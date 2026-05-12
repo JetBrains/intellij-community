@@ -14,7 +14,7 @@ internal class LocalizationPluginListener : DynamicPluginListener {
 
       LocalizationStateService.getInstance()?.setSelectedLocale(Locale.ENGLISH.toLanguageTag())
 
-      LanguageAndRegionUi.showRestartDialog(false)
+      LanguageAndRegionUi.showRestartDialog()
     }
   }
 }

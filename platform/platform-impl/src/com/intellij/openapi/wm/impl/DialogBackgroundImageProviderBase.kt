@@ -19,10 +19,10 @@ import java.net.URL
 
 @Internal
 abstract class DialogBackgroundImageProviderBase : DialogBackgroundImageProvider {
-  open fun getImageUrl(isDark: Boolean): URL? = null
+  open fun getImageUrl(isDark: Boolean, isIslands: Boolean): URL? = null
 
-  override fun getImage(isDark: Boolean): Image? {
-    val imageUrl = getImageUrl(isDark)?.takeIf { isAvailable && it.path.endsWith(".svg"); } ?: return null
+  override fun getImage(isDark: Boolean, isIslands: Boolean): Image? {
+    val imageUrl = getImageUrl(isDark, isIslands)?.takeIf { isAvailable && it.path.endsWith(".svg"); } ?: return null
     val timeout = if (USE_LONG_TIMEOUT) 30000 else LOADING_TIMEOUT_MILLIS
 
     val image: Image? = BackgroundTaskUtil.tryComputeFast(

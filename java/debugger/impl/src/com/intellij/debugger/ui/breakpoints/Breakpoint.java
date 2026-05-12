@@ -93,6 +93,7 @@ import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.request.EventRequest;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -389,6 +390,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
       CallTracer.get(debugProcess).stop(event.thread());
     }
     if (isLogEnabled() || isLogExpressionEnabled() || isLogStack()) {
+      getBreakpointManager().beforeLoggingBreakpoint(context.getSuspendContext());
       StringBuilder buf = new StringBuilder();
       if (myXBreakpoint.isLogMessage()) {
         buf.append(getEventMessage(event)).append("\n");
@@ -436,7 +438,8 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
       }
       if (!buf.isEmpty()) {
         var msg = buf.toString();
-        printLoggingBreakpointMessage(getBreakpointManager(), this, msg, debugProcess);
+        // TODO IDEA-389143 Provide stack for non-instrumented breakpoints?
+        printLoggingBreakpointMessage(this, debugProcess, msg, null);
       }
     }
     if (isRemoveAfterHit()) {
@@ -444,14 +447,15 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     }
   }
 
-  protected static void printLoggingBreakpointMessage(@NotNull BreakpointManager manager,
-                                                      @Nullable Breakpoint<?> breakpoint,
-                                                      @NotNull String msg,
-                                                      @NotNull DebugProcessImpl debugProcess) {
+  @ApiStatus.Internal
+  public static void printLoggingBreakpointMessage(@Nullable Breakpoint<?> breakpoint,
+                                                   @NotNull DebugProcessImpl debugProcess,
+                                                   @NotNull String message,
+                                                   @Nullable List<StackFrameItem> stack) {
     if (breakpoint != null) {
-      manager.multicastLogMessage(breakpoint, msg, debugProcess);
+      breakpoint.getBreakpointManager().multicastLogMessage(breakpoint, message, debugProcess, stack);
     }
-    debugProcess.printToConsole(msg);
+    debugProcess.printToConsole(message);
   }
 
   /**

@@ -169,20 +169,6 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     return session;
   }
 
-  /**
-   * use {@link #runInsideHighlightingSession(PsiFile, EditorColorsScheme, ProperTextRange, boolean, Consumer)}
-   */
-  @RequiresBackgroundThread
-  @ApiStatus.Internal
-  @Deprecated
-  public static void runInsideHighlightingSession(@NotNull PsiFile psiFile,
-                                                  @NotNull CodeInsightContext codeInsightContext,
-                                                  @Nullable EditorColorsScheme editorColorsScheme,
-                                                  @NotNull ProperTextRange visibleRange,
-                                                  boolean canChangeFileSilently,
-                                                  @NotNull Consumer<? super @NotNull HighlightingSession> runnable) {
-    runInsideHighlightingSession(psiFile, editorColorsScheme, visibleRange, canChangeFileSilently, runnable);
-  }
   @RequiresBackgroundThread
   @ApiStatus.Internal
   public static void runInsideHighlightingSession(@NotNull PsiFile psiFile,

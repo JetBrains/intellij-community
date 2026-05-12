@@ -23,7 +23,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.IconManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyStubElementTypes;
@@ -90,6 +89,7 @@ import com.jetbrains.python.psi.types.PyTypeChecker;
 import com.jetbrains.python.psi.types.PyTypeInferenceCspFactory;
 import com.jetbrains.python.psi.types.PyTypedDictType;
 import com.jetbrains.python.psi.types.PyUnionType;
+import com.jetbrains.python.psi.types.PyUnpackedTypedDictTypeImpl;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
@@ -499,8 +499,8 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       if (parameter instanceof PyNamedParameter namedParameter &&
           namedParameter.isKeywordContainer() &&
           context.getType(namedParameter) instanceof PyTypedDictType typedDictType) {
-        List<PyCallableParameter> typedDictParameters = typedDictType.toClass().getParameters(context);
-        parameters.addAll(ContainerUtil.notNullize(typedDictParameters));
+        PyUnpackedTypedDictTypeImpl keywordContainerType = new PyUnpackedTypedDictTypeImpl(typedDictType);
+        parameters.add(PyCallableParameterImpl.keywordContainerNonPsi(parameter.getName(), keywordContainerType));
       }
       else {
         parameters.add(PyCallableParameterImpl.psi(parameter));

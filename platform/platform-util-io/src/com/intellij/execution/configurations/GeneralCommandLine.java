@@ -245,12 +245,6 @@ public class GeneralCommandLine implements UserDataHolder {
     return myParentEnvironmentType != ParentEnvironmentType.NONE;
   }
 
-  /** @deprecated use {@link #withParentEnvironmentType(ParentEnvironmentType)} */
-  @Deprecated(forRemoval = true)
-  public void setPassParentEnvironment(boolean passParentEnvironment) {
-    withParentEnvironmentType(passParentEnvironment ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE);
-  }
-
   public @NotNull ParentEnvironmentType getParentEnvironmentType() {
     return myParentEnvironmentType;
   }

@@ -186,7 +186,7 @@ import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
 
 public final class JavaCompletionContributor extends CompletionContributor implements DumbAware {
   private static final PsiElementPattern<PsiElement, ?> START_FOR = psiElement().afterLeaf(
-    psiElement().withText("(").afterLeaf(PsiKeyword.FOR));
+    psiElement().withText("(").afterLeaf(JavaKeywords.FOR));
   private static final ElementPattern<PsiElement> START_SWITCH =
     psiElement().afterLeaf(psiElement().withText("{").withParents(PsiCodeBlock.class, PsiSwitchBlock.class));
   private static final ElementPattern<PsiElement> VARIABLE_AFTER_FINAL =
@@ -801,10 +801,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
 
   private static void registerClassFromTypeElement(LookupElement element, JavaCompletionSession session) {
     PsiType type = Objects.requireNonNull(element.as(PsiTypeLookupItem.CLASS_CONDITION_KEY)).getType();
-    if (type instanceof PsiPrimitiveType) {
-      session.registerKeyword(type.getCanonicalText(false));
-    }
-    else if (type instanceof PsiClassType && ((PsiClassType)type).getParameterCount() == 0) {
+    if (type instanceof PsiClassType && ((PsiClassType)type).getParameterCount() == 0) {
       PsiClass aClass = ((PsiClassType)type).resolve();
       if (aClass != null) {
         session.registerClass(aClass);

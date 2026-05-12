@@ -70,14 +70,6 @@ public class DefaultExecutionResult implements ExecutionResult {
     myRestartActions = restartActions;
   }
 
-  /**
-   * @deprecated unused
-   */
-  @Deprecated(forRemoval = true)
-  public AnAction @NotNull [] getAdditionalStopActions() {
-    return AnAction.EMPTY_ARRAY;
-  }
-
   @Override
   public ProcessHandler getProcessHandler() {
     return myProcessHandler;

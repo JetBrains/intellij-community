@@ -193,7 +193,7 @@ class OpenGradleJavaFileTest {
   @BeforeEach
   fun startIde() {
     bgRun = Starter.newContext(ideInfo = IdeProductProvider.IU) {
-      project = RemoteArchiveProjectInfo(projectURL = "https://repo.labs.intellij.net/artifactory/idea-test-data/lwjgl3-maven-gradle_2.zip")
+      project = RemoteArchiveProjectInfo(projectURL = "https://packages.jetbrains.team/files/p/ij/intellij-test-data/repo-labs-archive/idea-test-data/akka.zip")
     }.runIdeWithDriver()
   }
 
@@ -216,7 +216,7 @@ class OpenGradleJavaFileTest {
     @JvmStatic
     fun startIde() {
       run = Starter.newContext(ideInfo = IdeProductProvider.IU) {
-        project = RemoteArchiveProjectInfo(projectURL = "https://repo.labs.intellij.net/artifactory/idea-test-data/lwjgl3-maven-gradle_2.zip")
+        project = RemoteArchiveProjectInfo(projectURL = "https://packages.jetbrains.team/files/p/ij/intellij-test-data/repo-labs-archive/idea-test-data/akka.zip")
       }.runIdeWithDriver()
     }
 

@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
@@ -38,13 +37,6 @@ import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 object RecursivePropertyAccessUtil {
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated(
-        "use isRecursivePropertyAccess(KtElement, Boolean) instead",
-        replaceWith = ReplaceWith("isRecursivePropertyAccess(element, false)")
-    )
-    fun isRecursivePropertyAccess(element: KtElement): Boolean = isRecursivePropertyAccess(element, false)
-
     fun isRecursivePropertyAccess(element: KtElement, anyRecursionTypes: Boolean): Boolean {
         if (element !is KtSimpleNameExpression) return false
         return isApplicablePropertyAccessPsi(element) && element.isRecursivePropertyAccess(anyRecursionTypes)

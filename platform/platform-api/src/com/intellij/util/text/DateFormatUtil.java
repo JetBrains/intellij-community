@@ -19,7 +19,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.Month;
@@ -62,12 +61,6 @@ public final class DateFormatUtil {
   private static final Period[] PERIODS = {Period.YEAR, Period.MONTH, Period.WEEK, Period.DAY, Period.HOUR, Period.MINUTE};
 
   private DateFormatUtil() { }
-
-  /** @deprecated use {@link Duration#between} */
-  @Deprecated(forRemoval = true)
-  public static long getDifferenceInDays(@NotNull Date startDate, @NotNull Date endDate) {
-    return (endDate.getTime() - startDate.getTime() + DAY - 1000) / DAY;
-  }
 
   /** @deprecated use {@link #formatDate} */
   @Deprecated(forRemoval = true)

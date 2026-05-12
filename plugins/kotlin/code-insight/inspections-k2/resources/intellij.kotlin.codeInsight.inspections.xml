@@ -107,6 +107,15 @@
                      language="kotlin"
                      key="inspection.can.convert.to.multi.dollar.string.display.name" bundle="messages.KotlinBundle"/>
 
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.KotlinInternalInJavaInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.java.interop.issues"
+                     enabledByDefault="true"
+                     level="ERROR"
+                     language="JAVA"
+                     key="inspection.kotlin.internal.in.java.display.name" bundle="messages.KotlinBundle"/>
+
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.KotlinSealedInheritorsInJavaInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.java.interop.issues"
@@ -446,6 +455,14 @@
                      level="WARNING"
                      language="kotlin"
                      key="inspection.array.hash.code.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.KotlinMisorderedAssertEqualsArgumentsInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     language="kotlin"
+                     key="inspection.misordered.assert.equals.arguments.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.KotlinArrayToStringInspection"
                      groupPath="Kotlin"

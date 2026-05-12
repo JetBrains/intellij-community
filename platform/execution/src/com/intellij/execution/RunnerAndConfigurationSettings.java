@@ -256,14 +256,6 @@ public interface RunnerAndConfigurationSettings {
   boolean isFocusToolWindowBeforeRun();
 
   /**
-   * @deprecated Use {@link RunConfiguration#isAllowRunningInParallel()}
-   */
-  @Deprecated(forRemoval = true)
-  default boolean isSingleton() {
-    return !getConfiguration().isAllowRunningInParallel();
-  }
-
-  /**
    * @deprecated Use {@link RunConfiguration#setAllowRunningInParallel(boolean)}}
    */
   @Deprecated

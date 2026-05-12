@@ -104,10 +104,8 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
     clone.myOriginalFile = this;
     clone.myPseudoImports = new LinkedHashMap<>(myPseudoImports);
     FileManager fileManager = ((PsiManagerEx)getManager()).getFileManager();
-    SingleRootFileViewProvider cloneViewProvider = (SingleRootFileViewProvider)fileManager.createFileViewProvider(new LightVirtualFile(
-      getName(),
-      getLanguage(),
-      getText()), false);
+    SingleRootFileViewProvider cloneViewProvider = (SingleRootFileViewProvider)
+      fileManager.createFileViewProvider(new LightVirtualFile(getName(), getLanguage(), getText()), false);
     cloneViewProvider.forceCachedPsi(clone);
     clone.myViewProvider = cloneViewProvider;
     return clone;

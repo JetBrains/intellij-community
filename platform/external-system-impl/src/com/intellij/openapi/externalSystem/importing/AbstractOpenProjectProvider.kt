@@ -55,7 +55,10 @@ abstract class AbstractOpenProjectProvider {
 
   protected abstract suspend fun linkProject(projectFile: VirtualFile, project: Project)
 
-  suspend fun openProject(projectFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
+  suspend fun openProject(
+    projectFile: VirtualFile,
+    openProjectTask: OpenProjectTask,
+  ): Project? {
     LOG.debug("Open ${systemId.readableName} project from $projectFile")
 
     val projectDirectory = getProjectDirectory(projectFile)
@@ -65,12 +68,10 @@ abstract class AbstractOpenProjectProvider {
     val nioPath = projectDirectory.toNioPath()
     val isValidIdeaProject = ProjectUtil.isValidProjectPath(nioPath)
 
-    val options = OpenProjectTask {
-      isNewProject = !isValidIdeaProject
-      this.forceOpenInNewFrame = forceOpenInNewFrame
-      this.projectToClose = projectToClose
-      runConfigurators = false
-      projectRootDir = nioPath
+    val options = openProjectTask.copy(
+      isNewProject = !isValidIdeaProject,
+      runConfigurators = false,
+      projectRootDir = nioPath,
       beforeOpen = { project ->
         if (isValidIdeaProject) {
           UnlinkedProjectNotificationAware.enableNotifications(project, systemId)
@@ -83,9 +84,9 @@ abstract class AbstractOpenProjectProvider {
           }
           ProjectUtil.updateLastProjectLocation(nioPath)
         }
-        true
-      }
-    }
+        openProjectTask.beforeOpen?.invoke(project) ?: true
+      },
+    )
     return ProjectManagerEx.getInstanceEx().openProjectAsync(nioPath, options)
   }
 

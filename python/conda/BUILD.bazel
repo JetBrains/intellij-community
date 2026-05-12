@@ -14,6 +14,14 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/util",
     "//python/python-process-output/common",
+    "//python/openapi:community",
+    "//python/python-requirements:requirements",
+    "//platform/projectModel-api:projectModel",
+    "//python/python-sdk:sdk",
+    "//libraries/jackson/dataformat-yaml:libraries-jackson-dataformat-yaml",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//libraries/io",
   ]
 )
 
@@ -28,6 +36,14 @@ jvm_library(
     "//platform/core-api:core_test_lib",
     "//platform/util:util_test_lib",
     "//python/python-process-output/common:common_test_lib",
+    "//python/openapi:community_test_lib",
+    "//python/python-requirements:requirements_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//python/python-sdk:sdk_test_lib",
+    "//libraries/jackson/dataformat-yaml:libraries-jackson-dataformat-yaml_test_lib",
+    "//libraries/jackson/jackson:jackson_test_lib",
+    "//libraries/jackson/databind:databind_test_lib",
+    "//libraries/io:io_test_lib",
   ]
 )
 ### auto-generated section `build intellij.python.community.impl.conda` end

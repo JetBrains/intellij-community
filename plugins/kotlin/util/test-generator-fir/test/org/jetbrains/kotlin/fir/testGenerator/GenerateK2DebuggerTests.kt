@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CodeCorou
 import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CodeFileRankingTest
 import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CodeKotlinEvaluateExpressionTest
 import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CodeKotlinSteppingTest
+import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CodeKotlinEvaluationExpressionTest
 import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CodeKotlinVariablePrintingTest
 import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CodeSuspendStackTraceTest
 import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CodeXCoroutinesStackTraceTest
@@ -155,6 +156,12 @@ internal fun MutableTWorkspace.generateK2DebuggerTests() {
         listOf(AbstractK2IdeK2CodeKotlinVariablePrintingTest::class,).forEach {
             testClass(it) {
                 model("variables", isRecursive = false)
+            }
+        }
+
+        listOf(AbstractK2IdeK2CodeKotlinEvaluationExpressionTest::class,).forEach {
+            testClass(it) {
+                model("evaluationExpression", isRecursive = false)
             }
         }
 

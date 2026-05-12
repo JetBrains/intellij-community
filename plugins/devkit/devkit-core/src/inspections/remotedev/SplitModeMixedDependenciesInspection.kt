@@ -26,11 +26,13 @@ internal class SplitModeMixedDependenciesInspection : DevKitPluginXmlInspectionB
     val currentXmlFile = holder.fileElement.file
     val moduleAnalysis = SplitModeModuleKindResolver.getOrComputeModuleAnalysis(module, currentXmlFile)
     if (SplitModeInspectionUtil.shouldReportSinglePluginLevelError(currentXmlFile, moduleAnalysis)) {
+      val quickFixes = SplitModeDependencyQuickFixes.createNonNativePluginFixes(module, element, moduleAnalysis.resolvedModuleKind.kind)
       holder.createProblem(
         element,
         ProblemHighlightType.GENERIC_ERROR,
         buildNonNativePluginMessage(moduleAnalysis.resolvedModuleKind),
         null,
+        *quickFixes,
       )
       return
     }

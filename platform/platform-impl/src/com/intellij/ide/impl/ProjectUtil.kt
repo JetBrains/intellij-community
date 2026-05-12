@@ -91,6 +91,26 @@ private var ourProjectPath: String? = null
 private const val PROJECTS_DIR = "projects"
 private const val PROPERTY_PROJECT_PATH = "%s.project.path"
 
+private data class ProjectOpenOptionsImpl(
+  val originalOpenProjectTask: OpenProjectTask,
+) : ProjectOpenProcessor.ProjectOpenOptions {
+
+  override val forceOpenInNewFrame: Boolean
+    get() = originalOpenProjectTask.forceOpenInNewFrame
+
+  override val projectToClose: Project?
+    get() = originalOpenProjectTask.projectToClose
+}
+
+private fun OpenProjectTask.toProjectOpenOptions(): ProjectOpenProcessor.ProjectOpenOptions {
+  return ProjectOpenOptionsImpl(this)
+}
+
+fun ProjectOpenProcessor.ProjectOpenOptions.toOpenProjectTask(): OpenProjectTask {
+    if (this is ProjectOpenOptionsImpl) return originalOpenProjectTask
+    return OpenProjectTask(forceOpenInNewFrame, projectToClose)
+}
+
 object ProjectUtil {
   @JvmStatic
   fun updateLastProjectLocation(lastProjectLocation: Path) {
@@ -319,13 +339,7 @@ object ProjectUtil {
     LOG.info("Using processor ${processor.name} to open the project at ${virtualFile.path}")
 
     try {
-      return if (processor is PlatformProjectOpenProcessor) {
-        // this customization is needed, because there is no way to pass original OpenOptions to the ProjectOpenProcessor
-        PlatformProjectOpenProcessor.openProjectAsync(virtualFile.toNioPath(), options)
-      }
-      else {
-        processor.openProjectAsync(virtualFile, options.projectToClose, options.forceOpenInNewFrame)
-      }
+      return processor.openProjectAsync(virtualFile, options.toProjectOpenOptions())
     }
     catch (e: UnsupportedOperationException) {
       if (e != ProjectOpenProcessor.unimplementedOpenAsync) {

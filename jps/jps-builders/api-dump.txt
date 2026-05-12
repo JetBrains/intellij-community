@@ -2307,7 +2307,6 @@ org.jetbrains.jps.incremental.java.CustomOutputDataListener
 - a:getId():java.lang.String
 - a:processData(org.jetbrains.jps.incremental.CompileContext,java.lang.String,B[]):V
 org.jetbrains.jps.incremental.java.ExternalJavacOptionsProvider
-- getOptions(org.jetbrains.jps.builders.java.JavaCompilingTool):java.util.Collection
 - getOptions(org.jetbrains.jps.builders.java.JavaCompilingTool,I):java.util.Collection
 f:org.jetbrains.jps.incremental.java.JpsReferenceDependenciesRegistrar
 - org.jetbrains.jps.javac.JavacFileReferencesRegistrar

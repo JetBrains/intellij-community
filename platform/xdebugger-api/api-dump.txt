@@ -640,8 +640,7 @@ a:com.intellij.xdebugger.frame.XValueModifier
 - <init>():V
 - calculateInitialValueEditorText(com.intellij.xdebugger.frame.XValueModifier$XInitialValueCallback):V
 - getInitialValueEditorText():java.lang.String
-- setValue(com.intellij.xdebugger.XExpression,com.intellij.xdebugger.frame.XValueModifier$XModificationCallback):V
-- setValue(java.lang.String,com.intellij.xdebugger.frame.XValueModifier$XModificationCallback):V
+- a:setValue(com.intellij.xdebugger.XExpression,com.intellij.xdebugger.frame.XValueModifier$XModificationCallback):V
 com.intellij.xdebugger.frame.XValueModifier$XInitialValueCallback
 - a:setValue(java.lang.String):V
 com.intellij.xdebugger.frame.XValueModifier$XModificationCallback

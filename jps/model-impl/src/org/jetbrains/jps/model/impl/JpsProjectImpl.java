@@ -5,11 +5,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsElementCollection;
-import org.jetbrains.jps.model.JpsElementReference;
 import org.jetbrains.jps.model.JpsElementTypeWithDefaultProperties;
 import org.jetbrains.jps.model.JpsModel;
-import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
-import org.jetbrains.jps.model.ex.JpsElementCollectionRole;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryCollection;
 import org.jetbrains.jps.model.library.JpsLibraryType;
@@ -27,15 +24,12 @@ import java.util.List;
 import java.util.Objects;
 
 final class JpsProjectImpl extends JpsProjectBase {
-  private static final JpsElementCollectionRole<JpsElementReference<?>> EXTERNAL_REFERENCES_COLLECTION_ROLE =
-    JpsElementCollectionRole.create(JpsElementChildRoleBase.create("external reference"));
   private final JpsLibraryCollection myLibraryCollection;
   private String myName = "";
 
   JpsProjectImpl(@NotNull JpsModel model) {
     super(model);
     myContainer.setChild(JpsModuleRole.MODULE_COLLECTION_ROLE);
-    myContainer.setChild(EXTERNAL_REFERENCES_COLLECTION_ROLE);
     myContainer.setChild(JpsSdkReferencesTableImpl.ROLE);
     myLibraryCollection = new JpsLibraryCollectionImpl(myContainer.setChild(JpsLibraryRole.LIBRARIES_COLLECTION_ROLE));
   }
@@ -50,10 +44,6 @@ final class JpsProjectImpl extends JpsProjectBase {
     if (!Objects.equals(myName, name)) {
       myName = name;
     }
-  }
-
-  public void addExternalReference(@NotNull JpsElementReference<?> reference) {
-    myContainer.getChild(EXTERNAL_REFERENCES_COLLECTION_ROLE).addChild(reference);
   }
 
   @Override

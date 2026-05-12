@@ -25,7 +25,6 @@ import com.intellij.psi.util.PsiUtil
 import com.intellij.testIntegration.createTest.CreateTestAction
 import com.intellij.testIntegration.createTest.CreateTestUtils.computeTestRoots
 import com.intellij.testIntegration.createTest.TestGenerators
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.asJava.toLightClass
@@ -64,11 +63,6 @@ abstract class AbstractKotlinCreateTestIntention : SelfTargetingRangeIntention<K
         generatedFile: PsiFile,
         srcModule: Module
     )
-
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("Kept for Backward compatibility, please override `applicabilityRange` function", level = DeprecationLevel.ERROR)
-    fun applicabilityRange(element: KtNamedDeclaration): TextRange? =
-        calculateApplicabilityRange(element)
 
     override fun applicabilityRange(element: KtElement): TextRange? =
         calculateApplicabilityRange(element)

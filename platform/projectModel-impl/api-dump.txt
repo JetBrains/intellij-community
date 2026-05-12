@@ -200,7 +200,6 @@ Fa:com.intellij.openapi.options.SchemeManager
 - a:isMetadataEditable(java.lang.Object):Z
 - a:loadSchemes():java.util.Collection
 - a:reload():V
-- reload(kotlin.jvm.functions.Function1):V
 - a:removeScheme(java.lang.Object):Z
 - a:removeScheme(java.lang.String):java.lang.Object
 - a:save():V

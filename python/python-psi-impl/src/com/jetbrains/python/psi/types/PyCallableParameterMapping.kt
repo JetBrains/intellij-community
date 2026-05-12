@@ -50,6 +50,8 @@ object PyCallableParameterMapping {
     actualCallableParameters: List<PyCallableParameter>,
     context: TypeEvalContext,
   ): PyTypeParameterMapping? {
+    if (!handleUnwrappedTypedDict(expectedCallableParameters, actualCallableParameters, context)) return null
+
     val expectedCategorizedParameters = categorizeParameters(expectedCallableParameters, context) ?: return null
     val actualCategorizedParameters = categorizeParameters(actualCallableParameters, context) ?: return null
 
@@ -264,23 +266,24 @@ object PyCallableParameterMapping {
     return PyTypeParameterMapping.mapByShape(expectedTypes, actualTypes)
   }
 
-  // Unwraps *args: *tuple[T, T1] to a sequence of positional parameters: T, T1 for matching purposes
-  private fun flattenPositionalContainer(parameters: List<Parameter>, context: TypeEvalContext): List<Parameter> {
-    val flattenedParameters = mutableListOf<Parameter>()
-    for (parameter in parameters) {
-      val parameterType = parameter.getArgumentType(context)
-      if (parameter.parameter.isPositionalContainer && parameterType is PyUnpackedTupleType && !parameterType.isUnbound()) {
-        val flattenedTypes = parameterType.getElementTypes()
-        val unwrappedArgParameters = flattenedTypes.map { type ->
-          Parameter(PyCallableParameterImpl.nonPsi(type), ParameterKind.POSITIONAL_ONLY)
-        }
-        flattenedParameters.addAll(unwrappedArgParameters)
-      }
-      else {
-        flattenedParameters.add(parameter)
-      }
-    }
-    return flattenedParameters
+  /**
+   * Special handling for keyword containers annotated with `Unpacked[TypedDict]` type:
+   *
+   * We must check if the actual input signature also contains a keyword container
+   * before unwrapping TypedDict from the expected signature into a series of keyword-only parameters.
+   * See the [spec](https://typing.python.org/en/latest/spec/callables.html#source-contains-kwargs-and-destination-doesn-t)
+   */
+  private fun handleUnwrappedTypedDict(
+    expectedCallableParameters: List<PyCallableParameter>,
+    actualCallableParameters: List<PyCallableParameter>,
+    context: TypeEvalContext,
+  ): Boolean {
+    val expectedHasUnpackedTD = expectedCallableParameters.lastOrNull()
+      ?.takeIf { it.isKeywordContainer && it.getType(context) is PyUnpackedTypedDictType } != null
+    val actualHasKeywordContainer = actualCallableParameters.lastOrNull()
+      ?.takeIf { it.isKeywordContainer } != null
+
+    return !(expectedHasUnpackedTD && !actualHasKeywordContainer)
   }
 
   private enum class ParameterState {
@@ -295,13 +298,14 @@ object PyCallableParameterMapping {
    */
   private fun categorizeParameters(callableParameters: List<PyCallableParameter>, context: TypeEvalContext): List<Parameter>? {
     val parameters = mutableListOf<Parameter>()
+    val unwrappedParameters = ParamHelper.unpackContainerParameters(callableParameters, context)
 
     var positionalContainer: Parameter? = null
     var keywordContainer: Parameter? = null
     var typeVarTupleType: PyTypeVarTupleType? = null
 
     var state = ParameterState.POSITIONAL_OR_KEYWORD
-    for (param in callableParameters) {
+    for (param in unwrappedParameters) {
       val argumentType = param.getArgumentType(context)
       if (param.isPositionOnlySeparator) {
         parameters.replaceAll { p -> p.copy(kind = ParameterKind.POSITIONAL_ONLY) }
@@ -336,14 +340,7 @@ object PyCallableParameterMapping {
       else {
         if (state == ParameterState.POSITIONAL_OR_KEYWORD) {
           val paramName = param.name
-          val isPositionalOnly = paramName == null || param.protectionLevel == ProtectionLevel.PRIVATE
-          if (isPositionalOnly) {
-            parameters.lastOrNull()?.let {
-              if (it.kind != ParameterKind.POSITIONAL_ONLY && it.kind != ParameterKind.TYPE_VAR_TUPLE && !it.parameter.isSelf) {
-                // Previous parameter should also be positional-only in this case
-                return null
-              }
-            }
+          if (paramName == null || param.protectionLevel == ProtectionLevel.PRIVATE) {
             parameters.add(Parameter(param, ParameterKind.POSITIONAL_ONLY))
           }
           else {
@@ -355,10 +352,15 @@ object PyCallableParameterMapping {
           if (name == null) {
             return null
           }
-          parameters.add(Parameter(param, ParameterKind.KEYWORD_ONLY))
+          if (state == ParameterState.POSITIONAL_CONTAINER && param.protectionLevel == ProtectionLevel.PRIVATE) {
+            parameters.add(Parameter(param, ParameterKind.POSITIONAL_ONLY))
+          }
+          else {
+            parameters.add(Parameter(param, ParameterKind.KEYWORD_ONLY))
+          }
         }
       }
     }
-    return flattenPositionalContainer(parameters, context)
+    return parameters
   }
 }

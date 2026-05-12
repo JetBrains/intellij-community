@@ -34,7 +34,6 @@ f:com.intellij.codeInsight.completion.CompletionUtilCore
 - sf:DUMMY_IDENTIFIER_TRIMMED:java.lang.String
 - <init>():V
 f:com.intellij.codeInsight.documentation.DocumentationManagerUtil
-- s:createHyperlink(java.lang.StringBuilder,com.intellij.psi.PsiElement,java.lang.String,java.lang.String,Z):V
 - s:createHyperlink(java.lang.StringBuilder,com.intellij.psi.PsiElement,java.lang.String,java.lang.String,Z,Z):V
 - s:createHyperlink(java.lang.StringBuilder,java.lang.String,java.lang.String,Z):V
 - s:createHyperlink(java.lang.StringBuilder,java.lang.String,java.lang.String,Z,Z):V
@@ -659,7 +658,6 @@ a:com.intellij.openapi.application.QueryExecutorBase
 - f:execute(java.lang.Object,com.intellij.util.Processor):Z
 - a:processQuery(java.lang.Object,com.intellij.util.Processor):V
 a:com.intellij.openapi.application.ReadAction
-- <init>():V
 - s:compute(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 - execute():com.intellij.openapi.application.RunResult
 - s:nonBlocking(java.lang.Runnable):com.intellij.openapi.application.NonBlockingReadAction
@@ -702,15 +700,6 @@ a:com.intellij.openapi.application.TransactionGuard
 - a:submitTransactionAndWait(java.lang.Runnable):V
 - a:submitTransactionLater(com.intellij.openapi.Disposable,java.lang.Runnable):V
 com.intellij.openapi.application.TransactionId
-a:com.intellij.openapi.application.WriteAction
-- <init>():V
-- s:compute(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
-- s:computeAndWait(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
-- s:computeAndWait(com.intellij.openapi.util.ThrowableComputable,com.intellij.openapi.application.ModalityState):java.lang.Object
-- execute():com.intellij.openapi.application.RunResult
-- pa:run(com.intellij.openapi.application.Result):V
-- s:run(com.intellij.util.ThrowableRunnable):V
-- s:runAndWait(com.intellij.util.ThrowableRunnable):V
 f:com.intellij.openapi.client.ClientSessionsUtil
 - sf:forEachSession(com.intellij.openapi.application.Application,com.intellij.openapi.client.ClientKind,kotlin.jvm.functions.Function1):V
 - sf:forEachSession(com.intellij.openapi.project.Project,com.intellij.openapi.client.ClientKind,kotlin.jvm.functions.Function1):V
@@ -735,7 +724,6 @@ a:com.intellij.openapi.command.CommandProcessor
 - <init>():V
 - a:addAffectedDocuments(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document[]):V
 - a:addAffectedFiles(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile[]):V
-- a:addCommandListener(com.intellij.openapi.command.CommandListener):V
 - a:executeCommand(com.intellij.openapi.project.Project,java.lang.Runnable,java.lang.String,java.lang.Object):V
 - a:executeCommand(com.intellij.openapi.project.Project,java.lang.Runnable,java.lang.String,java.lang.Object,com.intellij.openapi.command.UndoConfirmationPolicy):V
 - a:executeCommand(com.intellij.openapi.project.Project,java.lang.Runnable,java.lang.String,java.lang.Object,com.intellij.openapi.command.UndoConfirmationPolicy,com.intellij.openapi.editor.Document):V
@@ -767,7 +755,6 @@ a:com.intellij.openapi.command.WriteCommandAction
 - f:getCommandName():java.lang.String
 - getGroupID():java.lang.String
 - f:getProject():com.intellij.openapi.project.Project
-- p:isGlobalUndoAction():Z
 - s:runWriteCommandAction(com.intellij.openapi.project.Project,com.intellij.openapi.util.Computable):java.lang.Object
 - s:runWriteCommandAction(com.intellij.openapi.project.Project,com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 - s:runWriteCommandAction(com.intellij.openapi.project.Project,java.lang.Runnable):V
@@ -783,7 +770,6 @@ a:com.intellij.openapi.command.WriteCommandAction$Simple
 - p:<init>(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile[]):V
 - pa:run():V
 - p:run(com.intellij.openapi.application.Result):V
-f:com.intellij.openapi.command.undo.UndoConstants$Companion
 f:com.intellij.openapi.command.undo.UndoUtil
 - s:disableUndoFor(com.intellij.openapi.editor.Document):V
 - s:disableUndoFor(com.intellij.openapi.vfs.VirtualFile):V
@@ -3424,7 +3410,6 @@ com.intellij.psi.tree.ParentProviderElementType
 a:com.intellij.psi.tree.StubFileElementType
 - com.intellij.psi.tree.IFileElementType
 - com.intellij.psi.stubs.StubSerializer
-- sf:DEFAULT_EXTERNAL_ID:java.lang.String
 - <init>(com.intellij.lang.Language):V
 - <init>(java.lang.String,com.intellij.lang.Language):V
 f:com.intellij.psi.tree.TokenSet

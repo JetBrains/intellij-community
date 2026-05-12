@@ -554,8 +554,6 @@ f:com.intellij.notification.NotificationGroup
 - sf:balloonGroup(java.lang.String):com.intellij.notification.NotificationGroup
 - sf:balloonGroup(java.lang.String,java.lang.String):com.intellij.notification.NotificationGroup
 - sf:createIdWithTitle(java.lang.String,java.lang.String):java.lang.String
-- f:createNotification():com.intellij.notification.Notification
-- f:createNotification(com.intellij.notification.NotificationType):com.intellij.notification.Notification
 - f:createNotification(java.lang.String,com.intellij.notification.NotificationType):com.intellij.notification.Notification
 - f:createNotification(java.lang.String,com.intellij.openapi.ui.MessageType):com.intellij.notification.Notification
 - f:createNotification(java.lang.String,java.lang.String,com.intellij.notification.NotificationType):com.intellij.notification.Notification
@@ -563,7 +561,6 @@ f:com.intellij.notification.NotificationGroup
 - f:createNotification(java.lang.String,java.lang.String,java.lang.String):com.intellij.notification.Notification
 - f:createNotification(java.lang.String,java.lang.String,java.lang.String,com.intellij.notification.NotificationType):com.intellij.notification.Notification
 - f:createNotification(java.lang.String,java.lang.String,java.lang.String,com.intellij.notification.NotificationType,com.intellij.notification.NotificationListener):com.intellij.notification.Notification
-- bs:createNotification$default(com.intellij.notification.NotificationGroup,com.intellij.notification.NotificationType,I,java.lang.Object):com.intellij.notification.Notification
 - bs:createNotification$default(com.intellij.notification.NotificationGroup,java.lang.String,java.lang.String,com.intellij.notification.NotificationType,com.intellij.notification.NotificationListener,I,java.lang.Object):com.intellij.notification.Notification
 - bs:createNotification$default(com.intellij.notification.NotificationGroup,java.lang.String,java.lang.String,java.lang.String,com.intellij.notification.NotificationType,com.intellij.notification.NotificationListener,I,java.lang.Object):com.intellij.notification.Notification
 - sf:findRegisteredGroup(java.lang.String):com.intellij.notification.NotificationGroup
@@ -578,7 +575,6 @@ f:com.intellij.notification.NotificationGroup
 - f:isHideFromSettings():Z
 - f:isLogByDefault():Z
 - sf:logOnlyGroup(java.lang.String):com.intellij.notification.NotificationGroup
-- sf:logOnlyGroup(java.lang.String,com.intellij.openapi.extensions.PluginId):com.intellij.notification.NotificationGroup
 - sf:logOnlyGroup(java.lang.String,java.lang.String):com.intellij.notification.NotificationGroup
 - f:setHideFromSettings(Z):V
 - f:setParentId(java.lang.String):com.intellij.notification.NotificationGroup
@@ -593,7 +589,6 @@ f:com.intellij.notification.NotificationGroup$Companion
 - f:getGroupTitle(java.lang.String):java.lang.String
 - f:isGroupRegistered(java.lang.String):Z
 - f:logOnlyGroup(java.lang.String):com.intellij.notification.NotificationGroup
-- f:logOnlyGroup(java.lang.String,com.intellij.openapi.extensions.PluginId):com.intellij.notification.NotificationGroup
 - f:logOnlyGroup(java.lang.String,java.lang.String):com.intellij.notification.NotificationGroup
 - f:toolWindowGroup(java.lang.String,java.lang.String):com.intellij.notification.NotificationGroup
 - f:toolWindowGroup(java.lang.String,java.lang.String,Z):com.intellij.notification.NotificationGroup
@@ -1479,7 +1474,6 @@ a:com.intellij.openapi.vfs.JarFileSystem
 - sf:PROTOCOL:java.lang.String
 - sf:PROTOCOL_PREFIX:java.lang.String
 - <init>():V
-- findLocalVirtualFileByPath(java.lang.String):com.intellij.openapi.vfs.VirtualFile
 - s:getInstance():com.intellij.openapi.vfs.JarFileSystem
 - getJarRootForLocalFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
 - getLocalVirtualFileFor(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
@@ -1898,7 +1892,6 @@ c:com.intellij.util.io.HttpRequests$HttpStatusException
 f:com.intellij.util.io.ReadOnlyAttributeUtil
 - <init>():V
 - s:setReadOnlyAttribute(com.intellij.openapi.vfs.VirtualFile,Z):V
-- s:setReadOnlyAttribute(java.lang.String,Z):V
 a:com.intellij.util.io.RequestBuilder
 - <init>():V
 - a:accept(java.lang.String):com.intellij.util.io.RequestBuilder

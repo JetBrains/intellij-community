@@ -1,0 +1,9 @@
+// FILE: before.kt
+class Box<T>(val value: T) {
+    fun get(): T = val<caret>ue
+}
+
+// FILE: after.kt
+class Box<<caret>T>(val value: T) {
+    fun get(): T = value
+}

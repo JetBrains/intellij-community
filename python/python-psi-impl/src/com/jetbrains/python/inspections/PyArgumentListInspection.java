@@ -30,8 +30,6 @@ import com.jetbrains.python.psi.PyDecorator;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyKeywordArgument;
-import com.jetbrains.python.psi.PySingleStarParameter;
-import com.jetbrains.python.psi.PySlashParameter;
 import com.jetbrains.python.psi.PyStarArgument;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.ParamHelper;
@@ -103,7 +101,7 @@ public final class PyArgumentListInspection extends PyInspection {
         else { // possible unfilled params
           for (int i = firstParamOffset; i < params.size(); i++) {
             final PyCallableParameter parameter = params.get(i);
-            if (parameter.getParameter() instanceof PySingleStarParameter || parameter.getParameter() instanceof PySlashParameter) {
+            if (parameter.isKeywordOnlySeparator() || parameter.isPositionOnlySeparator()) {
               continue;
             }
             // param tuples, non-starred or non-default won't do

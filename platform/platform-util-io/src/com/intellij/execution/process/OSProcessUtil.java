@@ -20,6 +20,7 @@ public final class OSProcessUtil {
 
   /// Consider using [ProcessHandle#allProcesses()] instead.
   @ApiStatus.Obsolete
+  @SuppressWarnings("UsagesOfObsoleteApi")
   public static ProcessInfo @NotNull [] getProcessList() {
     return ProcessListUtil.getProcessList();
   }
@@ -35,17 +36,39 @@ public final class OSProcessUtil {
   /// Returns `true` is the attempt was successful.
   public static boolean killProcessTree(@NotNull Process process) {
     if (OS.CURRENT == OS.Windows) {
+      var result = killProcessTree(process.pid());
+      if (result) {
+        process.destroyForcibly();
+      }
+      return result;
+    }
+    else {
+      ProcessHandle.of(process.pid()).ifPresent(handle -> {
+        var handles = handle.descendants().toList();
+        for (var iterator = handles.listIterator(handles.size()); iterator.hasPrevious(); ) {
+          iterator.previous().destroyForcibly();
+        }
+      });
+      process.destroyForcibly();
+      return true;
+    }
+  }
+
+  /// Forceful termination of a process tree.
+  /// Returns `true` is the attempt was successful.
+  public static boolean killProcessTree(long pid) {
+    if (OS.CURRENT == OS.Windows) {
       try {
         if (!Registry.is("disable.winp", false)) {
           try {
-            LocalProcessService.getInstance().killWinProcessRecursively(process);
+            LocalProcessService.getInstance().killWinProcessRecursively(Math.toIntExact(pid));
             return true;
           }
           catch (Throwable e) {
-            LOG.error("Failed to kill " + process.pid() + " tree with WinP, falling back to the default logic", e);
+            LOG.error("Failed to kill " + pid + " tree with WinP, falling back to the default logic", e);
           }
         }
-        return WinProcessManager.kill(process, true);
+        return WinProcessManager.kill(Math.toIntExact(pid), true);
       }
       catch (Throwable e) {
         LOG.info("Cannot kill process tree", e);
@@ -53,21 +76,13 @@ public final class OSProcessUtil {
       }
     }
     else {
-      ProcessHandle handle;
-      try {
-        handle = process.toHandle();
-      }
-      catch (UnsupportedOperationException e) {
-        // workaround for `com.pty4j.unix.UnixPtyProcess` (https://github.com/JetBrains/pty4j/issues/179)
-        handle = ProcessHandle.of(process.pid()).orElse(null);
-      }
-      if (handle != null) {
+      ProcessHandle.of(pid).ifPresent(handle -> {
         var handles = handle.descendants().toList();
         for (var iterator = handles.listIterator(handles.size()); iterator.hasPrevious(); ) {
           iterator.previous().destroyForcibly();
         }
-      }
-      process.destroyForcibly();
+        handle.destroyForcibly();
+      });
       return true;
     }
   }

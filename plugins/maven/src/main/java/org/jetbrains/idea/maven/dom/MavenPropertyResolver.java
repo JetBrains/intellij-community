@@ -22,7 +22,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -51,18 +50,6 @@ public final class MavenPropertyResolver {
 
     return new MavenPropertyResolverHelper(projectDom, mavenProjectsManager, mavenProject, additionalPropertySource)
       .filterText(text);
-  }
-
-  /**
-   * @deprecated use {@link MavenPropertyResolver#collectPropertyMapFromDOM(MavenProject, MavenDomProjectModel)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static Properties collectPropertiesFromDOM(@Nullable MavenProject project, MavenDomProjectModel projectDom) {
-    var result = new Properties();
-
-    result.putAll(collectPropertyMapFromDOM(project, projectDom));
-
-    return result;
   }
 
   public static Map<String, String> collectPropertyMapFromDOM(@Nullable MavenProject project, MavenDomProjectModel projectDom) {

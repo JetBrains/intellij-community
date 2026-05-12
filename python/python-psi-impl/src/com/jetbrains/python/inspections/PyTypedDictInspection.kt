@@ -29,6 +29,7 @@ import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyImportStatementBase
 import com.jetbrains.python.psi.PyKeyValueExpression
 import com.jetbrains.python.psi.PyKeywordArgument
+import com.jetbrains.python.psi.PyParameterList
 import com.jetbrains.python.psi.PyParenthesizedExpression
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PySequenceExpression
@@ -348,6 +349,23 @@ class PyTypedDictInspection : PyInspection() {
             }
           }
         }
+      }
+    }
+
+    override fun visitPyParameterList(node: PyParameterList) {
+      val parameters = node.parameters
+      if (parameters.isEmpty()) return
+
+      val kwContainer = parameters.last().asNamed?.takeIf { it.isKeywordContainer } ?: return
+      val kwContainerType = myTypeEvalContext.getType(kwContainer)
+
+      if (kwContainerType is PyTypedDictType) {
+        val fieldNames = kwContainerType.fields.keys
+        val typedDictName = kwContainerType.name
+        parameters
+          .mapNotNull { it.asNamed }
+          .filter { !it.isPositionalOnly && it.name in fieldNames }
+          .forEach { registerProblem(it, PyPsiBundle.message("INSP.typeddict.parameter.overlaps.with.typed.dict", it.name, typedDictName)) }
       }
     }
 

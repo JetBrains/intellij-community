@@ -477,14 +477,6 @@ public final class SwingHelper {
    * @deprecated use {@link com.intellij.ui.components.BrowserLink} instead
    */
   @Deprecated(forRemoval = true)
-  public static @NotNull HyperlinkLabel createWebHyperlink(@NlsSafe @NotNull String url) {
-    return createWebHyperlink(url, url);
-  }
-
-  /**
-   * @deprecated use {@link com.intellij.ui.components.BrowserLink} instead
-   */
-  @Deprecated(forRemoval = true)
   public static @NotNull HyperlinkLabel createWebHyperlink(@NlsContexts.LinkLabel @NotNull String text, @NotNull String url) {
     HyperlinkLabel hyperlink = new HyperlinkLabel(text);
     hyperlink.setHyperlinkTarget(url);

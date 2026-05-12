@@ -1535,11 +1535,6 @@ public final class UIUtil {
     painter.paint(g, startX, endX, lineY);
   }
 
-  @Deprecated(forRemoval = true)
-  public static void applyRenderingHints(@NotNull Graphics g) {
-    GraphicsUtil.applyRenderingHints((Graphics2D)g);
-  }
-
   /**
    * @deprecated Use {@link ImageUtil#createImage(int, int, int)}
    */

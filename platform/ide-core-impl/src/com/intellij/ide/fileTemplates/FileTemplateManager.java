@@ -80,16 +80,6 @@ public abstract class FileTemplateManager{
   }
 
   /**
-   * @deprecated use {@link #getDefaultProperties()} instead
-   */
-  @Deprecated(forRemoval = true)
-  public @NotNull Properties getDefaultProperties(@NotNull Project project) {
-    Properties properties = getDefaultProperties();
-    properties.setProperty(PROJECT_NAME_VARIABLE, project.getName());
-    return properties;
-  }
-
-  /**
    * Creates a new template with specified name, and adds it to the list of default templates.
    * @return created template
    */

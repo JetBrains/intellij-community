@@ -182,7 +182,7 @@ private fun loadDefaultTemplates(prefixes: List<String>): FileTemplateLoadResult
   val processedLoaders = Collections.newSetFromMap(IdentityHashMap<ClassLoader, Boolean>())
   for (module in PluginManagerCore.getPluginSet().getEnabledModules()) {
     val loader = module.classLoader
-    if (module is ContentModuleDescriptor && module.jarFiles.isNullOrEmpty()) {
+    if (module is ContentModuleDescriptor && module.ownClassPath.isNullOrEmpty()) {
       // not isolated module - skip, as resource will be loaded from plugin classpath
       continue
     }

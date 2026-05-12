@@ -39,38 +39,12 @@ public interface CodeInsightColors {
 
   /**
    * @deprecated as of version 16.
-   * For non-Java code use {@link com.intellij.openapi.editor.DefaultLanguageHighlighterColors#INSTANCE_FIELD} or define your own.
-   * For Java-related code use {@link com.intellij.ide.highlighter.JavaHighlightingColors#INSTANCE_FIELD_ATTRIBUTES}.
-   * The field will be removed in future versions.
-   */
-  @Deprecated @ApiStatus.ScheduledForRemoval
-  TextAttributesKey INSTANCE_FIELD_ATTRIBUTES = TextAttributesKey.DUMMY_DEPRECATED_ATTRIBUTES;
-  /**
-   * @deprecated as of version 16.
    * For non-Java code use {@link com.intellij.openapi.editor.DefaultLanguageHighlighterColors#STATIC_FIELD} or define your own.
    * For Java-related code use {@link com.intellij.ide.highlighter.JavaHighlightingColors#STATIC_FINAL_FIELD_ATTRIBUTES}.
    * The field will be removed in future versions.
    */
   @Deprecated @ApiStatus.ScheduledForRemoval
   TextAttributesKey STATIC_FINAL_FIELD_ATTRIBUTES = TextAttributesKey.DUMMY_DEPRECATED_ATTRIBUTES;
-  /**
-   * @deprecated as of version 16.
-   * For non-Java code use {@link com.intellij.openapi.editor.DefaultLanguageHighlighterColors#FUNCTION_CALL} or define your own.
-   * For Java-related code use {@link com.intellij.ide.highlighter.JavaHighlightingColors#METHOD_CALL_ATTRIBUTES}.
-   * The field will be removed in future versions.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  TextAttributesKey METHOD_CALL_ATTRIBUTES = TextAttributesKey.DUMMY_DEPRECATED_ATTRIBUTES;
-  /**
-   * @deprecated as of version 16.
-   * For non-Java code use {@link com.intellij.openapi.editor.DefaultLanguageHighlighterColors#METADATA} or define your own.
-   * For Java-related code use {@link com.intellij.ide.highlighter.JavaHighlightingColors#ANNOTATION_NAME_ATTRIBUTES}.
-   * The field will be removed in future versions.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  TextAttributesKey ANNOTATION_NAME_ATTRIBUTES = TextAttributesKey.DUMMY_DEPRECATED_ATTRIBUTES;
 
   TextAttributesKey MATCHED_BRACE_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("MATCHED_BRACE_ATTRIBUTES");
   TextAttributesKey UNMATCHED_BRACE_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("UNMATCHED_BRACE_ATTRIBUTES");

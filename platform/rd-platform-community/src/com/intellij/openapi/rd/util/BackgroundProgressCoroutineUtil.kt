@@ -23,7 +23,6 @@ import com.intellij.platform.util.progress.asContextElement
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.util.awaitCancellationAndInvoke
 import com.jetbrains.rd.framework.util.launch
-import com.jetbrains.rd.framework.util.startAsync
 import com.jetbrains.rd.framework.util.startChildAsync
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
@@ -223,20 +222,6 @@ fun <T> Lifetime.startUnderBackgroundProgressAsync(
   project: Project,
   action: suspend ProgressCoroutineScope.() -> T
 ): Deferred<T> = startBackgroundAsync { withBackgroundProgressContext(title, canBeCancelled, project, action) }
-
-@ApiStatus.Internal
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use startWithBackgroundProgressAsync")
-fun <T> Lifetime.startUnderBackgroundProgressAsync(
-  @Nls(capitalization = Nls.Capitalization.Sentence) title: String,
-  canBeCancelled: Boolean = true,
-  isIndeterminate: Boolean = true,
-  action: suspend ProgressCoroutineScope.() -> T
-): Deferred<T> {
-  return runBackgroundAsync(title, canBeCancelled, isIndeterminate, null) { dispatcher, indicator ->
-    startAsync(dispatcher) { ProgressCoroutineScopeLegacy.execute(coroutineContext, this@runBackgroundAsync, indicator(), action) }
-  }
-}
 
 private fun <T: Job> Lifetime.runBackgroundAsync(
   @Nls(capitalization = Nls.Capitalization.Sentence) title: String,

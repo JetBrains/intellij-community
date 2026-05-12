@@ -138,7 +138,7 @@
       <language>JAVA</language>
       <className>com.siyeh.ipp.varargs.WrapVarargArgumentsWithExplicitArrayIntention</className>
       <bundleName>messages.JavaBundle</bundleName>
-      <categoryKey>intention.category.declaration</categoryKey>
+      <categoryKey>intention.category.expressions</categoryKey>
     </intentionAction>
 
     <intentionAction>
@@ -290,7 +290,7 @@
       <language>JAVA</language>
       <className>com.siyeh.ipp.modifiers.ChangeModifierIntention</className>
       <bundleName>messages.JavaBundle</bundleName>
-      <categoryKey>intention.category.other</categoryKey>
+      <categoryKey>intention.category.declaration</categoryKey>
     </intentionAction>
 
     <!-- Strings -->
@@ -464,7 +464,7 @@
       <language>JAVA</language>
       <className>com.siyeh.ipp.datetime.ShowDateTimeExampleOutputIntention</className>
       <bundleName>messages.JavaBundle</bundleName>
-      <categoryKey>intention.category.other</categoryKey>
+      <categoryKey>intention.category.expressions</categoryKey>
     </intentionAction>
     <intentionAction>
       <language>JAVA</language>

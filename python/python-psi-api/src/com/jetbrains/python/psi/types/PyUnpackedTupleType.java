@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.types;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -40,4 +41,15 @@ public non-sealed interface PyUnpackedTupleType extends PyPositionalVariadicType
    * tuple of types of unknown length.
    */
   boolean isUnbound();
+
+  /**
+   * Expands this unpacked tuple type into a list of callable parameters suitable for argument matching.
+   * <p>
+   * For example, {@code *tuple[int, *tuple[str, ...], float]} is expanded into
+   * {@code [__p0: int, *args: str, __p1: float]}.
+   * <p>
+   * Returns an empty list for unbound tuples and tuples containing {@link PyTypeVarTupleType} elements.
+   */
+  @ApiStatus.Experimental
+  @NotNull List<PyCallableParameter> asCallableParameters();
 }

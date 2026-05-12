@@ -220,6 +220,10 @@ private fun checkModuleDump(
     if (actualDump.rawContent == expectedDump) {
       return
     }
+    if (System.getProperty("api.dump.test.update.files") == "true") {
+      actualDump.path.writeText(expectedDump)
+      return
+    }
     val expectedDumpPath: Path? = try {
       Files.createTempFile("expected_${actualDump.path.fileName}".removeSuffix(".txt"), ".txt")
         .also {

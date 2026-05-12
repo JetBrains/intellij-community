@@ -8677,6 +8677,50 @@ public abstract class LocalInspectionTestGenerated extends AbstractK1LocalInspec
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/inspectionsLocal/misorderedAssertEqualsArguments")
+    public static class MisorderedAssertEqualsArguments extends AbstractK1LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("enumConstant.kt")
+        public void testEnumConstant() throws Exception {
+            runTest("testData/inspectionsLocal/misorderedAssertEqualsArguments/enumConstant.kt");
+        }
+
+        @TestMetadata("junitInherited.kt")
+        public void testJunitInherited() throws Exception {
+            runTest("testData/inspectionsLocal/misorderedAssertEqualsArguments/junitInherited.kt");
+        }
+
+        @TestMetadata("listFactory.kt")
+        public void testListFactory() throws Exception {
+            runTest("testData/inspectionsLocal/misorderedAssertEqualsArguments/listFactory.kt");
+        }
+
+        @TestMetadata("noInspection.kt")
+        public void testNoInspection() throws Exception {
+            runTest("testData/inspectionsLocal/misorderedAssertEqualsArguments/noInspection.kt");
+        }
+
+        @TestMetadata("staticFactory.kt")
+        public void testStaticFactory() throws Exception {
+            runTest("testData/inspectionsLocal/misorderedAssertEqualsArguments/staticFactory.kt");
+        }
+
+        @TestMetadata("testNg.kt")
+        public void testTestNg() throws Exception {
+            runTest("testData/inspectionsLocal/misorderedAssertEqualsArguments/testNg.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/moveLambdaOutsideParentheses")
     public static class MoveLambdaOutsideParentheses extends AbstractK1LocalInspectionTest {
         @java.lang.Override

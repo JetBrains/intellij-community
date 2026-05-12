@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.core.CoreBundle;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.impl.InputStreamSkippingBOM;
 import com.intellij.openapi.vfs.impl.VfsUtilCoreApplicationService;
 import com.intellij.openapi.vfs.limits.FileSizeLimit;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.Processor;
@@ -469,6 +471,11 @@ public class VfsUtilCore {
    */
   public static byte @NotNull [] loadNBytes(@NotNull VirtualFile virtualFile, int maxLength) throws IOException {
     try (InputStream stream = virtualFile.getInputStream()) {
+      //noinspection ConstantValue
+      if (stream == null) {
+        LOG.error(PluginException.createByClass(virtualFile + "("+virtualFile.getClass()+").getInputStream() returned null. Its file system was "+virtualFile.getFileSystem()+"("+virtualFile.getFileSystem().getClass()+")", null, virtualFile.getClass()));
+        return ArrayUtil.EMPTY_BYTE_ARRAY;
+      }
       byte[] buffer = new byte[(int)Math.min(maxLength, virtualFile.getLength())];
       byte[] bom = virtualFile.getBOM();
       int o = 0;
@@ -477,11 +484,11 @@ public class VfsUtilCore {
         o = bom.length;
       }
       int n;
-      int nread = o;
-      while ((n = stream.read(buffer, nread, buffer.length - nread)) > 0) {
-        nread += n;
+      int nRead = o;
+      while ((n = stream.read(buffer, nRead, buffer.length - nRead)) > 0) {
+        nRead += n;
       }
-      return nread == buffer.length ? buffer : Arrays.copyOf(buffer, nread);
+      return nRead == buffer.length ? buffer : Arrays.copyOf(buffer, nRead);
     }
   }
 
@@ -606,7 +613,7 @@ public class VfsUtilCore {
   }
 
   /**
-   * Converts VsfUrl info {@link URL}.
+   * Converts VFS url into {@link URL}.
    *
    * @param vfsUrl VFS url (as constructed by {@link VirtualFile#getUrl()}
    * @return converted URL or null if error has occurred.
@@ -789,7 +796,7 @@ public class VfsUtilCore {
    * @return virtual files that represents paths from root to the passed file
    */
   @ApiStatus.Internal
-  public static VirtualFile @NotNull [] getPathComponents(@NotNull VirtualFile file) {
+  protected static VirtualFile @NotNull [] getPathComponents(@NotNull VirtualFile file) {
     List<VirtualFile> componentsList = new ArrayList<>();
     while (file != null) {
       componentsList.add(file);

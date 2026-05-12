@@ -1,18 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.observable.properties
 
-import com.intellij.openapi.Disposable
 import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Atomic implementation of boolean property.
  */
-@Suppress("DEPRECATION")
 class AtomicBooleanProperty(
   initial: Boolean
 ) : AbstractObservableBooleanProperty(),
-    AtomicMutableBooleanProperty,
-    BooleanProperty {
+    AtomicMutableBooleanProperty {
 
   private val value = AtomicReference(initial)
 
@@ -50,10 +47,4 @@ class AtomicBooleanProperty(
     }
     return succeed
   }
-
-  //TODO: Remove with BooleanProperty
-  override fun afterSet(listener: () -> Unit): Unit = afterSet(null, listener)
-  override fun afterSet(listener: () -> Unit, parentDisposable: Disposable): Unit = afterSet(parentDisposable, listener)
-  override fun afterReset(listener: () -> Unit): Unit = afterReset(null, listener)
-  override fun afterReset(listener: () -> Unit, parentDisposable: Disposable): Unit = afterReset(parentDisposable, listener)
 }

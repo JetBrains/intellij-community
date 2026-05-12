@@ -74,6 +74,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/redundantRequireNotNullCall")
             model("${idea}/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath")
             model("${idea}/inspectionsLocal/arrayHashCode")
+            model("${idea}/inspectionsLocal/misorderedAssertEqualsArguments", pattern = Patterns.KT_WITHOUT_DOTS)
             model("${idea}/inspectionsLocal/arrayToString")
             model("${idea}/inspectionsLocal/stringReferentialEquality")
             model("${idea}/inspectionsLocal/suspiciousCascadingIf")
@@ -225,8 +226,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
         }
 
         testClass<AbstractK2MultiFileInspectionTest> {
-            model("${idea}/multiFileInspections", pattern = Patterns.TEST, excludedDirectories = listOf("kotlinInternalInJava",
-                "kotlinInternalInJavaTest"))
+            model("${idea}/multiFileInspections", pattern = Patterns.TEST)
         }
 
         testClass<AbstractK2MultiFileLocalInspectionTest> {

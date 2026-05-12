@@ -117,11 +117,4 @@ public abstract class CommandProcessor {
   public boolean isCommandInProgress() {
     return getCurrentCommand() != null;
   }
-
-  /**
-   * @deprecated use {@link CommandListener#TOPIC}
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public abstract void addCommandListener(@NotNull CommandListener listener);
 }

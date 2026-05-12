@@ -480,7 +480,6 @@ f:com.intellij.openapi.util.JDOMExternalizer
 - s:readMap(org.jdom.Element,java.util.Map,java.lang.String,java.lang.String):V
 - s:readString(org.jdom.Element,java.lang.String):java.lang.String
 - s:saveStringsList(org.jdom.Element,java.lang.String,java.lang.String,java.lang.String[]):V
-- s:write(org.jdom.Element,java.lang.String,I):V
 - s:write(org.jdom.Element,java.lang.String,java.lang.String):V
 - s:write(org.jdom.Element,java.lang.String,Z):V
 - s:writeMap(org.jdom.Element,java.util.Map,java.lang.String,java.lang.String):V
@@ -769,7 +768,6 @@ f:com.intellij.openapi.util.SystemInfo
 - s:getWinBuildNumber():java.lang.Long
 - s:hasXdgMime():Z
 - s:hasXdgOpen():Z
-- s:isJavaVersionAtLeast(java.lang.String):Z
 - s:isOsVersionAtLeast(java.lang.String):Z
 f:com.intellij.openapi.util.TimeoutCachedValue
 - java.util.function.Supplier
@@ -942,7 +940,6 @@ Fc:com.intellij.openapi.util.io.FileUtil
 - s:asyncDelete(java.io.File):java.util.concurrent.Future
 - s:asyncDelete(java.util.Collection):java.util.concurrent.Future
 - s:canExecute(java.io.File):Z
-- s:canWrite(java.lang.String):Z
 - s:collectMatchedFiles(java.io.File,java.util.regex.Pattern,java.util.List):V
 - s:compareFiles(java.io.File,java.io.File):I
 - s:comparePaths(java.lang.String,java.lang.String):I
@@ -1437,7 +1434,6 @@ Fc:com.intellij.openapi.util.text.StringUtil
 - s:replace(java.lang.String,java.lang.String,java.lang.String):java.lang.String
 - s:replace(java.lang.String,java.lang.String,java.lang.String,Z):java.lang.String
 - s:replace(java.lang.String,java.util.List,java.util.List):java.lang.String
-- s:replaceChar(java.lang.String,C,C):java.lang.String
 - s:replaceIgnoreCase(java.lang.String,java.lang.String,java.lang.String):java.lang.String
 - s:replaceSubSequence(java.lang.CharSequence,I,I,java.lang.CharSequence):com.intellij.util.text.MergingCharSequence
 - s:replaceSubstring(java.lang.String,com.intellij.openapi.util.TextRange,java.lang.String):java.lang.String

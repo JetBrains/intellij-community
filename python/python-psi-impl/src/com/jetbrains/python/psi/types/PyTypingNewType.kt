@@ -37,7 +37,7 @@ class PyTypingNewType(
 
   override fun getParameters(context: TypeEvalContext): List<PyCallableParameter>? {
     return if (isCallable) {
-      listOf(PyCallableParameterImpl.nonPsi(null, classType.toInstance(), null))
+      listOf(PyCallableParameterImpl.nonPsi(null, classType.toInstance()))
     }
     else {
       null

@@ -10,12 +10,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.Serializable;
 import java.util.AbstractList;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.RandomAccess;
@@ -43,18 +41,6 @@ public final class ContainerUtilRt {
     ArrayList<T> list = new ArrayList<>(elements.length);
     Collections.addAll(list, elements);
     return list;
-  }
-
-  /**
-   * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#newLinkedHashSet(Object[])}
-   */
-  @SafeVarargs
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  @NotNull
-  @Contract(value = "_ -> new", pure = true)
-  public static <T> LinkedHashSet<T> newLinkedHashSet(T... elements) {
-    return new LinkedHashSet<>(Arrays.asList(elements));
   }
 
   /**

@@ -784,16 +784,6 @@ public class AnnotationUtil {
     return isAnnotated(listOwner, annotationFQN, flags(checkHierarchy, true, true));
   }
 
-  /** @deprecated use {@link #isAnnotated(PsiModifierListOwner, String, int)} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
-                                    @NotNull String annotationFQN,
-                                    boolean checkHierarchy,
-                                    boolean skipExternal) {
-    return isAnnotated(listOwner, annotationFQN, flags(checkHierarchy, skipExternal, skipExternal));
-  }
-
   @Flags
   private static int flags(boolean checkHierarchy, boolean skipExternal, boolean skipInferred) {
     int flags = CHECK_TYPE;

@@ -17,7 +17,6 @@ import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyBoolLiteralExpression
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyClass
-import com.jetbrains.python.psi.PyElementGenerator
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyRecursiveElementVisitor
 import com.jetbrains.python.psi.PyReferenceExpression
@@ -205,11 +204,8 @@ private fun buildGetMethodType(
 ): PyCallableType {
   val parameters = mutableListOf<PyCallableParameter>()
   val builtinCache = PyBuiltinCache.getInstance(referenceTarget)
-  val elementGenerator = PyElementGenerator.getInstance(referenceTarget.project)
   parameters.add(PyCallableParameterImpl.nonPsi("key", builtinCache.strType))
-  parameters.add(PyCallableParameterImpl.nonPsi("default", null,
-                                                elementGenerator.createExpressionFromText(LanguageLevel.forElement(referenceTarget),
-                                                                                          "None")))
+  parameters.add(PyCallableParameterImpl.nonPsi("default", null, PyNames.NONE))
   val key = PyEvaluator.evaluate(callExpression.getArgument(0, "key", PyExpression::class.java), String::class.java)
   val defaultArgument = callExpression.getArgument(1, "default", PyExpression::class.java)
   val default = if (defaultArgument != null) context.getType(defaultArgument) else builtinCache.noneType
@@ -247,7 +243,6 @@ private fun getTypedDictTypeForCallee(referenceExpression: PyReferenceExpression
   if (isTypedDict(referenceExpression, context)) {
     val builtinCache = PyBuiltinCache.getInstance(referenceExpression)
     val languageLevel = LanguageLevel.forElement(referenceExpression)
-    val generator = PyElementGenerator.getInstance(referenceExpression.project)
 
     val dictType = builtinCache.dictType
     val strToTypeDictType = if (dictType != null) {
@@ -260,18 +255,14 @@ private fun getTypedDictTypeForCallee(referenceExpression: PyReferenceExpression
     val parameters = listOf(
       PyCallableParameterImpl.nonPsi("typename", builtinCache.getStringType(languageLevel)),
       PyCallableParameterImpl.nonPsi("fields", strToTypeDictType),
-      PyCallableParameterImpl.psi(generator.createSingleStarParameter()),
-      PyCallableParameterImpl.psi(generator.createSlashParameter()),
-      PyCallableParameterImpl.nonPsi(TYPED_DICT_TOTAL_PARAMETER,
-                                     builtinCache.boolType,
-                                     generator.createExpressionFromText(languageLevel, PyNames.TRUE)),
-      PyCallableParameterImpl.nonPsi(TYPED_DICT_CLOSED_PARAMETER,
-                                     builtinCache.boolType,
-                                     generator.createExpressionFromText(languageLevel, PyNames.FALSE)),
+      PyCallableParameterImpl.keywordOnlySeparatorNonPsi(),
+      PyCallableParameterImpl.positionalOnlySeparatorNonPsi(),
+      PyCallableParameterImpl.nonPsi(TYPED_DICT_TOTAL_PARAMETER, builtinCache.boolType, PyNames.TRUE),
+      PyCallableParameterImpl.nonPsi(TYPED_DICT_CLOSED_PARAMETER, builtinCache.boolType, PyNames.FALSE),
       PyCallableParameterImpl.nonPsi(
         TYPED_DICT_EXTRA_ITEMS_PARAMETER,
         builtinCache.typeType,
-        generator.createExpressionFromText(languageLevel, PyNames.NONE)
+        PyNames.NONE
       )
     )
 

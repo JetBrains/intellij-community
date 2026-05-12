@@ -507,12 +507,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   public final boolean myDisableRtl = Registry.is("editor.disable.rtl");
 
-  /**
-   * @deprecated use UISettings#getEditorFractionalMetricsHint instead
-   */
-  @Deprecated(forRemoval = true)
-  public Object myFractionalMetricsHintValue = UISettings.getEditorFractionalMetricsHint();
-
   private final EditorModel myEditorModel;
   private final @Nullable EditorModel myAdEditorModel;
 
@@ -1390,8 +1384,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myFocusModeModel != null) {
       myFocusModeModel.clearFocusMode();
     }
-
-    myFractionalMetricsHintValue = UISettings.getEditorFractionalMetricsHint();
 
     reinitStickyLines();
   }

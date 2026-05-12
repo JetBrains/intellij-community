@@ -14,11 +14,9 @@ class BooleanPropertyTest {
   fun `test parallel setup`() {
     repeat(1000) {
       val setEventCounter = AtomicInteger(0)
-      val resetEventCounter = AtomicInteger(0)
       val changeEventCounter = AtomicInteger(0)
       val observable = AtomicBooleanProperty(false)
       observable.afterSet { setEventCounter.incrementAndGet() }
-      observable.afterReset { resetEventCounter.incrementAndGet() }
       observable.afterChange { changeEventCounter.incrementAndGet() }
 
       runConcurrentAction {
@@ -26,48 +24,28 @@ class BooleanPropertyTest {
       }
       assertEquals(true, observable.get())
       assertEquals(1, setEventCounter.get())
-      assertEquals(0, resetEventCounter.get())
       assertEquals(10, changeEventCounter.get())
 
       runConcurrentAction {
-        observable.reset()
+        observable.compareAndSet(true, false)
       }
       assertEquals(false, observable.get())
       assertEquals(1, setEventCounter.get())
-      assertEquals(1, resetEventCounter.get())
-      assertEquals(20, changeEventCounter.get())
-
-      runConcurrentAction {
-        observable.compareAndSet(false, true)
-      }
-      assertEquals(true, observable.get())
-      assertEquals(2, setEventCounter.get())
-      assertEquals(1, resetEventCounter.get())
-      assertEquals(21, changeEventCounter.get())
+      assertEquals(11, changeEventCounter.get())
 
       runConcurrentAction {
         observable.compareAndSet(true, false)
       }
       assertEquals(false, observable.get())
-      assertEquals(2, setEventCounter.get())
-      assertEquals(2, resetEventCounter.get())
-      assertEquals(22, changeEventCounter.get())
-
-      runConcurrentAction {
-        observable.compareAndSet(true, false)
-      }
-      assertEquals(false, observable.get())
-      assertEquals(2, setEventCounter.get())
-      assertEquals(2, resetEventCounter.get())
-      assertEquals(22, changeEventCounter.get())
+      assertEquals(1, setEventCounter.get())
+      assertEquals(11, changeEventCounter.get())
 
       runConcurrentAction {
         observable.compareAndSet(false, false)
       }
       assertEquals(false, observable.get())
-      assertEquals(2, setEventCounter.get())
-      assertEquals(2, resetEventCounter.get())
-      assertEquals(32, changeEventCounter.get())
+      assertEquals(1, setEventCounter.get())
+      assertEquals(21, changeEventCounter.get())
     }
   }
 

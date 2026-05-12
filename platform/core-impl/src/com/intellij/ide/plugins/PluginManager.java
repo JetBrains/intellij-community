@@ -14,11 +14,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.AbstractList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -87,41 +84,6 @@ public final class PluginManager {
 
   public static @NotNull List<? extends IdeaPluginDescriptor> getLoadedPlugins() {
     return PluginManagerCore.getLoadedPlugins();
-  }
-
-  /**
-   * @deprecated Bad API, sorry. Please use {@link PluginManagerCore#isDisabled(PluginId)} to check plugin's state,
-   * {@link DisabledPluginsState#disabledPlugins} to get an unmodifiable collection of all disabled plugins (rarely needed).
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static @NotNull List<String> getDisabledPlugins() {
-    Set<PluginId> list = DisabledPluginsState.Companion.getDisabledIds();
-    return new AbstractList<String>() {
-      //<editor-fold desc="Just a list-like immutable wrapper over a set; move along.">
-      @Override
-      public boolean contains(Object o) {
-        return list.contains(o);
-      }
-
-      @Override
-      public int size() {
-        return list.size();
-      }
-
-      @Override
-      public String get(int index) {
-        if (index < 0 || index >= list.size()) {
-          throw new IndexOutOfBoundsException("index=" + index + " size=" + list.size());
-        }
-        Iterator<PluginId> iterator = list.iterator();
-        for (int i = 0; i < index; i++) {
-          iterator.next();
-        }
-        return iterator.next().getIdString();
-      }
-      //</editor-fold>
-    };
   }
 
   public static boolean disablePlugin(@NotNull String id) {

@@ -14,10 +14,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
-import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -40,14 +38,6 @@ public final class OfflineViewParseUtil {
 
   public static Map<String, Set<OfflineProblemDescriptor>> parse(Path problemFile) throws IOException {
     return parse(Files.newBufferedReader(problemFile));
-  }
-
-  /**
-   * @deprecated use {@link #parse(File)} or {@link #parse(Reader)}
-   */
-  @Deprecated(forRemoval = true)
-  public static Map<String, Set<OfflineProblemDescriptor>> parse(String problemText) {
-    return parse(new StringReader(problemText));
   }
 
   public static Map<String, Set<OfflineProblemDescriptor>> parse(Reader problemReader) {
@@ -124,14 +114,6 @@ public final class OfflineViewParseUtil {
 
   public static @Nullable String parseProfileName(@NotNull Path descriptorFile) throws IOException {
     return parseProfileName(Files.newBufferedReader(descriptorFile));
-  }
-
-  /**
-   * @deprecated use {@link #parseProfileName(File)} or {@link #parseProfileName(Reader)}
-   */
-  @Deprecated(forRemoval = true)
-  public static @Nullable String parseProfileName(String descriptorText) {
-    return parseProfileName(new StringReader(descriptorText));
   }
 
   public static @Nullable String parseProfileName(Reader descriptorReader) {

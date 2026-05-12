@@ -5,20 +5,33 @@ import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.impl.text.TextEditorCustomizer
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
-import kotlinx.coroutines.coroutineScope
+import com.intellij.platform.util.coroutines.childScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
 
 class NotebookFloatingToolbarCustomizer : TextEditorCustomizer {
-  override suspend fun execute(textEditor: TextEditor) {
-    if (shouldAcceptEditor(textEditor)) {
-      coroutineScope {
-        val toolbar = MarkdownCellsFloatingToolbar(editor = textEditor.editor, coroutineScope = this)
-        Disposer.register(textEditor, toolbar)
+  override fun customize(textEditor: TextEditor, coroutineScope: CoroutineScope) {
+    if (!shouldAcceptEditor(textEditor)) {
+      return
+    }
+
+    val toolbarScope = coroutineScope.childScope("MarkdownCellsFloatingToolbar")
+    var registered = false
+    try {
+      val toolbar = MarkdownCellsFloatingToolbar(editor = textEditor.editor, coroutineScope = toolbarScope)
+      registered = Disposer.tryRegister(textEditor, toolbar)
+      if (!registered) {
+        Disposer.dispose(toolbar)
+      }
+    }
+    finally {
+      if (!registered) {
+        toolbarScope.cancel()
       }
     }
   }
 
   private fun shouldAcceptEditor(editor: TextEditor): Boolean {
-    if (!Registry.`is`("jupyter.markdown.cells.floating.toolbar")) return false
-    return editor.file.fileType.name == "Jupyter"
+    return Registry.`is`("jupyter.markdown.cells.floating.toolbar") && editor.file.fileType.name == "Jupyter"
   }
 }

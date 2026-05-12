@@ -902,7 +902,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   @ApiStatus.Internal
   public boolean isConflictsSolverEnabled() {
     ConflictsSolverOverride override = ContainerUtil.getLastItem(myConflictsSolverOverrides);
-    return override == null ? ourConflictsSolverEnabled : override.myEnabled;
+    return override == null || override.myEnabled;
   }
 
   // NB: virtualFile might be invalid by now
@@ -1020,11 +1020,6 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
       }
     });
   }
-
-  /** @deprecated another dirty Rider hack; use {@link FileDocumentManager#overrideConflictsSolverEnabled(boolean, Disposable)} instead. */
-  @Deprecated(forRemoval = true)
-  @SuppressWarnings("StaticNonFinalField")
-  public static boolean ourConflictsSolverEnabled = true;
 
   private static final class ConflictsSolverOverride {
     private final boolean myEnabled;

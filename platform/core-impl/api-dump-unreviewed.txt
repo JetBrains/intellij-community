@@ -112,9 +112,6 @@ f:com.intellij.concurrency.JobSchedulerImpl
 c:com.intellij.concurrency.SensitiveProgressWrapper
 - com.intellij.openapi.progress.util.ProgressWrapper
 - <init>(com.intellij.openapi.progress.ProgressIndicator):V
-c:com.intellij.core.CoreASTFactory
-- com.intellij.lang.DefaultASTFactoryImpl
-- <init>():V
 f:com.intellij.core.CoreFileTypeRegistry
 - com.intellij.openapi.fileTypes.FileTypeRegistry
 - <init>():V
@@ -369,7 +366,6 @@ f:com.intellij.ide.plugins.PluginManager
 - enablePlugin(com.intellij.openapi.extensions.PluginId):Z
 - s:enablePlugin(java.lang.String):Z
 - findEnabledPlugin(com.intellij.openapi.extensions.PluginId):com.intellij.ide.plugins.IdeaPluginDescriptor
-- s:getDisabledPlugins():java.util.List
 - s:getInstance():com.intellij.ide.plugins.PluginManager
 - s:getLoadedPlugins():java.util.List
 - s:getOnceInstalledIfExists():java.nio.file.Path
@@ -392,10 +388,8 @@ f:com.intellij.ide.plugins.PluginManagerCore
 - sf:PLUGIN_XML_PATH:java.lang.String
 - sf:VENDOR_JETBRAINS:java.lang.String
 - sf:VENDOR_JETBRAINS_SRO:java.lang.String
-- sf:addDisablePluginListener(java.lang.Runnable):V
 - sf:checkBuildNumberCompatibility(com.intellij.ide.plugins.IdeaPluginDescriptor,com.intellij.openapi.util.BuildNumber):com.intellij.ide.plugins.PluginNonLoadReason
 - sf:disablePlugin(java.lang.String):Z
-- sf:enablePlugin(java.lang.String):Z
 - sf:getBuildNumber():com.intellij.openapi.util.BuildNumber
 - sf:getPluginByClassName(java.lang.String):com.intellij.openapi.extensions.PluginId
 - sf:getPluginNameAndVendor(com.intellij.ide.plugins.IdeaPluginDescriptor):java.lang.String
@@ -974,7 +968,6 @@ c:com.intellij.openapi.command.impl.CoreCommandProcessor
 - <init>():V
 - addAffectedDocuments(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document[]):V
 - addAffectedFiles(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile[]):V
-- addCommandListener(com.intellij.openapi.command.CommandListener):V
 - allowMergeGlobalCommands(java.lang.Runnable):V
 - enterModal():V
 - executeCommand(com.intellij.openapi.project.Project,java.lang.Runnable,java.lang.String,java.lang.Object):V
@@ -2014,7 +2007,6 @@ f:com.intellij.psi.impl.PsiModificationTrackerImpl
 - s:canAffectPsi(com.intellij.psi.impl.PsiTreeChangeEventImpl):Z
 - forLanguage(com.intellij.lang.Language):com.intellij.openapi.util.ModificationTracker
 - forLanguages(java.util.function.Predicate):com.intellij.openapi.util.ModificationTracker
-- getJavaStructureModificationTracker():com.intellij.openapi.util.ModificationTracker
 - getModificationCount():J
 - incCounter():V
 - incOutOfCodeBlockModificationCounter():V

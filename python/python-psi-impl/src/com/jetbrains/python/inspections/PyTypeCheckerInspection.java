@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
@@ -83,6 +84,7 @@ import com.jetbrains.python.psi.types.PyTypedDictType;
 import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.PyUnpackedTupleType;
 import com.jetbrains.python.psi.types.PyUnpackedTupleTypeImpl;
+import com.jetbrains.python.psi.types.PyUnpackedTypedDictType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiUtil;
 import one.util.streamex.StreamEx;
@@ -445,6 +447,26 @@ public class PyTypeCheckerInspection extends PyInspection {
       });
     }
 
+    private void reportUnpackedTypedDictProblems(@NotNull PyUnpackedTypedDictType expectedType,
+                                                 @NotNull PyExpression expression) {
+      if (expression instanceof PyStarArgument starArgument) {
+        expression = PsiTreeUtil.findChildOfType(starArgument, PyExpression.class);
+      }
+      if (expression == null) return;
+      PyType argumentType = myTypeEvalContext.getType(expression);
+      PyTypedDictType typedDictType = expectedType.getTypedDictType();
+      if (PyTypedDictType.isDictExpression(expression, myTypeEvalContext)) {
+        reportTypedDictProblems(typedDictType, expression);
+        return;
+      }
+      if (!PyTypeChecker.match(typedDictType, argumentType, myTypeEvalContext)) {
+        registerProblem(expression,
+                        PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead",
+                                            PythonDocumentationProvider.getTypeName(typedDictType, myTypeEvalContext),
+                                            PythonDocumentationProvider.getTypeName(argumentType, myTypeEvalContext)));
+      }
+    }
+
     private @Nullable PyType tryPromotingType(@NotNull PyExpression expr, @Nullable PyType expected) {
       final PyType promotedToLiteral = PyLiteralType.Companion.promoteToLiteral(expr, expected, myTypeEvalContext, null);
       if (promotedToLiteral != null) return promotedToLiteral;
@@ -794,7 +816,7 @@ public class PyTypeCheckerInspection extends PyInspection {
         return;
       }
 
-      var mapping = PyCallExpressionHelper.analyzeArguments(arguments, paramSpecSubst.getParameters(), myTypeEvalContext);
+      var mapping = PyCallExpressionHelper.analyzeArguments(arguments, paramSpecSubst, myTypeEvalContext);
       for (var item : mapping.getMappedParameters().entrySet()) {
         PyExpression argument = item.getKey();
         PyCallableParameter parameter = item.getValue();
@@ -919,9 +941,14 @@ public class PyTypeCheckerInspection extends PyInspection {
                                               @NotNull PyTypeChecker.GenericSubstitutions substitutions) {
       argument = PyUtil.peelArgument(argument);
 
-      if (parameterType instanceof PyTypedDictType expectedTypedDictType) {
-        if (argument != null && PyTypedDictType.isDictExpression(argument, myTypeEvalContext)) {
+      if (argument != null) {
+        if (PyTypedDictType.isDictExpression(argument, myTypeEvalContext) &&
+            parameterType instanceof PyTypedDictType expectedTypedDictType) {
           reportTypedDictProblems(expectedTypedDictType, argument);
+          return true;
+        }
+        else if (parameterType instanceof PyUnpackedTypedDictType unpackedTypedDictType) {
+          reportUnpackedTypedDictProblems(unpackedTypedDictType, argument);
           return true;
         }
       }

@@ -50,20 +50,6 @@ import java.util.stream.Collectors;
 public final class PluginManagerMain {
   private PluginManagerMain() { }
 
-  /**
-   * @deprecated Please migrate to either {@link #downloadPluginsAndCleanup(List, Collection, Runnable, com.intellij.ide.plugins.PluginEnabler, ModalityState, Runnable)}
-   * or {@link #downloadPlugins(List, Collection, boolean, Runnable, com.intellij.ide.plugins.PluginEnabler, ModalityState, Consumer)}.
-   */
-  @Deprecated(since = "2020.2", forRemoval = true)
-  public static boolean downloadPlugins(@NotNull List<PluginNode> plugins,
-                                        @NotNull List<? extends IdeaPluginDescriptor> customPlugins,
-                                        @Nullable Runnable onSuccess,
-                                        @NotNull PluginEnabler pluginEnabler,
-                                        @Nullable Runnable cleanup) throws IOException {
-    var filteredCustomPlugins = ContainerUtil.filterIsInstance(customPlugins, PluginNode.class);
-    return downloadPluginsAndCleanup(plugins, filteredCustomPlugins, onSuccess, pluginEnabler, ModalityState.any(), cleanup);
-  }
-
   public static boolean downloadPluginsAndCleanup(@NotNull List<PluginNode> plugins,
                                                   @NotNull Collection<PluginNode> customPlugins,
                                                   @Nullable Runnable onSuccess,
@@ -285,38 +271,6 @@ public final class PluginManagerMain {
     }
     else if (!disabled.isEmpty()) {
       pluginEnabler.enable(disabled);
-    }
-  }
-
-  /** @deprecated Please use {@link com.intellij.ide.plugins.PluginEnabler} directly. */
-  @Deprecated(forRemoval = true)
-  public interface PluginEnabler extends com.intellij.ide.plugins.PluginEnabler {
-    @Override
-    default boolean isDisabled(@NotNull PluginId pluginId) {
-      return HEADLESS.isDisabled(pluginId);
-    }
-
-    @Override
-    default boolean enableById(@NotNull Set<PluginId> pluginIds) {
-      return HEADLESS.enableById(pluginIds);
-    }
-
-    @Override
-    default boolean enable(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors) {
-      return HEADLESS.enable(descriptors);
-    }
-
-    @Override
-    default boolean disableById(@NotNull Set<PluginId> pluginIds) {
-      return HEADLESS.disableById(pluginIds);
-    }
-
-    @Override
-    default boolean disable(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors) {
-      return HEADLESS.disable(descriptors);
-    }
-
-    final class HEADLESS implements PluginEnabler {
     }
   }
 

@@ -20,7 +20,6 @@ import org.jetbrains.jps.model.java.JpsJavaLibraryType;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryCollection;
-import org.jetbrains.jps.model.library.JpsLibraryReference;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 
 public class JpsLibraryTest extends JpsModelTestCase {
@@ -36,21 +35,5 @@ public class JpsLibraryTest extends JpsModelTestCase {
     final JpsLibrary library = myProject.addLibrary("a", JpsJavaLibraryType.INSTANCE);
     library.addRoot("file://my-url", JpsOrderRootType.COMPILED);
     assertEquals("file://my-url", assertOneElement(library.getRoots(JpsOrderRootType.COMPILED)).getUrl());
-  }
-
-  public void testCreateReferenceByLibrary() {
-    final JpsLibrary library = myProject.addLibrary("l", JpsJavaLibraryType.INSTANCE);
-    final JpsLibraryReference reference = library.createReference().asExternal(myModel);
-    assertEquals("l", reference.getLibraryName());
-    assertSame(library, reference.resolve());
-  }
-
-  public void testCreateReferenceByName() {
-    JpsLibraryReference reference = JpsElementFactory.getInstance().createLibraryReference("l", myProject.createReference()).asExternal(myModel);
-    assertEquals("l", reference.getLibraryName());
-    assertNull(reference.resolve());
-
-    final JpsLibrary library = myProject.addLibrary("l", JpsJavaLibraryType.INSTANCE);
-    assertSame(library, reference.resolve());
   }
 }

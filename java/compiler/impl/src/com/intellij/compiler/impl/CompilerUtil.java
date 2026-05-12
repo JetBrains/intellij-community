@@ -23,15 +23,6 @@ import java.util.HashSet;
 public final class CompilerUtil {
   private static final Logger LOG = Logger.getInstance(CompilerUtil.class);
 
-  /** @deprecated trivial; prefer {@link LocalFileSystem#refreshNioFiles} */
-  @Deprecated(forRemoval = true)
-  @SuppressWarnings({"UnnecessaryFullyQualifiedName", "IO_FILE_USAGE"})
-  public static void refreshIOFiles(@NotNull Collection<? extends java.io.File> files) {
-    if (!files.isEmpty()) {
-      LocalFileSystem.getInstance().refreshIoFiles(files);
-    }
-  }
-
   /**
    * A lightweight procedure which ensures that given roots exist in the VFS.
    * No recursive refresh is performed.

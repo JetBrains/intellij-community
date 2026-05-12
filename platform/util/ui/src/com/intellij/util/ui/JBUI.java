@@ -596,14 +596,6 @@ public final class JBUI {
         return JBColor.namedColor("DefaultTabs.underlineColor", new JBColor(0x4083C9, 0x4A88C7));
       }
 
-      /**
-       * @deprecated use {@link DefaultTabs#UNDERLINE_HEIGHT}
-       */
-      @Deprecated(forRemoval = true)
-      public static int underlineHeight() {
-        return UNDERLINE_HEIGHT.get();
-      }
-
       public static @NotNull Color inactiveUnderlineColor() {
         return JBColor.namedColor("DefaultTabs.inactiveUnderlineColor", new JBColor(0x9ca7b8, 0x747a80));
       }

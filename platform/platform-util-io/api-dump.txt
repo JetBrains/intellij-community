@@ -49,7 +49,6 @@ c:com.intellij.execution.configurations.GeneralCommandLine
 - putUserData(com.intellij.openapi.util.Key,java.lang.Object):V
 - setCharset(java.nio.charset.Charset):V
 - setExePath(java.lang.String):V
-- setPassParentEnvironment(Z):V
 - setRedirectErrorStream(Z):V
 - setWorkDirectory(java.io.File):V
 - setWorkDirectory(java.lang.String):V
@@ -312,6 +311,7 @@ f:com.intellij.execution.process.OSProcessUtil
 - s:getProcessList():com.intellij.execution.process.ProcessInfo[]
 - s:killProcess(I):V
 - s:killProcess(java.lang.Process):V
+- s:killProcessTree(J):Z
 - s:killProcessTree(java.lang.Process):Z
 - s:processName(java.lang.ProcessHandle):java.lang.String
 - s:terminateProcessGracefully(I):V

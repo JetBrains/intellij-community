@@ -15,6 +15,7 @@ import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.workspaceModel.ide.ProjectRootEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -91,9 +92,8 @@ open class BaseProjectDirectoriesImpl(val project: Project, scope: CoroutineScop
   }
 
   protected open fun collectRoots(snapshot: ImmutableEntityStorage): Sequence<VirtualFile> {
-    return snapshot.entities(ContentRootEntity::class.java).mapNotNull { contentRootEntity ->
-      contentRootEntity.getBaseDirectory()
-    }
+    return snapshot.entities(ProjectRootEntity::class.java).mapNotNull { it.root.virtualFile } +
+           snapshot.entities(ContentRootEntity::class.java).mapNotNull { it.getBaseDirectory() }
   }
 
   protected open fun processChange(change: VersionedStorageChange, oldRoots: HashSet<VirtualFile>, newRoots: HashSet<VirtualFile>) {
@@ -102,6 +102,14 @@ open class BaseProjectDirectoriesImpl(val project: Project, scope: CoroutineScop
         oldRoots.add(virtualFile)
       }
       it.newEntity?.getBaseDirectory()?.let { virtualFile ->
+        newRoots.add(virtualFile)
+      }
+    }
+    change.getChanges(ProjectRootEntity::class.java).forEach {
+      it.oldEntity?.root?.virtualFile?.let { virtualFile ->
+        oldRoots.add(virtualFile)
+      }
+      it.newEntity?.root?.virtualFile?.let { virtualFile ->
         newRoots.add(virtualFile)
       }
     }

@@ -5,8 +5,6 @@ import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.TextAttributesKey
-import com.intellij.ui.components.JBHtmlPaneStyleConfiguration.Companion.defaultSpaceAfterParagraph
-import com.intellij.ui.components.JBHtmlPaneStyleConfiguration.Companion.defaultSpaceBeforeParagraph
 import com.intellij.ui.scale.JBUIScale
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
@@ -166,19 +164,6 @@ class JBHtmlPaneStyleConfiguration private constructor(builder: Builder) {
   }
 
   class Builder {
-    /**
-     * Provide an editor color scheme to be used to determine colors of the elements
-     * and syntax highlighting.
-     */
-    @get:ApiStatus.ScheduledForRemoval()
-    @get:Deprecated("Use colorSchemeProvider instead to properly react for global scheme changes", ReplaceWith("colorSchemeProvider = { colorScheme }"))
-    @set:ApiStatus.ScheduledForRemoval()
-    @set:Deprecated("Use colorSchemeProvider instead to properly react for global scheme changes", ReplaceWith("colorSchemeProvider = { colorScheme }"))
-    var colorScheme: EditorColorsScheme = EditorColorsManager.getInstance().globalScheme
-      set(value) {
-        field = value
-        colorSchemeProvider = { value }
-      }
 
     /**
      * Provide an editor color scheme to be used to determine colors of the elements

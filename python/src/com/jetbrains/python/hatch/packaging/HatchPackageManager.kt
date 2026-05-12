@@ -3,9 +3,9 @@ package com.jetbrains.python.hatch.packaging
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.python.hatch.HatchService
 import com.intellij.python.hatch.getHatchService
+import com.intellij.python.pyproject.PyProjectTomlFile
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.hatch.sdk.HatchSdkAdditionalData
 import com.jetbrains.python.hatch.sdk.isHatch
@@ -33,7 +33,7 @@ internal class HatchPackageManager(project: Project, sdk: Sdk) : PipPythonPackag
     return workingDirectory.getHatchService(hatchEnvironmentName = data.hatchEnvironmentName)
   }
 
-  override fun getDependencyFile(): VirtualFile? {
+  override fun getDependencyFile(): PyProjectTomlFile? {
     val data = sdk.sdkAdditionalData as? HatchSdkAdditionalData ?: return null
     val workingDirectory = data.hatchWorkingDirectory ?: return null
     return resolvePyProjectToml(workingDirectory)

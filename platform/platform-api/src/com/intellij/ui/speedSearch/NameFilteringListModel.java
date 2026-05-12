@@ -24,7 +24,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 
-import javax.swing.JList;
 import javax.swing.ListModel;
 import java.util.List;
 
@@ -39,16 +38,6 @@ public class NameFilteringListModel<T> extends FilteringListModel<T> {
   private int myFullMatchIndex = -1;
   private int myStartsWithIndex = -1;
   private final Computable<String> myPattern;
-
-  /** @deprecated explicitly sets model for a list. Use other constructors instead. */
-  @Deprecated(forRemoval = true)
-  public NameFilteringListModel(JList<T> list,
-                                Function<? super T, String> namer,
-                                Condition<? super String> filter,
-                                SpeedSearchSupply speedSearch) {
-    this(list.getModel(), namer, filter, () -> StringUtil.notNullize(speedSearch.getEnteredPrefix()));
-    list.setModel(this);
-  }
 
   public NameFilteringListModel(ListModel<T> model,
                                 Function<? super T, String> namer,

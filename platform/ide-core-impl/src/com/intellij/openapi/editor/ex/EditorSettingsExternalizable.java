@@ -43,12 +43,6 @@ import java.util.stream.Collectors;
 @State(name = "EditorSettings", storages = @Storage("editor.xml"), category = SettingsCategory.CODE, perClient = true)
 public class EditorSettingsExternalizable implements PersistentStateComponent<EditorSettingsExternalizable.OptionSet> {
 
-  /**
-   * @deprecated Use {@link PropNames#PROP_ENABLE_RENDERED_DOC} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static final @NonNls String PROP_DOC_COMMENT_RENDERING = PropNames.PROP_ENABLE_RENDERED_DOC;
-
   public static final UINumericRange BLINKING_RANGE = new UINumericRange(500, 10, 1500);
   public static final UINumericRange TOOLTIPS_DELAY_RANGE = new UINumericRange(500, 1, 5000);
 
@@ -522,7 +516,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     boolean oldValue = myOptions.ENABLE_RENDERED_DOC;
     myOptions.ENABLE_RENDERED_DOC = value;
     if (oldValue != value) {
-      myPropertyChangeSupport.firePropertyChange(PROP_DOC_COMMENT_RENDERING, oldValue, value);
+      myPropertyChangeSupport.firePropertyChange(PropNames.PROP_ENABLE_RENDERED_DOC, oldValue, value);
     }
   }
 

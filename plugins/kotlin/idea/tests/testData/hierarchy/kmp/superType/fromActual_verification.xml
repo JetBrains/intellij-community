@@ -1,5 +1,5 @@
-<node text="BaseClass ()" base="true">
-  <node text="ParentClass ()">
+<node text="BaseClass () [JVM (1.8)]" base="true">
+  <node text="ParentClass () [JVM (1.8)]">
     <node text="Any (kotlin)"/>
     <node text="ParentClass ()">
       <node text="Any (kotlin)"/>

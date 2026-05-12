@@ -2,7 +2,6 @@
 package com.intellij.compiler.impl;
 
 import com.intellij.openapi.compiler.CompileScope;
-import com.intellij.openapi.compiler.CompilerFilter;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Contract;
@@ -19,19 +18,8 @@ import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage
 public abstract class BuildTargetScopeProvider {
   public static final ExtensionPointName<BuildTargetScopeProvider> EP_NAME = ExtensionPointName.create("com.intellij.compiler.buildTargetScopeProvider");
 
-  /**
-   * @deprecated override {@link #getBuildTargetScopes(CompileScope, Project, boolean)} instead
-   */
-  @Deprecated(forRemoval = true)
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Contract(pure = true)
-  public @NotNull List<TargetTypeBuildScope> getBuildTargetScopes(@NotNull CompileScope baseScope, @NotNull CompilerFilter filter,
-                                                         @NotNull Project project, boolean forceBuild) {
-    return Collections.emptyList();
-  }
-
   @Contract(pure = true)
   public @NotNull List<TargetTypeBuildScope> getBuildTargetScopes(@NotNull CompileScope baseScope, @NotNull Project project, boolean forceBuild) {
-    return getBuildTargetScopes(baseScope, CompilerFilter.ALL, project, forceBuild);
+    return Collections.emptyList();
   }
 }

@@ -108,17 +108,6 @@ public interface AnnotationHolder {
   Annotation createWarningAnnotation(@NotNull PsiElement elt, @Nullable @InspectionMessage String message);
 
   /**
-   * Creates a warning annotation with the specified message over the specified AST node.
-   *
-   * @param node    the node over which the annotation is created.
-   * @param message the warning message.
-   * @return the annotation (which can be modified to set additional annotation parameters)
-   * @deprecated Use {@link #newAnnotation(HighlightSeverity, String)} instead
-   */
-  @Deprecated(forRemoval = true)
-  Annotation createWarningAnnotation(@NotNull ASTNode node, @Nullable @InspectionMessage String message);
-
-  /**
    * Creates a warning annotation with the specified message over the specified text range.
    *
    * @param range   the text range over which the annotation is created.

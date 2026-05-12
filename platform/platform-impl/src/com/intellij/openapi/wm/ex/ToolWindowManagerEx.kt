@@ -7,7 +7,6 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.DesktopLayout
 import com.intellij.toolWindow.ToolWindowToolbar
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 
 abstract class ToolWindowManagerEx : ToolWindowManager() {
@@ -18,11 +17,6 @@ abstract class ToolWindowManagerEx : ToolWindowManager() {
 
   @get:Internal
   abstract val toolWindows: List<ToolWindow>
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use {@link ToolWindowManagerListener#TOPIC}", level = DeprecationLevel.ERROR)
-  open fun addToolWindowManagerListener(listener: ToolWindowManagerListener) {
-  }
 
   /**
    * @return layout of tool windows.

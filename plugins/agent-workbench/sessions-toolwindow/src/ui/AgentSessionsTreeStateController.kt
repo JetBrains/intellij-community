@@ -45,7 +45,7 @@ internal class AgentSessionsTreeStateController(
   private val onBeforeModelSwap: () -> Unit,
   private val invalidateTreeModel: (SessionTreeModelDiff) -> CompletableFuture<*>,
   private val expandNode: (SessionTreeId) -> Unit,
-  private val selectNode: (SessionTreeId) -> Unit,
+  private val selectNodes: (List<SessionTreeId>, () -> Boolean, (List<SessionTreeId>) -> Unit) -> Unit,
 ) {
   @Suppress("RAW_SCOPE_CREATION")
   private val scope = CoroutineScope(SupervisorJob() + Dispatchers.UI)
@@ -54,12 +54,14 @@ internal class AgentSessionsTreeStateController(
   private var selectedChatTab: AgentChatTabSelection? = null
   private var treeUpdateSequence: Long = 0
   private var rebuildJob: Job? = null
+  private var treeSelectionInitialized = false
+  private var lastAppliedSelectedTreeIds: List<SessionTreeId> = emptyList()
 
   fun start() {
     scope.launch {
       sessionsStateFlow.collect { newState ->
         sessionsState = newState
-        rebuildTree()
+        rebuildTree(SessionTreeRebuildReason.SESSION_STATE_CHANGED)
       }
     }
 
@@ -67,7 +69,7 @@ internal class AgentSessionsTreeStateController(
       chatSelectionService.selectedChatTab.collect { selection ->
         selectedChatTab = selection
         markSelectedTabThreadAsRead(selection)
-        rebuildTree()
+        rebuildTree(SessionTreeRebuildReason.CHAT_TAB_SELECTION_CHANGED)
       }
     }
 
@@ -101,7 +103,7 @@ internal class AgentSessionsTreeStateController(
     markThreadAsRead(selection.projectPath, provider, thread.id, thread.updatedAt)
   }
 
-  private fun rebuildTree() {
+  private fun rebuildTree(reason: SessionTreeRebuildReason) {
     rebuildJob?.cancel()
     val snapshotState = sessionsState
     val snapshotSelectedChatTab = selectedChatTab
@@ -121,7 +123,16 @@ internal class AgentSessionsTreeStateController(
       }
       if (treeUpdateSequence != updateSequence) return@launch
 
+      val selectedTreeIdsBeforeModelSwap = selectedTreeIds()
       val expandedProjectsBeforeModelSwap = expandedProjectIds()
+      val selectedTreeIds = sessionTreeSelectionTargetsAfterModelSwap(
+        model = nextModel,
+        reason = reason,
+        previouslySelectedTreeIds = selectedTreeIdsBeforeModelSwap,
+        selectedChatTreeId = selectedTreeId,
+        selectionInitialized = treeSelectionInitialized,
+        lastAppliedSelectedTreeIds = lastAppliedSelectedTreeIds,
+      )
       onBeforeModelSwap()
       setSessionTreeModel(nextModel)
       updateEmptyText()
@@ -134,9 +145,9 @@ internal class AgentSessionsTreeStateController(
             previousModel = oldModel,
             rootChanged = treeModelDiff.rootChanged,
             previouslyExpandedProjects = expandedProjectsBeforeModelSwap,
-            selectedTreeId = selectedTreeId,
+            selectedTreeIds = selectedTreeIds,
           )
-          applySelection(nextModel, selectedTreeId)
+          applySelection(selectedTreeIds, updateSequence)
         }
       }
     }
@@ -156,17 +167,24 @@ internal class AgentSessionsTreeStateController(
     previousModel: SessionTreeModel,
     rootChanged: Boolean,
     previouslyExpandedProjects: Set<SessionTreeId.Project>,
-    selectedTreeId: SessionTreeId?,
+    selectedTreeIds: Collection<SessionTreeId>,
   ) {
     sessionTreeExpansionTargetsAfterModelSwap(
       model = model,
       previousModel = previousModel,
       rootChanged = rootChanged,
       previouslyExpandedProjects = previouslyExpandedProjects,
-      selectedTreeId = selectedTreeId,
+      selectedTreeIds = selectedTreeIds,
     ).forEach { treeId ->
       expandNode(treeId)
     }
+  }
+
+  private fun selectedTreeIds(): List<SessionTreeId> {
+    val selectionPaths = tree.selectionPaths ?: return emptyList()
+    return selectionPaths.mapNotNull { path ->
+      path.lastPathComponent?.let(::extractSessionTreeId)
+    }.distinct()
   }
 
   private fun expandedProjectIds(): Set<SessionTreeId.Project> {
@@ -175,12 +193,47 @@ internal class AgentSessionsTreeStateController(
     }.filterNotNull().toSet()
   }
 
-  private fun applySelection(model: SessionTreeModel, selectedTreeId: SessionTreeId?) {
-    if (selectedTreeId == null || selectedTreeId !in model.entriesById) {
-      tree.clearSelection()
-      return
+  private fun applySelection(selectedTreeIds: List<SessionTreeId>, updateSequence: Long) {
+    selectNodes(selectedTreeIds, { treeUpdateSequence == updateSequence }) { appliedSelectedTreeIds ->
+      if (treeUpdateSequence == updateSequence) {
+        treeSelectionInitialized = true
+        lastAppliedSelectedTreeIds = appliedSelectedTreeIds
+      }
     }
-    selectNode(selectedTreeId)
+  }
+}
+
+internal enum class SessionTreeRebuildReason {
+  SESSION_STATE_CHANGED,
+  CHAT_TAB_SELECTION_CHANGED,
+}
+
+internal fun sessionTreeSelectionTargetsAfterModelSwap(
+  model: SessionTreeModel,
+  reason: SessionTreeRebuildReason,
+  previouslySelectedTreeIds: List<SessionTreeId>,
+  selectedChatTreeId: SessionTreeId?,
+  selectionInitialized: Boolean = true,
+  lastAppliedSelectedTreeIds: List<SessionTreeId> = previouslySelectedTreeIds,
+): List<SessionTreeId> {
+  val preservedSelection = previouslySelectedTreeIds.filter { treeId -> treeId in model.entriesById }
+  val activeChatSelection = selectedChatTreeId?.takeIf { treeId -> treeId in model.entriesById }?.let(::listOf).orEmpty()
+  val previouslyAppliedSelectionCleared =
+    selectionInitialized && previouslySelectedTreeIds.isEmpty() && lastAppliedSelectedTreeIds.isNotEmpty()
+  return when (reason) {
+    SessionTreeRebuildReason.SESSION_STATE_CHANGED -> {
+      when {
+        preservedSelection.isNotEmpty() -> preservedSelection
+        previouslyAppliedSelectionCleared -> emptyList()
+        !selectionInitialized ||
+        lastAppliedSelectedTreeIds.isEmpty() ||
+        previouslySelectedTreeIds.isNotEmpty() -> activeChatSelection
+        else -> emptyList()
+      }
+    }
+    SessionTreeRebuildReason.CHAT_TAB_SELECTION_CHANGED -> {
+      activeChatSelection.ifEmpty { preservedSelection }
+    }
   }
 }
 
@@ -189,7 +242,7 @@ internal fun sessionTreeExpansionTargetsAfterModelSwap(
   previousModel: SessionTreeModel,
   rootChanged: Boolean,
   previouslyExpandedProjects: Set<SessionTreeId.Project>,
-  selectedTreeId: SessionTreeId?,
+  selectedTreeIds: Collection<SessionTreeId>,
 ): List<SessionTreeId> {
   val result = LinkedHashSet<SessionTreeId>()
   previouslyExpandedProjects.forEach { projectId ->
@@ -205,7 +258,7 @@ internal fun sessionTreeExpansionTargetsAfterModelSwap(
     }
   }
 
-  selectedTreeId?.let { treeId ->
+  selectedTreeIds.forEach { treeId ->
     parentNodesForSelection(treeId).forEach { parentId ->
       if (parentId in model.entriesById) {
         result += parentId

@@ -35,7 +35,6 @@ public class ReflectionAccessorToEverything {
 
   public void grantAccessThroughReflection(@NotNull PsiMethodCallExpression generatedMethodCall) {
     replaceAll(new MyInaccessibleMethodReferencesVisitor(), generatedMethodCall);
-    replaceAll(new MyInaccessibleFieldVisitor(), generatedMethodCall);
     replaceAll(new MyInaccessibleItemsVisitor(), generatedMethodCall);
   }
 
@@ -94,14 +93,6 @@ public class ReflectionAccessorToEverything {
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       addIfNotNull(MethodDescriptor.createIfInaccessible(myOuterClass, expression));
-    }
-  }
-
-  private class MyInaccessibleFieldVisitor extends ReplaceVisitor {
-    @Override
-    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
-      super.visitReferenceExpression(expression);
-      addIfNotNull(FieldDescriptor.createIfInaccessible(myOuterClass, expression));
     }
 
     @Override

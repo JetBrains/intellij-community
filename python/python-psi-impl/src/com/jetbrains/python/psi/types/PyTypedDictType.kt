@@ -9,7 +9,6 @@ import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyCallSiteExpression
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyDictLiteralExpression
-import com.jetbrains.python.psi.PyElementGenerator
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyKeyValueExpression
 import com.jetbrains.python.psi.PyKeywordArgument
@@ -18,6 +17,7 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.types.PyTypeUtil.toStream
 import org.jetbrains.annotations.ApiStatus
 import java.util.Objects
+import kotlin.collections.emptyList
 
 class PyTypedDictType(
   override val name: String,
@@ -56,35 +56,31 @@ class PyTypedDictType(
   override fun isCallable(): Boolean = isDefinition
 
   override fun getParameters(context: TypeEvalContext): List<PyCallableParameter>? {
-  return if (isCallable) {
-    if (fields.isEmpty() && extraItemsType == null) {
-      emptyList()
-    }
-    else {
-      val elementGenerator = PyElementGenerator.getInstance(dictClass.project)
-      val singleStarParameter = PyCallableParameterImpl.psi(
-        elementGenerator.createSingleStarParameter()
-      )
-      
-      val fieldParameters = fields.map { (key, value) ->
-        val ellipsis = elementGenerator.createEllipsis()
-        if (value.qualifiers.isRequired == true) 
-          PyCallableParameterImpl.nonPsi(key, value.type)
-        else 
-          PyCallableParameterImpl.nonPsi(key, value.type, ellipsis)
-      }
-
-      val extraItemsParam = if (extraItemsType != null && !isClosed) {
-        listOf(PyCallableParameterImpl.keywordNonPsi("kwargs", extraItemsType))
-      } else {
+    return if (isCallable) {
+      if (fields.isEmpty() && extraItemsType == null) {
         emptyList()
       }
+      else {
+        val singleStarParameter = PyCallableParameterImpl.keywordOnlySeparatorNonPsi()
 
-      listOf(singleStarParameter) + fieldParameters + extraItemsParam
+        val fieldParameters = fields.map { (key, value) ->
+          if (value.qualifiers.isRequired == true)
+            PyCallableParameterImpl.nonPsi(key, value.type)
+          else
+            PyCallableParameterImpl.nonPsi(key, value.type, PyNames.ELLIPSIS)
+        }
+
+        val extraItemsParam = if (extraItemsType != null && !isClosed) {
+          listOf(PyCallableParameterImpl.keywordContainerNonPsi("kwargs", extraItemsType))
+        } else {
+          emptyList()
+        }
+
+        listOf(singleStarParameter) + fieldParameters + extraItemsParam
+      }
     }
+    else null
   }
-  else null
-}
 
   override fun getParametersType(context: TypeEvalContext): PyCallableParameterVariadicType? {
     return getParameters(context)?.let { PyCallableParameterListTypeImpl(it) }

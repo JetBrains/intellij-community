@@ -111,8 +111,6 @@
     <applicationSettings service="com.intellij.codeInsight.completion.command.configuration.ApplicationCommandCompletionService"/>
     <vetoRenameCondition implementation="com.intellij.openapi.paths.WebReferenceVetoRenameCondition"/>
 
-    <registryKey key="modern.diff.show.header.when.empty" defaultValue="true" description="Shows a string saying &quot;Preview&quot; when the header is not supplied"/>
-    <registryKey key="modern.diff.show.file.name.when.trivial" defaultValue="false" description="Shows the file name even when there is one file in the diff and it's the current file"/>
     <projectSettings service="com.intellij.analysis.AnalysisUIOptions"/>
     <projectSettings service="com.intellij.codeInsight.actions.onSave.CodeCleanupOnSaveOptions"/>
     <projectSettings service="com.intellij.codeInsight.actions.onSave.OptimizeImportsOnSaveOptions"/>

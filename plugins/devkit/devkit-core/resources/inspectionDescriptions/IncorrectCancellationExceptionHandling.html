@@ -3,16 +3,20 @@
 Reports <code>ProcessCanceledException</code> and <code>CancellationException</code> handled incorrectly.
 
 <p>
-  <code>ProcessCanceledException</code> and its inheritors must not be caught, swallowed, logged, or handled in any way.
+  <code>ProcessCanceledException</code> and its inheritors must not be caught, swallowed, logged*, or handled in any way.
   Instead, it must be rethrown so that the IntelliJ Platform infrastructure can handle it correctly.
 </p>
 <p>
-  <code>CancellationException</code> must not be caught, swallowed, logged, or handled in any way in coroutine context.
+  <code>CancellationException</code> must not be caught, swallowed, logged*, or handled in any way in coroutine context.
   Instead, it must be rethrown so that the coroutines infrastructure can handle it correctly.
 </p>
 
 <p>
-  Inspection reports both explicit <code>ProcessCanceledException</code> (including inheritors) and <code>CancellationException</code>catching,
+  <i>*The inspection reports logging these exceptions in any execution context.</i>
+</p>
+
+<p>
+  The inspection reports both explicit <code>ProcessCanceledException</code> (including inheritors) and <code>CancellationException</code> catching,
   as well as catching <code>RuntimeException</code>, <code>Exception</code> and <code>Throwable</code> covering cancellation exceptions.
 </p>
 

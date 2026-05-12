@@ -98,13 +98,6 @@ public final class AnnotationHolderImpl extends SmartList<@NotNull Annotation> i
   }
 
   @Override
-  public Annotation createWarningAnnotation(@NotNull ASTNode node, @NlsContexts.DetailedDescription String message) {
-    assertMyFile(node.getPsi());
-    Class<?> callerClass = ReflectionUtilRt.findCallerClass(2);
-    return doCreateAnnotation(HighlightSeverity.WARNING, node.getTextRange(), message, wrapXml(message), callerClass, "createWarningAnnotation");
-  }
-
-  @Override
   public Annotation createWarningAnnotation(@NotNull TextRange range, @NlsContexts.DetailedDescription String message) {
     Class<?> callerClass = ReflectionUtilRt.findCallerClass(2);
     return doCreateAnnotation(HighlightSeverity.WARNING, range, message, wrapXml(message), callerClass, "createWarningAnnotation");

@@ -33,18 +33,18 @@ class GradleDependenciesTest : GradleCodeInsightTestCase() {
 
   @ParameterizedTest
   @AllGradleVersionsSource("""
-    "dependencies { add('archives', name: 42) { <caret> } }",
-    "dependencies { add('archives', [name:42]) { <caret> } }",
-    "dependencies { add('archives', ':42') { <caret> } }",
-    "dependencies { archives(name: 42) { <caret> } }",
-    "dependencies { archives([name:42]) { <caret> } }",
-    "dependencies { archives(':42') { <caret> } }",
-    "dependencies.add('archives', name: 42) { <caret> }",
-    "dependencies.add('archives', [name:42]) { <caret> }",
-    "dependencies.add('archives', ':42') { <caret> }",
-    "dependencies.archives(name: 42) { <caret> }",
-    "dependencies.archives([name:42]) { <caret> }",
-    "dependencies.archives(':42') { <caret> }"
+    "dependencies { add('implementation', name: 42) { <caret> } }",
+    "dependencies { add('implementation', [name:42]) { <caret> } }",
+    "dependencies { add('implementation', ':42') { <caret> } }",
+    "dependencies { implementation(name: 42) { <caret> } }",
+    "dependencies { implementation([name:42]) { <caret> } }",
+    "dependencies { implementation(':42') { <caret> } }",
+    "dependencies.add('implementation', name: 42) { <caret> }",
+    "dependencies.add('implementation', [name:42]) { <caret> }",
+    "dependencies.add('implementation', ':42') { <caret> }",
+    "dependencies.implementation(name: 42) { <caret> }",
+    "dependencies.implementation([name:42]) { <caret> }",
+    "dependencies.implementation(':42') { <caret> }"
   """)
   fun `test add external module dependency delegate`(gradleVersion: GradleVersion, expression: String) {
     testJavaProject(gradleVersion) {
@@ -56,14 +56,14 @@ class GradleDependenciesTest : GradleCodeInsightTestCase() {
 
   @ParameterizedTest
   @AllGradleVersionsSource("""
-    "dependencies { add('archives', files()) { <caret> } }",
-    "dependencies { add('archives', fileTree("libs")) { <caret> } }",
-    "dependencies { archives(files()) { <caret> } }",
-    "dependencies { archives(fileTree('libs')) { <caret> } }",
-    "dependencies.add('archives', files()) { <caret> }",
-    "dependencies.add('archives', fileTree('libs')) { <caret> }",
-    "dependencies.archives(files()) { <caret> }",
-    "dependencies.archives(fileTree('libs')) { <caret> }"
+    "dependencies { add('implementation', files()) { <caret> } }",
+    "dependencies { add('implementation', fileTree("libs")) { <caret> } }",
+    "dependencies { implementation(files()) { <caret> } }",
+    "dependencies { implementation(fileTree('libs')) { <caret> } }",
+    "dependencies.add('implementation', files()) { <caret> }",
+    "dependencies.add('implementation', fileTree('libs')) { <caret> }",
+    "dependencies.implementation(files()) { <caret> }",
+    "dependencies.implementation(fileTree('libs')) { <caret> }"
   """)
   fun `test add self resolving dependency delegate`(gradleVersion: GradleVersion, expression: String) {
     testJavaProject(gradleVersion) {
@@ -75,10 +75,10 @@ class GradleDependenciesTest : GradleCodeInsightTestCase() {
 
   @ParameterizedTest
   @AllGradleVersionsSource("""
-      "dependencies { add('archives', project(':')) { <caret> } }",
-      "dependencies { archives(project(':')) { <caret> } }",
-      "dependencies.add('archives', project(':')) { <caret> }",
-      "dependencies.archives(project(':')) { <caret> }"
+      "dependencies { add('implementation', project(':')) { <caret> } }",
+      "dependencies { implementation(project(':')) { <caret> } }",
+      "dependencies.add('implementation', project(':')) { <caret> }",
+      "dependencies.implementation(project(':')) { <caret> }"
   """)
   fun `test add project dependency delegate`(gradleVersion: GradleVersion, expression: String) {
     testJavaProject(gradleVersion) {
@@ -92,7 +92,7 @@ class GradleDependenciesTest : GradleCodeInsightTestCase() {
   @AllGradleVersionsSource
   fun `test add delegate method setter`(gradleVersion: GradleVersion) {
     testJavaProject(gradleVersion) {
-      testBuildscript("dependencies { add('archives', 'notation') { <caret>transitive(false) } }") {
+      testBuildscript("dependencies { add('implementation', 'notation') { <caret>transitive(false) } }") {
         setterMethodTest("transitive", "setTransitive", GRADLE_API_ARTIFACTS_MODULE_DEPENDENCY)
       }
     }
@@ -173,20 +173,20 @@ class GradleDependenciesTest : GradleCodeInsightTestCase() {
 
   @ParameterizedTest
   @AllGradleVersionsSource
-  fun `test archives configuration`(gradleVersion: GradleVersion) {
+  fun `test implementation configuration`(gradleVersion: GradleVersion) {
     testJavaProject(gradleVersion) {
-      testBuildscript("dependencies { <caret>archives('hi') }") {
-        methodTest(resolveTest(PsiMethod::class.java), "archives", GRADLE_API_DEPENDENCY_HANDLER)
+      testBuildscript("dependencies { <caret>implementation('hi') }") {
+        methodTest(resolveTest(PsiMethod::class.java), "implementation", GRADLE_API_DEPENDENCY_HANDLER)
       }
     }
   }
 
   @ParameterizedTest
   @AllGradleVersionsSource
-  fun `test archives configuration via property`(gradleVersion: GradleVersion) {
+  fun `test implementation configuration via property`(gradleVersion: GradleVersion) {
     testJavaProject(gradleVersion) {
-      testBuildscript("dependencies.<caret>archives('hi')") {
-        methodTest(resolveTest(PsiMethod::class.java), "archives", GRADLE_API_DEPENDENCY_HANDLER)
+      testBuildscript("dependencies.<caret>implementation('hi')") {
+        methodTest(resolveTest(PsiMethod::class.java), "implementation", GRADLE_API_DEPENDENCY_HANDLER)
       }
     }
   }
@@ -203,9 +203,9 @@ class GradleDependenciesTest : GradleCodeInsightTestCase() {
 
   @ParameterizedTest
   @AllGradleVersionsSource
-  fun `test buildscript archives configuration`(gradleVersion: GradleVersion) {
+  fun `test buildscript implementation configuration`(gradleVersion: GradleVersion) {
     testJavaProject(gradleVersion) {
-      testBuildscript("buildscript { dependencies { <caret>archives('hi') } }") {
+      testBuildscript("buildscript { dependencies { <caret>implementation('hi') } }") {
         resolveTest<Nothing>(null)
       }
     }

@@ -146,7 +146,6 @@ com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder
 - a:fileLevelAnnotation():com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder
 - a:group(I):com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder
 - a:gutterIconRenderer(com.intellij.openapi.editor.markup.GutterIconRenderer):com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder
-- a:inspectionToolId(java.lang.String):com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder
 - a:navigationShift(I):com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder
 - a:needsUpdateOnTyping(Z):com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder
 - a:problemGroup(com.intellij.lang.annotation.ProblemGroup):com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder

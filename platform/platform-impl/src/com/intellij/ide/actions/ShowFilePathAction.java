@@ -140,22 +140,11 @@ public final class ShowFilePathAction extends DumbAwareAction implements ActionR
 
   //<editor-fold desc="Deprecated stuff.">
 
-  /** @deprecated use {@link RevealFileAction#getFileManagerName} */
-  @Deprecated(forRemoval = true)
-  public static @NotNull String getFileManagerName() {
-    return RevealFileAction.getFileManagerName();
-  }
-
   /** @deprecated use {@link RevealFileAction#openFile} */
   @Deprecated(forRemoval = true)
   public static void openFile(@NotNull File file) {
     RevealFileAction.openFile(file);
   }
 
-  /** @deprecated use {@link RevealFileAction#findLocalFile} */
-  @Deprecated(forRemoval = true)
-  public static @Nullable VirtualFile findLocalFile(@Nullable VirtualFile file) {
-    return RevealFileAction.findLocalFile(file);
-  }
   //</editor-fold>
 }

@@ -23,7 +23,6 @@ jvm_library(
   module_name = "fleet.compiler.plugins",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k21",
   runtime_deps = [":compiler-plugins"]
 )
 ### auto-generated section `build fleet.compiler.plugins` end

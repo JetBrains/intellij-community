@@ -161,9 +161,9 @@ object PyExpectedTypeJudgement {
             val index = if (parent.key == expr) 0 else 1
             return typeOfParentDict.elementTypes[index]
           }
-          if (typeOfParentDict is PyTypedDictType && parent.key is PyStringLiteralExpression) {
+          if (typeOfParentDict is PyUnpackedTypedDictType && parent.key is PyStringLiteralExpression) {
             val argName = (parent.key as PyStringLiteralExpression).stringValue
-            return typeOfParentDict.getElementType(argName)
+            return typeOfParentDict.typedDictType.getElementType(argName)
           }
         }
         return null
@@ -248,48 +248,52 @@ object PyExpectedTypeJudgement {
   private fun fromStarArgument(callArgument: PyStarArgument, mapping: PyCallExpression.PyArgumentsMapping, ctx: TypeEvalContext): PyType? {
     val mappedParameters = mapping.mappedParameters
     if (callArgument.isKeyword) {
-      val param = mappedParameters.values.firstOrNull { cp -> cp.isKeywordContainer }
-      if (param == null) {
-        // The function declares no kwargs, but the caller passed a starred expression:
-        // E.g.: def f(s: str, n: int) gets called f(**{"s": "foo", "n": 123}).
+      val kwargsContainer = mappedParameters.values.firstOrNull { cp -> cp.isKeywordContainer }
+      val kwargsContainerType = kwargsContainer?.getType(ctx)
 
-        val dictClass = PyBuiltinCache.getInstance(callArgument).getClass("dict") ?: return null
-        val fields = mutableMapOf<String, PyTypedDictType.FieldTypeAndTotality>()
-        for (parameter in mapping.parametersMappedToVariadicKeywordArguments) {
-          val name = parameter.name
-          if (name == null || parameter.isSelf || parameter.isPositionalContainer || parameter.isKeywordContainer) {
-            continue
-          }
-          fields[name] = PyTypedDictType.FieldTypeAndTotality(
-            value = null, // We define a schema, not a specific instance value
-            type = parameter.getType(ctx),
-            qualifiers = PyTypedDictType.TypedDictFieldQualifiers(isRequired = !parameter.hasDefaultValue())
-          )
-        }
+      val extraParams = mapping.parametersMappedToVariadicKeywordArguments.filter { parameter ->
+        val name = parameter.name
+        name != null && !parameter.isSelf && !parameter.isPositionalContainer && !parameter.isKeywordContainer
+      }
 
-        return PyTypedDictType(
-          name = "Parameters",
-          fields = fields,
-          dictClass = dictClass,
-          isDefinition = false,
-          // TODO: This is incorrect:
-          // `PyTypedDict` declaration is either a `PyClass` node:
-          // ```
-          // class TD(typing.TypedDict):
-          //   ...
-          // ```
-          //
-          // or a `PyTargetExpression` node:
-          // ```
-          // TD = typing.TypedDict("TD", {})
-          // ```
-          declaration = mapping.callableType?.callable ?: return null
+      if (extraParams.isEmpty() && kwargsContainer != null) {
+        return kwargsContainerType
+      }
+
+      // TODO For non-variadic types of **kwargs requires supporting extra_items in PyTypedDictType PY-85421
+      val baseFields = (kwargsContainerType as? PyUnpackedTypedDictType)?.typedDictType?.fields.orEmpty()
+      val fields = mutableMapOf<String, PyTypedDictType.FieldTypeAndTotality>()
+      fields.putAll(baseFields)
+      for (parameter in extraParams) {
+        val name = parameter.name ?: continue
+        if (fields.containsKey(name)) continue
+        fields[name] = PyTypedDictType.FieldTypeAndTotality(
+          value = null, // We define a schema, not a specific instance value
+          type = parameter.getType(ctx),
+          qualifiers = PyTypedDictType.TypedDictFieldQualifiers(isRequired = !parameter.hasDefaultValue())
         )
       }
-      // TODO merge the type of `**kwargs` with the types of other mapped parameters here
-      else {
-        return param.getType(ctx)
-      }
+
+      val dictClass = PyBuiltinCache.getInstance(callArgument).getClass("dict") ?: return null
+      val typedDictType = PyTypedDictType(
+        name = "Parameters",
+        fields = fields,
+        dictClass = dictClass,
+        isDefinition = false,
+        // TODO: This is incorrect:
+        // `PyTypedDict` declaration is either a `PyClass` node:
+        // ```
+        // class TD(typing.TypedDict):
+        //   ...
+        // ```
+        //
+        // or a `PyTargetExpression` node:
+        // ```
+        // TD = typing.TypedDict("TD", {})
+        // ```
+        declaration = mapping.callableType?.callable ?: return null
+      )
+      return PyUnpackedTypedDictTypeImpl(typedDictType)
     }
     else {
       val param = mappedParameters.values.firstOrNull { cp -> cp.isPositionalContainer }

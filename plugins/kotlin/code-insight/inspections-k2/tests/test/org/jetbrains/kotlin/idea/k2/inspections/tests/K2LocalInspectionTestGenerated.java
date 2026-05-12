@@ -4782,6 +4782,50 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/misorderedAssertEqualsArguments")
+    public static class MisorderedAssertEqualsArguments extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("enumConstant.kt")
+        public void testEnumConstant() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/misorderedAssertEqualsArguments/enumConstant.kt");
+        }
+
+        @TestMetadata("junitInherited.kt")
+        public void testJunitInherited() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/misorderedAssertEqualsArguments/junitInherited.kt");
+        }
+
+        @TestMetadata("listFactory.kt")
+        public void testListFactory() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/misorderedAssertEqualsArguments/listFactory.kt");
+        }
+
+        @TestMetadata("noInspection.kt")
+        public void testNoInspection() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/misorderedAssertEqualsArguments/noInspection.kt");
+        }
+
+        @TestMetadata("staticFactory.kt")
+        public void testStaticFactory() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/misorderedAssertEqualsArguments/staticFactory.kt");
+        }
+
+        @TestMetadata("testNg.kt")
+        public void testTestNg() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/misorderedAssertEqualsArguments/testNg.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/inspectionsLocal/arrayToString")
     public static class ArrayToString extends AbstractK2LocalInspectionTest {
         @java.lang.Override

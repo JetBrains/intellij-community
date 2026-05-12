@@ -64,7 +64,6 @@ org.jetbrains.jps.model.JpsElementParameterizedCreator
 - a:create(java.lang.Object):org.jetbrains.jps.model.JpsElement
 org.jetbrains.jps.model.JpsElementReference
 - org.jetbrains.jps.model.JpsElement
-- asExternal(org.jetbrains.jps.model.JpsModel):org.jetbrains.jps.model.JpsElementReference
 - a:resolve():org.jetbrains.jps.model.JpsElement
 org.jetbrains.jps.model.JpsElementType
 - a:getPropertiesRole():org.jetbrains.jps.model.JpsElementChildRole
@@ -97,7 +96,6 @@ org.jetbrains.jps.model.JpsGlobal
 org.jetbrains.jps.model.JpsModel
 - a:getGlobal():org.jetbrains.jps.model.JpsGlobal
 - a:getProject():org.jetbrains.jps.model.JpsProject
-- registerExternalReference(org.jetbrains.jps.model.JpsElementReference):V
 org.jetbrains.jps.model.JpsNamedElement
 - org.jetbrains.jps.model.JpsElement
 - a:getName():java.lang.String
@@ -142,7 +140,6 @@ org.jetbrains.jps.model.artifact.JpsArtifact
 - a:getRootElement():org.jetbrains.jps.model.artifact.elements.JpsCompositePackagingElement
 org.jetbrains.jps.model.artifact.JpsArtifactReference
 - org.jetbrains.jps.model.JpsElementReference
-- asExternal(org.jetbrains.jps.model.JpsModel):org.jetbrains.jps.model.artifact.JpsArtifactReference
 - a:getArtifactName():java.lang.String
 a:org.jetbrains.jps.model.artifact.JpsArtifactService
 - <init>():V
@@ -242,7 +239,6 @@ a:org.jetbrains.jps.model.ex.JpsElementReferenceBase
 - org.jetbrains.jps.model.ex.JpsElementBase
 - org.jetbrains.jps.model.JpsElementReference
 - <init>():V
-- asExternal(org.jetbrains.jps.model.JpsModel):org.jetbrains.jps.model.JpsElementReference
 a:org.jetbrains.jps.model.ex.JpsElementTypeBase
 - org.jetbrains.jps.model.JpsElementType
 - <init>():V
@@ -615,7 +611,6 @@ org.jetbrains.jps.model.library.JpsLibraryCollection
 - a:getLibraries(org.jetbrains.jps.model.library.JpsLibraryType):java.lang.Iterable
 org.jetbrains.jps.model.library.JpsLibraryReference
 - org.jetbrains.jps.model.JpsElementReference
-- asExternal(org.jetbrains.jps.model.JpsModel):org.jetbrains.jps.model.library.JpsLibraryReference
 - a:getLibraryName():java.lang.String
 org.jetbrains.jps.model.library.JpsLibraryRoot
 - org.jetbrains.jps.model.JpsElement
@@ -710,7 +705,6 @@ org.jetbrains.jps.model.module.JpsModuleDependency
 - a:getModuleReference():org.jetbrains.jps.model.module.JpsModuleReference
 org.jetbrains.jps.model.module.JpsModuleReference
 - org.jetbrains.jps.model.JpsElementReference
-- asExternal(org.jetbrains.jps.model.JpsModel):org.jetbrains.jps.model.module.JpsModuleReference
 - a:getModuleName():java.lang.String
 org.jetbrains.jps.model.module.JpsModuleSourceDependency
 - org.jetbrains.jps.model.module.JpsDependencyElement

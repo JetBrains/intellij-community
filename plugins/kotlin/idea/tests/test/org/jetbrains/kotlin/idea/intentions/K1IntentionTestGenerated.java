@@ -8535,6 +8535,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/convertStringTemplateToBuildString/inAnnotation.kt");
         }
 
+        @TestMetadata("orderOfActions.kt")
+        public void testOrderOfActions() throws Exception {
+            runTest("testData/intentions/convertStringTemplateToBuildString/orderOfActions.kt");
+        }
+
         @TestMetadata("raw.kt")
         public void testRaw() throws Exception {
             runTest("testData/intentions/convertStringTemplateToBuildString/raw.kt");

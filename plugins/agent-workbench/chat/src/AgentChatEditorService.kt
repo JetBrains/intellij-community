@@ -376,7 +376,7 @@ fun notifyAgentChatTerminalOutputForRefresh(
   provider: AgentSessionProvider,
   projectPath: String,
   threadId: String? = null,
-  activityHint: AgentThreadActivity? = AgentThreadActivity.PROCESSING,
+  activityHint: AgentThreadActivity? = null,
 ) {
   AgentChatScopedRefreshSignalBus.signal(provider, projectPath, threadId, activityHint)
 }

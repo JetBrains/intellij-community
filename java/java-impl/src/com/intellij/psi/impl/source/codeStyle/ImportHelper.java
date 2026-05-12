@@ -48,7 +48,6 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiPackageAccessibilityStatement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiResolveHelper;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.PackageEntry;
 import com.intellij.psi.codeStyle.PackageEntryTable;
@@ -111,15 +110,6 @@ public final class ImportHelper extends ImportHelperBase {
 
   public ImportHelper(@NotNull JavaCodeStyleSettings settings) {
     super(settings);
-  }
-
-  /**
-   * @deprecated Use {@link #ImportHelper(JavaCodeStyleSettings)} instead. The instance of JavaCodeStyleSettings
-   * can be obtained using {@link JavaCodeStyleSettings#getInstance(PsiFile)} method.
-   */
-  @Deprecated(forRemoval = true)
-  public ImportHelper(@NotNull CodeStyleSettings settings) {
-    super(settings.getCustomSettings(JavaCodeStyleSettings.class));
   }
 
   @Nullable("null means no need to replace the import list because they are the same")

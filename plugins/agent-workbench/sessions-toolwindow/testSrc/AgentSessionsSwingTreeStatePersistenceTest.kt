@@ -2,10 +2,13 @@
 package com.intellij.agent.workbench.sessions.toolwindow
 
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionThread
+import com.intellij.agent.workbench.common.session.AgentSubAgent
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentWorktree
 import com.intellij.agent.workbench.sessions.state.InMemorySessionTreeUiState
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
+import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeModel
 import com.intellij.agent.workbench.sessions.toolwindow.tree.buildSessionTreeModel
 import com.intellij.agent.workbench.sessions.toolwindow.tree.parentNodesForSelection
 import com.intellij.agent.workbench.sessions.toolwindow.ui.sessionTreeExpansionTargetsAfterModelSwap
@@ -108,7 +111,7 @@ class AgentSessionsSwingTreeStatePersistenceTest {
         previousModel = previousModel,
         rootChanged = true,
         previouslyExpandedProjects = emptySet(),
-        selectedTreeId = null,
+        selectedTreeIds = emptyList(),
       )
     ).containsExactly(projectBId)
     assertThat(
@@ -117,7 +120,7 @@ class AgentSessionsSwingTreeStatePersistenceTest {
         previousModel = previousModel,
         rootChanged = true,
         previouslyExpandedProjects = setOf(projectAId),
-        selectedTreeId = null,
+        selectedTreeIds = emptyList(),
       )
     ).containsExactly(projectAId, projectBId)
   }
@@ -143,6 +146,87 @@ class AgentSessionsSwingTreeStatePersistenceTest {
           threadId = "thread-1",
         ),
       )
+    )
+  }
+
+  @Test
+  fun multipleSelectedRowsExpandAllParents() {
+    val model = buildSessionTreeModel(
+      projects = listOf(
+        AgentProjectSessions(
+          path = "/work/project-a",
+          name = "Project A",
+          isOpen = false,
+          hasLoaded = true,
+          threads = listOf(
+            AgentSessionThread(
+              id = "thread-a",
+              title = "Thread A",
+              updatedAt = 100,
+              archived = false,
+              provider = AgentSessionProvider.CODEX,
+            )
+          ),
+        ),
+        AgentProjectSessions(
+          path = "/work/project-b",
+          name = "Project B",
+          isOpen = false,
+          hasLoaded = true,
+          worktrees = listOf(
+            AgentWorktree(
+              path = "/work/project-b-feature",
+              name = "project-b-feature",
+              branch = "feature",
+              isOpen = false,
+              threads = listOf(
+                AgentSessionThread(
+                  id = "thread-b",
+                  title = "Thread B",
+                  updatedAt = 200,
+                  archived = false,
+                  provider = AgentSessionProvider.CODEX,
+                  subAgents = listOf(AgentSubAgent(id = "sub-b", name = "Sub B")),
+                )
+              ),
+            )
+          ),
+        ),
+      ),
+      visibleClosedProjectCount = Int.MAX_VALUE,
+      visibleThreadCounts = mapOf(
+        "/work/project-a" to 10,
+        "/work/project-b-feature" to 10,
+      ),
+      treeUiState = InMemorySessionTreeUiState(),
+    )
+    val selectedProjectThread = SessionTreeId.Thread("/work/project-a", AgentSessionProvider.CODEX, "thread-a")
+    val selectedWorktreeSubAgent = SessionTreeId.WorktreeSubAgent(
+      projectPath = "/work/project-b",
+      worktreePath = "/work/project-b-feature",
+      provider = AgentSessionProvider.CODEX,
+      threadId = "thread-b",
+      subAgentId = "sub-b",
+    )
+
+    assertThat(
+      sessionTreeExpansionTargetsAfterModelSwap(
+        model = model,
+        previousModel = SessionTreeModel.EMPTY,
+        rootChanged = true,
+        previouslyExpandedProjects = emptySet(),
+        selectedTreeIds = listOf(selectedProjectThread, selectedWorktreeSubAgent),
+      )
+    ).containsExactly(
+      SessionTreeId.Project("/work/project-a"),
+      SessionTreeId.Project("/work/project-b"),
+      SessionTreeId.Worktree("/work/project-b", "/work/project-b-feature"),
+      SessionTreeId.WorktreeThread(
+        projectPath = "/work/project-b",
+        worktreePath = "/work/project-b-feature",
+        provider = AgentSessionProvider.CODEX,
+        threadId = "thread-b",
+      ),
     )
   }
 }

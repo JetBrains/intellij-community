@@ -245,7 +245,7 @@ object RemoteCommunicatorHolder : SettingsSyncEventListener {
             return@withContext false
           }
 
-          targetDescriptor.jarFiles = getJars(targetFile.parent)
+          targetDescriptor.ownClassPath = getJars(targetFile.parent)
           // TODO load fails now because marketplace plugin requires restart
           if (!loadPlugin(targetDescriptor)) {
             logger.error("Cannot load marketplace plugin")

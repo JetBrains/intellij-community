@@ -282,21 +282,8 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     }));
   }
 
-  /**
-   * @deprecated Use {@link #writeCommandAction(Project)}.withGlobalUndo() instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  protected boolean isGlobalUndoAction() {
-    return false;
-  }
-
   private void doExecuteCommand(@NotNull Runnable runnable) {
-    Runnable wrappedRunnable = () -> {
-      if (isGlobalUndoAction()) CommandProcessor.getInstance().markCurrentCommandAsGlobal(getProject());
-      runnable.run();
-    };
-    CommandProcessor.getInstance().executeCommand(getProject(), wrappedRunnable, getCommandName(), getGroupID(),
+    CommandProcessor.getInstance().executeCommand(getProject(), runnable, getCommandName(), getGroupID(),
                                                   UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION, true);
   }
 

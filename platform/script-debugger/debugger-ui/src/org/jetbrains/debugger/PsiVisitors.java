@@ -4,14 +4,9 @@ package org.jetbrains.debugger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
-import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.impl.source.tree.ForeignLeafPsiElement;
-import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.xdebugger.XSourcePosition;
@@ -53,30 +48,5 @@ public final class PsiVisitors {
   @ApiStatus.Internal
   public interface Visitor<RESULT> {
     RESULT visit(@NotNull XSourcePosition position, @NotNull PsiElement element, int positionOffset, @NotNull Document document);
-  }
-
-  /**
-   * @deprecated Use a specific visitor suitable for your task, the purpose of this one is unclear.
-   */
-  @Deprecated(forRemoval = true)
-  public abstract static class FilteringPsiRecursiveElementWalkingVisitor extends PsiRecursiveElementWalkingVisitor {
-    @Override
-    public void visitElement(@NotNull PsiElement element) {
-      if (!(element instanceof ForeignLeafPsiElement) && element.isPhysical()) {
-        super.visitElement(element);
-      }
-    }
-
-    @Override
-    public void visitWhiteSpace(@NotNull PsiWhiteSpace space) {
-    }
-
-    @Override
-    public void visitComment(@NotNull PsiComment comment) {
-    }
-
-    @Override
-    public void visitOuterLanguageElement(@NotNull OuterLanguageElement element) {
-    }
   }
 }

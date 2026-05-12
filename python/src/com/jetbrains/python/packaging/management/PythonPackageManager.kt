@@ -8,7 +8,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
@@ -19,6 +18,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.python.pyproject.PY_PROJECT_TOML
+import com.intellij.python.pyproject.PyProjectTomlFile
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -40,6 +40,7 @@ import com.jetbrains.python.packaging.packageRequirements.DependencyTreeProvider
 import com.jetbrains.python.packaging.packageRequirements.FlatPackageStructureNode
 import com.jetbrains.python.packaging.packageRequirements.PackageStructureNode
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
+import com.jetbrains.python.requirements.PyDependenciesFile
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.isReadOnly
 import com.jetbrains.python.sdk.readOnlyErrorMessage
@@ -348,6 +349,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
   @ApiStatus.Internal
   suspend fun listDeclaredPackagesCached(): PyResult<List<PythonPackage>>? {
     val stamps = getDependencyFiles()
+      .map { it.virtualFile }
       .sortedBy { it.path }
       .map { it to it.modificationStamp }
     if (stamps.isEmpty()) return null
@@ -360,7 +362,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
    */
   @ApiStatus.Internal
   @RequiresBackgroundThread
-  open fun getDependencyFile(): VirtualFile? = null
+  open fun getDependencyFile(): PyDependenciesFile? = null
 
   /**
    * Returns every file whose modification should invalidate the declared-packages cache.
@@ -370,7 +372,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
    * file invalidate the cached declared-packages list.
    */
   @ApiStatus.Internal
-  protected open suspend fun getDependencyFiles(): List<VirtualFile> = listOfNotNull(getDependencyFile())
+  protected open suspend fun getDependencyFiles(): List<PyDependenciesFile> = listOfNotNull(getDependencyFile())
 
   /**
    * Adds a dependency to the project's dependency declaration file.
@@ -470,13 +472,10 @@ fun PythonPackageManager.listDeclaredPackagesAsync(): List<PythonPackage>? = run
  */
 @ApiStatus.Internal
 @RequiresBackgroundThread
-internal fun resolvePyProjectToml(workingDirectory: Path): VirtualFile? {
+internal fun resolvePyProjectToml(workingDirectory: Path): PyProjectTomlFile? {
   val pyprojectPath = workingDirectory.resolve(PY_PROJECT_TOML)
-  return runBlockingMaybeCancellable {
-    readAction {
-      VirtualFileManager.getInstance().refreshAndFindFileByNioPath(pyprojectPath)
-    }
-  }
+  val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(pyprojectPath) ?: return null
+  return PyProjectTomlFile(virtualFile)
 }
 
 @ApiStatus.Internal

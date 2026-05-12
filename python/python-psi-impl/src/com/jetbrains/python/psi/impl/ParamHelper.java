@@ -30,9 +30,13 @@ import com.jetbrains.python.psi.PyTupleParameter;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableParameterImpl;
 import com.jetbrains.python.psi.types.PyCallableType;
+import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeVarTupleType;
+import com.jetbrains.python.psi.types.PyUnpackedTypedDictType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.ApiStatus;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,6 +84,12 @@ public final class ParamHelper {
       else if (psi instanceof PySingleStarParameter) {
         walker.visitSingleStarParameter((PySingleStarParameter)psi, first, last);
       }
+      else if (parameter.isPositionOnlySeparator()) {
+        walker.visitSlashParameter(null, first, last);
+      }
+      else if (parameter.isKeywordOnlySeparator()) {
+        walker.visitSingleStarParameter(null, first, last);
+      }
       else {
         walker.visitNonPsiParameter(parameter, first, last);
       }
@@ -119,13 +129,13 @@ public final class ParamHelper {
         }
 
         @Override
-        public void visitSlashParameter(@NotNull PySlashParameter param, boolean first, boolean last) {
+        public void visitSlashParameter(@Nullable PySlashParameter param, boolean first, boolean last) {
           result.append(PyAstSlashParameter.TEXT);
           if (!last) result.append(", ");
         }
 
         @Override
-        public void visitSingleStarParameter(PySingleStarParameter param, boolean first, boolean last) {
+        public void visitSingleStarParameter(@Nullable PySingleStarParameter param, boolean first, boolean last) {
           result.append(PyAstSingleStarParameter.TEXT);
           if (!last) result.append(", ");
         }
@@ -240,6 +250,72 @@ public final class ParamHelper {
     return !parameters.isEmpty() && parameters.getFirst().isSelf() ? parameters.subList(1, parameters.size()) : parameters;
   }
 
+  /**
+   * Processes a list of callable parameters, expanding container parameters
+   * into their unpacked forms if applicable.
+   * @see #unpackPositionalContainerParameters(List, TypeEvalContext)
+   * @see #unpackKeywordContainerParameters(List, TypeEvalContext)
+   *
+   * @return a list of {@link PyCallableParameter} with container parameters expanded.
+   */
+  public static @NotNull List<PyCallableParameter> unpackContainerParameters(@NotNull List<PyCallableParameter> parameters,
+                                                                             @NotNull TypeEvalContext context) {
+    return unpackPositionalContainerParameters(unpackKeywordContainerParameters(parameters, context), context);
+  }
+
+
+  /**
+   * Processes a list of callable parameters, expanding any keyword container parameters
+   * into their unpacked forms if applicable.
+   *
+   * @param parameters the list of callable parameters to process. Each parameter is expected
+   *                   to implement {@link PyCallableParameter}.
+   * @param context    the type evaluation context to use when resolving parameter types.
+   * @return a list of callable parameters where any keyword container parameters are replaced
+   *         with their unpacked representations.
+   */
+  public static @NotNull List<PyCallableParameter> unpackKeywordContainerParameters(@NotNull List<PyCallableParameter> parameters,
+                                                                                    @NotNull TypeEvalContext context) {
+    return StreamEx.of(parameters)
+      .flatMap(param -> {
+        if (param.isKeywordContainer()) {
+          PyType paramType = param.getType(context);
+          if (paramType instanceof PyUnpackedTypedDictType unpackedTypedDictType) {
+            return StreamEx.of(unpackedTypedDictType.getUnpackedParameters(context));
+          }
+        }
+        return StreamEx.of(param);
+      }).toList();
+  }
+
+  /**
+   * Processes a list of callable parameters, expanding any positional container parameters
+   * annotated with a bound tuple type into individual positional-only parameters.
+   * <p>
+   * For example, {@code *args: *tuple[int, *tuple[str, ...], float]} is expanded into
+   * {@code __p0: int, *args: str, __p1: float}.
+   * <p>
+   * Expansion is skipped for unbound tuples ({@code *tuple[str, ...]}) and tuples containing
+   * {@link PyTypeVarTupleType} elements.
+   *
+   * @return a list with positional containers expanded into individual parameters where applicable
+   */
+  public static @NotNull List<PyCallableParameter> unpackPositionalContainerParameters(
+    @NotNull List<PyCallableParameter> parameters,
+    @NotNull TypeEvalContext context
+  ) {
+    return StreamEx.of(parameters)
+      .flatMap(param -> {
+        if (!param.isPositionalContainer()) return StreamEx.of(param);
+
+        PyType paramType = param.getType(context);
+        if (!(paramType instanceof PyTupleType tupleType)) return StreamEx.of(param);
+
+        List<PyCallableParameter> expanded = tupleType.asUnpackedTupleType().asCallableParameters();
+        return expanded.isEmpty() ? StreamEx.of(param) : StreamEx.of(expanded);
+      }).toList();
+  }
+
   public interface ParamWalker {
     /**
      * Is called when a tuple parameter is encountered, before visiting any parameters nested in it.
@@ -268,9 +344,21 @@ public final class ParamHelper {
      */
     void visitNamedParameter(PyNamedParameter param, boolean first, boolean last);
 
-    void visitSlashParameter(@NotNull PySlashParameter param, boolean first, boolean last);
+    /**
+     * Is called when a positional-only separator ({@code /}) is encountered.
+     *
+     * @param param the underlying PSI element, or {@code null} if the separator is synthetic
+     *              (e.g. created via {@link PyCallableParameterImpl#positionalOnlySeparatorNonPsi()})
+     */
+    void visitSlashParameter(@Nullable PySlashParameter param, boolean first, boolean last);
 
-    void visitSingleStarParameter(PySingleStarParameter param, boolean first, boolean last);
+    /**
+     * Is called when a keyword-only separator ({@code *}) is encountered.
+     *
+     * @param param the underlying PSI element, or {@code null} if the separator is synthetic
+     *              (e.g. created via {@link PyCallableParameterImpl#keywordOnlySeparatorNonPsi()})
+     */
+    void visitSingleStarParameter(@Nullable PySingleStarParameter param, boolean first, boolean last);
 
     void visitNonPsiParameter(@NotNull PyCallableParameter parameter, boolean first, boolean last);
   }
@@ -287,10 +375,10 @@ public final class ParamHelper {
     public void visitNamedParameter(PyNamedParameter param, boolean first, boolean last) { }
 
     @Override
-    public void visitSlashParameter(@NotNull PySlashParameter param, boolean first, boolean last) { }
+    public void visitSlashParameter(@Nullable PySlashParameter param, boolean first, boolean last) { }
 
     @Override
-    public void visitSingleStarParameter(PySingleStarParameter param, boolean first, boolean last) { }
+    public void visitSingleStarParameter(@Nullable PySingleStarParameter param, boolean first, boolean last) { }
 
     @Override
     public void visitNonPsiParameter(@NotNull PyCallableParameter parameter, boolean first, boolean last) { }

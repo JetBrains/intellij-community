@@ -4,15 +4,21 @@ package com.jetbrains.python.sdk
 import com.intellij.execution.target.TargetBasedSdkAdditionalData
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.impl.buildPresentationInfo
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil.isPythonSdk
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
+import kotlin.io.path.Path
+import com.intellij.openapi.vfs.ex.temp.TempFileSystem
 
 @get:Internal
 val BASE_DIR: Key<Path> = Key.create("PYTHON_PROJECT_BASE_PATH")
@@ -113,3 +119,35 @@ val Sdk.targetEnvConfiguration: TargetEnvironmentConfiguration?
 
 @Internal
 fun Sdk.pyInterpreterPresentation(customName: String? = null): PythonInterpreterPresentation = buildPresentationInfo(customName)
+
+
+private val SDK_ERROR_REPORTED = Key.create<Boolean>("pySdkErrorReported")
+
+@get:Internal
+val Sdk.associatedModuleDir: VirtualFile?
+  get() {
+    val nioPath = associatedModuleNioPath ?: return null
+    return VirtualFileManager.getInstance().findFileByNioPath(nioPath) ?: TempFileSystem.getInstance().findFileByNioFile(nioPath)
+  }
+
+@get:Internal
+val Sdk.associatedModuleNioPath: Path?
+  get() =
+    try {
+      associatedModulePath?.let { Path(it) }
+    }
+    catch (e: InvalidPathException) {
+      if (getUserData(SDK_ERROR_REPORTED) != true) {
+        thisLogger().warn("Can't convert ${associatedModulePath} to path", e)
+        putUserData(SDK_ERROR_REPORTED, true)
+      }
+      null
+    }
+
+@get:Internal
+val Sdk.associatedModulePath: String?
+  // TODO: Support .project associations
+  get() = associatedPathFromAdditionalData /*?: associatedPathFromDotProject*/
+
+private val Sdk.associatedPathFromAdditionalData: String?
+  get() = (sdkAdditionalData as? PythonSdkAdditionalData)?.associatedModulePath

@@ -24,7 +24,6 @@ import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
-import com.intellij.util.system.CpuArch
 import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
@@ -143,7 +142,7 @@ fun buildJdkDownloaderModel(allItems: List<JdkItem>, eel: EelApi, itemFilter: (J
 
   val availableItems = allItems
     .filter { itemFilter.invoke(it) }
-    .filter { Registry.`is`("jdk.downloader.show.other.arch", false) || CpuArch.fromString(it.arch) == CpuArch.CURRENT }
+    .filter { Registry.`is`("jdk.downloader.show.other.arch", false) || EelPlatform.resolveArch(it.arch) == eel.platform.arch }
 
   val groups = availableItems
     .groupBy { it.versionGroupId() }

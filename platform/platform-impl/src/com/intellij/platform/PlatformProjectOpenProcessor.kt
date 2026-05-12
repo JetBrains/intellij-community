@@ -8,6 +8,7 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.impl.TrustedPaths
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
+import com.intellij.ide.impl.toOpenProjectTask
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.application.ApplicationManager
@@ -41,11 +42,9 @@ import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.EnumSet
 import java.util.concurrent.CancellationException
 
 private val LOG = logger<PlatformProjectOpenProcessor>()
@@ -106,26 +105,6 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     @JvmStatic
     fun getInstanceIfItExists(): PlatformProjectOpenProcessor? {
       return EXTENSION_POINT_NAME.findExtension(PlatformProjectOpenProcessor::class.java)
-    }
-
-    @JvmStatic
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("Use {@link #doOpenProject(Path, OpenProjectTask)}", level = DeprecationLevel.ERROR)
-    fun doOpenProject(
-      virtualFile: VirtualFile,
-      projectToClose: Project?,
-      line: Int,
-      callback: ProjectOpenedCallback?,
-      options: EnumSet<Option>,
-    ): Project? {
-      val openProjectOptions = OpenProjectTask {
-        forceOpenInNewFrame = Option.FORCE_NEW_FRAME in options
-        this.projectToClose = projectToClose
-        this.callback = callback
-        runConfigurators = callback != null
-        this.line = line
-      }
-      return doOpenProject(virtualFile.toNioPath(), openProjectOptions)
     }
 
     private fun createTempProjectOpenTask(
@@ -396,6 +375,15 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
 
   override fun lookForProjectsInDirectory(): Boolean = false
 
+  override suspend fun openProjectAsync(
+    virtualFile: VirtualFile,
+    projectOpenOptions: ProjectOpenOptions,
+  ): Project? {
+    return openProjectAsync(virtualFile.toNioPath(), projectOpenOptions.toOpenProjectTask())
+  }
+
+  @Deprecated("Use openProjectAsync(VirtualFile, ProjectOpenOptions) instead",
+              replaceWith = ReplaceWith("openProjectAsync(virtualFile, projectOpenOptions)"))
   override suspend fun openProjectAsync(virtualFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
     val baseDir = virtualFile.toNioPath()
     val options = createOptionsToOpenDotIdeaOrCreateNewIfNotExists(baseDir, projectToClose).copy(forceOpenInNewFrame = forceOpenInNewFrame)

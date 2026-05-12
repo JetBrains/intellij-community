@@ -1473,10 +1473,6 @@
 *f:com.intellij.webSymbols.utils.NameCaseUtils
 - sf:INSTANCE:com.intellij.webSymbols.utils.NameCaseUtils
 - sf:toCamelCase(java.lang.String):java.lang.String
-- sf:toCamelCase(java.lang.String,Z):java.lang.String
 - sf:toKebabCase(java.lang.String):java.lang.String
-- sf:toKebabCase(java.lang.String,Z,Z,Z):java.lang.String
 - sf:toPascalCase(java.lang.String):java.lang.String
-- sf:toPascalCase(java.lang.String,Z):java.lang.String
 - sf:toSnakeCase(java.lang.String):java.lang.String
-- sf:toSnakeCase(java.lang.String,Z,Z,Z):java.lang.String

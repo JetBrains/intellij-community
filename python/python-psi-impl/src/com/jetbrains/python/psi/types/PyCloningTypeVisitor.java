@@ -246,12 +246,20 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
           parameter.getName(),
           Ref.create(clone(parameter.getType(myTypeEvalContext))),
           parameter.getDefaultValue(),
+          parameter.getDefaultValueText(),
           parameter.getParameter(),
           parameter.isPositionalContainer(),
           parameter.isKeywordContainer(),
           parameter.isSelf(),
+          parameter.isKeywordOnlySeparator(),
+          parameter.isPositionOnlySeparator(),
           parameter.getDeclarationElement()
         ))
     );
+  }
+
+  @Override
+  public PyType visitPyUnpackedTypedDictType(@NotNull PyUnpackedTypedDictType unpackedTypedDictType) {
+    return new PyUnpackedTypedDictTypeImpl(clone(unpackedTypedDictType.getTypedDictType()));
   }
 }

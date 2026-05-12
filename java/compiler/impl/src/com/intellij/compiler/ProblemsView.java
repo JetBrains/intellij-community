@@ -24,19 +24,6 @@ import java.util.UUID;
 public abstract class ProblemsView {
   protected final Project myProject;
 
-  /**
-   * @deprecated use {@link ProblemsView#getInstance(Project)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static final class SERVICE {
-    private SERVICE() {
-    }
-
-    public static ProblemsView getInstance(@NotNull Project project) {
-      return ProblemsView.getInstance(project);
-    }
-  }
-
   public static ProblemsView getInstance(@NotNull Project project) {
     return project.getService(ProblemsView.class);
   }

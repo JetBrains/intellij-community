@@ -168,16 +168,6 @@ public class StringUtil {
     return replace(text, oldS, newS, true);
   }
 
-  /**
-   * @deprecated Use {@link String#replace(char,char)} instead
-   */
-  @Contract(pure = true)
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static @NotNull String replaceChar(@NotNull String buffer, char oldChar, char newChar) {
-    return buffer.replace(oldChar, newChar);
-  }
-
   @Contract(pure = true)
   public static String replace(@NotNull String text, @NotNull String oldS, @NotNull String newS, boolean ignoreCase) {
     if (text.length() < oldS.length()) return text;

@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.completion.test
 
 import com.intellij.codeInsight.completion.CompletionType
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import java.io.File
 
@@ -22,6 +21,6 @@ abstract class AbstractKotlinSourceInJavaWithMockLibCompletionTest : KotlinFixtu
         super.doTest(testPath)
     }
 
-    override fun getProjectDescriptor() = LightCodeInsightFixtureTestCase.JAVA_LATEST
+    override fun getProjectDescriptor() = JAVA_LATEST
     override fun defaultCompletionType() = CompletionType.BASIC
 }

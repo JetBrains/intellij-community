@@ -4914,17 +4914,17 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps-intellij-test-discovery-agent-1_0_771_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/intellij-test-discovery-agent/1.0.771/intellij-test-discovery-agent-1.0.771.jar",
-  sha256 = "29de9b5ec9d586dee34d75f191adfe227c2e9f2fc15c5c075a060fa31390414f",
-  downloaded_file_path = "intellij-test-discovery-agent-1.0.771.jar"
+  name = "org_jetbrains_intellij_deps-intellij-test-discovery-agent-1_0_776_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/intellij-test-discovery-agent/1.0.776/intellij-test-discovery-agent-1.0.776.jar",
+  sha256 = "b01cd2cebb3473a3559de471286517dee92c3ec850b96b9c03ce81dc1226623c",
+  downloaded_file_path = "intellij-test-discovery-agent-1.0.776.jar"
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps-intellij-test-discovery-agent-1_0_771-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/intellij-test-discovery-agent/1.0.771/intellij-test-discovery-agent-1.0.771-sources.jar",
-  sha256 = "165e14ac139b776447ff68e6a2b482b68ee7cc3f3f88830a80f08cf0a777a89a",
-  downloaded_file_path = "intellij-test-discovery-agent-1.0.771-sources.jar"
+  name = "org_jetbrains_intellij_deps-intellij-test-discovery-agent-1_0_776-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/intellij-test-discovery-agent/1.0.776/intellij-test-discovery-agent-1.0.776-sources.jar",
+  sha256 = "7089ed25f22538cd79ff2b6ea40084bca50397fb320130b64fc4acb88e7acfa5",
+  downloaded_file_path = "intellij-test-discovery-agent-1.0.776-sources.jar"
 )
 
 http_file(
@@ -5404,17 +5404,17 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps-debugger-agent-1_170_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/debugger-agent/1.170/debugger-agent-1.170.jar",
-  sha256 = "3aa5670b888e6c375013dc3d851fce05bdaa7580955b2fdba51ead0871d75132",
-  downloaded_file_path = "debugger-agent-1.170.jar"
+  name = "org_jetbrains_intellij_deps-debugger-agent-1_174_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/debugger-agent/1.174/debugger-agent-1.174.jar",
+  sha256 = "a9c21c80e6604834b2d2c134fa05f3ca6d2cda61042fdb6481cb089b19055c35",
+  downloaded_file_path = "debugger-agent-1.174.jar"
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps-debugger-agent-1_170-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/debugger-agent/1.170/debugger-agent-1.170-sources.jar",
-  sha256 = "423a739b7a026f5a3b3b05e8359bab8a118161eece61a8194e507114eace33f0",
-  downloaded_file_path = "debugger-agent-1.170-sources.jar"
+  name = "org_jetbrains_intellij_deps-debugger-agent-1_174-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/debugger-agent/1.174/debugger-agent-1.174-sources.jar",
+  sha256 = "64019def402bf9947cc116c139e2d02068e693ba82511e0f01e6cf7acf1668e9",
+  downloaded_file_path = "debugger-agent-1.174-sources.jar"
 )
 
 http_file(
@@ -14581,10 +14581,10 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps-intellij-coverage-reporter-1_0_775_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/intellij-coverage-reporter/1.0.775/intellij-coverage-reporter-1.0.775.jar",
-  sha256 = "96763f85d50c2e53080e243b9f7862064f56119c41fb81e1a92a2e859bdaffa5",
-  downloaded_file_path = "intellij-coverage-reporter-1.0.775.jar"
+  name = "org_jetbrains_intellij_deps-intellij-coverage-reporter-1_0_776_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/intellij-coverage-reporter/1.0.776/intellij-coverage-reporter-1.0.776.jar",
+  sha256 = "9df0cb585bc7f223a9ac9940c01aef08b2a857844709c0057b52abd2b047956d",
+  downloaded_file_path = "intellij-coverage-reporter-1.0.776.jar"
 )
 
 http_file(
@@ -14595,17 +14595,17 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps-intellij-coverage-agent-1_0_775_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/intellij-coverage-agent/1.0.775/intellij-coverage-agent-1.0.775.jar",
-  sha256 = "7722b3b63e58b3a55cf06d5a93560b7ede701b6cfe535772fb77e3e5ce055abd",
-  downloaded_file_path = "intellij-coverage-agent-1.0.775.jar"
+  name = "org_jetbrains_intellij_deps-intellij-coverage-agent-1_0_776_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/intellij-coverage-agent/1.0.776/intellij-coverage-agent-1.0.776.jar",
+  sha256 = "477944945187911ce656c6fa804c9f4c65a90dab7ad6717abae2ce0234b7e527",
+  downloaded_file_path = "intellij-coverage-agent-1.0.776.jar"
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps-intellij-coverage-reporter-1_0_775-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/intellij-coverage-reporter/1.0.775/intellij-coverage-reporter-1.0.775-sources.jar",
-  sha256 = "a15d18a33af5b59c320b979b1e80c0ef2a28062a5b64d1ee3f95dcd3e3f52ecf",
-  downloaded_file_path = "intellij-coverage-reporter-1.0.775-sources.jar"
+  name = "org_jetbrains_intellij_deps-intellij-coverage-reporter-1_0_776-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/intellij-coverage-reporter/1.0.776/intellij-coverage-reporter-1.0.776-sources.jar",
+  sha256 = "581a3bb0acf351709a4ab228bce97ccf7126cd99046d6e5950a103e593c8bf59",
+  downloaded_file_path = "intellij-coverage-reporter-1.0.776-sources.jar"
 )
 
 http_file(
@@ -14616,10 +14616,10 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps-intellij-coverage-agent-1_0_775-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/intellij-coverage-agent/1.0.775/intellij-coverage-agent-1.0.775-sources.jar",
-  sha256 = "d8448199807b06b8fb957bd958fc454402088a054967af79c6c705383d89f63e",
-  downloaded_file_path = "intellij-coverage-agent-1.0.775-sources.jar"
+  name = "org_jetbrains_intellij_deps-intellij-coverage-agent-1_0_776-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/intellij-coverage-agent/1.0.776/intellij-coverage-agent-1.0.776-sources.jar",
+  sha256 = "3418a9d2952acb01b12389c1a0b1a8532078261f5ebfedc1452d056023196f25",
+  downloaded_file_path = "intellij-coverage-agent-1.0.776-sources.jar"
 )
 
 http_file(

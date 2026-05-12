@@ -1116,6 +1116,7 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
       ((EditorImpl)alienEditor).setCaretActive();
       myTestDaemonCodeAnalyzer.waitForTermination();
       Runnable callbackWhileWaiting = () -> {
+        LOG.debug("callback called: checked="+checked);
         if (!checked.getAndSet(true)) {
           typeInAlienEditor(alienEditor, 'x');
         }

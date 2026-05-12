@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorBuilder
 import com.intellij.platform.pluginSystem.parser.impl.PluginXmlConst
@@ -50,8 +51,7 @@ sealed class IdeaPluginDescriptorImpl(
 
   var isDeleted: Boolean = false
 
-  @Transient
-  var jarFiles: List<Path>? = null
+  abstract val ownClassPath: List<Path>?
 
   /** **DO NOT USE** outside plugin subsystem internal code. It is public now due to an unfinished migration */
   var isMarkedForLoading: Boolean = true
@@ -160,6 +160,8 @@ class DependsSubDescriptor(
   override val moduleDependencies: ModuleDependencies = ModuleDependencies.EMPTY
 
   private val rawResourceBundleBaseName: String? = raw.resourceBundleBaseName
+
+  override val ownClassPath: List<Path>? = null
 
   override fun getDescriptorPath(): String = descriptorPath
 
@@ -275,6 +277,8 @@ class ContentModuleDescriptor(
   override val isIndependentFromCoreClassLoader: Boolean = raw.isIndependentFromCoreClassLoader
 
   private val resourceBundleBaseName: String? = raw.resourceBundleBaseName
+
+  override var ownClassPath: List<Path>? = null
 
   /** java helper */
   fun getModuleNameString(): String = moduleId.name
@@ -497,4 +501,12 @@ private fun convertExtensions(rawMap: Map<String, List<ExtensionElement>>): Map<
       null
     }
   }
+}
+
+@get:Internal
+@IntellijInternalApi
+val IdeaPluginDescriptorImpl.shortLogDescription: String get() = when (this) {
+  is PluginMainDescriptor -> "plugin '$name' ($pluginId, $version)"
+  is DependsSubDescriptor -> "<depends> config '${descriptorPath}' of plugin ${pluginId}"
+  is ContentModuleDescriptor -> "module ${moduleId.displayName}"
 }

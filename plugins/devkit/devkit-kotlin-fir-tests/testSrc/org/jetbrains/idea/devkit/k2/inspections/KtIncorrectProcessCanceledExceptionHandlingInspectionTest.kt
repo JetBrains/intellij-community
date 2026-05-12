@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.k2.inspections
 
 import com.intellij.testFramework.TestDataPath
@@ -19,10 +19,20 @@ abstract class KtIncorrectCancellationExceptionHandlingInspectionTestBase : Inco
   override fun setUp() {
     setUpWithKotlinPlugin { super.setUp() }
     ConfigLibraryUtil.configureKotlinRuntime(module)
+    addKotlinFile("SomeControlFlowException.kt", """
+        package com.example
+        import com.intellij.openapi.diagnostic.ControlFlowException
+        class SomeControlFlowException : ControlFlowException()
+      """.trimIndent())
     addKotlinFile("SubclassOfProcessCanceledException.kt", """
         package com.example
         import com.intellij.openapi.progress.ProcessCanceledException
         class SubclassOfProcessCanceledException : ProcessCanceledException()
+      """.trimIndent())
+    addKotlinFile("CancellationException.kt", """
+        package kotlinx.coroutines
+        @SinceKotlin("1.4")
+        typealias CancellationException = java.util.concurrent.CancellationException
       """.trimIndent())
   }
 
@@ -45,6 +55,10 @@ abstract class KtIncorrectCancellationExceptionHandlingInspectionTestBase : Inco
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/incorrectCeHandling")
 class KtIncorrectProcessCanceledExceptionHandlingInspectionTest : KtIncorrectCancellationExceptionHandlingInspectionTestBase() {
+
+  fun testIncorrectCeLoggedTests() {
+    doTest()
+  }
 
   fun testIncorrectPceHandlingTests() {
     doTest()

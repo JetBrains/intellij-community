@@ -1,0 +1,5 @@
+// FILE: before.kt
+fun <A, B> pair(first: A, second: B): A = fir<caret>st
+
+// FILE: after.kt
+fun <<caret>A, B> pair(first: A, second: B): A = first

@@ -24,6 +24,7 @@
     <module name="intellij.python.processOutput.common"/>
     <module name="intellij.python.pydev"/>
     <module name="intellij.python.pyproject"/>
+    <module name="intellij.python.requirements"/>
     <module name="intellij.python.sdk"/>
     <module name="intellij.python.sdk.ui"/>
     <module name="intellij.python.sdkConfigurator.common"/>
@@ -37,6 +38,10 @@
   <resource-bundle>messages.PyBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
+    <statusBarWidgetFactory id="pythonDependencyFileWidget"
+                            implementation="com.jetbrains.python.requirements.widget.PyDependenciesFileStatusBarWidgetFactory"
+                            order="after pythonInterpreterWidget, before git, before hg, before Notifications"/>
+
     <localInspection language="TOML" enabledByDefault="true"
                      implementationClass="com.jetbrains.python.sdk.poetry.PoetryPackageVersionsInspection"
                      key="INSP.poetry.package.versions.display.name" bundle="messages.PyBundle" groupKey="INSP.GROUP.python"

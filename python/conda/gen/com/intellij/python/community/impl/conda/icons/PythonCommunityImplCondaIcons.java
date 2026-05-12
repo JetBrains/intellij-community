@@ -16,4 +16,5 @@ public final class PythonCommunityImplCondaIcons {
     return IconManager.getInstance().loadRasterizedIcon(path, PythonCommunityImplCondaIcons.class.getClassLoader(), cacheKey, flags);
   }
   /** 16x16 */ public static final @NotNull Icon Anaconda = load("icons/com/intellij/python/community/impl/conda/expui/anaconda.svg", 1479605221, 2);
+  /** 16x16 */ public static final @NotNull Icon Yaml = load("icons/com/intellij/python/community/impl/conda/expui/yaml.svg", -1755535915, 2);
 }

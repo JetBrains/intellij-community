@@ -17,22 +17,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 
 import javax.swing.Icon;
-import javax.swing.JLabel;
 import java.util.List;
 
 public final class ElementLocationUtil {
 
   private ElementLocationUtil() {
-  }
-
-  /**
-   * @deprecated use {@link #renderElementLocation(PsiElement, Ref)}
-   */
-  @Deprecated(forRemoval = true)
-  public static void customizeElementLabel(final PsiElement element, final JLabel label) {
-    Ref<Icon> ref = new Ref<>();
-    label.setText(renderElementLocation(element, ref));
-    label.setIcon(ref.get());
   }
 
   public static @NlsSafe String renderElementLocation(final PsiElement element, final Ref<? super Icon> icon) {

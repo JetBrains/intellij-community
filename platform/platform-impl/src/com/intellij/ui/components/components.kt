@@ -108,14 +108,6 @@ private fun Label(
 }
 
 @ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL, method Row.link", level = DeprecationLevel.ERROR)
-fun Link(@Label text: String, style: UIUtil.ComponentStyle? = null, action: () -> Unit): JComponent {
-  val result = ActionLink(text) { action() }
-  style?.let { UIUtil.applyStyle(it, result) }
-  return result
-}
-
-@ApiStatus.ScheduledForRemoval
 @Deprecated("Use Kotlin UI DSL, methods like Row.text, Row.comment or Cell.comment", level = DeprecationLevel.ERROR)
 @JvmOverloads
 fun noteComponent(@Label note: String, linkHandler: ((url: String) -> Unit)? = null): JComponent {

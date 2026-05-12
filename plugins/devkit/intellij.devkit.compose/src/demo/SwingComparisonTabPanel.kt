@@ -13,8 +13,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -30,8 +32,15 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.JBPopupListener
+import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.IconLoader
+import com.intellij.ui.EditorNotificationPanel
+import com.intellij.ui.InlineBanner
 import com.intellij.ui.JBColor
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.BrowserLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
@@ -48,11 +57,16 @@ import org.jetbrains.jewel.bridge.JewelComposePanel
 import org.jetbrains.jewel.bridge.retrieveEditorColorScheme
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.DefaultButton
+import org.jetbrains.jewel.ui.component.DefaultInformationBanner
+import org.jetbrains.jewel.ui.component.DefaultSplitButton
 import org.jetbrains.jewel.ui.component.EditableListComboBox
 import org.jetbrains.jewel.ui.component.ExternalLink
 import org.jetbrains.jewel.ui.component.Icon
+import org.jetbrains.jewel.ui.component.InformationDefaultBanner
+import org.jetbrains.jewel.ui.component.InlineInformationBanner
 import org.jetbrains.jewel.ui.component.ListComboBox
 import org.jetbrains.jewel.ui.component.OutlinedButton
+import org.jetbrains.jewel.ui.component.OutlinedSplitButton
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.TextArea
 import org.jetbrains.jewel.ui.component.TextField
@@ -60,6 +74,8 @@ import org.jetbrains.jewel.ui.disabledAppearance
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.theme.textAreaStyle
 import org.jetbrains.jewel.ui.typography
+import java.awt.Dimension
+import java.awt.MouseInfo
 import javax.swing.BoxLayout
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JLabel
@@ -76,6 +92,10 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
       iconsRow()
       separator()
       linksRow()
+      separator()
+      inlineBannersRow()
+      separator()
+      bannersRow()
       separator()
       textFieldsRow()
       separator()
@@ -123,6 +143,80 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
       .layout(RowLayout.PARENT_GRID)
   }
 
+  private fun Panel.inlineBannersRow() {
+    row(DevkitComposeBundle.message("jewel.inline.banners.label")) {
+      val inlineBanner = InlineBanner(
+        messageText = DevkitComposeBundle.message("jewel.swing.inline.banners"),
+        status = EditorNotificationPanel.Status.Info,
+      )
+      inlineBanner.setGearAction("", {})
+      inlineBanner.addAction(DevkitComposeBundle.message("jewel.swing.inline.banner.action.a")) {}
+      inlineBanner.addAction(DevkitComposeBundle.message("jewel.swing.inline.banner.action.b")) {}
+      inlineBanner.addAction(DevkitComposeBundle.message("jewel.swing.inline.banner.action.c")) {}
+      inlineBanner.addAction(DevkitComposeBundle.message("jewel.swing.inline.banner.action.d")) {}
+
+      cell(
+        component = inlineBanner
+      )
+        .align(AlignY.CENTER)
+
+      compose {
+        Box {
+          InlineInformationBanner(
+            text = DevkitComposeBundle.message("jewel.compose.inline.banners"),
+            iconActions = {
+              iconAction(
+                AllIconsKeys.General.GearPlain,
+                "Close",
+                onClick = {},
+              )
+              iconAction(
+                AllIconsKeys.General.Close,
+                "Close",
+                onClick = {},
+              )
+            },
+            linkActions = {
+              action("Action A", onClick = {})
+              action("Action B", onClick = {})
+              action("Action C", onClick = {})
+              action("Action D", onClick = {})
+            }
+          )
+        }
+      }
+    }
+      .layout(RowLayout.PARENT_GRID)
+  }
+
+  private fun Panel.bannersRow() {
+    row(DevkitComposeBundle.message("jewel.banners.label")) {
+      val defaultBanner =
+        EditorNotificationPanel(EditorNotificationPanel.Status.Info).text(DevkitComposeBundle.message("jewel.swing.banners"))
+      defaultBanner.setCloseAction { }
+      cell(
+        component = defaultBanner
+      )
+        .align(AlignY.CENTER)
+
+      compose {
+        Box(Modifier.width(400.dp)) {
+          DefaultInformationBanner(
+            text = DevkitComposeBundle.message("jewel.compose.banners"),
+            iconActions = {
+              iconAction(
+                AllIconsKeys.General.Close,
+                "Close",
+                onClick = {},
+              )
+            },
+          )
+        }
+      }
+    }
+      .layout(RowLayout.PARENT_GRID)
+  }
+
   private val scrollingContainer =
     JBScrollPane(
       mainContent,
@@ -146,6 +240,62 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
         .align(AlignY.CENTER)
         .applyToComponent { putClientProperty(DarculaButtonUI.DEFAULT_STYLE_KEY, true) }
       compose { DefaultButton({}) { Text("Default Compose Button") } }
+
+      compose {
+        var showDefaultSplitButtonPopup by remember { mutableStateOf(false) }
+        var activeDefaultSplitButtonPopup by remember { mutableStateOf<JBPopup?>(null) }
+
+        DefaultSplitButton(
+          onClick = {},
+          expanded = showDefaultSplitButtonPopup,
+          onExpandedChange = { showDefaultSplitButtonPopup = it },
+        ) { Text("Default Split Button w/ JBPopup") }
+
+        LaunchedEffect(showDefaultSplitButtonPopup) {
+          if (showDefaultSplitButtonPopup) {
+            val mouseLocation = MouseInfo.getPointerInfo().location
+            val popup = JBPopupFactory.getInstance().createMessage(DevkitComposeBundle.message("jewel.compose.popup.example"))
+            popup.addListener(object : JBPopupListener {
+              override fun onClosed(event: LightweightWindowEvent) {
+                showDefaultSplitButtonPopup = false
+              }
+            })
+            activeDefaultSplitButtonPopup = popup
+            popup.show(RelativePoint.fromScreen(mouseLocation))
+          } else {
+            activeDefaultSplitButtonPopup?.cancel()
+            activeDefaultSplitButtonPopup = null
+          }
+        }
+      }
+
+      compose {
+        var showOutlinedSplitButtonPopup by remember { mutableStateOf(false) }
+        var activeOutlinedSplitButtonPopup by remember { mutableStateOf<JBPopup?>(null) }
+
+        OutlinedSplitButton(
+          onClick = {},
+          expanded = showOutlinedSplitButtonPopup,
+          onExpandedChange = { showOutlinedSplitButtonPopup = it },
+        ) { Text("Outlined Split Button w/ JBPopup") }
+
+        LaunchedEffect(showOutlinedSplitButtonPopup) {
+          if (showOutlinedSplitButtonPopup) {
+            val mouseLocation = MouseInfo.getPointerInfo().location
+            val popup = JBPopupFactory.getInstance().createMessage(DevkitComposeBundle.message("jewel.compose.popup.another.example"))
+            popup.addListener(object : JBPopupListener {
+              override fun onClosed(event: LightweightWindowEvent) {
+                showOutlinedSplitButtonPopup = false
+              }
+            })
+            activeOutlinedSplitButtonPopup = popup
+            popup.show(RelativePoint.fromScreen(mouseLocation))
+          } else {
+            activeOutlinedSplitButtonPopup?.cancel()
+            activeOutlinedSplitButtonPopup = null
+          }
+        }
+      }
     }
       .layout(RowLayout.PARENT_GRID)
   }
@@ -214,7 +364,8 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
     }
 
     row(DevkitComposeBundle.message("jewel.swing.titles.swing")) {
-      text(DevkitComposeBundle.message("jewel.swing.label.this.will.wrap.over.couple.rows"), maxLineLength = 30).component.font = JBFont.h1()
+      text(DevkitComposeBundle.message("jewel.swing.label.this.will.wrap.over.couple.rows"), maxLineLength = 30).component.font =
+        JBFont.h1()
     }
     row(DevkitComposeBundle.message("jewel.swing.titles.compose")) {
       compose {

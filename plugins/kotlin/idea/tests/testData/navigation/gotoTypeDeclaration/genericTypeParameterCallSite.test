@@ -1,0 +1,13 @@
+// FILE: before.kt
+fun <T> identity(x: T): T = x
+
+fun <U> usage(value: U) {
+    identity(val<caret>ue)
+}
+
+// FILE: after.kt
+fun <T> identity(x: T): T = x
+
+fun <<caret>U> usage(value: U) {
+    identity(value)
+}

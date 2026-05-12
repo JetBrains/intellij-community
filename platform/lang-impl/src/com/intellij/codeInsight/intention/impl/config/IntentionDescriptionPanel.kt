@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.config
 
 import com.intellij.codeInsight.CodeInsightBundle
@@ -11,11 +11,12 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx
 import com.intellij.openapi.options.ex.Settings
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.profile.codeInspection.ui.DescriptionEditorPane
 import com.intellij.profile.codeInspection.ui.readHTML
+import com.intellij.ui.JBSplitter
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SearchTextField
@@ -29,7 +30,6 @@ import com.intellij.ui.dsl.builder.VerticalComponentGap
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.NonNls
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.io.IOException
@@ -37,7 +37,6 @@ import java.net.URI
 import java.net.URISyntaxException
 import java.util.function.Consumer
 import javax.swing.JPanel
-import javax.swing.SwingUtilities
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.HyperlinkListener
 
@@ -48,42 +47,45 @@ class IntentionDescriptionPanel {
   private val myAfterPanel = JPanel()
   private val myBeforePanel = JPanel()
   private val myDescriptionBrowser = DescriptionEditorPane()
-  private val myBeforeUsagePanels: MutableList<IntentionUsagePanel> = ArrayList<IntentionUsagePanel>()
-  private val myAfterUsagePanels: MutableList<IntentionUsagePanel> = ArrayList<IntentionUsagePanel>()
+  private val myBeforeUsagePanels: MutableList<IntentionUsagePanel> = ArrayList()
+  private val myAfterUsagePanels: MutableList<IntentionUsagePanel> = ArrayList()
   private lateinit var myBeforeWrapperRow: Row
   private lateinit var myAfterWrapperRow: Row
 
   init {
     val descriptionScrollPane = ScrollPaneFactory.createScrollPane(myDescriptionBrowser)
-    descriptionScrollPane.setBorder(null)
+    descriptionScrollPane.border = JBUI.Borders.empty()
 
-    val examplePanel = panel {
+    val examplePanel = JBSplitter(true)
+    examplePanel.setResizeEnabled(false)
+    val gap = VerticalComponentGap(top = true, bottom = false)
+    examplePanel.firstComponent = panel {
       myBeforeWrapperRow = row {
         cell(myBeforePanel)
           .label(CodeInsightBundle.message("border.title.before"), LabelPosition.TOP)
           .align(Align.FILL)
           .applyToComponent {
-            putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.BOTH)
+            putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, gap)
           }
-      }.topGap(TopGap.SMALL)
-        .resizableRow()
+      }.topGap(TopGap.SMALL).resizableRow()
+    }
+    examplePanel.secondComponent = panel {
       myAfterWrapperRow = row {
         cell(myAfterPanel)
           .label(CodeInsightBundle.message("border.title.after"), LabelPosition.TOP)
           .align(Align.FILL)
           .applyToComponent {
-            putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.BOTH)
+            putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, gap)
           }
       }.resizableRow()
-    }.apply {
-      minimumSize = JBUI.size(100, 100)
     }
+    examplePanel.firstComponent.minimumSize = JBUI.size(100)
+    examplePanel.secondComponent.minimumSize = JBUI.size(100)
 
-    val mySplitter = OnePixelSplitter(true,
-                                      "IntentionDescriptionPanel.VERTICAL_DIVIDER_PROPORTION",
-                                      DIVIDER_PROPORTION_DEFAULT)
+    val mySplitter = OnePixelSplitter(true, "IntentionDescriptionPanel.VERTICAL_DIVIDER_PROPORTION", DIVIDER_PROPORTION_DEFAULT)
     mySplitter.setFirstComponent(descriptionScrollPane)
     mySplitter.setSecondComponent(examplePanel)
+    mySplitter.dividerPositionStrategy = Splitter.DividerPositionStrategy.KEEP_FIRST_SIZE
     this.component = mySplitter
 
     myDescriptionBrowser.addHyperlinkListener(HyperlinkListener { e: HyperlinkEvent? ->
@@ -96,7 +98,7 @@ class IntentionDescriptionPanel {
                 val settings = Settings.KEY.getData(context)
                 val searchTextField = SearchTextField.KEY.getData(context)
                 val configId = url.host
-                val search = url.getQuery()
+                val search = url.query
                 if (settings != null) {
                   val configurable = settings.find(configId)
                   settings.select(configurable).doWhenDone(Runnable {
@@ -104,7 +106,7 @@ class IntentionDescriptionPanel {
                   })
                 }
                 else {
-                  val project = context.getData<Project?>(CommonDataKeys.PROJECT)
+                  val project = context.getData(CommonDataKeys.PROJECT)
                   showSettingsDialog(project, configId, search)
                 }
               }
@@ -133,8 +135,6 @@ class IntentionDescriptionPanel {
       myAfterWrapperRow.visible(!actionMetaData.isSkipBeforeAfter)
       showUsages(myBeforePanel, myBeforeUsagePanels, actionMetaData.getExampleUsagesBefore())
       showUsages(myAfterPanel, myAfterUsagePanels, actionMetaData.getExampleUsagesAfter())
-
-      SwingUtilities.invokeLater(Runnable { component.revalidate() })
     }
     catch (e: IOException) {
       LOG.error(e)
@@ -143,17 +143,16 @@ class IntentionDescriptionPanel {
 
   fun reset(intentionCategory: String) {
     try {
-      myDescriptionBrowser
-        .readHTML(CodeInsightBundle.message("intention.settings.category.text", intentionCategory))
+      myDescriptionBrowser.readHTML(CodeInsightBundle.message("intention.settings.category.text", intentionCategory))
 
-      val beforeTemplate = PlainTextDescriptor(CodeInsightBundle.message("templates.intention.settings.category.before"), BEFORE_TEMPLATE)
+      val beforeTemplate =
+        PlainTextDescriptor(CodeInsightBundle.message("templates.intention.settings.category.before"), "before.java.template")
       showUsages(myBeforePanel, myBeforeUsagePanels, arrayOf(beforeTemplate))
-      val afterTemplate = PlainTextDescriptor(CodeInsightBundle.message("templates.intention.settings.category.after"), AFTER_TEMPLATE)
+      val afterTemplate =
+        PlainTextDescriptor(CodeInsightBundle.message("templates.intention.settings.category.after"), "after.java.template")
       myBeforeWrapperRow.visible(true)
       myAfterWrapperRow.visible(true)
       showUsages(myAfterPanel, myAfterUsagePanels, arrayOf(afterTemplate))
-
-      SwingUtilities.invokeLater(Runnable { component.revalidate() })
     }
     catch (e: IOException) {
       LOG.error(e)
@@ -167,8 +166,6 @@ class IntentionDescriptionPanel {
 
   companion object {
     private val LOG = Logger.getInstance(IntentionDescriptionPanel::class.java)
-    private const val BEFORE_TEMPLATE: @NonNls String = "before.java.template"
-    private const val AFTER_TEMPLATE: @NonNls String = "after.java.template"
     private const val DIVIDER_PROPORTION_DEFAULT = .25f
 
     @Throws(IOException::class)
@@ -181,7 +178,7 @@ class IntentionDescriptionPanel {
       val reuse = exampleUsages != null && panel.components.size == exampleUsages.size
       if (!reuse) {
         disposeUsagePanels(usagePanels)
-        panel.setLayout(GridBagLayout())
+        panel.layout = GridBagLayout()
         panel.removeAll()
         gb = GridBagConstraints()
         gb.anchor = GridBagConstraints.NORTHWEST

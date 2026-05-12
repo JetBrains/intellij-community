@@ -261,6 +261,8 @@ com.intellij.ide.file.BatchFileChangeListener
 - batchChangeStarted(com.intellij.openapi.project.Project,java.lang.String):V
 f:com.intellij.ide.impl.ProjectNewWindowDoNotAskOption
 - com.intellij.openapi.ui.DoNotAskOption
+f:com.intellij.ide.impl.ProjectUtilKt
+- sf:toOpenProjectTask(com.intellij.projectImport.ProjectOpenProcessor$ProjectOpenOptions):com.intellij.ide.impl.OpenProjectTask
 com.intellij.ide.navigationToolbar.NavBarModelExtension
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:additionalRoots(com.intellij.openapi.project.Project):java.util.Collection
@@ -302,13 +304,6 @@ f:com.intellij.ide.plugins.PluginManagerMain
 - s:getDisabledDependants(com.intellij.ide.plugins.PluginEnabler,java.util.List):java.util.Set
 - s:getDisabledPlugins(com.intellij.ide.plugins.PluginEnabler,java.util.List,java.lang.Boolean):java.util.Set
 - s:suggestToEnableInstalledDependantPlugins(com.intellij.ide.plugins.PluginEnabler,java.util.List,java.lang.Boolean):Z
-com.intellij.ide.plugins.PluginManagerMain$PluginEnabler
-- com.intellij.ide.plugins.PluginEnabler
-- disable(java.util.Collection):Z
-- disableById(java.util.Set):Z
-- enable(java.util.Collection):Z
-- enableById(java.util.Set):Z
-- isDisabled(com.intellij.openapi.extensions.PluginId):Z
 com.intellij.ide.plugins.PluginStateListener
 - a:install(com.intellij.ide.plugins.IdeaPluginDescriptor):V
 - uninstall(com.intellij.ide.plugins.IdeaPluginDescriptor):V
@@ -334,6 +329,38 @@ bf:com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate$$serializer
 - f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
 - f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
 - f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate):V
+f:com.intellij.ide.settings.RemoteSettingInfo
+- <init>(com.intellij.ide.settings.RemoteSettingInfo$Direction,Z):V
+- b:<init>(com.intellij.ide.settings.RemoteSettingInfo$Direction,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:getAllowedInCwm():Z
+- f:getDirection():com.intellij.ide.settings.RemoteSettingInfo$Direction
+e:com.intellij.ide.settings.RemoteSettingInfo$Direction
+- java.lang.Enum
+- sf:DoNotSynchronize:com.intellij.ide.settings.RemoteSettingInfo$Direction
+- sf:InitialFromBackend:com.intellij.ide.settings.RemoteSettingInfo$Direction
+- sf:InitialFromFrontend:com.intellij.ide.settings.RemoteSettingInfo$Direction
+- sf:OnlyFromBackend:com.intellij.ide.settings.RemoteSettingInfo$Direction
+- sf:OnlyFromFrontend:com.intellij.ide.settings.RemoteSettingInfo$Direction
+- s:getEntries():kotlin.enums.EnumEntries
+- f:getFrom():com.intellij.ide.settings.RemoteSettingInfo$Endpoint
+- f:getTo():com.intellij.ide.settings.RemoteSettingInfo$Endpoint
+- f:isOneDirectionOnly():Z
+- s:valueOf(java.lang.String):com.intellij.ide.settings.RemoteSettingInfo$Direction
+- s:values():com.intellij.ide.settings.RemoteSettingInfo$Direction[]
+e:com.intellij.ide.settings.RemoteSettingInfo$Endpoint
+- java.lang.Enum
+- sf:Backend:com.intellij.ide.settings.RemoteSettingInfo$Endpoint
+- sf:Frontend:com.intellij.ide.settings.RemoteSettingInfo$Endpoint
+- sf:None:com.intellij.ide.settings.RemoteSettingInfo$Endpoint
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.ide.settings.RemoteSettingInfo$Endpoint
+- s:values():com.intellij.ide.settings.RemoteSettingInfo$Endpoint[]
+com.intellij.ide.settings.RemoteSettingInfoProvider
+- sf:Companion:com.intellij.ide.settings.RemoteSettingInfoProvider$Companion
+- getPluginIdMapping(com.intellij.ide.settings.RemoteSettingInfo$Endpoint):java.util.Map
+- a:getRemoteSettingsInfo():java.util.Map
+f:com.intellij.ide.settings.RemoteSettingInfoProvider$Companion
+- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 f:com.intellij.ide.startup.StartupActionScriptManager
 - s:addActionCommand(com.intellij.ide.startup.StartupActionScriptManager$ActionCommand):V
 - s:addActionCommands(java.util.List):V
@@ -1162,12 +1189,12 @@ com.intellij.platform.DirectoryProjectGenerator
 - getHelpId():java.lang.String
 - a:getLogo():javax.swing.Icon
 - a:getName():java.lang.String
-- isPrimaryGenerator():Z
 - a:validate(java.lang.String):com.intellij.facet.ui.ValidationResult
 com.intellij.platform.HideableProjectGenerator
 - a:isHidden():Z
 f:com.intellij.platform.PlatformProjectOpenProcessor
 - openProjectAsync(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,Z,kotlin.coroutines.Continuation):java.lang.Object
+- openProjectAsync(com.intellij.openapi.vfs.VirtualFile,com.intellij.projectImport.ProjectOpenProcessor$ProjectOpenOptions,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.platform.PlatformProjectOpenProcessor$Companion
 - f:runDirectoryProjectConfigurators(java.nio.file.Path,com.intellij.openapi.project.Project,Z,kotlin.coroutines.Continuation):java.lang.Object
 - f:runDirectoryProjectConfigurators(java.nio.file.Path,com.intellij.openapi.project.Project,Z,Z,kotlin.coroutines.Continuation):java.lang.Object

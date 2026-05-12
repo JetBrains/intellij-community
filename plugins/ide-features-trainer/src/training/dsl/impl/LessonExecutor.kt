@@ -156,13 +156,13 @@ internal class LessonExecutor(val lesson: KLesson,
   override fun dispose() {
     if (hasBeenStopped) return
     ThreadingAssertions.assertEventDispatchThread()
+    hasBeenStopped = true
     val lessonPassed = currentTaskIndex == taskActions.size
     val visualIndex = if(lessonPassed) currentVisualIndex else (taskActions[currentTaskIndex].taskVisualIndex ?: 0)
     lesson.onStop(project, lessonPassed, currentTaskIndex, visualIndex, internalProblems)
     continueHighlighting.set(false)
     clearRestore()
     disposeRecorders()
-    hasBeenStopped = true
     taskActions.clear()
   }
 

@@ -12,6 +12,7 @@ public class MarkdownDocumentationCommentsMigrationInspectionTest extends LightJ
 
   public void testMarkdownDocumentationCommentsMigration() { check(); }
   public void testReferencesNoEscape() { check(); }
+  public void testCodeBlocks() { check(); }
 
 
   @Override

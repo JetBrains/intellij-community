@@ -41,12 +41,11 @@ class AddNameToArgumentIntention :
     override fun getPresentation(
         context: ActionContext,
         element: KtValueArgument,
-    ): Presentation? {
-        val (argumentName) = getElementContext(context, element)
-            ?: return null
-        return Presentation.of(KotlinBundle.message("add.0.to.argument", argumentName))
-            .withPriority(PriorityAction.Priority.LOW)
-    }
+    ): Presentation? =
+        getElementContext(context, element)?.let {
+            Presentation.of(KotlinBundle.message("add.0.to.argument", it.argumentName))
+                .withPriority(PriorityAction.Priority.LOW)
+        }
 
     override fun getApplicableRanges(element: KtValueArgument): List<TextRange> =
         ApplicabilityRanges.valueArgumentExcludingLambda(element)

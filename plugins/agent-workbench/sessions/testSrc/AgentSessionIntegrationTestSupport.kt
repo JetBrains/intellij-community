@@ -14,6 +14,7 @@ import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.common.session.AgentSubAgent
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionActivityHintPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
@@ -242,12 +243,14 @@ fun threadsChangedEvent(
   scopedPaths: Set<String>? = null,
   threadIds: Set<String>? = null,
   activityHintsByThreadId: Map<String, AgentThreadActivity> = emptyMap(),
+  activityHintPolicy: AgentSessionActivityHintPolicy = AgentSessionActivityHintPolicy.OPTIMISTIC,
 ): AgentSessionSourceUpdateEvent {
   return AgentSessionSourceUpdateEvent(
     type = AgentSessionSourceUpdate.THREADS_CHANGED,
     scopedPaths = scopedPaths,
     threadIds = threadIds,
     activityHintsByThreadId = activityHintsByThreadId,
+    activityHintPolicy = activityHintPolicy,
   )
 }
 
@@ -255,12 +258,14 @@ fun hintsChangedEvent(
   scopedPaths: Set<String>? = null,
   threadIds: Set<String>? = null,
   activityHintsByThreadId: Map<String, AgentThreadActivity> = emptyMap(),
+  activityHintPolicy: AgentSessionActivityHintPolicy = AgentSessionActivityHintPolicy.OPTIMISTIC,
 ): AgentSessionSourceUpdateEvent {
   return AgentSessionSourceUpdateEvent(
     type = AgentSessionSourceUpdate.HINTS_CHANGED,
     scopedPaths = scopedPaths,
     threadIds = threadIds,
     activityHintsByThreadId = activityHintsByThreadId,
+    activityHintPolicy = activityHintPolicy,
   )
 }
 

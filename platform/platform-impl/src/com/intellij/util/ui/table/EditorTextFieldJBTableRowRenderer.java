@@ -5,7 +5,6 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.EditorTextFieldCellRenderer;
 import org.jetbrains.annotations.NotNull;
@@ -15,12 +14,6 @@ import javax.swing.JComponent;
 import javax.swing.JTable;
 
 public abstract class EditorTextFieldJBTableRowRenderer extends EditorTextFieldCellRenderer implements JBTableRowRenderer {
-
-  /** @deprecated Use {@link EditorTextFieldJBTableRowRenderer#EditorTextFieldJBTableRowRenderer(Project, Language, Disposable)}*/
-  @Deprecated(forRemoval = true)
-  protected EditorTextFieldJBTableRowRenderer(@Nullable Project project, @Nullable FileType fileType, @NotNull Disposable parent) {
-    super(project, fileType, parent);
-  }
 
   protected EditorTextFieldJBTableRowRenderer(@Nullable Project project, @Nullable Language language, @NotNull Disposable parent) {
     super(project, language, parent);

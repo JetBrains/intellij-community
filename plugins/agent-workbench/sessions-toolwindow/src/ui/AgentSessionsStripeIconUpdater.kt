@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.IconManager
 import com.intellij.util.SingleAlarm
-import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
 import javax.swing.Icon
 
@@ -22,8 +21,11 @@ internal class AgentSessionsStripeIconUpdater(
   scope: CoroutineScope,
 ) {
   private val emptyIcon: Icon = AllIcons.Toolwindows.ToolWindowMessages
-  private val badgedIcon: Icon by lazy {
-    IconManager.getInstance().withIconBadge(emptyIcon, JBUI.CurrentTheme.IconBadge.WARNING)
+  private val attentionBadgedIcon: Icon by lazy {
+    IconManager.getInstance().withIconBadge(emptyIcon, AgentSessionsStripeBadge.ATTENTION.color())
+  }
+  private val doneBadgedIcon: Icon by lazy {
+    IconManager.getInstance().withIconBadge(emptyIcon, AgentSessionsStripeBadge.DONE.color())
   }
 
   private val alarm: SingleAlarm = SingleAlarm.singleEdtAlarm(
@@ -32,7 +34,13 @@ internal class AgentSessionsStripeIconUpdater(
   ) {
     val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(AGENT_SESSIONS_TOOL_WINDOW_ID) ?: return@singleEdtAlarm
     val summary = project.service<AgentSessionsActivityService>().latestSummary()
-    toolWindow.setIcon(if (summary.attentionRows.isNotEmpty()) badgedIcon else emptyIcon)
+    toolWindow.setIcon(
+      when (summary.stripeBadge()) {
+        AgentSessionsStripeBadge.ATTENTION -> attentionBadgedIcon
+        AgentSessionsStripeBadge.DONE -> doneBadgedIcon
+        null -> emptyIcon
+      }
+    )
   }
 
   fun scheduleUpdate() {

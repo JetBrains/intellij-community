@@ -1,11 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
-import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
-import java.nio.file.Path;
 
 public final class ReadOnlyAttributeUtil {
   /**
@@ -26,11 +24,5 @@ public final class ReadOnlyAttributeUtil {
     if (file.isWritable() != writable) {
       file.setWritable(writable);
     }
-  }
-
-  /** @deprecated use {@link NioFiles#setReadOnly} */
-  @Deprecated(forRemoval = true)
-  public static void setReadOnlyAttribute(String path, boolean readOnlyStatus) throws IOException {
-    NioFiles.setReadOnly(Path.of(path), readOnlyStatus);
   }
 }

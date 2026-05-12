@@ -26,6 +26,12 @@ import static com.intellij.openapi.application.ActionsKt.isReadAllowedButNotWrit
  * @see CoroutinesKt#readAction
  */
 public abstract class ReadAction<T> extends BaseActionRunnable<T> {
+  /**
+   * @deprecated use {@link #runBlocking(ThrowableRunnable)} or {@link #computeBlocking(ThrowableComputable)} instead of creating subclasses
+   */
+  @Deprecated
+  protected ReadAction() {
+  }
 
   /**
    * @deprecated use {@link #runBlocking(ThrowableRunnable)} or {@link #computeBlocking(ThrowableComputable)} instead

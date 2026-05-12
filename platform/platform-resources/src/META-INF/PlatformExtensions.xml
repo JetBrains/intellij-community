@@ -660,6 +660,7 @@
                         serviceImplementation="com.intellij.ide.PlatformIdeServiceImpl"/>
 
     <postStartupActivity implementation="com.intellij.ide.ProjectWindowCustomizerListener" order="last"/>
+    <backgroundPostStartupActivity implementation="com.intellij.ide.SystemDockMenuPostStartupActivity"/>
     <backgroundPostStartupActivity implementation="com.intellij.util.singleProduct.MigrationStartupActivity"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.util.singleProduct.MigrateToSingleProductCollector"/>
 

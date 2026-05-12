@@ -64,7 +64,7 @@ class IncorrectPceHandlingWhenPceCaughtImplicitlyTests {
       throwPce()
     }
     catch (<error descr="'com.intellij.openapi.progress.ProcessCanceledException' must be rethrown. It is thrown by 'throwPce()'.">e</error>: Exception) {
-      LOG.<error descr="'com.intellij.openapi.progress.ProcessCanceledException' must not be logged. It is thrown by 'throwPce()'.">error("Error occurred: " + e.message)</error>
+      LOG.error("Error occurred: " + e.message)
     }
   }
 
@@ -173,7 +173,7 @@ class IncorrectPceHandlingWhenPceCaughtImplicitlyTests {
       throwPceInheritor()
     }
     catch (<error descr="'com.intellij.openapi.progress.ProcessCanceledException' inheritor must be rethrown. It is thrown by 'throwPceInheritor()'.">e</error>: Exception) {
-      LOG.<error descr="'com.intellij.openapi.progress.ProcessCanceledException' inheritor must not be logged. It is thrown by 'throwPceInheritor()'.">error("Error occurred: " + e.message)</error>
+      LOG.error("Error occurred: " + e.message)
     }
   }
 

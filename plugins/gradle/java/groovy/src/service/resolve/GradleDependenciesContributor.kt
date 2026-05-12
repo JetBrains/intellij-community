@@ -94,7 +94,8 @@ class GradleDependenciesContributor : GradleMethodContextContributor {
     return when {
       isInheritor(type, JAVA_LANG_CHAR_SEQUENCE)
       || isInheritor(type, JAVA_UTIL_MAP) -> GRADLE_API_ARTIFACTS_EXTERNAL_MODULE_DEPENDENCY
-      isInheritor(type, GRADLE_API_PROJECT) -> GRADLE_API_ARTIFACTS_PROJECT_DEPENDENCY
+      isInheritor(type, GRADLE_API_PROJECT)
+      || isInheritor(type, GRADLE_API_ARTIFACTS_PROJECT_DEPENDENCY) -> GRADLE_API_ARTIFACTS_PROJECT_DEPENDENCY
       isInheritor(type, GRADLE_API_FILE_FILE_COLLECTION) -> GRADLE_API_ARTIFACTS_SELF_RESOLVING_DEPENDENCY
       else -> null
     }

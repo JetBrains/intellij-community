@@ -203,11 +203,6 @@ public final class EditorEventMulticasterImpl implements EditorEventMulticasterE
   }
 
   @Override
-  public void addSelectionListener(@NotNull SelectionListener listener) {
-    mySelectionMulticaster.addListener(listener);
-  }
-
-  @Override
   public void addSelectionListener(@NotNull SelectionListener listener, @NotNull Disposable parentDisposable) {
     mySelectionMulticaster.addListener(listener, parentDisposable);
   }

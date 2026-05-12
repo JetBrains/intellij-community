@@ -1,10 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.task;
 
-import com.google.gson.GsonBuilder;
-import com.intellij.build.SyncViewManager;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.target.TargetProgressIndicator;
 import com.intellij.execution.target.local.LocalTargetEnvironment;
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
@@ -12,35 +9,27 @@ import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
-import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
-import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
-import com.intellij.openapi.externalSystem.task.TaskCallback;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
-import com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.task.RunConfigurationTaskState;
 import com.intellij.util.containers.ContainerUtil;
-import org.gradle.api.Task;
 import org.gradle.tooling.CancellationToken;
 import org.gradle.tooling.CancellationTokenSource;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.data.CompositeBuildData;
@@ -55,16 +44,12 @@ import org.jetbrains.plugins.gradle.service.project.GradleTasksIndices;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleBuildParticipant;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
-import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLine;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper.DISPATCH_ADDR_SYS_PROP;
@@ -412,71 +397,5 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     if (GradleVersionUtil.isGradleAtLeast(context.getGradleVersion(), "7.6")) {
       settings.setBuiltInTestEventsUsed(true);
     }
-  }
-
-  /**
-   * @deprecated Use {@link ExternalSystemUtil#runTask(TaskExecutionSpec)} directly.
-   */
-  @Deprecated(forRemoval = true)
-  public static void runCustomTaskScript(@NotNull Project project,
-                                   @NotNull @Nls String executionName,
-                                   @NotNull String projectPath,
-                                   @NotNull String gradlePath,
-                                   @NotNull ProgressExecutionMode progressExecutionMode,
-                                   @Nullable TaskCallback callback,
-                                   @NotNull String initScript,
-                                   @NotNull String taskName) {
-    UserDataHolderBase userData = new UserDataHolderBase();
-    userData.putUserData(INIT_SCRIPT_KEY, initScript);
-    userData.putUserData(ExternalSystemRunConfiguration.PROGRESS_LISTENER_KEY, SyncViewManager.class);
-
-    String gradleVmOptions = GradleSettings.getInstance(project).getGradleVmOptions();
-    ExternalSystemTaskExecutionSettings settings = new ExternalSystemTaskExecutionSettings();
-    settings.setExecutionName(executionName);
-    settings.setExternalProjectPath(projectPath);
-    String taskPrefix = gradlePath.endsWith(":") ? gradlePath : gradlePath + ':';
-    settings.setTaskNames(Collections.singletonList(taskPrefix + taskName));
-    settings.setVmOptions(gradleVmOptions);
-    settings.setExternalSystemIdString(GradleConstants.SYSTEM_ID.getId());
-    ExternalSystemUtil.runTask(settings, DefaultRunExecutor.EXECUTOR_ID, project, GradleConstants.SYSTEM_ID, callback,
-                               progressExecutionMode, false, userData);
-  }
-
-  /**
-   * @deprecated Use {@link ExternalSystemUtil#runTask(TaskExecutionSpec)} directly.
-   */
-  @Deprecated(forRemoval = true)
-  public static void runCustomTask(@NotNull Project project,
-                                   @NotNull @Nls String executionName,
-                                   @NotNull Class<? extends Task> taskClass,
-                                   @NotNull String projectPath,
-                                   @NotNull String gradlePath,
-                                   @Nullable String taskConfiguration,
-                                   @NotNull ProgressExecutionMode progressExecutionMode,
-                                   @Nullable TaskCallback callback,
-                                   @NotNull Set<Class<?>> toolingExtensionClasses) {
-    String taskName = taskClass.getSimpleName();
-    String taskType = taskClass.getName();
-    Set<Class<?>> tools = new HashSet<>(toolingExtensionClasses);
-    tools.add(taskClass);
-    tools.add(GsonBuilder.class);
-    String initScript = GradleInitScriptUtil.loadTaskInitScript(gradlePath, taskName, taskType, tools, taskConfiguration);
-    runCustomTaskScript(project, executionName, projectPath, gradlePath, progressExecutionMode, callback, initScript, taskName);
-  }
-
-  /**
-   * @deprecated Use {@link ExternalSystemUtil#runTask(TaskExecutionSpec)} directly.
-   */
-  @Deprecated(forRemoval = true)
-  public static void runCustomTask(@NotNull Project project,
-                                   @NotNull @Nls String executionName,
-                                   @NotNull Class<? extends Task> taskClass,
-                                   @NotNull String projectPath,
-                                   @NotNull String gradlePath,
-                                   @Nullable String taskConfiguration,
-                                   @NotNull ProgressExecutionMode progressExecutionMode,
-                                   @Nullable TaskCallback callback) {
-    runCustomTask(project, executionName, taskClass, projectPath, gradlePath, taskConfiguration, progressExecutionMode, callback,
-                  new HashSet<>());
   }
 }

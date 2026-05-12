@@ -309,7 +309,6 @@ f:com.intellij.ide.ui.UISettings
 - com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
 - sf:ANIMATION_DURATION:I
 - sf:Companion:com.intellij.ide.ui.UISettings$Companion
-- EDITOR_TAB_LIMIT:I
 - sf:TABS_NONE:I
 - <init>():V
 - <init>(com.intellij.ide.ui.NotRoamableUiSettings):V
@@ -847,7 +846,6 @@ a:com.intellij.openapi.actionSystem.ActionGroup
 - f:setPopup(Z):V
 - f:setSearchable(Z):V
 a:com.intellij.openapi.actionSystem.ActionManager
-- addAnActionListener(com.intellij.openapi.actionSystem.ex.AnActionListener,com.intellij.openapi.Disposable):V
 - a:addTimerListener(com.intellij.openapi.actionSystem.TimerListener):V
 - a:createActionPopupMenu(java.lang.String,com.intellij.openapi.actionSystem.ActionGroup):com.intellij.openapi.actionSystem.ActionPopupMenu
 - a:createActionToolbar(java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,Z):com.intellij.openapi.actionSystem.ActionToolbar
@@ -987,7 +985,6 @@ c:com.intellij.openapi.actionSystem.AnActionEvent
 - com.intellij.ui.PlaceProvider
 - <init>(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.actionSystem.Presentation,java.lang.String,com.intellij.openapi.actionSystem.ActionUiKind,java.awt.event.InputEvent,I,com.intellij.openapi.actionSystem.ActionManager):V
 - <init>(java.awt.event.InputEvent,com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.Presentation,com.intellij.openapi.actionSystem.ActionManager,I):V
-- <init>(java.awt.event.InputEvent,com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.Presentation,com.intellij.openapi.actionSystem.ActionManager,I,Z,Z):V
 - accept(com.intellij.openapi.actionSystem.AnActionEventVisitor):V
 - s:createEvent(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.actionSystem.Presentation,java.lang.String,com.intellij.openapi.actionSystem.ActionUiKind,java.awt.event.InputEvent):com.intellij.openapi.actionSystem.AnActionEvent
 - s:createEvent(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.actionSystem.Presentation,java.lang.String,com.intellij.openapi.actionSystem.ActionUiKind,java.awt.event.InputEvent):com.intellij.openapi.actionSystem.AnActionEvent
@@ -1984,7 +1981,6 @@ com.intellij.openapi.editor.colors.EditorColorsScheme
 - a:getFont(com.intellij.openapi.editor.colors.EditorFontType):java.awt.Font
 - a:getFontPreferences():com.intellij.openapi.editor.colors.FontPreferences
 - a:getLineSpacing():F
-- getQuickDocFontSize():com.intellij.openapi.options.FontSize
 - isUseAppFontPreferencesInEditor():Z
 - isUseEditorFontPreferencesInConsole():Z
 - a:isUseLigatures():Z
@@ -2002,7 +1998,6 @@ com.intellij.openapi.editor.colors.EditorColorsScheme
 - a:setFontPreferences(com.intellij.openapi.editor.colors.FontPreferences):V
 - a:setLineSpacing(F):V
 - a:setName(java.lang.String):V
-- setQuickDocFontSize(com.intellij.openapi.options.FontSize):V
 - setUseAppFontPreferencesInEditor():V
 - setUseEditorFontPreferencesInConsole():V
 - a:setUseLigatures(Z):V
@@ -2118,7 +2113,6 @@ com.intellij.openapi.editor.event.EditorEventMulticaster
 - a:addEditorMouseListener(com.intellij.openapi.editor.event.EditorMouseListener,com.intellij.openapi.Disposable):V
 - a:addEditorMouseMotionListener(com.intellij.openapi.editor.event.EditorMouseMotionListener):V
 - a:addEditorMouseMotionListener(com.intellij.openapi.editor.event.EditorMouseMotionListener,com.intellij.openapi.Disposable):V
-- a:addSelectionListener(com.intellij.openapi.editor.event.SelectionListener):V
 - a:addSelectionListener(com.intellij.openapi.editor.event.SelectionListener,com.intellij.openapi.Disposable):V
 - a:addVisibleAreaListener(com.intellij.openapi.editor.event.VisibleAreaListener):V
 - addVisibleAreaListener(com.intellij.openapi.editor.event.VisibleAreaListener,com.intellij.openapi.Disposable):V
@@ -2554,11 +2548,6 @@ com.intellij.openapi.vcs.ElementStatusTracker
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.ElementStatusTracker
 com.intellij.openapi.vcs.FileStatus
 - sf:ADDED:com.intellij.openapi.vcs.FileStatus
-- sf:COLOR_MERGE:java.awt.Color
-- sf:COLOR_MISSING:java.awt.Color
-- sf:COLOR_MODIFIED:java.awt.Color
-- sf:COLOR_OUT_OF_DATE:java.awt.Color
-- sf:COLOR_UNKNOWN:java.awt.Color
 - sf:DELETED:com.intellij.openapi.vcs.FileStatus
 - sf:DELETED_FROM_FS:com.intellij.openapi.vcs.FileStatus
 - sf:HIJACKED:com.intellij.openapi.vcs.FileStatus

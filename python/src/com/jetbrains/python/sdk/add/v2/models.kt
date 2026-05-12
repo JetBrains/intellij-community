@@ -310,7 +310,7 @@ internal val <P : PathHolder> PythonAddInterpreterModel<P>.existingSdks: List<Sd
   get() = allInterpreters.value?.filterIsInstance<ExistingSelectableInterpreter<P>>()?.map { it.sdkWrapper.sdk } ?: emptyList()
 
 internal suspend fun PythonAddInterpreterModel<*>.getBasePath(module: Module?): Path = withContext(Dispatchers.IO) {
-  val pyProjectTomlBased = module?.let { PyProjectToml.findFile(it)?.toNioPathOrNull()?.parent }
+  val pyProjectTomlBased = module?.let { PyProjectToml.findPyProjectTomlFile(it)?.virtualFile?.toNioPathOrNull()?.parent }
 
   pyProjectTomlBased ?: module?.baseDir?.path?.let { Path.of(it) } ?: projectPathFlows.projectPathWithDefault.first()
 }

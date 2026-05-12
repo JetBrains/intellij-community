@@ -33,6 +33,10 @@ public class ExtractMethodObject4DebuggerReflectionTest extends LightJavaCodeIns
     doTest("instance.field = 50");
   }
 
+  public void testAccessAndUpdateField() {
+    doTest("instance.field = instance.field + 1");
+  }
+
   public void testAccessConstructor() {
     doTest("new WithReflectionAccess(50)");
   }

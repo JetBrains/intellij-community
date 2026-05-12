@@ -1237,14 +1237,6 @@
                      language="kotlin"
                      key="inspection.unused.lambda.expression.body.display.name" bundle="messages.KotlinBundle"/>
 
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.KotlinInternalInJavaInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.java.interop.issues"
-                     enabledByDefault="true"
-                     level="ERROR"
-                     language="JAVA"
-                     key="inspection.kotlin.internal.in.java.display.name" bundle="messages.KotlinBundle"/>
-
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.KotlinSealedInheritorsInJavaInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.java.interop.issues"

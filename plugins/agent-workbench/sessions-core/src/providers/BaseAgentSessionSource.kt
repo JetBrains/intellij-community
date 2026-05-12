@@ -1,13 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.core.providers
 
+import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.map
 import java.util.concurrent.ConcurrentHashMap
 
 abstract class BaseAgentSessionSource(
@@ -21,10 +21,9 @@ abstract class BaseAgentSessionSource(
    */
   protected val readTracker: ConcurrentHashMap<String, Long> = ConcurrentHashMap()
 
-  private val readStateUpdates = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+  private val readStateUpdates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(extraBufferCapacity = 1)
 
-  protected val readStateUpdateEvents: Flow<AgentSessionSourceUpdateEvent> =
-    readStateUpdates.map { AgentSessionSourceUpdateEvent(type = AgentSessionSourceUpdate.HINTS_CHANGED) }
+  protected val readStateUpdateEvents: Flow<AgentSessionSourceUpdateEvent> = readStateUpdates
 
   @Volatile
   protected var activeThreadId: String? = null
@@ -35,23 +34,42 @@ abstract class BaseAgentSessionSource(
   }
 
   final override fun markThreadAsRead(threadId: String, updatedAt: Long) {
-    readTracker.merge(threadId, updatedAt, ::maxOf)
-    readStateUpdates.tryEmit(Unit)
+    var advanced = false
+    readTracker.compute(threadId) { _, current ->
+      if (current == null || updatedAt > current) {
+        advanced = true
+        updatedAt
+      }
+      else {
+        current
+      }
+    }
+    if (advanced) {
+      readStateUpdates.tryEmit(
+        AgentSessionSourceUpdateEvent(
+          type = AgentSessionSourceUpdate.HINTS_CHANGED,
+          threadIds = setOf(threadId),
+        )
+      )
+    }
   }
 
   /**
-   * If any thread in [threads] matches [activeThreadId], merge its updatedAt
-   * into [readTracker]. Stops at first match.
+   * If any thread in [threads] matches [activeThreadId] and [shouldRemember] accepts it,
+   * merge its updatedAt into [readTracker]. Stops at first matching id.
    */
   protected inline fun <T> rememberActiveThreadRead(
     threads: Iterable<T>,
     id: (T) -> String,
     updatedAt: (T) -> Long,
+    shouldRemember: (T) -> Boolean = { true },
   ) {
     val currentActiveId = activeThreadId ?: return
     for (thread in threads) {
       if (id(thread) == currentActiveId) {
-        readTracker.merge(currentActiveId, updatedAt(thread), ::maxOf)
+        if (shouldRemember(thread)) {
+          readTracker.merge(currentActiveId, updatedAt(thread), ::maxOf)
+        }
         return
       }
     }
@@ -100,4 +118,9 @@ abstract class BaseAgentSessionSource(
   }
 
   protected abstract suspend fun listThreads(path: String, openProject: Project?): List<AgentSessionThread>
+}
+
+fun resolveReadTrackedActivity(readTracker: Map<String, Long>, threadId: String, updatedAt: Long): AgentThreadActivity {
+  val lastSeenAt = readTracker[threadId] ?: return AgentThreadActivity.READY
+  return if (updatedAt > lastSeenAt) AgentThreadActivity.UNREAD else AgentThreadActivity.READY
 }

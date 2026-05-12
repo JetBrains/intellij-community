@@ -27,16 +27,4 @@ public final class JavaLexer extends LexerAdapter {
   public static boolean isKeyword(@NotNull String id, @NotNull LanguageLevel level) {
     return PsiUtil.isKeyword(id, level);
   }
-
-  /**
-   * @param id keyword candidate
-   * @param level current language level
-   * @return true if a given id is a keyword at a given language level
-   * @deprecated use {@link PsiUtil#isSoftKeyword(CharSequence, LanguageLevel)}
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public static boolean isSoftKeyword(@NotNull CharSequence id, @NotNull LanguageLevel level) {
-    return PsiUtil.isSoftKeyword(id, level);
-  }
 }

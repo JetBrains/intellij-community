@@ -708,12 +708,6 @@ public class HighlightInfo implements Segment {
 
     @NotNull Builder problemGroup(@NotNull ProblemGroup problemGroup);
 
-    /**
-     * @deprecated Do not use. Inspections set this id automatically when run
-     */
-    @Deprecated(forRemoval = true)
-    @NotNull Builder inspectionToolId(@NotNull String inspectionTool);
-
     // only one allowed
     @NotNull Builder description(@DetailedDescription @NotNull String description);
 

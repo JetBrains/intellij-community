@@ -19,7 +19,7 @@ public class PsiJavaCodeReferenceCodeFragmentImpl extends PsiCodeFragmentImpl im
   private final boolean myIsClassesAccepted;
 
   public PsiJavaCodeReferenceCodeFragmentImpl(@NotNull Project project,
-                                              final boolean isPhysical,
+                                              boolean isPhysical,
                                               @NonNls @NotNull String name,
                                               @NotNull CharSequence text,
                                               boolean isClassesAccepted,

@@ -23,6 +23,7 @@ import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.PySubscriptionExpression;
 import com.jetbrains.python.psi.PyTypedElement;
 import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyKeywordArgumentProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
@@ -81,7 +82,7 @@ public final class KeywordArgumentCompletionUtil {
                                                                      @NotNull TypeEvalContext context) {
     List<String> result = new ArrayList<>();
     if (type.isCallable()) {
-      final List<PyCallableParameter> parameters = type.getParameters(context);
+      List<PyCallableParameter> parameters = type.getUnpackedParameters(context);
       if (parameters != null) {
         int indexOfPySlashParameter = getIndexOfPySlashParameter(parameters);
         for (PyCallableParameter parameter : parameters.subList(indexOfPySlashParameter + 1, parameters.size())) {

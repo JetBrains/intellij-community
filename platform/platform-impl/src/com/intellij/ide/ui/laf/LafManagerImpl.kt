@@ -233,11 +233,6 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     eventDispatcher.addListener(listener)
   }
 
-  @Suppress("removal")
-  override fun removeLafManagerListener(listener: LafManagerListener) {
-    eventDispatcher.removeListener(listener)
-  }
-
   override fun initializeComponent() {
     // must be after updateUI
     isFirstSetup = false

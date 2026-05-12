@@ -787,4 +787,72 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
                _ = Model(a2="value")
                """);
   }
+
+  // PY-88727
+  public void testFixedTupleArgsTooFewArguments() {
+    doTestByText("""
+                   def foo(*args: *tuple[int, str, float]) -> None: ...
+
+                   foo(1, "hello", 3.14)
+                   foo(1, "hello"<warning descr="Parameter '__p2' unfilled">)</warning>
+                   foo(1<warning descr="Parameter '__p1' unfilled"><warning descr="Parameter '__p2' unfilled">)</warning></warning>
+                   """);
+  }
+
+  // PY-88727
+  public void testFixedTupleArgsTooManyArguments() {
+    doTestByText("""
+                   def foo(*args: *tuple[int, str]) -> None: ...
+
+                   foo(1, "hello")
+                   foo(1, "hello", <warning descr="Unexpected argument">3.14</warning>)
+                   """);
+  }
+
+  // PY-88727
+  public void testFixedTupleArgsWithVariadicMiddleArgCount() {
+    doTestByText("""
+                   def foo(*args: *tuple[int, *tuple[str, ...], float]) -> None: ...
+                   
+                   foo(<warning descr="Parameter '__p0' unfilled"><warning descr="Parameter '__p2' unfilled">)</warning></warning>
+                   foo(1<warning descr="Parameter '__p2' unfilled">)</warning>
+                   foo(1, 3.14)
+                   foo(1, "a", 3.14)
+                   foo(1, "a", "b", "c", 3.14)
+                   """);
+  }
+
+  // PY-88727
+  public void testFixedTupleArgsWithVariadicAtStart() {
+    doTestByText("""
+                   def foo(*args: *tuple[*tuple[int, ...], str, bool]) -> None: ...
+                   
+                   foo(<warning descr="Parameter '__p1' unfilled"><warning descr="Parameter '__p2' unfilled">)</warning></warning>
+                   foo("a"<warning descr="Parameter '__p2' unfilled">)</warning>
+                   foo("a", True)
+                   foo(1, "a", True)
+                   foo(1, 2, 3, "a", True)
+                   """);
+  }
+
+  // PY-76847
+  public void testParamSpecSubstitutedWithUnpackedTypedDictKwargs() {
+    doTestByText("""
+                   from typing import Callable, TypedDict, Unpack
+                   
+                   def g[**P](fn: Callable[P, None]) -> Callable[P, None]:
+                       return fn
+                   
+                   class Person(TypedDict):
+                       name: str
+                       age: int
+                   
+                   def create_person(**kwargs: Unpack[Person]):
+                       pass
+                   
+                   g(create_person)(name=""<warning descr="Parameter 'age' unfilled">)</warning>
+                   g(create_person)(name="", age=30)
+                   g(create_person)(name="", age=30, <warning descr="Unexpected argument">position="CEO"</warning>)
+                   """);
+  }
 }

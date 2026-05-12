@@ -6,8 +6,8 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.PyRequirementParser
-import com.jetbrains.python.packaging.conda.environmentYml.format.CondaEnvironmentYmlParser
-import com.jetbrains.python.packaging.conda.environmentYml.format.EnvironmentYmlModifier
+import com.intellij.python.community.impl.conda.environmentYml.format.CondaEnvironmentYmlParser
+import com.intellij.python.community.impl.conda.environmentYml.format.EnvironmentYmlModifier
 import com.intellij.testFramework.common.timeoutRunBlocking
 import org.junit.jupiter.api.Assertions
 import java.io.File

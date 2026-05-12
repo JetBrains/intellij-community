@@ -212,7 +212,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     }
 
     if (descriptor != null) {
-      descriptor.jarFiles = if (AppMode.isRunningFromDevBuild()) {
+      descriptor.ownClassPath = if (AppMode.isRunningFromDevBuild()) {
         /* when running from dev build, content modules with package prefix may be put to separate JARs under jar-cache directory, and the
            plugin loading code expects them to be in the main plugin classpath, so we need to add them explicitly */
         val modulesWithPackagePrefix = descriptor.contentModules.asSequence().filter { it.packagePrefix != null }.mapTo(HashSet()) { it.moduleId.name }

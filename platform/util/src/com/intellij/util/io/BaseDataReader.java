@@ -137,13 +137,6 @@ public abstract class BaseDataReader {
 
 
     int getTimeToSleep(boolean wasActive);
-
-    /**
-     * @deprecated use {@link #NON_BLOCKING} instead
-     */
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval
-    SleepingPolicy SIMPLE = NON_BLOCKING;
   }
 
   protected void doRun() {

@@ -4,7 +4,6 @@
 package com.intellij.ide
 
 import com.intellij.configurationStore.ProjectStorePathManager
-import com.intellij.diagnostic.runActivity
 import com.intellij.ide.RecentProjectsManager.RecentProjectsChange
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
@@ -36,7 +35,6 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.createIdeFrame
 import com.intellij.openapi.util.ModificationTracker
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.registry.Registry
@@ -59,8 +57,6 @@ import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.project.ProjectStoreOwner
 import com.intellij.project.stateStore
-import com.intellij.ui.mac.createMacDelegate
-import com.intellij.ui.win.createWinDockDelegate
 import com.intellij.util.PathUtilRt
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
@@ -127,9 +123,9 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
   private val nameCache: MutableMap<String, String> = Collections.synchronizedMap(HashMap())
 
   private val disableUpdatingRecentInfo = AtomicBoolean()
+  private val systemDockMenuUpdater = RecentProjectsSystemDockMenuUpdater(coroutineScope)
 
   private val nameResolveRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-  private val updateDockRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private val stateLock = Any()
   private var state = RecentProjectManagerState()
@@ -150,26 +146,6 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
         }
     }
 
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
-      coroutineScope.launch {
-        val delegate = when {
-                         SystemInfoRt.isMac -> createMacDelegate()
-                         SystemInfoRt.isWindows -> createWinDockDelegate()
-                         else -> null
-                       } ?: return@launch
-
-        updateDockRequests
-          .debounce(50.milliseconds)
-          .collectLatest {
-            runActivity("system dock menu") {
-              runCatching {
-                delegate.updateRecentProjectsMenu()
-              }.getOrLogException(LOG)
-            }
-          }
-      }
-    }
-
     ApplicationManager.getApplication().messageBus.connect(coroutineScope).subscribe(RecentProjectsManager.RECENT_PROJECTS_CHANGE_TOPIC, object : RecentProjectsChange {
       override fun change() {
         updateSystemDockMenu()
@@ -177,8 +153,12 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     })
   }
 
+  internal fun startSystemDockUpdates() {
+    systemDockMenuUpdater.start()
+  }
+
   private fun updateSystemDockMenu() {
-    check(updateDockRequests.tryEmit(Unit))
+    systemDockMenuUpdater.requestUpdate()
   }
 
   @Internal

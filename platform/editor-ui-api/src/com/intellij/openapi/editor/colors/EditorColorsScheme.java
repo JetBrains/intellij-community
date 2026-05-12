@@ -2,7 +2,6 @@
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.options.SchemeMetaInfo;
 import com.intellij.openapi.util.NlsSafe;
@@ -80,20 +79,6 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
   default void setEditorFontSize(float fontSize) {
     setEditorFontSize((int)(fontSize + 0.5));
   }
-
-  /**
-   * @deprecated Quick documentation component's font size is stored in application level property, and can be obtained
-   * using {@link com.intellij.codeInsight.documentation.DocumentationComponent#getQuickDocFontSize()}.
-   */
-  @Deprecated(forRemoval = true)
-  default FontSize getQuickDocFontSize() { return FontSize.SMALL; }
-
-  /**
-   * @deprecated Quick documentation component's font size is stored in application level property, and can be set
-   * using {@link com.intellij.codeInsight.documentation.DocumentationComponent#setQuickDocFontSize(FontSize)}.
-   */
-  @Deprecated(forRemoval = true)
-  default void setQuickDocFontSize(@NotNull FontSize fontSize) {}
 
   @NotNull
   Font getFont(EditorFontType key);

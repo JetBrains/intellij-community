@@ -126,7 +126,6 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   private val isEdtRequired: Boolean,
   @JvmField internal val coroutineScope: CoroutineScope,
 ) : ToolWindowManagerEx(), Disposable {
-  private val dispatcher = EventDispatcher.create(ToolWindowManagerListener::class.java)
 
   private val state: ToolWindowManagerState by lazy(LazyThreadSafetyMode.NONE) { project.service() }
 
@@ -418,7 +417,6 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         // but we still need to initialize the tool windows themselves.
         toolWindowPanes.put(pane.paneId, pane)
       }
-      connection.subscribe(ToolWindowManagerListener.TOPIC, dispatcher.multicaster)
       defaultPaneInitialization.join()
       toolWindowSetInitializer.initUi(reopeningEditorJob, taskListDeferred)
     }
@@ -521,11 +519,6 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   ) {
     val layout = projectFrameLayoutProfile?.profile?.layout ?: ToolWindowDefaultLayoutManager.getInstance().getLayoutCopy()
     toolWindowSetInitializer.scheduleSetLayout(layout)
-  }
-
-  @Deprecated("Use {@link ToolWindowManagerListener#TOPIC}", level = DeprecationLevel.ERROR)
-  override fun addToolWindowManagerListener(listener: ToolWindowManagerListener) {
-    dispatcher.addListener(listener)
   }
 
   override fun activateEditorComponent() {

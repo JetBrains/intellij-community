@@ -248,7 +248,7 @@ private fun createTypedNamedTupleReplaceType(
   if (qualifierType.isDefinition) {
     parameters.add(PyCallableParameterImpl.nonPsi(PyNames.CANONICAL_SELF, resultType))
   }
-  parameters.add(PyCallableParameterImpl.psi(elementGenerator.createSingleStarParameter()))
+  parameters.add(PyCallableParameterImpl.keywordOnlySeparatorNonPsi())
 
   val ellipsis = elementGenerator.createEllipsis()
 
@@ -267,16 +267,13 @@ private fun createUntypedNamedTupleReplaceType(
 ): PyCallableType? {
   val parameters = mutableListOf<PyCallableParameter>()
   val resultType = qualifierType.toInstance()
-  val elementGenerator = PyElementGenerator.getInstance(anchor.project)
 
   if (qualifierType.isDefinition) {
     parameters.add(PyCallableParameterImpl.nonPsi(PyNames.CANONICAL_SELF, resultType))
   }
-  parameters.add(PyCallableParameterImpl.psi(elementGenerator.createSingleStarParameter()))
+  parameters.add(PyCallableParameterImpl.keywordOnlySeparatorNonPsi())
 
-  val ellipsis = elementGenerator.createEllipsis()
-
-  fields.keys.mapTo(parameters) { PyCallableParameterImpl.nonPsi(it, null, ellipsis) }
+  fields.keys.mapTo(parameters) { PyCallableParameterImpl.nonPsi(it, null, PyNames.ELLIPSIS) }
 
   return if (resultType is PyNamedTupleType && anchor is PyCallExpression) {
     val newFields = mutableMapOf<String?, PyType?>()

@@ -30,7 +30,6 @@ import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.TypeEvalContext
-import com.jetbrains.python.sdk.rootManager
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

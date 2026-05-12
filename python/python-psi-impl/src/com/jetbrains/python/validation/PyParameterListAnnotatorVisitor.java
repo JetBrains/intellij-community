@@ -27,6 +27,7 @@ import com.jetbrains.python.psi.PySlashParameter;
 import com.jetbrains.python.psi.PyTupleParameter;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -129,7 +130,9 @@ public class PyParameterListAnnotatorVisitor extends PyElementVisitor {
         }
 
         @Override
-        public void visitSlashParameter(@NotNull PySlashParameter param, boolean first, boolean last) {
+        public void visitSlashParameter(@Nullable PySlashParameter param, boolean first, boolean last) {
+          // Synthetic separators don't appear here: this annotator walks PSI-backed parameters only.
+          if (param == null) return;
           if (hadSlash) {
             myHolder.markError(param, PyPsiBundle.message("ANN.multiple.slash"));
           }
@@ -146,7 +149,9 @@ public class PyParameterListAnnotatorVisitor extends PyElementVisitor {
         }
 
         @Override
-        public void visitSingleStarParameter(PySingleStarParameter param, boolean first, boolean last) {
+        public void visitSingleStarParameter(@Nullable PySingleStarParameter param, boolean first, boolean last) {
+          // Synthetic separators don't appear here: this annotator walks PSI-backed parameters only.
+          if (param == null) return;
           if (hadPositionalContainer || hadSingleStar) {
             myHolder.markError(param, PyPsiBundle.message("ANN.multiple.args"));
           }

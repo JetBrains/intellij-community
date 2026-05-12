@@ -142,8 +142,9 @@ private class TrailingLambdaTemplateListener(
     }
 
     override fun templateFinished(template: Template, brokenOff: Boolean) {
-        if (!brokenOff || endOffset < 0) return
-        editor.caretModel.moveToOffset(endOffset)
+        if (brokenOff && endOffset >= 0) {
+            editor.caretModel.moveToOffset(endOffset)
+        }
     }
 
     // This is not called when the user explicitly cancels the template using escape.

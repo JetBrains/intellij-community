@@ -493,6 +493,7 @@ com.intellij.openapi.application.PathMacroContributor
 - forceRegisterPathMacros(java.util.Map):V
 - a:registerPathMacros(java.util.Map,java.util.Map):V
 a:com.intellij.openapi.application.ReadAction
+- p:<init>():V
 - s:computeBlocking(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 - s:computeCancellable(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 - s:runBlocking(com.intellij.util.ThrowableRunnable):V
@@ -512,6 +513,12 @@ com.intellij.openapi.application.ReadConstraint
 com.intellij.openapi.application.ReadResult
 - s:value(java.lang.Object):com.intellij.openapi.application.ReadResult
 - s:writeAction(kotlin.jvm.functions.Function0):com.intellij.openapi.application.ReadResult
+f:com.intellij.openapi.application.WriteAction
+- s:compute(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
+- s:computeAndWait(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
+- s:computeAndWait(com.intellij.openapi.util.ThrowableComputable,com.intellij.openapi.application.ModalityState):java.lang.Object
+- s:run(com.intellij.util.ThrowableRunnable):V
+- s:runAndWait(com.intellij.util.ThrowableRunnable):V
 com.intellij.openapi.application.WriteActionListener
 - java.util.EventListener
 - afterWriteActionFinished(java.lang.Class):V
@@ -541,18 +548,12 @@ com.intellij.openapi.command.WriteCommandAction$Builder
 - a:withGroupId(java.lang.String):com.intellij.openapi.command.WriteCommandAction$Builder
 - a:withName(java.lang.String):com.intellij.openapi.command.WriteCommandAction$Builder
 - a:withUndoConfirmationPolicy(com.intellij.openapi.command.UndoConfirmationPolicy):com.intellij.openapi.command.WriteCommandAction$Builder
-com.intellij.openapi.command.undo.UndoConstants
-- sf:Companion:com.intellij.openapi.command.undo.UndoConstants$Companion
-- sf:DONT_RECORD_UNDO:com.intellij.openapi.util.Key
 com.intellij.openapi.components.ApplicationComponent
 - com.intellij.openapi.components.BaseComponent
 com.intellij.openapi.components.ComponentManagerEx
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.components.ComponentManager
 - getServiceAsync(java.lang.Class,kotlin.coroutines.Continuation):java.lang.Object
-com.intellij.openapi.components.ExportableApplicationComponent
-- com.intellij.openapi.components.ApplicationComponent
-- com.intellij.openapi.components.ExportableComponent
 com.intellij.openapi.components.ExportableComponent
 - sf:EXTENSION_POINT:com.intellij.openapi.extensions.ExtensionPointName
 - a:getExportFiles():java.io.File[]
@@ -629,7 +630,6 @@ com.intellij.openapi.editor.StripTrailingSpacesFilter
 com.intellij.openapi.editor.actionSystem.ReadonlyFragmentModificationHandler
 - a:handle(com.intellij.openapi.editor.ReadOnlyFragmentModificationException):V
 com.intellij.openapi.editor.colors.CodeInsightColors
-- sf:ANNOTATION_NAME_ATTRIBUTES:com.intellij.openapi.editor.colors.TextAttributesKey
 - sf:BLINKING_HIGHLIGHTS_ATTRIBUTES:com.intellij.openapi.editor.colors.TextAttributesKey
 - sf:BOOKMARKS_ATTRIBUTES:com.intellij.openapi.editor.colors.TextAttributesKey
 - sf:CONSIDERATION_ATTRIBUTES:com.intellij.openapi.editor.colors.TextAttributesKey
@@ -642,14 +642,12 @@ com.intellij.openapi.editor.colors.CodeInsightColors
 - sf:INACTIVE_HYPERLINK_ATTRIBUTES:com.intellij.openapi.editor.colors.TextAttributesKey
 - sf:INFORMATION_ATTRIBUTES:com.intellij.openapi.editor.colors.TextAttributesKey
 - sf:INFO_ATTRIBUTES:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:INSTANCE_FIELD_ATTRIBUTES:com.intellij.openapi.editor.colors.TextAttributesKey
 - sf:JOIN_POINT:com.intellij.openapi.editor.colors.TextAttributesKey
 - sf:LINE_FULL_COVERAGE:com.intellij.openapi.editor.colors.TextAttributesKey
 - sf:LINE_NONE_COVERAGE:com.intellij.openapi.editor.colors.TextAttributesKey
 - sf:LINE_PARTIAL_COVERAGE:com.intellij.openapi.editor.colors.TextAttributesKey
 - sf:MARKED_FOR_REMOVAL_ATTRIBUTES:com.intellij.openapi.editor.colors.TextAttributesKey
 - sf:MATCHED_BRACE_ATTRIBUTES:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:METHOD_CALL_ATTRIBUTES:com.intellij.openapi.editor.colors.TextAttributesKey
 - sf:METHOD_SEPARATORS_COLOR:com.intellij.openapi.editor.colors.ColorKey
 - sf:NOT_USED_ELEMENT_ATTRIBUTES:com.intellij.openapi.editor.colors.TextAttributesKey
 - sf:RUNTIME_ERROR:com.intellij.openapi.editor.colors.TextAttributesKey
@@ -1821,7 +1819,6 @@ com.intellij.psi.util.PsiModificationTracker
 - a:forLanguage(com.intellij.lang.Language):com.intellij.openapi.util.ModificationTracker
 - a:forLanguages(java.util.function.Predicate):com.intellij.openapi.util.ModificationTracker
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.psi.util.PsiModificationTracker
-- a:getJavaStructureModificationTracker():com.intellij.openapi.util.ModificationTracker
 - a:getModificationCount():J
 com.intellij.psi.util.PsiModificationTracker$Listener
 - a:modificationCountChanged():V

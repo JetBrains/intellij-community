@@ -39,7 +39,7 @@
                                           nameKey="inlay.hints.version.catalog.dependencies.name"/>
 
     <applicationService serviceInterface="org.jetbrains.kotlin.gradle.scripting.shared.roots.AbstractGradleBuildRootDataSerializer"
-                    serviceImplementation="org.jetbrains.kotlin.gradle.scripting.k2.roots.GradleBuildRootDataSerializer"/>
+                        serviceImplementation="org.jetbrains.kotlin.gradle.scripting.k2.roots.GradleBuildRootDataSerializer"/>
 
     <projectService serviceInterface="org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator"
                     serviceImplementation="org.jetbrains.kotlin.gradle.scripting.k2.roots.GradleBuildRootsLocatorImpl"/>
@@ -72,4 +72,9 @@
     <listener class="org.jetbrains.kotlin.gradle.scripting.k2.GradleKotlinScriptEntityProvider$GradleWorkspaceModelListener"
               topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
   </projectListeners>
+
+  <applicationListeners>
+    <listener class="org.jetbrains.kotlin.gradle.scripting.k2.importing.KotlinDslGradleSyncListener"
+              topic="org.jetbrains.plugins.gradle.service.syncAction.GradleSyncListener"/>
+  </applicationListeners>
 </idea-plugin>

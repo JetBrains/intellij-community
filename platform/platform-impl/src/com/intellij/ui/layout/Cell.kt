@@ -50,9 +50,4 @@ abstract class Cell : BaseBuilder {
   @Deprecated("Use Kotlin UI DSL Version 2")
   val growX: CCFlags = CCFlags.growX
 
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  @ApiStatus.Internal
-  abstract fun <T : JComponent> component(component: T): CellBuilder<T>
-
 }

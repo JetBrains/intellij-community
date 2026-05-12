@@ -126,6 +126,9 @@
     libraries:
       jetbrains.ml.models.python.imports.ranking.model:
       - name: $MAVEN_REPOSITORY$/com/jetbrains/ml/models/python-imports-ranking-model/coral-panda-republished-6/python-imports-ranking-model-coral-panda-republished-6.jar
+- name: lib/modules/intellij.python.packaging.jar
+  contentModules:
+  - name: intellij.python.packaging
 - name: lib/modules/intellij.python.parser.jar
   contentModules:
   - name: intellij.python.parser
@@ -155,6 +158,9 @@
   - name: $MAVEN_REPOSITORY$/io/consensys/tuweni/tuweni-toml/2/tuweni-toml-2.jar
   - name: $MAVEN_REPOSITORY$/org/antlr/antlr4-runtime/4/antlr4-runtime-4.jar
   reason: <- intellij.python.pyproject
+- name: lib/modules/intellij.python.requirements.jar
+  contentModules:
+  - name: intellij.python.requirements
 - name: lib/modules/intellij.python.sdk.jar
   contentModules:
   - name: intellij.python.sdk

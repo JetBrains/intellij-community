@@ -54,7 +54,7 @@ class JpsCompilationOutputLoaderTest : BasePlatformTestCase() {
     assertThat(affectedModules).hasSize(1)
     val affectedModule = affectedModules[0]
     assertEquals("artifacts", affectedModule!!.type)
-    assertEquals("intellij.cidr.externalSystem", affectedModule.name)
+    assertEquals("intellij.clion.externalSystem", affectedModule.name)
   }
 
   fun testChangedProductionModule() {
@@ -63,7 +63,7 @@ class JpsCompilationOutputLoaderTest : BasePlatformTestCase() {
     assertThat(affectedModules).hasSize(1)
     val affectedModule = affectedModules[0]
     assertEquals(PRODUCTION, affectedModule!!.type)
-    assertEquals("intellij.cidr.externalSystem", affectedModule.name)
+    assertEquals("intellij.clion.externalSystem", affectedModule.name)
   }
 
   fun testNewBuildModule() {
@@ -82,7 +82,7 @@ class JpsCompilationOutputLoaderTest : BasePlatformTestCase() {
     val types = affectedModules.map { it.type }
     val names = affectedModules.map { it.name }
     UsefulTestCase.assertSameElements(types, "java-test", "production", "resources-test", "resources-production")
-    UsefulTestCase.assertSameElements(names, "intellij.cidr.externalSystem", "intellij.platform.ssh.integrationTests", "intellij.sh.plugin")
+    UsefulTestCase.assertSameElements(names, "intellij.clion.externalSystem", "intellij.platform.ssh.integrationTests", "intellij.sh.plugin")
   }
 
   fun testChangedTest() {
@@ -91,14 +91,14 @@ class JpsCompilationOutputLoaderTest : BasePlatformTestCase() {
     assertThat(affectedModules).hasSize(1)
     val affectedModule = affectedModules[0]
     assertEquals(TEST, affectedModule!!.type)
-    assertEquals("intellij.cidr.externalSystem", affectedModule.name)
+    assertEquals("intellij.clion.externalSystem", affectedModule.name)
   }
 
   fun testRemoveBuildType() {
     compilationOutputLoader!!.getAffectedModules(loadModelFromFile("removeOne.json"), loadModelFromFile("caseOne.json"), false)
     val oldModulesPaths = compilationOutputLoader!!.oldModulesPaths
     UsefulTestCase.assertSize(1, oldModulesPaths)
-    assertEquals("intellij.cidr", oldModulesPaths[0]!!.name)
+    assertEquals("intellij.clion", oldModulesPaths[0]!!.name)
   }
 
   fun testRemoveModuleNotExistingInOtherBuildTypes() {

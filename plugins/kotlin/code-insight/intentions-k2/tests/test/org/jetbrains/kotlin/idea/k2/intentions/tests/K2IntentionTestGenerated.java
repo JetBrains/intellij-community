@@ -2852,6 +2852,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertStringTemplateToBuildString/inAnnotation.kt");
         }
 
+        @TestMetadata("orderOfActions.kt")
+        public void testOrderOfActions() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertStringTemplateToBuildString/orderOfActions.kt");
+        }
+
         @TestMetadata("raw.kt")
         public void testRaw() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertStringTemplateToBuildString/raw.kt");
@@ -8944,7 +8949,34 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         }
     }
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/swapStringEqualsIgnoreCase")
+    public static class SwapStringEqualsIgnoreCase extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("equals.kt")
+        public void testEquals() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/swapStringEqualsIgnoreCase/equals.kt");
+        }
+
+        @TestMetadata("equalsIgnoreCase.kt")
+        public void testEqualsIgnoreCase() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/swapStringEqualsIgnoreCase/equalsIgnoreCase.kt");
+        }
+
+        @TestMetadata("nullableReceiver.kt")
+        public void testNullableReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/swapStringEqualsIgnoreCase/nullableReceiver.kt");
+        }
+    }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/replaceExplicitFunctionLiteralParamWithIt")

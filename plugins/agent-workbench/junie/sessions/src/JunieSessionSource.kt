@@ -13,6 +13,7 @@ import com.intellij.agent.workbench.json.forEachJsonObjectField
 import com.intellij.agent.workbench.json.readJsonLongOrNull
 import com.intellij.agent.workbench.json.readJsonStringOrNull
 import com.intellij.agent.workbench.sessions.core.providers.BaseAgentSessionSource
+import com.intellij.agent.workbench.sessions.core.providers.resolveReadTrackedActivity
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import java.io.StringWriter
@@ -331,9 +332,7 @@ private fun JunieSessionIndexEntry.toAgentSessionThread(readTracker: Map<String,
 }
 
 private fun JunieSessionIndexEntry.effectiveActivity(readTracker: Map<String, Long>): AgentThreadActivity {
-  val lastSeenAt = readTracker[sessionId] ?: return AgentThreadActivity.READY
-  if (updatedAt > lastSeenAt) return AgentThreadActivity.UNREAD
-  return AgentThreadActivity.READY
+  return resolveReadTrackedActivity(readTracker = readTracker, threadId = sessionId, updatedAt = updatedAt)
 }
 
 private fun normalizeJunieProjectPath(path: String): String? {

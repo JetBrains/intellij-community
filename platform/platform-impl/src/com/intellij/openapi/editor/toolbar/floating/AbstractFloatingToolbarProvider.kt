@@ -7,19 +7,12 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.diagnostic.logger
-import org.jetbrains.annotations.ApiStatus
 
 abstract class AbstractFloatingToolbarProvider(actionGroupId: String) : FloatingToolbarProvider {
 
   override val actionGroup: ActionGroup by lazy { resolveActionGroup(actionGroupId) }
 
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use register method with data context instead this")
-  open fun register(component: FloatingToolbarComponent, parentDisposable: Disposable) {}
-
   override fun register(dataContext: DataContext, component: FloatingToolbarComponent, parentDisposable: Disposable) {
-    @Suppress("DEPRECATION")
-    register(component, parentDisposable)
   }
 }
 

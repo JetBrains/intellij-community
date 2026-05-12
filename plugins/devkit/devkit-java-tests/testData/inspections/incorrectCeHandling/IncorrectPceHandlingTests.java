@@ -50,7 +50,7 @@ class IncorrectPceHandlingTests {
     try {
       // anything
     } catch (ProcessCanceledException <error descr="'com.intellij.openapi.progress.ProcessCanceledException' must be rethrown">e</error>) {
-      <error descr="'com.intellij.openapi.progress.ProcessCanceledException' must not be logged">LOG.error("Error occurred: " + e.getMessage())</error>;
+      LOG.error("Error occurred: " + e.getMessage());
     }
   }
 
@@ -58,7 +58,7 @@ class IncorrectPceHandlingTests {
     try {
       // anything
     } catch (ProcessCanceledException | IllegalArgumentException <error descr="'com.intellij.openapi.progress.ProcessCanceledException' must be rethrown">e</error>) {
-      <error descr="'com.intellij.openapi.progress.ProcessCanceledException' must not be logged">LOG.error("Error occurred: " + e.getMessage())</error>;
+      LOG.error("Error occurred: " + e.getMessage());
     }
   }
 
@@ -66,7 +66,7 @@ class IncorrectPceHandlingTests {
     try {
       // anything
     } catch (IllegalArgumentException | ProcessCanceledException <error descr="'com.intellij.openapi.progress.ProcessCanceledException' must be rethrown">e</error>) {
-      <error descr="'com.intellij.openapi.progress.ProcessCanceledException' must not be logged">LOG.error("Error occurred: " + e.getMessage())</error>;
+      LOG.error("Error occurred: " + e.getMessage());
     }
   }
 
@@ -83,6 +83,38 @@ class IncorrectPceHandlingTests {
       // anything
     } catch (IllegalArgumentException | SubclassOfProcessCanceledException <error descr="'com.intellij.openapi.progress.ProcessCanceledException' inheritor must be rethrown">e</error>) {
       <error descr="'com.intellij.openapi.progress.ProcessCanceledException' inheritor must not be logged">LOG.error(e)</error>;
+    }
+  }
+
+  void testSwallowedAndLoggedOnWarnLevel() {
+    try {
+      // anything
+    } catch (ProcessCanceledException <error descr="'com.intellij.openapi.progress.ProcessCanceledException' must be rethrown">e</error>) {
+      <error descr="'com.intellij.openapi.progress.ProcessCanceledException' must not be logged">LOG.warn(e)</error>;
+    }
+  }
+
+  void testSwallowedAndLoggedOnDebugLevel() {
+    try {
+      // anything
+    } catch (ProcessCanceledException <error descr="'com.intellij.openapi.progress.ProcessCanceledException' must be rethrown">e</error>) {
+      <error descr="'com.intellij.openapi.progress.ProcessCanceledException' must not be logged">LOG.debug(e)</error>;
+    }
+  }
+
+  void testSwallowedAndLoggedWithDebug() {
+    try {
+      // anything
+    } catch (ProcessCanceledException <error descr="'com.intellij.openapi.progress.ProcessCanceledException' must be rethrown">e</error>) {
+      <error descr="'com.intellij.openapi.progress.ProcessCanceledException' must not be logged">LOG.warnWithDebug(e)</error>;
+    }
+  }
+
+  void testRegularExceptionNotFlagged() {
+    try {
+      // anything
+    } catch (RuntimeException e) {
+      LOG.error(e);
     }
   }
 

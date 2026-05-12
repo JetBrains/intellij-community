@@ -15,6 +15,7 @@ import com.intellij.agent.workbench.chat.AgentChatTabRebindTarget
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSubAgent
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionActivityHintPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRebindCandidate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
@@ -780,6 +781,63 @@ class AgentSessionRefreshCoordinatorTest {
   }
 
   @Test
+  fun providerRefreshDoesNotTouchStateTimestampWhenOutcomeMatchesState() = runBlocking(Dispatchers.Default) {
+    val codexRefreshInvocations = AtomicInteger(0)
+    val completionRefreshInvocations = AtomicInteger(0)
+    val existingThread = thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.CODEX)
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = {
+        listOf(
+          ScriptedSessionSource(
+            provider = AgentSessionProvider.CODEX,
+            listFromClosedProject = { path ->
+              if (path != PROJECT_PATH) {
+                emptyList()
+              }
+              else {
+                codexRefreshInvocations.incrementAndGet()
+                listOf(existingThread)
+              }
+            },
+          ),
+          ScriptedSessionSource(
+            provider = AgentSessionProvider.CLAUDE,
+            listFromClosedProject = { path ->
+              if (path == PROJECT_PATH) {
+                completionRefreshInvocations.incrementAndGet()
+              }
+              emptyList()
+            },
+          )
+        )
+      },
+      isRefreshGateActive = { true },
+    ) { coordinator, stateStore ->
+      stateStore.replaceProjects(
+        projects = listOf(
+          AgentProjectSessions(
+            path = PROJECT_PATH,
+            name = "Project A",
+            isOpen = true,
+            hasLoaded = true,
+            threads = listOf(existingThread),
+          )
+        ),
+        visibleThreadCounts = emptyMap(),
+      )
+      val lastUpdatedAtBeforeRefresh = stateStore.snapshot().lastUpdatedAt
+
+      coordinator.refreshProviderScope(provider = AgentSessionProvider.CODEX, scopedPaths = setOf(PROJECT_PATH))
+      coordinator.refreshProviderScope(provider = AgentSessionProvider.CLAUDE, scopedPaths = setOf(PROJECT_PATH))
+
+      waitForCondition { completionRefreshInvocations.get() == 1 }
+      assertThat(codexRefreshInvocations.get()).isEqualTo(1)
+      assertThat(stateStore.snapshot().lastUpdatedAt).isEqualTo(lastUpdatedAtBeforeRefresh)
+    }
+  }
+
+  @Test
   fun providerUpdateIgnoredWhenSourceDoesNotSupportUpdates() = runBlocking(Dispatchers.Default) {
     val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
     val closedRefreshInvocations = AtomicInteger(0)
@@ -1483,6 +1541,64 @@ class AgentSessionRefreshCoordinatorTest {
   }
 
   @Test
+  fun providerUpdateAuthoritativeActivityHintsUpdateLoadedThreadBeforeRefreshGateOpens() = runBlocking(Dispatchers.Default) {
+    val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
+    val gateActive = AtomicBoolean(false)
+    val closedRefreshInvocations = AtomicInteger(0)
+
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.CLAUDE,
+      supportsUpdates = true,
+      updateEvents = updates,
+      listFromClosedProject = { path ->
+        if (path == PROJECT_PATH) {
+          closedRefreshInvocations.incrementAndGet()
+        }
+        emptyList()
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { gateActive.get() },
+    ) { coordinator, stateStore ->
+      stateStore.replaceProjects(
+        projects = listOf(
+          AgentProjectSessions(
+            path = PROJECT_PATH,
+            name = "Project A",
+            isOpen = true,
+            hasLoaded = true,
+            threads = listOf(
+              thread(id = "claude-1", updatedAt = 100L, provider = AgentSessionProvider.CLAUDE, activity = AgentThreadActivity.READY)
+            ),
+          )
+        ),
+        visibleThreadCounts = emptyMap(),
+      )
+
+      coordinator.observeSessionSourceUpdates()
+      updates.tryEmit(
+        threadsChangedEvent(
+          scopedPaths = setOf(PROJECT_PATH),
+          threadIds = setOf("claude-1"),
+          activityHintsByThreadId = mapOf("claude-1" to AgentThreadActivity.UNREAD),
+          activityHintPolicy = AgentSessionActivityHintPolicy.AUTHORITATIVE,
+        )
+      )
+
+      waitForCondition {
+        stateStore.snapshot().projects.firstOrNull { it.path == PROJECT_PATH }
+          ?.threads
+          ?.firstOrNull { it.id == "claude-1" }
+          ?.activity == AgentThreadActivity.UNREAD
+      }
+
+      assertThat(closedRefreshInvocations.get()).isEqualTo(0)
+    }
+  }
+
+  @Test
   fun providerUpdateActivityHintsUpdateLoadedThreadBeforeRefreshGateOpens() = runBlocking(Dispatchers.Default) {
     val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
     val gateActive = AtomicBoolean(false)
@@ -1550,9 +1666,10 @@ class AgentSessionRefreshCoordinatorTest {
   }
 
   @Test
-  fun providerUpdateActivityHintsOverrideStaleRefreshActivity() = runBlocking(Dispatchers.Default) {
+  fun providerRefreshActivityClearsOptimisticActivityHint() = runBlocking(Dispatchers.Default) {
     val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
     val closedRefreshInvocations = AtomicInteger(0)
+    val receivedActivityMaps = mutableListOf<Map<Pair<String, String>, AgentThreadActivity>>()
 
     val source = ScriptedSessionSource(
       provider = AgentSessionProvider.CODEX,
@@ -1591,6 +1708,10 @@ class AgentSessionRefreshCoordinatorTest {
     withLoadingCoordinator(
       sessionSourcesProvider = { listOf(source) },
       isRefreshGateActive = { true },
+      openChatTabPresentationUpdater = { _, _, _, activityMap ->
+        receivedActivityMaps.add(activityMap)
+        activityMap.size
+      },
     ) { coordinator, stateStore ->
       stateStore.replaceProjects(
         projects = listOf(
@@ -1623,7 +1744,12 @@ class AgentSessionRefreshCoordinatorTest {
                      ?: return@waitForCondition false
         closedRefreshInvocations.get() == 1 &&
         thread.updatedAt == 500L &&
-        thread.activity == AgentThreadActivity.PROCESSING
+        thread.activity == AgentThreadActivity.UNREAD
+      }
+
+      val expectedKey = PROJECT_PATH to buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-1")
+      waitForCondition {
+        receivedActivityMaps.any { activityMap -> activityMap[expectedKey] == AgentThreadActivity.UNREAD }
       }
     }
   }

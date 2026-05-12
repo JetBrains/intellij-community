@@ -146,7 +146,7 @@ class PluginDependenciesValidator private constructor(
   private fun checkPluginSet(pluginSet: PluginSet) {
     val jpsModuleToRuntimeDescriptors = LinkedHashMap<String, MutableList<IdeaPluginDescriptorImpl>>()
     for (descriptor in pluginSet.getEnabledModules()) {
-      val jarFiles = descriptor.jarFiles ?: continue
+      val jarFiles = descriptor.ownClassPath ?: continue
       jarFiles.groupByTo(jpsModuleToRuntimeDescriptors, {
         getModuleName(it) ?: error("Cannot detect module name for $it in $descriptor")  
       }, { descriptor })
@@ -339,12 +339,12 @@ class PluginDependenciesValidator private constructor(
       loadPluginSubDescriptors(descriptor, pathResolver, loadingContext = loadingContext, dataLoader = dataLoader, pluginDir = rootPath, pool = zipPool)
     }
     descriptor.setPluginClassLoader(UrlClassLoader.build().get())
-    descriptor.jarFiles = emptyList()
+    descriptor.ownClassPath = emptyList()
     return descriptor
   }
 
   private fun createPluginSet(): PluginSetTestBuilder {
-    val corePluginClasspath = createPluginDescriptor(corePluginDescription, loadingContext = null).jarFiles.orEmpty()
+    val corePluginClasspath = createPluginDescriptor(corePluginDescription, loadingContext = null).ownClassPath.orEmpty()
     val pluginSetBuilder = PluginSetTestBuilder.fromDescriptors { loadingContext ->
       moduleNameToPluginLayout.values.mapNotNull {
         try {
@@ -415,7 +415,7 @@ class PluginDependenciesValidator private constructor(
 
     //non-embedded content modules with `package` attribute are included in the main plugin JAR, but they are loaded by different classloaders
     val namesOfJpsModulesIncludedInPluginDescriptorModule = pluginLayout.jpsModulesInClasspath - nonEmbeddedContentModules + embeddedContentModules.map { it.name }
-    descriptor.jarFiles = jarFiles ?: namesOfJpsModulesIncludedInPluginDescriptorModule.map { getModuleOutputDir(it) }
+    descriptor.ownClassPath = jarFiles ?: namesOfJpsModulesIncludedInPluginDescriptorModule.map { getModuleOutputDir(it) }
     return descriptor
   }
 

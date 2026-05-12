@@ -1,8 +1,8 @@
 {
   "java-test": {
-    "intellij.cidr.externalSystem": {
+    "intellij.clion.externalSystem": {
       "h": 90345695402943,
-      "relativePath": "$BUILD_DIR$/test/intellij.cidr.externalSystem"
+      "relativePath": "$BUILD_DIR$/test/intellij.clion.externalSystem"
     }
   },
   "resources-test": {
@@ -12,15 +12,15 @@
     }
   },
   "java-production": {
-    "intellij.cidr.externalSystem": {
+    "intellij.clion.externalSystem": {
       "h": 4514032945642354,
-      "relativePath": "$BUILD_DIR$/production/intellij.cidr.externalSystem"
+      "relativePath": "$BUILD_DIR$/production/intellij.clion.externalSystem"
     }
   },
   "resources-production": {
-    "intellij.cidr.externalSystem": {
+    "intellij.clion.externalSystem": {
       "h": 8764333034314,
-      "relativePath": "$BUILD_DIR$/production/intellij.cidr.externalSystem"
+      "relativePath": "$BUILD_DIR$/production/intellij.clion.externalSystem"
     }
   }
 }

@@ -556,7 +556,9 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
 
   @Override
   protected void processMouseEvent(MouseEvent e) {
-    IdeMouseEventDispatcher.requestFocusInNonFocusedWindow(e);
+    if (isRequestFocusEnabled()) {
+      IdeMouseEventDispatcher.requestFocusInNonFocusedWindow(e);
+    }
     super.processMouseEvent(e);
     if (e.isConsumed()) return;
     boolean skipPress = checkSkipPressForEvent(e);

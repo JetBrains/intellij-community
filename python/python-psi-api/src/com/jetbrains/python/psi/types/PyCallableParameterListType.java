@@ -13,4 +13,14 @@ import java.util.List;
 @ApiStatus.Experimental
 public interface PyCallableParameterListType extends PyCallableParameterVariadicType {
   @NotNull List<PyCallableParameter> getParameters();
+
+  /**
+   * Returns the list of parameters with keyword containers carrying {@code Unpack[TypedDict]}
+   * expanded into individual keyword parameters derived from the TypedDict fields.
+   *
+   * @see PyUnpackedTypedDictType#getUnpackedParameters
+   */
+  default @NotNull List<PyCallableParameter> getUnpackedParameters(@NotNull TypeEvalContext context) {
+    return getParameters();
+  }
 }

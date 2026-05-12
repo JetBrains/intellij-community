@@ -580,7 +580,6 @@ c:com.intellij.codeInsight.lookup.LookupElementPresentation
 - isItemTextBold():Z
 - isItemTextItalic():Z
 - isItemTextUnderlined():Z
-- isReal():Z
 - isStrikeout():Z
 - isTypeGrayed():Z
 - isTypeIconRightAligned():Z
@@ -2247,7 +2246,6 @@ a:com.intellij.openapi.fileEditor.FileEditorManager
 - a:getSelectedTextEditor():com.intellij.openapi.editor.Editor
 - hasOpenFiles():Z
 - a:isFileOpen(com.intellij.openapi.vfs.VirtualFile):Z
-- navigateToTextEditor(com.intellij.openapi.fileEditor.OpenFileDescriptor,Z):V
 - f:openEditor(com.intellij.openapi.fileEditor.OpenFileDescriptor,Z):java.util.List
 - a:openFile(com.intellij.openapi.vfs.VirtualFile):java.util.List
 - a:openFile(com.intellij.openapi.vfs.VirtualFile,Z):com.intellij.openapi.fileEditor.FileEditor[]
@@ -2432,7 +2430,6 @@ a:com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 c:com.intellij.openapi.vfs.newvfs.FileAttribute
 - <init>(java.lang.String):V
 - <init>(java.lang.String,I,Z):V
-- <init>(java.lang.String,I,Z,Z):V
 - getId():java.lang.String
 - getVersion():I
 - isFixedSize():Z
@@ -2815,8 +2812,7 @@ com.intellij.psi.search.scope.packageSet.NamedScopesHolder$ScopeListener
 a:com.intellij.psi.search.scope.packageSet.PackageSetBase
 - com.intellij.psi.search.scope.packageSet.PackageSet
 - <init>():V
-- contains(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,com.intellij.psi.search.scope.packageSet.NamedScopesHolder):Z
-- contains(com.intellij.openapi.vfs.VirtualFile,com.intellij.psi.search.scope.packageSet.NamedScopesHolder):Z
+- a:contains(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,com.intellij.psi.search.scope.packageSet.NamedScopesHolder):Z
 - contains(com.intellij.psi.PsiFile,com.intellij.psi.search.scope.packageSet.NamedScopesHolder):Z
 - contains(com.intellij.psi.PsiFileSystemItem,com.intellij.psi.search.scope.packageSet.NamedScopesHolder):Z
 - s:getPsiFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):com.intellij.psi.PsiFile

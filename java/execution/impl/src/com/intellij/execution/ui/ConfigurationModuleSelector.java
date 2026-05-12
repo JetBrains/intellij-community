@@ -2,7 +2,6 @@
 package com.intellij.execution.ui;
 
 import com.intellij.application.options.ModuleDescriptionsComboBox;
-import com.intellij.application.options.ModuleListCellRenderer;
 import com.intellij.application.options.ModulesCombo;
 import com.intellij.application.options.ModulesComboBox;
 import com.intellij.core.JavaPsiBundle;
@@ -13,10 +12,8 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ui.configuration.ModulesAlphaComparator;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiClass;
-import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.SortedComboBoxModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,32 +29,6 @@ public class ConfigurationModuleSelector {
   private final ModulesCombo myModulesDescriptionsComboBox;
   /** this field is {@code null} if and only if {@link #myModulesDescriptionsComboBox} is not null */
   private final JComboBox<? extends Module> myModulesList;
-
-  /**
-   * @deprecated use {@link #ConfigurationModuleSelector(Project, ModulesComboBox)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public ConfigurationModuleSelector(@NotNull Project project, final JComboBox<? extends Module> modulesList) {
-    String noModule = JavaPsiBundle.message("list.item.no.module");
-    myProject = project;
-    myModulesList = modulesList;
-    myModulesDescriptionsComboBox = null;
-    ComboboxSpeedSearch search = new ComboboxSpeedSearch(modulesList, null) {
-      @Override
-      protected String getElementText(Object element) {
-        if (element instanceof Module) {
-          return ((Module)element).getName();
-        }
-        else if (element == null) {
-          return noModule;
-        }
-        return super.getElementText(element);
-      }
-    };
-    search.setupListeners();
-    myModulesList.setModel(new SortedComboBoxModel<>(ModulesAlphaComparator.INSTANCE));
-    myModulesList.setRenderer(new ModuleListCellRenderer(noModule));
-  }
 
   public ConfigurationModuleSelector(@NotNull Project project, ModulesComboBox modulesComboBox) {
     this(project, modulesComboBox, JavaPsiBundle.message("list.item.no.module"));

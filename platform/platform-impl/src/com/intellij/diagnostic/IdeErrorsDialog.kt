@@ -109,6 +109,7 @@ import javax.swing.event.DocumentEvent
 import javax.swing.event.HyperlinkEvent
 import javax.swing.text.JTextComponent
 
+@ApiStatus.Internal
 open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
   private val myMessagePool: MessagePool,
   private val myProject: Project?,
@@ -117,7 +118,7 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
   isModal: Boolean = false,
   actionLeadToError: @Nls String? = null, // Which action led to this error (user-readable description)
   private val hideClearButton: Boolean = false,
-) : DialogWrapper(myProject, true), MessagePoolListener, UiDataProvider {
+) : DialogWrapper(myProject, true), MessagePoolAdvisor, UiDataProvider {
   private val myAcceptedNotices: MutableSet<String>
   @Volatile
   private var myMessageClusters = emptyList<ErrorMessageCluster>() // exceptions with the same stacktrace
@@ -151,7 +152,7 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
     myLoadingDecorator.startLoading(false)
     updateMessages(defaultMessage)
     @Suppress("LeakingThis")
-    myMessagePool.addListener(this)
+    myMessagePool.addAdvisor(this)
     peer.isMaximizable = true
   }
 
@@ -376,7 +377,7 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
   override fun getDimensionServiceKey(): String? = "IDE.errors.dialog"
 
   override fun dispose() {
-    myMessagePool.removeListener(this)
+    myMessagePool.removeAdvisor(this)
     myUpdateControlsJob.cancel()
     super.dispose()
   }
@@ -741,12 +742,11 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
     override fun isEnabled(index: Int): Boolean = myEditable && index > 0
   }
 
-  /* interfaces */
-  override fun newEntryAdded() {
+  override suspend fun afterEntryAdded(e: MessagePoolAdvisor.AfterEntryAddedEvent) {
     updateMessages(defaultMessage = null)
   }
 
-  override fun poolCleared() {
+  override fun poolCleared(e: MessagePoolAdvisor.PoolClearedEvent) {
     UIUtil.invokeLaterIfNeeded {
       if (isShowing) {
         doCancelAction()

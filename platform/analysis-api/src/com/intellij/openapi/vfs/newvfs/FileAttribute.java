@@ -43,19 +43,10 @@ public class FileAttribute {
   private final boolean fixedSize;
 
   public FileAttribute(@NonNls @NotNull String id) {
-    this(id, UNDEFINED_VERSION, false, false);
+    this(id, UNDEFINED_VERSION, false);
   }
 
   public FileAttribute(@NonNls @NotNull String id, int version, boolean fixedSize) {
-    this(id, version, fixedSize, false);
-  }
-
-  /** @deprecated use {@link FileAttribute#FileAttribute(String, int, boolean)} -- shouldEnumerate is ignored (was never implemented) */
-  @Deprecated(forRemoval = true)
-  public FileAttribute(@NonNls @NotNull String id,
-                       int version,
-                       boolean fixedSize,
-                       @SuppressWarnings("unused") boolean shouldEnumerate) {
     this(version, fixedSize, id);
     boolean added = registeredAttributeIds.add(id);
     assert added : "Attribute id='" + id + "' is not unique";

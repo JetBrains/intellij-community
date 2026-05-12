@@ -30,7 +30,7 @@ import java.util.concurrent.CompletableFuture
 @ApiStatus.Internal
 class XToggleLineBreakpointActionHandler @JvmOverloads constructor(
   private val myTemporary: Boolean,
-  private val verticalPlacement: XLineBreakpointVerticalPlacement = XLineBreakpointVerticalPlacement.ON_LINE,
+  private val defaultVerticalPlacement: XLineBreakpointVerticalPlacement = XLineBreakpointVerticalPlacement.ON_LINE,
 ) : DebuggerActionHandler() {
   override fun isEnabled(project: Project, event: AnActionEvent): Boolean {
     val editor = event.getData(CommonDataKeys.EDITOR)
@@ -44,9 +44,9 @@ class XToggleLineBreakpointActionHandler @JvmOverloads constructor(
       for (breakpointType in breakpointTypes) {
         val file = position.getFile()
         val line = position.getLine()
-        if ((XBreakpointUIUtil.supportsPlacement(breakpointType, verticalPlacement) &&
+        if ((XBreakpointUIUtil.supportsPlacement(breakpointType, defaultVerticalPlacement) &&
              breakpointType.canPutAtFast(position.editor, line, project).isAtLeast(ThreeState.UNSURE)) ||
-            breakpointManager.findBreakpointAtLine(breakpointType, file, line, verticalPlacement) != null) {
+            breakpointManager.findBreakpointAtLine(breakpointType, file, line, defaultVerticalPlacement) != null) {
           return true
         }
       }
@@ -68,8 +68,16 @@ class XToggleLineBreakpointActionHandler @JvmOverloads constructor(
     val canCreateInterLineBreakpointFromGutter = EditorUtil.isBreakPointsOnLineNumbers()
     val isShiftClickForInterLine = isShiftClick && canCreateInterLineBreakpointFromGutter
     val canRemove = !isFromGutterClick || (!isShiftClickForInterLine && !`is`("debugger.click.disable.breakpoints"))
+    val interLineRequestedFromGutterClick = event.getData(XLineBreakpointManager.INTER_LINE_BREAKPOINT_KEY)
+    val placement = when (interLineRequestedFromGutterClick) {
+      true -> XLineBreakpointVerticalPlacement.INTER_LINE
+      false -> XLineBreakpointVerticalPlacement.ON_LINE
+      null -> defaultVerticalPlacement
+    }
     val isInterlineLogging =
-      editor != null && (isInterLineAction(inputEvent) || isInterLineMouseClick(inputEvent, canCreateInterLineBreakpointFromGutter, event))
+      editor != null && (isInterLineAction(inputEvent, placement) || isInterLineMouseClick(inputEvent,
+                                                                                           canCreateInterLineBreakpointFromGutter,
+                                                                                           event))
     val isMouseClick = inputEvent is MouseEvent
     val isLoggingBreakpoint = isInterlineLogging ||
                               isFromGutterClick && editor != null && isMouseClick && !isAltClick && isShiftClick
@@ -83,7 +91,7 @@ class XToggleLineBreakpointActionHandler @JvmOverloads constructor(
       if (processedLines.add(position.getLine())) {
         val future = XBreakpointUIUtil.toggleLineBreakpointProxy(
           project, position, !isFromGutterClick, position.editor, isAltClick || myTemporary,
-          !isFromGutterClick, canRemove, isLoggingBreakpoint, logExpression, verticalPlacement
+          !isFromGutterClick, canRemove, isLoggingBreakpoint, logExpression, placement
         ).thenAccept { breakpoint ->
           // isMouseClick is always `true`, but its usage here enables smart cast for nullable `inputEvent`
           @Suppress("KotlinConstantConditions")
@@ -109,6 +117,6 @@ class XToggleLineBreakpointActionHandler @JvmOverloads constructor(
   ): Boolean =
     (inputEvent is MouseEvent && canCreateInterLineBreakpointFromGutter && event.getData(InterLineBreakpointProperties.KEY)?.isLogging == true)
 
-  private fun isInterLineAction(inputEvent: InputEvent?): Boolean =
-    inputEvent !is MouseEvent && verticalPlacement == XLineBreakpointVerticalPlacement.INTER_LINE
+  private fun isInterLineAction(inputEvent: InputEvent?, placement: XLineBreakpointVerticalPlacement): Boolean =
+    inputEvent !is MouseEvent && placement == XLineBreakpointVerticalPlacement.INTER_LINE
 }

@@ -1353,9 +1353,7 @@ class AgentChatEditorServiceTest {
     val signal = signalWaiter.await()
     assertThat(signal.scopedPaths).containsExactly("/work/project-terminal-output-thread")
     assertThat(signal.threadIds).containsExactly("codex-thread-1")
-    assertThat(signal.activityHintsByThreadId).containsExactlyEntriesOf(
-      mapOf("codex-thread-1" to AgentThreadActivity.PROCESSING)
-    )
+    assertThat(signal.activityHintsByThreadId).isEmpty()
   }
 
   @Test

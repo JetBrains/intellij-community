@@ -164,7 +164,7 @@ class CodexSessionSourceTest {
   }
 
   @Test
-  fun rolloutWorkingHintUsesFreshAppServerVerificationWhenPrefetchingHints() {
+  fun rolloutWorkingHintOverridesFreshAppServerVerificationWhenPrefetchingHints() {
     val observedAppServerSeeds = mutableListOf<Set<AgentSessionRefreshThreadSeed>>()
     val source = createSource(
       appServerRefreshHintsProvider = recordingHintsProvider(
@@ -197,7 +197,7 @@ class CodexSessionSourceTest {
 
       assertThat(observedAppServerSeeds.single().single().forceRefresh).isTrue()
       assertThat(hints.getValue(PROJECT_PATH).activityByThreadId)
-        .containsExactlyEntriesOf(mapOf("thread-1" to AgentThreadActivity.READY))
+        .containsExactlyEntriesOf(mapOf("thread-1" to AgentThreadActivity.PROCESSING))
     }
   }
 
@@ -309,7 +309,7 @@ class CodexSessionSourceTest {
   }
 
   @Test
-  fun listThreadsAppliesFreshAppServerVerificationBeforeRolloutFallback() {
+  fun listThreadsKeepsRolloutWorkingHintOverFreshAppServerVerification() {
     val observedAppServerSeeds = mutableListOf<Set<AgentSessionRefreshThreadSeed>>()
     val source = createSource(
       backendThreads = listOf(
@@ -349,7 +349,7 @@ class CodexSessionSourceTest {
       val threads = source.listThreadsFromClosedProject(PROJECT_PATH)
 
       assertThat(observedAppServerSeeds.single().single().forceRefresh).isTrue()
-      assertThat(threads.single().activity).isEqualTo(AgentThreadActivity.READY)
+      assertThat(threads.single().activity).isEqualTo(AgentThreadActivity.PROCESSING)
     }
   }
 

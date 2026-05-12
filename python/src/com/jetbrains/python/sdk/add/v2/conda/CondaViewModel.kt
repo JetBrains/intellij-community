@@ -15,8 +15,8 @@ import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.conda.loadLocalPythonCondaPath
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows
-import com.jetbrains.python.packaging.conda.environmentYml.CondaEnvironmentYmlSdkUtils
-import com.jetbrains.python.packaging.conda.environmentYml.format.CondaEnvironmentYmlParser
+import com.intellij.python.community.impl.conda.environmentYml.CondaEnvironmentYmlSdkUtils
+import com.intellij.python.community.impl.conda.environmentYml.format.CondaEnvironmentYmlParser
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.PythonToolViewModel

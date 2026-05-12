@@ -16,7 +16,8 @@ import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
 import com.jetbrains.python.sdk.associatedModulePath
-import com.jetbrains.python.sdk.pipenv.PipEnvFileHelper
+import com.jetbrains.python.sdk.pipenv.PipFileLockFile
+import com.jetbrains.python.sdk.pipenv.findPipFileLockFile
 import com.jetbrains.python.sdk.pipenv.runPipEnv
 import com.jetbrains.python.sdk.pipenv.PipEnvParser as SdkPipEnvParser
 import org.jetbrains.annotations.ApiStatus
@@ -81,11 +82,9 @@ class PipEnvPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pr
 
   override suspend fun listDeclaredPackages(): PyResult<List<PythonPackage>>? {
     val pipFileLock =  getDependencyFile() ?: return null
-    val requirements = SdkPipEnvParser.getPipFileLockRequirements(pipFileLock) ?: return null
+    val requirements = SdkPipEnvParser.getPipFileLockRequirements(pipFileLock.virtualFile) ?: return null
     return PyResult.success(requirements.toPythonPackages())
   }
 
-  override fun getDependencyFile(): com.intellij.openapi.vfs.VirtualFile? {
-    return PipEnvFileHelper.getPipFileLock(sdk)
-  }
+  override fun getDependencyFile(): PipFileLockFile? = sdk.findPipFileLockFile()
 }

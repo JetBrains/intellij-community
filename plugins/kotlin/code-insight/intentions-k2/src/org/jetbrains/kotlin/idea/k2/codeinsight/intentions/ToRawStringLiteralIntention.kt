@@ -16,8 +16,9 @@ internal class ToRawStringLiteralIntention :
     KotlinApplicableModCommandAction.Simple<KtStringTemplateExpression>(KtStringTemplateExpression::class) {
 
     override fun getFamilyName(): String = KotlinBundle.message("convert.to.raw.string.literal")
+
     override fun getPresentation(context: ActionContext, element: KtStringTemplateExpression): Presentation =
-        Presentation.of(familyName).withPriority(PriorityAction.Priority.LOW)
+        Presentation.of(familyName).withPriority(PriorityAction.Priority.NORMAL)
 
     override fun invoke(
       actionContext: ActionContext,

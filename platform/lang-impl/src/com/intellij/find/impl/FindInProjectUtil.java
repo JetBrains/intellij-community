@@ -449,15 +449,6 @@ public final class FindInProjectUtil {
     presentation.setReplaceMode(findModel.isReplaceState());
   }
 
-  /** @deprecated please use {@link #setupProcessPresentation(boolean, UsageViewPresentation)} instead */
-  @Deprecated(forRemoval = true)
-  @SuppressWarnings("unused")
-  public static @NotNull FindUsagesProcessPresentation setupProcessPresentation(@NotNull Project project,
-                                                                                boolean showPanelIfOnlyOneUsage,
-                                                                                @NotNull UsageViewPresentation presentation) {
-    return setupProcessPresentation(showPanelIfOnlyOneUsage, presentation);
-  }
-
   public static @NotNull FindUsagesProcessPresentation setupProcessPresentation(@NotNull UsageViewPresentation presentation) {
     return setupProcessPresentation(!FindSettings.getInstance().isSkipResultsWithOneUsage(), presentation);
   }

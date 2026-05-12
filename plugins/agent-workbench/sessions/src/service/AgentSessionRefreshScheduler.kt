@@ -4,6 +4,7 @@ package com.intellij.agent.workbench.sessions.service
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionActivityHintPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
@@ -246,10 +247,12 @@ internal class AgentSessionRefreshScheduler(
   }
 
   private fun scheduleSourceRefresh(provider: AgentSessionProvider, updateEvent: AgentSessionSourceUpdateEvent) {
+    val normalizedIncoming = normalizeUpdateEvent(updateEvent)
+    applySourceUpdateActivityHints(provider, normalizedIncoming)
     synchronized(sourceRefreshJobsLock) {
       val existingJob = sourceRefreshJobs.remove(provider)
       existingJob?.job?.cancel()
-      val mergedUpdate = mergeSourceUpdateEvents(existingJob?.updateEvent, updateEvent)
+      val mergedUpdate = mergeSourceUpdateEvents(existingJob?.updateEvent, normalizedIncoming)
       LOG.debug {
         "Scheduled debounced source refresh for ${provider.value} " +
         "(${mergedUpdate.describeScope()}, sourceUpdate=${mergedUpdate.type.name.lowercase()})"
@@ -324,7 +327,11 @@ internal class AgentSessionRefreshScheduler(
       type = updateEvent.type,
       scopedPaths = normalizePaths(updateEvent.scopedPaths),
       threadIds = normalizeThreadIds(updateEvent.threadIds),
-      activityHintsByThreadId = normalizeActivityHints(updateEvent.activityHintsByThreadId),
+      activityHintsByThreadId = normalizeActivityHints(
+        activityHintsByThreadId = updateEvent.activityHintsByThreadId,
+        activityHintPolicy = updateEvent.activityHintPolicy,
+      ),
+      activityHintPolicy = updateEvent.activityHintPolicy,
     )
   }
 
@@ -346,7 +353,10 @@ internal class AgentSessionRefreshScheduler(
       ?.takeIf { it.isNotEmpty() }
   }
 
-  private fun normalizeActivityHints(activityHintsByThreadId: Map<String, AgentThreadActivity>): Map<String, AgentThreadActivity> {
+  private fun normalizeActivityHints(
+    activityHintsByThreadId: Map<String, AgentThreadActivity>,
+    @Suppress("UNUSED_PARAMETER") activityHintPolicy: AgentSessionActivityHintPolicy,
+  ): Map<String, AgentThreadActivity> {
     if (activityHintsByThreadId.isEmpty()) {
       return emptyMap()
     }
@@ -373,10 +383,12 @@ internal class AgentSessionRefreshScheduler(
       else -> AgentSessionSourceUpdate.HINTS_CHANGED
     }
     val mergedActivityHintsByThreadId = mergeActivityHints(existing.activityHintsByThreadId, incoming.activityHintsByThreadId)
+    val mergedActivityHintPolicy = mergeActivityHintPolicy(existing.activityHintPolicy, incoming.activityHintPolicy)
     if (existing.isUnscoped() || incoming.isUnscoped()) {
       return AgentSessionSourceUpdateEvent(
         type = mergedType,
         activityHintsByThreadId = mergedActivityHintsByThreadId,
+        activityHintPolicy = mergedActivityHintPolicy,
       )
     }
 
@@ -385,7 +397,20 @@ internal class AgentSessionRefreshScheduler(
       scopedPaths = mergeScopeSets(existing.scopedPaths, incoming.scopedPaths),
       threadIds = mergeScopeSets(existing.threadIds, incoming.threadIds),
       activityHintsByThreadId = mergedActivityHintsByThreadId,
+      activityHintPolicy = mergedActivityHintPolicy,
     )
+  }
+
+  private fun mergeActivityHintPolicy(
+    existing: AgentSessionActivityHintPolicy,
+    incoming: AgentSessionActivityHintPolicy,
+  ): AgentSessionActivityHintPolicy {
+    return if (existing == AgentSessionActivityHintPolicy.AUTHORITATIVE || incoming == AgentSessionActivityHintPolicy.AUTHORITATIVE) {
+      AgentSessionActivityHintPolicy.AUTHORITATIVE
+    }
+    else {
+      AgentSessionActivityHintPolicy.OPTIMISTIC
+    }
   }
 
   private fun mergeActivityHints(

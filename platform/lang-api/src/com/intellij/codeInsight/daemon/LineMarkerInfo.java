@@ -170,22 +170,6 @@ public class LineMarkerInfo<T extends PsiElement> {
                                           "Please use `LineMarkerInfo(T, TextRange, Icon, Function, GutterIconNavigationHandler, Alignment, Supplier)` instead");
   }
 
-  /**
-   * @deprecated use {@link #LineMarkerInfo(PsiElement, TextRange, Icon, Function, GutterIconNavigationHandler, GutterIconRenderer.Alignment, Supplier)}
-   * or {@link #LineMarkerInfo(PsiElement, TextRange)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public LineMarkerInfo(@NotNull T element,
-                        int startOffset,
-                        Icon icon,
-                        int updatePass,
-                        @Nullable Function<? super T, String> tooltipProvider,
-                        @Nullable GutterIconNavigationHandler<T> navHandler) {
-    this(element, new TextRange(startOffset, startOffset), icon, null, tooltipProvider, navHandler, GutterIconRenderer.Alignment.RIGHT);
-    PluginException.reportDeprecatedUsage("#LineMarkerInfo(T, int, Icon, int, Function, GutterIconNavigationHandler)",
-                                          "Please use `LineMarkerInfo(T, TextRange, Icon, Function, GutterIconNavigationHandler, Alignment, Supplier)` instead");
-  }
-
   public Icon getIcon() {
     return myIcon;
   }

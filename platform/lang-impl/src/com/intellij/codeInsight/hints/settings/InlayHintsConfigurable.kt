@@ -8,7 +8,6 @@ import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
-import java.util.function.Predicate
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -52,15 +51,5 @@ class InlayHintsConfigurable(private val project: Project) : Configurable, Confi
       showInlaySettings(project, language, null)
     }
 
-    @JvmStatic
-    @Deprecated("Use com.intellij.codeInsight.hints.settings.InlaySettingsConfigurableKt.showInlaySettings",
-                ReplaceWith("showInlaySettings(project, language, selector)"))
-    @ApiStatus.ScheduledForRemoval
-    fun showSettingsDialogForLanguage(project: Project, language: Language, selector: Predicate<InlayProviderSettingsModel>?) {
-      if (showInlaySettings(project, language, selector)) {
-        return
-      }
-      throw UnsupportedOperationException()
-    }
   }
 }

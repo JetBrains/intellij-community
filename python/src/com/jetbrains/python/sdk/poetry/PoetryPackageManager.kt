@@ -4,7 +4,7 @@ package com.jetbrains.python.sdk.poetry
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.python.pyproject.PyProjectTomlFile
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
@@ -219,7 +219,7 @@ class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pr
     return PackageCollectionPackageStructureNode(declared, undeclared + standalonePackages)
   }
 
-  override fun getDependencyFile(): VirtualFile? {
+  override fun getDependencyFile(): PyProjectTomlFile? {
     val projectPathStr = sdk.associatedModulePath ?: return null
     val projectPath = Path.of(projectPathStr)
     return resolvePyProjectToml(projectPath)

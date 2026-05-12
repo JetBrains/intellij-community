@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.ApiStatus;
 
 public final class DocumentationManagerUtil {
 
@@ -40,21 +39,6 @@ public final class DocumentationManagerUtil {
                                      String label,
                                      boolean plainLink,
                                      @SuppressWarnings("unused") boolean isRendered) {
-    createHyperlink(buffer, refText, label, plainLink);
-  }
-
-  /**
-   * @deprecated use {@link #createHyperlink(StringBuilder, String, String, boolean)}
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public static void createHyperlink(
-    StringBuilder buffer,
-    PsiElement refElement,
-    String refText,
-    String label,
-    boolean plainLink
-  ) {
     createHyperlink(buffer, refText, label, plainLink);
   }
 

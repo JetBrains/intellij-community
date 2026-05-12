@@ -15,19 +15,9 @@
  */
 package org.jetbrains.jps.model;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface JpsElementReference<T extends JpsElement> extends JpsElement {
   @Nullable
   T resolve();
-
-  /**
-   * @deprecated external references aren't supported anymore. If you need to refer to a {@link JpsElement} outside the model,
-   * use its name instead.
-   */
-  @Deprecated(forRemoval = true)
-  default JpsElementReference<T> asExternal(@NotNull JpsModel model) {
-    throw new UnsupportedOperationException();
-  }
 }

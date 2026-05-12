@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.impl.local
 
 import com.intellij.execution.process.LocalProcessService
@@ -16,7 +16,6 @@ import com.intellij.util.io.awaitExit
 import com.pty4j.WinSize
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 
 internal class LocalEelWindowsProcess private constructor(
@@ -42,7 +41,7 @@ internal class LocalEelWindowsProcess private constructor(
   )
 
   override suspend fun kill() {
-    LocalProcessService.getInstance().killWinProcessRecursively(process)
+    LocalProcessService.getInstance().killWinProcessRecursively(process.pid().toInt())
     process.destroyForcibly()
   }
 

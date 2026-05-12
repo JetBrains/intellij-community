@@ -115,7 +115,7 @@ public final class PyParameterInfoUtils {
         }
 
         @Override
-        public void visitSlashParameter(@NotNull PySlashParameter param, boolean first, boolean last) {
+        public void visitSlashParameter(@Nullable PySlashParameter param, boolean first, boolean last) {
           hintFlags.put(parameterDescriptions.size(), EnumSet.noneOf(ParameterFlag.class));
           currentParameterIndex[0]++;
           ParameterDescription parameterDescription = new ParameterDescription(PyAstSlashParameter.TEXT, "", last);
@@ -123,7 +123,7 @@ public final class PyParameterInfoUtils {
         }
 
         @Override
-        public void visitSingleStarParameter(PySingleStarParameter param, boolean first, boolean last) {
+        public void visitSingleStarParameter(@Nullable PySingleStarParameter param, boolean first, boolean last) {
           hintFlags.put(parameterDescriptions.size(), EnumSet.noneOf(ParameterFlag.class));
           currentParameterIndex[0]++;
           ParameterDescription parameterDescription = new ParameterDescription(PyAstSingleStarParameter.TEXT, "", last);
@@ -334,7 +334,7 @@ public final class PyParameterInfoUtils {
     final TypeEvalContext typeEvalContext = TypeEvalContext.codeAnalysis(callExpression.getProject(), callExpression.getContainingFile());
     final PyCallableType callableType = callAndCallee.getSecond();
 
-    final List<PyCallableParameter> parameters = callableType.getParameters(typeEvalContext);
+    List<PyCallableParameter> parameters = callableType.getUnpackedParameters(typeEvalContext);
     if (parameters == null) return null;
 
     final PyCallExpression.PyArgumentsMapping mapping = PyCallExpressionHelper.mapArguments(callExpression, callableType, typeEvalContext);

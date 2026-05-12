@@ -12,6 +12,7 @@ import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetSettings
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
+import com.intellij.platform.ide.productMode.IdeProductMode
 import kotlinx.coroutines.launch
 
 internal class McpServerStatusBarWidgetFactory : StatusBarWidgetFactory {
@@ -25,7 +26,7 @@ internal class McpServerStatusBarWidgetFactory : StatusBarWidgetFactory {
 
   override fun isEnabledByDefault(): Boolean = McpServerSettings.getInstance().state.enableMcpServer
 
-  override fun isAvailable(project: Project): Boolean = true
+  override fun isAvailable(project: Project): Boolean = IdeProductMode.isMonolith
 
   override fun canBeEnabledOn(statusBar: StatusBar): Boolean = true
 

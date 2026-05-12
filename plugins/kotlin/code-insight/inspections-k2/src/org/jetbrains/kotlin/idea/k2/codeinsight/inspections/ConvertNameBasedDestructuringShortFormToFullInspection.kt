@@ -5,12 +5,12 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.codeinsight.utils.NameBasedDestructuringForm
 import org.jetbrains.kotlin.idea.codeinsight.utils.buildNameBasedDestructuringText
 import org.jetbrains.kotlin.idea.codeinsight.utils.extractPrimaryParameters
 import org.jetbrains.kotlin.idea.codeinsight.utils.isPositionalDestructuringType
@@ -52,11 +52,12 @@ internal class ConvertNameBasedDestructuringShortFormToFullInspection : KotlinAp
     }
 
     override fun KaSession.prepareContext(element: KtDestructuringDeclaration): String? {
-        // Just verify that we can extract primary parameters - the actual work will be done in the QuickFix
-        if (extractPrimaryParameters(element) == null) return null
+        val names = extractPrimaryParameters(element)?.map { it.name.asString() } ?: return null
         // Exclude stdlib types - they should use brackets [x, y] instead
         if (element.isPositionalDestructuringType()) return null
-        return element.buildNameBasedDestructuringText()
+        return element.buildNameBasedDestructuringText(
+            NameBasedDestructuringForm(names, positionBased = false, useFullForm = true)
+        )
     }
 }
 

@@ -33,10 +33,13 @@ class PyCallableParameterImpl @JvmOverloads internal constructor(
   @field:NlsSafe private val myName: @NlsSafe String? = null,
   private val myType: Ref<PyType?>? = null,
   private val myDefaultValue: PyExpression? = null,
+  private val myDefaultValueText: String? = null,
   override val parameter: PyParameter? = null,
-  private val myIsPositional: Boolean = false,
-  private val myIsKeyword: Boolean = false,
+  private val myIsPositionalContainer: Boolean = false,
+  private val myIsKeywordContainer: Boolean = false,
   private val myIsSelf: Boolean = false,
+  private val myIsKeywordOnlySeparator: Boolean = false,
+  private val myIsPositionalOnlySeparator: Boolean = false,
   private val myDeclarationElement: PsiElement? = null,
 ) : PyCallableParameter {
   @get:Nls
@@ -56,29 +59,31 @@ class PyCallableParameterImpl @JvmOverloads internal constructor(
     get() = if (parameter == null) myDefaultValue else parameter.defaultValue
 
   override fun hasDefaultValue(): Boolean {
-    return parameter?.hasDefaultValue() ?: (myDefaultValue != null)
+    return parameter?.hasDefaultValue() ?: (myDefaultValue != null || myDefaultValueText != null)
   }
 
   override val defaultValueText: String?
-    get() = if (parameter != null)
-      parameter.defaultValueText
-    else
-      myDefaultValue?.text
+    get() = when {
+      parameter != null -> parameter.defaultValueText
+      myDefaultValue != null -> myDefaultValue.text
+      myDefaultValueText != null -> myDefaultValueText
+      else -> null
+    }
 
   override val isPositionalContainer: Boolean
-    get() = myIsPositional || (parameter as? PyNamedParameter)?.isPositionalContainer == true
+    get() = myIsPositionalContainer || (parameter as? PyNamedParameter)?.isPositionalContainer == true
 
   override val isKeywordContainer: Boolean
-    get() = myIsKeyword || (parameter as? PyNamedParameter)?.isKeywordContainer == true
+    get() = myIsKeywordContainer || (parameter as? PyNamedParameter)?.isKeywordContainer == true
 
   override val isSelf: Boolean
     get() = myIsSelf || parameter?.isSelf == true
 
   override val isPositionOnlySeparator: Boolean
-    get() = parameter is PySlashParameter
+    get() = parameter is PySlashParameter || myIsPositionalOnlySeparator
 
   override val isKeywordOnlySeparator: Boolean
-    get() = parameter is PySingleStarParameter
+    get() = parameter is PySingleStarParameter || myIsKeywordOnlySeparator
 
   override fun getPresentableText(includeDefaultValue: Boolean, context: TypeEvalContext?): String {
     return getPresentableText(includeDefaultValue, context, { it.isUnknown })
@@ -111,6 +116,21 @@ class PyCallableParameterImpl @JvmOverloads internal constructor(
     }
   }
 
+  /**
+   * Returns the expected type for an argument passed to this parameter.
+   *
+   * For most parameters, this is the same as [getType].
+   * However, for variadic parameters, this method applies special handling:
+   * - For positional containers (`*args`):
+   *   - If the type is `tuple[T, ...]`, returns `T` (the element type)
+   *   - If the type is `*tuple[T1, T2, ...]`, returns the unpacked tuple type itself
+   * - For keyword containers (`**kwargs`):
+   *   - If the type is a collection (e.g., `dict[str, V]`), returns `V` (the value type)
+   *   - If the type is `Unpack[TypedDict]`, returns the unpacked TypedDict type
+   *
+   * @param context the type evaluation context
+   * @return the expected type of the argument, or `null` if the type cannot be determined
+   */
   override fun getArgumentType(context: TypeEvalContext): PyType? {
     val parameterType = getType(context)
 
@@ -124,8 +144,11 @@ class PyCallableParameterImpl @JvmOverloads internal constructor(
       else
         unpackedTupleType
     }
-    else if (isKeywordContainer && parameterType is PyCollectionType) {
-      parameterType.elementTypes.getOrNull(1)
+    else if (isKeywordContainer) {
+      if (parameterType is PyCollectionType) {
+        parameterType.elementTypes.getOrNull(1)
+      }
+      else parameterType as? PyUnpackedTypedDictType ?: parameterType
     }
     else
       parameterType
@@ -136,37 +159,64 @@ class PyCallableParameterImpl @JvmOverloads internal constructor(
     if (other == null || javaClass != other.javaClass) return false
 
     other as PyCallableParameterImpl
-    return myIsPositional == other.myIsPositional && myIsKeyword == other.myIsKeyword &&
+    return parameter == other.parameter &&
            myName == other.myName &&
            myType?.get() == other.myType?.get() &&
+           myIsSelf == other.myIsSelf &&
+           myIsPositionalContainer == other.myIsPositionalContainer &&
+           myIsKeywordContainer == other.myIsKeywordContainer &&
+           myIsKeywordOnlySeparator == other.myIsKeywordOnlySeparator &&
+           myIsPositionalOnlySeparator == other.myIsPositionalOnlySeparator &&
            myDefaultValue == other.myDefaultValue &&
-           parameter == other.parameter
+           myDefaultValueText == other.myDefaultValueText
   }
 
   override fun hashCode(): Int {
     return Objects.hash(
-      myName, myType?.get(), myDefaultValue,
-      parameter, myIsPositional, myIsKeyword
+      parameter,
+      myName,
+      myType?.get(),
+      myIsSelf,
+      myIsPositionalContainer,
+      myIsKeywordContainer,
+      myIsKeywordOnlySeparator,
+      myIsPositionalOnlySeparator,
+      myDefaultValue,
+      myDefaultValueText,
     )
   }
 
   companion object {
     @JvmStatic
-    fun nonPsi(type: PyType?): PyCallableParameter = nonPsi(null, type)
+    fun nonPsi(type: PyType?): PyCallableParameter = nonPsi(null, type, defaultValue = null)
 
     @JvmStatic
     @JvmOverloads
     fun nonPsi(name: String?, type: PyType?, defaultValue: PyExpression? = null): PyCallableParameter =
       PyCallableParameterImpl(name, Ref(type), defaultValue)
 
+    @JvmStatic
+    fun nonPsi(name: String?, type: PyType?, defaultValueText: String?): PyCallableParameter =
+      PyCallableParameterImpl(name, Ref(type), myDefaultValueText = defaultValueText)
+
     fun nonPsi(name: String?, type: PyType?, defaultValue: PyExpression?, declarationElement: PsiElement): PyCallableParameter =
       PyCallableParameterImpl(name, Ref(type), defaultValue, myDeclarationElement = declarationElement)
 
-    fun positionalNonPsi(name: String?, type: PyType?): PyCallableParameter =
-      PyCallableParameterImpl(name, Ref(type), myIsPositional = true)
+    @JvmStatic
+    fun positionalContainerNonPsi(name: String?, type: PyType?): PyCallableParameter =
+      PyCallableParameterImpl(name, Ref(type), myIsPositionalContainer = true)
 
-    fun keywordNonPsi(name: String?, type: PyType?): PyCallableParameter =
-      PyCallableParameterImpl(name, Ref(type), myIsKeyword = true)
+    @JvmStatic
+    fun keywordContainerNonPsi(name: String?, type: PyType?): PyCallableParameter =
+      PyCallableParameterImpl(name, Ref(type), myIsKeywordContainer = true)
+
+    @JvmStatic
+    fun keywordOnlySeparatorNonPsi(): PyCallableParameter =
+      PyCallableParameterImpl(myIsKeywordOnlySeparator = true)
+
+    @JvmStatic
+    fun positionalOnlySeparatorNonPsi(): PyCallableParameter =
+      PyCallableParameterImpl(myIsPositionalOnlySeparator = true)
 
     @JvmStatic
     fun psi(parameter: PyParameter): PyCallableParameter =

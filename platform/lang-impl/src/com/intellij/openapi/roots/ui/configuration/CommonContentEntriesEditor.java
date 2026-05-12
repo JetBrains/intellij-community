@@ -72,11 +72,6 @@ import java.util.Map;
  */
 public class CommonContentEntriesEditor extends ModuleElementsEditor {
   private static final Logger LOG = Logger.getInstance(CommonContentEntriesEditor.class);
-  /**
-   * @deprecated Use {@link #getName()} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static final String NAME = "Sources";
 
   protected ContentEntryTreeEditor myRootTreeEditor;
   private MyContentEntryEditorListener myContentEntryEditorListener;

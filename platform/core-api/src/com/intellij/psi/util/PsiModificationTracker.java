@@ -106,14 +106,6 @@ public interface PsiModificationTracker extends ModificationTracker {
   long getModificationCount();
 
   /**
-   * @return an object returning {@link #getModificationCount()}
-   * @deprecated rarely supported by JVM language plugins; also a wrong way for optimisations
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  @NotNull ModificationTracker getJavaStructureModificationTracker();
-
-  /**
    * @return modification tracker incremented on changes in files with the passed language.
    */
   @NotNull ModificationTracker forLanguage(@NotNull Language language);

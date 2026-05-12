@@ -64,10 +64,6 @@ public class MockEditorEventMulticaster implements EditorEventMulticaster {
   }
 
   @Override
-  public void addSelectionListener(@NotNull SelectionListener listener) {
-  }
-
-  @Override
   public void addSelectionListener(@NotNull SelectionListener listener, @NotNull Disposable parentDisposable) {
   }
 

@@ -137,13 +137,6 @@ class NotificationGroup private constructor(val displayId: String,
       findRegisteredNotificationGroup(displayId)
       ?: NotificationGroup(displayId, NotificationDisplayType.NONE, title = title, registerGroup = true)
 
-    @JvmStatic
-    @Deprecated("Use com.intellij.notification.impl.NotificationGroupEP and com.intellij.notification.NotificationGroupManager")
-    @ApiStatus.ScheduledForRemoval
-    fun logOnlyGroup(displayId: String, pluginId: PluginId): NotificationGroup =
-      findRegisteredNotificationGroup(displayId)
-      ?: NotificationGroup(displayId, NotificationDisplayType.NONE, pluginId = pluginId, registerGroup = true)
-
     @JvmOverloads
     @JvmStatic
     @Deprecated("Use com.intellij.notification.impl.NotificationGroupEP and com.intellij.notification.NotificationGroupManager")
@@ -205,13 +198,6 @@ class NotificationGroup private constructor(val displayId: String,
                          listener: NotificationListener? = null): Notification =
     createNotification(title, content, type)
       .also { if (listener != null) it.setListener(listener) }
-
-  @Deprecated("Use `createNotification(String, NotificationType)` or `createNotification(String, String, NotificationType)`")
-  @ApiStatus.ScheduledForRemoval
-  @Suppress("DeprecatedCallableAddReplaceWith")
-  @JvmOverloads
-  fun createNotification(type: NotificationType = NotificationType.INFORMATION): Notification =
-    Notification(displayId, "", type)
 
   @Deprecated("Use `createNotification(String, NotificationType)` or `createNotification(String, String, NotificationType)`" +
               " along with `Notification#setSubtitle` and `Notification#setListener`")

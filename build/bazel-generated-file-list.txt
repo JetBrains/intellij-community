@@ -1607,6 +1607,7 @@ python/python-features-trainer
 python/python-grazie
 python/python-hatch
 python/python-markdown
+python/python-packaging
 python/python-parser
 python/python-poetry/backend
 python/python-poetry/common
@@ -1616,6 +1617,7 @@ python/python-process-output/frontend
 python/python-psi-api
 python/python-psi-impl
 python/python-pyproject
+python/python-requirements
 python/python-restructuredtext
 python/python-sdk
 python/python-sdk-configurator/backend

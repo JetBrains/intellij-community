@@ -13,6 +13,7 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyQualifiedNameOwner;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
@@ -123,6 +124,13 @@ public class PyCallableTypeImpl implements PyCallableType {
       return Collections.singletonList(PyCallableParameterImpl.nonPsi(myParametersType));
     }
     return null;
+  }
+
+  @Override
+  public @Nullable List<PyCallableParameter> getUnpackedParameters(@NotNull TypeEvalContext context) {
+    List<PyCallableParameter> parameters = getParameters(context);
+    if (parameters == null) return null;
+    return ParamHelper.unpackContainerParameters(parameters, context);
   }
 
   @Override

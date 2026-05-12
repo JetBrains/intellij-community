@@ -111,13 +111,12 @@ object IntentionDiffUtil {
 
     writeIntentReadAction {
       val foldingLinePredicate = unifiedFoldingModel.hideLineNumberPredicate(0)
-      val merged1 = DiffUtil.mergeLineConverters(DiffUtil.getContentLineConvertor(content1),
-                                                 convertor1.createConvertor())
-      val merged2 = DiffUtil.mergeLineConverters(DiffUtil.getContentLineConvertor(content2),
-                                                 convertor2.createConvertor())
+      val mergedLineConverter = DiffUtil.mergeLineConverters(
+        DiffUtil.getContentLineConvertor(content1), convertor1.createConvertor())
+
       unifiedEditor.getGutter().setLineNumberConverter(
-        DiffLineNumberConverter(foldingLinePredicate, merged1),
-        DiffLineNumberConverter(foldingLinePredicate, merged2)
+        DiffLineNumberConverter(foldingLinePredicate, mergedLineConverter),
+        null
       )
 
       runWriteAction { unifiedDocument.setText(builder.text) }

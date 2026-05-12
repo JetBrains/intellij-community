@@ -46,37 +46,12 @@ public abstract class CompilerManager {
   public abstract boolean isCompilationActive();
 
   /**
-   * Registers a custom compiler.
-   *
-   * @deprecated use {@link CompileTask} extension instead
-   */
-  @Deprecated(forRemoval = true)
-  public abstract void addCompiler(@NotNull Compiler compiler);
-
-  /**
-   * Unregisters a custom compiler.
-   *
-   * @deprecated use {@link CompileTask} extension instead
-   */
-  @Deprecated(forRemoval = true)
-  public abstract void removeCompiler(@NotNull Compiler compiler);
-
-  /**
    * Returns all registered compilers of the specified class.
    *
    * @param compilerClass the class for which the compilers should be returned.
    * @return all registered compilers of the specified class.
    */
   public abstract <T  extends Compiler> T @NotNull [] getCompilers(@NotNull Class<T> compilerClass);
-
-  /**
-   * Registers the type as a compilable type so that Compile action will be enabled on files of this type.
-   *
-   * @param type the type for which the Compile action is enabled.
-   * @deprecated use {@link CompilableFileTypesProvider} extension point to register compilable file types
-   */
-  @Deprecated(forRemoval = true)
-  public abstract void addCompilableFileType(@NotNull FileType type);
 
   /**
    * Checks if files of the specified type can be compiled by one of registered compilers.

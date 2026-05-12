@@ -51,12 +51,6 @@ public interface EditorEventMulticaster {
 
   void removeCaretListener(@NotNull CaretListener listener);
 
-  /**
-   * @deprecated Use {@link #addSelectionListener(SelectionListener, Disposable)} instead to avoid leaking listeners
-   */
-  @Deprecated(forRemoval = true)
-  void addSelectionListener(@NotNull SelectionListener listener);
-
   void addSelectionListener(@NotNull SelectionListener listener, @NotNull Disposable parentDisposable);
 
   void removeSelectionListener(@NotNull SelectionListener listener);

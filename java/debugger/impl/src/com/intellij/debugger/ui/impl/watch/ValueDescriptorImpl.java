@@ -574,7 +574,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
             try {
               return ReadAction.compute(() -> DebuggerTreeNodeExpression.substituteThis(
                 childrenRenderer.getChildValueExpression(new DebuggerTreeNodeMock(value), context),
-                ((PsiExpression)parentEvaluation), vDescriptor.getValue()
+                ((PsiExpression)parentEvaluation), vDescriptor.getValue(), vDescriptor.getDeclaredType()
               ));
             }
             catch (EvaluateException e) {

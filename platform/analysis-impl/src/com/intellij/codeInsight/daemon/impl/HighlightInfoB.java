@@ -93,12 +93,6 @@ class HighlightInfoB implements HighlightInfo.Builder {
   }
 
   @Override
-  public @NotNull HighlightInfo.Builder inspectionToolId(@NotNull String inspectionToolId) {
-    assertNotCreated();
-    return this;
-  }
-
-  @Override
   public @NotNull HighlightInfo.Builder description(@NotNull String description) {
     assertNotCreated();
     assertNotSet(this.escapedDescription, "description");

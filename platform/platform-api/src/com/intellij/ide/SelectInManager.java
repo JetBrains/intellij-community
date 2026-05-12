@@ -5,7 +5,6 @@ import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -16,10 +15,6 @@ import java.util.Objects;
 @Service(Service.Level.PROJECT)
 public final class SelectInManager {
   private final Project myProject;
-  /**
-   * @deprecated Use {@link #getProject()} instead
-   */
-  @Deprecated(forRemoval = true) public static final @NonNls String PROJECT = getProject();
 
   public SelectInManager(@NotNull Project project) {
     myProject = project;

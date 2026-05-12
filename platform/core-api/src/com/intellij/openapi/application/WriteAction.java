@@ -6,7 +6,6 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.EDT;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicReference;
@@ -14,50 +13,12 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * See <a href="https://plugins.jetbrains.com/docs/intellij/threading-model.html">Threading Model</a>
  *
- * @param <T> Result type.
  * @see ReadAction
  */
-public abstract class WriteAction<T> extends BaseActionRunnable<T> {
+public final class WriteAction {
   private static final Logger LOG = Logger.getInstance(WriteAction.class);
 
-  /**
-   * @deprecated Use {@link #run(ThrowableRunnable)} or {@link #compute(ThrowableComputable)} or similar method instead
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public WriteAction() {
-  }
-
-  /**
-   * @deprecated use {@link #run(ThrowableRunnable)}
-   * or {@link #compute(ThrowableComputable)}
-   * or (if really desperate) {@link #computeAndWait(ThrowableComputable)} instead
-   */
-  @Deprecated
-  @Override
-  public @NotNull RunResult<T> execute() {
-    final RunResult<T> result = new RunResult<>(this);
-
-    Application application = ApplicationManager.getApplication();
-    if (application.isWriteIntentLockAcquired()) {
-      application.runWriteAction(() -> {
-        result.run();
-      });
-      return result;
-    }
-
-    if (application.isReadAccessAllowed()) {
-      LOG.error("Must not start write action from within read action in the other thread - deadlock is coming");
-    }
-
-    WriteThread.invokeAndWait(() -> {
-      application.runWriteAction(() -> {
-        result.run();
-      });
-    });
-
-    result.throwException();
-    return result;
+  private WriteAction() {
   }
 
   /**
@@ -73,13 +34,6 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
   public static <T, E extends Throwable> T compute(@NotNull ThrowableComputable<T, E> action) throws E {
     return ApplicationManager.getApplication().runWriteAction(action);
   }
-
-  /**
-   * @deprecated use {@link #run(ThrowableRunnable)} or {@link #compute(ThrowableComputable)} instead
-   */
-  @Deprecated
-  @Override
-  protected abstract void run(@NotNull Result<? super T> result) throws Throwable;
 
   /**
    * Executes {@code action} inside write action.
