@@ -32,8 +32,10 @@ The Agent Threads tree follows IntelliJ tree conventions while adding provider-s
   `Needs attention` uses the strongest treatment with a bold count; `Running` and `Done` use normal foreground counts;
   zero-count buckets render disabled rather than disappearing.
   Clicking a counter opens a popup listing only that bucket's threads.
-  The stripe button icon carries a `Needs attention` badge whenever any thread is in `NEEDS_INPUT` or `REVIEWING`,
-  so the user is alerted even when the tool window is collapsed.
+  The stripe button icon uses collapsed notification precedence: it carries a `Needs attention` badge whenever any
+  thread is in `NEEDS_INPUT` or `REVIEWING`, otherwise a `Done` badge whenever any thread is `UNREAD`, otherwise no badge.
+  Stripe badges use the Agent Workbench activity colors: `Needs attention` uses the `NEEDS_INPUT` color and `Done` uses the
+  `UNREAD` color. `PROCESSING` threads never badge the collapsed stripe button.
   [@test] ../sessions-toolwindow/testSrc/AgentSessionsActivitySummaryTest.kt
 
 - Selection and activation must match platform tree behavior: single-click selects, Enter/double-click opens openable rows, and double-click on openable parent rows prefers open/focus over expansion.

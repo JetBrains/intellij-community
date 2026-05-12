@@ -4,12 +4,14 @@ package com.intellij.agent.workbench.sessions.toolwindow
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
+import com.intellij.agent.workbench.common.statusColor
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.model.AgentWorktree
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsActivityBucket
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsActivityCounterComponent
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsActivityCounterTone
+import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsStripeBadge
 import com.intellij.agent.workbench.sessions.toolwindow.ui.agentSessionsActivityPopupRowText
 import com.intellij.agent.workbench.sessions.toolwindow.ui.buildAgentSessionsActivitySummary
 import com.intellij.openapi.actionSystem.AnAction
@@ -106,6 +108,80 @@ class AgentSessionsActivitySummaryTest {
     assertThat(summary.attentionRows).isEmpty()
     assertThat(summary.runningRows).isEmpty()
     assertThat(summary.doneRows).isEmpty()
+  }
+
+  @Test
+  fun stripeBadgePrefersAttentionOverDoneAndRunning() {
+    val summary = buildAgentSessionsActivitySummary(
+      AgentSessionsState(
+        projects = listOf(
+          AgentProjectSessions(
+            path = "/work/project-a",
+            name = "Project A",
+            isOpen = true,
+            hasLoaded = true,
+            threads = listOf(
+              thread("needs-input", AgentThreadActivity.NEEDS_INPUT, 500),
+              thread("done", AgentThreadActivity.UNREAD, 400),
+              thread("processing", AgentThreadActivity.PROCESSING, 300),
+            ),
+          )
+        ),
+      )
+    )
+
+    assertThat(summary.stripeBadge()).isEqualTo(AgentSessionsStripeBadge.ATTENTION)
+  }
+
+  @Test
+  fun stripeBadgeShowsDoneWhenThereIsUnreadOutputAndNoAttention() {
+    val summary = buildAgentSessionsActivitySummary(
+      AgentSessionsState(
+        projects = listOf(
+          AgentProjectSessions(
+            path = "/work/project-a",
+            name = "Project A",
+            isOpen = true,
+            hasLoaded = true,
+            threads = listOf(
+              thread("done", AgentThreadActivity.UNREAD, 400),
+              thread("processing", AgentThreadActivity.PROCESSING, 300),
+            ),
+          )
+        ),
+      )
+    )
+
+    assertThat(summary.stripeBadge()).isEqualTo(AgentSessionsStripeBadge.DONE)
+  }
+
+  @Test
+  fun stripeBadgeIgnoresRunningReadyAndNewSessionRows() {
+    val summary = buildAgentSessionsActivitySummary(
+      AgentSessionsState(
+        projects = listOf(
+          AgentProjectSessions(
+            path = "/work/project-a",
+            name = "Project A",
+            isOpen = true,
+            hasLoaded = true,
+            threads = listOf(
+              thread("processing", AgentThreadActivity.PROCESSING, 300),
+              thread("ready", AgentThreadActivity.READY, 200),
+              thread("new-done", AgentThreadActivity.UNREAD, 100),
+            ),
+          )
+        ),
+      )
+    )
+
+    assertThat(summary.stripeBadge()).isNull()
+  }
+
+  @Test
+  fun stripeBadgeUsesAgentWorkbenchActivityColors() {
+    assertThat(AgentSessionsStripeBadge.ATTENTION.color().rgb).isEqualTo(AgentThreadActivity.NEEDS_INPUT.statusColor().rgb)
+    assertThat(AgentSessionsStripeBadge.DONE.color().rgb).isEqualTo(AgentThreadActivity.UNREAD.statusColor().rgb)
   }
 
   @Test

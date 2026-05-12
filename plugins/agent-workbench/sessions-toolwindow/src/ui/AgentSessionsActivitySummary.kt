@@ -5,11 +5,13 @@ package com.intellij.agent.workbench.sessions.toolwindow.ui
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.session.AgentSessionThread
+import com.intellij.agent.workbench.common.statusColor
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.model.AgentWorktree
 import com.intellij.agent.workbench.sessions.util.isAgentSessionNewSessionId
 import com.intellij.openapi.util.NlsSafe
+import java.awt.Color
 
 internal data class AgentSessionsActivityThreadRow(
   @JvmField val path: String,
@@ -27,6 +29,16 @@ internal enum class AgentSessionsActivityBucket {
   DONE,
 }
 
+internal enum class AgentSessionsStripeBadge(
+  private val activity: AgentThreadActivity,
+) {
+  ATTENTION(AgentThreadActivity.NEEDS_INPUT),
+  DONE(AgentThreadActivity.UNREAD),
+  ;
+
+  fun color(): Color = activity.statusColor()
+}
+
 internal data class AgentSessionsActivitySummary(
   @JvmField val attentionRows: List<AgentSessionsActivityThreadRow>,
   @JvmField val runningRows: List<AgentSessionsActivityThreadRow>,
@@ -37,6 +49,14 @@ internal data class AgentSessionsActivitySummary(
       AgentSessionsActivityBucket.ATTENTION -> attentionRows
       AgentSessionsActivityBucket.RUNNING -> runningRows
       AgentSessionsActivityBucket.DONE -> doneRows
+    }
+  }
+
+  fun stripeBadge(): AgentSessionsStripeBadge? {
+    return when {
+      attentionRows.isNotEmpty() -> AgentSessionsStripeBadge.ATTENTION
+      doneRows.isNotEmpty() -> AgentSessionsStripeBadge.DONE
+      else -> null
     }
   }
 
