@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation.impl
 
 import com.intellij.model.Symbol
@@ -34,7 +34,7 @@ class SymbolNavigationServiceImpl : SymbolNavigationService {
       result += symbol
     }
     val element = PsiSymbolService.getInstance().extractElementFromSymbol(symbol)
-    if (element != null) {
+    if (element != null && element.isValid) {
       result += PsiElementNavigationTarget(element)
     }
     return result
