@@ -149,6 +149,18 @@
 - name: lib/gradle-tooling-proxy.jar
   modules:
   - name: intellij.gradle.toolingProxy
+- name: lib/groovy-ant.jar
+  modules:
+  - name: intellij.libraries.groovy.ant
+    libraries:
+      groovy-ant:
+      - name: $MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-ant/3/groovy-ant-3.jar
+- name: lib/groovy.jar
+  modules:
+  - name: intellij.libraries.groovy
+    libraries:
+      groovy:
+      - name: $MAVEN_REPOSITORY$/org/codehaus/groovy/groovy/3/groovy-3.jar
 - name: lib/modules/intellij.gradle.completion.jar
   contentModules:
   - name: intellij.gradle.completion

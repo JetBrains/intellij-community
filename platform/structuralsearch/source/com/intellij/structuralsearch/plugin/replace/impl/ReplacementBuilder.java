@@ -12,6 +12,7 @@ import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.structuralsearch.MalformedPatternException;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.PatternContextInfo;
+import com.intellij.structuralsearch.StructuralSearchScriptEngine;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
@@ -23,7 +24,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import groovy.lang.Script;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -171,7 +171,7 @@ public final class ReplacementBuilder {
       final String name = info.getName();
       final String scriptText = StringUtil.unquoteString(constraint);
       try {
-        final Script script = ScriptSupport.buildScript(name, scriptText, options.getMatchOptions());
+        final StructuralSearchScriptEngine.CompiledScript script = ScriptSupport.buildScript(myProject, name, scriptText, options.getMatchOptions());
         scriptSupport = new ScriptSupport(myProject, script, name, variableNames);
         replacementVarsMap.put(info.getName(), scriptSupport);
       } catch (MalformedPatternException e) {

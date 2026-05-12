@@ -45,6 +45,7 @@ val knownMissingModuleDependencies: List<String> = listOf(
   // todo special module (make it not special)
   "intellij.platform.commercial.verifier",
   // included using `withModule`
+  "intellij.libraries.groovy",
   "intellij.python.frontend",
 )
 

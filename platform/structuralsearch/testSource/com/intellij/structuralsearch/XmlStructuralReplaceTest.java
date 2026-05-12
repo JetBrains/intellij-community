@@ -129,46 +129,22 @@ public class XmlStructuralReplaceTest extends StructuralReplaceTestCase {
     assertEquals(expected, replace(in, what, by));
   }
 
-  public void testReplaceTargetText() {
+  public void testReplacementScriptRequiresScriptEngine() {
     final ReplacementVariableDefinition definition = new ReplacementVariableDefinition("result");
     definition.setScriptCodeConstraint("value.getText().toInteger() + 1");
     options.addVariableDefinition(definition);
-    String in = """
-      <!doctype html>
-      <html>
-      <head>
-          <title class="EXAMPLE">Structural Replace Example</title>
-      <body>
-      <ul>
-          <li class="EXAMPLE">2<!--comment--></li>
-          <li class="example">3</li>
-          <li class="EXAMPLE">4</li>
-          <li class="example">Example line a</li>
-          <li id="EXAMPLE">6</li>
-      </ul>
-      </body>
-      </html>
-      """;
+    String in = "<ul><li>2</li></ul>";
     String what = "<li>'value:[regex(  \\d+  )]</li>";
     String by = "$result$";
 
-    final String expected = """
-      <!doctype html>
-      <html>
-      <head>
-          <title class="EXAMPLE">Structural Replace Example</title>
-      <body>
-      <ul>
-          <li class="EXAMPLE">3<!--comment--></li>
-          <li class="example">4</li>
-          <li class="EXAMPLE">5</li>
-          <li class="example">Example line a</li>
-          <li id="EXAMPLE">7</li>
-      </ul>
-      </body>
-      </html>
-      """;
-    assertEquals(expected, replace(in, what, by));
+    try {
+      replace(in, what, by);
+      fail("Replacement script should require a script engine");
+    }
+    catch (MalformedPatternException e) {
+      assertEquals(SSRBundle.message("replacement.variable.is.not.valid", "result",
+                                     SSRBundle.message("error.groovy.script.engine.not.available")), e.getMessage());
+    }
   }
 
   public void testReplaceAttributeValue() {

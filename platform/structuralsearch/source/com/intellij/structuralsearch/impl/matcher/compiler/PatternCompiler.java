@@ -24,6 +24,7 @@ import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.NoMatchFoundException;
 import com.intellij.structuralsearch.PatternContextInfo;
 import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.StructuralSearchScriptEngine;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
@@ -45,7 +46,6 @@ import com.intellij.structuralsearch.impl.matcher.predicates.WithinPredicate;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
-import groovy.lang.Script;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
@@ -600,7 +600,7 @@ public final class PatternCompiler {
     if (scriptCodeConstraint.length() > 2) {
       final String scriptText = StringUtil.unquoteString(scriptCodeConstraint);
       try {
-        final Script script = ScriptSupport.buildScript(name, scriptText, matchOptions);
+        final StructuralSearchScriptEngine.CompiledScript script = ScriptSupport.buildScript(project, name, scriptText, matchOptions);
         addPredicate(handler, new ScriptPredicate(project, name, script, variableNames));
       } catch (MalformedPatternException e) {
         if (checkForErrors) {

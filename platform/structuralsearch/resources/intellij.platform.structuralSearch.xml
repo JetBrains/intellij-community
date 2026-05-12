@@ -2,7 +2,6 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.fastutil"/>
-    <module name="intellij.libraries.groovy"/>
     <module name="intellij.libraries.kotlinx.collections.immutable"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.core"/>
@@ -31,6 +30,9 @@
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.structuralsearch.filterProvider"
                     interface="com.intellij.structuralsearch.plugin.ui.filters.FilterProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.structuralsearch.scriptEngine"
+                    interface="com.intellij.structuralsearch.StructuralSearchScriptEngine"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.structuralsearch.specialXmlTagExtractor"
                     interface="com.intellij.structuralsearch.SpecialElementExtractor"

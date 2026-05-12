@@ -10,7 +10,6 @@
     <orderEntry type="module" module-name="intellij.grid.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.grid.impl.ide" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.grid.types" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.libraries.groovy" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.moduleSet.plugin.grid.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.moduleSet.plugin.recentFiles" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.moduleSet.plugin.structuralSearch" scope="RUNTIME" />

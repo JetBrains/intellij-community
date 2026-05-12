@@ -10,18 +10,10 @@ import com.intellij.structuralsearch.MalformedPatternException;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.StructuralSearchScriptEngine;
 import com.intellij.structuralsearch.StructuralSearchScriptException;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
-import groovy.lang.Binding;
-import groovy.lang.GroovyShell;
-import groovy.lang.Script;
-import org.codehaus.groovy.control.CompilationFailedException;
-import org.codehaus.groovy.control.ErrorCollector;
-import org.codehaus.groovy.control.MultipleCompilationErrorsException;
-import org.codehaus.groovy.control.messages.Message;
-import org.codehaus.groovy.control.messages.SyntaxErrorMessage;
-import org.codehaus.groovy.syntax.SyntaxException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -29,7 +21,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * @author Maxim.Mossienko
@@ -44,19 +35,19 @@ public class ScriptSupport {
    */
   public static final @NlsSafe String UUID = "a3cd264774bf4efb9ab609b250c5165c";
 
-  private final Script myScript;
+  private final StructuralSearchScriptEngine.CompiledScript myScript;
   private final ScriptLog myScriptLog;
   private final String myName;
   private final Collection<String> myVariableNames;
 
-  public ScriptSupport(Project project, Script script, String name, Collection<String> variableNames) {
+  public ScriptSupport(Project project, StructuralSearchScriptEngine.CompiledScript script, String name, Collection<String> variableNames) {
     myScriptLog = new ScriptLog(project);
     myName = name;
     myVariableNames = variableNames;
     myScript = script;
   }
 
-  private static Map<String, Object> buildVariableMap(@NotNull MatchResult result, @NotNull Map<String, Object> out) {
+  private static void buildVariableMap(@NotNull MatchResult result, @NotNull Map<String, Object> out) {
     final String name = result.getName();
     if (name != null && !result.isMultipleMatch()) {
       final Object value = out.get(name);
@@ -81,7 +72,6 @@ public class ScriptSupport {
     for (MatchResult son : result.getChildren()) {
       buildVariableMap(son, out);
     }
-    return out;
   }
 
   public Object evaluate(MatchResult result, PsiElement context) {
@@ -100,47 +90,34 @@ public class ScriptSupport {
       variableMap.put(myName, context);
       variableMap.put(Configuration.CONTEXT_VAR_NAME, context);
 
-      myScript.setBinding(new Binding(variableMap));
-
-      return myScript.run();
+      return myScript.evaluate(variableMap);
     }
     catch (ProcessCanceledException t) {
       throw t;
     }
     catch (Throwable t) {
-      Logger.getInstance(ScriptSupport.class).info("Exception thrown by Structural Search Groovy Script", t);
+      Logger.getInstance(ScriptSupport.class).info("Exception thrown by Structural Search script", t);
       throw new StructuralSearchScriptException(t);
-    }
-    finally {
-      myScript.setBinding(null);
     }
   }
 
-  public static Script buildScript(
+  public static StructuralSearchScriptEngine.CompiledScript buildScript(
+    @NotNull Project project,
     @NotNull String scriptName,
     @NotNull String scriptText,
     @NotNull MatchOptions matchOptions
   ) throws MalformedPatternException {
+    final List<StructuralSearchScriptEngine> engines = StructuralSearchScriptEngine.EP_NAME.getExtensionList();
+    if (engines.isEmpty()) {
+      throw new MalformedPatternException(SSRBundle.message("error.groovy.script.engine.not.available"));
+    }
     try {
-      final GroovyShell shell = new GroovyShell(Objects.requireNonNull(matchOptions.getDialect()).getClass().getClassLoader());
-      return shell.parse(scriptText, scriptName + UUID + ".groovy");
+      return engines.getFirst().compile(project, scriptName, scriptText, matchOptions);
     }
-    catch (MultipleCompilationErrorsException e) {
-      final ErrorCollector errorCollector = e.getErrorCollector();
-      final List<? extends Message> errors = errorCollector.getErrors();
-      for (Message error : errors) {
-        if (error instanceof SyntaxErrorMessage syntaxError) {
-          final SyntaxException cause = syntaxError.getCause();
-          throw new MalformedPatternException(cause.getLocalizedMessage());
-        }
-      }
-      throw new MalformedPatternException(e.getLocalizedMessage());
-    }
-    catch (CompilationFailedException ex) {
-      throw new MalformedPatternException(ex.getLocalizedMessage());
+    catch (MalformedPatternException | ProcessCanceledException e) {
+      throw e;
     }
     catch (Throwable e) {
-      // to catch errors in groovy parsing
       LOG.warn(e);
       throw new MalformedPatternException(SSRBundle.message("error.in.groovy.parser"));
     }

@@ -305,7 +305,6 @@ object CommunityModuleSets {
    */
   @Suppress("unused")
   fun structuralSearch(): ModuleSet = plugin("structuralSearch") {
-    module("intellij.libraries.groovy")
     module("intellij.platform.structuralSearch")
   }
 

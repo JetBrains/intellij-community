@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.NamedScriptableDefinition;
 import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.StructuralSearchScriptEngine;
 import com.intellij.structuralsearch.impl.matcher.predicates.ScriptLog;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
@@ -50,7 +51,7 @@ class ScriptFilter extends FilterAction {
 
   @Override
   public boolean isApplicable(List<? extends PsiElement> nodes, boolean completePattern, boolean target) {
-    return true;
+    return StructuralSearchScriptEngine.isAvailable();
   }
 
   @Override
