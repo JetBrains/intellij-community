@@ -16,6 +16,7 @@
 package com.siyeh.ipp.bool;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiElement;
@@ -34,7 +35,7 @@ import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-public final class DemorgansIntention extends MCIntention {
+public final class DemorgansIntention extends MCIntention implements DumbAware {
 
   @Override
   public @NotNull String getFamilyName() {

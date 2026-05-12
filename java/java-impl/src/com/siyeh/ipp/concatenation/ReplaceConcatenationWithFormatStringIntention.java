@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.concatenation;
 
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.PsiClass;
@@ -33,7 +34,7 @@ import java.util.stream.Collectors;
 /**
  * @author Bas Leijdekkers
  */
-public final class ReplaceConcatenationWithFormatStringIntention extends MCIntention {
+public final class ReplaceConcatenationWithFormatStringIntention extends MCIntention implements DumbAware {
 
   @Override
   public @NotNull String getFamilyName() {

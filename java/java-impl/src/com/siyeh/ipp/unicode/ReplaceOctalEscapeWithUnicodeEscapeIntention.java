@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.unicode;
 
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFragment;
@@ -15,12 +16,11 @@ import com.siyeh.ipp.base.PsiElementContextPredicate;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public final class ReplaceOctalEscapeWithUnicodeEscapeIntention extends MCIntention {
+public final class ReplaceOctalEscapeWithUnicodeEscapeIntention extends MCIntention implements DumbAware {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -28,7 +28,7 @@ public final class ReplaceOctalEscapeWithUnicodeEscapeIntention extends MCIntent
   }
 
   @Override
-  protected @Nullable String getTextForElement(@NotNull PsiElement element) {
+  protected @NotNull String getTextForElement(@NotNull PsiElement element) {
     return IntentionPowerPackBundle.message("replace.octal.escape.with.unicode.escape.intention.name");
   }
 
