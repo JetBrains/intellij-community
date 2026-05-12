@@ -33,7 +33,7 @@ suspend fun discoverAllProducts(projectRoot: Path, outputProvider: ModuleOutputP
           productConfiguration = productConfig,
           outputProvider = outputProvider,
           projectDir = projectRoot,
-          platformPrefix = null,
+          platformPrefix = productName,
         )
         DiscoveredProduct(
           name = productName,

@@ -642,7 +642,7 @@ internal suspend fun createProductProperties(
   productConfiguration: ProductConfiguration,
   outputProvider: ModuleOutputProvider,
   projectDir: Path,
-  platformPrefix: String?,
+  platformPrefix: String,
 ): ProductProperties {
   val classPathFiles = getBuildModules(productConfiguration)
     .flatMap { outputProvider.getModuleOutputRoots(outputProvider.findRequiredModule(it)) }
@@ -675,7 +675,7 @@ private fun doCreateProductProperties(
   className: String,
   classPathFiles: List<Path>,
   projectDir: Path,
-  platformPrefix: String?,
+  platformPrefix: String,
 ): ProductProperties {
   val productPropertiesClass = try {
     classLoader.loadClass(className)
@@ -694,7 +694,7 @@ private fun doCreateProductProperties(
   catch (_: NoSuchMethodException) {
     lookup
       .findConstructor(productPropertiesClass, MethodType.methodType(Void.TYPE, Path::class.java))
-      .invoke(if (platformPrefix == "Idea") getCommunityHomePath(projectDir) else projectDir)
+      .invoke(if (platformPrefix == "Idea" || platformPrefix == "PyCharmCore") getCommunityHomePath(projectDir) else projectDir)
   } as ProductProperties
 }
 

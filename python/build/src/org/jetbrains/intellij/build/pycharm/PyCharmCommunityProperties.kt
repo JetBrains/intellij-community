@@ -20,7 +20,7 @@ import org.jetbrains.intellij.build.windowsCustomizer
 import java.nio.file.Files
 import java.nio.file.Path
 
-open class PyCharmCommunityProperties(protected val communityHome: Path) : PyCharmPropertiesBase(enlargeWelcomeScreen = true) {
+class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPropertiesBase(enlargeWelcomeScreen = true) {
   override val customProductCode: String
     get() = "PC"
 
