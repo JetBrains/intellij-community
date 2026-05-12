@@ -9,7 +9,7 @@
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <registryKey key="kotlin.cri.bta.support.enabled"
-                 defaultValue="false"
+                 defaultValue="true"
                  restartRequired="false"
                  description="Enable Kotlin Compiler Reference Index support for BTA-based builds (Gradle/Maven)"/>
 
