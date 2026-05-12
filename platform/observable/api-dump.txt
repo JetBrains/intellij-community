@@ -10,23 +10,17 @@ com.intellij.openapi.observable.operation.core.MutableOperationTrace
 - a:traceStart(com.intellij.openapi.observable.operation.OperationExecutionId):V
 - bs:traceStart$default(com.intellij.openapi.observable.operation.core.MutableOperationTrace,com.intellij.openapi.observable.operation.OperationExecutionId,I,java.lang.Object):V
 f:com.intellij.openapi.observable.properties.AtomicBooleanProperty
-- com.intellij.openapi.observable.properties.ObservableClearableProperty
+- com.intellij.openapi.observable.properties.ObservableMutableProperty
 Fc:com.intellij.openapi.observable.properties.AtomicLazyProperty
 - com.intellij.openapi.observable.properties.AbstractObservableProperty
-- com.intellij.openapi.observable.properties.ObservableClearableProperty
 f:com.intellij.openapi.observable.properties.AtomicProperty
 - com.intellij.openapi.observable.properties.AbstractObservableProperty
-- com.intellij.openapi.observable.properties.ObservableClearableProperty
 com.intellij.openapi.observable.properties.GraphProperty
-- com.intellij.openapi.observable.properties.ObservableClearableProperty
+- com.intellij.openapi.observable.properties.ObservableMutableProperty
 - afterPropagation(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function0):V
 - a:afterPropagation(kotlin.jvm.functions.Function0):V
-- afterReset(kotlin.jvm.functions.Function0):V
-- afterReset(kotlin.jvm.functions.Function0,com.intellij.openapi.Disposable):V
-- b:dependsOn(com.intellij.openapi.observable.properties.ObservableClearableProperty,kotlin.jvm.functions.Function0):V
 - dependsOn(com.intellij.openapi.observable.properties.ObservableProperty,kotlin.jvm.functions.Function0):V
 - dependsOn(com.intellij.openapi.observable.properties.ObservableProperty,Z,kotlin.jvm.functions.Function0):V
-- reset():V
 com.intellij.openapi.observable.properties.MutableBooleanProperty
 - com.intellij.openapi.observable.properties.ObservableBooleanProperty
 - com.intellij.openapi.observable.properties.ObservableMutableProperty
@@ -38,11 +32,6 @@ com.intellij.openapi.observable.properties.ObservableBooleanProperty
 - afterReset(kotlin.jvm.functions.Function0):V
 - a:afterSet(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function0):V
 - afterSet(kotlin.jvm.functions.Function0):V
-com.intellij.openapi.observable.properties.ObservableClearableProperty
-- com.intellij.openapi.observable.properties.ObservableMutableProperty
-- afterReset(kotlin.jvm.functions.Function0):V
-- afterReset(kotlin.jvm.functions.Function0,com.intellij.openapi.Disposable):V
-- reset():V
 com.intellij.openapi.observable.properties.ObservableMutableProperty
 - com.intellij.openapi.observable.properties.ObservableProperty
 - kotlin.properties.ReadWriteProperty
