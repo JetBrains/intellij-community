@@ -9,7 +9,6 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelPosixApi
-import com.intellij.platform.eel.EelUnavailableException
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
@@ -118,7 +117,7 @@ internal class WslShellExecCommand(
       val eelApi = try {
         toEelApi()
       }
-      catch (e: EelUnavailableException) {
+      catch (e: Exception) {
         logFallbackWarn("Unavailable EelApi for ${this.name}", e)
         return null
       }

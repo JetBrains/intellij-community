@@ -6,7 +6,7 @@ import com.intellij.openapi.diagnostic.LoggerKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.platform.eel.path.EelPath;
-import com.intellij.platform.eel.provider.EelProviderProjectUtilKt;
+import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.terminal.pty.PtyProcessTtyConnector;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.execution.ParametersListUtil;
@@ -128,7 +128,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     if (!LocalTerminalCustomizer.EP_NAME.hasAnyExtensions()) {
       return false;
     }
-    EelDescriptor projectEelDescriptor = EelProviderProjectUtilKt.getEelDescriptor(myProject);
+    EelDescriptor projectEelDescriptor = EelProviderUtil.getEelDescriptor(myProject);
     // Apply `LocalTerminalCustomizer` only if the project and the shell process
     // belong to the same environment.
     // Otherwise, `LocalTerminalCustomizer` implementations may customize wrongly,
