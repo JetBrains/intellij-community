@@ -63,7 +63,7 @@ import javax.swing.SwingUtilities
 import kotlin.math.max
 
 @ApiStatus.Internal
-class CombinedDiffMainUI(private val model: CombinedDiffModel, private val goToChangeAction: AnAction) : Disposable {
+class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeAction: AnAction) : Disposable {
   private val ourDisposable = Disposer.newCheckedDisposable().also { Disposer.register(this, it) }
 
   @OptIn(DelicateCoroutinesApi::class)
@@ -87,8 +87,8 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, private val goToC
     combinedDiffUIState,
     mainPanel,
     diffToolChooser,
+    context,
     goToChangeAction,
-    context
   )
 
   private val combinedViewer get() = context.getUserData(COMBINED_DIFF_VIEWER_KEY)
@@ -121,11 +121,11 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, private val goToC
   }
 
   @RequiresEdt
-  internal fun setContent(viewer: CombinedDiffViewer, blockState: BlockState) {
+  internal fun setContent(viewer: CombinedDiffViewer) {
     clear()
     contentPanel.setContent(viewer.component)
     val toolbarComponents = viewer.init()
-    mainToolbar.updateToolbar(blockState, toolbarComponents.toolbarActions)
+    mainToolbar.updateToolbar(toolbarComponents.toolbarActions)
     buildActionPopup(toolbarComponents.popupActions)
   }
 
@@ -278,7 +278,6 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, private val goToC
       sink[CommonDataKeys.PROJECT] = context.project
       sink[PlatformCoreDataKeys.HELP_ID] = context.getUserData(DiffUserDataKeys.HELP_ID) ?: "reference.dialogs.diff.file"
       sink[DiffDataKeys.DIFF_CONTEXT] = context
-
       DataSink.uiDataSnapshot(sink, context.getUserData(DiffUserDataKeys.DATA_PROVIDER))
       DataSink.uiDataSnapshot(sink, getCurrentRequest()?.getUserData(DiffUserDataKeys.DATA_PROVIDER))
       DataSink.uiDataSnapshot(sink, contentPanel.targetComponent as? UiDataProvider

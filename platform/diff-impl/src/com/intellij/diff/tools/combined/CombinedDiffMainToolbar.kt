@@ -40,12 +40,12 @@ import javax.swing.JPanel
 import kotlin.math.max
 
 internal class CombinedDiffMainToolbar(
-  private val cs: CoroutineScope,
+  cs: CoroutineScope,
   private val uiState: CombinedDiffUIState,
   private val targetComponent: JComponent,
   private val diffToolChooser: DiffToolChooser,
-  private val goToChangeAction: AnAction,
   private val context: DiffContext,
+  private val goToChangeAction: AnAction,
 ) {
   private val searchPanel = Wrapper()
   private val diffInfoPanel = DiffInfoComponent()
@@ -150,8 +150,8 @@ internal class CombinedDiffMainToolbar(
     component.repaint()
   }
 
-  fun updateToolbar(blockState: BlockState, toolbarActions: List<AnAction>?) {
-    collectToolbarActions(blockState, toolbarActions)
+  fun updateToolbar(toolbarActions: List<AnAction>?) {
+    collectToolbarActions(toolbarActions)
     (leftToolbar as ActionToolbarImpl).reset()
     leftToolbar.updateActionsImmediately()
     DiffUtil.recursiveRegisterShortcutSet(leftToolbarGroup, targetComponent, null)
@@ -161,24 +161,23 @@ internal class CombinedDiffMainToolbar(
     DiffUtil.recursiveRegisterShortcutSet(rightToolbarGroup, targetComponent, null)
   }
 
-  private fun collectToolbarActions(blockState: BlockState, viewerActions: List<AnAction?>?) {
+  private fun collectToolbarActions(viewerActions: List<AnAction?>?) {
     leftToolbarGroup.removeAll()
-    val navigationActions = ArrayList<AnAction>(collectNavigationActions(blockState))
 
     rightToolbarGroup.add(diffToolChooser)
 
-    DiffUtil.addActionBlock(leftToolbarGroup, navigationActions)
+    DiffUtil.addActionBlock(leftToolbarGroup, collectNavigationActions())
 
     DiffUtil.addActionBlock(rightToolbarGroup, viewerActions, false)
     val contextActions = context.getUserData(DiffUserDataKeys.CONTEXT_ACTIONS)
     DiffUtil.addActionBlock(leftToolbarGroup, contextActions)
   }
 
-  private fun collectNavigationActions(blockState: BlockState): List<AnAction> {
+  private fun collectNavigationActions(): List<AnAction> {
     return listOfNotNull(
       CombinedPrevBlockAction(context),
       CombinedPrevDifferenceAction(context),
-      FilesLabelAction(goToChangeAction, leftToolbar.component, blockState),
+      goToChangeAction,
       CombinedNextDifferenceAction(context),
       CombinedNextBlockAction(context),
       openInEditorAction,

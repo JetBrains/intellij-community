@@ -157,7 +157,7 @@ class CombinedDiffComponentProcessorImpl(
     return CombinedDiffViewer(context, MyBlockListener(), blockState, mainUi.getUiState()).also { viewer ->
       Disposer.register(disposable, viewer)
       context.putUserData(COMBINED_DIFF_VIEWER_KEY, viewer)
-      mainUi.setContent(viewer, blockState)
+      mainUi.setContent(viewer)
     }
   }
 

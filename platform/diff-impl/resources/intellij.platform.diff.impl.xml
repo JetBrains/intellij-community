@@ -79,14 +79,5 @@
     <action id="Diff.OpenInEditor"
             class="com.intellij.diff.actions.impl.OpenInEditorAction"
             use-shortcut-of="EditSource"/>
-
-    <group id="Diff.NavigationActions">
-      <reference ref="PreviousDiff"/>
-      <reference ref="NextDiff"/>
-      <reference ref="Diff.OpenInEditor"/>
-      <separator/>
-      <reference ref="Diff.PrevChange"/>
-      <reference ref="Diff.NextChange"/>
-    </group>
   </actions>
 </idea-plugin>

@@ -549,14 +549,20 @@ public abstract class DiffRequestProcessor
   }
 
   protected @NotNull List<AnAction> getNavigationActions() {
-    List<AnAction> actions = List.of(ActionManager.getInstance().getAction("Diff.NavigationActions"));
-
+    ActionManager am = ActionManager.getInstance();
+    List<AnAction> result = new ArrayList<>();
+    result.add(am.getAction("PreviousDiff"));
+    result.add(am.getAction("NextDiff"));
+    result.add(Separator.getInstance());
+    result.add(am.getAction("Diff.OpenInEditor"));
+    result.add(Separator.getInstance());
+    result.add(am.getAction("Diff.PrevChange"));
     AnAction goToChangeAction = createGoToChangeAction();
     if (goToChangeAction != null) {
-      actions = ContainerUtil.append(actions, goToChangeAction);
+      result.add(goToChangeAction);
     }
-
-    return actions;
+    result.add(am.getAction("Diff.NextChange"));
+    return result;
   }
 
   /**
@@ -676,9 +682,7 @@ public abstract class DiffRequestProcessor
 
     if (SystemInfo.isMac) { // collect touchbar actions
       myTouchbarActionGroup.removeAll();
-      myTouchbarActionGroup.add(
-        ActionManager.getInstance().getAction("Diff.NavigationActions")
-      );
+      myTouchbarActionGroup.addAll(getNavigationActions());
       if (SHOW_VIEWER_ACTIONS_IN_TOUCHBAR && viewerActions != null) {
         myTouchbarActionGroup.addAll(viewerActions);
       }
@@ -1155,7 +1159,7 @@ public abstract class DiffRequestProcessor
   }
 
   /**
-   * @deprecated {@code IdeActions.ACTION_NEXT_DIFF} action or {@code Diff.NavigationActions} group should be used instead
+   * @deprecated {@code IdeActions.ACTION_NEXT_DIFF} action or {@code getNavigationActions()} group should be used instead
    */
   @SuppressWarnings("InnerClassMayBeStatic")
   @Deprecated
@@ -1166,7 +1170,7 @@ public abstract class DiffRequestProcessor
   }
 
   /**
-   * @deprecated {@code IdeActions.ACTION_PREVIOUS_DIFF} action or {@code Diff.NavigationActions} group should be used instead
+   * @deprecated {@code IdeActions.ACTION_PREVIOUS_DIFF} action or {@code getNavigationActions()} group should be used instead
    */
   @SuppressWarnings("InnerClassMayBeStatic")
   @Deprecated
@@ -1179,7 +1183,7 @@ public abstract class DiffRequestProcessor
   // Iterate requests
 
   /**
-   * @deprecated {@code Diff.NextChange} action or {@code Diff.NavigationActions} group should be used instead
+   * @deprecated {@code Diff.NextChange} action or {@code getNavigationActions()} group should be used instead
    */
   @SuppressWarnings("InnerClassMayBeStatic")
   @Deprecated
@@ -1190,7 +1194,7 @@ public abstract class DiffRequestProcessor
   }
 
   /**
-   * @deprecated {@code Diff.PrevChange} action or {@code Diff.NavigationActions} group should be used instead
+   * @deprecated {@code Diff.PrevChange} action or {@code getNavigationActions()} group should be used instead
    */
   @SuppressWarnings("InnerClassMayBeStatic")
   @Deprecated

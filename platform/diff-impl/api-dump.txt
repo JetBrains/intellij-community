@@ -56,16 +56,17 @@ c:com.intellij.diff.actions.CompareFilesAction
 - p:isAvailable(com.intellij.openapi.actionSystem.AnActionEvent):Z
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.diff.actions.impl.GoToChangePopupBuilder
-- <init>():V
-- s:create(com.intellij.diff.chains.DiffRequestChain,com.intellij.util.Consumer,I):com.intellij.openapi.actionSystem.AnAction
+- sf:INSTANCE:com.intellij.diff.actions.impl.GoToChangePopupBuilder
+- sf:create(com.intellij.diff.chains.DiffRequestChain,com.intellij.util.Consumer,I):com.intellij.openapi.actionSystem.AnAction
 a:com.intellij.diff.actions.impl.GoToChangePopupBuilder$BaseGoToChangePopupAction
 - com.intellij.openapi.actionSystem.ActionGroup
 - com.intellij.openapi.project.DumbAware
 - <init>():V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- f:actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - pa:canNavigate():Z
 - pa:createPopup(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.ui.popup.JBPopup
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- f:getChildren(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.actionSystem.AnAction[]
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 com.intellij.diff.actions.impl.GoToChangePopupBuilder$Chain
 - com.intellij.diff.chains.DiffRequestChain
