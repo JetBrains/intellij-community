@@ -41,6 +41,7 @@ import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.dto.WithGitLabNamespace
 import org.jetbrains.plugins.gitlab.api.request.findProject
 import org.jetbrains.plugins.gitlab.api.request.getMemberNamespacesForShare
+import org.jetbrains.plugins.gitlab.authentication.GitLabCredentials
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
@@ -89,9 +90,9 @@ internal class GitLabShareProjectDialogViewModel(
     }
 
     coroutineScope {
-      emitAll(serviceAsync<GitLabAccountManager>().getCredentialsState(this, account).map { token ->
-        if (token == null) null
-        else serviceAsync<GitLabApiManager>().getClient(account.server, token)
+      emitAll(serviceAsync<GitLabAccountManager>().getCredentialsState(this, account).map { credentials ->
+        if (credentials == null) null
+        else serviceAsync<GitLabApiManager>().getClient(account.server, credentials.accessToken)
       })
     }
   }.stateIn(cs, SharingStarted.Eagerly, null)
@@ -237,9 +238,9 @@ internal class GitLabShareProjectDialogViewModel(
       description.value,
     )
 
-  fun updateAccount(account: GitLabAccount, token: String) {
+  fun updateAccount(account: GitLabAccount, credentials: GitLabCredentials) {
     cs.launchNow {
-      accountManager.updateAccount(account, token)
+      accountManager.updateAccount(account, credentials)
     }
   }
 }

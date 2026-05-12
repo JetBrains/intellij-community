@@ -32,6 +32,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
+import org.jetbrains.plugins.gitlab.authentication.GitLabCredentials
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabProjectDefaultAccountHolder
@@ -82,7 +83,7 @@ internal class GitLabCreateSnippetViewModel(
   /**
    * Flow of the current account and credentials for that account. Credentials can be null for an account.
    */
-  private val glAccountAndCredentials: SharedFlow<Pair<GitLabAccount, String?>?> = glAccount
+  private val glAccountAndCredentials: SharedFlow<Pair<GitLabAccount, GitLabCredentials?>?> = glAccount
     .flatMapLatest { accountOrNull ->
       val account = accountOrNull ?: return@flatMapLatest flowOf(null)
       glAccountManager.getCredentialsState(cs, account)
@@ -93,7 +94,7 @@ internal class GitLabCreateSnippetViewModel(
   /** Flow of [GitLabProjectCoordinates] based on the current selection of account. */
   val glRepositories: StateFlow<List<GitLabProjectCoordinates>> = channelFlow {
     val flowCs = this
-    val cache = mutableMapOf<Pair<GitLabAccount, String?>?, Flow<List<GitLabProjectCoordinates>>>()
+    val cache = mutableMapOf<Pair<GitLabAccount, GitLabCredentials?>?, Flow<List<GitLabProjectCoordinates>>>()
     glAccountAndCredentials
       .collectLatest { credentials ->
         if (credentials == null) {
@@ -101,9 +102,9 @@ internal class GitLabCreateSnippetViewModel(
         }
 
         cache.computeIfAbsent(credentials) { _ ->
-          val (account, tokenOrNull) = credentials
-          val token = tokenOrNull ?: return@computeIfAbsent flowOf(listOf())
-          glApiManager.getClient(account.server, token).graphQL
+          val (account, credentialsOrNull) = credentials
+          val credentials = credentialsOrNull ?: return@computeIfAbsent flowOf(listOf())
+          glApiManager.getClient(account.server, credentials.accessToken).graphQL
             .getSnippetAllowedProjects()
             .shareIn(flowCs, SharingStarted.Lazily, 1) // Let this live for as long as the repositories flow lives
         }.collectLatest { send(it) }

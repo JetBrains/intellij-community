@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
+import org.jetbrains.plugins.gitlab.authentication.GitLabCredentials
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabRepositoryAndAccountSelectorViewModel
@@ -47,7 +48,7 @@ internal class GitLabRepositoryAndAccountSelectorViewModelTest {
 
     val account = GitLabAccount(name = "test", server = GitLabServerPath.DEFAULT_SERVER)
     every { accountManager.accountsState } returns MutableStateFlow(setOf(account))
-    coEvery { accountManager.getCredentialsState(any(), any()) } returns MutableStateFlow("")
+    coEvery { accountManager.getCredentialsState(any(), any()) } returns MutableStateFlow(GitLabCredentials.Token(""))
     every { accountManager.canPersistCredentials } returns MutableStateFlow(true)
 
     val scope = childScope(this::class, Dispatchers.Main)
@@ -77,7 +78,7 @@ internal class GitLabRepositoryAndAccountSelectorViewModelTest {
     val account = GitLabAccount(name = "test", server = GitLabServerPath.DEFAULT_SERVER)
     val secondAccount = GitLabAccount(name = "secondAccount", server = GitLabServerPath.DEFAULT_SERVER)
     every { accountManager.accountsState } returns MutableStateFlow(setOf(account, secondAccount))
-    coEvery { accountManager.getCredentialsState(any(), any()) } returns MutableStateFlow("")
+    coEvery { accountManager.getCredentialsState(any(), any()) } returns MutableStateFlow(GitLabCredentials.Token(""))
     every { accountManager.canPersistCredentials } returns MutableStateFlow(true)
 
     val scope = childScope(this::class, Dispatchers.Main)

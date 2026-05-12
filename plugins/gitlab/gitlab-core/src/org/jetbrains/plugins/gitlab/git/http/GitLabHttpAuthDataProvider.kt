@@ -17,6 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.GitLabServersManager
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
+import org.jetbrains.plugins.gitlab.authentication.GitLabCredentials
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginSource
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
 import org.jetbrains.plugins.gitlab.authentication.LoginResult
@@ -48,20 +49,20 @@ class GitLabHttpAuthDataProvider : GitHttpAuthDataProvider {
 
 private suspend fun performLogin(project: Project, gitHostUrl: String, login: String? = null): LoginResult {
   val accountManager = serviceAsync<GitLabAccountManager>()
-  val accountsWithTokens = accountManager.accountsState.value
+  val accountsWithCredentials = accountManager.accountsState.value
     .filter { GitHostingUrlUtil.matchHost(it.server.toURI(), gitHostUrl) }
     .associateWith { accountManager.findCredentials(it) }
 
   val loginResult = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-    when (accountsWithTokens.size) {
+    when (accountsWithCredentials.size) {
       0 -> accountManager.tryCreateAccount(project, gitHostUrl, login)
-      1 -> accountManager.reLogInWithAccount(project, accountsWithTokens.keys.single(), login)
-      else -> accountManager.selectAccountAndLogIn(project, accountsWithTokens, gitHostUrl, login)
+      1 -> accountManager.reLogInWithAccount(project, accountsWithCredentials.keys.single(), login)
+      else -> accountManager.selectAccountAndLogIn(project, accountsWithCredentials, gitHostUrl, login)
     }
   }
 
   if (loginResult is LoginResult.Success) {
-    accountManager.updateAccount(loginResult.account, loginResult.token)
+    accountManager.updateAccount(loginResult.account, GitLabCredentials.Token(loginResult.token))
   }
 
   return loginResult
@@ -93,18 +94,18 @@ private suspend fun GitLabAccountManager.reLogInWithAccount(
 
 private suspend fun GitLabAccountManager.selectAccountAndLogIn(
   project: Project,
-  accountsWithTokens: Map<GitLabAccount, String?>,
+  accountsWithCredentials: Map<GitLabAccount, GitLabCredentials?>,
   url: String,
   login: String?,
 ): LoginResult = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
   val description = GitLabBundle.message("account.choose.git.description", url)
-  val account = GitLabLoginUtil.chooseAccount(project, null, description, accountsWithTokens.keys)
+  val account = GitLabLoginUtil.chooseAccount(project, null, description, accountsWithCredentials.keys)
                 ?: return@withContext LoginResult.Failure
-  val token = accountsWithTokens[account]
-  if (token == null) {
+  val credentials = accountsWithCredentials[account]
+  if (credentials == null) {
     GitLabLoginUtil.updateToken(project, null, account, login, loginSource = GitLabLoginSource.GIT, ::isAccountUnique)
   }
   else {
-    LoginResult.Success(account, token)
+    LoginResult.Success(account, credentials.accessToken)
   }
 }

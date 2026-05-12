@@ -3,9 +3,10 @@ package org.jetbrains.plugins.gitlab.authentication.ui
 
 import com.intellij.collaboration.auth.ui.AccountsListModel
 import com.intellij.collaboration.auth.ui.MutableAccountsListModel
+import org.jetbrains.plugins.gitlab.authentication.GitLabCredentials
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 
-internal class GitLabAccountsListModel : MutableAccountsListModel<GitLabAccount, String>(),
-                                         AccountsListModel.WithDefault<GitLabAccount, String> {
+internal class GitLabAccountsListModel : MutableAccountsListModel<GitLabAccount, GitLabCredentials>(),
+                                         AccountsListModel.WithDefault<GitLabAccount, GitLabCredentials> {
   override var defaultAccount: GitLabAccount? = null
 }

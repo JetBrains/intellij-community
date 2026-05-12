@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
+import org.jetbrains.plugins.gitlab.authentication.GitLabCredentials
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.createSingleProjectAndAccountState
@@ -68,9 +69,9 @@ class GitLabRepositoryAndAccountSelectorViewModel(
     val accounts: Set<GitLabAccount>
       get() = accountManager.accountsState.value
 
-    fun login(account: GitLabAccount, token: String) {
+    fun login(account: GitLabAccount, credentials: GitLabCredentials) {
       scope.launch {
-        accountManager.updateAccount(account, token)
+        accountManager.updateAccount(account, credentials)
         accountSelectionState.value = account
         if (submit) {
           submitSelection()

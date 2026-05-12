@@ -18,6 +18,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
+import org.jetbrains.plugins.gitlab.authentication.GitLabCredentials
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginSource
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
 import org.jetbrains.plugins.gitlab.authentication.LoginResult
@@ -39,8 +40,8 @@ object GitLabMergeRequestSelectorsComponentFactory {
     val defaultAccountHolder = project.service<GitLabProjectDefaultAccountHolder>()
     val accountsDetailsProvider = GitLabAccountsDetailsProvider(cs, selectorVm.accountManager) { account ->
       // TODO: separate loader
-      selectorVm.accountManager.findCredentials(account)?.let { token ->
-        service<GitLabApiManager>().getClient(account.server, token)
+      selectorVm.accountManager.findCredentials(account)?.let { credentials ->
+        service<GitLabApiManager>().getClient(account.server, credentials.accessToken)
       }
     }
 
@@ -67,13 +68,13 @@ object GitLabMergeRequestSelectorsComponentFactory {
           val (newAccount, token) = GitLabLoginUtil.logInViaToken(selectorVm.project, selectors, req.repo.repository.serverPath, loginSource = loginSource) { server, name ->
             GitLabLoginUtil.isAccountUnique(req.accounts, server, name)
           }.asSafely<LoginResult.Success>() ?: return@collect
-          req.login(newAccount, token)
+          req.login(newAccount, GitLabCredentials.Token(token))
         }
         else {
-          val loginResult = GitLabLoginUtil.updateToken(selectorVm.project, selectors, account, loginSource = loginSource, ) { server, name ->
+          val (_, token) = GitLabLoginUtil.updateToken(selectorVm.project, selectors, account, loginSource = loginSource, ) { server, name ->
             GitLabLoginUtil.isAccountUnique(req.accounts, server, name)
           }.asSafely<LoginResult.Success>() ?: return@collect
-          req.login(account, loginResult.token)
+          req.login(account, GitLabCredentials.Token(token))
         }
       }
     }

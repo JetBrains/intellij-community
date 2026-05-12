@@ -49,7 +49,7 @@ internal class GitLabSettingsConfigurable(private val project: Project)
       accountsModel.newCredentials.getOrElse(account) {
         accountManager.findCredentials(account)
       }?.let {
-        service<GitLabApiManager>().getClient(account.server, it)
+        service<GitLabApiManager>().getClient(account.server, it.accessToken)
       }
     }
     val actionsController = GitLabAccountsPanelActionsController(project, accountsModel)

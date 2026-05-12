@@ -30,18 +30,18 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
+import org.jetbrains.plugins.gitlab.api.dto.GitLabSnippetBlobAction
 import org.jetbrains.plugins.gitlab.api.dto.GitLabSnippetBlobActionEnum
 import org.jetbrains.plugins.gitlab.api.dto.GitLabVisibilityLevel
-import org.jetbrains.plugins.gitlab.api.dto.GitLabSnippetBlobAction
 import org.jetbrains.plugins.gitlab.api.getResultOrThrow
 import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
+import org.jetbrains.plugins.gitlab.authentication.GitLabCredentials
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginSource
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
 import org.jetbrains.plugins.gitlab.authentication.LoginResult
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabSelectorErrorStatusPresenter.Companion.isAuthorizationException
 import org.jetbrains.plugins.gitlab.mergerequest.util.localizedMessageOrClassName
-import org.jetbrains.plugins.gitlab.snippets.GitLabSnippetService.Companion.GL_SNIPPET_FILES_LIMIT
 import org.jetbrains.plugins.gitlab.util.GitLabBundle.message
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics.SnippetAction.CREATE_CANCEL
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics.SnippetAction.CREATE_CREATED
@@ -120,7 +120,7 @@ internal class GitLabSnippetService(private val project: Project, private val se
           GitLabLoginUtil.isAccountUnique(accountManager.accountsState.value, server, name)
         }.asSafely<LoginResult.Success>() ?: return@async false
 
-        accountManager.updateAccount(account, token)
+        accountManager.updateAccount(account, GitLabCredentials.Token(token))
         true
       }.await()
     }
@@ -139,7 +139,7 @@ internal class GitLabSnippetService(private val project: Project, private val se
           GitLabLoginUtil.isAccountUnique(accountManager.accountsState.value, server, name)
         }.asSafely<LoginResult.Success>() ?: return@async null
 
-        accountManager.updateAccount(result.account, loginResult.token)
+        accountManager.updateAccount(result.account, GitLabCredentials.Token(loginResult.token))
         apiManager.getClient(result.account.server, loginResult.token)
       }.await()
     }
@@ -158,7 +158,7 @@ internal class GitLabSnippetService(private val project: Project, private val se
                                       result: GitLabCreateSnippetResult): GitLabApi? {
     // Fetch token, if no token is present, re-login
     val server = result.account.server
-    val api = accountManager.findCredentials(result.account)?.let { apiManager.getClient(server, it) }
+    val api = accountManager.findCredentials(result.account)?.let { apiManager.getClient(server, it.accessToken) }
               ?: reattemptLogin(apiManager, accountManager, result)
               ?: return null
 
