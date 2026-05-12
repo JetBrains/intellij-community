@@ -1,10 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions.workingTree
 
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
@@ -14,10 +10,10 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.getPresentablePath
+import com.intellij.openapi.ui.validation.WHEN_GRAPH_PROPAGATION_FINISHED
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.platform.util.coroutines.childScope
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBTextField
@@ -33,6 +29,8 @@ import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.ValidationInfoBuilder
+import com.intellij.util.PathUtil.isValidFileName
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.ui.JBUI
 import com.intellij.vcs.git.ui.GitBranchesTreeIconProvider
@@ -44,30 +42,27 @@ import git4idea.GitStandardLocalBranch
 import git4idea.GitWorkingTree
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
+import git4idea.validators.checkRefName
 import git4idea.workingTrees.GitWorkingTreesService
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.ClosedSendChannelException
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Dimension
+import java.nio.file.InvalidPathException
+import java.nio.file.NoSuchFileException
+import java.nio.file.NotDirectoryException
 import java.nio.file.Paths
 import java.util.Vector
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JComponent
 import javax.swing.JList
-import kotlin.io.path.exists
-import kotlin.io.path.isDirectory
-import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.isWritable
 import kotlin.io.path.name
+import kotlin.io.path.useDirectoryEntries
 import kotlin.math.min
 
 internal class GitWorkingTreeDialog(
   private val data: GitWorkingTreePreDialogData,
 ) : DialogWrapper(data.project, false) {
-  private val uiScope: CoroutineScope = GitWorkingTreesService.getInstance(data.project).coroutineScope.childScope("GitWorkingTreeDialog")
+  private val propertyGraph = PropertyGraph("Git Working Tree Dialog")
   private val branchToWorkingTreeMap = data.repository.workingTreeHolder.getWorkingTrees()
     .filter { it.currentBranch != null }
     .associateBy { it.currentBranch!! }
@@ -82,10 +77,7 @@ internal class GitWorkingTreeDialog(
   private val createNewBranch: GraphProperty<Boolean>
   private val newBranchName: GraphProperty<String>
 
-  private val lastPathValidationChannel = Channel<PathValidationMessage>(Channel.CONFLATED)
-
   init {
-    val propertyGraph = PropertyGraph("Git Working Tree Dialog")
     existingBranchWithWorkingTree = propertyGraph.property(data.initialExistingBranch?.toBranchWithWorkingTree())
     createNewBranch = propertyGraph.property(false)
     newBranchName = propertyGraph.property("")
@@ -97,11 +89,6 @@ internal class GitWorkingTreeDialog(
     init()
     title = GitBundle.message("working.tree.dialog.title")
     setOKButtonText(GitBundle.message("working.tree.dialog.button.ok"))
-
-    Disposer.register(disposable) {
-      uiScope.cancel()
-      lastPathValidationChannel.close()
-    }
   }
 
   private data class BranchWithWorkingTree(val branch: GitBranch, val workingTree: GitWorkingTree?)
@@ -115,32 +102,56 @@ internal class GitWorkingTreeDialog(
     }
   }
 
+  override fun getDimensionServiceKey(): String = "Git.CreateWorkingTreeDialog"
+
+  override fun getInitialSize(): Dimension {
+    return Dimension(JBUI.DialogSizes.medium().width, -1)
+  }
+
   override fun createCenterPanel(): JComponent {
     return panel {
       row(GitBundle.message("working.tree.dialog.label.existing.branch")) {
-        createBranchComboBox().bindItem(existingBranchWithWorkingTree).align(Align.FILL)
+        createBranchComboBox()
+          .bindItem(existingBranchWithWorkingTree)
+          .align(Align.FILL)
       }
 
       row {
-        checkBox(GitBundle.message("working.tree.dialog.checkbox.new.branch")).bindSelected(createNewBranch).gap(RightGap.SMALL)
+        checkBox(GitBundle.message("working.tree.dialog.checkbox.new.branch"))
+          .bindSelected(createNewBranch)
+          .gap(RightGap.SMALL)
 
-        textField().bindText(newBranchName).align(Align.FILL).validationOnApply { validateNewBranchNameOnApply() }
+        textField()
+          .bindText(newBranchName)
+          .align(Align.FILL)
+          .validationRequestor(WHEN_GRAPH_PROPAGATION_FINISHED(propertyGraph))
+          .validationOnInput { validateNewBranchNameField() }
+          .validationOnApply { validateNewBranchNameField() }
           .enabledIf(createNewBranch)
       }
         .bottomGap(BottomGap.MEDIUM)
         .layout(RowLayout.LABEL_ALIGNED)
 
       row(GitBundle.message("working.tree.dialog.label.name")) {
-        projectNameCell = textField().bindText(projectName).align(Align.FILL).validationOnApply { validateProjectNameOnApply() }
+        projectNameCell = textField()
+          .bindText(projectName)
+          .align(Align.FILL)
+          .validationRequestor(WHEN_GRAPH_PROPAGATION_FINISHED(propertyGraph))
+          .validationOnInput { validateProjectName() }
+          .validationOnApply { validateProjectName() }
       }
       row(GitBundle.message("working.tree.dialog.label.location")) {
         val descriptor = FileChooserDescriptorFactory.singleDir()
           .withTitle(GitBundle.message("working.tree.dialog.label.location.file.chooser.title"))
         parentPathCell = textFieldWithBrowseButton(descriptor, data.project)
-          .bindText(parentPath).align(Align.FILL).validationOnApply { validateLocationOnApply() }
+          .bindText(parentPath)
+          .align(Align.FILL)
+          .validationRequestor(WHEN_GRAPH_PROPAGATION_FINISHED(propertyGraph))
+          .validationOnInput { validateLocationOnInput() }
+          .validationOnApply { validateLocationOnApply() }
           .comment("", maxLineLength = MAX_LINE_LENGTH_WORD_WRAP)
 
-        supportFieldCommentsAndPathValidation()
+        supportPathComment()
       }
     }
   }
@@ -202,50 +213,53 @@ internal class GitWorkingTreeDialog(
     return null
   }
 
-  private fun ValidationInfoBuilder.validateProjectNameOnApply(): ValidationInfo? {
-    return if (projectName.get().isBlank()) {
-      error(GitBundle.message("working.tree.dialog.location.validation.provide.name"))
+  private fun ValidationInfoBuilder.validateNewBranchNameField(): ValidationInfo? {
+    if (!createNewBranch.get()){
+      return null
     }
-    else {
-      null
-    }
-  }
-
-  private fun ValidationInfoBuilder.validateNewBranchNameOnApply(): ValidationInfo? {
     val name = newBranchName.get()
-    return when {
-      !createNewBranch.get() -> null
-      name.isBlank() -> error(GitBundle.message("working.tree.dialog.location.validation.provide.new.branch.name"))
-      localBranchNames.contains(name) -> {
-        error(GitBundle.message("working.tree.dialog.branch.validation.already.exists", name))
-      }
-      else -> null
-    }
-  }
-
-  private fun ValidationInfoBuilder.validateLocationOnApply(): ValidationInfo? {
-    if (parentPath.get().isBlank()) return error(GitBundle.message("working.tree.dialog.location.validation.empty"))
-
-    val validation = lastPathValidationChannel.tryReceive().getOrNull() ?: return null
-    if (parentPath.get() == validation.parentPath && projectName.get() == validation.dirName && validation.message != null) {
-      return error(validation.message)
+    checkRefName(name)?.let { return it }
+    if (localBranchNames.contains(name)){
+      return error(GitBundle.message("working.tree.dialog.branch.validation.already.exists", name))
     }
     return null
   }
 
-  private fun supportFieldCommentsAndPathValidation() {
-    updateParentPathCellComment()
-    parentPath.afterChange {
-      updateParentPathCellComment()
-      precomputePathValidation()
+  private fun ValidationInfoBuilder.validateProjectName(): ValidationInfo? {
+    if (!isValidFileName(projectName.get().trim())) {
+      return error(GitBundle.message("working.tree.dialog.name.validation.invalid.format"))
     }
-    projectName.afterChange {
-      updateParentPathCellComment()
-      precomputePathValidation()
-      if (hasErrors(parentPathCell.component.textField)) {
-        initValidation()
+    return null
+  }
+
+  private fun ValidationInfoBuilder.validateLocationOnInput(): ValidationInfo? {
+    return validateWorktreeParentPath(parentPath.get().trim())?.let { error(it) }
+  }
+
+  private fun ValidationInfoBuilder.validateLocationOnApply(): ValidationInfo? {
+    return runWithModalProgressBlocking(data.project, GitBundle.message("working.tree.dialog.location.validation.progress")) {
+      validateWorktreePath(parentPath.get().trim(), projectName.get().trim())
+    }?.let { error(it) }
+  }
+
+  private fun supportPathComment() {
+    updateParentPathCellComment()
+    parentPath.afterChange { updateParentPathCellComment() }
+    projectName.afterChange { updateParentPathCellComment() }
+  }
+
+  private fun updateParentPathCellComment() {
+    val parent = parentPath.get()
+    val child = projectName.get()
+    val text = when {
+      parent.isBlank() -> ""
+      child.isBlank() -> GitBundle.message("working.tree.dialog.label.location.comment", getPresentablePath(parent))
+      else -> {
+        val path = getPresentablePath("${parent}/${child}")
+        GitBundle.message("working.tree.dialog.label.location.comment", path)
       }
     }
+    parentPathCell.comment?.text = text
   }
 
   private fun computeBranchesWithWorkingTrees(): List<BranchWithWorkingTree> {
@@ -273,20 +287,6 @@ internal class GitWorkingTreeDialog(
     else {
       data.projectNameBase.name + "-" + branchToUse.substringAfterLast("/")
     }
-  }
-
-  private fun updateParentPathCellComment() {
-    val parent = parentPath.get()
-    val child = projectName.get()
-    val text = when {
-      parent.isBlank() -> ""
-      child.isBlank() -> GitBundle.message("working.tree.dialog.label.location.comment", getPresentablePath(parent))
-      else -> {
-        val path = getPresentablePath("${parent}/${child}")
-        GitBundle.message("working.tree.dialog.label.location.comment", path)
-      }
-    }
-    parentPathCell.comment?.text = text
   }
 
   private class BranchWithTreeCellRenderer(project: Project, repository: GitRepository) :
@@ -333,44 +333,60 @@ internal class GitWorkingTreeDialog(
     }
   }
 
-  private fun precomputePathValidation() {
-    val parentPath = parentPath.get()
-    val dirName = projectName.get()
-    uiScope.launch(Dispatchers.IO + ModalityState.current().asContextElement()) {
-      val message = getPathValidationMessage(parentPath, dirName)
-      try {
-        lastPathValidationChannel.send(PathValidationMessage(parentPath, dirName, message))
-      }
-      catch (e: ClosedSendChannelException) {
-        LOG.error(e)
-      }
-    }
-  }
-
-  private data class PathValidationMessage(val parentPath: String, val dirName: String, val message: @NlsContexts.DialogMessage String?)
-
-  override fun getDimensionServiceKey(): String = "Git.CreateWorkingTreeDialog"
-
-  override fun getInitialSize(): Dimension {
-    return Dimension(JBUI.DialogSizes.medium().width, -1)
-  }
-
   companion object {
-    private val LOG: Logger = logger<GitWorkingTreeDialog>()
+    @VisibleForTesting
+    internal fun validateWorktreeParentPath(parentPath: String): @NlsContexts.DialogMessage String? {
+      if (parentPath.isBlank()) {
+        return GitBundle.message("working.tree.dialog.location.validation.empty")
+      }
+
+      try {
+        Paths.get(parentPath)
+      } catch (_: InvalidPathException) {
+        return GitBundle.message("working.tree.dialog.location.validation.invalid.path")
+      }
+      return null
+    }
 
     @VisibleForTesting
-    internal fun getPathValidationMessage(parentPath: String, dirName: String): @NlsContexts.DialogMessage String? {
-      if (dirName.isBlank()) return null
-      if (parentPath.isBlank()) return GitBundle.message("working.tree.dialog.location.validation.empty")
+    @RequiresBackgroundThread
+    internal fun validateWorktreePath(parentPath: String, dirName: String): @NlsContexts.DialogMessage String? {
+      validateWorktreeParentPath(parentPath)?.let { return it }
+      val parent = Paths.get(parentPath)
 
-      val fullPath = Paths.get(parentPath).resolve(dirName)
-      return when {
-        !fullPath.exists() -> null
-        !fullPath.isDirectory() -> GitBundle.message("working.tree.dialog.location.validation.is.a.file",
-                                                     getPresentablePath(fullPath.toString()))
-        fullPath.listDirectoryEntries().isNotEmpty() -> GitBundle.message("working.tree.dialog.location.validation.is.not.empty",
-                                                                          getPresentablePath(fullPath.toString()))
-        else -> null
+      if (dirName.isNotBlank()) {
+        val fullPath = try {
+          parent.resolve(dirName)
+        }
+        catch (_: InvalidPathException) {
+          return GitBundle.message("working.tree.dialog.location.validation.invalid.path")
+        }
+
+        // Check the full target path first — if it already exists, we can skip the parent check entirely.
+        try {
+          return if (fullPath.useDirectoryEntries { entries -> entries.any() }) {
+            GitBundle.message("working.tree.dialog.location.validation.is.not.empty", getPresentablePath(fullPath.toString()))
+          } else {
+            null
+          }
+        }
+        catch (_: NoSuchFileException) { /* target doesn't exist — fall through to parent validation */ }
+        catch (_: NotDirectoryException) {
+            return GitBundle.message("working.tree.dialog.location.validation.is.a.file", getPresentablePath(fullPath.toString()))
+        }
+      }
+
+      return try {
+        parent.useDirectoryEntries { }
+        if (!parent.isWritable()) {
+          GitBundle.message("working.tree.dialog.location.validation.not.writable", getPresentablePath(parentPath))
+        } else {
+          null
+        }
+      } catch (_: NoSuchFileException) {
+        null
+      } catch (_: NotDirectoryException) {
+        GitBundle.message("working.tree.dialog.location.validation.not.a.directory", getPresentablePath(parentPath))
       }
     }
   }
