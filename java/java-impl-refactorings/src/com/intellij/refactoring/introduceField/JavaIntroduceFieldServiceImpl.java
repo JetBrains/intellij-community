@@ -12,8 +12,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public final class JavaIntroduceFieldServiceImpl extends JavaIntroduceFieldService {
-  private static final FieldExtractor myFieldExtractor = new FieldExtractor(new IntroduceFieldHandler());
-  private static final FieldExtractor myConstantExtractor = new FieldExtractor(new IntroduceConstantHandler());
+  private static final FieldExtractor myFieldExtractor = new FieldExtractor(new IntroduceFieldHelper());
+  private static final FieldExtractor myConstantExtractor = new FieldExtractor(new IntroduceConstantHelper());
 
   @Override
   public @NotNull JavaIntroduceFieldService.AvailableSettings getAvailableSettings(@NotNull PsiExpression expression) {

@@ -11,9 +11,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduce.inplace.KeyboardComboSwitcher;
 import com.intellij.refactoring.ui.TypeSelectorManager;
@@ -140,11 +138,7 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
 
   @Override
   public String getFieldVisibility() {
-    String visibility = JavaRefactoringSettings.getInstance().INTRODUCE_FIELD_VISIBILITY;
-    if (visibility == null) {
-      visibility = PsiModifier.PRIVATE;
-    }
-    return visibility;
+    return new IntroduceFieldHelper().getVisibility();
   }
 
   @Override

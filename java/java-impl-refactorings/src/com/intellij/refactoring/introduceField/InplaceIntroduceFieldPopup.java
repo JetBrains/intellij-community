@@ -53,7 +53,7 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
                                     final PsiElement anchorElementIfAll,
                                     Project project) {
     super(project, editor, initializerExpression, localVariable, occurrences, typeSelectorManager,
-          IntroduceFieldHandler.getRefactoringNameText(), parentClass, anchorElement, anchorElementIfAll);
+          IntroduceFieldHelper.getRefactoringNameText(), parentClass, anchorElement, anchorElementIfAll);
     myStatic = aStatic;
     myIntroduceFieldPanel =
       new IntroduceFieldPopupPanel(parentClass, initializerExpression, localVariable, currentMethodConstructor, localVariable != null, aStatic,

@@ -2,6 +2,7 @@
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -9,47 +10,48 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiCallExpression;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiDeclarationStatement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiLambdaExpression;
 import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiMethodReferenceUtil;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiParserFacade;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiThisExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypes;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
-import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.IntroduceVariableUtil;
-import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.ui.NameSuggestionsGenerator;
-import com.intellij.refactoring.util.JavaNameSuggestionUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.occurrences.NotInConstructorCallFilter;
 import com.intellij.refactoring.util.occurrences.OccurrenceManager;
 import com.intellij.util.CommonJavaRefactoringUtil;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,13 +65,23 @@ import static com.intellij.refactoring.introduceField.JavaIntroduceFieldService.
 import static com.intellij.refactoring.introduceField.JavaIntroduceFieldService.ToFieldContext;
 import static com.intellij.refactoring.introduceField.JavaIntroduceFieldService.VariableToFieldCandidatesContext;
 
+
+/**
+ * Headless core of the "Introduce Field" / "Introduce Constant" Java refactorings.
+ * <p>
+ * Like {@link FieldHelper}, <b>this class does not use or invoke any UI</b>:
+ * it neither opens dialogs nor shows popups/messages. All choices are derived
+ * from PSI and from persisted refactoring settings, so {@code FieldExtractor}
+ * can be driven from non-interactive contexts such as {@code ModCommand}
+ * actions and the LSP language server.
+ */
 final class FieldExtractor {
   private static final Logger LOG = Logger.getInstance(FieldExtractor.class);
 
-  @NotNull private final BaseExpressionToFieldHandler myHandler;
+  @NotNull private final FieldHelper myHelper;
 
-  FieldExtractor(@NotNull BaseExpressionToFieldHandler handler) {
-    myHandler = handler;
+  FieldExtractor(@NotNull FieldHelper helper) {
+    myHelper = helper;
   }
 
   @NotNull ToFieldContext getContext(@NotNull PsiFile psiFile, @NotNull TextRange range) {
@@ -77,7 +89,21 @@ final class FieldExtractor {
     if (offset == 0) {
       return new ToFieldContext.Error(RefactoringBundle.message("refactoring.cannot.be.performed"));
     }
+    ElementToWorkOn targetElement = findElementToWorkOn(psiFile, range);
+    if (targetElement == null) {
+      return new ToFieldContext.Error(RefactoringBundle.message("refactoring.cannot.be.performed"));
+    }
+    if (targetElement.getExpression() != null) {
+      return getContext(psiFile, targetElement.getExpression());
+    }
+    if (targetElement.getLocalVariable() != null) {
+      return getContext(psiFile, targetElement.getLocalVariable());
+    }
+    return new ToFieldContext.Error(RefactoringBundle.message("refactoring.cannot.be.performed"));
+  }
 
+  private @Nullable ElementToWorkOn findElementToWorkOn(@NotNull PsiFile psiFile, @NotNull TextRange range) {
+    int offset = range.getEndOffset();
     PsiElement psiElement;
     if (range.getEndOffset() == range.getStartOffset()) {
       PsiElement psiElementAfter = psiFile.findElementAt(offset);
@@ -116,7 +142,7 @@ final class FieldExtractor {
         if (psiElement != null && psiElement.getTextRange() != null &&
             psiElement.getTextRange().contains(range)) {
           ElementToWorkOn elementToWorkOn = ElementToWorkOn.tryToCreate(psiElement);
-          if (elementToWorkOn != null && myHandler.accept(elementToWorkOn)) {
+          if (elementToWorkOn != null && myHelper.accept(elementToWorkOn)) {
             targetElement = elementToWorkOn;
             break;
           }
@@ -126,16 +152,7 @@ final class FieldExtractor {
         break;
       }
     }
-    if (targetElement == null) {
-      return new ToFieldContext.Error(RefactoringBundle.message("refactoring.cannot.be.performed"));
-    }
-    if (targetElement.getExpression() != null) {
-      return getContext(psiFile, targetElement.getExpression());
-    }
-    if (targetElement.getLocalVariable() != null) {
-      return getContext(psiFile, targetElement.getLocalVariable());
-    }
-    return new ToFieldContext.Error(RefactoringBundle.message("refactoring.cannot.be.performed"));
+    return targetElement;
   }
 
   private static @Nullable PsiElement getExpression(PsiElement psiElementAfter) {
@@ -168,60 +185,17 @@ final class FieldExtractor {
 
   private @Nullable PsiField extractField(@NotNull ToFieldContext.VariableContext context,
                                           @NotNull InitializationPlace place) {
-    PsiLocalVariable localVariable = context.localVariable();
-    PsiLocalVariable local = localVariable;
+    PsiLocalVariable local = context.localVariable();
     VariableToFieldCandidatesContext variableToFieldCandidatesContext = context.variableToFieldCandidatesContext();
     if (variableToFieldCandidatesContext.classes().isEmpty()) {
       return null;
     }
     PsiClass destinationClass = variableToFieldCandidatesContext.classes().getFirst();
 
-    //todo workaround
-    BaseExpressionToFieldHandler.Settings settings;
     final PsiExpression[] occurrences =
       CodeInsightUtil.findReferenceExpressions(CommonJavaRefactoringUtil.getVariableScope(local), local);
 
-    //todo
-    if (myHandler instanceof IntroduceConstantHandler) {
-      boolean replaceAllOccurrences = true;
-      Project project = localVariable.getProject();
-      boolean preselectNonNls = PropertiesComponent.getInstance(project).getBoolean(IntroduceConstantDialog.NONNLS_SELECTED_PROPERTY);
-      PsiType defaultType = localVariable.getType();
-      defaultType = PsiTypesUtil.removeExternalAnnotations(defaultType);
-
-      final String propertyName =
-        JavaCodeStyleManager.getInstance(project).variableNameToPropertyName(localVariable.getName(), VariableKind.LOCAL_VARIABLE);
-
-      PsiExpression expr = local.getInitializer();
-      NameSuggestionsGenerator generator =
-        IntroduceConstantDialog.createNameSuggestionGenerator(propertyName, expr, JavaCodeStyleManager.getInstance(project), null,
-                                                              destinationClass);
-      settings = new BaseExpressionToFieldHandler.Settings(generator.getSuggestedNameInfo(defaultType).names[0], expr, occurrences,
-                                                           replaceAllOccurrences, true, true,
-                                                           place,
-                                                           ObjectUtils.notNull(
-                                                             JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY,
-                                                             PsiModifier.PUBLIC), local, defaultType, true, destinationClass,
-                                                           preselectNonNls, false);
-    }
-    else {
-      PsiExpression expr = local.getInitializer();
-      PsiType defaultType = localVariable.getType();
-
-      @PsiModifier.ModifierConstant String visibility = JavaRefactoringSettings.getInstance().INTRODUCE_FIELD_VISIBILITY;
-      if (visibility == null) {
-        visibility = PsiModifier.PRIVATE;
-      }
-      final PsiStatement statement = PsiTreeUtil.getParentOfType(local, PsiStatement.class);
-      FieldExtractor.SettingParameters parameters =
-        getParameters(destinationClass, expr, occurrences, local, statement, false);
-
-      settings = new BaseExpressionToFieldHandler.Settings(local.getName(), expr, occurrences,
-                                                           false, parameters.declareStatic(), true,
-                                                           place,
-                                                           visibility, local, defaultType, true, destinationClass,
-                                                           false, false);
-    }
+    BaseExpressionToFieldHandler.Settings settings = myHelper.getSettings(context, place, occurrences);
     boolean rebindNeeded =
       !destinationClass.getManager().areElementsEquivalent(destinationClass, PsiTreeUtil.getParentOfType(local, PsiClass.class));
 
@@ -233,7 +207,7 @@ final class FieldExtractor {
     return fieldResult;
   }
 
-  static ToFieldContext getContext(@NotNull BaseExpressionToFieldHandler handler,
+  static ToFieldContext getContext(@NotNull FieldHelper helper,
                                    @NotNull PsiLocalVariable psiLocalVariable) {
     final PsiElement parent = psiLocalVariable.getParent();
     if (!(parent instanceof PsiDeclarationStatement)) {
@@ -243,17 +217,17 @@ final class FieldExtractor {
     }
 
     if (psiLocalVariable.getContainingFile() instanceof PsiFile file && FileTypeUtils.isInServerPageFile(file)) {
-      String message = JavaRefactoringBundle.message("error.not.supported.for.jsp", handler.getRefactoringName());
+      String message = JavaRefactoringBundle.message("error.not.supported.for.jsp", helper.getRefactoringName());
       return new ToFieldContext.Error(message);
     }
 
-    String validationMessage = handler.checkLocalVariables(psiLocalVariable);
+    String validationMessage = helper.checkLocalVariables(psiLocalVariable);
     if (validationMessage != null) {
       return new ToFieldContext.Error(validationMessage);
     }
     VariableToFieldCandidatesContext
       variableToFieldCandidatesContext =
-      LocalToFieldHandler.getCandidatesContext(psiLocalVariable, handler instanceof IntroduceConstantHandler);
+      LocalToFieldHandler.getCandidatesContext(psiLocalVariable, helper.isConstant());
     if (variableToFieldCandidatesContext.classes().isEmpty()) {
       PsiClass parentClass = PsiTreeUtil.getParentOfType(psiLocalVariable, PsiClass.class);
       if (parentClass == null) {
@@ -261,7 +235,7 @@ final class FieldExtractor {
           RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("error.wrong.caret.position.local.or.expression.name"));
         return new ToFieldContext.Error(message);
       }
-      String message = IntroduceFieldHandler.checkCanIntroduceField(parentClass, psiLocalVariable.getType());
+      String message = IntroduceFieldHelper.checkCanIntroduceField(parentClass, psiLocalVariable.getType());
       if (message != null) {
         return new ToFieldContext.Error(RefactoringBundle.getCannotRefactorMessage(message));
       }
@@ -272,11 +246,11 @@ final class FieldExtractor {
     return new ToFieldContext.VariableContext(psiLocalVariable, variableToFieldCandidatesContext);
   }
 
-  static ToFieldContext getContext(@NotNull BaseExpressionToFieldHandler handler,
+  static ToFieldContext getContext(@NotNull FieldHelper helper,
                                    @NotNull PsiExpression selectedExpr) {
-    if (!Comparing.strEqual(IntroduceConstantHandler.getRefactoringNameText(), handler.getRefactoringName()) &&
+    if (!helper.isConstant() &&
         isInSuperOrThis(selectedExpr) &&
-        handler.isStaticFinalInitializer(selectedExpr) != null) {
+        isStaticFinalInitializer(selectedExpr, helper.isConstant()) != null) {
       return new ToFieldContext.Error(
         RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("invalid.expression.context")));
     }
@@ -306,8 +280,8 @@ final class FieldExtractor {
       String message = RefactoringBundle.getCannotRefactorMessage(switchLabelError);
       return new ToFieldContext.Error(message);
     }
-    PsiClass parentClass = handler.getParentClass(selectedExpr);
-    String message = checkParentClass(parentClass, file, handler);
+    PsiClass parentClass = helper.getParentClass(selectedExpr);
+    String message = checkParentClass(parentClass, file, helper);
     if (message != null) {
       return new ToFieldContext.Error(message);
     }
@@ -322,9 +296,9 @@ final class FieldExtractor {
       if (psiField != null && psiField.getParent() == aClass) break;
       aClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);
     }
-    proposedClasses.removeIf(proposedClass -> proposedClass == null || handler.checkClass(proposedClass, selectedExpr) != null);
+    proposedClasses.removeIf(proposedClass -> proposedClass == null || helper.checkClass(proposedClass, selectedExpr) != null);
     if (proposedClasses.isEmpty()) {
-      message = handler.checkClass(parentClass, selectedExpr);
+      message = helper.checkClass(parentClass, selectedExpr);
       if (message != null) {
         return new ToFieldContext.Error(RefactoringBundle.getCannotRefactorMessage(message));
       }
@@ -340,14 +314,14 @@ final class FieldExtractor {
     if (psiFile == null || !psiFile.isPhysical()) {
       return new ToFieldContext.Error(RefactoringBundle.message("refactoring.cannot.be.performed"));
     }
-    return getContext(myHandler, selectedExpr);
+    return getContext(myHelper, selectedExpr);
   }
 
   @NotNull ToFieldContext getContext(@Nullable PsiFile psiFile, @NotNull PsiLocalVariable selectedVariable) {
     if (psiFile == null || !psiFile.isPhysical()) {
       return new ToFieldContext.Error(RefactoringBundle.message("refactoring.cannot.be.performed"));
     }
-    return getContext(myHandler, selectedVariable);
+    return getContext(myHelper, selectedVariable);
   }
 
   @NotNull AvailableSettings getAvailableSettings(@NotNull ToFieldContext.VariableContext context) {
@@ -368,15 +342,14 @@ final class FieldExtractor {
   private @NotNull AvailableSettings getAvailableSettings(@NotNull PsiExpression expr, @NotNull PsiClass parentClass) {
     ArrayList<InitializationPlace> places =
       new ArrayList<>(List.of(InitializationPlace.values()));
-    final OccurrenceManager occurrenceManager = myHandler.createOccurrenceManager(expr, parentClass);
+    final OccurrenceManager occurrenceManager = myHelper.createOccurrenceManager(expr, parentClass);
     final PsiExpression[] occurrences = occurrenceManager.getOccurrences();
     final PsiElement anchorStatementIfAll = occurrenceManager.getAnchorStatementForAll();
     PsiElement tempAnchorElement = CommonJavaRefactoringUtil.getParentExpressionAnchorElement(expr);
     SettingParameters parameters = getParameters(parentClass, expr, occurrences,
                                                  tempAnchorElement == null ? expr : tempAnchorElement,
                                                  anchorStatementIfAll,
-                                                 //todo
-                                                 myHandler instanceof IntroduceConstantHandler);
+                                                 myHelper.isConstant());
 
     Project project = parentClass.getProject();
     boolean isTestClass = !DumbService.isDumb(project) && TestFrameworks.getInstance().isTestClass(parentClass);
@@ -413,7 +386,7 @@ final class FieldExtractor {
   @Nullable PsiField extractField(@NotNull ToFieldContext.ExpressionContext expressionContextContext,
                                   @NotNull InitializationPlace place) {
     final OccurrenceManager occurrenceManager =
-      myHandler.createOccurrenceManager(expressionContextContext.selectedExpr(), expressionContextContext.parentClass());
+      myHelper.createOccurrenceManager(expressionContextContext.selectedExpr(), expressionContextContext.parentClass());
     final PsiExpression[] occurrences = occurrenceManager.getOccurrences();
     final PsiElement anchorStatementIfAll = occurrenceManager.getAnchorStatementForAll();
 
@@ -424,32 +397,11 @@ final class FieldExtractor {
     SettingParameters parameters =
       getParameters(expressionContextContext.parentClass(), expressionContextContext.selectedExpr(), occurrences, tempAnchorElement,
                     anchorStatementIfAll,
-                    // todo
-                    myHandler instanceof IntroduceConstantHandler);
+                    myHelper.isConstant());
 
-    //noinspection MagicConstant
-    @PsiModifier.ModifierConstant String visibility = JavaRefactoringSettings.getInstance().INTRODUCE_FIELD_VISIBILITY;
-    if (visibility == null) {
-      visibility = PsiModifier.PRIVATE;
-    }
-    //todo workaround
-    if (myHandler instanceof IntroduceConstantHandler) {
-      visibility = PsiModifier.PUBLIC;
-    }
+    @PsiModifier.ModifierConstant String visibility = myHelper.getVisibility();
 
-    SuggestedNameInfo suggestedName =
-      JavaNameSuggestionUtil.suggestFieldName(expressionContextContext.tempType(), null, expressionContextContext.selectedExpr(),
-                                              parameters.declareStatic(), expressionContextContext.parentClass());
-
-    //todo extract similar code
-
-    if (myHandler instanceof IntroduceConstantHandler) {
-      JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(expressionContextContext.selectedExpr().getProject());
-      NameSuggestionsGenerator generator =
-        IntroduceConstantDialog.createNameSuggestionGenerator(null, expressionContextContext.selectedExpr(), codeStyleManager, null,
-                                                              expressionContextContext.parentClass());
-      suggestedName = generator.getSuggestedNameInfo(expressionContextContext.tempType());
-    }
+    SuggestedNameInfo suggestedName = myHelper.getSuggestedNameInfo(expressionContextContext, parameters);
 
     String name = suggestedName.names.length > 0 ? suggestedName.names[0] : "myField";
 
@@ -458,16 +410,15 @@ final class FieldExtractor {
                            (place == InitializationPlace.IN_CURRENT_METHOD &&
                             parameters.currentMethodConstructor() &&
                             expressionContextContext.parentClass().getConstructors().length <= 1);
-    //todo workaround
-    boolean preselectNonNls = myHandler instanceof IntroduceConstantHandler &&
+
+    boolean preselectNonNls = myHelper.isConstant() &&
                               PropertiesComponent.getInstance(expressionContextContext.selectedExpr().getProject())
                                 .getBoolean(IntroduceConstantDialog.NONNLS_SELECTED_PROPERTY);
 
     BaseExpressionToFieldHandler.Settings settings =
       new BaseExpressionToFieldHandler.Settings(name, expressionContextContext.selectedExpr(), occurrences, false,
                                                 parameters.declareStatic(), declareFinal, place, visibility, null,
-                                                //todo workaround
-                                                expressionContextContext.tempType(), myHandler instanceof IntroduceConstantHandler,
+                                                expressionContextContext.tempType(), myHelper.isConstant(),
                                                 expressionContextContext.parentClass(),
                                                 preselectNonNls, false);
 
@@ -559,13 +510,13 @@ final class FieldExtractor {
 
   private static @Nullable @NlsContexts.DialogMessage String checkParentClass(@Nullable PsiClass parentClass,
                                                                               @NotNull PsiFile file,
-                                                                              @NotNull BaseExpressionToFieldHandler handler) {
+                                                                              @NotNull FieldHelper helper) {
     if (parentClass == null) {
       if (FileTypeUtils.isInServerPageFile(file)) {
-        return JavaRefactoringBundle.message("error.not.supported.for.jsp", handler.getRefactoringName());
+        return JavaRefactoringBundle.message("error.not.supported.for.jsp", helper.getRefactoringName());
       }
       else if ("package-info.java".equals(file.getName())) {
-        return JavaRefactoringBundle.message("error.not.supported.for.package.info", handler.getRefactoringName());
+        return JavaRefactoringBundle.message("error.not.supported.for.package.info", helper.getRefactoringName());
       }
       else {
         LOG.error("Unexpected file: " + file);
@@ -576,7 +527,7 @@ final class FieldExtractor {
   }
 
 
-  private static PsiElement getElement(PsiExpression expr, PsiElement anchorElement) {
+  private static PsiElement getElement(@Nullable PsiExpression expr, @Nullable PsiElement anchorElement) {
     PsiElement element = null;
     if (expr != null) {
       element = expr.getUserData(ElementToWorkOn.PARENT);
@@ -584,5 +535,98 @@ final class FieldExtractor {
     }
     if (element == null) element = anchorElement;
     return element;
+  }
+
+  static @Nullable PsiClass getParentClass(@NotNull PsiExpression initializerExpression, boolean isConstant) {
+    boolean compileTimeConstant = LocalToFieldHandler.isCompileTimeConstant(initializerExpression, initializerExpression.getType());
+    PsiElement parent = initializerExpression.getUserData(ElementToWorkOn.PARENT);
+    PsiClass aClass = PsiTreeUtil.getParentOfType((parent == null) ? initializerExpression : parent, PsiClass.class);
+    while (aClass != null) {
+      if (!isConstant || compileTimeConstant || LocalToFieldHandler.isStaticFieldAllowed(aClass)) return aClass;
+      aClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class);
+    }
+    return null;
+  }
+
+  static @Nullable PsiElement isStaticFinalInitializer(@Nullable PsiExpression expr, boolean isConstant) {
+    PsiClass parentClass = expr != null ? getParentClass(expr, isConstant) : null;
+    if (parentClass == null) return null;
+    IsStaticFinalInitializerExpression visitor = new IsStaticFinalInitializerExpression(parentClass, expr);
+    expr.accept(visitor);
+    return visitor.getElementReference();
+  }
+
+  private static class IsStaticFinalInitializerExpression extends ClassMemberReferencesVisitor {
+    private PsiElement myElementReference;
+    private final PsiExpression myInitializer;
+    private boolean myCheckThrowables = true;
+
+    IsStaticFinalInitializerExpression(PsiClass aClass, PsiExpression initializer) {
+      super(aClass);
+      myInitializer = initializer;
+    }
+
+    @Override
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
+      final PsiElement psiElement = expression.resolve();
+      if ((PsiUtil.isJvmLocalVariable(psiElement)) &&
+          !PsiTreeUtil.isAncestor(myInitializer, psiElement, false)) {
+        myElementReference = expression;
+      }
+      else {
+        super.visitReferenceExpression(expression);
+      }
+    }
+
+    @Override
+    public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
+      if (!PsiMethodReferenceUtil.isResolvedBySecondSearch(expression)) {
+        super.visitMethodReferenceExpression(expression);
+      }
+    }
+
+    @Override
+    public void visitCallExpression(@NotNull PsiCallExpression callExpression) {
+      super.visitCallExpression(callExpression);
+      if (!myCheckThrowables) return;
+      final List<PsiClassType> checkedExceptions = ExceptionUtil.getThrownCheckedExceptions(callExpression);
+      if (!checkedExceptions.isEmpty()) {
+        myElementReference = callExpression;
+      }
+    }
+
+    @Override
+    public void visitClass(@NotNull PsiClass aClass) {
+      myCheckThrowables = false;
+      super.visitClass(aClass);
+    }
+
+    @Override
+    public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
+      myCheckThrowables = false;
+      super.visitLambdaExpression(expression);
+    }
+
+    @Override
+    protected void visitClassMemberReferenceElement(PsiMember classMember, PsiJavaCodeReferenceElement classMemberReference) {
+      if (!classMember.hasModifierProperty(PsiModifier.STATIC)) {
+        myElementReference = classMemberReference;
+      }
+    }
+
+    @Override
+    public void visitThisExpression(@NotNull PsiThisExpression expression) {
+      myElementReference = expression;
+    }
+
+    @Override
+    public void visitElement(@NotNull PsiElement element) {
+      if (myElementReference != null) return;
+      super.visitElement(element);
+    }
+
+    public @Nullable PsiElement getElementReference() {
+      return myElementReference;
+    }
   }
 }

@@ -7,9 +7,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.JavaVisibilityPanel;
 import com.intellij.refactoring.ui.TypeSelectorManager;
@@ -53,10 +51,7 @@ public class IntroduceFieldDialogPanel extends IntroduceFieldCentralPanel {
   @Override
   protected void initializeControls(PsiExpression initializerExpression, InitializationPlace ourLastInitializerPlace) {
     initializeInitializerPlace(initializerExpression, ourLastInitializerPlace);
-    String ourLastVisibility = JavaRefactoringSettings.getInstance().INTRODUCE_FIELD_VISIBILITY;
-    if (ourLastVisibility == null) {
-      ourLastVisibility = PsiModifier.PRIVATE;
-    }
+    String ourLastVisibility = new IntroduceFieldHelper().getVisibility();
     myVisibilityPanel.setVisibility(ourLastVisibility);
     super.initializeControls(initializerExpression, ourLastInitializerPlace);
   }

@@ -1,12 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceField;
 
-import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDeclarationStatement;
@@ -14,27 +12,17 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLambdaExpressionType;
-import com.intellij.psi.PsiLambdaParameterType;
 import com.intellij.psi.PsiLocalVariable;
-import com.intellij.psi.PsiMethodReferenceType;
 import com.intellij.psi.PsiStatement;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.AbstractJavaInplaceIntroducer;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.util.RefactoringUIUtil;
-import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager;
-import com.intellij.refactoring.util.occurrences.NotInConstructorCallFilter;
-import com.intellij.refactoring.util.occurrences.OccurrenceFilter;
-import com.intellij.refactoring.util.occurrences.OccurrenceManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,17 +32,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implemen
   private InplaceIntroduceFieldPopup myInplaceIntroduceFieldPopup;
 
   public IntroduceFieldHandler() {
-    super(false);
-  }
-
-  @Override
-  protected String getRefactoringName() {
-    return getRefactoringNameText();
-  }
-
-  @Override
-  protected @Nullable String checkClass(@NotNull PsiClass parentClass, @NotNull PsiExpression selectedExpr) {
-    return checkCanIntroduceField(parentClass, selectedExpr.getType());
+    super(new IntroduceFieldHelper());
   }
 
   /**
@@ -66,7 +44,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implemen
    * @return true, if a field can be introduced. false, if there is a problem.
    */
   static boolean canIntroduceField(@NotNull PsiClass parentClass, @Nullable PsiType type, Editor editor) {
-    String message = checkCanIntroduceField(parentClass, type);
+    String message = IntroduceFieldHelper.checkCanIntroduceField(parentClass, type);
     if (message != null) {
       showErrorMessage(parentClass.getProject(), editor, message);
       return false;
@@ -74,27 +52,9 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implemen
     return true;
   }
 
-  static @Nullable @NlsContexts.DialogMessage String checkCanIntroduceField(@NotNull PsiClass parentClass, @Nullable PsiType type) {
-    if (parentClass.isInterface()) {
-      return JavaRefactoringBundle.message("cannot.introduce.field.in.interface");
-    }
-    if (PsiTypes.nullType().equals(type) || type instanceof PsiLambdaParameterType || type instanceof PsiLambdaExpressionType ||
-        type instanceof PsiMethodReferenceType) {
-      return JavaRefactoringBundle.message("variable.type.unknown");
-    }
-    PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
-    if (aClass != null && PsiUtil.isLocalClass(aClass) && !PsiTreeUtil.isAncestor(aClass, parentClass, false)) {
-      String message = JavaRefactoringBundle.message("0.is.not.visible.to.members.of.1",
-                                                     RefactoringUIUtil.getDescription(aClass, false),
-                                                     RefactoringUIUtil.getDescription(parentClass, false));
-      return StringUtil.capitalize(message);
-    }
-    return null;
-  }
-
   private static void showErrorMessage(@NotNull Project project, Editor editor, @NlsContexts.DialogMessage String message) {
     message = RefactoringBundle.getCannotRefactorMessage(message);
-    CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringNameText(), HelpID.INTRODUCE_FIELD);
+    CommonRefactoringUtil.showErrorHint(project, editor, message, IntroduceFieldHelper.getRefactoringNameText(), HelpID.INTRODUCE_FIELD);
   }
 
   @Override
@@ -107,7 +67,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implemen
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    ElementToWorkOn.processElementToWorkOn(editor, file, getRefactoringNameText(), HelpID.INTRODUCE_FIELD, project,
+    ElementToWorkOn.processElementToWorkOn(editor, file, IntroduceFieldHelper.getRefactoringNameText(), HelpID.INTRODUCE_FIELD, project,
                                            getElementProcessor(project, editor));
   }
 
@@ -182,26 +142,15 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implemen
   }
 
   @Override
-  protected boolean accept(ElementToWorkOn elementToWorkOn) {
-    return true;
-  }
-
-  @Override
   public AbstractInplaceIntroducer getInplaceIntroducer() {
     return myInplaceIntroduceFieldPopup;
   }
 
   @Override
-  protected OccurrenceManager createOccurrenceManager(final PsiExpression selectedExpr, final PsiClass parentClass) {
-    final OccurrenceFilter occurrenceFilter = FieldExtractor.isInSuperOrThis(selectedExpr) ? null : NotInConstructorCallFilter.INSTANCE;
-    return new ExpressionOccurrenceManager(selectedExpr, parentClass, occurrenceFilter, true);
-  }
-
-  @Override
   protected boolean invokeImpl(final Project project, PsiLocalVariable localVariable, final Editor editor) {
-    JavaIntroduceFieldService.ToFieldContext context = FieldExtractor.getContext(this, localVariable);
+    JavaIntroduceFieldService.ToFieldContext context = FieldExtractor.getContext(myHelper, localVariable);
     if (context instanceof JavaIntroduceFieldService.ToFieldContext.Error(String errorMessage)) {
-      CommonRefactoringUtil.showErrorHint(project, editor, errorMessage, getRefactoringNameText(), getHelpID());
+      CommonRefactoringUtil.showErrorHint(project, editor, errorMessage, IntroduceFieldHelper.getRefactoringNameText(), getHelpID());
       return false;
     }
     final PsiElement parent = localVariable.getParent();
@@ -231,9 +180,5 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implemen
 
   protected int getChosenClassIndex(List<PsiClass> classes) {
     return classes.size() - 1;
-  }
-
-  public static @NlsContexts.DialogTitle String getRefactoringNameText() {
-    return RefactoringBundle.message("introduce.field.title");
   }
 }

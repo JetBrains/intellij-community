@@ -215,7 +215,7 @@ class IntroduceFieldDialog extends DialogWrapper {
     }
     if (errorString != null) {
       CommonRefactoringUtil.showErrorMessage(
-	IntroduceFieldHandler.getRefactoringNameText(),
+        IntroduceFieldHelper.getRefactoringNameText(),
 	errorString,
 	HelpID.INTRODUCE_FIELD,
 	myProject
@@ -229,7 +229,7 @@ class IntroduceFieldDialog extends DialogWrapper {
 	myProject,
 	RefactoringBundle.message("field.exists", fieldName,
                                    oldField.getContainingClass().getQualifiedName()),
-	IntroduceFieldHandler.getRefactoringNameText(),
+  IntroduceFieldHelper.getRefactoringNameText(),
 	Messages.getWarningIcon()
       );
       if (answer != Messages.YES) {

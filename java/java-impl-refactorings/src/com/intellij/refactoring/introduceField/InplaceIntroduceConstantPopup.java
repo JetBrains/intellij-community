@@ -63,7 +63,7 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
                                        TypeSelectorManagerImpl typeSelectorManager,
                                        PsiElement anchorElement,
                                        PsiElement anchorElementIfAll) {
-    super(project, editor, expr, localVariable, occurrences, typeSelectorManager, IntroduceConstantHandler.getRefactoringNameText(),
+    super(project, editor, expr, localVariable, occurrences, typeSelectorManager, IntroduceConstantHelper.getRefactoringNameText(),
           parentClass, anchorElement, anchorElementIfAll);
 
     myInitializerText = getExprText(expr, localVariable);

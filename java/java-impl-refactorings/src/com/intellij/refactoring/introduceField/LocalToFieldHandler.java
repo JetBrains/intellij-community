@@ -133,7 +133,7 @@ public abstract class LocalToFieldHandler {
     PsiElement parent = local.getParent();
     while (parent != null && parent.getContainingFile() != null) {
       if (parent instanceof PsiClass psiClass && (compileTimeConstant || !isConstant || isStaticFieldAllowed(psiClass))) {
-        if (IntroduceFieldHandler.checkCanIntroduceField(psiClass, local.getType()) == null) {
+        if (IntroduceFieldHelper.checkCanIntroduceField(psiClass, local.getType()) == null) {
           classes.add(psiClass);
         }
       }

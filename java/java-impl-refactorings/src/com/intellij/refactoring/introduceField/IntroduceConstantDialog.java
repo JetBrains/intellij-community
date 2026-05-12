@@ -214,7 +214,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     myTypeSelectorManager = typeSelectorManager;
     myDestinationClass = null;
 
-    setTitle(IntroduceConstantHandler.getRefactoringNameText());
+    setTitle(IntroduceConstantHelper.getRefactoringNameText());
     myCodeStyleManager = JavaCodeStyleManager.getInstance(myProject);
     myVPanel = new JavaVisibilityPanel(false, true);
     myVisibilityPanel.add(myVPanel, BorderLayout.CENTER);
@@ -352,7 +352,7 @@ class IntroduceConstantDialog extends DialogWrapper {
 
     Set<String> possibleClassNames = new LinkedHashSet<>();
     for (final PsiExpression occurrence : myOccurrences) {
-      final PsiClass parentClass = new IntroduceConstantHandler().getParentClass(occurrence);
+      final PsiClass parentClass = FieldExtractor.getParentClass(occurrence, true);
       if (parentClass != null && parentClass.getQualifiedName() != null) {
         possibleClassNames.add(parentClass.getQualifiedName());
       }
@@ -397,7 +397,7 @@ class IntroduceConstantDialog extends DialogWrapper {
                                                                                             myParentClass));
 
     myNameSuggestionsManager.setLabelsFor(myTypeLabel, myNameSuggestionLabel);
-    //////////
+
     if (myOccurrencesCount > 1) {
       myCbReplaceAll.addItemListener(new ItemListener() {
         @Override
@@ -609,7 +609,7 @@ class IntroduceConstantDialog extends DialogWrapper {
       newClass = JavaPsiFacade.getInstance(myProject).findClass(targetClassName, GlobalSearchScope.projectScope(myProject));
       if (newClass == null) {
         if (Messages.showOkCancelDialog(myProject, JavaRefactoringBundle.message("class.does.not.exist.in.the.project"),
-                                        IntroduceConstantHandler.getRefactoringNameText(), Messages.getErrorIcon()) != Messages.OK) {
+                                        IntroduceConstantHelper.getRefactoringNameText(), Messages.getErrorIcon()) != Messages.OK) {
           return;
         }
         myDestinationClass = new BaseExpressionToFieldHandler.TargetDestination(targetClassName, myParentClass);
@@ -633,7 +633,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     }
     if (errorString != null) {
       CommonRefactoringUtil.showErrorMessage(
-        IntroduceFieldHandler.getRefactoringNameText(),
+        IntroduceFieldHelper.getRefactoringNameText(),
         errorString,
         HelpID.INTRODUCE_FIELD,
         myProject);
@@ -646,7 +646,7 @@ class IntroduceConstantDialog extends DialogWrapper {
         int answer = Messages.showYesNoDialog(
           myProject,
           RefactoringBundle.message("field.exists", fieldName, oldField.getContainingClass().getQualifiedName()),
-          IntroduceFieldHandler.getRefactoringNameText(),
+          IntroduceFieldHelper.getRefactoringNameText(),
           Messages.getWarningIcon()
         );
         if (answer != Messages.YES) {
