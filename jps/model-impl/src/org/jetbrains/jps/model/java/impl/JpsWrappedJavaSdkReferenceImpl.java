@@ -5,7 +5,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsElement;
-import org.jetbrains.jps.model.JpsElementReference;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.ex.JpsCompositeElementBase;
 import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
@@ -52,11 +51,5 @@ final class JpsWrappedJavaSdkReferenceImpl extends JpsCompositeElementBase<JpsWr
 
     JpsLibrary library = model.getGlobal().getLibraryCollection().findLibrary(sdkName);
     return library != null ? library.asTyped(JpsJavaSdkType.INSTANCE) : null;
-  }
-
-  @Override
-  public JpsElementReference<JpsTypedLibrary<JpsSdk<JpsDummyElement>>> asExternal(@NotNull JpsModel model) {
-    model.registerExternalReference(this);
-    return this;
   }
 }

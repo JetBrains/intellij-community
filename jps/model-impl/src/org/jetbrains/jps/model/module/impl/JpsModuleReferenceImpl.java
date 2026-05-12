@@ -2,7 +2,6 @@
 package org.jetbrains.jps.model.module.impl;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.impl.JpsNamedElementReferenceImpl;
 import org.jetbrains.jps.model.impl.JpsProjectElementReference;
 import org.jetbrains.jps.model.module.JpsModule;
@@ -21,12 +20,6 @@ public final class JpsModuleReferenceImpl extends JpsNamedElementReferenceImpl<J
   @Override
   public @NotNull String getModuleName() {
     return myElementName;
-  }
-
-  @Override
-  public JpsModuleReference asExternal(@NotNull JpsModel model) {
-    model.registerExternalReference(this);
-    return this;
   }
 
   @Override

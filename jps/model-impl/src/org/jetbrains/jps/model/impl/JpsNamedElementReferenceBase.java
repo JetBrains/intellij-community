@@ -7,7 +7,6 @@ import org.jetbrains.jps.model.JpsCompositeElement;
 import org.jetbrains.jps.model.JpsElementChildRole;
 import org.jetbrains.jps.model.JpsElementCollection;
 import org.jetbrains.jps.model.JpsElementReference;
-import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.JpsNamedElement;
 import org.jetbrains.jps.model.JpsNamedElementCollection;
 import org.jetbrains.jps.model.ex.JpsCompositeElementBase;
@@ -78,11 +77,5 @@ public abstract class JpsNamedElementReferenceBase<S extends JpsNamedElement, T 
 
   public JpsElementReference<? extends JpsCompositeElement> getParentReference() {
     return myContainer.getChild(PARENT_REFERENCE_ROLE);
-  }
-
-  @Override
-  public JpsElementReference<T> asExternal(@NotNull JpsModel model) {
-    model.registerExternalReference(this);
-    return this;
   }
 }

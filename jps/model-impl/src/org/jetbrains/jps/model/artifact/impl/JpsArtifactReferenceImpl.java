@@ -3,7 +3,6 @@ package org.jetbrains.jps.model.artifact.impl;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsElementFactory;
-import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.artifact.JpsArtifactReference;
 import org.jetbrains.jps.model.impl.JpsNamedElementReferenceImpl;
@@ -25,11 +24,5 @@ class JpsArtifactReferenceImpl extends JpsNamedElementReferenceImpl<JpsArtifact,
   @Override
   public @NotNull String getArtifactName() {
     return myElementName;
-  }
-
-  @Override
-  public JpsArtifactReferenceImpl asExternal(@NotNull JpsModel model) {
-    model.registerExternalReference(this);
-    return this;
   }
 }

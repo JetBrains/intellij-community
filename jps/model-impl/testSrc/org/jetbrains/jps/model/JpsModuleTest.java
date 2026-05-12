@@ -28,7 +28,6 @@ import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsLibraryDependency;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleDependency;
-import org.jetbrains.jps.model.module.JpsModuleReference;
 import org.jetbrains.jps.model.module.JpsModuleSourceDependency;
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.model.module.JpsSdkDependency;
@@ -79,22 +78,6 @@ public class JpsModuleTest extends JpsModelTestCase {
     assertInstanceOf(dependencies.get(0), JpsModuleSourceDependency.class);
     assertSame(library, assertInstanceOf(dependencies.get(1), JpsLibraryDependency.class).getLibrary());
     assertSame(dep, assertInstanceOf(dependencies.get(2), JpsModuleDependency.class).getModule());
-  }
-
-  public void testCreateReferenceByModule() {
-    final JpsModule module = myProject.addModule("m", JpsJavaModuleType.INSTANCE);
-    final JpsModuleReference reference = module.createReference().asExternal(myModel);
-    assertEquals("m", reference.getModuleName());
-    assertSame(module, reference.resolve());
-  }
-
-  public void testCreateReferenceByName() {
-    final JpsModuleReference reference = JpsElementFactory.getInstance().createModuleReference("m").asExternal(myModel);
-    assertEquals("m", reference.getModuleName());
-    assertNull(reference.resolve());
-
-    final JpsModule module = myProject.addModule("m", JpsJavaModuleType.INSTANCE);
-    assertSame(module, reference.resolve());
   }
 
   public void testSdkDependency() {

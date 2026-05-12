@@ -3,7 +3,6 @@ package org.jetbrains.jps.model.impl;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.JpsElementReference;
 import org.jetbrains.jps.model.JpsModel;
 
 @ApiStatus.Internal
@@ -24,10 +23,5 @@ public final class JpsModelImpl implements JpsModel {
   @Override
   public @NotNull JpsGlobalImpl getGlobal() {
     return myGlobal;
-  }
-
-  @Override
-  public void registerExternalReference(@NotNull JpsElementReference<?> reference) {
-    myProject.addExternalReference(reference);
   }
 }
