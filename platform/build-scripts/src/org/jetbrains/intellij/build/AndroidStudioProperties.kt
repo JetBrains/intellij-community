@@ -87,9 +87,6 @@ class AndroidStudioProperties : ProductProperties() {
       "--add-opens=java.base/sun.net.www.protocol.https=ALL-UNNAMED",
       // Enable use of the deprecated SecurityManager (b/302171264).
       "-Djava.security.manager=allow",
-      // Configure the feedback URL displayed for IDE startup failures. This system property should match
-      // StartupErrorReporter.STARTUP_ERROR_REPORTING_URL_PROPERTY. Eventually we may want a better landing page (b/295896403).
-      "-Dij.startup.error.report.url=https://issuetracker.google.com/issues/new?component=192708",
       // Workaround for C2 crashes b/377324522
       "-XX:CompileCommand=exclude,org.jetbrains.kotlin.serialization.deserialization.TypeDeserializer::simpleType",
       "-XX:CompileCommand=exclude,org.jetbrains.kotlin.serialization.deserialization.TypeDeserializer::toAttributes",
