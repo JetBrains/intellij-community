@@ -72,6 +72,12 @@ fun catchNotifications(
 
         action()
         connection.deliverImmediately()
+        /*
+        Some notifications are emitted with `NonBlockingReadAction` in smart mode. The problem is that the `NonBlockingReadAction`
+        with `.inSmartMode(project)` requires indexing to finish. It might not be that fast in tests.
+        Also, a notification might not have been triggered yet because the settings change listener fires asynchronously.
+        To overcome these problems, we need this retry loop, and this approach is widely used in the project in tests.
+         */
         if (waitForNotificationLonger) {
             for (i in 1..5) {
                 if (notifications.isNotEmpty()) break

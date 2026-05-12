@@ -111,32 +111,32 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
                 Assert.assertEquals(LanguageVersion.KOTLIN_2_2, languageVersionSettingsBefore.languageVersion)
                 Assert.assertEquals(ApiVersion.KOTLIN_2_2, languageVersionSettingsBefore.apiVersion)
 
-            val projectLanguageVersionSettingsBefore = myProject.languageVersionSettings
-            Assert.assertEquals(LanguageVersion.KOTLIN_2_2, projectLanguageVersionSettingsBefore.languageVersion)
-            Assert.assertEquals(ApiVersion.KOTLIN_2_2, projectLanguageVersionSettingsBefore.apiVersion)
+                val projectLanguageVersionSettingsBefore = myProject.languageVersionSettings
+                Assert.assertEquals(LanguageVersion.KOTLIN_2_2, projectLanguageVersionSettingsBefore.languageVersion)
+                Assert.assertEquals(ApiVersion.KOTLIN_2_2, projectLanguageVersionSettingsBefore.apiVersion)
 
-            runWithModalProgressBlocking(project, "") {
-                saveProjectsAndApp(forceSavingAllSettings = true, onlyProject = myProject)
+                runWithModalProgressBlocking(project, "") {
+                    saveProjectsAndApp(forceSavingAllSettings = true, onlyProject = myProject)
+                }
+                checkKotlincPresence(true)
+
+                KotlinCommonCompilerArgumentsHolder.getInstance(project).update {
+                    languageVersion = LanguageVersion.KOTLIN_2_3.versionString
+                }
+
+                // Emulate project root change, as after changing Kotlin language settings in the preferences
+                runWriteActionAndWait {
+                    myProject.invalidateProjectRoots(RootsChangeRescanningInfo.NO_RESCAN_NEEDED)
+                }
+
+                val languageVersionSettingsAfter = module.languageVersionSettings
+                Assert.assertEquals(LanguageVersion.KOTLIN_2_3, languageVersionSettingsAfter.languageVersion)
+                Assert.assertEquals(ApiVersion.KOTLIN_2_2, languageVersionSettingsAfter.apiVersion)
+
+                val projectLanguageVersionSettingsAfter = myProject.languageVersionSettings
+                Assert.assertEquals(LanguageVersion.KOTLIN_2_3, projectLanguageVersionSettingsAfter.languageVersion)
+                Assert.assertEquals(ApiVersion.KOTLIN_2_2, projectLanguageVersionSettingsAfter.apiVersion)
             }
-            checkKotlincPresence(true)
-
-            KotlinCommonCompilerArgumentsHolder.getInstance(project).update {
-                languageVersion = LanguageVersion.KOTLIN_2_3.versionString
-            }
-
-            // Emulate project root change, as after changing Kotlin language settings in the preferences
-            runWriteActionAndWait {
-                myProject.invalidateProjectRoots(RootsChangeRescanningInfo.NO_RESCAN_NEEDED)
-            }
-
-            val languageVersionSettingsAfter = module.languageVersionSettings
-            Assert.assertEquals(LanguageVersion.KOTLIN_2_3, languageVersionSettingsAfter.languageVersion)
-            Assert.assertEquals(ApiVersion.KOTLIN_2_2, languageVersionSettingsAfter.apiVersion)
-
-            val projectLanguageVersionSettingsAfter = myProject.languageVersionSettings
-            Assert.assertEquals(LanguageVersion.KOTLIN_2_3, projectLanguageVersionSettingsAfter.languageVersion)
-            Assert.assertEquals(ApiVersion.KOTLIN_2_2, projectLanguageVersionSettingsAfter.apiVersion)
-        }
 
         assertEquals(
             "Update your code to replace the use of deprecated language and library features with supported constructs<br/><br/>Detected migration:<br/>&nbsp;&nbsp;Language version: 2.2 to 2.3<br/>",
