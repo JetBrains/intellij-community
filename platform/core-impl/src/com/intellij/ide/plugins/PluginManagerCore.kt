@@ -1173,6 +1173,7 @@ fun getPluginDistDirByClass(aClass: Class<*>): Path? {
     }
     return jarInsideLib
       .parent
+      .let { if (it.name == "modules") it.parent else it }
       .also { check(it.name == "lib") { "$it should be lib directory" } }
       .parent
   }
