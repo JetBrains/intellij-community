@@ -889,6 +889,34 @@ Backend dependency 'intellij.platform.backend' from descriptor 'backend-fragment
     myFixture.checkHighlighting()
   }
 
+  fun testCustomMetaInfDescriptorDoesNotInheritPluginXmlKind() {
+    addModuleWithXmlDescriptor(
+      moduleName = "unique.module.name.62",
+      descriptorRelativePathToResourcesDirectory = "META-INF/plugin.xml",
+      """
+        <idea-plugin>
+          <dependencies>
+            <module name="intellij.platform.backend"/>
+          </dependencies>
+        </idea-plugin>
+      """.trimIndent()
+    )
+    val customDescriptor = addModuleWithXmlDescriptor(
+      moduleName = "unique.module.name.62",
+      descriptorRelativePathToResourcesDirectory = "META-INF/custom-descriptor.xml",
+      """
+        <idea-plugin>
+          <extensions defaultExtensionNs="com.intellij">
+            <typedHandler/>
+          </extensions>
+        </idea-plugin>
+      """.trimIndent()
+    )
+
+    myFixture.configureFromExistingVirtualFile(customDescriptor.virtualFile)
+    myFixture.checkHighlighting()
+  }
+
   fun testBackendExtensionInModuleWithDuplicateTransitiveBackendDependencies() {
     val pluginXml = addModuleWithXmlDescriptor(
       moduleName = "unique.module.name.39",
