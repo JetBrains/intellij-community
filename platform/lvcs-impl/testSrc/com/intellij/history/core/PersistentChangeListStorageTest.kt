@@ -24,7 +24,7 @@ internal class PersistentChangeListStorageTest(
 
   private fun createStorage() = PersistentChangeListStorage(
     storageDir = tempDir.resolve("storage"),
-    useWriteCache = useCache,
+    getUseWriteCache = { useCache },
     getCurrentFsTimestamp = { 0 },
     unitTestMode = true
   )

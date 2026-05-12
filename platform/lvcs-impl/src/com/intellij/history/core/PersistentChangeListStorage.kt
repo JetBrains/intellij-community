@@ -25,7 +25,7 @@ private const val STORAGE_FILE: @NonNls String = "changes"
 
 internal class PersistentChangeListStorage(
   private val storageDir: Path,
-  private val useWriteCache: Boolean = Registry.`is`("lvcs.store.write.cache.in.memory", true),
+  private val getUseWriteCache: () -> Boolean = { Registry.`is`("lvcs.store.write.cache.in.memory", true) },
   private val getCurrentFsTimestamp: () -> Long = { ManagingFS.getInstance().creationTimestamp },
   private val unitTestMode: Boolean = ApplicationManager.getApplication().isUnitTestMode(),
 ) : ChangeListStorage {
@@ -232,7 +232,7 @@ internal class PersistentChangeListStorage(
   @Synchronized
   override fun writeNextSet(changeSet: ChangeSet) {
     if (isCompletelyBroken) return
-    if (useWriteCache) {
+    if (getUseWriteCache()) {
       pendingChangeSets.add(changeSet)
     }
     else {
