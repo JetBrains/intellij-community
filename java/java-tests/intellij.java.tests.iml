@@ -20,6 +20,8 @@
     <orderEntry type="module" module-name="intellij.platform.jps.model" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.serialization" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lang.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.structuralSearch" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.moduleSet.plugin.structuralSearch" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.lvcs" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.refactoring" scope="TEST" />

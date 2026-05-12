@@ -13,6 +13,8 @@ jvm_library(
     "//java/java-frontend:frontend",
   ],
   runtime_deps = [
+    "//platform/structuralsearch:structuralSearch",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.structuralSearch:moduleSet-plugin-structuralSearch",
     "//platform/testFramework",
     "//java/testFramework",
     "//java/java-impl:impl",
@@ -346,6 +348,8 @@ jvm_library(
   ],
   runtime_deps = [
     ":tests",
+    "//platform/structuralsearch:structuralSearch_test_lib",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.structuralSearch:moduleSet-plugin-structuralSearch_test_lib",
     "//platform/platform-impl/concurrency:concurrency_test_lib",
     "//community-resources:customization_test_lib",
     "//java/langInjection:langInjection_test_lib",

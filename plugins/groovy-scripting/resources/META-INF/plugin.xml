@@ -1,0 +1,17 @@
+<idea-plugin>
+  <id>com.intellij.groovy.scripting</id>
+  <name>Groovy Scripting</name>
+  <category>Languages</category>
+  <vendor>JetBrains</vendor>
+
+  <description><![CDATA[
+    Provides the Groovy JSR223 scripting engine for the IDE Scripting Console.
+  ]]></description>
+
+  <depends>com.intellij.modules.platform</depends>
+
+  <content namespace="jetbrains">
+    <module name="intellij.libraries.groovy" loading="embedded"/>
+    <module name="intellij.libraries.groovy.jsr223" loading="embedded"/>
+  </content>
+</idea-plugin>

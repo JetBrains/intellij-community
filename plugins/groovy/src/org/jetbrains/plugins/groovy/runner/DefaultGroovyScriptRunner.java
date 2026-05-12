@@ -37,7 +37,7 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
   public void ensureRunnerConfigured(@NotNull GroovyScriptRunConfiguration configuration) throws RuntimeConfigurationException {
     Module module = configuration.getModule();
     if (module == null) {
-      throw new RuntimeConfigurationException(GroovyBundle.message("script.runner.module.not.specified.message"));
+      return;
     }
 
     if (LibrariesUtil.getGroovyHomePath(module) == null) {
@@ -51,7 +51,8 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
 
   @Override
   public void configureCommandLine(JavaParameters params, @Nullable Module module, boolean tests, VirtualFile script, GroovyScriptRunConfiguration configuration) throws CantRunException {
-    configureGenericGroovyRunner(params, module, "groovy.ui.GroovyMain", false, tests, configuration.isAddClasspathToTheRunner());
+    boolean useBundled = module == null;
+    configureGenericGroovyRunnerImpl(params, module, "groovy.ui.GroovyMain", useBundled, tests, !useBundled && configuration.isAddClasspathToTheRunner());
 
     params.getVMParametersList().addParametersString(configuration.getVMParameters());
 
@@ -68,19 +69,28 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
 
   public static void configureGenericGroovyRunner(@NotNull JavaParameters params,
                                                   @NotNull Module module,
-                                                  @NotNull String mainClass,
-                                                  boolean useBundled,
-                                                  boolean tests) throws CantRunException {
-    configureGenericGroovyRunner(params, module, mainClass, useBundled, tests, true);
+                                                   @NotNull String mainClass,
+                                                   boolean useBundled,
+                                                   boolean tests) throws CantRunException {
+    configureGenericGroovyRunnerImpl(params, module, mainClass, useBundled, tests, true);
   }
 
   public static void configureGenericGroovyRunner(@NotNull JavaParameters params,
                                                   @NotNull Module module,
-                                                  @NotNull String mainClass,
-                                                  boolean useBundled,
-                                                  boolean tests,
-                                                  boolean addClasspathToRunner) throws CantRunException {
-    final VirtualFile groovyJar = findGroovyJar(module);
+                                                   @NotNull String mainClass,
+                                                   boolean useBundled,
+                                                   boolean tests,
+                                                   boolean addClasspathToRunner) throws CantRunException {
+    configureGenericGroovyRunnerImpl(params, module, mainClass, useBundled, tests, addClasspathToRunner);
+  }
+
+  private static void configureGenericGroovyRunnerImpl(@NotNull JavaParameters params,
+                                                       @Nullable Module module,
+                                                       @NotNull String mainClass,
+                                                       boolean useBundled,
+                                                       boolean tests,
+                                                       boolean addClasspathToRunner) throws CantRunException {
+    final VirtualFile groovyJar = !useBundled && module != null ? findGroovyJar(module) : null;
     if (useBundled) {
       params.getClassPath().add(getBundledGroovyFile().get());
     }
@@ -88,13 +98,14 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
       params.getClassPath().add(groovyJar);
     }
 
-    if (addClasspathToRunner) {
+    if (addClasspathToRunner && module != null) {
       getClassPathFromRootModel(module, tests, params, true, params.getClassPath());
     }
 
     setToolsJar(params);
 
-    String groovyHome = useBundled ? FileUtil.toCanonicalPath(getBundledGroovyFile().get().getParentFile().getParent()) : LibrariesUtil.getGroovyHomePath(module);
+    String groovyHome = useBundled ? FileUtil.toCanonicalPath(getBundledGroovyFile().get().getParentFile().getParent())
+                                   : module == null ? null : LibrariesUtil.getGroovyHomePath(module);
     String groovyHomeDependentName = groovyHome != null ? FileUtil.toSystemDependentName(groovyHome) : null;
 
     if (groovyHomeDependentName != null) {
@@ -123,8 +134,8 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
     }
   }
 
-  private static void addScriptEncodingSettings(final JavaParameters params, final VirtualFile scriptFile, Module module) {
-    Charset charset = EncodingProjectManager.getInstance(module.getProject()).getEncoding(scriptFile, true);
+  private static void addScriptEncodingSettings(final JavaParameters params, final VirtualFile scriptFile, @Nullable Module module) {
+    Charset charset = module == null ? null : EncodingProjectManager.getInstance(module.getProject()).getEncoding(scriptFile, true);
     if (charset == null) {
       charset = EncodingManager.getInstance().getDefaultCharset();
       if (!Comparing.equal(CharsetToolkit.getDefaultSystemCharset(), charset)) {

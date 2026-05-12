@@ -179,7 +179,6 @@ object CommunityRepositoryModules {
       spec.withProjectLibrary("Gradle", LibraryPackMode.STANDALONE_SEPARATE)
       spec.withProjectLibrary("Ant", "ant", LibraryPackMode.STANDALONE_SEPARATE)
     },
-    pluginAuto(listOf("intellij.groovy.live.templates")),
     pluginAuto(listOf("intellij.gradle.java.plugin", "intellij.gradle.java", "intellij.gradle.jps")) {
       it.excludeProjectLibrary("Ant")
       it.excludeProjectLibrary("Gradle")

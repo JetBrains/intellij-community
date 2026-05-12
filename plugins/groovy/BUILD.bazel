@@ -375,6 +375,8 @@ jvm_library(
     "//java/java-frontback-psi-api:frontback-psi_test_lib",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//plugins/groovy-scripting",
+    "//plugins/groovy-scripting:groovy-scripting_test_lib",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
   ],

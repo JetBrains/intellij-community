@@ -1100,6 +1100,7 @@ plugins/grazie/xml
 plugins/grazie/yaml
 plugins/groovy
 plugins/groovy-live-templates
+plugins/groovy-scripting
 plugins/groovy/ant
 plugins/groovy/byteCodeViewer
 plugins/groovy/git
