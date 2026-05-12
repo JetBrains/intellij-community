@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
 import com.intellij.codeInspection.util.InspectionMessage;
@@ -28,6 +28,7 @@ import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
+import org.jetbrains.plugins.javaFX.fxml.refs.JavaFxBindingExpressionParser;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -168,13 +169,31 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
     if (JavaFxPsiUtil.isIncorrectExpressionBinding(value)) {
       return JavaFXBundle.message("incorrect.expression.syntax");
     }
-    final List<String> propertyNames = JavaFxPsiUtil.isExpressionBinding(value)
-                                       ? StringUtil.split(value.substring(2, value.length() - 1), ".", true, false)
-                                       : Collections.singletonList(value.substring(1));
-    if (isIncompletePropertyChain(propertyNames)) {
-      return JavaFXBundle.message("incorrect.expression.syntax");
+    final List<String> propertyNames;
+    if (JavaFxPsiUtil.isExpressionBinding(value)) {
+      JavaFxBindingExpressionParser.ParsedBinding parsed =
+        JavaFxBindingExpressionParser.parse(value.substring(2, value.length() - 1));
+      if (!parsed.syntacticallyValid) {
+        return JavaFXBundle.message("incorrect.expression.syntax");
+      }
+      for (JavaFxBindingExpressionParser.PropertyChain chain : parsed.chains) {
+        if (chain.incomplete) return JavaFXBundle.message("incorrect.expression.syntax");
+      }
+      // For complex expressions (with operators, literals, multiple chains), the result type is unknown to us,
+      // so skip the target-property type-coercion check: the per-segment references handle resolution.
+      if (parsed.hasNonChainTokens || parsed.chains.size() != 1) return null;
+      JavaFxBindingExpressionParser.PropertyChain only = parsed.chains.getFirst();
+      propertyNames = new ArrayList<>(only.segments.size());
+      for (JavaFxBindingExpressionParser.Segment segment : only.segments) {
+        propertyNames.add(segment.name);
+      }
     }
-    if (FxmlConstants.NULL_EXPRESSION.equals(value)) return null;
+    else {
+      propertyNames = Collections.singletonList(value.substring(1));
+      if (isIncompletePropertyChain(propertyNames)) {
+        return JavaFXBundle.message("incorrect.expression.syntax");
+      }
+    }
 
     final XmlTag currentTag = PsiTreeUtil.getParentOfType(xmlAttributeValue, XmlTag.class);
     final PsiType targetPropertyType = JavaFxPsiUtil.getWritablePropertyType(xmlAttributeValue);

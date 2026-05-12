@@ -1,0 +1,10 @@
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.VBox?>
+<?import java.lang.Double?>
+<VBox xmlns:fx="http://javafx.com/fxml">
+    <fx:define>
+        <Double fx:id="myDouble" fx:value="31.5"/>
+    </fx:define>
+    <Label opacity=<error descr="Incorrect expression syntax">"${(myDouble + 1.0}"</error>
+           minHeight=<error descr="Incorrect expression syntax">"${myDouble + }"</error>/>
+</VBox>

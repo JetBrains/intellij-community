@@ -92,6 +92,14 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
     doTest("text");
   }
 
+  public void testExpressionBindingInArithmetic() {
+    doTest("text");
+  }
+
+  public void testExpressionBindingAfterOperator() {
+    doTest("text");
+  }
+
   public void testStylesheets() {
     doTest("mystyle.css", "mystyle.css");
   }
