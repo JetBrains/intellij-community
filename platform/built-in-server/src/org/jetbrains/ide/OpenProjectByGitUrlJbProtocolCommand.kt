@@ -116,9 +116,11 @@ suspend fun openKnownProjectByGitUrl(gitUrl: String): Project? {
 
 /**
  * Walks up from [projectDir] to find a `.git/config` file and returns the URL of the `origin` remote, or `null`.
- * Reads the file directly as INI text — does not invoke `git`.
+ * Reads the file directly as INI text — does not invoke `git`, so it works for paths whose project is not
+ * currently open or trusted (unlike [com.intellij.ide.impl.getProjectOriginUrl]).
  */
-private fun readGitOriginUrl(projectDir: Path): String? {
+@Internal
+fun readGitOriginUrl(projectDir: Path): String? {
   var dir: Path? = projectDir
   while (dir != null) {
     val gitConfig = dir.resolve(".git").resolve("config")
