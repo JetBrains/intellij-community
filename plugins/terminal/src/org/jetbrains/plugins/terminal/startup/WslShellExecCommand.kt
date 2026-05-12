@@ -4,7 +4,7 @@ package org.jetbrains.plugins.terminal.startup
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.execution.wsl.WslPath
-import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelPosixApi
@@ -73,10 +73,10 @@ internal class WslShellExecCommand(
       return installedDistributions[0].msId
     }
     if (installedDistributions.isEmpty()) {
-      logFallbackWarn("Found no installed WSL distributions.")
+      logFallbackWarn("Found no installed WSL distributions")
     }
     else {
-      logFallbackWarn("Found multiple (${installedDistributions.size}) installed WSL distributions.")
+      logFallbackWarn("Found multiple (${installedDistributions.size}) installed WSL distributions")
     }
     return null
   }
@@ -104,7 +104,7 @@ internal class WslShellExecCommand(
             return WslShellExecCommand(shellCommand[2])
           }
         }
-        logFallbackWarn("Unable to parse WSL command $shellCommand to launch via IJEnt.")
+        logFallbackWarn("Unable to parse WSL command $shellCommand to launch via IJEnt")
       }
       return null
     }
@@ -134,7 +134,7 @@ internal class WslShellExecCommand(
     }
 
     private fun logFallbackWarn(reason: String, t: Throwable? = null) {
-      fileLogger().warn("$reason. Fallback to local launch via wsl.exe.", t)
+      logger<WslShellExecCommand>().warn("$reason. Fallback to local launch via wsl.exe.", t)
     }
   }
 }
