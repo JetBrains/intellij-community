@@ -113,12 +113,13 @@ class MinimapService(private val scope: CoroutineScope) : Disposable {
                       ?: return false
 
     val supportLevel = MinimapFileSupportPolicy.forFileType(virtualFile.fileType)
-    // INDEPENDENT bypasses the global mode and IDE-availability checks entirely,
-    // letting plugins like Jupyter control minimap visibility with their own registry key.
+    if (!settings.state.enabled) return false
+
+    // INDEPENDENT bypasses the global mode and IDE-availability checks, but still obeys
+    // user-facing visibility settings and the context-menu disable action.
     if (supportLevel == MinimapSupportLevel.INDEPENDENT) return true
 
     if (!MinimapRegistry.isEnabled()) return false
-    if (!settings.state.enabled) return false
     return supportLevel != MinimapSupportLevel.UNSUPPORTED
   }
 

@@ -18,11 +18,11 @@ enum class MinimapSupportLevel {
   UNSUPPORTED,
 
   /**
-   * Minimap is shown unconditionally for this file type, regardless of the global
-   * `editor.minimap.mode` registry key or IDE availability restrictions.
+   * Minimap can be shown for this file type regardless of the global `editor.minimap.mode`
+   * registry key or IDE availability restrictions.
    *
-   * Use when a plugin has its own feature flag that fully controls minimap visibility
-   * (e.g. `jupyter.editor.minimap.enabled`).
+   * Use when a plugin has its own feature flag that controls whether the minimap is available
+   * (e.g. `jupyter.editor.minimap.enabled`). User-facing minimap visibility settings still apply.
    */
   INDEPENDENT,
 }

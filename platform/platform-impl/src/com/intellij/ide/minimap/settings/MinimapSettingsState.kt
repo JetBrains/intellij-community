@@ -4,7 +4,7 @@ package com.intellij.ide.minimap.settings
 import com.intellij.util.ui.JBUI
 
 /**
- * @param enabled Enables Minimap globally. Product-specific defaults are applied by [MinimapSettings].
+ * @param enabled User-facing global visibility switch. Product-specific defaults are applied by [MinimapSettings].
  * @param width Fixed width (scaled).
  * @param rightAligned If false, Minimap will be on the left side.
  * @param insideScrollbar If true and [rightAligned] is true, the vertical scrollbar stays to the right of the minimap.

@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.event.EditorFactoryListener
 
 internal class MinimapEditorFactoryListener : EditorFactoryListener {
   override fun editorCreated(event: EditorFactoryEvent) {
-    if (MinimapRegistry.isEnabled()) {
+    if (MinimapAvailability.isAvailable()) {
       MinimapService.getInstance().editorOpened(event.editor)
     }
   }
