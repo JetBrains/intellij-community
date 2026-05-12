@@ -88,7 +88,6 @@ com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotification
 f:com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware$Companion
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware
 - f:isNotificationVisibleProperty(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId):com.intellij.openapi.observable.properties.ObservableProperty
-- f:whenNotificationChanged(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function0):V
 com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware$Listener
 - onNotificationChanged(com.intellij.openapi.project.Project):V
 com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectReloadContext
