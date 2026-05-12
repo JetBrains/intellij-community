@@ -71,6 +71,7 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
   public void testInheritFromDollar$1() { doTest(); }
   public void testSealed() { doTest(); }
   public void testCompanyDO() { doTest(); }
+  public void testGenericRecord() { doTest(); }
   public void testCompanyDOInDumbMode() {
     testDumbMode("CompanyDO");
   }

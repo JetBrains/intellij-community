@@ -383,12 +383,13 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
     PsiRecordHeader header = getRecordHeader();
     if (header != null) {
       appendText(getNameIdentifier(), indentLevel, buffer, "");
+      appendText(getTypeParameterList(), indentLevel, buffer, "");
       appendText(header, indentLevel, buffer, " ");
     }
     else {
       appendText(getNameIdentifier(), indentLevel, buffer, " ");
+      appendText(getTypeParameterList(), indentLevel, buffer, " ");
     }
-    appendText(getTypeParameterList(), indentLevel, buffer, " ");
     appendText(getExtendsList(), indentLevel, buffer, " ");
     appendText(getImplementsList(), indentLevel, buffer, " ");
     appendText(getPermitsList(), indentLevel, buffer, " ");
