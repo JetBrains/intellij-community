@@ -26,7 +26,7 @@ abstract class PresentableGoToChangePopupAction<T> : BaseGoToChangePopupAction()
 
   protected abstract fun onSelected(change: T)
 
-  override fun createPopup(e: AnActionEvent): JBPopup {
+  final override fun createPopup(e: AnActionEvent): JBPopup {
     val project = e.project ?: ProjectManager.getInstance().getDefaultProject()
     return GoToChangePopupUtil.createPopup(project, getChanges(), PopupController())
   }

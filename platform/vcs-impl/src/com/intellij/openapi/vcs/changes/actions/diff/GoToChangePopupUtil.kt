@@ -26,11 +26,13 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.ui.tree.TreeUtil
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreeSelectionModel
 
-internal interface GoToChangePopupController<T> {
+@ApiStatus.Internal
+interface GoToChangePopupController<T> {
   fun getPresentation(change: T): PresentableChange?
 
   fun createToolbarActions(): List<AnAction> = listOf()
@@ -39,8 +41,9 @@ internal interface GoToChangePopupController<T> {
   fun onSelected(change: T)
 }
 
-internal object GoToChangePopupUtil {
-  internal fun <T> createPopup(
+@ApiStatus.Internal
+object GoToChangePopupUtil {
+  fun <T> createPopup(
     project: Project,
     changes: ListSelection<out T>,
     controller: GoToChangePopupController<T>,
