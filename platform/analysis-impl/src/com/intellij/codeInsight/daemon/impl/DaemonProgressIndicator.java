@@ -99,8 +99,8 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
       wasCanceled = tryCancel(cause, reason);
     }
     if (wasCanceled) { // call outside synchronized to avoid deadlock
-      if (LOG.isTraceEnabled()) {
-        LOG.trace("doCancel(" + this +
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("doCancel(" + this +
                   (reason.isEmpty() ? "" : ", reason: '" + reason + "'") +
                   (cause == null ? "" : ", cause: " + ExceptionUtil.getThrowableText(cause)) + ")");
       }
