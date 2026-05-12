@@ -34,6 +34,10 @@ public abstract class JavaIntroduceFieldService {
     return new AvailableSettings(List.of());
   }
 
+  public abstract @NotNull JavaIntroduceFieldService.AvailableSettings getAvailableSettings(@NotNull ToFieldContext.ExpressionContext context);
+
+  public abstract @NotNull JavaIntroduceFieldService.AvailableSettings getAvailableSettings(@NotNull ToFieldContext.VariableContext context);
+
   /**
    * Retrieves the context for converting a specific code expression into a field within a Java class.
    *

@@ -24,9 +24,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiParserFacade;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiStatement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypes;
@@ -80,8 +82,8 @@ final class FieldExtractor {
     if (range.getEndOffset() == range.getStartOffset()) {
       PsiElement psiElementAfter = psiFile.findElementAt(offset);
       PsiElement psiElementBefore = psiFile.findElementAt(offset - 1);
-      PsiElement expressionAfter = PsiTreeUtil.getParentOfType(psiElementAfter, PsiExpression.class);
-      PsiElement expressionBefore = PsiTreeUtil.getParentOfType(psiElementBefore, PsiExpression.class);
+      PsiElement expressionAfter = getExpression(psiElementAfter);
+      PsiElement expressionBefore = getExpression(psiElementBefore);
       psiElement = psiElementBefore;
       if (psiElementAfter != null && expressionAfter != null) {
         if (expressionBefore == null) {
@@ -104,8 +106,9 @@ final class FieldExtractor {
       if (psiElement != null && psiElement.getTextRange() != null && psiElement.getTextRange().equals(range)) {
         targetElement = ElementToWorkOn.tryToCreate(psiElement);
       }
-      if (targetElement == null ) {
-        targetElement = ElementToWorkOn.tryToCreate(IntroduceVariableUtil.getSelectedExpression(psiFile.getProject(), psiFile, range.getStartOffset(), range.getEndOffset()));
+      if (targetElement == null) {
+        targetElement = ElementToWorkOn.tryToCreate(
+          IntroduceVariableUtil.getSelectedExpression(psiFile.getProject(), psiFile, range.getStartOffset(), range.getEndOffset()));
       }
     }
     else {
@@ -133,6 +136,17 @@ final class FieldExtractor {
       return getContext(psiFile, targetElement.getLocalVariable());
     }
     return new ToFieldContext.Error(RefactoringBundle.message("refactoring.cannot.be.performed"));
+  }
+
+  private static @Nullable PsiElement getExpression(PsiElement psiElementAfter) {
+    PsiElement expressionAfter = PsiTreeUtil.getParentOfType(psiElementAfter, PsiExpression.class);
+    if (expressionAfter instanceof PsiReferenceExpression referenceExpression &&
+        referenceExpression.getParent() instanceof PsiMethodCallExpression methodCallExpression &&
+        methodCallExpression.getMethodExpression() == referenceExpression
+    ) {
+      expressionAfter = methodCallExpression;
+    }
+    return expressionAfter;
   }
 
   @Nullable PsiField extractField(@NotNull PsiJavaFile file,
@@ -179,7 +193,8 @@ final class FieldExtractor {
         JavaCodeStyleManager.getInstance(project).variableNameToPropertyName(localVariable.getName(), VariableKind.LOCAL_VARIABLE);
 
       PsiExpression expr = local.getInitializer();
-      NameSuggestionsGenerator generator = IntroduceConstantDialog.createNameSuggestionGenerator(propertyName, expr, JavaCodeStyleManager.getInstance(project), null,
+      NameSuggestionsGenerator generator =
+        IntroduceConstantDialog.createNameSuggestionGenerator(propertyName, expr, JavaCodeStyleManager.getInstance(project), null,
                                                               destinationClass);
       settings = new BaseExpressionToFieldHandler.Settings(generator.getSuggestedNameInfo(defaultType).names[0], expr, occurrences,
                                                            replaceAllOccurrences, true, true,
@@ -335,23 +350,38 @@ final class FieldExtractor {
     return getContext(myHandler, selectedVariable);
   }
 
+  @NotNull AvailableSettings getAvailableSettings(@NotNull ToFieldContext.VariableContext context) {
+    PsiExpression expr = context.localVariable().getInitializer();
+    if (expr == null) return new AvailableSettings(List.of());
+    List<PsiClass> classes = context.variableToFieldCandidatesContext().classes();
+    if (classes.isEmpty()) return new AvailableSettings(List.of());
+    PsiClass parentClass = classes.getFirst();
+    return getAvailableSettings(expr, parentClass);
+  }
+
   @NotNull AvailableSettings getAvailableSettings(@NotNull ToFieldContext.ExpressionContext context) {
+    PsiExpression expr = context.selectedExpr();
+    PsiClass parentClass = context.parentClass();
+    return getAvailableSettings(expr, parentClass);
+  }
+
+  private @NotNull AvailableSettings getAvailableSettings(@NotNull PsiExpression expr, @NotNull PsiClass parentClass) {
     ArrayList<InitializationPlace> places =
       new ArrayList<>(List.of(InitializationPlace.values()));
-    final OccurrenceManager occurrenceManager = myHandler.createOccurrenceManager(context.selectedExpr(), context.parentClass());
+    final OccurrenceManager occurrenceManager = myHandler.createOccurrenceManager(expr, parentClass);
     final PsiExpression[] occurrences = occurrenceManager.getOccurrences();
     final PsiElement anchorStatementIfAll = occurrenceManager.getAnchorStatementForAll();
-    PsiElement tempAnchorElement = CommonJavaRefactoringUtil.getParentExpressionAnchorElement(context.selectedExpr());
-    SettingParameters parameters = getParameters(context.parentClass(), context.selectedExpr(), occurrences,
-                                                 tempAnchorElement == null ? context.selectedExpr() : tempAnchorElement,
+    PsiElement tempAnchorElement = CommonJavaRefactoringUtil.getParentExpressionAnchorElement(expr);
+    SettingParameters parameters = getParameters(parentClass, expr, occurrences,
+                                                 tempAnchorElement == null ? expr : tempAnchorElement,
                                                  anchorStatementIfAll,
                                                  //todo
                                                  myHandler instanceof IntroduceConstantHandler);
 
-    Project project = context.parentClass().getProject();
-    boolean isTestClass = !DumbService.isDumb(project) && TestFrameworks.getInstance().isTestClass(context.parentClass());
+    Project project = parentClass.getProject();
+    boolean isTestClass = !DumbService.isDumb(project) && TestFrameworks.getInstance().isTestClass(parentClass);
     IntroduceFieldCentralPanel.InitializationParameters initializationPlaceParameters =
-      getInitializationPlaceParameters(context.selectedExpr(), isTestClass);
+      getInitializationPlaceParameters(expr, isTestClass);
 
     if (initializationPlaceParameters != null) {
       if (initializationPlaceParameters.locals()) {
@@ -372,7 +402,7 @@ final class FieldExtractor {
     if (!parameters.allowInitInMethod()) {
       places.remove(InitializationPlace.IN_CURRENT_METHOD);
     }
-    boolean inOnlyConstructor = parameters.currentMethodConstructor() && context.parentClass().getConstructors().length == 1;
+    boolean inOnlyConstructor = parameters.currentMethodConstructor() && parentClass.getConstructors().length == 1;
     if (parameters.declareStatic() || inOnlyConstructor) {
       places.remove(InitializationPlace.IN_CONSTRUCTOR);
     }
@@ -416,9 +446,9 @@ final class FieldExtractor {
     if (myHandler instanceof IntroduceConstantHandler) {
       JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(expressionContextContext.selectedExpr().getProject());
       NameSuggestionsGenerator generator =
-        IntroduceConstantDialog.createNameSuggestionGenerator(null, expressionContextContext.selectedExpr(), codeStyleManager, null, expressionContextContext.parentClass());
-      suggestedName =  generator.getSuggestedNameInfo(expressionContextContext.tempType());
-
+        IntroduceConstantDialog.createNameSuggestionGenerator(null, expressionContextContext.selectedExpr(), codeStyleManager, null,
+                                                              expressionContextContext.parentClass());
+      suggestedName = generator.getSuggestedNameInfo(expressionContextContext.tempType());
     }
 
     String name = suggestedName.names.length > 0 ? suggestedName.names[0] : "myField";
@@ -437,7 +467,8 @@ final class FieldExtractor {
       new BaseExpressionToFieldHandler.Settings(name, expressionContextContext.selectedExpr(), occurrences, false,
                                                 parameters.declareStatic(), declareFinal, place, visibility, null,
                                                 //todo workaround
-                                                expressionContextContext.tempType(), myHandler instanceof IntroduceConstantHandler, expressionContextContext.parentClass(),
+                                                expressionContextContext.tempType(), myHandler instanceof IntroduceConstantHandler,
+                                                expressionContextContext.parentClass(),
                                                 preselectNonNls, false);
 
     if (expressionContextContext.selectedExpr().getUserData(ElementToWorkOn.REPLACE_NON_PHYSICAL) == Boolean.TRUE) {

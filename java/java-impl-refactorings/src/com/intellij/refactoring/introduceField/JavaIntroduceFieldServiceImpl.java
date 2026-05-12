@@ -21,7 +21,17 @@ public final class JavaIntroduceFieldServiceImpl extends JavaIntroduceFieldServi
     if (!(ctx instanceof ToFieldContext.ExpressionContext success)) {
       return new AvailableSettings(List.of());
     }
-    return myFieldExtractor.getAvailableSettings(success);
+    return getAvailableSettings(success);
+  }
+
+  @Override
+  public @NotNull JavaIntroduceFieldService.AvailableSettings getAvailableSettings(@NotNull ToFieldContext.ExpressionContext context) {
+    return myFieldExtractor.getAvailableSettings(context);
+  }
+
+  @Override
+  public @NotNull JavaIntroduceFieldService.AvailableSettings getAvailableSettings(@NotNull ToFieldContext.VariableContext context) {
+    return myFieldExtractor.getAvailableSettings(context);
   }
 
   @Override

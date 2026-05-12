@@ -21,6 +21,7 @@ import com.intellij.psi.PsiExpressionStatement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiNewExpression;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceExpression;
@@ -56,6 +57,11 @@ public final class ElementToWorkOn {
   public static @Nullable ElementToWorkOn tryToCreate(@Nullable PsiElement element) {
     if (element == null) return null;
     if (element instanceof PsiExpression psiExpression) {
+      if (psiExpression instanceof PsiReferenceExpression referenceExpression &&
+          referenceExpression.getParent() instanceof PsiMethodCallExpression methodCallExpression &&
+          methodCallExpression.getMethodExpression() == referenceExpression) {
+        psiExpression = methodCallExpression;
+      }
       return new ElementToWorkOn(null, psiExpression);
     }
     if (element instanceof PsiIdentifier psiIdentifier && psiIdentifier.getParent() instanceof PsiLocalVariable localVariable) {
