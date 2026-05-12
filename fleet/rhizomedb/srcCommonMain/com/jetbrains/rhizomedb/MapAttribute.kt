@@ -1,14 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.rhizomedb
 
-import fleet.util.logging.logger
-
 data class MapAttribute(val attr: Attribute<*>,
                         val f: (Any) -> Any) : Instruction {
-  companion object {
-    val log = logger<MapAttribute>()
-  }
-
   override val seed: Long = 0L
 
   override fun DbContext<Q>.expand(): InstructionExpansion =
@@ -17,10 +11,8 @@ data class MapAttribute(val attr: Attribute<*>,
         val deser = kotlin.runCatching {
           f(datom.value)
         }.getOrElse { x ->
-          log.error(x) {
-            "error mapping attribute ${displayAttribute(attr)} value ${datom.value}"
-          }
-          DeserializationProblem.Exception(throwable = x, datom = datom)
+          DeserializationProblem.Exception(throwable = Throwable("error mapping attribute ${displayAttribute(attr)} value ${datom.value}",
+                                                                 x), datom = datom)
         }
         listOf(Op.Retract(datom.eid, datom.attr, datom.value),
                Op.AssertWithTX(datom.eid, datom.attr, deser, datom.tx))
