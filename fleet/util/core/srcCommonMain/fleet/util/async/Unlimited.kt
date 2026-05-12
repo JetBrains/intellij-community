@@ -4,17 +4,14 @@ package fleet.util.async
 import fleet.multiplatform.shims.multiplatformIO
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 /*
-Dispatcher intended for use in coroutines that blocks (not suspends) for indefinite amount of time
-Dispatchers.IO is limited to 64 threads. See documentation for Dispatchers.IO for details
+Dispatcher intended for use in coroutines that block (not suspend) for indefinite amount of time.
+Dispatchers.IO is limited to 64 threads, thread starvation on IO pool is a real thing.
 
-especially
-
+ See documentation for Dispatchers.IO for details, especially this part
  `Dispatchers.IO` has a unique property of elasticity: its views
  obtained with [CoroutineDispatcher.limitedParallelism] are
  not restricted by the `Dispatchers.IO` parallelism.
  */
-@OptIn(ExperimentalCoroutinesApi::class)
 val UnlimitedDispatcher: CoroutineDispatcher = Dispatchers.multiplatformIO.limitedParallelism(8192)
