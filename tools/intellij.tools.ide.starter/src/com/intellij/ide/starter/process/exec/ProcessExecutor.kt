@@ -236,6 +236,7 @@ class ProcessExecutor(
         throw ExecTimeoutException(args.joinToString(" "), timeout)
       }
       else {
+        if (!silent) logOutput("   ... process `$presentableName` (pid=$processId) exited on its own with code ${process.exitValue()} before the ${timeout.inWholeSeconds}s timeout. ")
         processFinished = true
       }
     }
