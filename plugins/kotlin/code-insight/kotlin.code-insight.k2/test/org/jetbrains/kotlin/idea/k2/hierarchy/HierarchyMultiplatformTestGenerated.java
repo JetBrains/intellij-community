@@ -95,9 +95,24 @@ public abstract class HierarchyMultiplatformTestGenerated extends AbstractHierar
             runTest("../../idea/tests/testData/hierarchy/kmp/method/fromActual.kt");
         }
 
+        @TestMetadata("fromActualTypeParameters.kt")
+        public void testFromActualTypeParameters() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/kmp/method/fromActualTypeParameters.kt");
+        }
+
         @TestMetadata("fromExpect.kt")
         public void testFromExpect() throws Exception {
             runTest("../../idea/tests/testData/hierarchy/kmp/method/fromExpect.kt");
+        }
+
+        @TestMetadata("fromExpectTypeParameters.kt")
+        public void testFromExpectTypeParameters() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/kmp/method/fromExpectTypeParameters.kt");
+        }
+
+        @TestMetadata("fromNormalTypeParameters.kt")
+        public void testFromNormalTypeParameters() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/kmp/method/fromNormalTypeParameters.kt");
         }
     }
 }

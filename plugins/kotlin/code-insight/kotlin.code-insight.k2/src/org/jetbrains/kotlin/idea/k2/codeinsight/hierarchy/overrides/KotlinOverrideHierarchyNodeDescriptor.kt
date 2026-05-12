@@ -21,10 +21,10 @@ import com.intellij.ui.RowIcon
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.asSignature
 import org.jetbrains.kotlin.analysis.api.components.callableSymbol
 import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.components.createInheritanceTypeSubstitutor
+import org.jetbrains.kotlin.analysis.api.components.declaredMemberScope
 import org.jetbrains.kotlin.analysis.api.components.getExpectsForActual
 import org.jetbrains.kotlin.analysis.api.components.namedClassSymbol
 import org.jetbrains.kotlin.analysis.api.components.substitute
@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.name
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
@@ -86,21 +87,26 @@ class KotlinOverrideHierarchyNodeDescriptor(
     private fun getCurrentSymbol(): KaCallableSymbol? {
         val classSymbol = getCurrentClassSymbol() ?: return null
         val baseSymbol = getBaseSymbol() ?: return null
+        val callableName = baseSymbol.name ?: return null
         val baseClassSymbol = baseSymbol.containingDeclaration as? KaClassSymbol ?: return null
-        val callableSignature = if (classSymbol.isActual) {
-            baseSymbol.asSignature()
-        } else {
-            val actualSuper = if (!classSymbol.isExpect) {
-                classSymbol.superTypes
-                    .mapNotNull { it.symbol as? KaClassSymbol }
+
+        val actualSuperSymbol =
+            if (baseClassSymbol.isExpect) {
+                classSymbol.superTypes.mapNotNull { it.symbol as? KaClassSymbol }
                     .firstOrNull { it.isActual && it.getExpectsForActual().contains(baseClassSymbol) }
+                    ?: classSymbol.takeIf { it.isActual }
             } else {
                 null
             }
-            val substitution = createInheritanceTypeSubstitutor(classSymbol, actualSuper ?: baseClassSymbol) ?: return null
-            baseSymbol.substitute(substitution)
-        }
 
+        val substitution = createInheritanceTypeSubstitutor(classSymbol, actualSuperSymbol ?: baseClassSymbol) ?: return null
+
+        val actualBaseSymbol = actualSuperSymbol
+            ?.declaredMemberScope
+            ?.callables(callableName)
+            ?.firstOrNull { it.isActual && it.getExpectsForActual().contains(baseSymbol) }
+
+        val callableSignature = (actualBaseSymbol ?: baseSymbol).substitute(substitution)
         return classSymbol.findCallableMemberBySignature(callableSignature)
     }
 
