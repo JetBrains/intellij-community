@@ -14,7 +14,7 @@ import org.jetbrains.annotations.ApiStatus
  */
 @Suppress("DEPRECATION")
 @ApiStatus.NonExtendable
-interface GraphProperty<T> : ObservableClearableProperty<T> {
+interface GraphProperty<T> : ObservableMutableProperty<T> {
 
   /**
    * @see PropertyGraph.dependsOn
@@ -42,21 +42,4 @@ interface GraphProperty<T> : ObservableClearableProperty<T> {
     afterPropagation(listener)
   }
 
-  @Deprecated("Use set instead")
-  @ApiStatus.ScheduledForRemoval
-  override fun reset() {}
-
-  @Deprecated("Use afterChange instead")
-  @ApiStatus.ScheduledForRemoval
-  override fun afterReset(listener: () -> Unit) {}
-
-  @Deprecated("Use afterChange instead")
-  @ApiStatus.ScheduledForRemoval
-  override fun afterReset(listener: () -> Unit, parentDisposable: Disposable) {}
-
-  @Deprecated("Please recompile code", level = DeprecationLevel.HIDDEN)
-  @ApiStatus.ScheduledForRemoval
-  fun dependsOn(parent: ObservableClearableProperty<*>, update: () -> T) {
-    dependsOn(parent, update)
-  }
 }

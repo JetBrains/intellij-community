@@ -9,8 +9,7 @@ import java.util.concurrent.atomic.AtomicReference
  * @param initial will be called only when methods [get] and [updateAndGet] is called.
  */
 @ApiStatus.NonExtendable
-@Suppress("DEPRECATION")
-open class AtomicLazyProperty<T>(private val initial: () -> T) : AbstractObservableClearableProperty<T>(), AtomicMutableProperty<T> {
+open class AtomicLazyProperty<T>(private val initial: () -> T) : AbstractObservableProperty<T>(), AtomicMutableProperty<T> {
 
   private val value = AtomicReference(UNINITIALIZED_VALUE)
 
@@ -33,13 +32,6 @@ open class AtomicLazyProperty<T>(private val initial: () -> T) : AbstractObserva
   private fun update(update: (T) -> T): T {
     val resolve = { it: Any? -> if (it === UNINITIALIZED_VALUE) initial() else it as T }
     return value.updateAndGet { update(resolve(it)) } as T
-  }
-
-  @Deprecated("Use set instead")
-  @ApiStatus.ScheduledForRemoval
-  override fun reset() {
-    value.set(UNINITIALIZED_VALUE)
-    fireResetEvent()
   }
 
   companion object {

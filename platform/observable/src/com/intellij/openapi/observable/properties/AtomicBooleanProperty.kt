@@ -55,5 +55,4 @@ class AtomicBooleanProperty(
   override fun afterSet(listener: () -> Unit): Unit = afterSet(null, listener)
   override fun afterSet(listener: () -> Unit, parentDisposable: Disposable): Unit = afterSet(parentDisposable, listener)
   override fun afterReset(listener: () -> Unit): Unit = afterReset(null, listener)
-  override fun afterReset(listener: () -> Unit, parentDisposable: Disposable): Unit = afterReset(parentDisposable, listener)
 }

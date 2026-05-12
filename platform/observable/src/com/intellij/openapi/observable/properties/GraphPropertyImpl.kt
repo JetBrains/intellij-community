@@ -29,18 +29,4 @@ class GraphPropertyImpl<T>(private val propertyGraph: PropertyGraph, initial: ()
     propertyGraph.afterPropagation(parentDisposable, listener)
   }
 
-  @Deprecated("Use set instead")
-  @ApiStatus.ScheduledForRemoval
-  override fun reset(): Unit =
-    super<AtomicLazyProperty>.reset()
-
-  @Deprecated("Use afterChange instead")
-  @ApiStatus.ScheduledForRemoval
-  override fun afterReset(listener: () -> Unit): Unit =
-    super<AtomicLazyProperty>.afterReset(listener)
-
-  @Deprecated("Use afterChange instead")
-  @ApiStatus.ScheduledForRemoval
-  override fun afterReset(listener: () -> Unit, parentDisposable: Disposable): Unit =
-    super<AtomicLazyProperty>.afterReset(listener, parentDisposable)
 }

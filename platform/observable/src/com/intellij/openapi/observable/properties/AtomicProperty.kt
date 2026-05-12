@@ -1,14 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.observable.properties
 
-import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Simple atomic property implementation.
  */
-@Suppress("DEPRECATION")
-class AtomicProperty<T>(private val initialValue: T) : AbstractObservableClearableProperty<T>(), AtomicMutableProperty<T> {
+class AtomicProperty<T>(initialValue: T) : AbstractObservableProperty<T>(), AtomicMutableProperty<T> {
   private val reference = AtomicReference(initialValue)
 
   override fun get(): T {
@@ -26,10 +24,4 @@ class AtomicProperty<T>(private val initialValue: T) : AbstractObservableClearab
     return newValue
   }
 
-  @Deprecated("Use set instead")
-  @ApiStatus.ScheduledForRemoval
-  override fun reset() {
-    reference.set(initialValue)
-    fireResetEvent()
-  }
 }

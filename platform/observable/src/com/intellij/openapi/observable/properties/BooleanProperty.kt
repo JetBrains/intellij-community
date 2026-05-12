@@ -13,17 +13,12 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Deprecated("Use instead MutableBooleanProperty")
 @ApiStatus.ScheduledForRemoval
-interface BooleanProperty : ObservableClearableProperty<Boolean> {
+interface BooleanProperty : ObservableMutableProperty<Boolean> {
 
   /**
    * Sets property value to true.
    */
   fun set()
-
-  /**
-   * Resets property value to false.
-   */
-  override fun reset()
 
   /**
    * Subscribes on set event.
@@ -37,15 +32,4 @@ interface BooleanProperty : ObservableClearableProperty<Boolean> {
    */
   fun afterSet(listener: () -> Unit, parentDisposable: Disposable)
 
-  /**
-   * Subscribes on reset event.
-   */
-  override fun afterReset(listener: () -> Unit)
-
-  /**
-   * Subscribes on reset event.
-   * @param listener is called only when value is changed from true to false.
-   * @param parentDisposable is used to early subscription from property reset events.
-   */
-  override fun afterReset(listener: () -> Unit, parentDisposable: Disposable)
 }
