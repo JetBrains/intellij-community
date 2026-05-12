@@ -32,7 +32,7 @@ import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreeSelectionModel
 
 @ApiStatus.Internal
-interface GoToChangePopupController<T> {
+interface GoToChangePopupController<T : Any> {
   fun getPresentation(change: T): PresentableChange?
 
   fun createToolbarActions(): List<AnAction> = listOf()
@@ -43,7 +43,7 @@ interface GoToChangePopupController<T> {
 
 @ApiStatus.Internal
 object GoToChangePopupUtil {
-  fun <T> createPopup(
+  fun <T : Any> createPopup(
     project: Project,
     changes: ListSelection<out T>,
     controller: GoToChangePopupController<T>,
@@ -82,7 +82,7 @@ object GoToChangePopupUtil {
   //
   // Helpers
   //
-  private class MyAsyncChangesTreeModel<T>(
+  private class MyAsyncChangesTreeModel<T : Any>(
     private val project: Project,
     private val changes: List<T>,
     private val controller: GoToChangePopupController<T>,
@@ -108,7 +108,7 @@ object GoToChangePopupUtil {
     }
   }
 
-  private class MyChangesBrowser<T>(
+  private class MyChangesBrowser<T : Any>(
     project: Project,
     private val changes: ListSelection<out T>,
     private val controller: GoToChangePopupController<T>,

@@ -13,10 +13,12 @@ import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.ChangeWrapper
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.Wrapper
+import com.intellij.openapi.vcs.changes.actions.diff.GoToChangePopupController
 import com.intellij.openapi.vcs.changes.actions.diff.PresentableGoToChangePopupAction
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.ChangesTreeDiffPreviewHandler
+import com.intellij.openapi.vcs.changes.ui.PresentableChange
 import com.intellij.openapi.vcs.changes.ui.TreeHandlerChangesTreeTracker
 import com.intellij.openapi.vcs.changes.ui.TreeHandlerDiffRequestProcessor
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
@@ -47,7 +49,7 @@ class GitStageDiffRequestProcessor(val stageTree: GitStageTree,
   override fun forceKeepCurrentFileWhileFocused(): Boolean = true
 
   override fun createGoToChangeAction(): AnAction {
-    return MyGoToChangePopupAction()
+    return PresentableGoToChangePopupAction.create({ getChanges() }, MyGoToChangePopupController())
   }
 
   override fun loadRequestFast(provider: DiffRequestProducer): DiffRequest? {
@@ -60,16 +62,18 @@ class GitStageDiffRequestProcessor(val stageTree: GitStageTree,
     return getUserData(HEAD_INFO)?.isCurrent(project) ?: true
   }
 
-  private inner class MyGoToChangePopupAction : PresentableGoToChangePopupAction.Default<Wrapper>() {
-    override fun getChanges(): ListSelection<Wrapper> {
-      return stageTree.listSelection(false).map {
-        when (it) {
-          is GitFileStatusNode -> GitFileStatusNodeWrapper(it)
-          is Change -> ChangeWrapper(it)
-          else -> null
-        }
+  private fun getChanges(): ListSelection<Wrapper> {
+    return stageTree.listSelection(false).map {
+      when (it) {
+        is GitFileStatusNode -> GitFileStatusNodeWrapper(it)
+        is Change -> ChangeWrapper(it)
+        else -> null
       }
     }
+  }
+
+  private inner class MyGoToChangePopupController : GoToChangePopupController<Wrapper> {
+    override fun getPresentation(change: Wrapper): PresentableChange = change
 
     override fun onSelected(change: Wrapper) {
       setCurrentChange(change)

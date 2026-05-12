@@ -28,22 +28,19 @@ internal class CombinedDiffManagerImpl(private val project: Project) : CombinedD
     val model = CombinedDiffModel(project)
     model.context.putUserData(DiffUserDataKeys.PLACE, diffPlace)
     model.context.putUserData(DiffUserDataKeys.CONTEXT_ACTIONS, contextActions)
-    val goToChangePopupAction = MyGoToChangePopupAction(model, goToChangeToolbarActions.orEmpty())
+    val controller = MyGoToChangePopupController(model, goToChangeToolbarActions.orEmpty())
+    val goToChangePopupAction = PresentableGoToChangePopupAction.create({ controller.getChanges() }, controller)
     return CombinedDiffComponentProcessorImpl(model, goToChangePopupAction)
   }
 }
 
-internal class MyGoToChangePopupAction(
-  val model: CombinedDiffModel,
+private class MyGoToChangePopupController(
+  private val model: CombinedDiffModel,
   private val toolbarActions: List<AnAction>,
-) : PresentableGoToChangePopupAction.Default<PresentableChange>() {
+) : GoToChangePopupController<PresentableChange> {
   private val viewer get() = model.context.getUserData(COMBINED_DIFF_VIEWER_KEY)
 
-  override fun createToolbarActions(): List<AnAction> {
-    return toolbarActions
-  }
-
-  override fun getChanges(): ListSelection<out PresentableChange> {
+  fun getChanges(): ListSelection<out PresentableChange> {
     val changes = model.requests.map { it.producer }.filterIsInstance<PresentableChange>()
 
     val selected = viewer?.getCurrentBlockId() as? CombinedPathBlockId
@@ -57,6 +54,9 @@ internal class MyGoToChangePopupAction(
     }
     return ListSelection.createAt(changes, selectedIndex)
   }
+
+  override fun getPresentation(change: PresentableChange): PresentableChange = change
+  override fun createToolbarActions(): List<AnAction> = toolbarActions
 
   override fun onSelected(change: PresentableChange) {
     viewer?.selectDiffBlock(CombinedPathBlockId(change.filePath, change.fileStatus, change.tag), true,

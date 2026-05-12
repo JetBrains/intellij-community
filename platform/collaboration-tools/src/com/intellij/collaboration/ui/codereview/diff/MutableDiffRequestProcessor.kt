@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.EdtImmediate
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.changes.actions.diff.GoToChangePopupController
 import com.intellij.openapi.vcs.changes.actions.diff.PresentableGoToChangePopupAction
 import com.intellij.openapi.vcs.changes.ui.PresentableChange
 import com.intellij.openapi.wm.IdeFocusManager
@@ -89,10 +90,18 @@ internal class MutableDiffRequestProcessor(project: Project) : DiffRequestProces
     }
   }
 
-  private fun <C : Any> Navigator<C>.getPopupAction() = object : PresentableGoToChangePopupAction<C>() {
-    override fun getChanges(): ListSelection<out C> = getCurrentList().let { ListSelection.createAt(it.list, it.selectedIndex) }
-    override fun onSelected(change: C) = select(change)
-    override fun getPresentation(change: C): PresentableChange? = getChangePresentation(change)
+  private fun <C : Any> Navigator<C>.getPopupAction() =
+    PresentableGoToChangePopupAction.create({ getCurrentList() }, getPopupController())
+
+  private fun <C : Any> Navigator<C>.getPopupController() =
+    object : GoToChangePopupController<C> {
+      override fun getPresentation(change: C): PresentableChange? {
+        return getChangePresentation(change)
+      }
+
+      override fun onSelected(change: C) {
+        select(change)
+      }
   }
 }
 

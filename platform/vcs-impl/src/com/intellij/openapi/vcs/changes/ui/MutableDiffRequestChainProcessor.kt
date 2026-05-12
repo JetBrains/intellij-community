@@ -9,6 +9,7 @@ import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.changes.actions.diff.GoToChangePopupController
 import com.intellij.openapi.vcs.changes.actions.diff.PresentableGoToChangePopupAction
 import com.intellij.util.EventDispatcher
 import org.jetbrains.annotations.ApiStatus
@@ -90,7 +91,8 @@ class MutableDiffRequestChainProcessor(project: Project, chain: DiffRequestChain
     return chain.requests.size > 1
   }
 
-  override fun createGoToChangeAction(): AnAction = MyGoToChangePopupAction()
+  override fun createGoToChangeAction(): AnAction =
+    PresentableGoToChangePopupAction.create({ getChanges() }, MyGoToChangePopupController())
 
   private fun selectCurrentChange() {
     val producer = currentRequestProvider as? ChangeDiffRequestChain.Producer ?: return
@@ -113,12 +115,14 @@ class MutableDiffRequestChainProcessor(project: Project, chain: DiffRequestChain
     currentIndex = newChain?.index ?: 0
   }
 
-  private inner class MyGoToChangePopupAction : PresentableGoToChangePopupAction.Default<ChangeDiffRequestChain.Producer>() {
-    override fun getChanges(): ListSelection<out ChangeDiffRequestChain.Producer> {
-      val requests = chain?.requests ?: return ListSelection.empty()
-      val list = ListSelection.createAt(requests, currentIndex)
-      return list.map { it as? ChangeDiffRequestChain.Producer }
-    }
+  private fun getChanges(): ListSelection<out ChangeDiffRequestChain.Producer> {
+    val requests = chain?.requests ?: return ListSelection.empty()
+    val list = ListSelection.createAt(requests, currentIndex)
+    return list.map { it as? ChangeDiffRequestChain.Producer }
+  }
+
+  private inner class MyGoToChangePopupController : GoToChangePopupController<ChangeDiffRequestChain.Producer> {
+    override fun getPresentation(change: ChangeDiffRequestChain.Producer): PresentableChange = change
 
     override fun onSelected(change: ChangeDiffRequestChain.Producer) {
       val newIndex = chain?.requests?.indexOf(change) ?: return

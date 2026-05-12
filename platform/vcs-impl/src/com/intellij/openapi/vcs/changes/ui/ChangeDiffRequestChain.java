@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.vcs.changes.actions.diff.GoToChangePopupController;
 import com.intellij.openapi.vcs.changes.actions.diff.PresentableGoToChangePopupAction;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
@@ -55,26 +56,27 @@ public class ChangeDiffRequestChain extends UserDataHolderBase implements DiffRe
   private static @NotNull AnAction createGoToChangeAction(@NotNull List<? extends Producer> producers,
                                                           @NotNull Consumer<? super Integer> onSelected,
                                                           int defaultSelection) {
-    return new PresentableGoToChangePopupAction<ProducerWrapper>() {
+    GoToChangePopupController<ProducerWrapper> controller = new GoToChangePopupController<>() {
       @Override
-      protected @NotNull ListSelection<? extends ProducerWrapper> getChanges() {
-        List<ProducerWrapper> wrappers = new ArrayList<>();
-        for (int i = 0; i < producers.size(); i++) {
-          wrappers.add(new ProducerWrapper(producers.get(i), i));
-        }
-        return ListSelection.createAt(wrappers, defaultSelection);
-      }
-
-      @Override
-      protected PresentableChange getPresentation(@NotNull ProducerWrapper change) {
+      public PresentableChange getPresentation(ProducerWrapper change) {
         return change.producer;
       }
 
       @Override
-      protected void onSelected(@NotNull ProducerWrapper change) {
+      public void onSelected(ProducerWrapper change) {
         onSelected.consume(change.index);
       }
     };
+    return PresentableGoToChangePopupAction.create(() -> getChanges(producers, defaultSelection), controller);
+  }
+
+  private static @NotNull ListSelection<? extends ProducerWrapper> getChanges(@NotNull List<? extends Producer> producers,
+                                                                              int defaultSelection) {
+    List<ProducerWrapper> wrappers = new ArrayList<>();
+    for (int i = 0; i < producers.size(); i++) {
+      wrappers.add(new ProducerWrapper(producers.get(i), i));
+    }
+    return ListSelection.createAt(wrappers, defaultSelection);
   }
 
   private static class ProducerWrapper {

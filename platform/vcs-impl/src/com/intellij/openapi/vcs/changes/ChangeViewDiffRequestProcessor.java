@@ -22,6 +22,7 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
+import com.intellij.openapi.vcs.changes.actions.diff.GoToChangePopupController;
 import com.intellij.openapi.vcs.changes.actions.diff.PresentableGoToChangePopupAction;
 import com.intellij.openapi.vcs.changes.actions.diff.UnversionedDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
@@ -245,7 +246,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
 
   @Override
   protected @Nullable AnAction createGoToChangeAction() {
-    return new MyGoToChangePopupAction();
+    return PresentableGoToChangePopupAction.create(this::getChanges, new MyGoToChangePopupController());
   }
 
   protected @NotNull List<AnAction> getGoToChangeToolbarActions() {
@@ -256,31 +257,34 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     return Collections.emptyList();
   }
 
-  private class MyGoToChangePopupAction extends PresentableGoToChangePopupAction.Default<Wrapper> {
+  private @NotNull ListSelection<? extends Wrapper> getChanges() {
+    List<? extends Wrapper> allChanges = toListIfNotMany(iterateAllChanges(), true);
+    if (allChanges == null) {
+      return ListSelection.empty();
+    }
+    else {
+      return ListSelection.create(allChanges, getCurrentChange());
+    }
+  }
+
+  private class MyGoToChangePopupController implements GoToChangePopupController<Wrapper> {
     @Override
-    protected @NotNull List<AnAction> createToolbarActions() {
+    public @Nullable PresentableChange getPresentation(@NotNull Wrapper change) {
+      return change;
+    }
+
+    @Override
+    public @NotNull List<AnAction> createToolbarActions() {
       return ChangeViewDiffRequestProcessor.this.getGoToChangeToolbarActions();
     }
 
     @Override
-    protected @NotNull List<AnAction> createPopupMenuActions() {
+    public @NotNull List<AnAction> createPopupMenuActions() {
       return ChangeViewDiffRequestProcessor.this.getGoToChangePopupMenuActions();
     }
 
     @Override
-    protected @NotNull ListSelection<? extends Wrapper> getChanges() {
-      List<? extends Wrapper> allChanges = ContainerUtil.newArrayList(iterateAllChanges());
-      return ListSelection.create(allChanges, getCurrentChange());
-    }
-
-    @Override
-    protected boolean canNavigate() {
-      List<? extends Wrapper> allChanges = toListIfNotMany(iterateAllChanges(), true);
-      return allChanges == null || allChanges.size() > 1;
-    }
-
-    @Override
-    protected void onSelected(@NotNull Wrapper change) {
+    public void onSelected(@NotNull Wrapper change) {
       setCurrentChange(change);
       selectChange(change);
     }
