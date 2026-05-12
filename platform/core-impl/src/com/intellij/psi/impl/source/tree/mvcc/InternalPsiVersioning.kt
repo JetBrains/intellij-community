@@ -12,6 +12,8 @@ import com.intellij.openapi.application.WriteActionListener
 import com.intellij.openapi.application.WriteIntentReadActionListener
 import com.intellij.openapi.application.WriteLockReacquisitionListener
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
@@ -20,6 +22,8 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import kotlinx.coroutines.ThreadContextElement
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import java.util.function.Supplier
@@ -43,8 +47,10 @@ object InternalPsiVersioning {
     val registry = PsiVersionRegistry.instance
     val latestVersion = registry.latestPublishedVersion
     return ApplicationManagerEx.getApplicationEx().withLocksProhibited(LOCK_PROHIBITION_FREEZE_PSI_VERSION_ADVICE) {
-      initFreezePsiVersionSection(false, latestVersion).use {
-        action()
+      registry.rememberFrozenVersion(latestVersion) {
+        initFreezePsiVersionSection(false, latestVersion).use {
+          action()
+        }
       }
     }
   }
@@ -214,15 +220,54 @@ object InternalPsiVersioning {
     val latestPublishedVersion: Long
       get() = version.get()
 
+
+    /**
+     * FileViewProvider subsystem is notoriously famous for dropping its data at random points of time
+     * When some computation captured a version, we must keep the data alive and available until the computation is finished.
+     */
+    val frozenPsiVersionsRegistry: ConcurrentMap<Long, Int> = ConcurrentHashMap<Long, Int>().apply { put(0, 1) }
+
+    fun <T> rememberFrozenVersion(version: Long, action: () -> T): T {
+      frozenPsiVersionsRegistry.compute(version) { _, v -> if (v == null) 1 else v + 1 }
+      try {
+        return action()
+      } finally {
+        decrementFrozenVersion(version)
+      }
+    }
+
+    internal fun registerCleanable(cleanable: PsiVersionCleanable) {
+      // service can be null in tests
+      ApplicationManager.getApplication().serviceOrNull<PsiVersioningGarbageCollector>()?.registerCleanable(cleanable)
+    }
+
+
     fun incrementVersion(expected: Long) {
+      // the published version is always frozen, we have no right to remove it until it ends
+      frozenPsiVersionsRegistry[expected + 1] = 1
       val versionAdvanced = version.compareAndSet(expected, expected + 1)
       assert(versionAdvanced) {
         "Version modification failed: could not increment the version with $expected, because global version version is ${version.get()}"
       }
+      decrementFrozenVersion(expected)
+    }
+
+
+    private fun decrementFrozenVersion(version: Long) {
+      val newValue = frozenPsiVersionsRegistry.compute(version) { _, v ->
+        when (v) {
+          null -> error("Unpublished version $version is unexpected")
+          1 -> null
+          else -> v - 1
+        }
+      }
+      if (newValue == null) {
+        ApplicationManager.getApplication().service<PsiVersioningGarbageCollector>().liveVersionsChanged(getFrozenKeys())
+      }
     }
 
     fun getFrozenKeys(): Set<Long> {
-      return setOf(latestPublishedVersion)
+      return frozenPsiVersionsRegistry.keys
     }
   }
 

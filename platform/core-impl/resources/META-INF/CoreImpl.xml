@@ -38,5 +38,7 @@
                     serviceImplementation="com.intellij.psi.impl.PsiCachedValuesFactory"/>
     <applicationService serviceInterface="com.intellij.psi.stubs.StubElementRegistryService"
                         serviceImplementation="com.intellij.psi.stubs.StubElementRegistryServiceImpl"/>
+    <applicationService serviceInterface="com.intellij.psi.impl.source.tree.mvcc.PsiVersioningGarbageCollector"
+                        serviceImplementation="com.intellij.psi.impl.AsyncPsiVersioningGarbageCollector"/>
   </extensions>
 </idea-plugin>
