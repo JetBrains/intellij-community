@@ -60,7 +60,9 @@ import javax.swing.JComponent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -75,6 +77,7 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
   private final AtomicReference<Pair<VirtualFile, Boolean>> mySuppressInfoRef = new AtomicReference<>();
 
   private volatile Pair<WidgetState, VirtualFile> myLastWidgetStateAndFilePair;
+  private final Map<RemoteFileInfo, FileDownloadingAdapter> myDownloadingListeners = new ConcurrentHashMap<>();
   private ProgressIndicator myCurrentProgress;
 
   private JsonSchemaStatusWidget(@NotNull Project project, @NotNull CoroutineScope scope) {
@@ -361,22 +364,34 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
   }
 
   private void addDownloadingUpdateListener(@NotNull RemoteFileInfo info) {
-    info.addDownloadingListener(new FileDownloadingAdapter() {
+    FileDownloadingAdapter listener = new FileDownloadingAdapter() {
       @Override
       public void fileDownloaded(@NotNull VirtualFile localFile) {
+        removeDownloadingUpdateListener(info, this);
         update();
       }
 
       @Override
       public void errorOccurred(@NotNull String errorMessage) {
+        removeDownloadingUpdateListener(info, this);
         update();
       }
 
       @Override
       public void downloadingCancelled() {
+        removeDownloadingUpdateListener(info, this);
         update();
       }
-    });
+    };
+    if (myDownloadingListeners.putIfAbsent(info, listener) == null) {
+      info.addDownloadingListener(listener);
+    }
+  }
+
+  private void removeDownloadingUpdateListener(@NotNull RemoteFileInfo info, @NotNull FileDownloadingAdapter listener) {
+    if (myDownloadingListeners.remove(info, listener)) {
+      info.removeDownloadingListener(listener);
+    }
   }
 
   private boolean isValidSchemaFile(@Nullable VirtualFile schemaFile) {
@@ -501,6 +516,11 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
 
   @Override
   public void dispose() {
+    for (Map.Entry<RemoteFileInfo, FileDownloadingAdapter> entry : myDownloadingListeners.entrySet()) {
+      entry.getKey().removeDownloadingListener(entry.getValue());
+    }
+    myDownloadingListeners.clear();
+
     JsonSchemaService service = myServiceLazy.isInitialized() ? myServiceLazy.getValue() : null;
     if (service != null) {
       service.unregisterRemoteUpdateCallback(myUpdateCallback);
