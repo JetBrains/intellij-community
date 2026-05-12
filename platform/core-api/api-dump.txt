@@ -512,6 +512,12 @@ com.intellij.openapi.application.ReadConstraint
 com.intellij.openapi.application.ReadResult
 - s:value(java.lang.Object):com.intellij.openapi.application.ReadResult
 - s:writeAction(kotlin.jvm.functions.Function0):com.intellij.openapi.application.ReadResult
+f:com.intellij.openapi.application.WriteAction
+- s:compute(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
+- s:computeAndWait(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
+- s:computeAndWait(com.intellij.openapi.util.ThrowableComputable,com.intellij.openapi.application.ModalityState):java.lang.Object
+- s:run(com.intellij.util.ThrowableRunnable):V
+- s:runAndWait(com.intellij.util.ThrowableRunnable):V
 com.intellij.openapi.application.WriteActionListener
 - java.util.EventListener
 - afterWriteActionFinished(java.lang.Class):V
