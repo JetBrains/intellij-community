@@ -3,11 +3,13 @@ package com.intellij.structuralsearch;
 
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.Collections;
 
 @SuppressWarnings("LanguageMismatch")
 public class XmlStructuralReplaceTest extends StructuralReplaceTestCase {
@@ -130,6 +132,8 @@ public class XmlStructuralReplaceTest extends StructuralReplaceTestCase {
   }
 
   public void testReplacementScriptRequiresScriptEngine() {
+    ExtensionTestUtil.maskExtensions(StructuralSearchScriptEngine.EP_NAME, Collections.emptyList(), getTestRootDisposable());
+
     final ReplacementVariableDefinition definition = new ReplacementVariableDefinition("result");
     definition.setScriptCodeConstraint("value.getText().toInteger() + 1");
     options.addVariableDefinition(definition);

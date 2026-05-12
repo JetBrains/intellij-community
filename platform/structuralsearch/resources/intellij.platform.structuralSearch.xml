@@ -66,7 +66,7 @@
     <applicationSettings service="com.intellij.structuralsearch.plugin.ui.UIState"/>
   </extensions>
 
-  <actions>
+  <actions resource-bundle="messages.ActionsBundle">
     <group id="StructuralSearchActions">
       <add-to-group group-id="FindMenuGroup" anchor="after" relative-to-action="ReplaceInPath"/>
 

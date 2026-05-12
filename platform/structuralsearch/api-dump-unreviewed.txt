@@ -301,12 +301,6 @@ a:com.intellij.structuralsearch.StructuralSearchProfileBase
 - p:getVariableDelimiters():com.intellij.psi.tree.TokenSet
 - isMatchNode(com.intellij.psi.PsiElement):Z
 - p:isStringLiteral(com.intellij.psi.PsiElement):Z
-com.intellij.structuralsearch.StructuralSearchScriptEngine
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- a:compile(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,com.intellij.structuralsearch.MatchOptions):com.intellij.structuralsearch.StructuralSearchScriptEngine$CompiledScript
-- s:isAvailable():Z
-com.intellij.structuralsearch.StructuralSearchScriptEngine$CompiledScript
-- a:evaluate(java.util.Map):java.lang.Object
 c:com.intellij.structuralsearch.StructuralSearchScriptException
 - com.intellij.structuralsearch.StructuralSearchException
 - <init>(java.lang.Throwable):V
@@ -702,15 +696,6 @@ c:com.intellij.structuralsearch.impl.matcher.predicates.ScriptLog
 - error(java.lang.Object):V
 - info(java.lang.Object):V
 - warn(java.lang.Object):V
-c:com.intellij.structuralsearch.impl.matcher.predicates.ScriptPredicate
-- com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate
-- <init>(com.intellij.openapi.project.Project,java.lang.String,com.intellij.structuralsearch.StructuralSearchScriptEngine$CompiledScript,java.util.Set):V
-- match(com.intellij.psi.PsiElement,I,I,com.intellij.structuralsearch.impl.matcher.MatchContext):Z
-c:com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport
-- sf:UUID:java.lang.String
-- <init>(com.intellij.openapi.project.Project,com.intellij.structuralsearch.StructuralSearchScriptEngine$CompiledScript,java.lang.String,java.util.Collection):V
-- s:buildScript(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,com.intellij.structuralsearch.MatchOptions):com.intellij.structuralsearch.StructuralSearchScriptEngine$CompiledScript
-- evaluate(com.intellij.structuralsearch.MatchResult,com.intellij.psi.PsiElement):java.lang.Object
 c:com.intellij.structuralsearch.impl.matcher.predicates.WithinPredicate
 - com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate
 - <init>(java.lang.String,com.intellij.openapi.fileTypes.LanguageFileType,com.intellij.openapi.project.Project):V

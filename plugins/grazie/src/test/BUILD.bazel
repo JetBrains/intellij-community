@@ -18,6 +18,8 @@ jvm_library(
     "@lib//:kotlin-test",
     "//java/testFramework",
     "@lib//:grazie-tests-org-jetbrains-intellij-deps-languagetool-languagetool-core",
+    "//platform/structuralsearch:structuralSearch",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.structuralSearch:moduleSet-plugin-structuralSearch",
     "//platform/vcs-api:vcs",
   ]
 )
@@ -86,6 +88,8 @@ jvm_library(
     "//xml/xml-parser:parser_test_lib",
     "//plugins/grazie/java",
     "//plugins/grazie/java:java_test_lib",
+    "//plugins/grazie/properties",
+    "//plugins/grazie/properties:properties_test_lib",
     "//platform/vcs-api:vcs",
     "//platform/vcs-api:vcs_test_lib",
     "//plugins/markdown/core:markdown",
@@ -126,6 +130,8 @@ jvm_library(
   ],
   runtime_deps = [
     ":grazie-tests",
+    "//platform/structuralsearch:structuralSearch_test_lib",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.structuralSearch:moduleSet-plugin-structuralSearch_test_lib",
     "//platform/ide-core:ide-core_test_lib",
   ]
 )

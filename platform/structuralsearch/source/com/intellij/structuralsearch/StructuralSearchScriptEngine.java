@@ -3,15 +3,15 @@ package com.intellij.structuralsearch;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-@ApiStatus.Internal
+@Internal
 public interface StructuralSearchScriptEngine {
-  ExtensionPointName<StructuralSearchScriptEngine> EP_NAME = ExtensionPointName.create("com.intellij.structuralsearch.scriptEngine");
+  ExtensionPointName<StructuralSearchScriptEngine> EP_NAME = new ExtensionPointName<>("com.intellij.structuralsearch.scriptEngine");
 
   static boolean isAvailable() {
     return EP_NAME.hasAnyExtensions();

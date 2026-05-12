@@ -14,6 +14,7 @@ import com.intellij.structuralsearch.StructuralSearchScriptEngine;
 import com.intellij.structuralsearch.StructuralSearchScriptException;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -22,11 +23,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author Maxim.Mossienko
- */
-public class ScriptSupport {
-
+@Internal
+public final class ScriptSupport {
   private static final Logger LOG = Logger.getInstance(ScriptSupport.class);
   /**
    * Artificial filename without extension must be different from any variable name or the variable will get hidden by the script.

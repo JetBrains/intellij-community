@@ -407,22 +407,22 @@ object CommunityLibraryLicenses {
     LibraryLicense("GraphQL Java Dataloader", libraryName = "graphql.java.dataloader", url = "https://github.com/graphql-java/java-dataloader")
       .apache("https://github.com/graphql-java/java-dataloader/blob/master/LICENSE"),
 
-    LibraryLicense("Groovy", libraryName = "org.codehaus.groovy:groovy", url = "https://groovy-lang.org/")
+    LibraryLicense("Groovy", libraryName = "groovy", url = "https://groovy-lang.org/")
       .apache("https://github.com/apache/groovy/blob/master/LICENSE"),
 
-    LibraryLicense("Groovy Ant", libraryName = "org.codehaus.groovy:groovy-ant", url = "https://groovy-lang.org/")
+    LibraryLicense("Groovy Ant", libraryName = "groovy-ant", url = "https://groovy-lang.org/")
       .apache("https://github.com/apache/groovy/blob/master/LICENSE"),
 
-    LibraryLicense("Groovy JSON", libraryName = "org.codehaus.groovy:groovy-json", url = "https://groovy-lang.org/")
+    LibraryLicense("Groovy JSON", libraryName = "groovy-json", url = "https://groovy-lang.org/")
       .apache("https://github.com/apache/groovy/blob/master/LICENSE"),
 
-    LibraryLicense("Groovy JSR-223", libraryName = "org.codehaus.groovy:groovy-jsr223", url = "https://groovy-lang.org/")
+    LibraryLicense("Groovy JSR-223", libraryName = "groovy-jsr223", url = "https://groovy-lang.org/")
       .apache("https://github.com/apache/groovy/blob/master/LICENSE"),
 
-    LibraryLicense("Groovy Templates", libraryName = "org.codehaus.groovy:groovy-templates", url = "https://groovy-lang.org/")
+    LibraryLicense("Groovy Templates", libraryName = "groovy-templates", url = "https://groovy-lang.org/")
       .apache("https://github.com/apache/groovy/blob/master/LICENSE"),
 
-    LibraryLicense("Groovy XML", libraryName = "org.codehaus.groovy:groovy-xml", url = "https://groovy-lang.org/")
+    LibraryLicense("Groovy XML", libraryName = "groovy-xml", url = "https://groovy-lang.org/")
       .apache("https://github.com/apache/groovy/blob/master/LICENSE"),
 
     LibraryLicense(libraryName = "grpc-inprocess", url = "https://grpc.io/")
