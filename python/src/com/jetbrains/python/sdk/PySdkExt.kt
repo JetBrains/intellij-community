@@ -23,7 +23,6 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -137,6 +136,8 @@ fun detectSystemWideSdks(
                                          { it.homePath }).reversed())
 }
 
+
+@Deprecated("Will be dropped soon along with PyDetectedSDK, do not use")
 private fun PythonSdkFlavor<*>.detectSdks(
   module: Module?,
   context: UserDataHolder,
@@ -446,10 +447,6 @@ internal val Sdk.remoteSourcesLocalPath: Path
 fun Sdk.configureBuilderToRunPythonOnTarget(targetCommandLineBuilder: TargetedCommandLineBuilder) {
   getOrCreateAdditionalData().flavorAndData.data.prepareTargetCommandLine(this, targetCommandLineBuilder)
 }
-
-@Deprecated("use SdkExtKt.isSdkSeemsValid", level = DeprecationLevel.ERROR)
-val Sdk.sdkSeemsValid: Boolean
-  get() = isSdkSeemsValid
 
 
 @Internal
