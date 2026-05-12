@@ -17,6 +17,7 @@ import com.intellij.util.PathUtil
 import com.intellij.util.asSafely
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
+import kotlinx.coroutines.future.await
 import org.jetbrains.plugins.terminal.LocalTerminalDirectRunner.LOGIN_CLI_OPTION
 import org.jetbrains.plugins.terminal.TerminalStartupEelContext
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder.INTERACTIVE_CLI_OPTION
@@ -60,14 +61,14 @@ internal class WslShellExecCommand(
     return null
   }
 
-  private fun findDistributionName(workingDirectory: Path): String? {
+  private suspend fun findDistributionName(workingDirectory: Path): String? {
     distributionNameFromCommandLine?.let {
       return it
     }
     WslPath.parseWindowsUncPath(workingDirectory.toString())?.let {
       return it.distributionId
     }
-    val installedDistributions = WslDistributionManager.getInstance().installedDistributions
+    val installedDistributions = WslDistributionManager.getInstance().installedDistributionsFuture.await()
     if (installedDistributions.size == 1) {
       return installedDistributions[0].msId
     }
