@@ -581,22 +581,24 @@ private fun createTargetValidationTasks(
               val suiteContext = suiteContextDeferred.await()
               val packageResult = packagingTask.resultDeferred.await()
                 .getOrAbort("Target validation '${validation.name}' for ${validation.targetId} skipped because packaging failed")
-              val validationTempDir = suiteContext.tempDir
-                .resolve("target-validation")
-                .resolve(validation.targetId)
-                .resolve(validation.name)
-                .createDirectories()
-              validation.validator(
-                PackagingTargetValidationContext(
-                  target = packagingTask.spec,
-                  projectHome = packageResult.projectHome,
-                  tempDir = validationTempDir,
-                  project = packageResult.jpsProject,
-                  outputProvider = suiteContext.compilationContext.outputProvider,
-                  runtimeModuleRepository = packageResult.runtimeModuleRepository,
-                  content = packageResult.content,
+              spanBuilder("run target validation: ${validation.targetId} ${validation.name}").use {
+                val validationTempDir = suiteContext.tempDir
+                  .resolve("target-validation")
+                  .resolve(validation.targetId)
+                  .resolve(validation.name)
+                  .createDirectories()
+                validation.validator(
+                  PackagingTargetValidationContext(
+                    target = packagingTask.spec,
+                    projectHome = packageResult.projectHome,
+                    tempDir = validationTempDir,
+                    project = packageResult.jpsProject,
+                    outputProvider = suiteContext.compilationContext.outputProvider,
+                    runtimeModuleRepository = packageResult.runtimeModuleRepository,
+                    content = packageResult.content,
+                  )
                 )
-              )
+              }
             }
           }
         },
