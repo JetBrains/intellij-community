@@ -493,6 +493,7 @@ com.intellij.openapi.application.PathMacroContributor
 - forceRegisterPathMacros(java.util.Map):V
 - a:registerPathMacros(java.util.Map,java.util.Map):V
 a:com.intellij.openapi.application.ReadAction
+- p:<init>():V
 - s:computeBlocking(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 - s:computeCancellable(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 - s:runBlocking(com.intellij.util.ThrowableRunnable):V

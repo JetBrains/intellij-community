@@ -658,7 +658,6 @@ a:com.intellij.openapi.application.QueryExecutorBase
 - f:execute(java.lang.Object,com.intellij.util.Processor):Z
 - a:processQuery(java.lang.Object,com.intellij.util.Processor):V
 a:com.intellij.openapi.application.ReadAction
-- <init>():V
 - s:compute(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 - execute():com.intellij.openapi.application.RunResult
 - s:nonBlocking(java.lang.Runnable):com.intellij.openapi.application.NonBlockingReadAction
