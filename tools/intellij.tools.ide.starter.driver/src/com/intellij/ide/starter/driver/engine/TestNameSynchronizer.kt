@@ -13,7 +13,8 @@ import com.intellij.ide.starter.runner.TestMethod
 internal class TestNameSynchronizer(private val driver: Driver) {
 
   private val listener: (TestMethod?) -> Unit = { method ->
-    if (driver.isConnected) {
+    // active test name setting is supported only for 262+ version
+    if (driver.isConnected && driver.getProductVersion().baselineVersion >= 262) {
       driver.setActiveTestNameInTestIde(method?.displayName)
     }
     else {
