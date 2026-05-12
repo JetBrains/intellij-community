@@ -276,7 +276,7 @@
     <facetIgnorer implementation="com.jetbrains.python.run.DjangoFacetIgnorer"/>
 
     <programRunner implementation="com.jetbrains.python.run.PythonRunner" order="before defaultRunRunner"/>
-    <programRunner implementation="com.jetbrains.python.debugger.PyDebugRunner" order="after intellij.platform.dap.DapProgramRunner, before defaultDebugRunner"/>
+    <programRunner implementation="com.jetbrains.python.debugger.PythonDebugProgramRunner" order="before intellij.platform.dap.DapProgramRunner, before defaultDebugRunner"/>
     <runConfigurationProducer implementation="com.jetbrains.python.run.PythonRunConfigurationProducer"/>
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.PyLineBreakpointType"/>
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.PyExceptionBreakpointType"/>
@@ -848,6 +848,8 @@
                     dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.debugSessionFactory" interface="com.jetbrains.python.debugger.PyDebugSessionFactory"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.pythonDebugBackendRunner" interface="com.jetbrains.python.debugger.PyDebugBackendRunner"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pyPregeneratedSkeletonsProvider"
                     interface="com.jetbrains.python.sdk.skeletons.PyPregeneratedSkeletonsProvider"
                     dynamic="true"/>
@@ -916,6 +918,7 @@
 
   <extensions defaultExtensionNs="Pythonid">
     <pyRunToolProvider implementation="com.jetbrains.python.sdk.uv.run.UvRunToolProvider"/>
+    <pythonDebugBackendRunner implementation="com.jetbrains.python.debugger.PydevdDebugBackendRunner"/>
     <pyRunToolProvider implementation="com.jetbrains.python.hatch.run.HatchRunToolProvider"/>
     <evoTreeElementProvider id="UvEvoProvider"
                             order="first"
