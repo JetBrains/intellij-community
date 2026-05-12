@@ -38,11 +38,11 @@
     <place><![CDATA[pyStringLiteralMatches("^(\\s*((((--|#)[^\n\r]*)|(/\\*([^*])+\\*+/))(\r\n|\n|\r))+)?\\s*(DELETE\\s+(\\*\\s+)?FROM\\s.+)")]]></place>
     <!-- DELETE *? FROM smth -->
 
-    <place><![CDATA[pyStringLiteralMatches("^(\\s*((((--|#)[^\n\r]*)|(/\\*([^*])+\\*+/))(\r\n|\n|\r))+)?\\s*((CREATE|DROP)\\s+DATABASE\\s.+)")]]></place>
-    <!-- CREATE|DROP DATABASE smth -->
+    <place><![CDATA[pyStringLiteralMatches("^(\\s*((((--|#)[^\n\r]*)|(/\\*([^*])+\\*+/))(\r\n|\n|\r))+)?\\s*((CREATE\\s+(OR\\s+(REPLACE|ALTER)\\s+)?((TRANSIENT|TEMP(ORARY)?)\\s+)?|DROP\\s+)(DATABASE|SCHEMA)\\s.+)")]]></place>
+    <!-- CREATE (OR REPLACE|ALTER)? (TRANSIENT|TEMPORARY)?|DROP DATABASE|SCHEMA smth -->
 
-    <place><![CDATA[pyStringLiteralMatches("^(\\s*((((--|#)[^\n\r]*)|(/\\*([^*])+\\*+/))(\r\n|\n|\r))+)?\\s*(CREATE\\s+((TEMP(ORARY)?|(GLOBAL\\s+TEMPORARY))\\s+)?TABLE\\s.+?\\(.+?\\))")]]></place>
-    <!-- CREATE TABLE smth (...) -->
+    <place><![CDATA[pyStringLiteralMatches("^(\\s*((((--|#)[^\n\r]*)|(/\\*([^*])+\\*+/))(\r\n|\n|\r))+)?\\s*(CREATE\\s+(OR\\s+(REPLACE|ALTER)\\s+)?((((GLOBAL|LOCAL)\\s+)?(TEMP(ORARY)?|VOLATILE)|TRANSIENT|EXTERNAL|DYNAMIC|ICEBERG|HYBRID)\\s+)?TABLE\\s.+?(\\(.+?\\)|AS\\s+.+))")]]></place>
+    <!-- CREATE (OR REPLACE|ALTER)? TABLE smth (...)|AS smth -->
 
     <place><![CDATA[pyStringLiteralMatches("^(\\s*((((--|#)[^\n\r]*)|(/\\*([^*])+\\*+/))(\r\n|\n|\r))+)?\\s*((ALTER|TRUNCATE)\\s+TABLE\\s.+)")]]></place>
     <!-- ALTER|TRUNCATE TABLE smth -->
@@ -56,11 +56,17 @@
     <place><![CDATA[pyStringLiteralMatches("^(\\s*((((--|#)[^\n\r]*)|(/\\*([^*])+\\*+/))(\r\n|\n|\r))+)?\\s*((ALTER|DROP)\\s+INDEX\\s.+)")]]></place>
     <!-- ALTER|DROP INDEX smth -->
 
-    <place><![CDATA[pyStringLiteralMatches("^(\\s*((((--|#)[^\n\r]*)|(/\\*([^*])+\\*+/))(\r\n|\n|\r))+)?\\s*(CREATE\\s+(OR\\s+REPLACE\\s+)?VIEW\\s.+?\\sAS\\s.+)")]]></place>
-    <!-- CREATE (OR REPLACE)? VIEW smth AS smth -->
+    <place><![CDATA[pyStringLiteralMatches("^(\\s*((((--|#)[^\n\r]*)|(/\\*([^*])+\\*+/))(\r\n|\n|\r))+)?\\s*(CREATE\\s+(OR\\s+(REPLACE|ALTER)\\s+)?(((FORCE\\s+)?SECURE|FORCE|((GLOBAL|LOCAL)\\s+)?(TEMP(ORARY)?|VOLATILE)|MATERIALIZED)\\s+)?VIEW\\s.+?\\sAS\\s.+)")]]></place>
+    <!-- CREATE (OR REPLACE|ALTER)? (FORCE|SECURE|TEMPORARY|VOLATILE|MATERIALIZED)? VIEW smth AS smth -->
 
-    <place><![CDATA[pyStringLiteralMatches("^(\\s*((((--|#)[^\n\r]*)|(/\\*([^*])+\\*+/))(\r\n|\n|\r))+)?\\s*((ALTER|DROP)\\s+VIEW\\s.+)")]]></place>
-    <!-- ALTER|DROP VIEW smth -->
+    <place><![CDATA[pyStringLiteralMatches("^(\\s*((((--|#)[^\n\r]*)|(/\\*([^*])+\\*+/))(\r\n|\n|\r))+)?\\s*((ALTER|DROP)\\s+(MATERIALIZED\\s+)?VIEW\\s.+)")]]></place>
+    <!-- ALTER|DROP (MATERIALIZED)? VIEW smth -->
+
+    <place><![CDATA[pyStringLiteralMatches("^(\\s*((((--|#)[^\n\r]*)|(/\\*([^*])+\\*+/))(\r\n|\n|\r))+)?\\s*((CREATE\\s+(OR\\s+REPLACE\\s+)?|ATTACH\\s+|DROP\\s+|RENAME\\s+)DICTIONARY\\s.+)")]]></place>
+    <!-- CREATE (OR REPLACE)?|ATTACH|DROP|RENAME DICTIONARY smth -->
+
+    <place><![CDATA[pyStringLiteralMatches("^(\\s*((((--|#)[^\n\r]*)|(/\\*([^*])+\\*+/))(\r\n|\n|\r))+)?\\s*((SYSTEM\\s+)?RELOAD\\s+DICTIONAR(Y|IES)\\s?.*)")]]></place>
+    <!-- (SYSTEM)? RELOAD DICTIONARY|DICTIONARIES smth -->
 
     <place><![CDATA[pyStringLiteralMatches("^(\\s*((((--|#)[^\n\r]*)|(/\\*([^*])+\\*+/))(\r\n|\n|\r))+)?\\s*(REPLACE\\s+INTO\\s.+)")]]></place>
     <!-- REPLACE INTO smth -->
