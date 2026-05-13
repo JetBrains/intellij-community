@@ -7,13 +7,17 @@ import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRule
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
 import com.intellij.platform.pluginSystem.parser.impl.elements.xmlValue
 import com.intellij.util.io.DirectoryContentBuilder
+import com.intellij.util.io.createDirectories
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.jarFile
+import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.io.zipFile
 import java.nio.file.FileSystems
 import java.nio.file.Path
+import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
+import kotlin.io.path.notExists
 
 private val LOG get() = logger<PluginPackagingConfig>()
 
@@ -113,6 +117,21 @@ fun PluginSpec.buildXml(config: PluginPackagingConfig = PluginPackagingConfig())
       appendLine()
     }
     append("</idea-plugin>")
+  }
+}
+
+fun PluginSpec.installAt(pluginsDir: Path, config: PluginPackagingConfig = PluginPackagingConfig()): Path = with(config) {
+  pluginsDir.createDirectories()
+  if (isSingleJar) {
+    val jarPath = findInexistentPath(pluginsDir, sanitizeFileName(id!!), ".jar")
+    buildMainJar(jarPath, config)
+    return jarPath
+  } else {
+    val dirPath = findInexistentPath(pluginsDir, sanitizeFileName(id!!), "")
+    directoryContent {
+      buildDir(this@directoryContent, config)
+    }.generate(dirPath)
+    return dirPath
   }
 }
 
@@ -261,4 +280,10 @@ private fun PluginSpec.sequencePluginDependenciesRecursive(): Sequence<DependsSp
       }
     }
   }
+}
+
+private fun findInexistentPath(directory: Path, prefix: String, suffix: String): Path {
+  require(directory.isDirectory())
+  val candidates = sequenceOf(prefix + suffix) + generateSequence(1) { it + 1 }.map { "$prefix-$it$suffix" }
+  return candidates.firstNotNullOf { filename -> directory.resolve(filename).takeIf { it.notExists() } }
 }
