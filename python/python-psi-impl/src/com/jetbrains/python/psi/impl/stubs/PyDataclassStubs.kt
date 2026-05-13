@@ -35,7 +35,9 @@ class PyDataclassStubImpl(
   private val matchArgs: Boolean?,
   private val kwOnly: Boolean?,
   private val slots: Boolean?,
-  private val populateByName: Boolean?
+  override var populateByName: Boolean?,
+  override var validateByName: Boolean?,
+  override var validateByAlias: Boolean?,
 ) : PyDataclassStub {
 
   companion object {
@@ -51,7 +53,9 @@ class PyDataclassStubImpl(
       matchArgs = null,
       kwOnly = null,
       slots = null,
-      populateByName = null
+      populateByName = null,
+      validateByName = null,
+      validateByAlias = null,
     )
 
     fun create(cls: PyClass): PyDataclassStub? {
@@ -72,8 +76,10 @@ class PyDataclassStubImpl(
       val kwOnly = DataInputOutputUtil.readNullable(stream, stream::readBoolean)
       val slots = DataInputOutputUtil.readNullable(stream, stream::readBoolean)
       val populateByName = DataInputOutputUtil.readNullable(stream, stream::readBoolean)
+      val validateByName = DataInputOutputUtil.readNullable(stream, stream::readBoolean)
+      val validateByAlias = DataInputOutputUtil.readNullable(stream, stream::readBoolean)
 
-      return PyDataclassStubImpl(type, decoratorName, init, repr, eq, order, unsafeHash, frozen, matchArgs, kwOnly, slots, populateByName)
+      return PyDataclassStubImpl(type, decoratorName, init, repr, eq, order, unsafeHash, frozen, matchArgs, kwOnly, slots, populateByName, validateByName, validateByAlias)
     }
   }
 
@@ -92,6 +98,8 @@ class PyDataclassStubImpl(
     DataInputOutputUtil.writeNullable(stream, kwOnly, stream::writeBoolean)
     DataInputOutputUtil.writeNullable(stream, slots, stream::writeBoolean)
     DataInputOutputUtil.writeNullable(stream, populateByName, stream::writeBoolean)
+    DataInputOutputUtil.writeNullable(stream, validateByName, stream::writeBoolean)
+    DataInputOutputUtil.writeNullable(stream, validateByAlias, stream::writeBoolean)
   }
 
   override fun getType(): String = type
@@ -105,7 +113,6 @@ class PyDataclassStubImpl(
   override fun matchArgsValue(): Boolean? = matchArgs
   override fun kwOnly(): Boolean? = kwOnly
   override fun slotsValue(): Boolean? = slots
-  override fun populateByName(): Boolean? = populateByName
 
   override fun toString(): String {
     return "PyDataclassStub(" +
@@ -120,7 +127,9 @@ class PyDataclassStubImpl(
            "matchArgs=$matchArgs, " +
            "kwOnly=$kwOnly, " +
            "slots=$slots, " +
-           "populateByName=$populateByName" +
+           "populateByName=$populateByName, " +
+           "validateByName=$validateByName, " +
+           "validateByAlias=$validateByAlias" +
            ")"
   }
 }

@@ -1497,6 +1497,109 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a2: str", new String[]{"a2: str"});
   }
 
+  @TestFor(issues = "PY-89182")
+  public void testPydanticValidateByAliasAndNameFalse() {
+    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
+    final Map<String, PsiElement> marks = loadTest(1);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("*, A: int", ArrayUtilRt.EMPTY_STRING_ARRAY);
+  }
+
+  @TestFor(issues = "PY-89182")
+  public void testPydanticValidateByNameAndAliasBothTrue() {
+    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
+    final Map<String, PsiElement> marks = loadTest(1);
+
+    final List<String> texts = Arrays.asList(
+      "*, my_alias: str",
+      "*, my_field: str"
+    );
+    final List<String[]> highlighted = Arrays.asList(
+      ArrayUtilRt.EMPTY_STRING_ARRAY,
+      ArrayUtilRt.EMPTY_STRING_ARRAY
+    );
+    final List<String[]> disabled = Arrays.asList(
+      ArrayUtilRt.EMPTY_STRING_ARRAY,
+      ArrayUtilRt.EMPTY_STRING_ARRAY
+    );
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check(texts, highlighted, disabled);
+  }
+
+  @TestFor(issues = "PY-89182")
+  public void testPydanticValidateByNameFalseAndAliasTrue() {
+    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
+    final Map<String, PsiElement> marks = loadTest(1);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("*, my_alias: str", ArrayUtilRt.EMPTY_STRING_ARRAY);
+  }
+
+  @TestFor(issues = "PY-89182")
+  public void testPydanticValidateByNameTrueAndAliasFalse() {
+    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
+    final Map<String, PsiElement> marks = loadTest(1);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("*, my_field: str", ArrayUtilRt.EMPTY_STRING_ARRAY);
+  }
+
+  @TestFor(issues = "PY-89182")
+  public void testPydanticValidateByAliasFalseInModelConfig() {
+    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
+    final Map<String, PsiElement> marks = loadTest(1);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("*, my_field: str", ArrayUtilRt.EMPTY_STRING_ARRAY);
+  }
+
+  @TestFor(issues = "PY-89182")
+  public void testPydanticValidateByNameAndAliasBothTrueInModelConfig() {
+    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
+    final Map<String, PsiElement> marks = loadTest(1);
+
+    final List<String> texts = Arrays.asList(
+      "*, my_alias: str",
+      "*, my_field: str"
+    );
+    final List<String[]> highlighted = Arrays.asList(ArrayUtilRt.EMPTY_STRING_ARRAY, ArrayUtilRt.EMPTY_STRING_ARRAY);
+    final List<String[]> disabled = Arrays.asList(ArrayUtilRt.EMPTY_STRING_ARRAY, ArrayUtilRt.EMPTY_STRING_ARRAY);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check(texts, highlighted, disabled);
+  }
+
+  @TestFor(issues = "PY-89182")
+  public void testPydanticInheritedValidateByNameTrueAndAliasFalse() {
+    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
+    final Map<String, PsiElement> marks = loadMultiFileTest(1);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("*, inherited_field: str, own_field: str",
+                                                          ArrayUtilRt.EMPTY_STRING_ARRAY);
+  }
+
+  @TestFor(issues = "PY-89182")
+  public void testPydanticInheritedValidateByNameFalseAndAliasTrue() {
+    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
+    final Map<String, PsiElement> marks = loadMultiFileTest(1);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("*, inherited_alias: str, own_alias: str",
+                                                          ArrayUtilRt.EMPTY_STRING_ARRAY);
+  }
+
+  @TestFor(issues = "PY-89182")
+  public void testPydanticInheritedConflictingValidationFlagsNearestAncestorWins() {
+    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
+    final Map<String, PsiElement> marks = loadMultiFileTest(1);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("*, grand_field: str, base_field: str, child_field: str",
+                                                          ArrayUtilRt.EMPTY_STRING_ARRAY);
+  }
+
+  @TestFor(issues = "PY-89182")
+  public void testPydanticValidateByAliasFalseEnablesValidateByName() {
+    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
+    final Map<String, PsiElement> marks = loadTest(1);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("*, a: int", ArrayUtilRt.EMPTY_STRING_ARRAY);
+  }
+
   @NotNull
   private Collector feignCtrlP(int offset) {
     return feignCtrlP(offset, myFixture.getFile(), true, myFixture.getEditor());

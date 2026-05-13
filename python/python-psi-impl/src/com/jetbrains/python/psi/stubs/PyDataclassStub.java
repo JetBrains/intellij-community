@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @see PyDataclassesKt#parseDataclassParameters(PyClass, TypeEvalContext)
  */
-public interface PyDataclassStub extends PyCustomClassStub {
+public interface PyDataclassStub extends PyCustomClassStub, PydanticConfigFlags {
 
   /**
    * @return library used to determine dataclass.
@@ -83,14 +83,4 @@ public interface PyDataclassStub extends PyCustomClassStub {
    * its default value if it is not specified or could not be evaluated.
    */
   @Nullable Boolean slotsValue();
-
-  /**
-   * Pydantic-specific flag propagated from model configuration.
-   * <p>
-   * For standard dataclasses, attrs, and generic dataclass_transform-based classes
-   * this value is always {@code null}. It is only set for classes recognized
-   * by {@link com.jetbrains.python.codeInsight.PyPydanticParametersProvider}
-   * as Pydantic models.
-   */
-  @Nullable Boolean populateByName();
 }

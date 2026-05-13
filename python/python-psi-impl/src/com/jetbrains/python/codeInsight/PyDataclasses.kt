@@ -39,6 +39,8 @@ import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.stubs.PyDataclassFieldStub
 import com.jetbrains.python.psi.stubs.PyDataclassStub
 import com.jetbrains.python.psi.stubs.PyDataclassTransformDecoratorStub
+import com.jetbrains.python.psi.stubs.PydanticConfigFlags
+import com.jetbrains.python.psi.stubs.PydanticConfigFlagsImpl
 import com.jetbrains.python.psi.types.PyCallableParameter
 import com.jetbrains.python.psi.types.PyCallableParameterImpl
 import com.jetbrains.python.psi.types.PyCallableTypeImpl
@@ -127,8 +129,10 @@ object PyDataclassNames {
       "match_args",
       "kw_only",
       "slots",
-      // class-parameter that is part of Pydantic-only extension
+      // class-parameters that are part of Pydantic-only extension
       "populate_by_name",
+      "validate_by_name",
+      "validate_by_alias"
     )
 
     val FIELD_SPECIFIER_PARAMETERS: Set<String> = setOf(
@@ -145,7 +149,6 @@ object PyDataclassNames {
     const val BASE_MODEL: String = "pydantic.BaseModel"
     const val BASE_MODEL_MAIN: String = "pydantic.main.BaseModel"
     const val GENERIC_MODEL: String = "pydantic.generics.GenericModel"
-    const val POPULATE_BY_NAME: String = "populate_by_name"
     const val MODEL_CONFIG: String = "model_config"
     const val PYDANTIC_CONFIG: String = "__pydantic_config__"
     const val MODEL_METACLASS: String = "pydantic._internal._model_construction.ModelMetaclass"
@@ -157,6 +160,12 @@ object PyDataclassNames {
 
     val DECORATOR_PARAMETERS: Set<String> = setOf(
       "config"
+    )
+
+    val PYDANTIC_CONFIG_OPTIONS: Set<String> = setOf(
+      "populate_by_name",
+      "validate_by_name",
+      "validate_by_alias",
     )
   }
 }
@@ -271,6 +280,8 @@ private fun parseDataclassParametersFromAST(cls: PyClass, context: TypeEvalConte
       kwOnly = provided.kwOnly,
       slots = provided.slots,
       populateByName = provided.populateByName,
+      validateByName = provided.validateByName,
+      validateByAlias = provided.validateByAlias,
     ),
     DataclassParameterArgumentMapping(
       initArgument = provided.initArgument,
@@ -283,6 +294,8 @@ private fun parseDataclassParametersFromAST(cls: PyClass, context: TypeEvalConte
       kwOnlyArgument = provided.kwOnlyArgument,
       slotsArgument = provided.slotsArgument,
       populateByNameArgument = provided.populateByNameArgument,
+      validateByNameArgument = provided.validateByNameArgument,
+      validateByAliasArgument = provided.validateByAliasArgument,
       others = provided.others,
     )
   )
@@ -383,8 +396,13 @@ data class PyDataclassParameters(
   val type: Type,
   val others: Map<String, PyExpression>,
   val fieldSpecifiers: List<QualifiedName> = emptyList(),
+  // pydantic-specific parameters
   val populateByName: Boolean? = null,
+  val validateByName: Boolean? = null,
+  val validateByAlias: Boolean? = null,
   val populateByNameArgument: PyExpression? = null,
+  val validateByAliasArgument: PyExpression? = null,
+  val validateByNameArgument: PyExpression? = null,
 ) {
 
   interface Type {
@@ -435,6 +453,8 @@ private class PyDataclassParametersBuilder(private val type: Type, private val d
   private var kwOnly: Boolean? = null
   private var slots: Boolean? = null
   private var populateByName: Boolean? = null
+  private var validateByName: Boolean? = null
+  private var validateByAlias: Boolean? = null
 
   private var initArgument: PyExpression? = null
   private var reprArgument: PyExpression? = null
@@ -446,6 +466,8 @@ private class PyDataclassParametersBuilder(private val type: Type, private val d
   private var kwOnlyArgument: PyExpression? = null
   private var slotsArgument: PyExpression? = null
   private var populateByNameArgument: PyExpression? = null
+  private var validateByNameArgument: PyExpression? = null
+  private var validateByAliasArgument: PyExpression? = null
 
   private val others = mutableMapOf<String, PyExpression>()
 
@@ -508,6 +530,16 @@ private class PyDataclassParametersBuilder(private val type: Type, private val d
           populateByNameArgument = argument
           return
         }
+        "validate_by_name" -> {
+          validateByName = PyEvaluator.evaluateAsBooleanNoResolve(value)
+          validateByNameArgument = argument
+          return
+        }
+        "validate_by_alias" -> {
+          validateByAlias = PyEvaluator.evaluateAsBooleanNoResolve(value)
+          validateByAliasArgument = argument
+          return
+        }
       }
     }
     else if (type.asPredefinedType == PyDataclassParameters.PredefinedType.ATTRS) {
@@ -565,6 +597,8 @@ private class PyDataclassParametersBuilder(private val type: Type, private val d
         kwOnly = kwOnly,
         slots = slots,
         populateByName = populateByName,
+        validateByName = validateByName,
+        validateByAlias = validateByAlias
       ),
       DataclassParameterArgumentMapping(
         initArgument = initArgument,
@@ -577,6 +611,8 @@ private class PyDataclassParametersBuilder(private val type: Type, private val d
         kwOnlyArgument = kwOnlyArgument,
         slotsArgument = slotsArgument,
         populateByNameArgument=populateByNameArgument,
+        validateByNameArgument=validateByNameArgument,
+        validateByAliasArgument=validateByAliasArgument,
         others = others,
       )
     )
@@ -593,6 +629,8 @@ private data class DataclassParameterArgumentMapping(
   val kwOnlyArgument: PyExpression?,
   val slotsArgument: PyExpression?,
   val populateByNameArgument: PyExpression?,
+  val validateByNameArgument: PyExpression?,
+  val validateByAliasArgument: PyExpression?,
   val others: Map<String, PyExpression>,
 )
 
@@ -711,8 +749,8 @@ private fun resolveDataclassParameters(
           }
 
           val isPydanticModel = isPydanticModel(pyClass, context)
-          val populateByName = if (isPydanticModel) {
-            resolvePopulateByNameFromAncestorsStubs(pyClass, context)
+          val pydanticConfigFlags = if (isPydanticModel) {
+            resolvePydanticConfigFlagsFromAncestorsStubs(pyClass, context)
           }
           else {
             null
@@ -733,6 +771,9 @@ private fun resolveDataclassParameters(
             matchArgs = stub.matchArgsValue() ?: true,
             kwOnly = stub.kwOnly() ?: dataclassTransformStub.kwOnlyDefault,
             slots = stub.slotsValue() ?: false,
+            populateByName = if (isPydanticModel) stub.populateByName ?: pydanticConfigFlags?.populateByName else null,
+            validateByName = if (isPydanticModel) stub.validateByName ?: pydanticConfigFlags?.validateByName else null,
+            validateByAlias = if (isPydanticModel) stub.validateByAlias ?: pydanticConfigFlags?.validateByAlias else null,
             initArgument = argumentMapping?.initArgument,
             reprArgument = argumentMapping?.reprArgument,
             eqArgument = argumentMapping?.eqArgument,
@@ -744,8 +785,9 @@ private fun resolveDataclassParameters(
             slotsArgument = argumentMapping?.slotsArgument,
             others = argumentMapping?.others ?: emptyMap(),
             type = type,
-            populateByName = if (isPydanticModel) stub.populateByName() ?: populateByName else null,
             populateByNameArgument = argumentMapping?.populateByNameArgument,
+            validateByNameArgument = argumentMapping?.validateByNameArgument,
+            validateByAliasArgument = argumentMapping?.validateByAliasArgument,
             fieldSpecifiers = resolvedFieldSpecifiers,
           )
         }
@@ -932,22 +974,33 @@ private fun hasPydanticDataclassDecorator(
   }
 }
 
-fun resolvePopulateByNameFromAncestorsStubs(cls: PyClass, context: TypeEvalContext): Boolean? {
+fun resolvePydanticConfigFlagsFromAncestorsStubs(cls: PyClass, context: TypeEvalContext): PydanticConfigFlags {
+  val result = PydanticConfigFlagsImpl()
+
   for (ancestorCls in cls.getAncestorClasses(context)) {
-    val ancestorStub: PyDataclassStub? = StubAwareComputation.on(ancestorCls)
+    val ancestorStub: PyDataclassStub = StubAwareComputation.on(ancestorCls)
       .withCustomStub { clsStub -> clsStub.getCustomStub(PyDataclassStub::class.java) }
       .overStub { it }
       .withStubBuilder { PyDataclassStubImpl.create(it) }
-      .compute(context)
+      .compute(context) ?: continue
 
-    if (ancestorStub != null) {
-      val populateByName = ancestorStub.populateByName()
-      if (populateByName != null) {
-        return populateByName
-      }
+    if (result.populateByName == null) {
+      result.populateByName = ancestorStub.populateByName
+    }
+    if (result.validateByAlias == null) {
+      result.validateByAlias = ancestorStub.validateByAlias
+    }
+    if (result.validateByName == null) {
+      result.validateByName = ancestorStub.validateByName
+    }
+
+    if (result.populateByName != null &&
+        result.validateByAlias != null &&
+        result.validateByName != null) {
+      break
     }
   }
-  return null
+  return result
 }
 
 private fun collectPydanticDataclassParametersFromConfigExpression(
@@ -1029,7 +1082,7 @@ private fun updatePydanticDataclassParametersFromConfigExpression(
         .filterIsInstance<PyKeywordArgument>()
         .forEach { arg ->
           val keyword = arg.keyword
-          if (keyword != null && keyword == PyDataclassNames.Pydantic.POPULATE_BY_NAME) {
+          if (keyword != null && keyword in PyDataclassNames.Pydantic.PYDANTIC_CONFIG_OPTIONS) {
             builder.update(keyword, arg.valueExpression)
             foundParameter = true
           }
@@ -1039,7 +1092,7 @@ private fun updatePydanticDataclassParametersFromConfigExpression(
     is PyDictLiteralExpression -> {
       configValue.elements.forEach { element ->
         val key = (element.key as? PyStringLiteralExpression)?.stringValue
-        if (key != null && key == PyDataclassNames.Pydantic.POPULATE_BY_NAME) {
+        if (key != null && key in PyDataclassNames.DataclassTransform.DECORATOR_OR_CLASS_PARAMETERS) {
           builder.update(key, element.value)
           foundParameter = true
         }

@@ -1288,6 +1288,19 @@ public class PyStubsTest extends PyTestCase {
     assertTrue(pydanticFieldStub.hasDefault());
   }
 
+  @TestFor(issues = "PY-89012")
+  public void testPydanticValidateByNameAndAliasOnClass() {
+    myFixture.copyDirectoryToProject("pydantic", "pydantic");
+    PyFile file = getTestFile();
+    @Nullable PyClass pydanticModel = file.findTopLevelClass("Model");
+    assertNotNull(pydanticModel);
+    PyDataclassStub pydanticStub = pydanticModel.getStub().getCustomStub(PyDataclassStub.class);
+    assertNotNull(pydanticStub);
+    assertTrue(pydanticStub.getValidateByName());
+    assertFalse(pydanticStub.getValidateByAlias());
+    assertNotParsed(file);
+  }
+
   // PY-54560
   public void testDataclassStubForClassDecoratedWithDataclassTransformFactoryFunction() {
     PyFile file = getTestFile();
@@ -1408,7 +1421,7 @@ public class PyStubsTest extends PyTestCase {
     assertNotNull(modelClass);
     PyDataclassStub stub = modelClass.getStub().getCustomStub(PyDataclassStub.class);
     assertNotNull(stub);
-    assertNull(stub.populateByName());
+    assertNull(stub.getPopulateByName());
     assertNotParsed(modelFile);
     assertNotParsed(configFile);
   }
@@ -1421,7 +1434,7 @@ public class PyStubsTest extends PyTestCase {
     assertNotNull(modelClass);
     PyDataclassStub stub = modelClass.getStub().getCustomStub(PyDataclassStub.class);
     assertNotNull(stub);
-    assertTrue(stub.populateByName());
+    assertTrue(stub.getPopulateByName());
     assertNotParsed(file);
   }
 

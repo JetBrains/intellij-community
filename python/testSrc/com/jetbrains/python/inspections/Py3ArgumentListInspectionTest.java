@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
+import com.intellij.idea.TestFor;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -854,5 +855,29 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
                    g(create_person)(name="", age=30)
                    g(create_person)(name="", age=30, <warning descr="Unexpected argument">position="CEO"</warning>)
                    """);
+  }
+
+  @TestFor(issues = "PY-89182")
+  public void testPydanticValidateByAliasAndNameFalse() {
+    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
+    doTest();
+  }
+
+  @TestFor(issues = "PY-89182")
+  public void testPydanticValidateByNameAndAliasBothTrue() {
+    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
+    doTest();
+  }
+
+  @TestFor(issues = "PY-89182")
+  public void testPydanticValidateByNameFalseAndAliasTrue() {
+    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
+    doTest();
+  }
+
+  @TestFor(issues = "PY-89182")
+  public void testPydanticValidateByNameTrueAndAliasFalse() {
+    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
+    doTest();
   }
 }

@@ -30,7 +30,6 @@ import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.PyUtil
-import com.jetbrains.python.psi.impl.ParamHelper
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyCallExpressionNavigator
 import com.jetbrains.python.psi.resolve.PyResolveContext
@@ -214,16 +213,18 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
       val elementGenerator = PyElementGenerator.getInstance(clsType.pyClass.project)
       val ellipsis = elementGenerator.createEllipsis()
 
-      val collected = linkedMapOf<String, PyCallableParameter>()
+      val positionalAliasOrFieldNameParams = linkedMapOf<String, PyCallableParameter>()
       var seenInit = false
-      val keywordOnly = linkedSetOf<String>()
+      val keywordOnlyAliasOrFieldNameParams = linkedSetOf<String>()
       var seenKeywordOnlyClass = false
       val seenNames = mutableSetOf<String>()
 
-      val collectedFieldNames = linkedMapOf<String, PyCallableParameter>()
-      val keywordOnlyFieldNames = linkedSetOf<String>()
+      val positionalFieldNameParams = linkedMapOf<String, PyCallableParameter>()
+      val keywordOnlyFieldNameParams = linkedSetOf<String>()
 
       var populateByName: Boolean? = null
+      var validateByName: Boolean? = null
+      var validateByAlias: Boolean? = null
 
       for (currentType in StreamEx.of<PyClassLikeType>(clsType).append(clsType.getAncestorTypes(context))) {
         if (currentType == null ||
@@ -248,6 +249,12 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
         if (populateByName == null && parameters.populateByName != null) {
           populateByName = parameters.populateByName
         }
+        if (validateByName == null && parameters.validateByName != null) {
+          validateByName = parameters.validateByName
+        }
+        if (validateByAlias == null && parameters.validateByAlias != null) {
+          validateByAlias = parameters.validateByAlias
+        }
 
         seenInit = seenInit || parameters.init
         seenKeywordOnlyClass = seenKeywordOnlyClass || parameters.kwOnly
@@ -266,40 +273,35 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
             parameter != null && isKwOnlyMarkerField(parameter, context)
           }
 
-          fieldsInfo.forEachIndexed { index, (name, kwOnly, parameter, fieldName) ->
+          fieldsInfo.forEachIndexed { index, (aliasOrFieldName, kwOnly, parameter, fieldName) ->
             // note: attributes are visited from inheritors to ancestors, in reversed order for every of them
 
             if ((seenKeywordOnlyClass && (parameters.type == PyDataclassParameters.PredefinedType.ATTRS || kwOnly != false)
                  || index < indexOfKeywordOnlyAttribute || kwOnly == true)
-                && name !in collected) {
-              keywordOnly += name
-
-              if (fieldName != null) {
-                keywordOnlyFieldNames += fieldName
-              }
+                && aliasOrFieldName !in positionalAliasOrFieldNameParams) {
+              keywordOnlyAliasOrFieldNameParams += aliasOrFieldName
+              keywordOnlyFieldNameParams += fieldName
             }
 
             if (parameter == null) {
-              seenNames.add(name)
+              seenNames.add(aliasOrFieldName)
             }
             else if (!isKwOnlyMarkerField(parameter, context)) {
               if (parameters.type.asPredefinedType == PyDataclassParameters.PredefinedType.STD ||
                   parameters.type.asPredefinedType == PyDataclassParameters.PredefinedType.DATACLASS_TRANSFORM) {
                 // std: attribute that overrides ancestor's attribute does not change the order but updates type
-                collected[name] = collected.remove(name) ?: parameter
+                positionalAliasOrFieldNameParams[aliasOrFieldName] = positionalAliasOrFieldNameParams.remove(aliasOrFieldName) ?: parameter
 
-                if (fieldName != null) {
-                  val fieldNameParam = PyCallableParameterImpl.nonPsi(
-                    fieldName,
-                    parameter.getType(context),
-                    parameter.defaultValue
-                  )
-                  collectedFieldNames[fieldName] = collectedFieldNames.remove(fieldName) ?: fieldNameParam
-                }
+                val fieldNameParam = PyCallableParameterImpl.nonPsi(
+                  fieldName,
+                  parameter.getType(context),
+                  parameter.defaultValue
+                )
+                positionalFieldNameParams[fieldName] = positionalFieldNameParams.remove(fieldName) ?: fieldNameParam
               }
-              else if (!collected.containsKey(name)) {
+              else if (aliasOrFieldName !in positionalAliasOrFieldNameParams) {
                 // attrs: attribute that overrides ancestor's attribute changes the order
-                collected[name] = parameter
+                positionalAliasOrFieldNameParams[aliasOrFieldName] = parameter
               }
             }
           }
@@ -308,15 +310,23 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
 
       if (initOnly && !seenInit) return null
 
-      val signatures = buildList {
-        add(buildParameters(elementGenerator, collected, keywordOnly))
+      val effectiveValidateByName = validateByName == true || (validateByAlias == false && validateByName != false)
 
-        if (populateByName == true) {
-          add(buildParameters(elementGenerator, collectedFieldNames, keywordOnlyFieldNames))
-        }
+      val acceptsByAliases = validateByAlias != false
+      val acceptsByName = effectiveValidateByName || populateByName == true
+
+      return when {
+        acceptsByAliases && acceptsByName -> listOf(
+          buildParameters(elementGenerator, positionalAliasOrFieldNameParams, keywordOnlyAliasOrFieldNameParams),
+          buildParameters(elementGenerator, positionalFieldNameParams, keywordOnlyFieldNameParams)
+        )
+        acceptsByName -> listOf(
+          buildParameters(elementGenerator, positionalFieldNameParams, keywordOnlyFieldNameParams)
+        )
+        else -> listOf(
+          buildParameters(elementGenerator, positionalAliasOrFieldNameParams, keywordOnlyAliasOrFieldNameParams)
+        )
       }
-
-      return signatures.distinctBy { ParamHelper.getPresentableText(it, true, context) }
     }
 
     private fun isKwOnlyMarkerField(parameter: PyCallableParameter, context: TypeEvalContext): Boolean {
@@ -353,7 +363,7 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
       val parameterName: String,
       val kwOnly: Boolean?,
       val parameter: PyCallableParameter?,
-      val fieldName: String?
+      val fieldName: String
     )
 
     private fun fieldToParameter(

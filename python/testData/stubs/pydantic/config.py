@@ -9,3 +9,5 @@ class ConfigDict(TypedDict, total=False):
     frozen: bool
     validate_default: bool
     arbitrary_types_allowed: bool
+    validate_by_alias: bool
+    validate_by_name: bool
