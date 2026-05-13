@@ -108,7 +108,7 @@ object ProcessKiller {
             val descendants = processHandle.descendants().toList()
             descendants.asReversed().forEach {
               logOutput("${processHandleToString(processHandle)}: Stopping descendant ${processHandleToString(it)} gracefully by `destroy` [SIGTERM]")
-              it.destroy()
+              gracefulStop(it, 2.seconds, cleanUpDescendants = false)
             }
           }
           logOutput("${processHandleToString(processHandle)}: Stopping gracefully by `destroy` [SIGTERM]")
