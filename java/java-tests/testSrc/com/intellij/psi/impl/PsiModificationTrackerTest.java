@@ -387,21 +387,22 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
   }
 
   public void testVirtualFileRename_WithPsi() {
-    final PsiManagerEx psiManager = PsiManagerEx.getInstanceEx(getProject());
+    PsiManagerEx psiManager = PsiManagerEx.getInstanceEx(getProject());
     GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
 
-    final VirtualFile file = addFileToProject("foo/Foo.java", "package foo; class Foo {}").getVirtualFile();
+    VirtualFile vFile = addFileToProject("foo/Foo.java", "package foo; class Foo {}").getVirtualFile();
     assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("foo.Foo", scope));
-    long count1 = getTracker().getModificationCount();
-    long hc = psiManager.findFile(file).hashCode();
-    long stamp1 = psiManager.findFile(file).getModificationStamp();
+    long psiModCountBefore = getTracker().getModificationCount();
+    PsiFile psiFileBefore = psiManager.findFile(vFile);
+    long psiStampBefore = psiFileBefore.getModificationStamp();
 
-    rename(file, "Bar.java");
+    rename(vFile, "Bar.java");
 
     assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("foo.Foo", scope));
-    assertTrue(String.valueOf(count1), count1 != getTracker().getModificationCount());
-    assertTrue(String.valueOf(stamp1), stamp1 != psiManager.findFile(file).getModificationStamp());
-    assertEquals(hc, psiManager.findFile(file).hashCode());
+    assertFalse(String.valueOf(psiModCountBefore), psiModCountBefore == getTracker().getModificationCount());
+    PsiFile psiFileAfter = psiManager.findFile(vFile);
+    assertFalse(String.valueOf(psiStampBefore), psiStampBefore == psiFileAfter.getModificationStamp());
+    assertEquals(psiFileBefore, psiFileAfter);
   }
 
   public void testLanguageLevelChange() {
