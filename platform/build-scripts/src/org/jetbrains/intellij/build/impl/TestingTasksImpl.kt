@@ -78,6 +78,10 @@ private const val NO_TESTS_ERROR = 42
 
 internal class TestingTasksImpl(context: CompilationContext, private val options: TestingOptions) : TestingTasks {
   private val context: CompilationContext = if (options.useArchivedCompiledClasses) context.asArchived else context
+  private val testPatternSystemPropertyKey = "intellij.build.test.patterns"
+  private val testGroupSystemPropertyKey = "intellij.build.test.groups"
+  private val testIncludeTagsSystemPropertyKey = "intellij.build.test.tags"
+  private val testExcludeTagsSystemPropertyKey = "intellij.build.test.excluded.tags"
 
   override val coverage: Coverage by lazy {
     CoverageImpl(
@@ -251,13 +255,13 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     if (options.testConfigurations != null) {
       val testConfigurationsOptionName = "intellij.build.test.configurations"
       if (options.testPatterns != null) {
-        errorOptionIgnored(testConfigurationsOptionName, "intellij.build.test.patterns")
+        errorOptionIgnored(testConfigurationsOptionName, testPatternSystemPropertyKey)
       }
       if (options.testSimplePatterns != null) {
         errorOptionIgnored(testConfigurationsOptionName, "intellij.build.test.simple.patterns")
       }
       if (options.testGroups != null) {
-        errorOptionIgnored(testConfigurationsOptionName, "intellij.build.test.groups")
+        errorOptionIgnored(testConfigurationsOptionName, testGroupSystemPropertyKey)
       }
       if (mainModule != null && !options.validateMainModule) {
         errorOptionIgnored(testConfigurationsOptionName, "intellij.build.test.main.module")
@@ -268,10 +272,10 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     }
     else if (options.testPatterns != null) {
       if (options.testSimplePatterns != null) {
-        errorOptionIgnored("intellij.build.test.patterns", "intellij.build.test.simple.patterns")
+        errorOptionIgnored(testPatternSystemPropertyKey, "intellij.build.test.simple.patterns")
       }
       if (options.testGroups != null) {
-        errorOptionIgnored("intellij.build.test.patterns", "intellij.build.test.groups")
+        errorOptionIgnored(testPatternSystemPropertyKey, testGroupSystemPropertyKey)
       }
     }
     else if (options.testSimplePatterns != null) {
@@ -279,12 +283,12 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         context.messages.logErrorAndThrow("'intellij.build.test.simple.patterns' option should be used only for local runs")
       }
       if (options.testGroups != null) {
-        errorOptionIgnored("intellij.build.test.simple.patterns", "intellij.build.test.groups")
+        errorOptionIgnored("intellij.build.test.simple.patterns", testGroupSystemPropertyKey)
       }
     }
 
     if (options.testConfigurations == null && options.testPatterns == null && options.testSimplePatterns == null && options.testGroups == null) {
-      context.messages.logErrorAndThrow("'intellij.build.test.configurations', 'intellij.build.test.patterns', 'intellij.build.test.simple.patterns', or 'intellij.build.test.groups' option should be set")
+      context.messages.logErrorAndThrow("'intellij.build.test.configurations', '$testPatternSystemPropertyKey', 'intellij.build.test.simple.patterns', or '$testGroupSystemPropertyKey' option should be set")
     }
 
     if (options.validateMainModule && mainModule.isNullOrEmpty()) {
@@ -362,8 +366,8 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
 
     // configure TestCaseLoader#isClassNameIncluded with the properties from the test process
     "test.group.roots".let { systemProperties[it]?.run { System.setProperty(it, this) } }  // from systemProperties
-    "intellij.build.test.patterns".let { options.testPatterns?.run { System.setProperty(it, this) } }  // from options, e.g. TestingTasksImpl#runTestsSkippedInHeadlessEnvironment
-    "intellij.build.test.groups".let { options.testGroups?.run { System.setProperty(it, this) } }  // from options, e.g. RunAnyTestTheSameWayTeamCityDoes#run
+    testPatternSystemPropertyKey.let { options.testPatterns?.run { System.setProperty(it, this) } }  // from options, e.g. TestingTasksImpl#runTestsSkippedInHeadlessEnvironment
+    testGroupSystemPropertyKey.let { options.testGroups?.run { System.setProperty(it, this) } }  // from options, e.g. RunAnyTestTheSameWayTeamCityDoes#run
     setPropertyFromPass(TestCaseLoader.INCLUDE_UNCONVENTIONALLY_NAMED_TESTS_FLAG)
 
     // configure TestCaseLoader#matchesCurrentBucket with the properties from the test process
@@ -515,7 +519,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       context.messages.logErrorAndThrow("Remote debugging supports debugging all test methods in a class for now, but target class isn't specified")
     }
     if (options.testPatterns != null) {
-      context.messages.warning("'intellij.build.test.patterns' option is ignored while debugging via TeamCity plugin")
+      context.messages.warning("'$testPatternSystemPropertyKey' option is ignored while debugging via TeamCity plugin")
     }
     if (options.testConfigurations != null) {
       context.messages.warning("'intellij.build.test.configurations' option is ignored while debugging via TeamCity plugin")
@@ -592,10 +596,10 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     val systemProperties = systemProperties.toMutableMap()
     systemProperties.put("io.netty.allocator.type", "pooled")
     systemProperties.put("test.roots", testRoots.joinToString(File.pathSeparator, transform = toExistingAbsolutePathConverter))
-    testPatterns?.let { systemProperties.putIfAbsent("intellij.build.test.patterns", it) }
-    testGroups?.let { systemProperties.putIfAbsent("intellij.build.test.groups", it) }
-    testTags?.let { systemProperties.putIfAbsent("intellij.build.test.tags", it) }
-    testExcludedTags?.let { systemProperties.putIfAbsent("intellij.build.test.excluded.tags", it) }
+    testPatterns?.let { systemProperties.putIfAbsent(testPatternSystemPropertyKey, it) }
+    testGroups?.let { systemProperties.putIfAbsent(testGroupSystemPropertyKey, it) }
+    testTags?.let { systemProperties.putIfAbsent(testIncludeTagsSystemPropertyKey, it) }
+    testExcludedTags?.let { systemProperties.putIfAbsent(testExcludeTagsSystemPropertyKey, it) }
     systemProperties.putIfAbsent(TestingOptions.PERFORMANCE_TESTS_ONLY_FLAG, options.isPerformanceTestsOnly.toString())
     val allJvmArgs = ArrayList(jvmArgs)
     prepareEnvForTestRun(jvmArgs = allJvmArgs, systemProperties = systemProperties, classPath = bootstrapClasspath, remoteDebugging = remoteDebugging, cleanSystemDir = false)
@@ -646,6 +650,41 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       devBuildServerSettings = devBuildServerSettings,
     )
     notifySnapshotBuilt(allJvmArgs)
+  }
+
+  private fun BuildMessages.analyzeAndLogTags(includedTagsAsString: String?, excludedTagsAsString: String?) {
+    fun parseTagProperty(tagsAsString: String): Set<String> {
+      return tagsAsString.splitToSequence(";").map { it.trim() }.filter { it.isNotEmpty() }.toSet()
+    }
+
+    // Case when no tags were provided
+    if (includedTagsAsString == null && excludedTagsAsString == null) {
+      info("No INCLUDE or EXCLUDE tags were specified")
+    }
+    else if (includedTagsAsString != null && excludedTagsAsString == null) {
+      val values = parseTagProperty(includedTagsAsString)
+      info("INCLUDE tags that will be applied: $values")
+    }
+    else if (includedTagsAsString == null && excludedTagsAsString != null) {
+      val values = parseTagProperty(excludedTagsAsString)
+      info("EXCLUDE tags that will be applied: $values")
+    }
+    else if (includedTagsAsString != null && excludedTagsAsString != null){
+      // Both tags are present
+      // As of JUnit5 functionality, if same values present in both INCLUDE and EXCLUDE tags - actual tag value will be counted as EXCLUDED.
+      val includedTags = parseTagProperty(includedTagsAsString)
+      val excludedTags = parseTagProperty(excludedTagsAsString)
+
+      (includedTags intersect excludedTags)
+        .apply { check(this.isEmpty()) { "Configuration error: INCLUDE and EXCLUDE tags must be mutually exclusive. Found overlapping tag(s): $this" } }
+
+      info(
+        """
+        INCLUDE tags that will be applied: $includedTags
+        EXCLUDE tags that will be applied: $excludedTags
+      """.trimIndent()
+      )
+    }
   }
 
   private suspend fun getRuntimeExecutablePath(): Path {
@@ -791,7 +830,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
 
     if (options.isEnableCausalProfiling) {
       val causalProfilingOptions = CausalProfilingOptions.IMPL
-      systemProperties.put("intellij.build.test.patterns", causalProfilingOptions.testClass.replace(".", "\\."))
+      systemProperties.put(testPatternSystemPropertyKey, causalProfilingOptions.testClass.replace(".", "\\."))
       jvmArgs.addAll(buildCausalProfilingAgentJvmArg(causalProfilingOptions, context))
     }
 
@@ -882,6 +921,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     devBuildServerSettings: DevBuildServerSettings?,
   ) {
     val messages = context.messages
+    messages.analyzeAndLogTags(systemProperties.get(testIncludeTagsSystemPropertyKey), systemProperties.get(testExcludeTagsSystemPropertyKey))
     if (options.testSimplePatterns != null) {
       val exitCode = blockWithDefaultFlowId("running tests w/ simple patterns") {
         runJUnit5Engine(
@@ -1066,7 +1106,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
           if (attempt > 1) {
             additionalProperties["intellij.build.test.ignoreFirstAndLastTests"] = "true"
             check(!failedClasses.isNullOrEmpty())  // already checked in the previous attempt
-            additionalProperties["intellij.build.test.patterns"] = failedClasses.joinToString(";")
+            additionalProperties[testPatternSystemPropertyKey] = failedClasses.joinToString(";")
           }
 
           blockWithDefaultFlowId("run tests${spanNameSuffix}") {
