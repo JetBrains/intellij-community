@@ -1,12 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.codeInsight.gradle
+package org.jetbrains.kotlin.idea.k2.codeInsight.gradle.configuration
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemDescriptorBase
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.runInEdtAndWait
+import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
 import org.jetbrains.kotlin.idea.groovy.inspections.DifferentKotlinGradleVersionInspection
 import org.jetbrains.kotlin.idea.inspections.runInspection
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
