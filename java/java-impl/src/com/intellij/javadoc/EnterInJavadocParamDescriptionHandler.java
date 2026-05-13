@@ -68,6 +68,14 @@ public final class EnterInJavadocParamDescriptionHandler implements EnterHandler
   private static boolean isInJavaDoc(@NotNull Editor editor, int offset) {
     Document document = editor.getDocument();
     CharSequence docChars = document.getCharsSequence();
+
+    // Markdown javadoc
+    int startOffset = CharArrayUtil.shiftBackwardUntil(docChars, offset - 1, "\n");
+    if (CharArrayUtil.shiftForwardUntil(docChars, startOffset, "///") == offset - 4) {
+      return true;
+    }
+
+    // Classic javadoc
     int i = CharArrayUtil.lastIndexOf(docChars, "/**", offset);
     if (i >= 0) {
       i = CharArrayUtil.indexOf(docChars, "*/", i);

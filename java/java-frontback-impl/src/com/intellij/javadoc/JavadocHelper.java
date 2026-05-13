@@ -32,6 +32,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.javadoc.PsiDocToken;
@@ -140,7 +141,12 @@ public final class JavadocHelper {
     if (tag == null) {
       // Due to javadoc PSI specifics.
       if (elementAtCaret instanceof PsiWhiteSpace) {
-        for (PsiElement e = elementAtCaret.getPrevSibling(); e != null && tag == null; e = e.getPrevSibling()) {
+        PsiElement e = elementAtCaret.getPrevSibling();
+        // Markdown comments are technically already closed when the last newline is found
+        if (e instanceof PsiDocComment docComment && docComment.isMarkdownComment()) {
+          e = docComment.getLastChild();
+        }
+        for (; e != null && tag == null; e = e.getPrevSibling()) {
           tag = PsiTreeUtil.getParentOfType(e, PsiDocTag.class, false);
           if (e instanceof PsiWhiteSpace
               || (e instanceof PsiDocToken && ((PsiDocToken)e).getTokenType() == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS)) {

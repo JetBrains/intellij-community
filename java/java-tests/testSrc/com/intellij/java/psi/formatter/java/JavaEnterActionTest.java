@@ -288,6 +288,23 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
         }"""
     );
   }
+  
+  public void testFirstLineOfJavaDocParameterMarkdown() {
+    doTextTest(
+      "java",
+      """
+        class Test {
+          /// @param i  this is my description<caret>
+          void test(int i) {}
+        }""",
+ """
+       class Test {
+         /// @param i  this is my description
+         ///           <caret>
+         void test(int i) {}
+       }"""
+    );
+  }
 
 
   public void testBetweenComments() {

@@ -840,6 +840,24 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
     );
   }
 
+  public void testSecondLineOfJavadocParameterMarkdown() {
+      doTextTest(
+        "java",
+        """
+          class Test {
+              /// @param i this is my description
+              ///          that spreads multiple lines<caret>
+              void test(int i) {}
+          }""",
+        """
+          class Test {
+              /// @param i this is my description
+              ///          that spreads multiple lines
+              ///          <caret>
+              void test(int i) {}
+          }"""
+      );
+    }
 
   public void testBeforeJavadocParameter() {
     // Inspired by IDEA-IDEA-70194
