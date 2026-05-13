@@ -824,11 +824,28 @@ object UniversalFileChooser {
         scope.launch {
           withContext(Dispatchers.IO) {
             val path = runCatching { Path.of(text) }.getOrNull() ?: return@withContext
+            val forceShowHidden = !fileTree.areHiddensShown() && hasHiddenSegment(path)
             runOnEdt {
+              if (forceShowHidden) {
+                fileTree.showHiddens(true)
+                PropertiesComponent.getInstance().setValue(SHOW_HIDDEN_FILES_KEY, true)
+                topToolbar.updateActionsAsync()
+              }
               fileTree.select(path) { fileTree.expand(path, null) }
             }
           }
         }
+      }
+
+      private fun hasHiddenSegment(path: Path): Boolean {
+        var current: Path? = path
+        while (current != null && current.parent != null) {
+          if (runCatching { Files.isHidden(current) }.getOrDefault(false)) {
+            return true
+          }
+          current = current.parent
+        }
+        return false
       }
 
       private fun updateBreadcrumbs(selection: List<Path?>) {
