@@ -11,6 +11,7 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xmlb.XmlSerializer
+import org.jetbrains.annotations.TestOnly
 
 private val NOT_APPLICABLE = Any()
 
@@ -31,6 +32,11 @@ internal open class XmlExtensionAdapter(implementationClassName: String,
 
   override val isInstanceCreated: Boolean
     get() = extensionInstance != null
+
+  @TestOnly
+  override fun dropInstance() {
+    extensionInstance = null
+  }
 
   override fun <T : Any> createInstance(componentManager: ComponentManager): T? {
     @Suppress("UNCHECKED_CAST")

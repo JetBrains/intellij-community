@@ -5,6 +5,7 @@ import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.extensions.PluginDescriptor
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
 
 @Internal
 abstract class ExtensionComponentAdapter internal constructor(
@@ -21,6 +22,13 @@ abstract class ExtensionComponentAdapter internal constructor(
   internal abstract val isInstanceCreated: Boolean
 
   abstract fun <T : Any> createInstance(componentManager: ComponentManager): T?
+
+  /**
+   * Clears extension point holders. The next call of [com.intellij.openapi.extensions.ExtensionPoint.getExtensionList] will
+   * create new instances of extensions defined in plugin/module XML files.
+   */
+  @TestOnly
+  open fun dropInstance(): Unit = Unit
 
   @Throws(ClassNotFoundException::class)
   fun <T> getImplementationClass(componentManager: ComponentManager): Class<T> {

@@ -772,6 +772,15 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
     extensionClass = null
   }
 
+  @TestOnly
+  @Synchronized
+  fun dropInstances() {
+    clearCache()
+    for (adapter in adapters) {
+      adapter.dropInstance()
+    }
+  }
+
   fun getExtensionClass(): Class<T> {
     var extensionClass = this.extensionClass
     if (extensionClass == null) {
