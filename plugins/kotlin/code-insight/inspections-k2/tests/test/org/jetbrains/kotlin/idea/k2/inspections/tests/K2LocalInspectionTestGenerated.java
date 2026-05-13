@@ -1425,6 +1425,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/intentions/iterationOverMap/Getters.kt");
         }
 
+        @TestMetadata("IndexedValue.kt")
+        public void testIndexedValue() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/IndexedValue.kt");
+        }
+
         @TestMetadata("KeyOnly.kt")
         public void testKeyOnly() throws Exception {
             runTest("../../../idea/tests/testData/intentions/iterationOverMap/KeyOnly.kt");
@@ -1478,6 +1483,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("SomeQualifiedExpressionInRange.kt")
         public void testSomeQualifiedExpressionInRange() throws Exception {
             runTest("../../../idea/tests/testData/intentions/iterationOverMap/SomeQualifiedExpressionInRange.kt");
+        }
+
+        @TestMetadata("StringTemplate.kt")
+        public void testStringTemplate() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/StringTemplate.kt");
         }
 
         @TestMetadata("ValueOnly.kt")

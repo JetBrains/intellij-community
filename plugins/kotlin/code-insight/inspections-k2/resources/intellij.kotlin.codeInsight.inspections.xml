@@ -1312,7 +1312,7 @@
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="true"
-                     level="INFORMATION"
+                     level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.destructure.display.name" bundle="messages.KotlinBundle"/>
 

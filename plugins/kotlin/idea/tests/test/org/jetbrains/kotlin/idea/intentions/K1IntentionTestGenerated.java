@@ -12811,6 +12811,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/iterationOverMap/Getters.kt");
         }
 
+        @TestMetadata("IndexedValue.kt")
+        public void testIndexedValue() throws Exception {
+            runTest("testData/intentions/iterationOverMap/IndexedValue.kt");
+        }
+
         @TestMetadata("KeyOnly.kt")
         public void testKeyOnly() throws Exception {
             runTest("testData/intentions/iterationOverMap/KeyOnly.kt");
@@ -12864,6 +12869,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("SomeQualifiedExpressionInRange.kt")
         public void testSomeQualifiedExpressionInRange() throws Exception {
             runTest("testData/intentions/iterationOverMap/SomeQualifiedExpressionInRange.kt");
+        }
+
+        @TestMetadata("StringTemplate.kt")
+        public void testStringTemplate() throws Exception {
+            runTest("testData/intentions/iterationOverMap/StringTemplate.kt");
         }
 
         @TestMetadata("ValueOnly.kt")
