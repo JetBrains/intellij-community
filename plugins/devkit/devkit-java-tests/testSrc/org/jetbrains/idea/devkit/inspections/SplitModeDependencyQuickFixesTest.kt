@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -26,6 +27,8 @@ internal class SplitModeDependencyQuickFixesTest : JavaCodeInsightFixtureTestCas
   override fun setUp() {
     super.setUp()
     IntelliJProjectUtil.markAsIntelliJPlatformProject(project, true)
+    RegistryManager.getInstance().get("devkit.remote.dev.split.mode.inspections.enable.xml.for.non.native.plugin")
+      .setValue(true, testRootDisposable)
 
     val service = SplitModeApiRestrictionsService.getInstance()
     service.scheduleLoadRestrictions()
