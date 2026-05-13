@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "OVERRIDE_DEPRECATION", "LoggingSimilarMessage")
 
 package com.intellij.openapi.extensions.impl
@@ -318,15 +318,11 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
 
   internal inline fun processWithPluginDescriptor(shouldBeSorted: Boolean, consumer: (T, PluginDescriptor) -> Unit) {
     for (adapter in if (shouldBeSorted) sortedAdapters else adapters) {
-      try {
-        val extension = adapter.createInstance<T>(componentManager) ?: continue
-        consumer(extension, adapter.pluginDescriptor)
-      }
-      catch (e: ProcessCanceledException) {
-        throw e
-      }
-      catch (e: Throwable) {
-        LOG.error(componentManager.createError(e, adapter.pluginDescriptor.pluginId))
+      runSafelyPluginCode(componentManager, pluginDescriptor) {
+        val extension = adapter.createInstance<T>(componentManager)
+        if (extension != null) {
+          consumer(extension, adapter.pluginDescriptor)
+        }
       }
     }
   }
@@ -390,7 +386,7 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
                              duplicates: MutableSet<T>?,
                              extensionClassForCheck: Class<T>,
                              adapters: List<ExtensionComponentAdapter>): T? {
-    try {
+    runSafely {
       if (!checkThatClassloaderIsActive(adapter)) {
         return null
       }
@@ -426,12 +422,6 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
         }
         return extension
       }
-    }
-    catch (e: ProcessCanceledException) {
-      throw e
-    }
-    catch (e: Throwable) {
-      LOG.error(e)
     }
     return null
   }
@@ -510,31 +500,19 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
   private fun doNotifyListeners(isRemoved: Boolean, extensions: List<T>, listeners: List<ExtensionPointListener<T>>) {
     for (listener in listeners) {
       if (listener is ExtensionPointAdapter<*>) {
-        try {
+        runSafely {
           listener.extensionListChanged()
-        }
-        catch (e: ProcessCanceledException) {
-          throw e
-        }
-        catch (e: Throwable) {
-          LOG.error(e)
         }
       }
       else {
         for (extension in extensions) {
-          try {
+          runSafely {
             if (isRemoved) {
               listener.extensionRemoved(extension, extensionPointPluginDescriptor)
             }
             else {
               listener.extensionAdded(extension, extensionPointPluginDescriptor)
             }
-          }
-          catch (e: ProcessCanceledException) {
-            throw e
-          }
-          catch (e: Throwable) {
-            LOG.error(e)
           }
         }
       }
@@ -1050,18 +1028,34 @@ private fun <T : Any> getOrCreateExtensionInstance(adapter: ExtensionComponentAd
     return null
   }
 
-  try {
+  runSafelyPluginCode(componentManager, adapter.pluginDescriptor) {
     val instance = adapter.createInstance<T>(componentManager)
     if (instance == null) {
       LOG.debug { "$adapter not loaded because it reported that not applicable" }
     }
     return instance
   }
-  catch (e: ProcessCanceledException) {
-    throw e
+  return null
+}
+
+private inline fun runSafelyPluginCode(
+  componentManager: ComponentManager,
+  descriptor: PluginDescriptor,
+  block: () -> Unit,
+) = runSafely(loggingErrorAdapter = { e -> componentManager.createError(e, descriptor.pluginId) }, block = block)
+
+private inline fun runSafely(
+  loggingErrorAdapter: (Throwable) -> Throwable = { e -> e },
+  block: () -> Unit,
+) {
+  try {
+    block()
   }
   catch (e: Throwable) {
-    LOG.error(componentManager.createError(e, adapter.pluginDescriptor.pluginId))
+    if (e is CancellationException) {
+      throw e
+    }
+
+    LOG.error(loggingErrorAdapter(e))
   }
-  return null
 }
