@@ -16,9 +16,15 @@ internal class PyInspectionTestJUnit5Extension : BeforeEachCallback, Extension {
     val annotation = testClass.kotlin.findAnnotation<InspectionTest>()
                      ?: error("@InspectionTest is missing on ${testClass.name}")
 
+    val manager = context.getLookupFixtureManager()
+    val codeInsightFixture = manager.findInstance(CodeInsightTestFixture::class.java, null)
+      ?: error(
+        "@InspectionTest on ${testClass.name} requires a CodeInsightTestFixture to be available. " +
+        "Annotate the test class with @PyCodeInsightTestApplication (or another extension that " +
+        "registers CodeInsightTestFixture)."
+      )
+
     val inspectionClasses = annotation.inspectionClasses.map { it.java }
-    val testMethodLevelManager = context.getLookupFixtureManager()
-    val codeInsightFixture = testMethodLevelManager.getRequired<CodeInsightTestFixture>()
     codeInsightFixture.get().enableInspections(inspectionClasses)
   }
 }

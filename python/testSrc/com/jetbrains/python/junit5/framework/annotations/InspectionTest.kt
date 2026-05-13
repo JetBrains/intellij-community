@@ -9,7 +9,13 @@ import org.junit.jupiter.api.extension.ExtendWith
 import kotlin.reflect.KClass
 
 /**
- * Enables the specific inspection(s) for the test class.
+ * Enables the given local inspection(s) on the test fixture for the annotated test class.
+ *
+ * Requires a `CodeInsightTestFixture` to be registered as a JUnit 5 fixture, which is
+ * what [PyCodeInsightTestApplication] arranges. If the fixture is missing, the extension
+ * fails before the test runs with a message that names what to add.
+ *
+ * @param inspectionClasses Inspection classes to enable. Pass at least one.
  */
 @TestOnly
 @ApiStatus.Experimental
