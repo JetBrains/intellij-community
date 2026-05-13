@@ -24,6 +24,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class RecursiveTreeElementWalkingVisitor extends TreeElementVisitor implements PsiRecursiveVisitor {
+  // in this visitor, we cache a version to avoid excessive access to thread locals.
+  // sometimes we are not operating on top of versioned syntax trees, so we need to indicate that this optimization is disabled.
+  private static final int OPTIMIZED_VERSION_ACCESS_DISABLED = -2;
+
   private final boolean myDoTransform;
   private final WalkingState<ASTNode> myWalkingState;
   private final long version;
@@ -43,7 +47,7 @@ public abstract class RecursiveTreeElementWalkingVisitor extends TreeElementVisi
   @ApiStatus.Experimental
   protected RecursiveTreeElementWalkingVisitor(@Nullable ASTNode node, boolean doTransform) {
     myDoTransform = doTransform;
-    version = node instanceof TreeElement ? ((TreeElement) node).isVersioned() ? InternalPsiVersioning.getCurrentPsiVersion() : -1 : -2;
+    version = node instanceof TreeElement ? ((TreeElement) node).isVersioned() ? InternalPsiVersioning.getCurrentPsiVersion() : -1 : OPTIMIZED_VERSION_ACCESS_DISABLED;
     myWalkingState = new WalkingState<ASTNode>(new ASTTreeGuide(version)) {
       @Override
       public void elementFinished(@NotNull ASTNode element) {
@@ -64,24 +68,28 @@ public abstract class RecursiveTreeElementWalkingVisitor extends TreeElementVisi
       this.version = version;
     }
 
+    private boolean isVersionAccessOptimizationEnabled(@NotNull ASTNode node) {
+      return version != OPTIMIZED_VERSION_ACCESS_DISABLED && node instanceof TreeElement;
+    }
+
     @Override
     public ASTNode getNextSibling(@NotNull ASTNode element) {
-      return version != -2 && element instanceof TreeElement ? ((TreeElement)element).getTreeNextVersioned(version) : element.getTreeNext();
+      return version != OPTIMIZED_VERSION_ACCESS_DISABLED && element instanceof TreeElement ? ((TreeElement)element).getTreeNextVersioned(version) : element.getTreeNext();
     }
 
     @Override
     public ASTNode getPrevSibling(@NotNull ASTNode element) {
-      return version != -2 && element instanceof TreeElement ? ((TreeElement)element).getTreePrevVersioned(version) : element.getTreePrev();
+      return isVersionAccessOptimizationEnabled(element) ? ((TreeElement)element).getTreePrevVersioned(version) : element.getTreePrev();
     }
 
     @Override
     public ASTNode getFirstChild(@NotNull ASTNode element) {
-      return version != -2 && element instanceof TreeElement ? ((TreeElement)element).getFirstChildNodeVersioned(version) : element.getFirstChildNode();
+      return isVersionAccessOptimizationEnabled(element) ? ((TreeElement)element).getFirstChildNodeVersioned(version) : element.getFirstChildNode();
     }
 
     @Override
     public ASTNode getParent(@NotNull ASTNode element) {
-      return version != -2 && element instanceof TreeElement ? ((TreeElement)element).getTreeParentVersioned(version) : element.getTreeParent();
+      return isVersionAccessOptimizationEnabled(element)  ? ((TreeElement)element).getTreeParentVersioned(version) : element.getTreeParent();
     }
 
   }
