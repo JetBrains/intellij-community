@@ -10,6 +10,7 @@ internal class MinimapLayerPipeline(
 
   fun paint(graphics: Graphics2D, state: MinimapLayerRenderState) {
     for (layer in orderedLayers) {
+      if (!MinimapLayerVisibilityPolicy.isLayerEnabled(state.snapshot.context.editor, layer.id)) continue
       if (!layer.isApplicable(state)) continue
       layer.paint(graphics, state)
     }

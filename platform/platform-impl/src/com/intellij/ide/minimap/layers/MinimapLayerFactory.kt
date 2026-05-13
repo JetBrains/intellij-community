@@ -32,7 +32,6 @@ interface MinimapLayerFactory {
       val factoriesById = LinkedHashMap<MinimapLayerId, MinimapLayerFactory>()
       for (factory in EP_NAME.extensionList.sortedBy(MinimapLayerFactory::order)) {
         if (!factory.isApplicable(panel)) continue
-        if (!MinimapLayerVisibilityPolicy.isLayerEnabled(panel.editor, factory.id)) continue
         val previous = factoriesById.put(factory.id, factory)
         if (previous != null && previous !== factory) {
           LOG.warn("Duplicate minimap layer id '${factory.id.value}', replacing ${previous.javaClass.name} with ${factory.javaClass.name}")
