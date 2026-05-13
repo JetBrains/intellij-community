@@ -30,7 +30,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
 
-@ApiStatus.Internal
 public abstract class ShowFilterAction extends ToggleAction implements DumbAware {
   private JBPopup myFilterPopup;
   private static final BadgeIconSupplier FILTER_ICON = new BadgeIconSupplier(AllIcons.General.Filter);

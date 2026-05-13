@@ -10,7 +10,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
 
-@ApiStatus.Internal
 public class SearchEverywhereFiltersAction<T> extends ShowFilterAction {
   final PersistentSearchEverywhereContributorFilter<T> filter;
   final Runnable rebuildRunnable;
