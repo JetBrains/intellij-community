@@ -84,6 +84,24 @@ Backend dependency 'intellij.platform.backend' from descriptor 'plugin.xml' in m
     myFixture.checkHighlighting()
   }
 
+  fun testOptionalDependsDoesNotMakePluginXmlMixed() {
+    val pluginXml = addModuleWithXmlDescriptor(
+      moduleName = "unique.module.name.64",
+      descriptorRelativePathToResourcesDirectory = "META-INF/plugin.xml",
+      pluginXmlContent = """
+        <idea-plugin>
+          <dependencies>
+            <module name="intellij.platform.frontend"/>
+          </dependencies>
+          <depends optional="true" config-file="optional-backend.xml">intellij.platform.backend</depends>
+        </idea-plugin>
+      """.trimIndent()
+    )
+    myFixture.configureFromExistingVirtualFile(pluginXml.virtualFile)
+
+    myFixture.checkHighlighting()
+  }
+
   fun testMixedDependenciesInContentModuleXml() {
     val contentModuleDescriptor = addModuleWithXmlDescriptor(
       moduleName = "unique.module.name.19",

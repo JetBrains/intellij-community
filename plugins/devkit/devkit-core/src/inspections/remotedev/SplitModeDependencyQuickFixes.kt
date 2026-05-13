@@ -29,6 +29,7 @@ import com.intellij.psi.xml.XmlFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.devkit.DevKitBundle.message
+import org.jetbrains.idea.devkit.dom.Dependency
 import org.jetbrains.idea.devkit.dom.IdeaPlugin
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeApiRestrictionsService
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeModuleKindResolver
@@ -270,6 +271,9 @@ private fun getRuntimeDependencies(ideaPlugin: IdeaPlugin?): Set<String> {
 
   return sequence {
     for (dependency in ideaPlugin.depends) {
+      if (dependency.isOptionalOldStyleDependency()) {
+        continue
+      }
       val dependencyName = dependency.rawText ?: dependency.stringValue ?: continue
       yield(dependencyName)
     }
@@ -337,6 +341,9 @@ private fun applyXmlDependencyChanges(
   changes: DependencyFixChanges,
 ) {
   for (dependency in ideaPlugin.depends.toList()) {
+    if (dependency.isOptionalOldStyleDependency()) {
+      continue
+    }
     val dependencyName = dependency.rawText ?: dependency.stringValue ?: continue
     if (dependencyName in changes.runtimeDependenciesToRemove) {
       dependency.xmlElement?.delete()
@@ -418,6 +425,9 @@ private fun buildResolvableRuntimeDependenciesRemovalPlan(
 
   for (dependency in ideaPlugin.depends) {
     ProgressManager.checkCanceled()
+    if (dependency.isOptionalOldStyleDependency()) {
+      continue
+    }
     val dependencyName = dependency.rawText ?: dependency.stringValue ?: continue
     val dependencyModule = dependencyModuleManager?.findModuleByName(dependencyName)
     runtimeDependenciesToRemove = addRuntimeDependencyToRemovalPlan(
@@ -681,7 +691,9 @@ private fun SplitModeApiRestrictionsService.ModuleKind.toFixableSplitKinds(): Li
 }
 
 private fun hasDirectDependency(ideaPlugin: IdeaPlugin, dependencyName: String): Boolean {
-  if (ideaPlugin.depends.any { dependency -> dependencyName == (dependency.rawText ?: dependency.stringValue) }) {
+  if (ideaPlugin.depends.any { dependency ->
+      !dependency.isOptionalOldStyleDependency() && dependencyName == (dependency.rawText ?: dependency.stringValue)
+    }) {
     return true
   }
 
@@ -690,3 +702,5 @@ private fun hasDirectDependency(ideaPlugin: IdeaPlugin, dependencyName: String):
          && (dependencies.moduleEntry.any { it.name.stringValue == dependencyName }
            || dependencies.plugin.any { it.id.stringValue == dependencyName })
 }
+
+private fun Dependency.isOptionalOldStyleDependency(): Boolean = optional.value == true

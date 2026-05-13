@@ -11,6 +11,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.xml.XmlFile
 import org.jetbrains.idea.devkit.dom.ContentDescriptor.ModuleDescriptor.ModuleLoadingRule
+import org.jetbrains.idea.devkit.dom.Dependency
 import org.jetbrains.idea.devkit.dom.IdeaPlugin
 
 private val OWN_DESCRIPTOR_DEPENDENCY_FACTS_KEY =
@@ -141,6 +142,9 @@ internal object SplitModeDescriptorDependencyAnalyzer {
   private fun collectDirectDependencies(ideaPlugin: IdeaPlugin): Sequence<DirectDependency> {
     return sequence {
       for (dependency in ideaPlugin.depends) {
+        if (dependency.isOptionalOldStyleDependency()) {
+          continue
+        }
         val dependencyName = dependency.rawText ?: dependency.stringValue ?: continue
         yield(DirectDependency(dependencyName) { dependency.value })
       }
@@ -186,6 +190,8 @@ internal object SplitModeDescriptorDependencyAnalyzer {
       .sortedWith(compareBy({ it.moduleName }, { it.loadingRule.value }))
   }
 }
+
+private fun Dependency.isOptionalOldStyleDependency(): Boolean = optional.value == true
 
 private fun getPredefinedDependencyFacts(ideaPlugin: IdeaPlugin): DependencyFacts? {
   val descriptorFile = getDescriptorXmlFile(ideaPlugin) ?: return null

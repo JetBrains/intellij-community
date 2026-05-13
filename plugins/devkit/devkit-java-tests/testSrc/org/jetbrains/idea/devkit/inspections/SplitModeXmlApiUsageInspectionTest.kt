@@ -85,6 +85,24 @@ Frontend dependency 'intellij.platform.frontend' from descriptor 'plugin.xml' in
     myFixture.checkHighlighting()
   }
 
+  fun testOptionalDependsDoesNotAffectPluginXmlKind() {
+    val pluginXml = addModuleWithXmlDescriptor(
+      moduleName = "unique.module.name.63",
+      descriptorRelativePathToResourcesDirectory = "META-INF/plugin.xml",
+      """
+        <idea-plugin>
+          <depends optional="true" config-file="optional-backend.xml">intellij.platform.backend</depends>
+          <extensions defaultExtensionNs="com.intellij">
+            <typedHandler/>
+          </extensions>
+        </idea-plugin>
+      """.trimIndent()
+    )
+    myFixture.configureFromExistingVirtualFile(pluginXml.virtualFile)
+
+    myFixture.checkHighlighting()
+  }
+
   fun testApiRestrictionsJsonHasNoDuplicateApiTargets() {
     SplitModeApiRestrictionsService.getInstance().assertApiRestrictionsCanBeReadForTest()
   }
