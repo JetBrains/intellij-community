@@ -5,9 +5,9 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
 import com.intellij.platform.runtime.product.ProductMode
-import com.intellij.platform.testFramework.plugins.buildDir
 import com.intellij.platform.testFramework.plugins.content
 import com.intellij.platform.testFramework.plugins.dependencies
+import com.intellij.platform.testFramework.plugins.installAt
 import com.intellij.platform.testFramework.plugins.module
 import com.intellij.platform.testFramework.plugins.plugin
 import com.intellij.testFramework.TestLoggerFactory
@@ -42,7 +42,7 @@ class ConditionalModuleLoadingRuleValueTest {
           dependencies { module("unavailable") }
         }
       }
-    }.buildDir(pluginsDirPath.resolve("foo"))
+    }.installAt(pluginsDirPath)
     val pluginSet = buildPluginSet { withProductMode(ProductMode.findById(appMode)!!) }
     if (appMode == "frontend") {
       assertThat(pluginSet).hasExactlyEnabledPlugins("foo")
@@ -62,7 +62,7 @@ class ConditionalModuleLoadingRuleValueTest {
           dependencies { module("unavailable") }
         }
       }
-    }.buildDir(pluginsDirPath.resolve("foo"))
+    }.installAt(pluginsDirPath)
     val pluginSet = buildPluginSet { withProductMode(ProductMode.findById(appMode)!!) }
     if (appMode == "backend") {
       assertThat(pluginSet).hasExactlyEnabledPlugins("foo")
@@ -82,7 +82,7 @@ class ConditionalModuleLoadingRuleValueTest {
           dependencies { module("unavailable") }
         }
       }
-    }.buildDir(pluginsDirPath.resolve("foo"))
+    }.installAt(pluginsDirPath)
     val pluginSet = buildPluginSet { withProductMode(ProductMode.findById(appMode)!!) }
     if (appMode != "frontend") {
       assertThat(pluginSet).hasExactlyEnabledPlugins("foo")
@@ -102,7 +102,7 @@ class ConditionalModuleLoadingRuleValueTest {
           dependencies { module("foo.optional") }
         }
       }
-    }.buildDir(pluginsDirPath.resolve("foo"))
+    }.installAt(pluginsDirPath)
 
     val pluginSetFrontend = buildPluginSet { withProductMode(ProductMode.findById("frontend")!!) }
     assertThat(pluginSetFrontend).hasExactlyEnabledPlugins("foo")

@@ -8,10 +8,10 @@ import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRule
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
 import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
 import com.intellij.platform.testFramework.plugins.appService
-import com.intellij.platform.testFramework.plugins.buildDir
 import com.intellij.platform.testFramework.plugins.content
 import com.intellij.platform.testFramework.plugins.dependencies
 import com.intellij.platform.testFramework.plugins.depends
+import com.intellij.platform.testFramework.plugins.installAt
 import com.intellij.platform.testFramework.plugins.module
 import com.intellij.platform.testFramework.plugins.plugin
 import com.intellij.platform.testFramework.plugins.pluginAlias
@@ -85,7 +85,7 @@ internal class PluginDependenciesTest {
     plugin("bar") {
       depends("foo", configFile = "foo.xml") { actions = "" }
       depends("baz", configFile = "baz.xml") { actions = "" }
-    }.buildDir(pluginDirPath.resolve("bar"))
+    }.installAt(pluginDirPath)
 
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("bar", "foo")
@@ -135,7 +135,7 @@ internal class PluginDependenciesTest {
         module("bar.required", ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "bar.required" }
         module("bar.embedded", ModuleLoadingRuleValue.EMBEDDED) { packagePrefix = "bar.embedded" }
       }
-    }.buildDir(pluginDirPath.resolve("bar"))
+    }.installAt(pluginDirPath)
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "bar")
     val (foo, bar) = pluginSet.getEnabledPlugins("foo", "bar")
@@ -148,7 +148,7 @@ internal class PluginDependenciesTest {
   @Test
   fun `plugin is not loaded if it has a depends dependency on v2 module`() {
     `bar with optional module`()
-    plugin("foo") { depends("bar.module") }.buildDir(pluginDirPath.resolve("foo"))
+    plugin("foo") { depends("bar.module") }.installAt(pluginDirPath)
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("bar")
   }
@@ -156,7 +156,7 @@ internal class PluginDependenciesTest {
   @Test
   fun `plugin is not loaded if it has a plugin dependency on v2 module`() {
     `bar with optional module`()
-    plugin("foo") { dependencies { plugin("bar.module") } }.buildDir(pluginDirPath.resolve("foo"))
+    plugin("foo") { dependencies { plugin("bar.module") } }.installAt(pluginDirPath)
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("bar")
   }
@@ -164,7 +164,7 @@ internal class PluginDependenciesTest {
   @Test
   fun `plugin is loaded if it has a module dependency on v2 module`() {
     `bar with optional module`()
-    plugin("foo") { dependencies { module("bar.module") } }.buildDir(pluginDirPath.resolve("foo"))
+    plugin("foo") { dependencies { module("bar.module") } }.installAt(pluginDirPath)
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "bar")
   }
@@ -180,7 +180,7 @@ internal class PluginDependenciesTest {
           }
         }
       }
-    }.buildDir(pluginDirPath.resolve("sample-plugin"))
+    }.installAt(pluginDirPath)
     val result = buildPluginSet()
     assertThat(result).doesNotHaveEnabledPlugins()
     assertFirstErrorContains("sample.plugin", "requires plugin", "unknown")
@@ -198,7 +198,7 @@ internal class PluginDependenciesTest {
           }
         }
       }
-    }.buildDir(pluginDirPath.resolve("sample-plugin"))
+    }.installAt(pluginDirPath)
     val result = buildPluginSet(disabledPluginIds = arrayOf("bar"))
     assertThat(result).doesNotHaveEnabledPlugins()
     assertFirstErrorContains("sample.plugin", "requires plugin", "bar")
@@ -217,7 +217,7 @@ internal class PluginDependenciesTest {
           }
         }
       }
-    }.buildDir(pluginDirPath.resolve("sample-plugin"))
+    }.installAt(pluginDirPath)
     val result = buildPluginSet(disabledPluginIds = arrayOf("bar-plugin"))
     assertThat(result).doesNotHaveEnabledPlugins()
     assertFirstErrorContains("sample.plugin", "requires plugin", "bar-plugin"/*, "to be enabled"*/) //todo fix not loading reason
@@ -242,8 +242,7 @@ internal class PluginDependenciesTest {
 
   @Test
   fun `embedded content module uses same classloader as the main module`() {
-    val samplePluginDir = pluginDirPath.resolve("sample-plugin")
-    plugin("sample.plugin") {
+    val samplePluginDir = plugin("sample.plugin") {
       content {
         module("embedded.module", ModuleLoadingRuleValue.EMBEDDED) {
           packagePrefix = "embedded"
@@ -257,7 +256,7 @@ internal class PluginDependenciesTest {
           packagePrefix = "optional"
         }
       }
-    }.buildDir(samplePluginDir)
+    }.installAt(pluginDirPath)
     val result = buildPluginSet()
     assertThat(result).hasExactlyEnabledPlugins("sample.plugin")
     val mainClassLoader = result.getEnabledPlugin("sample.plugin").pluginClassLoader
@@ -275,13 +274,12 @@ internal class PluginDependenciesTest {
   
   @Test
   fun `embedded and required content modules in the core plugin`() {
-    val corePluginDir = pluginDirPath.resolve("core")
     plugin(PluginManagerCore.CORE_PLUGIN_ID) {
       content {
         module("embedded.module", ModuleLoadingRuleValue.EMBEDDED) { packagePrefix = "embedded" }
         module("required.module", ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "required" }
       }
-    }.buildDir(corePluginDir)
+    }.installAt(pluginDirPath)
     val result = buildPluginSet()
     assertThat(result).hasExactlyEnabledPlugins(PluginManagerCore.CORE_PLUGIN_ID)
     val mainClassLoader = result.getEnabledPlugin(PluginManagerCore.CORE_PLUGIN_ID).pluginClassLoader
@@ -293,7 +291,6 @@ internal class PluginDependenciesTest {
   
   @Test
   fun `required content module with unresolved dependency in the core plugin`() {
-    val corePluginDir = pluginDirPath.resolve("core")
     plugin(PluginManagerCore.CORE_PLUGIN_ID) {
       content {
         module("required.module", ModuleLoadingRuleValue.REQUIRED) {
@@ -301,19 +298,18 @@ internal class PluginDependenciesTest {
           dependencies { module("unresolved") }
         }
       }
-    }.buildDir(corePluginDir)
+    }.installAt(pluginDirPath)
     buildPluginSet()
     assertFirstErrorContains("requires plugin", "unresolved")
   }
 
   @Test
   fun `embedded content module without package prefix`() {
-    val samplePluginDir = pluginDirPath.resolve("sample-plugin")
     plugin("sample.plugin") {
       content {
         module("embedded.module", ModuleLoadingRuleValue.EMBEDDED) {}
       }
-    }.buildDir(samplePluginDir)
+    }.installAt(pluginDirPath)
     val result = buildPluginSet()
     assertThat(result).hasExactlyEnabledPlugins("sample.plugin")
     val mainClassLoader = result.getEnabledPlugin("sample.plugin").pluginClassLoader
@@ -323,7 +319,7 @@ internal class PluginDependenciesTest {
 
   @Test
   fun `dependencies of embedded content module are added to the main class loader`() {
-    plugin("dep") {}.buildDir(pluginDirPath.resolve("dep"))
+    plugin("dep") {}.installAt(pluginDirPath)
     plugin("sample.plugin") {
       content {
         module("embedded.module", ModuleLoadingRuleValue.EMBEDDED) {
@@ -331,7 +327,7 @@ internal class PluginDependenciesTest {
           dependencies { plugin("dep") }
         }
       }
-    }.buildDir(pluginDirPath.resolve("sample-plugin"))
+    }.installAt(pluginDirPath)
     val result = buildPluginSet()
     assertThat(result).hasExactlyEnabledPlugins("sample.plugin", "dep")
     val (sample, dep) = result.getEnabledPlugins("sample.plugin", "dep")
@@ -358,7 +354,7 @@ internal class PluginDependenciesTest {
           }
         }
       }
-    }.buildDir(pluginDirPath.resolve("sample-plugin"))
+    }.installAt(pluginDirPath)
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledModulesWithoutMainDescriptors("embedded.module", "required.module", "required2.module")
     val (req, req2, embed) = pluginSet.getEnabledModules("required.module", "required2.module", "embedded.module")
@@ -368,12 +364,11 @@ internal class PluginDependenciesTest {
 
   @Test
   fun `content module in separate JAR`() {
-    val pluginDir = pluginDirPath.resolve("sample-plugin")
-    plugin("sample.plugin") {
+    val pluginDir = plugin("sample.plugin") {
       content {
         module("dep") { isSeparateJar = true }
       }
-    }.buildDir(pluginDir)
+    }.installAt(pluginDirPath)
     val result = buildPluginSet()
     assertThat(result).hasExactlyEnabledPlugins("sample.plugin")
     assertThat(result).hasExactlyEnabledModulesWithoutMainDescriptors("dep")
@@ -399,15 +394,15 @@ internal class PluginDependenciesTest {
 
   @Test
   fun `plugin is not loaded when it has a transitive disabled depends dependency`() {
-    plugin("com.intellij.gradle") {}.buildDir(pluginDirPath.resolve("intellij.gradle"))
+    plugin("com.intellij.gradle") {}.installAt(pluginDirPath)
     plugin("org.jetbrains.plugins.gradle") {
       implementationDetail = true
       depends("com.intellij.gradle")
-    }.buildDir(pluginDirPath.resolve("intellij.gradle.java"))
+    }.installAt(pluginDirPath)
     plugin("org.jetbrains.plugins.gradle.maven") {
       implementationDetail = true
       depends("org.jetbrains.plugins.gradle")
-    }.buildDir(pluginDirPath.resolve("intellij.gradle.java.maven"))
+    }.installAt(pluginDirPath)
     val pluginSet = buildPluginSet(disabledPluginIds = arrayOf("com.intellij.gradle"))
     assertThat(pluginSet).doesNotHaveEnabledPlugins()
   }
@@ -534,11 +529,11 @@ internal class PluginDependenciesTest {
         }
       }
       depends("additional")
-    }.buildDir(pluginDirPath.resolve("baz"))
+    }.installAt(pluginDirPath)
     `foo depends bar`()
     /* an additional module is used to ensure that in the sorted modules list the main module of 'baz' plugin is moved to the end of the 
        list if no explicit edge from 'foo' plugin to it is added */
-    plugin("additional") {}.buildDir(pluginDirPath.resolve("additional"))
+    plugin("additional") {}.installAt(pluginDirPath)
     
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "baz", "additional")
@@ -578,7 +573,7 @@ internal class PluginDependenciesTest {
     plugin("baz") {
       packagePrefix = "idk"
       pluginAlias("bar")
-    }.buildDir(pluginDirPath.resolve("baz"))
+    }.installAt(pluginDirPath)
     `foo module-dependency bar`()
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("baz")
@@ -587,7 +582,7 @@ internal class PluginDependenciesTest {
   @Test
   fun `plugin is not loaded if it has a depends dependency on v2 module with package prefix`() {
     `bar with optional module`()
-    plugin("foo") { depends("bar.module") }.buildDir(pluginDirPath.resolve("foo"))
+    plugin("foo") { depends("bar.module") }.installAt(pluginDirPath)
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("bar")
   }
@@ -595,7 +590,7 @@ internal class PluginDependenciesTest {
   @Test
   fun `plugin is not loaded if it has a plugin dependency on v2 module with package prefix`() {
     `bar with optional module`()
-    plugin("foo") { dependencies { plugin("bar.module") } }.buildDir(pluginDirPath.resolve("foo"))
+    plugin("foo") { dependencies { plugin("bar.module") } }.installAt(pluginDirPath)
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("bar")
   }
@@ -608,7 +603,7 @@ internal class PluginDependenciesTest {
           packagePrefix = "com.intellij.java.debugger.frontend"
         }
       }
-    }.buildDir(pluginDirPath.resolve("intellij.java"))
+    }.installAt(pluginDirPath)
 
     plugin("com.intellij.java.frontend") {
       content {
@@ -617,7 +612,7 @@ internal class PluginDependenciesTest {
         }
       }
       incompatibleWith = listOf("com.intellij.java")
-    }.buildDir(pluginDirPath.resolve("intellij.java.frontend"))
+    }.installAt(pluginDirPath)
 
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("com.intellij.java")
@@ -632,8 +627,8 @@ internal class PluginDependenciesTest {
           moduleVisibility = ModuleVisibilityValue.PUBLIC
         }
       }
-    }.buildDir(pluginDirPath.resolve("bar"))
-    plugin("foo") { dependencies { module("bar/module") } }.buildDir(pluginDirPath.resolve("foo"))
+    }.installAt(pluginDirPath)
+    plugin("foo") { dependencies { module("bar/module") } }.installAt(pluginDirPath)
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "bar")
     assertThat(pluginSet).hasExactlyEnabledModulesWithoutMainDescriptors("bar/module")
@@ -645,8 +640,8 @@ internal class PluginDependenciesTest {
       content {
         module("bar/module", ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "bar.module" }
       }
-    }.buildDir(pluginDirPath.resolve("bar"))
-    plugin("foo") { dependencies { module("bar.module") } }.buildDir(pluginDirPath.resolve("foo"))
+    }.installAt(pluginDirPath)
+    plugin("foo") { dependencies { module("bar.module") } }.installAt(pluginDirPath)
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("bar")
   }
@@ -660,8 +655,8 @@ internal class PluginDependenciesTest {
         module("required.module", ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "required" }
         module("optional.module", ModuleLoadingRuleValue.OPTIONAL) { packagePrefix = "optional" }
       }
-    }.buildDir(pluginDirPath.resolve("core"))
-    plugin("foo") {}.buildDir(pluginDirPath.resolve("foo"))
+    }.installAt(pluginDirPath)
+    plugin("foo") {}.installAt(pluginDirPath)
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins(PluginManagerCore.CORE_PLUGIN_ID, "foo")
     val (core, foo) = pluginSet.getEnabledPlugins(PluginManagerCore.CORE_PLUGIN_ID, "foo")
@@ -679,10 +674,10 @@ internal class PluginDependenciesTest {
         module("required.module", ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "required" }
         module("optional.module", ModuleLoadingRuleValue.OPTIONAL) { packagePrefix = "optional" }
       }
-    }.buildDir(pluginDirPath.resolve("core"))
+    }.installAt(pluginDirPath)
     plugin("foo") {
       dependencies { plugin(PluginManagerCore.CORE_PLUGIN_ID) }
-    }.buildDir(pluginDirPath.resolve("foo"))
+    }.installAt(pluginDirPath)
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins(PluginManagerCore.CORE_PLUGIN_ID, "foo")
     val (core, foo) = pluginSet.getEnabledPlugins(PluginManagerCore.CORE_PLUGIN_ID, "foo")
@@ -703,10 +698,10 @@ internal class PluginDependenciesTest {
           moduleVisibility = ModuleVisibilityValue.PUBLIC
         }
       }
-    }.buildDir(pluginDirPath.resolve("core"))
+    }.installAt(pluginDirPath)
     plugin("foo") {
       dependencies { module("optional.module") }
-    }.buildDir(pluginDirPath.resolve("foo"))
+    }.installAt(pluginDirPath)
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins(PluginManagerCore.CORE_PLUGIN_ID, "foo")
     val (core, foo) = pluginSet.getEnabledPlugins(PluginManagerCore.CORE_PLUGIN_ID, "foo")
@@ -728,7 +723,7 @@ internal class PluginDependenciesTest {
           appService("service")
         }
       }
-    }.buildDir(pluginDirPath.resolve("bar"))
+    }.installAt(pluginDirPath)
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("bar", "foo", "baz")
     val bar = pluginSet.getEnabledPlugin("bar")
@@ -747,7 +742,7 @@ internal class PluginDependenciesTest {
           isSeparateJar = true
         }
       }
-    }.buildDir(pluginDirPath.resolve("bar"))
+    }.installAt(pluginDirPath)
     val msg = LoggedErrorProcessor.executeAndReturnLoggedError {
       assertThatThrownBy {
         buildPluginSet()
@@ -768,19 +763,19 @@ internal class PluginDependenciesTest {
           moduleVisibility = ModuleVisibilityValue.PUBLIC
         }
       }
-    }.buildDir(pluginDirPath.resolve("core"))
+    }.installAt(pluginDirPath)
     plugin("with-depends") {
       depends("com.intellij.modules.platform")
-    }.buildDir(pluginDirPath.resolve("with-depends"))
+    }.installAt(pluginDirPath)
     plugin("with-depends-on-lang") {
       depends("com.intellij.modules.lang")
-    }.buildDir(pluginDirPath.resolve("with-depends-on-lang"))
+    }.installAt(pluginDirPath)
     plugin("with-dependencies") {
       dependencies { plugin("com.intellij.modules.platform") }
-    }.buildDir(pluginDirPath.resolve("with-dependencies"))
+    }.installAt(pluginDirPath)
     plugin("with-depends-on-vcs") {
       depends("com.intellij.modules.vcs")
-    }.buildDir(pluginDirPath.resolve("with-depends-on-vcs"))
+    }.installAt(pluginDirPath)
     val pluginSet = buildPluginSet()
     val (withDepends, withDependsOnLang, withDependencies, withDependsOnVcs) = 
       pluginSet.getEnabledPlugins("with-depends", "with-depends-on-lang", "with-dependencies", "with-depends-on-vcs")
@@ -802,7 +797,7 @@ internal class PluginDependenciesTest {
           module("baz.module")
         }
       }
-    }.buildDir(pluginDirPath.resolve("bar"))
+    }.installAt(pluginDirPath)
     val (pluginSet, err) = runAndReturnWithLoggedError { buildPluginSet() }
     assertThat(pluginSet).hasExactlyEnabledPlugins("bar", "foo", "baz")
     val (bar, foo, baz) = pluginSet.getEnabledPlugins("bar", "foo", "baz")
@@ -822,7 +817,7 @@ internal class PluginDependenciesTest {
       content {
         module("foo.embedded", ModuleLoadingRuleValue.EMBEDDED) {}
       }
-    }.buildDir(pluginDirPath.resolve("foo"))
+    }.installAt(pluginDirPath)
     plugin("bar") {
       content {
         module("bar.optional") {}
@@ -832,7 +827,7 @@ internal class PluginDependenciesTest {
           }
         }
       }
-    }.buildDir(pluginDirPath.resolve("bar"))
+    }.installAt(pluginDirPath)
     val pluginSet = PluginSetTestBuilder.fromPath(pluginDirPath)
       .withExplicitPluginSubsetToLoad(setOf(PluginId("bar")))
       .build()
@@ -848,7 +843,7 @@ internal class PluginDependenciesTest {
         module("required.module", ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "required" }
         module("optional.module", ModuleLoadingRuleValue.OPTIONAL) { packagePrefix = "optional" }
       }
-    }.buildDir(pluginDirPath.resolve("foo"))
+    }.installAt(pluginDirPath)
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("foo")
     val foo = pluginSet.getEnabledPlugin("foo")
@@ -868,7 +863,7 @@ internal class PluginDependenciesTest {
     @Test
     fun `legacy plugin gets implicit java dependency when all modules marker is present`() {
       // marker enables implicit dependencies for legacy plugins
-      plugin("com.intellij.modules.all") {}.buildDir(pluginDirPath.resolve("all-modules"))
+      plugin("com.intellij.modules.all") {}.installAt(pluginDirPath)
 
       // provide java alias and backend module
       plugin(PluginManagerCore.JAVA_PLUGIN_ID.idString) {
@@ -876,10 +871,10 @@ internal class PluginDependenciesTest {
         content(namespace = "jetbrains") {
           module("intellij.java.backend") { packagePrefix = "com.intellij.java.backend"; moduleVisibility = ModuleVisibilityValue.PUBLIC }
         }
-      }.buildDir(pluginDirPath.resolve("java"))
+      }.installAt(pluginDirPath)
 
       // legacy plugin: no explicit depends/module deps, non-bundled, no package prefix
-      plugin("legacy.plugin") {}.buildDir(pluginDirPath.resolve("legacy"))
+      plugin("legacy.plugin") {}.installAt(pluginDirPath)
 
       val pluginSet = buildPluginSet()
       assertThat(pluginSet).hasExactlyEnabledPlugins(
@@ -900,9 +895,9 @@ internal class PluginDependenciesTest {
         content {
           module("intellij.java.backend") { packagePrefix = "com.intellij.java.backend" }
         }
-      }.buildDir(pluginDirPath.resolve("java"))
+      }.installAt(pluginDirPath)
 
-      plugin("legacy.plugin") {}.buildDir(pluginDirPath.resolve("legacy"))
+      plugin("legacy.plugin") {}.installAt(pluginDirPath)
 
       val pluginSet = buildPluginSet()
       val legacy = pluginSet.getEnabledPlugin("legacy.plugin")
@@ -920,7 +915,7 @@ internal class PluginDependenciesTest {
         content(namespace = "jetbrains") {
           module("intellij.json.backend") { packagePrefix = "com.intellij.json.backend"; moduleVisibility = ModuleVisibilityValue.PUBLIC }
         }
-      }.buildDir(pluginDirPath.resolve("json"))
+      }.installAt(pluginDirPath)
 
       // Collaboration tools module
       plugin("collab.provider") {
@@ -928,7 +923,7 @@ internal class PluginDependenciesTest {
         content(namespace = "jetbrains") {
           module("intellij.platform.collaborationTools") { packagePrefix = "com.intellij.platform.collaborationTools"; moduleVisibility = ModuleVisibilityValue.PUBLIC }
         }
-      }.buildDir(pluginDirPath.resolve("collab"))
+      }.installAt(pluginDirPath)
 
       // VCS module to ensure only non-strict plugins get it implicitly
       plugin("vcs.provider") {
@@ -936,10 +931,10 @@ internal class PluginDependenciesTest {
         content(namespace = "jetbrains") {
           module("intellij.platform.vcs.impl") { packagePrefix = "com.intellij.vcs.impl"; moduleVisibility = ModuleVisibilityValue.PUBLIC }
         }
-      }.buildDir(pluginDirPath.resolve("vcs"))
+      }.installAt(pluginDirPath)
 
       plugin("consumer.plugin") {}
-        .buildDir(pluginDirPath.resolve("consumer"))
+        .installAt(pluginDirPath)
 
       val pluginSet = buildPluginSet()
       val consumer = pluginSet.getEnabledPlugin("consumer.plugin")
@@ -957,20 +952,20 @@ internal class PluginDependenciesTest {
         vendor = "JetBrains"
         pluginAlias("com.intellij.modules.json")
         content { module("intellij.json.backend") { packagePrefix = "com.intellij.json.backend" } }
-      }.buildDir(pluginDirPath.resolve("json"))
+      }.installAt(pluginDirPath)
 
       plugin("collab.provider") {
         vendor = "JetBrains"
         content { module("intellij.platform.collaborationTools") { packagePrefix = "com.intellij.platform.collaborationTools" } }
-      }.buildDir(pluginDirPath.resolve("collab"))
+      }.installAt(pluginDirPath)
 
       plugin("vcs.provider") {
         vendor = "JetBrains"
         content { module("intellij.platform.vcs.impl") { packagePrefix = "com.intellij.vcs.impl" } }
-      }.buildDir(pluginDirPath.resolve("vcs"))
+      }.installAt(pluginDirPath)
 
       plugin("strict.consumer") { vendor = "JetBrains" }
-        .buildDir(pluginDirPath.resolve("strict"))
+        .installAt(pluginDirPath)
 
       val pluginSet = buildPluginSet()
       val consumer = pluginSet.getEnabledPlugin("strict.consumer")
@@ -991,23 +986,23 @@ internal class PluginDependenciesTest {
             moduleVisibility = ModuleVisibilityValue.PUBLIC
           }
         }
-      }.buildDir(pluginDirPath.resolve("vcs"))
+      }.installAt(pluginDirPath)
 
       plugin("json.provider") {
         vendor = "JetBrains"
         pluginAlias("com.intellij.modules.json")
         content { module("intellij.json.backend") { packagePrefix = "com.intellij.json.backend" } }
-      }.buildDir(pluginDirPath.resolve("json"))
+      }.installAt(pluginDirPath)
 
       plugin("strict.no.dep") { vendor = "JetBrains" }
-        .buildDir(pluginDirPath.resolve("strict-no-dep"))
+        .installAt(pluginDirPath)
       plugin("strict.with.dep") {
         vendor = "JetBrains"
         dependencies {
           plugin("com.intellij.modules.vcs")
           plugin("com.intellij.modules.json")
         }
-      }.buildDir(pluginDirPath.resolve("strict-with-dep"))
+      }.installAt(pluginDirPath)
 
       val pluginSet = buildPluginSet()
       val noDep = pluginSet.getEnabledPlugin("strict.no.dep")
@@ -1027,14 +1022,14 @@ internal class PluginDependenciesTest {
         content(namespace = "jetbrains") {
           module("intellij.java.backend") { packagePrefix = "com.intellij.java.backend"; moduleVisibility = ModuleVisibilityValue.PUBLIC }
         }
-      }.buildDir(pluginDirPath.resolve("java"))
+      }.installAt(pluginDirPath)
 
       plugin("rider.provider") {
         pluginAlias("com.intellij.modules.rider")
         content(namespace = "jetbrains") {
           module("intellij.rider") { packagePrefix = "com.intellij.rider"; moduleVisibility = ModuleVisibilityValue.PUBLIC }
         }
-      }.buildDir(pluginDirPath.resolve("rider"))
+      }.installAt(pluginDirPath)
 
       plugin("full.line.provider") {
         pluginAlias("org.jetbrains.completion.full.line")
@@ -1043,28 +1038,28 @@ internal class PluginDependenciesTest {
           module("intellij.fullLine.local") { packagePrefix = "com.intellij.fullLine.local"; moduleVisibility = ModuleVisibilityValue.PUBLIC }
           module("intellij.fullLine.core.impl") { packagePrefix = "com.intellij.fullLine.core.impl"; moduleVisibility = ModuleVisibilityValue.PUBLIC }
         }
-      }.buildDir(pluginDirPath.resolve("full-line"))
+      }.installAt(pluginDirPath)
 
       plugin("cwm.provider") {
         pluginAlias("com.jetbrains.codeWithMe")
         content(namespace = "jetbrains") {
           module("intellij.cwm") { packagePrefix = "com.intellij.cwm"; moduleVisibility = ModuleVisibilityValue.PUBLIC }
         }
-      }.buildDir(pluginDirPath.resolve("cwm"))
+      }.installAt(pluginDirPath)
 
       plugin("cwm.rider.provider") {
         pluginAlias("intellij.rider.plugins.cwm")
         content(namespace = "jetbrains") {
           module("intellij.rider.plugins.cwm") { packagePrefix = "com.intellij.rider.plugins.cwm"; moduleVisibility = ModuleVisibilityValue.PUBLIC }
         }
-      }.buildDir(pluginDirPath.resolve("cwm-rider"))
+      }.installAt(pluginDirPath)
 
       plugin("json.provider") {
         pluginAlias("com.intellij.modules.json")
         content(namespace = "jetbrains") {
           module("intellij.json.backend") { packagePrefix = "com.intellij.json.backend"; moduleVisibility = ModuleVisibilityValue.PUBLIC }
         }
-      }.buildDir(pluginDirPath.resolve("json"))
+      }.installAt(pluginDirPath)
 
       plugin("consumer.plugin") {
         dependencies {
@@ -1075,7 +1070,7 @@ internal class PluginDependenciesTest {
           plugin("intellij.rider.plugins.cwm")
           plugin("com.intellij.modules.json")
         }
-      }.buildDir(pluginDirPath.resolve("consumer"))
+      }.installAt(pluginDirPath)
 
       val pluginSet = buildPluginSet()
       val consumer = pluginSet.getEnabledPlugin("consumer.plugin")
@@ -1105,7 +1100,7 @@ internal class PluginDependenciesTest {
         content(namespace = "jetbrains") {
           module("intellij.java.backend") { packagePrefix = "com.intellij.java.backend"; moduleVisibility = ModuleVisibilityValue.PUBLIC }
         }
-      }.buildDir(pluginDirPath.resolve("java"))
+      }.installAt(pluginDirPath)
 
       plugin("json.provider") {
         vendor = "JetBrains"
@@ -1113,7 +1108,7 @@ internal class PluginDependenciesTest {
         content(namespace = "jetbrains") {
           module("intellij.json.backend") { packagePrefix = "com.intellij.json.backend"; moduleVisibility = ModuleVisibilityValue.PUBLIC }
         }
-      }.buildDir(pluginDirPath.resolve("json"))
+      }.installAt(pluginDirPath)
 
       plugin("consumer") {
         content {
@@ -1125,7 +1120,7 @@ internal class PluginDependenciesTest {
             }
           }
         }
-      }.buildDir(pluginDirPath.resolve("consumer"))
+      }.installAt(pluginDirPath)
 
       val pluginSet = buildPluginSet()
       val consumerModule = pluginSet.getEnabledModule("consumer.module")
@@ -1146,27 +1141,27 @@ internal class PluginDependenciesTest {
         content(namespace = "jetbrains") {
           module("intellij.json.backend") { packagePrefix = "com.intellij.json.backend"; moduleVisibility = ModuleVisibilityValue.PUBLIC }
         }
-      }.buildDir(pluginDirPath.resolve("json"))
+      }.installAt(pluginDirPath)
 
       plugin("collab.provider") {
         vendor = "JetBrains"
         content(namespace = "jetbrains") {
           module("intellij.platform.collaborationTools") { packagePrefix = "com.intellij.platform.collaborationTools"; moduleVisibility = ModuleVisibilityValue.PUBLIC }
         }
-      }.buildDir(pluginDirPath.resolve("collab"))
+      }.installAt(pluginDirPath)
 
       plugin("vcs.provider") {
         vendor = "JetBrains"
         content(namespace = "jetbrains") {
           module("intellij.platform.vcs.impl") { packagePrefix = "com.intellij.vcs.impl"; moduleVisibility = ModuleVisibilityValue.PUBLIC }
         }
-      }.buildDir(pluginDirPath.resolve("vcs"))
+      }.installAt(pluginDirPath)
 
       plugin("consumer") {
         content {
           module("consumer.module", ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "consumer.module" }
         }
-      }.buildDir(pluginDirPath.resolve("consumer"))
+      }.installAt(pluginDirPath)
 
       val pluginSet = buildPluginSet()
       val consumerModule = pluginSet.getEnabledModule("consumer.module")
@@ -1182,18 +1177,18 @@ internal class PluginDependenciesTest {
     fun `depends on java alias adds java backend module`() {
       plugin("java.alias.provider") {
         pluginAlias(PluginManagerCore.JAVA_PLUGIN_ALIAS_ID.idString)
-      }.buildDir(pluginDirPath.resolve("java-alias"))
+      }.installAt(pluginDirPath)
 
       plugin("java.backend.provider") {
         content(namespace = "jetbrains") {
           module("intellij.java.backend") { packagePrefix = "com.intellij.java.backend"; moduleVisibility = ModuleVisibilityValue.PUBLIC }
         }
-      }.buildDir(pluginDirPath.resolve("java-backend"))
+      }.installAt(pluginDirPath)
 
       plugin("consumer") {
         vendor = "JetBrains"
         depends(PluginManagerCore.JAVA_PLUGIN_ALIAS_ID.idString)
-      }.buildDir(pluginDirPath.resolve("consumer"))
+      }.installAt(pluginDirPath)
 
       val pluginSet = buildPluginSet()
       val consumer = pluginSet.getEnabledPlugin("consumer")
@@ -1207,7 +1202,7 @@ internal class PluginDependenciesTest {
     fun `depends on full line alias adds full line modules`() {
       plugin("full.line.alias.provider") {
         pluginAlias("org.jetbrains.completion.full.line")
-      }.buildDir(pluginDirPath.resolve("full-line-alias"))
+      }.installAt(pluginDirPath)
 
       plugin("full.line.modules") {
         content(namespace = "jetbrains") {
@@ -1215,12 +1210,12 @@ internal class PluginDependenciesTest {
           module("intellij.fullLine.local") { packagePrefix = "com.intellij.fullLine.local"; moduleVisibility = ModuleVisibilityValue.PUBLIC }
           module("intellij.fullLine.core.impl") { packagePrefix = "com.intellij.fullLine.core.impl"; moduleVisibility = ModuleVisibilityValue.PUBLIC }
         }
-      }.buildDir(pluginDirPath.resolve("full-line-modules"))
+      }.installAt(pluginDirPath)
 
       plugin("consumer") {
         vendor = "JetBrains"
         depends("org.jetbrains.completion.full.line")
-      }.buildDir(pluginDirPath.resolve("consumer"))
+      }.installAt(pluginDirPath)
 
       val pluginSet = buildPluginSet()
       val consumer = pluginSet.getEnabledPlugin("consumer")
@@ -1236,17 +1231,17 @@ internal class PluginDependenciesTest {
     fun `depends on code with me alias adds remote development module`() {
       plugin("cwm.alias.provider") {
         pluginAlias("com.jetbrains.codeWithMe")
-      }.buildDir(pluginDirPath.resolve("cwm-alias"))
+      }.installAt(pluginDirPath)
 
       plugin("cwm.module.provider") {
         content(namespace = "jetbrains") {
           module("intellij.cwm") { packagePrefix = "com.intellij.cwm"; moduleVisibility = ModuleVisibilityValue.PUBLIC }
         }
-      }.buildDir(pluginDirPath.resolve("cwm-module"))
+      }.installAt(pluginDirPath)
 
       plugin("consumer") {
         depends("com.jetbrains.codeWithMe")
-      }.buildDir(pluginDirPath.resolve("consumer"))
+      }.installAt(pluginDirPath)
 
       val pluginSet = buildPluginSet()
       val consumer = pluginSet.getEnabledPlugin("consumer")
@@ -1260,17 +1255,17 @@ internal class PluginDependenciesTest {
     fun `depends on json alias adds json backend without property`() {
       plugin("json.alias.provider") {
         pluginAlias("com.intellij.modules.json")
-      }.buildDir(pluginDirPath.resolve("json-alias"))
+      }.installAt(pluginDirPath)
 
       plugin("json.backend.provider") {
         content(namespace = "jetbrains") {
           module("intellij.json.backend") { packagePrefix = "com.intellij.json.backend"; moduleVisibility = ModuleVisibilityValue.PUBLIC }
         }
-      }.buildDir(pluginDirPath.resolve("json-backend"))
+      }.installAt(pluginDirPath)
 
       plugin("consumer") {
         depends("com.intellij.modules.json")
-      }.buildDir(pluginDirPath.resolve("consumer"))
+      }.installAt(pluginDirPath)
 
       val pluginSet = buildPluginSet()
       val consumer = pluginSet.getEnabledPlugin("consumer")
@@ -1284,7 +1279,7 @@ internal class PluginDependenciesTest {
     fun `depends on rider alias adds rider module`() {
       plugin("rider.alias.provider") {
         pluginAlias("com.intellij.modules.rider")
-      }.buildDir(pluginDirPath.resolve("rider-alias"))
+      }.installAt(pluginDirPath)
 
       plugin("rider.module.provider") {
         content(namespace = "jetbrains") {
@@ -1293,12 +1288,12 @@ internal class PluginDependenciesTest {
             moduleVisibility = ModuleVisibilityValue.PUBLIC
           }
         }
-      }.buildDir(pluginDirPath.resolve("rider-module"))
+      }.installAt(pluginDirPath)
 
       plugin("consumer") {
         vendor = "JetBrains"
         depends("com.intellij.modules.rider")
-      }.buildDir(pluginDirPath.resolve("consumer"))
+      }.installAt(pluginDirPath)
 
       val pluginSet = buildPluginSet()
       val consumer = pluginSet.getEnabledPlugin("consumer")
@@ -1312,17 +1307,17 @@ internal class PluginDependenciesTest {
     fun `depends on code with me rider alias adds remote development rider module`() {
       plugin("cwm.rider.alias.provider") {
         pluginAlias("intellij.rider.plugins.cwm")
-      }.buildDir(pluginDirPath.resolve("cwm-rider-alias"))
+      }.installAt(pluginDirPath)
 
       plugin("cwm.rider.module.provider") {
         content(namespace = "jetbrains") {
           module("intellij.rider.plugins.cwm") { packagePrefix = "com.intellij.rider.plugins.cwm"; moduleVisibility = ModuleVisibilityValue.PUBLIC }
         }
-      }.buildDir(pluginDirPath.resolve("cwm-rider-module"))
+      }.installAt(pluginDirPath)
 
       plugin("consumer") {
         depends("intellij.rider.plugins.cwm")
-      }.buildDir(pluginDirPath.resolve("consumer"))
+      }.installAt(pluginDirPath)
 
       val pluginSet = buildPluginSet()
       val consumer = pluginSet.getEnabledPlugin("consumer")
@@ -1336,7 +1331,7 @@ internal class PluginDependenciesTest {
     fun `depends on vcs alias adds vcs module`() {
       plugin("vcs.alias.provider") {
         pluginAlias("com.intellij.modules.vcs")
-      }.buildDir(pluginDirPath.resolve("vcs-alias"))
+      }.installAt(pluginDirPath)
 
       plugin("vcs.module.provider") {
         vendor = "JetBrains"
@@ -1346,12 +1341,12 @@ internal class PluginDependenciesTest {
             moduleVisibility = ModuleVisibilityValue.PUBLIC
           }
         }
-      }.buildDir(pluginDirPath.resolve("vcs-module"))
+      }.installAt(pluginDirPath)
 
       plugin("consumer") {
         vendor = "JetBrains"
         depends("com.intellij.modules.vcs")
-      }.buildDir(pluginDirPath.resolve("consumer"))
+      }.installAt(pluginDirPath)
 
       val pluginSet = buildPluginSet()
       val consumer = pluginSet.getEnabledPlugin("consumer")
@@ -1385,22 +1380,22 @@ internal class PluginDependenciesTest {
             module(moduleId) { packagePrefix = "p.${moduleId.replace('/', '.')}"; moduleVisibility = ModuleVisibilityValue.PUBLIC }
           }
         }
-      }.buildDir(pluginDirPath.resolve("core"))
+      }.installAt(pluginDirPath)
 
       plugin("with-platform") {
         vendor = "JetBrains"
         depends("com.intellij.modules.platform")
-      }.buildDir(pluginDirPath.resolve("with-platform"))
+      }.installAt(pluginDirPath)
 
       plugin("with-lang") {
         vendor = "JetBrains"
         depends("com.intellij.modules.lang")
-      }.buildDir(pluginDirPath.resolve("with-lang"))
+      }.installAt(pluginDirPath)
 
       plugin("with-dependencies") {
         vendor = "JetBrains"
         dependencies { plugin("com.intellij.modules.platform") }
-      }.buildDir(pluginDirPath.resolve("with-dependencies"))
+      }.installAt(pluginDirPath)
 
       val pluginSet = buildPluginSet()
       val moduleDescriptors = extractedModules.map { pluginSet.getEnabledModule(it) }
@@ -1412,25 +1407,25 @@ internal class PluginDependenciesTest {
     }
   }
 
-  private fun foo() = plugin("foo") {}.buildDir(pluginDirPath.resolve("foo"))
-  private fun `foo depends bar`() = plugin("foo") { depends("bar") }.buildDir(pluginDirPath.resolve("foo"))
+  private fun foo() = plugin("foo") {}.installAt(pluginDirPath)
+  private fun `foo depends bar`() = plugin("foo") { depends("bar") }.installAt(pluginDirPath)
   private fun `foo depends-optional bar`() = plugin("foo") {
     depends("bar", configFile = "bar.xml") { actions = "" }
-  }.buildDir(pluginDirPath.resolve("foo"))
+  }.installAt(pluginDirPath)
   private fun `foo plugin-dependency bar`() = plugin("foo") {
     dependencies { plugin("bar") }
-  }.buildDir(pluginDirPath.resolve("foo"))
+  }.installAt(pluginDirPath)
   private fun `foo module-dependency bar`() = plugin("foo") {
     dependencies { module("bar") }
-  }.buildDir(pluginDirPath.resolve("foo"))
+  }.installAt(pluginDirPath)
   private fun `bar-plugin with module bar`() = plugin("bar-plugin") {
     content(namespace = "jetbrains") {
       module("bar") { moduleVisibility = ModuleVisibilityValue.PUBLIC }
     }
-  }.buildDir(pluginDirPath.resolve("bar-plugin"))
+  }.installAt(pluginDirPath)
 
 
-  private fun bar() = plugin("bar") {}.buildDir(pluginDirPath.resolve("bar"))
+  private fun bar() = plugin("bar") {}.installAt(pluginDirPath)
   private fun `bar with optional module`() = plugin("bar") {
     content(namespace = "jetbrains") {
       module("bar.module") {
@@ -1438,17 +1433,17 @@ internal class PluginDependenciesTest {
         moduleVisibility = ModuleVisibilityValue.PUBLIC
       }
     }
-  }.buildDir(pluginDirPath.resolve("bar"))
+  }.installAt(pluginDirPath)
 
-  private fun baz() = plugin("baz") {}.buildDir(pluginDirPath.resolve("baz"))
+  private fun baz() = plugin("baz") {}.installAt(pluginDirPath)
   private fun `baz with alias bar`() = plugin("baz") {
     pluginAlias("bar")
-  }.buildDir(pluginDirPath.resolve("baz"))
+  }.installAt(pluginDirPath)
   private fun `baz with an optional module which has a package prefix`() = plugin("baz") {
     content {
       module("baz.module") { packagePrefix = "baz.module" }
     }
-  }.buildDir(pluginDirPath.resolve("baz"))
+  }.installAt(pluginDirPath)
   private fun `baz with an optional module which has an alias bar and package prefix`() = plugin("baz") {
     content {
       module("baz.module") {
@@ -1456,7 +1451,7 @@ internal class PluginDependenciesTest {
         pluginAlias("bar")
       }
     }
-  }.buildDir(pluginDirPath.resolve("baz"))
+  }.installAt(pluginDirPath)
   private fun `baz with a required module which has an alias bar and package prefix`() = plugin("baz") {
     content {
       module("baz.module", ModuleLoadingRuleValue.REQUIRED) {
@@ -1464,7 +1459,7 @@ internal class PluginDependenciesTest {
         pluginAlias("bar")
       }
     }
-  }.buildDir(pluginDirPath.resolve("baz"))
+  }.installAt(pluginDirPath)
 
   private fun buildPluginSet(expiredPluginIds: Array<String> = emptyArray(), disabledPluginIds: Array<String> = emptyArray()): PluginSet {
     val state = PluginSetTestBuilder.fromPath(pluginDirPath)

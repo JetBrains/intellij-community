@@ -6,9 +6,9 @@ import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorBuilder
 import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
-import com.intellij.platform.testFramework.plugins.buildDir
 import com.intellij.platform.testFramework.plugins.content
 import com.intellij.platform.testFramework.plugins.depends
+import com.intellij.platform.testFramework.plugins.installAt
 import com.intellij.platform.testFramework.plugins.module
 import com.intellij.platform.testFramework.plugins.plugin
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -92,7 +92,7 @@ internal class ClassLoaderConfiguratorTest {
       packagePrefix = "com.bar"
       extensionPoints =
         """<extensionPoint qualifiedName="bar.barExtension" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true"/>"""
-    }.buildDir(rootDir.resolve("p_dependency"))
+    }.installAt(rootDir)
     plugin("p_dependent") {
       packagePrefix = "com.example"
       content(namespace = "jetbrains") {
@@ -102,7 +102,7 @@ internal class ClassLoaderConfiguratorTest {
             """<extensionPoint qualifiedName="bar.barExtension" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true"/>"""
         }
       }
-    }.buildDir(rootDir.resolve("p_dependent"))
+    }.installAt(rootDir)
     val pluginSetTestBuilder = PluginSetTestBuilder.fromPath(rootDir)
     val initContext = pluginSetTestBuilder.buildInitContext()
     val plugins = pluginSetTestBuilder.discoverPlugins().second.pluginLists.flatMap { it.plugins }
@@ -130,10 +130,10 @@ internal class ClassLoaderConfiguratorTest {
       content {
         module("com.example.sub") { packagePrefix="com.foo.sub" }
       }
-    }.buildDir(rootDir.resolve("1-foo"))
+    }.installAt(rootDir)
     plugin("2-bar") {
       depends("1-foo")
-    }.buildDir(rootDir.resolve("2-bar"))
+    }.installAt(rootDir)
 
     val pluginSetTestBuilder = PluginSetTestBuilder.fromPath(rootDir)
     val initContext = pluginSetTestBuilder.buildInitContext()

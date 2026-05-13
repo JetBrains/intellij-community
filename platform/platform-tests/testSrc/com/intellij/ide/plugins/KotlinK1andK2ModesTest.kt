@@ -2,8 +2,8 @@
 package com.intellij.ide.plugins
 
 import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
-import com.intellij.platform.testFramework.plugins.buildDir
 import com.intellij.platform.testFramework.plugins.depends
+import com.intellij.platform.testFramework.plugins.installAt
 import com.intellij.platform.testFramework.plugins.plugin
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
@@ -26,7 +26,7 @@ class KotlinK1andK2ModesTest {
   fun `plugin depending on kotlin enabled by default in K2 mode`() {
     plugin("foo") {
       depends("org.jetbrains.kotlin")
-    }.buildDir(rootDir.resolve("foo"))
+    }.installAt(rootDir)
     val (_, reason) = getSinglePlugin(rootDir)
     assertThat(reason).isNull()
   }
@@ -36,7 +36,7 @@ class KotlinK1andK2ModesTest {
   fun `plugin depending on kotlin is enabled when with supportsK2`() {
     plugin("foo") {
       depends("org.jetbrains.kotlin")
-    }.buildDir(rootDir.resolve("foo"))
+    }.installAt(rootDir)
     val (_, reason) = getSinglePlugin(rootDir)
     assertThat(reason).isNull()
   }
@@ -46,7 +46,7 @@ class KotlinK1andK2ModesTest {
   fun `plugin optionally depending on kotlin plugin is not disabled by default in K2 mode and optional dependency is enabled`() {
     plugin("foo") {
       depends("org.jetbrains.kotlin", configFile = "kt.xml") { }
-    }.buildDir(rootDir.resolve("foo"))
+    }.installAt(rootDir)
     val (plugin, reason) = getSinglePlugin(rootDir)
     assertThat(reason).isNull()
     val dependency = plugin.dependencies.single()

@@ -5,7 +5,7 @@ import com.intellij.ide.plugins.PluginManagerState
 import com.intellij.ide.plugins.PluginSet
 import com.intellij.platform.testFramework.plugins.PluginBuilderDsl
 import com.intellij.platform.testFramework.plugins.PluginSpecBuilder
-import com.intellij.platform.testFramework.plugins.buildDir
+import com.intellij.platform.testFramework.plugins.installAt
 import java.nio.file.Path
 import com.intellij.platform.testFramework.plugins.plugin as buildPlugin
 
@@ -33,6 +33,6 @@ class PluginSetSpecBuilder internal constructor(private val pluginsDirPath: Path
     else {
       buildPlugin(body = body)
     }
-    pluginSpec.buildDir(pluginsDirPath.resolve(pluginSpec.id!!))
+    pluginSpec.installAt(pluginsDirPath)
   }
 }

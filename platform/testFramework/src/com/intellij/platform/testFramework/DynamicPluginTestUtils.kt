@@ -12,9 +12,9 @@ import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.testFramework.plugins.PluginSpec
-import com.intellij.platform.testFramework.plugins.buildDir
 import com.intellij.platform.testFramework.plugins.dependsIntellijModulesLang
 import com.intellij.platform.testFramework.plugins.extensions
+import com.intellij.platform.testFramework.plugins.installAt
 import com.intellij.platform.testFramework.plugins.plugin
 import com.intellij.testFramework.IndexingTestUtil
 import org.assertj.core.api.Assertions.assertThat
@@ -90,8 +90,7 @@ fun loadDescriptorInTest(
   pluginSpec: PluginSpec,
   pluginsDir: Path
 ): PluginMainDescriptor {
-  val path = pluginsDir.resolve(pluginSpec.id!!)
-  pluginSpec.buildDir(path)
+  val path = pluginSpec.installAt(pluginsDir)
   return loadDescriptorInTest(fileOrDir = path)
 }
 

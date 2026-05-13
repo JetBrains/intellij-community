@@ -8,10 +8,10 @@ import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRule
 import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
 import com.intellij.platform.testFramework.plugins.ContentModuleSpec
 import com.intellij.platform.testFramework.plugins.PluginPackagingConfig
-import com.intellij.platform.testFramework.plugins.buildDir
 import com.intellij.platform.testFramework.plugins.content
 import com.intellij.platform.testFramework.plugins.dependencies
 import com.intellij.platform.testFramework.plugins.depends
+import com.intellij.platform.testFramework.plugins.installAt
 import com.intellij.platform.testFramework.plugins.module
 import com.intellij.platform.testFramework.plugins.plugin
 import com.intellij.platform.testFramework.plugins.pluginAlias
@@ -167,8 +167,8 @@ class PluginSetLoadingTest {
 
   @Test
   fun `use first plugin if both versions the same`() {
-    plugin("foo") { version = "1.0" }.buildDir(pluginsDirPath.resolve("foo_1-0"))
-    plugin("foo") { version = "1.0" }.buildDir(pluginsDirPath.resolve("foo_another"))
+    plugin("foo") { version = "1.0" }.installAt(pluginsDirPath)
+    plugin("foo") { version = "1.0" }.installAt(pluginsDirPath)
 
     val pluginSet = PluginSetTestBuilder.fromPath(pluginsDirPath).build()
     val plugins = pluginSet.enabledPlugins
@@ -249,12 +249,12 @@ class PluginSetLoadingTest {
       content {
         module("foo.module", loadingRule = ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "common.module" }
       }
-    }.buildDir(pluginsDirPath.resolve("foo"))
+    }.installAt(pluginsDirPath)
     plugin("bar") {
       content {
         module("bar.module", loadingRule = ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "common.module" }
       }
-    }.buildDir(pluginsDirPath.resolve("bar"))
+    }.installAt(pluginsDirPath)
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("foo")
     assertThat(loadingErrors).hasSizeGreaterThan(0)
@@ -268,12 +268,12 @@ class PluginSetLoadingTest {
       content {
         module("foo.module", loadingRule = ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "common.module" }
       }
-    }.buildDir(pluginsDirPath.resolve("foo"))
+    }.installAt(pluginsDirPath)
     plugin("bar") {
       content {
         module("bar.module", loadingRule = ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "common.module" }
       }
-    }.buildDir(pluginsDirPath.resolve("bar"))
+    }.installAt(pluginsDirPath)
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("bar")
   }
@@ -285,7 +285,7 @@ class PluginSetLoadingTest {
       content {
         module("foo.module", loadingRule = ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "common.module" }
       }
-    }.buildDir(pluginsDirPath.resolve("foo"))
+    }.installAt(pluginsDirPath)
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).doesNotHaveEnabledPlugins()
     assertThat(loadingErrors).hasSizeGreaterThan(0)
@@ -298,12 +298,12 @@ class PluginSetLoadingTest {
       content {
         module("foo.module", loadingRule = ModuleLoadingRuleValue.OPTIONAL) { packagePrefix = "common.module" }
       }
-    }.buildDir(pluginsDirPath.resolve("foo"))
+    }.installAt(pluginsDirPath)
     plugin("bar") {
       content {
         module("bar.module", loadingRule = ModuleLoadingRuleValue.OPTIONAL) { packagePrefix = "common.module" }
       }
-    }.buildDir(pluginsDirPath.resolve("bar"))
+    }.installAt(pluginsDirPath)
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "bar")
     // FIXME these plugins are not related, but one of them loads => depends on implicit order
@@ -318,7 +318,7 @@ class PluginSetLoadingTest {
       content {
         module("foo.module") {}
       }
-    }.buildDir(pluginsDirPath.resolve("foo"), object : PluginPackagingConfig() {
+    }.installAt(pluginsDirPath, object : PluginPackagingConfig() {
       override val ContentModuleSpec.packageToMainJar: Boolean get() = true
     })
     assertThatThrownBy {
@@ -332,23 +332,23 @@ class PluginSetLoadingTest {
       content {
         module("foo.module") { packagePrefix = "foo.module" }
       }
-    }.buildDir(pluginsDirPath.resolve("foo"))
+    }.installAt(pluginsDirPath)
     plugin("bar") {
       content {
         module("bar.module") { isSeparateJar = true }
       }
-    }.buildDir(pluginsDirPath.resolve("bar"))
+    }.installAt(pluginsDirPath)
     assertThat(buildPluginSet()).hasExactlyEnabledPlugins("foo", "bar")
   }
 
   @Test
   fun `id, version, name are inherited in depends sub-descriptors`() {
-    plugin("foo") {}.buildDir(pluginsDirPath.resolve("foo"))
+    plugin("foo") {}.installAt(pluginsDirPath)
     plugin("bar") {
       name = "Bar"
       version = "1.0.0"
       depends("foo", "foo.xml") {}
-    }.buildDir(pluginsDirPath.resolve("bar"))
+    }.installAt(pluginsDirPath)
 
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("bar", "foo")
@@ -365,7 +365,7 @@ class PluginSetLoadingTest {
 
   @Test
   fun `id, version, name can't be overridden in depends sub-descriptors`() {
-    plugin("foo") {}.buildDir(pluginsDirPath.resolve("foo"))
+    plugin("foo") {}.installAt(pluginsDirPath)
     plugin("bar") {
       name = "Bar"
       version = "1.0.0"
@@ -374,7 +374,7 @@ class PluginSetLoadingTest {
         name = "Bar Sub"
         version = "2.0.0"
       }
-    }.buildDir(pluginsDirPath.resolve("bar"))
+    }.installAt(pluginsDirPath)
 
     val (pluginSet, errs) = runAndReturnWithLoggedErrors { buildPluginSet() }
     assertThat(errs.joinToString { it.message ?: "" }).isNotNull
@@ -393,12 +393,12 @@ class PluginSetLoadingTest {
 
   @Test
   fun `resource bundle is inherited in depends sub-descriptors`() {
-    plugin("foo") {}.buildDir(pluginsDirPath.resolve("foo"))
+    plugin("foo") {}.installAt(pluginsDirPath)
     plugin("bar") {
       name = "Bar"
       resourceBundle = "resourceBundle"
       depends("foo", "foo.xml") {}
-    }.buildDir(pluginsDirPath.resolve("bar"))
+    }.installAt(pluginsDirPath)
 
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("bar", "foo")
@@ -411,12 +411,12 @@ class PluginSetLoadingTest {
 
   @Test
   fun `resource bundle can be overridden in depends sub-descriptors`() {
-    plugin("foo") {}.buildDir(pluginsDirPath.resolve("foo"))
+    plugin("foo") {}.installAt(pluginsDirPath)
     plugin("bar") {
       name = "Bar"
       resourceBundle = "resourceBundle"
       depends("foo", "foo.xml") { resourceBundle = "sub" }
-    }.buildDir(pluginsDirPath.resolve("bar"))
+    }.installAt(pluginsDirPath)
 
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("bar", "foo")
@@ -435,7 +435,7 @@ class PluginSetLoadingTest {
         module("required.module", loadingRule = ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "required" }
         module("optional.module", loadingRule = ModuleLoadingRuleValue.OPTIONAL) { packagePrefix = "optional" }
       }
-    }.buildDir(pluginsDirPath.resolve("core"))
+    }.installAt(pluginsDirPath)
     val pluginSet = buildPluginSet()
     val core = pluginSet.getEnabledPlugin("com.intellij")
     for (alias in IdeaPluginOsRequirement.getHostOsModuleIds() + productModeAliasesForCorePlugin()) {
@@ -447,7 +447,7 @@ class PluginSetLoadingTest {
   fun `findEnabledPlugin resolves plugin alias to declaring plugin`() {
     plugin("com.example.owner") {
       pluginAlias("com.example.owner.alias")
-    }.buildDir(pluginsDirPath.resolve("owner"))
+    }.installAt(pluginsDirPath)
 
     val pluginSet = buildPluginSet()
     val owner = pluginSet.getEnabledPlugin("com.example.owner")
@@ -461,7 +461,7 @@ class PluginSetLoadingTest {
         module("foo.module") { isSeparateJar = true }
         module("foo.module") { packagePrefix = "foo.module" }
       }
-    }.buildDir(pluginsDirPath.resolve("foo"))
+    }.installAt(pluginsDirPath)
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).doesNotHaveEnabledPlugins()
     assertThat(loadingErrors).hasSizeGreaterThan(0)
@@ -470,9 +470,6 @@ class PluginSetLoadingTest {
 
   @Test
   fun `test a module graph take into account aliases and sort them correctly`() {
-    val aPath = pluginsDirPath.resolve("a")
-    val bPath = pluginsDirPath.resolve("b")
-    val dPath = pluginsDirPath.resolve("d")
     plugin("d") {
       content {
         module("d.a", loadingRule = ModuleLoadingRuleValue.REQUIRED) {
@@ -481,7 +478,7 @@ class PluginSetLoadingTest {
           }
         }
       }
-    }.buildDir(dPath)
+    }.installAt(pluginsDirPath)
 
     plugin("a") {
       content {
@@ -491,7 +488,7 @@ class PluginSetLoadingTest {
           }
         }
       }
-    }.buildDir(aPath)
+    }.installAt(pluginsDirPath)
 
     plugin("b") {
       content {
@@ -503,7 +500,7 @@ class PluginSetLoadingTest {
           }
         }
       }
-    }.buildDir(bPath)
+    }.installAt(pluginsDirPath)
 
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("a", "b", "d")
@@ -511,9 +508,6 @@ class PluginSetLoadingTest {
 
   @Test
   fun `test a fail of one required module leads to not loading of all plugins`() {
-    val aPath = pluginsDirPath.resolve("a")
-    val bPath = pluginsDirPath.resolve("b")
-    val dPath = pluginsDirPath.resolve("d")
     plugin("d") {
       content {
         module("d.a", loadingRule = ModuleLoadingRuleValue.REQUIRED) {
@@ -522,7 +516,7 @@ class PluginSetLoadingTest {
           }
         }
       }
-    }.buildDir(dPath)
+    }.installAt(pluginsDirPath)
 
     plugin("a") {
       content {
@@ -532,7 +526,7 @@ class PluginSetLoadingTest {
           }
         }
       }
-    }.buildDir(aPath)
+    }.installAt(pluginsDirPath)
 
     plugin("b") {
       content {
@@ -549,7 +543,7 @@ class PluginSetLoadingTest {
           }
         }
       }
-    }.buildDir(bPath)
+    }.installAt(pluginsDirPath)
 
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins()
@@ -557,7 +551,7 @@ class PluginSetLoadingTest {
 
   @Test
   fun testLoadDisabledPlugin() {
-    plugin("disabled") { }.buildDir(pluginsDirPath.resolve("disabled"))
+    plugin("disabled") { }.installAt(pluginsDirPath)
     val pluginSet = buildPluginSet {
       withDisabledPlugins("disabled")
     }
@@ -580,7 +574,7 @@ class PluginSetLoadingTest {
             }
           }
         }
-      }.buildDir(pluginsDirPath.resolve("foo.$id"))
+      }.installAt(pluginsDirPath)
     }
     plugin(PluginManagerCore.CORE_PLUGIN_ID) {
       content {
@@ -590,7 +584,7 @@ class PluginSetLoadingTest {
         }
         module("intellij.required", loadingRule = ModuleLoadingRuleValue.REQUIRED) {}
       }
-    }.buildDir(pluginsDirPath.resolve("core"))
+    }.installAt(pluginsDirPath)
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins(PluginManagerCore.CORE_PLUGIN_ID, *ids.map { "intellij.textmate.$it" }.toTypedArray())
   }
@@ -599,7 +593,7 @@ class PluginSetLoadingTest {
   fun `getEnabledModules honors module dependencies`() {
     plugin("com.intellij") {
       pluginAlias("com.intellij.modules.microservices")
-    }.buildDir(pluginsDirPath.resolve("com.intellij"))
+    }.installAt(pluginsDirPath)
 
     plugin("com.intellij.microservices.ui") {
       name = "Endpoints"
@@ -608,7 +602,7 @@ class PluginSetLoadingTest {
       dependencies {
         plugin("com.intellij.modules.microservices")
       }
-    }.buildDir(pluginsDirPath.resolve("com.intellij.microservices.ui"))
+    }.installAt(pluginsDirPath)
 
     plugin("com.jetbrains.restClient") {
       name = "HTTP Client"
@@ -624,7 +618,7 @@ class PluginSetLoadingTest {
           }
         }
       }
-    }.buildDir(pluginsDirPath.resolve("com.jetbrains.restClient"))
+    }.installAt(pluginsDirPath)
 
     val pluginSet = buildPluginSet()
     assertThat(loadingErrors).isEmpty()
@@ -648,10 +642,10 @@ class PluginSetLoadingTest {
 
   @Test
   fun `incompatible-with's origin gets excluded instead of target`() {
-    plugin("foo") {}.buildDir(pluginsDirPath.resolve("foo"))
+    plugin("foo") {}.installAt(pluginsDirPath)
     plugin("bar") {
       incompatibleWith = listOf("foo")
-    }.buildDir(pluginsDirPath.resolve("bar"))
+    }.installAt(pluginsDirPath)
 
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("foo")

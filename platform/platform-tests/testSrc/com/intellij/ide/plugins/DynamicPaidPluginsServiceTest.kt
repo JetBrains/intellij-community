@@ -4,9 +4,9 @@ package com.intellij.ide.plugins
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
 import com.intellij.platform.testFramework.plugins.PluginSpec
-import com.intellij.platform.testFramework.plugins.buildDir
 import com.intellij.platform.testFramework.plugins.dependencies
 import com.intellij.platform.testFramework.plugins.depends
+import com.intellij.platform.testFramework.plugins.installAt
 import com.intellij.platform.testFramework.plugins.plugin
 import com.intellij.testFramework.EdtRule
 import com.intellij.testFramework.ProjectRule
@@ -152,9 +152,9 @@ class DynamicPaidPluginsServiceTest {
   }
 
   private fun generatePluginSet(vararg specs: PluginSpec, doNotDisable: Set<PluginSpec> = emptySet()): PluginSet {
-    plugin(ultimatePluginId) {}.buildDir(pluginsDir.resolve(ultimatePluginId))
+    plugin(ultimatePluginId) {}.installAt(pluginsDir)
     specs.forEach { spec ->
-      spec.buildDir(pluginsDir.resolve(spec.id!!))
+      spec.installAt(pluginsDir)
     }
 
     val disabledPluginIds = specs.filterNot { it in doNotDisable }.map2Array { it.id!! }

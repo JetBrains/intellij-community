@@ -61,7 +61,6 @@ import com.intellij.platform.testFramework.plugins.PluginSpec
 import com.intellij.platform.testFramework.plugins.PluginTestHandle
 import com.intellij.platform.testFramework.plugins.action
 import com.intellij.platform.testFramework.plugins.appService
-import com.intellij.platform.testFramework.plugins.buildDir
 import com.intellij.platform.testFramework.plugins.buildDistribution
 import com.intellij.platform.testFramework.plugins.buildMainJar
 import com.intellij.platform.testFramework.plugins.content
@@ -72,6 +71,7 @@ import com.intellij.platform.testFramework.plugins.extension
 import com.intellij.platform.testFramework.plugins.extensionPoint
 import com.intellij.platform.testFramework.plugins.extensions
 import com.intellij.platform.testFramework.plugins.includePackageClassFiles
+import com.intellij.platform.testFramework.plugins.installAt
 import com.intellij.platform.testFramework.plugins.module
 import com.intellij.platform.testFramework.plugins.plugin
 import com.intellij.platform.testFramework.setPluginClassLoaderForMainAndSubPlugins
@@ -521,9 +521,7 @@ class DynamicPluginsTest {
 
   @Test
   fun `separate content module jar unloading`() {
-    val fooDir = pluginsDir.resolve("foo")
-    val barJar = pluginsDir.resolve("bar.jar")
-    plugin("foo") {
+    val fooDir = plugin("foo") {
       content {
         module("foo.bar") {
           isSeparateJar = true
@@ -536,7 +534,8 @@ class DynamicPluginsTest {
       }
       action<FooAction>()
       includePackageClassFiles<FooAction>()
-    }.buildDir(fooDir)
+    }.installAt(pluginsDir)
+    val barJar = pluginsDir.resolve("bar.jar")
     plugin("bar") {
       action<BarAction>()
       includePackageClassFiles<BarAction>()
@@ -558,8 +557,7 @@ class DynamicPluginsTest {
 
   @Test
   fun `extension point from an embedded content module used in main descriptor`() {
-    val fooPath = pluginsDir.resolve("foo")
-    plugin("foo") {
+    val fooPath = plugin("foo") {
       content {
         module("foo.emb", loadingRule = ModuleLoadingRuleValue.EMBEDDED) {
           isSeparateJar = true
@@ -569,7 +567,7 @@ class DynamicPluginsTest {
       }
       extension<FooExtensionImpl>(FooExtension.EP_FQN)
       includePackageClassFiles<FooExtensionImpl>()
-    }.buildDir(fooPath)
+    }.installAt(pluginsDir)
     val foo = loadDescriptorInTest(fooPath)
     val fooEmb = foo.contentModules.first()
     try {
@@ -1047,8 +1045,7 @@ class DynamicPluginsTest {
 
   @Test
   fun `IJPL-233642 registry access of key from same plugin with multiple modules`() {
-    val fooPath = pluginsDir.resolve("foo")
-    plugin("foo") {
+    val fooPath = plugin("foo") {
       content {
         module("foo.core", loadingRule = ModuleLoadingRuleValue.EMBEDDED) {
           isSeparateJar = true
@@ -1069,7 +1066,7 @@ class DynamicPluginsTest {
           """.trimIndent())
         }
       }
-    }.buildDir(fooPath)
+    }.installAt(pluginsDir)
     StartupManagerImpl.addActivityEpListener(projectRule.project)
     val foo = loadDescriptorInTest(fooPath)
     val fooCore = foo.contentModules.first { it.moduleId.name == "foo.core" }
@@ -1114,12 +1111,9 @@ class DynamicPluginsTest {
   @Test
   @TestFor(issues = ["IJPL-183884"])
   fun `initial loading errors are cleared after successful dynamic plugin loading`() {
-    val barPluginPath = pluginsDir.resolve("bar")
-    val fooPluginPath = pluginsDir.resolve("foo")
-
     // initial descriptor loading
-    plugin("bar") {}.buildDir(barPluginPath)
-    plugin("foo") { depends("bar") }.buildDir(fooPluginPath)
+    val barPluginPath = plugin("bar") {}.installAt(pluginsDir)
+    val fooPluginPath = plugin("foo") { depends("bar") }.installAt(pluginsDir)
     PluginSetTestBuilder.fromPath(pluginsDir).withDisabledPlugins("bar").build()
 
     val barPluginId = PluginId.getId("bar")
@@ -1146,11 +1140,8 @@ class DynamicPluginsTest {
 
   @Test
   fun `enabling a plugin will not load actions form a module with an unsatisfied dependency`() {
-    val fooPluginPath = pluginsDir.resolve("foo")
-    val barPluginPath = pluginsDir.resolve("bar")
-
-    plugin("bar") {}.buildDir(barPluginPath)
-    plugin("foo") {
+    val barPluginPath = plugin("bar") {}.installAt(pluginsDir)
+    val fooPluginPath = plugin("foo") {
       namespace = "test_ns"
       content {
         module("foo.a") {
@@ -1168,7 +1159,7 @@ class DynamicPluginsTest {
           """
         }
       }
-    }.buildDir(fooPluginPath)
+    }.installAt(pluginsDir)
 
     PluginSetTestBuilder.fromPath(pluginsDir).withDisabledPlugins("bar").build()
     loadPluginInTest(fooPluginPath) {
@@ -1181,11 +1172,8 @@ class DynamicPluginsTest {
 
   @Test
   fun `we do not try to load an implementation-details plugin when it wants to enable an implementation-details module `() {
-    val fooPluginPath = pluginsDir.resolve("foo")
-    val barPluginPath = pluginsDir.resolve("bar")
-
-    plugin("bar") {}.buildDir(barPluginPath)
-    plugin("foo") {
+    val barPluginPath = plugin("bar") {}.installAt(pluginsDir)
+    val fooPluginPath = plugin("foo") {
       implementationDetail = true
       content(namespace = "test_ns") {
         module("foo.a") {
@@ -1194,7 +1182,7 @@ class DynamicPluginsTest {
           }
         }
       }
-    }.buildDir(fooPluginPath)
+    }.installAt(pluginsDir)
 
     PluginSetTestBuilder.fromPath(pluginsDir).withDisabledPlugins("bar").build()
     loadPluginInTest(fooPluginPath) {
@@ -1223,7 +1211,7 @@ class DynamicPluginsTest {
                             serviceImplementation="${DefaultService::class.qualifiedName}"/>
       """.trimIndent())
       includePackageClassFiles<DefaultService>()
-    }.buildDir(pluginsDir.resolve("foo"))
+    }.installAt(pluginsDir)
     val foo = loadDescriptorInTest(pluginsDir.resolve("foo"))
     assertThat(DynamicPlugins.loadPlugin(foo)).isFalse
   }
@@ -1232,7 +1220,7 @@ class DynamicPluginsTest {
   fun `test ide-plugins-allow-dynamic-services-overrides registry flag`() {
     for (dynamicServiceOverridesAllowed in listOf(true, false)) {
       Registry.get("ide.plugins.allow.dynamic.services.overrides").setValue(dynamicServiceOverridesAllowed, testDisposable.disposable)
-      plugin("foo") {
+      val fooPath = plugin("foo") {
         extensions("""
         <applicationService serviceInterface="${ServiceInterface::class.qualifiedName}" 
                             serviceImplementation="${DefaultService::class.qualifiedName}"
@@ -1243,8 +1231,8 @@ class DynamicPluginsTest {
                             overrides="true"/>
       """.trimIndent())
         includePackageClassFiles<DefaultService>()
-      }.buildDir(pluginsDir.resolve("foo"))
-      val foo = loadDescriptorInTest(pluginsDir.resolve("foo"))
+      }.installAt(pluginsDir)
+      val foo = loadDescriptorInTest(fooPath)
       assertThat(DynamicPlugins.loadPlugin(foo)).isEqualTo(dynamicServiceOverridesAllowed)
     }
   }

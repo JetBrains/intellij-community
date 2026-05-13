@@ -6,8 +6,8 @@ import com.intellij.idea.TestFor
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
 import com.intellij.platform.testFramework.plugins.PluginSpecBuilder
-import com.intellij.platform.testFramework.plugins.buildDir
 import com.intellij.platform.testFramework.plugins.extensions
+import com.intellij.platform.testFramework.plugins.installAt
 import com.intellij.platform.testFramework.plugins.plugin
 import com.intellij.settingsSync.core.plugins.SettingsSyncPluginCategoryFinder
 import com.intellij.testFramework.rules.InMemoryFsExtension
@@ -57,7 +57,7 @@ class SettingsSyncPluginCategoryFinderTest {
   private fun pluginDescriptor(body: PluginSpecBuilder.() -> Unit): IdeaPluginDescriptorImpl {
     plugin("plugin") {
       body()
-    }.buildDir(pluginDirPath.resolve("plugin"))
+    }.installAt(pluginDirPath)
     val pluginSet = buildPluginSet()
     return pluginSet.getEnabledPlugin("plugin")
   }
