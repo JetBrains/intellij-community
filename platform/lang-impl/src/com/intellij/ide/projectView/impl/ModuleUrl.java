@@ -2,9 +2,6 @@
 
 package com.intellij.ide.projectView.impl;
 
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
@@ -17,22 +14,7 @@ public final class ModuleUrl extends AbstractUrl {
   }
 
   @Override
-  public Object[] createPath(Project project) {
-    final Module module = moduleName != null ? ModuleManager.getInstance(project).findModuleByName(moduleName) : null;
-    if (module == null) return null;
-    return new Object[]{module};
-  }
-
-  @Override
   protected AbstractUrl createUrl(String moduleName, String url) {
       return new ModuleUrl(url, moduleName);
-  }
-
-  @Override
-  public AbstractUrl createUrlByElement(Object element) {
-    if (element instanceof Module module) {
-      return new ModuleUrl("", module.getName());
-    }
-    return null;
   }
 }

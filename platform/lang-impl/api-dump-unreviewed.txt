@@ -9366,8 +9366,6 @@ c:com.intellij.ide.projectView.impl.ProjectViewTree
 f:com.intellij.ide.projectView.impl.PsiFileUrl
 - com.intellij.ide.projectView.impl.AbstractUrl
 - <init>(java.lang.String):V
-- createPath(com.intellij.openapi.project.Project):java.lang.Object[]
-- createUrlByElement(java.lang.Object):com.intellij.ide.projectView.impl.AbstractUrl
 - equals(java.lang.Object):Z
 - hashCode():I
 c:com.intellij.ide.projectView.impl.RenameModuleHandler

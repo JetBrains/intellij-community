@@ -2,12 +2,7 @@
 
 package com.intellij.ide.projectView.impl;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -22,28 +17,8 @@ public final class PsiFileUrl extends AbstractUrl {
   }
 
   @Override
-  public Object[] createPath(final Project project) {
-    final VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
-    if (file == null || !file.isValid()){
-      return null;
-    }
-    return new Object[]{PsiManager.getInstance(project).findFile(file)};
-  }
-
-  @Override
   protected AbstractUrl createUrl(String moduleName, String url) {
       return new PsiFileUrl(url);
-  }
-
-  @Override
-  public AbstractUrl createUrlByElement(Object element) {
-    if (element instanceof PsiFile) {
-      VirtualFile file = ((PsiFile)element).getVirtualFile();
-      if (file != null){
-        return new PsiFileUrl(file.getUrl());
-      }
-    }
-    return null;
   }
 
   @Override

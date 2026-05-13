@@ -23,11 +23,6 @@ public class AbstractUrlFavoriteAdapter extends AbstractUrl {
     myNodeProvider = nodeProvider;
   }
 
-  @Override
-  public Object[] createPath(Project project) {
-    return myNodeProvider.createPathFromUrl(project, url, moduleName);
-  }
-
   @Nullable Bookmark createBookmark(@NotNull Project project) {
     if (myNodeProvider instanceof AbstractUrlFavoriteConverter converter) {
       var bookmark = converter.createBookmark(project, url, moduleName);
@@ -40,11 +35,6 @@ public class AbstractUrlFavoriteAdapter extends AbstractUrl {
 
   @Override
   protected AbstractUrl createUrl(String moduleName, String url) {
-    return null;
-  }
-
-  @Override
-  public AbstractUrl createUrlByElement(Object element) {
     return null;
   }
 

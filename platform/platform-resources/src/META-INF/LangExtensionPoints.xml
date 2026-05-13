@@ -219,7 +219,6 @@
     <extensionPoint name="bookmarkProvider" interface="com.intellij.ide.bookmark.BookmarkProvider" area="IDEA_PROJECT" dynamic="true"/>
     <extensionPoint name="bookmarksListProvider" interface="com.intellij.ide.bookmark.BookmarksListProvider" area="IDEA_PROJECT" dynamic="true"/>
     <extensionPoint name="favoriteNodeProvider" interface="com.intellij.ide.favoritesTreeView.FavoriteNodeProvider" area="IDEA_PROJECT" dynamic="true"/>
-    <extensionPoint name="favoritesListProvider" interface="com.intellij.ide.favoritesTreeView.FavoritesListProvider" area="IDEA_PROJECT" dynamic="true"/>
 
     <!-- File-Based Index-->
     <extensionPoint name="include.provider" interface="com.intellij.psi.impl.include.FileIncludeProvider" dynamic="true"/>

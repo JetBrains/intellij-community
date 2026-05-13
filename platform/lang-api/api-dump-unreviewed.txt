@@ -2098,17 +2098,7 @@ f:com.intellij.ide.bookmark.FileBookmarksListener
 a:com.intellij.ide.favoritesTreeView.FavoriteNodeProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
-- createNode(com.intellij.openapi.project.Project,java.lang.Object,com.intellij.ide.projectView.ViewSettings):com.intellij.ide.util.treeView.AbstractTreeNode
-- a:createPathFromUrl(com.intellij.openapi.project.Project,java.lang.String,java.lang.String):java.lang.Object[]
-- a:elementContainsFile(java.lang.Object,com.intellij.openapi.vfs.VirtualFile):Z
-- a:getElementLocation(java.lang.Object):java.lang.String
-- a:getElementModuleName(java.lang.Object):java.lang.String
-- a:getElementUrl(java.lang.Object):java.lang.String
-- a:getElementWeight(java.lang.Object,Z):I
-- a:getFavoriteNodes(com.intellij.openapi.actionSystem.DataContext,com.intellij.ide.projectView.ViewSettings):java.util.Collection
 - a:getFavoriteTypeId():java.lang.String
-- getPsiElement(java.lang.Object):com.intellij.psi.PsiElement
-- a:isInvalidElement(java.lang.Object):Z
 c:com.intellij.ide.fileTemplates.FileTemplateGroupDescriptor
 - com.intellij.ide.fileTemplates.FileTemplateDescriptor
 - <init>(java.lang.String,javax.swing.Icon):V
@@ -2177,9 +2167,7 @@ com.intellij.ide.projectView.ProjectViewSelectionListener
 f:com.intellij.ide.projectView.ProjectViewSelectionTopicKt
 - sf:PROJECT_VIEW_SELECTION_TOPIC:com.intellij.util.messages.Topic
 Fa:com.intellij.ide.projectView.impl.AbstractUrl
-- a:createPath(com.intellij.openapi.project.Project):java.lang.Object[]
 - createUrl(java.lang.String,java.lang.String,java.lang.String):com.intellij.ide.projectView.impl.AbstractUrl
-- a:createUrlByElement(java.lang.Object):com.intellij.ide.projectView.impl.AbstractUrl
 - equals(java.lang.Object):Z
 - getType():java.lang.String
 - getURL():java.lang.String

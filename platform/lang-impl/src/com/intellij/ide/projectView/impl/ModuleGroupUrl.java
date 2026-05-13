@@ -2,12 +2,8 @@
 
 package com.intellij.ide.projectView.impl;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
-
-import java.util.List;
 
 
 @ApiStatus.Internal
@@ -19,22 +15,7 @@ public final class ModuleGroupUrl extends AbstractUrl {
   }
 
   @Override
-  public Object[] createPath(Project project) {
-    List<String> groupPath = StringUtil.split(url, ";");
-    return new Object[]{new ModuleGroup(groupPath)};
-  }
-
-  @Override
   protected AbstractUrl createUrl(String moduleName, String url) {
       return new ModuleGroupUrl(url);
-  }
-
-  @Override
-  public AbstractUrl createUrlByElement(Object element) {
-    if (element instanceof ModuleGroup group) {
-      final String[] groupPath = group.getGroupPath();
-      return new ModuleGroupUrl(StringUtil.join(groupPath, ";"));
-    }
-    return null;
   }
 }

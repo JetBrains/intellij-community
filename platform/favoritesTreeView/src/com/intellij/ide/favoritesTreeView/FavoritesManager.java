@@ -1,22 +1,17 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.favoritesTreeView;
 
-import com.intellij.ide.bookmark.BookmarksListener;
 import com.intellij.ide.projectView.impl.AbstractUrl;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.TreeItem;
-import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -28,8 +23,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-
-import static com.intellij.ide.favoritesTreeView.FavoritesListProvider.EP_NAME;
 
 /**
  * @deprecated Use Bookmarks API instead.
@@ -47,8 +40,6 @@ public final class FavoritesManager implements PersistentStateComponent<Element>
   private final Map<String, List<TreeItem<Pair<AbstractUrl, String>>>> myName2FavoritesRoots = new TreeMap<>();
   private final List<String> myFavoritesRootsOrder = new ArrayList<>();
   private final Project myProject;
-  private final List<FavoritesListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final FavoritesViewSettings myViewSettings = new FavoritesViewSettings();
 
   public static FavoritesManager getInstance(@NotNull Project project) {
     return project.getService(FavoritesManager.class);
@@ -56,66 +47,15 @@ public final class FavoritesManager implements PersistentStateComponent<Element>
 
   public FavoritesManager(@NotNull Project project) {
     myProject = project;
-    EP_NAME.getPoint(myProject).addChangeListener(() -> {
-      rootsChanged();
-    }, myProject);
-  }
-
-  private void rootsChanged() {
-    for (FavoritesListener listener : myListeners) {
-      listener.rootsChanged();
-    }
-  }
-
-  private void listAdded(@NotNull String listName) {
-    for (FavoritesListener listener : myListeners) {
-      listener.listAdded(listName);
-    }
-  }
-
-  public void addFavoritesListener(final FavoritesListener listener, @NotNull Disposable parent) {
-    myListeners.add(listener);
-    listener.rootsChanged();
-    Disposer.register(parent, new Disposable() {
-      @Override
-      public void dispose() {
-        myListeners.remove(listener);
-      }
-    });
   }
 
   public @NotNull List<String> getAvailableFavoritesListNames() {
     return new ArrayList<>(myFavoritesRootsOrder);
   }
 
-  public synchronized void createNewList(@NotNull String listName) {
-    myName2FavoritesRoots.put(listName, new ArrayList<>());
-    myFavoritesRootsOrder.add(listName);
-    listAdded(listName);
-  }
-
-  /**
-   * @deprecated use {@link BookmarksListener#structureChanged} instead. For example,
-   * {@code myProject.getMessageBus().syncPublisher(BookmarksListener.TOPIC).structureChanged(node)}.
-   * The {@code null}-node can be used to rebuild the whole BookmarksView.
-   */
-  @Deprecated
-  public synchronized void fireListeners(final @NotNull String listName) {
-    myProject.getMessageBus().syncPublisher(BookmarksListener.TOPIC).structureChanged(null);
-    rootsChanged();
-  }
-
-  @NotNull FavoritesViewSettings getViewSettings() {
-    return myViewSettings;
-  }
-
   public @NotNull List<TreeItem<Pair<AbstractUrl, String>>> getFavoritesListRootUrls(@NotNull String name) {
     final List<TreeItem<Pair<AbstractUrl, String>>> pairs = myName2FavoritesRoots.get(name);
     return pairs == null ? new ArrayList<>() : pairs;
-  }
-
-  public synchronized boolean addRoots(@NotNull String name, Module moduleContext, @NotNull Object elements) {
-    return true;
   }
 
   @Override
