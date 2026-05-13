@@ -10,7 +10,6 @@ import javax.swing.ActionMap;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.KeyStroke;
-import javax.swing.SwingUtilities;
 import javax.swing.plaf.ComponentUI;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -23,9 +22,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyVetoException;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.Locale;
-import java.util.Set;
 import java.util.TimeZone;
 
 public class BasicCalendarPaneUI extends CalendarPaneUI implements
@@ -48,8 +45,6 @@ public class BasicCalendarPaneUI extends CalendarPaneUI implements
   protected CalendarNumberOfWeekPanel numberOfWeekPanel;
 
   protected CalendarHeader headerPanel;
-
-  protected Set<JComponent> focusableComponents = new HashSet<>();
 
   protected ComponentListener componentListener;
 
@@ -161,16 +156,7 @@ public class BasicCalendarPaneUI extends CalendarPaneUI implements
     numberOfWeekPanel = new CalendarNumberOfWeekPanel(peer.getDate(), peer
         .getLocale(), peer.getZone());
 
-    focusableComponents.addAll(classicPanel.getFocusableComponents());
-    focusableComponents.addAll(modernPanel.getFocusableComponents());
-    focusableComponents.addAll(auxPanel.getFocusableComponents());
-    focusableComponents.addAll(gridPanel.getFocusableComponents());
-    focusableComponents.addAll(auxPanel.getFocusableComponents());
-
     componentListener = new ComponentListener();
-    for (int i = 0; i < focusableComponents.size(); i++)
-      ((JComponent) focusableComponents.toArray()[i])
-          .addFocusListener(componentListener);
 
     gridPanel.addPropertyChangeListener(componentListener);
     modernPanel.addPropertyChangeListener(componentListener);
@@ -192,11 +178,6 @@ public class BasicCalendarPaneUI extends CalendarPaneUI implements
     classicPanel.removePropertyChangeListener(componentListener);
     auxPanel.removePropertyChangeListener(componentListener);
     componentListener = null;
-
-    for (int i = 0; i < focusableComponents.size(); i++)
-      ((JComponent) focusableComponents.toArray()[i])
-          .removeFocusListener(componentListener);
-    focusableComponents.clear();
 
     classicPanel = null;
     modernPanel = null;
@@ -353,24 +334,7 @@ public class BasicCalendarPaneUI extends CalendarPaneUI implements
     }
   }
 
-  protected class ComponentListener implements FocusListener,
-      PropertyChangeListener {
-    @Override
-    public void focusGained(FocusEvent e) {
-    }
-
-    @Override
-    public void focusLost(FocusEvent e) {
-      boolean isFocusableComponent = focusableComponents.contains(e
-          .getSource());
-      boolean isNonEmptyOpposite = e.getOppositeComponent() != null;
-      if (isFocusableComponent
-          && isNonEmptyOpposite
-          && !SwingUtilities.isDescendingFrom(e
-              .getOppositeComponent(), peer)) {
-        peer.commitOrRevert();
-      }
-    }
+  protected class ComponentListener implements PropertyChangeListener {
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {

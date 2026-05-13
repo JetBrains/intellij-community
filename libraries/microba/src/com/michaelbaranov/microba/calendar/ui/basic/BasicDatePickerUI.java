@@ -21,15 +21,20 @@ import javax.swing.JFormattedTextField.AbstractFormatter;
 import javax.swing.JPopupMenu;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.text.DateFormatter;
 import javax.swing.text.DefaultFormatterFactory;
+import java.awt.AWTEvent;
 import java.awt.BorderLayout;
 import java.awt.Insets;
+import java.awt.Toolkit;
+import java.awt.event.AWTEventListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyVetoException;
@@ -142,7 +147,7 @@ public class BasicDatePickerUI extends DatePickerUI implements
 
     setSimpeLook(false);
     // calendar
-    calendarPane = new CalendarPane(peer.getStyle());
+    calendarPane = new PopupCalendarPane(peer.getStyle());
     calendarPane.setShowTodayButton(peer.isShowTodayButton());
     calendarPane.setFocusLostBehavior(JFormattedTextField.REVERT);
     calendarPane.setFocusCycleRoot(true);
@@ -153,10 +158,10 @@ public class BasicDatePickerUI extends DatePickerUI implements
     calendarPane.setFocusable(peer.isDropdownFocusable());
     calendarPane.setColorOverrideMap(peer.getColorOverrideMap());
     // popup
-    popup = new JPopupMenu();
+    popup = new PopupMenuWithoutItems();
     popup.setLayout(new BorderLayout());
     popup.add(calendarPane, BorderLayout.CENTER);
-    popup.setLightWeightPopupEnabled(true);
+    popup.setLightWeightPopupEnabled(false); // we need a heavyweight popup to check for clicks outside its window
     // add
     peer.setLayout(new BorderLayout());
 
@@ -317,10 +322,17 @@ public class BasicDatePickerUI extends DatePickerUI implements
     @Override
     public void actionPerformed(ActionEvent e) {
 
-      if (e.getSource() != calendarPane)
-        showPopup(true);
-      else
+      if (e.getSource() == button) {
+        if (!popup.isVisible()) {
+          showPopup(true);
+        }
+        else {
+          calendarPane.commitOrRevert();
+        }
+      }
+      else {
         showPopup(false);
+      }
 
     }
 
@@ -408,6 +420,49 @@ public class BasicDatePickerUI extends DatePickerUI implements
   @Override
   public void revert() {
     peerDateChanged(peer.getDate());
+  }
+
+  private static class PopupMenuWithoutItems extends JPopupMenu {
+    @Override
+    public void menuSelectionChanged(boolean isIncluded) {
+      // Do nothing because our "menu" is not a real menu.
+      // And depending on the environment (Wayland, I'm looking at you!),
+      // an unexpected focus change may cause the selection to clear and hide the menu.
+    }
+  }
+
+  private class PopupCalendarPane extends CalendarPane {
+    private final MouseClickListener mouseClickListener = new MouseClickListener();
+
+    PopupCalendarPane(int style) {
+      super(style);
+    }
+
+    @Override
+    public void addNotify() {
+      super.addNotify();
+      Toolkit.getDefaultToolkit().addAWTEventListener(mouseClickListener, AWTEvent.MOUSE_EVENT_MASK);
+    }
+
+    @Override
+    public void removeNotify() {
+      Toolkit.getDefaultToolkit().removeAWTEventListener(mouseClickListener);
+      super.removeNotify();
+    }
+
+    private class MouseClickListener implements AWTEventListener {
+      @Override
+      public void eventDispatched(AWTEvent event) {
+        if (event.getSource() == button) return; // the button will handle closing the popup
+        var popupWindow = SwingUtilities.getWindowAncestor(PopupCalendarPane.this);
+        if (event instanceof MouseEvent mouseEvent && mouseEvent.getID() == MouseEvent.MOUSE_PRESSED) {
+          var clickWindow = SwingUtilities.getWindowAncestor(mouseEvent.getComponent());
+          if (clickWindow != popupWindow) {
+            commitOrRevert(); // close the popup, committing or reverting depending on the setting
+          }
+        }
+      }
+    }
   }
 
 }
