@@ -1324,6 +1324,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
                 runTest("../../../idea/tests/testData/quickfix/autoImports/operatorAssignPlusAssign.test");
             }
 
+            @TestMetadata("operatorAssignPlusAssignJavaSyntheticProperty.test")
+            public void testOperatorAssignPlusAssignJavaSyntheticProperty() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/operatorAssignPlusAssignJavaSyntheticProperty.test");
+            }
+
             @TestMetadata("operatorAssignPlusTwoVariantsDifferentPackages.test")
             public void testOperatorAssignPlusTwoVariantsDifferentPackages() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/autoImports/operatorAssignPlusTwoVariantsDifferentPackages.test");
