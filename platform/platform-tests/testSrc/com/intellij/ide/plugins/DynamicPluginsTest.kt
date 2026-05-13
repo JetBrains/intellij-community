@@ -21,6 +21,8 @@ import com.intellij.ide.plugins.testPluginSrc.foo.bar.FooBarService
 import com.intellij.ide.plugins.testPluginSrc.foo.ep.FooExtension
 import com.intellij.ide.plugins.testPluginSrc.foo.ep.FooExtensionService
 import com.intellij.ide.plugins.testPluginSrc.foo.epImpl.FooExtensionImpl
+import com.intellij.ide.plugins.testPluginSrc.projectService.MyProjectService
+import com.intellij.ide.plugins.testPluginSrc.projectService.MyStartupActivity
 import com.intellij.ide.plugins.testPluginSrc.registryAccess.MyRegistryAccessor
 import com.intellij.ide.plugins.testPluginSrc.registryAccess.MyRegistryAccessorService
 import com.intellij.ide.plugins.testPluginSrc.testPSC.MyPersistentComponent
@@ -42,10 +44,8 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.ComponentManager
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.module.ModuleConfigurationEditor
@@ -53,7 +53,6 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationEditorProvider
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState
-import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.use
@@ -848,25 +847,35 @@ class DynamicPluginsTest {
   }
 
   @Test
-  fun testProjectService() {
+  fun `project service loads`() {
     val project = projectRule.project
-    loadPluginWithText(plugin {
-      dependsIntellijModulesLang()
-      extensions("""<projectService serviceImplementation="${MyProjectService::class.java.name}"/>""")
-    }).use {
-      assertThat(project.getService(MyProjectService::class.java)).isNotNull()
+    val pluginSet = buildPluginSet(pluginsDir) {
+      plugin("plugin") {
+        extensions("""<projectService serviceImplementation="${MyProjectService::class.java.name}"/>""")
+        includePackageClassFiles<MyProjectService>()
+      }
+    }
+    val plugin = pluginSet.getEnabledPlugin("plugin")
+    loadPluginInTest(plugin) {
+      assertThat(project.getTestHandleService<MyProjectService, _, _>(plugin)).isNotNull()
     }
   }
 
   @Test
-  fun extensionOnServiceDependency() {
+  fun `project service can be acquired from extension listener - StartupActivity`() {
     val project = projectRule.project
     StartupManagerImpl.addActivityEpListener(project)
-    loadExtensionWithText("""
-      <postStartupActivity implementation="${MyStartupActivity::class.java.name}"/>
-      <projectService serviceImplementation="${MyProjectService::class.java.name}"/>
-    """).use {
-      assertThat(project.service<MyProjectService>().executed).isTrue()
+    val pluginSet = buildPluginSet(pluginsDir) {
+      plugin("plugin") {
+        extensions("""<postStartupActivity implementation="${MyStartupActivity::class.java.name}"/>""")
+        extensions("""<projectService serviceImplementation="${MyProjectService::class.java.name}"/>""")
+        includePackageClassFiles<MyProjectService>()
+      }
+    }
+    val plugin = pluginSet.getEnabledPlugin("plugin")
+    loadPluginInTest(plugin) {
+      val handle = project.getTestHandleService<MyProjectService, _, _>(plugin)!!
+      assertThat(handle.test(Unit)).isTrue()
     }
   }
 
@@ -1310,29 +1319,6 @@ class DynamicPluginsTest {
       }
     }
   }
-}
-
-@InternalIgnoreDependencyViolation
-private class MyStartupActivity : StartupActivity.DumbAware {
-  override fun runActivity(project: Project) {
-    val service = project.getService(MyProjectService::class.java)
-    if (service != null) {
-      service.executed = true
-    }
-  }
-}
-
-@InternalIgnoreDependencyViolation
-private class MyProjectService {
-  companion object {
-    val LOG = logger<MyProjectService>()
-  }
-
-  init {
-    LOG.info("MyProjectService initialized")
-  }
-
-  var executed = false
 }
 
 private class MyInspectionTool : GlobalInspectionTool()
