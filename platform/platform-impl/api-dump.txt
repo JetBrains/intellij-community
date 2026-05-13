@@ -1387,6 +1387,7 @@ com.intellij.ui.Hint
 - a:show(javax.swing.JComponent,I,I,javax.swing.JComponent,com.intellij.ui.HintHint):V
 com.intellij.ui.HintListener
 - java.util.EventListener
+- beforeShow(java.util.EventObject):V
 - a:hintHidden(java.util.EventObject):V
 com.intellij.ui.LanguageTextField$DocumentCreator
 - a:createDocument(java.lang.String,com.intellij.lang.Language,com.intellij.openapi.project.Project):com.intellij.openapi.editor.Document

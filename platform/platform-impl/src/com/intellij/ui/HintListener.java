@@ -8,4 +8,5 @@ import java.util.EventObject;
 
 public interface HintListener extends EventListener{
   void hintHidden(@NotNull EventObject event);
+  default void beforeShow(@NotNull EventObject event) {}
 }

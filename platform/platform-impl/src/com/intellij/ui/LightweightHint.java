@@ -186,6 +186,12 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
         }
 
         @Override
+        protected boolean beforeShow() {
+          fireBeforeShow();
+          return true;
+        }
+
+        @Override
         protected void onHidden() {
           fireHintHidden();
           TooltipController.getInstance().resetCurrent();
@@ -346,6 +352,13 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
     final EventListener[] listeners = myListenerList.getListeners(HintListener.class);
     for (EventListener listener : listeners) {
       ((HintListener)listener).hintHidden(new EventObject(this));
+    }
+  }
+
+  private void fireBeforeShow() {
+    final EventListener[] listeners = myListenerList.getListeners(HintListener.class);
+    for (EventListener listener : listeners) {
+      ((HintListener)listener).beforeShow(new EventObject(this));
     }
   }
 

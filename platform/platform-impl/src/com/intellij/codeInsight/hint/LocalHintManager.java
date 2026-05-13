@@ -409,22 +409,12 @@ public final class LocalHintManager implements ClientHintManager {
                                @HintManager.PositionFlags short constraint) {
     ThreadingAssertions.assertEventDispatchThread();
     hideQuestionHint();
-    RangeHighlighter highlighter;
-    if (offset1 != offset2) {
-      TextAttributes attributes = new TextAttributes();
-      attributes.setEffectColor(HintUtil.QUESTION_UNDERSCORE_COLOR);
-      attributes.setEffectType(EffectType.LINE_UNDERSCORE);
-      highlighter = editor.getMarkupModel()
-        .addRangeHighlighter(offset1, offset2, HighlighterLayer.ERROR + 1, attributes, HighlighterTargetArea.EXACT_RANGE);
-    }
-    else {
-      highlighter = null;
-    }
 
     hint.addHintListener(new HintListener() {
+      private RangeHighlighter highlighter;
+
       @Override
       public void hintHidden(@NotNull EventObject event) {
-        hint.removeHintListener(this);
         if (highlighter != null) {
           highlighter.dispose();
         }
@@ -433,6 +423,17 @@ public final class LocalHintManager implements ClientHintManager {
           myQuestionAction = null;
           myQuestionHint = null;
         }
+      }
+
+      @Override
+      public void beforeShow(@NotNull EventObject event) {
+        if (offset1 == offset2) return;
+
+        TextAttributes attributes = new TextAttributes();
+        attributes.setEffectColor(HintUtil.QUESTION_UNDERSCORE_COLOR);
+        attributes.setEffectType(EffectType.LINE_UNDERSCORE);
+        highlighter = editor.getMarkupModel()
+          .addRangeHighlighter(offset1, offset2, HighlighterLayer.ERROR + 1, attributes, HighlighterTargetArea.EXACT_RANGE);
       }
     });
 
