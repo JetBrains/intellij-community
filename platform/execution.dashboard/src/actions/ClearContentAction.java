@@ -4,6 +4,7 @@ package com.intellij.platform.execution.dashboard.actions;
 import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorRegistry;
 import com.intellij.execution.RunContentDescriptorId;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.execution.process.ProcessHandler;
@@ -17,7 +18,6 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.platform.execution.dashboard.RunDashboardManagerImpl;
 import com.intellij.ui.content.Content;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -46,8 +46,9 @@ final class ClearContentAction extends DumbAwareAction
     boolean enabled = targetNodes.filter(node -> {
       RunContentDescriptor descriptor = node.getDescriptor();
       if (descriptor == null) {
-        return RunDashboardManagerImpl.getInstance(project).getPersistedStatus(
-          node.getConfigurationSettings().getConfiguration()) != null;
+        RunnerAndConfigurationSettings settings = node.getConfigurationSettings();
+        return settings != null && RunDashboardManager.getInstance(project).hasPersistedStatus(
+          settings.getConfiguration());
       }
       ProcessHandler processHandler = descriptor.getProcessHandler();
       return processHandler == null || processHandler.isProcessTerminated();
@@ -62,10 +63,11 @@ final class ClearContentAction extends DumbAwareAction
     if (project == null) return;
 
     for (RunDashboardRunConfigurationNode node : getLeafTargets(e)) {
+      RunnerAndConfigurationSettings settings = node.getConfigurationSettings();
       RunContentDescriptor descriptor = node.getDescriptor();
       if (descriptor == null) {
-        RunDashboardManager.getInstance(project).clearConfigurationStatus(
-          node.getConfigurationSettings().getConfiguration());
+        if (settings == null) continue;
+        RunDashboardManager.getInstance(project).clearConfigurationStatus(settings.getConfiguration());
         continue;
       }
       ProcessHandler processHandler = descriptor.getProcessHandler();
@@ -79,8 +81,9 @@ final class ClearContentAction extends DumbAwareAction
 
       RunContentDescriptor managedDescriptor = getManagedDescriptor(descriptor, project);
       RunContentManager.getInstance(project).removeRunContent(executor, managedDescriptor);
-      RunDashboardManager.getInstance(project).clearConfigurationStatus(
-        node.getConfigurationSettings().getConfiguration());
+      if (settings != null) {
+        RunDashboardManager.getInstance(project).clearConfigurationStatus(settings.getConfiguration());
+      }
     }
   }
 

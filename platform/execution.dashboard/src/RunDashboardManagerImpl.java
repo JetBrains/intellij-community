@@ -512,6 +512,11 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   }
 
   @Override
+  public boolean hasPersistedStatus(@NotNull RunConfiguration configuration) {
+    return getPersistedStatus(configuration) != null;
+  }
+
+  @Override
   public void clearConfigurationStatus(@NotNull RunConfiguration configuration) {
     myConfigurationStatuses.remove(configuration);
     updateDashboardIfNeeded(configuration, false);
@@ -658,11 +663,32 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
 
     myServiceLock.writeLock().lock();
     try {
-      RunDashboardService service = findService(oldDescriptorId);
-      if (service != null) {
-        doDetachServiceRunContentDescriptor(service);
+      RunDashboardService oldService = findService(oldDescriptorId);
+      if (oldService != null && oldService.getConfigurationSettings().equals(settings)) {
+        List<RunDashboardService> services = getServices(settings);
+        if (services != null) {
+          for (RunDashboardService s : services) {
+            if (s != oldService && descriptorId.equals(s.getDescriptorId())) {
+              // Another service already owns descriptorId — detach oldService so it doesn't keep a stale link to oldDescriptorId.
+              doDetachServiceRunContentDescriptor(oldService);
+              return s;
+            }
+          }
+          if (oldService instanceof RunDashboardServiceImpl mainService) {
+            mainService.setDescriptorId(descriptorId);
+            return mainService;
+          }
+          int idx = services.indexOf(oldService);
+          AdditionalRunDashboardService replacement =
+            new AdditionalRunDashboardService(settings, descriptorId, services.getFirst().getScope());
+          services.set(idx, replacement);
+          return replacement;
+        }
       }
 
+      if (oldService != null) {
+        doDetachServiceRunContentDescriptor(oldService);
+      }
       return doAttachServiceRunContentDescriptor(settings, descriptorId);
     }
     finally {
@@ -718,12 +744,8 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
       return null;
     }
 
-    RunDashboardService service = settingsServices.get(0);
-
-    // purely to avoid thinking that frontend debugger might reuse content of the backend run
-    var areDescriptorsWithSameExecutors = areSameOriginDescriptorsBeingExchanged(descriptorId, service);
-
-    if ((!areDescriptorsWithSameExecutors || service.getDescriptorId() == null) && service instanceof RunDashboardServiceImpl mainService) {
+    RunDashboardService service = settingsServices.getFirst();
+    if (service.getDescriptorId() == null && service instanceof RunDashboardServiceImpl mainService) {
       mainService.setDescriptorId(descriptorId);
       return mainService;
     }
@@ -733,16 +755,6 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
       settingsServices.add(newService);
       return newService;
     }
-  }
-
-  private static boolean areSameOriginDescriptorsBeingExchanged(@NotNull RunContentDescriptorId descriptorId, RunDashboardService service) {
-    var existingId = service.getDescriptorId();
-    var resolvedExistingDescriptor = existingId instanceof RunContentDescriptorIdImpl impl ? findContentValue(impl) : null;
-    var resolvedNewDescriptor = descriptorId instanceof RunContentDescriptorIdImpl impl ? findContentValue(impl) : null;
-    var areDescriptorsWithSameExecutors =
-      resolvedExistingDescriptor != null && resolvedNewDescriptor != null
-      && resolvedExistingDescriptor.isHiddenContent() == resolvedNewDescriptor.isHiddenContent();
-    return areDescriptorsWithSameExecutors;
   }
 
   private void doDetachServiceRunContentDescriptor(@NotNull RunDashboardService service) {

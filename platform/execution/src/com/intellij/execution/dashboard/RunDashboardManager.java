@@ -60,6 +60,9 @@ public interface RunDashboardManager {
   void setNewExcluded(@NotNull String typeId, boolean newExcluded);
 
   @ApiStatus.Internal
+  boolean hasPersistedStatus(@NotNull RunConfiguration configuration);
+
+  @ApiStatus.Internal
   void clearConfigurationStatus(@NotNull RunConfiguration configuration);
 
   @ApiStatus.Internal
