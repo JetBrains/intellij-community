@@ -3,6 +3,6 @@ package com.jetbrains.rhizomedb.impl
 
 import kotlin.random.Random
 
-private val rand = Random(fleet.util.Random.nextLong())
+private val rand = Random.Default
 fun generateSeed(): Long = rand.nextLong()
   
