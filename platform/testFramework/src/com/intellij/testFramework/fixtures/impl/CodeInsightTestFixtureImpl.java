@@ -233,6 +233,7 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
+import java.time.Duration;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.ref.Reference;
@@ -2074,13 +2075,20 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   public @NotNull String getFoldingDescription(boolean withCollapseStatus, boolean withCaretLocation) {
+    return getFoldingDescription(withCollapseStatus, withCaretLocation, null);
+  }
+
+  /**
+   * @param timeout timeout for building foldings, or {@code null} to use the default timeout
+   */
+  public @NotNull String getFoldingDescription(boolean withCollapseStatus, boolean withCaretLocation, @Nullable Duration timeout) {
     Editor topEditor = getHostEditor();
     return EdtTestUtil.runInEdtAndGet(() -> {
       IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
       if (policy != null) {
         policy.waitForHighlighting(getProject(), topEditor);
       }
-      EditorTestUtil.buildInitialFoldingsInBackground(topEditor);
+      EditorTestUtil.buildInitialFoldingsInBackground(topEditor, timeout);
       return getFoldingData(topEditor, withCollapseStatus, withCaretLocation);
     });
   }
@@ -2141,6 +2149,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private void testFoldingRegions(@NotNull String verificationFileName,
                                   @Nullable String destinationFileName,
                                   boolean doCheckCollapseStatus) {
+    testFoldingRegions(verificationFileName, destinationFileName, doCheckCollapseStatus, null);
+  }
+
+  private void testFoldingRegions(@NotNull String verificationFileName,
+                                  @Nullable String destinationFileName,
+                                  boolean doCheckCollapseStatus,
+                                  @Nullable Duration timeout) {
     String expectedContent;
     File verificationFile;
     try {
@@ -2180,7 +2195,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       }
     }
     boolean wasCaretTagFoundInTestFile = ReadAction.compute(() -> editor.getCaretModel().getOffset() != 0);
-    String actual = getFoldingDescription(doCheckCollapseStatus, wasCaretTagFoundInTestFile);
+    final String actual = getFoldingDescription(doCheckCollapseStatus, wasCaretTagFoundInTestFile, timeout);
     if (!expectedContent.equals(actual)) {
       throw new FileComparisonFailedError(verificationFile.getName(), expectedContent, actual, verificationFile.getPath());
     }
@@ -2199,6 +2214,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public void testFoldingWithCollapseStatus(@NotNull String verificationFileName, @Nullable String destinationFileName) {
     testFoldingRegions(verificationFileName, destinationFileName, true);
+  }
+
+  /**
+   * @param timeout timeout for building foldings, or {@code null} to use the default timeout
+   */
+  public void testFoldingWithCollapseStatus(@NotNull String verificationFileName, @Nullable String destinationFileName, @NotNull Duration timeout) {
+    testFoldingRegions(verificationFileName, destinationFileName, true, timeout);
   }
 
   @Override

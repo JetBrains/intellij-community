@@ -90,6 +90,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.awt.Dimension;
+import java.time.Duration;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -921,9 +922,14 @@ public final class EditorTestUtil {
   }
   @RequiresEdt
   public static void buildInitialFoldingsInBackground(@NotNull Editor editor) {
+    buildInitialFoldingsInBackground(editor, null);
+  }
+
+  @RequiresEdt
+  public static void buildInitialFoldingsInBackground(@NotNull Editor editor, @Nullable Duration timeout) {
     ThreadingAssertions.assertEventDispatchThread();
     assert !ApplicationManager.getApplication().isWriteAccessAllowed();
-    Runnable foldingState = PlatformTestUtil.waitForFuture(ReadAction.nonBlocking(() -> {
+    var future = ReadAction.nonBlocking(() -> {
       Project project = editor.getProject();
       if (project == null || editor.isDisposed()) {
         return null;
@@ -937,7 +943,10 @@ public final class EditorTestUtil {
         return null;
       }
       return ((CodeFoldingManagerImpl)CodeFoldingManager.getInstance(project)).updateFoldRegionsAsync(editor, true, true);
-    }).submit(AppExecutorUtil.getAppExecutorService()));
+    }).submit(AppExecutorUtil.getAppExecutorService());
+    final Runnable foldingState = timeout != null
+                            ? PlatformTestUtil.waitForFuture(future, timeout.toMillis())
+                            : PlatformTestUtil.waitForFuture(future);
     if (foldingState != null) {
       foldingState.run();
     }
