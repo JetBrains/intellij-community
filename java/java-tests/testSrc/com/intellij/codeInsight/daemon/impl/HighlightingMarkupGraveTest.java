@@ -27,6 +27,7 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.CoroutineKt;
 import com.intellij.testFramework.LeakHunter;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.TestTimeOut;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ref.GCWatcher;
@@ -131,7 +132,7 @@ public class HighlightingMarkupGraveTest extends DaemonAnalyzerTestCase {
     while (!t.isTimedOut()) {
       CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myProject);
       LaterInvocator.purgeExpiredItems();
-      LaterInvocator.dispatchPendingFlushes();
+      PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
       myDaemonCodeAnalyzer.restart(this);
     }
     try {
@@ -181,7 +182,7 @@ public class HighlightingMarkupGraveTest extends DaemonAnalyzerTestCase {
     });
   }
 
-  private TextEditor openTextEditorForDaemonTest(Project project, VirtualFile file) {
+  private static TextEditor openTextEditorForDaemonTest(Project project, VirtualFile file) {
     List<FileEditor> editors = TasksKt.runWithModalProgressBlocking(project, "", (_, _) ->
       FileEditorManagerEx.getInstanceEx(project).openFile(file));
     return ContainerUtil.findInstance(editors, TextEditor.class);
