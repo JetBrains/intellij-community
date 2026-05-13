@@ -27,7 +27,7 @@ internal class PyWithLanguageLevelExtension : BeforeEachCallback, AfterEachCallb
                      ?: return
 
     val level = annotation.level
-    val project = context.getClassLevelLookupFixtureManager().getRequired<Project>().get()
+    val project = context.getParentLookupFixtureManager().getRequired<Project>().get()
 
     val store = context.getStore(namespace)
 
@@ -38,7 +38,7 @@ internal class PyWithLanguageLevelExtension : BeforeEachCallback, AfterEachCallb
   }
 
   override fun afterEach(context: ExtensionContext) {
-    val project = context.getClassLevelLookupFixtureManager().getRequired<Project>().get()
+    val project = context.getParentLookupFixtureManager().getRequired<Project>().get()
 
     val store = context.getStore(namespace)
     val previousForced = store.remove(PREV_LEVEL_KEY, LanguageLevel::class.java)

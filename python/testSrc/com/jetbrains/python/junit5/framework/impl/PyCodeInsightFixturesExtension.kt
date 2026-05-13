@@ -74,7 +74,7 @@ internal class PyCodeInsightFixturesExtension : BeforeAllCallback, BeforeEachCal
     val manager = context.getLookupFixtureManager()
     val implicitFixtures = mutableListOf<LookupFixture>()
 
-    val classLevelManager = context.getClassLevelLookupFixtureManager()
+    val classLevelManager = context.getParentLookupFixtureManager()
     val project = classLevelManager.getRequired<Project>()
     val tempDirFixture = classLevelManager.getRequired<Path>()
     val module = classLevelManager.getRequired<Module>()

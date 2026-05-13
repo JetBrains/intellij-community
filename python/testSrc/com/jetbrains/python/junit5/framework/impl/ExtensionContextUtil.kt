@@ -12,7 +12,7 @@ import org.junit.jupiter.api.extension.ExtensionContext
  * (e.g. project, module, SDK) that were registered in `BeforeAll`, since
  * `Namespace.GLOBAL` stores are not inherited along the JUnit 5 context hierarchy.
  */
-internal fun ExtensionContext.getClassLevelLookupFixtureManager(): LookupFixtureManager {
+internal fun ExtensionContext.getParentLookupFixtureManager(): LookupFixtureManager {
   val parent = parent.orElseThrow {
     IllegalStateException(
       "Parent ExtensionContext is not available. " +
