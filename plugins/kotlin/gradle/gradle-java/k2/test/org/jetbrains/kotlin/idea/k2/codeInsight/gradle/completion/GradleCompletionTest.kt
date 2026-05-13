@@ -3,11 +3,16 @@ package org.jetbrains.kotlin.idea.k2.codeInsight.gradle.completion
 
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.testFramework.runInEdtAndWait
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingCodeInsightTestCase
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.junit.Test
 
 class GradleCompletionTest : MultiplePluginVersionGradleImportingCodeInsightTestCase() {
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
+
     override fun testDataDirName() = "completion"
 
     private fun doCompletionTest(expected: List<String>) {
