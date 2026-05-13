@@ -269,7 +269,9 @@ private suspend fun computeDescriptorsForAdditionalFrontendPlugins(
       )
     )
 
-    val additionalPluginModules = embeddedFrontendContext.getBundledPluginModules() - context.getBundledPluginModules().toSet()
+    val additionalPluginModules = embeddedFrontendContext.getBundledPluginModules().toMutableSet()
+    additionalPluginModules.removeAll(context.getBundledPluginModules().toSet())
+
     if (additionalPluginModules.isNotEmpty()) {
       /* generate descriptors for custom 'Xxx for JetBrains Client' plugins, which are not bundled with the IDE but are used in the frontend process; eventually we'll get rid of
          them (see IJPL-220139) */
@@ -285,6 +287,7 @@ private suspend fun computeDescriptorsForAdditionalFrontendPlugins(
         state = context.distributionState(),
         context = context,
         copyFiles = false,
+        layoutOnly = true
       ))
     }
     additionalFrontendPlugins
@@ -318,4 +321,3 @@ private const val COMPACT_REPOSITORY_FILE_NAME: String = "module-descriptors.dat
 internal const val RUNTIME_REPOSITORY_MODULES_DIR_NAME = "modules"
 internal const val MODULE_DESCRIPTORS_JAR_PATH: String = "$RUNTIME_REPOSITORY_MODULES_DIR_NAME/$JAR_REPOSITORY_FILE_NAME" 
 const val MODULE_DESCRIPTORS_COMPACT_PATH: String = "$RUNTIME_REPOSITORY_MODULES_DIR_NAME/$COMPACT_REPOSITORY_FILE_NAME" 
-
