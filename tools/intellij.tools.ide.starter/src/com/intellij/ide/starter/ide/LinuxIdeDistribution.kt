@@ -65,6 +65,7 @@ class LinuxIdeDistribution : IdeDistribution() {
     require(SystemInfo.isLinux) { "Can only run on Linux, docker is possible, please PR" }
 
     val appHome = (unpackDir.listDirectoryEntriesQuietly()?.singleOrNull { it.isDirectory() } ?: unpackDir).toAbsolutePath()
+    JBRResolver.applyInstallerJbrOverrideIfLocalJbrPathNotEmpty(appHome)
     val (productCode, build) = readProductCodeAndBuildNumberFromBuildTxt(appHome.resolve("build.txt"))
 
     val executablePath = listOf(appHome / "bin" / executableFileName, appHome / "bin" / "$executableFileName.sh")

@@ -52,6 +52,7 @@ class MacOsIdeDistribution : IdeDistribution() {
     val executableName = getExecutableNameFromInfoPlist(appDir, "CFBundleExecutable")
 
     val appHome = appDir.resolve("Contents").toAbsolutePath()
+    JBRResolver.applyInstallerJbrOverrideIfLocalJbrPathNotEmpty(appHome)
     val executablePath = appHome / "MacOS" / executableName
     require(executablePath.isRegularFile()) { "Cannot find macOS IDE executable file in $executablePath" }
 

@@ -2,6 +2,7 @@ package com.intellij.ide.starter.ide
 
 import com.intellij.ide.starter.config.ConfigurationStorage
 import com.intellij.ide.starter.config.jbrVersionForDevServer
+import com.intellij.ide.starter.config.localJbrPath
 import com.intellij.ide.starter.config.useDockerContainer
 import com.intellij.ide.starter.di.di
 import com.intellij.ide.starter.path.GlobalPaths
@@ -58,11 +59,63 @@ object JBRResolver {
   }
 
   suspend fun downloadAndUnpackJbrFromBuildIfNeeded(jbrFullVersion: String): Path {
+    localJbrPathOverride()?.let { return it }
     return catchAll { downloadAndUnpackJbrIfNeeded(getJBRVersionFromBuild(jbrFullVersion)) } ?: throw JBRDownloadException(jbrFullVersion)
   }
 
   suspend fun downloadAndUnpackJbrFromSourcesIfNeeded(jbrFullVersion: String): Path {
+    localJbrPathOverride()?.let { return it }
     return catchAll { downloadAndUnpackJbrIfNeeded(getJBRVersionFromSources(jbrFullVersion)) } ?: throw JBRDownloadException(jbrFullVersion)
+  }
+
+  private fun localJbrPathOverride(): Path? {
+    val raw = ConfigurationStorage.localJbrPath() ?: return null
+    val path = Path.of(raw).toAbsolutePath()
+    require(Files.isDirectory(path)) { "Local JBR override does not point to an existing directory: $path" }
+    logOutput("Using local JBR override at $path")
+    return path
+  }
+
+  /**
+   * Installer-mode override: swap `<appHome>/jbr` (or `<appHome>/jbr/Contents/Home` on macOS) with a
+   * symlink to the user-supplied path. The bundled tree is kept as a `.bundled` sibling and restored
+   * automatically on the next run with no override.
+   */
+  fun applyInstallerJbrOverrideIfLocalJbrPathNotEmpty(appHome: Path) {
+    val swapTarget = if (SystemInfo.isMac) appHome / "jbr" / "Contents" / "Home" else appHome / "jbr"
+    val backupSibling = swapTarget.parent.resolve("${swapTarget.fileName}.bundled")
+    val raw = ConfigurationStorage.localJbrPath()
+
+    if (raw != null) {
+      val overridePath = Path.of(raw).toAbsolutePath()
+      require(Files.isDirectory(overridePath)) { "Local JBR override is not a directory: $overridePath" }
+      require(Files.isRegularFile(overridePath / "bin" / "java") || Files.isRegularFile(overridePath / "bin" / "java.exe")) {
+        "Local JBR override does not contain bin/java(.exe): $overridePath"
+      }
+
+      if (Files.notExists(backupSibling)) {
+        if (Files.isSymbolicLink(swapTarget)) Files.delete(swapTarget)
+        else if (Files.exists(swapTarget)) Files.move(swapTarget, backupSibling)
+      }
+      else if (Files.isSymbolicLink(swapTarget) || Files.exists(swapTarget)) {
+        Files.delete(swapTarget)
+      }
+
+      Files.createDirectories(swapTarget.parent)
+      try {
+        Files.createSymbolicLink(swapTarget, overridePath)
+        logOutput("Installer JBR override active: $swapTarget -> $overridePath (original kept at $backupSibling)")
+      }
+      catch (e: Exception) {
+        logOutput("Failed to create JBR override symlink at $swapTarget (${e.message}); restoring bundled JBR")
+        if (Files.exists(backupSibling)) Files.move(backupSibling, swapTarget)
+      }
+    }
+    else if (Files.exists(backupSibling)) {
+      if (Files.isSymbolicLink(swapTarget) || Files.exists(swapTarget)) Files.delete(swapTarget)
+      Files.move(backupSibling, swapTarget)
+      logOutput("Restored bundled installer JBR at $swapTarget")
+    }
   }
 
   suspend fun downloadAndUnpackJbrIfNeeded(jbrVersion: JBRVersion): Path = computeWithSpan("download and unpack JBR") {

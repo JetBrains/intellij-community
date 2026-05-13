@@ -92,10 +92,19 @@ fun ConfigurationStorage.Companion.monitoringDumpsIntervalSeconds(): Int = insta
 fun ConfigurationStorage.Companion.afterEachMessageBusCleanup() = instance().getBoolean(AFTER_EACH_MESSAGE_BUS_CLEANUP)
 fun ConfigurationStorage.Companion.afterEachMessageBusCleanup(value: Boolean) = instance().put(AFTER_EACH_MESSAGE_BUS_CLEANUP, value)
 
+const val JBR_PATH_SYSTEM_PROPERTY: String = "intellij.test.jbr.path"
+
 /**
  * If ENV variable like `17.0.10b1171.14` otherwise the value will be read from `community/build/dependencies/dependencies.properties`
  */
 fun ConfigurationStorage.Companion.jbrVersionForDevServer(): String? = instance().getOrNull(ENV_JBR_DEV_SERVER_VERSION)
+
+/**
+ * Path to a JBR home on the local filesystem.
+ * on macOS that is usually the directory ending in `Contents/Home`
+ */
+fun ConfigurationStorage.Companion.localJbrPath(): String? =
+  System.getProperty(JBR_PATH_SYSTEM_PROPERTY)?.takeIf { it.isNotBlank() }
 
 fun ConfigurationStorage.Companion.isScramblingEnabled(): Boolean = instance().getBoolean(ENABLE_SCRAMBLING_FOR_DEVSERVER)
 

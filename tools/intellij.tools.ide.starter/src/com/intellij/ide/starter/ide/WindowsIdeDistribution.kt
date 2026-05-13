@@ -13,6 +13,7 @@ import kotlin.io.path.listDirectoryEntries
 class WindowsIdeDistribution : IdeDistribution() {
   override fun installIde(unpackDir: Path, executableFileName: String): InstalledIde {
     val appHome = (unpackDir.listDirectoryEntriesQuietly()?.singleOrNull { it.isDirectory() } ?: unpackDir).toAbsolutePath()
+    JBRResolver.applyInstallerJbrOverrideIfLocalJbrPathNotEmpty(appHome)
     val (productCode, build) = readProductCodeAndBuildNumberFromBuildTxt(appHome.resolve("build.txt"))
 
     val binDir = appHome / "bin"
