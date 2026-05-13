@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.util.awaitWithCheckCanceled
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.AbstractFileViewProvider
 import com.intellij.psi.FileViewProvider
@@ -23,7 +24,6 @@ import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantLock
 import java.util.function.Consumer
-import kotlin.time.Duration.Companion.seconds
 import kotlin.time.measureTime
 
 /**
@@ -251,31 +251,34 @@ internal class MultiverseFileViewProviderCache(
 
   @RequiresWriteLock
   override fun markPossiblyInvalidated() {
-    val pointersInvalidationDuration = measureTime {
-      SmartPointerManagerEx.getInstanceEx(project).possiblyInvalidate()
-    }
-
-    if (pointersInvalidationDuration >= 1.seconds) {
-      log.error("Too long pointer invalidation: $pointersInvalidationDuration")
-    }
+    SmartPointerManagerEx.getInstanceEx(project).possiblyInvalidate()
 
     var mapSize = 0
+    var longestInvalidationDuration = 0L
+    var longestFile: VirtualFile? = null
+
     val providersInvalidationDuration = measureTime {
       doIfInitialized { map ->
-        map.forEach { (_, map: FileProviderMap?) ->
+        map.forEach { (file, map: FileProviderMap?) ->
           if (map != null) {
-            map.isPossiblyInvalidated = true
-            map.forEach { _, provider ->
-              provider.markPossiblyInvalidated()
-              mapSize++
+            val singleInvalidation = measureTime {
+              map.isPossiblyInvalidated = true
+              map.forEach { _, provider ->
+                provider.markPossiblyInvalidated()
+                mapSize++
+              }
+            }.inWholeMilliseconds
+            if (longestInvalidationDuration < singleInvalidation) {
+              longestInvalidationDuration = singleInvalidation
+              longestFile = file
             }
           }
         }
       }
     }
 
-    if (providersInvalidationDuration >= 1.seconds) {
-      log.error("Too long providers invalidation: $providersInvalidationDuration. Providers: $mapSize")
+    if (providersInvalidationDuration.inWholeMilliseconds >= invalidation_threshold_ms) {
+      log.error("Too long providers invalidation: $providersInvalidationDuration. Longest single invalidation: $longestInvalidationDuration. It was file *.${longestFile?.extension ?: "<no-ext>"}. Number of providers: $mapSize")
     }
   }
 
@@ -372,3 +375,5 @@ private class CancellableSynchronizer {
     }
   }
 }
+
+private val invalidation_threshold_ms: Int = Registry.intValue("file.view.provider.invalidation.threshold.ms")
