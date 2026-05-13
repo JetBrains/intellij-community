@@ -1,0 +1,10 @@
+// FILE: test/UnQualified.kt
+// BIND_TO test.Container
+package test
+
+import test.foo.Container
+
+fun caller() {
+    <caret>test.Container()
+}
+

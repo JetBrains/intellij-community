@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.bindToElement
 
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiMember
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
@@ -29,6 +29,15 @@ abstract class AbstractK2BindToElementTest : AbstractK2BindToTest() {
         return JavaPsiFacade.getInstance(myFixture.project).findClass(nameToBind, projectScope)
                ?: KotlinTopLevelFunctionFqnNameIndex[nameToBind, myFixture.project, projectScope].firstOrNull()
                ?: KotlinTopLevelPropertyFqnNameIndex[nameToBind, myFixture.project, projectScope].firstOrNull()
-               ?: JavaPsiFacade.getInstance(myFixture.project).findClass(nameToBind.substringBeforeLast("."), projectScope)?.findMethodsByName(nameToBind.substringAfterLast("."))?.get(0) as PsiMethod
+               ?: findMember(nameToBind, projectScope)
+    }
+
+    private fun findMember(nameToBind: String, projectScope: GlobalSearchScope): PsiMember? {
+        val containerFqn = nameToBind.substringBeforeLast(".")
+        val memberName = nameToBind.substringAfterLast(".")
+        val containingClass = JavaPsiFacade.getInstance(myFixture.project).findClass(containerFqn, projectScope) ?: return null
+        return containingClass.findMethodsByName(memberName, /* checkBases = */ false).firstOrNull()
+               ?: containingClass.findFieldByName(memberName, /* checkBases = */ false)
+               ?: containingClass.findMethodsByName("get" + memberName.replaceFirstChar { it.uppercase() }, /* checkBases = */ false).firstOrNull()
     }
 }

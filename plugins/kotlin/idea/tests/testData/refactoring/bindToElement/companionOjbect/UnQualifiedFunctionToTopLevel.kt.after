@@ -1,0 +1,10 @@
+// FILE: test/Test.kt
+// BIND_TO test.bar.foo
+package test
+
+import test.foo.Foo.Companion.foo
+
+fun test() {
+    <caret>test.bar.foo()
+}
+

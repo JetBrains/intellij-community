@@ -1,0 +1,15 @@
+// FILE: test/Test.kt
+// BIND_TO test.Bar.FOO
+package test
+
+fun test() {
+    Bar.<caret>FOO
+}
+
+enum class Foo {
+    FOO, BAR
+}
+
+enum class Bar {
+    FOO, BAR
+}

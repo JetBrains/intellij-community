@@ -1,0 +1,15 @@
+// BIND_TO test.foo
+
+package test
+
+fun test() {
+    println(<caret>foo)
+}
+
+class Foo {
+    companion object {
+       val foo: String = "foo"
+    }
+}
+
+val foo: String = "foo"

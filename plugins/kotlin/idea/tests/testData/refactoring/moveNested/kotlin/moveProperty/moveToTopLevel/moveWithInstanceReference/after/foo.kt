@@ -1,3 +1,3 @@
 package bar
 
-val foo: Int = Test.b + Test.b
+val foo: Int = b + b

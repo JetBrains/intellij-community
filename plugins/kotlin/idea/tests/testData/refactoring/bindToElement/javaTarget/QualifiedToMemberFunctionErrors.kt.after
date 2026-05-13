@@ -1,0 +1,8 @@
+// FILE: test/UnQualified.kt
+// BIND_TO test.Container.fooBar
+package test
+
+fun caller() {
+    test.foo.<caret>fooBar()
+}
+
