@@ -22,6 +22,9 @@ class MarkdownTablePostFormatProcessorTest: LightPlatformCodeInsightTestCase() {
   @Test
   fun `table without end newline`() = doTest()
 
+  @Test
+  fun `chinese table test`() = doTest()
+
   private fun doTest() {
     val before = getTestName(true) + ".before.md"
     val after = getTestName(true) + ".after.md"
