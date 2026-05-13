@@ -122,7 +122,6 @@ object UniversalFileChooser {
   class Dialog(
     val project: Project,
     private val descriptor: FileChooserDescriptor,
-    private val contributors: Collection<UniversalFileChooserContributor> = UniversalFileChooserContributor.EP_NAME.extensionList,
   ) : DialogWrapper(project), FileChooserDialog, PathChooserDialog {
     private lateinit var mainPanel: Panel
 
@@ -157,11 +156,9 @@ object UniversalFileChooser {
     }
 
     override fun createCenterPanel(): JComponent {
-      mainPanel = Panel(this.disposable, descriptor, project, ::doOKAction, ::setOKActionEnabled, contributors)
+      mainPanel = Panel(this.disposable, descriptor, project, ::doOKAction, ::setOKActionEnabled)
       return mainPanel
     }
-
-    fun getSelectedFiles(): List<Path> = mainPanel.getSelectedFiles()
   }
 
   private fun toVirtualFiles(paths: List<Path>): List<VirtualFile?> {
@@ -170,13 +167,12 @@ object UniversalFileChooser {
     }
   }
 
-  class Panel @JvmOverloads constructor(
+  class Panel(
     disposable: Disposable,
     descriptor: FileChooserDescriptor,
     private val project: Project,
     okAction: Runnable,
     private val okEnabledUpdater: (Boolean) -> Unit = {},
-    private val contributors: Collection<UniversalFileChooserContributor> = UniversalFileChooserContributor.EP_NAME.extensionList,
   ) : JPanel() {
 
     companion object {
@@ -204,8 +200,11 @@ object UniversalFileChooser {
       val screenSize = Toolkit.getDefaultToolkit().screenSize
       preferredSize = Dimension(screenSize.width / 2, screenSize.height / 2)
       tabbedPane = JBTabbedPane()
-      val projectContributor = projectContributor(project)
-      val contributors = if (projectContributor != null) listOf(projectContributor) else contributors
+      //val projectContributor = projectContributor(project)
+      val contributors = UniversalFileChooserContributor.EP_NAME.extensionList
+        // TODO IJPL-237292: Filter out tabs only with specific flag
+        //if (projectContributor != null) listOf(projectContributor)
+        //else UniversalFileChooserContributor.EP_NAME.extensionList
       for (contributor in contributors) {
         val fileView = FileView(contributor, descriptor, disposable, project, okAction, scope, topToolbar, ::updateOkEnabled)
         fileViews.add(fileView)
@@ -688,13 +687,15 @@ object UniversalFileChooser {
         cardLayout.show(contentPanel, LOADING_CARD)
         scope.launch {
           withContext(Dispatchers.IO) {
-            val allRoots = if (!project.isDefault) {
-              val basePath = project.basePath?.let { Path.of(it) }
-              if (basePath != null) contributor.getFilteredRoots(basePath) else contributor.getRoots()
-            }
-            else {
-              contributor.getRoots()
-            }
+            // TODO: IJPL-237292
+            //val allRoots = if (!project.isDefault) {
+            //  val basePath = project.basePath?.let { Path.of(it) }
+            //  if (basePath != null) contributor.getFilteredRoots(basePath) else contributor.getRoots()
+            //}
+            //else {
+            //  contributor.getRoots()
+            //}
+            val allRoots = contributor.getRoots()
             val realRoots = allRoots.filter { it.path != null }
             val presentations = mutableMapOf<String, UniversalFileChooserContributor.Presentation>()
             for (root in realRoots) {
