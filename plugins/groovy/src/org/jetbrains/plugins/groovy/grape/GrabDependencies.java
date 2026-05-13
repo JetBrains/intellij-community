@@ -79,7 +79,6 @@ import java.util.Set;
 public final class GrabDependencies implements IntentionAction {
   private static final Logger LOG = Logger.getInstance(GrabDependencies.class);
 
-  private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Grape");
   public static final String GRAPE_RUNNER = "org.jetbrains.plugins.groovy.grape.GrapeRunner";
 
   @Override
@@ -190,7 +189,7 @@ public final class GrabDependencies implements IntentionAction {
       }
       catch (CantRunException e) {
         String title = GroovyBundle.message("grab.error.0.title", ExceptionUtil.getMessage(e));
-        NOTIFICATION_GROUP.createNotification(title, ExceptionUtil.getThrowableText(e), NotificationType.ERROR).notify(project);
+        GrapeProcessHandler.NOTIFICATION_GROUP.createNotification(title, ExceptionUtil.getThrowableText(e), NotificationType.ERROR).notify(project);
         return;
       }
     }
@@ -221,7 +220,7 @@ public final class GrabDependencies implements IntentionAction {
         }
 
         final String title = GroovyBundle.message("grab.result.title", totalJarCount);
-        NOTIFICATION_GROUP.createNotification(title, messages.toString(), NotificationType.INFORMATION).notify(project);
+        GrapeProcessHandler.NOTIFICATION_GROUP.createNotification(title, messages.toString(), NotificationType.INFORMATION).notify(project);
       }
     });
   }
@@ -260,6 +259,7 @@ public final class GrabDependencies implements IntentionAction {
   }
 
   private static final class GrapeProcessHandler extends OSProcessHandler {
+    private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Grape");
     private final @NlsSafe StringBuilder myStdOut = new StringBuilder();
     private final @NlsSafe StringBuilder myStdErr = new StringBuilder();
     private final Module myModule;
