@@ -111,7 +111,10 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
         public boolean visitFile(@NotNull VirtualFile file) {
           progressIndicator.checkCanceled();
           //noinspection SpellCheckingInspection
-          if (file.isDirectory() && file.findChild("allclasses-frame.html") != null && file.findChild("allclasses-noframe.html") != null) {
+          if (file.isDirectory() &&
+              (file.findChild("allclasses-frame.html") != null && file.findChild("allclasses-noframe.html") != null)
+              || (file.findChild("allclasses-index.html") != null && file.findChild("allpackages-index.html") != null)
+          ) {
             result.add(file);
             return false;
           }

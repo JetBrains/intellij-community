@@ -4,6 +4,7 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor
 import com.intellij.ide.highlighter.ArchiveFileType
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.roots.JavadocOrderRootType
 import com.intellij.openapi.roots.NativeLibraryOrderRootType
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.ui.impl.LibraryRootsDetectorImpl
@@ -74,6 +75,24 @@ class JavaLibraryRootsDetectionTest : LightPlatformTestCase() {
       }
     }
   }
+  
+  fun `test javadoc in JAR`() {
+    assertRootType(JavadocOrderRootType.getInstance(), false) {
+      zip("javadoc.jar") {
+        file("allclasses-frame.html")
+        file("allclasses-noframe.html")
+      }
+    }
+  }
+  
+  fun `test javadoc in JAR 2`() {
+      assertRootType(JavadocOrderRootType.getInstance(), false) {
+        zip("javadoc.jar") {
+          file("allclasses-index.html")
+          file("allpackages-index.html")
+        }
+      }
+    }
 
   private fun assertRootType(expectedType: OrderRootType, jarDirectory: Boolean, content: DirectoryContentBuilder.() -> Unit) {
     val dir = directoryContent(content).generateInVirtualTempDir()
