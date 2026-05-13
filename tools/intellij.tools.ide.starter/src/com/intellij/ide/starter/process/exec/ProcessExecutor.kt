@@ -11,7 +11,6 @@ import com.intellij.tools.ide.util.common.logOutput
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.isActive
@@ -194,7 +193,7 @@ class ProcessExecutor(
     val process = processBuilder.start()
 
     val processId = process.pid()
-    val onProcessCreatedJob: Job = scopeForProcesses.launch(Dispatchers.IO + CoroutineName("On process $presentableName created job")) {
+    val onProcessCreatedJob = scopeForProcesses.launch(Dispatchers.IO + CoroutineName("On process $presentableName created job")) {
       if (!silent) logOutput("  ... started external process `$presentableName` with process ID = $processId")
       onProcessCreated(process, processId)
     }
@@ -230,7 +229,10 @@ class ProcessExecutor(
     }
 
     try {
-      if (!runInterruptible(currentCoroutineContext()) { process.waitFor(timeout.inWholeSeconds, TimeUnit.SECONDS) }) {
+      processFinished = runInterruptible(currentCoroutineContext()) {
+        process.waitFor(timeout.inWholeSeconds, TimeUnit.SECONDS)
+      }
+      if (!processFinished) {
         logOutput("   ... gracefully terminating process `$presentableName` because it runs for more than ${timeout.inWholeSeconds} seconds ...")
         killProcess(gracefully = true)
         throw ExecTimeoutException(args.joinToString(" "), timeout)
