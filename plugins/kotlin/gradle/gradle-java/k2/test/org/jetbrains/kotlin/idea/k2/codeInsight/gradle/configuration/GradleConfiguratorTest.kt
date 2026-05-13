@@ -803,6 +803,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
         changeLanguageVersion("2.2")
     }
 
+    // Test data of this test is deliberately very old as it demonstrates the behavior of Gradle Configurator with older versions for kotlinOptions.
     @Test
     @TargetVersions("<9.0.0")
     fun testChangeLanguageVersion() {
@@ -886,6 +887,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
         addLanguageFeature(LanguageFeature.InlineClasses)
     }
 
+    // Test data of this test is deliberately very old as it demonstrates the behavior of Gradle Configurator with older versions for kotlinOptions.
     @Test
     @TargetVersions("4.7 <=> 7.6.x")
     fun testChangeFeatureSupportWithXFlag() = testChangeFeatureSupport()
@@ -1042,6 +1044,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
         }
     }
 
+    // Test data of this test is deliberately very old as it demonstrates the behavior of Gradle Configurator with older versions for kotlinOptions.
     @Test
     @TargetVersions("4.7 <=> 7.6.x")
     fun testChangeFeatureSupportGSKWithXFlag() = testChangeFeatureSupportGSK()
