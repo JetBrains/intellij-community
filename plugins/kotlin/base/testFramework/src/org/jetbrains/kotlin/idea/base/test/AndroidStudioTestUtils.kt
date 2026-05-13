@@ -1,8 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.test
 
+import com.intellij.testFramework.utils.io.createDirectory
 import org.jetbrains.kotlin.utils.Printer
-import java.io.File
+import java.nio.file.Path
+import kotlin.io.path.appendText
 
 object AndroidStudioTestUtils {
     private const val KEY = "kombo.android.studio.mode"
@@ -29,15 +31,15 @@ object AndroidStudioTestUtils {
      * Adds explicit 'android.dir' preference to 'local.properties' of a Gradle project, disabling Android SDK
      * discovery in 'com.android.tools.idea.gradle.project.sync.SdkSync.syncIdeAndProjectAndroidSdk'.
      */
-    fun specifyAndroidSdk(projectRoot: File) {
+    fun specifyAndroidSdk(projectRoot: Path) {
         if (System.getProperty(KEY, null) != null) {
-            val androidSdkDir = File(projectRoot, "androidSdk")
+            val androidSdkDir = projectRoot.resolve("androidSdk")
 
             // Android plugin doesn't recognize an Android platform if there's no platforms dir
             // See 'com.android.tools.idea.sdk.SdkPaths.validateAndroidSdk' for more information
-            File(androidSdkDir, "platforms").mkdirs()
+            androidSdkDir.resolve("platforms").createDirectory()
 
-            File(projectRoot, "local.properties").appendText(Printer.LINE_SEPARATOR + "android.dir=${androidSdkDir.path}")
+            projectRoot.resolve("local.properties").appendText(Printer.LINE_SEPARATOR + "android.dir=${androidSdkDir}")
         }
     }
 }

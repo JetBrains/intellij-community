@@ -111,6 +111,8 @@ jvm_library(
     "//platform/util-ex:util-ex_test_lib",
     "//platform/util/jdom",
     "//platform/util/jdom:jdom_test_lib",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
   ],
   runtime_deps = [
     ":kotlin-gradle-multiplatform-tests",

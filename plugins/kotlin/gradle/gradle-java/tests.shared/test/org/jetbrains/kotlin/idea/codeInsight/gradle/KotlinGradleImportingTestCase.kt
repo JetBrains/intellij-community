@@ -49,6 +49,7 @@ import java.io.ObjectInputStream
 import java.nio.file.Files
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
+import kotlin.io.path.Path
 import kotlin.reflect.KClass
 
 @Suppress("ACCIDENTAL_OVERRIDE")
@@ -260,7 +261,7 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase(),
     }
 
     override fun importProject(skipIndexing: Boolean?) {
-        AndroidStudioTestUtils.specifyAndroidSdk(File(projectPath))
+        AndroidStudioTestUtils.specifyAndroidSdk(Path(projectPath))
         super.importProject(skipIndexing)
     }
 

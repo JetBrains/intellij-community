@@ -3,11 +3,14 @@ package org.jetbrains.kotlin.gradle.multiplatformTests
 
 import com.intellij.openapi.externalSystem.importing.ImportSpec
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.util.io.toCanonicalPath
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
+import com.intellij.testFramework.utils.io.deleteRecursively
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.CustomGradlePropertiesDsl
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.CustomGradlePropertiesTestFeature
@@ -60,7 +63,18 @@ import org.junit.Test
 import org.junit.runner.Description
 import org.junit.runner.RunWith
 import java.io.File
+import java.nio.file.Path
 import java.util.TreeSet
+import kotlin.io.path.Path
+import kotlin.io.path.createDirectories
+import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
+import kotlin.io.path.readText
+import kotlin.io.path.walk
+import kotlin.io.path.writeText
 
 /**
  * The base class for Kotlin MPP Import-based tests.
@@ -98,13 +112,13 @@ import java.util.TreeSet
 @RunWith(KotlinMppTestsJUnit4Runner::class)
 @TestDataPath($$"$PROJECT_ROOT/community/plugins/kotlin/idea/tests/testData/gradle")
 abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
-                                                      ExpectedPluginModeProvider,
-                                                      WorkspaceChecksDsl, GradleProjectsPublishingDsl, GradleProjectsLinkingDsl,
-                                                      HighlightingCheckDsl,
-                                                      TestWithKotlinPluginAndGradleVersions, TestWithAndroidVersion, DevModeTweaksDsl,
-                                                      AllFilesUnderContentRootConfigurationDsl, RunConfigurationChecksDsl,
-                                                      CustomGradlePropertiesDsl, DocumentationCheckerDsl, KotlinMppTestHooksDsl,
-                                                      LibrarySourcesCheckDsl {
+    ExpectedPluginModeProvider,
+    WorkspaceChecksDsl, GradleProjectsPublishingDsl, GradleProjectsLinkingDsl,
+    HighlightingCheckDsl,
+    TestWithKotlinPluginAndGradleVersions, TestWithAndroidVersion, DevModeTweaksDsl,
+    AllFilesUnderContentRootConfigurationDsl, RunConfigurationChecksDsl,
+    CustomGradlePropertiesDsl, DocumentationCheckerDsl, KotlinMppTestHooksDsl,
+    LibrarySourcesCheckDsl {
 
     internal val installedFeatures = listOf<TestFeature<*>>(
         GradleProjectsPublishingTestsFeature,
@@ -251,84 +265,8 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
         )
     }
 
-    private fun KotlinSyncTestsContext.configureByFiles(): List<VirtualFile> {
-        val rootDir = context.testDataDirectory
-        assert(rootDir.exists()) { "Directory ${rootDir.path} doesn't exist" }
-        val devModeConfig = testConfiguration.getConfiguration(DevModeTestFeature)
-        val writeTestProjectTo = devModeConfig.writeTestProjectTo
-        val rootForProjectCopy = computeRootForProjectCopy(writeTestProjectTo, devModeConfig)
-        rootForProjectCopy?.mkdirs()
-
-        return rootDir.walk().mapNotNull {
-            when {
-                it.isDirectory -> null
-
-                !it.name.endsWith(KotlinGradleImportingTestCase.AFTER_SUFFIX) -> {
-                    val relativeToRoot = it.path.substringAfter(rootDir.path + File.separator)
-
-                    val text = context.testProperties.substituteKotlinTestPropertiesInText(
-                        clearTextFromDiagnosticMarkup(FileUtil.loadFile(it, /* convertLineSeparators = */ true)),
-                        it
-                    )
-                    val preprocessedText = installedFeatures.fold(text) { currentText, nextFeature ->
-                        nextFeature.preprocessFile(it, currentText) ?: currentText
-                    }
-
-                    // Some test features might want to create files before test execution (e.g. to configure
-                    // 'gradle.properties'). 'createProjectSubFile' will overwrite pre-existing content, so we're
-                    // handling this here.
-                    // Note that editing file content *after* 'configureByFiles' isn't very nice as well, as
-                    // testFeatures will then have to care about IJ VirtualFile model (and e.g. request VFS refresh)
-                    val targetFileInTempDir = File(testProjectRoot, relativeToRoot)
-                    val textToWrite = if (targetFileInTempDir.exists())
-                        preprocessedText + "\n" + targetFileInTempDir.readText()
-                    else
-                        preprocessedText
-
-                    val virtualFile = createProjectSubFile(relativeToRoot, textToWrite)
-                    if (rootForProjectCopy != null) {
-                        val output = File(rootForProjectCopy, relativeToRoot)
-                        output.parentFile.mkdirs()
-                        output.createNewFile()
-                        output.writeText(textToWrite)
-                    }
-
-                    // Real file with expected testdata allows to throw nicer exceptions in
-                    // case of mismatch, as well as open interactive diff window in IDEA
-                    virtualFile.putUserData(VfsTestUtil.TEST_DATA_FILE_PATH, it.absolutePath)
-
-                    virtualFile
-                }
-
-                else -> null
-            }
-        }.toList()
-    }
-
-    private fun computeRootForProjectCopy(
-        writeTestProjectTo: File?,
-        devModeConfig: DevModeTweaksImpl
-    ): File? {
-        if (writeTestProjectTo == null) return null
-
-        val rootForProjectCopy = File(writeTestProjectTo, testDirectoryName)
-
-        when {
-            !writeTestProjectTo.isDirectory ->
-                error("Trying to write test project to ${writeTestProjectTo.canonicalPath}, but it's not a directory")
-
-            rootForProjectCopy.exists() && devModeConfig.overwriteExistingProjectCopy ->
-                rootForProjectCopy.deleteRecursively()
-
-            rootForProjectCopy.exists() && rootForProjectCopy.listFiles().isNotEmpty() && !devModeConfig.overwriteExistingProjectCopy ->
-                error("Asked to write test project to ${rootForProjectCopy.canonicalPath}, but it's not empty and 'overwriteExisting = true' isn't specified")
-        }
-
-        return rootForProjectCopy
-    }
-
     final override fun importProject(skipIndexing: Boolean?) {
-        AndroidStudioTestUtils.specifyAndroidSdk(File(projectPath))
+        AndroidStudioTestUtils.specifyAndroidSdk(Path(projectPath))
         super.importProject(skipIndexing)
     }
 
@@ -403,6 +341,84 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
         override fun after(target: Any) {
             // Make sure to call tearDown on those and only those features that executed setUp
             testFeaturesCompletedSetUp.forEach { it.additionalTearDown() }
+        }
+    }
+
+    companion object {
+        fun KotlinSyncTestsContext.configureByFiles() = WriteAction.runAndWait<Throwable> {
+            configureByFiles(testProjectRoot.toPath(), testDataDirectory.toPath(), testConfiguration, testProperties, testFeatures)
+        }
+
+        fun configureByFiles(
+            testProjectRoot: Path,
+            testDataDirectory: Path,
+            testConfiguration: TestConfiguration,
+            testProperties: KotlinTestProperties,
+            testFeatures: List<TestFeature<*>>
+        ) {
+            assert(testDataDirectory.exists()) { "Directory ${testDataDirectory} doesn't exist" }
+            val devModeConfig = testConfiguration.getConfiguration(DevModeTestFeature)
+            val writeTestProjectTo = devModeConfig.writeTestProjectTo?.toPath()
+            val rootForProjectCopy = computeRootForProjectCopy(writeTestProjectTo, devModeConfig, testDataDirectory.name)
+            rootForProjectCopy?.createDirectories()
+
+            WriteAction.runAndWait<Throwable> {
+                testDataDirectory.walk()
+                    .filter { it.isRegularFile() }
+                    .filterNot { it.name.endsWith(KotlinGradleImportingTestCase.AFTER_SUFFIX) }
+                    .forEach { source ->
+                        val relativePath = testDataDirectory.relativize(source).toCanonicalPath()
+
+                        val text = source.readText()
+                            .let(StringUtil::convertLineSeparators)
+                            .let(::clearTextFromDiagnosticMarkup)
+                            .let { testProperties.substituteKotlinTestPropertiesInText(it, source.toFile()) }
+                            .let { initial ->
+                                testFeatures.fold(initial) { text, feature ->
+                                    feature.preprocessFile(source.toFile(), text) ?: text
+                                }
+                            }
+
+                        val target = testProjectRoot.resolve(relativePath)
+                        val textToWrite = text + target.takeIf { it.exists() }?.let { "\n" + it.readText() }.orEmpty()
+
+                        target.parent.createDirectories()
+                        target.writeText(textToWrite)
+
+                        rootForProjectCopy?.resolve(relativePath)?.also { copy ->
+                            copy.parent.createDirectories()
+                            copy.writeText(textToWrite)
+                        }
+
+                        LocalFileSystem.getInstance()
+                            .refreshAndFindFileByNioFile(target)!!
+                            .putUserData(VfsTestUtil.TEST_DATA_FILE_PATH, source.toCanonicalPath())
+                    }
+            }
+        }
+
+        fun computeRootForProjectCopy(
+            writeTestProjectTo: Path?,
+            devModeConfig: DevModeTweaksImpl,
+            testDirectoryName: String
+        ): Path? {
+            if (writeTestProjectTo == null) return null
+
+            val rootForProjectCopy = writeTestProjectTo.resolve(testDirectoryName)
+
+            when {
+                !writeTestProjectTo.isDirectory() ->
+                    error("Trying to write test project to ${writeTestProjectTo}, but it's not a directory")
+
+                rootForProjectCopy.exists() && devModeConfig.overwriteExistingProjectCopy ->
+                    rootForProjectCopy.deleteRecursively()
+
+                rootForProjectCopy.exists() && rootForProjectCopy.listDirectoryEntries().isNotEmpty()
+                        && !devModeConfig.overwriteExistingProjectCopy ->
+                    error("Asked to write test project to ${rootForProjectCopy}, but it's not empty and 'overwriteExisting = true' isn't specified")
+            }
+
+            return rootForProjectCopy
         }
     }
 }

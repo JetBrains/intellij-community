@@ -39,7 +39,7 @@ class GradleProjectImportingTestWizardService(private val project: Project) : Pr
         buildSystem: BuildSystemType,
         buildSystemSettings: BuildSystemSettings?
     ): TaskResult<Unit> {
-        AndroidStudioTestUtils.specifyAndroidSdk(path.toFile())
+        AndroidStudioTestUtils.specifyAndroidSdk(path)
 
         var importingErrorMessage: String? = null
         var importingErrorDetails = ""

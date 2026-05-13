@@ -255,11 +255,11 @@ class KotlinMppTestProperties(
             )
         }
 
-        fun constructRaw(kotlinVersion: TestVersion<KotlinToolingVersion>, gradleVersion: TestVersion<GradleVersion>) =
+        fun constructRaw(kotlinVersion: TestVersion<KotlinToolingVersion>, gradleVersion: TestVersion<GradleVersion>, agpVersion: TestVersion<String>? = null) =
             KotlinMppTestProperties(
                 kotlinVersion,
                 gradleVersion,
-                null,
+                agpVersion,
                 null,
             )
 
