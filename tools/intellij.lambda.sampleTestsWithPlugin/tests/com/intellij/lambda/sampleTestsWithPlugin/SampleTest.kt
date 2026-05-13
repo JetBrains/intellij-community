@@ -31,7 +31,7 @@ class SampleTest {
 
       runInBackend {
         Logger.getInstance("test").warn("backend Projects: " + getProject())
-        openFile("src/SomeClass.java", waitForReadyState = false, requireFocus = false)
+        openFile("src/SomeClass.java", waitForReadyState = false, waitForFocus = false)
       }
     }
   }

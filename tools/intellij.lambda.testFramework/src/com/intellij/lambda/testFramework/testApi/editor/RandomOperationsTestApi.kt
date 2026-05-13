@@ -17,7 +17,7 @@ import kotlin.random.Random
 
 context(lambdaIdeContext: LambdaIdeContext)
 suspend fun performRandomOperationInCurrentEditor() {
-  withCurrentFile(waitForReadyState = false, requireFocus = false) {
+  withCurrentFile(waitForReadyState = false, waitForFocus = false) {
     performRandomOperation()
   }
 }

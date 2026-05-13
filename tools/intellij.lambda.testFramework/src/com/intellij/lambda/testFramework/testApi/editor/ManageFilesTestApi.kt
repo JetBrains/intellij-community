@@ -4,7 +4,6 @@ import com.intellij.lambda.testFramework.frameworkLogger
 import com.intellij.lambda.testFramework.testApi.executeAction
 import com.intellij.lambda.testFramework.testApi.getProject
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.application.writeIntentReadAction
@@ -56,18 +55,14 @@ fun getVirtualFile(file: File): VirtualFile =
   getVirtualFileOrNull(file) ?: error("cannot find virtual file by path ${file.path}")
 
 context(lambdaIdeContext: LambdaIdeContext)
-private fun defaultRequireFocus() =
-  (lambdaIdeContext is LambdaFrontendContext) && !ApplicationManager.getApplication().isHeadlessEnvironment
-
-context(lambdaIdeContext: LambdaIdeContext)
 suspend fun withCurrentFile(
   project: Project = getProject(),
   waitForReadyState: Boolean = true,
-  requireFocus: Boolean = defaultRequireFocus(),
+  waitForFocus: Boolean = false,
   block: suspend EditorImpl.() -> Unit = {},
 ): FileEditor =
   project.selectedFileEditorOrThrow.apply {
-    if (requireFocus) {
+    if (waitForFocus) {
       waitForFocus()
     }
     editorImplOrThrow.let {
@@ -112,7 +107,7 @@ context(lambdaIdeContext: LambdaIdeContext)
 suspend fun waitForExpectedSelectedFile(
   fileName: String,
   expectedOffset: Int? = null,
-  checkFocus: Boolean = defaultRequireFocus(),
+  waitForFocus: Boolean = false,
   project: Project = getProject(),
   timeout: Duration = 20.seconds,
 ): FileEditor {
@@ -123,7 +118,7 @@ suspend fun waitForExpectedSelectedFile(
                                     frameworkLogger.info("file=${it?.file}, fileName=${it?.file?.name}")
                                     it?.file?.name == fileName
                                   })!!
-  if (checkFocus) {
+  if (waitForFocus) {
     fileEditor.waitForFocus()
   }
 
@@ -138,10 +133,10 @@ suspend fun waitForExpectedSelectedFile(
   fileName: String,
   expectedLine: Int,
   expectedColumn: Int,
-  checkFocus: Boolean = defaultRequireFocus(),
+  waitForFocus: Boolean = false,
   timeout: Duration = 20.seconds,
 ): FileEditor {
-  val fileEditor = waitForExpectedSelectedFile(fileName = fileName, expectedOffset = null, checkFocus = checkFocus,
+  val fileEditor = waitForExpectedSelectedFile(fileName = fileName, expectedOffset = null, waitForFocus = waitForFocus,
                                                timeout = timeout).also {
     it.editorImplOrThrow.waitCaretPosition(expectedLine, expectedColumn)
   }
@@ -158,10 +153,10 @@ suspend fun <T> withOpenedFile(
   project: Project = getProject(),
   forceExpandAllRegions: Boolean = true,
   waitForReadyState: Boolean = true,
-  requireFocus: Boolean = defaultRequireFocus(),
+  waitForFocus: Boolean = false,
   block: suspend EditorImpl.() -> T,
 ): T =
-  openFile(relativePath, project, forceExpandAllRegions, waitForReadyState, requireFocus).editorImplOrThrow.block()
+  openFile(relativePath, project, forceExpandAllRegions, waitForReadyState, waitForFocus).editorImplOrThrow.block()
 
 context(lambdaIdeContext: LambdaIdeContext)
 suspend fun openFile(
@@ -169,7 +164,7 @@ suspend fun openFile(
   project: Project = getProject(),
   forceExpandAllRegions: Boolean = true,
   waitForReadyState: Boolean = true,
-  requireFocus: Boolean = defaultRequireFocus(),
+  waitForFocus: Boolean = false,
 ): FileEditor {
   frameworkLogger.info("Open file $relativePath, forceExpandAllRegions=$forceExpandAllRegions, " +
                        "waitForReadyState=$waitForReadyState")
@@ -179,7 +174,7 @@ suspend fun openFile(
   val fileEditor =
     if (oldFileEditor?.file?.name == Path.of(relativePath).fileName.name) {
       frameworkLogger.info("File with name '${oldFileEditor.file?.name}' is already opened")
-      if (requireFocus) {
+      if (waitForFocus) {
         oldFileEditor.waitForFocus()
       }
       oldFileEditor
@@ -190,7 +185,7 @@ suspend fun openFile(
         is LambdaFrontendContext -> doOpenFile(relativePath, project)
         else -> error("unexpected context")
       }
-      waitForExpectedSelectedFile(fileName, checkFocus = requireFocus, project = project)
+      waitForExpectedSelectedFile(fileName, waitForFocus = waitForFocus, project = project)
     }
 
   fileEditor.editorImpl?.let {
