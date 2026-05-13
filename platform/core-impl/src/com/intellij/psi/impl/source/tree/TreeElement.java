@@ -707,7 +707,6 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
       throw new VersionedPsiConsistencyException.TreeElement("Attempt to insert a non-versioned element into a versioned hierarchy. Please ensure that " + firstNew +
                                                              " is a versioned element by using `PsiVersioningService.inVersionedEnvironment`");
     }
-    assertElementCompatibility(this, firstNew);
     long versionForRemoval = firstNew.getVersionForWriting() == -1 ? -1 : version;
     firstNew.rawRemoveUpToWithoutNotifications(versionForRemoval, null, false);
     ensureVersioned(version, firstNew);
