@@ -48,7 +48,7 @@ class PythonLocalInterpreterConfigurable(private val project: Project, private v
         .bindText(interpreterPath)
         .align(AlignX.FILL)
     }
-    val sdkFlavor = PythonSdkFlavor.getPlatformIndependentFlavor(sdk.homePath)
+    val sdkFlavor = PythonSdkFlavor.getFlavor(sdk)
     if (sdkFlavor is VirtualEnvSdkFlavor || sdkFlavor is CondaEnvSdkFlavor) {
       // Add SDK association components only for Virtualenv and Conda interpreters
       val sdkAssociatedModulePath = sdk.associatedModulePath

@@ -313,29 +313,6 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   }
 
   /**
-   * @deprecated SDK path is not enough to get flavor, use {@link #getFlavor(Sdk)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static @Nullable PythonSdkFlavor<?> getPlatformIndependentFlavor(final @Nullable String sdkPath) {
-    if (sdkPath == null) {
-      return null;
-    }
-
-    for (PythonSdkFlavor<?> flavor : getPlatformIndependentFlavors()) {
-      if (flavor.isValidSdkPath(sdkPath)) {
-        return flavor;
-      }
-    }
-
-    for (PythonSdkFlavor<?> flavor : getPlatformFlavorsFromExtensions()) {
-      if (flavor.isValidSdkPath(sdkPath)) {
-        return flavor;
-      }
-    }
-    return null;
-  }
-
-  /**
    * It only validates path for local target, hence use {@link #sdkSeemsValid(Sdk, PyFlavorData, TargetEnvironmentConfiguration)} instead
    */
   @ApiStatus.Internal

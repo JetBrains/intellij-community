@@ -10,13 +10,27 @@ import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonSimplePackageDetails
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.TestOnly
+import java.util.concurrent.ConcurrentHashMap
 
 @TestOnly
 class TestPythonPackageManagerService(val installedPackages: List<PythonPackage> = emptyList()) : PythonPackageManagerService {
+  private val cache: MutableMap<Sdk, PythonPackageManager> = ConcurrentHashMap()
 
   override fun forSdk(project: Project, sdk: Sdk): PythonPackageManager {
-    installedPackages.ifEmpty {
+    return cache.computeIfAbsent(sdk) {
+      val manager = createManager(project, sdk)
+      // Production drives manager init via package UI / sync / FUS / install paths; tests
+      // bypass those paths, so trigger init here so the inspection-side snapshot is ready
+      // before the test starts reading it.
+      runBlocking { manager.waitForInit() }
+      manager
+    }
+  }
+
+  private fun createManager(project: Project, sdk: Sdk): TestPythonPackageManager {
+    if (installedPackages.isEmpty()) {
       return TestPythonPackageManager(project, sdk).also { Disposer.register(project, it) }
     }
 

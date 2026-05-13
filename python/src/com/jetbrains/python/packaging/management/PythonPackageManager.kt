@@ -3,6 +3,7 @@
 
 package com.jetbrains.python.packaging.management
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.execution.ExecutionException
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -40,10 +41,13 @@ import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.isReadOnly
 import com.jetbrains.python.sdk.readOnlyErrorMessage
 import com.jetbrains.python.sdk.refreshPaths
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -205,6 +209,14 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
     return installedPackages
   }
 
+  /**
+   * Non-blocking view of the most recently computed declared dependencies. `null` until the
+   * cache has been seeded by [initInstalledPackages] or refreshed by
+   * [listDeclaredPackagesCached]. Use the suspending variant when freshness matters.
+   */
+  @ApiStatus.Experimental
+  fun listDeclaredPackagesSnapshot(): List<PythonPackage>? = dependencyCache.snapshot.value
+
   @ApiStatus.Experimental
   suspend fun listOutdatedPackages(): Map<String, PythonOutdatedPackage> {
     waitForInit()
@@ -298,13 +310,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
    *         PyResult.Success with the list of dependencies if listing succeeded.
    */
   @ApiStatus.Internal
-  suspend fun listDeclaredPackagesCached(): PyResult<List<PythonPackage>>? {
-    val stamps = getDependencyFiles()
-      .sortedBy { it.path }
-      .map { it to it.modificationStamp }
-    if (stamps.isEmpty()) return null
-    return dependencyCache.getOrCompute(stamps).await()
-  }
+  suspend fun listDeclaredPackagesCached(): PyResult<List<PythonPackage>>? = dependencyCache.awaitLatest()
 
   /**
    * Returns the dependency declaration file (e.g., requirements.txt, Pipfile.lock, environment.yml).
@@ -354,6 +360,10 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
       if (!PythonSdkType.isMock(sdk)) {
         loadPackagesImpl(isInit = true)
       }
+      // Populate the declared-packages snapshot so non-suspend readers (e.g. inspection
+      // visitors) observe it without waiting for an explicit suspend caller. This runs
+      // even for mock SDKs because it only depends on dependency files (not an interpreter).
+      dependencyCache.awaitLatest()
     }
     catch (t: CancellationException) {
       throw t
@@ -363,21 +373,74 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
     }
   }
 
+  /**
+   * Caches [listDeclaredPackages] keyed by the `(file -> modification stamp)` map produced
+   * from [getDependencyFiles]. Each [awaitLatest] reuses the entry on a Map.equals hit and
+   * publishes a new one otherwise; [snapshot] mirrors the latest successful result for
+   * non-suspend readers.
+   */
   private inner class DependencyCache {
+    /** Replaced whenever the file/stamp map differs from the previous one. */
+    @Volatile
     private var entry: Entry? = null
 
-    @Synchronized
-    fun getOrCompute(stamps: List<Pair<VirtualFile, Long>>): Deferred<PyResult<List<PythonPackage>>?> {
-      val cached = entry?.takeIf { it.stamps == stamps }
-      return cached?.deferred ?: run {
-        PyPackageCoroutine.getScope(project).async(NON_INTERACTIVE_ROOT_TRACE_CONTEXT, start = CoroutineStart.LAZY) {
-          listDeclaredPackages()
-        }.also { entry = Entry(stamps, it) }
-      }
+    /**
+     * Latest successfully computed declared-packages list (`null` until the current entry's
+     * deferred completes — or for entries with no dependency files). Stale entry callbacks
+     * don't write.
+     */
+    val snapshot = MutableStateFlow<List<PythonPackage>?>(null)
+
+    /** Serializes refreshes so two concurrent callers don't both spawn redundant computes. */
+    private val refreshMutex = Mutex()
+
+    init {
+      // Drive DaemonCodeAnalyzer.restart off the cache's call chain so the restart never
+      // runs synchronously on the thread that completed the underlying deferred. drop(1)
+      // skips the StateFlow's initial replay so manager construction doesn't trigger a
+      // spurious restart for the still-empty snapshot.
+      PyPackageCoroutine.launch(project, NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
+        snapshot.drop(1).collect {
+          if (!project.isDisposed) {
+            DaemonCodeAnalyzer.getInstance(project).restart("PythonPackageManager.declaredPackagesChanged")
+          }
+        }
+      }.cancelOnDispose(this@PythonPackageManager)
     }
 
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    suspend fun ensureFreshEntry(): Entry = refreshMutex.withLock {
+      val files = getDependencyFiles()
+      val filesWithStamps: LinkedHashMap<VirtualFile, Long> =
+        files.sortedBy { it.path }.associateWithTo(LinkedHashMap()) { it.modificationStamp }
+
+      val current = entry
+      if (current?.files == filesWithStamps) return@withLock current
+
+      val deferred: Deferred<PyResult<List<PythonPackage>>?> = if (filesWithStamps.isEmpty()) {
+        CompletableDeferred(value = null)
+      }
+      else {
+        PyPackageCoroutine.getScope(project).async(NON_INTERACTIVE_ROOT_TRACE_CONTEXT, start = CoroutineStart.LAZY) {
+          listDeclaredPackages()
+        }
+      }
+
+      val newEntry = Entry(filesWithStamps, deferred).also { this.entry = it }
+
+      deferred.invokeOnCompletion { cause ->
+        // Stale completion (a newer entry replaced this one) — leave the snapshot alone.
+        if (entry !== newEntry) return@invokeOnCompletion
+        snapshot.value = if (cause == null) deferred.getCompleted()?.getOrNull() else null
+      }
+      newEntry
+    }
+
+    /** Refreshes if needed and awaits the entry's deferred; `await()` starts the LAZY async on first call. */
+    suspend fun awaitLatest(): PyResult<List<PythonPackage>>? = ensureFreshEntry().deferred.await()
+
     private inner class Entry(
-      val stamps: List<Pair<VirtualFile, Long>>,
+      val files: Map<VirtualFile, Long>,
       val deferred: Deferred<PyResult<List<PythonPackage>>?>,
     )
   }
