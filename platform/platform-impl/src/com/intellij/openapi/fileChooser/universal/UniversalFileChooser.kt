@@ -42,6 +42,7 @@ import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.OnePixelSplitter
+import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.UIBundle
 import com.intellij.ui.awt.RelativePoint
@@ -193,6 +194,7 @@ object UniversalFileChooser {
     private val scope = GlobalScope.childScope("UniversalFileChooser")
 
     private val topToolbar: ActionToolbar
+    private val toolbarActionGroup: DefaultActionGroup
 
     init {
       layout = BorderLayout()
@@ -200,7 +202,9 @@ object UniversalFileChooser {
       if (properties.isValueSet(SHOW_HIDDEN_FILES_KEY)) {
         descriptor.withShowHiddenFiles(properties.getBoolean(SHOW_HIDDEN_FILES_KEY, descriptor.isShowHiddenFiles))
       }
-      topToolbar = createTopToolbar()
+      val (toolbar, group) = createTopToolbar()
+      topToolbar = toolbar
+      toolbarActionGroup = group
       val screenSize = Toolkit.getDefaultToolkit().screenSize
       preferredSize = Dimension(screenSize.width / 2, screenSize.height / 2)
       tabbedPane = JBTabbedPane()
@@ -210,7 +214,7 @@ object UniversalFileChooser {
         //if (projectContributor != null) listOf(projectContributor)
         //else UniversalFileChooserContributor.EP_NAME.extensionList
       for (contributor in contributors) {
-        val fileView = FileView(contributor, descriptor, disposable, project, okAction, scope, topToolbar, ::updateOkEnabled)
+        val fileView = FileView(contributor, descriptor, disposable, project, okAction, scope, topToolbar, toolbarActionGroup, ::updateOkEnabled)
         fileViews.add(fileView)
         tabbedPane.addTab(contributor.tabTitle, fileView.topComponent)
       }
@@ -241,7 +245,7 @@ object UniversalFileChooser {
       }
     }
 
-    private fun createTopToolbar(): ActionToolbar {
+    private fun createTopToolbar(): Pair<ActionToolbar, DefaultActionGroup> {
       val homeAction = object : AnAction(
         IdeBundle.message("universal.file.chooser.action.home.text"),
         IdeBundle.message("universal.file.chooser.action.home.description"),
@@ -372,7 +376,8 @@ object UniversalFileChooser {
         add(showHiddenAction)
       }
 
-      return ActionManager.getInstance().createActionToolbar("UniversalFileChooserTopToolbar", actionGroup, true)
+      val toolbar = ActionManager.getInstance().createActionToolbar("UniversalFileChooserTopToolbar", actionGroup, true)
+      return toolbar to actionGroup
     }
 
     private fun projectContributor(project: Project): UniversalFileChooserContributor? {
@@ -529,6 +534,7 @@ object UniversalFileChooser {
       okAction: Runnable,
       val scope: CoroutineScope,
       private val topToolbar: ActionToolbar,
+      private val toolbarActionGroup: DefaultActionGroup,
       private val okEnabledUpdater: () -> Unit = {},
     ) {
       val topComponent: JComponent
@@ -647,6 +653,8 @@ object UniversalFileChooser {
         tree.addTreeSelectionListener {
           topToolbar.updateActionsAsync()
         }
+
+        PopupHandler.installPopupMenu(tree, toolbarActionGroup, "UniversalFileChooserTreePopup")
 
         tree.addKeyListener(object : KeyAdapter() {
           override fun keyPressed(e: KeyEvent) {
