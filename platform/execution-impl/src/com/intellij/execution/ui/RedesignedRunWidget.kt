@@ -130,8 +130,10 @@ private fun createRunActionToolbar(): ActionToolbar {
   toolbar.layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
   toolbar.component.isOpaque = false
   val toolbarInsetsSupplier: Supplier<Insets> = Supplier {
+    // If the toolbar has other actions to the left (added by the user), then the inset is needed (IJPL-145970),
+    // otherwise it isn't needed because we have a 20px gap between the center and the right toolbar anyway.
     @Suppress("UseDPIAwareInsets") // the supplier must provide unscaled values
-    Insets(0, 12, 0, 16)
+    Insets(0, if (isFirst(toolbar)) 0 else 12 , 0, 16)
   }
   toolbar.component.border = JBUI.Borders.empty(JBInsets.create(toolbarInsetsSupplier, toolbarInsetsSupplier.get()))
   toolbar.setMinimumButtonSize {
@@ -146,6 +148,12 @@ private fun createRunActionToolbar(): ActionToolbar {
   toolbar.setActionButtonBorder(JBEmptyBorder(JBInsets.create(buttonInsetsSupplier, buttonInsetsSupplier.get())))
   toolbar.setCustomButtonLook(RunWidgetButtonLook())
   return toolbar
+}
+
+private fun isFirst(toolbar: ActionToolbarImpl): Boolean {
+  val component = toolbar.component
+  val parent = component.parent ?: return true // doesn't really matter, as it's not showing
+  return parent.getComponent(0) == component
 }
 
 private val runToolbarDataKey = Key.create<Boolean>("run-toolbar-data")
