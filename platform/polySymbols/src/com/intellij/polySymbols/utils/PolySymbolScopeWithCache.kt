@@ -3,6 +3,7 @@ package com.intellij.polySymbols.utils
 
 import com.intellij.model.Pointer
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.UserDataHolder
@@ -21,6 +22,7 @@ import com.intellij.polySymbols.query.PolySymbolQueryStack
 import com.intellij.polySymbols.query.PolySymbolScope
 import com.intellij.polySymbols.query.PolySymbolThreadLocalCacheKeyProvider
 import com.intellij.polySymbols.query.PolySymbolWithPattern
+import com.intellij.psi.PsiInvalidElementAccessException
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -132,16 +134,28 @@ abstract class PolySymbolScopeWithCache<T : UserDataHolder, K>(
         {
           if (!provides(it.kind))
             throw IllegalArgumentException("Poly Symbol with unsupported kind: ${it.kind} added. $it (${it.javaClass}")
-          if (unitTestMode) {
-            val dereferenced = it.createPointer().dereference()
-            when {
-              dereferenced == null ->
-                throw IllegalArgumentException("Poly Symbol dereferenced from pointer is null. $it (${it.javaClass})")
-              !dereferenced.isEquivalentTo(it) ->
-                throw IllegalArgumentException("Poly Symbol dereferenced from pointer is not equivalent to the original. $dereferenced (${dereferenced.javaClass}) !isEquivalentTo $it (${it.javaClass})")
+          val psiContext = it.psiContext
+          if (psiContext != null && !psiContext.isValid) {
+            val ex = try {
+              throw PsiInvalidElementAccessException(psiContext)
             }
+            catch (e: Throwable) {
+              e
+            }
+            thisLogger().error("Provided Poly Symbol has invalid psi element ${psiContext}: $it (${it.javaClass}) in scope: $this.", ex)
           }
-          map.add(it)
+          else {
+            if (unitTestMode) {
+              val dereferenced = it.createPointer().dereference()
+              when {
+                dereferenced == null ->
+                  throw IllegalArgumentException("Poly Symbol dereferenced from pointer is null. $it (${it.javaClass})")
+                !dereferenced.isEquivalentTo(it) ->
+                  throw IllegalArgumentException("Poly Symbol dereferenced from pointer is not equivalent to the original. $dereferenced (${dereferenced.javaClass}) !isEquivalentTo $it (${it.javaClass})")
+              }
+            }
+            map.add(it)
+          }
         }, dependencies)
       if (dependencies.isEmpty()) {
         throw IllegalArgumentException(

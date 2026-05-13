@@ -37,6 +37,7 @@ import com.intellij.polySymbols.utils.nameSegments
 import com.intellij.polySymbols.utils.qualifiedName
 import com.intellij.polySymbols.utils.withMatchedName
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiInvalidElementAccessException
 import com.intellij.psi.createSmartPointer
 import com.intellij.util.PlatformUtils
 import com.intellij.util.SmartList
@@ -282,6 +283,7 @@ class PolySymbolQueryExecutorImpl(
           keepUnresolvedTopLevelReferences = false
           try {
             scope.getMatchingSymbols(qualifiedName, params, PolySymbolQueryStack(finalContext))
+              .filterSymbolsWithInvalidPsiContext(scope)
           }
           finally {
             keepUnresolvedTopLevelReferences = prev
@@ -499,6 +501,23 @@ class PolySymbolQueryExecutorImpl(
     else {
       ProgressManager.checkCanceled()
       resultsCustomizer.apply(this, strict, qualifiedName)
+    }
+
+  private fun List<PolySymbol>.filterSymbolsWithInvalidPsiContext(scope: PolySymbolScope): List<PolySymbol> =
+    filter {
+      val psi = it.psiContext
+      if (psi != null && !psi.isValid) {
+        val ex = try {
+          throw PsiInvalidElementAccessException(psi)
+        }
+        catch (e: Throwable) {
+          e
+        }
+        thisLogger().error("Invalid psi element ${psi} for symbol: ${it.qualifiedName} [$it] in scope: $scope.\n" +
+                           "Scope origin: ${scopeOrigin[scope]}.", ex)
+        false
+      }
+      else true
     }
 
   private val PolySymbolQueryParams.recursionKey: List<Any>
