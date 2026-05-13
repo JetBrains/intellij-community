@@ -3,6 +3,7 @@ package com.intellij.openapi.fileChooser.universal
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.ui.ProductIcons
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
@@ -265,7 +266,7 @@ object UniversalFileChooser {
       val projectAction = if (!project.isDefault) object : AnAction(
         IdeBundle.message("universal.file.chooser.action.project.text"),
         IdeBundle.message("universal.file.chooser.action.project.description"),
-        AllIcons.Nodes.Project
+        ProductIcons.getInstance().getProjectIcon()
       ) {
         override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
