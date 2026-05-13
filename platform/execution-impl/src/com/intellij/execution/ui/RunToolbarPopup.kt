@@ -66,6 +66,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher
 import com.intellij.openapi.ui.popup.util.PopupUtil
@@ -114,6 +115,7 @@ import java.util.function.Predicate
 import javax.swing.GroupLayout
 import javax.swing.JComponent
 import javax.swing.JList
+import javax.swing.ListCellRenderer
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 import kotlin.math.max
@@ -331,7 +333,7 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup,
   }
 
   override fun createPopup(parent: WizardPopup?, step: PopupStep<*>?, parentValue: Any?): WizardPopup {
-    val popup = super.createPopup(parent, step, parentValue)
+    val popup = ChildListPopup(parent, step, parentValue)
     popup.minimumSize = JBDimension(MINIMAL_POPUP_WIDTH, 0)
     return popup
   }
@@ -371,6 +373,24 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup,
       c.separator.preferredSize.height
     }
     else 0
+  }
+
+  private inner class ChildListPopup(
+    parent: WizardPopup?,
+    step: PopupStep<*>?,
+    parentValue: Any?,
+  ) : ListPopupImpl(project, parent, step as ListPopupStep<*>, parentValue) {
+    override fun createContentPanel(
+      resizable: Boolean,
+      border: PopupBorder,
+      isToDrawMacCorner: Boolean,
+    ): MyContentPanel {
+      return ContentPanelWithMaxWidth(border)
+    }
+
+    override fun getListElementRenderer(): ListCellRenderer<*> {
+      return MyListElementRenderer()
+    }
   }
 
   private inner class ContentPanelWithMaxWidth(border: PopupBorder) : MyContentPanel(border) {
