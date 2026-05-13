@@ -124,6 +124,14 @@ inline fun <reified Impl, reified Topic> PluginSpecBuilder.applicationListener()
   applicationListener(Impl::class.java.name, Topic::class.java.name)
 }
 
+fun PluginSpecBuilder.applicationService(implFqn: String, iface: String) {
+  extensions("""<applicationService serviceInterface="$iface" serviceImplementation="$implFqn"/>""")
+}
+
+inline fun <reified Impl, reified Iface> PluginSpecBuilder.applicationService() {
+  applicationService(Impl::class.java.name, Iface::class.java.name)
+}
+
 inline fun <reified T> PluginSpecBuilder.includeClassFile(): Unit =
   includeClassFile(T::class.java.name, T::class.java.classLoader)
 
