@@ -22,6 +22,7 @@ private const val ENV_MONITORING_DUMPS_INTERVAL_SECONDS = "MONITORING_DUMPS_INTE
 private const val ENV_SKIP_PERIODIC_IDE_THREAD_DUMPS = "SKIP_PERIODIC_IDE_THREAD_DUMPS"
 private const val ENV_COROUTINE_SCOPES_CANCEL_TIMEOUT_MS = "COROUTINE_SCOPES_CANCEL_TIMEOUT_MS"
 private const val ENV_DEBUG_LOGGING_ENABLED = "DEBUG_LOGGING_ENABLED"
+private const val ENV_SCREEN_RECORDING_ENABLED = "SCREEN_RECORDING_ENABLED"
 
 val starterConfigurationStorageDefaults = mapOf<String, String>(
   ENV_ENABLE_CLASS_FILE_VERIFICATION to System.getenv(ENV_ENABLE_CLASS_FILE_VERIFICATION),
@@ -38,6 +39,7 @@ val starterConfigurationStorageDefaults = mapOf<String, String>(
   ENV_MONITORING_DUMPS_INTERVAL_SECONDS to System.getenv().getOrDefault(ENV_MONITORING_DUMPS_INTERVAL_SECONDS, "60"),
   ENV_SKIP_PERIODIC_IDE_THREAD_DUMPS to System.getenv().getOrDefault(ENV_SKIP_PERIODIC_IDE_THREAD_DUMPS, "false"),
   ENV_DEBUG_LOGGING_ENABLED to System.getenv().getOrDefault(ENV_DEBUG_LOGGING_ENABLED, "false"),
+  ENV_SCREEN_RECORDING_ENABLED to System.getenv().getOrDefault(ENV_SCREEN_RECORDING_ENABLED, "false"),
 ).filter { entry ->
   @Suppress("SENSELESS_COMPARISON")
   entry.value != null
@@ -125,6 +127,9 @@ fun ConfigurationStorage.Companion.isScramblingEnabled(): Boolean = instance().g
  */
 fun ConfigurationStorage.Companion.enableScrambling() = instance().put(ENABLE_SCRAMBLING_FOR_DEVSERVER, true)
 fun ConfigurationStorage.Companion.disableScrambling() = instance().put(ENABLE_SCRAMBLING_FOR_DEVSERVER, false)
+
+fun ConfigurationStorage.Companion.isScreenRecordingEnabled(): Boolean = instance().getBoolean(ENV_SCREEN_RECORDING_ENABLED)
+fun ConfigurationStorage.Companion.enableScreenRecording() = instance().put(ENV_SCREEN_RECORDING_ENABLED, true)
 
 var ConfigurationStorage.Companion.coroutineScopesCancellationTimeout: Duration
   get() = instance().get(ENV_COROUTINE_SCOPES_CANCEL_TIMEOUT_MS) { (it ?: "10000").toLong().milliseconds }

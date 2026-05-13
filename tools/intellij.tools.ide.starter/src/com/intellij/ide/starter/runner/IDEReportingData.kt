@@ -6,7 +6,7 @@ import com.intellij.ide.starter.report.ErrorReporter
 import com.intellij.ide.starter.utils.ReportingPathUtils
 import com.intellij.ide.starter.utils.ReportingPathUtils.checkPathLength
 import com.intellij.ide.starter.utils.catchAll
-import com.intellij.ide.starter.utils.flattened
+import com.intellij.ide.starter.utils.flattenedTestName
 import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.tools.ide.util.common.replaceSpecialCharactersWithHyphens
@@ -59,8 +59,8 @@ class IDEReportingData internal constructor(
 
   // region Names
 
-  private val flattenedTestName: String = testName.flattened()
-  private val flattenedLaunchName: String? = launchName?.takeUnless(String::isEmpty)?.flattened()
+  private val flattenedTestName: String = testName.flattenedTestName()
+  private val flattenedLaunchName: String? = launchName?.takeUnless(String::isEmpty)?.flattenedTestName()
 
   private val launchDirName: String? = launchName
     ?.takeUnless { it.isEmpty() || testMethod?.namesTheLaunch(flattenedLaunchName) == true }

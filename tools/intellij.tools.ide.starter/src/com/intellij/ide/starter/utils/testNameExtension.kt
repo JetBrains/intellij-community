@@ -36,7 +36,7 @@ fun String.hyphenateTestName(): String {
 }
 
 /** A name as a reporting directory spells it: hyphenated, and its slashes flattened, one name getting one directory. */
-internal fun String.flattened(): String = hyphenateTestName().replace('/', '-')
+fun String.flattenedTestName(): String = hyphenateTestName().replace('/', '-')
 
 /** `.` and `..` spelled so that a directory name cannot point at another directory. */
 internal fun String.escapeDotSegment(): String = if (this == "." || this == "..") replace(".", "%2E") else this
