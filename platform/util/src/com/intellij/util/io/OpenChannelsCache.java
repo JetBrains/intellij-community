@@ -161,7 +161,7 @@ public final class OpenChannelsCache { // TODO: Will it make sense to have a bac
 
     //channel access is NOT guarded by the myCacheLock
     try {
-      return descriptor.channel().executeOperation(operation);
+      return descriptor.executeIdempotentOp(operation);
     }
     finally {
       synchronized (myCacheLock) {
@@ -209,13 +209,13 @@ public final class OpenChannelsCache { // TODO: Will it make sense to have a bac
     private static final OpenOption[] READ_ONLY_OPTS = {READ};
 
     private int lockCount = 0;
-    private final @NotNull ResilientFileChannel channel;
+    private final @NotNull FileChannel channel;
     private final boolean readOnly;
 
 
     ChannelDescriptor(@NotNull Path file, boolean readOnly) throws IOException {
       this.readOnly = readOnly;
-      channel = Objects.requireNonNull(FileUtilRt.doIOOperation(lastAttempt -> {
+      this.channel = Objects.requireNonNull(FileUtilRt.doIOOperation(lastAttempt -> {
         try {
           return new ResilientFileChannel(file, readOnly ? READ_ONLY_OPTS : MODIFIABLE_OPTS);
         }
@@ -230,6 +230,10 @@ public final class OpenChannelsCache { // TODO: Will it make sense to have a bac
           throw ex;
         }
       }));
+
+      if (!(channel instanceof Resilient)) {
+        throw new AssertionError("channel must be instanceof Resilient, but " + channel.getClass());
+      }
     }
 
     boolean isReadOnly() {
@@ -248,8 +252,12 @@ public final class OpenChannelsCache { // TODO: Will it make sense to have a bac
       return lockCount != 0;
     }
 
-    @NotNull ResilientFileChannel channel() {
+    @NotNull FileChannel channel() {
       return channel;
+    }
+
+    <R> R executeIdempotentOp(@NotNull FileChannelIdempotentOperation<R> operation) throws IOException {
+      return ((Resilient)channel).executeOperation(operation);
     }
 
     @Override

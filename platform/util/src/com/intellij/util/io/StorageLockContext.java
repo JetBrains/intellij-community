@@ -129,7 +129,7 @@ public final class StorageLockContext {
     else {
       getBufferCache().incrementUncachedFileAccess();
       try (OpenChannelsCache.ChannelDescriptor desc = new OpenChannelsCache.ChannelDescriptor(file, readOnly)) {
-        return desc.channel().executeOperation(operation);
+        return desc.executeIdempotentOp(operation);
       }
     }
   }
