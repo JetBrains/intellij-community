@@ -479,7 +479,7 @@
                  defaultValue="true"
                  restartRequired="true"
                  description="Enable plugin category promotion panels with priority sorting in the Installed plugins tab"/>
-    <postStartupActivity implementation="com.intellij.ide.actions.IdeScalePostStartupActivity"/>
+    <backgroundPostStartupActivity implementation="com.intellij.ide.actions.IdeScalePostStartupActivity"/>
 
     <applicationService serviceInterface="com.intellij.codeInsight.hint.HintManager"
                         serviceImplementation="com.intellij.codeInsight.hint.HintManagerImpl"/>

@@ -12,6 +12,7 @@ import com.intellij.ide.ui.percentStringValue
 import com.intellij.ide.ui.percentValue
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
@@ -191,7 +192,7 @@ internal class IdeScaleAppLifecycleListener : AppLifecycleListener {
 
 internal class IdeScalePostStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
-    IdeScaleIndicatorManager.getInstance(project)
+    project.serviceAsync<IdeScaleIndicatorManager>()
   }
 }
 
