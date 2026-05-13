@@ -41,7 +41,20 @@ import java.util.Set;
 import java.util.function.Function;
 
 public final class PersistentMapletFactory implements MapletFactory, Closeable {
-  private static final int BASE_CACHE_SIZE = 512 * (SystemProperties.getBooleanProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, false)? 2 : 1);
+  /**
+   * Option to override base cache size for all factory-created containers.
+   * Defines the minimal number of cached map entries for every map created by this factory. The effective cache size value can be greater depending on current heap size.
+   * Larger graphs may require this adjustment to let the working set of nodes fit in memory.
+   * Expected any integer value greater than zero.
+   */
+  public static final String DEPENDENCY_GRAPH_BASE_CACHE_SIZE = "jps.dependency.graph.base.cache.size";
+
+  private static final int BASE_CACHE_SIZE;
+  static {
+    int cacheSizeOverride = SystemProperties.getIntProperty(DEPENDENCY_GRAPH_BASE_CACHE_SIZE, 0);
+    BASE_CACHE_SIZE = cacheSizeOverride > 0? cacheSizeOverride : 512 * (SystemProperties.getBooleanProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, false)? 2 : 1);
+  }
+  
   private final String myRootDirPath;
   private final PersistentStringEnumerator myStringTable;
   private final List<BaseMaplet<?>> myMaps = new ArrayList<>();
