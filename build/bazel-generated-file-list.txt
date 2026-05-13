@@ -1455,6 +1455,7 @@ plugins/markdown/frontmatter
 plugins/markdown/frontmatter/toml
 plugins/markdown/frontmatter/yaml
 plugins/markdown/images
+plugins/markdown/java
 plugins/markdown/model
 plugins/markdown/plugin
 plugins/markdown/spellchecker

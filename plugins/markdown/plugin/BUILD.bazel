@@ -17,6 +17,7 @@ jvm_library(
     "//plugins/markdown/xml",
     "//plugins/markdown/compose:compose-preview",
     "//plugins/markdown/core/frontend",
+    "//plugins/markdown/java",
   ]
 )
 
@@ -38,6 +39,7 @@ jvm_library(
     "//plugins/markdown/xml:xml_test_lib",
     "//plugins/markdown/compose:compose-preview_test_lib",
     "//plugins/markdown/core/frontend:frontend_test_lib",
+    "//plugins/markdown/java:java_test_lib",
   ]
 )
 ### auto-generated section `build intellij.markdown.plugin.main` end

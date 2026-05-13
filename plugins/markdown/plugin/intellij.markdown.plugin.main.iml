@@ -14,5 +14,6 @@
     <orderEntry type="module" module-name="intellij.markdown.xml" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.markdown.compose.preview" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.markdown.frontend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.markdown.java" scope="RUNTIME" />
   </component>
 </module>

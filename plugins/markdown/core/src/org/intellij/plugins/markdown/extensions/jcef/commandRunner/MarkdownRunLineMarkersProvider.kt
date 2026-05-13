@@ -1,17 +1,23 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.extensions.jcef.commandRunner
 
+import com.intellij.execution.RunManager
+import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.lineMarker.RunLineMarkerContributor
+import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.nextLeaf
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.MarkdownUsageCollector.RUNNER_EXECUTED
+import org.intellij.plugins.markdown.extensions.MarkdownCodeSpanConfigurationContextSearcher
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension.Companion.execute
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension.Companion.matches
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension.Companion.trimPrompt
@@ -34,17 +40,20 @@ internal class MarkdownRunLineMarkersProvider: RunLineMarkerContributor(), DumbA
       }
     }
 
-    val inCodeSpan = (element.hasType(MarkdownTokenTypes.BACKTICK)
-                      && element.parent.hasType(MarkdownElementTypes.CODE_SPAN)
-                      && element.parent.firstChild == element)
+    val inCodeSpan = isOpeningCodeSpanBacktick(element)
     if (!(element.hasType(MarkdownTokenTypes.CODE_FENCE_CONTENT)
           || inCodeSpan)) {
       return null
     }
 
-    val dir = getMarkdownCommandWorkingDirectory(element.project, element.containingFile.virtualFile) ?: return null
     val text = getText(element)
-    if (!matches(element.project, dir, true, text, allowRunConfigurations = inCodeSpan)) {
+    if (inCodeSpan) {
+      val codeSpanInfo = processCodeSpan(element, text)
+      if (codeSpanInfo != null) return codeSpanInfo
+    }
+
+    val dir = getMarkdownCommandWorkingDirectory(element.project, element.containingFile.virtualFile) ?: return null
+    if (!matches(element.project, dir, true, text)) {
       return null
     }
 
@@ -76,7 +85,35 @@ internal class MarkdownRunLineMarkersProvider: RunLineMarkerContributor(), DumbA
         }
       }
     }
-    return Info(AllIcons.RunConfigurations.TestState.Run_run, { runner.title() }, runAction)
+    return Info(AllIcons.RunConfigurations.TestState.Run_run, arrayOf(runAction)) { runner.title() }
+  }
+
+  private fun processCodeSpan(element: PsiElement, elementText: String): Info? {
+    val text = elementText.trim()
+    if (text.isBlank()) return null
+
+    val codeSpans = getAllCodeSpansOnLine(element)
+    if (codeSpans.firstOrNull() != element) return null
+
+    val configurations = codeSpans
+      .asSequence()
+      .map { getText(it).trim() to it }
+      .filter { it.first.isNotBlank() }
+      .distinctBy { it.first }
+      .flatMap { (text, host) ->
+        MarkdownCodeSpanConfigurationContextSearcher
+          .findAllConfigurations(text, host)
+          .mapNotNull { it.findExisting() ?: it.getConfiguration() }
+          .distinctBy { it.uniqueID }
+      }
+      .toList()
+    if (configurations.isEmpty()) return null
+
+    val actions = configurations.map(::RunConfigurationAction).toTypedArray()
+    return Info(
+      AllIcons.RunConfigurations.TestState.Run_run,
+      actions
+    ) { MarkdownBundle.message("markdown.runner.launch.command", text) }
   }
 
   private fun getText(element: PsiElement): @NlsSafe String {
@@ -86,5 +123,50 @@ internal class MarkdownRunLineMarkersProvider: RunLineMarkerContributor(), DumbA
       return codeSpanText.substring(1, codeSpanText.length - 1).trim()
     }
     return ""
+  }
+
+  private fun getAllCodeSpansOnLine(element: PsiElement): List<PsiElement> {
+    val file = element.containingFile ?: return emptyList()
+    val document = PsiDocumentManager.getInstance(element.project).getDocument(file) ?: return listOf(element)
+
+    val line = document.getLineNumber(element.textRange.startOffset)
+    val lineStart = document.getLineStartOffset(line)
+    val lineEnd = document.getLineEndOffset(line)
+
+    val result = mutableListOf<PsiElement>()
+    var leaf = file.findElementAt(lineStart)
+
+    while (leaf != null) {
+      val leafRange = leaf.textRange
+      if (leafRange.startOffset >= lineEnd) break
+      if (leafRange.endOffset > lineStart && isOpeningCodeSpanBacktick(leaf) && getText(leaf).isNotBlank()) {
+        result.add(leaf)
+      }
+      leaf = leaf.nextLeaf()
+    }
+
+    return result
+  }
+
+  private fun isOpeningCodeSpanBacktick(element: PsiElement): Boolean =
+    element.hasType(MarkdownTokenTypes.BACKTICK)
+    && element.parent.hasType(MarkdownElementTypes.CODE_SPAN)
+    && element.parent.firstChild == element
+
+
+  private class RunConfigurationAction(private val settings: RunnerAndConfigurationSettings): AnAction({ settings.name }, settings.configuration.icon) {
+    override fun actionPerformed(event: AnActionEvent) {
+      val project = event.project ?: settings.configuration.project
+      TrustedProjectUtil.executeIfTrusted(project) {
+        val runManager = RunManager.getInstance(project)
+        if (!runManager.hasSettings(settings)) {
+          runManager.setTemporaryConfiguration(settings)
+        }
+        if (runManager.shouldSetRunConfigurationFromContext()) {
+          runManager.selectedConfiguration = settings
+        }
+        ExecutionUtil.runConfiguration(settings, DefaultRunExecutor.getRunExecutorInstance())
+      }
+    }
   }
 }

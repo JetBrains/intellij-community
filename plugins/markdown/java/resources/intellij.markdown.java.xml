@@ -1,0 +1,12 @@
+<idea-plugin>
+  <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.java.indexing"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.markdown"/>
+    <!-- endregion -->
+  </dependencies>
+  <extensions defaultExtensionNs="org.intellij.markdown">
+    <codeSpanRunnableSearcher implementation="com.intellij.markdown.java.JvmCodeSpanConfigurationContextSearcher"/>
+  </extensions>
+</idea-plugin>

@@ -23,6 +23,7 @@
     <module name="intellij.markdown.frontend"/>
     <module name="intellij.markdown.frontend.split"/>
     <module name="intellij.markdown.backend"/>
+    <module name="intellij.markdown.java"/>
   </content>
 
   <description><![CDATA[
@@ -60,6 +61,9 @@
                     dynamic="true"/>
     <extensionPoint qualifiedName="org.intellij.markdown.markdownRunner"
                     interface="org.intellij.plugins.markdown.extensions.jcef.commandRunner.MarkdownRunner"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="org.intellij.markdown.codeSpanRunnableSearcher"
+                    interface="org.intellij.plugins.markdown.extensions.MarkdownCodeSpanConfigurationContextSearcher"
                     dynamic="true"/>
     <extensionPoint qualifiedName="org.intellij.markdown.flavourProvider"
                     interface="org.intellij.plugins.markdown.lang.parser.MarkdownFlavourProvider"
