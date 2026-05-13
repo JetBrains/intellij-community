@@ -19,9 +19,9 @@ import kotlin.io.path.pathString
 internal class PyTestDataExtension: Extension, BeforeEachCallback {
 
   override fun beforeEach(context: ExtensionContext) {
-    val classLevelManager = context.getLookupFixtureManager()
-    val codeInsightTestFixture = classLevelManager.getRequired<CodeInsightTestFixture>()
-    val sourceRoot = classLevelManager.getRequired<PsiDirectory>()
+    val manager = context.getLookupFixtureManager()
+    val codeInsightTestFixture = manager.getRequired<CodeInsightTestFixture>()
+    val sourceRoot = manager.getRequired<PsiDirectory>()
 
     val testDataPath = context.getTestClassInfo().testDataPath
     val testCaseRelativePath = context.getTestMethodInfo().testCaseRelativePath
