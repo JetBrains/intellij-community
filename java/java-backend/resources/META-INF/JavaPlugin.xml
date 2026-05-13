@@ -507,8 +507,6 @@
 
     <patterns.patternClass className="com.intellij.patterns.PsiJavaPatterns" alias="java"/>
 
-    <favoriteNodeProvider implementation="com.intellij.ide.favoritesTreeView.UsageFavoriteNodeProvider"/>
-
     <configurationType implementation="com.intellij.execution.application.ApplicationConfigurationType"/>
     <configurationType implementation="com.intellij.execution.jar.JarApplicationConfigurationType"/>
     <configurationType implementation="com.intellij.execution.scratch.JavaScratchConfigurationType"/>

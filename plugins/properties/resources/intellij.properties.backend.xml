@@ -74,8 +74,6 @@
     <elementDescriptionProvider implementation="com.intellij.lang.properties.PropertiesDescriptionProvider"/>
     <fileType name="ResourceBundle" fieldName="INSTANCE" implementationClass="com.intellij.lang.properties.editor.ResourceBundleFileType"/>
 
-    <favoriteNodeProvider implementation="com.intellij.lang.properties.ide.favoritesTreeView.ResourcesFavoriteNodeProvider"/>
-
     <localInspection language="Properties" shortName="UnusedProperty" bundle="messages.PropertiesBundle"
                      key="unused.property.inspection.display.name"
                      groupKey="properties.files.inspection.group.display.name" enabledByDefault="true" level="WARNING"
