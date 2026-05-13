@@ -46,19 +46,19 @@ import java.nio.file.Path
 private val logger = fileLogger()
 
 /**
- * Create a venv in a [project] (or in [explicitProjectPath]) and SDK out of it (existing venv will be used if valid).
- * The best python os chosen automatically using [SystemPythonService], but if there is no python one will be installed with
- * [confirmInstallation].
+ * Create a venv in a [moduleOrProject] (or in [explicitPath]) and SDK out of it (existing venv will be used if valid).
+ *
  *  If a project has no module -- one will be created.
  *
  *  Use this function as a high-level API for various quick project creation wizards like Misc and Tour.
  *
  *  If you only need venv (no SDK), use [createVenv]
+ *
+ *  See [SystemPythonRequirements]
  */
 suspend fun createVenvAndSdk(
   moduleOrProject: ModuleOrProject,
-  confirmInstallation: suspend () -> Boolean = { true },
-  systemPythonService: SystemPythonService = SystemPythonService(),
+  systemPythonRequirements: SystemPythonRequirements = SystemPythonRequirements.ByVersionSpecifier(),
   explicitPath: VirtualFile? = null,
 ): PyResult<Sdk> {
   val project = moduleOrProject.project
@@ -82,7 +82,17 @@ suspend fun createVenvAndSdk(
 
   if (venvPython == null) {
     // No venv found -- find system python to create venv
-    val systemPythonBinary = getSystemPython(confirmInstallation = confirmInstallation, systemPythonService).getOr { return it }
+    val systemPythonBinary = when (systemPythonRequirements) {
+      is SystemPythonRequirements.Explicit -> systemPythonRequirements.systemPython
+      is SystemPythonRequirements.ByVersionSpecifier -> {
+        getSystemPython(
+          confirmInstallation = systemPythonRequirements.confirmInstallation,
+          pythonService = systemPythonRequirements.systemPythonService,
+          versionSpecifiers = systemPythonRequirements.versionSpecifiers,
+        ).getOr { return it }
+      }
+    }
+
     logger.info("no venv in $venvDirPath, using system python $systemPythonBinary to create venv")
     // create venv using this system python
     venvPython = createVenvFromSystemPython(systemPythonBinary,

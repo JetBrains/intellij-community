@@ -28,6 +28,7 @@ import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.getOr
 import com.jetbrains.python.mapResult
+import com.jetbrains.python.projectCreation.SystemPythonRequirements
 import com.jetbrains.python.projectCreation.createVenvAndSdk
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.pythonSdk
@@ -168,7 +169,8 @@ private suspend fun createOrOpenProjectAndSdk(
   // Even if the misc project might be already opened, it might not have sdk (if it was opened as a welcome project)
   val sdkResult = withContext(Dispatchers.EDT) {
     runWithSdkConfigurationLock(project) {
-      createVenvAndSdk(ModuleOrProject.ProjectOnly(project), confirmInstallation, systemPythonService, vfsProjectPath)
+      val systemPythonRequirements = SystemPythonRequirements.ByVersionSpecifier(systemPythonService, confirmInstallation = confirmInstallation)
+      createVenvAndSdk(ModuleOrProject.ProjectOnly(project), systemPythonRequirements, vfsProjectPath)
     }
   }
   val sdk = sdkResult.getOr(PyBundle.message("project.error.cant.venv")) { return it }
