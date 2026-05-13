@@ -7,7 +7,6 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersAction
 import com.intellij.ide.ui.icons.icon
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.scopes.SearchScopeData
@@ -84,11 +83,8 @@ class SeTargetsFilterEditor(
 private class SeScopePersistentStorage(private val project: Project, private val tabId: String, private val scopeInfo: SearchScopesInfo) {
   private val persistedScopeKey: String = "SearchEverywhere.PersistedScope.$tabId"
   private val scopePersistentStorage: PropertiesComponent get() = PropertiesComponent.getInstance(project)
-  private val shouldPersist: Boolean get() = AdvancedSettings.getBoolean("ide.remember.last.search.scope")
 
   fun persist(scopeId: String?) {
-    if (!shouldPersist) return
-
     val scopeName = scopeInfo.scopes.firstOrNull { it.scopeId == scopeId }?.name
     SeLog.log(SeLog.SCOPE) { "Persisting scope with name: $scopeName for tab: $tabId" }
 
@@ -96,8 +92,6 @@ private class SeScopePersistentStorage(private val project: Project, private val
   }
 
   fun getScope(): SearchScopeData? {
-    if (!shouldPersist) return null
-
     @NlsSafe
     val scopeName: String? = scopePersistentStorage.getValue(persistedScopeKey)
     SeLog.log(SeLog.SCOPE) { "Retrieving persisted scope with name: $scopeName for tab: $tabId" }
