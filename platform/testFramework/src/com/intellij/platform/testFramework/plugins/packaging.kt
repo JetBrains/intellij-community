@@ -154,7 +154,7 @@ private fun PluginSpec.buildMultiJarDir(
   }
 }
 
-fun PluginSpec.buildDistribution(dir: Path, config: PluginPackagingConfig = PluginPackagingConfig()): Path = with(config) {
+fun PluginSpec.buildDistributionArchive(dir: Path, config: PluginPackagingConfig = PluginPackagingConfig()): Path = with(config) {
   val archiveName = name ?: id ?: error("neither name or id specified")
   if (isSingleJar) {
     val path = dir.resolve("$archiveName.jar")

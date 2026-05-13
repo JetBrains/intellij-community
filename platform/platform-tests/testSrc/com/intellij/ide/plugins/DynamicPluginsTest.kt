@@ -61,7 +61,7 @@ import com.intellij.platform.testFramework.plugins.PluginSpec
 import com.intellij.platform.testFramework.plugins.PluginTestHandle
 import com.intellij.platform.testFramework.plugins.action
 import com.intellij.platform.testFramework.plugins.appService
-import com.intellij.platform.testFramework.plugins.buildDistribution
+import com.intellij.platform.testFramework.plugins.buildDistributionArchive
 import com.intellij.platform.testFramework.plugins.buildMainJar
 import com.intellij.platform.testFramework.plugins.content
 import com.intellij.platform.testFramework.plugins.dependencies
@@ -167,7 +167,7 @@ class DynamicPluginsTest {
   @Test
   fun testClassloaderAfterReload() {
     val bar = plugin("bar") { dependsIntellijModulesLang() }
-    val barPath = bar.buildDistribution(pluginsDir)
+    val barPath = bar.buildDistributionArchive(pluginsDir)
     val descriptor = loadDescriptorInTest(fileOrDir = barPath)
     assertThat(descriptor).isNotNull
 
