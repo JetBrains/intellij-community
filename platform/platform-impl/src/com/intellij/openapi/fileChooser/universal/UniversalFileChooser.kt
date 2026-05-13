@@ -796,12 +796,17 @@ object UniversalFileChooser {
             Messages.getWarningIcon()
           ) != Messages.YES) return
 
+        val nextSelection = fileTree.computeSelectionAfterDeletion()
+
         scope.launch {
           withContext(Dispatchers.IO) {
             val result = runCatching { Files.delete(selected) }
             runOnEdt {
               if (result.isSuccess) {
                 fileTree.updateTree()
+                if (nextSelection != null) {
+                  fileTree.select(nextSelection, null)
+                }
               }
               else {
                 val message = result.exceptionOrNull()?.message ?: ""

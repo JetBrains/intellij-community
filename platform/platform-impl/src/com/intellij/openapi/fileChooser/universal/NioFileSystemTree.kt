@@ -374,6 +374,36 @@ class NioFileSystemTree(
     fireSelection(selection)
   }
 
+  fun computeSelectionAfterDeletion(): Path? {
+    val selectionPath = myTree.selectionPath ?: return null
+    val parentPath = selectionPath.parentPath ?: return null
+    val selectionRow = myTree.getRowForPath(selectionPath)
+    if (selectionRow < 0) return getNioPath(parentPath)
+
+    // Look for next sibling among the rows following the selected one.
+    for (row in (selectionRow + 1) until myTree.rowCount) {
+      val rowPath = myTree.getPathForRow(row) ?: continue
+      if (rowPath.parentPath == parentPath) {
+        return getNioPath(rowPath)
+      }
+      // Once we leave the parent's subTree, there are no more siblings ahead.
+      if (!parentPath.isDescendant(rowPath)) break
+    }
+
+    // Look for previous sibling among the rows preceding the selected one.
+    for (row in (selectionRow - 1) downTo 0) {
+      val rowPath = myTree.getPathForRow(row) ?: continue
+      if (rowPath.parentPath == parentPath) {
+        return getNioPath(rowPath)
+      }
+      // Once we leave the parent's subTree backwards, no more previous siblings.
+      if (!parentPath.isDescendant(rowPath)) break
+    }
+
+    // Fall back to the containing directory.
+    return getNioPath(parentPath)
+  }
+
   companion object {
     private val LOG = Logger.getInstance(NioFileSystemTree::class.java)
 
