@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ReadResult
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.util.ui.EDT
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -51,6 +52,9 @@ suspend fun <T> WriteCommandAction.Builder.execute(action: () -> T): T {
 @ApiStatus.Experimental
 fun <T> ReadAndWriteScope.writeCommandAction(project: Project, @NlsContexts.Command commandName: String, action: () -> T): ReadResult<T> {
   return writeAction {
+    if (!EDT.isCurrentThreadEdt()) {
+      throw IllegalStateException("`writeCommandAction` is not supported in `readAndBackgroundWriteAction` because the Platform currently cannot run commands on background. Please use `readAndEdtWriteAction`")
+    }
     WriteCommandAction.writeCommandAction(project)
       .withName(commandName)
       .compute<T, Throwable>(action)
