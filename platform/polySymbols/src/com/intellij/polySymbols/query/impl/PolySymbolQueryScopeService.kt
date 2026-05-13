@@ -26,14 +26,14 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Predicate
 
 @Service(Service.Level.APP)
-class PolySymbolQueryScopeService {
+internal class PolySymbolQueryScopeService {
 
-  fun buildScope(project: Project, location: PsiElement?, context: PolyContext, allowResolve: Boolean): List<PolySymbolScope> =
+  fun buildScope(project: Project, location: PsiElement?, context: PolyContext, allowResolve: Boolean): List<Pair<PolySymbolScope, Any>> =
     elementClassToWrappers
       .computeIfAbsent(location?.javaClass ?: Unit::class.java, ::buildWrappersForElementClass)
       .flatMap {
         if (it.filters.accept(context, allowResolve))
-          it.getScopes(project, location)
+          it.getScopes(project, location).map { scope -> scope to it.provider }
         else
           emptyList()
       }
@@ -118,6 +118,7 @@ class PolySymbolQueryScopeService {
   }
 
   private interface ScopeProviderWrapper {
+    val provider: Any
     val elementClasses: List<Class<*>>
     val filters: ScopeProviderWrapperFilters
     fun getScopes(project: Project, location: PsiElement?): Collection<PolySymbolScope>
@@ -196,7 +197,7 @@ class PolySymbolQueryScopeService {
   private class LocationScopeProviderWrapper<T : PsiElement?>(
     val locationPatterns: Collection<PsiElementPattern<out T, *>>,
     val filePatterns: Collection<PsiFilePattern<out PsiFile, *>>,
-    val provider: PolySymbolLocationQueryScopeProvider<T>,
+    override val provider: PolySymbolLocationQueryScopeProvider<T>,
     override val filters: ScopeProviderWrapperFilters,
   ) : ScopeProviderWrapper {
 
@@ -230,7 +231,7 @@ class PolySymbolQueryScopeService {
   }
 
   private class ProjectScopeProviderWrapper(
-    val provider: PolySymbolAnyQueryScopeProvider,
+    override val provider: PolySymbolAnyQueryScopeProvider,
     override val filters: ScopeProviderWrapperFilters,
   ) : ScopeProviderWrapper {
 

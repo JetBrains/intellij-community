@@ -12,7 +12,7 @@ import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory.PolySymbolQ
 import com.intellij.polySymbols.query.PolySymbolQueryResultsCustomizer
 import com.intellij.polySymbols.query.PolySymbolScope
 
-class PolySymbolQueryExecutorBuilderImpl : PolySymbolQueryExecutorBuilder {
+class PolySymbolQueryExecutorBuilderImpl(private val source: Any? = null) : PolySymbolQueryExecutorBuilder {
   private val rootScopes = mutableListOf<PolySymbolScope>()
   private val customizers = mutableListOf<PolySymbolQueryResultsCustomizer>()
   private val nameConversionRules = mutableListOf<PolySymbolNameConversionRules>()
@@ -50,6 +50,7 @@ class PolySymbolQueryExecutorBuilderImpl : PolySymbolQueryExecutorBuilder {
     PolySymbolQueryExecutorImpl(
       null,
       rootScopes,
+      rootScopes.associateWith { source ?: this },
       PolySymbolNamesProviderImpl(PolyContext.create(context), nameConversionRules, ModificationTracker.NEVER_CHANGED),
       PolySymbolCompoundQueryResultsCustomizer(customizers),
       PolyContextImpl(context),

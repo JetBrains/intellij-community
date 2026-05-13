@@ -49,7 +49,7 @@ interface PolySymbolQueryExecutorFactory : Disposable {
       PolySymbolQueryExecutorBuilderImpl()
 
     fun createCustom(setup: PolySymbolQueryExecutorBuilder.() -> Unit): PolySymbolQueryExecutor =
-      PolySymbolQueryExecutorBuilderImpl()
+      PolySymbolQueryExecutorBuilderImpl(setup)
         .let { setup(it); it.create() }
 
   }

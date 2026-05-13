@@ -21,6 +21,7 @@ class PolySymbolMockQueryExecutorFactory : PolySymbolQueryExecutorFactory {
   override fun create(location: PsiElement?, allowResolve: Boolean): PolySymbolQueryExecutor {
     val polyContext = PolyContext.create(context)
     return PolySymbolQueryExecutorImpl(location, scopeList,
+                                       emptyMap(),
                                        PolySymbolNamesProviderImpl(
                                          polyContext,
                                          scopeList.filterIsInstance<WebTypesMockScopeImpl>().mapNotNull {

@@ -29,6 +29,7 @@ import com.intellij.polySymbols.utils.createModificationTracker
 import com.intellij.polySymbols.utils.findOriginalFile
 import com.intellij.psi.PsiElement
 import com.intellij.util.asSafely
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.MultiMap
 
 class PolySymbolQueryExecutorFactoryImpl(private val project: Project) : PolySymbolQueryExecutorFactory, Disposable {
@@ -37,26 +38,29 @@ class PolySymbolQueryExecutorFactoryImpl(private val project: Project) : PolySym
   private var modificationCount = 0L
 
   override fun create(location: PsiElement?, allowResolve: Boolean): PolySymbolQueryExecutor {
-    val application = ApplicationManager.getApplication()
-    application.assertReadAccessAllowed()
+    ThreadingAssertions.assertReadAccess()
 
     PolySymbolQueryConfigurator.EP_NAME.extensionList
       .forEach { it.beforeQueryExecutorCreation(project) }
 
     val context = location?.let { buildPolyContext(it) } ?: PolyContext.empty()
 
+    val scopeOrigin = mutableMapOf<PolySymbolScope, Any>()
     val scopeList = mutableListOf<PolySymbolScope>()
     getCustomScope(location).forEach(scopeList::add)
     val originalLocation = location?.originalElement
-    scopeList.addAll(
-      application.service<PolySymbolQueryScopeService>()
-        .buildScope(project, originalLocation, context, allowResolve)
-    )
+    service<PolySymbolQueryScopeService>()
+      .buildScope(project, originalLocation, context, allowResolve)
+      .forEach { (scope, origin) ->
+        scopeList.add(scope)
+        scopeOrigin[scope] = origin
+      }
 
     scopeList.sortBy { (it.asSafely<PolySymbolPrioritizedScope>()?.priority ?: PolySymbol.Priority.NORMAL).value }
 
     return PolySymbolQueryExecutorImpl(location,
                                        scopeList,
+                                       scopeOrigin,
                                        createNamesProvider(project, originalLocation, context),
                                        PolySymbolQueryResultsCustomizerFactory.getQueryResultsCustomizer(location, context),
                                        context,
@@ -141,6 +145,16 @@ class PolySymbolQueryExecutorFactoryImpl(private val project: Project) : PolySym
       }
     }
     return result
+  }
+
+  private object ScopesPriorityComparator : Comparator<PolySymbolScope> {
+    override fun compare(a: PolySymbolScope, b: PolySymbolScope): Int {
+      if (a == b) return 0
+      val priorityA = ((a as? PolySymbolPrioritizedScope)?.priority ?: PolySymbol.Priority.NORMAL).value
+      val priorityB = ((b as? PolySymbolPrioritizedScope)?.priority ?: PolySymbol.Priority.NORMAL).value
+      if (priorityA != priorityB) return priorityA.compareTo(priorityB)
+      return System.identityHashCode(a).compareTo(System.identityHashCode(b))
+    }
   }
 
 }

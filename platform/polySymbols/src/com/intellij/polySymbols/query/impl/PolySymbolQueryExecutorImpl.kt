@@ -51,12 +51,14 @@ import kotlin.math.min
 class PolySymbolQueryExecutorImpl(
   override val location: PsiElement?,
   rootScope: List<PolySymbolScope>,
+  scopeOrigin: Map<PolySymbolScope, Any>,
   override val namesProvider: PolySymbolNamesProvider,
   override val resultsCustomizer: PolySymbolQueryResultsCustomizer,
   override val context: PolyContext,
   allowResolve: Boolean,
 ) : PolySymbolQueryExecutor {
 
+  private val scopeOrigin: MutableMap<PolySymbolScope, Any> = scopeOrigin.toMutableMap()
   override val allowResolve: Boolean = if (PlatformUtils.isJetBrainsClient()) false else allowResolve
 
   internal val rootScope: List<PolySymbolScope> = initializeCompoundScopes(rootScope)
@@ -90,10 +92,11 @@ class PolySymbolQueryExecutorImpl(
     val scopePtr = this.resultsCustomizer.createPointer()
     val rootScopePointers = this.rootScope.map { it.createPointer() }
     return Pointer<PolySymbolQueryExecutor> {
-      @Suppress("UNCHECKED_CAST")
-      val rootScope = rootScopePointers.map { it.dereference() }
-                        .takeIf { it.all { c -> c != null } } as? List<PolySymbolScope>
-                      ?: return@Pointer null
+      val rootScope =
+        rootScopePointers
+          .mapNotNull { it.dereference() }
+          .takeIf { it.size == rootScopePointers.size }
+        ?: return@Pointer null
 
       val namesProvider = namesProviderPtr.dereference()
                           ?: return@Pointer null
@@ -101,7 +104,7 @@ class PolySymbolQueryExecutorImpl(
       val scope = scopePtr.dereference()
                   ?: return@Pointer null
       val location = locationPtr?.let { it.dereference() ?: return@Pointer null }
-      PolySymbolQueryExecutorImpl(location, rootScope, namesProvider, scope, context, allowResolve)
+      PolySymbolQueryExecutorImpl(location, rootScope, emptyMap(), namesProvider, scope, context, allowResolve)
     }
   }
 
@@ -213,7 +216,13 @@ class PolySymbolQueryExecutorImpl(
     if (rules.isEmpty())
       this
     else
-      PolySymbolQueryExecutorImpl(location, rootScope, namesProvider.withRules(rules), resultsCustomizer, context, allowResolve)
+      PolySymbolQueryExecutorImpl(location,
+                                  rootScope,
+                                  scopeOrigin,
+                                  namesProvider.withRules(rules),
+                                  resultsCustomizer,
+                                  context,
+                                  allowResolve)
 
   override fun hasExclusiveScopeFor(kind: PolySymbolKind, scope: List<PolySymbolScope>): Boolean {
     return buildQueryScope(scope).any { it.isExclusiveFor(kind) }
@@ -224,14 +233,18 @@ class PolySymbolQueryExecutorImpl(
       val compoundScopeQueryExecutor = PolySymbolQueryExecutorImpl(
         location,
         rootScope.filter { it !is PolySymbolCompoundScope },
-        namesProvider, resultsCustomizer, context, allowResolve
+        scopeOrigin, namesProvider, resultsCustomizer, context, allowResolve
       )
-      return rootScope.flatMap {
-        if (it is PolySymbolCompoundScope) {
-          it.getScopes(compoundScopeQueryExecutor)
+      return rootScope.flatMap { scope ->
+        if (scope is PolySymbolCompoundScope) {
+          scope.getScopes(compoundScopeQueryExecutor).also {
+            it.forEach { subScope ->
+              scopeOrigin[subScope] = scope to scopeOrigin[scope]
+            }
+          }
         }
         else {
-          listOf(it)
+          listOf(scope)
         }
       }
     }
