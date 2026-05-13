@@ -14,7 +14,7 @@ import kotlinx.serialization.builtins.serializer
 import kotlin.jvm.JvmStatic
 
 internal class TextSerializer : DataSerializer<Text, String>(String.serializer()) {
-  override fun fromData(data: String): Text = Text.fromString(data)
+  override fun fromData(data: String): Text = Text.fromStringExact(data)
 
   override fun toData(value: Text): String = value.view().charSequence().toString()
 }
