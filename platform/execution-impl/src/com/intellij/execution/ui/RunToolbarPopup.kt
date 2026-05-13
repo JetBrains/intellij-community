@@ -94,6 +94,7 @@ import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.popup.list.PopupListElementRenderer
 import com.intellij.util.messages.Topic
+import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JLabelUtil
@@ -421,7 +422,7 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup,
       myRendererComponent.setToolTipText(null) // we override the tool tip using getToolTipOverride()
       ClientProperty.put(myTextLabel, SwingTextTrimmer.KEY, SwingTextTrimmer.createCustomTrimmer(object : SwingTextTrimmerStrategy {
         override fun trim(text: @NlsActions.ActionText String, metrics: FontMetrics, availableWidth: Int): String {
-          return trimRunConfigurationName(text, availableWidth, metrics)
+          return trimRunConfigurationName(text, availableWidth, GraphicsUtil.fontMetrics(metrics.font))
         }
       }))
       JLabelUtil.setTrimOverflow(myTextLabel, true)

@@ -3774,6 +3774,7 @@ f:com.intellij.util.ui.GraphicsUtil
 - s:charWidth(I,java.awt.Font):I
 - s:createAATextInfo(java.lang.Object):com.intellij.util.ui.AATextInfo
 - s:disableAAPainting(java.awt.Graphics):com.intellij.openapi.ui.GraphicsConfig
+- s:fontMetrics(java.awt.Font):java.awt.FontMetrics
 - s:isRemoteEnvironment():Z
 - s:paintWithAlpha(java.awt.Graphics,F):com.intellij.openapi.ui.GraphicsConfig
 - s:paintWithAlpha(java.awt.Graphics,F,java.lang.Runnable):V

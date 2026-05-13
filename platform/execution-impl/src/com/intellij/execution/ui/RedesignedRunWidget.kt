@@ -71,6 +71,7 @@ import com.intellij.ui.icons.toStrokeIcon
 import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.EmptyIcon
+import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBInsets
@@ -542,7 +543,9 @@ private class RedesignedRunConfigurationSelectorButton(
 }) {
   
   private var isTrimmed = false
-  private var lastDumblyTrimmedText: @NlsActions.ActionText String? = null
+  private var lastMaxTextWidth: Int? = null
+  private var lastFullText: @NlsActions.ActionText String? = null
+  private var lastSmartlyTrimmedTextWidth: Int = 0
   private lateinit var lastSmartlyTrimmedText: @NlsActions.ActionText String
 
   init {
@@ -595,26 +598,39 @@ private class RedesignedRunConfigurationSelectorButton(
     outIconRect: Rectangle,
     outTextRect: Rectangle,
   ): @NlsActions.ActionText String {
-    val dumblyTrimmedText = super.layout(fm, fullText, icon, inViewRect, outIconRect, outTextRect)
+    val effectiveFM = GraphicsUtil.fontMetrics(fm.font)
+    super.layout(effectiveFM, fullText, icon, inViewRect, outIconRect, outTextRect)
     if (fullText.isEmpty()) { // to avoid silly edge-case errors
       isTrimmed = false
       return fullText
     }
-    if (fullText == dumblyTrimmedText) { // nothing to trim, enough space
+    // We need to recalculate this, because super.layout() is very inaccurate in some environments (e.g., macOS),
+    // as it assumes that the string width is equal to the sum of character widths, which isn't always the case.
+    val maxTextWidth = inViewRect.width - (outIconRect.width + if (icon == null) 0 else iconTextSpace())
+    val fullTextWidth = effectiveFM.stringWidth(fullText)
+    if (fullTextWidth <= maxTextWidth) { // nothing to trim, enough space
       isTrimmed = false
-      return dumblyTrimmedText
+      outTextRect.width = fullTextWidth
+      return fullText
     }
     isTrimmed = true
-    if (lastDumblyTrimmedText == dumblyTrimmedText) return lastSmartlyTrimmedText // no need to recompute
-    val smartlyTrimmedText = trimRunConfigurationName(fullText, fm.stringWidth(dumblyTrimmedText), fm)
-    lastDumblyTrimmedText = dumblyTrimmedText
+    if (lastFullText == fullText && lastMaxTextWidth == maxTextWidth) { // no need to recompute
+      outTextRect.width = lastSmartlyTrimmedTextWidth
+      return lastSmartlyTrimmedText 
+    }
+    val smartlyTrimmedText = trimRunConfigurationName(fullText, maxTextWidth, effectiveFM)
+    lastMaxTextWidth = maxTextWidth
+    lastFullText = fullText
     lastSmartlyTrimmedText = smartlyTrimmedText
+    outTextRect.width = effectiveFM.stringWidth(smartlyTrimmedText)
+    lastSmartlyTrimmedTextWidth = outTextRect.width
     return smartlyTrimmedText
   }
 
   fun updateFont() {
     font = JBUI.CurrentTheme.RunWidget.configurationSelectorFont()
-    lastDumblyTrimmedText = null
+    lastMaxTextWidth = null
+    lastFullText = null
   }
 
   override fun getButtonRect(): Rectangle? = super.buttonRect.apply {

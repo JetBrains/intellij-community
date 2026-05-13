@@ -14,6 +14,7 @@ import java.awt.AlphaComposite;
 import java.awt.Component;
 import java.awt.Composite;
 import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
@@ -62,7 +63,25 @@ public final class GraphicsUtil {
 
   public static int stringWidth(@NotNull String text, Font font) {
     setupAntialiasing(ourGraphics, true, true);
-    return ourGraphics.getFontMetrics(font).stringWidth(text);
+    return fontMetrics(font).stringWidth(text);
+  }
+
+  /**
+   * Returns the font metrics that account for graphics configurations used in real painting scenarios.
+   * <p>
+   *   Using {@link JComponent#getFontMetrics(Font)} can return inaccurate results,
+   *   because in real painting there are various configurations applied to the graphics that affect the results.
+   *   Example of such configurations are AA hints and fractional metrics.
+   *   The difference between the values can be quite huge (up to 10-20 pixel in string widths for large strings).
+   * </p>
+   * <p>
+   *   This function will return font metrics that reflect the actual configuration as accurately as possible.
+   * </p>
+   * @param font the font for which to retrieve metrics
+   * @return the font metrics
+   */
+  public static @NotNull FontMetrics fontMetrics(@NotNull Font font) {
+    return ourGraphics.getFontMetrics(font);
   }
 
   public static int charWidth(char ch,Font font) {
