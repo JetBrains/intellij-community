@@ -52,6 +52,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,8 +69,9 @@ import static com.intellij.patterns.PsiJavaPatterns.psiExpressionStatement;
 import static com.intellij.patterns.StandardPatterns.or;
 import static com.intellij.patterns.StandardPatterns.string;
 
+@ApiStatus.Internal
 @NotNullByDefault
-final class NonImportedClassProvider extends JavaModCompletionItemProvider {
+public final class NonImportedClassProvider extends JavaModCompletionItemProvider {
   private static final PsiJavaElementPattern.Capture<PsiElement> AFTER_NEW = psiElement().afterLeaf(JavaKeywords.NEW);
   private static final ElementPattern<PsiElement> IN_PERMITS_LIST = psiElement().afterLeaf(
     psiElement()

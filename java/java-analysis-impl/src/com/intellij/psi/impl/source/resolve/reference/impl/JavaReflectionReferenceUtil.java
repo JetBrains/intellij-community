@@ -7,6 +7,7 @@ import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.java.syntax.parser.JavaKeywords;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Pair;
@@ -407,6 +408,15 @@ public final class JavaReflectionReferenceUtil {
   @ApiStatus.Internal
   public static void shortenArgumentsClassReferences(@NotNull InsertionContext context) {
     final PsiElement parameter = PsiUtilCore.getElementAtOffset(context.getFile(), context.getStartOffset());
+    final PsiExpressionList parameterList = PsiTreeUtil.getParentOfType(parameter, PsiExpressionList.class);
+    if (parameterList != null && parameterList.getParent() instanceof PsiMethodCallExpression) {
+      JavaCodeStyleManager.getInstance(context.getProject()).shortenClassReferences(parameterList);
+    }
+  }
+
+  @ApiStatus.Internal
+  public static void shortenArgumentsClassReferences(@NotNull ModPsiUpdater context) {
+    final PsiElement parameter = PsiUtilCore.getElementAtOffset(context.getPsiFile(), context.getCaretOffset());
     final PsiExpressionList parameterList = PsiTreeUtil.getParentOfType(parameter, PsiExpressionList.class);
     if (parameterList != null && parameterList.getParent() instanceof PsiMethodCallExpression) {
       JavaCodeStyleManager.getInstance(context.getProject()).shortenClassReferences(parameterList);

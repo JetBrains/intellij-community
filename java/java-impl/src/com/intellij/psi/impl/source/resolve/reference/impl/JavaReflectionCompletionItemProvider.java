@@ -2,39 +2,42 @@
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.completion.CompletionContributor;
-import com.intellij.codeInsight.completion.CompletionParameters;
-import com.intellij.codeInsight.completion.CompletionResultSet;
-import com.intellij.codeInsight.completion.CompletionType;
-import com.intellij.codeInsight.completion.InsertionContext;
-import com.intellij.codeInsight.completion.JavaClassNameCompletionContributor;
-import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.completion.JavaClassReferenceCompletionContributor;
+import com.intellij.java.completion.modcommand.NonImportedClassProvider;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcompletion.CommonCompletionItem;
+import com.intellij.modcompletion.ModCompletionItemPresentation;
+import com.intellij.modcompletion.ModCompletionItemProvider;
+import com.intellij.modcompletion.ModCompletionResult;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.MarkupText;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PatternCondition;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassObjectAccessExpression;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpressionList;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ProcessingContext;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NotNullByDefault;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
@@ -48,9 +51,9 @@ import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflection
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.getReflectiveClass;
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.isPublic;
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.shortenArgumentsClassReferences;
-import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.withPriority;
 
-public final class JavaReflectionCompletionContributor extends CompletionContributor implements DumbAware {
+@NotNullByDefault
+public final class JavaReflectionCompletionItemProvider implements DumbAware, ModCompletionItemProvider {
   private static final String CONSTRUCTOR = "getConstructor";
   private static final String DECLARED_CONSTRUCTOR = "getDeclaredConstructor";
   private static final String ANNOTATION = "getAnnotation";
@@ -86,25 +89,24 @@ public final class JavaReflectionCompletionContributor extends CompletionContrib
   }
 
   @Override
-  public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
-    if (parameters.getCompletionType() != CompletionType.BASIC) {
-      return;
-    }
+  public void provideItems(CompletionContext parameters, ModCompletionResult sink) {
+    if (parameters.isSmart()) return;
 
     final PsiElement position = parameters.getPosition();
-    if (!isInJavaContext(position)) {
-      return;
-    }
+    if (!isInJavaContext(position)) return;
 
     if (BEGINNING_OF_ANNOTATION_ARGUMENTS.accepts(position)) {
-      addVariants(position, (psiClass, isDeclared) -> addAnnotationClasses(psiClass, isDeclared, result));
+      addVariants(position, (psiClass, isDeclared) -> addAnnotationClasses(psiClass, isDeclared, sink));
       //TODO handle annotations on fields and methods
     }
     else if (BEGINNING_OF_CONSTRUCTOR_ARGUMENTS.accepts(position)) {
-      addVariants(position, (psiClass, isDeclared) -> addConstructorParameterTypes(psiClass, isDeclared, result));
+      addVariants(position, (psiClass, isDeclared) -> addConstructorParameterTypes(psiClass, isDeclared, sink));
     }
     else if (JavaReflectionReferenceContributor.Holder.CLASS_PATTERN.accepts(position.getParent())) {
-      JavaClassNameCompletionContributor.addAllClasses(parameters, parameters.getInvocationCount() <= 1, result.getPrefixMatcher(), result);
+      JavaClassReference ref = JavaClassReferenceCompletionContributor.findJavaClassReference(position.getContainingFile(), parameters.getOffset());
+      if (ref != null && ref.getCompletionContext() instanceof PsiPackage psiPackage && psiPackage.getName() == null) {
+        NonImportedClassProvider.addAllClasses(parameters, parameters.getInvocationCount() <= 1, parameters.matcher(), sink);
+      }
     }
   }
 
@@ -121,9 +123,9 @@ public final class JavaReflectionCompletionContributor extends CompletionContrib
     }
   }
 
-  private static void addAnnotationClasses(@NotNull PsiClass psiClass, boolean isDeclared, @NotNull CompletionResultSet result) {
+  private static void addAnnotationClasses(PsiClass psiClass, boolean isDeclared, ModCompletionResult sink) {
     Set<PsiAnnotation> declaredAnnotations =
-      isDeclared ? Collections.unmodifiableSet(new HashSet<>(Arrays.asList(AnnotationUtil.getAllAnnotations(psiClass, false, null, false)))) : null;
+      isDeclared ? Set.of(AnnotationUtil.getAllAnnotations(psiClass, false, null, false)) : null;
 
     PsiAnnotation[] annotations = AnnotationUtil.getAllAnnotations(psiClass, true, null, false);
     for (PsiAnnotation annotation : annotations) {
@@ -132,75 +134,75 @@ public final class JavaReflectionCompletionContributor extends CompletionContrib
         PsiElement resolved = referenceElement.resolve();
         if (resolved instanceof PsiClass annotationClass) {
           String className = annotationClass.getName();
-          if (className != null) {
-            LookupElement lookupElement = LookupElementBuilder.createWithIcon(annotationClass)
-              .withPresentableText(className + ".class")
-              .withInsertHandler(JavaReflectionCompletionContributor::handleAnnotationClassInsertion);
-            if (isDeclared) {
-              lookupElement = withPriority(lookupElement, declaredAnnotations.contains(annotation));
-            }
-            result.addElement(lookupElement);
+          String qualifiedName = annotationClass.getQualifiedName();
+          if (className != null && qualifiedName != null) {
+            CommonCompletionItem item = new CommonCompletionItem(className)
+              .withObject(annotationClass)
+              .withPresentation(new ModCompletionItemPresentation(MarkupText.plainText(className + ".class"))
+                                  .withMainIcon(() -> annotationClass.getIcon(0)))
+              .withAdditionalUpdater((_, updater) -> {
+                handleParametersInsertion(updater, qualifiedName + ".class");
+              })
+              .withPriority(isDeclared && !declaredAnnotations.contains(annotation) ? -1 : 0);
+            sink.accept(item);
           }
         }
       }
     }
   }
 
-  private static void addConstructorParameterTypes(@NotNull PsiClass psiClass, boolean isDeclared, @NotNull CompletionResultSet result) {
+  private static void addConstructorParameterTypes(PsiClass psiClass, boolean isDeclared, ModCompletionResult result) {
     PsiMethod[] constructors = psiClass.getConstructors();
     for (PsiMethod constructor : constructors) {
-      LookupElement lookupElement = JavaLookupElementBuilder.forMethod(constructor, PsiSubstitutor.EMPTY)
-        .withInsertHandler(JavaReflectionCompletionContributor::handleConstructorSignatureInsertion);
-      if (isDeclared) {
-        lookupElement = withPriority(lookupElement, isPublic(constructor));
-      }
-      result.addElement(lookupElement);
+      String lookupString = constructor.getName();
+      String parametersPresentation = PsiFormatUtil.formatMethod(constructor, PsiSubstitutor.EMPTY,
+                                            PsiFormatUtilBase.SHOW_PARAMETERS,
+                                            PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE);
+      String parametersText = getParameterTypesText(constructor);
+      CommonCompletionItem item = new CommonCompletionItem(lookupString)
+        .withObject(constructor)
+        .withPresentation(new ModCompletionItemPresentation(
+          MarkupText.plainText(constructor.getName() + parametersPresentation))
+                            .withMainIcon(() -> constructor.getIcon(Iconable.ICON_FLAG_VISIBILITY)))
+        .withPriority(isDeclared && !isPublic(constructor) ? -1 : 0)
+        .withAdditionalUpdater((_, updater) -> {
+          if (parametersText != null) {
+            handleParametersInsertion(updater, parametersText);
+          }
+        });
+      result.accept(item);
     }
   }
 
-  private static void handleAnnotationClassInsertion(@NotNull InsertionContext context, @NotNull LookupElement item) {
-    Object object = item.getObject();
-    if (object instanceof PsiClass) {
-      String className = ((PsiClass)object).getQualifiedName();
-      if (className != null) {
-        handleParametersInsertion(context, className + ".class");
-      }
-    }
-  }
-
-  private static void handleConstructorSignatureInsertion(@NotNull InsertionContext context, @NotNull LookupElement item) {
-    Object object = item.getObject();
-    if (object instanceof PsiMethod) {
-      String text = getParameterTypesText((PsiMethod)object);
-      if (text != null) {
-        handleParametersInsertion(context, text);
-      }
-    }
-  }
-
-  private static void handleParametersInsertion(@NotNull InsertionContext context, @NotNull String text) {
-    PsiElement newElement = PsiUtilCore.getElementAtOffset(context.getFile(), context.getStartOffset());
+  private static void handleParametersInsertion(ModPsiUpdater updater, String text) {
+    PsiElement newElement = PsiUtilCore.getElementAtOffset(updater.getPsiFile(), updater.getCaretOffset());
     PsiExpressionList parameterList = PsiTreeUtil.getParentOfType(newElement, PsiExpressionList.class);
     if (parameterList != null) {
-      final TextRange range = parameterList.getTextRange();
-      context.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), "(" + text + ")");
-      context.commitDocument();
-      shortenArgumentsClassReferences(context);
+      TextRange range = parameterList.getTextRange();
+      Document document = updater.getDocument();
+      document.replaceString(range.getStartOffset(), range.getEndOffset(), "(" + text + ")");
+      PsiDocumentManager.getInstance(updater.getProject()).commitDocument(document);
+      shortenArgumentsClassReferences(updater);
     }
   }
 
   private static class MethodDefinedInInterfacePatternCondition extends PatternCondition<PsiMethod> {
     private final String myInterfaceName;
 
-    MethodDefinedInInterfacePatternCondition(@NotNull String interfaceName) {
+    MethodDefinedInInterfacePatternCondition(String interfaceName) {
       super("definedInInterface");
       myInterfaceName = interfaceName;
     }
 
     @Override
-    public boolean accepts(@NotNull PsiMethod method, ProcessingContext context) {
+    public boolean accepts(PsiMethod method, ProcessingContext context) {
       PsiClass containingClass = method.getContainingClass();
       return InheritanceUtil.isInheritor(containingClass, false, myInterfaceName);
     }
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return true;
   }
 }

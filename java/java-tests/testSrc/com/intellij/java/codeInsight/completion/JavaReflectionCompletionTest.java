@@ -179,7 +179,7 @@ public class JavaReflectionCompletionTest extends LightFixtureCompletionTestCase
   public void testClassForNamePackages() {
     myFixture.addClass("package foo.bar.one; public class FirstClass {}");
     myFixture.addClass("package foo.bar.two; public class SecondClass {}");
-    doTest(2, "FirstClass", "SecondClass", "one", "two");
+    doTest(0, "one", "two");
   }
 
   public void testClassForNameShortName() {
