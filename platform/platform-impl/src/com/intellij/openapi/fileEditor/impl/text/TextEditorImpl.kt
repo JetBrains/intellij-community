@@ -112,35 +112,39 @@ open class TextEditorImpl @Internal constructor(
 
     // postpone subscribing - perform not in EDT
     asyncLoader.coroutineScope.launch {
-      for (extension in TEXT_EDITOR_CUSTOMIZER_EP.filterableLazySequence()) {
-        try {
-          val customizer = extension.instance ?: continue
-          val scope = createCustomizerScope(
-            implementationClassName = extension.implementationClassName,
-            pluginClassLoader = customizer::class.java.classLoader,
-            pluginId = extension.pluginDescriptor.pluginId,
-          )
-          if (!registerCustomizerScope(scope)) {
-            continue
+      span("editor: customizer enumeration") {
+        for (extension in TEXT_EDITOR_CUSTOMIZER_EP.filterableLazySequence()) {
+          try {
+            span("editor: customizer dispatch ${extension.implementationClassName}") {
+              val customizer = extension.instance ?: return@span
+              val scope = createCustomizerScope(
+                implementationClassName = extension.implementationClassName,
+                pluginClassLoader = customizer::class.java.classLoader,
+                pluginId = extension.pluginDescriptor.pluginId,
+              )
+              if (!registerCustomizerScope(scope)) {
+                return@span
+              }
+              scope.launch(CoroutineName("TextEditorCustomizer.customize")) {
+                try {
+                  customizer.customize(textEditor = this@TextEditorImpl, coroutineScope = scope)
+                }
+                catch (e: CancellationException) {
+                  throw e
+                }
+                catch (e: Throwable) {
+                  scope.cancel()
+                  throw e
+                }
+              }
+            }
           }
-          scope.launch(CoroutineName("TextEditorCustomizer.customize")) {
-            try {
-              customizer.customize(textEditor = this@TextEditorImpl, coroutineScope = scope)
-            }
-            catch (e: CancellationException) {
-              throw e
-            }
-            catch (e: Throwable) {
-              scope.cancel()
-              throw e
-            }
+          catch (e: CancellationException) {
+            throw e
           }
-        }
-        catch (e: CancellationException) {
-          throw e
-        }
-        catch (e: Throwable) {
-          logger<TextEditorImpl>().error(PluginException(e, extension.pluginDescriptor.pluginId))
+          catch (e: Throwable) {
+            logger<TextEditorImpl>().error(PluginException(e, extension.pluginDescriptor.pluginId))
+          }
         }
       }
 
@@ -325,12 +329,14 @@ fun createAsyncEditorLoader(
 private suspend fun setHighlighterToEditor(project: Project, file: VirtualFile, document: Document, editor: EditorImpl) {
   val scheme = serviceAsync<EditorColorsManager>().globalScheme
   val editorHighlighterFactory = serviceAsync<EditorHighlighterFactory>()
-  val highlighter = readAction {
-    val highlighter = editorHighlighterFactory.createEditorHighlighter(file, scheme, project)
-    // editor.setHighlighter also sets text, but we set it here to avoid executing related work in EDT
-    // (the document text is compared, so, double work is not performed)
-    highlighter.setText(document.immutableCharSequence)
-    highlighter
+  val highlighter = span("editor: highlighter create (read action)") {
+    readAction {
+      val highlighter = editorHighlighterFactory.createEditorHighlighter(file, scheme, project)
+      // editor.setHighlighter also sets text, but we set it here to avoid executing related work in EDT
+      // (the document text is compared, so, double work is not performed)
+      highlighter.setText(document.immutableCharSequence)
+      highlighter
+    }
   }
 
   span("editor highlighter set", Dispatchers.EDT) {
