@@ -44,6 +44,7 @@ public final class OSProcessUtil {
     }
     else {
       ProcessHandle.of(process.pid()).ifPresent(handle -> {
+        @SuppressWarnings("UseProcessDescendantsWithCare")
         var handles = handle.descendants().toList();
         for (var iterator = handles.listIterator(handles.size()); iterator.hasPrevious(); ) {
           iterator.previous().destroyForcibly();
@@ -77,6 +78,7 @@ public final class OSProcessUtil {
     }
     else {
       ProcessHandle.of(pid).ifPresent(handle -> {
+        @SuppressWarnings("UseProcessDescendantsWithCare")
         var handles = handle.descendants().toList();
         for (var iterator = handles.listIterator(handles.size()); iterator.hasPrevious(); ) {
           iterator.previous().destroyForcibly();
@@ -144,12 +146,14 @@ public final class OSProcessUtil {
 
   /// @deprecated use `ProcessHandle.current().pid()`
   @Deprecated(forRemoval = true)
+  @SuppressWarnings("DeprecatedIsStillUsed")
   public static int getCurrentProcessId() {
     return (int)ProcessHandle.current().pid();
   }
 
   /// @deprecated use `String.valueOf(ProcessHandle.current().pid())`
   @Deprecated(forRemoval = true)
+  @SuppressWarnings("DeprecatedIsStillUsed")
   public static String getApplicationPid() {
     return String.valueOf(getCurrentProcessId());
   }

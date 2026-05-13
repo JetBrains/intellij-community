@@ -3311,6 +3311,14 @@
         <constraint name="s1" nameOfExprType="java\.lang\.String" within="" contains="" />
         <constraint name="s2" nameOfExprType="java\.lang\.String" within="" contains="" />
       </replaceConfiguration>
+      <searchConfiguration name="Use 'Process#descendants' with care" description="The method is susceptible to PID reuse problem on Windows, sometimes making it return unrelated processes.&#10;Don't use the returned list for killing child processes – prefer 'OSProcessUtil' instead." suppressId="UseProcessDescendantsWithCare" text="$Instance$.descendants()" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="java\.lang\.Process|java\.lang\.ProcessHandle" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Use 'Process#descendants' with care" text="$Instance$.descendants()" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="java\.lang\.Process|java\.lang\.ProcessHandle" within="" contains="" />
+      </searchConfiguration>
       <searchConfiguration name="Use `lt` instead of `lifetime` as argument name" uuid="75974233-e6df-342f-bb28-90fa3ddfde86" description="`lifetime` has higher priority as variable and shadows `lifetime` of nested scopes. It leads to subscription leaks.&#10;Just renaming it to `lt` helps a lot." text="class $Name$($Param1$: $T1$, $Param2$: $T2$, $Param3$: $T3$)" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
         <constraint name="Name" script="&quot;import org.jetbrains.kotlin.psi.KtClass&#10;&#10;def cls = __context__ as KtClass&#10;!(&quot;Lifetimed&quot; in cls.superTypeList?.entries?.text ?: [])&quot;" within="" contains="" />
