@@ -41,6 +41,7 @@ import java.awt.Frame;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -57,7 +58,7 @@ import static org.junit.Assert.assertNotEquals;
 public class LaterInvocatorTest extends HeavyPlatformTestCase {
   private static final Logger LOG = Logger.getInstance(LaterInvocatorTest.class);
   
-  private final ArrayList<String> myOrder = new ArrayList<>();
+  private final List<String> myOrder = new ArrayList<>();
 
   private Container myWindow1;
   private Container myWindow2;
@@ -559,6 +560,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
   public void testDispatchInvocationEventsWorksForJustSubmitted() {
     Application app = ApplicationManager.getApplication();
     app.invokeAndWait(() -> {
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
       app.invokeLater(() -> {
         myOrder.add("1");
         assertOrderedEquals(myOrder, "1");
@@ -574,6 +576,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
   public void testDispatchInvocationEventsVsInvokeLaterFromBgThreadRace() {
     Application app = ApplicationManager.getApplication();
     app.invokeAndWait(() -> {
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
       for (int i = 0; i < 20; i++) {
         AtomicBoolean executed = new AtomicBoolean();
         app.executeOnPooledThread(() -> app.invokeLater(EmptyRunnable.INSTANCE));
@@ -601,7 +604,8 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
   }
 
   public void testStateForComponentIdentity() {
-    ApplicationManager.getApplication().invokeAndWait(() ->
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
       UITestUtil.runWithHeadlessProperty(false, () -> {
         myWindow1 = new Frame();
         myWindow2 = new Frame();
@@ -616,7 +620,8 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
         LaterInvocator.enterModal(myWindow1);
         assertSame(state1, ModalityState.stateForComponent(panel));
         assertNotSame(state1, ModalityState.stateForComponent(myWindow2));
-      })
+      });
+      }
     );
   }
 
@@ -697,6 +702,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
 
   public void testModalityStateForNonDisplayedDialogGetsActualizedWhenItIsDisplayed() {
     ApplicationManager.getApplication().invokeAndWait(() -> {
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
       ModalityState state = ModalityState.stateForComponent(myModalDialog);
       AtomicBoolean invoked = new AtomicBoolean();
       ApplicationManager.getApplication().invokeLater(() -> invoked.set(true), state);
@@ -715,6 +721,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
 
   public void testModalityStateWorksImmediately() {
     ApplicationManager.getApplication().invokeAndWait(() -> {
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
       ModalityState state = ModalityState.stateForComponent(myModalDialog);
       AtomicBoolean invoked = new AtomicBoolean();
       ApplicationManager.getApplication().invokeLater(() -> invoked.set(true), state);
@@ -726,6 +733,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
 
   public void testInvokeLaterGoesIntoTransparentModality() {
     ApplicationManager.getApplication().invokeAndWait(() -> {
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
       AtomicBoolean invoked = new AtomicBoolean();
       ApplicationManager.getApplication().invokeLater(() -> invoked.set(true), ModalityState.nonModal());
       LaterInvocator.enterModal(myWindow1);
@@ -741,6 +749,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
 
   public void testInvokeLaterGoesIntoModalityDeclaredTransparentBeforeEntering() {
     ApplicationManager.getApplication().invokeAndWait(() -> {
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
       AtomicBoolean invoked = new AtomicBoolean();
       LaterInvocator.markTransparent(ModalityState.stateForComponent(myModalDialog));
       ApplicationManager.getApplication().invokeLater(() -> invoked.set(true), ModalityState.nonModal());
@@ -752,6 +761,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
 
   public void testInvokeAndWaitIsCancellable() {
     ApplicationManager.getApplication().invokeAndWait(() -> {
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
       AtomicBoolean executed = new AtomicBoolean();
       Runnable testRunnable = () -> {
         executed.set(true);
