@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project.open
 
-import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.toOpenProjectTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -18,16 +17,6 @@ class GradleProjectOpenProcessor : ProjectOpenProcessor() {
     get() = GradleIcons.Gradle
 
   override fun canOpenProject(file: VirtualFile): Boolean = canOpenGradleProject(file)
-
-  @Deprecated("Use openProjectAsync(VirtualFile, ProjectOpenOptions) instead",
-              replaceWith = ReplaceWith("openProjectAsync(virtualFile, projectOpenOptions)"))
-  override suspend fun openProjectAsync(
-    virtualFile: VirtualFile,
-    projectToClose: Project?,
-    forceOpenInNewFrame: Boolean,
-  ): Project? {
-    return openGradleProject(projectFile = virtualFile, OpenProjectTask(forceOpenInNewFrame, projectToClose))
-  }
 
   override suspend fun openProjectAsync(virtualFile: VirtualFile,
                                         projectOpenOptions: ProjectOpenOptions,): Project? {

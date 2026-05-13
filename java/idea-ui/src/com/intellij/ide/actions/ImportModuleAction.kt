@@ -3,6 +3,8 @@ package com.intellij.ide.actions
 
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.impl.NewProjectUtil
+import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.ProjectUtil.findAndFocusExistingProjectForPath
 import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.util.PropertiesComponent
@@ -208,8 +210,15 @@ open class ImportModuleAction : AnAction(), NewProjectOrModuleAction {
 
       val openProcessor = builder.getProjectOpenProcessor()
       return runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
-        // openProjectAsync must be implemented
-        openProcessor.openProjectAsync(virtualFile = file, projectToClose = null, forceOpenInNewFrame = false)
+        ProjectUtil.openOrImport(projectPath, OpenProjectTask().copy(
+          processorChooser = { available ->
+            if (!available.contains(openProcessor)) {
+              LOG.error("Needed ProjectOpenProcessor (${openProcessor}) is not among available processors: $available\n" +
+                        "Will force ${openProcessor} anyway.")
+            }
+            openProcessor
+          }
+        ))
       }
     }
 

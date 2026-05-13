@@ -11,9 +11,9 @@ import com.intellij.projectImport.ProjectOpenProcessor
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.TemporaryDirectoryExtension
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.closeProjectAsync
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
-import com.intellij.testFramework.useProject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
@@ -52,8 +52,9 @@ internal class ProjectOpenProcessorOptionsTest {
         showWelcomeScreen = false
         projectName = "imported-project"
         beforeInit = { beforeInitInvoked = true }
-      })?.useProject {  }
+      })
 
+      project?.closeProjectAsync()
       assertThat(project).isNotNull()
       assertTrue(beforeInitInvoked)
     }
