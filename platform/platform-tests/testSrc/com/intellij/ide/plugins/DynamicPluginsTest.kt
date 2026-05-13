@@ -21,6 +21,8 @@ import com.intellij.ide.plugins.testPluginSrc.foo.bar.FooBarService
 import com.intellij.ide.plugins.testPluginSrc.foo.ep.FooExtension
 import com.intellij.ide.plugins.testPluginSrc.foo.ep.FooExtensionService
 import com.intellij.ide.plugins.testPluginSrc.foo.epImpl.FooExtensionImpl
+import com.intellij.ide.plugins.testPluginSrc.testPSC.MyPersistentComponent
+import com.intellij.ide.plugins.testPluginSrc.testPSC.impl.MyPersistentComponentImpl
 import com.intellij.ide.plugins.testPluginSrc.uiSettingsListener.MyUISettingsListener
 import com.intellij.ide.plugins.testPluginSrc.uiSettingsListener.MyUISettingsListenerService
 import com.intellij.ide.plugins.testPluginSrc.uiSettingsListener.foo.MyFooUISettingsListener
@@ -38,9 +40,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.ComponentManager
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
@@ -67,6 +66,7 @@ import com.intellij.platform.testFramework.plugins.PluginTestHandle
 import com.intellij.platform.testFramework.plugins.action
 import com.intellij.platform.testFramework.plugins.appService
 import com.intellij.platform.testFramework.plugins.applicationListener
+import com.intellij.platform.testFramework.plugins.applicationService
 import com.intellij.platform.testFramework.plugins.buildDistributionArchive
 import com.intellij.platform.testFramework.plugins.buildMainJar
 import com.intellij.platform.testFramework.plugins.content
@@ -96,10 +96,10 @@ import com.intellij.util.application
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.java.classFile
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.xmlb.annotations.Attribute
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
+import java.lang.ref.WeakReference
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -238,26 +238,25 @@ class DynamicPluginsTest {
   }
 
   @Test
-  fun testSaveSettingsOnPluginUnload() {
+  fun `PSC data is preserved between unload and load`() {
     val data = System.currentTimeMillis().toString()
 
-    val extensionTag = """<applicationService serviceInterface="${MyPersistentComponent::class.java.name}" 
-      |serviceImplementation="${MyPersistentComponentImpl::class.java.name}"/>""".trimMargin()
-
-    loadExtensionWithText(extensionTag).use {
-      val service = ApplicationManager.getApplication()
-        .getService(MyPersistentComponent::class.java)
-      assertThat(service).isInstanceOf(MyPersistentComponentImpl::class.java)
-
-      (service as MyPersistentComponentImpl).state.stateData = data
+    val pluginSet = buildPluginSet(pluginsDir) {
+      plugin("psc") {
+        applicationService<MyPersistentComponentImpl, MyPersistentComponent>()
+        includePackageClassFiles<MyPersistentComponentImpl>()
+        includePackageClassFiles<MyPersistentComponent>()
+      }
     }
+    val plugin = pluginSet.getEnabledPlugin("psc")
 
-    loadExtensionWithText(extensionTag).use {
-      val service = ApplicationManager.getApplication()
-        .getService(MyPersistentComponent::class.java)
-      assertThat(service).isNotNull
-
-      assertThat(service.data).isEqualTo(data)
+    loadPluginInTest(plugin) {
+      val handle = application.getTestHandleService<MyPersistentComponent, _, _>(plugin)!!
+      handle.test(data)
+    }
+    loadPluginInTest(plugin) {
+      val handle = application.getTestHandleService<MyPersistentComponent, _, _>(plugin)!!
+      assertThat(handle.test(null)).isEqualTo(data)
     }
   }
 
@@ -775,26 +774,28 @@ class DynamicPluginsTest {
   }
 
   @Test
-  fun loadOptionalDependencyDescriptor() {
-    val pluginOne = plugin("optionalDependencyDescriptor-one") { dependsIntellijModulesLang() }
-    val app = ApplicationManager.getApplication()
-    loadPluginWithText(pluginOne).use {
-      assertThat(app.getService(MyPersistentComponent::class.java)).isNull()
-      val pluginTwoId = "optionalDependencyDescriptor-two"
-      loadPluginWithText(plugin(pluginTwoId) {
-        dependsIntellijModulesLang()
-        depends(pluginOne.id!!, "one.xml") {
-          dependsIntellijModulesLang()
-          extensions(
-            """<applicationService serviceInterface="${MyPersistentComponent::class.java.name}" 
-              |serviceImplementation="${MyPersistentComponentImpl::class.java.name}"/>""".trimMargin()
-          )
-        }
-      }).use {
-        assertThat(app.getService(MyPersistentComponent::class.java)).isNotNull()
+  fun `service registration from dynamic loading of optional depends`() {
+    val pluginSet = buildPluginSet(pluginsDir) {
+      plugin("foo") {
+        includePackageClassFiles<MyPersistentComponent>()
       }
-      assertThat(PluginManagerCore.getPlugin(PluginId.getId(pluginTwoId))).isNull()
-      assertThat(app.getService(MyPersistentComponent::class.java)).isNull()
+      plugin("bar") {
+        depends("foo", "foo.xml") {
+          applicationService<MyPersistentComponentImpl, MyPersistentComponent>()
+          includePackageClassFiles<MyPersistentComponentImpl>()
+        }
+      }
+    }
+    val (foo, bar) = pluginSet.getEnabledPlugins("foo", "bar")
+
+    loadPluginInTest(foo) {
+      assertThat(application.getTestHandleService<MyPersistentComponent, _, _>(foo)).isNull()
+      loadPluginInTest(bar) {
+        assertThat(application.getTestHandleService<MyPersistentComponent, _, _>(foo)).isNotNull()
+        assertThat(PluginManagerCore.getPlugin(PluginId.getId("bar"))).isNotNull()
+      }
+      assertThat(PluginManagerCore.getPlugin(PluginId.getId("bar"))).isNull()
+      assertThat(application.getTestHandleService<MyPersistentComponent, _, _>(foo)).isNull()
     }
   }
 
@@ -943,30 +944,27 @@ class DynamicPluginsTest {
   }
 
   @Test
-  fun disableWithoutRestart() {
-    val plugin = plugin("disableWithoutRestart") {
-      dependsIntellijModulesLang()
-      extensions("""<applicationService serviceInterface="${MyPersistentComponent::class.java.name}"
-        |serviceImplementation="${MyPersistentComponentImpl::class.java.name}"/>""".trimMargin())
+  fun `service load and unload without restart through PluginEnabler`() {
+    val pluginSet = buildPluginSet(pluginsDir) {
+      plugin("disableWithoutRestart") {
+        applicationService<MyPersistentComponentImpl, MyPersistentComponent>()
+        includePackageClassFiles<MyPersistentComponentImpl>()
+        includePackageClassFiles<MyPersistentComponent>()
+      }
     }
-    val disposable = loadPluginWithText(plugin)
-    val app = ApplicationManager.getApplication()
-    assertThat(app.getService(MyPersistentComponent::class.java)).isNotNull()
-    try {
-      val pluginDescriptor = PluginManagerCore.getPlugin(PluginId.getId(plugin.id!!))!!
-
-      val disabled = PluginEnabler.getInstance().disable(listOf(pluginDescriptor))
+    val plugin = pluginSet.enabledPlugins.first()
+    loadPluginInTest(plugin) {
+      val weakHandleClass = WeakReference(plugin.loadClassInsideSelf<MyPersistentComponent>())
+      val disabled = PluginEnabler.getInstance().disable(listOf(plugin))
       assertThat(disabled).isTrue()
-      assertThat(pluginDescriptor.isEnabled).isFalse()
-      assertThat(app.getService(MyPersistentComponent::class.java)).isNull()
+      assertThat(plugin.isEnabled).isFalse()
+      val handleClass = weakHandleClass.get()
+      if (handleClass != null) assertThat(application.getService(handleClass)).isNull()
 
-      val enabled = PluginEnabler.getInstance().enable(listOf(pluginDescriptor))
+      val enabled = PluginEnabler.getInstance().enable(listOf(plugin))
       assertThat(enabled).isTrue()
-      assertThat(pluginDescriptor.isEnabled).isTrue()
-      assertThat(app.getService(MyPersistentComponent::class.java)).isNotNull()
-    }
-    finally {
-      Disposer.dispose(disposable)
+      assertThat(plugin.isEnabled).isTrue()
+      assertThat(application.getService(plugin.loadClassInsideSelf<MyPersistentComponent>())).isNotNull()
     }
   }
 
@@ -1327,36 +1325,6 @@ private class MyRegistryAccessor {
     @Suppress("UnresolvedPluginConfigReference")
     check(Registry.get("test.plugin.registry.key").asBoolean())
     invocations++
-  }
-}
-
-private data class MyPersistentState(@Attribute var stateData: String? = "")
-
-private interface MyPersistentComponent {
-
-  var data: String?
-}
-
-@State(name = "MyTestState", storages = [Storage("other.xml")], allowLoadInTests = true)
-private class MyPersistentComponentImpl : MyPersistentComponent,
-                                          PersistentStateComponent<MyPersistentState> {
-
-  private var _state = MyPersistentState("")
-
-  override var data: String?
-    get() = _state.stateData
-    set(value) {
-      _state.stateData = value
-    }
-
-  override fun getState() = _state
-
-  fun setState(state: MyPersistentState) {
-    _state = state
-  }
-
-  override fun loadState(state: MyPersistentState) {
-    this.state = state
   }
 }
 
