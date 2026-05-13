@@ -333,41 +333,11 @@ object UniversalFileChooser {
         override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
         override fun update(e: AnActionEvent) {
-          val fileView = getActiveFileView()
-          if (fileView == null) { e.presentation.isEnabled = false; return }
-          val selected = fileView.fileTree.getSelectedFile()
-          if (selected == null || fileView.roots.contains(selected.invariantSeparatorsPathString) || !Files.isWritable(selected)) {
-            e.presentation.isEnabled = false; return
-          }
-          if (Files.isDirectory(selected) && !runCatching { Files.list(selected).isEmpty() }.getOrElse { true }) {
-            e.presentation.isEnabled = false; return
-          }
-          e.presentation.isEnabled = true
+          e.presentation.isEnabled = getActiveFileView()?.canDeleteSelectedFile() == true
         }
 
         override fun actionPerformed(e: AnActionEvent) {
-          val fileView = getActiveFileView() ?: return
-          val selected = fileView.fileTree.getSelectedFile() ?: return
-          if (Messages.showYesNoDialog(
-              IdeBundle.message("universal.file.chooser.action.delete.confirm", selected.name),
-              IdeBundle.message("universal.file.chooser.action.delete.text"),
-              Messages.getWarningIcon()
-            ) != Messages.YES) return
-
-          scope.launch {
-            withContext(Dispatchers.IO) {
-              val result = runCatching { Files.delete(selected) }
-              runOnEdt {
-                if (result.isSuccess) {
-                  fileView.fileTree.updateTree()
-                }
-                else {
-                  val message = result.exceptionOrNull()?.message ?: ""
-                  Messages.showErrorDialog(message, IdeBundle.message("universal.file.chooser.action.delete.text"))
-                }
-              }
-            }
-          }
+          getActiveFileView()?.deleteSelectedFile()
         }
       }
 
@@ -671,6 +641,18 @@ object UniversalFileChooser {
           topToolbar.updateActionsAsync()
         }
 
+        tree.addKeyListener(object : KeyAdapter() {
+          override fun keyPressed(e: KeyEvent) {
+            if (e.isConsumed) return
+            if (e.keyCode == KeyEvent.VK_DELETE && e.modifiersEx == 0) {
+              if (canDeleteSelectedFile()) {
+                deleteSelectedFile()
+                e.consume()
+              }
+            }
+          }
+        })
+
         val loadingLabel = JBLabel(
           contributor.getCustomLoadingText() ?: IdeBundle.message("universal.file.chooser.label.loading"),
           SwingConstants.CENTER)
@@ -795,6 +777,38 @@ object UniversalFileChooser {
         val selected = getSelectedFiles()
         return selected.isNotEmpty() && selected.all { file ->
           file.parent != null
+        }
+      }
+
+      fun canDeleteSelectedFile(): Boolean {
+        val selected = fileTree.getSelectedFile() ?: return false
+        if (roots.contains(selected.invariantSeparatorsPathString)) return false
+        if (!Files.isWritable(selected)) return false
+        if (Files.isDirectory(selected) && !runCatching { Files.list(selected).isEmpty() }.getOrElse { true }) return false
+        return true
+      }
+
+      fun deleteSelectedFile() {
+        val selected = fileTree.getSelectedFile() ?: return
+        if (Messages.showYesNoDialog(
+            IdeBundle.message("universal.file.chooser.action.delete.confirm", selected.name),
+            IdeBundle.message("universal.file.chooser.action.delete.text"),
+            Messages.getWarningIcon()
+          ) != Messages.YES) return
+
+        scope.launch {
+          withContext(Dispatchers.IO) {
+            val result = runCatching { Files.delete(selected) }
+            runOnEdt {
+              if (result.isSuccess) {
+                fileTree.updateTree()
+              }
+              else {
+                val message = result.exceptionOrNull()?.message ?: ""
+                Messages.showErrorDialog(message, IdeBundle.message("universal.file.chooser.action.delete.text"))
+              }
+            }
+          }
         }
       }
 
