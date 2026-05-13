@@ -71,6 +71,7 @@ import com.intellij.openapi.ui.popup.StackingPopupDispatcher
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsActions
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -397,12 +398,21 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup,
       isReserveSpaceForExtraButtons = false // otherwise the name won't fit if the popup has the same width as the button
       mainPanelLayout.invalidateLayout(mainPanel) // clear the cached preferred size
       super.customizeComponent(list, value, isSelected)
+      myRendererComponent.setToolTipText(null) // we override the tool tip using getToolTipOverride()
       ClientProperty.put(myTextLabel, SwingTextTrimmer.KEY, SwingTextTrimmer.createCustomTrimmer(object : SwingTextTrimmerStrategy {
         override fun trim(text: @NlsActions.ActionText String, metrics: FontMetrics, availableWidth: Int): String {
           return trimRunConfigurationName(text, availableWidth, metrics)
         }
       }))
       JLabelUtil.setTrimOverflow(myTextLabel, true)
+    }
+
+    override fun getToolTipOverride(): @NlsContexts.Tooltip String? {
+      // A hack: this triggers com.intellij.ide.ui.laf.darcula.ui.DarculaLabelUI.layoutCL and updates the trimmer's status.
+      // The width and height we have to trust here because we have nothing else.
+      myTextLabel.getBaseline(myTextLabel.width, myTextLabel.height)
+      val trimmer = ClientProperty.get(myTextLabel, SwingTextTrimmer.KEY) ?: return null
+      return if (trimmer.isTrimmed) StringUtil.escapeXmlEntities(myTextLabel.text) else null
     }
 
     override fun layoutComponent(middleItemComponent: JComponent): JComponent {

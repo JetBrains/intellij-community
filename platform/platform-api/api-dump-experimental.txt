@@ -269,6 +269,9 @@ a:com.intellij.ui.ColoredTreeCellRenderer
 - com.intellij.ui.SimpleColoredComponent
 - javax.swing.tree.TreeCellRenderer
 - *:setAccessibleStatusText(java.lang.String):V
+a:com.intellij.ui.GroupedElementsRenderer
+- javax.accessibility.Accessible
+- *p:getToolTipOverride():java.lang.String
 *f:com.intellij.ui.HelpIdAwareLinkListener
 - com.intellij.ui.BrowserHyperlinkListener
 - <init>():V

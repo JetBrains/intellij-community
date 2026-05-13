@@ -6252,6 +6252,7 @@ c:com.intellij.ui.GroupedElementsRenderer$MyComponent
 - <init>(com.intellij.ui.GroupedElementsRenderer):V
 - getAccessibleContext():javax.accessibility.AccessibleContext
 - getPreferredSize():java.awt.Dimension
+- getToolTipText():java.lang.String
 - getUiInspectorContext():java.util.List
 - setPreferredWidth(I):V
 a:com.intellij.ui.GroupedElementsRenderer$Tree
