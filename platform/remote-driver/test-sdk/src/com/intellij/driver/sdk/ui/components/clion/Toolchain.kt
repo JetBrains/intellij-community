@@ -68,7 +68,8 @@ sealed class Toolchain(
     debugger: Debugger = Debugger.MINGW_CUSTOM_GDB,
     buildTool: BuildTool = BuildTool.DEFAULT,
     name: ToolchainNames = ToolchainNames.MINGW_GDB,
-  ) : Toolchain(name, compiler, debugger, buildTool)
+    toolset: Toolset = Toolset(kind = "MINGW", path = "\"C:\\Tools\\msys2\\mingw64\"")
+  ) : Toolchain(name, compiler, debugger, buildTool, toolset)
 
   class MingwCustomGDB(
     compiler: Compiler = Compiler.DEFAULT,
