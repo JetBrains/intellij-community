@@ -15,7 +15,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.LastComputedIconCache;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -23,6 +22,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.impl.source.tree.mvcc.userData.VersionedUserDataHolderBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.CoreAwareIconManager;
 import com.intellij.ui.IconManager;
@@ -40,7 +40,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.Icon;
 
-public abstract class ElementBase extends UserDataHolderBase implements Iconable {
+public abstract class ElementBase extends VersionedUserDataHolderBase implements Iconable {
   private static final Logger LOG = Logger.getInstance(ElementBase.class);
 
   private static boolean forceDeferredIconsInTests = false;

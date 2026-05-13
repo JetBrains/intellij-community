@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ThreadingRuntimeFlagsKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCoreUtil;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
@@ -19,10 +18,10 @@ import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.ReparseableASTNode;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.tree.mvcc.VersionedPayloadMap;
-import com.intellij.psi.impl.source.tree.mvcc.VersionedPsiConsistencyException;
 import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning;
 import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning.PsiVersionRegistry;
+import com.intellij.psi.impl.source.tree.mvcc.VersionedPayloadMap;
+import com.intellij.psi.impl.source.tree.mvcc.VersionedPsiConsistencyException;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.testFramework.ReadOnlyLightVirtualFile;
 import com.intellij.util.CharTable;
@@ -632,13 +631,6 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
   }
 
   @Override
-  public <T> T getUserData(@NotNull Key<T> key) {
-    // userdata retrieval is not yet supported in versioned mode
-    InternalPsiVersioning.assertNotInFreezePsiVersion();
-    return super.getUserData(key);
-  }
-
-  @Override
   public final boolean equals(Object obj) {
     return obj == this;
   }
@@ -869,4 +861,3 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
     ApplicationManager.getApplication().assertReadAccessAllowed();
   }
 }
-
