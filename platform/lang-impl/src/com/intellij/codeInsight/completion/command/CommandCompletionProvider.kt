@@ -223,7 +223,7 @@ internal class CommandCompletionProvider(val contributor: CommandCompletionContr
       val baseMatcher = CamelHumpMatcher(prefix, false, true)
       commands.forEach { command ->
         ProgressManager.checkCanceled()
-        CommandCompletionCollector.shown(command::class.java, originalFile.language, commandCompletionType::class.java)
+        CommandCompletionCollector.shown(command::class.java, originalFile.language, commandCompletionType)
         val customPrefixMatcher = command.customPrefixMatcher(prefix)
         val lookupElements = createLookupElements(command, commandCompletionFactory, prefix, customPrefixMatcher)
         if (customPrefixMatcher != null) {

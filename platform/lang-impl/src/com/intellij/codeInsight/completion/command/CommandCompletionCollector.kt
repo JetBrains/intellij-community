@@ -10,7 +10,7 @@ import com.intellij.lang.Language
 internal object CommandCompletionCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = COUNTER_GROUP
 
-  private val COUNTER_GROUP = EventLogGroup("command.completion", 1)
+  private val COUNTER_GROUP = EventLogGroup("command.completion", 2)
 
   /**
    * class of command, used to classify the most popular commands
@@ -20,7 +20,11 @@ internal object CommandCompletionCollector : CounterUsagesCollector() {
   /**
    * invocation_type - how the completion is invoked, with '.', '..' or with empty line
    */
-  private val INVOCATION_TYPE_COMMAND = EventFields.StringValidatedByCustomRule("invocation_type", ClassNameRuleValidator::class.java)
+  private val INVOCATION_TYPE_COMMAND = EventFields.String("invocation_type",
+                                                           listOf(
+                                                             InvocationCommandType.FullLine::class.java.name,
+                                                             InvocationCommandType.FullSuffix::class.java.name,
+                                                             InvocationCommandType.PartialSuffix::class.java.name))
 
   /**
    * language of a file where completion lookup is shown
@@ -56,12 +60,12 @@ internal object CommandCompletionCollector : CounterUsagesCollector() {
   fun shown(
     className: Class<*>,
     language: Language,
-    invocationType: Class<*>,
+    invocationType: InvocationCommandType,
   ) {
     COMMAND_SHOWN.log(
       CLASS_NAME_COMMAND.with(className.name),
       LANGUAGE_FILE.with(language.id),
-      INVOCATION_TYPE_COMMAND.with(invocationType.name),
+      INVOCATION_TYPE_COMMAND.with(invocationType::class.java.name),
     )
   }
 
@@ -76,12 +80,12 @@ internal object CommandCompletionCollector : CounterUsagesCollector() {
   fun called(
     className: Class<*>,
     language: Language,
-    invocationType: Class<*>,
+    invocationType: InvocationCommandType,
   ) {
     COMMAND_CALLED.log(
       CLASS_NAME_COMMAND.with(className.name),
       LANGUAGE_FILE.with(language.id),
-      INVOCATION_TYPE_COMMAND.with(invocationType.name),
+      INVOCATION_TYPE_COMMAND.with(invocationType::class.java.name),
     )
   }
 }

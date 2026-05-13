@@ -72,7 +72,7 @@ internal class CommandInsertHandler(private val completionCommand: CompletionCom
     if (completionType != null) {
       CommandCompletionCollector.called(completionCommand::class.java,
                                         context.file.language,
-                                        completionType::class.java)
+                                        completionType)
     }
 
     val actualIndex = findActualIndex(commandCompletionFactory.suffix().toString() + (commandCompletionFactory.filterSuffix() ?: ""),
