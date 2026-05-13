@@ -40,6 +40,7 @@ internal class FileInvalidationTest {
    */
   @RepeatedTest(value = 100)
   fun `test default context invalidates`() = timeoutRunBlocking {
+    // Step 1: no modules
     val root = readAction { VfsUtil.findFile(Path(project.basePath!!), false)!! }
     val virtualFile = writeAction { root.createFile("foo.txt") }
 
@@ -51,6 +52,7 @@ internal class FileInvalidationTest {
       "Step 1 (no modules added yet): file should have defaultContext, but was $initialContext (${initialContext::class.java.name})",
     )
 
+    // Step 2: adding module1
     val module1 = PsiTestUtil.addModule(project, ModuleType.EMPTY, "module1", root)
 
     val psiFileModuleContext = readAction { PsiManager.getInstance(project).findFile(virtualFile)!! }
@@ -66,7 +68,8 @@ internal class FileInvalidationTest {
       "Step 2 (module1 added): module name should be 'module1', but ModuleContext resolved to '$moduleName1'",
     )
 
-    val module2 = PsiTestUtil.addModule(project, ModuleType.EMPTY, "module2", root)
+    // Step 3: adding module2 on same root
+    PsiTestUtil.addModule(project, ModuleType.EMPTY, "module2", root)
 
     val psiFileModuleContext2 = readAction { PsiManager.getInstance(project).findFile(virtualFile)!! }
     val moduleContext2 = readAction { psiFileModuleContext2.codeInsightContext }
@@ -81,6 +84,7 @@ internal class FileInvalidationTest {
     )
     psiFileModuleContext.hashCode() // keep a hard reference to the file with module1 context, so that it doesn't get GCed and make sure it keeps being preferred
 
+    // Step 4: removing module1 roots
     PsiTestUtil.removeAllRoots(module1, null)
     while (!CodeInsightContextManagerImpl.getInstanceImpl(project).isContextInvalidationComplete()) {
       delay(10.milliseconds)
