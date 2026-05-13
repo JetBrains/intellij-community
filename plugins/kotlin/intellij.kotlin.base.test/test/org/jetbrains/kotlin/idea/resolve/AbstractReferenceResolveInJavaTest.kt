@@ -1,8 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.resolve
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiReference
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
@@ -51,7 +52,9 @@ abstract class AbstractReferenceToCompiledKotlinResolveInJavaTest : AbstractRefe
         return getExpectedReferences(text, index, "CLS_REF")
     }
 
-    override fun checkResolvedTo(element: PsiElement) {
+    override fun checkResolvedTo(resolveData: ExpectedResolveData, reference: PsiReference, element: PsiElement) {
+        super.checkResolvedTo(resolveData, reference, element)
+
         val navigationElement = element.navigationElement
         Assert.assertFalse(
             "Reference should not navigate to a light element\nWas: ${navigationElement::class.java.simpleName}",

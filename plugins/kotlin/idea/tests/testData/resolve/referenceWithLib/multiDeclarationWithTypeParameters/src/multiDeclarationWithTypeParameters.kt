@@ -7,3 +7,4 @@ fun <Int> f(l: List<Int>) {
 }
 
 // REF: el1
+// SKIP_IS_REFERENCE_TO_CHECK

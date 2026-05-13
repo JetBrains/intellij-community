@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.navigation
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiReference
 import com.intellij.psi.xml.XmlFile
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
@@ -37,7 +38,9 @@ abstract class AbstractResolveExtensionGeneratedSourcesFilterTest : AbstractRefe
     }
 
     @OptIn(KaAllowAnalysisOnEdt::class)
-    override fun checkResolvedTo(element: PsiElement) {
+    override fun checkResolvedTo(resolveData: ExpectedResolveData, reference: PsiReference, element: PsiElement) {
+        super.checkResolvedTo(resolveData, reference, element)
+
         assertTrue(filter.isGeneratedSource(element.containingFile.virtualFile, project))
         // This method is usually called from a background thread, but we need to call it inline here
         // from the test's thread, which is registered as the EDT.

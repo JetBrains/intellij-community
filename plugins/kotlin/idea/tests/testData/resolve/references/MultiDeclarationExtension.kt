@@ -11,3 +11,4 @@ fun main(args: Array<String>) {
 }
 
 // REF: b
+// SKIP_IS_REFERENCE_TO_CHECK

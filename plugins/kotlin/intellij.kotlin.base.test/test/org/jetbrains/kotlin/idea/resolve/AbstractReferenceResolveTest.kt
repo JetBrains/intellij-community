@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.resolve
 
 import com.intellij.openapi.application.ApplicationManager
@@ -21,8 +21,11 @@ import org.junit.Assert
 import kotlin.test.assertTrue
 
 abstract class AbstractReferenceResolveTest : KotlinLightCodeInsightFixtureTestCase() {
-    class ExpectedResolveData(private val shouldBeUnresolved: Boolean?, val referenceString: String) {
-
+    class ExpectedResolveData(
+        private val shouldBeUnresolved: Boolean?,
+        val referenceString: String,
+        val skipIsReferenceToCheck: Boolean,
+    ) {
         fun shouldBeUnresolved(): Boolean {
             return shouldBeUnresolved!!
         }
@@ -62,8 +65,8 @@ abstract class AbstractReferenceResolveTest : KotlinLightCodeInsightFixtureTestC
             val fileText = myFixture.file.text
             val expectedResolveData = readResolveData(fileText, getExpectedReferences(fileText, index))
             val psiReference = wrapReference(myFixture.file.findReferenceAt(offset))
-            checkReferenceResolve(expectedResolveData, offset, psiReference, render  = { this.render(it) }, replacePlaceholders = replacePlaceholders) { resolveTo ->
-                checkResolvedTo(resolveTo)
+            checkReferenceResolve(expectedResolveData, offset, psiReference, render  = { this.render(it) }, replacePlaceholders = replacePlaceholders) { reference, resolveTo ->
+                checkResolvedTo(expectedResolveData, reference, resolveTo)
                 performAdditionalResolveChecks(listOf(resolveTo))
             }
         }
@@ -73,8 +76,15 @@ abstract class AbstractReferenceResolveTest : KotlinLightCodeInsightFixtureTestC
         return element.renderAsGotoImplementation()
     }
 
-    open fun checkResolvedTo(element: PsiElement) {
-        // do nothing
+    open fun checkResolvedTo(resolveData: ExpectedResolveData, reference: PsiReference, element: PsiElement) {
+        if (resolveData.skipIsReferenceToCheck) {
+            return
+        }
+
+        Assert.assertTrue(
+            "${reference::class.simpleName} is supposed to reference ${element::class.simpleName}",
+            reference.isReferenceTo(element),
+        )
     }
 
     open fun wrapReference(reference: PsiReference?): PsiReference? = reference
@@ -127,9 +137,11 @@ abstract class AbstractReferenceResolveTest : KotlinLightCodeInsightFixtureTestC
     companion object {
         const val MULTIRESOLVE: String = "MULTIRESOLVE"
         const val REF_EMPTY: String = "REF_EMPTY"
+        const val SKIP_IS_REFERENCE_TO_CHECK: String = "SKIP_IS_REFERENCE_TO_CHECK"
 
         fun readResolveData(fileText: String, expectedReferences: List<String>): ExpectedResolveData {
             val shouldBeUnresolved = InTextDirectivesUtils.isDirectiveDefined(fileText, REF_EMPTY)
+            val skipIsReferenceToCheck = InTextDirectivesUtils.isDirectiveDefined(fileText, SKIP_IS_REFERENCE_TO_CHECK)
 
             val referenceToString: String
             if (shouldBeUnresolved) {
@@ -145,7 +157,11 @@ abstract class AbstractReferenceResolveTest : KotlinLightCodeInsightFixtureTestC
                 Assert.assertNotNull("Test data wasn't found, use \"// REF: \" directive", referenceToString)
             }
 
-            return ExpectedResolveData(shouldBeUnresolved, referenceToString)
+            return ExpectedResolveData(
+                shouldBeUnresolved = shouldBeUnresolved,
+                referenceString = referenceToString,
+                skipIsReferenceToCheck = skipIsReferenceToCheck,
+            )
         }
 
         fun getExpectedReferences(fileText: String, index: Int, refMarkerText: String): List<String> {
@@ -160,13 +176,13 @@ abstract class AbstractReferenceResolveTest : KotlinLightCodeInsightFixtureTestC
             psiReference: PsiReference?,
             render: (PsiElement) -> String = { it.renderAsGotoImplementation() },
             replacePlaceholders: Boolean = true,
-            checkResolvedTo: (PsiElement) -> Unit = {},
+            checkResolvedTo: (PsiReference, PsiElement) -> Unit = { _, _ -> },
         ) {
             val expectedString = expectedResolveData.referenceString
             if (psiReference != null) {
                 val resolvedTo = executeOnPooledThreadInReadAction { psiReference.resolve() }
                 if (resolvedTo != null) {
-                    checkResolvedTo(resolvedTo)
+                    checkResolvedTo(psiReference, resolvedTo)
                     val renderedResolvedTo = render(resolvedTo)
                     val resolvedToElementStr = if (replacePlaceholders) replacePlaceholders(renderedResolvedTo) else renderedResolvedTo
                     assertEquals(
