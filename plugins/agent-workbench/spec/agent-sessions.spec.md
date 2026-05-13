@@ -2,6 +2,9 @@
 name: Agent Threads Tool Window
 description: Requirements for the Agent Threads project browser, row model, actions, and owned session UI surface.
 targets:
+  - ../claude/sessions/src/**/*.kt
+  - ../codex/sessions/src/**/*.kt
+  - ../junie/sessions/src/**/*.kt
   - ../sessions/src/**/*.kt
   - ../sessions-toolwindow/src/**/*.kt
   - ../sessions-actions/src/**/*.kt
@@ -50,6 +53,13 @@ Agent Threads is a project-scoped Swing tree for browsing agent threads across p
   [@test] ../sessions/testSrc/AgentSessionRenameServiceTest.kt
   [@test] ../sessions-actions/testSrc/AgentSessionsEditorTabActionsTest.kt
 
+- The tool window must offer an archived-only thread view alongside the default active view. Archived rows can be opened and unarchived, active activity counters and warm snapshots stay driven by the active view, and archived filtering is limited to runtime `All`, `Today`, `Last 7 days`, and `Last 30 days` presets.
+  [@test] ../sessions-toolwindow/testSrc/AgentSessionsSwingTreeRenderingTest.kt
+  [@test] ../sessions-toolwindow/testSrc/AgentSessionsTreePopupActionsTest.kt
+  [@test] ../codex/sessions/testSrc/CodexSessionSourceTest.kt
+  [@test] ../claude/sessions/testSrc/ClaudeSessionSourceTest.kt
+  [@test] ../junie/sessions/testSrc/JunieSessionSourceTest.kt
+
 - Claude quota hint visibility and acknowledgement must be gated by eligibility, acknowledgement state, and widget availability.
   [@test] ../claude/sessions/testSrc/AgentSessionsSwingQuotaHintTest.kt
   [@test] ../claude/sessions/testSrc/AgentSessionsClaudeQuotaWidgetActionRegistrationTest.kt
@@ -58,6 +68,7 @@ Agent Threads is a project-scoped Swing tree for browsing agent threads across p
 - Open projects are visually emphasized; closed recent projects are readable but de-emphasized.
 - Default visibility includes all open projects and up to three closed recent projects, with additional closed projects behind `More`.
 - Single-click selects normal rows. Opening/focusing happens through Enter, double-click, or explicit actions.
+- Active view keeps the title header focused on thread activity counters. Archived view replaces those counters with a direct return-to-active icon, an archived context label, and a separate range selector.
 
 ## Testing / Local Run
 - `./tests.cmd --module intellij.agent.workbench.sessions.toolwindow.tests --test "com.intellij.agent.workbench.sessions.toolwindow.AgentSessions*Test"`

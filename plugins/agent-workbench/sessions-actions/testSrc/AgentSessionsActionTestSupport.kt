@@ -21,13 +21,29 @@ import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Proxy
 
 internal const val EDITOR_TAB_POPUP_MENU_ID: String = "EditorTabPopupMenu"
-internal const val EDITOR_TAB_POPUP_SEPARATOR_BEFORE_CLOSE_ACTIONS_ID: String = "AgentWorkbenchSessions.EditorTabPopup.SeparatorBeforeCloseActions"
+internal const val EDITOR_TAB_POPUP_SEPARATOR_BEFORE_CLOSE_ACTIONS_ID: String =
+  "AgentWorkbenchSessions.EditorTabPopup.SeparatorBeforeCloseActions"
 internal const val ACTION_SEPARATOR_MARKER: String = "<separator>"
 
 internal fun ActionManager.childActionIds(groupId: String): List<String> {
   val group = getAction(groupId) as? ActionGroup
   assertThat(group).withFailMessage("Action group '%s' is not registered", groupId).isNotNull
   return checkNotNull(group).getChildren(TestActionEvent.createTestEvent()).mapNotNull { getId(it) }
+}
+
+internal fun ActionManager.childActionEntries(groupId: String): List<String> {
+  val group = getAction(groupId) as? ActionGroup
+  assertThat(group).withFailMessage("Action group '%s' is not registered", groupId).isNotNull
+  return flattenActionEntries(checkNotNull(group).getChildren(TestActionEvent.createTestEvent()))
+}
+
+private fun ActionManager.flattenActionEntries(actions: Array<AnAction>): List<String> {
+  return actions.mapNotNull { action ->
+    when (action) {
+      is Separator -> ACTION_SEPARATOR_MARKER
+      else -> getId(action)
+    }
+  }
 }
 
 internal fun ActionManager.editorTabPopupEntries(): List<String> {

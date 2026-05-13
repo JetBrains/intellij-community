@@ -8,6 +8,18 @@ import com.intellij.agent.workbench.sessions.state.DEFAULT_VISIBLE_CLOSED_PROJEC
 import com.intellij.openapi.util.NlsSafe
 import javax.swing.Icon
 
+enum class AgentSessionThreadViewMode {
+  ACTIVE,
+  ARCHIVED,
+}
+
+enum class AgentSessionArchivedRangePreset {
+  ALL,
+  TODAY,
+  LAST_7_DAYS,
+  LAST_30_DAYS,
+}
+
 sealed interface ArchiveThreadTarget {
   val path: String
   val provider: AgentSessionProvider
@@ -101,6 +113,13 @@ data class AgentProjectSessions(
 )
 
 data class AgentSessionsState(
+  @JvmField val projects: List<AgentProjectSessions> = emptyList(),
+  @JvmField val lastUpdatedAt: Long? = null,
+  @JvmField val visibleClosedProjectCount: Int = DEFAULT_VISIBLE_CLOSED_PROJECT_COUNT,
+  @JvmField val visibleThreadCounts: Map<String, Int> = emptyMap(),
+)
+
+data class AgentArchivedSessionsState(
   @JvmField val projects: List<AgentProjectSessions> = emptyList(),
   @JvmField val lastUpdatedAt: Long? = null,
   @JvmField val visibleClosedProjectCount: Int = DEFAULT_VISIBLE_CLOSED_PROJECT_COUNT,

@@ -3,15 +3,21 @@ package com.intellij.agent.workbench.sessions.toolwindow
 
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
+import com.intellij.agent.workbench.sessions.model.AgentArchivedSessionsState
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
+import com.intellij.agent.workbench.sessions.model.AgentSessionArchivedRangePreset
 import com.intellij.agent.workbench.sessions.model.AgentSessionProviderWarning
+import com.intellij.agent.workbench.sessions.model.AgentWorktree
 import com.intellij.agent.workbench.sessions.state.InMemorySessionTreeUiState
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeNode
 import com.intellij.agent.workbench.sessions.toolwindow.tree.buildSessionTreeModel
+import com.intellij.agent.workbench.sessions.toolwindow.ui.buildArchivedDisplayState
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.time.Instant
+import java.time.ZoneId
 
 @TestApplication
 class AgentSessionsSwingTreeRenderingTest {
@@ -83,8 +89,16 @@ class AgentSessionsSwingTreeRenderingTest {
           hasLoaded = true,
           hasUnknownThreadCount = true,
           threads = listOf(
-            AgentSessionThread(id = "thread-1", title = "Thread 1", updatedAt = 100, archived = false, provider = AgentSessionProvider.CODEX),
-            AgentSessionThread(id = "thread-2", title = "Thread 2", updatedAt = 90, archived = false, provider = AgentSessionProvider.CODEX),
+            AgentSessionThread(id = "thread-1",
+                               title = "Thread 1",
+                               updatedAt = 100,
+                               archived = false,
+                               provider = AgentSessionProvider.CODEX),
+            AgentSessionThread(id = "thread-2",
+                               title = "Thread 2",
+                               updatedAt = 90,
+                               archived = false,
+                               provider = AgentSessionProvider.CODEX),
           ),
         )
       ),
@@ -98,4 +112,69 @@ class AgentSessionsSwingTreeRenderingTest {
     val moreThreads = moreNodeId?.let { model.entriesById[it]?.node as? SessionTreeNode.MoreThreads }
     assertThat(moreThreads?.hiddenCount).isNull()
   }
+
+  @Test
+  fun archivedDisplayStateFiltersRangeAndDropsEmptyProjects() {
+    val zoneId = ZoneId.of("UTC")
+    val nowMs = Instant.parse("2026-05-13T12:00:00Z").toEpochMilli()
+    val projectPath = "/work/project-a"
+    val displayState = buildArchivedDisplayState(
+      archivedState = AgentArchivedSessionsState(
+        projects = listOf(
+          AgentProjectSessions(
+            path = projectPath,
+            name = "Project A",
+            isOpen = true,
+            threads = listOf(
+              archivedThread(id = "today", updatedAt = Instant.parse("2026-05-13T09:00:00Z").toEpochMilli()),
+              archivedThread(id = "yesterday", updatedAt = Instant.parse("2026-05-12T23:00:00Z").toEpochMilli()),
+            ),
+            worktrees = listOf(
+              AgentWorktree(
+                path = "/work/project-a-feature",
+                name = "project-a-feature",
+                branch = "feature",
+                isOpen = false,
+                threads = listOf(archivedThread(id = "worktree-old", updatedAt = Instant.parse("2026-05-11T09:00:00Z").toEpochMilli())),
+              )
+            ),
+          ),
+          AgentProjectSessions(
+            path = "/work/project-old",
+            name = "Old Project",
+            isOpen = false,
+            threads = listOf(archivedThread(id = "old", updatedAt = Instant.parse("2026-04-10T09:00:00Z").toEpochMilli())),
+          ),
+          AgentProjectSessions(
+            path = "/work/project-loading",
+            name = "Loading Project",
+            isOpen = false,
+            isLoading = true,
+          ),
+        ),
+        lastUpdatedAt = nowMs,
+        visibleClosedProjectCount = 7,
+        visibleThreadCounts = mapOf(projectPath to 12),
+      ),
+      rangePreset = AgentSessionArchivedRangePreset.TODAY,
+      nowMs = nowMs,
+      zoneId = zoneId,
+    )
+
+    assertThat(displayState.projects.map { it.path }).containsExactly(projectPath, "/work/project-loading")
+    assertThat(displayState.projects.first().threads.map { it.id }).containsExactly("today")
+    assertThat(displayState.projects.first().worktrees).isEmpty()
+    assertThat(displayState.visibleClosedProjectCount).isEqualTo(7)
+    assertThat(displayState.visibleThreadCounts).containsEntry(projectPath, 12)
+  }
+}
+
+private fun archivedThread(id: String, updatedAt: Long): AgentSessionThread {
+  return AgentSessionThread(
+    id = id,
+    title = id,
+    updatedAt = updatedAt,
+    archived = true,
+    provider = AgentSessionProvider.CODEX,
+  )
 }

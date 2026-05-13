@@ -1,8 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.actions
 
+import com.intellij.agent.workbench.sessions.model.AgentSessionThreadViewMode
+import com.intellij.agent.workbench.sessions.service.AgentArchivedSessionsService
 import com.intellij.agent.workbench.sessions.service.AgentSessionReadService
 import com.intellij.agent.workbench.sessions.service.AgentSessionRefreshService
+import com.intellij.agent.workbench.sessions.state.AgentSessionThreadViewStateService
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
@@ -14,8 +17,26 @@ internal class AgentSessionsRefreshAction : DumbAwareAction {
 
   @Suppress("unused")
   constructor() {
-    refreshSessions = { service<AgentSessionRefreshService>().refresh() }
-    isRefreshingProvider = { service<AgentSessionReadService>().stateFlow().value.projects.any { project -> project.isLoading } }
+    refreshSessions = {
+      if (service<AgentSessionThreadViewStateService>().state.value.mode == AgentSessionThreadViewMode.ARCHIVED) {
+        service<AgentArchivedSessionsService>().refresh()
+      }
+      else {
+        service<AgentSessionRefreshService>().refresh()
+      }
+    }
+    isRefreshingProvider = {
+      if (service<AgentSessionThreadViewStateService>().state.value.mode == AgentSessionThreadViewMode.ARCHIVED) {
+        service<AgentArchivedSessionsService>().stateFlow().value.projects.any { project ->
+          project.isLoading || project.worktrees.any { worktree -> worktree.isLoading }
+        }
+      }
+      else {
+        service<AgentSessionReadService>().stateFlow().value.projects.any { project ->
+          project.isLoading || project.worktrees.any { worktree -> worktree.isLoading }
+        }
+      }
+    }
   }
 
   internal constructor(

@@ -1,10 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.toolwindow.ui
 
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.state.AgentSessionTreeUiStateService
-import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeModel
 import com.intellij.agent.workbench.sessions.toolwindow.tree.buildSessionTreeModel
@@ -24,12 +24,23 @@ internal fun installSessionTreeSpeedSearchReveal(
   tree: Tree,
   modelProvider: () -> SessionTreeModel,
   stateProvider: () -> AgentSessionsState,
+  ensureProjectVisible: (String) -> Unit,
+  ensureThreadVisible: (String, AgentSessionProvider, String) -> Unit,
 ) {
   val speedSearch = SpeedSearchSupply.getSupply(tree, true) ?: return
   if (speedSearch is SpeedSearchBase<*>) {
     speedSearch.comparator = SessionTreeStrictSubstringComparator()
   }
-  speedSearch.addChangeListener { event -> revealHiddenMatches(event, modelProvider, stateProvider, speedSearch) }
+  speedSearch.addChangeListener { event ->
+    revealHiddenMatches(
+      event = event,
+      modelProvider = modelProvider,
+      stateProvider = stateProvider,
+      ensureProjectVisible = ensureProjectVisible,
+      ensureThreadVisible = ensureThreadVisible,
+      speedSearch = speedSearch,
+    )
+  }
 }
 
 internal class SessionTreeStrictSubstringComparator : SpeedSearchComparator(false, false) {
@@ -61,6 +72,8 @@ private fun revealHiddenMatches(
   event: PropertyChangeEvent,
   modelProvider: () -> SessionTreeModel,
   stateProvider: () -> AgentSessionsState,
+  ensureProjectVisible: (String) -> Unit,
+  ensureThreadVisible: (String, AgentSessionProvider, String) -> Unit,
   speedSearch: SpeedSearchSupply,
 ) {
   val pattern = (event.newValue as? String)?.trim().orEmpty()
@@ -69,8 +82,7 @@ private fun revealHiddenMatches(
   val hiddenIds = collectHiddenMatchingIds(pattern, modelProvider, stateProvider)
   if (hiddenIds.isEmpty()) return
 
-  val stateStore = service<AgentSessionsStateStore>()
-  hiddenIds.forEach { id -> ensureVisible(stateStore, id) }
+  hiddenIds.forEach { id -> ensureVisible(ensureProjectVisible, ensureThreadVisible, id) }
 
   refreshSelectionWhenAvailable(speedSearch, pattern, attempt = 0)
 }
@@ -111,25 +123,29 @@ private fun fullVisibleThreadCounts(projects: List<AgentProjectSessions>): Map<S
   return counts
 }
 
-private fun ensureVisible(stateStore: AgentSessionsStateStore, id: SessionTreeId) {
+private fun ensureVisible(
+  ensureProjectVisible: (String) -> Unit,
+  ensureThreadVisible: (String, AgentSessionProvider, String) -> Unit,
+  id: SessionTreeId,
+) {
   when (id) {
-    is SessionTreeId.Project -> stateStore.ensureProjectVisible(id.path)
-    is SessionTreeId.Worktree -> stateStore.ensureProjectVisible(id.projectPath)
+    is SessionTreeId.Project -> ensureProjectVisible(id.path)
+    is SessionTreeId.Worktree -> ensureProjectVisible(id.projectPath)
     is SessionTreeId.Thread -> {
-      stateStore.ensureProjectVisible(id.projectPath)
-      stateStore.ensureThreadVisible(id.projectPath, id.provider, id.threadId)
+      ensureProjectVisible(id.projectPath)
+      ensureThreadVisible(id.projectPath, id.provider, id.threadId)
     }
     is SessionTreeId.SubAgent -> {
-      stateStore.ensureProjectVisible(id.projectPath)
-      stateStore.ensureThreadVisible(id.projectPath, id.provider, id.threadId)
+      ensureProjectVisible(id.projectPath)
+      ensureThreadVisible(id.projectPath, id.provider, id.threadId)
     }
     is SessionTreeId.WorktreeThread -> {
-      stateStore.ensureProjectVisible(id.projectPath)
-      stateStore.ensureThreadVisible(id.worktreePath, id.provider, id.threadId)
+      ensureProjectVisible(id.projectPath)
+      ensureThreadVisible(id.worktreePath, id.provider, id.threadId)
     }
     is SessionTreeId.WorktreeSubAgent -> {
-      stateStore.ensureProjectVisible(id.projectPath)
-      stateStore.ensureThreadVisible(id.worktreePath, id.provider, id.threadId)
+      ensureProjectVisible(id.projectPath)
+      ensureThreadVisible(id.worktreePath, id.provider, id.threadId)
     }
     is SessionTreeId.Warning,
     is SessionTreeId.Error,

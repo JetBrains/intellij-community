@@ -61,6 +61,9 @@ internal class CodexSessionSource internal constructor(
   override val supportsUpdates: Boolean
     get() = true
 
+  override val supportsArchivedThreads: Boolean
+    get() = true
+
   override val updateEvents: Flow<AgentSessionSourceUpdateEvent>
     get() = merge(
       backend.updates.map { AgentSessionSourceUpdateEvent(type = AgentSessionSourceUpdate.THREADS_CHANGED) },
@@ -73,6 +76,10 @@ internal class CodexSessionSource internal constructor(
     val threads = backend.listThreads(path = path, openProject = openProject)
     trackActiveThreadRead(threads)
     return mapBackendThreadsWithRolloutFallback(mapOf(path to threads))[path].orEmpty()
+  }
+
+  override suspend fun listArchivedThreads(path: String, openProject: Project?): List<AgentSessionThread> {
+    return backend.listArchivedThreads(path = path, openProject = openProject).map(::toAgentSessionThread)
   }
 
   override suspend fun prefetchThreads(paths: List<String>): Map<String, List<AgentSessionThread>> {

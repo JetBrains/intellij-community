@@ -15,12 +15,14 @@ internal fun createAgentSessionsTreePopupActionContext(
   nodeId: SessionTreeId,
   node: SessionTreeNode,
   archiveTargets: List<ArchiveThreadTarget>,
+  unarchiveTargets: List<ArchiveThreadTarget> = emptyList(),
 ): AgentSessionsTreePopupActionContext? {
   val target = resolveSessionActionTarget(nodeId, node) ?: return null
   return AgentSessionsTreePopupActionContext(
     project = project,
     target = target,
     archiveTargets = archiveTargets,
+    unarchiveTargets = unarchiveTargets,
   )
 }
 
@@ -44,7 +46,8 @@ internal fun resolveSessionActionTarget(nodeId: SessionTreeId, node: SessionTree
     is SessionTreeNode.Thread -> {
       when (nodeId) {
         is SessionTreeId.Thread,
-        is SessionTreeId.WorktreeThread -> {
+        is SessionTreeId.WorktreeThread,
+          -> {
           SessionActionTarget.Thread(
             path = normalizeAgentWorkbenchPath(pathForThreadNode(nodeId, node.project.path)),
             provider = node.thread.provider,
@@ -61,7 +64,8 @@ internal fun resolveSessionActionTarget(nodeId: SessionTreeId, node: SessionTree
     is SessionTreeNode.SubAgent -> {
       when (nodeId) {
         is SessionTreeId.SubAgent,
-        is SessionTreeId.WorktreeSubAgent -> {
+        is SessionTreeId.WorktreeSubAgent,
+          -> {
           SessionActionTarget.SubAgent(
             path = normalizeAgentWorkbenchPath(pathForThreadNode(nodeId, node.project.path)),
             provider = node.thread.provider,
@@ -92,6 +96,7 @@ internal fun resolveSessionActionTarget(nodeId: SessionTreeId, node: SessionTree
 
     is SessionTreeNode.Warning,
     is SessionTreeNode.Error,
-    is SessionTreeNode.Empty -> null
+    is SessionTreeNode.Empty,
+      -> null
   }
 }

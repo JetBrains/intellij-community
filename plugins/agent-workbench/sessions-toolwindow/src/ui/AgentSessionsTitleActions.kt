@@ -8,14 +8,20 @@ import com.intellij.agent.workbench.common.statusColor
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.providers.agentSessionThreadStatusIcon
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
+import com.intellij.agent.workbench.sessions.model.AgentSessionArchivedRangePreset
+import com.intellij.agent.workbench.sessions.model.AgentSessionThreadViewMode
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
+import com.intellij.agent.workbench.sessions.state.AgentSessionThreadViewStateService
 import com.intellij.agent.workbench.sessions.toolwindow.tree.formatRelativeTimeShort
 import com.intellij.agent.workbench.sessions.tree.threadDisplayTitle
+import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
@@ -27,12 +33,147 @@ import javax.swing.JComponent
 
 private const val MAX_POPUP_ROW_TITLE_LENGTH: Int = 60
 
-internal fun createAgentSessionsTitleActions(): List<AgentSessionsActivityCounterAction> {
+internal fun createAgentSessionsTitleActions(): List<AnAction> {
   return listOf(
     AgentSessionsActivityCounterAction(AgentSessionsActivityBucket.ATTENTION),
     AgentSessionsActivityCounterAction(AgentSessionsActivityBucket.RUNNING),
     AgentSessionsActivityCounterAction(AgentSessionsActivityBucket.DONE),
+    AgentSessionsShowActiveThreadsHeaderAction(),
+    AgentSessionsArchivedContextHeaderAction(),
+    AgentSessionsArchivedRangeHeaderAction(),
   )
+}
+
+internal class AgentSessionsShowActiveThreadsHeaderAction : DumbAwareAction() {
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+  override fun update(e: AnActionEvent) {
+    val state = service<AgentSessionThreadViewStateService>().state.value
+    val presentation = e.presentation
+    if (state.mode != AgentSessionThreadViewMode.ARCHIVED) {
+      presentation.setEnabledAndVisible(false)
+      return
+    }
+
+    presentation.icon = AllIcons.Actions.Back
+    presentation.text = AgentSessionsBundle.message("toolwindow.action.show.active.threads")
+    presentation.description = AgentSessionsBundle.message("toolwindow.action.show.active.threads.description")
+    presentation.setEnabledAndVisible(true)
+  }
+
+  override fun actionPerformed(e: AnActionEvent) {
+    service<AgentSessionThreadViewStateService>().setMode(AgentSessionThreadViewMode.ACTIVE)
+  }
+}
+
+internal class AgentSessionsArchivedContextHeaderAction : DumbAwareAction(), CustomComponentAction {
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+  override fun update(e: AnActionEvent) {
+    val state = service<AgentSessionThreadViewStateService>().state.value
+    val presentation = e.presentation
+    if (state.mode != AgentSessionThreadViewMode.ARCHIVED) {
+      presentation.setEnabledAndVisible(false)
+      return
+    }
+
+    presentation.text = AgentSessionsBundle.message("toolwindow.context.archived")
+    presentation.description = AgentSessionsBundle.message("toolwindow.threadview.header.archived.tooltip")
+    presentation.setEnabledAndVisible(true)
+  }
+
+  override fun actionPerformed(e: AnActionEvent) {
+  }
+
+  override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+    val component = AgentSessionsArchivedContextHeaderComponent(action = null, showChevron = false, bold = true)
+    component.update(presentation)
+    return component
+  }
+
+  override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
+    (component as? AgentSessionsArchivedContextHeaderComponent)?.update(presentation)
+  }
+}
+
+internal class AgentSessionsArchivedRangeHeaderAction : DumbAwareAction(), CustomComponentAction {
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+  override fun update(e: AnActionEvent) {
+    val state = service<AgentSessionThreadViewStateService>().state.value
+    val presentation = e.presentation
+    if (state.mode != AgentSessionThreadViewMode.ARCHIVED) {
+      presentation.setEnabledAndVisible(false)
+      return
+    }
+
+    val rangeLabel = archivedRangePresetLabel(state.archivedRangePreset)
+    presentation.text = rangeLabel
+    presentation.description = AgentSessionsBundle.message("toolwindow.threadview.header.archived.range.tooltip", rangeLabel)
+    presentation.setEnabledAndVisible(true)
+  }
+
+  override fun actionPerformed(e: AnActionEvent) {
+    val component = e.inputEvent?.component as? JComponent ?: return
+    val viewStateService = service<AgentSessionThreadViewStateService>()
+    JBPopupFactory.getInstance()
+      .createActionGroupPopup(
+        null,
+        createArchivedRangeHeaderPopupGroup(viewStateService),
+        DataManager.getInstance().getDataContext(component),
+        JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
+        true,
+      )
+      .showUnderneathOf(component)
+  }
+
+  override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+    val component = AgentSessionsArchivedContextHeaderComponent(action = this, showChevron = true, bold = false)
+    component.update(presentation)
+    return component
+  }
+
+  override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
+    (component as? AgentSessionsArchivedContextHeaderComponent)?.update(presentation)
+  }
+}
+
+internal fun createArchivedRangeHeaderPopupGroup(viewStateService: AgentSessionThreadViewStateService): DefaultActionGroup {
+  return DefaultActionGroup().apply {
+    AgentSessionArchivedRangePreset.entries.forEach { preset ->
+      add(ArchivedRangePresetToggleAction(preset, viewStateService))
+    }
+  }
+}
+
+private class ArchivedRangePresetToggleAction(
+  private val preset: AgentSessionArchivedRangePreset,
+  private val viewStateService: AgentSessionThreadViewStateService,
+) : ToggleAction(archivedRangePresetLabel(preset)), com.intellij.openapi.project.DumbAware {
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+    e.presentation.isEnabled = viewStateService.state.value.mode == AgentSessionThreadViewMode.ARCHIVED
+  }
+
+  override fun isSelected(e: AnActionEvent): Boolean {
+    return viewStateService.state.value.archivedRangePreset == preset
+  }
+
+  override fun setSelected(e: AnActionEvent, state: Boolean) {
+    if (!state) return
+    viewStateService.setArchivedRangePreset(preset)
+  }
+}
+
+private fun archivedRangePresetLabel(preset: AgentSessionArchivedRangePreset): @Nls String {
+  return when (preset) {
+    AgentSessionArchivedRangePreset.ALL -> AgentSessionsBundle.message("toolwindow.archived.range.all")
+    AgentSessionArchivedRangePreset.TODAY -> AgentSessionsBundle.message("toolwindow.archived.range.today")
+    AgentSessionArchivedRangePreset.LAST_7_DAYS -> AgentSessionsBundle.message("toolwindow.archived.range.last.7.days")
+    AgentSessionArchivedRangePreset.LAST_30_DAYS -> AgentSessionsBundle.message("toolwindow.archived.range.last.30.days")
+  }
 }
 
 internal class AgentSessionsActivityCounterAction(
@@ -42,8 +183,13 @@ internal class AgentSessionsActivityCounterAction(
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
-    val rows = rowsFor(e.project)
     val presentation = e.presentation
+    val viewMode = service<AgentSessionThreadViewStateService>().state.value.mode
+    if (viewMode != AgentSessionThreadViewMode.ACTIVE) {
+      presentation.setEnabledAndVisible(false)
+      return
+    }
+    val rows = rowsFor(e.project)
     presentation.text = rows.size.toString()
     presentation.description = AgentSessionsBundle.message(bucket.tooltipKey)
     presentation.setEnabledAndVisible(true)
@@ -155,6 +301,7 @@ private fun AgentSessionsActivityBucket.counterTone(): AgentSessionsActivityCoun
   return when (this) {
     AgentSessionsActivityBucket.ATTENTION -> AgentSessionsActivityCounterTone.ATTENTION
     AgentSessionsActivityBucket.RUNNING,
-    AgentSessionsActivityBucket.DONE -> AgentSessionsActivityCounterTone.DEFAULT
+    AgentSessionsActivityBucket.DONE,
+      -> AgentSessionsActivityCounterTone.DEFAULT
   }
 }

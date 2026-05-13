@@ -132,6 +132,37 @@ class CodexSessionSourceTest {
   }
 
   @Test
+  fun archivedThreadsComeFromArchivedBackendListWithoutRolloutFallback() {
+    val source = createSource(
+      archivedBackendThreads = listOf(
+        CodexBackendThread(
+          thread = CodexThread(
+            id = "archived-1",
+            title = "Archived 1",
+            updatedAt = 200L,
+            archived = true,
+          ),
+          activity = CodexSessionActivity.READY,
+        )
+      ),
+      rolloutHints = mapOf(
+        PROJECT_PATH to refreshHints(
+          "archived-1" to refreshHint(activity = AgentThreadActivity.PROCESSING, updatedAt = 300L)
+        )
+      ),
+    )
+
+    runBlocking(Dispatchers.Default) {
+      val archivedThreads = source.listArchivedThreadsFromClosedProject(PROJECT_PATH)
+
+      assertThat(archivedThreads).hasSize(1)
+      assertThat(archivedThreads.single().id).isEqualTo("archived-1")
+      assertThat(archivedThreads.single().archived).isTrue()
+      assertThat(archivedThreads.single().activity).isEqualTo(AgentThreadActivity.READY)
+    }
+  }
+
+  @Test
   fun rolloutWorkingHintOverridesCachedReadyOutputHints() {
     val source = createSource(
       appServerHints = mapOf(
@@ -403,6 +434,7 @@ private const val PROJECT_PATH = "/work/project"
 
 private fun createSource(
   backendThreads: List<CodexBackendThread> = emptyList(),
+  archivedBackendThreads: List<CodexBackendThread> = emptyList(),
   appServerHints: Map<String, CodexRefreshHints> = emptyMap(),
   rolloutHints: Map<String, CodexRefreshHints> = emptyMap(),
   appServerRefreshHintsProvider: CodexRefreshHintsProvider = staticHintsProvider(appServerHints),
@@ -411,6 +443,8 @@ private fun createSource(
   return CodexSessionSource(
     backend = object : CodexSessionBackend {
       override suspend fun listThreads(path: String, openProject: Project?): List<CodexBackendThread> = backendThreads
+
+      override suspend fun listArchivedThreads(path: String, openProject: Project?): List<CodexBackendThread> = archivedBackendThreads
     },
     appServerRefreshHintsProvider = appServerRefreshHintsProvider,
     rolloutRefreshHintsProvider = rolloutRefreshHintsProvider,

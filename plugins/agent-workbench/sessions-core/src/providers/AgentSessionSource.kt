@@ -92,6 +92,9 @@ interface AgentSessionSource {
   val supportsUpdates: Boolean
     get() = false
 
+  val supportsArchivedThreads: Boolean
+    get() = false
+
   /**
    * Typed source updates used by the loading coordinator to distinguish
    * backend listing updates from auxiliary hint updates.
@@ -102,6 +105,16 @@ interface AgentSessionSource {
   suspend fun listThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread>
 
   suspend fun listThreadsFromClosedProject(path: String): List<AgentSessionThread>
+
+  suspend fun listArchivedThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread> {
+    return listArchivedThreads(path = path, openProject = project)
+  }
+
+  suspend fun listArchivedThreadsFromClosedProject(path: String): List<AgentSessionThread> {
+    return listArchivedThreads(path = path, openProject = null)
+  }
+
+  suspend fun listArchivedThreads(path: String, openProject: Project?): List<AgentSessionThread> = emptyList()
 
   /**
    * Refreshes provider rows for [AgentSessionSourceRefreshRequest.paths].

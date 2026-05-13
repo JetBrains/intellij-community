@@ -29,6 +29,8 @@ enum class CodexSessionActivity {
 interface CodexSessionBackend {
   suspend fun listThreads(path: String, openProject: Project?): List<CodexBackendThread>
 
+  suspend fun listArchivedThreads(path: String, openProject: Project?): List<CodexBackendThread> = emptyList()
+
   suspend fun refreshThreads(path: String, threadIds: Set<String>, openProject: Project?): CodexBackendThreadRefreshResult? = null
 
   val updates: Flow<Unit>

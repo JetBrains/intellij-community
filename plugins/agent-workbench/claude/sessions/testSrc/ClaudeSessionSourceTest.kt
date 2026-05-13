@@ -332,6 +332,32 @@ class ClaudeSessionSourceTest {
   }
 
   @Test
+  fun archivedThreadsAreReturnedFromArchivedList() {
+    val source = ClaudeSessionSource(
+      backend = staticBackend(
+        listOf(
+          ClaudeBackendThread(id = "visible", title = "Visible", updatedAt = 2_000L),
+          ClaudeBackendThread(
+            id = "archived",
+            title = "Archived",
+            archived = true,
+            updatedAt = 1_000L,
+            activity = ClaudeSessionActivity.PROCESSING,
+          ),
+        )
+      )
+    )
+
+    val result = runBlocking(Dispatchers.Default) {
+      source.listArchivedThreadsFromClosedProject(path = "/any")
+    }
+
+    assertThat(result.map { it.id }).containsExactly("archived")
+    assertThat(result.single().archived).isTrue()
+    assertThat(result.single().activity).isEqualTo(AgentThreadActivity.PROCESSING)
+  }
+
+  @Test
   fun archivedThreadsDoNotProduceRefreshHintCandidates() {
     val source = ClaudeSessionSource(
       backend = staticBackend(

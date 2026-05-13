@@ -27,6 +27,8 @@ class ClaudeSessionSource(
 
   override val supportsUpdates: Boolean get() = true
 
+  override val supportsArchivedThreads: Boolean get() = true
+
   override val updateEvents: Flow<AgentSessionSourceUpdateEvent>
     get() = merge(
       backend.sessionUpdates,
@@ -40,6 +42,12 @@ class ClaudeSessionSource(
     val agentThreads = visibleThreads.map { it.toAgentSessionThread(readTracker, completedUnreadUpdatedAtByThreadId) }
     rememberObservedThreadUpdates(visibleThreads)
     return agentThreads
+  }
+
+  override suspend fun listArchivedThreads(path: String, openProject: Project?): List<AgentSessionThread> {
+    val archivedThreads = backend.listThreads(path = path, openProject = openProject)
+      .filter(ClaudeBackendThread::archived)
+    return archivedThreads.map { it.toAgentSessionThread(readTracker, completedUnreadUpdatedAtByThreadId) }
   }
 
   override suspend fun refreshThreads(request: AgentSessionSourceRefreshRequest): AgentSessionSourceRefreshResult {

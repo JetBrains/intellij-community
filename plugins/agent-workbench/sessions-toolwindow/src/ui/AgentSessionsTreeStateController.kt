@@ -7,8 +7,11 @@ import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.parseAgentThreadIdentity
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
+import com.intellij.agent.workbench.sessions.model.AgentArchivedSessionsState
+import com.intellij.agent.workbench.sessions.model.AgentSessionThreadViewMode
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.state.AgentSessionTreeUiStateService
+import com.intellij.agent.workbench.sessions.state.AgentSessionThreadViewState
 import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeModel
@@ -36,8 +39,11 @@ import javax.swing.SwingUtilities
 
 internal class AgentSessionsTreeStateController(
   private val sessionsStateFlow: StateFlow<AgentSessionsState>,
+  private val archivedSessionsStateFlow: StateFlow<AgentArchivedSessionsState>,
+  private val threadViewStateFlow: StateFlow<AgentSessionThreadViewState>,
   private val chatSelectionService: AgentChatTabSelectionService,
   private val markThreadAsRead: (String, AgentSessionProvider, String, Long) -> Unit,
+  private val ensureArchivedSessionsLoaded: () -> Unit,
   private val tree: Tree,
   private val getSessionTreeModel: () -> SessionTreeModel,
   private val setSessionTreeModel: (SessionTreeModel) -> Unit,
@@ -46,11 +52,14 @@ internal class AgentSessionsTreeStateController(
   private val invalidateTreeModel: (SessionTreeModelDiff) -> CompletableFuture<*>,
   private val expandNode: (SessionTreeId) -> Unit,
   private val selectNodes: (List<SessionTreeId>, () -> Boolean, (List<SessionTreeId>) -> Unit) -> Unit,
+  private val nowProvider: () -> Long = System::currentTimeMillis,
 ) {
   @Suppress("RAW_SCOPE_CREATION")
   private val scope = CoroutineScope(SupervisorJob() + Dispatchers.UI)
 
-  private var sessionsState: AgentSessionsState = AgentSessionsState()
+  private var activeSessionsState: AgentSessionsState = AgentSessionsState()
+  private var archivedSessionsState: AgentArchivedSessionsState = AgentArchivedSessionsState()
+  private var threadViewState: AgentSessionThreadViewState = AgentSessionThreadViewState()
   private var selectedChatTab: AgentChatTabSelection? = null
   private var treeUpdateSequence: Long = 0
   private var rebuildJob: Job? = null
@@ -60,8 +69,25 @@ internal class AgentSessionsTreeStateController(
   fun start() {
     scope.launch {
       sessionsStateFlow.collect { newState ->
-        sessionsState = newState
+        activeSessionsState = newState
         rebuildTree(SessionTreeRebuildReason.SESSION_STATE_CHANGED)
+      }
+    }
+
+    scope.launch {
+      archivedSessionsStateFlow.collect { newState ->
+        archivedSessionsState = newState
+        rebuildTree(SessionTreeRebuildReason.SESSION_STATE_CHANGED)
+      }
+    }
+
+    scope.launch {
+      threadViewStateFlow.collect { newState ->
+        threadViewState = newState
+        if (newState.mode == AgentSessionThreadViewMode.ARCHIVED) {
+          ensureArchivedSessionsLoaded()
+        }
+        rebuildTree(SessionTreeRebuildReason.THREAD_VIEW_CHANGED)
       }
     }
 
@@ -80,6 +106,17 @@ internal class AgentSessionsTreeStateController(
     }
   }
 
+  fun displayedStateSnapshot(): AgentSessionsState {
+    return when (threadViewState.mode) {
+      AgentSessionThreadViewMode.ACTIVE -> activeSessionsState
+      AgentSessionThreadViewMode.ARCHIVED -> buildArchivedDisplayState(
+        archivedState = archivedSessionsState,
+        rangePreset = threadViewState.archivedRangePreset,
+        nowMs = nowProvider(),
+      )
+    }
+  }
+
   fun dispose() {
     rebuildJob?.cancel()
     scope.cancel("Agent sessions tree state controller disposed")
@@ -90,22 +127,23 @@ internal class AgentSessionsTreeStateController(
     val provider = AgentSessionProvider.fromOrNull(
       parseAgentThreadIdentity(selection.threadIdentity)?.providerId ?: return
     ) ?: return
-    val thread = sessionsState.projects
-      .asSequence()
-      .flatMap { project ->
-        when {
-          project.path == selection.projectPath -> project.threads.asSequence()
-          else -> project.worktrees.firstOrNull { it.path == selection.projectPath }?.threads?.asSequence() ?: emptySequence()
-        }
-      }
-      .firstOrNull { it.id == selection.threadId && it.provider == provider && it.activity == AgentThreadActivity.UNREAD }
-      ?: return
+    val thread = activeSessionsState.projects
+                   .asSequence()
+                   .flatMap { project ->
+                     when {
+                       project.path == selection.projectPath -> project.threads.asSequence()
+                       else -> project.worktrees.firstOrNull { it.path == selection.projectPath }?.threads?.asSequence() ?: emptySequence()
+                     }
+                   }
+                   .firstOrNull { it.id == selection.threadId && it.provider == provider && it.activity == AgentThreadActivity.UNREAD }
+                 ?: return
     markThreadAsRead(selection.projectPath, provider, thread.id, thread.updatedAt)
   }
 
   private fun rebuildTree(reason: SessionTreeRebuildReason) {
     rebuildJob?.cancel()
-    val snapshotState = sessionsState
+    val snapshotState = displayedStateSnapshot()
+    val snapshotThreadViewState = threadViewState
     val snapshotSelectedChatTab = selectedChatTab
     val oldModel = getSessionTreeModel()
     val updateSequence = ++treeUpdateSequence
@@ -118,7 +156,12 @@ internal class AgentSessionsTreeStateController(
           treeUiState = service<AgentSessionTreeUiStateService>(),
         )
         val diff = diffSessionTreeModels(oldModel, model)
-        val selection = resolveSelectedSessionTreeId(snapshotState.projects, snapshotSelectedChatTab)
+        val selection = if (snapshotThreadViewState.mode == AgentSessionThreadViewMode.ACTIVE) {
+          resolveSelectedSessionTreeId(snapshotState.projects, snapshotSelectedChatTab)
+        }
+        else {
+          null
+        }
         Triple(model, diff, selection)
       }
       if (treeUpdateSequence != updateSequence) return@launch
@@ -154,10 +197,18 @@ internal class AgentSessionsTreeStateController(
   }
 
   private fun updateEmptyText() {
-    val message = when {
-      sessionsState.projects.isEmpty() && sessionsState.lastUpdatedAt == null -> AgentSessionsBundle.message("toolwindow.loading")
-      sessionsState.projects.isEmpty() -> AgentSessionsBundle.message("toolwindow.empty.global")
-      else -> ""
+    val displayedState = displayedStateSnapshot()
+    val message = when (threadViewState.mode) {
+      AgentSessionThreadViewMode.ACTIVE -> when {
+        displayedState.projects.isEmpty() && displayedState.lastUpdatedAt == null -> AgentSessionsBundle.message("toolwindow.loading")
+        displayedState.projects.isEmpty() -> AgentSessionsBundle.message("toolwindow.empty.global")
+        else -> ""
+      }
+      AgentSessionThreadViewMode.ARCHIVED -> when {
+        archivedSessionsState.projects.isEmpty() && archivedSessionsState.lastUpdatedAt == null -> AgentSessionsBundle.message("toolwindow.loading.archived")
+        displayedState.projects.isEmpty() -> AgentSessionsBundle.message("toolwindow.empty.archived")
+        else -> ""
+      }
     }
     tree.emptyText.text = message
   }
@@ -206,6 +257,7 @@ internal class AgentSessionsTreeStateController(
 internal enum class SessionTreeRebuildReason {
   SESSION_STATE_CHANGED,
   CHAT_TAB_SELECTION_CHANGED,
+  THREAD_VIEW_CHANGED,
 }
 
 internal fun sessionTreeSelectionTargetsAfterModelSwap(
@@ -221,7 +273,9 @@ internal fun sessionTreeSelectionTargetsAfterModelSwap(
   val previouslyAppliedSelectionCleared =
     selectionInitialized && previouslySelectedTreeIds.isEmpty() && lastAppliedSelectedTreeIds.isNotEmpty()
   return when (reason) {
-    SessionTreeRebuildReason.SESSION_STATE_CHANGED -> {
+    SessionTreeRebuildReason.SESSION_STATE_CHANGED,
+    SessionTreeRebuildReason.THREAD_VIEW_CHANGED,
+      -> {
       when {
         preservedSelection.isNotEmpty() -> preservedSelection
         previouslyAppliedSelectionCleared -> emptyList()

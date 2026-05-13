@@ -31,6 +31,11 @@ class SharedCodexAppServerService(serviceScope: CoroutineScope) {
     return client.listThreads(archived = false, cwdFilter = cwdFilter)
   }
 
+  internal suspend fun listArchivedThreads(projectPath: Path): List<CodexThread> {
+    val cwdFilter = normalizeRootPath(projectPath.invariantSeparatorsPathString)
+    return client.listThreads(archived = true, cwdFilter = cwdFilter)
+  }
+
   internal suspend fun readThreadActivitySnapshot(threadId: String): CodexThreadActivitySnapshot? {
     return client.readThreadActivitySnapshot(threadId)
   }

@@ -55,6 +55,7 @@ class AgentSessionArchiveService internal constructor(
   private val contentRepository: AgentSessionContentRepository,
   private val archiveChatCleanup: suspend (projectPath: String, threadIdentity: String, subAgentId: String?) -> Unit,
   private val backgroundTaskRunner: AgentSessionArchiveBackgroundTaskRunner,
+  private val archivedSessionsRefreshIfLoaded: () -> Unit = {},
 ) {
   @Suppress("unused")
   constructor(serviceScope: CoroutineScope) : this(
@@ -68,6 +69,7 @@ class AgentSessionArchiveService internal constructor(
       closeAndForgetAgentChatsForThread(projectPath = projectPath, threadIdentity = threadIdentity, subAgentId = subAgentId)
     },
     backgroundTaskRunner = IdeAgentSessionArchiveBackgroundTaskRunner,
+    archivedSessionsRefreshIfLoaded = { service<AgentArchivedSessionsService>().refreshIfLoaded() },
   )
 
   private val actionGate = SingleFlightActionGate()
@@ -75,6 +77,11 @@ class AgentSessionArchiveService internal constructor(
   fun canArchiveProvider(provider: AgentSessionProvider): Boolean {
     val descriptor = AgentSessionProviders.find(provider) ?: return false
     return descriptor.supportsArchiveThread
+  }
+
+  fun canUnarchiveProvider(provider: AgentSessionProvider): Boolean {
+    val descriptor = AgentSessionProviders.find(provider) ?: return false
+    return descriptor.supportsUnarchiveThread
   }
 
   fun archiveThreads(
@@ -104,7 +111,7 @@ class AgentSessionArchiveService internal constructor(
     }
   }
 
-  internal fun unarchiveThreads(targets: List<ArchiveThreadTarget>) {
+  fun unarchiveThreads(targets: List<ArchiveThreadTarget>) {
     val normalizedTargets = normalizeArchiveTargets(targets)
     if (normalizedTargets.isEmpty()) {
       return
@@ -153,6 +160,7 @@ class AgentSessionArchiveService internal constructor(
         delay(refreshDelayMs.milliseconds)
       }
       syncService.refresh()
+      archivedSessionsRefreshIfLoaded()
     }
   }
 
@@ -305,6 +313,7 @@ class AgentSessionArchiveService internal constructor(
       delay(outcome.refreshDelayMs.milliseconds)
     }
     syncService.refresh()
+    archivedSessionsRefreshIfLoaded()
     showArchiveNotification(outcome)
   }
 

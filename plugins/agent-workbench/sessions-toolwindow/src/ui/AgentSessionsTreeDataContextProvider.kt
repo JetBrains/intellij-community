@@ -40,6 +40,7 @@ internal class AgentSessionsTreeDataContextProvider(
       selectedTreeId = selectedTreeId,
       selectedTreeNode = selectedTreeNode,
       selectedArchiveTargets = selectedArchiveTargets(),
+      selectedUnarchiveTargets = selectedUnarchiveTargets(),
     )
     sink[AGENT_PROMPT_PROJECT_PATH_CONTEXT_DATA_KEY] = resolvePromptProjectPathContext(selectedTreeId, selectedTreeNode)
     sink[CommonDataKeys.VIRTUAL_FILE_ARRAY] = selectedCopyFiles.takeIf { it.isNotEmpty() }?.toTypedArray()
@@ -55,9 +56,18 @@ internal class AgentSessionsTreeDataContextProvider(
   }
 
   fun selectedArchiveTargets(): List<ArchiveThreadTarget> {
+    return selectedThreadArchiveTargets(archived = false)
+  }
+
+  fun selectedUnarchiveTargets(): List<ArchiveThreadTarget> {
+    return selectedThreadArchiveTargets(archived = true)
+  }
+
+  private fun selectedThreadArchiveTargets(archived: Boolean): List<ArchiveThreadTarget> {
     val targetsByKey = LinkedHashMap<String, ArchiveThreadTarget>()
     selectedTreeIds().forEach { id ->
       val threadNode = nodeResolver(id) as? SessionTreeNode.Thread ?: return@forEach
+      if (threadNode.thread.archived != archived) return@forEach
       val target = archiveTargetFromThreadNode(id, threadNode)
       targetsByKey.putIfAbsent(archiveThreadTargetKey(target), target)
     }
@@ -103,21 +113,21 @@ internal class AgentSessionsTreeDataContextProvider(
     val treeId = selectedTreeId ?: return null
     val treeNode = selectedTreeNode ?: return null
     val path = when (treeId) {
-      is SessionTreeId.Project -> treeId.path
-      is SessionTreeId.Thread -> treeId.projectPath
-      is SessionTreeId.SubAgent -> treeId.projectPath
-      is SessionTreeId.Warning -> treeId.projectPath
-      is SessionTreeId.Error -> treeId.projectPath
-      is SessionTreeId.Empty -> treeId.projectPath
-      SessionTreeId.MoreProjects -> null
-      is SessionTreeId.MoreThreads -> treeId.projectPath
-      is SessionTreeId.Worktree -> treeId.worktreePath
-      is SessionTreeId.WorktreeThread -> treeId.worktreePath
-      is SessionTreeId.WorktreeSubAgent -> treeId.worktreePath
-      is SessionTreeId.WorktreeWarning -> treeId.worktreePath
-      is SessionTreeId.WorktreeMoreThreads -> treeId.worktreePath
-      is SessionTreeId.WorktreeError -> treeId.worktreePath
-    } ?: return null
+                 is SessionTreeId.Project -> treeId.path
+                 is SessionTreeId.Thread -> treeId.projectPath
+                 is SessionTreeId.SubAgent -> treeId.projectPath
+                 is SessionTreeId.Warning -> treeId.projectPath
+                 is SessionTreeId.Error -> treeId.projectPath
+                 is SessionTreeId.Empty -> treeId.projectPath
+                 SessionTreeId.MoreProjects -> null
+                 is SessionTreeId.MoreThreads -> treeId.projectPath
+                 is SessionTreeId.Worktree -> treeId.worktreePath
+                 is SessionTreeId.WorktreeThread -> treeId.worktreePath
+                 is SessionTreeId.WorktreeSubAgent -> treeId.worktreePath
+                 is SessionTreeId.WorktreeWarning -> treeId.worktreePath
+                 is SessionTreeId.WorktreeMoreThreads -> treeId.worktreePath
+                 is SessionTreeId.WorktreeError -> treeId.worktreePath
+               } ?: return null
     val displayName = when (treeNode) {
       is SessionTreeNode.Project -> treeNode.project.name
       is SessionTreeNode.Thread -> treeNode.project.name
@@ -127,7 +137,8 @@ internal class AgentSessionsTreeDataContextProvider(
       is SessionTreeNode.MoreThreads -> treeNode.project.name
       is SessionTreeNode.Worktree -> treeNode.worktree.name
       is SessionTreeNode.Warning,
-      is SessionTreeNode.MoreProjects -> null
+      is SessionTreeNode.MoreProjects,
+        -> null
     }
     return AgentPromptProjectPathContext(path = path, displayName = displayName)
   }

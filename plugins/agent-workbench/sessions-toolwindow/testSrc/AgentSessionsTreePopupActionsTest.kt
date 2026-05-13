@@ -17,6 +17,7 @@ import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTre
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupNewThreadGroup
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupOpenAction
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupRenameThreadAction
+import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupUnarchiveThreadAction
 import com.intellij.agent.workbench.sessions.toolwindow.actions.createAgentSessionsTreePopupActionContext
 import com.intellij.agent.workbench.sessions.toolwindow.actions.resolveAgentSessionsTreePopupActionContext
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
@@ -234,6 +235,63 @@ class AgentSessionsTreePopupActionsTest {
 
     assertThat(archivedTargets).containsExactly(treeTarget)
     assertThat(entryPoint).isEqualTo(AgentWorkbenchEntryPoint.TREE_POPUP)
+  }
+
+  @Test
+  fun unarchiveActionUsesCapabilityGateAndSelectedCountLabel() {
+    var unarchivedTargets: List<ArchiveThreadTarget>? = null
+    val unarchiveAction = AgentSessionsTreePopupUnarchiveThreadAction(
+      resolveContext = { event -> resolveAgentSessionsTreePopupActionContext(event) },
+      canUnarchiveProvider = { provider -> provider == AgentSessionProvider.CODEX },
+      unarchiveThreads = { targets -> unarchivedTargets = targets },
+    )
+
+    val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
+    val codexTarget = ArchiveThreadTarget.Thread(
+      path = "/work/project-a",
+      provider = AgentSessionProvider.CODEX,
+      threadId = "codex-archived",
+    )
+    val claudeTarget = ArchiveThreadTarget.Thread(
+      path = "/work/project-a",
+      provider = AgentSessionProvider.CLAUDE,
+      threadId = "claude-archived",
+    )
+    val unarchiveContext = popupContext(
+      nodeId = SessionTreeId.Thread(
+        projectPath = "/work/project-a",
+        provider = AgentSessionProvider.CODEX,
+        threadId = "codex-archived",
+      ),
+      node = SessionTreeNode.Thread(
+        project = project,
+        thread = thread(id = "codex-archived", provider = AgentSessionProvider.CODEX, archived = true),
+      ),
+      unarchiveTargets = listOf(codexTarget, claudeTarget),
+    )
+    val unarchiveEvent = popupEvent(unarchiveAction, unarchiveContext)
+    unarchiveAction.update(unarchiveEvent)
+    assertThat(unarchiveEvent.presentation.isEnabledAndVisible).isTrue()
+    assertThat(unarchiveEvent.presentation.text).isEqualTo("Unarchive Selected (2)")
+
+    unarchiveAction.actionPerformed(unarchiveEvent)
+    assertThat(unarchivedTargets).containsExactly(codexTarget, claudeTarget)
+
+    val unsupportedContext = popupContext(
+      nodeId = SessionTreeId.Thread(
+        projectPath = "/work/project-a",
+        provider = AgentSessionProvider.CLAUDE,
+        threadId = "claude-archived",
+      ),
+      node = SessionTreeNode.Thread(
+        project = project,
+        thread = thread(id = "claude-archived", provider = AgentSessionProvider.CLAUDE, archived = true),
+      ),
+      unarchiveTargets = listOf(claudeTarget),
+    )
+    val unsupportedEvent = popupEvent(unarchiveAction, unsupportedContext)
+    unarchiveAction.update(unsupportedEvent)
+    assertThat(unsupportedEvent.presentation.isEnabledAndVisible).isFalse()
   }
 
   @Test
@@ -557,12 +615,14 @@ private fun popupContext(
   nodeId: SessionTreeId,
   node: SessionTreeNode,
   archiveTargets: List<ArchiveThreadTarget> = emptyList(),
+  unarchiveTargets: List<ArchiveThreadTarget> = emptyList(),
 ): AgentSessionsTreePopupActionContext {
   return checkNotNull(createAgentSessionsTreePopupActionContext(
     project = ProjectManager.getInstance().defaultProject,
     nodeId = nodeId,
     node = node,
     archiveTargets = archiveTargets,
+    unarchiveTargets = unarchiveTargets,
   ))
 }
 
@@ -574,12 +634,12 @@ private fun popupEvent(action: AnAction, context: AgentSessionsTreePopupActionCo
   return TestActionEvent.createTestEvent(action, dataContext)
 }
 
-private fun thread(id: String, provider: AgentSessionProvider): AgentSessionThread {
+private fun thread(id: String, provider: AgentSessionProvider, archived: Boolean = false): AgentSessionThread {
   return AgentSessionThread(
     id = id,
     title = id,
     updatedAt = 100L,
-    archived = false,
+    archived = archived,
     provider = provider,
     subAgents = listOf(AgentSubAgent(id = "sub-$id", name = "Sub $id")),
   )

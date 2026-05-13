@@ -31,7 +31,7 @@
     <action
       id="AgentWorkbenchSessions.ToggleClaudeQuotaWidget"
       class="com.intellij.agent.workbench.claude.sessions.AgentSessionsToggleClaudeQuotaWidgetAction">
-      <add-to-group group-id="AgentWorkbenchSessions.ToolWindow.GearActions" anchor="before" relative-to-action="AgentWorkbenchSessions.Refresh"/>
+      <add-to-group group-id="AgentWorkbenchSessions.ToolWindow.GearActions" anchor="before" relative-to-action="AgentWorkbenchSessions.ToggleDedicatedFrame"/>
     </action>
   </actions>
 </idea-plugin>

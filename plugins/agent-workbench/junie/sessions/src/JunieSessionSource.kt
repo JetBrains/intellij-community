@@ -197,6 +197,8 @@ internal class JunieSessionSource(
     archiveStatePathProvider: () -> Path = { defaultJunieArchiveStatePath(sessionIndexPathProvider()) },
   ) : this(JunieSessionIndexStore(sessionIndexPathProvider, jsonFactory, timeProvider, archiveStatePathProvider))
 
+  override val supportsArchivedThreads: Boolean get() = true
+
   override suspend fun listThreads(path: String, openProject: Project?): List<AgentSessionThread> {
     val normalizedProjectPath = normalizeJunieProjectPath(path) ?: return emptyList()
     val matchingEntries = sessionIndexStore.loadEntries()
@@ -204,6 +206,15 @@ internal class JunieSessionSource(
       .filterNot { it.archived == true }
       .sortedByDescending(JunieSessionIndexEntry::updatedAt)
     rememberActiveThreadRead(matchingEntries, JunieSessionIndexEntry::sessionId, JunieSessionIndexEntry::updatedAt)
+    return matchingEntries.map { it.toAgentSessionThread(readTracker) }
+  }
+
+  override suspend fun listArchivedThreads(path: String, openProject: Project?): List<AgentSessionThread> {
+    val normalizedProjectPath = normalizeJunieProjectPath(path) ?: return emptyList()
+    val matchingEntries = sessionIndexStore.loadEntries()
+      .filter { it.normalizedProjectDir == normalizedProjectPath }
+      .filter { it.archived == true }
+      .sortedByDescending(JunieSessionIndexEntry::updatedAt)
     return matchingEntries.map { it.toAgentSessionThread(readTracker) }
   }
 }

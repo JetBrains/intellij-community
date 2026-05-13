@@ -18,7 +18,10 @@ import com.intellij.agent.workbench.sessions.core.providers.withYoloModeBadge
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
+import com.intellij.agent.workbench.sessions.model.AgentSessionThreadViewMode
+import com.intellij.agent.workbench.sessions.service.AgentArchivedSessionsService
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
+import com.intellij.agent.workbench.sessions.state.AgentSessionThreadViewStateService
 import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.agent.workbench.sessions.toolwindow.ui.providerIcon
@@ -44,6 +47,7 @@ internal data class AgentSessionsTreePopupActionContext(
   @JvmField val project: Project,
   val target: SessionActionTarget,
   @JvmField val archiveTargets: List<ArchiveThreadTarget>,
+  @JvmField val unarchiveTargets: List<ArchiveThreadTarget> = emptyList(),
 )
 
 internal fun resolveAgentSessionsTreePopupActionContext(event: AnActionEvent): AgentSessionsTreePopupActionContext? {
@@ -62,7 +66,8 @@ internal class AgentSessionsTreePopupOpenAction : DumbAwareAction {
     resolveContext = ::resolveAgentSessionsTreePopupActionContext
     isDedicatedProject = AgentWorkbenchDedicatedFrameProjectManager::isDedicatedProject
     openProject = { path, entryPoint -> service<AgentSessionLaunchService>().openOrFocusProject(path, entryPoint) }
-    openThread = { path, thread, project, entryPoint -> service<AgentSessionLaunchService>().openChatThread(path, thread, entryPoint, project) }
+    openThread =
+      { path, thread, project, entryPoint -> service<AgentSessionLaunchService>().openChatThread(path, thread, entryPoint, project) }
     openSubAgent = { path, thread, subAgent, project, entryPoint ->
       service<AgentSessionLaunchService>().openChatSubAgent(path, thread, subAgent, entryPoint, project)
     }
@@ -89,7 +94,8 @@ internal class AgentSessionsTreePopupOpenAction : DumbAwareAction {
       is SessionActionTarget.Project -> !target.isOpen || dedicatedFrame
       is SessionActionTarget.Worktree,
       is SessionActionTarget.Thread,
-      is SessionActionTarget.SubAgent -> true
+      is SessionActionTarget.SubAgent,
+        -> true
       else -> false
     }
     e.presentation.isEnabledAndVisible = canOpen
@@ -124,8 +130,22 @@ internal class AgentSessionsTreePopupMoreAction : DumbAwareAction {
   @Suppress("unused")
   constructor() {
     resolveContext = ::resolveAgentSessionsTreePopupActionContext
-    showMoreProjects = { service<AgentSessionsStateStore>().showMoreProjects() }
-    showMoreThreads = { path -> service<AgentSessionsStateStore>().showMoreThreads(path) }
+    showMoreProjects = {
+      if (service<AgentSessionThreadViewStateService>().state.value.mode == AgentSessionThreadViewMode.ARCHIVED) {
+        service<AgentArchivedSessionsService>().showMoreProjects()
+      }
+      else {
+        service<AgentSessionsStateStore>().showMoreProjects()
+      }
+    }
+    showMoreThreads = { path ->
+      if (service<AgentSessionThreadViewStateService>().state.value.mode == AgentSessionThreadViewMode.ARCHIVED) {
+        service<AgentArchivedSessionsService>().showMoreThreads(path)
+      }
+      else {
+        service<AgentSessionsStateStore>().showMoreThreads(path)
+      }
+    }
   }
 
   internal constructor(
@@ -185,7 +205,8 @@ internal class AgentSessionsTreePopupNewThreadGroup @JvmOverloads constructor(
     e.presentation.isEnabledAndVisible = true
     e.presentation.isPopupGroup = true
     e.presentation.isPerformGroup = actionModel.quickStartItem != null
-    e.presentation.icon = actionModel.quickStartItem?.let { quickStartProviderIcon(it.bridge.provider, it.mode) } ?: templatePresentation.icon
+    e.presentation.icon =
+      actionModel.quickStartItem?.let { quickStartProviderIcon(it.bridge.provider, it.mode) } ?: templatePresentation.icon
   }
 
   override fun actionPerformed(e: AnActionEvent) {

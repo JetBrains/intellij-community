@@ -366,6 +366,82 @@ class AgentSessionArchiveServiceIntegrationTest {
   }
 
   @Test
+  fun archiveThreadStaysHiddenWhenFullRefreshCompletesWithStaleSourceResult() = runBlocking(Dispatchers.Default) {
+    val backgroundRunner = PausedArchiveBackgroundTaskRunner()
+    val claudeSourceStarted = CompletableDeferred<Unit>()
+    val releaseClaudeSource = CompletableDeferred<Unit>()
+    val sourceThreads = mutableListOf(
+      thread(id = "codex-1", updatedAt = 200, provider = AgentSessionProvider.CODEX),
+      thread(id = "codex-2", updatedAt = 100, provider = AgentSessionProvider.CODEX),
+    )
+    val codexSource = ScriptedSessionSource(
+      provider = AgentSessionProvider.CODEX,
+      listFromOpenProject = { path, _ ->
+        if (path == PROJECT_PATH) sourceThreads.toList() else emptyList()
+      },
+    )
+    val claudeSource = ScriptedSessionSource(
+      provider = AgentSessionProvider.CLAUDE,
+      listFromOpenProject = { path, _ ->
+        if (path == PROJECT_PATH) {
+          claudeSourceStarted.complete(Unit)
+          releaseClaudeSource.await()
+        }
+        emptyList()
+      },
+    )
+    val codexBridge = testCodexBridge(
+      sessionSource = codexSource,
+      onArchive = { _, threadId ->
+        sourceThreads.removeIf { it.id == threadId }
+        true
+      },
+    )
+    val claudeBridge = testClaudeBridge(
+      sessionSource = claudeSource,
+      onArchive = { _, _ -> true },
+    )
+
+    AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(codexBridge, claudeBridge))) {
+      runBlocking(Dispatchers.Default) {
+        withServiceAndArchive(
+          sessionSourcesProvider = { listOf(codexSource, claudeSource) },
+          projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
+          archiveBackgroundTaskRunner = backgroundRunner,
+        ) { service, archiveService ->
+          service.refresh()
+          waitForCondition {
+            claudeSourceStarted.isCompleted
+          }
+          waitForCondition {
+            val project = service.state.value.projects.firstOrNull()
+            project?.isLoading == true && project.threads.map { it.id } == listOf("codex-1", "codex-2")
+          }
+
+          archiveService.archiveThreadsForTest(
+            listOf(ArchiveThreadTarget.Thread(PROJECT_PATH, AgentSessionProvider.CODEX, "codex-1"))
+          )
+          waitForCondition {
+            service.state.value.projects.firstOrNull()?.threads.orEmpty().map { it.id } == listOf("codex-2")
+          }
+          assertThat(backgroundRunner.hasPendingTask()).isTrue()
+
+          releaseClaudeSource.complete(Unit)
+          waitForCondition {
+            val project = service.state.value.projects.firstOrNull()
+            project?.isLoading == false && project.hasLoaded && project.threads.map { it.id } == listOf("codex-2")
+          }
+
+          backgroundRunner.resume()
+          waitForCondition(timeoutMs = 6_000) {
+            backgroundRunner.completed
+          }
+        }
+      }
+    }
+  }
+
+  @Test
   fun archiveThreadRestoresThreadWhenBackgroundArchiveFails() = runBlocking(Dispatchers.Default) {
     val backgroundRunner = PausedArchiveBackgroundTaskRunner()
     val cleanupCalls = mutableListOf<Pair<String, String>>()
@@ -410,12 +486,14 @@ class AgentSessionArchiveServiceIntegrationTest {
           backgroundRunner.resume()
           var restored = false
           var lastObservedThreads = emptyList<String>()
-          for (attempt in 0 until 300) {
+          var attempts = 0
+          while (attempts < 300) {
             lastObservedThreads = service.state.value.projects.firstOrNull()?.threads.orEmpty().map { it.id }
             if (lastObservedThreads == listOf("codex-1", "codex-2")) {
               restored = true
               break
             }
+            attempts++
             delay(20.milliseconds)
           }
           assertThat(restored)
@@ -490,7 +568,9 @@ class AgentSessionArchiveServiceIntegrationTest {
 
   @Test
   fun archiveThreadDoesNotCleanupChatMetadataWhenArchiveFails() = runBlocking(Dispatchers.Default) {
+    val archiveCalls = AtomicInteger(0)
     val cleanupCalls = mutableListOf<Pair<String, String>>()
+    val backgroundRunner = PausedArchiveBackgroundTaskRunner()
     val sourceThreads = mutableListOf(
       thread(id = "codex-1", updatedAt = 200, provider = AgentSessionProvider.CODEX),
       thread(id = "codex-2", updatedAt = 100, provider = AgentSessionProvider.CODEX),
@@ -500,10 +580,16 @@ class AgentSessionArchiveServiceIntegrationTest {
       listFromOpenProject = { path, _ ->
         if (path == PROJECT_PATH) sourceThreads.toList() else emptyList()
       },
+      listFromClosedProject = { path ->
+        if (path == PROJECT_PATH) sourceThreads.toList() else emptyList()
+      },
     )
     val bridge = testCodexBridge(
       sessionSource = sessionSource,
-      onArchive = { _, _ -> false },
+      onArchive = { _, _ ->
+        archiveCalls.incrementAndGet()
+        false
+      },
     )
 
     AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(bridge))) {
@@ -514,6 +600,7 @@ class AgentSessionArchiveServiceIntegrationTest {
           archiveChatCleanup = { projectPath, threadIdentity, _ ->
             cleanupCalls.add(projectPath to threadIdentity)
           },
+          archiveBackgroundTaskRunner = backgroundRunner,
         ) { service, archiveService ->
           service.refresh()
           waitForCondition {
@@ -524,10 +611,11 @@ class AgentSessionArchiveServiceIntegrationTest {
           archiveService.archiveThreadsForTest(
             listOf(ArchiveThreadTarget.Thread(PROJECT_PATH, threadToArchive.provider, threadToArchive.id))
           )
+          assertThat(backgroundRunner.hasPendingTask()).isTrue()
 
+          backgroundRunner.resume()
           waitForCondition {
-            val threads = service.state.value.projects.firstOrNull()?.threads.orEmpty()
-            threads.any { it.id == "codex-1" } && threads.any { it.id == "codex-2" }
+            backgroundRunner.completed && archiveCalls.get() == 1
           }
 
           assertThat(cleanupCalls).isEmpty()

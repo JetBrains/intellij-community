@@ -7,7 +7,6 @@ import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.agent.workbench.sessions.service.AgentSessionRefreshService
 import com.intellij.agent.workbench.sessions.state.AgentSessionTreeUiStateService
-import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupActionContext
 import com.intellij.agent.workbench.sessions.toolwindow.actions.createAgentSessionsTreePopupActionContext
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
@@ -42,6 +41,9 @@ internal class AgentSessionsTreeInteractionController(
   private val rowActionsOverlayProvider: () -> AgentSessionsTreeRowActionsOverlay,
   private val nodeResolver: (SessionTreeId) -> SessionTreeNode?,
   private val selectedArchiveTargets: () -> List<ArchiveThreadTarget>,
+  private val selectedUnarchiveTargets: () -> List<ArchiveThreadTarget>,
+  private val showMoreProjects: () -> Unit,
+  private val showMoreThreads: (String) -> Unit,
 ) {
   var popupActionContext: AgentSessionsTreePopupActionContext? = null
     private set
@@ -68,6 +70,7 @@ internal class AgentSessionsTreeInteractionController(
       nodeId = nodeId,
       node = node,
       archiveTargets = selectedArchiveTargets(),
+      unarchiveTargets = selectedUnarchiveTargets(),
     ) ?: return
     val popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, actionGroup)
     popupMenu.setTargetComponent(tree)
@@ -181,6 +184,7 @@ internal class AgentSessionsTreeInteractionController(
       nodeId = id,
       node = treeNode,
       archiveTargets = selectedArchiveTargets(),
+      unarchiveTargets = selectedUnarchiveTargets(),
     ) ?: return
     val popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, actionGroup)
     popupMenu.setTargetComponent(tree)
@@ -211,13 +215,13 @@ internal class AgentSessionsTreeInteractionController(
   private fun runNodeAction(id: SessionTreeId, treeNode: SessionTreeNode, includeOpenActions: Boolean): Boolean {
     return when (treeNode) {
       is SessionTreeNode.MoreProjects -> {
-        service<AgentSessionsStateStore>().showMoreProjects()
+        showMoreProjects()
         true
       }
 
       is SessionTreeNode.MoreThreads -> {
         val path = pathForMoreThreadsNode(id) ?: return false
-        service<AgentSessionsStateStore>().showMoreThreads(path)
+        showMoreThreads(path)
         true
       }
 
@@ -264,7 +268,7 @@ internal class AgentSessionsTreeInteractionController(
       is SessionTreeNode.Empty,
         -> {
         false
-        }
+      }
     }
   }
 

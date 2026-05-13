@@ -16,7 +16,9 @@ import com.intellij.agent.workbench.sessions.actions.AgentSessionsOpenDedicatedF
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsPreventSleepWhileWorkingToggleAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsRefreshAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsSelectThreadInToolWindowAction
+import com.intellij.agent.workbench.sessions.actions.AgentSessionsShowArchivedThreadsAction
 import com.intellij.agent.workbench.sessions.actions.DumbAwareDefaultActionGroup
+import com.intellij.agent.workbench.sessions.model.AgentSessionThreadViewMode
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
@@ -36,13 +38,40 @@ class AgentSessionsGearActionsTest {
   @Test
   fun gearActionsContainOpenFileToggleAndRefresh() {
     val actionManager = ActionManager.getInstance()
+    val entries = actionManager.childActionEntries("AgentWorkbenchSessions.ToolWindow.GearActions")
 
-    assertThat(actionManager.childActionIds("AgentWorkbenchSessions.ToolWindow.GearActions"))
-      .contains("OpenFile")
-      .contains("AgentWorkbenchSessions.ToggleDedicatedFrame")
-      .contains("AgentWorkbenchSessions.TogglePreventSleepWhileWorking")
-      .contains("AgentWorkbenchSessions.Refresh")
-      .doesNotContain("AgentWorkbenchSessions.OpenDedicatedFrame")
+    assertThat(entries).containsSubsequence(
+      "OpenFile",
+      "AgentWorkbenchSessions.ShowArchivedThreads",
+      "AgentWorkbenchSessions.Refresh",
+      ACTION_SEPARATOR_MARKER,
+      "AgentWorkbenchSessions.ToggleDedicatedFrame",
+      "AgentWorkbenchSessions.TogglePreventSleepWhileWorking",
+    )
+    assertThat(entries).doesNotContain("AgentWorkbenchSessions.OpenDedicatedFrame")
+  }
+
+  @Test
+  fun showArchivedThreadsActionSwitchesThreadViewAndLoadsArchivedSessions() {
+    var mode = AgentSessionThreadViewMode.ACTIVE
+    var loadInvocations = 0
+    val action = AgentSessionsShowArchivedThreadsAction(
+      viewMode = { mode },
+      setViewMode = { mode = it },
+      ensureArchivedSessionsLoaded = { loadInvocations++ },
+    )
+    val event = TestActionEvent.createTestEvent(action)
+
+    action.update(event)
+    assertThat(event.presentation.isVisible).isTrue()
+
+    action.actionPerformed(event)
+
+    assertThat(mode).isEqualTo(AgentSessionThreadViewMode.ARCHIVED)
+    assertThat(loadInvocations).isEqualTo(1)
+
+    action.update(event)
+    assertThat(event.presentation.isVisible).isFalse()
   }
 
   @Test

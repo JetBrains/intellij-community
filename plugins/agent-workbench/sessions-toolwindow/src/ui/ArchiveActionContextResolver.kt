@@ -14,6 +14,7 @@ internal fun resolveArchiveActionContext(
   selectedTreeId: SessionTreeId?,
   selectedTreeNode: SessionTreeNode?,
   selectedArchiveTargets: List<ArchiveThreadTarget>,
+  selectedUnarchiveTargets: List<ArchiveThreadTarget> = emptyList(),
 ): AgentSessionsTreePopupActionContext? {
   if (popupActionContext != null) {
     return popupActionContext
@@ -28,5 +29,6 @@ internal fun resolveArchiveActionContext(
     nodeId = selectedTreeId,
     node = selectedTreeNode,
     archiveTargets = selectedArchiveTargets,
+    unarchiveTargets = selectedUnarchiveTargets,
   )
 }

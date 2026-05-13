@@ -131,6 +131,63 @@ class CodexAppServerSessionBackendTest {
   }
 
   @Test
+  fun listArchivedThreadsUsesArchivedFetcherAndDoesNotArchiveOrphans() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-archived")
+      Files.createDirectories(projectDir)
+      val cwd = normalizeRootPath(projectDir.invariantSeparatorsPathString)
+      val activeFetchCalls = ArrayList<String>()
+      val archivedFetchCalls = ArrayList<String>()
+      val archiveCalls = ArrayList<String>()
+      val attemptedArchiveIds = LinkedHashSet<String>()
+
+      val backend = CodexAppServerSessionBackend(
+        listThreadsForProject = { projectPath ->
+          activeFetchCalls.add(projectPath.toString())
+          emptyList()
+        },
+        listArchivedThreadsForProject = { projectPath ->
+          archivedFetchCalls.add(normalizeRootPath(projectPath.invariantSeparatorsPathString))
+          listOf(
+            parentThread(id = "parent-archived", cwd = cwd, updatedAt = 300L).copy(archived = true),
+            subAgentThread(
+              id = "child-archived",
+              cwd = cwd,
+              parentThreadId = "parent-archived",
+              updatedAt = 320L,
+            ).copy(archived = true),
+            subAgentThread(
+              id = "orphan-archived",
+              cwd = cwd,
+              parentThreadId = "missing-parent",
+              updatedAt = 330L,
+              activeFlags = listOf(CodexThreadActiveFlag.WAITING_ON_APPROVAL),
+            ).copy(archived = true),
+          )
+        },
+        archiveThread = { threadId -> archiveCalls.add(threadId) },
+        orphanArchiveAttemptRecorder = attemptedArchiveIds::add,
+      )
+
+      val threads = backend.listArchivedThreads(path = projectDir.toString(), openProject = null)
+
+      assertThat(activeFetchCalls).isEmpty()
+      assertThat(archivedFetchCalls).containsExactly(cwd)
+      assertThat(archiveCalls).isEmpty()
+      assertThat(attemptedArchiveIds).isEmpty()
+      assertThat(threads.map { it.thread.id }).containsExactly("orphan-archived", "parent-archived")
+      val orphan = threads.first()
+      assertThat(orphan.thread.archived).isTrue()
+      assertThat(orphan.thread.subAgents).isEmpty()
+      assertThat(orphan.activity).isEqualTo(CodexSessionActivity.NEEDS_INPUT)
+      assertThat(orphan.requiresResponse).isTrue()
+      val parent = threads[1]
+      assertThat(parent.thread.archived).isTrue()
+      assertThat(parent.thread.subAgents.map { it.id }).containsExactly("child-archived")
+    }
+  }
+
+  @Test
   fun prefetchArchivesAtMostOneOrphanPerCall() {
     runBlocking(Dispatchers.Default) {
       val projectA = tempDir.resolve("project-a")

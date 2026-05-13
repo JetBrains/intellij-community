@@ -29,330 +29,368 @@ private const val PREFETCH_FETCH_PARALLELISM = 4
 private const val MAX_TRACKED_ORPHAN_SUB_AGENT_IDS = 4_096
 
 class CodexAppServerSessionBackend(
-    private val listThreadsForProject: suspend (Path) -> List<CodexThread> = { projectPath ->
-        service<SharedCodexAppServerService>().listThreads(projectPath)
-    },
-    private val readThread: suspend (String) -> CodexThread? = { threadId ->
-        service<SharedCodexAppServerService>().readThread(threadId)
-    },
-    private val archiveThread: suspend (String) -> Unit = { threadId ->
-        service<SharedCodexAppServerService>().archiveThread(threadId)
-    },
-    private val orphanArchiveAttemptRecorder: (String) -> Boolean = InMemoryOrphanArchiveAttemptRecorder()::markArchiveAttempted,
+  private val listThreadsForProject: suspend (Path) -> List<CodexThread> = { projectPath ->
+    service<SharedCodexAppServerService>().listThreads(projectPath)
+  },
+  private val listArchivedThreadsForProject: suspend (Path) -> List<CodexThread> = { projectPath ->
+    service<SharedCodexAppServerService>().listArchivedThreads(projectPath)
+  },
+  private val readThread: suspend (String) -> CodexThread? = { threadId ->
+    service<SharedCodexAppServerService>().readThread(threadId)
+  },
+  private val archiveThread: suspend (String) -> Unit = { threadId ->
+    service<SharedCodexAppServerService>().archiveThread(threadId)
+  },
+  private val orphanArchiveAttemptRecorder: (String) -> Boolean = InMemoryOrphanArchiveAttemptRecorder()::markArchiveAttempted,
 ) : CodexSessionBackend {
-    override suspend fun listThreads(path: String, @Suppress("UNUSED_PARAMETER") openProject: Project?): List<CodexBackendThread> {
-        val workingDirectory = resolveProjectDirectoryFromPath(path) ?: return emptyList()
-        val cwdFilter = normalizeRootPath(workingDirectory.invariantSeparatorsPathString)
-        val threads = listThreadsForProject(workingDirectory)
-        val byPath = buildThreadsByCwd(
-            threads = threads,
-            targetCwds = setOf(cwdFilter),
-            archiveThread = archiveThread,
-            orphanArchiveAttemptRecorder = orphanArchiveAttemptRecorder,
-        )
-        return byPath[cwdFilter].orEmpty()
+  override suspend fun listThreads(path: String, @Suppress("UNUSED_PARAMETER") openProject: Project?): List<CodexBackendThread> {
+    val workingDirectory = resolveProjectDirectoryFromPath(path) ?: return emptyList()
+    val cwdFilter = normalizeRootPath(workingDirectory.invariantSeparatorsPathString)
+    val threads = listThreadsForProject(workingDirectory)
+    val byPath = buildThreadsByCwd(
+      threads = threads,
+      targetCwds = setOf(cwdFilter),
+      archiveThread = archiveThread,
+      orphanArchiveAttemptRecorder = orphanArchiveAttemptRecorder,
+    )
+    return byPath[cwdFilter].orEmpty()
+  }
+
+  override suspend fun listArchivedThreads(path: String, @Suppress("UNUSED_PARAMETER") openProject: Project?): List<CodexBackendThread> {
+    val workingDirectory = resolveProjectDirectoryFromPath(path) ?: return emptyList()
+    val cwdFilter = normalizeRootPath(workingDirectory.invariantSeparatorsPathString)
+    val threads = listArchivedThreadsForProject(workingDirectory)
+    return buildThreadsByCwd(
+      threads = threads,
+      targetCwds = setOf(cwdFilter),
+      archiveThread = {},
+      orphanArchiveAttemptRecorder = { false },
+      includeOrphanSubAgents = true,
+    )[cwdFilter].orEmpty()
+  }
+
+  override suspend fun refreshThreads(path: String, threadIds: Set<String>, openProject: Project?): CodexBackendThreadRefreshResult? {
+    if (threadIds.isEmpty()) {
+      return null
+    }
+    val workingDirectory = resolveProjectDirectoryFromPath(path) ?: return CodexBackendThreadRefreshResult()
+    val cwdFilter = normalizeRootPath(workingDirectory.invariantSeparatorsPathString)
+    val fetchedThreadsById = LinkedHashMap<String, CodexThread>(threadIds.size)
+    val parentThreadIdsToFetch = LinkedHashSet<String>()
+    for (threadId in threadIds) {
+      val thread = readThread(threadId) ?: continue
+      if (thread.cwd != cwdFilter) {
+        continue
+      }
+      if (thread.shouldBeGroupedAsSubAgentChild()) {
+        thread.parentThreadId?.trim()?.takeIf { it.isNotEmpty() }?.let(parentThreadIdsToFetch::add)
+        fetchedThreadsById[thread.id] = thread
+        continue
+      }
+      fetchedThreadsById[thread.id] = thread
+    }
+    for (parentThreadId in parentThreadIdsToFetch) {
+      if (parentThreadId in fetchedThreadsById) {
+        continue
+      }
+      val parentThread = readThread(parentThreadId) ?: continue
+      if (parentThread.cwd == cwdFilter) {
+        fetchedThreadsById[parentThread.id] = parentThread
+      }
+    }
+    val threads = buildThreadsByCwd(
+      threads = ArrayList(fetchedThreadsById.values),
+      targetCwds = setOf(cwdFilter),
+      archiveThread = {},
+      orphanArchiveAttemptRecorder = { false },
+    )[cwdFilter].orEmpty()
+    return CodexBackendThreadRefreshResult(threads = threads, isComplete = false)
+  }
+
+  override suspend fun prefetchThreads(paths: List<String>): Map<String, List<CodexBackendThread>> {
+    if (paths.isEmpty()) return emptyMap()
+
+    val pathFilters = resolvePathFilters(paths)
+    if (pathFilters.isEmpty()) return emptyMap()
+
+    val filtersByCwd = LinkedHashMap<String, MutableList<PathFilter>>()
+    for (filter in pathFilters) {
+      filtersByCwd.getOrPut(filter.cwdFilter) { ArrayList() }.add(filter)
     }
 
-    override suspend fun refreshThreads(path: String, threadIds: Set<String>, openProject: Project?): CodexBackendThreadRefreshResult? {
-        if (threadIds.isEmpty()) {
-            return null
-        }
-        val workingDirectory = resolveProjectDirectoryFromPath(path) ?: return CodexBackendThreadRefreshResult()
-        val cwdFilter = normalizeRootPath(workingDirectory.invariantSeparatorsPathString)
-        val fetchedThreadsById = LinkedHashMap<String, CodexThread>(threadIds.size)
-        val parentThreadIdsToFetch = LinkedHashSet<String>()
-        for (threadId in threadIds) {
-            val thread = readThread(threadId) ?: continue
-            if (thread.cwd != cwdFilter) {
-                continue
-            }
-            if (thread.shouldBeGroupedAsSubAgentChild()) {
-                thread.parentThreadId?.trim()?.takeIf { it.isNotEmpty() }?.let(parentThreadIdsToFetch::add)
-                fetchedThreadsById[thread.id] = thread
-                continue
-            }
-            fetchedThreadsById[thread.id] = thread
-        }
-        for (parentThreadId in parentThreadIdsToFetch) {
-            if (parentThreadId in fetchedThreadsById) {
-                continue
-            }
-            val parentThread = readThread(parentThreadId) ?: continue
-            if (parentThread.cwd == cwdFilter) {
-                fetchedThreadsById[parentThread.id] = parentThread
-            }
-        }
-        val threads = buildThreadsByCwd(
-            threads = ArrayList(fetchedThreadsById.values),
-            targetCwds = setOf(cwdFilter),
-            archiveThread = {},
-            orphanArchiveAttemptRecorder = { false },
-        )[cwdFilter].orEmpty()
-        return CodexBackendThreadRefreshResult(threads = threads, isComplete = false)
+    LOG.debug {
+      "Codex app-server prefetch requestedPaths=${paths.size}, resolvedPaths=${pathFilters.size}, uniqueCwds=${filtersByCwd.size}"
     }
 
-    override suspend fun prefetchThreads(paths: List<String>): Map<String, List<CodexBackendThread>> {
-        if (paths.isEmpty()) return emptyMap()
-
-        val pathFilters = resolvePathFilters(paths)
-        if (pathFilters.isEmpty()) return emptyMap()
-
-        val filtersByCwd = LinkedHashMap<String, MutableList<PathFilter>>()
-        for (filter in pathFilters) {
-            filtersByCwd.getOrPut(filter.cwdFilter) { ArrayList() }.add(filter)
-        }
-
-        LOG.debug {
-            "Codex app-server prefetch requestedPaths=${paths.size}, resolvedPaths=${pathFilters.size}, uniqueCwds=${filtersByCwd.size}"
-        }
-
-        val semaphore = Semaphore(PREFETCH_FETCH_PARALLELISM)
-        val fetchedByCwd = coroutineScope {
-            filtersByCwd.map { (cwdFilter, filters) ->
-                async {
-                    semaphore.withPermit {
-                        val workingDirectory = filters.first().workingDirectory
-                        try {
-                            cwdFilter to listThreadsForProject(workingDirectory)
-                        } catch (t: Throwable) {
-                            LOG.warn("Failed to prefetch Codex threads for cwd $cwdFilter", t)
-                            cwdFilter to null
-                        }
-                    }
-                }
-            }.awaitAll()
-        }
-
-        val prefetchedThreads = ArrayList<CodexThread>()
-        val succeededCwds = LinkedHashSet<String>()
-        var failedCwds = 0
-        for ((cwdFilter, threads) in fetchedByCwd) {
-            if (threads == null) {
-                failedCwds++
-                continue
+    val semaphore = Semaphore(PREFETCH_FETCH_PARALLELISM)
+    val fetchedByCwd = coroutineScope {
+      filtersByCwd.map { (cwdFilter, filters) ->
+        async {
+          semaphore.withPermit {
+            val workingDirectory = filters.first().workingDirectory
+            try {
+              cwdFilter to listThreadsForProject(workingDirectory)
             }
-            succeededCwds.add(cwdFilter)
-            prefetchedThreads.addAll(threads)
-        }
-
-        if (succeededCwds.isEmpty()) {
-            LOG.debug {
-                "Codex app-server prefetch finished without successful cwd fetches (resolvedPaths=${pathFilters.size}, failedCwds=$failedCwds)"
+            catch (t: Throwable) {
+              LOG.warn("Failed to prefetch Codex threads for cwd $cwdFilter", t)
+              cwdFilter to null
             }
-            return emptyMap()
+          }
         }
-
-        val threadsByCwd = buildThreadsByCwd(
-            threads = prefetchedThreads,
-            targetCwds = succeededCwds,
-            archiveThread = archiveThread,
-            orphanArchiveAttemptRecorder = orphanArchiveAttemptRecorder,
-        )
-
-        val result = LinkedHashMap<String, List<CodexBackendThread>>(pathFilters.size)
-        for (filter in pathFilters) {
-            if (filter.cwdFilter !in succeededCwds) {
-                continue
-            }
-            result[filter.path] = threadsByCwd[filter.cwdFilter].orEmpty()
-        }
-
-        LOG.debug {
-            "Codex app-server prefetch resolvedPaths=${pathFilters.size}, succeededCwds=${succeededCwds.size}, " +
-                    "failedCwds=$failedCwds, returnedPaths=${result.size}"
-        }
-
-        return result
+      }.awaitAll()
     }
+
+    val prefetchedThreads = ArrayList<CodexThread>()
+    val succeededCwds = LinkedHashSet<String>()
+    var failedCwds = 0
+    for ((cwdFilter, threads) in fetchedByCwd) {
+      if (threads == null) {
+        failedCwds++
+        continue
+      }
+      succeededCwds.add(cwdFilter)
+      prefetchedThreads.addAll(threads)
+    }
+
+    if (succeededCwds.isEmpty()) {
+      LOG.debug {
+        "Codex app-server prefetch finished without successful cwd fetches (resolvedPaths=${pathFilters.size}, failedCwds=$failedCwds)"
+      }
+      return emptyMap()
+    }
+
+    val threadsByCwd = buildThreadsByCwd(
+      threads = prefetchedThreads,
+      targetCwds = succeededCwds,
+      archiveThread = archiveThread,
+      orphanArchiveAttemptRecorder = orphanArchiveAttemptRecorder,
+    )
+
+    val result = LinkedHashMap<String, List<CodexBackendThread>>(pathFilters.size)
+    for (filter in pathFilters) {
+      if (filter.cwdFilter !in succeededCwds) {
+        continue
+      }
+      result[filter.path] = threadsByCwd[filter.cwdFilter].orEmpty()
+    }
+
+    LOG.debug {
+      "Codex app-server prefetch resolvedPaths=${pathFilters.size}, succeededCwds=${succeededCwds.size}, " +
+      "failedCwds=$failedCwds, returnedPaths=${result.size}"
+    }
+
+    return result
+  }
 }
 
 private class InMemoryOrphanArchiveAttemptRecorder {
-    private val attemptedThreadIds = LinkedHashSet<String>()
+  private val attemptedThreadIds = LinkedHashSet<String>()
 
-    @Synchronized
-    fun markArchiveAttempted(threadId: String): Boolean {
-        val normalizedThreadId = threadId.trim()
-        if (normalizedThreadId.isEmpty()) {
-            return false
-        }
-        if (!attemptedThreadIds.add(normalizedThreadId)) {
-            return false
-        }
-
-        while (attemptedThreadIds.size > MAX_TRACKED_ORPHAN_SUB_AGENT_IDS) {
-            val iterator = attemptedThreadIds.iterator()
-            if (!iterator.hasNext()) {
-                break
-            }
-            iterator.next()
-            iterator.remove()
-        }
-        return true
+  @Synchronized
+  fun markArchiveAttempted(threadId: String): Boolean {
+    val normalizedThreadId = threadId.trim()
+    if (normalizedThreadId.isEmpty()) {
+      return false
     }
+    if (!attemptedThreadIds.add(normalizedThreadId)) {
+      return false
+    }
+
+    while (attemptedThreadIds.size > MAX_TRACKED_ORPHAN_SUB_AGENT_IDS) {
+      val iterator = attemptedThreadIds.iterator()
+      if (!iterator.hasNext()) {
+        break
+      }
+      iterator.next()
+      iterator.remove()
+    }
+    return true
+  }
 }
 
 private suspend fun buildThreadsByCwd(
-    threads: List<CodexThread>,
-    targetCwds: Set<String>,
-    archiveThread: suspend (String) -> Unit,
-    orphanArchiveAttemptRecorder: (String) -> Boolean,
+  threads: List<CodexThread>,
+  targetCwds: Set<String>,
+  archiveThread: suspend (String) -> Unit,
+  orphanArchiveAttemptRecorder: (String) -> Boolean,
+  includeOrphanSubAgents: Boolean = false,
 ): Map<String, List<CodexBackendThread>> {
-    if (threads.isEmpty() || targetCwds.isEmpty()) {
-        return emptyMap()
+  if (threads.isEmpty() || targetCwds.isEmpty()) {
+    return emptyMap()
+  }
+
+  val parentsByCwd = LinkedHashMap<String, LinkedHashMap<String, CodexThread>>()
+  val childrenByCwdAndParent = LinkedHashMap<String, LinkedHashMap<String, MutableList<CodexThread>>>()
+  val subAgentsWithoutParentByCwd = LinkedHashMap<String, MutableList<CodexThread>>()
+
+  for (thread in threads) {
+    val cwd = thread.cwd ?: continue
+    if (cwd !in targetCwds) continue
+    if (thread.shouldBeGroupedAsSubAgentChild()) {
+      val parentThreadId = thread.parentThreadId
+        ?.trim()
+        ?.takeIf { it.isNotEmpty() }
+      if (parentThreadId == null) {
+        subAgentsWithoutParentByCwd
+          .getOrPut(cwd) { ArrayList() }
+          .add(thread)
+      }
+      else {
+        childrenByCwdAndParent
+          .getOrPut(cwd) { LinkedHashMap() }
+          .getOrPut(parentThreadId) { ArrayList() }
+          .add(thread)
+      }
+      continue
     }
 
-    val parentsByCwd = LinkedHashMap<String, LinkedHashMap<String, CodexThread>>()
-    val childrenByCwdAndParent = LinkedHashMap<String, LinkedHashMap<String, MutableList<CodexThread>>>()
-    val subAgentsWithoutParent = ArrayList<CodexThread>()
+    val cwdParents = parentsByCwd.getOrPut(cwd) { LinkedHashMap() }
+    val existing = cwdParents[thread.id]
+    if (existing == null || thread.updatedAt >= existing.updatedAt) {
+      cwdParents[thread.id] = thread
+    }
+  }
 
-    for (thread in threads) {
-        val cwd = thread.cwd ?: continue
-        if (cwd !in targetCwds) continue
-        if (thread.shouldBeGroupedAsSubAgentChild()) {
-            val parentThreadId = thread.parentThreadId
-                ?.trim()
-                ?.takeIf { it.isNotEmpty() }
-            if (parentThreadId == null) {
-                subAgentsWithoutParent.add(thread)
-            } else {
-                childrenByCwdAndParent
-                    .getOrPut(cwd) { LinkedHashMap() }
-                    .getOrPut(parentThreadId) { ArrayList() }
-                    .add(thread)
-            }
-            continue
-        }
+  val result = LinkedHashMap<String, List<CodexBackendThread>>(targetCwds.size)
+  val orphanCandidates = ArrayList<CodexThread>()
+  for (cwd in targetCwds) {
+    val parents = parentsByCwd[cwd].orEmpty()
+    val childrenByParent = childrenByCwdAndParent[cwd].orEmpty()
 
-        val cwdParents = parentsByCwd.getOrPut(cwd) { LinkedHashMap() }
-        val existing = cwdParents[thread.id]
-        if (existing == null || thread.updatedAt >= existing.updatedAt) {
-            cwdParents[thread.id] = thread
-        }
+    val threadsForCwd = ArrayList<CodexBackendThread>(parents.size)
+    for (parent in parents.values) {
+      val children = childrenByParent[parent.id]
+        .orEmpty()
+        .sortedByDescending { it.updatedAt }
+      val subAgents = children.map { child ->
+        CodexSubAgent(id = child.id, name = child.toSubAgentName())
+      }
+      val activity = foldSessionActivity(
+        parent.toCodexSessionActivity(),
+        children.asSequence().map(CodexThread::toCodexSessionActivity),
+      )
+      val requiresResponse = parent.activeFlags.isResponseRequired() || children.any { child -> child.activeFlags.isResponseRequired() }
+      threadsForCwd.add(
+        CodexBackendThread(
+          thread = parent.copy(subAgents = subAgents),
+          activity = activity,
+          requiresResponse = requiresResponse,
+        )
+      )
     }
 
-    val result = LinkedHashMap<String, List<CodexBackendThread>>(targetCwds.size)
-    val orphanCandidates = ArrayList<CodexThread>()
-    for (cwd in targetCwds) {
-        val parents = parentsByCwd[cwd].orEmpty()
-        val childrenByParent = childrenByCwdAndParent[cwd].orEmpty()
-
-        val threadsForCwd = ArrayList<CodexBackendThread>(parents.size)
-        for (parent in parents.values) {
-            val children = childrenByParent[parent.id]
-                .orEmpty()
-                .sortedByDescending { it.updatedAt }
-            val subAgents = children.map { child ->
-                CodexSubAgent(id = child.id, name = child.toSubAgentName())
-            }
-            val activity = foldSessionActivity(
-                parent.toCodexSessionActivity(),
-                children.asSequence().map(CodexThread::toCodexSessionActivity),
-            )
-            val requiresResponse = parent.activeFlags.isResponseRequired() || children.any { child -> child.activeFlags.isResponseRequired() }
-            threadsForCwd.add(
-                CodexBackendThread(
-                    thread = parent.copy(subAgents = subAgents),
-                    activity = activity,
-                    requiresResponse = requiresResponse,
-                )
-            )
-        }
-        threadsForCwd.sortByDescending { it.thread.updatedAt }
-        result[cwd] = threadsForCwd
-
-        for ((parentThreadId, children) in childrenByParent) {
-            if (parentThreadId !in parents) {
-                orphanCandidates.addAll(children)
-            }
-        }
+    val orphanCandidatesForCwd = ArrayList<CodexThread>()
+    for ((parentThreadId, children) in childrenByParent) {
+      if (parentThreadId !in parents) {
+        orphanCandidatesForCwd.addAll(children)
+      }
     }
-    orphanCandidates.addAll(subAgentsWithoutParent)
+    orphanCandidatesForCwd.addAll(subAgentsWithoutParentByCwd[cwd].orEmpty())
+    if (includeOrphanSubAgents) {
+      orphanCandidatesForCwd
+        .mapTo(threadsForCwd) { orphan -> orphan.toStandaloneBackendThread() }
+    }
+    else {
+      orphanCandidates.addAll(orphanCandidatesForCwd)
+    }
+    threadsForCwd.sortByDescending { it.thread.updatedAt }
+    result[cwd] = threadsForCwd
+  }
 
-    archiveSingleOrphan(
-        orphanCandidates = orphanCandidates,
-        archiveThread = archiveThread,
-        orphanArchiveAttemptRecorder = orphanArchiveAttemptRecorder,
-    )
+  archiveSingleOrphan(
+    orphanCandidates = orphanCandidates,
+    archiveThread = archiveThread,
+    orphanArchiveAttemptRecorder = orphanArchiveAttemptRecorder,
+  )
 
-    return result
+  return result
+}
+
+private fun CodexThread.toStandaloneBackendThread(): CodexBackendThread {
+  return CodexBackendThread(
+    thread = copy(subAgents = emptyList()),
+    activity = toCodexSessionActivity(),
+    requiresResponse = activeFlags.isResponseRequired(),
+  )
 }
 
 private suspend fun archiveSingleOrphan(
-    orphanCandidates: List<CodexThread>,
-    archiveThread: suspend (String) -> Unit,
-    orphanArchiveAttemptRecorder: (String) -> Boolean,
+  orphanCandidates: List<CodexThread>,
+  archiveThread: suspend (String) -> Unit,
+  orphanArchiveAttemptRecorder: (String) -> Boolean,
 ) {
-    val candidate = orphanCandidates
-        .asSequence()
-        .sortedByDescending { it.updatedAt }
-        .firstOrNull { thread ->
-            // Record before RPC so each orphan is attempted at most once across refresh cycles.
-            thread.id.isNotBlank() && orphanArchiveAttemptRecorder(thread.id)
-        } ?: return
+  val candidate = orphanCandidates
+                    .asSequence()
+                    .sortedByDescending { it.updatedAt }
+                    .firstOrNull { thread ->
+                      // Record before RPC so each orphan is attempted at most once across refresh cycles.
+                      thread.id.isNotBlank() && orphanArchiveAttemptRecorder(thread.id)
+                    } ?: return
 
-    try {
-        archiveThread(candidate.id)
-    } catch (t: Throwable) {
-        LOG.warn("Failed to archive orphan sub-agent thread ${candidate.id}", t)
-    }
+  try {
+    archiveThread(candidate.id)
+  }
+  catch (t: Throwable) {
+    LOG.warn("Failed to archive orphan sub-agent thread ${candidate.id}", t)
+  }
 }
 
 private fun CodexThread.toSubAgentName(): String {
-    val nickname = agentNickname?.trim().orEmpty()
-    val role = agentRole?.trim().orEmpty()
-    val resolvedTitle = title.trim()
-    return when {
-        nickname.isNotEmpty() && role.isNotEmpty() -> "$nickname ($role)"
-        nickname.isNotEmpty() -> nickname
-        resolvedTitle.isNotEmpty() -> resolvedTitle
-        role.isNotEmpty() -> role
-        else -> "Sub-agent ${id.take(8)}"
-    }
+  val nickname = agentNickname?.trim().orEmpty()
+  val role = agentRole?.trim().orEmpty()
+  val resolvedTitle = title.trim()
+  return when {
+    nickname.isNotEmpty() && role.isNotEmpty() -> "$nickname ($role)"
+    nickname.isNotEmpty() -> nickname
+    resolvedTitle.isNotEmpty() -> resolvedTitle
+    role.isNotEmpty() -> role
+    else -> "Sub-agent ${id.take(8)}"
+  }
 }
 
 private fun CodexThread.shouldBeGroupedAsSubAgentChild(): Boolean {
-    return when (sourceKind) {
-        CodexThreadSourceKind.SUB_AGENT_THREAD_SPAWN,
-            -> true
+  return when (sourceKind) {
+    CodexThreadSourceKind.SUB_AGENT_THREAD_SPAWN,
+      -> true
 
-        CodexThreadSourceKind.SUB_AGENT,
-        CodexThreadSourceKind.SUB_AGENT_REVIEW,
-        CodexThreadSourceKind.SUB_AGENT_COMPACT,
-        CodexThreadSourceKind.SUB_AGENT_OTHER,
-            -> !parentThreadId.isNullOrBlank()
+    CodexThreadSourceKind.SUB_AGENT,
+    CodexThreadSourceKind.SUB_AGENT_REVIEW,
+    CodexThreadSourceKind.SUB_AGENT_COMPACT,
+    CodexThreadSourceKind.SUB_AGENT_OTHER,
+      -> !parentThreadId.isNullOrBlank()
 
-        else -> false
-    }
+    else -> false
+  }
 }
 
 private fun foldSessionActivity(base: CodexSessionActivity, children: Sequence<CodexSessionActivity>): CodexSessionActivity {
-    var current = base
-    for (child in children) {
-        current = when {
-            child == CodexSessionActivity.NEEDS_INPUT || current == CodexSessionActivity.NEEDS_INPUT -> CodexSessionActivity.NEEDS_INPUT
-            child == CodexSessionActivity.REVIEWING || current == CodexSessionActivity.REVIEWING -> CodexSessionActivity.REVIEWING
-            child == CodexSessionActivity.PROCESSING || current == CodexSessionActivity.PROCESSING -> CodexSessionActivity.PROCESSING
-            child == CodexSessionActivity.UNREAD || current == CodexSessionActivity.UNREAD -> CodexSessionActivity.UNREAD
-            else -> CodexSessionActivity.READY
-        }
+  var current = base
+  for (child in children) {
+    current = when {
+      child == CodexSessionActivity.NEEDS_INPUT || current == CodexSessionActivity.NEEDS_INPUT -> CodexSessionActivity.NEEDS_INPUT
+      child == CodexSessionActivity.REVIEWING || current == CodexSessionActivity.REVIEWING -> CodexSessionActivity.REVIEWING
+      child == CodexSessionActivity.PROCESSING || current == CodexSessionActivity.PROCESSING -> CodexSessionActivity.PROCESSING
+      child == CodexSessionActivity.UNREAD || current == CodexSessionActivity.UNREAD -> CodexSessionActivity.UNREAD
+      else -> CodexSessionActivity.READY
     }
-    return current
+  }
+  return current
 }
 
 private data class PathFilter(
-    @JvmField val path: String,
-    @JvmField val cwdFilter: String,
-    @JvmField val workingDirectory: Path,
+  @JvmField val path: String,
+  @JvmField val cwdFilter: String,
+  @JvmField val workingDirectory: Path,
 )
 
 private fun resolvePathFilters(paths: List<String>): List<PathFilter> {
-    return paths.mapNotNull { path ->
-        resolveProjectDirectoryFromPath(path)?.let { directory ->
-            PathFilter(
-                path = path,
-                cwdFilter = normalizeRootPath(directory.invariantSeparatorsPathString),
-                workingDirectory = directory,
-            )
-        }
+  return paths.mapNotNull { path ->
+    resolveProjectDirectoryFromPath(path)?.let { directory ->
+      PathFilter(
+        path = path,
+        cwdFilter = normalizeRootPath(directory.invariantSeparatorsPathString),
+        workingDirectory = directory,
+      )
     }
+  }
 }

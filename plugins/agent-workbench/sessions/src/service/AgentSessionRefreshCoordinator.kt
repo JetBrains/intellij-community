@@ -25,8 +25,8 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.agent.workbench.sessions.model.AgentSessionProviderWarning
-import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
+import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.model.ProjectEntry
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.agent.workbench.sessions.util.agentSessionCliMissingMessageKey
@@ -244,7 +244,7 @@ internal class AgentSessionRefreshCoordinator(
             ) { partial, isComplete ->
               stateStore.updateProject(normalizedEntryPath) { project ->
                 project.copy(
-                  threads = partial.threads,
+                  threads = archiveSuppressionSupport.apply(normalizedEntryPath, partial.threads),
                   providerWarnings = partial.providerWarnings,
                   isLoading = !isComplete,
                 )
@@ -255,7 +255,7 @@ internal class AgentSessionRefreshCoordinator(
                 isLoading = false,
                 hasLoaded = true,
                 hasUnknownThreadCount = finalResult.hasUnknownThreadCount,
-                threads = finalResult.threads,
+                threads = archiveSuppressionSupport.apply(normalizedEntryPath, finalResult.threads),
                 errorMessage = finalResult.errorMessage,
                 providerWarnings = finalResult.providerWarnings,
               )
@@ -283,7 +283,7 @@ internal class AgentSessionRefreshCoordinator(
               ) { partial, isComplete ->
                 stateStore.updateWorktree(normalizedEntryPath, normalizedWorktreePath) { worktree ->
                   worktree.copy(
-                    threads = partial.threads,
+                    threads = archiveSuppressionSupport.apply(normalizedWorktreePath, partial.threads),
                     providerWarnings = partial.providerWarnings,
                     isLoading = !isComplete,
                   )
@@ -294,7 +294,7 @@ internal class AgentSessionRefreshCoordinator(
                   isLoading = false,
                   hasLoaded = true,
                   hasUnknownThreadCount = finalResult.hasUnknownThreadCount,
-                  threads = finalResult.threads,
+                  threads = archiveSuppressionSupport.apply(normalizedWorktreePath, finalResult.threads),
                   errorMessage = finalResult.errorMessage,
                   providerWarnings = finalResult.providerWarnings,
                 )

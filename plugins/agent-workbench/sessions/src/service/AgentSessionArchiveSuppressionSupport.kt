@@ -30,28 +30,49 @@ internal class AgentSessionArchiveSuppressionSupport {
         .filter { suppression -> suppression.path == normalizedPath && suppression.provider == provider }
         .toList()
     }
+    return apply(threads, applicableSuppressions)
+  }
+
+  fun apply(path: String, threads: List<AgentSessionThread>): List<AgentSessionThread> {
+    val normalizedPath = normalizeAgentWorkbenchPath(path)
+    val applicableSuppressions = synchronized(lock) {
+      suppressions.asSequence()
+        .filter { suppression -> suppression.path == normalizedPath }
+        .toList()
+    }
+    return apply(threads, applicableSuppressions)
+  }
+
+  private fun apply(threads: List<AgentSessionThread>, applicableSuppressions: List<ArchiveThreadTarget>): List<AgentSessionThread> {
     if (applicableSuppressions.isEmpty()) {
       return threads
     }
 
-    val suppressedThreadIds = HashSet<String>()
-    val suppressedSubAgentIdsByParent = LinkedHashMap<String, MutableSet<String>>()
+    val suppressedThreadIdsByProvider = LinkedHashMap<AgentSessionProvider, MutableSet<String>>()
+    val suppressedSubAgentIdsByProviderAndParent = LinkedHashMap<AgentSessionProvider, MutableMap<String, MutableSet<String>>>()
     applicableSuppressions.forEach { suppression ->
       when (suppression) {
-        is ArchiveThreadTarget.Thread -> suppressedThreadIds.add(suppression.threadId)
-        is ArchiveThreadTarget.SubAgent -> suppressedSubAgentIdsByParent.getOrPut(suppression.parentThreadId) { HashSet() }.add(suppression.subAgentId)
+        is ArchiveThreadTarget.Thread -> {
+          suppressedThreadIdsByProvider.getOrPut(suppression.provider) { HashSet() }.add(suppression.threadId)
+        }
+        is ArchiveThreadTarget.SubAgent -> {
+          suppressedSubAgentIdsByProviderAndParent
+            .getOrPut(suppression.provider) { LinkedHashMap() }
+            .getOrPut(suppression.parentThreadId) { HashSet() }
+            .add(suppression.subAgentId)
+        }
       }
     }
 
     var changed = false
     val nextThreads = ArrayList<AgentSessionThread>(threads.size)
     threads.forEach { thread ->
-      if (thread.id in suppressedThreadIds) {
+      if (suppressedThreadIdsByProvider[thread.provider]?.contains(thread.id) == true) {
         changed = true
         return@forEach
       }
 
-      val suppressedSubAgentIds = suppressedSubAgentIdsByParent[thread.id]
+      val suppressedSubAgentIds = suppressedSubAgentIdsByProviderAndParent[thread.provider]?.get(thread.id)
       if (suppressedSubAgentIds.isNullOrEmpty()) {
         nextThreads.add(thread)
         return@forEach

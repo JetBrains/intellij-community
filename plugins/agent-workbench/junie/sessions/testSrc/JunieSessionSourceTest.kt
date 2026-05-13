@@ -56,6 +56,45 @@ class JunieSessionSourceTest {
   }
 
   @Test
+  fun `loads archived indexed sessions for matching project path`() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-archived-list")
+      val otherProjectDir = tempDir.resolve("project-other")
+      val index = writeIndex(
+        sessionIndexLine(
+          sessionId = "session-active",
+          projectDir = projectDir,
+          taskName = "Active",
+          updatedAt = 3000L,
+        ),
+        sessionIndexLine(
+          sessionId = "session-archived",
+          projectDir = projectDir,
+          taskName = "Archived",
+          updatedAt = 4000L,
+          archived = true,
+        ),
+        sessionIndexLine(
+          sessionId = "session-other",
+          projectDir = otherProjectDir,
+          taskName = "Other",
+          updatedAt = 5000L,
+          archived = true,
+        ),
+      )
+      val source = JunieSessionSource(sessionIndexPathProvider = { index })
+
+      val threads = source.listArchivedThreadsFromClosedProject(projectDir.toString())
+
+      assertThat(threads.map { it.id }).containsExactly("session-archived")
+      assertThat(threads.single().title).isEqualTo("Archived")
+      assertThat(threads.single().archived).isTrue()
+      assertThat(threads.single().activity).isEqualTo(AgentThreadActivity.READY)
+      assertThat(threads.single().provider).isEqualTo(AgentSessionProvider.JUNIE)
+    }
+  }
+
+  @Test
   fun `rename appends updated indexed entry`() {
     runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-rename")

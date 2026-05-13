@@ -11,10 +11,14 @@ import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
+import com.intellij.agent.workbench.sessions.model.AgentSessionThreadViewMode
+import com.intellij.agent.workbench.sessions.service.AgentArchivedSessionsService
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.agent.workbench.sessions.service.AgentSessionReadService
 import com.intellij.agent.workbench.sessions.service.AgentSessionRefreshService
+import com.intellij.agent.workbench.sessions.state.AgentSessionThreadViewStateService
 import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
+import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeModel
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeModelDiff
@@ -149,10 +153,13 @@ internal class AgentSessionsToolWindowPanel(
 
   private val stateController = AgentSessionsTreeStateController(
     sessionsStateFlow = service<AgentSessionReadService>().stateFlow(),
+    archivedSessionsStateFlow = service<AgentArchivedSessionsService>().stateFlow(),
+    threadViewStateFlow = service<AgentSessionThreadViewStateService>().state,
     chatSelectionService = project.service<AgentChatTabSelectionService>(),
     markThreadAsRead = { path, provider, threadId, updatedAt ->
       service<AgentSessionRefreshService>().markThreadAsRead(path, provider, threadId, updatedAt)
     },
+    ensureArchivedSessionsLoaded = { service<AgentArchivedSessionsService>().ensureLoaded() },
     tree = tree,
     getSessionTreeModel = { sessionTreeModel },
     setSessionTreeModel = { sessionTreeModel = it },
@@ -168,7 +175,7 @@ internal class AgentSessionsToolWindowPanel(
     selectNodes = ::selectNodes,
   )
 
-  private val northPanel = buildNorthPanel()
+  private val northPanel: JPanel = buildNorthPanel()
 
   init {
     dataContextProvider = AgentSessionsTreeDataContextProvider(
@@ -184,6 +191,9 @@ internal class AgentSessionsToolWindowPanel(
       rowActionsOverlayProvider = { rowActionsOverlay },
       nodeResolver = ::sessionTreeNode,
       selectedArchiveTargets = { dataContextProvider.selectedArchiveTargets() },
+      selectedUnarchiveTargets = { dataContextProvider.selectedUnarchiveTargets() },
+      showMoreProjects = ::showMoreProjectsForCurrentView,
+      showMoreThreads = ::showMoreThreadsForCurrentView,
     )
 
     rowActionsOverlay = AgentSessionsTreeRowActionsOverlay(
@@ -214,7 +224,7 @@ internal class AgentSessionsToolWindowPanel(
     )
 
     configureTree()
-    northPanel?.let { add(it, BorderLayout.NORTH) }
+    add(northPanel, BorderLayout.NORTH)
     add(ScrollPaneFactory.createScrollPane(tree, true), BorderLayout.CENTER)
 
     interactionController.install()
@@ -222,12 +232,9 @@ internal class AgentSessionsToolWindowPanel(
     service<AgentSessionRefreshService>().refresh()
   }
 
-  private fun buildNorthPanel(): JPanel? {
+  private fun buildNorthPanel(): JPanel {
     val contributions = AgentSessionProviders.allProvidersById()
       .mapNotNull { provider -> provider.createToolWindowNorthComponent(project) }
-    if (contributions.isEmpty()) {
-      return null
-    }
     return JPanel().apply {
       layout = BoxLayout(this, BoxLayout.Y_AXIS)
       isOpaque = false
@@ -251,7 +258,9 @@ internal class AgentSessionsToolWindowPanel(
     installSessionTreeSpeedSearchReveal(
       tree = tree,
       modelProvider = { sessionTreeModel },
-      stateProvider = { service<AgentSessionReadService>().stateFlow().value },
+      stateProvider = stateController::displayedStateSnapshot,
+      ensureProjectVisible = ::ensureProjectVisibleForCurrentView,
+      ensureThreadVisible = ::ensureThreadVisibleForCurrentView,
     )
     ToolTipManager.sharedInstance().registerComponent(tree)
     com.intellij.util.ui.tree.ExpandOnDoubleClick.DEFAULT.installOn(tree)
@@ -334,6 +343,46 @@ internal class AgentSessionsToolWindowPanel(
 
   private fun sessionTreeNode(id: SessionTreeId): SessionTreeNode? {
     return sessionTreeModel.entriesById[id]?.node
+  }
+
+  private fun isArchivedView(): Boolean {
+    return service<AgentSessionThreadViewStateService>().state.value.mode == AgentSessionThreadViewMode.ARCHIVED
+  }
+
+  private fun showMoreProjectsForCurrentView() {
+    if (isArchivedView()) {
+      service<AgentArchivedSessionsService>().showMoreProjects()
+    }
+    else {
+      service<AgentSessionsStateStore>().showMoreProjects()
+    }
+  }
+
+  private fun showMoreThreadsForCurrentView(path: String) {
+    if (isArchivedView()) {
+      service<AgentArchivedSessionsService>().showMoreThreads(path)
+    }
+    else {
+      service<AgentSessionsStateStore>().showMoreThreads(path)
+    }
+  }
+
+  private fun ensureProjectVisibleForCurrentView(path: String) {
+    if (isArchivedView()) {
+      service<AgentArchivedSessionsService>().ensureProjectVisible(path)
+    }
+    else {
+      service<AgentSessionsStateStore>().ensureProjectVisible(path)
+    }
+  }
+
+  private fun ensureThreadVisibleForCurrentView(path: String, provider: AgentSessionProvider, threadId: String) {
+    if (isArchivedView()) {
+      service<AgentArchivedSessionsService>().ensureThreadVisible(path, provider, threadId)
+    }
+    else {
+      service<AgentSessionsStateStore>().ensureThreadVisible(path, provider, threadId)
+    }
   }
 
   override fun dispose() {
