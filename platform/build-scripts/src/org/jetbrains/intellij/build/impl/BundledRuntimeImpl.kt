@@ -58,7 +58,7 @@ class BundledRuntimeImpl(
         LibcImpl.current(OsFamily.currentOs) == LinuxLibcImpl.MUSL -> JetBrainsRuntimeDistribution.LIGHTWEIGHT.artifactPrefix
         bundledRuntimePrefix != null -> bundledRuntimePrefix
         productProperties != null -> productProperties.runtimeDistribution.artifactPrefix
-        else -> JetBrainsRuntimeDistribution.JCEF.artifactPrefix
+        else -> JetBrainsRuntimeDistribution.STANDARD.artifactPrefix
       }
     }
 
