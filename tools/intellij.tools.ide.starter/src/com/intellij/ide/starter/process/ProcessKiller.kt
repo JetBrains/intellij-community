@@ -24,8 +24,9 @@ import kotlin.time.Duration.Companion.seconds
  * - On Windows, killing descendants should not be done by iterating descendants — PID rotation can happen (see MRI-4085).
  *   Use [OSProcessUtil.killProcessTree] (which goes through WinP/Job-Objects) instead.
  *
- * - TW-71208: many processes on Linux TC (java/python) ignore SIGINT and only react to SIGTERM,
+ * - TW-71208: many processes on Linux TC (java for sure, ide we test and small test apps from portUtilTest) ignore SIGINT and only react to SIGTERM,
  *   SIGTERM is sent by `processHandle.destroy()`.
+ *   OSProcessUtil.terminateProcessGracefully sends SIGINT on Linux.
  *
  * - SIGTERM does NOT propagate through shells like dash/xvfb-run to their children, so we must
  *   signal each descendant explicitly. We cannot rely on process groups either: Java's
