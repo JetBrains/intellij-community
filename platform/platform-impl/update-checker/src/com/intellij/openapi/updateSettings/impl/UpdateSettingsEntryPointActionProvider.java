@@ -110,7 +110,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
   private static void initPluginsListeners() {
     if (myUpdatesService == null) {
       myUpdatesService = PluginUpdatesService.connectWithUpdates(updateResult -> {
-        if (updateResult == null) {
+        if (updateResult.isEmpty()) {
           newUpdatesForPlugins(null);
           myCustomRepositoryPlugins = null;
           return;

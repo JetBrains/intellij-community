@@ -42,13 +42,13 @@ public class PluginUpdatesService {
 
   // FIXME it is strange that users of this class need to known which updates came from custom repositories (IJPL-6087)
   /** clients should receive filtered updates by default */
-  private static @Nullable InternalPluginResults ourAllUpdates;
+  private static @NotNull InternalPluginResults ourAllUpdates = InternalPluginResults.empty();
   private static @NotNull Condition<? super IdeaPluginDescriptor> ourFilter = DEFAULT_FILTER;
   private static boolean ourPrepared;
   private static boolean ourPreparing;
   private static boolean ourReset;
 
-  private final List<Consumer<InternalPluginResults>> myUpdateCallbacks = new ArrayList<>();
+  private final List<Consumer<@NotNull InternalPluginResults>> myUpdateCallbacks = new ArrayList<>();
   private boolean mySetFilter;
 
   static {
@@ -66,7 +66,7 @@ public class PluginUpdatesService {
   }
 
   @ApiStatus.Internal
-  public static @NotNull PluginUpdatesService connectWithUpdates(@NotNull Consumer<@Nullable InternalPluginResults> callback) {
+  public static @NotNull PluginUpdatesService connectWithUpdates(@NotNull Consumer<@NotNull InternalPluginResults> callback) {
     PluginUpdatesService service = new PluginUpdatesService();
     service.myUpdateCallbacks.add(callback);
     synchronized (ourLock) {
@@ -80,10 +80,10 @@ public class PluginUpdatesService {
     return service;
   }
 
-  private static @Nullable InternalPluginResults getFilteredUpdateResult() {
+  private static @NotNull InternalPluginResults getFilteredUpdateResult() {
     synchronized (ourLock) {
-      if (ourAllUpdates == null) {
-        return null;
+      if (ourAllUpdates.isEmpty()) {
+        return ourAllUpdates;
       }
       final var filter = ourFilter;
       return new InternalPluginResults(
@@ -112,7 +112,7 @@ public class PluginUpdatesService {
 
   private static void finishUpdate(@NotNull IdeaPluginDescriptor descriptor) {
     synchronized (ourLock) {
-      if (!ourPrepared || ourAllUpdates == null) {
+      if (!ourPrepared) {
         return;
       }
       boolean removed = removeUpdate(descriptor.getPluginId());
@@ -126,8 +126,7 @@ public class PluginUpdatesService {
   }
 
   private static boolean removeUpdate(@NotNull PluginId pluginId) {
-    if (ourAllUpdates == null ||
-        !ContainerUtil.exists(ourAllUpdates.getPluginUpdates().getAll(), d -> Objects.equals(d.getDescriptor().getPluginId(), pluginId))) {
+    if (!ContainerUtil.exists(ourAllUpdates.getPluginUpdates().getAll(), d -> Objects.equals(d.getDescriptor().getPluginId(), pluginId))) {
       return false;
     }
     ourAllUpdates = new InternalPluginResults(
@@ -144,7 +143,7 @@ public class PluginUpdatesService {
 
   public void finishUpdate() {
     synchronized (ourLock) {
-      if (!ourPrepared || ourAllUpdates == null) {
+      if (!ourPrepared) {
         return;
       }
       var results = getFilteredUpdateResult();
@@ -157,7 +156,7 @@ public class PluginUpdatesService {
   public void recalculateUpdates() {
     synchronized (ourLock) {
       for (PluginUpdatesService service : SERVICES) {
-        service.runAllCallbacks(null);
+        service.runAllCallbacks(InternalPluginResults.empty());
       }
       if (ourPreparing) {
         resetUpdates();
@@ -192,7 +191,7 @@ public class PluginUpdatesService {
   public static void reapplyFilter() {
     synchronized (ourLock) {
       for (PluginUpdatesService service : SERVICES) {
-        service.runAllCallbacks(null);
+        service.runAllCallbacks(InternalPluginResults.empty());
       }
       final var filteredUpdates = getFilteredUpdateResult();
       for (PluginUpdatesService service : SERVICES) {
@@ -221,7 +220,7 @@ public class PluginUpdatesService {
     synchronized (ourLock) {
       SERVICES.remove(service);
       if (SERVICES.isEmpty()) {
-        ourAllUpdates = null;
+        ourAllUpdates = InternalPluginResults.empty();
         ourPrepared = false;
         ourPreparing = false;
       }
@@ -231,7 +230,7 @@ public class PluginUpdatesService {
   public static boolean isNeedUpdate(@NotNull IdeaPluginDescriptor descriptor) {
     PluginId pluginId = descriptor.getPluginId();
     synchronized (ourLock) {
-      if (ourPrepared && ourAllUpdates != null) {
+      if (ourPrepared) {
         final var filteredUpdates = getFilteredUpdateResult();
         assert filteredUpdates != null;
         return ContainerUtil.exists(filteredUpdates.getPluginUpdates().getAll(), d -> Objects.equals(d.getDescriptor().getPluginId(), pluginId));
@@ -241,13 +240,13 @@ public class PluginUpdatesService {
   }
 
 
-  public static @Nullable Collection<IdeaPluginDescriptor> getUpdates() {
+  public static Collection<IdeaPluginDescriptor> getUpdates() {
     synchronized (ourLock) {
       if (!ourPrepared || ourPreparing) {
-        return null;
+        return List.of();
       }
       final var filteredUpdates = getFilteredUpdateResult();
-      return filteredUpdates == null ? null : ContainerUtil.map(filteredUpdates.getPluginUpdates().getAll(), PluginDownloader::getDescriptor);
+      return ContainerUtil.map(filteredUpdates.getPluginUpdates().getAll(), PluginDownloader::getDescriptor);
     }
   }
 
@@ -265,7 +264,7 @@ public class PluginUpdatesService {
         return;
       }
       ourPreparing = true;
-      ourAllUpdates = null;
+      ourAllUpdates = InternalPluginResults.empty();
     }
     // for example, if executed as part of Traverse UI - don't wait check updates
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
@@ -293,7 +292,7 @@ public class PluginUpdatesService {
     });
   }
 
-  private void runAllCallbacks(@Nullable InternalPluginResults filteredUpdates) {
+  private void runAllCallbacks(@NotNull InternalPluginResults filteredUpdates) {
     for (var callback : myUpdateCallbacks) {
       callback.accept(filteredUpdates);
     }
@@ -303,8 +302,8 @@ public class PluginUpdatesService {
     @NotNull Consumer<? super Collection<PluginUiModel>> consumer
   ) {
     return updateResult -> {
-      if (updateResult == null) consumer.accept(null);
-      else consumer.accept(ContainerUtil.map(updateResult.getPluginUpdates().getAll(), downloader -> downloader.getUiModel()));
+      assert updateResult != null;
+      consumer.accept(ContainerUtil.map(updateResult.getPluginUpdates().getAll(), downloader -> downloader.getUiModel()));
     };
   }
 }

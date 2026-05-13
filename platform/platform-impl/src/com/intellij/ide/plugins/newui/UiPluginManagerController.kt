@@ -74,7 +74,7 @@ interface UiPluginManagerController {
   fun filterPluginsRequiringUltimateButItsDisabled(pluginIds: List<PluginId>): List<PluginId>
   fun getAllPluginsTags(): Set<String>
   fun getAllVendors(): Set<String>
-  fun connectToUpdateServiceWithCounter(sessionId: String, callback: (Int?) -> Unit): PluginUpdatesService
+  fun connectToPluginUpdateService(sessionId: String, callback: (List<PluginUiModel>) -> Unit): PluginUpdatesService
 
   suspend fun loadErrors(sessionId: String): Map<PluginId, CheckErrorsResult>
   suspend fun loadErrors(sessionId: String, pluginIds: List<PluginId>): Map<PluginId, CheckErrorsResult>

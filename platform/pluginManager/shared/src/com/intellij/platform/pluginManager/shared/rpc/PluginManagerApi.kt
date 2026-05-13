@@ -56,7 +56,6 @@ interface PluginManagerApi : RemoteApi<Unit> {
   suspend fun findPluginNames(pluginIds: List<PluginId>): List<String>
   suspend fun isNeedUpdate(pluginId: PluginId): Boolean
   suspend fun subscribeToPluginUpdates(sessionId: String): Flow<List<PluginDto>>
-  suspend fun subscribeToUpdatesCount(sessionId: String): Flow<Int?>
   suspend fun recalculatePluginUpdates(sessionId: String)
   suspend fun disposeUpdaterService(sessionId: String)
   suspend fun notifyUpdateFinished(sessionId: String)

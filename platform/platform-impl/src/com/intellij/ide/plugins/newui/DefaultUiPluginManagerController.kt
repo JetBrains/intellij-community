@@ -478,12 +478,22 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       .firstOrNull()
   }
 
-  override fun connectToUpdateServiceWithCounter(sessionId: String, callback: (Int?) -> Unit): PluginUpdatesService {
+  override fun connectToPluginUpdateService(sessionId: String, callback: (List<PluginUiModel>) -> Unit): PluginUpdatesService {
     val session = createSession(sessionId)
-    val service = PluginUpdatesService.connectWithUpdates({ results -> callback(results?.pluginUpdates?.all?.size ?: 0) })
-    service.setFilter { session.isPluginEnabled(it.pluginId) }
-    session.updateService = service
-    return service
+    if (session.updateService != null) {
+      val service = session.updateService!!
+      service.calculateUpdates({ updates -> callback(updates as List<PluginUiModel>) })
+      return service
+    } else {
+      val service = PluginUpdatesService.connectWithUpdates({ results ->
+                                                              callback(results.pluginUpdates.all.map {
+                                                                it.uiModel ?: PluginUiModelAdapter(it.descriptor)
+                                                              })
+                                                            })
+      service.setFilter { session.isPluginEnabled(it.pluginId) }
+      session.updateService = service
+      return service
+    }
   }
 
   override fun getAllPluginsTags(): Set<String> {

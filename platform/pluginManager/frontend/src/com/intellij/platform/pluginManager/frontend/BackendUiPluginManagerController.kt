@@ -172,10 +172,10 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
   }
 
   @OptIn(FlowPreview::class)
-  override fun connectToUpdateServiceWithCounter(sessionId: String, callback: (Int?) -> Unit): PluginUpdatesService {
+  override fun connectToPluginUpdateService(sessionId: String, callback: (List<PluginUiModel>) -> Unit): PluginUpdatesService {
     service<BackendRpcCoroutineContext>().coroutineScope.launch {
       durable {
-        PluginManagerApi.getInstance().subscribeToUpdatesCount(sessionId).debounce(100).collectLatest {
+        PluginManagerApi.getInstance().subscribeToPluginUpdates(sessionId).debounce(100).collectLatest {
           callback(it)
         }
       }

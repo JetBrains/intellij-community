@@ -65,7 +65,16 @@ data class InternalPluginResults @JvmOverloads @VisibleForTesting constructor(
   val pluginUpdates: PluginUpdates,
   val pluginNods: Collection<PluginUiModel> = emptyList(),
   val errors: Map<String?, Exception> = emptyMap(),
-)
+) {
+  fun isEmpty(): Boolean =
+    pluginUpdates.all.isEmpty() && pluginNods.isEmpty() && errors.isEmpty()
+
+    companion object {
+    private val EMPTY: InternalPluginResults = InternalPluginResults(PluginUpdates())
+    @JvmStatic
+    fun empty(): InternalPluginResults = EMPTY
+  }
+}
 
 @ApiStatus.Internal
 @IntellijInternalApi

@@ -253,7 +253,7 @@ class UiPluginManager {
   }
 
   fun subscribeToUpdatesCount(sessionId: String, callback: (Int?) -> Unit): PluginUpdatesService {
-    return getController().connectToUpdateServiceWithCounter(sessionId, callback)
+    return getController().connectToPluginUpdateService(sessionId, { updatedPlugins -> callback(updatedPlugins?.size ?: 0)})
   }
 
   companion object {

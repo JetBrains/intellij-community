@@ -45,7 +45,7 @@ public final class PluginsTabFactory implements WelcomeTabFactory {
       myCountLabel.setVisible(false);
 
       myService = PluginUpdatesService.connectWithUpdates(results -> {
-        int countValue = results == null ? 0 : results.getPluginUpdates().getAll().size();
+        int countValue = results.getPluginUpdates().getAll().size();
         @NlsSafe String text = countValue <= 0 ? null : Integer.toString(countValue);
         myCountLabel.setText(text);
         myCountLabel.setVisible(text != null);

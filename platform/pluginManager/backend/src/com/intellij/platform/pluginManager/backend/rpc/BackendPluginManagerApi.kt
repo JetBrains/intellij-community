@@ -15,6 +15,7 @@ import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
 import com.intellij.ide.plugins.newui.DefaultUiPluginManagerController
 import com.intellij.ide.plugins.newui.PluginInstallationState
 import com.intellij.ide.plugins.newui.PluginManagerSessionService
+import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
@@ -214,21 +215,10 @@ class BackendPluginManagerApi : PluginManagerApi {
     return DefaultUiPluginManagerController.isNeedUpdate(pluginId)
   }
 
-  override suspend fun subscribeToUpdatesCount(sessionId: String): Flow<Int?> {
-    return channelFlow {
-      DefaultUiPluginManagerController.connectToUpdateServiceWithCounter(sessionId) {
-        trySend(it)
-      }
-      awaitClose()
-    }
-  }
-
   override suspend fun subscribeToPluginUpdates(sessionId: String): Flow<List<PluginDto>> {
     return channelFlow {
-      val session = PluginManagerSessionService.getInstance().getSession(sessionId)
-      session?.updateService?.calculateUpdates { result ->
-        val pluginDtos = result?.map { PluginDto.fromModel(it) } ?: emptyList()
-        trySend(pluginDtos)
+      DefaultUiPluginManagerController.connectToPluginUpdateService(sessionId) { pluginUiModels: List<PluginUiModel>? ->
+        trySend(pluginUiModels?.map { PluginDto.fromModel(it) } ?: emptyList())
       }
       awaitClose()
     }
