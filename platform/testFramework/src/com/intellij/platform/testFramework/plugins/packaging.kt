@@ -212,7 +212,6 @@ private fun PluginSpec.buildClasses(dir: DirectoryContentBuilder) {
     LOG.debug { "packing classes from $pkg package" }
     for (url in (classLoader ?: this::class.java.classLoader).getResources(pkg.replace('.', '/'))) {
       LOG.debug { "resources url: $url" }
-      require(url.toString().endsWith('/')) { url }
       val packageEntries: List<String> = if (url.protocol.contains("jar")) {
         FileSystems.newFileSystem(url.toURI(), mutableMapOf<String, Any>()).use { jarFs ->
           val pkgPath = jarFs.getPath(pkg.replace('.', '/'))
