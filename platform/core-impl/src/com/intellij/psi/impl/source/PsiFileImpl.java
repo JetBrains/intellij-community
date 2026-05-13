@@ -265,7 +265,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       synchronized (myPsiLock) {
         FileElement treeElement = derefTreeElement();
         if (treeElement != null) {
-          if (Registry.is("psi.enable.persistent.syntax.tree", false) && viewProvider.isPhysical() && !treeElement.isVersioned()) {
+          if (InternalPsiVersioning.isVersionedSyntaxTreeEnabled() && viewProvider.isPhysical() && !treeElement.isVersioned()) {
             VersionedPsiConsistencyException exception = new VersionedPsiConsistencyException.ViewProvider("Illegal state: attempted to attach a versioned=" + treeElement.isVersioned() + " tree to a physical=" + viewProvider.isPhysical() + " file.");
             LOG.error(exception);
           }
@@ -870,7 +870,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   private void updateTrees(@NotNull FileTrees trees) {
     TreeElement treeElement = trees.derefTreeElement();
-    if (Registry.is("psi.enable.persistent.syntax.tree", false) && treeElement != null && getViewProvider().isPhysical() && !treeElement.isVersioned()) {
+    if (InternalPsiVersioning.isVersionedSyntaxTreeEnabled() && treeElement != null && getViewProvider().isPhysical() && !treeElement.isVersioned()) {
       VersionedPsiConsistencyException exception = new VersionedPsiConsistencyException.ViewProvider("Attempt to set non-versioned tree to a physical view provider");
       LOG.error(exception);
     }

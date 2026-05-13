@@ -21,7 +21,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import java.util.function.Supplier
 import kotlin.coroutines.CoroutineContext
-import kotlin.getValue
 
 // object is used for namespace qualification
 @Internal
@@ -377,5 +376,10 @@ object InternalPsiVersioning {
 
   fun cleanupVersioningSection() {
     cleanupTokenList.get().removeAt(cleanupTokenList.get().lastIndex).close()
+  }
+
+  @JvmStatic
+  fun isVersionedSyntaxTreeEnabled(): Boolean {
+    return Registry.`is`("psi.enable.persistent.syntax.tree", false)
   }
 }

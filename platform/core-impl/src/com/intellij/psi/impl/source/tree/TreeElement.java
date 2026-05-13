@@ -263,7 +263,6 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
 
   @Override
   public @NotNull Object clone() {
-    long version = Registry.is("psi.enable.persistent.syntax.tree", false) ? InternalPsiVersioning.getCurrentPsiVersion() : -1;
     TreeElement clone = (TreeElement)super.clone();
     clone.creationVersion = -1L;
     myNextSiblingAccessor.setVolatile(clone, null);
