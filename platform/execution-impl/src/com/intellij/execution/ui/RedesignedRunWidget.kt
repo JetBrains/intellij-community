@@ -129,17 +129,21 @@ private fun createRunActionToolbar(): ActionToolbar {
   toolbar.isReservePlaceAutoPopupIcon = false
   toolbar.layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
   toolbar.component.isOpaque = false
-  toolbar.component.border = JBUI.Borders.empty(0, 12, 0, 16)
+  val toolbarInsetsSupplier: Supplier<Insets> = Supplier {
+    @Suppress("UseDPIAwareInsets") // the supplier must provide unscaled values
+    Insets(0, 12, 0, 16)
+  }
+  toolbar.component.border = JBUI.Borders.empty(JBInsets.create(toolbarInsetsSupplier, toolbarInsetsSupplier.get()))
   toolbar.setMinimumButtonSize {
     JBUI.size(JBUI.CurrentTheme.RunWidget.actionButtonWidth(), JBUI.CurrentTheme.RunWidget.toolbarHeight())
   }
-  val insetsSupplier: Supplier<Insets> = Supplier {
+  val buttonInsetsSupplier: Supplier<Insets> = Supplier {
     val horizontal = JBUI.CurrentTheme.RunWidget.toolbarBorderDirectionalGap()
     val mainToolbarInsets = (JBUI.CurrentTheme.Toolbar.mainToolbarButtonInsets() as JBInsets).unscaled
     @Suppress("UseDPIAwareInsets") // the supplier must provide unscaled values
     Insets(mainToolbarInsets.top, horizontal, mainToolbarInsets.bottom, horizontal)
   }
-  toolbar.setActionButtonBorder(JBEmptyBorder(JBInsets.create(insetsSupplier, insetsSupplier.get())))
+  toolbar.setActionButtonBorder(JBEmptyBorder(JBInsets.create(buttonInsetsSupplier, buttonInsetsSupplier.get())))
   toolbar.setCustomButtonLook(RunWidgetButtonLook())
   return toolbar
 }
