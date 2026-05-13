@@ -216,6 +216,8 @@ com.intellij.codeInsight.daemon.ProjectSdkSetupValidator
 - a:getErrorMessage(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.String
 - getFixHandler(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.ui.EditorNotificationPanel$ActionHandler
 - a:isApplicableFor(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):Z
+f:com.intellij.codeInsight.daemon.impl.DaemonTooltipActionProviderKt
+- sf:findIntention(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,I,java.lang.String):com.intellij.codeInsight.intention.IntentionAction
 com.intellij.codeInsight.daemon.impl.EditorTrackerListener
 - java.util.EventListener
 - sf:Companion:com.intellij.codeInsight.daemon.impl.EditorTrackerListener$Companion

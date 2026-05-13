@@ -22,6 +22,7 @@ import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.xml.util.XmlStringUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.event.InputEvent
 import java.util.Objects
 
@@ -38,9 +39,12 @@ class DaemonTooltipActionProvider : TooltipActionProvider {
  * @param myFixText is a text to show in tooltip
  * @param myActionText is a text to search for in intentions' actions
  */
-private class DaemonTooltipAction(@NlsActions.ActionText private val myFixText: String,
-                                  @NlsContexts.Command private val myActionText: String,
-                                  private val myActualOffset: Int) : TooltipAction {
+@ApiStatus.Internal
+class DaemonTooltipAction(
+  @NlsActions.ActionText private val myFixText: String,
+  @NlsContexts.Command val myActionText: String,
+  private val myActualOffset: Int,
+) : TooltipAction {
   override fun getText(): String {
     return myFixText
   }
@@ -50,23 +54,12 @@ private class DaemonTooltipAction(@NlsActions.ActionText private val myFixText: 
 
     TooltipActionsLogger.logExecute(project, inputEvent)
     val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return
-    val intentions = SlowOperations.knownIssue("IDEA-301732, EA-660480").use {
-      ShowIntentionsPass.getAvailableFixes(editor, psiFile, -1, myActualOffset)
-    }
 
-    for ((index, descriptor) in intentions.withIndex()) {
-      val action = descriptor.action
-      if (action.text == myActionText) {
-        // unfortunately it is very common case when quick fixes/refactorings use caret position
-        // Skip the ChoiceTitleIntentionAction if it's the first action: most likely it's a title and not the actual action
-        if (intentions.size > 1 && index == 0 && action is ChoiceTitleIntentionAction) {
-          continue
-        }
-        editor.caretModel.moveToOffset(myActualOffset)
-        ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, action, myActionText, IntentionSource.DAEMON_TOOLTIP)
-        return
-      }
-    }
+    val action = findIntention(editor, psiFile, myActualOffset, myActionText) ?: return
+    editor.caretModel.moveToOffset(myActualOffset)
+    ShowIntentionActionsHandler.chooseActionAndInvoke(
+      psiFile, editor, action, myActionText, IntentionSource.DAEMON_TOOLTIP
+    )
   }
 
   override fun showAllActions(editor: Editor) {
@@ -158,4 +151,23 @@ fun wrapIntentionToTooltipAction(intention: IntentionAction,
       }
     } ?: info.actualStartOffset
   return DaemonTooltipAction(text, intention.text, offset)
+}
+
+fun findIntention(editor: Editor, file: PsiFile, offset: Int, actionText: String): IntentionAction? {
+  val intentions = SlowOperations.knownIssue("IDEA-301732, EA-660480").use {
+    ShowIntentionsPass.getAvailableFixes(editor, file, -1, offset)
+  }
+
+  for ((index, descriptor) in intentions.withIndex()) {
+    val action = descriptor.action
+    if (action.text == actionText) {
+      // unfortunately it is very common case when quick fixes/refactorings use caret position
+      // Skip the ChoiceTitleIntentionAction if it's the first action: most likely it's a title and not the actual action
+      if (intentions.size > 1 && index == 0 && action is ChoiceTitleIntentionAction) {
+        continue
+      }
+      return action
+    }
+  }
+  return null
 }
