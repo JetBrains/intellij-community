@@ -129,13 +129,13 @@ fun PluginSpec.installAt(pluginsDir: Path, config: PluginPackagingConfig = Plugi
   } else {
     val dirPath = findInexistentPath(pluginsDir, sanitizeFileName(id!!), "")
     directoryContent {
-      buildDir(this@directoryContent, config)
+      buildMultiJarDir(this@directoryContent, config)
     }.generate(dirPath)
     return dirPath
   }
 }
 
-private fun PluginSpec.buildDir(
+private fun PluginSpec.buildMultiJarDir(
   builder: DirectoryContentBuilder,
   config: PluginPackagingConfig,
 ) = with(config) {
@@ -177,7 +177,7 @@ fun PluginSpec.buildZip(path: Path, config: PluginPackagingConfig = PluginPackag
   zipFile {
     val rootDir = name ?: id ?: error("neither name or id specified")
     dir(rootDir) {
-      buildDir(this, config)
+      buildMultiJarDir(this, config)
     }
   }.generate(path)
 }
