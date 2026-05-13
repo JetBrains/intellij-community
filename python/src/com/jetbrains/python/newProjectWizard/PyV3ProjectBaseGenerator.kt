@@ -10,7 +10,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.DirectoryProjectGenerator
 import com.intellij.platform.ProjectGeneratorPeer
 import com.intellij.platform.ide.progress.withBackgroundProgress
@@ -90,10 +89,8 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
       return // Since we failed to generate a project, we do not need to go any further
     }
 
-    withContext(Dispatchers.EDT) {
-      edtWriteAction {
-        VirtualFileManager.getInstance().syncRefresh()
-      }
+    edtWriteAction {
+      baseDir.refresh(false, true)
     }
 
     val pythonVersion = withContext(Dispatchers.IO) { sdk.version }
