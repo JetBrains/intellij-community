@@ -92,11 +92,20 @@ class TestMetaInfoExtension : BeforeAllCallback, BeforeEachCallback, Extension, 
     }
     else {
       val testClassInfo = context.getTestClassInfo()
+      val testMethod = context.testMethod.get()
+      val testMetaInfo = AnnotationSupport
+        .findAnnotation(testMethod, TestMetaInfo::class.java)
+        .getOrNull()
+
+      if (testMetaInfo != null && testClassInfo.testDataPath == null) {
+        error(
+          "@TestMetaInfo on ${testMethod.declaringClass.name}#${testMethod.name} " +
+          "requires @TestDataPath on the test class to resolve '${testMetaInfo.resourcePath}'."
+        )
+      }
+
       testClassInfo.testDataPath?.let { testDataPath ->
         val testName = context.resolveTestName()
-        val testMetaInfo = AnnotationSupport
-          .findAnnotation(context.testMethod.get(), TestMetaInfo::class.java)
-          .getOrNull()
 
         if (testMetaInfo != null) {
           val resourceRaw = testMetaInfo.resourcePath
