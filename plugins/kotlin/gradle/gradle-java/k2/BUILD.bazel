@@ -159,6 +159,10 @@ jvm_library(
     "@lib//:kotlin-tooling-core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/editor-ui-api:editor-ui_test_lib",
+    "//plugins/kotlin/gradle/code-insight-groovy:kotlin-gradle-codeInsight-groovy",
+    "//plugins/kotlin/gradle/code-insight-groovy:kotlin-gradle-codeInsight-groovy_test_lib",
+    "//plugins/kotlin/inspections",
+    "//plugins/kotlin/inspections:inspections_test_lib",
   ],
   runtime_deps = [
     ":kotlin-gradle-java-tests",
