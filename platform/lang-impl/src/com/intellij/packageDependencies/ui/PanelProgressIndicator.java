@@ -80,10 +80,13 @@ public class PanelProgressIndicator extends ProgressIndicatorBase {
     myAlarm = EdtExecutorService.getScheduledExecutorInstance().schedule(() -> {
       myPaintInQueue = false;
       myProgressPanel.myTextLabel.setText(scanningPackagesMessage);
-      int fraction = (int)(ffraction * 99 + 0.5);
-      myProgressPanel.myFractionLabel.setText(fraction + "%");
-      if (fraction != -1) {
+      if (ffraction != -1) {
+        int fraction = (int)(ffraction * 99 + 0.5);
+        myProgressPanel.myFractionLabel.setText(fraction + "%");
         myProgressPanel.myFractionProgress.setValue(fraction);
+      }
+      else {
+        myProgressPanel.myFractionLabel.setText("");
       }
       myProgressPanel.myFractionProgress.setIndeterminate(indeterminate);
     }, 10, TimeUnit.MILLISECONDS);
