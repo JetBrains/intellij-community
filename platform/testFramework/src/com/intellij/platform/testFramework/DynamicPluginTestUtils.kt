@@ -104,10 +104,10 @@ fun setPluginClassLoaderForMainAndSubPlugins(rootDescriptor: IdeaPluginDescripto
 }
 
 fun unloadAndUninstallPlugin(descriptor: PluginMainDescriptor): Boolean {
-  return DynamicPlugins.unloadPlugin(
+  val unloaded = DynamicPlugins.unloadPlugin(
     descriptor,
     DynamicPlugins.UnloadPluginOptions(disable = false),
-  ).also {
-    IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects()
-  }
+  )
+  if (unloaded) IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects()
+  return unloaded
 }

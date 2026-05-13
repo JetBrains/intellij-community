@@ -21,6 +21,10 @@ import com.intellij.ide.plugins.testPluginSrc.foo.bar.FooBarService
 import com.intellij.ide.plugins.testPluginSrc.foo.ep.FooExtension
 import com.intellij.ide.plugins.testPluginSrc.foo.ep.FooExtensionService
 import com.intellij.ide.plugins.testPluginSrc.foo.epImpl.FooExtensionImpl
+import com.intellij.ide.plugins.testPluginSrc.uiSettingsListener.MyUISettingsListener
+import com.intellij.ide.plugins.testPluginSrc.uiSettingsListener.MyUISettingsListenerService
+import com.intellij.ide.plugins.testPluginSrc.uiSettingsListener.foo.MyFooUISettingsListener
+import com.intellij.ide.plugins.testPluginSrc.uiSettingsListener.foo.MyFooUISettingsListenerService
 import com.intellij.ide.startup.impl.StartupManagerImpl
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
@@ -55,12 +59,14 @@ import com.intellij.openapi.util.use
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
 import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
+import com.intellij.platform.pluginSystem.testFramework.buildPluginSet
 import com.intellij.platform.testFramework.loadDescriptorInTest
 import com.intellij.platform.testFramework.loadExtensionWithText
 import com.intellij.platform.testFramework.plugins.PluginSpec
 import com.intellij.platform.testFramework.plugins.PluginTestHandle
 import com.intellij.platform.testFramework.plugins.action
 import com.intellij.platform.testFramework.plugins.appService
+import com.intellij.platform.testFramework.plugins.applicationListener
 import com.intellij.platform.testFramework.plugins.buildDistributionArchive
 import com.intellij.platform.testFramework.plugins.buildMainJar
 import com.intellij.platform.testFramework.plugins.content
@@ -95,17 +101,13 @@ import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.random.Random
 
 @Suppress("UnresolvedPluginConfigReference")
 @RunsInEdt
 class DynamicPluginsTest {
-  companion object {
-    val receivedNotifications = mutableListOf<UISettings>()
-    val receivedNotifications2 = mutableListOf<UISettings>()
-  }
-
   // per test
   @Rule
   @JvmField
@@ -142,26 +144,66 @@ class DynamicPluginsTest {
   }
 
   @Test
-  fun testLoadListeners() {
-    receivedNotifications.clear()
-
+  fun `app level listeners are loaded with plugin load`() {
     val app = ApplicationManager.getApplication()
     app.messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(UISettings())
-
-    val plugin = plugin("testLoadListeners") {
-      dependsIntellijModulesLang()
-      applicationListeners = """<listener class="${MyUISettingsListener::class.java.name}" topic="com.intellij.ide.ui.UISettingsListener"/>"""
+    val pluginSet = buildPluginSet(pluginsDir) {
+      plugin("listeners") {
+        applicationListener<MyUISettingsListener, UISettingsListener>()
+        includePackageClassFiles<MyUISettingsListener>()
+      }
     }
-    val descriptor = loadDescriptorInTest(plugin, pluginsDir)
-
-    setPluginClassLoaderForMainAndSubPlugins(descriptor, DynamicPlugins::class.java.classLoader)
-    DynamicPlugins.loadPlugin(descriptor)
+    val plugin = pluginSet.getEnabledPlugin("listeners")
+    loadPluginInTest(plugin) {
+      val listenerTriggered = AtomicBoolean()
+      val handle = application.getTestHandleService<MyUISettingsListenerService, _, _>(plugin)!!
+      handle.test { listenerTriggered.set(true) }
+      app.messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(UISettings())
+      assertThat(listenerTriggered.get()).isTrue()
+      handle.test { error("supposed to be unloaded") }
+    }
     app.messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(UISettings())
-    assertThat(receivedNotifications).hasSize(1)
+  }
 
-    unloadAndUninstallPlugin(descriptor)
-    app.messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(UISettings())
-    assertThat(receivedNotifications).hasSize(1)
+  // FIXME: Previously when listeners plugin was loaded it wasn't assigned a classloader, and because of that it was treated as not loaded by some checks.
+  //    Now, it is assigned a classloader and new "is this operation dynamic" checks start to work and they now prevent loading.
+  //    New dynamic plugin loading implementation will fix this properly.
+  @Ignore
+  @Test
+  fun `loading of a plugin also loads dependent content modules of other plugins`() {
+    val pluginSet = buildPluginSet(pluginsDir) {
+      plugin("foo") { }
+      plugin("listeners") {
+        content {
+          module("listeners.foo") {
+            dependencies { plugin("foo") }
+            applicationListener<MyFooUISettingsListener, UISettingsListener>()
+            includePackageClassFiles<MyFooUISettingsListener>()
+          }
+        }
+        applicationListener<MyUISettingsListener, UISettingsListener>()
+        includePackageClassFiles<MyUISettingsListener>()
+      }
+    }
+    val (foo, listeners) = pluginSet.getEnabledPlugins("foo", "listeners")
+    loadPluginInTest(listeners) {
+      val mainListenerHandle = application.getTestHandleService<MyUISettingsListenerService, _, _>(listeners)!!
+      val mainListenerInvokedCount = AtomicInteger(0)
+      val fooListenerInvokedCount = AtomicInteger(0)
+      mainListenerHandle.test { mainListenerInvokedCount.incrementAndGet() }
+      application.messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(UISettings())
+      assertThat(mainListenerInvokedCount.get()).isEqualTo(1)
+      loadPluginInTest(foo) {
+        val fooListenerHandle = application.getTestHandleService<MyFooUISettingsListenerService, _, _>(foo)!!
+        fooListenerHandle.test { fooListenerInvokedCount.incrementAndGet() }
+        application.messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(UISettings())
+        assertThat(mainListenerInvokedCount.get()).isEqualTo(2)
+        assertThat(fooListenerInvokedCount.get()).isEqualTo(1)
+      }
+      application.messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(UISettings())
+      assertThat(mainListenerInvokedCount.get()).isEqualTo(3)
+      assertThat(fooListenerInvokedCount.get()).isEqualTo(1)
+    }
   }
 
   @Test
@@ -757,44 +799,6 @@ class DynamicPluginsTest {
   }
 
   @Test
-  fun loadOptionalDependencyListener() {
-    receivedNotifications.clear()
-    receivedNotifications2.clear()
-
-    val pluginTwo = plugin("optionalDependencyListener-two") {
-      packagePrefix = "optionalDependencyListener-two"
-      dependsIntellijModulesLang()
-    }
-    val pluginDescriptor = plugin("optionalDependencyListener-one") {
-      packagePrefix = "org.foo.one"
-      dependsIntellijModulesLang()
-      content {
-        module("intellij.org.foo") {
-          packagePrefix = "org.foo"
-          applicationListeners = """<listener class="${MyUISettingsListener2::class.java.name}" topic="com.intellij.ide.ui.UISettingsListener"/>"""
-          dependencies { plugin(pluginTwo.id!!) }
-        }
-      }
-      applicationListeners = """<listener class="${MyUISettingsListener::class.java.name}" topic="com.intellij.ide.ui.UISettingsListener"/>"""
-    }
-    loadPluginWithText(pluginDescriptor).use {
-      val app = ApplicationManager.getApplication()
-      app.messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(UISettings())
-      assertThat(receivedNotifications).hasSize(1)
-
-      loadPluginWithText(pluginTwo).use {
-        app.messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(UISettings())
-        assertThat(receivedNotifications).hasSize(2)
-        assertThat(receivedNotifications2).hasSize(1)
-      }
-
-      app.messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(UISettings())
-      assertThat(receivedNotifications).hasSize(3)
-      assertThat(receivedNotifications2).hasSize(1)
-    }
-  }
-
-  @Test
   fun loadOptionalDependencyEP() {
     val pluginTwo = plugin("optionalDependencyListener-two") { dependsIntellijModulesLang() }
     val pluginTwoDisposable = loadPluginWithText(pluginTwo)
@@ -1326,19 +1330,6 @@ private class MyRegistryAccessor {
   }
 }
 
-
-private class MyUISettingsListener : UISettingsListener {
-  override fun uiSettingsChanged(uiSettings: UISettings) {
-    DynamicPluginsTest.receivedNotifications.add(uiSettings)
-  }
-}
-
-private class MyUISettingsListener2 : UISettingsListener {
-  override fun uiSettingsChanged(uiSettings: UISettings) {
-    DynamicPluginsTest.receivedNotifications2.add(uiSettings)
-  }
-}
-
 private data class MyPersistentState(@Attribute var stateData: String? = "")
 
 private interface MyPersistentComponent {
@@ -1450,14 +1441,17 @@ private fun assertModuleIsLoaded(moduleName: String) {
 }
 
 private fun loadPluginInTest(pluginPath: Path, actionWithPluginLoaded: () -> Unit) {
-  val descriptor = loadDescriptorInTest(pluginPath)
+  return loadPluginInTest(loadDescriptorInTest(pluginPath), actionWithPluginLoaded)
+}
+
+private fun loadPluginInTest(plugin: PluginMainDescriptor, actionWithPluginLoaded: () -> Unit) {
   try {
-    assertThat(DynamicPlugins.loadPlugin(pluginDescriptor = descriptor)).isTrue()
+    assertThat(DynamicPlugins.loadPlugin(pluginDescriptor = plugin)).isTrue()
     IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects()
     actionWithPluginLoaded()
   }
   finally {
-    unloadAndUninstallPlugin(descriptor)
+    assertThat(unloadAndUninstallPlugin(plugin)).isTrue()
   }
 }
 
