@@ -1,12 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.codeInsight.gradle
+package org.jetbrains.kotlin.idea.k2.codeInsight.gradle.configuration
 
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ExternalLibraryDescriptor
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.KotlinWithGradleConfigurator
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
