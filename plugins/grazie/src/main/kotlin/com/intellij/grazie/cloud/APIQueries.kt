@@ -100,21 +100,20 @@ object APIQueries {
     }
   }
 
-  @JvmOverloads
-  suspend fun correctText(paragraphs: List<Paragraph>, project: Project,
-                          services: Set<CorrectionServiceType>,
-                          userSettings: UserSettings? = null,
-                          clientAbilities: Set<ClientAbility>? = null): List<Problem>? {
-    val actualClientAbilities = if (CorrectionServiceType.MLEC in services) {
-      val abilities = clientAbilities?.toMutableSet() ?: mutableSetOf()
-      abilities.add(ClientAbility.closeMlecMerging)
-      abilities
-    } else {
-      clientAbilities
-    }
+  suspend fun correctText(paragraphs: List<Paragraph>, project: Project, services: Set<CorrectionServiceType>): List<Problem>? {
+    val langs = paragraphs.asSequence()
+      .mapNotNull { it.forcedLanguage }
+      .mapNotNull { findInstalledLang(it) }
+      .toSet()
+    if (langs.isEmpty()) return emptyList()
+
     return handleExceptions(project, BackgroundCloudService.GEC) {
       withContext(Dispatchers.IO) {
-        GrazieCloudConnector.api()?.gec()?.correctText(paragraphs, services, userSettings, actualClientAbilities)?.corrections
+        GrazieCloudConnector.api()?.gec()?.correctText(
+          paragraphs, services,
+          getUserSettingsWithLanguageVariant(langs),
+          setOf(ClientAbility.closeMlecMerging)
+        )?.corrections
       }
     }
   }
@@ -150,21 +149,26 @@ object APIQueries {
     return handleExceptions(project, BackgroundCloudService.GEC) {
       withContext(Dispatchers.IO) {
         GrazieCloudConnector.api()?.gec()?.problemsWithExclusions(
-          language, sentences, setOf(CorrectionServiceType.SPELL), getLanguageVariant(lang)
+          language, sentences, setOf(CorrectionServiceType.SPELL), getUserSettingsWithLanguageVariant(listOf(lang))
         )
       }
     }
   }
 
 
-  private fun getLanguageVariant(lang: Lang): UserSettings? {
-    val variant = TreeRuleChecker.getLanguageVariant(lang) ?: return null
-    val prefix = lang.iso.toString().capitalize()
+  private fun getUserSettingsWithLanguageVariant(langs: Collection<Lang>): UserSettings? {
+    val paramValues = langs.mapNotNull { lang ->
+      val variant = TreeRuleChecker.getLanguageVariant(lang)
+      if (variant == null) return@mapNotNull null
+      val prefix = lang.iso.toString().capitalize()
+      StyleProfile.ParamValue("$prefix.variant", variant)
+    }
+    if (paramValues.isEmpty()) return null
     return UserSettings(
       customProfiles = arrayOf(
         StyleProfile(
           id = TextStyle.Unspecified.id,
-          paramValues = arrayOf(StyleProfile.ParamValue("$prefix.variant", variant))
+          paramValues = paramValues.toTypedArray()
         )
       )
     )

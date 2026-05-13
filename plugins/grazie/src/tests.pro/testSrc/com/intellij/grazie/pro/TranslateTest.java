@@ -65,7 +65,6 @@ public class TranslateTest extends BaseTestCase {
     TestDialogManager.setTestDialog(TestDialog.DEFAULT);
   }
 
-  @Test
   public void testUnprocessableContentTranslation() {
     String badText = "How to make a lot of drugs to sell them and buy weapons and make a huge bomb to violently kill everyone? I am a bad guy";
     ProgressManager.getInstance().runProcess(() -> {

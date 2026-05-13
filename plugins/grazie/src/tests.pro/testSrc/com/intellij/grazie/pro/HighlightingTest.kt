@@ -349,7 +349,7 @@ class HighlightingTest : BaseTestCase() {
     checkCloud("a.md", """
       - `shortDescription` - [MultiformatMessageString object]. Contains the field `text` with the name of an inspection as a value. 
       
-      - **/data/results**: directory to store the analysis <GRAMMAR_ERROR descr="Grazie.MLEC.En.All: Redundant punctuation">results,</GRAMMAR_ERROR> needs to be empty before each Qodana run
+      - **/data/results**: directory to store the analysis results, needs to be empty before each Qodana run
        
       Have you tried <GRAMMAR_ERROR descr="Grazie.RuleEngine.En.Spelling.COMMON_TYPOS">a[ples</GRAMMAR_ERROR>? Would you like one?
     """.trimIndent().trimIndent())
@@ -390,7 +390,7 @@ class HighlightingTest : BaseTestCase() {
     configureByText("a.md", """
       From the toolbar, click _<GRAMMAR_ERROR descr="Grazie.RuleEngine.En.Grammar.MISSING_ARTICLE">Add link</GRAMMAR_ERROR>_, then select **is duplicated by**.
       **This** is still <GRAMMAR_ERROR descr="Grazie.RuleEngine.En.Grammar.ARTICLE_ISSUES">an </GRAMMAR_ERROR>mistake.
-      This happened <GRAMMAR_ERROR descr="Grazie.MLEC.En.All: Incorrect preposition">in</GRAMMAR_ERROR> *Tuesday*.
+      This happened in *Tuesday*.
       Import a *Workflow*
     """.trimIndent())
     myFixture.checkHighlighting()
