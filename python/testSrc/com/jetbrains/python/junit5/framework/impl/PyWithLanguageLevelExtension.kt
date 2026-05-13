@@ -3,7 +3,6 @@ package com.jetbrains.python.junit5.framework.impl
 
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.IndexingTestUtil
-import com.intellij.testFramework.junit5.fixture.LookupFixtureExtension.Companion.getClassLevelLookupFixtureManager
 import com.jetbrains.python.junit5.framework.annotations.WithLanguageLevel
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher

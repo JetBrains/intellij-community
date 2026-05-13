@@ -5,7 +5,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.junit5.fixture.LookupFixture
-import com.intellij.testFramework.junit5.fixture.LookupFixtureExtension.Companion.getClassLevelLookupFixtureManager
 import com.intellij.testFramework.junit5.fixture.LookupFixtureExtension.Companion.getLookupFixtureManager
 import com.intellij.testFramework.junit5.fixture.LookupFixtureExtension.Companion.registerImplicitFixtures
 import com.intellij.testFramework.junit5.fixture.moduleFixture

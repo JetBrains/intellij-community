@@ -147,11 +147,6 @@ class LookupFixtureExtension : BeforeAllCallback, BeforeEachCallback, AfterAllCa
       return manager
     }
 
-    fun ExtensionContext.getClassLevelLookupFixtureManager(): LookupFixtureManager {
-      val parent = this.parent ?: error("Context parent is not found. Please make sure you call this method from BeforeEach/AfterEach callbalck")
-      return parent.get().getLookupFixtureManager()
-    }
-
     private fun ExtensionContext.removeLookupFixtureManager() {
       val store = getStore(Namespace.GLOBAL)
       store.remove(LookupFixtureManager::class.java)
