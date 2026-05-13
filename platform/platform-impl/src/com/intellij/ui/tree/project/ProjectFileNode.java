@@ -9,7 +9,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.BaseProjectDirectories;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,14 +51,5 @@ public interface ProjectFileNode {
     if (module != null) return module.isDisposed() ? null : module;
     // file does not belong to any content root, but it is located under the project directory
     return BaseProjectDirectories.getInstance(project).getBaseDirectoryFor(file) == null ? null : project;
-  }
-
-  /**
-   * Returns a base directory for the specified {@code project}, or {@code null} if it does not exist.
-   */
-  static @Nullable VirtualFile findBaseDir(@Nullable Project project) {
-    if (project == null || project.isDisposed()) return null;
-    String path = project.getBasePath();
-    return path == null ? null : LocalFileSystem.getInstance().findFileByPath(path);
   }
 }

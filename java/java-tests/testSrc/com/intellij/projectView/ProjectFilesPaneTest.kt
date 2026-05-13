@@ -6,6 +6,7 @@ import com.intellij.ide.projectView.ProjectViewSettings
 import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.projectView.impl.ProjectViewState
 import com.intellij.ide.util.treeView.NodeOptions
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.io.directoryContent
@@ -208,22 +209,22 @@ class ProjectFilesPaneTest : AbstractProjectViewTest() {
     val folder = createChildDirectory(parent, "folder")
 
     selectFile(folder)
-    test.assertStructure("  -module\n" +
-                         "   -parent\n" +
-                         "    folder\n")
+    test.assertStructure(" -" + ModuleRootManager.getInstance(myModule).getContentRoots()[0].path + "\n" +
+                         "  -parent\n" +
+                         "   folder\n")
 
     selectFile(createChildDirectory(folder, "child"))
-    test.assertStructure("  -module\n" +
-                         "   -parent\n" +
-                         "    -folder\n" +
-                         "     child\n")
+    test.assertStructure(" -" + ModuleRootManager.getInstance(myModule).getContentRoots()[0].path + "\n" +
+                         "  -parent\n" +
+                         "   -folder\n" +
+                         "    child\n")
 
     selectFile(createChildDirectory(parent, "sibling"))
-    test.assertStructure("  -module\n" +
-                         "   -parent\n" +
-                         "    -folder\n" +
-                         "     child\n" +
-                         "    sibling\n")
+    test.assertStructure(" -" + ModuleRootManager.getInstance(myModule).getContentRoots()[0].path + "\n" +
+                         "  -parent\n" +
+                         "   -folder\n" +
+                         "    child\n" +
+                         "   sibling\n")
   }
 
   fun `test file nesting support`() {
@@ -244,18 +245,18 @@ class ProjectFilesPaneTest : AbstractProjectViewTest() {
 
     setFileNestingRules(".js" to ".js.map")
     selectFile(mapFile)
-    test.assertStructure("   -src\n" +
-                         "    -com\n" +
-                         "     -test.js\n" +
-                         "      test.js.map\n")
+    test.assertStructure(" -" + ModuleRootManager.getInstance(myModule).getContentRoots()[0].path + "\n" +
+                         "  -com\n" +
+                         "   -test.js\n" +
+                         "    test.js.map\n")
 
     val structureBefore = test.toString()
     projectView.setUseFileNestingRules(false)
     selectFile(mapFile)
-    test.assertStructure("   -src\n" +
-                         "    -com\n" +
-                         "     test.js\n" +
-                         "     test.js.map\n")
+    test.assertStructure(" -" + ModuleRootManager.getInstance(myModule).getContentRoots()[0].path + "\n" +
+                         "  -com\n" +
+                         "   test.js\n" +
+                         "   test.js.map\n")
 
     assertNotEquals(structureBefore, test.toString())
   }

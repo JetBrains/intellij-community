@@ -33,6 +33,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.project.BaseProjectDirectories;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -93,8 +94,11 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
+
+import static java.util.Collections.emptySet;
 
 final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implements InvokerSupplier {
   private static final Logger LOG = Logger.getInstance(ScopeViewTreeModel.class);
@@ -830,9 +834,12 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
     }
 
     private @NotNull @NlsSafe String getLocation(boolean allowEmpty) {
-      VirtualFile dir = ProjectFileNode.findBaseDir(getProject());
-      String location = dir == null ? null : VfsUtilCore.getRelativePath(getVirtualFile(), dir);
-      if (location != null && (allowEmpty || !location.isEmpty())) return location;
+      Project project = getProject();
+      Set<VirtualFile> baseDirectories = project == null ? emptySet() : BaseProjectDirectories.getBaseDirectories(project);
+      for (VirtualFile baseDirectory : baseDirectories) {
+        String location = VfsUtilCore.getRelativePath(getVirtualFile(), baseDirectory);
+        if (location != null && (allowEmpty || !location.isEmpty())) return location;
+      }
       return FileUtil.getLocationRelativeToUserHome(getVirtualFile().getPresentableUrl());
     }
 

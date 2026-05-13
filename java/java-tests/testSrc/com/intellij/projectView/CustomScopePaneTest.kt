@@ -4,6 +4,7 @@ package com.intellij.projectView
 import com.intellij.ide.projectView.ProjectViewNode
 import com.intellij.ide.projectView.impl.ProjectViewState
 import com.intellij.openapi.actionSystem.LangDataKeys
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.search.scope.packageSet.FilePatternPackageSet
@@ -84,13 +85,13 @@ class CustomScopePaneTest : AbstractProjectViewTest() {
 
     val class3 = javaFacade.findClass("package1.package2.package3.Test3")!!
     LangDataKeys.IDE_VIEW.getData(currentPane)?.selectElement(class3)
-    test.assertStructure("   -src\n" +
-                         "    -package1\n" +
-                         "     -package2\n" +
-                         "      -package3\n" +
-                         "       [Test3]\n" +
-                         "     Test1\n" +
-                         "    Test\n")
+    test.assertStructure(" -" + ModuleRootManager.getInstance(myModule).getContentRoots()[0].path + "\n" +
+                         "  -package1\n" +
+                         "   -package2\n" +
+                         "    -package3\n" +
+                         "     [Test3]\n" +
+                         "   Test1\n" +
+                         "  Test\n")
   }
 
 
@@ -107,43 +108,43 @@ class CustomScopePaneTest : AbstractProjectViewTest() {
     val class1 = javaFacade.findClass("package1.Test1")!!
     val class3 = javaFacade.findClass("package1.package2.package3.Test3")!!
     selectElement(class3)
-    test.assertStructure("  -directory-by-spec/src\n" +
-                         "   -package1\n" +
-                         "    -package2.package3\n" +
-                         "     Test3\n" +
-                         "    Test1\n" +
-                         "   Test\n")
+    test.assertStructure(" -" + ModuleRootManager.getInstance(myModule).getContentRoots()[0].path + "\n" +
+                         "  -package1\n" +
+                         "   -package2.package3\n" +
+                         "    Test3\n" +
+                         "   Test1\n" +
+                         "  Test\n")
 
     deleteElement(class1)
     selectElement(class3)
-    test.assertStructure("  -directory-by-spec/src\n" +
-                         "   -package1.package2.package3\n" +
-                         "    Test3\n" +
-                         "   Test\n")
+    test.assertStructure(" -" + ModuleRootManager.getInstance(myModule).getContentRoots()[0].path + "\n" +
+                         "  -package1.package2.package3\n" +
+                         "   Test3\n" +
+                         "  Test\n")
 
     val class111 = javaFacade.findClass("Test")!!
     renameElement(class111, "Test111")
-    test.assertStructure("  -directory-by-spec/src\n" +
-                         "   -package1.package2.package3\n" +
-                         "    Test3\n" +
-                         "   Test111\n")
+    test.assertStructure(" -" + ModuleRootManager.getInstance(myModule).getContentRoots()[0].path + "\n" +
+                         "  -package1.package2.package3\n" +
+                         "   Test3\n" +
+                         "  Test111\n")
 
     val package2 = javaFacade.findPackage("package1.package2")!!
     val classNew = JavaDirectoryService.getInstance().createClass(package2.directories[0], "Class")
     selectElement(classNew)
-    test.assertStructure("  -directory-by-spec/src\n" +
-                         "   -package1.package2\n" +
-                         "    +package3\n" +
-                         "    Class\n" +
-                         "   Test111\n")
+    test.assertStructure(" -" + ModuleRootManager.getInstance(myModule).getContentRoots()[0].path + "\n" +
+                         "  -package1.package2\n" +
+                         "   +package3\n" +
+                         "   Class\n" +
+                         "  Test111\n")
 
     projectView.setFlattenPackages(currentPane.id, true)
     selectElement(classNew)
-    test.assertStructure("  -directory-by-spec/src\n" +
-                         "   -package1.package2\n" +
-                         "    Class\n" +
-                         "   +package1.package2.package3\n" +
-                         "   Test111\n")
+    test.assertStructure(" -" + ModuleRootManager.getInstance(myModule).getContentRoots()[0].path + "\n" +
+                         "  -package1.package2\n" +
+                         "   Class\n" +
+                         "  +package1.package2.package3\n" +
+                         "  Test111\n")
   }
 
 
@@ -160,44 +161,44 @@ class CustomScopePaneTest : AbstractProjectViewTest() {
     val class1 = javaFacade.findClass("package1.Test1")!!
     val class3 = javaFacade.findClass("package1.package2.package3.Test3")!!
     selectElement(class3)
-    test.assertStructure("   -src\n" +
-                         "    +package1\n" +
-                         "    -package1.package2.package3\n" +
-                         "     Test3\n" +
-                         "    Test\n")
+    test.assertStructure(" -" + ModuleRootManager.getInstance(myModule).getContentRoots()[0].path + "\n" +
+                         "  +package1\n" +
+                         "  -package1.package2.package3\n" +
+                         "   Test3\n" +
+                         "  Test\n")
 
     deleteElement(class1)
     selectElement(class3)
-    test.assertStructure("   -src\n" +
-                         "    -package1.package2.package3\n" +
-                         "     Test3\n" +
-                         "    Test\n")
+    test.assertStructure(" -" + ModuleRootManager.getInstance(myModule).getContentRoots()[0].path + "\n" +
+                         "  -package1.package2.package3\n" +
+                         "   Test3\n" +
+                         "  Test\n")
 
     val class111 = javaFacade.findClass("Test")!!
     renameElement(class111, "Test111")
-    test.assertStructure("   -src\n" +
-                         "    -package1.package2.package3\n" +
-                         "     Test3\n" +
-                         "    Test111\n")
+    test.assertStructure(" -" + ModuleRootManager.getInstance(myModule).getContentRoots()[0].path + "\n" +
+                         "  -package1.package2.package3\n" +
+                         "   Test3\n" +
+                         "  Test111\n")
 
     val package3 = javaFacade.findPackage("package1.package2.package3")!!
     val classNew = JavaDirectoryService.getInstance().createClass(package3.directories[0], "Class")
     selectElement(classNew)
-    test.assertStructure("   -src\n" +
-                         "    -package1.package2.package3\n" +
-                         "     Class\n" +
-                         "     Test3\n" +
-                         "    Test111\n")
+    test.assertStructure(" -" + ModuleRootManager.getInstance(myModule).getContentRoots()[0].path + "\n" +
+                         "  -package1.package2.package3\n" +
+                         "   Class\n" +
+                         "   Test3\n" +
+                         "  Test111\n")
 
     projectView.setHideEmptyPackages(currentPane.id, false)
     selectElement(classNew)
-    test.assertStructure("   -src\n" +
-                         "    package1\n" +
-                         "    package1.package2\n" +
-                         "    -package1.package2.package3\n" +
-                         "     Class\n" +
-                         "     Test3\n" +
-                         "    Test111\n")
+    test.assertStructure(" -" + ModuleRootManager.getInstance(myModule).getContentRoots()[0].path + "\n" +
+                         "  package1\n" +
+                         "  package1.package2\n" +
+                         "  -package1.package2.package3\n" +
+                         "   Class\n" +
+                         "   Test3\n" +
+                         "  Test111\n")
   }
 
 
@@ -212,30 +213,30 @@ class CustomScopePaneTest : AbstractProjectViewTest() {
 
     val class3 = javaFacade.findClass("package1.package2.package3.Test3")!!
     selectElement(class3)
-    test.assertStructure("  -directory-by-spec/src\n" +
-                         "   -package1.package2.package3\n" +
-                         "    Test3\n")
+    test.assertStructure(" -" + ModuleRootManager.getInstance(myModule).getContentRoots()[0].path + "\n" +
+                         "  -package1.package2.package3\n" +
+                         "   Test3\n")
 
     renameElement(class3, "ATest3") //exclude from scope
     test.assertStructure("")
 
     renameElement(class3, "Test3") //restore in scope
     selectElement(class3)
-    test.assertStructure("  -directory-by-spec/src\n" +
-                         "   -package1.package2.package3\n" +
-                         "    Test3\n")
+    test.assertStructure(" -" + ModuleRootManager.getInstance(myModule).getContentRoots()[0].path + "\n" +
+                         "  -package1.package2.package3\n" +
+                         "   Test3\n")
 
     movePackageToPackage("package1.package2.package3", "package1")
     selectElement(class3)
-    test.assertStructure("  -directory-by-spec/src\n" +
-                         "   -package1.package3\n" +
-                         "    Test3\n")
+    test.assertStructure(" -" + ModuleRootManager.getInstance(myModule).getContentRoots()[0].path + "\n" +
+                         "  -package1.package3\n" +
+                         "   Test3\n")
 
     movePackageToPackage("package1.package3", "package1.package2")
     selectElement(class3)
-    test.assertStructure("  -directory-by-spec/src\n" +
-                         "   -package1.package2.package3\n" +
-                         "    Test3\n")
+    test.assertStructure(" -" + ModuleRootManager.getInstance(myModule).getContentRoots()[0].path + "\n" +
+                         "  -package1.package2.package3\n" +
+                         "   Test3\n")
   }
 
 
@@ -249,37 +250,37 @@ class CustomScopePaneTest : AbstractProjectViewTest() {
 
     val class3 = javaFacade.findClass("package1.package2.package3.Test3")!!
     selectElement(class3)
-    test.assertStructure("   -src\n" +
-                         "    -package1\n" +
-                         "     -package2\n" +
-                         "      -package3\n" +
-                         "       Test3\n")
+    test.assertStructure(" -" + ModuleRootManager.getInstance(myModule).getContentRoots()[0].path + "\n" +
+                         "  -package1\n" +
+                         "   -package2\n" +
+                         "    -package3\n" +
+                         "     Test3\n")
 
     renameElement(class3, "ATest3") //exclude from scope
     test.assertStructure("")
 
     renameElement(class3, "Test3") //restore in scope
     selectElement(class3)
-    test.assertStructure("   -src\n" +
-                         "    -package1\n" +
-                         "     -package2\n" +
-                         "      -package3\n" +
-                         "       Test3\n")
+    test.assertStructure(" -" + ModuleRootManager.getInstance(myModule).getContentRoots()[0].path + "\n" +
+                         "  -package1\n" +
+                         "   -package2\n" +
+                         "    -package3\n" +
+                         "     Test3\n")
 
     movePackageToPackage("package1.package2.package3", "package1")
     selectElement(class3)
-    test.assertStructure("   -src\n" +
-                         "    -package1\n" +
-                         "     -package3\n" +
-                         "      Test3\n")
+    test.assertStructure(" -" + ModuleRootManager.getInstance(myModule).getContentRoots()[0].path + "\n" +
+                         "  -package1\n" +
+                         "   -package3\n" +
+                         "    Test3\n")
 
     movePackageToPackage("package1.package3", "package1.package2")
     selectElement(class3)
-    test.assertStructure("   -src\n" +
-                         "    -package1\n" +
-                         "     -package2\n" +
-                         "      -package3\n" +
-                         "       Test3\n")
+    test.assertStructure(" -" + ModuleRootManager.getInstance(myModule).getContentRoots()[0].path + "\n" +
+                         "  -package1\n" +
+                         "   -package2\n" +
+                         "    -package3\n" +
+                         "     Test3\n")
   }
 
 
@@ -294,39 +295,39 @@ class CustomScopePaneTest : AbstractProjectViewTest() {
     val class1 = javaFacade.findClass("package1.Test1")!!
     val class3 = javaFacade.findClass("package1.package2.package3.Test3")!!
     selectElement(class3)
-    test.assertStructure("   -src\n" +
-                         "    -package1\n" +
-                         "     -package2\n" +
-                         "      -package3\n" +
-                         "       Test3\n" +
-                         "     Test1\n")
+    test.assertStructure(" -" + ModuleRootManager.getInstance(myModule).getContentRoots()[0].path + "\n" +
+                         "  -package1\n" +
+                         "   -package2\n" +
+                         "    -package3\n" +
+                         "     Test3\n" +
+                         "   Test1\n")
 
     deleteElement(class3)
     selectElement(class1)
-    test.assertStructure("   -src\n" +
-                         "    -package1\n" +
-                         "     Test1\n")
+    test.assertStructure(" -" + ModuleRootManager.getInstance(myModule).getContentRoots()[0].path + "\n" +
+                         "  -package1\n" +
+                         "   Test1\n")
 
     renameElement(class1, "Test111")
-    test.assertStructure("   -src\n" +
-                         "    -package1\n" +
-                         "     Test111\n")
+    test.assertStructure(" -" + ModuleRootManager.getInstance(myModule).getContentRoots()[0].path + "\n" +
+                         "  -package1\n" +
+                         "   Test111\n")
 
     val package1 = javaFacade.findPackage("package1")!!
     val classNew = JavaDirectoryService.getInstance().createClass(package1.directories[0], "Test222")
     selectElement(classNew)
-    test.assertStructure("   -src\n" +
-                         "    -package1\n" +
-                         "     Test111\n" +
-                         "     Test222\n")
+    test.assertStructure(" -" + ModuleRootManager.getInstance(myModule).getContentRoots()[0].path + "\n" +
+                         "  -package1\n" +
+                         "   Test111\n" +
+                         "   Test222\n")
 
     moveElementToPackage(classNew, "package1.package2.package3")
     selectElement(classNew)
-    test.assertStructure("   -src\n" +
-                         "    -package1\n" +
-                         "     -package2\n" +
-                         "      -package3\n" +
-                         "       Test222\n" +
-                         "     Test111\n")
+    test.assertStructure(" -" + ModuleRootManager.getInstance(myModule).getContentRoots()[0].path + "\n" +
+                         "  -package1\n" +
+                         "   -package2\n" +
+                         "    -package3\n" +
+                         "     Test222\n" +
+                         "   Test111\n")
   }
 }

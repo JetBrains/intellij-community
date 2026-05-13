@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.BaseProjectDirectories;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -39,6 +40,7 @@ import static com.intellij.openapi.project.ProjectUtil.isProjectOrWorkspaceFile;
 import static com.intellij.openapi.vfs.VFileProperty.SYMLINK;
 import static com.intellij.ui.tree.TreePathUtil.pathToCustomNode;
 import static java.util.Collections.emptyList;
+import static java.util.Collections.emptySet;
 import static java.util.stream.Collectors.toList;
 
 @ApiStatus.Internal
@@ -268,9 +270,11 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
     }
 
     private static void visitContentRoots(@Nullable Project project, @NotNull BiConsumer<? super VirtualFile, ? super AreaInstance> consumer) {
-      VirtualFile ancestor = ProjectFileNode.findBaseDir(project);
-      if (ancestor != null && project == ProjectFileNode.findArea(ancestor, project)) {
-        consumer.accept(ancestor, project);
+      Set<VirtualFile> baseDirectories = project == null ? emptySet() : BaseProjectDirectories.getBaseDirectories(project);
+      for (VirtualFile directory : baseDirectories) {
+        if (project == ProjectFileNode.findArea(directory, project)) {
+          consumer.accept(directory, project);
+        }
       }
       if (project != null && !project.isDisposed()) {
         for (Module module : ModuleManager.getInstance(project).getModules()) {

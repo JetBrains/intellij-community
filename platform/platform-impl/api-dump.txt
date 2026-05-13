@@ -1775,7 +1775,6 @@ com.intellij.ui.tree.ChildrenProvider
 com.intellij.ui.tree.project.ProjectFileNode
 - contains(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.extensions.AreaInstance,Z):Z
 - s:findArea(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):com.intellij.openapi.extensions.AreaInstance
-- s:findBaseDir(com.intellij.openapi.project.Project):com.intellij.openapi.vfs.VirtualFile
 - a:getRootID():java.lang.Object
 - a:getVirtualFile():com.intellij.openapi.vfs.VirtualFile
 com.intellij.ui.tree.ui.Control
