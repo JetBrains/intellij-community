@@ -284,7 +284,7 @@ public class DaemonAnnotatorsRespondToChangesTest extends ProductionDaemonAnalyz
     }
   }
   public static class MySleepyAnnotator extends MyRecordingAnnotator {
-    public MySleepyAnnotator() {
+    MySleepyAnnotator() {
       iDidIt(); // is not supposed to ever do anything
     }
 
@@ -500,7 +500,7 @@ public class DaemonAnnotatorsRespondToChangesTest extends ProductionDaemonAnalyz
     }
   }
 
-  static class EmptyAnnotator extends MyRecordingAnnotator {
+  private static class EmptyAnnotator extends MyRecordingAnnotator {
     @Override
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
       iDidIt();
@@ -734,7 +734,6 @@ public class DaemonAnnotatorsRespondToChangesTest extends ProductionDaemonAnalyz
     try {
       useAnnotatorsIn(annotatorsByLanguage, () -> {
         // now when the highlighting is restarted, we should get back our anno result very fast, despite very slow processing of every other element
-        TestTimeOut t = TestTimeOut.setTimeout(10_000, TimeUnit.MILLISECONDS);
         AtomicBoolean fastToolFinishedFaster = new AtomicBoolean();
         myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getFile(), () -> {
           if (MyCommentFastAnnotator.finished.get() && !MyFieldSlowAnnotator.finished.get()) {

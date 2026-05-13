@@ -194,12 +194,10 @@ class X {
       LOG.debug("i = " + i);
       String s = getFile().getText();
       int offset;
-      while (true) {
+      do {
         offset = random.nextInt(s.length());
-        if (s.charAt(offset) == ' ') {
-          break;
-        }
       }
+      while (s.charAt(offset) != ' ');
       getEditor().getCaretModel().moveToOffset(offset);
       type("/*--*/");
       List<HighlightInfo> infos = myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING);
@@ -221,7 +219,7 @@ class X {
         String oldText = StringUtil.join(oldWarningTexts, "\n");
         String newText = StringUtil.join(infos, info->text(info), "\n");
         if (!oldText.equals(newText)) {
-          List<HighlightInfo> infos1 = myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING);
+          myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING);
         }
         assertEquals(seed+"",oldText, newText);
         assertEquals(infos.toString(), oldWarningSize, infos.size());
@@ -288,12 +286,10 @@ class X {
       String s = getFile().getText();
 
       int offset;
-      while (true) {
+      do {
         offset = random.nextInt(s.length());
-        if (CharArrayUtil.regionMatches(s, offset, "/**/") || CharArrayUtil.regionMatches(s, offset, "//")) {
-          break;
-        }
       }
+      while (!CharArrayUtil.regionMatches(s, offset, "/**/") && !CharArrayUtil.regionMatches(s, offset, "//"));
 
       char next = offset < s.length()-1 ? s.charAt(offset+1) : 0;
       if (next == '/') {

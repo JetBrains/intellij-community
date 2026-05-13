@@ -17,8 +17,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorMouseHoverPopupManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -101,7 +99,7 @@ public class DaemonHighlightVisitorRespondToChangesTest extends ProductionDaemon
     EditorMouseHoverPopupManager.getInstance();
   }
 
-  public void testHighlightInfoGeneratedByHighlightVisitorMustImmediatelyShowItselfOnScreenRightAfterCreation() throws Exception {
+  public void testHighlightInfoGeneratedByHighlightVisitorMustImmediatelyShowItselfOnScreenRightAfterCreation() {
     AtomicBoolean xxxMustBeVisible = new AtomicBoolean();
     HighlightVisitor visitor = new MyHighlightCommentsSubstringVisitor(xxxMustBeVisible);
     myProject.getExtensionArea().getExtensionPoint(HighlightVisitor.EP_HIGHLIGHT_VISITOR).registerExtension(visitor, getTestRootDisposable());
@@ -117,7 +115,6 @@ public class DaemonHighlightVisitorRespondToChangesTest extends ProductionDaemon
       """;
     configureByText(JavaFileType.INSTANCE, text);
 
-    TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(getEditor());
     Runnable callbackWhileWaiting = () -> {
       if (xxxMustBeVisible.get()) {
         List<String> myInfos = ContainerUtil.map(filterMy(DaemonCodeAnalyzerImpl.getHighlights(getEditor().getDocument(), HighlightSeverity.WARNING, getProject())), h->h.getDescription());
@@ -362,7 +359,7 @@ public class DaemonHighlightVisitorRespondToChangesTest extends ProductionDaemon
     }
   }
 
-  public void testHighlightVisitorsMustRunIndependentlyAndInParallel() throws Exception {
+  public void testHighlightVisitorsMustRunIndependentlyAndInParallel() {
     @Language("JAVA")
     String text = """
       class X {
