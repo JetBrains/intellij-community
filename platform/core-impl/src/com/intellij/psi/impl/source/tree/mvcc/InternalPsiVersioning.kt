@@ -368,7 +368,9 @@ object InternalPsiVersioning {
         }
       }
     } else {
-      // there can be a mismatch between a global version and the installed version -- if, for example, someone calls `runReadActionBlocking` inside `freezePsiVersion`
+      if (correctVersion != value) {
+        error("Read action expected to see version $correctVersion, but found $value")
+      }
       AccessToken.EMPTY_ACCESS_TOKEN
     }
   }
