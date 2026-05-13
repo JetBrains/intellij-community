@@ -19,15 +19,27 @@ import kotlin.jvm.optionals.getOrNull
 
 
 /**
- * Test annotation that is used in conjunction with JUnit 5's [TestTemplate] to enable
- * parameterized testing over files within a directory. Each test invocation corresponds
- * to an individual file that matches the specified filter criteria.
+ * Test annotation used together with JUnit 5's [TestTemplate] to run a test method
+ * once per file in a folder. Each matching file becomes a parameterized test invocation.
  *
- * This annotation is processed by the [AllFilesInFolderTestCaseProvider] extension
+ * ## Folder location
  *
- * @param [fileNameFilter]: A string representing the regex pattern used to filter files
- *   in the folder for test execution. The default value is `FileNameFilter.ALL_FILES`,
- *   which means all files are included.
+ * The folder is `<TestDataPath>/<testName>/`, where `<testName>` is derived from the
+ * test method name by [com.intellij.testFramework.PlatformTestUtil.getTestName]: the
+ * optional leading `test` is stripped and the first letter is lower-cased. Examples:
+ *
+ * - `fun testFoo()` → `<TestDataPath>/foo/`
+ * - `fun allTests()` → `<TestDataPath>/allTests/`
+ *
+ * Each file in that folder that matches [fileNameFilter] becomes one invocation.
+ *
+ * Because this annotation is itself a [TestTemplate], do not add `@Test` to the
+ * method; JUnit 5 picks it up directly.
+ *
+ * Processed by [AllFilesInFolderTestCaseProvider].
+ *
+ * @param fileNameFilter Regex applied to file names in the folder. Defaults to
+ *   [FileNameFilter.ALL_FILES] (every file).
  */
 @TestOnly
 @TestTemplate
