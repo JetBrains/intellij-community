@@ -43,4 +43,3 @@ fun main() {
   val sdksJson = SdksKeeper.serialize(sdks)
   SDKS_JSON_PATH.toFile().writeText(sdksJson)
 }
-
