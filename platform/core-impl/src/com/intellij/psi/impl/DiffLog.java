@@ -108,9 +108,6 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
     private final ASTNode myNewChild;
 
     private ReplaceEntry(@NotNull ASTNode oldNode, @NotNull ASTNode newNode) {
-      if (InternalPsiVersioning.isVersionedSyntaxTreeEnabled() && oldNode instanceof TreeElement && newNode instanceof TreeElement && ((TreeElement)oldNode).isVersioned() != ((TreeElement)newNode).isVersioned()) {
-        throw new VersionedPsiConsistencyException.DiffLog("Operation between incompatible elements: oldNode=" + oldNode + " (versioned=" + ((TreeElement)oldNode).isVersioned() + "), newNode=" + newNode + " (versioned=" + ((TreeElement)newNode).isVersioned() + ")");
-      }
       myOldChild = oldNode;
       myNewChild = newNode;
       ensureOldParent();
@@ -188,9 +185,6 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
 
     private InsertEntry(@NotNull ASTNode oldParent, @NotNull ASTNode newNode, int pos) {
       assert pos>=0 : pos;
-      if (InternalPsiVersioning.isVersionedSyntaxTreeEnabled() && oldParent instanceof TreeElement && newNode instanceof TreeElement && ((TreeElement)oldParent).isVersioned() != ((TreeElement)newNode).isVersioned()) {
-        throw new VersionedPsiConsistencyException.DiffLog("Operation between incompatible elements");
-      }
       myOldParent = oldParent;
       myNewNode = newNode;
       myPos = pos;
@@ -234,9 +228,6 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
     private final @NotNull FileASTNode myNewNode;
 
     private ReplaceFileElement(@NotNull FileASTNode oldNode, @NotNull FileASTNode newNode) {
-      if (InternalPsiVersioning.isVersionedSyntaxTreeEnabled() && oldNode instanceof TreeElement && newNode instanceof TreeElement && ((TreeElement)oldNode).isVersioned() != ((TreeElement)newNode).isVersioned()) {
-        throw new VersionedPsiConsistencyException.DiffLog("Operation between incompatible elements");
-      }
       myOldNode = oldNode;
       myNewNode = newNode;
     }

@@ -7,13 +7,6 @@ package com.intellij.psi.impl.source.tree.mvcc
 internal sealed class VersionedPsiConsistencyException(message: String) : RuntimeException(message) {
 
   /**
-   * In DiffLog, the entries should be of the same versioning type.
-   * This adheres to the core invariant that we can perform only operations
-   * between simultaneously versioned or simultaneously non-versioned elements.
-   */
-  class DiffLog(message: String) : VersionedPsiConsistencyException(message)
-
-  /**
    * The invariant in [com.intellij.psi.FileViewProvider] is that physical files always contain versioned trees.
    * Non-physical files can contain any kind of tree.
    */

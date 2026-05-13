@@ -453,9 +453,7 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
     val diffLog: DiffLog
     val indicator = ProgressIndicatorProvider.getGlobalProgressIndicator() ?: EmptyProgressIndicator()
     try {
-      val result = PsiVersioningService.inVersionedEnvironment(oldFileNode) {
-        BlockSupportImpl.reparse(psiFile, oldFileNode, changedPsiRange, newDocumentText, indicator, task.myLastCommittedText)
-      }
+      val result = BlockSupportImpl.reparse(psiFile, oldFileNode, changedPsiRange, newDocumentText, indicator, task.myLastCommittedText)
       diffLog = result.log
 
       val injectedRunnables = documentManager.reparseChangedInjectedFragments(
