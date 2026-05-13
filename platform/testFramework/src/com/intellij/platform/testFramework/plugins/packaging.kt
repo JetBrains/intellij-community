@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.testFramework.plugins
 
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
 import com.intellij.platform.pluginSystem.parser.impl.elements.xmlValue
@@ -12,6 +14,8 @@ import java.nio.file.FileSystems
 import java.nio.file.Path
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
+
+private val LOG get() = logger<PluginPackagingConfig>()
 
 open class PluginPackagingConfig {
   open val ContentModuleSpec.descriptorFilename: String get() {
@@ -190,12 +194,15 @@ private fun ContentModuleSpec.buildContentDir(dir: DirectoryContentBuilder, conf
 
 private fun PluginSpec.buildClasses(dir: DirectoryContentBuilder) {
   for ((classFqn, classLoader) in classFiles) {
+    LOG.debug { "packing $classFqn"}
     val url = (classLoader ?: this::class.java.classLoader).getResource(classFqn.replace('.', '/') + ".class")
               ?: error("$classFqn not found")
     dir.dirsFile(classFqn.replace('.', '/') + ".class", url.readBytes())
   }
   for ((pkg, classLoader) in packageClassFiles) {
+    LOG.debug { "packing classes from $pkg package" }
     for (url in (classLoader ?: this::class.java.classLoader).getResources(pkg.replace('.', '/'))) {
+      LOG.debug { "resources url: $url" }
       require(url.toString().endsWith('/')) { url }
       val packageEntries: List<String> = if (url.protocol.contains("jar")) {
         FileSystems.newFileSystem(url.toURI(), mutableMapOf<String, Any>()).use { jarFs ->
@@ -205,7 +212,9 @@ private fun PluginSpec.buildClasses(dir: DirectoryContentBuilder) {
       } else {
         url.readText().splitToSequence("\n").filter { !it.isBlank() }.toList()
       }
+      LOG.debug { "package contains ${packageEntries.size} entries" }
       for (entry in packageEntries) {
+        LOG.debug { "packing $entry" }
         if (entry.endsWith(".class")) {
           val bytes = this::class.java.classLoader.getResource("${pkg.replace('.', '/')}/$entry")!!.readBytes()
           dir.dirsFile(pkg.replace('.', '/') + "/$entry", bytes)
