@@ -115,6 +115,9 @@ internal class ToolbarFrameHeader(
     DumbAwareAction.create {
       mainMenuWithButton.mainMenuButton.activateTopLevelMenu()
     }.registerCustomShortcutSet(CustomShortcutSet(KeyEvent.VK_SPACE, KeyEvent.VK_ENTER), mainMenuButtonComponent)
+    DumbAwareAction.create {
+      toolbar?.restoreFocusToPreviousComponent()
+    }.registerCustomShortcutSet(CustomShortcutSet(KeyEvent.VK_ESCAPE), mainMenuButtonComponent)
     layout = object : GridBagLayout() {
       override fun preferredLayoutSize(parent: Container?): Dimension {
         val size = super.preferredLayoutSize(parent)

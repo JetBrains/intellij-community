@@ -201,6 +201,8 @@ class MainToolbar(
 
   internal fun getFocusableItems(): List<Component> = focusSupport.getFocusableAndEnabledItems()
 
+  internal fun restoreFocusToPreviousComponent() = focusSupport.restoreFocusToPreviousComponent()
+
   private fun updateToolbarActions() {
     for (component in components) {
       if (component is ActionToolbarImpl) {

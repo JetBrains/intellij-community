@@ -83,7 +83,7 @@ internal class MainToolbarFocusSupport(
     component.putClientProperty(MAIN_TOOLBAR_ENTER_SHORTCUT_INSTALLED, true)
   }
 
-  private fun restoreFocusToPreviousComponent() {
+  fun restoreFocusToPreviousComponent() {
     cancelFocusFallback()
     val project = ProjectUtil.getProjectForComponent(toolbar) ?: return
     val savedFocus = restoreFocusTargetRef?.get()
