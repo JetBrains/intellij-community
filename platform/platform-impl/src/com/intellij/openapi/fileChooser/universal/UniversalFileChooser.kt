@@ -3,6 +3,7 @@ package com.intellij.openapi.fileChooser.universal
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionToolbar
@@ -172,6 +173,7 @@ object UniversalFileChooser {
       private val FILE_VIEW_KEY: Key<FileView?> = Key.create<FileView>("universalFileChooser.fileView")
       private const val LOCATIONS_PROPORTION_KEY = "universalFileChooser.locationsProportion"
       private const val LOCATIONS_DEFAULT_PROPORTION = 0.2f
+      private const val SHOW_HIDDEN_FILES_KEY = "universalFileChooser.showHiddenFiles"
     }
 
     private val tabbedPane: JBTabbedPane
@@ -184,6 +186,10 @@ object UniversalFileChooser {
 
     init {
       layout = BorderLayout()
+      val properties = PropertiesComponent.getInstance()
+      if (properties.isValueSet(SHOW_HIDDEN_FILES_KEY)) {
+        descriptor.withShowHiddenFiles(properties.getBoolean(SHOW_HIDDEN_FILES_KEY, descriptor.isShowHiddenFiles))
+      }
       topToolbar = createTopToolbar()
       val screenSize = Toolkit.getDefaultToolkit().screenSize
       preferredSize = Dimension(screenSize.width / 2, screenSize.height / 2)
@@ -272,6 +278,7 @@ object UniversalFileChooser {
 
         override fun setSelected(e: AnActionEvent, state: Boolean) {
           getActiveFileView()?.fileTree?.showHiddens(state)
+          PropertiesComponent.getInstance().setValue(SHOW_HIDDEN_FILES_KEY, state)
         }
 
         override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
