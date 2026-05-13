@@ -76,5 +76,7 @@ class RunnableActionsTest : HeavyPlatformTestCase() {
       .flushEDT()
       .continueEDT()
       .ifExceptions { exception -> fail(exception.toString()) }
+      .completed()
+      .waitCompletion(100_000)
   }
 }
