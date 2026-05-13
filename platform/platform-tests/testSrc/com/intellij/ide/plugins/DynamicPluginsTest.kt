@@ -21,6 +21,8 @@ import com.intellij.ide.plugins.testPluginSrc.foo.bar.FooBarService
 import com.intellij.ide.plugins.testPluginSrc.foo.ep.FooExtension
 import com.intellij.ide.plugins.testPluginSrc.foo.ep.FooExtensionService
 import com.intellij.ide.plugins.testPluginSrc.foo.epImpl.FooExtensionImpl
+import com.intellij.ide.plugins.testPluginSrc.registryAccess.MyRegistryAccessor
+import com.intellij.ide.plugins.testPluginSrc.registryAccess.MyRegistryAccessorService
 import com.intellij.ide.plugins.testPluginSrc.testPSC.MyPersistentComponent
 import com.intellij.ide.plugins.testPluginSrc.testPSC.impl.MyPersistentComponentImpl
 import com.intellij.ide.plugins.testPluginSrc.uiSettingsListener.MyUISettingsListener
@@ -103,7 +105,6 @@ import java.lang.ref.WeakReference
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.random.Random
 
 @Suppress("UnresolvedPluginConfigReference")
 @RunsInEdt
@@ -1010,36 +1011,36 @@ class DynamicPluginsTest {
      * This scenario might become obsolete if HashMap implementation changes so that the order of keys changes or if the plugin initialization
      * code changes. This test breaks as of revision 6be3a648dd07e4f675d40ab9553709446b06717c.
      */
-    val rnd = Random(239)
-    val pool: List<Char> = ('a'..'z') + ('A'..'Z')
-
-    val idParent = "test.batya"
+    val parentId = "test.batya"
+    val childId = "test.plugin"
     val antiHashMapKeys = listOf(
       "roGjzgGTyI", // this one goes before com.intellij.registryKey
       "OMEBtHDTCw" // this one goes after com.intellij.registryKey, so the test is green in this case
-    ) + (0..10).map { (0 until 10).map { pool.random(rnd) }.joinToString("") }
+    )
 
-    for (antiHashMap in antiHashMapKeys) {
-      val parentPlugin = plugin(idParent) {
-        dependsIntellijModulesLang()
-        extensionPoints = """<extensionPoint qualifiedName="$idParent.$antiHashMap" interface="java.lang.Runnable" dynamic="true"/>"""
-      }
+    for (antiHashMapKey in antiHashMapKeys) {
+      logger<DynamicPluginsTest>().debug("key: $antiHashMapKey")
 
-      val id = "test.plugin"
-      loadPluginWithText(parentPlugin).use {
-        val ep = ApplicationManager.getApplication().extensionArea.getExtensionPoint<Runnable>("$idParent.$antiHashMap")
-        ep.addChangeListener({ ep.extensionList.forEach(Runnable::run) }, it)
-        val plugin = plugin(id) {
-          dependsIntellijModulesLang()
-          depends(parentPlugin.id!!, "parent.xml") {
-            extensions("""<registryKey key="test.plugin.registry.key" defaultValue="true" description="sample text"/>""")
-            extensions("""<$antiHashMap implementation="${MyServiceAccessor::class.java.name}"/>""", idParent)
-            extensions("""<applicationService serviceImplementation="${MyRegistryAccessor::class.java.name}"/>""")
-          }
+      val epFqn = "$parentId.$antiHashMapKey"
+      val pluginSet = buildPluginSet(pluginsDir.resolve(antiHashMapKey)) {
+        plugin(parentId) {
+          extensionPoints = """<extensionPoint qualifiedName="$epFqn" interface="java.lang.Runnable" dynamic="true"/>"""
         }
-
-        loadPluginWithText(plugin).use {
-          check(service<MyRegistryAccessor>().invocations == 1)
+        plugin(childId) {
+          depends(parentId, "parent.xml") {
+            extensions("""<registryKey key="test.plugin.registry.key" defaultValue="true" description="sample text"/>""")
+            extensions("""<$antiHashMapKey implementation="${MyRegistryAccessor::class.qualifiedName}"/>""", parentId)
+          }
+          includePackageClassFiles<MyRegistryAccessor>()
+        }
+      }
+      val (parent, child) = pluginSet.getEnabledPlugins(parentId, childId)
+      loadPluginInTest(parent) {
+        val ep = ApplicationManager.getApplication().extensionArea.getExtensionPoint<Runnable>(epFqn)
+        ep.addChangeListener(Runnable { ep.extensionList.forEach(Runnable::run) }, testDisposable.disposable)
+        loadPluginInTest(child) {
+          val handle = application.getTestHandleService<MyRegistryAccessorService, _, _>(child)!!
+          assertThat(handle.test(Unit)).isEqualTo(1)
         }
       }
     }
@@ -1308,23 +1309,6 @@ class DynamicPluginsTest {
         }
       }
     }
-  }
-}
-
-@InternalIgnoreDependencyViolation
-private class MyServiceAccessor : Runnable {
-  override fun run() {
-    service<MyRegistryAccessor>().accessRegistry()
-  }
-}
-
-private class MyRegistryAccessor {
-  var invocations: Int = 0
-
-  fun accessRegistry() {
-    @Suppress("UnresolvedPluginConfigReference")
-    check(Registry.get("test.plugin.registry.key").asBoolean())
-    invocations++
   }
 }
 
