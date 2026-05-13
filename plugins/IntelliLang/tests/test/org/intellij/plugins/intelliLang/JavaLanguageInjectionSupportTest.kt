@@ -128,7 +128,7 @@ class JavaLanguageInjectionSupportTest : AbstractLanguageInjectionTestCase() {
                                     Injectable.fromLanguage(Language.findLanguageByID("Markdown"))
     )
 
-    assertInjectedLangAtCaret("XML")
+    assertInjectedLangAtCaret("Markdown")
 
     assertNotNull(myFixture.getAvailableIntention("Uninject language or reference"))
     UnInjectLanguageAction.invokeImpl(project, topLevelEditor, topLevelFile)
@@ -429,4 +429,3 @@ class JavaLanguageInjectionSupportTest : AbstractLanguageInjectionTestCase() {
 
 
 }
-

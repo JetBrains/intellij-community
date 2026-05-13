@@ -95,6 +95,26 @@ public class TextExtractionTest extends BasePlatformTestCase {
     assertEquals("you can use a number of predefined fields (e.g. |)", unknownOffsets(extracted));
   }
 
+  public void testInjectedMarkdownListBullet() {
+    String text = """
+      Something
+      ```markdown
+      ## Goals
+      - Primary outcomes the feature must deliver.
+      ```
+      """;
+    PsiFile file = myFixture.configureByText("a.md", text);
+    PsiElement injectedElement = InjectedLanguageManager.getInstance(getProject()).findInjectedElementAt(file, text.indexOf("- Primary"));
+    assertNotNull(injectedElement);
+
+    List<TextContent> contents = ContainerUtil.filter(
+      TextExtractor.findAllTextContents(injectedElement.getContainingFile().getViewProvider(), TextContent.TextDomain.ALL),
+      content -> content.toString().contains("Primary outcomes")
+    );
+    assertTrue(ContainerUtil.exists(contents, content -> content.toString().equals("Primary outcomes the feature must deliver.")));
+    assertFalse(ContainerUtil.exists(contents, content -> content.toString().contains("- Primary")));
+  }
+
   public void testMergeAdjacentJavaComments() {
     String text = extractText("a.java", "//Hello. I are a very humble\n//persons.\n\nclass C {}", 4).toString();
     assertTrue(text, text.matches("Hello\\. I are a very humble\\spersons\\."));

@@ -29,7 +29,9 @@ internal object MarkdownPsiUtils {
   internal fun ASTNode.isMarkdownCodeType() = when (elementType) {
     MarkdownElementTypes.CODE_FENCE,
     MarkdownElementTypes.CODE_BLOCK,
-    MarkdownElementTypes.CODE_SPAN -> true
+    MarkdownElementTypes.CODE_SPAN,
+    MarkdownTokenTypes.CODE_FENCE_CONTENT,
+    MarkdownTokenTypes.CODE_LINE -> true
     else -> false
   }
 

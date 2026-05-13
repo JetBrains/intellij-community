@@ -17,7 +17,8 @@ import com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.Present
 class MarkdownSupportTest : GrazieTestBase() {
   override val additionalEnabledRules: Set<String> = setOf(
     "LanguageTool.EN.COMMA_COMPOUND_SENTENCE",
-    "LanguageTool.EN.EN_QUOTES"
+    "LanguageTool.EN.EN_QUOTES",
+    "LanguageTool.EN.DASH_RULE"
   )
 
   fun `test grammar check in file`() {
@@ -55,6 +56,17 @@ class MarkdownSupportTest : GrazieTestBase() {
 
   fun `test html entity excluded before grazie checks`() {
     myFixture.configureByText("a.md", "You&#39;re here.")
+    myFixture.checkHighlighting()
+  }
+
+  fun `test no em dash warning for list bullet in injected markdown`() {
+    myFixture.configureByText("a.md", """
+      Something
+      ```markdown
+      ## Goals
+      - Primary outcomes the feature must deliver.
+      ```
+    """.trimIndent())
     myFixture.checkHighlighting()
   }
 

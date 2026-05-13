@@ -4,11 +4,15 @@ package org.intellij.plugins.markdown.editor.injection
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.lang.html.HTMLLanguage
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.impl.DebugUtil
+import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser.guessLanguageForInjection
+import org.intellij.plugins.markdown.lang.MarkdownElementTypes.MARKDOWN_TEMPLATE_DATA
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 
@@ -161,6 +165,36 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
 
   fun `test fence with xml`() {
     assertNotNull(guessLanguageForInjection("xml"))
+  }
+
+  fun `test injected markdown html root uses markdown template data`() {
+    val text = """
+      ```markdown
+      ## Goals
+      - Primary outcomes the feature must deliver.
+      Inline <b>HTML</b> stays markdown content.
+
+      <table>
+
+      **bold**
+
+      </table>
+      ```
+    """.trimIndent()
+    configureFromFileText("test.md", text)
+
+    val injectedElement = InjectedLanguageManager.getInstance(project).findInjectedElementAt(file, text.indexOf("- Primary"))
+    assertNotNull(injectedElement)
+
+    val htmlFile = injectedElement!!.containingFile.viewProvider.getPsi(HTMLLanguage.INSTANCE)
+    assertNotNull(htmlFile)
+    val htmlPsiFile = htmlFile as PsiFileImpl
+    assertEquals(MARKDOWN_TEMPLATE_DATA, htmlPsiFile.contentElementType)
+
+    val htmlTree = DebugUtil.psiToString(htmlPsiFile, true, false)
+    assertTrue(htmlTree, htmlTree.contains("MARKDOWN_OUTER_BLOCK"))
+    assertFalse(htmlTree, htmlTree.contains("HtmlTag:b"))
+    assertTrue(htmlTree, htmlTree.contains("HtmlTag:table"))
   }
 
   /**
