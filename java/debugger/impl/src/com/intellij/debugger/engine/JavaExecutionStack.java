@@ -25,6 +25,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.unscramble.IconsCache;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.frame.XDescriptor;
@@ -94,18 +95,20 @@ public class JavaExecutionStack extends XExecutionStack {
   }
 
   private static Icon calcIcon(ThreadReferenceProxyImpl threadProxy, boolean current) {
+    Icon baseIcon;
     if (current) {
-      return threadProxy.isSuspended() ? AllIcons.Debugger.ThreadCurrent : AllIcons.Debugger.ThreadRunning;
+      baseIcon = threadProxy.isSuspended() ? AllIcons.Debugger.ThreadCurrent : AllIcons.Debugger.ThreadRunning;
     }
     else if (threadProxy.isAtBreakpoint()) {
-      return AllIcons.Debugger.ThreadAtBreakpoint;
+      baseIcon = AllIcons.Debugger.ThreadAtBreakpoint;
     }
     else if (threadProxy.isSuspended()) {
-      return AllIcons.Debugger.ThreadSuspended;
+      baseIcon = AllIcons.Debugger.ThreadSuspended;
     }
     else {
-      return AllIcons.Debugger.ThreadRunning;
+      baseIcon = AllIcons.Debugger.ThreadRunning;
     }
+    return applyThreadOverlay(baseIcon, computeThreadOverlay(threadProxy));
   }
 
   private static CompletableFuture<Icon> calcIconAsync(ThreadReferenceProxyImpl threadProxy, boolean current) {
@@ -113,31 +116,51 @@ public class JavaExecutionStack extends XExecutionStack {
     if (!DebuggerUtilsAsync.isAsyncEnabled() || !(ref instanceof ThreadReferenceImpl threadReference)) {
       return CompletableFuture.completedFuture(calcIcon(threadProxy, current));
     }
+    return calcBaseIconAsync(threadReference, current)
+      .thenCombine(computeThreadOverlayAsync(threadProxy), JavaExecutionStack::applyThreadOverlay);
+  }
+
+  private static CompletableFuture<Icon> calcBaseIconAsync(ThreadReferenceImpl threadReference, boolean current) {
     if (current) {
-      return calcThreadIconAsync(threadReference, true);
+      return threadReference.isSuspendedAsync()
+        .thenApply(suspended -> suspended ? AllIcons.Debugger.ThreadCurrent : AllIcons.Debugger.ThreadRunning);
     }
-    return threadReference.isAtBreakpointAsync().thenCompose(r -> {
-      if (r) {
+    return threadReference.isAtBreakpointAsync().thenCompose(atBreakpoint -> {
+      if (atBreakpoint) {
         return CompletableFuture.completedFuture(AllIcons.Debugger.ThreadAtBreakpoint);
       }
-      else {
-        return calcThreadIconAsync(threadReference, false);
-      }
+      return threadReference.isSuspendedAsync()
+        .thenApply(suspended -> suspended ? AllIcons.Debugger.ThreadSuspended : AllIcons.Debugger.ThreadRunning);
     });
   }
 
-  private static CompletableFuture<Icon> calcThreadIconAsync(ThreadReferenceImpl threadReference, boolean current) {
-    return threadReference.isSuspendedAsync().thenApply(suspended -> {
-      if (suspended) {
-        if (current) {
-          return AllIcons.Debugger.ThreadCurrent;
-        }
-        else {
-          return AllIcons.Debugger.ThreadSuspended;
-        }
-      }
-      return AllIcons.Debugger.ThreadRunning;
-    });
+  private enum ThreadOverlay { NONE, DAEMON, VIRTUAL }
+
+  private static ThreadOverlay computeThreadOverlay(ThreadReferenceProxyImpl threadProxy) {
+    if (threadProxy.getThreadReference().isVirtual()) return ThreadOverlay.VIRTUAL;
+    return isDaemon(threadProxy) ? ThreadOverlay.DAEMON : ThreadOverlay.NONE;
+  }
+
+  private static CompletableFuture<ThreadOverlay> computeThreadOverlayAsync(ThreadReferenceProxyImpl threadProxy) {
+    if (threadProxy.getThreadReference().isVirtual()) return CompletableFuture.completedFuture(ThreadOverlay.VIRTUAL);
+    return isDaemonAsync(threadProxy)
+      .thenApply(daemon -> daemon ? ThreadOverlay.DAEMON : ThreadOverlay.NONE);
+  }
+
+  private static Icon applyThreadOverlay(Icon baseIcon, ThreadOverlay overlay) {
+    return switch (overlay) {
+      case VIRTUAL -> IconsCache.INSTANCE.getIconWithVirtualOverlay(baseIcon);
+      case DAEMON -> IconsCache.INSTANCE.getIconWithDaemonOverlay(baseIcon);
+      case NONE -> baseIcon;
+    };
+  }
+
+  private static boolean isDaemon(ThreadReferenceProxyImpl threadProxy) {
+    return threadProxy.getVirtualMachine().getThreadFieldsResolver().isJavaThreadDaemon(threadProxy.getThreadReference());
+  }
+
+  private static CompletableFuture<Boolean> isDaemonAsync(ThreadReferenceProxyImpl threadProxy) {
+    return threadProxy.getVirtualMachine().getThreadFieldsResolver().isJavaThreadDaemonAsync(threadProxy.getThreadReference());
   }
 
   @ApiStatus.Internal
