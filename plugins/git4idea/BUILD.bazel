@@ -101,6 +101,7 @@ jvm_library(
     "//platform/execution",
     "//platform/forms_rt:java-guiForms-rt",
     "//fleet/rhizomedb",
+    "//platform/eel-nioFs",
   ],
   exports = [
     "//platform/dvcs-api:vcs-dvcs",
@@ -238,6 +239,7 @@ jvm_library(
     "//platform/vcs-impl:vcs-impl-tests",
     "//platform/vcs-impl:vcs-impl-tests_test_lib",
     "//fleet/rhizomedb:rhizomedb_test_lib",
+    "//platform/eel-nioFs:eel-nioFs_test_lib",
   ]
 )
 ### auto-generated section `build intellij.vcs.git` end

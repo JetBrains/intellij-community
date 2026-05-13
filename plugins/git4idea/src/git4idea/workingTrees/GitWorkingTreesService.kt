@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.workingTrees
 
+import com.intellij.CommonBundle
 import com.intellij.dvcs.repo.repositoryId
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.impl.ProjectUtil
@@ -23,6 +24,9 @@ import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
+import com.intellij.platform.eel.fs.EelFileUtils
+import com.intellij.platform.eel.isWindows
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.application
@@ -34,6 +38,7 @@ import git4idea.GitRemoteBranch
 import git4idea.GitWorkingTree
 import git4idea.actions.workingTree.GitWorkingTreeDialogData
 import git4idea.commands.Git
+import git4idea.commands.GitCommandResult
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
@@ -238,17 +243,14 @@ internal class GitWorkingTreesService(private val project: Project, val coroutin
       }
 
       if (commandResult.success()) {
-        repository.workingTreeHolder.scheduleReload()
-        VcsNotifier.getInstance(project).notifySuccess(GitNotificationIdsHolder.WORKING_TREE_DELETED,
-                                                       "",
-                                                       GitBundle.message("Git.WorkingTrees.delete.worktree.success.message",
-                                                                         tree.path.presentableUrl))
+        notifyWorkingTreeDeletedSuccess(project, repository, tree)
+        return@launch
       }
-      else {
-        VcsNotifier.getInstance(project).notifyError(GitNotificationIdsHolder.WORKING_TREE_COULD_NOT_DELETE,
-                                                     GitBundle.message("Git.WorkingTrees.delete.worktrees.failure.notification.title"),
-                                                     commandResult.errorOutputAsHtmlString,
-                                                     true)
+
+      if (project.getEelDescriptor().osFamily.isWindows && isPermissionDenied(commandResult)) {
+        handleFailedDeletionOnWindows(project, repository, tree)
+      } else {
+        notifyWorkingTreeDeletedError(project, commandResult.errorOutputAsHtmlString)
       }
     }
   }
@@ -275,6 +277,52 @@ internal class GitWorkingTreesService(private val project: Project, val coroutin
     }
     RecentProjectsManager.getInstance().updateLastProjectPath()
   }
+
+
+  private fun isPermissionDenied(result: GitCommandResult): Boolean {
+    return result.errorOutput.any { it.contains("permission denied", ignoreCase = true) }
+  }
+
+  private fun notifyWorkingTreeDeletedSuccess(project: Project, repository: GitRepository, tree: GitWorkingTree) {
+    repository.workingTreeHolder.scheduleReload()
+    VcsNotifier.getInstance(project).notifySuccess(GitNotificationIdsHolder.WORKING_TREE_DELETED,
+                                                   "",
+                                                   GitBundle.message("Git.WorkingTrees.delete.worktree.success.message",
+                                                                     tree.path.presentableUrl))
+  }
+
+  private fun notifyWorkingTreeDeletedError(project: Project, @NlsSafe errorOutput: String) {
+    VcsNotifier.getInstance(project).notifyError(GitNotificationIdsHolder.WORKING_TREE_COULD_NOT_DELETE,
+                                                 GitBundle.message("Git.WorkingTrees.delete.worktrees.failure.notification.title"),
+                                                 errorOutput,
+                                                 true)
+  }
+
+  private suspend fun handleFailedDeletionOnWindows(project: Project, repository: GitRepository, tree: GitWorkingTree) {
+    val shouldRetry = withContext(Dispatchers.UiWithModelAccess) {
+      MessageDialogBuilder.yesNo(
+        GitBundle.message("Git.WorkingTrees.dialog.inuse.title"),
+        GitBundle.message("Git.WorkingTrees.dialog.inuse.message", tree.path.presentableUrl)
+      )
+        .yesText(GitBundle.message("Git.WorkingTrees.dialog.inuse.button.try.again"))
+        .noText(CommonBundle.getCancelButtonText())
+        .ask(project)
+    }
+
+    if (!shouldRetry) {
+      return
+    }
+
+    try  {
+      EelFileUtils.deleteRecursively(Path(tree.path.path))
+    } catch (e: Exception) {
+      notifyWorkingTreeDeletedError(project, e.message ?: "Unknown error while deleting working tree")
+      return
+    }
+
+    notifyWorkingTreeDeletedSuccess(project, repository, tree)
+  }
+
 
   fun pruneWorkingTrees(project: Project, repository: GitRepository) {
     coroutineScope.launch {
