@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file;
 
 import com.intellij.codeInsight.completion.scope.JavaCompletionHints;
@@ -21,6 +21,7 @@ import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PackageDirectoryProvider;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiDirectory;
@@ -113,7 +114,11 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     return CachedValuesManager.getManager(getProject()).createCachedValue(() -> {
       Collection<PsiDirectory> result = new ArrayList<>();
       Processor<PsiDirectory> processor = Processors.cancelableCollectProcessor(result);
-      getFacade().processPackageDirectories(this, allScope(), processor, includeLibrarySources);
+      for (PackageDirectoryProvider provider : PackageDirectoryProvider.EP_NAME.getExtensions(getProject())) {
+        if (!provider.processPackageDirectories(this, allScope(), processor, includeLibrarySources)) {
+          break;
+        }
+      }
       return CachedValueProvider.Result.create(result, PsiPackageImplementationHelper.getInstance().getDirectoryCachedValueDependencies(this));
     }, false);
   }

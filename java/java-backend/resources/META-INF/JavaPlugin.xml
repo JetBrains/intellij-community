@@ -1305,6 +1305,8 @@
                         serviceImplementation="com.intellij.util.xml.impl.JavaDomConverterManagerImpl"
                         overrides="true"/>
 
+    <packageDirectoryProvider implementation="com.intellij.psi.impl.file.JavaPackageDirectoryProvider" id="default"/>
+
     <java.externalAnnotation.locationProvider
       implementation="com.intellij.codeInsight.externalAnnotation.location.JBBundledAnnotationsProvider"/>
     <jreProvider implementation="com.intellij.execution.ui.BundledJreProvider"/>
