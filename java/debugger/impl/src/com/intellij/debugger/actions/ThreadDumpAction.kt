@@ -294,7 +294,7 @@ private fun buildThreadStates(
       tid = virtualThreadInfo.threadId
       carrierId = virtualThreadInfo.carrierId
       isVirtual = true
-      isDaemon = false
+      isDaemon = true
       prio = null
     }
     else {
