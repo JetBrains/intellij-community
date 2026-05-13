@@ -112,6 +112,7 @@ internal class ToolbarFrameHeader(
 
     mainMenuWithButton.mainMenuButton.expandableMenu = expandableMenu
     mainMenuButtonComponent.isFocusable = true
+    mainMenuButtonComponent.isRequestFocusEnabled = false
     DumbAwareAction.create {
       mainMenuWithButton.mainMenuButton.activateTopLevelMenu()
     }.registerCustomShortcutSet(CustomShortcutSet(KeyEvent.VK_SPACE, KeyEvent.VK_ENTER), mainMenuButtonComponent)
