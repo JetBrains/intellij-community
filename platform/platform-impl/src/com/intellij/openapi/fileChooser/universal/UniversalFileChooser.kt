@@ -21,8 +21,10 @@ import com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributo
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.ui.ComponentValidator
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.getUserData
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -79,12 +81,15 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.BooleanSupplier
+import java.util.function.Supplier
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JList
 import javax.swing.JPanel
 import javax.swing.ListSelectionModel
 import javax.swing.SwingConstants
+import javax.swing.event.DocumentEvent
+import javax.swing.event.DocumentListener
 import javax.swing.event.TreeExpansionEvent
 import javax.swing.event.TreeWillExpandListener
 import javax.swing.tree.ExpandVetoException
@@ -559,6 +564,9 @@ object UniversalFileChooser {
       private val barPanel = JPanel(barCardLayout)
       private val pathTextField: NioPathTextField = NioPathTextField(scope)
 
+      @Volatile
+      private var pathTextFieldInvalid: Boolean = false
+
       companion object {
         private const val LOADING_CARD = "loading"
         private const val TREE_CARD = "tree"
@@ -632,6 +640,18 @@ object UniversalFileChooser {
           }
         })
         pathTextField.showHiddenSupplier = BooleanSupplier { fileTree.areHiddensShown() }
+        ComponentValidator(disposable)
+          .withValidator(Supplier<ValidationInfo?> {
+            if (pathTextFieldInvalid)
+              ValidationInfo(IdeBundle.message("universal.file.chooser.invalid.path"), pathTextField)
+            else null
+          })
+          .installOn(pathTextField)
+        pathTextField.document.addDocumentListener(object : DocumentListener {
+          override fun insertUpdate(e: DocumentEvent) { setPathTextFieldError(false) }
+          override fun removeUpdate(e: DocumentEvent) { setPathTextFieldError(false) }
+          override fun changedUpdate(e: DocumentEvent) {}
+        })
         pathTextField.addKeyListener(object : KeyAdapter() {
           override fun keyPressed(e: KeyEvent) {
             if (e.isConsumed) return
@@ -640,7 +660,7 @@ object UniversalFileChooser {
                 navigateToTextFieldPath(); e.consume()
               }
               KeyEvent.VK_ESCAPE -> {
-                switchToBreadcrumbs(); e.consume()
+                setPathTextFieldError(false); switchToBreadcrumbs(); e.consume()
               }
             }
           }
@@ -819,13 +839,29 @@ object UniversalFileChooser {
 
       private fun navigateToTextFieldPath() {
         val text = pathTextField.text.trim()
-        switchToBreadcrumbs()
-        if (text.isEmpty()) return
+        if (text.isEmpty()) {
+          setPathTextFieldError(false)
+          switchToBreadcrumbs()
+          return
+        }
         scope.launch {
           withContext(Dispatchers.IO) {
-            val path = runCatching { Path.of(text) }.getOrNull() ?: return@withContext
+            val path = runCatching { Path.of(text) }.getOrNull()
+            val exists = path != null && runCatching { Files.exists(path) }.getOrDefault(false)
+            if (path == null || !exists) {
+              runOnEdt {
+                setPathTextFieldError(true)
+                if (barPanel.isShowing) {
+                  barCardLayout.show(barPanel, PATH_CARD)
+                  pathTextField.requestFocusInWindow()
+                }
+              }
+              return@withContext
+            }
             val forceShowHidden = !fileTree.areHiddensShown() && hasHiddenSegment(path)
             runOnEdt {
+              setPathTextFieldError(false)
+              switchToBreadcrumbs()
               if (forceShowHidden) {
                 fileTree.showHiddens(true)
                 PropertiesComponent.getInstance().setValue(SHOW_HIDDEN_FILES_KEY, true)
@@ -837,10 +873,16 @@ object UniversalFileChooser {
         }
       }
 
+      private fun setPathTextFieldError(isError: Boolean) {
+        if (pathTextFieldInvalid == isError) return
+        pathTextFieldInvalid = isError
+        ComponentValidator.getInstance(pathTextField).ifPresent { it.revalidate() }
+      }
+
       private fun hasHiddenSegment(path: Path): Boolean {
         var current: Path? = path
         while (current != null && current.parent != null) {
-          if (runCatching { Files.isHidden(current) }.getOrDefault(false)) {
+          if (runCatching { NioFileChooserUtil.isHidden(current) }.getOrDefault(false)) {
             return true
           }
           current = current.parent
