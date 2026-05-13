@@ -194,7 +194,7 @@ class SubscriptionExpirationSettings(
     @JvmOverloads
     fun showRemDevHint(show: Boolean = true): Builder = apply { this.showRemDevHint = show }
 
-    fun showErrorMessage(@Nls message: String): Builder = apply { this.errorMessage = message }
+    fun showErrorMessage(@Nls message: String?): Builder = apply { this.errorMessage = message }
 
     fun build(): SubscriptionExpirationSettings = SubscriptionExpirationSettings(
       isEvaluation = isEvaluation,
