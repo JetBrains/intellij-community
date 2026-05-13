@@ -208,6 +208,11 @@ class LombokGradleKotlinCompilerPluginProjectConfigurator : AbstractGradleKotlin
 
     override fun getKotlinPluginExpression(forKotlinDsl: Boolean): String =
         if (forKotlinDsl) "kotlin(\"plugin.lombok\")" else "id \"org.jetbrains.kotlin.plugin.lombok\""
+
+    override fun PsiFile.addCustomization(addVersion: Boolean, sourceModule: Module, changedFiles: ChangedConfiguratorFiles) {
+        configureKotlinLombokConfigIfNeeded(sourceModule, changedFiles)
+        configureKaptForLombokIfNeeded(sourceModule, changedFiles)
+    }
 }
 
 class JpaGradleKotlinCompilerPluginProjectConfigurator : AbstractGradleKotlinCompilerPluginProjectConfigurator() {

@@ -15,6 +15,6 @@
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-<!--    <projectPostConfigurator implementation="com.intellij.jpa.kotlin.configuration.KotlinJpaCompilerPluginProjectConfigurator"/>-->
+    <projectPostConfigurator implementation="org.jetbrains.kotlin.idea.lombok.configuration.LombokCompilerPluginProjectPostConfigurator"/>
   </extensions>
 </idea-plugin>
