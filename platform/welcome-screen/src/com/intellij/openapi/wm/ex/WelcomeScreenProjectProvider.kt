@@ -67,6 +67,11 @@ abstract class WelcomeScreenProjectProvider {
       return extension.doIsWelcomeScreenProject(project) && extension.doIsEditableProject(project)
     }
 
+    fun isVcsEnabled(project: Project): Boolean {
+      val isEditable = isEditableWelcomeProject(project)
+      return isEditable && getWelcomeScreenProjectProvider()?.doIsVcsEnabled() ?: false
+    }
+
     fun isForceDisabledFileColors(): Boolean {
       val extension = getWelcomeScreenProjectProvider() ?: return false
       return extension.doIsForceDisabledFileColors()
@@ -84,6 +89,10 @@ abstract class WelcomeScreenProjectProvider {
     @Suppress("unused")
     fun canOpenFilesFromSystemFileManager(filePath: Path): Boolean {
       return getWelcomeScreenProjectProvider()?.canOpenFilesFromSystemFileManager(filePath) ?: false
+    }
+
+    fun getProjectPaneToActivateId(): String? {
+      return getWelcomeScreenProjectProvider()?.doGetProjectPaneToActivateId()
     }
 
     suspend fun createOrOpenWelcomeScreenProject(extension: WelcomeScreenProjectProvider): Project {
@@ -118,6 +127,12 @@ abstract class WelcomeScreenProjectProvider {
     return false
   }
 
+  /**
+   * Return true if your project is a welcome screen that supports version control operations. This setting will be ignored unless the
+   * project is also editable. See [doIsEditableProject]
+   */
+  protected open fun doIsVcsEnabled(): Boolean = false
+
   protected abstract fun doIsForceDisabledFileColors(): Boolean
 
   protected abstract fun doGetCreateNewFileProjectPrefix(): String
@@ -132,6 +147,8 @@ abstract class WelcomeScreenProjectProvider {
   }
 
   protected open fun doIsHiddenInRecentProjects(): Boolean = true
+
+  protected open fun doGetProjectPaneToActivateId(): String? = null
 
   @Internal
   fun isHiddenInRecentProjectsForInternalUsage(): Boolean = doIsHiddenInRecentProjects()

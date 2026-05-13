@@ -31,12 +31,28 @@ interface WelcomeRightTabContentProvider {
 
   val isDisableOptionVisible: Boolean
 
+  val buttonsPerRow: Int
+    get() = 3
+
   fun shouldBeFocused(project: Project): Boolean {
     return project.service<WelcomeScreenPreventWelcomeTabFocusService>().isAllowedFocusOnWelcomeTab()
   }
 
   @Composable
   fun getFeatureButtonModels(project: Project): List<FeatureButtonModel>
+
+  @Composable
+  fun getAdditionalInfoButtonModels(project: Project): List<InfoButtonModel> = emptyList()
+
+  /**
+   * Button model for additional buttons displayed at the bottom of the welcome screen.
+   * These will be displayed after the default theme and keymap buttons.
+   */
+  class InfoButtonModel(
+    val text: String,
+    val icon: IconKey,
+    val onClick: (Project, CoroutineScope) -> Unit,
+  )
 
   /**
    * Base feature button model. Use for frontend-only features.

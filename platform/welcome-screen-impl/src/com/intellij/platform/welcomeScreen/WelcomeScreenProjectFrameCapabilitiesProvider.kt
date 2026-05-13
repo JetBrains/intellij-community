@@ -6,7 +6,6 @@ import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesProvider
 import com.intellij.openapi.wm.ex.ProjectFrameCapability
 import com.intellij.openapi.wm.ex.ProjectFrameUiPolicy
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
-import java.util.EnumSet
 
 internal class WelcomeScreenProjectFrameCapabilitiesProvider : ProjectFrameCapabilitiesProvider {
   /**
@@ -16,15 +15,20 @@ internal class WelcomeScreenProjectFrameCapabilitiesProvider : ProjectFrameCapab
    * providers that consume [ProjectFrameCapability.WELCOME_EXPERIENCE].
    */
   override fun getCapabilities(project: Project): Set<ProjectFrameCapability> {
-    if (!WelcomeScreenProjectProvider.Companion.isWelcomeScreenProject(project)) {
+    if (!WelcomeScreenProjectProvider.isWelcomeScreenProject(project)) {
       return emptySet()
     }
 
-    if (WelcomeScreenProjectProvider.Companion.isForceDisabledFileColors()) {
-      return WELCOME_CAPABILITIES_WITH_DISABLED_FILE_COLORS
-    }
-    else {
-      return WELCOME_CAPABILITIES
+    return buildSet {
+      add(ProjectFrameCapability.WELCOME_EXPERIENCE)
+
+      if (!WelcomeScreenProjectProvider.isVcsEnabled(project)) {
+        add(ProjectFrameCapability.SUPPRESS_VCS_UI)
+      }
+
+      if (WelcomeScreenProjectProvider.isForceDisabledFileColors()) {
+        add(ProjectFrameCapability.FORCE_DISABLE_FILE_COLORS)
+      }
     }
   }
 
@@ -32,14 +36,3 @@ internal class WelcomeScreenProjectFrameCapabilitiesProvider : ProjectFrameCapab
     return null
   }
 }
-
-private val WELCOME_CAPABILITIES: EnumSet<ProjectFrameCapability> =
-  EnumSet.of(
-    ProjectFrameCapability.WELCOME_EXPERIENCE,
-    ProjectFrameCapability.SUPPRESS_VCS_UI,
-  )
-
-private val WELCOME_CAPABILITIES_WITH_DISABLED_FILE_COLORS: EnumSet<ProjectFrameCapability> =
-  EnumSet.copyOf(WELCOME_CAPABILITIES).apply {
-    add(ProjectFrameCapability.FORCE_DISABLE_FILE_COLORS)
-  }

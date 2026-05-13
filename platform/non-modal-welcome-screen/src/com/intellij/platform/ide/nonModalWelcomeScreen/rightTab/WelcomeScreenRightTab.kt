@@ -3,6 +3,7 @@ package com.intellij.platform.ide.nonModalWelcomeScreen.rightTab
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.draganddrop.dragAndDropTarget
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CornerSize
@@ -31,12 +33,14 @@ import androidx.compose.ui.draganddrop.awtTransferable
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.intellij.ide.dnd.FileCopyPasteUtil
@@ -194,7 +198,7 @@ class WelcomeScreenRightTab(
         it !is FeatureButtonModelWithBackend || it.isAlwaysAvailable || it.featureKey in backendFeatureIds
       }
 
-      for (row in featureModels.chunked(3)) {
+      for (row in featureModels.chunked(contentProvider.buttonsPerRow)) {
         Row(modifier = Modifier.wrapContentSize(Alignment.Center), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
           for (model in row) {
             FeatureButton(model, coroutineScope)
@@ -239,14 +243,50 @@ class WelcomeScreenRightTab(
 
   @Composable
   fun SwitchPanel() {
-    Row(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.padding(bottom = 12.dp)) {
-      InfoPanelItem(themeIconKey,
-                    NonModalWelcomeScreenBundle.message("welcome.screen.right.tab.theme.switch.prefix"),
-                    ThemeModel())
-      InfoPanelItem(AllIconsKeys.General.Keyboard,
-                    NonModalWelcomeScreenBundle.message("welcome.screen.right.tab.keymap.switch.prefix"),
-                    KeymapModel())
+    val additionalButtons = contentProvider.getAdditionalInfoButtonModels(project).map { ButtonInfoPanelModel(it) }
+    val buttons = listOf(
+      ComboBoxInfoPanelModel(themeIconKey,
+                             "welcome.screen.right.tab.theme.switch.prefix",
+                             ThemeModel()),
+      ComboBoxInfoPanelModel(AllIconsKeys.General.Keyboard,
+                             "welcome.screen.right.tab.keymap.switch.prefix",
+                             KeymapModel()),
+    ) + additionalButtons
+
+    val buttonsPerRow = contentProvider.buttonsPerRow
+    val coroutineScope = contentProvider.coroutineScope
+    for (row in buttons.chunked(buttonsPerRow)) {
+      Row(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.padding(bottom = 12.dp)) {
+        for (model in row) {
+          when (model) {
+            is ComboBoxInfoPanelModel -> InfoPanelItem(model.iconKey, model.itemPrefix, model.model)
+            is ButtonInfoPanelModel -> InfoPanelButton(model.iconKey, model.itemPrefix, model.onClick, coroutineScope)
+          }
+        }
+      }
     }
+  }
+
+  sealed interface InfoPanelModel {
+    val iconKey: IconKey
+    val itemPrefix: String
+  }
+
+  private class ComboBoxInfoPanelModel(
+    override val iconKey: IconKey,
+    val itemPrefixKey: String,
+    val model: WelcomeScreenRightTabComboBoxModel<out Any>,
+  ) : InfoPanelModel {
+    override val itemPrefix: String
+      get() = NonModalWelcomeScreenBundle.message(itemPrefixKey)
+  }
+
+  private class ButtonInfoPanelModel(private val model: WelcomeRightTabContentProvider.InfoButtonModel) : InfoPanelModel {
+    override val iconKey: IconKey
+      get() = model.icon
+    override val itemPrefix: String
+      get() = model.text
+    val onClick: (Project, CoroutineScope) -> Unit = model.onClick
   }
 
   @Composable
@@ -272,6 +312,57 @@ class WelcomeScreenRightTab(
         )
       }
     }
+  }
+
+  @Composable
+  private fun InfoPanelButton(
+    icon: IconKey,
+    text: String,
+    onClick: (Project, CoroutineScope) -> Unit,
+    coroutineScope: CoroutineScope,
+  ) {
+    WelcomeScreenCustomButton(
+      onClick = {
+        onClick(project, coroutineScope)
+      },
+      style = InfoPanelButtonStyle(),
+    ) {
+      Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.focusable(false).focusProperties { canFocus = false }) {
+        Box(contentAlignment = Alignment.Center) {
+          Icon(key = icon, contentDescription = text)
+        }
+        Spacer(modifier = Modifier.width(6.dp))
+        Text(text = text, color = fontColor, maxLines = 1, style = JewelTheme.defaultTextStyle, overflow = TextOverflow.Ellipsis)
+      }
+    }
+  }
+
+  @Composable
+  fun InfoPanelButtonStyle(): ButtonStyle {
+    val defaultButtonStyle = JewelTheme.defaultButtonStyle
+    return ButtonStyle(
+      colors = with(defaultButtonStyle.colors) {
+        ButtonColors(
+          background = SolidColor(Color.Transparent),
+          backgroundDisabled = backgroundDisabled,
+          backgroundFocused = SolidColor(Color.Transparent),
+          backgroundPressed = featureButtonBackgroundPressedColor,
+          backgroundHovered = featureButtonBackgroundHoveredColor,
+          content = content,
+          contentDisabled = contentDisabled,
+          contentFocused = contentFocused,
+          contentPressed = contentPressed,
+          contentHovered = contentHovered,
+          border = border,
+          borderDisabled = borderDisabled,
+          borderFocused = borderFocused,
+          borderPressed = border,
+          borderHovered = border,
+        )
+      },
+      metrics = defaultButtonStyle.metrics,
+      focusOutlineAlignment = defaultButtonStyle.focusOutlineAlignment
+    )
   }
 
   @Composable

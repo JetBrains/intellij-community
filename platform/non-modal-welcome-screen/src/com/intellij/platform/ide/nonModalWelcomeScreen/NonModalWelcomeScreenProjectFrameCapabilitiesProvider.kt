@@ -6,6 +6,7 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesProvider
 import com.intellij.openapi.wm.ex.ProjectFrameCapability
 import com.intellij.openapi.wm.ex.ProjectFrameUiPolicy
+import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftPanel
 
 /**
@@ -38,6 +39,6 @@ internal class NonModalWelcomeScreenProjectFrameCapabilitiesProvider : ProjectFr
 }
 
 private val NON_MODAL_WELCOME_SCREEN_UI_POLICY = ProjectFrameUiPolicy(
-  projectPaneToActivateId = WelcomeScreenLeftPanel.ID,
+  projectPaneToActivateId = WelcomeScreenProjectProvider.getProjectPaneToActivateId() ?: WelcomeScreenLeftPanel.ID,
   startupToolWindowIdToActivate = ToolWindowId.PROJECT_VIEW,
 )
