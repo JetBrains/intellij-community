@@ -250,13 +250,6 @@ fun Sdk.isAssociatedWithAnotherModule(module: Module?): Boolean {
 }
 
 @Internal
-fun Sdk.setup(existingSdks: List<Sdk>): Sdk? {
-  val homeDir = homeDirectory ?: return null
-  return SdkConfigurationUtil.setupSdk(existingSdks.toTypedArray(), homeDir, PythonSdkType.getInstance(), null, null)
-}
-
-
-@Internal
 suspend fun Sdk.setupAssociated(
   existingSdks: List<Sdk>,
   associatedModulePath: String?,
