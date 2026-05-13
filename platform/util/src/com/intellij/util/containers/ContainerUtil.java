@@ -2751,11 +2751,11 @@ public final class ContainerUtil {
   }
 
   /**
-   * Creates List, which is thread-safe to modify and iterate.
-   * It differs from the java.util.concurrent.CopyOnWriteArrayList in the following:
-   * - faster modification in the uncontended case
-   * - less memory
-   * - slower modification in highly contented case (which is the kind of situation you shouldn't use COWAL anyway)<br>
+   * Creates {@link List} which is thread-safe to modify and iterate.
+   * It differs from the {@link java.util.concurrent.CopyOnWriteArrayList} in the following:
+   * - faster modification in the uncontended case (there's no synchronization inside)
+   * - less memory (no `lock` field)
+   * - slower modification in highly contented case (CAS could fail leading to multiple retries) (which is the kind of situation you shouldn't use COWAL anyway)<br>
    *
    * N.B. Avoid using {@code list.toArray(new T[list.size()])} on this list because it is inherently race-prone and
    * therefore can return an array with null elements at the end.

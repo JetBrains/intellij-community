@@ -24,21 +24,18 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 
-/**
- * This class is a
- * <ul>
- * <li> lock-free (CAS instead of ReentrantLock)
- * <li> less-memory (no lock field)
- * <li> less-garbage (does not create Object[0] arrays)
- * <li> non-cloneable, non-serializable, no-subList-method
- * </ul>
- * re-implementation of {@link java.util.concurrent.CopyOnWriteArrayList}.
- * It generally is faster than {@link java.util.concurrent.CopyOnWriteArrayList} in case of low write-contention.
- * (Note that it is not advisable to use {@link java.util.concurrent.CopyOnWriteArrayList}
- *  in high write-contention code anyway, consider using {@link java.util.concurrent.ConcurrentHashMap} instead).
- */
+/// This class implements a [List] which is thread-safe to modify and iterate.
+/// It differs from the [java.util.concurrent.CopyOnWriteArrayList] in the following:
+/// - faster modification in the uncontended case (there's no synchronization inside)
+/// - less memory (no `lock` field)
+/// - slower modification in highly contented case (CAS could fail leading to multiple retries) (which is the kind of situation you shouldn't use COWAL anyway)
+///
+/// It generally is faster than [java.util.concurrent.CopyOnWriteArrayList] in case of low write-contention.
+/// - N.B. It's not advisable to use [java.util.concurrent.CopyOnWriteArrayList]
+///  in high write-contention code anyway, consider using [java.util.concurrent.ConcurrentHashMap] instead.
+/// - N.B.2. Avoid using `list.toArray(new T[list.size()])` on this list because it is inherently race-prone and
+///  therefore can return an array with null elements at the end.
 final class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, ConcurrentList<E> {
-  @SuppressWarnings({"FieldMayBeFinal"})
   private volatile Object @NotNull [] array;
   private static final VarHandleWrapper ARRAY_HANDLE = VarHandleWrapper.getFactory().create(LockFreeCopyOnWriteArrayList.class, "array", Object[].class);
   LockFreeCopyOnWriteArrayList() {
