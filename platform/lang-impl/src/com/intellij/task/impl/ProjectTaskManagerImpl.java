@@ -34,6 +34,7 @@ import com.intellij.tracing.Tracer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.ApiStatus;
@@ -79,7 +80,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
 
   private final ProjectTaskRunner myDummyTaskRunner = new DummyTaskRunner();
   private final ProjectTaskListener myEventPublisher;
-  private final List<ProjectTaskManagerListener> myListeners = new CopyOnWriteArrayList<>();
+  private final List<ProjectTaskManagerListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public ProjectTaskManagerImpl(@NotNull Project project) {
     super(project);

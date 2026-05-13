@@ -4,6 +4,7 @@ package com.intellij.ide;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import sun.awt.DisplayChangedListener;
@@ -11,7 +12,6 @@ import sun.awt.DisplayChangedListener;
 import java.awt.GraphicsEnvironment;
 import java.awt.HeadlessException;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 @ApiStatus.Internal
 @Service
@@ -24,7 +24,7 @@ public final class DisplayChangeDetector {
 
   @SuppressWarnings("FieldCanBeLocal") // we need to keep a strong reference to this listener, as GraphicsEnvironment keeps only weak references to them
   private final DisplayChangeHandler myHandler = new DisplayChangeHandler();
-  private final List<Listener> myListeners = new CopyOnWriteArrayList<>();
+  private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private DisplayChangeDetector() {
     try {

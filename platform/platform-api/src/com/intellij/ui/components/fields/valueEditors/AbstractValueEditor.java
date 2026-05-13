@@ -3,6 +3,7 @@ package com.intellij.ui.components.fields.valueEditors;
 
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,7 +14,7 @@ public abstract class AbstractValueEditor<T> implements ValueEditor<T> {
 
   private @NotNull T myDefaultValue;
   private @Nullable String myValueName;
-  private final List<Listener<T>> myListeners = new ArrayList<>();
+  private final List<Listener<T>> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   protected AbstractValueEditor(@Nullable String valueName,
                                 @NotNull T defaultValue) {

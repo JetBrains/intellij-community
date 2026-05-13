@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -105,12 +106,11 @@ public final class StickyLinesModelImpl implements StickyLinesModel {
   }
 
   private final MarkupModelEx myMarkupModel;
-  private final List<Listener> myListeners;
+  private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean myIsCleared;
 
   private StickyLinesModelImpl(MarkupModelEx markupModel) {
     myMarkupModel = markupModel;
-    myListeners = new ArrayList<>();
     myIsCleared = false;
   }
 

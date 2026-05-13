@@ -7,6 +7,7 @@ import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.dsl.builder.DslComponentProperty;
 import com.intellij.ui.dsl.gridLayout.UnscaledGapsKt;
 import com.intellij.ui.picker.ColorListener;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +31,7 @@ import static java.beans.EventHandler.create;
 
 public class ColorPanel extends JComponent {
   private static final RelativeFont MONOSPACED_FONT = RelativeFont.SMALL.family(Font.MONOSPACED);
-  private final List<ActionListener> myListeners = new CopyOnWriteArrayList<>();
+  private final List<ActionListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final JTextField myTextField = new JBTextField(9);
   private boolean myEditable;
   private ActionEvent myEvent;

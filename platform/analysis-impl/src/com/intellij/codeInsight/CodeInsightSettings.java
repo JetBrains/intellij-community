@@ -17,6 +17,7 @@ import com.intellij.serialization.SerializationException;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThrowableConvertor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -31,12 +32,11 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.reflect.Field;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 @State(name = "CodeInsightSettings", storages = @Storage("editor.xml"), category = SettingsCategory.CODE, perClient = true)
 public final class CodeInsightSettings implements PersistentStateComponent<Element>, Cloneable {
   private static final Logger LOG = Logger.getInstance(CodeInsightSettings.class);
-  private final List<PropertyChangeListener> myListeners = new CopyOnWriteArrayList<>();
+  private final List<PropertyChangeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public static CodeInsightSettings getInstance() {
     return ApplicationManager.getApplication().getService(CodeInsightSettings.class);
