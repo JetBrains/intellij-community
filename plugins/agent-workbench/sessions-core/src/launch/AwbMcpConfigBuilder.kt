@@ -44,7 +44,7 @@ object AwbMcpConfigBuilder {
   private val LOG = logger<AwbMcpConfigBuilder>()
   private const val REGISTRY_KEY = "agent.workbench.mcp.use.direct.http"
   private const val USER_MCP_FILE = ".mcp.json"
-  private const val AWB_DIR = ".awb"
+  const val AWB_DIR: String = ".awb"
   private const val GENERATED_FILE = "awb-mcp.json"
 
   /**

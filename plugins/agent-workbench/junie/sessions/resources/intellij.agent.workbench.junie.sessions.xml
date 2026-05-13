@@ -16,5 +16,7 @@
       id="agentWorkbenchJunie"
       order="after agentWorkbenchClaude"
       implementation="com.intellij.agent.workbench.junie.sessions.JunieAgentSessionProviderDescriptor"/>
+    <agent.workbench.sessionLaunchContributor
+      implementation="com.intellij.agent.workbench.junie.sessions.JunieAwbMcpLocationContributor"/>
   </extensions>
 </idea-plugin>
