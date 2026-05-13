@@ -60,7 +60,7 @@ class GradleConfiguratorPlatformSpecificTest3 : KotlinGradleImportingTestCase() 
     }
 
     @Test
-    @TargetVersions("5.6+")
+    @TargetVersions("6.8.3+")
     fun testEnableFeatureSupportMultiplatformKts() {
         val files = importProjectFromTestData()
 
@@ -76,7 +76,7 @@ class GradleConfiguratorPlatformSpecificTest3 : KotlinGradleImportingTestCase() 
     }
 
     @Test
-    @TargetVersions("<7.6")
+    @TargetVersions("5.6+")
     fun testAddLibraryMultiplatform() = doTestAddLibrary()
 
     @Test
