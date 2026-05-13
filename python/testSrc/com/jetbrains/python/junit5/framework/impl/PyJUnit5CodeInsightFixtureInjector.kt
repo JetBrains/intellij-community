@@ -7,6 +7,9 @@ import com.jetbrains.python.junit5.framework.annotations.InjectCodeInsightTestFi
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.Extension
 import org.junit.jupiter.api.extension.ExtensionContext
+import org.junit.platform.commons.support.HierarchyTraversalMode
+import org.junit.platform.commons.support.ReflectionSupport
+import java.util.function.Predicate
 
 internal class PyJUnit5CodeInsightFixtureInjector : BeforeEachCallback, Extension {
 
@@ -14,8 +17,11 @@ internal class PyJUnit5CodeInsightFixtureInjector : BeforeEachCallback, Extensio
     val codeInsightFixture = context.getLookupFixtureManager().getRequired<CodeInsightTestFixture>()
 
     val testInstance = context.requiredTestInstance
-    val fields = testInstance::class.java.declaredFields
-      .filter { it.isAnnotationPresent(InjectCodeInsightTestFixture::class.java) }
+    val fields = ReflectionSupport.findFields(
+      testInstance.javaClass,
+      Predicate { it.isAnnotationPresent(InjectCodeInsightTestFixture::class.java) },
+      HierarchyTraversalMode.TOP_DOWN,
+    )
 
     for (field in fields) {
       require(CodeInsightTestFixture::class.java.isAssignableFrom(field.type)) {
