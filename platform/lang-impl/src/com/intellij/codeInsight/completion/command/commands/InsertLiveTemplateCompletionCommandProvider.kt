@@ -8,7 +8,7 @@ import com.intellij.psi.PsiFile
 
 class InsertLiveTemplateCompletionCommandProvider : ActionCommandProvider(
   actionId = "InsertLiveTemplate",
-  synonyms = listOf("Show live templates", "Live template"),
+  synonyms = listOf("Show live templates", "Insert live template", "Live template"),
   presentableName = CodeInsightBundle.message("command.completion.show.live.templates.text"),
   icon = null,
   priority = -150,
