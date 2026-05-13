@@ -6,7 +6,7 @@ import com.intellij.openapi.fileTypes.FileType
 /**
  * Platform-level default minimap support policy.
  *
- * All non-binary file types are [MinimapSupportLevel.SUPPORTED_BY_DEFAULT].
+ * All non-binary file types are [MinimapSupportLevel.SUPPORTED].
  * Binary types are rejected before this object is consulted; see [MinimapFileSupportPolicy.forFileType].
  *
  * IDEs that need to suppress the minimap for specific file types (e.g. notebooks that provide their own
@@ -14,5 +14,5 @@ import com.intellij.openapi.fileTypes.FileType
  * [MinimapSupportLevel.UNSUPPORTED] for the relevant types.
  */
 internal object DefaultMinimapFileSupportPolicy : MinimapFileSupportPolicy {
-  override fun getSupportLevel(fileType: FileType): MinimapSupportLevel = MinimapSupportLevel.SUPPORTED_BY_DEFAULT
+  override fun getSupportLevel(fileType: FileType): MinimapSupportLevel = MinimapSupportLevel.SUPPORTED
 }

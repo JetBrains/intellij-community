@@ -1860,14 +1860,11 @@
                        key="presentation.assistant.notification"/>
 
     <!-- Minimap -->
-    <registryKey key="editor.minimap.mode" defaultValue="[disabled|legacy|new*]"
-                 description="Minimap mode: disabled, legacy, new"/>
     <editorFactoryListener implementation="com.intellij.ide.minimap.MinimapEditorFactoryListener"/>
     <applicationService serviceImplementation="com.intellij.ide.minimap.settings.MinimapSettings"/>
     <applicationConfigurable id="com.intellij.minimap" parentId="editor"
                              key="settings.name" bundle="messages.MinimapBundle"
                              provider="com.intellij.ide.minimap.settings.MinimapConfigurableProvider"/>
-    <minimapLayerFactory implementation="com.intellij.ide.minimap.layers.factories.LegacyPreviewLayerFactory"/>
     <minimapLayerFactory implementation="com.intellij.ide.minimap.layers.factories.TokenFillerLayerFactory"/>
     <minimapLayerFactory implementation="com.intellij.ide.minimap.layers.factories.SelectionLayerFactory"/>
     <minimapLayerFactory implementation="com.intellij.ide.minimap.layers.factories.DiagnosticsLayerFactory"/>

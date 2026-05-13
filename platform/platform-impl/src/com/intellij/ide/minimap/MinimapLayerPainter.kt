@@ -6,7 +6,6 @@ import com.intellij.ide.minimap.diagnostics.MinimapDiagnosticsPainter
 import com.intellij.ide.minimap.folding.MinimapFoldMarkerPainter
 import com.intellij.ide.minimap.hover.MinimapHoverController
 import com.intellij.ide.minimap.layers.MinimapLayerRenderState
-import com.intellij.ide.minimap.legacy.MinimapLegacyPreview
 import com.intellij.ide.minimap.paint.MinimapSelectionPainter
 import com.intellij.ide.minimap.render.MinimapRenderer
 import com.intellij.ide.minimap.thumb.MinimapThumb
@@ -19,26 +18,12 @@ internal class MinimapLayerPainter(
   private val editor: Editor,
   private val minimapController: MinimapController,
   private val hoverController: MinimapHoverController,
-  repaintRequest: () -> Unit,
 ) {
   private val renderer = MinimapRenderer()
   private val selectionPainter = MinimapSelectionPainter(editor)
   private val diagnosticsPainter = MinimapDiagnosticsPainter(editor)
   private val foldPainter = MinimapFoldMarkerPainter()
   private val breakpointPainter = MinimapBreakpointPainter()
-  private val legacyPreview = MinimapLegacyPreview(repaintRequest)
-
-  fun clear() {
-    legacyPreview.clear()
-  }
-
-  fun updateLegacyPreview(minimapHeight: Int) {
-    legacyPreview.update(editor, minimapHeight, true)
-  }
-
-  fun paintLegacyPreviewLayer(graphics: Graphics2D, state: MinimapLayerRenderState) {
-    legacyPreview.paint(graphics, editor, state.panelWidth, state.snapshot.geometry)
-  }
 
   fun paintTokenFillerLayer(graphics: Graphics2D, state: MinimapLayerRenderState) {
     val snapshot = state.snapshot

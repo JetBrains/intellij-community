@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.minimap.listeners
 
-import com.intellij.ide.minimap.MinimapRegistry
 import com.intellij.ide.minimap.breakpoints.MinimapBreakpointUtil
 import com.intellij.ide.minimap.caret.MinimapCaretController
 import com.intellij.openapi.Disposable
@@ -40,7 +39,6 @@ class MinimapStateListeners(
 ) {
   private val documentListener = object : DocumentListener {
     override fun documentChanged(event: DocumentEvent) {
-      if (MinimapRegistry.isLegacy()) return
       invalidateLineProjection()
       scheduleStructureMarkersUpdate()
     }
@@ -48,7 +46,6 @@ class MinimapStateListeners(
 
   private val selectionListener = object : SelectionListener {
     override fun selectionChanged(e: SelectionEvent) {
-      if (MinimapRegistry.isLegacy()) return
       repaint()
     }
   }
@@ -89,7 +86,6 @@ class MinimapStateListeners(
 
   private val errorStripeListener = object : ErrorStripeListener {
     override fun errorMarkerChanged(e: ErrorStripeEvent) {
-      if (MinimapRegistry.isLegacy()) return
       scheduleDiagnosticsUpdate()
     }
   }
@@ -109,7 +105,6 @@ class MinimapStateListeners(
     }
 
     private fun onHighlighterChanged(highlighter: RangeHighlighterEx) {
-      if (MinimapRegistry.isLegacy()) return
       if (!MinimapBreakpointUtil.isBreakpointHighlighter(highlighter)) return
       scheduleBreakpointsUpdate()
     }
@@ -117,7 +112,6 @@ class MinimapStateListeners(
 
   private val foldingListener = object : FoldingListener {
     override fun onFoldProcessingEnd() {
-      if (MinimapRegistry.isLegacy()) return
       invalidateLineProjection()
       scheduleFoldingUpdate()
     }

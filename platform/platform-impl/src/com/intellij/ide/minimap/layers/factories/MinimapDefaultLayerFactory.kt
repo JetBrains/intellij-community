@@ -12,7 +12,6 @@ import java.awt.Graphics2D
 internal abstract class MinimapDefaultLayerFactory(
   final override val id: MinimapLayerId,
   final override val order: Int,
-  private val requiredLegacyMode: Boolean? = null,
 ) : MinimapLayerFactory {
   final override fun createLayer(panel: MinimapPanel): MinimapLayer {
     val layerId = id
@@ -23,7 +22,7 @@ internal abstract class MinimapDefaultLayerFactory(
       override val order: Int = layerOrder
 
       override fun isApplicable(state: MinimapLayerRenderState): Boolean {
-        return isLayerModeApplicable(state) && isAdditionalApplicable(state)
+        return isAdditionalApplicable(state)
       }
 
       override fun paint(graphics: Graphics2D, state: MinimapLayerRenderState) {
@@ -35,8 +34,4 @@ internal abstract class MinimapDefaultLayerFactory(
   open fun isAdditionalApplicable(state: MinimapLayerRenderState): Boolean = true
 
   abstract fun paint(layerPainter: MinimapLayerPainter, graphics: Graphics2D, state: MinimapLayerRenderState)
-
-  private fun isLayerModeApplicable(state: MinimapLayerRenderState): Boolean {
-    return requiredLegacyMode?.let { it == state.isLegacyMode } ?: true
-  }
 }

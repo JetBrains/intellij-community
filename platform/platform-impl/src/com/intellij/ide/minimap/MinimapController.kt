@@ -125,7 +125,6 @@ class MinimapController(
       panelHeight,
       scaleData,
       effectiveScaleMode,
-      MinimapRegistry.isLegacy(),
       areaStartOverride,
     )
     panel.updateSnapshot(snapshot)

@@ -8,21 +8,9 @@ package com.intellij.ide.minimap.model
  * can extend or override it via the [MinimapFileSupportPolicy] extension point.
  */
 enum class MinimapSupportLevel {
-  /** Minimap is shown by default; user can disable per file type. */
-  SUPPORTED_BY_DEFAULT,
-
-  /** Minimap is not shown by default; user can enable per file type. */
-  SUPPORTED_OPTIONAL,
+  /** Minimap can be shown for this file type when minimap is available and enabled. */
+  SUPPORTED,
 
   /** Minimap is never shown for this file type; not surfaced in settings. */
   UNSUPPORTED,
-
-  /**
-   * Minimap can be shown for this file type regardless of the global `editor.minimap.mode`
-   * registry key or IDE availability restrictions.
-   *
-   * Use when a plugin has its own feature flag that controls whether the minimap is available
-   * (e.g. `jupyter.editor.minimap.enabled`). User-facing minimap visibility settings still apply.
-   */
-  INDEPENDENT,
 }

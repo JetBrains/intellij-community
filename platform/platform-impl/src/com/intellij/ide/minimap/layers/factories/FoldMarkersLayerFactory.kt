@@ -9,7 +9,6 @@ import java.awt.Graphics2D
 internal class FoldMarkersLayerFactory : MinimapDefaultLayerFactory(
   id = MinimapLayerIds.FOLD_MARKERS,
   order = 50,
-  requiredLegacyMode = false,
 ) {
   override fun paint(layerPainter: MinimapLayerPainter, graphics: Graphics2D, state: MinimapLayerRenderState) {
     layerPainter.paintFoldMarkersLayer(graphics, state)

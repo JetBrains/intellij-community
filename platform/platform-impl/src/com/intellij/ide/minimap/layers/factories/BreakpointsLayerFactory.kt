@@ -9,7 +9,6 @@ import java.awt.Graphics2D
 internal class BreakpointsLayerFactory : MinimapDefaultLayerFactory(
   id = MinimapLayerIds.BREAKPOINTS,
   order = 60,
-  requiredLegacyMode = false,
 ) {
   override fun paint(layerPainter: MinimapLayerPainter, graphics: Graphics2D, state: MinimapLayerRenderState) {
     layerPainter.paintBreakpointsLayer(graphics, state)

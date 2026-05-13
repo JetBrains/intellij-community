@@ -9,7 +9,6 @@ import java.awt.Graphics2D
 internal class TokenFillerLayerFactory : MinimapDefaultLayerFactory(
   id = MinimapLayerIds.TOKEN_FILLER,
   order = 20,
-  requiredLegacyMode = false,
 ) {
   override fun paint(layerPainter: MinimapLayerPainter, graphics: Graphics2D, state: MinimapLayerRenderState) {
     layerPainter.paintTokenFillerLayer(graphics, state)

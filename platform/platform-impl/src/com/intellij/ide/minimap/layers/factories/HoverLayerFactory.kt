@@ -9,7 +9,6 @@ import java.awt.Graphics2D
 internal class HoverLayerFactory : MinimapDefaultLayerFactory(
   id = MinimapLayerIds.HOVER,
   order = 70,
-  requiredLegacyMode = false,
 ) {
   override fun paint(layerPainter: MinimapLayerPainter, graphics: Graphics2D, state: MinimapLayerRenderState) {
     layerPainter.paintHoverLayer(graphics)

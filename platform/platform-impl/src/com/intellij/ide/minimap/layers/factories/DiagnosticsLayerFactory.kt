@@ -9,7 +9,6 @@ import java.awt.Graphics2D
 internal class DiagnosticsLayerFactory : MinimapDefaultLayerFactory(
   id = MinimapLayerIds.DIAGNOSTICS,
   order = 40,
-  requiredLegacyMode = false,
 ) {
   override fun paint(layerPainter: MinimapLayerPainter, graphics: Graphics2D, state: MinimapLayerRenderState) {
     layerPainter.paintDiagnosticsLayer(graphics, state)

@@ -15,7 +15,6 @@ object MinimapUsageCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   private enum class MinimapMode {
-    LEGACY,
     NEW,
   }
 
@@ -188,5 +187,5 @@ object MinimapUsageCollector : CounterUsagesCollector() {
     }
   }
 
-  private fun mode(): MinimapMode = if (MinimapRegistry.isLegacy()) MinimapMode.LEGACY else MinimapMode.NEW
+  private fun mode(): MinimapMode = MinimapMode.NEW
 }

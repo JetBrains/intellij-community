@@ -7,7 +7,6 @@ import com.intellij.ide.minimap.folding.MinimapFoldMarkerCollector
 import com.intellij.ide.minimap.geometry.MinimapGeometryCalculator
 import com.intellij.ide.minimap.geometry.MinimapScaleData
 import com.intellij.ide.minimap.layout.MinimapLayoutCalculator
-import com.intellij.ide.minimap.layout.MinimapLayoutMode
 import com.intellij.ide.minimap.layout.MinimapLayoutModeSelector
 import com.intellij.ide.minimap.model.MinimapStructureMarker
 import com.intellij.ide.minimap.model.MinimapModel
@@ -31,7 +30,6 @@ class MinimapSceneBuilder(
                     panelHeight: Int,
                     scaleData: MinimapScaleData,
                     scaleMode: MinimapScaleMode,
-                    isLegacy: Boolean,
                     areaStartOverride: Int? = null): MinimapSnapshot {
     val lineProjection = model.getLineProjection()
     val geometry = geometryCalculator.compute(panelHeight, scaleData, scaleMode, lineProjection.projectedLineCount, areaStartOverride)
@@ -42,20 +40,6 @@ class MinimapSceneBuilder(
       geometry = geometry,
       lineProjection = lineProjection,
     )
-
-    if (isLegacy) {
-      return MinimapSnapshot(
-        context = context,
-        geometry = geometry,
-        tokenEntries = emptyList(),
-        structureEntries = emptyList(),
-        diagnosticEntries = emptyList(),
-        breakpointEntries = emptyList(),
-        foldEntries = emptyList(),
-        layoutMetrics = null,
-        layoutMode = MinimapLayoutMode.EXACT,
-      )
-    }
 
     val isCommitted = model.isDocumentCommitted()
     val structureMarkers = if (isCommitted) {

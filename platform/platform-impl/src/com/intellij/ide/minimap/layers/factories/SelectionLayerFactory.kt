@@ -9,7 +9,6 @@ import java.awt.Graphics2D
 internal class SelectionLayerFactory : MinimapDefaultLayerFactory(
   id = MinimapLayerIds.SELECTION,
   order = 30,
-  requiredLegacyMode = false,
 ) {
   override fun paint(layerPainter: MinimapLayerPainter, graphics: Graphics2D, state: MinimapLayerRenderState) {
     layerPainter.paintSelectionLayer(graphics, state)

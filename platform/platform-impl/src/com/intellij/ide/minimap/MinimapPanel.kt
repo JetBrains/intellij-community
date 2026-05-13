@@ -64,7 +64,6 @@ class MinimapPanel(
     editor = editor,
     minimapController = minimapController,
     hoverController = hoverController,
-    repaintRequest = ::repaint,
   )
 
   private val layerPipeline = MinimapLayerPipeline(
@@ -87,10 +86,7 @@ class MinimapPanel(
     installSettingsListeners()
     updatePreferredSize()
 
-    if (!MinimapRegistry.isLegacy()) {
-      minimapController.updateStructureMarkersNow()
-    }
-
+    minimapController.updateStructureMarkersNow()
     minimapController.install()
     interactionController.install()
   }
@@ -101,7 +97,6 @@ class MinimapPanel(
   override fun dispose() {
     disposed = true
     uninstallSettingsListeners()
-    layerPainter.clear()
     snapshot = null
     container.remove(this)
     container.revalidate()
@@ -139,18 +134,9 @@ class MinimapPanel(
     val layerState = MinimapLayerRenderState(
       snapshot = snapshot,
       panelWidth = width,
-      isLegacyMode = MinimapRegistry.isLegacy(),
       isMouseOver = isMouseOver,
     )
     layerPipeline.paint(g2d, layerState)
-  }
-
-  override fun updateUI() {
-    super.updateUI()
-
-    if (initialized && MinimapRegistry.isLegacy()) {
-      layerPainter.updateLegacyPreview(currentSnapshot()?.geometry?.minimapHeight ?: 0)
-    }
   }
 
   fun scrollTo(y: Int) {

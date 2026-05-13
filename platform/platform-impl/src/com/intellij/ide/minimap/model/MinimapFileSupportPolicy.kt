@@ -26,22 +26,6 @@ interface MinimapFileSupportPolicy {
    */
   fun getSupportLevel(fileType: FileType): MinimapSupportLevel?
 
-  /**
-   * Returns whether this policy can provide a minimap independently of the platform minimap registry.
-   *
-   * Used by user-facing entry points that should stay available when an independent provider is available.
-   */
-  fun hasIndependentSupport(): Boolean = false
-
-  /**
-   * Registry keys whose change should trigger a minimap refresh across all open editors.
-   *
-   * Override when your policy uses a dedicated registry key (e.g. `jupyter.editor.minimap.enabled`)
-   * instead of relying solely on `editor.minimap.mode`. [com.intellij.ide.minimap.MinimapService] collects these keys at
-   * startup and registers listeners automatically — no separate service or startup activity needed.
-   */
-  fun getWatchedRegistryKeys(): List<String> = emptyList()
-
   companion object {
     @JvmField
     val EP_NAME: ExtensionPointName<MinimapFileSupportPolicy> =
@@ -63,8 +47,5 @@ interface MinimapFileSupportPolicy {
       return DefaultMinimapFileSupportPolicy.getSupportLevel(fileType)
     }
 
-    fun hasIndependentSupport(): Boolean {
-      return EP_NAME.extensionList.any { it.hasIndependentSupport() }
-    }
   }
 }
