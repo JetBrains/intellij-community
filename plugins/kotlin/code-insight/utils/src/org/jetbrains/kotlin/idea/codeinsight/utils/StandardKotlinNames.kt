@@ -73,6 +73,11 @@ object StandardKotlinNames {
         @JvmField val JvmInline: FqName = JvmStandardClassIds.BASE_JVM_PACKAGE + "JvmInline"
     }
 
+    object Duration {
+        private val DURATION_COMPANION_CLASS_ID = ClassId(KOTLIN_TIME_PACKAGE, Name.identifier("Duration.Companion"))
+        @JvmField val milliseconds: CallableId = CallableId(DURATION_COMPANION_CLASS_ID, Name.identifier("milliseconds"))
+    }
+
     object Sequences {
         @JvmField val asSequence: FqName = BASE_SEQUENCES_PACKAGE + "asSequence"
 

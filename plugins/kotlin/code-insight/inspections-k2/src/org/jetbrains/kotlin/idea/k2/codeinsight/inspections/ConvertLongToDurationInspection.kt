@@ -11,6 +11,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames
+import org.jetbrains.kotlin.idea.imports.addImportFor
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -53,6 +55,8 @@ internal class ConvertLongToDurationInspection :
             withMilliseconds.receiverExpression.replace(firstArgumentExpr)
 
             firstArgumentExpr.replace(withMilliseconds)
+
+            writableElement.containingKtFile.addImportFor(StandardKotlinNames.Duration.milliseconds.asSingleFqName())
         }
     }
 
