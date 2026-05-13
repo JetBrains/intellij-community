@@ -1,7 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notebooks.visualization.ui
 
 import com.intellij.notebooks.ui.bind
+import com.intellij.notebooks.visualization.outputs.NotebookOutputDataKey
 import com.intellij.notebooks.visualization.outputs.NotebookOutputInlayShowable
 import com.intellij.notebooks.visualization.outputs.impl.CollapsingComponent
 import com.intellij.notebooks.visualization.ui.NotebookUiUtils.intersectsEvenIfEmpty
@@ -9,7 +10,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.util.Disposer
-import org.jetbrains.annotations.TestOnly
 import java.awt.Rectangle
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
@@ -70,7 +70,9 @@ class EditorCellOutputView internal constructor(
     component.addComponentListener(resizeListener)
   }
 
-  @TestOnly
+  val outputDataKey: NotebookOutputDataKey
+    get() = output.dataKey
+
   fun getOutputComponent(): JComponent = component.mainComponent
 
   private fun getFoldingBounds(): Pair<Int, Int> {
