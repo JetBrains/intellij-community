@@ -3,6 +3,7 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.application.options.CodeStyle;
+import com.intellij.codeWithMe.ClientIdContextElement;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.ide.plugins.DynamicPluginListener;
@@ -787,7 +788,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
   @Override
   public void reloadFromDisk(@NotNull Document document, @Nullable Project project) {
-    ThreadContext.resetThreadContext(() -> {
+    ThreadContext.installThreadContext(ThreadContext.currentThreadContext().minusKey(ClientIdContextElement.Key), true, () -> {
       ThreadingAssertions.assertEventDispatchThread();
 
       VirtualFile file = getFile(document);
