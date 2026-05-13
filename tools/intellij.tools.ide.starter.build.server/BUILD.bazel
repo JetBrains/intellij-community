@@ -25,7 +25,7 @@ jvm_library(
     "//tools/intellij.tools.ide.util.common:ide-util-common",
     "//libraries/junit5",
     "//libraries/junit5-launcher",
-    "@lib//:opentelemetry",
+    "//libraries/opentelemetry",
   ]
 )
 
@@ -45,6 +45,7 @@ jvm_library(
     "//tools/intellij.tools.ide.util.common:ide-util-common_test_lib",
     "//libraries/junit5:junit5_test_lib",
     "//libraries/junit5-launcher:junit5-launcher_test_lib",
+    "//libraries/opentelemetry:opentelemetry_test_lib",
   ]
 )
 ### auto-generated section `build intellij.tools.ide.starter.build.server` end

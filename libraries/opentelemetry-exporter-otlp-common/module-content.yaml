@@ -1,0 +1,7 @@
+- name: dist.all/lib/intellij.libraries.opentelemetry.exporter.otlp.common.jar
+  modules:
+  - name: intellij.libraries.opentelemetry.exporter.otlp.common
+    libraries:
+      opentelemetry-exporter-otlp-common:
+      - name: $MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-otlp-common/1/opentelemetry-exporter-otlp-common-1.jar
+      - name: $MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-common/1/opentelemetry-exporter-common-1.jar

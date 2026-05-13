@@ -15,9 +15,9 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" scope="TEST" />
     <orderEntry type="module" module-name="intellij.idea.community.build.tasks" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="opentelemetry" level="project" />
-    <orderEntry type="library" scope="TEST" name="opentelemetry-semconv" level="project" />
-    <orderEntry type="library" scope="TEST" name="opentelemetry-extension-kotlin" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.opentelemetry" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.opentelemetry.semconv" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.opentelemetry.extension.kotlin" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" scope="TEST" />

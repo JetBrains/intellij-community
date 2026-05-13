@@ -7,12 +7,12 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" scope="TEST" name="opentelemetry" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.opentelemetry" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="jetbrains-annotations" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
-    <orderEntry type="library" scope="TEST" name="opentelemetry-exporter-otlp-common" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.opentelemetry.exporter.otlp.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.jackson3" scope="TEST" />
-    <orderEntry type="library" scope="PROVIDED" name="io.opentelemetry.sdk.extension.autoconfigure.spi" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.opentelemetry.sdk.autoconfigure.spi" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.libraries.jackson3.databind" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.agent.extension" scope="TEST" />

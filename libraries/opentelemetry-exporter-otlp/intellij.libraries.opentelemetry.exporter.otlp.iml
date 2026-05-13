@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="JAVA_MODULE" version="4">
-  <component name="NewModuleRootManager" inherit-compiler-output="true">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.platform.backend" />
     <orderEntry type="module-library" exported="">
       <library name="opentelemetry-exporter-otlp-library" type="repository">
         <properties include-transitive-deps="false" maven-id="io.opentelemetry:opentelemetry-exporter-otlp:1.48.0">
@@ -26,5 +25,6 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.opentelemetry.exporter.otlp.common" exported="" />
   </component>
 </module>

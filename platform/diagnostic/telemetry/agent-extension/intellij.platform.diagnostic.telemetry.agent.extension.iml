@@ -24,12 +24,12 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="opentelemetry" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.opentelemetry" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
-    <orderEntry type="library" name="opentelemetry-exporter-otlp-common" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.opentelemetry.exporter.otlp.common" />
     <orderEntry type="module" module-name="intellij.libraries.jackson3" />
-    <orderEntry type="library" scope="PROVIDED" name="io.opentelemetry.sdk.extension.autoconfigure.spi" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.opentelemetry.sdk.autoconfigure.spi" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.libraries.jackson3.databind" />
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
   </component>

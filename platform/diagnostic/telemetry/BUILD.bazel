@@ -6,6 +6,21 @@ jvm_provided_library(
   lib = "//libraries/kotlinx/coroutines/core"
 )
 
+jvm_provided_library(
+  name = "libraries_opentelemetry_provided",
+  lib = "//libraries/opentelemetry"
+)
+
+jvm_provided_library(
+  name = "libraries_opentelemetry-semconv_provided",
+  lib = "//libraries/opentelemetry-semconv"
+)
+
+jvm_provided_library(
+  name = "libraries_opentelemetry-extension-kotlin_provided",
+  lib = "//libraries/opentelemetry-extension-kotlin"
+)
+
 jvm_library(
   name = "telemetry",
   module_name = "intellij.platform.diagnostic.telemetry",
@@ -16,13 +31,13 @@ jvm_library(
   kotlinc_opts = "@community//:k8",
   deps = [
     "@lib//:kotlin-stdlib-provided",
-    "@lib//:opentelemetry-provided",
-    "@lib//:opentelemetry-semconv-provided",
-    "@lib//:opentelemetry-extension-kotlin-provided",
     "//platform/util",
     "//platform/util/base",
     "//platform/diagnostic",
     ":libraries_kotlinx_coroutines_core_provided",
+    ":libraries_opentelemetry_provided",
+    ":libraries_opentelemetry-semconv_provided",
+    ":libraries_opentelemetry-extension-kotlin_provided",
   ],
   exports = ["//platform/diagnostic"]
 )
@@ -43,9 +58,12 @@ jvm_library(
     "@lib//:kotlin-stdlib-provided",
     "//libraries/kotlinx/coroutines/core",
     "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "@lib//:opentelemetry-provided",
-    "@lib//:opentelemetry-semconv-provided",
-    "@lib//:opentelemetry-extension-kotlin-provided",
+    "//libraries/opentelemetry",
+    "//libraries/opentelemetry:opentelemetry_test_lib",
+    "//libraries/opentelemetry-semconv",
+    "//libraries/opentelemetry-semconv:opentelemetry-semconv_test_lib",
+    "//libraries/opentelemetry-extension-kotlin",
+    "//libraries/opentelemetry-extension-kotlin:opentelemetry-extension-kotlin_test_lib",
     "//platform/util:util_test_lib",
     "//platform/util/base:base_test_lib",
     "//platform/diagnostic:diagnostic_test_lib",
@@ -84,9 +102,12 @@ jvm_library(
     "@lib//:kotlin-stdlib-provided",
     "//libraries/kotlinx/coroutines/core",
     "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "@lib//:opentelemetry-provided",
-    "@lib//:opentelemetry-semconv-provided",
-    "@lib//:opentelemetry-extension-kotlin-provided",
+    "//libraries/opentelemetry",
+    "//libraries/opentelemetry:opentelemetry_test_lib",
+    "//libraries/opentelemetry-semconv",
+    "//libraries/opentelemetry-semconv:opentelemetry-semconv_test_lib",
+    "//libraries/opentelemetry-extension-kotlin",
+    "//libraries/opentelemetry-extension-kotlin:opentelemetry-extension-kotlin_test_lib",
     "//platform/util",
     "//platform/util:util_test_lib",
     "//platform/diagnostic",

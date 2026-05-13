@@ -16,7 +16,7 @@ jvm_library(
     "//libraries/fastutil",
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/coroutines/core",
-    "@lib//:opentelemetry",
+    "//libraries/opentelemetry",
     "//platform/diagnostic/telemetry",
   ]
 )
@@ -38,6 +38,7 @@ jvm_library(
     "//libraries/kotlinx/coroutines/core:core_test_lib",
     "@lib//:junit4",
     "@lib//:junit5",
+    "//libraries/opentelemetry:opentelemetry_test_lib",
     "//platform/diagnostic/telemetry:telemetry_test_lib",
   ]
 )

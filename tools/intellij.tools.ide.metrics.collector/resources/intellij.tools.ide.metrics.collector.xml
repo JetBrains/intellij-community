@@ -1,6 +1,6 @@
 <idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.libraries.assertj.core"/>
     <module name="intellij.libraries.fastutil"/>
     <module name="intellij.libraries.jackson"/>
@@ -10,9 +10,11 @@
     <module name="intellij.libraries.kotlinTestAssertionsCoreJvm"/>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.libraries.opentelemetry"/>
+    <module name="intellij.libraries.opentelemetry.semconv"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.diagnostic.telemetry"/>
     <module name="intellij.tools.ide.util.common"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 </idea-plugin>

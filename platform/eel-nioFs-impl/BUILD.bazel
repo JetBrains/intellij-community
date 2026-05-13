@@ -16,7 +16,7 @@ jvm_library(
     "//platform/util",
     "//platform/core-api:core",
     "//platform/diagnostic/telemetry",
-    "@lib//:opentelemetry",
+    "//libraries/opentelemetry",
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
   ]
@@ -37,6 +37,7 @@ jvm_library(
     "//platform/util:util_test_lib",
     "//platform/core-api:core_test_lib",
     "//platform/diagnostic/telemetry:telemetry_test_lib",
+    "//libraries/opentelemetry:opentelemetry_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.eel.nioFs.impl` end

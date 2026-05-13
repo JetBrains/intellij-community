@@ -90,7 +90,6 @@ private val libsUsedInJps = setOf(
 private val predefinedMergeRules = listOf<Pair<String, (String) -> Boolean>>(
   "groovy.jar" to { it.startsWith("org.codehaus.groovy:") },
   "jsch-agent.jar" to { it.startsWith("jsch-agent") },
-  "opentelemetry.jar" to { it == "opentelemetry" || it == "opentelemetry-semconv" || it.startsWith("opentelemetry-exporter-otlp") },
   PRODUCT_BACKEND_JAR to { name -> name.startsWith("License") || name.startsWith("jetbrains.codeWithMe.lobby.server.") },
   // see ClassPathUtil.getUtilClassPath
   UTIL_8_JAR to { libsUsedInJps.contains(it) || (it.startsWith("kotlinx-")) },

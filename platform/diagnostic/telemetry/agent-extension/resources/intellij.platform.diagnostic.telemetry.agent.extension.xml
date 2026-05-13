@@ -3,6 +3,8 @@
   <dependencies>
     <module name="intellij.libraries.jackson3"/>
     <module name="intellij.libraries.jackson3.databind"/>
+    <module name="intellij.libraries.opentelemetry"/>
+    <module name="intellij.libraries.opentelemetry.exporter.otlp.common"/>
   </dependencies>
   <!-- endregion -->
   <!-- Platform module intellij.diagnostic.telemetry.agent.extension -->

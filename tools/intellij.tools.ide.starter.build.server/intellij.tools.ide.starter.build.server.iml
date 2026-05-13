@@ -33,6 +33,6 @@
     <orderEntry type="module" module-name="intellij.tools.ide.util.common" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" />
     <orderEntry type="module" module-name="intellij.libraries.junit5.launcher" />
-    <orderEntry type="library" name="opentelemetry" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.opentelemetry" />
   </component>
 </module>

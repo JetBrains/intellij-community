@@ -11,7 +11,7 @@ jvm_library(
     "//platform/util-rt",
     "//plugins/maven-server-api:maven-server",
     "@lib//:jetbrains-annotations",
-    "@lib//:opentelemetry",
+    "//libraries/opentelemetry",
     "//platform/diagnostic/telemetry/rt",
   ],
   exports = ["//platform/diagnostic/telemetry/rt"]
@@ -32,6 +32,7 @@ jvm_library(
     ":server-telemetry",
     "//platform/util-rt:util-rt_test_lib",
     "//plugins/maven-server-api:maven-server_test_lib",
+    "//libraries/opentelemetry:opentelemetry_test_lib",
     "//platform/diagnostic/telemetry/rt:rt_test_lib",
   ]
 )

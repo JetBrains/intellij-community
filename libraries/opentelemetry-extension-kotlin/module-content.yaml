@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.opentelemetry.extension.kotlin.jar
+  modules:
+  - name: intellij.libraries.opentelemetry.extension.kotlin
+    libraries:
+      opentelemetry-extension-kotlin:
+      - name: $MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-extension-kotlin/1/opentelemetry-extension-kotlin-1.jar

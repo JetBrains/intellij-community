@@ -1,5 +1,10 @@
 ### auto-generated section `build intellij.platform.diagnostic.telemetry.agent.extension` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+
+jvm_provided_library(
+  name = "libraries_opentelemetry-sdk-autoconfigure-spi_provided",
+  lib = "//libraries/opentelemetry-sdk-autoconfigure-spi"
+)
 
 jvm_library(
   name = "diagnostic-telemetry-agent-extension",
@@ -10,12 +15,12 @@ jvm_library(
   resource_strip_prefix = "resources",
   kotlinc_opts = "@community//:k8",
   deps = [
-    "@lib//:opentelemetry",
+    "//libraries/opentelemetry",
     "@lib//:jetbrains-annotations",
-    "@lib//:opentelemetry-exporter-otlp-common",
+    "//libraries/opentelemetry-exporter-otlp-common",
     "//libraries/jackson3/jackson:libraries-jackson3",
-    "@lib//:io-opentelemetry-sdk-extension-autoconfigure-spi-provided",
     "//libraries/jackson3/databind",
+    ":libraries_opentelemetry-sdk-autoconfigure-spi_provided",
   ]
 )
 
@@ -28,9 +33,12 @@ jvm_library(
   kotlinc_opts = "@community//:k8",
   runtime_deps = [
     ":diagnostic-telemetry-agent-extension",
+    "//libraries/opentelemetry:opentelemetry_test_lib",
     "@lib//:junit5",
+    "//libraries/opentelemetry-exporter-otlp-common:opentelemetry-exporter-otlp-common_test_lib",
     "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
-    "@lib//:io-opentelemetry-sdk-extension-autoconfigure-spi-provided",
+    "//libraries/opentelemetry-sdk-autoconfigure-spi",
+    "//libraries/opentelemetry-sdk-autoconfigure-spi:opentelemetry-sdk-autoconfigure-spi_test_lib",
     "//libraries/jackson3/databind:databind_test_lib",
     "@lib//:kotlin-stdlib",
   ]
@@ -61,13 +69,16 @@ jvm_library(
     "//platform/diagnostic/telemetry/agent-extension:diagnostic-telemetry-agent-extension_test_lib",
   ],
   deps = [
-    "@lib//:opentelemetry",
+    "//libraries/opentelemetry",
+    "//libraries/opentelemetry:opentelemetry_test_lib",
     "@lib//:jetbrains-annotations",
     "@lib//:junit5",
-    "@lib//:opentelemetry-exporter-otlp-common",
+    "//libraries/opentelemetry-exporter-otlp-common",
+    "//libraries/opentelemetry-exporter-otlp-common:opentelemetry-exporter-otlp-common_test_lib",
     "//libraries/jackson3/jackson:libraries-jackson3",
     "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
-    "@lib//:io-opentelemetry-sdk-extension-autoconfigure-spi-provided",
+    "//libraries/opentelemetry-sdk-autoconfigure-spi",
+    "//libraries/opentelemetry-sdk-autoconfigure-spi:opentelemetry-sdk-autoconfigure-spi_test_lib",
     "//libraries/jackson3/databind",
     "//libraries/jackson3/databind:databind_test_lib",
     "@lib//:kotlin-stdlib",

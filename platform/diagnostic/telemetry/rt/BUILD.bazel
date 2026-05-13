@@ -8,7 +8,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = "@community//:k8",
   deps = [
-    "@lib//:opentelemetry",
+    "//libraries/opentelemetry",
     "//platform/util-rt",
     "@lib//:jetbrains-annotations",
   ]
@@ -24,6 +24,7 @@ jvm_library(
   runtime_deps = [
     ":rt",
     "@lib//:kotlin-stdlib",
+    "//libraries/opentelemetry:opentelemetry_test_lib",
     "//platform/util-rt:util-rt_test_lib",
     "@lib//:junit5",
   ]
@@ -55,7 +56,8 @@ jvm_library(
   ],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:opentelemetry",
+    "//libraries/opentelemetry",
+    "//libraries/opentelemetry:opentelemetry_test_lib",
     "//platform/util-rt",
     "//platform/util-rt:util-rt_test_lib",
     "@lib//:jetbrains-annotations",

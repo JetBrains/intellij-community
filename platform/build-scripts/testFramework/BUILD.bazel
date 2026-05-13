@@ -16,8 +16,8 @@ jvm_library(
   deps = [
     "//platform/build-scripts",
     "@lib//:kotlin-stdlib",
-    "@lib//:opentelemetry",
-    "@lib//:opentelemetry-semconv",
+    "//libraries/opentelemetry",
+    "//libraries/opentelemetry-semconv",
     "@lib//:grpc-netty-shaded",
     "@lib//:grpc-core",
     "@lib//:grpc-protobuf",
@@ -66,6 +66,8 @@ jvm_library(
   runtime_deps = [
     ":testFramework",
     "//platform/build-scripts:build-scripts_test_lib",
+    "//libraries/opentelemetry:opentelemetry_test_lib",
+    "//libraries/opentelemetry-semconv:opentelemetry-semconv_test_lib",
     "//libraries/jackson/jr-objects:libraries-jackson-jr-objects_test_lib",
     "//platform/core-api:core_test_lib",
     "//jps/model-api:model_test_lib",

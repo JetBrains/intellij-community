@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.libraries.junit5"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.opentelemetry"/>
     <module name="intellij.platform.testFramework.common"/>
     <module name="intellij.platform.testFramework.teamCity"/>
     <module name="intellij.tools.ide.starter"/>

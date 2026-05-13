@@ -10,7 +10,7 @@ jvm_library(
   resource_strip_prefix = "resources",
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:opentelemetry",
+    "//libraries/opentelemetry",
     "@lib//:jetbrains-annotations",
     "//platform/eel-provider",
     "//platform/platform-impl:ide-impl",
@@ -36,6 +36,7 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   runtime_deps = [
     ":workspace.impl",
+    "//libraries/opentelemetry:opentelemetry_test_lib",
     "//platform/eel-provider:eel-provider_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/core-api:core_test_lib",

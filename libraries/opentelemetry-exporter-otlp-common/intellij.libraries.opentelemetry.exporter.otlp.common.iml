@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="opentelemetry-exporter-otlp-common" type="repository">
+        <properties maven-id="io.opentelemetry:opentelemetry-exporter-otlp-common:1.48.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-otlp-common/1.48.0/opentelemetry-exporter-otlp-common-1.48.0.jar">
+              <sha256sum>9b3211ad7f1508f6453d16922aad6c7dce5b2f9a88b7e272171f63875ee78efd</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-common/1.48.0/opentelemetry-exporter-common-1.48.0.jar">
+              <sha256sum>bc7af4f3c4ba1a23c20a6e1945f3e17fd3f5719f6f17d62961b3167d939a18e2</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="io.opentelemetry:opentelemetry-api" />
+            <dependency maven-id="io.opentelemetry:opentelemetry-sdk-extension-autoconfigure-spi" />
+            <dependency maven-id="io.opentelemetry:opentelemetry-api-incubator" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-otlp-common/1.48.0/opentelemetry-exporter-otlp-common-1.48.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-common/1.48.0/opentelemetry-exporter-common-1.48.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-otlp-common/1.48.0/opentelemetry-exporter-otlp-common-1.48.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-common/1.48.0/opentelemetry-exporter-common-1.48.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.opentelemetry" exported="" />
+    <orderEntry type="module" module-name="intellij.libraries.opentelemetry.sdk.autoconfigure.spi" exported="" />
+    <orderEntry type="module" module-name="intellij.libraries.opentelemetry.exporter.sender.jdk" scope="RUNTIME" />
+  </component>
+</module>

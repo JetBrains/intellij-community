@@ -62,7 +62,7 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework.common" />
     <orderEntry type="module" module-name="intellij.tools.ide.util.common" />
     <orderEntry type="module" module-name="intellij.tools.ide.starter.bus" exported="" />
-    <orderEntry type="library" name="opentelemetry" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.opentelemetry" />
     <orderEntry type="library" name="github.oshi.core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.runtime.repository" />
     <orderEntry type="module" module-name="intellij.libraries.commons.compress" />

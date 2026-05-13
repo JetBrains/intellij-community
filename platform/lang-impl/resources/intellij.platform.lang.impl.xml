@@ -22,6 +22,8 @@
     <module name="intellij.libraries.kotlinx.serialization.protobuf"/>
     <module name="intellij.libraries.lz4"/>
     <module name="intellij.libraries.miglayout.swing"/>
+    <module name="intellij.libraries.opentelemetry"/>
+    <module name="intellij.libraries.opentelemetry.semconv"/>
     <module name="intellij.libraries.oro.matcher"/>
     <module name="intellij.libraries.pty4j"/>
     <module name="intellij.libraries.rd.core"/>

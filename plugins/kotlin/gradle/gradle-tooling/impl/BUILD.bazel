@@ -25,7 +25,7 @@ jvm_library(
     "//plugins/kotlin/base/project-model",
     "//plugins/gradle/tooling-extension-api:toolingExtension",
     "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
-    "@lib//:opentelemetry",
+    "//libraries/opentelemetry",
     "@lib//:jspecify-provided",
     "@lib//:gradle",
     ":platform_extensions_provided",
@@ -51,6 +51,7 @@ jvm_library(
     "@lib//:kotlin-test",
     "//platform/extensions",
     "//platform/extensions:extensions_test_lib",
+    "//libraries/opentelemetry:opentelemetry_test_lib",
     "@lib//:jspecify-provided",
   ]
 )
@@ -100,7 +101,8 @@ jvm_library(
     "@lib//:kotlin-test",
     "//platform/extensions",
     "//platform/extensions:extensions_test_lib",
-    "@lib//:opentelemetry",
+    "//libraries/opentelemetry",
+    "//libraries/opentelemetry:opentelemetry_test_lib",
     "@lib//:jspecify-provided",
     "@lib//:gradle",
   ],

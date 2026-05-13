@@ -32,8 +32,8 @@ jvm_library(
     "//libraries/caffeine",
     "//libraries/kryo5",
     "//platform/diagnostic/telemetry",
-    "@lib//:opentelemetry",
-    "@lib//:opentelemetry-semconv",
+    "//libraries/opentelemetry",
+    "//libraries/opentelemetry-semconv",
     "//platform/diagnostic",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ]
@@ -58,6 +58,8 @@ jvm_library(
     "//libraries/caffeine:caffeine_test_lib",
     "//libraries/kryo5:kryo5_test_lib",
     "//platform/diagnostic/telemetry:telemetry_test_lib",
+    "//libraries/opentelemetry:opentelemetry_test_lib",
+    "//libraries/opentelemetry-semconv:opentelemetry-semconv_test_lib",
     "//platform/diagnostic:diagnostic_test_lib",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]

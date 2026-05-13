@@ -106,9 +106,9 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.datetime" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
     <orderEntry type="module" module-name="intellij.platform.ide.internal" />
-    <orderEntry type="library" scope="PROVIDED" name="opentelemetry" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="opentelemetry-semconv" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="opentelemetry-extension-kotlin" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.opentelemetry" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.libraries.opentelemetry.semconv" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.libraries.opentelemetry.extension.kotlin" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.ide.ui" />
     <orderEntry type="module" module-name="intellij.platform.kernel" />
     <orderEntry type="module" module-name="intellij.platform.project" />

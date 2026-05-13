@@ -26,7 +26,7 @@ jvm_library(
     "@lib//:junit5Params-provided",
     "@lib//:junit5Launcher-provided",
     "//tools/intellij.tools.ide.util.common:ide-util-common",
-    "@lib//:opentelemetry",
+    "//libraries/opentelemetry",
     "//platform/testFramework/common",
   ]
 )
@@ -58,6 +58,7 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.collector:ide-metrics-collector_test_lib",
     "//tools/intellij.tools.ide.metrics.collector.starter:ide-metrics-collector-starter",
     "//tools/intellij.tools.ide.metrics.collector.starter:ide-metrics-collector-starter_test_lib",
+    "//libraries/opentelemetry:opentelemetry_test_lib",
     "//platform/core-api:core",
     "//platform/core-api:core_test_lib",
     "//platform/util",
@@ -140,7 +141,8 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.collector:ide-metrics-collector_test_lib",
     "//tools/intellij.tools.ide.metrics.collector.starter:ide-metrics-collector-starter",
     "//tools/intellij.tools.ide.metrics.collector.starter:ide-metrics-collector-starter_test_lib",
-    "@lib//:opentelemetry",
+    "//libraries/opentelemetry",
+    "//libraries/opentelemetry:opentelemetry_test_lib",
     "//platform/core-api:core",
     "//platform/core-api:core_test_lib",
     "//platform/util",

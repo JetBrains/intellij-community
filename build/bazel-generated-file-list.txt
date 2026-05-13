@@ -484,9 +484,13 @@ libraries/netty/codec-http
 libraries/netty/handler-proxy
 libraries/netty/tcnative-boringssl
 libraries/opencsv
+libraries/opentelemetry
 libraries/opentelemetry-exporter-otlp
+libraries/opentelemetry-exporter-otlp-common
 libraries/opentelemetry-exporter-sender-jdk
+libraries/opentelemetry-extension-kotlin
 libraries/opentelemetry-sdk-autoconfigure-spi
+libraries/opentelemetry-semconv
 libraries/oro-matcher
 libraries/plexus-utils
 libraries/protobuf

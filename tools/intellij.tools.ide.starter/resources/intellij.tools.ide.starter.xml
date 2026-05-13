@@ -5,6 +5,7 @@
     <module name="intellij.libraries.commons.io"/>
     <module name="intellij.libraries.kotlin.reflect"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.opentelemetry"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.lang.impl"/>

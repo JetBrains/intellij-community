@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.opentelemetry.semconv.jar
+  modules:
+  - name: intellij.libraries.opentelemetry.semconv
+    libraries:
+      opentelemetry-semconv:
+      - name: $MAVEN_REPOSITORY$/io/opentelemetry/semconv/opentelemetry-semconv/1/opentelemetry-semconv-1.jar

@@ -16,8 +16,8 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/util/base/multiplatform",
     "//platform/util/base",
-    "@lib//:opentelemetry",
-    "@lib//:opentelemetry-semconv",
+    "//libraries/opentelemetry",
+    "//libraries/opentelemetry-semconv",
     "//libraries/kotlinx/coroutines/core",
   ]
 )
@@ -37,6 +37,8 @@ jvm_library(
     "//platform/util/jdom:jdom_test_lib",
     "//platform/util/base/multiplatform:multiplatform_test_lib",
     "//platform/util/base:base_test_lib",
+    "//libraries/opentelemetry:opentelemetry_test_lib",
+    "//libraries/opentelemetry-semconv:opentelemetry-semconv_test_lib",
     "//libraries/kotlinx/coroutines/core:core_test_lib",
   ]
 )
