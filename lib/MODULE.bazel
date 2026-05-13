@@ -2324,633 +2324,633 @@ http_file(
 )
 
 http_file(
-  name = "ai_grazie_api-api-gateway-client-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/api/api-gateway-client-jvm/0.8.155/api-gateway-client-jvm-0.8.155.jar",
-  sha256 = "c009534ab1582aa0af9add030f334da645985222044d0d6535d15716c0fd7248",
-  downloaded_file_path = "api-gateway-client-jvm-0.8.155.jar"
+  name = "ai_grazie_api-api-gateway-client-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/api/api-gateway-client-jvm/0.8.184/api-gateway-client-jvm-0.8.184.jar",
+  sha256 = "555b33ddcbbcd2192c3434b37d089d43234c55cb9b705d7a4c8d9615e0e11aa2",
+  downloaded_file_path = "api-gateway-client-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_api-api-gateway-api-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/api/api-gateway-api-jvm/0.8.155/api-gateway-api-jvm-0.8.155.jar",
-  sha256 = "90df1937d8bf815b269ce857ec0d1de6a3c83e2cedcfdc78799256d186d982c6",
-  downloaded_file_path = "api-gateway-api-jvm-0.8.155.jar"
+  name = "ai_grazie_api-api-gateway-api-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/api/api-gateway-api-jvm/0.8.184/api-gateway-api-jvm-0.8.184.jar",
+  sha256 = "83a6b488996c4dbc84c8e5c68b7c4082fd1e454b394a134ef4e142c22b3863c0",
+  downloaded_file_path = "api-gateway-api-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_auth-gec-agg-model-public-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/auth/gec-agg-model-public-jvm/0.8.155/gec-agg-model-public-jvm-0.8.155.jar",
-  sha256 = "649c24efdb3be4bd446103e8fbfe5a87ac628312b9c8b5e31a8ef86cc6b40115",
-  downloaded_file_path = "gec-agg-model-public-jvm-0.8.155.jar"
+  name = "ai_grazie_auth-gec-agg-model-public-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/auth/gec-agg-model-public-jvm/0.8.184/gec-agg-model-public-jvm-0.8.184.jar",
+  sha256 = "a9a5fe52382d2b214975c49ced17d21018af90e9377945009f1e4bd7da66b453",
+  downloaded_file_path = "gec-agg-model-public-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_llm-llm-agg-api-model-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/llm/llm-agg-api-model-jvm/0.8.155/llm-agg-api-model-jvm-0.8.155.jar",
-  sha256 = "adc3d93c128d4e0ccebbde7bc9749c3fa3ecda96b070e4bc7ea21a4fbb2ae546",
-  downloaded_file_path = "llm-agg-api-model-jvm-0.8.155.jar"
+  name = "ai_grazie_llm-llm-agg-api-model-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/llm/llm-agg-api-model-jvm/0.8.184/llm-agg-api-model-jvm-0.8.184.jar",
+  sha256 = "1799b940b3b6382cab6166bf2fdc69d4b24806b805b5c3c9b7e1b7d1fa5503b0",
+  downloaded_file_path = "llm-agg-api-model-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-feedback-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-feedback-jvm/0.8.155/model-feedback-jvm-0.8.155.jar",
-  sha256 = "ae3c6e4cd5f75ce2bdb6cfcc0503048b21d48247c32a6d79d739496f51855f05",
-  downloaded_file_path = "model-feedback-jvm-0.8.155.jar"
+  name = "ai_grazie_model-model-feedback-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-feedback-jvm/0.8.184/model-feedback-jvm-0.8.184.jar",
+  sha256 = "c088a24c24dda9ba3012b9d2196f103a4b531d635460d14409b721e850a833c1",
+  downloaded_file_path = "model-feedback-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-indexing-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-indexing-jvm/0.8.155/model-indexing-jvm-0.8.155.jar",
-  sha256 = "7a7d166805693da0223596aca392482dbcf71cbf3cb58f381ac95da8c5c9b0ac",
-  downloaded_file_path = "model-indexing-jvm-0.8.155.jar"
+  name = "ai_grazie_model-model-indexing-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-indexing-jvm/0.8.184/model-indexing-jvm-0.8.184.jar",
+  sha256 = "e552a00ac2ffa4931a80f0c8adac9e65146233666159f2836f509fbf94dc2ef6",
+  downloaded_file_path = "model-indexing-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-llm-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-llm-jvm/0.8.155/model-llm-jvm-0.8.155.jar",
-  sha256 = "dbe748241fcb60110653c364d32c257563f6a37eaddd5ef3487bf2d50efc39cc",
-  downloaded_file_path = "model-llm-jvm-0.8.155.jar"
+  name = "ai_grazie_model-model-llm-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-llm-jvm/0.8.184/model-llm-jvm-0.8.184.jar",
+  sha256 = "a10ea73e4ae69095093b931c8e8e34c803d760ee279df735eecb528085446f93",
+  downloaded_file_path = "model-llm-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-bdg-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-bdg-jvm/0.8.155/model-bdg-jvm-0.8.155.jar",
-  sha256 = "39223a82981b6893e31818d8433189106a5ef39cbb9bcf1a244db648405de57b",
-  downloaded_file_path = "model-bdg-jvm-0.8.155.jar"
+  name = "ai_grazie_model-model-bdg-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-bdg-jvm/0.8.184/model-bdg-jvm-0.8.184.jar",
+  sha256 = "900deb4a897c1261b567e10152bc28ba8d64e191c8d0cf2fed2586ecc5ab42fd",
+  downloaded_file_path = "model-bdg-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-nlp-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-nlp-jvm/0.8.155/model-nlp-jvm-0.8.155.jar",
-  sha256 = "719a36642a961607b0319a6cf8ec4f9cb0f30ca151247a2fabfdc81a9588a695",
-  downloaded_file_path = "model-nlp-jvm-0.8.155.jar"
+  name = "ai_grazie_model-model-nlp-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-nlp-jvm/0.8.184/model-nlp-jvm-0.8.184.jar",
+  sha256 = "c3db4ef129f5f0a1b3aa97028a3c0d71aa9b3429c35114dc4a33765a01f7b265",
+  downloaded_file_path = "model-nlp-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-quota-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-quota-jvm/0.8.155/model-quota-jvm-0.8.155.jar",
-  sha256 = "5314180ee81bc7e6f2d5d6d55f3481d7fb6c314ff80803a19ccb195481c44eb8",
-  downloaded_file_path = "model-quota-jvm-0.8.155.jar"
+  name = "ai_grazie_model-model-quota-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-quota-jvm/0.8.184/model-quota-jvm-0.8.184.jar",
+  sha256 = "ef454f66e89e3fd9b46098f0780e9734cc9236abf97eba0cc490070f8baf3dae",
+  downloaded_file_path = "model-quota-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-license-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-license-jvm/0.8.155/model-license-jvm-0.8.155.jar",
-  sha256 = "11f3c7001d063669fd181ff991be92790a0265dced9d2fe1a21af20f849cf855",
-  downloaded_file_path = "model-license-jvm-0.8.155.jar"
+  name = "ai_grazie_model-model-license-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-license-jvm/0.8.184/model-license-jvm-0.8.184.jar",
+  sha256 = "dc3788d44ac18c1f58626ee0f2cf30c47667d4d687c737037de55726f6ddbaf1",
+  downloaded_file_path = "model-license-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-tone-formality-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-tone-formality-jvm/0.8.155/model-tone-formality-jvm-0.8.155.jar",
-  sha256 = "005f0e1708984e4662e009955f6a507bc561929e642cd38e90ff87b81bc2b8d4",
-  downloaded_file_path = "model-tone-formality-jvm-0.8.155.jar"
+  name = "ai_grazie_model-model-tone-formality-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-tone-formality-jvm/0.8.184/model-tone-formality-jvm-0.8.184.jar",
+  sha256 = "871653f81919bb2406f7416ec89f380101ef4d6538c631179d0d1ed08780c20f",
+  downloaded_file_path = "model-tone-formality-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-gateway-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-gateway-jvm/0.8.155/model-gateway-jvm-0.8.155.jar",
-  sha256 = "d029ebec26db28c917b78fc4d851a2908aaf19e6e46a6158f8ad2380e069b74c",
-  downloaded_file_path = "model-gateway-jvm-0.8.155.jar"
+  name = "ai_grazie_model-model-gateway-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-gateway-jvm/0.8.184/model-gateway-jvm-0.8.184.jar",
+  sha256 = "3392479f899547ad31bc12c48ca433119f3bd0c6b750a7f5cf3c883e10f0cf91",
+  downloaded_file_path = "model-gateway-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_auth-auth-model-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/auth/auth-model-jvm/0.8.155/auth-model-jvm-0.8.155.jar",
-  sha256 = "ce0cb14deac77be098f7a64c9029ad12615fa8d808f878371500d9c340b3e1c8",
-  downloaded_file_path = "auth-model-jvm-0.8.155.jar"
+  name = "ai_grazie_auth-auth-model-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/auth/auth-model-jvm/0.8.184/auth-model-jvm-0.8.184.jar",
+  sha256 = "651f06cd499a25e8e50c24786659806b2bd063bd80906dcc853df54553a0cb9b",
+  downloaded_file_path = "auth-model-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_auth_product-auth-product-model-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/auth/product/auth-product-model-jvm/0.8.155/auth-product-model-jvm-0.8.155.jar",
-  sha256 = "a0bffb59021b768352b846ce2ca21b980a736dfd1003d964111ad460c2831121",
-  downloaded_file_path = "auth-product-model-jvm-0.8.155.jar"
+  name = "ai_grazie_auth_product-auth-product-model-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/auth/product/auth-product-model-jvm/0.8.184/auth-product-model-jvm-0.8.184.jar",
+  sha256 = "02a1eae3b6e2fdca91b4a34d86c601ee32571a4a227d3e7e7cf9d0a3a2a70af5",
+  downloaded_file_path = "auth-product-model-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_user_cfg-user-cfg-model-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/user/cfg/user-cfg-model-jvm/0.8.155/user-cfg-model-jvm-0.8.155.jar",
-  sha256 = "5c7b22e5b553011b64856df445ae07dd66eec95bdb476a57152b0739194be673",
-  downloaded_file_path = "user-cfg-model-jvm-0.8.155.jar"
+  name = "ai_grazie_user_cfg-user-cfg-model-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/user/cfg/user-cfg-model-jvm/0.8.184/user-cfg-model-jvm-0.8.184.jar",
+  sha256 = "b9aea90cc4c00ae349c1f0c8b046b30107ed45578d046b61c5f940fe420e6912",
+  downloaded_file_path = "user-cfg-model-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_utils-utils-jwt-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/utils/utils-jwt-jvm/0.8.155/utils-jwt-jvm-0.8.155.jar",
-  sha256 = "473741c0530833052b194bd1e2b97e08fdc043f9faed684120279ae0eadc4908",
-  downloaded_file_path = "utils-jwt-jvm-0.8.155.jar"
+  name = "ai_grazie_utils-utils-jwt-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/utils/utils-jwt-jvm/0.8.184/utils-jwt-jvm-0.8.184.jar",
+  sha256 = "2c176d7e73c0870cdd696954e9e92e96a71efe0659c1dbe9d1997195cd15263c",
+  downloaded_file_path = "utils-jwt-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_user_strg-user-strg-model-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/user/strg/user-strg-model-jvm/0.8.155/user-strg-model-jvm-0.8.155.jar",
-  sha256 = "b839d2851d26cfbc172e7ca26abd2c9a08bd1deeae33252500844d4edb32e64f",
-  downloaded_file_path = "user-strg-model-jvm-0.8.155.jar"
+  name = "ai_grazie_user_strg-user-strg-model-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/user/strg/user-strg-model-jvm/0.8.184/user-strg-model-jvm-0.8.184.jar",
+  sha256 = "56eefb7bc5a4657af567be340d7b7efabe47cf47e0966ee1b6271623b030b59b",
+  downloaded_file_path = "user-strg-model-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_indexing-indexing-server-api-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/indexing/indexing-server-api-jvm/0.8.155/indexing-server-api-jvm-0.8.155.jar",
-  sha256 = "77b83f556a6b97118215a73b31965666a70dccbdb5ee9affbf872d5ae86e84be",
-  downloaded_file_path = "indexing-server-api-jvm-0.8.155.jar"
+  name = "ai_grazie_indexing-indexing-server-api-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/indexing/indexing-server-api-jvm/0.8.184/indexing-server-api-jvm-0.8.184.jar",
+  sha256 = "0773a59376c96ce2ec6cd6bd7d0b00b6a8d91080ab02d6a2273a632bfdf13f25",
+  downloaded_file_path = "indexing-server-api-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_indexing-indexing-provider-api-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/indexing/indexing-provider-api-jvm/0.8.155/indexing-provider-api-jvm-0.8.155.jar",
-  sha256 = "6488d3f6bb972e22969e681768ecced71e195b85c28c034d44a6d7a8a1b49d1c",
-  downloaded_file_path = "indexing-provider-api-jvm-0.8.155.jar"
+  name = "ai_grazie_indexing-indexing-provider-api-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/indexing/indexing-provider-api-jvm/0.8.184/indexing-provider-api-jvm-0.8.184.jar",
+  sha256 = "fc5b58440da5fa25c2d47b669dd65969820e8758ddb16948649584a860d412ef",
+  downloaded_file_path = "indexing-provider-api-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-swagger-annotations-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/swagger-annotations-jvm/0.8.155/swagger-annotations-jvm-0.8.155.jar",
-  sha256 = "b2a31e8e5403557b7acd68f48bce247533c2170c7a43ecbcc0efc19055df1ef2",
-  downloaded_file_path = "swagger-annotations-jvm-0.8.155.jar"
+  name = "ai_grazie_model-swagger-annotations-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/swagger-annotations-jvm/0.8.184/swagger-annotations-jvm-0.8.184.jar",
+  sha256 = "44f6fc4e9c80bbf0a98f37782560ccaca6fb1531a569953fc8538b8bb3141bde",
+  downloaded_file_path = "swagger-annotations-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_client-client-common-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/client/client-common-jvm/0.8.155/client-common-jvm-0.8.155.jar",
-  sha256 = "f1d385e243712e8a67f7e28c39cad91819b662993ee7323ed63392b5689ca3fd",
-  downloaded_file_path = "client-common-jvm-0.8.155.jar"
+  name = "ai_grazie_client-client-common-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/client/client-common-jvm/0.8.184/client-common-jvm-0.8.184.jar",
+  sha256 = "7f0ba70a6595b368e14c65e52202f807d5b564ffe11e5b380fe49da2aaed4e92",
+  downloaded_file_path = "client-common-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-common-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-common-jvm/0.8.155/model-common-jvm-0.8.155.jar",
-  sha256 = "724ca83d6183b9b6c9d914436bfb4dba4744eb8493eaf1caaf093f401d610b6b",
-  downloaded_file_path = "model-common-jvm-0.8.155.jar"
+  name = "ai_grazie_model-model-common-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-common-jvm/0.8.184/model-common-jvm-0.8.184.jar",
+  sha256 = "c6ef673d49057bab8f64f9c9f54f78bc2dd0cda95ffd55d0d681de16da64e20e",
+  downloaded_file_path = "model-common-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-auth-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-auth-jvm/0.8.155/model-auth-jvm-0.8.155.jar",
-  sha256 = "02c0c21fe38037ba027262efcb515ed984f67cd97bd15b0e4e6664e64ce51d88",
-  downloaded_file_path = "model-auth-jvm-0.8.155.jar"
+  name = "ai_grazie_model-model-auth-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-auth-jvm/0.8.184/model-auth-jvm-0.8.184.jar",
+  sha256 = "bf736b204f0d02bd7717db7f91375be50af2de7c8666acf773f1e9b6338377c6",
+  downloaded_file_path = "model-auth-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_client-client-attribute-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/client/client-attribute-jvm/0.8.155/client-attribute-jvm-0.8.155.jar",
-  sha256 = "45fb64483c4399b0364a97d1a7bad58b6c0bbee4aeb5c38ef61c3fb2758588af",
-  downloaded_file_path = "client-attribute-jvm-0.8.155.jar"
+  name = "ai_grazie_client-client-attribute-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/client/client-attribute-jvm/0.8.184/client-attribute-jvm-0.8.184.jar",
+  sha256 = "1e7aa1e7a91867ed800a67d5cc9c6530c36c83b2a9230ae0c1d3f7a1c439c08e",
+  downloaded_file_path = "client-attribute-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-cloud-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-cloud-jvm/0.8.155/model-cloud-jvm-0.8.155.jar",
-  sha256 = "f093a6690306bd1e01d7963aa99b2416e808db44aceab1dbae7c51854be6244e",
-  downloaded_file_path = "model-cloud-jvm-0.8.155.jar"
+  name = "ai_grazie_model-model-cloud-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-cloud-jvm/0.8.184/model-cloud-jvm-0.8.184.jar",
+  sha256 = "6e5dc6fbdc534c7f28b7f6c5f7924ea6ec953817562d0f97aa7341838193f3ab",
+  downloaded_file_path = "model-cloud-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-nmt-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-nmt-jvm/0.8.155/model-nmt-jvm-0.8.155.jar",
-  sha256 = "4c2e588ff6d6054cd8433c15883e299a08cf9efc519c01fc76049ea751384473",
-  downloaded_file_path = "model-nmt-jvm-0.8.155.jar"
+  name = "ai_grazie_model-model-nmt-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-nmt-jvm/0.8.184/model-nmt-jvm-0.8.184.jar",
+  sha256 = "3d3ab59a7da590d6995342b9347eab9a1cc7829d01e5fc6509441619cb72d195",
+  downloaded_file_path = "model-nmt-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-nlc-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-nlc-jvm/0.8.155/model-nlc-jvm-0.8.155.jar",
-  sha256 = "f5affca7118e9ad7129dbdae54972f1ece4c7f6cdbc66ea18d627365070d2d18",
-  downloaded_file_path = "model-nlc-jvm-0.8.155.jar"
+  name = "ai_grazie_model-model-nlc-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-nlc-jvm/0.8.184/model-nlc-jvm-0.8.184.jar",
+  sha256 = "b999aba354a1f887908ba50b0a4fea0d461fb6f599baf41e840e9116c822ab87",
+  downloaded_file_path = "model-nlc-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_nlp-nlp-common-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/nlp/nlp-common-jvm/0.8.155/nlp-common-jvm-0.8.155.jar",
-  sha256 = "af1e898d6e261efcbbbd21a832594eaa324e4448ce7e8f8a495877cdbd289fa6",
-  downloaded_file_path = "nlp-common-jvm-0.8.155.jar"
+  name = "ai_grazie_nlp-nlp-common-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/nlp/nlp-common-jvm/0.8.184/nlp-common-jvm-0.8.184.jar",
+  sha256 = "b8776d100378f5964f5addc5ed733ca06c46572e43317ab66222761c344ac8c8",
+  downloaded_file_path = "nlp-common-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-qa-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-qa-jvm/0.8.155/model-qa-jvm-0.8.155.jar",
-  sha256 = "472c732b9f974df8c91314573ae88c66f8b4474503d9c3ab540dfc2b81250d78",
-  downloaded_file_path = "model-qa-jvm-0.8.155.jar"
+  name = "ai_grazie_model-model-qa-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-qa-jvm/0.8.184/model-qa-jvm-0.8.184.jar",
+  sha256 = "844297cc2888dfcacf1bbeb478f872b4f9dadb892c2036a7d686ea93f6c25d73",
+  downloaded_file_path = "model-qa-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-emb-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-emb-jvm/0.8.155/model-emb-jvm-0.8.155.jar",
-  sha256 = "572117af2d60e1976c75e3a9f02f7de69bb330e2cce166317448f99e7b211bef",
-  downloaded_file_path = "model-emb-jvm-0.8.155.jar"
+  name = "ai_grazie_model-model-emb-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-emb-jvm/0.8.184/model-emb-jvm-0.8.184.jar",
+  sha256 = "64a8ba9d2a64c26e89a3e0b63d626dff3ed3b02d23b5deb3f6ec05c7c97d0ae5",
+  downloaded_file_path = "model-emb-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-task-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-task-jvm/0.8.155/model-task-jvm-0.8.155.jar",
-  sha256 = "d2b856d07f57eb0e339b4c551f0f0dabf590da2f0ed54d0b261f9f944cb37485",
-  downloaded_file_path = "model-task-jvm-0.8.155.jar"
+  name = "ai_grazie_model-model-task-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-task-jvm/0.8.184/model-task-jvm-0.8.184.jar",
+  sha256 = "d006cdfe85d757809d157ab2e421df4b27f35ee91699043f56f7c8522d4950dc",
+  downloaded_file_path = "model-task-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-jet-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-jet-jvm/0.8.155/model-jet-jvm-0.8.155.jar",
-  sha256 = "b5fddf63122bde88c2818472017eab665bc9e0fb664c0820739ed55c5bedf575",
-  downloaded_file_path = "model-jet-jvm-0.8.155.jar"
+  name = "ai_grazie_model-model-jet-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-jet-jvm/0.8.184/model-jet-jvm-0.8.184.jar",
+  sha256 = "1489f8fe78c9a56abcf02d339ab6261e1c2c6b98687a7925e2867a70c07ef2f9",
+  downloaded_file_path = "model-jet-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-chat-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-chat-jvm/0.8.155/model-chat-jvm-0.8.155.jar",
-  sha256 = "370a0c0aa2655f1074abbaa3a9cf40de6a6fe010f056016e0cbf332dca5d9ac8",
-  downloaded_file_path = "model-chat-jvm-0.8.155.jar"
+  name = "ai_grazie_model-model-chat-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-chat-jvm/0.8.184/model-chat-jvm-0.8.184.jar",
+  sha256 = "8cb401a9e7f3bab338823da916c15024d5e080ecd57a58d6930e593a36b153ad",
+  downloaded_file_path = "model-chat-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_tasks_provider_model-tasks-provider-jet-completion-model-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/tasks/provider/model/tasks-provider-jet-completion-model-jvm/0.8.155/tasks-provider-jet-completion-model-jvm-0.8.155.jar",
-  sha256 = "116391e16761dc266e23e02a1f1418d72ed23079dae3a73334b58ab53ef41b29",
-  downloaded_file_path = "tasks-provider-jet-completion-model-jvm-0.8.155.jar"
+  name = "ai_grazie_tasks_provider_model-tasks-provider-jet-completion-model-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/tasks/provider/model/tasks-provider-jet-completion-model-jvm/0.8.184/tasks-provider-jet-completion-model-jvm-0.8.184.jar",
+  sha256 = "c6e3b5eb96c5f82ea305555294339fe97365c647c17223ec2f924f8228ed924b",
+  downloaded_file_path = "tasks-provider-jet-completion-model-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_tasks_provider-tasks-provider-task-schema-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/tasks/provider/tasks-provider-task-schema/0.8.155/tasks-provider-task-schema-0.8.155.jar",
-  sha256 = "9282963722787b99b71b438e7a7cbe807cdfd0f7c97e5f25dfef7d800444b398",
-  downloaded_file_path = "tasks-provider-task-schema-0.8.155.jar"
+  name = "ai_grazie_tasks_provider-tasks-provider-task-schema-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/tasks/provider/tasks-provider-task-schema/0.8.184/tasks-provider-task-schema-0.8.184.jar",
+  sha256 = "0a01abd1053298aacac592606dba8b0c8b8ab4f07e249b7d796dc215bb96de1f",
+  downloaded_file_path = "tasks-provider-task-schema-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_tasks_provider_llm_completion-tasks-provider-llm-completion-model-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/tasks/provider/llm/completion/tasks-provider-llm-completion-model-jvm/0.8.155/tasks-provider-llm-completion-model-jvm-0.8.155.jar",
-  sha256 = "b9127203563a81cd292875deb0c0218b6806d0a731de67b095d613ee06cbc845",
-  downloaded_file_path = "tasks-provider-llm-completion-model-jvm-0.8.155.jar"
+  name = "ai_grazie_tasks_provider_llm_completion-tasks-provider-llm-completion-model-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/tasks/provider/llm/completion/tasks-provider-llm-completion-model-jvm/0.8.184/tasks-provider-llm-completion-model-jvm-0.8.184.jar",
+  sha256 = "9e2636caadc15686f07150ae0211257ae4f23fa2320b501489bf4f07b6105c82",
+  downloaded_file_path = "tasks-provider-llm-completion-model-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_tasks_provider_model-tasks-provider-proxy-model-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/tasks/provider/model/tasks-provider-proxy-model-jvm/0.8.155/tasks-provider-proxy-model-jvm-0.8.155.jar",
-  sha256 = "08a1ef1535c5b749abf38401907981f51678640f22918eb1256fbc627e45186c",
-  downloaded_file_path = "tasks-provider-proxy-model-jvm-0.8.155.jar"
+  name = "ai_grazie_tasks_provider_model-tasks-provider-proxy-model-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/tasks/provider/model/tasks-provider-proxy-model-jvm/0.8.184/tasks-provider-proxy-model-jvm-0.8.184.jar",
+  sha256 = "a94942907a7002b80c2d59020bd1d4bf3edafdb09f7a577866029130561d0535",
+  downloaded_file_path = "tasks-provider-proxy-model-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_utils-utils-common-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/utils/utils-common-jvm/0.8.155/utils-common-jvm-0.8.155.jar",
-  sha256 = "a772aa5a613ad4c57c510faab8e9b8d9ede1b89113500ae1a9e05510de63d66d",
-  downloaded_file_path = "utils-common-jvm-0.8.155.jar"
+  name = "ai_grazie_utils-utils-common-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/utils/utils-common-jvm/0.8.184/utils-common-jvm-0.8.184.jar",
+  sha256 = "c7c9da6b27ff6f0e48a08dab0258b0b9f3c773764aece37787cce94e80148be8",
+  downloaded_file_path = "utils-common-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_utils-utils-multiplatform-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/utils/utils-multiplatform-jvm/0.8.155/utils-multiplatform-jvm-0.8.155.jar",
-  sha256 = "db952d025f1daaef7ba2f247999ac215d175aed3152b26ec7ade944dacc0aa7b",
-  downloaded_file_path = "utils-multiplatform-jvm-0.8.155.jar"
+  name = "ai_grazie_utils-utils-multiplatform-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/utils/utils-multiplatform-jvm/0.8.184/utils-multiplatform-jvm-0.8.184.jar",
+  sha256 = "659387ca197f28c3513996522f9fc634472a7729059d5a2d2597a1cf1e80696a",
+  downloaded_file_path = "utils-multiplatform-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_api-api-gateway-client-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/api/api-gateway-client-jvm/0.8.155/api-gateway-client-jvm-0.8.155-sources.jar",
-  sha256 = "dcc3401a43b294c6b3cb871fde70bdc772b67a74be698ba15cb1af72bd3a0657",
-  downloaded_file_path = "api-gateway-client-jvm-0.8.155-sources.jar"
+  name = "ai_grazie_api-api-gateway-client-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/api/api-gateway-client-jvm/0.8.184/api-gateway-client-jvm-0.8.184-sources.jar",
+  sha256 = "b9df1bb7a4b8578efc8d5bfb3abaa37f79fdc617efe892ccb5efb32a2abf1517",
+  downloaded_file_path = "api-gateway-client-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_api-api-gateway-api-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/api/api-gateway-api-jvm/0.8.155/api-gateway-api-jvm-0.8.155-sources.jar",
-  sha256 = "ccc9b0e531dc31fcd203fe8ee972a01d360c87961f4981a5b3b7e52a74323859",
-  downloaded_file_path = "api-gateway-api-jvm-0.8.155-sources.jar"
+  name = "ai_grazie_api-api-gateway-api-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/api/api-gateway-api-jvm/0.8.184/api-gateway-api-jvm-0.8.184-sources.jar",
+  sha256 = "59dcd98d5efb4eeb0906118ace8c2b2745a78df32e5a99fa6b6a816ce38e8e6f",
+  downloaded_file_path = "api-gateway-api-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_auth-gec-agg-model-public-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/auth/gec-agg-model-public-jvm/0.8.155/gec-agg-model-public-jvm-0.8.155-sources.jar",
-  sha256 = "bfe1aefe928b1207e736971728fc9b57f1ce2e3d36f4bab48b5e3250a555ef18",
-  downloaded_file_path = "gec-agg-model-public-jvm-0.8.155-sources.jar"
+  name = "ai_grazie_auth-gec-agg-model-public-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/auth/gec-agg-model-public-jvm/0.8.184/gec-agg-model-public-jvm-0.8.184-sources.jar",
+  sha256 = "bbe221a0822f214371d879a0d9ffea5a92251f857d2a0f1a29b40289c8d50cff",
+  downloaded_file_path = "gec-agg-model-public-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_llm-llm-agg-api-model-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/llm/llm-agg-api-model-jvm/0.8.155/llm-agg-api-model-jvm-0.8.155-sources.jar",
+  name = "ai_grazie_llm-llm-agg-api-model-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/llm/llm-agg-api-model-jvm/0.8.184/llm-agg-api-model-jvm-0.8.184-sources.jar",
   sha256 = "0f8b0fbac4351d4d4a67e66fc9affe08d0279f7db46d4c4c46835ca5e0eebb49",
-  downloaded_file_path = "llm-agg-api-model-jvm-0.8.155-sources.jar"
+  downloaded_file_path = "llm-agg-api-model-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-feedback-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-feedback-jvm/0.8.155/model-feedback-jvm-0.8.155-sources.jar",
+  name = "ai_grazie_model-model-feedback-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-feedback-jvm/0.8.184/model-feedback-jvm-0.8.184-sources.jar",
   sha256 = "9a777ec441ae702b001bfa379c25457847bfd2b9a1b30776f12c5809954df763",
-  downloaded_file_path = "model-feedback-jvm-0.8.155-sources.jar"
+  downloaded_file_path = "model-feedback-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-indexing-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-indexing-jvm/0.8.155/model-indexing-jvm-0.8.155-sources.jar",
-  sha256 = "47b4fc4e90cff54910cc600fa2a3b3bc5f1d6d8a0b6d34a35119be40168fdfc2",
-  downloaded_file_path = "model-indexing-jvm-0.8.155-sources.jar"
+  name = "ai_grazie_model-model-indexing-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-indexing-jvm/0.8.184/model-indexing-jvm-0.8.184-sources.jar",
+  sha256 = "eaccb8b6cd8346eea06ef3bd71dd1d145cf3fb9d42798a8f8ca1903c1c4590e6",
+  downloaded_file_path = "model-indexing-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-llm-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-llm-jvm/0.8.155/model-llm-jvm-0.8.155-sources.jar",
-  sha256 = "d31889bf053934bf3550e40652943b97319c5ad48d8720c2f98323e347571839",
-  downloaded_file_path = "model-llm-jvm-0.8.155-sources.jar"
+  name = "ai_grazie_model-model-llm-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-llm-jvm/0.8.184/model-llm-jvm-0.8.184-sources.jar",
+  sha256 = "c530a12a09089d69b60fa96038a4c43eb0e7141c4d41b8a73228d5562effb3db",
+  downloaded_file_path = "model-llm-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-bdg-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-bdg-jvm/0.8.155/model-bdg-jvm-0.8.155-sources.jar",
+  name = "ai_grazie_model-model-bdg-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-bdg-jvm/0.8.184/model-bdg-jvm-0.8.184-sources.jar",
   sha256 = "36af424dc049e7713a094c6e911f3dd9355d972ef381d47c56ac88c839949b74",
-  downloaded_file_path = "model-bdg-jvm-0.8.155-sources.jar"
+  downloaded_file_path = "model-bdg-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-nlp-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-nlp-jvm/0.8.155/model-nlp-jvm-0.8.155-sources.jar",
+  name = "ai_grazie_model-model-nlp-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-nlp-jvm/0.8.184/model-nlp-jvm-0.8.184-sources.jar",
   sha256 = "e16f569f7356c5e691919bc6fd8d654a939bb8c4b85160bc5cb1519265df8076",
-  downloaded_file_path = "model-nlp-jvm-0.8.155-sources.jar"
+  downloaded_file_path = "model-nlp-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-quota-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-quota-jvm/0.8.155/model-quota-jvm-0.8.155-sources.jar",
-  sha256 = "64af3590d07045362b8448e0f043b49b2084da288afaf0bee907002e1e3504ef",
-  downloaded_file_path = "model-quota-jvm-0.8.155-sources.jar"
+  name = "ai_grazie_model-model-quota-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-quota-jvm/0.8.184/model-quota-jvm-0.8.184-sources.jar",
+  sha256 = "a908ab29ca15502be779f79dbce3b300d6f6a4993979775019ee904b1cd25eb8",
+  downloaded_file_path = "model-quota-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-license-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-license-jvm/0.8.155/model-license-jvm-0.8.155-sources.jar",
-  sha256 = "f35e26311267e1ca1c634f62fa222444c842fc4795ac0e40eb28e9052c12af7e",
-  downloaded_file_path = "model-license-jvm-0.8.155-sources.jar"
+  name = "ai_grazie_model-model-license-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-license-jvm/0.8.184/model-license-jvm-0.8.184-sources.jar",
+  sha256 = "26312a92156636ea3e9f42db9157734ce23a2374b6d0af72d03564972bab01d1",
+  downloaded_file_path = "model-license-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-tone-formality-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-tone-formality-jvm/0.8.155/model-tone-formality-jvm-0.8.155-sources.jar",
+  name = "ai_grazie_model-model-tone-formality-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-tone-formality-jvm/0.8.184/model-tone-formality-jvm-0.8.184-sources.jar",
   sha256 = "5fa8fd59a9429bbf42182e16405476a50f46bfe5a933194cef246a781e8bb696",
-  downloaded_file_path = "model-tone-formality-jvm-0.8.155-sources.jar"
+  downloaded_file_path = "model-tone-formality-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-gateway-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-gateway-jvm/0.8.155/model-gateway-jvm-0.8.155-sources.jar",
+  name = "ai_grazie_model-model-gateway-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-gateway-jvm/0.8.184/model-gateway-jvm-0.8.184-sources.jar",
   sha256 = "0437d0ddcc3fd009a2fd3769c5c5f8233a95ed231bee8f7f0808ab9a2a2ac020",
-  downloaded_file_path = "model-gateway-jvm-0.8.155-sources.jar"
+  downloaded_file_path = "model-gateway-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_auth-auth-model-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/auth/auth-model-jvm/0.8.155/auth-model-jvm-0.8.155-sources.jar",
+  name = "ai_grazie_auth-auth-model-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/auth/auth-model-jvm/0.8.184/auth-model-jvm-0.8.184-sources.jar",
   sha256 = "948e90c9b6952c82999ddffd0b10d97ef881e085fc38c06696dbe125a6d9dcbe",
-  downloaded_file_path = "auth-model-jvm-0.8.155-sources.jar"
+  downloaded_file_path = "auth-model-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_auth_product-auth-product-model-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/auth/product/auth-product-model-jvm/0.8.155/auth-product-model-jvm-0.8.155-sources.jar",
+  name = "ai_grazie_auth_product-auth-product-model-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/auth/product/auth-product-model-jvm/0.8.184/auth-product-model-jvm-0.8.184-sources.jar",
   sha256 = "e397e3a673e3312c2027391989225adde60bf75457cc9dd8d26ac6193d1d704c",
-  downloaded_file_path = "auth-product-model-jvm-0.8.155-sources.jar"
+  downloaded_file_path = "auth-product-model-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_user_cfg-user-cfg-model-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/user/cfg/user-cfg-model-jvm/0.8.155/user-cfg-model-jvm-0.8.155-sources.jar",
+  name = "ai_grazie_user_cfg-user-cfg-model-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/user/cfg/user-cfg-model-jvm/0.8.184/user-cfg-model-jvm-0.8.184-sources.jar",
   sha256 = "802ef3139632b7a0c4a6997941cfb4385b7e6a14f2a628ed443533dc97c260bf",
-  downloaded_file_path = "user-cfg-model-jvm-0.8.155-sources.jar"
+  downloaded_file_path = "user-cfg-model-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_utils-utils-jwt-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/utils/utils-jwt-jvm/0.8.155/utils-jwt-jvm-0.8.155-sources.jar",
+  name = "ai_grazie_utils-utils-jwt-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/utils/utils-jwt-jvm/0.8.184/utils-jwt-jvm-0.8.184-sources.jar",
   sha256 = "11d67ff677114cda61649c81583c798d72c1696d7befb567a73fdc9de607fb00",
-  downloaded_file_path = "utils-jwt-jvm-0.8.155-sources.jar"
+  downloaded_file_path = "utils-jwt-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_user_strg-user-strg-model-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/user/strg/user-strg-model-jvm/0.8.155/user-strg-model-jvm-0.8.155-sources.jar",
-  sha256 = "92e8983d88eeabba04061a149ed37ff3b0e36dcd649424e51484b1197199593a",
-  downloaded_file_path = "user-strg-model-jvm-0.8.155-sources.jar"
+  name = "ai_grazie_user_strg-user-strg-model-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/user/strg/user-strg-model-jvm/0.8.184/user-strg-model-jvm-0.8.184-sources.jar",
+  sha256 = "342470ec214801ddc55bd99a376ca59608740081c53ad1c362ba266f4cc4aeed",
+  downloaded_file_path = "user-strg-model-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_indexing-indexing-server-api-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/indexing/indexing-server-api-jvm/0.8.155/indexing-server-api-jvm-0.8.155-sources.jar",
-  sha256 = "83475a577f0bf1bfe08a9fefbe6e5ff0b136da2348acaad05da6f3216627a6d6",
-  downloaded_file_path = "indexing-server-api-jvm-0.8.155-sources.jar"
+  name = "ai_grazie_indexing-indexing-server-api-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/indexing/indexing-server-api-jvm/0.8.184/indexing-server-api-jvm-0.8.184-sources.jar",
+  sha256 = "8df04cf7635fd583ed4e73382374d8c470df3cc67672590667ce884dd30b5447",
+  downloaded_file_path = "indexing-server-api-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_indexing-indexing-provider-api-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/indexing/indexing-provider-api-jvm/0.8.155/indexing-provider-api-jvm-0.8.155-sources.jar",
+  name = "ai_grazie_indexing-indexing-provider-api-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/indexing/indexing-provider-api-jvm/0.8.184/indexing-provider-api-jvm-0.8.184-sources.jar",
   sha256 = "a50defe82f3ecc245695690c22c0125190fbe7a1bbc3d05fb7b79afd6e1bde04",
-  downloaded_file_path = "indexing-provider-api-jvm-0.8.155-sources.jar"
+  downloaded_file_path = "indexing-provider-api-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-swagger-annotations-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/swagger-annotations-jvm/0.8.155/swagger-annotations-jvm-0.8.155-sources.jar",
+  name = "ai_grazie_model-swagger-annotations-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/swagger-annotations-jvm/0.8.184/swagger-annotations-jvm-0.8.184-sources.jar",
   sha256 = "ea7b914f14d045cb6c24449a62e7cd0b74ff2d907cb9a7412f894b01ec33613c",
-  downloaded_file_path = "swagger-annotations-jvm-0.8.155-sources.jar"
+  downloaded_file_path = "swagger-annotations-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_client-client-common-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/client/client-common-jvm/0.8.155/client-common-jvm-0.8.155-sources.jar",
-  sha256 = "5c0a36a2f39a64e85c989bcaa5c70293f0e9678f9a10b88d71247860dc222ad6",
-  downloaded_file_path = "client-common-jvm-0.8.155-sources.jar"
+  name = "ai_grazie_client-client-common-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/client/client-common-jvm/0.8.184/client-common-jvm-0.8.184-sources.jar",
+  sha256 = "2e86e6e390934105f4dbf544f3574aee53dfd9d88f28baae4286d61f9b2b460f",
+  downloaded_file_path = "client-common-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-common-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-common-jvm/0.8.155/model-common-jvm-0.8.155-sources.jar",
+  name = "ai_grazie_model-model-common-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-common-jvm/0.8.184/model-common-jvm-0.8.184-sources.jar",
   sha256 = "727681d9ac6bc3dcc5069416908e413ddef76101335269f7228550f7d4de3ab6",
-  downloaded_file_path = "model-common-jvm-0.8.155-sources.jar"
+  downloaded_file_path = "model-common-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-auth-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-auth-jvm/0.8.155/model-auth-jvm-0.8.155-sources.jar",
-  sha256 = "c33059dcadf0ace0ecff4a544e087d06a55209e56c2bd188c07f87094e75281f",
-  downloaded_file_path = "model-auth-jvm-0.8.155-sources.jar"
+  name = "ai_grazie_model-model-auth-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-auth-jvm/0.8.184/model-auth-jvm-0.8.184-sources.jar",
+  sha256 = "c6dc917fbe1285ce12835bed40008d52d4484ebaa92f22b984911153b5b46bc5",
+  downloaded_file_path = "model-auth-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_client-client-attribute-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/client/client-attribute-jvm/0.8.155/client-attribute-jvm-0.8.155-sources.jar",
+  name = "ai_grazie_client-client-attribute-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/client/client-attribute-jvm/0.8.184/client-attribute-jvm-0.8.184-sources.jar",
   sha256 = "36064958009fb3035e124257f3c7230a380b66b883b5b4474272e25b1d4f9c20",
-  downloaded_file_path = "client-attribute-jvm-0.8.155-sources.jar"
+  downloaded_file_path = "client-attribute-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-cloud-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-cloud-jvm/0.8.155/model-cloud-jvm-0.8.155-sources.jar",
-  sha256 = "e2e5fa35b848dfb492371e9de1218e6e9a306fb72b0870b41623bb460c8eb0c3",
-  downloaded_file_path = "model-cloud-jvm-0.8.155-sources.jar"
+  name = "ai_grazie_model-model-cloud-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-cloud-jvm/0.8.184/model-cloud-jvm-0.8.184-sources.jar",
+  sha256 = "93d311f259bcafaf849308b14dc24b16a2fb12922a53a843f658ccff84717e34",
+  downloaded_file_path = "model-cloud-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-nmt-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-nmt-jvm/0.8.155/model-nmt-jvm-0.8.155-sources.jar",
+  name = "ai_grazie_model-model-nmt-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-nmt-jvm/0.8.184/model-nmt-jvm-0.8.184-sources.jar",
   sha256 = "f35ff4b609d20b8d3f626aabbb94951b3bef07a4df5e9d6d9821eb49b2f2c78b",
-  downloaded_file_path = "model-nmt-jvm-0.8.155-sources.jar"
+  downloaded_file_path = "model-nmt-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-nlc-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-nlc-jvm/0.8.155/model-nlc-jvm-0.8.155-sources.jar",
+  name = "ai_grazie_model-model-nlc-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-nlc-jvm/0.8.184/model-nlc-jvm-0.8.184-sources.jar",
   sha256 = "47ce43b5c022ab8c46bfd14928d76172a84137dc43c8b8c44df4ac3860e07192",
-  downloaded_file_path = "model-nlc-jvm-0.8.155-sources.jar"
+  downloaded_file_path = "model-nlc-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_nlp-nlp-common-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/nlp/nlp-common-jvm/0.8.155/nlp-common-jvm-0.8.155-sources.jar",
+  name = "ai_grazie_nlp-nlp-common-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/nlp/nlp-common-jvm/0.8.184/nlp-common-jvm-0.8.184-sources.jar",
   sha256 = "5b5746d69035d2fa49b63e408395e29800df4d347909f9838c28685a7868646b",
-  downloaded_file_path = "nlp-common-jvm-0.8.155-sources.jar"
+  downloaded_file_path = "nlp-common-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-qa-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-qa-jvm/0.8.155/model-qa-jvm-0.8.155-sources.jar",
+  name = "ai_grazie_model-model-qa-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-qa-jvm/0.8.184/model-qa-jvm-0.8.184-sources.jar",
   sha256 = "ed849f82c567cc8d09a78f369f3400dcaf75858b400ebdf60403324836981f41",
-  downloaded_file_path = "model-qa-jvm-0.8.155-sources.jar"
+  downloaded_file_path = "model-qa-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-emb-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-emb-jvm/0.8.155/model-emb-jvm-0.8.155-sources.jar",
+  name = "ai_grazie_model-model-emb-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-emb-jvm/0.8.184/model-emb-jvm-0.8.184-sources.jar",
   sha256 = "2ff36a78883542daa4c7b3089101aed2fcb2d195c537830038cb87ce9a18e56b",
-  downloaded_file_path = "model-emb-jvm-0.8.155-sources.jar"
+  downloaded_file_path = "model-emb-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-task-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-task-jvm/0.8.155/model-task-jvm-0.8.155-sources.jar",
+  name = "ai_grazie_model-model-task-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-task-jvm/0.8.184/model-task-jvm-0.8.184-sources.jar",
   sha256 = "f1597adcdfcf2be769ff1c39925ccf6d1ee1f4c42c0a23ea5f8bc8ee38ef9af7",
-  downloaded_file_path = "model-task-jvm-0.8.155-sources.jar"
+  downloaded_file_path = "model-task-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-jet-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-jet-jvm/0.8.155/model-jet-jvm-0.8.155-sources.jar",
+  name = "ai_grazie_model-model-jet-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-jet-jvm/0.8.184/model-jet-jvm-0.8.184-sources.jar",
   sha256 = "c9e10aa94e015b3f7a8c5a98bdaf16410caecdfd5eafd3ec88369524ab8498a1",
-  downloaded_file_path = "model-jet-jvm-0.8.155-sources.jar"
+  downloaded_file_path = "model-jet-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-chat-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-chat-jvm/0.8.155/model-chat-jvm-0.8.155-sources.jar",
+  name = "ai_grazie_model-model-chat-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-chat-jvm/0.8.184/model-chat-jvm-0.8.184-sources.jar",
   sha256 = "415aef2b8950a49ac8c5566d465061920212d16f295a072ecb66bf3fc82c86fc",
-  downloaded_file_path = "model-chat-jvm-0.8.155-sources.jar"
+  downloaded_file_path = "model-chat-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_tasks_provider_model-tasks-provider-jet-completion-model-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/tasks/provider/model/tasks-provider-jet-completion-model-jvm/0.8.155/tasks-provider-jet-completion-model-jvm-0.8.155-sources.jar",
+  name = "ai_grazie_tasks_provider_model-tasks-provider-jet-completion-model-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/tasks/provider/model/tasks-provider-jet-completion-model-jvm/0.8.184/tasks-provider-jet-completion-model-jvm-0.8.184-sources.jar",
   sha256 = "ea62e56a4aa1434798942c2511983b0cfe2cc52824f998016546ea47a6773aa2",
-  downloaded_file_path = "tasks-provider-jet-completion-model-jvm-0.8.155-sources.jar"
+  downloaded_file_path = "tasks-provider-jet-completion-model-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_tasks_provider-tasks-provider-task-schema-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/tasks/provider/tasks-provider-task-schema/0.8.155/tasks-provider-task-schema-0.8.155-sources.jar",
+  name = "ai_grazie_tasks_provider-tasks-provider-task-schema-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/tasks/provider/tasks-provider-task-schema/0.8.184/tasks-provider-task-schema-0.8.184-sources.jar",
   sha256 = "7239c4d48657a97b43d92feadde9ea32bba8e284aa94446328eb6b8f9b1d38c5",
-  downloaded_file_path = "tasks-provider-task-schema-0.8.155-sources.jar"
+  downloaded_file_path = "tasks-provider-task-schema-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_tasks_provider_llm_completion-tasks-provider-llm-completion-model-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/tasks/provider/llm/completion/tasks-provider-llm-completion-model-jvm/0.8.155/tasks-provider-llm-completion-model-jvm-0.8.155-sources.jar",
+  name = "ai_grazie_tasks_provider_llm_completion-tasks-provider-llm-completion-model-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/tasks/provider/llm/completion/tasks-provider-llm-completion-model-jvm/0.8.184/tasks-provider-llm-completion-model-jvm-0.8.184-sources.jar",
   sha256 = "ac3857f9370ab6ee8b66a55220c05af66501c89a624e1b47d9f2e97f14e6179e",
-  downloaded_file_path = "tasks-provider-llm-completion-model-jvm-0.8.155-sources.jar"
+  downloaded_file_path = "tasks-provider-llm-completion-model-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_tasks_provider_model-tasks-provider-proxy-model-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/tasks/provider/model/tasks-provider-proxy-model-jvm/0.8.155/tasks-provider-proxy-model-jvm-0.8.155-sources.jar",
+  name = "ai_grazie_tasks_provider_model-tasks-provider-proxy-model-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/tasks/provider/model/tasks-provider-proxy-model-jvm/0.8.184/tasks-provider-proxy-model-jvm-0.8.184-sources.jar",
   sha256 = "47bddd87aba45c16af4f5f6dc0c3f519e9f64a63fb7e4f255fce28f4e522fd12",
-  downloaded_file_path = "tasks-provider-proxy-model-jvm-0.8.155-sources.jar"
+  downloaded_file_path = "tasks-provider-proxy-model-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_utils-utils-common-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/utils/utils-common-jvm/0.8.155/utils-common-jvm-0.8.155-sources.jar",
-  sha256 = "b140ecc9857eb8346b8fd25275241e8b3da2f9ff37a7a7a3f0bf3dbbe067a4b3",
-  downloaded_file_path = "utils-common-jvm-0.8.155-sources.jar"
+  name = "ai_grazie_utils-utils-common-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/utils/utils-common-jvm/0.8.184/utils-common-jvm-0.8.184-sources.jar",
+  sha256 = "b354aa18ff2ab5e8b3511d9386e911313b3835bb9f07ea39465185b940ea0995",
+  downloaded_file_path = "utils-common-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_utils-utils-multiplatform-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/utils/utils-multiplatform-jvm/0.8.155/utils-multiplatform-jvm-0.8.155-sources.jar",
+  name = "ai_grazie_utils-utils-multiplatform-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/utils/utils-multiplatform-jvm/0.8.184/utils-multiplatform-jvm-0.8.184-sources.jar",
   sha256 = "3a5cf0504859df6412f015419408f8f8997d94602301de1bb97f9c152c26e2df",
-  downloaded_file_path = "utils-multiplatform-jvm-0.8.155-sources.jar"
+  downloaded_file_path = "utils-multiplatform-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_client-client-ktor-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/client/client-ktor-jvm/0.8.155/client-ktor-jvm-0.8.155.jar",
-  sha256 = "119b7f02585d67f2ca52c19f814c567bcf67a6f18990e61fe139d6d7ff97501a",
-  downloaded_file_path = "client-ktor-jvm-0.8.155.jar"
+  name = "ai_grazie_client-client-ktor-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/client/client-ktor-jvm/0.8.184/client-ktor-jvm-0.8.184.jar",
+  sha256 = "f6dd5c9f2e0a4d9316ee46916fecc7f67b95059099b405f6ca17ce31569a68d1",
+  downloaded_file_path = "client-ktor-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_utils-utils-ktor-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/utils/utils-ktor-jvm/0.8.155/utils-ktor-jvm-0.8.155.jar",
-  sha256 = "a6534a8f6370571c748d6a3392bd5d11aeed671c69a0384a8497818ebb31f330",
-  downloaded_file_path = "utils-ktor-jvm-0.8.155.jar"
+  name = "ai_grazie_utils-utils-ktor-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/utils/utils-ktor-jvm/0.8.184/utils-ktor-jvm-0.8.184.jar",
+  sha256 = "bf45f67506b4f421a77cb6c9938459162881ba648716922d8e1ad2ce171e6916",
+  downloaded_file_path = "utils-ktor-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_client-client-ktor-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/client/client-ktor-jvm/0.8.155/client-ktor-jvm-0.8.155-sources.jar",
+  name = "ai_grazie_client-client-ktor-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/client/client-ktor-jvm/0.8.184/client-ktor-jvm-0.8.184-sources.jar",
   sha256 = "6b34db8e85caf1d37ddda3d54c5c3c73f5ca83586239f9aef2769f29d5c8661b",
-  downloaded_file_path = "client-ktor-jvm-0.8.155-sources.jar"
+  downloaded_file_path = "client-ktor-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_utils-utils-ktor-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/utils/utils-ktor-jvm/0.8.155/utils-ktor-jvm-0.8.155-sources.jar",
-  sha256 = "1a6925e41c77a2360e0aa2542cc8936aa76c06216523cc1f0d9ac992626f0392",
-  downloaded_file_path = "utils-ktor-jvm-0.8.155-sources.jar"
+  name = "ai_grazie_utils-utils-ktor-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/utils/utils-ktor-jvm/0.8.184/utils-ktor-jvm-0.8.184-sources.jar",
+  sha256 = "3937779486a75faf895043ecf0581135d142f1726c65a5df1ba30f66cabaf9d8",
+  downloaded_file_path = "utils-ktor-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_gec-gec-util-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/gec/gec-util/0.8.155/gec-util-0.8.155.jar",
-  sha256 = "a47c1cca32d5948844bb748c61d28dcad2bfcaebc863cf4c32c1ed7183d1dfa6",
-  downloaded_file_path = "gec-util-0.8.155.jar"
+  name = "ai_grazie_gec-gec-util-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/gec/gec-util/0.8.184/gec-util-0.8.184.jar",
+  sha256 = "360b9b2e1e7c995761a200a4cd47ea29a7bcd13a8b9a1109849a517554bc5168",
+  downloaded_file_path = "gec-util-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_gec-gec-util-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/gec/gec-util/0.8.155/gec-util-0.8.155-sources.jar",
+  name = "ai_grazie_gec-gec-util-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/gec/gec-util/0.8.184/gec-util-0.8.184-sources.jar",
   sha256 = "be35389af6210b1d1369800e385f2f8b60c7f9887c6ae40fa55364b4f9d8f83e",
-  downloaded_file_path = "gec-util-0.8.155-sources.jar"
+  downloaded_file_path = "gec-util-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-ner-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-ner-jvm/0.8.155/model-ner-jvm-0.8.155.jar",
-  sha256 = "283dcfcd6720f2547d78eb172a22d8291487f9caa37400b005508e054aa60dca",
-  downloaded_file_path = "model-ner-jvm-0.8.155.jar"
+  name = "ai_grazie_model-model-ner-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-ner-jvm/0.8.184/model-ner-jvm-0.8.184.jar",
+  sha256 = "1ebcfdb5c2bb052c1590d3952a50e89146fdd9ae39aa343c1b94a59009edb6b6",
+  downloaded_file_path = "model-ner-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-ner-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-ner-jvm/0.8.155/model-ner-jvm-0.8.155-sources.jar",
+  name = "ai_grazie_model-model-ner-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-ner-jvm/0.8.184/model-ner-jvm-0.8.184-sources.jar",
   sha256 = "5869aeb335fe4127eafa7da742a0b47049a87dfbb03b3f99a945dcb04d414d59",
-  downloaded_file_path = "model-ner-jvm-0.8.155-sources.jar"
+  downloaded_file_path = "model-ner-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-tree-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-tree-jvm/0.8.155/model-tree-jvm-0.8.155.jar",
-  sha256 = "725af6ca47747d674f0809c4d13b9cdf3aab176e7eed04b91552f8c19ae8d15a",
-  downloaded_file_path = "model-tree-jvm-0.8.155.jar"
+  name = "ai_grazie_model-model-tree-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-tree-jvm/0.8.184/model-tree-jvm-0.8.184.jar",
+  sha256 = "bc283081ba72b5cf798f2533cd6f0ea6442e70745f103d81402728a446dd6be3",
+  downloaded_file_path = "model-tree-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-tree-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-tree-jvm/0.8.155/model-tree-jvm-0.8.155-sources.jar",
+  name = "ai_grazie_model-model-tree-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-tree-jvm/0.8.184/model-tree-jvm-0.8.184-sources.jar",
   sha256 = "0e810a08389f9745f06407964709129f03af3f076496dc6abd319a69e2422514",
-  downloaded_file_path = "model-tree-jvm-0.8.155-sources.jar"
+  downloaded_file_path = "model-tree-jvm-0.8.184-sources.jar"
 )
 
 http_file(
@@ -3374,129 +3374,129 @@ http_file(
 )
 
 http_file(
-  name = "ai_grazie_nlp-nlp-detect-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/nlp/nlp-detect-jvm/0.8.155/nlp-detect-jvm-0.8.155.jar",
-  sha256 = "b7223fe933369d6b4c313c770df454c9f9ec5cf8ec25b27d4b11e979f80a6d3a",
-  downloaded_file_path = "nlp-detect-jvm-0.8.155.jar"
+  name = "ai_grazie_nlp-nlp-detect-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/nlp/nlp-detect-jvm/0.8.184/nlp-detect-jvm-0.8.184.jar",
+  sha256 = "2cad3ef7a547f82bc981972372f44538aa346caa87abf5a780bcdd4156469aba",
+  downloaded_file_path = "nlp-detect-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-text-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-text-jvm/0.8.155/model-text-jvm-0.8.155.jar",
-  sha256 = "eaa9ce037028e175c2015353a2796e9c620b9805b143168fc48538d80a85cf46",
-  downloaded_file_path = "model-text-jvm-0.8.155.jar"
+  name = "ai_grazie_model-model-text-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-text-jvm/0.8.184/model-text-jvm-0.8.184.jar",
+  sha256 = "550ac194a0d0970a36651b6da6ba432908dec87501bbdb0fba35d7a9decba38c",
+  downloaded_file_path = "model-text-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_nlp-nlp-patterns-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/nlp/nlp-patterns-jvm/0.8.155/nlp-patterns-jvm-0.8.155.jar",
-  sha256 = "95a40e8115abd83f5af9f1b3336999beb7f59b226931af4bb867d347ba631b0f",
-  downloaded_file_path = "nlp-patterns-jvm-0.8.155.jar"
+  name = "ai_grazie_nlp-nlp-patterns-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/nlp/nlp-patterns-jvm/0.8.184/nlp-patterns-jvm-0.8.184.jar",
+  sha256 = "076ec28c98ae8b5c77ed75be16c207c5a1c8a70434d20fafb565a5114eb0590a",
+  downloaded_file_path = "nlp-patterns-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_nlp-nlp-tokenizer-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/nlp/nlp-tokenizer-jvm/0.8.155/nlp-tokenizer-jvm-0.8.155.jar",
-  sha256 = "44c3386767116cbe50e06def8ef1e74e402bbcf67863fa6f0529402ca93a300f",
-  downloaded_file_path = "nlp-tokenizer-jvm-0.8.155.jar"
+  name = "ai_grazie_nlp-nlp-tokenizer-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/nlp/nlp-tokenizer-jvm/0.8.184/nlp-tokenizer-jvm-0.8.184.jar",
+  sha256 = "dbfb39d68641d0e6d4de60831771f4b3b0b5012026253e71a6968f6fd8b9a546",
+  downloaded_file_path = "nlp-tokenizer-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_nlp-nlp-similarity-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/nlp/nlp-similarity-jvm/0.8.155/nlp-similarity-jvm-0.8.155.jar",
-  sha256 = "cf5bbaa09720933af21319c28ad08be8387b57bce93362fca10747c2aa17d49e",
-  downloaded_file_path = "nlp-similarity-jvm-0.8.155.jar"
+  name = "ai_grazie_nlp-nlp-similarity-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/nlp/nlp-similarity-jvm/0.8.184/nlp-similarity-jvm-0.8.184.jar",
+  sha256 = "9fb5b6b4a0b6861db9473654bc4206d29344fb52ae1e9a6c43043cbc9e78bf39",
+  downloaded_file_path = "nlp-similarity-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_nlp-nlp-langs-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/nlp/nlp-langs-jvm/0.8.155/nlp-langs-jvm-0.8.155.jar",
-  sha256 = "4d0838862feb286a7da3e6a6aff57cb21a244fccca5e4a0a3d15453370b30624",
-  downloaded_file_path = "nlp-langs-jvm-0.8.155.jar"
+  name = "ai_grazie_nlp-nlp-langs-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/nlp/nlp-langs-jvm/0.8.184/nlp-langs-jvm-0.8.184.jar",
+  sha256 = "01d77682c32c7388cb1a14a11b24db714db3bd826da025256147cc7742a9ab17",
+  downloaded_file_path = "nlp-langs-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_nlp-nlp-detect-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/nlp/nlp-detect-jvm/0.8.155/nlp-detect-jvm-0.8.155-sources.jar",
+  name = "ai_grazie_nlp-nlp-detect-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/nlp/nlp-detect-jvm/0.8.184/nlp-detect-jvm-0.8.184-sources.jar",
   sha256 = "d3257c728e27e80a496fc01676082c4d0c769ea0fc7d3d48432ff457914e30ed",
-  downloaded_file_path = "nlp-detect-jvm-0.8.155-sources.jar"
+  downloaded_file_path = "nlp-detect-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-text-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-text-jvm/0.8.155/model-text-jvm-0.8.155-sources.jar",
-  sha256 = "f61e99fd02f17e754b37da2b729bfba637f350bfac7f793e26970513dc8e9205",
-  downloaded_file_path = "model-text-jvm-0.8.155-sources.jar"
+  name = "ai_grazie_model-model-text-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-text-jvm/0.8.184/model-text-jvm-0.8.184-sources.jar",
+  sha256 = "b610e796053e8f698f28fd4e1b548bdf8e6f6d5d293c17f758da9d46c85bc1cd",
+  downloaded_file_path = "model-text-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_nlp-nlp-patterns-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/nlp/nlp-patterns-jvm/0.8.155/nlp-patterns-jvm-0.8.155-sources.jar",
-  sha256 = "3a7eb361896751b78f68b7f4831e381e2188404f2f355b634c283b500c1f21a8",
-  downloaded_file_path = "nlp-patterns-jvm-0.8.155-sources.jar"
+  name = "ai_grazie_nlp-nlp-patterns-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/nlp/nlp-patterns-jvm/0.8.184/nlp-patterns-jvm-0.8.184-sources.jar",
+  sha256 = "7b3ec74f13a6d83966fa00b00161af5d29f7f0c56f75c19140c2ced3a7223415",
+  downloaded_file_path = "nlp-patterns-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_nlp-nlp-tokenizer-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/nlp/nlp-tokenizer-jvm/0.8.155/nlp-tokenizer-jvm-0.8.155-sources.jar",
-  sha256 = "12d27fb2f75ff6c92ab3cc9fe5d01d844954bc67c375a0297bb5f4d41072dcda",
-  downloaded_file_path = "nlp-tokenizer-jvm-0.8.155-sources.jar"
+  name = "ai_grazie_nlp-nlp-tokenizer-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/nlp/nlp-tokenizer-jvm/0.8.184/nlp-tokenizer-jvm-0.8.184-sources.jar",
+  sha256 = "f25aea9ea0fb1d710dddb116c530677565f50568a7d1b1224b7a73902709fada",
+  downloaded_file_path = "nlp-tokenizer-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_nlp-nlp-similarity-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/nlp/nlp-similarity-jvm/0.8.155/nlp-similarity-jvm-0.8.155-sources.jar",
+  name = "ai_grazie_nlp-nlp-similarity-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/nlp/nlp-similarity-jvm/0.8.184/nlp-similarity-jvm-0.8.184-sources.jar",
   sha256 = "1276645281e66385c93bc5fad2e41077da13c1fd4ff02af143db9094652deed2",
-  downloaded_file_path = "nlp-similarity-jvm-0.8.155-sources.jar"
+  downloaded_file_path = "nlp-similarity-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_nlp-nlp-langs-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/nlp/nlp-langs-jvm/0.8.155/nlp-langs-jvm-0.8.155-sources.jar",
-  sha256 = "de02a9e0609014fe44792d1113bc2a87a6bf7ece51b8cd79613080e5d5ec6d2b",
-  downloaded_file_path = "nlp-langs-jvm-0.8.155-sources.jar"
+  name = "ai_grazie_nlp-nlp-langs-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/nlp/nlp-langs-jvm/0.8.184/nlp-langs-jvm-0.8.184-sources.jar",
+  sha256 = "3c92dc02495a3815b47b01bb22f5829bfaf549a07d2867ed51aa00e05a1531b8",
+  downloaded_file_path = "nlp-langs-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_spell-gec-spell-engine-local-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/spell/gec-spell-engine-local/0.8.155/gec-spell-engine-local-0.8.155.jar",
-  sha256 = "0cced73741b0d60772c0dbae9a42e9cc9b0eaa415c051ce727ec2ff9a2bbf219",
-  downloaded_file_path = "gec-spell-engine-local-0.8.155.jar"
+  name = "ai_grazie_spell-gec-spell-engine-local-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/spell/gec-spell-engine-local/0.8.184/gec-spell-engine-local-0.8.184.jar",
+  sha256 = "71d6878c75865e62f116cf8c143a62f964f3b757ea08e555b267b7c2414a2308",
+  downloaded_file_path = "gec-spell-engine-local-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-gec-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-gec-jvm/0.8.155/model-gec-jvm-0.8.155.jar",
-  sha256 = "699f0485c2204c2c36e4fdca4e39f4bb34dc2b2b914b9ce18fa813e834f507e3",
-  downloaded_file_path = "model-gec-jvm-0.8.155.jar"
+  name = "ai_grazie_model-model-gec-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-gec-jvm/0.8.184/model-gec-jvm-0.8.184.jar",
+  sha256 = "3c2c43cf80a040b0e30008f5cc5e7a8bf59f279c8f5f0264c503a0a2a3981485",
+  downloaded_file_path = "model-gec-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_nlp-nlp-phonetics-jvm-0_8_155_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/nlp/nlp-phonetics-jvm/0.8.155/nlp-phonetics-jvm-0.8.155.jar",
-  sha256 = "fbd0ea1c6b7c408858f0def5636a9f702934336f3fed4b2b8bd38f7f8107c6a6",
-  downloaded_file_path = "nlp-phonetics-jvm-0.8.155.jar"
+  name = "ai_grazie_nlp-nlp-phonetics-jvm-0_8_184_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/nlp/nlp-phonetics-jvm/0.8.184/nlp-phonetics-jvm-0.8.184.jar",
+  sha256 = "b319d0f13e0360a06e3f8a8178571dcc275d8459c5674a6d851cd7f1a6400f74",
+  downloaded_file_path = "nlp-phonetics-jvm-0.8.184.jar"
 )
 
 http_file(
-  name = "ai_grazie_spell-gec-spell-engine-local-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/spell/gec-spell-engine-local/0.8.155/gec-spell-engine-local-0.8.155-sources.jar",
-  sha256 = "2ef73710b5ee95cfc771c99170faafe5c5b789c3e7cf36f1433ce0f4e3ea2224",
-  downloaded_file_path = "gec-spell-engine-local-0.8.155-sources.jar"
+  name = "ai_grazie_spell-gec-spell-engine-local-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/spell/gec-spell-engine-local/0.8.184/gec-spell-engine-local-0.8.184-sources.jar",
+  sha256 = "07e471cbb60f389c13f938783c58553914c6d341f25c472fdf84aff833b8a68c",
+  downloaded_file_path = "gec-spell-engine-local-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_model-model-gec-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-gec-jvm/0.8.155/model-gec-jvm-0.8.155-sources.jar",
-  sha256 = "be3461eba955069bfebb9be91b139e7d54586809a6212d5308ff2701dbbcea7a",
-  downloaded_file_path = "model-gec-jvm-0.8.155-sources.jar"
+  name = "ai_grazie_model-model-gec-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/model/model-gec-jvm/0.8.184/model-gec-jvm-0.8.184-sources.jar",
+  sha256 = "f8c44e863166c04ce4cdbef282e083ed8a13af7cfc2c53965ce9e4b632078a35",
+  downloaded_file_path = "model-gec-jvm-0.8.184-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_nlp-nlp-phonetics-jvm-0_8_155-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/nlp/nlp-phonetics-jvm/0.8.155/nlp-phonetics-jvm-0.8.155-sources.jar",
-  sha256 = "612700e3fe5ff0ee9d1006196294c22062eef7f634bf504d4eb84b03be07a587",
-  downloaded_file_path = "nlp-phonetics-jvm-0.8.155-sources.jar"
+  name = "ai_grazie_nlp-nlp-phonetics-jvm-0_8_184-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/nlp/nlp-phonetics-jvm/0.8.184/nlp-phonetics-jvm-0.8.184-sources.jar",
+  sha256 = "79fa79a78e5f181b0a7618cbbf4df77d4300b7d54cd0ee353d94ba736dd18912",
+  downloaded_file_path = "nlp-phonetics-jvm-0.8.184-sources.jar"
 )
 
 http_file(
