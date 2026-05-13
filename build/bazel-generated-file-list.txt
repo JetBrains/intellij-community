@@ -224,7 +224,6 @@ fleet/build/codecache
 fleet/build/fs
 fleet/build/http
 fleet/build/kernel.plugins.processor
-fleet/build/license
 fleet/build/platform
 fleet/build/s3
 fleet/build/scrambling

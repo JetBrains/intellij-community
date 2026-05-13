@@ -11,7 +11,6 @@
       <module fileurl="file://$PROJECT_DIR$/fleet/build/fs/fleet.build.fs.iml" filepath="$PROJECT_DIR$/fleet/build/fs/fleet.build.fs.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/build/http/fleet.build.http.iml" filepath="$PROJECT_DIR$/fleet/build/http/fleet.build.http.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/build/kernel.plugins.processor/fleet.build.kernel.plugins.processor.iml" filepath="$PROJECT_DIR$/fleet/build/kernel.plugins.processor/fleet.build.kernel.plugins.processor.iml" />
-      <module fileurl="file://$PROJECT_DIR$/fleet/build/license/fleet.build.license.iml" filepath="$PROJECT_DIR$/fleet/build/license/fleet.build.license.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/build/platform/fleet.build.platform.iml" filepath="$PROJECT_DIR$/fleet/build/platform/fleet.build.platform.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/build/s3/fleet.build.s3.iml" filepath="$PROJECT_DIR$/fleet/build/s3/fleet.build.s3.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/build/scrambling/fleet.build.scrambling.iml" filepath="$PROJECT_DIR$/fleet/build/scrambling/fleet.build.scrambling.iml" />

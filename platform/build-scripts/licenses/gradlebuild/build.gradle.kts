@@ -8,16 +8,14 @@ plugins {
   id("fleet.project-module-conventions")
   id("fleet.toolchain-conventions")
   alias(libs.plugins.dokka)
-  id("fleet.module-publishing-conventions")
   // GRADLE_PLUGINS__MARKER_START
   id("fleet-module")
-  alias(jps.plugins.kotlin.serialization)
   // GRADLE_PLUGINS__MARKER_END
 }
 
 fleetModule {
   module {
-    name = "fleet.build.license"
+    name = "intellij.platform.buildScripts.licenses"
     importedFromJps {}
   }
 }
@@ -25,17 +23,9 @@ fleetModule {
 @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
 kotlin {
   // KOTLIN__MARKER_START
-  compilerOptions.freeCompilerArgs = listOf(
-    "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
-    "-opt-in=kotlin.ExperimentalStdlibApi",
-    "-Xlambdas=class",
-    "-Xconsistent-data-class-copy-visibility",
-    "-Xcontext-parameters",
-    "-XXLanguage:+AllowEagerSupertypeAccessibilityChecks",
-    "-progressive",
-  )
   jvm {}
-  sourceSets.jvmMain.configure { resources.srcDir(layout.projectDirectory.dir("../resources")) }
+  sourceSets.jvmMain.configure { kotlin.srcDir(layout.projectDirectory.dir("../src")) }
+  configureAtMostOneJvmTargetOrThrow { compilations.named("main") { withJavaSourceSet { javaSourceSet -> javaSourceSet.java.srcDir(layout.projectDirectory.dir("../src")) } } }
   sourceSets.commonMain.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcCommonMain")) }
   sourceSets.commonMain.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesCommonMain")) }
   sourceSets.commonTest.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcCommonTest")) }
@@ -47,22 +37,12 @@ kotlin {
   configureAtMostOneJvmTargetOrThrow { compilations.named("test") { withJavaSourceSet { javaSourceSet -> javaSourceSet.java.srcDir(layout.projectDirectory.dir("../srcJvmTest")) } } }
   sourceSets.jvmTest.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesJvmTest")) }
   sourceSets.commonMain.dependencies {
+    implementation(jps.org.jetbrains.annotations1504825916.get())
     implementation(jps.org.jetbrains.kotlin.kotlin.stdlib1993400674.get().let { "${it.group}:${it.name}:${it.version}" }) {
       exclude(group = "org.jetbrains", module = "annotations")
     }
-    implementation(jps.org.jetbrains.kotlinx.kotlinx.serialization.core.jvm1739247612.get().let { "${it.group}:kotlinx-serialization-core:${it.version}" }) {
-      isTransitive = false
-    }
-    implementation(jps.org.jetbrains.kotlinx.kotlinx.serialization.json.jvm231489733.get().let { "${it.group}:kotlinx-serialization-json:${it.version}" }) {
-      isTransitive = false
-    }
-    implementation(jps.org.jetbrains.amper.async.processes1010455440.get().let { "${it.group}:${it.name}:${it.version}" }) {
-      isTransitive = false
-    }
-    implementation(jps.org.slf4j.slf4j.api2013636515.get().let { "${it.group}:${it.name}:${it.version}" }) {
-      isTransitive = false
-      exclude(group = "org.slf4j", module = "slf4j-jdk14")
-    }
+    implementation(jps.tools.jackson.core.jackson.core235935781.get())
+    implementation(jps.com.fasterxml.jackson.core.jackson.annotations21522943.get())
   }
   // KOTLIN__MARKER_END
 }

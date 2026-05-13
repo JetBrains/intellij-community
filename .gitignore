@@ -21,5 +21,6 @@
 build/dependencies/.gradle
 build/dependencies/build
 native/**/build/
+platform/build-scripts/licenses/gradlebuild/build
 stale_outputs_checked
 /android
