@@ -38,7 +38,7 @@ import java.util.Set;
  * on it.
  */
 @ApiStatus.Internal
-public final class ResilientFileChannel extends FileChannel {
+public final class ResilientFileChannel extends FileChannel implements Resilient {
 
   private final FileChannelInterruptsRetryer fileChannelHandle;
   /**
@@ -67,6 +67,7 @@ public final class ResilientFileChannel extends FileChannel {
     fileChannelHandle = new FileChannelInterruptsRetryer(path, openOptions);
   }
 
+  @Override
   public <T> T executeOperation(@NotNull FileChannelIdempotentOperation<T> operation) throws IOException {
     return fileChannelHandle.retryIfInterrupted(operation);
   }
