@@ -3,8 +3,6 @@ package com.intellij.grazie
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.grazie.ide.msg.GrazieStateLifecycle
-import com.intellij.grazie.jlanguage.Lang
-import com.intellij.grazie.remote.GrazieRemote.isAvailableLocally
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
@@ -23,7 +21,7 @@ object GraziePlugin {
   }
 
   object Hunspell : GrazieStateLifecycle {
-    const val version = "0.2.336"
+    const val version = "0.2.359"
     const val url = "https://packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/spell"
 
     override fun update(prevState: GrazieConfig.State, newState: GrazieConfig.State) {
@@ -59,10 +57,4 @@ object GraziePlugin {
 
   val classLoader: ClassLoader
     get() = descriptor.classLoader
-}
-
-private fun Collection<Lang>.filterHunspell(): Set<Lang> {
-  return asSequence()
-    .filter { it.hunspellRemote != null && isAvailableLocally(it) }
-    .toSet()
 }
