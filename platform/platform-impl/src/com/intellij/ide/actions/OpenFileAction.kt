@@ -40,7 +40,13 @@ import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
 import com.intellij.openapi.wm.impl.welcomeScreen.NewWelcomeScreen
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUtil
 import com.intellij.platform.PlatformProjectOpenProcessor
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.project.ProjectStoreOwner
 import com.intellij.projectImport.ProjectOpenProcessor.Companion.getImportProvider
 import com.intellij.util.SlowOperations
@@ -86,7 +92,7 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRe
       toSelect = VfsUtil.findFileByIoFile(File(defaultProjectDirectory), true)
     }
     val descriptor = createFileChooserDescriptor(project, toSelect)
-    FileChooser.chooseFiles(descriptor, project, toSelect ?: pathToSelect) { files ->
+    FileChooser.chooseFiles(descriptor, project, toSelect ?: getPathToSelect(project)) { files ->
       for (file in files) {
         if (!descriptor.isFileSelectable(file)) {
           val message = IdeBundle.message("error.dir.contains.no.project", file.presentableUrl)
@@ -141,8 +147,22 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRe
     }
   }
 
-  protected val pathToSelect: VirtualFile?
-    get() = VfsUtil.getUserHomeDir()
+  private fun getPathToSelect(project: Project?): VirtualFile? {
+    val projectFilePath = project?.projectFile?.toNioPath() ?: return VfsUtil.getUserHomeDir()
+    val descriptor = projectFilePath.getEelDescriptor()
+    return if (descriptor is LocalEelDescriptor) {
+      VfsUtil.getUserHomeDir()
+    }
+    else {
+      runWithModalProgressBlocking(
+        owner = ModalTaskOwner.project(project),
+        title = IdeBundle.message("title.open.file.or.project"),
+      ) {
+        val userHome = descriptor.toEelApi().userInfo.home
+        VfsUtil.findFile(userHome.asNioPath(), true)
+      }
+    }
+  }
 
   override fun update(e: AnActionEvent) {
     if (NewWelcomeScreen.isNewWelcomeScreen(e)) {

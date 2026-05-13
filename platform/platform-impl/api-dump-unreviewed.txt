@@ -1715,7 +1715,6 @@ c:com.intellij.ide.actions.OpenFileAction
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - p:createFileChooserDescriptor(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileChooser.FileChooserDescriptor
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- pf:getPathToSelect():com.intellij.openapi.vfs.VirtualFile
 - sf:openFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):V
 - sf:openFile(java.lang.String,com.intellij.openapi.project.Project):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
