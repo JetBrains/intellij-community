@@ -333,7 +333,9 @@ object InternalPsiVersioning {
 
   fun initWriteActionSection(): AccessToken {
     val storedThreadLocal = threadLocalVersioningTracker.get()
-    return if (storedThreadLocal == null) {
+    return if (storedThreadLocal == null
+               // this branch can happen in tests where the context is reset to dispatch some events synchronously
+               || currentThreadContext()[PsiVersionWriteContextElement.Key] == null) {
       val psiVersionRegistry = PsiVersionRegistry.instance
       val existingVersion = psiVersionRegistry.latestPublishedVersion
       val newVersion = existingVersion + 1
