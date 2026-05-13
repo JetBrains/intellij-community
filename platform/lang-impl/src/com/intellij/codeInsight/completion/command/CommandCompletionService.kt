@@ -325,15 +325,26 @@ private class CommandCompletionHighlightingListener(
     val highlightManager = HighlightManager.getInstance(project)
     val previousHighlighting = lookup.removeUserData(LOOKUP_HIGHLIGHTING)
     previousHighlighting?.forEach { t -> highlightManager.removeSegmentHighlighter(topLevelEditor, t) }
-    val startOffset = lookup.lookupOriginalStart -
-                      if (nonWrittenFiles) 0
-                      else findActualIndex(element.suffix, topLevelEditor.document.immutableCharSequence,
-                                           lookup.lookupOriginalStart)
+    val diff = if (nonWrittenFiles) 0
+              else findActualIndex(element.suffix, topLevelEditor.document.immutableCharSequence,
+                         lookup.lookupOriginalStart)
+    val startOffset = lookup.lookupOriginalStart - diff
     val highlightInfo = element.highlighting ?: return
     val rangeHighlighters = mutableListOf<RangeHighlighter>()
-    if (nonWrittenFiles || highlightInfo.range.startOffset <= min(highlightInfo.range.endOffset, startOffset)) {
-      highlightManager.addRangeHighlight(topLevelEditor, highlightInfo.range.startOffset, highlightInfo.range.endOffset, EditorColors.SEARCH_RESULT_ATTRIBUTES, false, rangeHighlighters)
-      highlightManager.addRangeHighlight(topLevelEditor, highlightInfo.range.startOffset, highlightInfo.range.endOffset, highlightInfo.attributesKey, false, rangeHighlighters)
+    val highlightedEndOffset = if (nonWrittenFiles) highlightInfo.range.endOffset else min(highlightInfo.range.endOffset, startOffset)
+    if (highlightInfo.range.startOffset <= highlightedEndOffset) {
+      highlightManager.addRangeHighlight(topLevelEditor,
+                                         highlightInfo.range.startOffset,
+                                         highlightedEndOffset,
+                                         EditorColors.SEARCH_RESULT_ATTRIBUTES,
+                                         false,
+                                         rangeHighlighters)
+      highlightManager.addRangeHighlight(topLevelEditor,
+                                         highlightInfo.range.startOffset,
+                                         highlightedEndOffset,
+                                         highlightInfo.attributesKey,
+                                         false,
+                                         rangeHighlighters)
     }
     if (rangeHighlighters.isNotEmpty()) {
       lookup.putUserData(LOOKUP_HIGHLIGHTING, rangeHighlighters)

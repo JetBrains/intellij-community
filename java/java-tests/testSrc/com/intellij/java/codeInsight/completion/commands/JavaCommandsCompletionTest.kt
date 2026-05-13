@@ -7,11 +7,14 @@ import com.intellij.codeInsight.completion.command.CommandCompletionLookupElemen
 import com.intellij.codeInsight.completion.command.LookupElementCustomPreviewHolderDocumentationProvider
 import com.intellij.codeInsight.completion.command.configuration.CommandCompletionSettingsService
 import com.intellij.codeInsight.daemon.impl.ProblemDescriptorWithReporterName
+import com.intellij.codeInsight.highlighting.HighlightManager
+import com.intellij.codeInsight.highlighting.HighlightManagerImpl
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.lookup.LookupElementCustomPreviewHolder
 import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInspection.LocalInspectionTool
@@ -114,6 +117,22 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
         } 
       }
     """.trimIndent())
+  }
+
+  fun testHighlighting() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class A { 
+          private String..getter<caret> aaaaaaaaaaaaaaaaa;
+      }
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    val activeLookup = LookupManager.getInstance(project).activeLookup ?: error("Lookup not found")
+    activeLookup.currentItem = elements.firstOrNull { it.lookupString == "getter" }
+    val highlightManagerImpl = HighlightManager.getInstance(project) as HighlightManagerImpl
+    val highlighters = highlightManagerImpl.getHighlighters(editor)
+    val expectedRange = TextRange(15, 29)
+    assertTrue(highlighters.any { it.textRange == expectedRange })
   }
 
   fun testFormatPreview() {
@@ -1878,7 +1897,8 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     }""".trimIndent())
     val elements = myFixture.completeBasic()
     assertTrue(elements.any { element ->
-      element.lookupString.contains("Parameter info", ignoreCase = true) })
+      element.lookupString.contains("Parameter info", ignoreCase = true)
+    })
   }
 
   fun testShowLiveTemplate() {
