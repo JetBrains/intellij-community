@@ -231,6 +231,9 @@ fleet/build/sign
 fleet/bundles
 fleet/codecache
 fleet/codecache/test
+fleet/compiler-plugins/expects
+fleet/compiler-plugins/noria
+fleet/compiler-plugins/rpc
 fleet/fastutil
 fleet/kernel
 fleet/ktor/client/core

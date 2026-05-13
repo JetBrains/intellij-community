@@ -6,15 +6,18 @@ import com.jetbrains.fleet.rpc.plugin.REMOTE_KIND_RECEIVE_CHANNEL_CLASS_ID
 import com.jetbrains.fleet.rpc.plugin.REMOTE_KIND_SEND_CHANNEL_CLASS_ID
 import com.jetbrains.fleet.rpc.plugin.ir.FileContext
 import org.jetbrains.kotlin.ir.builders.IrBuilderWithScope
+import org.jetbrains.kotlin.ir.builders.irBoolean
 import org.jetbrains.kotlin.ir.builders.irCallConstructor
 import org.jetbrains.kotlin.ir.expressions.IrExpression
-import org.jetbrains.kotlin.ir.util.constructors
-import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.ir.builders.irBoolean
 import org.jetbrains.kotlin.ir.symbols.IrConstructorSymbol
 import org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI
-import org.jetbrains.kotlin.ir.types.*
+import org.jetbrains.kotlin.ir.types.IrSimpleType
+import org.jetbrains.kotlin.ir.types.IrType
+import org.jetbrains.kotlin.ir.types.classFqName
+import org.jetbrains.kotlin.ir.types.typeOrFail
+import org.jetbrains.kotlin.ir.util.constructors
 import org.jetbrains.kotlin.ir.util.isNullable
+import org.jetbrains.kotlin.name.FqName
 
 @UnsafeDuringIrConstructionAPI
 internal fun IrBuilderWithScope.handleSpecialTypes(

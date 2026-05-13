@@ -6545,6 +6545,20 @@ http_file(
 )
 
 http_file(
+  name = "org_jetbrains_kotlin-kotlin-compiler-embeddable-2_4_0-RC_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.4.0-RC/kotlin-compiler-embeddable-2.4.0-RC.jar",
+  sha256 = "f2d0a10ac32702f217f53a3d760c33a51451fd1f233c38e58a275d740a270339",
+  downloaded_file_path = "kotlin-compiler-embeddable-2.4.0-RC.jar"
+)
+
+http_file(
+  name = "org_jetbrains_kotlin-kotlin-compiler-embeddable-2_4_0-RC-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.4.0-RC/kotlin-compiler-embeddable-2.4.0-RC-sources.jar",
+  sha256 = "e3e1fbaa1c8fc155b596ad486a720d63c606f7f700c6c5eeff50f544b09155db",
+  downloaded_file_path = "kotlin-compiler-embeddable-2.4.0-RC-sources.jar"
+)
+
+http_file(
   name = "org_jetbrains_intellij_deps_completion-completion-ranking-kotlin-0_4_0_http",
   url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0.4.0/completion-ranking-kotlin-0.4.0.jar",
   sha256 = "1849979a0cd2a997e1071ac79741b1a77781357e254138f30eabffebccddfec8",

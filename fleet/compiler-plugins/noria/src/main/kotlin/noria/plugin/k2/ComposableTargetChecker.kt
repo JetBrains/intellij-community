@@ -2,7 +2,17 @@
 
 package noria.plugin.k2
 
-import noria.plugin.inference.*
+import noria.plugin.inference.ApplierInferencer
+import noria.plugin.inference.ErrorReporter
+import noria.plugin.inference.Item
+import noria.plugin.inference.LazyScheme
+import noria.plugin.inference.LazySchemeStorage
+import noria.plugin.inference.NodeAdapter
+import noria.plugin.inference.NodeKind
+import noria.plugin.inference.Open
+import noria.plugin.inference.Scheme
+import noria.plugin.inference.TypeAdapter
+import noria.plugin.inference.mergeWith
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.diagnostics.reportOn
 import org.jetbrains.kotlin.fir.FirElement
@@ -13,7 +23,15 @@ import org.jetbrains.kotlin.fir.analysis.checkers.expression.FirFunctionCallChec
 import org.jetbrains.kotlin.fir.caches.firCachesFactory
 import org.jetbrains.kotlin.fir.declarations.FirAnonymousFunction
 import org.jetbrains.kotlin.fir.declarations.FirFunction
-import org.jetbrains.kotlin.fir.expressions.*
+import org.jetbrains.kotlin.fir.expressions.FirAnnotation
+import org.jetbrains.kotlin.fir.expressions.FirAnonymousFunctionExpression
+import org.jetbrains.kotlin.fir.expressions.FirFunctionCall
+import org.jetbrains.kotlin.fir.expressions.FirFunctionConversionKind
+import org.jetbrains.kotlin.fir.expressions.FirFunctionTypeConversionExpression
+import org.jetbrains.kotlin.fir.expressions.FirLiteralExpression
+import org.jetbrains.kotlin.fir.expressions.FirQualifiedAccessExpression
+import org.jetbrains.kotlin.fir.expressions.resolvedArgumentMapping
+import org.jetbrains.kotlin.fir.expressions.toResolvedCallableSymbol
 import org.jetbrains.kotlin.fir.extensions.FirExtensionSessionComponent
 import org.jetbrains.kotlin.fir.references.toResolvedCallableSymbol
 import org.jetbrains.kotlin.fir.symbols.SymbolInternals

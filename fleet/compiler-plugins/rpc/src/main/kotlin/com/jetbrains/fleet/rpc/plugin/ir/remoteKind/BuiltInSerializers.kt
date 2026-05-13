@@ -1,11 +1,11 @@
 package com.jetbrains.fleet.rpc.plugin.ir.remoteKind
 
 import com.jetbrains.fleet.rpc.plugin.ir.FileContext
-import org.jetbrains.kotlin.name.CallableId
-import org.jetbrains.kotlin.name.FqName
 import com.jetbrains.fleet.rpc.plugin.ir.util.name
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI
+import org.jetbrains.kotlin.name.CallableId
+import org.jetbrains.kotlin.name.FqName
 
 @UnsafeDuringIrConstructionAPI
 internal fun FileContext.getBuiltInSerializer(fqName: FqName?): IrSimpleFunctionSymbol? =

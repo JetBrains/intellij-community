@@ -1,23 +1,14 @@
-load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+load("@rules_jvm//:jvm.bzl", compiler_plugin_jvm_library = "jvm_library")
 load("@rules_kotlin//kotlin:kotlin.bzl", "kt_compiler_plugin")
 
-
-create_kotlinc_options(
-  name = "noria-compiler-plugin_kotlinc_options",
-  x_context_parameters = True,
-)
-
-jvm_library(
+compiler_plugin_jvm_library(
   name = "noria-compiler-plugin",
-  srcs = glob(["src/main/kotlin/**/*.kt"], exclude = ["src/main/kotlin/noria/plugin/gradle/NoriaGradlePlugin.kt"]),
-  kotlinc_opts = ":noria-compiler-plugin_kotlinc_options",
   visibility = ["//visibility:public"],
+  srcs = glob(["src/main/kotlin/**/*.kt"]),
   resources = glob(["src/main/resources/**/*"]),
   resource_strip_prefix = "src/main/resources",
-  deps = [
-    "@rules_jvm//jvm-inc-builder:kotlin-compiler-for-bazel",
-  ],
+  kotlinc_opts = ":custom_noria",
+  deps = ["@rules_jvm//jvm-inc-builder:kotlin-compiler-for-bazel"],
 )
 
 kt_compiler_plugin(
@@ -26,3 +17,47 @@ kt_compiler_plugin(
   visibility = ["//visibility:public"],
   deps = [":noria-compiler-plugin"],
 )
+
+### auto-generated section `build fleet.compiler.plugins.noria` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom_noria",
+  x_context_parameters = True,
+  x_jvm_default = "all-compatibility"
+)
+
+jvm_library(
+  name = "noria",
+  module_name = "fleet.compiler.plugins.noria",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
+  resources = glob(["src/main/resources/**/*"]),
+  resource_strip_prefix = "src/main/resources",
+  kotlinc_opts = ":custom_noria",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlin-compiler-embeddable-provided",
+  ]
+)
+
+jvm_library(
+  name = "noria_test_lib",
+  testonly = True,
+  module_name = "fleet.compiler.plugins.noria",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_noria",
+  runtime_deps = [
+    ":noria",
+    "@lib//:kotlin-compiler-embeddable-provided",
+  ]
+)
+### auto-generated section `build fleet.compiler.plugins.noria` end
+
+### auto-generated section `iml fleet.compiler.plugins.noria` start
+exports_files([
+  "fleet.compiler.plugins.noria.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml fleet.compiler.plugins.noria` end

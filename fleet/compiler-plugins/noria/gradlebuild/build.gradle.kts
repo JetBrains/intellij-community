@@ -2,6 +2,7 @@
 import fleet.buildtool.conventions.configureAtMostOneJvmTargetOrThrow
 import fleet.buildtool.conventions.withJavaSourceSet
 // IMPORT__MARKER_END
+
 plugins {
   alias(libs.plugins.kotlin.multiplatform)
   id("fleet.project-module-conventions")
@@ -14,7 +15,7 @@ plugins {
 
 fleetModule {
   module {
-    name = "fleet.compiler.plugins"
+    name = "fleet.compiler.plugins.noria"
     importedFromJps {}
   }
 }
@@ -22,6 +23,11 @@ fleetModule {
 @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
 kotlin {
   // KOTLIN__MARKER_START
+  compilerOptions.freeCompilerArgs = listOf(
+    "-Xcontext-parameters",
+    "-XXLanguage:+AllowEagerSupertypeAccessibilityChecks",
+    "-progressive",
+  )
   jvm {}
   sourceSets.jvmMain.configure { resources.srcDir(layout.projectDirectory.dir("../resources")) }
   sourceSets.commonMain.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcCommonMain")) }
@@ -35,21 +41,15 @@ kotlin {
   configureAtMostOneJvmTargetOrThrow { compilations.named("test") { withJavaSourceSet { javaSourceSet -> javaSourceSet.java.srcDir(layout.projectDirectory.dir("../srcJvmTest")) } } }
   sourceSets.jvmTest.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesJvmTest")) }
   sourceSets.commonMain.dependencies {
-    runtimeOnly(jps.org.jetbrains.kotlin.kotlin.compose.compiler.plugin782483974.get().let { "${it.group}:${it.name}:${it.version}" }) {
+    implementation(jps.org.jetbrains.kotlin.kotlin.stdlib1993400674.get().let { "${it.group}:${it.name}:${it.version}" }) {
+      exclude(group = "org.jetbrains", module = "annotations")
+    }
+    compileOnly(jps.org.jetbrains.kotlin.kotlin.compiler.embeddable2043673965.get().let { "${it.group}:${it.name}:${it.version}" }) {
       isTransitive = false
     }
   }
   sourceSets.jvmMain.dependencies {
-    runtimeOnly(jps.jetbrains.fleet.expects.compiler.plugin2128428904.get().let { "${it.group}:${it.name}:${it.version}" }) {
-      isTransitive = false
-    }
-    runtimeOnly(jps.jetbrains.fleet.noria.compiler.plugin1341495929.get().let { "${it.group}:${it.name}:${it.version}" }) {
-      isTransitive = false
-    }
-    runtimeOnly(jps.jetbrains.fleet.rhizomedb.compiler.plugin1056999844.get().let { "${it.group}:${it.name}:${it.version}" }) {
-      isTransitive = false
-    }
-    runtimeOnly(jps.com.jetbrains.fleet.rpc.compiler.plugin1676195831.get().let { "${it.group}:${it.name}:${it.version}" }) {
+    compileOnly(jps.org.jetbrains.kotlin.kotlin.compiler.embeddable2043673965.get().let { "${it.group}:${it.name}:${it.version}" }) {
       isTransitive = false
     }
   }

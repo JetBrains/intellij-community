@@ -8251,6 +8251,28 @@ jvm_import(
 )
 
 copy_file(
+  name = "org.jetbrains.kotlin/kotlin-compiler-embeddable-2.4.0-RC.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-compiler-embeddable-2_4_0-RC_http//file",
+  out = "org.jetbrains.kotlin/kotlin-compiler-embeddable-2.4.0-RC.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "kotlin-compiler-embeddable",
+  jar = "@org_jetbrains_kotlin-kotlin-compiler-embeddable-2_4_0-RC_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-compiler-embeddable-2_4_0-RC-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "kotlin-compiler-embeddable-provided",
+  exports = [":kotlin-compiler-embeddable"],
+  neverlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
   name = "org.jetbrains.intellij.deps.completion/completion-ranking-kotlin-0.4.0.jar_copy",
   src = "@org_jetbrains_intellij_deps_completion-completion-ranking-kotlin-0_4_0_http//file",
   out = "org.jetbrains.intellij.deps.completion/completion-ranking-kotlin-0.4.0.jar",
