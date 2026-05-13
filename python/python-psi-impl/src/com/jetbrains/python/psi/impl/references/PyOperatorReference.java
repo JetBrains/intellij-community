@@ -31,6 +31,7 @@ import com.jetbrains.python.psi.PyPrefixExpression;
 import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.PySubscriptionExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.types.PyClassLikeType;
@@ -39,6 +40,7 @@ import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import kotlin.Unit;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -112,6 +114,15 @@ public class PyOperatorReference extends PyReferenceImpl {
       result.addAll(resolveMember(expr.getReceiver(null), name));
       return Unit.INSTANCE;
     });
+
+    // A user-defined metaclass override of the operator never lets Python fall back to the
+    // reflected operator on the right; skipping it here keeps inherited typeshed signatures
+    // out of the inferred type. Instance-receiver paths still need both candidates (e.g. for
+    // stub-defined numpy operators).
+    if (isMetaclassDispatch(expr.getReceiver(null)) && hasUserDefinedResolution(result)) {
+      return result;
+    }
+
     typeEvalContext.traceWithIndent("Trying to resolve right operator", () -> {
       result.addAll(resolveMember(expr.getRightExpression(), PyNames.leftToRightOperatorName(name)));
       return Unit.INSTANCE;
@@ -136,6 +147,19 @@ public class PyOperatorReference extends PyReferenceImpl {
       return Unit.INSTANCE;
     });
     return result;
+  }
+
+  private static boolean hasUserDefinedResolution(@NotNull List<? extends RatedResolveResult> results) {
+    return StreamEx.of(results)
+      .map(res -> res.getElement())
+      .nonNull()
+      .anyMatch(element -> !PyBuiltinCache.getInstance(element).isBuiltin(element));
+  }
+
+  private boolean isMetaclassDispatch(@Nullable PyExpression receiver) {
+    if (receiver == null) return false;
+    final PyType type = myContext.getTypeEvalContext().getType(receiver);
+    return type instanceof PyClassLikeType classLikeType && classLikeType.isDefinition();
   }
 
   private @NotNull List<RatedResolveResult> resolveMember(@Nullable PyExpression object, @Nullable String name) {

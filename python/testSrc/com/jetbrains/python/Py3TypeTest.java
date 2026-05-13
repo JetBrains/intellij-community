@@ -5570,6 +5570,19 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
+  @TestFor(issues="PY-51329")
+  public void testMetaclassOrShadowsReflectedOnRight() {
+    doTest("int", """
+      class M(type):
+          def __or__(self, other: object) -> int:
+              return 1
+
+      class A(metaclass=M): ...
+
+      expr = A | str
+      """);
+  }
+
   @TestFor(issues="PY-57621")
   public void testTupleInListWidens() {
     doTest("list[tuple[int, str]]", """

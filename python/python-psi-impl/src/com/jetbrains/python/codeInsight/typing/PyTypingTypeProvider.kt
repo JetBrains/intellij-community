@@ -1224,6 +1224,21 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
         .noneMatch { it: PsiElement? -> PyBuiltinCache.getInstance(it).isBuiltin(it) }
     }
 
+    /**
+     * `true` when [operand] makes the enclosing `|` an operator call rather than a PEP 604 union:
+     * [operand]'s metaclass overloads [operator], or [operand] is itself a binary `|` whose inner
+     * level already declined a union.
+     */
+    private fun isOperatorCallOperand(
+      operand: PyExpression, operator: String, context: Context,
+    ): Boolean {
+      val type = getType(operand, context)?.get()
+      if (type != null) {
+        return typeHasOverloadedBitwiseOr(type, operand, operator, context)
+      }
+      return operand is PyBinaryExpression && operand.operator === PyTokenTypes.OR
+    }
+
     @JvmStatic
     fun isBitwiseOrUnionAvailable(context: TypeEvalContext): Boolean {
       val originFile = context.origin
@@ -2117,17 +2132,14 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
         val left = element.leftExpression ?: return null
         val right = element.rightExpression ?: return null
 
+        if (isOperatorCallOperand(left, "__or__", context) ||
+            isOperatorCallOperand(right, "__ror__", context)) return null
+
         val leftTypeRef = getType(left, context)
         val rightTypeRef = getType(right, context)
         if (leftTypeRef == null && rightTypeRef == null) return null
 
-        // if the class type defines __or__ then don't create a union
-        val leftType = leftTypeRef?.get()
-        if (leftType != null && typeHasOverloadedBitwiseOr(leftType, left, context = context)) return null
-        val rightType = rightTypeRef?.get()
-        if (rightType != null && typeHasOverloadedBitwiseOr(rightType, left, "__ror__", context)) return null
-
-        val union = PyUnionType.union(leftType, rightType)
+        val union = PyUnionType.union(leftTypeRef?.get(), rightTypeRef?.get())
         return if (union != null) Ref(union) else null
       }
       return null
