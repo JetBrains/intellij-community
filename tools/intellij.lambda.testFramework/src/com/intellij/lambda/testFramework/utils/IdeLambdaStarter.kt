@@ -110,7 +110,7 @@ internal fun IDERemDevTestContext.runIdeWithLambda(
   }
 }
 
-private fun LambdaRdTestSession.awaitSessionReady(timeout: Duration = 15.seconds) {
+private fun LambdaRdTestSession.awaitSessionReady(timeout: Duration = 20.seconds) {
   val timeStarted = System.currentTimeMillis()
   while (ready.value != true && timeStarted + timeout.inWholeMilliseconds > System.currentTimeMillis()) {
     Thread.sleep(500)
