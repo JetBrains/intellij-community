@@ -3,7 +3,6 @@ package com.intellij.diagnostic;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.util.ui.EDT;
-import kotlin.jvm.Volatile;
 import org.HdrHistogram.Histogram;
 import org.HdrHistogram.SingleWriterRecorder;
 import org.jetbrains.annotations.ApiStatus;
@@ -28,17 +27,13 @@ public abstract class PreciseEventWatcher implements EventWatcher, Disposable {
 
   // ========== cached histograms copies (for thread-safe reading without interrupting writing)
   //@GuardedBy("this")
-  @Volatile
-  private Histogram intervalWaitingTimes = null;
+  private volatile Histogram intervalWaitingTimes = null;
   //@GuardedBy("this")
-  @Volatile
-  private Histogram intervalQueueSizes = null;
+  private volatile Histogram intervalQueueSizes = null;
   //@GuardedBy("this")
-  @Volatile
-  private Histogram intervalExecutionTimes = null;
+  private volatile Histogram intervalExecutionTimes = null;
   //@GuardedBy("this")
-  @Volatile
-  private Histogram intervalAWTDispatchTimes = null;
+  private volatile Histogram intervalAWTDispatchTimes = null;
 
   protected Histogram getWaitingTimeHistogram() {
     intervalWaitingTimes = waitingTimesHistogram.getIntervalHistogram(intervalWaitingTimes);

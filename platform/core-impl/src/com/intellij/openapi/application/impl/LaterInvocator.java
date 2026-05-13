@@ -30,7 +30,6 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.EDT;
-import kotlin.jvm.Volatile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -60,10 +59,8 @@ public final class LaterInvocator {
   private static final Map<Project, List<Dialog>> projectToModalEntities = new WeakHashMap<>(); // accessed in EDT only
   private static final Map<Project, Stack<ModalityState>> projectToModalEntitiesStack = new WeakHashMap<>(); // accessed in EDT only
   private static final Stack<ModalityStateEx> ourModalityStack = new Stack<>((ModalityStateEx)ModalityState.nonModal());// guarded by ourModalityStack
-  private static final EventDispatcher<ModalityStateListener> ourModalityStateMulticaster =
-    EventDispatcher.create(ModalityStateListener.class);
-  @Volatile
-  private static NonBlockingFlushQueue ourNonBlockingEdtQueue = null;
+  private static final EventDispatcher<ModalityStateListener> ourModalityStateMulticaster = EventDispatcher.create(ModalityStateListener.class);
+  private volatile static NonBlockingFlushQueue ourNonBlockingEdtQueue;
 
   public static void initializeNonBlockingFlushQueue(@NotNull ThreadingSupport threadingSupport) {
     ourNonBlockingEdtQueue = new NonBlockingFlushQueue(threadingSupport);
