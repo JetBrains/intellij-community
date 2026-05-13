@@ -234,6 +234,10 @@ internal class FrontendRunDashboardManager(private val project: Project) : RunDa
     }
   }
 
+  override fun hasPersistedStatus(configuration: RunConfiguration): Boolean {
+    return false
+  }
+
   override fun clearConfigurationStatus(configuration: RunConfiguration) {
     LOG.debug("clearConfigurationStatus(${configuration.name}) invoked on frontend; ignored")
   }

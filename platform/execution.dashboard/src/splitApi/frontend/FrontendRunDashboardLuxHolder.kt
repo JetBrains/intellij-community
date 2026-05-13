@@ -46,15 +46,11 @@ internal class FrontendRunDashboardLuxHolder(val project: Project, val coroutine
   private fun unregisterLuxContent(luxedContent: RunDashboardLuxedContentEvent) {
     val existingLux = luxedContentsMap[luxedContent.serviceId]
 
-    val luxExists = existingLux != null
-    val sameExecutors = existingLux?.executorId == luxedContent.executorId
     val sameDescriptorIds = existingLux?.backendDescriptorId == luxedContent.contentDescriptorId
-    val shouldRemoveLux = when {
-      !luxExists -> false
-      sameExecutors && !sameDescriptorIds -> true
-      !sameExecutors && sameDescriptorIds -> true
-      else -> false
-    }
+    // Only the descriptor identifies our lux unambiguously. An unregister event whose descriptor differs
+    // from what we have stored is about another content (e.g. an old descriptor after a relaunch or
+    // a service-id rekey) and must not evict the current entry.
+    val shouldRemoveLux = existingLux != null && sameDescriptorIds
 
     if (shouldRemoveLux) {
       val removedLux = luxedContentsMap.remove(luxedContent.serviceId)
@@ -65,6 +61,9 @@ internal class FrontendRunDashboardLuxHolder(val project: Project, val coroutine
   private fun registerLuxContent(event: RunDashboardLuxedContentEvent) {
     val bindingScope = RunDashboardCoroutineScopeProvider.getInstance(project).cs.childScope("FrontendDashboardLuxComponent for service ${event.serviceId}")
     val wrappedComponent = FrontendDashboardLuxComponent(bindingScope, event.serviceId, event.contentDescriptorId, event.executorId, project)
-    luxedContentsMap[event.serviceId] = wrappedComponent
+    // Unbind any previous registration so its child scope / coroutines aren't leaked when the entry is overwritten
+    // (the new register event isn't always preceded by an explicit unregister for the previous descriptor).
+    val previous = luxedContentsMap.put(event.serviceId, wrappedComponent)
+    previous?.unbind()
   }
 }
