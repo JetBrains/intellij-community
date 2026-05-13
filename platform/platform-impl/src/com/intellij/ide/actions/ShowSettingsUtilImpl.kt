@@ -133,10 +133,16 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
   }
 
   @ApiStatus.Internal
+  protected open fun isNonModalSettingsEnabled(): Boolean = useNonModalSettingsWindow()
+
+  @ApiStatus.Internal
+  open fun isNonModalSettingsWindowVisible(): Boolean = true
+
+  @ApiStatus.Internal
   protected open fun doShow(project: Project?, groups: List<ConfigurableGroup>, toSelect: Configurable?, filter: String?) {
     val isModal = !(project != null &&
                     project != ProjectManager.getInstance().defaultProject &&
-                    useNonModalSettingsWindow() &&
+                    isNonModalSettingsEnabled() &&
                     ModalityState.current() == ModalityState.nonModal())
 
     val filteredGroups = filterEmptyGroups(groups)
@@ -165,7 +171,7 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
     // but actually rework the invocation to be performed not in EDT.
     ThreadingAssertions.assertBackgroundThread()
 
-    val isModal = project.isDefault || !useNonModalSettingsWindow()
+    val isModal = project.isDefault || !isNonModalSettingsEnabled()
     withContext(Dispatchers.EDT) {
       if (!isModal) {
         if (Registry.`is`("ide.settings.non.modal.project.switcher")) {
