@@ -522,13 +522,6 @@ open class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCompo
       // Replace the maybe-cut-off name (set by delegate.update) with the full one, the UI will then cut it as needed.
       e.presentation.setText(configurationName, false)
     }
-    if (configurationName?.length?.let { it > CONFIGURATION_NAME_NON_TRIM_MAX_LENGTH } == true) {
-      e.presentation.setDescription(ExecutionBundle.messagePointer("choose.run.configuration.action.new.ui.button.description.long",
-                                                                   StringUtil.escapeXmlEntities(configurationName)))
-    }
-    else {
-      e.presentation.setDescription(ExecutionBundle.messagePointer("choose.run.configuration.action.new.ui.button.description"))
-    }
   }
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
@@ -548,6 +541,7 @@ private class RedesignedRunConfigurationSelectorButton(
   JBUI.size(16, JBUI.CurrentTheme.RunWidget.toolbarHeight())
 }) {
   
+  private var isTrimmed = false
   private var lastDumblyTrimmedText: @NlsActions.ActionText String? = null
   private lateinit var lastSmartlyTrimmedText: @NlsActions.ActionText String
 
@@ -579,6 +573,20 @@ private class RedesignedRunConfigurationSelectorButton(
     updateFont()
   }
 
+  override fun updateToolTipText() {
+    // we provide our own
+  }
+
+  override fun getToolTipText(): String {
+    return if (isTrimmed) {
+      ExecutionBundle.message("choose.run.configuration.action.new.ui.button.description.long",
+                                     StringUtil.escapeXmlEntities(text))
+    }
+    else {
+      ExecutionBundle.message("choose.run.configuration.action.new.ui.button.description")
+    }
+  }
+
   override fun layout(
     fm: FontMetrics,
     fullText: @NlsActions.ActionText String,
@@ -588,8 +596,15 @@ private class RedesignedRunConfigurationSelectorButton(
     outTextRect: Rectangle,
   ): @NlsActions.ActionText String {
     val dumblyTrimmedText = super.layout(fm, fullText, icon, inViewRect, outIconRect, outTextRect)
-    if (fullText.isEmpty()) return fullText // to avoid silly edge-case errors
-    if (fullText == dumblyTrimmedText) return dumblyTrimmedText // nothing to trim, enough space
+    if (fullText.isEmpty()) { // to avoid silly edge-case errors
+      isTrimmed = false
+      return fullText
+    }
+    if (fullText == dumblyTrimmedText) { // nothing to trim, enough space
+      isTrimmed = false
+      return dumblyTrimmedText
+    }
+    isTrimmed = true
     if (lastDumblyTrimmedText == dumblyTrimmedText) return lastSmartlyTrimmedText // no need to recompute
     val smartlyTrimmedText = trimRunConfigurationName(fullText, fm.stringWidth(dumblyTrimmedText), fm)
     lastDumblyTrimmedText = dumblyTrimmedText
