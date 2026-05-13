@@ -251,6 +251,11 @@ public abstract class KotlinFirSurroundWithTestGenerated extends AbstractKotlinF
                 runTest("../../idea/tests/testData/codeInsight/surroundWith/if/emptyLine.kt");
             }
 
+            @TestMetadata("multilineCallAfterCaret.kt")
+            public void testMultilineCallAfterCaret() throws Exception {
+                runTest("../../idea/tests/testData/codeInsight/surroundWith/if/multilineCallAfterCaret.kt");
+            }
+
             @TestMetadata("severalStatements.kt")
             public void testSeveralStatements() throws Exception {
                 runTest("../../idea/tests/testData/codeInsight/surroundWith/if/severalStatements.kt");
@@ -522,6 +527,11 @@ public abstract class KotlinFirSurroundWithTestGenerated extends AbstractKotlinF
             @TestMetadata("inIf.kt")
             public void testInIf() throws Exception {
                 runTest("../../idea/tests/testData/codeInsight/surroundWith/parentheses/inIf.kt");
+            }
+
+            @TestMetadata("multilineCallAfterCaret.kt")
+            public void testMultilineCallAfterCaret() throws Exception {
+                runTest("../../idea/tests/testData/codeInsight/surroundWith/parentheses/multilineCallAfterCaret.kt");
             }
 
             @TestMetadata("partOfExpr.kt")
