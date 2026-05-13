@@ -112,10 +112,9 @@ public final class SharedImplUtil {
     ASTNode copyLast = null;
     ASTNode next = SourceTreeToPsiMap.psiElementToTree(last).getTreeNext();
     ASTNode parent = null;
-    CompositeElement thisElementTree = ((CompositeElement)SourceTreeToPsiMap.psiElementToTree(thisElement));
     for (ASTNode element = SourceTreeToPsiMap.psiElementToTree(first); element != next; element = element.getTreeNext()) {
       final ASTNode finalElement = element;
-      TreeElement elementCopy = InternalPsiVersioning.inVersionedEnvironment(thisElementTree.isVersioned(), () -> ChangeUtil.copyElement((TreeElement)finalElement, table));
+      TreeElement elementCopy = ChangeUtil.copyElement((TreeElement)finalElement, table);
       if (element == first.getNode()) {
         copyFirst = elementCopy;
       }

@@ -3,9 +3,6 @@ package com.intellij.platform.syntax.psi.impl
 
 import com.intellij.lang.ASTNode
 import com.intellij.lang.LighterASTNode
-import com.intellij.psi.impl.source.tree.TreeElement
-import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning.inVersionedEnvironment
-import com.intellij.psi.util.PsiVersioningService
 import com.intellij.util.diff.DiffTreeChangeBuilder
 
 internal class ConvertFromTokensToASTBuilder(
@@ -19,13 +16,11 @@ internal class ConvertFromTokensToASTBuilder(
   }
 
   override fun nodeInserted(oldParent: ASTNode, newNode: LighterASTNode, pos: Int) {
-    delegate.nodeInserted(oldParent, PsiVersioningService.inVersionedEnvironment(oldParent) { converter.convert(newNode as Node) }, pos)
+    delegate.nodeInserted(oldParent, converter.convert(newNode as Node), pos)
   }
 
   override fun nodeReplaced(oldChild: ASTNode, newChild: LighterASTNode) {
-    val converted = inVersionedEnvironment(oldChild is TreeElement && oldChild.isVersioned) {
-      converter.convert (newChild as Node)
-    }
+    val converted = converter.convert(newChild as Node)
     delegate.nodeReplaced(oldChild, converted)
   }
 }

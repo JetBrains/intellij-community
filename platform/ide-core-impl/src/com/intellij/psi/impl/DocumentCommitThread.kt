@@ -238,23 +238,21 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
       // Store new providers to retain them from GC
       task.cachedViewProviders = viewProviders
 
-      InternalPsiVersioning.inVersionedEnvironment(true) {
-        for (psiFile in viewProviders.flatMap { it.getAllFiles() }) {
-          val oldFileNode = psiFile.getNode()
-                            ?: throw AssertionError("No node for " + psiFile.javaClass + " in " + psiFile.getViewProvider().javaClass +
-                                                    " of size " + StringUtil.formatFileSize(document.textLength.toLong()) +
-                                                    " (is too large = " + SingleRootFileViewProvider
-                                                      .isTooLargeForIntelligence(psiFile.viewProvider.getVirtualFile(), document.textLength.toLong()) + ")")
-          val changedPsiRange = ChangedPsiRangeUtil.getChangedPsiRange(
-            psiFile,
-            document,
-            task.myLastCommittedText,
-            document.getImmutableCharSequence(),
-          )
-          if (changedPsiRange != null) {
-            val finishProcessor = doCommit(task, synchronously, document, psiFile, oldFileNode, changedPsiRange, reparseInjectedProcessors, documentManager)
-            finishProcessors.add(finishProcessor)
-          }
+      for (psiFile in viewProviders.flatMap { it.getAllFiles() }) {
+        val oldFileNode = psiFile.getNode()
+                          ?: throw AssertionError("No node for " + psiFile.javaClass + " in " + psiFile.getViewProvider().javaClass +
+                                                  " of size " + StringUtil.formatFileSize(document.textLength.toLong()) +
+                                                  " (is too large = " + SingleRootFileViewProvider
+                                                    .isTooLargeForIntelligence(psiFile.viewProvider.getVirtualFile(), document.textLength.toLong()) + ")")
+        val changedPsiRange = ChangedPsiRangeUtil.getChangedPsiRange(
+          psiFile,
+          document,
+          task.myLastCommittedText,
+          document.getImmutableCharSequence(),
+        )
+        if (changedPsiRange != null) {
+          val finishProcessor = doCommit(task, synchronously, document, psiFile, oldFileNode, changedPsiRange, reparseInjectedProcessors, documentManager)
+          finishProcessors.add(finishProcessor)
         }
       }
     }
@@ -274,9 +272,7 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
         return@task
       }
 
-      val success = InternalPsiVersioning.inVersionedEnvironment(true) {
-        documentManager.finishCommit(document, finishProcessors, reparseInjectedProcessors, synchronously, task.myReason)
-      }
+      val success = documentManager.finishCommit(document, finishProcessors, reparseInjectedProcessors, synchronously, task.myReason)
       if (synchronously) {
         assert(success)
       }
