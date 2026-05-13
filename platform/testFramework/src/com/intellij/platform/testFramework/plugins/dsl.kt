@@ -116,6 +116,14 @@ fun PluginSpecBuilder.pluginAlias(id: String) {
   pluginAliases += id
 }
 
+fun PluginSpecBuilder.applicationListener(implFqn: String, topic: String) {
+  applicationListeners += """<listener class="$implFqn" topic="$topic"/>\n"""
+}
+
+inline fun <reified Impl, reified Topic> PluginSpecBuilder.applicationListener() {
+  applicationListener(Impl::class.java.name, Topic::class.java.name)
+}
+
 inline fun <reified T> PluginSpecBuilder.includeClassFile(): Unit =
   includeClassFile(T::class.java.name, T::class.java.classLoader)
 
