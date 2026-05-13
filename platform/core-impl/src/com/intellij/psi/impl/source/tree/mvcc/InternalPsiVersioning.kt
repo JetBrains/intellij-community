@@ -83,23 +83,19 @@ object InternalPsiVersioning {
   }
 
   /**
-   * A version that is used in mutating operations for updating syntax elements.
-   * It is made available, for example, in [com.intellij.openapi.application.Application.runWriteAction] or [runWriteModification]
+   * We assert that it is allowed to modify versioned syntax trees only
+   * in [com.intellij.openapi.application.Application.runWriteAction] or [runWriteModification]
    */
   @JvmStatic
-  fun getCurrentPsiVersionForWrite(): Long {
+  fun assertWritePsiModificationAllowed() {
     val versionFromThreadLocal = threadLocalVersioningTracker.get()
-    val versionFromContextElement = currentThreadContext()[PsiVersionWriteContextElement.Key]?.version
-    require(versionFromContextElement == null || versionFromContextElement == versionFromThreadLocal) {
-      "Version from thread-local must be the same as version from thread context"
+    val writeVersionFromContext = currentThreadContext()[PsiVersionWriteContextElement.Key]
+    if (writeVersionFromContext == null) {
+      throw IllegalStateException("Versioned PSI modification is allowed only in write actions or `InternalPsiVersioning.runWriteModification`")
     }
-    val versionElement = requireNotNull(versionFromThreadLocal) {
-      "Attempt to modify persistent PSI without explicit write transaction. Solutions:\n" +
-      "1. Use explicit `runWriteAction`;\n" +
-      "2. The mutated element must not belong to persistent tree;\n" +
-      "3. If other solutions are impossible, use `runWriteModification`"
+    if (writeVersionFromContext.version != versionFromThreadLocal) {
+      throw IllegalStateException("Version from write context element (${writeVersionFromContext.version}) must be the same as version from thread local ($versionFromThreadLocal)")
     }
-    return versionElement
   }
 
   private class PsiVersionFreezeMarker(val version: Long): IntelliJThreadContextElement<Boolean> {

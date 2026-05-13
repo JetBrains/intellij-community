@@ -35,6 +35,7 @@ import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning;
 import com.intellij.psi.templateLanguages.ITemplateDataElementType;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.tree.CustomLanguageASTComparator;
@@ -213,8 +214,11 @@ public final class BlockSupportImpl extends BlockSupport {
     if (chameleon == null) {
       return null;
     }
-    DummyHolder holder = DummyHolderFactory.createHolder(manager, null, node.getPsi(), charTable);
-    holder.getTreeElement().rawAddChildren((TreeElement)chameleon);
+    InternalPsiVersioning.runWriteModification(() -> {
+      DummyHolder holder = DummyHolderFactory.createHolder(manager, null, node.getPsi(), charTable);
+      holder.getTreeElement().rawAddChildren((TreeElement)chameleon);
+      return null;
+    });
     if (!reparseable.isValidReparse(node, chameleon)) {
       return null;
     }

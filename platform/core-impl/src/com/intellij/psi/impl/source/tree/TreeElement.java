@@ -546,7 +546,8 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
   @ApiStatus.Internal
   protected final long getVersionForWriting() {
     if (isVersioned()) {
-      return InternalPsiVersioning.getCurrentPsiVersionForWrite();
+      InternalPsiVersioning.assertWritePsiModificationAllowed();
+      return InternalPsiVersioning.getCurrentPsiVersion();
     } else {
       return -1; // will be ignored
     }
