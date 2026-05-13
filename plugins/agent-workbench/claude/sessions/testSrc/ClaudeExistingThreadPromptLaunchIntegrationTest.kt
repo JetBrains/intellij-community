@@ -55,6 +55,7 @@ private fun descriptor(): ClaudeAgentSessionProviderDescriptor {
       },
     ),
     executableResolver = { ClaudeCliSupport.CLAUDE_COMMAND },
+    cliAvailableProbe = { true },
   )
 }
 

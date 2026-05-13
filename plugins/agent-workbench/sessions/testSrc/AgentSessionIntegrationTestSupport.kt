@@ -476,6 +476,7 @@ internal suspend fun withServiceAndArchiveAndLaunch(
         )
       },
       openAgentChatPendingTabsBinder = { _, requestsByPath -> openAgentChatPendingTabsBinder(requestsByPath) },
+      providerDescriptorProvider = { provider -> testIntegrationProviderDescriptor(provider) },
       subscribeToProjectLifecycle = false,
     )
     val service = AgentSessionStateSyncTestFacade(
@@ -602,6 +603,30 @@ suspend fun waitForCondition(timeoutMs: Long = 5_000, condition: () -> Boolean) 
     delay(20.milliseconds)
   }
   throw AssertionError("Condition was not satisfied within ${timeoutMs}ms")
+}
+
+private val TEST_INTEGRATION_PROVIDER_DESCRIPTORS: Map<AgentSessionProvider, TestAgentSessionProviderDescriptor> = listOf(
+  TestAgentSessionProviderDescriptor(
+    provider = AgentSessionProvider.CODEX,
+    supportedModes = emptySet(),
+    cliAvailable = true,
+    supportsPendingEditorTabRebind = true,
+    supportsNewThreadRebind = true,
+    emitsScopedRefreshSignals = true,
+    refreshPathAfterCreateNewSession = true,
+  ),
+  TestAgentSessionProviderDescriptor(
+    provider = AgentSessionProvider.CLAUDE,
+    supportedModes = emptySet(),
+    cliAvailable = true,
+    supportsPendingEditorTabRebind = true,
+    emitsScopedRefreshSignals = true,
+    refreshPathAfterCreateNewSession = true,
+  ),
+).associateBy { it.provider }
+
+private fun testIntegrationProviderDescriptor(provider: AgentSessionProvider): TestAgentSessionProviderDescriptor? {
+  return TEST_INTEGRATION_PROVIDER_DESCRIPTORS[provider]
 }
 
 private fun TestProjectCatalogEntry.toProjectEntry(): ProjectEntry {

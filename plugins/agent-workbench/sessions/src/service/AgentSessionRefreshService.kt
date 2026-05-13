@@ -16,6 +16,7 @@ import com.intellij.agent.workbench.chat.rebindOpenPendingAgentChatTabs
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.config.AgentWorkbenchProjectRuntimeConfigs
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
@@ -72,6 +73,7 @@ class AgentSessionRefreshService internal constructor(
   private val scopedRefreshSignalsProvider: (AgentSessionProvider) -> kotlinx.coroutines.flow.Flow<AgentSessionSourceUpdateEvent> = { provider ->
     agentChatScopedRefreshSignals(provider)
   },
+  private val providerDescriptorProvider: (AgentSessionProvider) -> AgentSessionProviderDescriptor? = AgentSessionProviders::find,
   subscribeToProjectLifecycle: Boolean,
 ) {
   @Suppress("unused")
@@ -103,6 +105,7 @@ class AgentSessionRefreshService internal constructor(
     openAgentChatPendingTabsBinder = openAgentChatPendingTabsBinder,
     openAgentChatConcreteTabsBinder = openAgentChatConcreteTabsBinder,
     clearOpenConcreteNewThreadRebindAnchors = clearOpenConcreteNewThreadRebindAnchors,
+    providerDescriptorProvider = providerDescriptorProvider,
   )
 
   init {

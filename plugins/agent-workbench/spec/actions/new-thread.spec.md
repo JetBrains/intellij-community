@@ -34,6 +34,17 @@ New-thread actions let users start provider-backed threads from project/worktree
   [@test] ../../sessions-toolwindow/testSrc/AgentSessionsTreePopupActionsTest.kt
   [@test] ../../sessions-actions/testSrc/AgentSessionsEditorTabActionsTest.kt
 
+- Provider availability for synchronous new-thread surfaces is read from the `TerminalAgentsAvailabilityService` cached snapshot via each descriptor's `terminalAgentKey`. A project-startup activity prewarms the cache so menus render the launch-time answer on first paint without waiting for the terminal tool window to initialize.
+  [@test] ../../sessions-toolwindow/testSrc/AgentSessionsSwingNewSessionActionsTest.kt
+
+- Provider/mode menu items render disabled when their CLI is unavailable. The label is suffixed with the resolved `cliMissingMessageKey` text (e.g. "Junie — Junie CLI not found. Install Junie CLI or add it to your PATH.") so the reason is visible inline, not only as a status-bar tooltip.
+  [@test] ../../sessions-toolwindow/testSrc/AgentSessionsTreePopupActionsTest.kt
+  [@test] ../../sessions-actions/testSrc/AgentSessionsEditorTabActionsTest.kt
+
+- Tree-row quick-create overlay falls back from a disabled `lastUsedProvider` to the next available standard provider, and hides the `+` button entirely when no provider is runnable. The main-toolbar new-thread action pins the button to `lastUsedProvider` (no silent substitution) and disables it with the `cliMissingMessageKey` description when that provider's CLI is unavailable.
+  [@test] ../../sessions-toolwindow/testSrc/AgentSessionsSwingNewSessionActionsTest.kt
+  [@test] ../../sessions-actions/testSrc/AgentSessionsMainToolbarNewThreadActionsTest.kt
+
 - Tree popup new-thread actions resolve context from tree rows only; editor-tab context uses editor-tab actions.
   [@test] ../../sessions-toolwindow/testSrc/AgentSessionsTreePopupActionsTest.kt
 

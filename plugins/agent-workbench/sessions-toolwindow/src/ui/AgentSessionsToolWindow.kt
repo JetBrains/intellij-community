@@ -9,6 +9,7 @@ import com.intellij.agent.workbench.chat.AgentChatTabSelectionService
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
+import com.intellij.agent.workbench.sessions.actions.providerAvailabilityFromTerminalCache
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.model.AgentSessionThreadViewMode
@@ -227,6 +228,9 @@ internal class AgentSessionsToolWindowPanel(
       },
       onShowPopup = { nodeId, node, anchorRect, row ->
         interactionController.showNewSessionActionPopup(nodeId, node, anchorRect, row)
+      },
+      isProviderAvailable = { provider ->
+        providerAvailabilityFromTerminalCache(AgentSessionProviders.allProviders(), project)[provider] == true
       },
     )
 

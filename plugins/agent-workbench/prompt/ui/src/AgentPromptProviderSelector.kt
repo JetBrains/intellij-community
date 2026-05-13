@@ -9,7 +9,6 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentPromptProviderO
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderMenuItem
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderMenuModel
-import com.intellij.agent.workbench.sessions.core.providers.buildAgentSessionProviderMenuModel
 import com.intellij.agent.workbench.sessions.core.providers.buildAgentSessionProviderMenuModelAsync
 import com.intellij.agent.workbench.sessions.core.providers.hasEntries
 import com.intellij.agent.workbench.sessions.core.providers.withYoloModeBadge
@@ -22,11 +21,12 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.openapi.application.EDT
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.DialogUtil
@@ -45,11 +45,9 @@ internal class AgentPromptProviderSelector(
     private val providersProvider: () -> List<AgentSessionProviderDescriptor>,
     private val sessionsMessageResolver: AgentPromptSessionsMessageResolver,
     /**
-     * When provided, [refresh] schedules a follow-up suspending refresh on this scope that re-evaluates each
-     * provider's CLI availability through [AgentSessionProviderDescriptor.ensureCliAvailable] (the shared
-     * `TerminalAgentResolver` for Claude/Codex). The initial synchronous paint runs immediately; the
-     * resolver-backed paint replaces it once the suspending lookup completes. Tests pass `null` to keep
-     * provider entries deterministic against the synchronous fallback.
+     * Scope that drives the suspending refresh which evaluates each provider's CLI availability through
+     * the shared `TerminalAgentResolver`. Required at runtime; tests that drive the selector
+     * synchronously pass `null` and rely on `refresh()` doing the work via `runBlocking` directly.
      */
     private val asyncRefreshScope: CoroutineScope? = null,
 ) {
@@ -68,8 +66,30 @@ internal class AgentPromptProviderSelector(
 
   fun refresh() {
     val bridges = providersProvider()
-    providerMenuModel = buildAgentSessionProviderMenuModel(bridges)
-    providerEntries = bridges.map { bridge ->
+    val (resolvedMenuModel, resolvedEntries) = runBlockingMaybeCancellable { resolveProviderState(bridges) }
+    applyResolvedState(resolvedMenuModel, resolvedEntries)
+    asyncRefreshScope?.launch { refreshFromTerminalResolver(bridges) }
+  }
+
+  /**
+   * Re-runs the provider scan using [AgentSessionProviderDescriptor.isCliAvailable]. The lookup may dispatch
+   * to background work (EEL probes for known-location candidates), so the result is applied back on the EDT
+   * before [updatePresentation] re-renders the popup. No-op when nothing changed compared to the synchronous
+   * paint already on screen.
+   */
+  private suspend fun refreshFromTerminalResolver(bridges: List<AgentSessionProviderDescriptor>) {
+    val (resolvedMenuModel, resolvedEntries) = resolveProviderState(bridges)
+    if (resolvedEntries == providerEntries && resolvedMenuModel == providerMenuModel) return
+    withContext(Dispatchers.EDT) {
+      applyResolvedState(resolvedMenuModel, resolvedEntries)
+    }
+  }
+
+  private suspend fun resolveProviderState(
+    bridges: List<AgentSessionProviderDescriptor>,
+  ): Pair<AgentSessionProviderMenuModel, List<ProviderEntry>> {
+    val resolvedMenuModel = buildAgentSessionProviderMenuModelAsync(bridges)
+    val resolvedEntries = bridges.map { bridge ->
       ProviderEntry(
         bridge = bridge,
         displayName = sessionsMessageResolver.resolve(bridge.displayNameKey, bridge) ?: bridge.displayNameFallback,
@@ -77,6 +97,15 @@ internal class AgentPromptProviderSelector(
         icon = bridge.icon,
       )
     }
+    return resolvedMenuModel to resolvedEntries
+  }
+
+  private fun applyResolvedState(
+    resolvedMenuModel: AgentSessionProviderMenuModel,
+    resolvedEntries: List<ProviderEntry>,
+  ) {
+    providerMenuModel = resolvedMenuModel
+    providerEntries = resolvedEntries
     val activeProviders = providerEntries.mapTo(HashSet()) { entry -> entry.bridge.provider }
     val obsoleteProviders = selectedOptionIdsByProvider.keys.filterNot { provider -> provider in activeProviders }
     obsoleteProviders.forEach(selectedOptionIdsByProvider::remove)
@@ -84,38 +113,9 @@ internal class AgentPromptProviderSelector(
       val currentSelection = selectedOptionIdsByProvider[entry.bridge.provider] ?: return@forEach
       selectedOptionIdsByProvider[entry.bridge.provider] = sanitizeSelectedOptionIds(entry.bridge, currentSelection)
     }
-
     val currentProviderId = selectedProvider?.bridge?.provider
-    selectedProvider = findProviderEntry(currentProviderId)
-                       ?: providerEntries.firstOrNull()
+    selectedProvider = findProviderEntry(currentProviderId) ?: providerEntries.firstOrNull()
     updatePresentation()
-    asyncRefreshScope?.launch { refreshFromTerminalResolver(bridges) }
-  }
-
-  /**
-   * Re-runs the provider scan using [AgentSessionProviderDescriptor.ensureCliAvailable]. The lookup may dispatch
-   * to background work (EEL probes for known-location candidates), so the result is applied back on the EDT
-   * before [updatePresentation] re-renders the popup. No-op when nothing changed compared to the synchronous
-   * paint already on screen.
-   */
-  private suspend fun refreshFromTerminalResolver(bridges: List<AgentSessionProviderDescriptor>) {
-    val resolvedMenuModel = buildAgentSessionProviderMenuModelAsync(bridges)
-    val resolvedEntries = bridges.map { bridge ->
-      ProviderEntry(
-        bridge = bridge,
-        displayName = sessionsMessageResolver.resolve(bridge.displayNameKey, bridge) ?: bridge.displayNameFallback,
-        isCliAvailable = bridge.ensureCliAvailable(),
-        icon = bridge.icon,
-      )
-    }
-    if (resolvedEntries == providerEntries && resolvedMenuModel == providerMenuModel) return
-    withContext(Dispatchers.EDT) {
-      providerMenuModel = resolvedMenuModel
-      providerEntries = resolvedEntries
-      val currentProviderId = selectedProvider?.bridge?.provider
-      selectedProvider = findProviderEntry(currentProviderId) ?: providerEntries.firstOrNull()
-      updatePresentation()
-    }
   }
 
   fun restoreProviderOptionSelections(providerOptionsByProviderId: Map<String, Set<String>>) {

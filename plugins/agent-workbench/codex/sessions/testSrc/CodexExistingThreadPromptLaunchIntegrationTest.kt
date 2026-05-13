@@ -56,6 +56,7 @@ private fun descriptor(): CodexAgentSessionProviderDescriptor {
       },
     ),
     executableResolver = { CodexCliUtils.CODEX_COMMAND },
+    cliAvailableProbe = { true },
   )
 }
 

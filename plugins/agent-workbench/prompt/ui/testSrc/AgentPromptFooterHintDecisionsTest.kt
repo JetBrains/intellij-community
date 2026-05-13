@@ -132,7 +132,7 @@ private fun testPromptProviderBridge(
     override val supportsPromptTabQueueShortcut: Boolean = supportsTabQueueShortcut
     override val suppressPromptExistingTaskSelectionHint: Boolean = suppressExistingTaskSelectionHint
 
-    override fun isCliAvailable(): Boolean = true
+    override suspend fun isCliAvailable(): Boolean = true
 
     override suspend fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
       return AgentSessionTerminalLaunchSpec(command = emptyList())

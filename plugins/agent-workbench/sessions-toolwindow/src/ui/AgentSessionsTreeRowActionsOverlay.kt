@@ -68,6 +68,7 @@ internal class AgentSessionsTreeRowActionsOverlay(
   private val lastUsedLaunchMode: () -> AgentSessionLaunchMode?,
   private val onQuickCreate: (path: String, provider: AgentSessionProvider, mode: AgentSessionLaunchMode) -> Unit,
   private val onShowPopup: (nodeId: SessionTreeId, node: SessionTreeNode, anchorRect: Rectangle, row: Int) -> Unit,
+  private val isProviderAvailable: (AgentSessionProvider) -> Boolean = { true },
 ) {
   private var hoveredRowAction: RowActionHit? = null
   private var popupPinnedRow: Int? = null
@@ -77,7 +78,7 @@ internal class AgentSessionsTreeRowActionsOverlay(
     treeNode: SessionTreeNode,
     selected: Boolean,
   ): SessionTreeRowActionPresentation? {
-    val rowActions = resolveNewSessionRowActions(treeNode, lastUsedProvider(), lastUsedLaunchMode()) ?: return null
+    val rowActions = resolveNewSessionRowActions(treeNode, lastUsedProvider(), lastUsedLaunchMode(), isProviderAvailable) ?: return null
     val isHovered = TreeHoverListener.getHoveredRow(tree) == row
     val isPinned = popupPinnedRow == row
     val showInteractiveActions = selected || isHovered || isPinned
@@ -240,7 +241,7 @@ internal class AgentSessionsTreeRowActionsOverlay(
     val path = tree.getPathForRow(row) ?: return null
     val treeId = path.lastPathComponent?.let(::extractSessionTreeId) ?: return null
     val treeNode = nodeResolver(treeId) ?: return null
-    val rowActions = resolveNewSessionRowActions(treeNode, lastUsedProvider(), lastUsedLaunchMode()) ?: return null
+    val rowActions = resolveNewSessionRowActions(treeNode, lastUsedProvider(), lastUsedLaunchMode(), isProviderAvailable) ?: return null
     val presentation = rowActionPresentation(
       row = row,
       treeNode = treeNode,

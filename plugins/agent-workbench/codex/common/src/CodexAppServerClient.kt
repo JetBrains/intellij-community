@@ -74,7 +74,7 @@ enum class CodexAppServerNotificationRouting {
 
 class CodexAppServerClient(
   private val coroutineScope: CoroutineScope,
-  private val executablePathProvider: () -> String? = { CodexCliUtils.findExecutable() },
+  private val executablePathProvider: suspend () -> String? = { CodexCliUtils.findExecutableViaTerminalResolver() },
   private val environmentOverrides: Map<String, String> = emptyMap(),
   workingDirectory: Path? = null,
   idleShutdownTimeoutMs: Long = DEFAULT_IDLE_SHUTDOWN_TIMEOUT_MS,
@@ -601,7 +601,7 @@ class CodexAppServerClient(
     }
   }
 
-  private fun startProcess(): Process {
+  private suspend fun startProcess(): Process {
     val configuredExecutable = executablePathProvider()
       ?.trim()
       ?.takeIf { it.isNotEmpty() }

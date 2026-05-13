@@ -30,6 +30,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
@@ -37,9 +38,13 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.merge.MergeDialogContext
 import com.intellij.openapi.vcs.merge.MergeResolveActionContext
+import com.intellij.terminal.frontend.action.TerminalAgentsAvailabilityService
 import com.intellij.ui.components.JBOptionButton
 import org.jetbrains.annotations.Nls
+import org.jetbrains.plugins.terminal.agent.TerminalAgent
+import org.jetbrains.plugins.terminal.agent.rpc.TerminalAgentMode
 import java.awt.event.ActionEvent
+import java.util.concurrent.atomic.AtomicReference
 import javax.swing.AbstractAction
 import javax.swing.JComponent
 
@@ -67,6 +72,11 @@ internal class AgentResolveConflictsAction @JvmOverloads constructor(
   private val lastUsedProvider: () -> AgentSessionProvider? = { service<AgentSessionUiPreferencesStateService>().getLastUsedVcsMergeProvider() },
   private val lastUsedLaunchMode: () -> AgentSessionLaunchMode? = { service<AgentSessionUiPreferencesStateService>().getLastUsedVcsMergeLaunchMode() },
 ) : DumbAwareAction(), CustomComponentAction {
+  // Captured during update(); reused by ResolveWithAgentOptionButton.buildOptionActions when its
+  // freshly-resolved data context lacks the merge context (e.g. when the button is not yet attached
+  // to a parent component hierarchy).
+  private val latestUpdateProject = AtomicReference<Project?>()
+
   init {
     templatePresentation.putClientProperty(ActionUtil.SHOW_TEXT_IN_TOOLBAR, true)
   }
@@ -80,8 +90,9 @@ internal class AgentResolveConflictsAction @JvmOverloads constructor(
     if (context == null) {
       return
     }
+    latestUpdateProject.set(context.project)
 
-    val actionModel = buildProviderActionModel()
+    val actionModel = buildProviderActionModel(context.project)
     val enabledItems = enabledItems(actionModel.menuModel)
     val rememberedQuickStartItem = rememberedQuickStartItem(actionModel.menuModel)
 
@@ -171,7 +182,7 @@ internal class AgentResolveConflictsAction @JvmOverloads constructor(
 
   private fun resolveAndQuickLaunch(dataContext: DataContext): QuickLaunchResult {
     val context = resolveContext(dataContext) ?: return QuickLaunchResult.NoContext
-    val menuModel = buildProviderActionModel().menuModel
+    val menuModel = buildProviderActionModel(context.project).menuModel
     val enabledItems = enabledItems(menuModel)
     if (enabledItems.isEmpty()) {
       Messages.showErrorDialog(
@@ -223,12 +234,31 @@ internal class AgentResolveConflictsAction @JvmOverloads constructor(
     )
   }
 
-  private fun buildProviderActionModel(): AgentSessionProviderActionModel {
+  private fun buildProviderActionModel(project: Project): AgentSessionProviderActionModel {
     return buildAgentSessionProviderActionModel(
       bridges = allProviders(),
       lastUsedProvider = lastUsedProvider(),
       lastUsedLaunchMode = lastUsedLaunchMode(),
+      availabilityByProvider = computeProviderAvailability(allProviders(), project),
     )
+  }
+
+  private fun computeProviderAvailability(
+    bridges: List<AgentSessionProviderDescriptor>,
+    project: Project,
+  ): Map<AgentSessionProvider, Boolean> {
+    val cached = TerminalAgentsAvailabilityService.getInstance(project).getAvailableAgents()
+    val cachedKeys = cached.mapTo(HashSet()) { it.agentKey }
+    val runnable = cached.filter { it.mode == TerminalAgentMode.RUN }.mapTo(HashSet()) { it.agentKey }
+    return bridges.associate { bridge ->
+      val agentKey = bridge.terminalAgentKey?.let(TerminalAgent::AgentKey)
+      val available = when {
+        agentKey == null -> runBlockingMaybeCancellable { bridge.isCliAvailable() }
+        agentKey in cachedKeys -> agentKey in runnable
+        else -> runBlockingMaybeCancellable { bridge.isCliAvailable() }
+      }
+      bridge.provider to available
+    }
   }
 
   private fun rememberedQuickStartItem(menuModel: AgentSessionProviderMenuModel): AgentSessionProviderMenuItem? {
@@ -306,15 +336,17 @@ internal class AgentResolveConflictsAction @JvmOverloads constructor(
     }
 
     private fun buildOptionActions(): List<AnAction>? {
-      val menuModel = buildProviderActionModel().menuModel
+      val dataContext = DataManager.getInstance().getDataContext(this)
+      val context = resolveContext(dataContext)
+      val project = context?.project ?: latestUpdateProject.get() ?: return null
+      val menuModel = buildProviderActionModel(project).menuModel
       if (enabledItems(menuModel).size <= 1) {
         return null
       }
 
       return buildAgentSessionProviderMenuActions(menuModel) { item ->
-        val dataContext = DataManager.getInstance().getDataContext(this)
-        val context = resolveContext(dataContext) ?: return@buildAgentSessionProviderMenuActions
-        launchResolution(context, item)
+        val resolvedContext = context ?: resolveContext(DataManager.getInstance().getDataContext(this)) ?: return@buildAgentSessionProviderMenuActions
+        launchResolution(resolvedContext, item)
       }.toList()
     }
   }

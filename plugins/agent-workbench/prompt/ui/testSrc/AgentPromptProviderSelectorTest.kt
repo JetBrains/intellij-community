@@ -150,7 +150,7 @@ class AgentPromptProviderSelectorTest {
       override val cliMissingMessageKey: String = displayNameKey
       override val icon = EmptyIcon.ICON_16
 
-      override fun isCliAvailable(): Boolean = cliAvailable
+      override suspend fun isCliAvailable(): Boolean = cliAvailable
 
       override suspend fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
         return AgentSessionTerminalLaunchSpec(command = emptyList())

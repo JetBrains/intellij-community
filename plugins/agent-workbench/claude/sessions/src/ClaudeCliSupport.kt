@@ -18,22 +18,8 @@ object ClaudeCliSupport {
   const val CLAUDE_COMMAND: String = "claude"
   const val CLAUDE_TERMINAL_AGENT_KEY: String = "claude_code"
 
-  fun isAvailable(): Boolean = findExecutable() != null
-
-  fun findExecutable(): String? {
-    val inPath = PathEnvironmentVariableUtil.findExecutableInPathOnAnyOS(CLAUDE_COMMAND)
-    @Suppress("IO_FILE_USAGE")
-    if (inPath != null) return inPath.toPath().toAbsolutePath().toString()
-
-    val homeDir = System.getProperty("user.home") ?: return null
-    val localBin = Path.of(homeDir, ".local", "bin", CLAUDE_COMMAND)
-    if (Files.exists(localBin)) return localBin.toAbsolutePath().toString()
-
-    return null
-  }
-
   /**
-   * Suspend variant of [findExecutable] that delegates to the shared terminal-agent resolver
+   * Delegates to the shared terminal-agent resolver
    * (`TerminalAgentResolver`). This consults the same PATH + known-location pipeline that powers
    * the terminal's "Run AI agent" gutter, ensuring agent-workbench launches and terminal launches
    * pick the same `claude` binary. Returns `null` when the terminal extension does not surface a
@@ -66,6 +52,18 @@ object ClaudeCliSupport {
 
   fun buildResumeCommand(sessionId: String, executable: String = CLAUDE_COMMAND): List<String> =
     listOf(executable, "--resume", sessionId)
+
+  internal fun findExecutable(): String? {
+    val inPath = PathEnvironmentVariableUtil.findExecutableInPathOnAnyOS(CLAUDE_COMMAND)
+    @Suppress("IO_FILE_USAGE")
+    if (inPath != null) return inPath.toPath().toAbsolutePath().toString()
+
+    val homeDir = System.getProperty("user.home") ?: return null
+    val localBin = Path.of(homeDir, ".local", "bin", CLAUDE_COMMAND)
+    if (Files.exists(localBin)) return localBin.toAbsolutePath().toString()
+
+    return null
+  }
 }
 
 internal const val PERMISSION_MODE_FLAG: String = "--permission-mode"

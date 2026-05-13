@@ -195,8 +195,12 @@ internal class AgentSessionsTreePopupNewThreadGroup @JvmOverloads constructor(
 
   override fun update(e: AnActionEvent) {
     val context = resolveContext(e)
-    val path = context?.target?.let(::newThreadPathFromTarget)
-    val actionModel = buildNewThreadActionModel(allBridges(), lastUsedProvider(), lastUsedLaunchMode())
+    if (context == null) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+    val path = newThreadPathFromTarget(context.target)
+    val actionModel = buildNewThreadActionModel(allBridges(), lastUsedProvider(), lastUsedLaunchMode(), context.project)
     if (path == null || !actionModel.menuModel.hasEntries()) {
       e.presentation.isEnabledAndVisible = false
       return
@@ -212,14 +216,14 @@ internal class AgentSessionsTreePopupNewThreadGroup @JvmOverloads constructor(
   override fun actionPerformed(e: AnActionEvent) {
     val context = resolveContext(e) ?: return
     val path = newThreadPathFromTarget(context.target) ?: return
-    val actionModel = buildNewThreadActionModel(allBridges(), lastUsedProvider(), lastUsedLaunchMode())
+    val actionModel = buildNewThreadActionModel(allBridges(), lastUsedProvider(), lastUsedLaunchMode(), context.project)
     launchQuickStartThread(path, context.project, actionModel.quickStartItem, AgentWorkbenchEntryPoint.TREE_POPUP, createNewSession)
   }
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val context = e?.let(resolveContext) ?: return emptyArray()
     val path = newThreadPathFromTarget(context.target) ?: return emptyArray()
-    val actionModel = buildNewThreadActionModel(allBridges(), lastUsedProvider(), lastUsedLaunchMode())
+    val actionModel = buildNewThreadActionModel(allBridges(), lastUsedProvider(), lastUsedLaunchMode(), context.project)
     return buildNewThreadMenuActions(
       path = path,
       project = context.project,

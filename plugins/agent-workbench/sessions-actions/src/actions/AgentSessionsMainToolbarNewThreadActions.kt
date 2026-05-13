@@ -158,7 +158,7 @@ internal class PickerActionGroup(
     val event = e ?: return emptyArray()
     val context = resolveContext(event) ?: return emptyArray()
     val target = context.target ?: return emptyArray()
-    val menuModel = buildNewThreadMenuModel(allBridges())
+    val menuModel = buildNewThreadMenuModel(allBridges(), context.project)
     if (!menuModel.hasEntries()) return emptyArray()
 
     return when (target) {
@@ -192,7 +192,8 @@ internal class QuickStartAction(
   private val showPicker: (ActionGroup, AnActionEvent) -> Unit,
 ) : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
-    if (resolveContext(e) == null) {
+    val context = resolveContext(e)
+    if (context == null) {
       e.presentation.isEnabledAndVisible = false
       return
     }
@@ -201,8 +202,9 @@ internal class QuickStartAction(
       hide(e)
       return
     }
+    val menuModel = buildNewThreadActionModel(allBridges(), provider, lastUsedLaunchMode(), context.project).menuModel
     val quickStartItem = resolveToolbarQuickStartItem(
-      menuModel = buildToolbarNewThreadMenuModel(allBridges()),
+      menuModel = menuModel,
       lastUsedProvider = provider,
       lastUsedLaunchMode = lastUsedLaunchMode(),
     )
@@ -210,9 +212,15 @@ internal class QuickStartAction(
       hide(e)
       return
     }
-    e.presentation.isEnabledAndVisible = true
+    e.presentation.isVisible = true
+    e.presentation.isEnabled = quickStartItem.isEnabled
     e.presentation.text = quickStartActionText(quickStartItem)
-    e.presentation.description = quickStartActionDescription(quickStartItem)
+    e.presentation.description = if (quickStartItem.isEnabled) {
+      quickStartActionDescription(quickStartItem)
+    }
+    else {
+      quickStartItem.disabledReasonKey?.let(AgentSessionsBundle::message) ?: quickStartActionDescription(quickStartItem)
+    }
     e.presentation.icon = providerItemIconWithMode(quickStartItem)
   }
 
@@ -220,7 +228,7 @@ internal class QuickStartAction(
     val context = resolveContext(e) ?: return
     when (val target = context.target) {
       is AgentSessionsEditorTabNewThreadTarget.Direct -> {
-        val quickStartItem = resolveReadyQuickStartItem(allBridges())
+        val quickStartItem = resolveReadyQuickStartItem(allBridges(), context.project)
         if (quickStartItem == null) {
           showPicker(pickerGroup, e)
           return
@@ -239,9 +247,9 @@ internal class QuickStartAction(
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
-  private fun resolveReadyQuickStartItem(bridges: List<AgentSessionProviderDescriptor>): AgentSessionProviderMenuItem? {
+  private fun resolveReadyQuickStartItem(bridges: List<AgentSessionProviderDescriptor>, project: Project): AgentSessionProviderMenuItem? {
     val provider = lastUsedProvider() ?: return null
-    return buildNewThreadActionModel(bridges, provider, lastUsedLaunchMode()).quickStartItem
+    return buildNewThreadActionModel(bridges, provider, lastUsedLaunchMode(), project).quickStartItem
   }
 
   private fun hide(e: AnActionEvent) {

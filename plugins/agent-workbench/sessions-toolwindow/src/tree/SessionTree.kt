@@ -456,6 +456,7 @@ internal fun resolveNewSessionRowActions(
   node: SessionTreeNode,
   lastUsedProvider: AgentSessionProvider?,
   lastUsedLaunchMode: AgentSessionLaunchMode? = null,
+  isProviderAvailable: (AgentSessionProvider) -> Boolean = { true },
 ): NewSessionRowActions? {
   val path = when (node) {
     is SessionTreeNode.Project -> node.project.path
@@ -470,7 +471,7 @@ internal fun resolveNewSessionRowActions(
     is SessionTreeNode.MoreProjects,
     is SessionTreeNode.MoreThreads -> return null
   }
-  val (quickProvider, quickLaunchMode) = resolveQuickCreateProviderAndMode(lastUsedProvider, lastUsedLaunchMode)
+  val (quickProvider, quickLaunchMode) = resolveQuickCreateProviderAndMode(lastUsedProvider, lastUsedLaunchMode, isProviderAvailable)
   return NewSessionRowActions(
     path = path,
     quickProvider = quickProvider,
@@ -484,6 +485,7 @@ internal fun resolveQuickCreateProvider(lastUsedProvider: AgentSessionProvider?)
 private fun resolveQuickCreateProviderAndMode(
   lastUsedProvider: AgentSessionProvider?,
   lastUsedLaunchMode: AgentSessionLaunchMode?,
+  isProviderAvailable: (AgentSessionProvider) -> Boolean = { true },
 ): Pair<AgentSessionProvider?, AgentSessionLaunchMode> {
   val bridges = AgentSessionProviders.allProviders()
 
@@ -491,6 +493,7 @@ private fun resolveQuickCreateProviderAndMode(
     val yoloProviders = bridges
       .filter { bridge -> AgentSessionLaunchMode.YOLO in bridge.supportedLaunchModes }
       .map { bridge -> bridge.provider }
+      .filter(isProviderAvailable)
     if (lastUsedProvider != null && lastUsedProvider in yoloProviders) {
       return lastUsedProvider to AgentSessionLaunchMode.YOLO
     }
@@ -499,6 +502,7 @@ private fun resolveQuickCreateProviderAndMode(
   val standardProviders = bridges
     .filter { bridge -> AgentSessionLaunchMode.STANDARD in bridge.supportedLaunchModes }
     .map { bridge -> bridge.provider }
+    .filter(isProviderAvailable)
   if (standardProviders.isEmpty()) return null to AgentSessionLaunchMode.STANDARD
 
   val provider = if (lastUsedProvider != null && lastUsedProvider in standardProviders) {

@@ -276,7 +276,7 @@ private class TestAgentSessionProviderDescriptor(
   override val cliMissingMessageKey: String
     get() = "cli.missing"
 
-  override fun isCliAvailable(): Boolean = true
+  override suspend fun isCliAvailable(): Boolean = true
 
   override suspend fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
     return AgentSessionTerminalLaunchSpec(command = listOf("test", "resume", sessionId))

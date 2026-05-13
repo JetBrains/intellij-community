@@ -68,7 +68,7 @@ private val LOG = logger<CodexWebSocketAppServerClient>()
 @ApiStatus.Internal
 class CodexWebSocketAppServerClient(
   private val coroutineScope: CoroutineScope,
-  private val executablePathProvider: () -> String? = { CodexCliUtils.findExecutable() },
+  private val executablePathProvider: suspend () -> String? = { CodexCliUtils.findExecutableViaTerminalResolver() },
   private val environmentOverrides: Map<String, String> = emptyMap(),
   workingDirectory: Path? = null,
 ) {

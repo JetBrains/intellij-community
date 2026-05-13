@@ -3,6 +3,9 @@ package com.intellij.agent.workbench.sessions.service
 
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
+import com.intellij.agent.workbench.sessions.core.providers.AgentProviderCliMissingException
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -23,6 +26,7 @@ internal class AgentSessionThreadLoadSupport(
   ) -> List<AgentSessionThread>,
   private val resolveErrorMessage: (AgentSessionProvider, Throwable) -> String,
   private val resolveProviderWarningMessage: (AgentSessionProvider, Throwable) -> String,
+  private val providerDescriptorProvider: (AgentSessionProvider) -> AgentSessionProviderDescriptor? = AgentSessionProviders::find,
 ) {
   suspend fun loadThreadsFromClosedProject(path: String): AgentSessionLoadResult {
     return loadThreads(path) { source ->
@@ -37,6 +41,12 @@ internal class AgentSessionThreadLoadSupport(
     val sourceResults = coroutineScope {
       sessionSourcesProvider().map { source ->
         async {
+          if (isProviderCliMissing(source.provider)) {
+            return@async AgentSessionSourceLoadResult(
+              provider = source.provider,
+              result = Result.failure(AgentProviderCliMissingException(source.provider)),
+            )
+          }
           val result = try {
             Result.success(
               applyArchiveSuppressions(
@@ -73,6 +83,12 @@ internal class AgentSessionThreadLoadSupport(
     prefetchedByProvider: Map<AgentSessionProvider, Map<String, List<AgentSessionThread>>>,
     originalPath: String,
   ): AgentSessionSourceLoadResult {
+    if (isProviderCliMissing(source.provider)) {
+      return AgentSessionSourceLoadResult(
+        provider = source.provider,
+        result = Result.failure(AgentProviderCliMissingException(source.provider)),
+      )
+    }
     return try {
       val prefetched = prefetchedByProvider[source.provider]?.get(normalizedPath)
       val threads = applyArchiveSuppressions(
@@ -94,6 +110,11 @@ internal class AgentSessionThreadLoadSupport(
         result = Result.failure(e),
       )
     }
+  }
+
+  private suspend fun isProviderCliMissing(provider: AgentSessionProvider): Boolean {
+    val descriptor = providerDescriptorProvider(provider) ?: return false
+    return !descriptor.isCliAvailable()
   }
 
   suspend fun loadSourcesIncrementally(

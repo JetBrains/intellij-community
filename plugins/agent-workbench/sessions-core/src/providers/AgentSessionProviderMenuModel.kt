@@ -26,12 +26,21 @@ fun AgentSessionProviderMenuModel.hasEntries(): Boolean {
   return standardItems.isNotEmpty() || yoloItems.isNotEmpty()
 }
 
-fun buildAgentSessionProviderMenuModel(bridges: List<AgentSessionProviderDescriptor>): AgentSessionProviderMenuModel {
+/**
+ * Sync menu-model builder. Synchronous surfaces (action `update()` callbacks) must supply
+ * [availabilityByProvider] (typically computed from `TerminalAgentsAvailabilityService` for the
+ * caller's project) — a missing entry is treated as "not yet resolved" and renders the provider as
+ * disabled.
+ */
+fun buildAgentSessionProviderMenuModel(
+  bridges: List<AgentSessionProviderDescriptor>,
+  availabilityByProvider: Map<AgentSessionProvider, Boolean>,
+): AgentSessionProviderMenuModel {
   val standardItems = ArrayList<AgentSessionProviderMenuItem>(bridges.size)
   val yoloItems = ArrayList<AgentSessionProviderMenuItem>()
 
   bridges.forEach { bridge ->
-    val cliAvailable = bridge.isCliAvailable()
+    val cliAvailable = availabilityByProvider[bridge.provider] == true
     appendMenuItems(bridge, cliAvailable, standardItems, yoloItems)
   }
 
@@ -42,26 +51,15 @@ fun buildAgentSessionProviderMenuModel(bridges: List<AgentSessionProviderDescrip
 }
 
 /**
- * Suspending variant of [buildAgentSessionProviderMenuModel] that uses [AgentSessionProviderDescriptor.ensureCliAvailable]
- * for the enable/disable decision, so menus rendered through it stay aligned with the launch-time CLI lookup
- * (`TerminalAgentResolver`). Surfaces that can repaint asynchronously (the agent prompt palette) prefer this
- * over the synchronous [buildAgentSessionProviderMenuModel].
+ * Suspending variant of [buildAgentSessionProviderMenuModel] that consults
+ * [AgentSessionProviderDescriptor.isCliAvailable] directly. Surfaces that can repaint
+ * asynchronously (the agent prompt palette) prefer this over the cached sync variant.
  */
 suspend fun buildAgentSessionProviderMenuModelAsync(
   bridges: List<AgentSessionProviderDescriptor>,
 ): AgentSessionProviderMenuModel {
-  val standardItems = ArrayList<AgentSessionProviderMenuItem>(bridges.size)
-  val yoloItems = ArrayList<AgentSessionProviderMenuItem>()
-
-  for (bridge in bridges) {
-    val cliAvailable = bridge.ensureCliAvailable()
-    appendMenuItems(bridge, cliAvailable, standardItems, yoloItems)
-  }
-
-  return AgentSessionProviderMenuModel(
-    standardItems = standardItems,
-    yoloItems = yoloItems,
-  )
+  val availability = bridges.associate { bridge -> bridge.provider to bridge.isCliAvailable() }
+  return buildAgentSessionProviderMenuModel(bridges, availability)
 }
 
 private fun appendMenuItems(
@@ -98,8 +96,9 @@ fun buildAgentSessionProviderActionModel(
     bridges: List<AgentSessionProviderDescriptor>,
     lastUsedProvider: AgentSessionProvider?,
     lastUsedLaunchMode: AgentSessionLaunchMode? = null,
+    availabilityByProvider: Map<AgentSessionProvider, Boolean>,
 ): AgentSessionProviderActionModel {
-  val menuModel = buildAgentSessionProviderMenuModel(bridges)
+  val menuModel = buildAgentSessionProviderMenuModel(bridges, availabilityByProvider)
   return AgentSessionProviderActionModel(
     menuModel = menuModel,
     quickStartItem = resolveQuickStartProviderItem(menuModel, lastUsedProvider, lastUsedLaunchMode),

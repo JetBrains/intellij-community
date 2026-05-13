@@ -58,7 +58,7 @@ class TestAgentSessionProviderDescriptor(
   override val cliMissingMessageKey: String
     get() = "toolwindow.error.cli"
 
-  override fun isCliAvailable(): Boolean {
+  override suspend fun isCliAvailable(): Boolean {
     onCliAvailable()
     return cliAvailable
   }

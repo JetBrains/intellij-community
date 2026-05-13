@@ -19,7 +19,10 @@ class AgentWorkbenchProviderRegistrationTest {
     assertTrue(AgentSessionProvider.CLAUDE in registeredProviderIds)
     assertTrue(AgentSessionProvider.JUNIE in registeredProviderIds)
 
-    val standardMenuProviders = buildAgentSessionProviderMenuModel(providers).standardItems.map { it.bridge.provider }
+    val standardMenuProviders = buildAgentSessionProviderMenuModel(
+      providers,
+      providers.associate { it.provider to true },
+    ).standardItems.map { it.bridge.provider }
     assertTrue(AgentSessionProvider.JUNIE in standardMenuProviders)
   }
 }

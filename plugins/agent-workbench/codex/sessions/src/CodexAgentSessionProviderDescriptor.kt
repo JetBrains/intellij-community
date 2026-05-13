@@ -38,6 +38,7 @@ internal class CodexAgentSessionProviderDescriptor(
    * inject a fixed resolver so assertions remain deterministic regardless of the host's PATH.
    */
   private val executableResolver: suspend () -> String = CodexCliUtils::resolveExecutableOrDefaultViaTerminalResolver,
+  private val cliAvailableProbe: suspend () -> Boolean = { CodexCliUtils.findExecutableViaTerminalResolver() != null },
 ) : AgentSessionProviderDescriptor {
   override val provider: AgentSessionProvider
     get() = AgentSessionProvider.CODEX
@@ -93,6 +94,9 @@ internal class CodexAgentSessionProviderDescriptor(
   override val cliMissingMessageKey: String
     get() = "toolwindow.error.cli"
 
+  override val terminalAgentKey: String
+    get() = CodexCliUtils.CODEX_TERMINAL_AGENT_KEY
+
   override val supportsArchiveThread: Boolean
     get() = true
 
@@ -112,9 +116,7 @@ internal class CodexAgentSessionProviderDescriptor(
     }
   }
 
-  override fun isCliAvailable(): Boolean = CodexCliUtils.findExecutable() != null
-
-  override suspend fun ensureCliAvailable(): Boolean = CodexCliUtils.findExecutableViaTerminalResolver() != null
+  override suspend fun isCliAvailable(): Boolean = cliAvailableProbe()
 
   override suspend fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
     val executable = executableResolver()

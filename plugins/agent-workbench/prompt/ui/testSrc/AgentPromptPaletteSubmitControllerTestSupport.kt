@@ -25,7 +25,7 @@ fun captureNewTaskPromptLaunchRequest(
 ): AgentPromptLaunchRequest {
   var capturedRequest: AgentPromptLaunchRequest? = null
   val availableDescriptor = object : AgentSessionProviderDescriptor by descriptor {
-    override fun isCliAvailable(): Boolean = true
+    override suspend fun isCliAvailable(): Boolean = true
   }
 
   runInEdtAndWait {

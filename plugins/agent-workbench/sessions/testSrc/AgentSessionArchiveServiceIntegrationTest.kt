@@ -79,7 +79,7 @@ class AgentSessionArchiveServiceIntegrationTest {
       override val cliMissingMessageKey: String
         get() = "toolwindow.error.claude.cli"
 
-      override fun isCliAvailable(): Boolean = true
+      override suspend fun isCliAvailable(): Boolean = true
       override suspend fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
         return AgentSessionTerminalLaunchSpec(command = listOf("claude", "--resume", sessionId))
       }
@@ -1126,7 +1126,7 @@ private fun testCodexBridge(
     override val suppressArchivedThreadsDuringRefresh: Boolean
       get() = true
 
-    override fun isCliAvailable(): Boolean = true
+    override suspend fun isCliAvailable(): Boolean = true
 
     override suspend fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
       return AgentSessionTerminalLaunchSpec(command = listOf("codex", "resume", sessionId))
@@ -1182,7 +1182,7 @@ private fun testClaudeBridge(
     override val supportsUnarchiveThread: Boolean
       get() = onUnarchive != null
 
-    override fun isCliAvailable(): Boolean = true
+    override suspend fun isCliAvailable(): Boolean = true
 
     override suspend fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
       return AgentSessionTerminalLaunchSpec(command = listOf("claude", "--resume", sessionId))

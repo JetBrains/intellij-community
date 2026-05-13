@@ -1,9 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.codex.common
 
-import com.intellij.agent.workbench.codex.common.CodexCliUtils.CODEX_COMMAND
-import com.intellij.agent.workbench.codex.common.CodexCliUtils.findExecutable
-import com.intellij.agent.workbench.codex.common.CodexCliUtils.findExecutableViaTerminalResolver
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.eel.provider.LocalEelDescriptor
@@ -19,12 +16,8 @@ object CodexCliUtils {
   const val CODEX_COMMAND: String = "codex"
   const val CODEX_TERMINAL_AGENT_KEY: String = "codex"
 
-  fun findExecutable(): String? {
-    return PathEnvironmentVariableUtil.findExecutableInPathOnAnyOS(CODEX_COMMAND)?.absolutePath
-  }
-
   /**
-   * Suspend variant of [findExecutable] that delegates to the shared terminal-agent resolver
+   * Delegates to the shared terminal-agent resolver
    * (`TerminalAgentResolver`). This consults the same PATH + known-location pipeline that powers
    * the terminal's "Run AI agent" gutter, ensuring agent-workbench launches and terminal launches
    * pick the same `codex` binary. Returns `null` when the terminal extension does not surface a
@@ -34,7 +27,7 @@ object CodexCliUtils {
     val codexAgent = TerminalAgent.findByKey(TerminalAgent.AgentKey(CODEX_TERMINAL_AGENT_KEY))
     if (codexAgent == null) {
       LOG.warn("Codex terminal agent extension is not registered; falling back to local PATH lookup")
-      return findExecutable()
+      return PathEnvironmentVariableUtil.findExecutableInPathOnAnyOS(CODEX_COMMAND)?.absolutePath
     }
     val eelApi = LocalEelDescriptor.toEelApi()
     return TerminalAgentResolver.findBinaryPath(codexAgent, eelApi)

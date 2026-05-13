@@ -40,6 +40,7 @@ internal class ClaudeAgentSessionProviderDescriptor(
     fallbackEngine = PtyClaudeThreadRenameEngine(backend = backend, executableResolver = executableResolver),
     executableResolver = executableResolver,
   ),
+  private val cliAvailableProbe: suspend () -> Boolean = { ClaudeCliSupport.findExecutableViaTerminalResolver() != null },
 ) : AgentSessionProviderDescriptor {
   override val provider: AgentSessionProvider
     get() = AgentSessionProvider.CLAUDE
@@ -107,9 +108,10 @@ internal class ClaudeAgentSessionProviderDescriptor(
   override val cliMissingMessageKey: String
     get() = "toolwindow.error.claude.cli"
 
-  override fun isCliAvailable(): Boolean = ClaudeCliSupport.isAvailable()
+  override val terminalAgentKey: String
+    get() = ClaudeCliSupport.CLAUDE_TERMINAL_AGENT_KEY
 
-  override suspend fun ensureCliAvailable(): Boolean = ClaudeCliSupport.findExecutableViaTerminalResolver() != null
+  override suspend fun isCliAvailable(): Boolean = cliAvailableProbe()
 
   override suspend fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
     return buildClaudeResumeLaunchSpec(sessionId, executableResolver())

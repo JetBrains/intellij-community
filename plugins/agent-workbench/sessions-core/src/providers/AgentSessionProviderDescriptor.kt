@@ -137,6 +137,15 @@ interface AgentSessionProviderDescriptor {
   val sessionSource: AgentSessionSource
   val cliMissingMessageKey: String
 
+  /**
+   * Terminal-agent identifier used by `TerminalAgentResolver` to locate this provider's CLI binary.
+   * When set, synchronous surfaces can resolve availability by reading the cached snapshot from
+   * `TerminalAgentsAvailabilityService.getAvailableAgents()` keyed by this value. `null` (default)
+   * disables that path; the provider then never reports as available to sync surfaces.
+   */
+  val terminalAgentKey: String?
+    get() = null
+
   val supportsArchiveThread: Boolean
     get() = false
 
@@ -153,19 +162,17 @@ interface AgentSessionProviderDescriptor {
   val supportsUnarchiveThread: Boolean
     get() = false
 
-  fun isCliAvailable(): Boolean
-
   /**
-   * Suspending equivalent of [isCliAvailable] that may consult richer (and slower) sources, such as the shared
-   * `TerminalAgentResolver` used by terminal launches. The default implementation falls back to the synchronous
-   * [isCliAvailable] check; provider bridges that ship with absolute-path resolution (Claude, Codex) override
-   * this so menu enable/disable matches the launch-time resolver answer instead of the fast-PATH-only probe.
+   * Resolves whether the provider's CLI binary is available, using the same shared `TerminalAgentResolver`
+   * pipeline that powers terminal launches. The result reflects PATH + known-location candidates so
+   * menu enable/disable matches the launch-time resolver answer.
    *
-   * UI surfaces that already paint synchronously (sessions tree popup, editor-tab actions, etc.) keep using
-   * [isCliAvailable]; surfaces that can re-paint after a suspending refresh (notably the agent prompt palette)
-   * call this to align with the launch lookup.
+   * Synchronous UI surfaces (menu `update()` callbacks, sessions tree popup, editor-tab actions, etc.)
+   * cannot suspend, and so consume the cached snapshot maintained by
+   * `TerminalAgentsAvailabilityService` instead of calling this directly. The cache is populated
+   * by the terminal tool window prewarm and refreshed on popup show / failed launch.
    */
-  suspend fun ensureCliAvailable(): Boolean = isCliAvailable()
+  suspend fun isCliAvailable(): Boolean
 
   suspend fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec
 

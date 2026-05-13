@@ -1431,7 +1431,7 @@ class AgentSessionPromptLauncherBridgeTest {
   }
 
   @Test
-  fun observeExistingThreadsFiltersProviderThreadsFromSharedState() = runBlocking(Dispatchers.Default) {
+  fun observeExistingThreadsFiltersProviderThreadsFromSharedState() = withCliAvailableTestRegistry { runBlocking(Dispatchers.Default) {
     withServiceAndLaunch(
       sessionSourcesProvider = {
         listOf(
@@ -1477,10 +1477,10 @@ class AgentSessionPromptLauncherBridgeTest {
         .containsExactly("claude-2", "claude-1")
       assertThat(snapshot.hasError).isFalse()
     }
-  }
+  } }
 
   @Test
-  fun refreshExistingThreadsBootstrapsWhenPathIsMissing() = runBlocking(Dispatchers.Default) {
+  fun refreshExistingThreadsBootstrapsWhenPathIsMissing() = withCliAvailableTestRegistry { runBlocking(Dispatchers.Default) {
     val openLoads = AtomicInteger(0)
     withServiceAndLaunch(
       sessionSourcesProvider = {
@@ -1515,10 +1515,10 @@ class AgentSessionPromptLauncherBridgeTest {
 
       assertThat(openLoads.get()).isEqualTo(1)
     }
-  }
+  } }
 
   @Test
-  fun refreshExistingThreadsUsesProviderScopedRefreshForLoadedPath() = runBlocking(Dispatchers.Default) {
+  fun refreshExistingThreadsUsesProviderScopedRefreshForLoadedPath() = withCliAvailableTestRegistry { runBlocking(Dispatchers.Default) {
     val codexClosedLoads = AtomicInteger(0)
     val claudeClosedLoads = AtomicInteger(0)
     var claudeClosedThreadId = "claude-closed-1"
@@ -1596,10 +1596,10 @@ class AgentSessionPromptLauncherBridgeTest {
       assertThat(claudeClosedLoads.get()).isEqualTo(1)
       assertThat(codexClosedLoads.get()).isEqualTo(0)
     }
-  }
+  } }
 
   @Test
-  fun observeExistingThreadsMarksProviderWarningAsError() = runBlocking(Dispatchers.Default) {
+  fun observeExistingThreadsMarksProviderWarningAsError() = withCliAvailableTestRegistry { runBlocking(Dispatchers.Default) {
     withServiceAndLaunch(
       sessionSourcesProvider = {
         listOf(
@@ -1645,7 +1645,7 @@ class AgentSessionPromptLauncherBridgeTest {
       assertThat(codexSnapshot.threads.map { thread -> thread.id }).containsExactly("codex-1")
       assertThat(codexSnapshot.hasError).isFalse()
     }
-  }
+  } }
 
   @Test
   fun dedicatedInvocationPrefersSelectedTreePathForWorkingProjectResolution() {
@@ -2014,7 +2014,7 @@ private class RecordingPromptLaunchProviderBridge(
   override val cliMissingMessageKey: String
     get() = "toolwindow.error.cli"
 
-  override fun isCliAvailable(): Boolean = true
+  override suspend fun isCliAvailable(): Boolean = true
 
   override suspend fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
     return AgentSessionTerminalLaunchSpec(command = listOf("test", "resume", sessionId))
@@ -2087,4 +2087,24 @@ private class RecordingPromptLaunchProviderBridge(
       timeoutPolicy = timeoutPolicy,
     )
   }
+}
+
+private fun <T> withCliAvailableTestRegistry(action: () -> T): T {
+  return AgentSessionProviders.withRegistryForTest(
+    InMemoryAgentSessionProviderRegistry(
+      listOf(
+        TestAgentSessionProviderDescriptor(
+          provider = AgentSessionProvider.CLAUDE,
+          supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+          cliAvailable = true,
+        ),
+        TestAgentSessionProviderDescriptor(
+          provider = AgentSessionProvider.CODEX,
+          supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+          cliAvailable = true,
+        ),
+      )
+    ),
+    action,
+  )
 }

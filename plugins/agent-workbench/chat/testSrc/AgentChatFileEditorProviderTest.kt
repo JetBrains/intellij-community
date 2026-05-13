@@ -777,7 +777,7 @@ private class ChatTestProviderBridge(
   override val cliMissingMessageKey: String
     get() = provider.value
 
-  override fun isCliAvailable(): Boolean = true
+  override suspend fun isCliAvailable(): Boolean = true
 
   override suspend fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
     return AgentSessionTerminalLaunchSpec(command = listOf("test", "resume", sessionId))

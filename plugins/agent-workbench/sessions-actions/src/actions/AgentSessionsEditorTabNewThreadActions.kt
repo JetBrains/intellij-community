@@ -48,7 +48,7 @@ internal class AgentSessionsEditorTabNewThreadQuickAction @JvmOverloads construc
       return
     }
 
-    val quickStartItem = buildNewThreadActionModel(allBridges(), lastUsedProvider(), lastUsedLaunchMode()).quickStartItem
+    val quickStartItem = buildNewThreadActionModel(allBridges(), lastUsedProvider(), lastUsedLaunchMode(), context.project).quickStartItem
     if (quickStartItem == null) {
       e.presentation.isEnabledAndVisible = false
       return
@@ -62,7 +62,7 @@ internal class AgentSessionsEditorTabNewThreadQuickAction @JvmOverloads construc
 
   override fun actionPerformed(e: AnActionEvent) {
     val context = resolveContext(e) ?: return
-    val quickStartItem = buildNewThreadActionModel(allBridges(), lastUsedProvider(), lastUsedLaunchMode()).quickStartItem ?: return
+    val quickStartItem = buildNewThreadActionModel(allBridges(), lastUsedProvider(), lastUsedLaunchMode(), context.project).quickStartItem ?: return
     when (val target = context.target ?: return) {
       is AgentSessionsEditorTabNewThreadTarget.Direct -> {
         launchQuickStartThread(
@@ -97,12 +97,13 @@ internal class AgentSessionsEditorTabNewThreadPopupGroup @JvmOverloads construct
   private val createNewSession: (String, AgentSessionProvider, AgentSessionLaunchMode, Project, AgentWorkbenchEntryPoint) -> Unit = ::createNewThreadViaService,
 ) : ActionGroup(), DumbAware {
   override fun update(e: AnActionEvent) {
-    if (resolveContext(e) == null) {
+    val context = resolveContext(e)
+    if (context == null) {
       e.presentation.isEnabledAndVisible = false
       return
     }
 
-    val menuModel = buildNewThreadMenuModel(allBridges())
+    val menuModel = buildNewThreadMenuModel(allBridges(), context.project)
     if (!menuModel.hasEntries()) {
       e.presentation.isEnabledAndVisible = false
       return
@@ -117,7 +118,7 @@ internal class AgentSessionsEditorTabNewThreadPopupGroup @JvmOverloads construct
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val context = e?.let(resolveContext) ?: return emptyArray()
     val target = context.target ?: return emptyArray()
-    val menuModel = buildNewThreadMenuModel(allBridges())
+    val menuModel = buildNewThreadMenuModel(allBridges(), context.project)
     return when (target) {
       is AgentSessionsEditorTabNewThreadTarget.Direct -> buildNewThreadMenuActions(
         path = target.path,

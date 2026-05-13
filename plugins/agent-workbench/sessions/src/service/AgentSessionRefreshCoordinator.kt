@@ -21,6 +21,7 @@ import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.config.AgentWorkbenchProjectRuntimeConfigs
+import com.intellij.agent.workbench.sessions.core.providers.AgentProviderCliMissingException
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
@@ -91,6 +92,7 @@ internal class AgentSessionRefreshCoordinator(
     applyArchiveSuppressions = archiveSuppressionSupport::apply,
     resolveErrorMessage = ::resolveErrorMessage,
     resolveProviderWarningMessage = ::resolveProviderWarningMessage,
+    providerDescriptorProvider = providerDescriptorProvider,
   )
   private val onDemandLoadSupport = AgentSessionOnDemandLoadSupport(
     serviceScope = serviceScope,
@@ -578,6 +580,7 @@ private fun resolveProviderWarningMessage(provider: AgentSessionProvider, t: Thr
 }
 
 private fun isCliMissingError(provider: AgentSessionProvider, t: Throwable): Boolean {
+  if (t is AgentProviderCliMissingException) return true
   return AgentSessionProviders.find(provider)?.isCliMissingError(t) == true
 }
 

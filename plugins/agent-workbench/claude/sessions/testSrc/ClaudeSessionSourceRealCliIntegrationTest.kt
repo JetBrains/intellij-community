@@ -7,6 +7,7 @@ import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -22,6 +23,7 @@ import java.util.UUID
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
+@TestApplication
 class ClaudeSessionSourceRealCliIntegrationTest {
   @TempDir
   lateinit var tempDir: Path
@@ -176,8 +178,8 @@ private data class RealClaudeSessionFixture(
   val transcriptFile: Path,
 )
 
-private fun prepareRealClaudeSessionFixture(tempDir: Path, prompt: String? = null): RealClaudeSessionFixture {
-  val claudeBinary = ClaudeCliSupport.findExecutable()
+private suspend fun prepareRealClaudeSessionFixture(tempDir: Path, prompt: String? = null): RealClaudeSessionFixture {
+  val claudeBinary = ClaudeCliSupport.findExecutableViaTerminalResolver()
   assumeTrue(claudeBinary != null, "Claude CLI not found. Ensure `claude` is on PATH.")
 
   val userHome = System.getProperty("user.home")

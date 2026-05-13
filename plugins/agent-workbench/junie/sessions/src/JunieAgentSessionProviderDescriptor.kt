@@ -45,6 +45,9 @@ internal class JunieAgentSessionProviderDescriptor(
   override val cliMissingMessageKey: String
     get() = "toolwindow.error.junie.cli"
 
+  override val terminalAgentKey: String
+    get() = JunieCliSupport.JUNIE_TERMINAL_AGENT_KEY
+
   override val archiveRefreshDelayMs: Long
     get() = 1_000L
 
@@ -69,9 +72,7 @@ internal class JunieAgentSessionProviderDescriptor(
     }
   }
 
-  override fun isCliAvailable(): Boolean = JunieCliSupport.isAvailable()
-
-  override suspend fun ensureCliAvailable(): Boolean = JunieCliSupport.findExecutableViaTerminalResolver() != null
+  override suspend fun isCliAvailable(): Boolean = JunieCliSupport.findExecutableViaTerminalResolver() != null
 
   override suspend fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
     return AgentSessionTerminalLaunchSpec(

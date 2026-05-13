@@ -307,7 +307,7 @@ class AgentPromptPaletteSubmitControllerTest {
       override val cliMissingMessageKey: String = displayNameKey
       override val icon = EmptyIcon.ICON_16
 
-      override fun isCliAvailable(): Boolean = true
+      override suspend fun isCliAvailable(): Boolean = true
 
       override suspend fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
         return AgentSessionTerminalLaunchSpec(command = emptyList())

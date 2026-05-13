@@ -107,7 +107,7 @@ private fun testPlanModeProviderBridge(
             get() = error("Not required for this test")
         override val cliMissingMessageKey: String = provider.value
 
-        override fun isCliAvailable(): Boolean = true
+        override suspend fun isCliAvailable(): Boolean = true
 
         override suspend fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
             return AgentSessionTerminalLaunchSpec(command = emptyList())
