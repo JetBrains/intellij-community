@@ -5,6 +5,7 @@
  */
 package com.intellij.debugger.jdi;
 
+import com.intellij.debugger.JavaThreadFieldsResolver;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
@@ -75,6 +76,7 @@ public class VirtualMachineProxyImpl extends UserDataHolderBase implements JdiTi
   private boolean myAllThreadsDirty = true;
   private List<ReferenceType> myAllClasses;
   private Map<ReferenceType, List<ReferenceType>> myNestedClassesCache = new HashMap<>();
+  private final JavaThreadFieldsResolver myThreadFieldsResolver = new JavaThreadFieldsResolver();
 
   private final boolean myVersionHigher_15;
   private final boolean myVersionHigher_14;
@@ -104,6 +106,11 @@ public class VirtualMachineProxyImpl extends UserDataHolderBase implements JdiTi
 
   public ClassesByNameProvider getClassesByNameProvider() {
     return this::classesByName;
+  }
+
+  @ApiStatus.Internal
+  public @NotNull JavaThreadFieldsResolver getThreadFieldsResolver() {
+    return myThreadFieldsResolver;
   }
 
   @Override

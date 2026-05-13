@@ -37,24 +37,16 @@ import com.intellij.util.lang.JavaVersion
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.jetbrains.jdi.ThreadReferenceImpl
 import com.sun.jdi.ArrayReference
-import com.sun.jdi.BooleanType
-import com.sun.jdi.BooleanValue
-import com.sun.jdi.ClassNotLoadedException
 import com.sun.jdi.ClassType
-import com.sun.jdi.Field
 import com.sun.jdi.IncompatibleThreadStateException
-import com.sun.jdi.IntegerType
 import com.sun.jdi.IntegerValue
 import com.sun.jdi.InvalidStackFrameException
 import com.sun.jdi.Location
-import com.sun.jdi.LongType
 import com.sun.jdi.LongValue
 import com.sun.jdi.MonitorInfo
 import com.sun.jdi.ObjectReference
-import com.sun.jdi.ReferenceType
 import com.sun.jdi.StringReference
 import com.sun.jdi.ThreadReference
-import com.sun.jdi.Type
 import com.sun.jdi.Value
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.SendChannel
@@ -62,7 +54,6 @@ import kotlinx.coroutines.coroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.CancellationException
-import kotlin.collections.set
 import kotlin.time.Duration.Companion.milliseconds
 import java.lang.Long as JLong
 
@@ -256,75 +247,12 @@ private fun threadName(threadReference: ThreadReference): String =
 private fun threadName(threadNameRaw: String, threadReference: ObjectReference): String =
   threadNameRaw + "@" + threadReference.uniqueID()
 
-private inline fun <reified T : Type> findThreadFieldImpl(fieldNames: List<String>, typeToSearch: ReferenceType): Field? {
-  val wellNamedFields = fieldNames.mapNotNull { DebuggerUtils.findField(typeToSearch, it) }
-  if (wellNamedFields.isEmpty()) return null
-
-  val wellTypedFields = try {
-     wellNamedFields.filter { it.type() is T }
-  } catch (_: ClassNotLoadedException) {
-    logger<ThreadDumpAction>().info(
-      "$typeToSearch has the fields ${wellNamedFields.map { it.name() }} whose type is not yet loaded, skipping. " +
-      "VM: ${typeToSearch.virtualMachine().let { "${it.name()}, ${it.version()}" }}"
-    )
-    return null
-  }
-
-  if (wellTypedFields.isEmpty()) {
-    val vm = typeToSearch.virtualMachine()
-    logger<ThreadDumpAction>().error(
-      "$typeToSearch has following fields ${wellNamedFields.map { it.name() }} with unexpected types ${wellNamedFields.map { it.type() }}, skipping it. " +
-      "VM: ${vm.name()}, ${vm.version()}.")
-    return null
-  }
-
-  if (wellTypedFields.size > 1) {
-    val vm = typeToSearch.virtualMachine()
-    logger<ThreadDumpAction>().error(
-      "$typeToSearch has ambiguous list of fields ${wellTypedFields.map { it.name() }}, taking the first one. " +
-      "VM: ${vm.name()}, ${vm.version()}.")
-  }
-
-  return wellTypedFields.first()
-}
-
-private inline fun <reified T : Type> findThreadField(fieldNames: List<String>, jlThreadType: ReferenceType?, fieldHolderType: ReferenceType?, optional: Boolean = false): Field? {
-  if (jlThreadType == null) return null
-
-  findThreadFieldImpl<T>(fieldNames, jlThreadType)?.let {
-    return it
-  }
-
-  if (fieldHolderType != null) {
-    findThreadFieldImpl<T>(fieldNames, fieldHolderType)?.let {
-      return it
-    }
-  }
-
-  if (!optional) {
-    val vm = jlThreadType.virtualMachine()
-    logger<ThreadDumpAction>().error(
-      if (fieldHolderType != null) {
-        "$jlThreadType and $fieldHolderType have "
-      } else {
-        "$jlThreadType has "
-      } +
-      "none of fields $fieldNames. " +
-      "VM: ${vm.name()}, ${vm.version()}.")
-  }
-
-  return null
-}
-
 private data class JavaVirtualThreadDesc(
   val thread: ThreadReference,
   val stackTrace: String,
   val threadId: Long,
   val carrierId: Long?
 )
-
-private inline fun <reified T : Type> findThreadField(fieldName: String, jlThreadType: ReferenceType?, fieldHolderType: ReferenceType?, optional: Boolean = false): Field? =
-  findThreadField<T>(listOf(fieldName), jlThreadType, fieldHolderType, optional)
 
 private fun buildThreadStates(
   vmProxy: VirtualMachineProxyImpl,
@@ -336,35 +264,7 @@ private fun buildThreadStates(
 
   val result = mutableListOf<ThreadState>()
   val nameToThreadMap = mutableMapOf<String, ThreadState>()
-
-  val jlThreadType = platformThreads.firstOrNull()
-    ?.let { someThread ->
-      val jlThreadName = "java.lang.Thread"
-      val someThreadType = someThread.referenceType()
-      generateSequence(someThreadType as? ClassType) { it.superclass() }
-        .firstOrNull { it.name() == jlThreadName }
-        .also { if (it == null) logger<ThreadDumpAction>().error("$someThreadType is expected to have $jlThreadName as super type") }
-    }
-
-  // Since Project Loom some of Thread's fields have been encapsulated into FieldHolder,
-  // so we try to look up fields in the thread itself and in its holder.
-  val holderField = findThreadField<ClassType>("holder", jlThreadType, null, optional = true)
-
-  val fieldHolderType = holderField?.type()?.let { it as ClassType }
-  val daemonField = findThreadField<BooleanType>(listOf("daemon", "isDaemon"), jlThreadType, fieldHolderType)
-  val priorityField = findThreadField<IntegerType>("priority", jlThreadType, fieldHolderType)
-  val tidField = findThreadField<LongType>("tid", jlThreadType, fieldHolderType)
-  val containerField = findThreadField<ClassType>("container", jlThreadType, null, optional = true)
-
-  fun getFieldValue(field: Field?, threadReference: ThreadReference, fieldHolder: ObjectReference?): Value? {
-    if (field == null) return null
-
-    return when (val fieldHost = field.declaringType()) {
-      jlThreadType -> threadReference.getValue(field)
-      fieldHolderType -> fieldHolder!!.getValue(field)
-      else -> { logger<ThreadDumpAction>().error("unexpected declaring type of field $field: $fieldHost"); null }
-    }
-  }
+  val threadFields = vmProxy.threadFieldsResolver
 
   fun processOne(threadReference: ThreadReference, virtualThreadInfo: JavaVirtualThreadDesc?) {
     ProgressManager.checkCanceled()
@@ -409,11 +309,10 @@ private fun buildThreadStates(
 
       rawStackTrace = getStackTrace(threadReference)
 
-      val holderObj = getFieldValue(holderField, threadReference, null)?.let { it as ObjectReference }
-      isDaemon = getFieldValue(daemonField, threadReference, holderObj)?.let { (it as BooleanValue).booleanValue() } ?: false
-      prio = getFieldValue(priorityField, threadReference, holderObj)?.let { (it as IntegerValue).intValue() }
-      tid = getFieldValue(tidField, threadReference, holderObj)?.let { (it as LongValue).longValue() }
-      val container = getFieldValue(containerField, threadReference, null)?.let { it as? ObjectReference }
+      isDaemon = threadFields.isJavaThreadDaemon(threadReference)
+      prio = threadFields.getJavaThreadPriority(threadReference)
+      tid = threadFields.getJavaThreadId(threadReference)
+      val container = threadFields.getJavaThreadContainer(threadReference)
       threadContainerId = containerIdOrNullIfRoot(container, rootThreadContainer)
       carrierId = null
     }
