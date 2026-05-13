@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.BaseProjectDirectories;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -49,9 +50,8 @@ public interface ProjectFileNode {
     if (ScratchFileService.getInstance().getRootType(file) != null) return ApplicationManager.getApplication();
     Module module = ProjectFileIndex.getInstance(project).getModuleForFile(file, false);
     if (module != null) return module.isDisposed() ? null : module;
-    VirtualFile ancestor = findBaseDir(project);
     // file does not belong to any content root, but it is located under the project directory
-    return ancestor == null || !isAncestor(ancestor, file, false) ? null : project;
+    return BaseProjectDirectories.getInstance(project).getBaseDirectoryFor(file) == null ? null : project;
   }
 
   /**
