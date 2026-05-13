@@ -14,7 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.openapi.progress.ProgressManager.checkCanceled;
-import static com.intellij.openapi.util.registry.Registry.is;
 import static com.intellij.openapi.vfs.VfsUtilCore.isAncestor;
 
 public interface ProjectFileNode {
@@ -50,7 +49,6 @@ public interface ProjectFileNode {
     if (ScratchFileService.getInstance().getRootType(file) != null) return ApplicationManager.getApplication();
     Module module = ProjectFileIndex.getInstance(project).getModuleForFile(file, false);
     if (module != null) return module.isDisposed() ? null : module;
-    if (!is("projectView.show.base.dir")) return null;
     VirtualFile ancestor = findBaseDir(project);
     // file does not belong to any content root, but it is located under the project directory
     return ancestor == null || !isAncestor(ancestor, file, false) ? null : project;
