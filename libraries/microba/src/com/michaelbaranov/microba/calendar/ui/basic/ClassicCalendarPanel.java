@@ -4,7 +4,6 @@ import com.michaelbaranov.microba.calendar.resource.Resource;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
@@ -20,11 +19,8 @@ import java.beans.PropertyChangeListener;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Collection;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.Locale;
-import java.util.Set;
 import java.util.TimeZone;
 
 class ClassicCalendarPanel extends JPanel implements
@@ -49,8 +45,6 @@ class ClassicCalendarPanel extends JPanel implements
   private final JLabel selectedDateLabel;
 
   private DateFormat format;
-
-  private final Set<JComponent> focusableComponents = new HashSet<>();
 
   private final JButton fastPrevButton;
 
@@ -144,11 +138,6 @@ class ClassicCalendarPanel extends JPanel implements
     });
 
     this.addPropertyChangeListener(this);
-
-    focusableComponents.add(prevButton);
-    focusableComponents.add(nextButton);
-    focusableComponents.add(fastNextButton);
-    focusableComponents.add(fastPrevButton);
 
     createLocaleAndZoneSensitive();
     calendar.setTime(aDate);
@@ -251,10 +240,6 @@ class ClassicCalendarPanel extends JPanel implements
       fastPrevButton.setEnabled(value.booleanValue());
     }
 
-  }
-
-  public Collection<JComponent> getFocusableComponents() {
-    return focusableComponents;
   }
 
   public void addMonth(int m) {

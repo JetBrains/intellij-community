@@ -6,7 +6,6 @@ import com.michaelbaranov.microba.common.PolicyEvent;
 import com.michaelbaranov.microba.common.PolicyListener;
 
 import javax.swing.JButton;
-import javax.swing.JComponent;
 import javax.swing.JPanel;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -17,11 +16,8 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.text.DateFormat;
 import java.util.Calendar;
-import java.util.Collection;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.Locale;
-import java.util.Set;
 import java.util.TimeZone;
 
 class AuxPanel extends JPanel implements PropertyChangeListener, PolicyListener {
@@ -47,8 +43,6 @@ class AuxPanel extends JPanel implements PropertyChangeListener, PolicyListener 
   private DateFormat fullDateFormat;
 
   private Date currentDate;
-
-  private final Set<JComponent> focusableComponents = new HashSet<>();
 
   private VetoPolicy vetoModel;
 
@@ -110,7 +104,6 @@ class AuxPanel extends JPanel implements PropertyChangeListener, PolicyListener 
       }
     });
 
-    focusableComponents.add(todayButton);
     this.addPropertyChangeListener(this);
 
     // Timer timer = new Timer(true);
@@ -174,10 +167,6 @@ class AuxPanel extends JPanel implements PropertyChangeListener, PolicyListener 
     firePropertyChange(PROPERTY_NAME_LOCALE, old, locale);
     createLocaleAndZoneSensitive();
     reflectData();
-  }
-
-  public Collection<JComponent> getFocusableComponents() {
-    return focusableComponents;
   }
 
   public TimeZone getZone() {

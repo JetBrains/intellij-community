@@ -11,7 +11,6 @@ import com.michaelbaranov.microba.common.PolicyListener;
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.InputMap;
-import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.KeyStroke;
@@ -29,11 +28,8 @@ import java.awt.event.MouseListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Calendar;
-import java.util.Collection;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.Locale;
-import java.util.Set;
 import java.util.TimeZone;
 
 public final class CalendarGridPanel extends JPanel implements FocusListener,
@@ -70,8 +66,6 @@ public final class CalendarGridPanel extends JPanel implements FocusListener,
   private VetoPolicy vetoPolicy;
 
   private final DateLabel[] labels = new DateLabel[42];
-
-  private final Set<JComponent> focusableComponents = new HashSet<>();
 
   private boolean explicitDateSetToNullFlag;
 
@@ -174,7 +168,6 @@ public final class CalendarGridPanel extends JPanel implements FocusListener,
       l.addMouseListener(this);
       add(l);
     }
-    focusableComponents.add(this);
     addKeyListener(this);
     setFocusable(true);
 
@@ -409,10 +402,6 @@ public final class CalendarGridPanel extends JPanel implements FocusListener,
     this.zone = zone;
     firePropertyChange(PROPERTY_NAME_ZONE, old, zone);
     reflectData();
-  }
-
-  public Collection<JComponent> getFocusableComponents() {
-    return focusableComponents;
   }
 
   class DateLabel extends JLabel {

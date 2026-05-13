@@ -1,7 +1,6 @@
 package com.michaelbaranov.microba.calendar.ui.basic;
 
 import javax.swing.JComboBox;
-import javax.swing.JComponent;
 import javax.swing.JPanel;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
@@ -9,11 +8,8 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Collection;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.Locale;
-import java.util.Set;
 import java.util.TimeZone;
 
 class ModernCalendarPanel extends JPanel implements PropertyChangeListener {
@@ -40,8 +36,6 @@ class ModernCalendarPanel extends JPanel implements PropertyChangeListener {
 
   private final JComboBox monthCombo;
 
-  private final Set<JComponent> focusableComponents = new HashSet<>();
-
   public ModernCalendarPanel(Date aDate, Locale aLocale, TimeZone zone) {
     this.date = aDate;
     this.locale = aLocale;
@@ -63,9 +57,6 @@ class ModernCalendarPanel extends JPanel implements PropertyChangeListener {
     add(yearSpinner, new GridBagConstraints(1, 0, 1, 1, 0, 0,
         GridBagConstraints.EAST, GridBagConstraints.VERTICAL,
         new Insets(0, 3, 3, 0), 0, 0));
-
-    focusableComponents.add(yearSpinner);
-    focusableComponents.add(monthCombo);
 
     monthComboBoxModel
         .addPropertyChangeListener(new PropertyChangeListener() {
@@ -134,10 +125,6 @@ class ModernCalendarPanel extends JPanel implements PropertyChangeListener {
     monthComboBoxModel.setLocale(locale);
     yearSpinnerModel.setLocale(locale);
     firePropertyChange(PROPERTY_NAME_LOCALE, old, locale);
-  }
-
-  public Collection<JComponent> getFocusableComponents() {
-    return focusableComponents;
   }
 
   public TimeZone getZone() {
