@@ -129,7 +129,7 @@ private fun createRunActionToolbar(): ActionToolbar {
   toolbar.isReservePlaceAutoPopupIcon = false
   toolbar.layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
   toolbar.component.isOpaque = false
-  toolbar.component.border = null
+  toolbar.component.border = JBUI.Borders.empty(0, 12, 0, 16)
   toolbar.setMinimumButtonSize {
     JBUI.size(JBUI.CurrentTheme.RunWidget.actionButtonWidth(), JBUI.CurrentTheme.RunWidget.toolbarHeight())
   }
@@ -153,9 +153,7 @@ internal class RedesignedRunToolbarWrapper : WindowHeaderPlaceholder() {
   override fun actionPerformed(e: AnActionEvent): Unit = error("Should not be invoked")
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-    val toolbar = createRunActionToolbar()
-    toolbar.component.border = JBUI.Borders.empty(0, 12, 0, 16)
-    return toolbar.component
+    return createRunActionToolbar().component
   }
 
   override fun update(e: AnActionEvent) {
