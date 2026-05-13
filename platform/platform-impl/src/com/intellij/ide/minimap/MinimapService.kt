@@ -25,6 +25,7 @@ import java.awt.event.HierarchyListener
 import javax.swing.JLayeredPane
 import javax.swing.JPanel
 import javax.swing.JScrollPane
+import javax.swing.JViewport
 import javax.swing.ScrollPaneLayout
 import javax.swing.border.Border
 
@@ -203,16 +204,23 @@ class MinimapService(private val scope: CoroutineScope) : Disposable {
 
     val originalLayout = scrollPane.layout as? ScrollPaneLayout
     val originalViewportBorder = scrollPane.viewportBorder
+    val originalViewportScrollMode = scrollPane.viewport?.scrollMode
+    val originalRowHeaderScrollMode = scrollPane.rowHeader?.scrollMode
+    val originalColumnHeaderScrollMode = scrollPane.columnHeader?.scrollMode
 
     editor.putUserData(MINI_MAP_SCROLLBAR_STATE_KEY, MinimapScrollbarState(
       scrollPane = scrollPane,
       originalLayout = originalLayout,
       originalViewportBorder = originalViewportBorder,
+      originalViewportScrollMode = originalViewportScrollMode,
+      originalRowHeaderScrollMode = originalRowHeaderScrollMode,
+      originalColumnHeaderScrollMode = originalColumnHeaderScrollMode,
     ))
 
     // Add minimap as a direct child of the scroll pane; the custom layout positions it
     // between the viewport and the vertical scrollbar. The scrollbar is never moved,
     // keeping PanelWithFloatingToolbar.doLayout() and the inspection toolbar working correctly.
+    disableBlitScrolling(scrollPane)
     scrollPane.add(minimapPanel)
     scrollPane.layout = MinimapScrollPaneLayout(minimapPanel)
     scrollPane.viewportBorder = MinimapScrollPaneLayout.createViewportBorder(scrollPane, minimapPanel, originalViewportBorder)
@@ -236,6 +244,9 @@ class MinimapService(private val scope: CoroutineScope) : Disposable {
       }
       state.scrollPane.viewportBorder = state.originalViewportBorder
       state.originalLayout?.let { state.scrollPane.layout = it }
+      restoreScrollMode(state.scrollPane.viewport, state.originalViewportScrollMode)
+      restoreScrollMode(state.scrollPane.rowHeader, state.originalRowHeaderScrollMode)
+      restoreScrollMode(state.scrollPane.columnHeader, state.originalColumnHeaderScrollMode)
       editor.putUserData(MINI_MAP_SCROLLBAR_STATE_KEY, null)
     }
 
@@ -248,10 +259,26 @@ class MinimapService(private val scope: CoroutineScope) : Disposable {
     return if (where == BorderLayout.LINE_END) BorderLayout.LINE_START else BorderLayout.LINE_END
   }
 
+  private fun disableBlitScrolling(scrollPane: JScrollPane) {
+    // The embedded minimap changes scroll pane child geometry; blit scrolling can copy stale rounded-corner pixels into the editor/gutter.
+    scrollPane.viewport?.scrollMode = JViewport.SIMPLE_SCROLL_MODE
+    scrollPane.rowHeader?.scrollMode = JViewport.SIMPLE_SCROLL_MODE
+    scrollPane.columnHeader?.scrollMode = JViewport.SIMPLE_SCROLL_MODE
+  }
+
+  private fun restoreScrollMode(viewport: JViewport?, scrollMode: Int?) {
+    if (viewport != null && scrollMode != null) {
+      viewport.scrollMode = scrollMode
+    }
+  }
+
   private data class MinimapScrollbarState(
     val scrollPane: JScrollPane,
     val originalLayout: ScrollPaneLayout?,
     val originalViewportBorder: Border?,
+    val originalViewportScrollMode: Int?,
+    val originalRowHeaderScrollMode: Int?,
+    val originalColumnHeaderScrollMode: Int?,
   )
 
   companion object {
