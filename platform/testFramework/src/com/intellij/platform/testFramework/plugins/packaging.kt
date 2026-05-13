@@ -135,16 +135,6 @@ fun PluginSpec.installAt(pluginsDir: Path, config: PluginPackagingConfig = Plugi
   }
 }
 
-fun PluginSpec.buildDir(path: Path, config: PluginPackagingConfig = PluginPackagingConfig()): Unit = with(config) {
-  directoryContent {
-    if (isSingleJar) {
-      buildMainDir(this, config)
-    } else {
-      buildDir(this@directoryContent, config)
-    }
-  }.generate(path)
-}
-
 private fun PluginSpec.buildDir(
   builder: DirectoryContentBuilder,
   config: PluginPackagingConfig,
