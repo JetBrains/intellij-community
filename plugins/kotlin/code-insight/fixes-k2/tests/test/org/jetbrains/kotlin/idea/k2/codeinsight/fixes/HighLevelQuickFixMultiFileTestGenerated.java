@@ -1715,6 +1715,21 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/changeImports.before.Main.kt");
         }
 
+        @TestMetadata("conflictingImports.before.Main.kt")
+        public void testConflictingImports() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/conflictingImports.before.Main.kt");
+        }
+
+        @TestMetadata("conflictingImportsClass.before.Main.kt")
+        public void testConflictingImportsClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/conflictingImportsClass.before.Main.kt");
+        }
+
+        @TestMetadata("conflictingImportsObject.before.Main.kt")
+        public void testConflictingImportsObject() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/conflictingImportsObject.before.Main.kt");
+        }
+
         @TestMetadata("rootPackage.before.Main.kt")
         public void testRootPackage() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/rootPackage.before.Main.kt");
@@ -2449,6 +2464,21 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             @TestMetadata("changeImports.before.Main.kt")
             public void testChangeImports() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/changeImports.before.Main.kt");
+            }
+
+            @TestMetadata("conflictingImports.before.Main.kt")
+            public void testConflictingImports() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/conflictingImports.before.Main.kt");
+            }
+
+            @TestMetadata("conflictingImportsClass.before.Main.kt")
+            public void testConflictingImportsClass() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/conflictingImportsClass.before.Main.kt");
+            }
+
+            @TestMetadata("conflictingImportsObject.before.Main.kt")
+            public void testConflictingImportsObject() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/conflictingImportsObject.before.Main.kt");
             }
 
             @TestMetadata("rootPackage.before.Main.kt")

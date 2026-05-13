@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith
 
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -27,6 +28,7 @@ import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory.IntentionBased
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinPsiOnlyQuickFixAction
+import org.jetbrains.kotlin.idea.codeinsight.utils.AddQualifiersUtil
 import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner.CallableUsageReplacementStrategy
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner.ClassUsageReplacementStrategy
@@ -175,8 +177,25 @@ abstract class DeprecatedSymbolUsageFixBase(
 
     final override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val expression = element ?: return
-        val strategy = buildUsageReplacementStrategy(expression, replaceWith, isUnitTypeReplacement) ?: return
+        val strategy = buildUsageReplacementStrategy(expression,
+            qualifyReplaceWithFragment(expression) ?: replaceWith, isUnitTypeReplacement) ?: return
         invoke(strategy, project, editor)
+    }
+
+    private fun qualifyReplaceWithFragment(expression: KtReferenceExpression): ReplaceWithData? {
+        if (replaceWith.imports.isNotEmpty()) {
+            return runWriteAction {
+                val fragment = KtPsiFactory.contextual(expression).createExpressionCodeFragment(replaceWith.pattern, expression)
+                fragment.addImportsFromString(replaceWith.imports.joinToString())
+                val contentElement = fragment.getContentElement()
+                if (contentElement != null) {
+
+                    AddQualifiersUtil.addQualifiersRecursively(contentElement)
+                    ReplaceWithData(fragment.text, replaceWith.imports, replaceWith.replaceInWholeProject)
+                } else null
+            }
+        }
+        return null
     }
 
     protected abstract operator fun invoke(replacementStrategy: UsageReplacementStrategy, project: Project, editor: Editor?)
