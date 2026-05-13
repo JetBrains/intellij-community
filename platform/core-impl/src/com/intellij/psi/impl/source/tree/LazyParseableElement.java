@@ -29,9 +29,15 @@ import static com.intellij.util.ObjectUtils.objectInfo;
 public class LazyParseableElement extends CompositeElement {
   private static final Logger LOG = Logger.getInstance(LazyParseableElement.class);
   private static final Supplier<CharSequence> NO_TEXT = () -> null;
+  private static final Object PARSED_SENTINEL = new Object() {
+    @Override
+    public String toString() {
+      return "This element is parsed";
+    }
+  };
 
-  private static final VarHandleWrapper myTextGetter = VarHandleWrapper.getFactory().create(LazyParseableElement.class, "myText", Object.class);
-  private static final VarHandleWrapper myParsedGetter = VarHandleWrapper.getFactory().create(LazyParseableElement.class, "myParsed", Object.class);
+  private static final VarHandleWrapper myTextAccessor = VarHandleWrapper.getFactory().create(LazyParseableElement.class, "myText", Object.class);
+  private static final VarHandleWrapper myParsedAccessor = VarHandleWrapper.getFactory().create(LazyParseableElement.class, "myParsed", Object.class);
 
 
   // Lock which protects expanding chameleon for this node.
@@ -60,7 +66,7 @@ public class LazyParseableElement extends CompositeElement {
     if (version == -1) {
       this.myText = text;
     } else {
-      setVersionedField(myTextGetter, version, text);
+      setVersionedField(myTextAccessor, version, text);
     }
   }
 
@@ -75,20 +81,21 @@ public class LazyParseableElement extends CompositeElement {
     }
   }
 
-  private void doSetMyParsed(long version, Boolean isParsed) {
+  private void doSetMyParsed(long version, boolean isParsed) {
+    Object value = isParsed ? PARSED_SENTINEL : null;
     if (version == -1) {
-      this.myParsed = isParsed;
+      this.myParsed = value;
     } else {
-      setVersionedField(myParsedGetter, version, isParsed);
+      setVersionedField(myParsedAccessor, version, value);
     }
   }
 
-  private Boolean doGetMyParsed(long version) {
+  private boolean doGetMyParsed(long version) {
     if (version == -1) {
-      return (Boolean)this.myParsed;
+      return this.myParsed != null;
     } else {
       Object result = getVersionedField(this.myParsed, version);
-      return (Boolean)result;
+      return result != null;
     }
   }
 
@@ -124,15 +131,15 @@ public class LazyParseableElement extends CompositeElement {
 
   @Override
   @ApiStatus.Internal
-  protected void postClone(CompositeElement origin) {
+  protected void postClone(@NotNull CompositeElement origin) {
     long originVersion = origin.getVersionForReading();
     long cloneVersion = getVersionForReading();
-    myParsedGetter.setVolatile(this, null);
-    myTextGetter.setVolatile(this, null);
+    myParsedAccessor.setVolatile(this, null);
+    myTextAccessor.setVolatile(this, null);
     doSetMyText(cloneVersion, ((LazyParseableElement)origin).doGetMyText(originVersion));
-    Boolean parsed = ((LazyParseableElement)origin).doGetMyParsed(originVersion);
+    boolean parsed = ((LazyParseableElement)origin).doGetMyParsed(originVersion);
     doSetMyParsed(cloneVersion, parsed);
-    if (parsed == null) {
+    if (!parsed) {
       setCachedLength(origin.getCachedLength());
     }
   }
@@ -143,10 +150,10 @@ public class LazyParseableElement extends CompositeElement {
     super.clearCaches();
 
     waitForLock(myLock);
-    long version = getVersionForWriting();
+    long version = getVersionForReading();
     try {
-      Boolean parsedForCurrentVersion = doGetMyParsed(version);
-      if (parsedForCurrentVersion != null) {
+      boolean parsedForCurrentVersion = doGetMyParsed(version);
+      if (parsedForCurrentVersion) {
         doSetMyText(version, NO_TEXT);
         doSetMyParsed(version, parsedForCurrentVersion);
       }
@@ -155,7 +162,7 @@ public class LazyParseableElement extends CompositeElement {
         doSetMyText(version, currentText);
         // myParsed corresponds to myText being not null
         setCachedLength(Objects.requireNonNull(currentText).get().length());
-        doSetMyParsed(version, null);
+        doSetMyParsed(version, false);
       }
     }
     finally {
@@ -195,7 +202,7 @@ public class LazyParseableElement extends CompositeElement {
 
   @Override
   @ApiStatus.Internal
-  public int getTextLengthVersioned(long version) {
+  public final int getTextLengthVersioned(long version) {
     Supplier<CharSequence> textGetter = doGetMyText(version);
     if (textGetter == null) {
       return super.getTextLengthVersioned(version);
@@ -237,8 +244,8 @@ public class LazyParseableElement extends CompositeElement {
   }
 
   @ApiStatus.Internal
-  public boolean isParsedVersioned(long version) {
-    return doGetMyParsed(version) != null;
+  public final boolean isParsedVersioned(long version) {
+    return doGetMyParsed(version);
   }
 
   private CharSequence myText() {
@@ -269,12 +276,12 @@ public class LazyParseableElement extends CompositeElement {
       LOG.error("Parsing not allowed!!!");
     }
     long version = getVersionForReading();
-    if (doGetMyParsed(version) != null) return;
+    if (doGetMyParsed(version)) return;
 
     CharSequence text;
     waitForLock(myLock);
     try {
-      if (doGetMyParsed(version) != null) return;
+      if (doGetMyParsed(version)) return;
 
       Supplier<CharSequence> textSupplier = doGetMyText(version);
 
@@ -343,7 +350,7 @@ public class LazyParseableElement extends CompositeElement {
 
   @Override
   @ApiStatus.Internal
-  protected void doEnsureVersioned(long version) {
+  protected final void doEnsureVersioned(long version) {
     if (isParsedVersioned(-1)) {
       // we want to prevent uncollapsing of lazy elements. We intend to only modify versions
       super.doEnsureVersioned(version);

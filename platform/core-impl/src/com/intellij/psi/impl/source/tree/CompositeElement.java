@@ -42,9 +42,9 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 public class CompositeElement extends TreeElement {
   private static final Logger LOG = Logger.getInstance(CompositeElement.class);
   private static final Key<Integer> OUR_HC_KEY = Key.create("OUR_HC_KEY");
-  private static final VarHandleWrapper firstChildGetter = VarHandleWrapper.getFactory().create(CompositeElement.class, "firstChild", Object.class);
-  private static final VarHandleWrapper lastChildGetter = VarHandleWrapper.getFactory().create(CompositeElement.class, "lastChild", Object.class);
-  private static final VarHandleWrapper myCachedLengthGetter = VarHandleWrapper.getFactory().create(CompositeElement.class, "myCachedLength", Object.class);
+  private static final VarHandleWrapper firstChildAccessor = VarHandleWrapper.getFactory().create(CompositeElement.class, "firstChild", Object.class);
+  private static final VarHandleWrapper lastChildAccessor = VarHandleWrapper.getFactory().create(CompositeElement.class, "lastChild", Object.class);
+  private static final VarHandleWrapper myCachedLengthAccessor = VarHandleWrapper.getFactory().create(CompositeElement.class, "myCachedLength", Object.class);
 
 
   public static final CompositeElement[] EMPTY_ARRAY = new CompositeElement[0];
@@ -94,9 +94,9 @@ public class CompositeElement extends TreeElement {
   protected final @NotNull CompositeElement cloneWithoutCopyingChildren() {
     CompositeElement clone = (CompositeElement)super.clone();
 
-    firstChildGetter.setVolatile(clone, null);
-    lastChildGetter.setVolatile(clone, null);
-    myCachedLengthGetter.setVolatile(clone, null);
+    firstChildAccessor.setVolatile(clone, null);
+    lastChildAccessor.setVolatile(clone, null);
+    myCachedLengthAccessor.setVolatile(clone, null);
     clone.myWrapper = null;
 
     clone.postClone(this);
@@ -112,7 +112,7 @@ public class CompositeElement extends TreeElement {
   @ApiStatus.Internal
   protected final void copyChildrenToClone(@NotNull CompositeElement clone) {
     long version = getVersionForReading();
-    myCachedLengthGetter.setVolatile(clone, doGetMyCachedLength(version));
+    clone.setCachedLength(doGetMyCachedLength(version));
     for (TreeElement child = getFirstChildNodeVersioned(version); child != null; child = child.getTreeNextVersioned(version)) {
       TreeElement childClone = (TreeElement)child.clone();
       clone.rawAddChildrenWithoutNotifications(childClone);
@@ -120,7 +120,7 @@ public class CompositeElement extends TreeElement {
   }
 
   @ApiStatus.Internal
-  protected void postClone(CompositeElement origin) {
+  protected void postClone(@NotNull CompositeElement origin) {
   }
 
 
@@ -128,7 +128,7 @@ public class CompositeElement extends TreeElement {
     if (version == -1) {
       this.firstChild = firstChild;
     } else {
-      setVersionedField(firstChildGetter, version, firstChild);
+      setVersionedField(firstChildAccessor, version, firstChild);
     }
   }
 
@@ -145,7 +145,7 @@ public class CompositeElement extends TreeElement {
     if (version == -1) {
       this.lastChild = lastChild;
     } else {
-      setVersionedField(lastChildGetter, version, lastChild);
+      setVersionedField(lastChildAccessor, version, lastChild);
     }
   }
 
@@ -162,16 +162,17 @@ public class CompositeElement extends TreeElement {
     if (version == -1) {
       this.myCachedLength = cachedLength;
     } else {
-      setVersionedField(myCachedLengthGetter, version, cachedLength);
+      setVersionedField(myCachedLengthAccessor, version, cachedLength);
     }
   }
 
-  private Integer doGetMyCachedLength(long version) {
+  private int doGetMyCachedLength(long version) {
     if (version == -1) {
-      return (Integer)this.myCachedLength;
+      Integer cachedLength = (Integer)this.myCachedLength;
+      return cachedLength == null ? -1 : cachedLength.intValue();
     } else {
       Object result = getVersionedField(this.myCachedLength, version);
-      return (Integer)result;
+      return result == null ? -1 : ((Integer)result).intValue();
     }
   }
 
@@ -610,8 +611,7 @@ public class CompositeElement extends TreeElement {
   @Override
   @ApiStatus.Internal
   public int getTextLengthVersioned(long version) {
-    Integer cachedLengthBoxed = doGetMyCachedLength(version);
-    int cachedLength = cachedLengthBoxed == null ? -1 : cachedLengthBoxed;
+    int cachedLength = doGetMyCachedLength(version);
     if (cachedLength >= 0) {
       return cachedLength;
     }
@@ -630,7 +630,7 @@ public class CompositeElement extends TreeElement {
   @Override
   public int hc() {
     InternalPsiVersioning.assertNotInFreezePsiVersion();
-    // todo: we need to store hc in versionedlazyfield
+    // todo: we need to make hc versioned
     long version = getVersionForReading();
     Integer cached = getUserData(OUR_HC_KEY);
     if (cached != null) {
@@ -656,13 +656,8 @@ public class CompositeElement extends TreeElement {
 
   @Override
   @ApiStatus.Internal
-  protected int getCachedLengthVersioned(long version) {
-    Integer cachedLength = doGetMyCachedLength(version);
-    if (cachedLength != null) {
-      return cachedLength;
-    } else {
-      return -1;
-    }
+  protected final int getCachedLengthVersioned(long version) {
+    return doGetMyCachedLength(version);
   }
 
   private static @NotNull TreeElement drillDown(@NotNull TreeElement start, long version) {
@@ -716,7 +711,7 @@ public class CompositeElement extends TreeElement {
     throw new IllegalStateException("Null parent of " + cur + " " + cur.getClass());
   }
 
-  void setCachedLength(int cachedLength) {
+  final void setCachedLength(int cachedLength) {
     long version = getVersionForReading();
     doSetMyCachedLength(version, cachedLength);
   }
@@ -882,7 +877,6 @@ public class CompositeElement extends TreeElement {
    * Don't call this method, it's here for implementation reasons.
    */
   final @Nullable PsiElement getCachedPsi() {
-    //PsiVersioning.assertNotInFreezePsiVersion();
     return myWrapper;
   }
 

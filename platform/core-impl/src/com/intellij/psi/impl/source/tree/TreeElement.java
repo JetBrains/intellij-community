@@ -64,12 +64,12 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
    * <p>
    * If {@link creationVersion} is equal to `-1`, then this element is non-versioned.
    */
-  // not final because of `clone`
+  // not final because of `clone` and possibility of transitioning to versioned state during insertion
   private volatile long creationVersion = InternalPsiVersioning.getCreationPsiVersionForElement();
 
   /*
     The following fields represent edges in the syntax tree graph.
-    They are either a direct reference to object (like `TreeElement`), or a reference to `VersionedPayloadMap`.
+    They are either a direct reference to an object (like `TreeElement`), or a reference to `VersionedPayloadMap`.
 
     In the first case, these fields represent a direct reference associated with `creationVersion`.
     If a field is a map, then it acts as a sorted map from long to `TreeElement`. In this case, the payloads in this map are ordered by versions.
@@ -466,7 +466,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
    * An optimized version of {@link #getTreePrev()} that allows skipping querying the thread-local version.
    */
   @ApiStatus.Internal
-  protected TreeElement getTreePrevVersioned(long version) {
+  protected final TreeElement getTreePrevVersioned(long version) {
     return doGetMyPrevSibling(version);
   }
 
@@ -498,10 +498,10 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
    * When this happens, we detach an element from its non-versioned structure, modify its internal structure so it is versioned,
    * and then we insert it into the versioned structure.
    * <p>
-   * This helps us to maintain versioning consistency of syntax trees while retaining old contracts.
+   * This helps us to maintain the versioning consistency of syntax trees while retaining old contracts.
    */
   @ApiStatus.Internal
-  protected void ensureVersioned(long version, @Nullable TreeElement element) {
+  protected final void ensureVersioned(long version, @Nullable TreeElement element) {
     if (!this.isVersioned() || element == null || element.creationVersion != -1) {
       return;
     }
@@ -539,12 +539,12 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
   }
 
   @ApiStatus.Internal
-  public boolean isVersioned() {
+  public final boolean isVersioned() {
     return creationVersion != -1L;
   }
 
   @ApiStatus.Internal
-  protected long getVersionForWriting() {
+  protected final long getVersionForWriting() {
     if (isVersioned()) {
       return InternalPsiVersioning.getCurrentPsiVersionForWrite();
     } else {
@@ -553,7 +553,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
   }
 
   @ApiStatus.Internal
-  protected long getVersionForReading() {
+  protected final long getVersionForReading() {
     if (isVersioned()) {
       return InternalPsiVersioning.getCurrentPsiVersion();
     } else {
