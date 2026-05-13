@@ -156,7 +156,7 @@ abstract class CommonStarterInitialStep(
     }
   }
 
-  protected fun Panel.addSdkUi() {
+  protected open fun Panel.addSdkUi() {
     row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
       projectWizardJdkComboBox(
         wizardContext,
