@@ -106,6 +106,9 @@ import com.intellij.platform.attachToProjectAsync
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystem
 import com.intellij.platform.diagnostic.telemetry.impl.span
+import com.intellij.platform.diagnostic.telemetry.Scope
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.eel.EelUnavailableException
 import com.intellij.platform.eel.fs.EelFileUtils
 import com.intellij.platform.eel.provider.EelInitialization
@@ -164,6 +167,7 @@ import kotlin.system.measureTimeMillis
 open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   companion object {
     private val LOG = logger<ProjectManagerImpl>()
+    private val tracer by lazy { TelemetryManager.getInstance().getTracer(Scope("projectLifecycle")) }
     private val LISTENERS_IN_PROJECT_KEY = Key.create<MutableList<ProjectManagerListener>>("LISTENERS_IN_PROJECT_KEY")
     private val CLOSE_HANDLER_EP = ExtensionPointName<ProjectCloseHandler>("com.intellij.projectCloseHandler")
 
@@ -461,9 +465,11 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     publisher.projectClosingBeforeSave(project)
 
     val projectSaveSettingsDurationMs = measureTimeMillis {
-      if (saveProject) {
-        serviceIfCreated<FileDocumentManager>()?.saveAllDocuments()
-        SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(project)
+      tracer.spanBuilder("save project settings on close").use {
+        if (saveProject) {
+          serviceIfCreated<FileDocumentManager>()?.saveAllDocuments()
+          SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(project)
+        }
       }
     }
 
@@ -472,14 +478,16 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
 
     val projectClosingDurationMs = measureTimeMillis {
-      // somebody can start progress here, do not wrap in write action
-      fireProjectClosing(project)
-      if (project is ProjectImpl) {
-        if (Registry.`is`("ide.await.project.scope.completion")) {
-          cancelAndJoinBlocking(project)
-        }
-        else {
-          cancelAndTryJoin(project)
+      tracer.spanBuilder("project closing").use {
+        // somebody can start progress here, do not wrap in write action
+        fireProjectClosing(project)
+        if (project is ProjectImpl) {
+          if (Registry.`is`("ide.await.project.scope.completion")) {
+            cancelAndJoinBlocking(project)
+          }
+          else {
+            cancelAndTryJoin(project)
+          }
         }
       }
     }
@@ -503,8 +511,10 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       LaterInvocator.purgeExpiredItems()
 
       val projectDisposeDurationMs = measureTimeMillis {
-        if (dispose) {
-          Disposer.dispose(project)
+        tracer.spanBuilder("dispose project").use {
+          if (dispose) {
+            Disposer.dispose(project)
+          }
         }
       }
       LifecycleUsageTriggerCollector.onProjectClosedAndDisposed(
