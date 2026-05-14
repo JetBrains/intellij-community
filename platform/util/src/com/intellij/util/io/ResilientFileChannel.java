@@ -21,20 +21,20 @@ import java.util.Set;
 
 /**
  * Class implements most of {@link FileChannel} operations so that each operation is either completed
- * successfully, or not started -- but operation (e.g. read or write) couldn't be partially applied.
- * Basically, it just reopens the underlying FileChannel, and repeats each operation on it until the
- * operation succeeds. Implementation mostly relies on already existing {@link FileChannelInterruptsRetryer}
- * machinery for that -- read {@link FileChannelInterruptsRetryer} description for implementation details
- * and discussions.
+ * successfully or not started -- but an operation (e.g. read or write) couldn't be partially applied.
+ * Basically, it just reopens the underlying FileChannel and repeats each operation on it until the
+ * operation succeeds.
+ * Implementation mostly relies on already existing {@link FileChannelInterruptsRetryer} machinery for
+ * that: read {@link FileChannelInterruptsRetryer} description for implementation details and discussions.
  * <p/>
- * This class could be seen as a counterpart for {@link FileChannelInterruptsRetryer} in following sense:
- * {@link FileChannelInterruptsRetryer} implements 'atomicity' (all-or-nothing) for logical unit of work
- * ({@link FileChannelIdempotentOperation}), while this class implements same 'atomicity' in relation to
- * elementary operations like read and write.
+ * This class could be seen as a counterpart for {@link FileChannelInterruptsRetryer} in the following
+ * sense: {@link FileChannelInterruptsRetryer} implements 'atomicity' (all-or-nothing) for logical unit
+ * of work ({@link FileChannelIdempotentOperation}), while this class implements the same 'atomicity' for
+ * the elementary operations like read and write.
  * <p/>
  * All relative-positioned methods are guarded by 'this' lock -- this means that they are not concurrent
  * even if underlying FileChannel implementation and hardware allow parallel access. Use absolute
- * positioned methods if you're sure underlying impl support parallel access, and you want piggyback
+ * positioned methods if you're sure underlying impl supports parallel access, and you want to piggyback
  * on it.
  */
 @ApiStatus.Internal
@@ -76,7 +76,7 @@ public final class ResilientFileChannel extends FileChannel {
   // 1. Some operations are naturally idempotent (i.e. size)
   // 2. Absolute-position methods of FileChannel are also naturally idempotent
   // 3. All relative-position methods themselves are not idempotent -> to circumvent it, we keep .position
-  //    in a local field (i.e. it is _detached_ from underlying FileChannel.position), and call apt absolute
+  //    in a local field (i.e. it is _detached_ from underlying FileChannel.position) and call apt absolute
   //    -positioned method instead
 
   @Override
@@ -101,9 +101,9 @@ public final class ResilientFileChannel extends FileChannel {
   }
 
 
-  //RC: Could buffer.position/limit be 'corrupted' if operation is interrupted? It seems they could:
-  //    i.e. it seems FileChannel operation interrupted in the middle could actually read all bytes
-  //    in the buffer, and update position, but throw exception on the exit path (and tests seem to
+  //RC: Could buffer.position/limit be 'corrupted' if an operation is interrupted? It seems they could:
+  //    i.e., it seems FileChannel operation interrupted in the middle could actually read all bytes
+  //    in the buffer and update position, but throw exception on the exit path (and tests seem to
   //    confirm such a behavior). This means we must store buffer.position before each .retryIfInterrupted()
   //    call and restore it inside lambda.
 

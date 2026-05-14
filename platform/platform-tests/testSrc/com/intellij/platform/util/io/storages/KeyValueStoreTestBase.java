@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * The issue with property-based tests of durable Maps is: because Map is durable, small and large worksets
- * may trigger different code paths. So to really stress most of branches in the code one need to generate
+ * may trigger different code paths. So to really stress most branches in the code, one needs to generate
  * quite a lot of key-values -- ideally, more than fit into a heap. But so many key-values trigger OutOfMemory
  * quite quickly -- especially because we have not very big -Xmx in TeamCity runs.
  * <p>

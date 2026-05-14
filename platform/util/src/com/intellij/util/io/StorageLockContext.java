@@ -56,12 +56,11 @@ public final class StorageLockContext {
   private final boolean disableAssertions;
 
 
-  @VisibleForTesting
-  StorageLockContext(@NotNull FilePageCache legacyFilePageCache,
-                     @Nullable FilePageCacheLockFree newFilePageCacheLockFree,
-                     boolean useReadWriteLock,
-                     boolean cacheChannels,
-                     boolean disableAssertions) {
+  private StorageLockContext(@NotNull FilePageCache legacyFilePageCache,
+                             @Nullable FilePageCacheLockFree newFilePageCacheLockFree,
+                             boolean useReadWriteLock,
+                             boolean cacheChannels,
+                             boolean disableAssertions) {
     this.useReadWriteLock = useReadWriteLock;
     this.cacheChannels = cacheChannels;
     this.disableAssertions = disableAssertions;

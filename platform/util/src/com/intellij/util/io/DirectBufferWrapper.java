@@ -250,7 +250,9 @@ public final class DirectBufferWrapper {
     if (releaseState || force) {
       myFile.getStorageLockContext().assertUnderSegmentAllocationLock();
 
-      if (isDirty()) force();
+      if (isDirty()) {
+        force();
+      }
       if (myBuffer != null) {
         DirectByteBufferAllocator.ALLOCATOR.release(myBuffer);
         myBuffer = null;
