@@ -7,9 +7,9 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginSugge
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.buildSuggestionForFileIfNeeded
 import com.intellij.openapi.vfs.VirtualFile
 
-private const val AMPER_PLUGIN_ID = "org.jetbrains.amper"
-private const val AMPER_PLUGIN_NAME = "Amper"
-private const val AMPER_FILE_LABEL = "Amper"
+private const val AMPER_PLUGIN_ID = "org.jetbrains.kotlin-toolchain"
+private const val AMPER_PLUGIN_NAME = "Kotlin Toolchain"
+private const val AMPER_FILE_LABEL = "Kotlin project" // for the message: "Plugin supporting _Kotlin project_ files found"
 private const val AMPER_PLUGIN_SUGGESTION_KEY = "amper.plugin.suggestion.dismissed"
 
 private const val MODULE_YAML_FILE_NAME: String = "module.yaml"
