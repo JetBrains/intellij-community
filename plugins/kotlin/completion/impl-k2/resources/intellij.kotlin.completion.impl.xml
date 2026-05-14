@@ -63,7 +63,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <codeInsight.completion.intention.offset.provider language="kotlin"
                                                       implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinCommandCompletionFactory$KotlinIntentionCommandOffsetProvider"/>
-
+    <modCommandCopyHandler implementation="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinCommandCompletionFactory$KotlinCommandCompletionModCommandPsiCopyHandler"/>
     <codeInsight.completion.command.factory language="kotlin"
                                             implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinCommandCompletionFactory"/>
     <codeInsight.completion.command.provider language="kotlin"
