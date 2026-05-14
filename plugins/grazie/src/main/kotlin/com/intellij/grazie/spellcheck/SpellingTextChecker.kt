@@ -1,6 +1,5 @@
 package com.intellij.grazie.spellcheck
 
-import ai.grazie.gec.model.CorrectionServiceType
 import ai.grazie.gec.model.problem.Problem
 import ai.grazie.gec.model.problem.ProblemFix
 import ai.grazie.gec.model.problem.SentenceWithProblems
@@ -27,8 +26,8 @@ import com.intellij.grazie.utils.EXTRACTOR_SOURCE
 import com.intellij.grazie.utils.NaturalTextDetector
 import com.intellij.grazie.utils.getGrazieTracker
 import com.intellij.grazie.utils.getProblems
-import com.intellij.grazie.utils.getTextProblems
 import com.intellij.grazie.utils.toLinkedSet
+import com.intellij.grazie.utils.toSpellingProblems
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.progress.ProgressManager
@@ -59,6 +58,12 @@ internal class SpellingTextChecker : ExternalTextChecker() {
       findTypos(context, it)
     }
 
+  fun checkWithProblems(contexts: List<ProofreadingContext>, problems: Map<ProofreadingContext, List<Problem>>): Collection<TextProblem> {
+    return doCheck(contexts) { contexts, project ->
+      findTypos(contexts, project, problems)
+    }
+  }
+
   private inline fun doCheck(context: ProofreadingContext, action: (Project) -> List<TypoProblem>): List<TypoProblem> {
     val file = context.text.containingFile
     val scopes = GrazieSpellCheckingInspection.buildAllowedScopes(file)
@@ -73,20 +78,6 @@ internal class SpellingTextChecker : ExternalTextChecker() {
       context.text.putUserData(spellingKey, CachedResults(configStamp, cache))
     }
     return cache
-  }
-
-  override fun check(contexts: List<ProofreadingContext>): Collection<TextProblem> {
-    if (!Registry.`is`("grazie.correct.text.enabled")) return super.check(contexts)
-    return doCheck(contexts) { contexts, project ->
-      findLocalTypos(contexts, project)
-    }
-  }
-
-  override suspend fun checkExternally(contexts: List<ProofreadingContext>): Collection<TextProblem> {
-    if (!Registry.`is`("grazie.correct.text.enabled")) return super.checkExternally(contexts)
-    return doCheck(contexts) { contexts, project ->
-      findTypos(contexts, project)
-    }
   }
 
   private inline fun doCheck(contexts: List<ProofreadingContext>, action: (List<ProofreadingContext>, Project) -> List<TypoProblem>): Collection<TextProblem> {
@@ -163,15 +154,9 @@ internal class SpellingTextChecker : ExternalTextChecker() {
     }
   }
 
-  private fun findLocalTypos(contexts: List<ProofreadingContext>, project: Project): List<TypoProblem> {
-    return checkText(contexts, project).flatMap { entry ->
-      entry.value.map { toProblem(entry.key, it) }
-    }
-  }
-
-  private suspend fun findTypos(contexts: List<ProofreadingContext>, project: Project): List<TypoProblem> {
-    val contextsWithProblems = checkText(contexts, project)
-    return findTyposInCloud(contexts, contextsWithProblems, project)
+  private fun findTypos(contexts: List<ProofreadingContext>, project: Project, cloudProblems: Map<ProofreadingContext, List<Problem>>): List<TypoProblem> {
+    val localProblems = checkText(contexts, project)
+    return findTyposInCloud(localProblems, cloudProblems, project)
   }
 
   private fun findLocalTypos(context: ProofreadingContext, project: Project): List<TypoProblem> =
@@ -182,18 +167,16 @@ internal class SpellingTextChecker : ExternalTextChecker() {
     return findTyposInCloud(context, localTypos, project)
   }
 
-  private suspend fun findTyposInCloud(contexts: List<ProofreadingContext>, localTypos: Map<ProofreadingContext, List<Typo>>, project: Project): List<TypoProblem> {
-    if (!Registry.`is`("spellchecker.cloud.enabled", false)
-        || localTypos.isEmpty()
-        || !GrazieCloudConnector.seemsCloudConnected()
-        || GrazieCloudConnector.isAfterRecentGecError()
-    ) {
+  private fun findTyposInCloud(
+    localTypos: Map<ProofreadingContext, List<Typo>>,
+    problems: Map<ProofreadingContext, List<Problem>>,
+    project: Project,
+  ): List<TypoProblem> {
+    if (!Registry.`is`("spellchecker.cloud.enabled", false) || localTypos.isEmpty() || problems.isEmpty()) {
       return localTypos.flatMap { entry -> entry.value.map { toProblem(entry.key, it) } }
     }
 
-    val cloudTypos = getTextProblems(contexts, CorrectionServiceType.SPELL)?.takeIf { it.isNotEmpty() }
-    if (cloudTypos == null) return localTypos.flatMap { entry -> entry.value.map { toProblem(entry.key, it) } }
-
+    val cloudTypos = problems.toSpellingProblems()
     val manager = SpellCheckerManager.getInstance(project)
     return localTypos.flatMap { (context, problems) ->
       val cloudProblems = cloudTypos[context] ?: return@flatMap problems.map { toProblem(context, it) }

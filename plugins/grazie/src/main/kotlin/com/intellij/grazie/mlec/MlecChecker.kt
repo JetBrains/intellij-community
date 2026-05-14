@@ -1,6 +1,5 @@
 package com.intellij.grazie.mlec
 
-import ai.grazie.gec.model.CorrectionServiceType
 import ai.grazie.gec.model.problem.Problem
 import ai.grazie.gec.model.problem.ProblemFix
 import ai.grazie.gec.model.problem.SentenceWithProblems
@@ -23,16 +22,15 @@ import com.intellij.grazie.utils.Text
 import com.intellij.grazie.utils.TextStyleDomain
 import com.intellij.grazie.utils.getAssociatedGrazieRule
 import com.intellij.grazie.utils.getProblems
-import com.intellij.grazie.utils.getTextProblems
-import com.intellij.grazie.utils.isEnabledInState
 import com.intellij.grazie.utils.hasLanguage
+import com.intellij.grazie.utils.isEnabledInState
+import com.intellij.grazie.utils.toMlecProblems
 import com.intellij.grazie.utils.underline
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import java.util.Locale
 
@@ -50,14 +48,9 @@ class MlecChecker : ExternalTextChecker() {
     return typos.toMlecProblems(context)
   }
 
-  override suspend fun checkExternally(contexts: List<ProofreadingContext>): Collection<TextProblem> {
-    if (!Registry.`is`("grazie.correct.text.enabled")) return super.checkExternally(contexts)
-    if (!GrazieCloudConnector.seemsCloudConnected() || contexts.isEmpty()) return emptyList()
-
-    val contextsWithProblems = getTextProblems(contexts, CorrectionServiceType.MLEC)?.takeIf { it.isNotEmpty() }
-                               ?: return emptyList()
+  fun checkWithProblems(problems: Map<ProofreadingContext, List<Problem>>): Collection<TextProblem> {
     val checkedDomains = HighlightingUtil.checkedDomains()
-    return contextsWithProblems
+    return problems.toMlecProblems()
       .filter { it.key.text.domain in checkedDomains }
       .map { (context, problems) -> problems.toMlecProblems(context) }
       .flatten()

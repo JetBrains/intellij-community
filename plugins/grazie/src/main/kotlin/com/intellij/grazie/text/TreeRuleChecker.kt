@@ -421,7 +421,7 @@ class TreeRuleChecker private constructor() {
     }
 
     @JvmStatic
-    fun checkText(texts: List<TextContent>): List<TreeProblem> {
+    suspend fun checkText(texts: List<TextContent>): List<TreeProblem> {
       return checkText(ParsedSentence.getAllCheckedSentences(texts))
     }
 

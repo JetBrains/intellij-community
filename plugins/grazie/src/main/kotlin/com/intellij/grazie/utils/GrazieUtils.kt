@@ -54,8 +54,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.spellchecker.engine.DictionaryModificationTracker
 import com.intellij.util.containers.CollectionFactory.createConcurrentSoftValueMap
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import ai.grazie.text.TextRange as GrazieTextRange
@@ -219,27 +217,23 @@ fun Rule.isEnabledInState(state: GrazieConfig.State, domain: TextStyleDomain): B
 private val textProblemsCache = Caffeine.newBuilder()
   .expireAfterWrite(5, TimeUnit.MINUTES)
   .build<String, List<Problem>>()
-private val textProblemsMutex = Mutex()
 
-
-suspend fun getTextProblems(contexts: List<ProofreadingContext>, service: CorrectionServiceType): Map<ProofreadingContext, List<Problem>>? {
+suspend fun getProblemsForText(contexts: List<ProofreadingContext>): Map<ProofreadingContext, List<Problem>> {
   if (contexts.isEmpty()) return emptyMap()
   if (!GrazieCloudConnector.seemsCloudConnected() || GrazieCloudConnector.isAfterRecentGecError()) {
-    return null
+    return emptyMap()
   }
   return getAndCacheTextProblems(contexts.filter { it.hasLanguage() && NaturalTextDetector.seemsNatural(it.text) })
-    .mapValues { (_, problems) -> problems.filter { it.info.service == service } }
 }
 
 private suspend fun getAndCacheTextProblems(contexts: List<ProofreadingContext>): Map<ProofreadingContext, List<Problem>> {
   if (contexts.isEmpty()) return emptyMap()
   val key = contexts.joinToString(";")
 
-  val problems = textProblemsMutex.withLock {
+  val problems =
     textProblemsCache.getIfPresent(key)
     ?: getTextProblems(contexts)?.also { textProblemsCache.put(key, it) }
     ?: emptyList()
-  }
   return problems.associateByContexts(contexts)
 }
 
@@ -289,6 +283,16 @@ private fun ProofreadingContext.toParagraph(): Paragraph {
     exclusions = exclusions,
     forcedLanguage = this.language
   )
+}
+
+internal fun Map<ProofreadingContext, List<Problem>>.toSpellingProblems(): Map<ProofreadingContext, List<Problem>> =
+  toServiceTypeProblems(CorrectionServiceType.SPELL)
+
+internal fun Map<ProofreadingContext, List<Problem>>.toMlecProblems(): Map<ProofreadingContext, List<Problem>> =
+  toServiceTypeProblems(CorrectionServiceType.MLEC)
+
+private fun Map<ProofreadingContext, List<Problem>>.toServiceTypeProblems(type: CorrectionServiceType): Map<ProofreadingContext, List<Problem>> {
+  return this.mapValues { (_, problems) -> problems.filter { it.info.service == type } }
 }
 
 internal fun getGrazieTracker(file: PsiFile): ModificationTracker {

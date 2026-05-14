@@ -101,14 +101,12 @@ class ParsedSentence private constructor(
     }
 
     @JvmStatic
-    fun getAllCheckedSentences(texts: List<TextContent>): SequencedMap<TextContent, List<ParsedSentence>> {
+    suspend fun getAllCheckedSentences(texts: List<TextContent>): SequencedMap<TextContent, List<ParsedSentence>> {
       val checkedDomains = checkedDomains()
       val contents = texts.filter { it.domain in checkedDomains && !HighlightingUtil.isTooLargeText(it) }
       if (contents.isEmpty()) return LinkedHashMap()
 
-      return runBlockingCancellable {
-        contents.associateWith { getSentencesAsync(it) } as SequencedMap<TextContent, List<ParsedSentence>>
-      }
+      return contents.associateWith { getSentencesAsync(it) } as SequencedMap<TextContent, List<ParsedSentence>>
     }
 
     suspend fun getSentencesAsync(content: TextContent): List<ParsedSentence> {

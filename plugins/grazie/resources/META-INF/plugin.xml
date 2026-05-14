@@ -125,6 +125,7 @@
     <registryKey key="grazie.batch.language.detector" defaultValue="true" description="Whether to use batch language detector instead of regular one"/>
     <registryKey key="grazie.correct.text.enabled" defaultValue="true" description="Whether to use new /correct-text REST API"/>
 
+    <!-- Order matters for TextCheckerManager scheduling: there is async work that can suspended while LanguageToolChecker works. -->
     <grazie.textChecker implementation="com.intellij.grazie.text.AsyncTreeRuleChecker" id="treeRules"/>
     <grazie.textChecker implementation="com.intellij.grazie.grammar.LanguageToolChecker" id="languageTool"/>
     <grazie.textChecker implementation="com.intellij.grazie.mlec.MlecChecker" id="mlec"/>

@@ -23,7 +23,6 @@ import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieYtReportAction
 import com.intellij.grazie.ide.language.LanguageGrammarChecking
 import com.intellij.grazie.rule.SentenceTokenizer
 import com.intellij.grazie.spellcheck.TypoProblem
-import com.intellij.grazie.text.TextChecker.ProofreadingContext
 import com.intellij.grazie.text.TextContent.TextDomain
 import com.intellij.grazie.utils.NaturalTextDetector.seemsNatural
 import com.intellij.grazie.utils.getTextDomain
@@ -32,9 +31,7 @@ import com.intellij.grazie.utils.isSpelling
 import com.intellij.grazie.utils.toProofreadingContext
 import com.intellij.lang.annotation.ProblemGroup
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
@@ -44,12 +41,7 @@ import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.util.parents
 import com.intellij.psi.util.startOffset
 import com.intellij.spellchecker.inspections.SpellCheckingInspection.SPELL_CHECKING_INSPECTION_TOOL_NAME
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.yield
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.CancellationException
 
 private val LOG = Logger.getInstance(CheckerRunner::class.java)
 
@@ -159,82 +151,15 @@ class CheckerRunner(val text: TextContent) {
     fun checkTexts(allCheckers: List<TextChecker>, texts: List<TextContent>, checkedDomains: Set<TextDomain>): List<TextProblem> {
       if (allCheckers.isEmpty() || texts.isEmpty() || texts.all { it.isBlank() }) return emptyList()
       val checkers = if (texts.all { it.domain !in checkedDomains }) allCheckers.filter { it.isSpelling() } else allCheckers
-      return doRun(checkers, texts.toProofreadingContext(isLanguageDetectionRequired(checkers)))
-        .filterNot { shouldBeIgnored(it) }
+      val contexts = texts.toProofreadingContext(isLanguageDetectionRequired(checkers))
+      return TextCheckerManager.doRun(checkers, contexts).filterNot { shouldBeIgnored(it) }
     }
 
     private fun run(allCheckers: List<TextChecker>, text: TextContent, checkedDomains: Set<TextDomain>): List<TextProblem> {
       if (text.isBlank() || allCheckers.isEmpty()) return emptyList()
       val checkers = if (text.domain in checkedDomains && seemsNatural(text)) allCheckers else allCheckers.filterNot { it.isGrammar() }
-      return doRun(checkers, text.toProofreadingContext(isLanguageDetectionRequired(checkers)))
-        .filterNot { shouldBeIgnored(it) }
-    }
-
-    private fun doRun(checkers: List<TextChecker>, context: ProofreadingContext): Collection<TextProblem> =
-      doRun(
-        checkers = checkers,
-        input = context,
-        runLocal = { checker, value -> checker.check(value) },
-        runExternal = { checker, value -> checker.checkExternally(value) },
-      )
-
-    private fun doRun(checkers: List<TextChecker>, contexts: List<ProofreadingContext>): Collection<TextProblem> =
-      doRun(
-        checkers = checkers,
-        input = contexts,
-        runLocal = { checker, value -> checker.check(value) },
-        runExternal = { checker, value -> checker.checkExternally(value) },
-      )
-
-    /**
-     * We want for the CPU-bound checkers to all happen on the same thread
-     * because other threads are all needed by other inspections during highlighting.
-     * But we also want for external checkers to make their network requests in parallel.
-     *
-     * So we split the checkers into coroutines but dispatch them on the same thread sequentially.
-     * We schedule the external checkers to start as soon as possible
-     * to allow them to make the requests and suspend, giving up the thread to others.
-     * Then we explicitly start the non-external checkers to do their work, probably CPU-bound.
-     * We periodically yield to allow the external checkers to process their network responses (if any) and possibly suspend further.
-     *
-     * In the end, we still collect the results in the checker registration order
-     * so that problems from the first checkers can override intersecting problems from others.
-     */
-    private fun <T> doRun(
-      checkers: List<TextChecker>, input: T,
-      runLocal: (TextChecker, T) -> Collection<TextProblem>,
-      runExternal: suspend (ExternalTextChecker, T) -> Collection<TextProblem>,
-    ): Collection<TextProblem> {
-      // Spelling text checker optimization
-      // To get rid of expensive cancellable overhead,
-      // in case if cloud checking is disabled
-      if (checkers.size == 1 && checkers.first().isSpelling()) {
-        val checker = checkers.first()
-        return catching {
-          if (seemsCloudConnected()) {
-            runBlockingCancellable {
-              runExternal(checker as ExternalTextChecker, input)
-            }
-          }
-          else {
-            runLocal(checker, input)
-          }
-        } ?: emptyList()
-      }
-
-      return runBlockingCancellable {
-        val deferred = checkers.map { checker ->
-          when (checker) {
-            is ExternalTextChecker -> async { catching { runExternal(checker, input) } ?: emptyList() }
-            else -> async(start = CoroutineStart.LAZY) { catching { runLocal(checker, input) } ?: emptyList() }
-          }
-        }
-        for (job in deferred) {
-          yield() // let all pending external checker jobs complete what they're ready to do and possibly suspend further
-          job.start()
-        }
-        deferred.awaitAll().flatten()
-      }
+      val context = text.toProofreadingContext(isLanguageDetectionRequired(checkers))
+      return TextCheckerManager.doRun(checkers, context).filterNot { shouldBeIgnored(it) }
     }
 
     private fun shouldBeIgnored(problem: TextProblem): Boolean =
@@ -335,15 +260,5 @@ class CheckerRunner(val text: TextContent) {
 
     private fun isLanguageDetectionRequired(checkers: List<TextChecker>): Boolean =
       checkers.any { it.isGrammar() } || checkers.any { it.isSpelling() } && seemsCloudConnected()
-
-    private inline fun <T> catching(function: () -> T): T? {
-      try {
-        return function()
-      } catch (e: Throwable) {
-        if (e is CancellationException) throw e
-        thisLogger().error(e)
-        return null
-      }
-    }
   }
 }
