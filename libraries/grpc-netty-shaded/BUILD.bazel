@@ -11,8 +11,7 @@ jvm_library(
   deps = [
     "@lib//:grpc-netty-shaded",
     "@lib//:kotlin-stdlib",
-    "//platform/util",
-    "//platform/core-api:core",
+    "@lib//:jetbrains-annotations",
     "//libraries/grpc",
   ],
   exports = ["@lib//:grpc-netty-shaded"]
@@ -27,8 +26,6 @@ jvm_library(
   exports = ["@lib//:grpc-netty-shaded"],
   runtime_deps = [
     ":grpc-netty-shaded",
-    "//platform/util:util_test_lib",
-    "//platform/core-api:core_test_lib",
     "//libraries/grpc:grpc_test_lib",
   ]
 )

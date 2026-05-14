@@ -1,8 +1,5 @@
 package com.intellij.libraries.grpc.netty.shaded
 
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import io.grpc.ManagedChannelRegistry
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelProvider
 import org.jetbrains.annotations.ApiStatus
@@ -13,23 +10,14 @@ import org.jetbrains.annotations.ApiStatus
  * because intellij.libraries.grpc module does not depend on intellij.libraries.grpc.netty.shaded,
  * so automatic discovery fails.
  */
-@Service(Service.Level.APP)
 @ApiStatus.Experimental
-class NettyChannelProviderRegistrationService : Disposable {
-  private val registry = ManagedChannelRegistry.getDefaultRegistry()
-  private val channelProvider = NettyChannelProvider()
-
-  init {
-    registry.register(channelProvider)
+object NettyChannelProviderRegistrationService {
+  private val registered: Unit by lazy {
+    ManagedChannelRegistry.getDefaultRegistry().register(NettyChannelProvider())
   }
 
-  override fun dispose() {
-    registry.deregister(channelProvider)
-  }
-
-  companion object {
-    fun ensureChannelProviderRegistered() {
-      service<NettyChannelProviderRegistrationService>()
-    }
+  @JvmStatic
+  fun ensureChannelProviderRegistered() {
+    registered
   }
 }
