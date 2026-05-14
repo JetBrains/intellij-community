@@ -57,6 +57,12 @@ interface EelMachineResolver {
   }
 
   @ApiStatus.Internal
+  fun getCachedDescriptors(): Collection<EelDescriptor> {
+    // TODO implement everywhere
+    return emptyList()
+  }
+
+  @ApiStatus.Internal
   fun getResolvedEelMachine(eelDescriptor: EelDescriptor): EelMachine?
 
   @Throws(EelUnavailableException::class)
