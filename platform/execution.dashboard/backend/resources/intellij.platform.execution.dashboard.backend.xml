@@ -26,7 +26,7 @@
   <!-- endregion -->
 
   <extensionPoints>
-    <extensionPoint name="runDashboardChecker" interface="com.intellij.execution.dashboard.RunDashboardChecker" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.runDashboardChecker" interface="com.intellij.execution.dashboard.RunDashboardChecker" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

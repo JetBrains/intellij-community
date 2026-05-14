@@ -32,7 +32,7 @@
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.runDashboardManagerProxy"
                     interface="com.intellij.execution.dashboard.RunDashboardManagerProxy" dynamic="true"/>
-    <extensionPoint name="runDashboardGroupingRule"
+    <extensionPoint qualifiedName="com.intellij.runDashboardGroupingRule"
                     interface="com.intellij.platform.execution.dashboard.splitApi.frontend.RunDashboardGroupingRule" dynamic="true"/>
   </extensionPoints>
 

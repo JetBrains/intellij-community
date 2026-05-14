@@ -12,7 +12,7 @@
   <!-- endregion -->
 
   <extensionPoints>
-    <extensionPoint name="serviceViewLocatableSearcher" interface="com.intellij.platform.execution.serviceView.backend.ServiceViewLocatableSearcher" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.serviceViewLocatableSearcher" interface="com.intellij.platform.execution.serviceView.backend.ServiceViewLocatableSearcher" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

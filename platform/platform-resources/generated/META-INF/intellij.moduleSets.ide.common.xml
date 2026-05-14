@@ -306,16 +306,9 @@
     <module name="intellij.platform.navbar.backend"/>
     <module name="intellij.platform.navbar.frontend"/>
     <module name="intellij.platform.navbar.monolith"/>
-    <module name="intellij.platform.clouds"/>
     <module name="intellij.platform.structureView.impl" loading="embedded"/>
     <module name="intellij.platform.structureView.backend"/>
     <module name="intellij.platform.structureView.frontend"/>
-    <module name="intellij.platform.execution.serviceView"/>
-    <module name="intellij.platform.execution.serviceView.frontend"/>
-    <module name="intellij.platform.execution.serviceView.backend"/>
-    <module name="intellij.platform.execution.dashboard"/>
-    <module name="intellij.platform.execution.dashboard.frontend"/>
-    <module name="intellij.platform.execution.dashboard.backend"/>
     <module name="intellij.platform.find" loading="embedded"/>
     <module name="intellij.platform.find.backend"/>
     <module name="intellij.platform.editor.frontend"/>

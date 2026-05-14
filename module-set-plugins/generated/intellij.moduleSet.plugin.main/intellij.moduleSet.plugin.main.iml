@@ -12,8 +12,16 @@
     <orderEntry type="module" module-name="intellij.grid.types" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.moduleSet.plugin.grid.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.moduleSet.plugin.recentFiles" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.moduleSet.plugin.servicesView" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.moduleSet.plugin.structuralSearch" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.moduleSet.plugin.vcs.frontend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.clouds" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.execution.dashboard" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.execution.dashboard.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.execution.dashboard.frontend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.execution.serviceView" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.execution.serviceView.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.execution.serviceView.frontend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.recentFiles" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.recentFiles.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.recentFiles.frontend" scope="RUNTIME" />

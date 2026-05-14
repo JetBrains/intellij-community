@@ -27,10 +27,10 @@
   </dependencies>
   <!-- endregion -->
   <extensionPoints>
-    <extensionPoint name="backendServiceViewNavigatableProvider"
+    <extensionPoint qualifiedName="com.intellij.backendServiceViewNavigatableProvider"
                     interface="com.intellij.platform.execution.serviceView.BackendServiceViewNavigatableProvider"
                     dynamic="true"/>
-    <extensionPoint name="backendServiceViewSelectedItemProvider"
+    <extensionPoint qualifiedName="com.intellij.backendServiceViewSelectedItemProvider"
                     interface="com.intellij.platform.execution.serviceView.BackendServiceViewSelectedItemProvider"
                     dynamic="true"/>
   </extensionPoints>

@@ -123,6 +123,20 @@ object CommunityModuleSets {
   }
 
   /**
+   * Services tool window support, including Run Dashboard integration.
+   */
+  @Suppress("unused")
+  fun servicesView(): ModuleSet = plugin("servicesView") {
+    module("intellij.platform.clouds")
+    module("intellij.platform.execution.serviceView")
+    module("intellij.platform.execution.serviceView.frontend")
+    module("intellij.platform.execution.serviceView.backend")
+    module("intellij.platform.execution.dashboard")
+    module("intellij.platform.execution.dashboard.frontend")
+    module("intellij.platform.execution.dashboard.backend")
+  }
+
+  /**
    * Essential platform modules required by most IDE products.
    */
   fun essential(): ModuleSet = moduleSet("essential", includeDependencies = true) {
@@ -147,18 +161,10 @@ object CommunityModuleSets {
     module("intellij.platform.navbar.backend")
     module("intellij.platform.navbar.frontend")
     module("intellij.platform.navbar.monolith")
-    module("intellij.platform.clouds")
 
     embeddedModule("intellij.platform.structureView.impl")
     module("intellij.platform.structureView.backend")
     module("intellij.platform.structureView.frontend")
-
-    module("intellij.platform.execution.serviceView")
-    module("intellij.platform.execution.serviceView.frontend")
-    module("intellij.platform.execution.serviceView.backend")
-    module("intellij.platform.execution.dashboard")
-    module("intellij.platform.execution.dashboard.frontend")
-    module("intellij.platform.execution.dashboard.backend")
 
     // The loading="embedded" attribute is required here for module synchronization with CWM's ThinClientFindAndReplaceExecutor.
     // Since intellij.platform.frontend.split module loads in embedded mode, and it needs to override the default FindAndReplaceExecutor,
