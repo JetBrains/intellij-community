@@ -2,9 +2,9 @@
 package org.jetbrains.plugins.terminal;
 
 import com.google.common.base.Ascii;
-import com.intellij.execution.ijent.IjentChildPtyProcessAdapter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.platform.eel.EelDescriptor;
+import com.intellij.platform.ijent.IjentChildPtyProcessAdapter;
 import com.intellij.terminal.pty.PtyProcessTtyConnector;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.jediterm.core.util.TermSize;

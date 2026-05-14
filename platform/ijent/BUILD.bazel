@@ -15,6 +15,8 @@ jvm_library(
     "//libraries/kotlinx/coroutines/core",
     "//platform/util/coroutines",
     "//platform/eel",
+    "//platform/platform-util-io:ide-util-io",
+    "//libraries/pty4j",
   ],
   exports = ["//platform/eel"]
 )
@@ -38,6 +40,8 @@ jvm_library(
     "//libraries/kotlinx/coroutines/core:core_test_lib",
     "//platform/util/coroutines:coroutines_test_lib",
     "//platform/eel:eel_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+    "//libraries/pty4j:pty4j_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.ijent` end

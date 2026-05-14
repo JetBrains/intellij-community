@@ -18,7 +18,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 interface WslIjentManager {
   /**
-   * This coroutine scope is for usage in [com.intellij.execution.ijent.IjentChildProcessAdapter] and things like that.
+   * This coroutine scope is for usage in [com.intellij.platform.ijent.IjentChildProcessAdapter] and things like that.
    */
   @DelicateCoroutinesApi
   val processAdapterScope: CoroutineScope

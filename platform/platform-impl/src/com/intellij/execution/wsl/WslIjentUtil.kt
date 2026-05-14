@@ -6,8 +6,8 @@
 package com.intellij.execution.wsl
 
 import com.intellij.execution.CommandLineUtil.posixQuote
-import com.intellij.execution.ijent.IjentChildProcessAdapter
-import com.intellij.execution.ijent.IjentChildPtyProcessAdapter
+import com.intellij.platform.ijent.IjentChildProcessAdapter
+import com.intellij.platform.ijent.IjentChildPtyProcessAdapter
 import com.intellij.execution.process.LocalPtyOptions
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
