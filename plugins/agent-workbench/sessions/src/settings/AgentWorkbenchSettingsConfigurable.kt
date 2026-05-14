@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.sessions.settings
 
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
+import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettingsContributors
 import com.intellij.agent.workbench.sessions.frame.AgentChatOpenModeSettings
 import com.intellij.agent.workbench.sessions.sleep.AgentSleepPreventionSettings
 import com.intellij.openapi.options.BoundSearchableConfigurable
@@ -26,6 +27,13 @@ internal class AgentWorkbenchSettingsConfigurable : BoundSearchableConfigurable(
           checkBox(AgentSessionsBundle.message("advanced.setting.agent.workbench.prevent.system.sleep.while.working"))
             .bindSelected(AgentSleepPreventionSettings::isEnabled, AgentSleepPreventionSettings::setEnabled)
         }.rowComment(AgentSessionsBundle.message("advanced.setting.agent.workbench.prevent.system.sleep.while.working.description"))
+
+        for (setting in AgentWorkbenchSettingsContributors.checkboxSettings()) {
+          val row = row {
+            checkBox(setting.text).bindSelected(setting.isSelected, setting.setSelected)
+          }
+          setting.description?.let { row.rowComment(it) }
+        }
       }
     }
   }

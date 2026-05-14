@@ -27,6 +27,10 @@
       qualifiedName="com.intellij.agent.workbench.mcpConfigProviderContributor"
       interface="com.intellij.agent.workbench.sessions.core.launch.AwbMcpConfigProviderContributor"
       dynamic="true"/>
+    <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.settingsContributor"
+      interface="com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettingsContributor"
+      dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

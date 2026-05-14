@@ -2,6 +2,9 @@
 package com.intellij.agent.workbench.sessions.settings
 
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
+import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchCheckboxSetting
+import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettingsContributor
+import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettingsContributors
 import com.intellij.agent.workbench.sessions.frame.OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID
 import com.intellij.agent.workbench.sessions.sleep.PREVENT_SYSTEM_SLEEP_WHILE_WORKING_SETTING_ID
 import com.intellij.openapi.Disposable
@@ -40,8 +43,10 @@ class AgentWorkbenchSettingsConfigurableTest {
         val component = configurable.createComponent()
         configurable.reset()
 
-        val dedicatedFrameCheckBox = component.checkBox(AgentSessionsBundle.message("advanced.setting.agent.workbench.chat.open.in.dedicated.frame"))
-        val sleepPreventionCheckBox = component.checkBox(AgentSessionsBundle.message("advanced.setting.agent.workbench.prevent.system.sleep.while.working"))
+        val dedicatedFrameCheckBox =
+          component.checkBox(AgentSessionsBundle.message("advanced.setting.agent.workbench.chat.open.in.dedicated.frame"))
+        val sleepPreventionCheckBox =
+          component.checkBox(AgentSessionsBundle.message("advanced.setting.agent.workbench.prevent.system.sleep.while.working"))
 
         assertThat(dedicatedFrameCheckBox.isSelected).isFalse()
         assertThat(sleepPreventionCheckBox.isSelected).isTrue()
@@ -60,6 +65,24 @@ class AgentWorkbenchSettingsConfigurableTest {
 
     assertThat(AdvancedSettings.getBoolean(OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID)).isTrue()
     assertThat(AdvancedSettings.getBoolean(PREVENT_SYSTEM_SLEEP_WHILE_WORKING_SETTING_ID)).isFalse()
+  }
+
+  @Test
+  fun configurableRendersRegisteredSettingsContributors(@TestDisposable disposable: Disposable) {
+    AgentWorkbenchSettingsContributors.EP_NAME.point.registerExtension(TestSettingsContributor(), disposable)
+
+    runInEdtAndWait {
+      val configurable = AgentWorkbenchSettingsConfigurable()
+      try {
+        val component = configurable.createComponent()
+        configurable.reset()
+
+        assertThat(component.checkBox(TEST_CONTRIBUTOR_CHECKBOX_TEXT)).isNotNull
+      }
+      finally {
+        configurable.disposeUIResources()
+      }
+    }
   }
 
   private fun JComponent.checkBox(text: String): JBCheckBox {
@@ -87,5 +110,22 @@ class AgentWorkbenchSettingsConfigurableTest {
     return checkNotNull(javaClass.classLoader.getResource("intellij.agent.workbench.sessions.xml")) {
       "Module descriptor intellij.agent.workbench.sessions.xml is missing"
     }.readText()
+  }
+
+  private class TestSettingsContributor : AgentWorkbenchSettingsContributor {
+    override fun checkboxSettings(): List<AgentWorkbenchCheckboxSetting> {
+      return listOf(
+        AgentWorkbenchCheckboxSetting(
+          text = TEST_CONTRIBUTOR_CHECKBOX_TEXT,
+          description = null,
+          isSelected = { false },
+          setSelected = {},
+        )
+      )
+    }
+  }
+
+  companion object {
+    private const val TEST_CONTRIBUTOR_CHECKBOX_TEXT = "Test provider setting"
   }
 }

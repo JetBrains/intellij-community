@@ -27,6 +27,10 @@
     <applicationSettings service="com.intellij.agent.workbench.claude.sessions.ClaudeQuotaHintStateService"/>
   </extensions>
 
+  <extensions defaultExtensionNs="com.intellij.agent.workbench">
+    <settingsContributor implementation="com.intellij.agent.workbench.claude.sessions.ClaudeQuotaSettingsContributor"/>
+  </extensions>
+
   <actions resource-bundle="messages.ClaudeSessionsBundle">
     <action
       id="AgentWorkbenchSessions.ToggleClaudeQuotaWidget"

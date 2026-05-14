@@ -11,8 +11,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 internal object ClaudeQuotaStatusBarWidgetSettings {
-  private val _enabledFlow = MutableStateFlow(readEnabledFromSettings())
-  val enabledFlow: StateFlow<Boolean> = _enabledFlow.asStateFlow()
+  private val _enabledFlow = MutableStateFlow(false)
+  private val enabledStateFlow = _enabledFlow.asStateFlow()
+  val enabledFlow: StateFlow<Boolean>
+    get() {
+      syncEnabledState()
+      return enabledStateFlow
+    }
 
   fun isEnabled(): Boolean {
     syncEnabledState()
@@ -46,4 +51,3 @@ private fun readEnabledFromSettings(): Boolean {
 private fun findFactory(): StatusBarWidgetFactory? {
   return StatusBarWidgetFactory.EP_NAME.extensionList.firstOrNull { it.id == CLAUDE_QUOTA_WIDGET_ID }
 }
-

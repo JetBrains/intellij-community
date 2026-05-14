@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.claude.sessions
 
+import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettingsContributors
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
@@ -26,6 +27,28 @@ class AgentSessionsClaudeQuotaWidgetActionRegistrationTest {
         "AgentWorkbenchSessions.ToggleClaudeQuotaWidget",
         "AgentWorkbenchSessions.ToggleDedicatedFrame",
       )
+  }
+
+  @Test
+  fun settingsContributorTogglesClaudeQuotaWidget() {
+    assertThat(AgentWorkbenchSettingsContributors.all()).anyMatch { it is ClaudeQuotaSettingsContributor }
+
+    val initialEnabled = ClaudeQuotaStatusBarWidgetSettings.isEnabled()
+    try {
+      ClaudeQuotaStatusBarWidgetSettings.setEnabled(false)
+
+      val setting = ClaudeQuotaSettingsContributor().checkboxSettings().single()
+      assertThat(setting.text).isEqualTo(ClaudeSessionsBundle.message("settings.agent.workbench.claude.quota.status.bar.widget"))
+      assertThat(setting.description).isEqualTo(ClaudeSessionsBundle.message("settings.agent.workbench.claude.quota.status.bar.widget.description"))
+      assertThat(setting.isSelected()).isFalse()
+
+      setting.setSelected(true)
+
+      assertThat(ClaudeQuotaStatusBarWidgetSettings.isEnabled()).isTrue()
+    }
+    finally {
+      ClaudeQuotaStatusBarWidgetSettings.setEnabled(initialEnabled)
+    }
   }
 
   private fun ActionManager.childActionEntries(groupId: String): List<String> {
