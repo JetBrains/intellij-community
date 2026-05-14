@@ -38,27 +38,27 @@ import static java.nio.file.StandardOpenOption.WRITE;
 @ApiStatus.Internal
 public final class OpenChannelsCache { // TODO: Will it make sense to have a background thread, that flushes the cache by timeout?
   /** Max channels to keep open in cache */
-  private final int myCapacity;
+  private final int capacity;
 
   //statistics of the caching efficacy:
-  private int myHitCount;
-  private int myMissCount;
-  private int myLoadCount;
+  private int hitCount;
+  private int missCount;
+  private int loadCount;
 
-  //@GuardedBy("myCacheLock")
-  private final @NotNull Map<Path, ChannelDescriptor> myCache;
+  //@GuardedBy("cacheLock")
+  private final @NotNull Map<Path, ChannelDescriptor> cachedChannels;
 
-  private final transient Object myCacheLock = new Object();
+  private final transient Object cacheLock = new Object();
 
   @VisibleForTesting
   public OpenChannelsCache(int capacity) {
-    myCapacity = capacity;
-    myCache = new LinkedHashMap<>(capacity, 0.5f, true);
+    this.capacity = capacity;
+    cachedChannels = new LinkedHashMap<>(capacity, 0.5f, true);
   }
 
   @NotNull CachedChannelsStatistics getStatistics() {
-    synchronized (myCacheLock) {
-      return new CachedChannelsStatistics(myHitCount, myMissCount, myLoadCount, myCapacity);
+    synchronized (cacheLock) {
+      return new CachedChannelsStatistics(hitCount, missCount, loadCount, capacity);
     }
   }
 
@@ -109,17 +109,17 @@ public final class OpenChannelsCache { // TODO: Will it make sense to have a bac
 
   private @NotNull ChannelDescriptor acquireDescriptor(@NotNull Path path,
                                                        boolean readOnly) throws IOException {
-    synchronized (myCacheLock) {
-      ChannelDescriptor descriptor = myCache.get(path);
+    synchronized (cacheLock) {
+      ChannelDescriptor descriptor = cachedChannels.get(path);
       if (descriptor == null) {
         boolean somethingDropped = releaseOverCachedChannels();
         descriptor = new ChannelDescriptor(path, /*readOnly: */ readOnly);
-        myCache.put(path, descriptor);
+        cachedChannels.put(path, descriptor);
         if (somethingDropped) {
-          myMissCount++;
+          missCount++;
         }
         else {
-          myLoadCount++;
+          loadCount++;
         }
       }
       else if (!readOnly && descriptor.isReadOnly()) {
@@ -130,12 +130,12 @@ public final class OpenChannelsCache { // TODO: Will it make sense to have a bac
           // re-open as write
           closeChannel(path);
           descriptor = new ChannelDescriptor(path, /*readOnly: */false);
-          myCache.put(path, descriptor);
+          cachedChannels.put(path, descriptor);
         }
-        myMissCount++;
+        missCount++;
       }
       else {
-        myHitCount++;
+        hitCount++;
       }
       descriptor.lock();
       return descriptor;
@@ -143,15 +143,15 @@ public final class OpenChannelsCache { // TODO: Will it make sense to have a bac
   }
 
   private void releaseDescriptor(ChannelDescriptor descriptor) {
-    synchronized (myCacheLock) {
+    synchronized (cacheLock) {
       descriptor.unlock();
     }
   }
 
   @VisibleForTesting
   public void closeChannel(Path path) throws IOException {
-    synchronized (myCacheLock) {
-      ChannelDescriptor descriptor = myCache.remove(path);
+    synchronized (cacheLock) {
+      ChannelDescriptor descriptor = cachedChannels.remove(path);
 
       if (descriptor != null) {
         assert !descriptor.isLocked() : "Channel is in use: " + descriptor;
@@ -162,14 +162,14 @@ public final class OpenChannelsCache { // TODO: Will it make sense to have a bac
 
   //@GuardedBy(myCacheLock)
   private boolean releaseOverCachedChannels() throws IOException {
-    int dropCount = myCache.size() - myCapacity;
+    int dropCount = cachedChannels.size() - capacity;
 
     if (dropCount < 0) {
       return false;
     }
 
     List<Path> keysToDrop = new ArrayList<>();
-    for (Map.Entry<Path, ChannelDescriptor> entry : myCache.entrySet()) {
+    for (Map.Entry<Path, ChannelDescriptor> entry : cachedChannels.entrySet()) {
       if (dropCount < 0) break;
       if (!entry.getValue().isLocked()) {
         dropCount--;
