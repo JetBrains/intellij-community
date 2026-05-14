@@ -363,6 +363,7 @@ com.intellij.model.Pointer
 - a:dereference():java.lang.Object
 - s:fileRangePointer(com.intellij.psi.PsiFile,com.intellij.openapi.util.TextRange,java.util.function.BiFunction):com.intellij.model.Pointer
 - s:hardPointer(java.lang.Object):com.intellij.model.Pointer
+- s:selfDelegatingPointer(com.intellij.model.Pointer,java.util.function.BiFunction):com.intellij.model.Pointer
 - s:uroborosPointer(com.intellij.model.Pointer,java.util.function.BiFunction):com.intellij.model.Pointer
 f:com.intellij.model.PsiElementUsageInfo
 - com.intellij.usageView.UsageInfo

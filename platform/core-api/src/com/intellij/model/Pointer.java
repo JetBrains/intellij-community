@@ -111,19 +111,48 @@ public interface Pointer<T> {
   }
 
   /**
-   * Creates the same pointer as {@link #delegatingPointer}, which additionally passes itself
-   * into the {@code restoration} function to allow caching the pointer in the restored value.
+   * Creates the same pointer as {@link #delegatingPointer(Pointer, Function)}, and additionally passes the created pointer to
+   * {@code restoration} so the restored value may cache it.
+   * <p>
+   * This is useful when the restored value is a {@link Symbol} (or a similar short-lived object recreated in every read action) and wants
+   * to reuse the pointer that produced it on subsequent {@link Symbol#createPointer()} calls, instead of allocating a fresh pointer each
+   * time. The restored value stores the pointer in a field; the next {@code createPointer()} call short-circuits and returns the cached
+   * pointer.
+   * </p>
+   * <p>
+   * Typical usage:
+   * </p>
+   * <pre>{@code
+   * @Override
+   * public @NotNull Pointer<MySymbol> createPointer() {
+   *   if (myPointer != null) return myPointer; // reuse pointer cached on a previous restore
+   *   return selfDelegatingPointer(
+   *     underlyingPointer,
+   *     (underlyingValue, pointer) -> new MySymbol(underlyingValue, pointer)
+   *   );
+   * }
+   * }</pre>
    */
   @Contract(value = "_, _ -> new", pure = true)
-  static <T, U> @NotNull Pointer<T> uroborosPointer(
+  static <T, U> @NotNull Pointer<T> selfDelegatingPointer(
     @NotNull Pointer<? extends U> underlyingPointer,
-    @NotNull BiFunction<? super U, ? super Pointer<T>, ? extends T> restoration
+    @NotNull BiFunction<? super U, ? super Pointer<T>, ? extends @Nullable T> restoration
   ) {
     return new DelegatingPointer.ByValueAndPointer<>(underlyingPointer, restoration);
   }
 
   /**
-   * Creates a pointer which uses {@code file} and {@code rangeInFile} to restore its value with {@code restoration} function.
+   * @deprecated use {@link #selfDelegatingPointer(Pointer, BiFunction)}.
+   */
+  @Deprecated
+  @Contract(value = "_, _ -> new", pure = true)
+  static <T, U> @NotNull Pointer<T> uroborosPointer(
+    @NotNull Pointer<? extends U> underlyingPointer,
+    @NotNull BiFunction<? super U, ? super Pointer<T>, ? extends @Nullable T> restoration
+  ) {
+    return selfDelegatingPointer(underlyingPointer, restoration);
+  }
+
   /**
    * Creates a pointer which uses {@code file} and {@code rangeInFile} to restore its value
    * with {@code restoration}.
