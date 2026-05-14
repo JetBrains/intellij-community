@@ -5,6 +5,7 @@ import com.intellij.concurrency.IntelliJContextElement
 import com.intellij.concurrency.IntelliJThreadContextElement
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.PrefetchDataElement
 import com.intellij.platform.eel.fs.EelFileInfo
 import com.intellij.platform.eel.path.EelPath
 import kotlinx.coroutines.ThreadContextElement
@@ -14,7 +15,7 @@ import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
-private val LOG = logger<PrefetchDataElement>()
+private val LOG = logger<PrefetchDataElementImpl>()
 
 /**
  * Coroutine context element carrying prefetched directory data.
@@ -29,10 +30,8 @@ private val LOG = logger<PrefetchDataElement>()
  *
  * @param data directory path → (childName → fileInfo), immutable after construction
  */
-@ApiStatus.Internal
-class PrefetchDataElement(private val data: Map<EelPath, Map<String, EelFileInfo>>) :
-  AbstractCoroutineContextElement(Key),
-  ThreadContextElement<PrefetchDataElement?>,
+private class PrefetchDataElementImpl(private val data: Map<EelPath, Map<String, EelFileInfo>>) :
+  PrefetchDataElement(),
   IntelliJThreadContextElement<Unit> {
 
   // --- ThreadContextElement ---
@@ -50,37 +49,30 @@ class PrefetchDataElement(private val data: Map<EelPath, Map<String, EelFileInfo
   // --- IntelliJContextElement ---
 
   override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
-  override fun beforeStarted(context: CoroutineContext) { threadLocal.set(this) }
-  override fun afterCompleted(context: CoroutineContext, oldState: Unit) { threadLocal.remove() }
-  override fun canceled(context: CoroutineContext) { threadLocal.remove() }
+  override fun beforeStarted(context: CoroutineContext) {
+    threadLocal.set(this)
+  }
+
+  override fun afterCompleted(context: CoroutineContext, oldState: Unit) {
+    threadLocal.remove()
+  }
+
+  override fun canceled(context: CoroutineContext) {
+    threadLocal.remove()
+  }
 
   // --- Cache access ---
 
-  fun getChildren(path: EelPath): Map<String, EelFileInfo>? = data[path]
+  override fun getChildren(path: EelPath): Map<String, EelFileInfo>? = data[path]
 
-  sealed class StatLookup {
-    class Hit(val info: EelFileInfo) : StatLookup()
-    object Absent : StatLookup()  // parent cached, child missing = known DoesNotExist
-    object Miss : StatLookup()    // parent not cached = need gRPC
-  }
-
-  fun lookupStat(path: EelPath): StatLookup {
+  override fun lookupStat(path: EelPath): StatLookup {
     val parent = path.parent ?: return StatLookup.Miss
     val children = data[parent] ?: return StatLookup.Miss
     val info = children[path.fileName]
     return if (info != null) StatLookup.Hit(info) else StatLookup.Absent
   }
 
-  val size: Int get() = data.size
-
-  companion object Key : CoroutineContext.Key<PrefetchDataElement> {
-    private val threadLocal = ThreadLocal<PrefetchDataElement?>()
-
-    @ApiStatus.Internal
-    suspend fun current(): PrefetchDataElement? {
-      return currentCoroutineContext()[PrefetchDataElement] ?: threadLocal.get()
-    }
-  }
+  override val size: Int get() = data.size
 }
 
 /**
@@ -109,7 +101,7 @@ suspend fun buildPrefetchContext(remoteRoots: List<Pair<EelDescriptor, EelPath>>
     if (prefetchData.isEmpty()) return EmptyCoroutineContext
 
     @Suppress("UNCHECKED_CAST")
-    val element = PrefetchDataElement(prefetchData as Map<EelPath, Map<String, EelFileInfo>>)
+    val element = PrefetchDataElementImpl(prefetchData as Map<EelPath, Map<String, EelFileInfo>>)
     LOG.info("Prefetched ${element.size} directories for scanning")
     return element
   }

@@ -9,6 +9,7 @@ jvm_library(
   resources = glob(["resources/**/*"]),
   resource_strip_prefix = "resources",
   deps = [
+    "//platform/core-ui",
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/coroutines/core",
     "//platform/util",
@@ -21,6 +22,10 @@ jvm_library(
     "//platform/core-impl",
     "//platform/eel-nioFs-impl",
     "//platform/eel-impl-base",
+    "//platform/ide-core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/progress/shared:ide-progress",
+    "//platform/platform-api:ide",
   ]
 )
 
@@ -32,6 +37,7 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   runtime_deps = [
     ":impl",
+    "//platform/core-ui:core-ui_test_lib",
     "@lib//:junit5",
     "@lib//:junit5Params",
     "@lib//:kotlin-test",
@@ -49,6 +55,10 @@ jvm_library(
     "//platform/core-impl:core-impl_test_lib",
     "//platform/eel-nioFs-impl:eel-nioFs-impl_test_lib",
     "//platform/eel-impl-base:eel-impl-base_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/progress/shared:ide-progress_test_lib",
+    "//platform/platform-api:ide_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.ijent.community.impl` end

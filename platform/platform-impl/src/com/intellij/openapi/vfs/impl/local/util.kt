@@ -11,6 +11,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase.LOG
 import com.intellij.openapi.vfs.limits.FileSizeLimit
+import com.intellij.platform.eel.PrefetchDataElement
 import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.fs.EelFileInfo
 import com.intellij.platform.eel.fs.EelFileSystemApi
@@ -30,13 +31,12 @@ import com.intellij.platform.eel.provider.EelMountRoot
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.buildPrefetchContext
+import com.intellij.platform.eel.provider.canReadPermissionsDirectly
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.eel.provider.toEelApiBlocking
 import com.intellij.platform.eel.provider.transformPath
-import com.intellij.platform.eel.provider.PrefetchDataElement
-import com.intellij.platform.eel.provider.buildPrefetchContext
-import com.intellij.platform.eel.provider.canReadPermissionsDirectly
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.eel.provider.utils.getOrThrowFileSystemException
 import com.intellij.platform.ijent.community.impl.nio.fsBlocking
