@@ -21,6 +21,7 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.isAncestor
@@ -242,11 +243,9 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
 
     private fun KtExpression.chooseDestructuringNames(
         editor: Editor?,
-        haveOccurrencesToReplace: Boolean,
         nameValidator: KotlinDeclarationNameValidator,
         callback: (SuggestedNames) -> Unit,
     ) {
-        if (haveOccurrencesToReplace) return callback(emptyList())
         return chooseDestructuringNames(
             editor = editor,
             expression = this,
@@ -330,6 +329,37 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
         return declaration.replace(newDeclaration) as KtDestructuringDeclaration
     }
 
+    private fun insertDestructuringDeclarationAfterProperty(
+        property: KtProperty,
+        suggestedNames: SuggestedNames,
+        nameBasedDestructuringForm: NameBasedDestructuringForm?,
+        entryNames: List<String>?,
+    ): KtDestructuringDeclaration? {
+        val propertyName = property.name ?: return null
+        val keyword = if (property.isVar) "var" else "val"
+        val declarationText = buildString {
+            suggestedNames.joinTo(this, prefix = "$keyword (", postfix = ")") { it.first() }
+            append(" = ")
+            append(propertyName)
+        }
+
+        val parent = property.parent ?: return null
+        val psiFactory = KtPsiFactory(property.project)
+        val declaration = parent.addAfter(psiFactory.createDestructuringDeclaration(declarationText), property) as KtDestructuringDeclaration
+        parent.addAfter(psiFactory.createNewLine(), property)
+
+        return if (nameBasedDestructuringForm != null) {
+            convertToFullFormNameBasedDestructuring(
+                declaration,
+                nameBasedDestructuringForm,
+                useExplicitMappings = false,
+                entryNames = entryNames,
+            )
+        } else {
+            declaration
+        }
+    }
+
     context(_: KaSession)
     private fun KaType?.toDenotable(): KaType? {
         val type = when {
@@ -404,10 +434,15 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
 
             expression.chooseDestructuringNames(
                 editor = editor,
-                haveOccurrencesToReplace = replaceFirstOccurrence || allReplaces.size > 1,
                 nameValidator = nameValidator,
             ) { destructuringNames ->
-                val suggestedNames = destructuringNames.takeIf { it.isNotEmpty() } ?: suggestSingleVariableNames(expression, nameValidator)
+                val haveOccurrencesToReplace = replaceFirstOccurrence || allReplaces.size > 1
+                val introduceDestructuringWithReplacement = destructuringNames.isNotEmpty() && haveOccurrencesToReplace
+                val suggestedNames = when {
+                    introduceDestructuringWithReplacement -> suggestSingleVariableNames(expression, nameValidator)
+                    destructuringNames.isNotEmpty() -> destructuringNames
+                    else -> suggestSingleVariableNames(expression, nameValidator)
+                }
                 val selectedDestructuringEntryNames = destructuringNames.takeIf { it.isNotEmpty() }?.map { it.first() }
                 val nameBasedDestructuringPropertyNames =
                     destructuringNames.takeIf { it.isNotEmpty() }?.let { suggestNameBasedDestructuringPropertyNames(expression, it.size) }
@@ -417,7 +452,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                     isVar,
                     suggestedNames,
                     replaceFirstOccurrence,
-                    destructuringNames.isNotEmpty(),
+                    destructuringNames.isNotEmpty() && !introduceDestructuringWithReplacement,
                     expressionRenderedType,
                     renderedTypeArguments,
                 )
@@ -441,6 +476,24 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                     }
 
                     var property = introduceVariableContext.introducedVariablePointer?.element ?: return@executeCommand
+                    val backingProperty = property as? KtProperty
+                    val destructuringDeclarationForReplacement =
+                        if (introduceDestructuringWithReplacement && backingProperty != null) {
+                            runWriteAction {
+                                insertDestructuringDeclarationAfterProperty(
+                                    backingProperty,
+                                    destructuringNames,
+                                    nameBasedDestructuringPropertyNames,
+                                    selectedDestructuringEntryNames,
+                                )
+                            }
+                        } else {
+                            null
+                        }
+                    destructuringDeclarationForReplacement?.initializer?.let { initializer ->
+                        introduceVariableContext.references.add(SmartPointerManager.createPointer(initializer))
+                    }
+
                     val destructuringDeclaration = property as? KtDestructuringDeclaration
                     if (destructuringDeclaration != null && nameBasedDestructuringPropertyNames != null) {
                         property = runWriteAction {

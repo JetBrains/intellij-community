@@ -977,6 +977,11 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
             runTest("../../idea/tests/testData/refactoring/introduceVariable/IntroduceNameBasedDestructuringDeclarationOnlySyntax2.kt");
         }
 
+        @TestMetadata("IntroducePositionBasedDestructuringDeclarationAsArgument.kt")
+        public void testIntroducePositionBasedDestructuringDeclarationAsArgument() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/IntroducePositionBasedDestructuringDeclarationAsArgument.kt");
+        }
+
         @TestMetadata("IntroducePositionBasedDestructuringDeclarationComplete.kt")
         public void testIntroducePositionBasedDestructuringDeclarationComplete() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceVariable/IntroducePositionBasedDestructuringDeclarationComplete.kt");

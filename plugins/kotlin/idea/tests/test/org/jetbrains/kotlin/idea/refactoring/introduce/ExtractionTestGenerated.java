@@ -979,6 +979,11 @@ public abstract class ExtractionTestGenerated extends AbstractK1ExtractionTest {
                 runTest("testData/refactoring/introduceVariable/IntroduceNameBasedDestructuringDeclarationOnlySyntax2.kt");
             }
 
+            @TestMetadata("IntroducePositionBasedDestructuringDeclarationAsArgument.kt")
+            public void testIntroducePositionBasedDestructuringDeclarationAsArgument() throws Exception {
+                runTest("testData/refactoring/introduceVariable/IntroducePositionBasedDestructuringDeclarationAsArgument.kt");
+            }
+
             @TestMetadata("IntroducePositionBasedDestructuringDeclarationComplete.kt")
             public void testIntroducePositionBasedDestructuringDeclarationComplete() throws Exception {
                 runTest("testData/refactoring/introduceVariable/IntroducePositionBasedDestructuringDeclarationComplete.kt");
