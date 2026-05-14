@@ -23,7 +23,6 @@ jvm_library(
   runtime_deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
-    "@lib//:kotlinx-io-core",
   ]
 )
 
@@ -38,6 +37,8 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlinx-coroutines-test",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
     "@lib//:kotlinx-io-core",
     "//fleet/ktor/client/cio",
     "//fleet/ktor/client/cio:cio_test_lib",

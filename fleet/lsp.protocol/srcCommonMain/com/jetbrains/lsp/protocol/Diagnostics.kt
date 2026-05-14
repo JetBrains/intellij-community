@@ -4,7 +4,6 @@ package com.jetbrains.lsp.protocol
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.builtins.NothingSerializer
 import kotlinx.serialization.builtins.nullable
 import kotlinx.serialization.json.JsonElement
 
@@ -404,8 +403,8 @@ object Diagnostics {
    */
   val Refresh: RequestType<Nothing?, Nothing?, Nothing?> = RequestType(
     method = "workspace/diagnostic/refresh",
-    paramsSerializer = NothingSerializer().nullable,
-    resultSerializer = NothingSerializer().nullable,
-    errorSerializer = NothingSerializer().nullable,
+    paramsSerializer = NoValueSerializer,
+    resultSerializer = NoValueSerializer,
+    errorSerializer = NoValueSerializer,
   )
 }
