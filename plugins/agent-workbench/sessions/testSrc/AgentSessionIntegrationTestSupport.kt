@@ -468,6 +468,7 @@ internal suspend fun withServiceAndArchiveAndLaunch(
       projectEntriesProvider = projectEntriesProvider,
       stateStore = stateStore,
       warmState = warmState,
+      scheduleVfsRefresh = {},
       openAgentChatSnapshotProvider = {
         buildOpenChatRefreshSnapshot(
           pendingTabsByProvider = mapOf(AgentSessionProvider.CODEX to openPendingCodexTabsProvider()),

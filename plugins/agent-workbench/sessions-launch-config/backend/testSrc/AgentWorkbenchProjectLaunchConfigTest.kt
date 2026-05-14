@@ -48,7 +48,8 @@ class AgentWorkbenchProjectLaunchConfigTest {
 
     val pathEntries = splitPathEntries(launchSpec.envVariables.getValue("PATH"), EelOsFamily.Posix)
     val shimDirectory = Path.of(pathEntries.first())
-    assertThat(shimDirectory.startsWith(tempDir.resolve("system").resolve("agent-workbench").resolve("command-shims").resolve("codex"))).isTrue()
+    assertThat(shimDirectory.startsWith(tempDir.resolve("system").resolve("agent-workbench").resolve("command-shims")
+                                          .resolve("codex"))).isTrue()
     assertThat(Files.isRegularFile(shimDirectory.resolve("bun"))).isTrue()
     assertThat(pathEntries[1]).isEqualTo(projectDir.resolve(AGENT_WORKBENCH_TEST_PATH_PREPEND).toString())
     assertThat(pathEntries.drop(2)).containsExactlyElementsOf(targetPathEntries.map(Path::toString))
@@ -331,6 +332,42 @@ class AgentWorkbenchProjectLaunchConfigTest {
   }
 
   @Test
+  fun runtimeConfigDefaultsToRefreshingVfsOnStatusUpdates() {
+    val projectDir = tempDir.resolve("project")
+    Files.createDirectories(projectDir)
+
+    assertThat(AgentWorkbenchProjectLaunchConfigCache().isRefreshVfsOnStatusUpdatesEnabled(projectDir)).isTrue()
+  }
+
+  @Test
+  fun runtimeConfigReadsRefreshVfsOnStatusUpdatesFlag() {
+    val projectDir = tempDir.resolve("project")
+    writeAgentWorkbenchProjectConfig(
+      projectDir = projectDir,
+      shared = AgentWorkbenchTestLaunchConfig(),
+      refreshVfsOnStatusUpdates = false,
+    )
+    val cache = AgentWorkbenchProjectLaunchConfigCache()
+
+    assertThat(cache.isRefreshVfsOnStatusUpdatesEnabled(projectDir)).isFalse()
+    assertThat(cache.getProviderConfig(projectRoot = projectDir, provider = AgentSessionProvider.CODEX)).isNull()
+    assertThat(AgentWorkbenchProjectRuntimeConfigProviderImpl(cache).isRefreshVfsOnStatusUpdatesEnabled(projectDir.toString())).isFalse()
+  }
+
+  @Test
+  fun runtimeConfigIgnoresInvalidRefreshVfsOnStatusUpdatesFlag() {
+    val projectDir = tempDir.resolve("project")
+    Files.createDirectories(projectDir)
+    Files.writeString(
+      projectDir.resolve(".agent-workbench.yaml"),
+      "refreshVfsOnStatusUpdates: maybe\n",
+      StandardCharsets.UTF_8,
+    )
+
+    assertThat(AgentWorkbenchProjectLaunchConfigCache().isRefreshVfsOnStatusUpdatesEnabled(projectDir)).isTrue()
+  }
+
+  @Test
   fun augmentUsesTargetNativePathsForPathAndCommandShims() {
     val projectDir = tempDir.resolve("project")
     writeAgentWorkbenchProjectConfig(projectDir)
@@ -343,7 +380,9 @@ class AgentWorkbenchProjectLaunchConfigTest {
       targetPathStringResolver = { path ->
         when {
           path == tempDir.resolve("system") -> "/remote/system"
-          path.startsWith(tempDir.resolve("system")) -> "/remote/system/${tempDir.resolve("system").relativize(path).invariantSeparatorsPathString}"
+          path.startsWith(tempDir.resolve("system")) -> "/remote/system/${
+            tempDir.resolve("system").relativize(path).invariantSeparatorsPathString
+          }"
           path == commandShimTarget -> "/remote/project/community/tools/bun.cmd"
           path == projectDir.resolve(AGENT_WORKBENCH_TEST_PATH_PREPEND) -> "/remote/project/$AGENT_WORKBENCH_TEST_PATH_PREPEND"
           else -> path.toString()

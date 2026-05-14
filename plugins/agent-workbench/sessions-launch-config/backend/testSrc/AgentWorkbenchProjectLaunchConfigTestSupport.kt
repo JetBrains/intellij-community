@@ -36,6 +36,7 @@ internal fun writeAgentWorkbenchProjectConfig(
   projectDir: Path,
   shared: AgentWorkbenchTestLaunchConfig = testLaunchConfig(),
   providers: Map<AgentSessionProvider, AgentWorkbenchTestLaunchConfig> = emptyMap(),
+  refreshVfsOnStatusUpdates: Boolean? = null,
 ) {
   Files.createDirectories(projectDir)
   sequenceOf(shared, *providers.values.toTypedArray())
@@ -43,6 +44,9 @@ internal fun writeAgentWorkbenchProjectConfig(
     .forEach { Files.createDirectories(projectDir.resolve(it)) }
 
   val yaml = buildString {
+    if (refreshVfsOnStatusUpdates != null) {
+      appendLine("refreshVfsOnStatusUpdates: $refreshVfsOnStatusUpdates")
+    }
     appendLaunchConfig(shared, indent = "")
     if (providers.isNotEmpty()) {
       appendLine("providers:")

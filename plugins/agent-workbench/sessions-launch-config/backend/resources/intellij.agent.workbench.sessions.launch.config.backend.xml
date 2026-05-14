@@ -9,5 +9,6 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <agent.workbench.sessionLaunchSpecAugmenter implementation="com.intellij.agent.workbench.sessions.launch.config.backend.AgentWorkbenchProjectLaunchConfigAugmenter"/>
+    <agent.workbench.projectRuntimeConfigProvider implementation="com.intellij.agent.workbench.sessions.launch.config.backend.AgentWorkbenchProjectRuntimeConfigProviderImpl"/>
   </extensions>
 </idea-plugin>

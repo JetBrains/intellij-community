@@ -112,6 +112,119 @@ class AgentSessionRefreshCoordinatorTest {
   }
 
   @Test
+  fun sourceUpdatesScheduleSingleDebouncedVfsRefresh() = runBlocking(Dispatchers.Default) {
+    val vfsRefreshInvocations = AtomicInteger(0)
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.CODEX,
+      supportsUpdates = true,
+      updateEvents = flow {
+        emit(threadsChangedEvent())
+        emit(hintsChangedEvent(activityHintsByThreadId = mapOf("codex-1" to AgentThreadActivity.NEEDS_INPUT)))
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { true },
+      scheduleVfsRefresh = { vfsRefreshInvocations.incrementAndGet() },
+    ) { coordinator, _ ->
+      coordinator.observeSessionSourceUpdates()
+
+      waitForCondition { vfsRefreshInvocations.get() == 1 }
+      delay(500.milliseconds)
+
+      assertThat(vfsRefreshInvocations.get()).isEqualTo(1)
+    }
+  }
+
+  @Test
+  fun sourceUpdateSchedulesVfsRefreshByDefault(@TempDir tempDir: Path) = runBlocking(Dispatchers.Default) {
+    val projectPath = tempDir.resolve("project")
+    Files.createDirectories(projectPath)
+    val vfsRefreshInvocations = AtomicInteger(0)
+    val closedRefreshInvocations = AtomicInteger(0)
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.CODEX,
+      supportsUpdates = true,
+      updateEvents = flow { emit(threadsChangedEvent()) },
+      listFromClosedProject = { path ->
+        if (path == projectPath.toString()) {
+          closedRefreshInvocations.incrementAndGet()
+        }
+        listOf(thread(id = "codex-1", updatedAt = 200L, provider = AgentSessionProvider.CODEX))
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { true },
+      scheduleVfsRefresh = { vfsRefreshInvocations.incrementAndGet() },
+    ) { coordinator, stateStore ->
+      stateStore.replaceProjects(
+        projects = listOf(
+          AgentProjectSessions(
+            path = projectPath.toString(),
+            name = "Project A",
+            isOpen = true,
+            hasLoaded = true,
+            threads = listOf(thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+          )
+        ),
+        visibleThreadCounts = emptyMap(),
+      )
+      coordinator.observeSessionSourceUpdates()
+
+      waitForCondition { closedRefreshInvocations.get() == 1 }
+
+      assertThat(vfsRefreshInvocations.get()).isEqualTo(1)
+    }
+  }
+
+  @Test
+  fun sourceUpdateSkipsVfsRefreshWhenRuntimeConfigDisablesIt(@TempDir tempDir: Path) = runBlocking(Dispatchers.Default) {
+    val projectPath = tempDir.resolve("project")
+    Files.createDirectories(projectPath)
+    val vfsRefreshInvocations = AtomicInteger(0)
+    val closedRefreshInvocations = AtomicInteger(0)
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.CODEX,
+      supportsUpdates = true,
+      updateEvents = flow { emit(threadsChangedEvent()) },
+      listFromClosedProject = { path ->
+        if (path == projectPath.toString()) {
+          closedRefreshInvocations.incrementAndGet()
+        }
+        listOf(thread(id = "codex-1", updatedAt = 200L, provider = AgentSessionProvider.CODEX))
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { true },
+      scheduleVfsRefresh = { vfsRefreshInvocations.incrementAndGet() },
+      isVfsRefreshOnStatusUpdatesEnabled = { false },
+    ) { coordinator, stateStore ->
+      stateStore.replaceProjects(
+        projects = listOf(
+          AgentProjectSessions(
+            path = projectPath.toString(),
+            name = "Project A",
+            isOpen = true,
+            hasLoaded = true,
+            threads = listOf(thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+          )
+        ),
+        visibleThreadCounts = emptyMap(),
+      )
+      coordinator.observeSessionSourceUpdates()
+
+      waitForCondition { closedRefreshInvocations.get() == 1 }
+
+      assertThat(vfsRefreshInvocations.get()).isEqualTo(0)
+    }
+  }
+
+  @Test
   fun providerUpdateDeferredUntilRefreshGateIsActive() = runBlocking(Dispatchers.Default) {
     val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
     val gateActive = AtomicBoolean(false)
@@ -4024,6 +4137,8 @@ private suspend fun withLoadingCoordinator(
   clearOpenConcreteCodexTabAnchors: (Map<String, List<AgentChatConcreteTabSnapshot>>) -> Int = { tabsByPath ->
     tabsByPath.values.sumOf { it.size }
   },
+  scheduleVfsRefresh: () -> Unit = {},
+  isVfsRefreshOnStatusUpdatesEnabled: (String) -> Boolean = { true },
   action: suspend (AgentSessionRefreshCoordinator, AgentSessionsStateStore) -> Unit,
 ) {
   @Suppress("RAW_SCOPE_CREATION")
@@ -4041,6 +4156,8 @@ private suspend fun withLoadingCoordinator(
       stateStore = stateStore,
       contentRepository = contentRepository,
       isRefreshGateActive = isRefreshGateActive,
+      scheduleVfsRefresh = scheduleVfsRefresh,
+      isVfsRefreshOnStatusUpdatesEnabled = isVfsRefreshOnStatusUpdatesEnabled,
       providerDescriptorsByIdProvider = { providerDescriptors },
       providerDescriptorProvider = { provider -> providerDescriptors.firstOrNull { it.provider == provider } },
       openAgentChatSnapshotProvider = openAgentChatSnapshotProvider ?: {

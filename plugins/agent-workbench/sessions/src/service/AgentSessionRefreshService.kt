@@ -15,6 +15,7 @@ import com.intellij.agent.workbench.chat.rebindOpenConcreteAgentChatTabs
 import com.intellij.agent.workbench.chat.rebindOpenPendingAgentChatTabs
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.config.AgentWorkbenchProjectRuntimeConfigs
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
@@ -25,6 +26,7 @@ import com.intellij.agent.workbench.sessions.model.ProjectEntry
 import com.intellij.agent.workbench.sessions.state.AgentSessionWarmStateService
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.agent.workbench.sessions.state.SessionWarmState
+import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.Service
@@ -50,6 +52,9 @@ class AgentSessionRefreshService internal constructor(
   private val projectEntriesProvider: suspend () -> List<ProjectEntry>,
   private val stateStore: AgentSessionsStateStore,
   private val warmState: SessionWarmState,
+  private val scheduleVfsRefresh: () -> Unit = { SaveAndSyncHandler.getInstance().scheduleRefresh() },
+  private val isVfsRefreshOnStatusUpdatesEnabled: (String) -> Boolean =
+    AgentWorkbenchProjectRuntimeConfigs::isRefreshVfsOnStatusUpdatesEnabled,
   private val openAgentChatSnapshotProvider: suspend () -> AgentChatOpenTabsRefreshSnapshot =
     ::collectOpenAgentChatRefreshSnapshot,
   private val openAgentChatPendingTabsBinder: suspend (
@@ -61,8 +66,8 @@ class AgentSessionRefreshService internal constructor(
     Map<String, List<AgentChatConcreteTabRebindRequest>>,
   ) -> AgentChatConcreteTabRebindReport = ::rebindOpenConcreteAgentChatTabs,
   private val clearOpenConcreteNewThreadRebindAnchors: (
-      AgentSessionProvider,
-      Map<String, List<AgentChatConcreteTabSnapshot>>,
+    AgentSessionProvider,
+    Map<String, List<AgentChatConcreteTabSnapshot>>,
   ) -> Int = ::clearOpenConcreteAgentChatNewThreadRebindAnchors,
   private val scopedRefreshSignalsProvider: (AgentSessionProvider) -> kotlinx.coroutines.flow.Flow<AgentSessionSourceUpdateEvent> = { provider ->
     agentChatScopedRefreshSignals(provider)
@@ -91,6 +96,8 @@ class AgentSessionRefreshService internal constructor(
     stateStore = stateStore,
     contentRepository = contentRepository,
     isRefreshGateActive = ::isSourceRefreshGateActive,
+    scheduleVfsRefresh = scheduleVfsRefresh,
+    isVfsRefreshOnStatusUpdatesEnabled = isVfsRefreshOnStatusUpdatesEnabled,
     openAgentChatSnapshotProvider = openAgentChatSnapshotProvider,
     scopedRefreshSignalsProvider = scopedRefreshSignalsProvider,
     openAgentChatPendingTabsBinder = openAgentChatPendingTabsBinder,

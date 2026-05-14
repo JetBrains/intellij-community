@@ -20,10 +20,12 @@ import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
+import com.intellij.agent.workbench.sessions.core.config.AgentWorkbenchProjectRuntimeConfigs
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
+import com.intellij.agent.workbench.sessions.core.providers.isUnscoped
 import com.intellij.agent.workbench.sessions.model.AgentSessionProviderWarning
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
@@ -31,6 +33,9 @@ import com.intellij.agent.workbench.sessions.model.ProjectEntry
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.agent.workbench.sessions.util.agentSessionCliMissingMessageKey
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
+import com.intellij.ide.SaveAndSyncHandler
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -40,6 +45,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
+private val LOG = logger<AgentSessionRefreshCoordinator>()
+
 internal class AgentSessionRefreshCoordinator(
   private val serviceScope: CoroutineScope,
   private val sessionSourcesProvider: () -> List<AgentSessionSource>,
@@ -47,6 +54,9 @@ internal class AgentSessionRefreshCoordinator(
   private val stateStore: AgentSessionsStateStore,
   private val contentRepository: AgentSessionContentRepository,
   private val isRefreshGateActive: suspend () -> Boolean,
+  private val scheduleVfsRefresh: () -> Unit = { SaveAndSyncHandler.getInstance().scheduleRefresh() },
+  private val isVfsRefreshOnStatusUpdatesEnabled: (String) -> Boolean =
+    AgentWorkbenchProjectRuntimeConfigs::isRefreshVfsOnStatusUpdatesEnabled,
   private val openAgentChatSnapshotProvider: suspend () -> AgentChatOpenTabsRefreshSnapshot = ::collectOpenAgentChatRefreshSnapshot,
   private val providerDescriptorsByIdProvider: () -> List<AgentSessionProviderDescriptor> = AgentSessionProviders::allProvidersById,
   private val providerDescriptorProvider: (AgentSessionProvider) -> AgentSessionProviderDescriptor? = AgentSessionProviders::find,
@@ -118,6 +128,7 @@ internal class AgentSessionRefreshCoordinator(
     executeFullRefresh = ::refreshNow,
     executeProviderRefresh = providerRefreshRunner::refreshLoadedProviderThreads,
     applySourceUpdateActivityHints = ::applySourceUpdateActivityHints,
+    scheduleVfsRefreshForSourceUpdate = ::scheduleVfsRefreshForSourceUpdate,
     onFullRefreshFailure = {
       stateStore.markLoadFailure(AgentSessionsBundle.message("toolwindow.error"))
     },
@@ -179,6 +190,21 @@ internal class AgentSessionRefreshCoordinator(
         activityByPathAndThreadIdentity,
       )
     }
+  }
+
+  private fun scheduleVfsRefreshForSourceUpdate(provider: AgentSessionProvider, updateEvent: AgentSessionSourceUpdateEvent) {
+    val candidatePaths = collectVfsRefreshCandidatePaths(
+      state = stateStore.snapshot(),
+      provider = provider,
+      updateEvent = updateEvent,
+    )
+    if (candidatePaths.isNotEmpty() && candidatePaths.none(isVfsRefreshOnStatusUpdatesEnabled)) {
+      LOG.debug {
+        "Skipped VFS refresh for ${provider.value} source update: disabled by project config paths=${candidatePaths.size}"
+      }
+      return
+    }
+    scheduleVfsRefresh()
   }
 
   fun refresh() {
@@ -457,6 +483,79 @@ private fun applyThreadActivityHintsForPath(
     threads = nextThreads,
     activityByPathAndThreadIdentity = activityByPathAndThreadIdentity,
   )
+}
+
+private fun collectVfsRefreshCandidatePaths(
+  state: AgentSessionsState,
+  provider: AgentSessionProvider,
+  updateEvent: AgentSessionSourceUpdateEvent,
+): Set<String> {
+  if (updateEvent.isUnscoped()) {
+    return collectOpenOrLoadedPaths(state)
+  }
+
+  val candidatePaths = LinkedHashSet<String>()
+  updateEvent.scopedPaths?.let { scopedPaths ->
+    candidatePaths.addAll(scopedPaths)
+    candidatePaths.addAll(resolveKnownPathsFromScopedPaths(state = state, scopedPaths = scopedPaths))
+  }
+  updateEvent.threadIds?.let { threadIds ->
+    candidatePaths.addAll(resolvePathsForVfsRefreshThreadIds(state = state, provider = provider, threadIds = threadIds))
+  }
+  return candidatePaths
+}
+
+private fun collectOpenOrLoadedPaths(state: AgentSessionsState): Set<String> {
+  val paths = LinkedHashSet<String>()
+  for (project in state.projects) {
+    if (project.isOpen || project.hasLoaded) {
+      paths.add(project.path)
+    }
+    for (worktree in project.worktrees) {
+      if (worktree.isOpen || worktree.hasLoaded) {
+        paths.add(worktree.path)
+      }
+    }
+  }
+  return paths
+}
+
+private fun resolveKnownPathsFromScopedPaths(state: AgentSessionsState, scopedPaths: Set<String>): Set<String> {
+  if (scopedPaths.isEmpty()) {
+    return emptySet()
+  }
+  val normalizedScopedPaths = scopedPaths.mapTo(LinkedHashSet()) { path -> normalizeAgentWorkbenchPath(path) }
+  return collectOpenOrLoadedPaths(state)
+    .asSequence()
+    .filter { path -> normalizeAgentWorkbenchPath(path) in normalizedScopedPaths }
+    .toCollection(LinkedHashSet())
+}
+
+private fun resolvePathsForVfsRefreshThreadIds(
+  state: AgentSessionsState,
+  provider: AgentSessionProvider,
+  threadIds: Set<String>,
+): Set<String> {
+  if (threadIds.isEmpty()) {
+    return emptySet()
+  }
+
+  val paths = LinkedHashSet<String>()
+  for (project in state.projects) {
+    if (project.threads.any { thread -> thread.matchesProviderAndThreadIds(provider, threadIds) }) {
+      paths.add(project.path)
+    }
+    for (worktree in project.worktrees) {
+      if (worktree.threads.any { thread -> thread.matchesProviderAndThreadIds(provider, threadIds) }) {
+        paths.add(worktree.path)
+      }
+    }
+  }
+  return paths
+}
+
+private fun AgentSessionThread.matchesProviderAndThreadIds(provider: AgentSessionProvider, threadIds: Set<String>): Boolean {
+  return this.provider == provider && (id in threadIds || subAgents.any { subAgent -> subAgent.id in threadIds })
 }
 
 private fun resolveErrorMessage(provider: AgentSessionProvider, t: Throwable): String {

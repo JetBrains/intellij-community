@@ -36,6 +36,7 @@ internal class AgentSessionRefreshScheduler(
   private val executeFullRefresh: suspend (RefreshLoadScope) -> Unit,
   private val executeProviderRefresh: suspend (AgentSessionProvider, Long, AgentSessionSourceUpdateEvent) -> Unit,
   private val applySourceUpdateActivityHints: (AgentSessionProvider, AgentSessionSourceUpdateEvent) -> Unit = { _, _ -> },
+  private val scheduleVfsRefreshForSourceUpdate: (AgentSessionProvider, AgentSessionSourceUpdateEvent) -> Unit = { _, _ -> },
   private val onFullRefreshFailure: (Throwable) -> Unit,
 ) {
   private val refreshQueueLock = Any()
@@ -92,9 +93,11 @@ internal class AgentSessionRefreshScheduler(
               LOG.debug {
                 "Received scoped refresh signal for ${provider.value} (${normalizedUpdateEvent.describeScope()}); scheduling scoped provider refresh"
               }
+              val refreshUpdateEvent = normalizedUpdateEvent.copy(type = AgentSessionSourceUpdate.THREADS_CHANGED)
+              scheduleVfsRefreshFromSourceUpdate(provider, refreshUpdateEvent)
               enqueueSourceRefresh(
                 provider = provider,
-                updateEvent = normalizedUpdateEvent.copy(type = AgentSessionSourceUpdate.THREADS_CHANGED),
+                updateEvent = refreshUpdateEvent,
               )
             }
           }
@@ -259,6 +262,7 @@ internal class AgentSessionRefreshScheduler(
       }
       val job = serviceScope.launch(Dispatchers.IO) {
         delay(SOURCE_UPDATE_DEBOUNCE_MS.milliseconds)
+        scheduleVfsRefreshFromSourceUpdate(provider, mergedUpdate)
         enqueueSourceRefresh(provider = provider, updateEvent = mergedUpdate)
       }
       sourceRefreshJobs[provider] = PendingSourceRefreshJob(job = job, updateEvent = mergedUpdate)
@@ -269,6 +273,16 @@ internal class AgentSessionRefreshScheduler(
           }
         }
       }
+    }
+  }
+
+  private fun scheduleVfsRefreshFromSourceUpdate(provider: AgentSessionProvider, updateEvent: AgentSessionSourceUpdateEvent) {
+    try {
+      scheduleVfsRefreshForSourceUpdate(provider, updateEvent)
+    }
+    catch (e: Throwable) {
+      if (e is CancellationException) throw e
+      LOG.warn("Failed to schedule VFS refresh for ${provider.value} source update", e)
     }
   }
 

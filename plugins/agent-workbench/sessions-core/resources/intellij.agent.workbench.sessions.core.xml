@@ -16,6 +16,10 @@
       interface="com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchSpecAugmenter"
       dynamic="true"/>
     <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.projectRuntimeConfigProvider"
+      interface="com.intellij.agent.workbench.sessions.core.config.AgentWorkbenchProjectRuntimeConfigProvider"
+      dynamic="true"/>
+    <extensionPoint
       qualifiedName="com.intellij.agent.workbench.sessionLaunchContributor"
       interface="com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchContributor"
       dynamic="true"/>

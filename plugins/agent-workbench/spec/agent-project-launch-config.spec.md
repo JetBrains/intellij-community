@@ -5,8 +5,10 @@ targets:
   - ../sessions-launch-config/backend/src/*.kt
   - ../sessions-launch-config/backend/resources/*.xml
   - ../sessions-launch-config/backend/testSrc/*.kt
+  - ../sessions-core/src/config/*.kt
   - ../sessions-core/src/launch/*.kt
   - ../sessions-core/resources/intellij.agent.workbench.sessions.core.xml
+  - ../sessions/src/service/AgentSessionRefreshCoordinator.kt
   - ../sessions/src/service/AgentSessionLaunchService.kt
   - ../sessions/src/service/AgentSessionChatOpenPayload.kt
   - ../chat/src/AgentChatEditorService.kt
@@ -44,6 +46,11 @@ Shared provider command mapping remains owned by `spec/agent-core-contracts.spec
   - `pathPrepend`: list of path strings
   - `commandShims`: object mapping command name to target path string
   [@test] ../sessions-launch-config/backend/testSrc/AgentWorkbenchProjectLaunchConfigTest.kt
+
+- Config schema supports a top-level runtime behavior key:
+  - `refreshVfsOnStatusUpdates`: boolean; defaults to `true`; when `false`, Agent Workbench suppresses IDE VFS refresh scheduling for agent status updates only when the resolved update candidate set contains no refresh-enabled project roots. The platform refresh API is global, so a disabled root may still be refreshed when batched with another enabled root.
+  [@test] ../sessions-launch-config/backend/testSrc/AgentWorkbenchProjectLaunchConfigTest.kt
+  [@test] ../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
 
 - Shared top-level launch augmentation applies to every provider automatically. Provider override blocks must affect only their matching provider id.
   [@test] ../sessions-launch-config/backend/testSrc/AgentWorkbenchProjectLaunchConfigTest.kt
