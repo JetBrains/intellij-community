@@ -137,13 +137,13 @@ public final class PagedFileStorage implements Forceable/*, PagedStorage*/, Clos
     }
   }
 
-  <R> R executeOp(final @NotNull FileChannelOperation<R> operation,
-                  final boolean readOnly) throws IOException {
+  <R> R executeOp(@NotNull FileChannelOperation<R> operation,
+                  boolean readOnly) throws IOException {
     return myStorageLockContext.executeOp(myFile, operation, readOnly);
   }
 
-  <R> R executeIdempotentOp(final @NotNull FileChannelIdempotentOperation<R> operation,
-                            final boolean readOnly) throws IOException {
+  <R> R executeIdempotentOp(@NotNull FileChannelIdempotentOperation<R> operation,
+                            boolean readOnly) throws IOException {
     return myStorageLockContext.executeIdempotentOp(myFile, operation, readOnly);
   }
 
@@ -282,7 +282,7 @@ public final class PagedFileStorage implements Forceable/*, PagedStorage*/, Clos
       int page_offset = (int)(i % myPageSize);
 
       int page_len = Math.min(l, myPageSize - page_offset);
-      final DirectBufferWrapper buffer = getReadOnlyBuffer(page, checkAccess);
+      DirectBufferWrapper buffer = getReadOnlyBuffer(page, checkAccess);
       try {
         buffer.readToArray(dst, o, page_offset, page_len, checkAccess);
       }
@@ -380,14 +380,14 @@ public final class PagedFileStorage implements Forceable/*, PagedStorage*/, Clos
 
   private static final int MAX_FILLER_SIZE = 8192;
 
-  private void fillWithZeros(final long from,
-                             final long length) throws IOException {
-    final byte[] zeroes = new byte[MAX_FILLER_SIZE];
+  private void fillWithZeros(long from,
+                             long length) throws IOException {
+    byte[] zeroes = new byte[MAX_FILLER_SIZE];
 
     long offset = from;
     long remaining = length;
     while (remaining > 0) {
-      final int toFill = (int)Math.min(remaining, MAX_FILLER_SIZE);
+      int toFill = (int)Math.min(remaining, MAX_FILLER_SIZE);
       if (toFill <= 0) {
         throw new AssertionError(
           "Bug: toFill(=" + toFill + ") -- must be positive. " +

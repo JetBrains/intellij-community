@@ -48,7 +48,7 @@ public final class OpenChannelsCache { // TODO: Will it make sense to have a bac
   private final transient Object myCacheLock = new Object();
 
   @VisibleForTesting
-  public OpenChannelsCache(final int capacity) {
+  public OpenChannelsCache(int capacity) {
     myCapacity = capacity;
     myCache = new LinkedHashMap<>(capacity, 0.5f, true);
   }
@@ -73,9 +73,9 @@ public final class OpenChannelsCache { // TODO: Will it make sense to have a bac
    * does not implement some FileChannel operations, so be aware.
    */
   @VisibleForTesting
-  public <T> T executeOp(final @NotNull Path path,
-                         final @NotNull FileChannelOperation<T> operation,
-                         final boolean read) throws IOException {
+  public <T> T executeOp(@NotNull Path path,
+                         @NotNull FileChannelOperation<T> operation,
+                         boolean read) throws IOException {
     ChannelDescriptor descriptor;
     synchronized (myCacheLock) {
       descriptor = myCache.get(path);
@@ -121,12 +121,12 @@ public final class OpenChannelsCache { // TODO: Will it make sense to have a bac
 
   /**
    * Parameter {@param operation} should be idempotent because sometimes calculation might be restarted
-   * when file channel was closed by thread interruption
+   * when the file channel was closed by thread interruption
    */
   @VisibleForTesting
-  public <T> T executeIdempotentOp(final @NotNull Path path,
-                            final @NotNull FileChannelIdempotentOperation<T> operation,
-                            final boolean read) throws IOException {
+  public <T> T executeIdempotentOp(@NotNull Path path,
+                                   @NotNull FileChannelIdempotentOperation<T> operation,
+                                   boolean read) throws IOException {
     ChannelDescriptor descriptor;
     synchronized (myCacheLock) {
       descriptor = myCache.get(path);
@@ -173,7 +173,7 @@ public final class OpenChannelsCache { // TODO: Will it make sense to have a bac
   @VisibleForTesting
   public void closeChannel(Path path) throws IOException {
     synchronized (myCacheLock) {
-      final ChannelDescriptor descriptor = myCache.remove(path);
+      ChannelDescriptor descriptor = myCache.remove(path);
 
       if (descriptor != null) {
         assert !descriptor.isLocked() : "Channel is in use: " + descriptor;

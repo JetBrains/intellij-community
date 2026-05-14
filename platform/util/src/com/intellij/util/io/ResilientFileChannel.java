@@ -49,8 +49,8 @@ public final class ResilientFileChannel extends FileChannel {
   //@GuardedBy("this")
   private long position = 0;
 
-  public ResilientFileChannel(final @NotNull Path path,
-                              final OpenOption @NotNull ... openOptions) throws IOException {
+  public ResilientFileChannel(@NotNull Path path,
+                              OpenOption @NotNull ... openOptions) throws IOException {
     Set<OpenOption> openOptionsSet;
     if (openOptions.length == 0) {
       openOptionsSet = Collections.emptySet();
@@ -62,12 +62,12 @@ public final class ResilientFileChannel extends FileChannel {
     fileChannelHandle = new FileChannelInterruptsRetryer(path, openOptionsSet);
   }
 
-  public ResilientFileChannel(final @NotNull Path path,
-                              final Set<? extends @NotNull OpenOption> openOptions) throws IOException {
+  public ResilientFileChannel(@NotNull Path path,
+                              Set<? extends @NotNull OpenOption> openOptions) throws IOException {
     fileChannelHandle = new FileChannelInterruptsRetryer(path, openOptions);
   }
 
-  public <T> T executeOperation(final @NotNull FileChannelIdempotentOperation<T> operation) throws IOException {
+  public <T> T executeOperation(@NotNull FileChannelIdempotentOperation<T> operation) throws IOException {
     return fileChannelHandle.retryIfInterrupted(operation);
   }
 
@@ -85,7 +85,7 @@ public final class ResilientFileChannel extends FileChannel {
   }
 
   @Override
-  public FileChannel truncate(final long size) throws IOException {
+  public FileChannel truncate(long size) throws IOException {
     synchronized (this) {
       this.position = Math.min(position, size);
     }
@@ -93,7 +93,7 @@ public final class ResilientFileChannel extends FileChannel {
   }
 
   @Override
-  public void force(final boolean metaData) throws IOException {
+  public void force(boolean metaData) throws IOException {
     fileChannelHandle.retryIfInterrupted(ch -> {
       ch.force(metaData);
       return null;
@@ -108,9 +108,9 @@ public final class ResilientFileChannel extends FileChannel {
   //    call and restore it inside lambda.
 
   @Override
-  public int read(final ByteBuffer target,
-                  final long offset) throws IOException {
-    final int bufferPos = target.position();
+  public int read(ByteBuffer target,
+                  long offset) throws IOException {
+    int bufferPos = target.position();
     return fileChannelHandle.retryIfInterrupted(ch -> {
       target.position(bufferPos);
       return ch.read(target, offset);
@@ -118,9 +118,9 @@ public final class ResilientFileChannel extends FileChannel {
   }
 
   @Override
-  public int write(final ByteBuffer source,
-                   final long offset) throws IOException {
-    final int bufferPos = source.position();
+  public int write(ByteBuffer source,
+                   long offset) throws IOException {
+    int bufferPos = source.position();
     return fileChannelHandle.retryIfInterrupted(ch -> {
       source.position(bufferPos);
       return ch.write(source, offset);
@@ -128,9 +128,9 @@ public final class ResilientFileChannel extends FileChannel {
   }
 
   @Override
-  public MappedByteBuffer map(final MapMode mapMode,
-                              final long mapRegionOffset,
-                              final long mapRegionSize) throws IOException {
+  public MappedByteBuffer map(MapMode mapMode,
+                              long mapRegionOffset,
+                              long mapRegionSize) throws IOException {
     return fileChannelHandle.retryIfInterrupted(ch -> ch.map(mapMode, mapRegionOffset, mapRegionSize));
   }
 
@@ -148,21 +148,21 @@ public final class ResilientFileChannel extends FileChannel {
 
 
   @Override
-  public synchronized FileChannel position(final long newPosition) throws IOException {
+  public synchronized FileChannel position(long newPosition) throws IOException {
     this.position = newPosition;
     return this;
   }
 
   @Override
-  public synchronized int read(final ByteBuffer target) throws IOException {
-    final int bytesRead = read(target, position);
+  public synchronized int read(ByteBuffer target) throws IOException {
+    int bytesRead = read(target, position);
     position += Math.max(0, bytesRead);
     return bytesRead;
   }
 
   @Override
-  public synchronized int write(final ByteBuffer src) throws IOException {
-    final int bytesWritten = write(src, position);
+  public synchronized int write(ByteBuffer src) throws IOException {
+    int bytesWritten = write(src, position);
     position += Math.max(0, bytesWritten);
     return bytesWritten;
   }

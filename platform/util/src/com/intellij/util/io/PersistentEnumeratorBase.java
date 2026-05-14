@@ -101,7 +101,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
 
     abstract byte @NotNull [] getRecordBuffer(T enumerator);
 
-    abstract void setupRecord(T enumerator, int hashCode, final int dataOffset, final byte[] buf);
+    abstract void setupRecord(T enumerator, int hashCode, int dataOffset, byte[] buf);
   }
 
   protected PersistentEnumeratorBase(@NotNull Path file,
@@ -203,7 +203,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     }
     catch (Throwable t) {
       //Close the valueStorage on any error in a single place:
-      final Exception errorOnClose = ExceptionUtil.runAndCatch(
+      Exception errorOnClose = ExceptionUtil.runAndCatch(
         valueStorage::close
       );
       if (errorOnClose != null) {
@@ -333,8 +333,8 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     }
   }
 
-  public boolean processAllDataObject(final @NotNull Processor<? super Data> processor,
-                                      final @Nullable DataFilter filter)
+  public boolean processAllDataObject(@NotNull Processor<? super Data> processor,
+                                      @Nullable DataFilter filter)
     throws IOException {
     return traverseAllRecords(new RecordsProcessor() {
       @Override
@@ -351,7 +351,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
                          @Nullable DataFilter filter) throws IOException {
     return traverseAllRecords(new RecordsProcessor() {
       @Override
-      public boolean process(final int record) throws IOException {
+      public boolean process(int record) throws IOException {
         if (filter == null || filter.accept(record)) {
           Data value = valueOf(record);
           return reader.read(record, value);
@@ -366,8 +366,8 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     return forEach(reader, /*filter: */null);
   }
 
-  public @NotNull Collection<Data> getAllDataObjects(final @Nullable DataFilter filter) throws IOException {
-    final List<Data> values = new ArrayList<>();
+  public @NotNull Collection<Data> getAllDataObjects(@Nullable DataFilter filter) throws IOException {
+    List<Data> values = new ArrayList<>();
     processAllDataObject(new CommonProcessors.CollectProcessor<>(values), filter);
     return values;
   }
@@ -388,15 +388,16 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
 
   public abstract boolean traverseAllRecords(RecordsProcessor p) throws IOException;
 
-  protected abstract int enumerateImpl(final Data value, final boolean onlyCheckForExisting, boolean saveNewValue) throws IOException;
+  protected abstract int enumerateImpl(Data value, boolean onlyCheckForExisting, boolean saveNewValue) throws IOException;
 
-  protected boolean isKeyAtIndex(final Data value, final int idx) throws IOException {
+  protected boolean isKeyAtIndex(Data value, int idx) throws IOException {
     if (myKeyStorage instanceof InlinedKeyStorage) return false;
 
     // check if previous serialized state is the same as for value
     // this is much faster than myDataDescriptor.isEqualTo(valueOf(idx), value) for identical objects
     // TODO: key storage lock
     final int addr = indexToAddr(idx);
+    int addr = indexToAddr(idx);
 
     if (myKeyStorage.checkBytesAreTheSame(addr, value)) return true;
 
@@ -408,11 +409,11 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     return myDataDescriptor.isEqual(actualValue, value);
   }
 
-  protected int writeData(final Data value, int hashCode) {
+  protected int writeData(Data value, int hashCode) {
     try {
       markDirty(true);
 
-      final int dataOff = doWriteData(value);
+      int dataOff = doWriteData(value);
 
       return setupValueId(hashCode, dataOff);
     }
@@ -430,9 +431,9 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   protected int setupValueId(int hashCode, int dataOff) throws IOException {
-    final byte[] buf = myRecordHandler.getRecordBuffer(this);
+    byte[] buf = myRecordHandler.getRecordBuffer(this);
     myRecordHandler.setupRecord(this, hashCode, dataOff, buf);
-    final int pos = myRecordHandler.recordWriteOffset(this, buf);
+    int pos = myRecordHandler.recordWriteOffset(this, buf);
     myCollisionResolutionStorage.put(pos, buf, 0, buf.length);
 
     return pos;
