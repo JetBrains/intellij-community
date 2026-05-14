@@ -348,17 +348,18 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
   private static void instantiateElementTypesFromFields() {
     // load stub serializers before usage
     FileTypeRegistry.getInstance().getRegisteredFileTypes();
-    getExtensions(BinaryFileStubBuilders.INSTANCE, builder -> {});
+    getExtensions(BinaryFileStubBuilders.INSTANCE, _ -> {});
     getExtensions(LanguageParserDefinitions.INSTANCE, ParserDefinition::getFileNodeType);
   }
 
   private static <T> void getExtensions(@NotNull KeyedExtensionCollector<T, ?> collector, @NotNull Consumer<? super T> consumer) {
     ExtensionPointImpl<@NotNull KeyedLazyInstance<T>> point = (ExtensionPointImpl<@NotNull KeyedLazyInstance<T>>)collector.getPoint();
-    if (point != null) {
-      Iterator<KeyedLazyInstance<T>> iterator = point.iterator();
-      while (iterator.hasNext()) {
-        consumer.accept(iterator.next().getInstance());
-      }
+    if (point == null) return;
+
+    Iterator<KeyedLazyInstance<T>> iterator = point.iterator();
+    while (iterator.hasNext()) {
+      T initializedExtension = iterator.next().getInstance();
+      consumer.accept(initializedExtension);
     }
   }
 }
