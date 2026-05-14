@@ -14,6 +14,7 @@
     <orderEntry type="module" module-name="intellij.moduleSet.plugin.recentFiles" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.moduleSet.plugin.servicesView" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.moduleSet.plugin.structuralSearch" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.moduleSet.plugin.todoView" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.moduleSet.plugin.vcs.frontend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.clouds" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.execution.dashboard" scope="RUNTIME" />
@@ -26,6 +27,8 @@
     <orderEntry type="module" module-name="intellij.platform.recentFiles.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.recentFiles.frontend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.structuralSearch" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.todo" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.todo.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl.frontend" scope="RUNTIME" />
   </component>
 </module>

@@ -137,6 +137,15 @@ object CommunityModuleSets {
   }
 
   /**
+   * TODO tool window support.
+   */
+  @Suppress("unused")
+  fun todoView(): ModuleSet = plugin("todoView") {
+    module("intellij.platform.todo")
+    module("intellij.platform.todo.backend")
+  }
+
+  /**
    * Essential platform modules required by most IDE products.
    */
   fun essential(): ModuleSet = moduleSet("essential", includeDependencies = true) {
@@ -175,9 +184,6 @@ object CommunityModuleSets {
     module("intellij.platform.editor.frontend")
     module("intellij.platform.managed.cache")
     module("intellij.platform.managed.cache.backend")
-
-    module("intellij.platform.todo")
-    module("intellij.platform.todo.backend")
 
     module("intellij.platform.bookmarks.backend")
     module("intellij.platform.bookmarks.frontend")

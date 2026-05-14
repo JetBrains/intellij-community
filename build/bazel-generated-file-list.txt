@@ -529,6 +529,7 @@ module-set-plugins/generated/intellij.moduleSet.plugin.main
 module-set-plugins/generated/intellij.moduleSet.plugin.recentFiles
 module-set-plugins/generated/intellij.moduleSet.plugin.servicesView
 module-set-plugins/generated/intellij.moduleSet.plugin.structuralSearch
+module-set-plugins/generated/intellij.moduleSet.plugin.todoView
 module-set-plugins/generated/intellij.moduleSet.plugin.vcs.frontend
 mps/build
 mps/build/intellij.mps.resources

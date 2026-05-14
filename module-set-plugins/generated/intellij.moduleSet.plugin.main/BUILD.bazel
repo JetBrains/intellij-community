@@ -17,6 +17,7 @@ jvm_library(
     "//module-set-plugins/generated/intellij.moduleSet.plugin.recentFiles:moduleSet-plugin-recentFiles",
     "//module-set-plugins/generated/intellij.moduleSet.plugin.servicesView:moduleSet-plugin-servicesView",
     "//module-set-plugins/generated/intellij.moduleSet.plugin.structuralSearch:moduleSet-plugin-structuralSearch",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.todoView:moduleSet-plugin-todoView",
     "//module-set-plugins/generated/intellij.moduleSet.plugin.vcs.frontend:moduleSet-plugin-vcs-frontend",
     "//platform/remote-servers/clouds",
     "//platform/execution.dashboard",
@@ -29,6 +30,8 @@ jvm_library(
     "//platform/recentFiles/backend",
     "//platform/recentFiles/frontend",
     "//platform/structuralsearch:structuralSearch",
+    "//platform/todo",
+    "//platform/todo/backend",
     "//platform/vcs-impl/frontend",
   ]
 )
@@ -51,6 +54,7 @@ jvm_library(
     "//module-set-plugins/generated/intellij.moduleSet.plugin.recentFiles:moduleSet-plugin-recentFiles_test_lib",
     "//module-set-plugins/generated/intellij.moduleSet.plugin.servicesView:moduleSet-plugin-servicesView_test_lib",
     "//module-set-plugins/generated/intellij.moduleSet.plugin.structuralSearch:moduleSet-plugin-structuralSearch_test_lib",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.todoView:moduleSet-plugin-todoView_test_lib",
     "//module-set-plugins/generated/intellij.moduleSet.plugin.vcs.frontend:moduleSet-plugin-vcs-frontend_test_lib",
     "//platform/remote-servers/clouds:clouds_test_lib",
     "//platform/execution.dashboard:execution.dashboard_test_lib",
@@ -63,6 +67,8 @@ jvm_library(
     "//platform/recentFiles/backend:backend_test_lib",
     "//platform/recentFiles/frontend:frontend_test_lib",
     "//platform/structuralsearch:structuralSearch_test_lib",
+    "//platform/todo:todo_test_lib",
+    "//platform/todo/backend:backend_test_lib",
     "//platform/vcs-impl/frontend:frontend_test_lib",
   ]
 )
