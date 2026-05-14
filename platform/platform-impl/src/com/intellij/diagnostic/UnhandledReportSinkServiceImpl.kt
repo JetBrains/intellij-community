@@ -45,11 +45,7 @@ internal class UnhandledReportSinkServiceImpl(coroutineScope: CoroutineScope) : 
   override fun report(data: PluginFreezeReportData) {
     if (isPluginFromDistribution(data.pluginId)) return
 
-    for (it in ErrorReportSinkBean.EP_NAME.extensionList) {
-      if (it.pluginDescriptor.pluginId == data.pluginId) {
-        flow.tryEmit(Pair(it.instance, UnhandledFreezeReport(data.message, data.durationMs, data.attachments, data.threadDumps)))
-      }
-    }
+    emitReport(data.pluginId, UnhandledFreezeReport(data.message, data.durationMs, data.attachments, data.threadDumps))
   }
 
   override fun report(data: PluginExceptionReportData) {
@@ -61,8 +57,13 @@ internal class UnhandledReportSinkServiceImpl(coroutineScope: CoroutineScope) : 
       thisLogger().warn("Exception report limit reached for plugin ${data.pluginId}, further reports will be dropped")
     }
 
-    ErrorReportSinkBean.EP_NAME.findFirstSafe { it.pluginDescriptor.pluginId == data.pluginId }
-      ?.let { flow.tryEmit(Pair(it.instance, UnhandledExceptionReport(data.t))) }
+    emitReport(data.pluginId, UnhandledExceptionReport(data.t))
+  }
+
+  private fun emitReport(pluginId: PluginId, report: UnhandledErrorReport) {
+    ErrorReportSinkBean.EP_NAME.extensionList
+      .firstOrNull { it.pluginDescriptor.pluginId == pluginId }
+      ?.let { flow.tryEmit(Pair(it.instance, report)) }
   }
 
   private fun isPluginFromDistribution(pluginId: PluginId?): Boolean {
