@@ -54,8 +54,8 @@ public final class PyStructuralTypeAttributesCompletionContributor extends Compl
   private static final Set<String> COMMON_OBJECT_ATTRIBUTES = ImmutableSet.of(
     "__init__",
     "__new__",
-    "__str__",
-    "__repr__", // TODO __module__ actually belongs to object's metaclass, it's not available to instances
+    PyNames.DUNDER_STR,
+    PyNames.DUNDER_REPR, // TODO __module__ actually belongs to object's metaclass, it's not available to instances
     "__doc__",
     "__class__",
     "__module__",
