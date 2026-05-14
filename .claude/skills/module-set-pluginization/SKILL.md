@@ -20,6 +20,7 @@ Use this workflow when a Product DSL `ModuleSet` should become a generated plugi
 - Keep the content modules unchanged unless the product layout itself is also changing.
 - Remove stale `moduleSet(...)` inclusions from aggregate module sets if the wrapper should no longer be inlined there.
 - If the wrapper should be bundled by default, add `intellij.moduleSet.plugin.<name>` to `DEFAULT_BUNDLED_PLUGINS` in `ProductModulesLayout.kt`.
+- Check products that override or reset default bundled plugins. JetBrains Client often needs explicit wiring in both product-module XML and Kotlin product layout code.
 
 ## Fix Ordering Bugs When Validation Runs Before Generation
 
@@ -41,6 +42,7 @@ If pluginization causes failures like "plugin missing" or unresolved dependencie
 - Deletion of the legacy generated `community/platform/platform-resources/generated/META-INF/intellij.moduleSets.<name>.xml`
 - Updates to any generated aggregators or xi:include-based product descriptors that previously referenced the legacy module-set XML
 - `.idea/modules.xml` and `community/.idea/modules.xml` updates after generator + JPS-to-Bazel sync
+- Product content snapshots for products affected by default bundled plugin changes. Keep unrelated dirty snapshot or plugin-dependency diffs out of the migration unless the packaging test proves they are caused by the new wrapper.
 
 ## Required Commands
 
@@ -60,6 +62,13 @@ bazel run //platform/buildScripts:plugin-model-tool
 - Run the `Fast Project Structure Tests` run configuration via `mcp__ijproxy__execute_run_configuration` with `configurationName = "Fast Project Structure Tests"`.
 - Run `UltimateProjectTestsStructureTest` after that via `mcp__ijproxy__execute_run_configuration` with `configurationName = "UltimateProjectTestsStructureTest"`.
 - Run `IdeaUltimatePluginModuleDependenciesTest` after that via `mcp__ijproxy__execute_run_configuration` with `configurationName = "IdeaUltimatePluginModuleDependenciesTest"`.
+- After platform packaging checks are clean, run CLion and Rider packaging tests:
+
+```bash
+./tests.cmd --module intellij.clion.build.tests --test org.jetbrains.intellij.build.clion.CLionPackagingTest
+./tests.cmd --module intellij.rider.build.tests --test com.jetbrains.rider.build.RiderPackagingTest
+```
+
 - Run `All Packaging Tests` after that via `mcp__ijproxy__execute_run_configuration` with `configurationName = "All Packaging Tests"`.
 - Add or update a regression test that proves the wrapper exists in memory before generated files are written if you touched pipeline ordering.
 - Use targeted tests with fully qualified names:
