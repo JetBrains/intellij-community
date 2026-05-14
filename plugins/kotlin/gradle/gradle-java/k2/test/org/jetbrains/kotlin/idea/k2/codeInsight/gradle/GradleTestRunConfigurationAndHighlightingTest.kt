@@ -1,6 +1,6 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.codeInsight.gradle
+package org.jetbrains.kotlin.idea.k2.codeInsight.gradle
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.execution.PsiLocation
@@ -21,6 +21,7 @@ import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.util.application
 import org.jetbrains.kotlin.gradle.GradleDaemonAnalyzerTestCase
 import org.jetbrains.kotlin.gradle.checkFiles
+import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
 import org.jetbrains.kotlin.idea.run.KotlinRunConfiguration
 import org.jetbrains.kotlin.idea.test.TagsTestDataUtil
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
