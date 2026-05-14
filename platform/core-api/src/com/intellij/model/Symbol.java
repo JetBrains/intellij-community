@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.model;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -15,6 +15,12 @@ import org.jetbrains.annotations.NotNull;
  * to obtain a new Symbol instance (or the same instance if it's still valid, this is up to the Pointer)
  * in the subsequent read action.
  *
+ * <h4>Equality contract</h4>
+ * Implementations must define {@link #equals(Object)} and {@link #hashCode()} by semantic symbol identity,
+ * not by object identity.
+ * Equal symbols must represent the same symbol in the same model scope and be interchangeable
+ * for platform caching and deduplication.
+ *
  * @see com.intellij.model
  * @see <a href="https://plugins.jetbrains.com/docs/intellij/symbols.html">Symbols (IntelliJ Platform Docs)</a>
  */
@@ -22,15 +28,15 @@ import org.jetbrains.annotations.NotNull;
 public interface Symbol {
 
   /**
-   * @return a pointer which is used to restore the Symbol between read actions
+   * @return a pointer that can restore an equivalent Symbol in a subsequent read action
    */
   @NotNull Pointer<? extends Symbol> createPointer();
 
   /**
    * Required for using the instance in platform-level caches as a key.
    * <p/>
-   * The platform will also check the equality when several concurrent computations
-   * return different instances but only one instance should be cached.
+   * The platform will also check equality when several concurrent computations
+   * return different instances, but only one instance should be cached.
    */
   @Override
   boolean equals(Object obj);
