@@ -31,7 +31,6 @@ import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.target.ui.TargetPanelExtension
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -54,30 +53,29 @@ interface PythonToolViewModel {
   fun initialize(scope: CoroutineScope)
 }
 
-@OptIn(ExperimentalCoroutinesApi::class)
 abstract class PythonAddInterpreterModel<P : PathHolder>(
   val projectPathFlows: ProjectPathFlows,
   val fileSystem: FileSystem<P>,
 ) {
-  val modificationCounter: AtomicProperty<Int> = AtomicProperty(0)
+  internal val modificationCounter: AtomicProperty<Int> = AtomicProperty(0)
 
-  val propertyGraph: PropertyGraph = PropertyGraph()
-  val navigator: PythonNewEnvironmentDialogNavigator = PythonNewEnvironmentDialogNavigator()
+  internal val propertyGraph: PropertyGraph = PropertyGraph()
+  internal val navigator: PythonNewEnvironmentDialogNavigator = PythonNewEnvironmentDialogNavigator()
   open val state: AddInterpreterState<P> = AddInterpreterState(propertyGraph)
 
   val condaViewModel: CondaViewModel<P> = CondaViewModel(fileSystem, propertyGraph, projectPathFlows)
-  val uvViewModel: UvViewModel<P> = UvViewModel(fileSystem, propertyGraph, projectPathFlows)
-  val pipenvViewModel: PipenvViewModel<P> = PipenvViewModel(fileSystem, propertyGraph)
-  val poetryViewModel: PoetryViewModel<P> = PoetryViewModel(fileSystem, propertyGraph)
-  val hatchViewModel: HatchViewModel<P> = HatchViewModel(fileSystem, propertyGraph, projectPathFlows)
+  internal val uvViewModel: UvViewModel<P> = UvViewModel(fileSystem, propertyGraph, projectPathFlows)
+  internal val pipenvViewModel: PipenvViewModel<P> = PipenvViewModel(fileSystem, propertyGraph)
+  internal val poetryViewModel: PoetryViewModel<P> = PoetryViewModel(fileSystem, propertyGraph)
+  internal val hatchViewModel: HatchViewModel<P> = HatchViewModel(fileSystem, propertyGraph, projectPathFlows)
   val venvViewModel: VenvViewModel<P> = VenvViewModel(fileSystem, propertyGraph, projectPathFlows)
 
-  internal val knownInterpreters: MutableStateFlow<List<PythonSelectableInterpreter<P>>?> = MutableStateFlow(null)
+  private val knownInterpreters: MutableStateFlow<List<PythonSelectableInterpreter<P>>?> = MutableStateFlow(null)
   private val detectedInterpretersUnfiltered: MutableStateFlow<List<DetectedSelectableInterpreter<P>>?> = MutableStateFlow(null)
   lateinit var detectedInterpreters: StateFlow<List<DetectedSelectableInterpreter<P>>?>
-  val manuallyAddedInterpreters: MutableStateFlow<List<ManuallyAddedSelectableInterpreter<P>>> = MutableStateFlow(emptyList())
+  internal val manuallyAddedInterpreters: MutableStateFlow<List<ManuallyAddedSelectableInterpreter<P>>> = MutableStateFlow(emptyList())
   private var installable: List<InstallableSelectableInterpreter<P>> = emptyList()
-  lateinit var allInterpreters: StateFlow<List<PythonSelectableInterpreter<P>>?>
+  internal lateinit var allInterpreters: StateFlow<List<PythonSelectableInterpreter<P>>?>
   lateinit var baseInterpreters: StateFlow<List<PythonSelectableInterpreter<P>>?>
 
   @TestOnly
