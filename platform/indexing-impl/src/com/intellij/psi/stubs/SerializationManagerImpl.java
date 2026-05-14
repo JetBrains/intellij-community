@@ -5,6 +5,7 @@ import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.ControlFlowExceptionKt;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
@@ -33,9 +34,12 @@ import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -56,6 +60,13 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
   private volatile StubSerializationHelper myStubSerializationHelper;
   private volatile StubSerializerEnumerator mySerializerEnumerator;
   private volatile boolean mySerializersLoaded;
+
+  // the diagnostics of the serializer initialization only add context to the error messages
+  private final AtomicInteger myInterruptedInitCount = new AtomicInteger();
+  private volatile @Nullable String myLastInterruptedInitStep;
+  private final AtomicBoolean myCancelledClassInitReported = new AtomicBoolean();
+  // guarded by this
+  private @Nullable String myInitStep;
 
   public SerializationManagerImpl(@NotNull CoroutineScope coroutineScope) {
     this(() -> FileBasedIndex.USE_IN_MEMORY_INDEX ? null : PathManager.getIndexRoot().resolve("rep.names"), false, coroutineScope);
@@ -91,7 +102,7 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
     try {
       // we need to cache last id -> String mappings due to StringRefs and stubs indexing that initially creates stubs (doing enumerate on String)
       // and then index them (valueOf), also similar string items are expected to be enumerated during stubs processing
-      StubSerializerEnumerator enumerator = new StubSerializerEnumerator(openNameStorage(), myUnmodifiable);
+      StubSerializerEnumerator enumerator = new StubSerializerEnumerator(openNameStorage(), myUnmodifiable, this::getInitDiagnostics);
       mySerializerEnumerator = enumerator;
       myStubSerializationHelper = new StubSerializationHelper(enumerator);
     }
@@ -244,7 +255,7 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
   }
 
   @Override
-  protected void initSerializers() {
+  public void initSerializers() {
     if (mySerializersLoaded) return;
 
     synchronized (this) {
@@ -258,19 +269,86 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
       catch (Throwable e) {
         // serializers could be initialized only partially, let's clean the partial state
         dropSerializerData();
+        recordInitFailure(e);
         throw e;
+      }
+      finally {
+        myInitStep = null;
       }
 
       mySerializersLoaded = true;
     }
   }
 
-  private void doInitSerializedUnderLock() {
-    ProgressManager.getInstance().executeNonCancelableSection(() -> {
-      instantiateElementTypesFromFields();
-      StubIndexEx.initExtensions();
-    });
+  private void recordInitFailure(@NotNull Throwable e) {
+    if (ControlFlowExceptionKt.isControlFlowException(e)) {
+      myInterruptedInitCount.incrementAndGet();
+      myLastInterruptedInitStep = myInitStep;
+      return;
+    }
 
+    Set<String> brokenClasses = findClassesWithCancelledInitializer(e);
+    if (brokenClasses != null && myCancelledClassInitReported.compareAndSet(false, true)) {
+      LOG.error("A cancellation interrupted the static initializer of " + brokenClasses + " at step '" + myInitStep + "'. " +
+                "The JVM keeps these classes broken until the IDE restarts, so the stub serializers cannot load. " +
+                getInitDiagnostics(), e);
+    }
+  }
+
+  /**
+   * @return the classes whose static initializer a control flow exception interrupted, as found in the cause chain of {@code e},
+   * or {@code null} when no such initializer exists. The set is empty when the stack traces do not name the classes.
+   */
+  private static @Nullable Set<String> findClassesWithCancelledInitializer(@NotNull Throwable e) {
+    Set<String> result = null;
+    int depth = 0;
+    for (Throwable t = e; t != null && depth < 100; t = t.getCause() == t ? null : t.getCause(), depth++) {
+      if (!(t instanceof ExceptionInInitializerError error) || !isCancelledInitialization(error)) continue;
+
+      if (result == null) result = new LinkedHashSet<>();
+      Throwable original = error.getCause() != null ? error.getCause() : error;
+      for (StackTraceElement frame : original.getStackTrace()) {
+        if ("<clinit>".equals(frame.getMethodName())) {
+          result.add(frame.getClassName());
+        }
+      }
+    }
+    return result;
+  }
+
+  private static boolean isCancelledInitialization(@NotNull ExceptionInInitializerError error) {
+    Throwable cause = error.getCause();
+    if (cause != null) {
+      return ControlFlowExceptionKt.isControlFlowException(cause);
+    }
+
+    // Since JDK 18, each later NoClassDefFoundError has a copy of the first failure as its cause: an ExceptionInInitializerError
+    // without a cause, with the original stack trace and the message "Exception <class name>[: <message>] [in thread "<name>"]".
+    String message = error.getMessage();
+    String prefix = "Exception ";
+    if (message == null || !message.startsWith(prefix)) return false;
+    int end = prefix.length();
+    while (end < message.length() && message.charAt(end) != ':' && message.charAt(end) != ' ') end++;
+    String className = message.substring(prefix.length(), end);
+    return className.endsWith("CanceledException") || className.endsWith("CancellationException");
+  }
+
+  /**
+   * @return a summary of the interrupted serializer initializations, or an empty string when no initialization was interrupted
+   */
+  public @NotNull String getInitDiagnostics() {
+    int interruptedCount = myInterruptedInitCount.get();
+    if (interruptedCount == 0) return "";
+    return "Serializer initialization was interrupted " + interruptedCount + " time(s), " +
+           "the last time at step '" + myLastInterruptedInitStep + "'.";
+  }
+
+  private void doInitSerializedUnderLock() {
+    instantiateElementTypesFromFields();
+    myInitStep = "StubIndexEx.initExtensions";
+    StubIndexEx.initExtensions();
+
+    myInitStep = "registerSerializers";
     registerSerializer(PsiFileStubImpl.TYPE);
 
     final List<StubFieldAccessor> lazySerializers = IStubElementType.loadRegisteredStubElementTypes();
@@ -345,21 +423,25 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
     }
   }
 
-  private static void instantiateElementTypesFromFields() {
+  private void instantiateElementTypesFromFields() {
     // load stub serializers before usage
+    myInitStep = "FileTypeRegistry.getRegisteredFileTypes";
     FileTypeRegistry.getInstance().getRegisteredFileTypes();
     getExtensions(BinaryFileStubBuilders.INSTANCE, _ -> {});
     getExtensions(LanguageParserDefinitions.INSTANCE, ParserDefinition::getFileNodeType);
   }
 
-  private static <T> void getExtensions(@NotNull KeyedExtensionCollector<T, ?> collector, @NotNull Consumer<? super T> consumer) {
+  private <T> void getExtensions(@NotNull KeyedExtensionCollector<T, ?> collector, @NotNull Consumer<? super T> consumer) {
     ExtensionPointImpl<@NotNull KeyedLazyInstance<T>> point = (ExtensionPointImpl<@NotNull KeyedLazyInstance<T>>)collector.getPoint();
     if (point == null) return;
 
     Iterator<KeyedLazyInstance<T>> iterator = point.iterator();
     while (iterator.hasNext()) {
-      T initializedExtension = iterator.next().getInstance();
+      KeyedLazyInstance<T> lazyExtension = iterator.next();
+      myInitStep = point.name + "[" + lazyExtension.getKey() + "]";
+      T initializedExtension = lazyExtension.getInstance();
       consumer.accept(initializedExtension);
+      ProgressManager.checkCanceled();
     }
   }
 }

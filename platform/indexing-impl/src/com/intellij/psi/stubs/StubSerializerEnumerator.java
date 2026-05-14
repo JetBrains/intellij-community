@@ -40,10 +40,22 @@ final class StubSerializerEnumerator implements Flushable, Closeable {
   private final Map<ObjectStubSerializer<?, ? extends Stub>, Integer> mySerializerToId = new ConcurrentHashMap<>();
 
   private final boolean myUnmodifiable;
+  private final @NotNull Supplier<@NotNull String> myInitDiagnostics;
 
-  StubSerializerEnumerator(@NotNull DataEnumeratorEx<String> nameStorage, boolean unmodifiable) {
+  /**
+   * @param initDiagnostics gives a summary of the interrupted serializer initializations for the error messages
+   */
+  StubSerializerEnumerator(@NotNull DataEnumeratorEx<String> nameStorage,
+                           boolean unmodifiable,
+                           @NotNull Supplier<@NotNull String> initDiagnostics) {
     myNameStorage = nameStorage;
     myUnmodifiable = unmodifiable;
+    myInitDiagnostics = initDiagnostics;
+  }
+
+  private @NotNull String withInitDiagnostics(@NotNull String message) {
+    String diagnostics = myInitDiagnostics.get();
+    return diagnostics.isEmpty() ? message : message + ". " + diagnostics;
   }
 
   void dropRegisteredSerializers() {
@@ -83,8 +95,8 @@ final class StubSerializerEnumerator implements Flushable, Closeable {
       ObjectStubSerializer<?, ? extends Stub> existing = old.get();
       ObjectStubSerializer<?, ? extends Stub> computed = serializer.get();
       if (existing != computed) {
-        throw new AssertionError("ID: " + name + " is not unique, but found in both " +
-                                 existing.getClass().getName() + " and " + computed.getClass().getName());
+        throw new AssertionError(withInitDiagnostics("ID: " + name + " is not unique, but found in both " +
+                                                     existing.getClass().getName() + " and " + computed.getClass().getName()));
       }
       return;
     }
@@ -149,7 +161,7 @@ final class StubSerializerEnumerator implements Flushable, Closeable {
       LOG.info(e);
       storageException = e;
     }
-    SerializerNotFoundException exception = new SerializerNotFoundException(reporter.report(id, name, externalId));
+    SerializerNotFoundException exception = new SerializerNotFoundException(withInitDiagnostics(reporter.report(id, name, externalId)));
     StubIndex.getInstance().forceRebuild(storageException != null ? storageException : exception);
     return exception;
   }
