@@ -365,9 +365,6 @@ com.intellij.model.Pointer
 - s:hardPointer(java.lang.Object):com.intellij.model.Pointer
 - s:selfDelegatingPointer(com.intellij.model.Pointer,java.util.function.BiFunction):com.intellij.model.Pointer
 - s:uroborosPointer(com.intellij.model.Pointer,java.util.function.BiFunction):com.intellij.model.Pointer
-f:com.intellij.model.PsiElementUsageInfo
-- com.intellij.usageView.UsageInfo
-- <init>(com.intellij.psi.PsiElement):V
 a:com.intellij.model.SingleTargetReference
 - <init>():V
 - f:resolveReference():java.util.Collection
