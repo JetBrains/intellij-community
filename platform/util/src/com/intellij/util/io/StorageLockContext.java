@@ -2,8 +2,8 @@
 package com.intellij.util.io;
 
 import com.intellij.util.indexing.impl.IndexDebugProperties;
+import com.intellij.util.io.ChannelsAccessor.FileChannelOperation;
 import com.intellij.util.io.FileChannelInterruptsRetryer.FileChannelIdempotentOperation;
-import com.intellij.util.io.OpenChannelsCache.FileChannelOperation;
 import com.intellij.util.io.pagecache.impl.PageContentLockingStrategy;
 import com.intellij.util.io.pagecache.impl.PageContentLockingStrategy.SharedLockLockingStrategy;
 import com.intellij.util.io.stats.FilePageCacheStatistics;
@@ -17,7 +17,6 @@ import java.nio.file.Path;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import static com.intellij.util.io.PageCacheUtils.CHANNELS_CACHE;
 import static com.intellij.util.io.PageCacheUtils.FILE_PAGE_CACHE_NEW_CAPACITY_BYTES;
 import static com.intellij.util.io.PageCacheUtils.FILE_PAGE_CACHE_OLD_CAPACITY_BYTES;
 import static com.intellij.util.io.PageCacheUtils.HEAP_CAPACITY_FRACTION;
@@ -52,8 +51,9 @@ public final class StorageLockContext {
   private final PageContentLockingStrategy defaultPageContentLockingStrategy = new SharedLockLockingStrategy(lock);
 
   private final boolean useReadWriteLock;
-  private final boolean cacheChannels;
   private final boolean disableAssertions;
+
+  private final ChannelsAccessor channelsAccessor;
 
 
   private StorageLockContext(@NotNull FilePageCache legacyFilePageCache,
@@ -62,18 +62,19 @@ public final class StorageLockContext {
                              boolean cacheChannels,
                              boolean disableAssertions) {
     this.useReadWriteLock = useReadWriteLock;
-    this.cacheChannels = cacheChannels;
     this.disableAssertions = disableAssertions;
 
     this.legacyFilePageCache = legacyFilePageCache;
     this.newFilePageCache = newFilePageCacheLockFree;
+
+    channelsAccessor = cacheChannels ? PageCacheUtils.CHANNELS_CACHE : PageCacheUtils.CHANNELS_NO_CACHE;
   }
 
   @VisibleForTesting
   public StorageLockContext(@Nullable FilePageCacheLockFree newFilePageCache,
-                     boolean useReadWriteLock,
-                     boolean cacheChannels,
-                     boolean disableAssertions) {
+                            boolean useReadWriteLock,
+                            boolean cacheChannels,
+                            boolean disableAssertions) {
     this(DEFAULT_FILE_PAGE_CACHE, newFilePageCache, useReadWriteLock, cacheChannels, disableAssertions);
   }
 
@@ -98,40 +99,16 @@ public final class StorageLockContext {
     this(false, false, false);
   }
 
-  boolean useChannelCache() {
-    return cacheChannels;
-  }
-
   public <R> R executeOp(final Path file,
                          final @NotNull FileChannelOperation<R> operation,
                          final boolean readOnly) throws IOException {
-    //MAYBE RC: both branches should be encapsulated inside OpenChannelsCache
-    //          (and the OpenChannelsCache should be a part of StorageLockContext then)
-    if (useChannelCache()) {
-      return CHANNELS_CACHE.executeOp(file, operation, readOnly);
-    }
-    else {
-      getBufferCache().incrementUncachedFileAccess();
-      try (OpenChannelsCache.ChannelDescriptor desc = new OpenChannelsCache.ChannelDescriptor(file, readOnly)) {
-        return operation.execute(desc.channel());
-      }
-    }
+    return channelsAccessor.executeOp(file, operation, readOnly);
   }
 
   public <R> R executeIdempotentOp(final Path file,
                                    final @NotNull FileChannelIdempotentOperation<R> operation,
                                    final boolean readOnly) throws IOException {
-    //MAYBE RC: both branches should be encapsulated inside OpenChannelsCache
-    //          (and the OpenChannelsCache should be a part of StorageLockContext then)
-    if (useChannelCache()) {
-      return CHANNELS_CACHE.executeIdempotentOp(file, operation, readOnly);
-    }
-    else {
-      getBufferCache().incrementUncachedFileAccess();
-      try (OpenChannelsCache.ChannelDescriptor desc = new OpenChannelsCache.ChannelDescriptor(file, readOnly)) {
-        return desc.executeIdempotentOp(operation);
-      }
-    }
+    return channelsAccessor.executeIdempotentOp(file, operation, readOnly);
   }
 
   public Lock readLock() {

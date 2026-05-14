@@ -10,6 +10,7 @@ import org.junit.runners.MethodSorters;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -34,7 +35,7 @@ public class PerformanceOfFileAccessViaChannelTest extends PerformanceOfFileAcce
   private static final boolean USE_IDEMPOTENT_OPS = Boolean.getBoolean("PerformanceOfFileAccessViaChannelTest.USE_IDEMPOTENT_OPS");
 
 
-  private final OpenChannelsCache cache = new OpenChannelsCache(32);
+  private final OpenChannelsCache cache = new OpenChannelsCache(32, (path, readOnly) -> FileChannel.open(path) );
 
   //======================= Single-threaded: =======================
 

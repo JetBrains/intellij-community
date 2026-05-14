@@ -501,7 +501,7 @@ object StorageDiagnosticData {
       {
         try {
           val pageCacheStats = StorageLockContext.getStatistics()
-          uncachedFileAccess.record(pageCacheStats.uncachedFileAccess.toLong())
+          uncachedFileAccess.record(pageCacheStats.cachedChannelsStatistics.bypassedCache.toLong())
           maxRegisteredFiles.record(pageCacheStats.maxRegisteredFiles.toLong())
 
           maxCacheSizeInBytes.record(pageCacheStats.maxCacheSizeInBytes)

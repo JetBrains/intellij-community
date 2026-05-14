@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
-import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -21,22 +20,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import static java.nio.file.StandardOpenOption.CREATE;
-import static java.nio.file.StandardOpenOption.READ;
-import static java.nio.file.StandardOpenOption.WRITE;
-
 /**
- * Cache of {@link FileChannel}s.
+ * {@linkplain ChannelsAccessor} implementation that caches a limited number of opened {@link FileChannel}s.
  * Cache eviction policy is kind of FIFO -- the first channel cached is the first candidate to drop
  * from the cache, given it is not used right now.
  * <p>
- * Cache provides 2 ways to access FileChannel: {@link #executeOp(Path, FileChannelOperation, boolean)} and {@link #executeIdempotentOp(Path, FileChannelIdempotentOperation, boolean)}.
- * In a first method lambda supplied with {@link ResilientFileChannel} channel wrapper -- see its description for details
- * about that 'reliable' means there. In the second method lambda must be idempotent, but supplied with direct {@link FileChannel}
- * without wrapping.
+ * Cache provides 2 ways to access a {@linkplain FileChannel}:
+ * - {@link #executeOp(Path, FileChannelOperation, boolean)}: a lambda supplied with {@link ResilientFileChannel} channel wrapper
+ *   (see {@link ResilientFileChannel} description for details about that 'reliable' means there)
+ * - {@link #executeIdempotentOp(Path, FileChannelIdempotentOperation, boolean)}: a lambda must be idempotent, but supplied with
+ *   plain {@link FileChannel} without wrapping.
  */
 @ApiStatus.Internal
-public final class OpenChannelsCache { // TODO: Will it make sense to have a background thread, that flushes the cache by timeout?
+public final class OpenChannelsCache implements ChannelsAccessor { // TODO: Will it make sense to have a background thread, that flushes the cache by timeout?
   /** Max channels to keep open in cache */
   private final int capacity;
 
@@ -50,25 +46,25 @@ public final class OpenChannelsCache { // TODO: Will it make sense to have a bac
 
   private final transient Object cacheLock = new Object();
 
+  private final @NotNull FileChannelOpener channelOpener;
+
   @VisibleForTesting
-  public OpenChannelsCache(int capacity) {
+  public OpenChannelsCache(int capacity,
+                           @NotNull FileChannelOpener channelOpener) {
     this.capacity = capacity;
     cachedChannels = new LinkedHashMap<>(capacity, 0.5f, true);
+    this.channelOpener = channelOpener;
   }
 
-  @NotNull CachedChannelsStatistics getStatistics() {
+  @Override
+  public @NotNull CachedChannelsStatistics getStatistics() {
     synchronized (cacheLock) {
-      return new CachedChannelsStatistics(hitCount, missCount, loadCount, capacity);
+      return new CachedChannelsStatistics(hitCount, missCount, loadCount, /*bypassedCache: */0,  capacity);
     }
   }
 
-  @FunctionalInterface
-  public interface FileChannelOperation<T> {
-    T execute(@NotNull FileChannel channel) throws IOException;
-  }
-
   /**
-   * Note: implementation supplies {@link ResilientFileChannel} to processor. {@link ResilientFileChannel}
+   * Note: this implementation supplies {@link ResilientFileChannel} to processor. {@link ResilientFileChannel}
    * is a FileChannel implementation that tries to ensure each FileChannel operation is completed,
    * or not started at all, but not interrupted in the middle. If something interrupts 'elementary'
    * FileChannel ops, like read/write -- those ops are retried, invisibly for processor -- see class
@@ -76,11 +72,12 @@ public final class OpenChannelsCache { // TODO: Will it make sense to have a bac
    * does not implement some FileChannel operations, so be aware.
    */
   @VisibleForTesting
+  @Override
   public <T> T executeOp(@NotNull Path path,
                          @NotNull FileChannelOperation<T> operation,
-                         boolean read) throws IOException {
-    ChannelDescriptor descriptor = acquireDescriptor(path, /*readOnly: */read);
-    //channel access is NOT guarded by the myCacheLock
+                         boolean readOnly) throws IOException {
+    ChannelDescriptor descriptor = acquireDescriptor(path, /*readOnly: */readOnly);
+    //channel access is NOT guarded by the cacheLock
     try {
       return operation.execute(descriptor.channel());
     }
@@ -94,11 +91,12 @@ public final class OpenChannelsCache { // TODO: Will it make sense to have a bac
    * when the file channel was closed by thread interruption
    */
   @VisibleForTesting
+  @Override
   public <T> T executeIdempotentOp(@NotNull Path path,
                                    @NotNull FileChannelIdempotentOperation<T> operation,
-                                   boolean read) throws IOException {
-    ChannelDescriptor descriptor = acquireDescriptor(path, /*readOnly: */read);
-    //channel access is NOT guarded by the myCacheLock
+                                   boolean readOnly) throws IOException {
+    ChannelDescriptor descriptor = acquireDescriptor(path, readOnly);
+    //channel access is NOT guarded by the cacheLock
     try {
       return descriptor.executeIdempotentOp(operation);
     }
@@ -113,7 +111,7 @@ public final class OpenChannelsCache { // TODO: Will it make sense to have a bac
       ChannelDescriptor descriptor = cachedChannels.get(path);
       if (descriptor == null) {
         boolean somethingDropped = releaseOverCachedChannels();
-        descriptor = new ChannelDescriptor(path, /*readOnly: */ readOnly);
+        descriptor = new ChannelDescriptor(path, readOnly, channelOpener);
         cachedChannels.put(path, descriptor);
         if (somethingDropped) {
           missCount++;
@@ -124,12 +122,12 @@ public final class OpenChannelsCache { // TODO: Will it make sense to have a bac
       }
       else if (!readOnly && descriptor.isReadOnly()) {
         if (descriptor.isLocked()) {
-          descriptor = new ChannelDescriptor(path, /*readOnly: */false);
+          descriptor = new ChannelDescriptor(path, /*readOnly: */ false, channelOpener);
         }
         else {
           // re-open as write
           closeChannel(path);
-          descriptor = new ChannelDescriptor(path, /*readOnly: */false);
+          descriptor = new ChannelDescriptor(path, /*readOnly: */ false, channelOpener);
           cachedChannels.put(path, descriptor);
         }
         missCount++;
@@ -160,7 +158,7 @@ public final class OpenChannelsCache { // TODO: Will it make sense to have a bac
     }
   }
 
-  //@GuardedBy(myCacheLock)
+  //@GuardedBy(cacheLock)
   private boolean releaseOverCachedChannels() throws IOException {
     int dropCount = cachedChannels.size() - capacity;
 
@@ -185,22 +183,20 @@ public final class OpenChannelsCache { // TODO: Will it make sense to have a bac
   }
 
   static final class ChannelDescriptor implements Closeable {
-    private static final OpenOption[] MODIFIABLE_OPTS = {READ, WRITE, CREATE};
-    private static final OpenOption[] READ_ONLY_OPTS = {READ};
-
     private int lockCount = 0;
     private final @NotNull FileChannel channel;
     private final boolean readOnly;
 
-
-    ChannelDescriptor(@NotNull Path file, boolean readOnly) throws IOException {
+    ChannelDescriptor(@NotNull Path path,
+                      boolean readOnly,
+                      @NotNull FileChannelOpener channelOpener) throws IOException {
       this.readOnly = readOnly;
       this.channel = Objects.requireNonNull(FileUtilRt.doIOOperation(lastAttempt -> {
         try {
-          return new ResilientFileChannel(file, readOnly ? READ_ONLY_OPTS : MODIFIABLE_OPTS);
+          return channelOpener.open(path, readOnly);
         }
         catch (NoSuchFileException ex) {
-          Path parent = file.getParent();
+          Path parent = path.getParent();
           if (!readOnly) {
             if (!Files.exists(parent)) {
               Files.createDirectories(parent);
@@ -228,7 +224,7 @@ public final class OpenChannelsCache { // TODO: Will it make sense to have a bac
       lockCount--;
     }
 
-    boolean isLocked() {
+    private boolean isLocked() {
       return lockCount != 0;
     }
 

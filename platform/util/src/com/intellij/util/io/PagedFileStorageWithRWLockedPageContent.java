@@ -3,8 +3,8 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.io.ChannelsAccessor.FileChannelOperation;
 import com.intellij.util.io.FileChannelInterruptsRetryer.FileChannelIdempotentOperation;
-import com.intellij.util.io.OpenChannelsCache.FileChannelOperation;
 import com.intellij.util.io.pagecache.FilePageCacheStatistics;
 import com.intellij.util.io.pagecache.Page;
 import com.intellij.util.io.pagecache.PagedStorage;

@@ -4,6 +4,7 @@ package com.intellij.util.io;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.hash.LongLinkedHashMap;
+import com.intellij.util.io.stats.CachedChannelsStatistics;
 import com.intellij.util.io.stats.FilePageCacheStatistics;
 import com.intellij.util.lang.CompoundRuntimeException;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -111,8 +112,6 @@ public final class FilePageCache {
 
   //stats counters:
 
-  /** how many times a file channel was accessed bypassing cache (see {@link PagedFileStorage#executeOp}) */
-  private volatile int myUncachedFileAccess;
   /** How many times page was found in local PagedFileStorage cache */
   private int myFastCacheHits;
   /** How many times page was found in this cache */
@@ -266,11 +265,6 @@ public final class FilePageCache {
     finally {
       pagesAllocationLock.unlock();
     }
-  }
-
-  @SuppressWarnings("NonAtomicOperationOnVolatileField") // expected, we don't need 100% precision
-  public void incrementUncachedFileAccess() {
-    myUncachedFileAccess++;
   }
 
   public void incrementFastCacheHitsCount() {
@@ -449,8 +443,8 @@ public final class FilePageCache {
     try {
       pagesAccessLock.lock();
       try {
-        return new FilePageCacheStatistics(PageCacheUtils.CHANNELS_CACHE.getStatistics(),
-                                           myUncachedFileAccess,
+        CachedChannelsStatistics channelCachingStats = PageCacheUtils.CHANNELS_CACHE.getStatistics().plus(PageCacheUtils.CHANNELS_NO_CACHE.getStatistics());
+        return new FilePageCacheStatistics(channelCachingStats,
                                            myMaxRegisteredFiles,
                                            myMaxLoadedSize,
                                            totalSizeCached,

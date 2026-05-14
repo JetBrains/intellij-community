@@ -3,17 +3,26 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.MathUtil;
+import com.intellij.util.io.stats.CachedChannelsStatistics;
 import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.nio.file.OpenOption;
+import java.nio.file.Path;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.util.SystemProperties.getBooleanProperty;
 import static com.intellij.util.SystemProperties.getFloatProperty;
 import static com.intellij.util.SystemProperties.getIntProperty;
 import static com.intellij.util.SystemProperties.getLongProperty;
 import static com.intellij.util.io.IOUtil.MiB;
+import static java.nio.file.StandardOpenOption.CREATE;
+import static java.nio.file.StandardOpenOption.READ;
+import static java.nio.file.StandardOpenOption.WRITE;
 
 /**
  * Constants, params, static functions around file page caching
@@ -84,8 +93,46 @@ public final class PageCacheUtils {
 
   //@formatter:on
 
+  private static final ChannelsAccessor.FileChannelOpener RESILIENT_CHANNEL_OPENER = (path, readOnly) -> {
+    return new ResilientFileChannel(path, readOnly ? new OpenOption[]{READ} : new OpenOption[]{READ, WRITE, CREATE});
+  };
+
+
   /** Shared channels cache */
-  static final OpenChannelsCache CHANNELS_CACHE = new OpenChannelsCache(CHANNELS_CACHE_CAPACITY);
+  static final OpenChannelsCache CHANNELS_CACHE = new OpenChannelsCache(
+    CHANNELS_CACHE_CAPACITY,
+    RESILIENT_CHANNEL_OPENER
+  );
+
+  /** Channels cache-bypassing accessor */
+  static final ChannelsAccessor CHANNELS_NO_CACHE = new ChannelsAccessor() {
+
+    private final AtomicInteger operationsExecuted = new AtomicInteger(0);
+    @Override
+    public <T> T executeOp(@NotNull Path path,
+                           @NotNull FileChannelOperation<T> operation,
+                           boolean readOnly) throws IOException {
+      operationsExecuted.incrementAndGet();
+      try (OpenChannelsCache.ChannelDescriptor desc = new OpenChannelsCache.ChannelDescriptor(path, readOnly, RESILIENT_CHANNEL_OPENER)) {
+        return operation.execute(desc.channel());
+      }
+    }
+
+    @Override
+    public <T> T executeIdempotentOp(@NotNull Path path,
+                                     @NotNull FileChannelInterruptsRetryer.FileChannelIdempotentOperation<T> operation,
+                                     boolean readOnly) throws IOException {
+      operationsExecuted.incrementAndGet();
+      try (OpenChannelsCache.ChannelDescriptor desc = new OpenChannelsCache.ChannelDescriptor(path, readOnly, RESILIENT_CHANNEL_OPENER)) {
+        return desc.executeIdempotentOp(operation);
+      }
+    }
+
+    @Override
+    public @NotNull CachedChannelsStatistics getStatistics() {
+      return new CachedChannelsStatistics(0, 0, 0, /*bypassedCache: */ operationsExecuted.get(), 0);
+    }
+  };
 
   static {
     LOG.info(
