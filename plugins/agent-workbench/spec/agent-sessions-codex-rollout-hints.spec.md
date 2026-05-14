@@ -27,7 +27,7 @@ Codex rollout files are parsed for refresh hints only: pending/concrete tab rebi
 - Title extraction uses the first qualifying user message, with explicit thread-name updates overriding derived titles. If no title is found, fallback is `Thread <id-prefix>`.
   [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
 
-- Rollout review-mode and response-required needs-input hints must use current Codex rollout event shapes, including `entered_review_mode`, `exited_review_mode`, `request_user_input`, and persisted `response_item` tool calls named `request_user_input`.
+- Rollout review-mode and response-required needs-input hints must use current Codex rollout event shapes, including `entered_review_mode`, `exited_review_mode`, `request_user_input`, persisted `response_item` tool calls named `request_user_input`, approval events (`exec_approval_request`, `apply_patch_approval_request`, `request_permissions`, `elicitation_request`), and escalated tool-call arguments (`sandbox_permissions: require_escalated`).
   [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
 
 - Rollout hints may be consumed for pending-tab rebinding, concrete `/new` rebinding, and Codex activity projection. Rollout-discovered ids must not create persisted thread rows.

@@ -144,6 +144,133 @@ class CodexRolloutSessionBackendTest {
           expected = CodexSessionActivity.UNREAD,
         ),
         ActivityCase(
+          id = "session-escalated-exec-needs-input",
+          eventLines = listOf(
+            """{"timestamp":"2026-02-13T11:01:34.000Z","type":"event_msg","payload":{"type":"user_message","message":"Run an escalated tool"}}""",
+            """{"timestamp":"2026-02-13T11:01:35.000Z","type":"response_item","payload":{"type":"message","role":"assistant","content":[]}}""",
+            responseItemFunctionCall(
+              timestamp = "2026-02-13T11:01:36.000Z",
+              callId = "call-escalated-exec",
+              name = "exec_command",
+              arguments = """{"sandbox_permissions":"require_escalated"}""",
+            ),
+          ),
+          expected = CodexSessionActivity.NEEDS_INPUT,
+          expectedRequiresResponse = true,
+        ),
+        ActivityCase(
+          id = "session-normal-exec-with-sandbox-arg-processing",
+          eventLines = listOf(
+            responseItemFunctionCall(
+              timestamp = "2026-02-13T11:01:37.000Z",
+              callId = "call-normal-exec",
+              name = "exec_command",
+              arguments = """{"sandbox_permissions":"use_default"}""",
+            ),
+          ),
+          expected = CodexSessionActivity.PROCESSING,
+        ),
+        ActivityCase(
+          id = "session-escalated-exec-output-unread",
+          eventLines = listOf(
+            """{"timestamp":"2026-02-13T11:01:38.000Z","type":"event_msg","payload":{"type":"user_message","message":"Run an approved tool"}}""",
+            """{"timestamp":"2026-02-13T11:01:39.000Z","type":"response_item","payload":{"type":"message","role":"assistant","content":[]}}""",
+            responseItemFunctionCall(
+              timestamp = "2026-02-13T11:01:40.000Z",
+              callId = "call-escalated-output",
+              name = "exec_command",
+              arguments = """{"sandbox_permissions":"require_escalated"}""",
+            ),
+            """{"timestamp":"2026-02-13T11:01:41.000Z","type":"response_item","payload":{"type":"function_call_output","call_id":"call-escalated-output","output":"{}"}}""",
+          ),
+          expected = CodexSessionActivity.UNREAD,
+        ),
+        ActivityCase(
+          id = "session-escalated-exec-started-processing",
+          eventLines = listOf(
+            responseItemFunctionCall(
+              timestamp = "2026-02-13T11:01:42.000Z",
+              callId = "call-escalated-started",
+              name = "exec_command",
+              arguments = """{"sandbox_permissions":"require_escalated"}""",
+            ),
+            approvalEventLine(
+              timestamp = "2026-02-13T11:01:43.000Z",
+              type = "exec_command_begin",
+              callId = "call-escalated-started",
+            ),
+          ),
+          expected = CodexSessionActivity.PROCESSING,
+        ),
+        ActivityCase(
+          id = "session-request-permissions-function-call",
+          eventLines = listOf(
+            responseItemFunctionCall(
+              timestamp = "2026-02-13T11:01:44.000Z",
+              callId = "call-request-permissions",
+              name = "request_permissions",
+            ),
+          ),
+          expected = CodexSessionActivity.NEEDS_INPUT,
+          expectedRequiresResponse = true,
+        ),
+        ActivityCase(
+          id = "session-exec-approval-event",
+          eventLines = listOf(
+            approvalEventLine(timestamp = "2026-02-13T11:01:45.000Z", type = "exec_approval_request", callId = "call-exec-approval"),
+          ),
+          expected = CodexSessionActivity.NEEDS_INPUT,
+          expectedRequiresResponse = true,
+        ),
+        ActivityCase(
+          id = "session-exec-approval-event-finished-ready",
+          eventLines = listOf(
+            approvalEventLine(timestamp = "2026-02-13T11:01:45.100Z", type = "exec_approval_request", callId = "call-exec-finished"),
+            approvalEventLine(timestamp = "2026-02-13T11:01:45.200Z", type = "exec_command_begin", callId = "call-exec-finished"),
+            approvalEventLine(timestamp = "2026-02-13T11:01:45.300Z", type = "exec_command_end", callId = "call-exec-finished"),
+          ),
+          expected = CodexSessionActivity.READY,
+        ),
+        ActivityCase(
+          id = "session-apply-patch-approval-event",
+          eventLines = listOf(
+            approvalEventLine(timestamp = "2026-02-13T11:01:46.000Z",
+                              type = "apply_patch_approval_request",
+                              callId = "call-patch-approval"),
+          ),
+          expected = CodexSessionActivity.NEEDS_INPUT,
+          expectedRequiresResponse = true,
+        ),
+        ActivityCase(
+          id = "session-request-permissions-event",
+          eventLines = listOf(
+            approvalEventLine(timestamp = "2026-02-13T11:01:47.000Z", type = "request_permissions", callId = "call-permission-event"),
+          ),
+          expected = CodexSessionActivity.NEEDS_INPUT,
+          expectedRequiresResponse = true,
+        ),
+        ActivityCase(
+          id = "session-elicitation-request-event",
+          eventLines = listOf(
+            approvalEventLine(timestamp = "2026-02-13T11:01:48.000Z", type = "elicitation_request", callId = "call-elicitation-request"),
+          ),
+          expected = CodexSessionActivity.NEEDS_INPUT,
+          expectedRequiresResponse = true,
+        ),
+        ActivityCase(
+          id = "session-approval-event-completion-ready",
+          eventLines = listOf(
+            approvalEventLine(
+              timestamp = "2026-02-13T11:01:49.000Z",
+              type = "exec_approval_request",
+              callId = "call-approval-completed",
+              turnId = "turn-approval-completed",
+            ),
+            turnCompleteLine(timestamp = "2026-02-13T11:01:50.000Z", turnId = "turn-approval-completed"),
+          ),
+          expected = CodexSessionActivity.READY,
+        ),
+        ActivityCase(
           id = "session-newer-function-call-survives-stale-turn-complete",
           eventLines = listOf(
             """{"timestamp":"2026-02-13T11:01:40.000Z","type":"event_msg","payload":{"type":"user_message","message":"Run overlapping tools"}}""",
@@ -1116,9 +1243,30 @@ private fun sessionMetaLine(timestamp: String, id: String, cwd: Path): String {
   }"}}"""
 }
 
-private fun responseItemFunctionCall(timestamp: String, callId: String, name: String = "request_user_input", turnId: String? = null): String {
+private fun responseItemFunctionCall(
+  timestamp: String,
+  callId: String,
+  name: String = "request_user_input",
+  arguments: String = "{}",
+  turnId: String? = null,
+): String {
   val turnIdField = turnId?.let { ""","turn_id":"$it"""" }.orEmpty()
-  return """{"timestamp":"$timestamp","type":"response_item","payload":{"type":"function_call","name":"$name","arguments":"{}","call_id":"$callId"$turnIdField}}"""
+  val escapedArguments = jsonString(arguments)
+  return """{"timestamp":"$timestamp","type":"response_item","payload":{"type":"function_call","name":"$name","arguments":"$escapedArguments","call_id":"$callId"$turnIdField}}"""
+}
+
+private fun approvalEventLine(timestamp: String, type: String, callId: String? = null, turnId: String? = null): String {
+  val callIdField = callId?.let { ""","call_id":"$it"""" }.orEmpty()
+  val turnIdField = turnId?.let { ""","turn_id":"$it"""" }.orEmpty()
+  return """{"timestamp":"$timestamp","type":"event_msg","payload":{"type":"$type"$callIdField$turnIdField}}"""
+}
+
+private fun jsonString(value: String): String {
+  return value
+    .replace("\\", "\\\\")
+    .replace("\"", "\\\"")
+    .replace("\n", "\\n")
+    .replace("\r", "\\r")
 }
 
 private fun turnCompleteLine(timestamp: String, turnId: String? = null): String {

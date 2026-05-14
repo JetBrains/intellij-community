@@ -52,11 +52,19 @@ internal class CodexRolloutParser(
     val resolvedSessionId = state.sessionId ?: return null
     val hasUnread = state.latestAgentMessageAt > state.latestUserMessageAt
     val hasPendingUserInput = state.pendingUserInputByCallId.isNotEmpty()
+    val hasPendingApproval = state.pendingApprovalByCallId.isNotEmpty()
     val hasPendingPlan = state.latestPlanAt > state.latestUserMessageAt
     val hasPendingFunctionCall = state.pendingFunctionCallByCallId.isNotEmpty()
+    val activeFlags = LinkedHashSet<CodexThreadActiveFlag>()
+    if (hasPendingApproval) {
+      activeFlags.add(CodexThreadActiveFlag.WAITING_ON_APPROVAL)
+    }
+    if (hasPendingUserInput) {
+      activeFlags.add(CodexThreadActiveFlag.WAITING_ON_USER_INPUT)
+    }
     val activity = resolveCodexSessionActivity(
       statusKind = CodexThreadStatusKind.IDLE,
-      activeFlags = if (hasPendingUserInput) setOf(CodexThreadActiveFlag.WAITING_ON_USER_INPUT) else emptySet(),
+      activeFlags = activeFlags,
       hasUnreadAssistantMessage = hasUnread,
       hasPendingPlan = hasPendingPlan,
       isReviewing = state.reviewing,
@@ -93,7 +101,7 @@ internal class CodexRolloutParser(
           parentThreadId = state.parentThreadId,
         ),
         activity = activity,
-        requiresResponse = hasPendingUserInput || hasPendingPlan,
+        requiresResponse = hasPendingUserInput || hasPendingApproval || hasPendingPlan,
       ),
     )
   }
@@ -114,13 +122,14 @@ private fun reduceEvent(parseState: RolloutParseState, event: RolloutEvent) {
   val eventTimestamp = event.timestampMs
   when (event.topLevelType) {
     "event_msg" -> {
-      when (event.payloadType) {
-        "task_started", "turn_started" -> {
+      when (normalizeToken(event.payloadType)) {
+        "taskstarted", "turnstarted" -> {
           parseState.processing = true
           parseState.processingTurnId = event.payloadTurnId
         }
 
-        "task_complete", "turn_complete", "turn_aborted" -> {
+        "taskcomplete", "turncomplete", "turnaborted" -> {
+          parseState.clearPendingApprovalsForCompletedTurn(completedTurnId = event.payloadTurnId)
           parseState.clearPendingFunctionCallsForCompletedTurn(completedTurnId = event.payloadTurnId)
           if (shouldClearProcessingTurn(parseState = parseState, completedTurnId = event.payloadTurnId)) {
             parseState.processing = false
@@ -128,7 +137,7 @@ private fun reduceEvent(parseState: RolloutParseState, event: RolloutEvent) {
           }
         }
 
-        "user_message" -> {
+        "usermessage" -> {
           parseState.latestUserMessageAt = maxTimestamp(parseState.latestUserMessageAt, eventTimestamp)
           parseState.title = parseState.title ?: extractTitle(event.payloadMessage)
           val pendingInputAt = parseState.latestPendingUserInputAt()
@@ -137,35 +146,48 @@ private fun reduceEvent(parseState: RolloutParseState, event: RolloutEvent) {
           }
         }
 
-        "thread_name_updated", "threadNameUpdated" -> {
+        "threadnameupdated" -> {
           parseState.title = extractThreadName(event.payloadThreadName) ?: parseState.title
         }
 
-        "agent_message" -> {
+        "agentmessage" -> {
           parseState.latestAgentMessageAt = maxTimestamp(parseState.latestAgentMessageAt, eventTimestamp)
         }
 
-        "mcp_tool_call_end" -> {
+        "mcptoolcallend" -> {
           event.payloadCallId?.let(parseState.pendingFunctionCallByCallId::remove)
         }
 
-        "request_user_input" -> {
+        "requestuserinput" -> {
           parseState.markPendingUserInput(eventTimestamp = eventTimestamp, callId = event.payloadCallId)
         }
 
-        "item_completed", "itemCompleted" -> {
+        "execapprovalrequest", "applypatchapprovalrequest", "requestpermissions", "elicitationrequest" -> {
+          parseState.markPendingApproval(eventTimestamp = eventTimestamp, callId = event.payloadCallId, turnId = event.payloadTurnId)
+        }
+
+        "execcommandbegin", "patchapplybegin" -> {
+          parseState.clearPendingApprovalForStartedTool(callId = event.payloadCallId, turnId = event.payloadTurnId)
+          parseState.markPendingFunctionCall(eventTimestamp = eventTimestamp, callId = event.payloadCallId, turnId = event.payloadTurnId)
+        }
+
+        "execcommandend", "patchapplyend" -> {
+          parseState.clearPendingFunctionCallForFinishedTool(callId = event.payloadCallId, turnId = event.payloadTurnId)
+        }
+
+        "itemcompleted" -> {
           if (isPlanItemType(event.payloadItemType)) {
             parseState.latestPlanAt = maxTimestamp(parseState.latestPlanAt, eventTimestamp)
           }
         }
 
-        "entered_review_mode" -> parseState.reviewing = true
-        "exited_review_mode" -> parseState.reviewing = false
+        "enteredreviewmode" -> parseState.reviewing = true
+        "exitedreviewmode" -> parseState.reviewing = false
       }
     }
 
     "response_item" -> {
-      when (event.payloadType) {
+      when (normalizeToken(event.payloadType)) {
         "message" -> {
           when (event.payloadRole) {
             "user" -> {
@@ -182,17 +204,28 @@ private fun reduceEvent(parseState: RolloutParseState, event: RolloutEvent) {
           }
         }
 
-        "function_call" -> {
-          if (event.payloadName == "request_user_input") {
+        "functioncall" -> {
+          if (normalizeToken(event.payloadName) == "requestuserinput") {
             parseState.markPendingUserInput(eventTimestamp = eventTimestamp, callId = event.payloadCallId)
+          }
+          else if (isApprovalFunctionCall(event)) {
+            parseState.markPendingApproval(eventTimestamp = eventTimestamp, callId = event.payloadCallId, turnId = event.payloadTurnId)
+            if (isToolFunctionCall(event)) {
+              parseState.markPendingFunctionCall(
+                eventTimestamp = eventTimestamp,
+                callId = event.payloadCallId,
+                turnId = event.payloadTurnId,
+              )
+            }
           }
           else {
             parseState.markPendingFunctionCall(eventTimestamp = eventTimestamp, callId = event.payloadCallId, turnId = event.payloadTurnId)
           }
         }
 
-        "function_call_output" -> {
+        "functioncalloutput" -> {
           event.payloadCallId?.let(parseState.pendingUserInputByCallId::remove)
+          event.payloadCallId?.let(parseState.pendingApprovalByCallId::remove)
           event.payloadCallId?.let(parseState.pendingFunctionCallByCallId::remove)
         }
       }
@@ -210,6 +243,7 @@ private fun parseEvent(parser: JsonParser): RolloutEvent? {
     var payloadRole: String? = null
     var payloadMessage: String? = null
     var payloadName: String? = null
+    var payloadArguments: String? = null
     var payloadCallId: String? = null
     var payloadItemType: String? = null
     var payloadThreadName: String? = null
@@ -233,6 +267,7 @@ private fun parseEvent(parser: JsonParser): RolloutEvent? {
                 "role" -> payloadRole = readStringOrNull(parser)
                 "message" -> payloadMessage = readStringOrNull(parser)
                 "name" -> payloadName = readStringOrNull(parser)
+                "arguments" -> payloadArguments = readStringOrNull(parser)
                 "call_id" -> payloadCallId = readStringOrNull(parser)
                 "item" -> payloadItemType = parseRolloutItemType(parser)
                 "thread_name", "threadName" -> payloadThreadName = readStringOrNull(parser)
@@ -274,6 +309,7 @@ private fun parseEvent(parser: JsonParser): RolloutEvent? {
       payloadRole = payloadRole,
       payloadMessage = payloadMessage,
       payloadName = payloadName,
+      payloadArguments = payloadArguments,
       payloadCallId = payloadCallId,
       payloadItemType = payloadItemType,
       payloadThreadName = payloadThreadName,
@@ -304,6 +340,7 @@ private data class RolloutEvent(
   @JvmField val payloadRole: String?,
   @JvmField val payloadMessage: String?,
   @JvmField val payloadName: String?,
+  @JvmField val payloadArguments: String?,
   @JvmField val payloadCallId: String?,
   @JvmField val payloadItemType: String?,
   @JvmField val payloadThreadName: String?,
@@ -331,9 +368,16 @@ private data class RolloutParseState(
   @JvmField var latestAgentMessageAt: Long = Long.MIN_VALUE,
   @JvmField var latestPlanAt: Long = Long.MIN_VALUE,
   @JvmField val pendingUserInputByCallId: LinkedHashMap<String, Long> = LinkedHashMap(),
+  @JvmField val pendingApprovalByCallId: LinkedHashMap<String, PendingApproval> = LinkedHashMap(),
   @JvmField val pendingFunctionCallByCallId: LinkedHashMap<String, PendingFunctionCall> = LinkedHashMap(),
   @JvmField var nextSyntheticPendingUserInputId: Int = 0,
+  @JvmField var nextSyntheticPendingApprovalId: Int = 0,
   @JvmField var nextSyntheticPendingFunctionCallId: Int = 0,
+)
+
+private data class PendingApproval(
+  @JvmField val updatedAt: Long,
+  @JvmField val turnId: String?,
 )
 
 private data class PendingFunctionCall(
@@ -356,6 +400,15 @@ private fun RolloutParseState.markPendingUserInput(eventTimestamp: Long?, callId
   pendingUserInputByCallId.merge(resolvedCallId, resolvedTimestamp, ::maxOf)
 }
 
+private fun RolloutParseState.markPendingApproval(eventTimestamp: Long?, callId: String?, turnId: String?) {
+  val resolvedTimestamp = eventTimestamp ?: updatedAt
+  val resolvedCallId = callId ?: "pending-approval-${nextSyntheticPendingApprovalId++}"
+  val previous = pendingApprovalByCallId[resolvedCallId]
+  if (previous == null || resolvedTimestamp >= previous.updatedAt) {
+    pendingApprovalByCallId[resolvedCallId] = PendingApproval(updatedAt = resolvedTimestamp, turnId = turnId)
+  }
+}
+
 private fun RolloutParseState.markPendingFunctionCall(eventTimestamp: Long?, callId: String?, turnId: String?) {
   val resolvedTimestamp = eventTimestamp ?: updatedAt
   val resolvedCallId = callId ?: "pending-function-call-${nextSyntheticPendingFunctionCallId++}"
@@ -363,6 +416,43 @@ private fun RolloutParseState.markPendingFunctionCall(eventTimestamp: Long?, cal
   if (previous == null || resolvedTimestamp >= previous.updatedAt) {
     pendingFunctionCallByCallId[resolvedCallId] = PendingFunctionCall(updatedAt = resolvedTimestamp, turnId = turnId)
   }
+}
+
+private fun RolloutParseState.clearPendingApprovalForStartedTool(callId: String?, turnId: String?) {
+  if (callId != null && pendingApprovalByCallId.remove(callId) != null) {
+    return
+  }
+  if (pendingApprovalByCallId.size == 1) {
+    pendingApprovalByCallId.clear()
+    return
+  }
+  clearPendingApprovalsForCompletedTurn(completedTurnId = turnId)
+}
+
+private fun RolloutParseState.clearPendingApprovalsForCompletedTurn(completedTurnId: String?) {
+  if (completedTurnId == null) {
+    pendingApprovalByCallId.clear()
+    return
+  }
+
+  val iterator = pendingApprovalByCallId.entries.iterator()
+  while (iterator.hasNext()) {
+    val (_, pendingApproval) = iterator.next()
+    if (pendingApproval.turnId == null || pendingApproval.turnId == completedTurnId) {
+      iterator.remove()
+    }
+  }
+}
+
+private fun RolloutParseState.clearPendingFunctionCallForFinishedTool(callId: String?, turnId: String?) {
+  if (callId != null && pendingFunctionCallByCallId.remove(callId) != null) {
+    return
+  }
+  if (pendingFunctionCallByCallId.size == 1) {
+    pendingFunctionCallByCallId.clear()
+    return
+  }
+  clearPendingFunctionCallsForCompletedTurn(completedTurnId = turnId)
 }
 
 private fun RolloutParseState.clearPendingFunctionCallsForCompletedTurn(completedTurnId: String?) {
@@ -373,10 +463,38 @@ private fun RolloutParseState.clearPendingFunctionCallsForCompletedTurn(complete
 
   val iterator = pendingFunctionCallByCallId.entries.iterator()
   while (iterator.hasNext()) {
-    val pendingFunctionCall = iterator.next().value
+    val (_, pendingFunctionCall) = iterator.next()
     if (pendingFunctionCall.turnId == null || pendingFunctionCall.turnId == completedTurnId) {
       iterator.remove()
     }
+  }
+}
+
+private fun isApprovalFunctionCall(event: RolloutEvent): Boolean {
+  return normalizeToken(event.payloadName) == "requestpermissions" || argumentsRequireEscalatedSandbox(event.payloadArguments)
+}
+
+private fun isToolFunctionCall(event: RolloutEvent): Boolean {
+  return normalizeToken(event.payloadName) != "requestpermissions"
+}
+
+private fun argumentsRequireEscalatedSandbox(arguments: String?): Boolean {
+  val text = arguments?.trim()?.takeIf { it.isNotEmpty() } ?: return false
+  return try {
+    JsonFactory().createParser(text).use { parser ->
+      if (parser.nextToken() != JsonToken.START_OBJECT) return false
+      forEachObjectField(parser) { fieldName ->
+        if (fieldName == "sandbox_permissions") {
+          return readStringOrNull(parser) == "require_escalated"
+        }
+        parser.skipChildren()
+        true
+      }
+      false
+    }
+  }
+  catch (_: Throwable) {
+    false
   }
 }
 
