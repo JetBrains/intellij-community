@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
 import com.intellij.find.EditorSearchSession;
@@ -338,6 +338,8 @@ public final class FindInProjectUtil {
     FindManager findManager = FindManager.getInstance(project);
     int count = 0;
     while (offset < textLength) {
+      ProgressManager.checkCanceled();
+
       FindResult result = findManager.findString(text, offset, findModel, psiFile.getVirtualFile());
       if (!result.isStringFound()) break;
 

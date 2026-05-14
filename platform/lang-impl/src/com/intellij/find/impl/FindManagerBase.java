@@ -25,6 +25,7 @@ import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -131,6 +132,8 @@ public abstract class FindManagerBase extends FindManager {
                                     @Nullable Predicate<? super FindResult> filter) {
     final char[] textArray = CharArrayUtil.fromSequenceWithoutCopying(text);
     while (true) {
+      ProgressManager.checkCanceled();
+
       FindResult result = doFindString(text, textArray, offset, model, file);
       if (filter == null || filter.test(result)) {
         if (!model.isWholeWordsOnly() || !result.isStringFound() || isWholeWord(text, result.getStartOffset(), result.getEndOffset())) {
@@ -333,7 +336,13 @@ public abstract class FindManagerBase extends FindManager {
     boolean scanningForward = model.isForward();
     FindResultImpl prevFindResult = NOT_FOUND_RESULT;
 
+    int j = 0;
     while ((tokenType = lexer.getTokenType()) != null) {
+      j++;
+      if (j % 1000 == 0) {
+        ProgressManager.checkCanceled();
+      }
+
       if (lexer.getState() == 0) lastGoodOffset = lexer.getTokenStart();
 
       final TextAttributesKey[] keys = currentThreadData.highlighter.getTokenHighlights(tokenType);
@@ -357,6 +366,11 @@ public abstract class FindManagerBase extends FindManager {
         final int tokenContentStart = start;
 
         while (true) {
+          j++;
+          if (j % 1000 == 0) {
+            ProgressManager.checkCanceled();
+          }
+
           FindResultImpl findResult = null;
 
           if (currentThreadData.searcher != null) {
