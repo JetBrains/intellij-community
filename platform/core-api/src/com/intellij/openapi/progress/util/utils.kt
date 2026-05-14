@@ -77,20 +77,20 @@ fun Lock.awaitWithCheckCanceled() {
   awaitWithCheckCanceled(ThrowableComputable { tryLock(ConcurrencyUtil.DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS) })
 }
 
-fun awaitWithCheckCanceled(waiter: ThrowableComputable<Boolean?, out Exception?>) {
+fun awaitWithCheckCanceled(waiter: ThrowableComputable<Boolean, out Throwable>) {
   val indicator = ProgressManager.getInstance().getProgressIndicator()
   var success = false
   while (!success) {
     checkCancelledEvenWithPCEDisabled(indicator)
     try {
-      success = waiter.compute()!!
+      success = waiter.compute()
     }
-    catch (pce: ProcessCanceledException) {
-      throw pce
+    catch (ce: CancellationException) {
+      throw ce
     }
-    catch (e: Exception) {
+    catch (e: Throwable) {
       if (e !is InterruptedException) {
-        LOG.warn(e)
+        LOG.error(e)
       }
       throw ProcessCanceledException(e)
     }
