@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author max
@@ -22,11 +22,10 @@ public final class StubIndexKey<K, Psi extends PsiElement> extends ID<K, Psi> {
     ID<?, ?> existing = findByName(name, true, pluginId);
     if (existing != null) {
       if (existing instanceof StubIndexKey) {
-        return (StubIndexKey<K, Psi>) existing;
+        return (StubIndexKey<K, Psi>)existing;
       }
       throw new IllegalStateException("key with id " + name + " is already registered", existing.getRegistrationTrace());
     }
     return new StubIndexKey<>(name, pluginId);
   }
-
 }
