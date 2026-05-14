@@ -38,25 +38,19 @@ class StatusBarWidgetSettings : SerializablePersistentStateComponent<StatusBarSt
     }
   }
 
-  fun setUserMoves(userMoves: List<StatusBarWidgetUserMove>) {
+  fun setWidgetOrder(widgetOrder: Map<String, Int>) {
     updateState { state ->
-      state.copy(userMoves = userMoves.associate { it.source to it.target })
+      state.copy(widgetOrder = widgetOrder)
     }
   }
 
-  fun getUserMoves(): List<StatusBarWidgetUserMove> {
-    return state.userMoves.map { StatusBarWidgetUserMove(it.key, it.value) }
+  fun getWidgetOrder(): Map<String, Int> {
+    return state.widgetOrder
   }
 }
 
 @Internal
 data class StatusBarState(
   @JvmField val widgets: Map<String, Boolean> = emptyMap(),
-  @JvmField val userMoves: Map<String, String> = emptyMap(),
-)
-
-@Internal
-data class StatusBarWidgetUserMove(
-  val source: String,
-  val target: String,
+  @JvmField val widgetOrder: Map<String, Int> = emptyMap(),
 )

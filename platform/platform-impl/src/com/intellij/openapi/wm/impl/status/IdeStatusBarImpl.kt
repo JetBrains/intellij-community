@@ -67,7 +67,6 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.openapi.wm.impl.status.TextPanel.WithIconAndArrows
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetSettings
-import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetUserMove
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
 import com.intellij.openapi.wm.impl.status.widget.WidgetPresentationWrapper
@@ -290,46 +289,32 @@ open class IdeStatusBarImpl @Internal constructor(
     return null
   }
 
+  @ApiStatus.Internal
   class WidgetSorter(
-    private val moves: MutableList<StatusBarWidgetUserMove> =
-      StatusBarWidgetSettings.getInstance().getUserMoves().toMutableList(),
-    private val persist: (List<StatusBarWidgetUserMove>) -> Unit =
-      StatusBarWidgetSettings.getInstance()::setUserMoves
+    initialOrder: Map<String, Int> = StatusBarWidgetSettings.getInstance().getWidgetOrder(),
+    private val persist: (Map<String, Int>) -> Unit = StatusBarWidgetSettings.getInstance()::setWidgetOrder,
   ) {
+    private val order: MutableMap<String, Int> = initialOrder.toMutableMap()
 
-    fun reorder(sourceWidgetId: String, targetWidgetId: String) {
-      moves.removeIf { it.source == sourceWidgetId }
-      moves += StatusBarWidgetUserMove(sourceWidgetId, targetWidgetId)
-      persist(moves)
+    fun reorder(sourceWidgetId: String, targetWidgetId: String, currentVisibleOrder: List<String>) {
+      val visible = currentVisibleOrder.toMutableList()
+      val sourceIdx = visible.indexOf(sourceWidgetId)
+      val targetIdx = visible.indexOf(targetWidgetId)
+      if (sourceIdx == -1 || targetIdx == -1) return
+
+      visible.removeAt(sourceIdx)
+      val insertIdx = if (sourceIdx < targetIdx) targetIdx - 1 else targetIdx
+      visible.add(insertIdx, sourceWidgetId)
+
+      // Snapshot dense positions for visible widgets; orphan entries for currently-invisible
+      // widgets are intentionally kept so their order is restored if the widget reappears.
+      visible.forEachIndexed { i, id -> order[id] = i }
+      persist(order.toMap())
     }
 
     fun sortWidgets(sorted: MutableList<Orderable>) {
       LoadingOrder.sortByLoadingOrder(sorted)
-
-      LOG.debug("Working list after sort: $sorted")
-
-      LOG.debug("User moves: $moves")
-      for (move in moves) {
-        applyUserMove(sorted, move)
-      }
-
-      LOG.debug("Working list after applying user moves: $sorted")
-    }
-
-    private fun <T : Orderable> applyUserMove(
-      widgets: MutableList<T>,
-      move: StatusBarWidgetUserMove
-    ) {
-      val sourceIndex = widgets.indexOfFirst { it.orderId == move.source }
-      val targetIndex = widgets.indexOfFirst { it.orderId == move.target }
-
-      if (sourceIndex == -1 || targetIndex == -1) return
-
-      val item = widgets.removeAt(sourceIndex)
-      val insertIndex =
-        if (sourceIndex < targetIndex) targetIndex - 1 else targetIndex
-
-      widgets.add(insertIndex, item)
+      sorted.sortBy { order[it.orderId] ?: Int.MAX_VALUE }
     }
   }
 
@@ -342,7 +327,13 @@ open class IdeStatusBarImpl @Internal constructor(
     if (sourceBean.position != Position.RIGHT) return
     if (targetBean.position != Position.RIGHT) return
 
-    widgetSorter.reorder(sourceWidgetId, targetWidgetId)
+    // Build the same sorted list that sortRightWidgets renders, then filter virtuals.
+    // This guarantees the drag insert positions match the on-screen widget order
+    // even when disabled-but-anchor-referenced extensions are injected as virtuals.
+    val sortedWithVirtuals = buildSortedRightWidgets()
+    val visibleOrder = sortedWithVirtuals.filterIsInstance<WidgetBean>().mapNotNull { it.orderId }
+
+    widgetSorter.reorder(sourceWidgetId, targetWidgetId, visibleOrder)
 
     sortRightWidgets()
     rightPanel.revalidate()
@@ -614,12 +605,11 @@ open class IdeStatusBarImpl @Internal constructor(
     }
   }
 
-  private fun sortRightWidgets() {
+  // Builds a sorted list of right-position widgets with virtual placeholders injected
+  // for disabled-but-EP-registered factories. Virtuals exist solely to anchor `after X` /
+  // `before X` chains during LoadingOrder topological sort and are skipped during rendering.
+  private fun buildSortedRightWidgets(): MutableList<Orderable> {
     val sorted = widgetRegistry.filterByPosition(Position.RIGHT)
-
-    // inject not available extension to make sort correct —
-    // e.g. `after PowerSaveMode` must work even if `PowerSaveMode` widget is disabled,
-    // because `PowerSaveMode` can specify something like `after Encoding`
     StatusBarWidgetFactory.EP_NAME.filterableLazySequence()
       .filter { it.id != null && !widgetRegistry.containsKey(it.id!!) }
       .mapTo(sorted) {
@@ -633,8 +623,12 @@ open class IdeStatusBarImpl @Internal constructor(
           }
         }
       }
-
     widgetSorter.sortWidgets(sorted)
+    return sorted
+  }
+
+  private fun sortRightWidgets() {
+    val sorted = buildSortedRightWidgets()
 
     for ((index, item) in sorted.withIndex()) {
       rightPanelLayout.setConstraints((item as? WidgetBean ?: continue).component, GridBagConstraints().apply {

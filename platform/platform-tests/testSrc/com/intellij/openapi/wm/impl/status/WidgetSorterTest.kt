@@ -2,7 +2,6 @@
 package com.intellij.openapi.wm.impl.status
 
 import com.intellij.openapi.extensions.LoadingOrder
-import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetUserMove
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -16,77 +15,31 @@ class WidgetSorterTest {
   }
 
   @Test
-  fun `should sort widgets by loading order`() {
+  fun `should sort widgets by loading order when no user customization`() {
     val widgets = mutableListOf(
       TestOrderable("LineSeparator", LoadingOrder.after("Position")),
       TestOrderable("Position", LoadingOrder.ANY),
       TestOrderable("Encoding", LoadingOrder.after("LineSeparator"))
     )
 
-    val sorter = IdeStatusBarImpl.WidgetSorter(mutableListOf()) { }
+    val sorter = IdeStatusBarImpl.WidgetSorter(initialOrder = emptyMap(), persist = { })
     sorter.sortWidgets(widgets.cast())
 
-    assertEquals("Position", widgets[0].orderId)
-    assertEquals("LineSeparator", widgets[1].orderId)
-    assertEquals("Encoding", widgets[2].orderId)
+    assertEquals(listOf("Position", "LineSeparator", "Encoding"), widgets.map { it.orderId })
   }
 
   @Test
-  fun `should apply user moves after loading order sort`() {
-    val widgets = mutableListOf(
-      TestOrderable("Position", LoadingOrder.ANY),
-      TestOrderable("LineSeparator", LoadingOrder.after("Position")),
-      TestOrderable("Encoding", LoadingOrder.after("LineSeparator"))
-    )
+  fun `should place dragged widget at target index`() {
+    var persisted: Map<String, Int> = emptyMap()
+    val sorter = IdeStatusBarImpl.WidgetSorter(initialOrder = emptyMap(), persist = { persisted = it })
 
-    // Move Encoding before Position
-    val moves = mutableListOf(StatusBarWidgetUserMove("Encoding", "Position"))
-    val sorter = IdeStatusBarImpl.WidgetSorter(moves) { }
-    sorter.sortWidgets(widgets.cast())
+    sorter.reorder("Encoding", "Position", listOf("Position", "LineSeparator", "Encoding"))
 
-    assertEquals("Encoding", widgets[0].orderId)
-    assertEquals("Position", widgets[1].orderId)
-    assertEquals("LineSeparator", widgets[2].orderId)
-  }
-
-  @Test
-  fun `should handle multiple user moves`() {
-    val widgets = mutableListOf(
-      TestOrderable("A", LoadingOrder.ANY),
-      TestOrderable("B", LoadingOrder.ANY),
-      TestOrderable("C", LoadingOrder.ANY)
-    )
-
-    // Initial order A, B, C
-    // Move C to A -> C, A, B
-    // Move B to C -> B, C, A
-    val moves = mutableListOf(
-        StatusBarWidgetUserMove("C", "A"),
-        StatusBarWidgetUserMove("B", "C")
-    )
-    val sorter = IdeStatusBarImpl.WidgetSorter(moves) { }
-    sorter.sortWidgets(widgets.cast())
-
-    assertEquals("B", widgets[0].orderId)
-    assertEquals("C", widgets[1].orderId)
-    assertEquals("A", widgets[2].orderId)
+    assertEquals(mapOf("Encoding" to 0, "Position" to 1, "LineSeparator" to 2), persisted)
   }
 
   @Test
   fun `should handle complex dependencies from example`() {
-    // This is actual Widget configuration taken from running instance, below as `widgets`
-    // [Widget(id=Position, order=ANY, position=RIGHT),
-    //  Widget(id=LanguageServiceStatusBarWidget, order=after Position, after AIAssistant, before LineSeparator, position=RIGHT),
-    //  Widget(id=LineSeparator, order=after Position, position=RIGHT),
-    //  Widget(id=Encoding, order=after LineSeparator, position=RIGHT),
-    //  Widget(id=PowerSaveMode, order=after Encoding, position=RIGHT),
-    //  Widget(id=InsertOverwrite, order=after PowerSaveMode, position=RIGHT),
-    //  Widget(id=CodeStyleStatusBarWidget, order=after InsertOverwrite, position=RIGHT),
-    //  Widget(id=JSONSchemaSelector, order=after CodeStyleStatusBarWidget, before ReadOnlyAttribute, position=RIGHT),
-    //  Widget(id=largeFileEncodingWidget, order=after PowerSaveMode, position=RIGHT),
-    //  Widget(id=ReadOnlyAttribute, order=after InsertOverwrite, position=RIGHT),
-    //  Widget(id=FatalError, order=after Notifications, position=RIGHT)]
-
     val widgets = mutableListOf(
       TestOrderable("Position", LoadingOrder.ANY),
       TestOrderable("LanguageServiceStatusBarWidget", LoadingOrder.readOrder("after Position, before LineSeparator")),
@@ -98,14 +51,13 @@ class WidgetSorterTest {
       TestOrderable("JSONSchemaSelector", LoadingOrder.readOrder("after CodeStyleStatusBarWidget, before ReadOnlyAttribute")),
       TestOrderable("largeFileEncodingWidget", LoadingOrder.after("PowerSaveMode")),
       TestOrderable("ReadOnlyAttribute", LoadingOrder.after("InsertOverwrite")),
-      TestOrderable("FatalError", LoadingOrder.after("Notifications")), // Notifications is missing
-      TestOrderable("Notifications", LoadingOrder.ANY) // Added to satisfy FatalError dependency if we want to test it
+      TestOrderable("FatalError", LoadingOrder.after("Notifications")),
+      TestOrderable("Notifications", LoadingOrder.ANY)
     )
 
-    val sorter = IdeStatusBarImpl.WidgetSorter(mutableListOf()) { }
+    val sorter = IdeStatusBarImpl.WidgetSorter(initialOrder = emptyMap(), persist = { })
     sorter.sortWidgets(widgets.cast())
 
-    // Verify some key orderings
     assertBefore(widgets, "Position", "LanguageServiceStatusBarWidget")
     assertBefore(widgets, "LanguageServiceStatusBarWidget", "LineSeparator")
     assertBefore(widgets, "LineSeparator", "Encoding")
@@ -119,28 +71,123 @@ class WidgetSorterTest {
   }
 
   @Test
-  fun `should persist moves when reordering`() {
-    var persistedMoves: List<StatusBarWidgetUserMove>? = null
-    val sorter = IdeStatusBarImpl.WidgetSorter(mutableListOf()) { persistedMoves = it }
+  fun `should persist widgetOrder map after drag`() {
+    var persisted: Map<String, Int> = emptyMap()
+    val sorter = IdeStatusBarImpl.WidgetSorter(initialOrder = emptyMap(), persist = { persisted = it })
 
-    sorter.reorder("A", "B")
+    sorter.reorder("C", "A", listOf("A", "B", "C"))
 
-    assertEquals(1, persistedMoves?.size)
-    assertEquals("A", persistedMoves?.get(0)?.source)
-    assertEquals("B", persistedMoves?.get(0)?.target)
+    assertEquals(mapOf("C" to 0, "A" to 1, "B" to 2), persisted)
   }
 
   @Test
-  fun `should replace existing move for the same source widget`() {
-    var persistedMoves: List<StatusBarWidgetUserMove>? = null
-    val initialMoves = mutableListOf(StatusBarWidgetUserMove("A", "B"))
-    val sorter = IdeStatusBarImpl.WidgetSorter(initialMoves) { persistedMoves = it }
+  fun `should update widget's order when redragged`() {
+    var persisted: Map<String, Int> = emptyMap()
+    val sorter = IdeStatusBarImpl.WidgetSorter(initialOrder = emptyMap(), persist = { persisted = it })
 
-    sorter.reorder("A", "C")
+    sorter.reorder("A", "B", listOf("A", "B", "C"))
+    assertEquals(mapOf("A" to 0, "B" to 1, "C" to 2), persisted)
 
-    assertEquals(1, persistedMoves?.size)
-    assertEquals("A", persistedMoves?.get(0)?.source)
-    assertEquals("C", persistedMoves?.get(0)?.target)
+    sorter.reorder("A", "C", currentVisibleOrderFrom(persisted, defaultIds = listOf("A", "B", "C")))
+    assertEquals(mapOf("B" to 0, "A" to 1, "C" to 2), persisted)
+  }
+
+  @Test
+  fun `inverse drag should keep unrelated widget at its absolute position`() {
+    val defaultIds = listOf("P", "LS", "E", "CS", "RO")
+
+    var persisted: Map<String, Int> = emptyMap()
+    val sorter = IdeStatusBarImpl.WidgetSorter(initialOrder = emptyMap(), persist = { persisted = it })
+
+    sorter.reorder("E", "RO", currentVisibleOrderFrom(persisted, defaultIds))
+    val csIdxAfterStep1 = currentVisibleOrderFrom(persisted, defaultIds).indexOf("CS")
+    assertEquals(2, csIdxAfterStep1)
+
+    sorter.reorder("RO", "E", currentVisibleOrderFrom(persisted, defaultIds))
+    val csIdxAfterStep2 = currentVisibleOrderFrom(persisted, defaultIds).indexOf("CS")
+    assertEquals(
+      "Unrelated widget CS must keep its absolute position; got order ${currentVisibleOrderFrom(persisted, defaultIds)}",
+      2, csIdxAfterStep2
+    )
+  }
+
+  @Test
+  fun `should assign unique dense indices across multiple drags`() {
+    val defaultIds = listOf("A", "B", "C", "D", "E")
+
+    var persisted: Map<String, Int> = emptyMap()
+    val sorter = IdeStatusBarImpl.WidgetSorter(initialOrder = emptyMap(), persist = { persisted = it })
+
+    sorter.reorder("E", "A", currentVisibleOrderFrom(persisted, defaultIds))
+    sorter.reorder("A", "C", currentVisibleOrderFrom(persisted, defaultIds))
+    sorter.reorder("D", "E", currentVisibleOrderFrom(persisted, defaultIds))
+
+    assertEquals(setOf(0, 1, 2, 3, 4), persisted.values.toSet())
+    assertEquals(5, persisted.keys.size)
+  }
+
+  @Test
+  fun `should preserve orphan entries for widgets temporarily not visible`() {
+    var persisted: Map<String, Int> = mapOf("OrphanWidget" to 0, "A" to 1, "B" to 2)
+    val sorter = IdeStatusBarImpl.WidgetSorter(initialOrder = persisted, persist = { persisted = it })
+
+    sorter.reorder("B", "A", listOf("A", "B"))
+
+    assertEquals(0, persisted["OrphanWidget"])
+    assertEquals(0, persisted["B"])
+    assertEquals(1, persisted["A"])
+  }
+
+  @Test
+  fun `should place widget without index entry after all customized widgets`() {
+    val widgets = mutableListOf(
+      TestOrderable("A", LoadingOrder.ANY),
+      TestOrderable("NewWidget", LoadingOrder.after("A")),
+      TestOrderable("B", LoadingOrder.after("NewWidget"))
+    )
+
+    val sorter = IdeStatusBarImpl.WidgetSorter(
+      initialOrder = mapOf("A" to 0, "B" to 1),
+      persist = { }
+    )
+    sorter.sortWidgets(widgets.cast())
+
+    assertEquals(listOf("A", "B", "NewWidget"), widgets.map { it.orderId })
+  }
+
+  @Test
+  fun `reorder with source equal to target is a no-op`() {
+    var persistCount = 0
+    val sorter = IdeStatusBarImpl.WidgetSorter(initialOrder = emptyMap(), persist = { persistCount++ })
+
+    sorter.reorder("A", "A", listOf("A", "B", "C"))
+
+    // Index recomputation must not throw and the list arrangement must remain identical;
+    // the algorithm tolerates degenerate input even though the production drop handler
+    // filters source == target upstream.
+    assertEquals(1, persistCount)
+  }
+
+  @Test
+  fun `reorder with unknown source or target is a no-op`() {
+    var persistCount = 0
+    val initial = mapOf("A" to 0, "B" to 1)
+    val sorter = IdeStatusBarImpl.WidgetSorter(initialOrder = initial, persist = { persistCount++ })
+
+    sorter.reorder("Ghost", "A", listOf("A", "B"))
+    sorter.reorder("A", "Ghost", listOf("A", "B"))
+
+    assertEquals(0, persistCount)
+  }
+
+  /**
+   * Mirrors what `IdeStatusBarImpl.reorderWidgets` computes before invoking `reorder`:
+   * widgets sorted by their persisted absolute index, with not-yet-customized widgets
+   * (using [Int.MAX_VALUE] as the fallback) following the customized ones in their
+   * default order.
+   */
+  private fun currentVisibleOrderFrom(persisted: Map<String, Int>, defaultIds: List<String>): List<String> {
+    return defaultIds.sortedBy { persisted[it] ?: Int.MAX_VALUE }
   }
 
   private fun assertBefore(widgets: List<LoadingOrder.Orderable>, beforeId: String, afterId: String) {
