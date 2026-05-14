@@ -119,14 +119,8 @@ class GradleMppJvmRunConfigurationProducersTest4 : GradleTestRunConfigurationPro
             setProjectName("project")
         }
 
-        val kotlinGradlePluginVersion = if (isGradleOlderThan("9.0")) {
-            KotlinGradlePluginVersions.V_1_8_22
-        } else {
-            KotlinGradlePluginVersions.V_1_9_25
-        }
-
         createBuildFile {
-            withPlugin("org.jetbrains.kotlin.multiplatform", kotlinGradlePluginVersion.toString())
+            withPlugin("org.jetbrains.kotlin.multiplatform", KotlinGradlePluginVersions.V_2_3_20.toString())
             withPrefix {
                 code(
                     """
@@ -143,7 +137,11 @@ class GradleMppJvmRunConfigurationProducersTest4 : GradleTestRunConfigurationPro
                 kotlin {
                     jvm {
                         compilations.all {
-                            kotlinOptions.jvmTarget = '1.8'
+                            compileTaskProvider.configure {
+                                compilerOptions {
+                                    jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8)
+                                }
+                            }
                         }
                         withJava()
                         testRuns["test"].executionTask.configure {
