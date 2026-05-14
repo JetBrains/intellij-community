@@ -3,7 +3,6 @@
 
 package com.example.pkg
 
-import com.example.pkg.StandAloneContext.closeKoin
 import com.example.pkg.StandAloneContext.stopKoin
 
 object StandAloneContext {

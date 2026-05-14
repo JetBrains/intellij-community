@@ -1,8 +1,6 @@
 // "Replace with 'str.isEmpty()'" "true"
 // WITH_STDLIB
 
-import Bar.bar
-
 fun foo(s: String) {
     s.isEmpty()
 }

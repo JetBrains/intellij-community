@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.idea.base.psi.moveInsideParenthesesAndReplaceWith
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
 import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertToBlockBodyUtils
+import org.jetbrains.kotlin.idea.refactoring.modifyPsiWithOptimizedImports
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtBlockExpression
@@ -80,7 +81,9 @@ abstract class AbstractSimpleReplacementPerformer<TElement : KtElement>(
         val mainExpression = codeToInline.mainExpression ?: error("mainExpression mustn't be null")
 
         val dummyElement = createDummyElement(mainExpression)
-        val replaced = elementToBeReplaced.replace(dummyElement)
+        val replaced = modifyPsiWithOptimizedImports(elementToBeReplaced.containingKtFile) {
+            elementToBeReplaced.replace(dummyElement)
+        }
 
         codeToInline.performPostInsertionActions(listOf(replaced))
 
@@ -189,35 +192,37 @@ class ExpressionReplacementPerformer(
             insertedStatements.add(inserted)
         }
 
-        val replaced: KtExpression? = when (val mainExpression = codeToInline.mainExpression?.copied()) {
-            is KtStringTemplateExpression -> elementToBeReplaced.replacedWithStringTemplate(mainExpression)
+        val replaced: KtExpression? = modifyPsiWithOptimizedImports(elementToBeReplaced.containingKtFile) {
+            when (val mainExpression = codeToInline.mainExpression?.copied()) {
+                is KtStringTemplateExpression -> elementToBeReplaced.replacedWithStringTemplate(mainExpression)
 
-            is KtExpression -> elementToBeReplaced.replaced(mainExpression)
+                is KtExpression -> elementToBeReplaced.replaced(mainExpression)
 
-            else -> {
-                // NB: Unit is never used as expression
-                val stub = elementToBeReplaced.replaced(psiFactory.createExpression("0"))
+                else -> {
+                    // NB: Unit is never used as expression
+                    val stub = elementToBeReplaced.replaced(psiFactory.createExpression("0"))
 
-                @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
-                val canDropElementToBeReplaced = allowAnalysisFromWriteAction {
-                    allowAnalysisOnEdt {
-                        analyze(stub) {
-                            !stub.isUsedAsExpression
+                    @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
+                    val canDropElementToBeReplaced = allowAnalysisFromWriteAction {
+                        allowAnalysisOnEdt {
+                            analyze(stub) {
+                                !stub.isUsedAsExpression
+                            }
                         }
                     }
-                }
-                if (canDropElementToBeReplaced) {
-                    val parent = stub.parents.first { it !is KtParenthesizedExpression }
-                    if (parent is KtWhenExpression && parent.subjectExpression?.safeDeparenthesize() == stub && parent.leftParenthesis != null && parent.rightParenthesis != null) {
-                        parent.deleteChildRange(parent.leftParenthesis, parent.rightParenthesis)
-                    } else if (parent is KtQualifiedExpression && parent.selectorExpression?.safeDeparenthesize() == stub) {
-                        parent.replaced(parent.receiverExpression)
+                    if (canDropElementToBeReplaced) {
+                        val parent = stub.parents.first { it !is KtParenthesizedExpression }
+                        if (parent is KtWhenExpression && parent.subjectExpression?.safeDeparenthesize() == stub && parent.leftParenthesis != null && parent.rightParenthesis != null) {
+                            parent.deleteChildRange(parent.leftParenthesis, parent.rightParenthesis)
+                        } else if (parent is KtQualifiedExpression && parent.selectorExpression?.safeDeparenthesize() == stub) {
+                            parent.replaced(parent.receiverExpression)
+                        } else {
+                            stub.delete()
+                        }
+                        null
                     } else {
-                        stub.delete()
+                        stub.replaced(psiFactory.createExpression("Unit"))
                     }
-                    null
-                } else {
-                    stub.replaced(psiFactory.createExpression("Unit"))
                 }
             }
         }

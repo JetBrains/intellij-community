@@ -1,7 +1,7 @@
 // "Replace with 'Foo'" "true"
 
-import old.Foo
+import foo.Foo
 
 fun test() {
-    printlin(foo.F<selection><caret></selection>oo())
+    printlin(<selection><caret></selection>Foo())
 }

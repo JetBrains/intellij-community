@@ -2,8 +2,7 @@
 package pack5
 
 import newFun
-import oldFun
 
 fun foo() {
-    <caret>newFun()
+    <selection><caret></selection>newFun()
 }
