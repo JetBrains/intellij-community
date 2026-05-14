@@ -553,7 +553,6 @@
       implementation="com.jetbrains.python.packaging.PyPackageRequirementsSettingsImlComponentNameContributor"/>
 
     <!-- Namespace packages -->
-    <moduleService serviceImplementation="com.jetbrains.python.namespacePackages.PyNamespacePackagesService"/>
     <registryKey key="python.create.namespace.package.action" defaultValue="false"
                  description="Possibility to create namespace packages from New | Python Package"/>
 
