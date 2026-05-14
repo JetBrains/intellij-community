@@ -78,6 +78,7 @@
     <orderEntry type="module" module-name="intellij.groovy" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.junit" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.maven" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.moduleSet.plugin.main" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.regexp" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.svn" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.testng" scope="RUNTIME" />

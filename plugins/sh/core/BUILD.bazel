@@ -90,6 +90,7 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   runtime_deps = [
     "//plugins/sh/core",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.structureView:moduleSet-plugin-structureView",
     "//platform/analysis-impl",
     "//platform/lang-api:lang",
     "//platform/lang-impl",
@@ -164,6 +165,7 @@ jvm_library(
   ],
   runtime_deps = [
     ":tests",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.structureView:moduleSet-plugin-structureView_test_lib",
     "//platform/ide-core:ide-core_test_lib",
   ]
 )

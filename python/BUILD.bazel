@@ -971,6 +971,8 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   runtime_deps = [
     "//platform/testFramework",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.structureView:moduleSet-plugin-structureView",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.todoView:moduleSet-plugin-todoView",
     "//libraries/guava",
     "//platform/editor-ui-ex:editor-ex",
     "//platform/util/progress",
@@ -1212,6 +1214,8 @@ jvm_library(
   ],
   runtime_deps = [
     ":python-community-tests",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.structureView:moduleSet-plugin-structureView_test_lib",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.todoView:moduleSet-plugin-todoView_test_lib",
     "//platform/observable:observable_test_lib",
     "//platform/platform-impl/internal:internal_test_lib",
     "//python/pluginCore/impl:impl_test_lib",

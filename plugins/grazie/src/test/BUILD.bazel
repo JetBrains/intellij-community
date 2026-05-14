@@ -20,6 +20,8 @@ jvm_library(
     "@lib//:grazie-tests-org-jetbrains-intellij-deps-languagetool-languagetool-core",
     "//platform/structuralsearch:structuralSearch",
     "//module-set-plugins/generated/intellij.moduleSet.plugin.structuralSearch:moduleSet-plugin-structuralSearch",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.structureView:moduleSet-plugin-structureView",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.todoView:moduleSet-plugin-todoView",
     "//platform/vcs-api:vcs",
   ]
 )
@@ -132,6 +134,8 @@ jvm_library(
     ":grazie-tests",
     "//platform/structuralsearch:structuralSearch_test_lib",
     "//module-set-plugins/generated/intellij.moduleSet.plugin.structuralSearch:moduleSet-plugin-structuralSearch_test_lib",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.structureView:moduleSet-plugin-structureView_test_lib",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.todoView:moduleSet-plugin-todoView_test_lib",
     "//platform/ide-core:ide-core_test_lib",
   ]
 )
