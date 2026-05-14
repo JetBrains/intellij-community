@@ -12,8 +12,8 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ijent.IjentLogger.CONN_MGR_LOG
 import com.intellij.platform.ijent.IjentSession
 import com.intellij.platform.ijent.ParentOfIjentScopes
-import com.intellij.platform.ijent.community.impl.guessVmIdOfWsl
 import com.intellij.platform.ijent.currentCoroutineDispatcher
+import com.intellij.platform.ijent.utils.guessVmIdOfWsl
 import com.intellij.util.io.blockingDispatcher
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch

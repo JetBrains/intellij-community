@@ -1,7 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.ijent.community.impl
+package com.intellij.platform.ijent.utils
 
 import com.intellij.platform.ijent.IjentLogger.CONN_MGR_LOG
+import org.jetbrains.annotations.ApiStatus
 import java.util.UUID
 
 /**
@@ -14,6 +15,7 @@ import java.util.UUID
  * Instead, we employ a _heuristic_: VmId is often passed as an argument to other Windows processes.
  * We read the data of these processes and try to find VmId in their argument list. This operation does not require administrator access.
  */
+@ApiStatus.Internal
 fun guessVmIdOfWsl(): UUID? {
   val process =
     ProcessBuilder("powershell", "-Command",
