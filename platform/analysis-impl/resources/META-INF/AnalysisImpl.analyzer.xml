@@ -4,6 +4,7 @@
     <extensionPoint qualifiedName="com.intellij.useScopeOptimizer" interface="com.intellij.psi.search.ScopeOptimizer" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.resolveScopeEnlarger" interface="com.intellij.psi.ResolveScopeEnlarger" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.resolveScopeProvider" interface="com.intellij.psi.ResolveScopeProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.modCommandCopyHandler" interface="com.intellij.modcommand.ModCommandService$ModCommandPsiCopyHandler" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.modcommand.ModCommandService"

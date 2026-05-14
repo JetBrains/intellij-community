@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,5 +88,24 @@ public interface ModCommandService {
    */
   static @NotNull ModCommandService getInstance() {
     return ApplicationManager.getApplication().getService(ModCommandService.class);
+  }
+
+
+  /**
+   * An internal interface introduced to handle ModCommand-related PSI file copying operations.
+   * This interface is intended to represent an abstraction for creating a copy of a given {@link PsiFile}.
+   * Implementations of this interface define the behavior for copying PSI files while preserving their
+   * specific properties and context.
+   */
+  @ApiStatus.Internal
+  interface ModCommandPsiCopyHandler {
+
+    /**
+     * Creates a copy of the given PSI file while preserving its specific properties and context.
+     * @param file the PSI file to copy
+     * @return the copied PSI file, or null if this handler does not support copying this type of files
+     */
+    @Nullable
+    PsiFile createCopy(@NotNull PsiFile file);
   }
 }

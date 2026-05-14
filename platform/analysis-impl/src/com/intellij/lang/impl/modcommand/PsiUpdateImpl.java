@@ -12,6 +12,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.FutureVirtualFile;
 import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandService;
 import com.intellij.modcommand.ModCreateFile;
 import com.intellij.modcommand.ModDeleteFile;
 import com.intellij.modcommand.ModHighlight;
@@ -34,6 +35,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -80,7 +82,7 @@ final class PsiUpdateImpl {
   private static final Key<PsiFile> ORIGINAL_FILE_FOR_INJECTION = Key.create("ORIGINAL_FILE_FOR_INJECTION");
 
   static @NotNull ModCommand psiUpdate(@NotNull ActionContext context,
-                                       @NotNull Consumer<@NotNull Document> copyCleaner, 
+                                       @NotNull Consumer<@NotNull Document> copyCleaner,
                                        @NotNull Consumer<@NotNull ModPsiUpdater> updater) {
     var runnable = new Runnable() {
       private ModPsiUpdaterImpl myUpdater;
@@ -135,7 +137,7 @@ final class PsiUpdateImpl {
         myInjectionHost = host;
         PsiFile hostFile = host.getContainingFile();
         FileTracker hostTracker = changedFiles.get(hostFile);
-        PsiFile hostFileCopy = hostTracker != null ? hostTracker.myTargetFile : (PsiFile)hostFile.copy();
+        PsiFile hostFileCopy = hostTracker != null ? hostTracker.myTargetFile : createCopyOfPsiFile(hostFile);
         PsiFile injectedFileCopy = getInjectedFileCopy(host, hostFileCopy, origFile.getLanguage());
         Disposable disposable = ApplicationManager.getApplication().getService(InjectionEditService.class)
           .synchronizeWithFragment(injectedFileCopy, myDocument);
@@ -266,11 +268,11 @@ final class PsiUpdateImpl {
     boolean injectedFragment = manager.isInjectedFragment(origFile);
     if (!injectedFragment) {
       PsiElement navigationElement = origFile.getNavigationElement();
-      if (navigationElement != origFile && navigationElement instanceof PsiFile) {
-        file = (PsiFile)navigationElement.copy();
+      if (navigationElement != origFile && navigationElement instanceof PsiFile psiFile) {
+        file = createCopyOfPsiFile(psiFile);
       }
       else {
-        file = (PsiFile)origFile.copy();
+        file = createCopyOfPsiFile(origFile);
       }
     }
     else {
@@ -281,6 +283,19 @@ final class PsiUpdateImpl {
     }
     file.putUserData(PsiFileFactory.ORIGINAL_FILE, origFile);
     return file;
+  }
+
+  private static final ExtensionPointName<ModCommandService.ModCommandPsiCopyHandler> EP =
+    new ExtensionPointName<>("com.intellij.modCommandCopyHandler");
+
+  private static PsiFile createCopyOfPsiFile(@NotNull PsiFile psiFile) {
+    for (ModCommandService.ModCommandPsiCopyHandler handler : EP.getExtensionList()) {
+      PsiFile copy = handler.createCopy(psiFile);
+      if (copy != null) {
+        return copy;
+      }
+    }
+    return (PsiFile)psiFile.copy();
   }
 
   private static class ModPsiUpdaterImpl implements ModPsiUpdater, DocumentListener, Disposable {
@@ -346,11 +361,11 @@ final class PsiUpdateImpl {
       mySelection = actionContext.selection();
       myCopyCleaner = copyCleaner;
     }
-    
+
     private @NotNull FileTracker tracker() {
       return myTracker == null ? tracker(myActionContext.file()) : myTracker;
     }
-    
+
     private @NotNull VirtualFile navigationFile() {
       if (myNavigationFile == null) {
         myNavigationFile = tracker().myOrigFile.getViewProvider().getVirtualFile();
