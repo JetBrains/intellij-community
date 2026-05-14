@@ -56,7 +56,7 @@ import kotlin.time.Duration.Companion.milliseconds
 private val LOG: Logger = logger<AsyncEditorLoader>()
 
 @Internal
-class  AsyncEditorLoader internal constructor(
+class AsyncEditorLoader internal constructor(
   private val project: Project,
   private val provider: TextEditorProvider,
   @JvmField val coroutineScope: CoroutineScope,
@@ -163,7 +163,7 @@ class  AsyncEditorLoader internal constructor(
         indicatorJob.cancel()
       }
 
-      span("execute delayed actions", Dispatchers.EDT) {
+      span("async editor delayed actions", Dispatchers.EDT) {
         // mark as loaded before daemonCodeAnalyzer restart,
         // does it from EDT to avoid execution of any following scroll requests before already scheduled delayedActions
         textEditor.editor.putUserData(ASYNC_LOADER, null)
@@ -177,7 +177,9 @@ class  AsyncEditorLoader internal constructor(
           scrollingModel.enableAnimation()
         }
       }
-      project.serviceAsync<EditorNotifications>().scheduleUpdateNotifications(textEditor)
+      span("editor notifications schedule") {
+        project.serviceAsync<EditorNotifications>().scheduleUpdateNotifications(textEditor)
+      }
     }
       .invokeOnCompletion {
         // make sure that async loaded marked as completed

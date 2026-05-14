@@ -40,7 +40,6 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -69,7 +68,9 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
       val effectiveDocument = document!!
 
       // trigger opening of persistent maps in advance
-      Necropolis.getInstanceAsync(project)
+      span("editor necropolis preload") {
+        Necropolis.getInstanceAsync(project)
+      }
 
       val highlighterDeferred = async(CoroutineName("editor highlighter creating")) {
         val scheme = serviceAsync<EditorColorsManager>().globalScheme
@@ -98,7 +99,7 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
       val factory = serviceAsync<EditorFactory>() as EditorFactoryImpl
       val highlighter = highlighterDeferred.await()
 
-      withContext(Dispatchers.EDT) {
+      span("initialize text editor on EDT", Dispatchers.EDT) {
         writeIntentReadAction {
           val editor = initializeEditor(factory, effectiveDocument, project, file, highlighter, asyncLoader)
           editorDeferred.complete(editor)
@@ -145,7 +146,9 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
       val highlighterReady = suspend { highlighterDeferred.join() }
 
       val necropolis = Necropolis.getInstanceAsync(project)
-      necropolis?.spawnZombies(project, file, document, editorSupplier, highlighterReady)
+      span("editor cached markup restoring") {
+        necropolis?.spawnZombies(project, file, document, editorSupplier, highlighterReady)
+      }
 
       val editor = editorSupplier()
       span("editor languageSupplier set", Dispatchers.EDT) {
@@ -164,7 +167,8 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
     return if (document != null) {
       val foldingState = CodeFoldingManager.getInstance(project).readFoldingState(foldingElement, document)
       state.withFoldingState(foldingState)
-    } else {
+    }
+    else {
       state
     }
   }

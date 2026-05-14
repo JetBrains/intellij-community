@@ -628,7 +628,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
   }
 
-  final override fun loadAndOpenProject(originalFilePath: String): Project? = openProject(toCanonicalName(originalFilePath), OpenProjectTask())
+  final override fun loadAndOpenProject(originalFilePath: String): Project? =
+    openProject(toCanonicalName(originalFilePath), OpenProjectTask())
 
   final override fun openProject(projectStoreBaseDir: Path, options: OpenProjectTask): Project? {
     @Suppress("DEPRECATION")
@@ -646,7 +647,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       span("EelInitialization.runEelInitialization") {
         try {
           EelInitialization.runEelInitialization(projectIdentityFile.toString())
-        } catch (e : EelUnavailableException) {
+        }
+        catch (e: EelUnavailableException) {
           LOG.error(e)
         }
       }
@@ -731,12 +733,12 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       coroutineScope {
         val initScope = this
         val initHelper = ProjectInitHelper(initScope, frameAllocator)
-        val backgroundJob = launch {
+        val backgroundJob = launch(CoroutineName("frame allocator background")) {
           frameAllocator.runInBackground(initHelper)
         }
 
         launch {
-          launch {
+          launch(CoroutineName("frame allocator foreground")) {
             frameAllocator.run(initHelper)
           }.invokeOnCompletion { cause ->
             if (cause is CancellationException) {
@@ -744,18 +746,20 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
             }
           }
 
-          launch {
+          launch(CoroutineName("project prepare and startup")) {
             val initFrameEarly = !options.isNewProject && options.beforeOpen == null && options.project == null
-            val project = when {
-              options.project != null -> options.project!!
-              options.isNewProject -> prepareNewProject(
-                projectIdentityFile, options.projectName, options.beforeInit, options.useDefaultProjectAsTemplate,
-                options.preloadServices, markAsNewlyCreated = options.isProjectCreatedWithWizard,
-              )
-              else -> prepareProject(
-                projectIdentityFile, options.projectName, options.beforeInit,
-                projectInitHelper = initHelper.takeIf { initFrameEarly }, options.runConversionBeforeOpen, options.preloadServices
-              )
+            val project = span("project prepare") {
+              when {
+                options.project != null -> options.project!!
+                options.isNewProject -> prepareNewProject(
+                  projectIdentityFile, options.projectName, options.beforeInit, options.useDefaultProjectAsTemplate,
+                  options.preloadServices, markAsNewlyCreated = options.isProjectCreatedWithWizard,
+                )
+                else -> prepareProject(
+                  projectIdentityFile, options.projectName, options.beforeInit,
+                  projectInitHelper = initHelper.takeIf { initFrameEarly }, options.runConversionBeforeOpen, options.preloadServices
+                )
+              }
             }
             result = project
             // must be under try-catch to dispose a project on beforeOpen or preparedToOpen callback failures
@@ -767,7 +771,9 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
               val projectStoreBaseDir = projectIdentityFile.takeIf { Files.isDirectory(it) } ?: options.projectRootDir
               if (projectStoreBaseDir != null) {
-                configureWorkspace(project, projectStoreBaseDir, options)
+                span("workspace configuration") {
+                  configureWorkspace(project, projectStoreBaseDir, options)
+                }
               }
             }
 
@@ -780,9 +786,12 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
               registerProjectRoot(project, root)
             }
 
-            if (!addToOpened(project)) {
+            val addedToOpened = span("project add to opened") {
+              addToOpened(project)
+            }
+            if (!addedToOpened) {
               throw CancellationException(
-                "project name=${project.name}, locationHash=${project.locationHash} in '${options.projectRootDir?:projectIdentityFile}'" +
+                "project name=${project.name}, locationHash=${project.locationHash} in '${options.projectRootDir ?: projectIdentityFile}'" +
                 " is already opened"
               )
             }
@@ -794,7 +803,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
               initHelper.notifyInit(project)
             }
 
-            span("project startup") {
+            span("project startup activities") {
               runInitProjectActivities(project, LOG)
             }
             initHelper.projectInitTimestamp = System.nanoTime()
@@ -855,7 +864,9 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
 
     if (isRunStartUpActivitiesEnabled(project)) {
-      (project.serviceAsync<StartupManager>() as StartupManagerImpl).runPostStartupActivities()
+      span("post startup activities") {
+        (project.serviceAsync<StartupManager>() as StartupManagerImpl).runPostStartupActivities()
+      }
     }
     LifecycleUsageTriggerCollector.onProjectOpened(project)
 
@@ -1026,13 +1037,15 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
           try {
             serviceAsync<ProjectStorePathManager>().getStoreDescriptor(identityFle).removeProjectConfigurationAndCaches()
           }
-          catch (_: IOException) { }
+          catch (_: IOException) {
+          }
         }
         launch {
           try {
             EelFileUtils.deleteRecursively(getProjectDataPathRoot(identityFle))
           }
-          catch (_: IOException) { }
+          catch (_: IOException) {
+          }
         }
       }
 
@@ -1092,7 +1105,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   }
 
   private suspend fun runConversion(projectPath: Path): ConversionResult? {
-    val conversionService = (ApplicationManager.getApplication() as ComponentManagerEx).getServiceAsyncIfDefined(ConversionService::class.java) ?: return null
+    val conversionService =
+      (ApplicationManager.getApplication() as ComponentManagerEx).getServiceAsyncIfDefined(ConversionService::class.java) ?: return null
     val result = span("project conversion") {
       conversionService.convert(projectPath)
     }
@@ -1146,7 +1160,9 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
     else {
       val mode = serviceAsync<GeneralSettings>().confirmOpenNewProject
-      if (mode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH && attachToProjectAsync(projectToClose, projectDir, callback = options.callback)) {
+      if (mode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH && attachToProjectAsync(projectToClose,
+                                                                                          projectDir,
+                                                                                          callback = options.callback)) {
         return true
       }
 
@@ -1329,8 +1345,10 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         return file.toRealPath(LinkOption.NOFOLLOW_LINKS)
       }
     }
-    catch (_: InvalidPathException) { }
-    catch (_: IOException) { } // the file does not yet exist, so its canonical path will be equal to its original path
+    catch (_: InvalidPathException) {
+    }
+    catch (_: IOException) {
+    } // the file does not yet exist, so its canonical path will be equal to its original path
     return file
   }
 
@@ -1462,7 +1480,10 @@ internal fun isCorePlugin(descriptor: PluginDescriptor): Boolean {
 
 @ApiStatus.Internal
 class UnableToSaveProjectNotification(project: Project, readOnlyFiles: List<VirtualFile>) :
-  Notification("Project Settings", IdeUICustomization.getInstance().projectMessage("notification.title.cannot.save.project"), IdeBundle.message("notification.content.unable.to.save.project.files"), NotificationType.ERROR) {
+  Notification("Project Settings",
+               IdeUICustomization.getInstance().projectMessage("notification.title.cannot.save.project"),
+               IdeBundle.message("notification.content.unable.to.save.project.files"),
+               NotificationType.ERROR) {
   private var project: Project?
 
   var files: List<VirtualFile>
@@ -1570,7 +1591,8 @@ fun CoroutineScope.runInitProjectActivities(project: Project, logger: Logger) {
   }
 
   @Suppress("DEPRECATION")
-  val projectComponents = (project as ComponentManagerEx).collectInitializedComponents(com.intellij.openapi.components.ProjectComponent::class.java)
+  val projectComponents =
+    (project as ComponentManagerEx).collectInitializedComponents(com.intellij.openapi.components.ProjectComponent::class.java)
   if (projectComponents.isEmpty()) {
     return
   }

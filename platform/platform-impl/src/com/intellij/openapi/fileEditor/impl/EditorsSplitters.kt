@@ -1125,22 +1125,24 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
     }
 
     val delayedTasks = ConcurrentLinkedQueue<Job>()
-    val items = coroutineScope {
-      val placeholderIcon by lazy { EmptyIcon.create(AllIcons.FileTypes.Text) }
-      fileEntries.map { fileEntry ->
-        async {
-          computeFileEntry(
-            virtualFileManager = virtualFileManager,
-            fileEntry = fileEntry,
-            fileEditorManager = fileEditorManager,
-            delayedTasks = delayedTasks,
-            placeholderIcon = placeholderIcon,
-            splitters = splitters,
-            isLazyComposite = isLazyComposite,
-          )
+    val items = span("editor file entries compute") {
+      coroutineScope {
+        val placeholderIcon by lazy { EmptyIcon.create(AllIcons.FileTypes.Text) }
+        fileEntries.map { fileEntry ->
+          async(CoroutineName("editor file entry compute")) {
+            computeFileEntry(
+              virtualFileManager = virtualFileManager,
+              fileEntry = fileEntry,
+              fileEditorManager = fileEditorManager,
+              delayedTasks = delayedTasks,
+              placeholderIcon = placeholderIcon,
+              splitters = splitters,
+              isLazyComposite = isLazyComposite,
+            )
+          }
         }
-      }
-    }.mapNotNull { it.getCompleted() }
+      }.mapNotNull { it.getCompleted() }
+    }
 
     span("file opening in EDT", Dispatchers.EDT) {
       var window: EditorWindow? = null
@@ -1193,7 +1195,10 @@ private fun computeFileEntry(
 
   // do not expose `file` variable to avoid using it instead of `fileProvider`
   val fileProviderDeferred =
-    compositeCoroutineScope.async(start = if (fileEntry.currentInTab) CoroutineStart.DEFAULT else CoroutineStart.LAZY) {
+    compositeCoroutineScope.async(
+      context = CoroutineName("editor file content preload"),
+      start = if (fileEntry.currentInTab) CoroutineStart.DEFAULT else CoroutineStart.LAZY,
+    ) {
       // https://youtrack.jetbrains.com/issue/IJPL-157845/Incorrect-encoding-of-file-during-project-opening
       // In the case of the JetBrains client, it's better to avoid a blocking protocol call inside [VirtualFile.contentsToByteArray]
       if (!PlatformUtils.isJetBrainsClient() && notFullyPreparedFile !is VirtualFileWithoutContent && !notFullyPreparedFile.isCharsetSet) {
@@ -1229,11 +1234,11 @@ private fun computeFileEntry(
     )
   }
 
-  val tabTitleTask = compositeCoroutineScope.async(start = CoroutineStart.LAZY) {
+  val tabTitleTask = compositeCoroutineScope.async(context = CoroutineName("editor tab title compute"), start = CoroutineStart.LAZY) {
     EditorTabPresentationUtil.getEditorTabTitleAsync(fileEditorManager.project, fileProvider())
   }
   val tabIconTask = if (UISettings.getInstance().showFileIconInTabs) {
-    compositeCoroutineScope.async(start = CoroutineStart.LAZY) {
+    compositeCoroutineScope.async(context = CoroutineName("editor tab icon compute"), start = CoroutineStart.LAZY) {
       val file = fileProvider()
       readAction {
         computeFileIconImpl(file = file, flags = Iconable.ICON_FLAG_READ_STATUS, project = fileEditorManager.project)
@@ -1244,7 +1249,7 @@ private fun computeFileEntry(
     null
   }
 
-  val tabFileColorTask = compositeCoroutineScope.async {
+  val tabFileColorTask = compositeCoroutineScope.async(CoroutineName("editor tab file status color compute")) {
     val fileStatusManager = fileEditorManager.project.serviceAsync<FileStatusManager>()
     val file = fileProvider()
     readAction {
@@ -1280,9 +1285,10 @@ private fun computeFileEntry(
     cachedIcon ?: placeholderIcon
   }
 
-  val tabColorTask = compositeCoroutineScope.async(start = CoroutineStart.LAZY) {
+  val tabColorTask = compositeCoroutineScope.async(context = CoroutineName("editor tab color compute"), start = CoroutineStart.LAZY) {
     val colorScheme = serviceAsync<EditorColorsManager>().schemeForCurrentUITheme
-    val attributes = if (fileEditorManager.isProblem(notFullyPreparedFile)) colorScheme.getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES) else null
+    val attributes =
+      if (fileEditorManager.isProblem(notFullyPreparedFile)) colorScheme.getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES) else null
     val colors = tabFileColorTask.await()
 
     var effectiveAttributes = if (fileEntry.isPreview) {

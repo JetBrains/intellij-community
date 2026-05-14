@@ -23,6 +23,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.FileIdAdapter
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.util.concurrency.ThreadingAssertions
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -59,10 +60,12 @@ class Necropolis(private val project: Project, private val coroutineScope: Corou
       return if (isEnabled()) {
         if (onlyIfCreated) {
           project.serviceIfCreated<Necropolis>()
-        } else {
+        }
+        else {
           project.service<Necropolis>()
         }
-      } else {
+      }
+      else {
         null
       }
     }
@@ -105,24 +108,37 @@ class Necropolis(private val project: Project, private val coroutineScope: Corou
     require(project == this.project)
     if (!project.isDisposed && !project.isDefault) {
       val fileId = FileIdAdapter.getInstance().getId(file) ?: return
-      val (modStamp, documentContent) = readActionBlocking {
-        // get consistent modStamp with docContent under RA
-        document.modificationStamp to document.immutableCharSequence
+      val (modStamp, documentContent) = span("editor document fingerprint input") {
+        readActionBlocking {
+          // get consistent modStamp with docContent under RA
+          document.modificationStamp to document.immutableCharSequence
+        }
       }
-      val fingerprint = FingerprintedZombieImpl.captureFingerprint(documentContent)
+      val fingerprint = span("editor document fingerprint capture") {
+        FingerprintedZombieImpl.captureFingerprint(documentContent)
+      }
       val recipe = SpawnRecipe(project, fileId, file, document, modStamp, editorSupplier, highlighterReady)
       coroutineScope {
-        for (necromancer in necromancersDeferred.await()) {
+        val necromancers = span("editor necromancers awaiting") {
+          necromancersDeferred.await()
+        }
+        for (necromancer in necromancers) {
           if (necromancer.enoughMana(recipe)) {
             launch(CoroutineName(necromancer.name())) {
               try {
                 if (!project.isDisposed && necromancer.shouldSpawnZombie(recipe)) {
-                  val zombie = exhumeZombieIfValid(recipe, necromancer, fingerprint)
-                  necromancer.spawnZombie(recipe, zombie)
+                  val zombie = span("cached markup exhume") {
+                    exhumeZombieIfValid(recipe, necromancer, fingerprint)
+                  }
+                  span("cached markup spawn") {
+                    necromancer.spawnZombie(recipe, zombie)
+                  }
                 }
-              } catch (e: CancellationException) {
+              }
+              catch (e: CancellationException) {
                 throw e
-              } catch (e: Throwable) {
+              }
+              catch (e: Throwable) {
                 LOG.warn(
                   "Exception during editor loading",
                   if (e is ControlFlowException) RuntimeException(e) else e
@@ -200,7 +216,8 @@ class Necropolis(private val project: Project, private val coroutineScope: Corou
     val documentContent = readActionBlocking {
       if (recipe.isValid()) {
         recipe.document.immutableCharSequence
-      } else {
+      }
+      else {
         LOG.debug("Invalid recipe for ${recipe.fileId}}")
         null
       }
