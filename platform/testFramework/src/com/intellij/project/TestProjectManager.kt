@@ -1,4 +1,6 @@
-// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.project
 
 import com.intellij.ide.AppLifecycleListener
@@ -40,7 +42,8 @@ import java.util.WeakHashMap
 import java.util.concurrent.TimeUnit
 
 private const val MAX_LEAKY_PROJECTS = 5
-private val LEAK_CHECK_INTERVAL = System.getProperty("idea.tests.leaked.projects.check.interval.ms")?.toLongOrNull() ?: TimeUnit.MINUTES.toMillis(30)
+private val LEAK_CHECK_INTERVAL = System.getProperty("idea.tests.leaked.projects.check.interval.ms")?.toLongOrNull()
+                                  ?: TimeUnit.MINUTES.toMillis(30)
 private var CHECK_START = System.currentTimeMillis()
 private val LOG_PROJECT_LEAKAGE = System.getProperty("idea.log.leaked.projects.in.tests", "true")!!.toBoolean()
 var totalCreatedProjectsCount: Int = 0
@@ -77,7 +80,7 @@ open class TestProjectManager : ProjectManagerImpl() {
 
     val project = super.newProject(file, options)
     if (project != null && LOG_PROJECT_LEAKAGE) {
-      projects[project] = null
+      projects.put(project, null)
     }
     return project
   }

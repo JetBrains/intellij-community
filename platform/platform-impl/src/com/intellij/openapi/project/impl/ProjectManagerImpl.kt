@@ -1,4 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment", "OVERRIDE_DEPRECATION")
+
 package com.intellij.openapi.project.impl
 
 import com.intellij.CommonBundle
@@ -105,10 +107,10 @@ import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.attachToProjectAsync
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystem
-import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.eel.EelUnavailableException
 import com.intellij.platform.eel.fs.EelFileUtils
 import com.intellij.platform.eel.provider.EelInitialization
@@ -149,7 +151,8 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
@@ -163,13 +166,10 @@ import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.system.measureTimeMillis
 
-@ApiStatus.Internal
+@Internal
 open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   companion object {
-    private val LOG = logger<ProjectManagerImpl>()
     private val tracer by lazy { TelemetryManager.getInstance().getTracer(Scope("projectLifecycle")) }
-    private val LISTENERS_IN_PROJECT_KEY = Key.create<MutableList<ProjectManagerListener>>("LISTENERS_IN_PROJECT_KEY")
-    private val CLOSE_HANDLER_EP = ExtensionPointName<ProjectCloseHandler>("com.intellij.projectCloseHandler")
 
     @TestOnly
     @JvmStatic
@@ -185,27 +185,6 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     suspend fun initEssentialProjectPreInit(project: Project) {
       runApprovedExtensions(project, "com.intellij.projectPreInit", essentialOnly = true)
     }
-
-    private suspend fun runApprovedExtensions(project: Project, epName: String, essentialOnly: Boolean) {
-      val ep = (ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl).getExtensionPoint<InitProjectActivity>(epName)
-      for (adapter in ep.sortedAdapters) {
-        val pluginDescriptor = adapter.pluginDescriptor
-        val assignableToClassName = adapter.assignableToClassName
-        if (!isCorePlugin(pluginDescriptor)
-            // todo develar
-            && !(pluginDescriptor.pluginId.idString == "org.jetbrains.bazel" && assignableToClassName == "org.jetbrains.bazel.flow.open.OpenBazelProjectAndSyncStartupActivity")) {
-          LOG.error(PluginException("Plugin $pluginDescriptor is not approved to add ${ep.name}", pluginDescriptor.pluginId))
-          continue
-        }
-
-        span("run $epName ${assignableToClassName.substringAfterLast('.')}") {
-          val activity = adapter.createInstance<InitProjectActivity>(ep.componentManager) ?: return@span
-          if (activity.isEssential || !essentialOnly) {
-            activity.run(project)
-          }
-        }
-      }
-    }
   }
 
   private var openProjects = arrayOf<Project>() // guarded by lock
@@ -218,12 +197,6 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   private val excludeRootsCache: ExcludeRootsCache
 
   private var getAllExcludedUrlsCallback: Runnable? = null
-
-  private val publisher: ProjectManagerListener
-    get() = ApplicationManager.getApplication().messageBus.syncPublisher(@Suppress("RemoveRedundantQualifierName") ProjectManager.TOPIC)
-
-  private val closePublisher: ProjectCloseListener
-    get() = ApplicationManager.getApplication().messageBus.syncPublisher(ProjectCloseListener.TOPIC)
 
   init {
     val connection = ApplicationManager.getApplication().messageBus.simpleConnect()
@@ -296,7 +269,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     Disposer.dispose(defaultProject)
   }
 
-  override fun loadProject(path: Path): Project = loadProject(path, preloadServices = true)
+  override fun loadProject(path: Path): Project = loadProject(path = path, preloadServices = true)
 
   @RequiresBackgroundThread
   fun loadProject(path: Path, preloadServices: Boolean): Project {
@@ -305,7 +278,12 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     return runBlockingCancellable {
       withContext(modalityState.asContextElement() + ClientId.localId.asContextElement()) {
         prepareProject(
-          path, projectName = null, beforeInit = null, projectInitHelper = null, runConversionBeforeOpen = false, preloadServices
+          projectIdentityFile = path,
+          projectName = null,
+          beforeInit = null,
+          projectInitHelper = null,
+          runConversionBeforeOpen = false,
+          preloadServices = preloadServices,
         )
       }
     }
@@ -321,7 +299,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   }
 
   @TestOnly
-  @ApiStatus.Internal
+  @Internal
   fun disposeDefaultProjectAndCleanupComponentsForDynamicPluginTests() {
     defaultProject.disposeDefaultProjectAndCleanupComponentsForDynamicPluginTests()
   }
@@ -374,11 +352,11 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
   @Suppress("OVERRIDE_DEPRECATION")
   final override fun closeProject(project: Project): Boolean {
-    return closeProject(project, saveProject = true, dispose = false, checkCanClose = true)
+    return closeProject(project = project, saveProject = true, dispose = false, checkCanClose = true)
   }
 
   final override fun forceCloseProject(project: Project, save: Boolean): Boolean {
-    return closeProject(project, saveProject = save, checkCanClose = false)
+    return closeProject(project = project, saveProject = save, checkCanClose = false)
   }
 
   final override suspend fun forceCloseProjectAsync(project: Project, save: Boolean): Boolean {
@@ -406,7 +384,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       projects += it
     }
     for (project in projects) {
-      if (!closeProject(project, checkCanClose = checkCanClose)) {
+      if (!closeProject(project = project, checkCanClose = checkCanClose)) {
         return false
       }
     }
@@ -1160,8 +1138,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
     else {
       val mode = serviceAsync<GeneralSettings>().confirmOpenNewProject
-      if (mode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH && attachToProjectAsync(projectToClose,
-                                                                                          projectDir,
+      if (mode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH && attachToProjectAsync(projectToClose = projectToClose,
+                                                                                          projectDir = projectDir,
                                                                                           callback = options.callback)) {
         return true
       }
@@ -1256,220 +1234,99 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
   }
 
-  @NlsSafe
-  private fun message(e: Throwable): String {
-    e.message ?: e.localizedMessage?.let {
-      return it
-    }
+}
 
-    val message = e.toString()
-    return "$message (cause: ${message(e.cause ?: return message)})"
+@NlsSafe
+private fun message(e: Throwable): String {
+  e.message ?: e.localizedMessage?.let {
+    return it
   }
 
-  private fun getListeners(project: Project): List<ProjectManagerListener> = project.getUserData(LISTENERS_IN_PROJECT_KEY) ?: emptyList()
+  val message = e.toString()
+  return "$message (cause: ${message(e.cause ?: return message)})"
+}
 
-  private fun handleListenerError(e: Throwable, listener: ProjectManagerListener) {
-    if (e is ProcessCanceledException || e is CancellationException) {
-      throw e
-    }
-    else {
-      LOG.error("From the listener $listener (${listener.javaClass})", e)
-    }
+private val LOG = logger<ProjectManagerImpl>()
+
+private val LISTENERS_IN_PROJECT_KEY = Key.create<MutableList<ProjectManagerListener>>("LISTENERS_IN_PROJECT_KEY")
+private val CLOSE_HANDLER_EP = ExtensionPointName<ProjectCloseHandler>("com.intellij.projectCloseHandler")
+
+private fun getListeners(project: Project): List<ProjectManagerListener> = project.getUserData(LISTENERS_IN_PROJECT_KEY) ?: emptyList()
+
+private val publisher: ProjectManagerListener
+  get() = ApplicationManager.getApplication().messageBus.syncPublisher(ProjectManager.TOPIC)
+private val closePublisher: ProjectCloseListener
+  get() = ApplicationManager.getApplication().messageBus.syncPublisher(ProjectCloseListener.TOPIC)
+
+private fun handleListenerError(e: Throwable, listener: ProjectManagerListener) {
+  if (e is ProcessCanceledException || e is CancellationException) {
+    throw e
   }
-
-  private fun fireProjectClosing(project: Project) {
-    LOG.debug("enter: fireProjectClosing()")
-    try {
-      closePublisher.projectClosing(project)
-      publisher.projectClosing(project)
-    }
-    catch (e: Throwable) {
-      LOG.warn("Failed to publish projectClosing(project) event", e)
-    }
-  }
-
-  private fun fireProjectClosed(project: Project) {
-    if (LOG.isDebugEnabled) {
-      LOG.debug("projectClosed $project", Throwable())
-    }
-
-    LifecycleUsageTriggerCollector.onBeforeProjectClosed(project)
-    closePublisher.projectClosed(project)
-    publisher.projectClosed(project)
-    @Suppress("DEPRECATION")
-    val projectComponents = (project as ComponentManagerEx)
-      .collectInitializedComponents(com.intellij.openapi.components.ProjectComponent::class.java)
-
-    // see "why is called after message bus" in the fireProjectOpened
-    for (i in projectComponents.indices.reversed()) {
-      val component = projectComponents[i]
-      try {
-        component.projectClosed()
-      }
-      catch (e: Throwable) {
-        LOG.error(component.toString(), e)
-      }
-    }
-  }
-
-  private fun ensureCouldCloseIfUnableToSave(project: Project): Boolean {
-    val notificationManager = ApplicationManager.getApplication().getServiceIfCreated(NotificationsManager::class.java) ?: return true
-    val notifications = notificationManager.getNotificationsOfType(UnableToSaveProjectNotification::class.java, project)
-    if (notifications.isEmpty()) {
-      return true
-    }
-
-    val message: @NlsContexts.DialogMessage StringBuilder = StringBuilder(
-      IdeBundle.message("dialog.message.was.unable.to.save.some.project.files", ApplicationNamesInfo.getInstance().productName))
-    var count = 0
-    val files = notifications.first().files
-    for (file in files) {
-      if (count == 10) {
-        message.append('\n').append("and ").append(files.size - count).append(" more").append('\n')
-      }
-      else {
-        message.append(file.path).append('\n')
-        count++
-      }
-    }
-
-    val title = IdeUICustomization.getInstance().projectMessage("dialog.title.unsaved.project")
-    return Messages.showYesNoDialog(project, message.toString(), title, Messages.getWarningIcon()) == Messages.YES
-  }
-
-  @OptIn(LowLevelLocalMachineAccess::class)
-  private fun toCanonicalName(filePath: String): Path {
-    val file = Path.of(filePath)
-    try {
-      if (OS.CURRENT == OS.Windows && FileUtil.containsWindowsShortName(filePath)) {
-        return file.toRealPath(LinkOption.NOFOLLOW_LINKS)
-      }
-    }
-    catch (_: InvalidPathException) {
-    }
-    catch (_: IOException) {
-    } // the file does not yet exist, so its canonical path will be equal to its original path
-    return file
-  }
-
-  private suspend fun initProject(
-    file: Path,
-    project: ProjectImpl,
-    preloadServices: Boolean,
-    template: Project?,
-    projectInitHelper: ProjectInitHelper? = null,
-  ) {
-    LOG.assertTrue(!project.isDefault)
-
-    val registerComponentActivity = createActivity(project) {
-      "project ${StartUpMeasurer.Activities.REGISTER_COMPONENTS_SUFFIX}"
-    }
-
-    project.putUserDataIfAbsent(PROJECT_PATH, file)
-
-    serviceAsync<ProjectEntitiesStorage>().createEntity(project)
-
-    project.registerComponents()
-    registerComponentActivity?.end()
-
-    if (ApplicationManager.getApplication().isUnitTestMode ||
-        ApplicationManagerEx.isInIntegrationTest()) {
-      @Suppress("TestOnlyProblems")
-      for (listener in ProjectServiceContainerCustomizer.getEp().extensionList) {
-        listener.serviceRegistered(project)
-      }
-    }
-
-    currentCoroutineContext().ensureActive()
-    project.componentStore.setPath(file, template)
-
-    coroutineScope {
-      val preInitJob = projectInitHelper?.launchPreInit(project)
-
-      runApprovedExtensions(project, "com.intellij.projectPreInit", essentialOnly = false)
-
-      projectInitHelper?.notifyInit(project)
-
-      if (preloadServices) {
-        schedulePreloadServices(project)
-      }
-
-      preInitJob?.join()
-      project.createComponentsNonBlocking()
-    }
-  }
-
-  /**
-   * Cancels the project's coroutine scope and disposes the project under a write action.
-   * Runs under [NonCancellable] so cleanup completes even when the outer scope is already canceled.
-   * Any exception during cleanup is attached to [cause] as a suppressed exception.
-   */
-  private suspend fun disposeFailedProject(project: ProjectImpl, cause: Throwable) {
-    try {
-      withContext(NonCancellable) {
-        project.getCoroutineScope().coroutineContext.job.cancelAndJoin()
-        edtWriteAction {
-          Disposer.dispose(project)
-        }
-      }
-    }
-    catch (disposeThrowable: Throwable) {
-      cause.addSuppressed(disposeThrowable)
-    }
-  }
-
-  private suspend fun confirmOpenNewProject(options: OpenProjectTask): Int {
-    if (ApplicationManager.getApplication().isUnitTestMode) {
-      return GeneralSettings.OPEN_PROJECT_NEW_WINDOW
-    }
-
-    var mode = serviceAsync<GeneralSettings>().confirmOpenNewProject
-    if (mode == GeneralSettings.OPEN_PROJECT_ASK) {
-      val ideUICustomization = serviceAsync<IdeUICustomization>()
-      val message = if (options.projectName == null) {
-        ideUICustomization.projectMessage("prompt.open.project.in.new.frame")
-      }
-      else {
-        ideUICustomization.projectMessage("prompt.open.project.with.name.in.new.frame", options.projectName)
-      }
-
-      val openInExistingFrame = withContext(Dispatchers.EDT) {
-        // readAction is not enough
-        writeIntentReadAction {
-          val actionPlace = "Open project action"
-          if (options.isNewProject)
-            MessageDialogBuilder.yesNoCancel(ideUICustomization.projectMessage("title.new.project"), message)
-              .yesText(IdeBundle.message("button.existing.frame"))
-              .noText(IdeBundle.message("button.new.frame"))
-              .doNotAsk(ProjectNewWindowDoNotAskOption())
-              .invocationPlace(actionPlace)
-              .guessWindowAndAsk()
-          else
-            MessageDialogBuilder.yesNoCancel(ideUICustomization.projectMessage("title.open.project"), message)
-              .yesText(IdeBundle.message("button.existing.frame"))
-              .noText(IdeBundle.message("button.new.frame"))
-              .doNotAsk(ProjectNewWindowDoNotAskOption())
-              .invocationPlace(actionPlace)
-              .guessWindowAndAsk()
-        }
-      }
-
-      mode = when (openInExistingFrame) {
-        Messages.YES -> GeneralSettings.OPEN_PROJECT_SAME_WINDOW
-        Messages.NO -> GeneralSettings.OPEN_PROJECT_NEW_WINDOW
-        else -> Messages.CANCEL
-      }
-      if (mode != Messages.CANCEL) {
-        LifecycleUsageTriggerCollector.onProjectFrameSelected(mode)
-      }
-    }
-    return mode
-  }
-
-  private inline fun createActivity(project: ProjectImpl, message: () -> String): Activity? {
-    return if (!StartUpMeasurer.isEnabled() || project.isDefault) null else StartUpMeasurer.startActivity(message())
+  else {
+    LOG.error("From the listener $listener (${listener.javaClass})", e)
   }
 }
+
+private fun fireProjectClosing(project: Project) {
+  LOG.debug("enter: fireProjectClosing()")
+  try {
+    closePublisher.projectClosing(project)
+    publisher.projectClosing(project)
+  }
+  catch (e: Throwable) {
+    LOG.warn("Failed to publish projectClosing(project) event", e)
+  }
+}
+
+private fun fireProjectClosed(project: Project) {
+  if (LOG.isDebugEnabled) {
+    LOG.debug("projectClosed $project", Throwable())
+  }
+
+  LifecycleUsageTriggerCollector.onBeforeProjectClosed(project)
+  closePublisher.projectClosed(project)
+  publisher.projectClosed(project)
+  @Suppress("DEPRECATION")
+  val projectComponents = (project as ComponentManagerEx)
+    .collectInitializedComponents(com.intellij.openapi.components.ProjectComponent::class.java)
+
+  // see "why is called after message bus" in the fireProjectOpened
+  for (i in projectComponents.indices.reversed()) {
+    val component = projectComponents[i]
+    try {
+      component.projectClosed()
+    }
+    catch (e: Throwable) {
+      LOG.error(component.toString(), e)
+    }
+  }
+}
+
+private fun ensureCouldCloseIfUnableToSave(project: Project): Boolean {
+  val notificationManager = ApplicationManager.getApplication().getServiceIfCreated(NotificationsManager::class.java) ?: return true
+  val notifications = notificationManager.getNotificationsOfType(UnableToSaveProjectNotification::class.java, project)
+  if (notifications.isEmpty()) {
+    return true
+  }
+
+  val message: @NlsContexts.DialogMessage StringBuilder = StringBuilder(
+    IdeBundle.message("dialog.message.was.unable.to.save.some.project.files", ApplicationNamesInfo.getInstance().productName))
+  var count = 0
+  val files = notifications.first().files
+  for (file in files) {
+    if (count == 10) {
+      message.append('\n').append("and ").append(files.size - count).append(" more").append('\n')
+    }
+    else {
+      message.append(file.path).append('\n')
+      count++
+    }
+  }
+
+  val title = IdeUICustomization.getInstance().projectMessage("dialog.title.unsaved.project")
+  return Messages.showYesNoDialog(project, message.toString(), title, Messages.getWarningIcon()) == Messages.YES
+}
+
 
 internal fun isCorePlugin(descriptor: PluginDescriptor): Boolean {
   val id = descriptor.pluginId
@@ -1478,7 +1335,7 @@ internal fun isCorePlugin(descriptor: PluginDescriptor): Boolean {
          id.idString == "com.intellij.kotlinNative.platformDeps"
 }
 
-@ApiStatus.Internal
+@Internal
 class UnableToSaveProjectNotification(project: Project, readOnlyFiles: List<VirtualFile>) :
   Notification("Project Settings",
                IdeUICustomization.getInstance().projectMessage("notification.title.cannot.save.project"),
@@ -1536,13 +1393,170 @@ private class ProjectInitHelper(
   }
 }
 
-@ApiStatus.Internal
+@OptIn(LowLevelLocalMachineAccess::class)
+private fun toCanonicalName(filePath: String): Path {
+  val file = Path.of(filePath)
+  try {
+    if (OS.CURRENT == OS.Windows && FileUtil.containsWindowsShortName(filePath)) {
+      return file.toRealPath(LinkOption.NOFOLLOW_LINKS)
+    }
+  }
+  catch (_: InvalidPathException) {
+  }
+  catch (_: IOException) {
+  } // the file does not yet exist, so its canonical path will be equal to its original path
+  return file
+}
+
+private suspend fun initProject(
+  file: Path,
+  project: ProjectImpl,
+  preloadServices: Boolean,
+  template: Project?,
+  projectInitHelper: ProjectInitHelper? = null,
+) {
+  LOG.assertTrue(!project.isDefault)
+
+  val registerComponentActivity = createActivity(project) {
+    "project ${StartUpMeasurer.Activities.REGISTER_COMPONENTS_SUFFIX}"
+  }
+
+  project.putUserDataIfAbsent(PROJECT_PATH, file)
+
+  serviceAsync<ProjectEntitiesStorage>().createEntity(project)
+
+  project.registerComponents()
+  registerComponentActivity?.end()
+
+  if (ApplicationManager.getApplication().isUnitTestMode ||
+      ApplicationManagerEx.isInIntegrationTest()) {
+    @Suppress("TestOnlyProblems")
+    for (listener in ProjectServiceContainerCustomizer.getEp().extensionList) {
+      listener.serviceRegistered(project)
+    }
+  }
+
+  currentCoroutineContext().ensureActive()
+  project.componentStore.setPath(file, template)
+
+  coroutineScope {
+    val preInitJob = projectInitHelper?.launchPreInit(project)
+
+    runApprovedExtensions(project, "com.intellij.projectPreInit", essentialOnly = false)
+
+    projectInitHelper?.notifyInit(project)
+
+    if (preloadServices) {
+      schedulePreloadServices(project)
+    }
+
+    preInitJob?.join()
+    project.createComponentsNonBlocking()
+  }
+}
+
+/**
+ * Cancels the project's coroutine scope and disposes the project under a write action.
+ * Runs under [NonCancellable] so cleanup completes even when the outer scope is already cancelled.
+ * Any exception during cleanup is attached to [cause] as a suppressed exception.
+ */
+private suspend fun disposeFailedProject(project: ProjectImpl, cause: Throwable) {
+  try {
+    withContext(NonCancellable) {
+      project.getCoroutineScope().coroutineContext.job.cancelAndJoin()
+      edtWriteAction {
+        Disposer.dispose(project)
+      }
+    }
+  }
+  catch (disposeThrowable: Throwable) {
+    cause.addSuppressed(disposeThrowable)
+  }
+}
+
+@Suppress("DuplicatedCode")
+private suspend fun confirmOpenNewProject(options: OpenProjectTask): Int {
+  if (ApplicationManager.getApplication().isUnitTestMode) {
+    return GeneralSettings.OPEN_PROJECT_NEW_WINDOW
+  }
+
+  var mode = serviceAsync<GeneralSettings>().confirmOpenNewProject
+  if (mode == GeneralSettings.OPEN_PROJECT_ASK) {
+    val ideUICustomization = serviceAsync<IdeUICustomization>()
+    val message = if (options.projectName == null) {
+      ideUICustomization.projectMessage("prompt.open.project.in.new.frame")
+    }
+    else {
+      ideUICustomization.projectMessage("prompt.open.project.with.name.in.new.frame", options.projectName)
+    }
+
+    val openInExistingFrame = withContext(Dispatchers.EDT) {
+      // readAction is not enough
+      writeIntentReadAction {
+        @NonNls
+        val actionPlace = "Open project action"
+        if (options.isNewProject)
+          MessageDialogBuilder.yesNoCancel(ideUICustomization.projectMessage("title.new.project"), message)
+            .yesText(IdeBundle.message("button.existing.frame"))
+            .noText(IdeBundle.message("button.new.frame"))
+            .doNotAsk(ProjectNewWindowDoNotAskOption())
+            .invocationPlace(actionPlace)
+            .guessWindowAndAsk()
+        else
+          MessageDialogBuilder.yesNoCancel(ideUICustomization.projectMessage("title.open.project"), message)
+            .yesText(IdeBundle.message("button.existing.frame"))
+            .noText(IdeBundle.message("button.new.frame"))
+            .doNotAsk(ProjectNewWindowDoNotAskOption())
+            .invocationPlace(actionPlace)
+            .guessWindowAndAsk()
+      }
+    }
+
+    mode = when (openInExistingFrame) {
+      Messages.YES -> GeneralSettings.OPEN_PROJECT_SAME_WINDOW
+      Messages.NO -> GeneralSettings.OPEN_PROJECT_NEW_WINDOW
+      else -> Messages.CANCEL
+    }
+    if (mode != Messages.CANCEL) {
+      LifecycleUsageTriggerCollector.onProjectFrameSelected(mode)
+    }
+  }
+  return mode
+}
+
+private inline fun createActivity(project: ProjectImpl, message: () -> String): Activity? {
+  return if (!StartUpMeasurer.isEnabled() || project.isDefault) null else StartUpMeasurer.startActivity(message())
+}
+
+private suspend fun runApprovedExtensions(project: Project, epName: String, essentialOnly: Boolean) {
+  val ep = (ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl).getExtensionPoint<InitProjectActivity>(epName)
+  for (adapter in ep.sortedAdapters) {
+    val pluginDescriptor = adapter.pluginDescriptor
+    val assignableToClassName = adapter.assignableToClassName
+    if (!isCorePlugin(pluginDescriptor)
+        // todo develar
+        && !(pluginDescriptor.pluginId.idString == "org.jetbrains.bazel" && assignableToClassName == "org.jetbrains.bazel.flow.open.OpenBazelProjectAndSyncStartupActivity")) {
+      LOG.error(PluginException("Plugin $pluginDescriptor is not approved to add ${ep.name}", pluginDescriptor.pluginId))
+      continue
+    }
+
+    span("run $epName ${assignableToClassName.substringAfterLast('.')}") {
+      val activity = adapter.createInstance<InitProjectActivity>(ep.componentManager) ?: return@span
+      if (activity.isEssential || !essentialOnly) {
+        activity.run(project)
+      }
+    }
+  }
+}
+
+@Internal
 @TestOnly
 interface ProjectServiceContainerCustomizer {
   companion object {
     @TestOnly
-    fun getEp(): ExtensionPointImpl<ProjectServiceContainerCustomizer> =
-      (ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl).getExtensionPoint("com.intellij.projectServiceContainerCustomizer")
+    fun getEp(): ExtensionPointImpl<ProjectServiceContainerCustomizer> {
+      return (ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl).getExtensionPoint("com.intellij.projectServiceContainerCustomizer")
+    }
   }
 
   /**
@@ -1558,8 +1572,11 @@ interface ProjectServiceContainerCustomizer {
  * @return true, if we should proceed with project opening, false if the process of project opening should be canceled.
  */
 internal suspend fun checkTrustedState(projectStoreBaseDir: Path): Boolean {
-  val title = IdeBundle.message("untrusted.project.open.dialog.title", projectStoreBaseDir.fileName ?: projectStoreBaseDir.toString())
-  return confirmOpeningOrLinkingUntrustedProject(projectStoreBaseDir, project = null, title)
+  return confirmOpeningOrLinkingUntrustedProject(
+    projectRoot = projectStoreBaseDir,
+    project = null,
+    title = IdeBundle.message("untrusted.project.open.dialog.title", projectStoreBaseDir.fileName ?: projectStoreBaseDir.toString())
+  )
 }
 
 internal class ProjectLoadingCancelled(reason: String) : CancellationException(reason)
@@ -1578,7 +1595,7 @@ internal fun CoroutineScope.schedulePreloadServices(project: ProjectImpl) {
   }
 }
 
-@ApiStatus.Internal
+@Internal
 @VisibleForTesting
 fun CoroutineScope.runInitProjectActivities(project: Project, logger: Logger) {
   launch(CoroutineName("run init project activities")) {
