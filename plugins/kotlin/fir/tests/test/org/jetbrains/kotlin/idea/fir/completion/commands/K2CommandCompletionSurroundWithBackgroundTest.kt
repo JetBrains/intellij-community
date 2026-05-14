@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.scripting.definitions.runReadAction
 
-class K2CommandCompletionBackgroundTest : KotlinLightCodeInsightFixtureTestCase() {
+class K2CommandCompletionSurroundWithBackgroundTest : KotlinLightCodeInsightFixtureTestCase() {
     override val pluginMode = KotlinPluginMode.K2
 
     override fun setUp() {
@@ -48,34 +48,6 @@ class K2CommandCompletionBackgroundTest : KotlinLightCodeInsightFixtureTestCase(
                     } 
                 }
             """.trimIndent(), preview?.modifiedText())
-        }
-    }
-
-    fun testOneLinePreview() {
-        myFixture.configureByText(
-            "A.kt", """
-        class A { 
-            fun foo() {
-                l {
-                    println("try").<caret>
-                }
-            }    
-            fun l(s: ()->Unit) {}
-        }
-      """.trimIndent()
-        )
-        val elements = myFixture.completeBasic()
-        val item = elements.first { element -> element.lookupString.contains("single-line lambda", ignoreCase = true) }
-        val previewHolder = item.`as`(LookupElementCustomPreviewHolder::class.java)
-        runReadAction {
-            val preview = previewHolder?.preview(ActionContext.from(myFixture.editor, myFixture.file)) as? IntentionPreviewInfo.CustomDiff
-            assertEquals("""
-                class A { 
-                    fun foo() {
-                        l { println("try") }
-                    }    
-                    fun l(s: ()->Unit) {}
-                }""".trimIndent(), preview?.modifiedText())
         }
     }
 }
