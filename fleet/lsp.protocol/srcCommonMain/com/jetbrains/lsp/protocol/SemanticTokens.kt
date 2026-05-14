@@ -2,7 +2,6 @@ package com.jetbrains.lsp.protocol
 
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.builtins.NothingSerializer
 import kotlinx.serialization.builtins.nullable
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.JsonContentPolymorphicSerializer
@@ -134,12 +133,12 @@ object SemanticTokensRequests {
         RequestType(
             "textDocument/semanticTokens/full",
             SemanticTokensParams.serializer(), SemanticTokens.serializer().nullable,
-            NothingSerializer().nullable)
+            NoValueSerializer)
 
     val SemanticTokensRangeRequest: RequestType<SemanticTokensRangeParams, SemanticTokens, Nothing?> =
         RequestType(
             "textDocument/semanticTokens/range", SemanticTokensRangeParams.serializer(), SemanticTokens.serializer(),
-            NothingSerializer().nullable)
+            NoValueSerializer)
 
     val SemanticTokensFullDeltaRequest: RequestType<SemanticTokensDeltaParams, SemanticTokensDeltaResult?, Unit> =
         RequestType(
