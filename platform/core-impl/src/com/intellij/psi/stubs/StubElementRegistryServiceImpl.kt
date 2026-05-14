@@ -100,11 +100,13 @@ open class StubElementRegistryServiceImpl(coroutineScope: CoroutineScope) : Core
   }
 }
 
+@ApiStatus.Internal
 @JvmField
-internal val STUB_DEFINITION_EP: LanguageExtension<LanguageStubDefinition> = LanguageExtension("com.intellij.languageStubDefinition")
+val STUB_DEFINITION_EP: LanguageExtension<LanguageStubDefinition> = LanguageExtension("com.intellij.languageStubDefinition")
 
+@ApiStatus.Internal
 @JvmField
-internal val STUB_REGISTRY_EP: ExtensionPointName<StubRegistryExtension> = ExtensionPointName("com.intellij.stubElementRegistryExtension")
+val STUB_REGISTRY_EP: ExtensionPointName<StubRegistryExtension> = ExtensionPointName("com.intellij.stubElementRegistryExtension")
 
 private class StubRegistryImpl(
   private val factories: MutableMap<IElementType, StubElementFactory<*, *>>,
