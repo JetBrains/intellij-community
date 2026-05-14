@@ -326,4 +326,11 @@ class PyStringConversionWithoutDunderMethodInspectionTest : PyInspectionTestCase
 
     print(ReprTrue())
     """.trimIndent())
+
+  // A class declared in a .pyi stub usually omits __str__/__repr__/__format__ that the runtime .py defines.
+  @TestFor(issues = ["PY-89004"])
+  fun testStubMethodResolvedToImplementation() = doMultiFileTest()
+
+  @TestFor(issues = ["PY-89004"])
+  fun testStubMethodMissingInImplementation() = doMultiFileTest()
 }

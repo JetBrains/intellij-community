@@ -50,7 +50,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
   }
 
   public void testObjectMethods() {  // PY-1494
-    assertResolvesTo(PyFunction.class, "__repr__");
+    assertResolvesTo(PyFunction.class, PyNames.DUNDER_REPR);
   }
 
   // PY-5499

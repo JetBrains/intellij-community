@@ -5,8 +5,10 @@ import com.jetbrains.python.allure.Components
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 
+import com.intellij.idea.TestFor
 import com.intellij.testFramework.LightProjectDescriptor
 import com.jetbrains.python.fixtures.PyTestCase
+import com.jetbrains.python.validation.PyFStringFormatSpecAnnotator
 
 /**
  * Tests for f-string format specification syntax highlighting (PY-88215).
@@ -17,6 +19,7 @@ import com.jetbrains.python.fixtures.PyTestCase
 @Subsystems.CodeInsight
 @Components.Highlighting
 @Layers.Functional
+@TestFor(classes = [PyFStringFormatSpecAnnotator::class])
 class PyFStringFormatSpecHighlightingTest : PyTestCase() {
 
   override fun getProjectDescriptor(): LightProjectDescriptor = ourPyLatestDescriptor
@@ -205,6 +208,13 @@ class PyFStringFormatSpecHighlightingTest : PyTestCase() {
   fun `test plus as fill character`() =
     // In "+>10", '+' is fill (NOT highlighted), '>' is alignment (special), '1' '0' are width (numbers)
     doTest("f'{1:+$align$number}'")
+
+  fun `test subclass`() = doTest("""
+    class A(str): ...
+    f"{A():$string_type}"
+    """.trimIndent(), extra = false)
+
+  fun `test type object`() = doTest("""f'{<info descr="PY.BUILTIN_NAME">str</info>:s}'""")
 
   private fun doTest(text: String, extra: Boolean = true) {
     myFixture.configureByText("test.py", text.trimIndent())

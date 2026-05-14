@@ -325,7 +325,7 @@ class PyDataclassInspection : PyInspection() {
       cls.methods.forEach {
         when (it.name) {
           PyNames.INIT -> initMethodExists = true
-          "__repr__" -> reprMethodExists = true
+          PyNames.DUNDER_REPR -> reprMethodExists = true
           "__eq__" -> eqMethodExists = true
           in ORDER_OPERATORS -> orderMethodsExist = true
           "__setattr__", "__delattr__" -> mutatingMethodsExist = true
@@ -343,7 +343,7 @@ class PyDataclassInspection : PyInspection() {
       }
 
       if (dataclassParameters.repr && reprMethodExists) {
-        useless.add(Triple(dataclassParameters.reprArgument, "repr", "__repr__"))
+        useless.add(Triple(dataclassParameters.reprArgument, "repr", PyNames.DUNDER_REPR))
       }
 
       if (dataclassParameters.eq && eqMethodExists) {
@@ -400,8 +400,8 @@ class PyDataclassInspection : PyInspection() {
       cls.methods.forEach {
         when (it.name) {
           PyNames.INIT -> initMethod = it
-          "__repr__" -> reprMethod = it
-          "__str__" -> strMethod = it
+          PyNames.DUNDER_REPR -> reprMethod = it
+          PyNames.DUNDER_STR -> strMethod = it
           "__eq__",
           in ORDER_OPERATORS,
             -> cmpMethods.add(it)
