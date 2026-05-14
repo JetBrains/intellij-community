@@ -21,6 +21,7 @@ import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.util.application
 import org.jetbrains.kotlin.gradle.GradleDaemonAnalyzerTestCase
 import org.jetbrains.kotlin.gradle.checkFiles
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
 import org.jetbrains.kotlin.idea.run.KotlinRunConfiguration
 import org.jetbrains.kotlin.idea.test.TagsTestDataUtil
@@ -32,6 +33,10 @@ import java.io.File
 import java.util.Locale
 
 class GradleTestRunConfigurationAndHighlightingTest23 : KotlinGradleImportingTestCase() {
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
+
     @Test
     @TargetVersions("<7.6")
     fun testExpectClassWithTests() {
@@ -58,7 +63,7 @@ class GradleTestRunConfigurationAndHighlightingTest23 : KotlinGradleImportingTes
     fun kotlinJUnitSettings() = doTest()
 
 
-    protected fun doTest() {
+    private fun doTest() {
         val files = importProjectFromTestData()
         val project = myTestFixture.project
 
@@ -75,8 +80,8 @@ class GradleTestRunConfigurationAndHighlightingTest23 : KotlinGradleImportingTes
                     val lineMarkerInfo = tag.data as? LineMarkerInfo<*> ?: return null
 
                     // Hacky way to check if it's test line-marker info. Can't rely on extractConfigurationsFromContext returning no
-                    // suitable configurationsFromContext, because it basically works on offsets, so if for some range we have two
-                    // line markers - one with tests, and one without, - then we'll get proper ConfigurationFromContext for both
+                    // suitable configurationsFromContext, because it basically works on offsets, so if for some range we have two-line
+                    // markers - one with tests, and one without, - then we'll get proper ConfigurationFromContext for both
 
                     val extractConfigurationsFromContext = lineMarkerInfo.extractConfigurationsFromContext()
                     val kotlinRunConfigsFromContext = extractConfigurationsFromContext
@@ -132,7 +137,7 @@ class GradleTestRunConfigurationAndHighlightingTest23 : KotlinGradleImportingTes
 
         var settings: ExternalSystemTaskExecutionSettings? = null
 
-        // We can not use settings straight away, because exact settings are determined only after 'onFirstRun'
+        // We cannot use settings straight away, because exact settings are determined only after 'onFirstRun'
         // (see MultiplatformTestTasksChooser)
         onFirstRun(context) {
             settings = configuration.settings
@@ -170,7 +175,7 @@ class GradleTestRunConfigurationAndHighlightingTest23 : KotlinGradleImportingTes
     private fun mockInheritorPopup() {
         application.replaceService(
             JBPopupFactory::class.java, object : PopupFactoryImpl() {
-                override fun <T : Any?> createPopupChooserBuilder(list: MutableList<out T>) = object: PopupChooserBuilder<T>(JBList()) {
+                override fun <T> createPopupChooserBuilder(list: MutableList<out T>) = object: PopupChooserBuilder<T>(JBList()) {
                     //Fix project leak in popup test infrastructure. In headless mode popup doesn't set up disposable.
                     //see: com.intellij.ui.popup.AbstractPopup.show(...)
                     override fun createPopup(): JBPopup = super.createPopup().also { popup -> Disposer.dispose(popup) }
