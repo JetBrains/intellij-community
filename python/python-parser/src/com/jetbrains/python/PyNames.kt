@@ -18,6 +18,7 @@ object PyNames {
   @NonNls
   object FQN {
     const val INT: String = "builtins.int"
+    const val BOOL: String = "builtins.bool"
     const val LONG: String = "builtins.long"
     const val FLOAT: String = "builtins.float"
     const val COMPLEX: String = "builtins.complex"
@@ -216,6 +217,10 @@ object PyNames {
   const val ALL: String = "__all__"
   const val SLOTS: String = "__slots__"
   const val DEBUG: String = "__debug__"
+
+  const val DUNDER_REPR: String = "__repr__"
+  const val DUNDER_STR: String = "__str__"
+  const val DUNDER_FORMAT: String = "__format__"
 
   const val ISINSTANCE: String = "isinstance"
   const val ASSERT_IS_INSTANCE: String = "assertIsInstance"
@@ -517,7 +522,7 @@ object PyNames {
     "__rdivmod__" to selfOtherDescr,
     "__reduce__" to onlySelfDescr,
     "__reduce_ex__" to BuiltinDescription("(self, protocol)"),
-    "__repr__" to onlySelfDescr,
+    PyNames.DUNDER_REPR to onlySelfDescr,
     "__reversed__" to onlySelfDescr,
     "__rfloordiv__" to selfOtherDescr,
     "__rlshift__" to selfOtherDescr,
@@ -538,7 +543,7 @@ object PyNames {
     SIZEOF to onlySelfDescr,
     //_"__self__" to_only_self_descr),
     //_"__slots__" to_only_self_descr),
-    "__str__" to onlySelfDescr,
+    DUNDER_STR to onlySelfDescr,
     "__sub__" to selfOtherDescr,
     "__truediv__" to selfOtherDescr,
     "__trunc__" to onlySelfDescr,
@@ -556,7 +561,7 @@ object PyNames {
   private val PY3_BUILTIN_METHODS: Map<String, BuiltinDescription> = BuiltinMethods + mapOf(
     "__bool__" to onlySelfDescr,
     BYTES to onlySelfDescr,
-    "__format__" to BuiltinDescription("(self, format_spec: str) -> str"),
+    DUNDER_FORMAT to BuiltinDescription("(self, format_spec: str) -> str"),
     "__instancecheck__" to BuiltinDescription("(self, instance)"),
     PREPARE to BuiltinDescription("(metacls, name: str, bases: tuple[type, ...], **kwargs: object) -> Mapping[str, object]", "collections.abc.Mapping"),
     ROUND to BuiltinDescription("(self, n=None)"),
