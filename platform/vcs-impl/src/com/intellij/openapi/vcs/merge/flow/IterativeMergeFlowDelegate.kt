@@ -347,7 +347,7 @@ internal class IterativeMergeFlowDelegate(
     grouping: ChangesGroupingPolicyFactory,
     unresolvedFiles: List<VirtualFile>,
   ): DefaultTreeModel {
-    val resolvedFiles = iterativeDataHolder.getResolvedFiles()
+    val resolvedFiles = iterativeDataHolder.getResolvedFilesAndModels().keys
     val unresolvedFiles = unresolvedFiles - resolvedFiles
     val unresolvedNode = ConflictsGroupNode(ConflictsNodeType.UNRESOLVED)
     val resolvedNode = ConflictsGroupNode(ConflictsNodeType.RESOLVED)
