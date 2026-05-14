@@ -351,27 +351,15 @@ private fun FileViewProvider.getRawContext(): CodeInsightContext =
 
 private class CancellableSynchronizer {
   private val lockMap = CollectionFactory.createConcurrentWeakValueMap<FileProviderMap, ReentrantLock>()
-  private val deadlockPrevention = ThreadLocal<FileProviderMap?>()
 
   fun <T> cancellableSynchronized(fileMap: FileProviderMap, block: () -> T): T {
-    val alreadyTaken = deadlockPrevention.get()
-    if (alreadyTaken != null && alreadyTaken !== fileMap) {
-      throw IllegalStateException("Already taken lock for $fileMap, cannot take it again for $alreadyTaken")
-    }
-
-    deadlockPrevention.set(fileMap)
+    val lock = lockMap.computeIfAbsent(fileMap) { ReentrantLock() }
+    lock.awaitWithCheckCanceled()
     try {
-      val lock = lockMap.computeIfAbsent(fileMap) { ReentrantLock() }
-      lock.awaitWithCheckCanceled()
-      try {
-        return block()
-      }
-      finally {
-        lock.unlock()
-      }
+      return block()
     }
     finally {
-      deadlockPrevention.remove()
+      lock.unlock()
     }
   }
 }
