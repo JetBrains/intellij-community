@@ -9,5 +9,9 @@
     <applicationService serviceInterface="com.intellij.platform.ide.customization.ExternalProductResourceUrls"
                         serviceImplementation="com.intellij.idea.customization.base.IntelliJIdeaExternalResourceUrls"
                         overrides="true"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.ui.DialogBackgroundImageProvider"
+                        serviceImplementation="com.intellij.openapi.wm.impl.IdeaDialogBackgroundImageProvider"
+                        overrides="true"/>
   </extensions>
 </idea-plugin>
