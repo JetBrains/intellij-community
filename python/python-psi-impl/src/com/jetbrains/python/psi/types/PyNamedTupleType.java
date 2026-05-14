@@ -12,7 +12,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyCallSiteExpression;
+import com.jetbrains.python.psi.PyCallSiteOwner;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyQualifiedNameOwner;
@@ -110,7 +110,7 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
   }
 
   @Override
-  public @Nullable PyNamedTupleType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite) {
+  public @Nullable PyNamedTupleType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteOwner callSite) {
     if (isDefinition()) {
       return getCallDefinitionType(callSite, context);
     }
@@ -205,7 +205,7 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
     return this;
   }
 
-  private @NotNull PyNamedTupleType getCallDefinitionType(@NotNull PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
+  private @NotNull PyNamedTupleType getCallDefinitionType(@NotNull PyCallSiteOwner callSite, @NotNull TypeEvalContext context) {
     if (!myTyped) {
       final List<PyExpression> arguments = callSite.getArguments(null);
 

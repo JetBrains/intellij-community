@@ -96,6 +96,21 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
     return bothOperandsAreKnown ? callResultType : PyUnionType.createWeakType(callResultType);
   }
 
+  @Override
+  public PyExpression getLeftExpression() {
+    return PyBinaryExpression.super.getLeftExpression();
+  }
+
+  @Override
+  public @Nullable PyExpression getRightExpression() {
+    return PyBinaryExpression.super.getRightExpression();
+  }
+
+  @Override
+  public @Nullable PyExpression getQualifier() {
+    return PyBinaryExpression.super.getQualifier();
+  }
+
   private static boolean operandIsKnown(@Nullable PyExpression operand, @NotNull TypeEvalContext context) {
     if (operand == null) return false;
 

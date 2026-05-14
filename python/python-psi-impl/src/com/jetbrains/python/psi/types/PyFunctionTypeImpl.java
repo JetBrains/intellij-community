@@ -7,7 +7,7 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.AccessDirection;
-import com.jetbrains.python.psi.PyCallSiteExpression;
+import com.jetbrains.python.psi.PyCallSiteOwner;
 import com.jetbrains.python.psi.PyCallable;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
@@ -61,7 +61,7 @@ public class PyFunctionTypeImpl implements PyFunctionType {
   }
 
   @Override
-  public @Nullable PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite) {
+  public @Nullable PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteOwner callSite) {
     return myCallable.getCallType(context, callSite);
   }
 

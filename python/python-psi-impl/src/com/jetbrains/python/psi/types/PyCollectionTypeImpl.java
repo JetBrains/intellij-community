@@ -20,7 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
-import com.jetbrains.python.psi.PyCallSiteExpression;
+import com.jetbrains.python.psi.PyCallSiteOwner;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyPsiFacade;
 import org.jetbrains.annotations.NotNull;
@@ -56,7 +56,7 @@ public class PyCollectionTypeImpl extends PyClassTypeImpl implements PyCollectio
   }
 
   @Override
-  public @Nullable PyType getCallType(final @NotNull TypeEvalContext context, final @Nullable PyCallSiteExpression callSite) {
+  public @Nullable PyType getCallType(final @NotNull TypeEvalContext context, final @Nullable PyCallSiteOwner callSite) {
     return getReturnType(context);
   }
 

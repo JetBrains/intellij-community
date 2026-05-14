@@ -48,6 +48,7 @@ import com.jetbrains.python.psi.PyAssignmentStatement
 import com.jetbrains.python.psi.PyBinaryExpression
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyCallSiteExpression
+import com.jetbrains.python.psi.PyCallSiteOwner
 import com.jetbrains.python.psi.PyCallable
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyDecoratable
@@ -248,7 +249,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
     return null
   }
 
-  override fun getCallType(function: PyFunction, callSite: PyCallSiteExpression, context: Context): Ref<PyType?>? {
+  override fun getCallType(function: PyFunction, callSite: PyCallSiteOwner, context: Context): Ref<PyType?>? {
     val functionQName = function.qualifiedName
 
     if (CAST == functionQName || CAST_EXT == functionQName) {
@@ -261,7 +262,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
     }
 
     if (functionReturningCallSiteAsAType(function)) {
-      return callSite.getAsClassObjectType(context)
+      return if (callSite is PyCallSiteExpression) callSite.getAsClassObjectType(context) else null
     }
 
     return null

@@ -4,6 +4,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.jetbrains.python.psi.PyArgumentList
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyCallSiteExpression
+import com.jetbrains.python.psi.PyCallSiteOwner
 import com.jetbrains.python.psi.PyDecoratorList
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyTypedElement
@@ -24,7 +25,7 @@ object PyTypeInferenceCspFactory {
 
   @JvmStatic
   fun unifyReceiver(argsMapping: PyCallExpression.PyArgumentsMapping, context: TypeEvalContext): GenericSubstitutions {
-    val callSite = argsMapping.callSiteExpression
+    val callSite = argsMapping.callSiteOwner
     val callableType = argsMapping.callableType
     val receiver = callSite.getReceiver(callableType?.callable)
     if (!Registry.`is`("python.use.csp.type.inference")) {
@@ -40,7 +41,7 @@ object PyTypeInferenceCspFactory {
 
   @JvmStatic
   fun unifyGenericCall(
-    callSite: PyCallSiteExpression?,
+    callSite: PyCallSiteOwner?,
     receiver: PyExpression?,
     callableType: PyCallableType?,
     mappedParameters: Map<PyExpression, PyCallableParameter>,
@@ -60,7 +61,7 @@ object PyTypeInferenceCspFactory {
   // TODO: wrong parameter mapping passed by testExplicitlyParameterizedGenericConstructorCall: self missing?
 
   private fun doUnifyFunctionCall(
-    callSite: PyCallSiteExpression?,
+    callSite: PyCallSiteOwner?,
     receiver: PyExpression?,
     callableType: PyCallableType?,
     mappedParameters: Map<PyExpression, PyCallableParameter>,

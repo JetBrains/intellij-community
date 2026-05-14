@@ -26,9 +26,10 @@ import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.inspections.quickfix.PyMakeFunctionReturnTypeQuickFix;
 import com.jetbrains.python.psi.PyAnnotation;
 import com.jetbrains.python.psi.PyAnnotationOwner;
+import com.jetbrains.python.psi.PyAugAssignmentStatement;
 import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyCallExpression;
-import com.jetbrains.python.psi.PyCallSiteExpression;
+import com.jetbrains.python.psi.PyCallSiteOwner;
 import com.jetbrains.python.psi.PyCallable;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyComprehensionElement;
@@ -143,6 +144,12 @@ public class PyTypeCheckerInspection extends PyInspection {
     @Override
     public void visitPyBinaryExpression(@NotNull PyBinaryExpression node) {
       checkCallSite(node);
+    }
+
+    @Override
+    public void visitPyAugAssignmentStatement(@NotNull PyAugAssignmentStatement node) {
+       checkCallSite(node);
+       visitPyTargetExpression(node.getAssignmentTarget());
     }
 
     @Override
@@ -370,9 +377,21 @@ public class PyTypeCheckerInspection extends PyInspection {
       }
 
       if (!PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
+        boolean isAugAssignment = node.getParent() instanceof PyAugAssignmentStatement;
         String message =
-          isDescriptor ? typeMismatchMessage(expected, actual, "INSP.type.checker.expected.type.from.dunder.set.got.type.instead")
-                       : typeMismatchMessage(expected, actual);
+          isDescriptor
+          ? typeMismatchMessage(
+            expected,
+            actual,
+            "INSP.type.checker.expected.type.from.dunder.set.got.type.instead"
+          )
+          : isAugAssignment
+            ? typeMismatchMessage(
+            expected,
+            actual,
+            "INSP.type.checker.expected.type.from.aug.assignment.got.type.instead"
+          )
+            : typeMismatchMessage(expected, actual);
         registerProblem(assignedValue,
                         message,
                         effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
@@ -421,7 +440,7 @@ public class PyTypeCheckerInspection extends PyInspection {
              ContainerUtil.exists(collectionType.getElementTypes(), Visitor::requiresTypeSpecialization);
     }
 
-    private @Nullable Ref<PyType> getClassAttributeType(@NotNull PyTargetExpression attribute) {
+    private <T extends PyQualifiedExpression & PyReferenceOwner> @Nullable Ref<PyType> getClassAttributeType(@NotNull T attribute) {
       if (!attribute.isQualified()) return null;
       PsiElement definition = attribute.getReference(PyResolveContext.defaultContext(myTypeEvalContext)).resolve();
       if (!(definition instanceof PyTargetExpression attrDefinition && PyUtil.isAttribute(attrDefinition))) return null;
@@ -590,7 +609,7 @@ public class PyTypeCheckerInspection extends PyInspection {
       }
     }
 
-    private void checkCallSite(@NotNull PyCallSiteExpression callSite) {
+    private void checkCallSite(@NotNull PyCallSiteOwner callSite) {
       final List<AnalyzeCalleeResults> calleesResults = StreamEx
         .of(mapArguments(callSite, getResolveContext()))
         .filter(mapping -> mapping.isComplete())
@@ -641,7 +660,7 @@ public class PyTypeCheckerInspection extends PyInspection {
       }
     }
 
-    private @Nullable AnalyzeCalleeResults analyzeCallee(@NotNull PyCallSiteExpression callSite,
+    private @Nullable AnalyzeCalleeResults analyzeCallee(@NotNull PyCallSiteOwner callSite,
                                                          @NotNull PyCallExpression.PyArgumentsMapping mapping) {
       final PyCallableType callableType = mapping.getCallableType();
       if (callableType == null) return null;
@@ -796,7 +815,7 @@ public class PyTypeCheckerInspection extends PyInspection {
                                       unfilledPositionalVarargs);
     }
 
-    private boolean isConstructorCall(@NotNull PyCallSiteExpression callSite) {
+    private boolean isConstructorCall(@NotNull PyCallSiteOwner callSite) {
       if (callSite instanceof PyCallExpression callExpression) {
         PyExpression callee = callExpression.getCallee();
         if (callee != null && myTypeEvalContext.getType(callee) instanceof PyClassType calleeType && calleeType.isDefinition()) {

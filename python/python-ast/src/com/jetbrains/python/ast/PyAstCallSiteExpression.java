@@ -18,6 +18,7 @@ package com.jetbrains.python.ast;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -26,7 +27,7 @@ import java.util.List;
  *
  */
 @ApiStatus.Experimental
-public interface PyAstCallSiteExpression extends PyAstExpression {
+public interface PyAstCallSiteExpression extends PyAstCallSiteOwner, PyAstExpression {
 
   /**
    * Returns an expression that is treated as a receiver for this explicit or implicit (read, operator) call.
@@ -38,9 +39,12 @@ public interface PyAstCallSiteExpression extends PyAstExpression {
    *
    * @param resolvedCallee optional callee corresponding to the call. Without it the receiver is deduced purely syntactically.
    */
+  @Override
   @Nullable
   PyAstExpression getReceiver(@Nullable PyAstCallable resolvedCallee);
 
+  @Override
   @NotNull
-  List<? extends @NotNull PyAstExpression> getArguments(@Nullable PyAstCallable resolvedCallee);
+  @Unmodifiable
+  List<PyAstExpression> getArguments(@Nullable PyAstCallable resolvedCallee);
 }

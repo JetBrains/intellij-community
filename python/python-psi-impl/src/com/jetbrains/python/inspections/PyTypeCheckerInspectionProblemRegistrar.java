@@ -33,7 +33,7 @@ import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.PyArgumentList;
 import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyCallExpression;
-import com.jetbrains.python.psi.PyCallSiteExpression;
+import com.jetbrains.python.psi.PyCallSiteOwner;
 import com.jetbrains.python.psi.PySubscriptionExpression;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.PyClassLikeType;
@@ -52,7 +52,7 @@ import java.util.stream.Collectors;
 final class PyTypeCheckerInspectionProblemRegistrar {
 
   static void registerProblem(@NotNull PyInspectionVisitor visitor,
-                              @NotNull PyCallSiteExpression callSite,
+                              @NotNull PyCallSiteOwner callSite,
                               @NotNull List<PyType> argumentTypes,
                               @NotNull List<PyTypeCheckerInspection.AnalyzeCalleeResults> calleesResults,
                               @NotNull TypeEvalContext context,
@@ -66,7 +66,7 @@ final class PyTypeCheckerInspectionProblemRegistrar {
   }
 
   private static void registerSingleCalleeProblem(@NotNull PyInspectionVisitor visitor,
-                                                  @NotNull PyCallSiteExpression callSite,
+                                                  @NotNull PyCallSiteOwner callSite,
                                                   @NotNull PyTypeCheckerInspection.AnalyzeCalleeResults calleeResults,
                                                   @NotNull TypeEvalContext context,
                                                   @Nullable ProblemHighlightType highlightOverride) {
@@ -123,7 +123,7 @@ final class PyTypeCheckerInspectionProblemRegistrar {
   }
 
   private static void registerMultiCalleeProblem(@NotNull PyInspectionVisitor visitor,
-                                                 @NotNull PyCallSiteExpression callSite,
+                                                 @NotNull PyCallSiteOwner callSite,
                                                  @NotNull List<PyType> argumentTypes,
                                                  @NotNull List<PyTypeCheckerInspection.AnalyzeCalleeResults> calleesResults,
                                                  @NotNull TypeEvalContext context,
@@ -213,7 +213,7 @@ final class PyTypeCheckerInspectionProblemRegistrar {
     }
   }
 
-  private static @NotNull PsiElement getMultiCalleeElementToHighlight(@NotNull PyCallSiteExpression callSite) {
+  private static @NotNull PsiElement getMultiCalleeElementToHighlight(@NotNull PyCallSiteOwner callSite) {
     if (callSite instanceof PyCallExpression call) {
       final PyArgumentList argumentList = call.getArgumentList();
 

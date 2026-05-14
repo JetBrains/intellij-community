@@ -33,7 +33,7 @@ import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.PyAugAssignmentStatement;
-import com.jetbrains.python.psi.PyCallSiteExpression;
+import com.jetbrains.python.psi.PyCallSiteOwner;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyImplicitImportNameDefiner;
@@ -98,7 +98,7 @@ public final class PyDefUseUtil {
     QualifiedName varQname = QualifiedName.fromDottedString(varName);
 
     final Collection<Instruction> result = new LinkedHashSet<>();
-    final HashMap<PyCallSiteExpression, ConditionalInstruction> pendingTypeGuard = new HashMap<>();
+    final HashMap<PyCallSiteOwner, ConditionalInstruction> pendingTypeGuard = new HashMap<>();
     final Ref<@NotNull Boolean> foundPrefixWrite = Ref.create(false);
     final Ref<@NotNull Boolean> foundPrefixCall = Ref.create(false);
     iteratePrev(startNum, controlFlow,

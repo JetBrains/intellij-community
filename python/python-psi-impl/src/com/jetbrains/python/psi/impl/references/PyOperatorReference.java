@@ -21,6 +21,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyAugAssignmentStatement;
 import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyCallSiteExpression;
 import com.jetbrains.python.psi.PyClass;
@@ -37,6 +38,7 @@ import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,7 +53,10 @@ public class PyOperatorReference extends PyReferenceImpl {
 
   @Override
   protected @NotNull List<RatedResolveResult> resolveInner() {
-    if (myElement instanceof PyBinaryExpression expr) {
+    if (myElement instanceof PyAugAssignmentStatement stmt) {
+      return resolveInlineAndLeftAndRightOperators(stmt, stmt.getReferencedName());
+    }
+    else if (myElement instanceof PyBinaryExpression expr) {
       final String name = expr.getReferencedName();
       if (PyNames.CONTAINS.equals(name)) {
         return resolveMember(expr.getRightExpression(), name);
@@ -103,23 +108,33 @@ public class PyOperatorReference extends PyReferenceImpl {
     final List<RatedResolveResult> result = new ArrayList<>();
 
     final TypeEvalContext typeEvalContext = myContext.getTypeEvalContext();
-    typeEvalContext.trace("Trying to resolve left operator");
-    typeEvalContext.traceIndent();
-    try {
+    typeEvalContext.traceWithIndent("Trying to resolve left operator", () -> {
       result.addAll(resolveMember(expr.getReceiver(null), name));
-    }
-    finally {
-      typeEvalContext.traceUnindent();
-    }
-    typeEvalContext.trace("Trying to resolve right operator");
-    typeEvalContext.traceIndent();
-    try {
+      return Unit.INSTANCE;
+    });
+    typeEvalContext.traceWithIndent("Trying to resolve right operator", () -> {
       result.addAll(resolveMember(expr.getRightExpression(), PyNames.leftToRightOperatorName(name)));
-    }
-    finally {
-      typeEvalContext.traceUnindent();
-    }
+      return Unit.INSTANCE;
+    });
+    return result;
+  }
 
+  private @NotNull List<RatedResolveResult> resolveInlineAndLeftAndRightOperators(@NotNull PyAugAssignmentStatement stmt, @Nullable String name) {
+    final List<RatedResolveResult> result = new ArrayList<>();
+
+    final TypeEvalContext typeEvalContext = myContext.getTypeEvalContext();
+    typeEvalContext.traceWithIndent("Trying to resolve inplace operator", () -> {
+      result.addAll(resolveMember(stmt.getReceiver(null), name));
+      return Unit.INSTANCE;
+    });
+    typeEvalContext.traceWithIndent("Trying to resolve left operator", () -> {
+      result.addAll(resolveMember(stmt.getReceiver(null), PyNames.inplaceToLeftOperatorName(name)));
+      return Unit.INSTANCE;
+    });
+    typeEvalContext.traceWithIndent("Trying to resolve right operator", () -> {
+      result.addAll(resolveMember(stmt.getValue(), PyNames.inplaceToRightOperatorName(name)));
+      return Unit.INSTANCE;
+    });
     return result;
   }
 

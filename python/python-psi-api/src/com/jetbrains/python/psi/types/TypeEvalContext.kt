@@ -33,6 +33,8 @@ abstract class TypeEvalContext protected constructor() {
   abstract fun printTrace(): String
   abstract fun tracing(): Boolean
 
+  abstract fun traceWithIndent(message: String, block: () -> Unit)
+
   @ApiStatus.Internal
   abstract fun <R> assumeType(element: PyTypedElement, type: PyType?, func: (TypeEvalContext?) -> R): R?
 

@@ -115,6 +115,17 @@ open class TypeEvalContextImpl internal constructor(
     return myTrace != null
   }
 
+  override fun traceWithIndent(message: String, block: () -> Unit) {
+    trace(message)
+    traceIndent()
+    try {
+      block()
+    }
+    finally {
+      traceUnindent()
+    }
+  }
+
   @ApiStatus.Internal
   override fun <R> assumeType(element: PyTypedElement, type: PyType?, func: (TypeEvalContext?) -> R): R? {
     if (!Registry.`is`("python.use.better.control.flow.type.inference")) {

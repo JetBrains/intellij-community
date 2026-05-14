@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi;
 
 import com.jetbrains.python.ast.PyAstCallSiteExpression;
@@ -12,7 +12,7 @@ import java.util.List;
  * Marker interface for Python expressions that are call sites for explicit or implicit function calls.
  *
  */
-public interface PyCallSiteExpression extends PyAstCallSiteExpression, PyExpression {
+public interface PyCallSiteExpression extends PyAstCallSiteExpression, PyCallSiteOwner, PyExpression {
 
   /**
    * Returns an expression that is treated as a receiver for this explicit or implicit (read, operator) call.
@@ -24,12 +24,16 @@ public interface PyCallSiteExpression extends PyAstCallSiteExpression, PyExpress
    *
    * @param resolvedCallee optional callee corresponding to the call. Without it the receiver is deduced purely syntactically.
    */
+  @Override
   default @Nullable PyExpression getReceiver(@Nullable PyCallable resolvedCallee) {
     return (PyExpression)getReceiver((PyAstCallable)resolvedCallee);
   }
 
+  @Override
   default @NotNull List<@NotNull PyExpression> getArguments(@Nullable PyCallable resolvedCallee) {
+    // Safe raw cast: the returned list is @Unmodifiable, so no one can insert a non-PyExpression element,
+    // and all PyAstExpression instances in the PSI layer are also PyExpression at runtime.
     //noinspection unchecked
-    return (List<@NotNull PyExpression>)getArguments((PyAstCallable)resolvedCallee);
+    return (List)getArguments((PyAstCallable)resolvedCallee);
   }
 }

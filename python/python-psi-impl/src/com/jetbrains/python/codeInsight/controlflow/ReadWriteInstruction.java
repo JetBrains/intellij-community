@@ -127,6 +127,13 @@ public final class ReadWriteInstruction extends InstructionImpl {
     return new ReadWriteInstruction(builder, element, name, ACCESS.ASSERTTYPE, getType);
   }
 
+  public static @NotNull ReadWriteInstruction readWrite(final @NotNull ControlFlowBuilder builder,
+                                                        final @Nullable PsiElement element,
+                                                        final @Nullable String name,
+                                                        final @Nullable InstructionTypeCallback getType) {
+    return new ReadWriteInstruction(builder, element, name, ACCESS.READWRITE, getType);
+  }
+
   public @Nullable Ref<PyType> getType(TypeEvalContext context, @Nullable PsiElement anchor) {
     return myGetType.getType(context);
   }

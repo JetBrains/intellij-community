@@ -6,7 +6,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.AccessDirection;
-import com.jetbrains.python.psi.PyCallSiteExpression;
+import com.jetbrains.python.psi.PyCallSiteOwner;
 import com.jetbrains.python.psi.PyCallable;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFunction;
@@ -89,7 +89,7 @@ public class PyCallableTypeImpl implements PyCallableType {
   }
 
   @Override
-  public @Nullable PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite) {
+  public @Nullable PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteOwner callSite) {
     if (!PyTypeChecker.hasGenerics(myReturnType, context)) {
       return PyNarrowedType.Companion.bindIfNeeded(myReturnType, callSite);
     }
@@ -105,7 +105,7 @@ public class PyCallableTypeImpl implements PyCallableType {
                                                   @NotNull Map<PyExpression, PyCallableParameter> actualParameters,
                                                   @NotNull Collection<PyCallableParameter> allParameters,
                                                   @Nullable PyExpression receiver,
-                                                  @NotNull PyCallSiteExpression callsite,
+                                                  @NotNull PyCallSiteOwner callsite,
                                                   @NotNull TypeEvalContext context) {
     final var substitutions = PyTypeChecker.unifyGenericCall(receiver, actualParameters, context);
     final var substitutionsWithUnresolvedReturnGenerics =

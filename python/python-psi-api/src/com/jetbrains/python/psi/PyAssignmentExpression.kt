@@ -13,11 +13,11 @@ interface PyAssignmentExpression : PyAstAssignmentExpression, PyExpression {
     /**
      * @return LHS of an expression (before :=), null if underlying target is not an identifier.
      */
-    get() = super.target as PyTargetExpression?
+    get() = super<PyAstAssignmentExpression>.target as PyTargetExpression?
 
   override val assignedValue: PyExpression?
     /**
      * @return RHS of an expression (after :=), null if assigned value is omitted or not an expression.
      */
-    get() = super.assignedValue as PyExpression?
+    get() = super<PyAstAssignmentExpression>.assignedValue as PyExpression?
 }

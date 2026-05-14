@@ -5340,4 +5340,120 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    foo(1, "hello", <warning descr="Expected type 'str', got 'int' instead">name=42</warning>)
                    """);
   }
+
+  @TestFor(issues = "PY-6426")
+  public void testAugmentedAssignmentArguments() {
+    doTestByText("""
+                   class A:
+                       def __iadd__(self, other: int) -> str: ...
+                   
+                   a = A()
+                   a += 1
+                   
+                   a = A()
+                   a += <warning descr="Expected type 'int', got 'str' instead">"a"</warning>
+                   """);
+    doTestByText("""
+                   class A:
+                       def __add__(self, other: int) -> str: ...
+                   
+                   a = A()
+                   a += 1
+                   
+                   a = A()
+                   a += <warning descr="Expected type 'int', got 'str' instead">"a"</warning>
+                   """);
+    doTestByText("""
+                   class A: pass
+                   
+                   class B:
+                       def __radd__(self, other: A) -> str: ...
+                   
+                   a = A()
+                   a += B()
+                   """);
+  }
+
+  @TestFor(issues = "PY-6426")
+  public void testAugmentedAssignmentAssignment() {
+    doTestByText("""
+                   class A:
+                       def __iadd__(self, other: int) -> str: ...
+                   
+                   a: A = A()
+                   <warning descr="Expected type 'A' for augmented assignment, got 'str' from operation instead">a += 1</warning>
+                   """);
+  }
+
+  @TestFor(issues = "PY-6426")
+  public void testAugmentedAssignmentQualified() {
+    doTestByText("""
+                   class A:
+                       i: int
+                   
+                   a: A = A()
+                   a.i += 1
+                   a.i += <warning descr="Expected type 'int', got 'str' instead">"s"</warning>
+                   """);
+  }
+
+  @TestFor(issues = "PY-6426")
+  // test case regarding name resolution
+  public void testAugmentedAssignmentQualifiedCollision() {
+    doTestByText("""
+                   class A:
+                       a: int
+                   
+                   a: A = A()
+                   a.a += 1
+                   a.a += <warning descr="Expected type 'int', got 'str' instead">"s"</warning>
+                   """);
+  }
+
+  @TestFor(issues = "PY-6426")
+  public void testAugmentedAssignmentGenericAttribute() {
+    doTestByText("""
+                   class A[T]:
+                       attr: T
+                   
+                   a: A[int] = A()
+                   a.attr += 1
+                   a.attr += <warning descr="Expected type 'int', got 'str' instead">"s"</warning>
+                   
+                   class B:
+                       def __add__(self, other) -> int: ...
+                   
+                   a: A[B]
+                   <warning descr="Expected type 'B' for augmented assignment, got 'int' from operation instead">a.attr += 1</warning>
+                   
+                   class C:
+                       def __iadd__(self, other) -> int: ...
+                   
+                   a: A[C]
+                   <warning descr="Expected type 'C' for augmented assignment, got 'int' from operation instead">a.attr += 1</warning>
+                   """);
+  }
+
+  @TestFor(issues = "PY-6426")
+  public void testAugmentedAssignmentDescriptorAttribute() {
+    doTestByText("""
+                   class B:
+                       def __add__(self, other: int) -> int: ...
+                   
+                   class C:
+                       def __radd__(self, other: B) -> str: ...
+                   
+                   class Desc:
+                       def __get__(self, instance, owner) -> B: ...
+                       def __set__(self, instance, value: int) -> None: ...
+                   
+                   class A:
+                       attr: Desc
+                   
+                   a: A = A()
+                   a.attr += 1
+                   a.attr += <warning descr="Expected type 'int', got 'str' instead">"s"</warning>
+                   <warning descr="Expected type 'int' (from '__set__'), got 'str' instead">a.attr += C()</warning>
+                   """);
+  }
 }

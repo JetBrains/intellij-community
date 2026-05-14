@@ -44,7 +44,7 @@ import com.jetbrains.python.psi.PsiQuery;
 import com.jetbrains.python.psi.PyAnnotation;
 import com.jetbrains.python.psi.PyAssignmentStatement;
 import com.jetbrains.python.psi.PyCallExpression;
-import com.jetbrains.python.psi.PyCallSiteExpression;
+import com.jetbrains.python.psi.PyCallSiteOwner;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyDecorator;
 import com.jetbrains.python.psi.PyDecoratorList;
@@ -241,7 +241,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   }
 
   @Override
-  public @Nullable PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite) {
+  public @Nullable PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteOwner callSite) {
     for (PyTypeProvider typeProvider : PyTypeProvider.EP_NAME.getExtensionList()) {
       final Ref<PyType> typeRef = typeProvider.getCallType(this, callSite, context);
       if (typeRef != null) {
@@ -273,7 +273,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
 
   @Override
   public @Nullable PyType getCallType(@Nullable PyExpression receiver,
-                                      @Nullable PyCallSiteExpression callSiteExpression,
+                                      @Nullable PyCallSiteOwner callSiteExpression,
                                       @NotNull Map<PyExpression, PyCallableParameter> parameters,
                                       @NotNull TypeEvalContext context) {
     @Nullable PyType type = context.getReturnType(this);

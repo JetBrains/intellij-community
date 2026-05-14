@@ -1236,7 +1236,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testNumpyResolveRaterDoesNotIncreaseRateForNotNdarrayRightOperatorFoundInStub() {
-    doMultiFileTest("D1 | D2",
+    doMultiFileTest("D1",
                     """
                       class D1(object):
                           pass
@@ -6077,6 +6077,536 @@ public class Py3TypeTest extends PyTestCase {
       def f(a: A[None]):
           expr = a.x
       """);
+  }
+
+  @TestFor(issues = "PY-80622")
+  public void testAugmentedAssignmentIAddSameType() {
+    doTest("MutableContainer", """
+      class MutableContainer:
+          def __iadd__(self, other: int) -> MutableContainer:
+              return self
+  
+      m = MutableContainer()
+      m += 1
+      expr = m
+      """);
+  }
+
+  @TestFor(issues = "PY-80622")
+  public void testAugmentedAssignmentIAddSelf() {
+    doTest("MutableContainer", """
+        from typing import Self
+
+        class MutableContainer:
+            def __iadd__(self, other: int) -> Self:
+                return self
+
+        m = MutableContainer()
+        m += 1
+        expr = m
+        """);
+  }
+
+  @TestFor(issues = "PY-80622")
+  public void testAugmentedAssignmentIAddDifferentType() {
+    doTest("str", """
+      class IAddReturnsDifferent:
+          def __iadd__(self, other: int) -> str:
+              return "result"
+  
+      d = IAddReturnsDifferent()
+      d += 1
+      expr = d
+      """);
+  }
+
+  @TestFor(issues = "PY-80622")
+  public void testAugmentedAssignmentFallbackToAdd() {
+    doTest("int", """
+      class AddOnly:
+          def __add__(self, other: int) -> int:
+              return 1
+  
+      a = AddOnly()
+      a += 4
+      expr = a
+      """);
+  }
+
+  @TestFor(issues = "PY-80622")
+  public void testAugmentedAssignmentFallbackToRadd() {
+    doTest("float | int", """
+      class NoOps:
+          pass
+  
+      class RightOperand:
+          def __radd__(self, other: NoOps) -> float:
+              return 1.0
+  
+      n = NoOps()
+      n += RightOperand()
+      expr = n
+      """);
+  }
+
+  @TestFor(issues = "PY-80622")
+  public void testAugmentedAssignmentIAddSignatureMismatchFallbackToAdd() {
+    doTest("float | int", """
+      class IAddAnnotatedAdd:
+          def __iadd__(self, other: str) -> IAddAnnotatedAdd:
+              return self
+          def __add__(self, other: int) -> float:
+              return 1.0
+  
+      ia = IAddAnnotatedAdd()
+      ia += 5
+      expr = ia
+      """);
+  }
+
+  @TestFor(issues = "PY-80622")
+  public void testAugmentedAssignmentBuiltinInt() {
+    doTest("int", """
+      x: int = 1
+      x += 1
+      expr = x
+      """);
+  }
+
+  @TestFor(issues = "PY-80622")
+  public void testAugmentedAssignmentBuiltinIntWidensToFloat() {
+    doTest("float | int", """
+      y: int = 1
+      y += 1.5
+      expr = y
+      """);
+  }
+
+  @TestFor(issues = "PY-80622")
+  public void testAugmentedAssignmentBuiltinList() {
+    doTest("list[int]", """
+      lst: list[int] = [1, 2]
+      lst += [3, 4]
+      expr = lst
+      """);
+  }
+
+  @TestFor(issues = "PY-80622")
+  public void testAugmentedAssignmentBuiltinStr() {
+    doTest("str", """
+      s: str = "hello"
+      s += " world"
+      expr = s
+      """);
+  }
+
+  @TestFor(issues = "PY-80622")
+  public void testAugmentedAssignmentGenericIAdd() {
+    doTest("MyList[int]", """
+      class MyList[T]:
+          def __iadd__(self, other: list[T]) -> MyList[T]:
+              return self
+  
+      ml = MyList[int]()
+      ml += [1, 2, 3]
+      expr = ml
+      """);
+  }
+
+  @TestFor(issues = "PY-80622")
+  public void testAugmentedAssignmentInLoop() {
+    doTest("Accumulator", """
+      class Accumulator:
+          def __iadd__(self, other: int) -> Accumulator:
+              return self
+  
+      acc = Accumulator()
+      for i in range(10):
+          acc += i
+      expr = acc
+      """);
+  }
+
+  @TestFor(issues = "PY-80622")
+  public void testAugmentedAssignmentTypeChangesInLoop() {
+    doTest("int", """
+      class Counter:
+          def __add__(self, other: int) -> int:
+              return 0
+  
+      c = Counter()
+      while True:
+          c += 1
+          if bool():
+              break
+      expr = c
+      """);
+  }
+
+  @TestFor(issues = "PY-80622")
+  public void testAugmentedAssignmentSubOperator() {
+    doTest("str", """
+      class SubOnly:
+          def __sub__(self, other: int) -> str:
+              return ""
+  
+      sub = SubOnly()
+      sub -= 1
+      expr = sub
+      """);
+  }
+
+  @TestFor(issues = "PY-80622")
+  public void testAugmentedAssignmentMulOperator() {
+    doTest("float | int", """
+      class MulOnly:
+          def __mul__(self, other: int) -> float:
+              return 0.0
+  
+      mul = MulOnly()
+      mul *= 3
+      expr = mul
+      """);
+  }
+
+  @TestFor(issues = "PY-80622")
+  public void testAugmentedAssignmentTruedivOperator() {
+    doTest("complex | float | int", """
+      class DivOnly:
+          def __truediv__(self, other: int) -> complex:
+              return 0j
+  
+      div = DivOnly()
+      div /= 2
+      expr = div
+      """);
+  }
+
+  @TestFor(issues = "PY-80622")
+  public void testAugmentedAssignmentSubclassIAdd() {
+    doTest("Base", """
+      class Base:
+          def __iadd__(self, other: int) -> Base:
+              return self
+  
+      class Child(Base):
+          def __iadd__(self, other: int) -> Child:
+              return self
+  
+      b: Base = Child()
+      b += 1
+      expr = b
+      """);
+  }
+
+  @TestFor(issues = "PY-80622")
+  public void testAugmentedAssignmentNoneReturn() {
+    doTest("None", """
+      class BadIAdd:
+          def __iadd__(self, other: int) -> None:
+              pass
+  
+      bad = BadIAdd()
+      bad += 1
+      expr = bad
+      """);
+  }
+
+  @TestFor(issues = "PY-80622")
+  public void testAugmentedAssignmentIAddPrecedenceOverAdd() {
+    doTest("str", """
+      class Multi:
+          def __iadd__(self, other: int) -> str:
+              return ""
+          def __add__(self, other: int) -> float:
+              return 0.0
+  
+      p = Multi()
+      p += 1
+      expr = p
+      """);
+  }
+
+  @TestFor(issues = "PY-87051")
+  public void testAugmentedAssignmentTypeNarrowingLiteral() {
+    doTest("int", """
+      from typing import Literal
+      
+      one: Literal[1] = 1
+      x = one
+      x += 1
+      expr = x
+      """);
+  }
+
+  @TestFor(issues = "PY-80622")
+  public void testBinaryExpressionLeftPrecedenceOverRight() {
+    doTest("str", """
+      class A:
+          def __add__(self, other: B) -> str: ...
+      
+      class B:
+          def __radd__(self, other: A) -> int: ...
+      
+      expr = A() + B()
+      """);
+  }
+
+  @TestFor(issues = "PY-80622")
+  public void testBinaryExpressionFallbackToRadd() {
+    doTest("bool", """
+      class E:
+          pass
+      
+      class F:
+          def __radd__(self, other: E) -> bool: ...
+      
+      expr = E() + F()
+      """);
+  }
+
+  @TestFor(issues = "PY-80622")
+  public void testBinaryExpressionRtruediv() {
+    doTest("str", """
+      class D1:
+          pass
+      
+      class D2:
+          def __rtruediv__(self, other: D1) -> str: ...
+      
+      expr = D1() / D2()
+      """);
+  }
+
+  @TestFor(issues = "PY-80622")
+  public void testBinaryExpressionUnionLeftAllHaveAdd() {
+    doTest("float | int | str", """
+      class A:
+          def __add__(self, other: int) -> float: ...
+      
+      class B:
+          def __add__(self, other: int) -> str: ...
+      
+      x: A | B = A()
+      expr = x + 1
+      """);
+  }
+
+  @TestFor(issues = "PY-80622")
+  public void testBinaryExpressionDifferentReturnTypes() {
+    doTest("str", """
+      class A:
+          def __sub__(self, other: int) -> str: ...
+      
+      expr = A() - 1
+      """);
+  }
+
+  @TestFor(issues = "PY-80622")
+  public void testBinaryExpressionMulPrecedence() {
+    doTest("str", """
+      class A:
+          def __mul__(self, other: B) -> str: ...
+      
+      class B:
+          def __rmul__(self, other: A) -> int: ...
+      
+      expr = A() * B()
+      """);
+  }
+
+  @TestFor(issues = "PY-80622")
+  public void testBinaryExpressionDoNotPreferReflectedIfItDoesNotMatchArguments() {
+    doTest("str", """
+    class A:
+        def __add__(self, other: B) -> str: ...
+
+    class B(A):
+        def __radd__(self, other: int) -> int: ...
+
+    expr = A() + B()
+    """);
+  }
+
+  @TestFor(issues = "PY-80622")
+  public void testBinaryExpressionDoNotPreferReflectedForUnrelatedTypes() {
+    doTest("str", """
+    class A:
+        def __mul__(self, other: B) -> str: ...
+
+    class B:
+        def __rmul__(self, other: A) -> int: ...
+
+    expr = A() * B()
+    """);
+  }
+
+  @TestFor(issues = "PY-80622")
+  public void testAugmentedAssignmentUnionIAddAndAdd() {
+    doTest("P | str", """
+      class P:
+          def __iadd__(self, other: int) -> P: ...
+      
+      class Q:
+          def __add__(self, other: int) -> str: ...
+      
+      u: P | Q = P()
+      u += 1
+      expr = u
+      """);
+  }
+
+  @TestFor(issues = "PY-80622")
+  public void testAugmentedAssignmentUnionAllIAdd() {
+    doTest("str | bool", """
+      class A:
+          def __iadd__(self, other: int) -> str: ...
+      
+      class B:
+          def __iadd__(self, other: int) -> bool: ...
+      
+      x: A | B = A()
+      x += 1
+      expr = x
+      """);
+  }
+
+  @TestFor(issues = "PY-80622")
+  public void testAugmentedAssignmentUnionSubOperator() {
+    doTest("int | str", """
+      class A:
+          def __isub__(self, other: int) -> int: ...
+      
+      class B:
+          def __sub__(self, other: int) -> str: ...
+      
+      x: A | B = A()
+      x -= 1
+      expr = x
+      """);
+  }
+
+  @TestFor(issues = "PY-80622")
+  public void testAugmentedAssignmentUnionInplacePrecedencePerClass() {
+    doTest("str | bool", """
+      class A:
+          def __iadd__(self, other: int) -> str: ...
+          def __add__(self, other: int) -> float: ...
+      
+      class B:
+          def __iadd__(self, other: int) -> bool: ...
+          def __add__(self, other: int) -> complex: ...
+      
+      x: A | B = A()
+      x += 1
+      expr = x
+      """);
+  }
+
+  @TestFor(issues = "PY-80622")
+  public void testAugmentedAssignmentInheritedLeftOperatorMatches() {
+    doTest("str", """
+      from typing import Any
+      
+      class Super:
+          def __iadd__(self, other: Any) -> str: ...
+      
+      class Sub(Super):
+          pass
+      
+      class Operand:
+          def __radd__(self, other: Super) -> int: ...
+      
+      x = Sub()
+      x += Operand()
+      expr = x
+      """);
+  }
+
+  @TestFor(issues = "PY-80622")
+  public void testBinaryExpressionInheritedLeftOperatorMatches() {
+    doTest("int", """
+    class Right:
+        def __radd__(self, other: 'Super') -> str: ...
+
+    class Super:
+        def __add__(self, other: Right) -> int: ...
+
+    class Sub(Super):
+        pass
+
+    expr = Sub() + Right()
+    """);
+  }
+
+  /**
+   * CPython's runtime rule "prefer rhs.__r<op>__ if rhs is a strict subclass of lhs" is not reproduced,
+   * as it relies on runtime classes rather than annotations, making annotation-based approximation unsound.
+   *
+   * @see <a href="https://github.com/astral-sh/ty/issues/1154">#1154</a>
+   * @see <a href="https://github.com/astral-sh/ty/issues/630">#630</a>
+   */
+  @TestFor(issues = "PY-80622")
+  public void testBinaryExpressionWhenRightOperandIsSubtypeOfLeft() {
+    doTest("str", """
+    class A:
+        def __add__(self, other: B) -> str: ...
+
+    class B(A):
+        def __radd__(self, other: A) -> int: ...
+
+    expr = A() + B()
+    """);
+  }
+
+  /**
+   * CPython's runtime rule "prefer rhs.__r<op>__ if rhs is a strict subclass of lhs" is not reproduced,
+   * as it relies on runtime classes rather than annotations, making annotation-based approximation unsound.
+   *
+   * @see <a href="https://github.com/astral-sh/ty/issues/1154">#1154</a>
+   * @see <a href="https://github.com/astral-sh/ty/issues/630">#630</a>
+   */
+  @TestFor(issues = "PY-80622")
+  public void testBinaryExpressionWhenRightOperandIsInheritedSubtypeOfLeft() {
+    doTest("str", """
+    class A:
+        def __add__(self, other: BBase) -> str: ...
+
+    class BBase(A):
+        def __radd__(self, other: A) -> int: ...
+
+    class B(BBase):
+        pass
+
+    expr = A() + B()
+    """);
+  }
+
+  /**
+   * CPython's runtime rule "prefer rhs.__r<op>__ if rhs is a strict subclass of lhs" is not reproduced,
+   * as it relies on runtime classes rather than annotations, making annotation-based approximation unsound.
+   *
+   * @see <a href="https://github.com/astral-sh/ty/issues/1154">#1154</a>
+   * @see <a href="https://github.com/astral-sh/ty/issues/630">#630</a>
+   */
+  @TestFor(issues = "PY-80622")
+  public void testBinaryExpressionWhenRightOperandIsUnionSubtypeOfLeft() {
+    doTest("str", """
+    class A:
+        def __add__(self, other: BBase) -> str: ...
+
+    class BBase(A):
+        def __radd__(self, other: A) -> int: ...
+
+    class B1(BBase):
+        pass
+
+    class B2(BBase):
+        pass
+
+    x: B1 | B2 = B1()
+    expr = A() + x
+    """);
   }
 
   private void doTest(final String expectedType, final String text) {

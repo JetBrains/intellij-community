@@ -3,7 +3,7 @@ package com.jetbrains.python.psi.types;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.psi.PyCallSiteExpression;
+import com.jetbrains.python.psi.PyCallSiteOwner;
 import com.jetbrains.python.psi.PyCallable;
 import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.ApiStatus;
@@ -41,7 +41,7 @@ public interface PyCallableType extends PyType {
    * Returns the type which is the result of calling an instance of this type.
    */
   @Nullable
-  PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite);
+  PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteOwner callSite);
 
   /**
    * Returns the list of parameter types.

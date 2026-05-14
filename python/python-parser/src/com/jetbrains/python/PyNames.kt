@@ -678,6 +678,20 @@ object PyNames {
     return referencedName != null && calleeName != null && calleeName == leftToRightComparisonOperatorName(referencedName)
   }
 
+  private val INPLACE_OPERATOR_PATTERN = "__i([a-z]+)__".toRegex()
+
+  @JvmStatic
+  private fun isInplaceOperatorName(name: String?): Boolean {
+    return name != null && (name.matches(INPLACE_OPERATOR_PATTERN))
+  }
+
+  @JvmStatic
+  fun isInplaceOperatorName(referencedName: String?, calleeName: String?): Boolean {
+    if (isInplaceOperatorName(calleeName)) return true
+
+    return referencedName != null && calleeName != null && calleeName == leftToRightComparisonOperatorName(referencedName)
+  }
+
   @JvmStatic
   fun leftToRightOperatorName(name: String?): String? {
     if (name == null) return null
@@ -686,6 +700,20 @@ object PyNames {
     if (rightComparisonOperatorName != null) return rightComparisonOperatorName
 
     return name.replaceFirst("__([a-z]+)__".toRegex(), "__r$1__")
+  }
+
+  @JvmStatic
+  fun inplaceToLeftOperatorName(name: String?): String? {
+    if (name == null) return null
+
+    return name.replaceFirst(INPLACE_OPERATOR_PATTERN, "__$1__")
+  }
+
+  @JvmStatic
+  fun inplaceToRightOperatorName(name: String?): String? {
+    if (name == null) return null
+
+    return name.replaceFirst(INPLACE_OPERATOR_PATTERN, "__r$1__")
   }
 
   @Deprecated("use `PyAstElement.protectionLevel` instead")

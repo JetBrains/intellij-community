@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections.quickfix;
 
 import com.google.common.collect.Iterators;
@@ -20,7 +20,7 @@ import com.intellij.xml.util.XmlStringUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyCallExpression.PyArgumentsMapping;
-import com.jetbrains.python.psi.PyCallSiteExpression;
+import com.jetbrains.python.psi.PyCallSiteOwner;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFunction;
@@ -64,7 +64,7 @@ public final class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
     final PyFunction function = as(mapping.getCallableType().getCallable(), PyFunction.class);
     assert function != null;
     Supplier<List<Pair<Integer, PyParameterInfo>>> extraParamsSupplier = () -> {
-      final PyCallSiteExpression callSiteExpression = mapping.getCallSiteExpression();
+      final var callSiteExpression = mapping.getCallSiteOwner();
       int positionalParamAnchor = -1;
       final PyParameter[] parameters = function.getParameterList().getParameters();
       for (PyParameter parameter : parameters) {
@@ -93,7 +93,7 @@ public final class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
       }
       return newParameters;
     };
-    return new PyChangeSignatureQuickFix(function, extraParamsSupplier, mapping.getCallSiteExpression());
+    return new PyChangeSignatureQuickFix(function, extraParamsSupplier, mapping.getCallSiteOwner());
   }
 
   public static @NotNull PyChangeSignatureQuickFix forMismatchingMethods(@NotNull PyFunction function, @NotNull PyFunction complementary) {
@@ -113,7 +113,7 @@ public final class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
   }
 
   private final @NotNull Supplier<List<Pair<Integer, PyParameterInfo>>> myExtraParametersSupplier;
-  private final @Nullable SmartPsiElementPointer<PyCallSiteExpression> myOriginalCallSiteExpression;
+  private final @Nullable SmartPsiElementPointer<PyCallSiteOwner> myOriginalCallSiteExpression;
 
 
   /**
@@ -122,7 +122,7 @@ public final class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
    */
   private PyChangeSignatureQuickFix(@NotNull PyFunction function,
                                     @NotNull Supplier<List<Pair<Integer, PyParameterInfo>>> extraParametersSupplier,
-                                    @Nullable PyCallSiteExpression expression) {
+                                    @Nullable PyCallSiteOwner expression) {
     super(function);
     myExtraParametersSupplier = () -> ContainerUtil.sorted(extraParametersSupplier.get(), Comparator.comparingInt(p -> p.getFirst()));
     if (expression != null) {
@@ -172,7 +172,7 @@ public final class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
       }
     };
 
-    final PyCallSiteExpression originalCallSite = myOriginalCallSiteExpression != null ? myOriginalCallSiteExpression.getElement() : null;
+    final var originalCallSite = myOriginalCallSiteExpression != null ? myOriginalCallSiteExpression.getElement() : null;
     try {
       if (originalCallSite != null) {
         originalCallSite.putUserData(CHANGE_SIGNATURE_ORIGINAL_CALL, true);

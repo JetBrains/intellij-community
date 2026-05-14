@@ -23,6 +23,7 @@ import com.intellij.codeInsight.controlflow.TransparentInstruction;
 import com.intellij.codeInsight.controlflow.impl.ConditionalInstructionImpl;
 import com.intellij.codeInsight.controlflow.impl.TransparentInstructionImpl;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -108,6 +109,8 @@ import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
 import com.jetbrains.python.psi.impl.PyEvaluator;
 import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeUtilKt;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -255,10 +258,13 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       return;
     }
 
-    final ReadWriteInstruction.ACCESS access = PyAugAssignmentStatementNavigator.getStatementByTarget(node) != null
-                                               ? ReadWriteInstruction.ACCESS.READWRITE
-                                               : ReadWriteInstruction.ACCESS.READ;
-    final ReadWriteInstruction readWriteInstruction = ReadWriteInstruction.newInstruction(myBuilder, node, getName(node), access);
+    final ReadWriteInstruction readWriteInstruction;
+    if (PyAugAssignmentStatementNavigator.getStatementByTarget(node) != null) {
+      readWriteInstruction = ReadWriteInstruction.readWrite(myBuilder, node, getName(node), augAssignmentTypeCallback(node));
+    }
+    else {
+      readWriteInstruction = ReadWriteInstruction.newInstruction(myBuilder, node, getName(node), ReadWriteInstruction.ACCESS.READ);
+    }
     myBuilder.addNodeAndCheckPending(readWriteInstruction);
   }
 
@@ -1251,6 +1257,14 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
              || element instanceof PyBreakStatement
              || element instanceof PyPassStatement
              || element instanceof PyStatementList);
+  }
+
+  private static @NotNull InstructionTypeCallback augAssignmentTypeCallback(@NotNull PyReferenceExpression target) {
+    final PyAugAssignmentStatement statement = PsiTreeUtil.getParentOfType(target, PyAugAssignmentStatement.class);
+    return context -> {
+      PyType assignmentType = statement != null ? context.getType(statement) : null;
+      return Ref.create(!PyTypeUtilKt.isUnknown(assignmentType) ? assignmentType : context.getType(target));
+    };
   }
 
   private void addTypeAssertionNodes(@NotNull PyElement condition, boolean positive) {

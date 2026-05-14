@@ -331,7 +331,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     // 1. If WRITE instructions are found on all possible execution paths:
     //    - Returns a union type combining the types from all getType() calls on those instructions
     //
-    // 2. If a WRITE instruction involving just the `qualifier` is found on any path 
+    // 2. If a WRITE instruction involving just the `qualifier` is found on any path
     //    (via PyTargetExpression or PyNamedParameter):
     //    - The analysis stops and returns null, ignoring any other paths
     //
@@ -536,8 +536,11 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       final ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(anchor);
       final String name = ((PyElement)target).getName();
       if (scopeOwner != null && name != null) {
-        if (!ScopeUtil.getElementsOfAccessType(name, scopeOwner, ReadWriteInstruction.ACCESS.ASSERTTYPE).isEmpty() ||
-            (target instanceof PyTargetExpression || target instanceof PyNamedParameter) && ScopeUtil.getScopeOwner(target) == scopeOwner) {
+        if (!ScopeUtil.getElementsOfAccessType(name, scopeOwner, ReadWriteInstruction.ACCESS.ASSERTTYPE).isEmpty()
+            || (target instanceof PyTargetExpression
+                || target instanceof PyNamedParameter
+                || !ScopeUtil.getElementsOfAccessType(name, scopeOwner, ReadWriteInstruction.ACCESS.READWRITE).isEmpty())
+            && ScopeUtil.getScopeOwner(target) == scopeOwner) {
           final PyType type = getTypeByControlFlow(name, context, anchor, scopeOwner).type();
           if (!isUnknown(type)) {
             return Ref.create(type);

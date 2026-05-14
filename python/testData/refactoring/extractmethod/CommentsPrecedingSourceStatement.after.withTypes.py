@@ -1,9 +1,7 @@
-from typing import Any
-
 x = 42
 
 # print('commented')
-def func() -> int | Any:
+def func() -> int:
     return x ** 2
 
 

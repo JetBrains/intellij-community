@@ -4,6 +4,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyCallSiteExpression;
+import com.jetbrains.python.psi.PyCallSiteOwner;
 import com.jetbrains.python.psi.PyCallable;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
@@ -81,7 +82,7 @@ public abstract class PyTypeProviderWithCustomContext<Context> extends PyTypePro
     });
   }
 
-  public Ref<PyType> getCallType(@NotNull PyFunction function, @NotNull PyCallSiteExpression site, @NotNull Context context) {
+  public Ref<PyType> getCallType(@NotNull PyFunction function, @NotNull PyCallSiteOwner site, @NotNull Context context) {
     return null;
   }
 

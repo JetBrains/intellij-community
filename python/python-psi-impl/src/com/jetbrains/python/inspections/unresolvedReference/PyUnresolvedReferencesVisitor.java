@@ -52,6 +52,7 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PsiReferenceEx;
 import com.jetbrains.python.psi.PyAnnotation;
 import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PyAugAssignmentStatement;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyCallSiteExpression;
 import com.jetbrains.python.psi.PyCallable;
@@ -145,6 +146,12 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
 
   @Override
   public void visitPyTargetExpression(@NotNull PyTargetExpression node) {
+    // Augmented assignments (e.g., `x += 1`) do have a target expression,
+    // but for historical reasons it is not represented in the PSI, so delegate to the base visitor for general reference checks
+    if (node.getParent() instanceof PyAugAssignmentStatement) {
+      super.visitPyTargetExpression(node);
+    }
+
     checkSlotsAndProperties(node);
     checkStrictClassAttributes(node);
   }

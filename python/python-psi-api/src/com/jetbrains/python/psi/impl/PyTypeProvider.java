@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyCallSiteExpression;
+import com.jetbrains.python.psi.PyCallSiteOwner;
 import com.jetbrains.python.psi.PyCallable;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
@@ -40,6 +41,9 @@ public interface PyTypeProvider {
 
   @Nullable
   Ref<PyType> getReturnType(@NotNull PyCallable callable, @NotNull TypeEvalContext context);
+
+  @Nullable
+  Ref<PyType> getCallType(@NotNull PyFunction function, @NotNull PyCallSiteOwner callSite, @NotNull TypeEvalContext context);
 
   @Nullable
   Ref<PyType> getCallType(@NotNull PyFunction function, @NotNull PyCallSiteExpression callSite, @NotNull TypeEvalContext context);

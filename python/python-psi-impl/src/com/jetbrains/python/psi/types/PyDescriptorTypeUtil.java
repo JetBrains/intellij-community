@@ -6,7 +6,6 @@ import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyQualifiedExpression;
-import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
@@ -39,7 +38,7 @@ public final class PyDescriptorTypeUtil {
     return getTypeFromSyntheticDunderGetCall(expression, attributeType, context);
   }
 
-  public static @Nullable Ref<PyType> getExpectedValueTypeForDunderSet(@NotNull PyTargetExpression targetExpression,
+  public static @Nullable Ref<PyType> getExpectedValueTypeForDunderSet(@NotNull PyQualifiedExpression targetExpression,
                                                                        @Nullable PyType attributeType,
                                                                        @NotNull TypeEvalContext context) {
     final PyClassLikeType targetType = as(attributeType, PyClassLikeType.class);
