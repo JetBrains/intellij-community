@@ -6,6 +6,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
+import com.intellij.ui.ExperimentalUI
 import com.intellij.util.system.OS
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
@@ -39,7 +40,7 @@ internal object IdeRootPaneBorderHelper {
   }
 
   fun update(rootPane: JRootPane) {
-    if (!OS.isGenericUnix()) {
+    if (!OS.isGenericUnix() && ExperimentalUI.isNewUI()) {
       setWindowBorder(rootPane)
     }
   }
