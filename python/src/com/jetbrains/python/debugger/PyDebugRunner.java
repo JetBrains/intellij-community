@@ -241,19 +241,14 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
         .runAsync(environment.getProject(), () -> {
           // Re-install the environment data context so that macro expansion works (PY-88858).
           try (AccessToken ignored2 = ExecutionManagerImpl.Companion.withEnvironmentDataContext(dataContext)) {
-            int serverLocalPort = findAvailableSocketPort();
             try {
+              ServerSocket serverSocket = new ServerSocket(0, 0, InetAddress.getLoopbackAddress());
+              int serverLocalPort = serverSocket.getLocalPort();
               TargetEnvironment.LocalPortBinding localPortBinding =
                 new TargetEnvironment.LocalPortBinding(serverLocalPort, null);
               var debuggerScriptCommandLineBuilder = new PythonDebuggerClientModeTargetedCommandLineBuilder(
-                environment.getProject(), pyState, profile, localPortBinding);
+                environment.getProject(), pyState, profile, localPortBinding, serverSocket);
               ExecutionResult result = pyState.execute(environment.getExecutor(), debuggerScriptCommandLineBuilder);
-              ServerSocket serverSocket = debuggerScriptCommandLineBuilder.getServerSocketForDebugging();
-              if (serverSocket == null) {
-                LOG.error("The server socket has not been created after the target environment preparation" +
-                          ", trying to fallback and create the server socket on the loopback address");
-                serverSocket = createServerSocketOnLoopbackAddress(serverLocalPort);
-              }
               return Pair.create(serverSocket, result);
             }
             catch (Exception err) {
@@ -268,15 +263,6 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
             return createXDebugSession(environment, pyState, serverSocket, result);
           }
         }));
-    }
-  }
-
-  private static @NotNull ServerSocket createServerSocketOnLoopbackAddress(int serverLocalPort) {
-    try {
-      return new ServerSocket(serverLocalPort, 0, InetAddress.getLoopbackAddress());
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e.getMessage(), e);
     }
   }
 
@@ -1141,24 +1127,27 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     private PythonDebuggerClientModeTargetedCommandLineBuilder(@NotNull Project project,
                                                                @NotNull PythonCommandLineState pyState,
                                                                @NotNull RunProfile profile,
-                                                               @NotNull TargetEnvironment.LocalPortBinding localPortBinding) {
+                                                               @NotNull TargetEnvironment.LocalPortBinding localPortBinding,
+                                                               @Nullable ServerSocket preCreatedServerSocket) {
       super(project, pyState, profile);
       myLocalPortBinding = localPortBinding;
+      myServerSocketForDebugging = preCreatedServerSocket;
     }
 
     @Override
     protected @NotNull Function<@Nullable TargetEnvironment, HostPort> createPortBinding(@NotNull HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest) {
       helpersAwareTargetRequest.getTargetEnvironmentRequest().getLocalPortBindings().add(myLocalPortBinding);
-      helpersAwareTargetRequest.getTargetEnvironmentRequest().onEnvironmentPrepared((environment, indicator) -> {
-        try {
-          myServerSocketForDebugging = createServerSocketForDebugging(environment, myLocalPortBinding);
-        }
-        catch (IOException e) {
-          LOG.error("Unable to create server socket for debugging", e);
-        }
-        return Unit.INSTANCE;
-      });
-
+      if (myServerSocketForDebugging == null) {
+        helpersAwareTargetRequest.getTargetEnvironmentRequest().onEnvironmentPrepared((environment, indicator) -> {
+          try {
+            myServerSocketForDebugging = createServerSocketForDebugging(environment, myLocalPortBinding);
+          }
+          catch (IOException e) {
+            LOG.error("Unable to create server socket for debugging", e);
+          }
+          return Unit.INSTANCE;
+        });
+      }
       helpersAwareTargetRequest.getTargetEnvironmentRequest().getLocalPortBindings().add(myLocalPortBinding);
       return TargetEnvironmentFunctions.getTargetEnvironmentValue(myLocalPortBinding);
     }
