@@ -22,7 +22,7 @@ import org.jetbrains.plugins.gradle.util.runReadActionAndWait
 import org.junit.Test
 
 /**
- * See paired [org.jetbrains.kotlin.idea.codeInsight.gradle.GradleMppNoJvmRunConfigurationProducersTest216]
+ * See paired [GradleMppNoJvmRunConfigurationProducersTest216]
  */
 class GradleMppJvmRunConfigurationProducersTest4 : GradleTestRunConfigurationProducerTestCase(), ExpectedPluginModeProvider {
     override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
