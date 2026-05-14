@@ -66,7 +66,7 @@ public final class XDebuggerWatchesManagerImpl implements XDebuggerWatchesManage
     myProject = project;
     EditorEventMulticaster editorEventMulticaster = EditorFactory.getInstance().getEventMulticaster();
     editorEventMulticaster.addDocumentListener(new MyDocumentListener(), project);
-    myProject.getMessageBus().connect().subscribe(FileDocumentManagerListener.TOPIC, new FileDocumentManagerListener() {
+    myProject.getMessageBus().connect(coroutineScope).subscribe(FileDocumentManagerListener.TOPIC, new FileDocumentManagerListener() {
       @Override
       public void fileContentLoaded(@NotNull VirtualFile file, @NotNull Document document) {
         getDocumentInlines(document).forEach(InlineWatch::setMarker);
