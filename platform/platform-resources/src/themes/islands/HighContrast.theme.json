@@ -48,6 +48,7 @@
     },
 
     "Island.arc": 0,
+    "Island.arc.compact": 0,
 
     "ActionButton": {
       "hoverBackground": "#000000",
@@ -713,16 +714,6 @@
         "foreground" : "#5F5F5F"
       }
     },
-
-    "RecentProject.Color1.MainToolbarGradientStart": "#66483200",
-    "RecentProject.Color2.MainToolbarGradientStart": "#5e472400",
-    "RecentProject.Color3.MainToolbarGradientStart": "#45522f00",
-    "RecentProject.Color4.MainToolbarGradientStart": "#33566100",
-    "RecentProject.Color5.MainToolbarGradientStart": "#39477300",
-    "RecentProject.Color6.MainToolbarGradientStart": "#61386100",
-    "RecentProject.Color7.MainToolbarGradientStart": "#503d7000",
-    "RecentProject.Color8.MainToolbarGradientStart": "#32595900",
-    "RecentProject.Color9.MainToolbarGradientStart": "#36543900",
 
     "Recap": {
       "ijnext": "#55339C",
