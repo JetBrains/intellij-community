@@ -50,6 +50,7 @@
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.util" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.projectWizard.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.psi" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlin-tooling-core" level="project" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.kotlin.gradle.java" />

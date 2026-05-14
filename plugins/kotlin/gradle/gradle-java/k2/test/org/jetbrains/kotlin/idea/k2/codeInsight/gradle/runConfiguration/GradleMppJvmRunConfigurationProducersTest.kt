@@ -25,7 +25,7 @@ import org.junit.Test
  * See paired [org.jetbrains.kotlin.idea.codeInsight.gradle.GradleMppNoJvmRunConfigurationProducersTest216]
  */
 class GradleMppJvmRunConfigurationProducersTest4 : GradleTestRunConfigurationProducerTestCase(), ExpectedPluginModeProvider {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K1
+    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     private lateinit var projectData: ProjectData
 
