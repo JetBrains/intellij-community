@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.refactoring.move;
 
@@ -188,6 +188,56 @@ public class K2MoveNestedTestGenerated extends AbstractK2MoveNestedTest {
     @TestMetadata("kotlin/moveMethod/moveToClass/propertyAsReference/propertyAsReference.test")
     public void testKotlin_moveMethod_moveToClass_propertyAsReference_PropertyAsReference() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveMethod/moveToClass/propertyAsReference/propertyAsReference.test");
+    }
+
+    @TestMetadata("kotlin/moveMethod/moveToClass/unrelatedTopLevelFunctionToClass/companionExtensionFunctionUsage/companionExtensionFunctionUsage.test")
+    public void testKotlin_moveMethod_moveToClass_unrelatedTopLevelFunctionToClass_companionExtensionFunctionUsage_CompanionExtensionFunctionUsage() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveMethod/moveToClass/unrelatedTopLevelFunctionToClass/companionExtensionFunctionUsage/companionExtensionFunctionUsage.test");
+    }
+
+    @TestMetadata("kotlin/moveMethod/moveToClass/unrelatedTopLevelFunctionToClass/companionFunctionUsage/companionFunctionUsage.test")
+    public void testKotlin_moveMethod_moveToClass_unrelatedTopLevelFunctionToClass_companionFunctionUsage_CompanionFunctionUsage() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveMethod/moveToClass/unrelatedTopLevelFunctionToClass/companionFunctionUsage/companionFunctionUsage.test");
+    }
+
+    @TestMetadata("kotlin/moveMethod/moveToClass/unrelatedTopLevelFunctionToClass/doubleInnerClassUsage/doubleInnerClassUsage.test")
+    public void testKotlin_moveMethod_moveToClass_unrelatedTopLevelFunctionToClass_doubleInnerClassUsage_DoubleInnerClassUsage() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveMethod/moveToClass/unrelatedTopLevelFunctionToClass/doubleInnerClassUsage/doubleInnerClassUsage.test");
+    }
+
+    @TestMetadata("kotlin/moveMethod/moveToClass/unrelatedTopLevelFunctionToClass/innerClassUsage/innerClassUsage.test")
+    public void testKotlin_moveMethod_moveToClass_unrelatedTopLevelFunctionToClass_innerClassUsage_InnerClassUsage() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveMethod/moveToClass/unrelatedTopLevelFunctionToClass/innerClassUsage/innerClassUsage.test");
+    }
+
+    @TestMetadata("kotlin/moveMethod/moveToClass/unrelatedTopLevelFunctionToClass/memberFunctionUsage/memberFunctionUsage.test")
+    public void testKotlin_moveMethod_moveToClass_unrelatedTopLevelFunctionToClass_memberFunctionUsage_MemberFunctionUsage() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveMethod/moveToClass/unrelatedTopLevelFunctionToClass/memberFunctionUsage/memberFunctionUsage.test");
+    }
+
+    @TestMetadata("kotlin/moveMethod/moveToClass/unrelatedTopLevelFunctionToClass/nestedClassUsage/nestedClassUsage.test")
+    public void testKotlin_moveMethod_moveToClass_unrelatedTopLevelFunctionToClass_nestedClassUsage_NestedClassUsage() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveMethod/moveToClass/unrelatedTopLevelFunctionToClass/nestedClassUsage/nestedClassUsage.test");
+    }
+
+    @TestMetadata("kotlin/moveMethod/moveToClass/unrelatedTopLevelFunctionToClass/topLevelExtensionFunctionUsage/topLevelExtensionFunctionUsage.test")
+    public void testKotlin_moveMethod_moveToClass_unrelatedTopLevelFunctionToClass_topLevelExtensionFunctionUsage_TopLevelExtensionFunctionUsage() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveMethod/moveToClass/unrelatedTopLevelFunctionToClass/topLevelExtensionFunctionUsage/topLevelExtensionFunctionUsage.test");
+    }
+
+    @TestMetadata("kotlin/moveMethod/moveToClass/unrelatedTopLevelFunctionToClass/topLevelFunctionUsage/topLevelFunctionUsage.test")
+    public void testKotlin_moveMethod_moveToClass_unrelatedTopLevelFunctionToClass_topLevelFunctionUsage_TopLevelFunctionUsage() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveMethod/moveToClass/unrelatedTopLevelFunctionToClass/topLevelFunctionUsage/topLevelFunctionUsage.test");
+    }
+
+    @TestMetadata("kotlin/moveMethod/moveToClass/unrelatedTopLevelFunctionToClass/usageInSubtype/usageInSubtype.test")
+    public void testKotlin_moveMethod_moveToClass_unrelatedTopLevelFunctionToClass_usageInSubtype_UsageInSubtype() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveMethod/moveToClass/unrelatedTopLevelFunctionToClass/usageInSubtype/usageInSubtype.test");
+    }
+
+    @TestMetadata("kotlin/moveMethod/moveToClass/unrelatedTopLevelFunctionToClass/usageInsideWith/usageInsideWith.test")
+    public void testKotlin_moveMethod_moveToClass_unrelatedTopLevelFunctionToClass_usageInsideWith_UsageInsideWith() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveMethod/moveToClass/unrelatedTopLevelFunctionToClass/usageInsideWith/usageInsideWith.test");
     }
 
     @TestMetadata("kotlin/moveMethod/moveToObject/moveToObject.test")
