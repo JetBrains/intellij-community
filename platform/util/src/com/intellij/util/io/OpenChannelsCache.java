@@ -37,7 +37,10 @@ import static java.nio.file.StandardOpenOption.WRITE;
  */
 @ApiStatus.Internal
 public final class OpenChannelsCache { // TODO: Will it make sense to have a background thread, that flushes the cache by timeout?
+  /** Max channels to keep open in cache */
   private final int myCapacity;
+
+  //statistics of the caching efficacy:
   private int myHitCount;
   private int myMissCount;
   private int myLoadCount;
@@ -61,7 +64,7 @@ public final class OpenChannelsCache { // TODO: Will it make sense to have a bac
 
   @FunctionalInterface
   public interface FileChannelOperation<T> {
-    T execute(@NotNull ResilientFileChannel channel) throws IOException;
+    T execute(@NotNull FileChannel channel) throws IOException;
   }
 
   /**
@@ -76,46 +79,13 @@ public final class OpenChannelsCache { // TODO: Will it make sense to have a bac
   public <T> T executeOp(@NotNull Path path,
                          @NotNull FileChannelOperation<T> operation,
                          boolean read) throws IOException {
-    ChannelDescriptor descriptor;
-    synchronized (myCacheLock) {
-      descriptor = myCache.get(path);
-      if (descriptor == null) {
-        boolean somethingDropped = releaseOverCachedChannels();
-        descriptor = new ChannelDescriptor(path, read);
-        myCache.put(path, descriptor);
-        if (somethingDropped) {
-          myMissCount++;
-        }
-        else {
-          myLoadCount++;
-        }
-      }
-      else if (!read && descriptor.isReadOnly()) {
-        if (descriptor.isLocked()) {
-          descriptor = new ChannelDescriptor(path, false);
-        }
-        else {
-          // re-open as write
-          closeChannel(path);
-          descriptor = new ChannelDescriptor(path, false);
-          myCache.put(path, descriptor);
-        }
-        myMissCount++;
-      }
-      else {
-        myHitCount++;
-      }
-      descriptor.lock();
-    }
-
+    ChannelDescriptor descriptor = acquireDescriptor(path, /*readOnly: */read);
     //channel access is NOT guarded by the myCacheLock
     try {
       return operation.execute(descriptor.channel());
     }
     finally {
-      synchronized (myCacheLock) {
-        descriptor.unlock();
-      }
+      releaseDescriptor(descriptor);
     }
   }
 
@@ -127,12 +97,23 @@ public final class OpenChannelsCache { // TODO: Will it make sense to have a bac
   public <T> T executeIdempotentOp(@NotNull Path path,
                                    @NotNull FileChannelIdempotentOperation<T> operation,
                                    boolean read) throws IOException {
-    ChannelDescriptor descriptor;
+    ChannelDescriptor descriptor = acquireDescriptor(path, /*readOnly: */read);
+    //channel access is NOT guarded by the myCacheLock
+    try {
+      return descriptor.executeIdempotentOp(operation);
+    }
+    finally {
+      releaseDescriptor(descriptor);
+    }
+  }
+
+  private @NotNull ChannelDescriptor acquireDescriptor(@NotNull Path path,
+                                                       boolean readOnly) throws IOException {
     synchronized (myCacheLock) {
-      descriptor = myCache.get(path);
+      ChannelDescriptor descriptor = myCache.get(path);
       if (descriptor == null) {
         boolean somethingDropped = releaseOverCachedChannels();
-        descriptor = new ChannelDescriptor(path, read);
+        descriptor = new ChannelDescriptor(path, /*readOnly: */ readOnly);
         myCache.put(path, descriptor);
         if (somethingDropped) {
           myMissCount++;
@@ -141,14 +122,14 @@ public final class OpenChannelsCache { // TODO: Will it make sense to have a bac
           myLoadCount++;
         }
       }
-      else if (!read && descriptor.isReadOnly()) {
+      else if (!readOnly && descriptor.isReadOnly()) {
         if (descriptor.isLocked()) {
-          descriptor = new ChannelDescriptor(path, false);
+          descriptor = new ChannelDescriptor(path, /*readOnly: */false);
         }
         else {
           // re-open as write
           closeChannel(path);
-          descriptor = new ChannelDescriptor(path, false);
+          descriptor = new ChannelDescriptor(path, /*readOnly: */false);
           myCache.put(path, descriptor);
         }
         myMissCount++;
@@ -157,16 +138,13 @@ public final class OpenChannelsCache { // TODO: Will it make sense to have a bac
         myHitCount++;
       }
       descriptor.lock();
+      return descriptor;
     }
+  }
 
-    //channel access is NOT guarded by the myCacheLock
-    try {
-      return descriptor.executeIdempotentOp(operation);
-    }
-    finally {
-      synchronized (myCacheLock) {
-        descriptor.unlock();
-      }
+  private void releaseDescriptor(ChannelDescriptor descriptor) {
+    synchronized (myCacheLock) {
+      descriptor.unlock();
     }
   }
 
@@ -182,26 +160,28 @@ public final class OpenChannelsCache { // TODO: Will it make sense to have a bac
     }
   }
 
+  //@GuardedBy(myCacheLock)
   private boolean releaseOverCachedChannels() throws IOException {
     int dropCount = myCache.size() - myCapacity;
 
-    if (dropCount >= 0) {
-      List<Path> keysToDrop = new ArrayList<>();
-      for (Map.Entry<Path, ChannelDescriptor> entry : myCache.entrySet()) {
-        if (dropCount < 0) break;
-        if (!entry.getValue().isLocked()) {
-          dropCount--;
-          keysToDrop.add(entry.getKey());
-        }
-      }
-
-      for (Path file : keysToDrop) {
-        closeChannel(file);
-      }
-
-      return true;
+    if (dropCount < 0) {
+      return false;
     }
-    return false;
+
+    List<Path> keysToDrop = new ArrayList<>();
+    for (Map.Entry<Path, ChannelDescriptor> entry : myCache.entrySet()) {
+      if (dropCount < 0) break;
+      if (!entry.getValue().isLocked()) {
+        dropCount--;
+        keysToDrop.add(entry.getKey());
+      }
+    }
+
+    for (Path file : keysToDrop) {
+      closeChannel(file);
+    }
+
+    return true;
   }
 
   static final class ChannelDescriptor implements Closeable {
@@ -236,15 +216,15 @@ public final class OpenChannelsCache { // TODO: Will it make sense to have a bac
       }
     }
 
-    boolean isReadOnly() {
+    private boolean isReadOnly() {
       return readOnly;
     }
 
-    void lock() {
+    private void lock() {
       lockCount++;
     }
 
-    void unlock() {
+    private void unlock() {
       lockCount--;
     }
 
