@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.structure;
 
 import com.intellij.ide.structureView.StructureViewBuilder;
@@ -22,5 +22,9 @@ public final class DomStructureViewBuilderProvider implements XmlStructureViewBu
     return null;
   }
 
-  public static final Function<DomElement,DomService.StructureViewMode> DESCRIPTOR = element -> DomService.StructureViewMode.SHOW;
+  public static final Function<DomElement, DomService.StructureViewMode> DESCRIPTOR = DomStructureViewBuilderProvider::getStructureViewMode;
+
+  private static DomService.StructureViewMode getStructureViewMode(@SuppressWarnings("unused") DomElement element) {
+    return DomService.StructureViewMode.SHOW;
+  }
 }

@@ -31,7 +31,6 @@
     <orderEntry type="module" module-name="intellij.xml.psi.impl" exported="" />
     <orderEntry type="module" module-name="intellij.xml.ui.common" exported="" />
     <orderEntry type="module" module-name="intellij.xml.analysis.impl" exported="" />
-    <orderEntry type="module" module-name="intellij.xml.structureView.impl" exported="" />
     <orderEntry type="module" module-name="intellij.platform.debugger" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" />

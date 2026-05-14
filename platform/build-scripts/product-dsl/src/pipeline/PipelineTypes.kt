@@ -16,6 +16,7 @@ import org.jetbrains.intellij.build.productLayout.dependency.ModuleDescriptorCac
 import org.jetbrains.intellij.build.productLayout.dependency.PluginContentCache
 import org.jetbrains.intellij.build.productLayout.discovery.DiscoveredProduct
 import org.jetbrains.intellij.build.productLayout.discovery.ModuleSetGenerationConfig
+import org.jetbrains.intellij.build.productLayout.discovery.ModuleSetSourceLabels
 import org.jetbrains.intellij.build.productLayout.stats.SuppressionUsage
 import org.jetbrains.intellij.build.productLayout.util.DeferredFileUpdater
 import org.jetbrains.intellij.build.productLayout.util.FileUpdateStrategy
@@ -50,15 +51,15 @@ internal data class DiscoveryResult(
 
   /** Community module sets */
   val communityModuleSets: List<ModuleSet>
-    get() = moduleSetsByLabel.get("community") ?: emptyList()
+    get() = ModuleSetSourceLabels.COMMUNITY_LABELS.flatMap { moduleSetsByLabel.get(it).orEmpty() }
 
   /** Ultimate module sets */
   val ultimateModuleSets: List<ModuleSet>
-    get() = moduleSetsByLabel.get("ultimate") ?: emptyList()
+    get() = moduleSetsByLabel.get(ModuleSetSourceLabels.ULTIMATE) ?: emptyList()
 
   /** Core module sets */
   val coreModuleSets: List<ModuleSet>
-    get() = moduleSetsByLabel.get("core") ?: emptyList()
+    get() = moduleSetsByLabel.get(ModuleSetSourceLabels.CORE) ?: emptyList()
 }
 
 /**

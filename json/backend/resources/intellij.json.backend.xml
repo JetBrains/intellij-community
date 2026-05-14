@@ -1,8 +1,11 @@
 <idea-plugin visibility="public">
   <dependencies>
-    <module name="intellij.platform.backend"/>
-    <module name="intellij.spellchecker"/>
     <module name="intellij.json"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.structureView.impl"/>
+    <module name="intellij.spellchecker"/>
+    <!-- endregion -->
   </dependencies>
   
   <actions resource-bundle="messages.JsonBundle">

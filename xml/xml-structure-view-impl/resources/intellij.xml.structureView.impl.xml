@@ -8,6 +8,8 @@
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.structureView.impl"/>
     <module name="intellij.platform.util.ui"/>
+    <module name="intellij.xml.dom"/>
+    <module name="intellij.xml.dom.impl"/>
     <module name="intellij.xml.parser"/>
     <module name="intellij.xml.psi"/>
     <module name="intellij.xml.psi.impl"/>
@@ -22,5 +24,6 @@
     <lang.psiStructureViewFactory language="XHTML" implementationClass="com.intellij.lang.xml.XmlStructureViewBuilderFactory"/>
 
     <xmlStructureViewBuilderProvider implementation="com.intellij.lang.html.structureView.HtmlStructureViewBuilderProvider"/>
+    <xmlStructureViewBuilderProvider implementation="com.intellij.util.xml.structure.DomStructureViewBuilderProvider" order="last"/>
   </extensions>
 </idea-plugin>

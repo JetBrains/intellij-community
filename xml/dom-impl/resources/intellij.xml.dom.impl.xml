@@ -18,7 +18,6 @@
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.projectModel"/>
-    <module name="intellij.platform.structureView.impl"/>
     <module name="intellij.platform.usageView"/>
     <module name="intellij.platform.usageView.impl"/>
     <module name="intellij.platform.util.ui"/>
@@ -27,7 +26,6 @@
     <module name="intellij.xml.impl"/>
     <module name="intellij.xml.parser"/>
     <module name="intellij.xml.psi"/>
-    <module name="intellij.xml.structureView"/>
   </dependencies>
   <!-- endregion -->
 
@@ -110,8 +108,6 @@
     <elementDescriptionProvider implementation="com.intellij.util.xml.impl.DefaultDomTargetDescriptionProvider" id="domDefault" order="last, before pomDefault"/>
     <iconProvider implementation="com.intellij.util.xml.impl.DefaultDomTargetIconProvider" id="domDefault" order="last"/>
     <iconProvider implementation="com.intellij.util.xml.DomFileIconProvider" id="domFileDefault" order="last"/>
-
-    <xmlStructureViewBuilderProvider implementation="com.intellij.util.xml.structure.DomStructureViewBuilderProvider" order="last"/>
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.util.xml.DomUtil$XmlDomCacheCleaner" topic="com.intellij.ide.plugins.DynamicPluginListener"/>

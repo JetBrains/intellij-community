@@ -3,6 +3,11 @@
   <name>Commander</name>
   <description>Provides a two-panel view for navigating and working with the project structure</description>
   <vendor>JetBrains</vendor>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.structureView.impl"/>
+  </dependencies>
+  <!-- endregion -->
   <resource-bundle>messages.CommanderBundle</resource-bundle>
 
   <depends>com.intellij.java</depends>

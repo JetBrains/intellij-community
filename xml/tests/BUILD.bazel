@@ -57,6 +57,8 @@ jvm_library(
     "//platform/structure-view-impl/backend:backend_test_lib",
     "//xml/impl",
     "//xml/impl:impl_test_lib",
+    "//xml/xml-structure-view-impl:structureView-impl",
+    "//xml/xml-structure-view-impl:structureView-impl_test_lib",
     "//java/testFramework",
     "//java/testFramework:testFramework_test_lib",
     "//java/idea-ui:ui",

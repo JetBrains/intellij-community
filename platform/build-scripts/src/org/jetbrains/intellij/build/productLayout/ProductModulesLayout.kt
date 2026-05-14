@@ -26,6 +26,7 @@ val DEFAULT_BUNDLED_PLUGINS: PersistentList<String> = persistentListOf(
   "intellij.moduleSet.plugin.grid.core",
   "intellij.moduleSet.plugin.recentFiles",
   "intellij.moduleSet.plugin.structuralSearch",
+  "intellij.moduleSet.plugin.structureView",
   "intellij.moduleSet.plugin.servicesView",
   "intellij.moduleSet.plugin.todoView",
   "intellij.moduleSet.plugin.vcs.frontend",
@@ -138,7 +139,7 @@ class ProductModulesLayout {
    */
   @ApiStatus.Internal
   var skipUnresolvedContentModules: Boolean = false
-  
+
   /**
    * Module names which should be excluded from this product.
    * Allows filtering out default platform modules (both api and implementation) as well as product modules.

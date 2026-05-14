@@ -166,11 +166,13 @@ internal object ModelBuildingStage {
     }
     for ((pluginId, owners) in dslTestPluginIdOwners) {
       if (owners.size <= 1) continue
-      errorSink.emit(DuplicateDslTestPluginIdError(
-        context = pluginId.value,
-        pluginId = pluginId,
-        productCounts = owners.groupingBy { it }.eachCount(),
-      ))
+      errorSink.emit(
+        DuplicateDslTestPluginIdError(
+          context = pluginId.value,
+          pluginId = pluginId,
+          productCounts = owners.groupingBy { it }.eachCount(),
+        )
+      )
     }
     val dslTestPlugins = dslTestPluginsByProduct.values.flatten()
     val dslTestPluginIds: Set<PluginId> = dslTestPlugins.mapTo(HashSet()) { it.pluginId }
@@ -316,8 +318,8 @@ internal object ModelBuildingStage {
     val extractedPlugins = coroutineScope {
       pluginTargets.map { plugin ->
         async {
-            val info = pluginContentCache.extract(plugin = plugin, isTest = plugin in testPluginModuleNames)
-            info?.let { plugin to it }
+          val info = pluginContentCache.extract(plugin = plugin, isTest = plugin in testPluginModuleNames)
+          info?.let { plugin to it }
         }
       }.awaitAll().filterNotNull()
     }
@@ -382,7 +384,7 @@ internal object ModelBuildingStage {
       }
 
       val module = outputProvider.findModule(pluginModule.value)
-        ?: error("Cannot find module '${pluginModule.value}' for product plugin.xml '$relativePluginXmlPath'")
+                   ?: error("Cannot find module '${pluginModule.value}' for product plugin.xml '$relativePluginXmlPath'")
       if (Files.notExists(pluginXmlPath)) {
         error("Product '${product.name}' plugin.xml '$relativePluginXmlPath' does not exist at '$pluginXmlPath'")
       }
@@ -436,7 +438,7 @@ internal object ModelBuildingStage {
       val reason = unresolvedXInclude?.let {
         "unresolved xi:include '$it' in source plugin.xml"
       }
-        ?: "content module '$missingBackingContentModule' has no backing JPS module in source plugin.xml"
+                   ?: "content module '$missingBackingContentModule' has no backing JPS module in source plugin.xml"
       debug("productPluginOverride") {
         "using generated override for ${pluginModule.value} due to $reason"
       }
@@ -601,6 +603,10 @@ internal object ModelBuildingStage {
       val productId = builder.addProduct(product.name)
       builder.addEdge(productId, corePluginNodeId, EDGE_BUNDLES)
 
+      for (pluginModule in product.bundledModuleSetPluginModules) {
+        builder.linkProductBundlesPlugin(productName = product.name, pluginName = pluginModule, isTest = false)
+      }
+
       val spec = product.spec ?: continue
 
       // Bundled plugins - addPlugin finds existing nodes created in Phase 1
@@ -709,13 +715,15 @@ internal object ModelBuildingStage {
           aliasIds.addAll(OS_MODULE_ALIASES)
           val moduleSetAliases = buildContentBlocksAndChainMapping(spec, collectModuleSetAliases = true).aliasToSource
           aliasIds.addAll(collectAndValidateAliases(spec, moduleSetAliases))
-          aliasIds.addAll(collectAliasesFromDeprecatedIncludes(
-            spec,
-            outputProvider,
-            includeAliasCache,
-            config.xIncludePrefixFilter,
-            config.skipXIncludePaths,
-          ))
+          aliasIds.addAll(
+            collectAliasesFromDeprecatedIncludes(
+              spec,
+              outputProvider,
+              includeAliasCache,
+              config.xIncludePrefixFilter,
+              config.skipXIncludePaths,
+            )
+          )
 
           val productModuleNames = collectProductModuleNames(graphView, product.name)
             .toCollection(LinkedHashSet())
@@ -954,6 +962,7 @@ internal object ModelBuildingStage {
     }
 
     for (product in discovery.products) {
+      product.bundledModuleSetPluginModules.forEach(::addPlugin)
       product.spec?.bundledPlugins?.forEach(::addPlugin)
     }
     for (nonBundled in config.nonBundledPlugins.values) {
@@ -1117,7 +1126,7 @@ internal object ModelBuildingStage {
   ): Set<PluginId> {
     val moduleName = include.contentModuleName.value
     val module = outputProvider.findModule(moduleName)
-      ?: error("Module '$moduleName' not found (referenced in deprecated include for '${include.resourcePath}')")
+                 ?: error("Module '$moduleName' not found (referenced in deprecated include for '${include.resourcePath}')")
 
 
     val initialData = resolveDeprecatedIncludeBytes(include, module, outputProvider)

@@ -23,6 +23,7 @@
     <orderEntry type="module" module-name="intellij.platform.structureView.frontend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.structureView.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.impl" />
+    <orderEntry type="module" module-name="intellij.xml.structureView.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.testFramework" />
     <orderEntry type="module" module-name="intellij.java.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.impl" scope="TEST" />

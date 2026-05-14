@@ -42,7 +42,6 @@ jvm_library(
     "//platform/util/progress",
     "//platform/util:util-ui",
     "//platform/code-style-impl:codeStyle-impl",
-    "//platform/structure-view-impl:structureView-impl",
     "//platform/refactoring",
   ],
   exports = ["//platform/lsp"]
@@ -90,7 +89,6 @@ jvm_library(
     "//platform/util/progress:progress_test_lib",
     "//platform/util:util-ui_test_lib",
     "//platform/code-style-impl:codeStyle-impl_test_lib",
-    "//platform/structure-view-impl:structureView-impl_test_lib",
     "//platform/refactoring:refactoring_test_lib",
   ]
 )

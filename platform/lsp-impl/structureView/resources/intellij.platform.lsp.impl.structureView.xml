@@ -1,0 +1,20 @@
+<idea-plugin visibility="public">
+  <dependencies>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.lsp"/>
+    <module name="intellij.platform.lsp.impl"/>
+    <module name="intellij.platform.structureView.impl"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <lang.psiStructureViewFactory language="" implementationClass="com.intellij.platform.lsp.impl.structureView.LspStructureViewFactory"/>
+    <postStartupActivity implementation="com.intellij.platform.lsp.impl.structureView.LspStructureViewProjectActivity"/>
+  </extensions>
+</idea-plugin>

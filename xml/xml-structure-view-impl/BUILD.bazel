@@ -11,6 +11,8 @@ jvm_library(
   deps = [
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
+    "//xml/dom-openapi:dom",
+    "//xml/dom-impl",
     "//xml/xml-psi-api:psi",
     "//xml/xml-structure-view-api:structureView",
     "//xml/xml-psi-impl:psi-impl",
@@ -34,6 +36,8 @@ jvm_library(
     ":structureView-impl",
     "//platform/core-api:core_test_lib",
     "//platform/editor-ui-api:editor-ui_test_lib",
+    "//xml/dom-openapi:dom_test_lib",
+    "//xml/dom-impl:dom-impl_test_lib",
     "//xml/xml-psi-api:psi_test_lib",
     "//xml/xml-structure-view-api:structureView_test_lib",
     "//xml/xml-psi-impl:psi-impl_test_lib",

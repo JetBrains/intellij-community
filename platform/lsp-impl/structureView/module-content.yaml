@@ -1,0 +1,3 @@
+- name: dist.all/lib/intellij.platform.lsp.impl.structureView.jar
+  modules:
+  - name: intellij.platform.lsp.impl.structureView

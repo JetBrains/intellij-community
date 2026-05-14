@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout
 
+import com.intellij.platform.pluginGraph.TargetName
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -41,6 +42,11 @@ suspend fun discoverAllProducts(projectRoot: Path, outputProvider: ModuleOutputP
           properties = productProperties,
           spec = productProperties.getProductContentDescriptor(),
           pluginXmlPath = productConfig.pluginXmlPath,
+          bundledModuleSetPluginModules = productProperties.productLayout.bundledPluginModules
+            .asSequence()
+            .filter(::isModuleSetPluginModuleName)
+            .map { TargetName(it) }
+            .toList(),
         )
       }
     }.awaitAll()

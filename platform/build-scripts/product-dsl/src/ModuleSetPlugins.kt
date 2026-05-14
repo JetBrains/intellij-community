@@ -26,6 +26,10 @@ fun moduleSetPluginModuleName(moduleSetName: String): TargetName {
   return TargetName(MODULE_SET_PLUGIN_MODULE_PREFIX + moduleSetName)
 }
 
+fun isModuleSetPluginModuleName(moduleName: String): Boolean {
+  return moduleName.startsWith(MODULE_SET_PLUGIN_MODULE_PREFIX)
+}
+
 fun defaultModuleSetPluginId(moduleSetName: String): PluginId {
   return PluginId(MODULE_SET_PLUGIN_ID_PREFIX + moduleSetName)
 }

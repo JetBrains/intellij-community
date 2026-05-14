@@ -13,6 +13,11 @@
     Read More</a></p>
   ]]></description>
 
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.structureView.impl"/>
+  </dependencies>
+  <!-- endregion -->
   <content namespace="jetbrains">
     <module name="intellij.performanceTesting.remoteDriver"/>
     <module name="intellij.performanceTesting.remoteDriver.compose"/>

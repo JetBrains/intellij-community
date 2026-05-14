@@ -202,6 +202,7 @@ private val excludedFromScrambling = hashSetOf(
   "fleet.protocol",
   "intellij.platform.lsp",
   "intellij.platform.lsp.impl",
+  "intellij.platform.lsp.impl.structureView",
   "intellij.platform.webide",
   "intellij.platform.webide.impl",
   "intellij.rml.dfa",

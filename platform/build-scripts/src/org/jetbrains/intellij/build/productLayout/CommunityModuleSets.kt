@@ -113,39 +113,6 @@ object CommunityModuleSets {
   }
 
   /**
-   * Recent files support (both backend and frontend).
-   * Provides recently opened files UI and persistence.
-   */
-  fun recentFiles(): ModuleSet = plugin("recentFiles") {
-    module("intellij.platform.recentFiles")
-    module("intellij.platform.recentFiles.frontend")
-    module("intellij.platform.recentFiles.backend")
-  }
-
-  /**
-   * Services tool window support, including Run Dashboard integration.
-   */
-  @Suppress("unused")
-  fun servicesView(): ModuleSet = plugin("servicesView") {
-    module("intellij.platform.clouds")
-    module("intellij.platform.execution.serviceView")
-    module("intellij.platform.execution.serviceView.frontend")
-    module("intellij.platform.execution.serviceView.backend")
-    module("intellij.platform.execution.dashboard")
-    module("intellij.platform.execution.dashboard.frontend")
-    module("intellij.platform.execution.dashboard.backend")
-  }
-
-  /**
-   * TODO tool window support.
-   */
-  @Suppress("unused")
-  fun todoView(): ModuleSet = plugin("todoView") {
-    module("intellij.platform.todo")
-    module("intellij.platform.todo.backend")
-  }
-
-  /**
    * Essential platform modules required by most IDE products.
    */
   fun essential(): ModuleSet = moduleSet("essential", includeDependencies = true) {
@@ -170,10 +137,6 @@ object CommunityModuleSets {
     module("intellij.platform.navbar.backend")
     module("intellij.platform.navbar.frontend")
     module("intellij.platform.navbar.monolith")
-
-    embeddedModule("intellij.platform.structureView.impl")
-    module("intellij.platform.structureView.backend")
-    module("intellij.platform.structureView.frontend")
 
     // The loading="embedded" attribute is required here for module synchronization with CWM's ThinClientFindAndReplaceExecutor.
     // Since intellij.platform.frontend.split module loads in embedded mode, and it needs to override the default FindAndReplaceExecutor,
@@ -271,14 +234,6 @@ object CommunityModuleSets {
   }
 
   /**
-   * VCS frontend modules.
-   */
-  @Suppress("unused")
-  fun vcsFrontend(): ModuleSet = plugin("vcs.frontend") {
-    module("intellij.platform.vcs.impl.frontend")
-  }
-
-  /**
    * XML support modules.
    */
   fun xml(): ModuleSet = moduleSet("xml", alias = "com.intellij.modules.xml") {
@@ -306,28 +261,35 @@ object CommunityModuleSets {
   }
 
   /**
+   * XML support modules without Structure View UI.
+   */
+  fun xmlWithoutStructureView(): ModuleSet = moduleSet("xml.without.structureView", alias = "com.intellij.modules.xml") {
+    embeddedModule("intellij.xml.dom")
+    embeddedModule("intellij.xml.dom.impl")
+    embeddedModule("intellij.xml.psi")
+    embeddedModule("intellij.xml.psi.impl")
+    embeddedModule("intellij.xml.analysis")
+    module("intellij.xml.emmet")
+    module("intellij.xml.emmet.backend")
+    module("intellij.xml.emmet.frontend")
+    embeddedModule("intellij.xml.ui.common")
+    embeddedModule("intellij.xml.parser")
+    embeddedModule("intellij.xml.syntax")
+    module("intellij.relaxng")
+    embeddedModule("intellij.xml.impl")
+    embeddedModule("intellij.xml.analysis.impl")
+    // embedded because intellij.xml.dom.impl which depends on it, is also embedded
+    embeddedModule("intellij.libraries.cglib")
+    embeddedModule("intellij.libraries.xerces")
+    module("intellij.xml.langInjection")
+    module("intellij.xml.langInjection.xpath")
+  }
+
+  /**
    * Duplicates analysis modules.
    */
   fun duplicates(): ModuleSet = moduleSet("duplicates") {
     embeddedModule("intellij.platform.duplicates.analysis")
-  }
-
-  /**
-   * Structural Search and Replace modules.
-   */
-  @Suppress("unused")
-  fun structuralSearch(): ModuleSet = plugin("structuralSearch") {
-    module("intellij.platform.structuralSearch")
-  }
-
-  /**
-   * Stream debugger modules.
-   */
-  @Suppress("unused")
-  fun debuggerStreams(): ModuleSet = plugin("debugger.streams", addToMainModule = false) {
-    module("intellij.debugger.streams.core")
-    module("intellij.debugger.streams.shared")
-    module("intellij.debugger.streams.backend")
   }
 
   /**
@@ -360,19 +322,6 @@ object CommunityModuleSets {
     module("intellij.platform.jewel.markdown.extensions.gfmStrikethrough")
     module("intellij.platform.jewel.markdown.extensions.images")
     module("intellij.platform.jewel.markdown.core")
-  }
-
-  /**
-   * Grid/data viewer core modules.
-   */
-  @Suppress("unused")
-  fun gridCore(): ModuleSet = plugin("grid.core") {
-    module("intellij.grid")
-    module("intellij.grid.types")
-    module("intellij.grid.csv.core.impl")
-    module("intellij.grid.core.impl")
-    module("intellij.grid.impl")
-    module("intellij.grid.impl.ide")
   }
 
   /**

@@ -298,7 +298,7 @@ class LspServerImpl internal constructor(
           }
         }
         documentSyncManager.openForOpenedOrUnsavedFiles()
-        LspServerManagerImpl.restartStructureView()
+        LspServerManagerImpl.refreshBreadcrumbs()
         LspServerManagerImpl.refreshInlayHints(project)
         LspServerManagerImpl.refreshCodeLenses(project)
       }

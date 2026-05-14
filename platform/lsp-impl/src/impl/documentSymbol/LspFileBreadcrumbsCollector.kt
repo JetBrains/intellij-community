@@ -70,9 +70,6 @@ internal class LspFileBreadcrumbsCollector(private val project: Project) : FileB
     }
   }
 
-  /**
-   * Compare with [LspStructureViewModel.findSymbolsAroundOffset]
-   */
   private fun findSymbolsAroundOffset(document: Document, documentSymbols: List<DocumentSymbol>, offset: Int): List<DocumentSymbol> {
     var currentLevelSymbols: List<DocumentSymbol>? = documentSymbols
     val relevantSymbols = mutableListOf<DocumentSymbol>()

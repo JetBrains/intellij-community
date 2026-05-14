@@ -3,6 +3,7 @@
 
 package org.jetbrains.intellij.build.productLayout.discovery
 
+import com.intellij.platform.pluginGraph.TargetName
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.jetbrains.intellij.build.ModuleOutputProvider
@@ -46,6 +47,7 @@ data class DiscoveredProduct(
   @JvmField val properties: Any?, // ProductProperties or null
   @JvmField val spec: org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec?,
   @JvmField val pluginXmlPath: String?,
+  @JvmField val bundledModuleSetPluginModules: List<TargetName> = emptyList(),
 )
 
 /**

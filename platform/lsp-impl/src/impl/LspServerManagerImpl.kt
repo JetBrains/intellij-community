@@ -3,7 +3,6 @@ package com.intellij.platform.lsp.impl
 import com.intellij.codeInsight.codeVision.CodeVisionHost
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactoryInternal
-import com.intellij.ide.impl.StructureViewWrapperImpl
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.notebook.editor.BackedVirtualFile
 import com.intellij.openapi.Disposable
@@ -314,8 +313,7 @@ class LspServerManagerImpl internal constructor(private val project: Project, in
       }
     }
 
-    internal fun restartStructureView() {
-      application.messageBus.syncPublisher(StructureViewWrapperImpl.STRUCTURE_CHANGED).run()
+    internal fun refreshBreadcrumbs() {
       application.messageBus.syncPublisher(BreadcrumbsXmlWrapper.FORCE_RELOAD_BREADCRUMBS).run()
     }
 

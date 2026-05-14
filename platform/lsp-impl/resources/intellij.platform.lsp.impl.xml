@@ -22,7 +22,6 @@
     <module name="intellij.platform.markdown.utils"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.statistics"/>
-    <module name="intellij.platform.structureView.impl"/>
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
@@ -90,7 +89,6 @@
     <gotoClassContributor implementation="com.intellij.platform.lsp.impl.workspaceSymbol.LspGoToClassContributor"/>
     <searchEverywhereResultsEqualityProvider
       implementation="com.intellij.platform.lsp.impl.workspaceSymbol.LspWorkspaceSymbolEqualityProvider"/>
-    <lang.psiStructureViewFactory language="" implementationClass="com.intellij.platform.lsp.impl.documentSymbol.LspStructureViewFactory"/>
     <fileBreadcrumbsCollector implementation="com.intellij.platform.lsp.impl.documentSymbol.LspFileBreadcrumbsCollector"
                               order="last, after PsiFileBreadcrumbsCollector"/>
     <platform.lang.lsWidget.itemsProvider id="LspWidgetItemsProvider"

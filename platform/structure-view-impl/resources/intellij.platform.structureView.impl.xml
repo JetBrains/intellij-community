@@ -27,11 +27,11 @@
   </dependencies>
   <!-- endregion -->
   <extensionPoints>
-    <extensionPoint name="lang.logicalStructureTreeElementProvider" interface="com.intellij.ide.structureView.logical.LogicalStructureTreeElementProvider" dynamic="true"/>
-    <extensionPoint name="lang.logicalStructureElementsProvider" beanClass="com.intellij.openapi.util.ClassExtensionPoint" dynamic="true">
+    <extensionPoint qualifiedName="com.intellij.lang.logicalStructureTreeElementProvider" interface="com.intellij.ide.structureView.logical.LogicalStructureTreeElementProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.lang.logicalStructureElementsProvider" beanClass="com.intellij.openapi.util.ClassExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.ide.structureView.logical.LogicalStructureElementsProvider"/>
     </extensionPoint>
-    <extensionPoint name="structurePopupProvider" interface="com.intellij.platform.structureView.impl.StructurePopupProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.structurePopupProvider" interface="com.intellij.platform.structureView.impl.StructurePopupProvider" dynamic="true"/>
   </extensionPoints>
   <actions>
     <action id="FileStructurePopup" class="com.intellij.platform.structureView.impl.actions.ViewStructureAction">
