@@ -516,7 +516,6 @@ class LinuxDistributionBuilder(
         "-Dawt.lock.fair=true",
         when (context.productProperties.platformPrefix) {
           "Gateway" -> null // disabled for Gateway until system tray will be supported in Wayland toolkit in JBR (IJPL-231661/JBR-9966)
-          "Rider" -> null // until the issues with SkikoLayer are resolved (RIDER-132169, SKIKO-28)
           else -> "-Dawt.toolkit.name=auto"
         }
       )
