@@ -3,7 +3,6 @@
 
 package com.intellij.platform.ijent
 
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ijent.tcp.TcpDeployInfo
 
 /**
@@ -17,7 +16,7 @@ fun getIjentGrpcArgv(
   useTLS: Boolean = false,
   jsonOutput: Boolean = false,
 ): List<String> {
-  val useMultiTransport = Registry.`is`("ijent.multiple.connections.mode")
+  val useMultiTransport = IjentRegistry.getInstance().isEnabled("ijent.multiple.connections.mode")
   return listOfNotNull(
     remotePathToIjent,
     if (useMultiTransport) "grpc-multi-transport-server" else "grpc-server",

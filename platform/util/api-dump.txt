@@ -56,8 +56,6 @@ f:com.intellij.openapi.application.PathManager
 - s:getTempPath():java.lang.String
 - s:isUnderHomeDirectory(java.lang.String):Z
 - s:isUnderHomeDirectory(java.nio.file.Path):Z
-com.intellij.openapi.diagnostic.ExceptionWithAttachments
-- a:getAttachments():com.intellij.openapi.diagnostic.Attachment[]
 com.intellij.openapi.diagnostic.Logger$Factory
 - a:getLoggerInstance(java.lang.String):com.intellij.openapi.diagnostic.Logger
 f:com.intellij.openapi.diagnostic.LoggerKt

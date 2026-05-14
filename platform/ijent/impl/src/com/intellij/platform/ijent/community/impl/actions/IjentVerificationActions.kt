@@ -5,6 +5,7 @@ package com.intellij.platform.ijent.community.impl.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
@@ -88,6 +89,8 @@ internal class IjentLocalVerificationAction : AbstractIjentVerificationAction() 
       override suspend fun getTargetPlatform(): EelPlatform = targetPlatform
       override suspend fun getConnectionStrategy(): IjentConnectionStrategy = IjentConnectionStrategy.Default
 
+      override val ijentExecFileProvider: IjentExecFileProvider = service()
+
       override suspend fun createProcess(binaryPath: String): IjentSessionProcessMediator =
         IjentSessionProcessMediator.create(
           ijentProcessScope,
@@ -122,13 +125,13 @@ internal class IjentDockerVerificationAction : AbstractIjentVerificationAction()
       null, CpuArch.X86, CpuArch.ARM32, CpuArch.OTHER, CpuArch.UNKNOWN -> error("Unsupported CPU arch: $arch")
     }
 
-    val ijentLinuxBinary = IjentExecFileProvider.getInstance().getIjentBinary(targetPlatform)
-
     val title = "Docker $dockerImage"
     return Triple(title, object : IjentDeployingOverShellProcessStrategy.JavaProcessBasedStrategy(ijentProcessScope, ijentProcessScope.s.coroutineDispatcher()) {
       override val ijentLabel: String = title
 
       override suspend fun mapPath(path: Path): String? = null
+
+      override val ijentExecFileProvider: IjentExecFileProvider = service()
 
       override suspend fun createShellProcess(): Process {
         val containerName = "ijent-test-${LocalDateTime.now().toEpochSecond(ZoneOffset.UTC)}"
@@ -140,7 +143,7 @@ internal class IjentDockerVerificationAction : AbstractIjentVerificationAction()
               "--interactive",
               "--rm",
               "--volume",
-              "${ijentLinuxBinary.toBindMount()}:/ijent:ro",
+              "${ijentExecFileProvider.getIjentBinary(targetPlatform).toBindMount()}:/ijent:ro",
               "--name",
               containerName,
               "registry.jetbrains.team/p/ij/docker-hub/$dockerImage",

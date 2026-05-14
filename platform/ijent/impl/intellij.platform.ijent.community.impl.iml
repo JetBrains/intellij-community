@@ -7,7 +7,6 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
-    <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit5Params" level="project" />
@@ -26,9 +25,11 @@
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.eel.nioFs.impl" />
     <orderEntry type="module" module-name="intellij.platform.eel.impl.base" />
-    <orderEntry type="module" module-name="intellij.platform.ide.core" />
-    <orderEntry type="module" module-name="intellij.platform.editor.ui" />
-    <orderEntry type="module" module-name="intellij.platform.ide.progress" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" />
+    <orderEntry type="module" module-name="intellij.platform.ide.progress" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" />
   </component>
 </module>

@@ -7,6 +7,7 @@ package com.intellij.platform.ide.impl.wsl
 
 import com.intellij.execution.wsl.WSLCommandLineOptions
 import com.intellij.execution.wsl.WSLDistribution
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ijent.IjentLogger.CONN_MGR_LOG
@@ -34,7 +35,7 @@ suspend fun WSLDistribution.createIjentSession(
     distribution = this,
     project = project,
     wslCommandLineOptionsModifier = wslCommandLineOptionsModifier
-  ).createIjentSession()
+  ).createIjentSession(serviceAsync())
 
   if (Registry.`is`("ijent.multiple.connections.mode")) {
     if (System.getProperty("ijent.wait.for.transport.initialization") == "true") {

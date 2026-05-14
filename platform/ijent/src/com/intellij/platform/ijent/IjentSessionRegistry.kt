@@ -1,14 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
-import com.intellij.openapi.components.serviceAsync
-import kotlinx.coroutines.CoroutineScope
+import com.intellij.platform.ijent.IjentSessionRegistry.register
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
@@ -19,8 +17,8 @@ import java.util.concurrent.atomic.AtomicLong
  * This service MUST know about a running IJent if it's going to be used through [java.nio.file.spi.FileSystemProvider].
  * It also MAY know about delegates and wrappers over interfaces, if they are registered with [register].
  */
-@Service(Service.Level.APP)
-class IjentSessionRegistry(private val coroutineScope: CoroutineScope) {
+@OptIn(DelicateCoroutinesApi::class)
+object IjentSessionRegistry {
   private val counter = AtomicLong()
 
   private class IjentBundle(
@@ -91,7 +89,7 @@ class IjentSessionRegistry(private val coroutineScope: CoroutineScope) {
 
       val actualDeferred =
         reusedOldDeferred
-        ?: coroutineScope.async(context = currentDispatcher, start = CoroutineStart.LAZY) {
+        ?: GlobalScope.async(context = currentDispatcher, start = CoroutineStart.LAZY) {
           oldBundle.factory(ijentId)
         }
 
@@ -107,15 +105,5 @@ class IjentSessionRegistry(private val coroutineScope: CoroutineScope) {
     catch (err: Throwable) {
       throw IjentUnavailableException.unwrapFromCancellationExceptions(err)
     }
-  }
-
-  companion object {
-    @JvmStatic
-    suspend fun instanceAsync(): IjentSessionRegistry =
-      serviceAsync()
-
-    @JvmStatic
-    fun instance(): IjentSessionRegistry =
-      ApplicationManager.getApplication().service()
   }
 }

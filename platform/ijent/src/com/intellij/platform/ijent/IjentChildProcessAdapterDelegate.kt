@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent
 
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.eel.EelPosixProcess
 import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.EelWindowsProcess
@@ -9,7 +8,6 @@ import com.intellij.platform.eel.SafeDeferred
 import com.intellij.platform.eel.provider.utils.asOutputStream
 import com.intellij.platform.eel.provider.utils.consumeAsInputStream
 import com.intellij.platform.ijent.spi.IjentThreadPool
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
@@ -32,7 +30,6 @@ internal class IjentChildProcessAdapterDelegate(
 
   val errorStream: InputStream = ijentChildProcess.stderr.consumeAsInputStream(coroutineScope.coroutineContext)
 
-  @RequiresBackgroundThread
   @Throws(InterruptedException::class)
   fun waitFor(): Int =
     runBlockingInContext {
@@ -44,7 +41,6 @@ internal class IjentChildProcessAdapterDelegate(
       }
     }
 
-  @RequiresBackgroundThread
   @Throws(InterruptedException::class)
   fun waitFor(timeout: Long, unit: TimeUnit): Boolean =
     runBlockingInContext {
@@ -100,7 +96,7 @@ internal class IjentChildProcessAdapterDelegate(
       body()
     }
 
-  @OptIn(IntellijInternalApi::class, DelicateCoroutinesApi::class)
+  @OptIn(DelicateCoroutinesApi::class)
   fun tryDestroyGracefully(): Boolean {
     coroutineScope.launch {
       ijentChildProcess.interrupt()

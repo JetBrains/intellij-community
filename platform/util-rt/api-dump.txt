@@ -1,3 +1,4 @@
+com.intellij.execution.process.SelfKiller
 com.intellij.execution.rmi.CastableArgument
 com.intellij.execution.rmi.IdeaWatchdog
 - java.rmi.Remote
@@ -70,6 +71,8 @@ f:com.intellij.execution.rmi.ssl.SslTrustStore
 - engineLoad(java.io.InputStream,C[]):V
 - s:getType():java.lang.String
 - s:setDefault():V
+com.intellij.openapi.diagnostic.ExceptionWithAttachments
+- a:getAttachments():com.intellij.openapi.diagnostic.Attachment[]
 Fa:com.intellij.openapi.diagnostic.LoggerRt
 - <init>():V
 - error(java.lang.String):V

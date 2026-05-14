@@ -1,13 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:OptIn(IntellijInternalApi::class)
-
 package com.intellij.platform.ijent.spi
 
-import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.eel.SafeDeferred
 import com.intellij.platform.eel.map
+import com.intellij.platform.ijent.IjentLog
 import com.intellij.platform.ijent.IjentScope
 import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.ijent.ParentOfIjentScopes
@@ -216,4 +212,4 @@ private fun ijentProcessFinalizer(ijentLabel: String, mediator: IjentSessionProc
   }
 }
 
-private val LOG = logger<IjentSessionProcessMediator>()
+private val LOG = IjentLog.getInstance<IjentSessionProcessMediator>()

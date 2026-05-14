@@ -57,6 +57,19 @@ abstract class IjentControlledEnvironmentDeployingStrategy : IjentDeployingStrat
   protected abstract suspend fun getConnectionStrategy(): IjentConnectionStrategy
 
   /**
+   * Provider of the local IJent executable runnable on [targetPlatform].
+   *
+   * Its [IjentExecFileProvider.getIjentBinary] is invoked once per [createIjentSession] invocation,
+   * after [getTargetPlatform] and before [copyFile]; the returned file is uploaded to the target
+   * environment via [copyFile] and then executed via [createProcess]. Implementations must return
+   * a binary whose OS and CPU architecture match [targetPlatform]; mismatches will surface only at
+   * process launch on the remote side. The lookup may suspend for a long time (e.g., to download a
+   * missing binary or prompt the user) and throws [com.intellij.platform.ijent.IjentMissingBinary]
+   * if no compatible binary can be produced.
+   */
+  protected abstract val ijentExecFileProvider: IjentExecFileProvider
+
+  /**
    * Validates if a process exit code indicates normal termination.
    *
    * Called when [ProcessExitPolicy] is [CHECK_CODE] to determine if termination should raise [IjentUnavailableException].
@@ -73,14 +86,14 @@ abstract class IjentControlledEnvironmentDeployingStrategy : IjentDeployingStrat
    */
   open suspend fun isExpectedProcessExit(exitCode: Int): Boolean = exitCode == 0
 
-  override suspend fun createIjentSession(): IjentSession.Posix =
+  override suspend fun createIjentSession(provider: IjentSessionProvider): IjentSession.Posix =
     try {
       val targetPlatform = getTargetPlatform()
       val connectionStrategy = getConnectionStrategy()
-      val remotePathToBinary = copyFile(IjentExecFileProvider.getInstance().getIjentBinary(targetPlatform))
+      val remotePathToBinary = copyFile(ijentExecFileProvider.getIjentBinary(targetPlatform))
       val mediator = createProcess(remotePathToBinary)
 
-      IjentSessionProvider.instanceAsync().connect(IjentConnectionContext(
+      provider.connect(IjentConnectionContext(
         mediator = mediator,
         targetPlatform = targetPlatform,
         remoteBinaryPath = remotePathToBinary,

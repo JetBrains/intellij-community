@@ -3,7 +3,6 @@ package com.intellij.platform.ijent
 
 import com.intellij.execution.process.SelfKiller
 import com.intellij.platform.eel.EelProcess
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import java.io.InputStream
@@ -34,11 +33,9 @@ class IjentChildProcessAdapter(
 
   override fun getErrorStream(): InputStream = delegate.errorStream
 
-  @RequiresBackgroundThread
   @Throws(InterruptedException::class)
   override fun waitFor(): Int = delegate.waitFor()
 
-  @RequiresBackgroundThread
   @Throws(InterruptedException::class)
   override fun waitFor(timeout: Long, unit: TimeUnit): Boolean = delegate.waitFor(timeout, unit)
 

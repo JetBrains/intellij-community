@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.DumbAwareAction
@@ -64,7 +65,7 @@ abstract class AbstractIjentVerificationAction : DumbAwareAction() {
         try {
           val (title, deployingStrategy, descriptor) = deployingStrategy(ParentOfIjentScopes(this)) ?: return@launch
           withModalProgress(modalTaskOwner, e.presentation.text, TaskCancellation.cancellable()) {
-            deployingStrategy.createIjentSession().getIjentInstance(descriptor).use { ijent ->
+            deployingStrategy.createIjentSession(serviceAsync()).getIjentInstance(descriptor).use { ijent ->
               coroutineScope {
                 launch {
                   val info = ijent.ijentProcessInfo

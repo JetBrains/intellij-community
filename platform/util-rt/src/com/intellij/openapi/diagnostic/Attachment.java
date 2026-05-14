@@ -1,9 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic;
 
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,6 +9,8 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -21,9 +20,10 @@ import java.util.Base64;
  * @see com.intellij.openapi.diagnostic.AttachmentFactory
  */
 public final class Attachment {
-  private static final Logger LOG = Logger.getInstance(Attachment.class);
+  private static final LoggerRt LOG = LoggerRt.getInstance(Attachment.class);
 
   public static final Attachment[] EMPTY_ARRAY = new Attachment[0];
+  private static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
 
   private final String myPath;
   private final String myDisplayText;
@@ -32,7 +32,7 @@ public final class Attachment {
   private boolean myIncluded;   // opt-out for traces, opt-in otherwise
 
   public Attachment(@NotNull String name, @NotNull Throwable throwable) {
-    this(name + ".trace", ExceptionUtil.getThrowableText(throwable));
+    this(name + ".trace", getThrowableText(throwable));
     myIncluded = true;
   }
 
@@ -63,11 +63,11 @@ public final class Attachment {
     return myDisplayText;
   }
 
-  public @NotNull @NlsSafe String getPath() {
+  public @NotNull String getPath() {
     return myPath;
   }
 
-  public @NotNull @NlsSafe String getName() {
+  public @NotNull String getName() {
     return PathUtilRt.getFileName(myPath);
   }
 
@@ -93,7 +93,7 @@ public final class Attachment {
       return myDisplayText.getBytes(StandardCharsets.UTF_8);
     }
 
-    return ArrayUtil.EMPTY_BYTE_ARRAY;
+    return EMPTY_BYTE_ARRAY;
   }
 
   public @NotNull InputStream openContentStream() {
@@ -114,7 +114,7 @@ public final class Attachment {
       return new ByteArrayInputStream(myDisplayText.getBytes(StandardCharsets.UTF_8));
     }
 
-    return new ByteArrayInputStream(ArrayUtil.EMPTY_BYTE_ARRAY);
+    return new ByteArrayInputStream(EMPTY_BYTE_ARRAY);
   }
 
   public boolean isIncluded() {
@@ -128,5 +128,11 @@ public final class Attachment {
   @Override
   public String toString() {
     return "Attachment[" + myPath + "][" + getBytes().length + " bytes]";
+  }
+
+  private static @NotNull String getThrowableText(@NotNull Throwable throwable) {
+    StringWriter writer = new StringWriter();
+    throwable.printStackTrace(new PrintWriter(writer));
+    return writer.toString();
   }
 }

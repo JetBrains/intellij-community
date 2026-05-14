@@ -1,13 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io
 
-import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.util.ObjectUtils
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.runInterruptible
 import org.jetbrains.annotations.ApiStatus
 import kotlin.time.Duration
@@ -15,7 +12,6 @@ import kotlin.time.Duration.Companion.milliseconds
 
 @ApiStatus.Internal
 @DelicateCoroutinesApi
-@IntellijInternalApi
 @OptIn(ExperimentalCoroutinesApi::class)
 val blockingDispatcher: CoroutineDispatcher = Dispatchers.IO.limitedParallelism(parallelism = Int.MAX_VALUE)
 
@@ -46,7 +42,9 @@ internal value class Attempt<T> private constructor(private val value: T) {
       return Attempt(tryAgain) as Attempt<T>
     }
 
-    private val tryAgain: Any = ObjectUtils.sentinel("try again")
+    private val tryAgain: Any = object {
+      override fun toString(): String = "try again"
+    }
   }
 }
 

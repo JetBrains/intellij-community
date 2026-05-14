@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.tcp
 
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelMachine
@@ -99,7 +100,7 @@ abstract class TcpEelMachine(override val internalName: String) : EelMachine {
    */
   private suspend fun createSession(): IjentSession {
     return try {
-      val session = createStrategy().createIjentSession()
+      val session = createStrategy().createIjentSession(serviceAsync())
       state = SessionState.Started(session)
       session
     }

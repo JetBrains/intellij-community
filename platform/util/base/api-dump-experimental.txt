@@ -7,3 +7,9 @@ f:com.intellij.util.containers.CollectionFactory
 - *s:createSoftMap(com.intellij.util.containers.HashingStrategy,com.intellij.util.containers.CollectionFactory$EvictionListener):java.util.Map
 *:com.intellij.util.containers.CollectionFactory$EvictionListener
 - a:evicted(java.util.Map,I,java.lang.Object):V
+f:com.intellij.util.io.IoKt
+- *sf:copyToAsync(java.io.InputStream,java.io.OutputStream,I,J,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- *bs:copyToAsync$default(java.io.InputStream,java.io.OutputStream,I,J,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+f:com.intellij.util.io.ProcessKt
+- *sf:computeDetached(kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- *bs:computeDetached$default(kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object

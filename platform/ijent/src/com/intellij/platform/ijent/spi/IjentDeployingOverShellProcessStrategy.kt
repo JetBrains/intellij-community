@@ -1,12 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.spi
 
-import com.intellij.execution.CommandLineUtil.posixQuote
-import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.SafeDeferred
+import com.intellij.platform.ijent.IjentLog
 import com.intellij.platform.ijent.IjentScope
 import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.ijent.ParentOfIjentScopes
@@ -480,4 +477,18 @@ private suspend fun DeployingContextAndShell.execIjentWithTcp(remotePathToBinary
  * we see the situation of compiling a shell with a problematic version and increased global buffer as improbable.
  */
 private val BUGGY_DASH_BUFFER_FILLER: String get() = "\n".repeat(8192)
-private val LOG = logger<IjentDeployingOverShellProcessStrategy>()
+private val LOG = IjentLog.getInstance<IjentDeployingOverShellProcessStrategy>()
+
+private val SHELL_UNSAFE_CHARACTERS: Set<Char> = setOf(
+  '|', '&', ';', '<', '>', '(', ')', '$', '`', '\\', '"', '\'', ' ', '\t', '\n', '*', '?', '[', '#', '~', '=', '%',
+)
+
+/**
+ * Wraps [argument] in single quotes for safe use as a single token in a POSIX shell command line, escaping any
+ * embedded single quote as `'"'"'`. Returns [argument] unchanged when it has no shell-unsafe characters.
+ */
+private fun posixQuote(argument: String): String =
+  if (argument.isEmpty() || argument.any { it in SHELL_UNSAFE_CHARACTERS })
+    "'" + argument.replace("'", "'\"'\"'") + "'"
+  else
+    argument

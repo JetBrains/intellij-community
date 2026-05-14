@@ -47,8 +47,6 @@
 
   <xi:include href="/META-INF/WorkspaceModelExtensions.xml"/>
 
-  <xi:include href="/META-INF/IJent.xml"/>
-
   <xi:include href="intellij.platform.syntax.psi.xml">
     <xi:fallback/>
   </xi:include>

@@ -217,21 +217,6 @@ f:com.intellij.openapi.application.PathManager
 - s:getPreInstalledPluginsPath():java.lang.String
 - s:getResourceRoot(java.lang.Class,java.lang.String):java.lang.String
 - s:getResourceRoot(java.lang.ClassLoader,java.lang.String):java.lang.String
-f:com.intellij.openapi.diagnostic.Attachment
-- sf:EMPTY_ARRAY:com.intellij.openapi.diagnostic.Attachment[]
-- <init>(java.lang.String,java.io.File,java.lang.String):V
-- <init>(java.lang.String,java.lang.String):V
-- <init>(java.lang.String,java.lang.Throwable):V
-- <init>(java.lang.String,java.nio.file.Path,java.lang.String):V
-- <init>(java.lang.String,B[],java.lang.String):V
-- getBytes():B[]
-- getDisplayText():java.lang.String
-- getEncodedBytes():java.lang.String
-- getName():java.lang.String
-- getPath():java.lang.String
-- isIncluded():Z
-- openContentStream():java.io.InputStream
-- setIncluded(Z):V
 f:com.intellij.openapi.diagnostic.AttachmentFactory
 - <init>():V
 - s:createAttachment(java.lang.String,java.io.InputStream,J,Z):com.intellij.openapi.diagnostic.Attachment
@@ -458,12 +443,6 @@ f:com.intellij.openapi.util.IntRef
 - set(I):V
 @:com.intellij.openapi.util.IntellijInternalApi
 - java.lang.annotation.Annotation
-f:com.intellij.openapi.util.InvalidDataException
-- java.lang.RuntimeException
-- <init>():V
-- <init>(java.lang.String):V
-- <init>(java.lang.String,java.lang.Throwable):V
-- <init>(java.lang.Throwable):V
 c:com.intellij.openapi.util.JDOMExternalizableStringList
 - java.util.ArrayList
 - com.intellij.openapi.util.JDOMExternalizable
@@ -2207,17 +2186,6 @@ f:com.intellij.util.concurrency.BoundedTaskExecutor
 - isTerminated():Z
 - shutdown():V
 - shutdownNow():java.util.List
-f:com.intellij.util.concurrency.Semaphore
-- <init>():V
-- <init>(I):V
-- down():V
-- isUp():Z
-- tryUp():Z
-- up():V
-- waitFor():V
-- waitFor(J):Z
-- waitForUnsafe():V
-- waitForUnsafe(J):Z
 f:com.intellij.util.concurrency.SequentialTaskExecutor
 - s:createSequentialApplicationPoolExecutor(java.lang.String):java.util.concurrent.ExecutorService
 - s:createSequentialApplicationPoolExecutor(java.lang.String,java.util.concurrent.Executor):java.util.concurrent.ExecutorService
@@ -3798,10 +3766,6 @@ c:com.intellij.util.io.Compressor$Zip
 - withLevel(I):com.intellij.util.io.Compressor$Zip
 - p:writeDirectoryEntry(java.lang.String,J):V
 - p:writeFileEntry(java.lang.String,java.io.InputStream,J,J,I,java.lang.String):V
-f:com.intellij.util.io.CoroutinesKt
-- sf:await(java.util.concurrent.CompletableFuture,kotlin.coroutines.Continuation):java.lang.Object
-- sf:await(java.util.concurrent.Future,kotlin.coroutines.Continuation):java.lang.Object
-- sf:awaitFor(com.intellij.util.concurrency.Semaphore,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.util.io.CountingGZIPInputStream
 - java.util.zip.GZIPInputStream
 - s:create(java.io.InputStream):com.intellij.util.io.CountingGZIPInputStream
@@ -4059,11 +4023,6 @@ c:com.intellij.util.io.IntInlineKeyDescriptor
 - <init>():V
 - fromInt(I):java.lang.Integer
 - toInt(java.lang.Integer):I
-f:com.intellij.util.io.IoKt
-- sf:decodeBase64(java.lang.String):B[]
-- sf:readCharSequence(java.io.Reader,I):java.lang.CharSequence
-- sf:toByteArray(java.nio.ByteBuffer,Z):B[]
-- bs:toByteArray$default(java.nio.ByteBuffer,Z,I,java.lang.Object):B[]
 f:com.intellij.util.io.MultiCloseable
 - java.lang.AutoCloseable
 - <init>():V
@@ -4151,9 +4110,6 @@ f:com.intellij.util.io.PreemptiveSafeFileOutputStream
 - flush():V
 - write(I):V
 - write(B[],I,I):V
-f:com.intellij.util.io.ProcessKt
-- sf:awaitExit(java.lang.Process,kotlin.coroutines.Continuation):java.lang.Object
-- sf:readLineAsync(java.io.BufferedReader,kotlin.coroutines.Continuation):java.lang.Object
 c:com.intellij.util.io.ReplicatorInputStream
 - java.io.InputStream
 - <init>(java.io.InputStream,com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream):V

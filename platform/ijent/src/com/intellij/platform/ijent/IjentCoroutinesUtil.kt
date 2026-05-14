@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent
 
-import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.currentCoroutineContext
@@ -22,7 +21,7 @@ data class IjentCallerContext(
 
 fun IjentCallerContext.allowCancellableNio(): Boolean {
   return when {
-    isRead && !isWrite -> Registry.`is`("ijent.nio.cancellable.read")
+    isRead && !isWrite -> IjentRegistry.getInstance().isEnabled("ijent.nio.cancellable.read", true)
     else -> false
   }
 }

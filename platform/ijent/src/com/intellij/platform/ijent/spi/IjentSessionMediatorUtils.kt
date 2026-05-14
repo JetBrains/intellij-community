@@ -3,16 +3,14 @@
 package com.intellij.platform.ijent.spi
 
 import com.intellij.openapi.diagnostic.Attachment
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.progress.Cancellation
 import com.intellij.platform.eel.channels.EelDelicateApi
+import com.intellij.platform.ijent.IjentLog
 import com.intellij.platform.ijent.IjentLogger
 import com.intellij.platform.ijent.IjentScope
 import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.ijent.ParentOfIjentScopes
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.CollectionFactory
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineStart
@@ -32,6 +30,7 @@ import kotlinx.coroutines.yield
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.io.InputStream
+import java.lang.reflect.Method
 import java.time.ZonedDateTime
 import java.time.format.DateTimeParseException
 import java.util.Collections
@@ -41,9 +40,9 @@ import kotlin.time.toKotlinDuration
 
 @ApiStatus.Internal
 object IjentSessionMediatorUtils {
-  private val loggedErrors = Collections.newSetFromMap(ContainerUtil.createConcurrentWeakMap<Throwable, Boolean>())
+  private val loggedErrors = Collections.newSetFromMap(CollectionFactory.createConcurrentWeakMap<Throwable, Boolean>())
 
-  fun createProcessScope(parentScope: ParentOfIjentScopes, ijentLabel: String, logger: Logger): IjentScope {
+  fun createProcessScope(parentScope: ParentOfIjentScopes, ijentLabel: String, logger: IjentLog): IjentScope {
     val context = IjentThreadPool.coroutineContext
     // Prevents from logging the error by the default exception handler.
     // Errors are logged explicitly in this function.
@@ -87,10 +86,12 @@ object IjentSessionMediatorUtils {
     return IjentScope(parentScope, ijentProcessScope)
   }
 
-  fun logIjentError(logger: Logger, ijentLabel: String, exception: Throwable) {
-    // The logger can create new services, and since this function is called inside an already failed coroutine context,
-    // service creation would be impossible without `executeInNonCancelableSection`.
-    Cancellation.executeInNonCancelableSection {
+  fun logIjentError(logger: IjentLog, ijentLabel: String, exception: Throwable) {
+    // Wrapped in a non-cancellable section because this can be called from `invokeOnCompletion`
+    // of an already-cancelled scope, and `logger.error(...)` may create application services
+    // (e.g. error-report submitters) that the service container refuses to instantiate under a
+    // cancelled Job. See [runInNonCancellableSection].
+    runInNonCancellableSection {
       when (exception) {
         is IjentUnavailableException -> when (exception) {
           is IjentUnavailableException.ClosedByApplication -> Unit
@@ -117,7 +118,7 @@ object IjentSessionMediatorUtils {
     errorStream: InputStream,
     ijentLabel: String,
     lastStderrMessages: MutableSharedFlow<String?>,
-    logger: Logger,
+    logger: IjentLog,
   ) {
     val lineConsumer = createIjentStderrLineConsumer(ijentLabel, lastStderrMessages, logger)
     try {
@@ -139,7 +140,7 @@ object IjentSessionMediatorUtils {
   fun createIjentStderrLineConsumer(
     ijentLabel: String,
     lastStderrMessages: MutableSharedFlow<String?>,
-    logger: Logger,
+    logger: IjentLog,
   ): IjentStderrLineConsumer {
     val logIjentStderr = LogIjentStderr(logger)
     return IjentStderrLineConsumer(lastStderrMessages) { line ->
@@ -175,13 +176,13 @@ object IjentSessionMediatorUtils {
     RegexOption.COMMENTS,
   )
 
-  private val logTargets: Map<String, Logger> by lazy {
+  private val logTargets: Map<String, IjentLog> by lazy {
     IjentLogger.ALL_LOGGERS.mapKeys { (loggerName, _) ->
       loggerName.removePrefix("#com.intellij.platform.ijent.")
     }
   }
 
-  private class LogIjentStderr(private val logger: Logger) {
+  private class LogIjentStderr(private val logger: IjentLog) {
     private var lastLoggingHandler: ((String) -> Unit)? = null
 
     operator fun invoke(ijentLabel: String, line: String) {
@@ -252,7 +253,7 @@ object IjentSessionMediatorUtils {
   suspend fun ijentProcessExitCodeHandler(
     ijentLabel: String,
     lastStderrMessages: MutableSharedFlow<String?>,
-    logger: Logger,
+    logger: IjentLog,
     exitCode: Int,
     isExitExpected: Boolean,
   ): Nothing {
@@ -322,5 +323,52 @@ object IjentSessionMediatorUtils {
       mediatorFinalizer()
 
     }
+  }
+}
+
+/**
+ * Runs [block] in a context where the current Job appears active to IntelliJ's cancellation machinery,
+ * even if the surrounding coroutine has already been cancelled.
+ *
+ * Why this exists: [IjentSessionMediatorUtils.logIjentError] is invoked from `invokeOnCompletion { ... }`
+ * of a scope that has just been cancelled. Inside, the platform's `Logger.error(message, throwable)` may
+ * need to create application services (e.g. an error-report submitter, message-pool listeners) — the
+ * service container refuses to do that under a cancelled `Job` and throws `ProcessCanceledException`
+ * instead. Wrapping the call masks the cancelled job locally so service creation succeeds; the actual
+ * ijent error is what gets logged, not a confusing PCE on top.
+ *
+ * The implementation reflectively delegates to `com.intellij.openapi.progress.Cancellation`
+ * (which installs a `NonCancellable` job into the thread context). It lives in `intellij.platform.util`,
+ * which the small ijent core deliberately does not depend on; if the class is not on the runtime
+ * classpath (lightweight contexts, no IDE), [block] runs as-is — there is no service container to placate
+ * in that case.
+ */
+private fun <T> runInNonCancellableSection(block: () -> T): T {
+  val invoker = CANCELLATION_INVOKER ?: return block()
+
+  var result: Any? = null
+  var error: Throwable? = null
+  invoker(Runnable {
+    try {
+      result = block()
+    }
+    catch (t: Throwable) {
+      error = t
+    }
+  })
+  error?.let { throw it }
+  @Suppress("UNCHECKED_CAST")
+  return result as T
+}
+
+private val CANCELLATION_INVOKER: ((Runnable) -> Unit)? = run {
+  try {
+    val method: Method = Class.forName("com.intellij.openapi.progress.Cancellation")
+      .getMethod("executeInNonCancelableSection", Runnable::class.java)
+      .apply { isAccessible = true }
+    return@run { runnable -> method.invoke(null, runnable) }
+  }
+  catch (_: Throwable) {
+    null
   }
 }

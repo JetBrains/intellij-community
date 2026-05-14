@@ -44,7 +44,7 @@
     <orderEntry type="module" module-name="intellij.libraries.commons.lang3" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.util.base" />
+    <orderEntry type="module" module-name="intellij.platform.util.base" exported="" />
     <orderEntry type="module" module-name="intellij.platform.util.base.multiplatform" />
     <orderEntry type="module" module-name="intellij.libraries.aalto.xml" />
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />

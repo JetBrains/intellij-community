@@ -21,5 +21,5 @@ interface IjentDeployingStrategy {
    * Creates a new IJent session in the target environment.
    * This method should be called exactly once.
    */
-  suspend fun createIjentSession(): IjentSession
+  suspend fun createIjentSession(provider: IjentSessionProvider): IjentSession
 }

@@ -4,7 +4,6 @@ package com.intellij.platform.ide.impl.wsl
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslIjentAvailabilityService
 import com.intellij.execution.wsl.WslIjentManager
-import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelDescriptor
@@ -48,10 +47,9 @@ class ProductionWslIjentManager(private val scope: CoroutineScope) : WslIjentMan
     rootUser: Boolean,
     sessionScope: ParentOfIjentScopes,
   ): IjentSession.Posix {
-    val ijentSessionRegistry = IjentSessionRegistry.instanceAsync()
     val ijentIdLabel = ijentIdLabel(wslDistribution, rootUser)
     val ijentId = myCache.computeIfAbsent(ijentIdLabel) { ijentName ->
-      val ijentId = ijentSessionRegistry.register(ijentName) { ijentId ->
+      val ijentId = IjentSessionRegistry.register(ijentName) { ijentId ->
         val ijentSession = wslDistribution.createIjentSession(
           sessionScope,
           project,
@@ -64,13 +62,13 @@ class ProductionWslIjentManager(private val scope: CoroutineScope) : WslIjentMan
         ijentSession
       }
       sessionScope.s.coroutineContext.job.invokeOnCompletion {
-        ijentSessionRegistry.unregister(ijentId)
+        IjentSessionRegistry.unregister(ijentId)
         myCache.remove(ijentName)
       }
       ijentId
     }
     initializedIjents.add(ijentIdLabel)
-    return ijentSessionRegistry.get(ijentId)
+    return IjentSessionRegistry.get(ijentId)
   }
 
   override suspend fun getIjentApi(descriptor: EelDescriptor?, wslDistribution: WSLDistribution, project: Project?, rootUser: Boolean): IjentPosixApi {
@@ -96,9 +94,8 @@ class ProductionWslIjentManager(private val scope: CoroutineScope) : WslIjentMan
 
   @VisibleForTesting
   fun dropCache() {
-    val ijentSessionRegistry = serviceIfCreated<IjentSessionRegistry>()
     myCache.values.removeAll { ijentId ->
-      ijentSessionRegistry?.unregister(ijentId)
+      IjentSessionRegistry.unregister(ijentId)
       true
     }
   }

@@ -4,9 +4,11 @@ package com.intellij.platform.ide.impl.wsl
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.wsl.WSLCommandLineOptions
 import com.intellij.execution.wsl.WSLDistribution
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ijent.IjentExecFileProvider
 import com.intellij.platform.ijent.ParentOfIjentScopes
 import com.intellij.platform.ijent.spi.IjentConnectionStrategy
 import com.intellij.platform.ijent.spi.IjentDeployingOverShellProcessStrategy
@@ -53,4 +55,6 @@ class WslIjentDeployingStrategy(
       }
     }
   }
+
+  override val ijentExecFileProvider: IjentExecFileProvider = service()
 }

@@ -2048,6 +2048,7 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
                         preload="notHeadless" os="linux"/>
 
     <projectPreInit implementation="com.intellij.execution.eel.EelProjectPreInit" order="before initialProjectSynchronizer"/>
+    <logLevelConfigurationListener implementation="com.intellij.diagnostic.logs.ijent.IjentLogLevelListener"/>
     <applicationActivity implementation="com.intellij.ide.SwingTooltipManagerCustomizer"/>
     <registryKey key="rhizome.progress.model"
                  defaultValue="false"

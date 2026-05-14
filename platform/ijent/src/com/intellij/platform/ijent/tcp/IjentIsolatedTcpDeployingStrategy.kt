@@ -19,5 +19,5 @@ abstract class IjentIsolatedTcpDeployingStrategy : IjentDeployingStrategy {
    */
   protected abstract suspend fun deploy(): IjentConnectionContext
 
-  final override suspend fun createIjentSession(): IjentSession = IjentSessionProvider.instanceAsync().connect(deploy())
+  final override suspend fun createIjentSession(provider: IjentSessionProvider): IjentSession = provider.connect(deploy())
 }

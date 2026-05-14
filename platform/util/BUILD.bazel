@@ -45,6 +45,7 @@ jvm_library(
   exports = [
     "@lib//:jetbrains-annotations",
     "//platform/util-rt",
+    "//platform/util/base",
     "//platform/icons-api",
     "//platform/icons-api/rendering",
   ],
@@ -66,6 +67,8 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "//platform/util-rt",
     "//platform/util-rt:util-rt_test_lib",
+    "//platform/util/base",
+    "//platform/util/base:base_test_lib",
     "//platform/icons-api",
     "//platform/icons-api:icons-api_test_lib",
     "//platform/icons-api/rendering",

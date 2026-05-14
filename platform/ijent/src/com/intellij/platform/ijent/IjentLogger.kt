@@ -1,8 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent
 
-import com.intellij.openapi.diagnostic.Logger
-
 /**
  * List of custom loggers for IJent.
  *
@@ -11,60 +9,60 @@ import com.intellij.openapi.diagnostic.Logger
  * Enable trace loggers cautiously.
  */
 object IjentLogger {
-  private val _all_loggers = linkedMapOf<String, Logger>()
-  val ALL_LOGGERS: Map<String, Logger> get() = _all_loggers
+  private val _all_loggers = linkedMapOf<String, IjentLog>()
+  val ALL_LOGGERS: Map<String, IjentLog> get() = _all_loggers
 
-  private fun logger(name: String): Logger {
-    val l = Logger.getInstance(name)
+  private fun logger(name: String): IjentLog {
+    val l = IjentLog.getInstance(name)
     _all_loggers[name] = l
     return l
   }
 
-  val CONN_MGR_LOG: Logger = logger("#com.intellij.platform.ijent.conn_mgr")
+  val CONN_MGR_LOG: IjentLog = logger("#com.intellij.platform.ijent.conn_mgr")
 
   /**
    * Fetching environment variables.
    */
-  val ENV_VAR_LOG: Logger = logger("#com.intellij.platform.ijent.env_var")
+  val ENV_VAR_LOG: IjentLog = logger("#com.intellij.platform.ijent.env_var")
 
   /**
    * Processes: launch, stdio, exit codes, signals.
    */
-  val EXEC_LOG: Logger = logger("#com.intellij.platform.ijent.exec")
+  val EXEC_LOG: IjentLog = logger("#com.intellij.platform.ijent.exec")
 
   /**
    * External CLI handlers. Logs similar to processes.
    */
-  val EXT_CLI_LOG: Logger = logger("#com.intellij.platform.ijent.ext_cli")
+  val EXT_CLI_LOG: IjentLog = logger("#com.intellij.platform.ijent.ext_cli")
 
   /**
    * Requests to watch/unwatch files. List of changed files.
    */
-  val FILE_WATCHER_LOG: Logger = logger("#com.intellij.platform.ijent.file_watcher")
+  val FILE_WATCHER_LOG: IjentLog = logger("#com.intellij.platform.ijent.file_watcher")
 
   /**
    * All filesystem operations excluding reading and writing files.
    */
-  val FS_LOG: Logger = logger("#com.intellij.platform.ijent.fs")
+  val FS_LOG: IjentLog = logger("#com.intellij.platform.ijent.fs")
 
   /**
    * Dedicated logger for reading and writing files that can show contents of files.
    */
-  val FS_FILE_CONTENT_LOG: Logger = logger("#com.intellij.platform.ijent.fs_file_content")
+  val FS_FILE_CONTENT_LOG: IjentLog = logger("#com.intellij.platform.ijent.fs_file_content")
 
   /**
    * gRPC requests and responses.
    */
-  val GRPC_LOG: Logger = logger("#com.intellij.platform.ijent.grpc")
+  val GRPC_LOG: IjentLog = logger("#com.intellij.platform.ijent.grpc")
 
   /**
    * Everything that doesn't fit the other categories.
    */
-  val OTHER_LOG: Logger = logger("#com.intellij.platform.ijent.other")
+  val OTHER_LOG: IjentLog = logger("#com.intellij.platform.ijent.other")
 
   /**
    * TCP tunnels (TODO).
    * Unix sockets.
    */
-  val TUNNELS_LOG: Logger = logger("#com.intellij.platform.ijent.tunnels")
+  val TUNNELS_LOG: IjentLog = logger("#com.intellij.platform.ijent.tunnels")
 }
