@@ -803,6 +803,19 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
         assertNotNull(elements.firstOrNull { element -> element.lookupString.contains("Live template", ignoreCase = true) })
     }
 
+    fun testIntentionReplaceWithUnderscore() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(
+            "x.kt", """
+                    fun <K, T> foo(x: (K) -> T): Pair<K, T> = TODO()
+                    
+                    val x = foo<Int.<caret>, _> { a: Int -> a.toFloat() }
+          """.trimIndent()
+        )
+        val elements = myFixture.completeBasic()
+        assertNotNull(elements.firstOrNull { element -> element.lookupString.contains("Replace explicit type with '_'", ignoreCase = true) })
+    }
+
     fun testPostfixIterPreview() {
         LiveTemplateCompletionContributor.setShowTemplatesInTests(true, getTestRootDisposable())
         myFixture.configureByText(

@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.util
 
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.isAncestor
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
@@ -179,16 +180,31 @@ fun KtTypeProjection.canBeReplacedWithUnderscore(callExpression: KtCallExpressio
 
 @OptIn(KaExperimentalApi::class)
 private fun buildCallExpressionWithUnderscores(element: KtCallExpression, typeProjectionToReplace: KtTypeProjection): KtCallExpression? {
-    val fileCopy = if (element.containingKtFile.copyOrigin != null) {
-        /**
-         * In intention actions such as
-         * [org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction],
-         * the PSI context is recomputed on a copied file right before the intention is invoked.
-         * In such cases, we can reuse and modify that existing copy instead of creating a new one.
-         *
-         * @see org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction.perform
-         */
-        element.containingFile
+    val copyOrigin = element.containingKtFile.copyOrigin
+    val fileCopy = if (copyOrigin != null) {
+        if (element.containingFile.isPhysical) {
+            /**
+             * It is a copy but marked as a physical.
+             * It is necessary to collect problems and can be used FLC or Command Completion. The document should be up to date.
+             * It is impossible to create a copy of a copy, so let's create a copy from the original file and replace the text.
+             */
+            val copyOrigin = copyOrigin
+            val copied = copyOrigin.copied()
+            val copyFileDocument = copied.fileDocument
+            copyFileDocument.replaceString(0, copyFileDocument.text.length, element.containingKtFile.fileDocument.text)
+            PsiDocumentManager.getInstance(element.project).commitDocument(copyFileDocument)
+            copied
+        } else {
+            /**
+             * In intention actions such as
+             * [org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction],
+             * the PSI context is recomputed on a copied file right before the intention is invoked.
+             * In such cases, we can reuse and modify that existing copy instead of creating a new one.
+             *
+             * @see org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction.perform
+             */
+            element.containingFile
+        }
     } else {
         element.containingKtFile.copied()
     }
