@@ -14,7 +14,6 @@ import com.intellij.platform.ijent.ParentOfIjentScopes
 import com.intellij.platform.ijent.coroutineNameAppended
 import com.intellij.platform.ijent.spi.IjentSessionProcessMediator.ProcessExitPolicy.CHECK_CODE
 import com.intellij.platform.ijent.spi.IjentSessionProcessMediator.ProcessExitPolicy.NORMAL
-import com.intellij.util.io.awaitExit
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -24,6 +23,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withTimeoutOrNull
 import java.io.InputStream
 import java.io.OutputStream
@@ -64,7 +64,22 @@ class IjentSessionProcessMediator private constructor(
     override val outputStream: OutputStream = process.outputStream
     override val inputStream: InputStream = process.inputStream
     override val errorStream: InputStream = process.errorStream
-    override val exitCode: SafeDeferred<Int> = SafeDeferred(ijentProcessScope.parent.s.async { process.awaitExit() })
+
+    // Pin the blocking `Process.waitFor()` call to `IjentThreadPool` via the explicit
+    // `runInterruptible` context. `Process.awaitExit()` would otherwise route the JDK
+    // wait through `runInterruptible(Dispatchers.IO)`, parking a `DefaultDispatcher-worker-*`
+    // thread that `ThreadLeakTracker.wellKnownOffenders` does not whitelist — so the
+    // watcher would be reported as a leak whenever the ijent session is still alive at
+    // the moment leak detection runs (e.g. an IDE Starter test on WSL where the manager
+    // scope outlives the test). `IjentThreadPool-` is whitelisted, and `runInterruptible`
+    // still delivers a thread interrupt on cancellation.
+    override val exitCode: SafeDeferred<Int> = SafeDeferred(ijentProcessScope.parent.s.async {
+      runInterruptible(IjentThreadPool.coroutineContext) {
+        @Suppress("UsePlatformProcessAwaitExit")
+        process.waitFor()
+      }
+      process.exitValue()
+    })
     override val isAlive: Boolean get() = process.isAlive
 
     override fun destroyForcibly() {
