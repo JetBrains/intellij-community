@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
+import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManagerFactory;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemModulePropertyManagerBridge;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -76,7 +77,8 @@ public class GradleProjectResolverUtilTest {
     when(module.getEntityStorage()).thenReturn(new VersionedEntityStorageOnSnapshot(builder.toSnapshot()));
 
     ExternalSystemModulePropertyManager modulePropertyManager = new ExternalSystemModulePropertyManagerBridge(module);
-    when(module.getService(ExternalSystemModulePropertyManager.class)).thenReturn(modulePropertyManager);
+    ExternalSystemModulePropertyManagerFactory modulePropertyManagerFactory = ignored -> modulePropertyManager;
+    when(project.getService(ExternalSystemModulePropertyManagerFactory.class)).thenReturn(modulePropertyManagerFactory);
 
     return module;
   }

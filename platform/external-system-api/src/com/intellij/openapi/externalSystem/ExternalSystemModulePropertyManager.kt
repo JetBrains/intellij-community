@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
@@ -33,6 +34,12 @@ abstract class ExternalSystemModulePropertyManager {
 
   companion object {
     @JvmStatic
-    fun getInstance(module: Module): ExternalSystemModulePropertyManager = module.getService(ExternalSystemModulePropertyManager::class.java)!!
+    fun getInstance(module: Module): ExternalSystemModulePropertyManager =
+      module.project.service<ExternalSystemModulePropertyManagerFactory>().getService(module)
   }
+}
+
+@ApiStatus.Internal
+interface ExternalSystemModulePropertyManagerFactory {
+  fun getService(module: Module): ExternalSystemModulePropertyManager
 }
