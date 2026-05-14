@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory.IntentionBased
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.CleanupFix
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinPsiOnlyQuickFixAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.AddQualifiersUtil
 import org.jetbrains.kotlin.idea.core.moveCaret
@@ -135,7 +136,7 @@ internal object DeprecationFixFactory {
 class DeprecatedSymbolUsageFix(
     element: KtReferenceExpression,
     replaceWith: ReplaceWithData
-) : DeprecatedSymbolUsageFixBase(element, replaceWith), HighPriorityAction {
+) : DeprecatedSymbolUsageFixBase(element, replaceWith), HighPriorityAction, CleanupFix {
     override fun getFamilyName(): String = KotlinBundle.message("replace.deprecated.symbol.usage")
     override fun getText(): String = KotlinBundle.message("replace.with.0", replaceWith.pattern)
 

@@ -5,6 +5,7 @@ import com.intellij.modcommand.ModCommandAction
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.CleanupFix
 import org.jetbrains.kotlin.idea.quickfix.AddModifierFix
 import org.jetbrains.kotlin.idea.refactoring.canRefactorElement
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
@@ -25,10 +26,10 @@ internal object ModifierRequiredFixFactories {
 private fun createFixIfAvailable(
     functionSymbol: KaFunctionSymbol,
     modifier: KtModifierKeywordToken,
-    ): ModCommandAction? {
+): ModCommandAction? {
     val element = (functionSymbol.psi as? KtModifierListOwner)?.takeIf {
         it.canRefactorElement()
     } ?: return null
 
-    return AddModifierFix(element, modifier)
+    return object : AddModifierFix(element, modifier), CleanupFix.ModCommand {}
 }

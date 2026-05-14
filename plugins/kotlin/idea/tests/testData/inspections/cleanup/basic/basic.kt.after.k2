@@ -1,4 +1,3 @@
-import pack.bar
 import pack.oldFun2 // should not be removed for non-deprecated overload used
 import kotlin.reflect.KProperty
 import some.unresolved.declaration // should not be removed
@@ -6,13 +5,16 @@ import some.unresolved.declaration // should not be removed
 class A private constructor()
 
 fun foo() {
+    @loop
     for (i in 1..100) {
-        val v = bar(i + 2)
+        bar(i + 2)
+        val v = Unit
         /* comment */
         continue@loop
     }
 
-    bar(bar(10 + 2) + 1)
+    bar(10 + 2)
+    bar(Unit + 1)
 
     oldFun2()
 }

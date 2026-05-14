@@ -4,15 +4,20 @@ package org.jetbrains.kotlin.idea.fir.inspections
 import com.intellij.analysis.AnalysisScope
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.TestRoot
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.SortModifiersInspection
+import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.KotlinCleanupInspection
+import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased.RedundantModalityModifierInspection
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
+import kotlin.jvm.java
 
 @TestRoot("idea/tests")
 @TestMetadata("testData/inspections/cleanup")
@@ -22,7 +27,11 @@ class KotlinCleanupInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
 
     override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
+    @OptIn(IntellijInternalApi::class)
     private fun doTest(dir: String, result: String, vararg files: String) {
+        myFixture.enableInspections(KotlinCleanupInspection::class.java)
+        myFixture.enableInspections(SortModifiersInspection::class.java)
+        myFixture.enableInspections(RedundantModalityModifierInspection::class.java)
         myFixture.configureByFiles(*files.map { "$dir/$it" }.toTypedArray())
 
         val project = myFixture.project
@@ -35,13 +44,11 @@ class KotlinCleanupInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
         myFixture.checkResultByFile("$dir/$result")
     }
 
-    // IGNORE_K2 KTIJ-38163
-    fun _testBasic() {
-        doTest("basic", "basic.kt.after", "basic.kt", "JavaAnn.java", "deprecatedSymbols.kt")
+    fun testBasic() {
+        doTest("basic", "basic.kt.after.k2", "basic.kt", "JavaAnn.java", "deprecatedSymbols.kt")
     }
 
-    // IGNORE_K2 KTIJ-38163
-    fun _testExpressionWithMultipleDeprecatedCalls() {
+    fun testExpressionWithMultipleDeprecatedCalls() {
         doTest(
             "expressionWithMultipleDeprecatedCalls",
             "expressionWithMultipleDeprecatedCalls.kt.after",

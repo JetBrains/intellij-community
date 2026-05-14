@@ -1,7 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased
 
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -14,7 +16,9 @@ import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.psiUtil.modalityModifierType
 import kotlin.reflect.KClass
 
-internal class RedundantModalityModifierInspection :
+@ApiStatus.Internal
+@IntellijInternalApi
+class RedundantModalityModifierInspection :
     RedundantModifierInspectionBase<KaFirDiagnostic.RedundantModalityModifier>(KtTokens.MODALITY_MODIFIERS) {
 
     override fun createQuickFix(
