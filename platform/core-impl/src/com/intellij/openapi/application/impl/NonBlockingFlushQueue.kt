@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Ref
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.TimeUnit
@@ -256,8 +257,8 @@ class NonBlockingFlushQueue(private val threadingSupport: ThreadingSupport) {
     }
   }
 
+  @RequiresEdt(generateAssertion = false/*already asserted*/)
   private fun reincludeSkippedItems(list: Ref<ObjectArrayList<RunnableInfo>>, mainQueue: BulkArrayQueue<in RunnableInfo>) {
-    ThreadingAssertions.assertEventDispatchThread()
     val size = list.get().size
     if (size != 0) {
       synchronized(lockObject) {
