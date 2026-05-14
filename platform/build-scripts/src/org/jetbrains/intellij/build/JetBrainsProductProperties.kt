@@ -115,7 +115,8 @@ private fun isIntentionallyIgnored(problem: PluginProblem, pluginId: String?): B
       pluginId == "com.jetbrains.php.joomla" || // Joomla!
       pluginId == "com.intellij.zh" || // Chinese (Simplified) Language Pack / 中文语言包
       pluginId == "com.intellij.ko" || // Korean Language Pack / 한국어 언어 팩
-      pluginId == "com.intellij.ja" // Japanese Language Pack / 日本語言語パック
+      pluginId == "com.intellij.ja" || // Japanese Language Pack / 日本語言語パック
+      pluginId == "com.intellij.clion.west" // CLion Integration for Zephyr® Project
     /**
      * According to https://plugins.jetbrains.com/docs/marketplace/add-required-parameters.html:
      * > Please make sure the `release-version` and the `version` parameters match.
