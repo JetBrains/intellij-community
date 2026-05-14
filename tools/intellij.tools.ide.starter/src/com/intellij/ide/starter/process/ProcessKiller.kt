@@ -131,7 +131,13 @@ object ProcessKiller {
       }
   }
 
+  @OptIn(LowLevelLocalMachineAccess::class)
   private suspend fun forcefulKill(processHandle: ProcessHandle, forcefulTimeout: Duration, cleanUpDescendants: Boolean = true) {
+    // On Windows we deliberately don't iterate descendants — see the MRI-4085 note at the top of the file.
+    val descendantsSnapshot: List<ProcessHandle> =
+      if (cleanUpDescendants && OS.CURRENT.platform == Platform.UNIX) processHandle.descendants().toList()
+      else emptyList()
+
     runCatching {
       if (cleanUpDescendants) {
         logOutput("${processHandleToString(processHandle)}: Killing process tree")
@@ -150,7 +156,12 @@ object ProcessKiller {
       }.onSuccess { successFulForceKill ->
         if (successFulForceKill) {
           catchAll("${processHandleToString(processHandle)}: Waiting for exit after Forceful kill with $forcefulTimeout timeout") {
-            withTimeout(forcefulTimeout) { processHandle.onExit().await() }
+            withTimeout(forcefulTimeout) {
+              processHandle.onExit().await()
+              descendantsSnapshot.forEach { descendant ->
+                descendant.onExit().await()
+              }
+            }
           }
         }
         else {
