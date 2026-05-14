@@ -52,6 +52,7 @@ if [[ -n "$BUILD_NUMBER" ]]; then
 fi
 
 pushd "$PROG_DIR"
+./bazel.cmd fetch --force --repo=@jps_dynamic_deps_community # Rerun the jps-to-bazel converter to ensure BUILD files are up-to-date.
 ./bazel.cmd "${BAZEL_STARTUP_FLAGS[@]}" run --config=ci //build:i_build_target_studio -- "${BUILD_PROPERTIES[@]/#/--jvm_flag=}"
 popd
 
