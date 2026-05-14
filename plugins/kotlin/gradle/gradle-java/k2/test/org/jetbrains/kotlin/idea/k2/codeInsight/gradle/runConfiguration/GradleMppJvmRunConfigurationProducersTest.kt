@@ -1,11 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.kotlin.idea.codeInsight.gradle
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.k2.codeInsight.gradle.runConfiguration
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.listRepositories
+import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions
 import org.jetbrains.kotlin.idea.gradleJava.testing.KotlinMultiplatformAllInDirectoryConfigurationProducer
 import org.jetbrains.kotlin.idea.gradleJava.testing.KotlinMultiplatformAllInPackageConfigurationProducer
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
@@ -21,7 +22,7 @@ import org.jetbrains.plugins.gradle.util.runReadActionAndWait
 import org.junit.Test
 
 /**
- * See paired [GradleMppNoJvmRunConfigurationProducersTest216]
+ * See paired [org.jetbrains.kotlin.idea.codeInsight.gradle.GradleMppNoJvmRunConfigurationProducersTest216]
  */
 class GradleMppJvmRunConfigurationProducersTest4 : GradleTestRunConfigurationProducerTestCase(), ExpectedPluginModeProvider {
     override val pluginMode: KotlinPluginMode = KotlinPluginMode.K1
