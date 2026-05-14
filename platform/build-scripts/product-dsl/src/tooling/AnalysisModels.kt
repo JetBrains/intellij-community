@@ -79,11 +79,12 @@ data class ModuleSetMetadata(
 /**
  * JSON filter for selective analysis output.
  * Supports various filter types: products, moduleSets, composition, duplicates, mergeImpact, modulePaths,
- * moduleDependencies, moduleOwners, moduleReachability, dependencyPath, productUsage, or specific items.
+ * moduleDependencies, moduleOwners, moduleReachability, dependencyPath, productUsage,
+ * embeddedDependencyClosure, or specific items.
  */
 @Serializable
 data class JsonFilter(
-  @JvmField val filter: String,  // "products", "moduleSets", "composition", "duplicates", "mergeImpact", "modulePaths", "product", "moduleSet", "moduleDependencies", "moduleOwners", "moduleReachability", "dependencyPath", "productUsage"
+  @JvmField val filter: String,  // "products", "moduleSets", "composition", "duplicates", "mergeImpact", "modulePaths", "product", "moduleSet", "moduleDependencies", "moduleOwners", "moduleReachability", "dependencyPath", "productUsage", "embeddedDependencyClosure"
   @JvmField val value: String? = null,  // Product/module set name when filter is "product" or "moduleSet"
   @JvmField val module: String? = null,  // Module name for "modulePaths", "moduleDependencies" filters
   @JvmField val moduleSet: String? = null,  // Module set name for "moduleReachability" or "productUsage" filter
@@ -98,6 +99,7 @@ data class JsonFilter(
   @JvmField val includeTestDependencies: Boolean = false,  // Include TEST-scoped target deps in moduleDependencies/dependencyPath
   @JvmField val includeTestSources: Boolean = false,  // Include test plugin owners in moduleOwners
   @JvmField val includeScopes: Boolean = false,  // Include dependency scopes in dependencyPath result
+  @JvmField val pluginSourceOnly: Boolean = false,  // For embeddedDependencyClosure: only report dependencies supplied by bundled plugins
 )
 
 /**

@@ -15,6 +15,7 @@ import org.jetbrains.intellij.build.productLayout.tooling.analyzeProductUsage
 import org.jetbrains.intellij.build.productLayout.tooling.detectModuleSetOverlap
 import org.jetbrains.intellij.build.productLayout.tooling.suggestModuleSetUnification
 import org.jetbrains.intellij.build.productLayout.traversal.checkModuleReachability
+import org.jetbrains.intellij.build.productLayout.traversal.analyzeEmbeddedDependencyClosure
 import org.jetbrains.intellij.build.productLayout.traversal.findDependencyPath
 import org.jetbrains.intellij.build.productLayout.traversal.findModulePaths
 import org.jetbrains.intellij.build.productLayout.traversal.getModuleDependencies
@@ -124,6 +125,7 @@ private suspend fun applyFilter(
     "moduleReachability" -> handleModuleReachabilityFilter(gen, filter, pluginGraph)
     "dependencyPath" -> handleDependencyPathFilter(gen, filter, pluginGraph)
     "productUsage" -> handleProductUsageFilter(gen, filter.moduleSet, products, pluginGraph)
+    "embeddedDependencyClosure" -> handleEmbeddedDependencyClosureFilter(gen, filter, pluginGraph)
     else -> gen.writeStringProperty("error", "Unknown filter: ${filter.filter}")
   }
 }
@@ -324,6 +326,22 @@ private fun handleProductUsageFilter(
   val usage = analyzeProductUsage(moduleSetName, products, pluginGraph)
   gen.writeName("productUsage")
   writeProductUsageAnalysis(gen, usage)
+}
+
+private fun handleEmbeddedDependencyClosureFilter(
+  gen: JsonGenerator,
+  filter: JsonFilter,
+  pluginGraph: PluginGraph,
+) {
+  val result = analyzeEmbeddedDependencyClosure(
+    graph = pluginGraph,
+    productName = filter.value,
+    moduleSetName = filter.moduleSet,
+    moduleName = filter.module,
+    pluginSourceOnly = filter.pluginSourceOnly,
+  )
+  gen.writeName("embeddedDependencyClosure")
+  writeEmbeddedDependencyClosureResult(gen, result)
 }
 
 /**

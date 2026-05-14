@@ -239,8 +239,8 @@ object CommunityModuleSets {
   fun xml(): ModuleSet = moduleSet("xml", alias = "com.intellij.modules.xml") {
     embeddedModule("intellij.xml.dom")
     embeddedModule("intellij.xml.dom.impl")
-    embeddedModule("intellij.xml.structureView")
-    embeddedModule("intellij.xml.structureView.impl")
+    module("intellij.xml.structureView")
+    module("intellij.xml.structureView.impl")
     embeddedModule("intellij.xml.psi")
     embeddedModule("intellij.xml.psi.impl")
     embeddedModule("intellij.xml.analysis")

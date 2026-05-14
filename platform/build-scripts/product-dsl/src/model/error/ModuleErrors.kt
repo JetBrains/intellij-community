@@ -375,3 +375,61 @@ data class ImplicitEmbeddedContentModuleError(
     appendLine()
   }
 }
+
+data class EmbeddedContentModuleSource(
+  @JvmField val kind: String,
+  @JvmField val name: String,
+  @JvmField val loading: String?,
+)
+
+data class EmbeddedContentModuleDependencyIssue(
+  @JvmField val sourceModule: String,
+  @JvmField val dependency: String,
+  @JvmField val dependencyPath: List<String>,
+  @JvmField val dependencySources: List<EmbeddedContentModuleSource>,
+)
+
+/**
+ * Reported when a product/module-set embedded content module depends on content
+ * supplied by a bundled plugin wrapper. Such a dependency crosses from the main
+ * classloader into a separately loaded plugin classloader and can create runtime
+ * loader cycles.
+ */
+data class EmbeddedContentModuleDependencyError(
+  override val context: String,
+  @JvmField val violations: List<EmbeddedContentModuleDependencyIssue>,
+  override val ruleName: String = "EmbeddedContentModuleDependencyValidation",
+) : ValidationError {
+  override val category: ErrorCategory get() = ErrorCategory.EMBEDDED_CONTENT_MODULE_DEPENDENCY
+
+  override fun format(s: AnsiStyle): String = buildString {
+    appendLine("${s.red}${s.bold}Product '${context}' has embedded content modules depending on bundled plugin content${s.reset}")
+    appendLine()
+    appendLine("${s.yellow}Embedded product/module-set modules are loaded by the main classloader.${s.reset}")
+    appendLine("${s.yellow}They cannot depend on content that is supplied only by bundled plugin wrappers.${s.reset}")
+    appendLine()
+
+    for (violation in violations.sortedWith(compareBy({ it.sourceModule }, { it.dependency }))) {
+      appendLine("  ${s.red}*${s.reset} ${s.bold}${violation.sourceModule}${s.reset} depends on ${s.bold}${violation.dependency}${s.reset}")
+      if (violation.dependencyPath.size > 2) {
+        appendLine("    Path: ${violation.dependencyPath.joinToString(separator = " -> ")}")
+      }
+      if (violation.dependencySources.isNotEmpty()) {
+        appendLine("    Dependency source(s):")
+        for (source in violation.dependencySources.sortedWith(compareBy({ it.kind }, { it.name }))) {
+          val loading = source.loading?.lowercase() ?: "unspecified"
+          appendLine("      - ${source.kind} ${source.name} ($loading)")
+        }
+      }
+    }
+
+    appendLine()
+    appendLine("${s.yellow}Fix:${s.reset}")
+    appendLine("1. Make the dependency embedded in the same product/module-set content, or")
+    appendLine("2. Make the depending module non-embedded, or")
+    appendLine("3. Move the dependency boundary so embedded code no longer references separately loaded content.")
+    appendLine()
+    appendLine("${s.gray}[Rule: $ruleName]${s.reset}")
+    appendLine()
+  }
+}

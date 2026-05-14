@@ -123,4 +123,7 @@ internal object NodeIds {
 
   /** Implicit embedded-module content-module inclusion validation */
   @JvmField val IMPLICIT_EMBEDDED_CONTENT_MODULE_VALIDATION = NodeId("implicitEmbeddedContentModuleValidation", NodeCategory.VALIDATION)
+
+  /** Product/module-set embedded content modules must not depend on non-embedded content modules */
+  @JvmField val EMBEDDED_CONTENT_MODULE_DEPENDENCY_VALIDATION = NodeId("embeddedContentModuleDependencyValidation", NodeCategory.VALIDATION)
 }

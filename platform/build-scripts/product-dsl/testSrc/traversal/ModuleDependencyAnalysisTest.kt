@@ -162,4 +162,69 @@ class ModuleDependencyAnalysisTest {
     )
     assertThat(allOwners.owners.any { it.name == TargetName("intellij.test.plugin") && it.isTest }).isTrue()
   }
+
+  @Test
+  fun `embedded dependency closure reports non-embedded boundary with path`() {
+    val graph = pluginGraph {
+      product("IDEA") {
+        includesModuleSet("core")
+        bundlesPlugin("plugin.ui")
+      }
+      moduleSet("core") {
+        module("core.embedded", ModuleLoadingRuleValue.EMBEDDED)
+        module("core.embedded.mid", ModuleLoadingRuleValue.EMBEDDED)
+      }
+      plugin("plugin.ui") {
+        content("plugin.ui.impl", ModuleLoadingRuleValue.OPTIONAL)
+      }
+      linkContentModuleDeps("core.embedded", "core.embedded.mid")
+      linkContentModuleDeps("core.embedded.mid", "plugin.ui.impl")
+    }
+
+    val result = analyzeEmbeddedDependencyClosure(graph, productName = "IDEA")
+
+    assertThat(result.error).isNull()
+    assertThat(result.summary.totalViolations).isEqualTo(2)
+    assertThat(result.violations.map { it.sourceModule to it.dependency }).containsExactlyInAnyOrder(
+      "core.embedded" to "plugin.ui.impl",
+      "core.embedded.mid" to "plugin.ui.impl",
+    )
+    assertThat(result.violations.single { it.sourceModule == "core.embedded" }.dependencyPath).containsExactly(
+      "core.embedded",
+      "core.embedded.mid",
+      "plugin.ui.impl",
+    )
+  }
+
+  @Test
+  fun `embedded dependency closure filters by module set and module`() {
+    val graph = pluginGraph {
+      product("IDEA") {
+        includesModuleSet("core")
+        includesModuleSet("other")
+        bundlesPlugin("plugin.ui")
+      }
+      moduleSet("core") {
+        module("core.embedded", ModuleLoadingRuleValue.EMBEDDED)
+      }
+      moduleSet("other") {
+        module("other.embedded", ModuleLoadingRuleValue.EMBEDDED)
+      }
+      plugin("plugin.ui") {
+        content("plugin.ui.impl", ModuleLoadingRuleValue.OPTIONAL)
+      }
+      linkContentModuleDeps("core.embedded", "plugin.ui.impl")
+      linkContentModuleDeps("other.embedded", "plugin.ui.impl")
+    }
+
+    val result = analyzeEmbeddedDependencyClosure(
+      graph = graph,
+      productName = "IDEA",
+      moduleSetName = "core",
+      moduleName = "core.embedded",
+    )
+
+    assertThat(result.summary.totalViolations).isEqualTo(1)
+    assertThat(result.violations.single().sourceModule).isEqualTo("core.embedded")
+  }
 }
