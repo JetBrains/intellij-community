@@ -3,7 +3,9 @@ package com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model
 
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.doNotEnableExternalStorageByDefaultInTestsSuspend
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
@@ -33,6 +35,8 @@ import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceF
 import com.intellij.workspaceModel.ide.toPath
 import org.assertj.core.api.Assertions.assertThat
 import java.nio.file.Path
+import kotlin.io.path.exists
+import kotlin.io.path.name
 
 /** Expected module type marker for pyproject-based modules in [PyProjectTomlSyncTestFixture.assertProjectStructure]. */
 internal const val PYPROJECT = "PYPROJECT"
@@ -55,6 +59,7 @@ internal data class ExpectedModule(
   val deps: List<String> = emptyList(),
   val sourceRoots: List<String> = emptyList(),
   val excludedFolders: List<String> = emptyList(),
+  val imlFileName: String = "$name.iml",
 )
 
 /** Name of the bystander Java module created by the fixture to verify it is never modified by sync. */
@@ -136,7 +141,13 @@ internal class PyProjectTomlSyncTestFixture(val project: Project, val root: Virt
   /** Triggers a full pyproject.toml sync (creates [sut] lazily on first call). */
   suspend fun reloadProject() {
     if (!::sut.isInitialized) sut = PyExternalSystemProjectAware.create(project)
-    sut.reloadProjectImpl()
+    // Tests default `Project.isExternalStorageEnabled` to true, which routes pyproject
+    // module .iml content to `external_build_system/` instead of `.idea/<name>.iml`.
+    // Disable that default so the sync flushes .iml files to the .idea/ folder, matching
+    // a freshly-created real project (where external storage is off by default).
+    doNotEnableExternalStorageByDefaultInTestsSuspend {
+      sut.reloadProjectImpl()
+    }
   }
 
   /** Creates the bystander Java and Python modules that every test expects to remain untouched. */
@@ -339,6 +350,21 @@ internal class PyProjectTomlSyncTestFixture(val project: Project, val root: Virt
     // No duplicate symbolic IDs
     val names = moduleEntities.map { it.name }
     assertThat(names).doesNotHaveDuplicates()
+
+    // Verify .iml filenames on disk for each expected module.
+    // The pyproject bridge flushes .iml files to disk via saveSettings() so they should be visible to VCS.
+    val moduleManager = ModuleManager.getInstance(project)
+    for (expected in expectedModules) {
+      val module = moduleManager.findModuleByName(expected.name)
+                   ?: error("Module '${expected.name}' not found by ModuleManager")
+      val imlPath = Path.of(module.moduleFilePath)
+      assertThat(imlPath.name)
+        .describedAs("Module '${expected.name}' .iml filename")
+        .isEqualTo(expected.imlFileName)
+      assertThat(imlPath.exists())
+        .describedAs("Module '${expected.name}' .iml file must be flushed to disk at $imlPath")
+        .isTrue()
+    }
 
     // Every module's content root must be recognized by the file index as a module content root.
     readAction {
