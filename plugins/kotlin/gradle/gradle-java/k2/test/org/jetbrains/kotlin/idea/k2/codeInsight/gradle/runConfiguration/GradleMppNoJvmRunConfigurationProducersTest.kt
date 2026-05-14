@@ -26,12 +26,12 @@ import org.junit.Test
 
 /**
  * See paired [org.jetbrains.kotlin.idea.k2.codeInsight.gradle.runConfiguration.GradleMppJvmRunConfigurationProducersTest4].
- * The idea behind "NoJvm" subset of tests is that jvm target test tasks are discovered by gradle plugin, not kotlin.
- * If a project has no jvm target (as here) and other-ones producers mistakenly delegate to gradle plugin tests are not available.
+ * The idea behind the "NoJvm" subset of tests is that jvm target test tasks are discovered by Gradle plugin, not kotlin.
+ * If a project has no jvm target (as here) and other ones producers mistakenly delegate to Gradle plugin tests are not available.
  */
 
 class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfigurationProducerTestCase(), ExpectedPluginModeProvider {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K1
+    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     private lateinit var projectData: ProjectData
 
