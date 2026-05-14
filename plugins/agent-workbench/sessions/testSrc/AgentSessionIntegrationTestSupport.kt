@@ -193,10 +193,13 @@ class AgentSessionStateSyncTestFacade(
 class ScriptedSessionSource(
   override val provider: AgentSessionProvider,
   override val canReportExactThreadCount: Boolean = true,
+  override val supportsArchivedThreads: Boolean = false,
   override val supportsUpdates: Boolean = false,
   override val updateEvents: Flow<AgentSessionSourceUpdateEvent> = emptyFlow(),
   private val listFromOpenProject: suspend (path: String, project: Project) -> List<AgentSessionThread> = { _, _ -> emptyList() },
   private val listFromClosedProject: suspend (path: String) -> List<AgentSessionThread> = { _ -> emptyList() },
+  private val listArchivedFromOpenProject: suspend (path: String, project: Project) -> List<AgentSessionThread> = { _, _ -> emptyList() },
+  private val listArchivedFromClosedProject: suspend (path: String) -> List<AgentSessionThread> = { _ -> emptyList() },
   private val prefetch: suspend (paths: List<String>) -> Map<String, List<AgentSessionThread>> = { emptyMap() },
   private val refreshThreadsProvider: (suspend (AgentSessionSourceRefreshRequest) -> AgentSessionSourceRefreshResult)? = null,
   private val prefetchRefreshHintsProvider: suspend (
@@ -221,6 +224,14 @@ class ScriptedSessionSource(
 
   override suspend fun listThreadsFromClosedProject(path: String): List<AgentSessionThread> {
     return listFromClosedProject(path)
+  }
+
+  override suspend fun listArchivedThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread> {
+    return listArchivedFromOpenProject(path, project)
+  }
+
+  override suspend fun listArchivedThreadsFromClosedProject(path: String): List<AgentSessionThread> {
+    return listArchivedFromClosedProject(path)
   }
 
   override suspend fun prefetchThreads(paths: List<String>): Map<String, List<AgentSessionThread>> {

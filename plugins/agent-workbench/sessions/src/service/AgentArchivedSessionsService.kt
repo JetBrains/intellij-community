@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.util.concurrent.atomic.AtomicBoolean
 
 private val ARCHIVED_LOG = logger<AgentArchivedSessionsService>()
 
@@ -49,12 +50,14 @@ class AgentArchivedSessionsService internal constructor(
 
   private val mutableState = MutableStateFlow(AgentArchivedSessionsState())
   private val refreshMutex = Mutex()
+  private val loadRequested = AtomicBoolean(false)
 
   fun stateFlow(): StateFlow<AgentArchivedSessionsState> = mutableState.asStateFlow()
 
   fun snapshot(): AgentArchivedSessionsState = mutableState.value
 
   fun ensureLoaded() {
+    loadRequested.set(true)
     val state = mutableState.value
     if (state.lastUpdatedAt == null && !state.projects.anyPathLoading()) {
       refresh()
@@ -62,12 +65,13 @@ class AgentArchivedSessionsService internal constructor(
   }
 
   fun refreshIfLoaded() {
-    if (mutableState.value.lastUpdatedAt != null) {
+    if (loadRequested.get() || mutableState.value.lastUpdatedAt != null) {
       refresh()
     }
   }
 
   fun refresh() {
+    loadRequested.set(true)
     serviceScope.launch(Dispatchers.IO) {
       refreshMutex.withLock {
         refreshNow()
