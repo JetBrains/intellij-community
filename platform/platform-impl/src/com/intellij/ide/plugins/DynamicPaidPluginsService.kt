@@ -24,11 +24,13 @@ import com.intellij.openapi.util.IntellijInternalApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.FileVisitResult
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.time.measureTimedValue
 
 @ApiStatus.Internal
@@ -71,26 +73,27 @@ class DynamicPaidPluginsService(private val cs: CoroutineScope) {
     }
   }
 
-  private fun doLoadPaidPlugins(project: Project?) {
+  private suspend fun doLoadPaidPlugins(project: Project?) {
     if (PluginEnabler.getInstance().isDisabled(ULTIMATE_PLUGIN_ID)) {
       logger.info("Ultimate plugin is disabled. Paid plugins will not be enabled.")
       return
     }
+    val (loadablePlugins, requireRestartPlugins) = withContext(Dispatchers.Default.takeIf { DynamicPluginsSupport.getInstance () != null } ?: EmptyCoroutineContext) {
+      val pluginSet = PluginManagerCore.getPluginSetOrNull()
+      if (pluginSet == null) {
+        logger.info("Plugin set is not initialized. Paid plugins will not be enabled.")
+        return@withContext null
+      }
 
-    val pluginSet = PluginManagerCore.getPluginSetOrNull()
-    if (pluginSet == null) {
-      logger.info("Plugin set is not initialized. Paid plugins will not be enabled.")
-      return
-    }
+      val disabledPlugins = DisabledPluginsState.getDisabledIds()
+      val pluginsToEnable = getPluginsToEnable(pluginSet, disabledPlugins)
+      if (pluginsToEnable.isEmpty()) {
+        logger.debug("No plugins found to be enabled.")
+        return@withContext null
+      }
 
-    val disabledPlugins = DisabledPluginsState.getDisabledIds()
-    val pluginsToEnable = getPluginsToEnable(pluginSet, disabledPlugins)
-    if (pluginsToEnable.isEmpty()) {
-      logger.debug("No plugins found to be enabled.")
-      return
-    }
-
-    val (loadablePlugins, requireRestartPlugins) = pluginsToEnable.splitPlugins()
+      pluginsToEnable.splitPlugins()
+    } ?: return
     val pluginEnabler = PluginEnabler.getInstance()
 
     if (loadablePlugins.isNotEmpty()) {
