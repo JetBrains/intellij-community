@@ -587,7 +587,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
         hasTypeMatchingSuggestions |= smartCompleteExpression(parameters, result, expectedInfos);
         smartCompleteNonExpression(parameters, result);
       } else {
-        if (!JavaKeywordCompletion.AFTER_DOT.accepts(position)) {
+        if (!JavaCompletionUtil.AFTER_DOT.accepts(position)) {
           for (ExpectedTypeInfo info : expectedInfos) {
             ClassLiteralGetter.addCompletions(new JavaSmartCompletionParameters(parameters, info), result, matcher);
           }
@@ -811,7 +811,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
 
   private static boolean shouldAddExpressionVariants(CompletionParameters parameters) {
     return JavaSmartCompletionContributor.INSIDE_EXPRESSION.accepts(parameters.getPosition()) &&
-           !JavaKeywordCompletion.AFTER_DOT.accepts(parameters.getPosition()) &&
+           !JavaCompletionUtil.AFTER_DOT.accepts(parameters.getPosition()) &&
            !SmartCastProvider.inCastContext(parameters);
   }
 

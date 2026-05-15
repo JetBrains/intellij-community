@@ -44,7 +44,7 @@ public class CheckInitialized implements ElementFilter {
 
   public static boolean isInsideConstructorCall(@NotNull PsiElement position) {
     return JavaPsiConstructorUtil.isConstructorCall(PsiTreeUtil.getParentOfType(position, PsiMethodCallExpression.class)) &&
-           !JavaKeywordCompletion.AFTER_DOT.accepts(position);
+           !JavaCompletionUtil.AFTER_DOT.accepts(position);
   }
 
   private static boolean isInitializedImplicitly(PsiField field) {

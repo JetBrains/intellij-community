@@ -2,8 +2,8 @@
 package com.intellij.java.completion.modcommand;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.completion.JavaGenerateMemberCompletionContributor;
-import com.intellij.codeInsight.completion.JavaKeywordCompletion;
 import com.intellij.codeInsight.completion.JavaMemberNameCompletionContributor;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.GenerationInfo;
@@ -68,7 +68,7 @@ final class GenerateMemberItemProvider extends JavaModCompletionItemProvider {
     PsiElement position = context.getPosition();
     if (JavaMemberNameCompletionContributor.INSIDE_TYPE_PARAMS_PATTERN.accepts(position)) return;
     if (psiElement(PsiIdentifier.class).withParents(PsiJavaCodeReferenceElement.class, PsiTypeElement.class, PsiClass.class).
-      andNot(JavaKeywordCompletion.AFTER_DOT).accepts(position)) {
+      andNot(JavaCompletionUtil.AFTER_DOT).accepts(position)) {
       PsiElement prevLeaf = PsiTreeUtil.prevVisibleLeaf(position);
       PsiModifierList modifierList = PsiTreeUtil.getParentOfType(prevLeaf, PsiModifierList.class);
       suggestGeneratedMethods(sink, position, modifierList);

@@ -79,7 +79,7 @@ public final class JavaGenerateMemberCompletionContributor {
     }
 
     if (psiElement(PsiIdentifier.class).withParents(PsiJavaCodeReferenceElement.class, PsiTypeElement.class, PsiClass.class).
-      andNot(JavaKeywordCompletion.AFTER_DOT).accepts(position)) {
+      andNot(JavaCompletionUtil.AFTER_DOT).accepts(position)) {
       PsiElement prevLeaf = PsiTreeUtil.prevVisibleLeaf(position);
       PsiModifierList modifierList = PsiTreeUtil.getParentOfType(prevLeaf, PsiModifierList.class);
       if (modifierList != null) {

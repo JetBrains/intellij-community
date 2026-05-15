@@ -78,7 +78,7 @@ public final class JavaQualifierAsArgumentContributor extends CompletionContribu
       return;
     }
     PsiElement position = parameters.getPosition();
-    if (!(JavaKeywordCompletion.AFTER_DOT.accepts(position))) {
+    if (!(JavaCompletionUtil.AFTER_DOT.accepts(position))) {
       return;
     }
     result.runRemainingContributors(parameters, true);
@@ -95,7 +95,7 @@ public final class JavaQualifierAsArgumentContributor extends CompletionContribu
       return;
     }
     PsiElement position = parameters.getPosition();
-    if (!(JavaKeywordCompletion.AFTER_DOT.accepts(position))) {
+    if (!(JavaCompletionUtil.AFTER_DOT.accepts(position))) {
       return;
     }
     if (!(position.getParent() instanceof PsiReferenceExpression psiReferenceExpression)) {

@@ -6,7 +6,7 @@ import com.intellij.codeInsight.completion.CompletionContributor;
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.CompletionType;
-import com.intellij.codeInsight.completion.JavaKeywordCompletion;
+import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.completion.JavaSmartCompletionContributor;
 import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -86,7 +86,7 @@ public final class MagicCompletionContributor extends CompletionContributor impl
   public void fillCompletionVariants(final @NotNull CompletionParameters parameters, final @NotNull CompletionResultSet result) {
     //if (parameters.getCompletionType() != CompletionType.SMART) return;
     PsiElement pos = parameters.getPosition();
-    if (JavaKeywordCompletion.AFTER_DOT.accepts(pos)) {
+    if (JavaCompletionUtil.AFTER_DOT.accepts(pos)) {
       return;
     }
 

@@ -6,6 +6,14 @@ import com.intellij.psi.PsiElement;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
+/**
+ * @deprecated Use {@link JavaCompletionUtil#AFTER_DOT} instead.
+ */
+@Deprecated
 public final class JavaKeywordCompletion {
+  /**
+   * @deprecated Use {@link JavaCompletionUtil#AFTER_DOT} instead.
+   */
+  @Deprecated
   public static final ElementPattern<PsiElement> AFTER_DOT = psiElement().afterLeaf(".");
 }

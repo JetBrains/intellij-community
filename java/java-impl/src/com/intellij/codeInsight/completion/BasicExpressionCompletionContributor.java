@@ -54,7 +54,7 @@ public final class BasicExpressionCompletionContributor {
 
     }
 
-    if (!JavaKeywordCompletion.AFTER_DOT.accepts(element)) {
+    if (!JavaCompletionUtil.AFTER_DOT.accepts(element)) {
       if (parameters.getParameters().getInvocationCount() <= 1) {
         new CollectionsUtilityMethodsProvider(parameters.getPosition(),
                                               parameters.getExpectedType(),

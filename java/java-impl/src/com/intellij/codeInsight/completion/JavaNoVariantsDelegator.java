@@ -140,7 +140,7 @@ public final class JavaNoVariantsDelegator extends CompletionContributor impleme
     if (!Registry.is("java.completion.methods.use.tags")) {
       return false;
     }
-    if (!(JavaKeywordCompletion.AFTER_DOT.accepts(position))) {
+    if (!(JavaCompletionUtil.AFTER_DOT.accepts(position))) {
       return false;
     }
     if (!(position.getParent() instanceof PsiReferenceExpression psiReferenceExpression)) {

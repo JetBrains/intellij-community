@@ -186,6 +186,10 @@ import static com.intellij.psi.util.proximity.ReferenceListWeigher.ReferenceList
  * Helper methods to support Java code completion functionality.
  */
 public final class JavaCompletionUtil {
+  /**
+   * Pattern matching PsiElements that are after a dot character.
+   */
+  public static final ElementPattern<PsiElement> AFTER_DOT = psiElement().afterLeaf(".");
   private static final ElementPattern<PsiElement> UNEXPECTED_REFERENCE_AFTER_DOT = or(
     // dot at the statement beginning
     psiElement().afterLeaf(".").insideStarting(psiExpressionStatement()),

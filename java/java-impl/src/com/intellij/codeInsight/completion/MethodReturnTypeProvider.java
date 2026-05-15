@@ -32,7 +32,7 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 final class MethodReturnTypeProvider {
   static final ElementPattern<PsiElement> IN_METHOD_RETURN_TYPE =
     psiElement().withParents(PsiJavaCodeReferenceElement.class, PsiTypeElement.class, PsiMethod.class)
-      .andNot(JavaKeywordCompletion.AFTER_DOT);
+      .andNot(JavaCompletionUtil.AFTER_DOT);
 
   static void addProbableReturnTypes(@NotNull PsiElement position, Consumer<? super LookupElement> consumer) {
     PsiMethod method = PsiTreeUtil.getParentOfType(position, PsiMethod.class);
