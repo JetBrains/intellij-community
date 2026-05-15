@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.model.psi;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * A marker interface for elements that support external references.
@@ -20,5 +21,6 @@ import com.intellij.psi.PsiElement;
  * @see PsiElement#getOwnReferences
  * @see UrlReferenceHost
  */
+@ApiStatus.Experimental
 public interface PsiExternalReferenceHost extends PsiElement {
 }

@@ -1,12 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete.api
 
 import com.intellij.model.Pointer
 import com.intellij.model.search.SearchParameters
 import com.intellij.model.search.Searcher
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.OverrideOnly
 
+@ApiStatus.Experimental
 class SafeDeleteSearchParameters(val target: SafeDeleteTarget, private val project: Project) : SearchParameters<SafeDeleteUsage> {
   private val pointer: Pointer<out SafeDeleteTarget> = target.createPointer()
 
@@ -15,5 +17,6 @@ class SafeDeleteSearchParameters(val target: SafeDeleteTarget, private val proje
   override fun areValid(): Boolean = pointer.dereference() != null
 }
 
+@ApiStatus.Experimental
 @OverrideOnly
 interface SafeDeleteUsageSearcher : Searcher<SafeDeleteSearchParameters, SafeDeleteUsage>

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.usages.api
 
 import com.intellij.model.Pointer
@@ -8,11 +8,13 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Represents the search implementation (the usage handler and the text search strings)
  * plus data needed to display it in the UI.
  */
+@ApiStatus.Experimental
 interface SearchTarget {
 
   /**

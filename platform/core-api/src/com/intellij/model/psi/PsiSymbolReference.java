@@ -1,10 +1,11 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.model.psi;
 
 import com.intellij.model.Symbol;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -17,6 +18,7 @@ import java.util.Collection;
  * @see PsiSymbolReferenceProvider
  * @see <a href="https://plugins.jetbrains.com/docs/intellij/declarations-and-references.html">Declarations and Reference (IntelliJ Platform Docs)</a>
  */
+@ApiStatus.Experimental
 public interface PsiSymbolReference {
 
   /**

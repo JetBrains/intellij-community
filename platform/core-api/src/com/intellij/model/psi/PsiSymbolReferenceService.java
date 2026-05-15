@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.model.psi;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -11,6 +12,7 @@ import java.util.Collection;
 /**
  * Entry point for obtaining {@link PsiSymbolReference}s from {@link PsiElement}.
  */
+@ApiStatus.Experimental
 public interface PsiSymbolReferenceService {
 
   static @NotNull PsiSymbolReferenceService getService() {

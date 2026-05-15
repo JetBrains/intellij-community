@@ -1,10 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("RenameUsageFileUpdaters")
+@file:ApiStatus.Experimental
 
 package com.intellij.refactoring.rename.api
 
 import com.intellij.refactoring.rename.api.ModifiableRenameUsage.FileUpdater
 import com.intellij.refactoring.rename.impl.PsiRenameUsageRangeUpdater
+import org.jetbrains.annotations.ApiStatus
 
 internal val idFileRangeUpdater: FileUpdater = fileRangeUpdater { it }
 

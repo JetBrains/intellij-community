@@ -1,10 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.api
 
 import com.intellij.find.usages.api.PsiUsage
 import com.intellij.model.Pointer
 import com.intellij.refactoring.rename.impl.DefaultPsiModifiableRenameUsage
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Experimental
 interface PsiModifiableRenameUsage : PsiRenameUsage, ModifiableRenameUsage {
 
   override fun createPointer(): Pointer<out PsiModifiableRenameUsage>

@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.usages.symbol;
 
 import com.intellij.find.usages.api.SearchTarget;
 import com.intellij.model.Symbol;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,6 +20,7 @@ import static org.jetbrains.annotations.ApiStatus.OverrideOnly;
  * Several symbols might have {@link SearchTarget#equals equal} targets,
  * in this case any target will be chosen and used instead of showing the disambiguation popup.
  */
+@ApiStatus.Experimental
 @OverrideOnly
 public interface SymbolSearchTargetFactory<T extends @NotNull Symbol> {
 

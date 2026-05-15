@@ -1,9 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.model.psi;
 
 import com.intellij.model.Symbol;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,6 +17,7 @@ import java.util.Collections;
  * @see com.intellij.navigation.DirectNavigationProvider
  * @see <a href="https://plugins.jetbrains.com/docs/intellij/declarations-and-references.html">Declarations and Reference (IntelliJ Platform Docs)</a>
  */
+@ApiStatus.Experimental
 public interface ImplicitReferenceProvider {
 
   @Internal

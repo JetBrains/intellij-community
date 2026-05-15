@@ -1,13 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.api
 
 import com.intellij.model.Pointer
 import com.intellij.openapi.progress.ProgressManager
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Implement this interface to consider the usage modifiable.
  * The [RenameUsage]s which don't implement this interface are highlighted as read-only in the Usage View.
  */
+@ApiStatus.Experimental
 interface ModifiableRenameUsage : RenameUsage {
 
   override fun createPointer(): Pointer<out ModifiableRenameUsage>
