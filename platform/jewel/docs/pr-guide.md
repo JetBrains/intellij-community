@@ -113,7 +113,7 @@ during safe-push if not done correctly, and prevent automated merging.
      | JPS scope                | Gradle scope         |
      |--------------------------|----------------------|
      | `compile` (not exported) | `implementation`     |
-     | `compile` (exported)     | `api`                |
+     | `compile` (exported)     | `contract`                |
      | `test` (not exported)    | `testImplementation` |
      | `test` (exported)        | `testApi`            |
      | `runtime`                | `runtimeOnly`        |
