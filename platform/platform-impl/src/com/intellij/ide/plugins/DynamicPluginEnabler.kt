@@ -3,6 +3,7 @@ package com.intellij.ide.plugins
 
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
@@ -12,6 +13,7 @@ import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JComponent
 
 private val LOG = logger<DynamicPluginEnabler>()
@@ -65,7 +67,16 @@ class DynamicPluginEnabler : PluginEnabler {
     PluginEnabler.HEADLESS.enable(descriptors)
     val installedDescriptors = findInstalledPlugins(descriptors) ?: return false
     val pluginsLoaded = if (progressTitle == null) {
-      DynamicPlugins.loadPlugins(installedDescriptors, project)
+      val loaded = AtomicBoolean(false)
+      if (ApplicationManager.getApplication().isDispatchThread) {
+        loaded.set(DynamicPlugins.loadPlugins(installedDescriptors, project))
+      } else {
+        // licensing may call this method from the main thread (not EDT)
+        ApplicationManager.getApplication().invokeAndWait {
+          loaded.set(DynamicPlugins.loadPlugins(installedDescriptors, project))
+        }
+      }
+      loaded.get()
     } else {
       val progress = PotemkinProgress(progressTitle, project, null, null)
       var result = false
