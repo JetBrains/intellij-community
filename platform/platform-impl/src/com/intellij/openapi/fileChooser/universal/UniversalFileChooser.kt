@@ -122,6 +122,7 @@ object UniversalFileChooser {
   class Dialog(
     val project: Project,
     private val descriptor: FileChooserDescriptor,
+    private val contributors: Collection<UniversalFileChooserContributor> = UniversalFileChooserContributor.EP_NAME.extensionList,
   ) : DialogWrapper(project), FileChooserDialog, PathChooserDialog {
     private lateinit var mainPanel: Panel
 
@@ -156,9 +157,11 @@ object UniversalFileChooser {
     }
 
     override fun createCenterPanel(): JComponent {
-      mainPanel = Panel(this.disposable, descriptor, project, ::doOKAction, ::setOKActionEnabled)
+      mainPanel = Panel(this.disposable, descriptor, project, ::doOKAction, ::setOKActionEnabled, contributors)
       return mainPanel
     }
+
+    fun getSelectedFiles(): List<Path> = mainPanel.getSelectedFiles()
   }
 
   private fun toVirtualFiles(paths: List<Path>): List<VirtualFile?> {
@@ -167,12 +170,13 @@ object UniversalFileChooser {
     }
   }
 
-  class Panel(
+  class Panel @JvmOverloads constructor(
     disposable: Disposable,
     descriptor: FileChooserDescriptor,
     private val project: Project,
     okAction: Runnable,
     private val okEnabledUpdater: (Boolean) -> Unit = {},
+    contributors: Collection<UniversalFileChooserContributor> = UniversalFileChooserContributor.EP_NAME.extensionList,
   ) : JPanel() {
 
     companion object {
@@ -201,7 +205,7 @@ object UniversalFileChooser {
       preferredSize = Dimension(screenSize.width / 2, screenSize.height / 2)
       tabbedPane = JBTabbedPane()
       //val projectContributor = projectContributor(project)
-      val contributors = UniversalFileChooserContributor.EP_NAME.extensionList
+      //val contributors = UniversalFileChooserContributor.EP_NAME.extensionList
         // TODO IJPL-237292: Filter out tabs only with specific flag
         //if (projectContributor != null) listOf(projectContributor)
         //else UniversalFileChooserContributor.EP_NAME.extensionList
@@ -521,7 +525,7 @@ object UniversalFileChooser {
       val contributor: UniversalFileChooserContributor,
       descriptor: FileChooserDescriptor,
       disposable: Disposable,
-      private val project: Project,
+      project: Project,
       okAction: Runnable,
       val scope: CoroutineScope,
       private val topToolbar: ActionToolbar,
