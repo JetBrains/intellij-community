@@ -38,11 +38,10 @@ import org.jetbrains.kotlin.analysis.api.symbols.name
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
-import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.k2.codeinsight.hierarchy.appendPlatformTruncatedPresentableName
 import org.jetbrains.kotlin.idea.k2.refactoring.findCallableMemberBySignature
-import org.jetbrains.kotlin.platform.presentableDescription
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -206,9 +205,7 @@ class KotlinOverrideHierarchyNodeDescriptor(
             }
 
             if (classPsi is KtClassOrObject && classPsi.isActualDeclaration()) {
-                classPsi.platform.presentableDescription.takeUnless { it.isEmpty() }?.let { platformName: @NlsSafe String ->
-                    addText(" [$platformName]", getPackageNameAttributes())
-                }
+                myHighlightedText.appendPlatformTruncatedPresentableName(classPsi, getPackageNameAttributes())
             }
         }
 
