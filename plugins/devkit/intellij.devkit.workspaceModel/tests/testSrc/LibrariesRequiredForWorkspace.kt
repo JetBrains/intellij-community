@@ -54,7 +54,7 @@ internal object LibrariesRequiredForWorkspace {
       "intellij.javaee.platform", "intellij.javaee.ejb", "intellij.javaee.web", "intellij.amper", "intellij.java.impl" -> {
         listOf(intellijJava)
       }
-      "intellij.rider.plugins.unity" -> {
+      "intellij.rider.plugins.unity.backend" -> {
         listOf(riderUnityPlugin, rdCore, riderRdClient, riderUnityPluginModel)
       }
       "intellij.rider" -> {
