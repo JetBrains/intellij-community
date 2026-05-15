@@ -7,6 +7,7 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptManualContextPickerRe
 import com.intellij.agent.workbench.prompt.core.array
 import com.intellij.agent.workbench.prompt.core.number
 import com.intellij.agent.workbench.prompt.core.objOrNull
+import com.intellij.agent.workbench.prompt.core.string
 import com.intellij.agent.workbench.prompt.vcs.AgentPromptVcsBundle
 import com.intellij.agent.workbench.prompt.core.AgentPromptPayloadValue
 import com.intellij.openapi.project.Project
@@ -90,6 +91,26 @@ class AgentPromptVcsCommitManualContextSourceTest {
   }
 
   @Test
+  fun buildManualVcsContextItemIncludesCommitMetadataInPayload() {
+    val item = buildManualVcsContextItem(
+      listOf(
+        commitEntry(
+          hash = "abc12345",
+          rootPath = "/repo",
+          author = "Test User",
+          commitTimeMs = 1710000000000L,
+        )
+      )
+    )
+
+    val entry = item.payload.objOrNull()?.array("entries")?.single()?.objOrNull()
+    assertThat(entry?.string("subject")).isEqualTo("Fix issue")
+    assertThat(entry?.string("author")).isEqualTo("Test User")
+    assertThat(entry?.number("commitTimeMs")).isEqualTo("1710000000000")
+    assertThat(entry?.string("rootName")).isEqualTo("repo")
+  }
+
+  @Test
   fun normalizeManualVcsSelectionDeduplicatesAndTrimsHashes() {
     val normalized = normalizeManualVcsSelection(
       listOf(
@@ -134,11 +155,19 @@ class AgentPromptVcsCommitManualContextSourceTest {
     assertThat(errorMessage).isEqualTo(AgentPromptVcsBundle.message("manual.context.vcs.error.unavailable"))
   }
 
-  private fun commitEntry(hash: String, rootPath: String?, issueUrls: List<String> = emptyList()): CommitPickerEntry {
+  private fun commitEntry(
+    hash: String,
+    rootPath: String?,
+    issueUrls: List<String> = emptyList(),
+    author: String? = null,
+    commitTimeMs: Long? = null,
+  ): CommitPickerEntry {
     return CommitPickerEntry(
       commitIndex = 1,
       hash = hash,
       subject = "Fix issue",
+      author = author,
+      commitTimeMs = commitTimeMs,
       rootPath = rootPath,
       rootName = rootPath?.substringAfterLast('/'),
       issueUrls = issueUrls,

@@ -19,12 +19,17 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.vcs.log.VcsLogCommitSelection
 import com.intellij.vcs.log.VcsLogDataKeys
 import com.intellij.vcs.log.data.LoadingDetails
+import com.intellij.vcs.log.util.VcsUserUtil
 
 private const val MAX_INCLUDED_SELECTION_COMMITS = 20
 
 private data class SelectedCommit(
   @JvmField val hash: String,
   @JvmField val rootPath: String?,
+  @JvmField val subject: String? = null,
+  @JvmField val author: String? = null,
+  @JvmField val commitTimeMs: Long? = null,
+  @JvmField val rootName: String? = null,
   @JvmField val selection: VcsLogCommitSelection? = null,
   @JvmField val selectionIndex: Int? = null,
 )
@@ -48,7 +53,15 @@ internal class AgentPromptVcsLogSelectionContextContributor : AgentPromptContext
     }
 
     val payloadEntries = included.map { commit ->
-      buildVcsCommitPayloadEntry(commit.hash, commit.rootPath, commit.resolveIssueUrls(invocationData.project))
+      buildVcsCommitPayloadEntry(
+        hash = commit.hash,
+        rootPath = commit.rootPath,
+        issueUrls = commit.resolveIssueUrls(invocationData.project),
+        subject = commit.subject,
+        author = commit.author,
+        commitTimeMs = commit.commitTimeMs,
+        rootName = commit.rootName,
+      )
     }
     val payload = AgentPromptPayload.obj(
       "entries" to AgentPromptPayloadValue.Arr(payloadEntries),
@@ -84,9 +97,14 @@ internal class AgentPromptVcsLogSelectionContextContributor : AgentPromptContext
       .getData(dataContext)
       ?.let { selection ->
         selection.commits.mapIndexed { index, commit ->
+          val metadata = selection.getCachedMetadata(index)
           SelectedCommit(
             hash = commit.hash.asString(),
             rootPath = commit.root.path,
+            subject = metadata?.subject?.trim()?.takeIf { it.isNotEmpty() },
+            author = metadata?.author?.let(VcsUserUtil::getShortPresentation)?.trim()?.takeIf { it.isNotEmpty() },
+            commitTimeMs = metadata?.commitTime?.takeIf { it > 0L },
+            rootName = commit.root.name,
             selection = selection,
             selectionIndex = index,
           )
@@ -146,12 +164,19 @@ internal class AgentPromptVcsLogSelectionContextContributor : AgentPromptContext
       if (previous != null && !previous.hasSelection() && normalized.hasSelection()) {
         unique[normalized.hash] = normalized
       }
+      if (previous != null && !previous.hasMetadata() && normalized.hasMetadata()) {
+        unique[normalized.hash] = normalized
+      }
     }
     return unique.values.toList()
   }
 
   private fun SelectedCommit.hasSelection(): Boolean {
     return selection != null && selectionIndex != null
+  }
+
+  private fun SelectedCommit.hasMetadata(): Boolean {
+    return subject != null || author != null || commitTimeMs != null || rootName != null
   }
 
   private fun SelectedCommit.resolveIssueUrls(project: Project): List<String> {
@@ -178,4 +203,11 @@ internal class AgentPromptVcsLogSelectionContextContributor : AgentPromptContext
       ?.trim()
       .orEmpty()
   }
+
+  private fun VcsLogCommitSelection.getCachedMetadata(index: Int) = cachedFullDetails
+                                                                      .getOrNull(index)
+                                                                      ?.takeUnless { details -> details is LoadingDetails }
+                                                                    ?: cachedMetadata
+                                                                      .getOrNull(index)
+                                                                      ?.takeUnless { metadata -> metadata is LoadingDetails }
 }

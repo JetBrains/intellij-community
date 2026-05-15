@@ -61,6 +61,55 @@ class AgentPromptVcsCommitsContextRendererBridgeTest {
     assertThat(chip.text).isEqualTo("Commits: abc12345")
   }
 
+  @Test
+  fun renderChipUsesSubjectAndCommitCountFromPayload() {
+    val item = contextItem(
+      body = "",
+      payload = AgentPromptPayload.obj(
+        "entries" to AgentPromptPayload.arr(
+          AgentPromptPayload.obj(
+            "hash" to AgentPromptPayload.str("abc12345abcdef"),
+            "subject" to AgentPromptPayload.str("Fix TEST-101 regression"),
+            "author" to AgentPromptPayload.str("Test User"),
+            "commitTimeMs" to AgentPromptPayloadValue.Num("1710000000000"),
+            "rootName" to AgentPromptPayload.str("repo"),
+          ),
+          AgentPromptPayload.obj(
+            "hash" to AgentPromptPayload.str("def67890abcdef"),
+            "subject" to AgentPromptPayload.str("Update docs"),
+          ),
+        ),
+        "selectedCount" to AgentPromptPayload.num(2),
+      )
+    )
+
+    val chip = renderer.renderChip(AgentPromptChipRenderInput(item = item, projectBasePath = null))
+
+    assertThat(chip.text).isEqualTo("Commits: Fix TEST-101 regression +1")
+    assertThat(chip.tooltipText).contains("abc12345  Fix TEST-101 regression")
+    assertThat(chip.tooltipText).contains("Test User")
+    assertThat(chip.tooltipText).contains("repo")
+  }
+
+  @Test
+  fun renderEnvelopeKeepsHashOnlyOutputWhenPayloadHasMetadata() {
+    val item = contextItem(
+      body = "",
+      payload = AgentPromptPayload.obj(
+        "entries" to AgentPromptPayload.arr(
+          AgentPromptPayload.obj(
+            "hash" to AgentPromptPayload.str("abc12345abcdef"),
+            "subject" to AgentPromptPayload.str("Fix TEST-101 regression"),
+          ),
+        )
+      )
+    )
+
+    val rendered = renderer.renderEnvelope(AgentPromptEnvelopeRenderInput(item = item, projectPath = null))
+
+    assertThat(rendered).isEqualTo("commits:\nabc12345abcdef")
+  }
+
   private fun contextItem(
     body: String,
     payload: AgentPromptPayloadValue,

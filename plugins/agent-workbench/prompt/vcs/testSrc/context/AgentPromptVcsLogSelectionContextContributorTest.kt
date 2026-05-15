@@ -23,6 +23,8 @@ import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.VcsLogCommitSelection
 import com.intellij.vcs.log.VcsLogCommitStorageIndex
 import com.intellij.vcs.log.VcsLogDataKeys
+import com.intellij.vcs.log.impl.VcsCommitMetadataImpl
+import com.intellij.vcs.log.util.VcsUserUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.util.function.Consumer
@@ -79,6 +81,39 @@ class AgentPromptVcsLogSelectionContextContributorTest {
     assertThat(entries.map { entry -> entry.string("hash") }).containsExactly(firstHash, secondHash)
     assertThat(entries.map { entry -> entry.string("rootPath") }).allMatch { rootPath -> !rootPath.isNullOrBlank() }
     assertThat(item.truncation.reason).isEqualTo(AgentPromptContextTruncationReason.NONE)
+  }
+
+  @Test
+  fun collectsCachedCommitMetadataIntoPayload() {
+    val hash = "1111111111111111111111111111111111111111"
+    val root = LightVirtualFile("root-a")
+    val metadata = VcsCommitMetadataImpl(
+      testHash(hash),
+      emptyList(),
+      1710000000000L,
+      root,
+      "Fix TEST-101 regression",
+      VcsUserUtil.createUser("Test User", "test@example.com"),
+      "Fix TEST-101 regression",
+      VcsUserUtil.createUser("Test User", "test@example.com"),
+      1710000000000L,
+    )
+    val selection = TestVcsLogCommitSelection(
+      selectedCommits = listOf(CommitId(testHash(hash), root)),
+      cachedMetadata = listOf(metadata),
+    )
+    val dataContext = SimpleDataContext.builder()
+      .add(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION, selection)
+      .build()
+
+    val result = contributor.collect(invocationData(dataContext = dataContext))
+
+    val entry = result.single().payload.objOrNull()?.array("entries")?.single()?.objOrNull()
+    assertThat(entry?.string("hash")).isEqualTo(hash)
+    assertThat(entry?.string("subject")).isEqualTo("Fix TEST-101 regression")
+    assertThat(entry?.string("author")).isEqualTo("Test User")
+    assertThat(entry?.number("commitTimeMs")).isEqualTo("1710000000000")
+    assertThat(entry?.string("rootName")).isEqualTo("root-a")
   }
 
   @Test

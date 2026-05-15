@@ -23,12 +23,32 @@ internal object AgentPromptVcsIssueUrls {
     return issueUrls.toList()
   }
 
-  internal fun buildVcsCommitPayloadEntry(hash: String, rootPath: String?, issueUrls: List<String>): AgentPromptPayloadValue.Obj {
+  internal fun buildVcsCommitPayloadEntry(
+    hash: String,
+    rootPath: String?,
+    issueUrls: List<String>,
+    subject: String? = null,
+    author: String? = null,
+    commitTimeMs: Long? = null,
+    rootName: String? = null,
+  ): AgentPromptPayloadValue.Obj {
     val fields = linkedMapOf<String, AgentPromptPayloadValue>(
       "hash" to AgentPromptPayload.str(hash),
     )
     rootPath?.let { path ->
       fields["rootPath"] = AgentPromptPayload.str(path)
+    }
+    rootName?.trim()?.takeIf { it.isNotEmpty() }?.let { name ->
+      fields["rootName"] = AgentPromptPayload.str(name)
+    }
+    subject?.trim()?.takeIf { it.isNotEmpty() }?.let { text ->
+      fields["subject"] = AgentPromptPayload.str(text)
+    }
+    author?.trim()?.takeIf { it.isNotEmpty() }?.let { name ->
+      fields["author"] = AgentPromptPayload.str(name)
+    }
+    commitTimeMs?.takeIf { it > 0L }?.let { timestamp ->
+      fields["commitTimeMs"] = AgentPromptPayloadValue.Num(timestamp.toString())
     }
     if (issueUrls.isNotEmpty()) {
       fields["issueUrls"] = AgentPromptPayloadValue.Arr(issueUrls.map(AgentPromptPayload::str))
