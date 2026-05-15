@@ -12,10 +12,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.searches.ReferencesSearch
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
@@ -42,6 +44,8 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.RangeKtExpressionType.RANGE_U
 import org.jetbrains.kotlin.idea.codeinsight.utils.RangeKtExpressionType.UNTIL
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.CallableId
+import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtArrayAccessExpression
 import org.jetbrains.kotlin.psi.KtBinaryExpression
@@ -98,8 +102,8 @@ class ReplaceManualRangeWithIndicesCallsInspection : KotlinApplicableInspectionB
         val explicitReceiver: KtExpression?,
         val indexUsagePattern: IndexUsagePattern,
         val implicitReceiverInfo: ImplicitReceiverInfo?,
-        val suggestedElementName: String?,
         val indexedAccessUsages: List<SmartPsiElementPointer<KtExpression>>,  // Either KtArrayAccessExpression or KtDotQualifiedExpression
+        val hasIndicesProperty: Boolean,
     )
 
     private val RANGE_CALLABLE_NAMES = setOf("until", "rangeTo", "rangeUntil", "downTo")
@@ -118,15 +122,12 @@ class ReplaceManualRangeWithIndicesCallsInspection : KotlinApplicableInspectionB
     }
 
     private fun isApplicableByPsi(range: RangeExpression): Boolean {
-        // Only ascending ranges are candidates for indices replacement
         if (range.type == DOWN_TO) return false
         
         val (left, right) = range.arguments
-        
-        // Must start with 0 to be a candidate for indices replacement
+
         if (left == null || !left.isIntConstantExpression(0)) return false
-        
-        // Must have a valid target expression that can be extracted
+
         if (right == null) return false
         
         return extractTargetExpression(range.type, right) != null
@@ -151,10 +152,8 @@ class ReplaceManualRangeWithIndicesCallsInspection : KotlinApplicableInspectionB
         val callableName = callableId.callableName.asString()
         if (callableName !in RANGE_CALLABLE_NAMES) return false
 
-        // Extension functions in kotlin.ranges (until, rangeUntil, downTo, and some rangeTo overloads)
         if (callableId.packageName == StandardClassIds.BASE_RANGES_PACKAGE) return true
 
-        // Member functions on primitive types (Int.rangeTo, Int.rangeUntil, etc.)
         if (callableName == "rangeTo" || callableName == "rangeUntil") {
             return callableId.classId?.isPrimitiveRangeType() == true
         }
@@ -165,35 +164,27 @@ class ReplaceManualRangeWithIndicesCallsInspection : KotlinApplicableInspectionB
     private fun KaSession.prepareContextForRange(range: RangeExpression): Context? {
         val (_, right) = range.arguments
 
-        // Must end with a size/length call
         val sizeCall = right?.let { rightBound(range.type, it) } ?: return null
         val explicitReceiver = (sizeCall as? KtQualifiedExpression)?.receiverExpression
 
         val indexUsageAnalysis = analyzeIndexUsagePattern(range, explicitReceiver)
         val implicitReceiverInfo = if (explicitReceiver == null) sizeCall.getImplicitReceiverInfo() else null
 
-        // Pre-compute a unique element name for the loop transformation (for ELEMENT_LOOP and WITH_INDEX patterns)
-        val suggestedElementName = if (indexUsageAnalysis.pattern != IndexUsagePattern.INDICES_ONLY) {
-            val forExpression = findContainingForLoop(range)
-            forExpression?.loopParameter?.let { loopParameter ->
-                val nameValidator = KotlinDeclarationNameValidator(
-                    loopParameter,
-                    true,
-                    KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
-                )
-                KotlinNameSuggester.suggestNameByName("element") { nameValidator.validate(it) }
-            }
-        } else null
-
-        // Store indexed access usages as smart pointers for use in quick fixes
         val indexedAccessPointers = indexUsageAnalysis.indexedAccessUsages.map { it.createSmartPointer() }
+
+        val receiverType = resolveReceiverType(sizeCall)
+        val hasIndices = receiverType?.let { hasIndicesProperty(it) } ?: false
+
+        if (indexUsageAnalysis.pattern == IndexUsagePattern.INDICES_ONLY && !hasIndices) {
+            return null
+        }
 
         return Context(
             explicitReceiver,
             indexUsageAnalysis.pattern,
             implicitReceiverInfo,
-            suggestedElementName,
-            indexedAccessPointers
+            indexedAccessPointers,
+            hasIndices
         )
     }
 
@@ -205,9 +196,9 @@ class ReplaceManualRangeWithIndicesCallsInspection : KotlinApplicableInspectionB
         // lastIndex is only valid for inclusive ranges (RANGE_TO)
         // For open ranges (UNTIL, RANGE_UNTIL), 0..<lastIndex excludes the last element
         if (selector.text == "lastIndex" && type != RANGE_TO) return null
-
         return when (selector.text) {
-            "size", "lastIndex" -> if (receiverType.isArrayOrPrimitiveArray || receiverType.isSubtypeOf(StandardClassIds.Collection)) target else null
+            "size" -> if (hasSizeProperty(receiverType)) target else null
+            "lastIndex" -> if (hasLastIndexProperty(receiverType)) target else null
             "length" -> if (receiverType.isSubtypeOf(StandardClassIds.CharSequence)) target else null
             else -> null
         }
@@ -222,14 +213,12 @@ class ReplaceManualRangeWithIndicesCallsInspection : KotlinApplicableInspectionB
     }
 
     private fun extractFromRangeToExpression(expression: KtExpression): KtExpression? {
-        // Handle arr.size - 1 pattern
         if (expression is KtBinaryExpression && expression.operationToken == KtTokens.MINUS) {
             val leftOperand = expression.left ?: return null
             val rightOperand = expression.right ?: return null
             return if (rightOperand.isIntConstantExpression(1)) leftOperand else null
         }
-        
-        // Handle arr.lastIndex pattern
+
         if (expression is KtDotQualifiedExpression) {
             val selector = expression.selectorExpression
             if (selector?.text == "lastIndex") {
@@ -245,14 +234,32 @@ class ReplaceManualRangeWithIndicesCallsInspection : KotlinApplicableInspectionB
     }
 
     private fun KaSession.resolveReceiverType(expression: KtExpression): KaType? {
-        val resolvedCall = expression.resolveToCall()
-        val variableCall = resolvedCall?.successfulVariableAccessCall() ?: return null
-        val partiallyApplied = variableCall.partiallyAppliedSymbol
-        
+        val variableCall = expression.resolveToCall()?.successfulVariableAccessCall() ?: return null
+
         // For member properties, use dispatchReceiver
         // For extension properties (like lastIndex), use extensionReceiver
-        return partiallyApplied.dispatchReceiver?.type ?: partiallyApplied.extensionReceiver?.type
+        return variableCall.dispatchReceiver?.type ?: variableCall.extensionReceiver?.type
     }
+
+    @OptIn(KaExperimentalApi::class)
+    private fun KaSession.hasPropertyOfType(type: KaType, propertyName: String, expectedReturnType: ClassId): Boolean {
+        val typeScope = type.scope?.declarationScope ?: return false
+        return typeScope.callables(Name.identifier(propertyName)).any { callable ->
+            callable is KaVariableSymbol && callable.returnType.isSubtypeOf(expectedReturnType)
+        }
+    }
+
+    private fun KaSession.isArrayOrCollection(type: KaType): Boolean =
+        type.isArrayOrPrimitiveArray || type.isSubtypeOf(StandardClassIds.Collection)
+
+    private fun KaSession.hasSizeProperty(type: KaType): Boolean =
+        isArrayOrCollection(type) || hasPropertyOfType(type, "size", StandardClassIds.Int)
+
+    private fun KaSession.hasLastIndexProperty(type: KaType): Boolean =
+        isArrayOrCollection(type) || type.isSubtypeOf(StandardClassIds.CharSequence) || hasPropertyOfType(type, "lastIndex", StandardClassIds.Int)
+
+    private fun KaSession.hasIndicesProperty(type: KaType): Boolean =
+        isArrayOrCollection(type) || type.isSubtypeOf(StandardClassIds.CharSequence) || hasPropertyOfType(type, "indices", StandardClassIds.IntRange)
 
     /**
      * Result of analyzing how the loop index variable is used in the loop body.
@@ -349,12 +356,20 @@ class ReplaceManualRangeWithIndicesCallsInspection : KotlinApplicableInspectionB
     }
 
     private fun createQuickFixes(context: Context): List<KotlinModCommandQuickFix<KtExpression>> {
-        val indicesFix = ReplaceManualRangeWithIndicesCallQuickFix(context)
-        return when (context.indexUsagePattern) {
-            IndexUsagePattern.ELEMENT_LOOP -> listOf(ReplaceIndexLoopWithCollectionLoopQuickFix(context), indicesFix)
-            IndexUsagePattern.WITH_INDEX -> listOf(ReplaceWithWithIndexLoopQuickFix(context), indicesFix)
-            IndexUsagePattern.INDICES_ONLY -> listOf(indicesFix)
+        val fixes = mutableListOf<KotlinModCommandQuickFix<KtExpression>>()
+
+        when (context.indexUsagePattern) {
+            IndexUsagePattern.ELEMENT_LOOP -> fixes.add(ReplaceIndexLoopWithCollectionLoopQuickFix(context))
+            IndexUsagePattern.WITH_INDEX -> fixes.add(ReplaceWithWithIndexLoopQuickFix(context))
+            IndexUsagePattern.INDICES_ONLY -> {} // Only indices fix, added below if available
         }
+
+        // Only offer .indices fix if the type has it available
+        if (context.hasIndicesProperty) {
+            fixes.add(ReplaceManualRangeWithIndicesCallQuickFix(context))
+        }
+
+        return fixes
     }
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitor<*, *> =
@@ -436,7 +451,13 @@ class ReplaceManualRangeWithIndicesCallsInspection : KotlinApplicableInspectionB
             val forExpression = element.getStrictParentOfType<KtForExpression>() ?: return
             val loopParameter = forExpression.loopParameter ?: return
             val loopRange = forExpression.loopRange ?: return
-            val elementName = context.suggestedElementName ?: return
+
+            val nameValidator = KotlinDeclarationNameValidator(
+                loopParameter,
+                true,
+                KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
+            )
+            val elementName = KotlinNameSuggester.suggestNameByName("element") { nameValidator.validate(it) }
 
             // Get writable indexed accesses from smart pointers
             val indexedAccesses = context.indexedAccessUsages.mapNotNull { pointer ->
@@ -477,7 +498,13 @@ class ReplaceManualRangeWithIndicesCallsInspection : KotlinApplicableInspectionB
             val forExpression = element.getStrictParentOfType<KtForExpression>() ?: return
             val loopParameter = forExpression.loopParameter ?: return
             val loopRange = forExpression.loopRange ?: return
-            val elementName = context.suggestedElementName ?: return
+
+            val nameValidator = KotlinDeclarationNameValidator(
+                loopParameter,
+                true,
+                KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
+            )
+            val elementName = KotlinNameSuggester.suggestNameByName("element") { nameValidator.validate(it) }
 
             // Get writable indexed accesses from smart pointers
             val indexedAccesses = context.indexedAccessUsages.mapNotNull { pointer ->

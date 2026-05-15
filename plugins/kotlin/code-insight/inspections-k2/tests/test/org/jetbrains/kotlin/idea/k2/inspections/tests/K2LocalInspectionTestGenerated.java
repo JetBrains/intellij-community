@@ -10290,6 +10290,31 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/complexReceiver.kt");
         }
 
+        @TestMetadata("customCollectionIndices.kt")
+        public void testCustomCollectionIndices() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/customCollectionIndices.kt");
+        }
+
+        @TestMetadata("customIterableElementLoop.kt")
+        public void testCustomIterableElementLoop() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/customIterableElementLoop.kt");
+        }
+
+        @TestMetadata("customIterableNoFix.kt")
+        public void testCustomIterableNoFix() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/customIterableNoFix.kt");
+        }
+
+        @TestMetadata("customIterableWithIndex.kt")
+        public void testCustomIterableWithIndex() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/customIterableWithIndex.kt");
+        }
+
+        @TestMetadata("customIterableWrongReturnType.kt")
+        public void testCustomIterableWrongReturnType() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/customIterableWrongReturnType.kt");
+        }
+
         @TestMetadata("elementNameCollision.kt")
         public void testElementNameCollision() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/elementNameCollision.kt");
