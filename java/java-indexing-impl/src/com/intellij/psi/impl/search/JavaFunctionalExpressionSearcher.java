@@ -115,6 +115,9 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
   private static @NotNull List<SamDescriptor> calcDescriptors(@NotNull Session session) {
     PsiClass aClass = session.elementToSearch;
     Project project = PsiUtilCore.getProjectInReadAction(aClass);
+    if (DumbService.isDumb(project)) {
+      return List.of();
+    }
 
     Callable<List<SamDescriptor>> runnable = () -> {
       if (!aClass.isValid() || !aClass.isInterface()) {
