@@ -479,12 +479,19 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
     <applicationService serviceInterface="com.intellij.openapi.vfs.encoding.EncodingManager"
                         serviceImplementation="com.intellij.openapi.vfs.encoding.EncodingManagerImpl"/>
     <applicationService serviceImplementation="com.intellij.ide.plugins.PluginManagerUISettings"/>
+    <backgroundPostStartupActivity implementation="com.intellij.ide.actions.IdeScalePostStartupActivity"/>
     <registryKey key="ide.plugins.category.promotion.enabled"
                  defaultValue="true"
                  restartRequired="true"
                  description="Enable plugin category promotion panels with priority sorting in the Installed plugins tab"/>
-    <backgroundPostStartupActivity implementation="com.intellij.ide.actions.IdeScalePostStartupActivity"/>
-
+    <registryKey key="dynamic.plugins.support.new.impl"
+                 defaultValue="false"
+                 restartRequired="true"
+                 description="Enable new dynamic plugin support implementation"/>
+    <registryKey key="dynamic.plugins.support.await.classloader.unload.strategy"
+                 defaultValue="[beforeLoad*|asyncPostTransition]"
+                 restartRequired="true"
+                 description="Changes the way IDE waits for plugins to unload during dynamic plugin reconfiguration"/>
     <applicationService serviceInterface="com.intellij.codeInsight.hint.HintManager"
                         serviceImplementation="com.intellij.codeInsight.hint.HintManagerImpl"/>
     <applicationService serviceInterface="com.intellij.codeInsight.hint.ClientHintManager"

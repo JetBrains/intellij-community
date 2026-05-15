@@ -1,0 +1,686 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.plugins
+
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.IdeEventQueue
+import com.intellij.ide.cancelAndJoinBlocking
+import com.intellij.ide.plugins.DynamicPluginsLegacyImpl.clearCachedValues
+import com.intellij.ide.plugins.DynamicPluginsLegacyImpl.clearCachesAfterUnload
+import com.intellij.ide.plugins.DynamicPluginsLegacyImpl.registerDescriptors
+import com.intellij.ide.plugins.DynamicPluginsLegacyImpl.unloadModuleDescriptorNotRecursively
+import com.intellij.ide.plugins.DynamicPluginsValidators.validateGroupCanBeLoaded
+import com.intellij.ide.plugins.DynamicPluginsValidators.validateGroupCanBeUnloaded
+import com.intellij.ide.plugins.DynamicPluginsValidators.validateGroupConformsCommonDynamicConstraints
+import com.intellij.ide.plugins.DynamicPluginsValidators.validateProductRulesPermitLoading
+import com.intellij.ide.plugins.DynamicPluginsValidators.validateProductRulesPermitUnloading
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader.UNLOAD_IN_PROGRESS
+import com.intellij.ide.plugins.cl.PluginClassLoader
+import com.intellij.openapi.actionSystem.impl.canUnloadActionGroup
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.trace
+import com.intellij.openapi.extensions.ExtensionPointDescriptor
+import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.extensions.impl.ExtensionPointDeferredListenersNotification
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryManager
+import com.intellij.platform.pluginSystem.parser.impl.elements.ActionElement.ActionElementName
+import com.intellij.platform.util.progress.withProgressText
+import com.intellij.util.application
+import com.intellij.util.containers.BidirectionalMap
+import com.intellij.util.containers.WeakList
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
+import kotlin.coroutines.CoroutineContext
+
+private val LOG = Logger.getInstance(DynamicPluginsSupportImpl::class.java)
+
+internal class DynamicPluginsSupportImpl(
+  val classloaderUnloadAwaitStrategy: AwaitClassloaderUnloadStrategy
+) : DynamicPluginsSupport {
+
+  private val outerContext: CoroutineContext get() {
+    return if (System.getProperty("background.dynamic.reload", "false") == "true") Dispatchers.Default
+    else Dispatchers.EDT
+  }
+
+  override suspend fun validateDynamicTransitionPossible(targetState: PluginSet): DynamicPluginsTransitionResult.Invalid? {
+    return withContext(Dispatchers.Default) {
+      val target = targetState.resolvedPluginSet ?: error("resolved plugin set is not set")
+      val current = getCurrentlyLoadedPluginSet()
+      val sequence = buildTransitionSequence(current, target).also { LOG.debug { it.getExplanationLogMessage() } }
+      validateTransitionSequenceCanBePerformedDynamically(sequence)?.let(DynamicPluginsTransitionResult::Invalid)
+    }
+  }
+
+  // assumes that the caller already holds all necessary locks
+  override suspend fun performDynamicTransition(targetState: PluginSet): DynamicPluginsTransitionResult {
+    return withContext(outerContext) {
+      val current = getCurrentlyLoadedPluginSet()
+      val target = targetState.resolvedPluginSet ?: error("resolved plugin set is not set")
+      val sequence = buildTransitionSequence(current, target).also {
+        LOG.info(it.getExplanationLogMessage())
+      }
+
+      val dynamicTransitionIsNotPossibleReason = validateTransitionSequenceCanBePerformedDynamically(sequence)
+      if (dynamicTransitionIsNotPossibleReason != null) {
+        return@withContext dynamicTransitionIsNotPossibleReason.let(DynamicPluginsTransitionResult::Invalid)
+      }
+
+      val unloadSteps = sequence.transitionSequence.takeWhile { it.action == RuntimeModuleGroupAction.UNLOAD }
+      val loadSteps = sequence.transitionSequence.drop(unloadSteps.size).takeWhile { it.action == RuntimeModuleGroupAction.LOAD }
+      check(unloadSteps.size + loadSteps.size == sequence.transitionSequence.size) { "All loading actions are expected to come after all unloading actions" }
+
+      val pluginsToLoad = loadSteps.asSequence().flatMap { it.runtimeModuleGroup.sortedDescriptors }.filterIsInstance<PluginMainDescriptor>().associateBy { it.pluginId }
+      val (successfullyUnloaded, classloadersToUnload) = unloadGroups(unloadSteps.map { it.runtimeModuleGroup }, pluginsToLoad)
+      if (!successfullyUnloaded) {
+        // broken state, require restart
+        InstalledPluginsState.getInstance().isRestartRequired = true
+        return@withContext DynamicPluginsTransitionResult.Incomplete()
+      }
+      loadGroups(targetState, loadSteps.map { it.runtimeModuleGroup })
+
+      val trulyCollected = classloaderUnloadAwaitStrategy.awaitClassloadersUnloadedPostTransition(classloadersToUnload)
+      if (!trulyCollected) {
+        InstalledPluginsState.getInstance().isRestartRequired = true
+        return@withContext DynamicPluginsTransitionResult.Incomplete()
+      }
+
+      return@withContext DynamicPluginsTransitionResult.Success()
+    }
+  }
+
+  private suspend fun validateTransitionSequenceCanBePerformedDynamically(sequence: TransitionSequence): DynamicTransitionIsNotPossibleReason? {
+    return withProgressText(IdeBundle.message("progress.text.validating.dynamic.reconfiguration")) {
+      val elementsModel = MutableAppElementsModel()
+      for (group in sequence.currentState.runtimeModuleGroupGraph.sortedGroups) {
+        elementsModel.register(group)
+          ?.let { return@withProgressText DynamicTransitionIsNotPossibleReason.of(it) }
+      }
+      for (step in sequence.transitionSequence) {
+        validateGroupConformsCommonDynamicConstraints(step.runtimeModuleGroup)
+          ?.let { return@withProgressText it }
+        when (step.action) {
+          RuntimeModuleGroupAction.UNLOAD -> {
+            validateProductRulesPermitUnloading(step.runtimeModuleGroup)
+              ?.let { return@withProgressText it }
+            validateGroupCanBeUnloaded(
+              step.runtimeModuleGroup,
+              elementsModel,
+              allowServiceOverridesUnloading,
+              allowUnloadingWhenRunFromSources
+            )?.let { return@withProgressText it }
+
+            elementsModel.unregister(step.runtimeModuleGroup)
+              ?.let { return@withProgressText DynamicTransitionIsNotPossibleReason.of(it) }
+          }
+          RuntimeModuleGroupAction.LOAD -> {
+            validateProductRulesPermitLoading(step.runtimeModuleGroup)
+              ?.let { return@withProgressText it }
+            validateGroupCanBeLoaded(step.runtimeModuleGroup)
+              ?.let { return@withProgressText it }
+
+            elementsModel.register(step.runtimeModuleGroup)
+              ?.let { return@withProgressText DynamicTransitionIsNotPossibleReason.of(it) }
+          }
+        }
+      }
+      return@withProgressText null
+    }.also {
+      if (it != null) LOG.warn("Dynamic plugins transition is not possible: ${it.logMessage}")
+    }
+  }
+
+  private suspend fun unloadGroups(
+    groupsToUnload: List<RuntimeModuleGroup>,
+    pluginsToBeLoadedLater: Map<PluginId, PluginMainDescriptor>,
+  ): Pair<Boolean, WeakList<PluginClassLoader>> {
+    val classloadersToUnload = WeakList<PluginClassLoader>()
+    if (groupsToUnload.isEmpty()) {
+      return true to classloadersToUnload
+    }
+    return withProgressText(IdeBundle.message("progress.text.unloading.n.modules", groupsToUnload.size)) {
+      val affectedPlugins = groupsToUnload.asSequence().flatMap { it.sortedDescriptors.asReversed() }.filterIsInstance<PluginMainDescriptor>()
+      try {
+        withContext(Dispatchers.EDT) {
+          for (plugin in affectedPlugins) {
+            val isUpdate = plugin.pluginId in pluginsToBeLoadedLater
+            runSafe {
+              application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginUnload(plugin, isUpdate)
+            }
+          }
+          IdeEventQueue.getInstance().flushQueue() // TODO get rid of this ?
+        }
+
+        classloadersToUnload.addAll(groupsToUnload.mapNotNull { getAssociatedClassloader(it) as? PluginClassLoader })
+        classloadersToUnload.forEach { it.state = UNLOAD_IN_PROGRESS } // triggers plugin scope cancellation
+        cancelAndJoinPluginScopes(classloadersToUnload)
+
+        application.runWriteAction {
+          for (group in groupsToUnload) {
+            for (descriptor in group.sortedDescriptors.asReversed()) {
+              deregisterDescriptor(descriptor)
+            }
+          }
+          detachClassLoaders(groupsToUnload)
+          clearCachesAfterUnload(classloadersToUnload)
+        }
+
+        val collected = classloaderUnloadAwaitStrategy.awaitClassloadersUnloadedBeforeLoad(classloadersToUnload)
+        for (plugin in affectedPlugins) {
+          DynamicPluginsUsagesCollector.logDescriptorUnload(plugin, success = collected)
+        }
+
+        return@withProgressText collected to classloadersToUnload
+      }
+      catch (e: Exception) {
+        LOG.error("Unloading failed", e)
+        for (plugin in affectedPlugins) {
+          DynamicPluginsUsagesCollector.logDescriptorUnload(plugin, success = false)
+        }
+        throw e
+      } finally {
+        withContext(Dispatchers.EDT + NonCancellable) {
+          for (plugin in affectedPlugins) {
+            val isUpdate = plugin.pluginId in pluginsToBeLoadedLater
+            runSafe {
+              application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).pluginUnloaded(plugin, isUpdate)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  private fun deregisterDescriptor(descriptor: IdeaPluginDescriptorImpl) {
+    unloadModuleDescriptorNotRecursively(descriptor) // reuse as is for now
+  }
+
+  private fun detachClassLoaders(groups: List<RuntimeModuleGroup>) {
+    for (group in groups) {
+      for (descriptor in group.sortedDescriptors) {
+        descriptor.pluginClassLoader = null
+      }
+    }
+  }
+
+  /**
+   * Applies new state, must be called even if there is nothing to load after unload
+   */
+  private suspend fun loadGroups(targetPluginSet: PluginSet, groups: List<RuntimeModuleGroup>) {
+    withProgressText(IdeBundle.message("progress.text.loading.n.modules", groups.size)) {
+      if (groups.isEmpty()) {
+        application.runWriteAction {
+          PluginManagerCore.setPluginSet(targetPluginSet)
+        }
+        return@withProgressText
+      }
+
+      val affectedPlugins = groups.asSequence().flatMap { it.sortedDescriptors }.filterIsInstance<PluginMainDescriptor>()
+      withContext(Dispatchers.EDT) {
+        runSafe { application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginsLoaded() }
+        for (plugin in affectedPlugins) {
+          runSafe { application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginLoaded(plugin) }
+        }
+      }
+      try {
+        attachClassLoaders(groups, targetPluginSet)
+        val listenerCallbacks = mutableListOf<ExtensionPointDeferredListenersNotification>()
+        application.runWriteAction {
+          val descriptors = groups.flatMap { it.sortedDescriptors }
+          registerDescriptors(application as ApplicationImpl, descriptors.asSequence(), listenerCallbacks)
+          clearCachedValues()
+
+          PluginManagerCore.setPluginSet(targetPluginSet)
+
+          if (System.getProperty("revert.IJPL233642", "false") != "true") {
+            listenerCallbacks.sortBy {
+              // put all registryKey EP listeners before anything else FIXME IJPL-233642
+              if (it.ep.name == "com.intellij.registryKey") -1 else 0
+            }
+          }
+          listenerCallbacks.forEach {
+            it.notify.run()
+          }
+        }
+      }
+      finally {
+        withContext(Dispatchers.EDT + NonCancellable) {
+          for (plugin in affectedPlugins) {
+            runSafe { application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).pluginLoaded(plugin) }
+            DynamicPluginsUsagesCollector.logDescriptorLoad(plugin)
+            PluginManagerCore.clearPluginNonLoadReasonFor(plugin.pluginId)
+          }
+          runSafe { application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).pluginsLoaded() }
+        }
+      }
+    }
+  }
+
+  private fun attachClassLoaders(groups: List<RuntimeModuleGroup>, pluginSet: PluginSet) {
+    val configurator = ClassLoaderConfigurator(pluginSet)
+    for (group in groups) {
+      for (descriptor in group.sortedDescriptors.filterIsInstance<PluginModuleDescriptor>()) {
+        configurator.configureModule(descriptor)
+      }
+    }
+  }
+
+  private fun getCurrentlyLoadedPluginSet(): ResolvedPluginSet {
+    return PluginManagerCore.getPluginSet().resolvedPluginSet ?: error("ResolvedPluginSet is not set")
+  }
+
+  private val allowServiceOverridesUnloading: Boolean
+    get() = Registry.`is`("ide.plugins.allow.dynamic.services.overrides", false)
+
+  private val allowUnloadingWhenRunFromSources: Boolean
+    get() = Registry.`is`("ide.plugins.allow.unload.from.sources", false)
+
+  private fun buildTransitionSequence(current: ResolvedPluginSet, target: ResolvedPluginSet): TransitionSequence {
+    val currentGraph = current.runtimeModuleGroupGraph
+    val targetGraph = target.runtimeModuleGroupGraph
+    val exactAlignment = BidirectionalMap<RuntimeModuleGroup, RuntimeModuleGroup>() // current <-> target
+    val steps = ArrayList<TransitionStep>()
+    for (currentGroup in currentGraph.sortedGroups) {
+      val representativeModule = currentGroup.representativeModule
+      if (target.isResolved(representativeModule)) {
+        val targetGroup = target.runtimeModuleGroupGraph.getRuntimeModuleGroup(representativeModule)
+        if (validateRuntimeModuleGroupsAlignExactly(currentGraph, currentGroup, targetGraph, targetGroup, exactAlignment)) {
+          LOG.trace { "Exact alignment found for group: ${targetGroup}" }
+          exactAlignment[currentGroup] = targetGroup
+          continue
+        }
+      } else {
+        LOG.debug { "Alignment failed for ${currentGroup}: ${representativeModule.shortLogDescription} is not resolved in new module graph" }
+      }
+      // exact alignment failed
+      LOG.debug { "Exact alignment failed for group: ${currentGroup}, scheduling unload" }
+      steps.add(TransitionStep(currentGroup, RuntimeModuleGroupAction.UNLOAD))
+    }
+    steps.reverse()
+    for (targetGroup in targetGraph.sortedGroups) {
+      if (exactAlignment.containsValue(targetGroup)) {
+        continue
+      }
+      LOG.trace { "Group ${targetGroup} wasn't aligned, scheduling load" }
+      steps.add(TransitionStep(targetGroup, RuntimeModuleGroupAction.LOAD))
+    }
+    return TransitionSequence(current, exactAlignment, steps)
+  }
+
+  private fun TransitionSequence.getExplanationLogMessage(): String {
+    return buildString {
+      append("Dynamic plugins transition sequence:\n")
+      append("- reuse ${exactRuntimeModuleGroupAlignment.size} module groups")
+      if (transitionSequence.isNotEmpty()) {
+        append("\n")
+        append(transitionSequence.joinToString("\n") {
+          when (it.action) {
+            RuntimeModuleGroupAction.UNLOAD -> "- unload ${it.runtimeModuleGroup}"
+            RuntimeModuleGroupAction.LOAD -> "- load ${it.runtimeModuleGroup}"
+          }
+        })
+      }
+    }
+  }
+
+  /**
+   * @return true if [targetGroup] can be configured from existing [currentGroup] without any (un-)loading.
+   */
+  private fun validateRuntimeModuleGroupsAlignExactly(
+    currentGraph: RuntimeModuleGroupGraph,
+    currentGroup: RuntimeModuleGroup,
+    targetGraph: RuntimeModuleGroupGraph,
+    targetGroup: RuntimeModuleGroup,
+    existingAlignment: Map<RuntimeModuleGroup, RuntimeModuleGroup>
+  ): Boolean {
+    // equality by instance identity is implied
+    if (currentGroup.representativeModule != targetGroup.representativeModule) {
+      LOG.debug { "Alignment failed for ${currentGroup}: target group has different representative module ${targetGroup.representativeModule.shortLogDescription}" }
+      return false
+    }
+    if (currentGroup.sortedDescriptors != targetGroup.sortedDescriptors) {
+      LOG.debug { "Alignment failed for ${currentGroup}: target group has a different set of included descriptors" }
+      return false
+    }
+    val currentAlignedDependencies = currentGraph.getDirectDependencies(currentGroup).map { existingAlignment[it] }
+    val targetDependencies = targetGraph.getDirectDependencies(targetGroup)
+    if (currentAlignedDependencies != targetDependencies) {
+      LOG.debug { "Alignment failed for ${currentGroup}: target dependency groups don't align with current dependency groups" }
+      return false
+    }
+    return true
+  }
+
+  private enum class RuntimeModuleGroupAction {
+    LOAD,
+    UNLOAD
+  }
+
+  private class TransitionStep(val runtimeModuleGroup: RuntimeModuleGroup, val action: RuntimeModuleGroupAction) {
+    override fun toString(): String = "${action.name} ${runtimeModuleGroup}"
+  }
+
+  private class TransitionSequence(
+    val currentState: ResolvedPluginSet,
+    val exactRuntimeModuleGroupAlignment: BidirectionalMap<RuntimeModuleGroup, RuntimeModuleGroup>,
+    val transitionSequence: List<TransitionStep>
+  ) {
+    override fun toString(): String = "TransitionSequence(steps=${transitionSequence.size})"
+  }
+
+  // TODO this is bad, rewrite later, there should be a separate mapping RMG -> Classloader provided by ClassLoaderConfigurator
+  private fun getAssociatedClassloader(group: RuntimeModuleGroup): ClassLoader {
+    val classloaders = group.sortedDescriptors.map { it.pluginClassLoader }
+    check(classloaders.all { it == classloaders[0] }) { "Runtime module group is expected to have a single classloader, but it has different: ${group.sortedDescriptors}"}
+    return classloaders[0] ?: error("Runtime module group is expected to have an assigned classloader: ${group.sortedDescriptors}")
+  }
+
+  private fun cancelAndJoinPluginScopes(classLoaders: WeakList<PluginClassLoader>) {
+    for (classLoader in classLoaders) {
+      cancelAndJoinBlocking(classLoader.pluginCoroutineScope, "Plugin ${classLoader.pluginId}") { job, _ ->
+        while (!job.isCompleted) {
+          ProgressManager.checkCanceled()
+          IdeEventQueue.getInstance().flushQueue()
+        }
+      }
+    }
+  }
+}
+
+private object DynamicPluginsValidators {
+  fun validateGroupConformsCommonDynamicConstraints(group: RuntimeModuleGroup): DynamicTransitionIsNotPossibleReason? {
+    for (descriptor in group.sortedDescriptors) {
+      validateDescriptorDoesNotRequireRestart(descriptor)
+        ?.let { return it }
+      validateDescriptorHasNoComponents(descriptor)
+        ?.let { return it }
+    }
+    return null
+  }
+
+  fun validateGroupCanBeLoaded(group: RuntimeModuleGroup): DynamicTransitionIsNotPossibleReason? {
+    return null // no checks right now
+  }
+
+  fun validateGroupCanBeUnloaded(
+    group: RuntimeModuleGroup,
+    elementsModel: MutableAppElementsModel,
+    allowServiceOverridesUnloading: Boolean,
+    allowUnloadingWhenRunFromSources: Boolean,
+  ): DynamicTransitionIsNotPossibleReason? {
+    val validators = listOfNotNull(
+      ::validateActionsCanBeUnloaded,
+      // ::validateIsNotDependsSubDescriptor, // TODO since ResolvedPluginSet now maintains proper RuntimeModuleGraph model, perhaps we can get rid of this constraint
+      ::validateDescriptorHasNoServiceOverrides.takeIf { !allowServiceOverridesUnloading },
+      ::validateDescriptorUsesPluginClassloader.takeIf { !allowUnloadingWhenRunFromSources },
+      { validateDescriptorHasAllExtensionsFromDynamicEPs(it, elementsModel) }
+    )
+    for (descriptor in group.sortedDescriptors.asReversed()) {
+      validators.firstNotNullOfOrNull { it(descriptor) }
+        ?.let { return it }
+    }
+    return null
+  }
+
+  fun validateProductRulesPermitUnloading(group: RuntimeModuleGroup): DynamicTransitionIsNotPossibleReason? {
+    validateProductRulesPermitDynamicLoadOrUnload(group)
+      ?.let { return it }
+    for (descriptor in group.sortedDescriptors) {
+      if (descriptor is PluginMainDescriptor) {
+        validatePluginUnloadingIsNotVetoed(descriptor)
+          ?.let { return it }
+      }
+    }
+    return null
+  }
+
+  fun validateProductRulesPermitLoading(group: RuntimeModuleGroup): DynamicTransitionIsNotPossibleReason? {
+    validateProductRulesPermitDynamicLoadOrUnload(group)
+      ?.let { return it }
+    for (descriptor in group.sortedDescriptors) {
+      if (descriptor is PluginMainDescriptor) {
+        validatePluginLoadingIsNotVetoed(descriptor)
+          ?.let { return it }
+      }
+    }
+    return null
+  }
+
+  fun validateProductRulesPermitDynamicLoadOrUnload(group: RuntimeModuleGroup): DynamicTransitionIsNotPossibleReason? {
+    if (InstalledPluginsState.getInstance().isRestartRequired) { // TODO maybe drop this flag eventually, should not exist (or at least shouldn't be used by platform stuff)
+      return DynamicTransitionIsNotPossibleReason.of("There are pending changes that require restart")
+    }
+    if (!RegistryManager.getInstance().`is`("ide.plugins.allow.unload")) {
+      // TODO in previous impl, there was a check for (!allowLoadUnloadSynchronously(module)) which basically checks that the plugin
+      //  affected only UI, this is not the case anymore (bad public contract otherwise)
+      return DynamicTransitionIsNotPossibleReason.of("Dynamic loading/unloading of plugins is disabled by a registry option 'ide.plugins.allow.unload'")
+    }
+    for (descriptor in group.sortedDescriptors) {
+      if (descriptor.productCode != null && !descriptor.isBundled && !PluginManagerCore.isDevelopedByJetBrains(descriptor)) {
+        return DynamicTransitionIsNotPossibleReason.of("${descriptor.shortLogDescription} is a paid plugin, dynamic loading/unloading is not supported")
+      }
+    }
+    return null
+  }
+
+  fun validatePluginLoadingIsNotVetoed(descriptor: PluginMainDescriptor): DynamicTransitionIsNotPossibleReason? {
+    var reason: DynamicTransitionIsNotPossibleReason? = null
+    VETOER_EP_NAME.processWithPluginDescriptor { vetoer, vetoerDescriptor ->
+      try {
+        if (vetoer.vetoPluginLoad(descriptor)) {
+          reason = DynamicTransitionIsNotPossibleReason.of(
+            "Dynamic loading of ${descriptor.shortLogDescription} was vetoed by ${vetoer.javaClass.name} from ${(vetoerDescriptor as? IdeaPluginDescriptorImpl)?.shortLogDescription}"
+          )
+        }
+      }
+      catch (_: CancellationException) { }
+      catch (e: Throwable) {
+        LOG.error(e)
+      }
+    }
+    return reason
+  }
+
+  fun validatePluginUnloadingIsNotVetoed(descriptor: PluginMainDescriptor): DynamicTransitionIsNotPossibleReason? {
+    val vetoMessage = VETOER_EP_NAME.computeSafeIfAny {
+      it.vetoPluginUnload(descriptor)
+    }
+    return vetoMessage?.let(DynamicTransitionIsNotPossibleReason::of)
+  }
+
+  fun validateDescriptorDoesNotRequireRestart(descriptor: IdeaPluginDescriptorImpl): DynamicTransitionIsNotPossibleReason? {
+    if (descriptor.isRequireRestart) {
+      return DynamicTransitionIsNotPossibleReason.of("${descriptor.shortLogDescription} explicitly requires restart to be loaded/unloaded")
+    }
+    return null
+  }
+
+  fun validateIsNotDependsSubDescriptor(descriptor: IdeaPluginDescriptorImpl): DynamicTransitionIsNotPossibleReason? {
+    if (descriptor is DependsSubDescriptor) {
+      return DynamicTransitionIsNotPossibleReason.of(
+        "${descriptor.getMainDescriptor().shortLogDescription} cannot be dynamically loaded/unloaded because it contains `<depends>` configs: ${descriptor.shortLogDescription}"
+      )
+    }
+    return null
+  }
+
+  fun validateDescriptorHasNoComponents(descriptor: IdeaPluginDescriptorImpl): DynamicTransitionIsNotPossibleReason? {
+    return validateInAllScopes(descriptor) { container ->
+      when {
+        container.components.isNotEmpty() -> DynamicTransitionIsNotPossibleReason.of(
+          "${descriptor.shortLogDescription} cannot be dynamically loaded/unloaded because it declares components: ${container.components.first()}"
+        )
+        else -> null
+      }
+    }
+  }
+
+  fun validateActionsCanBeUnloaded(descriptor: IdeaPluginDescriptorImpl): DynamicTransitionIsNotPossibleReason? {
+    for (action in descriptor.actions) {
+      val element = action.element
+      val elementName = action.name
+      val canUnload = elementName == ActionElementName.action ||
+                      elementName == ActionElementName.reference ||
+                      (elementName == ActionElementName.group && canUnloadActionGroup(element))
+      if (!canUnload) {
+        return DynamicTransitionIsNotPossibleReason.of("${descriptor.shortLogDescription} cannot be dynamically unloaded because of the action element $action")
+      }
+    }
+    return null
+  }
+
+  fun validateDescriptorHasNoServiceOverrides(descriptor: IdeaPluginDescriptorImpl): DynamicTransitionIsNotPossibleReason? {
+    return validateInAllScopes(descriptor) { container ->
+      val override = container.services.firstOrNull { it.overrides }
+      when {
+        override != null -> DynamicTransitionIsNotPossibleReason.of(
+          "${descriptor.shortLogDescription} cannot be dynamically loaded/unloaded because it declares service override: ${override}"
+        )
+        else -> null
+      }
+    }
+  }
+
+  fun validateDescriptorUsesPluginClassloader(descriptor: IdeaPluginDescriptorImpl): DynamicTransitionIsNotPossibleReason? {
+    val classloader = descriptor.pluginClassLoader
+    if (classloader != null && classloader !is PluginClassLoader && !descriptor.useIdeaClassLoader && !application.isUnitTestMode) {
+      return DynamicTransitionIsNotPossibleReason.of(
+        "${descriptor.shortLogDescription} cannot be unloaded dynamically because it is configured to use $classloader, and not PluginClassLoader. " +
+        "This may happen if the IDE is started from sources."
+      )
+    }
+    return null
+  }
+
+  fun validateDescriptorHasAllExtensionsFromDynamicEPs(
+    descriptor: IdeaPluginDescriptorImpl,
+    elementsModel: MutableAppElementsModel,
+  ): DynamicTransitionIsNotPossibleReason? {
+    for (epFqn in descriptor.extensions.keys) {
+      // TODO there were these hard-coded exclusions in the previous impl, let's try to live without them for now
+      //// special case Kotlin EPs registered via code in Kotlin compiler
+      //if (epName.startsWith("org.jetbrains.kotlin") && descriptor.pluginId.idString == "org.jetbrains.kotlin") {
+      //  continue
+      //}
+      //// Workaround until SID-207 fixed
+      //if (epName.startsWith("Pythonid.template") && descriptor.pluginId.idString in listOf("com.intellij.python.django", "org.jetbrains.dbt")) {
+      //  continue
+      //}
+      val epResult = elementsModel.getExtensionPoint(epFqn)
+      if (epResult == null) {
+        return DynamicTransitionIsNotPossibleReason.of(
+          "${descriptor.shortLogDescription} cannot be unloaded dynamically because it uses extension point '$epFqn' which was not found."
+        )
+      }
+      val (source, ep) = epResult
+      if (!ep.isDynamic) {
+        return DynamicTransitionIsNotPossibleReason.of(
+          "${descriptor.shortLogDescription} cannot be unloaded dynamically because it uses non-dynamic extension point '$epFqn' from ${source.shortLogDescription}."
+        )
+      }
+    }
+    return null
+  }
+
+  fun validateInAllScopes(
+    descriptor: IdeaPluginDescriptorImpl,
+    validateScope: (ContainerDescriptor) -> DynamicTransitionIsNotPossibleReason?,
+  ): DynamicTransitionIsNotPossibleReason? {
+    validateScope(descriptor.appContainerDescriptor)?.let { return it }
+    validateScope(descriptor.projectContainerDescriptor)?.let { return it }
+    validateScope(descriptor.moduleContainerDescriptor)?.let { return it }
+    return null
+  }
+}
+
+/**
+ * TODO Ideally, this shouldn't exist, and the model from the real elements registration should be reused,
+ *      but it's kinda too much hassle to refactor it right now, so this should suffice for the time being...
+ */
+private class MutableAppElementsModel {
+  private val appScope = ScopedContainer(hashMapOf())
+  private val projectScope = ScopedContainer(hashMapOf())
+  private val moduleScope = ScopedContainer(hashMapOf())
+
+  fun register(group: RuntimeModuleGroup): String? {
+    for (descriptor in group.sortedDescriptors) {
+      register(descriptor)?.let { return it }
+    }
+    return null
+  }
+
+  fun unregister(group: RuntimeModuleGroup): String? {
+    for (descriptor in group.sortedDescriptors.asReversed()) {
+      unregister(descriptor)?.let { return it }
+    }
+    return null
+  }
+
+  private fun register(descriptor: IdeaPluginDescriptorImpl): String? {
+    return runInEveryScope(descriptor) { container, scope ->
+      for (ep in container.extensionPoints) {
+        val existing = scope.extensionPoints.putIfAbsent(ep.getQualifiedName(descriptor), descriptor to ep)
+        if (existing != null) {
+          return@runInEveryScope "Extension point ${ep.getQualifiedName(descriptor)} from ${descriptor.shortLogDescription}" +
+                                 " was previously registered by ${existing.first.shortLogDescription}"
+        }
+      }
+      return@runInEveryScope null
+    }
+  }
+
+  private fun unregister(descriptor: IdeaPluginDescriptorImpl): String? {
+    return runInEveryScope(descriptor) { container, scope ->
+      for (ep in container.extensionPoints) {
+        val existing = scope.extensionPoints.remove(ep.getQualifiedName(descriptor))
+        if (existing == null) {
+          return@runInEveryScope "Extension point ${ep.getQualifiedName(descriptor)} from ${descriptor.shortLogDescription}" +
+                                 " was expected to be registered, but was not found"
+        }
+        if (existing.first != descriptor) {
+          return@runInEveryScope "Extension point ${ep.getQualifiedName(descriptor)} from ${descriptor.shortLogDescription}" +
+                                 " was expected to be registered, but was found associated with a different source: ${existing.first.shortLogDescription}"
+        }
+      }
+      return@runInEveryScope null
+    }
+  }
+
+  fun getExtensionPoint(fqn: String): Pair<IdeaPluginDescriptorImpl, ExtensionPointDescriptor>? {
+    return lookupInEveryScope { it.extensionPoints[fqn] }
+  }
+
+  private fun <R> runInEveryScope(descriptor: IdeaPluginDescriptorImpl, body: (ContainerDescriptor, ScopedContainer) -> R?): R? {
+    body(descriptor.appContainerDescriptor, appScope)?.let { return it }
+    body(descriptor.projectContainerDescriptor, projectScope)?.let { return it }
+    body(descriptor.moduleContainerDescriptor, moduleScope)?.let { return it }
+    return null
+  }
+
+  private fun <R> lookupInEveryScope(body: (ScopedContainer) -> R?): R? {
+    body(appScope)?.let { return it }
+    body(projectScope)?.let { return it }
+    body(moduleScope)?.let { return it }
+    return null
+  }
+
+  private class ScopedContainer(
+    val extensionPoints: MutableMap<String, Pair<IdeaPluginDescriptorImpl, ExtensionPointDescriptor>> = HashMap()
+  )
+}
+
+private fun <R> runSafe(body: () -> R): R? {
+  try {
+    return body()
+  }
+  catch (e: Throwable) {
+    if (e !is CancellationException) LOG.error(e)
+    return null
+  }
+}
