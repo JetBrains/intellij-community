@@ -292,6 +292,14 @@
                      language="kotlin"
                      key="inspection.redundant.if.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.KotlinLoggerInitializedWithForeignClassInspection"
+                      groupPath="Kotlin"
+                      groupBundle="messages.KotlinBundle" groupKey="group.names.logging"
+                      enabledByDefault="false"
+                      level="WARNING"
+                      language="kotlin"
+                      key="inspection.logger.initialized.with.foreign.class.display.name" bundle="messages.KotlinBundle"/>
+
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.declarations.MainFunctionReturnUnitInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
