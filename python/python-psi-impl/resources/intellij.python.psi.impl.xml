@@ -587,6 +587,12 @@
                  description="It enables the use of a library-level cache for PSI elements from packages."/>
     <registryKey key="python.statement.lists.incremental.reparse" defaultValue="true"
                  description="Enables incremental reparse for statement lists"/>
+    <registryKey key="python.statement.lists.incremental.reparse.min.file.chars" defaultValue="20000"
+                 description="Minimum file size (chars) below which incremental reparse of Python statement lists is skipped."/>
+    <registryKey key="python.statement.lists.incremental.reparse.max.list.chars" defaultValue="10000"
+                 description="Hard cap on the statement list size (chars) for incremental reparse."/>
+    <registryKey key="python.statement.lists.incremental.reparse.max.ratio.percent" defaultValue="10"
+                 description="Maximum statement list size as a percentage of the containing file for incremental reparse."/>
     <registryKey key="python.strict.type.narrow" defaultValue="false"
                  description="Allows narrowing types exhaustively to Never"/>
     <registryKey key="python.typing.soft.keys.type.eval.context" defaultValue="false"

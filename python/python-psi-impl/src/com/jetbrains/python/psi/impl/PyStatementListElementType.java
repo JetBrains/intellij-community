@@ -25,6 +25,7 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyIndentUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 public class PyStatementListElementType extends IReparseableElementType implements ICompositeElementType {
 
@@ -37,22 +38,22 @@ public class PyStatementListElementType extends IReparseableElementType implemen
   private static final Key<LanguageLevel> LANGUAGE_LEVEL_KEY = Key.create("LANGUAGE_LEVEL_FOR_REPARSEABLE_ELEMENT");
   private static final Key<Integer> BASE_INDENT_KEY = Key.create("FIRST_LINE_INDENT_FOR_REPARSEABLE_ELEMENT");
 
-  // TODO: may require further fine-tuning once more benchmark data is available
-  /** Minimum file size (chars) below which incremental reparse is skipped — full reparse is cheap enough.
-   *  ~20 000 chars ≈ 500 lines of typical Python code. */
-  private static final int LAZY_REPARSE_MIN_FILE_CHARS = 20_000;
+  // TODO: thresholds below may require further fine-tuning once more benchmark data is available
 
-  /** Hard cap on the statement list size (chars) for incremental reparse */
-  private static final int LAZY_REPARSE_MAX_STATEMENT_LIST_CHARS = 10_000;
+  /** Below this file size full reparse is cheap enough; 20K chars ≈ 500 lines of typical Python. */
+  private static int minFileCharsThreshold() {
+    return Math.max(0, Registry.intValue("python.statement.lists.incremental.reparse.min.file.chars", 20_000));
+  }
 
-  /**
-   * Maximum statement list size as a percentage of the file.
-   * For smaller files (below the crossover at {@code MAX_CHARS / MAX_RATIO = 100K}), the ratio
-   * is the binding constraint — it prevents incremental reparse when the savings over full reparse
-   * are too small to justify the per-commit overhead.
-   * For larger files, {@link #LAZY_REPARSE_MAX_STATEMENT_LIST_CHARS} takes over.
-   */
-  private static final int LAZY_REPARSE_MAX_RATIO_PERCENT = 10;
+  /** Hard cap on statement list size: protects EDT from per-keystroke lex over huge blocks. */
+  private static int maxListCharsThreshold() {
+    return Math.max(0, Registry.intValue("python.statement.lists.incremental.reparse.max.list.chars", 10_000));
+  }
+
+  /** Statement list size cap as % of file: keeps savings worth the per-commit overhead. */
+  private static int maxRatioPercentThreshold() {
+    return Math.max(0, Registry.intValue("python.statement.lists.incremental.reparse.max.ratio.percent", 10));
+  }
 
   @Override
   public boolean isReparseable(@NotNull ASTNode currentNode,
@@ -250,14 +251,28 @@ public class PyStatementListElementType extends IReparseableElementType implemen
     PsiFile containingFile = currentNode.getPsi().getContainingFile();
     if (containingFile == null) return true;
 
-    int fileLength = containingFile.getTextLength();
-    if (fileLength < LAZY_REPARSE_MIN_FILE_CHARS) return false;
+    return isLargeEnoughForIncrementalReparse(
+      containingFile.getTextLength(),
+      newText.length(),
+      minFileCharsThreshold(),
+      maxListCharsThreshold(),
+      maxRatioPercentThreshold()
+    );
+  }
 
-    long maxAllowed = Math.min(LAZY_REPARSE_MAX_STATEMENT_LIST_CHARS,
-                               (long)fileLength * LAZY_REPARSE_MAX_RATIO_PERCENT / 100);
-    if (newText.length() > maxAllowed) return false;
-
-    return true;
+  /**
+   * Pure heuristic: file ≥ {@code minFileChars} AND list ≤ min({@code maxListChars}, file * ratio%).
+   * Ratio binds below the {@code maxListChars * 100 / maxRatioPercent} crossover (100K with defaults), abs cap above.
+   */
+  @VisibleForTesting
+  public static boolean isLargeEnoughForIncrementalReparse(int fileLength,
+                                                           int newTextLength,
+                                                           int minFileChars,
+                                                           int maxListChars,
+                                                           int maxRatioPercent) {
+    if (fileLength < minFileChars) return false;
+    long maxAllowed = Math.min(maxListChars, (long)fileLength * maxRatioPercent / 100);
+    return newTextLength <= maxAllowed;
   }
 
   @Override
