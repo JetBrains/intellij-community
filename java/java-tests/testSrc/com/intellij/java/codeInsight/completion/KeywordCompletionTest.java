@@ -126,6 +126,24 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testInstanceOf3() { doTest(); }
   public void testCatchFinally() { doTest(2, "catch", "finally"); }
   public void testSecondCatch() { doTest(2, "catch", "finally"); }
+  public void testSuperParen() {
+    configureFromFileText("Test.java", """
+      class X {
+        X() {
+          s<caret>
+        }
+      }
+      """);
+    complete();
+    type('(');
+    checkResultByText("""
+      class X {
+        X() {
+          super();
+        }
+      }
+      """);
+  }
   public void testSuper1() { doTest(1, "super"); }
   public void testSuper2() { doTest(0, "super"); }
   public void testSuper3() { doTest(); }
