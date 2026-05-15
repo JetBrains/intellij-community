@@ -14,18 +14,31 @@ class UID private constructor(val id: String) {
   object Serializer : DelegateSerializer<UID, String>(UID::toString, String.serializer(), UID::fromString)
 
   companion object {
+    private const val LENGTH: Int = 20
+    // *5 – LENGTH chunks 5 bits each (len*5)
+    // /8 – split by bytes
+    // +7 – ceiling the value: (x + n - 1) / n ≡ ceil(x / n)
+    private const val BYTES_LENGTH: Int = (LENGTH * 5 + 7) / 8
+    private val BASE32 = "0123456789abcdefghijklmnopqrstuv".toCharArray()
+
     private const val MAX_LENGTH: Int = 36
     private val uidRegex = Regex("^([A-Za-z0-9_-]{1,$MAX_LENGTH})$")
 
     fun random(): UID {
-      val string = buildString {
-        repeat(3) {
-          // Would give 8 chars per chunk (radix 32 -> 5 bits per char, 5 * 8 bits generated)
-          append(Random.nextBytes(5).toLong().toString(32).padStart(8, '0'))
+      val bytes = Random.nextBytes(BYTES_LENGTH)
+      val chars = CharArray(LENGTH)
+      var bitBuf = 0
+      var bitCount = 0
+      var byteIdx = 0
+      for (i in 0 until LENGTH) {
+        if (bitCount < 5) {
+          bitBuf = (bitBuf shl 8) or (bytes[byteIdx++].toInt() and 0xff)
+          bitCount += 8
         }
+        bitCount -= 5
+        chars[i] = BASE32[(bitBuf ushr bitCount) and 31]
       }
-
-      return UID(string.take(20))
+      return UID(chars.concatToString())
     }
 
     fun isUid(id: String): Boolean = id.matches(uidRegex)
@@ -35,15 +48,6 @@ class UID private constructor(val id: String) {
         "Invalid UID format: \"$id\", UID is a random [A-Za-z0-9_-] string, case-sensitive, no more than 36 characters long."
       }
       UID(id)
-    }
-
-    private fun ByteArray.toLong(): Long {
-      var number = 0L
-      for ((index, i) in (size - 1 downTo 0).withIndex()) { // big-endian
-        val bitIndex = i * 8
-        number = get(index).toLong() and 0xff shl bitIndex or number
-      }
-      return number
     }
   }
 
