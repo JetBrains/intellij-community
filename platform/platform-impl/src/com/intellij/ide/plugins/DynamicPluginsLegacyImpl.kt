@@ -18,6 +18,7 @@ import com.intellij.ide.actions.RevealFileAction
 import com.intellij.ide.cancelAndJoinBlocking
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.DynamicPlugins.UnloadPluginOptions
+import com.intellij.ide.plugins.DynamicPluginsLegacyImpl.analyzeSnapshot
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.ui.TopHitCache
@@ -87,6 +88,7 @@ import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.ObjectUtils
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.SystemProperties
+import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.WeakList
 import com.intellij.util.messages.impl.MessageBusEx
@@ -107,7 +109,7 @@ import javax.swing.ToolTipManager
 
 private val LOG = logger<DynamicPlugins>()
 private val classloadersFromUnloadedPlugins = mutableMapOf<PluginId, WeakList<PluginClassLoader>>()
-private val VETOER_EP_NAME = ExtensionPointName<DynamicPluginVetoer>("com.intellij.ide.dynamicPluginVetoer")
+internal val VETOER_EP_NAME = ExtensionPointName<DynamicPluginVetoer>("com.intellij.ide.dynamicPluginVetoer")
 
 internal object DynamicPluginsLegacyImpl {
   private var myProcessRun = 0
@@ -570,37 +572,7 @@ internal object DynamicPluginsLegacyImpl {
           unloadDependencyDescriptors(pluginDescriptor, pluginSet, classLoaders)
           unloadModuleDescriptorNotRecursively(pluginDescriptor)
 
-          app.extensionArea.clearUserCache()
-          for (project in ProjectUtil.getOpenProjects()) {
-            (project.extensionArea as ExtensionsAreaImpl).clearUserCache()
-          }
-          clearCachedValues()
-
-          jdomSerializer.clearSerializationCaches()
-          clearPropertyCollectorCache()
-          InspectionVisitorOptimizer.clearCache()
-          TopHitCache.getInstance().clear()
-          ActionToolbarImpl.resetAllToolbars()
-          PresentationFactory.clearPresentationCaches()
-          TouchbarSupport.reloadAllActions()
-          ApplicationNotificationsModel.expireAll()
-          MessagePool.getInstance().clearErrors()
-          LaterInvocator.purgeExpiredItems()
-          FileAttribute.resetRegisteredIds()
-          resetFocusCycleRoot()
-          clearNewFocusOwner()
-          hideTooltip()
-          PerformanceWatcher.getInstance().clearFreezeStacktraces()
-
-          for (classLoader in classLoaders) {
-            IconLoader.detachClassLoader(classLoader)
-            Language.unregisterAllLanguagesIn(classLoader, pluginDescriptor)
-          }
-          serviceIfCreated<IconDeferrer>()?.clearCache()
-
-          (ApplicationManager.getApplication().messageBus as MessageBusEx).clearPublisherCache()
-          @Suppress("TestOnlyProblems")
-          (ProjectManager.getInstanceIfCreated() as? ProjectManagerImpl)?.disposeDefaultProjectAndCleanupComponentsForDynamicPluginTests()
+          clearCachesAfterUnload(classLoaders)
 
           // clear parents as much late as possible because allParents are a lazy list and calculated on demand
           // it may happen that too early invalidation may lead to unloaded loaders appear in allParents again (IJPL-171566)
@@ -685,7 +657,48 @@ internal object DynamicPluginsLegacyImpl {
     return classLoaderUnloaded
   }
 
-  private fun resetFocusCycleRoot() {
+  internal fun clearCachesAfterUnload(
+    classLoaders: WeakList<PluginClassLoader>,
+  ) {
+    (application as? ApplicationImpl)?.extensionArea?.clearUserCache()
+    for (project in ProjectUtil.getOpenProjects()) {
+      (project.extensionArea as ExtensionsAreaImpl).clearUserCache()
+    }
+    clearCachedValues()
+
+    jdomSerializer.clearSerializationCaches()
+    clearPropertyCollectorCache()
+    InspectionVisitorOptimizer.clearCache()
+    TopHitCache.getInstance().clear()
+    ActionToolbarImpl.resetAllToolbars()
+    PresentationFactory.clearPresentationCaches()
+    TouchbarSupport.reloadAllActions()
+    ApplicationNotificationsModel.expireAll()
+    MessagePool.getInstance().clearErrors()
+    LaterInvocator.purgeExpiredItems()
+    FileAttribute.resetRegisteredIds()
+    resetFocusCycleRoot()
+    clearNewFocusOwner()
+    hideTooltip()
+    PerformanceWatcher.getInstance().clearFreezeStacktraces()
+
+    for (classLoader in classLoaders) {
+      IconLoader.detachClassLoader(classLoader)
+    }
+    serviceIfCreated<IconDeferrer>()?.clearCache()
+
+    (ApplicationManager.getApplication().messageBus as MessageBusEx).clearPublisherCache()
+    @Suppress("TestOnlyProblems")
+    (ProjectManager.getInstanceIfCreated() as? ProjectManagerImpl)?.disposeDefaultProjectAndCleanupComponentsForDynamicPluginTests()
+
+    Disposer.clearDisposalTraces()   // ensure we don't have references to plugin classes in disposal backtraces
+    ThrowableInterner.clearInternedBacktraces()
+    IdeaLogger.ourErrorsOccurred = null   // ensure we don't have references to plugin classes in exception stacktraces
+    clearTemporaryLostComponent()
+    ActionToolbarImpl.updateAllToolbarsImmediately(true)
+  }
+
+  internal fun resetFocusCycleRoot() {
     val focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager()
     var focusCycleRoot = focusManager.currentFocusCycleRoot
     if (focusCycleRoot != null) {
@@ -776,7 +789,7 @@ internal object DynamicPluginsLegacyImpl {
 
   // PluginId cannot be used to unload related resources because one plugin descriptor may consist of several sub descriptors,
   // each of them depends on presense of another plugin, here not the whole plugin is unloaded, but only one part.
-  private fun unloadModuleDescriptorNotRecursively(module: IdeaPluginDescriptorImpl) {
+  internal fun unloadModuleDescriptorNotRecursively(module: IdeaPluginDescriptorImpl) {
     val app = ApplicationManager.getApplication() as ApplicationImpl
     (ActionManager.getInstance() as ActionManagerImpl).unloadActions(module)
 
@@ -833,9 +846,14 @@ internal object DynamicPluginsLegacyImpl {
     })
 
     createDisposeTreePredicate(module)?.let { Disposer.disposeChildren(ApplicationManager.getApplication(), it) }
+
+    val pluginClassLoader = module.pluginClassLoader as? PluginClassLoader
+    if (pluginClassLoader != null) {
+      Language.unregisterAllLanguagesIn(pluginClassLoader, module)
+    }
   }
 
-  private fun unregisterUnknownLevelExtensions(extensionMap: Map<String, List<ExtensionDescriptor>>,
+  internal fun unregisterUnknownLevelExtensions(extensionMap: Map<String, List<ExtensionDescriptor>>,
                                                pluginDescriptor: IdeaPluginDescriptorImpl,
                                                appExtensionArea: ExtensionsAreaImpl,
                                                openedProjects: List<Project>,
@@ -861,7 +879,7 @@ internal object DynamicPluginsLegacyImpl {
     }
   }
 
-  private inline fun processExtensionPoints(pluginDescriptor: IdeaPluginDescriptorImpl,
+  internal fun processExtensionPoints(pluginDescriptor: IdeaPluginDescriptorImpl,
                                             projects: List<Project>,
                                             processor: (points: List<ExtensionPointDescriptor>, area: ExtensionsAreaImpl) -> Unit) {
     pluginDescriptor.appContainerDescriptor.extensionPoints.takeIf { it.isNotEmpty() }?.let {
@@ -1026,6 +1044,90 @@ internal object DynamicPluginsLegacyImpl {
         }
       })
   }
+
+
+  internal fun registerDescriptors(
+    app: ApplicationImpl,
+    descriptors: Sequence<IdeaPluginDescriptorImpl>,
+    listenerCallbacks: MutableList<ExtensionPointDeferredListenersNotification>,
+  ) {
+    app.registerComponents(descriptors = descriptors, app = app, listenerCallbacks = listenerCallbacks)
+    for (openProject in getOpenedProjects()) {
+      openProject.getComponentManagerImpl().registerComponents(descriptors = descriptors, app = app, listenerCallbacks = listenerCallbacks)
+
+      for (module in ModuleManager.getInstance(openProject).modules) {
+        module.getComponentManagerImpl().registerComponents(descriptors = descriptors, app = app, listenerCallbacks = listenerCallbacks)
+      }
+    }
+
+    (ActionManager.getInstance() as ActionManagerImpl).registerActions(descriptors)
+  }
+
+  internal fun analyzeSnapshot(hprofPath: String, pluginId: PluginId): String {
+    FileChannel.open(Paths.get(hprofPath), StandardOpenOption.READ).use { channel ->
+      val analysis = HProfAnalysis(channel, SystemTempFilenameSupplier()) { analysisContext, listProvider, progressIndicator ->
+        AnalyzeClassloaderReferencesGraph(analysisContext, listProvider, pluginId.idString).analyze(progressIndicator).mainReport.toString()
+      }
+      analysis.onlyStrongReferences = true
+      analysis.includeClassesAsRoots = false
+      analysis.setIncludeMetaInfo(false)
+      return analysis.analyze(ProgressManager.getGlobalProgressIndicator() ?: EmptyProgressIndicator())
+    }
+  }
+
+  internal fun createDisposeTreePredicate(pluginDescriptor: IdeaPluginDescriptorImpl): Predicate<Disposable>? {
+    val classLoader = pluginDescriptor.pluginClassLoader as? PluginClassLoader ?: return null
+    return Predicate {
+      it::class.java.classLoader === classLoader
+    }
+  }
+
+  private fun loadModules(
+    modules: List<IdeaPluginDescriptorImpl>,
+    app: ApplicationImpl,
+    listenerCallbacks: MutableList<ExtensionPointDeferredListenersNotification>,
+  ) {
+    val descriptors = sequence {
+      for (module in modules) {
+        yield(module)
+        sequenceSubDescriptorsForRegistration(module) // TODO migrate
+      }
+    }.toList().asSequence()
+    registerDescriptors(app, descriptors, listenerCallbacks)
+  }
+
+  internal fun clearCachedValues() {
+    for (project in ProjectUtil.getOpenProjects()) {
+      (CachedValuesManager.getManager(project) as? CachedValuesManagerImpl)?.clearCachedValues()
+    }
+  }
+
+  internal fun hideTooltip() {
+    try {
+      val showMethod = ToolTipManager::class.java.declaredMethods.find { it.name == "show" }
+      if (showMethod == null) {
+        LOG.info("ToolTipManager.show method not found")
+        return
+      }
+      showMethod.isAccessible = true
+      showMethod.invoke(ToolTipManager.sharedInstance(), null)
+    }
+    catch (e: Throwable) {
+      LOG.info("Failed to hide tooltip", e)
+    }
+  }
+
+  internal fun clearNewFocusOwner() {
+    val field = ReflectionUtil.getDeclaredField(KeyboardFocusManager::class.java, "newFocusOwner")
+    if (field != null) {
+      try {
+        field.set(null, null)
+      }
+      catch (e: Throwable) {
+        LOG.info(e)
+      }
+    }
+  }
 }
 
 private fun clearTemporaryLostComponent() {
@@ -1047,33 +1149,6 @@ private fun clearTemporaryLostComponent() {
   }
   catch (e: Throwable) {
     LOG.info("Failed to clear Window.temporaryLostComponent", e)
-  }
-}
-
-private fun hideTooltip() {
-  try {
-    val showMethod = ToolTipManager::class.java.declaredMethods.find { it.name == "show" }
-    if (showMethod == null) {
-      LOG.info("ToolTipManager.show method not found")
-      return
-    }
-    showMethod.isAccessible = true
-    showMethod.invoke(ToolTipManager.sharedInstance(), null)
-  }
-  catch (e: Throwable) {
-    LOG.info("Failed to hide tooltip", e)
-  }
-}
-
-private fun clearNewFocusOwner() {
-  val field = ReflectionUtil.getDeclaredField(KeyboardFocusManager::class.java, "newFocusOwner")
-  if (field != null) {
-    try {
-      field.set(null, null)
-    }
-    catch (e: Throwable) {
-      LOG.info(e)
-    }
   }
 }
 
@@ -1173,48 +1248,6 @@ private fun optionalDependenciesOnPlugin(
       classLoaderConfigurator.configureDescriptorDynamic(it)
     }
     .toSet()
-}
-
-private fun loadModules(
-  modules: List<IdeaPluginDescriptorImpl>,
-  app: ApplicationImpl,
-  listenerCallbacks: MutableList<ExtensionPointDeferredListenersNotification>,
-) {
-  val descriptors = sequence {
-    for (module in modules) {
-      yield(module)
-      sequenceSubDescriptorsForRegistration(module) // TODO migrate
-    }
-  }.toList().asSequence()
-  app.registerComponents(descriptors = descriptors, app = app, listenerCallbacks = listenerCallbacks)
-  for (openProject in getOpenedProjects()) {
-    openProject.getComponentManagerImpl().registerComponents(descriptors = descriptors, app = app, listenerCallbacks = listenerCallbacks)
-
-    for (module in ModuleManager.getInstance(openProject).modules) {
-      module.getComponentManagerImpl().registerComponents(descriptors = descriptors, app = app, listenerCallbacks = listenerCallbacks)
-    }
-  }
-
-  (ActionManager.getInstance() as ActionManagerImpl).registerActions(descriptors)
-}
-
-private fun analyzeSnapshot(hprofPath: String, pluginId: PluginId): String {
-  FileChannel.open(Paths.get(hprofPath), StandardOpenOption.READ).use { channel ->
-    val analysis = HProfAnalysis(channel, SystemTempFilenameSupplier()) { analysisContext, listProvider, progressIndicator ->
-      AnalyzeClassloaderReferencesGraph(analysisContext, listProvider, pluginId.idString).analyze(progressIndicator).mainReport.toString()
-    }
-    analysis.onlyStrongReferences = true
-    analysis.includeClassesAsRoots = false
-    analysis.setIncludeMetaInfo(false)
-    return analysis.analyze(ProgressManager.getGlobalProgressIndicator() ?: EmptyProgressIndicator())
-  }
-}
-
-private fun createDisposeTreePredicate(pluginDescriptor: IdeaPluginDescriptorImpl): Predicate<Disposable>? {
-  val classLoader = pluginDescriptor.pluginClassLoader as? PluginClassLoader ?: return null
-  return Predicate {
-    it::class.java.classLoader === classLoader
-  }
 }
 
 private fun processOptionalDependenciesOnPlugin(
@@ -1490,12 +1523,6 @@ private fun clearPluginClassLoaderParentListCache(pluginSet: PluginSet) {
   // it's a cheap operation and even if some modules may repeat due to concatenation, it should be not a problem (making a set is probably even slower)
   for (descriptor in pluginSet.allPlugins + pluginSet.getEnabledModules()) {
     (descriptor.pluginClassLoader as? PluginClassLoader)?.clearParentListCache()
-  }
-}
-
-private fun clearCachedValues() {
-  for (project in ProjectUtil.getOpenProjects()) {
-    (CachedValuesManager.getManager(project) as? CachedValuesManagerImpl)?.clearCachedValues()
   }
 }
 
