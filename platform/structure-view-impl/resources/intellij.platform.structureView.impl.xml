@@ -26,6 +26,7 @@
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
+  <resource-bundle>messages.ActionsBundle</resource-bundle>
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.lang.logicalStructureTreeElementProvider" interface="com.intellij.ide.structureView.logical.LogicalStructureTreeElementProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.lang.logicalStructureElementsProvider" beanClass="com.intellij.openapi.util.ClassExtensionPoint" dynamic="true">

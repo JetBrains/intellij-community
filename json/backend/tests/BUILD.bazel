@@ -43,6 +43,8 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//json/backend",
     "//json/backend:backend_test_lib",
+    "//json/structureView",
+    "//json/structureView:structureView_test_lib",
     "//json/backend/regexp",
     "//json/backend/regexp:regexp_test_lib",
     "//spellchecker",

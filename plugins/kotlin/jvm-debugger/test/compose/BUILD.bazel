@@ -24,7 +24,10 @@ jvm_library(
   module_name = "intellij.kotlin.jvm.debugger.test.compose",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  runtime_deps = ["//plugins/kotlin/plugin/k2"]
+  runtime_deps = [
+    "//plugins/kotlin/plugin/k2",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.servicesView:moduleSet-plugin-servicesView",
+  ]
 )
 
 jvm_library(
@@ -74,7 +77,10 @@ jvm_library(
     "//plugins/kotlin/jvm-debugger/test/compose/testFramework",
     "//plugins/kotlin/jvm-debugger/test/compose/testFramework:testFramework_test_lib",
   ],
-  runtime_deps = [":compose"]
+  runtime_deps = [
+    ":compose",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.servicesView:moduleSet-plugin-servicesView_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.kotlin.jvm.debugger.test.compose` end
 

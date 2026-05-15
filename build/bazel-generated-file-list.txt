@@ -346,6 +346,7 @@ json
 json/backend
 json/backend/regexp
 json/backend/tests
+json/structureView
 json/syntax
 jupyter
 jvm/jvm-analysis-api

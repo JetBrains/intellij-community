@@ -22,10 +22,11 @@ import java.util.List;
  */
 public final class JsonStructureViewBuilderFactory implements PsiStructureViewFactory {
 
+  @SuppressWarnings("deprecation")
   public JsonStructureViewBuilderFactory() {
     JsonCustomStructureViewFactory.EP_NAME.addChangeListener(
       () -> ApplicationManager.getApplication().getMessageBus().syncPublisher(StructureViewWrapperImpl.STRUCTURE_CHANGED).run(),
-      ExtensionPointUtil.createKeyedExtensionDisposable(this, PsiStructureViewFactory.EP_NAME.getPoint()));
+      ExtensionPointUtil.createKeyedExtensionDisposable(this, EP_NAME.getPoint()));
   }
 
   @Override
