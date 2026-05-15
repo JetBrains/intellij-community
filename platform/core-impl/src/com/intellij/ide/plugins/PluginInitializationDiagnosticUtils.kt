@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object PluginInitializationDiagnosticUtils {
-  fun logExclusionTree(resolvedPluginSet: ResolvedPluginSet, incompletePlugins: HashMap<PluginId, PluginMainDescriptor>) {
+  fun logExclusionTree(resolvedPluginSet: ResolvedPluginSet, incompletePlugins: Map<PluginId, PluginMainDescriptor>) {
     val broadResolveContext by lazy { AmbiguousPluginSet.build(resolvedPluginSet.originalPluginSet.plugins + incompletePlugins.values) }
     val exclusionChildren = LinkedHashMap<IdeaPluginDescriptorImpl, ArrayList<IdeaPluginDescriptorImpl>>()
     val roots = LinkedHashSet<IdeaPluginDescriptorImpl>()
