@@ -249,7 +249,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
         RangeHighlighterEx highlighter = info.getHighlighter();
         if (highlighter != null) {
           Document hostDocument = highlighter.getDocument();
-          evictedMap.computeIfAbsent(hostDocument, _->HashSet.newHashSet(infos.size())).addAll(infos);
+          evictedMap.computeIfAbsent(hostDocument, _->HashSet.newHashSet(infos.size())).add(info);
         }
       }
       for (Map.Entry<Document, Collection<HighlightInfo>> entry : evictedMap.entrySet()) {
