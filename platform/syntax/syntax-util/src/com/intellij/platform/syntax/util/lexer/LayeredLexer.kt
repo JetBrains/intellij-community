@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.syntax.util.lexer
 
 import com.intellij.platform.syntax.SyntaxElementType
@@ -53,6 +53,9 @@ open class LayeredLexer(baseLexer: Lexer) : DelegateLexer(baseLexer) {
   override fun start(buffer: CharSequence, startOffset: Int, endOffset: Int, initialState: Int) {
     state = initialState
     currentLayerLexer = null
+    currentBaseTokenType = null
+    layerLeftPart = -1
+    baseTokenEnd = -1
 
     super.start(buffer, startOffset, endOffset, initialState)
     activateLayerIfNecessary()
