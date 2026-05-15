@@ -15,14 +15,10 @@ import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.assertAll
 import org.junit.jupiter.api.fail
-import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.attribute.PosixFilePermission
 import kotlin.io.path.div
 import kotlin.io.path.exists
 import kotlin.io.path.readText
-import kotlin.io.path.setAttribute
-import kotlin.io.path.setPosixFilePermissions
 import kotlin.io.path.writeText
 
 fun performApiCheckTest(cs: CoroutineScope, wantedModules: List<JpsModule>): List<DynamicTest> = buildList {
@@ -116,7 +112,7 @@ internal fun Path.experimentalApiDumpPath(): Path {
   return this / MODULE_API_DUMP_EXPERIMENTAL_FILE_NAME
 }
 
-private data class ActualDump(
+private data class ExpectedDump(
   val path: Path,
   val rawContent: String,
   val pathExists: Boolean,
@@ -124,41 +120,36 @@ private data class ActualDump(
   val simplifiedBuilder: StringBuilder = StringBuilder(),
 ) {
   companion object {
-    fun build(path: Path): ActualDump {
+    fun build(path: Path): ExpectedDump {
       val exists = path.exists()
       val content = if (exists) path.readText().replace("\r\n", "\n") else ""
       val lines = Diff.splitLines(content)
-      return ActualDump(path, content, exists, lines.groupByClasses())
+      return ExpectedDump(path, content, exists, lines.groupByClasses())
     }
   }
 }
 
-private fun checkModuleDump(
-  moduleName: String,
-  primaryActualDumpPath: Path,
-  secondaryActualDumpPath: Path?,
-  classSignatures: List<ApiClass>,
-): List<() -> Unit> {
-  val primaryActualDump = ActualDump.build(primaryActualDumpPath)
-  val secondaryActualDump = secondaryActualDumpPath?.let { ActualDump.build(it) }
+private fun checkModuleDump(moduleName: String, primaryExpectedDumpPath: Path, secondaryExpectedDumpPath: Path?, classSignatures: List<ApiClass>): List<() -> Unit> {
+  val primaryExpectedDump = ExpectedDump.build(primaryExpectedDumpPath)
+  val secondaryExpectedDump = secondaryExpectedDumpPath?.let { ExpectedDump.build(it) }
   val actualCategorizedDump = dumpApiAndGroupByClasses(classSignatures)
   // partition of the actual dump that corresponds to the primary dump
-  val primaryExpectedBuilder = StringBuilder()
+  val primaryActualBuilder = StringBuilder()
   // partition of the actual dump that corresponds to the secondary dump
-  val secondaryExpectedBuilder = StringBuilder()
-  val mutablePrimaryDump = primaryActualDump.categorizedDump.toMutableMap()
-  val mutableSecondaryDump = secondaryActualDump?.categorizedDump?.toMutableMap()
-  for ((className, expectedMembers) in actualCategorizedDump) {
+  val secondaryActualBuilder = StringBuilder()
+  val mutablePrimaryDump = primaryExpectedDump.categorizedDump.toMutableMap()
+  val mutableSecondaryDump = secondaryExpectedDump?.categorizedDump?.toMutableMap()
+  for ((className, actualMembers) in actualCategorizedDump) {
     val primaryMembers = mutablePrimaryDump.remove(className)
     val secondaryMembers = mutableSecondaryDump?.remove(className)
 
     if (primaryMembers == null && secondaryMembers == null) {
       // new classes go to the primary dump by default
-      primaryExpectedBuilder.appendLine(className)
-      primaryActualDump.simplifiedBuilder.appendLine("+ $className")
-      expectedMembers.forEach {
-        primaryExpectedBuilder.appendLine(it)
-        primaryActualDump.simplifiedBuilder.appendLine("+ $it")
+      primaryActualBuilder.appendLine(className)
+      primaryExpectedDump.simplifiedBuilder.appendLine("+ $className")
+      actualMembers.forEach {
+        primaryActualBuilder.appendLine(it)
+        primaryExpectedDump.simplifiedBuilder.appendLine("+ $it")
       }
       continue
     }
@@ -173,109 +164,83 @@ private fun checkModuleDump(
 
     var headerAdded = false
 
-    for (expectedMember in expectedMembers) {
-      if (serializedPrimaryMembers?.contains(expectedMember) == true) {
+    for (actualMember in actualMembers) {
+      if (serializedPrimaryMembers?.contains(actualMember) == true) {
         // member is mentioned in the primary dump; skipping it
-        serializedPrimaryMembers.remove(expectedMember)
-        actualPrimaryMembers.add(expectedMember)
+        serializedPrimaryMembers.remove(actualMember)
+        actualPrimaryMembers.add(actualMember)
       }
-      else if (serializedSecondaryMembers?.contains(expectedMember) == true) {
+      else if (serializedSecondaryMembers?.contains(actualMember) == true) {
         // member is mentioned in the secondary dump; skipping it
-        serializedSecondaryMembers.remove(expectedMember)
-        actualSecondaryMembers.add(expectedMember)
+        serializedSecondaryMembers.remove(actualMember)
+        actualSecondaryMembers.add(actualMember)
       }
       else {
         // member is not mentioned anywhere; adding it to the primary dump by default
         if (!headerAdded) {
           if (primaryMembers == null) {
             // the class was not previously mentioned in the primary dump, let's add class name
-            primaryActualDump.simplifiedBuilder.appendLine("+ $className")
+            primaryExpectedDump.simplifiedBuilder.appendLine("+ $className")
           }
           headerAdded = true
         }
-        primaryActualDump.simplifiedBuilder.appendLine("+ $expectedMember")
-        actualPrimaryMembers.add(expectedMember)
+        primaryExpectedDump.simplifiedBuilder.appendLine("+ $actualMember")
+        actualPrimaryMembers.add(actualMember)
       }
     }
 
-    // building partition of expected API dump by primary and secondary dumps
-    appendMembersToExpectedDump(primaryExpectedBuilder, actualPrimaryMembers, className, primaryMembers != null)
-    appendMembersToExpectedDump(secondaryExpectedBuilder, actualSecondaryMembers, className, secondaryMembers != null)
+    // building partition of actual API dump by primary and secondary dumps
+    appendMembersToActualDump(primaryActualBuilder, actualPrimaryMembers, className, primaryMembers != null)
+    appendMembersToActualDump(secondaryActualBuilder, actualSecondaryMembers, className, secondaryMembers != null)
 
     // suggesting to remove leftover members from the primary
-    removeLeftoverMethods(serializedPrimaryMembers, primaryActualDump.simplifiedBuilder)
+    removeLeftoverMethods(serializedPrimaryMembers, primaryExpectedDump.simplifiedBuilder)
     if (serializedSecondaryMembers?.isNotEmpty() == true && serializedSecondaryMembers.size == secondaryMembers.size) {
       // we moved all members from secondary dump; let's remove the class name altogether
-      secondaryActualDump.simplifiedBuilder.appendLine("- $className")
+      secondaryExpectedDump.simplifiedBuilder.appendLine("- $className")
     }
-    removeLeftoverMethods(serializedSecondaryMembers, secondaryActualDump?.simplifiedBuilder)
+    removeLeftoverMethods(serializedSecondaryMembers, secondaryExpectedDump?.simplifiedBuilder)
   }
 
-  cleanupClassesThatDoNotExist(mutablePrimaryDump, primaryActualDump)
+  cleanupClassesThatDoNotExist(mutablePrimaryDump, primaryExpectedDump)
   if (mutableSecondaryDump != null) {
-    cleanupClassesThatDoNotExist(mutableSecondaryDump, secondaryActualDump)
+    cleanupClassesThatDoNotExist(mutableSecondaryDump, secondaryExpectedDump)
   }
 
-  fun runCheck(actualDump: ActualDump, expectedDump: String) {
-    if (actualDump.rawContent == expectedDump) {
+  fun runCheck(expectedDump: ExpectedDump, actualDump: String) {
+    if (expectedDump.rawContent == actualDump) {
       return
     }
     if (System.getProperty("api.dump.test.update.files") == "true") {
-      actualDump.path.writeText(expectedDump)
+      expectedDump.path.writeText(actualDump)
       return
     }
-    val expectedDumpPath: Path? = try {
-      Files.createTempFile("expected_${actualDump.path.fileName}".removeSuffix(".txt"), ".txt")
-        .also {
-          it.writeText(expectedDump)
-          if ("dos" in it.fileSystem.supportedFileAttributeViews()) {
-            it.setAttribute("dos:readonly", true)
-          }
-          else {
-            it.setPosixFilePermissions(setOf(
-              PosixFilePermission.OWNER_READ,
-              PosixFilePermission.GROUP_READ,
-              PosixFilePermission.OTHERS_READ,
-            ))
-          }
-        }
-    }
-    catch (e: Throwable) {
-      e.printStackTrace()
-      null
-    }
-
     throw FileComparisonFailedError(
       message =
-        "'$moduleName' ${actualDump.path.fileName} does not match the actual API. " +
-        "If the API change was intentional, please ${if (actualDump.pathExists) "update" else "create"} '${actualDump.path}', " +
-        "otherwise revert the change. " + "Simplified diff:\n" + actualDump.simplifiedBuilder.toString(),
-      expected = expectedDump,
-      expectedFilePath = expectedDumpPath?.toString(),
-      actual = actualDump.rawContent,
-      actualFilePath = if (actualDump.pathExists) actualDump.path.toString() else null)
+        "'$moduleName' ${expectedDump.path.fileName} does not match the actual API. " +
+        "If the API change was intentional, please ${if (expectedDump.pathExists) "update" else "create"} '${expectedDump.path}', " +
+        "otherwise revert the change. " + "Simplified diff:\n" + expectedDump.simplifiedBuilder.toString(),
+      expected = expectedDump.rawContent,
+      expectedFilePath = if (expectedDump.pathExists) expectedDump.path.toString() else null,
+      actual = actualDump,
+    )
   }
 
   return listOf(
     {
-      runCheck(primaryActualDump, primaryExpectedBuilder.toString())
+      runCheck(primaryExpectedDump, primaryActualBuilder.toString())
     }, {
-      if (secondaryActualDump != null) {
-        runCheck(secondaryActualDump, secondaryExpectedBuilder.toString())
+      if (secondaryExpectedDump != null) {
+        runCheck(secondaryExpectedDump, secondaryActualBuilder.toString())
       }
     })
 
 }
 
-private fun appendMembersToExpectedDump(
-  expectedBuilder: StringBuilder,
-  actualMembers: List<String>,
-  className: String,
-  existsInDump: Boolean,
-) {
+private fun appendMembersToActualDump(actualBuilder: StringBuilder, actualMembers: List<String>, className: String, existsInDump: Boolean) {
   if (actualMembers.isNotEmpty() || existsInDump) {
-    expectedBuilder.appendLine(className)
-    actualMembers.forEach { expectedBuilder.appendLine(it) }
+    actualBuilder.appendLine(className)
+    actualMembers.forEach { actualBuilder.appendLine(it) }
   }
 }
 
@@ -288,7 +253,7 @@ private fun removeLeftoverMethods(serializedMembers: Set<String>?, simplifiedBui
   }
 }
 
-private fun cleanupClassesThatDoNotExist(classes: Map<ClassName, ClassMembers>, expectedDump: ActualDump) {
+private fun cleanupClassesThatDoNotExist(classes: Map<ClassName, ClassMembers>, expectedDump: ExpectedDump) {
   for ((redundantName, redundantMembers) in classes) {
     expectedDump.simplifiedBuilder.appendLine("- $redundantName")
     redundantMembers.forEach { expectedDump.simplifiedBuilder.appendLine("- $it") }
