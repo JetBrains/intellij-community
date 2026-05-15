@@ -93,7 +93,7 @@ private class MonolithSessionProxy(val session: XDebugSession) : XDebugSessionPr
   override val valueMarkers: XValueMarkers<*, *>?
     get() = sessionImplIfAvailable?.valueMarkers
   override val sessionTab: XDebugSessionTab?
-    get() = sessionImplIfAvailable?.sessionTab
+    get() = sessionImplIfAvailable?.sessionTabIfInitialized
   override val isPaused: Boolean
     get() = session.isPaused
   override val isStopped: Boolean

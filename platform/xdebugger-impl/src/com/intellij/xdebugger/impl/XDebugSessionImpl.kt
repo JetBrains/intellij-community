@@ -515,6 +515,10 @@ class XDebugSessionImpl @JvmOverloads constructor(
       return getSessionTabInternal()
     }
 
+  val sessionTabIfInitialized: XDebugSessionTab?
+    @ApiStatus.Internal
+    get() = getSessionTabInternal()
+
   /**
    * Calls [block] in EDT when the tab is ready.
    */

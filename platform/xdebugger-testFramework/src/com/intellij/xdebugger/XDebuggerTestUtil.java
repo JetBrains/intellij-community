@@ -46,6 +46,7 @@ import com.intellij.xdebugger.impl.frame.XStackFrameContainerEx;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
+import com.intellij.xdebugger.ui.IXDebuggerSessionTab;
 import kotlin.Unit;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
@@ -377,12 +378,16 @@ public class XDebuggerTestUtil {
 
   public static void disposeDebugSession(final XDebugSession debugSession) {
     WriteAction.runAndWait(() -> {
+      IXDebuggerSessionTab sessionTab = null;
       var sessionProxy = findSessionProxy(debugSession);
       if (sessionProxy != null) {
-        var sessionTab = sessionProxy.getSessionTab();
-        if (sessionTab != null) {
-          Disposer.dispose(sessionTab);
-        }
+        sessionTab = sessionProxy.getSessionTab();
+      }
+      if (sessionTab == null && debugSession instanceof XDebugSessionImpl sessionImpl) {
+        sessionTab = sessionImpl.getSessionTabIfInitialized();
+      }
+      if (sessionTab != null) {
+        Disposer.dispose(sessionTab);
       }
       ConsoleView consoleView = debugSession.getConsoleView();
       if (consoleView != null) {
