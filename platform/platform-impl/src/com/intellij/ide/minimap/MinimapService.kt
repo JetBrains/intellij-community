@@ -48,7 +48,6 @@ class MinimapService(private val scope: CoroutineScope) : Disposable {
     updateMinimap(editorImpl)
   }
 
-
   fun updateAllEditors() {
     EditorFactory.getInstance().allEditors.forEach { editor ->
       getMainEditorImpl(editor)?.let {
