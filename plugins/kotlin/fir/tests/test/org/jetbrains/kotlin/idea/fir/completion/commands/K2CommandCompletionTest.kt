@@ -320,6 +320,7 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
         )
         val elements = myFixture.completeBasic()
         selectItem(myFixture, elements.first { element -> element.lookupString.contains("Copy ref", ignoreCase = true) })
+        NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
         myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE)
         myFixture.checkResult(
             """

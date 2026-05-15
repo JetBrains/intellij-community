@@ -400,6 +400,7 @@ class JavaCommandsCompletionTest {
     val preview = (item.`as`(CommandCompletionLookupElement::class.java))?.preview(ActionContext.from(myFixture.editor, myFixture.file))
     assertEquals("Copy reference for 'foo'.", (preview as IntentionPreviewInfo.Html).content().toString())
     completion.selectItem(item)
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE)
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     myFixture.checkResult("""

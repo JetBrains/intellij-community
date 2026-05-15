@@ -4,6 +4,7 @@ package org.jetbrains.yaml.navigation;
 import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -66,6 +67,7 @@ public class YAMLCopyReferenceTest extends BasePlatformTestCase {
   private String configureAndCopyReference() {
     myFixture.configureByFile(getTestName(true) + ".yml");
     myFixture.performEditorAction(IdeActions.ACTION_COPY_REFERENCE);
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     String reference;
     try {
       reference = (String)CopyPasteManager.getInstance().getContents().getTransferData(DataFlavor.stringFlavor);

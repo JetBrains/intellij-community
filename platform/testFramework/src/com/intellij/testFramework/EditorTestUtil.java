@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Caret;
@@ -200,6 +201,7 @@ public final class EditorTestUtil {
 
   public static void performReferenceCopy(Editor editor) {
     executeAction(editor, IdeActions.ACTION_COPY_REFERENCE, true);
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
   }
 
   public static void performPaste(Editor editor) {

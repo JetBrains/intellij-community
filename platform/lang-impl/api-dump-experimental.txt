@@ -678,6 +678,7 @@ f:com.intellij.find.findUsages.FindUsagesManager
 *:com.intellij.ide.actions.copyReference.CopyReferenceTarget
 - a:createPointer():com.intellij.model.Pointer
 - a:equals(java.lang.Object):Z
+- s:fromTransferable(java.awt.datatransfer.Transferable):com.intellij.ide.actions.copyReference.CopyReferenceTarget
 - a:getReference():java.lang.String
 - a:hashCode():I
 - a:presentation():com.intellij.platform.backend.presentation.TargetPresentation

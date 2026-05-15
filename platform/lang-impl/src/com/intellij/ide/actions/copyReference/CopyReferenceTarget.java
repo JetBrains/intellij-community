@@ -11,6 +11,8 @@ import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.datatransfer.Transferable;
+
 /**
  * Represents a minimal entity participating in copy reference actions. Provision of a {@link CopyReferenceTarget} allows it to be copied to
  * the clipboard. By default, only support for pasting the {@link #getReference()} is provided. For more complex paste actions (e.g., for
@@ -62,4 +64,15 @@ public interface CopyReferenceTarget {
   @RequiresReadLock
   @RequiresBackgroundThread
   @NotNull TargetPresentation presentation();
+
+  /**
+   * Gets the target that {@link CopyReferenceAction} put into the clipboard. A custom {@link PasteProvider} calls this method to read the
+   * target of the pasted transferable.
+   *
+   * @return the target, or {@code null} if the transferable holds no target, or the target is no longer valid.
+   */
+  @RequiresReadLock
+  static @Nullable CopyReferenceTarget fromTransferable(@NotNull Transferable transferable) {
+    return CopyReferenceTransferable.targetOf(transferable);
+  }
 }

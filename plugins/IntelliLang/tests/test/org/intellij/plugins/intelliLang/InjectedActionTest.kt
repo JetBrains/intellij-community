@@ -20,6 +20,7 @@ class InjectedActionTest : JavaCodeInsightFixtureTestCase() {
       }
       """.trimIndent())
     myFixture.performEditorAction(IdeActions.ACTION_COPY_REFERENCE)
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE)
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     myFixture.checkResult("""

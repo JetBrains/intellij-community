@@ -6,6 +6,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.EdtTestUtil;
@@ -248,7 +249,10 @@ public class CopyReferenceActionTest {
   }
 
   private void performCopy() {
-    EdtTestUtil.runInEdtAndWait(() -> codeInsightFixture.get().testAction(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY_REFERENCE)));
+    EdtTestUtil.runInEdtAndWait(() -> {
+      codeInsightFixture.get().testAction(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY_REFERENCE));
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    });
   }
 
   private void performPaste() {
