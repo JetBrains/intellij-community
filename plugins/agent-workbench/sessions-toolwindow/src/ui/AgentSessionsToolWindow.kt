@@ -28,6 +28,9 @@ import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.TreeUIHelper
 import com.intellij.ui.tree.AsyncTreeModel
@@ -69,9 +72,11 @@ internal fun dispatchTreeRowOverlayQuickCreate(
 
 internal class AgentSessionsToolWindowPanel(
   private val project: Project,
+  private val toolWindow: ToolWindow,
 ) : JPanel(BorderLayout()), Disposable, UiDataProvider {
   private var sessionTreeModel: SessionTreeModel = SessionTreeModel.EMPTY
   private var lastUsedProvider: AgentSessionProvider? = null
+  private var initialRefreshRequested = false
 
   private val treeStructure = AgentSessionsTreeStructure { sessionTreeModel }
   private val structureTreeModel = StructureTreeModel(treeStructure, this)
@@ -155,7 +160,7 @@ internal class AgentSessionsToolWindowPanel(
     sessionsStateFlow = service<AgentSessionReadService>().stateFlow(),
     archivedSessionsStateFlow = service<AgentArchivedSessionsService>().stateFlow(),
     threadViewStateFlow = service<AgentSessionThreadViewStateService>().state,
-    chatSelectionService = project.service<AgentChatTabSelectionService>(),
+    selectedChatTabFlow = project.service<AgentChatTabSelectionService>().selectedChatTab,
     markThreadAsRead = { path, provider, threadId, updatedAt ->
       service<AgentSessionRefreshService>().markThreadAsRead(path, provider, threadId, updatedAt)
     },
@@ -165,7 +170,9 @@ internal class AgentSessionsToolWindowPanel(
     setSessionTreeModel = { sessionTreeModel = it },
     onLastUsedProviderChanged = { provider ->
       lastUsedProvider = provider
-      tree.repaint()
+      if (isModelUpdateVisible()) {
+        tree.repaint()
+      }
     },
     onBeforeModelSwap = {
       rowActionsOverlay.clearTransientState()
@@ -228,7 +235,48 @@ internal class AgentSessionsToolWindowPanel(
     add(ScrollPaneFactory.createScrollPane(tree, true), BorderLayout.CENTER)
 
     interactionController.install()
+    installToolWindowVisibilityTracker()
+    stateController.setModelUpdatesVisible(isModelUpdateVisible())
     stateController.start()
+    requestInitialRefreshIfVisible()
+  }
+
+  private fun installToolWindowVisibilityTracker() {
+    project.messageBus.connect(this).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
+      override fun stateChanged(
+        toolWindowManager: ToolWindowManager,
+        changedToolWindow: ToolWindow,
+        changeType: ToolWindowManagerListener.ToolWindowManagerEventType,
+      ) {
+        if (changedToolWindow == toolWindow) {
+          scheduleToolWindowVisibilityUpdate()
+        }
+      }
+
+      override fun toolWindowShown(shownToolWindow: ToolWindow) {
+        if (shownToolWindow == toolWindow) {
+          scheduleToolWindowVisibilityUpdate()
+        }
+      }
+    })
+  }
+
+  private fun scheduleToolWindowVisibilityUpdate() {
+    EdtInvocationManager.invokeLaterIfNeeded { applyToolWindowVisibility() }
+  }
+
+  private fun applyToolWindowVisibility() {
+    stateController.setModelUpdatesVisible(isModelUpdateVisible())
+    requestInitialRefreshIfVisible()
+  }
+
+  private fun isModelUpdateVisible(): Boolean {
+    return toolWindow.isVisible
+  }
+
+  private fun requestInitialRefreshIfVisible() {
+    if (initialRefreshRequested || !isModelUpdateVisible()) return
+    initialRefreshRequested = true
     service<AgentSessionRefreshService>().refresh()
   }
 

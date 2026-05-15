@@ -18,7 +18,7 @@ internal class AgentSessionsToolWindowFactory : ToolWindowFactory, DumbAware {
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     toolWindow.title = AgentSessionsBundle.message("toolwindow.title")
-    val panel = AgentSessionsToolWindowPanel(project)
+    val panel = AgentSessionsToolWindowPanel(project, toolWindow)
     val content = ContentFactory.getInstance().createContent(panel, null, false)
     content.setDisposer(panel)
     toolWindow.contentManager.addContent(content)
