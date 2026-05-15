@@ -1133,6 +1133,54 @@ internal class PluginDependenciesTest {
     }
 
     @Test
+    fun `external non bundled descriptors get implicit compatibility modules`() {
+      val compatibilityModuleIds = listOf(
+        "intellij.libraries.groovy",
+        "intellij.platform.structureView.impl",
+        "intellij.platform.todo",
+      )
+      plugin("compatibility.modules.provider") {
+        vendor = "JetBrains"
+        content(namespace = "jetbrains") {
+          for (moduleId in compatibilityModuleIds) {
+            module(moduleId) { packagePrefix = moduleId; moduleVisibility = ModuleVisibilityValue.PUBLIC }
+          }
+        }
+      }.installAt(pluginDirPath)
+
+      plugin("optional.target") { vendor = "JetBrains" }.installAt(pluginDirPath)
+
+      plugin("external.consumer") {
+        depends("optional.target", configFile = "optional.xml") { appService("optional.service") }
+        content {
+          module("external.consumer.module", ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "external.consumer.module" }
+        }
+      }.installAt(pluginDirPath)
+
+      plugin("jetbrains.consumer") {
+        vendor = "JetBrains"
+        depends("optional.target", configFile = "optional.xml") { appService("optional.service") }
+        content {
+          module("jetbrains.consumer.module", ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "jetbrains.consumer.module" }
+        }
+      }.installAt(pluginDirPath)
+
+      val pluginSet = buildPluginSet()
+      val compatibilityModules = compatibilityModuleIds.map { pluginSet.getEnabledModule(it) }.toTypedArray()
+      val optionalTarget = pluginSet.getEnabledPlugin("optional.target")
+      val (externalConsumer, jetbrainsConsumer) = pluginSet.getEnabledPlugins("external.consumer", "jetbrains.consumer")
+      val externalOptionalDescriptor = externalConsumer.dependencies.single { it.pluginId == PluginId.getId("optional.target") }.subDescriptor!!
+      val jetbrainsOptionalDescriptor = jetbrainsConsumer.dependencies.single { it.pluginId == PluginId.getId("optional.target") }.subDescriptor!!
+
+      assertThat(externalConsumer).hasExactDirectParentClassloaders(optionalTarget, *compatibilityModules)
+      assertThat(externalOptionalDescriptor).hasExactDirectParentClassloaders(optionalTarget, *compatibilityModules)
+      assertThat(pluginSet.getEnabledModule("external.consumer.module")).hasExactDirectParentClassloaders(*compatibilityModules)
+      assertThat(jetbrainsConsumer).hasExactDirectParentClassloaders(optionalTarget)
+      assertThat(jetbrainsOptionalDescriptor).hasExactDirectParentClassloaders(optionalTarget)
+      assertThat(pluginSet.getEnabledModule("jetbrains.consumer.module")).doesNotHaveDirectParentClassloaders(*compatibilityModules)
+    }
+
+    @Test
     @SystemProperty(propertyKey = "enable.implicit.json.dependency", propertyValue = "true")
     fun `non strict content module gets implicit json backend and collaboration tools`() {
       plugin("json.provider") {

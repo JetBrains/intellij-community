@@ -210,9 +210,19 @@ class ProductPluginInitContext(
           yield(ref)
         }
       }
+      suspend fun SequenceScope<DependencyRef>.yieldPlatformAliasCompatibilityDependencies() {
+        for (contentModuleId in contentModulesExtractedInCorePluginWhichCanBeUsedFromExternalPlugins) {
+          yieldIfResolves(DependencyRef.of(contentModuleId))
+        }
+      }
       return sequence {
         if (!PluginManagerCore.fallbackToOldPluginSetResolution() && descriptor.pluginId != CORE_ID) {
           yieldIfResolves(DependencyRef.of(CORE_ID))
+        }
+        if (descriptor is PluginModuleDescriptor && descriptor.pluginId != CORE_ID && isExternalNonBundledPlugin(descriptor)) {
+          for (dependencyRef in externalNonBundledPluginCompatibilityDependencies) {
+            yieldIfResolves(dependencyRef)
+          }
         }
 
         // If a plugin does not include any module dependency tags in its plugin.xml, it's assumed to be a legacy plugin
@@ -234,13 +244,13 @@ class ProductPluginInitContext(
         // Check modules as well, for example, intellij.diagram.impl.vcs.
         // We are not yet ready to recommend adding a dependency on extracted VCS modules since the coordinates are not finalized.
         if ((descriptor is PluginMainDescriptor && descriptor.pluginId != CORE_ID) || descriptor is ContentModuleDescriptor) {
-          val strictCheck = descriptor.isBundled || PluginManagerCore.isVendorJetBrains(descriptor.vendor ?: "")
-          if (!strictCheck || doesDependOnPluginAlias(descriptor, VCS_ALIAS_ID)) {
+          val isExternalNonBundledDescriptor = isExternalNonBundledPlugin(descriptor)
+          if (isExternalNonBundledDescriptor || doesDependOnPluginAlias(descriptor, VCS_ALIAS_ID)) {
             vcsApiContentModules.forEach { vcsModule ->
               yieldIfResolves(DependencyRef.of(vcsModule))
             }
           }
-          if (!strictCheck) {
+          if (isExternalNonBundledDescriptor) {
             if (System.getProperty("enable.implicit.json.dependency").toBoolean()) {
               yieldIfResolves(DependencyRef.of(JSON_ALIAS_ID))
               yieldIfResolves(DependencyRef.of(JSON_BACKEND_MODULE_ID))
@@ -284,18 +294,14 @@ class ProductPluginInitContext(
               continue
             }
             if ((depends.pluginId == PLATFORM_PLUGIN_ALIAS_ID || depends.pluginId == LANG_PLUGIN_ALIAS_ID) && pluginSet.resolvePluginId(depends.pluginId) != null) {
-              for (contentModuleId in contentModulesExtractedInCorePluginWhichCanBeUsedFromExternalPlugins) {
-                yieldIfResolves(DependencyRef.of(contentModuleId))
-              }
+              yieldPlatformAliasCompatibilityDependencies()
             }
           }
         }
 
         if (descriptor is DependsSubDescriptor) {
           if ((descriptor.dependsTargetId == PLATFORM_PLUGIN_ALIAS_ID || descriptor.dependsTargetId == LANG_PLUGIN_ALIAS_ID) && pluginSet.resolvePluginId(descriptor.pluginId) != null) {
-            for (contentModuleId in contentModulesExtractedInCorePluginWhichCanBeUsedFromExternalPlugins) {
-              yieldIfResolves(DependencyRef.of(contentModuleId))
-            }
+            yieldPlatformAliasCompatibilityDependencies()
           }
         }
       }
@@ -350,6 +356,10 @@ private fun doesDependOnPluginAlias(plugin: IdeaPluginDescriptorImpl, @Suppress(
   return plugin.dependencies.any { it.pluginId == aliasId } || plugin.moduleDependencies.plugins.any { it == aliasId }
 }
 
+private fun isExternalNonBundledPlugin(plugin: IdeaPluginDescriptorImpl): Boolean {
+  return !plugin.isBundled && !PluginManagerCore.isVendorJetBrains(plugin.vendor ?: "")
+}
+
 private val JAVA_BACKEND_MODULE_ID = PluginModuleId("intellij.java.backend", PluginModuleId.JETBRAINS_NAMESPACE)
 private val VCS_ALIAS_ID = PluginId.getId("com.intellij.modules.vcs")
 private val RIDER_ALIAS_ID = PluginId.getId("com.intellij.modules.rider")
@@ -369,6 +379,11 @@ private val XDEBUGGER_MODULE_IDS = listOf(
   PluginModuleId("intellij.platform.debugger.impl.shared", PluginModuleId.JETBRAINS_NAMESPACE),
   PluginModuleId("intellij.platform.debugger.impl.ui", PluginModuleId.JETBRAINS_NAMESPACE),
 )
+private val externalNonBundledPluginCompatibilityDependencies = listOf(
+  "intellij.libraries.groovy",
+  "intellij.platform.structureView.impl",
+  "intellij.platform.todo",
+).map { DependencyRef.of(PluginModuleId(it, PluginModuleId.JETBRAINS_NAMESPACE)) }
 
 /**
  * List of content modules from the core plugin which should be automatically added as dependencies third-party plugins and plugins with dependency on `com.intellij.modules.vcs`
