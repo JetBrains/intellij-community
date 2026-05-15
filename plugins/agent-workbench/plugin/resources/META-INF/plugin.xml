@@ -38,6 +38,7 @@
     <module name="intellij.agent.workbench.filewatch"/>
     <module name="intellij.agent.workbench.ai.review"/>
     <module name="intellij.agent.workbench.ai.review.agents"/>
+    <module name="intellij.agent.workbench.ai.review.llm.plugin.integration" loading="optional"/>
     <module name="intellij.agent.workbench.ai.review.space"/>
     <module name="intellij.agent.workbench.container"/>
     <module name="intellij.agent.workbench.container.mcp"/>

@@ -7,6 +7,9 @@
 - name: lib/modules/intellij.agent.workbench.ai.review.jar
   contentModules:
   - name: intellij.agent.workbench.ai.review
+- name: lib/modules/intellij.agent.workbench.ai.review.llm.plugin.integration.jar
+  contentModules:
+  - name: intellij.agent.workbench.ai.review.llm.plugin.integration
 - name: lib/modules/intellij.agent.workbench.ai.review.space.jar
   contentModules:
   - name: intellij.agent.workbench.ai.review.space
