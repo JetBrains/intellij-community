@@ -2,6 +2,9 @@
 package org.intellij.plugins.markdown.reference
 
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.PsiReference
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.intellij.plugins.markdown.lang.references.backtick.BacktickReference
 import org.junit.Test
@@ -38,13 +41,126 @@ class BacktickReferenceTest : BasePlatformTestCase() {
     myFixture.checkResult("There is an `NewJavaClass` backtick")
   }
 
+  @Test
+  fun `test path reference resolves from project root`() {
+    val target = createFile("community/module-set-plugins/generated/intellij.moduleSet.plugin.main/README.md").parent!!
+    val generated = target.parent!!
+    val moduleSetPlugins = generated.parent!!
+    val community = moduleSetPlugins.parent!!
+
+    assertFileReferenceResolves(
+      "docs/references/project-root-community.md",
+      "Update of `communit<caret>y/module-set-plugins/generated/intellij.moduleSet.plugin.main/`",
+      community
+    )
+    assertFileReferenceResolves(
+      "docs/references/project-root-module-set-plugins.md",
+      "Update of `community/module-set<caret>-plugins/generated/intellij.moduleSet.plugin.main/`",
+      moduleSetPlugins
+    )
+    assertFileReferenceResolves(
+      "docs/references/project-root-generated.md",
+      "Update of `community/module-set-plugins/gene<caret>rated/intellij.moduleSet.plugin.main/`",
+      generated
+    )
+    assertFileReferenceResolves(
+      "docs/references/project-root-wrapper.md",
+      "Update of `community/module-set-plugins/generated/intellij.moduleSet.plugin.main<caret>/`",
+      target
+    )
+  }
+
+  @Test
+  fun `test top level file reference resolves from project root`() {
+    val target = createFile("README.md")
+
+    assertFileReferenceResolves(
+      "docs/references/top-level-file.md",
+      "See `READ<caret>ME.md`",
+      target
+    )
+  }
+
+  @Test
+  fun `test skill dir variable path resolves from current skill directory`() {
+    val target = createFile("docs/example-skill/scripts/nb.py")
+
+    assertFileReferenceResolves(
+      "docs/example-skill/SKILL.md",
+      "`$CLAUDE_SKILL_DIR/scripts/nb.<caret>py` is a small CLI",
+      target
+    )
+  }
+
+  @Test
+  fun `test skill dir variable segment resolves to current skill directory`() {
+    val skillDirectory = createFile("docs/example-skill/scripts/nb.py").parent!!.parent!!
+
+    assertFileReferenceResolves(
+      "docs/example-skill/SKILL.md",
+      $$"`${CLAUDE_SKILL_D<caret>IR}/scripts/nb.py`",
+      skillDirectory
+    )
+  }
+
+  @Test
+  fun `test skill dir variable path provides file variants`() {
+    createFile("docs/example-skill/scripts/nb.py")
+
+    val reference = configureAndGetReferenceAtCaret(
+      "docs/example-skill/SKILL.md",
+      "Run `$CLAUDE_SKILL_DIR/scripts/n<caret>`"
+    )
+
+    assertInstanceOf(reference, FileReference::class.java)
+    myFixture.completeBasic()
+    myFixture.checkResult("Run `$CLAUDE_SKILL_DIR/scripts/nb.py`")
+  }
+
+  @Test
+  fun `test skill dir variable path does not resolve outside project root`() {
+    createFile("../SKILL.md")
+
+    val reference = configureAndGetReferenceAtCaret(
+      "docs/example.md",
+      "`$CLAUDE_SKILL_DIR/nb.<caret>py`"
+    )
+
+    assertFalse(reference is FileReference)
+    assertNull(reference?.resolve())
+  }
+
   private fun createJavaClass(): PsiClass {
-    val file = myFixture.addFileToProject("JavaClass.java", "class JavaClass {}")
+    val file = createFile("JavaClass.java", "class JavaClass {}")
     return file.children.single { it is PsiClass } as PsiClass
   }
 
-  private fun configureAndGetReferenceAtCaret(text: String): BacktickReference? {
-    val file = myFixture.configureByText("some.md", text)
-    return file.findReferenceAt(myFixture.editor.caretModel.offset) as BacktickReference?
+  private fun createFile(path: String, text: String = ""): PsiFileSystemItem {
+    return myFixture.addFileToProject(path, text)
+  }
+
+  private fun configureAndGetReferenceAtCaret(text: String): PsiReference? {
+    return configureAndGetReferenceAtCaret("some.md", text)
+  }
+
+  private fun configureAndGetReferenceAtCaret(fileName: String, text: String): PsiReference? {
+    if (fileName.contains('/')) {
+      val existingFile = myFixture.addFileToProject(fileName, text)
+      myFixture.configureFromExistingVirtualFile(existingFile.virtualFile)
+    } else {
+      myFixture.configureByText(fileName, text)
+    }
+    return myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
+  }
+
+  private fun assertFileReferenceResolves(fileName: String, text: String, target: PsiFileSystemItem) {
+    val reference = configureAndGetReferenceAtCaret(fileName, text)
+    assertInstanceOf(reference, FileReference::class.java)
+    assertTrue(reference!!.isReferenceTo(target))
+    assertTrue(myFixture.psiManager.areElementsEquivalent(target, reference.resolve()))
+  }
+
+  companion object {
+    private const val CLAUDE_SKILL_DIR = $$"${CLAUDE_SKILL_DIR}"
   }
 }

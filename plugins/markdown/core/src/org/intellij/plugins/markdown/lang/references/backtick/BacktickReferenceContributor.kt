@@ -18,6 +18,8 @@ internal class BacktickReferenceContributor: PsiReferenceContributor() {
         override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<PsiReference> {
           val codeSpan = element as? MarkdownCodeSpan
           if (codeSpan?.getContentRange() == null) return PsiReference.EMPTY_ARRAY
+          val pathReferences = BacktickPathReferenceProvider.getReferences(codeSpan)
+          if (pathReferences.isNotEmpty()) return pathReferences
           return arrayOf(BacktickReference(codeSpan))
         }
       }
