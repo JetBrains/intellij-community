@@ -21,34 +21,13 @@ import static com.intellij.openapi.application.ActionsKt.isReadAllowedButNotWrit
 /**
  * See <a href="https://plugins.jetbrains.com/docs/intellij/threading-model.html">Threading Model</a>
  *
- * @param <T> Result type.
  * @see WriteAction
  * @see CoroutinesKt#readAction
  */
-public abstract class ReadAction<T> extends BaseActionRunnable<T> {
-  /**
-   * @deprecated use {@link #runBlocking(ThrowableRunnable)} or {@link #computeBlocking(ThrowableComputable)} instead of creating subclasses
-   */
-  @Deprecated
-  protected ReadAction() {
-  }
+public final class ReadAction {
 
-  /**
-   * @deprecated use {@link #runBlocking(ThrowableRunnable)} or {@link #computeBlocking(ThrowableComputable)} instead
-   */
-  @Deprecated
-  @Override
-  public @NotNull RunResult<T> execute() {
-    final RunResult<T> result = new RunResult<>(this);
-    return computeBlocking(() -> result.run());
+  private ReadAction() {
   }
-
-  /**
-   * @deprecated use {@link #runBlocking(ThrowableRunnable)} or {@link #computeBlocking(ThrowableComputable)} instead
-   */
-  @Deprecated
-  @Override
-  protected abstract void run(@NotNull Result<? super T> result) throws Throwable;
 
   /**
    * @see ReadAction#nonBlocking for background processing without suspend

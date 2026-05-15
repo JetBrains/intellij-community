@@ -657,13 +657,6 @@ a:com.intellij.openapi.application.QueryExecutorBase
 - p:<init>(Z):V
 - f:execute(java.lang.Object,com.intellij.util.Processor):Z
 - a:processQuery(java.lang.Object,com.intellij.util.Processor):V
-a:com.intellij.openapi.application.ReadAction
-- s:compute(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
-- execute():com.intellij.openapi.application.RunResult
-- s:nonBlocking(java.lang.Runnable):com.intellij.openapi.application.NonBlockingReadAction
-- s:nonBlocking(java.util.concurrent.Callable):com.intellij.openapi.application.NonBlockingReadAction
-- pa:run(com.intellij.openapi.application.Result):V
-- s:run(com.intellij.util.ThrowableRunnable):V
 f:com.intellij.openapi.application.ReadAction$CannotReadException
 - com.intellij.openapi.progress.ProcessCanceledException
 a:com.intellij.openapi.application.ReadActionProcessor
@@ -679,15 +672,6 @@ c:com.intellij.openapi.application.Result
 - p:myResult:java.lang.Object
 - <init>():V
 - f:setResult(java.lang.Object):V
-f:com.intellij.openapi.application.RunResult
-- com.intellij.openapi.application.Result
-- getResultObject():java.lang.Object
-- getThrowable():java.lang.Throwable
-- hasException():Z
-- logException(com.intellij.openapi.diagnostic.Logger):com.intellij.openapi.application.RunResult
-- run():com.intellij.openapi.application.RunResult
-- setThrowable(java.lang.Exception):V
-- throwException():com.intellij.openapi.application.RunResult
 a:com.intellij.openapi.application.TransactionGuard
 - <init>():V
 - a:assertWriteSafeContext(com.intellij.openapi.application.ModalityState):V
@@ -747,29 +731,6 @@ e:com.intellij.openapi.command.UndoConfirmationPolicy
 - sf:REQUEST_CONFIRMATION:com.intellij.openapi.command.UndoConfirmationPolicy
 - s:valueOf(java.lang.String):com.intellij.openapi.command.UndoConfirmationPolicy
 - s:values():com.intellij.openapi.command.UndoConfirmationPolicy[]
-a:com.intellij.openapi.command.WriteCommandAction
-- p:<init>(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,com.intellij.psi.PsiFile[]):V
-- p:<init>(com.intellij.openapi.project.Project,java.lang.String,com.intellij.psi.PsiFile[]):V
-- p:<init>(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile[]):V
-- execute():com.intellij.openapi.application.RunResult
-- f:getCommandName():java.lang.String
-- getGroupID():java.lang.String
-- f:getProject():com.intellij.openapi.project.Project
-- s:runWriteCommandAction(com.intellij.openapi.project.Project,com.intellij.openapi.util.Computable):java.lang.Object
-- s:runWriteCommandAction(com.intellij.openapi.project.Project,com.intellij.openapi.util.ThrowableComputable):java.lang.Object
-- s:runWriteCommandAction(com.intellij.openapi.project.Project,java.lang.Runnable):V
-- s:runWriteCommandAction(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.Runnable,com.intellij.psi.PsiFile[]):V
-- s:writeCommandAction(com.intellij.openapi.project.Project):com.intellij.openapi.command.WriteCommandAction$Builder
-- s:writeCommandAction(com.intellij.openapi.project.Project,java.util.Collection):com.intellij.openapi.command.WriteCommandAction$Builder
-- s:writeCommandAction(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile[]):com.intellij.openapi.command.WriteCommandAction$Builder
-- s:writeCommandAction(com.intellij.psi.PsiFile,com.intellij.psi.PsiFile[]):com.intellij.openapi.command.WriteCommandAction$Builder
-a:com.intellij.openapi.command.WriteCommandAction$Simple
-- com.intellij.openapi.command.WriteCommandAction
-- p:<init>(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,com.intellij.psi.PsiFile[]):V
-- p:<init>(com.intellij.openapi.project.Project,java.lang.String,com.intellij.psi.PsiFile[]):V
-- p:<init>(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile[]):V
-- pa:run():V
-- p:run(com.intellij.openapi.application.Result):V
 f:com.intellij.openapi.command.undo.UndoUtil
 - s:disableUndoFor(com.intellij.openapi.editor.Document):V
 - s:disableUndoFor(com.intellij.openapi.vfs.VirtualFile):V

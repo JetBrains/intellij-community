@@ -503,10 +503,13 @@ com.intellij.openapi.application.NonBlockingReadAction
 com.intellij.openapi.application.PathMacroContributor
 - forceRegisterPathMacros(java.util.Map):V
 - a:registerPathMacros(java.util.Map,java.util.Map):V
-a:com.intellij.openapi.application.ReadAction
-- p:<init>():V
+f:com.intellij.openapi.application.ReadAction
+- s:compute(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 - s:computeBlocking(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 - s:computeCancellable(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
+- s:nonBlocking(java.lang.Runnable):com.intellij.openapi.application.NonBlockingReadAction
+- s:nonBlocking(java.util.concurrent.Callable):com.intellij.openapi.application.NonBlockingReadAction
+- s:run(com.intellij.util.ThrowableRunnable):V
 - s:runBlocking(com.intellij.util.ThrowableRunnable):V
 com.intellij.openapi.application.ReadActionListener
 - java.util.EventListener
@@ -551,6 +554,15 @@ com.intellij.openapi.command.CommandListener
 - commandStarted(com.intellij.openapi.command.CommandEvent):V
 - undoTransparentActionFinished():V
 - undoTransparentActionStarted():V
+f:com.intellij.openapi.command.WriteCommandAction
+- s:runWriteCommandAction(com.intellij.openapi.project.Project,com.intellij.openapi.util.Computable):java.lang.Object
+- s:runWriteCommandAction(com.intellij.openapi.project.Project,com.intellij.openapi.util.ThrowableComputable):java.lang.Object
+- s:runWriteCommandAction(com.intellij.openapi.project.Project,java.lang.Runnable):V
+- s:runWriteCommandAction(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.Runnable,com.intellij.psi.PsiFile[]):V
+- s:writeCommandAction(com.intellij.openapi.project.Project):com.intellij.openapi.command.WriteCommandAction$Builder
+- s:writeCommandAction(com.intellij.openapi.project.Project,java.util.Collection):com.intellij.openapi.command.WriteCommandAction$Builder
+- s:writeCommandAction(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile[]):com.intellij.openapi.command.WriteCommandAction$Builder
+- s:writeCommandAction(com.intellij.psi.PsiFile,com.intellij.psi.PsiFile[]):com.intellij.openapi.command.WriteCommandAction$Builder
 com.intellij.openapi.command.WriteCommandAction$Builder
 - a:compute(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 - a:run(com.intellij.util.ThrowableRunnable):V

@@ -5,13 +5,9 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.core.CoreBundle;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.BaseActionRunnable;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.RunResult;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -20,7 +16,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThrowableRunnable;
 import kotlin.coroutines.Continuation;
 import kotlin.jvm.functions.Function0;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +30,10 @@ import static com.intellij.openapi.util.NlsContexts.Command;
 /**
  * @see CoroutinesKt#writeCommandAction(Project, String, Function0, Continuation)
  */
-public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
+public final class WriteCommandAction {
+
+  private WriteCommandAction() {
+  }
 
   private static final String DEFAULT_GROUP_ID = null;
 
@@ -132,7 +130,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
         try {
           ApplicationManager.getApplication().invokeAndWait(() -> thrown.set(doRunWriteCommandAction(action)));
         }
-        catch (ProcessCanceledException ignored) {
+        catch (@SuppressWarnings("IncorrectCancellationExceptionHandling") ProcessCanceledException ignored) {
         }
       }
       if (thrown.get() != null) {
@@ -194,129 +192,9 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     return new BuilderImpl(project, elementsToMakeWritable);
   }
 
-  private final @Command String myCommandName;
-  private final String myGroupID;
-  private final Project myProject;
-  private final PsiFile[] myPsiFiles;
-
   /**
-   * @deprecated Use {@link #writeCommandAction(Project, PsiFile...)}{@code .run()} instead
-   */
-  @Deprecated
-  protected WriteCommandAction(@Nullable Project project, PsiFile @NotNull ... files) {
-    this(project, getDefaultCommandName(), files);
-  }
-
-  /**
-   * @deprecated Use {@link #writeCommandAction(Project, PsiFile...)}{@code .withName(commandName).run()} instead
-   */
-  @Deprecated
-  protected WriteCommandAction(@Nullable Project project, @Nullable @Command String commandName, PsiFile @NotNull ... files) {
-    this(project, commandName, DEFAULT_GROUP_ID, files);
-  }
-
-  /**
-   * @deprecated Use {@link #writeCommandAction(Project, PsiFile...)}{@code .withName(commandName).withGroupId(groupID).run()} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  protected WriteCommandAction(@Nullable Project project,
-                               @Nullable @Command String commandName,
-                               @Nullable String groupID,
-                               PsiFile @NotNull ... files) {
-    myCommandName = commandName;
-    myGroupID = groupID;
-    myProject = project;
-    myPsiFiles = files.length == 0 ? PsiFile.EMPTY_ARRAY : files;
-  }
-
-  public final Project getProject() {
-    return myProject;
-  }
-
-  public final @Command String getCommandName() {
-    return myCommandName;
-  }
-
-  public String getGroupID() {
-    return myGroupID;
-  }
-
-  /**
-   * @deprecated Use {@code #writeCommandAction(Project).run()} or compute() instead
-   */
-  @Deprecated
-  @Override
-  public @NotNull RunResult<T> execute() {
-    Application application = ApplicationManager.getApplication();
-    boolean dispatchThread = application.isDispatchThread();
-
-    if (!dispatchThread && application.isReadAccessAllowed()) {
-      throw new IllegalStateException("Must not start write action from within read action in the other thread - deadlock is coming");
-    }
-
-    final RunResult<T> result = new RunResult<>(this);
-    if (dispatchThread) {
-      performWriteCommandAction(result);
-    }
-    else {
-      try {
-        ApplicationManager.getApplication().invokeAndWait(() -> performWriteCommandAction(result));
-      }
-      catch (ProcessCanceledException ignored) {
-      }
-    }
-    return result;
-  }
-
-  private void performWriteCommandAction(@NotNull RunResult<T> result) {
-    if (myPsiFiles.length > 0 && !FileModificationService.getInstance().preparePsiElementsForWrite(Arrays.asList(myPsiFiles))) {
-      return;
-    }
-
-    // this is needed to prevent memory leak, since the command is put into undo queue
-    Ref<RunResult<?>> resultRef = new Ref<>(result);
-    doExecuteCommand(() -> ApplicationManager.getApplication().runWriteAction(() -> {
-      resultRef.get().run();
-      resultRef.set(null);
-    }));
-  }
-
-  private void doExecuteCommand(@NotNull Runnable runnable) {
-    CommandProcessor.getInstance().executeCommand(getProject(), runnable, getCommandName(), getGroupID(),
-                                                  UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION, true);
-  }
-
-  /**
-   * WriteCommandAction without result
-   *
-   * @deprecated Use {@link #writeCommandAction(Project)}.run() or .compute() instead
-   */
-  @Deprecated
-  public abstract static class Simple<T> extends WriteCommandAction<T> {
-    protected Simple(Project project, /*@NotNull*/ PsiFile... files) {
-      super(project, files);
-    }
-
-    protected Simple(Project project, @Command String commandName, /*@NotNull*/ PsiFile... files) {
-      super(project, commandName, files);
-    }
-
-    protected Simple(Project project, @Command String name, String groupID, /*@NotNull*/ PsiFile... files) {
-      super(project, name, groupID, files);
-    }
-
-    @Override
-    protected void run(@NotNull Result<? super T> result) throws Throwable {
-      run();
-    }
-
-    protected abstract void run() throws Throwable;
-  }
-
-  /**
-   * If run a write command using this method then "Undo" action always shows "Undefined" text.
-   *
+   * If run a write command using this method, then the "Undo" action always shows "Undefined" text.
+   * <p>
    * Please use {@link #runWriteCommandAction(Project, String, String, Runnable, PsiFile...)} instead.
    */
   @TestOnly
@@ -329,18 +207,18 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   }
 
   public static void runWriteCommandAction(Project project,
-                                           final @Nullable @Command String commandName,
-                                           final @Nullable String groupID,
-                                           final @NotNull Runnable runnable,
+                                           @Nullable @Command String commandName,
+                                           @Nullable String groupID,
+                                           @NotNull Runnable runnable,
                                            PsiFile @NotNull ... files) {
     writeCommandAction(project, files).withName(commandName).withGroupId(groupID).run(() -> runnable.run());
   }
 
-  public static <T> T runWriteCommandAction(Project project, final @NotNull Computable<T> computable) {
+  public static <T> T runWriteCommandAction(Project project, @NotNull Computable<T> computable) {
     return writeCommandAction(project).compute(() -> computable.compute());
   }
 
-  public static <T, E extends Throwable> T runWriteCommandAction(Project project, final @NotNull ThrowableComputable<T, E> computable)
+  public static <T, E extends Throwable> T runWriteCommandAction(Project project, @NotNull ThrowableComputable<T, E> computable)
     throws E {
     return writeCommandAction(project).compute(computable);
   }
