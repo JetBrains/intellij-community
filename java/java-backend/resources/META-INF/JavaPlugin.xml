@@ -1144,8 +1144,8 @@
     <multiHostInjector implementation="com.intellij.psi.impl.source.tree.injected.JavadocInjector"/>
     <changeSignatureDetector language="JAVA" implementationClass="com.intellij.refactoring.changeSignature.JavaChangeSignatureDetector"/>
     <lookup.charFilter implementation="com.intellij.codeInsight.completion.JavaCharFilter" id="java"/>
-    <completion.contributor language="JAVA" id="javaMethodHandle" order="last, before javaLegacy"
-                            implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.JavaMethodHandleCompletionContributor"/>
+    <modcompletion.completionItemProvider language="JAVA" id="javaMethodHandle" order="last"
+                            implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.JavaMethodHandleCompletionItemProvider"/>
     <modcompletion.completionItemProvider language="JAVA" id="javaReflection" 
                             implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionCompletionItemProvider"/>
     <completion.contributor language="JAVA" id="javadoc" order="last, before javaLegacy, before wordCompletion"

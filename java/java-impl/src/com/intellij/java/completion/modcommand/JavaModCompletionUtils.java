@@ -6,13 +6,16 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Utilities to support mod command completion in Java
+ */
 @NotNullByDefault
-final class JavaModCompletionUtils {
+public final class JavaModCompletionUtils {
   /**
    * @param type type to represent as {@link MarkupText}
    * @return markup text that represents the type
    */
-  static MarkupText typeMarkup(@Nullable PsiType type) {
+  public static MarkupText typeMarkup(@Nullable PsiType type) {
     return type == null ? MarkupText.empty() :
            MarkupText.plainText(type.getPresentableText());
   }

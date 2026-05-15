@@ -1,18 +1,21 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
-import com.intellij.codeInsight.completion.CompletionContributor;
-import com.intellij.codeInsight.completion.CompletionParameters;
-import com.intellij.codeInsight.completion.CompletionResultSet;
-import com.intellij.codeInsight.completion.InsertionContext;
-import com.intellij.codeInsight.completion.PrioritizedLookupElement;
-import com.intellij.codeInsight.lookup.ExpressionLookupItem;
-import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.java.completion.modcommand.JavaModCompletionUtils;
+import com.intellij.modcompletion.CommonCompletionItem;
+import com.intellij.modcompletion.ModCompletionItem;
+import com.intellij.modcompletion.ModCompletionItemPresentation;
+import com.intellij.modcompletion.ModCompletionItemProvider;
+import com.intellij.modcompletion.ModCompletionResult;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.MarkupText;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.patterns.PsiMethodPattern;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
@@ -22,10 +25,11 @@ import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.Consumer;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
@@ -58,9 +62,10 @@ import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflection
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.getMethodTypeExpressionText;
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.getReflectiveClass;
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.getTypeText;
-import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.replaceText;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.shortenArgumentsClassReferences;
 
-public final class JavaMethodHandleCompletionContributor extends CompletionContributor implements DumbAware {
+@NotNullByDefault
+public final class JavaMethodHandleCompletionItemProvider implements DumbAware, ModCompletionItemProvider {
 
   // MethodHandle for constructors and methods
   private static final Set<String> METHOD_HANDLE_FACTORY_NAMES = Set.of(
@@ -81,12 +86,12 @@ public final class JavaMethodHandleCompletionContributor extends CompletionContr
       psiExpression().methodCallParameter(2, methodPattern(ArrayUtilRt.toStringArray(FIELD_HANDLE_FACTORY_NAMES))));
 
 
-  private static @NotNull PsiMethodPattern methodPattern(String... methodNames) {
+  private static PsiMethodPattern methodPattern(String... methodNames) {
     return psiMethod().withName(methodNames).definedInClass(JAVA_LANG_INVOKE_METHOD_HANDLES_LOOKUP);
   }
 
   @Override
-  public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
+  public void provideItems(CompletionContext parameters, ModCompletionResult result) {
     final PsiElement position = parameters.getPosition();
     if (!isInJavaContext(position)) {
       return;
@@ -100,7 +105,7 @@ public final class JavaMethodHandleCompletionContributor extends CompletionContr
     }
   }
 
-  private static void addMethodHandleVariants(@NotNull PsiElement position, @NotNull Consumer<? super LookupElement> result) {
+  private static void addMethodHandleVariants(PsiElement position, ModCompletionResult result) {
     final PsiMethodCallExpression methodCall = PsiTreeUtil.getParentOfType(position, PsiMethodCallExpression.class);
     if (methodCall != null) {
       final String methodName = methodCall.getMethodExpression().getReferenceName();
@@ -123,23 +128,23 @@ public final class JavaMethodHandleCompletionContributor extends CompletionContr
     }
   }
 
-  private static void addConstructorSignatures(@NotNull ReflectiveClass ownerClass,
-                                               @NotNull PsiElement context,
-                                               @NotNull Consumer<? super LookupElement> result) {
+  private static void addConstructorSignatures(ReflectiveClass ownerClass,
+                                               PsiElement context,
+                                               ModCompletionResult result) {
     final PsiMethod[] constructors = ownerClass.getPsiClass().getConstructors();
     if (constructors.length != 0) {
       lookupMethodTypes(Arrays.stream(constructors), context, result);
     }
     else {
-      result.consume(lookupSignature(ReflectiveSignature.NO_ARGUMENT_CONSTRUCTOR_SIGNATURE, context));
+      result.accept(lookupSignature(ReflectiveSignature.NO_ARGUMENT_CONSTRUCTOR_SIGNATURE, context));
     }
   }
 
-  private static void addMethodSignatures(@NotNull ReflectiveClass psiClass,
-                                          @NotNull String methodName,
+  private static void addMethodSignatures(ReflectiveClass psiClass,
+                                          String methodName,
                                           boolean isStaticExpected,
-                                          @NotNull PsiElement context,
-                                          @NotNull Consumer<? super LookupElement> result) {
+                                          PsiElement context,
+                                          ModCompletionResult result) {
     final PsiMethod[] methods = psiClass.getPsiClass().findMethodsByName(methodName, false);
     if (methods.length != 0) {
       final Stream<PsiMethod> methodStream = Arrays.stream(methods)
@@ -148,18 +153,18 @@ public final class JavaMethodHandleCompletionContributor extends CompletionContr
     }
   }
 
-  private static void lookupMethodTypes(@NotNull Stream<? extends PsiMethod> methods,
-                                        @NotNull PsiElement context,
-                                        @NotNull Consumer<? super LookupElement> result) {
+  private static void lookupMethodTypes(Stream<? extends PsiMethod> methods,
+                                        PsiElement context,
+                                        ModCompletionResult result) {
     methods
       .map(JavaReflectionReferenceUtil::getMethodSignature)
       .filter(Objects::nonNull)
       .sorted(ReflectiveSignature::compareTo)
       .map(signature -> lookupSignature(signature, context))
-      .forEach(result::consume);
+      .forEach(result);
   }
 
-  private static @NotNull LookupElement lookupSignature(@NotNull ReflectiveSignature signature, @NotNull PsiElement context) {
+  private static ModCompletionItem lookupSignature(ReflectiveSignature signature, PsiElement context) {
     final String expressionText = getMethodTypeExpressionText(signature);
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
     final PsiExpression expression = factory.createExpressionFromText(expressionText, context);
@@ -168,10 +173,10 @@ public final class JavaMethodHandleCompletionContributor extends CompletionContr
     final String presentableText = PsiNameHelper.getShortClassName(JAVA_LANG_INVOKE_METHOD_TYPE) + "." + METHOD_TYPE + shortTypes;
     final String lookupText = METHOD_TYPE + signature.getText(true, PsiNameHelper::getShortClassName);
 
-    return lookupExpression(expression, IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Method), presentableText, lookupText);
+    return lookupExpression(expression, IconManager.getInstance().getPlatformIcon(PlatformIcons.Method), presentableText, lookupText);
   }
 
-  private static void addFieldHandleVariants(@NotNull PsiElement position, @NotNull Consumer<? super LookupElement> result) {
+  private static void addFieldHandleVariants(PsiElement position, ModCompletionResult result) {
     final PsiMethodCallExpression methodCall = PsiTreeUtil.getParentOfType(position, PsiMethodCallExpression.class);
     if (methodCall != null) {
       final String methodName = methodCall.getMethodExpression().getReferenceName();
@@ -190,10 +195,10 @@ public final class JavaMethodHandleCompletionContributor extends CompletionContr
     }
   }
 
-  private static void addFieldType(@NotNull ReflectiveClass ownerClass,
-                                   @NotNull String fieldName,
-                                   @NotNull PsiElement context,
-                                   @NotNull Consumer<? super LookupElement> result) {
+  private static void addFieldType(ReflectiveClass ownerClass,
+                                   String fieldName,
+                                   PsiElement context,
+                                   ModCompletionResult result) {
     final PsiField field = ownerClass.getPsiClass().findFieldByName(fieldName, false);
     if (field != null) {
       final String typeText = getTypeText(field.getType());
@@ -201,22 +206,37 @@ public final class JavaMethodHandleCompletionContributor extends CompletionContr
       final PsiExpression expression = factory.createExpressionFromText(typeText + ".class", context);
 
       final String shortType = PsiNameHelper.getShortClassName(typeText);
-      result.consume(lookupExpression(expression, IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Class), shortType + ".class", shortType));
+      result.accept(lookupExpression(expression, IconManager.getInstance().getPlatformIcon(PlatformIcons.Class), shortType + ".class", shortType));
     }
   }
 
-  private static @NotNull LookupElement lookupExpression(@NotNull PsiExpression expression,
-                                                         @Nullable Icon icon,
-                                                         @NotNull String presentableText,
-                                                         @NotNull String lookupText) {
-    final LookupElement element = new ExpressionLookupItem(expression, icon, presentableText, lookupText) {
-      @Override
-      public void handleInsert(@NotNull InsertionContext context) {
-        context.getDocument().deleteString(context.getStartOffset(), context.getTailOffset());
-        context.commitDocument();
-        replaceText(context, getObject().getText());
-      }
-    };
-    return PrioritizedLookupElement.withPriority(element, 1);
+  private static ModCompletionItem lookupExpression(PsiExpression expression,
+                                                    @Nullable Icon icon,
+                                                    @NlsSafe String presentableText,
+                                                    String lookupText) {
+    String text = expression.getText();
+    return new CommonCompletionItem(lookupText)
+      .withPresentation(new ModCompletionItemPresentation(MarkupText.plainText(presentableText))
+                          .withMainIcon(() -> icon)
+                          .withDetailText(JavaModCompletionUtils.typeMarkup(expression.getType())))
+      .withPriority(1)
+      .withAdditionalUpdater(((completionStart, updater) -> {
+        Document document = updater.getDocument();
+        document.deleteString(completionStart, updater.getCaretOffset());
+        PsiDocumentManager.getInstance(updater.getProject()).commitDocument(document);
+        PsiElement newElement = PsiUtilCore.getElementAtOffset(updater.getPsiFile(), completionStart);
+        PsiElement params = newElement.getParent().getParent();
+        int end = params.getTextRange().getEndOffset() - 1;
+        int start = Math.min(newElement.getTextRange().getEndOffset(), end);
+
+        document.replaceString(start, end, text);
+        PsiDocumentManager.getInstance(updater.getProject()).commitDocument(document);
+        shortenArgumentsClassReferences(updater);
+      }));
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return true;
   }
 }
