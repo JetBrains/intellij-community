@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Proxy
 import javax.swing.JPanel
+import javax.swing.ListSelectionModel
 
 @TestApplication
 class AgentPromptVcsCommitManualContextSourceTest {
@@ -123,6 +124,20 @@ class AgentPromptVcsCommitManualContextSourceTest {
 
     assertThat(normalized.map { it.hash }).containsExactly("abc12345", "def67890")
     assertThat(normalized.first().rootPath).isEqualTo("/repo")
+  }
+
+  @Test
+  fun createCommitPickerListUsesFixedWidthAndRestoresSelection() {
+    val entries = listOf(
+      commitEntry(hash = "abc12345", rootPath = "/repo"),
+      commitEntry(hash = "def67890", rootPath = "/repo"),
+    )
+
+    val list = createCommitPickerList(entries, selectedHashes = setOf("def67890"))
+
+    assertThat(list.fixedCellWidth).isGreaterThanOrEqualTo(COMMIT_CHOOSER_CELL_WIDTH)
+    assertThat(list.selectionMode).isEqualTo(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION)
+    assertThat(list.selectedValuesList).containsExactly(entries[1])
   }
 
   @Test

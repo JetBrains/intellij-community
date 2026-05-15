@@ -92,6 +92,27 @@ class AgentPromptVcsCommitsContextRendererBridgeTest {
   }
 
   @Test
+  fun renderChipShortensLongSubjectButKeepsFullTooltip() {
+    val subject = "Fix VCS commit chip preview width by trimming long subjects"
+    val item = contextItem(
+      body = "",
+      payload = AgentPromptPayload.obj(
+        "entries" to AgentPromptPayload.arr(
+          AgentPromptPayload.obj(
+            "hash" to AgentPromptPayload.str("abc12345abcdef"),
+            "subject" to AgentPromptPayload.str(subject),
+          ),
+        )
+      )
+    )
+
+    val chip = renderer.renderChip(AgentPromptChipRenderInput(item = item, projectBasePath = null))
+
+    assertThat(chip.text).isEqualTo("Commits: ${subject.take(40)}\u2026")
+    assertThat(chip.tooltipText).contains("abc12345  $subject")
+  }
+
+  @Test
   fun renderEnvelopeKeepsHashOnlyOutputWhenPayloadHasMetadata() {
     val item = contextItem(
       body = "",

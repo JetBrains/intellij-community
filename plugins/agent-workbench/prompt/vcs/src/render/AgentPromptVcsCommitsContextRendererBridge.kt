@@ -14,6 +14,8 @@ import com.intellij.agent.workbench.prompt.core.objOrNull
 import com.intellij.agent.workbench.prompt.core.string
 import com.intellij.util.text.DateFormatUtil
 
+private const val COMMIT_CHIP_PREVIEW_MAX_LENGTH = 40
+
 class AgentPromptVcsCommitsContextRendererBridge : AgentPromptContextRendererBridge {
   override val rendererId: String
     get() = AgentPromptContextRendererIds.VCS_COMMITS
@@ -128,7 +130,12 @@ private fun composeCommitChipText(title: String?, preview: String, totalCount: I
   if (trimmedPreview.isEmpty()) {
     return resolvedTitle
   }
-  val shortPreview = if (trimmedPreview.length <= 60) trimmedPreview else trimmedPreview.take(60) + "\u2026"
+  val shortPreview = if (trimmedPreview.length <= COMMIT_CHIP_PREVIEW_MAX_LENGTH) {
+    trimmedPreview
+  }
+  else {
+    trimmedPreview.take(COMMIT_CHIP_PREVIEW_MAX_LENGTH) + "\u2026"
+  }
   val countSuffix = if (totalCount > 1) " +${totalCount - 1}" else ""
   return "$resolvedTitle: $shortPreview$countSuffix"
 }

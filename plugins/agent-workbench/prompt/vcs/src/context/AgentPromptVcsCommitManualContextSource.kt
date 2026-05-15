@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.components.JBList
+import com.intellij.util.ui.JBUI
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.impl.VcsLogManager
@@ -33,6 +34,7 @@ import javax.swing.ListSelectionModel
 
 private const val MAX_INCLUDED_SELECTION_COMMITS = 20
 private const val MAX_CHOOSER_CANDIDATES = 200
+internal const val COMMIT_CHOOSER_CELL_WIDTH = 520
 
 internal data class CommitPickerEntry(
   @JvmField val commitIndex: Int,
@@ -171,15 +173,7 @@ internal class AgentPromptVcsCommitManualContextSource(
                           .distinct()
                           .take(2)
                           .count() > 1
-    val chooserList = JBList(entries).apply {
-      selectionMode = ListSelectionModel.MULTIPLE_INTERVAL_SELECTION
-      val selectedIndices = entries.mapIndexedNotNull { index, entry ->
-        index.takeIf { entry.hash in selectedHashes }
-      }
-      if (selectedIndices.isNotEmpty()) {
-        setSelectedIndices(selectedIndices.toIntArray())
-      }
-    }
+    val chooserList = createCommitPickerList(entries, selectedHashes)
     PopupChooserBuilder(chooserList)
       .setTitle(AgentPromptVcsBundle.message("manual.context.vcs.chooser.title"))
       .setRenderer(AgentPromptVcsCommitListCellRenderer(showRootNames))
@@ -197,6 +191,22 @@ internal class AgentPromptVcsCommitManualContextSource(
       .showUnderneathOf(request.anchorComponent)
   }
 
+}
+
+internal fun createCommitPickerList(
+  entries: List<CommitPickerEntry>,
+  selectedHashes: Set<String>,
+): JBList<CommitPickerEntry> {
+  return JBList(entries).apply {
+    fixedCellWidth = JBUI.scale(COMMIT_CHOOSER_CELL_WIDTH)
+    selectionMode = ListSelectionModel.MULTIPLE_INTERVAL_SELECTION
+    val selectedIndices = entries.mapIndexedNotNull { index, entry ->
+      index.takeIf { entry.hash in selectedHashes }
+    }
+    if (selectedIndices.isNotEmpty()) {
+      setSelectedIndices(selectedIndices.toIntArray())
+    }
+  }
 }
 
 @Suppress("DuplicatedCode")
