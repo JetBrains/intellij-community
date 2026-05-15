@@ -48,7 +48,7 @@ internal class GitCreateWorkingTreeAction : DumbAwareAction() {
     }
     else {
       val branchName = localBranchFromContext.name
-      e.presentation.text = GitBundle.message("action.Git.CreateNewWorkingTree.from.branch.text", branchName)
+      e.presentation.setText(GitBundle.message("action.Git.CreateNewWorkingTree.from.branch.text", branchName), false)
       e.presentation.description = GitBundle.message("action.Git.CreateNewWorkingTree.from.branch.description", branchName)
     }
   }
