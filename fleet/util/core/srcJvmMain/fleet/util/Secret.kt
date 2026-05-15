@@ -1,8 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.util
 
 import fleet.reporting.shared.tracing.span
-import kotlin.random.Random
+import java.security.SecureRandom
 
 private const val SECRET_SIZE: Int = 256
 
@@ -18,8 +18,9 @@ class Secret(private val secret: ByteArray) {
   companion object {
     fun generate(): Secret {
       return span("generateSecret") {
+        val random = SecureRandom()
         val bytes = ByteArray(SECRET_SIZE)
-        Random.nextBytes(bytes)
+        random.nextBytes(bytes)
         Secret(bytes)
       }
     }
