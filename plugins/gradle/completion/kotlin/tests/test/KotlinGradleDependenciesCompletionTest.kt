@@ -656,6 +656,7 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
             }
             withBuildFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
                 withKotlinJvmPlugin()
+                withPrefix { code("val customSourceSet by sourceSets.creating {}") }
             }
             withFile("gradle/libs.versions.toml", "")
         }

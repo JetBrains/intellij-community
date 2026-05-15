@@ -1,6 +1,6 @@
-// "EXPECTED-SUGGESTION": annotationProcessor, testAnnotationProcessor
+// "EXPECTED-SUGGESTION": annotationProcessor, customSourceSetAnnotationProcessor, testAnnotationProcessor
 // "OTHER-SUGGESTIONS-ARE-NOT-EXPECTED"
-// "SUGGESTION-INDEX-TO-APPLY": 1
+// "SUGGESTION-INDEX-TO-APPLY": 2
 // "COMPLETION-RESULT-PATH": build.gradle.after.kts
 // FILE: build.gradle.kts
 plugins {
