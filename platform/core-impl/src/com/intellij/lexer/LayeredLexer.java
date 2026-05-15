@@ -71,6 +71,9 @@ public class LayeredLexer extends DelegateLexer {
     LOG.assertTrue(initialState != IN_LAYER_STATE, "Restoring to layer is not supported.");
     myState = initialState;
     myCurrentLayerLexer = null;
+    myCurrentBaseTokenType = null;
+    myLayerLeftPart = -1;
+    myBaseTokenEnd = -1;
 
     super.start(buffer, startOffset, endOffset, initialState);
     activateLayerIfNecessary();
