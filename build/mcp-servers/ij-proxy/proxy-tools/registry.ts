@@ -4,6 +4,7 @@ import {handleApplyPatchTool} from './handlers/apply-patch'
 import {handleLintFilesTool} from './handlers/lint-files'
 import {handleListDirTool} from './handlers/list-dir'
 import {handleReadTool} from './handlers/read'
+import {handleReformatFileTool} from './handlers/reformat-file'
 import {handleRenameTool} from './handlers/rename'
 import {handleSearchFileTool, handleSearchRegexTool, handleSearchSymbolTool, handleSearchTextTool} from './handlers/search'
 import {
@@ -20,6 +21,7 @@ import {
   createLintFilesSchema,
   createListDirSchema,
   createReadSchema,
+  createReformatFileSchema,
   createRenameSchema,
   createSearchFileSchema,
   createSearchRegexSchema,
@@ -29,6 +31,7 @@ import {
 import type {
   AnalysisCapabilities,
   ContainerSessionConfig,
+  FormattingCapabilities,
   ReadCapabilities,
   SearchCapabilities,
   ToolAnnotationsLike,
@@ -46,6 +49,7 @@ interface ToolContext {
   callUpstreamToolRaw: UpstreamToolCaller
   searchCapabilities: SearchCapabilities
   analysisCapabilities: AnalysisCapabilities
+  formattingCapabilities: FormattingCapabilities
   readCapabilities: ReadCapabilities
   shouldApplyWorkaround: WorkaroundChecker
   containerSession: ContainerSessionConfig | null
@@ -188,6 +192,15 @@ const TOOL_VARIANTS: ToolVariant[] = [
     annotations: READ_ONLY_TOOL_ANNOTATIONS,
     upstreamNames: ['get_file_problems'],
     expose: ({analysisCapabilities}) => !analysisCapabilities.hasLintFiles && analysisCapabilities.supportsLintFiles
+  },
+  {
+    name: 'reformat_file',
+    description: 'Reformats the specified files in the JetBrains IDE.',
+    schemaFactory: () => createReformatFileSchema(),
+    handlerFactory: ({callUpstreamTool, formattingCapabilities}) => (args) =>
+      handleReformatFileTool(args, callUpstreamTool, formattingCapabilities),
+    upstreamNames: ['reformat_file'],
+    expose: ({formattingCapabilities}) => formattingCapabilities.hasReformatFile && !formattingCapabilities.hasReformatFilePaths
   },
   {
     name: 'list_dir',

@@ -4,10 +4,22 @@ import {AsyncLocalStorage} from 'node:async_hooks'
 import {Client} from '@modelcontextprotocol/sdk/client/index.js'
 import {ResultSchema} from '@modelcontextprotocol/sdk/types.js'
 import {createProjectPathManager} from './project-path'
-import {resolveAnalysisCapabilities, resolveReadCapabilities, resolveSearchCapabilities} from './proxy-tools/tooling'
+import {
+  resolveAnalysisCapabilities,
+  resolveFormattingCapabilities,
+  resolveReadCapabilities,
+  resolveSearchCapabilities
+} from './proxy-tools/tooling'
 import {extractTextFromResult} from './proxy-tools/shared'
 import type {McpStreamTransport} from './stream-transport'
-import type {AnalysisCapabilities, ReadCapabilities, SearchCapabilities, ToolArgs, ToolSpecLike} from './proxy-tools/types'
+import type {
+  AnalysisCapabilities,
+  FormattingCapabilities,
+  ReadCapabilities,
+  SearchCapabilities,
+  ToolArgs,
+  ToolSpecLike
+} from './proxy-tools/types'
 
 export interface RequestContext {
   /**
@@ -67,6 +79,7 @@ export class UpstreamConnection {
 
   searchCapabilities: SearchCapabilities = resolveSearchCapabilities([]).capabilities
   analysisCapabilities: AnalysisCapabilities = resolveAnalysisCapabilities([]).capabilities
+  formattingCapabilities: FormattingCapabilities = resolveFormattingCapabilities([]).capabilities
   readCapabilities: ReadCapabilities = resolveReadCapabilities([]).capabilities
   ideVersion: string | null = null
 
@@ -148,6 +161,7 @@ export class UpstreamConnection {
     this._tools = null
     this.searchCapabilities = resolveSearchCapabilities([]).capabilities
     this.analysisCapabilities = resolveAnalysisCapabilities([]).capabilities
+    this.formattingCapabilities = resolveFormattingCapabilities([]).capabilities
     this.readCapabilities = resolveReadCapabilities([]).capabilities
     this.ideVersion = null
     this.onStateChange?.()
@@ -180,6 +194,7 @@ export class UpstreamConnection {
       this._tools = tools
       this.searchCapabilities = resolveSearchCapabilities(tools).capabilities
       this.analysisCapabilities = resolveAnalysisCapabilities(tools).capabilities
+      this.formattingCapabilities = resolveFormattingCapabilities(tools).capabilities
       this.readCapabilities = resolveReadCapabilities(tools).capabilities
       this.onStateChange?.()
       return tools
@@ -273,7 +288,7 @@ export class UpstreamConnection {
     })
   }
 
-  private static readonly _LONG_TIMEOUT_TOOLS = new Set(['build_project', 'lint_files', 'open_file_in_editor', 'container_exec'])
+  private static readonly _LONG_TIMEOUT_TOOLS = new Set(['build_project', 'lint_files', 'reformat_file', 'open_file_in_editor', 'container_exec'])
 
   private _resolveTimeoutMs(toolName: string): number {
     const ctx = requestContext.getStore()

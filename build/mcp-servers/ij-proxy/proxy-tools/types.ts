@@ -51,6 +51,12 @@ export interface AnalysisCapabilities {
   supportsLintFiles: boolean
 }
 
+export interface FormattingCapabilities {
+  hasReformatFile: boolean
+  hasReformatFilePaths: boolean
+  supportsReformatFile: boolean
+}
+
 export interface ReadCapabilities {
   hasReadFile: boolean
   hasApplyPatch?: boolean

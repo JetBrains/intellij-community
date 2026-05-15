@@ -169,6 +169,24 @@ export function createLintFilesSchema(): ToolInputSchema {
   )
 }
 
+export function createReformatFileSchema(): ToolInputSchema {
+  return objectSchema(
+    {
+      path: {
+        type: 'string',
+        description: 'Project-relative file path to reformat. Deprecated: prefer paths for batch formatting.'
+      },
+      paths: {
+        type: 'array',
+        description: 'List of project-relative file paths to reformat. Duplicate paths are ignored after normalization.',
+        items: {
+          type: 'string'
+        }
+      }
+    }
+  )
+}
+
 export function createApplyPatchSchema(): ToolInputSchema {
   return objectSchema(
     {

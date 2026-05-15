@@ -5,6 +5,7 @@ import {shouldApplyWorkaround} from '../workarounds'
 import type {
   AnalysisCapabilities,
   ContainerSessionConfig,
+  FormattingCapabilities,
   ReadCapabilities,
   SearchCapabilities,
   ToolArgs,
@@ -90,12 +91,38 @@ export function resolveAnalysisCapabilities(
   }
 }
 
+export function resolveFormattingCapabilities(
+  upstreamTools: ToolSpecLike[] | undefined
+): {capabilities: FormattingCapabilities} {
+  let hasReformatFile = false
+  let hasReformatFilePaths = false
+  for (const tool of upstreamTools ?? []) {
+    if (tool?.name !== 'reformat_file') continue
+    hasReformatFile = true
+    const properties = tool.inputSchema?.properties
+    if (properties &&
+        typeof properties === 'object' &&
+        Object.prototype.hasOwnProperty.call(properties, 'paths')) {
+      hasReformatFilePaths = true
+    }
+  }
+
+  return {
+    capabilities: {
+      hasReformatFile,
+      hasReformatFilePaths,
+      supportsReformatFile: hasReformatFile
+    }
+  }
+}
+
 export function createProxyTooling({
   projectPath,
   callUpstreamTool,
   callUpstreamToolRaw,
   searchCapabilities,
   analysisCapabilities,
+  formattingCapabilities,
   readCapabilities,
   ideVersion,
   containerSession
@@ -105,6 +132,7 @@ export function createProxyTooling({
   callUpstreamToolRaw?: UpstreamToolCaller
   searchCapabilities: SearchCapabilities
   analysisCapabilities: AnalysisCapabilities
+  formattingCapabilities: FormattingCapabilities
   readCapabilities: ReadCapabilities
   ideVersion?: string | null
   containerSession?: ContainerSessionConfig | null
@@ -120,6 +148,7 @@ export function createProxyTooling({
     callUpstreamToolRaw: callUpstreamToolRaw ?? callUpstreamTool,
     searchCapabilities,
     analysisCapabilities,
+    formattingCapabilities,
     readCapabilities,
     shouldApplyWorkaround: (key) => shouldApplyWorkaround(key, boundVersion),
     containerSession: containerSession ?? null

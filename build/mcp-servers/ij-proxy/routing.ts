@@ -10,7 +10,7 @@ const MERGE_TOOL_NAMES = new Set([
 ])
 
 const SPLIT_MERGE_TOOL_NAMES = new Set([
-  'lint_files'
+  'lint_files', 'reformat_file'
 ])
 
 // --- Routing decisions ---

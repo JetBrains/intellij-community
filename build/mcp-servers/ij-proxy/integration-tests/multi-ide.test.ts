@@ -304,4 +304,40 @@ describe('ij MCP proxy multi-IDE', {timeout: SUITE_TIMEOUT_MS}, () => {
       deepStrictEqual(riderCalls.map((call) => call.args.timeout), [500])
     })
   })
+
+  it('splits reformat_file paths across IDEA and Rider', async () => {
+    const reformatTool = buildUpstreamTool('reformat_file', {
+      path: {type: 'string'},
+      paths: {type: 'array', items: {type: 'string'}}
+    })
+
+    await withConfiguredDualProxy({
+      ideaTools: [reformatTool],
+      riderTools: [reformatTool],
+      ideaOnToolCall({name, args}) {
+        strictEqual(name, 'reformat_file')
+        deepStrictEqual(args.paths, ['src/File1.kt', 'src/File2.kt'])
+        ok(!('path' in args))
+        return {text: 'ok'}
+      },
+      riderOnToolCall({name, args}) {
+        strictEqual(name, 'reformat_file')
+        deepStrictEqual(args.paths, ['Psi/File1.cs', 'Psi/File2.cs'])
+        ok(!('path' in args))
+        return {text: 'ok'}
+      }
+    }, async ({proxyClient, ideaCalls, riderCalls}) => {
+      await proxyClient.send('tools/list')
+      const response = await proxyClient.send('tools/call', {
+        name: 'reformat_file',
+        arguments: {
+          paths: ['src/File1.kt', 'dotnet/Psi/File1.cs', 'src/File2.kt', 'dotnet/Psi/File2.cs']
+        }
+      })
+
+      strictEqual(response.result.content[0].text, 'ok')
+      strictEqual(ideaCalls.length, 1)
+      strictEqual(riderCalls.length, 1)
+    })
+  })
 })
