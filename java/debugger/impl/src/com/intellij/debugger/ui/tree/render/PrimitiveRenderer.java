@@ -1,18 +1,25 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.JavaDebuggerBundle;
+import com.intellij.debugger.engine.JavaDebuggerMagicConstantUtils;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
+import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
+import com.sun.jdi.ByteValue;
 import com.sun.jdi.CharValue;
+import com.sun.jdi.IntegerValue;
+import com.sun.jdi.LongValue;
 import com.sun.jdi.PrimitiveType;
 import com.sun.jdi.PrimitiveValue;
+import com.sun.jdi.ShortValue;
 import com.sun.jdi.Type;
 import com.sun.jdi.Value;
 import com.sun.jdi.VoidType;
@@ -60,6 +67,7 @@ public class PrimitiveRenderer extends NodeRendererImpl {
       return "null";
     }
     else if (value instanceof PrimitiveValue) {
+      String label;
       if (value instanceof CharValue) {
         StringBuilder buf = new StringBuilder();
         appendCharValue((CharValue)value, buf);
@@ -69,23 +77,34 @@ public class PrimitiveRenderer extends NodeRendererImpl {
         else {
           buf.append(' ').append(((PrimitiveValue)value).longValue());
         }
-        return buf.toString();
+        label = buf.toString();
+      }
+      else if (SHOW_HEX_VALUE) {
+        StringBuilder buf = new StringBuilder();
+        buf.append(value);
+        appendHexValue((PrimitiveValue)value, buf);
+        label = buf.toString();
       }
       else {
-        if (SHOW_HEX_VALUE) {
-          StringBuilder buf = new StringBuilder();
-          buf.append(value);
-          appendHexValue((PrimitiveValue)value, buf);
-          return buf.toString();
-        }
-        else {
-          return value.toString();
-        }
+        label = value.toString();
       }
+      if (isMagicConstantCandidate(value)
+          && valueDescriptor instanceof ValueDescriptorImpl descriptorImpl
+          && evaluationContext instanceof EvaluationContextImpl contextImpl) {
+        JavaDebuggerMagicConstantUtils.scheduleMagicConstantSuffix(descriptorImpl, contextImpl, label, labelListener);
+      }
+      return label;
     }
     else {
       return JavaDebuggerBundle.message("label.undefined");
     }
+  }
+
+  private static boolean isMagicConstantCandidate(Value value) {
+    return value instanceof IntegerValue
+           || value instanceof LongValue
+           || value instanceof ShortValue
+           || value instanceof ByteValue;
   }
 
   static void appendCharValue(CharValue value, StringBuilder buf) {
