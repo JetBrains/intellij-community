@@ -259,9 +259,9 @@ class SLRUTextMateCacheTest {
             assertEquals("value-key-$taskId", value)
             "result-$taskId"
           }
-          results.update { it.add(result) }
+          results.update { it.adding(result) }
         }.onFailure { e ->
-          exceptions.update { it.add(e) }
+          exceptions.update { it.adding(e) }
         }
       }
     }
@@ -291,7 +291,7 @@ class SLRUTextMateCacheTest {
           cache.get("evict-key-${counter++}").close()
           realDelay(1.milliseconds)
         }.onFailure { e ->
-          exceptions.update { it.add(e) }
+          exceptions.update { it.adding(e) }
         }
       }
     }
@@ -306,7 +306,7 @@ class SLRUTextMateCacheTest {
               value
             }
           }.onFailure { e ->
-            exceptions.update { it.add(e) }
+            exceptions.update { it.adding(e) }
           }
         }
       }
@@ -335,7 +335,7 @@ class SLRUTextMateCacheTest {
           cache.cleanup()
           realDelay(10.milliseconds)
         }.onFailure { e ->
-          exceptions.update { it.add(e) }
+          exceptions.update { it.adding(e) }
         }
       }
     }
@@ -348,7 +348,7 @@ class SLRUTextMateCacheTest {
             cache.get("key-$coroutineId-$iteration").close()
             realDelay(1.milliseconds)
           }.onFailure { e ->
-            exceptions.update { it.add(e) }
+            exceptions.update { it.adding(e) }
           }
         }
       }
@@ -395,7 +395,7 @@ class SLRUTextMateCacheTest {
             // Small random delay
             realDelay((0..5).random().milliseconds)
           }.onFailure { e ->
-            exceptions.update { it.add(e) }
+            exceptions.update { it.adding(e) }
           }
         }
       }
@@ -438,7 +438,7 @@ class SLRUTextMateCacheTest {
           realDelay(1.milliseconds)
           "fast-result-$value"
         }
-        results.update { it.add(result) }
+        results.update { it.adding(result) }
       })
     }
 
@@ -449,7 +449,7 @@ class SLRUTextMateCacheTest {
           realDelay(10.milliseconds) // Longer async work
           "slow-result-$value"
         }
-        results.update { it.add(result) }
+        results.update { it.adding(result) }
       })
     }
 
@@ -467,7 +467,7 @@ class SLRUTextMateCacheTest {
     val cache = SLRUTextMateCache<String, String>(
       capacity = 2,
       computeFn = { key -> "value-$key" },
-      disposeFn = { value -> disposedValues.update { it.add(value) } }
+      disposeFn = { value -> disposedValues.update { it.adding(value) } }
     )
 
     cache.get("key1").close()
@@ -486,7 +486,7 @@ class SLRUTextMateCacheTest {
     val cache = SLRUTextMateCache<String, String>(
       capacity = 2,
       computeFn = { key -> "value-$key" },
-      disposeFn = { value -> disposedValues.update { it.add(value) } }
+      disposeFn = { value -> disposedValues.update { it.adding(value) } }
     )
 
     val key1IsInUse = Job()
@@ -519,7 +519,7 @@ class SLRUTextMateCacheTest {
     val cache = SLRUTextMateCache<String, String>(
       capacity = 2,
       computeFn = { key -> "value-$key" },
-      disposeFn = { value -> disposedValues.update { it.add(value) } }
+      disposeFn = { value -> disposedValues.update { it.adding(value) } }
     )
 
     suspend fun useKeyAndWaitUntilReallyUsed(): Job {
@@ -554,7 +554,7 @@ class SLRUTextMateCacheTest {
     val cache = SLRUTextMateCache<String, String>(
       capacity = 10,
       computeFn = { key -> "value-$key" },
-      disposeFn = { value -> disposedValues.update { it.add(value) } }
+      disposeFn = { value -> disposedValues.update { it.adding(value) } }
     )
 
     // Add entries
@@ -576,7 +576,7 @@ class SLRUTextMateCacheTest {
     val cache = SLRUTextMateCache<String, String>(
       capacity = 10,
       computeFn = { key -> "value-$key" },
-      disposeFn = { value -> disposedValues.update { it.add(value) } }
+      disposeFn = { value -> disposedValues.update { it.adding(value) } }
     )
 
     repeat(5) { i ->
@@ -597,7 +597,7 @@ class SLRUTextMateCacheTest {
     val cache = SLRUTextMateCache<String, String>(
       capacity = 10,
       computeFn = { key -> "value-$key" },
-      disposeFn = { value -> disposedValues.update { it.add(value) } }
+      disposeFn = { value -> disposedValues.update { it.adding(value) } }
     )
 
     cache.get("key1").close()
@@ -655,7 +655,7 @@ class SLRUTextMateCacheTest {
       capacity = 2,
       computeFn = { key -> "value-$key" },
       disposeFn = { value ->
-        disposeAttempts.update { it.add(value) }
+        disposeAttempts.update { it.adding(value) }
         if (value == "value-key1") {
           error("Dispose failed")
         }
@@ -723,7 +723,7 @@ class SLRUTextMateCacheTest {
             value
           }
         }.onFailure { e ->
-          exceptions.update { it.add(e) }
+          exceptions.update { it.adding(e) }
         }
       }
     }
@@ -919,7 +919,7 @@ class SLRUTextMateCacheTest {
     val cache = SLRUTextMateCache<String, String>(
       capacity = 10,
       computeFn = { key -> "value-$key" },
-      disposeFn = { value -> disposedValues.update { it.add(value) } },
+      disposeFn = { value -> disposedValues.update { it.adding(value) } },
       timeSource = testTimeSource
     )
 
@@ -951,7 +951,7 @@ class SLRUTextMateCacheTest {
     val cache = SLRUTextMateCache<String, String>(
       capacity = 10,
       computeFn = { key -> "value-$key" },
-      disposeFn = { value -> disposedValues.update { it.add(value) } }
+      disposeFn = { value -> disposedValues.update { it.adding(value) } }
     )
 
     repeat(5) { i ->
@@ -972,7 +972,7 @@ class SLRUTextMateCacheTest {
     val cache = SLRUTextMateCache<String, String>(
       capacity = 10,
       computeFn = { key -> "value-$key" },
-      disposeFn = { value -> disposedValues.update { it.add(value) } }
+      disposeFn = { value -> disposedValues.update { it.adding(value) } }
     )
 
     repeat(5) { i ->

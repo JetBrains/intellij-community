@@ -68,7 +68,7 @@ private data class OpenMapAdapter<Domain>(val original: OpenMapView<Domain>,
   }
 
   fun <T : Any> dissoc(k: Key<T, Domain>): OpenMapAdapter<Domain> {
-    return if (k in added) copy(added = added.dissoc(k)) else copy(removedKeys = removedKeys.add(k))
+    return if (k in added) copy(added = added.dissoc(k)) else copy(removedKeys = removedKeys.adding(k))
   }
 }
 

@@ -200,14 +200,14 @@ public open class VirtualFileIndex internal constructor(
             if (existingVfu != null) {
               val cleanedVfu = cleanExistingVfu(existingVfu)
               val newPropertyVfu = if (cleanedVfu == null) {
-                property2Vfu.remove(propertyName)
+                property2Vfu.removing(propertyName)
               } else {
-                property2Vfu.put(propertyName, cleanedVfu)
+                property2Vfu.putting(propertyName, cleanedVfu)
               }
               if (newPropertyVfu.isEmpty()) {
-                entityId2VirtualFileUrl = entityId2VirtualFileUrl.remove(id)
+                entityId2VirtualFileUrl = entityId2VirtualFileUrl.removing(id)
               } else {
-                entityId2VirtualFileUrl = entityId2VirtualFileUrl.put(id, newPropertyVfu)
+                entityId2VirtualFileUrl = entityId2VirtualFileUrl.putting(id, newPropertyVfu)
               }
             }
           }
@@ -216,9 +216,9 @@ public open class VirtualFileIndex internal constructor(
             if (existingPropertyName == propertyName) {
               val cleanedVfu = cleanExistingVfu(property2Vfu.second!!)
               if (cleanedVfu == null) {
-                entityId2VirtualFileUrl = entityId2VirtualFileUrl.remove(id)
+                entityId2VirtualFileUrl = entityId2VirtualFileUrl.removing(id)
               } else {
-                entityId2VirtualFileUrl = entityId2VirtualFileUrl.put(id, Pair(propertyName, cleanedVfu))
+                entityId2VirtualFileUrl = entityId2VirtualFileUrl.putting(id, Pair(propertyName, cleanedVfu))
               }
               
             }
@@ -255,7 +255,7 @@ public open class VirtualFileIndex internal constructor(
       startWrite()
       entityId2JarDir.removeKey(id)
       val removedProperty2Vfu = entityId2VirtualFileUrl[id] ?: return
-      entityId2VirtualFileUrl = entityId2VirtualFileUrl.remove(id)
+      entityId2VirtualFileUrl = entityId2VirtualFileUrl.removing(id)
       when (removedProperty2Vfu) {
         is Pair<*, *> -> removeFromVfu2EntityIdMap(id, removedProperty2Vfu.first as String, removedProperty2Vfu.second!!)
         is Map<*, *> -> removedProperty2Vfu.forEach { (property, vfu) ->
@@ -268,7 +268,7 @@ public open class VirtualFileIndex internal constructor(
     @TestOnly
     internal fun clear() {
       startWrite()
-      entityId2VirtualFileUrl = entityId2VirtualFileUrl.clear()
+      entityId2VirtualFileUrl = entityId2VirtualFileUrl.cleared()
       vfu2EntityId.clear()
       entityId2JarDir.clear()
     }
@@ -296,7 +296,7 @@ public open class VirtualFileIndex internal constructor(
     private fun addVfuToExisting(vfu: Any, virtualFileUrl: VirtualFileUrl): Set<VirtualFileUrl> {
       when (vfu) {
         is Set<*> -> {
-          return (vfu as PersistentSet<VirtualFileUrl>).add(virtualFileUrl)
+          return (vfu as PersistentSet<VirtualFileUrl>).adding(virtualFileUrl)
         }
         is VirtualFileUrl -> {
           return persistentHashSetOf(vfu, virtualFileUrl)
@@ -314,11 +314,11 @@ public open class VirtualFileIndex internal constructor(
             property2Vfu as PersistentMap<String, Any>
             val vfu = property2Vfu[propertyName]
             if (vfu == null) {
-              property2Vfu.put(propertyName, virtualFileUrl)
+              property2Vfu.putting(propertyName, virtualFileUrl)
             }
             else {
               val newVfu = addVfuToExisting(vfu, virtualFileUrl)
-              property2Vfu.put(propertyName, newVfu)
+              property2Vfu.putting(propertyName, newVfu)
             }
           }
           is Pair<*, *> -> {
@@ -333,10 +333,10 @@ public open class VirtualFileIndex internal constructor(
           }
           else -> throw WrongProperty2VfuInfoTypeException(property2Vfu::class.java.canonicalName)
         }
-        entityId2VirtualFileUrl = entityId2VirtualFileUrl.put(id, newProperty2Vfu)
+        entityId2VirtualFileUrl = entityId2VirtualFileUrl.putting(id, newProperty2Vfu)
       }
       else {
-        entityId2VirtualFileUrl = entityId2VirtualFileUrl.put(id, Pair(propertyName, virtualFileUrl))
+        entityId2VirtualFileUrl = entityId2VirtualFileUrl.putting(id, Pair(propertyName, virtualFileUrl))
       }
 
       val property2EntityId = vfu2EntityId.getOrDefault(virtualFileUrl, Object2LongWithDefaultMap())
@@ -350,18 +350,18 @@ public open class VirtualFileIndex internal constructor(
         is Map<*, *> -> {
           property2vfu as PersistentMap<String, Any>
           val removedVfu = property2vfu[propertyName] ?: return
-          val newProperty2Vfu = property2vfu.remove(propertyName)
+          val newProperty2Vfu = property2vfu.removing(propertyName)
           if (newProperty2Vfu.isEmpty()) {
-            entityId2VirtualFileUrl = entityId2VirtualFileUrl.remove(id)
+            entityId2VirtualFileUrl = entityId2VirtualFileUrl.removing(id)
           } else {
-            entityId2VirtualFileUrl = entityId2VirtualFileUrl.put(id, newProperty2Vfu)
+            entityId2VirtualFileUrl = entityId2VirtualFileUrl.putting(id, newProperty2Vfu)
           }
           removeFromVfu2EntityIdMap(id, propertyName, removedVfu)
         }
         is Pair<*, *> -> {
           val existingPropertyName = property2vfu.first as String
           if (existingPropertyName != propertyName) return
-          entityId2VirtualFileUrl = entityId2VirtualFileUrl.remove(id)
+          entityId2VirtualFileUrl = entityId2VirtualFileUrl.removing(id)
           removeFromVfu2EntityIdMap(id, propertyName, property2vfu.second!!)
         }
         else -> throw WrongProperty2VfuInfoTypeException(property2vfu::class.java.canonicalName)

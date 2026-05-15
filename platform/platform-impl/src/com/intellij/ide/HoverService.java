@@ -39,7 +39,7 @@ final class HoverService {
         Component component = getDeepestComponentAt(parent, event.getX(), event.getY());
         while (component != null && !(component instanceof Window)) {
           if (!HoverListener.getAll(component).isEmpty()) {
-            components = components.add(0, component);
+            components = components.addingAt(0, component);
           }
           component = component.getParent();
         }

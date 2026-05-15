@@ -401,7 +401,7 @@ class RpcExecutor private constructor(
     }
 
     // Add dependency to the created remote object
-    children.compute(parent) { k, v -> v.orEmpty().toPersistentSet().add(path) }
+    children.compute(parent) { k, v -> v.orEmpty().toPersistentSet().adding(path) }
     parents[path] = parent
   }
 
@@ -422,7 +422,7 @@ class RpcExecutor private constructor(
     additionalStep?.invoke(path)
 
     // Remove from parent deps, and unregister children
-    parents.remove(path)?.let { parent -> children.computeIfPresent(parent) { _, deps -> deps.toPersistentSet().remove(path) } }
+    parents.remove(path)?.let { parent -> children.computeIfPresent(parent) { _, deps -> deps.toPersistentSet().removing(path) } }
     children.remove(path)?.forEach {
       unregisterRemoteObject(it, additionalStep)
     }

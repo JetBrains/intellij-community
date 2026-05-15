@@ -11,7 +11,7 @@ internal class ErrorLog {
   fun recordLoggedError(message: String?, t: Throwable?) {
     val logged = LoggedError(message, t)
     errors.updateAndGet {
-      it.add(logged)
+      it.adding(logged)
     }
   }
 

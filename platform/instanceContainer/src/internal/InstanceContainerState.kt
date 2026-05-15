@@ -38,7 +38,7 @@ internal class InstanceContainerState private constructor(
       }
 
       val holder = getByName(keyClass.name)
-      val newValue = cache.put(keyClass, notNullizer.notNullize(holder))
+      val newValue = cache.putting(keyClass, notNullizer.notNullize(holder))
       val witness = cacheHandle.compareAndExchange(this, cache, newValue)
       if (witness === cache) {
         return holder
@@ -77,7 +77,7 @@ internal class InstanceContainerState private constructor(
      */
     return InstanceContainerState(
       holders = holders.with(keyClass.name, holder),
-      cache = cache.put(keyClass, holder),
+      cache = cache.putting(keyClass, holder),
     )
   }
 

@@ -39,11 +39,11 @@ internal class ChildStatusBarManager(
     bar.isVisible = parent.isVisible
 
     synchronized(parent) {
-      children = children.add(bar)
+      children = children.adding(bar)
     }
     coroutineScope.coroutineContext.job.invokeOnCompletion {
       synchronized(parent) {
-        children = children.remove(bar)
+        children = children.removing(bar)
       }
     }
 

@@ -577,7 +577,7 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
       adapters = mutateAdapters(adapters) { it.removeAt(i) }
 
       if (!listeners.isEmpty()) {
-        removedAdapters = removedAdapters.add(adapter)
+        removedAdapters = removedAdapters.adding(adapter)
       }
 
       if (stopAfterFirstMatch) {
@@ -701,7 +701,7 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
     listenerUpdater.updateAndGet(this) {
       @Suppress("UNCHECKED_CAST")
       val list = it as PersistentList<ExtensionPointListener<T>>
-      if (listener is ExtensionPointPriorityListener) list.add(0, listener) else list.add(listener)
+      if (listener is ExtensionPointPriorityListener) list.addingAt(0, listener) else list.adding(listener)
     }
     return true
   }
@@ -729,7 +729,7 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
 
     listenerUpdater.updateAndGet(this) {
       @Suppress("UNCHECKED_CAST")
-      (it as PersistentList<ExtensionPointListener<T>>).add(listenerAdapter)
+      (it as PersistentList<ExtensionPointListener<T>>).adding(listenerAdapter)
     }
     return listenerAdapter
   }
@@ -737,7 +737,7 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
   final override fun removeExtensionPointListener(listener: ExtensionPointListener<T>) {
     listenerUpdater.updateAndGet(this) {
       @Suppress("UNCHECKED_CAST")
-      (it as PersistentList<ExtensionPointListener<T>>).remove(listener)
+      (it as PersistentList<ExtensionPointListener<T>>).removing(listener)
     }
   }
 
@@ -752,7 +752,7 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
     }
 
     // help GC
-    listenerUpdater.updateAndGet(this) { it.clear() }
+    listenerUpdater.updateAndGet(this) { it.cleared() }
     extensionClass = null
   }
 

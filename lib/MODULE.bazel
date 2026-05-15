@@ -7343,17 +7343,17 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_kotlinx-kotlinx-collections-immutable-jvm-0_4_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-collections-immutable-jvm/0.4.0/kotlinx-collections-immutable-jvm-0.4.0.jar",
-  sha256 = "d767014ad0c9a27d27d26fd38e7afa030aee0d141338f108781ff02ecf2fdab5",
-  downloaded_file_path = "kotlinx-collections-immutable-jvm-0.4.0.jar"
+  name = "org_jetbrains_kotlinx-kotlinx-collections-immutable-jvm-0_5_0-beta01_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-collections-immutable-jvm/0.5.0-beta01/kotlinx-collections-immutable-jvm-0.5.0-beta01.jar",
+  sha256 = "0f1c7678eb4162590af510ca7cacd039106046a4f55cf706d65958291b7c43b3",
+  downloaded_file_path = "kotlinx-collections-immutable-jvm-0.5.0-beta01.jar"
 )
 
 http_file(
-  name = "org_jetbrains_kotlinx-kotlinx-collections-immutable-jvm-0_4_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-collections-immutable-jvm/0.4.0/kotlinx-collections-immutable-jvm-0.4.0-sources.jar",
-  sha256 = "b5100e18f87ea5014838482f550046bac26b23f6c32eb681bfccf6e8f736c9b0",
-  downloaded_file_path = "kotlinx-collections-immutable-jvm-0.4.0-sources.jar"
+  name = "org_jetbrains_kotlinx-kotlinx-collections-immutable-jvm-0_5_0-beta01-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-collections-immutable-jvm/0.5.0-beta01/kotlinx-collections-immutable-jvm-0.5.0-beta01-sources.jar",
+  sha256 = "a128a59936250b179d10d9cbb993fd24d6f7de6ce2c2e129884cd74583d40dde",
+  downloaded_file_path = "kotlinx-collections-immutable-jvm-0.5.0-beta01-sources.jar"
 )
 
 http_file(

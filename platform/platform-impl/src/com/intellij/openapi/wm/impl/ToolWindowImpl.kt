@@ -645,7 +645,7 @@ private val LOG = logger<ToolWindowManagerImpl>()
       contentManager.value.addContentManagerListener(listener)
     }
     else {
-      pendingContentManagerListeners = pendingContentManagerListeners.add(listener)
+      pendingContentManagerListeners = pendingContentManagerListeners.adding(listener)
     }
   }
 

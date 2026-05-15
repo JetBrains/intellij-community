@@ -24,7 +24,7 @@ abstract class PyCharmPropertiesBase(enlargeWelcomeScreen: Boolean) : JetBrainsP
     reassignAltClickToMultipleCarets = true
     useSplash = true
     buildCrossPlatformDistribution = true
-    mavenArtifacts.additionalModules = mavenArtifacts.additionalModules.addAll(listOf(
+    mavenArtifacts.additionalModules = mavenArtifacts.additionalModules.addingAll(listOf(
       "intellij.java.compiler.antTasks",
       "intellij.platform.testFramework.common",
       "intellij.platform.testFramework.junit5",
@@ -32,7 +32,7 @@ abstract class PyCharmPropertiesBase(enlargeWelcomeScreen: Boolean) : JetBrainsP
       "intellij.platform.testFramework",
     ))
 
-    productLayout.compatiblePluginsToIgnore = productLayout.compatiblePluginsToIgnore.addAll(
+    productLayout.compatiblePluginsToIgnore = productLayout.compatiblePluginsToIgnore.addingAll(
       //workaround (IJPL-209175) for IDEA-366600
       persistentListOf("intellij.java.plugin"))
   }

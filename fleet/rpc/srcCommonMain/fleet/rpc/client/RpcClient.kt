@@ -154,7 +154,7 @@ private class RpcClient(
         ))
     )
 
-    remoteResources.compute(parentService) { k, s -> s.orEmpty().toPersistentSet().add(instanceId to resource) }
+    remoteResources.compute(parentService) { k, s -> s.orEmpty().toPersistentSet().adding(instanceId to resource) }
     resourceParents.put(instanceId, parentService)
 
     return resource
