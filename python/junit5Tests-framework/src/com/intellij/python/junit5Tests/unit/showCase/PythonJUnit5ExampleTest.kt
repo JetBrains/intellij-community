@@ -12,7 +12,11 @@ import com.intellij.python.junit5Tests.framework.FolderTest
 import com.intellij.python.junit5Tests.framework.PyDefaultTestApplication
 import com.intellij.python.junit5Tests.framework.TestResourcePathResolver
 import com.intellij.python.junit5Tests.framework.helper.doHighlighting
-import com.intellij.python.junit5Tests.framework.metaInfo.*
+import com.intellij.python.junit5Tests.framework.metaInfo.Repository
+import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfo
+import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfoData
+import com.intellij.python.junit5Tests.framework.metaInfo.TestMetaInfo
+import com.intellij.python.junit5Tests.framework.metaInfo.WithCustomTestResourcePathResolver
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.projectFixture
