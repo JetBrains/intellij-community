@@ -13,6 +13,7 @@ import com.intellij.platform.testFramework.junit5.projectStructure.fixture.multi
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.EnableTracingFor
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.utils.vfs.createFile
 import kotlinx.coroutines.delay
@@ -21,6 +22,10 @@ import org.junit.jupiter.api.RepeatedTest
 import kotlin.io.path.Path
 import kotlin.time.Duration.Companion.milliseconds
 
+@EnableTracingFor(
+  categories = ["#com.intellij.psi.impl.file.impl.MultiverseFileViewProviderCache"],
+  categoryClasses = [CodeInsightContextManagerImpl::class]
+)
 @TestApplication
 internal class FileInvalidationTest {
   private val projectFixture = multiverseProjectFixture(withSharedSourceEnabled = true) {}
