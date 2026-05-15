@@ -31,7 +31,7 @@ internal class AgentSessionsActivityService(
         _summary.value = nextSummary
         systemNotificationTracker
           .collectNotifications(nextSummary, isLoadedState = state.lastUpdatedAt != null)
-          .forEach(::showAgentSessionsSystemNotification)
+          .forEach { notification -> showAgentSessionsSystemNotification(notification) }
         project.service<AgentSessionsStripeIconUpdater>().scheduleUpdate()
       }
     }

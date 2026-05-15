@@ -13,13 +13,17 @@ import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsActivity
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsActivityCounterTone
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsActivitySummary
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsStripeBadge
+import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsSystemNotificationTarget
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsSystemNotificationTracker
 import com.intellij.agent.workbench.sessions.toolwindow.ui.agentSessionsActivityPopupRowText
 import com.intellij.agent.workbench.sessions.toolwindow.ui.buildAgentSessionsActivitySummary
+import com.intellij.agent.workbench.sessions.toolwindow.ui.resolveAgentSessionsSystemNotificationThread
+import com.intellij.agent.workbench.sessions.toolwindow.ui.showAgentSessionsSystemNotification
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.ui.SystemNotifications
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.awt.Color
@@ -294,6 +298,93 @@ class AgentSessionsActivitySummaryTest {
 
     assertThat(notification.title).isEqualTo("Agent Task Needs Attention")
     assertThat(notification.text).isEqualTo("\"Confirm tool call\" in Project A / feature needs attention.")
+    assertThat(notification.target).isEqualTo(
+      AgentSessionsSystemNotificationTarget(
+        path = "/work/project-a-feature",
+        provider = AgentSessionProvider.CODEX,
+        threadId = "needs-input",
+      )
+    )
+  }
+
+  @Test
+  fun systemNotificationActivationForwardsStableTarget() {
+    val tracker = AgentSessionsSystemNotificationTracker()
+    tracker.collectNotifications(summary(thread("done", AgentThreadActivity.PROCESSING, 100)), isLoadedState = true)
+    val notification = tracker.collectNotifications(summary(thread("done", AgentThreadActivity.UNREAD, 200)), isLoadedState = true).single()
+    var activationCallback: Runnable? = null
+    var activatedTarget: AgentSessionsSystemNotificationTarget? = null
+
+    val systemNotifications = object : SystemNotifications() {
+      override fun notify(notificationName: String, title: String, text: String) {
+        error("Activation-aware overload expected")
+      }
+
+      override fun notify(notificationName: String, title: String, text: String, onActivated: Runnable?) {
+        assertThat(notificationName).isEqualTo("Agent Workbench Sessions")
+        assertThat(title).isEqualTo(notification.title)
+        assertThat(text).isEqualTo(notification.text)
+        activationCallback = onActivated
+      }
+    }
+
+    showAgentSessionsSystemNotification(
+      notification = notification,
+      systemNotifications = systemNotifications,
+      openTarget = { target -> activatedTarget = target },
+    )
+
+    activationCallback?.run()
+    assertThat(activatedTarget).isEqualTo(notification.target)
+  }
+
+  @Test
+  fun systemNotificationTargetResolutionUsesStableThreadIdNotTitle() {
+    val state = AgentSessionsState(
+      projects = listOf(
+        AgentProjectSessions(
+          path = "/work/project-a",
+          name = "Project A",
+          isOpen = true,
+          hasLoaded = true,
+          threads = listOf(
+            thread("first", AgentThreadActivity.UNREAD, 100, title = "Same title"),
+            thread("target", AgentThreadActivity.UNREAD, 200, title = "Same title"),
+          ),
+        )
+      ),
+    )
+
+    val target = AgentSessionsSystemNotificationTarget(
+      path = "/work/project-a",
+      provider = AgentSessionProvider.CODEX,
+      threadId = "target",
+    )
+
+    assertThat(resolveAgentSessionsSystemNotificationThread(state, target)?.id).isEqualTo("target")
+  }
+
+  @Test
+  fun staleSystemNotificationTargetDoesNotResolve() {
+    val state = AgentSessionsState(
+      projects = listOf(
+        AgentProjectSessions(
+          path = "/work/project-a",
+          name = "Project A",
+          isOpen = true,
+          hasLoaded = true,
+          threads = listOf(thread("existing", AgentThreadActivity.UNREAD, 100)),
+        )
+      ),
+    )
+
+    val target = AgentSessionsSystemNotificationTarget(
+      path = "/work/project-a",
+      provider = AgentSessionProvider.CODEX,
+      threadId = "missing",
+    )
+
+    assertThat(resolveAgentSessionsSystemNotificationThread(state, target)).isNull()
   }
 
   @Test

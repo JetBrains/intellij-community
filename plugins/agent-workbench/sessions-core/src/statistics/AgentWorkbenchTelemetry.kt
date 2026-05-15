@@ -29,6 +29,7 @@ enum class AgentWorkbenchEntryPoint {
   EDITOR_TAB_POPUP,
   TOOLBAR,
   WINDOW_MENU,
+  SYSTEM_NOTIFICATION,
 }
 
 @Internal
@@ -240,7 +241,7 @@ object AgentWorkbenchTelemetry {
 internal object AgentWorkbenchFusCollector : CounterUsagesCollector() {
   private val LOG = logger<AgentWorkbenchFusCollector>()
 
-  private val group = EventLogGroup("agent.workbench", 2)
+  private val group = EventLogGroup("agent.workbench", 3)
 
   private val entryPointField: EnumEventField<AgentWorkbenchEntryPoint> = EventFields.Enum("entry_point", AgentWorkbenchEntryPoint::class.java)
   private val providerField: EnumEventField<AgentWorkbenchTelemetryProvider> =

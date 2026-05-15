@@ -15,16 +15,25 @@ import static com.intellij.openapi.util.NullableLazyValue.atomicLazyNullable;
 final class SystemNotificationsImpl extends SystemNotifications {
   interface Notifier {
     void notify(@NotNull String name, @NotNull String title, @NotNull String description);
+
+    default void notify(@NotNull String name, @NotNull String title, @NotNull String description, @Nullable Runnable onActivated) {
+      notify(name, title, description);
+    }
   }
 
   private final NullableLazyValue<Notifier> myNotifier = atomicLazyNullable(SystemNotificationsImpl::getPlatformNotifier);
 
   @Override
   public void notify(@NotNull String notificationName, @NotNull String title, @NotNull String text) {
+    notify(notificationName, title, text, null);
+  }
+
+  @Override
+  public void notify(@NotNull String notificationName, @NotNull String title, @NotNull String text, @Nullable Runnable onActivated) {
     if (NotificationsConfigurationImpl.getInstanceImpl().SYSTEM_NOTIFICATIONS && !ApplicationManager.getApplication().isActive()) {
       var notifier = myNotifier.getValue();
       if (notifier != null) {
-        notifier.notify(notificationName, title, text);
+        notifier.notify(notificationName, title, text, onActivated);
       }
     }
   }

@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.NlsContexts.SystemNotificationText;
 import com.intellij.openapi.util.NlsContexts.SystemNotificationTitle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class SystemNotifications {
   private static final SystemNotifications MUTE = new SystemNotifications() {
@@ -22,4 +23,13 @@ public abstract class SystemNotifications {
     @NotNull @SystemNotificationTitle String title,
     @NotNull @SystemNotificationText String text
   );
+
+  public void notify(
+    @NotNull String notificationName,
+    @NotNull @SystemNotificationTitle String title,
+    @NotNull @SystemNotificationText String text,
+    @Nullable Runnable onActivated
+  ) {
+    notify(notificationName, title, text);
+  }
 }

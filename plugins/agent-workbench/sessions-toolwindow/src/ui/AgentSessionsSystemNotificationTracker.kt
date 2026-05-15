@@ -3,17 +3,36 @@ package com.intellij.agent.workbench.sessions.toolwindow.ui
 
 // @spec community/plugins/agent-workbench/spec/agent-sessions-tree.spec.md
 
+import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
+import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
+import com.intellij.agent.workbench.sessions.model.AgentSessionsState
+import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
+import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.agent.workbench.sessions.tree.threadDisplayTitle
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.SystemNotifications
 
 private const val AGENT_SESSIONS_SYSTEM_NOTIFICATION_NAME: String = "Agent Workbench Sessions"
 
+private val LOG = logger<AgentSessionsSystemNotificationTracker>()
+
+internal data class AgentSessionsSystemNotificationTarget(
+  @JvmField val path: String,
+  val provider: AgentSessionProvider,
+  @JvmField val threadId: String,
+)
+
 internal data class AgentSessionsSystemNotification(
   @JvmField val bucket: AgentSessionsActivityBucket,
   @JvmField val title: @NlsContexts.SystemNotificationTitle String,
   @JvmField val text: @NlsContexts.SystemNotificationText String,
+  @JvmField val target: AgentSessionsSystemNotificationTarget,
 )
 
 internal class AgentSessionsSystemNotificationTracker {
@@ -48,12 +67,56 @@ internal class AgentSessionsSystemNotificationTracker {
   }
 }
 
-internal fun showAgentSessionsSystemNotification(notification: AgentSessionsSystemNotification) {
-  SystemNotifications.getInstance().notify(
+internal fun showAgentSessionsSystemNotification(
+  notification: AgentSessionsSystemNotification,
+  systemNotifications: SystemNotifications = SystemNotifications.getInstance(),
+  openTarget: (AgentSessionsSystemNotificationTarget) -> Unit = ::openAgentSessionsSystemNotificationTarget,
+) {
+  val target = notification.target
+  systemNotifications.notify(
     AGENT_SESSIONS_SYSTEM_NOTIFICATION_NAME,
     notification.title,
     notification.text,
+    Runnable { openTarget(target) },
   )
+}
+
+internal fun openAgentSessionsSystemNotificationTarget(target: AgentSessionsSystemNotificationTarget) {
+  val normalizedTarget = target.copy(path = normalizeAgentWorkbenchPath(target.path))
+  val thread = resolveAgentSessionsSystemNotificationThread(
+    state = service<AgentSessionsStateStore>().snapshot(),
+    target = normalizedTarget,
+  )
+  if (thread == null) {
+    LOG.debug { "Skipped system notification activation for stale thread target: $normalizedTarget" }
+    return
+  }
+
+  service<AgentSessionLaunchService>().openChatThread(
+    path = normalizedTarget.path,
+    thread = thread,
+    entryPoint = AgentWorkbenchEntryPoint.SYSTEM_NOTIFICATION,
+  )
+}
+
+internal fun resolveAgentSessionsSystemNotificationThread(
+  state: AgentSessionsState,
+  target: AgentSessionsSystemNotificationTarget,
+): AgentSessionThread? {
+  val normalizedPath = normalizeAgentWorkbenchPath(target.path)
+  state.projects.firstOrNull { project -> normalizeAgentWorkbenchPath(project.path) == normalizedPath }
+    ?.threads
+    ?.firstOrNull { thread -> thread.provider == target.provider && thread.id == target.threadId }
+    ?.let { return it }
+
+  state.projects.forEach { project ->
+    project.worktrees.firstOrNull { worktree -> normalizeAgentWorkbenchPath(worktree.path) == normalizedPath }
+      ?.threads
+      ?.firstOrNull { thread -> thread.provider == target.provider && thread.id == target.threadId }
+      ?.let { return it }
+  }
+
+  return null
 }
 
 private data class AgentSessionsSystemNotificationThreadKey(
@@ -92,14 +155,24 @@ private fun AgentSessionsSystemNotificationBucketedRow.toSystemNotification(): A
       bucket = bucket,
       title = AgentSessionsBundle.message("toolwindow.system.notification.attention.title"),
       text = AgentSessionsBundle.message("toolwindow.system.notification.attention.text", displayTitle, row.locationLabel),
+      target = row.toSystemNotificationTarget(),
     )
 
     AgentSessionsActivityBucket.DONE -> AgentSessionsSystemNotification(
       bucket = bucket,
       title = AgentSessionsBundle.message("toolwindow.system.notification.done.title"),
       text = AgentSessionsBundle.message("toolwindow.system.notification.done.text", displayTitle, row.locationLabel),
+      target = row.toSystemNotificationTarget(),
     )
 
     AgentSessionsActivityBucket.RUNNING -> error("Running threads do not create system notifications")
   }
+}
+
+private fun AgentSessionsActivityThreadRow.toSystemNotificationTarget(): AgentSessionsSystemNotificationTarget {
+  return AgentSessionsSystemNotificationTarget(
+    path = path,
+    provider = thread.provider,
+    threadId = thread.id,
+  )
 }

@@ -22,7 +22,7 @@ Date: 2026-05-09
 Agent Workbench custom telemetry records semantic workflow outcomes that platform action telemetry cannot infer. It must stay content-free, allowlisted, and centralized behind the shared telemetry facade.
 
 ## Requirements
-- Custom telemetry uses one event-only `CounterUsagesCollector` in `sessions-core` with FUS group `agent.workbench` version `1`.
+- Custom telemetry uses one event-only `CounterUsagesCollector` in `sessions-core` with FUS group `agent.workbench` version `3`.
 
 - Custom events must not duplicate ordinary `AnAction` invocation counting already covered by the platform `actions` group.
 

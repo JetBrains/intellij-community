@@ -11686,6 +11686,7 @@ a:com.intellij.ui.SystemNotifications
 - <init>():V
 - s:getInstance():com.intellij.ui.SystemNotifications
 - a:notify(java.lang.String,java.lang.String,java.lang.String):V
+- notify(java.lang.String,java.lang.String,java.lang.String,java.lang.Runnable):V
 c:com.intellij.ui.TabbedPaneImpl
 - com.intellij.ui.components.JBTabbedPane
 - com.intellij.ui.TabbedPane

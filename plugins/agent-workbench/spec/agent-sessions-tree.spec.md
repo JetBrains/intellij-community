@@ -37,8 +37,9 @@ The Agent Threads tree follows IntelliJ tree conventions while adding provider-s
   Stripe badges use the Agent Workbench activity colors: `Needs attention` uses the `NEEDS_INPUT` color and `Done` uses the
   `UNREAD` color. `PROCESSING` threads never badge the collapsed stripe button.
   When the IDE is not active, a thread's first transition into `Needs attention` or `Done` after the initial loaded
-  baseline emits a per-thread OS system notification through platform system notifications. Initial loaded rows and
-  `Running` transitions do not notify.
+  baseline emits a per-thread OS system notification through platform system notifications. On platform implementations
+  that support exact native activation callbacks, clicking the OS notification opens/focuses the matching chat tab by
+  stable path/provider/thread id. Initial loaded rows and `Running` transitions do not notify.
   [@test] ../sessions-toolwindow/testSrc/AgentSessionsActivitySummaryTest.kt
 
 - Selection and activation must match platform tree behavior: single-click selects, Enter/double-click opens openable rows, and double-click on openable parent rows prefers open/focus over expansion.
