@@ -59,7 +59,7 @@ public final class PyDebuggerOptionsProvider implements PersistentStateComponent
     public int myDebuggerPort = 29781;
     public @NonNls String myAttachProcessFilter = "python";
     public int myEvaluationResponseTimeout = 60_000;
-    public @NonNls String myDebuggerBackend = PyDebuggerBackend.DEBUGPY.name();
+    public @NonNls String myDebuggerBackend = DEFAULT_BACKEND_MARKER;
   }
 
 
@@ -146,12 +146,27 @@ public final class PyDebuggerOptionsProvider implements PersistentStateComponent
     myState.myEvaluationResponseTimeout = timeout;
   }
 
+  /**
+   * Storage marker for "user has not made an explicit choice; use the global default
+   * {@link PyDebugBackendRunnerKt#DEFAULT_PY_DEBUGGER_BACKEND}". Distinct from any {@link PyDebuggerBackend}
+   * enum name so that explicit user picks and "default" can be told apart in {@code workspace.xml}.
+   */
+  public static final String DEFAULT_BACKEND_MARKER = "DEFAULT";
+
+  /**
+   * Returns the backend that should actually be used: an explicit user choice if any, otherwise the
+   * current global default {@link PyDebugBackendRunnerKt#DEFAULT_PY_DEBUGGER_BACKEND}. Never returns
+   * a value outside the {@link PyDebuggerBackend} enum.
+   */
   public @NotNull PyDebuggerBackend getSelectedBackend() {
+    if (myState.myDebuggerBackend.equals(DEFAULT_BACKEND_MARKER)) {
+      return PyDebugBackendRunnerKt.DEFAULT_PY_DEBUGGER_BACKEND;
+    }
     try {
       return PyDebuggerBackend.valueOf(myState.myDebuggerBackend);
     }
     catch (IllegalArgumentException e) {
-      return PyDebuggerBackend.PYDEVD;
+      return PyDebugBackendRunnerKt.DEFAULT_PY_DEBUGGER_BACKEND;
     }
   }
 
@@ -203,4 +218,3 @@ public final class PyDebuggerOptionsProvider implements PersistentStateComponent
     }
   }
 }
-

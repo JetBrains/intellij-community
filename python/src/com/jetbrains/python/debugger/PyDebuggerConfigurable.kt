@@ -174,15 +174,21 @@ class PyDebuggerConfigurable(private val myProject: Project) : SearchableConfigu
     PyDebuggerOptionsProvider.switchBackendWithRestart(myProject, newBackend)
   }
 
-  override fun isModified(): Boolean {
+  private fun isBackendModified(): Boolean {
     val settings = PyDebuggerOptionsProvider.getInstance(myProject)
+    return myBackendSelector.selectedItem != settings.selectedBackend
+  }
+
+  override fun isModified(): Boolean {
     return myMainPanel?.isModified() == true ||
-           myBackendSelector.selectedItem != settings.selectedBackend
+           isBackendModified()
   }
 
   override fun apply() {
     myMainPanel?.apply()
-    applyBackend()
+    if (isBackendModified()) {
+      applyBackend()
+    }
   }
 
   override fun reset() {

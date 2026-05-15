@@ -28,6 +28,16 @@ interface PyDebugBackendRunner : ProgramRunner<RunnerSettings> {
   }
 }
 
+/**
+ * Backend used when a project has no explicit user selection (storage value is
+ * [PyDebuggerOptionsProvider.DEFAULT_BACKEND_MARKER] or absent from `workspace.xml`). Flipping this
+ * constant in a future release will propagate to all projects without an explicit user choice;
+ * explicit choices written to `workspace.xml` are preserved.
+ */
+@JvmField
+@ApiStatus.Internal
+val DEFAULT_PY_DEBUGGER_BACKEND: PyDebuggerBackend = PyDebuggerBackend.DEBUGPY
+
 internal fun findPyDebugBackendRunner(executorId: String, profile: RunProfile): PyDebugBackendRunner? {
   val runners = PyDebugBackendRunner.EP_NAME.extensionList
   return runners.findBackendRunner(PyDebuggerBackend.DEBUGPY, executorId, profile)
