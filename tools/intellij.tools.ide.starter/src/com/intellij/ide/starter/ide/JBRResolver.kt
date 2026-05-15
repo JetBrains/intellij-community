@@ -10,6 +10,7 @@ import com.intellij.ide.starter.runner.SetupException
 import com.intellij.ide.starter.telemetry.computeWithSpan
 import com.intellij.ide.starter.utils.catchAll
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.util.system.OS
 import kotlinx.coroutines.Dispatchers
@@ -107,7 +108,7 @@ object JBRResolver {
         logOutput("Installer JBR override active: $swapTarget -> $overridePath (original kept at $backupSibling)")
       }
       catch (e: Exception) {
-        logOutput("Failed to create JBR override symlink at $swapTarget (${e.message}); restoring bundled JBR")
+        logError("Failed to create JBR override symlink at $swapTarget (${e.message}); restoring bundled JBR")
         if (Files.exists(backupSibling)) Files.move(backupSibling, swapTarget)
       }
     }
