@@ -382,11 +382,11 @@ fun CodeInsightTestFixture.renderLookupItems(
         isTypeGreyed = presentation.isTypeGrayed,
       )
     }
-    ?.filter(lookupFilter)
     ?.sortedWith(
       Comparator.comparing { it: LookupElementInfo -> -it.priority }
         .thenComparingInt { -(it.proximity ?: 0) }
         .thenComparing { it: LookupElementInfo -> it.lookupString })
+    ?.filter(lookupFilter)
     ?.map {
       it.render(
         renderPriority = renderPriority,
