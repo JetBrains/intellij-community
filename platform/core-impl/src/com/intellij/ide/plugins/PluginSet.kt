@@ -176,6 +176,15 @@ class PluginSet internal constructor(
       }
     }
   }
+
+  override fun toString(): String {
+    return buildString {
+      val resolvedPluginsCount = resolvedPluginSet?.sortedResolvedDescriptors?.filterIsInstance<PluginMainDescriptor>()?.count()
+      val resolvedContentModulesCount = resolvedPluginSet?.sortedResolvedDescriptors?.filterIsInstance<ContentModuleDescriptor>()?.count()
+      val excludedModulesCount = resolvedPluginSet?.originalPluginSet?.plugins?.flatMap { it.sequenceAllDescriptors() }?.count { resolvedPluginSet.isExcluded(it) }
+      append("PluginSet(resolvedPlugins=${resolvedPluginsCount}, resolvedContentModules=${resolvedContentModulesCount}, excludedModules=${excludedModulesCount})")
+    }
+  }
 }
 
 private fun IdeaPluginDescriptorImpl.legacyEquals(other: Any?): Boolean {
