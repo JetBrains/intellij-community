@@ -12,7 +12,7 @@ import java.util.stream.Stream;
 
 
 @SuppressWarnings("unchecked")
-public final class VirtualThreadDumper {
+public final class JvmThreadHelper {
 
   private final MethodHandle containersRootHandle;
   private final MethodHandle containerChildrenHandle;
@@ -32,7 +32,7 @@ public final class VirtualThreadDumper {
   private final ArrayList<Object> containerReferences = new ArrayList<>();
   private final ArrayList<Integer> containerParentOrdinals = new ArrayList<>();
 
-  private VirtualThreadDumper(MethodHandles.Lookup lookup) throws Throwable {
+  private JvmThreadHelper(MethodHandles.Lookup lookup) throws Throwable {
     // ThreadContainer & Co., since Java 21
     Class<?> threadContainersClass = Class.forName("jdk.internal.vm.ThreadContainers", false, ClassLoader.getSystemClassLoader());
     Class<?> threadContainerClass = Class.forName("jdk.internal.vm.ThreadContainer", false, ClassLoader.getSystemClassLoader());
@@ -76,7 +76,7 @@ public final class VirtualThreadDumper {
    * </ol>
    */
   public static Object[] getAllVirtualThreadsWithStackTracesAndContainers(MethodHandles.Lookup lookup) throws Throwable {
-    VirtualThreadDumper dumper = new VirtualThreadDumper(lookup);
+    JvmThreadHelper dumper = new JvmThreadHelper(lookup);
     return dumper.collect();
   }
 

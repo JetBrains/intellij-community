@@ -26,7 +26,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.removeUserData
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.rt.debugger.VirtualThreadDumper
+import com.intellij.rt.debugger.JvmThreadHelper
 import com.intellij.threadDumpParser.ThreadDumpParser
 import com.intellij.threadDumpParser.ThreadState
 import com.intellij.unscramble.InfoDumpItem
@@ -517,7 +517,7 @@ internal class JavaVirtualThreadsProvider : ThreadDumpItemsProviderFactory() {
       val evaluated =
         DebuggerUtilsImpl.invokeHelperMethod(
           evaluationContext,
-          VirtualThreadDumper::class.java, "getAllVirtualThreadsWithStackTracesAndContainers",
+          JvmThreadHelper::class.java, "getAllVirtualThreadsWithStackTracesAndContainers",
           listOf(lookupImpl)
         )
 
