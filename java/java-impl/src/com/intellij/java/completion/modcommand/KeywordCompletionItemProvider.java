@@ -540,10 +540,12 @@ final class KeywordCompletionItemProvider extends JavaModCompletionItemProvider 
            expressionPosition) && primitivesAreExpected(myPosition)) {
         for (String primitiveType : PsiTypes.primitiveTypeNames()) {
           addKeyword(createKeyword(primitiveType).withObject(Objects.requireNonNull(PsiTypes.primitiveTypeByName(primitiveType)))
-                       .withAdditionalUpdater((completionStart, updater, insertionContext) -> {
+                       .withAdditionalUpdater((_, updater, insertionContext) -> {
                          if (insertionContext.insertionCharacter() == '[') {
                            // Opening bracket will be added automatically.
-                           updater.getDocument().insertString(updater.getCaretOffset(), "]");
+                           int offset = updater.getCaretOffset();
+                           updater.getDocument().insertString(offset, "]");
+                           updater.registerTabOut(TextRange.create(offset, offset), offset + 1);
                          }
                        }));
         }
@@ -668,7 +670,7 @@ final class KeywordCompletionItemProvider extends JavaModCompletionItemProvider 
         .withPresentation(
           new ModCompletionItemPresentation(MarkupText.builder().append(keyword, STRONG).append(" " + className, NORMAL).build())
             .withMainIcon(() -> CreateClassKind.valueOf(keyword.toUpperCase(Locale.ROOT)).getKindIcon()))
-        .withAdditionalUpdater((start, updater) -> {
+        .withAdditionalUpdater((_, updater) -> {
           Document document = updater.getDocument();
           int offset = updater.getCaretOffset();
           String suffix = " ";
