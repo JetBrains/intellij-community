@@ -208,18 +208,20 @@ private fun comparator(): Comparator<PsiElement> = Comparator.comparing { el ->
     presentation.presentableText + (if (containerText != null) " $containerText" else "")
 }
 
+private const val TOOLTIPS_LIMIT = 5
+
 object ClassInheritorsTooltip : Function<PsiElement, String> {
     override fun `fun`(element: PsiElement): String? {
         val ktClass = element.parent as? KtClass ?: return null
-        var inheritors = KotlinFindUsagesSupport.searchInheritors(ktClass, ktClass.useScope).take(5).toList()
+        var inheritors = KotlinFindUsagesSupport.searchInheritors(ktClass, ktClass.useScope).take(TOOLTIPS_LIMIT).toList()
         if (inheritors.isEmpty()) {
-            inheritors = if (ktClass.isExpectDeclaration()) ktClass.actualsForExpect().take(5).toList() else emptyList()
+            inheritors = if (ktClass.isExpectDeclaration()) ktClass.actualsForExpect().take(TOOLTIPS_LIMIT).toList() else emptyList()
         }
         if (inheritors.isEmpty()) {
             inheritors = findFunctionalExpressions(ktClass)
         }
         val isInterface = ktClass.isInterface()
-        if (inheritors.size == 5) {
+        if (inheritors.size == TOOLTIPS_LIMIT) {
             return if (isInterface) DaemonBundle.message("method.is.implemented.too.many") else DaemonBundle.message("class.is.subclassed.too.many")
         }
         val start =
@@ -235,7 +237,7 @@ object ClassInheritorsTooltip : Function<PsiElement, String> {
 private fun findFunctionalExpressions(ktClass: KtClass): List<PsiElement> {
     val lightClass = ktClass.toLightClass()
     if (lightClass != null && LambdaUtil.isFunctionalClass(lightClass)) {
-        return FunctionalExpressionSearch.search(lightClass, ktClass.useScope).asIterable().asSequence().take(5).toList()
+        return FunctionalExpressionSearch.search(lightClass, ktClass.useScope).asIterable().asSequence().take(TOOLTIPS_LIMIT).toList()
     }
     return emptyList()
 }
@@ -244,15 +246,15 @@ object CallableOverridingsTooltip : Function<PsiElement, String> {
     override fun `fun`(element: PsiElement): String? {
         val declaration = element.getParentOfType<KtCallableDeclaration>(false) ?: return null
         val klass = declaration.containingClassOrObject as? KtClass ?: return null
-        var overridings = KotlinFindUsagesSupport.searchOverriders(declaration, declaration.useScope).take(5).toList()
+        var overridings = KotlinFindUsagesSupport.searchOverriders(declaration, declaration.useScope).take(TOOLTIPS_LIMIT).toList()
         if (overridings.isEmpty()) {
-            overridings = declaration.actualsForExpect().take(5).toList()
+            overridings = declaration.actualsForExpect().take(TOOLTIPS_LIMIT).toList()
         }
         if (overridings.isEmpty()) {
             overridings = findFunctionalExpressions(klass)
         }
         val isAbstract = isAbstract(declaration, klass) || declaration.isExpectDeclaration()
-        if (overridings.size == 5) {
+        if (overridings.size == TOOLTIPS_LIMIT) {
             return if (isAbstract) DaemonBundle.message("method.is.implemented.too.many") else DaemonBundle.message("method.is.overridden.too.many")
         }
         else {
