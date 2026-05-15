@@ -12,6 +12,7 @@ import com.intellij.ide.starter.utils.catchAll
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
+import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -82,8 +83,9 @@ object JBRResolver {
    * symlink to the user-supplied path. The bundled tree is kept as a `.bundled` sibling and restored
    * automatically on the next run with no override.
    */
+  @OptIn(LowLevelLocalMachineAccess::class)
   fun applyInstallerJbrOverrideIfLocalJbrPathNotEmpty(appHome: Path) {
-    val swapTarget = if (SystemInfo.isMac) appHome / "jbr" / "Contents" / "Home" else appHome / "jbr"
+    val swapTarget = if (OS.CURRENT == OS.macOS) appHome / "jbr" / "Contents" / "Home" else appHome / "jbr"
     val backupSibling = swapTarget.parent.resolve("${swapTarget.fileName}.bundled")
     val raw = ConfigurationStorage.localJbrPath()
 
@@ -119,6 +121,7 @@ object JBRResolver {
     }
   }
 
+  @OptIn(LowLevelLocalMachineAccess::class)
   suspend fun downloadAndUnpackJbrIfNeeded(jbrVersion: JBRVersion): Path = computeWithSpan("download and unpack JBR") {
     val (majorVersion, buildNumber) = listOf(jbrVersion.majorVersion, jbrVersion.buildNumber)
 
@@ -142,7 +145,7 @@ object JBRResolver {
     val appHome = withContext(Dispatchers.IO) {
       di.direct.instance<JBRDownloader>().downloadJbr(jbrFileName)
     }
-    return if (SystemInfo.isMac && !ConfigurationStorage.useDockerContainer()) appHome.resolve("Contents/Home") else appHome
+    return if (OS.CURRENT == OS.macOS && !ConfigurationStorage.useDockerContainer()) appHome.resolve("Contents/Home") else appHome
   }
 
   fun getRuntimeBuildVersion(): String {
