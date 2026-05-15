@@ -21,10 +21,15 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.nio.file.FileVisitResult
@@ -49,37 +54,40 @@ class PluginBooleanOptionDescriptor internal constructor(private val myDescripto
 
     @JvmStatic
     fun togglePluginState(descriptors: Collection<IdeaPluginDescriptor>, enable: Boolean) {
-      if (descriptors.isEmpty()) {
-        return
-      }
+      // TODO get proper scope
+      GlobalScope.launch(CoroutineName("toggle plugins state") + Dispatchers.EDT) {
+        if (descriptors.isEmpty()) {
+          return@launch
+        }
 
-      val pluginIdMap = PluginManagerCore.buildPluginIdMap()
-      val contentModuleIdMap = PluginManagerCore.getPluginSet().buildContentModuleIdMap()
-      val autoSwitchedDescriptors = if (enable) {
-        getDependenciesToEnable(descriptors, pluginIdMap, contentModuleIdMap)
-      }
-      else {
-        getDependentsToDisable(descriptors, pluginIdMap, contentModuleIdMap)
-      }
+        val pluginIdMap = PluginManagerCore.buildPluginIdMap()
+        val contentModuleIdMap = PluginManagerCore.getPluginSet().buildContentModuleIdMap()
+        val autoSwitchedDescriptors = if (enable) {
+          getDependenciesToEnable(descriptors, pluginIdMap, contentModuleIdMap)
+        }
+        else {
+          getDependentsToDisable(descriptors, pluginIdMap, contentModuleIdMap)
+        }
 
-      val pluginEnabler = PluginEnabler.getInstance()
-      val appliedWithoutRestart = if (enable) {
-        pluginEnabler.enable(autoSwitchedDescriptors)
-      }
-      else {
-        pluginEnabler.disable(autoSwitchedDescriptors)
-      }
+        val pluginEnabler = PluginEnabler.getInstance()
+        val appliedWithoutRestart = if (enable) {
+          pluginEnabler.enable(autoSwitchedDescriptors)
+        }
+        else {
+          pluginEnabler.disable(autoSwitchedDescriptors)
+        }
 
-      if (autoSwitchedDescriptors.size > descriptors.size) {
-        val content = IdeBundle.message(
-          if (enable) "plugins.auto.enabled.notification.content" else "plugins.auto.disabled.notification.content",
-          MyPluginModel.joinPluginNamesOrIds(MyPluginModel.getPluginNames(descriptors)),
-          MyPluginModel.joinPluginNamesOrIds(MyPluginModel.getPluginNames(autoSwitchedDescriptors))
-        )
-        showAutoSwitchNotification(autoSwitchedDescriptors, pluginEnabler, content, enable)
-      }
+        if (autoSwitchedDescriptors.size > descriptors.size) {
+          val content = IdeBundle.message(
+            if (enable) "plugins.auto.enabled.notification.content" else "plugins.auto.disabled.notification.content",
+            MyPluginModel.joinPluginNamesOrIds(MyPluginModel.getPluginNames(descriptors)),
+            MyPluginModel.joinPluginNamesOrIds(MyPluginModel.getPluginNames(autoSwitchedDescriptors))
+          )
+          showAutoSwitchNotification(autoSwitchedDescriptors, pluginEnabler, content, enable)
+        }
 
-      notifyIfRestartRequired(!appliedWithoutRestart)
+        notifyIfRestartRequired(!appliedWithoutRestart)
+      }
     }
 
     private fun showAutoSwitchNotification(
