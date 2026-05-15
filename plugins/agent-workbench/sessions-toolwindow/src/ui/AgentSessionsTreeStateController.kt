@@ -95,8 +95,12 @@ internal class AgentSessionsTreeStateController(
 
     scope.launch {
       selectedChatTabFlow.collect { selection ->
+        val previousSelection = selectedChatTab
         selectedChatTab = selection
-        markSelectedTabThreadAsRead(selection)
+        if (previousSelection != selection) {
+          markChatTabThreadAsRead(previousSelection)
+        }
+        markChatTabThreadAsRead(selection)
         applyChatSelection(selection)
       }
     }
@@ -148,7 +152,7 @@ internal class AgentSessionsTreeStateController(
   @TestOnly
   internal fun hasPendingModelUpdateForTest(): Boolean = pendingRebuildReason != null
 
-  private fun markSelectedTabThreadAsRead(selection: AgentChatTabSelection?) {
+  private fun markChatTabThreadAsRead(selection: AgentChatTabSelection?) {
     if (selection == null) return
     val provider = AgentSessionProvider.fromOrNull(
       parseAgentThreadIdentity(selection.threadIdentity)?.providerId ?: return

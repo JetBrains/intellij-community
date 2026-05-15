@@ -44,6 +44,11 @@ The Agent Threads tree follows IntelliJ tree conventions while adding provider-s
 - Selection and activation must match platform tree behavior: single-click selects, Enter/double-click opens openable rows, and double-click on openable parent rows prefers open/focus over expansion.
   [@test] ../sessions-toolwindow/testSrc/AgentSessionsSwingTreeInteractionTest.kt
 
+- Chat tab selection controls when `Done` is acknowledged. Selecting an already `Done` thread marks it read immediately.
+  If a selected thread transitions to `Done`, the tree keeps that state visible until selection leaves that chat tab,
+  including switching to another editor or closing the selected tab.
+  [@test] ../sessions-toolwindow/testSrc/AgentSessionsTreeStateControllerTest.kt
+
 - Context menus must preserve multi-selection when invoked from an already selected row and retarget selection when invoked from an unselected row.
   [@test] ../sessions-toolwindow/testSrc/AgentSessionsSwingTreeInteractionTest.kt
 
