@@ -93,8 +93,9 @@ private class AgentSessionsTreeNodeDescriptor(
     return when (element) {
       SessionTreeRootElement -> 0
       is SessionTreeId -> {
-        val node = modelProvider().entriesById[element]?.node ?: return -1
-        sessionTreeNodePresentation(node).hashCode()
+        val model = modelProvider()
+        val node = model.entriesById[element]?.node ?: return -1
+        sessionTreeNodePresentation(node, model.duplicateProjectNames).hashCode()
       }
       else -> 0
     }

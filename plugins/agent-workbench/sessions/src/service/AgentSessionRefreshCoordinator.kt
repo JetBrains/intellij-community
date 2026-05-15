@@ -468,10 +468,10 @@ private fun applyThreadActivityHintsForPath(
       return@map thread
     }
     val hintedActivity = activityHintsByThreadId[thread.id] ?: return@map thread
-    activityByPathAndThreadIdentity[path to buildAgentSessionIdentity(provider, thread.id)] = hintedActivity
     if (hintedActivity == thread.activity) {
       return@map thread
     }
+    activityByPathAndThreadIdentity[path to buildAgentSessionIdentity(provider, thread.id)] = hintedActivity
     changed = true
     thread.copy(activity = hintedActivity)
   }

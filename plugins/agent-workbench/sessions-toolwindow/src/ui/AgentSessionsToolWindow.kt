@@ -272,7 +272,7 @@ internal class AgentSessionsToolWindowPanel(
 
   private fun invalidateTreeModel(diff: SessionTreeModelDiff): CompletableFuture<*> {
     if (diff.rootChanged) {
-      return structureTreeModel.invalidateAsync()
+      return structureTreeModel.invalidateAsync().handle { _, _ -> null }
     }
 
     var future: CompletableFuture<*> = CompletableFuture.completedFuture(null)
@@ -286,10 +286,15 @@ internal class AgentSessionsToolWindowPanel(
         .handle { _, _ -> null }
         .thenCompose { structureTreeModel.invalidateAsync(id, false) }
     }
-    return future
+    return future.handle { _, _ -> null }
   }
 
-  private fun selectNodes(ids: List<SessionTreeId>, shouldApply: () -> Boolean, onApplied: (List<SessionTreeId>) -> Unit) {
+  private fun selectNodes(
+    ids: List<SessionTreeId>,
+    shouldApply: () -> Boolean,
+    scrollToVisible: Boolean,
+    onApplied: (List<SessionTreeId>) -> Unit,
+  ) {
     if (!shouldApply()) return
     val distinctIds = ids.distinct()
     if (distinctIds.isEmpty()) {
@@ -309,7 +314,9 @@ internal class AgentSessionsToolWindowPanel(
         return
       }
       tree.selectionPaths = selectionPaths
-      TreeUtil.scrollToVisible(tree, selectionPaths.first(), false)
+      if (scrollToVisible) {
+        TreeUtil.scrollToVisible(tree, selectionPaths.first(), false)
+      }
       onApplied(selectionPaths.mapNotNull(::idFromPath).distinct())
     }
 

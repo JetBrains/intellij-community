@@ -19,6 +19,7 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptProjectPathCandidate
 import com.intellij.agent.workbench.prompt.core.getAgentPromptProjectPathContext
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
+import com.intellij.agent.workbench.sessions.model.sortAgentSessionThreadsForDisplay
 import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
@@ -257,8 +258,8 @@ private fun buildSnapshot(pathState: AgentSessionPathState?, provider: AgentSess
     .asSequence()
     .filter { thread -> thread.provider == provider }
     .filter { thread -> !thread.archived }
-    .sortedByDescending { thread -> thread.updatedAt }
     .toList()
+    .let(::sortAgentSessionThreadsForDisplay)
   val hasProviderWarning = pathState.providerWarnings.any { warning -> warning.provider == provider }
   val hasError = pathState.errorMessage != null ||
                  (hasProviderWarning && providerThreads.isEmpty() && pathState.hasLoaded && !pathState.isLoading)

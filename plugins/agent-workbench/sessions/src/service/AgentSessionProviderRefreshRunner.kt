@@ -22,6 +22,7 @@ import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentSessionProviderWarning
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.model.AgentWorktree
+import com.intellij.agent.workbench.sessions.model.mergeAgentSessionThreadsForDisplay
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
 import com.intellij.openapi.diagnostic.debug
@@ -650,8 +651,7 @@ private fun mergeThreadsForProvider(
   val mergedThreads = ArrayList<AgentSessionThread>(existingThreads.size + newProviderThreads.size)
   existingThreads.filterTo(mergedThreads) { it.provider != provider }
   mergedThreads.addAll(newProviderThreads)
-  mergedThreads.sortByDescending { it.updatedAt }
-  return mergedThreads
+  return mergeAgentSessionThreadsForDisplay(existingThreads, mergedThreads)
 }
 
 private fun mergeThreadUpdatesForProvider(
@@ -680,8 +680,7 @@ private fun mergeThreadUpdatesForProvider(
     mergedThreads.add(if (update == null) thread else mergeThreadUpdate(existing = thread, update = update))
   }
   mergedThreads.addAll(updatesById.values)
-  mergedThreads.sortByDescending { it.updatedAt }
-  return mergedThreads
+  return mergeAgentSessionThreadsForDisplay(existingThreads, mergedThreads)
 }
 
 private fun mergeThreadUpdate(existing: AgentSessionThread, update: AgentSessionThread): AgentSessionThread {

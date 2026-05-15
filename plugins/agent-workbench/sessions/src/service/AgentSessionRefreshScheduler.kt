@@ -263,7 +263,7 @@ internal class AgentSessionRefreshScheduler(
       val job = serviceScope.launch(Dispatchers.IO) {
         delay(SOURCE_UPDATE_DEBOUNCE_MS.milliseconds)
         scheduleVfsRefreshFromSourceUpdate(provider, mergedUpdate)
-        enqueueSourceRefresh(provider = provider, updateEvent = mergedUpdate)
+        enqueueSourceRefresh(provider = provider, updateEvent = mergedUpdate, applyActivityHints = false)
       }
       sourceRefreshJobs[provider] = PendingSourceRefreshJob(job = job, updateEvent = mergedUpdate)
       job.invokeOnCompletion {
@@ -289,9 +289,12 @@ internal class AgentSessionRefreshScheduler(
   private fun enqueueSourceRefresh(
     provider: AgentSessionProvider,
     updateEvent: AgentSessionSourceUpdateEvent,
+    applyActivityHints: Boolean = true,
   ) {
     val normalizedUpdateEvent = normalizeUpdateEvent(updateEvent)
-    applySourceUpdateActivityHints(provider, normalizedUpdateEvent)
+    if (applyActivityHints) {
+      applySourceUpdateActivityHints(provider, normalizedUpdateEvent)
+    }
 
     var shouldStartProcessor = false
     var queueSize = 0

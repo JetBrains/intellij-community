@@ -4,6 +4,7 @@ package com.intellij.agent.workbench.sessions.service
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.model.AgentSessionProviderWarning
+import com.intellij.agent.workbench.sessions.model.sortAgentSessionThreadsForDisplay
 
 internal data class AgentSessionLoadResult(
   @JvmField val threads: List<AgentSessionThread>,
@@ -27,7 +28,7 @@ internal fun mergeAgentSessionSourceLoadResults(
     sourceResults.forEach { sourceResult ->
       addAll(sourceResult.result.getOrElse { emptyList() })
     }
-  }.sortedByDescending { it.updatedAt }
+  }.let(::sortAgentSessionThreadsForDisplay)
 
   val providerWarnings = sourceResults.mapNotNull { sourceResult ->
     sourceResult.result.exceptionOrNull()?.let { throwable ->

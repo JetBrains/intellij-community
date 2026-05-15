@@ -82,7 +82,7 @@ private fun revealHiddenMatches(
   val hiddenIds = collectHiddenMatchingIds(pattern, modelProvider, stateProvider)
   if (hiddenIds.isEmpty()) return
 
-  hiddenIds.forEach { id -> ensureVisible(ensureProjectVisible, ensureThreadVisible, id) }
+  hiddenIds.firstOrNull()?.let { id -> ensureVisible(ensureProjectVisible, ensureThreadVisible, id) }
 
   refreshSelectionWhenAvailable(speedSearch, pattern, attempt = 0)
 }

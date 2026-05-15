@@ -51,7 +51,7 @@ internal class AgentSessionsTreeStateController(
   private val onBeforeModelSwap: () -> Unit,
   private val invalidateTreeModel: (SessionTreeModelDiff) -> CompletableFuture<*>,
   private val expandNode: (SessionTreeId) -> Unit,
-  private val selectNodes: (List<SessionTreeId>, () -> Boolean, (List<SessionTreeId>) -> Unit) -> Unit,
+  private val selectNodes: (List<SessionTreeId>, () -> Boolean, Boolean, (List<SessionTreeId>) -> Unit) -> Unit,
   private val nowProvider: () -> Long = System::currentTimeMillis,
 ) {
   @Suppress("RAW_SCOPE_CREATION")
@@ -95,7 +95,7 @@ internal class AgentSessionsTreeStateController(
       chatSelectionService.selectedChatTab.collect { selection ->
         selectedChatTab = selection
         markSelectedTabThreadAsRead(selection)
-        rebuildTree(SessionTreeRebuildReason.CHAT_TAB_SELECTION_CHANGED)
+        applyChatSelection(selection)
       }
     }
 
@@ -190,10 +190,33 @@ internal class AgentSessionsTreeStateController(
             previouslyExpandedProjects = expandedProjectsBeforeModelSwap,
             selectedTreeIds = selectedTreeIds,
           )
-          applySelection(selectedTreeIds, updateSequence)
+          applySelection(
+            selectedTreeIds = selectedTreeIds,
+            updateSequence = updateSequence,
+            scrollToVisible = reason != SessionTreeRebuildReason.SESSION_STATE_CHANGED,
+          )
         }
       }
     }
+  }
+
+  private fun applyChatSelection(selection: AgentChatTabSelection?) {
+    val updateSequence = treeUpdateSequence
+    val selectedTreeId = if (threadViewState.mode == AgentSessionThreadViewMode.ACTIVE) {
+      resolveSelectedSessionTreeId(displayedStateSnapshot().projects, selection)
+    }
+    else {
+      null
+    }
+    val selectedTreeIds = sessionTreeSelectionTargetsAfterModelSwap(
+      model = getSessionTreeModel(),
+      reason = SessionTreeRebuildReason.CHAT_TAB_SELECTION_CHANGED,
+      previouslySelectedTreeIds = selectedTreeIds(),
+      selectedChatTreeId = selectedTreeId,
+      selectionInitialized = treeSelectionInitialized,
+      lastAppliedSelectedTreeIds = lastAppliedSelectedTreeIds,
+    )
+    applySelection(selectedTreeIds = selectedTreeIds, updateSequence = updateSequence, scrollToVisible = true)
   }
 
   private fun updateEmptyText() {
@@ -244,8 +267,8 @@ internal class AgentSessionsTreeStateController(
     }.filterNotNull().toSet()
   }
 
-  private fun applySelection(selectedTreeIds: List<SessionTreeId>, updateSequence: Long) {
-    selectNodes(selectedTreeIds, { treeUpdateSequence == updateSequence }) { appliedSelectedTreeIds ->
+  private fun applySelection(selectedTreeIds: List<SessionTreeId>, updateSequence: Long, scrollToVisible: Boolean) {
+    selectNodes(selectedTreeIds, { treeUpdateSequence == updateSequence }, scrollToVisible) { appliedSelectedTreeIds ->
       if (treeUpdateSequence == updateSequence) {
         treeSelectionInitialized = true
         lastAppliedSelectedTreeIds = appliedSelectedTreeIds

@@ -13,6 +13,7 @@ import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.model.AgentWorktree
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.model.normalizeArchiveThreadTarget
+import com.intellij.agent.workbench.sessions.model.sortAgentSessionThreadsForDisplay
 import com.intellij.agent.workbench.sessions.state.AgentSessionWarmPathSnapshot
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.agent.workbench.sessions.state.SessionWarmState
@@ -36,6 +37,12 @@ internal class AgentSessionContentRepository(
       return warmState.removePathSnapshot(normalizedPath)
     }
     if (content.errorMessage != null) {
+      return false
+    }
+    val currentSnapshot = warmState.getPathSnapshot(normalizedPath)
+    if (currentSnapshot != null &&
+        currentSnapshot.threads == content.threads &&
+        currentSnapshot.hasUnknownThreadCount == content.hasUnknownThreadCount) {
       return false
     }
     return warmState.setPathSnapshot(
@@ -318,7 +325,7 @@ private fun restoreArchivedThread(
   if (threads.any { existing -> existing.provider == thread.provider && existing.id == thread.id }) {
     return threads
   }
-  return (threads + thread).sortedByDescending { it.updatedAt }
+  return sortAgentSessionThreadsForDisplay(threads + thread)
 }
 
 private fun removeArchivedTarget(

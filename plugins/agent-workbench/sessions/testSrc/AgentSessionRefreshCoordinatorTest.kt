@@ -2378,6 +2378,117 @@ class AgentSessionRefreshCoordinatorTest {
   }
 
   @Test
+  fun threadScopedProviderUpdatePreservesRelativeOrderForStillWorkingThreads() = runBlocking(Dispatchers.Default) {
+    val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
+
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.CODEX,
+      supportsUpdates = true,
+      updateEvents = updates,
+      refreshThreadsProvider = {
+        AgentSessionSourceRefreshResult(
+          partialThreadsByPath = mapOf(
+            PROJECT_PATH to listOf(
+              thread(
+                id = "codex-2",
+                updatedAt = 900L,
+                provider = AgentSessionProvider.CODEX,
+                activity = AgentThreadActivity.PROCESSING,
+              )
+            )
+          )
+        )
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { true },
+    ) { coordinator, stateStore ->
+      stateStore.replaceProjects(
+        projects = listOf(
+          AgentProjectSessions(
+            path = PROJECT_PATH,
+            name = "Project A",
+            isOpen = true,
+            hasLoaded = true,
+            threads = listOf(
+              thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.CODEX, activity = AgentThreadActivity.PROCESSING),
+              thread(id = "codex-2", updatedAt = 200L, provider = AgentSessionProvider.CODEX, activity = AgentThreadActivity.PROCESSING),
+            ),
+          )
+        ),
+        visibleThreadCounts = emptyMap(),
+      )
+
+      coordinator.observeSessionSourceUpdates()
+      updates.tryEmit(threadsChangedEvent(threadIds = setOf("codex-2")))
+
+      waitForCondition {
+        stateStore.snapshot().projects.first().threads.first { it.id == "codex-2" }.updatedAt == 900L
+      }
+
+      assertThat(stateStore.snapshot().projects.first().threads.map { it.id }).containsExactly("codex-1", "codex-2")
+    }
+  }
+
+  @Test
+  fun threadScopedProviderUpdateAllowsThreadLeavingWorkingStateToMoveByUpdatedTime() = runBlocking(Dispatchers.Default) {
+    val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
+
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.CODEX,
+      supportsUpdates = true,
+      updateEvents = updates,
+      refreshThreadsProvider = {
+        AgentSessionSourceRefreshResult(
+          partialThreadsByPath = mapOf(
+            PROJECT_PATH to listOf(
+              thread(
+                id = "codex-2",
+                updatedAt = 900L,
+                provider = AgentSessionProvider.CODEX,
+                activity = AgentThreadActivity.READY,
+              )
+            )
+          )
+        )
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { true },
+    ) { coordinator, stateStore ->
+      stateStore.replaceProjects(
+        projects = listOf(
+          AgentProjectSessions(
+            path = PROJECT_PATH,
+            name = "Project A",
+            isOpen = true,
+            hasLoaded = true,
+            threads = listOf(
+              thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.CODEX, activity = AgentThreadActivity.PROCESSING),
+              thread(id = "codex-2", updatedAt = 200L, provider = AgentSessionProvider.CODEX, activity = AgentThreadActivity.PROCESSING),
+            ),
+          )
+        ),
+        visibleThreadCounts = emptyMap(),
+      )
+
+      coordinator.observeSessionSourceUpdates()
+      updates.tryEmit(threadsChangedEvent(threadIds = setOf("codex-2")))
+
+      waitForCondition {
+        val threads = stateStore.snapshot().projects.first().threads
+        threads.first().id == "codex-2" && threads.first().updatedAt == 900L
+      }
+
+      assertThat(stateStore.snapshot().projects.first().threads.map { it.id }).containsExactly("codex-2", "codex-1")
+    }
+  }
+
+  @Test
   fun threadScopedProviderUpdateMergesReturnedSubAgentsWithExistingParentSubAgents() = runBlocking(Dispatchers.Default) {
     val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
     val refreshRequests = mutableListOf<Pair<List<String>, Set<String>>>()

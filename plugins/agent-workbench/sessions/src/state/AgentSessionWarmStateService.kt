@@ -6,6 +6,7 @@ import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.common.session.AgentSubAgent
+import com.intellij.agent.workbench.sessions.model.sortAgentSessionThreadsForDisplay
 import com.intellij.agent.workbench.sessions.tree.threadDisplayTitle
 import com.intellij.agent.workbench.sessions.util.isAgentSessionNewSessionId
 import com.intellij.openapi.components.SerializablePersistentStateComponent
@@ -161,8 +162,8 @@ private fun normalizeWarmPathSnapshot(snapshot: AgentSessionWarmPathSnapshot): A
           title = threadDisplayTitle(threadId = thread.id, title = thread.title),
         )
       }
-      .sortedByDescending { it.updatedAt }
-      .toList(),
+      .toList()
+      .let(::sortAgentSessionThreadsForDisplay),
   )
 }
 

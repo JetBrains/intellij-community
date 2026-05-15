@@ -115,26 +115,53 @@ class AgentSessionsStateStore {
 
   fun updateProject(path: String, transform: (AgentProjectSessions) -> AgentProjectSessions) {
     update { state ->
+      var changed = false
       val next = state.projects.map { project ->
-        if (project.path == path) transform(project) else project
+        if (project.path != path) {
+          project
+        }
+        else {
+          val updatedProject = transform(project)
+          if (updatedProject == project) {
+            project
+          }
+          else {
+            changed = true
+            updatedProject
+          }
+        }
       }
-      state.copy(projects = next, lastUpdatedAt = System.currentTimeMillis())
+      if (changed) state.copy(projects = next, lastUpdatedAt = System.currentTimeMillis()) else state
     }
   }
 
   fun updateWorktree(projectPath: String, worktreePath: String, transform: (AgentWorktree) -> AgentWorktree) {
     update { state ->
+      var changed = false
       val next = state.projects.map { project ->
         if (project.path == projectPath) {
-          project.copy(worktrees = project.worktrees.map { wt ->
-            if (wt.path == worktreePath) transform(wt) else wt
-          })
+          val nextWorktrees = project.worktrees.map { wt ->
+            if (wt.path != worktreePath) {
+              wt
+            }
+            else {
+              val updatedWorktree = transform(wt)
+              if (updatedWorktree == wt) {
+                wt
+              }
+              else {
+                changed = true
+                updatedWorktree
+              }
+            }
+          }
+          if (changed) project.copy(worktrees = nextWorktrees) else project
         }
         else {
           project
         }
       }
-      state.copy(projects = next, lastUpdatedAt = System.currentTimeMillis())
+      if (changed) state.copy(projects = next, lastUpdatedAt = System.currentTimeMillis()) else state
     }
   }
 

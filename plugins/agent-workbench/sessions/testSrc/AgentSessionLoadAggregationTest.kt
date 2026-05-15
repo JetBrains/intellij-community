@@ -82,6 +82,47 @@ class AgentSessionLoadAggregationTest {
   }
 
   @Test
+  fun mergesEqualUpdatedTimesDeterministically() {
+    val codexThread = AgentSessionThread(
+      id = "codex-1",
+      title = "Codex Session",
+      updatedAt = 100,
+      archived = false,
+      provider = AgentSessionProvider.CODEX,
+    )
+    val claudeThread = AgentSessionThread(
+      id = "claude-1",
+      title = "Claude Session",
+      updatedAt = 100,
+      archived = false,
+      provider = AgentSessionProvider.CLAUDE,
+    )
+
+    fun merge(sourceResults: List<AgentSessionSourceLoadResult>): List<String> {
+      return mergeAgentSessionSourceLoadResults(
+        sourceResults = sourceResults,
+        resolveErrorMessage = { _, _ -> "error" },
+      ).threads.map { it.id }
+    }
+
+    val codexThenClaude = merge(
+      listOf(
+        AgentSessionSourceLoadResult(AgentSessionProvider.CODEX, Result.success(listOf(codexThread))),
+        AgentSessionSourceLoadResult(AgentSessionProvider.CLAUDE, Result.success(listOf(claudeThread))),
+      )
+    )
+    val claudeThenCodex = merge(
+      listOf(
+        AgentSessionSourceLoadResult(AgentSessionProvider.CLAUDE, Result.success(listOf(claudeThread))),
+        AgentSessionSourceLoadResult(AgentSessionProvider.CODEX, Result.success(listOf(codexThread))),
+      )
+    )
+
+    assertThat(codexThenClaude).containsExactly("claude-1", "codex-1")
+    assertThat(claudeThenCodex).containsExactly("claude-1", "codex-1")
+  }
+
+  @Test
   fun marksUnknownThreadCountWhenSuccessfulSourceCannotReportExactTotal() {
     val codexThread = AgentSessionThread(
       id = "codex-1",
