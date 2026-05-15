@@ -246,11 +246,16 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
         final Rectangle parentBounds = getParent().getBounds();
         parentBounds.x += STEP_X_PADDING;
         parentBounds.width -= STEP_X_PADDING * 2;
-        ScreenUtil.moveToFit(targetBounds, ScreenUtil.getScreenRectangle(
+        var screenRectangle = ScreenUtil.getScreenRectangle(
           parentBounds.x + parentBounds.width / 2,
-          parentBounds.y + parentBounds.height / 2), null);
+          parentBounds.y + parentBounds.height / 2
+        );
+        ScreenUtil.moveToFit(targetBounds, screenRectangle, null);
         if (parentBounds.intersects(targetBounds)) {
           targetBounds.x = getParent().getBounds().x - targetBounds.width - STEP_X_PADDING;
+          if (targetBounds.x < screenRectangle.x) { // prevent the child popup from appearing on another monitor
+            targetBounds.x = screenRectangle.x;
+          }
         }
       } else {
         ScreenUtil.moveToFit(targetBounds, ScreenUtil.getScreenRectangle(aScreenX + 1, aScreenY + 1), null);
