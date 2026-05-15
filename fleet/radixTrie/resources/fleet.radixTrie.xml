@@ -1,0 +1,8 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="fleet.util.serialization"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+  </dependencies>
+  <!-- endregion -->
+</idea-plugin>

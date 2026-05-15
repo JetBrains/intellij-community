@@ -2,8 +2,8 @@
 package com.jetbrains.rhizomedb.impl
 
 import com.jetbrains.rhizomedb.ReduceDecision
-import fleet.util.radixTrie.RadixTrie
-import fleet.util.radixTrie.RadixTrieReduceDecision
+import fleet.radixTrie.RadixTrie
+import fleet.radixTrie.RadixTrieReduceDecision
 
 private fun RadixTrieReduceDecision.asReduceDecision(): ReduceDecision =
   when (this) {

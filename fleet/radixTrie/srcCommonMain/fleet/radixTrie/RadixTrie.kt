@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package fleet.util.radixTrie
+package fleet.radixTrie
 
 import fleet.util.serialization.DataSerializer
 import kotlinx.serialization.KSerializer
@@ -17,6 +17,41 @@ private const val COLLISION: What = 2
 
 typealias BitMap = Int
 
+/**
+ * [RadixTrie] provides a persistent (immutable-by-default) map keyed by `Int`s, designed as a more
+ * memory-efficient and cache-friendly persistent hash maps when the keys are already primitive integers.
+ * It is the primary integer-keyed associative structure used internally by Fleet/RhizomeDB for storing entity attributes and indices, where:
+ *
+ * - keys are dense, monotonically growing entity ids (`Int`),
+ * - lookups and updates dominate over iteration,
+ * - structural sharing between successive versions of the map is required (every "modification" must produce a
+ *   new value without copying the whole structure).
+ *
+ * ## Why a 5-bit radix trie
+ *
+ * - **No key boxing.** Keys are stored as raw `int`s in [ints], avoiding the [Integer] boxing overhead a regular
+ *   `Map<Int, V>` would incur on every put/get.
+ * - **Shallow, wide tree.** Splitting a 32-bit key into 5-bit slices yields at most 7 levels (32 / 5, rounded up),
+ *   which keeps point lookups effectively O(1) in practice with a very small constant.
+ * - **Compact nodes.** [dataMap] and [collisionsMap] are bitmaps over the 32 possible slice values; only slots
+ *   that are actually populated take space in [buffer]/[ints]. This is the same trick used by HAMT/CHAMP and
+ *   keeps memory overhead low for sparse keys, while still giving O(1) indexing via
+ *   `Integer.bitCount(map and (mask - 1))`.
+ * - **Persistent with controlled mutation.** Each node carries an [editor] token. When the same editor is passed
+ *   through a chain of updates, nodes are mutated in place (a "transient" mode, see [mutate]); when the editor
+ *   differs, nodes are copied on write. This makes batch construction (e.g. deserialization or bulk inserts)
+ *   nearly as fast as building a mutable map, while still producing fully persistent values that can be safely
+ *   shared between threads/snapshots.
+ * - **Stable iteration cost.** [reduce] walks the trie in a single pass without allocating intermediate
+ *   collections, which is important for hot paths like index scans.
+ *
+ * ## When to use
+ *
+ * Prefer [RadixTrie] over a plain `Map<Int, V>` or a persistent hash map when you need any of:
+ * - frequent persistent updates with structural sharing,
+ * - primitive `Int` keys without boxing,
+ * - predictable, allocation-light reads and writes on large maps.
+ */
 //TODO: specialize for Longs!
 @Serializable(with=RadixTrieSerializer::class)
 class RadixTrieNode<V : Any>(var ints: IntArray?, // [k1 k2 k3]
@@ -372,33 +407,3 @@ private inline fun BitMap.getBit(bit: Int): Boolean =
 
 private inline fun BitMap.bitsBefore(key: TinyInt): Int =
   (this and (mask(key) - 1)).countOneBits()
-
-private fun radix() {
-  val e = Any()
-  var t = RadixTrie.empty<String>()
-  var v: String? = null
-  repeat(10000000) { i ->
-    v = "hey $i"
-    t = t.update(e, i) { v!! }
-  }
-  repeat(10000000) { i ->
-    require(t[i] == "hey $i")
-  }
-  val kvs = HashMap<Int, Any?>()
-  t.reduce { k, value ->
-    kvs[k] = value
-    RadixTrieReduceDecision.Continue
-  }
-  repeat(10000000) { i ->
-    require(kvs[i] == "hey $i")
-  }
-  repeat(10000000) { i ->
-    t = t.update(e, i) { null }
-  }
-  repeat(10000000) { i ->
-    require(t[i] == null)
-  }
-  t.reduce { k, _ ->
-    error("should be empty: $k")
-  }
-}

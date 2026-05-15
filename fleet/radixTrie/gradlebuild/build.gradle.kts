@@ -1,25 +1,22 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 // IMPORT__MARKER_START
 import fleet.buildtool.conventions.configureAtMostOneJvmTargetOrThrow
 import fleet.buildtool.conventions.withJavaSourceSet
 // IMPORT__MARKER_END
+
 plugins {
   alias(libs.plugins.kotlin.multiplatform)
   id("fleet.project-module-conventions")
   id("fleet.toolchain-conventions")
-  id("fleet.module-publishing-conventions")
-  id("fleet.open-source-module-conventions")
   alias(libs.plugins.dokka)
   // GRADLE_PLUGINS__MARKER_START
   id("fleet-module")
-  alias(jps.plugins.ksp)
-  id("fleet-ksp-plugin")
+  alias(jps.plugins.kotlin.serialization)
   // GRADLE_PLUGINS__MARKER_END
 }
 
 fleetModule {
   module {
-    name = "fleet.rhizomedb"
+    name = "fleet.radixTrie"
     importedFromJps {}
   }
 }
@@ -28,12 +25,11 @@ fleetModule {
 kotlin {
   // KOTLIN__MARKER_START
   compilerOptions.freeCompilerArgs = listOf(
-    "-opt-in=kotlin.ExperimentalStdlibApi",
-    "-Xallow-kotlin-package",
+    "-Xjvm-default=all",
     "-Xlambdas=class",
     "-Xconsistent-data-class-copy-visibility",
-    "-opt-in=kotlin.concurrent.atomics.ExperimentalAtomicApi",
     "-Xcontext-parameters",
+    "-opt-in=kotlin.concurrent.atomics.ExperimentalAtomicApi",
     "-Xwasm-kclass-fqn",
     "-XXLanguage:+AllowEagerSupertypeAccessibilityChecks",
     "-progressive",
@@ -42,8 +38,6 @@ kotlin {
   wasmJs {
     browser {}
   }
-  iosArm64 {}
-  iosSimulatorArm64 {}
   sourceSets.jvmMain.configure { resources.srcDir(layout.projectDirectory.dir("../resources")) }
   sourceSets.commonMain.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcCommonMain")) }
   sourceSets.commonMain.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesCommonMain")) }
@@ -59,28 +53,17 @@ kotlin {
   sourceSets.wasmJsMain.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesWasmJsMain")) }
   sourceSets.wasmJsTest.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcWasmJsTest")) }
   sourceSets.wasmJsTest.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesWasmJsTest")) }
-  sourceSets.iosMain.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcIosMain")) }
-  sourceSets.iosMain.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesIosMain")) }
-  sourceSets.iosTest.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcIosTest")) }
-  sourceSets.iosTest.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesIosTest")) }
   sourceSets.commonMain.dependencies {
     implementation(jps.org.jetbrains.kotlin.kotlin.stdlib1993400674.get().let { "${it.group}:${it.name}:${it.version}" }) {
       exclude(group = "org.jetbrains", module = "annotations")
     }
-    implementation(jps.org.jetbrains.kotlinx.kotlinx.collections.immutable.jvm717536558.get().let { "${it.group}:kotlinx-collections-immutable:${it.version}" }) {
-      isTransitive = false
-    }
-    implementation(jps.org.jetbrains.annotations1504825916.get())
     implementation(jps.org.jetbrains.kotlinx.kotlinx.serialization.core.jvm1739247612.get().let { "${it.group}:kotlinx-serialization-core:${it.version}" }) {
       isTransitive = false
     }
-    implementation(jps.org.jetbrains.kotlinx.kotlinx.serialization.json.jvm231489733.get().let { "${it.group}:kotlinx-serialization-json:${it.version}" }) {
-      isTransitive = false
-    }
-    implementation(project(":fleet.util.core"))
-    implementation(project(":fleet.multiplatform.shims"))
-    implementation(project(":fleet.radixTrie"))
-    implementation(project(":fleet.fastutil"))
+    implementation(project(":fleet.util.serialization"))
+  }
+  sourceSets.commonTest.dependencies {
+    implementation(project(":fleet.test.runtime"))
   }
   // KOTLIN__MARKER_END
 }
