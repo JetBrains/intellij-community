@@ -6,9 +6,7 @@ import com.intellij.platform.rpc.topics.ProjectRemoteTopic
 import com.intellij.platform.rpc.topics.ProjectRemoteTopicListener
 import com.intellij.platform.vcs.impl.shared.CODE_SMELL_REMOTE_TOPIC
 import com.intellij.platform.vcs.impl.shared.ShowCodeSmellRequest
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 internal class CodeSmellRemoteTopicListener : ProjectRemoteTopicListener<ShowCodeSmellRequest> {
   override val topic: ProjectRemoteTopic<ShowCodeSmellRequest> = CODE_SMELL_REMOTE_TOPIC
 
