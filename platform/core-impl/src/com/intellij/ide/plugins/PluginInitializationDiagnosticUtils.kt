@@ -73,10 +73,10 @@ object PluginInitializationDiagnosticUtils {
             appendLine("${disabledPlugin.shortLogDescription} is marked disabled")
           } else {
             when (ref) {
-              is DependencyRef.ContentModule -> append("module ")
-              is DependencyRef.Plugin -> append("plugin ")
+              is DependencyRef.ContentModule -> append("module ${ref.moduleId.name} (namespace=${ref.moduleId.namespace})")
+              is DependencyRef.Plugin -> append("plugin ${ref.pluginId.idString}")
             }
-            appendLine("${ref.getIdString()} is not resolved")
+            appendLine(" is not resolved")
           }
 
           // a bit of duplication, but I guess it's alright for this code
