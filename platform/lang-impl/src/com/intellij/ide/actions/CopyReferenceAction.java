@@ -2,6 +2,8 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.copyReference.CopyReferenceTarget;
+import com.intellij.ide.actions.copyReference.CopyReferenceTargetsDataRule;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -9,6 +11,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -22,12 +25,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -40,6 +45,12 @@ import static com.intellij.ide.actions.CopyReferenceUtil.setStatusBarText;
  */
 public class CopyReferenceAction extends DumbAwareAction {
   public static final DataFlavor ourFlavor = FileCopyPasteUtil.createJvmDataFlavor(CopyReferenceFQNTransferable.class);
+
+  /**
+   * @see CopyReferenceTargetsDataRule
+   */
+  @ApiStatus.Internal
+  public static final DataKey<Collection<CopyReferenceTarget>> COPY_REFERENCE_TARGETS = DataKey.create("copy.reference.targets");
 
   public CopyReferenceAction() {
     super();

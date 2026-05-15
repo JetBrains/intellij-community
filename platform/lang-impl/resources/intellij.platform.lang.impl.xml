@@ -379,6 +379,8 @@
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.lookup.usageDetails" interface="com.intellij.codeInsight.lookup.impl.LookupUsageDescriptor" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.createDirectoryCompletionContributor" interface="com.intellij.ide.actions.CreateDirectoryCompletionContributor" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.copyReference.targetProvider" dynamic="true" interface="com.intellij.ide.actions.copyReference.CopyReferenceTargetProvider"/>
+    <extensionPoint qualifiedName="com.intellij.copyReference.symbolTargetProvider" dynamic="true" interface="com.intellij.ide.actions.copyReference.SymbolCopyReferenceTargetProvider"/>
     <extensionPoint dynamic="true" qualifiedName="com.intellij.codeCompletionConfigurable" beanClass="com.intellij.application.options.CodeCompletionConfigurableEP">
       <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable" />
     </extensionPoint>
@@ -1011,6 +1013,7 @@
     <lang.syntaxHighlighterFactory language="TEXT" implementationClass="com.intellij.openapi.fileTypes.PlainTextSyntaxHighlighterFactory"/>
     <lang.braceMatcher language="TEXT" implementationClass="com.intellij.ide.highlighter.custom.impl.CustomFileTypeBraceMatcher"/>
     <lang.quoteHandler language="TEXT" implementationClass="com.intellij.ide.highlighter.custom.impl.CustomFileTypeQuoteHandler"/>
+    <uiDataRule implementation="com.intellij.ide.actions.copyReference.CopyReferenceTargetsDataRule"/>
     <uiDataRule implementation="com.intellij.ide.impl.dataRules.BasicLangUiDataRule" order="last"/>
     <uiDataRule implementation="com.intellij.model.psi.impl.TargetSymbolsDataRule"/>
     <uiDataRule implementation="com.intellij.find.actions.SearchTargetsDataRule"/>

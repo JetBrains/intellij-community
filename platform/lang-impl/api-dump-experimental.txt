@@ -671,6 +671,20 @@ f:com.intellij.find.findUsages.FindUsagesManager
 - a:isVisible(com.intellij.openapi.actionSystem.DataContext,java.lang.String):com.intellij.util.ThreeState
 *:com.intellij.ide.actions.NewFileActionWithCategory
 - a:getCategory():java.lang.String
+*:com.intellij.ide.actions.copyReference.CopyReferenceSymbol
+- com.intellij.model.Symbol
+- a:createPointer():com.intellij.model.Pointer
+- a:getCopyReferenceTarget(com.intellij.openapi.project.Project):com.intellij.ide.actions.copyReference.CopyReferenceTarget
+*:com.intellij.ide.actions.copyReference.CopyReferenceTarget
+- a:createPointer():com.intellij.model.Pointer
+- a:equals(java.lang.Object):Z
+- a:getReference():java.lang.String
+- a:hashCode():I
+- a:presentation():com.intellij.platform.backend.presentation.TargetPresentation
+*:com.intellij.ide.actions.copyReference.CopyReferenceTargetProvider
+- a:copyReferenceTargets(com.intellij.psi.PsiFile,I):java.util.List
+*:com.intellij.ide.actions.copyReference.SymbolCopyReferenceTargetProvider
+- a:copyReferenceTargets(com.intellij.openapi.project.Project,com.intellij.model.Symbol):java.util.List
 a:com.intellij.ide.actions.searcheverywhere.AbstractEqualityProvider
 - com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider
 - *f:compareItemsCollection(com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo,java.util.Collection):com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider$SEEqualElementsActionType
