@@ -1,6 +1,7 @@
 package org.intellij.plugins.markdown.folding;
 
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import org.intellij.plugins.markdown.MarkdownTestingUtil;
 
 public class MarkdownFoldingTest extends BasePlatformTestCase {
@@ -98,6 +99,22 @@ public class MarkdownFoldingTest extends BasePlatformTestCase {
 
   public void testLinkDestinations() {
     doTest();
+  }
+
+  public void testLinkDestinationsInsideTableAreNotFolded() {
+    myFixture.configureByText("table.md", """
+      [Regular link](https://jetbrains.com/path)
+
+      | Server | Address                                                   |
+      |--------|-----------------------------------------------------------|
+      | Client | [http://localhost](http://localhost/variable-length-link) |
+      | Server | [http://localhost](http://localhost/variable)             |
+      """);
+
+    String foldingDescription = ((CodeInsightTestFixtureImpl)myFixture).getFoldingDescription(false, false);
+    assertTrue(foldingDescription, foldingDescription.contains("[Regular link](<fold text='...'>https://jetbrains.com/path</fold>)"));
+    assertFalse(foldingDescription, foldingDescription.contains("[http://localhost](<fold text='...'>http://localhost/variable-length-link</fold>)"));
+    assertFalse(foldingDescription, foldingDescription.contains("[http://localhost](<fold text='...'>http://localhost/variable</fold>)"));
   }
 
   public void testTableOfContents() {
