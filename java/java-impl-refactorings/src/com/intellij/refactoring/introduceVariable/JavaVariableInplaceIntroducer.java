@@ -6,10 +6,13 @@ import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -17,10 +20,12 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.LambdaUtil;
@@ -129,8 +134,30 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
       }
     }
     final ResolveSnapshotProvider resolveSnapshotProvider = VariableInplaceRenamer.INSTANCE.forLanguage(myScope.getLanguage());
-    myConflictResolver = resolveSnapshotProvider != null ? resolveSnapshotProvider.createSnapshot(myScope) : null;
+    myConflictResolver = resolveSnapshotProvider != null ? createSnapshotWithProgress(resolveSnapshotProvider) : null;
     super.beforeTemplateStart();
+  }
+
+  private @Nullable ResolveSnapshotProvider.ResolveSnapshot createSnapshotWithProgress(@NotNull ResolveSnapshotProvider provider) {
+    ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+    if (!app.isDispatchThread()) {
+      return provider.createSnapshot(myScope);
+    }
+    if (app.isWriteAccessAllowed()) {
+      Ref<ResolveSnapshotProvider.ResolveSnapshot> ref = new Ref<>();
+      app.runWriteActionWithCancellableProgressInDispatchThread(
+        JavaRefactoringBundle.message("introduce.variable.resolving.conflicts"),
+        myProject,
+        null,
+        _ -> {
+          ref.set(provider.createSnapshot(myScope));
+        });
+      return ref.get();
+    }
+    return ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> ReadAction.computeCancellable(() -> provider.createSnapshot(myScope)),
+      JavaRefactoringBundle.message("introduce.variable.resolving.conflicts"),
+      true, myProject);
   }
 
   @Override
@@ -488,9 +515,9 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
       }
     }
 
-    SmartPsiElementPointer<PsiVariable> pointer = variable == null ? null : smartPointerManager.createSmartPsiElementPointer(variable);
+    SmartPsiElementPointer<PsiVariable> pointer = smartPointerManager.createSmartPsiElementPointer(variable);
     PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myEditor.getDocument());
-    return pointer == null ? null : pointer.getElement();
+    return pointer.getElement();
   }
 
   @Override
