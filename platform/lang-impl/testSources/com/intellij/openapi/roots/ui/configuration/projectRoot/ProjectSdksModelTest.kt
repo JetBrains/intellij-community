@@ -17,6 +17,7 @@ import com.intellij.util.Consumer
 import com.intellij.util.ui.UIUtil
 import org.junit.Assert
 import org.junit.Test
+import java.io.IOException
 import kotlin.io.path.absolute
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.pathString
@@ -140,7 +141,7 @@ class ProjectSdksModelTest : LightPlatformTestCase() {
           assertThat(model.sdks).withFailMessage("SDK should be added to the model").anyMatch { it.name == sdkName }
         }
 
-        error("Download task has to fail")
+        throw IOException("Download task has to fail")
       }
     }
     catch (t: Throwable) {

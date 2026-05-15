@@ -27,6 +27,7 @@ import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApiBlocking
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
+import java.io.IOException
 import java.nio.file.Path
 import java.util.function.Consumer
 import java.util.function.Predicate
@@ -56,7 +57,7 @@ data class JdkInstallRequestInfo(
 }
 
 @Internal
-class JdkDownload : SdkDownload {
+internal class JdkDownload : SdkDownload {
   override fun supportsDownload(sdkTypeId: SdkTypeId): Boolean {
     if (!Registry.`is`("jdk.downloader")) return false
     if (ApplicationManager.getApplication().isUnitTestMode) return false
@@ -157,7 +158,8 @@ class JdkDownload : SdkDownload {
     return JdkDownloadDialog(project, parentComponent, sdkTypeId, eelModelPair.first, eelModelPair.second, okActionText).selectJdkAndPath()
   }
 
-  fun prepareDownloadTask(
+  @Throws(IOException::class)
+  private fun prepareDownloadTask(
     project: Project?,
     jdkItem: JdkItem,
     jdkHome: Path,
@@ -168,11 +170,10 @@ class JdkDownload : SdkDownload {
         JdkInstaller.getInstance().prepareJdkInstallation(jdkItem, jdkHome)
       }
     }
-    catch (e: Throwable) {
-      if (e is ControlFlowException) throw e
-      LOG.warn("Failed to prepare JDK installation to $jdkHome. ${e.message}", e)
+    catch (e: IOException) {
+      LOG.warn("Failed to prepare JDK installation to $jdkHome", e)
       Messages.showErrorDialog(project,
-                               ProjectBundle.message("error.message.text.jdk.install.failed", jdkHome),
+                               ProjectBundle.message("error.message.text.jdk.install.failed", jdkHome, e),
                                ProjectBundle.message("error.message.title.download.jdk")
       )
       return null
@@ -219,6 +220,8 @@ class JdkDownloadTask(
   override fun getPlannedHomeDir() = request.javaHome.toString()
   override fun getPlannedVersion() = request.item.versionString
   override fun getProductName(): String = request.item.fullPresentationWithVendorText
+
+  @Throws(IOException::class)
   override fun doDownload(indicator: ProgressIndicator) {
     JdkInstaller.getInstance().installJdk(request, indicator, project)
   }

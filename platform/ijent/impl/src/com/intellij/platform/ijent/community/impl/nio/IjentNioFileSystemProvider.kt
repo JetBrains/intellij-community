@@ -293,6 +293,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     }
   }
 
+  @Throws(IOException::class)
   override fun createDirectory(dir: Path, vararg attrs: FileAttribute<*>?) {
     try {
       ensureAbsoluteIjentNioPath(dir)

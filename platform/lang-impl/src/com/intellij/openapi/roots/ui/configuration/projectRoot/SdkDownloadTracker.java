@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -40,12 +39,14 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -210,7 +211,7 @@ public final class SdkDownloadTracker {
       }
 
       @Override
-      protected void handleDownloadError(@NotNull SdkType type, @NotNull @Nls String title, @NotNull Throwable exception) {
+      protected void handleDownloadError(@NotNull SdkType type, @NotNull @Nls String title, @NotNull IOException exception) {
         throw new RuntimeException("Failed to download and configure " + type.getPresentableName() + " for "
                          + myEditableSdks.copy() + ". " + exception.getMessage(), exception);
       }
@@ -371,9 +372,13 @@ public final class SdkDownloadTracker {
             //update the pending SDKs
             onSdkDownloadCompletedSuccessfully();
           }
-          catch (Throwable e) {
+          catch (CancellationException e) {
             failed = true;
-            if (!myProgressIndicator.isCanceled() && !(e instanceof ControlFlowException)) {
+            throw e;
+          }
+          catch (IOException e) {
+            failed = true;
+            if (!myProgressIndicator.isCanceled()) {
               handleDownloadError(type, title, e);
             }
           }
@@ -387,11 +392,11 @@ public final class SdkDownloadTracker {
       runTask(title, taskAction);
     }
 
-    protected void handleDownloadError(@NotNull SdkType type, @NotNull @Nls String title, @NotNull Throwable exception) {
+    protected void handleDownloadError(@NotNull SdkType type, @NotNull @Nls String title, @NotNull IOException exception) {
       LOG.warn("SDK Download failed. " + exception.getMessage(), exception);
       if (ApplicationManager.getApplication().isUnitTestMode()) return;
       myModalityTracker.invokeLater(() -> {
-        Messages.showErrorDialog(ProjectBundle.message("error.message.sdk.download.failed", type.getPresentableName()), title);
+        Messages.showErrorDialog(ProjectBundle.message("error.message.sdk.download.failed", type.getPresentableName(), exception), title);
       });
     }
 

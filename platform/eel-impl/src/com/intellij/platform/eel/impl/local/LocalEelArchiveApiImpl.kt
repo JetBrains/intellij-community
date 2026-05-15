@@ -6,9 +6,12 @@ import com.intellij.platform.eel.path.EelPath
 import com.intellij.util.io.Decompressor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.IOException
 import kotlin.io.path.Path
 
 internal object LocalEelArchiveApiImpl : EelArchiveApi {
+
+  @Throws(IOException::class)
   override suspend fun extract(archive: EelPath, target: EelPath) {
     // This task occupies both CPU and IO resources, so the CPU-bound dispatcher is chosen.
     withContext(Dispatchers.Default) {

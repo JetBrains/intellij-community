@@ -15,12 +15,14 @@ import com.intellij.platform.eel.provider.asNioPathOrNull
 import com.intellij.platform.eel.provider.utils.EelPathTransfer
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.name
 
 @Internal
 object JdkInstallerEel {
+  @Throws(IOException::class)
   fun unpackJdkOnEel(
     eel: EelApi,
     downloadFile: Path,

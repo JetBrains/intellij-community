@@ -22,6 +22,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import java.io.IOException
 import java.nio.file.Path
 import kotlin.coroutines.resume
 
@@ -44,10 +45,10 @@ object JdkDownloadUtil {
     val downloadRequest = try {
       JdkInstaller.getInstance().prepareJdkInstallation(jdkItem, jdkHome)
     }
-    catch (ex: JdkInstallationException) {
+    catch (ex: IOException) {
       withContext(Dispatchers.EDT) {
         Messages.showErrorDialog(project,
-                                 ProjectBundle.message("error.message.text.jdk.download.failed", ex.reason),
+                                 ProjectBundle.message("error.message.text.jdk.download.failed", jdkHome, ex),
                                  ProjectBundle.message("error.message.title.download.jdk")
         )
       }

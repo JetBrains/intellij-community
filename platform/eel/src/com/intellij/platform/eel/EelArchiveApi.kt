@@ -3,8 +3,10 @@ package com.intellij.platform.eel
 
 import com.intellij.platform.eel.path.EelPath
 import org.jetbrains.annotations.ApiStatus
+import java.io.IOException
 
 @ApiStatus.Internal
 interface EelArchiveApi {
+  @Throws(IOException::class)
   suspend fun extract(archive: EelPath, target: EelPath)
 }

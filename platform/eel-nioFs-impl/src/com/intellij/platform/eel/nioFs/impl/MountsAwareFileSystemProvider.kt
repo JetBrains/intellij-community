@@ -149,6 +149,7 @@ abstract class MountsAwareFileSystemProvider(
     } ?: delegate.delete(path)
   }
 
+  @Throws(IOException::class)
   override fun createDirectory(dir: Path?, vararg attrs: FileAttribute<*>) {
     dir?.tryUseDirectAccess(-attrs) {
       Files.createDirectory(it, *attrs)
