@@ -8,7 +8,6 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminal
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.project.Project
-import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTab
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabBuilder
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
 import com.intellij.terminal.frontend.view.TerminalInputInterceptor
@@ -19,6 +18,7 @@ import com.intellij.util.asDisposable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -117,14 +117,15 @@ internal interface AgentChatTerminalTabs {
 
 internal object ToolWindowAgentChatTerminalTabs : AgentChatTerminalTabs {
   override fun createTab(project: Project, file: AgentChatVirtualFile, startupLaunchSpec: AgentSessionTerminalLaunchSpec): AgentChatTerminalTab {
+    val terminalToolWindowTabsManager = TerminalToolWindowTabsManager.getInstance(project)
     val terminalTab = configureAgentChatTerminalTabBuilder(
-      builder = TerminalToolWindowTabsManager.getInstance(project).createTabBuilder(),
+      builder = terminalToolWindowTabsManager.createTabBuilder(),
       file = file,
       startupLaunchSpec = startupLaunchSpec,
     )
       .createTab()
     return ToolWindowAgentChatTerminalTab(
-      delegate = terminalTab,
+      terminalView = terminalToolWindowTabsManager.detachTab(terminalTab),
       projectPath = file.projectPath,
       provider = file.provider,
       threadId = resolveAgentChatScopedRefreshThreadId(file),
@@ -132,8 +133,7 @@ internal object ToolWindowAgentChatTerminalTabs : AgentChatTerminalTabs {
   }
 
   override fun closeTab(project: Project, tab: AgentChatTerminalTab) {
-    val toolWindowTab = (tab as? ToolWindowAgentChatTerminalTab)?.delegate ?: return
-    closeTerminalToolWindowTab(project, toolWindowTab)
+    tab.terminalView?.coroutineScope?.cancel()
   }
 }
 
@@ -154,52 +154,35 @@ internal fun configureAgentChatTerminalTabBuilder(
     .envVariables(startupLaunchSpec.envVariables)
 }
 
-internal fun closeTerminalToolWindowTab(
-  project: Project,
-  tab: TerminalToolWindowTab,
-  managerProvider: (Project) -> TerminalToolWindowTabsManager = TerminalToolWindowTabsManager::getInstance,
-) {
-  val content = tab.content
-  if (content.manager != null) {
-    managerProvider(project).closeTab(tab)
-  }
-  else {
-    content.release()
-  }
-}
-
 private class ToolWindowAgentChatTerminalTab(
-  val delegate: TerminalToolWindowTab,
+  override val terminalView: TerminalView,
   private val projectPath: String,
   private val provider: AgentSessionProvider?,
   private val threadId: String?,
 ) : AgentChatTerminalTab {
   override val component: JComponent
-    get() = delegate.content.component
+    get() = terminalView.component
 
   override val preferredFocusableComponent: JComponent
-    get() = delegate.view.preferredFocusableComponent
+    get() = terminalView.preferredFocusableComponent
 
   override val coroutineScope: CoroutineScope
-    get() = delegate.view.coroutineScope
+    get() = terminalView.coroutineScope
 
   override val sessionState: StateFlow<TerminalViewSessionState>
-    get() = delegate.view.sessionState
+    get() = terminalView.sessionState
 
   override val keyEventsFlow: Flow<TerminalKeyEvent>
-    get() = delegate.view.keyEventsFlow
-
-  override val terminalView: TerminalView
-    get() = delegate.view
+    get() = terminalView.keyEventsFlow
 
   override suspend fun awaitInitialMessageReadiness(
     timeoutMs: Long,
     idleMs: Long,
     checkpoint: AgentChatTerminalOutputCheckpoint?,
   ): AgentChatTerminalInputReadiness {
-    val outputModels = delegate.view.outputModels
+    val outputModels = terminalView.outputModels
     return awaitTerminalInitialMessageReadiness(
-      sessionState = delegate.view.sessionState,
+      sessionState = terminalView.sessionState,
       regularOutputModel = outputModels.regular,
       alternativeOutputModel = outputModels.alternative,
       timeoutMs = timeoutMs,
@@ -219,7 +202,7 @@ private class ToolWindowAgentChatTerminalTab(
   }
 
   override suspend fun captureOutputCheckpoint(): AgentChatTerminalOutputCheckpoint {
-    val outputModels = delegate.view.outputModels
+    val outputModels = terminalView.outputModels
     return withContext(Dispatchers.UI) {
       AgentChatTerminalOutputCheckpoint(
         regularEndOffset = outputModels.regular.endOffset.toAbsolute(),
@@ -233,9 +216,9 @@ private class ToolWindowAgentChatTerminalTab(
     timeoutMs: Long,
     idleMs: Long,
   ): AgentChatTerminalOutputObservation {
-    val outputModels = delegate.view.outputModels
+    val outputModels = terminalView.outputModels
     return awaitTerminalOutputObservation(
-      sessionState = delegate.view.sessionState,
+      sessionState = terminalView.sessionState,
       regularOutputModel = outputModels.regular,
       alternativeOutputModel = outputModels.alternative,
       checkpoint = checkpoint,
@@ -255,7 +238,7 @@ private class ToolWindowAgentChatTerminalTab(
   }
 
   override suspend fun readRecentOutputTail(): String {
-    val outputModels = delegate.view.outputModels
+    val outputModels = terminalView.outputModels
     return withContext(Dispatchers.UI) {
       readRecentTerminalOutputTail(outputModels.regular, outputModels.alternative)
     }
@@ -270,7 +253,7 @@ private class ToolWindowAgentChatTerminalTab(
   }
 
   private fun sendNormalizedText(text: String, shouldExecute: Boolean, useBracketedPasteMode: Boolean) {
-    val sendTextBuilder = delegate.view.createSendTextBuilder()
+    val sendTextBuilder = terminalView.createSendTextBuilder()
     if (useBracketedPasteMode) {
       sendTextBuilder.useBracketedPasteMode()
     }
