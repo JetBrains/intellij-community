@@ -20,7 +20,6 @@ public final class JvmThreadHelper {
   public static final int METHOD_STACK_STATUS_TOO_MANY_INCOMPLETE_STACKS = 4;
   public static final int METHOD_STACK_STATUS_TIMED_OUT = 5;
   public static final int METHOD_STACK_SCAN_UNLIMITED_DEPTH = -1;
-  public static final int METHOD_STACK_SCAN_DEFAULT_TIMEOUT_MILLIS = 100;
 
   private static final int MAX_INCOMPLETE_STACKS = 32;
 
@@ -264,7 +263,7 @@ public final class JvmThreadHelper {
   }
 
   private static boolean hasKnownRootFrame(Thread thread, StackTraceElement[] stackTrace) {
-    if (stackTrace.length == 0) return false;
+    if (stackTrace.length == 0) return true; // It should be rare case and let's consider it as known root
     StackTraceElement root = stackTrace[stackTrace.length - 1];
     if ("main".equals(root.getMethodName())) return true;
     if (!"run".equals(root.getMethodName())) return false;

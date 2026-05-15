@@ -17,6 +17,7 @@ import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.psi.CommonClassNames
 import com.intellij.rt.debugger.JvmThreadHelper
 import com.intellij.rt.debugger.MethodInvoker
@@ -117,7 +118,7 @@ object MethodInvokeUtils {
     methods: Collection<Method>,
     maxStackTraceFramesToScan: Int = JvmThreadHelper.METHOD_STACK_SCAN_UNLIMITED_DEPTH,
     threadToSkip: ThreadReference? = null,
-    timeoutMillis: Int = JvmThreadHelper.METHOD_STACK_SCAN_DEFAULT_TIMEOUT_MILLIS,
+    timeoutMillis: Int = methodStackScanDefaultTimeoutMillis,
   ): MethodStackScanResult {
     val methodKeys = methods.asSequence()
       .map { it.declaringType().name() to it.name() }
@@ -155,6 +156,8 @@ object MethodInvokeUtils {
         evaluationContext.virtualMachineProxy.mirrorOf(timeoutMillis),
       ),
       false,
+      JvmThreadHelper::class.java.name + '$' + "MethodTarget",
+      JvmThreadHelper::class.java.name + '$' + "MethodStackScanResult",
     )
     val elapsedMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startedAtNanos)
     val values = (result as? ArrayReference)?.values ?: throw EvaluateException("Unexpected method stack check helper result: $result")
@@ -306,3 +309,6 @@ private fun isHelperFrame(frame: String): Boolean = HELPER_FRAMES.any { frame.co
 internal data class InvocationResult(@get:JvmName("isSuccess") val success: Boolean, val value: Value?)
 
 private val INVOCATION_FAILED = InvocationResult(false, null)
+
+private val methodStackScanDefaultTimeoutMillis: Int
+  get() = RegistryManager.getInstance().intValue("debugger.helper.method.stack.scan.timeout.ms", 200)
