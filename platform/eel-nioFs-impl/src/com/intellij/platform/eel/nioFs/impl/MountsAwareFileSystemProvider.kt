@@ -40,7 +40,7 @@ import java.util.concurrent.ExecutorService
  */
 abstract class MountsAwareFileSystemProvider(
   protected val delegate: FileSystemProvider,
-  internal val mountProvider: EelMountProvider
+  internal val mountProvider: EelMountProvider,
 ) : DelegatingFileSystemProvider<MountsAwareFileSystemProvider, MountsAwareFileSystem>() {
 
   override fun wrapDelegateFileSystem(delegateFs: FileSystem): MountsAwareFileSystem = MountsAwareFileSystem(this, delegateFs)
@@ -54,7 +54,10 @@ abstract class MountsAwareFileSystemProvider(
    * Checks if the given path is in a mounted volume and can be accessed directly.
    * Returns the local path if it can be accessed directly, null otherwise.
    */
-  private fun getDirectAccessPath(path: Path?, directAccess: EelMountRoot.DirectAccessOptions = EelMountRoot.DirectAccessOptions.BasicAttributes): Path? {
+  private fun getDirectAccessPath(
+    path: Path?,
+    directAccess: EelMountRoot.DirectAccessOptions = EelMountRoot.DirectAccessOptions.BasicAttributes,
+  ): Path? {
     if (path == null) return null
     val (eelPath, eelFsApi) = unwrapEelPath(path) ?: return null
     val mountRoot = mountProvider.getMountRoot(eelPath) ?: return null
@@ -62,6 +65,7 @@ abstract class MountsAwareFileSystemProvider(
     if (!mountRoot.canReadPermissionsDirectly(eelFsApi, localEel.fs, directAccess)) return null
     return directAccessPath
   }
+
   private fun <T : FileAttribute<*>> Array<T>.containsPosixAttribute(): Boolean {
     return any { attr -> attr.name().startsWith("posix:") }
   }
@@ -88,7 +92,10 @@ abstract class MountsAwareFileSystemProvider(
     else EelMountRoot.DirectAccessOptions.BasicAttributes
   }
 
-  protected fun <T> Path.tryUseDirectAccess(directAccess: EelMountRoot.DirectAccessOptions = EelMountRoot.DirectAccessOptions.BasicAttributes, block: (directPath: Path) -> T): T? {
+  protected fun <T> Path.tryUseDirectAccess(
+    directAccess: EelMountRoot.DirectAccessOptions = EelMountRoot.DirectAccessOptions.BasicAttributes,
+    block: (directPath: Path) -> T,
+  ): T? {
     val directPath = getDirectAccessPath(this, directAccess) ?: return null
 
     try {
@@ -125,7 +132,12 @@ abstract class MountsAwareFileSystemProvider(
     } ?: delegate.newFileChannel(path, options, *attrs)
   }
 
-  override fun newAsynchronousFileChannel(path: Path?, options: Set<OpenOption?>?, executor: ExecutorService?, vararg attrs: FileAttribute<*>): AsynchronousFileChannel? {
+  override fun newAsynchronousFileChannel(
+    path: Path?,
+    options: Set<OpenOption?>?,
+    executor: ExecutorService?,
+    vararg attrs: FileAttribute<*>,
+  ): AsynchronousFileChannel? {
     return path?.tryUseDirectAccess(-attrs) {
       AsynchronousFileChannel.open(it, options, executor, *attrs)
     } ?: delegate.newAsynchronousFileChannel(path, options, executor, *attrs)

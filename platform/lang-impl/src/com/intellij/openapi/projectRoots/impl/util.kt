@@ -22,7 +22,8 @@ import java.nio.file.InvalidPathException
 import java.nio.file.Path
 
 fun findClashingSdk(project: Project?, sdkName: String, sdk: Sdk): SdkEntity? {
-  val machine = project?.getEelMachine() ?: sdk.homePath?.let { Path.of(it) }?.getEelDescriptor()?.getResolvedEelMachine() ?: LocalEelMachine
+  val machine =
+    project?.getEelMachine() ?: sdk.homePath?.let { Path.of(it) }?.getEelDescriptor()?.getResolvedEelMachine() ?: LocalEelMachine
   val relevantSnapshot = GlobalWorkspaceModel.getInstance(machine).currentSnapshot
   return relevantSnapshot.entities(SdkEntity::class.java).find { it.name == sdkName }
 }

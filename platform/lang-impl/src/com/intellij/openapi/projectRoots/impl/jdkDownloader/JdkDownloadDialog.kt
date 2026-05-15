@@ -52,8 +52,8 @@ class JdkVersionItem(
    */
   private val defaultSelectedItem: JdkVersionVendorItem,
   val includedItems: List<JdkVersionVendorItem>,
-  val excludedItems: List<JdkVersionVendorItem>
-)  {
+  val excludedItems: List<JdkVersionVendorItem>,
+) {
   //we reuse model to keep selected element in-memory!
   val model: ComboBoxModel<JdkVersionVendorItem> by lazy {
     require(this.includedItems.isNotEmpty()) { "No included items for $jdkVersion" }
@@ -61,7 +61,7 @@ class JdkVersionItem(
 
     val allItems = when {
       this.excludedItems.isNotEmpty() -> this.includedItems + this.excludedItems
-      else                            -> this.includedItems
+      else -> this.includedItems
     }
 
     DefaultComboBoxModel(allItems.toTypedArray()).also {
@@ -72,7 +72,7 @@ class JdkVersionItem(
 
 @Internal
 class JdkVersionVendorItem(
-  val item: JdkItem
+  val item: JdkItem,
 ) {
   var parent: JdkVersionItem? = null
   val selectItem: JdkVersionVendorItem get() = parent?.includedItems?.find { it.item == item } ?: this
@@ -80,7 +80,7 @@ class JdkVersionVendorItem(
   val canBeSelected: Boolean get() = parent == null
 }
 
-private class JdkVersionVendorCombobox: ComboBox<JdkVersionVendorItem>() {
+private class JdkVersionVendorCombobox : ComboBox<JdkVersionVendorItem>() {
   var itemWithSeparator: JdkVersionVendorItem? = null
   private val myActionItemSelectedListeners = mutableListOf<(item: JdkVersionVendorItem) -> Unit>()
 
@@ -89,7 +89,8 @@ private class JdkVersionVendorCombobox: ComboBox<JdkVersionVendorItem>() {
 
     if (anObject.canBeSelected) {
       super.setSelectedItem(anObject)
-    } else {
+    }
+    else {
       myActionItemSelectedListeners.forEach { it(anObject) }
     }
   }
@@ -223,14 +224,14 @@ internal class JdkDownloadDialog(
   private val eel: EelApi,
   private val model: JdkDownloaderModel,
   okActionText: @NlsContexts.Button String = ProjectBundle.message("dialog.button.download.jdk"),
-  val text: @Nls String? = null
+  val text: @Nls String? = null,
 ) : DialogWrapper(project, parentComponent, false, IdeModalityType.IDE) {
-  private lateinit var versionComboBox : ComboBox<JdkVersionItem>
+  private lateinit var versionComboBox: ComboBox<JdkVersionItem>
   private val vendorComboBox: JdkVersionVendorCombobox = JdkVersionVendorCombobox()
 
   private lateinit var installDirTextField: TextFieldWithBrowseButton
 
-  private var currentModel : JdkDownloaderModel? = null
+  private var currentModel: JdkDownloaderModel? = null
 
   private lateinit var selectedItem: JdkItem
   private lateinit var selectedPath: String

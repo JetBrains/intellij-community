@@ -27,32 +27,33 @@ class RuntimeChooserPaths {
     return Path.of(directory, configName)
   }
 
-  fun installCustomJdk(@NlsSafe jdkName: String, resolveSuggestedHome: (ProgressIndicator) -> Path?): Unit = runWithProgress { indicator, jdkFile ->
-    val sdkHome = try {
-      resolveSuggestedHome(indicator)
-    }
-    catch (t: Throwable) {
-      if (t is ControlFlowException) throw t
-      LOG.warn("resolve failed. ${t.message}", t)
-      return@runWithProgress null
-    }
+  fun installCustomJdk(@NlsSafe jdkName: String, resolveSuggestedHome: (ProgressIndicator) -> Path?): Unit =
+    runWithProgress { indicator, jdkFile ->
+      val sdkHome = try {
+        resolveSuggestedHome(indicator)
+      }
+      catch (t: Throwable) {
+        if (t is ControlFlowException) throw t
+        LOG.warn("resolve failed. ${t.message}", t)
+        return@runWithProgress null
+      }
 
-    val home = RuntimeChooserJreValidator.testNewJdkUnderProgress(
-      allowRunProcesses = true,
-      computeHomePath = { sdkHome?.toAbsolutePath()?.toString() },
-      callback = object : RuntimeChooserJreValidatorCallback<Path?> {
-        override fun onSdkResolved(displayName: String?, versionString: String, sdkHome: Path) = sdkHome
-        override fun onError(message: String): Path? {
-          RuntimeChooserMessages.showErrorMessage(message)
-          return null
-        }
-      }) ?: return@runWithProgress null
+      val home = RuntimeChooserJreValidator.testNewJdkUnderProgress(
+        allowRunProcesses = true,
+        computeHomePath = { sdkHome?.toAbsolutePath()?.toString() },
+        callback = object : RuntimeChooserJreValidatorCallback<Path?> {
+          override fun onSdkResolved(displayName: String?, versionString: String, sdkHome: Path) = sdkHome
+          override fun onError(message: String): Path? {
+            RuntimeChooserMessages.showErrorMessage(message)
+            return null
+          }
+        }) ?: return@runWithProgress null
 
-    jdkFile.parent?.createDirectories()
-    jdkFile.write(home.toAbsolutePath().toString())
-    LOG.warn("Set custom boot runtime to: $home in the $jdkFile. On errors, please remove the .jdk file")
-    jdkName
-  }
+      jdkFile.parent?.createDirectories()
+      jdkFile.write(home.toAbsolutePath().toString())
+      LOG.warn("Set custom boot runtime to: $home in the $jdkFile. On errors, please remove the .jdk file")
+      jdkName
+    }
 
   fun resetCustomJdk(): Unit = runWithProgress { _, jdkFile ->
     jdkFile.delete()

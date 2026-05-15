@@ -18,8 +18,8 @@ internal object JdkDownloaderLogger : CounterUsagesCollector() {
                                                                          EventFields.Int("version"))
 
   private val DOWNLOADED_SDK: EventId2<String?, Int> = GROUP.registerEvent("jdk.downloaded",
-                                                                         EventFields.String("product", JdkVersionDetector.VENDORS),
-                                                                         EventFields.Int("version"))
+                                                                           EventFields.String("product", JdkVersionDetector.VENDORS),
+                                                                           EventFields.Int("version"))
 
   private val FAILURE: EventId1<DownloadFailure> = GROUP.registerEvent("failure",
                                                                        EventFields.Enum("reason", DownloadFailure::class.java))
@@ -29,7 +29,8 @@ internal object JdkDownloaderLogger : CounterUsagesCollector() {
   }
 
   @Deprecated(message = "Use logDownload(JdkItem) instead")
-  fun logDownload(success: Boolean) {}
+  fun logDownload(success: Boolean) {
+  }
 
   fun logDownload(item: JdkItem) {
     val variant = item.detectVariant()

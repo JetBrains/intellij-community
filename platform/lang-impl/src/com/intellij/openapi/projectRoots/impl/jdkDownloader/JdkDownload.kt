@@ -41,14 +41,16 @@ val JDK_DOWNLOADER_EXT: DataKey<JdkDownloaderDialogHostExtension> = DataKey.crea
 interface JdkDownloaderDialogHostExtension {
   fun getEel(): EelApi = LocalEelDescriptor.toEelApiBlocking()
 
-  fun createEelPredicate(eel: EelApi) : JdkPredicate? = null
+  fun createEelPredicate(eel: EelApi): JdkPredicate? = null
 
-  fun shouldIncludeItem(sdkType: SdkTypeId, item: JdkItem) : Boolean = true
+  fun shouldIncludeItem(sdkType: SdkTypeId, item: JdkItem): Boolean = true
 }
 
 @Internal
-data class JdkInstallRequestInfo(override val item: JdkItem,
-                                 override val installDir: Path): JdkInstallRequest {
+data class JdkInstallRequestInfo(
+  override val item: JdkItem,
+  override val installDir: Path,
+) : JdkInstallRequest {
   override val javaHome: Path
     get() = item.resolveJavaHome(installDir)
 }
@@ -126,10 +128,11 @@ class JdkDownload : SdkDownload {
         val eelApi = extension.getEel()
 
         val jdkDownloaderModel = JdkListDownloader.getInstance()
-          .downloadForUI(predicate = extension.createEelPredicate(eelApi) ?: JdkPredicate.forEel(eelApi), progress = it)
-          .filter { extension.shouldIncludeItem(sdkTypeId, it) }
-          .takeIf { it.isNotEmpty() }
-          ?.let { buildJdkDownloaderModel(it, extension.getEel(), { sdkFilter?.test(it) != false }) }
+                                   .downloadForUI(predicate = extension.createEelPredicate(eelApi) ?: JdkPredicate.forEel(eelApi),
+                                                  progress = it)
+                                   .filter { extension.shouldIncludeItem(sdkTypeId, it) }
+                                   .takeIf { it.isNotEmpty() }
+                                   ?.let { buildJdkDownloaderModel(it, extension.getEel(), { sdkFilter?.test(it) != false }) }
                                  ?: return@computeInBackground null
 
         eelApi to jdkDownloaderModel
@@ -164,7 +167,8 @@ class JdkDownload : SdkDownload {
       computeInBackground(project, ProjectBundle.message("progress.title.preparing.jdk")) {
         JdkInstaller.getInstance().prepareJdkInstallation(jdkItem, jdkHome)
       }
-    } catch (e: Throwable) {
+    }
+    catch (e: Throwable) {
       if (e is ControlFlowException) throw e
       LOG.warn("Failed to prepare JDK installation to $jdkHome. ${e.message}", e)
       Messages.showErrorDialog(project,
@@ -177,9 +181,11 @@ class JdkDownload : SdkDownload {
     return JdkDownloadTask(jdkItem, request, project)
   }
 
-  private inline fun <T : Any?> computeInBackground(project: Project?,
-                                                   @NlsContexts.DialogTitle title: String,
-                                                   crossinline action: (ProgressIndicator) -> T): T =
+  private inline fun <T : Any?> computeInBackground(
+    project: Project?,
+    @NlsContexts.DialogTitle title: String,
+    crossinline action: (ProgressIndicator) -> T,
+  ): T =
     ProgressManager.getInstance().run(object : Task.WithResult<T, Exception>(project, title, true) {
       override fun compute(indicator: ProgressIndicator) = action(indicator)
     })
@@ -208,7 +214,7 @@ class JdkDownloadTask(
   @JvmField val jdkItem: JdkItem,
   @JvmField val request: JdkInstallRequest,
   @JvmField val project: Project?,
-): SdkDownloadTask {
+) : SdkDownloadTask {
   override fun getSuggestedSdkName() = request.item.suggestedSdkName
   override fun getPlannedHomeDir() = request.javaHome.toString()
   override fun getPlannedVersion() = request.item.versionString

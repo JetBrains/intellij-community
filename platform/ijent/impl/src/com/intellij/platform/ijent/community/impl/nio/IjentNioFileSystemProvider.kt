@@ -672,7 +672,8 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     val os = fs.ijentFs.descriptor.osFamily
     return fsBlocking {
       when (val ijentFs = fs.ijentFs) {
-        is IjentFileSystemPosixApi, is IjentFileSystemWindowsApi -> when (val type = ijentFs.stat(absolutePath).justResolve().getOrThrowFileSystemException().type) {
+        is IjentFileSystemPosixApi, is IjentFileSystemWindowsApi -> when (val type =
+          ijentFs.stat(absolutePath).justResolve().getOrThrowFileSystemException().type) {
           is Symlink.Resolved.Absolute -> AbsoluteIjentNioPath(type.result, link.nioFs, null)
           is Symlink.Resolved.Relative -> {
             RelativeIjentNioPath(type.result.split(*os.directorySeparators), link.nioFs)
@@ -747,7 +748,10 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
 }
 
 
-internal fun EelFileSystemApiHelpers.ChangeAttributes.updateTime(selector: EelFileSystemApiHelpers.ChangeAttributes.(EelFileSystemApi.TimeSinceEpoch) -> Unit, obj: Any) {
+internal fun EelFileSystemApiHelpers.ChangeAttributes.updateTime(
+  selector: EelFileSystemApiHelpers.ChangeAttributes.(EelFileSystemApi.TimeSinceEpoch) -> Unit,
+  obj: Any,
+) {
   obj as FileTime // ClassCastException is expected
   val instant = obj.toInstant()
   selector(EelFileSystemApi.timeSinceEpoch(instant.epochSecond.toULong(), instant.nano.toUInt()))

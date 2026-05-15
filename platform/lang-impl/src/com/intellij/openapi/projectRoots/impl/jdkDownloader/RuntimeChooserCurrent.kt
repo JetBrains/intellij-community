@@ -24,7 +24,7 @@ internal data class RuntimeChooserCurrentItem(
   val isBundled: Boolean,
   override val homeDir: String,
   override val displayName: String?,
-  override val version: String?
+  override val version: String?,
 ) : RuntimeChooserItem(), RuntimeChooserItemWithFixedLocation {
   companion object
 }
@@ -41,6 +41,7 @@ internal fun RuntimeChooserCurrentItem.Companion.currentRuntime(): RuntimeChoose
       javaName = displayName
       javaVersion = versionString
     }
+
     override fun onError(message: String) = Unit
   })
 

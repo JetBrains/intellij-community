@@ -99,7 +99,7 @@ internal object RuntimeChooserCustom {
               }
             }
 
-            override fun onError(message: String) { }
+            override fun onError(message: String) {}
           },
           hideLogs,
         )

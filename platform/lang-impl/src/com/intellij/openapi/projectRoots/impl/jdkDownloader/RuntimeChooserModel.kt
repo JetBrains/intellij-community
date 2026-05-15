@@ -14,7 +14,7 @@ import javax.swing.DefaultComboBoxModel
 
 internal sealed class RuntimeChooserItem
 
-internal object RuntimeChooserSelectRuntimeItem: RuntimeChooserItem()
+internal object RuntimeChooserSelectRuntimeItem : RuntimeChooserItem()
 
 internal fun <Y> GraphProperty<Y>.getAndSubscribe(lifetime: Disposable, action: (Y) -> Unit) {
   action(get())
@@ -40,7 +40,7 @@ internal class RuntimeChooserModel {
     return FileUtil.getLocationRelativeToUserHome(path.toAbsolutePath().toString(), false)
   }
 
-  fun getInstallPathFromText(item: JdkItem, text: String?) : Path {
+  fun getInstallPathFromText(item: JdkItem, text: String?): Path {
     val path = text?.trim()?.takeIf { it.isNotBlank() }?.let { OSAgnosticPathUtil.expandUserHome(it) }
     if (path != null) {
       var file = Paths.get(path)
@@ -97,7 +97,7 @@ internal class RuntimeChooserModel {
     updateMainCombobox()
   }
 
-  fun addExistingSdkItem(newItem : RuntimeChooserCustomItem) {
+  fun addExistingSdkItem(newItem: RuntimeChooserCustomItem) {
     customJdks += newItem
     updateMainCombobox(newItem)
   }

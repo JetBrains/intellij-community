@@ -37,11 +37,7 @@ internal object RuntimeChooserJreValidator {
   fun isSupportedSdkItem(item: JdkItem): Boolean {
     // TODO Introduce EelApi here.
     //we do only support mac bundle layout
-    if (SystemInfo.isMac && !item.packageToBinJavaPrefix.endsWith("Contents/Home")) {
-      return false
-    }
-
-    return item.jdkMajorVersion >= minJdkFeatureVersion && item.os == JdkPredicate.currentOS && item.arch == JdkPredicate.currentArch
+    return !(SystemInfo.isMac && !item.packageToBinJavaPrefix.endsWith("Contents/Home")) && item.jdkMajorVersion >= minJdkFeatureVersion && item.os == JdkPredicate.currentOS && item.arch == JdkPredicate.currentArch
   }
 
   fun isSupportedSdkItem(sdk: Sdk): Boolean = isSupportedSdkItem({ sdk.versionString }, { sdk.homePath })
@@ -68,7 +64,8 @@ internal object RuntimeChooserJreValidator {
   ): R {
     val homeDir = runCatching { Path.of(computeHomePath()).toAbsolutePath() }.getOrNull()
                   ?: return callback.onError(
-                    LangBundle.message("dialog.message.choose.ide.runtime.set.unknown.error", LangBundle.message("dialog.message.choose.ide.runtime.no.file.part")))
+                    LangBundle.message("dialog.message.choose.ide.runtime.set.unknown.error",
+                                       LangBundle.message("dialog.message.choose.ide.runtime.no.file.part")))
 
     if (SystemInfo.isMac && homeDir.toString().endsWith("/Contents/Home")) {
       return testNewJdkUnderProgress(allowRunProcesses, { homeDir.parent?.parent?.toString() }, callback)
@@ -180,7 +177,8 @@ private fun tryComputeAdvancedFullVersion(binJava: Path): String? = runCatching 
       val implVersion = p.getJdkProperty("IMPLEMENTOR_VERSION")
       if (implVersion != null && implVersion.startsWith("Corretto-")) {
         implVersion.removePrefix("Corretto-")
-      } else null
+      }
+      else null
     }
     else -> null
   }

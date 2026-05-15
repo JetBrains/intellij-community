@@ -73,7 +73,7 @@ internal class JdkUpdaterStartup : ProjectActivity {
     val jdkUpdaterService = project.service<JdkUpdatesCollectorQueue>()
 
     val knownSdks = suspendCancellableCoroutine<Collection<Sdk>> { continuation ->
-      jdkUpdaterService.queue(object: UnknownSdkTrackerTask {
+      jdkUpdaterService.queue(object : UnknownSdkTrackerTask {
         override fun createCollector(): UnknownSdkCollector {
           return object : UnknownSdkCollector(project) {
             override fun getContributors(): List<UnknownSdkContributor> {
@@ -106,7 +106,7 @@ internal class JdkUpdaterStartup : ProjectActivity {
 
     jdkUpdaterService.updateJob?.cancel()
     jdkUpdaterService.updateJob = jdkUpdaterService.coroutineScope.launch(Dispatchers.IO) {
-      withBackgroundProgress (project, ProjectBundle.message("progress.title.checking.for.jdk.updates")) {
+      withBackgroundProgress(project, ProjectBundle.message("progress.title.checking.for.jdk.updates")) {
         coroutineToIndicator {
           updateWithSnapshot(knownSdks.distinct().sortedBy { it.name }, it)
         }
@@ -157,7 +157,7 @@ internal class JdkUpdaterStartup : ProjectActivity {
 }
 
 @Service(Service.Level.PROJECT)
-private class JdkUpdatesCollectorQueue(val coroutineScope: CoroutineScope)
-  : UnknownSdkCollectorQueue(mergingTimeSpaceMillis = 7_000, coroutineScope = coroutineScope) {
+private class JdkUpdatesCollectorQueue(val coroutineScope: CoroutineScope) :
+  UnknownSdkCollectorQueue(mergingTimeSpaceMillis = 7_000, coroutineScope = coroutineScope) {
   var updateJob: Job? = null
 }

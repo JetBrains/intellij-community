@@ -7,13 +7,15 @@ import com.intellij.ui.GroupedComboBoxRenderer
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 
-internal abstract class RuntimeChooserPresenter: GroupedComboBoxRenderer<RuntimeChooserItem?>() {
+internal abstract class RuntimeChooserPresenter : GroupedComboBoxRenderer<RuntimeChooserItem?>() {
   override fun customize(item: SimpleColoredComponent, value: RuntimeChooserItem?, index: Int, isSelected: Boolean, cellHasFocus: Boolean) {
     when (value) {
       is RuntimeChooserDownloadableItem -> item.presentJbrItem(value)
       is RuntimeChooserCurrentItem -> item.presetCurrentRuntime(value)
-      is RuntimeChooserSelectRuntimeItem -> item.append(LangBundle.message("dialog.item.choose.ide.runtime.select.runtime"), SimpleTextAttributes.GRAYED_ATTRIBUTES)
-      is RuntimeChooserAddCustomItem -> item.append(LangBundle.message("dialog.item.choose.ide.runtime.add.custom", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES))
+      is RuntimeChooserSelectRuntimeItem -> item.append(LangBundle.message("dialog.item.choose.ide.runtime.select.runtime"),
+                                                        SimpleTextAttributes.GRAYED_ATTRIBUTES)
+      is RuntimeChooserAddCustomItem -> item.append(LangBundle.message("dialog.item.choose.ide.runtime.add.custom",
+                                                                       SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES))
       is RuntimeChooserItemWithFixedLocation -> item.presetRuntime(value)
       else -> {}
     }

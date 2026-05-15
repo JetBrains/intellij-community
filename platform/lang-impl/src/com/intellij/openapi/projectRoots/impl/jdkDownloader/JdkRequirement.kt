@@ -21,12 +21,12 @@ object JdkRequirements {
   private val LOG = logger<JdkRequirements>()
 
   private interface VersionMatcher {
-    fun matchVersion(versionString: String) : Boolean
+    fun matchVersion(versionString: String): Boolean
     override fun toString(): String
   }
 
   private fun sameMajorVersionMatcher(parsed: JavaVersion): VersionMatcher {
-    return object: VersionMatcher {
+    return object : VersionMatcher {
       override fun toString() = "it >= $parsed && same major version"
       override fun matchVersion(versionString: String): Boolean {
         val it = JavaVersion.tryParse(versionString) ?: return false
@@ -36,7 +36,7 @@ object JdkRequirements {
   }
 
   private fun strictVersionMatcher(parsed: JavaVersion): VersionMatcher {
-    return object: VersionMatcher {
+    return object : VersionMatcher {
       override fun toString() = "it == $parsed"
       override fun matchVersion(versionString: String): Boolean {
         val it = JavaVersion.tryParse(versionString) ?: return false
@@ -45,9 +45,11 @@ object JdkRequirements {
     }
   }
 
-  fun parseRequirement(namePredicate: String?,
-                       versionStringPredicate: Predicate<String>?,
-                       homePredicate: Predicate<String>?) : JdkRequirement? {
+  fun parseRequirement(
+    namePredicate: String?,
+    versionStringPredicate: Predicate<String>?,
+    homePredicate: Predicate<String>?,
+  ): JdkRequirement? {
     val nameFilter = namePredicate?.let { parseRequirement(it) }
 
     if (versionStringPredicate == null && nameFilter == null) {
@@ -56,7 +58,7 @@ object JdkRequirements {
       return null
     }
 
-    return object: JdkRequirement {
+    return object : JdkRequirement {
       override fun matches(sdk: Sdk): Boolean {
         if (nameFilter != null) {
           if (!nameFilter.matches(sdk)) return false
@@ -75,7 +77,7 @@ object JdkRequirements {
         return true
       }
 
-      override fun matches(sdk: JdkItem) : Boolean {
+      override fun matches(sdk: JdkItem): Boolean {
         if (nameFilter != null) {
           if (!nameFilter.matches(sdk)) return false
         }

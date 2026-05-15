@@ -11,11 +11,13 @@ private val LOG = logger<JdkInstallerWSL>()
 
 @Internal
 object JdkInstallerWSL {
-  fun unpackJdkOnWsl(wslDistribution: OsAbstractionForJdkInstaller.Wsl,
-                     packageType: JdkPackageType,
-                     downloadFile: Path,
-                     targetDir: Path,
-                     packageRootPrefixRaw: String) {
+  fun unpackJdkOnWsl(
+    wslDistribution: OsAbstractionForJdkInstaller.Wsl,
+    packageType: JdkPackageType,
+    downloadFile: Path,
+    targetDir: Path,
+    packageRootPrefixRaw: String,
+  ) {
 
     val unpackDir = targetDir.resolveSibling(".${targetDir.fileName}-downloading-${System.currentTimeMillis()}")
     try {
@@ -31,10 +33,12 @@ object JdkInstallerWSL {
     }
   }
 
-  private fun unpackJdkArchiveOnWsl(osAbstraction: OsAbstractionForJdkInstaller,
-                                    packageType: JdkPackageType,
-                                    downloadFile: Path,
-                                    targetDir: Path) {
+  private fun unpackJdkArchiveOnWsl(
+    osAbstraction: OsAbstractionForJdkInstaller,
+    packageType: JdkPackageType,
+    downloadFile: Path,
+    targetDir: Path,
+  ) {
     val downloadFileWslPath = osAbstraction.getPath(downloadFile)
     val targetWslPath = osAbstraction.getPath(targetDir)
     FileUtil.createDirectory(targetDir.toFile())

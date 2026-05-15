@@ -103,9 +103,10 @@ class JdkUpdaterNotifications(private val coroutineScope: CoroutineScope) {
     return newNotification
   }
 
-  fun getActions() : List<JdkUpdateNotification.JdkUpdateSuggestionAction> = pendingActionsCopy
+  fun getActions(): List<JdkUpdateNotification.JdkUpdateSuggestionAction> = pendingActionsCopy
 
-  @TestOnly fun getNotificationScope(): CoroutineScope = notificationScope
+  @TestOnly
+  fun getNotificationScope(): CoroutineScope = notificationScope
 }
 
 internal class JdkSettingsActionRegistryActionProvider : SettingsEntryPointAction.ActionProvider {
