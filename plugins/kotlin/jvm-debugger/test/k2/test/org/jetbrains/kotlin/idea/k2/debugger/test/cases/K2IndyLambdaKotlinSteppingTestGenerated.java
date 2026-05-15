@@ -1713,6 +1713,11 @@ public abstract class K2IndyLambdaKotlinSteppingTestGenerated extends AbstractK2
             runTest("../testData/stepping/custom/skipSimpleGetters.kt");
         }
 
+        @TestMetadata("smartStepIntoAnonymousObjectReceiver.kt")
+        public void testSmartStepIntoAnonymousObjectReceiver() throws Exception {
+            runTest("../testData/stepping/custom/smartStepIntoAnonymousObjectReceiver.kt");
+        }
+
         @TestMetadata("smartStepIntoAsyncLambda.kt")
         public void testSmartStepIntoAsyncLambda() throws Exception {
             runTest("../testData/stepping/custom/smartStepIntoAsyncLambda.kt");
@@ -1796,6 +1801,11 @@ public abstract class K2IndyLambdaKotlinSteppingTestGenerated extends AbstractK2
         @TestMetadata("smartStepIntoInlineLambda.kt")
         public void testSmartStepIntoInlineLambda() throws Exception {
             runTest("../testData/stepping/custom/smartStepIntoInlineLambda.kt");
+        }
+
+        @TestMetadata("smartStepIntoInlineLambdaReceiverParameter.kt")
+        public void testSmartStepIntoInlineLambdaReceiverParameter() throws Exception {
+            runTest("../testData/stepping/custom/smartStepIntoInlineLambdaReceiverParameter.kt");
         }
 
         @TestMetadata("smartStepIntoInlineLambdasInFunctionsWithSameName.kt")

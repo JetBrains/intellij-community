@@ -1,0 +1,13 @@
+LineBreakpoint created at smartStepIntoAnonymousObjectReceiver.kt:7
+Run Java
+Connected to the target VM
+smartStepIntoAnonymousObjectReceiver.kt:7
+smartStepIntoAnonymousObjectReceiver.kt:14
+Object.!EXT!
+smartStepIntoAnonymousObjectReceiver.kt:14
+smartStepIntoAnonymousObjectReceiver.kt:19
+smartStepIntoAnonymousObjectReceiver.kt:14
+smartStepIntoAnonymousObjectReceiver.kt:15
+Disconnected from the target VM
+
+Process finished with exit code 0

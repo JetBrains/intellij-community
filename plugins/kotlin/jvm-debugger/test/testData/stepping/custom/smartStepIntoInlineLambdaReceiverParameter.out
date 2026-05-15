@@ -1,0 +1,10 @@
+LineBreakpoint created at smartStepIntoInlineLambdaReceiverParameter.kt:12
+Run Java
+Connected to the target VM
+smartStepIntoInlineLambdaReceiverParameter.kt:12
+smartStepIntoInlineLambdaReceiverParameter.kt:4
+smartStepIntoInlineLambdaReceiverParameter.kt:12
+smartStepIntoInlineLambdaReceiverParameter.kt:13
+Disconnected from the target VM
+
+Process finished with exit code 0
