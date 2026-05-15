@@ -86,7 +86,7 @@ import java.util.Objects;
 import java.util.Set;
 
 public final class ActionsTree {
-  public static final int SHORTCUTS_RIGHT_GAP = 9;
+  static final int SHORTCUTS_RIGHT_GAP = 19;
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
 
   private final JTree myTree;
@@ -320,7 +320,7 @@ public final class ActionsTree {
         if (userObject instanceof QuickList) {
           userObject = ((QuickList)userObject).getActionId();
         }
-        return userObject instanceof String ? KeymapUtil.getShortcutsText(myKeymap.getShortcuts((String)userObject)) : "";
+        return userObject instanceof String && myKeymap != null ? KeymapUtil.getShortcutsText(myKeymap.getShortcuts((String)userObject)) : "";
       }
       else {
         return "???";
@@ -595,7 +595,7 @@ public final class ActionsTree {
       }
       else if (userObject instanceof String) {
         actionId = (String)userObject;
-        boundId = ((KeymapImpl)myKeymap).hasShortcutDefined(actionId) ? null : ActionManagerEx.getInstanceEx().getActionBinding(actionId);
+        boundId = myKeymap == null || ((KeymapImpl)myKeymap).hasShortcutDefined(actionId) ? null : ActionManagerEx.getInstanceEx().getActionBinding(actionId);
         Presentation presentation = ActionsTreeUtil.getTemplatePresentation(actionId, null);
         if (presentation == null) {
           text = actionId;
@@ -803,7 +803,7 @@ public final class ActionsTree {
     final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
 
     if (ExperimentalUI.isNewUI()) {
-      new ShortcutTextList(shortcuts, abbreviations, tree, g).draw(bounds, g);
+      new ShortcutTextList(shortcuts, abbreviations, tree, -1).draw(bounds, g);
       config.restore();
       return;
     }

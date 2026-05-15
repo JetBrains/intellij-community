@@ -25,12 +25,15 @@ import javax.swing.UIManager
  * @author Alexander Lobas
  */
 internal class ShortcutTextList {
+
   private val width: Int
   private val height = JBUI.scale(18)
   private val round = JBUI.scale(8)
-  private val elements = mutableListOf<ShortcutTextElement>()
+  private val elements = mutableListOf<BaseElement>()
+  val tree: JComponent
 
-  constructor(shortcuts: Array<Shortcut>?, abbreviations: Collection<String>?, tree: JComponent, g: Graphics2D) {
+  constructor(shortcuts: Array<Shortcut>?, abbreviations: Collection<String>?, tree: JComponent, maxWidth: Int) {
+    this.tree = tree
     if (shortcuts.isNullOrEmpty() && abbreviations.isNullOrEmpty()) {
       width = 0
       return
@@ -38,72 +41,71 @@ internal class ShortcutTextList {
 
     val fixedWidth = JBUI.scale(20)
     val textGap = JBUI.scale(4)
-    val betweenGap = JBUI.scale(3)
-    val separatorGap = JBUI.scale(8)
+    val betweenGapElement = GapElement(JBUI.scale(3))
 
     val font = JBFont.medium()
+    val fontMetrics = tree.getFontMetrics(font)
     val boldFont = font.asBold()
-    val boldMetrics = tree.getFontMetrics(boldFont)
 
     val shortcutPresentation = createPresentation(
       textColor = JBColor.namedColor("Shortcut.foreground", JBColor(0x0, 0xDFE1E5)),
-      fillColorKey = "Shortcut.background",
+      fillColor = JBColor.namedColor("Shortcut.background", JBUI.CurrentTheme.CustomFrameDecorations.paneBackground()),
       borderColorKey = "Shortcut.borderColor",
       font = boldFont,
     )
 
     val abbreviationPresentation = createPresentation(
       textColor = JBColor.namedColor("Abbreviation.foreground", JBColor(0x5A5D6B2E, 0xB4B8BF40.toInt())),
-      fillColorKey = "Abbreviation.background",
+      fillColor = getColor("Abbreviation.background"),
       borderColorKey = "Abbreviation.borderColor",
       font = boldFont,
     )
 
-    val separatorText = KeyMapBundle.message("or.separator")
-    val separatorPresentation = ShortcutTextPresentation(JBUI.CurrentTheme.Label.foreground(), null, null, font)
-    val separatorElement = createTextElement(separatorText, 0, separatorGap, tree.getFontMetrics(font), separatorPresentation, g)
+    val textSeparatorPresentation = ShortcutTextPresentation(JBUI.CurrentTheme.Label.foreground(), null, null, font)
+    val orSeparator = createTextElement(KeyMapBundle.message("or.separator"), textSeparatorGap, tree, font, textSeparatorPresentation)
+    val shortcutsBlocks = mutableListOf<List<BaseElement>>()
 
     if (!shortcuts.isNullOrEmpty()) {
-      val lastShortcut = shortcuts.lastIndex
-
-      for ((index, shortcut) in shortcuts.withIndex()) {
+      for (shortcut in shortcuts) {
         val texts = getShortcutTexts(shortcut)
         val lastText = texts.lastIndex
+        val shortcutElements = mutableListOf<BaseElement>()
+
+        if (shortcutsBlocks.isNotEmpty()) {
+          shortcutElements.add(orSeparator)
+        }
 
         for ((index, text) in texts.withIndex()) {
-          val gap = if (index == lastText) 0 else betweenGap
-
           if (text.length == 1) {
-            elements.add(ShortcutTextElement(fixedWidth, gap, text, shortcutPresentation))
+            shortcutElements.add(ShortcutTextElement(fixedWidth, text, shortcutPresentation))
           }
           else {
-            elements.add(createTextElement(text, gap, textGap, boldMetrics, shortcutPresentation, g))
+            shortcutElements.add(createTextElement(text, textGap, tree, boldFont, shortcutPresentation))
+          }
+
+          if (index < lastText) {
+            shortcutElements.add(betweenGapElement)
           }
         }
 
-        if (index != lastShortcut) {
-          elements.add(separatorElement.copy())
-        }
+        shortcutsBlocks.add(shortcutElements)
       }
     }
 
     if (!abbreviations.isNullOrEmpty()) {
-      if (elements.isNotEmpty()) {
-        elements.add(separatorElement.copy())
-      }
-
-      val lastAbbreviation = abbreviations.size - 1
-
-      for ((index, abbreviation) in abbreviations.withIndex()) {
-        elements.add(createTextElement(abbreviation, 0, textGap, boldMetrics, abbreviationPresentation, g))
-
-        if (index != lastAbbreviation) {
-          elements.add(separatorElement.copy())
+      for (abbreviation in abbreviations) {
+        val shortcutElements = mutableListOf<BaseElement>()
+        if (shortcutsBlocks.isNotEmpty()) {
+          shortcutElements.add(orSeparator)
         }
+
+        shortcutElements.add(createTextElement(abbreviation, textGap, tree, boldFont, abbreviationPresentation))
+        shortcutsBlocks.add(shortcutElements)
       }
     }
 
-    width = elements.sumOf { element -> element.width + element.gap } + JBUI.scale(10)
+    fillElements(elements, shortcutsBlocks, maxWidth, fontMetrics, textSeparatorPresentation)
+    width = elements.sumOf { element -> element.width }
   }
 
   private fun getShortcutTexts(shortcut: Shortcut): List<String> {
@@ -154,14 +156,20 @@ internal class ShortcutTextList {
     }
   }
 
-  private fun createPresentation(textColor: Color, fillColorKey: String, borderColorKey: String, font: Font): ShortcutTextPresentation {
-    return ShortcutTextPresentation(textColor, getColor(fillColorKey), getColor(borderColorKey), font)
+  private fun createPresentation(textColor: JBColor, fillColor: Color?, borderColorKey: String, font: Font): ShortcutTextPresentation {
+    return ShortcutTextPresentation(textColor, fillColor, getColor(borderColorKey), font)
   }
 
-  private fun createTextElement(text: String, gap: Int, textGap: Int, fontMetrics: FontMetrics, presentation: ShortcutTextPresentation, g: Graphics2D): ShortcutTextElement {
-    val bounds = fontMetrics.getStringBounds(text, g)
-    val textWidth = bounds.width + textGap * 2
-    return ShortcutTextElement(textWidth.toInt(), gap, text, presentation)
+  private fun createTextElement(
+    text: String,
+    textGap: Int,
+    c: JComponent,
+    font: Font,
+    presentation: ShortcutTextPresentation,
+  ): ShortcutTextElement {
+    val fontMetrics = c.getFontMetrics(font)
+    val textWidth = fontMetrics.stringWidth(text) + textGap * 2
+    return ShortcutTextElement(textWidth, text, presentation)
   }
 
   private fun getColor(name: String): Color? {
@@ -172,30 +180,87 @@ internal class ShortcutTextList {
     return null
   }
 
+  fun getWidth(): Int {
+    return width
+  }
+
   fun draw(bounds: Rectangle, g: Graphics2D) {
     var startX = bounds.x + bounds.width - width
     val y = bounds.y + (bounds.height - height) / 2
 
     for (element in elements) {
-      val presentation = element.presentation
-      val borderColor = presentation.borderColor
-      if (borderColor != null) {
-        g.color = borderColor
-        g.drawRoundRect(startX, y, element.width, height, round, round)
+      when (element) {
+        is GapElement -> {
+          startX += element.width
+        }
+
+        is ShortcutTextElement -> {
+          val presentation = element.presentation
+
+          val fillColor = presentation.fillColor
+          if (fillColor != null) {
+            g.color = fillColor
+            g.fillRoundRect(startX, y, element.width, height, round, round)
+          }
+
+          val borderColor = presentation.borderColor
+          if (borderColor != null) {
+            g.color = borderColor
+            g.drawRoundRect(startX, y, element.width, height, round, round)
+          }
+
+          g.color = presentation.textColor
+          g.font = presentation.font
+          UIUtil.drawCenteredString(g, Rectangle(startX, y, element.width, height), element.text)
+
+          startX += element.width
+        }
       }
-
-      val fillColor = presentation.fillColor
-      if (fillColor != null) {
-        g.color = fillColor
-        g.fillRoundRect(startX, y, element.width, height, round, round)
-      }
-
-      g.color = presentation.textColor
-      g.font = presentation.font
-      UIUtil.drawCenteredString(g, Rectangle(startX, y, element.width, height), element.text)
-
-      startX += element.width + element.gap
     }
+  }
+}
+
+private val textSeparatorGap: Int
+  get() = JBUI.scale(8)
+
+private fun fillElements(
+  elements: MutableList<BaseElement>,
+  shortcutsBlocks: MutableList<List<BaseElement>>,
+  maxWidth: Int,
+  fontMetrics: FontMetrics,
+  textSeparatorPresentation: ShortcutTextPresentation,
+) {
+  val flattenShortcuts = shortcutsBlocks.flatten()
+  var currentWidth = flattenShortcuts.sumOf { it.width }
+  if (maxWidth == -1 || currentWidth <= maxWidth) {
+    elements.addAll(flattenShortcuts)
+    return
+  }
+
+  currentWidth -= shortcutsBlocks.removeLast().sumOf { it.width }
+  var moreCount = 1
+  val textSeparatorGap = textSeparatorGap
+
+  while (shortcutsBlocks.isNotEmpty()) {
+    val orMoreText = KeyMapBundle.message("shortcuts.or.more", moreCount)
+    val orMoreTextWidth = fontMetrics.stringWidth(orMoreText)
+    if (currentWidth + textSeparatorGap + orMoreTextWidth <= maxWidth) {
+      elements.addAll(shortcutsBlocks.flatten())
+      elements.add(GapElement(textSeparatorGap))
+      elements.add(ShortcutTextElement(orMoreTextWidth, orMoreText, textSeparatorPresentation))
+
+      return
+    }
+
+    currentWidth -= shortcutsBlocks.removeLast().sumOf { it.width }
+    moreCount++
+  }
+
+  val tinyInfoText = KeyMapBundle.message("shortcuts.tiny.info")
+  val tinyInfoTextWidth = fontMetrics.stringWidth(tinyInfoText)
+
+  if (tinyInfoTextWidth <= maxWidth) {
+    elements.add(ShortcutTextElement(tinyInfoTextWidth, tinyInfoText, textSeparatorPresentation))
   }
 }
 
@@ -207,8 +272,15 @@ private data class ShortcutTextPresentation(
 )
 
 private data class ShortcutTextElement(
-  val width: Int,
-  val gap: Int,
+  override val width: Int,
   val text: String,
   val presentation: ShortcutTextPresentation,
-)
+) : BaseElement
+
+private data class GapElement(
+  override val width: Int,
+) : BaseElement
+
+private sealed interface BaseElement {
+  val width: Int
+}

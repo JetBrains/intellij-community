@@ -126,7 +126,7 @@
       restartRequired="true"
     />
     <registryKey
-      key="ide.linux.ijpl187594"
+      key="ide.ui.keymap.ijpl187594"
       defaultValue="false"
       description="Enable the fix for IJPL-187594 Keymaps: shortcuts overlap long action names. The Classic UI is not affected"
     />
