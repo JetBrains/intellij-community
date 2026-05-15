@@ -18,24 +18,20 @@ class NodeProviderTreeAction(
 ) : CheckboxTreeAction {
 
   @Volatile
-  private var myNodes: List<StructureUiTreeElement> = emptyList()
+  private var myNodesByParentId: Map<Int, List<StructureUiTreeElement>> = emptyMap()
 
   @Volatile
   var nodesLoaded: Boolean = false
     private set
 
-  val nodes: List<StructureUiTreeElement>
-    get() = myNodes
-
   fun setNodes(newNodes: List<StructureUiTreeElement>) {
-    myNodes = newNodes
+    myNodesByParentId = newNodes.groupBy { node ->
+      (node as? StructureUiTreeElementImpl)?.dto?.parentId ?: -1
+    }
     nodesLoaded = true
   }
 
   fun getNodes(parent: StructureUiTreeElement): List<StructureUiTreeElement> {
-    return nodes.filter {
-      if (it !is StructureUiTreeElementImpl) return@filter false
-      it.dto.parentId == parent.id
-    }
+    return myNodesByParentId[parent.id] ?: emptyList()
   }
 }
