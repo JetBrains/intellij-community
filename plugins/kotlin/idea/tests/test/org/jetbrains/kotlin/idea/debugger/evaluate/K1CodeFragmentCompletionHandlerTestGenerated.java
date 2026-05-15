@@ -79,4 +79,14 @@ public class K1CodeFragmentCompletionHandlerTestGenerated extends AbstractK1Code
     public void testNotImportedExtension() throws Exception {
         runTest("../../completion/testData/handlers/runtimeCast/NotImportedExtension.kt");
     }
+
+    @TestMetadata("NullableClassCast.kt")
+    public void testNullableClassCast() throws Exception {
+        runTest("../../completion/testData/handlers/runtimeCast/NullableClassCast.kt");
+    }
+
+    @TestMetadata("NullableIntClassCast.kt")
+    public void testNullableIntClassCast() throws Exception {
+        runTest("../../completion/testData/handlers/runtimeCast/NullableIntClassCast.kt");
+    }
 }
