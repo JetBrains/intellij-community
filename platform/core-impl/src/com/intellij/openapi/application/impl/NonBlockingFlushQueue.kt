@@ -12,7 +12,6 @@ import com.intellij.openapi.diagnostic.ThrottledLogger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Condition
-import com.intellij.openapi.util.Ref
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -75,23 +74,27 @@ class NonBlockingFlushQueue(private val threadingSupport: ThreadingSupport) {
 
   /**
    * The main queue for runnables requiring write-intent lock.
+   * guarded by [lockObject]
    */
   private val writeIntentQueue: BulkArrayQueue<RunnableInfo> = BulkArrayQueue()
 
   /**
    * Runnables, which require write-intent lock, but that were skipped due to incompatible modality states.
+   * guarded by [lockObject]
    */
-  private val skippedWriteIntentQueue: Ref<ObjectArrayList<RunnableInfo>> = Ref(ObjectArrayList(100))
+  private var skippedWriteIntentQueue: ObjectArrayList<RunnableInfo> = ObjectArrayList(100)
 
   /**
    * The main queue for runnables not requiring write-intent lock.
+   * guarded by [lockObject]
    */
   private val uiQueue: BulkArrayQueue<FlushQueueCommand> = BulkArrayQueue()
 
   /**
    * Runnables, which do not require write-intent lock, but that were skipped due to incompatible modality states.
+   * guarded by [lockObject]
    */
-  private val skippedUiQueue: Ref<ObjectArrayList<RunnableInfo>> = Ref(ObjectArrayList(100))
+  private var skippedUiQueue: ObjectArrayList<RunnableInfo> = ObjectArrayList(100)
 
   /**
    * A monitor for interaction with [writeIntentQueue], [uiQueue] and [FLUSH_SCHEDULED].
@@ -108,22 +111,9 @@ class NonBlockingFlushQueue(private val threadingSupport: ThreadingSupport) {
 
   /**
    * Protection against too frequent scheduling requests.
+   * guarded by [lockObject]
    */
   private var FLUSH_SCHEDULED: Boolean = false
-
-  /**
-   * Requires lock on [lockObject]
-   */
-  private fun setFlushScheduledGuard(value: Boolean) {
-    FLUSH_SCHEDULED = value
-  }
-
-  /**
-   * Requires lock on [lockObject]
-   */
-  private fun getFlushScheduledGuard(): Boolean {
-    return FLUSH_SCHEDULED
-  }
 
   /**
    * States of [NonBlockingFlushQueue]
@@ -146,7 +136,7 @@ class NonBlockingFlushQueue(private val threadingSupport: ThreadingSupport) {
     val queuedTimeNs: Long,
     /** How many items were in queue at the moment this item was enqueued  */
     val queueSize: Int,
-    // this field is not protected by intention. It gets mutated only on EDT
+    // this field is not protected by intention. It's accessed only in EDT
     var wasInSkippedItems: Boolean,
   ): FlushQueueCommand {
     override fun toString(): String {
@@ -169,16 +159,18 @@ class NonBlockingFlushQueue(private val threadingSupport: ThreadingSupport) {
 
   /**
    * Current state of [NonBlockingFlushQueue].
-   * Can be changed only on EDT
+   * Can be changed only on EDT, accessed also from BGT
    */
+  @Volatile
   private var currentWriteIntentLockMode: WriteIntentLockMode = WriteIntentLockMode.ALL
 
+  @RequiresEdt(generateAssertion = false/*already asserted*/)
   private fun pollNextEvent(): RunnableInfo? {
     ThreadingAssertions.assertEventDispatchThread()
 
     val currentModality = LaterInvocator.getCurrentModalityState()
     while (true) {
-      var skippedQueue: Ref<ObjectArrayList<RunnableInfo>>
+      var skippedQueue: ObjectArrayList<RunnableInfo>
       var selectedQueue: BulkArrayQueue<*>
       val incomingInfo = synchronized(lockObject) {
         val topUiRunnable = uiQueue.peekFirst()
@@ -236,9 +228,9 @@ class NonBlockingFlushQueue(private val threadingSupport: ThreadingSupport) {
         is RunnableInfo -> {
           if (!currentModality.accepts(incomingInfo.modalityState)) {
             // Current modality is not acceptable; we must send such event to the Skipped Modality Queue
-            skippedQueue.get().add(incomingInfo)
-            incomingInfo.wasInSkippedItems = true
             synchronized(lockObject) {
+              skippedQueue.add(incomingInfo)
+              incomingInfo.wasInSkippedItems = true
               selectedQueue.pollFirst() // remove the skipped runnable
             }
             continue
@@ -258,41 +250,42 @@ class NonBlockingFlushQueue(private val threadingSupport: ThreadingSupport) {
   }
 
   @RequiresEdt(generateAssertion = false/*already asserted*/)
-  private fun reincludeSkippedItems(list: Ref<ObjectArrayList<RunnableInfo>>, mainQueue: BulkArrayQueue<in RunnableInfo>) {
-    val size = list.get().size
-    if (size != 0) {
-      synchronized(lockObject) {
-        mainQueue.bulkEnqueueFirst(list.get())
-      }
+  private fun reincludeSkippedItems(list: ObjectArrayList<RunnableInfo>, mainQueue: BulkArrayQueue<in RunnableInfo>) : ObjectArrayList<RunnableInfo>? {
+    val size = list.size
+    val result:ObjectArrayList<RunnableInfo>?
+    if (size == 0) {
+      result = null
+    }
+    else {
+      mainQueue.bulkEnqueueFirst(list)
       if (size < 100) {
-        list.get().clear()
-      } else {
-        list.set(ObjectArrayList(100))
+        list.clear()
+        result = null
+      }
+      else {
+        result = ObjectArrayList(100)
       }
     }
     requestFlush()
+    return result
   }
 
-  fun requestFlush() {
+  private fun requestFlush() {
     synchronized(lockObject) {
-      if (getFlushScheduledGuard()) {
-        return
+      if (!FLUSH_SCHEDULED && (!uiQueue.isEmpty || currentWriteIntentLockMode != WriteIntentLockMode.UI_ONLY && !writeIntentQueue.isEmpty)) {
+        // so the queue is effectively non-empty
+        FLUSH_SCHEDULED = true
+        SwingUtilities.invokeLater(FLUSH_NOW)
       }
-      if (uiQueue.isEmpty && (currentWriteIntentLockMode == WriteIntentLockMode.UI_ONLY || writeIntentQueue.isEmpty)) {
-        // so the queue is effectively empty
-        return
-      }
-      setFlushScheduledGuard(true)
     }
-
-    SwingUtilities.invokeLater(FLUSH_NOW)
   }
 
+  @RequiresEdt(generateAssertion = false/*already asserted*/)
   private fun flushNow() {
     ThreadingAssertions.assertEventDispatchThread()
 
     synchronized(lockObject) {
-      setFlushScheduledGuard(false)
+      FLUSH_SCHEDULED = false
     }
 
     val startTime = System.nanoTime()
@@ -315,6 +308,7 @@ class NonBlockingFlushQueue(private val threadingSupport: ThreadingSupport) {
   }
 
   @Suppress("IncorrectCancellationExceptionHandling")
+  @RequiresEdt(generateAssertion = false/*already asserted*/)
   private fun runNextEvent(nextRunnable: RunnableInfo) {
     val watcher = EventWatcher.getInstanceOrNull()
     val waitingFinishedNs = System.nanoTime()
@@ -374,6 +368,7 @@ class NonBlockingFlushQueue(private val threadingSupport: ThreadingSupport) {
     }
   }
 
+  @RequiresEdt(generateAssertion = false/*already asserted*/)
   private fun reportStatistics(watcher: EventWatcher?, waitingFinishedNs: Long, runnableInfo: RunnableInfo) {
     if (watcher == null) return
     val runnable: Runnable = runnableInfo.runnable
@@ -385,7 +380,7 @@ class NonBlockingFlushQueue(private val threadingSupport: ThreadingSupport) {
     //RC: ExceptionAnalyzer reports negative values here, but it is not clear there do they come from.
     //    The reasons I could think of now are:
     //    1) oddities of .nanoTime() behavior under different CPU power-saving modes
-    //    2) changing .nanoTime() origin due to thead being relocated to another CPU
+    //    2) changing .nanoTime() origin due to thread being relocated to another CPU
     //    3) long overflow in (end-start) expression.
     //    those are straightforward reasons, but 1-2 was mostly solved (it seems to me) in a modern
     //    hardware/software, and 3 is hard to expect in our use-cases. Hence, negative values could be
@@ -408,17 +403,26 @@ class NonBlockingFlushQueue(private val threadingSupport: ThreadingSupport) {
   /**
    * Since the modality states are different now, we need to reevaluate the decisions about skipped runnables
    */
+  @RequiresEdt(generateAssertion = false/*already asserted*/)
   fun onModalityChanged() {
     ThreadingAssertions.assertEventDispatchThread()
-    reincludeSkippedItems(skippedUiQueue, uiQueue)
-    reincludeSkippedItems(skippedWriteIntentQueue, writeIntentQueue)
+    synchronized(lockObject) {
+      val resultUI = reincludeSkippedItems(skippedUiQueue, uiQueue)
+      if (resultUI != null) {
+        skippedUiQueue = resultUI
+      }
+      val resultWI = reincludeSkippedItems(skippedWriteIntentQueue, writeIntentQueue)
+      if (resultWI != null) {
+        skippedWriteIntentQueue = resultWI
+      }
+    }
   }
 
   fun purgeExpiredItems() {
     ThreadingAssertions.assertEventDispatchThread()
     synchronized(lockObject) {
-      skippedUiQueue.get().removeAll { it.isExpired.value(null) }
-      skippedWriteIntentQueue.get().removeAll { it.isExpired.value(null) }
+      skippedUiQueue.removeAll { it.isExpired.value(null) }
+      skippedWriteIntentQueue.removeAll { it.isExpired.value(null) }
       writeIntentQueue.removeAll { it.isExpired.value(null) }
       uiQueue.removeAll { it is RunnableInfo && it.isExpired.value(null) }
       requestFlush()
@@ -444,7 +448,9 @@ class NonBlockingFlushQueue(private val threadingSupport: ThreadingSupport) {
   }
 
   override fun toString(): String {
-    return "NonBlockingFlushQueue(currentWriteIntentLockMode=$currentWriteIntentLockMode, wiQueue=${writeIntentQueue.size()} elements, uiQueue=${uiQueue.size()}, skippedWriteIntentQueue=${skippedWriteIntentQueue.get().size} elements, skippedUiQueue=${skippedUiQueue.get().size} elements; flush scheduled: $FLUSH_SCHEDULED)"
+    synchronized(lockObject) {
+      return "NonBlockingFlushQueue(currentWriteIntentLockMode=$currentWriteIntentLockMode, wiQueue=${writeIntentQueue.size()} elements, uiQueue=${uiQueue.size()}, skippedWriteIntentQueue=${skippedWriteIntentQueue.size} elements, skippedUiQueue=${skippedUiQueue.size} elements; flush scheduled: $FLUSH_SCHEDULED)"
+    }
   }
 
   fun isFlushNow(runnable: Runnable): Boolean {
