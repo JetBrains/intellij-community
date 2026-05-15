@@ -5,7 +5,6 @@ import fleet.bundles.PluginName
 import fleet.bundles.PluginRepository
 import fleet.bundles.PluginVersion
 import fleet.util.logging.logger
-import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
@@ -20,8 +19,11 @@ private object Marketplace {
   val logger = logger<Marketplace>()
 }
 
-//@fleet.kernel.plugins.InternalInPluginModules(where = ["fleet.common", "fleet.plugins.pluginManagement.test"])
-fun marketPlaceRepository(httpClient: suspend () -> HttpClient, host: String, defaultRepository: PluginRepository? = null): PluginRepository {
+fun marketPlaceRepository(
+  httpClientSource: HttpClientSource,
+  host: String,
+  defaultRepository: PluginRepository? = null
+): PluginRepository {
   return object : PluginRepository {
     override suspend fun getLatestVersions(names: Set<PluginName>, shipVersion: PluginVersion): Map<PluginName, PluginVersion> {
       Marketplace.logger.debug { "Querying latest versions of '$names' compatible with '$shipVersion'..." }
@@ -32,14 +34,16 @@ fun marketPlaceRepository(httpClient: suspend () -> HttpClient, host: String, de
         val query = versionsQuery(names.mapTo(HashSet()) { it.name }, offset, shipVersion)
         val queryStr = Json.encodeToString(VersionsQuery.serializer(), query)
         val versions = kotlin.runCatching {
-          val url = searchUri(host)
-          val body = httpClient().post(url) {
-            setBody(TextContent(queryStr, ContentType.Application.Json))
-          }.bodyAsText()
-          val response = Json.decodeFromString(VersionsResponse.serializer(), body)
-          Marketplace.logger.debug { "URL:\n$url\nQuery:\n$queryStr\nResponse:\n$response" }
-          response.data.updates.updates.map { versionInfo ->
-            PluginName(versionInfo.xmlId) to PluginVersion.fromString(versionInfo.version)
+          httpClientSource.use { httpClient ->
+            val url = searchUri(host)
+            val body = httpClient.post(url) {
+              setBody(TextContent(queryStr, ContentType.Application.Json))
+            }.bodyAsText()
+            val response = Json.decodeFromString(VersionsResponse.serializer(), body)
+            Marketplace.logger.debug { "URL:\n$url\nQuery:\n$queryStr\nResponse:\n$response" }
+            response.data.updates.updates.map { versionInfo ->
+              PluginName(versionInfo.xmlId) to PluginVersion.fromString(versionInfo.version)
+            }
           }
         }.onFailure { x ->
           if (x is CancellationException) {
@@ -67,9 +71,11 @@ fun marketPlaceRepository(httpClient: suspend () -> HttpClient, host: String, de
         Marketplace.logger.debug { "Querying marketplace $host for a plugin $pluginName" }
         val uri = bundleUri(host, pluginName.name, pluginVersion.versionString)
         try {
-          val bundleStr = httpClient().get(uri).bodyAsText()
-          Marketplace.logger.debug { "getPlugin($pluginName, $pluginVersion) => ${bundleStr.length} bytes" }
-          Json.decodeFromString(PluginDescriptor.serializer(), bundleStr)
+          httpClientSource.use { httpClient ->
+            val bundleStr = httpClient.get(uri).bodyAsText()
+            Marketplace.logger.debug { "getPlugin($pluginName, $pluginVersion) => ${bundleStr.length} bytes" }
+            Json.decodeFromString(PluginDescriptor.serializer(), bundleStr)
+          }
         }
         catch (x: CancellationException) {
           throw x
@@ -83,7 +89,6 @@ fun marketPlaceRepository(httpClient: suspend () -> HttpClient, host: String, de
 
     override fun presentableName(): String = "Marketplace PluginRepository `$host`"
 
-    @OptIn(ExperimentalUuidApi::class)
     /**
      * Marketplace repository is always considered identical in context of cache invalidation, we want reproducibility (after the first resolution) instead of freshness.
      */

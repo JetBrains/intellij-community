@@ -28,11 +28,11 @@ import java.nio.file.StandardOpenOption
 import java.security.MessageDigest
 import java.text.DecimalFormat
 import kotlin.io.path.absolutePathString
-import kotlin.io.path.copyToRecursively
 import kotlin.io.path.isDirectory
 import kotlin.io.path.outputStream
 import kotlin.math.log10
 import kotlin.math.pow
+import kotlin.time.Duration.Companion.milliseconds
 
 private const val MAX_LOCK_WAIT_MS = 60000L
 private const val LOCK_DELAY_MS = 100L
@@ -40,7 +40,7 @@ private const val LOCK_DELAY_MS = 100L
 data class CodeCachePath(val path: Path, val writable: Boolean)
 
 class CodeCache(
-  private val httpClientFn: suspend () -> HttpClient,
+  private val httpClientSource: HttpClientSource,
   private val paths: List<CodeCachePath>,
   private val lockDelay: Long = LOCK_DELAY_MS,
   private val maxLockWaitTime: Long = MAX_LOCK_WAIT_MS,
@@ -89,7 +89,9 @@ class CodeCache(
 
     return withFileLock(tmpFile.parent, tmpFile.name, coord) {
       if (!targetFile.exists()) {
-        httpClientFn().downloadFile(coord.url, tmpFile, queryParams)
+        httpClientSource.use { httpClient ->
+          httpClient.downloadFile(coord.url, tmpFile, queryParams)
+        }
         val actualHash = hash(tmpFile)
         val hashesMatch = actualHash == coord.hash
         if (hashesMatch) {
@@ -152,9 +154,9 @@ class CodeCache(
     }
 
     try {
-      val success = withTimeoutOrNull(maxLockWaitTime) {
+      val success = withTimeoutOrNull(maxLockWaitTime.milliseconds) {
         while (!tryLock(lockFile)) {
-          delay(lockDelay)
+          delay(lockDelay.milliseconds)
         }
         true
       }

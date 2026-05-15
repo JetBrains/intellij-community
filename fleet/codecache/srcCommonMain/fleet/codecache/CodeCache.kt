@@ -1,9 +1,14 @@
 package fleet.codecache
 
 import fleet.bundles.Coordinates
+import io.ktor.client.HttpClient
 import io.ktor.http.decodeURLQueryComponent
+import kotlinx.coroutines.CoroutineScope
 
-//@fleet.kernel.plugins.InternalInPluginModules(where = ["fleet.commander.workspace"])
+interface HttpClientSource {
+  suspend fun <T> use(consumer: suspend CoroutineScope.(HttpClient) -> T): T
+}
+
 fun Coordinates.relativePathToCodeCache(): String {
   return when (this) {
     is Coordinates.Remote -> {

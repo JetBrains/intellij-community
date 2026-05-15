@@ -4,8 +4,10 @@ import fleet.bundles.Coordinates
 import fleet.bundles.ResolutionException
 import fleet.codecache.CodeCache
 import fleet.codecache.CodeCachePath
+import fleet.codecache.HttpClientSource
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -16,6 +18,7 @@ import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.test.Test
 import kotlin.test.fail
+import kotlin.time.Duration.Companion.milliseconds
 
 class CodeCacheFileLockTest {
   @Test
@@ -44,7 +47,7 @@ class CodeCacheFileLockTest {
           cc.withFileLock(cacheDir, filename, mockCoord) {
             try {
               if (acquired.getAndSet(true)) fail("More than one client")
-              delay(10)
+              delay(10.milliseconds)
             }
             finally {
               acquired.set(false)
@@ -67,7 +70,7 @@ class CodeCacheFileLockTest {
       val lockJob = launch {
         cc.withFileLock(cacheDir, filename, mockCoord) {
           semaphore.release()
-          delay(testTimeout * 2)
+          delay((testTimeout * 2).milliseconds)
         }
       }
 
@@ -106,10 +109,21 @@ class CodeCacheFileLockTest {
 
   private fun codeCacheTest(testTimeout: Long, maxLockWait: Long, body: suspend CoroutineScope.(CodeCache, Path) -> Unit) {
     runBlocking {
-      withTimeout(testTimeout) {
+      withTimeout(testTimeout.milliseconds) {
         val cacheDir = Files.createTempDirectory("codeCacheTest")
         val codeCachePaths = listOf(CodeCachePath(cacheDir, writable = true))
-        val cc = CodeCache({ HttpClient { } }, codeCachePaths, maxLockWaitTime = maxLockWait)
+        val cc = CodeCache(
+          httpClientSource = object : HttpClientSource {
+            override suspend fun <T> use(consumer: suspend CoroutineScope.(HttpClient) -> T): T {
+              return HttpClient { }.use { httpClient ->
+                coroutineScope {
+                  consumer(httpClient)
+                }
+              }
+            }
+          },
+          codeCachePaths,
+          maxLockWaitTime = maxLockWait)
         body(cc, cacheDir)
       }
     }
