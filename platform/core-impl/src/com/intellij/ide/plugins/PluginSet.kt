@@ -64,7 +64,7 @@ class PluginSet internal constructor(
     PluginManagerCore.logger.assertTrue(plugin.isMarkedForLoading, "$plugin is not marked for loading")
 
     val unsortedPlugins = LinkedHashSet(allPlugins)
-    unsortedPlugins.removeIf { it.legacyEquals(plugin) }
+    unsortedPlugins.removeIf { it.pluginId == plugin.pluginId }
     unsortedPlugins.add(plugin)
 
     // FIXME handle potential conflict
