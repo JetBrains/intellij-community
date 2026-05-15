@@ -1,2 +1,3 @@
 [J.java] Usage in extends/implements clause 1 public class J implements OnlyInCommonInterface001 { }
+[common.kt] Unclassified 1 expect interface OnlyInCommonInterface001
 [jvm.kt] Supertype 3 interface ChildInterface : OnlyInCommonInterface001

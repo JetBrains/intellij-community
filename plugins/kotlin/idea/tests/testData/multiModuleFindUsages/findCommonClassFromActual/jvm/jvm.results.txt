@@ -1,2 +1,3 @@
 [common.kt] New instance creation 2 My("a").boo()
 [common.kt] New instance creation 3 My("b").boo()
+[common.kt] Unclassified 6 expect class My(val s: String) {

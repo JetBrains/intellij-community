@@ -1,3 +1,4 @@
 [common.kt] New instance creation 2 val ac = Clazz004()
+[common.kt] Unclassified 1 expect open class Clazz004()
 [js.kt] New instance creation 4 val a1 = Clazz004()
 [jvm.kt] New instance creation 2 val a2 = Clazz004()

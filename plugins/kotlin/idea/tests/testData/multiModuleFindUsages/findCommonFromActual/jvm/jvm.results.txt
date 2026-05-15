@@ -1,2 +1,3 @@
 [common.kt] Function call 2 boo("a")
 [common.kt] Function call 3 boo("b")
+[common.kt] Unclassified 6 expect fun boo(s: String)

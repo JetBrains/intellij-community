@@ -1,4 +1,5 @@
 [common.kt] Function call 6 DummyClass001().component1()
+[common.kt] Unclassified 2 expect operator fun DummyClass001.component1()
 [common.kt] Value read 5 val (a, b) = DummyClass001()
 [js.kt] Function call 7 DummyClass001().component1()
 [js.kt] Value read 6 val (a, b) = DummyClass001()

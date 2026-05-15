@@ -1,3 +1,4 @@
 [common.kt] Companion object 8 println(Clazz006.AA_A)
+[common.kt] Unclassified 1 expect class Clazz006 {
 [js.kt] Companion object 12 println(Clazz006.AA_A)
 [jvm.kt] Companion object 9 println(Clazz006.AA_A)

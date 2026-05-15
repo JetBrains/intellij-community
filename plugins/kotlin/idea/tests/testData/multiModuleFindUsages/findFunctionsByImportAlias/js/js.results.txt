@@ -1,4 +1,5 @@
 [common.kt] Function call 6 A1ImportAlias()
+[common.kt] Unclassified 4 expect fun a1()
 [common.kt] Usage in import 2 import foo.a1 as A1ImportAlias
 [js.kt] Function call 9 A1ImportAlias()
 [js.kt] Usage in import 5 import foo.a1 as A1ImportAlias

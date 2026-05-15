@@ -1,1 +1,2 @@
 [Main.java] Unclassified 3 int p = c.getP();
+[jvm.kt] Unclassified 2 actual val p: Int = 42

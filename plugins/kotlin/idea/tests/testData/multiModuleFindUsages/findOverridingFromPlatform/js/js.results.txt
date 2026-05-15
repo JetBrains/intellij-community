@@ -1,5 +1,6 @@
 [common.kt] Function call 10 b.firstFun()
 [common.kt] Function call 11 impl.firstFun()
+[common.kt] Unclassified 2 actual fun firstFun()
 [js.kt] Function call 12 b.firstFun()
 [js.kt] Function call 13 impl.firstFun()
 [jvm.kt] Function call 10 b.firstFun()

@@ -1,5 +1,6 @@
 [common.kt] Function call 5 d.invoke()
 [common.kt] Implicit 'invoke' 4 d()
+[common.kt] Unclassified 2 expect operator fun DummyClass002.invoke()
 [js.kt] Function call 6 d.invoke()
 [js.kt] Implicit 'invoke' 5 d()
 [jvm.kt] Function call 4 d.invoke()

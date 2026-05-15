@@ -1,2 +1,3 @@
 [common.kt] Parameter type 5 fun smth(p: ImportAlias) {}
+[common.kt] Unclassified 4 expect interface OnlyInCommonInterface014
 [common.kt] Usage in import 2 import foo.OnlyInCommonInterface014 as ImportAlias

@@ -1,2 +1,3 @@
 [Main.java] New instance creation 3 C c = new C(0);
 [Main.java] Unclassified 9 super(i);
+[jvm.kt] Unclassified 1 actual class C actual constructor(i: Int)

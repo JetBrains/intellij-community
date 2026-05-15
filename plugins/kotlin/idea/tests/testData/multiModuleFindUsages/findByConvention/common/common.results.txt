@@ -2,5 +2,7 @@
 [common.kt] Implicit 'invoke' 7 d()
 [js.kt] Function call 4 d.invoke()
 [js.kt] Implicit 'invoke' 3 d()
+[js.kt] Unclassified 1 actual  operator fun DummyClass002.invoke() {}
 [jvm.kt] Function call 4 d.invoke()
 [jvm.kt] Implicit 'invoke' 3 d()
+[jvm.kt] Unclassified 1 actual operator fun DummyClass002.invoke() {}

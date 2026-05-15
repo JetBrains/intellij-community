@@ -1,2 +1,3 @@
 [jvm.kt] Function call 4 boo("a")
 [jvm.kt] Function call 5 boo("b")
+[jvm.kt] Unclassified 1 actual fun boo(s: String) {}

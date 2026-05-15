@@ -1,2 +1,3 @@
 [common.kt] Supertype 2 expect class C : I
+[common.kt] Unclassified 1 expect interface I
 [jvm.kt] Supertype 5 actual class C : I

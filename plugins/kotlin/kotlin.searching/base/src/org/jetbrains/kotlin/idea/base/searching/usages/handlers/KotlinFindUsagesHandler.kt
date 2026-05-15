@@ -4,11 +4,13 @@ package org.jetbrains.kotlin.idea.base.searching.usages.handlers
 
 import com.intellij.find.findUsages.FindUsagesHandler
 import com.intellij.find.findUsages.FindUsagesOptions
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.impl.light.LightMemberReference
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
@@ -19,7 +21,13 @@ import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFindUsagesHandlerFa
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinReferencePreservingUsageInfo
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinReferenceUsageInfo
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils.actualsForExpect
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils.expectDeclarationIfAny
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.psiUtil.isActualDeclaration
+import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import java.util.Collections
+import java.util.concurrent.Callable
 
 abstract class KotlinFindUsagesHandler<T : PsiElement>(
     psiElement: T,
@@ -106,6 +114,25 @@ abstract class KotlinFindUsagesHandler<T : PsiElement>(
         val options: FindUsagesOptions
     ) {
         private val tasks = ArrayList<() -> Boolean>()
+        init {
+            addTask {
+                when (element) {
+                    is KtDeclaration if runReadAction { element.isExpectDeclaration() } -> ReadAction.nonBlocking(Callable { element.actualsForExpect().map { it.createSmartPointer() } })
+                        .executeSynchronously().all { actualPointer ->
+                            val actual = actualPointer.element
+                            actual != null && processUsage(processor, actual)
+                    }
+
+                    is KtDeclaration if runReadAction { element.isActualDeclaration() } -> ReadAction.nonBlocking(Callable { element.expectDeclarationIfAny()?.createSmartPointer() })
+                        .executeSynchronously()?.let { expectPointer ->
+                            val expect = expectPointer.element
+                            expect != null && processUsage(processor, expect)
+                    } ?: true
+
+                    else -> true
+                }
+            }
+        }
 
         /**
          * Adds a time-consuming operation to be executed outside read-action
