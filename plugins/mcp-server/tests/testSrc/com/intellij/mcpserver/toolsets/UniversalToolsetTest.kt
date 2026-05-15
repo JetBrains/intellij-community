@@ -2,17 +2,22 @@
 
 package com.intellij.mcpserver.toolsets
 
-import com.intellij.mcpserver.McpSessionInvocationMode
 import com.intellij.mcpserver.GeneralMcpToolsetTestBase
+import com.intellij.mcpserver.McpExpectedError
+import com.intellij.mcpserver.McpSessionInvocationMode
 import com.intellij.mcpserver.settings.McpToolFilterSettings
 import com.intellij.mcpserver.toolsets.general.UniversalToolset
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -127,6 +132,63 @@ class UniversalToolsetTest : GeneralMcpToolsetTestBase() {
   }
 
   @Test
+  fun execute_tool_search_file_with_paths_array(): Unit = runBlocking(Dispatchers.Default) {
+    testMcpTool(
+      UniversalToolset::execute_tool.name,
+      buildJsonObject {
+        put("command", JsonPrimitive("search_file --q **/*.java --paths '[\"src/Test.java\"]'"))
+      }
+    ) { result ->
+      assert(result.isError == false) { "search_file with paths array should succeed" }
+      assertThat(parseSearchResult(result.textContent.text).filePaths()).containsExactly("src/Test.java")
+    }
+  }
+
+  @Test
+  fun parse_args_to_json_with_array_and_object_parameters() {
+    val jsonArgs = parseUniversalArgs(
+      listOf("--items", "[\"first\",\"second\"]", "--payload", "{\"enabled\":true}"),
+      buildJsonObject {
+        put("items", buildJsonObject { put("type", JsonPrimitive("array")) })
+        put("payload", buildJsonObject { put("type", JsonPrimitive("object")) })
+      },
+    )
+
+    assertThat(jsonArgs["items"]).isInstanceOf(JsonArray::class.java)
+    assertThat(jsonArgs["items"].toString()).isEqualTo("[\"first\",\"second\"]")
+    assertThat(jsonArgs["payload"]).isInstanceOf(JsonObject::class.java)
+    assertThat(jsonArgs["payload"].toString()).isEqualTo("{\"enabled\":true}")
+  }
+
+  @Test
+  fun parse_args_to_json_rejects_malformed_array_parameter() {
+    val error = assertThrows(McpExpectedError::class.java) {
+      parseUniversalArgs(
+        listOf("--items", "not-json"),
+        buildJsonObject {
+          put("items", buildJsonObject { put("type", JsonPrimitive("array")) })
+        },
+      )
+    }
+
+    assertThat(error.mcpErrorText).contains("Parameter 'items' expects a JSON array")
+  }
+
+  @Test
+  fun parse_args_to_json_rejects_wrong_structured_json_shape() {
+    val error = assertThrows(McpExpectedError::class.java) {
+      parseUniversalArgs(
+        listOf("--payload", "[]"),
+        buildJsonObject {
+          put("payload", buildJsonObject { put("type", JsonPrimitive("object")) })
+        },
+      )
+    }
+
+    assertThat(error.mcpErrorText).contains("Parameter 'payload' expects a JSON object")
+  }
+
+  @Test
   fun execute_tool_nonexistent_tool(): Unit = runBlocking(Dispatchers.Default) {
     testMcpTool(
       UniversalToolset::execute_tool.name,
@@ -186,5 +248,9 @@ class UniversalToolsetTest : GeneralMcpToolsetTestBase() {
         "Error message should mention empty command"
       }
     }
+  }
+
+  private fun parseUniversalArgs(args: List<String>, propertiesSchema: JsonObject): JsonObject {
+    return UniversalToolset().parseArgsToJson(args, propertiesSchema)
   }
 }

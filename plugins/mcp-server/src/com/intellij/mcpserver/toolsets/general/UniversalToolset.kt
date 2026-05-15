@@ -13,11 +13,13 @@ import com.intellij.mcpserver.reportToolActivity
 import com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector
 import com.intellij.util.execution.ParametersListUtil
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
+import org.jetbrains.annotations.VisibleForTesting
 import kotlin.time.TimeSource
 import com.intellij.mcpserver.McpTool as McpToolDef
 
@@ -89,12 +91,16 @@ class UniversalToolset : McpToolset {
     return result.toString()
   }
 
-  private fun parseArgsToJson(args: List<String>, propertiesSchema: JsonObject): JsonObject = buildJsonObject {
+  @VisibleForTesting
+  internal fun parseArgsToJson(args: List<String>, propertiesSchema: JsonObject): JsonObject = buildJsonObject {
     var i = 0
     while (i < args.size) {
       val arg = args[i]
       if (!arg.startsWith(FLAG_PREFIX)) {
-        mcpFail("Invalid argument format: '$arg'. Expected '${FLAG_PREFIX}paramName value' format")
+        mcpFail(
+          "Invalid argument format: '$arg'. Expected '${FLAG_PREFIX}paramName value' format. " +
+          "For object/array parameters pass a JSON value, e.g. --findings '[{...}]'."
+        )
       }
       val name = arg.substring(FLAG_PREFIX.length)
       val value = args.getOrNull(i + 1) ?: mcpFail("Parameter '$name' requires a value")
@@ -106,7 +112,7 @@ class UniversalToolset : McpToolset {
   private fun convertToJsonValue(paramName: String, value: String, propertiesSchema: JsonObject): JsonElement {
     val paramSchema = propertiesSchema[paramName] as? JsonObject
     val type = (paramSchema?.get("type") as? JsonPrimitive)?.content ?: "string"
-    
+
     return when (type) {
       "boolean" -> JsonPrimitive(value.toBoolean())
       "integer", "number" -> {
@@ -117,16 +123,33 @@ class UniversalToolset : McpToolset {
           JsonPrimitive(value.toDouble())
         }
       }
-      "array", "object" -> {
-        runCatching { McpServerJson.parseToJsonElement(value) }.getOrElse { JsonNull }
-      }
+      "array" -> parseAsStructuredJson(paramName, value, "array") { it is JsonArray }
+      "object" -> parseAsStructuredJson(paramName, value, "object") { it is JsonObject }
       else -> JsonPrimitive(value)
     }
   }
 
+  private fun parseAsStructuredJson(
+    paramName: String,
+    value: String,
+    typeName: String,
+    predicate: (JsonElement) -> Boolean,
+  ): JsonElement {
+    val parsed = try {
+      McpServerJson.parseToJsonElement(value)
+    }
+    catch (e: SerializationException) {
+      mcpFail("Parameter '$paramName' expects a JSON $typeName, got: $value (${e.message})")
+    }
+    if (!predicate(parsed)) {
+      mcpFail("Parameter '$paramName' expects a JSON $typeName, got ${parsed::class.simpleName}: $value")
+    }
+    return parsed
+  }
+
   /**
    * Accumulates state for a single `execute_tool` invocation and emits it as a
-   * [McpServerCounterUsagesCollector.ExecuteToolDispatch] FUS event via [emit].
+   * [McpServerCounterUsagesCollector.EXECUTE_TOOL_DISPATCH_EVENT] FUS event via [emit].
    *
    * Counters are mutated progressively as the dispatch advances, so the event still
    * reports the last reached stage when an `mcpFail` aborts the call midway.
