@@ -1,11 +1,11 @@
 package com.intellij.mcpserver.impl.util.network
 
-import io.modelcontextprotocol.kotlin.sdk.shared.McpJson
 import io.modelcontextprotocol.kotlin.sdk.types.Implementation
 import io.modelcontextprotocol.kotlin.sdk.types.InitializeResult
 import io.modelcontextprotocol.kotlin.sdk.types.JSONRPCMessage
 import io.modelcontextprotocol.kotlin.sdk.types.JSONRPCNotification
 import io.modelcontextprotocol.kotlin.sdk.types.JSONRPCResponse
+import io.modelcontextprotocol.kotlin.sdk.types.McpJson
 import io.modelcontextprotocol.kotlin.sdk.types.RequestId
 import io.modelcontextprotocol.kotlin.sdk.types.ServerCapabilities
 import kotlinx.coroutines.CompletableDeferred
@@ -20,6 +20,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 @OptIn(DelicateCoroutinesApi::class)
@@ -107,6 +108,18 @@ class StreamableHttpServerTransportTest {
     assertThat(sseEvents.tryReceive().isFailure)
       .withFailMessage("Notification should be dropped when there is no active SSE subscriber")
       .isTrue()
+  }
+
+  @Test
+  fun `streamable GET emits heartbeat while idle`() = runBlocking<Unit> {
+    val transport = StreamableHttpServerTransport()
+    transport.start()
+
+    val event = withTimeout(1.seconds) {
+      transport.sseEvents().nextHeartbeatAwareEvent(10.milliseconds)
+    }
+
+    assertThat(event).isEqualTo(": heartbeat\n\n")
   }
 
   @Test

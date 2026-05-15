@@ -20,6 +20,7 @@ import io.modelcontextprotocol.kotlin.sdk.types.RequestId
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.isActive
 import kotlinx.serialization.json.jsonPrimitive
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
@@ -266,10 +267,16 @@ internal class StreamableHttpServerTransport : AbstractTransport() {
     ) {
       try {
         while (!closing.get()) {
-          val event = sseEvents.receiveCatching().getOrNull() ?: break
+          val event = sseEvents.nextHeartbeatAwareEvent() ?: break
           write(event)
           flush()
         }
+      }
+      catch (e: CancellationException) {
+        if (!call.isActive) {
+          this@StreamableHttpServerTransport.close()
+        }
+        throw e
       }
       finally {
         hasActiveSse.set(false)

@@ -35,7 +35,9 @@ import io.modelcontextprotocol.kotlin.sdk.shared.McpJson
 import io.modelcontextprotocol.kotlin.sdk.shared.Transport
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
@@ -43,6 +45,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlin.coroutines.CoroutineContext
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 private val logger = logger<RoutingContext>()
@@ -286,9 +289,18 @@ private suspend fun RoutingContext.respondJsonError(status: HttpStatusCode, code
 private data class ParsedMessages(val messages: List<JSONRPCMessage>, val isBatch: Boolean)
 private data class StreamableSession(val transport: StreamableHttpServerTransport, val server: ServerSession)
 
+internal suspend fun Channel<String>.nextHeartbeatAwareEvent(heartbeatPeriod: Duration = HEARTBEAT_PERIOD): String? {
+  val event = withTimeoutOrNull(heartbeatPeriod) { receiveCatching() }
+  return when {
+    event == null -> SSE_HEARTBEAT_EVENT
+    else -> event.getOrNull()
+  }
+}
+
 //–– your custom context element
 class HttpRequestElement(val request: ApplicationRequest) : CoroutineContext.Element {
   companion object Key : CoroutineContext.Key<HttpRequestElement>
+
   override val key: CoroutineContext.Key<*> = Key
 }
 
@@ -303,3 +315,6 @@ fun Application.installHttpRequestPropagation() {
 
 val CoroutineContext.httpRequestOrNull: ApplicationRequest? get() = get(HttpRequestElement)?.request
 val CoroutineContext.mcpSessionId: String? get() = httpRequestOrNull?.queryParameters?.get("sessionId")
+
+private const val SSE_HEARTBEAT_EVENT = ": heartbeat\n\n"
+private val HEARTBEAT_PERIOD = 5.seconds
