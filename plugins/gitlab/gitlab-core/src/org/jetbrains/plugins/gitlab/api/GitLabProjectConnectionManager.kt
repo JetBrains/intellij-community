@@ -65,7 +65,7 @@ internal class GitLabProjectConnectionManager(private val project: Project, cs: 
     account: GitLabAccount,
     tokenState: StateFlow<GitLabCredentials>,
   ): GitLabProjectConnection {
-    val apiClient = service<GitLabApiManager>().getClient(account.server) { tokenState.value.accessToken }
+    val apiClient = service<GitLabApiManager>().getClient(account)
     val glMetadata = apiClient.getMetadataOrNull()
     val currentUser = apiClient.graphQL.getCurrentUser()
     val projectDetails = apiClient.loadProjectDetails(glMetadata, glProjectMapping.repository.projectPath)
