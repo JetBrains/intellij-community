@@ -11,7 +11,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.rpc.topics.broadcast
 import com.intellij.platform.vcs.impl.shared.CODE_SMELL_REMOTE_TOPIC
 import com.intellij.platform.vcs.impl.shared.CodeSmellDto
-import com.intellij.platform.vcs.impl.shared.CodeSmellEvent
+import com.intellij.platform.vcs.impl.shared.ShowCodeSmellRequest
 
 private val LOG = logger<CodeSmellDetectorImpl>()
 
@@ -22,8 +22,8 @@ internal fun showCodeSmellErrorsInFrontend(smellList: List<@JvmWildcard CodeSmel
     return
   }
 
-  val event = CodeSmellEvent(dtos)
-  CODE_SMELL_REMOTE_TOPIC.broadcast(project, event)
+  val showCodeSmellRequest = ShowCodeSmellRequest(dtos)
+  CODE_SMELL_REMOTE_TOPIC.broadcast(project, showCodeSmellRequest)
 }
 
 

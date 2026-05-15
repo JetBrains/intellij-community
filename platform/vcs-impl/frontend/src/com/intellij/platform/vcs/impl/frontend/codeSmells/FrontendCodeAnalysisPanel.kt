@@ -3,9 +3,7 @@ package com.intellij.platform.vcs.impl.frontend.codeSmells
 
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel
 import com.intellij.openapi.project.Project
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 internal class FrontendCodeAnalysisPanel(project: Project) : NewErrorTreeViewPanel(
   project,
   null,

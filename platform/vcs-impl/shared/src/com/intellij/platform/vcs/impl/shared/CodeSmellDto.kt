@@ -20,7 +20,7 @@ data class CodeSmellDto(
 
 @ApiStatus.Internal
 @Serializable
-data class CodeSmellEvent(val smells: List<CodeSmellDto>)
+data class ShowCodeSmellRequest(val smells: List<CodeSmellDto>)
 
 @ApiStatus.Internal
-val CODE_SMELL_REMOTE_TOPIC: ProjectRemoteTopic<CodeSmellEvent> = ProjectRemoteTopic("vcs.codeSmell.show", CodeSmellEvent.serializer())
+val CODE_SMELL_REMOTE_TOPIC: ProjectRemoteTopic<ShowCodeSmellRequest> = ProjectRemoteTopic("vcs.codeSmell.show", ShowCodeSmellRequest.serializer())
