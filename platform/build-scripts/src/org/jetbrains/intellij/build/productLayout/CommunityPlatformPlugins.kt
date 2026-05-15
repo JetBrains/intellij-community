@@ -31,6 +31,7 @@ object CommunityPlatformPlugins {
   fun todoView(): ModuleSet = plugin("todoView") {
     module("intellij.platform.todo")
     module("intellij.platform.todo.backend")
+    module("intellij.platform.vcs.impl.lang.todo")
   }
 
   fun vcsFrontend(): ModuleSet = plugin("vcs.frontend") {

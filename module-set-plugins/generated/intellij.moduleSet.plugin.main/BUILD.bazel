@@ -37,6 +37,7 @@ jvm_library(
     "//platform/todo",
     "//platform/todo/backend",
     "//platform/vcs-impl/frontend",
+    "//platform/vcs-impl/lang/todo",
   ]
 )
 
@@ -78,6 +79,7 @@ jvm_library(
     "//platform/todo:todo_test_lib",
     "//platform/todo/backend:backend_test_lib",
     "//platform/vcs-impl/frontend:frontend_test_lib",
+    "//platform/vcs-impl/lang/todo:todo_test_lib",
   ]
 )
 ### auto-generated section `build intellij.moduleSet.plugin.main` end

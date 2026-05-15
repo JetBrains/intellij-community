@@ -7,3 +7,6 @@
 - name: lib/modules/intellij.platform.todo.jar
   contentModules:
   - name: intellij.platform.todo
+- name: lib/modules/intellij.platform.vcs.impl.lang.todo.jar
+  contentModules:
+  - name: intellij.platform.vcs.impl.lang.todo

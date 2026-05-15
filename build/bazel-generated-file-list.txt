@@ -896,6 +896,7 @@ platform/vcs-impl/exec
 platform/vcs-impl/frontend
 platform/vcs-impl/lang
 platform/vcs-impl/lang/actions
+platform/vcs-impl/lang/todo
 platform/vcs-impl/shared
 platform/vcs-log/api
 platform/vcs-log/graph

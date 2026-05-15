@@ -8,5 +8,6 @@
   <content namespace="jetbrains">
     <module name="intellij.platform.todo"/>
     <module name="intellij.platform.todo.backend"/>
+    <module name="intellij.platform.vcs.impl.lang.todo"/>
   </content>
 </idea-plugin>
