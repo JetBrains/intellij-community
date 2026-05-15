@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi
 
-import com.jetbrains.python.codeInsight.parseDataclassParameters
+import com.jetbrains.python.psi.impl.PyClassImpl
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import org.jetbrains.annotations.ApiStatus
@@ -27,7 +27,7 @@ object PyDisjointBaseUtil {
 
     return true
   }
-  
+
   private fun findDisjointBase(pyClass: PyClass, context: TypeEvalContext): PyClass? {
     if (isDisjointBase(pyClass, context)) return pyClass
 
@@ -38,31 +38,29 @@ object PyDisjointBaseUtil {
 
     // Per PEP 800: if multiple disjoint base candidates exist, one must be a subclass of all others.
     return candidates.firstOrNull { candidate ->
-      candidates.all { other -> candidate == other || candidate.isSubclass(other, context) }
+      candidates.all { candidate.isSubclass(it, context) }
     }
   }
 
   /**
    * Per PEP 800, a class is a disjoint base if:
    * - It has @disjoint_base decorator
-   * - It has non-empty __slots__ (explicit or synthesized via @dataclass(slots=True) or dataclass_transform)
+   * - It has non-empty `__slots__` (explicit or synthesized via @dataclass(slots=True) or dataclass_transform)
    */
   @JvmStatic
   fun isDisjointBase(pyClass: PyClass, context: TypeEvalContext): Boolean {
-    return hasDisjointBaseDecorator(pyClass, context) || hasOwnNonEmptySlots(pyClass, context)
+    return hasDisjointBaseDecorator(pyClass, context) || hasNonEmptySlots(pyClass, context)
   }
 
   private fun hasDisjointBaseDecorator(pyClass: PyClass, context: TypeEvalContext): Boolean {
-    return PyKnownDecoratorUtil.getKnownDecorators(pyClass, context).contains(PyKnownDecorator.DISJOINT_BASE_EXT)
+    val decorators = PyKnownDecoratorUtil.getKnownDecorators(pyClass, context)
+    return decorators.contains(PyKnownDecorator.DISJOINT_BASE) || decorators.contains(PyKnownDecorator.DISJOINT_BASE_EXT)
   }
 
-  private fun hasOwnNonEmptySlots(pyClass: PyClass, context: TypeEvalContext): Boolean {
+  private fun hasNonEmptySlots(pyClass: PyClass, context: TypeEvalContext): Boolean {
     val ownSlots = pyClass.ownSlots
     if (!ownSlots.isNullOrEmpty()) return true
 
-    val dataclassParams = parseDataclassParameters(pyClass, context)
-    if (dataclassParams != null && dataclassParams.slots) return true
-
-    return false
+    return !PyClassImpl.getOwnSlotsSynthesized(pyClass, context).isNullOrEmpty()
   }
 }

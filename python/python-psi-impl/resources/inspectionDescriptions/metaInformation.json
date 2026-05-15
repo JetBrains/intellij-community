@@ -229,6 +229,10 @@
       "codeQualityCategory": "Reliability"
     },
     {
+      "id": "PyDisjointBaseInspection",
+      "codeQualityCategory": "Reliability"
+    },
+    {
       "id": "PyUnusedLocalInspection",
       "codeQualityCategory": "Code Style"
     },
