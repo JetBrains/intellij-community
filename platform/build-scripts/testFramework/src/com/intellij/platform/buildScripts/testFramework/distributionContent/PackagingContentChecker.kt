@@ -242,11 +242,13 @@ class PackagingSuiteFixture private constructor(
       try {
         val tempDir = Files.createTempDirectory("${spec.name}-packaging-suite-").also { tempDirForCleanup = it }
         val suiteContextDeferred = scope.async(start = CoroutineStart.LAZY) {
-          PackagingSuiteContext(
-            projectHome = spec.homePath,
-            tempDir = tempDir,
-            compilationContext = createSharedCompilationContext(projectHome = spec.homePath, tempDir = tempDir, scope = scope),
-          )
+          withTelemetrySpan(telemetry = telemetry, name = "create shared compilation context") {
+            PackagingSuiteContext(
+              projectHome = spec.homePath,
+              tempDir = tempDir,
+              compilationContext = createSharedCompilationContext(projectHome = spec.homePath, tempDir = tempDir, scope = scope),
+            )
+          }
         }
         val compileProductionModulesDeferred = scope.async(start = CoroutineStart.LAZY) {
           withTelemetrySpan(
@@ -500,6 +502,11 @@ private fun scheduleFullSuiteWork(
   targetValidationTasks: List<TargetValidationTask>,
 ) {
   startBlockingValidationTasks(validationTasks)
+  // Start non-blocking + source-only (no compile gate) validations immediately — they are independent
+  // of compilation and of blocking validations, so they should overlap with model-generation/compile.
+  validationTasks.startAllDeferreds { task ->
+    if (!task.spec.isBlocking && !task.spec.requiresCompilation) task.resultDeferred else null
+  }
   val targetValidationPackagingTasks = targetValidationTasks.mapTo(LinkedHashSet()) { it.packagingTask }
   targetValidationPackagingTasks.startAllPackagingTasks()
   targetValidationTasks.startAllDeferreds { it.resultDeferred }
@@ -510,7 +517,8 @@ private fun scheduleFullSuiteWork(
   scope.launch(Dispatchers.Default) {
     validationTasks.filter { it.spec.isBlocking }.map { it.resultDeferred }.awaitAll()
     validationTasks.startAllDeferreds { task ->
-      if (task.spec.isBlocking) null else task.resultDeferred
+      // independent ones already started above
+      if (task.spec.isBlocking || !task.spec.requiresCompilation) null else task.resultDeferred
     }
     targetValidationPackagingTasks.map { it.resultDeferred }.awaitAll()
 
@@ -586,6 +594,10 @@ private fun createValidationTasks(
       continue
     }
 
+    // A "source-only" non-blocking validation (no compilation gate) is independent of blocking validations
+    // and can run in parallel with model-generation/compilation. It is scheduled immediately in
+    // scheduleFullSuiteWork and skips the ensureBlockingValidationsSucceededOrAbort gate here.
+    val runIndependently = !validation.requiresCompilation
     result.add(
       ValidationTask(
         spec = validation,
@@ -598,8 +610,10 @@ private fun createValidationTasks(
                 span.setAttribute("packaging.validation.name", validation.name)
               },
             ) {
-              ensureBlockingValidationsSucceededOrAbort(blockingTasks)
-              awaitPackagingSuiteValidationCompilationIfRequired(validation = validation, compileProductionModulesDeferred = compileProductionModulesDeferred)
+              if (!runIndependently) {
+                ensureBlockingValidationsSucceededOrAbort(blockingTasks)
+                awaitPackagingSuiteValidationCompilationIfRequired(validation = validation, compileProductionModulesDeferred = compileProductionModulesDeferred)
+              }
               validation.validator(suiteContextDeferred.await())
             }
           }
@@ -916,8 +930,12 @@ private suspend fun computePackageResult(context: BuildContext): PackageResult {
     build = { buildContext ->
       buildDistributions(buildContext)
       PackageResult(
-        content = readContentReportZip(buildContext.paths.artifactDir.resolve("content-report.zip")),
-        runtimeModuleRepository = readGeneratedRuntimeModuleRepository(buildContext),
+        content = spanBuilder("read content report").use {
+          readContentReportZip(buildContext.paths.artifactDir.resolve("content-report.zip"))
+        },
+        runtimeModuleRepository = spanBuilder("read runtime module repository").use {
+          readGeneratedRuntimeModuleRepository(buildContext)
+        },
         jpsProject = buildContext.project,
         projectHome = buildContext.paths.projectHome,
       )
