@@ -36,6 +36,7 @@ import com.intellij.ui.content.ContentManager
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.asDisposable
 import com.intellij.util.awaitCancellationAndInvoke
+import com.intellij.util.disposeOnCompletion
 import com.intellij.util.ui.initOnShow
 import com.jediterm.core.util.TermSize
 import kotlinx.coroutines.CompletableDeferred
@@ -102,8 +103,14 @@ internal class TerminalToolWindowTabsManagerImpl(
   override fun detachTab(tab: TerminalToolWindowTab): TerminalView {
     TerminalTabCloseListener.executeContentOperationSilently(tab.content) {
       tab.content.putUserData(TAB_DETACHED_KEY, Unit)
-      val manager = tab.content.manager ?: error("No content manager for $tab")
-      manager.removeContent(tab.content, true)
+      val manager = tab.content.manager
+      if (manager != null) {
+        manager.removeContent(tab.content, true)
+      }
+      else {
+        // tabs created with TerminalToolWindowTabBuilder.shouldAddToToolWindow(false) don't have ContentManager
+        tab.content.release()
+      }
     }
     val toolWindow = getToolWindow()
     if (toolWindow.contentManager.isEmpty) {
@@ -265,6 +272,8 @@ internal class TerminalToolWindowTabsManagerImpl(
   ) = terminal.coroutineScope.launch {
     val backendTabId = builder.backendTabId ?: TerminalTabsManager.getInstance(project).createNewTerminalTab().id
 
+    excludeTabFromPersistenceOnDetach(terminal, backendTabId)
+
     terminal.coroutineScope.awaitCancellationAndInvoke(Dispatchers.EDT) {
       // Backend terminal session tab lifecycle is not directly bound to the terminal frontend lifecycle.
       // We need to close the backend session when the terminal is closed explicitly.
@@ -288,6 +297,21 @@ internal class TerminalToolWindowTabsManagerImpl(
     )
 
     scheduleSessionStart(terminal, builder, backendTabId)
+  }
+
+  private fun excludeTabFromPersistenceOnDetach(terminal: TerminalView, tabId: Int) {
+    val disposable = Disposer.newDisposable()
+    disposable.disposeOnCompletion(terminal.coroutineScope)
+    project.messageBus.connect(disposable).subscribe(TerminalTabsManagerListener.TOPIC, object : TerminalTabsManagerListener {
+      override fun tabDetached(tab: TerminalToolWindowTab) {
+        if (tab.view == terminal) {
+          coroutineScope.launch {
+            TerminalTabsManager.getInstance(project).detachTerminalTab(tabId)
+          }
+          Disposer.dispose(disposable)
+        }
+      }
+    })
   }
 
   private suspend fun scheduleSessionStart(

@@ -28,6 +28,7 @@ import org.jetbrains.plugins.terminal.session.impl.TerminalCloseEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalStateChangedEvent
 import org.jetbrains.plugins.terminal.settings.impl.TerminalSessionPersistedTab
 import org.jetbrains.plugins.terminal.settings.impl.TerminalTabsStorage
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.io.path.pathString
 
@@ -37,6 +38,7 @@ internal class TerminalTabsManager(private val project: Project, private val cor
   private val tabsMap: MutableMap<Int, TerminalSessionTab> = LinkedHashMap()
   private val tabsLock = Mutex()
   private val tabIdCounter = AtomicInteger(0)
+  private val detachedTabs: MutableSet<Int> = ConcurrentHashMap.newKeySet()
 
   init {
     val storedTabs = TerminalTabsStorage.getInstance(project).getStoredTabs()
@@ -203,7 +205,9 @@ internal class TerminalTabsManager(private val project: Project, private val cor
         action(tabsMap)
       }
       finally {
-        val persistedTabs = tabsMap.values.map { it.toPersistedTab() }
+        val persistedTabs = tabsMap.entries.mapNotNull {
+          if (it.key !in detachedTabs) it.value.toPersistedTab() else null
+        }
         TerminalTabsStorage.getInstance(project).updateStoredTabs(persistedTabs)
       }
     }
@@ -231,6 +235,12 @@ internal class TerminalTabsManager(private val project: Project, private val cor
       processType = processType,
       sessionId = null,
     )
+  }
+
+  suspend fun detachTerminalTab(tabId: Int) {
+    updateTabsAndStore {
+      detachedTabs += tabId
+    }
   }
 
   companion object {
