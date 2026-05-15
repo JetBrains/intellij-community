@@ -7,7 +7,9 @@ import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.core.InstanceId
 import fleet.rpc.core.RpcFlow
+import fleet.rpc.core.toRpc
 import fleet.util.UID
+import fleet.util.async.chunked
 import fleet.util.openmap.SerializedValue
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.serialization.SerialName
@@ -20,6 +22,13 @@ interface RemoteKernel : RemoteApi<Unit> {
   @Serializable
   data class Subscription(
     val snapshot: RpcFlow<DurableSnapshot.DurableEntity>,
+    val vectorClock: Map<UID, Long>,
+    val txs: RpcFlow<Broadcast>,
+  )
+
+  @Serializable
+  data class SubscriptionWithChunkedSnapshot(
+    val snapshot: RpcFlow<List<DurableSnapshot.DurableEntity>>,
     val vectorClock: Map<UID, Long>,
     val txs: RpcFlow<Broadcast>,
   )
@@ -47,7 +56,16 @@ interface RemoteKernel : RemoteApi<Unit> {
     data object Reset : Broadcast
   }
 
+  @Deprecated("Use chunked subscription instead", replaceWith = ReplaceWith("subscribeWithChunkedSnapshot(author)"))
   suspend fun subscribe(author: UID?): Subscription
+  suspend fun subscribeWithChunkedSnapshot(author: UID?): SubscriptionWithChunkedSnapshot {
+    val subscribe = subscribe(author)
+    return SubscriptionWithChunkedSnapshot(
+      snapshot = subscribe.snapshot.toFlow().chunked().toRpc(),
+      vectorClock = subscribe.vectorClock,
+      txs = subscribe.txs
+    )
+  }
   suspend fun transact(frontendTxs: ReceiveChannel<Transaction>)
 }
 

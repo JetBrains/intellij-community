@@ -14,14 +14,17 @@ import com.jetbrains.rhizomedb.getOne
 import com.jetbrains.rhizomedb.mutate
 import com.jetbrains.rhizomedb.queryIndex
 import fleet.fastutil.ints.IntList
+import fleet.kernel.DurableSnapshot
 import fleet.kernel.SharedPart
 import fleet.kernel.SubscriptionEvent
 import fleet.kernel.Transactor
 import fleet.kernel.buildDurableSnapshot
 import fleet.kernel.uidAttribute
 import fleet.rpc.core.AssumptionsViolatedException
+import fleet.rpc.core.RpcFlow
 import fleet.rpc.core.toRpc
 import fleet.util.UID
+import fleet.util.async.chunked
 import fleet.util.async.takeUntilInclusive
 import fleet.util.logging.KLoggers
 import kotlinx.coroutines.CompletableDeferred
@@ -54,6 +57,8 @@ fun <T> CoroutineScope.waitForCompletion(flow: Flow<T>): Flow<T> {
   }
 }
 
+private data class Subscription(val snapshot: List<DurableSnapshot.DurableEntity>, val txs: RpcFlow<RemoteKernel.Broadcast>, val vectorClock: Map<UID, Long>,)
+
 class RemoteKernelImpl(
   val transactor: Transactor,
   val coroutineScope: CoroutineScope,
@@ -64,8 +69,24 @@ class RemoteKernelImpl(
     val log = KLoggers.logger(RemoteKernelImpl::class)
   }
 
+  override suspend fun subscribeWithChunkedSnapshot(author: UID?): RemoteKernel.SubscriptionWithChunkedSnapshot {
+    return subscribeImpl(author).let { (snapshot, txs, vectorClock) ->
+      RemoteKernel.SubscriptionWithChunkedSnapshot(snapshot = snapshot.asFlow().chunked().toRpc(),
+                                                   txs = txs,
+                                                   vectorClock = vectorClock)
+    }
+  }
+
   override suspend fun subscribe(author: UID?): RemoteKernel.Subscription {
-    val result = CompletableDeferred<RemoteKernel.Subscription>()
+    return subscribeImpl(author).let { (snapshot, txs, vectorClock) ->
+      RemoteKernel.Subscription(snapshot = snapshot.asFlow().toRpc(),
+                                txs = txs,
+                                vectorClock = vectorClock)
+    }
+  }
+
+  private suspend fun subscribeImpl(author: UID?): Subscription {
+    val result = CompletableDeferred<Subscription>()
     coroutineScope.launch {
       val events = transactor.log.produceIn(this)
       val first = events.receive()
@@ -118,8 +139,8 @@ class RemoteKernelImpl(
         }
         .takeUntilInclusive { it is RemoteKernel.Broadcast.Reset }
 
-      result.complete(RemoteKernel.Subscription(
-        snapshot = snapshot.entities.asFlow().toRpc(),
+      result.complete(Subscription(
+        snapshot = snapshot.entities,
         txs = waitForCompletion(broadcastFlow).toRpc(),
         vectorClock = vectorClock
       ))

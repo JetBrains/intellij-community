@@ -78,7 +78,6 @@ import kotlinx.coroutines.channels.consume
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.produceIn
-import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.onTimeout
 import kotlinx.coroutines.selects.whileSelect
@@ -439,10 +438,15 @@ private suspend fun remoteKernelConnection(
     subscribe(transactor, clientId) { dbSnapshot, changesReceiver ->
       connected.complete(Unit)
       val subscription = spannedScope("RemoteKernel.subscribe") {
-        durable { withoutCausality { remoteKernel.subscribe(clientId) } }
+        durable { withoutCausality { remoteKernel.subscribeWithChunkedSnapshot(clientId) } }
       }
       val snapshot = spannedScope("fetch snapshot") {
-        DurableSnapshot(subscription.snapshot.toFlow().toList())
+        DurableSnapshot(
+          buildList {
+            subscription.snapshot.toFlow().collect {
+              addAll(it)
+            }
+          })
       }
       logger.info { "[$transactor] received snapshot with VectorClock: ${subscription.vectorClock}" }
       logger.trace { "[$transactor] received snapshot $subscription" }
