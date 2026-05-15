@@ -104,17 +104,8 @@ public final class JarRepositoryManager {
   private static final String DEFAULT_REPOSITORY_PATH = ".m2/repository";
   private static final AtomicInteger ourTasksInProgress = new AtomicInteger();
 
-  private static final Map<String, OrderRootType> ourClassifierToRootType = new HashMap<>();
-
   // slf4j logger handles format strings with a throwable in the end
   private static final org.slf4j.Logger slf4jLogger = LoggerFactory.getLogger(JarRepositoryManager.class);
-
-  static {
-    ourClassifierToRootType.put(ArtifactKind.ARTIFACT.getClassifier(), OrderRootType.CLASSES);
-    ourClassifierToRootType.put(ArtifactKind.JAVADOC.getClassifier(), JavadocOrderRootType.getInstance());
-    ourClassifierToRootType.put(ArtifactKind.SOURCES.getClassifier(), OrderRootType.SOURCES);
-    ourClassifierToRootType.put(ArtifactKind.ANNOTATIONS.getClassifier(), AnnotationOrderRootType.getInstance());
-  }
 
   static final ExecutorService DOWNLOADER_EXECUTOR = AppExecutorUtil.createBoundedApplicationPoolExecutor("RemoteLibraryDownloader",
                                                                                                           ProcessIOExecutorService.INSTANCE,
@@ -721,7 +712,7 @@ public final class JarRepositoryManager {
           final String url = VfsUtil.getUrlForLibraryRoot(toFile);
           final VirtualFile file = manager.refreshAndFindFileByUrl(url);
           if (file != null) {
-            OrderRootType rootType = ourClassifierToRootType.getOrDefault(each.getClassifier(), OrderRootType.CLASSES);
+            OrderRootType rootType = getRootType(each.getClassifier());
 
             result.add(new OrderRoot(file, rootType));
           }
@@ -737,6 +728,19 @@ public final class JarRepositoryManager {
       }
     }
     return result;
+  }
+
+  private static @NotNull OrderRootType getRootType(@Nullable String classifier) {
+    if (ArtifactKind.JAVADOC.getClassifier().equals(classifier)) {
+      return JavadocOrderRootType.getInstance();
+    }
+    if (ArtifactKind.SOURCES.getClassifier().equals(classifier)) {
+      return OrderRootType.SOURCES;
+    }
+    if (ArtifactKind.ANNOTATIONS.getClassifier().equals(classifier)) {
+      return AnnotationOrderRootType.getInstance();
+    }
+    return OrderRootType.CLASSES;
   }
 
   private static class LibraryResolveJob extends AetherJob<Collection<Artifact>> {

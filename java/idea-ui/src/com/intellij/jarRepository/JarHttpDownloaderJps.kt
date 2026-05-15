@@ -10,7 +10,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.AnnotationOrderRootType
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.util.io.FileUtil
@@ -52,6 +51,8 @@ class JarHttpDownloaderJps(val project: Project, val coroutineScope: CoroutineSc
 
     @JvmStatic
     fun getInstance(project: Project): JarHttpDownloaderJps = project.service<JarHttpDownloaderJps>()
+
+    private const val ANNOTATION_ROOT_TYPE_NAME = "ANNOTATIONS"
 
     private fun collectRelativePathsForJarHttpDownloaderOrLog(project: Project?, library: LibraryEx): CollectResult {
       if (library.getKind() != RepositoryLibraryType.REPOSITORY_LIBRARY_KIND) {
@@ -106,7 +107,7 @@ class JarHttpDownloaderJps(val project: Project, val coroutineScope: CoroutineSc
           else {
             // allow existing annotation roots on disk to be excluded from downloading
             // continue
-            if (rootType == AnnotationOrderRootType.getInstance() && path.exists()) {
+            if (rootType.name() == ANNOTATION_ROOT_TYPE_NAME && path.exists()) {
               return@mapNotNull null
             }
 
