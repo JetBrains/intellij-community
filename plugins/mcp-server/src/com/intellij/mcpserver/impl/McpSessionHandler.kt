@@ -206,7 +206,7 @@ internal class McpSessionHandler(
       sessionScope.cancel()
     }
 
-    app.launch {
+    sessionScope.launch {
       logger.trace { "Subscribing to MCP tools updates for session ${session.sessionId}" }
       mcpTools.collectLatest { updatedTools ->
         processToolsUpdate(updatedTools)
@@ -234,7 +234,7 @@ internal class McpSessionHandler(
           sessionRoots.set(null)
         }
         session.setNotificationHandler<RootsListChangedNotification>(Method.Defined.NotificationsRootsListChanged) {
-          app.async {
+          sessionScope.async {
             val roots = session.roots()
             logger.trace {
               "Received roots list changed notification for session ${session.sessionId}: $roots roots"
@@ -242,7 +242,7 @@ internal class McpSessionHandler(
             sessionRoots.set(roots)
           }
         }
-        app.launch {
+        sessionScope.launch {
           val roots = session.roots()
           logger.trace {
             "Initialized roots for session ${session.sessionId}: $roots roots"

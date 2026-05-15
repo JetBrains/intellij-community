@@ -21,6 +21,7 @@ import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import io.ktor.server.sse.SSE
 import io.ktor.server.sse.ServerSSESession
+import io.ktor.server.sse.heartbeat
 import io.ktor.server.sse.sse
 import io.ktor.util.collections.ConcurrentMap
 import io.ktor.util.pipeline.PipelineContext
@@ -42,6 +43,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlin.coroutines.CoroutineContext
+import kotlin.time.Duration.Companion.seconds
 
 private val logger = logger<RoutingContext>()
 
@@ -61,6 +63,10 @@ fun Application.mcpPatched(
     }
 
     sse("/sse") {
+      heartbeat {
+        period = 5.seconds
+      }
+
       mcpSseEndpoint("/message", transports, block)
     }
 
