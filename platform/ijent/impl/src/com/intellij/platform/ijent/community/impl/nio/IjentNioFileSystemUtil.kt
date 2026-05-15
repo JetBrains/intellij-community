@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("IjentNioFileSystemUtil")
 @file:ApiStatus.Internal
 
@@ -13,9 +13,13 @@ import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.EelFsError
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.utils.getOrThrowFileSystemException
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.TaskCancellation
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ijent.IjentCalledContextElement
 import com.intellij.platform.ijent.IjentCallerContext
 import com.intellij.platform.ijent.allowCancellableNio
+import com.intellij.platform.ijent.community.impl.IjentCommunityImplBundle
 import com.intellij.platform.ijent.unavailableDialogTimeout
 import com.intellij.util.IntelliJCoroutinesFacade
 import kotlinx.coroutines.runBlocking
@@ -77,10 +81,28 @@ fun <T, E : EelFsError, O : EelOwnedBuilder<EelResult<T, E>>> O.getOrThrowFileSy
  */
 @ApiStatus.Internal
 fun <T> EelDescriptor.fsBlocking(body: suspend () -> T): T {
-  return IntelliJCoroutinesFacade.runAndCompensateParallelism(500.milliseconds) {
-    fsBlockingWithoutParallelismCompensation {
-      showModalDialogOnTimeout(this, IjentCallerContext.computeCallerContext().unavailableDialogTimeout()) {
-        body()
+  val application = ApplicationManager.getApplication()
+  return if (
+    application?.isDispatchThread == true
+    && !application.isWriteAccessAllowed
+  ) {
+    // Unfortunately, it happens. And it's important to free the EDT because file systems like SSH may show dialog windows.
+    // It's still not a panacea. The current implementation can deadlock if it's called inside a write action on EDT and decides to show UI.
+    // TODO IJPL-245001
+    runWithModalProgressBlocking(
+      ModalTaskOwner.guess(),
+      IjentCommunityImplBundle.message("modal.progress.title.remote.file.system.access"),
+      TaskCancellation.cancellable(),
+    ) {
+      this@fsBlocking.fsBlocking(body)
+    }
+  }
+  else {
+    IntelliJCoroutinesFacade.runAndCompensateParallelism(500.milliseconds) {
+      fsBlockingWithoutParallelismCompensation {
+        showModalDialogOnTimeout(this, IjentCallerContext.computeCallerContext().unavailableDialogTimeout()) {
+          body()
+        }
       }
     }
   }
