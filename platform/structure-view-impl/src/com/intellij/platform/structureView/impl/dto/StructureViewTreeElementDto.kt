@@ -11,7 +11,6 @@ data class StructureViewTreeElementDto(
   val parentId: Int,
   val index: Int,
   val speedSearchText: String?,
-  val valueHashCode: Int,
   val presentation: PresentationDataDto,
   val autoExpand: Boolean,
   val alwaysShowsPlus: Boolean,
