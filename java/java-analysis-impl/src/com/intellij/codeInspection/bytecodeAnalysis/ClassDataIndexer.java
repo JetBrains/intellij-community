@@ -177,9 +177,7 @@ public final class ClassDataIndexer implements VirtualFileGist.GistCalculator<Ma
         }
         List<DirectionResultPair> newPairs;
         if (effects == null || effects.isTop()) {
-          newPairs = new ArrayList<>(eqs.results.size() - 1);
-          newPairs.addAll(eqs.results.subList(0, i));
-          newPairs.addAll(eqs.results.subList(i + 1, eqs.results.size()));
+          newPairs = ContainerUtil.remove(eqs.results, i);
         } else {
           newPairs = new ArrayList<>(eqs.results);
           newPairs.set(i, new DirectionResultPair(Pure.asInt(), effects));

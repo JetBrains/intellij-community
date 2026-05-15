@@ -1365,6 +1365,16 @@ public final class ContainerUtil {
     return modified;
   }
 
+  @Contract(pure = true)
+  public static <T> @NotNull @Unmodifiable List<T> remove(@NotNull @Unmodifiable List<T> list, T element) {
+    int i = list.indexOf(element);
+    return i==-1 ? list : remove(list, i);
+  }
+  @Contract(pure = true)
+  public static <T> @NotNull @Unmodifiable List<T> remove(@NotNull @Unmodifiable List<? extends T> list, int indexToRemove) {
+    return concat(list.subList(0,indexToRemove), list.subList(indexToRemove+1, list.size()));
+  }
+
   // returns true if the collection was modified
   @Contract(mutates = "param1")
   public static <T> boolean retainAll(@NotNull Collection<T> collection, @NotNull Condition<? super T> condition) {

@@ -4,6 +4,7 @@ package com.intellij.ide;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.SystemIndependent;
@@ -66,28 +67,13 @@ public final class ProjectGroup implements ModificationTracker {
   }
 
   public boolean markProjectFirst(@SystemIndependent String path) {
-    if (!myProjects.contains(path)) {
-      return false;
-    }
-
-    List<String> existing = new ArrayList<>(myProjects);
-    int index = existing.indexOf(path);
+    int index = myProjects.indexOf(path);
     if (index <= 0) {
       return false;
     }
-
-    List<String> projects = new ArrayList<>(existing.size());
-    projects.add(path);
-    projects.addAll(existing.subList(0, index));
-    projects.addAll(existing.subList(index + 1, existing.size()));
-    save(projects);
+    myProjects = new ArrayList<>(ContainerUtil.prepend(ContainerUtil.remove(myProjects, index), path));
     modCounter.incrementAndGet();
     return true;
-  }
-
-  private void save(@NotNull List<String> projects) {
-    //myProjectPaths = String.join(File.pathSeparator, projects);
-    myProjects = projects;
   }
 
   public @NotNull List<String> getProjects() {

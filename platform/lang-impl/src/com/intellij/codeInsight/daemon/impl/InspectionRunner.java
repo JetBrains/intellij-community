@@ -29,7 +29,6 @@ import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -521,7 +520,7 @@ final class InspectionRunner {
         if (isSuppressedForHost || descriptorPsiElement != null && wrapper.getTool().isSuppressedFor(descriptorPsiElement)) {
           registerSuppressedElements(host, wrapper);
           // remove descriptor at index i from applying
-          descriptors = ContainerUtil.concat(descriptors.subList(0, i), descriptors.subList(i+1, descriptors.size()));
+          descriptors = ContainerUtil.remove(descriptors, i);
           if (LOG.isTraceEnabled()) {
             LOG.trace("startInspectingInjectedPsi:applyInjectedDescriptor: suppressed " + descriptor + " for tool " + wrapper);
           }

@@ -560,6 +560,9 @@ public class ContainerUtilTest {
     assertUnmodifiable(ContainerUtil.unmodifiableOrEmptyList(new ArrayList<>(Arrays.asList("a", "b"))));
     assertUnmodifiable(ContainerUtil.unmodifiableOrEmptySet(new HashSet<>(Arrays.asList("a", "b"))));
     assertUnmodifiable(ContainerUtil.unmodifiableOrEmptyMap(new HashMap<>(Map.of("a", "b"))));
+    assertUnmodifiable(ContainerUtil.remove(List.of("x","y"), 0));
+    assertUnmodifiable(ContainerUtil.remove(List.of("x","y"), "x"));
+    assertUnmodifiable(ContainerUtil.remove(List.of("x","y"), "z"));
   }
 
   private static <K, V> void assertUnmodifiable(Map<K, V> map) {
@@ -647,5 +650,16 @@ public class ContainerUtilTest {
       assertThrowsUOE(collection, ()->list.replaceAll(t->t));
       assertThrowsUOE(collection, ()->list.set(0, null));
     }
+  }
+
+  @Test
+  public void testRemove() {
+    assertEquals(List.of("y"), ContainerUtil.remove(List.of("x","y"), 0));
+    assertEquals(List.of("y"), ContainerUtil.remove(List.of("x","y"), "x"));
+    assertEquals(List.of("x","y"), ContainerUtil.remove(List.of("x","y"), "z"));
+    assertEquals(List.of(), ContainerUtil.remove(List.of(), "z"));
+    assertEquals(List.of("x","z"), ContainerUtil.remove(List.of("x","y", "z"), "y"));
+    assertEquals(List.of("y","z"), ContainerUtil.remove(List.of("x","y", "z"), "x"));
+    assertEquals(List.of("x","y"), ContainerUtil.remove(List.of("x","y", "z"), "z"));
   }
 }

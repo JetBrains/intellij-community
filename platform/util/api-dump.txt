@@ -430,6 +430,9 @@ com.intellij.util.containers.ConcurrentLongObjectMap
 - a:values():java.util.Collection
 com.intellij.util.containers.ConcurrentLongObjectMap$LongObjectToObjectFunction
 - a:apply(J,java.lang.Object):java.lang.Object
+f:com.intellij.util.containers.ContainerUtil
+- s:remove(java.util.List,I):java.util.List
+- s:remove(java.util.List,java.lang.Object):java.util.List
 com.intellij.util.containers.Convertor
 - java.util.function.Function
 - sf:SELF:com.intellij.util.containers.Convertor$IntoSelf
