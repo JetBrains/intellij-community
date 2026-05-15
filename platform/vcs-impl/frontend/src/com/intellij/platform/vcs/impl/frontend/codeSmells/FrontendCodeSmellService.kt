@@ -12,15 +12,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Service(Level.PROJECT)
-internal class FrontendCodeSmellService(val project: Project, val cs: CoroutineScope) {
+internal class FrontendCodeSmellService(private val project: Project, private val cs: CoroutineScope) {
 
   fun showCodeSmellsInToolWindow(codeSmellDtos: List<CodeSmellDto>) {
     val messages = convertCodeSmellDtosToMessages(codeSmellDtos, project)
 
-    val panel = FrontendCodeAnalysisPanel(project)
-    panel.populate(messages)
-
     cs.launch(Dispatchers.EDT) {
+      val panel = FrontendCodeAnalysisPanel(project)
+      panel.populate(messages)
+
       showCodeSmellsPanelInToolWindow(project, panel)
     }
   }
