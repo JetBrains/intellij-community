@@ -2,7 +2,6 @@
 package com.intellij.platform.util.coroutines
 
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -31,9 +30,8 @@ fun CoroutineScope.childScope(context: CoroutineContext = EmptyCoroutineContext,
  * otherwise, it will continue to live in the Job hierarchy until [this] scope is canceled.
  *
  * For example, if [this] scope is a service scope, the child scope will be only canceled on service termination,
- * even if it's not needed anymore.
+ * even if it's not necessary anymore.
  */
-@Experimental
 fun CoroutineScope.childScope(
   name: String,
   context: CoroutineContext = EmptyCoroutineContext,
@@ -44,7 +42,7 @@ fun CoroutineScope.childScope(
 }
 
 /**
- * This allows to see actual coroutine context (and name!)
+ * This allows seeing actual coroutine context (and name!)
  * in the coroutine dump instead of "SupervisorJobImpl{Active}@598294b2".
  *
  * [See issue](https://github.com/Kotlin/kotlinx.coroutines/issues/3428)
@@ -70,7 +68,7 @@ private class ChildScope(ctx: CoroutineContext, private val supervisor: Boolean)
  * Makes [this] scope job behave as if it was a child of [secondaryParent] job
  * as per the coroutine framework parent-child [Job] relation:
  * - child prevents completion of the parent;
- * - child failure is propagated to the parent (note, parent might not cancel itself if it's a supervisor);
+ * - child failure is propagated to the parent (note, the parent might not cancel itself if it's a supervisor);
  * - parent cancellation is propagated to the child.
  *
  * The [real parent][ChildHandle.parent] of [this] scope job is not changed.
