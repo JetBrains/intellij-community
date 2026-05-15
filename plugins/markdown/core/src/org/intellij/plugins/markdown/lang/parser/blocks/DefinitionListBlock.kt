@@ -70,10 +70,13 @@ internal class DefinitionListBlock(
     val start = startPosition.offset + (startPosition.charsToNonWhitespace() ?: 0)
     val end = currentPosition.nextLineOrEofOffset
     val markerEnd = start + definitionMarker.length
-    val definitionNode = SequentialParser.Node(start..end, DefinitionListMarkerProvider.DEFINITION)
-    val markerNode = SequentialParser.Node(start..markerEnd, DefinitionListMarkerProvider.DEFINITION_MARKER)
-    val contentNode = SequentialParser.Node(markerEnd..end, MarkdownElementTypes.PARAGRAPH)
-    productionHolder.addProduction(listOf(contentNode, markerNode, definitionNode))
+    val nodes = mutableListOf<SequentialParser.Node>()
+    if (markerEnd < end) {
+      nodes.add(SequentialParser.Node(markerEnd..end, MarkdownElementTypes.PARAGRAPH))
+    }
+    nodes.add(SequentialParser.Node(start..markerEnd, DefinitionListMarkerProvider.DEFINITION_MARKER))
+    nodes.add(SequentialParser.Node(start..end, DefinitionListMarkerProvider.DEFINITION))
+    productionHolder.addProduction(nodes)
   }
 
   override fun getDefaultAction(): MarkerBlock.ClosingAction {
