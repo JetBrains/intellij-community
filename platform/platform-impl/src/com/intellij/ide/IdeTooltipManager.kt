@@ -680,6 +680,7 @@ class IdeTooltipManager(coroutineScope: CoroutineScope) : Disposable {
       .setCalloutShift(if (small && tooltip.calloutShift == 0) 2 else tooltip.calloutShift)
       .setPositionChangeXShift(tooltip.positionChangeX)
       .setPositionChangeYShift(tooltip.positionChangeY)
+      .setHideOnClickOutside(!tooltip.isExplicitClose)
       .setHideOnKeyOutside(!tooltip.isExplicitClose)
       .setHideOnAction(!tooltip.isExplicitClose)
       .setRequestFocus(tooltip.isRequestFocus)

@@ -113,7 +113,7 @@ public final class LocalHintManager implements ClientHintManager {
     myEditorMouseListener = new EditorMouseListener() {
       @Override
       public void mousePressed(@NotNull EditorMouseEvent event) {
-        hideAllHints();
+        hideHints(HintManager.HIDE_BY_ANY_KEY, false, false);
       }
     };
 

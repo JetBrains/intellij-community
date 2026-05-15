@@ -56,6 +56,10 @@ public class HintManagerImpl extends HintManager {
 
   private static final Logger LOG = Logger.getInstance(HintManager.class);
 
+  private static final @HideFlags int DEFAULT_QUESTION_HINT_HIDE_FLAGS =
+    HIDE_BY_ANY_KEY | HIDE_BY_TEXT_CHANGE | UPDATE_BY_SCROLLING |
+    HIDE_IF_OUT_OF_EDITOR | DONT_CONSUME_ESCAPE;
+
   private static final boolean EDITOR_BALLOON_HINTS = true;
   private final MyEditorManagerListener myEditorManagerListener;
 
@@ -672,10 +676,42 @@ public class HintManagerImpl extends HintManager {
                                final @NotNull LightweightHint hint,
                                final @NotNull QuestionAction action,
                                @PositionFlags short constraint) {
+    showQuestionHint(editor, offset1, offset2, hint, action, DEFAULT_QUESTION_HINT_HIDE_FLAGS, constraint);
+  }
+
+  public void showQuestionHint(final @NotNull Editor editor,
+                               final @NotNull Point p,
+                               final int offset1,
+                               final int offset2,
+                               final @NotNull LightweightHint hint,
+                               final @NotNull QuestionAction action,
+                               @PositionFlags short constraint) {
+    showQuestionHint(editor, p, offset1, offset2, hint, DEFAULT_QUESTION_HINT_HIDE_FLAGS, action, constraint);
+  }
+
+  /**
+   * Displays a question hint at a specified position within the editor.
+   * Highlights a segment of code between offset1 and offset2 if they are not equivalent.
+   *
+   * @param editor       The editor instance where the hint should be displayed.
+   * @param offset1      The start offset in the editor where the hint is anchored.
+   * @param offset2      The end offset in the editor where the hint is anchored.
+   * @param hint         The hint to be displayed.
+   * @param action       The action to be executed when a user interacts with the hint.
+   * @param hideFlags    Flags specifying the conditions under which the hint should be hidden.
+   * @param constraint   A positional constraint that defines where the hint should be displayed relative to the anchored offsets.
+   */
+  public void showQuestionHint(final @NotNull Editor editor,
+                               final int offset1,
+                               final int offset2,
+                               final @NotNull LightweightHint hint,
+                               final @NotNull QuestionAction action,
+                               @HideFlags int hideFlags,
+                               @PositionFlags short constraint) {
     final VisualPosition pos1 = editor.offsetToVisualPosition(offset1);
     final VisualPosition pos2 = editor.offsetToVisualPosition(offset2);
     final Point p = getHintPosition(hint, editor, pos1, pos2, constraint);
-    showQuestionHint(editor, p, offset1, offset2, hint, action, constraint);
+    showQuestionHint(editor, p, offset1, offset2, hint, hideFlags, action, constraint);
   }
 
   private static void showQuestionHint(final @NotNull Editor editor,
@@ -686,16 +722,6 @@ public class HintManagerImpl extends HintManager {
                                        int flags,
                                        final @NotNull QuestionAction action,
                                        @PositionFlags short constraint) {
-    getClientManager(editor).showQuestionHint(editor, p, offset1, offset2, hint, flags, action, constraint);
-  }
-
-  public void showQuestionHint(final @NotNull Editor editor,
-                               final @NotNull Point p,
-                               final int offset1,
-                               final int offset2,
-                               final @NotNull LightweightHint hint,
-                               final @NotNull QuestionAction action,
-                               @PositionFlags short constraint) {
     if (ExperimentalUI.isNewUI() && hint.getComponent() instanceof HintUtil.HintLabel label) {
       JEditorPane pane = label.getPane();
       if (pane != null) {
@@ -714,9 +740,7 @@ public class HintManagerImpl extends HintManager {
         });
       }
     }
-    int flags = HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.UPDATE_BY_SCROLLING |
-                HintManager.HIDE_IF_OUT_OF_EDITOR | HintManager.DONT_CONSUME_ESCAPE;
-    showQuestionHint(editor, p, offset1, offset2, hint, flags, action, constraint);
+    getClientManager(editor).showQuestionHint(editor, p, offset1, offset2, hint, flags, action, constraint);
   }
 
   public static HintHint createHintHint(Editor editor, Point p, LightweightHint hint, @PositionFlags short constraint) {
