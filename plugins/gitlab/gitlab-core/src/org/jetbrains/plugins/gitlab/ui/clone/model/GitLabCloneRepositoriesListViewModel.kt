@@ -70,7 +70,7 @@ private class GitLabCloneRepositoriesForAccountViewModelImpl(
           emit(listOf(GitLabCloneListItem.Error(account, GitLabCloneException.MissingAccessToken(account))))
           return@transformLatest
         }
-        val apiClient = apiManager.getClient(account.server) { credentials.accessToken }
+        val apiClient = apiManager.getClient(account.server, credentials.accessToken)
         apiClient.graphQL.getCloneableProjects()
           .map { l -> l.map { GitLabCloneListItem.Repository(account, it) } }
           .collectBatches()

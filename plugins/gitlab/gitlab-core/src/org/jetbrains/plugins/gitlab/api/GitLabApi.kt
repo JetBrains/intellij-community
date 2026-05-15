@@ -53,7 +53,7 @@ internal class GitLabApiImpl(
   constructor(
     serversManager: GitLabServersManager,
     server: GitLabServerPath,
-    tokenSupplier: (() -> String)? = null
+    tokenSupplier: (suspend () -> String)? = null,
   ) : this(serversManager, server, tokenSupplier?.let { httpHelper(server, it) } ?: httpHelper())
 
   override suspend fun getMetadata(): GitLabServerMetadata =
@@ -127,10 +127,9 @@ fun <R : Any, MR : GitLabGraphQLMutationResultDTO<R>> HttpResponse<out MR?>.getR
 }
 
 
-private fun httpHelper(server: GitLabServerPath, tokenSupplier: () -> String): HttpApiHelper {
+private fun httpHelper(server: GitLabServerPath, tokenSupplier: suspend () -> String): HttpApiHelper {
   val authConfigurer = object : HttpRequestConfigurer {
-
-    override fun configure(builder: HttpRequest.Builder): HttpRequest.Builder {
+    override suspend fun configureSuspend(builder: HttpRequest.Builder): HttpRequest.Builder {
       val uri = builder.build().uri()
       if (server.isAuthorizedUrl(uri)) {
         val token = tokenSupplier()
