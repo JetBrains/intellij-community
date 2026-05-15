@@ -17,9 +17,9 @@ import fleet.kernel.rebase.InstructionEncodingContext
 import fleet.kernel.rebase.SharedInstructionData
 import fleet.kernel.rebase.sharedInstruction
 import fleet.kernel.sharedId
-import fleet.util.Random
 import fleet.util.UID
 import kotlinx.serialization.KSerializer
+import kotlin.random.Random
 import kotlin.reflect.KClass
 
 
