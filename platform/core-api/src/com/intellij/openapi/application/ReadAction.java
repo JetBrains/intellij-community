@@ -80,7 +80,13 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
 
   /**
    * Runs the specified computation in a blocking read action (as opposed to {@link NonBlockingReadAction}).
-   * Can be called from any thread. Do not get canceled if a write action is pending, executed at most once.
+   * Can be called from any thread.
+   * <p>
+   * When called as the outermost (top-level) read action, it is not canceled if a write action is pending and is executed at most once.
+   * When called inside an already-active cancellable read action (e.g., inside {@link #computeCancellable} or a {@link NonBlockingReadAction}),
+   * the supplied computation runs directly in that outer context: it may be canceled when a write action is pending,
+   * and it may run more than once if the outer action is retried.
+   * Only the outermost read action boundary controls cancellation and retry behavior.
    * <p>
    * Avoid usage in background threads as it will likely cause UI freezes. Use it only under modal progress or from EDT.
    * <p>
@@ -103,13 +109,19 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
 
   /**
    * Runs the specified computation in a blocking read action (as opposed to {@link NonBlockingReadAction}).
-   * Can be called from any thread. Do not get canceled if a write action is pending, executed at most once.
+   * Can be called from any thread.
+   * <p>
+   * When called as the outermost (top-level) read action, it is not canceled if a write action is pending and is executed at most once.
+   * When called inside an already-active cancellable read action (e.g., inside {@link #computeCancellable} or a {@link NonBlockingReadAction}),
+   * the supplied computation runs directly in that outer context: it may be canceled when a write action is pending,
+   * and it may run more than once if the outer action is retried.
+   * Only the outermost read action boundary controls cancellation and retry behavior.
    * <p>
    * Avoid usage in background threads as it will likely cause UI freezes.
    * Use it only under modal progress or from EDT.
    * <p>
    * The computation is executed immediately if no write action is currently running or the write action is running on the current thread.
-   * Otherwise, the action is **blocked** until the currently running write action completes.
+   * Otherwise, the action is <b>blocked</b> until the currently running write action completes.
    *
    * @see ReadAction#nonBlocking for background processing without suspend
    * @see NonBlockingReadAction#executeSynchronously for synchronous execution in background threads
@@ -137,7 +149,7 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
    * or pass explicit {@code Callable<Void>} to {@link #nonBlocking(Callable)}, if this method is really needed
    * <p>
    * The {@code task} might be executed several times, it may be canceled on write action,
-   * and then restarted again once write action is finished.
+   * and then restarted again once a write action is finished.
    * If the client doesn't expect a result, then the task is mutating some outer state,
    * which greatly lowers its probability of being idempotent,
    * which in turn may cause delayed bugs in unrelated places and races.
@@ -164,7 +176,7 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
   /**
    * Runs the specified computation in a cancellable read action with a single attempt.
    * <p/>
-   * If there is running or a requested write action, this method throws {@link CannotReadException},
+   * If there is a running or requested write action, this method throws {@link CannotReadException},
    * otherwise the computation is executed immediately in the current thread.
    * If a write action is requested during the computation, the computation becomes canceled
    * (i.e., {@link ProgressManager#checkCanceled()} starts to throw inside the computation),
