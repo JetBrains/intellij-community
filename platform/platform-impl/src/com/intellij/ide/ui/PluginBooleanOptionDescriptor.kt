@@ -1,217 +1,211 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.ui;
+package com.intellij.ide.ui
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.ContentModuleDescriptor;
-import com.intellij.ide.plugins.DisabledPluginsState;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
-import com.intellij.ide.plugins.PluginEnabler;
-import com.intellij.ide.plugins.PluginManagerConfigurable;
-import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.plugins.PluginModuleId;
-import com.intellij.ide.plugins.PluginUtils;
-import com.intellij.ide.plugins.newui.DefaultUiPluginManagerController;
-import com.intellij.ide.plugins.newui.MyPluginModel;
-import com.intellij.ide.ui.search.BooleanOptionDescription;
-import com.intellij.ide.ui.search.NotABooleanOptionDescription;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationAction;
-import com.intellij.notification.NotificationType;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade;
-import com.intellij.openapi.util.Condition;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.plugins.ContentModuleDescriptor
+import com.intellij.ide.plugins.DisabledPluginsState
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.ide.plugins.PluginEnabler
+import com.intellij.ide.plugins.PluginManagerConfigurable
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginModuleId
+import com.intellij.ide.plugins.PluginUtils.toPluginIdSet
+import com.intellij.ide.plugins.newui.DefaultUiPluginManagerController
+import com.intellij.ide.plugins.newui.MyPluginModel
+import com.intellij.ide.ui.search.BooleanOptionDescription
+import com.intellij.ide.ui.search.NotABooleanOptionDescription
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import java.nio.file.FileVisitResult
+import java.util.concurrent.atomic.AtomicReference
 
-import java.nio.file.FileVisitResult;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
-
-/**
- * @author Konstantin Bulenkov
- */
 @ApiStatus.Internal
-public final class PluginBooleanOptionDescriptor extends BooleanOptionDescription
-  implements BooleanOptionDescription.RequiresRebuild, NotABooleanOptionDescription {
+class PluginBooleanOptionDescriptor internal constructor(private val myDescriptor: IdeaPluginDescriptor) : BooleanOptionDescription(
+  IdeBundle.message("search.everywhere.command.plugins", myDescriptor.name),
+  PluginManagerConfigurable.ID
+), BooleanOptionDescription.RequiresRebuild, NotABooleanOptionDescription {
 
-  private static final AtomicReference<Notification> ourPreviousNotification = new AtomicReference<>();
-
-  private final IdeaPluginDescriptor myDescriptor;
-
-  PluginBooleanOptionDescriptor(@NotNull IdeaPluginDescriptor descriptor) {
-    super(IdeBundle.message("search.everywhere.command.plugins", descriptor.getName()),
-          PluginManagerConfigurable.ID);
-    myDescriptor = descriptor;
+  override fun isOptionEnabled(): Boolean {
+    return !PluginEnabler.HEADLESS.isDisabled(myDescriptor.pluginId)
   }
 
-  @Override
-  public boolean isOptionEnabled() {
-    return !PluginEnabler.HEADLESS.isDisabled(myDescriptor.getPluginId());
+  override fun setOptionState(enable: Boolean) {
+    togglePluginState(listOf(myDescriptor), enable)
   }
 
-  @Override
-  public void setOptionState(boolean enable) {
-    togglePluginState(List.of(myDescriptor),
-                      enable);
-  }
+  companion object {
+    private val ourPreviousNotification = AtomicReference<Notification?>()
 
-  public static void togglePluginState(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors,
-                                       boolean enable) {
-    if (descriptors.isEmpty()) {
-      return;
-    }
-
-    Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.INSTANCE.buildPluginIdMap();
-    Map<@NotNull PluginModuleId, @NotNull ContentModuleDescriptor> contentModuleIdMap = PluginManagerCore.getPluginSet().buildContentModuleIdMap();
-    Collection<? extends IdeaPluginDescriptor> autoSwitchedDescriptors = enable ?
-                                                                         getDependenciesToEnable(descriptors, pluginIdMap, contentModuleIdMap) :
-                                                                         getDependentsToDisable(descriptors, pluginIdMap, contentModuleIdMap);
-
-    PluginEnabler pluginEnabler = PluginEnabler.getInstance();
-    boolean appliedWithoutRestart = enable ?
-                                    pluginEnabler.enable(autoSwitchedDescriptors) :
-                                    pluginEnabler.disable(autoSwitchedDescriptors);
-
-    if (autoSwitchedDescriptors.size() > descriptors.size()) {
-      String content =
-        IdeBundle.message(enable ? "plugins.auto.enabled.notification.content" : "plugins.auto.disabled.notification.content",
-                          MyPluginModel.joinPluginNamesOrIds(MyPluginModel.getPluginNames(descriptors)),
-                          MyPluginModel.joinPluginNamesOrIds(MyPluginModel.getPluginNames(autoSwitchedDescriptors)));
-
-      showAutoSwitchNotification(autoSwitchedDescriptors, pluginEnabler, content, enable);
-    }
-
-    notifyIfRestartRequired(!appliedWithoutRestart);
-  }
-
-  private static void showAutoSwitchNotification(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors,
-                                                 @NotNull PluginEnabler pluginEnabler,
-                                                 @NotNull @Nls String content,
-                                                 boolean enabled) {
-    String title = IdeBundle.message(enabled ? "plugins.auto.enabled.notification.title" : "plugins.auto.disabled.notification.title");
-    Notification switchNotification = UpdateCheckerFacade.getInstance().getNotificationGroupForPluginUpdateResults()
-      .createNotification(content, NotificationType.INFORMATION)
-      .setDisplayId("plugin.auto.switch")
-      .setTitle(title)
-      .addAction(new NotificationAction(IdeBundle.message("plugins.auto.switch.action.name")) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e,
-                                    @NotNull Notification notification) {
-          boolean appliedWithoutRestart = enabled ?
-                                          pluginEnabler.disable(descriptors) :
-                                          pluginEnabler.enable(descriptors);
-          notification.expire();
-
-          notifyIfRestartRequired(!appliedWithoutRestart);
-        }
-      });
-
-    Set<PluginId> pluginIds = PluginUtils.toPluginIdSet(descriptors);
-
-    DisabledPluginsState.Companion.addDisablePluginListener(new Runnable() {
-      @Override
-      public void run() {
-        Condition<? super PluginId> condition = pluginEnabler::isDisabled;
-        boolean notificationValid = enabled ?
-                                    !ContainerUtil.exists(pluginIds, condition) :
-                                    ContainerUtil.and(pluginIds, condition);
-        if (!notificationValid) {
-          switchNotification.expire();
-        }
-
-        Balloon balloon = switchNotification.getBalloon();
-        if (balloon == null || balloon.isDisposed()) {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            DisabledPluginsState.Companion.removeDisablePluginListener(this);
-          });
-        }
-      }
-    });
-    switchNotification.notify(null);
-  }
-
-  private static @NotNull Collection<? extends IdeaPluginDescriptor> getDependenciesToEnable(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors,
-                                                                                             @NotNull Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap,
-                                                                                             @NotNull Map<PluginModuleId, ContentModuleDescriptor> contentModuleIdMap) {
-    Set<IdeaPluginDescriptor> result = new LinkedHashSet<>();
-
-    for (IdeaPluginDescriptor descriptor : descriptors) {
-      result.add(descriptor);
-
-      if (!(descriptor instanceof IdeaPluginDescriptorImpl)) {
-        continue;
+    @JvmStatic
+    fun togglePluginState(descriptors: Collection<IdeaPluginDescriptor>, enable: Boolean) {
+      if (descriptors.isEmpty()) {
+        return
       }
 
-      PluginManagerCore.INSTANCE.processAllNonOptionalDependencies((IdeaPluginDescriptorImpl)descriptor, pluginIdMap, contentModuleIdMap, dependency ->
-        PluginManagerCore.CORE_ID.equals(dependency.getPluginId()) ||
-        (PluginManagerCore.ULTIMATE_PLUGIN_ID.equals(dependency.getPluginId()) &&
-         PluginManagerCore.isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID)) ||
-        dependency.isEnabled() ||
-        !result.add(dependency) ?
-        FileVisitResult.SKIP_SUBTREE /* if descriptor has already been added/enabled, no need to process its dependencies */ :
-        FileVisitResult.CONTINUE);
-    }
-
-    return Collections.unmodifiableSet(result);
-  }
-
-  private static @NotNull Collection<? extends IdeaPluginDescriptor> getDependentsToDisable(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors,
-                                                                                            @NotNull Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap,
-                                                                                            @NotNull Map<PluginModuleId, ContentModuleDescriptor> contentModuleIdMap) {
-    Set<IdeaPluginDescriptor> result = new LinkedHashSet<>();
-    ApplicationInfoEx applicationInfo = ApplicationInfoEx.getInstanceEx();
-
-    for (IdeaPluginDescriptor descriptor : descriptors) {
-      result.add(descriptor);
-
-      result.addAll(DefaultUiPluginManagerController.INSTANCE.getDependents(descriptor.getPluginId(), applicationInfo, pluginIdMap, contentModuleIdMap));
-    }
-
-    return Collections.unmodifiableSet(result);
-  }
-
-  private static void notifyIfRestartRequired(boolean restartRequired) {
-    if (!restartRequired) {
-      return;
-    }
-
-    Notification notification = ourPreviousNotification.get();
-    if (notification != null) {
-      Balloon balloon = notification.getBalloon();
-      if (balloon != null && !balloon.isDisposed()) {
-        return;
+      val pluginIdMap = PluginManagerCore.buildPluginIdMap()
+      val contentModuleIdMap = PluginManagerCore.getPluginSet().buildContentModuleIdMap()
+      val autoSwitchedDescriptors = if (enable) {
+        getDependenciesToEnable(descriptors, pluginIdMap, contentModuleIdMap)
       }
+      else {
+        getDependentsToDisable(descriptors, pluginIdMap, contentModuleIdMap)
+      }
+
+      val pluginEnabler = PluginEnabler.getInstance()
+      val appliedWithoutRestart = if (enable) {
+        pluginEnabler.enable(autoSwitchedDescriptors)
+      }
+      else {
+        pluginEnabler.disable(autoSwitchedDescriptors)
+      }
+
+      if (autoSwitchedDescriptors.size > descriptors.size) {
+        val content = IdeBundle.message(
+          if (enable) "plugins.auto.enabled.notification.content" else "plugins.auto.disabled.notification.content",
+          MyPluginModel.joinPluginNamesOrIds(MyPluginModel.getPluginNames(descriptors)),
+          MyPluginModel.joinPluginNamesOrIds(MyPluginModel.getPluginNames(autoSwitchedDescriptors))
+        )
+        showAutoSwitchNotification(autoSwitchedDescriptors, pluginEnabler, content, enable)
+      }
+
+      notifyIfRestartRequired(!appliedWithoutRestart)
     }
 
-    Notification newNotification = UpdateCheckerFacade.getInstance().getNotificationGroupForIdeUpdateResults()
-      .createNotification(
-        IdeBundle.message("plugins.changed.notification.content", ApplicationNamesInfo.getInstance().getFullProductName()),
-        NotificationType.INFORMATION)
-      .setTitle(IdeBundle.message("plugins.changed.notification.title"))
-      .setDisplayId("plugins.updated.restart.required")
-      .addAction(new DumbAwareAction(IdeBundle.message("ide.restart.action")) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          ApplicationManager.getApplication().restart();
-        }
-      });
+    private fun showAutoSwitchNotification(
+      descriptors: Collection<IdeaPluginDescriptor>,
+      pluginEnabler: PluginEnabler,
+      content: @Nls String,
+      enabled: Boolean
+    ) {
+      val title = IdeBundle.message(if (enabled) "plugins.auto.enabled.notification.title" else "plugins.auto.disabled.notification.title")
+      val switchNotification = UpdateCheckerFacade.getInstance().getNotificationGroupForPluginUpdateResults()
+        .createNotification(content, NotificationType.INFORMATION)
+        .setDisplayId("plugin.auto.switch")
+        .setTitle(title)
+        .addAction(object : NotificationAction(IdeBundle.message("plugins.auto.switch.action.name")) {
+          override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+            val appliedWithoutRestart = if (enabled) {
+              pluginEnabler.disable(descriptors)
+            }
+            else {
+              pluginEnabler.enable(descriptors)
+            }
+            notification.expire()
+            notifyIfRestartRequired(!appliedWithoutRestart)
+          }
+        })
 
-    if (ourPreviousNotification.compareAndSet(notification, newNotification)) {
-      newNotification.notify(null);
+      val pluginIds = descriptors.toPluginIdSet()
+      DisabledPluginsState.addDisablePluginListener(object : Runnable {
+        override fun run() {
+          val condition: (PluginId) -> Boolean = { pluginEnabler.isDisabled(it) }
+          val notificationValid = if (enabled) {
+            !pluginIds.any(condition)
+          }
+          else {
+            pluginIds.all(condition)
+          }
+          if (!notificationValid) {
+            switchNotification.expire()
+          }
+
+          val balloon = switchNotification.balloon
+          if (balloon == null || balloon.isDisposed) {
+            ApplicationManager.getApplication().invokeLater {
+              DisabledPluginsState.removeDisablePluginListener(this)
+            }
+          }
+        }
+      })
+      switchNotification.notify(null)
+    }
+
+    private fun getDependenciesToEnable(
+      descriptors: Collection<IdeaPluginDescriptor>,
+      pluginIdMap: Map<PluginId, IdeaPluginDescriptorImpl>,
+      contentModuleIdMap: Map<PluginModuleId, ContentModuleDescriptor>
+    ): Collection<IdeaPluginDescriptor> {
+      val result = LinkedHashSet<IdeaPluginDescriptor>()
+
+      for (descriptor in descriptors) {
+        result.add(descriptor)
+        if (descriptor !is IdeaPluginDescriptorImpl) {
+          continue
+        }
+
+        PluginManagerCore.processAllNonOptionalDependencies(descriptor, pluginIdMap, contentModuleIdMap) { dependency ->
+          if (PluginManagerCore.CORE_ID == dependency.pluginId ||
+              (PluginManagerCore.ULTIMATE_PLUGIN_ID == dependency.pluginId &&
+               PluginManagerCore.isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID)) ||
+              dependency.isEnabled ||
+              !result.add(dependency)) {
+            FileVisitResult.SKIP_SUBTREE /* if descriptor has already been added/enabled, no need to process its dependencies */
+          }
+          else {
+            FileVisitResult.CONTINUE
+          }
+        }
+      }
+
+      return java.util.Collections.unmodifiableSet(result)
+    }
+
+    private fun getDependentsToDisable(
+      descriptors: Collection<IdeaPluginDescriptor>,
+      pluginIdMap: Map<PluginId, IdeaPluginDescriptorImpl>,
+      contentModuleIdMap: Map<PluginModuleId, ContentModuleDescriptor>
+    ): Collection<IdeaPluginDescriptor> {
+      val result = LinkedHashSet<IdeaPluginDescriptor>()
+      val applicationInfo = ApplicationInfoEx.getInstanceEx()
+
+      for (descriptor in descriptors) {
+        result.add(descriptor)
+        result.addAll(DefaultUiPluginManagerController.getDependents(descriptor.pluginId, applicationInfo, pluginIdMap, contentModuleIdMap))
+      }
+
+      return java.util.Collections.unmodifiableSet(result)
+    }
+
+    private fun notifyIfRestartRequired(restartRequired: Boolean) {
+      if (!restartRequired) {
+        return
+      }
+
+      val notification = ourPreviousNotification.get()
+      if (notification != null) {
+        val balloon = notification.balloon
+        if (balloon != null && !balloon.isDisposed) {
+          return
+        }
+      }
+
+      val newNotification = UpdateCheckerFacade.getInstance().getNotificationGroupForIdeUpdateResults()
+        .createNotification(
+          IdeBundle.message("plugins.changed.notification.content", ApplicationNamesInfo.getInstance().fullProductName),
+          NotificationType.INFORMATION
+        )
+        .setTitle(IdeBundle.message("plugins.changed.notification.title"))
+        .setDisplayId("plugins.updated.restart.required")
+        .addAction(object : DumbAwareAction(IdeBundle.message("ide.restart.action")) {
+          override fun actionPerformed(e: AnActionEvent) {
+            ApplicationManager.getApplication().restart()
+          }
+        })
+
+      if (ourPreviousNotification.compareAndSet(notification, newNotification)) {
+        newNotification.notify(null)
+      }
     }
   }
 }
