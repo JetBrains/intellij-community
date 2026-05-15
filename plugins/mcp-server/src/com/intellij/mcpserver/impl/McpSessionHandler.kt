@@ -53,7 +53,6 @@ import com.intellij.platform.diagnostic.telemetry.TracerLevel
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.application
 import com.intellij.util.asDisposable
-import io.ktor.server.application.Application
 import io.ktor.util.toMap
 import io.modelcontextprotocol.kotlin.sdk.server.RegisteredTool
 import io.modelcontextprotocol.kotlin.sdk.server.Server
@@ -198,7 +197,7 @@ internal class McpSessionHandler(
    * Creates and configures a new session with the given transport.
    * Sets up onClose handler, onInitialized handler and launches the tool updates collector.
    */
-  suspend fun createAndInitializeSession(transport: Transport, app: Application): ServerSession {
+  suspend fun createAndInitializeSession(transport: Transport): ServerSession {
     val session = mcpServer.createSession(transport)
     sessionAwaiter.complete(session)
 
