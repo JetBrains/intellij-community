@@ -66,7 +66,7 @@ interface ToolVariant {
   expose?: ToolExpose
 }
 
-export const BLOCKED_TOOL_NAMES = new Set(['create_new_file', 'execute_terminal_command'])
+export const BLOCKED_TOOL_NAMES = new Set(['create_new_file', 'execute_terminal_command', 'execute_tool'])
 
 const EXTRA_REPLACED_TOOL_NAMES = [
   'search_in_files_by_text',

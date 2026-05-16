@@ -203,6 +203,19 @@ describe('ij MCP proxy tool list', {timeout: SUITE_TIMEOUT_MS}, () => {
     })
   })
 
+  it('rejects direct execute_tool calls', async () => {
+    await withProxy({}, async ({proxyClient}) => {
+      const response = await proxyClient.send('tools/call', {
+        name: 'execute_tool',
+        arguments: {command: 'read_file --file_path example.txt'}
+      })
+
+      ok(response.result?.isError)
+      const message = response.result?.content?.[0]?.text ?? ''
+      ok(message.includes("Tool 'execute_tool' is not exposed by ij-proxy"))
+    })
+  })
+
   it('rejects direct get_file_problems calls', async () => {
     await withProxy({}, async ({proxyClient}) => {
       const response = await proxyClient.send('tools/call', {
