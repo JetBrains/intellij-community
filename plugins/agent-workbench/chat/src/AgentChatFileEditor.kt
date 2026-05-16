@@ -62,6 +62,7 @@ internal class AgentChatFileEditor(
   editorCoroutineScope: CoroutineScope? = null,
 ) : UserDataHolderBase(), FileEditor {
   private val ownedTerminalStartupJob = if (editorCoroutineScope == null) SupervisorJob() else null
+
   @Suppress("RAW_SCOPE_CREATION")
   private val terminalStartupScope = editorCoroutineScope ?: CoroutineScope(checkNotNull(ownedTerminalStartupJob) + Dispatchers.Default)
   private val pendingContextPanel by lazy { AgentChatPendingContextPanel(file.projectPath) }
@@ -263,6 +264,7 @@ internal class AgentChatFileEditor(
       projectPath = file.projectPath,
       provider = provider,
       sessionId = file.threadId.ifBlank { file.sessionId },
+      launchMode = parseAgentChatLaunchMode(file.launchMode),
     )
   }
 

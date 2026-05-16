@@ -52,8 +52,13 @@ object JunieCliSupport {
     else listOf(executable, SKIP_UPDATE_CHECK_FLAG)
   }
 
-  fun buildResumeCommand(sessionId: String, executable: String = JUNIE_COMMAND): List<String> {
-    return listOf(executable, SKIP_UPDATE_CHECK_FLAG, SESSION_ID_FLAG, sessionId)
+  fun buildResumeCommand(
+    sessionId: String,
+    yolo: Boolean = false,
+    executable: String = JUNIE_COMMAND,
+  ): List<String> {
+    return if (yolo) listOf(executable, SKIP_UPDATE_CHECK_FLAG, BRAVE_FLAG, SESSION_ID_FLAG, sessionId)
+    else listOf(executable, SKIP_UPDATE_CHECK_FLAG, SESSION_ID_FLAG, sessionId)
   }
 
 }

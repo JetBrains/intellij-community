@@ -10,6 +10,7 @@ package com.intellij.agent.workbench.sessions.service
 import com.intellij.agent.workbench.chat.AgentChatDeferredStartPhase
 import com.intellij.agent.workbench.chat.AgentChatDeferredStartState
 import com.intellij.agent.workbench.chat.openChat
+import com.intellij.agent.workbench.chat.serializeAgentChatLaunchMode
 import com.intellij.agent.workbench.chat.updateAgentChatDeferredStartState
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.common.parseAgentWorkbenchPathOrNull
@@ -107,6 +108,7 @@ internal interface AgentSessionChatOpenExecutor {
     subAgent: AgentSubAgent?,
     launchSpecOverride: AgentSessionTerminalLaunchSpec?,
     initialMessageDispatchPlan: AgentInitialMessageDispatchPlan,
+    launchMode: AgentSessionLaunchMode?,
   )
 
   suspend fun openNewChat(
@@ -150,6 +152,7 @@ private object DefaultAgentSessionChatOpenExecutor : AgentSessionChatOpenExecuto
     subAgent: AgentSubAgent?,
     launchSpecOverride: AgentSessionTerminalLaunchSpec?,
     initialMessageDispatchPlan: AgentInitialMessageDispatchPlan,
+    launchMode: AgentSessionLaunchMode?,
   ) {
     openAgentSessionChat(
       normalizedPath = normalizedPath,
@@ -157,6 +160,7 @@ private object DefaultAgentSessionChatOpenExecutor : AgentSessionChatOpenExecuto
       subAgent = subAgent,
       launchSpecOverride = launchSpecOverride,
       initialMessageDispatchPlan = initialMessageDispatchPlan,
+      launchMode = launchMode,
     )
   }
 
@@ -245,6 +249,7 @@ class AgentSessionLaunchService internal constructor(
     initialMessageDispatchPlan: AgentInitialMessageDispatchPlan = AgentInitialMessageDispatchPlan.EMPTY,
     initialMessageRequest: AgentPromptInitialMessageRequest? = null,
     precomputedInitialMessagePlan: AgentInitialMessagePlan? = null,
+    resumeLaunchMode: AgentSessionLaunchMode? = null,
     singleFlightPolicy: SingleFlightPolicy = SingleFlightPolicy.DROP,
     launchOrigin: OpenThreadLaunchOrigin = OpenThreadLaunchOrigin.USER_OPEN,
     promptLaunchResolved: ((AgentPromptLaunchResult) -> Unit)? = null,
@@ -285,9 +290,9 @@ class AgentSessionLaunchService internal constructor(
             threadId = openedThread.id,
           ) ?: openedThread.takeIf { archiveResolution.unarchived }
                                 ?: run {
-                                  promptLaunchResolved?.invoke(AgentPromptLaunchResult.failure(AgentPromptLaunchError.TARGET_THREAD_NOT_FOUND))
-                                  return@launchDropAction
-                                }
+            promptLaunchResolved?.invoke(AgentPromptLaunchResult.failure(AgentPromptLaunchError.TARGET_THREAD_NOT_FOUND))
+            return@launchDropAction
+          }
           if (effectiveInitialMessagePlan?.isBlockedForExistingThreadPlanMode(refreshedThread.activity) == true) {
             promptLaunchResolved?.invoke(AgentPromptLaunchResult.failure(AgentPromptLaunchError.TARGET_THREAD_BUSY_FOR_PLAN_MODE))
             return@launchDropAction
@@ -319,6 +324,14 @@ class AgentSessionLaunchService internal constructor(
             precomputedInitialMessagePlan = effectiveInitialMessagePlan,
           )
         }
+        val effectiveResumeLaunchMode = resolveResumeLaunchMode(
+          descriptor = descriptor,
+          requestedLaunchMode = resumeLaunchMode,
+        )
+        val launchModeForChatState = resolveLaunchModeForChatState(
+          requestedLaunchMode = resumeLaunchMode,
+          effectiveLaunchMode = effectiveResumeLaunchMode,
+        )
         AgentWorkbenchTelemetry.logThreadOpenRequested(entryPoint, effectiveThread.provider, AgentWorkbenchTargetKind.THREAD)
         // When the caller passes extras (e.g. AWB container env vars), augment the
         // resume launch spec so the respawned CLI receives them. Without this the
@@ -329,6 +342,7 @@ class AgentSessionLaunchService internal constructor(
             projectPath = normalizedPath,
             provider = effectiveThread.provider,
             sessionId = effectiveThread.id,
+            launchMode = effectiveResumeLaunchMode,
           )
           baseResumeSpec.copy(
             command = if (extraCommandArgs.isNotEmpty()) baseResumeSpec.command + extraCommandArgs else baseResumeSpec.command,
@@ -345,6 +359,7 @@ class AgentSessionLaunchService internal constructor(
           subAgent = null,
           launchSpecOverride = launchSpecOverride,
           initialMessageDispatchPlan = effectiveInitialMessageDispatchPlan,
+          launchMode = launchModeForChatState,
         )
         scheduleRefreshAfterArchivedThreadOpen(archiveResolution)
         promptLaunchResolved?.invoke(AgentPromptLaunchResult.SUCCESS)
@@ -386,6 +401,7 @@ class AgentSessionLaunchService internal constructor(
         subAgent = subAgent,
         launchSpecOverride = null,
         initialMessageDispatchPlan = AgentInitialMessageDispatchPlan.EMPTY,
+        launchMode = null,
       )
       scheduleRefreshAfterArchivedThreadOpen(archiveResolution)
     }
@@ -444,6 +460,25 @@ class AgentSessionLaunchService internal constructor(
       syncService.refresh()
       archivedSessionsRefreshIfLoaded()
     }
+  }
+
+  private fun resolveResumeLaunchMode(
+    descriptor: AgentSessionProviderDescriptor?,
+    requestedLaunchMode: AgentSessionLaunchMode?,
+  ): AgentSessionLaunchMode {
+    return requestedLaunchMode
+             ?.takeIf { launchMode -> descriptor != null && launchMode in descriptor.supportedLaunchModes }
+           ?: AgentSessionLaunchMode.STANDARD
+  }
+
+  private fun resolveLaunchModeForChatState(
+    requestedLaunchMode: AgentSessionLaunchMode?,
+    effectiveLaunchMode: AgentSessionLaunchMode,
+  ): AgentSessionLaunchMode? {
+    if (requestedLaunchMode != null) {
+      return effectiveLaunchMode
+    }
+    return effectiveLaunchMode.takeIf { launchMode -> launchMode != AgentSessionLaunchMode.STANDARD }
   }
 
   fun createNewSession(
@@ -764,6 +799,7 @@ class AgentSessionLaunchService internal constructor(
             entryPoint = AgentWorkbenchEntryPoint.PROMPT,
             initialMessageRequest = request.initialMessageRequest,
             precomputedInitialMessagePlan = initialMessagePlan,
+            resumeLaunchMode = request.launchMode,
             singleFlightPolicy = SingleFlightPolicy.RESTART_LATEST,
             launchOrigin = OpenThreadLaunchOrigin.PROMPT_LAUNCH,
             promptLaunchResolved = ::reportPromptLaunchResolved,
@@ -864,6 +900,7 @@ private suspend fun openAgentSessionChat(
   subAgent: AgentSubAgent?,
   launchSpecOverride: AgentSessionTerminalLaunchSpec? = null,
   initialMessageDispatchPlan: AgentInitialMessageDispatchPlan = AgentInitialMessageDispatchPlan.EMPTY,
+  launchMode: AgentSessionLaunchMode? = null,
 ) {
   if (AgentChatOpenModeSettings.openInDedicatedFrame()) {
     openChatInDedicatedFrame(
@@ -872,6 +909,7 @@ private suspend fun openAgentSessionChat(
       subAgent = subAgent,
       launchSpecOverride = launchSpecOverride,
       initialMessageDispatchPlan = initialMessageDispatchPlan,
+      launchMode = launchMode,
     )
     return
   }
@@ -883,6 +921,7 @@ private suspend fun openAgentSessionChat(
     subAgent = subAgent,
     launchSpecOverride = launchSpecOverride,
     initialMessageDispatchPlan = initialMessageDispatchPlan,
+    launchMode = launchMode,
   )
 }
 
@@ -1236,6 +1275,7 @@ private suspend fun openNewChatInProject(
     threadActivity = com.intellij.agent.workbench.common.AgentThreadActivity.READY,
     pendingCreatedAtMs = pendingMetadata?.createdAtMs,
     pendingLaunchMode = pendingMetadata?.launchMode,
+    launchMode = pendingMetadata?.launchMode,
     initialMessageDispatchPlan = initialMessageDispatchPlan,
   )
   focusProjectWindow(project)
@@ -1265,6 +1305,7 @@ private suspend fun openDeferredNewChatInProject(
     threadActivity = com.intellij.agent.workbench.common.AgentThreadActivity.READY,
     pendingCreatedAtMs = pendingMetadata?.createdAtMs,
     pendingLaunchMode = pendingMetadata?.launchMode,
+    launchMode = pendingMetadata?.launchMode,
     initialMessageDispatchPlan = AgentInitialMessageDispatchPlan.EMPTY,
     persistSnapshot = false,
     deferredStartState = waitingState,
@@ -1280,6 +1321,7 @@ private suspend fun openChatInDedicatedFrame(
   subAgent: AgentSubAgent?,
   launchSpecOverride: AgentSessionTerminalLaunchSpec?,
   initialMessageDispatchPlan: AgentInitialMessageDispatchPlan = AgentInitialMessageDispatchPlan.EMPTY,
+  launchMode: AgentSessionLaunchMode? = null,
 ) {
   val dedicatedProjectPath = AgentWorkbenchDedicatedFrameProjectManager.dedicatedProjectPath()
   val openProject = findOpenProject(dedicatedProjectPath)
@@ -1292,6 +1334,7 @@ private suspend fun openChatInDedicatedFrame(
       subAgent = subAgent,
       launchSpecOverride = launchSpecOverride,
       initialMessageDispatchPlan = initialMessageDispatchPlan,
+      launchMode = launchMode,
     )
     return
   }
@@ -1313,6 +1356,7 @@ private suspend fun openChatInDedicatedFrame(
     subAgent = subAgent,
     launchSpecOverride = launchSpecOverride,
     initialMessageDispatchPlan = initialMessageDispatchPlan,
+    launchMode = launchMode,
   )
 }
 
@@ -1323,12 +1367,14 @@ private suspend fun openChatInProject(
   subAgent: AgentSubAgent?,
   launchSpecOverride: AgentSessionTerminalLaunchSpec?,
   initialMessageDispatchPlan: AgentInitialMessageDispatchPlan = AgentInitialMessageDispatchPlan.EMPTY,
+  launchMode: AgentSessionLaunchMode? = null,
 ) {
   val chatOpenPayload = resolveAgentSessionChatOpenPayload(
     projectPath = projectPath,
     thread = thread,
     subAgent = subAgent,
     launchSpecOverride = launchSpecOverride,
+    launchMode = launchMode ?: AgentSessionLaunchMode.STANDARD,
   )
   val effectiveInitialMessageDispatchPlan = if (initialMessageDispatchPlan != AgentInitialMessageDispatchPlan.EMPTY) {
     initialMessageDispatchPlan
@@ -1346,6 +1392,7 @@ private suspend fun openChatInProject(
     threadTitle = chatOpenPayload.threadTitle,
     subAgentId = chatOpenPayload.subAgentId,
     threadActivity = thread.activity,
+    launchMode = serializeAgentChatLaunchMode(launchMode),
     initialMessageDispatchPlan = effectiveInitialMessageDispatchPlan,
   )
 

@@ -116,6 +116,9 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
       lastUsedLaunchMode = { AgentSessionLaunchMode.STANDARD },
     )
     val event = TestActionEvent.createTestEvent(action)
+    AgentSessionProviderAvailabilityService.getInstance(context.project).setAvailabilityForTest(
+      mapOf(AgentSessionProvider.CODEX to true),
+    )
 
     action.update(event)
 

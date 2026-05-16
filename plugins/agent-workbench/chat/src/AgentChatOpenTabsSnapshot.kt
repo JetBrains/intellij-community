@@ -2,7 +2,6 @@
 package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
-import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AgentPromptAddContextTargetCandidate
 import com.intellij.openapi.application.UI
@@ -288,7 +287,7 @@ internal class AgentChatOpenTabsSnapshot(
         AgentPromptAddContextTargetCandidate(
           projectPath = normalizedPath,
           provider = provider,
-          launchMode = AgentSessionLaunchMode.STANDARD,
+          launchMode = parseAgentChatLaunchMode(chatFile.launchMode),
           threadId = threadId,
           displayText = chatFile.threadTitle.takeIf { title -> title.isNotBlank() } ?: threadId,
           secondaryText = "  ${provider.value}",

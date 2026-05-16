@@ -42,6 +42,14 @@ class ClaudeAgentSessionProviderDescriptorTest {
   }
 
   @Test
+  fun buildYoloResumeLaunchSpec(): Unit = runBlocking(Dispatchers.Default) {
+    assertThat(bridge.buildResumeLaunchSpec("session-1", AgentSessionLaunchMode.YOLO).command)
+      .containsExactly("claude", "--resume", "session-1", "--dangerously-skip-permissions")
+    assertThat(bridge.buildResumeLaunchSpec("session-1", AgentSessionLaunchMode.YOLO).envVariables)
+      .containsExactlyEntriesOf(mapOf("DISABLE_AUTOUPDATER" to "1"))
+  }
+
+  @Test
   fun buildYoloLaunchSpec(): Unit = runBlocking(Dispatchers.Default) {
     assertThat(bridge.buildNewSessionLaunchSpec(AgentSessionLaunchMode.YOLO).command)
       .containsExactly("claude", "--dangerously-skip-permissions")

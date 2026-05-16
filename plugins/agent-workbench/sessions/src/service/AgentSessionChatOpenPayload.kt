@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.sessions.service
 
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.common.session.AgentSubAgent
 import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchSpecs
@@ -23,7 +24,8 @@ internal suspend fun resolveAgentSessionChatOpenPayload(
   thread: AgentSessionThread,
   subAgent: AgentSubAgent?,
   launchSpecOverride: AgentSessionTerminalLaunchSpec?,
-  resumeLaunchSpecProvider: (suspend (AgentSessionProvider, String) -> AgentSessionTerminalLaunchSpec)? = null,
+  launchMode: AgentSessionLaunchMode = AgentSessionLaunchMode.STANDARD,
+  resumeLaunchSpecProvider: (suspend (AgentSessionProvider, String, AgentSessionLaunchMode) -> AgentSessionTerminalLaunchSpec)? = null,
 ): AgentSessionChatOpenPayload {
   val threadIdentity = buildAgentSessionIdentity(provider = thread.provider, sessionId = thread.id)
   val runtimeThreadId = subAgent?.id ?: thread.id
@@ -34,6 +36,7 @@ internal suspend fun resolveAgentSessionChatOpenPayload(
                          projectPath = projectPath,
                          provider = thread.provider,
                          sessionId = runtimeThreadId,
+                         launchMode = launchMode,
                          baseLaunchSpecProvider = provider,
                        )
                      }
@@ -41,6 +44,7 @@ internal suspend fun resolveAgentSessionChatOpenPayload(
                      projectPath = projectPath,
                      provider = thread.provider,
                      sessionId = runtimeThreadId,
+                     launchMode = launchMode,
                    )
   val threadTitle = subAgent?.name?.ifBlank { subAgent.id } ?: thread.title
   return AgentSessionChatOpenPayload(

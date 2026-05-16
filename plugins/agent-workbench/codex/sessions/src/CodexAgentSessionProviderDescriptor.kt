@@ -122,9 +122,22 @@ internal class CodexAgentSessionProviderDescriptor(
   override suspend fun isCliAvailable(): Boolean = cliAvailableProbe()
 
   override suspend fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
+    return buildResumeLaunchSpec(sessionId, AgentSessionLaunchMode.STANDARD)
+  }
+
+  override suspend fun buildResumeLaunchSpec(
+    sessionId: String,
+    launchMode: AgentSessionLaunchMode,
+  ): AgentSessionTerminalLaunchSpec {
     val executable = executableResolver()
+    val command = if (launchMode == AgentSessionLaunchMode.YOLO) {
+      listOf(executable, "-c", CODEX_AUTO_UPDATE_CONFIG, "--yolo", "resume", sessionId)
+    }
+    else {
+      listOf(executable, "-c", CODEX_AUTO_UPDATE_CONFIG, "resume", sessionId)
+    }
     return AgentSessionTerminalLaunchSpec(
-      command = listOf(executable, "-c", CODEX_AUTO_UPDATE_CONFIG, "resume", sessionId),
+      command = command,
     )
   }
 

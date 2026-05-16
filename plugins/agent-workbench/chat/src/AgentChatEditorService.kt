@@ -190,6 +190,7 @@ suspend fun openChat(
   pendingCreatedAtMs: Long? = null,
   pendingFirstInputAtMs: Long? = null,
   pendingLaunchMode: String? = null,
+  launchMode: String? = null,
   initialMessageDispatchPlan: AgentInitialMessageDispatchPlan = AgentInitialMessageDispatchPlan.EMPTY,
   persistSnapshot: Boolean = true,
   deferredStartState: AgentChatDeferredStartState? = null,
@@ -237,6 +238,7 @@ suspend fun openChat(
     pendingCreatedAtMs = pendingCreatedAtMs,
     pendingFirstInputAtMs = pendingFirstInputAtMs,
     pendingLaunchMode = pendingLaunchMode,
+    launchMode = launchMode ?: existing?.launchMode,
     newThreadRebindRequestedAtMs = existing?.newThreadRebindRequestedAtMs,
     initialMessageDispatchSteps = snapshotInitialMessageDispatchSteps,
     initialMessageToken = snapshotInitialMessageToken,
@@ -248,6 +250,7 @@ suspend fun openChat(
   }
   val file = existing ?: agentChatVirtualFileSystem().getOrCreateFile(snapshot)
   if (existing != null) {
+    val oldLaunchMode = existing.launchMode
     existing.updateRestoreOnRestart(persistSnapshot)
     if (!persistSnapshot) {
       existing.updateStartupIntent(null)
@@ -260,10 +263,11 @@ suspend fun openChat(
     val deferredStartStateUpdated = existing.updateDeferredStartState(deferredStartState)
     val pendingUpdated = (pendingCreatedAtMs != null || pendingFirstInputAtMs != null || pendingLaunchMode != null) &&
                          existing.updatePendingMetadata(
-        pendingCreatedAtMs = pendingCreatedAtMs,
-        pendingFirstInputAtMs = pendingFirstInputAtMs,
-        pendingLaunchMode = pendingLaunchMode,
-      )
+                           pendingCreatedAtMs = pendingCreatedAtMs,
+                           pendingFirstInputAtMs = pendingFirstInputAtMs,
+                           pendingLaunchMode = pendingLaunchMode,
+                         )
+    val launchModeUpdated = oldLaunchMode != existing.launchMode
     if (hasExplicitInitialMessageDispatch) {
       existing.updateInitialMessageMetadata(
         initialMessageDispatchSteps = initialMessageDispatchPlan.postStartDispatchSteps,
@@ -278,7 +282,8 @@ suspend fun openChat(
       "currentName=${existing.name}," +
       " currentTitle=${existing.threadTitle}, currentActivity=${existing.threadActivity}"
     }
-    if (titleUpdated || activityUpdated || sharedPresentationUpdated || pendingUpdated || hasExplicitInitialMessageDispatch || deferredStartStateUpdated) {
+    if (titleUpdated || activityUpdated || sharedPresentationUpdated || pendingUpdated || launchModeUpdated || hasExplicitInitialMessageDispatch ||
+        deferredStartStateUpdated) {
       withContext(Dispatchers.EDT) {
         manager.updateFilePresentation(existing)
         if (deferredStartStateUpdated) {

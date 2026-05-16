@@ -179,6 +179,11 @@ interface AgentSessionProviderDescriptor {
 
   suspend fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec
 
+  suspend fun buildResumeLaunchSpec(
+    sessionId: String,
+    launchMode: AgentSessionLaunchMode,
+  ): AgentSessionTerminalLaunchSpec = buildResumeLaunchSpec(sessionId)
+
   suspend fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec
 
   fun buildLaunchSpecWithInitialMessage(

@@ -116,6 +116,7 @@ class AgentChatFileEditorProviderTest {
         envVariables = mapOf("PATH" to "/custom/bin", "DISABLE_AUTOUPDATER" to "1"),
       )
     )
+    file.updateLaunchMode(AgentSessionLaunchMode.YOLO.name)
 
     val startupLaunchSpec = checkNotNull(file.consumeStartupLaunchSpecOverride())
     assertThat(startupLaunchSpec.command).containsExactly("codex", "--", "-run this")
@@ -130,6 +131,7 @@ class AgentChatFileEditorProviderTest {
       val loaded = store.load(snapshot.tabKey)
       assertThat(loaded?.identity).isEqualTo(snapshot.identity)
       assertThat(loaded?.runtime?.threadId).isEqualTo(snapshot.runtime.threadId)
+      assertThat(loaded?.runtime?.launchMode).isEqualTo("yolo")
     }
     finally {
       store.delete(snapshot.tabKey)
@@ -153,6 +155,7 @@ class AgentChatFileEditorProviderTest {
       pendingCreatedAtMs = 100,
       pendingFirstInputAtMs = 200,
       pendingLaunchMode = AgentSessionLaunchMode.STANDARD.name,
+      launchMode = AgentSessionLaunchMode.YOLO.name,
       newThreadRebindRequestedAtMs = 300,
       initialMessageDispatchSteps = dispatchSteps,
       initialMessageDispatchStepIndex = 1,
@@ -173,6 +176,7 @@ class AgentChatFileEditorProviderTest {
     assertThat(element.getAttributeValue("startupKind")).isEqualTo("newSession")
     assertThat(element.getAttributeValue("startupProvider")).isEqualTo(AgentSessionProvider.CODEX.value)
     assertThat(element.getAttributeValue("startupLaunchMode")).isEqualTo(AgentSessionLaunchMode.YOLO.name)
+    assertThat(element.getAttributeValue("launchMode")).isEqualTo("yolo")
 
     val file = AgentChatVirtualFile(
       projectPath = snapshot.identity.projectPath,
@@ -193,12 +197,14 @@ class AgentChatFileEditorProviderTest {
     assertThat(restored?.runtime?.pendingCreatedAtMs).isEqualTo(100)
     assertThat(restored?.runtime?.pendingFirstInputAtMs).isEqualTo(200)
     assertThat(restored?.runtime?.pendingLaunchMode).isEqualTo(AgentSessionLaunchMode.STANDARD.name)
+    assertThat(restored?.runtime?.launchMode).isEqualTo("yolo")
     assertThat(restored?.runtime?.newThreadRebindRequestedAtMs).isEqualTo(300)
     assertThat(restored?.runtime?.initialMessageDispatchSteps).containsExactlyElementsOf(dispatchSteps)
     assertThat(restored?.runtime?.initialMessageDispatchStepIndex).isEqualTo(1)
     assertThat(restored?.runtime?.initialMessageToken).isEqualTo("token-state")
     assertThat(restored?.runtime?.initialMessageSent).isFalse()
     assertThat(restoredState.startupIntent).isEqualTo(startupIntent)
+    assertThat(file.launchMode).isEqualTo("yolo")
   }
 
   @Test

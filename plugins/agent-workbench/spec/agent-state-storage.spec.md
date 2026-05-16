@@ -31,7 +31,7 @@ Agent Workbench state is intentionally split by lifetime and scope. Editor-provi
 - Warm session state must not persist blocking errors, provider warnings, loading flags, or pending `new-*` identities.
   [@test] ../sessions/testSrc/AgentSessionWarmStateServiceTest.kt
 
-- Agent Chat persisted tab state must persist tab identity, UI/runtime restore metadata, and command-free startup intent for pending new-session tabs, but must not persist shell command or environment variables. The provider variant is the canonical source for resume and new-session command construction.
+- Agent Chat persisted tab state must persist tab identity, UI/runtime restore metadata including concrete-tab resume launch mode, and command-free startup intent for pending new-session tabs, but must not persist shell command or environment variables. The provider variant and stored launch mode are the canonical sources for resume and new-session command construction.
   [@test] ../chat/testSrc/AgentChatFileEditorProviderTest.kt
 
 - Prompt context restore snapshots are runtime-only and must not be serialized into `AgentPromptUiState`.

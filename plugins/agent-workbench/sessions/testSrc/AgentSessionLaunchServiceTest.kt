@@ -2,13 +2,17 @@
 package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.common.session.AgentSubAgent
+import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
+import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchRequest
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
+import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -101,6 +105,87 @@ class AgentSessionLaunchServiceTest {
           assertThat(openRequest.thread.archived).isFalse()
           assertThat(unarchiveCalls.get()).isZero()
           assertThat(archivedRefreshCalls.get()).isZero()
+        }
+      }
+    }
+  }
+
+  @Test
+  fun openActiveThreadIgnoresLastYoloLaunchModeForSameProvider() {
+    val descriptor = testDescriptor(
+      supportsUnarchiveThread = true,
+      unarchiveThreadHandler = { _, _ -> false },
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO),
+    )
+    val chatOpenExecutor = RecordingChatOpenExecutor()
+    val uiPreferencesState = AgentSessionUiPreferencesStateService().also { preferences ->
+      preferences.updateProviderPreferencesOnLaunch(
+        provider = AgentSessionProvider.CODEX,
+        launchMode = AgentSessionLaunchMode.YOLO,
+        initialMessageRequest = null,
+      )
+    }
+
+    AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(descriptor))) {
+      runBlocking(Dispatchers.Default) {
+        withTestServiceAndLaunch(
+          sessionSourcesProvider = { listOf(sourceForActiveThreads(emptyList())) },
+          projectEntriesProvider = { listOf(openTestProjectEntry(PROJECT_PATH, "Project A")) },
+          uiPreferencesState = uiPreferencesState,
+          chatOpenExecutor = chatOpenExecutor,
+        ) { _, launchService ->
+          launchService.openChatThread(
+            path = PROJECT_PATH,
+            thread = thread(id = "codex-active", updatedAt = 200, provider = AgentSessionProvider.CODEX),
+            entryPoint = AgentWorkbenchEntryPoint.TREE_ROW,
+          )
+
+          waitForCondition { chatOpenExecutor.openChatCalls.get() == 1 }
+
+          val openRequest = checkNotNull(chatOpenExecutor.lastOpenChatRequest.get())
+          assertThat(openRequest.launchMode).isNull()
+        }
+      }
+    }
+  }
+
+  @Test
+  fun promptExistingThreadUsesRequestedYoloLaunchMode() {
+    val descriptor = testDescriptor(
+      supportsUnarchiveThread = true,
+      unarchiveThreadHandler = { _, _ -> false },
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO),
+    )
+    val chatOpenExecutor = RecordingChatOpenExecutor()
+    val activeThread = thread(id = "codex-active", updatedAt = 200, provider = AgentSessionProvider.CODEX)
+
+    AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(descriptor))) {
+      runBlocking(Dispatchers.Default) {
+        withTestServiceAndLaunch(
+          sessionSourcesProvider = { listOf(sourceForActiveThreads(listOf(activeThread))) },
+          projectEntriesProvider = { listOf(openTestProjectEntry(PROJECT_PATH, "Project A")) },
+          chatOpenExecutor = chatOpenExecutor,
+        ) { service, launchService ->
+          service.refresh()
+          waitForCondition { activeThreadIds(service.state.value).contains(activeThread.id) }
+
+          val result = launchService.launchPromptRequest(
+            AgentPromptLaunchRequest(
+              provider = AgentSessionProvider.CODEX,
+              projectPath = PROJECT_PATH,
+              launchMode = AgentSessionLaunchMode.YOLO,
+              initialMessageRequest = AgentPromptInitialMessageRequest(prompt = "Continue this thread"),
+              targetThreadId = activeThread.id,
+            )
+          )
+
+          assertThat(result.launched).isTrue()
+          assertThat(result.error).isNull()
+          waitForCondition { chatOpenExecutor.openChatCalls.get() == 1 }
+
+          val openRequest = checkNotNull(chatOpenExecutor.lastOpenChatRequest.get())
+          assertThat(openRequest.thread.id).isEqualTo(activeThread.id)
+          assertThat(openRequest.launchMode).isEqualTo(AgentSessionLaunchMode.YOLO)
         }
       }
     }
@@ -309,13 +394,14 @@ class AgentSessionLaunchServiceTest {
   private fun testDescriptor(
     supportsUnarchiveThread: Boolean,
     unarchiveThreadHandler: suspend (String, String) -> Boolean,
+    supportedModes: Set<AgentSessionLaunchMode> = emptySet(),
     supportsArchiveThread: Boolean = false,
     suppressArchivedThreadsDuringRefresh: Boolean = false,
     archiveThreadHandler: suspend (String, String) -> Boolean = { _, _ -> false },
   ): TestAgentSessionProviderDescriptor {
     return TestAgentSessionProviderDescriptor(
       provider = AgentSessionProvider.CODEX,
-      supportedModes = emptySet(),
+      supportedModes = supportedModes,
       cliAvailable = true,
       supportsArchiveThread = supportsArchiveThread,
       supportsUnarchiveThread = supportsUnarchiveThread,

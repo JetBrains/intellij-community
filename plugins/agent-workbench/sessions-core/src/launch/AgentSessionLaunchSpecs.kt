@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.sessions.core.launch
 
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.openapi.diagnostic.logger
@@ -23,11 +24,13 @@ object AgentSessionLaunchSpecs {
     projectPath: String,
     provider: AgentSessionProvider,
     sessionId: String,
+    launchMode: AgentSessionLaunchMode = AgentSessionLaunchMode.STANDARD,
   ): AgentSessionTerminalLaunchSpec {
     return resolveResume(
       projectPath = projectPath,
       provider = provider,
       sessionId = sessionId,
+      launchMode = launchMode,
       baseLaunchSpecProvider = ::buildDefaultResumeLaunchSpec,
     )
   }
@@ -36,10 +39,11 @@ object AgentSessionLaunchSpecs {
     projectPath: String,
     provider: AgentSessionProvider,
     sessionId: String,
-    baseLaunchSpecProvider: suspend (AgentSessionProvider, String) -> AgentSessionTerminalLaunchSpec,
+    launchMode: AgentSessionLaunchMode = AgentSessionLaunchMode.STANDARD,
+    baseLaunchSpecProvider: suspend (AgentSessionProvider, String, AgentSessionLaunchMode) -> AgentSessionTerminalLaunchSpec,
   ): AgentSessionTerminalLaunchSpec {
     val baseLaunchSpec = runCatching {
-      baseLaunchSpecProvider(provider, sessionId)
+      baseLaunchSpecProvider(provider, sessionId, launchMode)
     }.getOrElse { t ->
       LOG.warn(
         "Failed to build base resume launch spec for ${provider.value}:$sessionId; falling back to default command",
@@ -60,8 +64,9 @@ object AgentSessionLaunchSpecs {
 private suspend fun buildDefaultResumeLaunchSpec(
   provider: AgentSessionProvider,
   sessionId: String,
+  launchMode: AgentSessionLaunchMode,
 ): AgentSessionTerminalLaunchSpec {
-  return AgentSessionProviders.find(provider)?.buildResumeLaunchSpec(sessionId)
+  return AgentSessionProviders.find(provider)?.buildResumeLaunchSpec(sessionId, launchMode)
          ?: fallbackResumeLaunchSpec(provider, sessionId)
 }
 

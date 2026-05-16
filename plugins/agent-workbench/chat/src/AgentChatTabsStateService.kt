@@ -34,8 +34,8 @@ private val LOG = logger<AgentChatTabsStateService>()
 
 @Service(Service.Level.APP)
 @State(name = "AgentChatTabsState", storages = [Storage(StoragePathMacros.CACHE_FILE)])
-internal class AgentChatTabsStateService(scope: CoroutineScope?)
-  : SerializablePersistentStateComponent<AgentChatTabsState>(AgentChatTabsState()) {
+internal class AgentChatTabsStateService(scope: CoroutineScope?) :
+  SerializablePersistentStateComponent<AgentChatTabsState>(AgentChatTabsState()) {
 
   @Volatile
   private var versionMismatchForcedForTests: Boolean = false
@@ -214,6 +214,7 @@ internal data class PersistedAgentChatTabState(
   @JvmField val pendingCreatedAtMs: Long? = null,
   @JvmField val pendingFirstInputAtMs: Long? = null,
   @JvmField val pendingLaunchMode: String? = null,
+  @JvmField val launchMode: String? = null,
   @JvmField val newThreadRebindRequestedAtMs: Long? = null,
   @JvmField val initialMessageDispatchSteps: List<PersistedAgentChatInitialMessageDispatchStep> = emptyList(),
   @JvmField val initialMessageDispatchStepIndex: Int = 0,
@@ -265,7 +266,7 @@ private fun isExpired(updatedAt: Long, now: Long): Boolean {
 
 private fun PersistedAgentChatTabState.toSnapshot(tabKey: AgentChatTabKey): AgentChatTabSnapshot {
   val resolvedPendingCreatedAtMs = pendingCreatedAtMs
-    ?: updatedAt.takeIf { it > 0L && isPersistedPendingThreadIdentity(threadIdentity) }
+                                   ?: updatedAt.takeIf { it > 0L && isPersistedPendingThreadIdentity(threadIdentity) }
   val runtimeSteps = if (initialMessageDispatchSteps.isNotEmpty()) {
     initialMessageDispatchSteps.mapNotNull(PersistedAgentChatInitialMessageDispatchStep::toRuntime)
   }
@@ -304,6 +305,7 @@ private fun PersistedAgentChatTabState.toSnapshot(tabKey: AgentChatTabKey): Agen
       pendingCreatedAtMs = resolvedPendingCreatedAtMs,
       pendingFirstInputAtMs = pendingFirstInputAtMs,
       pendingLaunchMode = pendingLaunchMode,
+      launchMode = normalizeAgentChatLaunchMode(launchMode),
       newThreadRebindRequestedAtMs = newThreadRebindRequestedAtMs,
       initialMessageDispatchSteps = runtimeSteps,
       initialMessageDispatchStepIndex = runtimeStepIndex,
@@ -330,6 +332,7 @@ private fun AgentChatTabSnapshot.toPersisted(updatedAt: Long): PersistedAgentCha
     pendingCreatedAtMs = runtime.pendingCreatedAtMs,
     pendingFirstInputAtMs = runtime.pendingFirstInputAtMs,
     pendingLaunchMode = runtime.pendingLaunchMode,
+    launchMode = runtime.launchMode,
     newThreadRebindRequestedAtMs = runtime.newThreadRebindRequestedAtMs,
     initialMessageDispatchSteps = runtime.initialMessageDispatchSteps.map(AgentInitialMessageDispatchStep::toPersisted),
     initialMessageDispatchStepIndex = runtime.initialMessageDispatchStepIndex,

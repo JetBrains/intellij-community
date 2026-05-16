@@ -93,6 +93,21 @@ class JunieAgentSessionProviderDescriptorTest {
   }
 
   @Test
+  fun `yolo resume launch enables Junie brave mode`(): Unit = runBlocking(Dispatchers.Default) {
+    val descriptor = JunieAgentSessionProviderDescriptor(executableResolver = { "/bin/junie" })
+
+    val launchSpec = descriptor.buildResumeLaunchSpec("session-251209-172932-1ze8", AgentSessionLaunchMode.YOLO)
+
+    assertThat(launchSpec.command).containsExactly(
+      "/bin/junie",
+      "--skip-update-check",
+      "--brave",
+      "--session-id",
+      "session-251209-172932-1ze8",
+    )
+  }
+
+  @Test
   fun `initial message launch uses interactive post start dispatch`() {
     val descriptor = JunieAgentSessionProviderDescriptor(executableResolver = { "junie-test" })
     val initialMessagePlan = AgentInitialMessagePlan(message = "Implement the feature")

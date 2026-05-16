@@ -42,10 +42,11 @@ internal fun readAgentChatFileEditorState(sourceElement: Element, file: VirtualF
       pendingCreatedAtMs = sourceElement.getAttributeLongValueOrNull(ATTR_PENDING_CREATED_AT_MS),
       pendingFirstInputAtMs = sourceElement.getAttributeLongValueOrNull(ATTR_PENDING_FIRST_INPUT_AT_MS),
       pendingLaunchMode = sourceElement.getAttributeValue(ATTR_PENDING_LAUNCH_MODE),
+      launchMode = normalizeAgentChatLaunchMode(sourceElement.getAttributeValue(ATTR_LAUNCH_MODE)),
       newThreadRebindRequestedAtMs = sourceElement.getAttributeLongValueOrNull(ATTR_NEW_THREAD_REBIND_REQUESTED_AT_MS),
       initialMessageDispatchSteps = steps,
       initialMessageDispatchStepIndex = sourceElement.getAttributeIntValueOrNull(ATTR_INITIAL_MESSAGE_DISPATCH_STEP_INDEX)
-        ?.coerceIn(0, steps.size) ?: 0,
+                                          ?.coerceIn(0, steps.size) ?: 0,
       initialMessageToken = sourceElement.getAttributeValue(ATTR_INITIAL_MESSAGE_TOKEN),
       initialMessageSent = sourceElement.getAttributeValue(ATTR_INITIAL_MESSAGE_SENT)?.toBooleanStrictOrNull() ?: false,
     ),
@@ -77,6 +78,7 @@ internal fun writeAgentChatFileEditorState(state: AgentChatFileEditorState, targ
   targetElement.setNullableAttribute(ATTR_PENDING_CREATED_AT_MS, runtime.pendingCreatedAtMs?.toString())
   targetElement.setNullableAttribute(ATTR_PENDING_FIRST_INPUT_AT_MS, runtime.pendingFirstInputAtMs?.toString())
   targetElement.setNullableAttribute(ATTR_PENDING_LAUNCH_MODE, runtime.pendingLaunchMode)
+  targetElement.setNullableAttribute(ATTR_LAUNCH_MODE, runtime.launchMode)
   targetElement.setNullableAttribute(ATTR_NEW_THREAD_REBIND_REQUESTED_AT_MS, runtime.newThreadRebindRequestedAtMs?.toString())
   targetElement.setAttribute(ATTR_INITIAL_MESSAGE_DISPATCH_STEP_INDEX, runtime.initialMessageDispatchStepIndex.toString())
   targetElement.setNullableAttribute(ATTR_INITIAL_MESSAGE_TOKEN, runtime.initialMessageToken)
@@ -101,7 +103,7 @@ private fun readStartupIntent(sourceElement: Element, threadIdentity: String): A
     return null
   }
   val provider = sourceElement.getAttributeValue(ATTR_STARTUP_PROVIDER)
-    ?.let(AgentSessionProvider::fromOrNull)
+                   ?.let(AgentSessionProvider::fromOrNull)
                  ?: pendingProviderForThreadIdentity(threadIdentity)
                  ?: return null
   return AgentChatStartupIntent.NewSession(
@@ -128,8 +130,10 @@ private fun readInitialMessageDispatchSteps(sourceElement: Element): List<AgentI
       val text = stepElement.textTrim.takeIf { it.isNotEmpty() } ?: return@mapNotNull null
       AgentInitialMessageDispatchStep(
         text = text,
-        timeoutPolicy = parseEnum(stepElement.getAttributeValue(ATTR_TIMEOUT_POLICY), AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK),
-        completionPolicy = parseEnum(stepElement.getAttributeValue(ATTR_COMPLETION_POLICY), AgentInitialMessageDispatchCompletionPolicy.IMMEDIATE),
+        timeoutPolicy = parseEnum(stepElement.getAttributeValue(ATTR_TIMEOUT_POLICY),
+                                  AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK),
+        completionPolicy = parseEnum(stepElement.getAttributeValue(ATTR_COMPLETION_POLICY),
+                                     AgentInitialMessageDispatchCompletionPolicy.IMMEDIATE),
       )
     }
     .orEmpty()
@@ -161,6 +165,7 @@ private const val ATTR_THREAD_ACTIVITY = "threadActivity"
 private const val ATTR_PENDING_CREATED_AT_MS = "pendingCreatedAtMs"
 private const val ATTR_PENDING_FIRST_INPUT_AT_MS = "pendingFirstInputAtMs"
 private const val ATTR_PENDING_LAUNCH_MODE = "pendingLaunchMode"
+private const val ATTR_LAUNCH_MODE = "launchMode"
 private const val ATTR_NEW_THREAD_REBIND_REQUESTED_AT_MS = "newThreadRebindRequestedAtMs"
 private const val ATTR_INITIAL_MESSAGE_DISPATCH_STEP_INDEX = "initialMessageDispatchStepIndex"
 private const val ATTR_INITIAL_MESSAGE_TOKEN = "initialMessageToken"

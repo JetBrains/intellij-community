@@ -75,8 +75,19 @@ internal class JunieAgentSessionProviderDescriptor(
   override suspend fun isCliAvailable(): Boolean = JunieCliSupport.findExecutableViaTerminalResolver() != null
 
   override suspend fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
+    return buildResumeLaunchSpec(sessionId, AgentSessionLaunchMode.STANDARD)
+  }
+
+  override suspend fun buildResumeLaunchSpec(
+    sessionId: String,
+    launchMode: AgentSessionLaunchMode,
+  ): AgentSessionTerminalLaunchSpec {
     return AgentSessionTerminalLaunchSpec(
-      command = JunieCliSupport.buildResumeCommand(sessionId = sessionId, executable = executableResolver()),
+      command = JunieCliSupport.buildResumeCommand(
+        sessionId = sessionId,
+        yolo = launchMode == AgentSessionLaunchMode.YOLO,
+        executable = executableResolver(),
+      ),
     )
   }
 

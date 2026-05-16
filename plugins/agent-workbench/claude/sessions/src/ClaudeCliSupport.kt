@@ -50,8 +50,16 @@ object ClaudeCliSupport {
     if (yolo) listOf(executable, "--dangerously-skip-permissions")
     else listOf(executable, PERMISSION_MODE_FLAG, PERMISSION_MODE_DEFAULT)
 
-  fun buildResumeCommand(sessionId: String, executable: String = CLAUDE_COMMAND): List<String> =
+  fun buildResumeCommand(
+    sessionId: String,
+    yolo: Boolean = false,
+    executable: String = CLAUDE_COMMAND,
+  ): List<String> = if (yolo) {
+    listOf(executable, "--resume", sessionId, "--dangerously-skip-permissions")
+  }
+  else {
     listOf(executable, "--resume", sessionId)
+  }
 
   internal fun findExecutable(): String? {
     val inPath = PathEnvironmentVariableUtil.findExecutableInPathOnAnyOS(CLAUDE_COMMAND)

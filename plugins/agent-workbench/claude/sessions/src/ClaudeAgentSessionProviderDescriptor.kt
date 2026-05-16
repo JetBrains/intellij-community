@@ -120,7 +120,18 @@ internal class ClaudeAgentSessionProviderDescriptor(
   override suspend fun isCliAvailable(): Boolean = cliAvailableProbe()
 
   override suspend fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
-    return buildClaudeResumeLaunchSpec(sessionId, executableResolver())
+    return buildResumeLaunchSpec(sessionId, AgentSessionLaunchMode.STANDARD)
+  }
+
+  override suspend fun buildResumeLaunchSpec(
+    sessionId: String,
+    launchMode: AgentSessionLaunchMode,
+  ): AgentSessionTerminalLaunchSpec {
+    return buildClaudeResumeLaunchSpec(
+      sessionId = sessionId,
+      executable = executableResolver(),
+      launchMode = launchMode,
+    )
   }
 
   override suspend fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec {
@@ -180,9 +191,14 @@ internal fun replaceOrAddPermissionMode(command: List<String>, mode: String): Li
 internal fun buildClaudeResumeLaunchSpec(
   sessionId: String,
   executable: String = ClaudeCliSupport.CLAUDE_COMMAND,
+  launchMode: AgentSessionLaunchMode = AgentSessionLaunchMode.STANDARD,
 ): AgentSessionTerminalLaunchSpec {
   return AgentSessionTerminalLaunchSpec(
-    command = ClaudeCliSupport.buildResumeCommand(sessionId, executable),
+    command = ClaudeCliSupport.buildResumeCommand(
+      sessionId = sessionId,
+      yolo = launchMode == AgentSessionLaunchMode.YOLO,
+      executable = executable,
+    ),
     envVariables = mapOf(CLAUDE_DISABLE_AUTO_UPDATER_ENV to CLAUDE_DISABLE_AUTO_UPDATER_VALUE),
   )
 }

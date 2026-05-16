@@ -100,6 +100,9 @@ internal class AgentChatVirtualFile internal constructor(
   var pendingLaunchMode: String? = null
     private set
 
+  var launchMode: String? = null
+    private set
+
   var newThreadRebindRequestedAtMs: Long? = null
     private set
 
@@ -286,6 +289,15 @@ internal class AgentChatVirtualFile internal constructor(
     this.pendingCreatedAtMs = pendingCreatedAtMs
     this.pendingFirstInputAtMs = pendingFirstInputAtMs
     this.pendingLaunchMode = pendingLaunchMode
+    return true
+  }
+
+  fun updateLaunchMode(launchMode: String?): Boolean {
+    val normalized = normalizeAgentChatLaunchMode(launchMode)
+    if (this.launchMode == normalized) {
+      return false
+    }
+    this.launchMode = normalized
     return true
   }
 
@@ -537,6 +549,7 @@ internal class AgentChatVirtualFile internal constructor(
       pendingFirstInputAtMs = snapshot.runtime.pendingFirstInputAtMs,
       pendingLaunchMode = snapshot.runtime.pendingLaunchMode,
     )
+    updateLaunchMode(snapshot.runtime.launchMode)
     updateNewThreadRebindRequestedAtMs(snapshot.runtime.newThreadRebindRequestedAtMs)
     updateInitialMessageMetadata(
       initialMessageDispatchSteps = snapshot.runtime.initialMessageDispatchSteps,
@@ -569,6 +582,7 @@ internal class AgentChatVirtualFile internal constructor(
         pendingCreatedAtMs = pendingCreatedAtMs,
         pendingFirstInputAtMs = pendingFirstInputAtMs,
         pendingLaunchMode = pendingLaunchMode,
+        launchMode = launchMode,
         newThreadRebindRequestedAtMs = newThreadRebindRequestedAtMs,
         initialMessageDispatchSteps = initialMessageDispatchSteps,
         initialMessageDispatchStepIndex = initialMessageDispatchStepIndex,

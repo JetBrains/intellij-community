@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.common.session.AgentSubAgent
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
@@ -124,6 +125,31 @@ class AgentSessionChatOpenPayloadTest {
   }
 
   @Test
+  fun resolvesYoloResumeLaunchSpecWhenRequested() {
+    runBlocking(Dispatchers.Default) {
+      val thread = AgentSessionThread(
+        id = "thread-1",
+        title = "Parent title",
+        updatedAt = 1,
+        archived = false,
+        provider = AgentSessionProvider.CODEX,
+      )
+
+      val payload = resolveAgentSessionChatOpenPayload(
+        projectPath = PROJECT_PATH,
+        thread = thread,
+        subAgent = null,
+        launchSpecOverride = null,
+        launchMode = AgentSessionLaunchMode.YOLO,
+        resumeLaunchSpecProvider = ::testResumeLaunchSpec,
+      )
+
+      assertThat(payload.launchSpec.command)
+        .containsExactly("codex", "--yolo", "resume", "thread-1")
+    }
+  }
+
+  @Test
   fun resolvesLaunchSpecFromAugmenterWhenOverrideMissing() {
     runBlocking(Dispatchers.Default) {
       val thread = AgentSessionThread(
@@ -140,7 +166,7 @@ class AgentSessionChatOpenPayloadTest {
           thread = thread,
           subAgent = null,
           launchSpecOverride = null,
-          resumeLaunchSpecProvider = { _, sessionId ->
+          resumeLaunchSpecProvider = { _, sessionId, _ ->
             AgentSessionTerminalLaunchSpec(
               command = listOf("codex", "resume", sessionId),
               envVariables = mapOf("DISABLE_AUTOUPDATER" to "1"),
@@ -174,7 +200,7 @@ class AgentSessionChatOpenPayloadTest {
         thread = thread,
         subAgent = null,
         launchSpecOverride = null,
-        resumeLaunchSpecProvider = { provider, sessionId ->
+        resumeLaunchSpecProvider = { provider, sessionId, _ ->
           check(provider == AgentSessionProvider.CODEX)
           AgentSessionTerminalLaunchSpec(
             command = listOf(
@@ -206,8 +232,14 @@ class AgentSessionChatOpenPayloadTest {
 private fun testResumeLaunchSpec(
   provider: AgentSessionProvider,
   sessionId: String,
+  launchMode: AgentSessionLaunchMode,
 ): AgentSessionTerminalLaunchSpec {
   check(provider == AgentSessionProvider.CODEX)
+  if (launchMode == AgentSessionLaunchMode.YOLO) {
+    return AgentSessionTerminalLaunchSpec(
+      command = listOf("codex", "--yolo", "resume", sessionId),
+    )
+  }
   return AgentSessionTerminalLaunchSpec(
     command = listOf("codex", "-c", "check_for_update_on_startup=false", "resume", sessionId),
   )

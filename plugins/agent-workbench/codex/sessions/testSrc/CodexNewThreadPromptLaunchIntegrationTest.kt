@@ -100,6 +100,7 @@ private fun descriptor(): CodexAgentSessionProviderDescriptor {
   return CodexAgentSessionProviderDescriptor(
     sessionSource = ScriptedSessionSource(provider = AgentSessionProvider.CODEX),
     executableResolver = { CodexCliUtils.CODEX_COMMAND },
+    cliAvailableProbe = { true },
   )
 }
 

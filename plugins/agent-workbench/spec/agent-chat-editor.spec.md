@@ -29,7 +29,7 @@ Agent Chat tabs are protocol-backed editor tabs around terminal-backed agent ses
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
   [@test] ../chat/testSrc/AgentChatOpenTopLevelDispatchTest.kt
 
-- Restore must restore all previously open Agent Chat tabs from editor state, tolerate unresolved URL materialization before provider state is applied, reconstruct pending new-session startup from provider/mode metadata instead of persisted shell commands, prune stale/invalid legacy tab state, and use persisted title/activity only as bootstrap fallback until live shared thread presentation is available.
+- Restore must restore all previously open Agent Chat tabs from editor state, tolerate unresolved URL materialization before provider state is applied, reconstruct pending new-session startup from provider/mode metadata instead of persisted shell commands, restore the stored resume launch mode for concrete tabs, prune stale/invalid legacy tab state, and use persisted title/activity only as bootstrap fallback until live shared thread presentation is available.
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
   [@test] ../chat/testSrc/AgentChatFileEditorProviderTest.kt
 

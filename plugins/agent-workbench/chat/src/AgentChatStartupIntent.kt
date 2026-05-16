@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import java.util.Locale
 
 internal sealed interface AgentChatStartupIntent {
   data class NewSession(
@@ -20,6 +21,18 @@ internal fun resolveAgentChatNewSessionStartupIntent(file: AgentChatVirtualFile)
 }
 
 internal fun parseAgentChatLaunchMode(value: String?): AgentSessionLaunchMode {
-  val normalized = value?.trim()?.takeIf { it.isNotEmpty() } ?: return AgentSessionLaunchMode.STANDARD
-  return runCatching { AgentSessionLaunchMode.valueOf(normalized.uppercase()) }.getOrDefault(AgentSessionLaunchMode.STANDARD)
+  return parseAgentChatLaunchModeOrNull(value) ?: AgentSessionLaunchMode.STANDARD
+}
+
+internal fun parseAgentChatLaunchModeOrNull(value: String?): AgentSessionLaunchMode? {
+  val normalized = value?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+  return runCatching { AgentSessionLaunchMode.valueOf(normalized.uppercase(Locale.ROOT)) }.getOrNull()
+}
+
+fun serializeAgentChatLaunchMode(mode: AgentSessionLaunchMode?): String? {
+  return mode?.name?.lowercase(Locale.ROOT)
+}
+
+internal fun normalizeAgentChatLaunchMode(value: String?): String? {
+  return serializeAgentChatLaunchMode(parseAgentChatLaunchModeOrNull(value))
 }

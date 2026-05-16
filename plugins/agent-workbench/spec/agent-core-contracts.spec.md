@@ -35,10 +35,11 @@ These contracts keep shared identity, command mapping, provider capabilities, pr
   [@test] ../sessions/testSrc/AgentSessionTreeUiStateServiceTest.kt
   [@test] ../sessions/testSrc/AgentSessionRefreshOnDemandIntegrationTest.kt
 
-- Resume command mapping after executable token is canonical: Codex `-c check_for_update_on_startup=false resume <id>`, Claude `--resume <id>`, Junie `--skip-update-check --session-id <id>`.
+- Standard resume command mapping after executable token is canonical: Codex `-c check_for_update_on_startup=false resume <id>`, Claude `--resume <id>`, Junie `--skip-update-check --session-id <id>`. YOLO resume uses provider-specific YOLO flags only when explicitly requested by prompt launch or restored from stored chat tab metadata; ordinary thread open must not infer YOLO from global last-used UI preferences.
   [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
   [@test] ../claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
   [@test] ../junie/sessions/testSrc/JunieAgentSessionProviderDescriptorTest.kt
+  [@test] ../sessions/testSrc/AgentSessionLaunchServiceTest.kt
 
 - New-thread command mapping after executable token is canonical: Codex standard/YOLO, Claude standard/YOLO, and Junie standard/YOLO are defined by provider descriptors and tested there.
   [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
