@@ -12,33 +12,33 @@ class AgentThreadActivityPresentationTest {
     val expected = linkedMapOf(
       AgentThreadActivity.READY to AgentThreadActivityPresentation(
         namedColorKey = "AgentWorkbench.ThreadStatus.ready",
-        lightFallbackRgb = 0x8C8C8C,
-        darkFallbackRgb = 0x8C8C8C,
+        lightFallbackRgb = Color(0x55A76A).rgb,
+        darkFallbackRgb = Color(0x5FAD65).rgb,
         statusMessageKey = "toolwindow.thread.status.ready",
         showBadge = false,
       ),
       AgentThreadActivity.PROCESSING to AgentThreadActivityPresentation(
         namedColorKey = "AgentWorkbench.ThreadStatus.processing",
-        lightFallbackRgb = 0xFF9F43,
-        darkFallbackRgb = 0xE08855,
+        lightFallbackRgb = Color(0xFFAF0F).rgb,
+        darkFallbackRgb = Color(0xF2C55C).rgb,
         statusMessageKey = "toolwindow.thread.status.in.progress",
       ),
       AgentThreadActivity.REVIEWING to AgentThreadActivityPresentation(
         namedColorKey = "AgentWorkbench.ThreadStatus.reviewing",
-        lightFallbackRgb = 0x2FD1C4,
-        darkFallbackRgb = 0x20B2AA,
+        lightFallbackRgb = Color(0x8F5AE5).rgb,
+        darkFallbackRgb = Color(0x8F5AE5).rgb,
         statusMessageKey = "toolwindow.thread.status.needs.review",
       ),
       AgentThreadActivity.UNREAD to AgentThreadActivityPresentation(
         namedColorKey = "AgentWorkbench.ThreadStatus.unread",
-        lightFallbackRgb = 0x3FE47E,
-        darkFallbackRgb = 0x57965C,
+        lightFallbackRgb = Color(0x588CF3).rgb,
+        darkFallbackRgb = Color(0x548AF7).rgb,
         statusMessageKey = "toolwindow.thread.status.done",
       ),
       AgentThreadActivity.NEEDS_INPUT to AgentThreadActivityPresentation(
         namedColorKey = "AgentWorkbench.ThreadStatus.needsInput",
-        lightFallbackRgb = 0x4DA3FF,
-        darkFallbackRgb = 0x548AF7,
+        lightFallbackRgb = Color(0xE55765).rgb,
+        darkFallbackRgb = Color(0xDB5C5C).rgb,
         statusMessageKey = "toolwindow.thread.status.needs.input",
       ),
     )

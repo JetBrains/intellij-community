@@ -14,6 +14,16 @@ data class AgentThreadActivityPresentation(
   @JvmField val showBadge: Boolean = true,
 ) {
   val namedColor: JBColor = JBColor.namedColor(namedColorKey, JBColor(lightFallbackRgb, darkFallbackRgb))
+
+  override fun toString(): String {
+    return "AgentThreadActivityPresentation(" +
+           "$namedColorKey, " +
+           "${Color(lightFallbackRgb)}, " +
+           "${Color(darkFallbackRgb)}, " +
+           "$statusMessageKey, " +
+           "$showBadge" +
+           ")"
+  }
 }
 
 private fun threadActivityPresentation(
@@ -63,8 +73,8 @@ private val UNREAD_PRESENTATION = threadActivityPresentation(
 
 private val NEEDS_INPUT_PRESENTATION = threadActivityPresentation(
   namedColorKey = "AgentWorkbench.ThreadStatus.needsInput",
-  lightFallbackColor = 0xE55765,
-  darkFallbackColor = 0xDB5C5C,
+  lightFallbackColor = Color(0xE55765).rgb,
+  darkFallbackColor = Color(0xDB5C5C).rgb,
   statusMessageKey = "toolwindow.thread.status.needs.input",
 )
 
