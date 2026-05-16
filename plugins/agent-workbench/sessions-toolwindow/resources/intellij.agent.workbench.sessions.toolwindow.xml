@@ -16,7 +16,7 @@
     <toolWindow
       id="agent.workbench.sessions"
       anchor="right"
-      icon="AllIcons.Toolwindows.ToolWindowMessages"
+      icon="com.intellij.agent.workbench.sessions.toolwindow.icons.AgentWorkbenchSessionsToolwindowIcons.Alien"
       canCloseContents="false"
       factoryClass="com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsToolWindowFactory"/>
     <postStartupActivity implementation="com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsActivityStartupActivity"/>

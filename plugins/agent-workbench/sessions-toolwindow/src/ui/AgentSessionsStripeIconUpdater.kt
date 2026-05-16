@@ -3,7 +3,7 @@ package com.intellij.agent.workbench.sessions.toolwindow.ui
 
 // @spec community/plugins/agent-workbench/spec/agent-sessions-tree.spec.md
 
-import com.intellij.icons.AllIcons
+import com.intellij.agent.workbench.sessions.toolwindow.icons.AgentWorkbenchSessionsToolwindowIcons
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -15,12 +15,14 @@ import javax.swing.Icon
 
 private const val AGENT_SESSIONS_TOOL_WINDOW_ID: String = "agent.workbench.sessions"
 
+private val TOOLWINDOW_ICON: Icon = AgentWorkbenchSessionsToolwindowIcons.Alien
+
 @Service(Service.Level.PROJECT)
 internal class AgentSessionsStripeIconUpdater(
   private val project: Project,
   scope: CoroutineScope,
 ) {
-  private val emptyIcon: Icon = AllIcons.Toolwindows.ToolWindowMessages
+  private val emptyIcon: Icon = TOOLWINDOW_ICON
   private val attentionBadgedIcon: Icon by lazy {
     IconManager.getInstance().withIconBadge(emptyIcon, AgentSessionsStripeBadge.ATTENTION.color())
   }
