@@ -183,6 +183,26 @@ class CodexAppServerClient(
     return threads.sortedByDescending { it.updatedAt }
   }
 
+  suspend fun listSkills(cwd: String, forceReload: Boolean = false): List<CodexSkill> {
+    val normalizedCwd = cwd.trim().takeIf(String::isNotEmpty) ?: return emptyList()
+    return request(
+      method = "skills/list",
+      paramsWriter = { generator ->
+        generator.writeStartObject()
+        generator.writeFieldName("cwds")
+        generator.writeStartArray()
+        generator.writeString(normalizedCwd)
+        generator.writeEndArray()
+        if (forceReload) {
+          generator.writeBooleanField("forceReload", true)
+        }
+        generator.writeEndObject()
+      },
+      resultParser = { parser -> protocol.parseSkillsListResult(parser) },
+      defaultResult = emptyList(),
+    )
+  }
+
   suspend fun readThreadActivitySnapshot(threadId: String): CodexThreadActivitySnapshot? {
     val normalizedThreadId = threadId.trim()
     if (normalizedThreadId.isEmpty()) {

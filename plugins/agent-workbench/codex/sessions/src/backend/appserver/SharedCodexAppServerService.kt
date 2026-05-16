@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.codex.sessions.backend.appserver
 
 import com.intellij.agent.workbench.codex.common.CodexAppServerNotification
+import com.intellij.agent.workbench.codex.common.CodexSkill
 import com.intellij.agent.workbench.codex.common.CodexThread
 import com.intellij.agent.workbench.codex.common.CodexThreadActivitySnapshot
 import com.intellij.agent.workbench.codex.common.CodexWebSocketAppServerClient
@@ -42,6 +43,10 @@ class SharedCodexAppServerService(serviceScope: CoroutineScope) {
 
   internal suspend fun readThread(threadId: String): CodexThread? {
     return client.readThread(threadId)
+  }
+
+  internal suspend fun listSkills(projectPath: Path): List<CodexSkill> {
+    return client.listSkills(cwd = projectPath.invariantSeparatorsPathString)
   }
 
   @Suppress("unused")

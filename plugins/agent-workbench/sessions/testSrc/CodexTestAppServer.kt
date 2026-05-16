@@ -175,6 +175,9 @@ internal object CodexTestAppServer {
             sourceKinds = request.params.sourceKinds,
           )
         })
+        "skills/list" -> writeResponse(writer, request.id, resultWriter = { generator ->
+          writeSkillsList(generator)
+        })
         "thread/read" -> writeResponse(writer, request.id, resultWriter = { generator ->
           val thread = request.params.id
             ?.let { requestedId -> threads.firstOrNull { entry -> entry.id == requestedId } }
@@ -290,7 +293,8 @@ internal object CodexTestAppServer {
         generator.writeStartObject()
         generator.writeStringField("id", "tests.bisect")
         generator.writeStringField("label", "AI: Bisect the ParserTest regression")
-        generator.writeStringField("promptText", "Identify the commit that broke ParserTest by reading recent diffs of the test and its production paths.")
+        generator.writeStringField("promptText",
+                                   "Identify the commit that broke ParserTest by reading recent diffs of the test and its production paths.")
         generator.writeEndObject()
         generator.writeEndArray()
         generator.writeEndObject()
@@ -315,6 +319,39 @@ internal object CodexTestAppServer {
         generator.writeEndObject()
       }
     }
+  }
+
+  private fun writeSkillsList(generator: JsonGenerator) {
+    generator.writeStartObject()
+    generator.writeFieldName("data")
+    generator.writeStartArray()
+    generator.writeStartObject()
+    generator.writeStringField("cwd", "/project")
+    generator.writeFieldName("skills")
+    generator.writeStartArray()
+    generator.writeStartObject()
+    generator.writeStringField("name", "reviewer")
+    generator.writeStringField("path", "/project/.codex/skills/reviewer/SKILL.md")
+    generator.writeStringField("description", "Review code changes")
+    generator.writeBooleanField("enabled", true)
+    generator.writeFieldName("interface")
+    generator.writeStartObject()
+    generator.writeStringField("displayName", "Reviewer")
+    generator.writeStringField("shortDescription", "Find issues in code changes")
+    generator.writeStringField("defaultPrompt", "Review the current diff.")
+    generator.writeEndObject()
+    generator.writeEndObject()
+    generator.writeStartObject()
+    generator.writeStringField("name", "disabled-skill")
+    generator.writeBooleanField("enabled", false)
+    generator.writeEndObject()
+    generator.writeEndArray()
+    generator.writeFieldName("errors")
+    generator.writeStartArray()
+    generator.writeEndArray()
+    generator.writeEndObject()
+    generator.writeEndArray()
+    generator.writeEndObject()
   }
 
   private fun writePromptSuggestionTurnNotifications(

@@ -6,6 +6,7 @@ import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.parseAgentThreadIdentity
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextEnvelopeFormatter
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
+import com.intellij.agent.workbench.prompt.core.AgentPromptReusableSourceEntry
 import com.intellij.openapi.project.Project
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -208,6 +209,10 @@ interface AgentSessionProviderDescriptor {
   suspend fun unarchiveThread(path: String, threadId: String): Boolean = false
 
   fun buildInitialMessagePlan(request: AgentPromptInitialMessageRequest): AgentInitialMessagePlan
+
+  suspend fun listReusablePromptSourceEntries(projectPath: String): List<AgentPromptReusableSourceEntry> {
+    return emptyList()
+  }
 
   fun onConversationOpened() {
   }

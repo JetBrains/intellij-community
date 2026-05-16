@@ -129,6 +129,23 @@ internal class CodexAppServerProtocol {
     return ThreadListResult(threads, nextCursor)
   }
 
+  fun parseSkillsListResult(parser: JsonParser): List<CodexSkill> {
+    if (parser.currentToken != JsonToken.START_OBJECT) {
+      parser.skipChildren()
+      return emptyList()
+    }
+
+    val skills = mutableListOf<CodexSkill>()
+    forEachObjectField(parser) { fieldName ->
+      when (fieldName) {
+        "data" -> parseSkillsListData(parser, skills)
+        else -> parser.skipChildren()
+      }
+      true
+    }
+    return skills
+  }
+
   fun parseThreadStartResult(parser: JsonParser): CodexStartedThreadSession {
     if (parser.currentToken != JsonToken.START_OBJECT) {
       parser.skipChildren()
@@ -408,6 +425,111 @@ private fun parseThreadArray(parser: JsonParser, archived: Boolean, threads: Mut
       parser.skipChildren()
     }
   }
+}
+
+private fun parseSkillsListData(parser: JsonParser, skills: MutableList<CodexSkill>) {
+  if (parser.currentToken != JsonToken.START_ARRAY) {
+    parser.skipChildren()
+    return
+  }
+
+  while (true) {
+    val token = parser.nextToken() ?: return
+    if (token == JsonToken.END_ARRAY) return
+    if (token == JsonToken.START_OBJECT) {
+      parseSkillsListEntry(parser, skills)
+    }
+    else {
+      parser.skipChildren()
+    }
+  }
+}
+
+private fun parseSkillsListEntry(parser: JsonParser, skills: MutableList<CodexSkill>) {
+  forEachObjectField(parser) { fieldName ->
+    when (fieldName) {
+      "skills" -> parseSkillArray(parser, skills)
+      else -> parser.skipChildren()
+    }
+    true
+  }
+}
+
+private fun parseSkillArray(parser: JsonParser, skills: MutableList<CodexSkill>) {
+  if (parser.currentToken != JsonToken.START_ARRAY) {
+    parser.skipChildren()
+    return
+  }
+
+  while (true) {
+    val token = parser.nextToken() ?: return
+    if (token == JsonToken.END_ARRAY) return
+    if (token == JsonToken.START_OBJECT) {
+      parseSkillObject(parser)?.let(skills::add)
+    }
+    else {
+      parser.skipChildren()
+    }
+  }
+}
+
+private fun parseSkillObject(parser: JsonParser): CodexSkill? {
+  var name: String? = null
+  var path: String? = null
+  var description: String? = null
+  var enabled = true
+  var displayName: String? = null
+  var shortDescription: String? = null
+  var defaultPrompt: String? = null
+
+  forEachObjectField(parser) { fieldName ->
+    when (fieldName) {
+      "name" -> name = readStringOrNull(parser)
+      "path" -> path = readStringOrNull(parser)
+      "description" -> description = readStringOrNull(parser)
+      "enabled" -> enabled = readBooleanOrTrue(parser)
+      "interface" -> {
+        val parsed = parseSkillInterface(parser)
+        displayName = parsed.displayName ?: displayName
+        shortDescription = parsed.shortDescription ?: shortDescription
+        defaultPrompt = parsed.defaultPrompt ?: defaultPrompt
+      }
+      else -> parser.skipChildren()
+    }
+    true
+  }
+
+  val resolvedName = name?.trimToNull() ?: return null
+  return CodexSkill(
+    name = resolvedName,
+    path = path?.trimToNull(),
+    description = description?.trimToNull(),
+    enabled = enabled,
+    displayName = displayName?.trimToNull(),
+    shortDescription = shortDescription?.trimToNull(),
+    defaultPrompt = defaultPrompt?.trimToNull(),
+  )
+}
+
+private fun parseSkillInterface(parser: JsonParser): ParsedSkillInterface {
+  if (parser.currentToken != JsonToken.START_OBJECT) {
+    parser.skipChildren()
+    return ParsedSkillInterface()
+  }
+
+  var displayName: String? = null
+  var shortDescription: String? = null
+  var defaultPrompt: String? = null
+  forEachObjectField(parser) { fieldName ->
+    when (fieldName) {
+      "displayName", "display_name" -> displayName = readStringOrNull(parser)
+      "shortDescription", "short_description" -> shortDescription = readStringOrNull(parser)
+      "defaultPrompt", "default_prompt" -> defaultPrompt = readStringOrNull(parser)
+      else -> parser.skipChildren()
+    }
+    true
+  }
+  return ParsedSkillInterface(displayName, shortDescription, defaultPrompt)
 }
 
 private fun parseThreadObject(parser: JsonParser, archived: Boolean, cwdFilter: String?): CodexThread? {
@@ -785,6 +907,17 @@ private fun normalizeToken(value: String?): String {
     .orEmpty()
 }
 
+private fun readBooleanOrTrue(parser: JsonParser): Boolean {
+  return when (parser.currentToken) {
+    JsonToken.VALUE_TRUE -> true
+    JsonToken.VALUE_FALSE -> false
+    else -> {
+      parser.skipChildren()
+      true
+    }
+  }
+}
+
 private data class ThreadPayload(
   @JvmField val id: String?,
   @JvmField val updatedAt: Long?,
@@ -815,6 +948,12 @@ private data class ParsedThreadSource(
 private data class ParsedThreadStatus(
   @JvmField val statusKind: CodexThreadStatusKind,
   @JvmField val activeFlags: List<CodexThreadActiveFlag>,
+)
+
+private data class ParsedSkillInterface(
+  @JvmField val displayName: String? = null,
+  @JvmField val shortDescription: String? = null,
+  @JvmField val defaultPrompt: String? = null,
 )
 
 @Suppress("DuplicatedCode")

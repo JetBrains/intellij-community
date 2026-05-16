@@ -36,6 +36,7 @@ import java.awt.event.MouseEvent
 import javax.swing.DefaultListModel
 import javax.swing.JCheckBox
 import javax.swing.JEditorPane
+import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.ListSelectionModel
 import javax.swing.ScrollPaneConstants
@@ -58,6 +59,8 @@ internal data class AgentPromptPaletteView(
   @JvmField val bottomPanel: JPanel,
   @JvmField val tabbedPane: JBTabbedPane,
   @JvmField val providerIconLabel: JBLabel,
+  @JvmField val historyIconLabel: JLabel,
+  @JvmField val sourceIconLabel: JLabel,
   @JvmField val addContextButton: ActionLink,
   @JvmField val existingTaskListModel: DefaultListModel<ThreadEntry>,
   @JvmField val existingTaskList: JBList<ThreadEntry>,
@@ -84,6 +87,8 @@ internal fun createAgentPromptPaletteView(
   suggestionsPanel: JPanel = JPanel(),
   contextChipsPanel: JPanel,
   providerOptionsPanel: JPanel? = null,
+  onHistoryClicked: () -> Unit = {},
+  onSourceClicked: () -> Unit = {},
   onProviderIconClicked: () -> Unit,
   onExistingTaskSelected: (ThreadEntry) -> Unit,
 ): AgentPromptPaletteView {
@@ -97,6 +102,30 @@ internal fun createAgentPromptPaletteView(
       }
     })
   }
+
+  fun toolbarIconLabel(icon: javax.swing.Icon, tooltipKey: String, onClick: () -> Unit): JLabel {
+    return JBLabel(icon).apply {
+      cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+      setToolTipText(HtmlChunk.text(AgentPromptBundle.message(tooltipKey)))
+      border = JBUI.Borders.empty()
+      addMouseListener(object : MouseAdapter() {
+        override fun mouseClicked(e: MouseEvent?) {
+          onClick()
+        }
+      })
+    }
+  }
+
+  val historyIconLabel = toolbarIconLabel(
+    icon = AllIcons.Vcs.HistoryInline,
+    tooltipKey = "popup.history.tooltip",
+    onClick = onHistoryClicked,
+  )
+  val sourceIconLabel = toolbarIconLabel(
+    icon = AllIcons.Actions.ListFiles,
+    tooltipKey = "popup.source.tooltip",
+    onClick = onSourceClicked,
+  )
 
   val previewPane = JEditorPane().apply {
     editorKit = HTMLEditorKitBuilder().withWordWrapViewFactory().build()
@@ -172,6 +201,12 @@ internal fun createAgentPromptPaletteView(
       cell(previewToggle)
         .align(AlignX.RIGHT)
         .customize(UnscaledGaps(left = if (providerOptionsPanel != null) controlToIconGap else controlsLeftGap))
+      cell(historyIconLabel)
+        .align(AlignX.RIGHT)
+        .customize(UnscaledGaps(left = controlToIconGap))
+      cell(sourceIconLabel)
+        .align(AlignX.RIGHT)
+        .customize(UnscaledGaps(left = controlToIconGap))
       cell(providerIconLabel)
         .align(AlignX.RIGHT)
         .customize(UnscaledGaps(left = controlToIconGap))
@@ -304,6 +339,8 @@ internal fun createAgentPromptPaletteView(
     bottomPanel = bottomPanel,
     tabbedPane = tabbedPane,
     providerIconLabel = providerIconLabel,
+    historyIconLabel = historyIconLabel,
+    sourceIconLabel = sourceIconLabel,
     addContextButton = addContextButton,
     existingTaskListModel = existingTaskListModel,
     existingTaskList = existingTaskList,

@@ -174,6 +174,8 @@ internal class AgentPromptPalettePopup(
       suggestionsPanel = suggestions.component,
       contextChipsPanel = contextChips.component,
       providerOptionsPanel = promptProviderOptionsPanel,
+      onHistoryClicked = { controllerRef.showPromptHistoryChooser() },
+      onSourceClicked = { controllerRef.showReusableSourceChooser() },
       onProviderIconClicked = { controllerRef.showProviderChooser() },
       onExistingTaskSelected = { selected -> controllerRef.onExistingTaskSelected(selected) },
     )

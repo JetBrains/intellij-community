@@ -42,6 +42,7 @@ internal class AgentPromptPaletteSubmitController(
   private val onWorkingProjectPathSelected: (String) -> Unit,
   private val onSubmitBlocked: (@Nls String) -> Unit,
   private val onSubmitSucceeded: () -> Unit,
+  private val onPromptSubmitted: (AgentPromptHistoryEntry) -> Unit = {},
   private val isContainerModeSelected: () -> Boolean = { false },
 ) {
   fun canSubmit(): Boolean = launchState.canSubmitNow
@@ -209,6 +210,15 @@ internal class AgentPromptPaletteSubmitController(
 
     val result = launcherBridge.launch(request)
     if (result.launched) {
+      onPromptSubmitted(
+        AgentPromptHistoryEntry(
+          promptText = prompt,
+          createdAtMs = System.currentTimeMillis(),
+          providerId = providerEntry.bridge.provider.value,
+          targetMode = targetMode,
+          launchMode = providerSelector.selectedLaunchMode.name,
+        )
+      )
       launchState.clearDraftOnClose = true
       onSubmitSucceeded()
       return

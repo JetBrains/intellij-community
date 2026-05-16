@@ -145,6 +145,35 @@ class CodexAppServerClientTest {
   }
 
   @Test
+  fun listSkillsParsesCodexAppServerSkills(): Unit = runBlocking(Dispatchers.Default) {
+    val configPath = tempDir.resolve("codex-skills.json")
+    writeConfig(path = configPath, threads = emptyList())
+    val backendDir = tempDir.resolve("backend-skills")
+    Files.createDirectories(backendDir)
+    val client = createMockClient(
+      scope = this,
+      tempDir = backendDir,
+      configPath = configPath,
+    )
+    try {
+      val skills = client.listSkills(cwd = "/project")
+
+      assertThat(skills.map { it.name }).containsExactly("reviewer", "disabled-skill")
+      val reviewer = skills.first()
+      assertThat(reviewer.path).isEqualTo("/project/.codex/skills/reviewer/SKILL.md")
+      assertThat(reviewer.description).isEqualTo("Review code changes")
+      assertThat(reviewer.enabled).isTrue()
+      assertThat(reviewer.displayName).isEqualTo("Reviewer")
+      assertThat(reviewer.shortDescription).isEqualTo("Find issues in code changes")
+      assertThat(reviewer.defaultPrompt).isEqualTo("Review the current diff.")
+      assertThat(skills.last().enabled).isFalse()
+    }
+    finally {
+      client.shutdown()
+    }
+  }
+
+  @Test
   fun listThreadsIncludesSubAgentSourcesAndParsesSourceStatusMetadata(): Unit = runBlocking(Dispatchers.Default) {
     val project = tempDir.resolve("project-source-status")
     Files.createDirectories(project)

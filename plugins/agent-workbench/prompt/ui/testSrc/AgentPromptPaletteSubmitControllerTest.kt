@@ -11,6 +11,7 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptContextRendererIds
 import com.intellij.agent.workbench.prompt.core.AgentPromptExistingThreadsSnapshot
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
+import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchError
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchResult
 import com.intellij.agent.workbench.prompt.core.AgentPromptLauncherBridge
@@ -169,6 +170,72 @@ class AgentPromptPaletteSubmitControllerTest {
   }
 
   @Test
+  fun submitRecordsPromptHistoryOnlyAfterSuccessfulLaunch() {
+    runInEdtAndWait {
+      val project = ProjectManager.getInstance().defaultProject
+      val submittedHistory = mutableListOf<AgentPromptHistoryEntry>()
+      val fixture = createFixture(
+        project = project,
+        launcherProvider = {
+          object : AgentPromptLauncherBridge {
+            override fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
+              return AgentPromptLaunchResult.SUCCESS
+            }
+
+            override fun resolveWorkingProjectPath(invocationData: AgentPromptInvocationData): String = "/launcher/path"
+          }
+        },
+        providersProvider = { listOf(testProviderBridge(provider = AgentSessionProvider.CODEX)) },
+        currentTargetMode = { PromptTargetMode.NEW_TASK },
+        onPromptSubmitted = submittedHistory::add,
+      )
+      fixture.providerSelector.refresh()
+      fixture.providerSelector.selectProvider(AgentSessionProvider.CODEX)
+      fixture.promptArea.text = "  Refactor selected code  "
+      fixture.launchState.selectedWorkingProjectPath = "/repo"
+
+      fixture.controller.submit()
+
+      assertThat(submittedHistory).hasSize(1)
+      assertThat(submittedHistory.single().promptText).isEqualTo("Refactor selected code")
+      assertThat(submittedHistory.single().providerId).isEqualTo("codex")
+      assertThat(submittedHistory.single().targetMode).isEqualTo(PromptTargetMode.NEW_TASK)
+      assertThat(submittedHistory.single().launchMode).isEqualTo(AgentSessionLaunchMode.STANDARD.name)
+    }
+  }
+
+  @Test
+  fun failedSubmitDoesNotRecordPromptHistory() {
+    runInEdtAndWait {
+      val project = ProjectManager.getInstance().defaultProject
+      val submittedHistory = mutableListOf<AgentPromptHistoryEntry>()
+      val fixture = createFixture(
+        project = project,
+        launcherProvider = {
+          object : AgentPromptLauncherBridge {
+            override fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
+              return AgentPromptLaunchResult.failure(AgentPromptLaunchError.INTERNAL_ERROR)
+            }
+
+            override fun resolveWorkingProjectPath(invocationData: AgentPromptInvocationData): String = "/launcher/path"
+          }
+        },
+        providersProvider = { listOf(testProviderBridge(provider = AgentSessionProvider.CODEX)) },
+        currentTargetMode = { PromptTargetMode.NEW_TASK },
+        onPromptSubmitted = submittedHistory::add,
+      )
+      fixture.providerSelector.refresh()
+      fixture.providerSelector.selectProvider(AgentSessionProvider.CODEX)
+      fixture.promptArea.text = "Refactor selected code"
+      fixture.launchState.selectedWorkingProjectPath = "/repo"
+
+      fixture.controller.submit()
+
+      assertThat(submittedHistory).isEmpty()
+    }
+  }
+
+  @Test
   fun submitBlocksManualPlanPromptForBusyExistingTask() {
     runInEdtAndWait {
       val project = ProjectManager.getInstance().defaultProject
@@ -244,6 +311,7 @@ class AgentPromptPaletteSubmitControllerTest {
     currentTargetMode: () -> PromptTargetMode = { PromptTargetMode.EXISTING_TASK },
     onSubmitBlocked: (String) -> Unit = {},
     onSubmitSucceeded: () -> Unit = {},
+    onPromptSubmitted: (AgentPromptHistoryEntry) -> Unit = {},
   ): SubmitControllerFixture {
     val promptArea = EditorTextField()
     val providerSelector = AgentPromptProviderSelector(
@@ -288,6 +356,7 @@ class AgentPromptPaletteSubmitControllerTest {
       onWorkingProjectPathSelected = {},
       onSubmitBlocked = onSubmitBlocked,
       onSubmitSucceeded = onSubmitSucceeded,
+      onPromptSubmitted = onPromptSubmitted,
     )
     return SubmitControllerFixture(controller, promptArea, providerSelector, existingTaskController, launchState)
   }

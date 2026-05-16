@@ -16,10 +16,12 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchResult
 import com.intellij.agent.workbench.prompt.core.AgentPromptLauncherBridge
 import com.intellij.agent.workbench.prompt.core.AgentPromptProjectPathCandidate
+import com.intellij.agent.workbench.prompt.core.AgentPromptReusableSourceEntry
 import com.intellij.agent.workbench.prompt.core.getAgentPromptProjectPathContext
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.model.sortAgentSessionThreadsForDisplay
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
@@ -151,6 +153,13 @@ internal class AgentSessionPromptLauncherBridge : AgentPromptLauncherBridge {
 
   override suspend fun addContextToOpenChatTarget(request: AgentPromptAddContextToTargetRequest): AgentPromptAddContextToTargetResult {
     return addContextToOpenChatTargetHandler.invoke(request)
+  }
+
+  override suspend fun listReusablePromptSourceEntries(
+    projectPath: String,
+    provider: AgentSessionProvider,
+  ): List<AgentPromptReusableSourceEntry> {
+    return AgentSessionProviders.find(provider)?.listReusablePromptSourceEntries(projectPath) ?: emptyList()
   }
 
   override fun observeExistingThreads(

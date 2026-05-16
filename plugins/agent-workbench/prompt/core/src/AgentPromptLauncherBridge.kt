@@ -63,6 +63,13 @@ interface AgentPromptLauncherBridge {
     return AgentPromptAddContextToTargetResult.UNAVAILABLE
   }
 
+  suspend fun listReusablePromptSourceEntries(
+    projectPath: String,
+    provider: AgentSessionProvider,
+  ): List<AgentPromptReusableSourceEntry> {
+    return emptyList()
+  }
+
   data class ProviderPreferences(
     @JvmField val providerId: String? = null,
     @JvmField val launchMode: AgentSessionLaunchMode? = null,
