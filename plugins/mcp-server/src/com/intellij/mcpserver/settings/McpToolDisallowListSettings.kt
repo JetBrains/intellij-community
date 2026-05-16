@@ -8,6 +8,7 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
 import com.intellij.util.xmlb.annotations.MapAnnotation
 import com.intellij.util.xmlb.annotations.Property
+import com.intellij.util.xmlb.annotations.XMap
 import com.intellij.util.xmlb.annotations.XCollection
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -27,6 +28,10 @@ internal class McpToolDisallowListSettings : SimplePersistentStateComponent<McpT
     get() = _toolStatesFlow.asStateFlow()
 
   override fun loadState(state: MyState) {
+    if (state.toolStatesData.isEmpty()) {
+      state.migrateLegacy261State()
+      state.migrateLegacy262NightlyState()
+    }
     super.loadState(state)
     _toolStatesFlow.value = this.state.getToolStates()
   }
@@ -52,7 +57,6 @@ internal class McpToolDisallowListSettings : SimplePersistentStateComponent<McpT
     }
 
     var enabled: Boolean by property(true)
-    var onDemand: Boolean by property(true) // legacy: reads old XML for migration
     var routerOnly: Boolean by property(true)
 
     fun toToolState(): ToolState = ToolState(enabled = enabled, routerOnly = routerOnly)
@@ -61,49 +65,30 @@ internal class McpToolDisallowListSettings : SimplePersistentStateComponent<McpT
   internal class MyState : BaseState() {
     enum class LegacyMcpToolState { OFF, ON, ON_DEMAND }
 
-    @get:Property(surroundWithTag = false)
-    @get:MapAnnotation(sortBeforeSave = false)
+    @get:XMap(propertyElementName = "toolStates")
     var toolStatesData: MutableMap<String, ToolStateBean> by map()
 
     @get:Property(surroundWithTag = false)
     @get:MapAnnotation(sortBeforeSave = false)
     var legacyToolStates: MutableMap<String, LegacyMcpToolState> by map()
 
-    @get:XCollection(elementName = "option", valueAttributeName = "value")
+    @get:XCollection(style = XCollection.Style.v2)
     var disallowedToolNames: MutableList<String> by list()
 
-    internal fun getToolStates(): Map<String, ToolState> {
-      migrateLegacy261State()
-      migrateLegacy262NightlyState()
-      return toolStatesData.mapValues { (_, toolState) -> toolState.toToolState() }
-    }
+    internal fun getToolStates(): Map<String, ToolState> = toolStatesData.mapValues { (_, toolState) -> toolState.toToolState() }
 
     internal fun migrateLegacy261State() {
       if (disallowedToolNames.isEmpty()) return
-      disallowedToolNames.forEach { toolName ->
-        toolStatesData[toolName] = ToolStateBean(ToolState(enabled = false))
-      }
+      val data = disallowedToolNames.associateWith { ToolStateBean(ToolState(enabled = false)) }
+      toolStatesData.putAll(data)
       disallowedToolNames.clear()
     }
 
     internal fun migrateLegacy262NightlyState() {
-      if (toolStatesData.isNotEmpty() || legacyToolStates.isEmpty()) {
-        migrateOnDemandToRouterOnly()
-        return
-      }
-
-      toolStatesData.putAll(legacyToolStates.mapValues { (_, toolState) -> ToolStateBean(toolState.toToolState()) })
+      if (legacyToolStates.isEmpty()) return
+      val data = legacyToolStates.mapValues { ToolStateBean(it.value.toToolState()) }
+      toolStatesData.putAll(data)
       legacyToolStates.clear()
-      migrateOnDemandToRouterOnly()
-    }
-
-    private fun migrateOnDemandToRouterOnly() {
-      for (bean in toolStatesData.values) {
-        if (!bean.onDemand) {
-          bean.routerOnly = false
-          bean.onDemand = true
-        }
-      }
     }
 
     private fun LegacyMcpToolState.toToolState(): ToolState =
