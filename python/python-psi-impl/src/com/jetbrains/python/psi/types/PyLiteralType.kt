@@ -391,9 +391,14 @@ class PyLiteralType private constructor(
     private fun getPyClass(expression: PyExpression, context: TypeEvalContext) = (context.getType(expression) as? PyClassType)?.pyClass
 
     private fun isAcceptableStringLiteral(expression: PyStringLiteralExpression, index: Boolean): Boolean {
-      val singleElement = expression.stringElements.singleOrNull() ?: return false
-      return if (!index && singleElement is PyFormattedStringElement) singleElement.fragments.isEmpty()
-      else singleElement is PyPlainStringElement
+      val stringElements = expression.stringElements
+      if (stringElements.isEmpty()) return false
+
+      val singleElement = stringElements.singleOrNull()
+      if (!index && singleElement is PyFormattedStringElement) {
+        return singleElement.fragments.isEmpty()
+      }
+      return stringElements.all { it is PyPlainStringElement }
     }
   }
 }

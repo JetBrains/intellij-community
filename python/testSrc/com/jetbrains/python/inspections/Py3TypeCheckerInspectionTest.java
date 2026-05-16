@@ -2537,6 +2537,28 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  // PY-65488
+  public void testLiteralStringImplicitConcatenation() {
+    doTestByText("""
+                   from typing_extensions import LiteralString
+                   def expect_literal_string(s: LiteralString) -> None: ...
+
+                   expect_literal_string("foo" "bar")
+                   expect_literal_string(
+                     "select "
+                     "* "
+                     "from table"
+                   )
+
+                   literal_string: LiteralString = "foo" "bar"
+                   multiline_literal_string: LiteralString = (
+                     "select "
+                     "* "
+                     "from table"
+                   )
+                   """);
+  }
+
   // PY-53612
   public void testLiteralStringJoin() {
     doTestByText("""
