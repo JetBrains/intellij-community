@@ -1,8 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.prompt.ui
 
-import com.intellij.agent.workbench.common.session.AgentSessionProvider
-import com.intellij.agent.workbench.prompt.core.AgentPromptLauncherBridge
 import com.intellij.agent.workbench.prompt.core.AgentPromptReusableSourceEntry
 import com.intellij.agent.workbench.prompt.core.AgentPromptReusableSourceKind
 import java.io.IOException
@@ -14,27 +12,14 @@ private const val GITHUB_DIRECTORY = ".github"
 private const val PROMPTS_DIRECTORY = "prompts"
 private const val PROMPT_FILE_SUFFIX = ".prompt.md"
 
-internal suspend fun collectReusablePromptSourceEntries(
-  selectedProvider: AgentSessionProvider?,
+internal fun collectReusablePromptSourceEntries(
   workingProjectPaths: Iterable<String?>,
-  launcher: AgentPromptLauncherBridge?,
-  resolvedProjectPath: String?,
 ): List<AgentPromptReusableSourceEntry> {
   val entriesById = LinkedHashMap<String, AgentPromptReusableSourceEntry>()
 
   collectPromptFileEntries(workingProjectPaths).forEach { entry -> entriesById.putIfAbsent(entry.id, entry) }
 
-  if (selectedProvider == AgentSessionProvider.CLAUDE) {
-    collectClaudeReusableEntries(workingProjectPaths).forEach { entry -> entriesById.putIfAbsent(entry.id, entry) }
-  }
-
-  if (selectedProvider != null && launcher != null && !resolvedProjectPath.isNullOrBlank()) {
-    runCatching { launcher.listReusablePromptSourceEntries(resolvedProjectPath, selectedProvider) }
-      .getOrDefault(emptyList())
-      .forEach { entry -> entriesById.putIfAbsent(entry.id, entry) }
-  }
-
-  return entriesById.values.sortedWith(compareBy({ it.provider?.value.orEmpty() }, { it.kind.sortOrder }, { it.label }))
+  return entriesById.values.sortedWith(compareBy({ it.kind.sortOrder }, { it.label }))
 }
 
 internal fun collectPromptFileEntries(workingProjectPaths: Iterable<String?>): List<AgentPromptReusableSourceEntry> {
@@ -83,34 +68,12 @@ private fun readPromptFileEntry(path: Path): AgentPromptReusableSourceEntry? {
   val fileName = path.fileName.toString().removeSuffix(PROMPT_FILE_SUFFIX)
   return AgentPromptReusableSourceEntry(
     id = "prompt-file:${path.toAbsolutePath().normalize()}",
-    label = parsed.title ?: fileName,
+    label = parsed.name ?: parsed.title ?: fileName,
     insertText = insertText,
     kind = AgentPromptReusableSourceKind.PROMPT_FILE,
     description = parsed.description,
     sourcePath = path.toString(),
   )
-}
-
-private fun collectClaudeReusableEntries(workingProjectPaths: Iterable<String?>): List<AgentPromptReusableSourceEntry> {
-  return collectClaudeSlashCompletionEntries(workingProjectPaths)
-    .asSequence()
-    .filter { entry -> entry.kind != AgentPromptClaudeSlashCompletionKind.MENU }
-    .map { entry ->
-      AgentPromptReusableSourceEntry(
-        id = "claude:${entry.kind.name.lowercase()}:${entry.sourceKey}",
-        label = entry.lookupString,
-        insertText = "${entry.lookupString} ",
-        kind = when (entry.kind) {
-          AgentPromptClaudeSlashCompletionKind.COMMAND -> AgentPromptReusableSourceKind.COMMAND
-          AgentPromptClaudeSlashCompletionKind.SKILL -> AgentPromptReusableSourceKind.SKILL
-          AgentPromptClaudeSlashCompletionKind.MENU -> AgentPromptReusableSourceKind.COMMAND
-        },
-        provider = AgentSessionProvider.CLAUDE,
-        description = entry.argumentHint.takeIf(String::isNotBlank),
-        sourcePath = entry.sourcePath?.toString(),
-      )
-    }
-    .toList()
 }
 
 private fun parseReusableSourceRoot(workingProjectPath: String?): Path? {
@@ -144,6 +107,7 @@ private fun parsePromptFile(text: String): ParsedPromptFile {
     if (index < normalizedText.length && normalizedText[index] == '\n') index + 1 else index
   }
   return ParsedPromptFile(
+    name = readSimpleFrontmatterValue(frontmatter, "name"),
     title = readSimpleFrontmatterValue(frontmatter, "title"),
     description = readSimpleFrontmatterValue(frontmatter, "description"),
     body = normalizedText.substring(bodyStart),
@@ -176,6 +140,7 @@ private val AgentPromptReusableSourceKind.sortOrder: Int
   }
 
 private data class ParsedPromptFile(
+  @JvmField val name: String? = null,
   @JvmField val title: String? = null,
   @JvmField val description: String? = null,
   @JvmField val body: String,

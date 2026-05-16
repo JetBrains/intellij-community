@@ -130,6 +130,51 @@ class AgentPromptUiSessionStateServiceTest {
     assertThat(history.last().promptText).isEqualTo("prompt-10")
   }
 
+  @Test
+  fun savedPromptsRoundTripNormalizesDeduplicatesAndMovesLatestFirst() {
+    val service = AgentPromptUiSessionStateService()
+
+    service.savePersistentPrompt("first", createdAtMs = 1)
+    service.savePersistentPrompt("second\r\nline", createdAtMs = 2)
+    service.savePersistentPrompt(" first ", createdAtMs = 3)
+
+    val savedPrompts = service.loadSavedPrompts()
+    assertThat(savedPrompts.map { it.promptText }).containsExactly("first", "second\nline")
+    assertThat(savedPrompts.first().createdAtMs).isEqualTo(3)
+
+    val reloaded = AgentPromptUiSessionStateService()
+    reloaded.loadState(service.state)
+
+    assertThat(reloaded.loadSavedPrompts()).isEqualTo(savedPrompts)
+  }
+
+  @Test
+  fun savedPromptsIgnoreBlankPromptsAndCapEntries() {
+    val service = AgentPromptUiSessionStateService()
+
+    service.savePersistentPrompt("   ")
+    repeat(60) { index ->
+      service.savePersistentPrompt("prompt-$index", createdAtMs = index.toLong())
+    }
+
+    val savedPrompts = service.loadSavedPrompts()
+    assertThat(savedPrompts).hasSize(50)
+    assertThat(savedPrompts.first().promptText).isEqualTo("prompt-59")
+    assertThat(savedPrompts.last().promptText).isEqualTo("prompt-10")
+  }
+
+  @Test
+  fun removePersistentPromptRemovesSavedPromptByNormalizedText() {
+    val service = AgentPromptUiSessionStateService()
+
+    service.savePersistentPrompt("first")
+    service.savePersistentPrompt("second")
+
+    service.removePersistentPrompt(" first ")
+
+    assertThat(service.loadSavedPrompts().map { it.promptText }).containsExactly("second")
+  }
+
   private fun manualContextItem(): AgentPromptContextItem {
     return AgentPromptContextItem(
       rendererId = AgentPromptContextRendererIds.VCS_COMMITS,

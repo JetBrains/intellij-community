@@ -59,8 +59,7 @@ internal data class AgentPromptPaletteView(
   @JvmField val bottomPanel: JPanel,
   @JvmField val tabbedPane: JBTabbedPane,
   @JvmField val providerIconLabel: JBLabel,
-  @JvmField val historyIconLabel: JLabel,
-  @JvmField val sourceIconLabel: JLabel,
+  @JvmField val promptLibraryIconLabel: JLabel,
   @JvmField val addContextButton: ActionLink,
   @JvmField val existingTaskListModel: DefaultListModel<ThreadEntry>,
   @JvmField val existingTaskList: JBList<ThreadEntry>,
@@ -87,8 +86,7 @@ internal fun createAgentPromptPaletteView(
   suggestionsPanel: JPanel = JPanel(),
   contextChipsPanel: JPanel,
   providerOptionsPanel: JPanel? = null,
-  onHistoryClicked: () -> Unit = {},
-  onSourceClicked: () -> Unit = {},
+  onPromptLibraryClicked: () -> Unit = {},
   onProviderIconClicked: () -> Unit,
   onExistingTaskSelected: (ThreadEntry) -> Unit,
 ): AgentPromptPaletteView {
@@ -116,15 +114,10 @@ internal fun createAgentPromptPaletteView(
     }
   }
 
-  val historyIconLabel = toolbarIconLabel(
-    icon = AllIcons.Vcs.HistoryInline,
-    tooltipKey = "popup.history.tooltip",
-    onClick = onHistoryClicked,
-  )
-  val sourceIconLabel = toolbarIconLabel(
+  val promptLibraryIconLabel = toolbarIconLabel(
     icon = AllIcons.Actions.ListFiles,
-    tooltipKey = "popup.source.tooltip",
-    onClick = onSourceClicked,
+    tooltipKey = "popup.prompt.library.tooltip",
+    onClick = onPromptLibraryClicked,
   )
 
   val previewPane = JEditorPane().apply {
@@ -201,10 +194,7 @@ internal fun createAgentPromptPaletteView(
       cell(previewToggle)
         .align(AlignX.RIGHT)
         .customize(UnscaledGaps(left = if (providerOptionsPanel != null) controlToIconGap else controlsLeftGap))
-      cell(historyIconLabel)
-        .align(AlignX.RIGHT)
-        .customize(UnscaledGaps(left = controlToIconGap))
-      cell(sourceIconLabel)
+      cell(promptLibraryIconLabel)
         .align(AlignX.RIGHT)
         .customize(UnscaledGaps(left = controlToIconGap))
       cell(providerIconLabel)
@@ -339,8 +329,7 @@ internal fun createAgentPromptPaletteView(
     bottomPanel = bottomPanel,
     tabbedPane = tabbedPane,
     providerIconLabel = providerIconLabel,
-    historyIconLabel = historyIconLabel,
-    sourceIconLabel = sourceIconLabel,
+    promptLibraryIconLabel = promptLibraryIconLabel,
     addContextButton = addContextButton,
     existingTaskListModel = existingTaskListModel,
     existingTaskList = existingTaskList,

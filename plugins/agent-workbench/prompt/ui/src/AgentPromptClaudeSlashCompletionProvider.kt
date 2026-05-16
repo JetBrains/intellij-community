@@ -3,6 +3,8 @@ package com.intellij.agent.workbench.prompt.ui
 
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.claudeMenuCommandEntries
+import com.intellij.agent.workbench.prompt.core.AgentPromptReusableSourceEntry
+import com.intellij.agent.workbench.prompt.core.AgentPromptReusableSourceKind
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.PlainPrefixMatcher
 import com.intellij.codeInsight.lookup.CharFilter
@@ -18,20 +20,23 @@ private const val CLAUDE_DIRECTORY = ".claude"
 private const val COMMANDS_DIRECTORY = "commands"
 private const val SKILLS_DIRECTORY = "skills"
 private const val SKILL_FILE_NAME = "SKILL.md"
+private const val CODEX_SKILL_PREFIX = '$'
 
 internal class AgentPromptClaudeSlashCompletionProvider(
   private val selectedProvider: () -> AgentSessionProvider?,
   private val resolveWorkingProjectPaths: () -> List<String>,
+  private val resolveCodexSkillEntries: () -> List<AgentPromptReusableSourceEntry> = { emptyList() },
 ) : TextFieldCompletionProviderDumbAware() {
   override fun getPrefix(text: String, offset: Int): String? {
-    if (selectedProvider() != AgentSessionProvider.CLAUDE) {
-      return null
+    return when (selectedProvider()) {
+      AgentSessionProvider.CLAUDE -> findClaudeSlashCompletionPrefix(text, offset)
+      AgentSessionProvider.CODEX -> findCodexSkillCompletionPrefix(text, offset)
+      else -> null
     }
-    return findClaudeSlashCompletionPrefix(text, offset)
   }
 
   override fun acceptChar(c: Char): CharFilter.Result? {
-    return if (c == '/' || c == '-' || c == '_' || c.isLetterOrDigit()) CharFilter.Result.ADD_TO_PREFIX else null
+    return if (c == '/' || c == '$' || c == '-' || c == '_' || c.isLetterOrDigit()) CharFilter.Result.ADD_TO_PREFIX else null
   }
 
   override fun applyPrefixMatcher(result: CompletionResultSet, prefix: String): CompletionResultSet {
@@ -39,8 +44,15 @@ internal class AgentPromptClaudeSlashCompletionProvider(
   }
 
   override fun addCompletionVariants(text: String, offset: Int, prefix: String, result: CompletionResultSet) {
-    collectClaudeSlashCompletionEntries(resolveWorkingProjectPaths()).forEach { entry ->
-      result.addElement(entry.toLookupElement())
+    when (selectedProvider()) {
+      AgentSessionProvider.CLAUDE -> collectClaudeSlashCompletionEntries(resolveWorkingProjectPaths()).forEach { entry ->
+        result.addElement(entry.toLookupElement())
+      }
+      AgentSessionProvider.CODEX -> resolveCodexSkillEntries()
+        .asSequence()
+        .filter { entry -> entry.kind == AgentPromptReusableSourceKind.SKILL }
+        .forEach { entry -> result.addElement(entry.toLookupElement()) }
+      else -> Unit
     }
   }
 }
@@ -54,6 +66,17 @@ internal fun findClaudeSlashCompletionPrefix(text: String, offset: Int): String?
 
   val prefix = text.substring(tokenStart, safeOffset)
   return prefix.takeIf { candidate -> candidate.startsWith('/') }
+}
+
+internal fun findCodexSkillCompletionPrefix(text: String, offset: Int): String? {
+  val safeOffset = offset.coerceIn(0, text.length)
+  val tokenStart = text.lastIndexOfAny(charArrayOf(' ', '\n', '\t', '\r'), startIndex = safeOffset - 1) + 1
+  if (tokenStart >= safeOffset) {
+    return null
+  }
+
+  val prefix = text.substring(tokenStart, safeOffset)
+  return prefix.takeIf { candidate -> candidate.startsWith('$') }
 }
 
 internal fun shouldAutoPopupClaudeSlashCompletion(
@@ -76,6 +99,24 @@ internal fun shouldAutoPopupClaudeSlashCompletion(
     return false
   }
   return collectClaudeSlashCompletionEntries(workingProjectPaths).isNotEmpty()
+}
+
+internal fun shouldAutoPopupCodexSkillCompletion(
+  selectedProvider: AgentSessionProvider?,
+  text: String,
+  offsetAfterChange: Int,
+  insertedFragment: CharSequence,
+): Boolean {
+  if (selectedProvider != AgentSessionProvider.CODEX) {
+    return false
+  }
+  if (insertedFragment.length != 1 || insertedFragment[0] != '$') {
+    return false
+  }
+  if (offsetAfterChange != 1 || !text.startsWith('$')) {
+    return false
+  }
+  return findCodexSkillCompletionPrefix(text, offsetAfterChange) == CODEX_SKILL_PREFIX.toString()
 }
 
 internal fun collectClaudeSlashCompletionEntries(workingProjectPath: String?): List<AgentPromptClaudeSlashCompletionEntry> {
@@ -200,6 +241,27 @@ private fun AgentPromptClaudeSlashCompletionEntry.toLookupElement(): LookupEleme
     .withTypeText(kind.label, true)
 
   return (argumentHint.takeIf(String::isNotBlank)?.let { hint ->
+    builder.withTailText(" $hint", true)
+  } ?: builder).withInsertHandler { context, _ ->
+    val tailOffset = context.tailOffset
+    val chars = context.document.charsSequence
+    if (tailOffset < chars.length && chars[tailOffset].isWhitespace()) {
+      return@withInsertHandler
+    }
+    if (tailOffset == chars.length) {
+      context.document.insertString(tailOffset, " ")
+      context.tailOffset = tailOffset + 1
+    }
+  }
+}
+
+private fun AgentPromptReusableSourceEntry.toLookupElement(): LookupElement {
+  val lookupString = insertText.trim()
+  val builder = LookupElementBuilder.create(this, lookupString)
+    .withPresentableText(lookupString)
+    .withTypeText(AgentPromptBundle.message("popup.completion.type.skill"), true)
+
+  return (description?.takeIf(String::isNotBlank)?.let { hint ->
     builder.withTailText(" $hint", true)
   } ?: builder).withInsertHandler { context, _ ->
     val tailOffset = context.tailOffset

@@ -109,6 +109,25 @@ class AgentPromptPaletteViewStructureTest {
   }
 
   @Test
+  fun promptLibraryControlIsSingleHeaderEntryBeforeProviderIcon() {
+    runInEdtAndWait {
+      val view = createAgentPromptPaletteView(
+        promptArea = EditorTextField(),
+        contextChipsPanel = JPanel(),
+        onPromptLibraryClicked = {},
+        onProviderIconClicked = {},
+        onExistingTaskSelected = {},
+      )
+
+      layoutPopupRoot(view.rootPanel)
+
+      assertThat(SwingUtilities.isDescendingFrom(view.promptLibraryIconLabel, view.rootPanel)).isTrue()
+      assertThat(view.promptLibraryIconLabel.toolTipText).contains("Open prompt library")
+      assertThat(xInRoot(view.promptLibraryIconLabel, view.rootPanel)).isLessThan(xInRoot(view.providerIconLabel, view.rootPanel))
+    }
+  }
+
+  @Test
   fun addContextControlUsesTextLabelAndInlineMnemonic() {
     runInEdtAndWait {
       val view = createAgentPromptPaletteView(

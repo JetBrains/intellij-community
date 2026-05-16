@@ -10,6 +10,7 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptContextResolverServic
 import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
 import com.intellij.agent.workbench.prompt.core.AgentPromptLauncherBridge
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchers
+import com.intellij.agent.workbench.prompt.core.AgentPromptReusableSourceEntry
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.ide.FrameStateListener
@@ -54,6 +55,7 @@ internal class AgentPromptPalettePopup(
     completionProvider = AgentPromptClaudeSlashCompletionProvider(
       selectedProvider = ::selectedProviderForCompletion,
       resolveWorkingProjectPaths = ::resolveWorkingProjectPathsForCompletion,
+      resolveCodexSkillEntries = ::resolveCodexSkillEntriesForCompletion,
     ),
   )
 
@@ -174,8 +176,7 @@ internal class AgentPromptPalettePopup(
       suggestionsPanel = suggestions.component,
       contextChipsPanel = contextChips.component,
       providerOptionsPanel = promptProviderOptionsPanel,
-      onHistoryClicked = { controllerRef.showPromptHistoryChooser() },
-      onSourceClicked = { controllerRef.showReusableSourceChooser() },
+      onPromptLibraryClicked = { controllerRef.showPromptLibraryChooser() },
       onProviderIconClicked = { controllerRef.showProviderChooser() },
       onExistingTaskSelected = { selected -> controllerRef.onExistingTaskSelected(selected) },
     )
@@ -242,6 +243,10 @@ internal class AgentPromptPalettePopup(
       sourceProjectBasePath = sourceProjectBasePath,
       projectBasePath = project.basePath,
     )
+  }
+
+  private fun resolveCodexSkillEntriesForCompletion(): List<AgentPromptReusableSourceEntry> {
+    return if (::sessionController.isInitialized) sessionController.codexSkillCompletionEntriesForCompletion() else emptyList()
   }
 
   private fun createProviderOptionsPanel(): JPanel {

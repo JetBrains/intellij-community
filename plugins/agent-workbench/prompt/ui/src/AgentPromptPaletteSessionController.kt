@@ -21,17 +21,27 @@ import com.intellij.agent.workbench.prompt.ui.context.dataContextOrNull
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.AnActionHolder
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.KeepPopupOnPerform
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.ui.ColoredListCellRenderer
-import com.intellij.ui.SimpleTextAttributes
+import com.intellij.openapi.util.Condition
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
@@ -42,8 +52,9 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import javax.swing.JList
 import javax.swing.JPanel
-import javax.swing.ListSelectionModel
 import javax.swing.event.ChangeListener
+
+private const val CODEX_SKILL_PREFIX = '$'
 
 internal class AgentPromptPaletteSessionController(
   private val project: Project,
@@ -69,6 +80,9 @@ internal class AgentPromptPaletteSessionController(
   private val contextController: AgentPromptPaletteContextController
   private val draftController: AgentPromptPaletteDraftController
   private val submitController: AgentPromptPaletteSubmitController
+
+  @Volatile
+  private var codexSkillCompletionEntries: List<AgentPromptReusableSourceEntry> = emptyList()
 
   init {
     lateinit var submitControllerRef: AgentPromptPaletteSubmitController
@@ -193,7 +207,7 @@ internal class AgentPromptPaletteSessionController(
     promptArea.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {
         onPromptChanged()
-        autoPopupClaudeSlashCompletionIfNeeded(event)
+        autoPopupCommandCompletionIfNeeded(event)
       }
     })
   }
@@ -222,60 +236,17 @@ internal class AgentPromptPaletteSessionController(
     }
   }
 
-  fun showPromptHistoryChooser() {
-    val historyEntries = uiStateService.loadPromptHistory()
-    if (historyEntries.isEmpty()) {
-      showInfo(AgentPromptBundle.message("popup.history.empty"))
-      return
-    }
-
-    val snapshot = draftController.snapshotPrompt()
-    var chosenEntry: AgentPromptHistoryEntry? = null
-    JBPopupFactory.getInstance()
-      .createPopupChooserBuilder(historyEntries)
-      .setTitle(AgentPromptBundle.message("popup.history.title"))
-      .setVisibleRowCount(historyEntries.size.coerceAtMost(7))
-      .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
-      .setNamerForFiltering { entry -> entry.promptText }
-      .setItemSelectedCallback { entry ->
-        entry?.let { draftController.previewPromptText(it.promptText) }
-      }
-      .setItemChosenCallback { entry ->
-        chosenEntry = entry
-        draftController.replacePromptTextFromChooser(entry.promptText)
-        IdeFocusManager.getInstance(project).requestFocusInProject(promptArea, project)
-      }
-      .setRenderer(PromptHistoryCellRenderer())
-      .addListener(object : JBPopupListener {
-        override fun onClosed(event: LightweightWindowEvent) {
-          ApplicationManager.getApplication().invokeLater {
-            if (chosenEntry == null && !project.isDisposed) {
-              draftController.restorePromptSnapshot(snapshot)
-              IdeFocusManager.getInstance(project).requestFocusInProject(promptArea, project)
-            }
-          }
-        }
-      })
-      .setAutoPackHeightOnFiltering(false)
-      .createPopup()
-      .showUnderneathOf(view.historyIconLabel)
-  }
-
-  fun showReusableSourceChooser() {
+  fun showPromptLibraryChooser() {
     popupScope.launch {
       val sourceEntries = collectReusablePromptSourceEntries(
-        selectedProvider = providerSelector.selectedProvider?.bridge?.provider,
         workingProjectPaths = reusableSourceProjectPaths(),
-        launcher = launcherProvider(),
-        resolvedProjectPath = submitController.resolveWorkingProjectPath(),
       )
+      val historyEntries = uiStateService.loadPromptHistory()
       withContext(Dispatchers.EDT) {
-        if (sourceEntries.isEmpty()) {
-          showInfo(AgentPromptBundle.message("popup.source.empty"))
-        }
-        else {
-          showReusableSourceChooser(sourceEntries)
-        }
+        showPromptLibraryChooser(
+          promptFiles = sourceEntries,
+          historyEntries = historyEntries,
+        )
       }
     }
   }
@@ -300,6 +271,8 @@ internal class AgentPromptPaletteSessionController(
     IdeFocusManager.getInstance(project).requestFocusInProject(promptArea, project)
   }
 
+  fun codexSkillCompletionEntriesForCompletion(): List<AgentPromptReusableSourceEntry> = codexSkillCompletionEntries
+
   fun resolveWorkingProjectPath(): String? = submitController.resolveWorkingProjectPath()
 
   fun applyAddContextRequest(request: AgentPromptAddContextRequest): AgentPromptAddContextApplyResult {
@@ -317,37 +290,142 @@ internal class AgentPromptPaletteSessionController(
     draftController.loadPromptTextForSelectedTab()
   }
 
-  private fun showReusableSourceChooser(sourceEntries: List<AgentPromptReusableSourceEntry>) {
+  private fun showPromptLibraryChooser(
+    promptFiles: List<AgentPromptReusableSourceEntry>,
+    historyEntries: List<AgentPromptHistoryEntry>,
+  ) {
     val snapshot = draftController.snapshotPrompt()
-    var chosenEntry: AgentPromptReusableSourceEntry? = null
-    JBPopupFactory.getInstance()
-      .createPopupChooserBuilder(sourceEntries)
-      .setTitle(AgentPromptBundle.message("popup.source.title"))
-      .setVisibleRowCount(sourceEntries.size.coerceAtMost(9))
-      .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
-      .setNamerForFiltering { entry -> listOfNotNull(entry.label, entry.description, entry.sourcePath).joinToString("\n") }
-      .setItemSelectedCallback { entry ->
-        entry?.let { draftController.previewPromptText(it.insertText) }
+    val promptLibraryState = PromptLibraryState(
+      promptFiles = promptFiles,
+      savedPromptEntries = uiStateService.loadSavedPrompts(),
+      historyEntries = historyEntries,
+    )
+    var promptLibraryPopup: JBPopup? = null
+    val popupsWithoutPromptRestore = mutableSetOf<JBPopup>()
+    lateinit var openPromptLibraryPopup: (String?) -> Unit
+
+    fun refreshPromptLibraryPopup(preselectNormalizedPromptText: String?) {
+      val popupToRefresh = promptLibraryPopup ?: return
+      ApplicationManager.getApplication().invokeLater {
+        if (project.isDisposed || promptLibraryPopup !== popupToRefresh || popupToRefresh.isDisposed) {
+          return@invokeLater
+        }
+        popupsWithoutPromptRestore.add(popupToRefresh)
+        popupToRefresh.cancel()
+        promptLibraryPopup = null
+        openPromptLibraryPopup(preselectNormalizedPromptText)
       }
-      .setItemChosenCallback { entry ->
-        chosenEntry = entry
-        draftController.replacePromptTextFromChooser(entry.insertText)
-        IdeFocusManager.getInstance(project).requestFocusInProject(promptArea, project)
+    }
+
+    openPromptLibraryPopup = open@{ preselectNormalizedPromptText ->
+      val rows = promptLibraryState.rows()
+      if (rows.isEmpty()) {
+        draftController.restorePromptSnapshot(snapshot)
+        showPromptLibraryMessage(AgentPromptBundle.message("popup.prompt.library.empty"))
+        return@open
       }
-      .setRenderer(ReusableSourceCellRenderer())
-      .addListener(object : JBPopupListener {
+
+      var chosenEntry: PromptLibraryEntry? = null
+      val actionGroup = DefaultActionGroup().apply {
+        rows.forEach { row ->
+          add(PromptLibraryEntryAction(
+            row = row,
+            loadSavedPromptEntries = { promptLibraryState.savedPromptEntries },
+            onChoose = { chosen ->
+              chosenEntry = chosen
+              draftController.replacePromptTextFromChooser(chosen.insertText)
+              IdeFocusManager.getInstance(project).requestFocusInProject(promptArea, project)
+              promptLibraryPopup?.cancel()
+            },
+            onSave = { recentEntry ->
+              val savedPromptEntry = savePromptAsPersistentPrompt(recentEntry.insertText)
+              if (savedPromptEntry != null) {
+                promptLibraryState.markSaved(savedPromptEntry)
+                showInfo(AgentPromptBundle.message("popup.prompt.library.saved"))
+                refreshPromptLibraryPopup(row.normalizedPromptText)
+              }
+            },
+            onRemove = { savedEntry ->
+              removePersistentPrompt(savedEntry.insertText)
+              promptLibraryState.markRemoved(savedEntry.insertText)
+              showInfo(AgentPromptBundle.message("popup.prompt.library.removed"))
+              refreshPromptLibraryPopup(row.normalizedPromptText)
+            },
+          ))
+        }
+      }
+      val preselectCondition = preselectNormalizedPromptText?.let { normalizedPromptText ->
+        Condition<AnAction> { action ->
+          action is PromptLibraryEntryAction && action.normalizedPromptText == normalizedPromptText
+        }
+      }
+      val popup = JBPopupFactory.getInstance()
+        .createActionGroupPopup(
+          AgentPromptBundle.message("popup.prompt.library.title"),
+          actionGroup,
+          promptLibraryDataContext(),
+          JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
+          false,
+          null,
+          rows.size.coerceAtMost(9),
+          preselectCondition,
+          null,
+        )
+      popup.addListSelectionListener { event ->
+        if (event.valueIsAdjusting) {
+          return@addListSelectionListener
+        }
+        val action = ((event.source as? JList<*>)?.selectedValue as? AnActionHolder)?.action as? PromptLibraryEntryAction
+                     ?: return@addListSelectionListener
+        val entry = action.currentEntry() ?: return@addListSelectionListener
+        draftController.previewPromptText(entry.insertText)
+      }
+      popup.addListener(object : JBPopupListener {
         override fun onClosed(event: LightweightWindowEvent) {
+          val skipPromptRestore = popupsWithoutPromptRestore.remove(popup)
+          if (promptLibraryPopup === popup) {
+            promptLibraryPopup = null
+          }
           ApplicationManager.getApplication().invokeLater {
-            if (chosenEntry == null && !project.isDisposed) {
+            if (!skipPromptRestore && chosenEntry == null && !project.isDisposed) {
               draftController.restorePromptSnapshot(snapshot)
               IdeFocusManager.getInstance(project).requestFocusInProject(promptArea, project)
             }
           }
         }
       })
-      .setAutoPackHeightOnFiltering(false)
-      .createPopup()
-      .showUnderneathOf(view.sourceIconLabel)
+      val previewEntry = rows
+                           .firstOrNull { row -> row.normalizedPromptText == preselectNormalizedPromptText }
+                           ?.let(promptLibraryState::resolveEntry)
+                         ?: rows.firstNotNullOfOrNull(promptLibraryState::resolveEntry)
+      previewEntry?.let { entry -> draftController.previewPromptText(entry.insertText) }
+      promptLibraryPopup = popup
+      popup.showUnderneathOf(view.promptLibraryIconLabel)
+    }
+
+    openPromptLibraryPopup(null)
+  }
+
+  private fun promptLibraryDataContext(): DataContext {
+    return invocationData.dataContextOrNull() ?: DataContext.EMPTY_CONTEXT
+  }
+
+  private fun savePromptAsPersistentPrompt(promptText: String): AgentPromptSavedPromptEntry? {
+    val savedPromptEntry = uiStateService.savePersistentPrompt(promptText)
+    if (savedPromptEntry == null) {
+      showError(AgentPromptBundle.message("popup.prompt.library.save.error"))
+    }
+    return savedPromptEntry
+  }
+
+  private fun removePersistentPrompt(promptText: String) {
+    uiStateService.removePersistentPrompt(promptText)
+  }
+
+  private fun showPromptLibraryMessage(message: @Nls String) {
+    JBPopupFactory.getInstance()
+      .createMessage(message)
+      .showUnderneathOf(view.promptLibraryIconLabel)
   }
 
   private fun reusableSourceProjectPaths(): List<String> {
@@ -367,7 +445,7 @@ internal class AgentPromptPaletteSessionController(
     clearStatus()
   }
 
-  private fun autoPopupClaudeSlashCompletionIfNeeded(event: DocumentEvent) {
+  private fun autoPopupCommandCompletionIfNeeded(event: DocumentEvent) {
     val editor = promptArea.editor ?: return
     if (!editor.contentComponent.hasFocus()) {
       return
@@ -376,12 +454,13 @@ internal class AgentPromptPaletteSessionController(
       return
     }
 
+    val selectedProvider = providerSelector.selectedProvider?.bridge?.provider
     val documentText = event.document.immutableCharSequence.toString()
     val sourceProjectBasePath = launcherProvider()
       ?.resolveSourceProject(invocationData)
       ?.basePath
-    if (!shouldAutoPopupClaudeSlashCompletion(
-        selectedProvider = providerSelector.selectedProvider?.bridge?.provider,
+    if (shouldAutoPopupClaudeSlashCompletion(
+        selectedProvider = selectedProvider,
         workingProjectPaths = resolveClaudeSlashCompletionProjectPaths(
           workingProjectPath = submitController.resolveWorkingProjectPath(),
           sourceProjectBasePath = sourceProjectBasePath,
@@ -392,18 +471,64 @@ internal class AgentPromptPaletteSessionController(
         insertedFragment = event.newFragment,
       )
     ) {
+      invokePromptCompletionWhenReady(editor, expectedPrefix = '/')
       return
     }
 
-    ApplicationManager.getApplication().invokeLater {
-      if (project.isDisposed || editor.isDisposed || !editor.contentComponent.hasFocus()) {
-        return@invokeLater
-      }
-      if (LookupManager.getActiveLookup(editor) != null) {
-        return@invokeLater
-      }
+    if (!shouldAutoPopupCodexSkillCompletion(
+        selectedProvider = selectedProvider,
+        text = documentText,
+        offsetAfterChange = event.offset + event.newLength,
+        insertedFragment = event.newFragment,
+      )
+    ) {
+      return
+    }
 
-      CodeCompletionHandlerBase(CompletionType.BASIC, false, true, true).invokeCompletion(project, editor, 1)
+    popupScope.launch {
+      val skillEntries = loadCodexSkillCompletionEntries()
+      if (skillEntries.isEmpty()) {
+        return@launch
+      }
+      codexSkillCompletionEntries = skillEntries
+      withContext(Dispatchers.EDT) {
+        invokePromptCompletionWhenReady(editor, expectedPrefix = CODEX_SKILL_PREFIX)
+      }
+    }
+  }
+
+  private suspend fun loadCodexSkillCompletionEntries(): List<AgentPromptReusableSourceEntry> {
+    val launcher = launcherProvider() ?: return emptyList()
+    val projectPath = submitController.resolveWorkingProjectPath()?.takeIf(String::isNotBlank) ?: return emptyList()
+    return runCatching { launcher.listReusablePromptSourceEntries(projectPath, AgentSessionProvider.CODEX) }
+      .getOrDefault(emptyList())
+      .filter { entry ->
+        entry.kind == AgentPromptReusableSourceKind.SKILL && entry.insertText.trim().startsWith('$')
+      }
+  }
+
+  private fun invokePromptCompletionWhenReady(editor: Editor, expectedPrefix: Char) {
+    popupScope.launch {
+      withContext(Dispatchers.EDT) {
+        if (project.isDisposed || editor.isDisposed || !editor.contentComponent.hasFocus()) {
+          return@withContext
+        }
+        if (LookupManager.getActiveLookup(editor) != null) {
+          return@withContext
+        }
+        val text = editor.document.immutableCharSequence.toString()
+        val caretOffset = editor.caretModel.offset
+        val currentPrefix = when (expectedPrefix) {
+          '/' -> findClaudeSlashCompletionPrefix(text, caretOffset)
+          CODEX_SKILL_PREFIX -> findCodexSkillCompletionPrefix(text, caretOffset)
+          else -> null
+        }
+        if (currentPrefix != expectedPrefix.toString()) {
+          return@withContext
+        }
+
+        CodeCompletionHandlerBase(CompletionType.BASIC, false, true, true).invokeCompletion(project, editor, 1)
+      }
     }
   }
 
@@ -647,55 +772,81 @@ internal class AgentPromptPaletteSessionController(
   }
 }
 
-@Suppress("HardCodedStringLiteral")
-private class PromptHistoryCellRenderer : ColoredListCellRenderer<AgentPromptHistoryEntry>() {
-  override fun customizeCellRenderer(
-    list: JList<out AgentPromptHistoryEntry>,
-    value: AgentPromptHistoryEntry?,
-    index: Int,
-    selected: Boolean,
-    hasFocus: Boolean,
-  ) {
-    if (value == null) {
+internal class PromptLibraryEntryAction(
+  private val row: PromptLibraryRow,
+  private val loadSavedPromptEntries: () -> List<AgentPromptSavedPromptEntry>,
+  private val onChoose: (PromptLibraryEntry) -> Unit,
+  private val onSave: (PromptLibraryEntry.RecentPrompt) -> Unit,
+  private val onRemove: (PromptLibraryEntry.SavedPrompt) -> Unit,
+) : DumbAwareAction() {
+  val normalizedPromptText: String
+    get() = row.normalizedPromptText
+
+  fun currentEntry(): PromptLibraryEntry? = row.resolveEntry(loadSavedPromptEntries())
+
+  override fun update(e: AnActionEvent) {
+    val entry = currentEntry()
+    if (entry == null) {
+      e.presentation.isEnabledAndVisible = false
+      e.presentation.putClientProperty(ActionUtil.SECONDARY_TEXT, null)
+      e.presentation.putClientProperty(ActionUtil.SECONDARY_ICON, null)
+      e.presentation.putClientProperty(ActionUtil.INLINE_ACTIONS, null)
       return
     }
-    append(compactPromptPreview(value.promptText), SimpleTextAttributes.REGULAR_ATTRIBUTES)
-    val details = listOfNotNull(value.providerId, value.targetMode.name.lowercase().replace('_', ' ')).joinToString(" · ")
-    if (details.isNotBlank()) {
-      append("  $details", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
+    e.presentation.isEnabledAndVisible = true
+    e.presentation.text = entry.displayText()
+    e.presentation.description = entry.searchText
+    e.presentation.icon = null
+    e.presentation.putClientProperty(ActionUtil.SECONDARY_TEXT, entry.secondaryText())
+    e.presentation.putClientProperty(ActionUtil.SECONDARY_ICON, null)
+    e.presentation.putClientProperty(ActionUtil.SEARCH_TAG, entry.searchText)
+    val inlineAction = when (entry) {
+      is PromptLibraryEntry.SavedPrompt -> RemoveSavedPromptAction(entry, onRemove)
+      is PromptLibraryEntry.PromptFile -> null
+      is PromptLibraryEntry.RecentPrompt -> SaveRecentPromptAction(entry, onSave)
     }
+    e.presentation.putClientProperty(ActionUtil.INLINE_ACTIONS, inlineAction?.let { listOf(it) })
   }
+
+  override fun actionPerformed(e: AnActionEvent) {
+    currentEntry()?.let(onChoose)
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }
 
-@Suppress("HardCodedStringLiteral")
-private class ReusableSourceCellRenderer : ColoredListCellRenderer<AgentPromptReusableSourceEntry>() {
-  override fun customizeCellRenderer(
-    list: JList<out AgentPromptReusableSourceEntry>,
-    value: AgentPromptReusableSourceEntry?,
-    index: Int,
-    selected: Boolean,
-    hasFocus: Boolean,
-  ) {
-    if (value == null) {
-      return
-    }
-    append(value.label, SimpleTextAttributes.REGULAR_ATTRIBUTES)
-    append("  ${sourceKindLabel(value.kind)}", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
-    value.description?.takeIf(String::isNotBlank)?.let { description ->
-      append("  ${StringUtil.first(description, 80, true)}", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
-    }
+private class SaveRecentPromptAction(
+  private val entry: PromptLibraryEntry.RecentPrompt,
+  private val onSave: (PromptLibraryEntry.RecentPrompt) -> Unit,
+) : DumbAwareAction() {
+  override fun update(e: AnActionEvent) {
+    e.presentation.text = AgentPromptBundle.message("popup.prompt.library.save")
+    e.presentation.description = AgentPromptBundle.message("popup.prompt.library.save")
+    e.presentation.icon = AllIcons.Actions.MenuSaveall
+    e.presentation.keepPopupOnPerform = KeepPopupOnPerform.Always
   }
+
+  override fun actionPerformed(e: AnActionEvent) {
+    onSave(entry)
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }
 
-private fun compactPromptPreview(promptText: String): String {
-  val singleLine = promptText.replace('\n', ' ').trim()
-  return StringUtil.first(singleLine, 100, true)
-}
-
-private fun sourceKindLabel(kind: AgentPromptReusableSourceKind): String {
-  return when (kind) {
-    AgentPromptReusableSourceKind.PROMPT_FILE -> AgentPromptBundle.message("popup.source.type.prompt.file")
-    AgentPromptReusableSourceKind.COMMAND -> AgentPromptBundle.message("popup.source.type.command")
-    AgentPromptReusableSourceKind.SKILL -> AgentPromptBundle.message("popup.source.type.skill")
+private class RemoveSavedPromptAction(
+  private val entry: PromptLibraryEntry.SavedPrompt,
+  private val onRemove: (PromptLibraryEntry.SavedPrompt) -> Unit,
+) : DumbAwareAction() {
+  override fun update(e: AnActionEvent) {
+    e.presentation.text = AgentPromptBundle.message("popup.prompt.library.remove")
+    e.presentation.description = AgentPromptBundle.message("popup.prompt.library.remove")
+    e.presentation.icon = AllIcons.General.Remove
+    e.presentation.keepPopupOnPerform = KeepPopupOnPerform.Always
   }
+
+  override fun actionPerformed(e: AnActionEvent) {
+    onRemove(entry)
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }

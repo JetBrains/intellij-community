@@ -38,11 +38,51 @@ class AgentPromptReusableSourceCollectorTest {
   }
 
   @Test
+  fun collectPromptFileEntriesUsesNameFrontmatterBeforeTitle() {
+    val promptsDir = tempDir.resolve(".github/prompts")
+    Files.createDirectories(promptsDir)
+    Files.writeString(
+      promptsDir.resolve("review.prompt.md"),
+      """
+      ---
+      name: review-code
+      title: Review Changes
+      ---
+      Review changes
+      """.trimIndent(),
+    )
+
+    val entry = collectPromptFileEntries(listOf(tempDir.toString())).single()
+
+    assertThat(entry.label).isEqualTo("review-code")
+  }
+
+  @Test
   fun collectPromptFileEntriesSkipsBlankPromptBodies() {
     val promptsDir = tempDir.resolve(".github/prompts")
     Files.createDirectories(promptsDir)
     Files.writeString(promptsDir.resolve("empty.prompt.md"), "---\ntitle: Empty\n---\n   ")
 
     assertThat(collectPromptFileEntries(listOf(tempDir.toString()))).isEmpty()
+  }
+
+  @Test
+  fun collectReusablePromptSourceEntriesOnlyIncludesPromptFiles() {
+    val promptsDir = tempDir.resolve(".github/prompts")
+    Files.createDirectories(promptsDir)
+    Files.writeString(promptsDir.resolve("review.prompt.md"), "Review changes")
+
+    Files.createDirectories(tempDir.resolve(".claude/commands"))
+    Files.writeString(tempDir.resolve(".claude/commands/review.md"), "# Review")
+    Files.createDirectories(tempDir.resolve(".claude/skills/safe-push"))
+    Files.writeString(tempDir.resolve(".claude/skills/safe-push/SKILL.md"), "# Safe Push")
+
+    val entries = collectReusablePromptSourceEntries(listOf(tempDir.toString()))
+
+    assertThat(entries).hasSize(1)
+    val entry = entries.single()
+    assertThat(entry.kind).isEqualTo(AgentPromptReusableSourceKind.PROMPT_FILE)
+    assertThat(entry.label).isEqualTo("review")
+    assertThat(entry.insertText).isEqualTo("Review changes")
   }
 }

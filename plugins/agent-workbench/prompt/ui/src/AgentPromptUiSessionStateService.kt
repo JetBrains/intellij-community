@@ -11,6 +11,7 @@ import com.intellij.openapi.components.StoragePathMacros
 import kotlinx.serialization.Serializable
 
 private const val MAX_PROMPT_HISTORY_ENTRIES = 50
+private const val MAX_SAVED_PROMPT_ENTRIES = 50
 
 @Serializable
 internal enum class PromptTargetMode {
@@ -45,6 +46,12 @@ internal data class AgentPromptHistoryEntry(
   @JvmField val launchMode: String? = null,
 )
 
+@Serializable
+internal data class AgentPromptSavedPromptEntry(
+  @JvmField val promptText: String,
+  @JvmField val createdAtMs: Long,
+)
+
 internal data class AgentPromptUiContextRestoreSnapshot(
   @JvmField val contextFingerprint: HashValue128? = null,
   @JvmField val removedContextItemIds: List<String> = emptyList(),
@@ -55,6 +62,7 @@ internal data class AgentPromptUiContextRestoreSnapshot(
 internal data class AgentPromptUiState(
   @JvmField val draft: AgentPromptUiDraft = AgentPromptUiDraft(),
   @JvmField val promptHistory: List<AgentPromptHistoryEntry> = emptyList(),
+  @JvmField val savedPrompts: List<AgentPromptSavedPromptEntry> = emptyList(),
 )
 
 @Service(Service.Level.PROJECT)
@@ -76,8 +84,12 @@ internal class AgentPromptUiSessionStateService
     return state.promptHistory
   }
 
+  fun loadSavedPrompts(): List<AgentPromptSavedPromptEntry> {
+    return state.savedPrompts
+  }
+
   fun saveSubmittedPromptHistoryEntry(entry: AgentPromptHistoryEntry) {
-    val normalizedPrompt = normalizePromptHistoryText(entry.promptText)
+    val normalizedPrompt = normalizeAgentPromptText(entry.promptText)
     if (normalizedPrompt.isBlank()) {
       return
     }
@@ -87,11 +99,50 @@ internal class AgentPromptUiSessionStateService
         add(normalizedEntry)
         current.promptHistory
           .asSequence()
-          .filter { historyEntry -> normalizePromptHistoryText(historyEntry.promptText) != normalizedPrompt }
+          .filter { historyEntry -> normalizeAgentPromptText(historyEntry.promptText) != normalizedPrompt }
           .take(MAX_PROMPT_HISTORY_ENTRIES - 1)
           .forEach(::add)
       }
       current.copy(promptHistory = updatedHistory)
+    }
+  }
+
+  fun savePersistentPrompt(promptText: String, createdAtMs: Long = System.currentTimeMillis()): AgentPromptSavedPromptEntry? {
+    val normalizedPrompt = normalizeAgentPromptText(promptText)
+    if (normalizedPrompt.isBlank()) {
+      return null
+    }
+
+    val savedEntry = AgentPromptSavedPromptEntry(
+      promptText = normalizedPrompt,
+      createdAtMs = createdAtMs,
+    )
+    updateState { current ->
+      val updatedSavedPrompts = buildList {
+        add(savedEntry)
+        current.savedPrompts
+          .asSequence()
+          .filter { savedPrompt -> normalizeAgentPromptText(savedPrompt.promptText) != normalizedPrompt }
+          .take(MAX_SAVED_PROMPT_ENTRIES - 1)
+          .forEach(::add)
+      }
+      current.copy(savedPrompts = updatedSavedPrompts)
+    }
+    return savedEntry
+  }
+
+  fun removePersistentPrompt(promptText: String) {
+    val normalizedPrompt = normalizeAgentPromptText(promptText)
+    if (normalizedPrompt.isBlank()) {
+      return
+    }
+
+    updateState { current ->
+      current.copy(
+        savedPrompts = current.savedPrompts.filter { savedPrompt ->
+          normalizeAgentPromptText(savedPrompt.promptText) != normalizedPrompt
+        }
+      )
     }
   }
 
@@ -109,6 +160,6 @@ internal class AgentPromptUiSessionStateService
   }
 }
 
-private fun normalizePromptHistoryText(promptText: String): String {
+internal fun normalizeAgentPromptText(promptText: String): String {
   return promptText.replace("\r\n", "\n").replace('\r', '\n').trim()
 }
