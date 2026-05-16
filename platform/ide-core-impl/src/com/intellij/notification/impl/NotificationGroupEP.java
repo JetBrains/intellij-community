@@ -27,7 +27,7 @@ import java.util.ResourceBundle;
  * <p>
  * Use {@link com.intellij.notification.NotificationGroupManager#getNotificationGroup(String)} to obtain instance via {@link #id}.
  * <p>
- * See <a href="https://plugins.jetbrains.com/docs/intellij/notifications.html#balloons">Top-Level Notifications (Balloons)</a>.
+ * See <a href="https://plugins.jetbrains.com/docs/intellij/notification-balloons.html">Notification Balloons</a>.
  */
 public final class NotificationGroupEP implements PluginAware {
   static final ExtensionPointName<NotificationGroupEP> EP_NAME = new ExtensionPointName<>("com.intellij.notificationGroup");
