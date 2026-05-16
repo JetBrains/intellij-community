@@ -75,9 +75,8 @@ IDE Power Save Mode is a hard override: while it is enabled, sleep prevention mu
   `MacUtil.wakeUpNeo()` must not be used for this feature because it explicitly allows idle system sleep.
   [@test] ../sessions/testSrc/AgentSleepInhibitorTest.kt
 
-- Windows implementation must use `SetThreadExecutionState` to request continuous system-required execution while the blocker is held and must clear that request on release.
-  Windows-specific thread affinity must be guaranteed by a service-owned dedicated single-thread coroutine dispatcher so acquire and release always run on the same OS thread.
-  `Dispatchers.IO.limitedParallelism(1)` and bounded application-pool executors are not sufficient for this requirement.
+- Windows implementation must use `PowerCreateRequest` and `PowerSetRequest(PowerRequestSystemRequired)` while the blocker is held and must call `PowerClearRequest` on release.
+  The request must use a simple reason string and must not request display sleep prevention or away mode.
   [@test] ../sessions/testSrc/AgentSleepInhibitorTest.kt
 
 - Linux and unsupported environments must use a no-op implementation in v1.
@@ -105,6 +104,7 @@ IDE Power Save Mode is a hard override: while it is enabled, sleep prevention mu
 
 ## Error Handling
 - Native inhibitor errors must not block session loading, refresh, chat opening, or tool-window rendering.
+- Failed native release must not make the service forget a blocker that may still be held; release must remain retryable.
 - Repeated inactive state updates during a pending release debounce must not schedule duplicate release timers.
 - Multiple active threads must not cause duplicate acquires, and one thread becoming inactive must not release the blocker while other active threads remain.
 

@@ -3,7 +3,7 @@ package com.intellij.agent.workbench.sessions.sleep
 
 // @spec community/plugins/agent-workbench/spec/agent-sessions-sleep-prevention.spec.md
 
-import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.isWorking
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.service.AgentSessionReadService
 import com.intellij.ide.PowerSaveMode
@@ -17,9 +17,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.awaitCancellation
@@ -28,7 +26,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicBoolean
@@ -188,8 +185,9 @@ internal class AgentSessionSleepPreventionService(
       return
     }
 
-    blockerHeld = false
-    sleepInhibitor.release()
+    if (sleepInhibitor.release()) {
+      blockerHeld = false
+    }
   }
 
   private fun cancelPendingRelease() {
@@ -222,31 +220,14 @@ internal interface AgentSleepPreventionExecutionContext : AutoCloseable {
   val dispatcher: CoroutineDispatcher
 }
 
-@OptIn(ExperimentalCoroutinesApi::class)
-internal fun createAgentSleepPreventionExecutionContext(
-  platform: AgentSleepPlatform = currentAgentSleepPlatform(),
-): AgentSleepPreventionExecutionContext {
-  return when (platform) {
-    AgentSleepPlatform.WINDOWS -> DedicatedThreadAgentSleepPreventionExecutionContext()
-    AgentSleepPlatform.MAC, AgentSleepPlatform.OTHER -> StaticAgentSleepPreventionExecutionContext(Dispatchers.Default.limitedParallelism(1))
-  }
+internal fun createAgentSleepPreventionExecutionContext(): AgentSleepPreventionExecutionContext {
+  return StaticAgentSleepPreventionExecutionContext(Dispatchers.Default.limitedParallelism(1))
 }
 
 private class StaticAgentSleepPreventionExecutionContext(
   override val dispatcher: CoroutineDispatcher,
 ) : AgentSleepPreventionExecutionContext {
   override fun close() {
-  }
-}
-
-@OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
-private class DedicatedThreadAgentSleepPreventionExecutionContext : AgentSleepPreventionExecutionContext {
-  private val closeableDispatcher = newSingleThreadContext("AgentWorkbenchSleepPrevention")
-
-  override val dispatcher: CoroutineDispatcher = closeableDispatcher
-
-  override fun close() {
-    closeableDispatcher.close()
   }
 }
 
@@ -274,11 +255,7 @@ private fun createPowerSaveModeFlow(serviceScope: CoroutineScope): StateFlow<Boo
 
 private fun AgentSessionsState.hasSleepPreventingWork(): Boolean {
   return projects.any { project ->
-    project.threads.any { thread -> thread.activity.preventsSystemSleep() } ||
-    project.worktrees.any { worktree -> worktree.threads.any { thread -> thread.activity.preventsSystemSleep() } }
+    project.threads.any { thread -> thread.activity.isWorking } ||
+    project.worktrees.any { worktree -> worktree.threads.any { thread -> thread.activity.isWorking } }
   }
-}
-
-private fun AgentThreadActivity.preventsSystemSleep(): Boolean {
-  return this == AgentThreadActivity.PROCESSING || this == AgentThreadActivity.REVIEWING
 }

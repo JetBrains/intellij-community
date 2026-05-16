@@ -1,11 +1,17 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.sessions.sleep.AgentSleepInhibitor
 import com.intellij.agent.workbench.sessions.sleep.AgentSleepPlatform
+import com.intellij.agent.workbench.sessions.sleep.WINDOWS_POWER_REQUEST_REASON
+import com.intellij.agent.workbench.sessions.sleep.WINDOWS_POWER_REQUEST_SYSTEM_REQUIRED
 import com.intellij.agent.workbench.sessions.sleep.WindowsAgentSleepInhibitor
 import com.intellij.agent.workbench.sessions.sleep.WindowsKernel32
+import com.intellij.agent.workbench.sessions.sleep.WindowsPowerRequestReasonContext
 import com.intellij.agent.workbench.sessions.sleep.createAgentSleepInhibitor
 import com.intellij.agent.workbench.sessions.sleep.safeAgentSleepInhibitor
+import com.intellij.openapi.util.Disposer
+import com.sun.jna.Pointer
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
@@ -25,7 +31,7 @@ class AgentSleepInhibitorTest {
 
     assertThat(inhibitor.acquire()).isTrue()
     assertThat(mac.acquireCalls).isEqualTo(1)
-    inhibitor.release()
+    assertThat(inhibitor.release()).isTrue()
     assertThat(mac.releaseCalls).isEqualTo(1)
   }
 
@@ -43,7 +49,7 @@ class AgentSleepInhibitorTest {
 
     assertThat(inhibitor.acquire()).isTrue()
     assertThat(windows.acquireCalls).isEqualTo(1)
-    inhibitor.release()
+    assertThat(inhibitor.release()).isTrue()
     assertThat(windows.releaseCalls).isEqualTo(1)
   }
 
@@ -59,6 +65,7 @@ class AgentSleepInhibitorTest {
     )
 
     assertThat(inhibitor.acquire()).isFalse()
+    assertThat(inhibitor.release()).isTrue()
   }
 
   @Test
@@ -73,46 +80,101 @@ class AgentSleepInhibitorTest {
     )
 
     assertThat(inhibitor.acquire()).isFalse()
+    assertThat(inhibitor.release()).isTrue()
   }
 
   @Test
   fun safeWrapperDisablesDelegateAfterAcquireFailure() {
-    val delegate = FailingSleepInhibitor()
+    val delegate = FailingAcquireSleepInhibitor()
     val inhibitor = safeAgentSleepInhibitor(delegate)
 
     assertThat(inhibitor.acquire()).isFalse()
     assertThat(inhibitor.acquire()).isFalse()
-    inhibitor.release()
+    assertThat(inhibitor.release()).isTrue()
 
     assertThat(delegate.acquireAttempts).isEqualTo(1)
     assertThat(delegate.releaseAttempts).isZero()
   }
 
   @Test
-  fun windowsInhibitorUsesExpectedExecutionStateFlags() {
+  fun safeWrapperKeepsReleaseRetryAvailable() {
+    val delegate = ReleaseFailsOnceSleepInhibitor()
+    val inhibitor = safeAgentSleepInhibitor(delegate)
+
+    assertThat(inhibitor.acquire()).isTrue()
+    assertThat(inhibitor.release()).isFalse()
+    assertThat(inhibitor.release()).isTrue()
+
+    assertThat(delegate.releaseAttempts).isEqualTo(2)
+  }
+
+  @Test
+  fun windowsInhibitorUsesPowerRequestSystemRequired() {
     val kernel32 = RecordingWindowsKernel32()
     val inhibitor = WindowsAgentSleepInhibitor(kernel32)
 
     assertThat(inhibitor.acquire()).isTrue()
     assertThat(inhibitor.acquire()).isTrue()
 
-    inhibitor.release()
-    inhibitor.release()
+    assertThat(kernel32.createRequestReasonStrings).containsExactly(WINDOWS_POWER_REQUEST_REASON)
+    assertThat(kernel32.powerSetRequestCalls).containsExactly(PowerRequestCall(REQUEST_HANDLE, WINDOWS_POWER_REQUEST_SYSTEM_REQUIRED))
 
-    assertThat(kernel32.executionStateCalls).containsExactly(0x80000000.toInt() or 0x00000001, 0x80000000.toInt())
+    assertThat(inhibitor.release()).isTrue()
+    assertThat(inhibitor.release()).isTrue()
+
+    assertThat(kernel32.powerClearRequestCalls).containsExactly(PowerRequestCall(REQUEST_HANDLE, WINDOWS_POWER_REQUEST_SYSTEM_REQUIRED))
+    assertThat(kernel32.closedHandles).isEmpty()
   }
 
   @Test
-  fun windowsInhibitorReportsNativeFailure() {
-    val kernel32 = RecordingWindowsKernel32(result = 0, errorCode = 42)
+  fun windowsInhibitorClosesPowerRequestOnDispose() {
+    val kernel32 = RecordingWindowsKernel32()
+    val inhibitor = WindowsAgentSleepInhibitor(kernel32)
+
+    assertThat(inhibitor.acquire()).isTrue()
+
+    Disposer.dispose(inhibitor)
+
+    assertThat(kernel32.powerClearRequestCalls).containsExactly(PowerRequestCall(REQUEST_HANDLE, WINDOWS_POWER_REQUEST_SYSTEM_REQUIRED))
+    assertThat(kernel32.closedHandles).containsExactly(REQUEST_HANDLE)
+  }
+
+  @Test
+  fun windowsInhibitorReportsPowerCreateRequestFailure() {
+    val kernel32 = RecordingWindowsKernel32(createRequestResult = null, errorCode = 42)
     val inhibitor = WindowsAgentSleepInhibitor(kernel32)
 
     assertThatThrownBy { inhibitor.acquire() }
       .isInstanceOf(IllegalStateException::class.java)
-      .hasMessageContaining("SetThreadExecutionState")
+      .hasMessageContaining("PowerCreateRequest")
       .hasMessageContaining("42")
   }
+
+  @Test
+  fun windowsInhibitorKeepsHeldStateAfterReleaseFailure() {
+    val kernel32 = RecordingWindowsKernel32(clearRequestResults = listOf(false, true), errorCode = 42)
+    val inhibitor = WindowsAgentSleepInhibitor(kernel32)
+
+    assertThat(inhibitor.acquire()).isTrue()
+    assertThatThrownBy { inhibitor.release() }
+      .isInstanceOf(IllegalStateException::class.java)
+      .hasMessageContaining("PowerClearRequest")
+      .hasMessageContaining("42")
+
+    assertThat(inhibitor.release()).isTrue()
+    assertThat(kernel32.powerClearRequestCalls).containsExactly(
+      PowerRequestCall(REQUEST_HANDLE, WINDOWS_POWER_REQUEST_SYSTEM_REQUIRED),
+      PowerRequestCall(REQUEST_HANDLE, WINDOWS_POWER_REQUEST_SYSTEM_REQUIRED),
+    )
+  }
 }
+
+private val REQUEST_HANDLE: Pointer = Pointer.createConstant(0xA11CE)
+
+private data class PowerRequestCall(
+  @JvmField val handle: Pointer,
+  @JvmField val requestType: Int,
+)
 
 private class RecordingFactorySleepInhibitor : AgentSleepInhibitor {
   var acquireCalls: Int = 0
@@ -125,17 +187,18 @@ private class RecordingFactorySleepInhibitor : AgentSleepInhibitor {
     return true
   }
 
-  override fun release() {
+  override fun release(): Boolean {
     if (!held) {
-      return
+      return true
     }
 
     held = false
     releaseCalls++
+    return true
   }
 }
 
-private class FailingSleepInhibitor : AgentSleepInhibitor {
+private class FailingAcquireSleepInhibitor : AgentSleepInhibitor {
   var acquireAttempts: Int = 0
   var releaseAttempts: Int = 0
 
@@ -144,25 +207,67 @@ private class FailingSleepInhibitor : AgentSleepInhibitor {
     error("boom")
   }
 
-  override fun release() {
+  override fun release(): Boolean {
     releaseAttempts++
+    return true
   }
 
   override fun dispose() {
   }
 }
 
+private class ReleaseFailsOnceSleepInhibitor : AgentSleepInhibitor {
+  var releaseAttempts: Int = 0
+
+  override fun acquire(): Boolean = true
+
+  override fun release(): Boolean {
+    releaseAttempts++
+    if (releaseAttempts == 1) {
+      error("boom")
+    }
+    return true
+  }
+}
+
 @Suppress("TestFunctionName")
 private class RecordingWindowsKernel32(
-  private val result: Int = 1,
+  private val createRequestResult: Pointer? = REQUEST_HANDLE,
+  private val setRequestResults: List<Boolean> = emptyList(),
+  private val clearRequestResults: List<Boolean> = emptyList(),
+  private val closeHandleResult: Boolean = true,
   private val errorCode: Int = 0,
 ) : WindowsKernel32 {
-  val executionStateCalls = mutableListOf<Int>()
+  val createRequestReasonStrings = mutableListOf<String>()
+  val powerSetRequestCalls = mutableListOf<PowerRequestCall>()
+  val powerClearRequestCalls = mutableListOf<PowerRequestCall>()
+  val closedHandles = mutableListOf<Pointer>()
+  private val setRequestResultsQueue = ArrayDeque<Boolean>().apply { addAll(setRequestResults) }
+  private val clearRequestResultsQueue = ArrayDeque<Boolean>().apply { addAll(clearRequestResults) }
 
-  override fun SetThreadExecutionState(flags: Int): Int {
-    executionStateCalls += flags
-    return result
+  override fun PowerCreateRequest(context: WindowsPowerRequestReasonContext): Pointer? {
+    createRequestReasonStrings += context.Reason.SimpleReasonString.toString()
+    return createRequestResult
+  }
+
+  override fun PowerSetRequest(powerRequest: Pointer, requestType: Int): Boolean {
+    powerSetRequestCalls += PowerRequestCall(powerRequest, requestType)
+    return setRequestResultsQueue.nextOrDefault(true)
+  }
+
+  override fun PowerClearRequest(powerRequest: Pointer, requestType: Int): Boolean {
+    powerClearRequestCalls += PowerRequestCall(powerRequest, requestType)
+    return clearRequestResultsQueue.nextOrDefault(true)
+  }
+
+  override fun CloseHandle(handle: Pointer): Boolean {
+    closedHandles += handle
+    return closeHandleResult
   }
 
   override fun GetLastError(): Int = errorCode
+}
+
+private fun ArrayDeque<Boolean>.nextOrDefault(defaultValue: Boolean): Boolean {
+  return if (isEmpty()) defaultValue else removeFirst()
 }

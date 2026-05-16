@@ -1,3 +1,4 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
@@ -243,6 +244,27 @@ class AgentSessionSleepPreventionServiceTest {
     assertThat(fixture.inhibitor.releaseCalls).isEqualTo(1)
     fixture.scope.cancel()
   }
+
+  @Test
+  fun failedReleaseKeepsBlockerHeldForRetry() {
+    val fixture = sleepPreventionFixture()
+    fixture.stateFlow.value = sessionsState(projectThreads = listOf(activeThread(AgentThreadActivity.PROCESSING)))
+    fixture.service.refreshState()
+    fixture.inhibitor.releaseResults.add(false)
+
+    fixture.stateFlow.value = sessionsState()
+    fixture.service.refreshState()
+    fixture.scheduler.runNext()
+    assertThat(fixture.inhibitor.releaseCalls).isEqualTo(1)
+    assertThat(fixture.inhibitor.held).isTrue()
+
+    fixture.settingFlow.value = false
+    fixture.service.refreshState()
+
+    assertThat(fixture.inhibitor.releaseCalls).isEqualTo(2)
+    assertThat(fixture.inhibitor.held).isFalse()
+    fixture.dispose()
+  }
 }
 
 private data class SleepPreventionFixture(
@@ -324,7 +346,9 @@ private fun activeThread(activity: AgentThreadActivity, id: String = "thread-1")
 private class RecordingServiceSleepInhibitor : AgentSleepInhibitor {
   var acquireCalls: Int = 0
   var releaseCalls: Int = 0
-  private var held = false
+  var held: Boolean = false
+    private set
+  val releaseResults = ArrayDeque<Boolean>()
 
   override fun acquire(): Boolean {
     acquireCalls++
@@ -332,13 +356,17 @@ private class RecordingServiceSleepInhibitor : AgentSleepInhibitor {
     return true
   }
 
-  override fun release() {
+  override fun release(): Boolean {
     if (!held) {
-      return
+      return true
     }
 
-    held = false
     releaseCalls++
+    val released = releaseResults.nextOrDefault(true)
+    if (released) {
+      held = false
+    }
+    return released
   }
 }
 
@@ -380,4 +408,8 @@ private class TestAgentSleepPreventionExecutionContext : AgentSleepPreventionExe
 
   override fun close() {
   }
+}
+
+private fun ArrayDeque<Boolean>.nextOrDefault(defaultValue: Boolean): Boolean {
+  return if (isEmpty()) defaultValue else removeFirst()
 }
