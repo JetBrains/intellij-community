@@ -28,9 +28,9 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.dropCurlyBracketsIfPossible
-import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
@@ -65,22 +65,29 @@ import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.addRemoveModifier.setModifierList
 import org.jetbrains.kotlin.psi.createDestructuringDeclarationByPattern
+import org.jetbrains.kotlin.psi.parameterVisitor
 import org.jetbrains.kotlin.psi.psiUtil.PsiChildRange
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
 
-internal class DestructureInspection : KotlinApplicableInspectionBase.Simple<KtDeclaration, UsagesToRemove>() {
+internal abstract class AbstractDestructureInspection<T: KtDeclaration>:  KotlinApplicableInspectionBase.Simple<T, UsagesToRemove>() {
+    override fun createQuickFix(
+        element: T, context: UsagesToRemove
+    ): KotlinModCommandQuickFix<T> =
+        UseDestructureDeclarationFix(context)
+
+    override fun KaSession.prepareContext(element: T): UsagesToRemove? =
+        collectUsagesToRemove(element)
+}
+
+internal class DestructureInspection : AbstractDestructureInspection<KtDeclaration>() {
     override fun getProblemDescription(
         element: KtDeclaration, context: UsagesToRemove
-    ): @InspectionMessage String = KotlinBundle.message("use.destructuring.declaration")
+    ): @InspectionMessage String =
+        KotlinBundle.message("use.destructuring.declaration")
 
-    override fun createQuickFix(
-        element: KtDeclaration, context: UsagesToRemove
-    ): KotlinModCommandQuickFix<KtDeclaration> = UseDestructureDeclarationFix(context)
-
-    override fun isApplicableByPsi(element: KtDeclaration): Boolean {
-        return element.getUsageScopeElement() != null
-    }
+    override fun isApplicableByPsi(element: KtDeclaration): Boolean =
+        element.getUsageScopeElement() != null
 
     override fun getApplicableRanges(element: KtDeclaration): List<TextRange> {
         val textRange = when (element) {
@@ -104,17 +111,32 @@ internal class DestructureInspection : KotlinApplicableInspectionBase.Simple<KtD
             visitTargetElement(dcl, holder, isOnTheFly)
         }
     }
+}
 
-    override fun KaSession.prepareContext(element: KtDeclaration): UsagesToRemove? {
-        return collectUsagesToRemove(element)
+internal class DestructuringForParameterInspection : AbstractDestructureInspection<KtParameter>() {
+    override fun getProblemDescription(
+        element: KtParameter, context: UsagesToRemove
+    ): @InspectionMessage String =
+        KotlinBundle.message("use.destructuring.declaration.in.for.loop")
+
+    override fun isApplicableByPsi(element: KtParameter): Boolean =
+        element.parent is KtForExpression
+
+    override fun getApplicableRanges(element: KtParameter): List<TextRange> =
+        listOfNotNull(element.nameIdentifier?.textRange?.shiftLeft(element.textRange.startOffset))
+
+    override fun buildVisitor(
+        holder: ProblemsHolder, isOnTheFly: Boolean
+    ): KtVisitor<*, *> = parameterVisitor {
+        visitTargetElement(it, holder, isOnTheFly)
     }
 }
 
-internal class UseDestructureDeclarationFix(private val context: UsagesToRemove) : KotlinModCommandQuickFix<KtDeclaration>() {
+internal class UseDestructureDeclarationFix<T: KtDeclaration>(private val context: UsagesToRemove) : KotlinModCommandQuickFix<T>() {
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("use.destructuring.declaration")
 
     override fun applyFix(
-        project: Project, element: KtDeclaration, updater: ModPsiUpdater
+        project: Project, element: T, updater: ModPsiUpdater
     ) {
         val (usagesToRemove, removeSelectorInLoopRange) = context
         val psiFactory = KtPsiFactory(element.project)
@@ -130,9 +152,9 @@ internal class UseDestructureDeclarationFix(private val context: UsagesToRemove)
             visibleDeclarationsContext = anchor ?: container as KtElement,
             checkVisibleDeclarationsContext = true,
             target = KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
-            excludedDeclarations = modifiableUsagesToRemove.map {
+            excludedDeclarations = modifiableUsagesToRemove.flatMap {
                 (it.declarationToDrop as? KtDestructuringDeclaration)?.entries ?: listOfNotNull(it.declarationToDrop)
-            }.flatten()
+            }
         )
         val names = ArrayList<String>()
         val underscoreSupported =
@@ -280,7 +302,7 @@ private fun collectUsagesToRemove(declaration: KtDeclaration): UsagesToRemove? {
 
     if (usageScopeElement.hasBadRefences(variableName, componentNames, isMapEntry, declaration, usagesToRemove)) return null
 
-    val removeSelectorInLoopRange = if (isMapEntry) removeEntriesEntrySetInLoopRange(declaration) else false
+    val removeSelectorInLoopRange = isMapEntry && removeEntriesEntrySetInLoopRange(declaration)
     val droppedLastUnused = usagesToRemove.dropLastWhile { it.usagesToReplace.isEmpty() && it.declarationToDrop == null }
     return UsagesToRemove(droppedLastUnused.ifEmpty { usagesToRemove }, removeSelectorInLoopRange)
 }
