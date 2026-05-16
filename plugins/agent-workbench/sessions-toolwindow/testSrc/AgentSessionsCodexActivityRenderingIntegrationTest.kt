@@ -207,7 +207,7 @@ class AgentSessionsCodexActivityRenderingIntegrationTest {
       arrayOf(refreshHintsProviderClass),
     ) { proxy, method, args ->
       when (method.name) {
-        "getUpdates" -> emptyFlow<Unit>()
+        "getUpdateEvents" -> emptyFlow<Unit>()
         "prefetchRefreshHints" -> emptyMap<String, Any>()
         "toString" -> "EmptyCodexRefreshHintsProvider"
         "hashCode" -> System.identityHashCode(proxy)
