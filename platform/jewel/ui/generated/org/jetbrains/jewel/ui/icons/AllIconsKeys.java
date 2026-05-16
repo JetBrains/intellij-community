@@ -1279,6 +1279,9 @@ public final class AllIconsKeys {
     public static final @NotNull IntelliJIconKey BinaryData = new IntelliJIconKey("fileTypes/binaryData.svg", "expui/fileTypes/binaryData.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey C = new IntelliJIconKey("expui/fileTypes/c.svg", "expui/fileTypes/c.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey Config = new IntelliJIconKey("fileTypes/config.svg", "expui/fileTypes/config.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
@@ -1286,6 +1289,12 @@ public final class AllIconsKeys {
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey ContextsModifier = new IntelliJIconKey("fileTypes/contextsModifier.svg", "expui/fileTypes/contextsModifier.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Cpp = new IntelliJIconKey("expui/fileTypes/cpp.svg", "expui/fileTypes/cpp.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Csharp = new IntelliJIconKey("expui/fileTypes/Csharp.svg", "expui/fileTypes/Csharp.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey Css = new IntelliJIconKey("fileTypes/css.svg", "expui/fileTypes/css.svg", AllIconsKeys.class);
@@ -1307,6 +1316,18 @@ public final class AllIconsKeys {
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey Gitignore = new IntelliJIconKey("expui/fileTypes/gitignore.svg", "expui/fileTypes/gitignore.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Gradle = new IntelliJIconKey("expui/fileTypes/gradle.svg", "expui/fileTypes/gradle.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Graphql = new IntelliJIconKey("expui/fileTypes/graphql.svg", "expui/fileTypes/graphql.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Groovy = new IntelliJIconKey("expui/fileTypes/groovy.svg", "expui/fileTypes/groovy.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey H = new IntelliJIconKey("expui/fileTypes/h.svg", "expui/fileTypes/h.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey Hprof = new IntelliJIconKey("fileTypes/hprof.svg", "expui/fileTypes/hprof.svg", AllIconsKeys.class);
@@ -1357,7 +1378,16 @@ public final class AllIconsKeys {
     public static final @NotNull IntelliJIconKey Jspx = new IntelliJIconKey("fileTypes/jspx.svg", "expui/fileTypes/jspx.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Jupyter = new IntelliJIconKey("fileTypes/jupyter.svg", "expui/fileTypes/jupyter.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey Manifest = new IntelliJIconKey("fileTypes/manifest.svg", "expui/fileTypes/manifest.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Markdown = new IntelliJIconKey("expui/fileTypes/markdown.svg", "expui/fileTypes/markdown.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey MarkdownPlugin = new IntelliJIconKey("fileTypes/MarkdownPlugin.svg", "fileTypes/MarkdownPlugin.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey MicrosoftWindows = new IntelliJIconKey("fileTypes/microsoftWindows.svg", "expui/fileTypes/microsoftWindows.svg", AllIconsKeys.class);
@@ -1372,16 +1402,37 @@ public final class AllIconsKeys {
     public static final @NotNull IntelliJIconKey Regexp = new IntelliJIconKey("fileTypes/regexp.svg", "expui/fileTypes/regexp.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Rst = new IntelliJIconKey("expui/fileTypes/rst.svg", "expui/fileTypes/rst.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey SourceMap = new IntelliJIconKey("expui/fileTypes/sourceMap.svg", "expui/fileTypes/sourceMap.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Sql = new IntelliJIconKey("expui/fileTypes/sql.svg", "expui/fileTypes/sql.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey SwiftLang = new IntelliJIconKey("expui/fileTypes/swiftLang.svg", "expui/fileTypes/swiftLang.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Terraform = new IntelliJIconKey("expui/fileTypes/terraform.svg", "expui/fileTypes/terraform.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey Text = new IntelliJIconKey("fileTypes/text.svg", "expui/fileTypes/text.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey TomlFile = new IntelliJIconKey("fileTypes/toml-file.svg", "fileTypes/toml-file.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Toml = new IntelliJIconKey("expui/fileTypes/toml.svg", "expui/fileTypes/toml.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey UiForm = new IntelliJIconKey("fileTypes/uiForm.svg", "expui/fileTypes/uiForm.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey Unknown = new IntelliJIconKey("fileTypes/unknown.svg", "expui/fileTypes/unknown.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Vue = new IntelliJIconKey("expui/fileTypes/vue.svg", "expui/fileTypes/vue.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey WsdlFile = new IntelliJIconKey("fileTypes/wsdlFile.svg", "expui/fileTypes/wsdl.svg", AllIconsKeys.class);

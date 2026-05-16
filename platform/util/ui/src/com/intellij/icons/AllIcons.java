@@ -499,9 +499,10 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon JsonSchema = load("expui/fileTypes/jsonSchema.svg", "fileTypes/jsonSchema.svg", -2026062432, 2);
     /** 16x16 */ public static final @NotNull Icon Jsp = load("expui/fileTypes/jsp.svg", "fileTypes/jsp.svg", -476790980, 0);
     /** 16x16 */ public static final @NotNull Icon Jspx = load("expui/fileTypes/jspx.svg", "fileTypes/jspx.svg", -576899393, 0);
-    /** 16x16 */ public static final @NotNull Icon Jupyter = load("expui/fileTypes/jupyter.svg", 216238156, 2);
+    /** 16x16 */ public static final @NotNull Icon Jupyter = load("expui/fileTypes/jupyter.svg", "fileTypes/jupyter.svg", -1078981909, 0);
     /** 16x16 */ public static final @NotNull Icon Manifest = load("expui/fileTypes/manifest.svg", "fileTypes/manifest.svg", -119717710, 0);
     /** 16x16 */ public static final @NotNull Icon Markdown = load("expui/fileTypes/markdown.svg", -856702461, 2);
+    /** 16x16 */ public static final @NotNull Icon MarkdownPlugin = load("fileTypes/MarkdownPlugin.svg", -1740905249, 0);
     /** 16x16 */ public static final @NotNull Icon MicrosoftWindows = load("expui/fileTypes/microsoftWindows.svg", "fileTypes/microsoftWindows.svg", 10953923, 0);
     /** 16x16 */ public static final @NotNull Icon Perl = load("expui/fileTypes/perl.svg", -895068164, 2);
     /** 16x16 */ public static final @NotNull Icon Properties = load("expui/fileTypes/properties.svg", "fileTypes/properties.svg", -1983560201, 0);
@@ -512,6 +513,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon SwiftLang = load("expui/fileTypes/swiftLang.svg", 286491144, 2);
     /** 16x16 */ public static final @NotNull Icon Terraform = load("expui/fileTypes/terraform.svg", 460683072, 2);
     /** 16x16 */ public static final @NotNull Icon Text = load("expui/fileTypes/text.svg", "fileTypes/text.svg", -444897274, 0);
+    /** 16x16 */ public static final @NotNull Icon TomlFile = load("fileTypes/toml-file.svg", -1826996194, 2);
     /** 16x16 */ public static final @NotNull Icon Toml = load("expui/fileTypes/toml.svg", 1967853425, 2);
     /** 16x16 */ public static final @NotNull Icon UiForm = load("expui/fileTypes/uiForm.svg", "fileTypes/uiForm.svg", -734581860, 0);
     /** 16x16 */ public static final @NotNull Icon Unknown = load("expui/fileTypes/unknown.svg", "fileTypes/unknown.svg", 1094896438, 0);
