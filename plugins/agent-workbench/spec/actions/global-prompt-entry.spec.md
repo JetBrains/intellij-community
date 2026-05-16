@@ -3,6 +3,7 @@ name: Global Prompt Entry
 description: Requirements for opening, focusing, submitting, and routing the Agent Workbench global prompt.
 targets:
   - ../../prompt/ui/src/actions/AgentWorkbenchGlobalPromptAction.kt
+  - ../../prompt/ui/src/actions/AgentWorkbenchGlobalPromptShortcutCustomizer.kt
   - ../../prompt/ui/src/AgentPromptPalettePopup.kt
   - ../../prompt/ui/src/AgentPromptPaletteSubmitController.kt
   - ../../prompt/ui/src/AgentPromptEnterHandlers.kt
@@ -17,7 +18,7 @@ targets:
 # Global Prompt Entry
 
 Status: Draft
-Date: 2026-05-09
+Date: 2026-05-16
 
 ## Summary
 The global prompt opens a project-scoped popup for starting a new task or sending a prompt to an existing loaded task. This spec owns popup lifecycle, target mode, validation, keyboard behavior, provider selection, and launcher handoff. Context collection and Add-to-Agent-Context routing are specified separately.
@@ -25,6 +26,9 @@ The global prompt opens a project-scoped popup for starting a new task or sendin
 ## Requirements
 - `AgentWorkbenchPrompt.OpenGlobalPalette` and `AgentWorkbenchPrompt.OpenGlobalPaletteAutoSelect` are available only with an open project. Invoking either action while the popup is already visible for the same project focuses the existing popup and preserves live state.
   [@test] ../../prompt/ui/testSrc/AgentPromptPalettePopupServiceTest.kt
+
+- `AgentWorkbenchPrompt.OpenGlobalPalette` is invoked by pressing `Ctrl` twice. `AgentWorkbenchPrompt.OpenGlobalPaletteAutoSelect` is invoked by holding `Alt`/`Option` while pressing `Ctrl` twice. While Agent Workbench is installed, it displaces Run Anything from bare `Ctrl Ctrl` and must not install a replacement Run Anything keymap shortcut.
+  [@test] ../../prompt/ui/testSrc/actions/AgentWorkbenchGlobalPromptDoubleCtrlShortcutTest.kt
 
 - The main prompt popup remains open when application focus moves to another app or IDE frame, and it refocuses when the originating project frame becomes active again. Popup dismissal is limited to explicit dismissal or clicks outside the popup inside the originating frame.
   [@test] ../../prompt/ui/testSrc/AgentPromptPalettePopupActivationDecisionsTest.kt

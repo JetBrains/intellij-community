@@ -21,11 +21,15 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.KeyStroke
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 private const val MY_SHIFT_SHIFT_ACTION = "ModifierKeyDoubleClickHandlerTest.action1"
 private const val MY_SHIFT_KEY_ACTION = "ModifierKeyDoubleClickHandlerTest.action2"
 private const val MY_SHIFT_SHIFT_KEY_ACTION = "ModifierKeyDoubleClickHandlerTest.action3"
 private const val MY_SHIFT_OTHER_KEY_ACTION = "ModifierKeyDoubleClickHandlerTest.action4"
+private const val MY_CTRL_CTRL_WITH_ALT_ACTION = "ModifierKeyDoubleClickHandlerTest.action5"
+private const val MY_SUPPRESSED_META_META_ACTION = "ModifierKeyDoubleClickHandlerTest.action6"
 
 @Suppress("DEPRECATION")
 private val SHIFT_KEY_SHORTCUT = KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, InputEvent.SHIFT_MASK), null)
@@ -57,6 +61,8 @@ class ModifierKeyDoubleClickHandlerTest {
   private var shiftKeyActionInvocationCount = 0
   private var shiftShiftKeyActionInvocationCount = 0
   private var shiftOtherKeyActionInvocationCount = 0
+  private var ctrlCtrlWithAltActionInvocationCount = 0
+  private var suppressedMetaMetaActionInvocationCount = 0
 
   @BeforeEach
   fun setUp() {
@@ -67,6 +73,8 @@ class ModifierKeyDoubleClickHandlerTest {
     actionManager.registerAction(MY_SHIFT_KEY_ACTION, createAction { shiftKeyActionInvocationCount++ })
     actionManager.registerAction(MY_SHIFT_SHIFT_KEY_ACTION, createAction { shiftShiftKeyActionInvocationCount++ })
     actionManager.registerAction(MY_SHIFT_OTHER_KEY_ACTION, createAction { shiftOtherKeyActionInvocationCount++ })
+    actionManager.registerAction(MY_CTRL_CTRL_WITH_ALT_ACTION, createAction { ctrlCtrlWithAltActionInvocationCount++ })
+    actionManager.registerAction(MY_SUPPRESSED_META_META_ACTION, createAction { suppressedMetaMetaActionInvocationCount++ })
 
     val activeKeymap = KeymapManager.getInstance().activeKeymap
     activeKeymap.addShortcut(MY_SHIFT_KEY_ACTION, SHIFT_KEY_SHORTCUT)
@@ -75,11 +83,15 @@ class ModifierKeyDoubleClickHandlerTest {
     val doubleClickHandler = ModifierKeyDoubleClickHandler.getInstance()
     doubleClickHandler.registerAction(MY_SHIFT_SHIFT_ACTION, KeyEvent.VK_SHIFT, -1)
     doubleClickHandler.registerAction(MY_SHIFT_SHIFT_KEY_ACTION, KeyEvent.VK_SHIFT, KeyEvent.VK_BACK_SPACE)
+    doubleClickHandler.registerAction(MY_CTRL_CTRL_WITH_ALT_ACTION, KeyEvent.VK_CONTROL, -1, KeyEvent.VK_ALT, false)
   }
 
   @AfterEach
   fun tearDown() {
     val doubleClickHandler = ModifierKeyDoubleClickHandler.getInstance()
+    doubleClickHandler.unsuppressAction(MY_SUPPRESSED_META_META_ACTION)
+    doubleClickHandler.unregisterAction(MY_SUPPRESSED_META_META_ACTION)
+    doubleClickHandler.unregisterAction(MY_CTRL_CTRL_WITH_ALT_ACTION)
     doubleClickHandler.unregisterAction(MY_SHIFT_SHIFT_KEY_ACTION)
     doubleClickHandler.unregisterAction(MY_SHIFT_SHIFT_ACTION)
 
@@ -88,6 +100,8 @@ class ModifierKeyDoubleClickHandlerTest {
     activeKeymap.removeShortcut(MY_SHIFT_KEY_ACTION, SHIFT_KEY_SHORTCUT)
 
     val actionManager = ActionManager.getInstance()
+    actionManager.unregisterAction(MY_SUPPRESSED_META_META_ACTION)
+    actionManager.unregisterAction(MY_CTRL_CTRL_WITH_ALT_ACTION)
     actionManager.unregisterAction(MY_SHIFT_OTHER_KEY_ACTION)
     actionManager.unregisterAction(MY_SHIFT_SHIFT_KEY_ACTION)
     actionManager.unregisterAction(MY_SHIFT_KEY_ACTION)
@@ -177,6 +191,81 @@ class ModifierKeyDoubleClickHandlerTest {
     assertInvocationCounts(0, 0, 0)
   }
 
+  @Test
+  fun ctrlCtrlWithRequiredAltSuccessfulCase() {
+    ctrlPressWithAlt()
+    ctrlReleaseWithAlt()
+    ctrlPressWithAlt()
+    assertEquals(0, ctrlCtrlWithAltActionInvocationCount)
+
+    ctrlReleaseWithAlt()
+
+    assertEquals(1, ctrlCtrlWithAltActionInvocationCount)
+  }
+
+  @Test
+  fun ctrlCtrlWithRequiredAltAllowsPhysicalAltKeyEvent() {
+    altPress()
+    ctrlPressWithAlt()
+    ctrlReleaseWithAlt()
+    ctrlPressWithAlt()
+    ctrlReleaseWithAlt()
+    altRelease()
+
+    assertEquals(1, ctrlCtrlWithAltActionInvocationCount)
+  }
+
+  @Test
+  fun ctrlCtrlWithRequiredAltDoesNotTriggerWithoutAlt() {
+    ctrlPress()
+    ctrlRelease()
+    ctrlPress()
+    ctrlRelease()
+
+    assertEquals(0, ctrlCtrlWithAltActionInvocationCount)
+  }
+
+  @Test
+  fun suppressActionUnregistersAction() {
+    val doubleClickHandler = ModifierKeyDoubleClickHandler.getInstance()
+    doubleClickHandler.registerAction(MY_SUPPRESSED_META_META_ACTION, KeyEvent.VK_META, -1, false)
+    assertTrue(doubleClickHandler.isActionRegistered(MY_SUPPRESSED_META_META_ACTION))
+
+    doubleClickHandler.suppressAction(MY_SUPPRESSED_META_META_ACTION)
+
+    assertFalse(doubleClickHandler.isActionRegistered(MY_SUPPRESSED_META_META_ACTION))
+    metaPress()
+    metaRelease()
+    metaPress()
+    metaRelease()
+    assertEquals(0, suppressedMetaMetaActionInvocationCount)
+  }
+
+  @Test
+  fun suppressedActionIgnoresRegistrationUntilUnsuppressed() {
+    val doubleClickHandler = ModifierKeyDoubleClickHandler.getInstance()
+    doubleClickHandler.suppressAction(MY_SUPPRESSED_META_META_ACTION)
+
+    doubleClickHandler.registerAction(MY_SUPPRESSED_META_META_ACTION, KeyEvent.VK_META, -1, false)
+
+    assertFalse(doubleClickHandler.isActionRegistered(MY_SUPPRESSED_META_META_ACTION))
+    metaPress()
+    metaRelease()
+    metaPress()
+    metaRelease()
+    assertEquals(0, suppressedMetaMetaActionInvocationCount)
+
+    doubleClickHandler.unsuppressAction(MY_SUPPRESSED_META_META_ACTION)
+    doubleClickHandler.registerAction(MY_SUPPRESSED_META_META_ACTION, KeyEvent.VK_META, -1, false)
+
+    assertTrue(doubleClickHandler.isActionRegistered(MY_SUPPRESSED_META_META_ACTION))
+    metaPress()
+    metaRelease()
+    metaPress()
+    metaRelease()
+    assertEquals(1, suppressedMetaMetaActionInvocationCount)
+  }
+
   private fun assertInvocationCounts(shiftKeyCount: Int, shiftShiftCount: Int, shiftShiftKeyCount: Int) {
     assertEquals(shiftKeyCount, shiftKeyActionInvocationCount)
     assertEquals(shiftShiftCount, shiftShiftActionInvocationCount)
@@ -190,6 +279,38 @@ class ModifierKeyDoubleClickHandlerTest {
 
   private fun release() {
     dispatchEvent(KeyEvent.KEY_RELEASED, 0, KeyEvent.VK_SHIFT, KeyEvent.CHAR_UNDEFINED)
+  }
+
+  private fun altPress() {
+    dispatchEvent(KeyEvent.KEY_PRESSED, InputEvent.ALT_MASK, KeyEvent.VK_ALT, KeyEvent.CHAR_UNDEFINED)
+  }
+
+  private fun altRelease() {
+    dispatchEvent(KeyEvent.KEY_RELEASED, 0, KeyEvent.VK_ALT, KeyEvent.CHAR_UNDEFINED)
+  }
+
+  private fun metaPress() {
+    dispatchEvent(KeyEvent.KEY_PRESSED, InputEvent.META_MASK, KeyEvent.VK_META, KeyEvent.CHAR_UNDEFINED)
+  }
+
+  private fun metaRelease() {
+    dispatchEvent(KeyEvent.KEY_RELEASED, 0, KeyEvent.VK_META, KeyEvent.CHAR_UNDEFINED)
+  }
+
+  private fun ctrlPress() {
+    dispatchEvent(KeyEvent.KEY_PRESSED, InputEvent.CTRL_MASK, KeyEvent.VK_CONTROL, KeyEvent.CHAR_UNDEFINED)
+  }
+
+  private fun ctrlRelease() {
+    dispatchEvent(KeyEvent.KEY_RELEASED, 0, KeyEvent.VK_CONTROL, KeyEvent.CHAR_UNDEFINED)
+  }
+
+  private fun ctrlPressWithAlt() {
+    dispatchEvent(KeyEvent.KEY_PRESSED, InputEvent.CTRL_MASK or InputEvent.ALT_MASK, KeyEvent.VK_CONTROL, KeyEvent.CHAR_UNDEFINED)
+  }
+
+  private fun ctrlReleaseWithAlt() {
+    dispatchEvent(KeyEvent.KEY_RELEASED, InputEvent.ALT_MASK, KeyEvent.VK_CONTROL, KeyEvent.CHAR_UNDEFINED)
   }
 
   private fun dispatchEvent(id: Int, modifiers: Int, keyCode: Int, keyChar: Char) {

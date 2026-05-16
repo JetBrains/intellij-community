@@ -59,9 +59,6 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   @SuppressWarnings("DeprecatedIsStillUsed") 
   @Deprecated
   public static final AtomicBoolean ALT_IS_PRESSED = new AtomicBoolean(false);
-
-  private static boolean ourDoubleCtrlRegistered;
-
   static final class ShortcutTracker implements ActionConfigurationCustomizer,
                                                 ActionConfigurationCustomizer.AsyncLightCustomizeStrategy {
     @Override
@@ -103,19 +100,19 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   }
 
   private static void updateShortcut(KeymapManager keymapManager) {
+    ModifierKeyDoubleClickHandler doubleClickHandler = ModifierKeyDoubleClickHandler.getInstance();
     if (!KeymapUtilKt.getActiveKeymapShortcuts(RUN_ANYTHING_ACTION_ID, keymapManager).hasShortcuts()) {
       registerDblCtrlClick();
     }
-    else if (ourDoubleCtrlRegistered) {
-      ModifierKeyDoubleClickHandler.getInstance().unregisterAction(RUN_ANYTHING_ACTION_ID);
-      ourDoubleCtrlRegistered = false;
+    else if (doubleClickHandler.isActionRegistered(RUN_ANYTHING_ACTION_ID)) {
+      doubleClickHandler.unregisterAction(RUN_ANYTHING_ACTION_ID);
     }
   }
 
   private static void registerDblCtrlClick() {
-    if (!ourDoubleCtrlRegistered) {
-      ModifierKeyDoubleClickHandler.getInstance().registerAction(RUN_ANYTHING_ACTION_ID, KeyEvent.VK_CONTROL, -1, false);
-      ourDoubleCtrlRegistered = true;
+    ModifierKeyDoubleClickHandler doubleClickHandler = ModifierKeyDoubleClickHandler.getInstance();
+    if (!doubleClickHandler.isActionRegistered(RUN_ANYTHING_ACTION_ID)) {
+      doubleClickHandler.registerAction(RUN_ANYTHING_ACTION_ID, KeyEvent.VK_CONTROL, -1, false);
     }
   }
 
@@ -160,7 +157,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       }
 
       private static @Nullable String getShortcut() {
-        if (ourDoubleCtrlRegistered) {
+        if (ModifierKeyDoubleClickHandler.getInstance().isActionRegistered(RUN_ANYTHING_ACTION_ID)) {
           return IdeBundle.message("double.ctrl.or.shift.shortcut",
                                    ClientSystemInfo.isMac() ? FontUtil.thinSpace() + MacKeymapUtil.CONTROL : "Ctrl"); //NON-NLS
         }

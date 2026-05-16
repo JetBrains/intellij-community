@@ -11,7 +11,9 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.DumbAware
+import java.awt.event.KeyEvent
 
 /**
  * Standard global prompt entrypoint.
@@ -21,11 +23,15 @@ import com.intellij.openapi.project.DumbAware
  */
 internal class AgentWorkbenchGlobalPromptAction : AnAction(), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
+    if (isSuppressedDoubleCtrlInvocation(e)) {
+      return
+    }
+
     val project = e.project ?: return
     project.service<AgentPromptPalettePopupService>().show(
       invocationData = AgentPromptInvocationData(
         project = project,
-        actionId = "AgentWorkbenchPrompt.OpenGlobalPalette",
+        actionId = AGENT_WORKBENCH_GLOBAL_PROMPT_ACTION_ID,
         actionText = e.presentation.text,
         actionPlace = e.place,
         invokedAtMs = System.currentTimeMillis(),
@@ -42,4 +48,11 @@ internal class AgentWorkbenchGlobalPromptAction : AnAction(), DumbAware {
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+}
+
+internal fun isSuppressedDoubleCtrlInvocation(e: AnActionEvent): Boolean {
+  val inputEvent = e.inputEvent
+  return AdvancedSettings.getBoolean("ide.suppress.double.click.handler") &&
+         inputEvent is KeyEvent &&
+         inputEvent.keyCode == KeyEvent.VK_CONTROL
 }

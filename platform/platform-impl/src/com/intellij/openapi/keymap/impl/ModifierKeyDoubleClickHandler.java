@@ -23,6 +23,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.AWTEvent;
@@ -32,6 +33,7 @@ import java.awt.Window;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.Collection;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -62,6 +64,7 @@ public final class ModifierKeyDoubleClickHandler {
   }
 
   private final ConcurrentMap<String, MyDispatcher> myDispatchers = new ConcurrentHashMap<>();
+  private final Set<String> mySuppressedActionIds = ConcurrentHashMap.newKeySet();
   private boolean myIsRunningAction;
 
   public ModifierKeyDoubleClickHandler() {
@@ -90,7 +93,7 @@ public final class ModifierKeyDoubleClickHandler {
     }
   }
 
-  @ApiStatus.Internal
+  @Internal
   public static final class MyEventDispatcher implements IdeEventQueue.NonLockedEventDispatcher {
     @Override
     public boolean dispatch(@NotNull AWTEvent event) {
@@ -139,7 +142,27 @@ public final class ModifierKeyDoubleClickHandler {
                              int modifierKeyCode,
                              int actionKeyCode,
                              boolean skipIfActionHasShortcut) {
-    myDispatchers.put(actionId, new MyDispatcher(actionId, modifierKeyCode, actionKeyCode, skipIfActionHasShortcut));
+    registerAction(actionId, modifierKeyCode, actionKeyCode, -1, skipIfActionHasShortcut);
+  }
+
+  /**
+   * @param actionId                Id of action to be triggered on modifier+modifier[+actionKey]
+   * @param modifierKeyCode         keyCode for modifier, e.g. KeyEvent.VK_SHIFT
+   * @param actionKeyCode           keyCode for actionKey, or -1 if action should be triggered on bare modifier double click
+   * @param requiredModifierKeyCode keyCode for an additional modifier that must be held, or -1
+   * @param skipIfActionHasShortcut do not invoke action if a shortcut is already bound to it in keymap
+   */
+  @Internal
+  public synchronized void registerAction(@NotNull String actionId,
+                                          int modifierKeyCode,
+                                          int actionKeyCode,
+                                          int requiredModifierKeyCode,
+                                          boolean skipIfActionHasShortcut) {
+    if (mySuppressedActionIds.contains(actionId)) {
+      return;
+    }
+    myDispatchers.put(actionId, new MyDispatcher(actionId, modifierKeyCode, actionKeyCode, requiredModifierKeyCode,
+                                                  skipIfActionHasShortcut));
   }
 
   /**
@@ -151,8 +174,24 @@ public final class ModifierKeyDoubleClickHandler {
     registerAction(actionId, modifierKeyCode, actionKeyCode, true);
   }
 
-  public void unregisterAction(@NotNull String actionId) {
+  public synchronized void unregisterAction(@NotNull String actionId) {
     myDispatchers.remove(actionId);
+  }
+
+  @Internal
+  public synchronized void suppressAction(@NotNull String actionId) {
+    mySuppressedActionIds.add(actionId);
+    myDispatchers.remove(actionId);
+  }
+
+  @Internal
+  public synchronized void unsuppressAction(@NotNull String actionId) {
+    mySuppressedActionIds.remove(actionId);
+  }
+
+  @Internal
+  public synchronized boolean isActionRegistered(@NotNull String actionId) {
+    return myDispatchers.containsKey(actionId);
   }
 
   public boolean isRunningAction() {
@@ -163,6 +202,8 @@ public final class ModifierKeyDoubleClickHandler {
     private final String myActionId;
     private final int myModifierKeyCode;
     private final int myActionKeyCode;
+    private final int myRequiredModifierKeyCode;
+    private final int myRequiredModifierMask;
     private final boolean mySkipIfActionHasShortcut;
 
     private final Couple<AtomicBoolean> ourPressed = Couple.of(new AtomicBoolean(false), new AtomicBoolean(false));
@@ -170,10 +211,16 @@ public final class ModifierKeyDoubleClickHandler {
     private final AtomicBoolean ourOtherKeyWasPressed = new AtomicBoolean(false);
     private final AtomicLong ourLastTimePressed = new AtomicLong(0);
 
-    MyDispatcher(@NotNull String actionId, int modifierKeyCode, int actionKeyCode, boolean skipIfActionHasShortcut) {
+    MyDispatcher(@NotNull String actionId,
+                 int modifierKeyCode,
+                 int actionKeyCode,
+                 int requiredModifierKeyCode,
+                 boolean skipIfActionHasShortcut) {
       myActionId = actionId;
       myModifierKeyCode = modifierKeyCode;
       myActionKeyCode = actionKeyCode;
+      myRequiredModifierKeyCode = requiredModifierKeyCode;
+      myRequiredModifierMask = requiredModifierKeyCode == -1 ? 0 : getModifierMask(requiredModifierKeyCode);
       mySkipIfActionHasShortcut = skipIfActionHasShortcut;
     }
 
@@ -183,7 +230,7 @@ public final class ModifierKeyDoubleClickHandler {
         LOG.trace(this + " " + event);
       }
       if (keyCode == myModifierKeyCode) {
-        if (hasOtherModifiers(event)) {
+        if (hasOtherModifiers(event) || !hasRequiredModifier(event)) {
           resetState();
           return false;
         }
@@ -200,8 +247,14 @@ public final class ModifierKeyDoubleClickHandler {
 
         return handleModifier(event);
       }
+      else if (keyCode == myRequiredModifierKeyCode) {
+        if (hasOtherModifiers(event)) {
+          resetState();
+        }
+        return false;
+      }
       else if (ourPressed.first.get() && ourReleased.first.get() && ourPressed.second.get() && myActionKeyCode != -1) {
-        if (keyCode == myActionKeyCode && !hasOtherModifiers(event)) {
+        if (keyCode == myActionKeyCode && !hasOtherModifiers(event) && hasRequiredModifier(event)) {
           if (event.getID() == KeyEvent.KEY_PRESSED) {
             return run(event);
           }
@@ -223,11 +276,25 @@ public final class ModifierKeyDoubleClickHandler {
     private boolean hasOtherModifiers(KeyEvent keyEvent) {
       int modifiers = keyEvent.getModifiers();
       for (Int2IntMap.Entry entry : KEY_CODE_TO_MODIFIER_MAP.int2IntEntrySet()) {
-        if (!(entry.getIntKey() == myModifierKeyCode || (modifiers & entry.getIntValue()) == 0)) {
+        if (!(entry.getIntKey() == myModifierKeyCode || entry.getIntKey() == myRequiredModifierKeyCode ||
+              (modifiers & entry.getIntValue()) == 0)) {
           return true;
         }
       }
       return false;
+    }
+
+    @SuppressWarnings("deprecation")
+    private boolean hasRequiredModifier(KeyEvent event) {
+      return myRequiredModifierMask == 0 || (event.getModifiers() & myRequiredModifierMask) != 0;
+    }
+
+    private static int getModifierMask(int keyCode) {
+      int modifierMask = KEY_CODE_TO_MODIFIER_MAP.get(keyCode);
+      if (modifierMask == 0) {
+        throw new IllegalArgumentException("Unsupported required modifier keyCode: " + keyCode);
+      }
+      return modifierMask;
     }
 
     private boolean handleModifier(KeyEvent event) {
@@ -322,7 +389,9 @@ public final class ModifierKeyDoubleClickHandler {
     @Override
     public String toString() {
       return "modifier double-click dispatcher [modifierKeyCode=" + myModifierKeyCode +
-             ",actionKeyCode=" + myActionKeyCode + ",actionId=" + myActionId + "]";
+             ",actionKeyCode=" + myActionKeyCode +
+             ",requiredModifierKeyCode=" + myRequiredModifierKeyCode +
+             ",actionId=" + myActionId + "]";
     }
   }
 }

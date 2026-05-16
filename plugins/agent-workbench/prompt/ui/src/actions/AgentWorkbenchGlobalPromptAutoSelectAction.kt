@@ -23,11 +23,15 @@ import com.intellij.openapi.project.DumbAware
 internal class AgentWorkbenchGlobalPromptAutoSelectAction : AnAction(), DumbAware {
 
   override fun actionPerformed(e: AnActionEvent) {
+    if (isSuppressedDoubleCtrlInvocation(e)) {
+      return
+    }
+
     val project = e.project ?: return
     project.service<AgentPromptPalettePopupService>().show(
       invocationData = AgentPromptInvocationData(
         project = project,
-        actionId = "AgentWorkbenchPrompt.OpenGlobalPaletteAutoSelect",
+        actionId = AGENT_WORKBENCH_GLOBAL_PROMPT_AUTO_SELECT_ACTION_ID,
         actionText = e.presentation.text,
         actionPlace = e.place,
         invokedAtMs = System.currentTimeMillis(),
