@@ -19,6 +19,7 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.nio.file.attribute.BasicFileAttributes
 import kotlin.io.path.isRegularFile
 
 private const val COMMAND: String = "project"
@@ -115,8 +116,14 @@ suspend fun openKnownProjectByGitUrl(gitUrl: String): Project? {
 data class GitRemote(val name: String, val url: String)
 
 /**
- * Walks up from [projectDir] to find a `.git/config` file and returns every `[remote "*"] url = …` it
- * contains, in the order they appear. Returns an empty list if no `.git/config` is found.
+ * Walks up from [projectDir] to find the git directory and returns every `[remote "*"] url = …` from
+ * its `config`, in the order they appear. Returns an empty list if no git directory is found.
+ *
+ * Handles three layouts:
+ * - regular checkout: `.git` is a directory; config is `<.git>/config`.
+ * - submodule: `.git` is a file `gitdir: <gitdir>`; config is `<gitdir>/config`.
+ * - worktree: `.git` is a file `gitdir: <gitdir>` where `<gitdir>/commondir` points at the main
+ *   repository's `.git`; remotes live in the main repository's config, not the worktree's.
  *
  * Reads the file directly as INI text — does not invoke `git`, so it works for paths whose project is not
  * currently open or trusted (unlike [com.intellij.ide.impl.getProjectOriginUrl]).
@@ -125,13 +132,49 @@ data class GitRemote(val name: String, val url: String)
 fun readGitRemoteUrls(projectDir: Path): List<GitRemote> {
   var dir: Path? = projectDir
   while (dir != null) {
-    val gitConfig = dir.resolve(".git").resolve("config")
-    if (gitConfig.isRegularFile()) {
-      return parseRemoteUrlsFromConfig(gitConfig)
+    val gitDir = resolveGitDir(dir.resolve(".git"))
+    if (gitDir != null) {
+      val configDir = readCommonDir(gitDir) ?: gitDir
+      val config = configDir.resolve("config")
+      return if (config.isRegularFile()) parseRemoteUrlsFromConfig(config) else emptyList()
     }
     dir = dir.parent
   }
   return emptyList()
+}
+
+private const val GIT_DIR_PREFIX = "gitdir:"
+
+/**
+ * Resolves a `.git` entry to the actual git directory: returns [dotGit] itself when it's a directory,
+ * or follows the `gitdir: <path>` pointer when it's a regular file (submodule/worktree layout).
+ * Relative pointer paths are resolved against [dotGit]'s parent.
+ */
+private fun resolveGitDir(dotGit: Path): Path? {
+  val attrs = try { Files.readAttributes(dotGit, BasicFileAttributes::class.java) } catch (_: Exception) { return null }
+  if (attrs.isDirectory) return dotGit
+  if (!attrs.isRegularFile) return null
+
+  val content = try { Files.readString(dotGit, Charsets.UTF_8).trim() } catch (_: Exception) { return null }
+  if (!content.startsWith(GIT_DIR_PREFIX)) return null
+  val target = content.substring(GIT_DIR_PREFIX.length).trim().takeIf { it.isNotEmpty() } ?: return null
+
+  val pointer = try { Paths.get(target) } catch (_: Exception) { return null }
+  val resolved = if (pointer.isAbsolute) pointer else (dotGit.parent ?: return null).resolve(pointer)
+  return resolved.normalize()
+}
+
+/**
+ * If [gitDir] is a worktree gitdir, reads its `commondir` pointer and returns the resolved path to the
+ * main repository's git directory; otherwise `null`. Relative pointer paths are resolved against [gitDir].
+ */
+private fun readCommonDir(gitDir: Path): Path? {
+  val commonDirFile = gitDir.resolve("commondir")
+  val content = try { Files.readString(commonDirFile, Charsets.UTF_8).trim() } catch (_: Exception) { return null }
+  if (content.isEmpty()) return null
+  val pointer = try { Paths.get(content) } catch (_: Exception) { return null }
+  val resolved = if (pointer.isAbsolute) pointer else gitDir.resolve(pointer)
+  return resolved.normalize()
 }
 
 private val REMOTE_HEADER = Regex("""^\[remote\s+"([^"]+)"]$""", RegexOption.IGNORE_CASE)
