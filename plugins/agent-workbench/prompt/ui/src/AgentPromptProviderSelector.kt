@@ -9,9 +9,10 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentPromptProviderO
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderMenuItem
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderMenuModel
-import com.intellij.agent.workbench.sessions.core.providers.buildAgentSessionProviderMenuModelAsync
+import com.intellij.agent.workbench.sessions.core.providers.buildAgentSessionProviderMenuModel
 import com.intellij.agent.workbench.sessions.core.providers.hasEntries
 import com.intellij.agent.workbench.sessions.core.providers.withYoloModeBadge
+import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.setToolTipText
@@ -22,7 +23,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -39,18 +39,19 @@ import javax.swing.Icon
 import javax.swing.JPanel
 
 internal class AgentPromptProviderSelector(
-    private val invocationData: AgentPromptInvocationData,
-    private val providerIconLabel: JBLabel,
-    private val providerOptionsPanel: JPanel,
-    private val providersProvider: () -> List<AgentSessionProviderDescriptor>,
-    private val sessionsMessageResolver: AgentPromptSessionsMessageResolver,
-    /**
-     * Scope that drives the suspending refresh which evaluates each provider's CLI availability through
-     * the shared `TerminalAgentResolver`. Required at runtime; tests that drive the selector
-     * synchronously pass `null` and rely on `refresh()` doing the work via `runBlocking` directly.
-     */
-    private val asyncRefreshScope: CoroutineScope? = null,
+  private val invocationData: AgentPromptInvocationData,
+  private val providerIconLabel: JBLabel,
+  private val providerOptionsPanel: JPanel,
+  private val providersProvider: () -> List<AgentSessionProviderDescriptor>,
+  private val sessionsMessageResolver: AgentPromptSessionsMessageResolver,
+  /**
+   * Scope that drives the suspending refresh which evaluates each provider's CLI availability off the
+   * UI path. Tests that drive the selector synchronously pass `null` and seed the availability cache
+   * directly.
+   */
+  private val asyncRefreshScope: CoroutineScope? = null,
 ) {
+  private val providerAvailabilityService = AgentSessionProviderAvailabilityService.getInstance(invocationData.project)
   private var providerEntries: List<ProviderEntry> = emptyList()
   private var providerMenuModel: AgentSessionProviderMenuModel = AgentSessionProviderMenuModel(emptyList(), emptyList())
   private val selectedOptionIdsByProvider = LinkedHashMap<AgentSessionProvider, LinkedHashSet<String>>()
@@ -66,34 +67,36 @@ internal class AgentPromptProviderSelector(
 
   fun refresh() {
     val bridges = providersProvider()
-    val (resolvedMenuModel, resolvedEntries) = runBlockingMaybeCancellable { resolveProviderState(bridges) }
+    val (resolvedMenuModel, resolvedEntries) = resolveProviderState(bridges, providerAvailabilityService.availabilitySnapshot(bridges))
     applyResolvedState(resolvedMenuModel, resolvedEntries)
-    asyncRefreshScope?.launch { refreshFromTerminalResolver(bridges) }
+    asyncRefreshScope?.launch { refreshProviderAvailability(bridges) }
   }
 
   /**
    * Re-runs the provider scan using [AgentSessionProviderDescriptor.isCliAvailable]. The lookup may dispatch
-   * to background work (EEL probes for known-location candidates), so the result is applied back on the EDT
-   * before [updatePresentation] re-renders the popup. No-op when nothing changed compared to the synchronous
-   * paint already on screen.
+   * to background work (EEL probes for known-location candidates), so the result is cached and applied back
+   * on the EDT before [updatePresentation] re-renders the popup. No-op when nothing changed compared to the
+   * cached paint already on screen.
    */
-  private suspend fun refreshFromTerminalResolver(bridges: List<AgentSessionProviderDescriptor>) {
-    val (resolvedMenuModel, resolvedEntries) = resolveProviderState(bridges)
-    if (resolvedEntries == providerEntries && resolvedMenuModel == providerMenuModel) return
+  private suspend fun refreshProviderAvailability(bridges: List<AgentSessionProviderDescriptor>) {
+    val availabilityByProvider = providerAvailabilityService.refreshNow(bridges)
+    val (resolvedMenuModel, resolvedEntries) = resolveProviderState(bridges, availabilityByProvider)
     withContext(Dispatchers.EDT) {
+      if (resolvedEntries == providerEntries && resolvedMenuModel == providerMenuModel) return@withContext
       applyResolvedState(resolvedMenuModel, resolvedEntries)
     }
   }
 
-  private suspend fun resolveProviderState(
+  private fun resolveProviderState(
     bridges: List<AgentSessionProviderDescriptor>,
+    availabilityByProvider: Map<AgentSessionProvider, Boolean>,
   ): Pair<AgentSessionProviderMenuModel, List<ProviderEntry>> {
-    val resolvedMenuModel = buildAgentSessionProviderMenuModelAsync(bridges)
+    val resolvedMenuModel = buildAgentSessionProviderMenuModel(bridges, availabilityByProvider)
     val resolvedEntries = bridges.map { bridge ->
       ProviderEntry(
         bridge = bridge,
         displayName = sessionsMessageResolver.resolve(bridge.displayNameKey, bridge) ?: bridge.displayNameFallback,
-        isCliAvailable = bridge.isCliAvailable(),
+        isCliAvailable = availabilityByProvider[bridge.provider] == true,
         icon = bridge.icon,
       )
     }
@@ -285,9 +288,9 @@ internal class AgentPromptProviderSelector(
   }
 
   private fun createProviderOptionCheckBox(
-      bridge: AgentSessionProviderDescriptor,
-      option: AgentPromptProviderOption,
-      selectedOptionIds: LinkedHashSet<String>,
+    bridge: AgentSessionProviderDescriptor,
+    option: AgentPromptProviderOption,
+    selectedOptionIds: LinkedHashSet<String>,
   ): JBCheckBox {
     val label = sessionsMessageResolver.resolve(option.labelKey, bridge) ?: option.labelFallback
     return JBCheckBox(label, option.id in selectedOptionIds).apply {

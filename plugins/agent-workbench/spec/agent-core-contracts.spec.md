@@ -45,7 +45,7 @@ These contracts keep shared identity, command mapping, provider capabilities, pr
   [@test] ../claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
   [@test] ../junie/sessions/testSrc/JunieAgentSessionProviderDescriptorTest.kt
 
-- Provider bridges resolve executables through the shared `TerminalAgentResolver` at launch time. `AgentSessionProviderDescriptor.isCliAvailable` is a single suspending contract backed by the resolver; synchronous UI surfaces consult the `TerminalAgentsAvailabilityService` cached snapshot keyed by each descriptor's `terminalAgentKey` (with a `runBlocking { isCliAvailable() }` fallback for test descriptors with no key). Launch-spec construction is suspending.
+- Provider bridges resolve executables through the shared `TerminalAgentResolver` at launch time. `AgentSessionProviderDescriptor.isCliAvailable` is a single suspending contract backed by the resolver; synchronous UI surfaces consult the project-level provider availability cache and request background refreshes instead of blocking UI code. Launch-spec construction is suspending.
   [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
   [@test] ../claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
   [@test] ../junie/sessions/testSrc/JunieAgentSessionProviderDescriptorTest.kt

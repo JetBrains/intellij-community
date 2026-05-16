@@ -12,6 +12,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.buildAgentSessionProviderActionModel
 import com.intellij.agent.workbench.sessions.providerIconWithMode
+import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
 import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
@@ -30,7 +31,6 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
@@ -38,11 +38,8 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.merge.MergeDialogContext
 import com.intellij.openapi.vcs.merge.MergeResolveActionContext
-import com.intellij.terminal.frontend.action.TerminalAgentsAvailabilityService
 import com.intellij.ui.components.JBOptionButton
 import org.jetbrains.annotations.Nls
-import org.jetbrains.plugins.terminal.agent.TerminalAgent
-import org.jetbrains.plugins.terminal.agent.rpc.TerminalAgentMode
 import java.awt.event.ActionEvent
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.AbstractAction
@@ -235,30 +232,15 @@ internal class AgentResolveConflictsAction @JvmOverloads constructor(
   }
 
   private fun buildProviderActionModel(project: Project): AgentSessionProviderActionModel {
+    val providers = allProviders()
+    val availabilityService = AgentSessionProviderAvailabilityService.getInstance(project)
+    availabilityService.requestRefresh(providers)
     return buildAgentSessionProviderActionModel(
-      bridges = allProviders(),
+      bridges = providers,
       lastUsedProvider = lastUsedProvider(),
       lastUsedLaunchMode = lastUsedLaunchMode(),
-      availabilityByProvider = computeProviderAvailability(allProviders(), project),
+      availabilityByProvider = availabilityService.availabilitySnapshot(providers),
     )
-  }
-
-  private fun computeProviderAvailability(
-    bridges: List<AgentSessionProviderDescriptor>,
-    project: Project,
-  ): Map<AgentSessionProvider, Boolean> {
-    val cached = TerminalAgentsAvailabilityService.getInstance(project).getAvailableAgents()
-    val cachedKeys = cached.mapTo(HashSet()) { it.agentKey }
-    val runnable = cached.filter { it.mode == TerminalAgentMode.RUN }.mapTo(HashSet()) { it.agentKey }
-    return bridges.associate { bridge ->
-      val agentKey = bridge.terminalAgentKey?.let(TerminalAgent::AgentKey)
-      val available = when {
-        agentKey == null -> runBlockingMaybeCancellable { bridge.isCliAvailable() }
-        agentKey in cachedKeys -> agentKey in runnable
-        else -> runBlockingMaybeCancellable { bridge.isCliAvailable() }
-      }
-      bridge.provider to available
-    }
   }
 
   private fun rememberedQuickStartItem(menuModel: AgentSessionProviderMenuModel): AgentSessionProviderMenuItem? {
@@ -345,7 +327,8 @@ internal class AgentResolveConflictsAction @JvmOverloads constructor(
       }
 
       return buildAgentSessionProviderMenuActions(menuModel) { item ->
-        val resolvedContext = context ?: resolveContext(DataManager.getInstance().getDataContext(this)) ?: return@buildAgentSessionProviderMenuActions
+        val resolvedContext =
+          context ?: resolveContext(DataManager.getInstance().getDataContext(this)) ?: return@buildAgentSessionProviderMenuActions
         launchResolution(resolvedContext, item)
       }.toList()
     }

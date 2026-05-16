@@ -15,11 +15,11 @@ data class AgentSessionProviderActionModel(
 )
 
 data class AgentSessionProviderMenuItem(
-    @JvmField val bridge: AgentSessionProviderDescriptor,
-    @JvmField val mode: AgentSessionLaunchMode,
-    @JvmField val labelKey: String,
-    @JvmField val isEnabled: Boolean,
-    @JvmField val disabledReasonKey: String? = null,
+  @JvmField val bridge: AgentSessionProviderDescriptor,
+  @JvmField val mode: AgentSessionLaunchMode,
+  @JvmField val labelKey: String,
+  @JvmField val isEnabled: Boolean,
+  @JvmField val disabledReasonKey: String? = null,
 )
 
 fun AgentSessionProviderMenuModel.hasEntries(): Boolean {
@@ -28,9 +28,7 @@ fun AgentSessionProviderMenuModel.hasEntries(): Boolean {
 
 /**
  * Sync menu-model builder. Synchronous surfaces (action `update()` callbacks) must supply
- * [availabilityByProvider] (typically computed from `TerminalAgentsAvailabilityService` for the
- * caller's project) — a missing entry is treated as "not yet resolved" and renders the provider as
- * disabled.
+ * [availabilityByProvider] from the caller's project-level provider availability cache.
  */
 fun buildAgentSessionProviderMenuModel(
   bridges: List<AgentSessionProviderDescriptor>,
@@ -48,18 +46,6 @@ fun buildAgentSessionProviderMenuModel(
     standardItems = standardItems,
     yoloItems = yoloItems,
   )
-}
-
-/**
- * Suspending variant of [buildAgentSessionProviderMenuModel] that consults
- * [AgentSessionProviderDescriptor.isCliAvailable] directly. Surfaces that can repaint
- * asynchronously (the agent prompt palette) prefer this over the cached sync variant.
- */
-suspend fun buildAgentSessionProviderMenuModelAsync(
-  bridges: List<AgentSessionProviderDescriptor>,
-): AgentSessionProviderMenuModel {
-  val availability = bridges.associate { bridge -> bridge.provider to bridge.isCliAvailable() }
-  return buildAgentSessionProviderMenuModel(bridges, availability)
 }
 
 private fun appendMenuItems(
@@ -93,10 +79,10 @@ private fun appendMenuItems(
 }
 
 fun buildAgentSessionProviderActionModel(
-    bridges: List<AgentSessionProviderDescriptor>,
-    lastUsedProvider: AgentSessionProvider?,
-    lastUsedLaunchMode: AgentSessionLaunchMode? = null,
-    availabilityByProvider: Map<AgentSessionProvider, Boolean>,
+  bridges: List<AgentSessionProviderDescriptor>,
+  lastUsedProvider: AgentSessionProvider?,
+  lastUsedLaunchMode: AgentSessionLaunchMode? = null,
+  availabilityByProvider: Map<AgentSessionProvider, Boolean>,
 ): AgentSessionProviderActionModel {
   val menuModel = buildAgentSessionProviderMenuModel(bridges, availabilityByProvider)
   return AgentSessionProviderActionModel(

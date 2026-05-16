@@ -11,21 +11,39 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentPromptProviderO
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
+import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.EmptyIcon
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.awt.event.KeyEvent
 import javax.swing.JPanel
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 @TestApplication
 class AgentPromptProviderSelectorTest {
+  @BeforeEach
+  fun clearProviderAvailabilityCache() {
+    AgentSessionProviderAvailabilityService.getInstance(ProjectManager.getInstance().defaultProject).clearAvailabilityForTest()
+  }
+
   @Test
   fun planModeCheckboxUsesMnemonicAndUpdatesStoredSelection() {
     runInEdtAndWait {
@@ -98,7 +116,7 @@ class AgentPromptProviderSelectorTest {
         promptOptions = emptyList(),
         cliAvailable = false,
       )
-      val fixture = createSelectorFixture(listOf(provider))
+      val fixture = createSelectorFixture(listOf(provider), availabilityByProvider = mapOf(provider.provider to false))
 
       fixture.selector.refresh()
 
@@ -114,8 +132,41 @@ class AgentPromptProviderSelectorTest {
     }
   }
 
-  private fun createSelectorFixture(providers: List<AgentSessionProviderDescriptor>): ProviderSelectorFixture {
+  @Test
+  @Suppress("RAW_SCOPE_CREATION")
+  fun asyncRefreshAppliesResolvedProviderAvailabilityFromUiScope() = timeoutRunBlocking {
+    val provider = testProviderBridge(
+      provider = AgentSessionProvider.CODEX,
+      promptOptions = emptyList(),
+      cliAvailable = false,
+    )
+    val asyncRefreshScope = CoroutineScope(SupervisorJob() + Dispatchers.EDT)
+    try {
+      val fixture = withContext(Dispatchers.EDT) {
+        createSelectorFixture(listOf(provider), asyncRefreshScope = asyncRefreshScope).also { fixture ->
+          fixture.selector.refresh()
+        }
+      }
+
+      assertThat(withContext(Dispatchers.EDT) { fixture.selector.selectedProvider?.isCliAvailable }).isTrue()
+      waitForCondition {
+        withContext(Dispatchers.EDT) {
+          fixture.selector.selectedProvider?.isCliAvailable == false
+        }
+      }
+    }
+    finally {
+      asyncRefreshScope.cancel()
+    }
+  }
+
+  private fun createSelectorFixture(
+    providers: List<AgentSessionProviderDescriptor>,
+    availabilityByProvider: Map<AgentSessionProvider, Boolean> = emptyMap(),
+    asyncRefreshScope: CoroutineScope? = null,
+  ): ProviderSelectorFixture {
     val project = ProjectManager.getInstance().defaultProject
+    AgentSessionProviderAvailabilityService.getInstance(project).setAvailabilityForTest(availabilityByProvider)
     val providerOptionsPanel = JPanel()
     return ProviderSelectorFixture(
       selector = AgentPromptProviderSelector(
@@ -130,9 +181,18 @@ class AgentPromptProviderSelectorTest {
         providerOptionsPanel = providerOptionsPanel,
         providersProvider = { providers },
         sessionsMessageResolver = AgentPromptSessionsMessageResolver(AgentPromptProviderSelector::class.java.classLoader),
+        asyncRefreshScope = asyncRefreshScope,
       ),
       providerOptionsPanel = providerOptionsPanel,
     )
+  }
+
+  private suspend fun waitForCondition(condition: suspend () -> Boolean) {
+    withTimeout(5.seconds) {
+      while (!condition()) {
+        delay(10.milliseconds)
+      }
+    }
   }
 
   private fun testProviderBridge(

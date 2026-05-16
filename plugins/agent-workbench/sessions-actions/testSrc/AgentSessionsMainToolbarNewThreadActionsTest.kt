@@ -13,8 +13,8 @@ import com.intellij.agent.workbench.sessions.actions.PickerActionGroup
 import com.intellij.agent.workbench.sessions.actions.QuickStartAction
 import com.intellij.agent.workbench.sessions.actions.resolveAgentSessionsMainToolbarNewThreadContext
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
+import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionUiKind
@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.Utils
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -31,10 +32,16 @@ import com.intellij.ui.BadgeIcon
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 @TestApplication
 class AgentSessionsMainToolbarNewThreadActionsTest {
+  @BeforeEach
+  fun clearProviderAvailabilityCache() {
+    AgentSessionProviderAvailabilityService.getInstance(ProjectManager.getInstance().defaultProject).clearAvailabilityForTest()
+  }
+
   @Test
   fun updateUsesQuickStartProviderTitleBadgeIconAndParameterizedDescription() {
     val context = newThreadContext(path = "/tmp/toolbar-project")
@@ -250,7 +257,7 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
   }
 
   @Test
-  fun primaryClickChecksProviderCliBeforeQuickLaunchAndFallsBackToPicker() {
+  fun primaryClickUsesCachedProviderAvailabilityBeforeQuickLaunchAndFallsBackToPicker() {
     val context = newThreadContext(path = "/tmp/toolbar-project")
     var cliChecks = 0
     var launched = false
@@ -269,12 +276,15 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
       lastUsedLaunchMode = { AgentSessionLaunchMode.STANDARD },
       showPicker = { _, _ -> pickerShown++ },
     )
+    AgentSessionProviderAvailabilityService.getInstance(context.project).setAvailabilityForTest(
+      mapOf(AgentSessionProvider.CODEX to false),
+    )
     val mainAction = action.getMainAction(TestActionEvent.createTestEvent(action))
 
     assertThat(mainAction).isInstanceOf(QuickStartAction::class.java)
     checkNotNull(mainAction).actionPerformed(TestActionEvent.createTestEvent(mainAction))
 
-    assertThat(cliChecks).isPositive()
+    assertThat(cliChecks).isZero()
     assertThat(launched).isFalse()
     assertThat(pickerShown).isEqualTo(1)
   }

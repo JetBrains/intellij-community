@@ -14,14 +14,11 @@ import com.intellij.agent.workbench.sessions.core.providers.buildAgentSessionPro
 import com.intellij.agent.workbench.sessions.core.providers.hasEntries
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
+import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
-import com.intellij.terminal.frontend.action.TerminalAgentsAvailabilityService
 import org.jetbrains.annotations.Nls
-import org.jetbrains.plugins.terminal.agent.TerminalAgent
-import org.jetbrains.plugins.terminal.agent.rpc.TerminalAgentMode
 
 fun createNewThreadViaService(
   path: String,
@@ -37,7 +34,7 @@ fun buildNewThreadMenuModel(
   bridges: List<AgentSessionProviderDescriptor>,
   project: Project,
 ): AgentSessionProviderMenuModel {
-  return buildAgentSessionProviderMenuModel(bridges, providerAvailabilityFromTerminalCache(bridges, project))
+  return buildAgentSessionProviderMenuModel(bridges, providerAvailabilitySnapshot(bridges, project))
 }
 
 fun buildNewThreadActionModel(
@@ -50,37 +47,23 @@ fun buildNewThreadActionModel(
     bridges = bridges,
     lastUsedProvider = lastUsedProvider,
     lastUsedLaunchMode = lastUsedLaunchMode,
-    availabilityByProvider = providerAvailabilityFromTerminalCache(bridges, project),
+    availabilityByProvider = providerAvailabilitySnapshot(bridges, project),
   )
 }
 
 /**
- * Reads the cached snapshot from `TerminalAgentsAvailabilityService.getAvailableAgents()` and maps it
- * onto each bridge's [AgentSessionProviderDescriptor.terminalAgentKey]. Synchronous surfaces (BGT action
- * `update()`) use this; the cache is prewarmed at terminal tool window initialization, refreshed when the
- * terminal agents popup is shown, and after a failed launch (see `TerminalAgentsAvailabilityService`).
- *
- * The cache is checked first; if it has no entry for a provider's [AgentSessionProviderDescriptor.terminalAgentKey] (e.g., before the
- * project-level prewarm has populated it, or when the terminal plugin's registry flag is disabled), the
- * helper falls back to `runBlocking { bridge.isCliAvailable() }` so the menu doesn't render every
- * provider as "CLI not found" simply because the cache hasn't filled in yet.
+ * Synchronous action updates and tree renderers cannot call [AgentSessionProviderDescriptor.isCliAvailable]
+ * directly. They read the project-level availability cache instead and request a background refresh when
+ * the cache has not been populated yet. Unknown availability is treated as enabled so first paint does not
+ * disable every provider while startup prewarm is still running.
  */
-fun providerAvailabilityFromTerminalCache(
+fun providerAvailabilitySnapshot(
   bridges: List<AgentSessionProviderDescriptor>,
   project: Project,
 ): Map<AgentSessionProvider, Boolean> {
-  val cached = TerminalAgentsAvailabilityService.getInstance(project).getAvailableAgents()
-  val cachedKeys = cached.mapTo(HashSet()) { it.agentKey }
-  val runnable = cached.filter { it.mode == TerminalAgentMode.RUN }.mapTo(HashSet()) { it.agentKey }
-  return bridges.associate { bridge ->
-    val agentKey = bridge.terminalAgentKey?.let(TerminalAgent::AgentKey)
-    val available = when (agentKey) {
-        null -> runBlockingCancellable { bridge.isCliAvailable() }
-        in cachedKeys -> agentKey in runnable
-        else -> runBlockingCancellable { bridge.isCliAvailable() }
-    }
-    bridge.provider to available
-  }
+  val availabilityService = AgentSessionProviderAvailabilityService.getInstance(project)
+  availabilityService.requestRefresh(bridges)
+  return availabilityService.availabilitySnapshot(bridges)
 }
 
 internal fun quickStartActionText(item: AgentSessionProviderMenuItem): @Nls String {

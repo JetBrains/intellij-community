@@ -140,9 +140,8 @@ interface AgentSessionProviderDescriptor {
 
   /**
    * Terminal-agent identifier used by `TerminalAgentResolver` to locate this provider's CLI binary.
-   * When set, synchronous surfaces can resolve availability by reading the cached snapshot from
-   * `TerminalAgentsAvailabilityService.getAvailableAgents()` keyed by this value. `null` (default)
-   * disables that path; the provider then never reports as available to sync surfaces.
+   * The provider availability cache refreshes through [isCliAvailable], which should use the same
+   * resolver path as launch-time CLI resolution so menus and launch errors agree.
    */
   val terminalAgentKey: String?
     get() = null
@@ -169,9 +168,8 @@ interface AgentSessionProviderDescriptor {
    * menu enable/disable matches the launch-time resolver answer.
    *
    * Synchronous UI surfaces (menu `update()` callbacks, sessions tree popup, editor-tab actions, etc.)
-   * cannot suspend, and so consume the cached snapshot maintained by
-   * `TerminalAgentsAvailabilityService` instead of calling this directly. The cache is populated
-   * by the terminal tool window prewarm and refreshed on popup show / failed launch.
+   * cannot suspend, and so consume the project-level provider availability cache instead of calling
+   * this directly. The cache is populated by startup prewarm and refreshed from background coroutines.
    */
   suspend fun isCliAvailable(): Boolean
 

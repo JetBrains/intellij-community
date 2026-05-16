@@ -170,6 +170,32 @@ class AgentPromptVcsCommitManualContextSourceTest {
     assertThat(errorMessage).isEqualTo(AgentPromptVcsBundle.message("manual.context.vcs.error.unavailable"))
   }
 
+  @Test
+  fun showPickerReportsUnavailableWhenVcsLogDoesNotBecomeReady() {
+    val hostProject = projectProxy(name = "Agent Dedicated Frame", basePath = "/dedicated")
+    val sourceProject = projectProxy(name = "Source Project", basePath = "/repo")
+    var errorMessage: String? = null
+    val source = AgentPromptVcsCommitManualContextSource(
+      projectLogAvailability = { true },
+      runWhenLogIsReady = { _, _, onUnavailable -> onUnavailable() },
+    )
+
+    source.showPicker(
+      AgentPromptManualContextPickerRequest(
+        hostProject = hostProject,
+        sourceProject = sourceProject,
+        invocationData = invocationData(hostProject),
+        workingProjectPath = "/repo",
+        currentItems = emptyList(),
+        anchorComponent = JPanel(),
+        onSelected = { error("Selection callback is not expected") },
+        onError = { message -> errorMessage = message },
+      )
+    )
+
+    assertThat(errorMessage).isEqualTo(AgentPromptVcsBundle.message("manual.context.vcs.error.unavailable"))
+  }
+
   private fun commitEntry(
     hash: String,
     rootPath: String?,

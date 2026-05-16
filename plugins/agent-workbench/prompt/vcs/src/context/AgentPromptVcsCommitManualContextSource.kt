@@ -18,7 +18,6 @@ import com.intellij.agent.workbench.prompt.vcs.context.AgentPromptVcsIssueUrls.r
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.PopupChooserBuilder
 import com.intellij.openapi.util.NlsSafe
@@ -60,7 +59,9 @@ private val LOG = logger<AgentPromptVcsCommitManualContextSource>()
 
 internal class AgentPromptVcsCommitManualContextSource(
   private val projectLogAvailability: (Project) -> Boolean = VcsProjectLog::isAvailable,
-  private val awaitLogManager: suspend (Project) -> VcsLogManager? = VcsProjectLog::awaitLogIsReady,
+  private val runWhenLogIsReady: (Project, (VcsLogManager) -> Unit, () -> Unit) -> Unit = { project, onReady, _ ->
+    VcsProjectLog.runWhenLogIsReady(project, onReady)
+  },
 ) : AgentPromptManualContextSourceBridge {
   override val sourceId: String
     get() = "manual.vcs.commits"
@@ -82,23 +83,30 @@ internal class AgentPromptVcsCommitManualContextSource(
       return
     }
 
+    runWhenLogIsReady(
+      request.sourceProject,
+      { logManager -> queueCommitEntriesLoad(request, logManager) },
+      { request.onError(AgentPromptVcsBundle.message("manual.context.vcs.error.unavailable")) },
+    )
+  }
+
+  private fun queueCommitEntriesLoad(
+    request: AgentPromptManualContextPickerRequest,
+    logManager: VcsLogManager,
+  ) {
     object : Task.Backgroundable(
       request.hostProject,
       AgentPromptVcsBundle.message("manual.context.vcs.loading.title"),
       true,
     ) {
-      private var entries: List<CommitPickerEntry>? = null
+      private var entries: List<CommitPickerEntry> = emptyList()
 
       override fun run(indicator: ProgressIndicator) {
-        entries = loadEntries(request, indicator)
+        entries = loadEntries(request, indicator, logManager)
       }
 
       override fun onSuccess() {
         val loaded = entries
-        if (loaded == null) {
-          request.onError(AgentPromptVcsBundle.message("manual.context.vcs.error.unavailable"))
-          return
-        }
         if (loaded.isEmpty()) {
           request.onError(AgentPromptVcsBundle.message("manual.context.vcs.error.empty"))
           return
@@ -116,10 +124,8 @@ internal class AgentPromptVcsCommitManualContextSource(
   private fun loadEntries(
     request: AgentPromptManualContextPickerRequest,
     indicator: ProgressIndicator,
-  ): List<CommitPickerEntry>? {
-    val logManager = runBlockingMaybeCancellable {
-      awaitLogManager(request.sourceProject)
-    } ?: return null
+    logManager: VcsLogManager,
+  ): List<CommitPickerEntry> {
     val dataManager = logManager.dataManager
     val eligibleRoots = resolveEligibleRootPaths(dataManager.logProviders.keys.map { root -> root.path }, request.workingProjectPath)
     if (eligibleRoots.isEmpty()) {
