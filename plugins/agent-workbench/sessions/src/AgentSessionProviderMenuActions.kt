@@ -42,10 +42,18 @@ fun providerIconWithMode(provider: AgentSessionProvider, mode: AgentSessionLaunc
   return icon
 }
 
+fun providerItemIconWithMode(item: AgentSessionProviderMenuItem): Icon {
+  val icon = item.bridge.icon
+  if (item.mode == AgentSessionLaunchMode.YOLO) {
+    return withYoloModeBadge(icon)
+  }
+  return icon
+}
+
 private class AgentSessionProviderMenuItemAction(
   private val item: AgentSessionProviderMenuItem,
   private val onItemSelected: (AgentSessionProviderMenuItem) -> Unit,
-) : DumbAwareAction(AgentSessionsBundle.message(item.labelKey), null, providerIconWithMode(item.bridge.provider, item.mode)) {
+) : DumbAwareAction(AgentSessionsBundle.message(item.labelKey), null, providerItemIconWithMode(item)) {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = item.isEnabled
     e.presentation.description = if (item.isEnabled) null else disabledProviderReason(item)

@@ -22,6 +22,7 @@ import com.intellij.agent.workbench.sessions.actions.resolveQuickStartProjectPop
 import com.intellij.agent.workbench.sessions.core.SessionActionTarget
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
+import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUiKind
@@ -34,12 +35,18 @@ import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.ui.BadgeIcon
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.awt.event.MouseEvent
 import javax.swing.JPanel
 
 @TestApplication
 class AgentSessionsEditorTabActionsTest {
+  @BeforeEach
+  fun clearProviderAvailabilityCache() {
+    AgentSessionProviderAvailabilityService.getInstance(ProjectManager.getInstance().defaultProject).clearAvailabilityForTest()
+  }
+
   @Test
   fun editorTabNewThreadUsesLastUsedProviderAndLaunchesStandardSessionFromPrimaryClick() {
     val path = "/tmp/editor-project"
@@ -77,7 +84,7 @@ class AgentSessionsEditorTabActionsTest {
     action.update(event)
 
     assertThat(event.presentation.isEnabledAndVisible).isTrue()
-    assertThat(event.presentation.icon).isEqualTo(providerIcon(AgentSessionProvider.CLAUDE))
+    assertThat(event.presentation.icon).isEqualTo(claudeBridge.icon)
     assertThat(event.presentation.text).isEqualTo(AgentSessionsBundle.message(
       "action.AgentWorkbenchSessions.NewThreadQuick.text",
       AgentSessionsBundle.message("toolwindow.action.new.session.claude"),
@@ -186,7 +193,7 @@ class AgentSessionsEditorTabActionsTest {
     action.update(event)
 
     assertThat(event.presentation.isEnabledAndVisible).isTrue()
-    assertThat(event.presentation.icon).isEqualTo(providerIcon(fallbackProvider))
+    assertThat(event.presentation.icon).isEqualTo(fallbackBridge.icon)
 
     action.actionPerformed(event)
 
@@ -210,6 +217,9 @@ class AgentSessionsEditorTabActionsTest {
       createNewSession = { _, _, _, _, _ -> error("Disabled provider should not launch from quick action") },
     )
     val event = TestActionEvent.createTestEvent(action)
+    AgentSessionProviderAvailabilityService.getInstance(context.project).setAvailabilityForTest(
+      mapOf(AgentSessionProvider.CODEX to false),
+    )
 
     action.update(event)
 
@@ -232,6 +242,9 @@ class AgentSessionsEditorTabActionsTest {
       createNewSession = { _, _, _, _, _ -> launched = true },
     )
     val event = TestActionEvent.createTestEvent(action)
+    AgentSessionProviderAvailabilityService.getInstance(context.project).setAvailabilityForTest(
+      mapOf(AgentSessionProvider.CODEX to false),
+    )
 
     action.update(event)
 

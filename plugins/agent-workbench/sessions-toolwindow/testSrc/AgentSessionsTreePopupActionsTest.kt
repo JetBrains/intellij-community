@@ -10,6 +10,7 @@ import com.intellij.agent.workbench.sessions.TestAgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
+import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupActionContext
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupArchiveThreadAction
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupDataKeys
@@ -31,10 +32,16 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 @TestApplication
 class AgentSessionsTreePopupActionsTest {
+  @BeforeEach
+  fun clearProviderAvailabilityCache() {
+    AgentSessionProviderAvailabilityService.getInstance(ProjectManager.getInstance().defaultProject).clearAvailabilityForTest()
+  }
+
   @Test
   fun openActionVisibilityAndDispatchForProjectAndWorktreeThread() {
     var dedicatedFrame = false
@@ -518,6 +525,12 @@ class AgentSessionsTreePopupActionsTest {
       node = SessionTreeNode.Project(AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)),
     )
     val event = popupEvent(group, projectContext)
+    AgentSessionProviderAvailabilityService.getInstance(projectContext.project).setAvailabilityForTest(
+      mapOf(
+        AgentSessionProvider.CODEX to true,
+        AgentSessionProvider.CLAUDE to false,
+      ),
+    )
 
     group.update(event)
     assertThat(event.presentation.isEnabledAndVisible).isTrue()

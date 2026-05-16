@@ -14,17 +14,16 @@ import com.intellij.agent.workbench.sessions.core.SessionActionTarget
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.hasEntries
-import com.intellij.agent.workbench.sessions.core.providers.withYoloModeBadge
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.model.AgentSessionThreadViewMode
+import com.intellij.agent.workbench.sessions.providerItemIconWithMode
 import com.intellij.agent.workbench.sessions.service.AgentArchivedSessionsService
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.agent.workbench.sessions.state.AgentSessionThreadViewStateService
 import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
-import com.intellij.agent.workbench.sessions.toolwindow.ui.providerIcon
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
@@ -35,7 +34,6 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.Nls
-import javax.swing.Icon
 
 internal object AgentSessionsTreePopupDataKeys {
   @JvmField
@@ -209,8 +207,7 @@ internal class AgentSessionsTreePopupNewThreadGroup @JvmOverloads constructor(
     e.presentation.isEnabledAndVisible = true
     e.presentation.isPopupGroup = true
     e.presentation.isPerformGroup = actionModel.quickStartItem != null
-    e.presentation.icon =
-      actionModel.quickStartItem?.let { quickStartProviderIcon(it.bridge.provider, it.mode) } ?: templatePresentation.icon
+    e.presentation.icon = actionModel.quickStartItem?.let(::providerItemIconWithMode) ?: templatePresentation.icon
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -242,14 +239,6 @@ private fun newThreadPathFromTarget(target: SessionActionTarget): String? {
     is SessionActionTarget.Worktree -> target.path
     else -> null
   }
-}
-
-private fun quickStartProviderIcon(provider: AgentSessionProvider, mode: AgentSessionLaunchMode): Icon? {
-  val icon = providerIcon(provider) ?: return null
-  if (mode == AgentSessionLaunchMode.YOLO) {
-    return withYoloModeBadge(icon)
-  }
-  return icon
 }
 
 private fun morePopupLabel(target: SessionActionTarget): @Nls String {

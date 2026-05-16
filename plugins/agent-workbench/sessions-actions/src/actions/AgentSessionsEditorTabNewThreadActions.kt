@@ -12,7 +12,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.hasEntries
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
-import com.intellij.agent.workbench.sessions.providerIconWithMode
+import com.intellij.agent.workbench.sessions.providerItemIconWithMode
 import com.intellij.agent.workbench.sessions.service.buildAgentSessionProjectPathCandidates
 import com.intellij.agent.workbench.sessions.service.collectOpenAgentSessionProjectPaths
 import com.intellij.agent.workbench.sessions.service.normalizeOpenableSourceProjectPath
@@ -55,7 +55,7 @@ internal class AgentSessionsEditorTabNewThreadQuickAction @JvmOverloads construc
     }
 
     e.presentation.isEnabledAndVisible = true
-    e.presentation.icon = providerIconWithMode(quickStartItem.bridge.provider, quickStartItem.mode)
+    e.presentation.icon = providerItemIconWithMode(quickStartItem)
     e.presentation.text = quickStartActionText(quickStartItem)
     e.presentation.description = quickStartActionDescription(quickStartItem)
   }
