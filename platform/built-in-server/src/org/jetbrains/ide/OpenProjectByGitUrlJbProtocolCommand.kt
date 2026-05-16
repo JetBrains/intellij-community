@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.NlsContexts.DialogMessage
+import com.intellij.platform.eel.fs.EelFiles
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -155,7 +156,7 @@ private fun resolveGitDir(dotGit: Path): Path? {
   if (attrs.isDirectory) return dotGit
   if (!attrs.isRegularFile) return null
 
-  val content = try { Files.readString(dotGit, Charsets.UTF_8).trim() } catch (_: Exception) { return null }
+  val content = try { EelFiles.readString(dotGit, Charsets.UTF_8).trim() } catch (_: Exception) { return null }
   if (!content.startsWith(GIT_DIR_PREFIX)) return null
   val target = content.substring(GIT_DIR_PREFIX.length).trim().takeIf { it.isNotEmpty() } ?: return null
 
@@ -170,7 +171,7 @@ private fun resolveGitDir(dotGit: Path): Path? {
  */
 private fun readCommonDir(gitDir: Path): Path? {
   val commonDirFile = gitDir.resolve("commondir")
-  val content = try { Files.readString(commonDirFile, Charsets.UTF_8).trim() } catch (_: Exception) { return null }
+  val content = try { EelFiles.readString(commonDirFile, Charsets.UTF_8).trim() } catch (_: Exception) { return null }
   if (content.isEmpty()) return null
   val pointer = try { Paths.get(content) } catch (_: Exception) { return null }
   val resolved = if (pointer.isAbsolute) pointer else gitDir.resolve(pointer)
