@@ -15,6 +15,7 @@ import com.intellij.platform.eel.fs.EelFiles
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.VisibleForTesting
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -151,7 +152,8 @@ private const val GIT_DIR_PREFIX = "gitdir:"
  * or follows the `gitdir: <path>` pointer when it's a regular file (submodule/worktree layout).
  * Relative pointer paths are resolved against [dotGit]'s parent.
  */
-private fun resolveGitDir(dotGit: Path): Path? {
+@VisibleForTesting
+fun resolveGitDir(dotGit: Path): Path? {
   val attrs = try { Files.readAttributes(dotGit, BasicFileAttributes::class.java) } catch (_: Exception) { return null }
   if (attrs.isDirectory) return dotGit
   if (!attrs.isRegularFile) return null
@@ -169,7 +171,8 @@ private fun resolveGitDir(dotGit: Path): Path? {
  * If [gitDir] is a worktree gitdir, reads its `commondir` pointer and returns the resolved path to the
  * main repository's git directory; otherwise `null`. Relative pointer paths are resolved against [gitDir].
  */
-private fun readCommonDir(gitDir: Path): Path? {
+@VisibleForTesting
+fun readCommonDir(gitDir: Path): Path? {
   val commonDirFile = gitDir.resolve("commondir")
   val content = try { EelFiles.readString(commonDirFile, Charsets.UTF_8).trim() } catch (_: Exception) { return null }
   if (content.isEmpty()) return null
@@ -181,7 +184,8 @@ private fun readCommonDir(gitDir: Path): Path? {
 private val REMOTE_HEADER = Regex("""^\[remote\s+"([^"]+)"]$""", RegexOption.IGNORE_CASE)
 private val SECTION_HEADER = Regex("""^\[.*]$""")
 
-private fun parseRemoteUrlsFromConfig(configFile: Path): List<GitRemote> {
+@VisibleForTesting
+fun parseRemoteUrlsFromConfig(configFile: Path): List<GitRemote> {
   val lines = try {
     Files.readAllLines(configFile, Charsets.UTF_8)
   }
