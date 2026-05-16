@@ -53,6 +53,7 @@ import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
 import com.intellij.openapi.wm.WindowInfo
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
@@ -62,6 +63,7 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.toolWindow.PreparedRegisterToolWindowTask
+import com.intellij.toolWindow.ProjectFrameToolWindowLayoutService
 import com.intellij.toolWindow.RegisterToolWindowResult
 import com.intellij.toolWindow.ToolWindowButtonManager
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
@@ -82,7 +84,6 @@ import com.intellij.toolWindow.isUltrawideLayout
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.BitUtil
-import com.intellij.util.EventDispatcher
 import com.intellij.util.SingleAlarm
 import com.intellij.util.SystemProperties
 import com.intellij.util.cancelOnDispose
@@ -139,6 +140,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   internal val activeStack = ActiveStack()
   private val sideStack = SideStack()
   internal val toolWindowPanes = LinkedHashMap<String, ToolWindowPane>()
+  internal var projectFrameTypeId: String? = null
   private val notifications = ToolWindowManagerNotifications(this)
   private val decorators = ToolWindowManagerDecorators(this)
 
@@ -386,12 +388,15 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     pane: ToolWindowPane,
     reopeningEditorJob: Job,
     taskListDeferred: Deferred<List<RegisterToolWindowTaskData>>,
+    projectFrameTypeId: String? = null,
   ) {
+    this.projectFrameTypeId = projectFrameTypeId
     doInit(
       pane = pane,
       connection = project.messageBus.connect(coroutineScope),
       reopeningEditorJob = reopeningEditorJob,
       taskListDeferred = taskListDeferred,
+      projectFrameTypeId = projectFrameTypeId,
     )
   }
 
@@ -402,7 +407,9 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     connection: SimpleMessageBusConnection,
     reopeningEditorJob: Job,
     taskListDeferred: Deferred<List<RegisterToolWindowTaskData>>?,
+    projectFrameTypeId: String? = this.projectFrameTypeId,
   ) {
+    this.projectFrameTypeId = projectFrameTypeId
     withContext(ModalityState.any().asContextElement()) {
       val defaultPaneInitialization = launch(Dispatchers.EDT) {
         this@ToolWindowManagerImpl.projectFrame = pane.frame
@@ -448,6 +455,10 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   }
 
   suspend fun initToolWindow(bean: ToolWindowEP, plugin: PluginDescriptor) {
+    if (isToolWindowRegistrationSuppressed(bean.id)) {
+      return
+    }
+
     val condition = bean.getCondition(plugin)
     if (condition != null && !condition.value(project)) {
       return
@@ -481,6 +492,25 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       toolWindowPane.repaint()
     }
     project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowsRegistered(listOf(bean.id), this)
+  }
+
+  internal fun isToolWindowRegistrationSuppressed(toolWindowId: String): Boolean {
+    return service<ProjectFrameToolWindowLayoutService>().isToolWindowRegistrationSuppressed(
+      frameType = projectFrameTypeId,
+      profileId = getProjectFrameToolWindowLayoutProfileId(),
+      toolWindowId = toolWindowId,
+    )
+  }
+
+  internal fun getSuppressedToolWindowIds(): Set<String> {
+    return service<ProjectFrameToolWindowLayoutService>().getSuppressedToolWindowIds(
+      frameType = projectFrameTypeId,
+      profileId = getProjectFrameToolWindowLayoutProfileId(),
+    )
+  }
+
+  private fun getProjectFrameToolWindowLayoutProfileId(): String? {
+    return service<ProjectFrameCapabilitiesService>().getUiPolicy(project)?.toolWindowLayoutProfileId
   }
 
   private fun getDefaultToolWindowPaneIfInitialized(): ToolWindowPane {

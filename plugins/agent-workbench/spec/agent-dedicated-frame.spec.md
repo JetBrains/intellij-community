@@ -46,7 +46,8 @@ Define dedicated-frame mode behavior for Agent chat routing. This spec owns fram
   [@test] ../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 
 - Dedicated frame project must suppress Project View capability and must not initialize Project View for dedicated projects.
-  [@test] ../sessions/testSrc/AgentWorkbenchToolWindowLayoutProfileProviderTest.kt
+  [@test] ../sessions/testSrc/AgentWorkbenchProjectFrameCapabilitiesProviderTest.kt
+  [@test] ../../../platform/platform-impl/testSrc/com/intellij/toolWindow/ProjectFrameToolWindowLayoutServiceTest.kt
 
 - Plugin descriptor must register `AgentWorkbenchSessions.ActivateWithProjectShortcut` with `use-shortcut-of="ActivateProjectToolWindow"`.
   [@test] ../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt

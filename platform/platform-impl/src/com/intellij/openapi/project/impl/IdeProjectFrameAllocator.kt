@@ -147,11 +147,14 @@ internal class IdeProjectFrameAllocator(
     span("frame allocator foreground") {
       coroutineScope {
         val job = currentCoroutineContext().job
+        val frameSettingsDeferred = async(CoroutineName("project frame settings resolving")) {
+          resolveFrameSettings()
+        }
 
         launch(CoroutineName("project frame creating")) {
           val loadingState = MutableLoadingState(done = job)
           span("frame creation") {
-            createFrameManager(loadingState)
+            createFrameManager(loadingState, frameSettingsDeferred.await())
           }
         }.invokeOnCompletion { cause ->
           if (cause is CancellationException) {
@@ -205,16 +208,22 @@ internal class IdeProjectFrameAllocator(
             launch(CoroutineName("tool window pane creation")) {
               val deferredToolWindowManager = async { project.serviceAsync<ToolWindowManager>() as? ToolWindowManagerImpl }
               val taskListDeferred = async(CoroutineName("toolwindow init command creation")) {
-                computeToolWindowBeans(project)
+                computeToolWindowBeans(project, frameSettingsDeferred.await().projectFrameTypeId)
               }
 
               val toolWindowManager = deferredToolWindowManager.await() ?: return@launch
+              val projectFrameTypeId = frameSettingsDeferred.await().projectFrameTypeId
               val projectFrameHelper = deferredProjectFrameHelper.await()
               val toolWindowPane = withContext(Dispatchers.UI) {
                 projectFrameHelper.toolWindowPane
               }
               span("tool window manager init") {
-                toolWindowManager.init(pane = toolWindowPane, reopeningEditorJob = reopeningEditorJob, taskListDeferred = taskListDeferred)
+                toolWindowManager.init(
+                  pane = toolWindowPane,
+                  reopeningEditorJob = reopeningEditorJob,
+                  taskListDeferred = taskListDeferred,
+                  projectFrameTypeId = projectFrameTypeId,
+                )
               }
               serviceAsync<ProjectFrameCapabilitiesService>().getUiPolicy(project)?.let { projectFrameUiPolicy ->
                 applyProjectFrameUiPolicy(toolWindowManager, project, projectFrameUiPolicy)
@@ -258,9 +267,8 @@ internal class IdeProjectFrameAllocator(
     }
   }
 
-  private suspend fun createFrameManager(loadingState: FrameLoadingState) {
+  private suspend fun createFrameManager(loadingState: FrameLoadingState, frameSettings: ResolvedFrameSettings) {
     val frame = getFrame()
-    val frameSettings = resolveFrameSettings()
 
     withContext(Dispatchers.ui(CoroutineSupport.UiDispatcherKind.STRICT)) {
       if (frame != null) {

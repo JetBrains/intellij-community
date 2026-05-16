@@ -33,7 +33,12 @@
       bundle="messages.AgentSessionsBundle"
       groupKey="advanced.settings.agent.workbench"/>
     <projectFrameCapabilitiesProvider implementation="com.intellij.agent.workbench.sessions.frame.AgentWorkbenchProjectFrameCapabilitiesProvider"/>
-    <toolWindowLayoutProfileProvider implementation="com.intellij.agent.workbench.sessions.frame.AgentWorkbenchToolWindowLayoutProfileProvider"/>
+    <projectFrameToolWindowLayout id="agent.workbench.dedicated" frameType="AGENT_DEDICATED" applyMode="forceOnce" migrationVersion="3">
+      <toolWindow id="Project" register="false"/>
+      <toolWindow id="Structure" register="false"/>
+      <toolWindow id="agent.workbench.sessions" anchor="left" visible="true" showStripeButton="true" weight="0.25"/>
+      <toolWindow id="Terminal" anchor="bottom" visible="false" showStripeButton="true"/>
+    </projectFrameToolWindowLayout>
     <projectFrameActionExclusion frameType="AGENT_DEDICATED" place="MainToolbar" id="MainToolbarVCSGroup"/>
     <projectFrameActionExclusion frameType="AGENT_DEDICATED" place="MainToolbar" id="ExecutionTargetsToolbarGroup"/>
     <projectFrameActionExclusion frameType="AGENT_DEDICATED" place="MainToolbar" id="NewUiRunWidget"/>

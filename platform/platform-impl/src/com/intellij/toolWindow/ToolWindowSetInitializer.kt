@@ -12,6 +12,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointListener
@@ -25,6 +26,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowEP
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
+import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.DesktopLayout
 import com.intellij.openapi.wm.impl.ToolWindowManagerAppLevelHelper
@@ -132,7 +134,7 @@ internal class ToolWindowSetInitializer(private val project: Project, private va
     val layout = pendingLayout.getAndSet(null) ?: throw IllegalStateException("Expected some pending layout")
     val stripeManager = project.serviceAsync<ToolWindowStripeManager>()
     val list = span("toolwindow creating preparation") {
-      addExtraTasks(tasks = tasks, project = project, ep = ep).map { task ->
+      addExtraTasks(tasks = tasks, project = project, ep = ep, suppressedToolWindowIds = manager.getSuppressedToolWindowIds()).map { task ->
         val existingInfo = layout.getInfo(task.id)
         val paneId = existingInfo?.safeToolWindowPaneId ?: WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
         PreparedRegisterToolWindowTask(
@@ -225,12 +227,18 @@ internal class ToolWindowSetInitializer(private val project: Project, private va
 private fun registerEpListeners(manager: ToolWindowManagerImpl) {
   ToolWindowEP.EP_NAME.addExtensionPointListener(manager.coroutineScope, object : ExtensionPointListener<ToolWindowEP> {
     override fun extensionAdded(extension: ToolWindowEP, pluginDescriptor: PluginDescriptor) {
+      if (manager.isToolWindowRegistrationSuppressed(extension.id)) {
+        return
+      }
       manager.coroutineScope.launch {
         manager.initToolWindow(extension, pluginDescriptor)
       }
     }
 
     override fun extensionRemoved(extension: ToolWindowEP, pluginDescriptor: PluginDescriptor) {
+      if (manager.isToolWindowRegistrationSuppressed(extension.id)) {
+        return
+      }
       manager.doUnregisterToolWindow(extension.id)
     }
   })
@@ -247,7 +255,7 @@ internal data class PreparedRegisterToolWindowTask(
 
 internal data class RegisterToolWindowResult(
   @JvmField val entry: ToolWindowEntry,
-  @JvmField val postTask: (() -> Unit)?
+  @JvmField val postTask: (() -> Unit)?,
 )
 
 private fun registerToolWindows(
@@ -285,12 +293,19 @@ private suspend fun addExtraTasks(
   tasks: List<RegisterToolWindowTaskData>,
   project: Project,
   ep: ExtensionPointImpl<RegisterToolWindowTaskProvider>,
+  suppressedToolWindowIds: Set<String>,
 ): List<RegisterToolWindowTaskData> {
+  val filteredTasks = if (suppressedToolWindowIds.isEmpty()) {
+    tasks
+  }
+  else {
+    tasks.filterNot { suppressedToolWindowIds.contains(it.id) }
+  }
   if (ep.size() == 0) {
-    return tasks
+    return filteredTasks
   }
 
-  val result = tasks.toMutableList()
+  val result = filteredTasks.toMutableList()
   // FacetDependentToolWindowManager - strictly speaking, computeExtraToolWindowBeans should be executed not in EDT, but for now it is not safe because:
   // 1. read action is required to read a facet list (might cause a deadlock)
   // 2. delay between a collection and adding ProjectWideFacetListener (should we introduce a new method in RegisterToolWindowTaskProvider to add listeners?)
@@ -313,7 +328,11 @@ private suspend fun addExtraTasks(
     }
 
     for (bean in provider.getTasks(project)) {
-      beanToTask(project = project, bean = bean, plugin = bean.pluginDescriptor)?.let(result::add)
+      val task =
+        beanToTask(project = project, bean = bean, plugin = bean.pluginDescriptor, suppressedToolWindowIds = suppressedToolWindowIds)
+      if (task != null) {
+        result.add(task)
+      }
     }
   }
   return result
@@ -323,7 +342,16 @@ internal fun getToolWindowAnchor(factory: ToolWindowFactory?, bean: ToolWindowEP
   return factory?.anchor ?: ToolWindowAnchor.fromText(bean.anchor ?: ToolWindowAnchor.LEFT.toString())
 }
 
-private suspend fun beanToTask(project: Project, bean: ToolWindowEP, plugin: PluginDescriptor): RegisterToolWindowTaskData? {
+private suspend fun beanToTask(
+  project: Project,
+  bean: ToolWindowEP,
+  plugin: PluginDescriptor,
+  suppressedToolWindowIds: Set<String>,
+): RegisterToolWindowTaskData? {
+  if (suppressedToolWindowIds.contains(bean.id)) {
+    return null
+  }
+
   val factory = bean.getToolWindowFactory(plugin)
   return if (factory.isApplicableAsync(project)) beanToTask(project = project, bean = bean, plugin = plugin, factory = factory) else null
 }
@@ -349,15 +377,23 @@ private fun beanToTask(
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
-internal suspend fun computeToolWindowBeans(project: Project): List<RegisterToolWindowTaskData> {
+internal suspend fun computeToolWindowBeans(project: Project, projectFrameTypeId: String? = null): List<RegisterToolWindowTaskData> {
+  val projectFrameToolWindowLayoutProfileId = service<ProjectFrameCapabilitiesService>().getUiPolicy(project)?.toolWindowLayoutProfileId
+  val suppressedToolWindowIds = service<ProjectFrameToolWindowLayoutService>().getSuppressedToolWindowIds(
+    frameType = projectFrameTypeId,
+    profileId = projectFrameToolWindowLayoutProfileId,
+  )
   return coroutineScope {
     ToolWindowEP.EP_NAME.filterableLazySequence().map { item ->
       async {
         try {
           val bean = item.instance ?: return@async null
+          if (suppressedToolWindowIds.contains(bean.id)) {
+            return@async null
+          }
           val condition = bean.getCondition(item.pluginDescriptor)
           if (condition == null || condition.value(project)) {
-            beanToTask(project = project, bean = bean, plugin = item.pluginDescriptor)
+            beanToTask(project = project, bean = bean, plugin = item.pluginDescriptor, suppressedToolWindowIds = suppressedToolWindowIds)
           }
           else {
             null

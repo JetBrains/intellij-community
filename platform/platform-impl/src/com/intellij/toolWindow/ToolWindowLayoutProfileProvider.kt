@@ -2,6 +2,7 @@
 package com.intellij.toolWindow
 
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
@@ -65,13 +66,19 @@ class ToolWindowLayoutProfileService {
       return null
     }
 
-    val providers = ToolWindowLayoutProfileProvider.EP_NAME.extensionList
-    if (providers.isEmpty()) {
-      return null
+    var profile: ToolWindowLayoutProfile? = try {
+      service<ProjectFrameToolWindowLayoutService>().getProfile(project = project, profileId = profileId, isNewUi = isNewUi)
     }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      LOG.error("Project frame tool window layout profile '$profileId' failed", e)
+      null
+    }
+    var profileProviderName: String? = if (profile == null) null else ProjectFrameToolWindowLayoutService::class.java.name
 
-    var profile: ToolWindowLayoutProfile? = null
-    var profileProvider: ToolWindowLayoutProfileProvider? = null
+    val providers = ToolWindowLayoutProfileProvider.EP_NAME.extensionList
     for (provider in providers) {
       try {
         val providerLayout = provider.getLayout(project = project, profileId = profileId, isNewUi = isNewUi)
@@ -82,12 +89,12 @@ class ToolWindowLayoutProfileService {
               applyMode = provider.getApplyMode(project = project, profileId = profileId, isNewUi = isNewUi),
               migrationVersion = provider.getMigrationVersion(project = project, profileId = profileId, isNewUi = isNewUi).coerceAtLeast(0),
             )
-            profileProvider = provider
+            profileProviderName = provider.javaClass.name
           }
           else {
             LOG.error(
               "Multiple tool window layouts are provided for profile '$profileId'. " +
-              "Keeping ${profileProvider?.javaClass?.name}, ignoring ${provider.javaClass.name}."
+              "Keeping $profileProviderName, ignoring ${provider.javaClass.name}."
             )
           }
         }
