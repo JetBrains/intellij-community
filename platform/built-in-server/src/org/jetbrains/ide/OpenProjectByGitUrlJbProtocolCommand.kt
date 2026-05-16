@@ -46,13 +46,13 @@ class OpenProjectByGitUrlJbProtocolCommand : JBProtocolCommand(COMMAND) {
 }
 
 /**
- * Returns a [Project] whose git origin URL matches [gitUrl] after normalization, or `null` if no known
- * (open or recent) project matches.
+ * Returns a [Project] whose git remote URL (any remote — `origin`, `upstream`, fork mirrors, etc.) matches
+ * [gitUrl] after normalization, or `null` if no known (open or recent) project matches.
  *
  * If the matching project is already open, its window is focused. If it is in the recent-projects list but
  * not open, it is opened (which also focuses its window).
  *
- * The git origin is read directly from `.git/config` to avoid running a `git config` subprocess —
+ * Git remotes are read directly from `.git/config` to avoid running a `git config` subprocess —
  * that path requires either a [Project] context or that the working directory be in the trusted-paths set,
  * neither of which holds when scanning recent projects (see `GitHandler.start()`).
  *
@@ -77,16 +77,16 @@ suspend fun openKnownProjectByGitUrl(gitUrl: String): Project? {
       LOG.info("  open project '${project.name}': basePath unavailable (raw='$basePathStr')")
       continue
     }
-    val origin = readGitOriginUrl(basePath)
-    val normalized = origin?.let(::normalizeGitUrl)
-    LOG.info("  open project '${project.name}' basePath='$basePath' origin='$origin' normalized='$normalized'")
-    if (normalized == target) {
-      LOG.info("  -> match on open project '${project.name}', focusing")
+    val remotes = readGitRemoteUrls(basePath)
+    val match = remotes.firstOrNull { normalizeGitUrl(it.url) == target }
+    if (match != null) {
+      LOG.info("  -> match on open project '${project.name}' via remote '${match.name}' (${match.url}), focusing")
       withContext(Dispatchers.EDT) {
         ProjectUtil.focusProjectWindow(project, true)
       }
       return project
     }
+    LOG.info("  open project '${project.name}' basePath='$basePath' remotes=${remotes.size}, no match")
   }
 
   val recents = RecentProjectsManagerBase.getInstanceEx()
@@ -98,64 +98,70 @@ suspend fun openKnownProjectByGitUrl(gitUrl: String): Project? {
       LOG.info("  recent path '$pathStr' is unparseable")
       continue
     }
-    val origin = readGitOriginUrl(path)
-    val normalized = origin?.let(::normalizeGitUrl)
-    LOG.info("  recent path='$path' origin='$origin' normalized='$normalized'")
-    if (normalized == target) {
-      LOG.info("  -> match on recent '$path', opening")
+    val remotes = readGitRemoteUrls(path)
+    val match = remotes.firstOrNull { normalizeGitUrl(it.url) == target }
+    if (match != null) {
+      LOG.info("  -> match on recent '$path' via remote '${match.name}' (${match.url}), opening")
       return recents.openProject(path, OpenProjectTask())
     }
+    LOG.info("  recent path='$path' remotes=${remotes.size}, no match")
   }
 
   LOG.info("openKnownProjectByGitUrl: no match for '$target'")
   return null
 }
 
+@Internal
+data class GitRemote(val name: String, val url: String)
+
 /**
- * Walks up from [projectDir] to find a `.git/config` file and returns the URL of the `origin` remote, or `null`.
+ * Walks up from [projectDir] to find a `.git/config` file and returns every `[remote "*"] url = …` it
+ * contains, in the order they appear. Returns an empty list if no `.git/config` is found.
+ *
  * Reads the file directly as INI text — does not invoke `git`, so it works for paths whose project is not
  * currently open or trusted (unlike [com.intellij.ide.impl.getProjectOriginUrl]).
  */
 @Internal
-fun readGitOriginUrl(projectDir: Path): String? {
+fun readGitRemoteUrls(projectDir: Path): List<GitRemote> {
   var dir: Path? = projectDir
   while (dir != null) {
     val gitConfig = dir.resolve(".git").resolve("config")
     if (gitConfig.isRegularFile()) {
-      return parseOriginUrlFromConfig(gitConfig)
+      return parseRemoteUrlsFromConfig(gitConfig)
     }
     dir = dir.parent
   }
-  return null
+  return emptyList()
 }
 
-private val ORIGIN_REMOTE_HEADER = Regex("""^\[remote\s+"origin"]$""", RegexOption.IGNORE_CASE)
+private val REMOTE_HEADER = Regex("""^\[remote\s+"([^"]+)"]$""", RegexOption.IGNORE_CASE)
 private val SECTION_HEADER = Regex("""^\[.*]$""")
 
-private fun parseOriginUrlFromConfig(configFile: Path): String? {
+private fun parseRemoteUrlsFromConfig(configFile: Path): List<GitRemote> {
   val lines = try {
     Files.readAllLines(configFile, Charsets.UTF_8)
   }
   catch (e: Exception) {
     LOG.info("  failed to read $configFile: ${e.message}")
-    return null
+    return emptyList()
   }
-  var inOriginRemote = false
+  val remotes = mutableListOf<GitRemote>()
+  var currentRemote: String? = null
   for (raw in lines) {
     val line = raw.trim().substringBefore('#').substringBefore(';').trim()
     if (line.isEmpty()) continue
     if (SECTION_HEADER.matches(line)) {
-      inOriginRemote = ORIGIN_REMOTE_HEADER.matches(line)
+      currentRemote = REMOTE_HEADER.matchEntire(line)?.groupValues?.get(1)
       continue
     }
-    if (!inOriginRemote) continue
+    val name = currentRemote ?: continue
     val eq = line.indexOf('=')
     if (eq < 0) continue
     val key = line.substring(0, eq).trim()
     val value = line.substring(eq + 1).trim().trim('"')
-    if (key.equals("url", ignoreCase = true)) return value
+    if (key.equals("url", ignoreCase = true)) remotes.add(GitRemote(name, value))
   }
-  return null
+  return remotes
 }
 
 private val LOG = logger<OpenProjectByGitUrlJbProtocolCommand>()
