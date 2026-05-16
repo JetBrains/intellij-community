@@ -51,6 +51,12 @@ internal class ClaudeAgentSessionProviderDescriptor(
   override val displayNameKey: String
     get() = "toolwindow.provider.claude"
 
+  override val cliDisplayNameKey: String
+    get() = "toolwindow.provider.cli.claude"
+
+  override val cliDisplayNameFallback: String
+    get() = "Claude Code"
+
   override val newSessionLabelKey: String
     get() = "toolwindow.action.new.session.claude"
 

@@ -8,6 +8,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageP
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
+import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsService
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
@@ -167,6 +168,29 @@ class AgentSessionProviderAvailabilityServiceTest {
       assertThat(eventCount.get()).isZero()
       service.refreshNow(listOf(availabilityProvider(provider.provider) { false }))
       assertThat(eventCount.get()).isEqualTo(1)
+    }
+  }
+
+  @Test
+  fun disabledProvidersAreNotProbed() {
+    val providerId = AgentSessionProvider.from("test-disabled")
+    val providerSettings = AgentSessionProviderSettingsService.getInstance()
+    val probeCount = AtomicInteger()
+    val provider = availabilityProvider(providerId) {
+      probeCount.incrementAndGet()
+      true
+    }
+
+    try {
+      providerSettings.setProviderEnabled(providerId, false)
+
+      service.requestRefresh(listOf(provider), force = true)
+
+      assertThat(probeCount.get()).isZero()
+      assertThat(service.availabilitySnapshot(listOf(provider))).containsEntry(providerId, false)
+    }
+    finally {
+      providerSettings.setProviderEnabled(providerId, true)
     }
   }
 

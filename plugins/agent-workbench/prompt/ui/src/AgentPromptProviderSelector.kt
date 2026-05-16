@@ -13,6 +13,7 @@ import com.intellij.agent.workbench.sessions.core.providers.buildAgentSessionPro
 import com.intellij.agent.workbench.sessions.core.providers.hasEntries
 import com.intellij.agent.workbench.sessions.core.providers.withYoloModeBadge
 import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
+import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsService
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.setToolTipText
@@ -52,6 +53,7 @@ internal class AgentPromptProviderSelector(
   private val asyncRefreshScope: CoroutineScope? = null,
 ) {
   private val providerAvailabilityService = AgentSessionProviderAvailabilityService.getInstance(invocationData.project)
+  private val providerSettingsService = AgentSessionProviderSettingsService.getInstance()
   private var providerEntries: List<ProviderEntry> = emptyList()
   private var providerMenuModel: AgentSessionProviderMenuModel = AgentSessionProviderMenuModel(emptyList(), emptyList())
   private val selectedOptionIdsByProvider = LinkedHashMap<AgentSessionProvider, LinkedHashSet<String>>()
@@ -66,7 +68,7 @@ internal class AgentPromptProviderSelector(
     get() = providerEntries.map { entry -> entry.bridge.provider }
 
   fun refresh() {
-    val bridges = providersProvider()
+    val bridges = providerSettingsService.enabledProviders(providersProvider())
     val (resolvedMenuModel, resolvedEntries) = resolveProviderState(bridges, providerAvailabilityService.availabilitySnapshot(bridges))
     applyResolvedState(resolvedMenuModel, resolvedEntries)
     asyncRefreshScope?.launch { refreshProviderAvailability(bridges) }

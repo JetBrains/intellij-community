@@ -30,7 +30,7 @@ Session refresh is event-driven and provider-agnostic. It merges provider result
 - Partial provider failures must keep successful provider rows visible and surface provider-local warning rows. If every provider fails for a path, the path shows one blocking error instead.
   [@test] ../sessions/testSrc/AgentSessionLoadAggregationTest.kt
 
-- Before invoking a session source for a path, the load pipeline must consult `AgentSessionProviderDescriptor.isCliAvailable`. When the descriptor reports the CLI as missing, the source is short-circuited with `AgentProviderCliMissingException` so the aggregation produces a provider warning resolved through `cliMissingMessageKey` (e.g. "Junie CLI not found. …") — even for filesystem-backed sources (Claude/Junie) that would otherwise return an empty list silently.
+- Before invoking a session source for a path, the load pipeline must consult `AgentSessionProviderDescriptor.isCliAvailable`. When the descriptor reports the CLI as missing, the source is skipped so the tree does not get per-path warning rows; the tool window banner surfaces the provider-level `cliMissingMessageKey` message instead — even for filesystem-backed sources (Claude/Junie) that would otherwise return an empty list silently.
   [@test] ../sessions/testSrc/AgentSessionLoadAggregationTest.kt
   [@test] ../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
 

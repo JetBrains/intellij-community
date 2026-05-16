@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.sessions.settings
 
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettingsContributors
 import com.intellij.agent.workbench.sessions.frame.AgentChatOpenModeSettings
 import com.intellij.agent.workbench.sessions.sleep.AgentSleepPreventionSettings
@@ -10,12 +11,15 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 
+const val AGENT_WORKBENCH_SETTINGS_CONFIGURABLE_ID: String = "com.intellij.agent.workbench.settings"
+
 internal class AgentWorkbenchSettingsConfigurable : BoundSearchableConfigurable(
   displayName = AgentSessionsBundle.message("settings.agent.workbench.name"),
   helpTopic = "settings.agent.workbench",
   _id = ID,
 ) {
   override fun createPanel(): DialogPanel {
+    val providerSettings = AgentSessionProviderSettingsService.getInstance()
     return panel {
       group(AgentSessionsBundle.message("settings.agent.workbench.general.group")) {
         row {
@@ -35,10 +39,21 @@ internal class AgentWorkbenchSettingsConfigurable : BoundSearchableConfigurable(
           setting.description?.let { row.rowComment(it) }
         }
       }
+      group(AgentSessionsBundle.message("settings.agent.workbench.providers.group")) {
+        for (provider in AgentSessionProviders.allProviders()) {
+          row {
+            checkBox(AgentSessionsBundle.message(provider.displayNameKey))
+              .bindSelected(
+                { providerSettings.isProviderEnabled(provider.provider) },
+                { enabled -> providerSettings.setProviderEnabled(provider.provider, enabled) },
+              )
+          }
+        }
+      }
     }
   }
 
   companion object {
-    const val ID: String = "com.intellij.agent.workbench.settings"
+    const val ID: String = AGENT_WORKBENCH_SETTINGS_CONFIGURABLE_ID
   }
 }

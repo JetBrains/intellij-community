@@ -39,6 +39,7 @@ import com.intellij.agent.workbench.sessions.frame.AGENT_SESSIONS_TOOL_WINDOW_ID
 import com.intellij.agent.workbench.sessions.frame.AGENT_WORKBENCH_DEDICATED_FRAME_TYPE_ID
 import com.intellij.agent.workbench.sessions.frame.AgentChatOpenModeSettings
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
+import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsService
 import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.agent.workbench.sessions.util.SingleFlightActionGate
@@ -174,6 +175,7 @@ class AgentSessionLaunchService internal constructor(
   private val stateStore: AgentSessionsStateStore,
   private val syncService: AgentSessionRefreshService,
   private val uiPreferencesState: AgentSessionUiPreferencesStateService = AgentSessionUiPreferencesStateService(),
+  private val providerSettingsService: AgentSessionProviderSettingsService = AgentSessionProviderSettingsService.getInstance(),
   private val chatOpenExecutor: AgentSessionChatOpenExecutor = DefaultAgentSessionChatOpenExecutor,
 ) {
   @Suppress("unused")
@@ -182,10 +184,22 @@ class AgentSessionLaunchService internal constructor(
     stateStore = service<AgentSessionsStateStore>(),
     syncService = service<AgentSessionRefreshService>(),
     uiPreferencesState = service<AgentSessionUiPreferencesStateService>(),
+    providerSettingsService = AgentSessionProviderSettingsService.getInstance(),
     chatOpenExecutor = DefaultAgentSessionChatOpenExecutor,
   )
 
   private val actionGate = SingleFlightActionGate()
+
+  private suspend fun isProviderCliAvailableForLaunch(
+    provider: AgentSessionProvider,
+    descriptor: AgentSessionProviderDescriptor,
+    currentProject: Project?,
+  ): Boolean {
+    if (currentProject != null && !currentProject.isDisposed) {
+      return AgentSessionProviderAvailabilityService.getInstance(currentProject).refreshNow(listOf(descriptor))[provider] == true
+    }
+    return descriptor.isCliAvailable()
+  }
 
   fun openOrFocusProject(path: String, entryPoint: AgentWorkbenchEntryPoint) {
     val normalizedPath = normalizeAgentWorkbenchPath(path)
@@ -365,10 +379,6 @@ class AgentSessionLaunchService internal constructor(
     extraCommandArgs: List<String> = emptyList(),
   ) {
     val normalizedPath = normalizeAgentWorkbenchPath(path)
-    AgentSessionProviders.find(provider)?.onConversationOpened()
-    if (updateGeneralProviderPreferences) {
-      uiPreferencesState.updateProviderPreferencesOnLaunch(provider, mode, initialMessageRequest)
-    }
     val createSessionActionKey = buildCreateSessionActionKey(
       path = normalizedPath,
       provider = provider,
@@ -384,6 +394,10 @@ class AgentSessionLaunchService internal constructor(
       },
     ) {
       try {
+        if (!providerSettingsService.isProviderEnabled(provider)) {
+          promptLaunchResolved?.invoke(AgentPromptLaunchResult.failure(AgentPromptLaunchError.PROVIDER_UNAVAILABLE))
+          return@launchDropAction
+        }
         val descriptor = AgentSessionProviders.find(provider)
         if (descriptor == null) {
           logMissingProviderDescriptor(provider)
@@ -396,6 +410,14 @@ class AgentSessionLaunchService internal constructor(
           syncService.appendProviderUnavailableWarning(normalizedPath, provider)
           promptLaunchResolved?.invoke(AgentPromptLaunchResult.failure(AgentPromptLaunchError.UNSUPPORTED_LAUNCH_MODE))
           return@launchDropAction
+        }
+        if (!isProviderCliAvailableForLaunch(provider = provider, descriptor = descriptor, currentProject = currentProject)) {
+          promptLaunchResolved?.invoke(AgentPromptLaunchResult.failure(AgentPromptLaunchError.PROVIDER_UNAVAILABLE))
+          return@launchDropAction
+        }
+        descriptor.onConversationOpened()
+        if (updateGeneralProviderPreferences) {
+          uiPreferencesState.updateProviderPreferencesOnLaunch(provider, mode, initialMessageRequest)
         }
 
         val initialMessagePlan = initialMessageRequest
@@ -486,9 +508,8 @@ class AgentSessionLaunchService internal constructor(
     waitingMessage: @Nls String? = null,
   ): AgentDeferredNewSessionLaunchResult {
     val normalizedPath = normalizeAgentWorkbenchPath(path)
-    AgentSessionProviders.find(provider)?.onConversationOpened()
-    if (updateGeneralProviderPreferences) {
-      uiPreferencesState.updateProviderPreferencesOnLaunch(provider, mode, initialMessageRequest = null)
+    if (!providerSettingsService.isProviderEnabled(provider)) {
+      return AgentDeferredNewSessionLaunchResult(error = AgentPromptLaunchError.PROVIDER_UNAVAILABLE)
     }
 
     val descriptor = AgentSessionProviders.find(provider)
@@ -501,6 +522,13 @@ class AgentSessionLaunchService internal constructor(
       logUnsupportedLaunchMode(provider = provider, mode = mode)
       syncService.appendProviderUnavailableWarning(normalizedPath, provider)
       return AgentDeferredNewSessionLaunchResult(error = AgentPromptLaunchError.UNSUPPORTED_LAUNCH_MODE)
+    }
+    if (!isProviderCliAvailableForLaunch(provider = provider, descriptor = descriptor, currentProject = null)) {
+      return AgentDeferredNewSessionLaunchResult(error = AgentPromptLaunchError.PROVIDER_UNAVAILABLE)
+    }
+    descriptor.onConversationOpened()
+    if (updateGeneralProviderPreferences) {
+      uiPreferencesState.updateProviderPreferencesOnLaunch(provider, mode, initialMessageRequest = null)
     }
 
     val baseLaunchSpec = descriptor.buildNewSessionLaunchSpec(mode)

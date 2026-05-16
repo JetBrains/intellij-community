@@ -24,6 +24,8 @@ import com.intellij.agent.workbench.sessions.frame.AGENT_SESSIONS_TOOL_WINDOW_ID
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.model.ProjectEntry
+import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsListener
+import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsService
 import com.intellij.agent.workbench.sessions.state.AgentSessionWarmStateService
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.agent.workbench.sessions.state.SessionWarmState
@@ -79,7 +81,9 @@ class AgentSessionRefreshService internal constructor(
   @Suppress("unused")
   constructor(serviceScope: CoroutineScope) : this(
     serviceScope = serviceScope,
-    sessionSourcesProvider = AgentSessionProviders::sessionSources,
+    sessionSourcesProvider = {
+      AgentSessionProviderSettingsService.getInstance().enabledSessionSources(AgentSessionProviders.sessionSources())
+    },
     projectEntriesProvider = AgentSessionProjectCatalog()::collectProjects,
     stateStore = service<AgentSessionsStateStore>(),
     warmState = service<AgentSessionWarmStateService>(),
@@ -112,18 +116,23 @@ class AgentSessionRefreshService internal constructor(
     loadingCoordinator.observeSessionSourceUpdates()
 
     if (subscribeToProjectLifecycle) {
-      ApplicationManager.getApplication().messageBus.connect(serviceScope)
-        .subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
-          @Deprecated("Deprecated in Java")
-          @Suppress("removal")
-          override fun projectOpened(project: Project) {
-            refreshCatalogAndLoadNewlyOpened()
-          }
+      val connection = ApplicationManager.getApplication().messageBus.connect(serviceScope)
+      connection.subscribe(AgentSessionProviderSettingsListener.TOPIC, object : AgentSessionProviderSettingsListener {
+        override fun providerSettingsChanged() {
+          refresh()
+        }
+      })
+      connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+        @Deprecated("Deprecated in Java")
+        @Suppress("removal")
+        override fun projectOpened(project: Project) {
+          refreshCatalogAndLoadNewlyOpened()
+        }
 
-          override fun projectClosed(project: Project) {
-            refreshCatalogAndLoadNewlyOpened()
-          }
-        })
+        override fun projectClosed(project: Project) {
+          refreshCatalogAndLoadNewlyOpened()
+        }
+      })
     }
   }
 

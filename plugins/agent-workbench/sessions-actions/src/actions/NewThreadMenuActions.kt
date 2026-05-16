@@ -15,6 +15,7 @@ import com.intellij.agent.workbench.sessions.core.providers.hasEntries
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
+import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsService
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -34,7 +35,8 @@ fun buildNewThreadMenuModel(
   bridges: List<AgentSessionProviderDescriptor>,
   project: Project,
 ): AgentSessionProviderMenuModel {
-  return buildAgentSessionProviderMenuModel(bridges, providerAvailabilitySnapshot(bridges, project))
+  val enabledBridges = AgentSessionProviderSettingsService.getInstance().enabledProviders(bridges)
+  return buildAgentSessionProviderMenuModel(enabledBridges, providerAvailabilitySnapshot(enabledBridges, project))
 }
 
 fun buildNewThreadActionModel(
@@ -43,11 +45,12 @@ fun buildNewThreadActionModel(
   lastUsedLaunchMode: AgentSessionLaunchMode? = null,
   project: Project,
 ): AgentSessionProviderActionModel {
+  val enabledBridges = AgentSessionProviderSettingsService.getInstance().enabledProviders(bridges)
   return buildAgentSessionProviderActionModel(
-    bridges = bridges,
+    bridges = enabledBridges,
     lastUsedProvider = lastUsedProvider,
     lastUsedLaunchMode = lastUsedLaunchMode,
-    availabilityByProvider = providerAvailabilitySnapshot(bridges, project),
+    availabilityByProvider = providerAvailabilitySnapshot(enabledBridges, project),
   )
 }
 

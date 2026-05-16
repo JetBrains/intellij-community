@@ -78,8 +78,8 @@ internal class AgentSessionsMainToolbarNewThreadAction private constructor(
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   public override fun getMainAction(e: AnActionEvent): AnAction? {
-    resolveContext(e) ?: return null
-    resolveToolbarQuickStartItem(allBridges()) ?: return null
+    val context = resolveContext(e) ?: return null
+    resolveToolbarQuickStartItem(allBridges(), context.project) ?: return null
     return quickStartAction
   }
 
@@ -90,7 +90,7 @@ internal class AgentSessionsMainToolbarNewThreadAction private constructor(
       return
     }
     val bridges = allBridges()
-    val menuModel = buildToolbarNewThreadMenuModel(bridges)
+    val menuModel = buildNewThreadMenuModel(bridges, context.project)
     if (!menuModel.hasEntries()) {
       e.presentation.isEnabledAndVisible = false
       return
@@ -109,8 +109,8 @@ internal class AgentSessionsMainToolbarNewThreadAction private constructor(
     e.presentation.isEnabledAndVisible = true
   }
 
-  private fun resolveToolbarQuickStartItem(bridges: List<AgentSessionProviderDescriptor>): AgentSessionProviderMenuItem? {
-    return resolveToolbarQuickStartItem(buildToolbarNewThreadMenuModel(bridges))
+  private fun resolveToolbarQuickStartItem(bridges: List<AgentSessionProviderDescriptor>, project: Project): AgentSessionProviderMenuItem? {
+    return resolveToolbarQuickStartItem(buildNewThreadMenuModel(bridges, project))
   }
 
   private fun resolveToolbarQuickStartItem(menuModel: AgentSessionProviderMenuModel): AgentSessionProviderMenuItem? {
@@ -255,31 +255,6 @@ internal class QuickStartAction(
   private fun hide(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = false
   }
-}
-
-private fun buildToolbarNewThreadMenuModel(bridges: List<AgentSessionProviderDescriptor>): AgentSessionProviderMenuModel {
-  val standardItems = ArrayList<AgentSessionProviderMenuItem>(bridges.size)
-  val yoloItems = ArrayList<AgentSessionProviderMenuItem>()
-  for (bridge in bridges) {
-    if (AgentSessionLaunchMode.STANDARD in bridge.supportedLaunchModes) {
-      standardItems += AgentSessionProviderMenuItem(
-        bridge = bridge,
-        mode = AgentSessionLaunchMode.STANDARD,
-        labelKey = bridge.newSessionLabelKey,
-        isEnabled = true,
-      )
-    }
-    val yoloLabelKey = bridge.yoloSessionLabelKey
-    if (yoloLabelKey != null && AgentSessionLaunchMode.YOLO in bridge.supportedLaunchModes) {
-      yoloItems += AgentSessionProviderMenuItem(
-        bridge = bridge,
-        mode = AgentSessionLaunchMode.YOLO,
-        labelKey = yoloLabelKey,
-        isEnabled = true,
-      )
-    }
-  }
-  return AgentSessionProviderMenuModel(standardItems = standardItems, yoloItems = yoloItems)
 }
 
 private fun resolveToolbarQuickStartItem(

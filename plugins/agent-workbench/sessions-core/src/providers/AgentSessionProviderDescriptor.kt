@@ -96,6 +96,10 @@ interface AgentSessionProviderDescriptor {
     get() = provider.value.replaceFirstChar { char ->
       if (char.isLowerCase()) char.titlecase() else char.toString()
     }
+  val cliDisplayNameKey: String
+    get() = displayNameKey
+  val cliDisplayNameFallback: String
+    get() = displayNameFallback
   val displayPriority: Int
     get() = Int.MAX_VALUE
   val newSessionLabelKey: String

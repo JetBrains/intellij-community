@@ -1,7 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.settings
 
+import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
+import com.intellij.agent.workbench.sessions.TestAgentSessionProviderDescriptor
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
+import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
 import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchCheckboxSetting
 import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettingsContributor
 import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettingsContributors
@@ -10,17 +15,24 @@ import com.intellij.agent.workbench.sessions.sleep.PREVENT_SYSTEM_SLEEP_WHILE_WO
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.advanced.AdvancedSettingsImpl
+import com.intellij.openapi.components.service
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.components.JBCheckBox
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import java.awt.Container
 import javax.swing.JComponent
 
 @TestApplication
 class AgentWorkbenchSettingsConfigurableTest {
+  @AfterEach
+  fun resetProviderSettings() {
+    service<AgentSessionProviderSettingsService>().setProviderEnabled(AgentSessionProvider.CODEX, true)
+  }
+
   @Test
   fun descriptorRegistersToolsConfigurable() {
     assertThat(sessionsDescriptor())
@@ -29,6 +41,7 @@ class AgentWorkbenchSettingsConfigurableTest {
       .contains("id=\"${AgentWorkbenchSettingsConfigurable.ID}\"")
       .contains("key=\"settings.agent.workbench.name\"")
       .contains("parentId=\"tools\"")
+      .contains("<applicationSettings service=\"com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsService\"/>")
   }
 
   @Test
@@ -83,6 +96,44 @@ class AgentWorkbenchSettingsConfigurableTest {
         configurable.disposeUIResources()
       }
     }
+  }
+
+  @Test
+  fun configurableAppliesProviderSettings() {
+    val providerSettings = service<AgentSessionProviderSettingsService>()
+    providerSettings.setProviderEnabled(AgentSessionProvider.CODEX, true)
+
+    AgentSessionProviders.withRegistryForTest(
+      InMemoryAgentSessionProviderRegistry(
+        listOf(
+          TestAgentSessionProviderDescriptor(
+            provider = AgentSessionProvider.CODEX,
+            supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+            cliAvailable = true,
+          )
+        )
+      )
+    ) {
+      runInEdtAndWait {
+        val configurable = AgentWorkbenchSettingsConfigurable()
+        try {
+          val component = configurable.createComponent()
+          configurable.reset()
+
+          val providerCheckBox = component.checkBox(AgentSessionsBundle.message("toolwindow.provider.codex"))
+          assertThat(providerCheckBox.isSelected).isTrue()
+
+          providerCheckBox.isSelected = false
+          assertThat(configurable.isModified).isTrue()
+          configurable.apply()
+        }
+        finally {
+          configurable.disposeUIResources()
+        }
+      }
+    }
+
+    assertThat(providerSettings.isProviderEnabled(AgentSessionProvider.CODEX)).isFalse()
   }
 
   private fun JComponent.checkBox(text: String): JBCheckBox {

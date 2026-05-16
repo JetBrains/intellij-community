@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.common.AgentWorkbenchActionIds
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsActivateWithProjectShortcutAction
+import com.intellij.agent.workbench.sessions.actions.AgentSessionsConfigureProvidersAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsCopyThreadIdFromEditorTabAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsDedicatedFrameToggleAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabArchiveThreadAction
@@ -44,11 +45,15 @@ class AgentSessionsGearActionsTest {
       "OpenFile",
       "AgentWorkbenchSessions.ShowArchivedThreads",
       "AgentWorkbenchSessions.Refresh",
+      "AgentWorkbenchSessions.ConfigureProviders",
       ACTION_SEPARATOR_MARKER,
       "AgentWorkbenchSessions.ToggleDedicatedFrame",
       "AgentWorkbenchSessions.TogglePreventSleepWhileWorking",
     )
     assertThat(entries).doesNotContain("AgentWorkbenchSessions.OpenDedicatedFrame")
+    assertThat(actionManager.getAction("AgentWorkbenchSessions.ConfigureProviders"))
+      .isNotNull
+      .isInstanceOf(AgentSessionsConfigureProvidersAction::class.java)
   }
 
   @Test

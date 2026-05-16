@@ -11,10 +11,13 @@ import com.intellij.agent.workbench.sessions.model.AgentArchivedSessionsState
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentWorktree
 import com.intellij.agent.workbench.sessions.model.ProjectEntry
+import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsListener
+import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsService
 import com.intellij.agent.workbench.sessions.state.DEFAULT_VISIBLE_CLOSED_PROJECT_COUNT
 import com.intellij.agent.workbench.sessions.state.DEFAULT_VISIBLE_THREAD_COUNT
 import com.intellij.agent.workbench.sessions.util.agentSessionCliMissingMessageKey
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CancellationException
@@ -44,13 +47,24 @@ class AgentArchivedSessionsService internal constructor(
   @Suppress("unused")
   constructor(serviceScope: CoroutineScope) : this(
     serviceScope = serviceScope,
-    sessionSourcesProvider = AgentSessionProviders::sessionSources,
+    sessionSourcesProvider = {
+      AgentSessionProviderSettingsService.getInstance().enabledSessionSources(AgentSessionProviders.sessionSources())
+    },
     projectEntriesProvider = AgentSessionProjectCatalog()::collectProjects,
   )
 
   private val mutableState = MutableStateFlow(AgentArchivedSessionsState())
   private val refreshMutex = Mutex()
   private val loadRequested = AtomicBoolean(false)
+
+  init {
+    ApplicationManager.getApplication().messageBus.connect(serviceScope)
+      .subscribe(AgentSessionProviderSettingsListener.TOPIC, object : AgentSessionProviderSettingsListener {
+        override fun providerSettingsChanged() {
+          refreshIfLoaded()
+        }
+      })
+  }
 
   fun stateFlow(): StateFlow<AgentArchivedSessionsState> = mutableState.asStateFlow()
 
@@ -135,6 +149,9 @@ class AgentArchivedSessionsService internal constructor(
     val pathRequests = buildArchivedPathRequests(entries)
     val knownPaths = pathRequests.mapTo(LinkedHashSet()) { it.path }
     val initialProjects = buildInitialArchivedProjects(entries, previousProjectsByPath)
+    val sources = sessionSourcesProvider().filter { source -> source.supportsArchivedThreads }
+    val cliAvailabilityByProvider = resolveArchivedCliAvailabilityByProvider(sources)
+    val availableSources = sources.filter { source -> cliAvailabilityByProvider[source.provider] != false }
 
     mutableState.update { state ->
       state.copy(
@@ -146,7 +163,7 @@ class AgentArchivedSessionsService internal constructor(
     val resultsByPath = coroutineScope {
       pathRequests.map { request ->
         async {
-          request.path to loadArchivedThreads(path = request.path, project = request.project)
+          request.path to loadArchivedThreads(path = request.path, project = request.project, sources = availableSources)
         }
       }.awaitAll().toMap()
     }
@@ -159,8 +176,11 @@ class AgentArchivedSessionsService internal constructor(
     }
   }
 
-  private suspend fun loadArchivedThreads(path: String, project: Project?): AgentSessionLoadResult {
-    val sources = sessionSourcesProvider().filter { source -> source.supportsArchivedThreads }
+  private suspend fun loadArchivedThreads(
+    path: String,
+    project: Project?,
+    sources: List<AgentSessionSource>,
+  ): AgentSessionLoadResult {
     if (sources.isEmpty()) {
       return AgentSessionLoadResult(threads = emptyList())
     }
@@ -179,6 +199,7 @@ class AgentArchivedSessionsService internal constructor(
           }
           catch (throwable: Throwable) {
             if (throwable is CancellationException) throw throwable
+            if (isCliMissingError(source.provider, throwable)) return@async null
             ARCHIVED_LOG.warn("Failed to load archived ${source.provider.value} sessions for $path", throwable)
             Result.failure(throwable)
           }
@@ -188,13 +209,35 @@ class AgentArchivedSessionsService internal constructor(
             hasUnknownTotal = false,
           )
         }
-      }.awaitAll()
+      }.awaitAll().filterNotNull()
     }
     return mergeAgentSessionSourceLoadResults(
       sourceResults = sourceResults,
       resolveErrorMessage = ::resolveArchivedErrorMessage,
       resolveWarningMessage = ::resolveArchivedProviderWarningMessage,
     )
+  }
+
+  private suspend fun resolveArchivedCliAvailabilityByProvider(
+    sources: List<AgentSessionSource>,
+  ): Map<AgentSessionProvider, Boolean> {
+    return coroutineScope {
+      sources.map { source ->
+        async {
+          val descriptor = AgentSessionProviders.find(source.provider) ?: return@async source.provider to true
+          source.provider to try {
+            descriptor.isCliAvailable()
+          }
+          catch (e: CancellationException) {
+            throw e
+          }
+          catch (throwable: Throwable) {
+            ARCHIVED_LOG.warn("Failed to resolve CLI availability for ${source.provider.value}", throwable)
+            false
+          }
+        }
+      }.awaitAll().toMap()
+    }
   }
 }
 

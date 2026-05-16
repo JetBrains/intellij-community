@@ -14,7 +14,7 @@ Status: Draft
 Date: 2026-05-09
 
 ## Summary
-The Agent Threads tree follows IntelliJ tree conventions while adding provider-specific thread presentation, loading indicators, warnings, and new-thread row actions.
+The Agent Threads tree follows IntelliJ tree conventions while adding provider-specific thread presentation, loading indicators, provider-source warnings, and new-thread row actions.
 
 ## Requirements
 - Rendering precedence is strict: blocking path error suppresses provider warnings and empty rows; warnings suppress empty rows; `More` rows preserve exact and unknown-count semantics.

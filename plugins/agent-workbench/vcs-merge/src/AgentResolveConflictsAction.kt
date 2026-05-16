@@ -13,6 +13,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.buildAgentSessionProviderActionModel
 import com.intellij.agent.workbench.sessions.providerIconWithMode
 import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
+import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsService
 import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
@@ -232,7 +233,7 @@ internal class AgentResolveConflictsAction @JvmOverloads constructor(
   }
 
   private fun buildProviderActionModel(project: Project): AgentSessionProviderActionModel {
-    val providers = allProviders()
+    val providers = AgentSessionProviderSettingsService.getInstance().enabledProviders(allProviders())
     val availabilityService = AgentSessionProviderAvailabilityService.getInstance(project)
     availabilityService.requestRefresh(providers)
     return buildAgentSessionProviderActionModel(
