@@ -53,7 +53,7 @@ Agent Threads is a project-scoped Swing tree for browsing agent threads across p
   [@test] ../sessions/testSrc/AgentSessionRenameServiceTest.kt
   [@test] ../sessions-actions/testSrc/AgentSessionsEditorTabActionsTest.kt
 
-- The tool window must offer an archived-only thread view alongside the default active view. Archived rows can be opened and unarchived, active activity counters and warm snapshots stay driven by the active view, and archived filtering is limited to runtime `All`, `Today`, `Last 7 days`, and `Last 30 days` presets.
+- The tool window must offer an archived-only thread view alongside the default active view. Opening an archived row unarchives it and refreshes both views; archived rows can also be explicitly unarchived. Active activity counters and warm snapshots stay driven by the active view, and archived filtering is limited to runtime `All`, `Today`, `Last 7 days`, and `Last 30 days` presets.
   [@test] ../sessions-toolwindow/testSrc/AgentSessionsSwingTreeRenderingTest.kt
   [@test] ../sessions-toolwindow/testSrc/AgentSessionsTreePopupActionsTest.kt
   [@test] ../codex/sessions/testSrc/CodexSessionSourceTest.kt

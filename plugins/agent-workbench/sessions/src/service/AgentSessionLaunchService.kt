@@ -39,6 +39,7 @@ import com.intellij.agent.workbench.sessions.frame.AGENT_SESSIONS_TOOL_WINDOW_ID
 import com.intellij.agent.workbench.sessions.frame.AGENT_WORKBENCH_DEDICATED_FRAME_TYPE_ID
 import com.intellij.agent.workbench.sessions.frame.AgentChatOpenModeSettings
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
+import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsService
 import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
@@ -74,12 +75,15 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.time.Duration.Companion.milliseconds
 
 private val LOG = logger<AgentSessionLaunchService>()
 
@@ -131,6 +135,14 @@ interface AgentDeferredNewSessionHandle {
   suspend fun fail(title: @Nls String, message: @Nls String? = null)
 }
 
+private data class ArchivedThreadOpenResolution(
+  @JvmField val thread: AgentSessionThread,
+  @JvmField val refreshDelayMs: Long? = null,
+) {
+  val unarchived: Boolean
+    get() = refreshDelayMs != null
+}
+
 private object DefaultAgentSessionChatOpenExecutor : AgentSessionChatOpenExecutor {
   override suspend fun openChat(
     normalizedPath: String,
@@ -177,6 +189,7 @@ class AgentSessionLaunchService internal constructor(
   private val uiPreferencesState: AgentSessionUiPreferencesStateService = AgentSessionUiPreferencesStateService(),
   private val providerSettingsService: AgentSessionProviderSettingsService = AgentSessionProviderSettingsService.getInstance(),
   private val chatOpenExecutor: AgentSessionChatOpenExecutor = DefaultAgentSessionChatOpenExecutor,
+  private val archivedSessionsRefreshIfLoaded: () -> Unit = {},
 ) {
   @Suppress("unused")
   constructor(serviceScope: CoroutineScope) : this(
@@ -186,6 +199,7 @@ class AgentSessionLaunchService internal constructor(
     uiPreferencesState = service<AgentSessionUiPreferencesStateService>(),
     providerSettingsService = AgentSessionProviderSettingsService.getInstance(),
     chatOpenExecutor = DefaultAgentSessionChatOpenExecutor,
+    archivedSessionsRefreshIfLoaded = { service<AgentArchivedSessionsService>().refreshIfLoaded() },
   )
 
   private val actionGate = SingleFlightActionGate()
@@ -238,7 +252,8 @@ class AgentSessionLaunchService internal constructor(
     extraCommandArgs: List<String> = emptyList(),
   ) {
     val normalizedPath = normalizeAgentWorkbenchPath(path)
-    AgentSessionProviders.find(thread.provider)?.onConversationOpened()
+    val descriptor = AgentSessionProviders.find(thread.provider)
+    descriptor?.onConversationOpened()
     syncService.prepareThreadForOpen(
       path = normalizedPath,
       provider = thread.provider,
@@ -252,20 +267,27 @@ class AgentSessionLaunchService internal constructor(
       policy = singleFlightPolicy,
     ) {
       try {
+        val archiveResolution = resolveArchivedThreadOpen(
+          normalizedPath = normalizedPath,
+          thread = thread,
+          descriptor = descriptor,
+        )
+        val openedThread = archiveResolution.thread
         val effectiveInitialMessagePlan = when {
           initialMessageRequest == null -> null
           precomputedInitialMessagePlan != null -> precomputedInitialMessagePlan
-          else -> AgentSessionProviders.find(thread.provider)?.buildInitialMessagePlan(initialMessageRequest)
+          else -> descriptor?.buildInitialMessagePlan(initialMessageRequest)
         }
         val effectiveThread = if (initialMessageRequest != null) {
           val refreshedThread = findPromptTargetThread(
             normalizedPath = normalizedPath,
-            provider = thread.provider,
-            threadId = thread.id,
-          ) ?: run {
-            promptLaunchResolved?.invoke(AgentPromptLaunchResult.failure(AgentPromptLaunchError.TARGET_THREAD_NOT_FOUND))
-            return@launchDropAction
-          }
+            provider = openedThread.provider,
+            threadId = openedThread.id,
+          ) ?: openedThread.takeIf { archiveResolution.unarchived }
+                                ?: run {
+                                  promptLaunchResolved?.invoke(AgentPromptLaunchResult.failure(AgentPromptLaunchError.TARGET_THREAD_NOT_FOUND))
+                                  return@launchDropAction
+                                }
           if (effectiveInitialMessagePlan?.isBlockedForExistingThreadPlanMode(refreshedThread.activity) == true) {
             promptLaunchResolved?.invoke(AgentPromptLaunchResult.failure(AgentPromptLaunchError.TARGET_THREAD_BUSY_FOR_PLAN_MODE))
             return@launchDropAction
@@ -273,7 +295,7 @@ class AgentSessionLaunchService internal constructor(
           refreshedThread
         }
         else {
-          thread
+          openedThread
         }
         val worktreeBranch = stateStore.findWorktreeBranch(normalizedPath)
         val originBranch = effectiveThread.originBranch
@@ -324,6 +346,7 @@ class AgentSessionLaunchService internal constructor(
           launchSpecOverride = launchSpecOverride,
           initialMessageDispatchPlan = effectiveInitialMessageDispatchPlan,
         )
+        scheduleRefreshAfterArchivedThreadOpen(archiveResolution)
         promptLaunchResolved?.invoke(AgentPromptLaunchResult.SUCCESS)
       }
       catch (t: Throwable) {
@@ -344,20 +367,82 @@ class AgentSessionLaunchService internal constructor(
     currentProject: Project? = null,
   ) {
     val normalizedPath = normalizeAgentWorkbenchPath(path)
-    AgentSessionProviders.find(thread.provider)?.onConversationOpened()
+    val descriptor = AgentSessionProviders.find(thread.provider)
+    descriptor?.onConversationOpened()
     launchDropAction(
       key = buildOpenSubAgentActionKey(path = normalizedPath, thread = thread, subAgent = subAgent),
       droppedActionMessage = "Dropped duplicate open sub-agent action for $normalizedPath:${thread.provider}:${thread.id}:${subAgent.id}",
       progress = dedicatedFrameOpenProgressRequest(currentProject),
     ) {
+      val archiveResolution = resolveArchivedThreadOpen(
+        normalizedPath = normalizedPath,
+        thread = thread,
+        descriptor = descriptor,
+      )
       AgentWorkbenchTelemetry.logThreadOpenRequested(entryPoint, thread.provider, AgentWorkbenchTargetKind.SUB_AGENT)
       chatOpenExecutor.openChat(
         normalizedPath = normalizedPath,
-        thread = thread,
+        thread = archiveResolution.thread,
         subAgent = subAgent,
         launchSpecOverride = null,
         initialMessageDispatchPlan = AgentInitialMessageDispatchPlan.EMPTY,
       )
+      scheduleRefreshAfterArchivedThreadOpen(archiveResolution)
+    }
+  }
+
+  private suspend fun resolveArchivedThreadOpen(
+    normalizedPath: String,
+    thread: AgentSessionThread,
+    descriptor: AgentSessionProviderDescriptor?,
+  ): ArchivedThreadOpenResolution {
+    if (!thread.archived) {
+      return ArchivedThreadOpenResolution(thread = thread)
+    }
+    if (descriptor == null) {
+      logMissingProviderDescriptor(thread.provider)
+      return ArchivedThreadOpenResolution(thread = thread)
+    }
+    if (!descriptor.supportsUnarchiveThread) {
+      return ArchivedThreadOpenResolution(thread = thread)
+    }
+
+    val unarchived = try {
+      descriptor.unarchiveThread(path = normalizedPath, threadId = thread.id)
+    }
+    catch (t: Throwable) {
+      if (t is CancellationException) {
+        throw t
+      }
+      LOG.warn("Failed to unarchive opened archived thread ${thread.provider}:${thread.id}", t)
+      false
+    }
+    if (!unarchived) {
+      return ArchivedThreadOpenResolution(thread = thread)
+    }
+    if (descriptor.suppressArchivedThreadsDuringRefresh) {
+      syncService.unsuppressArchivedTarget(
+        ArchiveThreadTarget.Thread(
+          path = normalizedPath,
+          provider = thread.provider,
+          threadId = thread.id,
+        )
+      )
+    }
+    return ArchivedThreadOpenResolution(
+      thread = thread.copy(archived = false),
+      refreshDelayMs = descriptor.archiveRefreshDelayMs,
+    )
+  }
+
+  private fun scheduleRefreshAfterArchivedThreadOpen(resolution: ArchivedThreadOpenResolution) {
+    val refreshDelayMs = resolution.refreshDelayMs ?: return
+    serviceScope.launch(Dispatchers.IO) {
+      if (refreshDelayMs > 0L) {
+        delay(refreshDelayMs.milliseconds)
+      }
+      syncService.refresh()
+      archivedSessionsRefreshIfLoaded()
     }
   }
 

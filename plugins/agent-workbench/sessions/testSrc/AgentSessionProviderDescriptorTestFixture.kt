@@ -29,7 +29,13 @@ class TestAgentSessionProviderDescriptor(
   private val threadRenameHandlerOverride: AgentThreadRenameHandler? = null,
   override val emitsScopedRefreshSignals: Boolean = false,
   override val refreshPathAfterCreateNewSession: Boolean = false,
+  override val archiveRefreshDelayMs: Long = 0L,
+  override val suppressArchivedThreadsDuringRefresh: Boolean = false,
+  override val supportsArchiveThread: Boolean = false,
+  override val supportsUnarchiveThread: Boolean = false,
   private val onCliAvailable: () -> Unit = {},
+  private val archiveThreadHandler: suspend (String, String) -> Boolean = { _, _ -> false },
+  private val unarchiveThreadHandler: suspend (String, String) -> Boolean = { _, _ -> false },
 ) : AgentSessionProviderDescriptor {
   override val displayNameKey: String
     get() = if (provider == AgentSessionProvider.CLAUDE) "toolwindow.provider.claude" else "toolwindow.provider.codex"
@@ -76,6 +82,14 @@ class TestAgentSessionProviderDescriptor(
 
   override fun buildInitialMessagePlan(request: AgentPromptInitialMessageRequest): AgentInitialMessagePlan {
     return AgentInitialMessagePlan.composeDefault(request)
+  }
+
+  override suspend fun archiveThread(path: String, threadId: String): Boolean {
+    return archiveThreadHandler(path, threadId)
+  }
+
+  override suspend fun unarchiveThread(path: String, threadId: String): Boolean {
+    return unarchiveThreadHandler(path, threadId)
   }
 
   override val threadRenameHandler: AgentThreadRenameHandler?
