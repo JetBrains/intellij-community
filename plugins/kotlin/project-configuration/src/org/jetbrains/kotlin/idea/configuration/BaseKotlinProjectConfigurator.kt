@@ -287,7 +287,6 @@ abstract class BaseKotlinProjectConfigurator : KotlinProjectConfigurator {
         val configuratorsByModule = this.mapNotNull { module ->
             val configuratorsByModules =
                 KotlinProjectPostConfigurator.EP_NAME.extensionList
-                    .sortedBy { it.javaClass.name }
                     .filter {
                         runReadAction {
                             it.isApplicable(module)
