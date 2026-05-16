@@ -8,6 +8,7 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.JBProtocolCommand
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.BaseProjectDirectories.Companion.getBaseDirectories
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.NlsContexts.DialogMessage
@@ -55,6 +56,12 @@ class OpenProjectByGitUrlJbProtocolCommand : JBProtocolCommand(COMMAND) {
  * If the matching project is already open, its window is focused. If it is in the recent-projects list but
  * not open, it is opened (which also focuses its window).
  *
+ * For open projects every base directory reported by [getBaseDirectories] is checked, so layouts with more
+ * than one top-level root (Gradle composite builds with `includeBuild`, multi-root `.ipr` workspaces, etc.)
+ * are matched against the URL — not only the directory that happens to be [Project.getBasePath]. Recent
+ * projects only carry a path, so they fall back to that path plus the existing ancestor walk-up; sibling
+ * roots of a composite build are not visible until the project is opened.
+ *
  * Git remotes are read directly from `.git/config` to avoid running a `git config` subprocess —
  * that path requires either a [Project] context or that the working directory be in the trusted-paths set,
  * neither of which holds when scanning recent projects (see `GitHandler.start()`).
@@ -74,14 +81,16 @@ suspend fun openKnownProjectByGitUrl(gitUrl: String): Project? {
   val openProjects = ProjectManager.getInstance().openProjects
   LOG.info("openKnownProjectByGitUrl: scanning ${openProjects.size} open project(s)")
   for (project in openProjects) {
-    val basePathStr = project.basePath
-    val basePath = basePathStr?.let(::toPath)
-    if (basePath == null) {
-      LOG.info("  open project '${project.name}': basePath unavailable (raw='$basePathStr')")
+    val baseDirs = project.getBaseDirectories()
+      .mapNotNull { it.fileSystem.getNioPath(it) }
+      .ifEmpty { listOfNotNull(project.basePath?.let(::toPath)) }
+    if (baseDirs.isEmpty()) {
+      LOG.info("  open project '${project.name}': no base directories (basePath='${project.basePath}')")
       continue
     }
-    val remotes = readGitRemoteUrls(basePath)
-    val match = remotes.firstOrNull { normalizeGitUrl(it.url) == target }
+    val match = baseDirs.firstNotNullOfOrNull { dir ->
+      readGitRemoteUrls(dir).firstOrNull { normalizeGitUrl(it.url) == target }
+    }
     if (match != null) {
       LOG.info("  -> match on open project '${project.name}' via remote '${match.name}' (${match.url}), focusing")
       withContext(Dispatchers.EDT) {
@@ -89,7 +98,7 @@ suspend fun openKnownProjectByGitUrl(gitUrl: String): Project? {
       }
       return project
     }
-    LOG.info("  open project '${project.name}' basePath='$basePath' remotes=${remotes.size}, no match")
+    LOG.info("  open project '${project.name}' baseDirs=${baseDirs.size}, no match")
   }
 
   val recents = RecentProjectsManagerBase.getInstanceEx()
