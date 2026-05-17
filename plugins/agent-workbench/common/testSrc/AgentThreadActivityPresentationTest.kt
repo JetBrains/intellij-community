@@ -37,8 +37,8 @@ class AgentThreadActivityPresentationTest {
       ),
       AgentThreadActivity.NEEDS_INPUT to AgentThreadActivityPresentation(
         namedColorKey = "AgentWorkbench.ThreadStatus.needsInput",
-        lightFallbackRgb = Color(0xE55765).rgb,
-        darkFallbackRgb = Color(0xDB5C5C).rgb,
+        lightFallbackRgb = Color(0x588CF3).rgb,
+        darkFallbackRgb = Color(0x548AF7).rgb,
         statusMessageKey = "toolwindow.thread.status.needs.input",
       ),
     )

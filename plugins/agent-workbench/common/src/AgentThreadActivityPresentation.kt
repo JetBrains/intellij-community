@@ -73,8 +73,8 @@ private val UNREAD_PRESENTATION = threadActivityPresentation(
 
 private val NEEDS_INPUT_PRESENTATION = threadActivityPresentation(
   namedColorKey = "AgentWorkbench.ThreadStatus.needsInput",
-  lightFallbackColor = Color(0xE55765).rgb,
-  darkFallbackColor = Color(0xDB5C5C).rgb,
+  lightFallbackColor = Color(0x588CF3).rgb,
+  darkFallbackColor = Color(0x548AF7).rgb,
   statusMessageKey = "toolwindow.thread.status.needs.input",
 )
 
