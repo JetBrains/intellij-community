@@ -1735,16 +1735,12 @@ object PyTypeChecker {
         }
 
         val substitutedParams = parameters
-          .associateWith { it.getType(context) }
-          .flatMap { (param, _) ->
+          .flatMap { param ->
             val paramPsi = param.parameter
             flattenUnpackedTuple(clone(param.getType(context)))
               .map { paramSubType ->
                 if (paramPsi != null) {
-                  PyCallableParameterImpl.psi(
-                    paramPsi,
-                    paramSubType
-                  )
+                  PyCallableParameterImpl.psi(paramPsi, paramSubType)
                 }
                 else {
                   PyCallableParameterImpl(
