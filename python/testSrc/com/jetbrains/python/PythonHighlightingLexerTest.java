@@ -307,6 +307,21 @@ public class PythonHighlightingLexerTest extends PyLexerTestCase {
            "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:DOCSTRING", "Py:SPACE", "Py:END_OF_LINE_COMMENT", "Py:LINE_BREAK");
   }
 
+  // PY-48749
+  @Test
+  public void testCommentInsideMultilineAnnotation() {
+    doTest(LanguageLevel.PYTHON36, """
+             x: Union[
+                 int,  # comment
+                 str,
+             ]""",
+           "Py:IDENTIFIER", "Py:COLON", "Py:SPACE", "Py:IDENTIFIER", "Py:LBRACKET", "Py:LINE_BREAK",
+           "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:IDENTIFIER", "Py:COMMA", "Py:SPACE", "Py:SPACE", "Py:END_OF_LINE_COMMENT",
+           "Py:LINE_BREAK",
+           "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:IDENTIFIER", "Py:COMMA", "Py:LINE_BREAK",
+           "Py:RBRACKET");
+  }
+
   // PY-40634
   @Test
   public void testDocstringAtVariableDeclaration() {

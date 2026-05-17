@@ -4,7 +4,11 @@ package com.jetbrains.python.validation;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -105,8 +109,42 @@ public class PyFunctionHighlightingAnnotator extends PyAnnotatorBase {
     public void visitPyAnnotation(@NotNull PyAnnotation node) {
       final PyExpression value = node.getValue();
       if (value != null) {
-        myHolder.addHighlightingAnnotation(value, PyHighlighter.PY_ANNOTATION, LOW_PRIORITY_HIGHLIGHTING);
+        highlightAnnotationValue(value);
       }
+    }
+
+    private void highlightAnnotationValue(@NotNull PyExpression value) {
+      int currentRangeStart = -1;
+      int currentRangeEnd = -1;
+      for (PsiElement element : SyntaxTraverser.psiTraverser(value).filter(MyVisitor::isHighlightableAnnotationLeaf)) {
+        TextRange range = element.getTextRange();
+        int rangeStart = range.getStartOffset();
+        int rangeEnd = range.getEndOffset();
+        if (currentRangeEnd == rangeStart) {
+          currentRangeEnd = rangeEnd;
+          continue;
+        }
+        if (currentRangeStart >= 0) {
+          myHolder.addHighlightingAnnotation(new TextRange(currentRangeStart, currentRangeEnd),
+                                             PyHighlighter.PY_ANNOTATION,
+                                             LOW_PRIORITY_HIGHLIGHTING);
+        }
+        currentRangeStart = rangeStart;
+        currentRangeEnd = rangeEnd;
+      }
+
+      if (currentRangeStart >= 0) {
+        myHolder.addHighlightingAnnotation(new TextRange(currentRangeStart, currentRangeEnd),
+                                           PyHighlighter.PY_ANNOTATION,
+                                           LOW_PRIORITY_HIGHLIGHTING);
+      }
+    }
+
+    private static boolean isHighlightableAnnotationLeaf(@NotNull PsiElement element) {
+      return element.getFirstChild() == null &&
+             !(element instanceof PsiComment) &&
+             !(element instanceof PsiWhiteSpace) &&
+             !element.getTextRange().isEmpty();
     }
 
     private static @Nullable PyNamedParameter findParameterRecursively(@NotNull PyFunction function, @NotNull String referencedName) {

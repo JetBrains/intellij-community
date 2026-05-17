@@ -611,6 +611,11 @@ public class PythonHighlightingTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }
 
+  // PY-48749
+  public void testCommentInsideMultilineAnnotation() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
   // PY-22729
   public void testParametersWithAnnotationsAndDefaults() {
     runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);

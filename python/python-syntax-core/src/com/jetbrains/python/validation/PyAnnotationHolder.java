@@ -7,6 +7,7 @@ import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -40,6 +41,12 @@ public final class PyAnnotationHolder {
   }
 
   public void addHighlightingAnnotation(@NotNull PsiElement target,
+                                         @NotNull TextAttributesKey key,
+                                         @NotNull HighlightSeverity severity) {
+    addHighlightingAnnotation(target.getTextRange(), key, severity);
+  }
+
+  public void addHighlightingAnnotation(@NotNull TextRange range,
                                         @NotNull TextAttributesKey key,
                                         @NotNull HighlightSeverity severity) {
     final String message = myTestMode ? key.getExternalName() : null;
@@ -47,7 +54,7 @@ public final class PyAnnotationHolder {
     final HighlightSeverity actualSeverity =
       myTestMode && severity.myVal < HighlightSeverity.INFORMATION.myVal ? HighlightSeverity.INFORMATION : severity;
     (message == null ? myHolder.newSilentAnnotation(actualSeverity) : myHolder.newAnnotation(actualSeverity, message))
-      .range(target).textAttributes(key).create();
+      .range(range).textAttributes(key).create();
   }
 
   public void addHighlightingAnnotation(@NotNull ASTNode target, @NotNull TextAttributesKey key) {
