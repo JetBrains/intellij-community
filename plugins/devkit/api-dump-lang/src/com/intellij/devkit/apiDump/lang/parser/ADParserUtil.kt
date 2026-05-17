@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ADParserUtil")
 
 package com.intellij.devkit.apiDump.lang.parser
@@ -6,15 +6,8 @@ package com.intellij.devkit.apiDump.lang.parser
 import com.intellij.lang.PsiBuilder
 import com.intellij.psi.TokenType
 
-internal fun consumeUntilNextLineImpl(builder: PsiBuilder, level: Int) {
-  while (!builder.eof()) {
-    if (isLineFeed(builder, level)) break
-    builder.advanceLexer()
-  }
-}
-
 /** Check if there is a line feed before the current token  */
-private fun isLineFeed(builder: PsiBuilder, level: Int): Boolean {
+internal fun isLineFeed(builder: PsiBuilder, level: Int): Boolean {
   if (builder.eof()) return true
 
   var steps = 0

@@ -23,10 +23,8 @@ FILE
         PsiElement(IDENTIFIER)('lang')
         PsiElement(DOT)('.')
         PsiElement(IDENTIFIER)('Exception')
-  PsiWhiteSpace(' ')
-  PsiElement(CLASS_DECLARATION)
-    PsiElement(CLASS_HEADER)
-      PsiElement(TYPE_REFERENCE)
+      PsiWhiteSpace(' ')
+      PsiErrorElement:DOT or LBRACKET expected, got 'foo'
         PsiElement(IDENTIFIER)('foo')
     PsiWhiteSpace('\n')
     PsiElement(SUPER_TYPE)

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 // This is a generated file. Not intended for manual editing.
 package com.intellij.devkit.apiDump.lang.parser;
@@ -63,7 +63,7 @@ public class ADParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_, CLASS_DECLARATION, "<class declaration>");
     r = ClassHeader(b, l + 1);
     r = r && ClassDeclaration_1(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
+    exit_section_(b, l, m, r, false, ADParser::consumeUntilNextLine);
     return r;
   }
 
@@ -196,15 +196,14 @@ public class ADParser implements PsiParser, LightPsiParser {
   // Method | Constructor | Field | Companion | SuperType
   public static boolean Member(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "Member")) return false;
-    if (!nextTokenIs(b, MINUS)) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _COLLAPSE_, MEMBER, null);
+    Marker m = enter_section_(b, l, _COLLAPSE_, MEMBER, "<member>");
     r = Method(b, l + 1);
     if (!r) r = Constructor(b, l + 1);
     if (!r) r = Field(b, l + 1);
     if (!r) r = Companion(b, l + 1);
     if (!r) r = SuperType(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
+    exit_section_(b, l, m, r, false, ADParser::consumeUntilNextLine);
     return r;
   }
 
@@ -496,6 +495,17 @@ public class ADParser implements PsiParser, LightPsiParser {
       if (!empty_element_parsed_guard_(b, "TypeReference_2", c)) break;
     }
     return true;
+  }
+
+  /* ********************************************************** */
+  // !<<isLineFeed>>
+  static boolean consumeUntilNextLine(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "consumeUntilNextLine")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !isLineFeed(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
   }
 
 }

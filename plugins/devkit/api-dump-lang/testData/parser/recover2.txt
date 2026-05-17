@@ -23,10 +23,8 @@ FILE
         PsiElement(IDENTIFIER)('lang')
         PsiElement(DOT)('.')
         PsiElement(IDENTIFIER)('Exception')
-  PsiWhiteSpace(' ')
-  PsiElement(CLASS_DECLARATION)
-    PsiElement(CLASS_HEADER)
-      PsiElement(TYPE_REFERENCE)
+      PsiWhiteSpace(' ')
+      PsiErrorElement:DOT or LBRACKET expected, got 'foo'
         PsiElement(IDENTIFIER)('foo')
   PsiWhiteSpace('\n')
   PsiElement(CLASS_DECLARATION)
@@ -55,8 +53,8 @@ FILE
         PsiElement(IDENTIFIER)('execution')
         PsiElement(DOT)('.')
         PsiElement(IDENTIFIER)('ExecutionException')
-  PsiWhiteSpace('\n')
-  PsiElement(MINUS)('-')
-  PsiErrorElement:<modifiers>, Companion, IDENTIFIER or LESS expected, got '-'
+    PsiWhiteSpace('\n')
     PsiElement(MINUS)('-')
-  PsiElement(MINUS)('-')
+    PsiErrorElement:<modifiers>, Companion, IDENTIFIER or LESS expected, got '-'
+      PsiElement(MINUS)('-')
+    PsiElement(MINUS)('-')

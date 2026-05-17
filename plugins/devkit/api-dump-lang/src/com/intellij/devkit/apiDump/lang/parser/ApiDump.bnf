@@ -119,4 +119,4 @@ SuperType ::= MINUS TypeReference
 
 Companion ::= MemberStart 'Companion' COLON TypeReference
 
-private consumeUntilNextLine ::= <<consumeUntilNextLineImpl>>
+private consumeUntilNextLine ::= !<<isLineFeed>>

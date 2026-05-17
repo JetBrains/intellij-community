@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 // This is a generated file. Not intended for manual editing.
 package com.intellij.devkit.apiDump.lang.psi;
@@ -74,6 +74,9 @@ public interface ADElementTypes {
       }
       else if (type == FIELD_REFERENCE) {
         return new ADFieldReferenceImplGen(type);
+      }
+      else if (type == MEMBER) {
+        return new ADMemberImplGen(type);
       }
       else if (type == METHOD) {
         return new ADMethodImplGen(type);
