@@ -54,6 +54,7 @@ import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.TestApplicationManager
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.common.ThreadLeakTracker
 import com.intellij.testFramework.junit5.fixture.TestFixtures
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.util.indexing.FileBasedIndex
@@ -146,6 +147,10 @@ class BuildersGeneratorTest {
     fun beforeAll() {
       TestApplicationManager.getInstance()
       testClassDisposable = Disposer.newDisposable()
+
+      // Opening the temporary project may lazily initialize these application-scoped Android ADB helper threads
+      // after the JUnit thread snapshot.
+      ThreadLeakTracker.longRunningThreadCreated(testClassDisposable, "AndroidAdbSessionHost", "InnocuousThread")
 
       oldInitInspections = InspectionProfileImpl.INIT_INSPECTIONS
       InspectionProfileImpl.INIT_INSPECTIONS = true
