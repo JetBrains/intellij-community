@@ -170,6 +170,113 @@ class AgentPromptPaletteSubmitControllerTest {
   }
 
   @Test
+  fun submitKeepsContainerModeForSupportedProvider() {
+    runInEdtAndWait {
+      val project = ProjectManager.getInstance().defaultProject
+      var capturedRequest: AgentPromptLaunchRequest? = null
+      val fixture = createFixture(
+        project = project,
+        launcherProvider = {
+          object : AgentPromptLauncherBridge {
+            override fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
+              capturedRequest = request
+              return AgentPromptLaunchResult.SUCCESS
+            }
+
+            override fun resolveWorkingProjectPath(invocationData: AgentPromptInvocationData): String = "/launcher/path"
+          }
+        },
+        providersProvider = { listOf(testProviderBridge(provider = AgentSessionProvider.CLAUDE)) },
+        currentTargetMode = { PromptTargetMode.NEW_TASK },
+        isContainerModeSelected = { true },
+        isContainerModeSupported = { provider -> provider == AgentSessionProvider.CLAUDE },
+        isContainerModeRuntimeAvailable = { provider -> provider == AgentSessionProvider.CLAUDE },
+      )
+      fixture.providerSelector.refresh()
+      fixture.providerSelector.selectProvider(AgentSessionProvider.CLAUDE)
+      fixture.promptArea.text = "Refactor selected code"
+      fixture.launchState.selectedWorkingProjectPath = "/repo"
+
+      fixture.controller.submit()
+
+      val request = checkNotNull(capturedRequest)
+      assertThat(request.provider).isEqualTo(AgentSessionProvider.CLAUDE)
+      assertThat(request.containerMode).isTrue()
+    }
+  }
+
+  @Test
+  fun submitClearsPersistedContainerModeForUnsupportedProvider() {
+    runInEdtAndWait {
+      val project = ProjectManager.getInstance().defaultProject
+      var capturedRequest: AgentPromptLaunchRequest? = null
+      val fixture = createFixture(
+        project = project,
+        launcherProvider = {
+          object : AgentPromptLauncherBridge {
+            override fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
+              capturedRequest = request
+              return AgentPromptLaunchResult.SUCCESS
+            }
+
+            override fun resolveWorkingProjectPath(invocationData: AgentPromptInvocationData): String = "/launcher/path"
+          }
+        },
+        providersProvider = { listOf(testProviderBridge(provider = AgentSessionProvider.CODEX)) },
+        currentTargetMode = { PromptTargetMode.NEW_TASK },
+        isContainerModeSelected = { true },
+        isContainerModeSupported = { provider -> provider == AgentSessionProvider.CLAUDE },
+      )
+      fixture.providerSelector.refresh()
+      fixture.providerSelector.selectProvider(AgentSessionProvider.CODEX)
+      fixture.promptArea.text = "Refactor selected code"
+      fixture.launchState.selectedWorkingProjectPath = "/repo"
+
+      fixture.controller.submit()
+
+      val request = checkNotNull(capturedRequest)
+      assertThat(request.provider).isEqualTo(AgentSessionProvider.CODEX)
+      assertThat(request.containerMode).isFalse()
+    }
+  }
+
+  @Test
+  fun submitClearsPersistedContainerModeWhenRuntimeIsUnavailable() {
+    runInEdtAndWait {
+      val project = ProjectManager.getInstance().defaultProject
+      var capturedRequest: AgentPromptLaunchRequest? = null
+      val fixture = createFixture(
+        project = project,
+        launcherProvider = {
+          object : AgentPromptLauncherBridge {
+            override fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
+              capturedRequest = request
+              return AgentPromptLaunchResult.SUCCESS
+            }
+
+            override fun resolveWorkingProjectPath(invocationData: AgentPromptInvocationData): String = "/launcher/path"
+          }
+        },
+        providersProvider = { listOf(testProviderBridge(provider = AgentSessionProvider.CLAUDE)) },
+        currentTargetMode = { PromptTargetMode.NEW_TASK },
+        isContainerModeSelected = { true },
+        isContainerModeSupported = { provider -> provider == AgentSessionProvider.CLAUDE },
+        isContainerModeRuntimeAvailable = { false },
+      )
+      fixture.providerSelector.refresh()
+      fixture.providerSelector.selectProvider(AgentSessionProvider.CLAUDE)
+      fixture.promptArea.text = "Refactor selected code"
+      fixture.launchState.selectedWorkingProjectPath = "/repo"
+
+      fixture.controller.submit()
+
+      val request = checkNotNull(capturedRequest)
+      assertThat(request.provider).isEqualTo(AgentSessionProvider.CLAUDE)
+      assertThat(request.containerMode).isFalse()
+    }
+  }
+
+  @Test
   fun submitRecordsPromptHistoryOnlyAfterSuccessfulLaunch() {
     runInEdtAndWait {
       val project = ProjectManager.getInstance().defaultProject
@@ -312,6 +419,9 @@ class AgentPromptPaletteSubmitControllerTest {
     onSubmitBlocked: (String) -> Unit = {},
     onSubmitSucceeded: () -> Unit = {},
     onPromptSubmitted: (AgentPromptHistoryEntry) -> Unit = {},
+    isContainerModeSelected: () -> Boolean = { false },
+    isContainerModeSupported: (AgentSessionProvider) -> Boolean = { false },
+    isContainerModeRuntimeAvailable: (AgentSessionProvider) -> Boolean = { false },
   ): SubmitControllerFixture {
     val promptArea = EditorTextField()
     val providerSelector = AgentPromptProviderSelector(
@@ -357,6 +467,9 @@ class AgentPromptPaletteSubmitControllerTest {
       onSubmitBlocked = onSubmitBlocked,
       onSubmitSucceeded = onSubmitSucceeded,
       onPromptSubmitted = onPromptSubmitted,
+      isContainerModeSelected = isContainerModeSelected,
+      isContainerModeSupported = isContainerModeSupported,
+      isContainerModeRuntimeAvailable = isContainerModeRuntimeAvailable,
     )
     return SubmitControllerFixture(controller, promptArea, providerSelector, existingTaskController, launchState)
   }

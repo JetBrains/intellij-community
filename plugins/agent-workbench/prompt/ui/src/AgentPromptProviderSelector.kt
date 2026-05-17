@@ -30,7 +30,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
-import com.intellij.util.ui.DialogUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -295,10 +294,7 @@ internal class AgentPromptProviderSelector(
     selectedOptionIds: LinkedHashSet<String>,
   ): JBCheckBox {
     val label = sessionsMessageResolver.resolve(option.labelKey, bridge) ?: option.labelFallback
-    return JBCheckBox(label, option.id in selectedOptionIds).apply {
-      isOpaque = false
-      DialogUtil.registerMnemonic(this)
-      isFocusable = false
+    return createAgentPromptHeaderCheckBox(label, option.id in selectedOptionIds).apply {
       addActionListener {
         if (isSelected) {
           selectedOptionIds.add(option.id)

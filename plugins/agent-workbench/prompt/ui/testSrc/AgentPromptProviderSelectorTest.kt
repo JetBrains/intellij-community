@@ -61,6 +61,10 @@ class AgentPromptProviderSelectorTest {
       assertThat(fixture.planModeCheckBox().displayedMnemonicIndex).isEqualTo(0)
       assertThat(fixture.planModeCheckBox().text).doesNotContain("Alt+P")
       assertThat(fixture.planModeCheckBox().isSelected).isTrue()
+      assertThat(fixture.planModeCheckBox().font).isEqualTo(JBCheckBox().font)
+      val expectedHeaderCheckBox = createAgentPromptHeaderCheckBox("Run in container")
+      assertThat(fixture.planModeCheckBox().border.getBorderInsets(fixture.planModeCheckBox()))
+        .isEqualTo(expectedHeaderCheckBox.border.getBorderInsets(expectedHeaderCheckBox))
 
       fixture.planModeCheckBox().doClick()
       assertThat(fixture.selector.selectedOptionIds(provider.provider)).isEmpty()

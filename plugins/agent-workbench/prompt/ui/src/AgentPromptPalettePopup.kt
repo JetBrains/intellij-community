@@ -25,15 +25,15 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
-import com.intellij.util.ui.JBUI
+import com.intellij.ui.components.panels.HorizontalLayout
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import java.awt.Component
-import java.awt.FlowLayout
 import java.awt.Window
 import javax.swing.JPanel
+import javax.swing.SwingConstants
 import javax.swing.SwingUtilities
 
 private const val ACTIVATION_CLICK_GRACE_MS = 500L
@@ -250,7 +250,7 @@ internal class AgentPromptPalettePopup(
   }
 
   private fun createProviderOptionsPanel(): JPanel {
-    return JPanel(FlowLayout(FlowLayout.RIGHT, JBUI.scale(8), 0)).apply {
+    return JPanel(HorizontalLayout(8, SwingConstants.CENTER)).apply {
       isOpaque = false
       isVisible = false
     }

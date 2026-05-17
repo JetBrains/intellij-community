@@ -12,6 +12,7 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptAddContextToTargetRes
 import com.intellij.agent.workbench.prompt.core.AgentPromptContainerLauncher
 import com.intellij.agent.workbench.prompt.core.AgentPromptExistingThreadsSnapshot
 import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
+import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchError
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchResult
 import com.intellij.agent.workbench.prompt.core.AgentPromptLauncherBridge
@@ -22,6 +23,7 @@ import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameP
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.model.sortAgentSessionThreadsForDisplay
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
+import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchTelemetry
 import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
@@ -104,15 +106,28 @@ internal class AgentSessionPromptLauncherBridge : AgentPromptLauncherBridge {
   }
 
   override fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
+    fun reportPromptLaunchResolved(result: AgentPromptLaunchResult): AgentPromptLaunchResult {
+      AgentWorkbenchTelemetry.logPromptLaunchResolved(request, result)
+      return result
+    }
+
     if (request.containerMode) {
       val containerLauncher = AgentPromptContainerLauncher.findInstance()
-      if (containerLauncher != null && containerLauncher.isAvailable()) {
-        val project = sourceProjectResolver(request.projectPath)
-        if (project != null) {
-          containerLauncher.launch(project, request)
-          return AgentPromptLaunchResult.SUCCESS
-        }
+      if (containerLauncher == null) {
+        return reportPromptLaunchResolved(AgentPromptLaunchResult.failure(AgentPromptLaunchError.UNSUPPORTED_LAUNCH_MODE))
       }
+      if (!containerLauncher.supportsProvider(request.provider)) {
+        return reportPromptLaunchResolved(AgentPromptLaunchResult.failure(AgentPromptLaunchError.UNSUPPORTED_LAUNCH_MODE))
+      }
+      if (!containerLauncher.isAvailable()) {
+        return reportPromptLaunchResolved(AgentPromptLaunchResult.failure(AgentPromptLaunchError.PROVIDER_UNAVAILABLE))
+      }
+      val project = sourceProjectResolver(request.projectPath)
+      if (project == null) {
+        return reportPromptLaunchResolved(AgentPromptLaunchResult.failure(AgentPromptLaunchError.INTERNAL_ERROR))
+      }
+      containerLauncher.launch(project, request)
+      return AgentPromptLaunchResult.SUCCESS
     }
     return launchPromptRequest(request)
   }

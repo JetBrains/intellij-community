@@ -5,10 +5,13 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.panels.HorizontalLayout
+import com.intellij.util.ui.EmptyIcon
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.awt.event.KeyEvent
 import javax.swing.JPanel
+import javax.swing.SwingConstants
 import javax.swing.SwingUtilities
 
 @TestApplication
@@ -68,8 +71,8 @@ class AgentPromptPaletteViewStructureTest {
   fun providerOptionsPanelIsRenderedOnceWhenProvided() {
     runInEdtAndWait {
       val promptArea = EditorTextField()
-      val planModeCheckBox = JBCheckBox("Plan mode").apply { isFocusable = false }
-      val providerOptionsPanel = JPanel().apply { add(planModeCheckBox) }
+      val planModeCheckBox = createAgentPromptHeaderCheckBox("Plan mode")
+      val providerOptionsPanel = JPanel(HorizontalLayout(8, SwingConstants.CENTER)).apply { add(planModeCheckBox) }
       val view = createAgentPromptPaletteView(
         promptArea = promptArea,
         contextChipsPanel = JPanel(),
@@ -79,18 +82,20 @@ class AgentPromptPaletteViewStructureTest {
       )
 
       val planModeCheckBoxes = collectComponentsOfType(view.rootPanel, JBCheckBox::class.java)
-      assertThat(planModeCheckBoxes).containsExactly(planModeCheckBox)
+      assertThat(planModeCheckBoxes).contains(planModeCheckBox, view.containerModeCheckBox)
+      assertThat(planModeCheckBoxes.count { it === planModeCheckBox }).isEqualTo(1)
       assertThat(view.providerOptionsPanel).isSameAs(providerOptionsPanel)
+      assertThat(SwingUtilities.isDescendingFrom(providerOptionsPanel, view.rightHeaderPanel)).isTrue()
       assertThat(planModeCheckBox.isFocusable).isFalse()
     }
   }
 
   @Test
-  fun providerOptionsPanelIsRightAlignedNextToProviderIcon() {
+  fun rightHeaderPanelIsRightAlignedAfterTargetTabs() {
     runInEdtAndWait {
       val promptArea = EditorTextField()
-      val planModeCheckBox = JBCheckBox("Plan mode").apply { isFocusable = false }
-      val providerOptionsPanel = JPanel().apply { add(planModeCheckBox) }
+      val planModeCheckBox = createAgentPromptHeaderCheckBox("Plan mode")
+      val providerOptionsPanel = JPanel(HorizontalLayout(8, SwingConstants.CENTER)).apply { add(planModeCheckBox) }
       val view = createAgentPromptPaletteView(
         promptArea = promptArea,
         contextChipsPanel = JPanel(),
@@ -98,13 +103,68 @@ class AgentPromptPaletteViewStructureTest {
         onProviderIconClicked = {},
         onExistingTaskSelected = {},
       )
+      view.containerModeCheckBox.isVisible = true
+      view.providerIconLabel.icon = EmptyIcon.ICON_16
 
       layoutPopupRoot(view.rootPanel)
 
-      val checkBoxX = xInRoot(planModeCheckBox, view.rootPanel)
+      val tabbedPaneX = xInRoot(view.tabbedPane, view.rootPanel)
+      val rightHeaderX = xInRoot(view.rightHeaderPanel, view.rootPanel)
+      val containerModeX = xInRoot(view.containerModeCheckBox, view.rootPanel)
+      val planModeX = xInRoot(planModeCheckBox, view.rootPanel)
+      val promptLibraryX = xInRoot(view.promptLibraryIconLabel, view.rootPanel)
       val providerIconX = xInRoot(view.providerIconLabel, view.rootPanel)
-      assertThat(checkBoxX).isGreaterThan(view.rootPanel.width / 2)
-      assertThat(providerIconX).isGreaterThan(checkBoxX)
+      assertThat(view.rightHeaderPanel.layout).isInstanceOf(HorizontalLayout::class.java)
+      assertThat(rightHeaderX).isGreaterThan(tabbedPaneX)
+      assertThat(containerModeX).isGreaterThan(view.rootPanel.width / 2)
+      assertThat(planModeX).isGreaterThan(containerModeX)
+      assertThat(promptLibraryX).isGreaterThan(planModeX)
+      assertThat(providerIconX).isGreaterThan(promptLibraryX)
+      assertThat(providerIconX + view.providerIconLabel.width).isGreaterThan(view.rootPanel.width - 32)
+    }
+  }
+
+  @Test
+  fun containerModeControlIsAHeaderLaunchOption() {
+    runInEdtAndWait {
+      val view = createAgentPromptPaletteView(
+        promptArea = EditorTextField(),
+        contextChipsPanel = JPanel(),
+        onProviderIconClicked = {},
+        onExistingTaskSelected = {},
+      )
+
+      assertThat(SwingUtilities.isDescendingFrom(view.containerModeCheckBox, view.rightHeaderPanel)).isTrue()
+      assertThat(SwingUtilities.isDescendingFrom(view.containerModeCheckBox, view.bottomPanel)).isFalse()
+      assertThat(view.containerModeCheckBox.text).isEqualTo("Run in container")
+      assertThat(view.containerModeCheckBox.mnemonic).isEqualTo(KeyEvent.VK_R)
+      assertThat(view.containerModeCheckBox.displayedMnemonicIndex).isEqualTo(0)
+      assertThat(view.containerModeCheckBox.isFocusable).isFalse()
+      assertThat(view.containerModeCheckBox.isOpaque).isFalse()
+      assertThat(view.containerModeCheckBox.font).isEqualTo(JBCheckBox().font)
+    }
+  }
+
+  @Test
+  fun headerOptionCheckBoxesUseSearchEverywhereCheckboxStyle() {
+    runInEdtAndWait {
+      val planModeCheckBox = createAgentPromptHeaderCheckBox("Plan mode")
+      val providerOptionsPanel = JPanel(HorizontalLayout(8, SwingConstants.CENTER)).apply { add(planModeCheckBox) }
+      val view = createAgentPromptPaletteView(
+        promptArea = EditorTextField(),
+        contextChipsPanel = JPanel(),
+        providerOptionsPanel = providerOptionsPanel,
+        onProviderIconClicked = {},
+        onExistingTaskSelected = {},
+      )
+
+      val defaultCheckBox = JBCheckBox()
+      assertThat(planModeCheckBox.font).isEqualTo(defaultCheckBox.font)
+      assertThat(view.containerModeCheckBox.font).isEqualTo(defaultCheckBox.font)
+      assertThat(planModeCheckBox.isOpaque).isEqualTo(view.containerModeCheckBox.isOpaque)
+      assertThat(planModeCheckBox.isFocusable).isEqualTo(view.containerModeCheckBox.isFocusable)
+      assertThat(planModeCheckBox.border.getBorderInsets(planModeCheckBox))
+        .isEqualTo(view.containerModeCheckBox.border.getBorderInsets(view.containerModeCheckBox))
     }
   }
 

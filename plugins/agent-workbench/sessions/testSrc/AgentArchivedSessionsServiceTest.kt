@@ -11,10 +11,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.Duration.Companion.seconds
 
 @TestApplication
 class AgentArchivedSessionsServiceTest {
@@ -27,8 +29,9 @@ class AgentArchivedSessionsServiceTest {
       val listCalls = AtomicInteger(0)
       val firstLoadStarted = CompletableDeferred<Unit>()
       val releaseFirstLoad = CompletableDeferred<Unit>()
+      val provider = AgentSessionProvider.from("test-archived")
       val sessionSource = ScriptedSessionSource(
-        provider = AgentSessionProvider.CODEX,
+        provider = provider,
         supportsArchivedThreads = true,
         listArchivedFromOpenProject = { path, _ ->
           if (path != PROJECT_PATH) {
@@ -52,9 +55,11 @@ class AgentArchivedSessionsServiceTest {
 
       try {
         service.ensureLoaded()
-        firstLoadStarted.await()
+        withTimeout(6.seconds) {
+          firstLoadStarted.await()
+        }
 
-        archivedThreads.add(thread(id = "codex-1", updatedAt = 100, provider = AgentSessionProvider.CODEX).copy(archived = true))
+        archivedThreads.add(thread(id = "codex-1", updatedAt = 100, provider = provider).copy(archived = true))
         service.refreshIfLoaded()
         releaseFirstLoad.complete(Unit)
 

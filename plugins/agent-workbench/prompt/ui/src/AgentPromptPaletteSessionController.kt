@@ -10,6 +10,7 @@ import com.intellij.agent.workbench.prompt.core.AGENT_PROMPT_INITIAL_TEXT_DATA_K
 import com.intellij.agent.workbench.prompt.core.AgentPromptAddContextTargetCandidate
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextResolverService
+import com.intellij.agent.workbench.prompt.core.AgentPromptContainerLauncher
 import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
 import com.intellij.agent.workbench.prompt.core.AgentPromptLauncherBridge
 import com.intellij.agent.workbench.prompt.core.AgentPromptPaletteExtensionContext
@@ -22,6 +23,7 @@ import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.icons.AllIcons
+import com.intellij.ide.setToolTipText
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -42,6 +44,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Condition
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
@@ -144,6 +147,8 @@ internal class AgentPromptPaletteSessionController(
       onSubmitSucceeded = ::closeAfterSuccessfulSubmit,
       onPromptSubmitted = uiStateService::saveSubmittedPromptHistoryEntry,
       isContainerModeSelected = { view.containerModeCheckBox.isSelected },
+      isContainerModeSupported = ::isContainerModeSupported,
+      isContainerModeRuntimeAvailable = ::isContainerModeRuntimeAvailable,
     )
     submitControllerRef = submitController
   }
@@ -557,11 +562,43 @@ internal class AgentPromptPaletteSessionController(
     providerOptionsPanel.revalidate()
     providerOptionsPanel.repaint()
 
-    // Container mode only supported for providers with --disallowedTools (currently Claude only).
-    // Not applicable on AI Review (and other extension tabs) — they use a different launch path.
-    val supportsContainer = providerSelector.selectedProvider?.bridge?.provider == AgentSessionProvider.CLAUDE
-    val isExtensionTab = contextState.activeExtensionTab != null
-    view.containerModeCheckBox.isVisible = supportsContainer && !isExtensionTab
+    val selectedProvider = providerSelector.selectedProvider?.bridge?.provider
+    val showContainerMode = shouldShowContainerModeOption(
+      selectedProvider = selectedProvider,
+      isExtensionTab = contextState.activeExtensionTab != null,
+      supportsContainerMode = ::isContainerModeSupported,
+    )
+    val enableContainerMode = shouldEnableContainerModeOption(
+      selectedProvider = selectedProvider,
+      isExtensionTab = contextState.activeExtensionTab != null,
+      supportsContainerMode = ::isContainerModeSupported,
+      isContainerRuntimeAvailable = ::isContainerModeRuntimeAvailable,
+    )
+    view.containerModeCheckBox.isVisible = showContainerMode
+    view.containerModeCheckBox.isEnabled = enableContainerMode
+    if (!enableContainerMode) {
+      view.containerModeCheckBox.isSelected = false
+    }
+    view.containerModeCheckBox.setToolTipText(
+      if (showContainerMode && !enableContainerMode) {
+        HtmlChunk.text(AgentPromptBundle.message("popup.option.container.mode.unavailable.tooltip"))
+      }
+      else {
+        null
+      }
+    )
+    view.rightHeaderPanel.revalidate()
+    view.rightHeaderPanel.repaint()
+  }
+
+  private fun isContainerModeSupported(provider: AgentSessionProvider): Boolean {
+    return AgentPromptContainerLauncher.findInstance()?.supportsProvider(provider) == true
+  }
+
+  private fun isContainerModeRuntimeAvailable(provider: AgentSessionProvider): Boolean {
+    return AgentPromptContainerLauncher.findInstance()?.let { launcher ->
+      launcher.supportsProvider(provider) && launcher.isAvailable()
+    } == true
   }
 
   private fun reloadExistingTasks() {

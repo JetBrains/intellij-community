@@ -11,10 +11,12 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.WindowMoveListener
 import com.intellij.ui.components.ActionLink
+import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTabbedPane
+import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.tabbedPaneHeader
@@ -34,12 +36,12 @@ import java.awt.event.ContainerEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.DefaultListModel
-import javax.swing.JCheckBox
 import javax.swing.JEditorPane
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.ListSelectionModel
 import javax.swing.ScrollPaneConstants
+import javax.swing.SwingConstants
 import javax.swing.text.DefaultCaret
 
 private val POPUP_PREFERRED_SIZE = JBUI.size(680, 380)
@@ -65,9 +67,19 @@ internal data class AgentPromptPaletteView(
   @JvmField val existingTaskList: JBList<ThreadEntry>,
   @JvmField val existingTaskScrollPane: JBScrollPane,
   @JvmField val footerLabel: JBLabel,
+  @JvmField val rightHeaderPanel: JPanel,
   @JvmField val providerOptionsPanel: JPanel?,
-  @JvmField val containerModeCheckBox: JCheckBox,
+  @JvmField val containerModeCheckBox: JBCheckBox,
 )
+
+internal fun createAgentPromptHeaderCheckBox(text: @Nls String, selected: Boolean = false): JBCheckBox {
+  return JBCheckBox(text, selected).apply {
+    isOpaque = false
+    isFocusable = false
+    DialogUtil.registerMnemonic(this)
+    border = JBUI.Borders.emptyRight(9)
+  }
+}
 
 private class ComposerContextActionLink(text: @Nls String) : ActionLink(text) {
   var onVisibilityChanged: (() -> Unit)? = null
@@ -166,12 +178,22 @@ internal fun createAgentPromptPaletteView(
     })
   }
 
+  val containerModeCheckBox = createAgentPromptHeaderCheckBox(AgentPromptBundle.message("popup.option.container.mode")).apply {
+    isVisible = false
+  }
+
   lateinit var tabbedPane: JBTabbedPane
   val headerControlsInsets = JBUI.CurrentTheme.BigPopup.headerToolbarInsets()
-  val controlsLeftGap = headerControlsInsets.left
-  val controlToIconGap = headerControlsInsets.right
-  val spacer = JPanel().apply {
+  val rightHeaderPanel = JPanel(HorizontalLayout(8, SwingConstants.CENTER)).apply {
     isOpaque = false
+    border = JBUI.Borders.empty(headerControlsInsets)
+    add(containerModeCheckBox, HorizontalLayout.RIGHT)
+    if (providerOptionsPanel != null) {
+      add(providerOptionsPanel, HorizontalLayout.RIGHT)
+    }
+    add(previewToggle, HorizontalLayout.RIGHT)
+    add(promptLibraryIconLabel, HorizontalLayout.RIGHT)
+    add(providerIconLabel, HorizontalLayout.RIGHT)
   }
   val headerPanel = panel {
     row {
@@ -184,22 +206,10 @@ internal fun createAgentPromptPaletteView(
         }
         .component
       cell(tabbedPane)
-      cell(spacer)
+      cell(rightHeaderPanel)
         .resizableColumn()
-      if (providerOptionsPanel != null) {
-        cell(providerOptionsPanel)
-          .align(AlignX.RIGHT)
-          .customize(UnscaledGaps(left = controlToIconGap))
-      }
-      cell(previewToggle)
         .align(AlignX.RIGHT)
-        .customize(UnscaledGaps(left = if (providerOptionsPanel != null) controlToIconGap else controlsLeftGap))
-      cell(promptLibraryIconLabel)
-        .align(AlignX.RIGHT)
-        .customize(UnscaledGaps(left = controlToIconGap))
-      cell(providerIconLabel)
-        .align(AlignX.RIGHT)
-        .customize(UnscaledGaps(left = controlToIconGap))
+        .customize(UnscaledGaps(left = 18))
     }
   }
   headerPanel.apply {
@@ -280,19 +290,10 @@ internal fun createAgentPromptPaletteView(
     isOpaque = true
   }
 
-  val containerModeCheckBox = JCheckBox(AgentPromptBundle.message("popup.option.container.mode")).apply {
-    isOpaque = false
-    isFocusable = false
-    font = JBUI.Fonts.smallFont()
-    foreground = JBUI.CurrentTheme.Advertiser.foreground()
-    border = JBUI.Borders.emptyLeft(4)
-  }
-
   val footerPanel = JPanel(BorderLayout()).apply {
     isOpaque = true
     background = JBUI.CurrentTheme.Advertiser.background()
     border = JBUI.CurrentTheme.Advertiser.border()
-    add(containerModeCheckBox, BorderLayout.WEST)
     add(footerLabel, BorderLayout.CENTER)
   }
 
@@ -335,6 +336,7 @@ internal fun createAgentPromptPaletteView(
     existingTaskList = existingTaskList,
     existingTaskScrollPane = existingTaskScrollPane,
     footerLabel = footerLabel,
+    rightHeaderPanel = rightHeaderPanel,
     providerOptionsPanel = providerOptionsPanel,
     containerModeCheckBox = containerModeCheckBox,
   )

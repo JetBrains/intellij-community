@@ -11,6 +11,7 @@ import com.intellij.agent.workbench.prompt.core.AGENT_PROMPT_PROJECT_PATH_CONTEX
 import com.intellij.agent.workbench.prompt.core.AgentPromptAddContextTargetCandidate
 import com.intellij.agent.workbench.prompt.core.AgentPromptAddContextToTargetRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptAddContextToTargetResult
+import com.intellij.agent.workbench.prompt.core.AgentPromptContainerLauncher
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
@@ -52,6 +53,7 @@ import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStat
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.contextModality
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.advanced.AdvancedSettingsImpl
 import com.intellij.openapi.project.Project
@@ -156,6 +158,177 @@ class AgentSessionPromptLauncherBridgeTest {
           }
         }
       }
+    }
+  }
+
+  @Test
+  fun launchRoutesSupportedContainerRequestToContainerLauncher() {
+    val project = ProjectManager.getInstance().defaultProject
+    val containerLauncher = RecordingContainerLauncher(
+      supportedProviders = setOf(AgentSessionProvider.CLAUDE),
+      available = true,
+    )
+    val standardLaunchCalls = AtomicInteger()
+    val bridge = containerPromptLauncherBridge(
+      launchPromptRequest = {
+        standardLaunchCalls.incrementAndGet()
+        AgentPromptLaunchResult.SUCCESS
+      },
+      sourceProjectResolver = { path -> project.takeIf { path == PROJECT_PATH } },
+    )
+    val request = promptLaunchRequest(provider = AgentSessionProvider.CLAUDE).copy(containerMode = true)
+
+    withContainerLauncherForTest(containerLauncher) {
+      val result = bridge.launch(request)
+
+      assertThat(result).isEqualTo(AgentPromptLaunchResult.SUCCESS)
+      assertThat(standardLaunchCalls.get()).isZero()
+      assertThat(containerLauncher.launchCalls.get()).isEqualTo(1)
+      assertThat(containerLauncher.lastProject.get()).isSameAs(project)
+      assertThat(containerLauncher.lastRequest.get()).isEqualTo(request)
+    }
+  }
+
+  @Test
+  fun launchRejectsContainerRequestForUnsupportedProviderWithoutStandardFallback() {
+    val containerLauncher = RecordingContainerLauncher(
+      supportedProviders = setOf(AgentSessionProvider.CLAUDE),
+      available = true,
+    )
+    val standardLaunchCalls = AtomicInteger()
+    val bridge = containerPromptLauncherBridge(
+      launchPromptRequest = {
+        standardLaunchCalls.incrementAndGet()
+        AgentPromptLaunchResult.SUCCESS
+      },
+    )
+    val request = promptLaunchRequest(provider = AgentSessionProvider.CODEX).copy(containerMode = true)
+    val telemetryEvents = CopyOnWriteArrayList<AgentWorkbenchTelemetryEvent>()
+    val token = AgentWorkbenchTelemetry.pushTestHandler(telemetryEvents::add)
+
+    try {
+      withContainerLauncherForTest(containerLauncher) {
+        val result = bridge.launch(request)
+
+        assertThat(result.launched).isFalse()
+        assertThat(result.error).isEqualTo(AgentPromptLaunchError.UNSUPPORTED_LAUNCH_MODE)
+        assertThat(standardLaunchCalls.get()).isZero()
+        assertThat(containerLauncher.launchCalls.get()).isZero()
+      }
+      assertPromptLaunchResolvedTelemetry(
+        telemetryEvents = telemetryEvents,
+        provider = AgentWorkbenchTelemetryProvider.CODEX,
+        launchResult = AgentWorkbenchPromptLaunchResultKind.UNSUPPORTED_LAUNCH_MODE,
+      )
+    }
+    finally {
+      token.finish()
+    }
+  }
+
+  @Test
+  fun launchRejectsContainerRequestWhenLauncherIsUnavailableWithoutStandardFallback() {
+    val containerLauncher = RecordingContainerLauncher(
+      supportedProviders = setOf(AgentSessionProvider.CLAUDE),
+      available = false,
+    )
+    val standardLaunchCalls = AtomicInteger()
+    val bridge = containerPromptLauncherBridge(
+      launchPromptRequest = {
+        standardLaunchCalls.incrementAndGet()
+        AgentPromptLaunchResult.SUCCESS
+      },
+    )
+    val request = promptLaunchRequest(provider = AgentSessionProvider.CLAUDE).copy(containerMode = true)
+    val telemetryEvents = CopyOnWriteArrayList<AgentWorkbenchTelemetryEvent>()
+    val token = AgentWorkbenchTelemetry.pushTestHandler(telemetryEvents::add)
+
+    try {
+      withContainerLauncherForTest(containerLauncher) {
+        val result = bridge.launch(request)
+
+        assertThat(result.launched).isFalse()
+        assertThat(result.error).isEqualTo(AgentPromptLaunchError.PROVIDER_UNAVAILABLE)
+        assertThat(standardLaunchCalls.get()).isZero()
+        assertThat(containerLauncher.launchCalls.get()).isZero()
+      }
+      assertPromptLaunchResolvedTelemetry(
+        telemetryEvents = telemetryEvents,
+        provider = AgentWorkbenchTelemetryProvider.CLAUDE,
+        launchResult = AgentWorkbenchPromptLaunchResultKind.PROVIDER_UNAVAILABLE,
+      )
+    }
+    finally {
+      token.finish()
+    }
+  }
+
+  @Test
+  fun launchRejectsContainerRequestWhenContainerLauncherIsMissingWithoutStandardFallback() {
+    val standardLaunchCalls = AtomicInteger()
+    val bridge = containerPromptLauncherBridge(
+      launchPromptRequest = {
+        standardLaunchCalls.incrementAndGet()
+        AgentPromptLaunchResult.SUCCESS
+      },
+    )
+    val request = promptLaunchRequest(provider = AgentSessionProvider.CLAUDE).copy(containerMode = true)
+    val telemetryEvents = CopyOnWriteArrayList<AgentWorkbenchTelemetryEvent>()
+    val token = AgentWorkbenchTelemetry.pushTestHandler(telemetryEvents::add)
+
+    try {
+      withContainerLaunchersForTest(emptyList()) {
+        val result = bridge.launch(request)
+
+        assertThat(result.launched).isFalse()
+        assertThat(result.error).isEqualTo(AgentPromptLaunchError.UNSUPPORTED_LAUNCH_MODE)
+        assertThat(standardLaunchCalls.get()).isZero()
+      }
+      assertPromptLaunchResolvedTelemetry(
+        telemetryEvents = telemetryEvents,
+        provider = AgentWorkbenchTelemetryProvider.CLAUDE,
+        launchResult = AgentWorkbenchPromptLaunchResultKind.UNSUPPORTED_LAUNCH_MODE,
+      )
+    }
+    finally {
+      token.finish()
+    }
+  }
+
+  @Test
+  fun launchRejectsContainerRequestWhenSourceProjectCannotBeResolvedWithoutStandardFallback() {
+    val containerLauncher = RecordingContainerLauncher(
+      supportedProviders = setOf(AgentSessionProvider.CLAUDE),
+      available = true,
+    )
+    val standardLaunchCalls = AtomicInteger()
+    val bridge = containerPromptLauncherBridge(
+      launchPromptRequest = {
+        standardLaunchCalls.incrementAndGet()
+        AgentPromptLaunchResult.SUCCESS
+      },
+    )
+    val request = promptLaunchRequest(provider = AgentSessionProvider.CLAUDE).copy(containerMode = true)
+    val telemetryEvents = CopyOnWriteArrayList<AgentWorkbenchTelemetryEvent>()
+    val token = AgentWorkbenchTelemetry.pushTestHandler(telemetryEvents::add)
+
+    try {
+      withContainerLauncherForTest(containerLauncher) {
+        val result = bridge.launch(request)
+
+        assertThat(result.launched).isFalse()
+        assertThat(result.error).isEqualTo(AgentPromptLaunchError.INTERNAL_ERROR)
+        assertThat(standardLaunchCalls.get()).isZero()
+        assertThat(containerLauncher.launchCalls.get()).isZero()
+      }
+      assertPromptLaunchResolvedTelemetry(
+        telemetryEvents = telemetryEvents,
+        provider = AgentWorkbenchTelemetryProvider.CLAUDE,
+        launchResult = AgentWorkbenchPromptLaunchResultKind.INTERNAL_ERROR,
+      )
+    }
+    finally {
+      token.finish()
     }
   }
 
@@ -1431,221 +1604,229 @@ class AgentSessionPromptLauncherBridgeTest {
   }
 
   @Test
-  fun observeExistingThreadsFiltersProviderThreadsFromSharedState() = withCliAvailableTestRegistry { runBlocking(Dispatchers.Default) {
-    withServiceAndLaunch(
-      sessionSourcesProvider = {
-        listOf(
-          ScriptedSessionSource(
-            provider = AgentSessionProvider.CODEX,
-            listFromOpenProject = { path, _ ->
-              if (path == PROJECT_PATH) listOf(thread(id = "codex-1", updatedAt = 200, provider = AgentSessionProvider.CODEX))
-              else emptyList()
-            },
-          ),
-          ScriptedSessionSource(
-            provider = AgentSessionProvider.CLAUDE,
-            listFromOpenProject = { path, _ ->
-              if (path == PROJECT_PATH) {
-                listOf(
-                  thread(id = "claude-1", updatedAt = 100, provider = AgentSessionProvider.CLAUDE),
-                  thread(id = "claude-2", updatedAt = 300, provider = AgentSessionProvider.CLAUDE),
-                )
-              }
-              else {
-                emptyList()
-              }
-            },
-          ),
-        )
-      },
-      projectEntriesProvider = {
-        listOf(openProjectEntry(PROJECT_PATH, "Project A"))
-      },
-    ) { service, launchService ->
-      service.refresh()
-      waitForCondition {
-        service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }?.hasLoaded == true
-      }
-
-      val bridge = promptLauncherBridge(service, launchService)
-      val snapshot = bridge.observeExistingThreads(
-        projectPath = PROJECT_PATH,
-        provider = AgentSessionProvider.CLAUDE,
-      ).first { it.hasLoaded }
-
-      assertThat(snapshot.threads.map { thread -> thread.id })
-        .containsExactly("claude-2", "claude-1")
-      assertThat(snapshot.hasError).isFalse()
-    }
-  } }
-
-  @Test
-  fun refreshExistingThreadsBootstrapsWhenPathIsMissing() = withCliAvailableTestRegistry { runBlocking(Dispatchers.Default) {
-    val openLoads = AtomicInteger(0)
-    withServiceAndLaunch(
-      sessionSourcesProvider = {
-        listOf(
-          ScriptedSessionSource(
-            provider = AgentSessionProvider.CLAUDE,
-            listFromOpenProject = { path, _ ->
-              if (path == PROJECT_PATH) {
-                openLoads.incrementAndGet()
-                listOf(thread(id = "claude-1", updatedAt = 100, provider = AgentSessionProvider.CLAUDE))
-              }
-              else {
-                emptyList()
-              }
-            },
+  fun observeExistingThreadsFiltersProviderThreadsFromSharedState() = withCliAvailableTestRegistry {
+    runBlocking(Dispatchers.Default) {
+      withServiceAndLaunch(
+        sessionSourcesProvider = {
+          listOf(
+            ScriptedSessionSource(
+              provider = AgentSessionProvider.CODEX,
+              listFromOpenProject = { path, _ ->
+                if (path == PROJECT_PATH) listOf(thread(id = "codex-1", updatedAt = 200, provider = AgentSessionProvider.CODEX))
+                else emptyList()
+              },
+            ),
+            ScriptedSessionSource(
+              provider = AgentSessionProvider.CLAUDE,
+              listFromOpenProject = { path, _ ->
+                if (path == PROJECT_PATH) {
+                  listOf(
+                    thread(id = "claude-1", updatedAt = 100, provider = AgentSessionProvider.CLAUDE),
+                    thread(id = "claude-2", updatedAt = 300, provider = AgentSessionProvider.CLAUDE),
+                  )
+                }
+                else {
+                  emptyList()
+                }
+              },
+            ),
           )
-        )
-      },
-      projectEntriesProvider = {
-        listOf(openProjectEntry(PROJECT_PATH, "Project A"))
-      },
-    ) { service, launchService ->
-      assertThat(service.state.value.projects).isEmpty()
+        },
+        projectEntriesProvider = {
+          listOf(openProjectEntry(PROJECT_PATH, "Project A"))
+        },
+      ) { service, launchService ->
+        service.refresh()
+        waitForCondition {
+          service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }?.hasLoaded == true
+        }
 
-      val bridge = promptLauncherBridge(service, launchService)
-      bridge.refreshExistingThreads(projectPath = PROJECT_PATH, provider = AgentSessionProvider.CLAUDE)
+        val bridge = promptLauncherBridge(service, launchService)
+        val snapshot = bridge.observeExistingThreads(
+          projectPath = PROJECT_PATH,
+          provider = AgentSessionProvider.CLAUDE,
+        ).first { it.hasLoaded }
 
-      waitForCondition {
-        val project = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
-        project.hasLoaded && project.threads.map { thread -> thread.id } == listOf("claude-1")
+        assertThat(snapshot.threads.map { thread -> thread.id })
+          .containsExactly("claude-2", "claude-1")
+        assertThat(snapshot.hasError).isFalse()
       }
-
-      assertThat(openLoads.get()).isEqualTo(1)
     }
-  } }
+  }
 
   @Test
-  fun refreshExistingThreadsUsesProviderScopedRefreshForLoadedPath() = withCliAvailableTestRegistry { runBlocking(Dispatchers.Default) {
-    val codexClosedLoads = AtomicInteger(0)
-    val claudeClosedLoads = AtomicInteger(0)
-    var claudeClosedThreadId = "claude-closed-1"
+  fun refreshExistingThreadsBootstrapsWhenPathIsMissing() = withCliAvailableTestRegistry {
+    runBlocking(Dispatchers.Default) {
+      val openLoads = AtomicInteger(0)
+      withServiceAndLaunch(
+        sessionSourcesProvider = {
+          listOf(
+            ScriptedSessionSource(
+              provider = AgentSessionProvider.CLAUDE,
+              listFromOpenProject = { path, _ ->
+                if (path == PROJECT_PATH) {
+                  openLoads.incrementAndGet()
+                  listOf(thread(id = "claude-1", updatedAt = 100, provider = AgentSessionProvider.CLAUDE))
+                }
+                else {
+                  emptyList()
+                }
+              },
+            )
+          )
+        },
+        projectEntriesProvider = {
+          listOf(openProjectEntry(PROJECT_PATH, "Project A"))
+        },
+      ) { service, launchService ->
+        assertThat(service.state.value.projects).isEmpty()
 
-    withServiceAndLaunch(
-      sessionSourcesProvider = {
-        listOf(
-          ScriptedSessionSource(
-            provider = AgentSessionProvider.CODEX,
-            listFromOpenProject = { path, _ ->
-              if (path == PROJECT_PATH) listOf(
-                thread(
-                  id = "codex-open",
-                  updatedAt = 300,
-                  provider = AgentSessionProvider.CODEX
-                )
-              )
-              else emptyList()
-            },
-            listFromClosedProject = { path ->
-              if (path == PROJECT_PATH) {
-                codexClosedLoads.incrementAndGet()
-                listOf(thread(id = "codex-closed", updatedAt = 250, provider = AgentSessionProvider.CODEX))
-              }
-              else {
-                emptyList()
-              }
-            },
-          ),
-          ScriptedSessionSource(
-            provider = AgentSessionProvider.CLAUDE,
-            listFromOpenProject = { path, _ ->
-              if (path == PROJECT_PATH) listOf(
-                thread(
-                  id = "claude-open",
-                  updatedAt = 200,
-                  provider = AgentSessionProvider.CLAUDE
-                )
-              )
-              else emptyList()
-            },
-            listFromClosedProject = { path ->
-              if (path == PROJECT_PATH) {
-                claudeClosedLoads.incrementAndGet()
-                listOf(thread(id = claudeClosedThreadId, updatedAt = 400, provider = AgentSessionProvider.CLAUDE))
-              }
-              else {
-                emptyList()
-              }
-            },
-          ),
-        )
-      },
-      projectEntriesProvider = {
-        listOf(openProjectEntry(PROJECT_PATH, "Project A"))
-      },
-    ) { service, launchService ->
-      service.refresh()
-      waitForCondition {
-        val ids = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }?.threads?.map { thread -> thread.id }
-                  ?: return@waitForCondition false
-        ids.contains("codex-open") && ids.contains("claude-open")
+        val bridge = promptLauncherBridge(service, launchService)
+        bridge.refreshExistingThreads(projectPath = PROJECT_PATH, provider = AgentSessionProvider.CLAUDE)
+
+        waitForCondition {
+          val project = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
+          project.hasLoaded && project.threads.map { thread -> thread.id } == listOf("claude-1")
+        }
+
+        assertThat(openLoads.get()).isEqualTo(1)
       }
-
-      claudeClosedThreadId = "claude-closed-2"
-      val bridge = promptLauncherBridge(service, launchService)
-      bridge.refreshExistingThreads(projectPath = PROJECT_PATH, provider = AgentSessionProvider.CLAUDE)
-
-      waitForCondition {
-        val ids = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }?.threads?.map { thread -> thread.id }
-                  ?: return@waitForCondition false
-        ids.contains("codex-open") && ids.contains("claude-closed-2")
-      }
-
-      assertThat(claudeClosedLoads.get()).isEqualTo(1)
-      assertThat(codexClosedLoads.get()).isEqualTo(0)
     }
-  } }
+  }
 
   @Test
-  fun observeExistingThreadsMarksProviderWarningAsError() = withCliAvailableTestRegistry { runBlocking(Dispatchers.Default) {
-    withServiceAndLaunch(
-      sessionSourcesProvider = {
-        listOf(
-          ScriptedSessionSource(
-            provider = AgentSessionProvider.CODEX,
-            listFromOpenProject = { path, _ ->
-              if (path == PROJECT_PATH) listOf(thread(id = "codex-1", updatedAt = 200, provider = AgentSessionProvider.CODEX))
-              else emptyList()
-            },
-          ),
-          ScriptedSessionSource(
-            provider = AgentSessionProvider.CLAUDE,
-            listFromOpenProject = { path, _ ->
-              if (path == PROJECT_PATH) {
-                throw IllegalStateException("Claude backend failed")
-              }
-              emptyList()
-            },
-          ),
-        )
-      },
-      projectEntriesProvider = {
-        listOf(openProjectEntry(PROJECT_PATH, "Project A"))
-      },
-    ) { service, launchService ->
-      service.refresh()
-      waitForCondition {
-        service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }?.hasLoaded == true
+  fun refreshExistingThreadsUsesProviderScopedRefreshForLoadedPath() = withCliAvailableTestRegistry {
+    runBlocking(Dispatchers.Default) {
+      val codexClosedLoads = AtomicInteger(0)
+      val claudeClosedLoads = AtomicInteger(0)
+      var claudeClosedThreadId = "claude-closed-1"
+
+      withServiceAndLaunch(
+        sessionSourcesProvider = {
+          listOf(
+            ScriptedSessionSource(
+              provider = AgentSessionProvider.CODEX,
+              listFromOpenProject = { path, _ ->
+                if (path == PROJECT_PATH) listOf(
+                  thread(
+                    id = "codex-open",
+                    updatedAt = 300,
+                    provider = AgentSessionProvider.CODEX
+                  )
+                )
+                else emptyList()
+              },
+              listFromClosedProject = { path ->
+                if (path == PROJECT_PATH) {
+                  codexClosedLoads.incrementAndGet()
+                  listOf(thread(id = "codex-closed", updatedAt = 250, provider = AgentSessionProvider.CODEX))
+                }
+                else {
+                  emptyList()
+                }
+              },
+            ),
+            ScriptedSessionSource(
+              provider = AgentSessionProvider.CLAUDE,
+              listFromOpenProject = { path, _ ->
+                if (path == PROJECT_PATH) listOf(
+                  thread(
+                    id = "claude-open",
+                    updatedAt = 200,
+                    provider = AgentSessionProvider.CLAUDE
+                  )
+                )
+                else emptyList()
+              },
+              listFromClosedProject = { path ->
+                if (path == PROJECT_PATH) {
+                  claudeClosedLoads.incrementAndGet()
+                  listOf(thread(id = claudeClosedThreadId, updatedAt = 400, provider = AgentSessionProvider.CLAUDE))
+                }
+                else {
+                  emptyList()
+                }
+              },
+            ),
+          )
+        },
+        projectEntriesProvider = {
+          listOf(openProjectEntry(PROJECT_PATH, "Project A"))
+        },
+      ) { service, launchService ->
+        service.refresh()
+        waitForCondition {
+          val ids = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }?.threads?.map { thread -> thread.id }
+                    ?: return@waitForCondition false
+          ids.contains("codex-open") && ids.contains("claude-open")
+        }
+
+        claudeClosedThreadId = "claude-closed-2"
+        val bridge = promptLauncherBridge(service, launchService)
+        bridge.refreshExistingThreads(projectPath = PROJECT_PATH, provider = AgentSessionProvider.CLAUDE)
+
+        waitForCondition {
+          val ids = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }?.threads?.map { thread -> thread.id }
+                    ?: return@waitForCondition false
+          ids.contains("codex-open") && ids.contains("claude-closed-2")
+        }
+
+        assertThat(claudeClosedLoads.get()).isEqualTo(1)
+        assertThat(codexClosedLoads.get()).isEqualTo(0)
       }
-
-      val bridge = promptLauncherBridge(service, launchService)
-      val claudeSnapshot = bridge.observeExistingThreads(
-        projectPath = PROJECT_PATH,
-        provider = AgentSessionProvider.CLAUDE,
-      ).first { it.hasLoaded && !it.isLoading }
-      val codexSnapshot = bridge.observeExistingThreads(
-        projectPath = PROJECT_PATH,
-        provider = AgentSessionProvider.CODEX,
-      ).first { it.hasLoaded && !it.isLoading }
-
-      assertThat(claudeSnapshot.threads).isEmpty()
-      assertThat(claudeSnapshot.hasError).isTrue()
-      assertThat(codexSnapshot.threads.map { thread -> thread.id }).containsExactly("codex-1")
-      assertThat(codexSnapshot.hasError).isFalse()
     }
-  } }
+  }
+
+  @Test
+  fun observeExistingThreadsMarksProviderWarningAsError() = withCliAvailableTestRegistry {
+    runBlocking(Dispatchers.Default) {
+      withServiceAndLaunch(
+        sessionSourcesProvider = {
+          listOf(
+            ScriptedSessionSource(
+              provider = AgentSessionProvider.CODEX,
+              listFromOpenProject = { path, _ ->
+                if (path == PROJECT_PATH) listOf(thread(id = "codex-1", updatedAt = 200, provider = AgentSessionProvider.CODEX))
+                else emptyList()
+              },
+            ),
+            ScriptedSessionSource(
+              provider = AgentSessionProvider.CLAUDE,
+              listFromOpenProject = { path, _ ->
+                if (path == PROJECT_PATH) {
+                  throw IllegalStateException("Claude backend failed")
+                }
+                emptyList()
+              },
+            ),
+          )
+        },
+        projectEntriesProvider = {
+          listOf(openProjectEntry(PROJECT_PATH, "Project A"))
+        },
+      ) { service, launchService ->
+        service.refresh()
+        waitForCondition {
+          service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }?.hasLoaded == true
+        }
+
+        val bridge = promptLauncherBridge(service, launchService)
+        val claudeSnapshot = bridge.observeExistingThreads(
+          projectPath = PROJECT_PATH,
+          provider = AgentSessionProvider.CLAUDE,
+        ).first { it.hasLoaded && !it.isLoading }
+        val codexSnapshot = bridge.observeExistingThreads(
+          projectPath = PROJECT_PATH,
+          provider = AgentSessionProvider.CODEX,
+        ).first { it.hasLoaded && !it.isLoading }
+
+        assertThat(claudeSnapshot.threads).isEmpty()
+        assertThat(claudeSnapshot.hasError).isTrue()
+        assertThat(codexSnapshot.threads.map { thread -> thread.id }).containsExactly("codex-1")
+        assertThat(codexSnapshot.hasError).isFalse()
+      }
+    }
+  }
 
   @Test
   fun dedicatedInvocationPrefersSelectedTreePathForWorkingProjectResolution() {
@@ -1873,6 +2054,82 @@ private fun <T> withOpenInNonDedicatedFrameSettingForTest(action: () -> T): T {
   }
   finally {
     Disposer.dispose(disposable)
+  }
+}
+
+private fun assertPromptLaunchResolvedTelemetry(
+  telemetryEvents: Iterable<AgentWorkbenchTelemetryEvent>,
+  provider: AgentWorkbenchTelemetryProvider,
+  launchResult: AgentWorkbenchPromptLaunchResultKind,
+  launchMode: AgentSessionLaunchMode = AgentSessionLaunchMode.STANDARD,
+  targetKind: AgentWorkbenchTargetKind = AgentWorkbenchTargetKind.NEW_THREAD,
+) {
+  assertThat(telemetryEvents).contains(
+    AgentWorkbenchTelemetryEvent(
+      id = AgentWorkbenchTelemetry.PROMPT_LAUNCH_RESOLVED_EVENT_ID,
+      provider = provider,
+      launchMode = launchMode,
+      targetKind = targetKind,
+      launchResult = launchResult,
+    )
+  )
+}
+
+private fun containerPromptLauncherBridge(
+  launchPromptRequest: (AgentPromptLaunchRequest) -> AgentPromptLaunchResult,
+  sourceProjectResolver: (String) -> Project? = { null },
+): AgentSessionPromptLauncherBridge {
+  return AgentSessionPromptLauncherBridge(
+    launchPromptRequest = launchPromptRequest,
+    stateFlowProvider = {
+      error("stateFlowProvider is unavailable in this test setup")
+    },
+    pathStateResolver = ::resolveAgentSessionPathState,
+    refreshCatalogAndLoadNewlyOpened = {},
+    refreshProviderForPath = { _, _ -> },
+    preferredProviderProvider = { null },
+    sourceProjectResolver = sourceProjectResolver,
+  )
+}
+
+private fun <T> withContainerLauncherForTest(
+  launcher: AgentPromptContainerLauncher,
+  action: () -> T,
+): T {
+  return withContainerLaunchersForTest(listOf(launcher), action)
+}
+
+private fun <T> withContainerLaunchersForTest(
+  launchers: List<AgentPromptContainerLauncher>,
+  action: () -> T,
+): T {
+  val point = AgentPromptContainerLauncher.EP_NAME.point as ExtensionPointImpl<AgentPromptContainerLauncher>
+  val disposable = Disposer.newDisposable()
+  try {
+    point.maskAll(newList = launchers, parentDisposable = disposable, fireEvents = false)
+    return action()
+  }
+  finally {
+    Disposer.dispose(disposable)
+  }
+}
+
+private class RecordingContainerLauncher(
+  private val supportedProviders: Set<AgentSessionProvider>,
+  private val available: Boolean,
+) : AgentPromptContainerLauncher {
+  val launchCalls = AtomicInteger()
+  val lastProject = AtomicReference<Project?>()
+  val lastRequest = AtomicReference<AgentPromptLaunchRequest?>()
+
+  override fun isAvailable(): Boolean = available
+
+  override fun supportsProvider(provider: AgentSessionProvider): Boolean = provider in supportedProviders
+
+  override fun launch(project: Project, request: AgentPromptLaunchRequest) {
+    launchCalls.incrementAndGet()
+    lastProject.set(project)
+    lastRequest.set(request)
   }
 }
 

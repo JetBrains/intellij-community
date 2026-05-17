@@ -53,6 +53,42 @@ internal fun shouldShowExistingTaskSelectionHint(
          selectedProvider?.suppressPromptExistingTaskSelectionHint != true
 }
 
+internal fun shouldShowContainerModeOption(
+  selectedProvider: AgentSessionProvider?,
+  isExtensionTab: Boolean,
+  supportsContainerMode: (AgentSessionProvider) -> Boolean,
+): Boolean {
+  return !isExtensionTab && selectedProvider?.let(supportsContainerMode) == true
+}
+
+internal fun shouldEnableContainerModeOption(
+  selectedProvider: AgentSessionProvider?,
+  isExtensionTab: Boolean,
+  supportsContainerMode: (AgentSessionProvider) -> Boolean,
+  isContainerRuntimeAvailable: (AgentSessionProvider) -> Boolean,
+): Boolean {
+  return shouldShowContainerModeOption(
+    selectedProvider = selectedProvider,
+    isExtensionTab = isExtensionTab,
+    supportsContainerMode = supportsContainerMode,
+  ) && selectedProvider?.let(isContainerRuntimeAvailable) == true
+}
+
+internal fun shouldSubmitContainerMode(
+  isSelected: Boolean,
+  selectedProvider: AgentSessionProvider?,
+  isExtensionTab: Boolean,
+  supportsContainerMode: (AgentSessionProvider) -> Boolean,
+  isContainerRuntimeAvailable: (AgentSessionProvider) -> Boolean,
+): Boolean {
+  return isSelected && shouldEnableContainerModeOption(
+    selectedProvider = selectedProvider,
+    isExtensionTab = isExtensionTab,
+    supportsContainerMode = supportsContainerMode,
+    isContainerRuntimeAvailable = isContainerRuntimeAvailable,
+  )
+}
+
 internal fun resolveEffectiveProviderOptionIds(
   selectedProvider: AgentSessionProviderDescriptor?,
   selectedOptionIds: Set<String>,
@@ -130,8 +166,7 @@ internal fun shouldAllowPromptPopupCancellation(
   isExplicitClose: Boolean,
   resolveProject: (Component?) -> Project?,
 ): Boolean {
-  if (isExplicitClose || popupProject == null) return true
-  return when (currentEvent) {
+  return isExplicitClose || popupProject == null || when (currentEvent) {
     is MouseEvent ->
       !isRecentSourceFrameActivation &&
       resolveProject(currentEvent.component) === popupProject
