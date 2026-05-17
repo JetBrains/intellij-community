@@ -7,51 +7,75 @@ package com.intellij.agent.workbench.prompt.ui
 import com.intellij.icons.AllIcons
 import com.intellij.ide.setToolTipText
 import com.intellij.markdown.utils.convertMarkdownToHtml
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.ex.CheckboxAction
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.WindowMoveListener
 import com.intellij.ui.components.ActionLink
-import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTabbedPane
-import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.tabbedPaneHeader
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.util.ui.Advertiser
 import com.intellij.util.ui.DialogUtil
 import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.CardLayout
 import java.awt.Cursor
+import java.awt.Dimension
+import java.awt.Color
 import java.awt.event.ContainerAdapter
 import java.awt.event.ContainerEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.DefaultListModel
 import javax.swing.JEditorPane
+import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.ListSelectionModel
 import javax.swing.ScrollPaneConstants
 import javax.swing.SwingConstants
 import javax.swing.text.DefaultCaret
+import javax.swing.Icon
 
-private val POPUP_PREFERRED_SIZE = JBUI.size(680, 380)
-private val POPUP_MINIMUM_SIZE = JBUI.size(680, 260)
+internal val AGENT_PROMPT_PALETTE_PREFERRED_SIZE: Dimension
+  get() = JBUI.size(680, 380)
+internal val AGENT_PROMPT_PALETTE_MINIMUM_SIZE: Dimension
+  get() = JBUI.size(520, 260)
 private val EXISTING_TASK_PANEL_PREFERRED_SIZE = JBUI.size(0, 90)
 private val EXISTING_TASK_PANEL_MINIMUM_SIZE = JBUI.size(0, 60)
 private const val EXISTING_TASK_VISIBLE_ROWS = 3
 private val PROMPT_PANEL_MINIMUM_SIZE = JBUI.size(0, 120)
+
+@NonNls
+private const val HEADER_ACTIONS_PLACE = "AgentPromptPalette.Header"
 private const val CARD_EDITOR = "editor"
 private const val CARD_PREVIEW = "preview"
+
+private fun headerIconButtonSize(): Dimension = Dimension(ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
 
 internal data class AgentPromptPaletteView(
   @JvmField val rootPanel: JPanel,
@@ -66,18 +90,171 @@ internal data class AgentPromptPaletteView(
   @JvmField val existingTaskListModel: DefaultListModel<ThreadEntry>,
   @JvmField val existingTaskList: JBList<ThreadEntry>,
   @JvmField val existingTaskScrollPane: JBScrollPane,
-  @JvmField val footerLabel: JBLabel,
+  @JvmField val statusStrip: AgentPromptStatusStrip,
   @JvmField val rightHeaderPanel: JPanel,
-  @JvmField val providerOptionsPanel: JPanel?,
-  @JvmField val containerModeCheckBox: JBCheckBox,
+  @JvmField val headerToolbar: ActionToolbar,
+  @JvmField val headerControls: AgentPromptHeaderControls,
+  @JvmField val containerModeAction: AgentPromptHeaderCheckBoxAction,
 )
 
-internal fun createAgentPromptHeaderCheckBox(text: @Nls String, selected: Boolean = false): JBCheckBox {
-  return JBCheckBox(text, selected).apply {
-    isOpaque = false
-    isFocusable = false
-    DialogUtil.registerMnemonic(this)
-    border = JBUI.Borders.emptyRight(9)
+internal class AgentPromptHeaderCheckBoxAction(
+  text: @Nls String,
+  var selected: Boolean = false,
+  private val onSelectionChanged: ((Boolean) -> Unit)? = null,
+) : CheckboxAction(text), DumbAware {
+  var visible: Boolean = true
+  var enabled: Boolean = true
+  var tooltipText: @Nls String? = null
+
+  override fun isSelected(e: AnActionEvent): Boolean {
+    return selected
+  }
+
+  override fun setSelected(e: AnActionEvent, state: Boolean) {
+    selected = state
+    onSelectionChanged?.invoke(state)
+  }
+
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+    e.presentation.isVisible = visible
+    e.presentation.isEnabled = enabled
+    e.presentation.description = tooltipText
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+}
+
+internal class AgentPromptStatusStrip(initialText: @Nls String) {
+  private val advertiser = Advertiser().apply {
+    setBorder(JBUI.CurrentTheme.BigPopup.advertiserBorder())
+    setBackground(JBUI.CurrentTheme.BigPopup.advertiserBackground())
+    setForeground(JBUI.CurrentTheme.BigPopup.advertiserForeground())
+  }
+
+  @JvmField
+  val component: JComponent = advertiser.adComponent
+
+  var text: @Nls String = ""
+    private set
+
+  init {
+    showInfo(initialText)
+  }
+
+  fun showInfo(message: @Nls String) {
+    show(message, JBUI.CurrentTheme.BigPopup.advertiserForeground())
+  }
+
+  fun showError(message: @Nls String) {
+    show(message, NamedColorUtil.getErrorForeground())
+  }
+
+  private fun show(message: @Nls String, foreground: Color) {
+    text = message
+    advertiser.clearAdvertisements()
+    advertiser.setForeground(foreground)
+    advertiser.addAdvertisement(message, null)
+  }
+}
+
+internal class AgentPromptHeaderControls(
+  private val rootGroup: DefaultActionGroup,
+  @JvmField val toolbar: ActionToolbar,
+  @JvmField val toolbarComponent: JComponent,
+  @JvmField val containerModeAction: AgentPromptHeaderCheckBoxAction,
+  private val previewAction: AgentPromptToolbarIconAction,
+  private val promptLibraryAction: AgentPromptToolbarIconAction,
+  private val providerAction: AgentPromptToolbarIconAction,
+) {
+  private var providerOptionsVisible = true
+
+  var providerOptionActions: List<AgentPromptHeaderCheckBoxAction> = emptyList()
+    private set
+
+  fun setProviderOptionActions(actions: List<AgentPromptHeaderCheckBoxAction>) {
+    providerOptionActions = actions
+    providerOptionActions.forEach { action -> action.visible = providerOptionsVisible }
+    rebuildActions()
+  }
+
+  fun setProviderOptionsVisible(visible: Boolean) {
+    providerOptionsVisible = visible
+    providerOptionActions.forEach { action -> action.visible = visible }
+    updateActions()
+  }
+
+  fun setContainerModeVisible(visible: Boolean) {
+    containerModeAction.visible = visible
+    updateActions()
+  }
+
+  fun setContainerModeEnabled(enabled: Boolean) {
+    containerModeAction.enabled = enabled
+    updateActions()
+  }
+
+  fun setContainerModeSelected(selected: Boolean) {
+    containerModeAction.selected = selected
+    updateActions()
+  }
+
+  fun setContainerModeTooltip(tooltipText: @Nls String?) {
+    containerModeAction.tooltipText = tooltipText
+    updateActions()
+  }
+
+  fun updateActions() {
+    @Suppress("DEPRECATION")
+    toolbar.updateActionsImmediately()
+  }
+
+  private fun rebuildActions() {
+    rootGroup.removeAll()
+    rootGroup.add(containerModeAction)
+    providerOptionActions.forEach(rootGroup::add)
+    rootGroup.add(previewAction)
+    rootGroup.add(promptLibraryAction)
+    rootGroup.add(providerAction)
+    updateActions()
+  }
+}
+
+internal class AgentPromptToolbarIconAction(
+  text: @Nls String,
+  initialIcon: Icon,
+  private val onClick: () -> Unit,
+) : DumbAwareAction(text, text, initialIcon), CustomComponentAction {
+  val label: JBLabel = JBLabel(initialIcon).apply {
+    cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+    setToolTipText(HtmlChunk.text(text))
+    accessibleContext.accessibleName = text
+    horizontalAlignment = SwingConstants.CENTER
+    verticalAlignment = SwingConstants.CENTER
+    minimumSize = headerIconButtonSize()
+    preferredSize = headerIconButtonSize()
+    maximumSize = headerIconButtonSize()
+    border = JBUI.Borders.empty()
+    addMouseListener(object : MouseAdapter() {
+      override fun mouseClicked(e: MouseEvent?) {
+        onClick()
+      }
+    })
+  }
+
+  override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+    return label
+  }
+
+  override fun actionPerformed(e: AnActionEvent) {
+    onClick()
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+  fun setIcon(icon: Icon) {
+    templatePresentation.icon = icon
+    label.icon = icon
   }
 }
 
@@ -97,40 +274,23 @@ internal fun createAgentPromptPaletteView(
   promptArea: EditorTextField,
   suggestionsPanel: JPanel = JPanel(),
   contextChipsPanel: JPanel,
-  providerOptionsPanel: JPanel? = null,
   onPromptLibraryClicked: () -> Unit = {},
   onProviderIconClicked: () -> Unit,
   onExistingTaskSelected: (ThreadEntry) -> Unit,
 ): AgentPromptPaletteView {
-  val providerIconLabel = JBLabel().apply {
-    cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-    setToolTipText(HtmlChunk.text(AgentPromptBundle.message("popup.provider.selector.tooltip")))
-    border = JBUI.Borders.empty()
-    addMouseListener(object : MouseAdapter() {
-      override fun mouseClicked(e: MouseEvent?) {
-        onProviderIconClicked()
-      }
-    })
-  }
+  val providerSelectorAction = AgentPromptToolbarIconAction(
+    text = AgentPromptBundle.message("popup.provider.selector.tooltip"),
+    initialIcon = AllIcons.Toolwindows.ToolWindowMessages,
+    onClick = onProviderIconClicked,
+  )
+  val providerIconLabel = providerSelectorAction.label
 
-  fun toolbarIconLabel(icon: javax.swing.Icon, tooltipKey: String, onClick: () -> Unit): JLabel {
-    return JBLabel(icon).apply {
-      cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-      setToolTipText(HtmlChunk.text(AgentPromptBundle.message(tooltipKey)))
-      border = JBUI.Borders.empty()
-      addMouseListener(object : MouseAdapter() {
-        override fun mouseClicked(e: MouseEvent?) {
-          onClick()
-        }
-      })
-    }
-  }
-
-  val promptLibraryIconLabel = toolbarIconLabel(
-    icon = AllIcons.Actions.ListFiles,
-    tooltipKey = "popup.prompt.library.tooltip",
+  val promptLibraryAction = AgentPromptToolbarIconAction(
+    text = AgentPromptBundle.message("popup.prompt.library.tooltip"),
+    initialIcon = AllIcons.Actions.ListFiles,
     onClick = onPromptLibraryClicked,
   )
+  val promptLibraryIconLabel = promptLibraryAction.label
 
   val previewPane = JEditorPane().apply {
     editorKit = HTMLEditorKitBuilder().withWordWrapViewFactory().build()
@@ -153,48 +313,55 @@ internal fun createAgentPromptPaletteView(
   }
   promptCardLayout.show(promptCardPanel, CARD_EDITOR)
 
-  val previewToggle = JBLabel(AllIcons.Actions.Preview).apply {
-    cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-    setToolTipText(HtmlChunk.text(AgentPromptBundle.message("popup.preview.toggle.tooltip")))
-    border = JBUI.Borders.empty()
-    addMouseListener(object : MouseAdapter() {
-      override fun mouseClicked(e: MouseEvent?) {
-        val showing = promptCardPanel.getClientProperty("previewShowing") == true
-        if (showing) {
-          promptCardLayout.show(promptCardPanel, CARD_EDITOR)
-          promptCardPanel.putClientProperty("previewShowing", false)
-          icon = AllIcons.Actions.Preview
-        }
-        else {
-          val markdown = promptArea.text
-          val html = convertMarkdownToHtml(markdown)
-          previewPane.text = "<html><body>$html</body></html>"
-          previewPane.caretPosition = 0
-          promptCardLayout.show(promptCardPanel, CARD_PREVIEW)
-          promptCardPanel.putClientProperty("previewShowing", true)
-          icon = AllIcons.Actions.Edit
-        }
-      }
-    })
+  lateinit var previewToggleAction: AgentPromptToolbarIconAction
+  previewToggleAction = AgentPromptToolbarIconAction(
+    text = AgentPromptBundle.message("popup.preview.toggle.tooltip"),
+    initialIcon = AllIcons.Actions.Preview,
+  ) {
+    val showing = promptCardPanel.getClientProperty("previewShowing") == true
+    if (showing) {
+      promptCardLayout.show(promptCardPanel, CARD_EDITOR)
+      promptCardPanel.putClientProperty("previewShowing", false)
+      previewToggleAction.setIcon(AllIcons.Actions.Preview)
+    }
+    else {
+      val markdown = promptArea.text
+      val html = convertMarkdownToHtml(markdown)
+      previewPane.text = "<html><body>$html</body></html>"
+      previewPane.caretPosition = 0
+      promptCardLayout.show(promptCardPanel, CARD_PREVIEW)
+      promptCardPanel.putClientProperty("previewShowing", true)
+      previewToggleAction.setIcon(AllIcons.Actions.Edit)
+    }
   }
 
-  val containerModeCheckBox = createAgentPromptHeaderCheckBox(AgentPromptBundle.message("popup.option.container.mode")).apply {
-    isVisible = false
+  val containerModeAction = AgentPromptHeaderCheckBoxAction(AgentPromptBundle.message("popup.option.container.mode")).apply {
+    visible = false
   }
+  val headerActionsGroup = DefaultActionGroup()
+  val headerToolbar = ActionManager.getInstance().createActionToolbar(HEADER_ACTIONS_PLACE, headerActionsGroup, true).apply {
+    layoutStrategy = ToolbarLayoutStrategy.AUTOLAYOUT_STRATEGY
+    setReservePlaceAutoPopupIcon(true)
+    (this as? ActionToolbarImpl)?.setSkipWindowAdjustments(true)
+    component.isOpaque = false
+    component.border = JBUI.Borders.empty(JBUI.CurrentTheme.BigPopup.headerToolbarInsets())
+  }
+  val headerControls = AgentPromptHeaderControls(
+    rootGroup = headerActionsGroup,
+    toolbar = headerToolbar,
+    toolbarComponent = headerToolbar.component,
+    containerModeAction = containerModeAction,
+    previewAction = previewToggleAction,
+    promptLibraryAction = promptLibraryAction,
+    providerAction = providerSelectorAction,
+  )
 
   lateinit var tabbedPane: JBTabbedPane
-  val headerControlsInsets = JBUI.CurrentTheme.BigPopup.headerToolbarInsets()
-  val rightHeaderPanel = JPanel(HorizontalLayout(8, SwingConstants.CENTER)).apply {
+  val rightHeaderPanel = JPanel(BorderLayout()).apply {
     isOpaque = false
-    border = JBUI.Borders.empty(headerControlsInsets)
-    add(containerModeCheckBox, HorizontalLayout.RIGHT)
-    if (providerOptionsPanel != null) {
-      add(providerOptionsPanel, HorizontalLayout.RIGHT)
-    }
-    add(previewToggle, HorizontalLayout.RIGHT)
-    add(promptLibraryIconLabel, HorizontalLayout.RIGHT)
-    add(providerIconLabel, HorizontalLayout.RIGHT)
+    add(headerToolbar.component, BorderLayout.CENTER)
   }
+  headerControls.setProviderOptionActions(emptyList())
   val headerPanel = panel {
     row {
       tabbedPane = tabbedPaneHeader()
@@ -282,26 +449,12 @@ internal fun createAgentPromptPaletteView(
     minimumSize = PROMPT_PANEL_MINIMUM_SIZE
   }
 
-  val footerLabel = JBLabel("").apply {
-    text = AgentPromptBundle.message("popup.footer.hint")
-    foreground = JBUI.CurrentTheme.Advertiser.foreground()
-    background = JBUI.CurrentTheme.Advertiser.background()
-    border = JBUI.CurrentTheme.Advertiser.border()
-    isOpaque = true
-  }
-
-  val footerPanel = JPanel(BorderLayout()).apply {
-    isOpaque = true
-    background = JBUI.CurrentTheme.Advertiser.background()
-    border = JBUI.CurrentTheme.Advertiser.border()
-    add(footerLabel, BorderLayout.CENTER)
-  }
+  val statusStrip = AgentPromptStatusStrip(AgentPromptBundle.message("popup.footer.hint"))
 
   val bottomPanel = BorderLayoutPanel().apply {
     background = JBUI.CurrentTheme.Popup.BACKGROUND
-    border = JBUI.Borders.customLine(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(), 1, 0, 0, 0)
     addToCenter(existingTaskScrollPane)
-    addToBottom(footerPanel)
+    addToBottom(statusStrip.component)
   }
   installComposerContextVisibilitySync(
     contextChipsPanel = contextChipsPanel,
@@ -313,12 +466,13 @@ internal fun createAgentPromptPaletteView(
 
   val rootPanel = BorderLayoutPanel().apply {
     background = JBUI.CurrentTheme.Popup.BACKGROUND
-    preferredSize = POPUP_PREFERRED_SIZE
-    minimumSize = POPUP_MINIMUM_SIZE
+    preferredSize = AGENT_PROMPT_PALETTE_PREFERRED_SIZE
+    minimumSize = AGENT_PROMPT_PALETTE_MINIMUM_SIZE
     addToTop(headerPanel)
     addToCenter(promptPanel)
     addToBottom(bottomPanel)
   }
+  headerToolbar.targetComponent = rootPanel
 
   WindowMoveListener(rootPanel).installTo(headerPanel)
 
@@ -335,10 +489,11 @@ internal fun createAgentPromptPaletteView(
     existingTaskListModel = existingTaskListModel,
     existingTaskList = existingTaskList,
     existingTaskScrollPane = existingTaskScrollPane,
-    footerLabel = footerLabel,
+    statusStrip = statusStrip,
     rightHeaderPanel = rightHeaderPanel,
-    providerOptionsPanel = providerOptionsPanel,
-    containerModeCheckBox = containerModeCheckBox,
+    headerToolbar = headerToolbar,
+    headerControls = headerControls,
+    containerModeAction = containerModeAction,
   )
 }
 

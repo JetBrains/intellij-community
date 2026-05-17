@@ -25,7 +25,6 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
-import com.intellij.ui.components.panels.HorizontalLayout
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -33,7 +32,6 @@ import kotlinx.coroutines.cancel
 import java.awt.Component
 import java.awt.Window
 import javax.swing.JPanel
-import javax.swing.SwingConstants
 import javax.swing.SwingUtilities
 
 private const val ACTIVATION_CLICK_GRACE_MS = 500L
@@ -96,6 +94,7 @@ internal class AgentPromptPalettePopup(
       .setResizable(true)
       .setMovable(true)
       .setDimensionServiceKey(project, "AgentWorkbench.PromptPalette", true)
+      .setMinSize(AGENT_PROMPT_PALETTE_MINIMUM_SIZE)
       .setLocateWithinScreenBounds(false)
       .createPopup()
 
@@ -170,21 +169,18 @@ internal class AgentPromptPalettePopup(
     lateinit var controllerRef: AgentPromptPaletteSessionController
     val suggestions = AgentPromptSuggestionsComponent { candidate -> controllerRef.applySuggestedPrompt(candidate) }
     val contextChips = AgentPromptContextChipsComponent { entry -> controllerRef.removeContextEntry(entry) }
-    val promptProviderOptionsPanel = createProviderOptionsPanel()
     val view = createAgentPromptPaletteView(
       promptArea = promptArea,
       suggestionsPanel = suggestions.component,
       contextChipsPanel = contextChips.component,
-      providerOptionsPanel = promptProviderOptionsPanel,
       onPromptLibraryClicked = { controllerRef.showPromptLibraryChooser() },
       onProviderIconClicked = { controllerRef.showProviderChooser() },
       onExistingTaskSelected = { selected -> controllerRef.onExistingTaskSelected(selected) },
     )
-    val providerOptionsPanel = checkNotNull(view.providerOptionsPanel)
     providerSelector = AgentPromptProviderSelector(
       invocationData = invocationData,
       providerIconLabel = view.providerIconLabel,
-      providerOptionsPanel = providerOptionsPanel,
+      headerControls = view.headerControls,
       providersProvider = providersProvider,
       sessionsMessageResolver = sessionsMessageResolver,
       asyncRefreshScope = popupScope,
@@ -247,13 +243,6 @@ internal class AgentPromptPalettePopup(
 
   private fun resolveCodexSkillEntriesForCompletion(): List<AgentPromptReusableSourceEntry> {
     return if (::sessionController.isInitialized) sessionController.codexSkillCompletionEntriesForCompletion() else emptyList()
-  }
-
-  private fun createProviderOptionsPanel(): JPanel {
-    return JPanel(HorizontalLayout(8, SwingConstants.CENTER)).apply {
-      isOpaque = false
-      isVisible = false
-    }
   }
 
   private fun cancelPopupExplicitly() {

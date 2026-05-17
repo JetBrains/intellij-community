@@ -28,7 +28,6 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.EditorTextField
-import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.EmptyIcon
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -424,6 +423,12 @@ class AgentPromptPaletteSubmitControllerTest {
     isContainerModeRuntimeAvailable: (AgentSessionProvider) -> Boolean = { false },
   ): SubmitControllerFixture {
     val promptArea = EditorTextField()
+    val view = createAgentPromptPaletteView(
+      promptArea = EditorTextField(),
+      contextChipsPanel = JPanel(),
+      onProviderIconClicked = {},
+      onExistingTaskSelected = {},
+    )
     val providerSelector = AgentPromptProviderSelector(
       invocationData = AgentPromptInvocationData(
         project = project,
@@ -432,8 +437,8 @@ class AgentPromptPaletteSubmitControllerTest {
         actionPlace = "MainMenu",
         invokedAtMs = 0L,
       ),
-      providerIconLabel = JBLabel(),
-      providerOptionsPanel = JPanel(),
+      providerIconLabel = view.providerIconLabel,
+      headerControls = view.headerControls,
       providersProvider = providersProvider,
       sessionsMessageResolver = AgentPromptSessionsMessageResolver(AgentPromptPaletteSubmitControllerTest::class.java.classLoader),
     )

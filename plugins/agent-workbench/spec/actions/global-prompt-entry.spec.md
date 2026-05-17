@@ -66,7 +66,7 @@ The global prompt opens a project-scoped popup for starting a new task or sendin
   [@test] ../../prompt/ui/testSrc/AgentPromptPlanModeDecisionsTest.kt
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 
-- Header provider/launch options, including Plan mode and Run in container, are right-aligned after the target tabs and render as platform header checkboxes. Their text font must match Search Everywhere `CheckboxAction` checkboxes such as "Include non-project items"; they must not use small footer/advertiser text styling.
+- Header provider/launch options, including Plan mode and Run in container, are right-aligned after the target tabs through a Search Everywhere-style action toolbar. Checkbox options render through `CheckboxAction` components with platform header checkbox metrics; the prompt footer/status area uses the compact BigPopup advertiser strip, not a custom large footer panel.
   [@test] ../../prompt/ui/testSrc/AgentPromptPaletteViewStructureTest.kt
   [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
 

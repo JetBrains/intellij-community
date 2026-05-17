@@ -4,10 +4,11 @@ package com.intellij.agent.workbench.prompt.ui
 import com.intellij.ui.EditorTextField
 import java.awt.Component
 import java.awt.Container
+import java.awt.Dimension
 import javax.swing.JPanel
 
-internal fun layoutPopupRoot(root: JPanel) {
-  root.size = root.preferredSize
+internal fun layoutPopupRoot(root: JPanel, size: Dimension = root.preferredSize) {
+  root.size = Dimension(size)
   layoutRecursively(root)
 }
 

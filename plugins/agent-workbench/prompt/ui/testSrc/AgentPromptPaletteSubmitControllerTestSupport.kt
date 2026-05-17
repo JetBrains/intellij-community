@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.EditorTextField
-import com.intellij.ui.components.JBLabel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -31,10 +30,16 @@ fun captureNewTaskPromptLaunchRequest(
   runInEdtAndWait {
     val classLoader = AgentPromptPaletteSubmitController::class.java.classLoader
     val promptArea = EditorTextField()
+    val view = createAgentPromptPaletteView(
+      promptArea = EditorTextField(),
+      contextChipsPanel = JPanel(),
+      onProviderIconClicked = {},
+      onExistingTaskSelected = {},
+    )
     val providerSelector = AgentPromptProviderSelector(
       invocationData = testInvocationData(project),
-      providerIconLabel = JBLabel(),
-      providerOptionsPanel = JPanel(),
+      providerIconLabel = view.providerIconLabel,
+      headerControls = view.headerControls,
       providersProvider = { listOf(availableDescriptor) },
       sessionsMessageResolver = AgentPromptSessionsMessageResolver(classLoader),
     )

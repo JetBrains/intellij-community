@@ -23,7 +23,6 @@ import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.icons.AllIcons
-import com.intellij.ide.setToolTipText
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -44,10 +43,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Condition
-import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.NamedColorUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -127,8 +123,8 @@ internal class AgentPromptPaletteSessionController(
       updateProviderOptionsVisibility = ::updateProviderOptionsVisibility,
       setTargetMode = ::setTargetMode,
       resolveTaskKey = ::resolveTaskKey,
-      getContainerModeSelected = { view.containerModeCheckBox.isSelected },
-      setContainerModeSelected = { view.containerModeCheckBox.isSelected = it },
+      getContainerModeSelected = { view.containerModeAction.selected },
+      setContainerModeSelected = { view.headerControls.setContainerModeSelected(it) },
     )
     submitController = AgentPromptPaletteSubmitController(
       project = project,
@@ -146,7 +142,7 @@ internal class AgentPromptPaletteSessionController(
       onSubmitBlocked = ::showError,
       onSubmitSucceeded = ::closeAfterSuccessfulSubmit,
       onPromptSubmitted = uiStateService::saveSubmittedPromptHistoryEntry,
-      isContainerModeSelected = { view.containerModeCheckBox.isSelected },
+      isContainerModeSelected = { view.containerModeAction.selected },
       isContainerModeSupported = ::isContainerModeSupported,
       isContainerModeRuntimeAvailable = ::isContainerModeRuntimeAvailable,
     )
@@ -557,10 +553,7 @@ internal class AgentPromptPaletteSessionController(
   }
 
   private fun updateProviderOptionsVisibility() {
-    val providerOptionsPanel = checkNotNull(view.providerOptionsPanel)
-    providerOptionsPanel.isVisible = contextState.activeExtensionTab == null && providerOptionsPanel.componentCount > 0
-    providerOptionsPanel.revalidate()
-    providerOptionsPanel.repaint()
+    providerSelector.setProviderOptionsVisible(contextState.activeExtensionTab == null)
 
     val selectedProvider = providerSelector.selectedProvider?.bridge?.provider
     val showContainerMode = shouldShowContainerModeOption(
@@ -574,14 +567,14 @@ internal class AgentPromptPaletteSessionController(
       supportsContainerMode = ::isContainerModeSupported,
       isContainerRuntimeAvailable = ::isContainerModeRuntimeAvailable,
     )
-    view.containerModeCheckBox.isVisible = showContainerMode
-    view.containerModeCheckBox.isEnabled = enableContainerMode
+    view.headerControls.setContainerModeVisible(showContainerMode)
+    view.headerControls.setContainerModeEnabled(enableContainerMode)
     if (!enableContainerMode) {
-      view.containerModeCheckBox.isSelected = false
+      view.headerControls.setContainerModeSelected(false)
     }
-    view.containerModeCheckBox.setToolTipText(
+    view.headerControls.setContainerModeTooltip(
       if (showContainerMode && !enableContainerMode) {
-        HtmlChunk.text(AgentPromptBundle.message("popup.option.container.mode.unavailable.tooltip"))
+        AgentPromptBundle.message("popup.option.container.mode.unavailable.tooltip")
       }
       else {
         null
@@ -746,7 +739,7 @@ internal class AgentPromptPaletteSessionController(
 
   private fun clearStatus() {
     val extensionTab = contextState.activeExtensionTab
-    view.footerLabel.text = if (extensionTab != null) {
+    val message = if (extensionTab != null) {
       extensionTab.extension.getFooterHint() ?: AgentPromptBundle.message("popup.footer.hint.default.tab")
     }
     else {
@@ -758,7 +751,7 @@ internal class AgentPromptPaletteSessionController(
         )
       )
     }
-    view.footerLabel.foreground = JBUI.CurrentTheme.Advertiser.foreground()
+    view.statusStrip.showInfo(message)
   }
 
   private fun refreshFooterHintForCurrentState() {
@@ -799,13 +792,11 @@ internal class AgentPromptPaletteSessionController(
   }
 
   private fun showError(message: @Nls String) {
-    view.footerLabel.foreground = NamedColorUtil.getErrorForeground()
-    view.footerLabel.text = message
+    view.statusStrip.showError(message)
   }
 
   private fun showInfo(message: @Nls String) {
-    view.footerLabel.foreground = JBUI.CurrentTheme.Advertiser.foreground()
-    view.footerLabel.text = message
+    view.statusStrip.showInfo(message)
   }
 }
 

@@ -1,18 +1,22 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.prompt.ui
 
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.panels.HorizontalLayout
-import com.intellij.util.ui.EmptyIcon
+import com.intellij.util.ui.Advertiser
+import com.intellij.util.ui.JBUI
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.awt.Dimension
 import java.awt.event.KeyEvent
 import javax.swing.JPanel
 import javax.swing.SwingConstants
 import javax.swing.SwingUtilities
+import kotlin.math.abs
 
 @TestApplication
 class AgentPromptPaletteViewStructureTest {
@@ -68,24 +72,24 @@ class AgentPromptPaletteViewStructureTest {
   }
 
   @Test
-  fun providerOptionsPanelIsRenderedOnceWhenProvided() {
+  fun providerOptionActionsAreRenderedOnceInsideHeaderToolbar() {
     runInEdtAndWait {
       val promptArea = EditorTextField()
-      val planModeCheckBox = createAgentPromptHeaderCheckBox("Plan mode")
-      val providerOptionsPanel = JPanel(HorizontalLayout(8, SwingConstants.CENTER)).apply { add(planModeCheckBox) }
+      val planModeAction = AgentPromptHeaderCheckBoxAction("&Plan mode")
       val view = createAgentPromptPaletteView(
         promptArea = promptArea,
         contextChipsPanel = JPanel(),
-        providerOptionsPanel = providerOptionsPanel,
         onProviderIconClicked = {},
         onExistingTaskSelected = {},
       )
+      view.headerControls.setProviderOptionActions(listOf(planModeAction))
+      layoutPopupRoot(view.rootPanel)
 
-      val planModeCheckBoxes = collectComponentsOfType(view.rootPanel, JBCheckBox::class.java)
-      assertThat(planModeCheckBoxes).contains(planModeCheckBox, view.containerModeCheckBox)
-      assertThat(planModeCheckBoxes.count { it === planModeCheckBox }).isEqualTo(1)
-      assertThat(view.providerOptionsPanel).isSameAs(providerOptionsPanel)
-      assertThat(SwingUtilities.isDescendingFrom(providerOptionsPanel, view.rightHeaderPanel)).isTrue()
+      val planModeCheckBoxes = collectComponentsOfType(view.rootPanel, JBCheckBox::class.java).filter { it.text == "Plan mode" }
+      val planModeCheckBox = planModeCheckBoxes.single()
+      assertThat(view.headerControls.providerOptionActions).containsExactly(planModeAction)
+      assertThat(SwingUtilities.isDescendingFrom(planModeCheckBox, view.headerControls.toolbarComponent)).isTrue()
+      assertThat(SwingUtilities.isDescendingFrom(planModeCheckBox, view.rightHeaderPanel)).isTrue()
       assertThat(planModeCheckBox.isFocusable).isFalse()
     }
   }
@@ -94,33 +98,81 @@ class AgentPromptPaletteViewStructureTest {
   fun rightHeaderPanelIsRightAlignedAfterTargetTabs() {
     runInEdtAndWait {
       val promptArea = EditorTextField()
-      val planModeCheckBox = createAgentPromptHeaderCheckBox("Plan mode")
-      val providerOptionsPanel = JPanel(HorizontalLayout(8, SwingConstants.CENTER)).apply { add(planModeCheckBox) }
+      val planModeAction = AgentPromptHeaderCheckBoxAction("&Plan mode")
       val view = createAgentPromptPaletteView(
         promptArea = promptArea,
         contextChipsPanel = JPanel(),
-        providerOptionsPanel = providerOptionsPanel,
         onProviderIconClicked = {},
         onExistingTaskSelected = {},
       )
-      view.containerModeCheckBox.isVisible = true
-      view.providerIconLabel.icon = EmptyIcon.ICON_16
+      view.headerControls.setProviderOptionActions(listOf(planModeAction))
+      view.headerControls.setContainerModeVisible(true)
 
       layoutPopupRoot(view.rootPanel)
 
       val tabbedPaneX = xInRoot(view.tabbedPane, view.rootPanel)
       val rightHeaderX = xInRoot(view.rightHeaderPanel, view.rootPanel)
-      val containerModeX = xInRoot(view.containerModeCheckBox, view.rootPanel)
+      val containerModeCheckBox = findHeaderCheckBox(view, "Run in container")
+      val planModeCheckBox = findHeaderCheckBox(view, "Plan mode")
+      val containerModeX = xInRoot(containerModeCheckBox, view.rootPanel)
       val planModeX = xInRoot(planModeCheckBox, view.rootPanel)
       val promptLibraryX = xInRoot(view.promptLibraryIconLabel, view.rootPanel)
       val providerIconX = xInRoot(view.providerIconLabel, view.rootPanel)
-      assertThat(view.rightHeaderPanel.layout).isInstanceOf(HorizontalLayout::class.java)
+      assertThat(view.headerToolbar.layoutStrategy).isSameAs(ToolbarLayoutStrategy.AUTOLAYOUT_STRATEGY)
+      assertThat(SwingUtilities.isDescendingFrom(view.headerControls.toolbarComponent, view.rightHeaderPanel)).isTrue()
       assertThat(rightHeaderX).isGreaterThan(tabbedPaneX)
       assertThat(containerModeX).isGreaterThan(view.rootPanel.width / 2)
       assertThat(planModeX).isGreaterThan(containerModeX)
       assertThat(promptLibraryX).isGreaterThan(planModeX)
       assertThat(providerIconX).isGreaterThan(promptLibraryX)
       assertThat(providerIconX + view.providerIconLabel.width).isGreaterThan(view.rootPanel.width - 32)
+    }
+  }
+
+  @Test
+  fun popupDefaultWidthStaysStableWhenHeaderOptionsAreVisible() {
+    runInEdtAndWait {
+      val planModeAction = AgentPromptHeaderCheckBoxAction("&Plan mode")
+      val view = createAgentPromptPaletteView(
+        promptArea = EditorTextField(),
+        contextChipsPanel = JPanel(),
+        onProviderIconClicked = {},
+        onExistingTaskSelected = {},
+      )
+      view.headerControls.setProviderOptionActions(listOf(planModeAction))
+      view.headerControls.setContainerModeVisible(true)
+
+      layoutPopupRoot(view.rootPanel)
+
+      assertThat(view.rootPanel.preferredSize.width).isEqualTo(680)
+      assertThat(view.rootPanel.minimumSize.width).isEqualTo(520)
+      assertThat(view.rootPanel.minimumSize.width).isLessThan(view.rootPanel.preferredSize.width)
+      assertThat(view.headerControls.toolbarComponent.minimumSize.width)
+        .isLessThan(view.headerControls.toolbarComponent.preferredSize.width)
+      assertThat(view.rootPanel.width).isEqualTo(view.rootPanel.preferredSize.width)
+    }
+  }
+
+  @Test
+  fun headerToolbarDoesNotForcePopupWiderThanMinimumWidth() {
+    runInEdtAndWait {
+      val planModeAction = AgentPromptHeaderCheckBoxAction("&Plan mode")
+      val view = createAgentPromptPaletteView(
+        promptArea = EditorTextField(),
+        contextChipsPanel = JPanel(),
+        onProviderIconClicked = {},
+        onExistingTaskSelected = {},
+      )
+      view.headerControls.setProviderOptionActions(listOf(planModeAction))
+      view.headerControls.setContainerModeVisible(true)
+      val narrowSize = Dimension(view.rootPanel.minimumSize.width, view.rootPanel.preferredSize.height)
+
+      layoutPopupRoot(view.rootPanel, narrowSize)
+
+      val toolbarX = xInRoot(view.headerControls.toolbarComponent, view.rootPanel)
+      assertThat(view.rootPanel.width).isEqualTo(narrowSize.width)
+      assertThat(view.headerControls.toolbarComponent.width).isLessThanOrEqualTo(view.rightHeaderPanel.width)
+      assertThat(toolbarX + view.headerControls.toolbarComponent.width).isLessThanOrEqualTo(view.rootPanel.width)
     }
   }
 
@@ -133,38 +185,73 @@ class AgentPromptPaletteViewStructureTest {
         onProviderIconClicked = {},
         onExistingTaskSelected = {},
       )
+      view.headerControls.setContainerModeVisible(true)
+      layoutPopupRoot(view.rootPanel)
+      val containerModeCheckBox = findHeaderCheckBox(view, "Run in container")
 
-      assertThat(SwingUtilities.isDescendingFrom(view.containerModeCheckBox, view.rightHeaderPanel)).isTrue()
-      assertThat(SwingUtilities.isDescendingFrom(view.containerModeCheckBox, view.bottomPanel)).isFalse()
-      assertThat(view.containerModeCheckBox.text).isEqualTo("Run in container")
-      assertThat(view.containerModeCheckBox.mnemonic).isEqualTo(KeyEvent.VK_R)
-      assertThat(view.containerModeCheckBox.displayedMnemonicIndex).isEqualTo(0)
-      assertThat(view.containerModeCheckBox.isFocusable).isFalse()
-      assertThat(view.containerModeCheckBox.isOpaque).isFalse()
-      assertThat(view.containerModeCheckBox.font).isEqualTo(JBCheckBox().font)
+      assertThat(SwingUtilities.isDescendingFrom(containerModeCheckBox, view.headerControls.toolbarComponent)).isTrue()
+      assertThat(SwingUtilities.isDescendingFrom(containerModeCheckBox, view.rightHeaderPanel)).isTrue()
+      assertThat(SwingUtilities.isDescendingFrom(containerModeCheckBox, view.bottomPanel)).isFalse()
+      assertThat(containerModeCheckBox.text).isEqualTo("Run in container")
+      assertThat(containerModeCheckBox.mnemonic).isEqualTo(KeyEvent.VK_R)
+      assertThat(containerModeCheckBox.displayedMnemonicIndex).isEqualTo(0)
+      assertThat(containerModeCheckBox.isFocusable).isFalse()
+      assertThat(containerModeCheckBox.isOpaque).isFalse()
+      assertThat(containerModeCheckBox.font).isEqualTo(JBCheckBox().font)
     }
   }
 
   @Test
   fun headerOptionCheckBoxesUseSearchEverywhereCheckboxStyle() {
     runInEdtAndWait {
-      val planModeCheckBox = createAgentPromptHeaderCheckBox("Plan mode")
-      val providerOptionsPanel = JPanel(HorizontalLayout(8, SwingConstants.CENTER)).apply { add(planModeCheckBox) }
+      val planModeAction = AgentPromptHeaderCheckBoxAction("&Plan mode")
       val view = createAgentPromptPaletteView(
         promptArea = EditorTextField(),
         contextChipsPanel = JPanel(),
-        providerOptionsPanel = providerOptionsPanel,
         onProviderIconClicked = {},
         onExistingTaskSelected = {},
       )
+      view.headerControls.setProviderOptionActions(listOf(planModeAction))
+      view.headerControls.setContainerModeVisible(true)
+      layoutPopupRoot(view.rootPanel)
+      val planModeCheckBox = findHeaderCheckBox(view, "Plan mode")
+      val containerModeCheckBox = findHeaderCheckBox(view, "Run in container")
 
       val defaultCheckBox = JBCheckBox()
       assertThat(planModeCheckBox.font).isEqualTo(defaultCheckBox.font)
-      assertThat(view.containerModeCheckBox.font).isEqualTo(defaultCheckBox.font)
-      assertThat(planModeCheckBox.isOpaque).isEqualTo(view.containerModeCheckBox.isOpaque)
-      assertThat(planModeCheckBox.isFocusable).isEqualTo(view.containerModeCheckBox.isFocusable)
+      assertThat(containerModeCheckBox.font).isEqualTo(defaultCheckBox.font)
+      assertThat(planModeCheckBox.isOpaque).isEqualTo(containerModeCheckBox.isOpaque)
+      assertThat(planModeCheckBox.isFocusable).isEqualTo(containerModeCheckBox.isFocusable)
       assertThat(planModeCheckBox.border.getBorderInsets(planModeCheckBox))
-        .isEqualTo(view.containerModeCheckBox.border.getBorderInsets(view.containerModeCheckBox))
+        .isEqualTo(containerModeCheckBox.border.getBorderInsets(containerModeCheckBox))
+      assertThat(abs(yCenterInRoot(planModeCheckBox, view.rootPanel) - yCenterInRoot(containerModeCheckBox, view.rootPanel)))
+        .isLessThanOrEqualTo(1)
+    }
+  }
+
+  @Test
+  fun statusStripUsesCompactBigPopupAdvertiserChrome() {
+    runInEdtAndWait {
+      val view = createAgentPromptPaletteView(
+        promptArea = EditorTextField(),
+        contextChipsPanel = JPanel(),
+        onProviderIconClicked = {},
+        onExistingTaskSelected = {},
+      )
+      val referenceAdvertiser = Advertiser().apply {
+        setBorder(JBUI.CurrentTheme.BigPopup.advertiserBorder())
+        setBackground(JBUI.CurrentTheme.BigPopup.advertiserBackground())
+        setForeground(JBUI.CurrentTheme.BigPopup.advertiserForeground())
+        addAdvertisement("Enter to send", null)
+      }
+
+      layoutPopupRoot(view.rootPanel)
+
+      assertThat(SwingUtilities.isDescendingFrom(view.statusStrip.component, view.bottomPanel)).isTrue()
+      assertThat(view.statusStrip.component.preferredSize.height)
+        .isEqualTo(referenceAdvertiser.adComponent.preferredSize.height)
+      assertThat(view.statusStrip.component.preferredSize.height)
+        .isLessThan(view.rootPanel.preferredSize.height / 10)
     }
   }
 
@@ -184,6 +271,12 @@ class AgentPromptPaletteViewStructureTest {
       assertThat(SwingUtilities.isDescendingFrom(view.promptLibraryIconLabel, view.rootPanel)).isTrue()
       assertThat(view.promptLibraryIconLabel.toolTipText).contains("Open prompt library")
       assertThat(xInRoot(view.promptLibraryIconLabel, view.rootPanel)).isLessThan(xInRoot(view.providerIconLabel, view.rootPanel))
+      assertThat(view.promptLibraryIconLabel.preferredSize).isEqualTo(ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
+      assertThat(view.providerIconLabel.preferredSize).isEqualTo(ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
+      assertThat(view.promptLibraryIconLabel.width).isEqualTo(ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.width)
+      assertThat(view.providerIconLabel.width).isEqualTo(ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.width)
+      assertThat(view.promptLibraryIconLabel.horizontalAlignment).isEqualTo(SwingConstants.CENTER)
+      assertThat(view.providerIconLabel.horizontalAlignment).isEqualTo(SwingConstants.CENTER)
     }
   }
 
@@ -248,5 +341,16 @@ class AgentPromptPaletteViewStructureTest {
 
   private fun xInRoot(component: java.awt.Component, root: JPanel): Int {
     return SwingUtilities.convertPoint(component.parent, component.location, root).x
+  }
+
+  private fun yCenterInRoot(component: java.awt.Component, root: JPanel): Int {
+    val y = SwingUtilities.convertPoint(component.parent, component.location, root).y
+    return y + component.height / 2
+  }
+
+  private fun findHeaderCheckBox(view: AgentPromptPaletteView, text: String): JBCheckBox {
+    view.headerControls.updateActions()
+    layoutPopupRoot(view.rootPanel)
+    return collectComponentsOfType(view.rootPanel, JBCheckBox::class.java).single { checkBox -> checkBox.text == text }
   }
 }

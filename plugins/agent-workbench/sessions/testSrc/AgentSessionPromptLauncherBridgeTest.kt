@@ -50,6 +50,7 @@ import com.intellij.agent.workbench.sessions.service.AgentSessionPromptLauncherB
 import com.intellij.agent.workbench.sessions.service.OpenThreadLaunchOrigin
 import com.intellij.agent.workbench.sessions.service.resolveAgentSessionPathState
 import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.contextModality
@@ -58,8 +59,8 @@ import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.advanced.AdvancedSettingsImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
@@ -76,6 +77,9 @@ import javax.swing.Icon
 
 @TestApplication
 class AgentSessionPromptLauncherBridgeTest {
+  @TestDisposable
+  lateinit var testRootDisposable: Disposable
+
   @Test
   fun launchCreatesNewSessionForPromptRequest() {
     val providerBridge = RecordingPromptLaunchProviderBridge(
@@ -178,7 +182,7 @@ class AgentSessionPromptLauncherBridgeTest {
     )
     val request = promptLaunchRequest(provider = AgentSessionProvider.CLAUDE).copy(containerMode = true)
 
-    withContainerLauncherForTest(containerLauncher) {
+    withContainerLauncherForTest(containerLauncher, testRootDisposable) {
       val result = bridge.launch(request)
 
       assertThat(result).isEqualTo(AgentPromptLaunchResult.SUCCESS)
@@ -207,7 +211,7 @@ class AgentSessionPromptLauncherBridgeTest {
     val token = AgentWorkbenchTelemetry.pushTestHandler(telemetryEvents::add)
 
     try {
-      withContainerLauncherForTest(containerLauncher) {
+      withContainerLauncherForTest(containerLauncher, testRootDisposable) {
         val result = bridge.launch(request)
 
         assertThat(result.launched).isFalse()
@@ -244,7 +248,7 @@ class AgentSessionPromptLauncherBridgeTest {
     val token = AgentWorkbenchTelemetry.pushTestHandler(telemetryEvents::add)
 
     try {
-      withContainerLauncherForTest(containerLauncher) {
+      withContainerLauncherForTest(containerLauncher, testRootDisposable) {
         val result = bridge.launch(request)
 
         assertThat(result.launched).isFalse()
@@ -277,7 +281,7 @@ class AgentSessionPromptLauncherBridgeTest {
     val token = AgentWorkbenchTelemetry.pushTestHandler(telemetryEvents::add)
 
     try {
-      withContainerLaunchersForTest(emptyList()) {
+      withContainerLaunchersForTest(emptyList(), testRootDisposable) {
         val result = bridge.launch(request)
 
         assertThat(result.launched).isFalse()
@@ -313,7 +317,7 @@ class AgentSessionPromptLauncherBridgeTest {
     val token = AgentWorkbenchTelemetry.pushTestHandler(telemetryEvents::add)
 
     try {
-      withContainerLauncherForTest(containerLauncher) {
+      withContainerLauncherForTest(containerLauncher, testRootDisposable) {
         val result = bridge.launch(request)
 
         assertThat(result.launched).isFalse()
@@ -461,7 +465,7 @@ class AgentSessionPromptLauncherBridgeTest {
         }
       }
     )
-    withOpenInNonDedicatedFrameSettingForTest {
+    withOpenInNonDedicatedFrameSettingForTest(testRootDisposable) {
       AgentSessionProviders.withRegistryForTest(
         InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
       ) {
@@ -530,7 +534,7 @@ class AgentSessionPromptLauncherBridgeTest {
         }
       }
     )
-    withOpenInNonDedicatedFrameSettingForTest {
+    withOpenInNonDedicatedFrameSettingForTest(testRootDisposable) {
       AgentSessionProviders.withRegistryForTest(
         InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
       ) {
@@ -584,7 +588,7 @@ class AgentSessionPromptLauncherBridgeTest {
     val firstLaunchResult = CompletableDeferred<AgentPromptLaunchResult>()
     val secondLaunchResult = CompletableDeferred<AgentPromptLaunchResult>()
     val chatOpenExecutor = RecordingChatOpenExecutor()
-    withOpenInNonDedicatedFrameSettingForTest {
+    withOpenInNonDedicatedFrameSettingForTest(testRootDisposable) {
       AgentSessionProviders.withRegistryForTest(
         InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
       ) {
@@ -646,7 +650,7 @@ class AgentSessionPromptLauncherBridgeTest {
         openModality.set(currentCoroutineContext().contextModality())
       }
     )
-    withOpenInNonDedicatedFrameSettingForTest {
+    withOpenInNonDedicatedFrameSettingForTest(testRootDisposable) {
       AgentSessionProviders.withRegistryForTest(
         InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
       ) {
@@ -1295,7 +1299,7 @@ class AgentSessionPromptLauncherBridgeTest {
         }
       }
     )
-    withOpenInNonDedicatedFrameSettingForTest {
+    withOpenInNonDedicatedFrameSettingForTest(testRootDisposable) {
       AgentSessionProviders.withRegistryForTest(
         InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
       ) {
@@ -2043,18 +2047,12 @@ private fun addContextToTargetRequest(): AgentPromptAddContextToTargetRequest {
   )
 }
 
-private fun <T> withOpenInNonDedicatedFrameSettingForTest(action: () -> T): T {
+private fun <T> withOpenInNonDedicatedFrameSettingForTest(parentDisposable: Disposable, action: () -> T): T {
   val advancedSettings = AdvancedSettings.getInstance() as AdvancedSettingsImpl
-  val disposable = Disposer.newDisposable()
-  registerDedicatedFrameSettingForTest(disposable)
-  advancedSettings.setSetting(OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID, false, disposable)
-  try {
-    AgentChatOpenModeSettings.setOpenInDedicatedFrame(false)
-    return action()
-  }
-  finally {
-    Disposer.dispose(disposable)
-  }
+  registerDedicatedFrameSettingForTest(parentDisposable)
+  advancedSettings.setSetting(OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID, false, parentDisposable)
+  AgentChatOpenModeSettings.setOpenInDedicatedFrame(false)
+  return action()
 }
 
 private fun assertPromptLaunchResolvedTelemetry(
@@ -2094,24 +2092,20 @@ private fun containerPromptLauncherBridge(
 
 private fun <T> withContainerLauncherForTest(
   launcher: AgentPromptContainerLauncher,
+  parentDisposable: Disposable,
   action: () -> T,
 ): T {
-  return withContainerLaunchersForTest(listOf(launcher), action)
+  return withContainerLaunchersForTest(listOf(launcher), parentDisposable, action)
 }
 
 private fun <T> withContainerLaunchersForTest(
   launchers: List<AgentPromptContainerLauncher>,
+  parentDisposable: Disposable,
   action: () -> T,
 ): T {
   val point = AgentPromptContainerLauncher.EP_NAME.point as ExtensionPointImpl<AgentPromptContainerLauncher>
-  val disposable = Disposer.newDisposable()
-  try {
-    point.maskAll(newList = launchers, parentDisposable = disposable, fireEvents = false)
-    return action()
-  }
-  finally {
-    Disposer.dispose(disposable)
-  }
+  point.maskAll(newList = launchers, parentDisposable = parentDisposable, fireEvents = false)
+  return action()
 }
 
 private class RecordingContainerLauncher(

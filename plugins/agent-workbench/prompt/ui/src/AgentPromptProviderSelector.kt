@@ -28,7 +28,6 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -36,12 +35,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
-import javax.swing.JPanel
 
 internal class AgentPromptProviderSelector(
   private val invocationData: AgentPromptInvocationData,
   private val providerIconLabel: JBLabel,
-  private val providerOptionsPanel: JPanel,
+  private val headerControls: AgentPromptHeaderControls,
   private val providersProvider: () -> List<AgentSessionProviderDescriptor>,
   private val sessionsMessageResolver: AgentPromptSessionsMessageResolver,
   /**
@@ -130,6 +128,10 @@ internal class AgentPromptProviderSelector(
       selectedOptionIdsByProvider[entry.bridge.provider] = sanitizeSelectedOptionIds(entry.bridge, storedSelection)
     }
     updateProviderOptionsPresentation()
+  }
+
+  fun setProviderOptionsVisible(visible: Boolean) {
+    headerControls.setProviderOptionsVisible(visible)
   }
 
   fun providerOptionSelections(): Map<String, Set<String>> {
@@ -221,23 +223,15 @@ internal class AgentPromptProviderSelector(
   }
 
   private fun updateProviderOptionsPresentation() {
-    providerOptionsPanel.removeAll()
     val bridge = selectedProvider?.bridge
     val options = bridge?.promptOptions.orEmpty()
     if (bridge == null || options.isEmpty()) {
-      providerOptionsPanel.isVisible = false
-      providerOptionsPanel.revalidate()
-      providerOptionsPanel.repaint()
+      headerControls.setProviderOptionActions(emptyList())
       return
     }
 
     val selectedOptionIds = optionSelectionState(bridge)
-    options.forEach { option ->
-      providerOptionsPanel.add(createProviderOptionCheckBox(bridge, option, selectedOptionIds))
-    }
-    providerOptionsPanel.isVisible = true
-    providerOptionsPanel.revalidate()
-    providerOptionsPanel.repaint()
+    headerControls.setProviderOptionActions(options.map { option -> createProviderOptionAction(bridge, option, selectedOptionIds) })
   }
 
   private fun createProviderSelectionAction(item: AgentSessionProviderMenuItem, onSelected: (ProviderEntry) -> Unit): AnAction {
@@ -288,20 +282,18 @@ internal class AgentPromptProviderSelector(
     return AgentPromptBundle.message("popup.error.provider.unavailable", item.displayNameFallback())
   }
 
-  private fun createProviderOptionCheckBox(
+  private fun createProviderOptionAction(
     bridge: AgentSessionProviderDescriptor,
     option: AgentPromptProviderOption,
     selectedOptionIds: LinkedHashSet<String>,
-  ): JBCheckBox {
+  ): AgentPromptHeaderCheckBoxAction {
     val label = sessionsMessageResolver.resolve(option.labelKey, bridge) ?: option.labelFallback
-    return createAgentPromptHeaderCheckBox(label, option.id in selectedOptionIds).apply {
-      addActionListener {
-        if (isSelected) {
-          selectedOptionIds.add(option.id)
-        }
-        else {
-          selectedOptionIds.remove(option.id)
-        }
+    return AgentPromptHeaderCheckBoxAction(label, option.id in selectedOptionIds) { selected ->
+      if (selected) {
+        selectedOptionIds.add(option.id)
+      }
+      else {
+        selectedOptionIds.remove(option.id)
       }
     }
   }

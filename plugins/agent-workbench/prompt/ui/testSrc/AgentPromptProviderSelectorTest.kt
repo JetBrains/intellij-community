@@ -19,8 +19,8 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.ui.EditorTextField
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.EmptyIcon
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -62,7 +62,8 @@ class AgentPromptProviderSelectorTest {
       assertThat(fixture.planModeCheckBox().text).doesNotContain("Alt+P")
       assertThat(fixture.planModeCheckBox().isSelected).isTrue()
       assertThat(fixture.planModeCheckBox().font).isEqualTo(JBCheckBox().font)
-      val expectedHeaderCheckBox = createAgentPromptHeaderCheckBox("Run in container")
+      fixture.view.headerControls.setContainerModeVisible(true)
+      val expectedHeaderCheckBox = fixture.headerCheckBox("Run in container")
       assertThat(fixture.planModeCheckBox().border.getBorderInsets(fixture.planModeCheckBox()))
         .isEqualTo(expectedHeaderCheckBox.border.getBorderInsets(expectedHeaderCheckBox))
 
@@ -87,8 +88,9 @@ class AgentPromptProviderSelectorTest {
 
       fixture.selector.refresh()
 
-      assertThat(fixture.providerOptionsPanel.componentCount).isZero()
-      assertThat(fixture.providerOptionsPanel.isVisible).isFalse()
+      assertThat(fixture.view.headerControls.providerOptionActions).isEmpty()
+      assertThat(collectComponentsOfType(fixture.view.rootPanel, JBCheckBox::class.java).map { it.text })
+        .doesNotContain("Plan mode")
     }
   }
 
@@ -171,7 +173,12 @@ class AgentPromptProviderSelectorTest {
   ): ProviderSelectorFixture {
     val project = ProjectManager.getInstance().defaultProject
     AgentSessionProviderAvailabilityService.getInstance(project).setAvailabilityForTest(availabilityByProvider)
-    val providerOptionsPanel = JPanel()
+    val view = createAgentPromptPaletteView(
+      promptArea = EditorTextField(),
+      contextChipsPanel = JPanel(),
+      onProviderIconClicked = {},
+      onExistingTaskSelected = {},
+    )
     return ProviderSelectorFixture(
       selector = AgentPromptProviderSelector(
         invocationData = AgentPromptInvocationData(
@@ -181,13 +188,13 @@ class AgentPromptProviderSelectorTest {
           actionPlace = "MainMenu",
           invokedAtMs = 0L,
         ),
-        providerIconLabel = JBLabel(),
-        providerOptionsPanel = providerOptionsPanel,
+        providerIconLabel = view.providerIconLabel,
+        headerControls = view.headerControls,
         providersProvider = { providers },
         sessionsMessageResolver = AgentPromptSessionsMessageResolver(AgentPromptProviderSelector::class.java.classLoader),
         asyncRefreshScope = asyncRefreshScope,
       ),
-      providerOptionsPanel = providerOptionsPanel,
+      view = view,
     )
   }
 
@@ -241,10 +248,16 @@ class AgentPromptProviderSelectorTest {
 
   private data class ProviderSelectorFixture(
     val selector: AgentPromptProviderSelector,
-    val providerOptionsPanel: JPanel,
+    val view: AgentPromptPaletteView,
   ) {
     fun planModeCheckBox(): JBCheckBox {
-      return providerOptionsPanel.components.single() as JBCheckBox
+      return headerCheckBox("Plan mode")
+    }
+
+    fun headerCheckBox(text: String): JBCheckBox {
+      view.headerControls.updateActions()
+      layoutPopupRoot(view.rootPanel)
+      return collectComponentsOfType(view.rootPanel, JBCheckBox::class.java).single { checkBox -> checkBox.text == text }
     }
   }
 }

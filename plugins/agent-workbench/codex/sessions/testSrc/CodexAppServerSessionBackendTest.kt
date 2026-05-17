@@ -12,6 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
@@ -291,8 +292,12 @@ class CodexAppServerSessionBackendTest {
 
       val threads = backend.listThreads(path = projectDir.toString(), openProject = null)
       assertThat(threads.map { it.thread.id }).containsExactly("compact-1", "review-1", "parent-1")
-      assertThat(threads.first { it.thread.id == "compact-1" }.summaryActivity).isNull()
-      assertThat(threads.first { it.thread.id == "review-1" }.summaryActivity).isNull()
+      val compactThread = threads.firstOrNull { it.thread.id == "compact-1" }
+      val reviewThread = threads.firstOrNull { it.thread.id == "review-1" }
+      assertNotNull(compactThread, "Expected compact-1 flat sub-agent thread to be present")
+      assertNotNull(reviewThread, "Expected review-1 flat sub-agent thread to be present")
+      assertThat(compactThread.summaryActivity).isNull()
+      assertThat(reviewThread.summaryActivity).isNull()
       assertThat(archiveCalls).isEmpty()
     }
   }

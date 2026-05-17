@@ -101,6 +101,12 @@ class AgentPromptPaletteDraftControllerTest {
   }
 
   private fun createProviderSelector(project: com.intellij.openapi.project.Project): AgentPromptProviderSelector {
+    val view = createAgentPromptPaletteView(
+      promptArea = EditorTextField(),
+      contextChipsPanel = JPanel(),
+      onProviderIconClicked = {},
+      onExistingTaskSelected = {},
+    )
     return AgentPromptProviderSelector(
       invocationData = AgentPromptInvocationData(
         project = project,
@@ -109,8 +115,8 @@ class AgentPromptPaletteDraftControllerTest {
         actionPlace = "MainMenu",
         invokedAtMs = 0L,
       ),
-      providerIconLabel = com.intellij.ui.components.JBLabel(),
-      providerOptionsPanel = JPanel(),
+      providerIconLabel = view.providerIconLabel,
+      headerControls = view.headerControls,
       providersProvider = { emptyList() },
       sessionsMessageResolver = AgentPromptSessionsMessageResolver(AgentPromptPaletteDraftControllerTest::class.java.classLoader),
     )
@@ -134,7 +140,8 @@ class AgentPromptPaletteDraftControllerTest {
 
       override fun getTabTitle(): String = "Extension"
 
-      override fun getInitialPrompt(project: com.intellij.openapi.project.Project): AgentPromptPaletteInitialPrompt = AgentPromptPaletteInitialPrompt(content = "extension prompt")
+      override fun getInitialPrompt(project: com.intellij.openapi.project.Project): AgentPromptPaletteInitialPrompt =
+        AgentPromptPaletteInitialPrompt(content = "extension prompt")
 
       override fun getSubmitActionId(): String? = null
 
