@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.starter.junit5
 
+import com.intellij.ide.starter.ci.CIServer
+import com.intellij.ide.starter.ci.teamcity.TeamCityCIServer
+import com.intellij.ide.starter.di.di
 import com.intellij.ide.starter.junit5.config.KillOutdatedProcessesAfterEach
 import com.intellij.ide.starter.models.IdeInfo
 import com.intellij.ide.starter.models.TestCase
@@ -16,6 +19,8 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.io.TempDir
+import org.kodein.di.DI
+import org.kodein.di.bindSingleton
 import java.nio.file.Path
 import kotlin.time.Duration.Companion.minutes
 
@@ -28,7 +33,6 @@ import kotlin.time.Duration.Companion.minutes
  * (reported as `testIgnored` on TeamCity) or rethrows it unchanged.
  */
 @ExtendWith(KillOutdatedProcessesAfterEach::class)
-@ExtendWith(IgnoreOnIdeErrorExtension::class)
 class IgnoreOnIdeErrorDemoTest {
 
   @AfterEach
@@ -38,7 +42,7 @@ class IgnoreOnIdeErrorDemoTest {
 
   @Test
   @IgnoreOnIdeError(
-      message = ".*Drop error from command.*",
+      messageRegex = ".*Drop error from command.*",
       reason = "demo: matching filter",
     )
   fun matchingFilterDowngradesFailureToIgnored(testInfo: TestInfo, @TempDir projectDir: Path) {
@@ -57,7 +61,7 @@ class IgnoreOnIdeErrorDemoTest {
     "that a non-matching filter does not downgrade the failure."
   )
   @IgnoreOnIdeError(
-    message = ".*never-matches-anything-zzz.*",
+    messageRegex = ".*never-matches-anything-zzz.*",
     reason = "demo: non-matching filter",
   )
   fun nonMatchingFilterStillFails(testInfo: TestInfo, @TempDir projectDir: Path) {
@@ -73,6 +77,10 @@ class IgnoreOnIdeErrorDemoTest {
       testInfo.hyphenateWithClass(),
       TestCase(IdeInfo.IdeaUltimate, LocalProjectInfo(projectDir)).useRelease(),
     )
+    di = DI {
+      extend(di)
+      bindSingleton<CIServer>(overrides = true) { TeamCityCIServer() }
+    }
     context.runIDE(
       commands = CommandChain()
         .addCommand("%dropError demo error from IgnoreOnIdeErrorDemoTest")
