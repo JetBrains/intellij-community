@@ -1,11 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui
 
-import org.jetbrains.annotations.ApiStatus
 import java.awt.geom.Ellipse2D
 
-@ApiStatus.Internal
-@ApiStatus.Experimental
 class BadgeDotProvider(
   val x: Double = getDouble("IconBadge.dotX", 16.5) / 20,
   val y: Double = getDouble("IconBadge.dotY", 3.5) / 20,

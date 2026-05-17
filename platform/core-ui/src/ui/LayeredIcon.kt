@@ -139,7 +139,7 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
   val allLayers: Array<Icon?>
     get() = iconListSupplier.get().icons
 
-  override fun replaceBy(replacer: IconReplacer) = LayeredIcon(icon = this, replacer = replacer)
+  override fun replaceBy(replacer: IconReplacer): LayeredIcon = LayeredIcon(icon = this, replacer = replacer)
 
   override fun copy(): LayeredIcon = LayeredIcon(icon = this, replacer = null)
 
@@ -178,15 +178,15 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
   }
 
   // for cache, we need distinct hash code, but we cannot compute it by content, as we should not call iconListSupplier to compute hash code
-  override fun hashCode() = System.identityHashCode(this)
+  override fun hashCode(): Int = System.identityHashCode(this)
 
   fun setIcon(icon: Icon?, layer: Int) {
     setIcon(icon = icon, layer = layer, hShift = 0, vShift = 0)
   }
 
-  override fun getIcon(layer: Int) = allLayers[layer]
+  override fun getIcon(layer: Int): Icon? = allLayers[layer]
 
-  override fun getIconCount() = allLayers.size
+  override fun getIconCount(): Int = allLayers.size
 
   fun setIcon(icon: Icon?, layer: Int, hShift: Int, vShift: Int) {
     if (icon is LayeredIcon) {
@@ -376,9 +376,9 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
     return newIcon
   }
 
-  override fun toString() = "LayeredIcon(w=$width, h=$height, icons=[${allLayers.joinToString(", ")}]"
+  override fun toString(): String = "LayeredIcon(w=$width, h=$height, icons=[${allLayers.joinToString(", ")}]"
 
-  override fun getToolTip(composite: Boolean) = combineIconTooltips(allLayers)
+  override fun getToolTip(composite: Boolean): @NlsContexts.Tooltip String? = combineIconTooltips(allLayers)
 }
 
 internal fun combineIconTooltips(icons: Array<Icon?>): @NlsContexts.Tooltip String? {
@@ -390,7 +390,6 @@ internal fun combineIconTooltips(icons: Array<Icon?>): @NlsContexts.Tooltip Stri
         val result: @NlsContexts.Tooltip StringBuilder = StringBuilder()
         val seenTooltips = HashSet<String>()
         buildCompositeTooltip(icons = icons, result = result, seenTooltips = seenTooltips)
-        @Suppress("HardCodedStringLiteral")
         return result.toString()
       }
       singleIcon = icon
@@ -404,7 +403,7 @@ internal fun combineIconTooltips(icons: Array<Icon?>): @NlsContexts.Tooltip Stri
 
 private fun buildCompositeTooltip(icons: Array<Icon?>, result: StringBuilder, seenTooltips: MutableSet<String>) {
   for (i in icons.indices) {
-    // the first layer is the actual object (noun), other layers are modifiers (adjectives), so put a first object in the last position
+    // the first layer is the actual object (noun), other layers are modifiers (adjectives), so put the first object in the last position
     val icon = if (i == icons.size - 1) icons[0] else icons[i + 1]
     if (icon is LayeredIcon) {
       buildCompositeTooltip(icons = icon.allLayers, result = result, seenTooltips = seenTooltips)

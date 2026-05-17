@@ -155,6 +155,39 @@ a:com.intellij.openapi.util.BusyObject$Impl
 - f:onReady():V
 - f:onReady(java.lang.Object):V
 - p:onReadyWasSent():V
+f:com.intellij.ui.BadgeDotProvider
+- com.intellij.ui.BadgeShapeProvider
+- <init>():V
+- <init>(D,D,D,D):V
+- b:<init>(D,D,D,D,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- createShape(I,I,Z):java.awt.geom.Ellipse2D
+- f:getRadius():D
+- f:getX():D
+- f:getY():D
+f:com.intellij.ui.BadgeIcon
+- com.intellij.ui.icons.HoledIcon
+- <init>(javax.swing.Icon,java.awt.Paint):V
+- <init>(javax.swing.Icon,java.awt.Paint,com.intellij.ui.BadgeShapeProvider):V
+- f:getPaint():java.awt.Paint
+- f:getProvider():com.intellij.ui.BadgeShapeProvider
+- replaceBy(com.intellij.ui.icons.IconReplacer):com.intellij.ui.BadgeIcon
+f:com.intellij.ui.BadgeRectProvider
+- com.intellij.ui.BadgeShapeProvider
+- <init>():V
+- <init>(D,D,D,D,D,D):V
+- b:<init>(D,D,D,D,D,D,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- createShape(I,I,Z):java.awt.geom.RoundRectangle2D
+- f:getArc():D
+- f:getBottom():D
+- f:getLeft():D
+- f:getRight():D
+- f:getTop():D
+a:com.intellij.ui.BadgeShapeProvider
+- sf:Companion:com.intellij.ui.BadgeShapeProvider$Companion
+- a:createShape(I,I,Z):java.awt.Shape
+- f:getBorder():D
+f:com.intellij.ui.BadgeShapeProvider$Companion
+- f:getDouble(java.lang.String,D):D
 c:com.intellij.ui.BooleanTableCellRenderer
 - javax.swing.JCheckBox
 - javax.swing.table.TableCellRenderer
@@ -397,6 +430,20 @@ a:com.intellij.ui.TreeUIHelper
 - a:installToolTipHandler(javax.swing.JTree):V
 - a:installTreeSpeedSearch(javax.swing.JTree):V
 - a:installTreeSpeedSearch(javax.swing.JTree,com.intellij.util.containers.Convertor,Z):V
+a:com.intellij.ui.icons.HoledIcon
+- com.intellij.util.ui.JBScalableIcon
+- com.intellij.ui.icons.ReplaceableIcon
+- <init>(javax.swing.Icon):V
+- pa:copyWith(javax.swing.Icon):javax.swing.Icon
+- pa:createHole(I,I):java.awt.Shape
+- f:getExtraInsets():java.awt.Insets
+- f:getIcon():javax.swing.Icon
+- getIconHeight():I
+- getIconWidth():I
+- getScale():F
+- pa:paintHole(java.awt.Graphics2D,I,I):V
+- paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
+- scale(F):javax.swing.Icon
 a:com.intellij.ui.icons.IconWithOverlay
 - com.intellij.ui.LayeredIcon
 - <init>(javax.swing.Icon,javax.swing.Icon):V

@@ -3,19 +3,18 @@ package com.intellij.ui
 
 import com.intellij.ui.icons.HoledIcon
 import com.intellij.ui.icons.IconReplacer
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Graphics2D
 import java.awt.Paint
+import java.awt.Shape
 import javax.swing.Icon
 
-@ApiStatus.Internal
-@ApiStatus.Experimental
 class BadgeIcon(icon: Icon, val paint: Paint, val provider: BadgeShapeProvider) : HoledIcon(icon) {
   constructor(icon: Icon, paint: Paint) : this(icon, paint, BadgeDotProvider())
 
-  override fun copyWith(icon: Icon) = BadgeIcon(icon, paint, provider)
+  override fun copyWith(icon: Icon): BadgeIcon = BadgeIcon(icon, paint, provider)
 
-  override fun createHole(width: Int, height: Int) = provider.createShape(width, height, true)
+  override fun createHole(width: Int, height: Int): Shape? = provider.createShape(width, height, true)
+
   override fun paintHole(g: Graphics2D, width: Int, height: Int) {
     val shape = provider.createShape(width, height, false) ?: return
     g.paint = paint
