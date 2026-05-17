@@ -2937,6 +2937,14 @@
         <constraint name="__context__" within="" contains="" />
         <constraint name="foo" within="" contains="" />
       </replaceConfiguration>
+      <replaceConfiguration name="Rethow ControlFlowException using platform utility function" description="Replaces if (e instanceOf ControlFlowException) throw e with a convenient helper utility call" suppressId="RethowControlFlowExceptionWithUtil" text="if ($Expr$ instanceof ControlFlowException) {&#10;  throw $Expr$;&#10;}" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.diagnostic.LoggerKt.rethrowControlFlowException($Expr$);">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Expr" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Rethow ControlFlowException using platform utility function" text="if ($Expr$ is ControlFlowException) {&#10;  throw $Expr$&#10;}" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.diagnostic.rethrowControlFlowException($Expr$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Expr" within="" contains="" />
+      </replaceConfiguration>
       <searchConfiguration name="Rpc functions must be suspend" text="interface $Class$: RemoteApi&lt;Unit&gt; {&#10;  suspend fun $Method$ ($Parameter$ : $ParameterType$)&#10;&#10;  fun $Method2$($Parameter2$ : $ParameterType2$)&#10;}" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
         <constraint name="Class" within="" contains="" />
