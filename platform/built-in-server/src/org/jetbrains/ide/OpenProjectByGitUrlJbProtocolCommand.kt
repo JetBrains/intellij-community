@@ -225,6 +225,10 @@ private val LOG = logger<OpenProjectByGitUrlJbProtocolCommand>()
 
 private fun toPath(path: String): Path? = try { Paths.get(path) } catch (_: Exception) { null }
 
+// Matches only the `<scheme>://` header — deliberately omits a trailing `(.+)$` so the match metadata is
+// O(scheme length) regardless of how long the rest of the URL is. The post-header walk uses indexOf on the
+// original string so the only substrings allocated are the (short) authority and the (returned) path.
+private val SCHEME_HEAD = Regex("""^[a-zA-Z][a-zA-Z0-9+.\-]*://""")
 private val SCP_LIKE = Regex("""^(?:[^@/:\s]+@)?([^/:\s]+):(.+)$""")
 
 private fun normalizeGitUrl(url: String): String? {
@@ -241,13 +245,14 @@ private fun normalizeGitUrl(url: String): String? {
   return "${host.lowercase()}/$cleanPath"
 }
 
-private fun parseHostAndPath(url: String): Pair<String, String>? {
-  val schemeMatch = Regex("""^([a-zA-Z][a-zA-Z0-9+.\-]*)://(.+)$""").matchEntire(url)
-  if (schemeMatch != null) {
-    val rest = schemeMatch.groupValues[2]
-    val slash = rest.indexOf('/').takeIf { it >= 0 } ?: return null
-    val authority = rest.substring(0, slash).substringAfterLast('@').substringBefore(':')
-    val path = rest.substring(slash + 1)
+@VisibleForTesting
+fun parseHostAndPath(url: String): Pair<String, String>? {
+  val schemeMatch = SCHEME_HEAD.find(url)
+  if (schemeMatch != null && schemeMatch.range.first == 0) {
+    val authStart = schemeMatch.range.last + 1
+    val slash = url.indexOf('/', authStart).takeIf { it >= 0 } ?: return null
+    val authority = url.substring(authStart, slash).substringAfterLast('@').substringBefore(':')
+    val path = url.substring(slash + 1)
     return authority to path
   }
   val scp = SCP_LIKE.matchEntire(url) ?: return null

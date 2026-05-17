@@ -127,6 +127,75 @@ class OpenProjectByGitUrlJbProtocolCommandTest {
       .containsExactly(GitRemote("origin", "https://github.com/Foo/Bar.git"))
   }
 
+  // --- parseHostAndPath ---
+
+  @Test
+  fun `parseHostAndPath - https url`() {
+    assertThat(parseHostAndPath("https://github.com/Foo/Bar.git"))
+      .isEqualTo("github.com" to "Foo/Bar.git")
+  }
+
+  @Test
+  fun `parseHostAndPath - https url with userinfo and port`() {
+    assertThat(parseHostAndPath("https://alice@github.com:443/Foo/Bar.git"))
+      .isEqualTo("github.com" to "Foo/Bar.git")
+  }
+
+  @Test
+  fun `parseHostAndPath - ssh url`() {
+    assertThat(parseHostAndPath("ssh://git@github.com/Foo/Bar.git"))
+      .isEqualTo("github.com" to "Foo/Bar.git")
+  }
+
+  @Test
+  fun `parseHostAndPath - mixed-case scheme is accepted`() {
+    assertThat(parseHostAndPath("HTTPS://github.com/Foo/Bar.git"))
+      .isEqualTo("github.com" to "Foo/Bar.git")
+  }
+
+  @Test
+  fun `parseHostAndPath - scheme with plus and dot characters`() {
+    assertThat(parseHostAndPath("git+ssh://git@example.com/Foo/Bar"))
+      .isEqualTo("example.com" to "Foo/Bar")
+  }
+
+  @Test
+  fun `parseHostAndPath - scp-like form`() {
+    assertThat(parseHostAndPath("git@github.com:Foo/Bar.git"))
+      .isEqualTo("github.com" to "Foo/Bar.git")
+  }
+
+  @Test
+  fun `parseHostAndPath - scp-like without user`() {
+    assertThat(parseHostAndPath("github.com:Foo/Bar.git"))
+      .isEqualTo("github.com" to "Foo/Bar.git")
+  }
+
+  @Test
+  fun `parseHostAndPath - scheme without slash after host returns null`() {
+    // Used to allocate the entire post-scheme remainder via `groupValues[2]` before discovering there
+    // was no slash; with the indexOf-based walk no large substring is allocated.
+    assertThat(parseHostAndPath("https://github.com-no-slash-here")).isNull()
+  }
+
+  @Test
+  fun `parseHostAndPath - pathologically long input without scheme is rejected without allocation`() {
+    val payload = "a".repeat(100_000)
+    assertThat(parseHostAndPath(payload)).isNull()
+  }
+
+  @Test
+  fun `parseHostAndPath - pathologically long input after scheme without slash returns null`() {
+    val payload = "https://" + "a".repeat(100_000)
+    assertThat(parseHostAndPath(payload)).isNull()
+  }
+
+  @Test
+  fun `parseHostAndPath - unrecognized input returns null`() {
+    assertThat(parseHostAndPath("just-some-text")).isNull()
+    assertThat(parseHostAndPath("")).isNull()
+  }
+
   // --- readGitRemoteUrls (.git layout resolution) ---
 
   @Test
