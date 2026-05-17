@@ -3,12 +3,12 @@ package com.intellij.agent.workbench.sessions.toolwindow.ui
 
 // @spec community/plugins/agent-workbench/spec/agent-sessions-tree.spec.md
 
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 
 internal class AgentSessionsActivityStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
-    project.service<AgentSessionsActivityService>()
+    project.serviceAsync<AgentSessionsActivityService>()
   }
 }

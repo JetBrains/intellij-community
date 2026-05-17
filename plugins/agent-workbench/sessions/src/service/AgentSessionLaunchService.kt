@@ -191,7 +191,7 @@ class AgentSessionLaunchService internal constructor(
   private val stateStore: AgentSessionsStateStore,
   private val syncService: AgentSessionRefreshService,
   private val uiPreferencesState: AgentSessionUiPreferencesStateService = AgentSessionUiPreferencesStateService(),
-  private val providerSettingsService: AgentSessionProviderSettingsService = AgentSessionProviderSettingsService.getInstance(),
+  private val providerSettingsService: AgentSessionProviderSettingsService = service(),
   private val chatOpenExecutor: AgentSessionChatOpenExecutor = DefaultAgentSessionChatOpenExecutor,
   private val archivedSessionsRefreshIfLoaded: () -> Unit = {},
 ) {
@@ -201,7 +201,7 @@ class AgentSessionLaunchService internal constructor(
     stateStore = service<AgentSessionsStateStore>(),
     syncService = service<AgentSessionRefreshService>(),
     uiPreferencesState = service<AgentSessionUiPreferencesStateService>(),
-    providerSettingsService = AgentSessionProviderSettingsService.getInstance(),
+    providerSettingsService = service<AgentSessionProviderSettingsService>(),
     chatOpenExecutor = DefaultAgentSessionChatOpenExecutor,
     archivedSessionsRefreshIfLoaded = { service<AgentArchivedSessionsService>().refreshIfLoaded() },
   )
@@ -214,7 +214,7 @@ class AgentSessionLaunchService internal constructor(
     currentProject: Project?,
   ): Boolean {
     if (currentProject != null && !currentProject.isDisposed) {
-      return AgentSessionProviderAvailabilityService.getInstance(currentProject).refreshNow(listOf(descriptor))[provider] == true
+      return currentProject.serviceAsync<AgentSessionProviderAvailabilityService>().refreshNow(listOf(descriptor))[provider] == true
     }
     return descriptor.isCliAvailable()
   }

@@ -8,6 +8,7 @@ import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettin
 import com.intellij.ide.ActivityTracker
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.util.messages.Topic
@@ -52,15 +53,22 @@ class AgentSessionProviderAvailabilityService(
   fun availabilitySnapshot(
     providers: List<AgentSessionProviderDescriptor> = AgentSessionProviders.allProviders(),
   ): Map<AgentSessionProvider, Boolean> {
+    val providerSettings = service<AgentSessionProviderSettingsService>()
+    return availabilitySnapshot(providers, providerSettings)
+  }
+
+  private fun availabilitySnapshot(
+    providers: List<AgentSessionProviderDescriptor>,
+    providerSettings: AgentSessionProviderSettingsService,
+  ): Map<AgentSessionProvider, Boolean> {
     val snapshot = cachedAvailability
-    val providerSettings = AgentSessionProviderSettingsService.getInstance()
     return providers.associate { provider ->
       provider.provider to (providerSettings.isProviderEnabled(provider.provider) && (snapshot[provider.provider]?.available ?: true))
     }
   }
 
   fun isProviderAvailable(provider: AgentSessionProvider): Boolean {
-    return AgentSessionProviderSettingsService.getInstance().isProviderEnabled(provider) &&
+    return service<AgentSessionProviderSettingsService>().isProviderEnabled(provider) &&
            (cachedAvailability[provider]?.available ?: true)
   }
 
@@ -69,7 +77,7 @@ class AgentSessionProviderAvailabilityService(
     force: Boolean = false,
   ) {
     if (project.isDisposed) return
-    val enabledProviders = AgentSessionProviderSettingsService.getInstance().enabledProviders(providers)
+    val enabledProviders = service<AgentSessionProviderSettingsService>().enabledProviders(providers)
     val providersToRefresh = providersNeedingRefresh(enabledProviders, force = force)
     if (providersToRefresh.isEmpty()) return
     val shouldLaunch = synchronized(lock) {
@@ -93,12 +101,13 @@ class AgentSessionProviderAvailabilityService(
     providers: List<AgentSessionProviderDescriptor> = AgentSessionProviders.allProviders(),
   ): Map<AgentSessionProvider, Boolean> {
     if (project.isDisposed) return emptyMap()
-    val enabledProviders = AgentSessionProviderSettingsService.getInstance().enabledProviders(providers)
+    val providerSettings = serviceAsync<AgentSessionProviderSettingsService>()
+    val enabledProviders = providerSettings.enabledProviders(providers)
     val resolvedAvailability = withContext(Dispatchers.Default) {
       enabledProviders.associate { provider -> provider.provider to resolveAvailability(provider) }
     }
     updateAvailability(resolvedAvailability, updatedAtMs = System.currentTimeMillis())
-    return availabilitySnapshot(providers)
+    return availabilitySnapshot(providers, providerSettings)
   }
 
   @TestOnly
@@ -198,11 +207,6 @@ class AgentSessionProviderAvailabilityService(
   private fun publishAvailabilityChanged() {
     ActivityTracker.getInstance().inc()
     project.messageBus.syncPublisher(AgentSessionProviderAvailabilityListener.TOPIC).availabilityChanged()
-  }
-
-  companion object {
-    @JvmStatic
-    fun getInstance(project: Project): AgentSessionProviderAvailabilityService = project.service()
   }
 }
 

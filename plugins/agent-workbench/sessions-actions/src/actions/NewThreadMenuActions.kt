@@ -35,7 +35,7 @@ fun buildNewThreadMenuModel(
   bridges: List<AgentSessionProviderDescriptor>,
   project: Project,
 ): AgentSessionProviderMenuModel {
-  val enabledBridges = AgentSessionProviderSettingsService.getInstance().enabledProviders(bridges)
+  val enabledBridges = service<AgentSessionProviderSettingsService>().enabledProviders(bridges)
   return buildAgentSessionProviderMenuModel(enabledBridges, providerAvailabilitySnapshot(enabledBridges, project))
 }
 
@@ -45,7 +45,7 @@ fun buildNewThreadActionModel(
   lastUsedLaunchMode: AgentSessionLaunchMode? = null,
   project: Project,
 ): AgentSessionProviderActionModel {
-  val enabledBridges = AgentSessionProviderSettingsService.getInstance().enabledProviders(bridges)
+  val enabledBridges = service<AgentSessionProviderSettingsService>().enabledProviders(bridges)
   return buildAgentSessionProviderActionModel(
     bridges = enabledBridges,
     lastUsedProvider = lastUsedProvider,
@@ -64,7 +64,7 @@ fun providerAvailabilitySnapshot(
   bridges: List<AgentSessionProviderDescriptor>,
   project: Project,
 ): Map<AgentSessionProvider, Boolean> {
-  val availabilityService = AgentSessionProviderAvailabilityService.getInstance(project)
+  val availabilityService = project.service<AgentSessionProviderAvailabilityService>()
   availabilityService.requestRefresh(bridges)
   return availabilityService.availabilitySnapshot(bridges)
 }

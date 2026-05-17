@@ -35,6 +35,7 @@ import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.agent.workbench.sessions.util.agentSessionCliMissingMessageKey
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
 import com.intellij.ide.SaveAndSyncHandler
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import kotlinx.coroutines.CancellationException
@@ -120,7 +121,7 @@ internal class AgentSessionRefreshCoordinator(
     serviceScope = serviceScope,
     sessionSourcesProvider = sessionSourcesProvider,
     scopedRefreshProvidersProvider = {
-      AgentSessionProviderSettingsService.getInstance().enabledProviders(providerDescriptorsByIdProvider())
+      service<AgentSessionProviderSettingsService>().enabledProviders(providerDescriptorsByIdProvider())
         .asSequence()
         .filter { provider -> provider.emitsScopedRefreshSignals }
         .map { provider -> provider.provider }

@@ -233,8 +233,8 @@ internal class AgentResolveConflictsAction @JvmOverloads constructor(
   }
 
   private fun buildProviderActionModel(project: Project): AgentSessionProviderActionModel {
-    val providers = AgentSessionProviderSettingsService.getInstance().enabledProviders(allProviders())
-    val availabilityService = AgentSessionProviderAvailabilityService.getInstance(project)
+    val providers = service<AgentSessionProviderSettingsService>().enabledProviders(allProviders())
+    val availabilityService = project.service<AgentSessionProviderAvailabilityService>()
     availabilityService.requestRefresh(providers)
     return buildAgentSessionProviderActionModel(
       bridges = providers,

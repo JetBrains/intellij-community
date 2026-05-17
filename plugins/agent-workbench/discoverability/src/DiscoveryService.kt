@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.util.io.jackson.createGenerator
@@ -40,9 +39,6 @@ internal class DiscoveryService(private val coroutineScope: CoroutineScope) {
   internal companion object {
     private val LOG = logger<DiscoveryService>()
     private const val FILE_SUFFIX = "-ide-instance.json"
-
-    @JvmStatic
-    fun getInstance(): DiscoveryService = service()
   }
 
   private val ready = CompletableDeferred<Unit>()
@@ -232,4 +228,3 @@ internal class DiscoveryService(private val coroutineScope: CoroutineScope) {
     }
   }
 }
-

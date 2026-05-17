@@ -20,7 +20,6 @@ import com.intellij.agent.workbench.sessions.toolwindow.tree.diffSessionTreeMode
 import com.intellij.agent.workbench.sessions.toolwindow.tree.parentNodesForSelection
 import com.intellij.agent.workbench.sessions.toolwindow.tree.resolveSelectedSessionTreeId
 import com.intellij.openapi.application.UI
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.tree.TreeUtil
@@ -191,7 +190,7 @@ internal class AgentSessionsTreeStateController(
           projects = snapshotState.projects,
           visibleClosedProjectCount = snapshotState.visibleClosedProjectCount,
           visibleThreadCounts = snapshotState.visibleThreadCounts,
-          treeUiState = service<AgentSessionTreeUiStateService>(),
+          treeUiState = serviceAsync<AgentSessionTreeUiStateService>(),
         )
         val diff = diffSessionTreeModels(oldModel, model)
         val selection = if (snapshotThreadViewState.mode == AgentSessionThreadViewMode.ACTIVE) {

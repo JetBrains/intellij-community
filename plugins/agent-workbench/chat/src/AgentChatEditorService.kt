@@ -20,7 +20,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.UiWithModelAccess
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorProvider
@@ -923,7 +923,7 @@ suspend fun updateOpenAgentChatTabPresentation(
     return 0
   }
 
-  val changeSet = service<AgentThreadPresentationStore>().applyRefresh(
+  val changeSet = serviceAsync<AgentThreadPresentationStore>().applyRefresh(
     provider = provider,
     refreshedPaths = refreshedPaths,
     titleByPathAndThreadIdentity = titleByPathAndThreadIdentity,

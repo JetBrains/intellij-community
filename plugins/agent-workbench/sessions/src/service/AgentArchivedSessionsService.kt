@@ -16,6 +16,7 @@ import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettin
 import com.intellij.agent.workbench.sessions.state.DEFAULT_VISIBLE_CLOSED_PROJECT_COUNT
 import com.intellij.agent.workbench.sessions.state.DEFAULT_VISIBLE_THREAD_COUNT
 import com.intellij.agent.workbench.sessions.util.agentSessionCliMissingMessageKey
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
@@ -48,7 +49,7 @@ class AgentArchivedSessionsService internal constructor(
   constructor(serviceScope: CoroutineScope) : this(
     serviceScope = serviceScope,
     sessionSourcesProvider = {
-      AgentSessionProviderSettingsService.getInstance().enabledSessionSources(AgentSessionProviders.sessionSources())
+      service<AgentSessionProviderSettingsService>().enabledSessionSources(AgentSessionProviders.sessionSources())
     },
     projectEntriesProvider = AgentSessionProjectCatalog()::collectProjects,
   )

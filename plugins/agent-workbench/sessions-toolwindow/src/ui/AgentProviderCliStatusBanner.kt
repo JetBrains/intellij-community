@@ -39,8 +39,8 @@ internal class AgentProviderCliStatusBanner(
   private val project: Project,
   parentDisposable: Disposable,
   private val providerAvailabilityService: AgentSessionProviderAvailabilityService =
-    AgentSessionProviderAvailabilityService.getInstance(project),
-  private val providerSettingsService: AgentSessionProviderSettingsService = AgentSessionProviderSettingsService.getInstance(),
+    project.service(),
+  private val providerSettingsService: AgentSessionProviderSettingsService = service(),
   private val refreshSessions: () -> Unit = {
     service<AgentSessionRefreshService>().refresh()
     service<AgentArchivedSessionsService>().refreshIfLoaded()

@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -49,8 +50,8 @@ internal class AgentPromptProviderSelector(
    */
   private val asyncRefreshScope: CoroutineScope? = null,
 ) {
-  private val providerAvailabilityService = AgentSessionProviderAvailabilityService.getInstance(invocationData.project)
-  private val providerSettingsService = AgentSessionProviderSettingsService.getInstance()
+  private val providerAvailabilityService = invocationData.project.service<AgentSessionProviderAvailabilityService>()
+  private val providerSettingsService = service<AgentSessionProviderSettingsService>()
   private var providerEntries: List<ProviderEntry> = emptyList()
   private var providerMenuModel: AgentSessionProviderMenuModel = AgentSessionProviderMenuModel(emptyList(), emptyList())
   private val selectedOptionIdsByProvider = LinkedHashMap<AgentSessionProvider, LinkedHashSet<String>>()

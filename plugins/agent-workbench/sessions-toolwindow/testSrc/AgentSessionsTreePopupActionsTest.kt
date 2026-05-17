@@ -27,6 +27,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.TestActionEvent
@@ -39,7 +40,7 @@ import org.junit.jupiter.api.Test
 class AgentSessionsTreePopupActionsTest {
   @BeforeEach
   fun clearProviderAvailabilityCache() {
-    AgentSessionProviderAvailabilityService.getInstance(ProjectManager.getInstance().defaultProject).clearAvailabilityForTest()
+    ProjectManager.getInstance().defaultProject.service<AgentSessionProviderAvailabilityService>().clearAvailabilityForTest()
   }
 
   @Test
@@ -525,7 +526,7 @@ class AgentSessionsTreePopupActionsTest {
       node = SessionTreeNode.Project(AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)),
     )
     val event = popupEvent(group, projectContext)
-    AgentSessionProviderAvailabilityService.getInstance(projectContext.project).setAvailabilityForTest(
+    projectContext.project.service<AgentSessionProviderAvailabilityService>().setAvailabilityForTest(
       mapOf(
         AgentSessionProvider.CODEX to true,
         AgentSessionProvider.CLAUDE to false,

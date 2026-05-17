@@ -12,7 +12,7 @@ import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionBackend
 import com.intellij.agent.workbench.codex.sessions.backend.isResponseRequired
 import com.intellij.agent.workbench.codex.sessions.backend.toCodexSessionActivity
 import com.intellij.agent.workbench.codex.sessions.resolveProjectDirectoryFromPath
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -30,16 +30,16 @@ private const val MAX_TRACKED_ORPHAN_SUB_AGENT_IDS = 4_096
 
 class CodexAppServerSessionBackend(
   private val listThreadsForProject: suspend (Path) -> List<CodexThread> = { projectPath ->
-    service<SharedCodexAppServerService>().listThreads(projectPath)
+    serviceAsync<SharedCodexAppServerService>().listThreads(projectPath)
   },
   private val listArchivedThreadsForProject: suspend (Path) -> List<CodexThread> = { projectPath ->
-    service<SharedCodexAppServerService>().listArchivedThreads(projectPath)
+    serviceAsync<SharedCodexAppServerService>().listArchivedThreads(projectPath)
   },
   private val readThread: suspend (String) -> CodexThread? = { threadId ->
-    service<SharedCodexAppServerService>().readThread(threadId)
+    serviceAsync<SharedCodexAppServerService>().readThread(threadId)
   },
   private val archiveThread: suspend (String) -> Unit = { threadId ->
-    service<SharedCodexAppServerService>().archiveThread(threadId)
+    serviceAsync<SharedCodexAppServerService>().archiveThread(threadId)
   },
   private val orphanArchiveAttemptRecorder: (String) -> Boolean = InMemoryOrphanArchiveAttemptRecorder()::markArchiveAttempted,
 ) : CodexSessionBackend {

@@ -11,7 +11,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.components.service
 import com.intellij.util.messages.Topic
 import kotlinx.serialization.Serializable
 
@@ -62,9 +61,4 @@ class AgentSessionProviderSettingsService
   data class ProviderSettingsState(
     @JvmField val disabledProviderIds: Set<String> = emptySet(),
   )
-
-  companion object {
-    @JvmStatic
-    fun getInstance(): AgentSessionProviderSettingsService = service()
-  }
 }

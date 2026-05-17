@@ -11,6 +11,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminal
 import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsService
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.junit5.TestApplication
@@ -39,7 +40,7 @@ class AgentSessionProviderAvailabilityServiceTest {
     get() = ProjectManager.getInstance().defaultProject
 
   private val service: AgentSessionProviderAvailabilityService
-    get() = AgentSessionProviderAvailabilityService.getInstance(project)
+    get() = project.service()
 
   @BeforeEach
   fun clearProviderAvailabilityCache() {
@@ -174,7 +175,7 @@ class AgentSessionProviderAvailabilityServiceTest {
   @Test
   fun disabledProvidersAreNotProbed() {
     val providerId = AgentSessionProvider.from("test-disabled")
-    val providerSettings = AgentSessionProviderSettingsService.getInstance()
+    val providerSettings = service<AgentSessionProviderSettingsService>()
     val probeCount = AtomicInteger()
     val provider = availabilityProvider(providerId) {
       probeCount.incrementAndGet()

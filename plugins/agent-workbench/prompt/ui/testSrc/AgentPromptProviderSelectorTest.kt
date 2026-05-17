@@ -13,6 +13,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -41,7 +42,7 @@ import kotlin.time.Duration.Companion.seconds
 class AgentPromptProviderSelectorTest {
   @BeforeEach
   fun clearProviderAvailabilityCache() {
-    AgentSessionProviderAvailabilityService.getInstance(ProjectManager.getInstance().defaultProject).clearAvailabilityForTest()
+    ProjectManager.getInstance().defaultProject.service<AgentSessionProviderAvailabilityService>().clearAvailabilityForTest()
   }
 
   @Test
@@ -172,7 +173,7 @@ class AgentPromptProviderSelectorTest {
     asyncRefreshScope: CoroutineScope? = null,
   ): ProviderSelectorFixture {
     val project = ProjectManager.getInstance().defaultProject
-    AgentSessionProviderAvailabilityService.getInstance(project).setAvailabilityForTest(availabilityByProvider)
+    project.service<AgentSessionProviderAvailabilityService>().setAvailabilityForTest(availabilityByProvider)
     val view = createAgentPromptPaletteView(
       promptArea = EditorTextField(),
       contextChipsPanel = JPanel(),

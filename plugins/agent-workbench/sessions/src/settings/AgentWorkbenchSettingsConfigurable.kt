@@ -6,6 +6,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettingsContributors
 import com.intellij.agent.workbench.sessions.frame.AgentChatOpenModeSettings
 import com.intellij.agent.workbench.sessions.sleep.AgentSleepPreventionSettings
+import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.bindSelected
@@ -19,7 +20,7 @@ internal class AgentWorkbenchSettingsConfigurable : BoundSearchableConfigurable(
   _id = ID,
 ) {
   override fun createPanel(): DialogPanel {
-    val providerSettings = AgentSessionProviderSettingsService.getInstance()
+    val providerSettings = service<AgentSessionProviderSettingsService>()
     return panel {
       group(AgentSessionsBundle.message("settings.agent.workbench.general.group")) {
         row {

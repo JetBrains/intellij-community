@@ -34,6 +34,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -82,7 +83,7 @@ class AgentSessionRefreshService internal constructor(
   constructor(serviceScope: CoroutineScope) : this(
     serviceScope = serviceScope,
     sessionSourcesProvider = {
-      AgentSessionProviderSettingsService.getInstance().enabledSessionSources(AgentSessionProviders.sessionSources())
+      service<AgentSessionProviderSettingsService>().enabledSessionSources(AgentSessionProviders.sessionSources())
     },
     projectEntriesProvider = AgentSessionProjectCatalog()::collectProjects,
     stateStore = service<AgentSessionsStateStore>(),
@@ -253,9 +254,9 @@ private fun isSessionsToolWindowVisible(project: Project): Boolean {
     ?.isVisible == true
 }
 
-private fun isAgentChatActive(project: Project): Boolean {
+private suspend fun isAgentChatActive(project: Project): Boolean {
   return runCatching {
-    val selectionService = project.service<AgentChatTabSelectionService>()
+    val selectionService = project.serviceAsync<AgentChatTabSelectionService>()
     selectionService.selectedChatTab.value != null || selectionService.hasOpenChatTabs()
   }.getOrDefault(false)
 }

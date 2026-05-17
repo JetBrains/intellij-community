@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -39,7 +40,7 @@ import org.junit.jupiter.api.Test
 class AgentSessionsMainToolbarNewThreadActionsTest {
   @BeforeEach
   fun clearProviderAvailabilityCache() {
-    AgentSessionProviderAvailabilityService.getInstance(ProjectManager.getInstance().defaultProject).clearAvailabilityForTest()
+    ProjectManager.getInstance().defaultProject.service<AgentSessionProviderAvailabilityService>().clearAvailabilityForTest()
   }
 
   @Test
@@ -116,7 +117,7 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
       lastUsedLaunchMode = { AgentSessionLaunchMode.STANDARD },
     )
     val event = TestActionEvent.createTestEvent(action)
-    AgentSessionProviderAvailabilityService.getInstance(context.project).setAvailabilityForTest(
+    context.project.service<AgentSessionProviderAvailabilityService>().setAvailabilityForTest(
       mapOf(AgentSessionProvider.CODEX to true),
     )
 
@@ -279,7 +280,7 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
       lastUsedLaunchMode = { AgentSessionLaunchMode.STANDARD },
       showPicker = { _, _ -> pickerShown++ },
     )
-    AgentSessionProviderAvailabilityService.getInstance(context.project).setAvailabilityForTest(
+    context.project.service<AgentSessionProviderAvailabilityService>().setAvailabilityForTest(
       mapOf(AgentSessionProvider.CODEX to false),
     )
     val mainAction = action.getMainAction(TestActionEvent.createTestEvent(action))

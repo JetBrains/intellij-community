@@ -82,8 +82,8 @@ internal class AgentSessionsToolWindowPanel(
   private var sessionTreeModel: SessionTreeModel = SessionTreeModel.EMPTY
   private var lastUsedProvider: AgentSessionProvider? = null
   private var initialRefreshRequested = false
-  private val providerAvailabilityService = AgentSessionProviderAvailabilityService.getInstance(project)
-  private val providerSettingsService = AgentSessionProviderSettingsService.getInstance()
+  private val providerAvailabilityService = project.service<AgentSessionProviderAvailabilityService>()
+  private val providerSettingsService = service<AgentSessionProviderSettingsService>()
 
   private val treeStructure = AgentSessionsTreeStructure { sessionTreeModel }
   private val structureTreeModel = StructureTreeModel(treeStructure, this)

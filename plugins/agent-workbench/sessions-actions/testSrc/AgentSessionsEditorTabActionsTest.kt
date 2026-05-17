@@ -29,6 +29,7 @@ import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.TestActionEvent
@@ -44,7 +45,7 @@ import javax.swing.JPanel
 class AgentSessionsEditorTabActionsTest {
   @BeforeEach
   fun clearProviderAvailabilityCache() {
-    AgentSessionProviderAvailabilityService.getInstance(ProjectManager.getInstance().defaultProject).clearAvailabilityForTest()
+    ProjectManager.getInstance().defaultProject.service<AgentSessionProviderAvailabilityService>().clearAvailabilityForTest()
   }
 
   @Test
@@ -211,7 +212,7 @@ class AgentSessionsEditorTabActionsTest {
       showPicker = { _, _ -> pickerShown++ },
     )
     val event = TestActionEvent.createTestEvent(action)
-    AgentSessionProviderAvailabilityService.getInstance(context.project).setAvailabilityForTest(
+    context.project.service<AgentSessionProviderAvailabilityService>().setAvailabilityForTest(
       mapOf(AgentSessionProvider.CODEX to false),
     )
 
@@ -242,7 +243,7 @@ class AgentSessionsEditorTabActionsTest {
       entryPoint = AgentWorkbenchEntryPoint.EDITOR_TAB_POPUP,
     )
     val event = TestActionEvent.createTestEvent(action)
-    AgentSessionProviderAvailabilityService.getInstance(context.project).setAvailabilityForTest(
+    context.project.service<AgentSessionProviderAvailabilityService>().setAvailabilityForTest(
       mapOf(AgentSessionProvider.CODEX to false),
     )
 

@@ -35,7 +35,7 @@ class AgentProviderCliStatusBannerTest {
     get() = service()
 
   private val availabilityService: AgentSessionProviderAvailabilityService
-    get() = AgentSessionProviderAvailabilityService.getInstance(project)
+    get() = project.service()
 
   @AfterEach
   fun resetState() {

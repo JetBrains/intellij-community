@@ -5,7 +5,7 @@ package com.intellij.agent.workbench.sessions.toolwindow.ui
 
 import com.intellij.agent.workbench.sessions.service.AgentSessionReadService
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -26,13 +26,13 @@ internal class AgentSessionsActivityService(
 
   init {
     scope.launch(Dispatchers.Default) {
-      service<AgentSessionReadService>().stateFlow().collect { state ->
+      serviceAsync<AgentSessionReadService>().stateFlow().collect { state ->
         val nextSummary = buildAgentSessionsActivitySummary(state)
         _summary.value = nextSummary
         systemNotificationTracker
           .collectNotifications(nextSummary, isLoadedState = state.lastUpdatedAt != null)
           .forEach { notification -> showAgentSessionsSystemNotification(notification) }
-        project.service<AgentSessionsStripeIconUpdater>().scheduleUpdate()
+        project.serviceAsync<AgentSessionsStripeIconUpdater>().scheduleUpdate()
       }
     }
   }
