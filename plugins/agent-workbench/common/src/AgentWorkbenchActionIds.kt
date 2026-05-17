@@ -18,8 +18,7 @@ object AgentWorkbenchActionIds {
     }
 
     object EditorTab {
-      const val NEW_THREAD_QUICK: String = "AgentWorkbenchSessions.EditorTab.NewThreadQuick"
-      const val NEW_THREAD_POPUP: String = "AgentWorkbenchSessions.EditorTab.NewThreadPopup"
+      const val NEW_THREAD: String = "AgentWorkbenchSessions.EditorTab.NewThread"
       const val PREVIOUS_PROPOSED_PLAN: String = "AgentWorkbenchSessions.EditorTab.PreviousProposedPlan"
       const val NEXT_PROPOSED_PLAN: String = "AgentWorkbenchSessions.EditorTab.NextProposedPlan"
     }

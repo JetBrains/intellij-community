@@ -9,14 +9,14 @@ import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AgentPromptProjectPathCandidate
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsCopyThreadIdFromEditorTabAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabArchiveThreadAction
+import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabNewThreadAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabNewThreadContext
-import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabNewThreadPopupGroup
-import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabNewThreadQuickAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabNewThreadTarget
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabRenameThreadAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsGoToSourceProjectFromEditorTabAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsSelectThreadInToolWindowAction
-import com.intellij.agent.workbench.sessions.actions.buildQuickStartProjectPopupGroup
+import com.intellij.agent.workbench.sessions.actions.PickerActionGroup
+import com.intellij.agent.workbench.sessions.actions.QuickStartAction
 import com.intellij.agent.workbench.sessions.actions.resolveAgentSessionsEditorTabNewThreadContext
 import com.intellij.agent.workbench.sessions.actions.resolveQuickStartProjectPopupAnchor
 import com.intellij.agent.workbench.sessions.core.SessionActionTarget
@@ -67,7 +67,7 @@ class AgentSessionsEditorTabActionsTest {
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = true,
     )
-    val action = AgentSessionsEditorTabNewThreadQuickAction(
+    val action = AgentSessionsEditorTabNewThreadAction(
       resolveContext = { context },
       allBridges = { listOf(codexBridge, claudeBridge) },
       lastUsedProvider = { AgentSessionProvider.CLAUDE },
@@ -94,7 +94,9 @@ class AgentSessionsEditorTabActionsTest {
       AgentSessionsBundle.message("toolwindow.action.new.session.claude"),
     ))
 
-    action.actionPerformed(event)
+    val mainAction = action.getMainAction(event)
+    assertThat(mainAction).isInstanceOf(QuickStartAction::class.java)
+    checkNotNull(mainAction).actionPerformed(TestActionEvent.createTestEvent(mainAction))
 
     assertThat(launchedPath).isEqualTo(path)
     assertThat(launchedProvider).isEqualTo(AgentSessionProvider.CLAUDE)
@@ -123,7 +125,7 @@ class AgentSessionsEditorTabActionsTest {
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = true,
     )
-    val action = AgentSessionsEditorTabNewThreadQuickAction(
+    val action = AgentSessionsEditorTabNewThreadAction(
       resolveContext = { context },
       allBridges = { listOf(codexBridge, claudeBridge) },
       lastUsedProvider = { AgentSessionProvider.CODEX },
@@ -151,7 +153,9 @@ class AgentSessionsEditorTabActionsTest {
       AgentSessionsBundle.message("toolwindow.action.new.session.codex.yolo"),
     ))
 
-    action.actionPerformed(event)
+    val mainAction = action.getMainAction(event)
+    assertThat(mainAction).isInstanceOf(QuickStartAction::class.java)
+    checkNotNull(mainAction).actionPerformed(TestActionEvent.createTestEvent(mainAction))
 
     assertThat(launchedPath).isEqualTo(path)
     assertThat(launchedProvider).isEqualTo(AgentSessionProvider.CODEX)
@@ -161,12 +165,8 @@ class AgentSessionsEditorTabActionsTest {
   }
 
   @Test
-  fun editorTabNewThreadFallsBackToFirstStandardProviderWhenLastUsedIsNotEligible() {
+  fun editorTabNewThreadDoesNotFallBackToAnotherProviderWhenLastUsedIsNotEligible() {
     val context = newThreadContext()
-    var launchedProvider: AgentSessionProvider? = null
-    var launchedMode: AgentSessionLaunchMode? = null
-    var entryPoint: AgentWorkbenchEntryPoint? = null
-    val fallbackProvider = AgentSessionProvider.CLAUDE
     val codexYoloOnlyBridge = TestAgentSessionProviderDescriptor(
       provider = AgentSessionProvider.CODEX,
       supportedModes = setOf(AgentSessionLaunchMode.YOLO),
@@ -174,47 +174,41 @@ class AgentSessionsEditorTabActionsTest {
       yoloSessionLabelKey = "toolwindow.action.new.session.codex.yolo",
     )
     val fallbackBridge = TestAgentSessionProviderDescriptor(
-      provider = fallbackProvider,
+      provider = AgentSessionProvider.CLAUDE,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = true,
     )
-    val action = AgentSessionsEditorTabNewThreadQuickAction(
+    val action = AgentSessionsEditorTabNewThreadAction(
       resolveContext = { context },
       allBridges = { listOf(codexYoloOnlyBridge, fallbackBridge) },
       lastUsedProvider = { AgentSessionProvider.CODEX },
-      createNewSession = { _, provider, mode, _, capturedEntryPoint ->
-        launchedProvider = provider
-        launchedMode = mode
-        entryPoint = capturedEntryPoint
-      },
+      createNewSession = { _, _, _, _, _ -> error("Primary click must not silently use another provider") },
     )
     val event = TestActionEvent.createTestEvent(action)
 
     action.update(event)
 
     assertThat(event.presentation.isEnabledAndVisible).isTrue()
-    assertThat(event.presentation.icon).isEqualTo(fallbackBridge.icon)
-
-    action.actionPerformed(event)
-
-    assertThat(launchedProvider).isEqualTo(fallbackProvider)
-    assertThat(launchedMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
-    assertThat(entryPoint).isEqualTo(AgentWorkbenchEntryPoint.EDITOR_TAB_QUICK)
+    assertThat(event.presentation.icon).isEqualTo(com.intellij.icons.AllIcons.General.Add)
+    assertThat(action.getMainAction(event)).isNull()
   }
 
   @Test
-  fun editorTabNewThreadQuickActionHiddenWhenNoQuickStartItemExists() {
+  fun editorTabNewThreadPrimaryClickShowsPickerWhenLastUsedProviderIsDisabled() {
     val context = newThreadContext()
+    var launched = false
+    var pickerShown = 0
     val disabledBridge = TestAgentSessionProviderDescriptor(
       provider = AgentSessionProvider.CODEX,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = false,
     )
-    val action = AgentSessionsEditorTabNewThreadQuickAction(
+    val action = AgentSessionsEditorTabNewThreadAction(
       resolveContext = { context },
       allBridges = { listOf(disabledBridge) },
       lastUsedProvider = { AgentSessionProvider.CODEX },
-      createNewSession = { _, _, _, _, _ -> error("Disabled provider should not launch from quick action") },
+      createNewSession = { _, _, _, _, _ -> launched = true },
+      showPicker = { _, _ -> pickerShown++ },
     )
     val event = TestActionEvent.createTestEvent(action)
     AgentSessionProviderAvailabilityService.getInstance(context.project).setAvailabilityForTest(
@@ -223,11 +217,16 @@ class AgentSessionsEditorTabActionsTest {
 
     action.update(event)
 
-    assertThat(event.presentation.isEnabledAndVisible).isFalse()
+    assertThat(event.presentation.isEnabledAndVisible).isTrue()
+    val mainAction = action.getMainAction(event)
+    assertThat(mainAction).isInstanceOf(QuickStartAction::class.java)
+    checkNotNull(mainAction).actionPerformed(TestActionEvent.createTestEvent(mainAction))
+    assertThat(launched).isFalse()
+    assertThat(pickerShown).isEqualTo(1)
   }
 
   @Test
-  fun editorTabNewThreadPopupActionShowsProviderOptionsWhenNoQuickStartItemExists() {
+  fun editorTabNewThreadPickerShowsProviderOptionsWhenNoQuickStartItemExists() {
     val path = "/tmp/editor-project"
     val context = newThreadContext(path = path)
     var launched = false
@@ -236,21 +235,16 @@ class AgentSessionsEditorTabActionsTest {
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = false,
     )
-    val action = AgentSessionsEditorTabNewThreadPopupGroup(
+    val action = PickerActionGroup(
       resolveContext = { context },
       allBridges = { listOf(disabledBridge) },
       createNewSession = { _, _, _, _, _ -> launched = true },
+      entryPoint = AgentWorkbenchEntryPoint.EDITOR_TAB_POPUP,
     )
     val event = TestActionEvent.createTestEvent(action)
     AgentSessionProviderAvailabilityService.getInstance(context.project).setAvailabilityForTest(
       mapOf(AgentSessionProvider.CODEX to false),
     )
-
-    action.update(event)
-
-    assertThat(event.presentation.isEnabledAndVisible).isTrue()
-    assertThat(event.presentation.isPopupGroup).isTrue()
-    assertThat(event.presentation.isPerformGroup).isFalse()
 
     val children = action.getChildren(event)
     assertThat(children).hasSize(1)
@@ -259,57 +253,38 @@ class AgentSessionsEditorTabActionsTest {
   }
 
   @Test
-  fun editorTabNewThreadPrimaryClickShowsProjectPopupWhenMultipleSourceProjectsExist() {
+  fun editorTabNewThreadPrimaryClickShowsPickerWhenMultipleSourceProjectsExist() {
     val context = newThreadContext(
       projectPathCandidates = listOf(
         projectCandidate(path = "/work/repo-a", displayName = "Project A"),
         projectCandidate(path = "/tmp/repo-a", displayName = "/tmp/repo-a"),
       ),
     )
-    var launchedPath: String? = null
-    var launchedProvider: AgentSessionProvider? = null
-    var launchedMode: AgentSessionLaunchMode? = null
-    var entryPoint: AgentWorkbenchEntryPoint? = null
-    var shownCandidates: List<AgentPromptProjectPathCandidate>? = null
-    var popupSelection: ((AgentPromptProjectPathCandidate) -> Unit)? = null
+    var launched = false
+    var pickerShown = 0
     val claudeBridge = TestAgentSessionProviderDescriptor(
       provider = AgentSessionProvider.CLAUDE,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = true,
     )
-    val action = AgentSessionsEditorTabNewThreadQuickAction(
+    val action = AgentSessionsEditorTabNewThreadAction(
       resolveContext = { context },
       allBridges = { listOf(claudeBridge) },
       lastUsedProvider = { AgentSessionProvider.CLAUDE },
-      createNewSession = { path, provider, mode, _, capturedEntryPoint ->
-        launchedPath = path
-        launchedProvider = provider
-        launchedMode = mode
-        entryPoint = capturedEntryPoint
-      },
-      showProjectPopup = { candidates, _, onResolved ->
-        shownCandidates = candidates
-        popupSelection = onResolved
-      },
+      createNewSession = { _, _, _, _, _ -> launched = true },
+      showPicker = { _, _ -> pickerShown++ },
     )
 
-    action.actionPerformed(TestActionEvent.createTestEvent(action))
+    val mainAction = action.getMainAction(TestActionEvent.createTestEvent(action))
+    assertThat(mainAction).isInstanceOf(QuickStartAction::class.java)
+    checkNotNull(mainAction).actionPerformed(TestActionEvent.createTestEvent(mainAction))
 
-    assertThat(launchedPath).isNull()
-    assertThat(shownCandidates).isNotNull()
-    val resolvedCandidates = shownCandidates.orEmpty()
-    assertThat(resolvedCandidates.map(AgentPromptProjectPathCandidate::displayName))
-      .containsExactly("Project A", "/tmp/repo-a")
-    checkNotNull(popupSelection).invoke(resolvedCandidates.last())
-
-    assertThat(launchedPath).isEqualTo("/tmp/repo-a")
-    assertThat(launchedProvider).isEqualTo(AgentSessionProvider.CLAUDE)
-    assertThat(launchedMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
-    assertThat(entryPoint).isEqualTo(AgentWorkbenchEntryPoint.EDITOR_TAB_QUICK)
+    assertThat(launched).isFalse()
+    assertThat(pickerShown).isEqualTo(1)
   }
 
   @Test
-  fun editorTabNewThreadQuickActionResolvesProjectCandidatesOnlyOnPrimaryClick() {
+  fun editorTabNewThreadSplitButtonResolvesProjectCandidatesOnlyOnPrimaryClick() {
     var targetResolved = false
     val candidates = listOf(
       projectCandidate(path = "/work/repo-a", displayName = "Project A"),
@@ -319,17 +294,17 @@ class AgentSessionsEditorTabActionsTest {
       targetResolved = true
       AgentSessionsEditorTabNewThreadTarget.Candidates(candidates)
     }
-    var shownCandidates: List<AgentPromptProjectPathCandidate>? = null
+    var pickerShown = 0
     val claudeBridge = TestAgentSessionProviderDescriptor(
       provider = AgentSessionProvider.CLAUDE,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = true,
     )
-    val action = AgentSessionsEditorTabNewThreadQuickAction(
+    val action = AgentSessionsEditorTabNewThreadAction(
       resolveContext = { context },
       allBridges = { listOf(claudeBridge) },
       lastUsedProvider = { AgentSessionProvider.CLAUDE },
-      showProjectPopup = { popupCandidates, _, _ -> shownCandidates = popupCandidates },
+      showPicker = { _, _ -> pickerShown++ },
     )
     val event = TestActionEvent.createTestEvent(action)
 
@@ -337,10 +312,12 @@ class AgentSessionsEditorTabActionsTest {
 
     assertThat(targetResolved).isFalse()
 
-    action.actionPerformed(event)
+    val mainAction = action.getMainAction(event)
+    assertThat(mainAction).isInstanceOf(QuickStartAction::class.java)
+    checkNotNull(mainAction).actionPerformed(TestActionEvent.createTestEvent(mainAction))
 
     assertThat(targetResolved).isTrue()
-    assertThat(checkNotNull(shownCandidates)).containsExactlyElementsOf(candidates)
+    assertThat(pickerShown).isEqualTo(1)
   }
 
   @Test
@@ -465,7 +442,7 @@ class AgentSessionsEditorTabActionsTest {
 
   @Test
   fun quickNewThreadPopupAnchorPrefersInputEventComponent() {
-    val action = AgentSessionsEditorTabNewThreadQuickAction(resolveContext = { null }, allBridges = { emptyList() })
+    val action = AgentSessionsEditorTabNewThreadAction(resolveContext = { null }, allBridges = { emptyList() })
     val inputComponent = JPanel()
     val contextComponent = JPanel()
     val event = AnActionEvent(
@@ -483,7 +460,7 @@ class AgentSessionsEditorTabActionsTest {
 
   @Test
   fun quickNewThreadPopupAnchorFallsBackToContextComponent() {
-    val action = AgentSessionsEditorTabNewThreadQuickAction(resolveContext = { null }, allBridges = { emptyList() })
+    val action = AgentSessionsEditorTabNewThreadAction(resolveContext = { null }, allBridges = { emptyList() })
     val contextComponent = JPanel()
     val event = AnActionEvent(
       { dataId -> if (dataId == PlatformCoreDataKeys.CONTEXT_COMPONENT.name) contextComponent else null },
@@ -500,24 +477,10 @@ class AgentSessionsEditorTabActionsTest {
 
   @Test
   fun quickNewThreadPopupAnchorReturnsNullWithoutUiComponent() {
-    val action = AgentSessionsEditorTabNewThreadQuickAction(resolveContext = { null }, allBridges = { emptyList() })
+    val action = AgentSessionsEditorTabNewThreadAction(resolveContext = { null }, allBridges = { emptyList() })
     val event = TestActionEvent.createTestEvent(action)
 
     assertThat(resolveQuickStartProjectPopupAnchor(event)).isNull()
-  }
-
-  @Test
-  fun quickNewThreadProjectPopupActionsAreDumbAware() {
-    val candidates = listOf(
-      projectCandidate(path = "/work/repo-a", displayName = "Project A"),
-      projectCandidate(path = "/tmp/repo-a", displayName = "/tmp/repo-a"),
-    )
-
-    val group = buildQuickStartProjectPopupGroup(candidates) { }
-
-    assertThat(DumbService.isDumbAware(group)).isTrue()
-    assertThat(group.getChildren(TestActionEvent.createTestEvent()))
-      .allSatisfy { action -> assertThat(DumbService.isDumbAware(action)).isTrue() }
   }
 
   @Test
@@ -540,7 +503,7 @@ class AgentSessionsEditorTabActionsTest {
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = true,
     )
-    val group = AgentSessionsEditorTabNewThreadPopupGroup(
+    val group = PickerActionGroup(
       resolveContext = { context },
       allBridges = { listOf(codexBridge, claudeBridge) },
       createNewSession = { path, provider, mode, project, capturedEntryPoint ->
@@ -550,14 +513,9 @@ class AgentSessionsEditorTabActionsTest {
         launchedProjectName = project.name
         entryPoint = capturedEntryPoint
       },
+      entryPoint = AgentWorkbenchEntryPoint.EDITOR_TAB_POPUP,
     )
     val event = TestActionEvent.createTestEvent(group)
-
-    group.update(event)
-
-    assertThat(event.presentation.isEnabledAndVisible).isTrue()
-    assertThat(event.presentation.isPopupGroup).isTrue()
-    assertThat(event.presentation.isPerformGroup).isFalse()
 
     val children = group.getChildren(event)
     assertThat(children).hasSize(5)
@@ -597,7 +555,7 @@ class AgentSessionsEditorTabActionsTest {
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = true,
     )
-    val group = AgentSessionsEditorTabNewThreadPopupGroup(
+    val group = PickerActionGroup(
       resolveContext = { context },
       allBridges = { listOf(codexBridge, claudeBridge) },
       createNewSession = { path, provider, mode, _, capturedEntryPoint ->
@@ -606,6 +564,7 @@ class AgentSessionsEditorTabActionsTest {
         launchedMode = mode
         entryPoint = capturedEntryPoint
       },
+      entryPoint = AgentWorkbenchEntryPoint.EDITOR_TAB_POPUP,
     )
     val event = TestActionEvent.createTestEvent(group)
 
@@ -645,13 +604,13 @@ class AgentSessionsEditorTabActionsTest {
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = true,
     )
-    val group = AgentSessionsEditorTabNewThreadPopupGroup(
+    val group = PickerActionGroup(
       resolveContext = { context },
       allBridges = { listOf(claudeBridge) },
+      createNewSession = { _, _, _, _, _ -> },
+      entryPoint = AgentWorkbenchEntryPoint.EDITOR_TAB_POPUP,
     )
     val event = TestActionEvent.createTestEvent(group)
-
-    group.update(event)
 
     assertThat(targetResolved).isFalse()
 
@@ -668,16 +627,16 @@ class AgentSessionsEditorTabActionsTest {
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = true,
     )
-    val group = AgentSessionsEditorTabNewThreadPopupGroup(
+    val action = AgentSessionsEditorTabNewThreadAction(
       resolveContext = { null },
       allBridges = { listOf(codexBridge) },
     )
-    val event = TestActionEvent.createTestEvent(group)
+    val event = TestActionEvent.createTestEvent(action)
 
-    group.update(event)
+    action.update(event)
 
     assertThat(event.presentation.isEnabledAndVisible).isFalse()
-    assertThat(group.getChildren(event)).isEmpty()
+    assertThat(action.getChildren(event)).isEmpty()
   }
 
   @Test

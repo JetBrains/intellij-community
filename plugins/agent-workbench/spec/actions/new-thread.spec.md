@@ -48,7 +48,7 @@ New-thread actions let users start provider-backed threads from project/worktree
 - Tree popup new-thread actions resolve context from tree rows only; editor-tab context uses editor-tab actions.
   [@test] ../../sessions-toolwindow/testSrc/AgentSessionsTreePopupActionsTest.kt
 
-- Editor-tab new-thread actions are contributed to `EditorTabsToolbarActions` as quick-start and Add-popup entries. They are visible in dedicated Agent frames and hidden in normal project frames when dedicated-frame mode is enabled.
+- Editor-tab new-thread is contributed to `EditorTabsToolbarActions` as one split-button entry: primary click quick-launches when the source project and last provider/mode are eligible, and the chevron opens the provider/mode picker. It is visible in dedicated Agent frames and hidden in normal project frames when dedicated-frame mode is enabled.
   [@test] ../../sessions-actions/testSrc/AgentSessionsEditorTabActionsTest.kt
   [@test] ../../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
 
