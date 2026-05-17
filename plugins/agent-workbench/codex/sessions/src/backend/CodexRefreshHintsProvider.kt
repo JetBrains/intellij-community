@@ -14,6 +14,8 @@ internal data class CodexRefreshActivityHint(
   @JvmField val updatedAt: Long,
   @JvmField val responseRequired: Boolean = false,
   @JvmField val verifiedFresh: Boolean = false,
+  @JvmField val summaryActivity: AgentThreadActivity? = activity,
+  @JvmField val hasSummaryActivityHint: Boolean = true,
 )
 
 internal data class CodexRefreshHints(
@@ -22,9 +24,16 @@ internal data class CodexRefreshHints(
 )
 
 internal fun CodexRefreshHints.toAgentSessionRefreshHints(): AgentSessionRefreshHints {
+  val summaryActivityByThreadId = LinkedHashMap<String, AgentThreadActivity?>()
+  for ((threadId, hint) in activityHintsByThreadId) {
+    if (hint.hasSummaryActivityHint) {
+      summaryActivityByThreadId[threadId] = hint.summaryActivity
+    }
+  }
   return AgentSessionRefreshHints(
     rebindCandidates = rebindCandidates,
     activityByThreadId = activityHintsByThreadId.mapValues { (_, hint) -> hint.activity },
+    summaryActivityByThreadId = summaryActivityByThreadId,
   )
 }
 

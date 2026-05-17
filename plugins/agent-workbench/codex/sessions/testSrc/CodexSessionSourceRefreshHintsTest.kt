@@ -131,6 +131,37 @@ class CodexSessionSourceRefreshHintsTest {
   }
 
   @Test
+  fun mergePreservesRolloutSummaryActivityWhenRolloutOverridesActivity() {
+    val merged = mergeCodexRefreshHints(
+      appServerHintsByPath = mapOf(
+        "/work/project" to CodexRefreshHints(
+          activityHintsByThreadId = mapOf(
+            "thread-with-child-activity" to refreshHint(
+              activity = AgentThreadActivity.READY,
+              updatedAt = 200L,
+            ),
+          )
+        )
+      ),
+      rolloutHintsByPath = mapOf(
+        "/work/project" to CodexRefreshHints(
+          activityHintsByThreadId = mapOf(
+            "thread-with-child-activity" to refreshHint(
+              activity = AgentThreadActivity.UNREAD,
+              updatedAt = 230L,
+              summaryActivity = null,
+            ),
+          )
+        )
+      ),
+    )
+
+    val hint = merged.getValue("/work/project").activityHintsByThreadId.getValue("thread-with-child-activity")
+    assertThat(hint.activity).isEqualTo(AgentThreadActivity.UNREAD)
+    assertThat(hint.summaryActivity).isNull()
+  }
+
+  @Test
   fun mergeAllowsNewerRolloutWorkingActivityToOverrideStaleVerifiedAppServerHint() {
     val merged = mergeCodexRefreshHints(
       appServerHintsByPath = mapOf(
@@ -663,11 +694,13 @@ private fun refreshHint(
   updatedAt: Long,
   responseRequired: Boolean = false,
   verifiedFresh: Boolean = false,
+  summaryActivity: AgentThreadActivity? = activity,
 ): CodexRefreshActivityHint {
   return CodexRefreshActivityHint(
     activity = activity,
     updatedAt = updatedAt,
     responseRequired = responseRequired,
     verifiedFresh = verifiedFresh,
+    summaryActivity = summaryActivity,
   )
 }

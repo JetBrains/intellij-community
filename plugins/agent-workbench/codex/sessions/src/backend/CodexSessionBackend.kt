@@ -10,6 +10,7 @@ data class CodexBackendThread(
   @JvmField val thread: CodexThread,
   @JvmField val activity: CodexSessionActivity = CodexSessionActivity.READY,
   @JvmField val requiresResponse: Boolean = false,
+  @JvmField val summaryActivity: CodexSessionActivity? = activity,
 )
 
 data class CodexBackendThreadRefreshResult(

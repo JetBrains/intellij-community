@@ -7,9 +7,11 @@ import com.intellij.agent.workbench.codex.common.CodexThreadActivitySnapshot
 import com.intellij.agent.workbench.codex.common.CodexThreadStatusKind
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
+import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.openTestProjectEntry
 import com.intellij.agent.workbench.sessions.state.InMemorySessionTreeUiState
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
@@ -141,6 +143,51 @@ class AgentSessionsCodexActivityRenderingIntegrationTest {
     }
   }
 
+  @Test
+  fun treeRowRendersActualActivityWhenSummaryActivityDoesNotContribute() {
+    val thread = AgentSessionThread(
+      id = "sub-agent-only",
+      title = "Sub-agent only",
+      updatedAt = 1_000L,
+      archived = false,
+      activity = AgentThreadActivity.UNREAD,
+      provider = AgentSessionProvider.CODEX,
+      summaryActivity = null,
+    )
+    val project = AgentProjectSessions(
+      path = PROJECT_PATH,
+      name = "Project A",
+      isOpen = true,
+      hasLoaded = true,
+      threads = listOf(thread),
+    )
+    val model = buildSessionTreeModel(
+      projects = listOf(project),
+      visibleClosedProjectCount = Int.MAX_VALUE,
+      visibleThreadCounts = emptyMap(),
+      treeUiState = InMemorySessionTreeUiState(),
+    )
+    val threadId = SessionTreeId.Thread(project.path, AgentSessionProvider.CODEX, thread.id)
+    val unreadNode = model.entriesById.getValue(threadId).node as SessionTreeNode.Thread
+    assertThat(unreadNode.thread.activity).isEqualTo(AgentThreadActivity.UNREAD)
+    assertThat(unreadNode.thread.summaryActivity).isNull()
+
+    val tree = createTree()
+    val unreadRenderer = createRenderer { id -> model.entriesById[id]?.node }
+    unreadRenderer.getTreeCellRendererComponent(tree, descriptorValue(threadId), false, false, true, 0, false)
+    val unreadIcon = unreadRenderer.icon
+    assertThat(unreadIcon).isNotNull()
+
+    val readyRenderer = createRenderer { id ->
+      when (id) {
+        threadId -> unreadNode.copy(thread = unreadNode.thread.copy(activity = AgentThreadActivity.READY))
+        else -> model.entriesById[id]?.node
+      }
+    }
+    readyRenderer.getTreeCellRendererComponent(tree, descriptorValue(threadId), false, false, true, 0, false)
+    assertThat(unreadIcon).isNotSameAs(readyRenderer.icon)
+  }
+
   private fun createRenderer(nodeResolver: (SessionTreeId) -> SessionTreeNode?): SessionTreeCellRenderer {
     return SessionTreeCellRenderer(
       nowProvider = { 2_000L },
@@ -174,9 +221,14 @@ class AgentSessionsCodexActivityRenderingIntegrationTest {
     val backendThreadClass = Class.forName("com.intellij.agent.workbench.codex.sessions.backend.CodexBackendThread")
     val activityClass = Class.forName("com.intellij.agent.workbench.codex.sessions.backend.CodexSessionActivity")
     val readyActivity = activityClass.enumConstants.single { constant -> (constant as Enum<*>).name == "READY" }
-    val constructor = backendThreadClass.getDeclaredConstructor(CodexThread::class.java, activityClass, Boolean::class.javaPrimitiveType)
+    val constructor = backendThreadClass.getDeclaredConstructor(
+      CodexThread::class.java,
+      activityClass,
+      Boolean::class.javaPrimitiveType,
+      activityClass,
+    )
     constructor.isAccessible = true
-    return constructor.newInstance(thread, readyActivity, false)
+    return constructor.newInstance(thread, readyActivity, false, readyActivity)
   }
 
   private fun createStaticBackend(backendClass: Class<*>, backendThreads: List<Any>): Any {

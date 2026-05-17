@@ -1866,14 +1866,16 @@ class AgentSessionRefreshCoordinatorTest {
           scopedPaths = setOf(PROJECT_PATH),
           threadIds = setOf("codex-1"),
           activityHintsByThreadId = mapOf("codex-1" to AgentThreadActivity.PROCESSING),
+          summaryActivityHintsByThreadId = mapOf("codex-1" to null),
         )
       )
 
       waitForCondition {
-        stateStore.snapshot().projects.firstOrNull { it.path == PROJECT_PATH }
-          ?.threads
-          ?.firstOrNull { it.id == "codex-1" }
-          ?.activity == AgentThreadActivity.PROCESSING
+        val thread = stateStore.snapshot().projects.firstOrNull { it.path == PROJECT_PATH }
+                       ?.threads
+                       ?.firstOrNull { it.id == "codex-1" }
+                     ?: return@waitForCondition false
+        thread.activity == AgentThreadActivity.PROCESSING && thread.summaryActivity == null
       }
 
       val expectedKey = PROJECT_PATH to buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-1")
@@ -1970,6 +1972,89 @@ class AgentSessionRefreshCoordinatorTest {
       val expectedKey = PROJECT_PATH to buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-1")
       waitForCondition {
         receivedActivityMaps.any { activityMap -> activityMap[expectedKey] == AgentThreadActivity.UNREAD }
+      }
+    }
+  }
+
+  @Test
+  fun providerRefreshActivityHintWithoutSummaryPreservesNonContributingSummaryActivity() = runBlocking(Dispatchers.Default) {
+    val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
+
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.CODEX,
+      supportsUpdates = true,
+      updateEvents = updates,
+      listFromClosedProject = { path ->
+        if (path != PROJECT_PATH) {
+          emptyList()
+        }
+        else {
+          listOf(
+            thread(
+              id = "codex-sub-agent",
+              updatedAt = 500L,
+              provider = AgentSessionProvider.CODEX,
+              activity = AgentThreadActivity.READY,
+              summaryActivity = null,
+            )
+          )
+        }
+      },
+      prefetchRefreshThreadSeedsProvider = { paths, _ ->
+        if (PROJECT_PATH !in paths) {
+          emptyMap()
+        }
+        else {
+          mapOf(
+            PROJECT_PATH to AgentSessionRefreshHints(
+              activityByThreadId = mapOf("codex-sub-agent" to AgentThreadActivity.UNREAD)
+            )
+          )
+        }
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { true },
+    ) { coordinator, stateStore ->
+      stateStore.replaceProjects(
+        projects = listOf(
+          AgentProjectSessions(
+            path = PROJECT_PATH,
+            name = "Project A",
+            isOpen = true,
+            hasLoaded = true,
+            threads = listOf(
+              thread(
+                id = "codex-sub-agent",
+                updatedAt = 100L,
+                provider = AgentSessionProvider.CODEX,
+                activity = AgentThreadActivity.READY,
+                summaryActivity = null,
+              )
+            ),
+          )
+        ),
+        visibleThreadCounts = emptyMap(),
+      )
+
+      coordinator.observeSessionSourceUpdates()
+      updates.tryEmit(
+        threadsChangedEvent(
+          scopedPaths = setOf(PROJECT_PATH),
+          threadIds = setOf("codex-sub-agent"),
+        )
+      )
+
+      waitForCondition {
+        val thread = stateStore.snapshot().projects.firstOrNull { it.path == PROJECT_PATH }
+                       ?.threads
+                       ?.firstOrNull { it.id == "codex-sub-agent" }
+                     ?: return@waitForCondition false
+        thread.updatedAt == 500L &&
+        thread.activity == AgentThreadActivity.UNREAD &&
+        thread.summaryActivity == null
       }
     }
   }

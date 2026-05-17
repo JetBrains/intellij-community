@@ -72,9 +72,9 @@ internal data class AgentSessionsActivitySummary(
 internal fun buildAgentSessionsActivitySummary(state: AgentSessionsState): AgentSessionsActivitySummary {
   val rows = collectAgentSessionsActivityThreadRows(state)
   return AgentSessionsActivitySummary(
-    attentionRows = rows.filter { it.thread.activity.isAttentionActivity() }.sortedByRecentActivity(),
-    runningRows = rows.filter { it.thread.activity == AgentThreadActivity.PROCESSING }.sortedByRecentActivity(),
-    doneRows = rows.filter { it.thread.activity == AgentThreadActivity.UNREAD }.sortedByRecentActivity(),
+    attentionRows = rows.filter { it.thread.summaryActivity.isAttentionActivity() }.sortedByRecentActivity(),
+    runningRows = rows.filter { it.thread.summaryActivity == AgentThreadActivity.PROCESSING }.sortedByRecentActivity(),
+    doneRows = rows.filter { it.thread.summaryActivity == AgentThreadActivity.UNREAD }.sortedByRecentActivity(),
   )
 }
 
@@ -128,6 +128,6 @@ private fun List<AgentSessionsActivityThreadRow>.sortedByRecentActivity(): List<
   )
 }
 
-private fun AgentThreadActivity.isAttentionActivity(): Boolean {
+private fun AgentThreadActivity?.isAttentionActivity(): Boolean {
   return this == AgentThreadActivity.NEEDS_INPUT || this == AgentThreadActivity.REVIEWING
 }

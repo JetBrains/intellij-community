@@ -603,6 +603,7 @@ private fun CodexThreadActivitySnapshot.toRefreshActivityHint(verifiedFresh: Boo
     updatedAt = updatedAt,
     responseRequired = activeFlags.isResponseRequired() || hasPendingPlan,
     verifiedFresh = verifiedFresh,
+    hasSummaryActivityHint = false,
   )
 }
 
@@ -619,6 +620,7 @@ private fun CodexAppServerNotification.toRefreshActivityHintOrNull(receivedAtMs:
     activity = resolveCodexSessionActivity(statusKind = resolvedStatusKind, activeFlags = resolvedActiveFlags).toAgentThreadActivity(),
     updatedAt = startedThread?.updatedAt ?: receivedAtMs,
     responseRequired = resolvedActiveFlags.isResponseRequired(),
+    hasSummaryActivityHint = false,
   )
 }
 

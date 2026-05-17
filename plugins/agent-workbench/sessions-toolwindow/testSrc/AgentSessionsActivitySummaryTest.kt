@@ -117,6 +117,30 @@ class AgentSessionsActivitySummaryTest {
   }
 
   @Test
+  fun nonContributingSummaryActivityKeepsRowActivityOutOfGlobalSummary() {
+    val summary = buildAgentSessionsActivitySummary(
+      AgentSessionsState(
+        projects = listOf(
+          AgentProjectSessions(
+            path = "/work/project-a",
+            name = "Project A",
+            isOpen = true,
+            hasLoaded = true,
+            threads = listOf(
+              thread("sub-agent-done", AgentThreadActivity.UNREAD, 100, summaryActivity = null),
+            ),
+          )
+        ),
+      )
+    )
+
+    assertThat(summary.attentionRows).isEmpty()
+    assertThat(summary.runningRows).isEmpty()
+    assertThat(summary.doneRows).isEmpty()
+    assertThat(summary.stripeBadge()).isNull()
+  }
+
+  @Test
   fun stripeBadgePrefersAttentionOverDoneAndRunning() {
     val summary = buildAgentSessionsActivitySummary(
       AgentSessionsState(
@@ -284,6 +308,25 @@ class AgentSessionsActivitySummaryTest {
     assertThat(tracker.collectNotifications(summary(thread("done", AgentThreadActivity.UNREAD, 200)), isLoadedState = true)).hasSize(1)
     assertThat(tracker.collectNotifications(summary(thread("done", AgentThreadActivity.PROCESSING, 300)), isLoadedState = true)).isEmpty()
     assertThat(tracker.collectNotifications(summary(thread("done", AgentThreadActivity.UNREAD, 400)), isLoadedState = true)).hasSize(1)
+  }
+
+  @Test
+  fun systemNotificationTrackerIgnoresNonContributingSummaryActivity() {
+    val tracker = AgentSessionsSystemNotificationTracker()
+    tracker.collectNotifications(summary(thread("done", AgentThreadActivity.PROCESSING, 100)), isLoadedState = true)
+
+    assertThat(
+      tracker.collectNotifications(
+        summary(thread("done", AgentThreadActivity.UNREAD, 200, summaryActivity = null)),
+        isLoadedState = true,
+      )
+    ).isEmpty()
+    assertThat(
+      tracker.collectNotifications(
+        summary(thread("done", AgentThreadActivity.UNREAD, 300, summaryActivity = AgentThreadActivity.UNREAD)),
+        isLoadedState = true,
+      )
+    ).hasSize(1)
   }
 
   @Test
@@ -460,6 +503,7 @@ class AgentSessionsActivitySummaryTest {
     activity: AgentThreadActivity,
     updatedAt: Long,
     title: String = id,
+    summaryActivity: AgentThreadActivity? = activity,
   ): AgentSessionThread {
     return AgentSessionThread(
       id = id,
@@ -468,6 +512,7 @@ class AgentSessionsActivitySummaryTest {
       archived = false,
       activity = activity,
       provider = AgentSessionProvider.CODEX,
+      summaryActivity = summaryActivity,
     )
   }
 }

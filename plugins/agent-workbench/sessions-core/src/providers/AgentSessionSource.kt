@@ -19,6 +19,7 @@ data class AgentSessionRebindCandidate(
 data class AgentSessionRefreshHints(
   @JvmField val rebindCandidates: List<AgentSessionRebindCandidate> = emptyList(),
   @JvmField val activityByThreadId: Map<String, AgentThreadActivity> = emptyMap(),
+  @JvmField val summaryActivityByThreadId: Map<String, AgentThreadActivity?> = emptyMap(),
 )
 
 const val UNKNOWN_AGENT_SESSION_REFRESH_THREAD_UPDATED_AT: Long = -1L
@@ -50,6 +51,7 @@ data class AgentSessionSourceUpdateEvent(
   @JvmField val scopedPaths: Set<String>? = null,
   @JvmField val threadIds: Set<String>? = null,
   @JvmField val activityHintsByThreadId: Map<String, AgentThreadActivity> = emptyMap(),
+  @JvmField val summaryActivityHintsByThreadId: Map<String, AgentThreadActivity?> = emptyMap(),
   @JvmField val activityHintPolicy: AgentSessionActivityHintPolicy = AgentSessionActivityHintPolicy.AUTHORITATIVE,
 )
 

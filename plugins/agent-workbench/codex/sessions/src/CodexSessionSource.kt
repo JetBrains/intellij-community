@@ -219,8 +219,9 @@ internal class CodexSessionSource internal constructor(
         if (!shouldKeepRefreshHint(threadId = thread.id, hint = activityHint)) {
           return@map thread
         }
+        val hintedSummaryActivity = resolveHintedSummaryActivity(thread = thread, hint = activityHint)
         if (activityHint.verifiedFresh) {
-          if (thread.activity == activityHint.activity) {
+          if (thread.activity == activityHint.activity && thread.summaryActivity == hintedSummaryActivity) {
             return@map thread
           }
 
@@ -230,7 +231,7 @@ internal class CodexSessionSource internal constructor(
             "path=$path threadId=${thread.id} appServerActivity=${thread.activity} verifiedActivity=${activityHint.activity} " +
             "verifiedUpdatedAt=${activityHint.updatedAt} verifiedResponseRequired=${activityHint.responseRequired}"
           }
-          return@map thread.copy(activity = activityHint.activity)
+          return@map thread.copy(activity = activityHint.activity, summaryActivity = hintedSummaryActivity)
         }
 
         val backendThread = backendThreadsById[thread.id]
@@ -238,6 +239,7 @@ internal class CodexSessionSource internal constructor(
           activity = thread.activity,
           updatedAt = backendThread?.thread?.updatedAt ?: thread.updatedAt,
           responseRequired = backendThread?.requiresResponse == true,
+          summaryActivity = thread.summaryActivity,
         )
         if (!shouldApplyRolloutActivityFallback(currentHint = currentHint, rolloutHint = activityHint)) {
           return@map thread
@@ -250,7 +252,7 @@ internal class CodexSessionSource internal constructor(
           "appServerUpdatedAt=${currentHint.updatedAt} rolloutUpdatedAt=${activityHint.updatedAt} " +
           "appServerResponseRequired=${currentHint.responseRequired} rolloutResponseRequired=${activityHint.responseRequired}"
         }
-        thread.copy(activity = activityHint.activity)
+        thread.copy(activity = activityHint.activity, summaryActivity = hintedSummaryActivity)
       }
       if (appliedActivityUpdates > 0) {
         LOG.debug {
@@ -485,6 +487,14 @@ private fun CodexRefreshActivityHint.shouldVerifyWithAppServer(): Boolean {
   return responseRequired || activity.isWorking
 }
 
+private fun resolveHintedSummaryActivity(thread: AgentSessionThread, hint: CodexRefreshActivityHint): AgentThreadActivity? {
+  return when {
+    hint.hasSummaryActivityHint -> hint.summaryActivity
+    thread.summaryActivity == null -> null
+    else -> hint.activity
+  }
+}
+
 private fun mergeRebindCandidates(
   primary: List<AgentSessionRebindCandidate>,
   fallback: List<AgentSessionRebindCandidate>,
@@ -503,10 +513,18 @@ private fun mergeRebindCandidates(
 }
 
 private fun toAgentSessionThread(thread: CodexBackendThread): AgentSessionThread {
-  return toAgentSessionThread(thread = thread.thread, activity = thread.activity)
+  return toAgentSessionThread(
+    thread = thread.thread,
+    activity = thread.activity,
+    summaryActivity = thread.summaryActivity,
+  )
 }
 
-private fun toAgentSessionThread(thread: CodexThread, activity: CodexSessionActivity): AgentSessionThread {
+private fun toAgentSessionThread(
+  thread: CodexThread,
+  activity: CodexSessionActivity,
+  summaryActivity: CodexSessionActivity?,
+): AgentSessionThread {
   return AgentSessionThread(
     id = thread.id,
     title = thread.title,
@@ -516,5 +534,6 @@ private fun toAgentSessionThread(thread: CodexThread, activity: CodexSessionActi
     subAgents = thread.subAgents.map { AgentSubAgent(it.id, it.name) },
     originBranch = thread.gitBranch,
     activity = activity.toAgentThreadActivity(),
+    summaryActivity = summaryActivity?.toAgentThreadActivity(),
   )
 }

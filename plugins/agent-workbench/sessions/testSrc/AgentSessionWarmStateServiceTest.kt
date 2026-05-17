@@ -118,4 +118,32 @@ class AgentSessionWarmStateServiceTest {
     assertThat(snapshot?.threads?.map { it.provider }).isEqualTo(listOf(AgentSessionProvider.CLAUDE, AgentSessionProvider.CODEX))
     assertThat(snapshot?.threads?.map { it.activity }).isEqualTo(listOf(AgentThreadActivity.UNREAD, AgentThreadActivity.READY))
   }
+
+  @Test
+  fun warmStateRoundTripPreservesNonContributingSummaryActivity() {
+    val original = AgentSessionWarmStateService()
+    original.setPathSnapshot(
+      "/work/project-a/",
+      AgentSessionWarmPathSnapshot(
+        threads = listOf(
+          thread(
+            id = "codex-sub-agent",
+            updatedAt = 10,
+            provider = AgentSessionProvider.CODEX,
+            activity = AgentThreadActivity.UNREAD,
+            summaryActivity = null,
+          ),
+        ),
+        hasUnknownThreadCount = false,
+        updatedAt = 200,
+      ),
+    )
+
+    val reloaded = AgentSessionWarmStateService()
+    reloaded.loadState(original.state)
+
+    val thread = reloaded.getPathSnapshot("/work/project-a")?.threads?.single()
+    assertThat(thread?.activity).isEqualTo(AgentThreadActivity.UNREAD)
+    assertThat(thread?.summaryActivity).isNull()
+  }
 }

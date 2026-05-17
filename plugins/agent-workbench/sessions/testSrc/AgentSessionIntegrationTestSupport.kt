@@ -254,6 +254,7 @@ fun threadsChangedEvent(
   scopedPaths: Set<String>? = null,
   threadIds: Set<String>? = null,
   activityHintsByThreadId: Map<String, AgentThreadActivity> = emptyMap(),
+  summaryActivityHintsByThreadId: Map<String, AgentThreadActivity?> = emptyMap(),
   activityHintPolicy: AgentSessionActivityHintPolicy = AgentSessionActivityHintPolicy.OPTIMISTIC,
 ): AgentSessionSourceUpdateEvent {
   return AgentSessionSourceUpdateEvent(
@@ -261,6 +262,7 @@ fun threadsChangedEvent(
     scopedPaths = scopedPaths,
     threadIds = threadIds,
     activityHintsByThreadId = activityHintsByThreadId,
+    summaryActivityHintsByThreadId = summaryActivityHintsByThreadId,
     activityHintPolicy = activityHintPolicy,
   )
 }
@@ -269,6 +271,7 @@ fun hintsChangedEvent(
   scopedPaths: Set<String>? = null,
   threadIds: Set<String>? = null,
   activityHintsByThreadId: Map<String, AgentThreadActivity> = emptyMap(),
+  summaryActivityHintsByThreadId: Map<String, AgentThreadActivity?> = emptyMap(),
   activityHintPolicy: AgentSessionActivityHintPolicy = AgentSessionActivityHintPolicy.OPTIMISTIC,
 ): AgentSessionSourceUpdateEvent {
   return AgentSessionSourceUpdateEvent(
@@ -276,6 +279,7 @@ fun hintsChangedEvent(
     scopedPaths = scopedPaths,
     threadIds = threadIds,
     activityHintsByThreadId = activityHintsByThreadId,
+    summaryActivityHintsByThreadId = summaryActivityHintsByThreadId,
     activityHintPolicy = activityHintPolicy,
   )
 }
@@ -286,6 +290,7 @@ fun thread(
   provider: AgentSessionProvider,
   title: String = id,
   activity: AgentThreadActivity = AgentThreadActivity.READY,
+  summaryActivity: AgentThreadActivity? = activity,
   subAgents: List<AgentSubAgent> = emptyList(),
 ): AgentSessionThread {
   return AgentSessionThread(
@@ -295,6 +300,7 @@ fun thread(
     archived = false,
     provider = provider,
     activity = activity,
+    summaryActivity = summaryActivity,
     subAgents = subAgents,
   )
 }

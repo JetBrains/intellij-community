@@ -81,6 +81,7 @@ internal class CodexRolloutParser(
       state.parentThreadId != null -> CodexThreadSourceKind.SUB_AGENT_THREAD_SPAWN
       else -> CodexThreadSourceKind.CLI
     }
+    val summaryActivity = if (sourceKind.isSubAgentSourceKind()) null else activity
 
     LOG.debug {
       "Parsed rollout thread (sessionId=$resolvedSessionId, cwd=$normalizedCwd, title=$resolvedTitle, fallbackTitle=$usedFallbackTitle, updatedAt=$resolvedUpdatedAt, activity=$activity)"
@@ -102,10 +103,29 @@ internal class CodexRolloutParser(
         ),
         activity = activity,
         requiresResponse = hasPendingUserInput || hasPendingApproval || hasPendingPlan,
+        summaryActivity = summaryActivity,
       ),
     )
   }
 
+}
+
+private fun CodexThreadSourceKind.isSubAgentSourceKind(): Boolean {
+  return when (this) {
+    CodexThreadSourceKind.SUB_AGENT,
+    CodexThreadSourceKind.SUB_AGENT_REVIEW,
+    CodexThreadSourceKind.SUB_AGENT_COMPACT,
+    CodexThreadSourceKind.SUB_AGENT_THREAD_SPAWN,
+    CodexThreadSourceKind.SUB_AGENT_OTHER,
+      -> true
+
+    CodexThreadSourceKind.CLI,
+    CodexThreadSourceKind.VSCODE,
+    CodexThreadSourceKind.EXEC,
+    CodexThreadSourceKind.APP_SERVER,
+    CodexThreadSourceKind.UNKNOWN,
+      -> false
+  }
 }
 
 private fun reduceEvent(parseState: RolloutParseState, event: RolloutEvent) {

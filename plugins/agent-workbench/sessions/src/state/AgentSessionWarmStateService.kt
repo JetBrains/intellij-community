@@ -142,6 +142,7 @@ internal class AgentSessionWarmStateService
     @JvmField val provider: String,
     @JvmField val subAgents: List<WarmSubAgentState> = emptyList(),
     @JvmField val originBranch: String? = null,
+    @JvmField val summaryActivity: String? = activity,
   )
 
   @Serializable
@@ -180,6 +181,7 @@ private fun AgentSessionWarmStateService.WarmPathSnapshotState.toSnapshot(): Age
         provider = provider,
         subAgents = thread.subAgents.map { subAgent -> AgentSubAgent(id = subAgent.id, name = subAgent.name) },
         originBranch = thread.originBranch,
+        summaryActivity = parseWarmStateThreadSummaryActivity(thread.summaryActivity),
       )
     },
     hasUnknownThreadCount = hasUnknownThreadCount,
@@ -200,6 +202,7 @@ private fun AgentSessionWarmPathSnapshot.toState(): AgentSessionWarmStateService
           AgentSessionWarmStateService.WarmSubAgentState(id = subAgent.id, name = subAgent.name)
         },
         originBranch = thread.originBranch,
+        summaryActivity = thread.summaryActivity?.name,
       )
     },
     hasUnknownThreadCount = hasUnknownThreadCount,
@@ -210,4 +213,8 @@ private fun AgentSessionWarmPathSnapshot.toState(): AgentSessionWarmStateService
 private fun parseWarmStateThreadActivity(value: String): AgentThreadActivity {
   return runCatching { AgentThreadActivity.valueOf(value) }
     .getOrDefault(AgentThreadActivity.READY)
+}
+
+private fun parseWarmStateThreadSummaryActivity(value: String?): AgentThreadActivity? {
+  return value?.let { runCatching { AgentThreadActivity.valueOf(it) }.getOrNull() }
 }

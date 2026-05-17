@@ -372,7 +372,10 @@ private fun markThreadAsRead(
   val nextThreads = threads.map { thread ->
     if (thread.provider == provider && thread.id == threadId && thread.activity == AgentThreadActivity.UNREAD && thread.updatedAt <= updatedAt) {
       changed = true
-      thread.copy(activity = AgentThreadActivity.READY)
+      thread.copy(
+        activity = AgentThreadActivity.READY,
+        summaryActivity = thread.summaryActivity?.takeUnless { it == AgentThreadActivity.UNREAD } ?: AgentThreadActivity.READY,
+      )
     }
     else {
       thread

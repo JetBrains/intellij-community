@@ -163,6 +163,7 @@ internal class AgentSessionRefreshCoordinator(
     if (activityHintsByThreadId.isEmpty()) {
       return
     }
+    val summaryActivityHintsByThreadId = updateEvent.summaryActivityHintsByThreadId
 
     val normalizedScopedPaths = updateEvent.scopedPaths
       ?.asSequence()
@@ -177,6 +178,7 @@ internal class AgentSessionRefreshCoordinator(
         provider = provider,
         normalizedScopedPaths = normalizedScopedPaths,
         activityHintsByThreadId = activityHintsByThreadId,
+        summaryActivityHintsByThreadId = summaryActivityHintsByThreadId,
       )
       activityByPathAndThreadIdentity = update.activityByPathAndThreadIdentity
       update.state
@@ -422,6 +424,7 @@ private fun applyThreadActivityHints(
   provider: AgentSessionProvider,
   normalizedScopedPaths: Set<String>?,
   activityHintsByThreadId: Map<String, AgentThreadActivity>,
+  summaryActivityHintsByThreadId: Map<String, AgentThreadActivity?>,
 ): ActivityHintStateUpdate {
   val activityByPathAndThreadIdentity = LinkedHashMap<Pair<String, String>, AgentThreadActivity>()
   var changed = false
@@ -432,6 +435,7 @@ private fun applyThreadActivityHints(
       threads = project.threads,
       normalizedScopedPaths = normalizedScopedPaths,
       activityHintsByThreadId = activityHintsByThreadId,
+      summaryActivityHintsByThreadId = summaryActivityHintsByThreadId,
     )
     activityByPathAndThreadIdentity.putAll(projectUpdate.activityByPathAndThreadIdentity)
 
@@ -443,6 +447,7 @@ private fun applyThreadActivityHints(
         threads = worktree.threads,
         normalizedScopedPaths = normalizedScopedPaths,
         activityHintsByThreadId = activityHintsByThreadId,
+        summaryActivityHintsByThreadId = summaryActivityHintsByThreadId,
       )
       activityByPathAndThreadIdentity.putAll(worktreeUpdate.activityByPathAndThreadIdentity)
       if (worktreeUpdate.threads === worktree.threads) {
@@ -484,6 +489,7 @@ private fun applyThreadActivityHintsForPath(
   threads: List<AgentSessionThread>,
   normalizedScopedPaths: Set<String>?,
   activityHintsByThreadId: Map<String, AgentThreadActivity>,
+  summaryActivityHintsByThreadId: Map<String, AgentThreadActivity?>,
 ): ActivityHintThreadUpdate {
   val normalizedPath = normalizeAgentWorkbenchPath(path)
   if (normalizedScopedPaths != null && normalizedPath !in normalizedScopedPaths) {
@@ -497,12 +503,17 @@ private fun applyThreadActivityHintsForPath(
       return@map thread
     }
     val hintedActivity = activityHintsByThreadId[thread.id] ?: return@map thread
-    if (hintedActivity == thread.activity) {
+    val hintedSummaryActivity = resolveHintedSummaryActivity(
+      thread = thread,
+      hintedActivity = hintedActivity,
+      summaryActivityHintsByThreadId = summaryActivityHintsByThreadId,
+    )
+    if (hintedActivity == thread.activity && thread.summaryActivity == hintedSummaryActivity) {
       return@map thread
     }
     activityByPathAndThreadIdentity[path to buildAgentSessionIdentity(provider, thread.id)] = hintedActivity
     changed = true
-    thread.copy(activity = hintedActivity)
+    thread.copy(activity = hintedActivity, summaryActivity = hintedSummaryActivity)
   }
 
   if (!changed) {
@@ -512,6 +523,18 @@ private fun applyThreadActivityHintsForPath(
     threads = nextThreads,
     activityByPathAndThreadIdentity = activityByPathAndThreadIdentity,
   )
+}
+
+private fun resolveHintedSummaryActivity(
+  thread: AgentSessionThread,
+  hintedActivity: AgentThreadActivity,
+  summaryActivityHintsByThreadId: Map<String, AgentThreadActivity?>,
+): AgentThreadActivity? {
+  return when {
+    summaryActivityHintsByThreadId.containsKey(thread.id) -> summaryActivityHintsByThreadId[thread.id]
+    thread.summaryActivity == null -> null
+    else -> hintedActivity
+  }
 }
 
 private fun collectVfsRefreshCandidatePaths(

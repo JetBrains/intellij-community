@@ -262,11 +262,12 @@ private suspend fun buildThreadsByCwd(
       val children = childrenByParent[parent.id]
         .orEmpty()
         .sortedByDescending { it.updatedAt }
+      val parentActivity = parent.toCodexSessionActivity()
       val subAgents = children.map { child ->
         CodexSubAgent(id = child.id, name = child.toSubAgentName())
       }
       val activity = foldSessionActivity(
-        parent.toCodexSessionActivity(),
+        parentActivity,
         children.asSequence().map(CodexThread::toCodexSessionActivity),
       )
       val requiresResponse = parent.activeFlags.isResponseRequired() || children.any { child -> child.activeFlags.isResponseRequired() }
@@ -275,6 +276,7 @@ private suspend fun buildThreadsByCwd(
           thread = parent.copy(subAgents = subAgents),
           activity = activity,
           requiresResponse = requiresResponse,
+          summaryActivity = if (parent.isSubAgentSourceKind()) null else parentActivity,
         )
       )
     }
@@ -311,6 +313,7 @@ private fun CodexThread.toStandaloneBackendThread(): CodexBackendThread {
     thread = copy(subAgents = emptyList()),
     activity = toCodexSessionActivity(),
     requiresResponse = activeFlags.isResponseRequired(),
+    summaryActivity = null,
   )
 }
 
@@ -360,6 +363,24 @@ private fun CodexThread.shouldBeGroupedAsSubAgentChild(): Boolean {
       -> !parentThreadId.isNullOrBlank()
 
     else -> false
+  }
+}
+
+private fun CodexThread.isSubAgentSourceKind(): Boolean {
+  return when (sourceKind) {
+    CodexThreadSourceKind.SUB_AGENT,
+    CodexThreadSourceKind.SUB_AGENT_REVIEW,
+    CodexThreadSourceKind.SUB_AGENT_COMPACT,
+    CodexThreadSourceKind.SUB_AGENT_THREAD_SPAWN,
+    CodexThreadSourceKind.SUB_AGENT_OTHER,
+      -> true
+
+    CodexThreadSourceKind.CLI,
+    CodexThreadSourceKind.VSCODE,
+    CodexThreadSourceKind.EXEC,
+    CodexThreadSourceKind.APP_SERVER,
+    CodexThreadSourceKind.UNKNOWN,
+      -> false
   }
 }
 

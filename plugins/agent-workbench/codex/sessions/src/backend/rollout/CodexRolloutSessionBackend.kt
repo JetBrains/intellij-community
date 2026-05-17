@@ -90,6 +90,7 @@ internal class CodexRolloutSessionBackend(
     val scopedPaths = LinkedHashSet<String>()
     val threadIds = LinkedHashSet<String>()
     val activityHintsByThreadId = LinkedHashMap<String, AgentThreadActivity>()
+    val summaryActivityHintsByThreadId = LinkedHashMap<String, AgentThreadActivity?>()
     var failedParses = 0
     for (path in rolloutPaths) {
       val parsedThread = parser.parse(path)
@@ -101,7 +102,9 @@ internal class CodexRolloutSessionBackend(
       threadIds += parsedThread.thread.thread.id
       parsedThread.parentThreadId?.let(threadIds::add)
       if (parsedThread.parentThreadId == null) {
-        activityHintsByThreadId[parsedThread.thread.thread.id] = parsedThread.thread.activity.toAgentThreadActivity()
+        val threadId = parsedThread.thread.thread.id
+        activityHintsByThreadId[threadId] = parsedThread.thread.activity.toAgentThreadActivity()
+        summaryActivityHintsByThreadId[threadId] = parsedThread.thread.summaryActivity?.toAgentThreadActivity()
       }
     }
 
@@ -121,6 +124,7 @@ internal class CodexRolloutSessionBackend(
       scopedPaths = scopedPaths,
       threadIds = threadIds.takeIf { it.isNotEmpty() },
       activityHintsByThreadId = activityHintsByThreadId,
+      summaryActivityHintsByThreadId = summaryActivityHintsByThreadId,
       activityHintPolicy = AgentSessionActivityHintPolicy.AUTHORITATIVE,
     )
   }

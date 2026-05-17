@@ -139,7 +139,9 @@ internal class AgentSessionThreadRebindSupport(
     val updatedOutcomes = LinkedHashMap<String, ProviderRefreshOutcome>()
     for ((path, outcome) in outcomes) {
       val threads = outcome.threads ?: continue
-      val activityByThreadId = refreshHintsByPath[path]?.activityByThreadId ?: continue
+      val refreshHints = refreshHintsByPath[path] ?: continue
+      val activityByThreadId = refreshHints.activityByThreadId
+      val summaryActivityByThreadId = refreshHints.summaryActivityByThreadId
       if (activityByThreadId.isEmpty()) {
         continue
       }
@@ -150,11 +152,16 @@ internal class AgentSessionThreadRebindSupport(
           return@map thread
         }
         val hintedActivity = activityByThreadId[thread.id] ?: return@map thread
-        if (hintedActivity == thread.activity) {
+        val hintedSummaryActivity = resolveHintedSummaryActivity(
+          thread = thread,
+          hintedActivity = hintedActivity,
+          summaryActivityByThreadId = summaryActivityByThreadId,
+        )
+        if (hintedActivity == thread.activity && hintedSummaryActivity == thread.summaryActivity) {
           return@map thread
         }
         changed = true
-        thread.copy(activity = hintedActivity)
+        thread.copy(activity = hintedActivity, summaryActivity = hintedSummaryActivity)
       }
 
       if (changed) {
@@ -780,6 +787,18 @@ private fun deduplicateRebindTargets(candidates: List<AgentChatTabRebindTarget>)
     }
   }
   return result
+}
+
+private fun resolveHintedSummaryActivity(
+  thread: AgentSessionThread,
+  hintedActivity: AgentThreadActivity,
+  summaryActivityByThreadId: Map<String, AgentThreadActivity?>,
+): AgentThreadActivity? {
+  return when {
+    summaryActivityByThreadId.containsKey(thread.id) -> summaryActivityByThreadId[thread.id]
+    thread.summaryActivity == null -> null
+    else -> hintedActivity
+  }
 }
 
 private data class PendingThreadAmbiguityState(

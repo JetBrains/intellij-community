@@ -49,6 +49,7 @@ internal class CodexRolloutRefreshHintsProvider(
               activity = threadActivity,
               updatedAt = rolloutUpdatedAt,
               responseRequired = rolloutThread.requiresResponse,
+              summaryActivity = rolloutThread.summaryActivity?.toAgentThreadActivity(),
             )
           }
         }

@@ -623,6 +623,7 @@ class CodexRolloutSessionBackendTest {
       assertThat(threads).hasSize(1)
       assertThat(threads.single().thread.id).isEqualTo("session-subagent-only")
       assertThat(threads.single().thread.subAgents).isEmpty()
+      assertThat(threads.single().summaryActivity).isNull()
     }
   }
 
@@ -865,6 +866,62 @@ class CodexRolloutSessionBackendTest {
         assertThat(update.threadIds).containsExactly("session-update-activity-hint")
         assertThat(update.activityHintsByThreadId)
           .containsEntry("session-update-activity-hint", AgentThreadActivity.PROCESSING)
+        assertThat(update.activityHintPolicy).isEqualTo(AgentSessionActivityHintPolicy.AUTHORITATIVE)
+      }
+      finally {
+        updatesJob.cancelAndJoin()
+      }
+    }
+  }
+
+  @Test
+  fun scopedRolloutUpdateIncludesNonContributingSummaryHintForStandaloneSubAgent() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-update-sub-agent-summary-hint")
+      Files.createDirectories(projectDir)
+
+      val rollout = tempDir.resolve("sessions").resolve("2026").resolve("02").resolve("16")
+        .resolve("rollout-update-sub-agent-summary-hint.jsonl")
+      val escapedProjectDir = projectDir.toString().replace("\\", "\\\\")
+      val subAgentMetaLine = buildString {
+        append("""{"timestamp":"2026-02-16T13:00:00.000Z","type":"session_meta","payload":{""")
+        append("\"id\":\"session-sub-agent-summary-hint\",")
+        append("\"timestamp\":\"2026-02-16T13:00:00.000Z\",")
+        append("\"cwd\":\"$escapedProjectDir\",")
+        append(""""source":{"subagent":"compact"}}}""")
+      }
+      writeRollout(
+        file = rollout,
+        lines = listOf(
+          subAgentMetaLine,
+          """{"timestamp":"2026-02-16T13:00:01.000Z","type":"event_msg","payload":{"type":"user_message","message":"Summarize context"}}""",
+          """{"timestamp":"2026-02-16T13:00:02.000Z","type":"event_msg","payload":{"type":"agent_message","message":"Done"}}""",
+        ),
+      )
+
+      val sourceUpdates = MutableSharedFlow<FileBackedSessionChangeSet>(replay = 1, extraBufferCapacity = 1)
+      val backend = CodexRolloutSessionBackend(
+        codexHomeProvider = { tempDir },
+        rolloutChangeSource = { sourceUpdates },
+      )
+      val updates = Channel<AgentSessionSourceUpdateEvent>(capacity = Channel.CONFLATED)
+      val updatesJob = launch {
+        backend.sessionUpdates.collect { update ->
+          updates.trySend(update)
+        }
+      }
+
+      try {
+        drainUpdateChannel(updates)
+        sourceUpdates.emit(FileBackedSessionChangeSet(changedPaths = setOf(rollout)))
+
+        val update = withTimeoutOrNull(WATCHER_UPDATE_WAIT_TIMEOUT) { updates.receive() }
+        assertThat(update).isNotNull
+        assertThat(update!!.scopedPaths).containsExactly(projectDir.toString())
+        assertThat(update.threadIds).containsExactly("session-sub-agent-summary-hint")
+        assertThat(update.activityHintsByThreadId)
+          .containsEntry("session-sub-agent-summary-hint", AgentThreadActivity.UNREAD)
+        assertThat(update.summaryActivityHintsByThreadId).containsEntry("session-sub-agent-summary-hint", null)
         assertThat(update.activityHintPolicy).isEqualTo(AgentSessionActivityHintPolicy.AUTHORITATIVE)
       }
       finally {

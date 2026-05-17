@@ -58,6 +58,7 @@ class CodexAppServerSessionBackendTest {
       assertThat(parent.thread.subAgents.single().id).isEqualTo("child-1")
       assertThat(parent.thread.subAgents.single().name).isEqualTo("Scout (reviewer)")
       assertThat(parent.activity).isEqualTo(CodexSessionActivity.NEEDS_INPUT)
+      assertThat(parent.summaryActivity).isEqualTo(CodexSessionActivity.READY)
       assertThat(archiveCalls).containsExactly("orphan-1")
 
       val second = backend.listThreads(path = projectDir.toString(), openProject = null)
@@ -127,6 +128,7 @@ class CodexAppServerSessionBackendTest {
       assertThat(parent.thread.id).isEqualTo("parent-1")
       assertThat(parent.thread.subAgents.map { it.id }).containsExactly("child-1")
       assertThat(parent.activity).isEqualTo(CodexSessionActivity.NEEDS_INPUT)
+      assertThat(parent.summaryActivity).isEqualTo(CodexSessionActivity.READY)
     }
   }
 
@@ -289,6 +291,8 @@ class CodexAppServerSessionBackendTest {
 
       val threads = backend.listThreads(path = projectDir.toString(), openProject = null)
       assertThat(threads.map { it.thread.id }).containsExactly("compact-1", "review-1", "parent-1")
+      assertThat(threads.first { it.thread.id == "compact-1" }.summaryActivity).isNull()
+      assertThat(threads.first { it.thread.id == "review-1" }.summaryActivity).isNull()
       assertThat(archiveCalls).isEmpty()
     }
   }

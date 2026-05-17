@@ -348,6 +348,7 @@ internal class AgentSessionRefreshScheduler(
         activityHintsByThreadId = updateEvent.activityHintsByThreadId,
         activityHintPolicy = updateEvent.activityHintPolicy,
       ),
+      summaryActivityHintsByThreadId = normalizeSummaryActivityHints(updateEvent.summaryActivityHintsByThreadId),
       activityHintPolicy = updateEvent.activityHintPolicy,
     )
   }
@@ -387,6 +388,22 @@ internal class AgentSessionRefreshScheduler(
     return normalized
   }
 
+  private fun normalizeSummaryActivityHints(
+    summaryActivityHintsByThreadId: Map<String, AgentThreadActivity?>,
+  ): Map<String, AgentThreadActivity?> {
+    if (summaryActivityHintsByThreadId.isEmpty()) {
+      return emptyMap()
+    }
+    val normalized = LinkedHashMap<String, AgentThreadActivity?>(summaryActivityHintsByThreadId.size)
+    for ((threadId, summaryActivity) in summaryActivityHintsByThreadId) {
+      val normalizedThreadId = threadId.trim()
+      if (normalizedThreadId.isNotEmpty()) {
+        normalized[normalizedThreadId] = summaryActivity
+      }
+    }
+    return normalized
+  }
+
   private fun mergeSourceUpdateEvents(
     existing: AgentSessionSourceUpdateEvent?,
     incoming: AgentSessionSourceUpdateEvent,
@@ -396,15 +413,21 @@ internal class AgentSessionRefreshScheduler(
     }
 
     val mergedType = when {
-      existing.type == AgentSessionSourceUpdate.THREADS_CHANGED || incoming.type == AgentSessionSourceUpdate.THREADS_CHANGED -> AgentSessionSourceUpdate.THREADS_CHANGED
+      existing.type == AgentSessionSourceUpdate.THREADS_CHANGED ||
+      incoming.type == AgentSessionSourceUpdate.THREADS_CHANGED -> AgentSessionSourceUpdate.THREADS_CHANGED
       else -> AgentSessionSourceUpdate.HINTS_CHANGED
     }
     val mergedActivityHintsByThreadId = mergeActivityHints(existing.activityHintsByThreadId, incoming.activityHintsByThreadId)
+    val mergedSummaryActivityHintsByThreadId = mergeSummaryActivityHints(
+      existing = existing.summaryActivityHintsByThreadId,
+      incoming = incoming.summaryActivityHintsByThreadId,
+    )
     val mergedActivityHintPolicy = mergeActivityHintPolicy(existing.activityHintPolicy, incoming.activityHintPolicy)
     if (existing.isUnscoped() || incoming.isUnscoped()) {
       return AgentSessionSourceUpdateEvent(
         type = mergedType,
         activityHintsByThreadId = mergedActivityHintsByThreadId,
+        summaryActivityHintsByThreadId = mergedSummaryActivityHintsByThreadId,
         activityHintPolicy = mergedActivityHintPolicy,
       )
     }
@@ -414,6 +437,7 @@ internal class AgentSessionRefreshScheduler(
       scopedPaths = mergeScopeSets(existing.scopedPaths, incoming.scopedPaths),
       threadIds = mergeScopeSets(existing.threadIds, incoming.threadIds),
       activityHintsByThreadId = mergedActivityHintsByThreadId,
+      summaryActivityHintsByThreadId = mergedSummaryActivityHintsByThreadId,
       activityHintPolicy = mergedActivityHintPolicy,
     )
   }
@@ -441,6 +465,22 @@ internal class AgentSessionRefreshScheduler(
       return existing
     }
     val merged = LinkedHashMap<String, AgentThreadActivity>(existing.size + incoming.size)
+    merged.putAll(existing)
+    merged.putAll(incoming)
+    return merged
+  }
+
+  private fun mergeSummaryActivityHints(
+    existing: Map<String, AgentThreadActivity?>,
+    incoming: Map<String, AgentThreadActivity?>,
+  ): Map<String, AgentThreadActivity?> {
+    if (existing.isEmpty()) {
+      return incoming
+    }
+    if (incoming.isEmpty()) {
+      return existing
+    }
+    val merged = LinkedHashMap<String, AgentThreadActivity?>(existing.size + incoming.size)
     merged.putAll(existing)
     merged.putAll(incoming)
     return merged
