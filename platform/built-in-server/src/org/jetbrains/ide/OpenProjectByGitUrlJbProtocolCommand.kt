@@ -81,6 +81,9 @@ suspend fun openKnownProjectByGitUrl(gitUrl: String): Project? {
   val openProjects = ProjectManager.getInstance().openProjects
   LOG.info("openKnownProjectByGitUrl: scanning ${openProjects.size} open project(s)")
   for (project in openProjects) {
+    if (project.isDisposed) {
+      continue
+    }
     val baseDirs = project.getBaseDirectories()
       .mapNotNull { it.fileSystem.getNioPath(it) }
       .ifEmpty { listOfNotNull(project.basePath?.let(::toPath)) }
