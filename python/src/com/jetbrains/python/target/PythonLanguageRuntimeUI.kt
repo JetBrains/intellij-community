@@ -25,11 +25,11 @@ import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.collector.PythonNewInterpreterAddedCollector
-import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.PythonAddCustomInterpreter
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode
 import com.jetbrains.python.sdk.add.v2.PythonLocalAddInterpreterModel
+import com.jetbrains.python.sdk.add.v2.TargetFileSystem
 import com.jetbrains.python.sdk.configurePythonSdk
 import com.jetbrains.python.sdk.runWithSdkConfigurationLock
 import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
@@ -58,7 +58,7 @@ class PythonLanguageRuntimeUI(
     val targetEnvironmentConfiguration = targetSupplier.get()
     val model = PythonLocalAddInterpreterModel(
       ProjectPathFlows.create(Path.of(project.basePath!!)),
-      FileSystem.Target(
+      TargetFileSystem(
         targetEnvironmentConfiguration = targetEnvironmentConfiguration,
         pythonLanguageRuntimeConfiguration = config,
       )

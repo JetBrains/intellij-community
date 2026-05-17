@@ -14,6 +14,7 @@ import com.jetbrains.python.Result.Companion.success
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows
+import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.PythonToolViewModel
@@ -49,7 +50,7 @@ class HatchViewModel<P : PathHolder>(
     propertyGraph = propertyGraph,
     defaultPathSupplier = {
       when (fileSystem) {
-        is FileSystem.Eel -> getOrDetectHatchExecutablePath(fileSystem.eelApi).getOrNull()?.let { PathHolder.Eel(it) } as P?
+        is EelFileSystem -> getOrDetectHatchExecutablePath(fileSystem.eelApi).getOrNull()?.let { PathHolder.Eel(it) } as P?
         else -> null
       }
     }

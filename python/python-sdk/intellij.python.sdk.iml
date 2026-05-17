@@ -50,5 +50,9 @@
     <orderEntry type="module" module-name="intellij.python.requirements" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
+    <orderEntry type="module" module-name="intellij.platform.eel" />
+    <orderEntry type="module" module-name="intellij.python.community.execService" />
+    <orderEntry type="module" module-name="intellij.python.community.services.shared" />
+    <orderEntry type="module" module-name="intellij.python.community.execService.python" />
   </component>
 </module>

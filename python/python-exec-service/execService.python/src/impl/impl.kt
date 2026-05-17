@@ -15,13 +15,13 @@ import com.intellij.python.community.execService.ZeroCodeStdoutTransformerTyped
 import com.intellij.python.community.execService.impl.transformerToHandler
 import com.intellij.python.community.execService.python.advancedApi.ExecutablePython
 import com.intellij.python.community.execService.python.advancedApi.executePythonAdvanced
+import com.intellij.python.community.execService.python.getLanguageLevelFromVersionStringSafe
 import com.intellij.python.community.execService.python.impl.PyExecPythonBundle.message
 import com.jetbrains.python.PYTHON_VERSION_ARG
 import com.jetbrains.python.PythonInfo
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.getOr
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor.getLanguageLevelFromVersionStringStaticSafe
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -44,7 +44,7 @@ internal suspend fun ExecService.validatePythonAndGetInfoImpl(python: Executable
   val versionString = versionOutput.stdoutString.let { stdout ->
     stdout.ifBlank { versionOutput.stderrString.lineSequence().lastOrNull { it.isNotBlank() } ?: "" }
   }
-  val languageLevel = getLanguageLevelFromVersionStringStaticSafe(versionString.trim())
+  val languageLevel = getLanguageLevelFromVersionStringSafe(versionString.trim())
   if (languageLevel == null) {
     return@withContext PyResult.localizedError(message("python.get.version.wrong.version", python.userReadableName, versionString))
   }

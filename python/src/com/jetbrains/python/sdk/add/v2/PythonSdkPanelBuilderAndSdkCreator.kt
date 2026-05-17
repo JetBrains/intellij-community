@@ -100,7 +100,7 @@ internal class PythonSdkPanelBuilderAndSdkCreator(
   private lateinit var model: PythonMutableTargetAddInterpreterModel<PathHolder.Eel>
 
   override fun buildPanel(outerPanel: Panel, projectPathFlows: ProjectPathFlows) {
-    model = PythonLocalAddInterpreterModel(projectPathFlows, FileSystem.Eel(localEel))
+    model = PythonLocalAddInterpreterModel(projectPathFlows, EelFileSystem(localEel))
     model.navigator.selectionMode = selectedMode
     uvSection = UvInterpreterSection(model, module, selectedMode, propertyGraph)
 

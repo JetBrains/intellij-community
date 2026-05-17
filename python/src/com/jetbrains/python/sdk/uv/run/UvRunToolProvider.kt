@@ -8,7 +8,7 @@ import com.jetbrains.python.run.features.PyRunToolData
 import com.jetbrains.python.run.features.PyRunToolId
 import com.jetbrains.python.run.features.PyRunToolParameters
 import com.jetbrains.python.run.features.PyRunToolProvider
-import com.jetbrains.python.sdk.add.v2.FileSystem
+import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.sdk.uv.UvSdkAdditionalData
 import com.jetbrains.python.sdk.uv.getUvExecutionContext
 import com.jetbrains.python.sdk.uv.impl.getUvExecutable
@@ -28,7 +28,7 @@ internal class UvRunToolProvider : PyRunToolProvider {
   override suspend fun getRunToolParameters(sdk: Sdk): PyRunToolParameters {
     val env = mutableMapOf<String, String>()
     val uvExecutionContext = sdk.getUvExecutionContext()
-    val fileSystem = uvExecutionContext?.fileSystem ?: FileSystem.Eel(localEel)
+    val fileSystem = uvExecutionContext?.fileSystem ?: EelFileSystem(localEel)
     val uvExecutable = getUvExecutable(fileSystem, uvExecutionContext?.uvPath?.toString())?.toString()
     // TODO PY-87712 Duplicated code for setting up uv envs
     uvExecutionContext?.venvPath?.toString()?.let {

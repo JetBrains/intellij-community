@@ -4,6 +4,7 @@ package com.jetbrains.python.sdk.add.v2.pipenv
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.platform.eel.provider.localEel
+import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.PythonToolViewModel
@@ -25,7 +26,7 @@ class PipenvViewModel<P : PathHolder>(
     propertyGraph = propertyGraph,
     defaultPathSupplier = {
       when (fileSystem) {
-        is FileSystem.Eel -> {
+        is EelFileSystem -> {
           if (fileSystem.eelApi == localEel) getPipEnvExecutable()?.let { PathHolder.Eel(it) } as P?
           else null // getPipEnvExecutable() works only with localEel currently
         }

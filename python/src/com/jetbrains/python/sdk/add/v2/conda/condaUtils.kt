@@ -10,9 +10,9 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.isCondaVirtualEnv
 import com.jetbrains.python.onSuccess
 import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PyProjectCreateHelpers
 import com.jetbrains.python.sdk.add.v2.PythonAddInterpreterModel
+import com.jetbrains.python.sdk.add.v2.TargetFileSystem
 import com.jetbrains.python.sdk.add.v2.Version
 import com.jetbrains.python.sdk.add.v2.VersionFormatException
 import com.jetbrains.python.sdk.add.v2.existingSdks
@@ -28,7 +28,7 @@ import kotlinx.coroutines.flow.takeWhile
 
 @RequiresEdt
 internal fun PythonAddInterpreterModel<*>.createCondaCommand(): PyResult<PyCondaCommand> {
-  val targetEnvironmentConfiguration = (fileSystem as? FileSystem.Target)?.targetEnvironmentConfiguration
+  val targetEnvironmentConfiguration = (fileSystem as? TargetFileSystem)?.targetEnvironmentConfiguration
   val executable = condaViewModel.condaExecutable.get() ?: return PyResult.localizedError(message("python.sdk.select.conda.path.title"))
   return PyCondaCommand(
     fullCondaPathOnTarget = executable.pathHolder.toString(),
@@ -79,7 +79,7 @@ suspend fun PythonAddInterpreterModel<*>.selectCondaEnvironment(moduleOrProject:
 
   val sdk = PyCondaCommand(
     fullCondaPathOnTarget = executable.pathHolder.toString(),
-    targetConfig = (fileSystem as? FileSystem.Target)?.targetEnvironmentConfiguration
+    targetConfig = (fileSystem as? TargetFileSystem)?.targetEnvironmentConfiguration
   ).createCondaSdkFromExistingEnvironment(
     condaIdentity = pyCondaEnv.envIdentity,
     existingSdks = this@selectCondaEnvironment.existingSdks,

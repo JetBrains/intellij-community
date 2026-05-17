@@ -75,9 +75,10 @@ suspend fun <P : PathHolder> sortForExistingEnvironment(
         is InstallableSelectableInterpreter -> error("$it is unexpected")
         is DetectedSelectableInterpreter -> {
           if (module != null) {
-            when (it.homePath) {
+            val homePath = it.homePath
+            when (homePath) {
               is PathHolder.Eel -> {
-                if (ModuleRootManager.getInstance(module).contentRoots.any { root -> it.homePath.path.startsWith(root.toNioPath()) }) {
+                if (ModuleRootManager.getInstance(module).contentRoots.any { root -> homePath.path.startsWith(root.toNioPath()) }) {
                   return@groupBy Group.ASSOC_WITH_PROJ_ROOT
                 }
               }
@@ -117,4 +118,3 @@ suspend fun <P : PathHolder> sortForExistingEnvironment(
     }.distinctBy { it.homePath }
   }
 }
-

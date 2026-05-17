@@ -21,6 +21,7 @@ import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.ToolCommandExecutor
 import com.jetbrains.python.sdk.ToolSearchPath
+import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.conda.execution.CondaExecutor
@@ -163,7 +164,7 @@ private fun NewCondaEnvRequest.toIdentity(): PyCondaEnvIdentity =
 /**
  * Detects conda binary in PATH and then well-known locations on the local machine.
  */
-suspend fun findCondaLocal(filter: (PathHolder.Eel) -> Boolean = { true }): PathHolder.Eel? = findConda(FileSystem.Eel(localEel), filter)
+suspend fun findCondaLocal(filter: (PathHolder.Eel) -> Boolean = { true }): PathHolder.Eel? = findConda(EelFileSystem(localEel), filter)
 
 /**
  * Detects conda binary in PATH and then well-known locations on the provided FileSystem

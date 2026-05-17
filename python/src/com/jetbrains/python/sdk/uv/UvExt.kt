@@ -20,8 +20,10 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.onSuccess
+import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
+import com.jetbrains.python.sdk.add.v2.TargetFileSystem
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.uv.impl.createUvCli
@@ -68,14 +70,14 @@ internal sealed interface UvExecutionContext<P : PathHolder> {
   data class Eel(
     override val workingDir: Path,
     override val venvPath: PathHolder.Eel?,
-    override val fileSystem: FileSystem.Eel,
+    override val fileSystem: EelFileSystem,
     override val uvPath: PathHolder.Eel?,
   ) : UvExecutionContext<PathHolder.Eel>
 
   data class Target(
     override val workingDir: Path,
     override val venvPath: PathHolder.Target?,
-    override val fileSystem: FileSystem.Target,
+    override val fileSystem: TargetFileSystem,
     override val uvPath: PathHolder.Target?,
   ) : UvExecutionContext<PathHolder.Target>
 
@@ -90,7 +92,7 @@ private suspend fun createEelUvExecutionContext(
   uvPathString: String?,
 ): UvExecutionContext.Eel {
   val eelApi = workingDir.getEelDescriptor().toEelApi()
-  val fileSystem = FileSystem.Eel(eelApi)
+  val fileSystem = EelFileSystem(eelApi)
   val uvPath = getUvExecutable(fileSystem, uvPathString)
   return UvExecutionContext.Eel(
     workingDir = workingDir,
@@ -106,7 +108,7 @@ private suspend fun createTargetUvExecutionContext(
   uvPathString: FullPathOnTarget?,
   targetConfig: TargetEnvironmentConfiguration,
 ): UvExecutionContext.Target {
-  val fileSystem = FileSystem.Target(targetConfig, PythonLanguageRuntimeConfiguration())
+  val fileSystem = TargetFileSystem(targetConfig, PythonLanguageRuntimeConfiguration())
   val uvPath = getUvExecutable(fileSystem, uvPathString)
   return UvExecutionContext.Target(
     workingDir = workingDir,
@@ -159,7 +161,7 @@ suspend fun setupNewUvSdkAndEnv(uvExecutable: Path, workingDir: Path, version: V
     uvExecutable = PathHolder.Eel(uvExecutable),
     workingDir = workingDir,
     venvPath = null,
-    fileSystem = FileSystem.Eel(localEel),
+    fileSystem = EelFileSystem(localEel),
     version = version,
     errorSink = errorSink,
   )
@@ -207,7 +209,7 @@ suspend fun setupExistingEnvAndSdk(
     pythonBinary = PathHolder.Eel(pythonBinary),
     uvPath = PathHolder.Eel(uvPath),
     workingDir = envWorkingDir,
-    fileSystem = FileSystem.Eel(localEel),
+    fileSystem = EelFileSystem(localEel),
     usePip = usePip
   )
 

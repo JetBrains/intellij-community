@@ -55,7 +55,7 @@ internal class PythonAddLocalInterpreterDialog(private val dialogPresenter: Pyth
     val errorSink = ShowingMessageErrorSync.withProject(dialogPresenter.moduleOrProject.project)
 
     val rootPanel = panel {
-      model = PythonLocalAddInterpreterModel(ProjectPathFlows.create(basePath), FileSystem.Eel(eelApi = localEel))
+      model = PythonLocalAddInterpreterModel(ProjectPathFlows.create(basePath), EelFileSystem(eelApi = localEel))
       model.navigator.selectionMode = AtomicProperty(PythonInterpreterSelectionMode.CUSTOM)
       mainPanel = PythonAddCustomInterpreter(
         model = model,

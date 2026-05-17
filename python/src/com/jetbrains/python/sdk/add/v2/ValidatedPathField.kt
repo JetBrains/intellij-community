@@ -261,7 +261,7 @@ internal class ValidatedPathField<T, P : PathHolder, VP : ValidatedPath<T, P>>(
   private fun createBrowseFolderListener(browseFolderDialogTitle: @Nls String, isFileSelectionMode: Boolean): ActionListener? {
     val descriptor = getFileChooserDescriptor(browseFolderDialogTitle, isFileSelectionMode)
     val targetBrowserHints = TargetBrowserHints(showLocalFsInBrowser = true, descriptor)
-    val targetEnvironmentConfiguration = (fileSystem as? FileSystem.Target)?.targetEnvironmentConfiguration
+    val targetEnvironmentConfiguration = (fileSystem as? TargetFileSystem)?.targetEnvironmentConfiguration
 
     val listener = if (targetEnvironmentConfiguration == null) {
       BrowseFolderActionListener(this, null, descriptor, fieldAccessor)

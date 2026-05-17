@@ -14,6 +14,7 @@ import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.pathValidation.ValidationRequest
 import com.jetbrains.python.pathValidation.validateExecutableFile
 import com.jetbrains.python.sdk.ToolCommandExecutor
+import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.runExecutableWithProgress
@@ -84,7 +85,7 @@ private class UvCliImpl<P : PathHolder>(val dispatcher: CoroutineDispatcher, val
     }
 }
 
-suspend fun getUvExecutableLocal(eel: EelApi = localEel): Path? = getUvExecutable(FileSystem.Eel(eel), null)?.path
+suspend fun getUvExecutableLocal(eel: EelApi = localEel): Path? = getUvExecutable(EelFileSystem(eel), null)?.path
 
 suspend fun <P : PathHolder> getUvExecutable(fileSystem: FileSystem<P>, pathFromSdk: FullPathOnTarget?): P? =
   UV_TOOL.getToolExecutable(fileSystem, pathFromSdk)
@@ -98,7 +99,7 @@ suspend fun hasUvExecutableLocal(): Boolean {
 }
 
 suspend fun createUvCliLocal(uv: Path? = null, dispatcher: CoroutineDispatcher = Dispatchers.IO): PyResult<UvCli<PathHolder.Eel>> {
-  return createUvCli(uv?.let { PathHolder.Eel(it) }, FileSystem.Eel(localEel), dispatcher)
+  return createUvCli(uv?.let { PathHolder.Eel(it) }, EelFileSystem(localEel), dispatcher)
 }
 
 suspend fun <P : PathHolder> createUvCli(

@@ -16,6 +16,7 @@ import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.sdk.add.v2.InstallablePythonSdk
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.installer.BinaryInstallation
 import com.jetbrains.python.sdk.installer.installBinary
@@ -58,7 +59,7 @@ class PySdkToInstall(
    * of SDK. That method relies on the version string being prepended with "Python ".
    */
   "${PythonSdkFlavor.PYTHON_VERSION_STRING_PREFIX}${installation.release.version}"
-) {
+), InstallablePythonSdk {
 
   /**
    * Customize [renderer], which is typically either [com.intellij.ui.ColoredListCellRenderer] or [com.intellij.ui.ColoredTreeCellRenderer].
