@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -347,7 +348,7 @@ public final class PagedFileStorage implements Forceable/*, PagedStorage*/, Clos
     long oldSize;
 
     if (Files.exists(myFile)) {
-      oldSize = Files.size(myFile);
+      oldSize = myStorageLockContext.executeOp(myFile, FileChannel::size, /*readOnly: */ true);
     }
     else {
       Files.createDirectories(myFile.getParent());
@@ -407,7 +408,7 @@ public final class PagedFileStorage implements Forceable/*, PagedStorage*/, Clos
     if (size == -1) {
       if (Files.exists(myFile)) {
         try {
-          mySize = size = Files.size(myFile);
+          mySize = size = myStorageLockContext.executeOp(myFile, FileChannel::size, /*readOnly: */ true);
         }
         catch (IOException e) {
           LOG.error(e);
