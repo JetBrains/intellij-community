@@ -134,6 +134,8 @@ val RUN_CONFIGURATION_KEY: DataKey<RunnerAndConfigurationSettings> = DataKey.cre
 @JvmField
 internal val RUN_CONFIGURATION_ID: Key<String> = Key.create("sub.popup.run.configuration.unique.id")
 
+private val NEEDS_RUN_CONFIG_NAME_TRIMMING: Key<Boolean> = Key.create("sub.popup.run.configuration.need.trimming")
+
 private const val TAG_PINNED = "pinned"
 private const val TAG_RECENT = "recent"
 private const val TAG_REGULAR_HIDE = "regular-hide" // hidden behind the "All configurations" toggle
@@ -386,7 +388,13 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup,
       border: PopupBorder,
       isToDrawMacCorner: Boolean,
     ): MyContentPanel {
-      return ContentPanelWithMaxWidth(border)
+      @Suppress("UNCHECKED_CAST")
+      if ((step as? ListPopupStep<PopupFactoryImpl.ActionItem>)?.values?.any { it.getClientProperty(NEEDS_RUN_CONFIG_NAME_TRIMMING) == true } == true) {
+        return ContentPanelWithMaxWidth(border)
+      }
+      else {
+        return super.createContentPanel(resizable, border, isToDrawMacCorner)
+      }
     }
 
     override fun getListElementRenderer(): ListCellRenderer<*> {
@@ -419,13 +427,15 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup,
       isReserveSpaceForExtraButtons = false // otherwise the name won't fit if the popup has the same width as the button
       mainPanelLayout.invalidateLayout(mainPanel) // clear the cached preferred size
       super.customizeComponent(list, value, isSelected)
-      myRendererComponent.setToolTipText(null) // we override the tool tip using getToolTipOverride()
-      ClientProperty.put(myTextLabel, SwingTextTrimmer.KEY, SwingTextTrimmer.createCustomTrimmer(object : SwingTextTrimmerStrategy {
-        override fun trim(text: @NlsActions.ActionText String, metrics: FontMetrics, availableWidth: Int): String {
-          return trimRunConfigurationName(text, availableWidth, GraphicsUtil.fontMetrics(metrics.font))
-        }
-      }))
-      JLabelUtil.setTrimOverflow(myTextLabel, true)
+      if (value?.getClientProperty(NEEDS_RUN_CONFIG_NAME_TRIMMING) == true) {
+        myRendererComponent.setToolTipText(null) // we override the tool tip using getToolTipOverride()
+        ClientProperty.put(myTextLabel, SwingTextTrimmer.KEY, SwingTextTrimmer.createCustomTrimmer(object : SwingTextTrimmerStrategy {
+          override fun trim(text: @NlsActions.ActionText String, metrics: FontMetrics, availableWidth: Int): String {
+            return trimRunConfigurationName(text, availableWidth, GraphicsUtil.fontMetrics(metrics.font))
+          }
+        }))
+        JLabelUtil.setTrimOverflow(myTextLabel, true)
+      }
     }
 
     override fun getToolTipOverride(): @NlsContexts.Tooltip String? {
@@ -601,6 +611,7 @@ private fun createRunConfigurationWithInlines(project: Project,
       super.update(e)
       // This popup has its own truncation logic, so we replace the shortened name set by super().
       e.presentation.setText(configuration.name, false)
+      e.presentation.putClientProperty(NEEDS_RUN_CONFIG_NAME_TRIMMING, true)
       val filtered = filterOutRunIfDebugResumeIsPresent(
         e, ActionGroupUtil.getVisibleActions(inlineActionGroup, e).toList())
       e.presentation.putClientProperty(ActionUtil.INLINE_ACTIONS, filtered)
