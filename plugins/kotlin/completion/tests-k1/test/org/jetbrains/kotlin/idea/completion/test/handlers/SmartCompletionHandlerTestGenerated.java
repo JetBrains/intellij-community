@@ -121,6 +121,21 @@ public abstract class SmartCompletionHandlerTestGenerated extends AbstractSmartC
             runTest("../testData/handlers/smart/SAM/KotlinFunInterfaceMultiParam.kt");
         }
 
+        @TestMetadata("KotlinSamInheritedKotlin.kt")
+        public void testKotlinSamInheritedKotlin() throws Exception {
+            runTest("../testData/handlers/smart/SAM/KotlinSamInheritedKotlin.kt");
+        }
+
+        @TestMetadata("KotlinSamNullableExpected.kt")
+        public void testKotlinSamNullableExpected() throws Exception {
+            runTest("../testData/handlers/smart/SAM/KotlinSamNullableExpected.kt");
+        }
+
+        @TestMetadata("KotlinSamVararg.kt")
+        public void testKotlinSamVararg() throws Exception {
+            runTest("../testData/handlers/smart/SAM/KotlinSamVararg.kt");
+        }
+
         @TestMetadata("SAMExpected1.kt")
         public void testSAMExpected1() throws Exception {
             runTest("../testData/handlers/smart/SAM/SAMExpected1.kt");

@@ -1230,6 +1230,16 @@ public abstract class K1JvmSmartCompletionTestGenerated extends AbstractK1JvmSma
             runTest("../testData/smart/SAM/KotlinFunInterfaceWithParam.kt");
         }
 
+        @TestMetadata("KotlinSamSubtypeExpected.kt")
+        public void testKotlinSamSubtypeExpected() throws Exception {
+            runTest("../testData/smart/SAM/KotlinSamSubtypeExpected.kt");
+        }
+
+        @TestMetadata("KotlinSamSubtypeExpectedSam.kt")
+        public void testKotlinSamSubtypeExpectedSam() throws Exception {
+            runTest("../testData/smart/SAM/KotlinSamSubtypeExpectedSam.kt");
+        }
+
         @TestMetadata("SAMConstructorForTypeAlias.kt")
         public void testSAMConstructorForTypeAlias() throws Exception {
             runTest("../testData/smart/SAM/SAMConstructorForTypeAlias.kt");

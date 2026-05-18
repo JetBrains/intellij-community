@@ -1230,6 +1230,16 @@ public abstract class K2SmartCompletionTestGenerated extends AbstractK2SmartComp
             runTest("../../completion/testData/smart/SAM/KotlinFunInterfaceWithParam.kt");
         }
 
+        @TestMetadata("KotlinSamSubtypeExpected.kt")
+        public void testKotlinSamSubtypeExpected() throws Exception {
+            runTest("../../completion/testData/smart/SAM/KotlinSamSubtypeExpected.kt");
+        }
+
+        @TestMetadata("KotlinSamSubtypeExpectedSam.kt")
+        public void testKotlinSamSubtypeExpectedSam() throws Exception {
+            runTest("../../completion/testData/smart/SAM/KotlinSamSubtypeExpectedSam.kt");
+        }
+
         @TestMetadata("SAMConstructorForTypeAlias.kt")
         public void testSAMConstructorForTypeAlias() throws Exception {
             runTest("../../completion/testData/smart/SAM/SAMConstructorForTypeAlias.kt");

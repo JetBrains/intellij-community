@@ -1,0 +1,3 @@
+interface Base {
+    void run();
+}

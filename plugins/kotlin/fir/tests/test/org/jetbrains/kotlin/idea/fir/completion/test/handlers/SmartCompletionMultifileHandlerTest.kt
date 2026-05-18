@@ -41,6 +41,22 @@ class SmartCompletionMultifileHandlerTest : KotlinFixtureCompletionBaseTestCase(
         doTest(lookupString = "Nested")
     }
 
+    fun testJavaSamDefaultStatic() {
+        doTest(lookupString = "Action")
+    }
+
+    fun testJavaSamInheritedJava() {
+        doTest(lookupString = "Sam")
+    }
+
+    fun testJavaSamObjectMethod() {
+        doTest(lookupString = "Action")
+    }
+
+    fun testJavaSamVararg() {
+        doTest(lookupString = "Action")
+    }
+
     private fun doTest(lookupString: String? = null, itemText: String? = null) {
         val fileName = getTestName(false)
 
