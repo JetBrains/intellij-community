@@ -4,11 +4,12 @@ package org.jetbrains.kotlin.idea.k2.codeInsight.gradle.runConfiguration
 
 import com.intellij.execution.actions.ConfigurationFromContextImpl
 import com.intellij.execution.junit.AllInPackageConfigurationProducer
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase
 import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.gradle.textWithoutTags
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
 import org.jetbrains.kotlin.idea.gradleJava.run.KotlinJvmTestClassGradleConfigurationProducer
 import org.jetbrains.kotlin.idea.gradleJava.run.KotlinJvmTestMethodGradleConfigurationProducer
@@ -20,16 +21,19 @@ import org.jetbrains.plugins.gradle.execution.test.runner.TestMethodGradleConfig
 import org.jetbrains.plugins.gradle.settings.TestRunner
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
-import kotlin.jvm.javaClass
 
 class GradleTestRunConfigurationCustomTest16 : KotlinGradleImportingTestCase() {
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
+
     @Test
     @TargetVersions("4.7+")
     fun testPreferredConfigurations() {
         val files = importProjectFromTestData()
 
         runInEdtAndWait {
-            runReadAction {
+            runReadActionBlocking {
                 val javaFile = files.first { it.name == "MyTest.java" }
                 val kotlinFile = files.first { it.name == "MyKotlinTest.kt" }
 
@@ -58,7 +62,7 @@ class GradleTestRunConfigurationCustomTest16 : KotlinGradleImportingTestCase() {
         val files = importProjectFromTestData()
 
         runInEdtAndWait {
-            runReadAction {
+            runReadActionBlocking {
                 val kotlinFile = files.first { it.name == "MyKotlinTest.kt" }
                 val kotlinPackageConfiguration = getConfiguration(kotlinFile.parent, myProject, "")
                 assertEquals("Tests in 'my.company.pkg'", kotlinPackageConfiguration.configuration.name)
@@ -73,7 +77,7 @@ class GradleTestRunConfigurationCustomTest16 : KotlinGradleImportingTestCase() {
         val files = importProjectFromTestData()
 
         runInEdtAndWait {
-            runReadAction {
+            runReadActionBlocking {
                 currentExternalProjectSettings.testRunner = TestRunner.CHOOSE_PER_TEST
 
                 val kotlinFile = files.first { it.name == "MyKotlinTest.kt" }
