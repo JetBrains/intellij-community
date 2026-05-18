@@ -10,11 +10,20 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.HeavyPlatformTestCase
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
-import com.intellij.util.ui.UIUtil
 import java.io.File
+import java.util.concurrent.atomic.AtomicInteger
 
 class OrderEnumeratorHandlerRegistrationTest : HeavyPlatformTestCase() {
+  private lateinit var rootsChangedCounter: RootsChangedCounter
+
+  override fun setUp() {
+    super.setUp()
+    rootsChangedCounter = RootsChangedCounter()
+    myProject.messageBus.connect(testRootDisposable).subscribe(ModuleRootListener.TOPIC, rootsChangedCounter)
+  }
+
   fun `test unregister order enumeration handler`() {
     val (moduleA, moduleB, moduleC) = runWriteAction {
       listOf("a", "b", "c").map {
@@ -68,7 +77,10 @@ class OrderEnumeratorHandlerRegistrationTest : HeavyPlatformTestCase() {
       action()
     }
     finally {
-      Disposer.dispose(orderEnumerationDisposable)
+      rootsChangedCounter.assertRootsChanged("after unregistering ${factory.javaClass.simpleName}") {
+        Disposer.dispose(orderEnumerationDisposable)
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+      }
     }
   }
 
@@ -78,10 +90,44 @@ class OrderEnumeratorHandlerRegistrationTest : HeavyPlatformTestCase() {
       runWriteAction {
         Disposer.dispose(orderEnumerationDisposable)
       }
-      UIUtil.dispatchAllInvocationEvents()
     })
-    OrderEnumerationHandler.EP_NAME.point.registerExtension(factory, orderEnumerationDisposable)
-    UIUtil.dispatchAllInvocationEvents()
+
+    rootsChangedCounter.assertRootsChanged("after registering ${factory.javaClass.simpleName}") {
+      OrderEnumerationHandler.EP_NAME.point.registerExtension(factory, orderEnumerationDisposable)
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+    }
+  }
+}
+
+private class RootsChangedCounter : ModuleRootListener {
+  private val beforeRootsChangedCount = AtomicInteger(0)
+  private val rootsChangedCount = AtomicInteger(0)
+
+  override fun beforeRootsChange(event: ModuleRootEvent) {
+    beforeRootsChangedCount.incrementAndGet()
+  }
+
+  override fun rootsChanged(event: ModuleRootEvent) {
+    rootsChangedCount.incrementAndGet()
+  }
+
+  fun assertRootsChanged(context: String, block: () -> Unit) {
+    beforeRootsChangedCount.set(0)
+    rootsChangedCount.set(0)
+
+    block()
+
+    val rootsChangedValue = rootsChangedCount.get()
+    val beforeRootsChangedValue = beforeRootsChangedCount.get()
+
+    check(rootsChangedValue > 0) {
+      "Expected rootsChanged event $context, but received none " +
+      "(beforeRootsChange=$beforeRootsChangedValue, rootsChanged=$rootsChangedValue)"
+    }
+    check(beforeRootsChangedValue == rootsChangedValue) {
+      "Mismatched rootsChanged events $context: " +
+      "beforeRootsChange=$beforeRootsChangedValue, rootsChanged=$rootsChangedValue"
+    }
   }
 }
 
