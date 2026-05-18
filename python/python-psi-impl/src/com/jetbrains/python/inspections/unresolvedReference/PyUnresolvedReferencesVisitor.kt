@@ -15,7 +15,6 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
 import com.intellij.util.ObjectUtils
-import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.python.PyCustomType
 import com.jetbrains.python.PyNames
@@ -27,7 +26,6 @@ import com.jetbrains.python.codeInsight.controlflow.Reachability
 import com.jetbrains.python.codeInsight.controlflow.getReachabilityForInspection
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.documentation.PythonDocumentationProvider
-import com.jetbrains.python.documentation.docstrings.DocStringParameterReference
 import com.jetbrains.python.documentation.docstrings.DocStringTypeReference
 import com.jetbrains.python.inspections.PyInspectionExtension
 import com.jetbrains.python.inspections.PyInspectionVisitor
@@ -78,12 +76,10 @@ import com.jetbrains.python.psi.impl.references.PyImportReference
 import com.jetbrains.python.psi.impl.references.PyOperatorReference
 import com.jetbrains.python.psi.impl.references.hasattr.PyHasAttrHelper.getNamesFromHasAttrs
 import com.jetbrains.python.psi.resolve.PyResolveContext
-import com.jetbrains.python.psi.resolve.QualifiedNameFinder
 import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyClassMembersProvider
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyClassTypeImpl
-import com.jetbrains.python.psi.types.PyFunctionType
 import com.jetbrains.python.psi.types.PyFunctionTypeImpl
 import com.jetbrains.python.psi.types.PyImportedModuleType
 import com.jetbrains.python.psi.types.PyIntersectionType
@@ -293,7 +289,7 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
             return
         }
 
-        val qualifiedNames: MutableList<QualifiedName> = getCanonicalNames(reference, myTypeEvalContext)
+        val qualifiedNames: List<QualifiedName> = getCanonicalNames(reference, myTypeEvalContext)
         for (name in qualifiedNames) {
             val canonicalName = name.toString()
             for (ignored in myIgnoredIdentifiers) {
@@ -803,94 +799,6 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
          * Return the canonical qualified names for a reference (even for an unresolved one).
          * If reference is qualified and its qualifier has union type, all possible canonical names will be returned.
          */
-        private fun getCanonicalNames(reference: PsiReference, context: TypeEvalContext): MutableList<QualifiedName> {
-            val element = reference.getElement()
-            val result: MutableList<QualifiedName> = SmartList<QualifiedName>()
-            if (reference is PyOperatorReference && element is PyQualifiedExpression) {
-                val receiver = reference.getReceiver()
-                if (receiver != null) {
-                    val type = context.getType(receiver)
-                    if (type is PyClassType) {
-                        val methodName = element.getReferencedName()
-                        ContainerUtil.addIfNotNull(result, extractAttributeQNameFromClassType(methodName, type))
-                    }
-                }
-            } else if (element is PyReferenceExpression) {
-                val qualifier = element.qualifier
-                val exprName = element.name
-                if (exprName != null) {
-                    if (qualifier != null) {
-                        val qualifierType = context.getType(qualifier)
-                        qualifierType.toStream()
-                            .map<QualifiedName?> { type: PyType? ->
-                                if (type is PyClassType) {
-                                    return@map extractAttributeQNameFromClassType(exprName, type)
-                                } else if (type is PyModuleType) {
-                                    val file = type.module
-                                    val name = QualifiedNameFinder.findCanonicalImportPath(file, element)
-                                    if (name != null) {
-                                        return@map name.append(exprName)
-                                    }
-                                } else if (type is PyImportedModuleType) {
-                                    val module = type.importedModule
-                                    val resolved = module.resolve()
-                                    if (resolved != null) {
-                                        val path = QualifiedNameFinder.findCanonicalImportPath(resolved, element)
-                                        if (path != null) {
-                                            return@map path.append(exprName)
-                                        }
-                                    }
-                                } else if (type is PyFunctionType) {
-                                    val callable = type.getCallable()
-                                    val callableName = callable.getName()
-                                    if (callableName != null) {
-                                        val path = QualifiedNameFinder.findCanonicalImportPath(callable, element)
-                                        if (path != null) {
-                                            return@map path.append(QualifiedName.fromComponents(callableName, exprName))
-                                        }
-                                    }
-                                }
-                                null
-                            }
-                            .nonNull()
-                            .forEach { name -> if (name != null) result.add(name) }
-                    } else {
-                        val parent = element.getParent()
-                        if (parent is PyImportElement) {
-                            val importStmt = PsiTreeUtil.getParentOfType(parent, PyImportStatementBase::class.java)
-                            if (importStmt is PyImportStatement) {
-                                ContainerUtil.addIfNotNull(result, QualifiedName.fromComponents(exprName))
-                            } else if (importStmt is PyFromImportStatement) {
-                                val resolved: PsiElement? = importStmt.resolveImportSource()
-                                if (resolved != null) {
-                                    val path = QualifiedNameFinder.findCanonicalImportPath(resolved, element)
-                                    if (path != null) {
-                                        ContainerUtil.addIfNotNull(result, path.append(exprName))
-                                    }
-                                }
-                            }
-                        } else {
-                            val path = QualifiedNameFinder.findCanonicalImportPath(element, element)
-                            if (path != null) {
-                                ContainerUtil.addIfNotNull(result, path.append(exprName))
-                            }
-                        }
-                    }
-                }
-            } else if (reference is DocStringParameterReference) {
-                ContainerUtil.addIfNotNull(result, QualifiedName.fromDottedString(reference.canonicalText))
-            }
-            return result
-        }
-
-        private fun extractAttributeQNameFromClassType(exprName: String?, type: PyClassType): QualifiedName? {
-            val name = type.getClassQName()
-            if (name != null) {
-                return QualifiedName.fromDottedString(name).append(exprName)
-            }
-            return null
-        }
-
         private fun getCreateFunctionQuickFix(expr: PyReferenceExpression): LocalQuickFix? {
             val callExpression = PyCallExpressionNavigator.getPyCallExpressionByCallee(expr)
             if (callExpression != null && (callExpression.callee !is PyQualifiedExpression ||
