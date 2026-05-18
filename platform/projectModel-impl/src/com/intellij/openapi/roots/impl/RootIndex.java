@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,36 +6,28 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.impl.FileTypeAssocTable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider;
-import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.LibraryOrSdkOrderEntry;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleSourceOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.OrderEnumerationHandler;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.SyntheticLibrary;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VirtualFileSet;
 import com.intellij.openapi.vfs.VirtualFileSetFactory;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics;
 import com.intellij.platform.workspace.storage.WorkspaceEntity;
-import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -44,7 +36,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.SLRUMap;
-import com.intellij.util.containers.Stack;
 import com.intellij.workspaceModel.core.fileIndex.impl.FileTypeAssocTableUtil;
 import kotlin.Lazy;
 import kotlin.LazyKt;
@@ -58,9 +49,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -72,15 +61,15 @@ import java.util.Set;
 @ApiStatus.Internal
 public final class RootIndex {
   static final Comparator<OrderEntry> BY_OWNER_MODULE = (o1, o2) -> {
-    String name1 = o1.getOwnerModule().getName();
-    String name2 = o2.getOwnerModule().getName();
+    var name1 = o1.getOwnerModule().getName();
+    var name2 = o2.getOwnerModule().getName();
     return name1.compareTo(name2);
   };
 
   private static final Logger LOG = Logger.getInstance(RootIndex.class);
   private static final FileTypeRegistry ourFileTypes = FileTypeRegistry.getInstance();
 
-  private final @NotNull Project myProject;
+  private final Project myProject;
   private final Lazy<OrderEntryGraph> myOrderEntryGraphLazy;
 
   public RootIndex(@NotNull Project project, @Nullable OrderEntryGraph graph) {
@@ -97,40 +86,40 @@ public final class RootIndex {
       LOG.error("Directory index may not be queried for default project");
     }
 
-    WorkspaceModelTopics workspaceModelTopics = project.getService(WorkspaceModelTopics.class);
+    var workspaceModelTopics = project.getService(WorkspaceModelTopics.class);
     if (workspaceModelTopics != null) {
       LOG.assertTrue(workspaceModelTopics.getModulesAreLoaded(), "Directory index can only be queried after project initialization");
     }
     myOrderEntryGraphLazy = LazyKt.lazy(() -> calculateOrderEntryGraph());
   }
 
-  private @NotNull RootInfo buildRootInfo(@NotNull Project project) {
+  private RootInfo buildRootInfo(Project project) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Start building root info " + Thread.currentThread());
     }
 
-    final RootInfo info = new RootInfo();
-    ModuleManager moduleManager = ModuleManager.getInstance(project);
-    boolean includeProjectJdk = true;
+    var info = new RootInfo();
+    var moduleManager = ModuleManager.getInstance(project);
+    var includeProjectJdk = true;
 
-    for (final Module module : moduleManager.getModules()) {
-      final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+    for (var module : moduleManager.getModules()) {
+      var moduleRootManager = ModuleRootManager.getInstance(module);
 
-      for (ContentEntry contentEntry : moduleRootManager.getContentEntries()) {
-        for (VirtualFile excludeRoot : contentEntry.getExcludeFolderFiles()) {
+      for (var contentEntry : moduleRootManager.getContentEntries()) {
+        for (var excludeRoot : contentEntry.getExcludeFolderFiles()) {
           if (!ensureValid(excludeRoot, contentEntry)) continue;
 
           info.excludedFromModule.put(excludeRoot, module);
         }
-        VirtualFile contentRoot = contentEntry.getFile();
+        var contentRoot = contentEntry.getFile();
         if (contentRoot != null && ensureValid(contentRoot, module)) {
           if (!info.contentRootOf.containsKey(contentRoot)) {
             info.contentRootOf.put(contentRoot, module);
           }
-          List<String> patterns = contentEntry.getExcludePatterns();
+          var patterns = contentEntry.getExcludePatterns();
           if (!patterns.isEmpty()) {
             FileTypeAssocTable<Boolean> table = FileTypeAssocTableUtil.newScalableFileTypeAssocTable();
-            for (String pattern : patterns) {
+            for (var pattern : patterns) {
               table.addAssociation(FileNameMatcherFactory.getInstance().createMatcher(pattern), Boolean.TRUE);
             }
             info.excludeFromContentRootTables.put(contentRoot, table);
@@ -138,8 +127,8 @@ public final class RootIndex {
         }
 
         // Init module sources
-        for (final SourceFolder sourceFolder : contentEntry.getSourceFolders()) {
-          VirtualFile sourceFolderRoot = sourceFolder.getFile();
+        for (var sourceFolder : contentEntry.getSourceFolders()) {
+          var sourceFolderRoot = sourceFolder.getFile();
           if (sourceFolderRoot != null && ensureValid(sourceFolderRoot, sourceFolder)) {
             info.classAndSourceRoots.add(sourceFolderRoot);
             info.sourceRootOf.putValue(sourceFolderRoot, module);
@@ -147,30 +136,30 @@ public final class RootIndex {
         }
       }
 
-      for (OrderEntry orderEntry : moduleRootManager.getOrderEntries()) {
+      for (var orderEntry : moduleRootManager.getOrderEntries()) {
         if (orderEntry instanceof LibraryOrSdkOrderEntry entry) {
-          VirtualFile[] sourceRoots = entry.getRootFiles(OrderRootType.SOURCES);
-          VirtualFile[] classRoots = entry.getRootFiles(OrderRootType.CLASSES);
+          var sourceRoots = entry.getRootFiles(OrderRootType.SOURCES);
+          var classRoots = entry.getRootFiles(OrderRootType.CLASSES);
 
           fillIndexWithLibraryRoots(info, entry, sourceRoots, classRoots);
 
           if (orderEntry instanceof LibraryOrderEntry) {
-            Library library = ((LibraryOrderEntry)orderEntry).getLibrary();
+            var library = ((LibraryOrderEntry)orderEntry).getLibrary();
             if (library != null) {
-              for (VirtualFile root : ((LibraryEx)library).getExcludedRoots()) {
-                if (!ensureValid(root, library)) continue;
-
-                info.excludedFromLibraries.putValue(root, library);
+              for (var root : ((LibraryEx)library).getExcludedRoots()) {
+                if (ensureValid(root, library)) {
+                  info.excludedFromLibraries.putValue(root, library);
+                }
               }
-              for (VirtualFile root : sourceRoots) {
-                if (!ensureValid(root, library)) continue;
-
-                info.sourceOfLibraries.putValue(root, library);
+              for (var root : sourceRoots) {
+                if (ensureValid(root, library)) {
+                  info.sourceOfLibraries.putValue(root, library);
+                }
               }
-              for (VirtualFile root : classRoots) {
-                if (!ensureValid(root, library)) continue;
-
-                info.classOfLibraries.putValue(root, library);
+              for (var root : classRoots) {
+                if (ensureValid(root, library)) {
+                  info.classOfLibraries.putValue(root, library);
+                }
               }
             }
           }
@@ -182,55 +171,56 @@ public final class RootIndex {
     }
 
     if (includeProjectJdk) {
-      Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
+      var sdk = ProjectRootManager.getInstance(project).getProjectSdk();
       if (sdk != null) {
-        fillIndexWithLibraryRoots(info, sdk, sdk.getRootProvider().getFiles(OrderRootType.SOURCES),
-                                  sdk.getRootProvider().getFiles(OrderRootType.CLASSES));
+        fillIndexWithLibraryRoots(
+          info, sdk, sdk.getRootProvider().getFiles(OrderRootType.SOURCES), sdk.getRootProvider().getFiles(OrderRootType.CLASSES)
+        );
       }
     }
 
-    for (AdditionalLibraryRootsProvider provider : AdditionalLibraryRootsProvider.EP_NAME.getExtensionList()) {
-      Collection<SyntheticLibrary> libraries = provider.getAdditionalProjectLibraries(project);
-      for (SyntheticLibrary library : libraries) {
-        for (VirtualFile sourceRoot : library.getSourceRoots()) {
+    for (var provider : AdditionalLibraryRootsProvider.EP_NAME.getExtensionList()) {
+      var libraries = provider.getAdditionalProjectLibraries(project);
+      for (var library : libraries) {
+        for (var sourceRoot : library.getSourceRoots()) {
           sourceRoot = RootFileValidityChecker.correctRoot(sourceRoot, library, provider);
-          if (sourceRoot == null) continue;
-
-          info.libraryOrSdkSources.add(sourceRoot);
-          info.classAndSourceRoots.add(sourceRoot);
-          info.sourceOfLibraries.putValue(sourceRoot, library);
+          if (sourceRoot != null) {
+            info.libraryOrSdkSources.add(sourceRoot);
+            info.classAndSourceRoots.add(sourceRoot);
+            info.sourceOfLibraries.putValue(sourceRoot, library);
+          }
         }
-        for (VirtualFile classRoot : library.getBinaryRoots()) {
+        for (var classRoot : library.getBinaryRoots()) {
           classRoot = RootFileValidityChecker.correctRoot(classRoot, library, provider);
-          if (classRoot == null) continue;
-
-          info.libraryOrSdkClasses.add(classRoot);
-          info.classAndSourceRoots.add(classRoot);
-          info.classOfLibraries.putValue(classRoot, library);
+          if (classRoot != null) {
+            info.libraryOrSdkClasses.add(classRoot);
+            info.classAndSourceRoots.add(classRoot);
+            info.classOfLibraries.putValue(classRoot, library);
+          }
         }
-        for (VirtualFile file : library.getExcludedRoots()) {
+        for (var file : library.getExcludedRoots()) {
           file = RootFileValidityChecker.correctRoot(file, library, provider);
-          if (file == null) continue;
-
-          info.excludedFromLibraries.putValue(file, library);
+          if (file != null) {
+            info.excludedFromLibraries.putValue(file, library);
+          }
         }
       }
     }
 
-    for (DirectoryIndexExcludePolicy policy : DirectoryIndexExcludePolicy.EP_NAME.getExtensions(project)) {
-      List<VirtualFile> files = ContainerUtil.mapNotNull(policy.getExcludeUrlsForProject(),
-                                                         url -> VirtualFileManager.getInstance().findFileByUrl(url));
+    for (var policy : DirectoryIndexExcludePolicy.EP_NAME.getExtensions(project)) {
+      var files = ContainerUtil.mapNotNull(policy.getExcludeUrlsForProject(), url -> VirtualFileManager.getInstance().findFileByUrl(url));
       info.excludedFromProject.addAll(ContainerUtil.filter(files, file -> RootFileValidityChecker.ensureValid(file, project, policy)));
 
-      Function<Sdk, List<VirtualFile>> fun = policy.getExcludeSdkRootsStrategy();
+      @SuppressWarnings("removal")
+      var fun = policy.getExcludeSdkRootsStrategy();
 
       if (fun != null) {
-        Set<Sdk> sdks = collectSdks();
+        var sdks = collectSdks();
 
-        Set<VirtualFile> roots = collectSdkClasses(sdks);
+        var roots = collectSdkClasses(sdks);
 
-        for (Sdk sdk: sdks) {
-          for (VirtualFile file : fun.fun(sdk)) {
+        for (var sdk: sdks) {
+          for (var file : fun.fun(sdk)) {
             if (!roots.contains(file)) {
               ContainerUtil.addIfNotNull(info.excludedFromSdkRoots, RootFileValidityChecker.correctRoot(file, sdk, policy));
             }
@@ -238,9 +228,9 @@ public final class RootIndex {
         }
       }
     }
-    for (UnloadedModuleDescription description : moduleManager.getUnloadedModuleDescriptions()) {
-      for (VirtualFilePointer contentRootPointer : description.getContentRoots()) {
-        VirtualFile contentRoot = contentRootPointer.getFile();
+    for (var description : moduleManager.getUnloadedModuleDescriptions()) {
+      for (var contentRootPointer : description.getContentRoots()) {
+        var contentRoot = contentRootPointer.getFile();
         if (contentRoot != null && ensureValid(contentRoot, description)) {
           info.contentRootOfUnloaded.put(contentRoot, description.getName());
         }
@@ -250,20 +240,18 @@ public final class RootIndex {
     return info;
   }
 
-  private static @NotNull Set<VirtualFile> collectSdkClasses(@NotNull Set<? extends Sdk> sdks) {
-    Set<VirtualFile> roots = new HashSet<>();
-
-    for (Sdk sdk : sdks) {
+  private static Set<VirtualFile> collectSdkClasses(Set<Sdk> sdks) {
+    var roots = new HashSet<VirtualFile>();
+    for (var sdk : sdks) {
       roots.addAll(Arrays.asList(sdk.getRootProvider().getFiles(OrderRootType.CLASSES)));
     }
     return roots;
   }
 
-  private @NotNull Set<Sdk> collectSdks() {
-    Set<Sdk> sdks = new HashSet<>();
-
-    for (Module m : ModuleManager.getInstance(myProject).getModules()) {
-      Sdk sdk = ModuleRootManager.getInstance(m).getSdk();
+  private Set<Sdk> collectSdks() {
+    var sdks = new HashSet<Sdk>();
+    for (var module : ModuleManager.getInstance(myProject).getModules()) {
+      var sdk = ModuleRootManager.getInstance(module).getSdk();
       if (sdk != null) {
         sdks.add(sdk);
       }
@@ -271,28 +259,24 @@ public final class RootIndex {
     return sdks;
   }
 
-  private static void fillIndexWithLibraryRoots(@NotNull RootInfo info,
-                                                @NotNull Object container,
-                                                VirtualFile @NotNull [] sourceRoots,
-                                                VirtualFile @NotNull [] classRoots) {
+  private static void fillIndexWithLibraryRoots(RootInfo info, Object container, VirtualFile[] sourceRoots, VirtualFile[] classRoots) {
     // Init library sources
-    for (final VirtualFile sourceRoot : sourceRoots) {
-      if (!ensureValid(sourceRoot, container)) continue;
-
-      info.classAndSourceRoots.add(sourceRoot);
-      info.libraryOrSdkSources.add(sourceRoot);
+    for (var sourceRoot : sourceRoots) {
+      if (ensureValid(sourceRoot, container)) {
+        info.classAndSourceRoots.add(sourceRoot);
+        info.libraryOrSdkSources.add(sourceRoot);
+      }
     }
-
     // init library classes
-    for (final VirtualFile classRoot : classRoots) {
-      if (!ensureValid(classRoot, container)) continue;
-
-      info.classAndSourceRoots.add(classRoot);
-      info.libraryOrSdkClasses.add(classRoot);
+    for (var classRoot : classRoots) {
+      if (ensureValid(classRoot, container)) {
+        info.classAndSourceRoots.add(classRoot);
+        info.libraryOrSdkClasses.add(classRoot);
+      }
     }
   }
 
-  private static boolean ensureValid(@NotNull VirtualFile file, @NotNull Object container) {
+  private static boolean ensureValid(VirtualFile file, Object container) {
     return RootFileValidityChecker.ensureValid(file, container, null);
   }
 
@@ -301,25 +285,23 @@ public final class RootIndex {
     return myOrderEntryGraphLazy.getValue();
   }
 
-  private @NotNull OrderEntryGraph calculateOrderEntryGraph() {
-    RootInfo rootInfo = buildRootInfo(myProject);
-    Couple<@NotNull MultiMap<VirtualFile, OrderEntry>> pair = initLibraryClassSourceRoots();
+  private OrderEntryGraph calculateOrderEntryGraph() {
+    var rootInfo = buildRootInfo(myProject);
+    var pair = initLibraryClassSourceRoots();
     return new OrderEntryGraph(myProject, rootInfo, pair.first, pair.second);
   }
 
-  /**
-   * A reverse dependency graph of (library, jdk, module, module source) -> (module).
-   * <p>
-   * <p>Each edge carries with it the associated OrderEntry that caused the dependency.
-   */
+  /// A reverse dependency graph of (library, jdk, module, module source) -> (module).
+  ///
+  /// Each edge carries with it the associated OrderEntry that caused the dependency.
   @ApiStatus.Internal
-  public static class OrderEntryGraph {
+  public static final class OrderEntryGraph {
     private static class Edge {
       private final Module myKey;
-      private final @NotNull ModuleOrderEntry myOrderEntry; // Order entry from myKey -> the node containing the edge
+      private final ModuleOrderEntry myOrderEntry; // Order entry from myKey -> the node containing the edge
       private final boolean myRecursive; // Whether this edge should be descended into during graph walk
 
-      Edge(@NotNull Module key, @NotNull ModuleOrderEntry orderEntry, boolean recursive) {
+      private Edge(Module key, ModuleOrderEntry orderEntry, boolean recursive) {
         myKey = key;
         myOrderEntry = orderEntry;
         myRecursive = recursive;
@@ -336,7 +318,7 @@ public final class RootIndex {
       private final List<Edge> myEdges = new ArrayList<>();
       private Set<String> myUnloadedDependentModules;
 
-      private Node(@NotNull Module key) {
+      private Node(Module key) {
         myKey = key;
       }
 
@@ -349,7 +331,7 @@ public final class RootIndex {
     private static class Graph {
       private final Map<Module, Node> myNodes;
 
-      Graph(int moduleCount) {
+      private Graph(int moduleCount) {
         myNodes = new HashMap<>(moduleCount);
       }
     }
@@ -364,21 +346,23 @@ public final class RootIndex {
     private final MultiMap<VirtualFile, OrderEntry> myLibClassRootEntries;
     private final MultiMap<VirtualFile, OrderEntry> myLibSourceRootEntries;
 
-    OrderEntryGraph(@NotNull Project project,
-                    @NotNull RootInfo rootInfo,
-                    @NotNull MultiMap<VirtualFile, OrderEntry> libClassRootEntries,
-                    @NotNull MultiMap<VirtualFile, OrderEntry> libSourceRootEntries) {
+    private OrderEntryGraph(
+      Project project,
+      RootInfo rootInfo,
+      MultiMap<VirtualFile, OrderEntry> libClassRootEntries,
+      MultiMap<VirtualFile, OrderEntry> libSourceRootEntries
+    ) {
       myProject = project;
       myRootInfo = rootInfo;
       myAllRoots = rootInfo.getAllRoots();
-      int cacheSize = Math.max(100, myAllRoots.size() / 3);
+      var cacheSize = Math.max(100, myAllRoots.size() / 3);
       myCache = new SynchronizedSLRUCache<>(cacheSize, cacheSize) {
         @Override
         public @NotNull @Unmodifiable List<OrderEntry> createValue(@NotNull VirtualFile key) {
           return collectOrderEntries(key);
         }
       };
-      int dependentUnloadedModulesCacheSize = ModuleManager.getInstance(project).getModules().length / 2;
+      var dependentUnloadedModulesCacheSize = ModuleManager.getInstance(project).getModules().length / 2;
       myDependentUnloadedModulesCache =
         new SynchronizedSLRUCache<>(dependentUnloadedModulesCacheSize, dependentUnloadedModulesCacheSize) {
           @Override
@@ -386,7 +370,7 @@ public final class RootIndex {
             return collectDependentUnloadedModules(key);
           }
         };
-      Pair<Graph, MultiMap<VirtualFile, Node>> pair = initGraphRoots();
+      var pair = initGraphRoots();
       myGraph = pair.getFirst();
       myRoots = pair.getSecond();
       myLibClassRootEntries = libClassRootEntries;
@@ -394,46 +378,46 @@ public final class RootIndex {
     }
 
     private @NotNull Pair<Graph, MultiMap<VirtualFile, Node>> initGraphRoots() {
-      ModuleManager moduleManager = ModuleManager.getInstance(myProject);
-      Module[] modules = moduleManager.getModules();
-      Graph graph = new Graph(modules.length);
+      var moduleManager = ModuleManager.getInstance(myProject);
+      var modules = moduleManager.getModules();
+      var graph = new Graph(modules.length);
+      var roots = new MultiMap<VirtualFile, Node>();
 
-      MultiMap<VirtualFile, Node> roots = new MultiMap<>();
-
-      for (final Module module : modules) {
-        final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-        List<OrderEnumerationHandler> handlers = OrderEnumeratorBase.getCustomHandlers(module);
-        for (OrderEntry orderEntry : moduleRootManager.getOrderEntries()) {
+      for (var module : modules) {
+        var moduleRootManager = ModuleRootManager.getInstance(module);
+        var handlers = OrderEnumeratorBase.getCustomHandlers(module);
+        for (var orderEntry : moduleRootManager.getOrderEntries()) {
           if (orderEntry instanceof ModuleOrderEntry moduleOrderEntry) {
-            final Module depModule = moduleOrderEntry.getModule();
+            var depModule = moduleOrderEntry.getModule();
             if (depModule != null) {
-              Node node = graph.myNodes.get(depModule);
-              OrderEnumerator en = OrderEnumerator.orderEntries(depModule).exportedOnly();
+              var node = graph.myNodes.get(depModule);
+              var en = OrderEnumerator.orderEntries(depModule).exportedOnly();
               if (node == null) {
                 node = new Node(depModule);
                 graph.myNodes.put(depModule, node);
 
-                VirtualFile[] importedClassRoots = en.classes().usingCache().getRoots();
-                for (VirtualFile importedClassRoot : importedClassRoots) {
+                var importedClassRoots = en.classes().usingCache().getRoots();
+                for (var importedClassRoot : importedClassRoots) {
                   roots.putValue(importedClassRoot, node);
                 }
 
-                VirtualFile[] importedSourceRoots = en.sources().usingCache().getRoots();
-                for (VirtualFile sourceRoot : importedSourceRoots) {
+                var importedSourceRoots = en.sources().usingCache().getRoots();
+                for (var sourceRoot : importedSourceRoots) {
                   roots.putValue(sourceRoot, node);
                 }
               }
-              boolean shouldRecurse = en.recursively().shouldRecurse(moduleOrderEntry, handlers);
+              var shouldRecurse = en.recursively().shouldRecurse(moduleOrderEntry, handlers);
               node.myEdges.add(new Edge(module, moduleOrderEntry, shouldRecurse));
             }
           }
         }
       }
-      for (UnloadedModuleDescription description : moduleManager.getUnloadedModuleDescriptions()) {
-        for (String depName : description.getDependencyModuleNames()) {
-          Module depModule = moduleManager.findModuleByName(depName);
+
+      for (var description : moduleManager.getUnloadedModuleDescriptions()) {
+        for (var depName : description.getDependencyModuleNames()) {
+          var depModule = moduleManager.findModuleByName(depName);
           if (depModule != null) {
-            Node node = graph.myNodes.get(depModule);
+            var node = graph.myNodes.get(depModule);
             if (node == null) {
               node = new Node(depModule);
               graph.myNodes.put(depModule, node);
@@ -446,42 +430,41 @@ public final class RootIndex {
         }
       }
 
-      return Pair.create(graph, roots);
+      return new Pair<>(graph, roots);
     }
 
-    private @NotNull List<OrderEntry> getOrderEntries(@NotNull VirtualFile file) {
+    private List<OrderEntry> getOrderEntries(VirtualFile file) {
       return myCache.get(file);
     }
 
-    /**
-     * Traverses the graph from the given file, collecting all encountered order entries.
-     */
-    private @NotNull @Unmodifiable List<OrderEntry> collectOrderEntries(@NotNull VirtualFile file) {
-      List<VirtualFile> roots = getHierarchy(file, myAllRoots, myRootInfo);
+    /// Traverses the graph from the given file, collecting all encountered order entries.
+    private @Unmodifiable List<OrderEntry> collectOrderEntries(VirtualFile file) {
+      var roots = getHierarchy(file, myAllRoots, myRootInfo);
       if (roots == null) {
-        return Collections.emptyList();
+        return List.of();
       }
-      Stack<Node> stack = new Stack<>(roots.size());
-      for (VirtualFile root : roots) {
-        Collection<Node> nodes = myRoots.get(root);
-        for (Node node : nodes) {
+
+      var stack = new ArrayDeque<Node>(roots.size());
+      for (var root : roots) {
+        var nodes = myRoots.get(root);
+        for (var node : nodes) {
           stack.push(node);
         }
       }
 
-      Set<Node> seen = new HashSet<>(stack.size());
-      List<OrderEntry> result = new ArrayList<>(stack.size());
+      var seen = new HashSet<Node>(stack.size());
+      var result = new ArrayList<OrderEntry>(stack.size());
       while (!stack.isEmpty()) {
-        Node node = stack.pop();
+        var node = stack.pop();
         if (!seen.add(node)) {
           continue;
         }
 
-        for (Edge edge : node.myEdges) {
+        for (var edge : node.myEdges) {
           result.add(edge.myOrderEntry);
 
           if (edge.myRecursive) {
-            Node targetNode = myGraph.myNodes.get(edge.myKey);
+            var targetNode = myGraph.myNodes.get(edge.myKey);
             if (targetNode != null) {
               stack.push(targetNode);
             }
@@ -489,14 +472,13 @@ public final class RootIndex {
         }
       }
 
-      Pair<VirtualFile, List<Condition<? super VirtualFile>>> libraryClassRootInfo = myRootInfo.findLibraryRootInfo(roots, false);
-      Pair<VirtualFile, List<Condition<? super VirtualFile>>> librarySourceRootInfo = myRootInfo.findLibraryRootInfo(roots, true);
-      result.addAll(myRootInfo.getLibraryOrderEntries(roots,
-                                                      Pair.getFirst(libraryClassRootInfo),
-                                                      Pair.getFirst(librarySourceRootInfo),
-                                                      myLibClassRootEntries, myLibSourceRootEntries));
+      var libraryClassRootInfo = myRootInfo.findLibraryRootInfo(roots, false);
+      var librarySourceRootInfo = myRootInfo.findLibraryRootInfo(roots, true);
+      result.addAll(myRootInfo.getLibraryOrderEntries(
+        roots, Pair.getFirst(libraryClassRootInfo), Pair.getFirst(librarySourceRootInfo), myLibClassRootEntries, myLibSourceRootEntries)
+      );
 
-      VirtualFile moduleContentRoot = myRootInfo.findNearestContentRoot(roots);
+      var moduleContentRoot = myRootInfo.findNearestContentRoot(roots);
       if (moduleContentRoot != null) {
         ContainerUtil.addIfNotNull(result, myRootInfo.getModuleSourceEntry(roots, moduleContentRoot, myLibClassRootEntries));
       }
@@ -504,23 +486,20 @@ public final class RootIndex {
       return List.copyOf(result);
     }
 
-    @NotNull
-    Set<String> getDependentUnloadedModules(@NotNull Module module) {
+    @NotNull Set<String> getDependentUnloadedModules(@NotNull Module module) {
       return myDependentUnloadedModulesCache.get(module);
     }
 
-    /**
-     * @return names of unloaded modules which directly or transitively via exported dependencies depend on the specified module
-     */
+    /// @return names of unloaded modules that directly or transitively via exported dependencies depend on the specified module
     private @NotNull Set<String> collectDependentUnloadedModules(@NotNull Module module) {
-      Node start = myGraph.myNodes.get(module);
-      if (start == null) return Collections.emptySet();
-      Deque<Node> stack = new ArrayDeque<>();
+      var start = myGraph.myNodes.get(module);
+      if (start == null) return Set.of();
+      var stack = new ArrayDeque<Node>();
       stack.push(start);
-      Set<Node> seen = new HashSet<>();
-      Set<String> result = null;
+      var seen = new HashSet<Node>();
+      var result = (Set<String>)null;
       while (!stack.isEmpty()) {
-        Node node = stack.pop();
+        var node = stack.pop();
         if (!seen.add(node)) {
           continue;
         }
@@ -532,47 +511,45 @@ public final class RootIndex {
             result.addAll(node.myUnloadedDependentModules);
           }
         }
-        for (Edge edge : node.myEdges) {
+        for (var edge : node.myEdges) {
           if (edge.myRecursive) {
-            Node targetNode = myGraph.myNodes.get(edge.myKey);
+            var targetNode = myGraph.myNodes.get(edge.myKey);
             if (targetNode != null) {
               stack.push(targetNode);
             }
           }
         }
       }
-      return result != null ? result : Collections.emptySet();
+      return result != null ? result : Set.of();
     }
   }
 
-  private @NotNull Couple<@NotNull MultiMap<VirtualFile, OrderEntry>> initLibraryClassSourceRoots() {
-    MultiMap<VirtualFile, OrderEntry> libClassRootEntries = new MultiMap<>();
-    MultiMap<VirtualFile, OrderEntry> libSourceRootEntries = new MultiMap<>();
+  private Pair<MultiMap<VirtualFile, OrderEntry>, MultiMap<VirtualFile, OrderEntry>> initLibraryClassSourceRoots() {
+    var libClassRootEntries = new MultiMap<VirtualFile, OrderEntry>();
+    var libSourceRootEntries = new MultiMap<VirtualFile, OrderEntry>();
 
-    for (final Module module : ModuleManager.getInstance(myProject).getModules()) {
-      final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-      for (OrderEntry orderEntry : moduleRootManager.getOrderEntries()) {
+    for (var module : ModuleManager.getInstance(myProject).getModules()) {
+      var moduleRootManager = ModuleRootManager.getInstance(module);
+      for (var orderEntry : moduleRootManager.getOrderEntries()) {
         if (orderEntry instanceof LibraryOrSdkOrderEntry entry) {
-          for (final VirtualFile sourceRoot : entry.getRootFiles(OrderRootType.SOURCES)) {
+          for (var sourceRoot : entry.getRootFiles(OrderRootType.SOURCES)) {
             libSourceRootEntries.putValue(sourceRoot, orderEntry);
           }
-          for (final VirtualFile classRoot : entry.getRootFiles(OrderRootType.CLASSES)) {
+          for (var classRoot : entry.getRootFiles(OrderRootType.CLASSES)) {
             libClassRootEntries.putValue(classRoot, orderEntry);
           }
         }
       }
     }
 
-    return Couple.of(libClassRootEntries, libSourceRootEntries);
+    return new Pair<>(libClassRootEntries, libSourceRootEntries);
   }
 
-  /**
-   * @return list of all super-directories which are marked as some kind of root, or {@code null} if {@code deepDir} is under the ignored folder (with no nested roots)
-   */
-  private static @Nullable("returns null only if dir is under ignored folder") List<VirtualFile> getHierarchy(@NotNull VirtualFile deepDir, @NotNull Set<? extends VirtualFile> allRoots, @NotNull RootInfo info) {
-    List<VirtualFile> hierarchy = new ArrayList<>();
-    boolean hasContentRoots = false;
-    for (VirtualFile dir = deepDir; dir != null; dir = dir.getParent()) {
+  /// @return list of all super-directories that are marked as some kind of root, or `null` if `deepDir` is under the ignored folder (with no nested roots)
+  private static @Nullable("returns null only if dir is under ignored folder") List<VirtualFile> getHierarchy(VirtualFile deepDir, Set<VirtualFile> allRoots, RootInfo info) {
+    var hierarchy = new ArrayList<VirtualFile>();
+    var hasContentRoots = false;
+    for (var dir = deepDir; dir != null; dir = dir.getParent()) {
       hasContentRoots |= info.contentRootOf.get(dir) != null;
       if (!hasContentRoots && ourFileTypes.isFileIgnored(dir)) {
         return null;
@@ -586,24 +563,23 @@ public final class RootIndex {
 
   private static class RootInfo {
     // getDirectoriesByPackageName used to be in this order, some clients might rely on that
-    private final @NotNull Set<VirtualFile> classAndSourceRoots = new LinkedHashSet<>();
+    private final Set<VirtualFile> classAndSourceRoots = new LinkedHashSet<>();
+    private final Set<VirtualFile> libraryOrSdkSources = new HashSet<>();
+    private final Set<VirtualFile> libraryOrSdkClasses = new HashSet<>();
+    private final Map<VirtualFile, Module> contentRootOf = new HashMap<>();
+    private final Map<VirtualFile, String> contentRootOfUnloaded = new HashMap<>();
+    private final MultiMap<VirtualFile, Module> sourceRootOf = MultiMap.createSet();
+    private final MultiMap<VirtualFile, /*Library|SyntheticLibrary|WorkspaceEntity*/ Object> excludedFromLibraries = MultiMap.createSet();
+    private final MultiMap<VirtualFile, /*Library|SyntheticLibrary|WorkspaceEntity*/ Object> classOfLibraries = MultiMap.createSet();
+    private final MultiMap<VirtualFile, /*Library|SyntheticLibrary|WorkspaceEntity*/ Object> sourceOfLibraries = MultiMap.createSet();
+    private final Map<WorkspaceEntity, Condition<VirtualFile>> customEntitiesExcludeConditions = new HashMap<>();
+    private final Set<VirtualFile> excludedFromProject = new HashSet<>();
+    private final Set<VirtualFile> excludedFromSdkRoots = new HashSet<>();
+    private final Map<VirtualFile, Module> excludedFromModule = new HashMap<>();
+    private final Map<VirtualFile, FileTypeAssocTable<Boolean>> excludeFromContentRootTables = new HashMap<>();
 
-    private final @NotNull Set<VirtualFile> libraryOrSdkSources = new HashSet<>();
-    private final @NotNull Set<VirtualFile> libraryOrSdkClasses = new HashSet<>();
-    private final @NotNull Map<VirtualFile, Module> contentRootOf = new HashMap<>();
-    private final @NotNull Map<VirtualFile, String> contentRootOfUnloaded = new HashMap<>();
-    private final @NotNull MultiMap<VirtualFile, Module> sourceRootOf = MultiMap.createSet();
-    private final @NotNull MultiMap<VirtualFile, /*Library|SyntheticLibrary|WorkspaceEntity*/ Object> excludedFromLibraries = MultiMap.createSet();
-    private final @NotNull MultiMap<VirtualFile, /*Library|SyntheticLibrary|WorkspaceEntity*/ Object> classOfLibraries = MultiMap.createSet();
-    private final @NotNull MultiMap<VirtualFile, /*Library|SyntheticLibrary|WorkspaceEntity*/ Object> sourceOfLibraries = MultiMap.createSet();
-    private final @NotNull Map<WorkspaceEntity, Condition<VirtualFile>> customEntitiesExcludeConditions = new HashMap<>();
-    private final @NotNull Set<VirtualFile> excludedFromProject = new HashSet<>();
-    private final @NotNull Set<VirtualFile> excludedFromSdkRoots = new HashSet<>();
-    private final @NotNull Map<VirtualFile, Module> excludedFromModule = new HashMap<>();
-    private final @NotNull Map<VirtualFile, FileTypeAssocTable<Boolean>> excludeFromContentRootTables = new HashMap<>();
-
-    private @NotNull Set<VirtualFile> getAllRoots() {
-      VirtualFileSet result = VirtualFileSetFactory.getInstance().createCompactVirtualFileSet();
+    private Set<VirtualFile> getAllRoots() {
+      var result = VirtualFileSetFactory.getInstance().createCompactVirtualFileSet();
       result.addAll(classAndSourceRoots);
       result.addAll(contentRootOf.keySet());
       result.addAll(contentRootOfUnloaded.keySet());
@@ -614,18 +590,16 @@ public final class RootIndex {
       return result.freezed();
     }
 
-    /**
-     * Returns nearest content root for a file by its parent directories hierarchy. If the file is excluded (i.e. located under an excluded
-     * root and there are no source roots on the path to the excluded root) returns {@code null}.
-     */
-    private @Nullable VirtualFile findNearestContentRoot(@NotNull List<? extends VirtualFile> hierarchy) {
-      Collection<Module> sourceRootOwners = null;
-      boolean underExcludedSourceRoot = false;
-      for (VirtualFile root : hierarchy) {
-        Module module = contentRootOf.get(root);
-        Module excludedFrom = excludedFromModule.get(root);
+    /// Returns the nearest content root for a file by its parent directories hierarchy. If the file is excluded
+    /// (i.e., located under an excluded root and there are no source roots on the path to the excluded root) returns `null`.
+    private @Nullable VirtualFile findNearestContentRoot(List<VirtualFile> hierarchy) {
+      var sourceRootOwners = (Collection<Module>)null;
+      var underExcludedSourceRoot = false;
+      for (var root : hierarchy) {
+        var module = contentRootOf.get(root);
+        var excludedFrom = excludedFromModule.get(root);
         if (module != null) {
-          FileTypeAssocTable<Boolean> table = excludeFromContentRootTables.get(root);
+          var table = excludeFromContentRootTables.get(root);
           if (table != null && isExcludedByPattern(root, hierarchy, table)) {
             excludedFrom = module;
           }
@@ -639,9 +613,8 @@ public final class RootIndex {
           }
           underExcludedSourceRoot = true;
         }
-
         if (!underExcludedSourceRoot && sourceRootOf.containsKey(root)) {
-          Collection<Module> modulesForSourceRoot = sourceRootOf.get(root);
+          var modulesForSourceRoot = sourceRootOf.get(root);
           if (!modulesForSourceRoot.isEmpty()) {
             sourceRootOwners = sourceRootOwners == null ? modulesForSourceRoot : ContainerUtil.union(sourceRootOwners, modulesForSourceRoot);
           }
@@ -650,10 +623,8 @@ public final class RootIndex {
       return null;
     }
 
-    private static boolean isExcludedByPattern(@NotNull VirtualFile contentRoot,
-                                               @NotNull List<? extends VirtualFile> hierarchy,
-                                               @NotNull FileTypeAssocTable<Boolean> table) {
-      for (VirtualFile file : hierarchy) {
+    private static boolean isExcludedByPattern(VirtualFile contentRoot, List<VirtualFile> hierarchy, FileTypeAssocTable<Boolean> table) {
+      for (var file : hierarchy) {
         if (table.findAssociatedFileType(file.getNameSequence()) != null) {
           return true;
         }
@@ -664,34 +635,29 @@ public final class RootIndex {
       return false;
     }
 
-    /**
-     * @return root and set of libraries that provided it
-     */
-    private @Nullable Pair<VirtualFile, List<Condition<? super VirtualFile>>> findLibraryRootInfo(@NotNull List<? extends VirtualFile> hierarchy,
-                                                                                        boolean source) {
-      Set</*Library|SyntheticLibrary|WorkspaceEntity*/ Object> librariesToIgnore = createLibrarySet();
-      for (VirtualFile root : hierarchy) {
+    /// @return root and set of libraries that provided it
+    private @Nullable Pair<VirtualFile, List<Condition<VirtualFile>>> findLibraryRootInfo(List<VirtualFile> hierarchy, boolean source) {
+      var librariesToIgnore = createLibrarySet();
+      for (var root : hierarchy) {
         librariesToIgnore.addAll(excludedFromLibraries.get(root));
         if (source && libraryOrSdkSources.contains(root)) {
-          List<Condition<? super VirtualFile>> found = findInLibraryProducers(root, sourceOfLibraries, librariesToIgnore,
-                                                                              customEntitiesExcludeConditions);
-          if (found != null) return Pair.create(root, found);
+          var found = findInLibraryProducers(root, sourceOfLibraries, librariesToIgnore, customEntitiesExcludeConditions);
+          if (found != null) return new Pair<>(root, found);
         }
         else if (!source && libraryOrSdkClasses.contains(root)) {
-          List<Condition<? super VirtualFile>> found = findInLibraryProducers(root, classOfLibraries, librariesToIgnore,
-                                                                              customEntitiesExcludeConditions);
-          if (found != null) return Pair.create(root, found);
+          var found = findInLibraryProducers(root, classOfLibraries, librariesToIgnore, customEntitiesExcludeConditions);
+          if (found != null) return new Pair<>(root, found);
         }
       }
       return null;
     }
 
-    private static @NotNull Set</*Library|SyntheticLibrary*/ Object> createLibrarySet() {
+    private static Set</*Library|SyntheticLibrary*/ Object> createLibrarySet() {
       return CollectionFactory.createCustomHashingStrategySet(new HashingStrategy<>() {
         @Override
         public int hashCode(Object object) {
           // reduce complexity of hashCode calculation to speed it up
-          return Objects.hashCode(object instanceof Library ? ((Library)object).getName() : object);
+          return Objects.hashCode(object instanceof Library lib ? lib.getName() : object);
         }
 
         @Override
@@ -701,29 +667,33 @@ public final class RootIndex {
       });
     }
 
-    private static List<Condition<? super VirtualFile>> findInLibraryProducers(@NotNull VirtualFile root,
-                                                                               @NotNull MultiMap<VirtualFile, Object> libraryRoots,
-                                                                               @NotNull Set<Object> librariesToIgnore,
-                                                                               @NotNull Map<WorkspaceEntity, Condition<VirtualFile>> customEntitiesExcludeConditions) {
+    private static List<Condition<VirtualFile>> findInLibraryProducers(
+      VirtualFile root,
+      MultiMap<VirtualFile, Object> libraryRoots,
+      Set<Object> librariesToIgnore,
+      Map<WorkspaceEntity, Condition<VirtualFile>> customEntitiesExcludeConditions
+    ) {
       if (!libraryRoots.containsKey(root)) {
-        return Collections.emptyList();
+        return List.of();
       }
-      Collection<Object> producers = libraryRoots.get(root);
-      Set</*Library|SyntheticLibrary|WorkspaceEntity*/ Object> libraries = new HashSet<>(producers.size());
-      List<Condition<? super VirtualFile>> exclusions = new SmartList<>();
-      for (Object library : producers) {
+
+      var producers = libraryRoots.get(root);
+      var libraries = new HashSet</*Library|SyntheticLibrary|WorkspaceEntity*/>(producers.size());
+      var exclusions = new SmartList<Condition<VirtualFile>>();
+      for (var library : producers) {
         if (librariesToIgnore.contains(library)) continue;
-        if (library instanceof SyntheticLibrary) {
-          Condition<? super VirtualFile> exclusion = ((SyntheticLibrary)library).getUnitedExcludeCondition();
+        if (library instanceof SyntheticLibrary sl) {
+          var exclusion = sl.getUnitedExcludeCondition();
           if (exclusion != null) {
-            exclusions.add(exclusion);
+            @SuppressWarnings("unchecked") var condition = (Condition<VirtualFile>)exclusion;
+            exclusions.add(condition);
             if (exclusion.value(root)) {
               continue;
             }
           }
         }
         else if (library instanceof WorkspaceEntity) {
-          Condition<VirtualFile> condition = customEntitiesExcludeConditions.get(library);
+          var condition = customEntitiesExcludeConditions.get(library);
           if (condition != null) {
             exclusions.add(condition);
             if (condition.value(root)) {
@@ -739,13 +709,15 @@ public final class RootIndex {
       return null;
     }
 
-    private @NotNull Set<OrderEntry> getLibraryOrderEntries(@NotNull List<? extends VirtualFile> hierarchy,
-                                                            @Nullable VirtualFile libraryClassRoot,
-                                                            @Nullable VirtualFile librarySourceRoot,
-                                                            @NotNull MultiMap<VirtualFile, OrderEntry> libClassRootEntries,
-                                                            @NotNull MultiMap<VirtualFile, OrderEntry> libSourceRootEntries) {
-      Set<OrderEntry> orderEntries = new LinkedHashSet<>();
-      for (VirtualFile root : hierarchy) {
+    private Set<OrderEntry> getLibraryOrderEntries(
+      List<VirtualFile> hierarchy,
+      @Nullable VirtualFile libraryClassRoot,
+      @Nullable VirtualFile librarySourceRoot,
+      MultiMap<VirtualFile, OrderEntry> libClassRootEntries,
+      MultiMap<VirtualFile, OrderEntry> libSourceRootEntries
+    ) {
+      var orderEntries = new LinkedHashSet<OrderEntry>();
+      for (var root : hierarchy) {
         if (root.equals(libraryClassRoot) && !sourceRootOf.containsKey(root)) {
           orderEntries.addAll(libClassRootEntries.get(root));
         }
@@ -760,11 +732,13 @@ public final class RootIndex {
     }
 
 
-    private @Nullable ModuleSourceOrderEntry getModuleSourceEntry(@NotNull List<? extends VirtualFile> hierarchy,
-                                                                  @NotNull VirtualFile moduleContentRoot,
-                                                                  @NotNull MultiMap<VirtualFile, OrderEntry> libClassRootEntries) {
-      Module module = contentRootOf.get(moduleContentRoot);
-      for (VirtualFile root : hierarchy) {
+    private @Nullable ModuleSourceOrderEntry getModuleSourceEntry(
+      List<VirtualFile> hierarchy,
+      VirtualFile moduleContentRoot,
+      MultiMap<VirtualFile, OrderEntry> libClassRootEntries
+    ) {
+      var module = contentRootOf.get(moduleContentRoot);
+      for (var root : hierarchy) {
         if (sourceRootOf.get(root).contains(module)) {
           return ContainerUtil.findInstance(ModuleRootManager.getInstance(module).getOrderEntries(), ModuleSourceOrderEntry.class);
         }
@@ -776,24 +750,20 @@ public final class RootIndex {
     }
   }
 
-  @NotNull
-  List<OrderEntry> getOrderEntries(@NotNull VirtualFile root) {
+  @NotNull List<OrderEntry> getOrderEntries(@NotNull VirtualFile root) {
     return getOrderEntryGraph().getOrderEntries(root);
   }
 
-  @NotNull
-  Set<String> getDependentUnloadedModules(@NotNull Module module) {
+  @NotNull Set<String> getDependentUnloadedModules(@NotNull Module module) {
     return getOrderEntryGraph().getDependentUnloadedModules(module);
   }
 
-  /**
-   * An LRU cache with synchronization around the primary cache operations (get() and insertion
-   * of a newly created value). Other map operations are not synchronized.
-   */
-  abstract static class SynchronizedSLRUCache<K, V> extends SLRUMap<K, V> {
+  /// An LRU cache with synchronization around the primary cache operations (get() and insertion of a newly created value).
+  /// Other map operations are not synchronized.
+  private abstract static class SynchronizedSLRUCache<K, V> extends SLRUMap<K, V> {
     private final Object myLock = ObjectUtils.sentinel("Root index lock");
 
-    SynchronizedSLRUCache(final int protectedQueueSize, final int probationalQueueSize) {
+    private SynchronizedSLRUCache(int protectedQueueSize, int probationalQueueSize) {
       super(protectedQueueSize, probationalQueueSize);
     }
 

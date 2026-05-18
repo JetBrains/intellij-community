@@ -136,6 +136,7 @@ internal class NonIncrementalContributors(private val project: Project) {
           excludedUrls.add(virtualFileUrlManager.getOrCreateFromUrl(url))
         }
       }
+      @Suppress("DEPRECATION", "removal")
       policy.excludeSdkRootsStrategy?.let { strategy ->
         val sdks = ModuleManager.getInstance(project).modules.mapNotNullTo(HashSet()) { ModuleRootManager.getInstance(it).sdk }
         val sdkClasses = sdks.flatMapTo(HashSet()) { it.rootProvider.getFiles(OrderRootType.CLASSES).asList() }
@@ -157,6 +158,7 @@ internal class NonIncrementalContributors(private val project: Project) {
       }
       if (hasExcludeRootsForModule) {
         ModuleManager.getInstance(project).modules.forEach { module ->
+          @Suppress("DEPRECATION", "removal")
           policy.getExcludeRootsForModule(ModuleRootManager.getInstance(module)).forEach { pointer ->
             val file = pointer.file
             if (file != null) {

@@ -1,5 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.extensions.AreaInstance;
@@ -17,33 +16,43 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-
-/**
- * Implement this interface and register the implementation as {@code directoryIndexExcludePolicy} extension in plugin.xml to specify files
- * and directories which should be automatically
- * <a href="https://www.jetbrains.com/help/idea/content-roots.html#exclude-files-folders">excluded</a> from the project and its modules.
- */
+/// Implement this interface and register the implementation as a `directoryIndexExcludePolicy` extension in `plugin.xml`
+/// to specify files and directories which should be automatically
+/// [excluded](https://www.jetbrains.com/help/idea/content-roots.html#exclude-files-folders) from the project and its modules.
+///
+/// **NB:** legacy API; prefer [com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor] instead.
+@ApiStatus.OverrideOnly
 public interface DirectoryIndexExcludePolicy {
   @ApiStatus.Internal
-  ProjectExtensionPointName<DirectoryIndexExcludePolicy> EP_NAME =
-    new ProjectExtensionPointName<>("com.intellij.directoryIndexExcludePolicy");
+  ProjectExtensionPointName<DirectoryIndexExcludePolicy> EP_NAME = new ProjectExtensionPointName<>("com.intellij.directoryIndexExcludePolicy");
 
-  /**
-   * Supply all file urls (existing as well as not yet created) that should be treated as 'excluded'
-   */
+  /// Supply all file URLs (existing as well as not yet created) that should be treated as 'excluded'.
   @Contract(pure = true)
   default String @NotNull [] getExcludeUrlsForProject() {
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
+  /// @deprecated causes performance problems. Please use [#getExcludeUrlsForProject]
+  /// or [com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor] instead.
+  @Deprecated(forRemoval = true)
   @Contract(pure = true)
+  @SuppressWarnings({"DeprecatedIsStillUsed", "UsagesOfObsoleteApi"})
   default @Nullable Function<Sdk, List<VirtualFile>> getExcludeSdkRootsStrategy() {
     return null;
   }
 
+  /// @deprecated causes performance problems. Please use [#getExcludeUrlsForProject]
+  /// or [com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor] instead.
+  @Deprecated(forRemoval = true)
   @Contract(pure = true)
-  default VirtualFilePointer @NotNull [] getExcludeRootsForModule(@NotNull ModuleRootModel rootModel) { return VirtualFilePointer.EMPTY_ARRAY; }
+  @SuppressWarnings({"DeprecatedIsStillUsed", "unused"})
+  default VirtualFilePointer @NotNull [] getExcludeRootsForModule(@NotNull ModuleRootModel rootModel) {
+    return VirtualFilePointer.EMPTY_ARRAY;
+  }
 
+  /// @deprecated use [#EP_NAME]
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
   static DirectoryIndexExcludePolicy @NotNull [] getExtensions(@NotNull AreaInstance areaInstance) {
     return EP_NAME.getExtensions(areaInstance).toArray(new DirectoryIndexExcludePolicy[0]);
   }

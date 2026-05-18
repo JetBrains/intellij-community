@@ -3,10 +3,8 @@ package com.intellij.util.indexing.dependenciesCache;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.RootsChangeRescanningInfo;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.OrderRootType;
@@ -15,7 +13,6 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy;
 import com.intellij.openapi.roots.impl.indexing.DirectorySpec;
 import com.intellij.openapi.roots.impl.indexing.ProjectStructureDslKt;
-import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
@@ -29,11 +26,9 @@ import com.intellij.testFramework.TestModeFlags;
 import com.intellij.testFramework.rules.ProjectModelRule;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.ThreeState;
 import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService.StatusMark;
-import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.kind.IndexableSetContributorOrigin;
 import com.intellij.util.indexing.roots.kind.ModuleRootOrigin;
 import com.intellij.util.indexing.roots.kind.SyntheticLibraryOrigin;
@@ -63,19 +58,13 @@ import static com.intellij.util.ThreeState.UNSURE;
 import static com.intellij.util.ThreeState.YES;
 
 @RunsInEdt
-@SuppressWarnings("KotlinInternalInJava")
 public abstract class DependenciesIndexedStatusServiceBaseTest {
-  @ClassRule
-  public static final ApplicationRule appRule = new ApplicationRule();
+  @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
 
-  @Rule
-  public final ProjectModelRule projectModelRule = new ProjectModelRule();
-  @Rule
-  public final EdtRule edtRule = new EdtRule();
-  @Rule
-  public final DisposableRule disposableRule = new DisposableRule();
-  @Rule
-  public final TempDirectory tempDirectory = new TempDirectory();
+  @Rule public final ProjectModelRule projectModelRule = new ProjectModelRule();
+  @Rule public final EdtRule edtRule = new EdtRule();
+  @Rule public final DisposableRule disposableRule = new DisposableRule();
+  @Rule public final TempDirectory tempDirectory = new TempDirectory();
 
   @Rule
   public final ExternalResource dependenciesIndexedStatusServiceEnabler = new ExternalResource() {
@@ -85,9 +74,11 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
     }
   };
 
-  protected void setUp(List<AdditionalLibraryRootsProvider> providers,
-                       List<IndexableSetContributor> contributors,
-                       List<DirectoryIndexExcludePolicy> policies) {
+  protected void setUp(
+    List<AdditionalLibraryRootsProvider> providers,
+    List<IndexableSetContributor> contributors,
+    List<DirectoryIndexExcludePolicy> policies
+  ) {
     ApplicationManager.getApplication().runWriteAction(() -> {
       ((ExtensionPointImpl<@NotNull AdditionalLibraryRootsProvider>)AdditionalLibraryRootsProvider.EP_NAME.getPoint()).
         maskAll(providers, disposableRule.getDisposable(), true);
@@ -109,17 +100,17 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
 
     @Before
     public void setUp() {
-      AdditionalLibraryRootsProvider provider = new AdditionalLibraryRootsProvider() {
+      var provider = new AdditionalLibraryRootsProvider() {
         @Override
         public @NotNull Collection<SyntheticLibrary> getAdditionalProjectLibraries(@NotNull Project project) {
-          ArrayList<SyntheticLibrary> result = new ArrayList<>();
+          var result = new ArrayList<SyntheticLibrary>();
           addLibrary(result, libraryRootsNoId, null);
           addLibrary(result, libraryRootsId1, "ID1");
           addLibrary(result, libraryRootsId2, "ID2");
           return result;
         }
       };
-      setUp(Collections.singletonList(provider), Collections.emptyList(), Collections.emptyList());
+      setUp(List.of(provider), List.of(), List.of());
     }
 
     private static void addLibrary(@NotNull List<SyntheticLibrary> list, @NotNull List<VirtualFile> contentRoots, @Nullable String id) {
@@ -128,7 +119,7 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
         list.add(SyntheticLibrary.newImmutableLibrary(contentRoots));
       }
       else {
-        list.add(SyntheticLibrary.newImmutableLibrary(id, contentRoots, Collections.emptyList(), Collections.emptySet(), null));
+        list.add(SyntheticLibrary.newImmutableLibrary(id, contentRoots, List.of(), Collections.emptySet(), null));
       }
     }
 
@@ -141,8 +132,8 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
 
     @Test
     public void checkAddingSyntheticLibraryRootInSingleLibraryWithoutId() {
-      VirtualFile first = tempDirectory.newVirtualDirectory("first/");
-      VirtualFile second = tempDirectory.newVirtualDirectory("second/");
+      var first = tempDirectory.newVirtualDirectory("first/");
+      var second = tempDirectory.newVirtualDirectory("second/");
 
       assertNothingToRescan();
       libraryRootsNoId.add(first);
@@ -161,10 +152,10 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
 
     @Test
     public void checkAddingSyntheticLibraryRootInLibraryWithId() {
-      VirtualFile first = tempDirectory.newVirtualDirectory("first/");
-      VirtualFile second = tempDirectory.newVirtualDirectory("second/");
+      var first = tempDirectory.newVirtualDirectory("first/");
+      var second = tempDirectory.newVirtualDirectory("second/");
       {
-        VirtualFile constantAdditionalLib = tempDirectory.newVirtualDirectory("constantAdditionalLib/");
+        var constantAdditionalLib = tempDirectory.newVirtualDirectory("constantAdditionalLib/");
         libraryRootsId1.add(constantAdditionalLib);
         assertRescanningLibraries(YES, constantAdditionalLib);
       }
@@ -181,10 +172,10 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
 
     @Test
     public void checkAddingSyntheticLibraryRootInNonSingleLibraryWithoutId() {
-      VirtualFile first = tempDirectory.newVirtualDirectory("first/");
-      VirtualFile second = tempDirectory.newVirtualDirectory("second/");
+      var first = tempDirectory.newVirtualDirectory("first/");
+      var second = tempDirectory.newVirtualDirectory("second/");
       {
-        VirtualFile constantAdditionalLib = tempDirectory.newVirtualDirectory("constantAdditionalLib/");
+        var constantAdditionalLib = tempDirectory.newVirtualDirectory("constantAdditionalLib/");
         libraryRootsId1.add(constantAdditionalLib);
         assertRescanningLibraries(YES, constantAdditionalLib);
       }
@@ -207,8 +198,8 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
 
     @Test
     public void checkAddingSyntheticLibraryRootWithCancelledIndexingInSingleLibraryWithoutId() {
-      VirtualFile first = tempDirectory.newVirtualDirectory("first/");
-      VirtualFile second = tempDirectory.newVirtualDirectory("second/");
+      var first = tempDirectory.newVirtualDirectory("first/");
+      var second = tempDirectory.newVirtualDirectory("second/");
 
       assertNothingToRescan();
       libraryRootsNoId.add(first);
@@ -227,8 +218,8 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
 
     @Test
     public void checkSwitchingRootBetweenLibrariesWithIds() {
-      VirtualFile first = tempDirectory.newVirtualDirectory("first/");
-      VirtualFile second = tempDirectory.newVirtualDirectory("second/");
+      var first = tempDirectory.newVirtualDirectory("first/");
+      var second = tempDirectory.newVirtualDirectory("second/");
 
       assertNothingToRescan();
       libraryRootsId1.add(first);
@@ -259,8 +250,8 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
 
     @Test
     public void checkReorderingOfRoots() {
-      VirtualFile first = tempDirectory.newVirtualDirectory("first/");
-      VirtualFile second = tempDirectory.newVirtualDirectory("second/");
+      var first = tempDirectory.newVirtualDirectory("first/");
+      var second = tempDirectory.newVirtualDirectory("second/");
 
       assertNothingToRescan();
       libraryRootsId1.add(first);
@@ -276,13 +267,12 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
 
 
     private void assertRescanningLibraries(ThreeState finishIndexingWithStatus, VirtualFile... roots) {
-      DependenciesIndexedStatusService statusService = DependenciesIndexedStatusService.getInstance(getProject());
-      @Nullable Pair<@NotNull Collection<? extends IndexableFilesIterator>, @NotNull StatusMark> statusPair;
-      statusPair = statusService.getDeltaWithLastIndexedStatus();
-      Collection<? extends IndexableFilesIterator> iterators = statusPair.getFirst();
-      List<VirtualFile> actualRoots = new ArrayList<>();
-      for (IndexableFilesIterator iterator : iterators) {
-        SyntheticLibraryOrigin origin = assertInstanceOf(iterator.getOrigin(), SyntheticLibraryOrigin.class);
+      var statusService = DependenciesIndexedStatusService.getInstance(getProject());
+      var statusPair = statusService.getDeltaWithLastIndexedStatus();
+      var iterators = statusPair.getFirst();
+      var actualRoots = new ArrayList<VirtualFile>();
+      for (var iterator : iterators) {
+        var origin = assertInstanceOf(iterator.getOrigin(), SyntheticLibraryOrigin.class);
         actualRoots.addAll(origin.getRootsToIndex());
       }
       assertContainsElements(actualRoots, roots);
@@ -297,7 +287,7 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
 
     @Before
     public void setUp() {
-      IndexableSetContributor contributor = new IndexableSetContributor() {
+      var contributor = new IndexableSetContributor() {
         @Override
         public @NotNull Set<VirtualFile> getAdditionalProjectRootsToIndex(@NotNull Project project) {
           return Set.copyOf(indexableProjectRoots);
@@ -308,7 +298,7 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
           return Set.copyOf(indexableRoots);
         }
       };
-      setUp(Collections.emptyList(), Collections.singletonList(contributor), Collections.emptyList());
+      setUp(List.of(), List.of(contributor), List.of());
     }
 
     @After
@@ -328,8 +318,8 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
     }
 
     private void doCheckAddingRoots(List<VirtualFile> roots) {
-      VirtualFile first = tempDirectory.newVirtualDirectory("first/");
-      VirtualFile second = tempDirectory.newVirtualDirectory("second/");
+      var first = tempDirectory.newVirtualDirectory("first/");
+      var second = tempDirectory.newVirtualDirectory("second/");
 
       assertNothingToRescan();
       roots.add(first);
@@ -347,8 +337,8 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
 
     @Test
     public void checkSwitchingRootBetweenProjectAndApplicationRoots() {
-      VirtualFile first = tempDirectory.newVirtualDirectory("first/");
-      VirtualFile second = tempDirectory.newVirtualDirectory("second/");
+      var first = tempDirectory.newVirtualDirectory("first/");
+      var second = tempDirectory.newVirtualDirectory("second/");
 
       assertNothingToRescan();
       indexableProjectRoots.add(first);
@@ -388,8 +378,8 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
     }
 
     private void doCheckAddingRootsWithCancelledIndexing(List<VirtualFile> roots) {
-      VirtualFile first = tempDirectory.newVirtualDirectory("first/");
-      VirtualFile second = tempDirectory.newVirtualDirectory("second/");
+      var first = tempDirectory.newVirtualDirectory("first/");
+      var second = tempDirectory.newVirtualDirectory("second/");
 
       assertNothingToRescan();
       roots.add(first);
@@ -408,8 +398,8 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
 
     @Test
     public void checkReorderingOfRoots() {
-      VirtualFile first = tempDirectory.newVirtualDirectory("first/");
-      VirtualFile second = tempDirectory.newVirtualDirectory("second/");
+      var first = tempDirectory.newVirtualDirectory("first/");
+      var second = tempDirectory.newVirtualDirectory("second/");
 
       assertNothingToRescan();
       indexableRoots.add(first);
@@ -435,13 +425,12 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
     }
 
     private void assertRescanningIndexableSets(ThreeState finishIndexingWithStatus, VirtualFile... roots) {
-      DependenciesIndexedStatusService statusService = DependenciesIndexedStatusService.getInstance(getProject());
-      @Nullable Pair<@NotNull Collection<? extends IndexableFilesIterator>, @NotNull StatusMark> statusPair;
-      statusPair = statusService.getDeltaWithLastIndexedStatus();
-      Collection<? extends IndexableFilesIterator> iterators = statusPair.getFirst();
-      List<VirtualFile> actualRoots = new ArrayList<>();
-      for (IndexableFilesIterator iterator : iterators) {
-        IndexableSetContributorOrigin origin = assertInstanceOf(iterator.getOrigin(), IndexableSetContributorOrigin.class);
+      var statusService = DependenciesIndexedStatusService.getInstance(getProject());
+      var statusPair = statusService.getDeltaWithLastIndexedStatus();
+      var iterators = statusPair.getFirst();
+      var actualRoots = new ArrayList<VirtualFile>();
+      for (var iterator : iterators) {
+        var origin = assertInstanceOf(iterator.getOrigin(), IndexableSetContributorOrigin.class);
         actualRoots.addAll(origin.getRootsToIndex());
       }
       assertContainsElements(actualRoots, roots);
@@ -452,45 +441,38 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
 
   public static class DirectoryIndexExcludePolicyTest extends DependenciesIndexedStatusServiceBaseTest {
     private final List<String> excludedUrls = new ArrayList<>();
-    private final List<VirtualFile> excludedFromSdk = new ArrayList<>();
 
     @Before
     public void setUp() {
       Registry.get("use.workspace.file.index.for.partial.scanning").setValue(false, disposableRule.getDisposable());
-      DirectoryIndexExcludePolicy policy = new DirectoryIndexExcludePolicy() {
+      var policy = new DirectoryIndexExcludePolicy() {
         @Override
         public String @NotNull [] getExcludeUrlsForProject() {
           return ArrayUtil.toStringArray(excludedUrls);
         }
-
-        @Override
-        public Function<Sdk, List<VirtualFile>> getExcludeSdkRootsStrategy() {
-          return sdk -> excludedFromSdk;
-        }
       };
-      setUp(Collections.emptyList(), Collections.emptyList(), Collections.singletonList(policy));
+      setUp(List.of(), List.of(), List.of(policy));
     }
 
     @After
     public void tearDown() {
       excludedUrls.clear();
-      excludedFromSdk.clear();
     }
 
     @Test
     public void checkExcludingProjectPart() {
-      Ref<DirectorySpec> firstDirSpec = new Ref<>();
-      Ref<DirectorySpec> secondDirSpec = new Ref<>();
+      var firstDirSpec = new Ref<DirectorySpec>();
+      var secondDirSpec = new Ref<DirectorySpec>();
       ProjectStructureDslKt.createJavaModule(projectModelRule, "module", moduleContentBuilder -> {
         moduleContentBuilder.source("sourceRoot", JavaSourceRootType.SOURCE, contentBuilder -> {
-          firstDirSpec.set(contentBuilder.dir("first", builder1 -> Unit.INSTANCE));
-          secondDirSpec.set(contentBuilder.dir("second", builder1 -> Unit.INSTANCE));
+          firstDirSpec.set(contentBuilder.dir("first", _ -> Unit.INSTANCE));
+          secondDirSpec.set(contentBuilder.dir("second", _ -> Unit.INSTANCE));
           return Unit.INSTANCE;
         });
         return Unit.INSTANCE;
       });
-      VirtualFile firstDir = ProjectStructureDslKt.resolveVirtualFile(firstDirSpec.get());
-      VirtualFile secondDir = ProjectStructureDslKt.resolveVirtualFile(secondDirSpec.get());
+      var firstDir = ProjectStructureDslKt.resolveVirtualFile(firstDirSpec.get());
+      var secondDir = ProjectStructureDslKt.resolveVirtualFile(secondDirSpec.get());
 
       assertNothingToRescan();
       updateExcludedRoots(urls -> {
@@ -513,18 +495,18 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
 
     @Test
     public void checkReorderingExcludingProjectPart() {
-      Ref<DirectorySpec> firstDirSpec = new Ref<>();
-      Ref<DirectorySpec> secondDirSpec = new Ref<>();
+      var firstDirSpec = new Ref<DirectorySpec>();
+      var secondDirSpec = new Ref<DirectorySpec>();
       ProjectStructureDslKt.createJavaModule(projectModelRule, "module", moduleContentBuilder -> {
         moduleContentBuilder.source("sourceRoot", JavaSourceRootType.SOURCE, contentBuilder -> {
-          firstDirSpec.set(contentBuilder.dir("first", builder1 -> Unit.INSTANCE));
-          secondDirSpec.set(contentBuilder.dir("second", builder1 -> Unit.INSTANCE));
+          firstDirSpec.set(contentBuilder.dir("first", _ -> Unit.INSTANCE));
+          secondDirSpec.set(contentBuilder.dir("second", _ -> Unit.INSTANCE));
           return Unit.INSTANCE;
         });
         return Unit.INSTANCE;
       });
-      VirtualFile firstDir = ProjectStructureDslKt.resolveVirtualFile(firstDirSpec.get());
-      VirtualFile secondDir = ProjectStructureDslKt.resolveVirtualFile(secondDirSpec.get());
+      var firstDir = ProjectStructureDslKt.resolveVirtualFile(firstDirSpec.get());
+      var secondDir = ProjectStructureDslKt.resolveVirtualFile(secondDirSpec.get());
 
       assertNothingToRescan();
       updateExcludedRoots(urls -> {
@@ -543,29 +525,29 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
 
     @Test
     public void checkExcludingSdkPart() {
-      Ref<DirectorySpec> classesDirSpec = new Ref<>();
-      Ref<DirectorySpec> sourcesDirSpec = new Ref<>();
+      var classesDirSpec = new Ref<DirectorySpec>();
+      var sourcesDirSpec = new Ref<DirectorySpec>();
 
-      VirtualFile sdkRoot = tempDirectory.newVirtualDirectory("sdkRoot");
+      var sdkRoot = tempDirectory.newVirtualDirectory("sdkRoot");
       ProjectStructureDslKt.buildDirectoryContent(sdkRoot, contentBuilder -> {
         contentBuilder.dir("sdk", sdkBuilder -> {
-          classesDirSpec.set(sdkBuilder.dir("classes", builder -> Unit.INSTANCE));
-          sourcesDirSpec.set(sdkBuilder.dir("sources", builder -> Unit.INSTANCE));
+          classesDirSpec.set(sdkBuilder.dir("classes", _ -> Unit.INSTANCE));
+          sourcesDirSpec.set(sdkBuilder.dir("sources", _ -> Unit.INSTANCE));
           return Unit.INSTANCE;
         });
         return Unit.INSTANCE;
       });
 
-      VirtualFile classesDir = ProjectStructureDslKt.resolveVirtualFile(classesDirSpec.get());
-      VirtualFile sourcesDir = ProjectStructureDslKt.resolveVirtualFile(sourcesDirSpec.get());
+      var classesDir = ProjectStructureDslKt.resolveVirtualFile(classesDirSpec.get());
+      var sourcesDir = ProjectStructureDslKt.resolveVirtualFile(sourcesDirSpec.get());
 
-      Sdk sdk = projectModelRule.addSdk("sdkName", sdkModificator -> {
+      var sdk = projectModelRule.addSdk("sdkName", sdkModificator -> {
         sdkModificator.addRoot(classesDir, OrderRootType.CLASSES);
         sdkModificator.addRoot(sourcesDir, OrderRootType.SOURCES);
         return Unit.INSTANCE;
       });
 
-      Module module = projectModelRule.createModule("module");
+      var module = projectModelRule.createModule("module");
       ModuleRootModificationUtil.setModuleSdk(module, sdk);
 
       assertNothingToRescan();
@@ -577,63 +559,18 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
     }
 
     @Test
-    public void checkExcludingSdkPartWithSdkStrategy() {
-      Ref<DirectorySpec> classesDirSpec = new Ref<>();
-      Ref<DirectorySpec> classesExcludedDirSpec = new Ref<>();
-      Ref<DirectorySpec> sourcesDirSpec = new Ref<>();
-      Ref<DirectorySpec> sourcesExcludedDirSpec = new Ref<>();
-
-      VirtualFile sdkRoot = tempDirectory.newVirtualDirectory("sdkRoot");
-      ProjectStructureDslKt.buildDirectoryContent(sdkRoot, contentBuilder -> {
-        contentBuilder.dir("sdk", sdkBuilder -> {
-          classesDirSpec.set(sdkBuilder.dir("classes", builder -> {
-            classesExcludedDirSpec.set(builder.dir("excludedInClasses", ignored -> Unit.INSTANCE));
-            return Unit.INSTANCE;
-          }));
-          sourcesDirSpec.set(sdkBuilder.dir("sources", builder -> {
-            sourcesExcludedDirSpec.set(builder.dir("excludedInSources", ignored -> Unit.INSTANCE));
-            return Unit.INSTANCE;
-          }));
-          return Unit.INSTANCE;
-        });
-        return Unit.INSTANCE;
-      });
-
-      VirtualFile classesDir = ProjectStructureDslKt.resolveVirtualFile(classesDirSpec.get());
-      VirtualFile classesExcludedDir = ProjectStructureDslKt.resolveVirtualFile(classesExcludedDirSpec.get());
-      VirtualFile sourcesDir = ProjectStructureDslKt.resolveVirtualFile(sourcesDirSpec.get());
-      VirtualFile sourcesExcludedDir = ProjectStructureDslKt.resolveVirtualFile(sourcesExcludedDirSpec.get());
-
-      Sdk sdk = projectModelRule.addSdk("sdkName", sdkModificator -> {
-        sdkModificator.addRoot(classesDir, OrderRootType.CLASSES);
-        sdkModificator.addRoot(sourcesDir, OrderRootType.SOURCES);
-        return Unit.INSTANCE;
-      });
-
-      Module module = projectModelRule.createModule("module");
-      ModuleRootModificationUtil.setModuleSdk(module, sdk);
-
-      assertNothingToRescan();
-      updateExcludedFromSdkRoots(roots -> {
-        roots.add(classesExcludedDir);
-        roots.add(sourcesExcludedDir);
-      });
-      assertNothingToRescanAndFinishIndexing();
-    }
-
-    @Test
     public void checkExcludingModuleLibraryPart() {
       if (Registry.is("use.workspace.file.index.for.partial.scanning")) {
         return;
       }
       doTestLibraryExcluding(libRootPair -> {
-        Module module = ProjectStructureDslKt.createJavaModule(projectModelRule, "module", moduleContentBuilder -> {
+        var module = ProjectStructureDslKt.createJavaModule(projectModelRule, "module", _ -> {
           return Unit.INSTANCE;
         });
 
-        ModuleRootModificationUtil.addModuleLibrary(module, "libName",
-                                                    Collections.singletonList(libRootPair.getFirst().getUrl()),
-                                                    Collections.singletonList(libRootPair.getSecond().getUrl()));
+        ModuleRootModificationUtil.addModuleLibrary(
+          module, "libName", List.of(libRootPair.getFirst().getUrl()), List.of(libRootPair.getSecond().getUrl())
+        );
       });
     }
 
@@ -643,11 +580,11 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
         return;
       }
       doTestLibraryExcluding(libRootPair -> {
-        Module module = ProjectStructureDslKt.createJavaModule(projectModelRule, "module", moduleContentBuilder -> {
+        var module = ProjectStructureDslKt.createJavaModule(projectModelRule, "module", _ -> {
           return Unit.INSTANCE;
         });
 
-        LibraryEx library = projectModelRule.addProjectLevelLibrary("libName", setup -> {
+        var library = projectModelRule.addProjectLevelLibrary("libName", setup -> {
           setup.addRoot(libRootPair.getFirst(), OrderRootType.CLASSES);
           setup.addRoot(libRootPair.getSecond(), OrderRootType.SOURCES);
           return Unit.INSTANCE;
@@ -662,11 +599,11 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
         return;
       }
       doTestLibraryExcluding(libRootPair -> {
-        Module module = ProjectStructureDslKt.createJavaModule(projectModelRule, "module", moduleContentBuilder -> {
+        var module = ProjectStructureDslKt.createJavaModule(projectModelRule, "module", _ -> {
           return Unit.INSTANCE;
         });
 
-        LibraryEx library = projectModelRule.addApplicationLevelLibrary("libName", setup -> {
+        var library = projectModelRule.addApplicationLevelLibrary("libName", setup -> {
           setup.addRoot(libRootPair.getFirst(), OrderRootType.CLASSES);
           setup.addRoot(libRootPair.getSecond(), OrderRootType.SOURCES);
           return Unit.INSTANCE;
@@ -676,21 +613,21 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
     }
 
     private void doTestLibraryExcluding(Consumer<Pair<VirtualFile, VirtualFile>> libraryCreator) {
-      Ref<DirectorySpec> classesDirSpec = new Ref<>();
-      Ref<DirectorySpec> sourcesDirSpec = new Ref<>();
+      var classesDirSpec = new Ref<DirectorySpec>();
+      var sourcesDirSpec = new Ref<DirectorySpec>();
 
-      VirtualFile sdkRoot = tempDirectory.newVirtualDirectory("sdkRoot");
+      var sdkRoot = tempDirectory.newVirtualDirectory("sdkRoot");
       ProjectStructureDslKt.buildDirectoryContent(sdkRoot, contentBuilder -> {
         contentBuilder.dir("library", sdkBuilder -> {
-          classesDirSpec.set(sdkBuilder.dir("classes", builder -> Unit.INSTANCE));
-          sourcesDirSpec.set(sdkBuilder.dir("sources", builder -> Unit.INSTANCE));
+          classesDirSpec.set(sdkBuilder.dir("classes", _ -> Unit.INSTANCE));
+          sourcesDirSpec.set(sdkBuilder.dir("sources", _ -> Unit.INSTANCE));
           return Unit.INSTANCE;
         });
         return Unit.INSTANCE;
       });
 
-      VirtualFile classesDir = ProjectStructureDslKt.resolveVirtualFile(classesDirSpec.get());
-      VirtualFile sourcesDir = ProjectStructureDslKt.resolveVirtualFile(sourcesDirSpec.get());
+      var classesDir = ProjectStructureDslKt.resolveVirtualFile(classesDirSpec.get());
+      var sourcesDir = ProjectStructureDslKt.resolveVirtualFile(sourcesDirSpec.get());
 
       libraryCreator.accept(new Pair<>(classesDir, sourcesDir));
 
@@ -707,24 +644,18 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
       fireRootsChangedTotalRescan(RootsChangeRescanningInfo.NO_RESCAN_NEEDED);//to update DirectoryIndex
     }
 
-    private void updateExcludedFromSdkRoots(Consumer<List<VirtualFile>> urlsConsumer) {
-      urlsConsumer.accept(excludedFromSdk);
-      fireRootsChangedTotalRescan(RootsChangeRescanningInfo.NO_RESCAN_NEEDED);//to update DirectoryIndex
-    }
-
     private void assertRescanningProjectContent(ThreeState finishIndexingWithStatus, VirtualFile... roots) {
-      DependenciesIndexedStatusService statusService = DependenciesIndexedStatusService.getInstance(getProject());
-      @Nullable Pair<@NotNull Collection<? extends IndexableFilesIterator>, @NotNull StatusMark> statusPair;
-      statusPair = statusService.getDeltaWithLastIndexedStatus();
-      Collection<? extends IndexableFilesIterator> iterators = statusPair.getFirst();
+      var statusService = DependenciesIndexedStatusService.getInstance(getProject());
+      var statusPair = statusService.getDeltaWithLastIndexedStatus();
+      var iterators = statusPair.getFirst();
       List<VirtualFile> actualRoots = new ArrayList<>();
-      for (IndexableFilesIterator iterator : iterators) {
-        ModuleRootOrigin origin = assertInstanceOf(iterator.getOrigin(), ModuleRootOrigin.class);
-        List<VirtualFile> originRoots = origin.getRoots();
+      for (var iterator : iterators) {
+        var origin = assertInstanceOf(iterator.getOrigin(), ModuleRootOrigin.class);
+        var originRoots = origin.getRoots();
         if (originRoots != null) {
           actualRoots.addAll(originRoots);
         }
-        List<VirtualFile> nonRecursiveRoots = origin.getNonRecursiveRoots();
+        var nonRecursiveRoots = origin.getNonRecursiveRoots();
         if (nonRecursiveRoots != null) {
           actualRoots.addAll(nonRecursiveRoots);
         }
@@ -735,15 +666,13 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
     }
   }
 
-  @NotNull
-  protected Project getProject() {
+  protected @NotNull Project getProject() {
     return projectModelRule.project;
   }
 
   protected StatusMark assertNothingToRescan() {
-    DependenciesIndexedStatusService statusService = DependenciesIndexedStatusService.getInstance(getProject());
-    Pair<Collection<? extends IndexableFilesIterator>, StatusMark> statusPair =
-      statusService.getDeltaWithLastIndexedStatus();
+    var statusService = DependenciesIndexedStatusService.getInstance(getProject());
+    var statusPair = statusService.getDeltaWithLastIndexedStatus();
     assertEmpty(statusPair.getFirst());
     return statusPair.getSecond();
   }
@@ -756,13 +685,15 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
   }
 
   protected void assertNothingToRescanAndFinishIndexing() {
-    StatusMark mark = assertNothingToRescan();
+    var mark = assertNothingToRescan();
     DependenciesIndexedStatusService.getInstance(getProject()).indexingFinished(true, mark);
   }
 
-  protected static void finishIndexing(@NotNull ThreeState finishIndexingWithStatus,
-                                       @NotNull StatusMark second,
-                                       @NotNull DependenciesIndexedStatusService statusService) {
+  protected static void finishIndexing(
+    @NotNull ThreeState finishIndexingWithStatus,
+    @NotNull StatusMark second,
+    @NotNull DependenciesIndexedStatusService statusService
+  ) {
     switch (finishIndexingWithStatus) {
       case YES -> statusService.indexingFinished(true, second);
       case NO -> statusService.indexingFinished(false, second);

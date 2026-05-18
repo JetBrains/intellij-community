@@ -335,7 +335,6 @@ com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy
 - getExcludeRootsForModule(com.intellij.openapi.roots.ModuleRootModel):com.intellij.openapi.vfs.pointers.VirtualFilePointer[]
 - getExcludeSdkRootsStrategy():com.intellij.util.Function
 - getExcludeUrlsForProject():java.lang.String[]
-- s:getExtensions(com.intellij.openapi.extensions.AreaInstance):com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy[]
 f:com.intellij.openapi.roots.impl.ModifiableModelCommitter
 - s:multiCommit(java.util.Collection,com.intellij.openapi.module.ModifiableModuleModel):V
 - s:multiCommit(com.intellij.openapi.roots.ModifiableRootModel[],com.intellij.openapi.module.ModifiableModuleModel):V
