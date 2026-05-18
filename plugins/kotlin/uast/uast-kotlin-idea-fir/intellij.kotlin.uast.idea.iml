@@ -44,5 +44,6 @@
     <orderEntry type="module" module-name="kotlin.refactorings.common" />
     <orderEntry type="module" module-name="intellij.kotlin.base.analysis.utils" />
     <orderEntry type="module" module-name="intellij.platform.uast.ide" />
+    <orderEntry type="module" module-name="intellij.kotlin.references" />
   </component>
 </module>

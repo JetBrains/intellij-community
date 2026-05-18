@@ -228,5 +228,6 @@
     <orderEntry type="module" module-name="kotlin.gradle.scripting.k1" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.scripting" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.base.serialization" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.references" exported="" />
   </component>
 </module>

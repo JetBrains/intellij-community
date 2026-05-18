@@ -166,6 +166,7 @@ jvm_library(
     "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.shared:kotlin-gradle-scripting-shared",
     "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k1:kotlin-gradle-scripting-k1",
     "//plugins/kotlin/base/kotlin.base.serialization",
+    "//plugins/kotlin/references",
   ]
 )
 
@@ -328,6 +329,7 @@ jvm_library(
     "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.shared:kotlin-gradle-scripting-shared_test_lib",
     "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k1:kotlin-gradle-scripting-k1_test_lib",
     "//plugins/kotlin/base/kotlin.base.serialization:kotlin.base.serialization_test_lib",
+    "//plugins/kotlin/references:references_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.plugin.k1` end

@@ -1,0 +1,41 @@
+### auto-generated section `build intellij.kotlin.references` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "references",
+  module_name = "intellij.kotlin.references",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/core-api:core",
+    "//platform/util",
+    "//platform/core-impl",
+    "//java/java-psi-api:psi",
+  ]
+)
+
+jvm_library(
+  name = "references_test_lib",
+  testonly = True,
+  module_name = "intellij.kotlin.references",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  runtime_deps = [
+    ":references",
+    "//platform/core-api:core_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//java/java-psi-api:psi_test_lib",
+  ]
+)
+### auto-generated section `build intellij.kotlin.references` end
+
+### auto-generated section `iml intellij.kotlin.references` start
+exports_files([
+  "intellij.kotlin.references.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.references` end

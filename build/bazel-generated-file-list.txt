@@ -1438,6 +1438,7 @@ plugins/kotlin/refactorings/kotlin.refactorings.k2
 plugins/kotlin/refactorings/kotlin.refactorings.move.k2
 plugins/kotlin/refactorings/kotlin.refactorings.tests.k2
 plugins/kotlin/refactorings/rename.k2
+plugins/kotlin/references
 plugins/kotlin/repl
 plugins/kotlin/run-configurations/junit
 plugins/kotlin/run-configurations/junit-fe10

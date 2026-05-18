@@ -185,6 +185,7 @@
   - name: intellij.kotlin.onboarding.maven
   - name: intellij.kotlin.plugin.updater
   - name: intellij.kotlin.preferences
+  - name: intellij.kotlin.references
   - name: intellij.kotlin.projectConfiguration
   - name: intellij.kotlin.projectWizard.cli
   - name: intellij.kotlin.projectWizard.core

@@ -164,5 +164,6 @@
     <orderEntry type="module" module-name="kotlin.gradle.scripting.shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.scripting.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.serialization" />
+    <orderEntry type="module" module-name="intellij.kotlin.references" scope="RUNTIME" />
   </component>
 </module>

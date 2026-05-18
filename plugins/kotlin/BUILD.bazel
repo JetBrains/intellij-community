@@ -217,6 +217,7 @@ jvm_library(
     "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k1:kotlin-gradle-scripting-k1",
     "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k2:kotlin-gradle-scripting",
     "//plugins/kotlin/base/kotlin.base.serialization",
+    "//plugins/kotlin/references",
   ],
   runtime_deps = [
     "//platform/bootstrap",
@@ -443,6 +444,7 @@ jvm_library(
     "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k1:kotlin-gradle-scripting-k1",
     "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k2:kotlin-gradle-scripting",
     "//plugins/kotlin/base/kotlin.base.serialization",
+    "//plugins/kotlin/references",
   ]
 )
 
@@ -853,6 +855,8 @@ jvm_library(
     "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k2:kotlin-gradle-scripting_test_lib",
     "//plugins/kotlin/base/kotlin.base.serialization",
     "//plugins/kotlin/base/kotlin.base.serialization:kotlin.base.serialization_test_lib",
+    "//plugins/kotlin/references",
+    "//plugins/kotlin/references:references_test_lib",
   ],
   runtime_deps = [
     ":kotlin-plugin-community-main",
@@ -1057,6 +1061,7 @@ jvm_library(
     "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k1:kotlin-gradle-scripting-k1_test_lib",
     "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k2:kotlin-gradle-scripting_test_lib",
     "//plugins/kotlin/base/kotlin.base.serialization:kotlin.base.serialization_test_lib",
+    "//plugins/kotlin/references:references_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.plugin.community.main` end

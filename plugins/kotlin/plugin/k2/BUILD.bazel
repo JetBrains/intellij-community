@@ -162,6 +162,7 @@ jvm_library(
     "//plugins/kotlin/jvm/k2:kotlin-jvm",
     "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.shared:kotlin-gradle-scripting-shared",
     "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k2:kotlin-gradle-scripting",
+    "//plugins/kotlin/references",
   ]
 )
 
@@ -323,6 +324,7 @@ jvm_library(
     "//plugins/kotlin/jvm/k2:kotlin-jvm_test_lib",
     "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.shared:kotlin-gradle-scripting-shared_test_lib",
     "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k2:kotlin-gradle-scripting_test_lib",
+    "//plugins/kotlin/references:references_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.plugin.k2` end
