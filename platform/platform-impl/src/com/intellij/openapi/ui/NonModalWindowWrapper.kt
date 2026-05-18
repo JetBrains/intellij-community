@@ -242,6 +242,7 @@ abstract class NonModalWindowWrapper(
       defaultCloseOperation = DO_NOTHING_ON_CLOSE
       background = UIUtil.getPanelBackground()
       focusTraversalPolicy = IdeFocusTraversalPolicy()
+      UIUtil.markAsPossibleOwner(this)
     }
 
     override fun uiDataSnapshot(sink: DataSink): Unit = this@NonModalWindowWrapper.uiDataSnapshot(sink)
