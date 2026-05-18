@@ -35,20 +35,13 @@ import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.containers.WeakList
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
-import kotlin.coroutines.CoroutineContext
 
 private val LOG = Logger.getInstance(DynamicPluginsSupportImpl::class.java)
 
 internal class DynamicPluginsSupportImpl(
   val classloaderUnloadAwaitStrategy: AwaitClassloaderUnloadStrategy
 ) : DynamicPluginsSupport {
-
-  private val outerContext: CoroutineContext get() {
-    return if (System.getProperty("background.dynamic.reload", "false") == "true") Dispatchers.Default
-    else Dispatchers.EDT
-  }
 
   override suspend fun validateDynamicTransitionPossible(targetState: PluginSet): DynamicPluginsTransitionResult.Invalid? {
     return withContext(Dispatchers.Default) {
@@ -61,7 +54,7 @@ internal class DynamicPluginsSupportImpl(
 
   // assumes that the caller already holds all necessary locks
   override suspend fun performDynamicTransition(targetState: PluginSet): DynamicPluginsTransitionResult {
-    return withContext(outerContext) {
+    return withContext(Dispatchers.Default) {
       val current = getCurrentlyLoadedPluginSet()
       val target = targetState.resolvedPluginSet ?: error("resolved plugin set is not set")
       val sequence = buildTransitionSequence(current, target).also {
@@ -185,8 +178,9 @@ internal class DynamicPluginsSupportImpl(
           DynamicPluginsUsagesCollector.logDescriptorUnload(plugin, success = false)
         }
         throw e
-      } finally {
-        withContext(Dispatchers.EDT + NonCancellable) {
+      }
+      finally {
+        withContext(Dispatchers.EDT) {
           for (plugin in affectedPlugins) {
             val isUpdate = plugin.pluginId in pluginsToBeLoadedLater
             runSafe {
@@ -251,7 +245,7 @@ internal class DynamicPluginsSupportImpl(
         }
       }
       finally {
-        withContext(Dispatchers.EDT + NonCancellable) {
+        withContext(Dispatchers.EDT) {
           for (plugin in affectedPlugins) {
             runSafe { application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).pluginLoaded(plugin) }
             DynamicPluginsUsagesCollector.logDescriptorLoad(plugin)
