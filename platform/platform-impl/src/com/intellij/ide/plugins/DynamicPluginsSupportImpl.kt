@@ -1,7 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
-import com.intellij.configurationStore.StoreUtil.saveDocumentsAndProjectsAndApp
+import com.intellij.configurationStore.runInAutoSaveDisabledMode
+import com.intellij.configurationStore.saveProjectsAndApp
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.cancelAndJoinBlocking
@@ -20,18 +21,21 @@ import com.intellij.openapi.actionSystem.impl.canUnloadActionGroup
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.extensions.ExtensionPointDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionPointDeferredListenersNotification
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.platform.pluginSystem.parser.impl.elements.ActionElement.ActionElementName
 import com.intellij.platform.util.progress.withProgressText
 import com.intellij.util.application
+import com.intellij.util.concurrency.TransferredWriteActionService
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.containers.WeakList
 import kotlinx.coroutines.CancellationException
@@ -67,11 +71,7 @@ internal class DynamicPluginsSupportImpl(
         return@withContext dynamicTransitionIsNotPossibleReason.let(DynamicPluginsTransitionResult::Invalid)
       }
 
-      withContext(Dispatchers.EDT) { // TODO should be converted into pre-reconfiguration listener
-        withProgressText(IdeBundle.message("progress.text.dynamic.plugins.saving.settings")) {
-          saveDocumentsAndProjectsAndApp(true)
-        }
-      }
+      saveAllSettings() // TODO should be converted to pre-reconfiguration listener
 
       val unloadSteps = sequence.transitionSequence.takeWhile { it.action == RuntimeModuleGroupAction.UNLOAD }
       val loadSteps = sequence.transitionSequence.drop(unloadSteps.size).takeWhile { it.action == RuntimeModuleGroupAction.LOAD }
@@ -93,6 +93,15 @@ internal class DynamicPluginsSupportImpl(
       }
 
       return@withContext DynamicPluginsTransitionResult.Success()
+    }
+  }
+
+  private suspend fun saveAllSettings() {
+    withProgressText(IdeBundle.message("progress.text.dynamic.plugins.saving.settings")) {
+      runInAutoSaveDisabledMode {
+        FileDocumentManager.getInstance().saveAllDocuments()
+        saveProjectsAndApp(true)
+      }
     }
   }
 
@@ -162,14 +171,14 @@ internal class DynamicPluginsSupportImpl(
         classloadersToUnload.forEach { it.state = UNLOAD_IN_PROGRESS } // triggers plugin scope cancellation
         cancelAndJoinPluginScopes(classloadersToUnload)
 
-        edtWriteAction { // cache clearing expects EDT
+        edtWriteAction {
           for (group in groupsToUnload) {
             for (descriptor in group.sortedDescriptors.asReversed()) {
-              deregisterDescriptor(descriptor)
+              deregisterDescriptor(descriptor) // FIXME calls EDT-bound listeners inside
             }
           }
           detachClassLoaders(groupsToUnload)
-          clearCachesAfterUnload(classloadersToUnload)
+          clearCachesAfterUnload(classloadersToUnload) // expects EDT
         }
 
         val collected = classloaderUnloadAwaitStrategy.awaitClassloadersUnloadedBeforeLoad(classloadersToUnload)
@@ -234,7 +243,7 @@ internal class DynamicPluginsSupportImpl(
       try {
         attachClassLoaders(targetPluginSet, groups, reusedGroups)
         val listenerCallbacks = mutableListOf<ExtensionPointDeferredListenersNotification>()
-        edtWriteAction { // listeners are expected to be called on EDT FIXME
+        application.runWriteAction {
           val descriptors = groups.flatMap { it.sortedDescriptors }
           registerDescriptors(application as ApplicationImpl, descriptors.asSequence(), listenerCallbacks)
           clearCachedValues()
@@ -247,8 +256,10 @@ internal class DynamicPluginsSupportImpl(
               if (it.ep.name == "com.intellij.registryKey") -1 else 0
             }
           }
-          listenerCallbacks.forEach {
-            it.notify.run()
+          application.service<TransferredWriteActionService>().runOnEdtWithTransferredWriteActionAndWait {
+            listenerCallbacks.forEach {
+              it.notify.run()
+            }
           }
         }
       }
