@@ -484,6 +484,60 @@ class EditorHyperlinkSupportTest(private val trackDocumentChangesManually: Boole
     assertNull(hyperlinkSupport.getLinkNavigationRunnable(LogicalPosition(0, 0)))
   }
 
+  @Test
+  fun `test overlapping visible and invisible links same range`() {
+    document.setText("foo bar baz")
+    val filter = CompositeFilter(project).also {
+      it.addFilter(MyHyperlinkFilter("bar"))              // visible
+      it.addFilter(MyInvisibleHyperlinkFilter("bar"))     // invisible, same range
+      it.setForceUseAllFilters(true)
+    }
+    hyperlinkSupport.highlightHyperlinksLater(filter, 0, 0, eternal())
+
+    val hyperlinks = collectAllHyperlinks()
+    assertEquals(2, hyperlinks.size)
+
+    // visible "bar" wins
+    val link = hyperlinkSupport.getHyperlinkAt(document.text.indexOf("bar"))
+    assertEquals("bar", (link as MyHyperlinkFilter.MyHyperlinkInfo).linkText)
+  }
+
+  @Test
+  fun `test overlapping visible link preferred when larger than invisible link`() {
+    document.setText("foo bar baz")
+    val filter = CompositeFilter(project).also {
+      it.addFilter(MyInvisibleHyperlinkFilter("bar"))      // invisible, smaller
+      it.addFilter(MyHyperlinkFilter("foo bar baz"))       // visible, larger
+      it.setForceUseAllFilters(true)
+    }
+    hyperlinkSupport.highlightHyperlinksLater(filter, 0, 0, eternal())
+
+    val hyperlinks = collectAllHyperlinks()
+    assertEquals(2, hyperlinks.size)
+
+    // "foo bar baz" should win as it's visible
+    val link = hyperlinkSupport.getHyperlinkAt(document.text.indexOf("bar"))
+    assertEquals("foo bar baz", (link as MyHyperlinkFilter.MyHyperlinkInfo).linkText)
+  }
+
+  @Test
+  fun `test overlapping links size preference when same visibility`() {
+    document.setText("foo bar baz")
+    val filter = CompositeFilter(project).also {
+      it.addFilter(MyInvisibleHyperlinkFilter("foo bar baz"))  // invisible, larger
+      it.addFilter(MyInvisibleHyperlinkFilter("bar"))          // invisible, smaller
+      it.setForceUseAllFilters(true)
+    }
+    hyperlinkSupport.highlightHyperlinksLater(filter, 0, 0, eternal())
+
+    val hyperlinks = collectAllHyperlinks()
+    assertEquals(2, hyperlinks.size)
+
+    // "bar" should win as it's smaller
+    val link = hyperlinkSupport.getHyperlinkAt(document.text.indexOf("bar"))
+    assertEquals("bar", (link as MyInvisibleHyperlinkFilter.InvisibleHyperlinkInfo).linkText)
+  }
+
   private fun assertHighlightings(textToHighlight: String, expectedCount: Int): List<RangeHighlighter> {
     val text = document.text
     val expectedRanges = text.allOccurrencesOf(textToHighlight).map {
@@ -538,9 +592,13 @@ private open class MyHyperlinkFilter(linkText: String, delay: Duration = 0.milli
 
 private class MyInvisibleHyperlinkFilter(linkText: String) : MyHyperlinkFilter(linkText) {
   override fun createResultItem(startOffset: Int, endOffset: Int): ResultItem {
-    return ResultItem(startOffset, endOffset, MyHyperlinkInfo(linkText), null).apply {
+    return ResultItem(startOffset, endOffset, InvisibleHyperlinkInfo(linkText), null).apply {
       isInvisibleLink = true
     }
+  }
+
+  data class InvisibleHyperlinkInfo(val linkText: String) : HyperlinkInfo {
+    override fun navigate(project: Project) {}
   }
 }
 

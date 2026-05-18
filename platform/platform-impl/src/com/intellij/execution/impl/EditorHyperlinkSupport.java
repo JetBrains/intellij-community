@@ -304,23 +304,36 @@ public final class EditorHyperlinkSupport {
 
   private @Nullable RangeHighlighterEx findLinkRangeAt(int offset) {
     // It should be synced with c.i.o.editor.impl.view.IterationState.LayerComparator.compare()
-    Ref<RangeHighlighterEx> minHighlighter = new Ref<>();
+    Ref<RangeHighlighterEx> result = new Ref<>();
     processHyperlinksAndHighlightings(offset, offset, myEditor, true, false, highlighter -> {
-      if (minHighlighter.isNull()) {
-        minHighlighter.set(highlighter);
+      if (result.isNull()) {
+        result.set(highlighter);
       }
       else {
-        var minRange = minHighlighter.get().getTextRange();
-        var newRange = highlighter.getTextRange();
-        // Choose the smaller one. In case of equal sizes, prefer the left one. That's how IterationState works de facto.
-        if (newRange.getLength() < minRange.getLength() ||
-            newRange.getLength() == minRange.getLength() && newRange.getStartOffset() < minRange.getStartOffset()) {
-          minHighlighter.set(highlighter);
-        }
+        RangeHighlighterEx preferred = choosePreferredLink(result.get(), highlighter);
+        result.set(preferred);
       }
       return true;
     });
-    return minHighlighter.get();
+    return result.get();
+  }
+
+  private static @NotNull RangeHighlighterEx choosePreferredLink(@NotNull RangeHighlighterEx link1, @NotNull RangeHighlighterEx link2) {
+    HyperlinkData data1 = getHyperlinkData(link1);
+    HyperlinkData data2 = getHyperlinkData(link2);
+    boolean invisible1 = data1 != null && data1.isInvisibleLink;
+    boolean invisible2 = data2 != null && data2.isInvisibleLink;
+    if (invisible1 != invisible2) {
+      return invisible1 ? link2 : link1; // prefer visible link
+    }
+    var range1 = link1.getTextRange();
+    var range2 = link2.getTextRange();
+    // Choose the smaller one. In case of equal sizes, prefer the left one. That's how IterationState works de facto.
+    if (range1.getLength() < range2.getLength() ||
+        range1.getLength() == range2.getLength() && range1.getStartOffset() < range2.getStartOffset()) {
+      return link1;
+    }
+    return link2;
   }
 
   public @Nullable HyperlinkInfo getHyperlinkAt(int offset) {

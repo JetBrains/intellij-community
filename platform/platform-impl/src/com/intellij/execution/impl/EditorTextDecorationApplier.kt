@@ -415,7 +415,7 @@ private class EditorTextDecorationApplierImpl(private val editor: EditorEx, pare
         offset in highlighter.startOffset until highlighter.endOffset // process...() treats the end as inclusive, that's why
       ) {
         result = HighlightedTextDecoration(hyperlink, highlighter)
-        false
+        hyperlink.isInvisibleLink // prefer visible link
       }
       else {
         true
