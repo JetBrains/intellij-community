@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.bootstrap;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -64,6 +64,7 @@ import static java.util.Objects.requireNonNullElse;
  * and participates in the CLI bypassing arguments and relaying back exit codes and error messages.
  */
 @ApiStatus.Internal
+@SuppressWarnings("UseOptimizedEelFunctions")
 public final class DirectoryLock {
   private static final CollectingLogger LOG = new CollectingLogger(DirectoryLock.class);
 
@@ -86,6 +87,7 @@ public final class DirectoryLock {
     }
 
     @Override
+    @SuppressWarnings("SSBasedInspection")
     public @NotNull Attachment @NotNull [] getAttachments() {
       return myAttachments;
     }
@@ -220,7 +222,7 @@ public final class DirectoryLock {
             "competing processes:\n" +
             competition.stream().map(ph -> "  PID=" + ph.pid() + " (" + ph.info().user() + ") " + ph.info().command()).collect(Collectors.joining())
           );
-          cannotActivate(command, competition.get(0).pid(), suppressed);
+          cannotActivate(command, competition.getFirst().pid(), suppressed);
         }
       }
 
@@ -391,7 +393,7 @@ public final class DirectoryLock {
         ProcessIOExecutorService.INSTANCE.execute(() -> handleConnection(socketChannel));
       }
       catch (ClosedChannelException e) {
-        LOG.debug(e);
+        LOG.debug("channel closed");
         break;
       }
       catch (Throwable t) {
