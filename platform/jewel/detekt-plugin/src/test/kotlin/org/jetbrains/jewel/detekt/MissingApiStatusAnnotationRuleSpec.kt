@@ -2,10 +2,10 @@
 // Apache 2.0 license.
 package org.jetbrains.jewel.detekt
 
-import io.gitlab.arturbosch.detekt.api.Config
-import io.gitlab.arturbosch.detekt.api.Finding
-import io.gitlab.arturbosch.detekt.test.TestConfig
-import io.gitlab.arturbosch.detekt.test.compileAndLint
+import dev.detekt.api.Config
+import dev.detekt.api.Finding
+import dev.detekt.test.TestConfig
+import dev.detekt.test.lint
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.jewel.detekt.rules.MissingApiStatusAnnotationRule
 import org.junit.jupiter.api.Nested
@@ -1301,7 +1301,7 @@ internal class MissingApiStatusAnnotationRuleSpec {
                 |class MyClass
                 """
                     .trimMargin()
-            val findings = subject.compileAndLint(code)
+            val findings = subject.lint(code)
 
             assertThat(findings).isEmpty()
         }
@@ -1317,7 +1317,7 @@ internal class MissingApiStatusAnnotationRuleSpec {
                 |class MyClass
                 """
                     .trimMargin()
-            val findings = subject.compileAndLint(code)
+            val findings = subject.lint(code)
 
             assertThat(findings).isEmpty()
         }
@@ -1333,7 +1333,7 @@ internal class MissingApiStatusAnnotationRuleSpec {
                 |fun myFunction() {}
                 """
                     .trimMargin()
-            val findings = subject.compileAndLint(code)
+            val findings = subject.lint(code)
 
             assertThat(findings).isEmpty()
         }
@@ -1349,7 +1349,7 @@ internal class MissingApiStatusAnnotationRuleSpec {
                 |fun myFunction() {}
                 """
                     .trimMargin()
-            val findings = subject.compileAndLint(code)
+            val findings = subject.lint(code)
 
             assertThat(findings).isEmpty()
         }
@@ -1365,7 +1365,7 @@ internal class MissingApiStatusAnnotationRuleSpec {
                 |val myVal = 0
                 """
                     .trimMargin()
-            val findings = subject.compileAndLint(code)
+            val findings = subject.lint(code)
 
             assertThat(findings).isEmpty()
         }
@@ -1381,7 +1381,7 @@ internal class MissingApiStatusAnnotationRuleSpec {
                 |val myVal = 0
                 """
                     .trimMargin()
-            val findings = subject.compileAndLint(code)
+            val findings = subject.lint(code)
 
             assertThat(findings).isEmpty()
         }
@@ -1397,7 +1397,7 @@ internal class MissingApiStatusAnnotationRuleSpec {
                 |typealias MyAlias = String
                 """
                     .trimMargin()
-            val findings = subject.compileAndLint(code)
+            val findings = subject.lint(code)
 
             assertThat(findings).isEmpty()
         }
@@ -1413,7 +1413,7 @@ internal class MissingApiStatusAnnotationRuleSpec {
                 |typealias MyAlias = String
                 """
                     .trimMargin()
-            val findings = subject.compileAndLint(code)
+            val findings = subject.lint(code)
 
             assertThat(findings).isEmpty()
         }
@@ -1429,7 +1429,7 @@ internal class MissingApiStatusAnnotationRuleSpec {
                 |object MyObject
                 """
                     .trimMargin()
-            val findings = subject.compileAndLint(code)
+            val findings = subject.lint(code)
 
             assertThat(findings).isEmpty()
         }
@@ -1443,7 +1443,7 @@ internal class MissingApiStatusAnnotationRuleSpec {
                 |class MyClass @ExperimentalJewelApi @ApiStatus.Experimental constructor()
                 """
                     .trimMargin()
-            val findings = subject.compileAndLint(code)
+            val findings = subject.lint(code)
 
             assertThat(findings).isEmpty()
         }
@@ -1461,7 +1461,7 @@ internal class MissingApiStatusAnnotationRuleSpec {
                 |}
                 """
                     .trimMargin()
-            val findings = subject.compileAndLint(code)
+            val findings = subject.lint(code)
 
             assertThat(findings).isEmpty()
         }
@@ -1479,7 +1479,7 @@ internal class MissingApiStatusAnnotationRuleSpec {
                 |}
                 """
                     .trimMargin()
-            val findings = subject.compileAndLint(code)
+            val findings = subject.lint(code)
 
             assertThat(findings).isEmpty()
         }
@@ -1498,7 +1498,7 @@ internal class MissingApiStatusAnnotationRuleSpec {
                 |}
                 """
                     .trimMargin()
-            val findings = subject.compileAndLint(code)
+            val findings = subject.lint(code)
 
             assertThat(findings).isEmpty()
         }
@@ -1517,7 +1517,7 @@ internal class MissingApiStatusAnnotationRuleSpec {
                 |}
                 """
                     .trimMargin()
-            val findings = subject.compileAndLint(code)
+            val findings = subject.lint(code)
 
             assertThat(findings).isEmpty()
         }
@@ -1531,7 +1531,7 @@ internal class MissingApiStatusAnnotationRuleSpec {
                 |fun myFunction(@InternalJewelApi @ApiStatus.Internal param: Int) {}
                 """
                     .trimMargin()
-            val findings = subject.compileAndLint(code)
+            val findings = subject.lint(code)
 
             assertThat(findings).isEmpty()
         }
@@ -1547,7 +1547,7 @@ internal class MissingApiStatusAnnotationRuleSpec {
                 |interface MyInterface
                 """
                     .trimMargin()
-            val findings = subject.compileAndLint(code)
+            val findings = subject.lint(code)
 
             assertThat(findings).isEmpty()
         }
@@ -1563,7 +1563,7 @@ internal class MissingApiStatusAnnotationRuleSpec {
                 |enum class MyEnum
                 """
                     .trimMargin()
-            val findings = subject.compileAndLint(code)
+            val findings = subject.lint(code)
 
             assertThat(findings).isEmpty()
         }
@@ -1581,7 +1581,7 @@ internal class MissingApiStatusAnnotationRuleSpec {
                 |}
                 """
                     .trimMargin()
-            val findings = subject.compileAndLint(code)
+            val findings = subject.lint(code)
 
             assertThat(findings).isEmpty()
         }
@@ -1599,7 +1599,7 @@ internal class MissingApiStatusAnnotationRuleSpec {
                 |)
                 """
                     .trimMargin()
-            val findings = subject.compileAndLint(code)
+            val findings = subject.lint(code)
 
             assertThat(findings).isEmpty()
         }
