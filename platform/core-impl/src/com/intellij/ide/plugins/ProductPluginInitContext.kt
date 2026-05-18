@@ -182,6 +182,7 @@ class ProductPluginInitContext(
     @VisibleForTesting
     fun MutableMap<PluginModuleId, EnvironmentConfiguredModuleData>.configureProductModeModules(productModeId: String) {
       val frontendSplit = PluginModuleId("intellij.platform.frontend.split", PluginModuleId.JETBRAINS_NAMESPACE)
+      val frontendSplitBase = PluginModuleId("intellij.platform.frontend.split.base", PluginModuleId.JETBRAINS_NAMESPACE)
       val frontend = PluginModuleId("intellij.platform.frontend", PluginModuleId.JETBRAINS_NAMESPACE)
       val backend = PluginModuleId("intellij.platform.backend", PluginModuleId.JETBRAINS_NAMESPACE)
       val backendJps = PluginModuleId("intellij.platform.jps.build", PluginModuleId.JETBRAINS_NAMESPACE)
@@ -190,9 +191,10 @@ class ProductPluginInitContext(
       for (moduleId in listOf(frontend, backend, frontendSplit, backendJps, backendJpsGraph)) {
         val isAvailable = when (productModeId) {
           /** intellij.platform.backend.split is currently available in 'monolith' mode because it's used as a backend in CodeWithMe */
-          "monolith" -> moduleId != frontendSplit
-          "backend" -> moduleId != frontend && moduleId != frontendSplit
+          "monolith" -> moduleId != frontendSplit && moduleId != frontendSplitBase
+          "backend" -> moduleId != frontend && moduleId != frontendSplit && moduleId != frontendSplitBase
           "frontend" -> moduleId != backend && moduleId != backendJps && moduleId != backendJpsGraph
+          "frontend-base" -> moduleId != backend && moduleId != frontendSplit && moduleId != backendJps && moduleId != backendJpsGraph
           else -> true
         }
         val unavailabilityReason =
