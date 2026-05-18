@@ -494,15 +494,15 @@ class DynamicPluginsTest {
     try {
       assertThat(DynamicPlugins.loadPlugin(barDescriptor)).isTrue()
 
-      val fooDescriptor = loadDescriptorInTest(pluginsPath.resolve(fooJar))
+      val foo = loadDescriptorInTest(pluginsPath.resolve(fooJar))
       try {
-        assertThat(DynamicPlugins.loadPlugin(fooDescriptor)).isTrue()
+        assertThat(DynamicPlugins.loadPlugin(foo)).isTrue()
 
         assertThat(forNameInModuleClassloader("bar.foo.FooImpl", "bar.foo")).isNotNull
         assertThat(forNameInModuleClassloader("foo.bar.BarImpl", "foo.bar")).isNotNull
       }
       finally {
-        unloadAndUninstallPlugin(fooDescriptor)
+        unloadAndUninstallPlugin(foo)
       }
     }
     finally {
@@ -512,39 +512,36 @@ class DynamicPluginsTest {
 
   @Test
   fun `optional plugin dependency loading`() {
-    val fooJar = pluginsDir.resolve("foo.jar")
-    val barJar = pluginsDir.resolve("bar.jar")
-    plugin("foo") {
-      depends("bar", "bar.xml") {
-        appService<FooBarService>()
+    val pluginSet = buildPluginSet(pluginsDir, configureClassLoaders = false) {
+      plugin("foo") {
+        depends("bar", "bar.xml") {
+          appService<FooBarService>()
+        }
+        includePackageClassFiles<FooBarService>()
       }
-      includePackageClassFiles<FooBarService>()
-    }.buildMainJar(fooJar)
-    plugin("bar") {
-      appService<BarService>()
-      includePackageClassFiles<BarService>()
-    }.buildMainJar(barJar)
-
-    val fooDescriptor = loadDescriptorInTest(fooJar)
-    try {
-      assertThat(DynamicPlugins.loadPlugin(fooDescriptor)).isTrue()
-      val barDescriptor = loadDescriptorInTest(barJar)
-      try {
-        // FIXME perhaps it should return false to indicate that restart is needed to load more stuff
-        assertThat(DynamicPlugins.loadPlugin(barDescriptor)).isTrue()
-        val barService = application.getTestHandleService<BarService, _, _>(barDescriptor)!!
-        barService.test(Unit)
-        val fooBarClass = fooDescriptor.loadClassInsideSelf<FooBarService>() // loaded because packed into the same jar with the main descriptor
-        assertThat(application.getService(fooBarClass)).isNull()
-        assertThat(fooDescriptor.dependencies.first().subDescriptor!!.isMarkedForLoading).isFalse
-        assertThat(fooDescriptor.dependencies.first().subDescriptor!!.pluginClassLoader).isNull()
-      }
-      finally {
-        unloadAndUninstallPlugin(barDescriptor)
+      plugin("bar") {
+        appService<BarService>()
+        includePackageClassFiles<BarService>()
       }
     }
-    finally {
-      unloadAndUninstallPlugin(fooDescriptor)
+    val (foo, bar) = pluginSet.getEnabledPlugins("foo", "bar")
+
+    loadPluginInTest(foo) {
+      loadPluginInTest(bar) {
+        val barService = application.getTestHandleService<BarService, _, _>(bar)!!
+        barService.test(Unit)
+        val fooBarClass = foo.loadClassInsideSelf<FooBarService>() // loaded because packed into the same jar with the main descriptor
+        if (isNewSupportEnabled()) {
+          assertThat(application.getService(fooBarClass)).isNotNull()
+          assertThat(foo.dependencies.first().subDescriptor!!.isMarkedForLoading).isTrue
+          assertThat(foo.dependencies.first().subDescriptor!!.pluginClassLoader).isNotNull()
+        } else {
+          // why was it like that...?
+          assertThat(application.getService(fooBarClass)).isNull()
+          assertThat(foo.dependencies.first().subDescriptor!!.isMarkedForLoading).isFalse
+          assertThat(foo.dependencies.first().subDescriptor!!.pluginClassLoader).isNull()
+        }
+      }
     }
   }
 
