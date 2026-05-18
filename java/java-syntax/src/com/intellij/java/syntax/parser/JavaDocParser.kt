@@ -349,13 +349,17 @@ class JavaDocParser(
 
     // Parse the reference itself
     builder.advanceLexer()
-    parseMarkdownReference()
-    builder.advanceLexer()
-
-    tag.done(JavaDocSyntaxElementType.DOC_MARKDOWN_REFERENCE_LINK)
+    if (parseMarkdownReference()) {
+      builder.advanceLexer()
+      tag.done(JavaDocSyntaxElementType.DOC_MARKDOWN_REFERENCE_LINK)
+    }
+    else {
+      tag.drop()
+    }
   }
 
-  private fun parseMarkdownReference() {
+  /** @return Whether the reference managed to get parsed */
+  private fun parseMarkdownReference(): Boolean {
     val moduleMarker = parseModuleRef(builder.mark())
     var referenceParsed = false
     var referenceEnded = false
@@ -363,7 +367,7 @@ class JavaDocParser(
 
     if (getTokenType() === JavaDocSyntaxTokenType.DOC_RBRACKET) {
       if (moduleMarker == null) {
-        return
+        return false
       }
       referenceEnded = true
     }
@@ -375,6 +379,11 @@ class JavaDocParser(
       // In practice, () is not mandatory, and fields have the same issue but cannot be separated from class names on parsing
       if (builder.lookAhead(1) == JavaDocSyntaxTokenType.DOC_LPAREN) {
         isMethodFieldOrRef = true
+      }
+      else if (!REFERENCE_LINK_EOC_EXPECTED_TOKENS.contains(builder.lookAhead(1))) {
+        // Additional unexpected data: "[String unlawfulData]"
+        refStart.rollbackTo()
+        return false
       }
       else {
         parseMaybeGenericType(true)
@@ -403,10 +412,21 @@ class JavaDocParser(
 
         // Only the first data element count as a type in links like [#foo(int arg1, int arg2)]
         var dataSinceComma = false
+        var spaceCount = 0
         
         while (!builder.eof()) {
           val type = getTokenType()
           if (type === JavaDocSyntaxTokenType.DOC_COMMENT_DATA) {
+            if (isWhiteSpace(builder.rawLookup(1))) {
+              spaceCount++
+            }
+            if (spaceCount >= 2) {
+              // Unexpected data: [#foo(int desc unexpectedData)]
+              subValue.drop()
+              fakeCollapse(refStart, JavaDocSyntaxTokenType.DOC_COMMENT_DATA)
+              return false
+            }
+              
             if(!dataSinceComma) {
               dataSinceComma = true
               parseMaybeGenericType(false)
@@ -465,6 +485,8 @@ class JavaDocParser(
     if (getTokenType() !== JavaDocSyntaxTokenType.DOC_RBRACKET) {
       findInlineToken(JavaDocSyntaxTokenType.DOC_RBRACKET)
     }
+
+    return true
   }
 
   /** Simple parse function that will wrap a Markdown link in an element */
@@ -904,6 +926,12 @@ private val COMMENT_DATA_TOKENS: SyntaxElementTypeSet = syntaxElementTypeSetOf(
   JavaDocSyntaxTokenType.DOC_COMMA,
   JavaDocSyntaxTokenType.DOC_SHARP, JavaDocSyntaxTokenType.DOC_DOUBLE_SHARP,
   JavaDocSyntaxTokenType.DOC_LT, JavaDocSyntaxTokenType.DOC_GT,
+)
+
+/** Represent the expected token at the caret for Markdown link `[Class<caret>#method()]` */
+private val REFERENCE_LINK_EOC_EXPECTED_TOKENS: SyntaxElementTypeSet = syntaxElementTypeSetOf(
+  JavaDocSyntaxTokenType.DOC_RBRACKET, JavaDocSyntaxTokenType.DOC_LT,
+  JavaDocSyntaxTokenType.DOC_SHARP, JavaDocSyntaxTokenType.DOC_DOUBLE_SHARP,
 )
 
 private const val SEE_TAG = "@see"

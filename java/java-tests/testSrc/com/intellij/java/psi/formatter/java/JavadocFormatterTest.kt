@@ -2139,6 +2139,18 @@ public class Test {
     """.trimIndent())
   }
 
+  fun testSpacesInReferenceLinkLookalike() {
+    doTextTest("""
+      /// [Hello, world] fake link with a comma
+      /// \format[WrapFileLinks(\i. \d (\p))]{\file}
+      public class Main {}
+    """.trimIndent(), """
+      /// [Hello, world] fake link with a comma
+      /// \format[WrapFileLinks(\i. \d (\p))]{\file}
+      public class Main {
+      }""".trimIndent())
+  }
+
   fun testListItemIndentBeingPreserved() {
     settings.apply {
       WRAP_COMMENTS = true

@@ -5,20 +5,9 @@ PsiJavaFile:ReferenceLinkMarkdown05.java
     PsiDocComment
       PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
       PsiWhiteSpace(' ')
-      PsiReferenceLink:
-        PsiDocToken:DOC_LBRACKET('[')
-        PsiElement(DOC_REFERENCE_HOLDER)
-          PsiJavaCodeReferenceElement:label
-            PsiIdentifier:label('label')
-            PsiReferenceParameterList
-              <empty list>
-        PsiWhiteSpace(' ')
-        PsiDocToken:DOC_COMMENT_DATA('with')
-        PsiWhiteSpace(' ')
-        PsiDocToken:DOC_COMMENT_DATA('unbalanced')
-        PsiWhiteSpace(' ')
-        PsiDocToken:DOC_COMMENT_DATA('brackets')
-        PsiDocToken:DOC_RBRACKET(']')
+      PsiDocToken:DOC_LBRACKET('[')
+      PsiDocToken:DOC_COMMENT_DATA('label with unbalanced brackets')
+      PsiDocToken:DOC_RBRACKET(']')
       PsiDocToken:DOC_RBRACKET(']')
       PsiReferenceLink:
         PsiDocToken:DOC_LBRACKET('[')
