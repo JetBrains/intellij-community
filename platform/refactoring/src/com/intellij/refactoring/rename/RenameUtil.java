@@ -13,6 +13,7 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
@@ -100,6 +101,7 @@ public final class RenameUtil {
                   }
     );
 
+    ProgressManager.progress(RefactoringBundle.message("progress.text.rename.find.collisions"));
     elementProcessor.findCollisions(element, newName, allRenames, result);
 
     return result.toArray(UsageInfo.EMPTY_ARRAY);
@@ -132,6 +134,7 @@ public final class RenameUtil {
 
     if (searchInCode) {
       Collection<PsiReference> refs = elementProcessor.findReferences(element, useScope, searchInStringsAndComments);
+      ProgressManager.progress(RefactoringBundle.message("progress.text.rename.processing.references"));
       for (final PsiReference ref : refs) {
         if (ref == null) {
           LOG.error("null reference from processor " + elementProcessor);
