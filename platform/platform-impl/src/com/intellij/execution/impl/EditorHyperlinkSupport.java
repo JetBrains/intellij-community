@@ -4,6 +4,7 @@ package com.intellij.execution.impl;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.ide.OccurenceNavigator;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -12,6 +13,7 @@ import com.intellij.openapi.editor.EditorCoreUtil;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseListener;
@@ -19,6 +21,7 @@ import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -36,6 +39,7 @@ import com.intellij.util.FilteringProcessor;
 import com.intellij.util.Processor;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -57,9 +61,16 @@ import java.util.function.Function;
 
 import static com.intellij.execution.filters.HyperlinkInfoBaseKt.navigate;
 
+/**
+ * Provides hyperlink support in editors.
+ * <p> 
+ * Invisible links ({@link Filter.ResultItem#isInvisibleLink()}) appear as normal text
+ * until Ctrl/Cmd is pressed. They require Ctrl+Click to navigate and are excluded from
+ * keyboard shortcuts and occurrence navigation.
+ */
 public final class EditorHyperlinkSupport {
   private static final Logger LOG = Logger.getInstance(EditorHyperlinkSupport.class);
-  private static final Key<HyperlinkInfoTextAttributes> HYPERLINK = Key.create("EDITOR_HYPERLINK_SUPPORT_HYPERLINK");
+  private static final Key<HyperlinkData> HYPERLINK = Key.create("EDITOR_HYPERLINK_SUPPORT_HYPERLINK");
   private static final Key<Unit> HIGHLIGHTING = Key.create("EDITOR_HYPERLINK_SUPPORT_HIGHLIGHTING");
   private static final Key<Unit> INLAY = Key.create("EDITOR_HYPERLINK_SUPPORT_INLAY");
   private static final Key<EditorHyperlinkSupport> EDITOR_HYPERLINK_SUPPORT_KEY = Key.create("EDITOR_HYPERLINK_SUPPORT_KEY");
@@ -67,7 +78,7 @@ public final class EditorHyperlinkSupport {
 
   private final EditorEx myEditor;
   private final @NotNull Project myProject;
-  private final EditorHyperlinkEffectSupport myLinkEffectSupport;
+  private final EditorHyperlinkInteraction myLinkInteraction;
   private final AsyncFilterRunner myFilterRunner;
 
   private final CopyOnWriteArrayList<EditorHyperlinkListener> myHyperlinkListeners = new CopyOnWriteArrayList<>();
@@ -82,7 +93,9 @@ public final class EditorHyperlinkSupport {
   private EditorHyperlinkSupport(@NotNull Editor editor, @NotNull Project project, boolean trackChangesManually) {
     myEditor = (EditorEx)editor;
     myProject = project;
-    myLinkEffectSupport = new EditorHyperlinkEffectSupport(myEditor, new MyEffectSupplier());
+    Disposable editorDisposable = Disposer.newDisposable(project);
+    EditorUtil.disposeWithEditor(editor, editorDisposable);
+    myLinkInteraction = new EditorHyperlinkInteraction(myEditor, new MyEffectSupplier(), editorDisposable);
     myFilterRunner = new AsyncFilterRunner(this, myEditor, trackChangesManually);
 
     editor.addEditorMouseListener(new EditorMouseListener() {
@@ -107,7 +120,7 @@ public final class EditorHyperlinkSupport {
             return;
           }
 
-          Runnable runnable = getLinkNavigationRunnable(e.getLogicalPosition());
+          Runnable runnable = getLinkNavigationRunnable(e.getLogicalPosition(), e);
           if (runnable != null) {
             try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
               runnable.run();
@@ -119,7 +132,7 @@ public final class EditorHyperlinkSupport {
 
       @Override
       public void mouseExited(@NotNull EditorMouseEvent event) {
-        myLinkEffectSupport.linkHovered(null);
+        myLinkInteraction.linkHovered(null, event);
       }
     });
 
@@ -129,7 +142,7 @@ public final class EditorHyperlinkSupport {
         RangeHighlighter range = findLinkAt(e);
         HyperlinkInfo info = range == null ? null : getHyperlinkInfo(range);
         myEditor.setCustomCursor(EditorHyperlinkSupport.class, info == null ? null : Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        myLinkEffectSupport.linkHovered(range);
+        myLinkInteraction.linkHovered(range, e);
       }
     });
   }
@@ -228,21 +241,38 @@ public final class EditorHyperlinkSupport {
     return result;
   }
 
+  /**
+   * Returns a runnable to navigate the hyperlink at the given logical position, or {@code null} if no navigable link exists.
+   * <p>
+   * <b>Note:</b> This method does not support invisible links ({@link Filter.ResultItem#isInvisibleLink()}).
+   * Invisible links require Ctrl+Click interaction and will return {@code null} from this method.
+   */
   public @Nullable Runnable getLinkNavigationRunnable(@NotNull LogicalPosition logical) {
+    return getLinkNavigationRunnable(logical, null);
+  }
+
+  private @Nullable Runnable getLinkNavigationRunnable(@NotNull LogicalPosition logical, @Nullable EditorMouseEvent e) {
     if (EditorCoreUtil.inVirtualSpace(myEditor, logical)) {
       return null;
     }
 
     int positionOffset = myEditor.logicalPositionToOffset(logical);
-    RangeHighlighter range = findLinkRangeAt(positionOffset);
-    if (range != null) {
+    RangeHighlighterEx range = findLinkRangeAt(positionOffset);
+    HyperlinkData hyperlinkData = range != null ? getHyperlinkData(range) : null;
+    if (hyperlinkData != null) {
       if (range.getEndOffset() == positionOffset) return null;
-      HyperlinkInfo hyperlinkInfo = getHyperlinkInfo(range);
-      if (hyperlinkInfo != null) {
+      HyperlinkInfo hyperlinkInfo = hyperlinkData.hyperlinkInfo;
+      Runnable navigateAction = () -> {
+        navigate(hyperlinkInfo, myProject, myEditor, logical);
+        fireListeners(hyperlinkInfo);
+      };
+      if (e != null) {
+        return () -> followLink(range, e, navigateAction);
+      }
+      else if (!hyperlinkData.isInvisibleLink) {
         return () -> {
-          navigate(hyperlinkInfo, myProject, myEditor, logical);
-          linkFollowed(range);
-          fireListeners(hyperlinkInfo);
+          navigateAction.run();
+          myLinkInteraction.onLinkFollowed(range);
         };
       }
     }
@@ -264,13 +294,17 @@ public final class EditorHyperlinkSupport {
   }
 
   public static @Nullable HyperlinkInfo getHyperlinkInfo(@NotNull RangeHighlighter range) {
-    HyperlinkInfoTextAttributes attributes = range.getUserData(HYPERLINK);
+    HyperlinkData attributes = getHyperlinkData(range);
     return attributes != null ? attributes.hyperlinkInfo() : null;
   }
 
-  private @Nullable RangeHighlighter findLinkRangeAt(int offset) {
+  private static @Nullable HyperlinkData getHyperlinkData(@NotNull RangeHighlighter range) {
+    return range.getUserData(HYPERLINK);
+  }
+
+  private @Nullable RangeHighlighterEx findLinkRangeAt(int offset) {
     // It should be synced with c.i.o.editor.impl.view.IterationState.LayerComparator.compare()
-    Ref<RangeHighlighter> minHighlighter = new Ref<>();
+    Ref<RangeHighlighterEx> minHighlighter = new Ref<>();
     processHyperlinksAndHighlightings(offset, offset, myEditor, true, false, highlighter -> {
       if (minHighlighter.isNull()) {
         minHighlighter.set(highlighter);
@@ -337,7 +371,7 @@ public final class EditorHyperlinkSupport {
                                                         @SuppressWarnings("SameParameterValue")
                                                         boolean hyperlinks,
                                                         boolean highlightings,
-                                                        @NotNull Processor<? super RangeHighlighter> processor) {
+                                                        @NotNull Processor<? super RangeHighlighterEx> processor) {
     MarkupModelEx markupModel = (MarkupModelEx)editor.getMarkupModel();
     markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, new FilteringProcessor<>(
       highlighter -> highlighter.isValid() &&
@@ -354,7 +388,7 @@ public final class EditorHyperlinkSupport {
   }
 
   public void createHyperlink(@NotNull RangeHighlighter highlighter, @NotNull HyperlinkInfo hyperlinkInfo) {
-    associateHyperlink(highlighter, hyperlinkInfo, null, null, true);
+    associateHyperlink(highlighter, hyperlinkInfo, null, null, true, false);
   }
 
   public @NotNull RangeHighlighter createHyperlink(int highlightStartOffset,
@@ -362,7 +396,7 @@ public final class EditorHyperlinkSupport {
                                                    @Nullable TextAttributes highlightAttributes,
                                                    @NotNull HyperlinkInfo hyperlinkInfo) {
     return createHyperlink(highlightStartOffset, highlightEndOffset, highlightAttributes, hyperlinkInfo, null, null,
-                           HighlighterLayer.HYPERLINK);
+                           HighlighterLayer.HYPERLINK, false);
   }
 
   private @NotNull RangeHighlighter createHyperlink(int highlightStartOffset,
@@ -371,8 +405,10 @@ public final class EditorHyperlinkSupport {
                                                     @NotNull HyperlinkInfo hyperlinkInfo,
                                                     @Nullable TextAttributes followedHyperlinkAttributes,
                                                     @Nullable TextAttributes hoveredHyperlinkAttributes,
-                                                    int layer) {
-    return myEditor.getMarkupModel().addRangeHighlighterAndChangeAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES,
+                                                    int layer,
+                                                    boolean isInvisibleLink) {
+    TextAttributesKey textAttributesKey = isInvisibleLink ? null : CodeInsightColors.HYPERLINK_ATTRIBUTES;
+    return myEditor.getMarkupModel().addRangeHighlighterAndChangeAttributes(textAttributesKey,
                                                                             highlightStartOffset,
                                                                             highlightEndOffset,
                                                                             layer,
@@ -381,7 +417,7 @@ public final class EditorHyperlinkSupport {
         if (highlightAttributes != null) {
           ex.setTextAttributes(highlightAttributes);
         }
-        associateHyperlink(ex, hyperlinkInfo, followedHyperlinkAttributes, hoveredHyperlinkAttributes, false);
+        associateHyperlink(ex, hyperlinkInfo, followedHyperlinkAttributes, hoveredHyperlinkAttributes, false, isInvisibleLink);
       });
   }
 
@@ -389,8 +425,11 @@ public final class EditorHyperlinkSupport {
                                          @NotNull HyperlinkInfo hyperlinkInfo,
                                          @Nullable TextAttributes followedHyperlinkAttributes,
                                          @Nullable TextAttributes hoveredHyperlinkAttributes,
-                                         boolean fireChanged) {
-    HyperlinkInfoTextAttributes attributes = new HyperlinkInfoTextAttributes(hyperlinkInfo, followedHyperlinkAttributes, hoveredHyperlinkAttributes);
+                                         boolean fireChanged,
+                                         boolean isInvisibleLink) {
+    HyperlinkData attributes = new HyperlinkData(
+      highlighter, hyperlinkInfo, followedHyperlinkAttributes, hoveredHyperlinkAttributes, isInvisibleLink
+    );
     highlighter.putUserData(HYPERLINK, attributes);
     if (fireChanged) {
       ((RangeHighlighterEx)highlighter).fireChanged(false, false, false);
@@ -459,7 +498,8 @@ public final class EditorHyperlinkSupport {
       else if (resultItem.getHyperlinkInfo() != null) {
         createHyperlink(start, end, attributes, resultItem.getHyperlinkInfo(), resultItem.getFollowedHyperlinkAttributes(),
                         resultItem.getHoveredHyperlinkAttributes(),
-                        resultItem.getHighlighterLayer());
+                        resultItem.getHighlighterLayer(),
+                        resultItem.isInvisibleLink());
       }
       else if (attributes != null) {
         addHighlighter(start, end, attributes, resultItem.getHighlighterLayer());
@@ -496,19 +536,20 @@ public final class EditorHyperlinkSupport {
   private static class MyEffectSupplier implements EditorHyperlinkEffectSupplier {
     @Override
     public @Nullable TextAttributes getFollowedHyperlinkAttributes(@NotNull RangeHighlighterEx highlighter) {
-      HyperlinkInfoTextAttributes attrs = highlighter.getUserData(HYPERLINK);
-      return attrs == null ? null : attrs.followedHyperlinkAttributes();
+      HyperlinkData data = getHyperlinkData(highlighter);
+      return data == null ? null : data.followedHyperlinkAttributes();
     }
 
     @Override
     public @Nullable TextAttributes getHoveredHyperlinkAttributes(@NotNull RangeHighlighterEx highlighter) {
-      HyperlinkInfoTextAttributes attrs = highlighter.getUserData(HYPERLINK);
-      return attrs == null ? null : attrs.hoveredHyperlinkAttributes();
+      HyperlinkData data = getHyperlinkData(highlighter);
+      return data == null ? null : data.hoveredHyperlinkAttributes();
     }
 
     @Override
     public boolean isInvisibleLink(@NotNull RangeHighlighterEx highlighter) {
-      return false;
+      HyperlinkData data = getHyperlinkData(highlighter);
+      return data != null && data.isInvisibleLink;
     }
   }
 
@@ -517,42 +558,60 @@ public final class EditorHyperlinkSupport {
     int delta,
     @NotNull Consumer<? super RangeHighlighter> action
   ) {
-    List<RangeHighlighter> ranges = getHyperlinks(0, myEditor.getDocument().getTextLength(), myEditor);
-    if (ranges.isEmpty()) {
-      return null;
-    }
-    int i = ranges.indexOf(myLinkEffectSupport.getFollowedLink());
-    if (i == -1) {
-      i = 0;
-    }
-    int newIndex = i;
-    while (newIndex < ranges.size()) {
-      newIndex = (newIndex + delta + ranges.size()) % ranges.size();
-      RangeHighlighter next = ranges.get(newIndex);
-      HyperlinkInfo info = getHyperlinkInfo(next);
-      assert info != null;
-      if (info.includeInOccurenceNavigation()) {
-        boolean inCollapsedRegion = myEditor.getFoldingModel().getCollapsedRegionAtOffset(next.getStartOffset()) != null;
-        if (!inCollapsedRegion) {
-          return new OccurenceNavigator.OccurenceInfo(new NavigatableAdapter() {
-            @Override
-            public void navigate(boolean requestFocus) {
-              action.accept(next);
-              linkFollowed(next);
+    List<HyperlinkData> links = ContainerUtil.mapNotNull(
+      getHyperlinks(0, myEditor.getDocument().getTextLength(), myEditor),
+      range -> {
+        HyperlinkData data = getHyperlinkData(range);
+        return data != null && !data.isInvisibleLink && data.hyperlinkInfo.includeInOccurenceNavigation() ? data : null;
+      }
+    );
+    int nextInd = findNextOccurrenceIndex(links, delta > 0);
+    if (nextInd >= 0) {
+      HyperlinkData nextLink = links.get(nextInd);
+      return new OccurenceNavigator.OccurenceInfo(new NavigatableAdapter() {
+        @Override
+        public void navigate(boolean requestFocus) {
+          if (nextLink.rangeHighlighter.isValid()) {
+            action.accept(nextLink.rangeHighlighter);
+            if (nextLink.rangeHighlighter instanceof RangeHighlighterEx rangeHighlighterEx) {
+              myLinkInteraction.onLinkFollowed(rangeHighlighterEx);
             }
-          }, newIndex + 1, ranges.size());
+          }
         }
-      }
-      if (newIndex == i) {
-        break; // cycled through everything, found no next/prev hyperlink
-      }
+      }, nextInd + 1, links.size());
     }
     return null;
   }
 
-  private void linkFollowed(@NotNull RangeHighlighter link) {
+  /**
+   * Finds the index of the next navigable occurrence, wrapping around the list.
+   * Skips the currently followed link and any links in collapsed regions.
+   */
+  private int findNextOccurrenceIndex(@NotNull List<HyperlinkData> links, boolean forward) {
+    if (links.isEmpty()) {
+      return -1;
+    }
+    RangeHighlighter lastFollowedLink = myLinkInteraction.getLastFollowedLink();
+    int startInd = Math.max(ContainerUtil.indexOf(links, link -> link.rangeHighlighter == lastFollowedLink), 0);
+    int sign = forward ? 1 : -1;
+    for (int i = 1; i <= links.size(); i++) {
+      int ind = Math.floorMod(startInd + sign * i, links.size());
+      HyperlinkData link = links.get(ind);
+      RangeHighlighter range = link.rangeHighlighter;
+      boolean inCollapsedRegion = myEditor.getFoldingModel().getCollapsedRegionAtOffset(range.getStartOffset()) != null;
+      if (!inCollapsedRegion) {
+        return ind;
+      }
+    }
+    return -1;
+  }
+
+  private void followLink(@NotNull RangeHighlighterEx link, @NotNull EditorMouseEvent e, @NotNull Runnable action) {
     if (link.isValid()) {
-      myLinkEffectSupport.linkFollowed(link);
+      myLinkInteraction.followLink(link, e, () -> {
+        action.run();
+        return Unit.INSTANCE;
+      });
     }
   }
 
@@ -568,10 +627,12 @@ public final class EditorHyperlinkSupport {
     return document.getImmutableCharSequence().subSequence(document.getLineStartOffset(lineNumber), endOffset);
   }
 
-  private record HyperlinkInfoTextAttributes(
+  private record HyperlinkData(
+    @NotNull RangeHighlighter rangeHighlighter,
     @NotNull HyperlinkInfo hyperlinkInfo,
     @Nullable TextAttributes followedHyperlinkAttributes,
-    @Nullable TextAttributes hoveredHyperlinkAttributes
+    @Nullable TextAttributes hoveredHyperlinkAttributes,
+    boolean isInvisibleLink
   ) {
   }
 }

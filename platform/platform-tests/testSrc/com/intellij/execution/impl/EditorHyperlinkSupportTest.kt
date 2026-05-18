@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.impl.DocumentImpl
@@ -446,6 +447,43 @@ class EditorHyperlinkSupportTest(private val trackDocumentChangesManually: Boole
     assertEquals("bar baz", (infoAtBaz as MyHyperlinkFilter.MyHyperlinkInfo).linkText)
   }
 
+  @Test
+  fun `test invisible links`() {
+    val invisibleLinkText = "hidden-foo"
+    val visibleLinkText = "normal-bar"
+    document.setText("""
+        $invisibleLinkText
+        $visibleLinkText
+        $invisibleLinkText
+    """.trimIndent())
+
+    val filter = CompositeFilter(project).also {
+      it.addFilter(MyInvisibleHyperlinkFilter(invisibleLinkText))
+      it.addFilter(MyHyperlinkFilter(visibleLinkText))
+      it.setForceUseAllFilters(true)
+    }
+    hyperlinkSupport.highlightHyperlinksLater(filter, 0, 2, eternal())
+
+    // Verify all hyperlinks are created (both visible and invisible)
+    val allHyperlinks = collectAllHyperlinks()
+    assertEquals(3, allHyperlinks.size)
+
+    val invisibleCount = allHyperlinks.count { document.getText(it.textRange) == invisibleLinkText }
+    val visibleCount = allHyperlinks.count { document.getText(it.textRange) == visibleLinkText }
+    assertEquals(2, invisibleCount)
+    assertEquals(1, visibleCount)
+
+    // invisible links are excluded from occurrence navigation
+    val nextOccurrence = hyperlinkSupport.getNextOccurrence(1) { }
+    assertNotNull(nextOccurrence)
+    assertEquals(1, nextOccurrence!!.occurenceNumber)
+    assertEquals(1, nextOccurrence.occurencesCount)
+
+    assertNotNull(hyperlinkSupport.getLinkNavigationRunnable(LogicalPosition(1, 0)))
+    // no invisible link navigation without mouse event
+    assertNull(hyperlinkSupport.getLinkNavigationRunnable(LogicalPosition(0, 0)))
+  }
+
   private fun assertHighlightings(textToHighlight: String, expectedCount: Int): List<RangeHighlighter> {
     val text = document.text
     val expectedRanges = text.allOccurrencesOf(textToHighlight).map {
@@ -495,6 +533,14 @@ private open class MyHyperlinkFilter(linkText: String, delay: Duration = 0.milli
 
   data class MyHyperlinkInfo(val linkText: String) : HyperlinkInfo {
     override fun navigate(project: Project) {}
+  }
+}
+
+private class MyInvisibleHyperlinkFilter(linkText: String) : MyHyperlinkFilter(linkText) {
+  override fun createResultItem(startOffset: Int, endOffset: Int): ResultItem {
+    return ResultItem(startOffset, endOffset, MyHyperlinkInfo(linkText), null).apply {
+      isInvisibleLink = true
+    }
   }
 }
 

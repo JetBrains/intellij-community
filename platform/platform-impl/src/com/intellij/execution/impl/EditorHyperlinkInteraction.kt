@@ -32,6 +32,10 @@ internal class EditorHyperlinkInteraction(
   private var followedLinkWrapper: ChangedAttrsLinkWrapper? = null
   private var hoveredLinkWrapper: ChangedAttrsLinkWrapper? = null
 
+  val lastFollowedLink: RangeHighlighter?
+    @RequiresEdt(generateAssertion = false)
+    get() = followedLinkWrapper?.linkRangeHighlighter
+
   init {
     editor.contentComponent.addKeyListener(object : KeyAdapter() {
       override fun keyPressed(e: KeyEvent) {
@@ -70,7 +74,7 @@ internal class EditorHyperlinkInteraction(
     }
   }
 
-  private fun onLinkFollowed(link: RangeHighlighterEx) {
+  fun onLinkFollowed(link: RangeHighlighterEx) {
     if (followedLinkWrapper?.isSame(link) == true) return
     followedLinkWrapper?.restoreOriginalAttrs()
     followedLinkWrapper = null
