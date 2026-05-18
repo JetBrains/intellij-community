@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.idea.run.KotlinRunConfiguration
 import org.jetbrains.kotlin.idea.test.TagsTestDataUtil
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
+import org.junit.Ignore
 import org.junit.Test
 import java.awt.Point
 import java.io.File
@@ -39,12 +40,14 @@ class GradleTestRunConfigurationAndHighlightingTest23 : KotlinGradleImportingTes
 
     @Test
     @TargetVersions("<7.6")
+    @Ignore("KTIJ-38801")
     fun testExpectClassWithTests() {
         doTest()
     }
 
     @Test
     @TargetVersions("<7.6")
+    @Ignore("KTIJ-38801")
     fun testMultiplatformInheritedTests() {
         mockInheritorPopup()
         doTest()
@@ -57,6 +60,7 @@ class GradleTestRunConfigurationAndHighlightingTest23 : KotlinGradleImportingTes
     fun multiplatformTestsInObject() = doTest()
 
     @Test
+    @Ignore("KTIJ-38801")
     fun testMultiProjectBuild() = doTest()
 
     @Test
