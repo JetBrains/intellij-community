@@ -839,7 +839,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       Factory(create_person).fn(**{"name": ""})
       #                           ^^^^^^^^^^^^ WARNING TypedDict 'Person' has missing key: 'age'
       Factory(create_person).fn(name="")
-      #                                └ WARNING Parameter 'age' unfilled (from ParamSpec 'P')
+      #                                └ WARNING Parameter 'age' unfilled
       """)
 
     @Test

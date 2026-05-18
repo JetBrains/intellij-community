@@ -29,14 +29,14 @@ internal class PySelfTypeTest : PyInspectionTestCase() {
                        def bar(x, y: type[Self]) -> Self: ...
                    
                    assert_type(A.foo(A()), A)
-                   A.foo(<warning descr="Expected type 'A' (matched generic type 'Self@A'), got 'type[A]' instead">A</warning>)
-                   A.bar(<warning descr="Expected type 'type[A]' (matched generic type 'type[Self@A]'), got 'A' instead">A()</warning>)
+                   A.foo(<warning descr="Expected type 'A', got 'type[A]' instead">A</warning>)
+                   A.bar(<warning descr="Expected type 'type[A]', got 'A' instead">A()</warning>)
                    assert_type(A.bar(A), A)
                    
                    a = A()
                    assert_type(a.foo(A()), A)
-                   a.foo(<warning descr="Expected type 'A' (matched generic type 'Self@A'), got 'type[A]' instead">A</warning>)
-                   a.bar(<warning descr="Expected type 'type[A]' (matched generic type 'type[Self@A]'), got 'A' instead">A()</warning>)
+                   a.foo(<warning descr="Expected type 'A', got 'type[A]' instead">A</warning>)
+                   a.bar(<warning descr="Expected type 'type[A]', got 'A' instead">A()</warning>)
                    assert_type(a.bar(A), A)
                    """.trimIndent())
   }

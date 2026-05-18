@@ -278,9 +278,9 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
     }
   }
 
+  @TestFor(issues = ["PY-85922"])
   fun testExpressionInsideGenericClassAsReturnValue1() {
-    fixme<StackOverflowPreventedException>("PY-85922", "") {
-      doTest("expr", "int", """
+    doTest("expr", "int", """
         from typing import Callable
         
         class A[T]:
@@ -288,12 +288,11 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
         
         A[int]().f(lambda expr: "s")
         """)
-    }
   }
 
+  @TestFor(issues = ["PY-85922"])
   fun testExpressionInsideGenericClassAsReturnValue2() {
-    fixme<StackOverflowPreventedException>("PY-85922", "") {
-      doTest("expr", "int", """
+    doTest("expr", "int", """
         from typing import Callable
         
         class A[T]:
@@ -301,7 +300,6 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
         
         A[int]().f(lambda x: expr)
         """)
-    }
   }
 
   fun testTupleAsReturnValueNoTypeHint() {

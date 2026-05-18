@@ -366,16 +366,10 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   @Override
   public @Nullable List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
     final var resolveContext = PyResolveContext.defaultContext(context);
-
-    return StreamEx
-      .of(PyUtil.filterTopPriorityElements(PyCallExpressionHelper.resolveImplicitlyInvokedMethods(this, null, resolveContext)))
-      .select(PyCallable.class)
-      .map(callable -> callable.getParameters(context))
-      .findFirst()
-      // If resolved parameters are empty, consider them as invalid and return null
-      .filter(parameters -> !parameters.isEmpty())
-      // Skip "self" for __init__/__call__ and "cls" for __new__
-      .map(parameters -> ContainerUtil.subList(parameters, 1))
+    PyType callableType = PyCallExpressionHelper.createCallableFromClass(this, resolveContext);
+    return StreamEx.of(PyTypeUtil.getCallableItems(callableType).iterator())
+      .findAny()
+      .map(it -> it.getParameters(context))
       .orElse(null);
   }
 

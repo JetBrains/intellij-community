@@ -479,4 +479,21 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
           n4: N = n2
         """);
   }
+
+  // PY-79220
+  public void testAnnotatedSelfInOverloads() {
+    doTestByText("""
+                   from typing import overload
+
+                   class A[T]:
+                       @overload
+                       def foo(self: A[int]) -> None: ...
+                       @overload
+                       def foo(self: A[str]) -> None: ...
+                       def foo(self): ...
+
+                   A[str]().foo()
+                   <warning descr="Invalid self argument `A[float | int]` to method `A.foo` with type `(self: A[int]) -> None`">A[float]().foo</warning>()
+                   """);
+  }
 }

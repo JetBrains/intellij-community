@@ -515,7 +515,7 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
       V = TypeVar('V')
       
       class B(Generic[V]):
-          def get() -> V:
+          def get(self) -> V:
               pass
       
       class C(B[T]):
@@ -576,7 +576,7 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
           def __init__(self, children : List[T]):
               self.children = children
       expr = Node[str]([1,2,3])
-      #│               ^^^^^^^ WARNING Expected type 'list[str]' (matched generic type 'list[T]'), got 'list[Literal[1, 2, 3]]' instead
+      #│               ^^^^^^^ WARNING Expected type 'list[str]', got 'list[Literal[1, 2, 3]]' instead
       #└ TYPE Node[str]
       """)
 
@@ -1099,7 +1099,7 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
               pass
       
       class Derived(Base):
-          def __init__():
+          def __init__(self):
               pass
       
       expr = Derived()
@@ -1797,7 +1797,7 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
             pass
 
     def foo(cb: Callback[int]):
-        cb("42") # WARNING Expected type 'int' (matched generic type '_T'), got 'Literal["42"]' instead
+        cb("42") # WARNING Expected type 'int', got 'Literal["42"]' instead
     """)
 
   @Test

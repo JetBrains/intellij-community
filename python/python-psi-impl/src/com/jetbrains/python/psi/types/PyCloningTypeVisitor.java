@@ -213,8 +213,7 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
       clonedParametersType,
       clone(callableType.getReturnType(myTypeEvalContext)),
       callableType.getCallable(),
-      callableType.getModifier(),
-      callableType.getImplicitOffset()
+      callableType.getModifier()
     );
   }
 

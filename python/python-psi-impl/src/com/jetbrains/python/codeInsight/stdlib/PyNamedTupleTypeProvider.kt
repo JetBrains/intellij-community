@@ -54,6 +54,7 @@ private typealias ImmutableNTFields = Map<String, PyNamedTupleType.FieldTypeAndD
 class PyNamedTupleTypeProvider : PyTypeProviderBase() {
 
   override fun getReferenceType(referenceTarget: PsiElement, context: TypeEvalContext, anchor: PsiElement?): Ref<PyType>? {
+    val anchor = anchor?.let(PyCallExpressionNavigator::getPyCallExpressionByCallee)
     val type = when (referenceTarget) {
       is PyFunction if anchor is PyCallExpression -> getNamedTupleFunctionType(referenceTarget, context, anchor)
       is PyTargetExpression -> getNamedTupleTypeForTarget(referenceTarget, context)
@@ -172,18 +173,20 @@ private fun getCallableType(
 }
 
 private fun getNamedTupleFunctionType(function: PyFunction, context: TypeEvalContext, call: PyCallExpression): PyType? {
-  if (ArrayUtil.contains(function.qualifiedName, PyNames.COLLECTIONS_NAMEDTUPLE_PY2, PyNames.COLLECTIONS_NAMEDTUPLE_PY3) ||
-      PyTypingTypeProvider.NAMEDTUPLE == PyUtil.turnConstructorIntoClass(function)?.qualifiedName) {
+  val isCollectionsNamedTuple = ArrayUtil.contains(function.qualifiedName, PyNames.COLLECTIONS_NAMEDTUPLE_PY2, PyNames.COLLECTIONS_NAMEDTUPLE_PY3)
+  val isTypingNamedTupleInit = !isCollectionsNamedTuple &&
+                               PyTypingTypeProvider.NAMEDTUPLE == PyUtil.turnConstructorIntoClass(function)?.qualifiedName
+  if (isCollectionsNamedTuple || isTypingNamedTupleInit) {
     return if (context.maySwitchToAST(call)) {
       val functionType = context.getType(function) as? PyCallableType ?: return null
       val returnType = getNamedTupleTypeFromStub(call, PyNamedTupleStubImpl.create(call), context) ?: return null
+      val parameters = functionType.getParameters(context)
 
       PyCallableTypeImpl(
-        functionType.getParameters(context),
+        if (isTypingNamedTupleInit) parameters?.drop(1) else parameters,
         returnType,
         functionType.callable,
-        functionType.modifier,
-        functionType.implicitOffset
+        functionType.modifier
       )
     }
     else null
@@ -202,9 +205,10 @@ private fun getNamedTupleTypeForTarget(target: PyTargetExpression, context: Type
 
 private fun getNamedTupleTypeForClass(cls: PyClass, context: TypeEvalContext, call: PyCallExpression): PyType? {
   return getNamedTupleTypeForClass(cls, context)
-         ?: PyUnionType.union(
-           cls.multiFindInitOrNew(false, context).mapSmartNotNull { getNamedTupleFunctionType(it, context, call) }
-         )
+         ?: cls.multiFindInitOrNew(false, context)
+              .mapSmartNotNull { getNamedTupleFunctionType(it, context, call) }
+              .takeIf { it.isNotEmpty() }
+              ?.let(PyUnionType::union)
 }
 
 internal fun getNamedTupleTypeForClass(cls: PyClass, context: TypeEvalContext): PyNamedTupleType? {

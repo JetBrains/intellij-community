@@ -238,7 +238,7 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
   }
 
   public void testInStackOfDecoratorsChangingFunctionSignatureOnlyAnnotatedAreConsideredClassMethod() {
-    doTest("tuple[str, tuple[bool, None]]", "(str, bool) -> tuple[str, tuple[bool, None]]",
+    doTest("tuple[A, tuple[bool, None]]", "(bool) -> tuple[A, tuple[bool, None]]",
            """
              from typing import Callable, Concatenate, ParamSpec, TypeVar
              
@@ -246,7 +246,7 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
              T = TypeVar('T')
              
              
-             def prepend_str(fn: Callable[P, T]) -> Callable[Concatenate[str, P], tuple[str, T]]:
+             def prepend_A(fn: Callable[P, T]) -> Callable[Concatenate[A, P], tuple[A, T]]:
                  def wrapper(p: str, *args, **kwargs):
                      return p, fn(*args, **kwargs)
                  return wrapper
@@ -262,13 +262,13 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
                  return wrapper
              
              class A:
-               @prepend_str
+               @prepend_A
                @prepend_int
                @prepend_bool
                def f():
                    pass
              a = A()
-             value = a.f('foo', 42, True)
+             value = a.f(True)
              dec_func = a.f
              """);
   }

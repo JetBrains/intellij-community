@@ -89,6 +89,7 @@ import com.jetbrains.python.psi.types.PyNamedTupleType;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
+import com.jetbrains.python.psi.types.PyTypeMember;
 import com.jetbrains.python.psi.types.PyTypeParser;
 import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.PyUnionType;
@@ -100,6 +101,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -182,28 +184,21 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
         return PyUtil.convertToType(literalKind, PyBuiltinCache.getInstance(this));
       }
 
-      final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
-
-      final List<PyType> types = StreamEx
-        .of(multiResolveAssignedValue(resolveContext))
-        .select(PyTypedElement.class)
-        .map((el) -> {
-          if (el instanceof PyFunction function) {
-            PyClass containingClass = function.getContainingClass();
-            if (containingClass != null) {
-              String name = el.getName();
-              if (name != null) {
-                Property property = containingClass.findPropertyByCallable(function);
-                if (property != null) {
-                  return property.getType(this, context);
-                }
-              }
+      final List<PyType> types = new ArrayList<>();
+      final QualifiedName qName = getAssignedQName();
+      if (qName != null && qName.getComponentCount() != 0) {
+        final ScopeOwner owner = ScopeUtil.getScopeOwner(this);
+        if (owner != null) {
+          for (RatedResolveResult result : PyResolveUtil.resolveQualifiedNameInScopeNew(qName, owner, context)) {
+            if (result instanceof PyTypeMember typeMember) {
+              types.add(typeMember.getType());
+            }
+            else if (result.getElement() instanceof PyTypedElement element) {
+              types.add(context.getType(element));
             }
           }
-          return context.getType(el);
-        })
-        .toList();
-
+        }
+      }
       return PyUnionType.union(types);
     }
     type = getTypeFromComment(this);

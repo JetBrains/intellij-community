@@ -760,9 +760,9 @@ class PyStringFormatInspection : PyInspection() {
         resolveContext: PyResolveContext,
         evalContext: TypeEvalContext,
       ): Int {
-        val statistics = callExpression.multiResolveCalleeFunction(resolveContext)
+        val statistics = callExpression.multiResolveCallee(resolveContext)
           .stream()
-          .map { it.getCallType(evalContext, callExpression) }
+          .map { callableType -> callableType.getCallType(evalContext, callExpression) }
           .collect(
             Collectors.summarizingInt(
               ToIntFunction { callType ->

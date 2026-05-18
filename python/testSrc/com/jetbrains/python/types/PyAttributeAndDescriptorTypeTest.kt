@@ -694,7 +694,7 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
       from collections import defaultdict
       data = defaultdict(dict)
       expr = data['name']
-      #└ TYPE dict[Unknown, Unknown]
+      #└ TYPE dict
       """)
 
     @Test

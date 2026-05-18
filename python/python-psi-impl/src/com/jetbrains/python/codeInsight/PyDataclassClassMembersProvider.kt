@@ -105,8 +105,15 @@ class PyDataclassClassMembersProvider : PyClassMembersProviderBase() {
         if (pyClass.findMethodByName(member.memberName, false, context) != null) return null
 
         val boolType = PyBuiltinCache.getInstance(pyClass).boolType ?: return null
+        val instanceType = type.toInstance()
         PyCustomMember(member.memberName, null) {
-          PyCallableTypeImpl(listOf(PyCallableParameterImpl.nonPsi("other", type.toInstance())), boolType)
+          PyCallableTypeImpl(
+            listOf(
+              PyCallableParameterImpl.selfNonPsi(instanceType),
+              PyCallableParameterImpl.nonPsi("other", instanceType),
+            ),
+            boolType,
+          )
         }.toPsiElement(pyClass)
       }
     }

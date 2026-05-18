@@ -18,6 +18,7 @@ package com.jetbrains.python.psi.types
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
+import com.jetbrains.python.PyNames
 import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyNamedParameter
@@ -206,6 +207,10 @@ class PyCallableParameterImpl @JvmOverloads internal constructor(
 
     fun nonPsi(name: String?, type: PyType?, defaultValue: PyExpression?, declarationElement: PsiElement): PyCallableParameter =
       PyCallableParameterImpl(name, Ref(type), defaultValue, myDeclarationElement = declarationElement)
+
+    @JvmStatic
+    fun selfNonPsi(type: PyType?): PyCallableParameter =
+      PyCallableParameterImpl(PyNames.CANONICAL_SELF, Ref(type), myIsSelf = true)
 
     @JvmStatic
     fun positionalContainerNonPsi(name: String?, type: PyType?): PyCallableParameter =

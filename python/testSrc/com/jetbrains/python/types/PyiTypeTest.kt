@@ -24,6 +24,7 @@ class PyiTypeTest : PyCodeInsightTestCase() {
 
   @Test
   fun `function return type`() = test(
+    TestOptions(enablePyAnyType = false),
     "FunctionReturnType.py",
     """
     def f():
@@ -63,13 +64,14 @@ class PyiTypeTest : PyCodeInsightTestCase() {
 
   @Test
   fun `coroutine type`() = test(
+    TestOptions(enablePyAnyType = false),
     "CoroutineType.py",
     """
     async def f():
         return 42
     
     coroutine = f()
-    #\ TYPE CoroutineType[Unknown, Unknown, int]
+    #\ TYPE CoroutineType[Any, Any, int]
     """,
     "CoroutineType.pyi" to """
       async def f() -> int:
@@ -126,14 +128,14 @@ class PyiTypeTest : PyCodeInsightTestCase() {
   @TestFor(issues = ["PY-22808"])
   fun `overloaded not matched generic type`() = test(
     """
-    from typing import Any
     from m1 import C
     
     def f(x: list):
-    c = C()
-    #\ ERROR Indent expected
-    expr = c.foo(non_existing=0) # ISSUES *
-    #└ TYPE dict[str, Unknown] | list[Unknown]
+        c = C()
+        expr = c.foo(non_existing=0)
+    #   │           │              └ WARNING No overload of 'foo' matches the arguments. Argument types: (non_existing=Literal[0]). Expected one of: (i: int), (s: str)
+    #   │           ^^^^^^^^^^^^^^^^ WARNING No overload of 'foo' matches the arguments. Argument types: (non_existing=Literal[0]). Expected one of: (i: int), (s: str)
+    #   └ TYPE Unknown
     """,
     "m1.pyi" to """
       from typing import TypeVar, Generic, overload, List, Dict

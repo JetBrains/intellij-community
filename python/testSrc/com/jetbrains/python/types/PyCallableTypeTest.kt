@@ -428,6 +428,220 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       expr = Foo7[str]().meth
       #└ TYPE (/) -> Foo7[str]
       """)
+
+    @Test
+    @TestFor(issues = ["PY-89401"])
+    fun `bound method`() = test("""
+      class A:
+          def f(self, x: int) -> str:
+              raise NotImplementedError
+
+      def foo(a: A):
+          f = a.f
+      #   └ TYPE (x: int) -> str
+          expr = f(-1)
+      #   └ TYPE str
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-89401"])
+    fun `bound generic method`() = test("""
+      class A:
+          def f[U](self, x: U) -> U:
+              raise NotImplementedError
+
+      def foo(a: A):
+          f = a.f
+      #   └ TYPE [U: Unknown](x: U) -> U
+          expr = f('abb')
+      #   └ TYPE str
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-89401"])
+    fun `bound method of generic class`() = test("""
+      class A[T]:
+          def f(self, x: str) -> T:
+              raise NotImplementedError
+
+      def foo(a: A[int]):
+          f = a.f
+      #   └ TYPE (x: str) -> int
+          expr = f('abb')
+      #   └ TYPE int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-89401"])
+    fun `bound generic method of generic class`() = test("""
+      class A[T]:
+          def f[U](self, x: U) -> tuple[T, U]:
+              raise NotImplementedError
+
+      def foo(a: A[int]):
+          f = a.f
+      #   └ TYPE [U: Unknown](x: U) -> tuple[int, U]
+          expr = f('abb')
+      #   └ TYPE tuple[int, str]
+    """)
+
+    @Test
+    @TestFor(issues = ["PY-89401"])
+    fun `overloaded bound method`() = test("""
+      from typing import overload
+
+      class A[T]:
+          @overload
+          def f[U](self, x: U, y: int) -> tuple[T, U, str]: ...
+
+          @overload
+          def f[U](self, x: U, y: str) -> tuple[T, U, bytes]: ...
+
+          def f[U](self, x: U, y: object) -> tuple[T, U, object]:
+              raise NotImplementedError
+
+      def foo(a: A[int]):
+          f = a.f
+      #   └ TYPE Overload[[U: Unknown](x: U, y: int) -> tuple[int, U, str], [U: Unknown](x: U, y: str) -> tuple[int, U, bytes]]
+          expr = f('abb', 'abc')
+      #   └ TYPE tuple[int, str, bytes]
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-89401"])
+    fun `overloaded bound method with annotated self`() = test("""
+      from typing import overload
+
+      class A[T]:
+          @overload
+          def f(self: A[int]) -> str: ...
+
+          @overload
+          def f(self: A[str]) -> int: ...
+
+          def f(self) -> object:
+              raise NotImplementedError
+
+      def foo(a: A[str]):
+          f = a.f
+      #   └ TYPE () -> int
+          expr = f()
+      #   └ TYPE int
+      """)
+
+    @TestFor(issues = ["PY-89400"])
+    @Test
+    fun `method call on union of class types`() = test("""
+      class A[T]:
+          def foo[U](self: U) -> tuple[T, U]: ...
+
+      class B[T]:
+          def foo(self) -> T: ...
+
+      def f(receiver: A[int] | B[str]):
+          expr = receiver.foo()
+      #   └ TYPE tuple[int, A[int]] | str
+      """)
+
+    @Test
+    fun `bound method self in varargs`() = test("""
+      from typing import overload
+
+      class A[T]:
+          @overload
+          def f(*args: A[int]) -> str: ...
+
+          @overload
+          def f(*args: A[str]) -> int: ...
+
+          @overload
+          def f(*args: A[list[int]]) -> list[str]: ...
+
+          def f(*args: object) -> object:
+              raise NotImplementedError
+
+      a = A[str]()
+      func = a.f
+      #└ TYPE (*args: A[str]) -> int
+      expr = a.f()
+      #└ TYPE int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-90249"])
+    fun `bound method of type var with bound`() = test("""
+      class Box[U]:
+          def get(self) -> U: ...
+
+      def foo[T: Box[int]](x: T):
+          get = x.get
+      #   └ TYPE () -> int
+          expr = x.get()
+      #   └ TYPE int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-90249"])
+    fun `bound method of type var with constraints`() = test("""
+      class Box[U]:
+          def get(self) -> U: ...
+
+      def foo[T: (Box[int], Box[str])](x: T):
+          get = x.get
+      #   └ TYPE () -> int | () -> str
+          expr = get()
+      #   └ TYPE int | str
+      """)
+
+    @Test
+    fun `bound method returning self of type var`() = test("""
+      from typing import Self
+
+      class Box[U]:
+          def get(self) -> Self: ...
+
+      def foo[T: Box[int], Y: (Box[int], Box[str])](t: T, y: Y):
+          v1 = t.get()
+      #   └ TYPE T
+          v2 = y.get()
+      #   └ TYPE Y
+      """)
+
+    @Test
+    fun `metaclass method call on class`() = test("""
+      class Meta(type):
+          def foo(cls) -> int: ...
+
+      class Class(metaclass=Meta): ...
+
+      expr = Class.foo()
+      #└ TYPE int
+      """)
+
+    @Test
+    fun `call type preserves generic parameter`() = test("""
+      class MyList[T]:
+          def add(self, v: T) -> MyList[T]:
+              raise NotImplementedError
+
+      def add[T](c: MyList[T], v: T):
+          expr = c.add(v)
+      #   └ TYPE MyList[T]
+      """)
+
+    @TestFor(issues = ["PY-89079"])
+    @Test
+    fun `subscription expression as callee`() = test("""
+      class A:
+          def __call__[T](self, x: T) -> T: return x
+
+      def f(items: list[A]):
+          item = items[0]
+          _ = item(-7)
+      #   └ TYPE int
+          _ = items[0](1)
+      #   └ TYPE int
+      """)
   }
 
   @Nested
@@ -1366,7 +1580,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
           def call(self) -> Callable[P, int]: ...
       c = MyClass[str, int]() # WARNING Passed type arguments do not match type parameters [T, **P] of class 'MyClass'
       expr = c.call()
-      #└ TYPE (**P) -> int
+      #└ TYPE (...) -> int
       """)
 
     @Test
@@ -2143,7 +2357,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-82871"])
-    fun `Concatenate with ellipsis assignability`() = test("""
+    fun `Concatenate with ellipsis assignability`() = test(TestOptions(enablePyAnyType = false), """
       from typing import Callable, Concatenate
 
       call: Callable[Concatenate[int, ...], str]

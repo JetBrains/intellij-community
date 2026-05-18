@@ -161,7 +161,7 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
           def foo(self, value):
               return None
       expr = A().foo(object()) # WARNING No overload of 'foo' matches the arguments. Argument types: (object). Expected one of: (value: int), (value: str)
-      #└ TYPE Union[int, str]
+      #└ TYPE Unknown
       """,
     )
 
@@ -180,7 +180,7 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
       def foo(value):
           return None
       expr = foo(object()) # WARNING No overload of 'foo' matches the arguments. Argument types: (object). Expected one of: (value: int), (value: str)
-      #└ TYPE Union[int, str]
+      #└ TYPE Unknown
       """,
     )
 
@@ -191,7 +191,7 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
       """
       from b import A
       expr = A().foo(object()) # WARNING No overload of 'foo' matches the arguments. Argument types: (object). Expected one of: (value: int), (value: str)
-      #└ TYPE Union[int, str]
+      #└ TYPE Unknown
       """,
       "b.py" to OVERLOAD_CLASS_MODULE,
     )
@@ -203,7 +203,7 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
       """
       from b import foo
       expr = foo(object()) # WARNING No overload of 'foo' matches the arguments. Argument types: (object). Expected one of: (value: int), (value: str)
-      # └ TYPE Union[int, str]
+      # └ TYPE Unknown
       """,
       "b.py" to OVERLOAD_TOPLEVEL_MODULE,
     )
@@ -399,7 +399,7 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-53105"])
-    fun `variadic generic class overloaded methods - first method`() { assertThrows<TestLoggerAssertionError>("PY-90332") { test("""
+    fun `variadic generic class overloaded methods - first method`() = test("""
       from __future__ import annotations
 
       from typing import TypeVarTuple
@@ -429,11 +429,11 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
 
       expr = a.transpose()
       #└ TYPE Array[str, int]
-      """) } }
+      """)
 
     @Test
     @TestFor(issues = ["PY-53105"])
-    fun `variadic generic class overloaded methods - second method`() { assertThrows<TestLoggerAssertionError>("PY-90332") { test("""
+    fun `variadic generic class overloaded methods - second method`() = test("""
       from __future__ import annotations
 
       from typing import TypeVarTuple
@@ -462,7 +462,7 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
 
       expr = a.transpose()
       #└ TYPE Array[list[int], str, int]
-      """) } }
+      """)
 
     @Test
     fun `generic self specialization in overloaded constructor`() = test("""
@@ -594,8 +594,8 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
       l = [foo]
       l.append(foo)  # ok
       l.append(foo2)  # ok
-      l.append(bar) # WARNING Expected type 'Overload[(x: int) -> int, (x: str) -> str]' (matched generic type '_T'), got 'Overload[(x: int) -> int, (x: str) -> int]' instead
-      l.append(baz) # WARNING Expected type 'Overload[(x: int) -> int, (x: str) -> str]' (matched generic type '_T'), got '(x: int) -> int' instead
+      l.append(bar) # WARNING Expected type 'Overload[(x: int) -> int, (x: str) -> str]', got 'Overload[(x: int) -> int, (x: str) -> int]' instead
+      l.append(baz) # WARNING Expected type 'Overload[(x: int) -> int, (x: str) -> str]', got '(x: int) -> int' instead
       """)
 
     @Test
@@ -657,7 +657,7 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
           l3.append(c)
 
           l4 = [bad_converter_func]
-          l4.append(c) # WARNING Expected type 'Overload[(x: str) -> str, (x: int) -> int]' (matched generic type '_T'), got 'ConverterProtocol' instead
+          l4.append(c) # WARNING Expected type 'Overload[(x: str) -> str, (x: int) -> int]', got 'ConverterProtocol' instead
       """)
 
     @Test
@@ -690,7 +690,7 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
       l1.append(many_overloads)  # ok
 
       l2 = [many_overloads]
-      l2.append(few_overloads) # WARNING Expected type 'Overload[(x: int) -> int, (x: str) -> str, (x: float | int) -> float | int]' (matched generic type '_T'), got 'Overload[(x: str) -> str, (x: int) -> int]' instead
+      l2.append(few_overloads) # WARNING Expected type 'Overload[(x: int) -> int, (x: str) -> str, (x: float | int) -> float | int]', got 'Overload[(x: str) -> str, (x: int) -> int]' instead
       """)
 
     @Test
@@ -941,18 +941,19 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
     """
     from module import foo, bar
 
-    foo("str")
     foo(5)
-    foo([5]) # WARNING No overload of 'foo' matches the arguments. Argument types: (list[Literal[5]]). Expected one of: (p: str), (p: int)
+    foo("str", 5)
+    foo([5]) # WARNING Expected type 'int', got 'list[Literal[5]]' instead
 
     bar("str")
     bar(5)
     bar([5]) # WARNING No overload of 'bar' matches the arguments. Argument types: (list[Literal[5]]). Expected one of: (p: str), (p: int)
     """,
     "module.pyi" to """
+      import sys
       from typing import overload
 
-      if undefined:
+      if sys.version_info < (3, ):
           def foo(p: str) -> str: pass
       else:
           @overload
@@ -960,6 +961,7 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
           @overload
           def foo(p: str, i: int) -> str: pass
 
+      @overload
       def bar(p: str) -> str: pass
 
       @overload

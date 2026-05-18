@@ -275,16 +275,16 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
     @TestFor(issues = ["PY-76659"])
     fun `class chain fixed point in while loop`() = test("""
       class A:
-          def bar() -> "B":
+          def bar(self) -> "B":
               return B()
       class B:
-          def bar() -> "C":
+          def bar(self) -> "C":
               return C()
       class C:
-          def bar() -> "D":
+          def bar(self) -> "D":
               return D()
       class D:
-          def bar() -> A:
+          def bar(self) -> A:
               return A()
 
       def foo(b):
@@ -721,7 +721,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
           def __new__(cls, *args, **kwargs):
               expr = super().__new__(cls, *args, **kwargs)
               return expr
-      #              └ TYPE dict[Unknown, Unknown] FIXME Self@Subclass
+      #              └ TYPE dict FIXME Self@Subclass
       """)
 
     @Test
@@ -1984,7 +1984,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       """,
       "a.py" to """
         class Stack[T]:
-            def pop() -> T:
+            def pop(self) -> T:
                 pass
         """,
     )
@@ -2079,7 +2079,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       r: Box[int] | Box[str] = ...
       #                        ^^^ WARNING Expected type 'Box[int] | Box[str]', got 'EllipsisType' instead
       expr = r.get()
-      #└ TYPE int FIXME int | str
+      #└ TYPE int | str
       """)
 
     @Test

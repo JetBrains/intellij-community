@@ -1,29 +1,38 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.types;
 
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.AccessDirection;
+import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyCallSiteOwner;
 import com.jetbrains.python.psi.PyCallable;
 import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyTypeParameter;
 import com.jetbrains.python.psi.PyTypeParameterList;
 import com.jetbrains.python.psi.PyTypeParameterListOwner;
 import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.impl.ArgumentMappingResults;
 import com.jetbrains.python.psi.impl.ParamHelper;
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
+import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
@@ -62,11 +71,29 @@ public class PyFunctionTypeImpl implements PyFunctionType {
 
   @Override
   public @Nullable PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteOwner callSite) {
-    return myCallable.getCallType(context, callSite);
+    if (!(myCallable instanceof PyFunction function)) {
+      return context.getReturnType(myCallable);
+    }
+
+    for (PyTypeProvider typeProvider : PyTypeProvider.EP_NAME.getExtensionList()) {
+      final Ref<PyType> typeRef = typeProvider.getCallType(function, callSite, context);
+      if (typeRef != null) {
+        final PyType type = typeRef.get();
+        if (type != null) {
+          type.assertValid(typeProvider.toString());
+        }
+        return type;
+      }
+    }
+
+    List<PyExpression> arguments = callSite.getArguments(myCallable);
+    PyCallableParameterListTypeImpl parametersType = new PyCallableParameterListTypeImpl(myParameters);
+    ArgumentMappingResults mappingResults = PyCallExpressionHelper.analyzeArguments(arguments, parametersType, context);
+    return function.getCallType(null, callSite, mappingResults.getMappedParameters(), context);
   }
 
   @Override
-  public @Nullable List<@NotNull PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
+  public @NotNull List<@NotNull PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
     return myParameters;
   }
 

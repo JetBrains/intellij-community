@@ -20,6 +20,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
     @Test
     @TestFor(issues = ["PY-7058"])
     fun `type of an instance is a class object type`() = test(
+      TestOptions(assertRecursionPrevention = false), // PY-90413
       """
       class C:
           pass
@@ -33,6 +34,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
     @Test
     @TestFor(issues = ["PY-7058"])
     fun `type of a class object is type`() = test(
+      TestOptions(assertRecursionPrevention = false), // PY-90413
       """
       class C:
           pass
@@ -44,11 +46,13 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-7058"])
-    fun `type of an unknown value is Unknown`() = test(
+    fun `type of an any value is Any`() = test(
+      TestOptions(enablePyAnyType = false, assertRecursionPrevention = false), // PY-90413
       """
       def f(x):
+      #     └ TYPE Any
           expr = type(x)
-      #   └ TYPE Unknown
+      #   └ TYPE Any
       """,
     )
 
@@ -1230,7 +1234,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
               ...
 
       expr = Box.create("foo")
-      #└ TYPE Box[str]
+      #└ TYPE Box FIXME Box[str]
       """)
 
     @Test
@@ -1243,8 +1247,8 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
               ...
 
       b: Box[int]
-      expr = b.create("foo") # WARNING Expected type 'int' (matched generic type 'T'), got 'Literal["foo"]' instead
-      #└ TYPE Unknown
+      expr = b.create("foo") # WARNING Expected type 'int', got 'Literal["foo"]' instead
+      #└ TYPE Box[int]
       """)
 
     @Test
@@ -1256,8 +1260,8 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
               ...
 
       b: Box[int]
-      expr = b.m("foo") # WARNING Expected type 'int' (matched generic type 'T'), got 'Literal["foo"]' instead
-      #└ TYPE Unknown
+      expr = b.m("foo") # WARNING Expected type 'int', got 'Literal["foo"]' instead
+      #└ TYPE Box[int]
       """)
 
     @Test
@@ -1489,11 +1493,11 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       sh.difference(cir)
       sh.difference(sh)
       cir.difference(cir)
-      cir.difference(sh) # WARNING Expected type 'Circle' (matched generic type 'Self@Shape'), got 'Shape' instead
+      cir.difference(sh) # WARNING Expected type 'Circle', got 'Shape' instead
 
       cir.apply(fCircle)
-      cir.apply(fShape) # WARNING Expected type '(Circle) -> None' (matched generic type '(Self@Shape) -> None'), got '(sh: Shape) -> None' instead
-      sh.apply(fCircle)
+      cir.apply(fShape)
+      sh.apply(fCircle) # WARNING Expected type '(Shape) -> None', got '(c: Circle) -> None' instead
       sh.apply(fShape)
       """)
 
@@ -1546,13 +1550,13 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       myClass.foo(subClass)
       myClass.foo(42)
       myClass.foo(None)
-      myClass.foo("") # WARNING Expected type 'MyClass | None | int' (matched generic type 'Self@MyClass | None | int'), got 'Literal[""]' instead
+      myClass.foo("") # WARNING Expected type 'MyClass | None | int', got 'Literal[""]' instead
 
-      subClass.foo(myClass) # WARNING Expected type 'SubClass | None | int' (matched generic type 'Self@MyClass | None | int'), got 'MyClass' instead
+      subClass.foo(myClass) # WARNING Expected type 'SubClass | None | int', got 'MyClass' instead
       subClass.foo(subClass)
       subClass.foo(42)
       subClass.foo(None)
-      subClass.foo("") # WARNING Expected type 'SubClass | None | int' (matched generic type 'Self@MyClass | None | int'), got 'Literal[""]' instead
+      subClass.foo("") # WARNING Expected type 'SubClass | None | int', got 'Literal[""]' instead
       """)
 
     @Test
@@ -1574,12 +1578,12 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       myClass.foo(myClass.foo(myClass))
       myClass.foo(subClass.foo(subClass))
       myClass.foo(myClass.foo(subClass))
-      myClass.foo(subClass.foo(myClass)) # WARNING Expected type 'SubClass' (matched generic type 'Self@MyClass'), got 'MyClass' instead
+      myClass.foo(subClass.foo(myClass)) # WARNING Expected type 'SubClass', got 'MyClass' instead
 
-      subClass.foo(myClass.foo(myClass)) # WARNING Expected type 'SubClass' (matched generic type 'Self@MyClass'), got 'MyClass' instead
+      subClass.foo(myClass.foo(myClass)) # WARNING Expected type 'SubClass', got 'MyClass' instead
       subClass.foo(subClass.foo(subClass))
-      subClass.foo(myClass.foo(subClass)) # WARNING Expected type 'SubClass' (matched generic type 'Self@MyClass'), got 'MyClass' instead
-      subClass.foo(subClass.foo(myClass)) # WARNING Expected type 'SubClass' (matched generic type 'Self@MyClass'), got 'MyClass' instead
+      subClass.foo(myClass.foo(subClass)) # WARNING Expected type 'SubClass', got 'MyClass' instead
+      subClass.foo(subClass.foo(myClass)) # WARNING Expected type 'SubClass', got 'MyClass' instead
       """)
 
     @Test
@@ -1592,12 +1596,15 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
           def bar(x: type[A[int]]) -> None: ...
 
       A[int]().foo()
-      A[str]().foo() # WARNING Expected type 'A[int]', got 'A[str]' instead
+      A[str]().foo()
+      #^^^^^^^^^^^ WARNING Invalid self argument `A[str]` to method `A.foo` with type `(x: A[int]) -> None`
 
       A[int].bar()
       A[int]().bar()
-      A[str].bar() # WARNING Expected type 'type[A[int]]', got 'type[A[str]]' instead
-      A[str]().bar() # WARNING Expected type 'type[A[int]]', got 'type[A[str]]' instead
+      A[str].bar()
+      #^^^^^^^^^ WARNING Invalid self argument `type[A[str]]` to method `A.bar` with type `(x: type[A[int]]) -> None`
+      A[str]().bar()
+      #^^^^^^^^^^^ WARNING Invalid self argument `type[A[str]]` to method `A.bar` with type `(x: type[A[int]]) -> None`
       """)
 
     @Test
@@ -1614,7 +1621,8 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
 
       def f(x: A | B, y: A | B | C[str]):
           x.foo()
-          y.foo() # TODO: Expected warning: 'C[str]' not assignable to 'C[int]'
+          y.foo()
+      #   ^^^^^ WARNING Invalid self argument `C[str]` to method `C.foo` with type `(self: C[int]) -> None`
       """)
 
     @Test

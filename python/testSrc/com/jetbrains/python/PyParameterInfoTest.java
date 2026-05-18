@@ -171,7 +171,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
 
   public void testKwdArgInClass() {
     Map<String, PsiElement> marks = loadTest(1);
-    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("self: Self@A, **kw", new String[]{"**kw"}, new String[]{"self: Self@A, "});
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("**kw", new String[]{"**kw"});
   }
 
   public void testKwdArgOutOfOrder() {
@@ -243,14 +243,14 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   public void testSimpleMethod() {
     Map<String, PsiElement> marks = loadTest(1);
 
-    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("self: Self@A, a", new String[]{"a"}, new String[]{"self: Self@A, "});
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a", new String[]{"a"});
   }
 
   public void testSimpleClassFunction() {
     Map<String, PsiElement> marks = loadTest(2);
 
-    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("self: Self@A, a", new String[]{"self: Self@A, "});
-    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("self: Self@A, a", new String[]{"a"});
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("self: A, a", new String[]{"self: A, "});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("self: A, a", new String[]{"a"});
   }
 
   public void testReassignedFunction() {
@@ -263,47 +263,45 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   public void testReassignedInstanceMethod() {
     Map<String, PsiElement> marks = loadTest(3);
 
-    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("self: Self@Foo, a, b, c", new String[]{"a, "}, new String[]{"self: Self@Foo, "});
-    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("self: Self@Foo, a, b, c", new String[]{"b, "}, new String[]{"self: Self@Foo, "});
-    feignCtrlP(marks.get("<arg3>").getTextOffset()).check("self: Self@Foo, a, b, c", new String[]{"c"}, new String[]{"self: Self@Foo, "});
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a, b, c", new String[]{"a, "});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a, b, c", new String[]{"b, "});
+    feignCtrlP(marks.get("<arg3>").getTextOffset()).check("a, b, c", new String[]{"c"});
   }
 
   public void testReassignedClassInit() {
     Map<String, PsiElement> marks = loadTest(2);
 
-    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("self: Self@Bar, a, b", new String[]{"a, "}, new String[]{"self: Self@Bar, "});
-    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("self: Self@Bar, a, b", new String[]{"b"}, new String[]{"self: Self@Bar, "});
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a, b", new String[]{"a, "});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a, b", new String[]{"b"});
   }
 
   public void testInheritedClassInit() {
     Map<String, PsiElement> marks = loadTest(2);
 
-    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("self: Self@Bar, a, b", new String[]{"a, "}, new String[]{"self: Self@Bar, "});
-    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("self: Self@Bar, a, b", new String[]{"b"}, new String[]{"self: Self@Bar, "});
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a, b", new String[]{"a, "});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a, b", new String[]{"b"});
   }
 
   public void testRedefinedNewConstructorCall() {
     Map<String, PsiElement> marks = loadTest(2);
 
-    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("cls: type[Self@A], a, b", new String[]{"a, "},
-                                                          new String[]{"cls: type[Self@A], "});
-    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("cls: type[Self@A], a, b", new String[]{"b"},
-                                                          new String[]{"cls: type[Self@A], "});
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a, b", new String[]{"a, "});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a, b", new String[]{"b"});
   }
 
   public void testRedefinedNewDirectCall() {
     Map<String, PsiElement> marks = loadTest(3);
 
-    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("cls: type[Self@A], a, b", new String[]{"cls: type[Self@A], "});
-    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("cls: type[Self@A], a, b", new String[]{"a, "});
-    feignCtrlP(marks.get("<arg3>").getTextOffset()).check("cls: type[Self@A], a, b", new String[]{"b"});
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("cls: type[A], a, b", new String[]{"cls: type[A], "});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("cls: type[A], a, b", new String[]{"a, "});
+    feignCtrlP(marks.get("<arg3>").getTextOffset()).check("cls: type[A], a, b", new String[]{"b"});
   }
 
   public void testIgnoreNewInOldStyleClass() {
     runWithLanguageLevel(LanguageLevel.PYTHON27, () -> {
       Map<String, PsiElement> marks = loadTest(1);
 
-      feignCtrlP(marks.get("<arg1>").getTextOffset()).check("self: Self@A, one", new String[]{"one"}, new String[]{"self: Self@A, "});
+      feignCtrlP(marks.get("<arg1>").getTextOffset()).check("one", new String[]{"one"});
     });
   }
 
@@ -311,34 +309,34 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   public void testBoundMethodSimple() {
     Map<String, PsiElement> marks = loadTest(2);
 
-    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("self: Self@A, a, b", new String[]{"a, "}, new String[]{"self: Self@A, "});
-    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("self: Self@A, a, b", new String[]{"b"}, new String[]{"self: Self@A, "});
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a, b", new String[]{"a, "});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a, b", new String[]{"b"});
   }
 
   public void testBoundMethodReassigned() {
     Map<String, PsiElement> marks = loadTest(2);
 
-    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("self: Self@A, a, b", new String[]{"a, "}, new String[]{"self: Self@A, "});
-    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("self: Self@A, a, b", new String[]{"b"}, new String[]{"self: Self@A, "});
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a, b", new String[]{"a, "});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a, b", new String[]{"b"});
   }
 
   // PY-53671
   public void testUnboundMethodReassignedAndImportedWithQualifiedImport() {
     Map<String, PsiElement> marks = loadMultiFileTest(1);
-    feignCtrlP(marks.get("<arg>").getTextOffset()).check("self: Self@C, param", new String[]{"self: Self@C, "},
+    feignCtrlP(marks.get("<arg>").getTextOffset()).check("self: C, param", new String[]{"self: C, "},
                                                          ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
   // PY-53671
   public void testBoundMethodReassignedAndImportedWithQualifiedImport() {
     Map<String, PsiElement> marks = loadMultiFileTest(1);
-    feignCtrlP(marks.get("<arg>").getTextOffset()).check("self: Self@C, param", new String[]{"param"}, new String[]{"self: Self@C, "});
+    feignCtrlP(marks.get("<arg>").getTextOffset()).check("param", new String[]{"param"});
   }
 
   public void testConstructorFactory() {
     Map<String, PsiElement> marks = loadTest(1);
 
-    feignCtrlP(marks.get("<arg>").getTextOffset()).check("self: Self@Foo, color", new String[]{"color"}, new String[]{"self: Self@Foo, "});
+    feignCtrlP(marks.get("<arg>").getTextOffset()).check("color", new String[]{"color"});
   }
 
 
@@ -474,9 +472,9 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   public void testMultiResolved() {
     final int offset = loadTest(1).get("<arg2>").getTextOffset();
 
-    final List<String> texts = Arrays.asList("self: Self@C1, x", "self: Self@C2, x, y: str");
+    final List<String> texts = Arrays.asList("x", "x, y: str");
     final List<String[]> highlighted = Arrays.asList(ArrayUtilRt.EMPTY_STRING_ARRAY, new String[]{"y: str"});
-    final List<String[]> disabled = Arrays.asList(new String[]{"self: Self@C1, "}, new String[]{"self: Self@C2, "});
+    final List<String[]> disabled = Arrays.asList(ArrayUtilRt.EMPTY_STRING_ARRAY, ArrayUtilRt.EMPTY_STRING_ARRAY);
 
     feignCtrlP(offset).check(texts, highlighted, disabled);
   }
@@ -484,9 +482,9 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   public void testOverloadsInImportedClass() {
     final int offset = loadMultiFileTest(1).get("<arg1>").getTextOffset();
 
-    final List<String> texts = Arrays.asList("self: Self@C, a: str, b: str", "self: Self@C, a: int, b: int");
+    final List<String> texts = Arrays.asList("a: str, b: str", "a: int, b: int");
     final List<String[]> highlighted = Arrays.asList(new String[]{"a: str, "}, new String[]{"a: int, "});
-    final List<String[]> disabled = Arrays.asList(new String[]{"self: Self@C, "}, new String[]{"self: Self@C, "});
+    final List<String[]> disabled = Arrays.asList(ArrayUtilRt.EMPTY_STRING_ARRAY, ArrayUtilRt.EMPTY_STRING_ARRAY);
 
     feignCtrlP(offset).check(texts, highlighted, disabled);
   }
@@ -503,9 +501,9 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   public void testOverloadsWithDifferentNumberOfArgumentsInImportedClass() {
     final int offset = loadMultiFileTest(1).get("<arg1>").getTextOffset();
 
-    final List<String> texts = Arrays.asList("self: Self@C, a: str, b: str", "self: Self@C, a: int");
+    final List<String> texts = Arrays.asList("a: str, b: str", "a: int");
     final List<String[]> highlighted = Arrays.asList(new String[]{"a: str, "}, new String[]{"a: int"});
-    final List<String[]> disabled = Arrays.asList(new String[]{"self: Self@C, "}, new String[]{"self: Self@C, "});
+    final List<String[]> disabled = Arrays.asList(ArrayUtilRt.EMPTY_STRING_ARRAY, ArrayUtilRt.EMPTY_STRING_ARRAY);
 
     feignCtrlP(offset).check(texts, highlighted, disabled);
   }
@@ -534,10 +532,10 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   public void testOverloadsAndImplementationInClass() {
     final int offset = loadTest(1).get("<arg1>").getTextOffset();
 
-    final List<String> texts = Arrays.asList("self: Self@A, value: None", "self: Self@A, value: int", "self: Self@A, value: str");
+    final List<String> texts = Arrays.asList("value: None", "value: int", "value: str");
     final List<String[]> highlighted = Arrays.asList(new String[]{"value: None"}, new String[]{"value: int"}, new String[]{"value: str"});
     final List<String[]> disabled =
-      Arrays.asList(new String[]{"self: Self@A, "}, new String[]{"self: Self@A, "}, new String[]{"self: Self@A, "});
+      Arrays.asList(ArrayUtilRt.EMPTY_STRING_ARRAY, ArrayUtilRt.EMPTY_STRING_ARRAY, ArrayUtilRt.EMPTY_STRING_ARRAY);
 
     feignCtrlP(offset).check(texts, highlighted, disabled);
   }
@@ -557,10 +555,10 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   public void testOverloadsAndImplementationInImportedClass() {
     final int offset = loadMultiFileTest(1).get("<arg1>").getTextOffset();
 
-    final List<String> texts = Arrays.asList("self: Self@A, value: None", "self: Self@A, value: int", "self: Self@A, value: str");
+    final List<String> texts = Arrays.asList("value: None", "value: int", "value: str");
     final List<String[]> highlighted = Arrays.asList(new String[]{"value: None"}, new String[]{"value: int"}, new String[]{"value: str"});
     final List<String[]> disabled =
-      Arrays.asList(new String[]{"self: Self@A, "}, new String[]{"self: Self@A, "}, new String[]{"self: Self@A, "});
+      Arrays.asList(ArrayUtilRt.EMPTY_STRING_ARRAY, ArrayUtilRt.EMPTY_STRING_ARRAY, ArrayUtilRt.EMPTY_STRING_ARRAY);
 
     feignCtrlP(offset).check(texts, highlighted, disabled);
   }
@@ -632,7 +630,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   // PY-24930
   public void testCallOperator() {
     for (int offset : StreamEx.of(loadTest(2).values()).map(PsiElement::getTextOffset)) {
-      feignCtrlP(offset).check("self: Self@Foo, arg: int", new String[]{"arg: int"}, new String[]{"self: Self@Foo, "});
+      feignCtrlP(offset).check("arg: int", new String[]{"arg: int"});
     }
   }
 
@@ -674,10 +672,10 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("x: int, y: str, z: float | int = 0.0", new String[]{"x: int, "});
     feignCtrlP(marks.get("<arg2>").getTextOffset()).check("x: int, y: str, z: float | int = 0.0", new String[]{"x: int, "});
 
-    feignCtrlP(marks.get("<arg3>").getTextOffset()).check("self: Self@object", ArrayUtilRt.EMPTY_STRING_ARRAY,
-                                                          new String[]{"self: Self@object"});
+    feignCtrlP(marks.get("<arg3>").getTextOffset()).check("<no parameters>", ArrayUtilRt.EMPTY_STRING_ARRAY,
+                                                          new String[]{"<no parameters>"});
 
-    feignCtrlP(marks.get("<arg4>").getTextOffset()).check("self: Self@B2, x: int", new String[]{"x: int"}, new String[]{"self: Self@B2, "});
+    feignCtrlP(marks.get("<arg4>").getTextOffset()).check("x: int", new String[]{"x: int"});
     feignCtrlP(marks.get("<arg5>").getTextOffset()).check("b: int", new String[]{"b: int"});
     feignCtrlP(marks.get("<arg6>").getTextOffset()).check("b: int", new String[]{"b: int"});
     feignCtrlP(marks.get("<arg7>").getTextOffset()).check("a: int, b: int", new String[]{"a: int, "});
@@ -696,8 +694,8 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a: int, b: str", new String[]{"a: int, "});
     feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a: int, b: str", new String[]{"a: int, "});
     feignCtrlP(marks.get("<arg3>").getTextOffset()).check("a: int", new String[]{"a: int"});
-    feignCtrlP(marks.get("<arg4>").getTextOffset()).check("self: Self@object", ArrayUtilRt.EMPTY_STRING_ARRAY,
-                                                          new String[]{"self: Self@object"});
+    feignCtrlP(marks.get("<arg4>").getTextOffset()).check("<no parameters>", ArrayUtilRt.EMPTY_STRING_ARRAY,
+                                                          new String[]{"<no parameters>"});
   }
 
   // PY-28506
@@ -706,9 +704,9 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
 
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a: int", new String[]{"a: int"});
     feignCtrlP(marks.get("<arg2>").getTextOffset()).check("b: str", new String[]{"b: str"});
-    feignCtrlP(marks.get("<arg3>").getTextOffset()).check("self: Self@B3, b: str", new String[]{"b: str"}, new String[]{"self: Self@B3, "});
-    feignCtrlP(marks.get("<arg4>").getTextOffset()).check("self: Self@object", ArrayUtilRt.EMPTY_STRING_ARRAY,
-                                                          new String[]{"self: Self@object"});
+    feignCtrlP(marks.get("<arg3>").getTextOffset()).check("b: str", new String[]{"b: str"});
+    feignCtrlP(marks.get("<arg4>").getTextOffset()).check("<no parameters>", ArrayUtilRt.EMPTY_STRING_ARRAY,
+                                                          new String[]{"<no parameters>"});
     feignCtrlP(marks.get("<arg5>").getTextOffset()).check("x: int, z: str", new String[]{"x: int, "});
   }
 
@@ -730,11 +728,10 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
         feignCtrlP(marks.get("<arg1>").getTextOffset()).check("x: int, y: str, z: float | int = 0.0", new String[]{"x: int, "});
         feignCtrlP(marks.get("<arg2>").getTextOffset()).check("x: int, y: str, z: float | int = 0.0", new String[]{"x: int, "});
 
-        feignCtrlP(marks.get("<arg3>").getTextOffset()).check("self: Self@object", ArrayUtilRt.EMPTY_STRING_ARRAY,
-                                                              new String[]{"self: Self@object"});
+        feignCtrlP(marks.get("<arg3>").getTextOffset()).check("<no parameters>", ArrayUtilRt.EMPTY_STRING_ARRAY,
+                                                              new String[]{"<no parameters>"});
 
-        feignCtrlP(marks.get("<arg4>").getTextOffset()).check("self: Self@B2, x: int", new String[]{"x: int"},
-                                                              new String[]{"self: Self@B2, "});
+        feignCtrlP(marks.get("<arg4>").getTextOffset()).check("x: int", new String[]{"x: int"});
         feignCtrlP(marks.get("<arg5>").getTextOffset()).check("b: int", new String[]{"b: int"});
         feignCtrlP(marks.get("<arg6>").getTextOffset()).check("x: int, y: str = \"0\"", new String[]{"x: int, "});
         feignCtrlP(marks.get("<arg7>").getTextOffset()).check("x: int", new String[]{"x: int"});
@@ -775,8 +772,8 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
         feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a: int, b: str", new String[]{"a: int, "});
         feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a: int, b: str", new String[]{"a: int, "});
         feignCtrlP(marks.get("<arg3>").getTextOffset()).check("a: int", new String[]{"a: int"});
-        feignCtrlP(marks.get("<arg4>").getTextOffset()).check("self: Self@object", ArrayUtilRt.EMPTY_STRING_ARRAY,
-                                                              new String[]{"self: Self@object"});
+        feignCtrlP(marks.get("<arg4>").getTextOffset()).check("<no parameters>", ArrayUtilRt.EMPTY_STRING_ARRAY,
+                                                              new String[]{"<no parameters>"});
         feignCtrlP(marks.get("<arg5>").getTextOffset()).check("y: int = 0, z: int = 10, x: int = 15", new String[]{"y: int = 0, "});
         feignCtrlP(marks.get("<arg6>").getTextOffset()).check("type: int = ..., locations: str = ...", new String[]{"type: int = ..., "});
       }
@@ -794,10 +791,9 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
 
         feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a: int", new String[]{"a: int"});
         feignCtrlP(marks.get("<arg2>").getTextOffset()).check("b: str", new String[]{"b: str"});
-        feignCtrlP(marks.get("<arg3>").getTextOffset()).check("self: Self@B3, b: str", new String[]{"b: str"},
-                                                              new String[]{"self: Self@B3, "});
-        feignCtrlP(marks.get("<arg4>").getTextOffset()).check("self: Self@object", ArrayUtilRt.EMPTY_STRING_ARRAY,
-                                                              new String[]{"self: Self@object"});
+        feignCtrlP(marks.get("<arg3>").getTextOffset()).check("b: str", new String[]{"b: str"});
+        feignCtrlP(marks.get("<arg4>").getTextOffset()).check("<no parameters>", ArrayUtilRt.EMPTY_STRING_ARRAY,
+                                                              new String[]{"<no parameters>"});
         feignCtrlP(marks.get("<arg5>").getTextOffset()).check("x: int, z: str", new String[]{"x: int, "});
       }
     );
@@ -1018,9 +1014,9 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     final int offset = loadTest(1).get("<arg1>").getTextOffset();
 
     feignCtrlP(offset).check(Arrays.asList(
-                               "cls: type[Self@TypeVar], name: str, *constraints, bound: Any | None = None, contravariant: bool = False, covariant: bool = False, infer_variance: bool = False, default=..."),
+                               "name: str, *constraints, bound: Any | None = None, contravariant: bool = False, covariant: bool = False, infer_variance: bool = False, default=..."),
                              Arrays.asList(new String[]{"name: str, "}, new String[]{"name: str, "}),
-                             Arrays.asList(new String[]{"cls: type[Self@TypeVar], "}, new String[]{"cls: type[Self@TypeVar], "}));
+                             Arrays.asList(ArrayUtilRt.EMPTY_STRING_ARRAY, ArrayUtilRt.EMPTY_STRING_ARRAY));
   }
 
   // PY-36008
@@ -1081,9 +1077,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   public void testNonReferenceCallee() {
     final Map<String, PsiElement> marks = loadTest(1);
 
-    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("self: Self@CallableTest, arg=None",
-                                                          new String[]{"arg=None"},
-                                                          new String[]{"self: Self@CallableTest, "});
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("arg=None", new String[]{"arg=None"});
   }
 
   // PY-53611
@@ -1375,10 +1369,8 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   public void testFunctoolsWraps() {
     final Map<String, PsiElement> marks = loadTest(2);
 
-    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("self: Self@MyClass, s: str, b: bool", new String[]{"s: str, "},
-                                                          new String[]{"self: Self@MyClass, "});
-    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("self: Self@MyClass, s: str, b: bool", new String[]{"b: bool"},
-                                                          new String[]{"self: Self@MyClass, "});
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("s: str, b: bool", new String[]{"s: str, "});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("s: str, b: bool", new String[]{"b: bool"});
   }
 
   // PY-58497

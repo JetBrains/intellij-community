@@ -63,6 +63,7 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
 
   override fun getReferenceType(referenceTarget: PsiElement, context: TypeEvalContext, anchor: PsiElement?): Ref<PyType>? {
     // MyDataclass() call
+    val anchor = anchor?.let(PyCallExpressionNavigator::getPyCallExpressionByCallee)
     if (referenceTarget is PyClass && anchor is PyCallExpression) {
       return getDataclassTypeForClass(context.getType(referenceTarget), context).notNullToRef()
     }

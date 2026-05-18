@@ -81,6 +81,7 @@ class PyInlineFunctionTest : PyTestCase() {
   fun testNestedCalls() = doTest(inlineThis = false, remove = true)
   fun testCallFromStaticMethod() = doTest()
   fun testCallFromClassMethod() = doTest()
+  fun testCallThroughClassName() = doTest()
   fun testComplexQualifier() = doTest()
   fun testRedundantQualifier() = doTest()
   fun testFunctionWithLambda() = doTest()

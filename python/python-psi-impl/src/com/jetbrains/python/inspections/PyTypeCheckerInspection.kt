@@ -4,6 +4,7 @@ package com.jetbrains.python.inspections
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
@@ -12,7 +13,6 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
-import com.jetbrains.python.ast.PyAstFunction
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil.getScopeOwner
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider.getEnumAttributeInfo
@@ -72,6 +72,7 @@ import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper.analyzeArguments
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper.mapArguments
 import com.jetbrains.python.psi.impl.PyPsiUtils.flattenParens
+import com.jetbrains.python.psi.impl.PyReferenceExpressionImpl
 import com.jetbrains.python.psi.impl.PySubscriptionExpressionImpl
 import com.jetbrains.python.psi.impl.PyTargetExpressionImpl
 import com.jetbrains.python.psi.resolve.PyResolveContext
@@ -86,7 +87,6 @@ import com.jetbrains.python.psi.types.PyCollectionType
 import com.jetbrains.python.psi.types.PyCollectionTypeImpl
 import com.jetbrains.python.psi.types.PyConcatenateType
 import com.jetbrains.python.psi.types.PyDescriptorTypeUtil.getExpectedValueTypeForDunderSet
-import com.jetbrains.python.psi.types.PyInstantiableType
 import com.jetbrains.python.psi.types.PyLiteralType.Companion.promoteToLiteral
 import com.jetbrains.python.psi.types.PyLiteralType.Companion.upcastLiteralToClass
 import com.jetbrains.python.psi.types.PyNeverType
@@ -107,7 +107,9 @@ import com.jetbrains.python.psi.types.PyTypeChecker.unifyReceiver
 import com.jetbrains.python.psi.types.PyTypeInferenceCspFactory.unifyReceiver
 import com.jetbrains.python.psi.types.PyTypeParameterMapping
 import com.jetbrains.python.psi.types.PyTypeParameterType
+import com.jetbrains.python.psi.types.PyTypeUtil.asUnionSequence
 import com.jetbrains.python.psi.types.PyTypeUtil.derefOrUnknown
+import com.jetbrains.python.psi.types.isUnknown
 import com.jetbrains.python.psi.types.PyTypedDictType
 import com.jetbrains.python.psi.types.PyTypedDictType.Companion.checkExpression
 import com.jetbrains.python.psi.types.PyTypedDictType.Companion.isDictExpression
@@ -367,6 +369,16 @@ open class PyTypeCheckerInspection : PyInspection() {
 
     override fun visitPyReferenceExpression(node: PyReferenceExpression) {
       checkClassAttributeAccess(node)
+
+      // Recompute the qualified reference type when it's `Unknown` to collect possible method binding errors.
+      if (node.isQualified &&
+          myTypeEvalContext.getType(node).asUnionSequence().any { it.isUnknown }) {
+        val errors = mutableListOf<@InspectionMessage String>()
+        PyReferenceExpressionImpl.getQualifiedReferenceType(node, myTypeEvalContext, errors)
+        for (error in errors) {
+          registerProblem(node, error, effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING))
+        }
+      }
     }
 
     override fun visitPyAssignmentStatement(node: PyAssignmentStatement) {
@@ -852,6 +864,24 @@ open class PyTypeCheckerInspection : PyInspection() {
     }
 
     private fun checkCallSite(callSite: PyCallSiteOwner) {
+      // Check constructor call self argument type
+      if (callSite is PyCallExpression) {
+        val callee = callSite.callee
+        if (callee != null) {
+          val calleeType = myTypeEvalContext.getType(callee)
+          if (calleeType is PyClassType && calleeType.isDefinition) {
+            val errors = mutableListOf<@InspectionMessage String>()
+            val constructorType = PyCallExpressionHelper.createCallableFromClass(calleeType, resolveContext, errors)
+            if (constructorType.isUnknown) {
+              for (error in errors) {
+                registerProblem(callSite, error, effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING))
+              }
+              return
+            }
+          }
+        }
+      }
+
       val calleesResults = mapArguments(callSite, resolveContext)
         .filter { it.isComplete }
         .mapNotNull { analyzeCallee(callSite, it) }
@@ -1055,54 +1085,7 @@ open class PyTypeCheckerInspection : PyInspection() {
       val unexpectedArgumentForParamSpecs = ArrayList<UnexpectedArgumentForParamSpec>()
       val unfilledParameterFromParamSpecs = ArrayList<UnfilledParameterFromParamSpec>()
 
-      val receiver = callSite.getReceiver(callableType.callable)
       val substitutions = unifyReceiver(mapping, myTypeEvalContext)
-
-      val selfParameter = mapping.implicitParameters.firstOrNull()
-      if (receiver != null && selfParameter != null) {
-        var actual = myTypeEvalContext.getType(receiver)
-        // TODO (PY-89400): Support validation for `receiver` of a union type
-        // When `receiver` has a union type, we must find the specific member of the union bound to `callableType`.
-        // See `Py3TypeCheckerInspectionTest.testAnnotatedSelfAgainstUnionReceiver`.
-        if (actual !is PyUnionType) {
-          if (actual is PyInstantiableType<*>) {
-            if (isConstructorCall(callSite) && isInitMethod(callableType.callable)) {
-              actual = actual.toInstance()
-            }
-            if (callableType.modifier == PyAstFunction.Modifier.CLASSMETHOD) {
-              actual = actual.toClass()
-            }
-          }
-
-          val expected = selfParameter.getArgumentType(myTypeEvalContext)
-          // Skip the check when `expected` is a metaclass-scoped `PySelfType`:
-          // - explicit `typing.Self` usage on a metaclass is disallowed by the typing specification;
-          // - for an unannotated `self`/`cls` (for which the inferred type is also `PySelfType`),
-          //   the bound-receiver resolution already guarantees that the receiver is an instance of the metaclass;
-          // - matching a class receiver against a metaclass-scoped `PySelfType` currently fails
-          //   (see `Py3TypeCheckerInspectionTest.testSelfOnMetaclass`).
-          var isSelfOnMetaclass = false
-          if (expected is PySelfType) {
-            val typeType = getInstance(callSite).typeType
-            isSelfOnMetaclass = typeType != null &&
-                                expected.scopeClassType.getAncestorTypes(myTypeEvalContext).contains(typeType.toClass())
-          }
-          if (!isSelfOnMetaclass) {
-            if (!matchParameterAndArgument(expected, actual, receiver, substitutions)) {
-              result.add(
-                AnalyzeArgumentResult(
-                  receiver,
-                  selfParameter,
-                  expected,
-                  substituteGenerics(expected, substitutions),
-                  actual,
-                  false
-                )
-              )
-            }
-          }
-        }
-      }
 
       val mappedParameters = mapping.mappedParameters
       val regularMappedParameters =
@@ -1221,16 +1204,6 @@ open class PyTypeCheckerInspection : PyInspection() {
         unfilledParameterFromParamSpecs,
         unfilledPositionalVarargs
       )
-    }
-
-    private fun isConstructorCall(callSite: PyCallSiteOwner): Boolean {
-      if (callSite is PyCallExpression) {
-        val callee = callSite.callee
-        if (callee != null && (myTypeEvalContext.getType(callee) as? PyClassType)?.isDefinition == true) {
-          return true
-        }
-      }
-      return false
     }
 
     private fun analyzeParamSpec(

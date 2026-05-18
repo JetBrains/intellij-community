@@ -1465,26 +1465,50 @@ object PyTypeChecker {
 
   @JvmStatic
   fun getSubstitutionsWithUnresolvedReturnGenerics(
-    parameters: Collection<PyCallableParameter>,
+    callableType: PyCallableType,
     returnType: PyType?,
     substitutions: GenericSubstitutions?,
     context: TypeEvalContext,
   ): GenericSubstitutions {
-    val parameterTypes = parameters.map { it.getArgumentType(context) }
-    return substituteUnboundTypeVarsWithDefaultOrAny(returnType, parameterTypes, substitutions, context)
+    val substitutions = substitutions ?: GenericSubstitutions()
+
+    val typeParameters = callableType.getTypeParameters(context).orEmpty()
+    typeParameters.forEach { typeParameter ->
+      when (typeParameter) {
+        is PyTypeVarType -> {
+          @Suppress("UNCHECKED_CAST")
+          substitutions.putTypeVar(typeParameter, typeParameter.defaultType as Ref<PyType?>?, KeyImpl, true)
+        }
+        is PyTypeVarTupleType -> {
+          substitutions.putTypeVarTuple(typeParameter, Ref.deref(typeParameter.defaultType), KeyImpl, true)
+        }
+        is PyParamSpecType -> {
+          substitutions.putParamSpec(typeParameter, Ref.deref(typeParameter.defaultType), KeyImpl, true)
+        }
+      }
+    }
+
+    // Restrict defaulting to `callableType`-scoped type parameters.
+    val resolvableTypeParams = GenericsImpl()
+    val callable = callableType.callable
+    if (callable != null) {
+      callableType.getParameters(context)?.forEach { parameter ->
+        collectGenerics(parameter.getArgumentType(context), context, resolvableTypeParams)
+      }
+      resolvableTypeParams.typeVars.removeAll { it.scopeOwner !== callable }
+      resolvableTypeParams.typeVarTuples.removeAll { it.scopeOwner !== callable }
+      resolvableTypeParams.paramSpecs.removeAll { it.scopeOwner !== callable }
+    }
+
+    return substituteUnboundTypeVarsWithDefaultOrAny(returnType, resolvableTypeParams, substitutions, context)
   }
 
   private fun substituteUnboundTypeVarsWithDefaultOrAny(
     targetType: PyType?,
-    typeParameterSources: List<PyType?>,
+    resolvableTypeParams: Generics,
     substitutions: GenericSubstitutions?,
     context: TypeEvalContext,
   ): GenericSubstitutions {
-    val resolvableTypeParams = GenericsImpl()
-    for (parameterType in typeParameterSources) {
-      collectGenerics(parameterType, context, resolvableTypeParams)
-    }
-
     val existingSubstitutions = substitutions ?: GenericSubstitutions()
     val requiredTypeParams = targetType.collectGenerics(context)
     // TODO Handle unmatched TypeVarTuples here as well
@@ -1766,8 +1790,13 @@ object PyTypeChecker {
           clone(callableType.getReturnType(context)),
           callableType.callable,
           callableType.modifier,
-          callableType.implicitOffset,
         )
+      }
+
+      override fun visitPyOverloadType(overloadType: PyOverloadType): PyType? {
+        return overloadType.map {
+          if (it != null) visitPyCallableType(it) as PyCallableType else null
+        }
       }
 
       override fun visitPyCallableParameterListType(callableParameterListType: PyCallableParameterListType): PyType {
@@ -2068,6 +2097,7 @@ object PyTypeChecker {
     return when (type) {
       null, is PyAnyType -> null
       is PyUnionType -> isUnionCallable(type)
+      is PyOverloadType -> true
       is PyCallableType -> type.isCallable
       is PyStructuralType if type.isInferredFromUsages -> true
       is PyTypeVarType -> {
@@ -2284,7 +2314,8 @@ object PyTypeChecker {
       // we don't keep the bind T@Iterable -> Any (see the implementation of `match(PyTypeVarType, PyType, MatchContext)`).
       // As a workaround, until we migrate to type checking with CSP, we consider that
       // all parameter of the super types should be bound, and if they aren't, we fall back them to Any.
-      val substitutions = substituteUnboundTypeVarsWithDefaultOrAny(superType, listOf(superType), matchContext.mySubstitutions, context)
+      val resolvableTypeParams = superType.collectGenerics(context)
+      val substitutions = substituteUnboundTypeVarsWithDefaultOrAny(superType, resolvableTypeParams, matchContext.mySubstitutions, context)
       return substitute(superType, substitutions, context)
     }
     return null

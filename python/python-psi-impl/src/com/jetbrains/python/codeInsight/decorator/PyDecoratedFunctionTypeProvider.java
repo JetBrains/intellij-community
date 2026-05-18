@@ -164,12 +164,7 @@ public final class PyDecoratedFunctionTypeProvider extends PyTypeProviderBase {
     var expectedFuncType = decoratorParams.getFirst().getType(context);
     if (!(expectedFuncType instanceof PyCallableType expectedCallable)) return null;
 
-    var expectedParams = expectedCallable.getParameters(context);
-    if (expectedParams == null) return null;
-
-    // Apply implicit offset to skip self-like params in the expected callable
-    int implicitOffset = Math.min(expectedCallable.getImplicitOffset(), expectedParams.size());
-    return expectedParams.subList(implicitOffset, expectedParams.size());
+    return expectedCallable.getParameters(context);
   }
 
   @Override
@@ -257,8 +252,7 @@ public final class PyDecoratedFunctionTypeProvider extends PyTypeProviderBase {
         currentType.getParameters(context),
         currentType.getReturnType(context),
         callableReference,
-        callableReference.getModifier(),
-        currentType.getImplicitOffset()
+        callableReference.getModifier()
       ));
     }
 
@@ -359,7 +353,7 @@ public final class PyDecoratedFunctionTypeProvider extends PyTypeProviderBase {
         resolvedElements = List.of(resolvedFunction);
       }
       else {
-        resolvedElements = PySyntheticCallHelper.matchOverloadsByArgumentTypes(overloads, decoratorArgumentTypes, PyAnyType.getUnknown(), context);
+        resolvedElements = PySyntheticCallHelper.matchOverloadsByArgumentTypes(overloads, decoratorArgumentTypes, null, context);
       }
     }
     else {

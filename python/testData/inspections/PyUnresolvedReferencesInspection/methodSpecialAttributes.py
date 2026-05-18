@@ -14,7 +14,7 @@ MyClass.method.<warning descr="Cannot find reference '__defaults__' in '(self: M
 # Bound method with qualifier
 inst = MyClass()
 inst.method.__func__
-inst.method.<warning descr="Cannot find reference '__defaults__' in '() -> Any'">__defaults__</warning>
+inst.method.<warning descr="Cannot find reference '__defaults__' in '() -> None'">__defaults__</warning>
 
 # Static method
 inst.static_method.<warning descr="Cannot find reference '__func__' in '() -> Any'">__func__</warning>

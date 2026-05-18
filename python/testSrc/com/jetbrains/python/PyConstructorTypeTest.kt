@@ -153,7 +153,7 @@ internal class PyConstructorTypeTest : PyInspectionTestCase() {
 
       assert_type(MyClass[int](1), MyClass[int])
       assert_type(MyClass[float](1), MyClass[float])
-      MyClass[int](<warning descr="Expected type 'int' (matched generic type 'T'), got 'float' instead">1.0</warning>)
+      MyClass[int](<warning descr="Expected type 'int', got 'float' instead">1.0</warning>)
 
       assert_type(MyClass(1), MyClass[int])
       assert_type(MyClass(1.0), MyClass[float])
@@ -171,7 +171,7 @@ internal class PyConstructorTypeTest : PyInspectionTestCase() {
       
       assert_type(MyClass[int](1), list[int]) # PY-88644
       assert_type(MyClass[float](1), list[float]) # PY-88644
-      MyClass[int](<warning descr="Expected type 'int' (matched generic type 'T'), got 'float' instead">1.0</warning>)
+      MyClass[int](<warning descr="Expected type 'int', got 'float' instead">1.0</warning>)
 
       assert_type(MyClass(1), list[int])
       assert_type(MyClass(1.0), list[float])
@@ -233,7 +233,7 @@ internal class PyConstructorTypeTest : PyInspectionTestCase() {
 
       assert_type(MyClass[int](1), MyClass[int])
       assert_type(MyClass[float](1), MyClass[float])
-      MyClass[int](<warning descr="Expected type 'int' (matched generic type 'T'), got 'float' instead">1.0</warning>)
+      MyClass[int](<warning descr="Expected type 'int', got 'float' instead">1.0</warning>)
       
       assert_type(MyClass(1), MyClass[int])
       assert_type(MyClass(1.0), MyClass[float])
@@ -248,7 +248,7 @@ internal class PyConstructorTypeTest : PyInspectionTestCase() {
                    
       MyClass()
       MyClass[int]()
-      <warning descr="Expected type 'MyClass[int]', got 'MyClass[str]' instead">MyClass[str]</warning>()
+      <warning descr="Invalid self argument `MyClass[str]` to method `MyClass.__init__` with type `(self: MyClass[int]) -> None`">MyClass[str]()</warning>
       """.trimIndent())
   }
 

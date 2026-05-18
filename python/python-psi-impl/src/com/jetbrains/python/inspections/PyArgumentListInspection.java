@@ -28,6 +28,7 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyKeywordArgument;
 import com.jetbrains.python.psi.PyStarArgument;
 import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyCallableParameter;
@@ -90,18 +91,17 @@ public final class PyArgumentListInspection extends PyInspection {
       if (callableType != null) {
         final PyCallable callable = callableType.getCallable();
         if (callable == null) return;
-        final int firstParamOffset = callableType.getImplicitOffset();
         final List<PyCallableParameter> params = callableType.getParameters(myTypeEvalContext);
         if (params == null) return;
 
-        final PyCallableParameter allegedFirstParam = ContainerUtil.getOrElse(params, firstParamOffset, null);
+        final PyCallableParameter allegedFirstParam = ContainerUtil.getOrElse(params, 0, null);
         if (allegedFirstParam == null || allegedFirstParam.isKeywordContainer()) {
           // no parameters left to pass function implicitly, or wrong param type
           registerProblem(deco, PyPsiBundle.problemMessage("INSP.function.lacks.positional.argument",
                                                     callable.getName())); // TODO: better names for anon lambdas
         }
         else { // possible unfilled params
-          for (int i = firstParamOffset + 1; i < params.size(); i++) {
+          for (int i = 1; i < params.size(); i++) {
             final PyCallableParameter parameter = params.get(i);
             if (parameter.isKeywordOnlySeparator() || parameter.isPositionOnlySeparator()) {
               continue;
@@ -426,8 +426,7 @@ public final class PyArgumentListInspection extends PyInspection {
       final PyCallableType callableType = mapping.getCallableType();
       final List<PyCallableParameter> parameters = callableType == null ? null : callableType.getParameters(context);
       if (parameters != null) {
-        for (int i = callableType.getImplicitOffset(); i < parameters.size(); i++) {
-          final PyCallableParameter parameter = parameters.get(i);
+        for (PyCallableParameter parameter : parameters) {
           if (parameter.isPositionOnlySeparator() || parameter.isKeywordOnlySeparator()) continue;
           final boolean matched = !containsIdentity(mapping.getUnmappedParameters(), parameter);
           row.add(new PyMismatchTooltips.Slot(PyMismatchTooltips.parameterText(parameter, context), matched));

@@ -121,15 +121,6 @@ public interface PyCallableType extends PyType {
     return null;
   }
 
-  /**
-   * @return number of implicitly passed positional parameters; 0 means no parameters are passed implicitly.
-   * Note that a <tt>*args</tt> is never marked as passed implicitly.
-   * E.g. for a function like <tt>foo(a, b, *args)</tt> always holds <tt>getImplicitOffset() < 2</tt>.
-   */
-  default int getImplicitOffset() {
-    return 0;
-  }
-
   @Override
   default <T> T acceptTypeVisitor(@NotNull PyTypeVisitor<T> visitor) {
     return visitor.visitPyCallableType(this);

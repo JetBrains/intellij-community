@@ -1,8 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.types;
 
-import com.jetbrains.python.PyNames;
-import com.jetbrains.python.ast.PyAstFunction;
 import com.jetbrains.python.psi.PyCallable;
 import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.NotNull;
@@ -24,13 +22,6 @@ public interface PyFunctionType extends PyCallableType {
   @Override
   @NotNull
   PyFunctionType dropSelf(@NotNull TypeEvalContext context);
-
-  @Override
-  default int getImplicitOffset() {
-    return getCallable().asMethod() != null
-           ? (PyNames.NEW.equals(getCallable().getName()) || getModifier() == PyAstFunction.Modifier.STATICMETHOD ? 0 : 1)
-           : 0;
-  }
 
   @Override
   default @Nullable PyFunction.Modifier getModifier() {

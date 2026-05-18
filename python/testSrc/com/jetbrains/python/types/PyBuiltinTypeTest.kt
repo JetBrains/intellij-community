@@ -197,8 +197,9 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
     fun `defaultdict from dict`() = test("""
       from collections import defaultdict
       expr = defaultdict(dict)
-      #└ TYPE defaultdict[Unknown, dict[Unknown, Unknown]]
-      """)
+      #└ TYPE defaultdict[Unknown, dict]
+      """,
+    )
   }
 
   @Nested

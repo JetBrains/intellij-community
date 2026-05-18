@@ -21,7 +21,6 @@ import com.jetbrains.python.psi.PyExpressionStatement
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyKnownDecoratorUtil
 import com.jetbrains.python.psi.PyReferenceExpression
-import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyABCUtil
 import com.jetbrains.python.psi.types.PyClassLikeType
@@ -117,8 +116,8 @@ private val ignoreBuiltinFunctions = listOf("asyncio.events.AbstractEventLoop.ru
 
 private fun getCalledCoroutineName(callExpression: PyCallExpression, resolveContext: PyResolveContext): String? {
   val callee = callExpression.callee as? PyReferenceExpression ?: return null
-  val function = callExpression.multiResolveCalleeFunction(resolveContext).firstOrNull() as? PyFunction ?: return null
-  return if (PyUtil.isInitMethod(function)) callee.name else function.name
+  val function = callExpression.multiResolveCallee(resolveContext).firstOrNull()?.callable as? PyFunction
+  return if (function == null) callee.name else function.name
 }
 
 private fun isOuterFunctionAsync(node: PyExpression): Boolean {
