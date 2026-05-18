@@ -191,6 +191,11 @@ object DebouncedUpdates {
      * Actions execute sequentially - if a new item arrives while the previous action is still executing,
      * it waits for the previous action to complete before starting.
      *
+     * **Note for component-based queues ([ComponentBuilder]):** The action may be called more than
+     * once for the same item. If the component is hidden while the action is executing, the action is
+     * cancelled and will be re-invoked when the component becomes visible again, unless a newer item
+     * has arrived in the meantime.
+     *
      * Example:
      * ```kotlin
      * val queue = DebouncedUpdates.forScope<State>(scope, "update", 100.milliseconds)
