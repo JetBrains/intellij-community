@@ -8,6 +8,7 @@ import com.intellij.openapi.util.io.getResolvedPath
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.testFramework.common.runAllCatching
 import com.intellij.util.SmartList
 import com.intellij.util.io.Ksuid
@@ -112,6 +113,8 @@ open class TemporaryDirectory : ExternalResource() {
       return
     }
 
+    //If files were loaded into VFS, there could be pending updates for them: apply them before deleting the files
+    ManagingFS.getInstanceOrNull()?.flushPendingUpdates()
     val error = runAllCatching(paths.asReversed()) {
       NioFiles.deleteRecursively(it)
     }

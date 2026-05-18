@@ -40,6 +40,7 @@ import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.refreshAndFindVirtualFileOrDirectory
 import com.intellij.platform.eel.fs.EelFileSystemApi.CreateTemporaryEntryOptions
 import com.intellij.platform.eel.getOrThrow
@@ -104,6 +105,8 @@ fun tempPathFixture(root: Path? = null, prefix: String = "IJ", subdirName: Strin
   val realTempDir = tempDir.toRealPath()
   initialized(realTempDir) {
     withContext(Dispatchers.IO) {
+      //If files were loaded into VFS, there could be pending updates for them: apply them before deleting the files
+      ManagingFS.getInstanceOrNull()?.flushPendingUpdates()
       repeat(10) {
         try {
           // This method might throw DirectoryNotEmptyException due to races, hence retry
