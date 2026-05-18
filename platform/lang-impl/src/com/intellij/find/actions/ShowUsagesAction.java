@@ -1320,7 +1320,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
       return null;
     }, (value) -> {
       return null;
-    }, false);
+    }, false, false);
 
     ExtendedInfoComponent extendedInfoComponent = new ExtendedInfoComponent(project, extendedInfo);
     extendedInfoComponent.updateElement("", parentDisposable);

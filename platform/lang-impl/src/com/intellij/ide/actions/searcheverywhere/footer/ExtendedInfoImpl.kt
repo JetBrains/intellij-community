@@ -148,13 +148,16 @@ internal fun createTextExtendedInfo(): ExtendedInfo {
 }
 
 @ApiStatus.Internal
-fun createPsiExtendedInfo(): ExtendedInfo {
+fun createPsiExtendedInfo(): ExtendedInfo = createPsiExtendedInfo(false)
+
+@ApiStatus.Internal
+fun createPsiExtendedInfo(fallbackToContentFileSetRoot: Boolean): ExtendedInfo {
   val psiElement: (Any) -> PsiElement? = {
     val item = (it as? PsiItemWithSimilarity<*>)?.value ?: it
     (item as? PSIPresentationBgRendererWrapper.PsiItemWithPresentation)?.item
   }
 
-  return createPsiExtendedInfo(project = null, file = null, psiElement)
+  return createPsiExtendedInfo(project = null, file = null, psiElement, true, fallbackToContentFileSetRoot = fallbackToContentFileSetRoot)
 }
 
 fun createPsiExtendedInfo(project: ((Any) -> Project?)? = null,
@@ -165,7 +168,8 @@ fun createPsiExtendedInfo(project: ((Any) -> Project?)? = null,
 fun createPsiExtendedInfo(project: ((Any) -> Project?)? = null,
                           file: ((Any) -> VirtualFile?)? = null,
                           psiElement: (Any) -> PsiElement?,
-                          shouldShowRightAction: Boolean): ExtendedInfo {
+                          shouldShowRightAction: Boolean,
+                          fallbackToContentFileSetRoot: Boolean = false): ExtendedInfo {
   val projectFun = { item: Any -> project?.invoke(item) ?: psiElement.invoke(item)?.project }
 
   val fileFun = { item: Any ->
@@ -184,8 +188,9 @@ fun createPsiExtendedInfo(project: ((Any) -> Project?)? = null,
     val actualProject = projectFun.invoke(item)
     if (actualFile == null) return null
 
-    val rootForFile = ProjectFileIndex.getInstance(actualProject ?: return null).getSourceRootForFile(actualFile)
-                      ?: WorkspaceFileIndex.getInstance(actualProject).getContentFileSetRoot(actualFile, true)
+    val rootForFile = ProjectFileIndex.getInstance(actualProject ?: return null).getSourceRootForFile(actualFile) ?:
+                      if (fallbackToContentFileSetRoot) WorkspaceFileIndex.getInstance(actualProject).getContentFileSetRoot(actualFile, true)
+                      else null
     return rootForFile?.let { VfsUtilCore.getRelativePath(actualFile, it) }
            ?: FileUtil.getLocationRelativeToUserHome(actualFile.path)
   }

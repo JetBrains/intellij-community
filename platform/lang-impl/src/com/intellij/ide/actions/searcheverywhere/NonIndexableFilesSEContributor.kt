@@ -225,7 +225,7 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
     }
   }
 
-  override fun createExtendedInfo(): @Nls ExtendedInfo = createPsiExtendedInfo()
+  override fun createExtendedInfo(): @Nls ExtendedInfo = createPsiExtendedInfo(fallbackToContentFileSetRoot = true)
 
   companion object {
     @ApiStatus.Internal
