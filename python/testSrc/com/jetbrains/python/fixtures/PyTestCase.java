@@ -108,7 +108,8 @@ public abstract class PyTestCase extends UsefulTestCase {
     super.setUp();
 
     IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
-    TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(getProjectDescriptor(), getTestName(false));
+    TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder =
+      factory.createLightFixtureBuilder(getProjectDescriptor(), getTestName(false));
     final IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
     myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, createTempDirFixture());
     myFixture.setTestDataPath(getTestDataPath());
@@ -350,7 +351,7 @@ public abstract class PyTestCase extends UsefulTestCase {
     return PsiDocumentManager.getInstance(myFixture.getProject()).getDocument(myFixture.getFile()).getText().indexOf(signature);
   }
 
-  private void setLanguageLevel(@Nullable LanguageLevel languageLevel) {
+  protected void setLanguageLevel(@Nullable LanguageLevel languageLevel) {
     Project project = myFixture.getProject();
     if (project != null) {
       PythonLanguageLevelPusher.setForcedLanguageLevel(project, languageLevel);
@@ -400,7 +401,10 @@ public abstract class PyTestCase extends UsefulTestCase {
     String path = virtualFile.getPath();
     String name = virtualFile.getName();
     String errorMessage = "Operations should have been performed on stubs but caused file to be parsed: " + path;
-    String tip = "As a starting point for an investigation, a breakpoint can be set in com.intellij.psi.impl.source.PsiFileImpl#loadTreeElement with a condition `getName().equals(\"" + name + "\")`.\nThen the stacktrace can be investigated to find the root cause.";
+    String tip =
+      "As a starting point for an investigation, a breakpoint can be set in com.intellij.psi.impl.source.PsiFileImpl#loadTreeElement with a condition `getName().equals(\"" +
+      name +
+      "\")`.\nThen the stacktrace can be investigated to find the root cause.";
     assertNull(errorMessage + "\n" + tip,
                ((PyFileImpl)file).getTreeElement());
   }

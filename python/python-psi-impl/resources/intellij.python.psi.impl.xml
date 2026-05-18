@@ -167,6 +167,9 @@
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyLiteralTypeCompletionContributor"/>
 
+    <completion.contributor language="Python" order="first" id="pyPyCodeInsightTestCaseOnlyCompletionContributor"
+                            implementationClass="com.jetbrains.python.codeInsight.completion.PyCodeInsightTestCaseOnlyCompletionContributor"/>
+
     <lang.tokenSeparatorGenerator language="Python" implementationClass="com.jetbrains.python.PyTokenSeparatorGenerator"/>
 
     <lang.ast.factory language="Python" implementationClass="com.jetbrains.python.psi.impl.PythonASTFactory"/>

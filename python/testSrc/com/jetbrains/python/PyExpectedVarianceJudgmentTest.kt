@@ -1,609 +1,544 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python
 
-import com.intellij.psi.util.PsiTreeUtil
-import com.jetbrains.python.fixtures.PyTestCase
-import com.jetbrains.python.psi.PyExpression
-import com.jetbrains.python.psi.PyStringLiteralExpression
-import com.jetbrains.python.psi.PyUtil
-import com.jetbrains.python.psi.types.PyExpectedVarianceJudgment.getExpectedVariance
-import com.jetbrains.python.psi.types.PyTypeParameterType.Variance
-import com.jetbrains.python.psi.types.TypeEvalContext
-import org.intellij.lang.annotations.Language
+import com.jetbrains.python.fixtures.PyCodeInsightTestCase
+import org.junit.jupiter.api.Test
 
-internal class PyExpectedVarianceJudgmentTest : PyTestCase() {
+internal class PyExpectedVarianceJudgmentTest : PyCodeInsightTestCase() {
 
-  private fun doTest(expression: String, expectedVariance: Variance?, @Language("Python") text: String) {
-    val textIndented = text.trimIndent()
-    myFixture.configureByText(PythonFileType.INSTANCE, textIndented)
-    var typeAnnotation: PyExpression = myFixture.findElementByText(expression, PyExpression::class.java)
+  @Test
+  fun `Generic super class expects bivariant type parameters`() = test("""
+    from typing import TypeVar, Generic
+    T = TypeVar("T")
+    class C(Generic[T]):
+    #               └ EXPECTED_VARIANCE BIVARIANT
+        pass
+    """.trimIndent())
 
-    if (typeAnnotation is PyStringLiteralExpression && typeAnnotation.text.contains(expression)) {
-      val syntheticElement = PyUtil.createExpressionFromFragment(typeAnnotation.stringValue, typeAnnotation)
-                             ?: throw AssertionError("Expression not found in string literal: $expression")
-      val posWithQuotes = typeAnnotation.text.indexOf(expression)
-      val pos = posWithQuotes - (typeAnnotation.text.length - typeAnnotation.stringValue.length) / 2
-      typeAnnotation = PsiTreeUtil.getParentOfType(syntheticElement.findElementAt(pos), PyExpression::class.java)
-                       ?: throw AssertionError("Expression not found in string literal: $expression")
-    }
+  @Test
+  fun `Generic super class expects bivariant type parameters co`() = test("""
+    from typing import TypeVar, Generic
+    T1 = TypeVar("T1", covariant=True)
+    class Box(Generic[T1]):
+    #                 └ EXPECTED_VARIANCE BIVARIANT
+        pass
+    """.trimIndent())
 
-    val context = TypeEvalContext.userInitiated(typeAnnotation.project, typeAnnotation.containingFile)
-    val actualVariance = getExpectedVariance(typeAnnotation, context)
-    assertEquals(expectedVariance, actualVariance)
-  }
+  @Test
+  fun `Generic super class expects bivariant type parameters contra`() = test("""
+    from typing import TypeVar, Generic
+    T1 = TypeVar("T1", contravariant=True)
+    class Box(Generic[T1]):
+    #                 └ EXPECTED_VARIANCE BIVARIANT
+        pass
+    """.trimIndent())
 
-  fun `test Generic super class expects bivariant type parameters`() {
-    doTest("T]", Variance.BIVARIANT, """
-      from typing import TypeVar, Generic
-      T = TypeVar("T")
-      class C(Generic[T]):
-          pass
-      """)
-  }
+  @Test
+  fun `Protocol super class expects bivariant type parameters`() = test("""
+    from typing import TypeVar, Protocol
+    T = TypeVar("T")
+    class C(Protocol[T]):
+    #                └ EXPECTED_VARIANCE BIVARIANT
+    #                └ WARNING This type variable is effectively covariant in this protocol, so it cannot be invariant here
+        pass
+    """.trimIndent())
 
-  fun `test Generic super class expects bivariant type parameters co`() {
-    doTest("T1]", Variance.BIVARIANT, """
-      from typing import TypeVar, Generic
-      T1 = TypeVar("T1", covariant=True)
-      class Box(Generic[T1]):
-          pass
-      """)
-  }
+  @Test
+  fun `Generic class attribute`() = test("""
+    class A[T]:
+        attr: T # attribute
+    #         └ EXPECTED_VARIANCE INVARIANT
+    """.trimIndent())
 
-  fun `test Generic super class expects bivariant type parameters contra`() {
-    doTest("T1]", Variance.BIVARIANT, """
-      from typing import TypeVar, Generic
-      T1 = TypeVar("T1", contravariant=True)
-      class Box(Generic[T1]):
-          pass
-      """)
-  }
+  @Test
+  fun `Generic class attribute callable parameter`() = test("""
+    from typing import Callable
+    class A[T]:
+        attr: Callable[[T], None]
+    #                   └ EXPECTED_VARIANCE INVARIANT
+    """.trimIndent())
 
-  fun `test Protocol super class expects bivariant type parameters`() {
-    doTest("T]", Variance.BIVARIANT, """
-      from typing import TypeVar, Protocol
-      T = TypeVar("T")
-      class C(Protocol[T]):
-          pass
-      """)
-  }
+  @Test
+  fun `Generic class attribute callable return`() = test("""
+    from typing import Callable
+    class A[T]:
+        attr: Callable[[], T] # attribute
+    #                      └ EXPECTED_VARIANCE INVARIANT
+    """.trimIndent())
 
-  fun `test Generic class attribute`() {
-    doTest("T #", Variance.INVARIANT, """
-      class A[T]:
-          attr: T # attribute
-      """)
-  }
+  @Test
+  fun `Generic class readonly attribute`() = test("""
+    from typing import ReadOnly, TypedDict
+    class A[T](TypedDict):
+        attr: ReadOnly[T] # attribute
+    #                  └ EXPECTED_VARIANCE COVARIANT
+    """.trimIndent())
 
-  fun `test Generic class attribute callable parameter`() {
-    doTest("T],", Variance.INVARIANT, """
-      from typing import Callable
-      class A[T]:
-          attr: Callable[[T], None]
-      """)
-  }
+  @Test
+  fun `Generic class final attribute`() = test("""
+    from typing import Final
+    class A[T]:
+        def __init__(self): self.attr = None
+        attr: Final[T]
+    #               └ EXPECTED_VARIANCE COVARIANT
+    """.trimIndent())
 
-  fun `test Generic class attribute callable return`() {
-    doTest("T] #", Variance.INVARIANT, """
-      from typing import Callable
-      class A[T]:
-          attr: Callable[[], T] # attribute
-      """)
-  }
+  @Test
+  fun `Generic class final attribute callable parameter and return`() = test("""
+    from typing import Final, Callable
+    class A[T, R]:
+        def __init__(self): self.attr = lambda a: None
+        attr: Final[Callable[[T], R]]
+    #                         │   └ EXPECTED_VARIANCE COVARIANT
+    #                         └ EXPECTED_VARIANCE CONTRAVARIANT
+    """.trimIndent())
 
-  fun `test Generic class readonly attribute`() {
-    doTest("T] #", Variance.COVARIANT, """
-      from typing import ReadOnly
-      class A[T]:
-          attr: ReadOnly[T] # attribute
-      """)
-  }
+  @Test
+  fun `Generic class final attribute callable concatenate parameter`() = test("""
+    from typing import Callable, Concatenate, Final
+    class A[T, **P]:
+        def __init__(self): self.attr = lambda a: None
+        attr: Final[Callable[Concatenate[T, P], None]]
+    #                                    └ EXPECTED_VARIANCE CONTRAVARIANT
+    """.trimIndent())
 
-  fun `test Generic class final attribute`() {
-    doTest("T] #", Variance.COVARIANT, """
-      from typing import Final
-      class A[T]:
-          attr: Final[T] # attribute
-      """)
-  }
+  @Test
+  fun `Generic class method parameter and return`() = test("""
+    class A[T, R]:
+        def method(self, t: T) -> R: pass
+    #                       │     └ EXPECTED_VARIANCE COVARIANT
+    #                       └ EXPECTED_VARIANCE CONTRAVARIANT
+    """.trimIndent())
 
-  fun `test Generic class final attribute callable parameter`() {
-    doTest("T],", Variance.CONTRAVARIANT, """
-      from typing import Final, Callable
-      class A[T]:
-          attr: Final[Callable[[T], None]]
-      """)
-  }
+  @Test
+  fun `Generic class nested covariant`() = test("""
+    from typing import Iterable
+    class A[T]:
+        def method(self) -> Iterable[T]: pass
+    #                                └ EXPECTED_VARIANCE COVARIANT
+    """.trimIndent())
 
-  fun `test Generic class final attribute callable concatenate parameter`() {
-    doTest("T, P], None", Variance.CONTRAVARIANT, """
-      from typing import Callable, Concatenate, Final
-      class A[T, **P]:
-          attr: Final[Callable[Concatenate[T, P], None]]
-      """)
-  }
+  @Test
+  fun `Generic class method parameter nesting callable parameter`() = test("""
+    from typing import Callable
+    class A[T]:
+        def method(self, arg: Callable[[T], None]): pass
+    #                                   └ EXPECTED_VARIANCE COVARIANT
+    """.trimIndent())
 
-  fun `test Generic class final attribute callable return`() {
-    doTest("T]]", Variance.COVARIANT, """
-      from typing import Final, Callable
-      class A[T]:
-          attr: Final[Callable[[], T]]
-      """)
-  }
+  @Test
+  fun `Generic class method parameter nesting callable concatenate parameter`() = test("""
+    from typing import Callable, Concatenate
+    class A[T, **P]:
+        def method(self, arg: Callable[Concatenate[T, P], None]): ...
+    #                                              └ EXPECTED_VARIANCE COVARIANT
+    """.trimIndent())
 
-  fun `test Generic class method parameter`() {
-    doTest("T)", Variance.CONTRAVARIANT, """
-      class A[T]:
-          def method(self, t: T): pass
-      """)
-  }
+  @Test
+  fun `Generic class method parameter nesting callable parameter and return`() = test("""
+    from typing import Callable
+    class A[T, R]:
+        def method(self, arg: Callable[[T], R]): pass
+    #                                   │   └ EXPECTED_VARIANCE CONTRAVARIANT
+    #                                   └ EXPECTED_VARIANCE COVARIANT
+    """.trimIndent())
 
-  fun `test Generic class method return type`() {
-    doTest("T:", Variance.COVARIANT, """
-      class A[T]:
-          def method(self) -> T: pass
-      """)
-  }
+  @Test
+  fun `Generic class method return nesting callable concatenate parameter`() = test("""
+    from typing import Callable, Concatenate
+    class A[T, **P]:
+        def f2(self, t: T) -> Callable[Concatenate[T, P], None]: ...
+    #                                              └ EXPECTED_VARIANCE CONTRAVARIANT
+    """.trimIndent())
 
-  fun `test Generic class nested covariant`() {
-    doTest("T]: pass", Variance.COVARIANT, """
-      from typing import Iterable
-      class A[T]:
-          def method(self) -> Iterable[T]: pass
-      """)
-  }
+  @Test
+  fun `Generic class method return nesting callable return`() = test("""
+    from typing import Callable
+    class A[T, R]:
+        def method(self) -> Callable[[T], R]: pass
+    #                                 │   └ EXPECTED_VARIANCE COVARIANT
+    #                                 └ EXPECTED_VARIANCE CONTRAVARIANT
+    """.trimIndent())
 
-  fun `test Generic class method parameter nesting callable parameter`() {
-    doTest("T],", Variance.COVARIANT, """
-      from typing import Callable
-      class A[T]:
-          def method(self, arg: Callable[[T], None]): pass
-      """)
-  }
+  @Test
+  fun `Generic class type argument legacy syntax 1`() = test("""
+    from typing import TypeVar, Generic
+    T1 = TypeVar("T1", infer_variance=False)
+    class Box(Generic[T1]):
+        pass
+    T2 = TypeVar('T2', contravariant=True)
+    class ReadOnlyBox(Box[T2], Generic[T2]):
+    #                     └ EXPECTED_VARIANCE INVARIANT # not affected by warning below
+    #                     ^^ WARNING A contravariant type variable cannot be used in this invariant position
+        pass
+    """.trimIndent())
 
-  fun `test Generic class method parameter nesting callable concatenate parameter`() {
-    doTest("T, P], None", Variance.COVARIANT, """
-      from typing import Callable, Concatenate
-      class A[T, **P]:
-          def method(self, arg: Callable[Concatenate[T, P], None]): ...
-      """)
-  }
+  @Test
+  fun `Generic class type argument legacy syntax 1a`() = test("""
+    from typing import TypeVar, Generic
+    T1 = TypeVar("T1", covariant=True)
+    class Box(Generic[T1]):
+        pass
+    T2 = TypeVar('T2', contravariant=True)
+    class ReadOnlyBox(Box[T2], Generic[T2]):
+    #                     └ EXPECTED_VARIANCE COVARIANT # not affected by warning below
+    #                     ^^ WARNING A contravariant type variable cannot be used in this covariant position
+        pass
+    """.trimIndent())
 
-  fun `test Generic class method parameter nesting callable return`() {
-    doTest("T])", Variance.CONTRAVARIANT, """
-      from typing import Callable
-      class A[T]:
-          def method(self, arg: Callable[[], T]): pass
-      """)
-  }
+  @Test
+  fun `Generic class type argument legacy syntax 1b`() = test("""
+    from typing import TypeVar, Generic
+    T1 = TypeVar("T1", contravariant=False)
+    class Box(Generic[T1]):
+        pass
+    T2 = TypeVar('T2', covariant=True)
+    class ReadOnlyBox(Box[T2], Generic[T2]):
+    #                     └ EXPECTED_VARIANCE INVARIANT # not affected by warning below
+    #                     ^^ WARNING A covariant type variable cannot be used in this invariant position
+        pass
+    """.trimIndent())
 
-  fun `test Generic class method return nesting callable parameter`() {
-    doTest("T],", Variance.CONTRAVARIANT, """
-      from typing import Callable
-      class A[T]:
-          def method(self) -> Callable[[T], None]: pass
-      """)
-  }
+  @Test
+  fun `Generic class type argument legacy syntax 2a`() = test("""
+    from typing import TypeVar, Generic
+    T1 = TypeVar("T1", infer_variance=False)
+    T2 = TypeVar("T2", infer_variance=False)
+    class Box(Generic[T1, T2]):
+        pass
+    
+    T3 = TypeVar("T3", contravariant=True)
+    T4 = TypeVar("T4", contravariant=True)
+    class ReadOnlyBox(Box[T3, T4]): # ISSUES *
+    #                     │   └ EXPECTED_VARIANCE INVARIANT
+    #                     └ EXPECTED_VARIANCE INVARIANT
+        pass
+    """.trimIndent())
 
-  fun `test Generic class method return nesting callable concatenate parameter`() {
-    doTest("T, P], None", Variance.CONTRAVARIANT, """
-      from typing import Callable, Concatenate
-      class A[T, **P]:
-          def f2(self, t: T) -> Callable[Concatenate[T, P], None]: ...
-      """)
-  }
+  @Test
+  fun `Generic class type argument PEP695 syntax`() = test("""
+    from typing import TypeVar, Generic
+    class Box[T1]:
+        pass
+    T2 = TypeVar('T2', contravariant=True)
+    class ReadOnlyBox(Box[T2], Generic[T2]):
+    #                     └ EXPECTED_VARIANCE BIVARIANT
+        pass
+    """.trimIndent())
 
-  fun `test Generic class method return nesting callable return`() {
-    doTest("T]: pass", Variance.COVARIANT, """
-      from typing import Callable
-      class A[T]:
-          def method(self) -> Callable[[], T]: pass
-      """)
-  }
+  @Test
+  fun `Generic class type argument PEP695 syntax 2a`() = test("""
+    from typing import TypeVar, Generic
+    class Box[T1, T2]:
+        pass
+    
+    T3 = TypeVar("T3", contravariant=True)
+    T4 = TypeVar("T4", contravariant=True)
+    class ReadOnlyBox(Box[T3, T4]):
+    #                     │   └ EXPECTED_VARIANCE BIVARIANT
+    #                     └ EXPECTED_VARIANCE BIVARIANT
+        pass
+    """.trimIndent())
 
-  fun `test Generic class type argument legacy syntax 1`() {
-    doTest("T2]", Variance.INVARIANT, """
-      from typing import TypeVar, Generic
-      T1 = TypeVar("T1", infer_variance=False)
-      class Box(Generic[T1]):
-          pass
-      T2 = TypeVar('T2', contravariant=True)
-      class ReadOnlyBox(Box[T2], Generic[T2]):
-          pass
-      """)
-  }
+  @Test
+  fun `Nested generic classes invariant`() = test("""
+    from typing import TypeVar, Generic
+    T = TypeVar("T")
+    T_co = TypeVar("T_co", covariant=True)
+    T_contra = TypeVar("T_contra", contravariant=True)
+    class Co(Generic[T_co]):
+        pass
+    class Contra(Generic[T_contra]):
+        pass
+    class A(Contra[Co[T]]):
+    #                 └ EXPECTED_VARIANCE CONTRAVARIANT
+        pass
+    """.trimIndent())
 
-  fun `test Generic class type argument legacy syntax 1a`() {
-    doTest("T2]", Variance.COVARIANT, """
-      from typing import TypeVar, Generic
-      T1 = TypeVar("T1", covariant=True)
-      class Box(Generic[T1]):
-          pass
-      T2 = TypeVar('T2', contravariant=True)
-      class ReadOnlyBox(Box[T2], Generic[T2]):
-          pass
-      """)
-  }
+  @Test
+  fun `Nested generic classes covariant`() = test("""
+    from typing import TypeVar, Generic
+    T = TypeVar("T")
+    T_co = TypeVar("T_co", covariant=True)
+    T_contra = TypeVar("T_contra", contravariant=True)
+    class Co(Generic[T_co]):
+        pass
+    class Contra(Generic[T_contra]):
+        pass
+    class A(Co[Co[T]]):
+    #             └ EXPECTED_VARIANCE COVARIANT
+        pass
+    """.trimIndent())
 
-  fun `test Generic class type argument legacy syntax 1b`() {
-    doTest("T2]", Variance.INVARIANT, """
-      from typing import TypeVar, Generic
-      T1 = TypeVar("T1", contravariant=False)
-      class Box(Generic[T1]):
-          pass
-      T2 = TypeVar('T2', covariant=True)
-      class ReadOnlyBox(Box[T2], Generic[T2]):
-          pass
-      """)
-  }
+  @Test
+  fun `Nested generic classes contravariant`() = test("""
+    from typing import TypeVar, Generic
+    T = TypeVar("T")
+    T_co = TypeVar("T_co", covariant=True)
+    T_contra = TypeVar("T_contra", contravariant=True)
+    class Co(Generic[T_co]):
+        pass
+    class Contra(Generic[T_contra]):
+        pass
+    class A(Contra[Contra[T]]):
+    #                     └ EXPECTED_VARIANCE COVARIANT
+        pass
+    """.trimIndent())
 
-  fun `test Generic class type argument legacy syntax 2a`() {
-    doTest("T3,", Variance.INVARIANT, """
-      from typing import TypeVar, Generic
-      T1 = TypeVar("T1", infer_variance=False)
-      T2 = TypeVar("T2", infer_variance=False)
-      class Box(Generic[T1, T2]):
-          pass
-  
-      T3 = TypeVar("T3", contravariant=True)
-      T4 = TypeVar("T4", contravariant=True)
-      class ReadOnlyBox(Box[T3, T4]):
-          pass
-      """)
-  }
+  @Test
+  fun `Frozen attribute`() = test("""
+    from dataclasses import dataclass
+    @dataclass(frozen=True)
+    class A[T]:
+        attr: T  # read-only
+    #         └ EXPECTED_VARIANCE COVARIANT
+    """.trimIndent())
 
-  fun `test Generic class type argument legacy syntax 2b`() {
-    doTest("T4]", Variance.INVARIANT, """
-      from typing import TypeVar, Generic
-      T1 = TypeVar("T1", infer_variance=False)
-      T2 = TypeVar("T2", infer_variance=False)
-      class Box(Generic[T1, T2]):
-          pass
-  
-      T3 = TypeVar("T3", contravariant=True)
-      T4 = TypeVar("T4", contravariant=True)
-      class ReadOnlyBox(Box[T3, T4]):
-          pass
-      """)
-  }
+  @Test
+  fun `String literal type`() = test("""
+    from dataclasses import dataclass
+    @dataclass(frozen=True)
+    class A[T]:
+        attr: "T"  # read-only
+    #          └ EXPECTED_VARIANCE COVARIANT
+    """.trimIndent())
 
-  fun `test Generic class type argument PEP695 syntax`() {
-    doTest("T2]", Variance.BIVARIANT, """
-      from typing import TypeVar, Generic
-      class Box[T1]:
-          pass
-      T2 = TypeVar('T2', contravariant=True)
-      class ReadOnlyBox(Box[T2], Generic[T2]):
-          pass
-      """)
-  }
+  @Test
+  fun `String literal type at return inside callable`() = test("""
+    from typing import Callable
+    class A[T]:
+        def f(self, t: Callable[["T"],None]) : ...
+    #                             └ EXPECTED_VARIANCE COVARIANT
+    """.trimIndent())
 
-  fun `test Generic class type argument PEP695 syntax 2a`() {
-    doTest("T3,", Variance.BIVARIANT, """
-      from typing import TypeVar, Generic
-      class Box[T1, T2]:
-          pass
-  
-      T3 = TypeVar("T3", contravariant=True)
-      T4 = TypeVar("T4", contravariant=True)
-      class ReadOnlyBox(Box[T3, T4]):
-          pass
-      """)
-  }
+  @Test
+  fun `String literal type at function parameter`() = test("""
+    from typing import Callable
+    class A[T]:
+        def f(self, t: "Callable[[T], None]") : ...
+    #                             └ EXPECTED_VARIANCE CONTRAVARIANT FIXME COVARIANT # requires PY-87942
+    """.trimIndent())
 
-  fun `test Generic class type argument PEP695 syntax 2b`() {
-    doTest("T4]", Variance.BIVARIANT, """
-      from typing import TypeVar, Generic
-      class Box[T1, T2]:
-          pass
-  
-      T3 = TypeVar("T3", contravariant=True)
-      T4 = TypeVar("T4", contravariant=True)
-      class ReadOnlyBox(Box[T3, T4]):
-          pass
-      """)
-  }
+  @Test
+  fun `Type alias use for generic class invariant`() = test("""
+    from typing import TypeVar, Generic, TypeAlias
+    T1 = TypeVar("T1")
+    class Box(Generic[T1]): ...
+    Box_TA: TypeAlias = Box[T1]
+    #                       └ EXPECTED_VARIANCE NULL FIXME INVARIANT
+    my_box: Box_TA[int]
+    #              └ EXPECTED_VARIANCE INVARIANT
+    """.trimIndent())
 
-  fun `test Nested generic classes invariant`() {
-    doTest("T]", Variance.CONTRAVARIANT, """
-      from typing import TypeVar, Generic
-      T = TypeVar("T")
-      T_co = TypeVar("T_co", covariant=True)
-      T_contra = TypeVar("T_contra", contravariant=True)
-      class Co(Generic[T_co]):
-          pass
-      class Contra(Generic[T_contra]):
-          pass
-      class A(Contra[Co[T]]):
-          pass
-      """)
-  }
+  @Test
+  fun `Type alias use for generic class covariant`() = test("""
+    from typing import Generic, TypeVar, TypeAlias
+    T_co = TypeVar("T_co", covariant=True)
+    class ClassA(Generic[T_co]): ...
+    
+    T = TypeVar("T")
+    A_Alias_1: TypeAlias = ClassA[T]
+    #                             └ EXPECTED_VARIANCE NULL FIXME COVARIANT
+    
+    obj: A_Alias_1[int] #
+    #              └ EXPECTED_VARIANCE COVARIANT
+    """.trimIndent())
 
-  fun `test Nested generic classes covariant`() {
-    doTest("T]", Variance.COVARIANT, """
-      from typing import TypeVar, Generic
-      T = TypeVar("T")
-      T_co = TypeVar("T_co", covariant=True)
-      T_contra = TypeVar("T_contra", contravariant=True)
-      class Co(Generic[T_co]):
-          pass
-      class Contra(Generic[T_contra]):
-          pass
-      class A(Co[Co[T]]):
-          pass
-      """)
-  }
-
-  fun `test Nested generic classes contravariant`() {
-    doTest("T]", Variance.COVARIANT, """
-      from typing import TypeVar, Generic
-      T = TypeVar("T")
-      T_co = TypeVar("T_co", covariant=True)
-      T_contra = TypeVar("T_contra", contravariant=True)
-      class Co(Generic[T_co]):
-          pass
-      class Contra(Generic[T_contra]):
-          pass
-      class A(Contra[Contra[T]]):
-          pass
-      """)
-  }
-
-  fun `test Frozen attribute`() {
-    doTest("T  #", Variance.COVARIANT, """
-      from dataclasses import dataclass
-      @dataclass(frozen=True)
-      class A[T]:
-          attr: T  # read-only
-      """)
-  }
-
-  fun `test String literal type`() {
-    doTest("T\"  #", Variance.COVARIANT, """
-      from dataclasses import dataclass
-      @dataclass(frozen=True)
-      class A[T]:
-          attr: "T"  # read-only
-      """)
-  }
-
-  fun `test String literal type at return inside callable`() {
-    doTest("T\"", Variance.COVARIANT, """
-      from typing import Callable
-      class A[T]:
-          def f(self, t: Callable[["T"],None]) : ...
-      """)
-  }
-
-  fun `test String literal type at function parameter`() {
-    doTest("T],", Variance.COVARIANT, """
-      from typing import Callable
-      class A[T]:
-          def f(self, t: "Callable[[T],None]") : ...
-      """)
-  }
-
-  fun `test Type alias use for generic class invariant`() {
-    doTest("T2]", Variance.INVARIANT, """
-      from typing import TypeVar, Generic
-      T1 = TypeVar("T1")
-      class Box(Generic[T1]): ...
-      Box_TA: TypeAlias = Box[T1]
-      T2 = TypeVar("T2", covariant=True)
-      my_box: Box_TA[T2]
-      """)
-  }
-
-  fun `test Type alias use for generic class covariant`() {
-    doTest("T_co] #", Variance.COVARIANT, """
-      from typing import Generic, TypeVar, TypeAlias
-      T_co = TypeVar("T_co", covariant=True)
-      class ClassA(Generic[T_co]): ...
-      
-      T = TypeVar("T")
-      A_Alias_1: TypeAlias = ClassA[T]
-      
-      obj: A_Alias_1[T_co] #
-      """)
-  }
+  @Test
+  fun `Type argument of self type`() = test("""
+    class K[T]:
+        def m1(self: "K[T]", x: T) -> None: ...
+    #                   └ EXPECTED_VARIANCE CONTRAVARIANT
+    """.trimIndent())
 
   // Expect null to avoid variance compatibility inspection check
 
-  fun `test Generic class dunder init special case`() {
-    // actually bivariant
-    doTest("T):", null, """
-      class A[T]:
-          def __init__(self, value: T): pass
-      """)
-  }
+  @Test
+  fun `Generic class dunder init special case`() = test("""
+    class A[T]:
+        def __init__(self, value: T): pass
+    #                             └ EXPECTED_VARIANCE NULL # actually bivariant
+    """.trimIndent())
 
-  fun `test Generic class dunder new special case`() {
-    // actually bivariant
-    doTest("T):", null, """
-      class A[T]:
-          def __new__(self, value: T): pass
-      """)
-  }
+  @Test
+  fun `Generic class dunder new special case`() = test("""
+    class A[T]:
+        def __new__(self, value: T): pass
+    #                            └ EXPECTED_VARIANCE NULL # actually bivariant
+    """.trimIndent())
 
-  fun `test Type argument of self type`() {
-    doTest("T]\"", null, """"
-      class K[T]:
-          def m1(self: "K[T]", x: T) -> None: ...
-      """)
-  }
+  @Test
+  fun `Generic class dunder init safety`() = test("""
+    class A[T]:
+        def __init__(self, value: T) -> None : pass
+    #                                    └ EXPECTED_VARIANCE NULL
+    """.trimIndent())
 
-  fun `test Generic class dunder init safety`() {
-    doTest("int", null, """
-      class A[T]:
-          def __init__(self, value: T) -> int : pass
-      """)
-  }
+  @Test
+  fun `Private attributes are ignored`() = test("""
+    class A[T]:
+        __t: T  # private
+    #        └ EXPECTED_VARIANCE NULL
+    """.trimIndent())
 
-  fun `test Private attributes are ignored`() {
-    doTest("T  #", null, """
-      class A[T]:
-          __t: T  # private
-      """)
-  }
+  @Test
+  fun `Private methods are ignored`() = test("""
+    class A[T]:
+        def __foo(self, t:T) -> T: pass  # private
+    #                     └ EXPECTED_VARIANCE NULL
+    """.trimIndent())
 
-  fun `test Private methods are ignored`() {
-    doTest("T)", null, """
-      class A[T]:
-          def __foo(self, t:T) -> T: pass  # private
-      """)
-  }
+  @Test
+  fun `Protected attributes are ignored`() = test("""
+    class A[T]:
+        _t: T  # protected
+    #       └ EXPECTED_VARIANCE NULL
+    """.trimIndent())
 
-  fun `test Protected attributes are ignored`() {
-    doTest("T  #", null, """
-      class A[T]:
-          _t: T  # protected
-      """)
-  }
+  @Test
+  fun `Protected methods are ignored`() = test("""
+    class A[T]:
+        def _foo(self, t:T) -> T: pass  # private
+    #                    └ EXPECTED_VARIANCE NULL
+    """.trimIndent())
 
-  fun `test Protected methods are ignored`() {
-    doTest("T)", null, """
-      class A[T]:
-          def _foo(self, t:T) -> T: pass  # private
-      """)
-  }
+  @Test
+  fun `Null when bound to function return 1`() = test("""
+    from typing import TypeVar
+    T = TypeVar("T", covariant=True)
+    def fn() -> T: pass
+    #           └ EXPECTED_VARIANCE NULL
+    """.trimIndent())
 
-  fun `test Null when bound to function return 1`() {
-    doTest("T:", null, """
-      from typing import TypeVar
-      T = TypeVar("T", covariant=True)
-      def fn() -> T: pass
-      """)
-  }
+  @Test
+  fun `Null when bound to function return 2`() = test("""
+    def fn[T]() -> T: pass
+    #              └ EXPECTED_VARIANCE NULL
+    """.trimIndent())
 
-  fun `test Null when bound to function return 2`() {
-    doTest("T:", null, """
-      def fn[T]() -> T: pass
-      """)
-  }
+  @Test
+  fun `Null when bound to function param 1`() = test("""
+    from typing import TypeVar
+    T = TypeVar("T", covariant=True)
+    def fn(t: T): pass
+    #         └ EXPECTED_VARIANCE NULL
+    """.trimIndent())
 
-  fun `test Null when bound to function param 1`() {
-    doTest("T):", null, """
-      from typing import TypeVar
-      T = TypeVar("T", covariant=True)
-      def fn(t: T): pass
-      """)
-  }
+  @Test
+  fun `Null when bound to function param 2`() = test("""
+    def fn[T](t: T): pass
+    #            └ EXPECTED_VARIANCE NULL
+    """.trimIndent())
 
-  fun `test Null when bound to function param 2`() {
-    doTest("T):", null, """
-      def fn[T](t: T): pass
-      """)
-  }
+  @Test
+  fun `Null when bound to function parameter nesting callable parameter`() = test("""
+    from typing import Callable
+    def fn[T](t: Callable[[T], None]): pass
+    #                      └ EXPECTED_VARIANCE NULL
+    """.trimIndent())
 
-  fun `test Null when bound to function parameter nesting callable parameter`() {
-    doTest("T],", null, """
-      from typing import Callable
-      def fn[T](t: Callable[[T], None]): pass
-      """)
-  }
+  @Test
+  fun `Null when bound to function parameter nesting callable return`() = test("""
+    from typing import Callable
+    def fn[T](t: Callable[[], T]): pass
+    #                         └ EXPECTED_VARIANCE NULL
+    """.trimIndent())
 
-  fun `test Null when bound to function parameter nesting callable return`() {
-    doTest("T])", null, """
-      from typing import Callable
-      def fn[T](t: Callable[[], T]): pass
-      """)
-  }
+  @Test
+  fun `Null when bound to function return nesting callable parameter`() = test("""
+    from typing import Callable
+    def fn[T]() -> Callable[[T], None]: pass
+    #                        └ EXPECTED_VARIANCE NULL
+    """.trimIndent())
 
-  fun `test Null when bound to function return nesting callable parameter`() {
-    doTest("T],", null, """
-      from typing import Callable
-      def fn[T]() -> Callable[[T], None]: pass
-      """)
-  }
+  @Test
+  fun `Null when bound to function return nesting callable return`() = test("""
+    from typing import Callable
+    def fn[T]() -> Callable[[], T]: pass
+    #                           └ EXPECTED_VARIANCE NULL
+    """.trimIndent())
 
-  fun `test Null when bound to function return nesting callable return`() {
-    doTest("T]:", null, """
-      from typing import Callable
-      def fn[T]() -> Callable[[], T]: pass
-      """)
-  }
+  @Test
+  fun `Null when bound to function generic parameter`() = test("""
+    from typing import TypeVar
+    B_co = TypeVar("B_co", covariant=True)
+    def func(x: list[B_co]) -> B_co:
+    #                └ EXPECTED_VARIANCE NULL
+        ...
+    """.trimIndent())
 
-  fun `test Null when bound to function generic parameter`() {
-    doTest("B_co]", null, """
-      from typing import TypeVar
-      B_co = TypeVar("B_co", covariant=True)
-      def func(x: list[B_co]) -> B_co:
-          ...
-      """)
-  }
+  @Test
+  fun `Null when in function`() = test("""
+    from typing import TypeVar, Generic
+    T = TypeVar("T", covariant=True)
+    def fn() -> T: pass
+    #           └ EXPECTED_VARIANCE NULL
+    """.trimIndent())
 
-  fun `test Null when in function`() {
-    doTest("T:", null, """
-      from typing import TypeVar, Generic
-      T = TypeVar("T", covariant=True)
-      def fn() -> T: pass
-      """)
-  }
+  @Test
+  fun `Null when in unbound instance function`() = test("""
+    from typing import TypeVar, Generic
+    T = TypeVar("T", covariant=True)
+    class C(Generic[T]):
+        def fn() -> T: pass
+    #               └ EXPECTED_VARIANCE NULL
+    """.trimIndent())
 
-  fun `test Null when in unbound instance function`() {
-    doTest("T:", null, """
-      from typing import TypeVar, Generic
-      T = TypeVar("T", covariant=True)
-      class C(Generic[T]):
-          def fn() -> T: pass
-      """)
-  }
+  @Test
+  fun `Null when in class function`() = test("""
+    from typing import TypeVar, Generic
+    T = TypeVar("T", covariant=True)
+    class C(Generic[T]):
+        @classmethod
+        def fn(cls) -> T: pass
+    #                  └ EXPECTED_VARIANCE NULL
+    """.trimIndent())
 
-  fun `test Null when in class function`() {
-    doTest("T:", null, """
-      from typing import TypeVar, Generic
-      T = TypeVar("T", covariant=True)
-      class C(Generic[T]):
-          @classmethod
-          def fn(cls) -> T: pass
-      """)
-  }
+  @Test
+  fun `Null when in static function`() = test("""
+    from typing import TypeVar, Generic
+    T = TypeVar("T", covariant=True)
+    class C(Generic[T]):
+        @staticmethod
+        def fn() -> T: pass
+    #               └ EXPECTED_VARIANCE NULL
+    """.trimIndent())
 
-  fun `test Null when in static function`() {
-    doTest("T:", null, """
-      from typing import TypeVar, Generic
-      T = TypeVar("T", covariant=True)
-      class C(Generic[T]):
-          @staticmethod
-          def fn() -> T: pass
-      """)
-  }
+  @Test
+  fun `Null when pass`() = test("""
+    class C[T]:
+        def method(self) -> T: pass
+    #                          └ EXPECTED_VARIANCE NULL
+    """.trimIndent())
 
-  fun `test Null when pass`() {
-    doTest("pass", null, """
-      class C[T]:
-          def method(self) -> T: pass
-      """)
-  }
+  @Test
+  fun `Null when default parameter value`() = test("""
+    class C[T]:
+        def method(self, a = 1) -> T: pass
+    #                        └ EXPECTED_VARIANCE NULL
+    """.trimIndent())
 
-  fun `test Null when default parameter value`() {
-    doTest("1", null, """
-      class C[T]:
-          def method(self, a = 1) -> T: pass
-      """)
-  }
+  @Test
+  fun `Null when literal expression`() = test("""
+    class C[T]:
+        def method(self, a: int) -> T:
+            return a + 2
+    #                  └ EXPECTED_VARIANCE NULL
+    """.trimIndent())
 
-  fun `test Null when literal expression`() {
-    doTest("2", null, """
-      class C[T]:
-          def method(self, a: int) -> T:
-              return a+2
-      """)
-  }
+  @Test
+  fun `Null when ref in some expression`() = test("""
+    class C[T]:
+        def method(self, a: int) -> T:
+            return a + 2
+    #              └ EXPECTED_VARIANCE NULL
+    """.trimIndent())
 
-  fun `test Null when ref in some expression`() {
-    doTest("a+", null, """
-      class C[T]:
-          def method(self, a: int) -> T:
-              return a+2
-      """)
-  }
-
-  fun `test Null when ref in attr initializer`() {
-    doTest("None", null, """
-      class A[T]:
-          attr: T = None
-      """)
-  }
+  @Test
+  fun `Null when ref in attr initializer`() = test("""
+    class A[T]:
+        attr: T = None
+    #             └ EXPECTED_VARIANCE NULL
+    """.trimIndent())
 
 }
