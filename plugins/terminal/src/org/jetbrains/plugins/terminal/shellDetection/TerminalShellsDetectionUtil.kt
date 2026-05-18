@@ -19,6 +19,10 @@ import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.eel.where
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.terminal.TerminalBundle
@@ -30,6 +34,12 @@ object TerminalShellsDetectionUtil {
     get() = TerminalBundle.message("local.environment.name")
   const val WSL_ENVIRONMENT_NAME: @NlsSafe String = "WSL"
   const val DEV_CONTAINER_ENVIRONMENT_NAME: @NlsSafe String = "Dev Container"
+
+  private const val POWERSHELL_5_NAME: @NlsSafe String = "Windows PowerShell"
+  private const val POWERSHELL_7_NAME: @NlsSafe String = "PowerShell"
+  private const val CMD_NAME: @NlsSafe String = "Command Prompt"
+  private const val GIT_BASH_NAME: @NlsSafe String = "Git Bash"
+  private const val CMDER_NAME: @NlsSafe String = "Cmder"
 
   private val UNIX_BINARIES_DIRECTORIES = listOf(
     "/bin",
@@ -43,28 +53,41 @@ object TerminalShellsDetectionUtil {
   suspend fun detectUnixShells(eelDescriptor: EelDescriptor): List<DetectedShellInfo> {
     require(eelDescriptor.osFamily.isPosix) { "detectUnixShells should only be called with Unix EelDescriptor" }
 
-    val eelApi = eelDescriptor.toEelApi()
-    val shells = mutableListOf<DetectedShellInfo>()
+    data class ShellCandidate(val name: String, val path: EelPath)
 
     // Iterate over all combinations of path+shell to find executables.
-    for (parentPath in UNIX_BINARIES_DIRECTORIES) {
-      val parentEelPath = EelPath.parse(parentPath, eelDescriptor)
-      for (shellName in UNIX_SHELL_NAMES) {
-        val shellPath = parentEelPath.resolve(shellName)
-        if (eelApi.fs.isRegularFile(shellPath)) {
-          shells.add(createShellInfo(shellName, shellPath.toString(), eelDescriptor = eelDescriptor))
+    val candidates: List<ShellCandidate> = buildList {
+      for (parentPath in UNIX_BINARIES_DIRECTORIES) {
+        val parentEelPath = EelPath.parse(parentPath, eelDescriptor)
+        for (shellName in UNIX_SHELL_NAMES) {
+          val shellPath = parentEelPath.resolve(shellName)
+          add(ShellCandidate(shellName, shellPath))
         }
       }
     }
 
-    return shells
+    val existingCandidates = coroutineScope {
+      val eelApi = eelDescriptor.toEelApi()
+
+      // Launch existence checks in parallel because checking sequentially can be slow for remote environments with big latency.
+      candidates.map { shell ->
+        async {
+          if (eelApi.fs.isRegularFile(shell.path)) shell else null
+        }
+      }
+        .awaitAll()
+        .filterNotNull()
+    }
+
+    return existingCandidates.map {
+      createShellInfo(it.name, it.path.toString(), eelDescriptor = eelDescriptor)
+    }
   }
 
   suspend fun detectWindowsShells(eelDescriptor: EelDescriptor): List<DetectedShellInfo> {
     require(eelDescriptor.osFamily.isWindows) { "detectWindowsShells should only be called with Windows EelDescriptor" }
 
     val eelApi = eelDescriptor.toEelApi()
-    val shells = mutableListOf<DetectedShellInfo>()
 
     val envVariables = try {
       eelApi.exec.environmentVariables().onlyActual(true).eelIt().await()
@@ -78,39 +101,63 @@ object TerminalShellsDetectionUtil {
     val programFiles = envVariables["ProgramFiles"]  // C:\\Program Files
     val localAppData = envVariables["LocalAppData"]  // C:\\Users\\<Username>\\AppData\\Local
 
-    val powershell = eelApi.exec.where("powershell.exe")
-    if (powershell != null && powershell.startsWithIgnoreCase("$systemRoot\\System32\\WindowsPowerShell\\")) {
-      shells.add(createShellInfo("Windows PowerShell", powershell.toString(), eelDescriptor = eelDescriptor))
-    }
-    val cmd = eelApi.exec.where("cmd.exe")
-    if (cmd != null && cmd.startsWithIgnoreCase("$systemRoot\\System32\\")) {
-      shells.add(createShellInfo("Command Prompt", cmd.toString(), eelDescriptor = eelDescriptor))
-    }
-    val pwsh = eelApi.exec.where("pwsh.exe")
-    if (pwsh != null && pwsh.startsWithIgnoreCase("$programFiles\\PowerShell\\")) {
-      shells.add(createShellInfo("PowerShell", pwsh.toString(), eelDescriptor = eelDescriptor))
-    }
+    val detectedShells: List<DetectedShellInfo> = coroutineScope {
+      // Launch existence checks in parallel because checking sequentially can be slow for remote environments with big latency.
+      val tasks: List<Deferred<DetectedShellInfo?>> = buildList {
+        add(async {
+          val powershell = eelApi.exec.where("powershell.exe")
+          if (powershell != null && powershell.startsWithIgnoreCase("$systemRoot\\System32\\WindowsPowerShell\\")) {
+            createShellInfo(POWERSHELL_5_NAME, powershell.toString(), eelDescriptor = eelDescriptor)
+          }
+          else null
+        })
 
-    val gitBashGlobal = EelPath.parse("$programFiles\\Git\\bin\\bash.exe", eelDescriptor)
-    val gitBashLocal = EelPath.parse("$localAppData\\Programs\\Git\\bin\\bash.exe", eelDescriptor)
-    val gitBash = when {
-      eelApi.fs.isRegularFile(gitBashLocal) -> gitBashLocal
-      eelApi.fs.isRegularFile(gitBashGlobal) -> gitBashGlobal
-      else -> null
-    }
-    if (gitBash != null) {
-      shells.add(createShellInfo("Git Bash", gitBash.toString(), eelDescriptor = eelDescriptor))
+        add(async {
+          val cmd = eelApi.exec.where("cmd.exe")
+          if (cmd != null && cmd.startsWithIgnoreCase("$systemRoot\\System32\\")) {
+            createShellInfo(CMD_NAME, cmd.toString(), eelDescriptor = eelDescriptor)
+          }
+          else null
+        })
+
+        add(async {
+          val pwsh = eelApi.exec.where("pwsh.exe")
+          if (pwsh != null && pwsh.startsWithIgnoreCase("$programFiles\\PowerShell\\")) {
+            createShellInfo(POWERSHELL_7_NAME, pwsh.toString(), eelDescriptor = eelDescriptor)
+          }
+          else null
+        })
+
+        add(async {
+          val gitBashGlobal = EelPath.parse("$programFiles\\Git\\bin\\bash.exe", eelDescriptor)
+          val gitBashLocal = EelPath.parse("$localAppData\\Programs\\Git\\bin\\bash.exe", eelDescriptor)
+          val gitBash = when {
+            eelApi.fs.isRegularFile(gitBashLocal) -> gitBashLocal
+            eelApi.fs.isRegularFile(gitBashGlobal) -> gitBashGlobal
+            else -> null
+          }
+          if (gitBash != null) {
+            createShellInfo(GIT_BASH_NAME, gitBash.toString(), eelDescriptor = eelDescriptor)
+          }
+          else null
+        })
+      }
+
+      tasks.awaitAll().filterNotNull()
     }
 
     val cmderRoot = envVariables["CMDER_ROOT"]
-    if (cmderRoot != null && cmd != null && cmd.startsWithIgnoreCase("$systemRoot\\System32\\")) {
+    val cmd = detectedShells.find { it.name == CMD_NAME }?.path
+    val cmderShell = if (cmderRoot != null && cmd != null && cmd.startsWith("$systemRoot\\System32\\", ignoreCase = true)) {
       val cmderInitBat = EelPath.parse(cmderRoot, eelDescriptor).resolve("vendor\\init.bat")
       if (eelApi.fs.isRegularFile(cmderInitBat)) {
-        shells.add(createShellInfo("Cmder", cmd.toString(), listOf("/k", cmderInitBat.toString()), eelDescriptor))
+        createShellInfo(CMDER_NAME, cmd, listOf("/k", cmderInitBat.toString()), eelDescriptor)
       }
+      else null
     }
+    else null
 
-    return shells
+    return if (cmderShell != null) detectedShells + cmderShell else detectedShells
   }
 
   @RequiresBackgroundThread
