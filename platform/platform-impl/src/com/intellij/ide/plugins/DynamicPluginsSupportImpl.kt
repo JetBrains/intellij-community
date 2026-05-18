@@ -200,6 +200,7 @@ internal class DynamicPluginsSupportImpl(
     for (group in groups) {
       for (descriptor in group.sortedDescriptors) {
         descriptor.pluginClassLoader = null
+        descriptor.isMarkedForLoading = false  // FIXME it is here only because descriptor.isEnabled still refers to isMarkedForLoading
       }
     }
   }
@@ -265,8 +266,11 @@ internal class DynamicPluginsSupportImpl(
       }
     }
     for (group in groups) {
-      for (descriptor in group.sortedDescriptors.filterIsInstance<PluginModuleDescriptor>()) {
-        configurator.configureModule(descriptor)
+      for (descriptor in group.sortedDescriptors) {
+        descriptor.isMarkedForLoading = true // FIXME it is here only because descriptor.isEnabled still refers to isMarkedForLoading
+        if (descriptor is PluginModuleDescriptor) {
+          configurator.configureModule(descriptor)
+        }
       }
     }
   }
