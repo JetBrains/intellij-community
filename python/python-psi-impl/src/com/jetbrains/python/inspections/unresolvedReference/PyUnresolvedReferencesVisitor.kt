@@ -397,24 +397,22 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
     val reference = spec.reference
     val element = spec.element
 
-    when {
-      reference is PsiReferenceEx -> {
-        fixes.addAll(reference.getQuickFixes(myTypeEvalContext))
-      }
-      spec.qualifierType != null -> {
-        fixes.addAll(getCreateMemberFromUsageFixes(myTypeEvalContext, spec.qualifierType, reference, spec.refText))
-      }
-      spec.fallbackToUnqualifiedFix -> {
-        fixes.addAll(getAutoImportFixes(spec.node, reference, element))
-        fixes.addIfNotNull(getCreateClassFix(myTypeEvalContext, spec.refText, element))
-      }
-      element is PyReferenceExpression && !element.isQualified -> {
-        fixes.addIfNotNull(getTrueFalseQuickFix(spec.refText))
-        fixes.addAll(getAddSelfFixes(myTypeEvalContext, spec.node, element))
-        fixes.addIfNotNull(getCreateFunctionQuickFix(element))
-        fixes.addIfNotNull(getAddParameterQuickFix(spec.refName, element))
-        fixes.addIfNotNull(PyRenameUnresolvedRefQuickFix())
-      }
+    if (reference is PsiReferenceEx) {
+      fixes.addAll(reference.getQuickFixes(myTypeEvalContext))
+    }
+    if (element is PyReferenceExpression && !element.isQualified) {
+      fixes.addIfNotNull(getTrueFalseQuickFix(spec.refText))
+      fixes.addAll(getAddSelfFixes(myTypeEvalContext, spec.node, element))
+      fixes.addIfNotNull(getCreateFunctionQuickFix(element))
+      fixes.addIfNotNull(getAddParameterQuickFix(spec.refName, element))
+      fixes.add(PyRenameUnresolvedRefQuickFix())
+    }
+    if (spec.qualifierType != null) {
+      fixes.addAll(getCreateMemberFromUsageFixes(myTypeEvalContext, spec.qualifierType, reference, spec.refText))
+    }
+    if (spec.fallbackToUnqualifiedFix) {
+      fixes.addAll(getAutoImportFixes(spec.node, reference, element))
+      fixes.addIfNotNull(getCreateClassFix(myTypeEvalContext, spec.refText, element))
     }
     return fixes
   }
