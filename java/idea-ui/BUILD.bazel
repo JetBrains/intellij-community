@@ -161,6 +161,8 @@ jvm_library(
   runtime_deps = [
     "//java/idea-ui:ui",
     "//platform/core-ui",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.structureView:moduleSet-plugin-structureView",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.todoView:moduleSet-plugin-todoView",
     "//platform/ide-core-impl",
     "@lib//:kotlin-test",
     "//platform/forms_rt:java-guiForms-rt",
@@ -261,6 +263,8 @@ jvm_library(
   ],
   runtime_deps = [
     ":ui-tests",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.structureView:moduleSet-plugin-structureView_test_lib",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.todoView:moduleSet-plugin-todoView_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
     "//platform/ide-core:ide-core_test_lib",
   ]
