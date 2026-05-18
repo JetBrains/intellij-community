@@ -5,6 +5,7 @@ import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.environmentVariables
@@ -19,7 +20,6 @@ import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.eel.where
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -40,6 +40,11 @@ object TerminalShellsDetectionUtil {
   private const val CMD_NAME: @NlsSafe String = "Command Prompt"
   private const val GIT_BASH_NAME: @NlsSafe String = "Git Bash"
   private const val CMDER_NAME: @NlsSafe String = "Cmder"
+
+  private const val ENV_SYSTEM_ROOT: String = "SystemRoot"        // C:\Windows
+  private const val ENV_PROGRAM_FILES: String = "ProgramFiles"    // C:\Program Files
+  private const val ENV_LOCAL_APP_DATA: String = "LocalAppData"   // C:\Users\<Username>\AppData\Local
+  private const val ENV_CMDER_ROOT: String = "CMDER_ROOT"
 
   private val UNIX_BINARIES_DIRECTORIES = listOf(
     "/bin",
@@ -97,67 +102,62 @@ object TerminalShellsDetectionUtil {
       return emptyList()
     }
 
-    val systemRoot = envVariables["SystemRoot"]      // C:\\Windows
-    val programFiles = envVariables["ProgramFiles"]  // C:\\Program Files
-    val localAppData = envVariables["LocalAppData"]  // C:\\Users\\<Username>\\AppData\\Local
-
-    val detectedShells: List<DetectedShellInfo> = coroutineScope {
+    return coroutineScope {
       // Launch existence checks in parallel because checking sequentially can be slow for remote environments with big latency.
-      val tasks: List<Deferred<DetectedShellInfo?>> = buildList {
-        add(async {
-          val powershell = eelApi.exec.where("powershell.exe")
-          if (powershell != null && powershell.startsWithIgnoreCase("$systemRoot\\System32\\WindowsPowerShell\\")) {
-            createShellInfo(POWERSHELL_5_NAME, powershell.toString(), eelDescriptor = eelDescriptor)
-          }
-          else null
-        })
-
-        add(async {
-          val cmd = eelApi.exec.where("cmd.exe")
-          if (cmd != null && cmd.startsWithIgnoreCase("$systemRoot\\System32\\")) {
-            createShellInfo(CMD_NAME, cmd.toString(), eelDescriptor = eelDescriptor)
-          }
-          else null
-        })
-
-        add(async {
-          val pwsh = eelApi.exec.where("pwsh.exe")
-          if (pwsh != null && pwsh.startsWithIgnoreCase("$programFiles\\PowerShell\\")) {
-            createShellInfo(POWERSHELL_7_NAME, pwsh.toString(), eelDescriptor = eelDescriptor)
-          }
-          else null
-        })
-
-        add(async {
-          val gitBashGlobal = EelPath.parse("$programFiles\\Git\\bin\\bash.exe", eelDescriptor)
-          val gitBashLocal = EelPath.parse("$localAppData\\Programs\\Git\\bin\\bash.exe", eelDescriptor)
-          val gitBash = when {
-            eelApi.fs.isRegularFile(gitBashLocal) -> gitBashLocal
-            eelApi.fs.isRegularFile(gitBashGlobal) -> gitBashGlobal
-            else -> null
-          }
-          if (gitBash != null) {
-            createShellInfo(GIT_BASH_NAME, gitBash.toString(), eelDescriptor = eelDescriptor)
-          }
-          else null
-        })
+      buildList {
+        add(async { detectWindowsPowerShell5(eelApi, envVariables) })
+        add(async { detectWindowsCmd(eelApi, envVariables) })
+        add(async { detectWindowsPowerShell7(eelApi, envVariables) })
+        add(async { detectWindowsGitBash(eelApi, envVariables) })
+        add(async { detectWindowsCmder(eelApi, envVariables) })
       }
-
-      tasks.awaitAll().filterNotNull()
+        .awaitAll()
+        .filterNotNull()
     }
+  }
 
-    val cmderRoot = envVariables["CMDER_ROOT"]
-    val cmd = detectedShells.find { it.name == CMD_NAME }?.path
-    val cmderShell = if (cmderRoot != null && cmd != null && cmd.startsWith("$systemRoot\\System32\\", ignoreCase = true)) {
-      val cmderInitBat = EelPath.parse(cmderRoot, eelDescriptor).resolve("vendor\\init.bat")
-      if (eelApi.fs.isRegularFile(cmderInitBat)) {
-        createShellInfo(CMDER_NAME, cmd, listOf("/k", cmderInitBat.toString()), eelDescriptor)
-      }
-      else null
+  private suspend fun detectWindowsPowerShell5(eelApi: EelApi, envVariables: Map<String, String>): DetectedShellInfo? {
+    val systemRoot = envVariables[ENV_SYSTEM_ROOT] ?: return null
+    val powershell = eelApi.exec.where("powershell.exe") ?: return null
+    if (!powershell.startsWithIgnoreCase("$systemRoot\\System32\\WindowsPowerShell\\")) return null
+    return createShellInfo(POWERSHELL_5_NAME, powershell.toString(), eelDescriptor = eelApi.descriptor)
+  }
+
+  private suspend fun detectWindowsCmd(eelApi: EelApi, envVariables: Map<String, String>): DetectedShellInfo? {
+    val systemRoot = envVariables[ENV_SYSTEM_ROOT] ?: return null
+    val cmd = eelApi.exec.where("cmd.exe") ?: return null
+    if (!cmd.startsWithIgnoreCase("$systemRoot\\System32\\")) return null
+    return createShellInfo(CMD_NAME, cmd.toString(), eelDescriptor = eelApi.descriptor)
+  }
+
+  private suspend fun detectWindowsPowerShell7(eelApi: EelApi, envVariables: Map<String, String>): DetectedShellInfo? {
+    val programFiles = envVariables[ENV_PROGRAM_FILES] ?: return null
+    val pwsh = eelApi.exec.where("pwsh.exe") ?: return null
+    if (!pwsh.startsWithIgnoreCase("$programFiles\\PowerShell\\")) return null
+    return createShellInfo(POWERSHELL_7_NAME, pwsh.toString(), eelDescriptor = eelApi.descriptor)
+  }
+
+  private suspend fun detectWindowsGitBash(eelApi: EelApi, envVariables: Map<String, String>): DetectedShellInfo? {
+    val programFiles = envVariables[ENV_PROGRAM_FILES] ?: return null
+    val localAppData = envVariables[ENV_LOCAL_APP_DATA] ?: return null
+    val gitBashGlobal = EelPath.parse("$programFiles\\Git\\bin\\bash.exe", eelApi.descriptor)
+    val gitBashLocal = EelPath.parse("$localAppData\\Programs\\Git\\bin\\bash.exe", eelApi.descriptor)
+    val gitBash = when {
+      eelApi.fs.isRegularFile(gitBashLocal) -> gitBashLocal
+      eelApi.fs.isRegularFile(gitBashGlobal) -> gitBashGlobal
+      else -> return null
     }
-    else null
+    return createShellInfo(GIT_BASH_NAME, gitBash.toString(), eelDescriptor = eelApi.descriptor)
+  }
 
-    return if (cmderShell != null) detectedShells + cmderShell else detectedShells
+  private suspend fun detectWindowsCmder(eelApi: EelApi, envVariables: Map<String, String>): DetectedShellInfo? {
+    val cmderRoot = envVariables[ENV_CMDER_ROOT] ?: return null
+    val systemRoot = envVariables[ENV_SYSTEM_ROOT] ?: return null
+    val cmd = eelApi.exec.where("cmd.exe") ?: return null
+    if (!cmd.startsWithIgnoreCase("$systemRoot\\System32\\")) return null
+    val cmderInitBat = EelPath.parse(cmderRoot, eelApi.descriptor).resolve("vendor\\init.bat")
+    if (!eelApi.fs.isRegularFile(cmderInitBat)) return null
+    return createShellInfo(CMDER_NAME, cmd.toString(), listOf("/k", cmderInitBat.toString()), eelApi.descriptor)
   }
 
   @RequiresBackgroundThread
