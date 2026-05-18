@@ -4,5 +4,5 @@ class Example1:
 
 
 class Example2(Example1):
-    def <warning descr="Call to __init__ of super class is missed">__init<caret>__</warning>(self):  # Some valuable comment here
+    def <warning descr="Call to '__init__' of super class is missing">__init<caret>__</warning>(self):  # Some valuable comment here
         pass
