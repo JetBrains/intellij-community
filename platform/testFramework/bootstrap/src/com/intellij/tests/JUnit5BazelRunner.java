@@ -58,6 +58,8 @@ import java.util.stream.Stream;
 
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectMethod;
+import static org.junit.platform.launcher.LauncherConstants.CAPTURE_STDERR_PROPERTY_NAME;
+import static org.junit.platform.launcher.LauncherConstants.CAPTURE_STDOUT_PROPERTY_NAME;
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public final class JUnit5BazelRunner {
@@ -116,6 +118,8 @@ public final class JUnit5BazelRunner {
   public static LauncherDiscoveryRequest createDiscoveryRequest(List<? extends DiscoverySelector> bazelTestSelectors, String engineVintage) {
     LauncherDiscoveryRequestBuilder builder = LauncherDiscoveryRequestBuilder.request()
       .configurationParameter("junit.jupiter.extensions.autodetection.enabled", "true")
+      .configurationParameter(CAPTURE_STDOUT_PROPERTY_NAME, "true")
+      .configurationParameter(CAPTURE_STDERR_PROPERTY_NAME, "true")
       .selectors(bazelTestSelectors)
       .filters(getTestFilters(bazelTestSelectors))
       .filters(generateFiltersFromJbEnv().toArray(new Filter[0]))
