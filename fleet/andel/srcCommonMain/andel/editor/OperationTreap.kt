@@ -5,10 +5,6 @@ import andel.operation.NewOffsetProvider
 import andel.operation.Op
 import andel.operation.Operation
 import fleet.util.logging.KLoggers
-import fleet.util.tree.Node
-import fleet.util.tree.PushFun
-import fleet.util.tree.Treap
-import fleet.util.tree.UpdateFun
 
 private val logger by lazy { KLoggers.logger(OpTreapData::class) }
 
