@@ -10,6 +10,7 @@
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.libraries.stream"/>
     <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.bookmarks"/>
     <module name="intellij.platform.codeStyle"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>

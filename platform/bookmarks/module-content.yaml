@@ -1,0 +1,3 @@
+- name: dist.all/lib/intellij.platform.bookmarks.jar
+  modules:
+  - name: intellij.platform.bookmarks

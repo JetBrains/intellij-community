@@ -1,6 +1,44 @@
-<!-- todo: register this as a content module (IJPL-210868); currently it's included via 'xi:include' tag -->
-<idea-plugin>
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="fleet.rhizomedb"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ex"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.ide.concurrency"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.favoritesTreeView"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.diff"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceImplementation="com.intellij.ide.bookmarks.BookmarkManager" open="true"/>
+    <projectService serviceInterface="com.intellij.ide.bookmark.BookmarksManager" open="true"
+                    serviceImplementation="com.intellij.ide.bookmark.BookmarksManagerImpl"/>
+    <bookmarkProvider implementation="com.intellij.ide.favoritesTreeView.AbstractUrlBookmarkProvider" order="first"/>
+    <bookmarkProvider implementation="com.intellij.ide.bookmark.providers.LineBookmarkProvider" order="last"/>
+    <bookmarkProvider implementation="com.intellij.ide.bookmark.providers.ModuleBookmarkProvider"/>
+    <bookmarkProvider implementation="com.intellij.ide.bookmark.providers.RootTypeBookmarkProvider"/>
+    <bookmarksListProvider implementation="com.intellij.ide.bookmark.ui.tree.BookmarkListProvider"/>
+    <bookmarksListProvider implementation="com.intellij.ide.bookmark.ui.tree.GroupListProvider"/>
+    <advancedSetting id="show.line.bookmarks.in.popup" default="true"
+                     bundle="messages.BookmarkBundle" groupKey="group.advanced.settings.bookmarks"/>
+    <advancedSetting id="tasks.enable.bookmark.context.on.branch.switch"
+                     default="true" groupKey="group.advanced.settings.bookmarks" bundle="messages.BookmarkBundle"/>
+
     <toolWindow id="Bookmarks" anchor="left" icon="AllIcons.Toolwindows.ToolWindowBookmarks" secondary="true"
                 factoryClass="com.intellij.ide.bookmark.ui.BookmarksViewFactory" order="after Structure"/>
     <toolWindowExtractorMode id="Bookmarks" mode="per_client"/>
@@ -11,7 +49,10 @@
     <selectInTarget implementation="com.intellij.ide.bookmark.ui.BookmarksSelectInTarget"/>
     <actionPromoter implementation="com.intellij.ide.bookmark.actions.NodeMoveActionPromoter"/>
     <projectSettings service="com.intellij.ide.bookmark.ui.BookmarksViewStateComponent"/>
+    <projectSettings service="com.intellij.ide.bookmark.BookmarksManagerImpl"/>
+    <projectSettings service="com.intellij.ide.bookmarks.BookmarkManager"/>
   </extensions>
+
   <actions>
     <group id="Bookmarks" popup="true">
       <action id="AddAnotherBookmark" class="com.intellij.ide.bookmark.actions.AddAnotherBookmarkAction"/>

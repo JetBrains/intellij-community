@@ -65,7 +65,6 @@
   {"moduleName": "intellij.platform.resources", "descriptorRelativePath": "src/META-INF/WorkspaceModelExtensions.xml", "moduleKind": "shared"},
   {"moduleName": "intellij.platform.resources", "descriptorRelativePath": "src/intellij.platform.feedback.xml", "moduleKind": "shared"},
   {"moduleName": "intellij.platform.resources", "descriptorRelativePath": "src/META-INF/IJent.xml", "moduleKind": "shared"},
-  {"moduleName": "intellij.platform.resources", "descriptorRelativePath": "src/intellij.platform.bookmarks.xml", "moduleKind": "shared"},
   {"moduleName": "intellij.platform.resources", "descriptorRelativePath": "src/intellij.platform.syntax.psi.xml", "moduleKind": "shared"},
   {"moduleName": "intellij.platform.resources", "descriptorRelativePath": "src/META-INF/CompletionExtensionPoints.xml", "moduleKind": "shared"},
   {"moduleName": "intellij.platform.resources", "descriptorRelativePath": "src/META-INF/RefactoringExtensionPoints.xml", "moduleKind": "shared"},
