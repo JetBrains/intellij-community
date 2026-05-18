@@ -540,6 +540,7 @@ notebooks/notebook-ui
 notebooks/visualization
 notebooks/visualization/testFramework
 platform/acp
+platform/acp/tests
 platform/analysis-api
 platform/analysis-impl
 platform/backend
