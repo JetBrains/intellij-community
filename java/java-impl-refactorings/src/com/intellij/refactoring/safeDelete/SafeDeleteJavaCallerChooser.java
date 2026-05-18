@@ -2,7 +2,7 @@
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -100,7 +100,7 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
       }
     };
 
-    if (ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(runnable),
+    if (ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ReadAction.runBlocking(runnable::run),
                                                                           JavaRefactoringBundle.message(
                                                                             "safe.delete.search.for.caller.method.usages.progress"), true, myProject)) {
       myResult.addAll(foreignMethodUsages);

@@ -3,6 +3,7 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
@@ -137,7 +138,7 @@ public final class AllClassesSearchExecutor implements QueryExecutor<PsiClass, A
         super.visitClass(aClass);
       }
     };
-    ApplicationManager.getApplication().runReadAction(() -> scopeRoot.accept(visitor));
+    ReadAction.runBlocking(() -> scopeRoot.accept(visitor));
 
     return !stopped[0];
   }

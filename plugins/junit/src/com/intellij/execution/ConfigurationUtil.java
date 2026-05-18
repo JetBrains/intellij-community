@@ -4,7 +4,6 @@ package com.intellij.execution;
 
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit.TestClassFilter;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.module.Module;
@@ -54,7 +53,7 @@ public final class ConfigurationUtil {
     final PsiMethod[] suiteMethods =
       ReadAction.compute(() -> PsiShortNamesCache.getInstance(project).getMethodsByName(JUnitUtil.SUITE_METHOD_NAME, scope));
     for (final PsiMethod method : suiteMethods) {
-      ApplicationManager.getApplication().runReadAction(() -> {
+      ReadAction.runBlocking(() -> {
         final PsiClass containingClass = method.getContainingClass();
         if (containingClass == null) return;
         if (containingClass instanceof PsiAnonymousClass) return;

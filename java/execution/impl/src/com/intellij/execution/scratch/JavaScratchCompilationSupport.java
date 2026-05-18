@@ -4,7 +4,6 @@ package com.intellij.execution.scratch;
 import com.intellij.compiler.options.CompileStepBeforeRun;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.ClassObject;
 import com.intellij.openapi.compiler.CompilationException;
@@ -150,7 +149,7 @@ final class JavaScratchCompilationSupport implements CompileTask {
       final Computable<OrderEnumerator> orderEnumerator = module != null ? () -> ModuleRootManager.getInstance(module).orderEntries()
                                                                          : () -> ProjectRootManager.getInstance(project).orderEntries();
 
-      ApplicationManager.getApplication().runReadAction(() -> {
+      ReadAction.runBlocking(() -> {
         if (module != null || scratchConfig.isBuildProjectOnEmptyModuleList()) {
           for (String s : orderEnumerator.compute().compileOnly().recursively().exportedOnly().withoutSdk().getPathsList().getPathList()) {
             cp.add(new File(s));

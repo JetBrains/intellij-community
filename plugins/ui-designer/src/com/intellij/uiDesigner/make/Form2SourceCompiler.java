@@ -4,6 +4,7 @@ package com.intellij.uiDesigner.make;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
@@ -183,7 +184,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
       final VirtualFile formFile = item.getFormFile();
 
       if (GuiDesignerConfiguration.getInstance(project).COPY_FORMS_RUNTIME_TO_OUTPUT) {
-        ApplicationManager.getApplication().runReadAction(() -> {
+        ReadAction.runBlocking(() -> {
           final Module module = ModuleUtilCore.findModuleForFile(formFile, project);
           if (module != null && !processedModules.contains(module)) {
             processedModules.add(module);
@@ -201,7 +202,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
               addError(
                 context,
                 new FormErrorInfo(null, UIDesignerBundle.message("error.cannot.copy.gui.designer.form.runtime",
-                                         module.getName(), e.toString())),
+                                                                 module.getName(), e.toString())),
                 null
               );
             }

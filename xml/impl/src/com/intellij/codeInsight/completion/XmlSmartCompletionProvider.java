@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.xml.XmlContentDFA;
 import com.intellij.psi.xml.XmlTag;
@@ -43,7 +43,7 @@ final class XmlSmartCompletionProvider {
     if (parentTag == null) return;
     final XmlContentDFA dfa = XmlContentDFA.getContentDFA(parentTag);
     if (dfa == null) return;
-    ApplicationManager.getApplication().runReadAction(() -> {
+    ReadAction.runBlocking(() -> {
       for (XmlTag subTag : parentTag.getSubTags()) {
         if (subTag == tag) {
           break;
@@ -51,7 +51,7 @@ final class XmlSmartCompletionProvider {
         dfa.transition(subTag);
       }
       List<XmlElementDescriptor> elements = dfa.getPossibleElements();
-      for (XmlElementDescriptor elementDescriptor: elements) {
+      for (XmlElementDescriptor elementDescriptor : elements) {
         addElementToResult(elementDescriptor, result);
       }
     });

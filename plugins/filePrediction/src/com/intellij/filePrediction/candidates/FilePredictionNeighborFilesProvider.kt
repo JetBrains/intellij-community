@@ -3,6 +3,7 @@ package com.intellij.filePrediction.candidates
 
 import com.intellij.filePrediction.candidates.FilePredictionCandidateSource.NEIGHBOR
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.vfs.VirtualFile
@@ -15,7 +16,7 @@ internal class FilePredictionNeighborFilesProvider : FilePredictionBaseCandidate
 
     val result = HashSet<FilePredictionCandidateFile>()
     val fileIndex = FileIndexFacade.getInstance(project)
-    ApplicationManager.getApplication().runReadAction {
+    runReadActionBlocking {
       var parent = file.parent
       while (parent != null && parent.isDirectory && result.size < limit && fileIndex.isInProjectScope(parent)) {
         addWithLimit(parent.children.iterator(), result, NEIGHBOR, file, limit)

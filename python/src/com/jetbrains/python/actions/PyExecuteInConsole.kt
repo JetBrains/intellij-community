@@ -7,6 +7,7 @@ import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.Project
@@ -190,7 +191,7 @@ private fun startNewConsoleInstance(project: Project,
                                     listener: PydevConsoleRunner.ConsoleListener?,
                                     isRequestFocus: Boolean = false) {
   val consoleRunnerFactory = PythonConsoleRunnerFactory.getInstance()
-  val runner: PydevConsoleRunner = ApplicationManager.getApplication().runReadAction<PydevConsoleRunner> {
+  val runner: PydevConsoleRunner = runReadActionBlocking {
     if (executeInConsole == null || config == null) {
       consoleRunnerFactory.createConsoleRunner(project, null)
     }

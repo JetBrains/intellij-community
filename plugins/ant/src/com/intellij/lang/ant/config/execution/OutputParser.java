@@ -5,6 +5,7 @@ import com.intellij.compiler.impl.javaCompiler.javac.JavacOutputParser;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -217,7 +218,7 @@ public class OutputParser{
         for (int idx = 0; tokenizer.hasMoreTokens(); idx++) {
           strings[idx] = tokenizer.nextToken();
         }
-        ApplicationManager.getApplication().runReadAction(() -> {
+        ReadAction.runBlocking(() -> {
           VirtualFile file = url == null ? null : VirtualFileManager.getInstance().findFileByUrl(url);
           messageView.outputJavacMessage(convertCategory(category), strings, file, url, lineNum, columnNum);
 

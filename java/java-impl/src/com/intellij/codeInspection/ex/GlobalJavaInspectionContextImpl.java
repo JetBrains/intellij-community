@@ -20,7 +20,6 @@ import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -463,7 +462,7 @@ public final class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionC
   private static List<SmartPsiElementPointer<?>> getSortedIDs(Map<SmartPsiElementPointer<?>, ?> requests) {
     List<SmartPsiElementPointer<?>> result = new ArrayList<>();
 
-    ApplicationManager.getApplication().runReadAction(() -> {
+    ReadAction.runBlocking(() -> {
       for (SmartPsiElementPointer<?> id : requests.keySet()) {
         if (id != null && id.getContainingFile() != null) {
           result.add(id);

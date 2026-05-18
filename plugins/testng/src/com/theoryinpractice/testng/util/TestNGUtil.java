@@ -303,14 +303,12 @@ public final class TestNGUtil {
     ContainerUtil.addAll(test, CONFIG_ANNOTATIONS_FQN);
     if (psiMethods != null) {
       for (final PsiMethod psiMethod : psiMethods) {
-        ApplicationManager.getApplication().runReadAction(
-          () -> appendAnnotationAttributeValues(results, AnnotationUtil.findAnnotation(psiMethod, test), psiMethod)
-        );
+        ReadAction.runBlocking(() -> appendAnnotationAttributeValues(results, AnnotationUtil.findAnnotation(psiMethod, test), psiMethod));
       }
     }
     else {
       for (final PsiClass psiClass : classes) {
-        ApplicationManager.getApplication().runReadAction(() -> {
+        ReadAction.runBlocking(() -> {
           if (psiClass != null && hasTest(psiClass)) {
             appendAnnotationAttributeValues(results, AnnotationUtil.findAnnotation(psiClass, test), psiClass);
             PsiMethod[] methods = psiClass.getMethods();

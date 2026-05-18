@@ -37,6 +37,7 @@ import com.intellij.debugger.ui.overhead.OverheadTimings;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.notification.NotificationAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -835,7 +836,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
         if (requestHit && adjustedRequestor instanceof Breakpoint<?> breakpoint) {
           // if requestor is a breakpoint and this breakpoint was hit, no matter its suspend policy
-          ApplicationManager.getApplication().runReadAction(() -> {
+          ReadAction.runBlocking(() -> {
             XDebugSession session = getSession().getXDebugSession();
             if (session != null) {
               XBreakpoint<?> xBreakpoint = breakpoint.getXBreakpoint();

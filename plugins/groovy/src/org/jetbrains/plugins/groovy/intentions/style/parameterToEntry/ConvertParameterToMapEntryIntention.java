@@ -441,7 +441,7 @@ public final class ConvertParameterToMapEntryIntention extends Intention {
           }
         }
         for (final PsiReference reference : references) {
-          ApplicationManager.getApplication().runReadAction(() -> {
+          ReadAction.runBlocking(() -> {
             final PsiElement element = reference.getElement();
             occurrences.add(element);
           });

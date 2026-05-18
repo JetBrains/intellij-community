@@ -3,6 +3,7 @@ package com.intellij.xml.actions.validate;
 
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -50,7 +51,7 @@ public final class StdErrorReporter extends ErrorReporter {
     myErrorsView.setProcessController(processController);
     openMessageView();
     processController.setFuture(ApplicationManager.getApplication().executeOnPooledThread(
-      () -> ApplicationManager.getApplication().runReadAction(() -> super.startProcessing())));
+      () -> ReadAction.runBlocking(() -> super.startProcessing())));
 
     ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW).activate(null);
   }

@@ -13,6 +13,7 @@ import com.intellij.ide.util.PsiElementRenderingInfo;
 import com.intellij.ide.util.PsiMethodRenderingInfo;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -151,7 +152,7 @@ public final class GroovyMarkerTypes {
 
       Set<PsiMethod> result = new HashSet<>();
       Processor<PsiMethod> collectProcessor = Processors.cancelableCollectProcessor(result);
-      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
+      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ReadAction.runBlocking(() -> {
         for (GrAccessorMethod method : GroovyPropertyUtils.getFieldAccessors(field)) {
           OverridingMethodsSearch.search(method).forEach(collectProcessor);
         }

@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.configuration
 
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.junit.Assert
@@ -13,6 +13,6 @@ import org.junit.runner.RunWith
 @RunWith(JUnit38ClassRunner::class)
 class AutoConfigureKotlinSdkOnStartupTest : AbstractConfigureKotlinInTempDirTest() {
     fun testKotlinSdkAdded() {
-        Assert.assertTrue(runReadAction { ProjectJdkTable.getInstance() }.allJdks.any { it.sdkType is KotlinSdkType })
+        Assert.assertTrue(runReadActionBlocking { ProjectJdkTable.getInstance() }.allJdks.any { it.sdkType is KotlinSdkType })
     }
 }

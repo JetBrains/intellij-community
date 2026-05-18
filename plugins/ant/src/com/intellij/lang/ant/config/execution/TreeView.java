@@ -246,7 +246,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
     final VirtualFile file = message.getFile();
     if (message.getLine() > 0) {
       if (file != null) {
-        ApplicationManager.getApplication().runReadAction(() -> {
+        ReadAction.runBlocking(() -> {
           String presentableUrl = file.getPresentableUrl();
           builder.append(presentableUrl);
           builder.append(' ');

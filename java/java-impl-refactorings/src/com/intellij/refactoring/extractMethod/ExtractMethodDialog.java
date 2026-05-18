@@ -219,7 +219,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
   protected void doAction() {
     MultiMap<PsiElement, @NlsContexts.DialogMessage String> conflicts = new MultiMap<>();
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      () -> ApplicationManager.getApplication().runReadAction(
+      () -> ReadAction.runBlocking(
         () -> checkMethodConflicts(conflicts)
       ), JavaRefactoringBundle.message("checking.conflicts"), true, myProject)) {
       return;

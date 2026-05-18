@@ -7,6 +7,7 @@ import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -100,11 +101,12 @@ public final class InlineToAnonymousClassHandler extends JavaInlineActionHandler
 
   private static boolean hasInheritors(final PsiClass element) {
     final Collection<PsiElement> inheritors = new ArrayList<>();
-    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ReadAction.runBlocking(() -> {
       final PsiClass inheritor = ClassInheritorsSearch.search(element).findFirst();
       if (inheritor != null) {
         inheritors.add(inheritor);
-      } else {
+      }
+      else {
         final PsiFunctionalExpression functionalExpression = FunctionalExpressionSearch.search(element).findFirst();
         if (functionalExpression != null) {
           inheritors.add(functionalExpression);
@@ -142,8 +144,7 @@ public final class InlineToAnonymousClassHandler extends JavaInlineActionHandler
 
     final Ref<@Nls String> errorMessage = new Ref<>();
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      () -> ApplicationManager.getApplication().runReadAction(
-        () -> errorMessage.set(getCannotInlineMessage((PsiClass)psiClass.getNavigationElement()))), 
+      () -> ReadAction.runBlocking(() -> errorMessage.set(getCannotInlineMessage((PsiClass)psiClass.getNavigationElement()))),
       JavaRefactoringBundle.message("inline.conflicts.progress"), true, project)) return;
     if (errorMessage.get() != null) {
       CommonRefactoringUtil.showErrorHint(project, editor, errorMessage.get(), JavaRefactoringBundle.message("inline.to.anonymous.refactoring"), null);

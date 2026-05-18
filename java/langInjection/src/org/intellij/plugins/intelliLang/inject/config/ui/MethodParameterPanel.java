@@ -287,7 +287,7 @@ public final class MethodParameterPanel extends AbstractInjectionPanel<MethodPar
 
   private void rebuildTreeModel() {
     myData.clear();
-    ApplicationManager.getApplication().runReadAction(() -> {
+    ReadAction.runBlocking(() -> {
       final PsiType classType = getClassType();
       final PsiClass[] classes = classType instanceof PsiClassType
                                  ? JavaPsiFacade.getInstance(myProject).

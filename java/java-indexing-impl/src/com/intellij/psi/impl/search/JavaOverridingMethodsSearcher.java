@@ -3,7 +3,6 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.Language;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.progress.ProgressManager;
@@ -91,27 +90,24 @@ public final class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMet
     final boolean[] success = {true};
     for (VirtualFile virtualFile : virtualFiles) {
       ProgressManager.checkCanceled();
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
-          if (psiFile != null) {
-            psiFile.accept(new JavaRecursiveElementWalkingVisitor() {
-              @Override
-              public void visitClass(@NotNull PsiClass candidate) {
-                ProgressManager.checkCanceled();
-                PsiMethod overridingMethod = candidate.isInheritor(methodContainingClass, true)
-                                             ? findOverridingMethod(candidate, method, methodContainingClass) : null;
-                if (overridingMethod != null && !consumer.process(overridingMethod)) {
-                  success[0] = false;
-                  stopWalking();
-                }
-                else {
-                  super.visitClass(candidate);
-                }
+      ReadAction.runBlocking(() -> {
+        PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
+        if (psiFile != null) {
+          psiFile.accept(new JavaRecursiveElementWalkingVisitor() {
+            @Override
+            public void visitClass(@NotNull PsiClass candidate) {
+              ProgressManager.checkCanceled();
+              PsiMethod overridingMethod = candidate.isInheritor(methodContainingClass, true)
+                                           ? findOverridingMethod(candidate, method, methodContainingClass) : null;
+              if (overridingMethod != null && !consumer.process(overridingMethod)) {
+                success[0] = false;
+                stopWalking();
               }
-            });
-          }
+              else {
+                super.visitClass(candidate);
+              }
+            }
+          });
         }
       });
     }

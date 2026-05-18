@@ -4,7 +4,6 @@ package com.intellij.internal;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -73,7 +72,7 @@ final class StaticIconFieldsAction extends AnAction {
   }
 
   private static void searchFields(final PsiClass allIcons, final UsageView view, final ProgressIndicator indicator) {
-    ApplicationManager.getApplication().runReadAction(() -> indicator.setText("Searching for: " + allIcons.getQualifiedName()));
+    ReadAction.runBlocking(() -> indicator.setText("Searching for: " + allIcons.getQualifiedName()));
 
     ReferencesSearch.search(allIcons).forEach(reference -> {
       PsiElement elt = reference.getElement();

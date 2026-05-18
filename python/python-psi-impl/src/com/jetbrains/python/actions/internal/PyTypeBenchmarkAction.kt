@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -42,7 +43,7 @@ internal class PyTypeBenchmarkAction : AnAction() {
           var elementCount = 0
           var elapsedMs = 0L
           ProgressManager.getInstance().executeNonCancelableSection {
-            ApplicationManager.getApplication().runReadAction {
+            runReadActionBlocking {
               val context = TypeEvalContext.userInitiated(project, psiFile)
               val elements = PsiTreeUtil.collectElementsOfType(psiFile, PyTypedElement::class.java)
               elementCount = elements.size

@@ -5,7 +5,6 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.testframework.SourceScope;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -153,7 +152,7 @@ public abstract class TestNGTestObject {
                                            final GlobalSearchScope searchScope,
                                            final Set<PsiMember> membersToCheckNow,
                                            final PsiClass... classes) {
-    ApplicationManager.getApplication().runReadAction(() -> {
+    ReadAction.runBlocking(() -> {
       final Project project = classes[0].getProject();
       final PsiClass testAnnotation = JavaPsiFacade.getInstance(project).findClass(annotationFqn, GlobalSearchScope.allScope(project));
       if (testAnnotation == null) {
@@ -194,7 +193,7 @@ public abstract class TestNGTestObject {
       valuesMap.put("dependsOnMethods", testMethodDependencies);
       TestNGUtil.collectAnnotationValues(valuesMap, methods, containingClass);
       if (!testMethodDependencies.isEmpty()) {
-        ApplicationManager.getApplication().runReadAction(() -> {
+        ReadAction.runBlocking(() -> {
           final Project project = containingClass.getProject();
           final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
           for (String dependency : testMethodDependencies) {

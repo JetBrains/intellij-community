@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -75,12 +76,12 @@ public final class FindUnusedTestDataAction extends DumbAwareAction {
           VirtualFileManager vfm = VirtualFileManager.getInstance();
           PsiManager psiManager = PsiManager.getInstance(project);
           String basePath = projectBasePath.getPath();
-          application.runReadAction(() -> {
+          ReadAction.runBlocking(() -> {
             PsiFile[] files = JBIterable.of(filesWithoutTests)
-                .flatten(FunctionUtil.id())
-                .map(f -> vfm.refreshAndFindFileByUrl(PROTOCOL_PREFIX + basePath + f))
-                .map(psiManager::findFile)
-                .filter(Objects::nonNull).toSet().toArray(PsiFile.EMPTY_ARRAY);
+              .flatten(FunctionUtil.id())
+              .map(f -> vfm.refreshAndFindFileByUrl(PROTOCOL_PREFIX + basePath + f))
+              .map(psiManager::findFile)
+              .filter(Objects::nonNull).toSet().toArray(PsiFile.EMPTY_ARRAY);
 
             if (files.length == 0) {
               nothingToDo();

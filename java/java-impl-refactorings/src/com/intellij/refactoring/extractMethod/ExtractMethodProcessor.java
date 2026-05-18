@@ -27,6 +27,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -993,7 +994,7 @@ public class ExtractMethodProcessor implements MatchProvider {
                                         GlobalSearchScope.projectScope(myProject);
 
     final Map<PsiMethodCallExpression, PsiMethod> overloadsResolveMap = new HashMap<>();
-    final Runnable collectOverloads = () -> ApplicationManager.getApplication().runReadAction(() -> {
+    final Runnable collectOverloads = () -> ReadAction.runBlocking(() -> {
       Map<PsiMethodCallExpression, PsiMethod> overloads =
         ExtractMethodUtil.encodeOverloadTargets(myTargetClass, processConflictsScope, myMethodName, myCodeFragmentMember);
       overloadsResolveMap.putAll(overloads);

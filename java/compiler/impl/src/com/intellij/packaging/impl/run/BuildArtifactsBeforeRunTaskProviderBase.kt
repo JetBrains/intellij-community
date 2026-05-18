@@ -10,8 +10,8 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.ide.DataManager
 import com.intellij.java.workspace.entities.ArtifactEntity
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.compiler.JavaCompilerBundle
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -115,7 +115,7 @@ abstract class BuildArtifactsBeforeRunTaskProviderBase<T : BuildArtifactsBeforeR
 
   override fun executeTask(context: DataContext, configuration: RunConfiguration, env: ExecutionEnvironment, task: T): Boolean {
     val artifacts = ArrayList<Artifact>()
-    ApplicationManager.getApplication().runReadAction {
+    runReadActionBlocking {
       for (pointer in task.artifactPointers) {
         pointer.artifact?.let(artifacts::add)
       }

@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
@@ -184,7 +185,6 @@ public abstract class LongRunningReadTask<RequestInfo, ResultData> {
      * Execute action with immediate stop when write lock is required.
      *
      * {@link ProgressIndicatorUtils#runWithWriteActionPriority(Runnable, ProgressIndicator)}
-     *
      */
     public static void runWithWriteActionPriority(
             final @NotNull ProgressIndicator indicator,
@@ -202,7 +202,7 @@ public abstract class LongRunningReadTask<RequestInfo, ResultData> {
         final Application application = ApplicationManager.getApplication();
         try {
             application.addApplicationListener(listener, disposable);
-            ProgressManager.getInstance().runProcess(() -> application.runReadAction(action), indicator);
+            ProgressManager.getInstance().runProcess(() -> ReadAction.runBlocking(action::run), indicator);
         }
         finally {
             Disposer.dispose(disposable);

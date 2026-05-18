@@ -7,6 +7,7 @@ import com.intellij.ide.util.DirectoryChooser;
 import com.intellij.ide.util.PlatformPackageUtil;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -310,7 +311,7 @@ public final class MoveClassesOrPackagesImpl {
     final PsiDirectory selectedTarget = chooser.getSelectedDirectory();
     if (selectedTarget == null) return;
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
-    final Runnable analyzeConflicts = () -> ApplicationManager.getApplication().runReadAction(() -> {
+    final Runnable analyzeConflicts = () -> ReadAction.runBlocking(() -> {
       final Collection<? extends PsiElement> scopes = Arrays.asList(directories);
       final VirtualFile vFile = PsiUtilCore.getVirtualFile(selectedTarget);
       if (vFile != null) {

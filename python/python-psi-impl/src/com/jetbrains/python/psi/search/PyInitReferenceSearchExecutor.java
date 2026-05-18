@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.search;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.QueryExecutorBase;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -28,7 +28,7 @@ public final class PyInitReferenceSearchExecutor extends QueryExecutorBase<PsiRe
       return;
     }
 
-    ApplicationManager.getApplication().runReadAction(() -> {
+    ReadAction.runBlocking(() -> {
       String className;
       SearchScope searchScope;
       PyFunction function = (PyFunction)element;

@@ -3,6 +3,7 @@ package org.intellij.plugins.relaxNG.validation;
 
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -95,7 +96,7 @@ public class RngValidateHandler implements ValidateXmlHandler {
     helper.openMessageView(() -> doRun(project, instanceFile, schemaFile));
 
     final Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(
-      () -> ApplicationManager.getApplication().runReadAction(() -> {
+      () -> ReadAction.runBlocking(() -> {
         final MessageViewHelper.ErrorHandler eh = helper.new ErrorHandler();
 
         doValidation(instanceFile, schemaFile, eh);

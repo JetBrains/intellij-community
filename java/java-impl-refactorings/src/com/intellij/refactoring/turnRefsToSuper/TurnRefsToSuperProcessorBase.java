@@ -8,6 +8,7 @@ import com.intellij.internal.diGraph.analyzer.OneEndFunctor;
 import com.intellij.internal.diGraph.impl.EdgeImpl;
 import com.intellij.internal.diGraph.impl.NodeImpl;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -132,7 +133,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
           myVariablesRenames.put(pointer, variableRenamer.getNewName(variable));
         }
 
-        Runnable runnable = () -> ApplicationManager.getApplication().runReadAction(() -> variableRenamer.findUsages(myVariablesUsages, false, false));
+        Runnable runnable = () -> ReadAction.runBlocking(() -> variableRenamer.findUsages(myVariablesUsages, false, false));
 
         if (!ProgressManager.getInstance()
           .runProcessWithProgressSynchronously(runnable, RefactoringBundle.message("searching.for.variables"), true, myProject)) {

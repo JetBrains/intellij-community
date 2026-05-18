@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -37,7 +36,7 @@ public final class JavaFxControllerFieldSearcher implements QueryExecutor<PsiRef
           final List<PsiFile> fxmlWithController =
             JavaFxControllerClassIndex.findFxmlWithController(project, qualifiedName);
           for (final PsiFile file : fxmlWithController) {
-            ApplicationManager.getApplication().runReadAction(() -> {
+            ReadAction.runBlocking(() -> {
               final String fieldName = field.getName();
               final VirtualFile virtualFile = file.getViewProvider().getVirtualFile();
               final SearchScope searchScope = queryParameters.getEffectiveSearchScope();

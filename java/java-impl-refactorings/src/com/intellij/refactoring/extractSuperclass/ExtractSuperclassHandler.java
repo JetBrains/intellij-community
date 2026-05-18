@@ -8,7 +8,7 @@ import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -143,7 +143,7 @@ public class ExtractSuperclassHandler implements ElementsHandler, ExtractSupercl
     final PsiDirectory targetDirectory = dialog.getTargetDirectory();
     final PsiPackage targetPackage = targetDirectory != null ? JavaDirectoryService.getInstance().getPackage(targetDirectory) : null;
     final MultiMap<PsiElement,String> conflicts = new MultiMap<>();
-    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ReadAction.runBlocking(() -> {
       final PsiClass superClass =
         mySubclass.getExtendsListTypes().length > 0 || mySubclass instanceof PsiAnonymousClass ? mySubclass.getSuperClass() : null;
       if (targetPackage != null) {

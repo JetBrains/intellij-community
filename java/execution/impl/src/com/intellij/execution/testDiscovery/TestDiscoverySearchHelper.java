@@ -49,7 +49,7 @@ public final class TestDiscoverySearchHelper {
     final PsiManager psiManager = PsiManager.getInstance(project);
     final TestDiscoveryIndex discoveryIndex = TestDiscoveryIndex.getInstance(project);
     for (final VirtualFile file : files) {
-      ApplicationManager.getApplication().runReadAction(() -> {
+      ReadAction.runBlocking(() -> {
         final PsiFile psiFile = psiManager.findFile(file);
         if (psiFile instanceof PsiClassOwner) {
           if (position != null) {

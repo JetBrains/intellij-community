@@ -10,6 +10,7 @@ import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.ide.util.PsiElementRenderingInfo;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -68,7 +69,7 @@ public class ImplementAbstractMethodHandler {
 
     Ref<@Nls String> problemDetected = new Ref<>();
     final PsiElement[][] result = new PsiElement[1][];
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ReadAction.runBlocking(() -> {
       final PsiClass psiClass = myMethod.getContainingClass();
       if (!psiClass.isValid()) return;
       if (!psiClass.isEnum()) {

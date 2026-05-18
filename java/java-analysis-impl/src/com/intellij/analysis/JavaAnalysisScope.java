@@ -3,7 +3,7 @@
 package com.intellij.analysis;
 
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -104,7 +104,7 @@ public class JavaAnalysisScope extends AnalysisScope {
   public boolean accept(@NotNull Processor<? super VirtualFile> processor) {
     if (myElement instanceof PsiPackage pack) {
       final Set<PsiDirectory> dirs = new HashSet<>();
-      ApplicationManager.getApplication().runReadAction(() -> {
+      ReadAction.runBlocking(() -> {
         ContainerUtil.addAll(dirs, pack.getDirectories(GlobalSearchScope.projectScope(myElement.getProject())));
       });
       for (PsiDirectory dir : dirs) {

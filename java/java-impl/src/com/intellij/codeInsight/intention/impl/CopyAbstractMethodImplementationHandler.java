@@ -8,6 +8,7 @@ import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.ide.util.MethodCellRenderer;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -58,7 +59,9 @@ public class CopyAbstractMethodImplementationHandler {
   }
 
   public void invoke() {
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> searchExistingImplementations()), CodeInsightBundle.message("searching.for.implementations"), false, myProject);
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> ReadAction.runBlocking(() -> searchExistingImplementations()), CodeInsightBundle.message("searching.for.implementations")
+      , false, myProject);
     if (mySourceMethods.isEmpty()) {
       Messages.showErrorDialog(myProject, JavaBundle.message("copy.abstract.method.no.existing.implementations.found"),
                                JavaBundle.message("copy.abstract.method.title"));

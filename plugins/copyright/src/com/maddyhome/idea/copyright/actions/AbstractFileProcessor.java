@@ -5,6 +5,7 @@ package com.maddyhome.idea.copyright.actions;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.copyright.CopyrightManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -205,7 +206,7 @@ public abstract class AbstractFileProcessor {
     final VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
 
     for (final VirtualFile root : roots) {
-      ApplicationManager.getApplication().runReadAction(() -> {
+      ReadAction.runBlocking(() -> {
         idx.iterateContentUnderDirectory(root, dir -> {
           if (dir.isDirectory()) {
             final PsiDirectory psiDir = PsiManager.getInstance(module.getProject()).findDirectory(dir);
@@ -260,7 +261,7 @@ public abstract class AbstractFileProcessor {
 
   private void execute(@NotNull Computable<Runnable> readAction) {
     final Runnable[] writeAction = new Runnable[1];
-    runWithProgress(() -> ApplicationManager.getApplication().runReadAction(() -> {
+    runWithProgress(() -> ReadAction.runBlocking(() -> {
       writeAction[0] = readAction.compute();
     }));
     if (writeAction[0] != null) {

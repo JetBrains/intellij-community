@@ -4,7 +4,7 @@ package com.intellij.refactoring.memberPullUp;
 import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.progress.ProgressManager;
@@ -154,7 +154,7 @@ public class JavaPullUpHandler implements PullUpDialog.Callback, ElementsHandler
     final PsiClass superClass = dialog.getSuperClass();
     if (superClass == null || !checkWritable(superClass, memberInfos)) return false;
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
-    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ReadAction.runBlocking(() -> {
       final PsiDirectory targetDirectory = superClass.getContainingFile().getContainingDirectory();
       final PsiPackage targetPackage = targetDirectory != null ? JavaDirectoryService.getInstance().getPackage(targetDirectory) : null;
       if (targetDirectory != null && targetPackage != null) {

@@ -17,7 +17,7 @@ package com.intellij.testIntegration;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.TestStateStorage;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Ref;
 
 import java.util.Collection;
@@ -42,7 +42,7 @@ public class DeadTestsCleaner implements Runnable {
 
   private void processUrl(final String url) {
     final Ref<Location> locationRef = Ref.create();
-    ApplicationManager.getApplication().runReadAction(() -> {
+    ReadAction.runBlocking(() -> {
       Location location = myTestLocator.getLocation(url);
       locationRef.set(location);
     });

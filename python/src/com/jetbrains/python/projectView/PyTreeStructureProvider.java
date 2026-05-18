@@ -8,7 +8,7 @@ import com.intellij.ide.projectView.impl.nodes.NamedLibraryElementNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -145,7 +145,7 @@ public final class PyTreeStructureProvider implements SelectableTreeStructurePro
   public PsiElement getTopLevelElement(PsiElement element) {
     PyPsiUtils.assertValid(element);
     final Ref<PsiFile> containingFileRef = Ref.create();
-    ApplicationManager.getApplication().runReadAction(() -> containingFileRef.set(element.getContainingFile()));
+    ReadAction.runBlocking(() -> containingFileRef.set(element.getContainingFile()));
     final PsiFile containingFile = containingFileRef.get();
     if (!(containingFile instanceof PyFile)) {
       return null;

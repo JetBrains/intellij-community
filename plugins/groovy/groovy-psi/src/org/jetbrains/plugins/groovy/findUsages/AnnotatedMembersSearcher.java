@@ -43,7 +43,7 @@ public final class AnnotatedMembersSearcher implements QueryExecutor<PsiModifier
 
     final List<PsiModifierListOwner> result = new ArrayList<>();
     for (final PsiElement element : members) {
-      ApplicationManager.getApplication().runReadAction(() -> {
+      ReadAction.runBlocking(() -> {
         PsiElement e =
           element instanceof GroovyFile ?
           ((GroovyFile)element).getPackageDefinition() : element;
@@ -73,7 +73,7 @@ public final class AnnotatedMembersSearcher implements QueryExecutor<PsiModifier
     else {
       candidates = new ArrayList<>();
       for (final PsiElement element : ((LocalSearchScope)scope).getScope()) {
-        ApplicationManager.getApplication().runReadAction(() -> {
+        ReadAction.runBlocking(() -> {
           if (element instanceof GroovyPsiElement) {
             ((GroovyPsiElement)element).accept(new GroovyRecursiveElementVisitor() {
               @Override

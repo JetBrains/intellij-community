@@ -22,7 +22,7 @@ import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -490,7 +490,7 @@ public class XPathEvalAction extends XPathAction {
                 }
                 list.clear();
             };
-            ApplicationManager.getApplication().runReadAction(runnable);
+          ReadAction.runBlocking(runnable::run);
         }
     }
 

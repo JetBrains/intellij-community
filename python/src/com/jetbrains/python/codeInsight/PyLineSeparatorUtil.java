@@ -3,7 +3,7 @@ package com.jetbrains.python.codeInsight;
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.impl.LineMarkersPass;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
@@ -22,7 +22,7 @@ public final class PyLineSeparatorUtil {
 
   public static @Nullable LineMarkerInfo addLineSeparatorIfNeeded(@NotNull Provider provider, @NotNull PsiElement element) {
     final Ref<LineMarkerInfo> info = new Ref<>(null);
-    ApplicationManager.getApplication().runReadAction(() -> {
+    ReadAction.runBlocking(() -> {
       if (!provider.isSeparatorAllowed(element)) {
         return;
       }
@@ -32,7 +32,7 @@ public final class PyLineSeparatorUtil {
         return;
       }
       for (PsiElement child : parent.getChildren()) {
-        if (child == element){
+        if (child == element) {
           break;
         }
         if (provider.isSeparatorAllowed(child)) {

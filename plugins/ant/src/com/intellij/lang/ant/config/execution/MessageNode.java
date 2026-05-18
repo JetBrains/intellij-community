@@ -2,7 +2,7 @@
 package com.intellij.lang.ant.config.execution;
 
 import com.intellij.lang.ant.AntBundle;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
@@ -23,20 +23,20 @@ final class MessageNode extends DefaultMutableTreeNode {
   private Document myEditorDocument;
   private boolean myAllowToShowPosition;
 
-  MessageNode(final AntMessage message, final Project project, final boolean allowToShowPosition) {
-    ApplicationManager.getApplication().runReadAction(() -> {
+  MessageNode(AntMessage message, Project project, boolean allowToShowPosition) {
+    ReadAction.runBlocking(() -> {
       myMessage = message;
       myText = message.getTextLines();
-      if(myMessage.getFile() != null) {
+      if (myMessage.getFile() != null) {
         PsiFile psiFile = PsiManager.getInstance(project).findFile(myMessage.getFile());
         if (psiFile != null) {
           myEditorDocument = PsiDocumentManager.getInstance(project).getDocument(psiFile);
-          if(myEditorDocument != null) {
+          if (myEditorDocument != null) {
             int line = myMessage.getLine();
             int column = myMessage.getColumn();
-            if(line-1 >= 0 && line < myEditorDocument.getLineCount()) {
-              int start = myEditorDocument.getLineStartOffset(line-1) + column-1;
-              if(start >=0 && start < myEditorDocument.getTextLength()) {
+            if (line - 1 >= 0 && line < myEditorDocument.getLineCount()) {
+              int start = myEditorDocument.getLineStartOffset(line - 1) + column - 1;
+              if (start >= 0 && start < myEditorDocument.getTextLength()) {
                 myRangeMarker = myEditorDocument.createRangeMarker(start, start);
               }
             }

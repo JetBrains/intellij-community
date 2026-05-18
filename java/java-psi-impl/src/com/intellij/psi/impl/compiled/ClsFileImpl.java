@@ -9,6 +9,7 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -538,7 +539,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
     PsiManager manager = PsiManager.getInstance(DefaultProjectFactory.getInstance().getDefaultProject());
     ClsFileImpl clsFile = new ClsFileImpl(new ClassFileViewProvider(manager, file), true);
     StringBuilder buffer = new StringBuilder();
-    ApplicationManager.getApplication().runReadAction(() -> clsFile.appendMirrorText(buffer));
+    ReadAction.runBlocking(() -> clsFile.appendMirrorText(buffer));
     return buffer;
   }
 

@@ -22,7 +22,6 @@ import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -330,7 +329,7 @@ public class BreakpointManager {
   }
 
   private void doRead(final @NotNull Element parentNode) {
-    ApplicationManager.getApplication().runReadAction(() -> {
+    ReadAction.runBlocking(() -> {
       final Map<String, Breakpoint> nameToBreakpointMap = new HashMap<>();
       try {
         final List groups = parentNode.getChildren();
@@ -354,12 +353,12 @@ public class BreakpointManager {
             anyExceptionBreakpointGroup = group.getChild(AnyExceptionBreakpoint.ANY_EXCEPTION_BREAKPOINT.toString());
             //final BreakpointFactory factory = BreakpointFactory.getInstance(breakpointCategory);
             //if (factory != null) {
-              for (Element breakpointNode : group.getChildren("breakpoint")) {
-                //Breakpoint breakpoint = factory.createBreakpoint(myProject, breakpointNode);
-                Breakpoint breakpoint = createBreakpoint(categoryName, breakpointNode);
-                breakpoint.readExternal(breakpointNode);
-                nameToBreakpointMap.put(breakpoint.getDisplayName(), breakpoint);
-              }
+            for (Element breakpointNode : group.getChildren("breakpoint")) {
+              //Breakpoint breakpoint = factory.createBreakpoint(myProject, breakpointNode);
+              Breakpoint breakpoint = createBreakpoint(categoryName, breakpointNode);
+              breakpoint.readExternal(breakpointNode);
+              nameToBreakpointMap.put(breakpoint.getDisplayName(), breakpoint);
+            }
             //}
           }
           else {
@@ -411,7 +410,8 @@ public class BreakpointManager {
           }
 
           boolean leaveEnabled = Boolean.parseBoolean(rule.getAttributeValue("leaveEnabled"));
-          XDependentBreakpointManager dependentBreakpointManager = ((XBreakpointManagerImpl)getXBreakpointManager()).getDependentBreakpointManager();
+          XDependentBreakpointManager dependentBreakpointManager =
+            ((XBreakpointManagerImpl)getXBreakpointManager()).getDependentBreakpointManager();
           dependentBreakpointManager.setMasterBreakpoint(slaveBreakpoint.myXBreakpoint, masterBreakpoint.myXBreakpoint, leaveEnabled);
           //addBreakpointRule(new EnableBreakpointRule(BreakpointManager.this, masterBreakpoint, slaveBreakpoint, leaveEnabled));
         }

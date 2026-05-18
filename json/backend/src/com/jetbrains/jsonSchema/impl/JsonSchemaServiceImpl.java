@@ -7,6 +7,7 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
@@ -445,7 +446,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
 
     Ref<String> res = Ref.create(null);
     //noinspection CodeBlock2Expr
-    ApplicationManager.getApplication().runReadAction(() -> {
+    ReadAction.runBlocking(() -> {
       res.set(JsonCachedValues.getSchemaUrlFromSchemaProperty(file, myProject));
     });
     schemaPropertyValue = res.get();

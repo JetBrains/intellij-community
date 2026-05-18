@@ -18,7 +18,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -405,7 +405,7 @@ public class PackageChooserDialog extends PackageChooser {
           LOG.debug(e);
         }
       };
-      ApplicationManager.getApplication().runReadAction(action);
+      ReadAction.runBlocking(action::run);
     }, IdeBundle.message("command.create.new.package"), null);
   }
 

@@ -167,7 +167,7 @@ public final class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClas
     }
     for (VirtualFile virtualFile : virtualFiles) {
       ProgressManager.checkCanceled();
-      ApplicationManager.getApplication().runReadAction(() -> {
+      ReadAction.runBlocking(() -> {
         PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
         if (psiFile != null) {
           processFile(psiFile, parameters, baseClass, success, consumer);

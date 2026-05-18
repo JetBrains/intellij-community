@@ -3,7 +3,6 @@ package com.intellij.find.findUsages;
 
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -76,7 +75,7 @@ public final class JavaFindUsagesHelper {
 
     Set<String> result = new HashSet<>();
 
-    ApplicationManager.getApplication().runReadAction(() -> {
+    ReadAction.runBlocking(() -> {
       switch (element) {
         case PsiPackage psiPackage -> ContainerUtil.addIfNotNull(result, psiPackage.getQualifiedName());
         case PsiClass psiClass -> {
@@ -262,7 +261,7 @@ public final class JavaFindUsagesHelper {
   }
 
   private static void addClassesInDirectory(@NotNull PsiDirectory dir, boolean includeSubdirs, @NotNull List<? super PsiClass> array) {
-    ApplicationManager.getApplication().runReadAction(() -> {
+    ReadAction.runBlocking(() -> {
       ContainerUtil.addAll(array, JavaDirectoryService.getInstance().getClasses(dir));
       if (includeSubdirs) {
         for (PsiDirectory directory : dir.getSubdirectories()) {

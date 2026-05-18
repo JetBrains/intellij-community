@@ -2,7 +2,7 @@
 
 package org.jetbrains.plugins.groovy.util;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -50,7 +50,7 @@ public final class LibrariesUtil {
     if (module == null) return Library.EMPTY_ARRAY;
     final ArrayList<Library> libraries = new ArrayList<>();
 
-    ApplicationManager.getApplication().runReadAction(() -> populateOrderEntries(module, condition, libraries, false, new HashSet<>()));
+    ReadAction.runBlocking(() -> populateOrderEntries(module, condition, libraries, false, new HashSet<>()));
 
     return libraries.toArray(Library.EMPTY_ARRAY);
   }

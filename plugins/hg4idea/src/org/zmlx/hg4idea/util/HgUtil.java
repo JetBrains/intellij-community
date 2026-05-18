@@ -16,6 +16,7 @@ import com.intellij.dvcs.DvcsUtil;
 import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -119,7 +120,7 @@ public abstract class HgUtil {
   }
 
   public static void markFileDirty(final Project project, final VirtualFile file) throws InvocationTargetException, InterruptedException {
-    ApplicationManager.getApplication().runReadAction(() -> VcsDirtyScopeManager.getInstance(project).fileDirty(file));
+    ReadAction.runBlocking(() -> VcsDirtyScopeManager.getInstance(project).fileDirty(file));
     runWriteActionAndWait(() -> file.refresh(true, false));
   }
 

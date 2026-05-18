@@ -182,7 +182,7 @@ public final class MigrationPanel extends JPanel implements Disposable {
         if (!migrationNode.getInfo().isExcluded() || migrationNode.areChildrenInitialized()) { //do not walk into excluded collapsed nodes: nothing to migrate can be found
           final Collection<? extends AbstractTreeNode<?>> nodes = migrationNode.getChildren();
           for (final AbstractTreeNode<?> node : nodes) {
-            ApplicationManager.getApplication().runReadAction(() -> expandTree((MigrationNode)node));
+            ReadAction.runBlocking(() -> expandTree((MigrationNode)node));
           }
         }
       }

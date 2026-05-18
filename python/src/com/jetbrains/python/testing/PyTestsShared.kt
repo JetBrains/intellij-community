@@ -24,8 +24,8 @@ import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties
 import com.intellij.execution.testframework.sm.runner.SMTestLocator
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope
@@ -557,7 +557,7 @@ abstract class PyAbstractTestConfiguration(
       return getExpandedWorkingDir(this)
     }
 
-    return ApplicationManager.getApplication().runReadAction<String> {
+    return runReadActionBlocking {
       target.getElementDirectory(this)?.path ?: super.getWorkingDirectorySafe()
     }
   }

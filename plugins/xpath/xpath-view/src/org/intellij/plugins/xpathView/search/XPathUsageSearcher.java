@@ -16,7 +16,7 @@
 package org.intellij.plugins.xpathView.search;
 
 import com.intellij.find.FindBundle;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -71,18 +71,16 @@ class XPathUsageSearcher implements UsageSearcher {
 
     @Override
     public void generate(final @NotNull Processor<? super Usage> processor) {
-        Runnable runnable = () -> {
-            myIndicator.setIndeterminate(true);
-            //noinspection DialogTitleCapitalization
-            myIndicator.setText2(FindBundle.message("find.searching.for.string.in.file.occurrences.progress", 0));
-            final CountProcessor counter = new CountProcessor();
-            myScope.iterateContent(myProject, counter);
+      ReadAction.runBlocking(() -> {
+        myIndicator.setIndeterminate(true);
+        myIndicator.setText2(FindBundle.message("find.searching.for.string.in.file.occurrences.progress", 0));
+        final CountProcessor counter = new CountProcessor();
+        myScope.iterateContent(myProject, counter);
 
-            myIndicator.setIndeterminate(false);
-            myIndicator.setFraction(0);
-            myScope.iterateContent(myProject, new MyProcessor(processor, counter.getFileCount()));
-        };
-        ApplicationManager.getApplication().runReadAction(runnable);
+        myIndicator.setIndeterminate(false);
+        myIndicator.setFraction(0);
+        myScope.iterateContent(myProject, new MyProcessor(processor, counter.getFileCount()));
+      });
     }
 
     private class MyProcessor extends BaseProcessor {

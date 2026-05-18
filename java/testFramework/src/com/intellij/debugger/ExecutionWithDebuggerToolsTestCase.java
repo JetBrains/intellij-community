@@ -287,7 +287,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
 
   /** Prints the location of the given context, in the format "file.ext:12345". */
   protected void printContext(@NotNull String prefix, StackFrameContext context) {
-    ApplicationManager.getApplication().runReadAction(() -> {
+    ReadAction.runBlocking(() -> {
       if (context.getFrameProxy() != null) {
         systemPrintln(prefix + toDisplayableString(PositionUtil.getSourcePosition(context)));
       }
@@ -298,7 +298,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   }
 
   protected void printContextWithText(StackFrameContext context) {
-    ApplicationManager.getApplication().runReadAction(() -> {
+    ReadAction.runBlocking(() -> {
       if (context.getFrameProxy() != null) {
         SourcePosition sourcePosition = PositionUtil.getSourcePosition(context);
         int offset = sourcePosition.getOffset();

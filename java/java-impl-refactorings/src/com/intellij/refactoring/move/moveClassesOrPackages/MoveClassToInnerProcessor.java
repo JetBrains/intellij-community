@@ -4,6 +4,7 @@ package com.intellij.refactoring.move.moveClassesOrPackages;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -115,7 +116,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
 
   @Override
   protected void refreshElements(final PsiElement @NotNull [] elements) {
-    ApplicationManager.getApplication().runReadAction(() -> {
+    ReadAction.runBlocking(() -> {
       final PsiClass[] classesToMove = new PsiClass[elements.length];
       for (int i = 0; i < classesToMove.length; i++) {
         classesToMove[i] = (PsiClass)elements[i];

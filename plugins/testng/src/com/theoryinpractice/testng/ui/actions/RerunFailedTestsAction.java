@@ -12,7 +12,6 @@ import com.intellij.execution.target.TargetEnvironment;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.TestConsoleProperties;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -71,11 +70,9 @@ public class RerunFailedTestsAction extends JavaRerunFailedTestsAction {
                 final GlobalSearchScope scope = getConfiguration().getConfigurationModule().getSearchScope();
                 final Project project = getConfiguration().getProject();
                 for (final AbstractTestProxy proxy : failedTests) {
-                  ApplicationManager.getApplication().runReadAction(() -> includeFailedTestWithDependencies(classes, scope, project, proxy));
+                  ReadAction.runBlocking(() -> includeFailedTestWithDependencies(classes, scope, project, proxy));
                 }
               }
-
-
             };
           }
         };

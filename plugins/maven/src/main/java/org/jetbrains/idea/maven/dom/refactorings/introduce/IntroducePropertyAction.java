@@ -6,7 +6,7 @@ import com.intellij.find.FindModel;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -257,7 +257,7 @@ final class IntroducePropertyAction extends BaseRefactoringAction {
 
           @Override
           public void generate(final @NotNull Processor<? super Usage> processor) {
-            ApplicationManager.getApplication().runReadAction(() -> {
+            ReadAction.runBlocking(() -> {
               collectUsages(myModel);
               for (MavenDomProjectModel model : MavenDomProjectProcessorUtils.getChildrenProjects(myModel)) {
                 collectUsages(model);

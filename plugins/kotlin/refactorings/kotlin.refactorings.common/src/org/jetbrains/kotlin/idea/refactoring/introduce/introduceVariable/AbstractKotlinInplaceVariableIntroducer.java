@@ -9,7 +9,7 @@ import com.intellij.codeInsight.template.TemplateEditingListener;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -296,7 +296,7 @@ public abstract class AbstractKotlinInplaceVariableIntroducer<D extends KtCallab
                 templateState.gotoEnd(true);
             }
         });
-        ApplicationManager.getApplication().runReadAction(() -> {
+        ReadAction.runBlocking(() -> {
             ASTNode identifier = myDeclaration.getNode().findChildByType(KtTokens.IDENTIFIER);
             if (identifier != null) {
                 TextRange range = identifier.getTextRange();

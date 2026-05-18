@@ -9,7 +9,6 @@ import com.intellij.codeInsight.lookup.LookupElementRenderer;
 import com.intellij.find.FindModel;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.lang.jvm.JvmModifier;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
@@ -88,7 +87,7 @@ final class IconsReferencesQueryExecutor implements QueryExecutor<PsiReference, 
         model.setFindAll(true);
         model.setWholeWordsOnly(true);
         FindInProjectUtil.findUsages(model, project, usage -> {
-          ApplicationManager.getApplication().runReadAction(() -> {
+          ReadAction.runBlocking(() -> {
             final PsiElement element = usage.getElement();
 
             final ProperTextRange textRange = usage.getRangeInElement();

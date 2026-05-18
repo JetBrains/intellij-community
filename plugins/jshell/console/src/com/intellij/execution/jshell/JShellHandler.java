@@ -29,6 +29,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
@@ -175,7 +176,7 @@ public final class JShellHandler {
     final Computable<OrderEnumerator> orderEnumerator = module != null ?
                                                         () -> ModuleRootManager.getInstance(module).orderEntries() :
                                                         () -> ProjectRootManager.getInstance(project).orderEntries();
-    ApplicationManager.getApplication().runReadAction(() -> {
+    ReadAction.runBlocking(() -> {
       cp.addAll(orderEnumerator.compute().recursively().withoutSdk().getPathsList().getPathList());
     });
     if (!cp.isEmpty()) {
