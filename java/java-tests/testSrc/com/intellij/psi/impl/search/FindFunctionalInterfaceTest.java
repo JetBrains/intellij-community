@@ -17,6 +17,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
@@ -272,6 +273,17 @@ public class FindFunctionalInterfaceTest extends LightJavaCodeInsightFixtureTest
     configure();
     // whatever, but it shouldn't throw
     assertEmpty(FunctionalExpressionSearch.search(findClass("I")).findAll());
+  }
+
+  public void testNoCrashInDumbMode() {
+    PsiClass sam = myFixture.addClass("interface I { void foo(); }");
+    myFixture.addClass("class Some {{ I i = () -> {}; }}");
+
+    assertSize(1, FunctionalExpressionSearch.search(sam).findAll());
+
+    DumbModeTestUtils.runInDumbModeSynchronously(getProject(), () -> {
+      assertEmpty(FunctionalExpressionSearch.search(sam).findAll());
+    });
   }
 
   @Override
