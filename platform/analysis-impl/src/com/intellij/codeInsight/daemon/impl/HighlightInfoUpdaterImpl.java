@@ -269,7 +269,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
           LOG.trace("addEvictedInfos(" + document + "): stored " + debugRender(Arrays.asList(newInfos)));
         }
         if (newInfos.length != (storedInfos == null ? 0 : storedInfos.length)) {
-          ReadAction.run(() -> {
+          ReadAction.runBlocking(() -> {
             if (!project.isDisposed()) {
               PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
               // some passes could already be running and have no idea that some of the existing range highlighters are obsolete and must be disposed and possibly (re)created

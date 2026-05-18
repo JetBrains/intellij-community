@@ -95,7 +95,7 @@ public class TodoCheckinHandlerWorker {
       FilePath afterFilePath = afterRevision.getFile();
       VirtualFile afterFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(afterFilePath.getPath());
 
-      EditedFileProcessorBase fileProcessor = ReadAction.compute(() -> {
+      EditedFileProcessorBase fileProcessor = ReadAction.computeBlocking(() -> {
         progress(afterFile != null ? ProjectUtil.calcRelativeToProjectPath(afterFile, myProject) : afterFilePath.getName());
 
         if (afterFile == null || afterFile.isDirectory() || afterFile.getFileType().isBinary()) {
@@ -281,7 +281,7 @@ public class TodoCheckinHandlerWorker {
     protected abstract @NotNull List<LineFragment> computeFragments();
 
     private @NotNull List<TodoItem> computeOldTodoItems() {
-      PsiFile beforePsiFile = ReadAction.compute(
+      PsiFile beforePsiFile = ReadAction.computeBlocking(
         () -> PsiFileFactory.getInstance(myProject).createFileFromText("old" + myAfterFile.getName(),
                                                                        myAfterFile.getFileType(), myBeforeContent));
       return collectTodoItems(beforePsiFile, true);

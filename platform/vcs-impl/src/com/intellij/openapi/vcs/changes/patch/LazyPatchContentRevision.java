@@ -37,7 +37,7 @@ public final class LazyPatchContentRevision implements ContentRevision {
   }
 
   private Data loadContent() {
-    String localContext = ReadAction.compute(() -> {
+    String localContext = ReadAction.computeBlocking(() -> {
       Document doc = FileDocumentManager.getInstance().getDocument(myVf);
       return doc == null ? null : doc.getText();
     });

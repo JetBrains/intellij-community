@@ -117,7 +117,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
     myCachesHolder = new CachesHolder(project, myLocationCache);
     myTaskQueue = new ProgressManagerQueue(project, VcsBundle.message("committed.changes.refresh.progress"));
     ProjectLevelVcsManager.getInstance(project).runAfterInitialization(() -> {
-      ApplicationManager.getApplication().runReadAction(() -> {
+      ReadAction.runBlocking(() -> {
         if (myProject.isDisposed()) {
           return;
         }
@@ -502,7 +502,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
       changeList.getChanges();
     }
     final Ref<IOException> ref = new Ref<>();
-    final List<CommittedChangeList> savedChanges = ReadAction.compute(() -> {
+    List<CommittedChangeList> savedChanges = ReadAction.computeBlocking(() -> {
       try {
         return cacheFile.writeChanges(newChanges);    // skip duplicates;
       }

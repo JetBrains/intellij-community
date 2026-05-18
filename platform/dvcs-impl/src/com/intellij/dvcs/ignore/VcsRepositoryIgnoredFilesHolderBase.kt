@@ -3,7 +3,7 @@ package com.intellij.dvcs.ignore
 
 import com.intellij.dvcs.repo.AbstractRepositoryManager
 import com.intellij.dvcs.repo.Repository
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsException
@@ -105,9 +105,9 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
   }
 
   fun setupListeners(coroutineScope: CoroutineScope) {
-    ApplicationManager.getApplication().runReadAction {
+    runReadActionBlocking {
       if (repository.project.isDisposed) {
-        return@runReadAction
+        return@runReadActionBlocking
       }
 
       AsyncVfsEventsPostProcessor.getInstance().addListener(this, coroutineScope)

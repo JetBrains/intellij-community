@@ -5,7 +5,7 @@ import com.intellij.history.core.LocalHistoryFacade
 import com.intellij.history.core.tree.RootEntry
 import com.intellij.history.integration.IdeaGateway
 import com.intellij.history.integration.ui.models.SelectionCalculator
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.getOrCreateUserData
 import com.intellij.platform.lvcs.impl.diff.getEntryPath
@@ -16,10 +16,10 @@ internal val AFFECTED_PATHS: Key<Collection<String>> = Key.create("Lvcs.Affected
 private val ROOT_ENTRY: Key<RootEntry> = Key.create("Lvcs.Root.Entry")
 internal fun ActivityData.getRootEntry(gateway: IdeaGateway): RootEntry {
   return getOrCreateUserData(ROOT_ENTRY) {
-    runReadAction {
+    runReadActionBlocking {
       val affectedPaths = getUserData(AFFECTED_PATHS)
       if (!affectedPaths.isNullOrEmpty()) {
-        return@runReadAction SlowOperations.knownIssue("IJPL-162340").use {
+        return@runReadActionBlocking SlowOperations.knownIssue("IJPL-162340").use {
           gateway.createTransientRootEntryForPaths(affectedPaths, true)
         }
       }

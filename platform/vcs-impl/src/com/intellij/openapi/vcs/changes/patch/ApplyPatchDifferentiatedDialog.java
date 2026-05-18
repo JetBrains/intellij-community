@@ -494,7 +494,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
   private @Nullable PatchReader loadPatches(@NotNull VirtualFile patchFile) {
     try {
-      String text = ReadAction.compute(() -> {
+      String text = ReadAction.computeBlocking(() -> {
         try (InputStreamReader inputStreamReader = new InputStreamReader(patchFile.getInputStream(), patchFile.getCharset())) {
           return StreamUtil.readText(inputStreamReader);
         }

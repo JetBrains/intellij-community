@@ -24,9 +24,8 @@ import com.intellij.history.utils.LocalHistoryLog
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.ShutDownTracker
@@ -193,9 +192,9 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
       }
 
       override fun getByteContent(path: String): ByteContent {
-        return ApplicationManager.getApplication().runReadAction(Computable {
+        return runReadActionBlocking {
           label.getByteContent(gateway.createTransientRootEntryForPath(path, false), path)
-        })
+        }
       }
     }
   }
@@ -205,14 +204,14 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
       return null
     }
 
-    return ApplicationManager.getApplication().runReadAction(Computable {
+    return runReadActionBlocking {
       if (gateway.areContentChangesVersioned(file)) {
         ByteContentRetriever(gateway, facade, file, condition).getResult()
       }
       else {
         null
       }
-    })
+    }
   }
 
   override fun isUnderControl(file: VirtualFile): Boolean = isInitialized() && gateway.isVersioned(file)
@@ -237,7 +236,7 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
       throw LocalHistoryException("Couldn't find label")
     }
 
-    val rootEntry = runReadAction { gateway.createTransientRootEntryForPaths(targetPaths, true) }
+    val rootEntry = runReadActionBlocking { gateway.createTransientRootEntryForPaths(targetPaths, true) }
     val leftEntry = facade!!.findEntry(rootEntry, RevisionId.ChangeSet(targetChangeSet.id), path,
                                        /*do not revert the change itself*/false)
     val rightEntry = rootEntry.findEntry(path)

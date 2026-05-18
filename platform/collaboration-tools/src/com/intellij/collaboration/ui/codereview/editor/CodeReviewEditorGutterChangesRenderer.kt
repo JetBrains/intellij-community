@@ -16,7 +16,7 @@ import com.intellij.openapi.actionSystem.CompositeShortcutSet
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diff.DefaultFlagsProvider
 import com.intellij.openapi.diff.LineStatusMarkerColorScheme
 import com.intellij.openapi.diff.LineStatusMarkerDrawUtil
@@ -107,7 +107,7 @@ open class CodeReviewEditorGutterChangesRenderer(
     val factory = EditorFactory.getInstance()
     val editor = factory.createViewer(factory.createDocument(vcsContent), project, EditorKind.DIFF) as EditorEx
 
-    ReadAction.run<RuntimeException> {
+    runReadActionBlocking {
       with(editor) {
         setCaretEnabled(false)
         getContentComponent().setFocusCycleRoot(false)

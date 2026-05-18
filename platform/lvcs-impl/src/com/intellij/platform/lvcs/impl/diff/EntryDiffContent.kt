@@ -11,7 +11,7 @@ import com.intellij.history.integration.IdeaGateway
 import com.intellij.history.integration.LocalHistoryBundle
 import com.intellij.history.integration.ui.models.RevisionProcessingProgress
 import com.intellij.history.integration.ui.models.SelectionCalculator
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.lvcs.impl.RevisionId
@@ -32,7 +32,7 @@ fun createDiffContent(project: Project?, gateway: IdeaGateway, e: Entry): DiffCo
 }
 
 fun createCurrentDiffContent(project: Project?, gateway: IdeaGateway, path: String): DiffContent {
-  val document = runReadAction { gateway.getDocument(path) }
+  val document = runReadActionBlocking { gateway.getDocument(path) }
   if (document == null) return createUnavailableContent()
   return DiffContentFactory.getInstance().create(project, document)
 }
@@ -52,14 +52,14 @@ fun createDiffContent(gateway: IdeaGateway,
 }
 
 fun createCurrentDiffContent(project: Project?, gateway: IdeaGateway, path: String, from: Int, to: Int): DiffContent {
-  return runReadAction {
+  return runReadActionBlocking {
     val document = gateway.getDocument(path)
-    if (document == null) return@runReadAction createUnavailableContent()
+    if (document == null) return@runReadActionBlocking createUnavailableContent()
 
     val fromOffset = document.getLineStartOffset(from)
     val toOffset = document.getLineEndOffset(to)
 
-    return@runReadAction DiffContentFactory.getInstance().createFragment(project, document, TextRange(fromOffset, toOffset))
+    DiffContentFactory.getInstance().createFragment(project, document, TextRange(fromOffset, toOffset))
   }
 }
 

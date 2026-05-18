@@ -155,8 +155,8 @@ public final class VcsUtil {
 
   private static @Nullable <T> T computeValue(@NotNull Project project,
                                               @NotNull java.util.function.Function<? super ProjectLevelVcsManager, ? extends T> provider) {
-    return ReadAction.compute(() -> {
-      //  IDEADEV-17916, when e.g. ContentRevision.getContent is called in
+    return ReadAction.computeBlocking(() -> {
+      //  IDEADEV-17916, when e.g., ContentRevision.getContent is called in
       //  a future task after the component has been disposed.
       T result = null;
       if (!project.isDisposed()) {
@@ -168,11 +168,11 @@ public final class VcsUtil {
   }
 
   public static @Nullable VirtualFile getVirtualFile(@NotNull @NonNls String path) {
-    return ReadAction.compute(() -> LocalFileSystem.getInstance().findFileByPath(path.replace(File.separatorChar, '/')));
+    return ReadAction.computeBlocking(() -> LocalFileSystem.getInstance().findFileByPath(path.replace(File.separatorChar, '/')));
   }
 
   public static @Nullable VirtualFile getVirtualFile(@NotNull File file) {
-    return ReadAction.compute(() -> LocalFileSystem.getInstance().findFileByIoFile(file));
+    return ReadAction.computeBlocking(() -> LocalFileSystem.getInstance().findFileByIoFile(file));
   }
 
   public static @Nullable VirtualFile getVirtualFileWithRefresh(@Nullable File file) {
@@ -186,7 +186,7 @@ public final class VcsUtil {
   }
 
   public static @NlsSafe String getFileContent(@NotNull @NonNls String path) {
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       VirtualFile vFile = getVirtualFile(path);
       assert vFile != null;
       return FileDocumentManager.getInstance().getDocument(vFile).getText();

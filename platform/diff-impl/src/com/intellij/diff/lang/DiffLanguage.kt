@@ -3,11 +3,10 @@ package com.intellij.diff.lang
 
 import com.intellij.diff.contents.DiffContent
 import com.intellij.diff.contents.DocumentContent
-import com.intellij.diff.lang.DiffLanguage.getLanguageOrCompute
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageUtil
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -54,7 +53,7 @@ internal object DiffLanguage {
 
     val fileType = content.getContentType()
     val languageForPsi = (content as? DocumentContent)?.highlightFile?.let { highlightingFile ->
-      runReadAction { LanguageUtil.getLanguageForPsi(project, highlightingFile, fileType) }
+      runReadActionBlocking { LanguageUtil.getLanguageForPsi(project, highlightingFile, fileType) }
     }
 
     return languageForPsi ?: getLanguageByFileType(content)

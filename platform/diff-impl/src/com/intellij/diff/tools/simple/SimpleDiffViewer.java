@@ -268,7 +268,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     final Document document2 = getContent2().getDocument();
 
     CharSequence[] texts =
-      ReadAction.compute(() -> new CharSequence[]{document1.getImmutableCharSequence(), document2.getImmutableCharSequence()});
+      ReadAction.computeBlocking(() -> new CharSequence[]{document1.getImmutableCharSequence(), document2.getImmutableCharSequence()});
 
     List<LineFragment> lineFragments = myTextDiffProvider.compare(texts[0], texts[1], indicator);
 

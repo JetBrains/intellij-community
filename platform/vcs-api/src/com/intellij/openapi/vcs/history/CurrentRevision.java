@@ -47,7 +47,7 @@ public class CurrentRevision implements VcsFileRevision {
   @Override
   public byte[] loadContent() {
     try {
-      Document document = ReadAction.compute(() -> FileDocumentManager.getInstance().getDocument(myFile));
+      Document document = ReadAction.computeBlocking(() -> FileDocumentManager.getInstance().getDocument(myFile));
       if (document != null) {
         return document.getText().getBytes(myFile.getCharset());
       }

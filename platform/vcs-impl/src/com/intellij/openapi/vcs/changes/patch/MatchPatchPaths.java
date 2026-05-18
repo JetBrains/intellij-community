@@ -187,7 +187,7 @@ public final class MatchPatchPaths {
 
   private @Unmodifiable Collection<VirtualFile> findFilesFromIndex(final @NotNull PatchBaseDirectoryDetector directoryDetector,
                                                                    final @NotNull String fileName) {
-    Collection<VirtualFile> files = ReadAction.compute(() -> directoryDetector.findFiles(fileName));
+    Collection<VirtualFile> files = ReadAction.computeBlocking(() -> directoryDetector.findFiles(fileName));
     final File shelfResourcesDirectory = ShelveChangesManager.getInstance(myProject).getShelfResourcesDirectory();
     return ContainerUtil.filter(files, file -> !FileUtil.isAncestor(shelfResourcesDirectory, VfsUtilCore.virtualToIoFile(file), false));
   }

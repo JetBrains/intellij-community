@@ -74,7 +74,7 @@ public class ChangesBrowserModuleNode extends ChangesBrowserNode<Module> impleme
   }
 
   private static @Nullable FilePath getModuleRootFilePath(@NotNull Module module) {
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       if (module.isDisposed()) return null;
       VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
       if (roots.length == 1) {

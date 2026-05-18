@@ -41,7 +41,7 @@ public class VcsDescriptor {
 
   public boolean probablyUnderVcs(final VirtualFile file) {
     if (myAdministrativePatterns.isEmpty()) return false;
-    return ReadAction.compute(() -> matchesVcsDirPattern(file));
+    return ReadAction.computeBlocking(() -> matchesVcsDirPattern(file));
   }
 
   private boolean matchesVcsDirPattern(@Nullable VirtualFile file) {

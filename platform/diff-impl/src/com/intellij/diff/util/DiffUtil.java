@@ -238,7 +238,7 @@ public final class DiffUtil {
   }
 
   private static CharSequence getDocumentCharSequence(DocumentContent documentContent) {
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       return documentContent.getDocument().getImmutableCharSequence();
     });
   }
@@ -1197,7 +1197,7 @@ public final class DiffUtil {
       return ((FileSystemInterface)fs).getInputStream(file);
     }
     // can't use VirtualFile.getInputStream here, as it will strip BOM
-    byte[] content = ReadAction.compute(() -> file.contentsToByteArray());
+    byte[] content = ReadAction.computeBlocking(() -> file.contentsToByteArray());
     return new ByteArrayInputStream(content);
   }
 
@@ -1630,10 +1630,10 @@ public final class DiffUtil {
   @RequiresEdt
   public static boolean makeWritable(@Nullable Project project, @NotNull VirtualFile file) {
     Project projectOrDefault = project == null ? ProjectManager.getInstance().getDefaultProject() : project;
-    return ReadAction.compute(() ->
-                                !ReadonlyStatusHandler.getInstance(projectOrDefault)
-                                  .ensureFilesWritable(Collections.singletonList(file))
-                                  .hasReadonlyFiles());
+    return ReadAction.computeBlocking(() ->
+                                        !ReadonlyStatusHandler.getInstance(projectOrDefault)
+                                          .ensureFilesWritable(Collections.singletonList(file))
+                                          .hasReadonlyFiles());
   }
 
   public static void putNonundoableOperation(@Nullable Project project, @NotNull Document document) {

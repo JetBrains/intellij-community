@@ -4,10 +4,9 @@ package com.intellij.openapi.vcs.checkin
 import com.intellij.codeInsight.CodeSmellInfo
 import com.intellij.diff.tools.util.text.LineOffsetsUtil
 import com.intellij.diff.util.Range
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
@@ -77,7 +76,7 @@ internal object CodeAnalysisBeforeCheckinShowOnlyNew {
         return@map it
       }
       val newFile = VirtualFileManager.getInstance().findFileByUrl(file.url) ?: return@map it
-      val document = ReadAction.compute<Document?, Exception> { fileDocumentManager.getDocument(newFile) } ?: return@map it
+      val document = runReadActionBlocking { fileDocumentManager.getDocument(newFile) } ?: return@map it
       CodeSmellInfo(document, it.description, it.textRange, it.severity)
     }
   }

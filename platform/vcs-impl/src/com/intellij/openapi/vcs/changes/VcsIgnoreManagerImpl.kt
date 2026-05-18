@@ -3,7 +3,7 @@ package com.intellij.openapi.vcs.changes
 
 import com.intellij.configurationStore.OLD_NAME_CONVERTER
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
@@ -154,11 +154,10 @@ class VcsIgnoreManagerImpl(private val project: Project, coroutineScope: Corouti
   override fun isPotentiallyIgnoredFile(file: VirtualFile): Boolean = isPotentiallyIgnoredFile(VcsUtil.getFilePath(file))
 
   override fun isPotentiallyIgnoredFile(filePath: FilePath): Boolean {
-    return runReadAction {
-      if (project.isDisposed) {
-        return@runReadAction false
-      }
-      return@runReadAction IgnoredFileProvider.IGNORE_FILE.extensionList.any { it.isIgnoredFile(project, filePath) }
+    return runReadActionBlocking {
+      if (project.isDisposed) return@runReadActionBlocking false
+
+      IgnoredFileProvider.IGNORE_FILE.extensionList.any { it.isIgnoredFile(project, filePath) }
     }
   }
 }

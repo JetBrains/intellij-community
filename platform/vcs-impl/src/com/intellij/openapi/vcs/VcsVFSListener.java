@@ -465,11 +465,11 @@ public abstract class VcsVFSListener implements Disposable {
   }
 
   protected boolean isUnderMyVcs(@Nullable VirtualFile file) {
-    return file != null && ReadAction.compute(() -> !myProject.isDisposed() && myVcsManager.getVcsFor(file) == myVcs);
+    return file != null && ReadAction.computeBlocking(() -> !myProject.isDisposed() && myVcsManager.getVcsFor(file) == myVcs);
   }
 
   protected boolean isUnderMyVcs(@Nullable FilePath filePath) {
-    return filePath != null && ReadAction.compute(() -> !myProject.isDisposed() && myVcsManager.getVcsFor(filePath) == myVcs);
+    return filePath != null && ReadAction.computeBlocking(() -> !myProject.isDisposed() && myVcsManager.getVcsFor(filePath) == myVcs);
   }
 
   private static @NotNull FilePath getEventFilePath(@NotNull VFileEvent event) {

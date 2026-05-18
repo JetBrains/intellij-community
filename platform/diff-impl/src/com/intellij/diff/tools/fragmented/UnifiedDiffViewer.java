@@ -395,12 +395,12 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
     final Document document1 = getContent1().getDocument();
     final Document document2 = getContent2().getDocument();
 
-    final CharSequence[] texts = ReadAction.compute(
+    CharSequence[] texts = ReadAction.computeBlocking(
       () -> new CharSequence[]{document1.getImmutableCharSequence(), document2.getImmutableCharSequence()});
 
     final List<LineFragment> fragments = myTextDiffProvider.compare(texts[0], texts[1], indicator);
 
-    UnifiedDiffState builder = ReadAction.compute(() -> {
+    UnifiedDiffState builder = ReadAction.computeBlocking(() -> {
       indicator.checkCanceled();
       return new SimpleUnifiedFragmentBuilder(document1, document2, myMasterSide).exec(fragments);
     });
@@ -438,7 +438,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
     final DocumentContent content2 = getContent2();
 
     UnifiedDiffHighlightersData unifiedDiffHighlightersData = BackgroundTaskUtil.tryComputeFast(_ -> {
-      return ReadAction.compute(() -> {
+      return ReadAction.computeBlocking(() -> {
         EditorHighlighter highlighter =
           UnifiedEditorHighlighter.buildHighlighter(myProject, myDocument, content1, content2,
                            texts[0], texts[1], builder.getRanges(),
@@ -1156,7 +1156,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
   public @NotNull List<? extends Editor> getHighlightEditors() {
     if (myProject == null) return Collections.emptyList();
 
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       List<Editor> result = new ArrayList<>();
       result.add(myEditor);
       ContainerUtil.addIfNotNull(result, createImaginaryEditor(Side.LEFT));

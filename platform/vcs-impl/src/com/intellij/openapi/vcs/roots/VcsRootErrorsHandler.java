@@ -196,7 +196,7 @@ public final class VcsRootErrorsHandler {
   private boolean isIgnoredOrExcludedPath(@NotNull VcsDirectoryMapping mapping) {
     if (mapping.isDefaultMapping()) return false;
     VirtualFile file = LocalFileSystem.getInstance().findFileByPath(mapping.getDirectory());
-    return file != null && (myChangeListManager.isIgnoredFile(file) || ReadAction.compute(() -> myProjectFileIndex.isExcluded(file)));
+    return file != null && (myChangeListManager.isIgnoredFile(file) || ReadAction.computeBlocking(() -> myProjectFileIndex.isExcluded(file)));
   }
 
   private boolean isExplicitlyIgnoredPath(@NotNull VcsDirectoryMapping mapping) {

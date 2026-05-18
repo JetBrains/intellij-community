@@ -111,7 +111,7 @@ public class VcsStructureChooser extends DialogWrapper {
 
     final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
     // assertion for read access inside
-    Module[] modules = ReadAction.compute(() -> moduleManager.getModules());
+    Module[] modules = ReadAction.computeBlocking(() -> moduleManager.getModules());
 
     TreeSet<VirtualFile> checkSet = new TreeSet<>(FilePathComparator.getInstance());
     checkSet.addAll(roots);

@@ -41,7 +41,7 @@ public class ApplyPatchMergeRequest extends MergeRequest implements ApplyPatchRe
     myResultContent = resultContent;
     myAppliedPatch = appliedPatch;
 
-    myOriginalContent = ReadAction.compute(() -> myResultContent.getDocument().getImmutableCharSequence());
+    myOriginalContent = ReadAction.computeBlocking(() -> myResultContent.getDocument().getImmutableCharSequence());
     myLocalContent = localContent;
 
     myWindowTitle = windowTitle;

@@ -42,7 +42,7 @@ public final class RecentChangesPopup {
       @Override
       protected List<RecentChange> compute(@NotNull ProgressIndicator indicator) {
         return LocalHistoryCounter.INSTANCE.logLoadItems(project, LocalHistoryCounter.Kind.Recent, () -> {
-          return RecentChangeKt.getRecentChanges(vcs, ReadAction.compute(() -> {
+          return RecentChangeKt.getRecentChanges(vcs, ReadAction.computeBlocking(() -> {
             return gw.createTransientRootEntry();
           }));
         });

@@ -23,7 +23,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -97,7 +97,7 @@ object LocalTrackerDiffUtil {
     }
 
     indicator.checkCanceled()
-    val data = runReadAction {
+    val data = runReadActionBlocking {
       partialTracker.readLock {
         if (partialTracker.isReleased) return@readLock TrackerData.Released
 

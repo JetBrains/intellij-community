@@ -160,7 +160,7 @@ public final class ChangesUtil {
 
   public static FilePath getLocalPath(@NotNull Project project, FilePath filePath) {
     // check if the file has just been renamed (IDEADEV-15494)
-    Change change = ReadAction.compute(() -> {
+    Change change = ReadAction.computeBlocking(() -> {
       if (project.isDisposed()) throw new ProcessCanceledException();
       return ChangeListManager.getInstance(project).getChange(filePath);
     });
@@ -198,7 +198,7 @@ public final class ChangesUtil {
    */
   @Deprecated
   private static @Nullable VirtualFile getValidParentUnderReadAction(@NotNull FilePath filePath) {
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       VirtualFile result = null;
       FilePath parent = filePath;
       LocalFileSystem lfs = LocalFileSystem.getInstance();
@@ -246,7 +246,7 @@ public final class ChangesUtil {
                                            @NotNull VcsSeparator<? super T> separator,
                                            @NotNull PerVcsProcessor<T> processor) {
     Map<AbstractVcs, List<T>> changesByVcs = new HashMap<>();
-    ReadAction.run(() -> {
+    ReadAction.runBlocking(() -> {
       for (T item : items) {
         AbstractVcs vcs = separator.getVcsFor(item);
         if (vcs != null) {

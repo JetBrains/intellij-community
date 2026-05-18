@@ -7,6 +7,7 @@ import com.intellij.ide.trustedProjects.TrustedProjectsListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -21,10 +22,8 @@ import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.WriteExternalException
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.openapi.vcs.FilePath
@@ -65,13 +64,11 @@ import com.intellij.project.stateStore
 import com.intellij.ui.content.ContentManager
 import com.intellij.util.ContentUtilEx
 import com.intellij.util.Processor
-import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.text.StringTokenizer
 import com.intellij.vcs.console.VcsConsoleTabService
-import com.intellij.vcsUtil.VcsImplUtil
 import kotlinx.coroutines.CoroutineScope
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -114,7 +111,7 @@ class ProjectLevelVcsManagerImpl(
     val vcs = AllVcses.getInstance(project).getByName(name)
     if (vcs == null && project.isDisposed()) {
       // Take readLock to avoid race between Project.isDisposed and Disposer.dispose.
-      ReadAction.run(ThrowableRunnable { ProgressManager.checkCanceled() })
+      runReadActionBlocking { ProgressManager.checkCanceled() }
     }
     return vcs
   }
@@ -516,8 +513,8 @@ class ProjectLevelVcsManagerImpl(
 
   override fun isFileInContent(vf: VirtualFile?): Boolean {
     if (vf == null) return false
-    return ReadAction.compute(ThrowableComputable {
-      if (!vf.isValid()) return@ThrowableComputable false
+    return runReadActionBlocking {
+      if (!vf.isValid()) return@runReadActionBlocking false
       val fileIndex = FileIndexFacade.getInstance(project)
       val isUnderProject = isFileInBaseDir(vf) ||
                            isInDirectoryBasedRoot(vf) ||
@@ -525,7 +522,7 @@ class ProjectLevelVcsManagerImpl(
                            fileIndex.isInContent(vf) ||
                            fileIndex.isExcludedFile(vf)
       isUnderProject && !isIgnoredFilePath(vf.path)
-    })
+    }
   }
 
   override fun isIgnored(vf: VirtualFile): Boolean {
@@ -647,7 +644,7 @@ class ProjectLevelVcsManagerImpl(
     canceled: Boolean,
   ): UpdateInfoTree? {
     if (!project.isOpen() || project.isDisposed()) return null
-    val contentManager = contentManager ?: return null // content manager is made null during dispose; flag is set later
+    val contentManager = contentManager ?: return null // content manager is made null during disposal; flag is set later
     val updateInfoTree = UpdateInfoTree(contentManager, project, updatedFiles, displayActionName, actionInfo)
     val tabName = DateFormatUtil.formatDateTime(System.currentTimeMillis())
     ContentUtilEx.addTabbedContent(contentManager, updateInfoTree, "Update Info",

@@ -20,7 +20,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.impl.TestOnlyThreading
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.command.CommandEvent
@@ -434,7 +434,7 @@ class LineStatusTrackerManager(
 
   private fun canCreateTrackerFor(virtualFile: VirtualFile, document: Document): Boolean {
     if (isDisposed) return false
-    return runReadAction {
+    return runReadActionBlocking {
       virtualFile.isValid &&
       !virtualFile.fileType.isBinary &&
       !FileDocumentManager.getInstance().isPartialPreviewOfALargeFile(document)
@@ -986,7 +986,7 @@ class LineStatusTrackerManager(
 
   private inner class MyFreezeListener : VcsFreezingProcess.Listener {
     override fun onFreeze() {
-      runReadAction {
+      runReadActionBlocking {
         synchronized(LOCK) {
           if (clmFreezeCounter == 0) {
             for (data in trackers.values) {

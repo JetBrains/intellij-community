@@ -10,7 +10,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -105,7 +105,7 @@ class IgnoredToExcludedSynchronizer(project: Project, private val cs: CoroutineS
       LOG.debug("updateNotificationState, acquiredFiles", acquiredFiles)
       val filesToRemove = acquiredFiles
         .asSequence()
-        .filter { file -> runReadAction { fileIndex.isExcluded(file) } || sourceRoots.contains(file) }
+        .filter { file -> runReadActionBlocking { fileIndex.isExcluded(file) } || sourceRoots.contains(file) }
         .toList()
       LOG.debug("updateNotificationState, filesToRemove", filesToRemove)
 
@@ -213,7 +213,7 @@ class IgnoredToExcludedSynchronizer(project: Project, private val cs: CoroutineS
 }
 
 private fun markIgnoredAsExcluded(project: Project, files: Collection<VirtualFile>) {
-  val ignoredDirsByModule = runReadAction {
+  val ignoredDirsByModule = runReadActionBlocking {
     files
       .groupBy { ModuleUtil.findModuleForFile(it, project) }
       //if the directory already excluded then ModuleUtil.findModuleForFile return null and this will filter out such directories from processing.
@@ -264,7 +264,7 @@ private fun determineIgnoredDirsToExclude(project: Project, ignoredPaths: Collec
     //shelf directory usually contains in project and excluding it prevents local history to work on it
     .filterNot { containsShelfDirectoryOrUnderIt(it, shelfPath) }
     .mapNotNull(FilePath::getVirtualFile)
-    .filterNot { runReadAction { fileIndex.isExcluded(it) } }
+    .filterNot { runReadActionBlocking { fileIndex.isExcluded(it) } }
     //do not propose to exclude if there is a source root inside
     .filterNot { ignored -> sourceRoots.contains(ignored) }
     .toList()

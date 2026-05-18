@@ -1074,7 +1074,6 @@ public final class ChangeListWorker {
       return myVcsManager.getVcsFor(revision.getFile()) == null;
     }
 
-
     public void notifyDoneProcessingChanges(@NotNull DelayedNotificator dispatcher, @Nullable VcsDirtyScope scope) {
       List<ChangeList> changedLists = new ArrayList<>();
       final Map<LocalChangeListImpl, List<Change>> removedChanges = new HashMap<>();

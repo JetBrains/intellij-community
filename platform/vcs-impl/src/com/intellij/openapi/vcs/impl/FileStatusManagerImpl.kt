@@ -7,6 +7,7 @@ import com.intellij.ide.scratch.ScratchUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.colors.EditorColorsListener
@@ -19,7 +20,6 @@ import com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.startup.StartupManager
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.FileStatusListener
@@ -153,7 +153,7 @@ class FileStatusManagerImpl(private val project: Project, coroutineScope: Corout
   private fun getVcsFileStatus(virtualFile: VirtualFile): FileStatus? {
     if (ProjectLevelVcsManager.getInstance(project).getVcsFor(virtualFile) == null) {
       if (ScratchUtil.isScratch(virtualFile)) {
-        // do not use for vcs-tracked scratched files
+        // do not use it for vcs-tracked scratched files
         return FileStatus.SUPPRESSED
       }
       else {
@@ -319,7 +319,7 @@ class FileStatusManagerImpl(private val project: Project, coroutineScope: Corout
   @RequiresBackgroundThread
   private fun processModifiedDocument(file: VirtualFile, isDocumentModified: Boolean) {
     if (LOG.isDebugEnabled) {
-      val document = ApplicationManager.getApplication().runReadAction(Computable { FileDocumentManager.getInstance().getDocument(file) })
+      val document = runReadActionBlocking { FileDocumentManager.getInstance().getDocument(file) }
       LOG.debug(
         "[processModifiedDocument] isModified: ${isDocumentModified}, file modificationStamp: ${file.modificationStamp}, " +
         "document modificationStamp: ${document?.modificationStamp}"
@@ -360,7 +360,7 @@ class FileStatusManagerImpl(private val project: Project, coroutineScope: Corout
     queue.waitForAllExecuted(10, TimeUnit.SECONDS)
     if (queue.isFlushing) {
       // MUQ.queue() inside Update.run cancels underlying future, and 'waitForAllExecuted' exits prematurely.
-      // Workaround this issue by waiting twice
+      // Work around this issue by waiting twice
       // This fixes 'processModifiedDocument -> fileStatusChanged' interaction.
       queue.waitForAllExecuted(10, TimeUnit.SECONDS)
     }

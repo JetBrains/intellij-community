@@ -2,7 +2,7 @@
 package com.intellij.vcs.commit
 
 import com.intellij.history.LocalHistory
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
@@ -76,7 +76,7 @@ open class LocalChangesCommitter(
 
   private fun refreshChanges() {
     try {
-      val refreshAction = runReadAction { LocalHistory.getInstance().startAction(localHistoryActionName) }
+      val refreshAction = runReadActionBlocking { LocalHistory.getInstance().startAction(localHistoryActionName) }
 
       val toRefresh = mutableListOf<Change>()
       val additionalPathsToRefresh = mutableListOf<FilePath>()

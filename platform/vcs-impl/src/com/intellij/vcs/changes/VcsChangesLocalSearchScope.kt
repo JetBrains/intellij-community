@@ -3,7 +3,7 @@ package com.intellij.vcs.changes
 
 import com.intellij.codeInsight.actions.VcsFacade
 import com.intellij.ide.util.treeView.WeighedItem
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
@@ -28,7 +28,7 @@ class VcsChangesLocalSearchScope(private val myProject: Project,
   }
 
   private val rangeMap: HashMap<VirtualFile, List<TextRange>> by lazy {
-    ReadAction.compute<HashMap<VirtualFile, List<TextRange>>, RuntimeException> {
+    runReadActionBlocking {
       val changeListManager = ChangeListManager.getInstance(myProject)
       val vcsFacade = VcsFacade.getInstance()
       val psiManager = PsiManager.getInstance(myProject)
@@ -79,7 +79,7 @@ class VcsChangesLocalSearchScope(private val myProject: Project,
 
   override fun getVirtualFiles(): Array<VirtualFile> = rangeMap.keys.toTypedArray()
 
-  override fun getPsiElements(): Array<PsiElement> = ReadAction.compute<Array<PsiElement>, RuntimeException> {
+  override fun getPsiElements(): Array<PsiElement> = runReadActionBlocking {
     val elements: MutableList<PsiElement> = ArrayList()
     val psiManager = PsiManager.getInstance(myProject)
     this.rangeMap.forEach { (virtualFile, ranges) ->

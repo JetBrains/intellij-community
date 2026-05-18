@@ -110,7 +110,7 @@ public abstract class FileDifferenceModel {
 
   public static @NotNull ContentDiffRequest createRequest(@NotNull FileDifferenceModel model,
                                                           @NotNull RevisionProcessingProgress progress) {
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       progress.processingLeftRevision();
       DiffContent left = model.getLeftDiffContent(progress);
 

@@ -73,7 +73,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
                                   @NotNull CanISilentlyChange.Result canChangeFileSilently,
                                   @NotNull Number daemonCancelEventCount) {
     myPsiFile = psiFile;
-    myCodeInsightContext = ReadAction.compute(() -> CodeInsightContextUtil.getCodeInsightContext(psiFile));
+    myCodeInsightContext = ReadAction.computeBlocking(() -> CodeInsightContextUtil.getCodeInsightContext(psiFile));
     myProgressIndicator = progressIndicator;
     myEditorColorsScheme = editorColorsScheme;
 

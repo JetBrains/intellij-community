@@ -145,7 +145,7 @@ public class ApplyPatchForBaseRevisionTexts {
   }
 
   private static @NotNull String getLocalFileContent(@NotNull VirtualFile file) {
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       Document document = FileDocumentManager.getInstance().getDocument(file);
       if (document != null) {
         return document.getText();

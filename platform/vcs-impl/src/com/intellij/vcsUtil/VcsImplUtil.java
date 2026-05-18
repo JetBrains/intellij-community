@@ -120,7 +120,7 @@ public final class VcsImplUtil {
   }
 
   public static boolean isProjectSharedInVcs(@NotNull Project project) {
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       if (project.isDisposed()) return false;
       @SystemIndependent String projectFilePath = project.getProjectFilePath();
       ChangeListManagerEx changeListManager = ChangeListManagerEx.getInstanceEx(project);

@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl
 
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -32,7 +32,7 @@ internal class ModuleDefaultVcsRootPolicy(project: Project) : DefaultVcsRootPoli
       }
     }
 
-    result += runReadAction {
+    result += runReadActionBlocking {
       WorkspaceModel.getInstance(myProject).currentSnapshot
         .entities(ContentRootEntity::class.java)
         .mapNotNull { it.url.virtualFile }

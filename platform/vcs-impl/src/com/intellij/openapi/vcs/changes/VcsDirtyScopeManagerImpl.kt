@@ -3,10 +3,10 @@
 
 package com.intellij.openapi.vcs.changes
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -17,7 +17,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.util.ActionCallback
-import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.FilePath
@@ -284,10 +283,10 @@ class VcsDirtyScopeManagerImpl(private val project: Project, coroutineScope: Cor
   }
 
   override fun whatFilesDirty(files: Collection<FilePath>): Collection<FilePath> {
-    return ApplicationManager.getApplication().runReadAction(ThrowableComputable {
+    return runReadActionBlocking {
       synchronized(LOCK) {
         if (!isReady) {
-          return@ThrowableComputable emptyList()
+          return@runReadActionBlocking emptyList()
         }
 
         val result = ArrayList<FilePath>()
@@ -298,7 +297,7 @@ class VcsDirtyScopeManagerImpl(private val project: Project, coroutineScope: Cor
         }
         result
       }
-    })
+    }
   }
 
   internal class MyStartupActivity : VcsStartupActivity {

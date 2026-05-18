@@ -346,7 +346,7 @@ public final class DiffContentFactoryImpl extends DiffContentFactoryEx {
                                                             @Nullable VirtualFile highlightFile) {
     if (file.isDirectory()) return new DirectoryContentImpl(project, file, highlightFile);
 
-    Document document = ReadAction.compute(() -> FileDocumentManager.getInstance().getDocument(file));
+    Document document = ReadAction.computeBlocking(() -> FileDocumentManager.getInstance().getDocument(file));
     if (document != null) {
       // TODO: add notification if file is decompiled ?
       return new FileDocumentContentImpl(project, document, file, highlightFile);
@@ -427,7 +427,7 @@ public final class DiffContentFactoryImpl extends DiffContentFactoryEx {
     file.setWritable(!readOnly);
 
     LightVirtualFile finalFile = file;
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       Document document = FileDocumentManager.getInstance().getDocument(finalFile, project);
       if (document == null) {
         return null;

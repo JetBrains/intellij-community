@@ -116,7 +116,7 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
 
   @Override
   public byte @Nullable [] getContent() throws IOException {
-    return ReadAction.compute(() -> myFile.contentsToByteArray());
+    return ReadAction.computeBlocking(() -> myFile.contentsToByteArray());
   }
 
   @Override

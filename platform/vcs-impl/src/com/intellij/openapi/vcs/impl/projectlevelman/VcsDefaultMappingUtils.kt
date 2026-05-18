@@ -2,7 +2,7 @@
 
 package com.intellij.openapi.vcs.impl.projectlevelman
 
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -15,7 +15,7 @@ internal object VcsDefaultMappingUtils {
    * Provides VCS roots where [projectRoots] are located using [rootChecker].
    *
    * [mappedDirs] are took into account during detection, so that direct mappings shouldn't be overwritten by <Project> mappings.
-   * E.g. if directory `/project` has direct mapping for Hg and there is `/project/.git` folder
+   * E.g., if directory `/project` has direct mapping for Hg and there is `/project/.git` folder
    * (that is going to be detected as <Project> mapping),
    * `/project` shouldn't be returned as <Project> mapping. It should stay as Hg direct mapping.
    * So, already mapped files and directories from [mappedDirs] are excluded from the result.
@@ -24,7 +24,7 @@ internal object VcsDefaultMappingUtils {
    * is true then a result may contain directories under [project] but not "pure" VCS roots.
    * Example: for `root/svn_root_dir/project_root_dir` if `svn_root_dir` is not under project
    * `project_dir` will be returned as VCS root, not `svn_root_dir`.
-   * It is needed to detect changes only under `project_root_dir`, not under `svn_root_dir/unrelated_project`
+   * It is necessary to detect changes only under `project_root_dir`, not under `svn_root_dir/unrelated_project`
    *
    * @param projectRoots files and directories that are a part of the [project]
    * @param mappedDirs directories that were already mapped with VCS
@@ -99,7 +99,7 @@ private class VcsDefaultMappingDetector(
   }
 
   private fun isUnderProject(f: VirtualFile): Boolean {
-    return runReadAction {
+    return runReadActionBlocking {
       if (project.isDisposed) {
         throw ProcessCanceledException()
       }

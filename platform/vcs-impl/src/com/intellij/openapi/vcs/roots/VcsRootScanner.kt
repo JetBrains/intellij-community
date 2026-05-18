@@ -4,7 +4,7 @@ package com.intellij.openapi.vcs.roots
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.trustedProjects.TrustedProjectsListener
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -120,7 +120,7 @@ class VcsRootScanner(private val project: Project, coroutineScope: CoroutineScop
             return SKIP_CHILDREN
           }
 
-          if (ReadAction.computeBlocking<Boolean, RuntimeException> { project.isDisposed || !fileIndex.isInContent(file) }) {
+          if (runReadActionBlocking { project.isDisposed || !fileIndex.isInContent(file) }) {
             return SKIP_CHILDREN
           }
 

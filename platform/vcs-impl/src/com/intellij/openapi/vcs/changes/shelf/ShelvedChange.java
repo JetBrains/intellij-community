@@ -222,7 +222,7 @@ public final class ShelvedChange {
     }
 
     private @NotNull String loadLocalContent() throws VcsException {
-      return ReadAction.compute(() -> {
+      return ReadAction.computeBlocking(() -> {
         VirtualFile file = myBeforeFilePath.getVirtualFile();
         if (file == null) throw new VcsException(VcsBundle.message("patch.apply.error.file.not.found", myBeforeFilePath));
         final Document doc = FileDocumentManager.getInstance().getDocument(file);

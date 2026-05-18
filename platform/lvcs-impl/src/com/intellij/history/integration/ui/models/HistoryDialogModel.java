@@ -74,7 +74,7 @@ public abstract class HistoryDialogModel {
   }
 
   protected @NotNull RootEntry createRootEntry() {
-    return ReadAction.compute(() -> myGateway.createTransientRootEntry());
+    return ReadAction.computeBlocking(() -> myGateway.createTransientRootEntry());
   }
 
   public void processContents(@NotNull PairProcessor<? super Revision, ? super String> processor) {

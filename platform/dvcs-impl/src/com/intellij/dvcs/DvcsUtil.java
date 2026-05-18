@@ -467,7 +467,7 @@ public final class DvcsUtil {
       return root;
     }
 
-    Set<VirtualFile> modulesVcsRoots = ReadAction.compute(() -> findVcsRootForModuleLibrary(project, file));
+    Set<VirtualFile> modulesVcsRoots = ReadAction.computeBlocking(() -> findVcsRootForModuleLibrary(project, file));
     if (modulesVcsRoots.isEmpty()) {
       LOG.debug("No library roots");
       return null;

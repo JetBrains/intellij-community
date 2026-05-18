@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorGutterAction;
@@ -196,7 +197,7 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
         Map<VirtualFile, IntList> files2lines = CollectionFactory.createSmallMemoryFootprintMap();
         Int2ObjectMap<LastRevision> revisions = new Int2ObjectOpenHashMap<>();
 
-        ApplicationManager.getApplication().runReadAction(() -> {
+        ReadAction.runBlocking(() -> {
           for (int line = 0; line < editor.getDocument().getLineCount(); line++) {
             indicator.checkCanceled();
             VirtualFile file = getHyperlinkVirtualFile(hyperlinks.findAllHyperlinksOnLine(line));

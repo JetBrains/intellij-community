@@ -108,7 +108,7 @@ public class LocalChangeListDiffRequest extends ContentDiffRequest {
   }
 
   private boolean installTracker() {
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       Document document = FileDocumentManager.getInstance().getDocument(myVirtualFile);
       if (document == null) return false;
 

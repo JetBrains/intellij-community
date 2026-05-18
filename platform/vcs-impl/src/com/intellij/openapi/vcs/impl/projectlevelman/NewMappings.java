@@ -486,7 +486,7 @@ public final class NewMappings implements Disposable {
     AbstractVcs vcs = getMappingsVcs(mapping);
     String rootPath = mapping.getDirectory();
 
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       VirtualFilePointerManager.getInstance().create(VfsUtilCore.pathToUrl(rootPath), pointerDisposable, myFilePointerListener);
 
       VirtualFile vcsRoot = LocalFileSystem.getInstance().findFileByPath(rootPath);
@@ -516,7 +516,7 @@ public final class NewMappings implements Disposable {
                                                                  directMappingDirs);
 
     List<MappedRoot> result = new ArrayList<>();
-    ReadAction.run(() -> {
+    ReadAction.runBlocking(() -> {
       for (VirtualFile vcsRoot : defaultRoots) {
         if (vcsRoot != null && vcsRoot.isDirectory()) {
           VirtualFilePointerManager.getInstance().create(vcsRoot, pointerDisposable, myFilePointerListener);
@@ -538,7 +538,7 @@ public final class NewMappings implements Disposable {
     // For example, if a "$PROJECT_DIR$" was replaced with a "<Project>" mapping as a part of shelve-unshelve operation.
 
     List<MappedRoot> result = new ArrayList<>();
-    ReadAction.run(() -> {
+    ReadAction.runBlocking(() -> {
       List<MappedRoot> oldMappings = ContainerUtil.filter(oldMappedRoots, root -> root.mapping.getVcs().equals(mapping.getVcs()));
       for (MappedRoot root : oldMappings) {
         VirtualFilePointerManager.getInstance().create(root.root, pointerDisposable, myFilePointerListener);

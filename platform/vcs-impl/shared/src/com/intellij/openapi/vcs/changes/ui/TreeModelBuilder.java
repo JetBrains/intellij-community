@@ -386,7 +386,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
       GROUPING_POLICY.set(subtreeRoot, policy);
     }
 
-    ChangesBrowserNode<?> parentNode = ReadAction.compute(
+    ChangesBrowserNode<?> parentNode = ReadAction.computeBlocking(
       () -> notNull(GROUPING_POLICY.getRequired(subtreeRoot).getParentNodeFor(pathKey, node, subtreeRoot), subtreeRoot));
     ChangesBrowserNode<?> cachingRoot = BaseChangesGroupingPolicy.getCachingRoot(parentNode, subtreeRoot);
 

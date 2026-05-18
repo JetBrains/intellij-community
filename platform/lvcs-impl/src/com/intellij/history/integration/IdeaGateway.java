@@ -11,6 +11,7 @@ import com.intellij.history.core.tree.RootEntry;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -487,7 +488,7 @@ public class IdeaGateway {
   }
 
   public void registerUnsavedDocuments(final @NotNull LocalHistoryFacade vcs) {
-    ApplicationManager.getApplication().runReadAction(() -> {
+    ReadAction.runBlocking(() -> {
       vcs.beginChangeSet();
       for (Document d : FileDocumentManager.getInstance().getUnsavedDocuments()) {
         VirtualFile f = getFile(d);
