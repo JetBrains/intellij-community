@@ -619,6 +619,20 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
     myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());
   }
 
+  @TestFor(issues="PY-87799")
+  public void testStrictInstanceAttributes() {
+    doTest();
+  }
+
+  @TestFor(issues="PY-87799")
+  public void testStrictInstanceAttributesOff() {
+    final PyUnresolvedReferencesInspection inspection = new PyUnresolvedReferencesInspection();
+    inspection.strictInstanceAttributes = false;
+    myFixture.enableInspections(inspection);
+    myFixture.configureByFile(getTestCaseDirectory() + getTestName(true) + ".py");
+    myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());
+  }
+
   @TestFor(issues="PY-82245")
   public void testStringInAnnotated() {
     doTestByText(

@@ -18,7 +18,7 @@ def assign1():
         pass
 
     c = C()
-    c.bar = 1
+    c.<warning descr="Unresolved attribute reference 'bar' for class 'C'">bar</warning> = 1
     c.foo = 1
 
 

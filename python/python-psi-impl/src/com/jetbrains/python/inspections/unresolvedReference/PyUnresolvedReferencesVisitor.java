@@ -130,6 +130,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
   private final ImmutableSet<String> myIgnoredIdentifiers;
   private final Version myVersion;
   private final boolean myStrictClassAttributes;
+  private final boolean myStrictInstanceAttributes;
   private volatile Boolean myIsEnabled = null;
   protected final List<PyPackageInstallAllProblemInfo> myUnresolvedRefs = Collections.synchronizedList(new ArrayList<>());
 
@@ -138,10 +139,20 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
                                           @NotNull TypeEvalContext context,
                                           @NotNull LanguageLevel languageLevel,
                                           boolean strictClassAttributes) {
+    this(holder, ignoredIdentifiers, context, languageLevel, strictClassAttributes, false);
+  }
+
+  protected PyUnresolvedReferencesVisitor(@Nullable ProblemsHolder holder,
+                                          @NotNull List<String> ignoredIdentifiers,
+                                          @NotNull TypeEvalContext context,
+                                          @NotNull LanguageLevel languageLevel,
+                                          boolean strictClassAttributes,
+                                          boolean strictInstanceAttributes) {
     super(holder, context);
     myIgnoredIdentifiers = ImmutableSet.copyOf(ignoredIdentifiers);
     myVersion = new Version(languageLevel.getMajorVersion(), languageLevel.getMinorVersion(), 0);
     myStrictClassAttributes = strictClassAttributes;
+    myStrictInstanceAttributes = strictInstanceAttributes;
   }
 
   @Override
@@ -154,6 +165,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
 
     checkSlotsAndProperties(node);
     checkStrictClassAttributes(node);
+    checkStrictInstanceAttributes(node);
   }
 
   private void checkSlotsAndProperties(PyQualifiedExpression node) {
@@ -195,6 +207,43 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     registerProblem(e,
                     PyPsiBundle.message("INSP.unresolved.refs.unresolved.attribute.for.class", attrName, type.getName()),
                     ProblemHighlightType.WARNING);
+  }
+
+  // PY-87799
+  private void checkStrictInstanceAttributes(PyQualifiedExpression node) {
+    if (!myStrictInstanceAttributes) return;
+
+    PyExpression qualifier = node.getQualifier();
+    String attrName = node.getReferencedName();
+    if (qualifier == null || attrName == null) return;
+
+    PyType type = replaceSelfWithItsScopeClass(myTypeEvalContext.getType(qualifier));
+
+    if (!(type instanceof PyClassType classType) || classType.isDefinition()) return;
+    if (PyUtil.isObjectClass(classType.getPyClass())) return;
+    // Slot violations and read-only properties are reported by checkSlotsAndProperties; avoid double-reporting.
+    if (!classType.isAttributeWritable(attrName, myTypeEvalContext)) return;
+    if (!ContainerUtil.isEmpty(classType.resolveMember(attrName, as(node, PyExpression.class),
+                                                       AccessDirection.READ, getResolveContext()))) {
+      return;
+    }
+    if (isDeclaredInSlots(type, attrName)) return;
+    // A user-defined __setattr__ accepts arbitrary attribute assignments.
+    if (overridesSetAttr(classType.getPyClass())) return;
+
+    PsiReference reference = node.getReference();
+    if (reference != null && ignoreUnresolvedMemberForType(type, reference, attrName)) return;
+
+    ASTNode nameNode = node.getNameElement();
+    final PsiElement e = nameNode != null ? nameNode.getPsi() : node;
+    registerProblem(e,
+                    PyPsiBundle.message("INSP.unresolved.refs.unresolved.attribute.for.class", attrName, type.getName()),
+                    ProblemHighlightType.WARNING);
+  }
+
+  private boolean overridesSetAttr(@NotNull PyClass cls) {
+    PyFunction setAttr = cls.findMethodByName("__setattr__", true, myTypeEvalContext);
+    return setAttr != null && !PyBuiltinCache.getInstance(cls).isBuiltin(setAttr);
   }
 
   private static @Nullable PyType replaceSelfWithItsScopeClass(@Nullable PyType type) {
