@@ -3874,9 +3874,9 @@ jvm_import(
 )
 
 copy_file(
-  name = "org.jetbrains.intellij.deps.languagetool/language-en-6.7.21.jar_copy",
-  src = "@org_jetbrains_intellij_deps_languagetool-language-en-6_7_21_http//file",
-  out = "org.jetbrains.intellij.deps.languagetool/language-en-6.7.21.jar",
+  name = "org.jetbrains.intellij.deps.languagetool/language-en-6.8.27.jar_copy",
+  src = "@org_jetbrains_intellij_deps_languagetool-language-en-6_8_27_http//file",
+  out = "org.jetbrains.intellij.deps.languagetool/language-en-6.8.27.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
@@ -3892,16 +3892,16 @@ copy_file(
 java_library(
   name = "grazie-core-org-jetbrains-intellij-deps-languagetool-language-en",
   exports = [
-    ":org_jetbrains_intellij_deps_languagetool-language-en-6_7_21_http_import",
+    ":org_jetbrains_intellij_deps_languagetool-language-en-6_8_27_http_import",
     ":org_languagetool-english-pos-dict-0_6_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "org_jetbrains_intellij_deps_languagetool-language-en-6_7_21_http_import",
-  jar = "@org_jetbrains_intellij_deps_languagetool-language-en-6_7_21_http//file",
-  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-en-6_7_21-sources_http//file"
+  name = "org_jetbrains_intellij_deps_languagetool-language-en-6_8_27_http_import",
+  jar = "@org_jetbrains_intellij_deps_languagetool-language-en-6_8_27_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-en-6_8_27-sources_http//file"
 )
 
 jvm_import(
@@ -3910,9 +3910,9 @@ jvm_import(
 )
 
 copy_file(
-  name = "org.jetbrains.intellij.deps.languagetool/languagetool-core-6.7.21.jar_copy",
-  src = "@org_jetbrains_intellij_deps_languagetool-languagetool-core-6_7_21_http//file",
-  out = "org.jetbrains.intellij.deps.languagetool/languagetool-core-6.7.21.jar",
+  name = "org.jetbrains.intellij.deps.languagetool/languagetool-core-6.8.27.jar_copy",
+  src = "@org_jetbrains_intellij_deps_languagetool-languagetool-core-6_8_27_http//file",
+  out = "org.jetbrains.intellij.deps.languagetool/languagetool-core-6.8.27.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
@@ -3928,16 +3928,16 @@ copy_file(
 java_library(
   name = "grazie-core-org-jetbrains-intellij-deps-languagetool-languagetool-core",
   exports = [
-    ":org_jetbrains_intellij_deps_languagetool-languagetool-core-6_7_21_http_import",
+    ":org_jetbrains_intellij_deps_languagetool-languagetool-core-6_8_27_http_import",
     ":edu_washington_cs_knowitall-openregex-1_1_1_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "org_jetbrains_intellij_deps_languagetool-languagetool-core-6_7_21_http_import",
-  jar = "@org_jetbrains_intellij_deps_languagetool-languagetool-core-6_7_21_http//file",
-  source_jar = "@org_jetbrains_intellij_deps_languagetool-languagetool-core-6_7_21-sources_http//file"
+  name = "org_jetbrains_intellij_deps_languagetool-languagetool-core-6_8_27_http_import",
+  jar = "@org_jetbrains_intellij_deps_languagetool-languagetool-core-6_8_27_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_languagetool-languagetool-core-6_8_27-sources_http//file"
 )
 
 jvm_import(
@@ -4034,9 +4034,9 @@ jvm_import(
 )
 
 copy_file(
-  name = "org.jetbrains.intellij.deps.languagetool/language-be-6.7.21.jar_copy",
-  src = "@org_jetbrains_intellij_deps_languagetool-language-be-6_7_21_http//file",
-  out = "org.jetbrains.intellij.deps.languagetool/language-be-6.7.21.jar",
+  name = "org.jetbrains.intellij.deps.languagetool/language-be-6.8.27.jar_copy",
+  src = "@org_jetbrains_intellij_deps_languagetool-language-be-6_8_27_http//file",
+  out = "org.jetbrains.intellij.deps.languagetool/language-be-6.8.27.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
@@ -4052,16 +4052,16 @@ copy_file(
 java_library(
   name = "grazie-tests-jetbrains-intellij-deps-languagetool-language-be",
   exports = [
-    ":org_jetbrains_intellij_deps_languagetool-language-be-6_7_21_http_import",
+    ":org_jetbrains_intellij_deps_languagetool-language-be-6_8_27_http_import",
     ":io_github_belarus-linguistics_grammardb_spell_languagetool-1_0_2_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "org_jetbrains_intellij_deps_languagetool-language-be-6_7_21_http_import",
-  jar = "@org_jetbrains_intellij_deps_languagetool-language-be-6_7_21_http//file",
-  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-be-6_7_21-sources_http//file"
+  name = "org_jetbrains_intellij_deps_languagetool-language-be-6_8_27_http_import",
+  jar = "@org_jetbrains_intellij_deps_languagetool-language-be-6_8_27_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-be-6_8_27-sources_http//file"
 )
 
 jvm_import(
@@ -4070,17 +4070,17 @@ jvm_import(
 )
 
 copy_file(
-  name = "org.jetbrains.intellij.deps.languagetool/language-uk-6.7.21.jar_copy",
-  src = "@org_jetbrains_intellij_deps_languagetool-language-uk-6_7_21_http//file",
-  out = "org.jetbrains.intellij.deps.languagetool/language-uk-6.7.21.jar",
+  name = "org.jetbrains.intellij.deps.languagetool/language-uk-6.8.27.jar_copy",
+  src = "@org_jetbrains_intellij_deps_languagetool-language-uk-6_8_27_http//file",
+  out = "org.jetbrains.intellij.deps.languagetool/language-uk-6.8.27.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "ua.net.nlp/morfologik-ukrainian-lt-6.7.1.jar_copy",
-  src = "@ua_net_nlp-morfologik-ukrainian-lt-6_7_1_http//file",
-  out = "ua.net.nlp/morfologik-ukrainian-lt-6.7.1.jar",
+  name = "ua.net.nlp/morfologik-ukrainian-lt-6.8.0.jar_copy",
+  src = "@ua_net_nlp-morfologik-ukrainian-lt-6_8_0_http//file",
+  out = "ua.net.nlp/morfologik-ukrainian-lt-6.8.0.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
@@ -4088,27 +4088,27 @@ copy_file(
 java_library(
   name = "grazie-tests-jetbrains-intellij-deps-languagetool-language-uk",
   exports = [
-    ":org_jetbrains_intellij_deps_languagetool-language-uk-6_7_21_http_import",
-    ":ua_net_nlp-morfologik-ukrainian-lt-6_7_1_http_import",
+    ":org_jetbrains_intellij_deps_languagetool-language-uk-6_8_27_http_import",
+    ":ua_net_nlp-morfologik-ukrainian-lt-6_8_0_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "org_jetbrains_intellij_deps_languagetool-language-uk-6_7_21_http_import",
-  jar = "@org_jetbrains_intellij_deps_languagetool-language-uk-6_7_21_http//file",
-  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-uk-6_7_21-sources_http//file"
+  name = "org_jetbrains_intellij_deps_languagetool-language-uk-6_8_27_http_import",
+  jar = "@org_jetbrains_intellij_deps_languagetool-language-uk-6_8_27_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-uk-6_8_27-sources_http//file"
 )
 
 jvm_import(
-  name = "ua_net_nlp-morfologik-ukrainian-lt-6_7_1_http_import",
-  jar = "@ua_net_nlp-morfologik-ukrainian-lt-6_7_1_http//file"
+  name = "ua_net_nlp-morfologik-ukrainian-lt-6_8_0_http_import",
+  jar = "@ua_net_nlp-morfologik-ukrainian-lt-6_8_0_http//file"
 )
 
 copy_file(
-  name = "org.jetbrains.intellij.deps.languagetool/language-de-6.7.21.jar_copy",
-  src = "@org_jetbrains_intellij_deps_languagetool-language-de-6_7_21_http//file",
-  out = "org.jetbrains.intellij.deps.languagetool/language-de-6.7.21.jar",
+  name = "org.jetbrains.intellij.deps.languagetool/language-de-6.8.27.jar_copy",
+  src = "@org_jetbrains_intellij_deps_languagetool-language-de-6_8_27_http//file",
+  out = "org.jetbrains.intellij.deps.languagetool/language-de-6.8.27.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
@@ -4132,7 +4132,7 @@ copy_file(
 java_library(
   name = "grazie-tests-org-jetbrains-intellij-deps-languagetool-language-de",
   exports = [
-    ":org_jetbrains_intellij_deps_languagetool-language-de-6_7_21_http_import",
+    ":org_jetbrains_intellij_deps_languagetool-language-de-6_8_27_http_import",
     ":de_danielnaber-german-pos-dict-1_2_4_http_import",
     ":de_danielnaber-jwordsplitter-4_7_http_import",
   ],
@@ -4140,9 +4140,9 @@ java_library(
 )
 
 jvm_import(
-  name = "org_jetbrains_intellij_deps_languagetool-language-de-6_7_21_http_import",
-  jar = "@org_jetbrains_intellij_deps_languagetool-language-de-6_7_21_http//file",
-  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-de-6_7_21-sources_http//file"
+  name = "org_jetbrains_intellij_deps_languagetool-language-de-6_8_27_http_import",
+  jar = "@org_jetbrains_intellij_deps_languagetool-language-de-6_8_27_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-de-6_8_27-sources_http//file"
 )
 
 jvm_import(
@@ -4157,54 +4157,54 @@ jvm_import(
 )
 
 copy_file(
-  name = "org.jetbrains.intellij.deps.languagetool/language-it-6.7.21.jar_copy",
-  src = "@org_jetbrains_intellij_deps_languagetool-language-it-6_7_21_http//file",
-  out = "org.jetbrains.intellij.deps.languagetool/language-it-6.7.21.jar",
+  name = "org.jetbrains.intellij.deps.languagetool/language-it-6.8.27.jar_copy",
+  src = "@org_jetbrains_intellij_deps_languagetool-language-it-6_8_27_http//file",
+  out = "org.jetbrains.intellij.deps.languagetool/language-it-6.8.27.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "grazie-tests-org-jetbrains-intellij-deps-languagetool-language-it",
-  jar = "@org_jetbrains_intellij_deps_languagetool-language-it-6_7_21_http//file",
-  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-it-6_7_21-sources_http//file",
+  jar = "@org_jetbrains_intellij_deps_languagetool-language-it-6_8_27_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-it-6_8_27-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "org.jetbrains.intellij.deps.languagetool/language-pt-6.7.21.jar_copy",
-  src = "@org_jetbrains_intellij_deps_languagetool-language-pt-6_7_21_http//file",
-  out = "org.jetbrains.intellij.deps.languagetool/language-pt-6.7.21.jar",
+  name = "org.jetbrains.intellij.deps.languagetool/language-pt-6.8.27.jar_copy",
+  src = "@org_jetbrains_intellij_deps_languagetool-language-pt-6_8_27_http//file",
+  out = "org.jetbrains.intellij.deps.languagetool/language-pt-6.8.27.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "grazie-tests-org-jetbrains-intellij-deps-languagetool-language-pt",
-  jar = "@org_jetbrains_intellij_deps_languagetool-language-pt-6_7_21_http//file",
-  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-pt-6_7_21-sources_http//file",
+  jar = "@org_jetbrains_intellij_deps_languagetool-language-pt-6_8_27_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-pt-6_8_27-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "org.jetbrains.intellij.deps.languagetool/language-ru-6.7.21.jar_copy",
-  src = "@org_jetbrains_intellij_deps_languagetool-language-ru-6_7_21_http//file",
-  out = "org.jetbrains.intellij.deps.languagetool/language-ru-6.7.21.jar",
+  name = "org.jetbrains.intellij.deps.languagetool/language-ru-6.8.27.jar_copy",
+  src = "@org_jetbrains_intellij_deps_languagetool-language-ru-6_8_27_http//file",
+  out = "org.jetbrains.intellij.deps.languagetool/language-ru-6.8.27.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "grazie-tests-org-jetbrains-intellij-deps-languagetool-language-ru",
-  jar = "@org_jetbrains_intellij_deps_languagetool-language-ru-6_7_21_http//file",
-  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-ru-6_7_21-sources_http//file",
+  jar = "@org_jetbrains_intellij_deps_languagetool-language-ru-6_8_27_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-ru-6_8_27-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "org.jetbrains.intellij.deps.languagetool/language-zh-6.7.21.jar_copy",
-  src = "@org_jetbrains_intellij_deps_languagetool-language-zh-6_7_21_http//file",
-  out = "org.jetbrains.intellij.deps.languagetool/language-zh-6.7.21.jar",
+  name = "org.jetbrains.intellij.deps.languagetool/language-zh-6.8.27.jar_copy",
+  src = "@org_jetbrains_intellij_deps_languagetool-language-zh-6_8_27_http//file",
+  out = "org.jetbrains.intellij.deps.languagetool/language-zh-6.8.27.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
@@ -4220,16 +4220,16 @@ copy_file(
 java_library(
   name = "grazie-tests-org-jetbrains-intellij-deps-languagetool-language-zh",
   exports = [
-    ":org_jetbrains_intellij_deps_languagetool-language-zh-6_7_21_http_import",
+    ":org_jetbrains_intellij_deps_languagetool-language-zh-6_8_27_http_import",
     ":com_hankcs-hanlp-portable-1_8_2_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "org_jetbrains_intellij_deps_languagetool-language-zh-6_7_21_http_import",
-  jar = "@org_jetbrains_intellij_deps_languagetool-language-zh-6_7_21_http//file",
-  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-zh-6_7_21-sources_http//file"
+  name = "org_jetbrains_intellij_deps_languagetool-language-zh-6_8_27_http_import",
+  jar = "@org_jetbrains_intellij_deps_languagetool-language-zh-6_8_27_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-zh-6_8_27-sources_http//file"
 )
 
 jvm_import(
@@ -4241,7 +4241,7 @@ jvm_import(
 java_library(
   name = "grazie-tests-org-jetbrains-intellij-deps-languagetool-languagetool-core",
   exports = [
-    ":org_jetbrains_intellij_deps_languagetool-languagetool-core-6_7_21_http_import",
+    ":org_jetbrains_intellij_deps_languagetool-languagetool-core-6_8_27_http_import",
     ":edu_washington_cs_knowitall-openregex-1_1_1_http_import",
   ],
   visibility = ["//visibility:public"]
@@ -4494,17 +4494,17 @@ copy_file(
 )
 
 copy_file(
-  name = "com.google.guava/guava-33.3.1-jre.jar_copy",
-  src = "@com_google_guava-guava-33_3_1-jre_http//file",
-  out = "com.google.guava/guava-33.3.1-jre.jar",
+  name = "com.google.guava/guava-33.5.0-jre.jar_copy",
+  src = "@com_google_guava-guava-33_5_0-jre_http//file",
+  out = "com.google.guava/guava-33.5.0-jre.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "com.google.guava/failureaccess-1.0.2.jar_copy",
-  src = "@com_google_guava-failureaccess-1_0_2_http//file",
-  out = "com.google.guava/failureaccess-1.0.2.jar",
+  name = "com.google.guava/failureaccess-1.0.3.jar_copy",
+  src = "@com_google_guava-failureaccess-1_0_3_http//file",
+  out = "com.google.guava/failureaccess-1.0.3.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
@@ -4526,9 +4526,9 @@ copy_file(
 )
 
 copy_file(
-  name = "org.checkerframework/checker-qual-3.43.0.jar_copy",
-  src = "@org_checkerframework-checker-qual-3_43_0_http//file",
-  out = "org.checkerframework/checker-qual-3.43.0.jar",
+  name = "org.jspecify/jspecify-1.0.0.jar_copy",
+  src = "@org_jspecify-jspecify-1_0_0_http//file",
+  out = "org.jspecify/jspecify-1.0.0.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
@@ -4542,17 +4542,17 @@ copy_file(
 )
 
 copy_file(
-  name = "com.google.errorprone/error_prone_annotations-2.28.0.jar_copy",
-  src = "@com_google_errorprone-error_prone_annotations-2_28_0_http//file",
-  out = "com.google.errorprone/error_prone_annotations-2.28.0.jar",
+  name = "com.google.errorprone/error_prone_annotations-2.41.0.jar_copy",
+  src = "@com_google_errorprone-error_prone_annotations-2_41_0_http//file",
+  out = "com.google.errorprone/error_prone_annotations-2.41.0.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "com.google.j2objc/j2objc-annotations-3.0.0.jar_copy",
-  src = "@com_google_j2objc-j2objc-annotations-3_0_0_http//file",
-  out = "com.google.j2objc/j2objc-annotations-3.0.0.jar",
+  name = "com.google.j2objc/j2objc-annotations-3.1.jar_copy",
+  src = "@com_google_j2objc-j2objc-annotations-3_1_http//file",
+  out = "com.google.j2objc/j2objc-annotations-3.1.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
@@ -5040,7 +5040,7 @@ copy_file(
 java_library(
   name = "grazie-tests-pro-jetbrains-intellij-deps-languagetool-core",
   exports = [
-    ":org_jetbrains_intellij_deps_languagetool-languagetool-core-6_7_21_http_import",
+    ":org_jetbrains_intellij_deps_languagetool-languagetool-core-6_8_27_http_import",
     ":com_carrotsearch-hppc-0_8_2_http_import",
     ":com_fasterxml_jackson_core-jackson-databind-2_18_0_http_import",
     ":com_fasterxml_jackson_core-jackson-annotations-2_18_0_http_import",
@@ -5048,14 +5048,14 @@ java_library(
     ":com_gitlab_dumonts-hunspell-2_1_2_http_import",
     ":net_java_dev_jna-jna-platform-5_12_1_http_import",
     ":net_java_dev_jna-jna-5_12_1_http_import",
-    ":com_google_guava-guava-33_3_1-jre_http_import",
-    ":com_google_guava-failureaccess-1_0_2_http_import",
+    ":com_google_guava-guava-33_5_0-jre_http_import",
+    ":com_google_guava-failureaccess-1_0_3_http_import",
     ":com_google_guava-listenablefuture-9999_0-empty-to-avoid-conflict-with-guava_http_import",
     ":com_google_code_findbugs-jsr305-3_0_2_http_import",
-    ":org_checkerframework-checker-qual-3_43_0_http_import",
+    ":org_jspecify-jspecify-1_0_0_http_import",
     ":org_codehaus_mojo-animal-sniffer-annotations-1_24_http_import",
-    ":com_google_errorprone-error_prone_annotations-2_28_0_http_import",
-    ":com_google_j2objc-j2objc-annotations-3_0_0_http_import",
+    ":com_google_errorprone-error_prone_annotations-2_41_0_http_import",
+    ":com_google_j2objc-j2objc-annotations-3_1_http_import",
     ":com_google_protobuf-protobuf-java-3_25_8_http_import",
     ":com_hankcs-aho-corasick-double-array-trie-1_2_2_http_import",
     ":com_optimaize_languagedetector-language-detector-0_6_http_import",
@@ -5172,15 +5172,15 @@ jvm_import(
 )
 
 jvm_import(
-  name = "com_google_guava-guava-33_3_1-jre_http_import",
-  jar = "@com_google_guava-guava-33_3_1-jre_http//file",
-  source_jar = "@com_google_guava-guava-33_3_1-jre-sources_http//file"
+  name = "com_google_guava-guava-33_5_0-jre_http_import",
+  jar = "@com_google_guava-guava-33_5_0-jre_http//file",
+  source_jar = "@com_google_guava-guava-33_5_0-jre-sources_http//file"
 )
 
 jvm_import(
-  name = "com_google_guava-failureaccess-1_0_2_http_import",
-  jar = "@com_google_guava-failureaccess-1_0_2_http//file",
-  source_jar = "@com_google_guava-failureaccess-1_0_2-sources_http//file"
+  name = "com_google_guava-failureaccess-1_0_3_http_import",
+  jar = "@com_google_guava-failureaccess-1_0_3_http//file",
+  source_jar = "@com_google_guava-failureaccess-1_0_3-sources_http//file"
 )
 
 jvm_import(
@@ -5195,9 +5195,9 @@ jvm_import(
 )
 
 jvm_import(
-  name = "org_checkerframework-checker-qual-3_43_0_http_import",
-  jar = "@org_checkerframework-checker-qual-3_43_0_http//file",
-  source_jar = "@org_checkerframework-checker-qual-3_43_0-sources_http//file"
+  name = "org_jspecify-jspecify-1_0_0_http_import",
+  jar = "@org_jspecify-jspecify-1_0_0_http//file",
+  source_jar = "@org_jspecify-jspecify-1_0_0-sources_http//file"
 )
 
 jvm_import(
@@ -5207,15 +5207,15 @@ jvm_import(
 )
 
 jvm_import(
-  name = "com_google_errorprone-error_prone_annotations-2_28_0_http_import",
-  jar = "@com_google_errorprone-error_prone_annotations-2_28_0_http//file",
-  source_jar = "@com_google_errorprone-error_prone_annotations-2_28_0-sources_http//file"
+  name = "com_google_errorprone-error_prone_annotations-2_41_0_http_import",
+  jar = "@com_google_errorprone-error_prone_annotations-2_41_0_http//file",
+  source_jar = "@com_google_errorprone-error_prone_annotations-2_41_0-sources_http//file"
 )
 
 jvm_import(
-  name = "com_google_j2objc-j2objc-annotations-3_0_0_http_import",
-  jar = "@com_google_j2objc-j2objc-annotations-3_0_0_http//file",
-  source_jar = "@com_google_j2objc-j2objc-annotations-3_0_0-sources_http//file"
+  name = "com_google_j2objc-j2objc-annotations-3_1_http_import",
+  jar = "@com_google_j2objc-j2objc-annotations-3_1_http//file",
+  source_jar = "@com_google_j2objc-j2objc-annotations-3_1-sources_http//file"
 )
 
 jvm_import(
@@ -5629,7 +5629,7 @@ jvm_import(
 java_library(
   name = "grazie-tests-pro-jetbrains-intellij-deps-languagetool-language-de",
   exports = [
-    ":org_jetbrains_intellij_deps_languagetool-language-de-6_7_21_http_import",
+    ":org_jetbrains_intellij_deps_languagetool-language-de-6_8_27_http_import",
     ":de_danielnaber-german-pos-dict-1_2_4_http_import",
     ":de_danielnaber-jwordsplitter-4_7_http_import",
     ":edu_washington_cs_knowitall-openregex-1_1_1_http_import",
@@ -5639,9 +5639,9 @@ java_library(
 )
 
 copy_file(
-  name = "org.jetbrains.intellij.deps.languagetool/language-el-6.7.21.jar_copy",
-  src = "@org_jetbrains_intellij_deps_languagetool-language-el-6_7_21_http//file",
-  out = "org.jetbrains.intellij.deps.languagetool/language-el-6.7.21.jar",
+  name = "org.jetbrains.intellij.deps.languagetool/language-el-6.8.27.jar_copy",
+  src = "@org_jetbrains_intellij_deps_languagetool-language-el-6_8_27_http//file",
+  out = "org.jetbrains.intellij.deps.languagetool/language-el-6.8.27.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
@@ -5657,16 +5657,16 @@ copy_file(
 java_library(
   name = "grazie-tests-pro-jetbrains-intellij-deps-languagetool-language-el",
   exports = [
-    ":org_jetbrains_intellij_deps_languagetool-language-el-6_7_21_http_import",
+    ":org_jetbrains_intellij_deps_languagetool-language-el-6_8_27_http_import",
     ":org_ioperm-morphology-el-1_0_0_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "org_jetbrains_intellij_deps_languagetool-language-el-6_7_21_http_import",
-  jar = "@org_jetbrains_intellij_deps_languagetool-language-el-6_7_21_http//file",
-  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-el-6_7_21-sources_http//file"
+  name = "org_jetbrains_intellij_deps_languagetool-language-el-6_8_27_http_import",
+  jar = "@org_jetbrains_intellij_deps_languagetool-language-el-6_8_27_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-el-6_8_27-sources_http//file"
 )
 
 jvm_import(
@@ -5678,23 +5678,23 @@ jvm_import(
 java_library(
   name = "grazie-tests-pro-jetbrains-intellij-deps-languagetool-language-ru",
   exports = [
-    ":org_jetbrains_intellij_deps_languagetool-language-ru-6_7_21_http_import",
+    ":org_jetbrains_intellij_deps_languagetool-language-ru-6_8_27_http_import",
     ":edu_washington_cs_knowitall-openregex-1_1_1_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "org_jetbrains_intellij_deps_languagetool-language-ru-6_7_21_http_import",
-  jar = "@org_jetbrains_intellij_deps_languagetool-language-ru-6_7_21_http//file",
-  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-ru-6_7_21-sources_http//file"
+  name = "org_jetbrains_intellij_deps_languagetool-language-ru-6_8_27_http_import",
+  jar = "@org_jetbrains_intellij_deps_languagetool-language-ru-6_8_27_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-ru-6_8_27-sources_http//file"
 )
 
 java_library(
   name = "grazie-tests-pro-jetbrains-intellij-deps-languagetool-language-uk",
   exports = [
-    ":org_jetbrains_intellij_deps_languagetool-language-uk-6_7_21_http_import",
-    ":ua_net_nlp-morfologik-ukrainian-lt-6_7_1_http_import",
+    ":org_jetbrains_intellij_deps_languagetool-language-uk-6_8_27_http_import",
+    ":ua_net_nlp-morfologik-ukrainian-lt-6_8_0_http_import",
   ],
   visibility = ["//visibility:public"]
 )
@@ -5932,22 +5932,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-copy_file(
-  name = "com.google.guava/guava-33.5.0-jre.jar_copy",
-  src = "@com_google_guava-guava-33_5_0-jre_http//file",
-  out = "com.google.guava/guava-33.5.0-jre.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "com.google.guava/failureaccess-1.0.3.jar_copy",
-  src = "@com_google_guava-failureaccess-1_0_3_http//file",
-  out = "com.google.guava/failureaccess-1.0.3.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
 java_library(
   name = "guava",
   exports = [
@@ -5955,18 +5939,6 @@ java_library(
     ":com_google_guava-failureaccess-1_0_3_http_import",
   ],
   visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "com_google_guava-guava-33_5_0-jre_http_import",
-  jar = "@com_google_guava-guava-33_5_0-jre_http//file",
-  source_jar = "@com_google_guava-guava-33_5_0-jre-sources_http//file"
-)
-
-jvm_import(
-  name = "com_google_guava-failureaccess-1_0_3_http_import",
-  jar = "@com_google_guava-failureaccess-1_0_3_http//file",
-  source_jar = "@com_google_guava-failureaccess-1_0_3-sources_http//file"
 )
 
 copy_file(
@@ -7708,14 +7680,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-copy_file(
-  name = "org.jspecify/jspecify-1.0.0.jar_copy",
-  src = "@org_jspecify-jspecify-1_0_0_http//file",
-  out = "org.jspecify/jspecify-1.0.0.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
 jvm_import(
   name = "jspecify",
   jar = "@org_jspecify-jspecify-1_0_0_http//file",
@@ -8019,12 +7983,6 @@ jvm_import(
   name = "org_junit_platform-junit-platform-commons-6_0_0_http_import",
   jar = "@org_junit_platform-junit-platform-commons-6_0_0_http//file",
   source_jar = "@org_junit_platform-junit-platform-commons-6_0_0-sources_http//file"
-)
-
-jvm_import(
-  name = "org_jspecify-jspecify-1_0_0_http_import",
-  jar = "@org_jspecify-jspecify-1_0_0_http//file",
-  source_jar = "@org_jspecify-jspecify-1_0_0-sources_http//file"
 )
 
 java_library(

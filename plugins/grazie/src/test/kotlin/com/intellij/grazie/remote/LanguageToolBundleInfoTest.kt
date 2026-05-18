@@ -35,7 +35,7 @@ class LanguageToolBundleInfoTest : BundleInfoTestCase() {
 
   @Test
   fun `verify hardcoded checksums are valid`() {
-    assertChecksums("In case language tool was updated, please update checksums in RemoteLangDescriptor.kt") {
+    assertChecksums("In case language tool was updated, please update checksums in LanguageToolDescriptor.kt") {
       it.ltRemote
     }
   }

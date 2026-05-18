@@ -728,6 +728,7 @@ Johns Hopkins University
 Joining sentences with comma
 Joining words or separating words with a hyphen or space
 Kama Sutra
+Katharina (Katherina) Reiche
 Kellogg's
 Kim Jong-un
 Kin (kind) regards
@@ -1191,6 +1192,7 @@ Wrong phrase: 'in nowadays' (nowadays)
 Wrong phrase: 'today morning' (this morning)
 Wrong phrase: 'today night' (tonight)
 Wrong phrase: 'yesterday night' (last night)
+Wrong phrase: I have x years old (I am x years old)
 Wrong phrase: have x years old (be x years old)
 Wrong preposition: 'be fond to' (be fond of)
 Wrong preposition: 'obvious for' (obvious to)

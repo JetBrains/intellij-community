@@ -362,10 +362,10 @@
     </orderEntry>
     <orderEntry type="module-library" exported="">
       <library name="org.jetbrains.intellij.deps.languagetool:languagetool-core" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.languagetool:languagetool-core:6.7.21">
+        <properties maven-id="org.jetbrains.intellij.deps.languagetool:languagetool-core:6.8.27">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/languagetool-core/6.7.21/languagetool-core-6.7.21.jar">
-              <sha256sum>cca73b390f94078fc7a498ced615ce24fab95eef39cb5d676f63d92a355749fe</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/languagetool-core/6.8.27/languagetool-core-6.8.27.jar">
+              <sha256sum>be8f6f4295da4601a3855f950f223218ca9cbaa7c95525def5d0851503df1a53</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1.jar">
               <sha256sum>33021c9cca70c6292d53ff7dac5d1832d422e986aba52ec998532a5f47f921f8</sha256sum>
@@ -415,22 +415,22 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/languagetool-core/6.7.21/languagetool-core-6.7.21.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/languagetool-core/6.8.27/languagetool-core-6.8.27.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/languagetool-core/6.7.21/languagetool-core-6.7.21-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/languagetool-core/6.8.27/languagetool-core-6.8.27-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
       <library name="org.jetbrains.intellij.deps.languagetool:language-en" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.languagetool:language-en:6.7.21">
+        <properties maven-id="org.jetbrains.intellij.deps.languagetool:language-en:6.8.27">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-en/6.7.21/language-en-6.7.21.jar">
-              <sha256sum>227c623a7f7b4bafc34184f9320b3c1a1d373bb3329c2148c9dcb2f81ef134b2</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-en/6.8.27/language-en-6.8.27.jar">
+              <sha256sum>44a80fe4bd3869c9341c7356ccfcf98731f8dbcb3b310203982562bc8898869a</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/org/languagetool/english-pos-dict/0.6/english-pos-dict-0.6.jar">
               <sha256sum>2a3e96b49854e5275f8eb7a1bb5b3b85b82f687fed272f3043882ccc0b1634b1</sha256sum>
@@ -445,12 +445,12 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-en/6.7.21/language-en-6.7.21.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-en/6.8.27/language-en-6.8.27.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/english-pos-dict/0.6/english-pos-dict-0.6.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-en/6.7.21/language-en-6.7.21-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-en/6.8.27/language-en-6.8.27-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

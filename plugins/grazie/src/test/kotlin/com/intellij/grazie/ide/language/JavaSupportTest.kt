@@ -108,42 +108,45 @@ class JavaSupportTest : GrazieTestBase() {
   }
 
   fun `test multiline compounds`() {
-    enableProofreadingFor(setOf(Lang.GERMANY_GERMAN))
     doTest(
       """
         public class Main {
           /**
-           * I use {@code awaitility} to poll any eve<caret>ntually-      
-           * consistent results for a short period.
+           * It is a very good number: twent<caret>y-
+           * one.
            */
-          int consistency;
+          int number;
         }
       """.trimIndent(),
       """
         public class Main {
           /**
-           * I use {@code awaitility} to poll any eventually-consistent results for a short period.
+           * It is a very good number: twenty-one.
            */
-          int consistency;
+          int number;
         }
       """.trimIndent(),
-      "eventually-consistent"
+      "twenty-one"
     )
     doTest(
       """
         public class Main {
-          // Du bestellst ein Paket bei einem Online         
-          // -Sh<caret>op. Direkt nach der Bestellung steht auf der Website.
-          double onlineShop;
+          /**
+           * It is a very good number: twenty
+           * -o<caret>ne.
+           */
+          int number;
         }
       """.trimIndent(),
       """
         public class Main {
-          // Du bestellst ein Paket bei einem Online-Shop. Direkt nach der Bestellung steht auf der Website.
-          double onlineShop;
+          /**
+           * It is a very good number: twenty-one.
+           */
+          int number;
         }
       """.trimIndent(),
-      "Online-Shop"
+      "twenty-one"
     )
   }
 
