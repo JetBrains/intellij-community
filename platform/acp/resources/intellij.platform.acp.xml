@@ -2,9 +2,11 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService
         serviceInterface="com.intellij.platform.acp.AcpAgentsCatalog"
-        serviceImplementation="com.intellij.platform.acp.DefaultAcpAgentsCatalog"/>
+        serviceImplementation="com.intellij.platform.acp.DefaultAcpAgentsCatalog"
+        open="true"/>
     <projectService
         serviceInterface="com.intellij.platform.acp.AcpProcessLauncher"
-        serviceImplementation="com.intellij.platform.acp.DefaultAcpProcessLauncher"/>
+        serviceImplementation="com.intellij.platform.acp.DefaultAcpProcessLauncher"
+        open="true"/>
   </extensions>
 </idea-plugin>
