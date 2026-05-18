@@ -35,6 +35,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.UpdateScaleHelper;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -70,6 +71,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
   private JPanel myButtonPane;
   private Boolean hasExtraButtons = null; // state initialized in updateExtraButtons
   private boolean reserveSpaceForExtraButtons = true;
+  private boolean showingTooltipForExtraButton = false;
 
   private JComponent myMainPane;
   protected JComponent myButtonSeparator;
@@ -484,6 +486,24 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     this.reserveSpaceForExtraButtons = reserveSpaceForExtraButtons;
   }
 
+  /**
+   * Checks if the current tooltip comes from an extra inline action button.
+   * <p>
+   *   Designed to be used in {@link #customizeComponent(JList, Object, int, boolean, boolean)} for tooltip customization.
+   *   Sometimes it's needed to override the tooltip set by a base class, but only if that's the "main" tooltip.
+   *   If the cursor is over an inline action button, then this function will return {@code true}
+   *   and the customization logic should leave the tooltip alone (or apply some special logic).
+   * </p>
+   * <p>
+   *   Note that the tooltip set by an inline button can be {@code null} if the inline button doesn't have a tooltip.
+   * </p>
+   * @return {@code true} iff the tooltip currently set (possibly {@code null}) comes from an extra button
+   */
+  @ApiStatus.Experimental
+  protected boolean isShowingTooltipForExtraButton() {
+    return showingTooltipForExtraButton;
+  }
+
   private boolean updateExtraButtons(JList<? extends E> list, E value, ListPopupStep<Object> step, boolean isSelected, boolean hasNextIcon) {
     GridBag gb = new GridBag().setDefaultFill(GridBagConstraints.BOTH)
       .setDefaultAnchor(GridBagConstraints.CENTER)
@@ -503,6 +523,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
         value, isSelected, !isSelected || activeButtonIndex == null ? -1 : activeButtonIndex);
     }
 
+    showingTooltipForExtraButton = false;
     if (!extraButtons.isEmpty()) {
       myButtonPane.removeAll();
       myButtonSeparator.setVisible(true);
@@ -515,6 +536,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       if (activeButtonIndex != null && activeButtonIndex < extraButtons.size()) {
         String text = myInlineActionsSupport.getToolTipText(value, activeButtonIndex);
         myRendererComponent.setToolTipText(text);
+        showingTooltipForExtraButton = true;
       }
       hasExtraButtons = true;
     }

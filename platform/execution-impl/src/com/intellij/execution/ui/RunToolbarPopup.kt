@@ -428,7 +428,9 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup,
       mainPanelLayout.invalidateLayout(mainPanel) // clear the cached preferred size
       super.customizeComponent(list, value, isSelected)
       if (value?.getClientProperty(NEEDS_RUN_CONFIG_NAME_TRIMMING) == true) {
-        myRendererComponent.setToolTipText(null) // we override the tool tip using getToolTipOverride()
+        if (!isShowingTooltipForExtraButton) {
+          myRendererComponent.setToolTipText(null) // we override the tool tip using getToolTipOverride()
+        }
         ClientProperty.put(myTextLabel, SwingTextTrimmer.KEY, SwingTextTrimmer.createCustomTrimmer(object : SwingTextTrimmerStrategy {
           override fun trim(text: @NlsActions.ActionText String, metrics: FontMetrics, availableWidth: Int): String {
             return trimRunConfigurationName(text, availableWidth, GraphicsUtil.fontMetrics(metrics.font))
@@ -439,6 +441,7 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup,
     }
 
     override fun getToolTipOverride(): @NlsContexts.Tooltip String? {
+      if (isShowingTooltipForExtraButton) return null
       // A hack: this triggers com.intellij.ide.ui.laf.darcula.ui.DarculaLabelUI.layoutCL and updates the trimmer's status.
       // The width and height we have to trust here because we have nothing else.
       myTextLabel.getBaseline(myTextLabel.width, myTextLabel.height)
