@@ -564,13 +564,12 @@ public final class FileTypeDetectionService {
     int n = stream.read(buffer, 0, length);
     if (n <= 0) {
       // maybe locked because someone else is writing to it
-      // repeat inside read action to guarantee all writes are finished
       if (toLog()) {
-        log("F: readSafely(): inputStream.read(" +length+ ") returned "+n+"; retrying with read action. stream="+ streamInfo(stream));
+        log("F: readSafely(): inputStream.read(" +length+ ") returned "+n+"; retrying. stream="+ streamInfo(stream));
       }
       n = stream.read(buffer, 0, length);
       if (toLog()) {
-        log("F: readSafely(): under read action inputStream.read(" +length+ ") returned "+n+"; stream="+ streamInfo(stream));
+        log("F: readSafely(): 2nd inputStream.read(" +length+ ") returned "+n+"; stream="+ streamInfo(stream));
       }
     }
     return n;
