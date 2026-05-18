@@ -291,7 +291,7 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
       return result
     }
 
-    override fun getPluginQuickFixes(fixes: List<LocalQuickFix>, reference: PsiReference) {
+    override fun getPluginQuickFixes(fixes: MutableList<LocalQuickFix>, reference: PsiReference) {
       for (provider in PyUnresolvedReferenceQuickFixProvider.EP_NAME.extensionList) {
         provider.registerQuickFixes(reference, fixes)
       }
