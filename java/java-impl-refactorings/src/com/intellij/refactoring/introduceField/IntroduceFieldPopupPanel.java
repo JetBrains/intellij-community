@@ -165,7 +165,7 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
       ComboBox<JavaIntroduceFieldService.InitializationPlace> initializersCombo = new ComboBox<>(myInitialisersPlaceModel);
       KeyboardComboSwitcher.setupActions(initializersCombo, myParentClass.getProject());
       initLabel.setLabelFor(initializersCombo);
-      initializersCombo.setRenderer(BuilderKt.textListCellRenderer("", place -> JavaIntroduceFieldService.InitializationPlace.getPresentableText(place)));
+      initializersCombo.setRenderer(BuilderKt.textListCellRenderer("", place -> JavaIntroduceFieldService.InitializationPlace.getShortPresentableText(place)));
       initializersCombo.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {

@@ -110,6 +110,19 @@ public abstract class JavaIntroduceFieldService {
         case null -> null;
       };
     }
+
+    /** @return the localized short display name of the place, or {@code null} if {@code place} is {@code null}. */
+    @Nls
+    @Nullable
+    public static String getShortPresentableText(@Nullable InitializationPlace place) {
+      return switch (place) {
+        case IN_CURRENT_METHOD -> JavaBundle.message("introduce.field.initialization.place.current.method.short");
+        case IN_FIELD_DECLARATION -> JavaBundle.message("introduce.field.initialization.place.field.declaration.short");
+        case IN_CONSTRUCTOR -> JavaBundle.message("introduce.field.initialization.place.constructor.short");
+        case IN_SETUP_METHOD -> JavaBundle.message("introduce.field.initialization.place.setup.method.short");
+        case null -> null;
+      };
+    }
   }
 
   /**
