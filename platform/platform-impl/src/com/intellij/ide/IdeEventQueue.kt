@@ -6,6 +6,7 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.currentOrNull
 import com.intellij.codeWithMe.ClientId.Companion.withExplicitClientId
 import com.intellij.concurrency.ContextAwareRunnable
+import com.intellij.concurrency.ExternalIntelliJContextElement
 import com.intellij.concurrency.captureThreadContext
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
@@ -118,6 +119,8 @@ import javax.swing.JTree
 import javax.swing.MenuSelectionManager
 import javax.swing.SwingUtilities
 import javax.swing.plaf.basic.ComboPopup
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.cancellation.CancellationException
 
 @Suppress("FunctionName")
@@ -751,7 +754,8 @@ class IdeEventQueue private constructor() : EventQueue() {
   }
 
   fun pumpEventsForHierarchy(modalComponent: Component, exitCondition: Future<*>, eventConsumer: Consumer<AWTEvent>) {
-    resetThreadContext {
+    val externalContext = currentThreadContext().fold<CoroutineContext>(EmptyCoroutineContext) { acc, elem -> acc + (elem as? ExternalIntelliJContextElement ?: EmptyCoroutineContext) }
+    installThreadContext(externalContext, true) {
       EDT.assertIsEdt()
       Logs.LOG.debug { "pumpEventsForHierarchy($modalComponent, $exitCondition)" }
 

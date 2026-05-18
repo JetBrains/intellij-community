@@ -7,6 +7,8 @@ import com.intellij.AbstractBundle
 import com.intellij.BundleBase
 import com.intellij.DynamicBundle
 import com.intellij.codeWithMe.ClientId
+import com.intellij.concurrency.ExternalIntelliJContextElement
+import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
@@ -159,6 +161,7 @@ import javax.swing.Icon
 import javax.swing.JLabel
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.resume
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -1218,6 +1221,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       val coroutineContext = continuation.context +
                              ModalityState.current().asContextElement() +
                              ClientId.coroutineContext() +
+                             currentThreadContext().fold<CoroutineContext>(EmptyCoroutineContext) { acc, elem -> acc + (elem as? ExternalIntelliJContextElement ?: EmptyCoroutineContext) } +
                              ActionContextElement.create(actionId, event.place, event.inputEvent, component)
       // todo: remove `ThreadScopeCheckpoint` from here once we migrate all usages to `AnActionEvent#coroutineScope`
       val coroutineContext2 = coroutineContext + ThreadScopeCheckpoint(coroutineContext) // permit `currentThreadCoroutineScope` inside
