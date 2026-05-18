@@ -92,3 +92,4 @@ class JUnit5SystemPropertyTest {
     assertEquals("world-method2", System.getProperty("hello-method"))
   }
 }
+

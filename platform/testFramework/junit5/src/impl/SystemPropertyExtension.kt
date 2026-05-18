@@ -2,7 +2,12 @@
 package com.intellij.testFramework.junit5.impl
 
 import com.intellij.testFramework.junit5.SystemProperty
+import com.intellij.testFramework.junit5.SystemPropertyClassLevel
+import com.intellij.testFramework.junit5.impl.TypedStoreKey.Companion.remove
+import com.intellij.testFramework.junit5.impl.TypedStoreKey.Companion.set
 import org.jetbrains.annotations.TestOnly
+import org.junit.jupiter.api.extension.AfterAllCallback
+import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.InvocationInterceptor
 import org.junit.jupiter.api.extension.ReflectiveInvocationContext
@@ -11,7 +16,29 @@ import java.lang.reflect.Constructor
 import java.lang.reflect.Method
 
 @TestOnly
-internal class SystemPropertyExtension : InvocationInterceptor {
+internal class SystemPropertyExtension : InvocationInterceptor, BeforeAllCallback, AfterAllCallback {
+
+  private data class SystemPropertyValueHolder(val propertyKey: String, val previousValue: String?)
+
+  companion object {
+    private val classLevelPropertiesKey = TypedStoreKey.createKey<List<SystemPropertyValueHolder>>()
+  }
+
+  override fun beforeAll(context: ExtensionContext) {
+    val annotations = AnnotationSupport.findRepeatableAnnotations(context.testClass, SystemPropertyClassLevel::class.java)
+    if (annotations.isNotEmpty()) {
+      context[classLevelPropertiesKey] = annotations.map { annotation ->
+        setPropertyValue(annotation.propertyKey, annotation.propertyValue)
+      }
+    }
+  }
+
+  override fun afterAll(context: ExtensionContext) {
+    val properties = context.remove(classLevelPropertiesKey) ?: return
+    for (property in properties.asReversed()) {
+      resetPropertyValue(property)
+    }
+  }
 
   override fun interceptBeforeAllMethod(
     invocation: InvocationInterceptor.Invocation<Void>,
@@ -76,19 +103,19 @@ internal class SystemPropertyExtension : InvocationInterceptor {
       return invocation.proceed()
     }
     val valuesBefore = annotations.map { annotation ->
-      Pair(annotation, annotation.setPropertyValue())
+      setPropertyValue(annotation.propertyKey, annotation.propertyValue)
     }
     try {
       return invocation.proceed()
     }
     finally {
-      for ((annotation, previousValue) in valuesBefore.asReversed()) {
-        annotation.resetPropertyValue(previousValue)
+      for (property in valuesBefore.asReversed()) {
+        resetPropertyValue(property)
       }
     }
   }
 
-  private fun SystemProperty.setPropertyValue(): String? {
+  private fun setPropertyValue(propertyKey: String, propertyValue: String): SystemPropertyValueHolder {
     val previousValue = System.getProperty(propertyKey)
     if (propertyValue.isEmpty()) {
       System.clearProperty(propertyKey)
@@ -96,15 +123,15 @@ internal class SystemPropertyExtension : InvocationInterceptor {
     else {
       System.setProperty(propertyKey, propertyValue)
     }
-    return previousValue
+    return SystemPropertyValueHolder(propertyKey, previousValue)
   }
 
-  private fun SystemProperty.resetPropertyValue(previousValue: String?) {
-    if (previousValue == null) {
-      System.clearProperty(propertyKey)
+  private fun resetPropertyValue(property: SystemPropertyValueHolder) {
+    if (property.previousValue == null) {
+      System.clearProperty(property.propertyKey)
     }
     else {
-      System.setProperty(propertyKey, previousValue)
+      System.setProperty(property.propertyKey, property.previousValue)
     }
   }
 }

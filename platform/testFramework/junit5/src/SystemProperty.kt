@@ -22,3 +22,16 @@ annotation class SystemProperty(
   val propertyKey: String,
   val propertyValue: String,
 )
+
+/**
+ * Same as [SystemProperty], but sets the property in [org.junit.jupiter.api.extension.BeforeAllCallback]
+ * so it also covers JUnit extensions and fixtures initialized before test methods.
+ */
+@TestOnly
+@Repeatable
+@Target(AnnotationTarget.CLASS)
+@ExtendWith(SystemPropertyExtension::class)
+annotation class SystemPropertyClassLevel(
+  val propertyKey: String,
+  val propertyValue: String,
+)
