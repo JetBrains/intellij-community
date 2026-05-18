@@ -155,7 +155,7 @@ internal class DynamicPluginsSupportImpl(
         classloadersToUnload.forEach { it.state = UNLOAD_IN_PROGRESS } // triggers plugin scope cancellation
         cancelAndJoinPluginScopes(classloadersToUnload)
 
-        application.runWriteAction {
+        edtWriteAction { // cache clearing expects EDT
           for (group in groupsToUnload) {
             for (descriptor in group.sortedDescriptors.asReversed()) {
               deregisterDescriptor(descriptor)
