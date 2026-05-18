@@ -22346,7 +22346,8 @@ function createProjectPathManager({
 }
 
 // proxy-tools/handlers/apply-patch.ts
-import { copyFile, mkdir, rename, rm } from "fs/promises";
+import { Buffer as Buffer2 } from "buffer";
+import { chmod, copyFile, mkdir, readFile, rename, rm, stat, writeFile as writeFile2 } from "fs/promises";
 import path3 from "path";
 
 // proxy-tools/git-utils.ts
@@ -22790,15 +22791,20 @@ function isLineBreakChar(code) {
 // proxy-tools/handlers/apply-patch.ts
 var BEGIN_MARKER = "*** Begin Patch", END_MARKER = "*** End Patch", ADD_PREFIX = "*** Add File: ", UPDATE_PREFIX = "*** Update File: ", DELETE_PREFIX = "*** Delete File: ", MOVE_PREFIX = "*** Move to: ", END_OF_FILE = "*** End of File", DIFF_GIT_PREFIX = "diff --git ", NO_NEWLINE_MARKER = "\\ No newline at end of file", HEREDOC_PREFIXES = /* @__PURE__ */ new Set(["<<EOF", "<<'EOF'", '<<"EOF"']), TRUNCATION_ERROR = "file content truncated while reading", UNIFIED_DIFF_HEADER_REGEX = /^@@+\s*-\d+(?:,\d+)?\s+\+\d+(?:,\d+)?\s*@@+$/;
 async function handleApplyPatchTool(args, projectPath, callUpstreamTool) {
-  let patchText = extractPatchText(args), operations = parsePatch(patchText), touched = 0;
+  let patchText = extractPatchText(args), operations = parsePatch(patchText), writeToDisk = await pathExists(projectPath), writeReports = [], touched = 0;
   for (let op of operations) {
     if (op.type === "add") {
-      let { relative: relative2 } = resolvePathInProject(projectPath, op.path, "path");
-      await callUpstreamTool("create_new_file", {
-        pathInProject: relative2,
-        text: op.content,
-        overwrite: !1
-      }), touched += 1;
+      let { relative: relative2, absolute: absolute2 } = resolvePathInProject(projectPath, op.path, "path");
+      if (writeToDisk) {
+        let bytes = await writeTextFile(absolute2, op.content, !1);
+        writeReports.push({ relative: relative2, bytes });
+      } else
+        await callUpstreamTool("create_new_file", {
+          pathInProject: relative2,
+          text: op.content,
+          overwrite: !1
+        });
+      touched += 1;
       continue;
     }
     let { relative, absolute } = resolvePathInProject(projectPath, op.path, "path");
@@ -22807,35 +22813,151 @@ async function handleApplyPatchTool(args, projectPath, callUpstreamTool) {
       continue;
     }
     if (op.type === "update") {
-      let original = await readFileTextForPatch(relative, absolute, projectPath, callUpstreamTool), updated = op.hunks.length === 0 ? original : applyHunks(original, op.hunks), resolvedTarget = op.moveTo ? resolvePathInProject(projectPath, op.moveTo, "path") : null, moveTarget = resolvedTarget && resolvedTarget.relative !== relative ? resolvedTarget : null;
+      let source = await readFileTextForPatch(relative, absolute, projectPath, writeToDisk, callUpstreamTool), updated = op.hunks.length === 0 ? source.text : applyHunks(source.text, op.hunks), resolvedTarget = op.moveTo ? resolvePathInProject(projectPath, op.moveTo, "path") : null, moveTarget = resolvedTarget && resolvedTarget.relative !== relative ? resolvedTarget : null;
       if (moveTarget)
-        await ensureParentDir(moveTarget.absolute), await runGitMv(relative, moveTarget.relative, projectPath), await callUpstreamTool("create_new_file", {
-          pathInProject: moveTarget.relative,
+        await ensureParentDir(moveTarget.absolute), await runGitMv(relative, moveTarget.relative, projectPath), await writePatchedText({
+          relative: moveTarget.relative,
+          absolute: moveTarget.absolute,
           text: updated,
-          overwrite: !0
+          overwrite: !0,
+          writeToDisk,
+          preferUpstreamWrite: source.preferUpstreamWrite,
+          callUpstreamTool,
+          writeReports
         });
       else
-        await callUpstreamTool("create_new_file", {
-          pathInProject: relative,
+        await writePatchedText({
+          relative,
+          absolute,
           text: updated,
-          overwrite: !0
+          overwrite: !0,
+          writeToDisk,
+          preferUpstreamWrite: source.preferUpstreamWrite,
+          callUpstreamTool,
+          writeReports
         });
       touched += 1;
     }
   }
-  return `Applied patch to ${touched} file${touched === 1 ? "" : "s"}.`;
+  return formatApplyPatchResult(touched, writeReports);
 }
-async function readFileTextForPatch(relativePath, absolutePath, projectPath, callUpstreamTool) {
+async function readFileTextForPatch(relativePath, absolutePath, projectPath, writeToDisk, callUpstreamTool) {
+  if (writeToDisk) {
+    let diskText = await readFile(absolutePath, "utf8"), upstreamText = await readUpstreamDocumentTextIfDifferent(relativePath, diskText, callUpstreamTool);
+    if (upstreamText !== null)
+      return { text: upstreamText, preferUpstreamWrite: !0 };
+    return { text: diskText, preferUpstreamWrite: !1 };
+  }
   let original = await readFileTextExact(relativePath, callUpstreamTool);
   if (!isTruncatedText(original))
-    return original;
+    return { text: original, preferUpstreamWrite: !0 };
   try {
-    return await readFileTextViaSearch(projectPath, relativePath, absolutePath, callUpstreamTool);
+    return {
+      text: await readFileTextViaSearch(projectPath, relativePath, absolutePath, callUpstreamTool),
+      preferUpstreamWrite: !0
+    };
   } catch (error48) {
     if (error48 instanceof Error && error48.message === TRUNCATION_ERROR)
       throw error48;
     throw Error(TRUNCATION_ERROR);
   }
+}
+async function readUpstreamDocumentTextIfDifferent(relativePath, diskText, callUpstreamTool) {
+  try {
+    let upstreamText = await readFileTextExact(relativePath, callUpstreamTool);
+    if (isTruncatedText(upstreamText) || upstreamText === diskText)
+      return null;
+    return upstreamText;
+  } catch {
+    return null;
+  }
+}
+async function writePatchedText(options) {
+  let {
+    relative,
+    absolute,
+    text,
+    overwrite,
+    writeToDisk,
+    preferUpstreamWrite,
+    callUpstreamTool,
+    writeReports
+  } = options;
+  if (preferUpstreamWrite || !writeToDisk) {
+    if (await callUpstreamTool("create_new_file", {
+      pathInProject: relative,
+      text,
+      overwrite
+    }), !writeToDisk)
+      return;
+    let verifiedBytes = await tryVerifyTextFile(absolute, text);
+    if (verifiedBytes !== null) {
+      writeReports.push({ relative, bytes: verifiedBytes });
+      return;
+    }
+  }
+  let bytes = await writeTextFile(absolute, text, overwrite);
+  writeReports.push({ relative, bytes });
+}
+async function pathExists(filePath) {
+  try {
+    return await stat(filePath), !0;
+  } catch (error48) {
+    if (isErrorCode(error48, "ENOENT"))
+      return !1;
+    throw error48;
+  }
+}
+async function writeTextFile(absolutePath, text, overwrite) {
+  if (await ensureParentDir(absolutePath), overwrite)
+    await writeTextFileAtomically(absolutePath, text);
+  else
+    await writeFile2(absolutePath, text, { encoding: "utf8", flag: "wx" });
+  return await verifyTextFile(absolutePath, text);
+}
+async function writeTextFileAtomically(absolutePath, text) {
+  let existingMode = await getFileMode(absolutePath), tempPath = path3.join(path3.dirname(absolutePath), `.${path3.basename(absolutePath)}.ijproxy-${process.pid}-${Date.now()}-${Math.random().toString(16).slice(2)}.tmp`);
+  try {
+    if (await writeFile2(tempPath, text, { encoding: "utf8", flag: "wx" }), existingMode !== null)
+      await chmod(tempPath, existingMode);
+    await rename(tempPath, absolutePath);
+  } catch (error48) {
+    throw await rm(tempPath, { force: !0 }).catch(() => {}), error48;
+  }
+}
+async function getFileMode(absolutePath) {
+  try {
+    return (await stat(absolutePath)).mode;
+  } catch (error48) {
+    if (isErrorCode(error48, "ENOENT"))
+      return null;
+    throw error48;
+  }
+}
+async function tryVerifyTextFile(absolutePath, expectedText) {
+  try {
+    return await verifyTextFile(absolutePath, expectedText);
+  } catch {
+    return null;
+  }
+}
+async function verifyTextFile(absolutePath, expectedText) {
+  let actualText = await readFile(absolutePath, "utf8");
+  if (actualText !== expectedText)
+    throw Error(`Failed to save patched document to disk: ${absolutePath}`);
+  return Buffer2.byteLength(actualText, "utf8");
+}
+function formatApplyPatchResult(touched, writeReports) {
+  let summary = `Applied patch to ${touched} file${touched === 1 ? "" : "s"}.`;
+  if (writeReports.length === 0)
+    return summary;
+  let details = writeReports.map(({ relative, bytes }) => `Wrote ${bytes} bytes to ${relative}.`);
+  return `${summary}
+${details.join(`
+`)}`;
+}
+function isErrorCode(error48, code) {
+  return Boolean(error48 && typeof error48 === "object" && "code" in error48 && error48.code === code);
 }
 async function readFileTextViaSearch(projectPath, relativePath, absolutePath, callUpstreamTool) {
   let { lineMap, maxLineNumber, hasMore, hasTruncatedLine } = await readLinesViaSearch(projectPath, relativePath, absolutePath, SEARCH_FALLBACK_MAX_LINES, callUpstreamTool);

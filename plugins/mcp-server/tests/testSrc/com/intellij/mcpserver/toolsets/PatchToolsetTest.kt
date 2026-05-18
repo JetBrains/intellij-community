@@ -14,6 +14,8 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.nio.file.Files
+import java.nio.file.Path
 
 class PatchToolsetTest : GeneralMcpToolsetTestBase() {
   @Test
@@ -42,6 +44,8 @@ class PatchToolsetTest : GeneralMcpToolsetTestBase() {
       },
       renderNumberedText("alpha\nbeta\n")
     )
+    assertThat(Files.readString(projectFilePath(pathInProject))).isEqualTo("alpha\nbeta\n")
+    Unit
   }
 
   @Test
@@ -71,6 +75,34 @@ class PatchToolsetTest : GeneralMcpToolsetTestBase() {
       },
       renderNumberedText("updated content")
     )
+    assertThat(Files.readString(projectFilePath(pathInProject))).isEqualTo("updated content")
+    Unit
+  }
+
+  @Test
+  fun apply_patch_updates_after_external_disk_change() = runBlocking(Dispatchers.Default) {
+    val pathInProject = "src/Test.java"
+    Files.writeString(projectFilePath(pathInProject), "external content\n")
+
+    val patch = buildPatch(
+      "*** Begin Patch",
+      "*** Update File: $pathInProject",
+      "@@",
+      "-external content",
+      "+updated external",
+      "*** End Patch",
+    )
+
+    testMcpTool(
+      PatchToolset::apply_patch.name,
+      buildJsonObject {
+        put("input", JsonPrimitive(patch))
+      },
+      "Applied patch to 1 file."
+    )
+
+    assertThat(Files.readString(projectFilePath(pathInProject))).isEqualTo("updated external\n")
+    Unit
   }
 
   @Test
@@ -176,6 +208,8 @@ class PatchToolsetTest : GeneralMcpToolsetTestBase() {
       },
       renderNumberedText("updated from unsaved\n")
     )
+    assertThat(Files.readString(projectFilePath(pathInProject))).isEqualTo("updated from unsaved\n")
+    Unit
   }
 
   @Test
@@ -448,6 +482,10 @@ class PatchToolsetTest : GeneralMcpToolsetTestBase() {
   private fun renderNumberedText(text: String): String {
     val lines = text.replace("\r\n", "\n").replace("\r", "\n").split('\n')
     return lines.mapIndexed { index, line -> "L${index + 1}: $line" }.joinToString("\n")
+  }
+
+  private fun projectFilePath(pathInProject: String): Path {
+    return Path.of(project.basePath ?: error("Project base path is not available")).resolve(pathInProject)
   }
 
   private fun buildPatch(vararg lines: String): String {

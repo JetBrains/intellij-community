@@ -19,7 +19,8 @@ import com.intellij.mcpserver.util.relativizeIfPossible
 import com.intellij.mcpserver.util.renderDirectoryTree
 import com.intellij.mcpserver.util.resolveInProject
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.backgroundWriteAction
+import com.intellij.openapi.application.readAndEdtWriteAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
@@ -145,22 +146,35 @@ class FileToolset : McpToolset {
     val project = currentCoroutineContext().project
 
     val path = project.resolveInProject(pathInProject)
-    try {
-      writeAction {
+    val changedDocument = try {
+      val createdFile = backgroundWriteAction {
         val parent = VfsUtil.createDirectories(path.parent.pathString)
         val existing = parent.findChild(path.name)
         if (existing != null && !overwrite) mcpFail("File already exists: $pathInProject. Specify 'overwrite=true' to overwrite it")
-        val createdFile = parent.findOrCreateFile(path.name)
+        parent.findOrCreateFile(path.name)
+      }
 
-        if (text != null) {
-          val documentText = TextPresentationTransformers.fromPersistent(text, virtualFile = createdFile)
-          val document = FileDocumentManager.getInstance().getDocument(createdFile) ?: mcpFail("Can't get document for created file: $pathInProject")
-          document.setText(documentText)
+      if (text != null) {
+        val documentText = TextPresentationTransformers.fromPersistent(text, virtualFile = createdFile)
+        val document = readAndEdtWriteAction {
+          val document = FileDocumentManager.getInstance().getDocument(createdFile)
+                         ?: mcpFail("Can't get document for created file: $pathInProject")
+          writeAction {
+            document.setText(documentText)
+            document
+          }
         }
+        document
+      }
+      else {
+        null
       }
     }
     catch (io: IOException) {
       mcpFail("Can't create file: $path: ${io.message}")
+    }
+    if (changedDocument != null) {
+      FileDocumentManager.getInstance().saveDocument(changedDocument)
     }
   }
 }

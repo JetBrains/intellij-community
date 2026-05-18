@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-import {copyFile, mkdir, rename, rm} from 'node:fs/promises'
+import {Buffer} from 'node:buffer'
+import {chmod, copyFile, mkdir, readFile, rename, rm, stat, writeFile} from 'node:fs/promises'
 import path from 'node:path'
 import {isTrackedPath, runGitCommand, toGitPath} from '../git-utils'
 import {readFileTextExact, resolvePathInProject, splitLines} from '../shared'
@@ -59,6 +60,27 @@ interface UpdateOperation {
 
 type PatchOperation = AddOperation | DeleteOperation | UpdateOperation
 
+interface WriteReport {
+  relative: string
+  bytes: number
+}
+
+interface PatchSource {
+  text: string
+  preferUpstreamWrite: boolean
+}
+
+interface WritePatchedTextOptions {
+  relative: string
+  absolute: string
+  text: string
+  overwrite: boolean
+  writeToDisk: boolean
+  preferUpstreamWrite: boolean
+  callUpstreamTool: UpstreamToolCaller
+  writeReports: WriteReport[]
+}
+
 export async function handleApplyPatchTool(
   args: ApplyPatchArgs,
   projectPath: string,
@@ -66,16 +88,23 @@ export async function handleApplyPatchTool(
 ): Promise<string> {
   const patchText = extractPatchText(args)
   const operations = parsePatch(patchText)
+  const writeToDisk = await pathExists(projectPath)
+  const writeReports: WriteReport[] = []
   let touched = 0
 
   for (const op of operations) {
     if (op.type === 'add') {
-      const {relative} = resolvePathInProject(projectPath, op.path, 'path')
-      await callUpstreamTool('create_new_file', {
-        pathInProject: relative,
-        text: op.content,
-        overwrite: false
-      })
+      const {relative, absolute} = resolvePathInProject(projectPath, op.path, 'path')
+      if (writeToDisk) {
+        const bytes = await writeTextFile(absolute, op.content, false)
+        writeReports.push({relative, bytes})
+      } else {
+        await callUpstreamTool('create_new_file', {
+          pathInProject: relative,
+          text: op.content,
+          overwrite: false
+        })
+      }
       touched += 1
       continue
     }
@@ -89,24 +118,34 @@ export async function handleApplyPatchTool(
     }
 
     if (op.type === 'update') {
-      const original = await readFileTextForPatch(relative, absolute, projectPath, callUpstreamTool)
-      const updated = op.hunks.length === 0 ? original : applyHunks(original, op.hunks)
+      const source = await readFileTextForPatch(relative, absolute, projectPath, writeToDisk, callUpstreamTool)
+      const updated = op.hunks.length === 0 ? source.text : applyHunks(source.text, op.hunks)
       const resolvedTarget = op.moveTo ? resolvePathInProject(projectPath, op.moveTo, 'path') : null
       const moveTarget = resolvedTarget && resolvedTarget.relative !== relative ? resolvedTarget : null
 
       if (moveTarget) {
         await ensureParentDir(moveTarget.absolute)
         await runGitMv(relative, moveTarget.relative, projectPath)
-        await callUpstreamTool('create_new_file', {
-          pathInProject: moveTarget.relative,
+        await writePatchedText({
+          relative: moveTarget.relative,
+          absolute: moveTarget.absolute,
           text: updated,
-          overwrite: true
+          overwrite: true,
+          writeToDisk,
+          preferUpstreamWrite: source.preferUpstreamWrite,
+          callUpstreamTool,
+          writeReports
         })
       } else {
-        await callUpstreamTool('create_new_file', {
-          pathInProject: relative,
+        await writePatchedText({
+          relative,
+          absolute,
           text: updated,
-          overwrite: true
+          overwrite: true,
+          writeToDisk,
+          preferUpstreamWrite: source.preferUpstreamWrite,
+          callUpstreamTool,
+          writeReports
         })
       }
 
@@ -114,24 +153,156 @@ export async function handleApplyPatchTool(
     }
   }
 
-  const suffix = touched === 1 ? '' : 's'
-  return `Applied patch to ${touched} file${suffix}.`
+  return formatApplyPatchResult(touched, writeReports)
 }
 
 async function readFileTextForPatch(
   relativePath: string,
   absolutePath: string,
   projectPath: string,
+  writeToDisk: boolean,
   callUpstreamTool: UpstreamToolCaller
-): Promise<string> {
+): Promise<PatchSource> {
+  if (writeToDisk) {
+    const diskText = await readFile(absolutePath, 'utf8')
+    const upstreamText = await readUpstreamDocumentTextIfDifferent(relativePath, diskText, callUpstreamTool)
+    if (upstreamText !== null) {
+      return {text: upstreamText, preferUpstreamWrite: true}
+    }
+    return {text: diskText, preferUpstreamWrite: false}
+  }
+
   const original = await readFileTextExact(relativePath, callUpstreamTool)
-  if (!isTruncatedText(original)) return original
+  if (!isTruncatedText(original)) return {text: original, preferUpstreamWrite: true}
   try {
-    return await readFileTextViaSearch(projectPath, relativePath, absolutePath, callUpstreamTool)
+    return {
+      text: await readFileTextViaSearch(projectPath, relativePath, absolutePath, callUpstreamTool),
+      preferUpstreamWrite: true
+    }
   } catch (error) {
     if (error instanceof Error && error.message === TRUNCATION_ERROR) throw error
     throw new Error(TRUNCATION_ERROR)
   }
+}
+
+async function readUpstreamDocumentTextIfDifferent(
+  relativePath: string,
+  diskText: string,
+  callUpstreamTool: UpstreamToolCaller
+): Promise<string | null> {
+  try {
+    const upstreamText = await readFileTextExact(relativePath, callUpstreamTool)
+    if (isTruncatedText(upstreamText) || upstreamText === diskText) return null
+    return upstreamText
+  } catch {
+    return null
+  }
+}
+
+async function writePatchedText(options: WritePatchedTextOptions): Promise<void> {
+  const {
+    relative,
+    absolute,
+    text,
+    overwrite,
+    writeToDisk,
+    preferUpstreamWrite,
+    callUpstreamTool,
+    writeReports
+  } = options
+
+  if (preferUpstreamWrite || !writeToDisk) {
+    await callUpstreamTool('create_new_file', {
+      pathInProject: relative,
+      text,
+      overwrite
+    })
+    if (!writeToDisk) return
+
+    const verifiedBytes = await tryVerifyTextFile(absolute, text)
+    if (verifiedBytes !== null) {
+      writeReports.push({relative, bytes: verifiedBytes})
+      return
+    }
+  }
+
+  const bytes = await writeTextFile(absolute, text, overwrite)
+  writeReports.push({relative, bytes})
+}
+
+async function pathExists(filePath: string): Promise<boolean> {
+  try {
+    await stat(filePath)
+    return true
+  } catch (error) {
+    if (isErrorCode(error, 'ENOENT')) return false
+    throw error
+  }
+}
+
+async function writeTextFile(absolutePath: string, text: string, overwrite: boolean): Promise<number> {
+  await ensureParentDir(absolutePath)
+  if (overwrite) {
+    await writeTextFileAtomically(absolutePath, text)
+  } else {
+    await writeFile(absolutePath, text, {encoding: 'utf8', flag: 'wx'})
+  }
+  return await verifyTextFile(absolutePath, text)
+}
+
+async function writeTextFileAtomically(absolutePath: string, text: string): Promise<void> {
+  const existingMode = await getFileMode(absolutePath)
+  const tempPath = path.join(
+    path.dirname(absolutePath),
+    `.${path.basename(absolutePath)}.ijproxy-${process.pid}-${Date.now()}-${Math.random().toString(16).slice(2)}.tmp`
+  )
+  try {
+    await writeFile(tempPath, text, {encoding: 'utf8', flag: 'wx'})
+    if (existingMode !== null) {
+      await chmod(tempPath, existingMode)
+    }
+    await rename(tempPath, absolutePath)
+  } catch (error) {
+    await rm(tempPath, {force: true}).catch(() => {})
+    throw error
+  }
+}
+
+async function getFileMode(absolutePath: string): Promise<number | null> {
+  try {
+    return (await stat(absolutePath)).mode
+  } catch (error) {
+    if (isErrorCode(error, 'ENOENT')) return null
+    throw error
+  }
+}
+
+async function tryVerifyTextFile(absolutePath: string, expectedText: string): Promise<number | null> {
+  try {
+    return await verifyTextFile(absolutePath, expectedText)
+  } catch {
+    return null
+  }
+}
+
+async function verifyTextFile(absolutePath: string, expectedText: string): Promise<number> {
+  const actualText = await readFile(absolutePath, 'utf8')
+  if (actualText !== expectedText) {
+    throw new Error(`Failed to save patched document to disk: ${absolutePath}`)
+  }
+  return Buffer.byteLength(actualText, 'utf8')
+}
+
+function formatApplyPatchResult(touched: number, writeReports: WriteReport[]): string {
+  const suffix = touched === 1 ? '' : 's'
+  const summary = `Applied patch to ${touched} file${suffix}.`
+  if (writeReports.length === 0) return summary
+  const details = writeReports.map(({relative, bytes}) => `Wrote ${bytes} bytes to ${relative}.`)
+  return `${summary}\n${details.join('\n')}`
+}
+
+function isErrorCode(error: unknown, code: string): boolean {
+  return Boolean(error && typeof error === 'object' && 'code' in error && (error as {code?: string}).code === code)
 }
 
 async function readFileTextViaSearch(

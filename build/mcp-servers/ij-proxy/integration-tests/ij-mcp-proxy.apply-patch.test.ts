@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-import {strictEqual} from 'node:assert/strict'
+import {ok, strictEqual} from 'node:assert/strict'
 import {existsSync} from 'node:fs'
 import {mkdir, readFile, writeFile} from 'node:fs/promises'
 import {dirname, join, resolve} from 'node:path'
@@ -151,13 +151,88 @@ describe('ij MCP proxy apply_patch', {timeout: SUITE_TIMEOUT_MS}, () => {
         '*** End Patch'
       ])
 
+      const response = await proxyClient.send('tools/call', {
+        name: 'apply_patch',
+        arguments: {patch}
+      })
+
+      const responseText = response.result.content?.[0]?.text ?? ''
+      ok(responseText.startsWith('Applied patch to 1 file.'))
+      ok(responseText.includes('Wrote 16 bytes to edit.txt.'))
+      const content = await readFile(filePath, 'utf8')
+      strictEqual(content, 'one\ntwo changed\n')
+    })
+  })
+
+  it('preserves upstream document text that differs from disk while persisting fallback', async () => {
+    await withProxy({
+      onToolCall: async ({name, args}) => {
+        if (name === 'get_file_text_by_path') {
+          return {text: 'one unsaved\ntwo\n'}
+        }
+
+        if (name === 'create_new_file') {
+          strictEqual(args.pathInProject, 'edit.txt')
+          strictEqual(args.text, 'one patched\ntwo\n')
+          strictEqual(args.overwrite, true)
+          return {text: 'ok'}
+        }
+
+        return {text: '{}'}
+      }
+    }, async ({proxyClient, testDir}) => {
+      const filePath = join(testDir, 'edit.txt')
+      await writeFile(filePath, 'one\ntwo\n', 'utf8')
+      await initGitRepo(testDir)
+
+      const patch = buildPatch([
+        '*** Begin Patch',
+        '*** Update File: edit.txt',
+        '@@',
+        '-one unsaved',
+        '+one patched',
+        '*** End Patch'
+      ])
+
+      const response = await proxyClient.send('tools/call', {
+        name: 'apply_patch',
+        arguments: {patch}
+      })
+
+      const responseText = response.result.content?.[0]?.text ?? ''
+      ok(responseText.includes('Wrote 16 bytes to edit.txt.'))
+      const content = await readFile(filePath, 'utf8')
+      strictEqual(content, 'one patched\ntwo\n')
+    })
+  })
+
+  it('preserves trailing lines when updating a long file far from EOF', async () => {
+    await withProxy({onToolCall: createFsToolCallHandler()}, async ({proxyClient, testDir}) => {
+      const filePath = join(testDir, 'long.txt')
+      const lines = Array.from({length: 2029}, (_, index) => `line ${index + 1}`)
+      lines[1280] = 'target before'
+      await writeFile(filePath, `${lines.join('\n')}\n`, 'utf8')
+      await initGitRepo(testDir)
+
+      const patch = buildPatch([
+        '*** Begin Patch',
+        '*** Update File: long.txt',
+        '@@',
+        '-target before',
+        '+target after',
+        '*** End Patch'
+      ])
+
       await proxyClient.send('tools/call', {
         name: 'apply_patch',
         arguments: {patch}
       })
 
-      const content = await readFile(filePath, 'utf8')
-      strictEqual(content, 'one\ntwo changed\n')
+      const updatedLines = (await readFile(filePath, 'utf8')).split('\n')
+      strictEqual(updatedLines[1280], 'target after')
+      strictEqual(updatedLines[1993], 'line 1994')
+      strictEqual(updatedLines[2028], 'line 2029')
+      strictEqual(updatedLines[2029], '')
     })
   })
 

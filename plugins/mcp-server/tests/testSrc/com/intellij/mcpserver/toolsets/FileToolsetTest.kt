@@ -12,8 +12,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
+import java.nio.file.Files
+import java.nio.file.Path
 
 class FileToolsetTest : GeneralMcpToolsetTestBase() {
   @Disabled("Output contains the project directory name that is not predictable because of generated")
@@ -34,7 +37,8 @@ class FileToolsetTest : GeneralMcpToolsetTestBase() {
     testMcpTool(
       FileToolset::open_file_in_editor.name,
       buildJsonObject {
-        put("filePath", JsonPrimitive(project.baseDir.toNioPath().relativizeIfPossible(testJavaFile)))
+        val projectPath = Path.of(project.basePath ?: error("Project base path is not available"))
+        put("filePath", JsonPrimitive(projectPath.relativizeIfPossible(testJavaFile)))
       },
       "[success]"
     )
@@ -61,5 +65,22 @@ class FileToolsetTest : GeneralMcpToolsetTestBase() {
       },
       "[success]"
     )
+  }
+
+  @Test
+  fun create_new_file_saves_text_to_disk() = runBlocking(Dispatchers.Default) {
+    val pathInProject = "src/NewFileWithText.txt"
+    testMcpTool(
+      FileToolset::create_new_file.name,
+      buildJsonObject {
+        put("pathInProject", JsonPrimitive(pathInProject))
+        put("text", JsonPrimitive("persisted\n"))
+      },
+      "[success]"
+    )
+
+    val filePath = Path.of(project.basePath ?: error("Project base path is not available")).resolve(pathInProject)
+    assertThat(Files.readString(filePath)).isEqualTo("persisted\n")
+    Unit
   }
 }
