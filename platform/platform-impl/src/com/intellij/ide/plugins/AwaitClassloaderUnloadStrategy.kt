@@ -27,6 +27,7 @@ import com.intellij.util.application
 import com.intellij.util.containers.WeakList
 import com.intellij.util.ref.GCWatcher
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.TimeoutCancellationException
@@ -107,7 +108,11 @@ internal class AwaitClassloaderUnloadAsyncPostTransition : AwaitClassloaderUnloa
         override fun actionPerformed(e: AnActionEvent) = ApplicationManager.getApplication().restart()
       })
       notification.addAction(object : AnAction(IdeBundle.message("action.save.memory.snapshot.text")), DumbAware {
-        override fun actionPerformed(e: AnActionEvent) = saveMemorySnapshot(classloaders.firstOrNull()?.pluginId ?: PluginId.getId("unknown"))
+        override fun actionPerformed(e: AnActionEvent) {
+          service<DynamicPluginsSupportService>().coroutineScope.launch(CoroutineName("memory snapshot") + Dispatchers.IO) {
+            saveMemorySnapshot(classloaders.firstOrNull()?.pluginId ?: PluginId.getId("unknown"))
+          }
+        }
       })
       notification.notify(null)
     }
@@ -148,7 +153,7 @@ private suspend fun awaitClassLoadersGetGarbageCollected(classloaders: WeakList<
     }
   }
   catch (e: CancellationException) {
-    withContext(NonCancellable) {
+    withContext(NonCancellable + Dispatchers.IO) {
       if (Registry.`is`("ide.plugins.snapshot.on.unload.fail") && !application.isUnitTestMode && MemoryDumpHelper.memoryDumpAvailable()) {
         saveMemorySnapshot(classloaders.firstOrNull()?.pluginId ?: PluginId.getId("unknown"))
       }
