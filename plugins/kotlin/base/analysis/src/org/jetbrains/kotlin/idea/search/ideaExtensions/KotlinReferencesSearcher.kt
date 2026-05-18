@@ -26,6 +26,7 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.SearchSession
 import com.intellij.psi.search.UsageSearchContext
 import com.intellij.psi.search.searches.MethodReferencesSearch
+import com.intellij.psi.search.searches.MethodReferencesSearch.search
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.descendantsOfType
 import com.intellij.util.Processor
@@ -269,7 +270,7 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
                     }
                 }
 
-                if (!(elementToSearchPointer.element is KtElement && runReadAction { isOnlyKotlinSearch(effectiveSearchScope) })) {
+                if (runReadAction { elementToSearchPointer.element is KtElement && !isOnlyKotlinSearch(effectiveSearchScope) }) {
                     longTasks.add {
                         DumbService.getInstance(queryParameters.project).runReadActionInSmartMode(Runnable {
                             element?.element?.let(::searchLightElements)
@@ -430,23 +431,14 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
                 .filterIsInstance<KtParameter>()
                 .flatMap { it.toLightElements() }
                 .toList()
-            val namedElements = lightMethods.filterDataClassComponentsIfDisabled(kotlinOptions)
+            val namedElements = lightMethods.filterDataClassComponentsIfDisabled(kotlinOptions).filterIsInstance<PsiMethod>()
             for (element in namedElements) {
-                searchMethodAware(element)
-            }
-        }
-
-        @RequiresReadLock
-        private fun searchMethodAware(element: PsiNamedElement) {
-            if (element is PsiMethod) {
                 val pointer = element.createSmartPointer()
                 longTasks.add {
                     runReadAction { pointer.element }?.let {
-                        MethodReferencesSearch.search(it, queryParameters.effectiveSearchScope, true).forEach(consumer)
+                        search(it, queryParameters.effectiveSearchScope, true).forEach(consumer)
                     }
                 }
-            } else {
-                searchNamedElement(element)
             }
         }
 
