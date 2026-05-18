@@ -1139,28 +1139,30 @@ class DynamicPluginsTest {
     }
   }
 
-  @Ignore // FIXME
-  @Test // IJPL-207058
-  fun `dynamic load of a plugin with service overrides is declined`() {
-    plugin("foo") {
-      content {
-        module("foo.module") {
-          extensions("""
+  @Test
+  fun `IJPL-207058 dynamic load of a plugin with service overrides is declined`() {
+    assumeNewSupportEnabled()
+    val pluginSet = buildPluginSet(pluginsDir, configureClassLoaders = false) {
+      plugin("foo") {
+        content {
+          module("foo.module") {
+            extensions("""
             <applicationService serviceInterface="${ServiceInterface::class.qualifiedName}" 
                                 serviceImplementation="${OverriddenService::class.qualifiedName}"
                                 overrides="true"/>
           """.trimIndent())
-          includePackageClassFiles<OverriddenService>()
+            includePackageClassFiles<OverriddenService>()
+          }
         }
-      }
-      extensions("""
+        extensions("""
         <applicationService serviceInterface="${ServiceInterface::class.qualifiedName}" 
                             serviceImplementation="${DefaultService::class.qualifiedName}"/>
       """.trimIndent())
-      includePackageClassFiles<DefaultService>()
-    }.installAt(pluginsDir)
-    val foo = loadDescriptorInTest(pluginsDir.resolve("foo"))
-    assertThat(DynamicPlugins.loadPlugin(foo)).isFalse
+        includePackageClassFiles<DefaultService>()
+      }
+    }
+    val foo = pluginSet.getPlugin("foo")
+    assertThat(DynamicPlugins.checkCanLoadWithoutRestart(foo)).isNotNull()
   }
 
   @Test

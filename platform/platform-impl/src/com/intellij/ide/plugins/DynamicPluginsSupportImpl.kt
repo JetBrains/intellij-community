@@ -113,7 +113,7 @@ internal class DynamicPluginsSupportImpl(
             validateGroupCanBeUnloaded(
               step.runtimeModuleGroup,
               elementsModel,
-              allowServiceOverridesUnloading,
+              allowDynamicServiceOverrides,
               allowUnloadingWhenRunFromSources
             )?.let { return@withProgressText it }
 
@@ -123,7 +123,7 @@ internal class DynamicPluginsSupportImpl(
           RuntimeModuleGroupAction.LOAD -> {
             validateProductRulesPermitLoading(step.runtimeModuleGroup)
               ?.let { return@withProgressText it }
-            validateGroupCanBeLoaded(step.runtimeModuleGroup, elementsModel)
+            validateGroupCanBeLoaded(step.runtimeModuleGroup, elementsModel, allowDynamicServiceOverrides)
               ?.let { return@withProgressText it }
 
             elementsModel.register(step.runtimeModuleGroup)
@@ -286,7 +286,7 @@ internal class DynamicPluginsSupportImpl(
     return PluginManagerCore.getPluginSet().resolvedPluginSet ?: error("ResolvedPluginSet is not set")
   }
 
-  private val allowServiceOverridesUnloading: Boolean
+  private val allowDynamicServiceOverrides: Boolean
     get() = Registry.`is`("ide.plugins.allow.dynamic.services.overrides", false)
 
   private val allowUnloadingWhenRunFromSources: Boolean
@@ -415,7 +415,18 @@ private object DynamicPluginsValidators {
     return null
   }
 
-  fun validateGroupCanBeLoaded(group: RuntimeModuleGroup, elementsModel: MutableAppElementsModel): DynamicTransitionIsNotPossibleReason? {
+  fun validateGroupCanBeLoaded(
+    group: RuntimeModuleGroup,
+    elementsModel: MutableAppElementsModel,
+    allowServiceOverridesUnloading: Boolean,
+  ): DynamicTransitionIsNotPossibleReason? {
+    val validators = listOfNotNull(
+      ::validateDescriptorHasNoServiceOverrides.takeIf { !allowServiceOverridesUnloading },
+    )
+    for (descriptor in group.sortedDescriptors) {
+      validators.firstNotNullOfOrNull { it(descriptor) }
+        ?.let { return it }
+    }
     validateModuleGroupHasAllExtensionsFromDynamicEPs(group, elementsModel)
       ?.let { return it }
     return null
