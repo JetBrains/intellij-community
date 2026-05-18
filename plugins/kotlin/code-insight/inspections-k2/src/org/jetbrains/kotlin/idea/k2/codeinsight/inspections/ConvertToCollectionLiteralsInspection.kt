@@ -7,15 +7,11 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
-import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -25,29 +21,20 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.getTopmostParenthesizedExpressionOrSelf
 import org.jetbrains.kotlin.idea.codeinsight.utils.setTypeReference
 import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.utils.TARGET_FUNCTION_FQ_NAMES
-import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.utils.isCollectionLiteralSafeAsArgument
+import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.utils.toCollectionLiteralString
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtClassBody
-import org.jetbrains.kotlin.psi.KtCollectionLiteralExpression
-import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
-import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtFunction
-import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtParenthesizedExpression
 import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtVisitorVoid
-import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
-import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.types.Variance
 
 internal class ConvertToCollectionLiteralsInspection :
@@ -152,54 +139,6 @@ internal class ConvertToCollectionLiteralsInspection :
         }
     }
 
-    @OptIn(KaExperimentalApi::class, KaImplementationDetail::class)
-    private fun isCollectionLiteralSafeAsArgument(
-        element: KtCallExpression,
-        expressionType: KaType,
-    ): Boolean {
-        val context = findContextToAnalyze(element) ?: return false
-        val literal = buildCodeFragmentWithCollectionLiteral(element, context) ?: return false
-        val expressionTypePointer = expressionType.createPointer()
-        return analyze(literal) {
-            val restoredType = expressionTypePointer.restore(this) ?: return false
-            val literalType = literal.expressionType ?: return false
-            if (!literalType.semanticallyEquals(restoredType)) return false
-            val outerCall = literal.getParentOfType<KtCallExpression>(strict = true) ?: return true
-            outerCall.resolveToCall()?.successfulFunctionCallOrNull() != null
-        }
-    }
-
-    private fun findContextToAnalyze(
-        expression: KtExpression,
-    ): KtExpression? {
-        for (element in expression.parentsWithSelf) {
-            when (element) {
-                is KtFunctionLiteral -> continue
-                is KtParameter -> continue
-                is KtPropertyAccessor -> continue
-                is KtProperty -> if (element.parent is KtClassBody) continue else return element
-                is KtFunction -> if (element.hasModifier(KtTokens.OVERRIDE_KEYWORD)) continue else return element
-                is KtDeclaration -> return element
-                else -> continue
-            }
-        }
-        return null
-    }
-
-    private fun buildCodeFragmentWithCollectionLiteral(
-        element: KtCallExpression,
-        context: KtExpression,
-    ): KtCollectionLiteralExpression? {
-        val elementRange = element.textRange
-        val contextStartOffset = context.textRange.startOffset
-        val startIndex = elementRange.startOffset - contextStartOffset
-        val endIndex = elementRange.endOffset - contextStartOffset
-        val literalText = element.toCollectionLiteralString() ?: return null
-        val textWithLiteral = context.text.replaceRange(startIndex, endIndex, literalText)
-        val codeFragment = KtPsiFactory(element.project).createBlockCodeFragment(textWithLiteral, context)
-        return codeFragment.findElementAt(startIndex)?.parentOfType()
-    }
-
     private val LIST_LITERAL = FqName("kotlin.collections.listOf")
 
     private val LIST_FQ_NAMES: Set<FqName> = setOf(
@@ -208,9 +147,4 @@ internal class ConvertToCollectionLiteralsInspection :
     )
 
     private val TARGET_FUNCTION_SHORT_NAMES: Set<Name> = TARGET_FUNCTION_FQ_NAMES.mapTo(HashSet()) { it.shortName() }
-
-    private fun KtCallExpression.toCollectionLiteralString(): String? {
-        val argumentListText = valueArgumentList?.text ?: return null
-        return "[${argumentListText.drop(1).dropLast(1)}]"
-    }
 }

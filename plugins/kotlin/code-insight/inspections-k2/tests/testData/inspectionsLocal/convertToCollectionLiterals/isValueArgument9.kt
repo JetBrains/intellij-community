@@ -1,0 +1,6 @@
+// COMPILER_ARGUMENTS: -Xcollection-literals
+fun process(items: Set<Int>) {}
+
+fun main() {
+    process(emptySet<caret>())
+}

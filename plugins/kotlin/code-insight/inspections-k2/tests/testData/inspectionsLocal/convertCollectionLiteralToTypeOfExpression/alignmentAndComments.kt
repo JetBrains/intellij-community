@@ -1,0 +1,19 @@
+// COMPILER_ARGUMENTS: -Xcollection-literals
+class MyCollection<T> {
+    companion object { operator fun <T> of(vararg elements: T): MyCollection<T> = TODO() }
+}
+
+fun <T> testCollection(x: MyCollection<T>, y: MyCollection<T>) {
+    println(x)
+}
+
+fun main() {
+   testCollection(
+        [
+            1,<caret>
+            2, // comment
+            3
+        ],
+        []
+    )
+}

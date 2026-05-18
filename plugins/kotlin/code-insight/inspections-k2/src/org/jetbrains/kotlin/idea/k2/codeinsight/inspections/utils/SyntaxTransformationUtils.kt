@@ -52,6 +52,11 @@ internal fun applyToWithConversion(
     return qualifiedExpression.replace(newWithCall) as KtCallExpression
 }
 
+internal fun KtCallExpression.toCollectionLiteralString(): String? {
+    val argumentListText = valueArgumentList?.text ?: return null
+    return "[${argumentListText.drop(1).dropLast(1)}]"
+}
+
 internal val TARGET_FUNCTION_FQ_NAMES: Set<FqName> = setOf(
     FqName("kotlin.collections.listOf"),
     FqName("kotlin.collections.emptyList"),

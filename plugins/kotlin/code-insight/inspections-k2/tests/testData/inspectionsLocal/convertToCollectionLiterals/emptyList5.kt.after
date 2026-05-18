@@ -1,0 +1,2 @@
+// COMPILER_ARGUMENTS: -Xcollection-literals
+val empty: List<String> = []
