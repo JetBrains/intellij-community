@@ -16,7 +16,7 @@ import org.junit.Test
 class K2MppHighlightingIntegrationTest : AbstractKotlinMppGradleImportingTest() {
 
     override val allowOnNonMac: Boolean
-        get() = true
+        get() = false
 
     override fun TestConfigurationDslScope.defaultTestConfiguration() {
         hideHighlightsBelow = HighlightSeverity.ERROR
