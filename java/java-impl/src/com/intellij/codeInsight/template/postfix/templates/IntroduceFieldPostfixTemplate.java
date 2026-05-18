@@ -13,7 +13,6 @@ import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.Presentation;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -46,9 +45,7 @@ public class IntroduceFieldPostfixTemplate extends PostfixTemplateWithExpression
 
   @Override
   public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
-    EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
-    return (editorSettings == null || editorSettings.isVariableInplaceRenameEnabled()) &&
-           super.isApplicable(context, copyDocument, newOffset) &&
+    return super.isApplicable(context, copyDocument, newOffset) &&
            !JavaPostfixTemplatesUtils.isInExpressionFile(context);
   }
 
