@@ -205,6 +205,9 @@ final class SettingsHelper {
     }
 
     args = ArrayUtil.mergeArrays(args, "--autoplay-policy=no-user-gesture-required", "--disable-component-update");
+    if (SystemInfoRt.isLinux && !StringUtil.isEmptyOrSpaces(System.getenv("DISPLAY"))) {
+      args = ArrayUtil.mergeArrays(args, "--ozone-platform=x11");
+    }
 
     return args;
   }
