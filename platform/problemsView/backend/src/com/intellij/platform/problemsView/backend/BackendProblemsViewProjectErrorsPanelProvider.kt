@@ -2,6 +2,7 @@
 package com.intellij.platform.problemsView.backend
 
 import com.intellij.analysis.problemsView.toolWindow.ProblemsView
+import com.intellij.analysis.problemsView.toolWindow.ProblemsViewBundle
 import com.intellij.analysis.problemsView.toolWindow.ProblemsViewPanel
 import com.intellij.analysis.problemsView.toolWindow.ProblemsViewPanelProvider
 import com.intellij.analysis.problemsView.toolWindow.ProblemsViewState
@@ -28,5 +29,5 @@ internal class BackendProblemsViewProjectErrorsPanelProvider(private val project
 }
 
 internal class MockProjectErrorsPanel(project: Project, state: ProblemsViewState)
-  : ProblemsViewPanel(project, "BEProjectErrors", state, { "Project Errors" }) {
+  : ProblemsViewPanel(project, "BEProjectErrors", state, ProblemsViewBundle.messagePointer("problems.view.project")) {
 }

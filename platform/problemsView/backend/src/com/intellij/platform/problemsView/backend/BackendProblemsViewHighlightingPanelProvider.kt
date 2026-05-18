@@ -2,6 +2,7 @@
 package com.intellij.platform.problemsView.backend
 
 import com.intellij.analysis.problemsView.toolWindow.ProblemsView
+import com.intellij.analysis.problemsView.toolWindow.ProblemsViewBundle
 import com.intellij.analysis.problemsView.toolWindow.ProblemsViewPanel
 import com.intellij.analysis.problemsView.toolWindow.ProblemsViewPanelProvider
 import com.intellij.analysis.problemsView.toolWindow.ProblemsViewState
@@ -34,5 +35,5 @@ internal class BackendProblemsViewHighlightingPanelProvider(private val project:
 }
 
 internal class MockHighlightingPanel(project: Project, state: ProblemsViewState)
-  : ProblemsViewPanel(project, "FrontendCurrentFile", state, { "File" }) {
+  : ProblemsViewPanel(project, "BECurrentFile", state, ProblemsViewBundle.messagePointer("problems.view.highlighting")) {
 }
