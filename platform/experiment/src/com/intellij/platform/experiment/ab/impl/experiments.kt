@@ -25,6 +25,7 @@ enum class ABExperimentOption {
   SHOW_TRIAL_SURVEY,
   NEW_USERS_ONBOARDING,
   SPLIT_SEARCH_EVERYWHERE,
+  CLION_WIZARD_REMOVAL,
 
   /**
    * A group for users which are not assigned to any experiment.
@@ -64,12 +65,19 @@ internal val experimentsPartition: List<ExperimentAssignment> = listOf(
   //),
   ExperimentAssignment(
     experiment = ABExperimentOption.SPLIT_SEARCH_EVERYWHERE,
-    experimentBuckets = (0 until 512).toSet(),
-    controlBuckets = (512 until 1024).toSet(),
+    experimentBuckets = (0 until 256).toSet(),
+    controlBuckets = (256 until 512).toSet(),
     majorVersion = "2026.1 EAP",
     products = EnumSet.of(IntelliJPlatformProduct.IDEA,
                           IntelliJPlatformProduct.PYCHARM,
                           IntelliJPlatformProduct.RIDER),
+  ),
+  ExperimentAssignment(
+    experiment = ABExperimentOption.CLION_WIZARD_REMOVAL,
+    experimentBuckets = (512 until 768).toSet(),
+    controlBuckets = (768 until 1024).toSet(),
+    majorVersion = "2026.2",
+    products = EnumSet.of(IntelliJPlatformProduct.CLION),
   ),
   // the rest belongs to the "unassigned" experiment
 )
@@ -139,6 +147,7 @@ internal enum class IntelliJPlatformProduct {
   IDEA,
   PYCHARM,
   RIDER,
+  CLION,
   OTHER,
   ;
 
