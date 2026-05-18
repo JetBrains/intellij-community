@@ -99,7 +99,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   @ApiStatus.Internal
   @Contract(pure = true)
   protected final @NotNull GlobalSearchScope defaultIntersectWith(@NotNull GlobalSearchScope scope) {
-    if (scope == this) return this;
+    if (scope == this || scope.equals(this) || this.equals(scope)) return this;
     if (scope instanceof IntersectionScope && ((IntersectionScope)scope).containsScope(this)) {
       return scope;
     }
