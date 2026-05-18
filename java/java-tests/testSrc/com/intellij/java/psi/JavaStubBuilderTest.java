@@ -772,7 +772,22 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
                  MODIFIER_LIST:PsiModifierListStub[mask=10]
                  TYPE_PARAMETER_LIST:PsiTypeParameterListStub
                  EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]
-                 IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]
+                 IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:BiConsumer]
+             """);
+  }
+
+  public void testInvalidGenericEmptyBodyQualified() {
+    doTest("""
+             private static class A implements java.util.function.BiConsumer<java.util.List<A>, java.util.List<A>n>> {}
+             """,
+           """
+             PsiJavaFileStub []
+               IMPORT_LIST:PsiImportListStub
+               CLASS:PsiClassStub[name=A fqn=A]
+                 MODIFIER_LIST:PsiModifierListStub[mask=10]
+                 TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                 EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]
+                 IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:java.util.function.BiConsumer]
              """);
   }
 
