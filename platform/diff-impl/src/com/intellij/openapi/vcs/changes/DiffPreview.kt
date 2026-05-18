@@ -40,8 +40,11 @@ interface DiffPreview {
     @JvmStatic
     fun closePreviewFile(project: Project, previewFile: VirtualFile) {
       DiffEditorTabFilesUtil.setForceOpeningsInNewWindow(previewFile, null)
-      val editorManager = FileEditorManager.getInstance(project) as FileEditorManagerImpl
-      editorManager.closeFile(previewFile, closeAllCopies = true, moveFocus = true)
+      val editorManager: FileEditorManager = FileEditorManager.getInstance(project)
+      when (editorManager) {
+        is FileEditorManagerImpl -> editorManager.closeFile(previewFile, closeAllCopies = true, moveFocus = true)
+        else -> editorManager.closeFile(previewFile)
+      }
     }
   }
 }
