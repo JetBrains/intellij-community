@@ -47,6 +47,7 @@ class SmoothRobot @JvmOverloads constructor(
       simpleWaitForIdle(true)
       timeoutToFindPopup(1000)
     }
+    Toolkit.getDefaultToolkit().addAWTEventListener(KeyLoggerAWTEventListener, AWTEvent.KEY_EVENT_MASK)
   }
 
   @Suppress("TestOnlyProblems")
@@ -229,6 +230,11 @@ class SmoothRobot @JvmOverloads constructor(
   }
 
   fun makeScreenshot(): ByteArray = makeScreenshot(Rectangle(Toolkit.getDefaultToolkit().screenSize))
+
+  override fun cleanUp() {
+    basicRobot.cleanUp()
+    Toolkit.getDefaultToolkit().removeAWTEventListener(KeyLoggerAWTEventListener)
+  }
 
   private fun smoothMoveMouse(x: Int, y: Int) {
     val pauseConstMs = settings().delayBetweenEvents().toLong()
@@ -431,6 +437,16 @@ class SmoothRobot @JvmOverloads constructor(
 
     private fun isAncestorOrDescendant(c1: Component?, c2: Component): Boolean {
       return c1 != null && (SwingUtilities.isDescendingFrom(c1, c2) || SwingUtilities.isDescendingFrom(c2, c1))
+    }
+  }
+
+  private object KeyLoggerAWTEventListener : AWTEventListener {
+    override fun eventDispatched(event: AWTEvent) {
+      if (event !is KeyEvent) return
+      when (event.id) {
+        KeyEvent.KEY_PRESSED -> logger.info("KEY_PRESSED: ${KeyEvent.getKeyText(event.keyCode)} on ${event.component}")
+        KeyEvent.KEY_RELEASED -> logger.info("KEY_RELEASED: ${KeyEvent.getKeyText(event.keyCode)} on ${event.component}")
+      }
     }
   }
 
