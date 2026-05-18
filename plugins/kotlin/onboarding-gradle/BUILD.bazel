@@ -135,8 +135,6 @@ jvm_library(
     "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm_test_lib",
     "@lib//:kotlin-test-junit",
     "@lib//:junit5",
-    "//java/testFramework",
-    "//java/testFramework:testFramework_test_lib",
     "//plugins/gradle:gradle-common",
     "//plugins/gradle:gradle-common_test_lib",
     "//plugins/kotlin/project-configuration",

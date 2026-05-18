@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.onboarding.gradle
 
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.jetbrains.kotlin.onboarding.gradle.BuildProcessSatisfactionSurveyStore.Companion.MINIMUM_BUILDS_BEFORE_SURVEY
 import org.jetbrains.kotlin.onboarding.gradle.BuildProcessSatisfactionSurveyStore.Companion.MINIMUM_DURATION_SINCE_FIRST_BUILD
 import java.time.Duration
@@ -11,7 +11,7 @@ import java.time.temporal.ChronoUnit
 import kotlin.math.absoluteValue
 import kotlin.test.assertNotEquals
 
-class BuildProcessSatisfactionSurveyStoreTest : LightJavaCodeInsightFixtureTestCase() {
+class BuildProcessSatisfactionSurveyStoreTest : BasePlatformTestCase() {
     private val today = LocalDate.now()
     private val now = Instant.now()
     private fun createInstance(): BuildProcessSatisfactionSurveyStore {
