@@ -11,7 +11,8 @@ object AndroidGradlePluginVersionTestsProperty : KotlinTestsResolvableProperty<A
         MinSupported("MIN", "7.4.2"),
         LatestStable("STABLE", "8.5.2"),
         Beta("BETA", "8.5.2"),
-        Alpha("ALPHA", "8.6.0-alpha03");
+        Alpha("ALPHA", "8.6.0-alpha03"),
+        Agp92("AGP_9_2", "9.2.1");
     }
 
     override val versionByAlias: Map<Value, String> = Value.entries.associate { it to it.version }

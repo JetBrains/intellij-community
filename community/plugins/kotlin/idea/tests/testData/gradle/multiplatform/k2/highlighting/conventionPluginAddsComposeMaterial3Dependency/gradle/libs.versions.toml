@@ -1,0 +1,18 @@
+[versions]
+android-gradle-plugin = "{{agp_version}}"
+kotlin = "{{kgp_version}}"
+androidx-compose = "1.11.1"
+androidx-compose-material3 = "1.4.0"
+compose-plugin = "1.11.0"
+compose-material3-desktop = "1.9.0"
+
+[libraries]
+androidx-compose-material3 = { module = "androidx.compose.material3:material3", version.ref = "androidx-compose-material3" }
+androidx-compose-runtime = { module = "androidx.compose.runtime:runtime", version.ref = "androidx-compose" }
+androidx-compose-runtime-desktop = { module = "androidx.compose.runtime:runtime-desktop", version.ref = "androidx-compose" }
+compose-material3-desktop = { module = "org.jetbrains.compose.material3:material3-desktop", version.ref = "compose-material3-desktop" }
+compose-runtime-desktop = { module = "org.jetbrains.compose.runtime:runtime-desktop", version.ref = "compose-plugin" }
+
+[plugins]
+android-kotlin-multiplatform-library = { id = "com.android.kotlin.multiplatform.library", version.ref = "android-gradle-plugin" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

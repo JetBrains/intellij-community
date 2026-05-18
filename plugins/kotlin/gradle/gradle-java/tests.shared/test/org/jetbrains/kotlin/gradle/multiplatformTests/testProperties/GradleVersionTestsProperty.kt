@@ -10,7 +10,8 @@ object GradleVersionTestsProperty : org.jetbrains.kotlin.gradle.multiplatformTes
         ForMinAgp("REQUIRED_FOR_MIN_AGP", "7.5.1"),
         ForStableAgp("REQUIRED_FOR_STABLE_AGP", "8.10.2"),
         ForBetaAgp("REQUIRED_FOR_BETA_AGP", "8.7"),
-        ForAlphaAgp("REQUIRED_FOR_ALPHA_AGP", "8.7")
+        ForAlphaAgp("REQUIRED_FOR_ALPHA_AGP", "8.7"),
+        ForAgp92("REQUIRED_FOR_AGP_9_2", "9.4.1")
     }
 
     override val versionByAlias: Map<Value, String> = Value.entries.associateWith { it.version }
