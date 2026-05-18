@@ -23,7 +23,6 @@ import org.jetbrains.kotlin.idea.base.codeInsight.contributorClass
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.test.AssertKotlinPluginMode
 import org.jetbrains.kotlin.idea.test.UseK2PluginMode
-import org.jetbrains.kotlin.idea.testFramework.gradle.KotlinGradleProjectTestCase
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
@@ -31,7 +30,6 @@ import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionS
 import org.jetbrains.plugins.gradle.testFramework.annotations.GradleTestSource
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
-import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.assertNotNull
@@ -83,7 +81,7 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
     @ParameterizedTest
     @GradleTestSource(value = "9.4.0")
     fun `test configuration without the accessor class is completed in quotes`(gradleVersion: GradleVersion) =
-        test(gradleVersion, KOTLIN_JVM_PROJECT) {
+        test(gradleVersion, KOTLIN_GRADLE_COMPLETION_FIXTURE) {
             val buildScriptFile = writeTextAndCommit(
                 "build.gradle.kts", """
                     val customSourceSet by sourceSets.registering {}
@@ -112,7 +110,7 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
     @BaseGradleVersionSource
     fun `test source set configuration is completed without quotes for Gradle 9,5,0 because it has an accessor class`(
         gradleVersion: GradleVersion
-    ) = test(gradleVersion, KOTLIN_JVM_PROJECT) {
+    ) = test(gradleVersion, KOTLIN_GRADLE_COMPLETION_FIXTURE) {
         val buildScriptFile = writeTextAndCommit(
             "build.gradle.kts", """
                 val customSourceSet by sourceSets.registering {}
@@ -155,7 +153,7 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
         expectedSuggestion: String,
     ) {
         LiveTemplateCompletionContributor.setShowTemplatesInTests(true, testRootDisposable)
-        test(gradleVersion, KotlinGradleProjectTestCase.KOTLIN_PROJECT) {
+        test(gradleVersion, KOTLIN_GRADLE_COMPLETION_FIXTURE) {
             val file = writeTextAndCommit("build.gradle.kts", expression)
             runInEdtAndWait {
                 codeInsightFixture.configureFromExistingVirtualFile(file)
@@ -188,7 +186,7 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
     @ParameterizedTest
     @BaseGradleVersionSource
     fun `test scope argument - suggest version catalogs and Dependency-returning methods`(gradleVersion: GradleVersion) {
-        test(gradleVersion, KOTLIN_JVM_PROJECT) {
+        test(gradleVersion, KOTLIN_GRADLE_COMPLETION_FIXTURE) {
             writeTextAndCommit(
                 "gradle/libs.versions.toml", """ 
                     [libraries]
@@ -225,7 +223,7 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
     @ParameterizedTest
     @BaseGradleVersionSource
     fun `test scope argument - when quoted, don't suggest Dependency-returning methods`(gradleVersion: GradleVersion) {
-        test(gradleVersion, KOTLIN_JVM_PROJECT) {
+        test(gradleVersion, KOTLIN_GRADLE_COMPLETION_FIXTURE) {
             val file = writeTextAndCommit("build.gradle.kts", """dependencies { implementation("<caret>") }""")
             assertCompletionDoesntSuggest(
                 file,
@@ -256,7 +254,7 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
         input: String,
         expected: String,
     ) {
-        test(gradleVersion, KOTLIN_JVM_PROJECT) {
+        test(gradleVersion, KOTLIN_GRADLE_COMPLETION_FIXTURE) {
             val file = writeTextAndCommit("build.gradle.kts", "dependencies { implementation($input) }")
             runInEdtAndWait {
                 codeInsightFixture.configureFromExistingVirtualFile(file)
@@ -281,7 +279,7 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
         input: String,
         expected: String
     ) {
-        test(gradleVersion, KOTLIN_JVM_PROJECT) {
+        test(gradleVersion, KOTLIN_GRADLE_COMPLETION_FIXTURE) {
             val file = writeTextAndCommit("build.gradle.kts", "dependencies { implementation($input) }")
             runInEdtAndWait {
                 codeInsightFixture.configureFromExistingVirtualFile(file)
@@ -415,7 +413,7 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
     @BaseGradleVersionSource(DEPENDENCY_CONFIGURATIONS_AND_NOTATIONS)
     fun `test coordinates completion in dependency configuration`(gradleVersion: GradleVersion, dependencyConfigurationEscaped: String) {
         val dependencyConfiguration = dependencyConfigurationEscaped.unescape()
-        test(gradleVersion, KotlinGradleProjectTestCase.KOTLIN_PROJECT) {
+        test(gradleVersion, KOTLIN_GRADLE_COMPLETION_FIXTURE) {
             val parts = dependencyConfiguration.split(":")
 
             val dependencyEntryTemplate = if (parts.size > 1)
@@ -500,7 +498,7 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
                 )
             }
         }, testRootDisposable)
-        test(gradleVersion, KotlinGradleProjectTestCase.KOTLIN_PROJECT) {
+        test(gradleVersion, KOTLIN_GRADLE_COMPLETION_FIXTURE) {
             val file = writeTextAndCommit("build.gradle.kts", "dependencies { a<caret> }")
             runInEdtAndWait {
                 codeInsightFixture.configureFromExistingVirtualFile(file)
@@ -550,7 +548,7 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
                 )
             }
         }, testRootDisposable)
-        test(gradleVersion, KotlinGradleProjectTestCase.KOTLIN_PROJECT) {
+        test(gradleVersion, KOTLIN_GRADLE_COMPLETION_FIXTURE) {
             val file = writeTextAndCommit("build.gradle.kts", "dependencies { $completion }")
             runInEdtAndWait {
                 codeInsightFixture.configureFromExistingVirtualFile(file)
@@ -589,7 +587,7 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
                 )
             }
         }, testRootDisposable)
-        test(gradleVersion, KotlinGradleProjectTestCase.KOTLIN_PROJECT) {
+        test(gradleVersion, KOTLIN_GRADLE_COMPLETION_FIXTURE) {
             val file = writeTextAndCommit("build.gradle.kts", "dependencies { $completion }")
             runInEdtAndWait {
                 codeInsightFixture.configureFromExistingVirtualFile(file)
@@ -625,7 +623,7 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
                 )
             }
         }, testRootDisposable)
-        test(gradleVersion, KotlinGradleProjectTestCase.KOTLIN_PROJECT) {
+        test(gradleVersion, KOTLIN_GRADLE_COMPLETION_FIXTURE) {
             val file = writeTextAndCommit("build.gradle.kts", "dependencies { $completion }")
             runInEdtAndWait {
                 codeInsightFixture.configureFromExistingVirtualFile(file)
@@ -647,7 +645,7 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
     @ParameterizedTest
     @BaseGradleVersionSource
     fun `test K2 Contributor is not ignored in unsupported cases`(gradleVersion: GradleVersion) {
-        test(gradleVersion, KOTLIN_JVM_PROJECT) {
+        test(gradleVersion, KOTLIN_GRADLE_COMPLETION_FIXTURE) {
             val file = writeTextAndCommit(
                 "build.gradle.kts",
                 """
@@ -675,7 +673,7 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
     }
 
     private fun verifyCompletion(gradleVersion: GradleVersion) {
-        verifyCompletion(gradleVersion, KOTLIN_JVM_PROJECT)
+        verifyCompletion(gradleVersion, KOTLIN_GRADLE_COMPLETION_FIXTURE)
     }
 
     private fun String.unescape(): String = this
@@ -698,7 +696,7 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
     }
 
     companion object {
-        const val DEPENDENCY_CONFIGURATIONS_AND_NOTATIONS = """
+        private const val DEPENDENCY_CONFIGURATIONS_AND_NOTATIONS = """
             api,
             implementation,
             compileOnly,
@@ -711,11 +709,7 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
             implementation<colon>testFixtures
         """
 
-        // TODO rename
-        val KOTLIN_JVM_PROJECT: GradleTestFixtureBuilder = GradleTestFixtureBuilder.create("kotlin-jvm-project") { gradleVersion ->
-            withSettingsFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
-                setProjectName("kotlin-jvm-project")
-            }
+        private val KOTLIN_GRADLE_COMPLETION_FIXTURE = GradleTestFixtureBuilder.create("KotlinGradleDependenciesCompletionTest") { gradleVersion ->
             withBuildFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
                 withKotlinJvmPlugin()
                 withPrefix { code("val customSourceSet by sourceSets.creating {}") }
