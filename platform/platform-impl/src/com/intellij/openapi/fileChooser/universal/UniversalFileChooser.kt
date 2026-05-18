@@ -576,6 +576,7 @@ object UniversalFileChooser {
         tree.isRootVisible = false
         tree.showsRootHandles = true
         tree.selectionModel.selectionMode = TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION
+        contributor.getNoEntriesText()?.let { tree.emptyText.text = it }
         tree.addTreeWillExpandListener(object : TreeWillExpandListener {
           override fun treeWillExpand(event: TreeExpansionEvent) {
             val virtualRoot = fileTree.getVirtualRoot(event.path)
