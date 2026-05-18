@@ -57,6 +57,11 @@
                  description="Allows completion of top level packages"
                  defaultValue="true"
                  restartRequired="false"/>
+
+    <registryKey key="kotlin.java.completion.companion.members"
+                 description="Shows Kotlin companion members in Java files during completion"
+                 defaultValue="true"
+                 restartRequired="false"/>
   </extensions>
 
   <!-- Command Completion -->

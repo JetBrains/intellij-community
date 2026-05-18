@@ -1545,14 +1545,11 @@
     <projectService serviceInterface="com.intellij.codeInsight.daemon.impl.HectorComponentFactory"
                     serviceImplementation="com.intellij.codeInsight.daemon.impl.HectorComponentFactoryImpl"/>
 
-    <registryKey key="problems.view.highlighting.frontend.enabled"
+    <registryKey key="problems.view.split.enabled"
                  defaultValue="true"
-                 description="Enable split implementation of File problems in Problems View tab, needs to be set in both client and host"
+                 description="Enable split implementation of File, Project Errors and Code Analysis tabs in Problems View. Key needs to be set in both client and host."
                  restartRequired="true"/>
-    <registryKey key="problems.view.project.errors.frontend.enabled"
-                 defaultValue="true"
-                 description="Enable split implementation of Project Errors in Problems View tab, needs to be set in both client and host"
-                 restartRequired="true"/>
+
     <toolWindow id="Problems View" anchor="bottom" icon="AllIcons.Toolwindows.ToolWindowProblemsEmpty" canCloseContents="true"
                 factoryClass="com.intellij.analysis.problemsView.toolWindow.ProblemsView"/>
     <notificationGroup id="Execution" displayType="TOOL_WINDOW" bundle="messages.ExecutionBundle" key="notification.group.execution"/>

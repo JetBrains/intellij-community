@@ -78,6 +78,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.SwingUtilities;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.MissingResourceException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -568,9 +569,9 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   }
 
   public DebuggerSession attachVirtualMachine(RunProfileState state,
-                                                 ExecutionEnvironment environment,
-                                                 RemoteConnection remoteConnection,
-                                                 boolean pollConnection) throws ExecutionException {
+                                              ExecutionEnvironment environment,
+                                              RemoteConnection remoteConnection,
+                                              boolean pollConnection) throws ExecutionException {
     assertFalse(EDT.isCurrentThreadEdt());
     DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(myProject)
       .attachVirtualMachine(new DefaultDebugEnvironment(environment, state, remoteConnection, pollConnection));
@@ -609,6 +610,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       state
     );
   }
+
   protected void doWhenXSessionPaused(ThrowableRunnable runnable) {
     doWhenXSessionPaused(runnable, false);
   }
@@ -660,6 +662,15 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     setRegistryPropertyForTest("debugger.evaluate.single.threaded.timeout", "-1");
     setRegistryPropertyForTest("debugger.preload.types.async", "false");
     setRegistryPropertyForTest("debugger.preload.types.hierarchy", "false");
+    // Enabling these advanced features makes packets number unstable, because they use caching.
+    // Packets number tests are targeted for core debugger functionality, so we do not want to mess up with advanced features.
+    // A better approach is to add performance tests for these features separately.
+    try {
+      setRegistryPropertyForTest("debugger.navigation.from.console.to.sources", "off");
+      setRegistryPropertyForTest("debugger.log.capture.batched", "false");
+    }
+    catch (MissingResourceException ignored) {
+    }
 
     boolean dfa = ViewsGeneralSettings.getInstance().USE_DFA_ASSIST;
     boolean dfaGray = ViewsGeneralSettings.getInstance().USE_DFA_ASSIST_GRAY_OUT;

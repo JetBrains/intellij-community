@@ -833,7 +833,7 @@ def array_data_to_xml(rows, cols, get_row, format):
     for row in range(rows):
         xml += "<row index=\"%s\"/>\n" % row
         for value in get_row(row):
-            xml += var_to_xml(value, '', format=format)
+            xml += var_to_xml(value, '')
     return xml
 
 

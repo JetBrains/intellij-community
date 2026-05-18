@@ -112,6 +112,7 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
 
   override fun isUrlInContent(url: String): ThreeState {
     var currentUrl = url
+    var includeNonRecursive = true
     val fileManager = VirtualFileManager.getInstance()
     val urlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
     while (currentUrl.isNotEmpty()) {
@@ -121,7 +122,7 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
       }
       val virtualFileUrl = urlManager.findByUrl(currentUrl)
       if (virtualFileUrl != null) {
-        val kinds = getMainIndexData().getNonExistentFileSetKinds(virtualFileUrl)
+        val kinds = getMainIndexData().getNonExistentFileSetKinds(virtualFileUrl, includeNonRecursive)
         if (NonExistingFileSetKind.EXCLUDED_FROM_CONTENT in kinds) {
           return ThreeState.NO
         }
@@ -131,8 +132,42 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
         if (NonExistingFileSetKind.INCLUDED_CONTENT in kinds) {
           return ThreeState.YES
         }
+        if (NonExistingFileSetKind.INCLUDED_CONTENT_NON_INDEXABLE in kinds) {
+          return ThreeState.YES
+        }
       }
       currentUrl = PathUtil.getParentPath(currentUrl)
+      includeNonRecursive = false
+    }
+    return ThreeState.NO
+  }
+
+  override fun isUrlIndexable(url: String, allowNonRecursive: Boolean): ThreeState {
+    var currentUrl = url
+    var includeNonRecursive = allowNonRecursive
+    val fileManager = VirtualFileManager.getInstance()
+    val urlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
+    while (currentUrl.isNotEmpty()) {
+      val file = fileManager.findFileByUrl(currentUrl)
+      if (file != null) {
+        val filesets = findFileSets(file, true, true, false, false, false, false, false)
+        val isIndexable = filesets.any {
+          it.kind.isIndexable && (allowNonRecursive || (it as? WorkspaceFileSetWithCustomData<*>)?.recursive == true)
+        }
+        return ThreeState.fromBoolean(isIndexable)
+      }
+      val virtualFileUrl = urlManager.findByUrl(currentUrl)
+      if (virtualFileUrl != null) {
+        val kinds = getMainIndexData().getNonExistentFileSetKinds(virtualFileUrl, includeNonRecursive)
+        when {
+          NonExistingFileSetKind.EXCLUDED_FROM_CONTENT in kinds -> return ThreeState.NO
+          NonExistingFileSetKind.EXCLUDED_OTHER in kinds -> return ThreeState.UNSURE
+          NonExistingFileSetKind.INCLUDED_CONTENT in kinds -> return ThreeState.YES
+          NonExistingFileSetKind.INCLUDED_CONTENT_NON_INDEXABLE in kinds -> return ThreeState.NO
+        }
+      }
+      currentUrl = PathUtil.getParentPath(currentUrl)
+      includeNonRecursive = false
     }
     return ThreeState.NO
   }

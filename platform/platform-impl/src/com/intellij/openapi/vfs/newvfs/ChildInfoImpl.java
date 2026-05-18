@@ -25,12 +25,14 @@ public final class ChildInfoImpl implements ChildInfo {
   private final int nameId;
   private final String symLinkTarget;
   private final ChildInfo @Nullable("null means children are unknown") [] children;
+  private final boolean allChildren;
 
   public ChildInfoImpl(int nameId,
                        @Nullable FileAttributes attributes,
                        ChildInfo @Nullable [] children,
-                       @Nullable String symLinkTarget) {
-    this(UNKNOWN_ID_YET, nameId, attributes, children, symLinkTarget);
+                       @Nullable String symLinkTarget,
+                       boolean allChildren) {
+    this(UNKNOWN_ID_YET, nameId, attributes, children, symLinkTarget, allChildren);
   }
 
   public ChildInfoImpl(int fileId,
@@ -38,11 +40,21 @@ public final class ChildInfoImpl implements ChildInfo {
                        @Nullable FileAttributes attributes,
                        ChildInfo @Nullable [] children,
                        @Nullable String symLinkTarget) {
+    this(fileId, nameId, attributes, children, symLinkTarget, children != null);
+  }
+
+  public ChildInfoImpl(int fileId,
+                       int nameId,
+                       @Nullable FileAttributes attributes,
+                       ChildInfo @Nullable [] children,
+                       @Nullable String symLinkTarget,
+                       boolean allChildren) {
     this.attributes = null == attributes ? UNKNOWN : attributes;
     this.id = fileId;
     this.nameId = nameId;
     this.symLinkTarget = symLinkTarget;
     this.children = children;
+    this.allChildren = children != null && allChildren;
     if (fileId <= 0 && fileId != UNKNOWN_ID_YET) {
       int parentId = FSRecords.getInstance().getParent(fileId);
       throw new IllegalArgumentException("fileId is invalid: fileId=" + fileId + ", parentId=" + parentId + ", nameId=" + nameId);
@@ -79,6 +91,11 @@ public final class ChildInfoImpl implements ChildInfo {
   }
 
   @Override
+  public boolean isAllChildren() {
+    return allChildren;
+  }
+
+  @Override
   public @Nullable FileAttributes getFileAttributes() {
     return attributes == UNKNOWN ? null : attributes;
   }
@@ -97,24 +114,30 @@ public final class ChildInfoImpl implements ChildInfo {
     return PersistentFSImpl.fileAttributesToFlags(isDirectory, isWritable, isSymLink, isSpecial, isHidden, isCaseSensitivityKnown, isCaseSensitive);
   }
 
-  private ChildInfoImpl(FileAttributes attributes, int id, int nameId, String symLinkTarget, ChildInfo @Nullable [] children) {
+  private ChildInfoImpl(FileAttributes attributes,
+                        int id,
+                        int nameId,
+                        String symLinkTarget,
+                        ChildInfo @Nullable [] children,
+                        boolean allChildren) {
     this.attributes = attributes;
     this.id = id;
     this.nameId = nameId;
     this.symLinkTarget = symLinkTarget;
     this.children = children;
+    this.allChildren = children != null && allChildren;
   }
 
-  public @NotNull ChildInfo withChildren(ChildInfo @Nullable [] children) {
-    return new ChildInfoImpl(attributes, id, nameId, symLinkTarget, children);
+  public @NotNull ChildInfo withChildren(ChildInfo @Nullable [] children, boolean allChildren) {
+    return new ChildInfoImpl(attributes, id, nameId, symLinkTarget, children, allChildren);
   }
 
   public @NotNull ChildInfo withNameId(int nameId) {
-    return new ChildInfoImpl(attributes, id, nameId, symLinkTarget, children);
+    return new ChildInfoImpl(attributes, id, nameId, symLinkTarget, children, allChildren);
   }
 
   public @NotNull ChildInfo withId(int id) {
-    return new ChildInfoImpl(attributes, id, nameId, symLinkTarget, children);
+    return new ChildInfoImpl(attributes, id, nameId, symLinkTarget, children, allChildren);
   }
 
   @Override
@@ -125,19 +148,21 @@ public final class ChildInfoImpl implements ChildInfo {
     ChildInfoImpl info = (ChildInfoImpl)o;
     return id == info.id &&
            nameId == info.nameId &&
+           allChildren == info.allChildren &&
            Objects.equals(symLinkTarget, info.symLinkTarget) &&
            Arrays.equals(children, info.children);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), id, nameId, symLinkTarget, Arrays.hashCode(children));
+    return Objects.hash(super.hashCode(), id, nameId, symLinkTarget, Arrays.hashCode(children), allChildren);
   }
 
   @Override
   public String toString() {
     return "\"" + (nameId > 0 ? getName() : "?") + "\"; nameId: " + nameId + "; id: " + id +
            " (" + (attributes == UNKNOWN ? "unknown" : attributes.toString()) + ")" +
-           (children == null ? "" : "\n  " + StringUtil.join(children, info -> info.toString().replaceAll("\n", "\n  "), "\n  "));
+           (children == null ? "" : (allChildren ? "" : " (partial children)") +
+                                  "\n  " + StringUtil.join(children, info -> info.toString().replace("\n", "\n  "), "\n  "));
   }
 }

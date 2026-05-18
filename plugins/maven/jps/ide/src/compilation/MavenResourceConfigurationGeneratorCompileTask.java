@@ -4,7 +4,7 @@ package com.intellij.maven.jps.ide.compilation;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.server.BuildManager;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,6 +27,7 @@ import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenResource;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -59,23 +60,50 @@ public final class MavenResourceConfigurationGeneratorCompileTask implements Com
 
   @Override
   public boolean execute(@NotNull CompileContext context) {
-    ApplicationManager.getApplication().runReadAction(() -> generateBuildConfiguration(context.isRebuild(), context.getProject()));
+    generateBuildConfiguration(context.isRebuild(), context.getProject());
     return true;
   }
 
   private static void generateBuildConfiguration(boolean force, @NotNull Project project) {
-    MavenProjectsManager mavenProjectsManager = MavenProjectsManager.getInstance(project);
-    if (!mavenProjectsManager.isMavenizedProject()) {
-      return;
-    }
-
     final BuildManager buildManager = BuildManager.getInstance();
     File projectSystemIoFile = buildManager.getProjectSystemDirectory(project);
-
     final Path projectSystemDir = projectSystemIoFile.toPath();
-    RemotePathTransformerFactory.Transformer transformer = RemotePathTransformerFactory.createForProject(project);
     final Path mavenConfigFile = projectSystemDir.resolve(MavenProjectConfiguration.CONFIGURATION_FILE_RELATIVE_PATH);
+    final Path crcFile = mavenConfigFile.resolveSibling("configuration.crc");
 
+    CollectedConfiguration collected = ReadAction.computeBlocking(() -> collectConfiguration(force, project, crcFile));
+    if (collected == null) return;
+
+    final Element element = new Element("maven-project-configuration");
+    XmlSerializer.serializeInto(collected.projectConfig, element);
+
+    buildManager.runCommand(() -> {
+      if (!project.isDefault()) {
+        buildManager.clearState(project);
+      }
+      try {
+        JDOMUtil.write(element, mavenConfigFile);
+        try (DataOutputStream crcOutput = new DataOutputStream(
+          new BufferedOutputStream(Files.newOutputStream(crcFile, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)))) {
+          crcOutput.writeInt(collected.crc);
+        }
+      }
+      catch (IOException e) {
+        LOG.debug("Unable to write config file", e);
+        throw new RuntimeException(e);
+      }
+    });
+  }
+
+  private static @Nullable CollectedConfiguration collectConfiguration(boolean force,
+                                                                       @NotNull Project project,
+                                                                       @NotNull Path crcFile) {
+    MavenProjectsManager mavenProjectsManager = MavenProjectsManager.getInstance(project);
+    if (!mavenProjectsManager.isMavenizedProject()) {
+      return null;
+    }
+
+    RemotePathTransformerFactory.Transformer transformer = RemotePathTransformerFactory.createForProject(project);
     ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
     ProjectFileIndex fileIndex = projectRootManager.getFileIndex();
 
@@ -83,12 +111,10 @@ public final class MavenResourceConfigurationGeneratorCompileTask implements Com
     final int mavenConfigCrc = mavenProjectsManager.getFilterConfigCrc(fileIndex);
     final int crc = mavenConfigCrc + projectRootModificationCount;
 
-    final Path crcFile = mavenConfigFile.resolveSibling("configuration.crc");
-
     if (!force) {
       try (DataInputStream crcInput = new DataInputStream(Files.newInputStream(crcFile, StandardOpenOption.READ))) {
         final int lastCrc = crcInput.readInt();
-        if (lastCrc == crc) return; // Project had not changed since last config generation.
+        if (lastCrc == crc) return null; // Project had not changed since last config generation.
 
         LOG.debug(String.format(
           "project configuration changed: lastCrc = %d, currentCrc = %d, projectRootModificationCount = %d, mavenConfigCrc = %d",
@@ -105,26 +131,10 @@ public final class MavenResourceConfigurationGeneratorCompileTask implements Com
       new FilteredJarConfigGenerator(fileIndex, mavenProjectsManager, transformer, projectConfig, mavenProject).generateAdditionalJars();
     }
     addNonMavenResources(transformer, projectConfig, mavenProjectsManager, project);
-
-    final Element element = new Element("maven-project-configuration");
-    XmlSerializer.serializeInto(projectConfig, element);
-    buildManager.runCommand(() -> {
-      if (!project.isDefault()) {
-        buildManager.clearState(project);
-      }
-      try {
-        JDOMUtil.write(element, mavenConfigFile);
-        try (DataOutputStream crcOutput = new DataOutputStream(
-          new BufferedOutputStream(Files.newOutputStream(crcFile, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)))) {
-          crcOutput.writeInt(crc);
-        }
-      }
-      catch (IOException e) {
-        LOG.debug("Unable to write config file", e);
-        throw new RuntimeException(e);
-      }
-    });
+    return new CollectedConfiguration(projectConfig, crc);
   }
+
+  private record CollectedConfiguration(@NotNull MavenProjectConfiguration projectConfig, int crc) {}
 
   private static void addNonMavenResources(RemotePathTransformerFactory.Transformer transformer,
                                            @NotNull MavenProjectConfiguration projectCfg,

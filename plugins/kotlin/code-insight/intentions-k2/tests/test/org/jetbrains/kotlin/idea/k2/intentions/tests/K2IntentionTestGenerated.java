@@ -13296,11 +13296,6 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/moveOutOfCompanion/companionAsImplicitReceiver.kt");
         }
 
-        @TestMetadata("companionAsImplicitReceiverK2.kt")
-        public void testCompanionAsImplicitReceiverK2() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/moveOutOfCompanion/companionAsImplicitReceiverK2.kt");
-        }
-
         @TestMetadata("hasJvmFieldInInterface.kt")
         public void testHasJvmFieldInInterface() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveOutOfCompanion/hasJvmFieldInInterface.kt");

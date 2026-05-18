@@ -3,24 +3,31 @@ package com.intellij.openapi.roots.impl
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.AsyncFileListener.ChangeApplier
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
+import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
+import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.VfsTestUtil
@@ -28,11 +35,14 @@ import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.io.path.pathString
 
 @TestApplication
 @RunInEdt(writeIntent = true)
@@ -99,6 +109,60 @@ class NoIteratingUnderExcludedRootsTest {
     FileUtil.writeToFile(nioExcluded2.resolve("my.txt").toFile(), "")
     moduleRoot.refresh(false, true)
     checkIterate(moduleRoot, moduleRoot)
+  }
+
+  @Test
+  fun testRefreshLoadsContentRootUnderExcludedDirectoryRegisteredByUrl() {
+    val createdPath = moduleRoot.toNioPath().resolve("created")
+    val excludedPath = createdPath.resolve("excluded")
+    val contentRootPath = excludedPath.resolve("registeredContent")
+    val contentFilePath = contentRootPath.resolve("content.txt")
+    val nonContentFilePath = excludedPath.resolve("nonContent/ignored.txt")
+    val contentModule = projectModel.createModule("registeredContentModule")
+    registerContentRootUnderExcluded(contentModule, contentRootPath, excludedPath)
+
+    Files.createDirectories(contentRootPath)
+    Files.writeString(contentFilePath, "")
+    Files.createDirectories(nonContentFilePath.parent)
+    Files.writeString(nonContentFilePath, "")
+
+    moduleRoot.refresh(false, true)
+
+    val created = moduleRoot.findChild("created") ?: error("created directory wasn't loaded")
+    val excluded = created.findChild("excluded") ?: error("excluded directory wasn't loaded")
+    assertThat((excluded as VirtualFileSystemEntry).cachedChildren.map { it.name }).containsExactly("registeredContent")
+    val contentRoot = excluded.findChild("registeredContent") ?: error("content root under excluded directory wasn't loaded")
+    assertThat((contentRoot as VirtualFileSystemEntry).cachedChildren.map { it.name }).containsExactly("content.txt")
+  }
+
+  @Test
+  fun testRefreshLoadsContentRootsUnderExcludedDirectoryWithSharedAncestor() {
+    val createdPath = moduleRoot.toNioPath().resolve("created")
+    val excludedPath = createdPath.resolve("excluded")
+    val srcRootPath = excludedPath.resolve("a/src")
+    val resourcesRootPath = excludedPath.resolve("a/resources")
+    val skippedSiblingPath = excludedPath.resolve("a/tmp/ignored.txt")
+    val contentModule = projectModel.createModule("sharedAncestorContentModule")
+    registerContentRootsUnderExcluded(contentModule, excludedPath, srcRootPath, resourcesRootPath)
+
+    Files.createDirectories(srcRootPath)
+    Files.writeString(srcRootPath.resolve("Main.java"), "")
+    Files.createDirectories(resourcesRootPath)
+    Files.writeString(resourcesRootPath.resolve("strings.xml"), "")
+    Files.createDirectories(skippedSiblingPath.parent)
+    Files.writeString(skippedSiblingPath, "")
+
+    moduleRoot.refresh(false, true)
+
+    val created = moduleRoot.findChild("created") ?: error("created directory wasn't loaded")
+    val excluded = created.findChild("excluded") ?: error("excluded directory wasn't loaded")
+    assertThat((excluded as VirtualFileSystemEntry).cachedChildren.map { it.name }).containsExactly("a")
+    val sharedAncestor = excluded.findChild("a") ?: error("shared ancestor under excluded directory wasn't loaded")
+    assertThat((sharedAncestor as VirtualFileSystemEntry).cachedChildren.map { it.name }).containsExactlyInAnyOrder("src", "resources")
+    val srcRoot = sharedAncestor.findChild("src") ?: error("src content root under excluded directory wasn't loaded")
+    assertThat((srcRoot as VirtualFileSystemEntry).cachedChildren.map { it.name }).containsExactly("Main.java")
+    val resourcesRoot = sharedAncestor.findChild("resources") ?: error("resources content root under excluded directory wasn't loaded")
+    assertThat((resourcesRoot as VirtualFileSystemEntry).cachedChildren.map { it.name }).containsExactly("strings.xml")
   }
 
   private fun excludeIfCreateEvent(events: List<VFileEvent>, createdPathToExclude: Path) {
@@ -213,6 +277,26 @@ class NoIteratingUnderExcludedRootsTest {
       workspaceModel.updateProjectModel("exclude") {
         val virtualFileUrlManager = workspaceModel.getVirtualFileUrlManager()
         it.addEntity(ExcludeUrlEntity(folderToExclude.toVirtualFileUrl(virtualFileUrlManager), NonPersistentEntitySource))
+      }
+    }
+  }
+
+  private fun registerContentRootUnderExcluded(module: Module, contentRoot: Path, excludedRoot: Path): Unit =
+    registerContentRootsUnderExcluded(module, excludedRoot, contentRoot)
+
+  private fun registerContentRootsUnderExcluded(module: Module, excludedRoot: Path, vararg contentRoots: Path): Unit = WriteAction.run<Throwable> {
+    val workspaceModel = WorkspaceModel.getInstance(projectModel.project)
+    val virtualFileUrlManager = workspaceModel.getVirtualFileUrlManager()
+    workspaceModel.updateProjectModel("register content under excluded") { builder ->
+      builder.addEntity(ExcludeUrlEntity(virtualFileUrlManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(excludedRoot.pathString)),
+                                         NonPersistentEntitySource))
+      val moduleEntity = builder.resolve(ModuleId(module.name))!!
+      builder.modifyModuleEntity(moduleEntity) {
+        this.contentRoots += contentRoots.map { contentRoot ->
+          ContentRootEntity(virtualFileUrlManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(contentRoot.pathString)),
+                            emptyList<@NlsSafe String>(),
+                            moduleEntity.entitySource)
+        }
       }
     }
   }

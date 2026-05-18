@@ -1,0 +1,1 @@
+'b' in function c() will require class instance

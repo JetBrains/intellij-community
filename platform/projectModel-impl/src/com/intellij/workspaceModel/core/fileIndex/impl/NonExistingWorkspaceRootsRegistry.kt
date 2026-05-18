@@ -34,12 +34,20 @@ internal class NonExistingWorkspaceRootsRegistry(
   /** todo: replace by MostlySingularMultiMap to reduce memory usage  */
   private val nonExistingFiles = MultiMap.createConcurrent<VirtualFileUrl, NonExistingFileSetData>()
   
-  fun registerUrl(root: VirtualFileUrl, entity: WorkspaceEntity, storageKind: EntityStorageKind, fileSetKind: NonExistingFileSetKind) {
-    registerUrl(root, entity.createPointer(), storageKind, fileSetKind)
+  fun registerUrl(root: VirtualFileUrl,
+                  entity: WorkspaceEntity,
+                  storageKind: EntityStorageKind,
+                  fileSetKind: NonExistingFileSetKind,
+                  recursive: Boolean) {
+    registerUrl(root, entity.createPointer(), storageKind, fileSetKind, recursive)
   }
 
-  fun registerUrl(root: VirtualFileUrl, reference: EntityPointer<WorkspaceEntity>, storageKind: EntityStorageKind, fileSetKind: NonExistingFileSetKind) {
-    nonExistingFiles.putValue(root, NonExistingFileSetData(reference, storageKind, fileSetKind))
+  fun registerUrl(root: VirtualFileUrl,
+                  reference: EntityPointer<WorkspaceEntity>,
+                  storageKind: EntityStorageKind,
+                  fileSetKind: NonExistingFileSetKind,
+                  recursive: Boolean) {
+    nonExistingFiles.putValue(root, NonExistingFileSetData(reference, storageKind, fileSetKind, recursive))
   }
 
   fun unregisterUrl(fileUrl: VirtualFileUrl, entity: WorkspaceEntity, storageKind: EntityStorageKind) {
@@ -58,10 +66,12 @@ internal class NonExistingWorkspaceRootsRegistry(
     nonExistingFiles.remove(url)
   }
   
-  fun getFileSetKindsFor(url: VirtualFileUrl): Set<NonExistingFileSetKind> {
+  fun getFileSetKindsFor(url: VirtualFileUrl, includeNonRecursive: Boolean): Set<NonExistingFileSetKind> {
     val data = nonExistingFiles.get(url)
     if (data.isEmpty()) return emptySet()
-    return data.mapTo(EnumSet.noneOf(NonExistingFileSetKind::class.java)) { it.fileSetKind }
+    return data.mapNotNullTo(EnumSet.noneOf(NonExistingFileSetKind::class.java)) { fileSetData ->
+      fileSetData.fileSetKind.takeIf { includeNonRecursive || fileSetData.recursive }
+    }
   }
 
   private inline fun <K, V> MultiMap<K, V>.removeValueIf(key: K, crossinline valuePredicate: (V) -> Boolean) {
@@ -266,7 +276,8 @@ fun getOldAndNewUrls(event: VFileEvent): Pair<String, String> {
 internal data class NonExistingFileSetData(
   val reference: EntityPointer<WorkspaceEntity>,
   val storageKind: EntityStorageKind,
-  val fileSetKind: NonExistingFileSetKind
+  val fileSetKind: NonExistingFileSetKind,
+  val recursive: Boolean,
 )
 
 /**
@@ -274,9 +285,15 @@ internal data class NonExistingFileSetData(
  */
 enum class NonExistingFileSetKind {
   /**
-   * File set of [content][com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind.isContent]
+   * File set of [content][com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind.isContent] and
+   * [indexable][com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind.isIndexable]
    */                                
   INCLUDED_CONTENT,
+
+  /**
+   * File set of [content][com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind.isContent] kind which shouldn't be indexed
+   */
+  INCLUDED_CONTENT_NON_INDEXABLE,
 
   /**
    * File set of other kinds

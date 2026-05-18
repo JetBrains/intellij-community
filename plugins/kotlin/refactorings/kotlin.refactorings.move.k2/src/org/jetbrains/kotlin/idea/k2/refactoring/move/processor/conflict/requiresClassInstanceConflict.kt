@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.K2MoveRenameUsageInfo
@@ -12,7 +13,6 @@ import org.jetbrains.kotlin.idea.refactoring.pullUp.willBeMoved
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.psiUtil.containingClass
 
 internal fun checkRequiresClassInstanceConflict(
     usages: List<MoveRenameUsageInfo>,
@@ -27,7 +27,7 @@ internal fun checkRequiresClassInstanceConflict(
         val referencedElement = usage.upToDateReferencedElement as? KtNamedDeclaration ?: continue
         if (referencedElement is KtClass) continue
         val refElement = usage.element ?: continue
-        if ((refElement as? KtElement)?.containingClass() == targetClass) continue
+        if (isClassAvailableAsImplicitReceiver(refElement, targetClass)) continue
         if (!referencedElement.willBeMoved(allDeclarationsToMove)) continue
 
         val context = refElement.getUsageContext()
@@ -39,4 +39,13 @@ internal fun checkRequiresClassInstanceConflict(
         conflicts.putValue(refElement, message)
     }
     return conflicts
+}
+
+private fun isClassAvailableAsImplicitReceiver(usageElement: PsiElement, targetClass: KtClass): Boolean {
+    return usageElement is KtElement && analyze(usageElement) {
+        val targetClassSymbolClassId = targetClass.classSymbol?.classId ?: return@analyze false
+        collectImplicitReceiverTypes(usageElement).any { implicitReceiverType ->
+            implicitReceiverType.isSubtypeOf(targetClassSymbolClassId)
+        }
+    }
 }

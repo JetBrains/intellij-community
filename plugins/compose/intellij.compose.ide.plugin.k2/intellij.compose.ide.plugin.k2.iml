@@ -45,5 +45,9 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.codeInsight" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.analysis-api-k2" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.compose-compiler-plugin" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" />
+    <orderEntry type="module" module-name="intellij.gradle" />
+    <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" />
+    <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-compiler-fir" level="project" />
   </component>
 </module>

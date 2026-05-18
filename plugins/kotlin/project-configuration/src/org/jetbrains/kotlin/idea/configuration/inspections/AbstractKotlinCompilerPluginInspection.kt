@@ -10,15 +10,10 @@ import com.intellij.modcommand.ModCommandQuickFix
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.IncompleteModelUtil.isIncompleteModel
-import com.intellij.psi.util.CachedValue
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.indexing.DumbModeAccessType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
@@ -36,13 +31,11 @@ import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 
 abstract class AbstractKotlinCompilerPluginInspection(protected val kotlinCompilerPluginId: String): LocalInspectionTool() {
-    private val availabilityCacheKey: Key<CachedValue<Boolean>> = Key.create("${this.javaClass.simpleName}.availability.cache.key")
-
     protected fun compilerPluginProjectConfigurators(module: Module): List<KotlinCompilerPluginProjectConfigurator> =
         compilerPluginProjectConfigurators(kotlinCompilerPluginId, module)
 
     final override fun isAvailableForFile(file: PsiFile): Boolean =
-        isAvailableForFile(file, availabilityCacheKey) { file, module -> isAvailableForFileInModule(file, module) }
+        isAvailableForFile(file) { file, module -> isAvailableForFileInModule(file, module) }
 
     protected abstract fun isAvailableForFileInModule(ktFile: KtFile, module: Module): Boolean
 
@@ -111,32 +104,19 @@ abstract class AbstractKotlinCompilerPluginInspection(protected val kotlinCompil
         }
 
         @ApiStatus.Internal
-        fun isAvailableForFile(
-            file: PsiFile,
-            cacheKey: Key<CachedValue<Boolean>>,
-            isAvailableForFileInModule: (KtFile, Module) -> Boolean
-        ): Boolean {
+        fun isAvailableForFile(file: PsiFile, isAvailableForFileInModule: (KtFile, Module) -> Boolean): Boolean {
             val ktFile = (file as? KtFile)?.takeUnless { it.isCompiled } ?: return false
 
             if (isIncompleteModel(file)) return false
 
-            val project = file.project
-                    val module = ModuleUtilCore.findModuleForFile(ktFile) ?: return false
-            return CachedValuesManager.getManager(project).getCachedValue(
-                file,
-                cacheKey,
-                CachedValueProvider {
-                    val scope = module.getModuleWithDependenciesAndLibrariesScope(true)
-                    val hasKotlinJvmRuntime = DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
-                        scope.hasKotlinJvmRuntime(project)
-                    })
+            val module = ModuleUtilCore.findModuleForFile(ktFile) ?: return false
 
-                    CachedValueProvider.Result.create(
-                        hasKotlinJvmRuntime && isAvailableForFileInModule(ktFile, module),
-                        ProjectRootManager.getInstance(project)
-                    )
-                },
-                false)
+            val scope = module.getModuleWithDependenciesAndLibrariesScope(true)
+            val hasKotlinJvmRuntime = DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
+                scope.hasKotlinJvmRuntime(module.project)
+            })
+
+            return hasKotlinJvmRuntime && isAvailableForFileInModule(ktFile, module)
         }
     }
 

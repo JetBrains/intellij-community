@@ -2,14 +2,14 @@
 package com.intellij.platform.problemsView.frontend
 
 import com.intellij.analysis.problemsView.toolWindow.ProblemsViewState
-import com.intellij.analysis.problemsView.toolWindow.splitApi.isSplitProblemsViewProjectErrorsKeyEnabled
+import com.intellij.analysis.problemsView.toolWindow.splitApi.isSplitProblemsViewKeyEnabled
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.ui.content.Content
 
 internal class FrontendProjectErrorsProblemsContentProvider : FrontendProblemsViewContentProvider {
   override fun isAvailable(project: Project): Boolean {
-    return isSplitProblemsViewProjectErrorsKeyEnabled()
+    return isSplitProblemsViewKeyEnabled()
   }
 
   override fun initTabContent(project: Project, content: Content) {

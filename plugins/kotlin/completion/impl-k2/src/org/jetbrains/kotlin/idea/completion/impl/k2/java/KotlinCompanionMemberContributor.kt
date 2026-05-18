@@ -12,6 +12,7 @@ import com.intellij.codeInsight.completion.JavaSmartCompletionContributor
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.TypedLookupItem
 import com.intellij.codeInsight.lookup.VariableLookupItem
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -37,6 +38,14 @@ import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.utils.addIfNotNull
 
+/**
+ * A contributor responsible for providing completion of companion object members in **Java** files.
+ * In Java, the discoverability of Kotlin companion members is hindered by having to type `.Companion`
+ * to access the companion object instance and its members.
+ * This contributor provides a shortcut that will show elements of companion objects when just typing the
+ * name of the Kotlin class, similar to how it works in Kotlin.
+ * Upon completion, the qualifier for the companion object will be automatically added to the reference expression.
+ */
 internal class KotlinCompanionMemberContributor : CompletionContributor() {
     init {
         extend(
@@ -134,10 +143,12 @@ private object KotlinCompanionMemberCompletionProvider : CompletionProvider<Comp
         context: ProcessingContext,
         result: CompletionResultSet
     ) {
+        if (!Registry.`is`("kotlin.java.completion.companion.members", false)) return
+
         val parent = parameters.position.parent
         if (parent !is PsiReferenceExpression) return
-        val firstChild = parent.qualifierExpression as? PsiReferenceExpression ?: return
-        val resolvedElement = firstChild.resolve() ?: return
+        val qualifierExpression = parent.qualifierExpression as? PsiReferenceExpression ?: return
+        val resolvedElement = qualifierExpression.resolve() ?: return
         val ktClass = (resolvedElement as? KtLightElement<*, *>)?.kotlinOrigin as? KtClassOrObject ?: return
 
         val companionObject = ktClass.companionObjects.firstOrNull() ?: return

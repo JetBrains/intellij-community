@@ -605,7 +605,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         //         -- what's the point?
         ChildInfo newChild = justCreated.computeIfAbsent(
           newChildName,
-          _newChildName -> makeChildRecord(dir, dirId, _newChildName, childData, fs, null)
+          _newChildName -> makeChildRecord(dir, dirId, _newChildName, childData, fs, null, false)
         );
         childrenToAdd.add(newChild);
       }
@@ -634,7 +634,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       //MAYBE RC: duplicates may indicate wrongly-detected dir.caseSensitivity -- so we should consider re-detect it?
       ChildInfo newChild = justCreated.computeIfAbsent(
         newChildName,
-        _newChildName -> makeChildRecord(dir, dirId, _newChildName, childData, fs, null)
+        _newChildName -> makeChildRecord(dir, dirId, _newChildName, childData, fs, null, false)
       );
       childrenToAdd.add(newChild);
     }
@@ -839,7 +839,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       }
 
       if (child == null) {
-        child = makeChildRecord(parent, parentId, canonicalName, childData, fs, null);
+        child = makeChildRecord(parent, parentId, canonicalName, childData, fs, null, false);
         foundChildRef.set(child);
         return children.insert(child);
       }
@@ -1858,7 +1858,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       Pair<@NotNull FileAttributes, String> childData =
         getChildData(fs, createEvent.getParent(), name, createEvent.getAttributes(), createEvent.getSymlinkTarget());
       if (childData != null) {
-        ChildInfo child = makeChildRecord(parent, parentId, name, childData, fs, createEvent.getChildren());
+        ChildInfo child = makeChildRecord(parent, parentId, name, childData, fs, createEvent.getChildren(), createEvent.isAllChildren());
         childrenAdded.add(child);
       }
     }
@@ -1881,12 +1881,13 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       // todo avoid expensive findFile
       VirtualFile createdDir = createEvent.getFile();
       if (createdDir instanceof VirtualDirectoryImpl) {
-        Queue<Pair<VirtualDirectoryImpl, ChildInfo[]>> queue = new ArrayDeque<>();
-        queue.add(new Pair<>((VirtualDirectoryImpl)createdDir, children));
+        record ScannedChildren(VirtualDirectoryImpl directory, ChildInfo[] children, boolean allChildren) { }
+        Queue<ScannedChildren> queue = new ArrayDeque<>();
+        queue.add(new ScannedChildren((VirtualDirectoryImpl)createdDir, children, createEvent.isAllChildren()));
         while (!queue.isEmpty()) {
-          Pair<VirtualDirectoryImpl, ChildInfo[]> queued = queue.remove();
-          VirtualDirectoryImpl directory = queued.first;
-          List<ChildInfo> scannedChildren = Arrays.asList(queued.second);
+          ScannedChildren queued = queue.remove();
+          VirtualDirectoryImpl directory = queued.directory();
+          List<ChildInfo> scannedChildren = Arrays.asList(queued.children());
           int directoryId = directory.getId();
           List<ChildInfo> added = new ArrayList<>(scannedChildren.size());
           for (ChildInfo childInfo : scannedChildren) {
@@ -1894,22 +1895,21 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
             Pair<@NotNull FileAttributes, String> childData =
               getChildData(fs, directory, childName.toString(), childInfo.getFileAttributes(), childInfo.getSymlinkTarget());
             if (childData != null) {
-              added.add(makeChildRecord(directory, directoryId, childName, childData, fs, childInfo.getChildren()));
+              added.add(makeChildRecord(directory, directoryId, childName, childData, fs, childInfo.getChildren(), childInfo.isAllChildren()));
             }
           }
 
           added.sort(ChildInfo.BY_ID);
-          // set "all children cached" because the first "fileCreated" listener (looking at you, local history)
-          // will call getChildren() anyway, beyond a shadow of a doubt
+          // set "all children cached" only when the scanned list is complete; partial lists must stay partial
           vfsPeer.update(
             directory, directoryId,
             oldChildren -> oldChildren.merge(vfsPeer, added, isCaseSensitive),
-            /*setAllChildrenCached: */ true
+            /*setAllChildrenCached: */ queued.allChildren()
           );
-          directory.initializeAndAddChildren(added, /*allChildrenLoaded: */ true, (childCreated, childInfo) -> {
+          directory.initializeAndAddChildren(added, /*allChildrenLoaded: */ queued.allChildren(), (childCreated, childInfo) -> {
             // enqueue recursive children
             if (childCreated instanceof VirtualDirectoryImpl && childInfo.getChildren() != null) {
-              queue.add(new Pair<>((VirtualDirectoryImpl)childCreated, childInfo.getChildren()));
+              queue.add(new ScannedChildren((VirtualDirectoryImpl)childCreated, childInfo.getChildren(), childInfo.isAllChildren()));
             }
           });
         }
@@ -2601,7 +2601,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         ChildInfo duplicate = findExistingChildInfo(children.children, name, parent.isCaseSensitive());
         if (duplicate != null) return children;
 
-        insertedChildInfo = makeChildRecord(parent, parentId, name, childData, fs, null);
+        insertedChildInfo = makeChildRecord(parent, parentId, name, childData, fs, null, false);
         return children.insert(insertedChildInfo);
       }
     }
@@ -2629,7 +2629,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                                              @NotNull CharSequence name,
                                              @NotNull Pair<@NotNull FileAttributes, String> childData,
                                              @NotNull NewVirtualFileSystem fs,
-                                             @NotNull ChildInfo @Nullable [] children) {
+                                             @NotNull ChildInfo @Nullable [] children,
+                                             boolean allChildren) {
     assert parentId > 0 : parentId; // 0 means it's root => should use .writeRootFields() instead
 
     FileAttributes attributes = childData.first;
@@ -2642,7 +2643,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       vfsPeer.loadDirectoryData(newChildId, parentFile, name, fs);
     }
 
-    return new ChildInfoImpl(newChildId, nameId, attributes, children, symLinkTarget);
+    return new ChildInfoImpl(newChildId, nameId, attributes, children, symLinkTarget, allChildren);
   }
 
   /**

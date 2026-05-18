@@ -2,7 +2,7 @@
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.analysis.problemsView.toolWindow.splitApi.actions.setupEmptyStatusActions
-import com.intellij.analysis.problemsView.toolWindow.splitApi.isSplitProblemsViewProjectErrorsKeyEnabled
+import com.intellij.analysis.problemsView.toolWindow.splitApi.isSplitProblemsViewKeyEnabled
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 
@@ -10,7 +10,7 @@ import org.jetbrains.annotations.ApiStatus
 class ProblemsViewProjectErrorsPanelProvider(private val project: Project) : ProblemsViewPanelProvider {
 
   override fun create(): ProblemsViewTab? {
-    if (isSplitProblemsViewProjectErrorsKeyEnabled()) return null
+    if (isSplitProblemsViewKeyEnabled()) return null
 
     val state = ProblemsViewState.getInstance(project)
     val panel = ProblemsViewPanel(project,

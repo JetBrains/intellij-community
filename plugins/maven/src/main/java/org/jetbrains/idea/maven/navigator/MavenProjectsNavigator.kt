@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.navigator
 
+import com.intellij.execution.RunManager
 import com.intellij.execution.RunManagerListener
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.icons.AllIcons
@@ -18,6 +19,7 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -418,6 +420,11 @@ class MavenProjectsNavigator(project: Project) : MavenSimpleProjectComponent(
             initStructure()
             TreeState.createFrom(myState.treeState).applyTo(myTree!!)
           }
+
+        // Ensure RunManager is initialized off-EDT — the tree update path
+        // (RunConfigurationsNode.updateRunConfigurations) queries it and would
+        // otherwise trigger blocking service init on EDT.
+        project.serviceAsync<RunManager>()
 
         r.run()
       }
