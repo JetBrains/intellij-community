@@ -14,7 +14,7 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.TestApplicationManager;
 import com.intellij.testFramework.Timings;
 import com.intellij.testFramework.UITestUtil;
-import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.common.TestEnvironmentKt;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
@@ -45,13 +45,14 @@ import java.util.prefs.Preferences;
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "JavadocReference"})
 public class JUnit5TestSessionListener implements LauncherSessionListener {
   private final boolean includeFirstLast = !"true".equals(System.getProperty("intellij.build.test.ignoreFirstAndLastTests")) &&
-                                           UsefulTestCase.IS_UNDER_TEAMCITY;
+                                           System.getenv("TEAMCITY_VERSION") != null;
 
   private final List<Throwable> caughtExceptions = new ArrayList<>();
 
   @ReviseWhenPortedToJDK("13")
   @Override
   public void launcherSessionOpened(LauncherSession session) {
+    TestEnvironmentKt.initializeTestEnvironment();
     if (!includeFirstLast) return;
     session.getLauncher().registerTestExecutionListeners(new FirstAndLastInSuiteTestExecutionListener(caughtExceptions));
   }
