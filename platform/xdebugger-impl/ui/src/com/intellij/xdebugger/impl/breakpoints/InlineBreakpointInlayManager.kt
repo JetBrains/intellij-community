@@ -68,8 +68,10 @@ class InlineBreakpointInlayManager(private val project: Project, parentScope: Co
 
   private fun areInlineBreakpointsEnabled(virtualFile: VirtualFile?) = XDebuggerUtil.areInlineBreakpointsEnabled(virtualFile)
 
-  private fun areInlineBreakpointsEnabled(document: Document) =
-    areInlineBreakpointsEnabled(FileDocumentManager.getInstance().getFile(document))
+  private fun areInlineBreakpointsEnabled(document: Document): Boolean {
+    val virtualFile = FileDocumentManager.getInstance().getFile(document) ?: return false
+    return areInlineBreakpointsEnabled(virtualFile)
+  }
 
   // Breakpoints are modified without borrowing the write lock,
   // so we have to manually track their modifications to prevent races
@@ -122,21 +124,23 @@ class InlineBreakpointInlayManager(private val project: Project, parentScope: Co
    * This request might be merged with subsequent requests for the same location.
    */
   private fun redrawLineQueued(document: Document, line: Int) {
-    if (!areInlineBreakpointsEnabled(document)) return
     redrawQueue.queue(RedrawRequest(document, line, null))
   }
 
   fun redrawDocument(e: DocumentEvent) {
     val document = e.document
-    val file = FileDocumentManager.getInstance().getFile(document)
-    if (file == null) return
-    if (!XDebuggerUtil.areInlineBreakpointsEnabled(file)) return
+    if (!areInlineBreakpointsEnabled(document)) return
     val firstLine: Int = document.getLineNumber(e.offset)
     val lastLine: Int = document.getLineNumber(e.offset + e.newLength)
     redrawLineQueued(document, firstLine)
     if (lastLine != firstLine) {
       redrawLineQueued(document, lastLine)
     }
+  }
+
+  fun redrawDocument(document: Document) {
+    if (!areInlineBreakpointsEnabled(document)) return
+    redrawQueue.queue(RedrawRequest(document, null, null))
   }
 
   /**

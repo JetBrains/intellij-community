@@ -34,6 +34,8 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicReference
 
 internal enum class RegistrationStatus {
@@ -308,7 +310,18 @@ internal class FrontendXLineBreakpointProxy(
   override fun toString(): String {
     return this::class.simpleName + "(id=$id, type=${type.id}, line=${getLine()}, file=${getFileUrl()})"
   }
+
+  @TestOnly
+  internal fun installRangeMarkerForTest(rangeMarker: RangeMarker) {
+    visualRepresentation.installRangeMarkerForTest(rangeMarker)
+  }
 }
 
 private val UNAVAILABLE_RANGE = TextRangeDto(-1, -1)
 private fun XLineBreakpointInfo.invalidateHighlightingRangeOrNull() = if (highlightingRange == null) null else UNAVAILABLE_RANGE
+
+@ApiStatus.Internal
+@TestOnly
+fun installRangeMarkerForTest(breakpoint: XLineBreakpointProxy, rangeMarker: RangeMarker) {
+  (breakpoint as FrontendXLineBreakpointProxy).installRangeMarkerForTest(rangeMarker)
+}

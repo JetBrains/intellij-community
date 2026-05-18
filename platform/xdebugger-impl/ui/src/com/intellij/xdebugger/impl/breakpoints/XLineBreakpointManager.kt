@@ -24,8 +24,8 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
+import com.intellij.openapi.editor.event.BulkAwareDocumentListener
 import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseEventArea
 import com.intellij.openapi.editor.event.EditorMouseListener
@@ -71,8 +71,8 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement
 import com.intellij.xdebugger.impl.actions.ToggleLineBreakpointAction
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
@@ -393,17 +393,27 @@ class XLineBreakpointManager(
     breakpointUpdateQueue.sendFlush()
   }
 
-  private inner class MyDocumentListener : DocumentListener {
-    override fun documentChanged(e: DocumentEvent) {
-      val document = e.document
-      val breakpoints = getDocumentBreakpointProxies(document)
-      if (!breakpoints.isEmpty()) {
-        // Update position immediately to avoid races with doUpdateUI
-        breakpoints.forEach { it.fastUpdatePosition() }
-        scheduleDocumentUpdate(document)
-
+  private inner class MyDocumentListener : BulkAwareDocumentListener {
+    override fun documentChangedNonBulk(e: DocumentEvent) {
+      if (processDocumentChange(e.document)) {
         InlineBreakpointInlayManager.getInstance(project).redrawDocument(e)
       }
+    }
+
+    override fun bulkUpdateFinished(document: Document) {
+      if (processDocumentChange(document)) {
+        InlineBreakpointInlayManager.getInstance(project).redrawDocument(document)
+      }
+    }
+
+    private fun processDocumentChange(document: Document): Boolean {
+      val breakpoints = getDocumentBreakpointProxies(document)
+      if (breakpoints.isEmpty()) return false
+
+      // Update position immediately to avoid races with doUpdateUI
+      breakpoints.forEach { it.fastUpdatePosition() }
+      scheduleDocumentUpdate(document)
+      return true
     }
   }
 

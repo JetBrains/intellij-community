@@ -48,6 +48,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.awt.Cursor
 import java.awt.dnd.DnDConstants
 import java.awt.dnd.DragSource
@@ -315,6 +316,11 @@ class XBreakpointVisualRepresentation(
       return existing == null || existing == myBreakpoint
     }
     return false
+  }
+
+  @TestOnly
+  fun installRangeMarkerForTest(rangeMarker: RangeMarker) {
+    this.rangeMarker = rangeMarker
   }
 
   companion object {
