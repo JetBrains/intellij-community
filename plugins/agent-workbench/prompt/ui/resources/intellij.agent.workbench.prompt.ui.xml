@@ -13,6 +13,10 @@
   <resource-bundle>messages.AgentPromptBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="agent.workbench.prompt.double.ctrl.enabled"
+                 defaultValue="true"
+                 description="Open the Agent Workbench global prompt on double Ctrl (and Alt + double Ctrl for the auto-select variant)."
+                 restartRequired="true"/>
     <agent.workbench.promptManualContextSource implementation="com.intellij.agent.workbench.prompt.ui.context.AgentPromptProjectPathsManualContextSource"/>
     <agent.workbench.promptManualContextSource implementation="com.intellij.agent.workbench.prompt.ui.context.uiPicker.AgentPromptUIContextManualContextSource"/>
     <agent.workbench.promptManualContextSource implementation="com.intellij.agent.workbench.prompt.ui.context.screenCapture.AgentPromptScreenCaptureManualContextSource"/>

@@ -10,8 +10,11 @@ import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.util.messages.MessageBusConnection
 import java.awt.event.KeyEvent
+
+internal const val AGENT_WORKBENCH_PROMPT_DOUBLE_CTRL_REGISTRY_KEY: String = "agent.workbench.prompt.double.ctrl.enabled"
 
 internal const val AGENT_WORKBENCH_GLOBAL_PROMPT_ACTION_ID: String = "AgentWorkbenchPrompt.OpenGlobalPalette"
 internal const val AGENT_WORKBENCH_GLOBAL_PROMPT_AUTO_SELECT_ACTION_ID: String = "AgentWorkbenchPrompt.OpenGlobalPaletteAutoSelect"
@@ -20,9 +23,13 @@ internal const val RUN_ANYTHING_ACTION_ID: String = "RunAnything"
 internal class AgentWorkbenchGlobalPromptShortcutCustomizer : DynamicActionConfigurationCustomizer,
                                                                ActionConfigurationCustomizer.LightCustomizeStrategy {
   override suspend fun customize(actionRegistrar: ActionRuntimeRegistrar) {
-    if (actionRegistrar.getActionOrStub(AGENT_WORKBENCH_GLOBAL_PROMPT_ACTION_ID) != null) {
-      AgentWorkbenchGlobalPromptShortcutInstaller.installFromActionConfiguration()
+    if (actionRegistrar.getActionOrStub(AGENT_WORKBENCH_GLOBAL_PROMPT_ACTION_ID) == null) {
+      return
     }
+    if (!RegistryManager.getInstanceAsync().get(AGENT_WORKBENCH_PROMPT_DOUBLE_CTRL_REGISTRY_KEY).asBoolean()) {
+      return
+    }
+    AgentWorkbenchGlobalPromptShortcutInstaller.installFromActionConfiguration()
   }
 
   override fun unregisterActions(actionManager: ActionManager) {
