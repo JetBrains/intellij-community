@@ -165,7 +165,7 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
   }
 
   public List<HighlightInfo> getHighlights() {
-    clearLineMarkers(myEditor);
+    clearMyLineMarkers(myEditor);
 
     int count = myPairsToHighlight.size();
     List<HighlightInfo> highlightInfos = new ArrayList<>(count * 2);
@@ -216,7 +216,7 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
     return highlightInfos;
   }
 
-  private static void clearLineMarkers(Editor editor) {
+  private static void clearMyLineMarkers(@NotNull Editor editor) {
     List<RangeHighlighter> oldHighlighters = editor.getUserData(TAG_TREE_HIGHLIGHTERS_IN_EDITOR_KEY);
 
     if (oldHighlighters != null) {
@@ -298,6 +298,6 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
       }
     }
 
-    clearLineMarkers(editor);
+    clearMyLineMarkers(editor);
   }
 }
