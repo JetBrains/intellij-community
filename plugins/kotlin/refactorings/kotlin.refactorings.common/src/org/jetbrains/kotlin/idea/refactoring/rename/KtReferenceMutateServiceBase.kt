@@ -76,7 +76,7 @@ abstract class KtReferenceMutateServiceBase : KtReferenceMutateService {
         return bindToFqName(simpleNameReference, fqName, shorteningMode, element)
     }
 
-    protected fun KtSimpleReference<KtNameReferenceExpression>.getAdjustedNewName(newElementName: String): Name? {
+    protected fun KtReference.getAdjustedNewName(newElementName: String): Name? {
         val newNameAsName = Name.identifier(newElementName)
         val newName = if (JvmAbi.isGetterName(newElementName)) {
             propertyNameByGetMethodName(newNameAsName)
@@ -86,24 +86,25 @@ abstract class KtReferenceMutateServiceBase : KtReferenceMutateService {
             //TODO: setIsY -> setIsIsY bug
             propertyNameBySetMethodName(
               newNameAsName,
-              withIsPrefix = expression.getReferencedName().startsWith("is")
+              withIsPrefix = element.text.startsWith("is")
             )
         }
         else null
         return newName
     }
 
-    protected fun KtSimpleReference<KtNameReferenceExpression>.renameToOrdinaryMethod(newElementName: String): KtElement? {
-        val psiFactory = KtPsiFactory(expression.project)
+    protected fun KtReference.renameToOrdinaryMethod(newElementName: String): KtElement? {
+        val psiFactory = KtPsiFactory(element.project)
+        val expression = element as? KtExpression ?: return null
         val isGetterRename = isKotlinAwareJavaGetterRename(this)
 
-        val newGetterName = if (isGetterRename) newElementName else JvmAbi.getterName(expression.getReferencedName())
+        val newGetterName = if (isGetterRename) newElementName else JvmAbi.getterName(expression.text)
 
         if (expression.readWriteAccess(false) == ReferenceAccess.READ) {
             return expression.replaced(expression.createCall(psiFactory, newGetterName))
         }
 
-        val newSetterName = if (isGetterRename) JvmAbi.setterName(expression.getReferencedName()) else newElementName
+        val newSetterName = if (isGetterRename) JvmAbi.setterName(expression.text) else newElementName
 
         val fullExpression = expression.getQualifiedExpressionForSelectorOrThis()
         fullExpression.getAssignmentByLHS()?.let { assignment ->
@@ -150,7 +151,7 @@ abstract class KtReferenceMutateServiceBase : KtReferenceMutateService {
         return expression
     }
 
-    abstract fun KtSimpleReference<KtNameReferenceExpression>.suggestVariableName(expr: KtExpression, context: PsiElement): String
+    abstract fun KtReference.suggestVariableName(expr: KtExpression, context: PsiElement): String
 
     private fun KtExpression.createCall(
         psiFactory: KtPsiFactory,

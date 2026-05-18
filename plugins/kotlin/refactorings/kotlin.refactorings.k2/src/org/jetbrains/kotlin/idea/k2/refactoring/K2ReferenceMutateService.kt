@@ -75,7 +75,6 @@ import org.jetbrains.kotlin.util.OperatorNameConventions
  * At the moment, this implementation of [KtReferenceMutateService] is not able to do some of the
  * required operations. It is OK and on purpose - this functionality will be added later.
  */
-@Suppress("UNCHECKED_CAST")
 internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
     companion object {
         private val ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE_NAME: Name = Name.identifier(ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE)
@@ -431,7 +430,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         return replaced(newOperator)
     }
 
-    override fun KtSimpleReference<KtNameReferenceExpression>.suggestVariableName(
+    override fun KtReference.suggestVariableName(
         expr: KtExpression,
         context: PsiElement
     ): String {
@@ -451,9 +450,9 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
                 analyze(ktReference.element) {
                     val symbol = ktReference.resolveToSymbol()
                     if (symbol is KaSyntheticJavaPropertySymbol) {
-                        val newName = (ktReference as? KtSimpleReference<KtNameReferenceExpression>)?.getAdjustedNewName(newElementName)
+                        val newName = ktReference.getAdjustedNewName(newElementName)
                         if (newName == null) {
-                            return (ktReference as? KtSimpleReference<KtNameReferenceExpression>)?.renameToOrdinaryMethod(newElementName)
+                            return ktReference.renameToOrdinaryMethod(newElementName)
                         } else {
                             return super.handleElementRename(ktReference, newName.asString())
                         }

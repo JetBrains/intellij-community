@@ -111,7 +111,7 @@ class K1ReferenceMutateService : KtReferenceMutateServiceBase() {
         return renameByPropertyName(newName.identifier)
     }
 
-    override fun KtSimpleReference<KtNameReferenceExpression>.suggestVariableName(expr: KtExpression, context: PsiElement): String {
+    override fun KtReference.suggestVariableName(expr: KtExpression, context: PsiElement): String {
         val anchor = expr.parent.parentsWithSelf.firstOrNull { it.parent == context }
         val validator = Fe10KotlinNewDeclarationNameValidator(
             context,
