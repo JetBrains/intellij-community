@@ -6,6 +6,7 @@ Tests handling of Enum class definitions using the class syntax.
 
 from enum import Enum, EnumType
 from typing import Literal, assert_type
+import sys
 
 # > Type checkers should support the class syntax
 
@@ -73,3 +74,20 @@ class Color11(CustomEnum2):
 
 
 assert_type(Color11.RED, Literal[Color11.RED])
+
+# > Enum members may be conditional, via checks of the same
+# > statically-known conditions that a type-checker understands elsewhere,
+# > such as Python version:
+
+class Color12(Enum):
+    RED = 1
+    if sys.version_info >= (3, 12):
+        GREEN = 2
+    if sys.version_info >= (4, 0):
+        BLUE = 3
+
+# The conformance suite runs type checkers configured to Python 3.12 or later:
+assert_type(Color12.RED, Literal[Color12.RED])
+assert_type(Color12.GREEN, Literal[Color12.GREEN])
+Color12.BLUE  # E
+

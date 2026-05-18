@@ -5,6 +5,7 @@ Tests the class syntax for defining a TypedDict.
 # Specification: https://typing.readthedocs.io/en/latest/spec/typeddict.html#typeddict
 
 from typing import Generic, TypeVar, TypedDict
+import sys
 
 
 class Movie(TypedDict):
@@ -48,6 +49,20 @@ class BadTypedDict2(TypedDict, metaclass=type):  # E
 # This should generate an error because "other" is not an allowed keyword argument.
 class BadTypedDict3(TypedDict, other=True):  # E
     name: str
+
+# > `if` conditions that the type checker is able to
+# > statically evaluate are also permitted (e.g. `if sys.version_info > (3, 14)`),
+# > in order to specify items that exist only under the given conditions.
+class ConditionalField(TypedDict):
+    x: int
+    if sys.version_info >= (3, 12):
+        y: int
+    if sys.version_info >= (4, 0):
+        z: int
+
+# The conformance suite runs type checkers configured to Python 3.12 or later:
+ConditionalField(x=1, y=2)
+ConditionalField(x=1, y=2, z=3)  # E
 
 
 # > TypedDicts may be made generic by adding Generic[T] among the bases.

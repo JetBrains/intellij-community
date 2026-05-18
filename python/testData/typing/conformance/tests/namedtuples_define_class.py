@@ -7,6 +7,7 @@ Tests NamedTuple definitions using the class syntax.
 # > Type checkers should support the class syntax
 
 from typing import Generic, NamedTuple, TypeVar, assert_type
+import sys
 
 
 class Point(NamedTuple):
@@ -104,6 +105,20 @@ assert_type(pn1.name, str)
 class BadPointWithName(Point):
     name: str = ""  # OK
     x: int = 0  # E
+
+# > Namedtuple fields may be conditional, via checks of the same statically-known
+# > conditions that a type-checker understands elsewhere, such as Python version::
+
+class ConditionalField(NamedTuple):
+    x: int
+    if sys.version_info >= (3, 12):
+        y: int
+    if sys.version_info >= (4, 0):
+        z: int
+
+# The conformance suite runs type checkers configured to Python 3.12 or later:
+ConditionalField(1, 2)
+ConditionalField(1, 2, 3)  # E
 
 
 # > In Python 3.11 and newer, the class syntax supports generic named tuple classes.
