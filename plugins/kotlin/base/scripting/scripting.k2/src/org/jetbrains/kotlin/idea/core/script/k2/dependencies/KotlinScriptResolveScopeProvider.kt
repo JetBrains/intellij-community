@@ -40,12 +40,11 @@ class KotlinScriptResolveScopeProvider : ResolveScopeProvider() {
         // This is a workaround for completion in REPL to provide module dependencies
         if (scriptDefinition.baseClassType.fromClass == Any::class) return null
 
-        val featureEnabled = LanguageFeature.SkipStandaloneScriptsInSourceRoots.isEnabled(ktFile.module, project)
         val backwardCompatibilityIsOn = compilerAllowsAnyScriptsInSourceRoots(project)
 
-        ktFile.debugLog { "language-feature: ${featureEnabled}, backward-compatibility-flag: ${backwardCompatibilityIsOn}" }
+        ktFile.debugLog { "backward-compatibility-flag: ${backwardCompatibilityIsOn}" }
 
-        if (featureEnabled && !backwardCompatibilityIsOn) {
+        if (!backwardCompatibilityIsOn) {
             return ktFile.getScopeAccordingToLanguageFeature(file, project, scriptDefinition)
         }
 
@@ -58,8 +57,6 @@ class KotlinScriptResolveScopeProvider : ResolveScopeProvider() {
         project: Project,
         scriptDefinition: ScriptDefinition
     ): GlobalSearchScope? {
-        assert(LanguageFeature.SkipStandaloneScriptsInSourceRoots.isEnabled(module, project)) { "SkipStandaloneScriptsInSourceRoots is off" }
-
         return if (isStandaloneScriptByDesign(project, scriptDefinition)) {
             getScopeForStandaloneScript(file, project)
         } else {

@@ -11,13 +11,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.refactoring.move.MoveHandler
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
-import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_AWARE_SOURCE_ROOT_TYPES
-import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.core.script.v1.compilerAllowsAnyScriptsInSourceRoots
 import org.jetbrains.kotlin.idea.core.script.v1.hasNoExceptionsToBeUnderSourceRoot
-import org.jetbrains.kotlin.idea.core.script.v1.isEnabled
 import org.jetbrains.kotlin.idea.core.script.v1.isStandaloneKotlinScript
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.psi.KtFile
@@ -30,10 +27,7 @@ class ScriptingSupportChecker : EditorNotificationProvider {
     override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
         if (file.isNonScript()) return null
 
-        val ktFile = file.toKtFile(project) ?: return null
-        val featureEnabled = LanguageFeature.SkipStandaloneScriptsInSourceRoots.isEnabled(ktFile.module, project)
-
-        if (featureEnabled && !compilerAllowsAnyScriptsInSourceRoots(project)
+        if (!compilerAllowsAnyScriptsInSourceRoots(project)
             && file.isUnderSourceRoot(project)
             && (file.isStandaloneKotlinScript(project) && file.hasNoExceptionsToBeUnderSourceRoot())
         ) {
