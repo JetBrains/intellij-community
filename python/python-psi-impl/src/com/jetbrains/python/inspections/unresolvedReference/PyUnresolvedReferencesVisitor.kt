@@ -208,7 +208,7 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
     }
     else if (reference is PyImportReference &&
              target is PsiFile && target === reference.element.containingFile &&
-             !isContainingFileImportAllowed(node, target)) {
+             !isReExportInPackageInit(node, target)) {
       registerProblem(node, PyPsiBundle.message("INSP.unresolved.refs.import.resolves.to.its.containing.file"))
     }
     else if (PyUnionType.isStrictSemanticsEnabled() && node is PyQualifiedExpression) {
@@ -245,7 +245,7 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
   private fun isAwaitCallToImportedNonAsyncFunction(reference: PsiReference): Boolean {
     val prefixExpression = reference.element as? PyPrefixExpression ?: return false
     if (PyNames.DUNDER_AWAIT != prefixExpression.operator.specialMethodName) return false
-    val callExpression = getReferenceQualifier(reference) as? PyCallExpression ?: return false
+    val callExpression = getReferenceQualifierOrImportSource(reference) as? PyCallExpression ?: return false
     val callees = callExpression.multiResolveCalleeFunction(PyResolveContext.defaultContext(myTypeEvalContext))
     if (callees.isEmpty()) return false
     for (callee in callees) {
@@ -318,7 +318,7 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
       }
 
       var markedQualified = false
-      val qualifier = getReferenceQualifier(reference)
+      val qualifier = getReferenceQualifierOrImportSource(reference)
       if (qualifier != null) {
         val type = replaceSelfWithItsScopeClass(myTypeEvalContext.getType(qualifier))
         if (type != null) {
@@ -512,7 +512,7 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
     return overridesGetAttr(cls, myTypeEvalContext) ||
            cls.findProperty(name, true, myTypeEvalContext) != null ||
            PyUtil.hasUnresolvedAncestors(cls, myTypeEvalContext) ||
-           isDecoratedAsDynamic(cls, true) ||
+           isDecoratedAsDynamic(cls) ||
            hasUnresolvedDynamicMember(type, reference, name, myTypeEvalContext) ||
            isAwaitOnGeneratorBasedCoroutine(name, reference, cls)
   }
@@ -552,25 +552,14 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
     }
   }
 
-  private fun isDecoratedAsDynamic(cls: PyClass, inherited: Boolean): Boolean {
-    if (inherited) {
-      if (isDecoratedAsDynamic(cls, false)) {
-        return true
-      }
-      for (base in cls.getAncestorClasses(myTypeEvalContext)) {
-        if (base != null && isDecoratedAsDynamic(base, false)) {
-          return true
-        }
-      }
-    }
-    else {
-      val docString = cls.docStringValue
-      if (docString != null && docString.contains("@DynamicAttrs")) {
-        return true
-      }
-    }
-    return false
+  private fun isDecoratedAsDynamic(cls: PyClass): Boolean {
+    if (hasDynamicAttrsDocstring(cls)) return true
+    return cls.getAncestorClasses(myTypeEvalContext)
+      .any { it != null && hasDynamicAttrsDocstring(it) }
   }
+
+  private fun hasDynamicAttrsDocstring(cls: PyClass): Boolean =
+    cls.docStringValue?.contains("@DynamicAttrs") == true
 
   private fun isAwaitOnGeneratorBasedCoroutine(name: String, reference: PsiReference, cls: PyClass): Boolean {
     if (PyNames.DUNDER_AWAIT == name &&
@@ -690,30 +679,18 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
       return null
     }
 
-    private fun isContainingFileImportAllowed(node: PyElement?, target: PsiFile): Boolean {
-      return PyImportStatementNavigator.getImportStatementByElement(node) == null && target.getName() == PyNames.INIT_DOT_PY
-    }
+    /** Self-imports inside `__init__.py` are a deliberate re-export pattern — not a "resolves to itself" warning. */
+    private fun isReExportInPackageInit(node: PyElement?, target: PsiFile): Boolean =
+      PyImportStatementNavigator.getImportStatementByElement(node) == null && target.name == PyNames.INIT_DOT_PY
 
-    private fun getReferenceQualifier(reference: PsiReference): PyExpression? {
-      val element = reference.getElement()
-
+    private fun getReferenceQualifierOrImportSource(reference: PsiReference): PyExpression? {
+      val element = reference.element
       if (element is PyQualifiedExpression) {
-        val qualifier = element.getQualifier()
-        if (qualifier != null) {
-          return qualifier
-        }
+        element.qualifier?.let { return it }
       }
-
       if (reference is PyFromImportNameReference) {
-        val statement = PsiTreeUtil.getParentOfType(element, PyFromImportStatement::class.java)
-        if (statement != null) {
-          val source = statement.importSource
-          if (source != null) {
-            return source
-          }
-        }
+        return PsiTreeUtil.getParentOfType(element, PyFromImportStatement::class.java)?.importSource
       }
-
       return null
     }
 
