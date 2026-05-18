@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.PluginManagerCore.isPlatformClass
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.lang.UrlClassLoader
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
@@ -120,4 +121,6 @@ object PluginUtils {
     }
     return null
   }
+
+  fun PluginId.asSanitizedPathElement(): String = sanitizeFileName(idString)
 }
