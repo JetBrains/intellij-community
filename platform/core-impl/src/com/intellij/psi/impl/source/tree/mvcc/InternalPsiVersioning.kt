@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.mvcc
 
+import com.intellij.concurrency.ExternalIntelliJContextElement
 import com.intellij.concurrency.IntelliJThreadContextElement
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
@@ -11,6 +12,7 @@ import com.intellij.openapi.application.WriteActionListener
 import com.intellij.openapi.application.WriteIntentReadActionListener
 import com.intellij.openapi.application.WriteLockReacquisitionListener
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
@@ -123,7 +125,7 @@ object InternalPsiVersioning {
 
   typealias PsiVersion = Long
 
-  private class PsiVersionWriteContextElement(val version: Long): IntelliJThreadContextElement<PsiVersion?>, ThreadContextElement<PsiVersion?> {
+  private class PsiVersionWriteContextElement(val version: Long): IntelliJThreadContextElement<PsiVersion?>, ExternalIntelliJContextElement, ThreadContextElement<PsiVersion?> {
     object Key : CoroutineContext.Key<PsiVersionWriteContextElement>
     override val key: CoroutineContext.Key<*> = Key
 
@@ -267,7 +269,7 @@ object InternalPsiVersioning {
 
   @VisibleForTesting
   @Internal
-  class PsiVersioningLockingListener : WriteActionListener, WriteLockReacquisitionListener<MutableList<AccessToken>>, ReadActionListener, WriteIntentReadActionListener {
+  class PsiVersioningLockingListener : WriteActionListener, WriteLockReacquisitionListener<Unit>, ReadActionListener, WriteIntentReadActionListener {
     override fun writeActionStarted(action: Class<*>) {
       val token = initWriteActionSection()
       cleanupTokenList.get().add(token)
@@ -277,19 +279,19 @@ object InternalPsiVersioning {
       cleanupVersioningSection()
     }
 
-    override fun beforeWriteLockTemporarilyReleased(): MutableList<AccessToken> {
-      val publishedVersion = PsiVersionRegistry.instance.latestPublishedVersion
-      PsiVersionRegistry.instance.incrementVersion(publishedVersion)
-      val currentCleanupTokenListData = cleanupTokenList.get()
-      cleanupTokenList.remove()
+    override fun beforeWriteLockTemporarilyReleased(): Unit {
+      writeActionFinished(Any::class.java) // we publish the incremented version here so that the published version is incremented
       // clear thread local reentrancy tracker, run writeActionStarted again
       writeActionStarted(Any::class.java)
-      return currentCleanupTokenListData
+      return
     }
 
-    override fun beforeWriteLockReacquired(list: MutableList<AccessToken>) {
+    override fun beforeWriteLockReacquired(data: Unit) {
+    }
+
+    override fun afterWriteLockReacquired(data: Unit) {
       writeActionFinished(Any::class.java)
-      cleanupTokenList.set(list)
+      writeActionStarted(Any::class.java)
     }
 
     override fun readActionStarted(action: Class<*>) {
@@ -342,8 +344,6 @@ object InternalPsiVersioning {
       @Suppress("DEPRECATION")
       val threadContextInstallation = installThreadContext(currentThreadContext() + PsiVersionWriteContextElement(newVersion), true)
       threadLocalVersioningTracker.set(newVersion)
-      // Intention actions and quick-fixes often create synthetic PSI elements and insert them to the main live tree.
-      // To support such use-case, we make all synthetic elements automatically versioned. This helps to avoid assertions about the mismatch of direct and versioned nodes.
       object : AccessToken() {
         override fun finish() {
           threadContextInstallation.finish()
@@ -359,7 +359,13 @@ object InternalPsiVersioning {
 
   fun initReadActionSection(): AccessToken {
     val latestVersion = PsiVersionRegistry.instance.latestPublishedVersion
-    val correctVersion = if (ApplicationManager.getApplication().isWriteAccessAllowed) latestVersion + 1 else latestVersion
+    val writeElementVersion = currentThreadContext()[PsiVersionWriteContextElement.Key]?.version
+    val correctVersion = when {
+      writeElementVersion != null -> writeElementVersion
+      // this condition can happen if we are in service initialization, where contexts are independent from the thread
+      ApplicationManager.getApplication().isWriteAccessAllowed -> latestVersion + 1
+      else -> latestVersion
+    }
     val value = threadLocalVersioningTracker.get()
     return if (value == null) {
       threadLocalVersioningTracker.set(correctVersion)
@@ -370,7 +376,7 @@ object InternalPsiVersioning {
       }
     } else {
       if (correctVersion != value) {
-        error("Read action expected to see version $correctVersion, but found $value")
+        thisLogger().error("Expected version $correctVersion, but found $value")
       }
       AccessToken.EMPTY_ACCESS_TOKEN
     }
