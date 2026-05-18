@@ -396,8 +396,8 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     // check if previous serialized state is the same as for value
     // this is much faster than myDataDescriptor.isEqualTo(valueOf(idx), value) for identical objects
     // TODO: key storage lock
-    final int addr = indexToAddr(idx);
     int addr = indexToAddr(idx);
+    //assert addr >= 0 : "addr(=" + addr + "), idx(=" + idx + ")";
 
     if (myKeyStorage.checkBytesAreTheSame(addr, value)) return true;
 
