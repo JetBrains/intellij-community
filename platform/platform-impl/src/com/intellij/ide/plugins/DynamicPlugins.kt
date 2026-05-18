@@ -65,7 +65,7 @@ object DynamicPlugins {
   ): Boolean {
     DynamicPluginsSupport.getInstance()?.let { instance ->
       return runWithModalProgressBlocking(
-        parentComponent?.let { ModalTaskOwner.component(it) } ?: project?.let { ModalTaskOwner.project(it) } ?: ModalTaskOwner.guess(),
+        project?.let { ModalTaskOwner.project(it) } ?: ModalTaskOwner.guess(),
         IdeBundle.message("modal.progress.title.unloading.plugins"),
         cancellation = TaskCancellation.nonCancellable()
       ) {
@@ -100,7 +100,7 @@ object DynamicPlugins {
                                options: UnloadPluginOptions): Boolean {
     DynamicPluginsSupport.getInstance()?.let { instance ->
       return runWithModalProgressBlocking(
-        parentComponent?.let { ModalTaskOwner.component(it) } ?: project?.let { ModalTaskOwner.project(it) } ?: ModalTaskOwner.guess(),
+        project?.let { ModalTaskOwner.project(it) } ?: ModalTaskOwner.guess(),
         IdeBundle.message("modal.progress.title.unloading.plugin", pluginDescriptor.name),
         cancellation = TaskCancellation.nonCancellable()
       ) {
