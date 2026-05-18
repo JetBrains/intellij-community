@@ -116,7 +116,7 @@ internal class DynamicPluginsSupportImpl(
           RuntimeModuleGroupAction.LOAD -> {
             validateProductRulesPermitLoading(step.runtimeModuleGroup)
               ?.let { return@withProgressText it }
-            validateGroupCanBeLoaded(step.runtimeModuleGroup)
+            validateGroupCanBeLoaded(step.runtimeModuleGroup, elementsModel)
               ?.let { return@withProgressText it }
 
             elementsModel.register(step.runtimeModuleGroup)
@@ -408,8 +408,15 @@ private object DynamicPluginsValidators {
     return null
   }
 
-  fun validateGroupCanBeLoaded(group: RuntimeModuleGroup): DynamicTransitionIsNotPossibleReason? {
-    return null // no checks right now
+  fun validateGroupCanBeLoaded(group: RuntimeModuleGroup, elementsModel: MutableAppElementsModel): DynamicTransitionIsNotPossibleReason? {
+    val validators: List<(IdeaPluginDescriptorImpl) -> DynamicTransitionIsNotPossibleReason?> = listOfNotNull(
+      { validateDescriptorHasAllExtensionsFromDynamicEPs(it, elementsModel) }
+    )
+    for (descriptor in group.sortedDescriptors) {
+      validators.firstNotNullOfOrNull { it(descriptor) }
+        ?.let { return it }
+    }
+    return null
   }
 
   fun validateGroupCanBeUnloaded(
@@ -579,13 +586,13 @@ private object DynamicPluginsValidators {
       val epResult = elementsModel.getExtensionPoint(epFqn)
       if (epResult == null) {
         return DynamicTransitionIsNotPossibleReason.of(
-          "${descriptor.shortLogDescription} cannot be unloaded dynamically because it uses extension point '$epFqn' which was not found."
+          "${descriptor.shortLogDescription} cannot be loaded/unloaded dynamically because it uses extension point '$epFqn' which was not found."
         )
       }
       val (source, ep) = epResult
       if (!ep.isDynamic) {
         return DynamicTransitionIsNotPossibleReason.of(
-          "${descriptor.shortLogDescription} cannot be unloaded dynamically because it uses non-dynamic extension point '$epFqn' from ${source.shortLogDescription}."
+          "${descriptor.shortLogDescription} cannot be loaded/unloaded dynamically because it uses non-dynamic extension point '$epFqn' from ${source.shortLogDescription}."
         )
       }
     }

@@ -140,6 +140,16 @@ object DynamicPlugins {
     return DynamicPluginsLegacyImpl.checkCanUnloadWithoutRestart(module)
   }
 
+  fun checkCanLoadWithoutRestart(plugin: PluginMainDescriptor): String? {
+    DynamicPluginsSupport.getInstance()?.let { instance ->
+      val newState = computeNewPluginsState(listOf(plugin), listOf())
+      return runBlockingMaybeCancellable {
+        instance.validateDynamicTransitionPossible(newState)?.reason?.logMessage
+      }
+    }
+    return DynamicPluginsLegacyImpl.checkCanUnloadWithoutRestart(plugin) // old impl always assumes unload :igor-dead-inside:
+  }
+
   /**
    * Checks if the plugin can be loaded/unloaded immediately when the corresponding action is invoked in the
    * plugins settings, without pressing the Apply button.

@@ -980,28 +980,33 @@ class DynamicPluginsTest {
   }
 
   @Test
-  fun canUnloadNestedOptionalDependency() {
-    val bar = plugin("bar") {
-      dependsIntellijModulesLang()
-      extensionPoints = """<extensionPoint qualifiedName="foo.barExtension" beanClass="com.intellij.util.KeyedLazyInstanceEP"/>"""
-    }
-    val quux = plugin("quux") { dependsIntellijModulesLang() }
-    val main = plugin("main") {
-      dependsIntellijModulesLang()
-      depends(bar.id!!, "bar.xml") {
-        dependsIntellijModulesLang()
-        depends(quux.id!!, "quux.xml") {
-          dependsIntellijModulesLang()
-          extensions("""<barExtension key="foo" implementationClass="y"/>""", "foo")
+  fun `loading of plugin with an extension of non-dynamic EP is prohibited`() {
+    val pluginSet = buildPluginSet(pluginsDir, configureClassLoaders = false) {
+      plugin("bar") {
+        extensionPoints = """<extensionPoint qualifiedName="foo.barExtension" beanClass="com.intellij.util.KeyedLazyInstanceEP"/>"""
+      }
+      plugin("quux") {}
+      plugin("main") {
+        depends("bar", "bar.xml") {
+          depends("quux", "quux.xml") {
+            extensions("""<barExtension key="foo" implementationClass="y"/>""", "foo")
+          }
         }
       }
     }
-    loadPluginWithText(bar).use {
-      loadPluginWithText(quux).use {
-        val descriptor = loadDescriptorInTest(main, pluginsDir)
-        setPluginClassLoaderForMainAndSubPlugins(descriptor, DynamicPluginsTest::class.java.classLoader)
-        assertThat(DynamicPlugins.checkCanUnloadWithoutRestart(descriptor)).isEqualTo(
-          "Plugin '${main.id}' is not unload-safe because of extension to non-dynamic EP 'foo.barExtension' in optional dependency on ${quux.id} in optional dependency on ${bar.id}")
+    val (bar, quux, main) = pluginSet.getEnabledPlugins("bar", "quux", "main")
+    loadPluginInTest(bar) {
+      loadPluginInTest(quux) {
+        if (isNewSupportEnabled()) {
+          assertThat(DynamicPlugins.checkCanLoadWithoutRestart(main)).isEqualTo(
+            "<depends> config 'quux.xml' of plugin main cannot be loaded/unloaded dynamically because it uses non-dynamic extension point 'foo.barExtension' from plugin 'bar' (bar, 262.SNAPSHOT)."
+          )
+        } else {
+          setPluginClassLoaderForMainAndSubPlugins(main, DynamicPluginsTest::class.java.classLoader)
+          assertThat(DynamicPlugins.checkCanLoadWithoutRestart(main)).isEqualTo(
+            "Plugin '${main.pluginId}' is not unload-safe because of extension to non-dynamic EP 'foo.barExtension' in optional dependency on ${quux.pluginId} in optional dependency on ${bar.pluginId}"
+          )
+        }
       }
     }
   }
@@ -1338,8 +1343,10 @@ class DynamicPluginsTest {
   }
 
   private fun assumeNewSupportEnabled() {
-    Assume.assumeTrue("new dynamic plugins support is enabled", DynamicPluginsSupport.getInstance() != null)
+    Assume.assumeTrue("new dynamic plugins support is enabled", isNewSupportEnabled())
   }
+
+  private fun isNewSupportEnabled(): Boolean = DynamicPluginsSupport.getInstance() != null
 }
 
 private class MyInspectionTool : GlobalInspectionTool()
