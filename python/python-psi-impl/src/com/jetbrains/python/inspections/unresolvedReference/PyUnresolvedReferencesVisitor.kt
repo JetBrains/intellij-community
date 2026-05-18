@@ -82,9 +82,9 @@ import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyClassMembersProvider
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyClassTypeImpl
+import com.jetbrains.python.psi.types.PyCompositeType
 import com.jetbrains.python.psi.types.PyFunctionTypeImpl
 import com.jetbrains.python.psi.types.PyImportedModuleType
-import com.jetbrains.python.psi.types.PyIntersectionType
 import com.jetbrains.python.psi.types.PyModuleType
 import com.jetbrains.python.psi.types.PySelfType
 import com.jetbrains.python.psi.types.PyStructuralType
@@ -95,7 +95,6 @@ import com.jetbrains.python.psi.types.PyTypeChecker.overridesGetAttr
 import com.jetbrains.python.psi.types.PyTypeUtil.toStream
 import com.jetbrains.python.psi.types.PyTypeVarType
 import com.jetbrains.python.psi.types.PyUnionType
-import com.jetbrains.python.psi.types.PyUnsafeUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import one.util.streamex.StreamEx
 import org.jetbrains.annotations.NonNls
@@ -483,87 +482,71 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
   }
 
   private fun ignoreUnresolvedMemberForType(type: PyType?, reference: PsiReference, name: String): Boolean {
-    if (type is PyTypeVarType) {
-      return type.bound == null && type.defaultType == null && type.getConstraints().isEmpty()
-    }
-    if (type is PyUnionType) {
-      if (PyUnionType.isStrictSemanticsEnabled()) {
-        // If strict unions are enabled, we should report an error even if a union contains Any, e.g. in
-        // x: int | Any
-        // x.foo()  # 'foo' access should be reported despite Any
-        return findStrictUnionMemberMissingAttribute(type, reference, name) == null
-      }
-      return type.members.any { ignoreUnresolvedMemberForType(it, reference, name) }
-    }
-    if (type is PyUnsafeUnionType) {
-      return type.members.any { ignoreUnresolvedMemberForType(it, reference, name) }
-    }
-    if (type is PyIntersectionType) {
-      return type.members.any { ignoreUnresolvedMemberForType(it, reference, name) }
-    }
-    if (isUnknown(type, myTypeEvalContext)) {
-      // this almost always means that we don't know the type, so don't show an error in this case
-      return true
-    }
-    if (type is PyStructuralType && type.isInferredFromUsages) {
-      return true
-    }
-    if (type is PyImportedModuleType) {
-      val module = type.importedModule
-      if (module.resolve() == null) {
-        return true
-      }
-    }
-    if (type is PyCustomType) {
-      // Skip custom member types that mimics another class with fuzzy parents
-      for (mimic in type.typesToMimic) {
-        if (mimic !is PyClassType) {
-          continue
-        }
-        if (PyUtil.hasUnresolvedAncestors(mimic.getPyClass(), myTypeEvalContext)) {
-          return true
-        }
-      }
-    }
-    if (type is PyClassType) {
-      val cls = type.getPyClass()
-      if (overridesGetAttr(cls, myTypeEvalContext)) {
-        return true
-      }
-      if (cls.findProperty(name, true, myTypeEvalContext) != null) {
-        return true
-      }
-      if (PyUtil.hasUnresolvedAncestors(cls, myTypeEvalContext)) {
-        return true
-      }
-      if (isDecoratedAsDynamic(cls, true)) {
-        return true
-      }
-      if (hasUnresolvedDynamicMember(type, reference, name, myTypeEvalContext)) return true
+    return when {
+      type is PyTypeVarType -> isUnboundedTypeVar(type)
+      type is PyUnionType -> isUnionMemberIgnored(type, reference, name)
+      type is PyCompositeType -> type.members.any { ignoreUnresolvedMemberForType(it, reference, name) }
 
-      if (isAwaitOnGeneratorBasedCoroutine(name, reference, cls)) return true
+      // Unknown / Any-ish types: do not emit anything, we have no information to be confident.
+      isUnknown(type, myTypeEvalContext) -> true
+
+      type is PyStructuralType && type.isInferredFromUsages -> true
+      type is PyImportedModuleType && type.importedModule.resolve() == null -> true
+      type is PyCustomType && hasUnclearClassParent(type) -> true
+      type is PyClassType && isDynamicClass(type, reference, name) -> true
+      type is PyFunctionTypeImpl && hasUnknownAttrsDecorator(type) -> true
+      type is PyModuleType && moduleDefinesGetAttr(type) -> true
+
+      type != null -> isIgnoredByExtension(type, name)
+      else -> false
     }
-    if (type is PyFunctionTypeImpl) {
-      val callable = type.callable
-      if (callable is PyFunction &&
-          PyKnownDecoratorUtil.hasUnknownOrUpdatingAttributesDecorator(callable, myTypeEvalContext)
-      ) {
-        return true
-      }
-    }
-    if (type is PyModuleType) {
-      val module = type.module
-      if (module.languageLevel.isAtLeast(LanguageLevel.PYTHON37)) {
-        return definesGetAttr(module, myTypeEvalContext)
-      }
-    }
-    for (extension in PyInspectionExtension.EP_NAME.extensionList) {
-      if (extension.ignoreUnresolvedMember(type!!, name, myTypeEvalContext)) {
-        return true
-      }
-    }
-    return false
   }
+
+  private fun isUnboundedTypeVar(type: PyTypeVarType): Boolean =
+    type.bound == null && type.defaultType == null && type.constraints.isEmpty()
+
+  /**
+   * Under strict-union semantics a union is ignored only when every member resolves the attribute
+   * — otherwise (e.g. `x: int | Any`) the missing-on-one-arm case is still reported. Under permissive
+   * semantics, ignoring any one member is enough.
+   */
+  private fun isUnionMemberIgnored(type: PyUnionType, reference: PsiReference, name: String): Boolean {
+    if (PyUnionType.isStrictSemanticsEnabled()) {
+      return findStrictUnionMemberMissingAttribute(type, reference, name) == null
+    }
+    return type.members.any { ignoreUnresolvedMemberForType(it, reference, name) }
+  }
+
+  /** Custom type that mimics a class whose ancestors did not all resolve — too uncertain to flag. */
+  private fun hasUnclearClassParent(type: PyCustomType): Boolean =
+    type.typesToMimic
+      .filterIsInstance<PyClassType>()
+      .any { PyUtil.hasUnresolvedAncestors(it.pyClass, myTypeEvalContext) }
+
+  /** Class participates in some dynamic-attribute mechanism (`__getattr__`, property, `@DynamicAttrs`, etc.). */
+  private fun isDynamicClass(type: PyClassType, reference: PsiReference, name: String): Boolean {
+    val cls = type.pyClass
+    return overridesGetAttr(cls, myTypeEvalContext) ||
+           cls.findProperty(name, true, myTypeEvalContext) != null ||
+           PyUtil.hasUnresolvedAncestors(cls, myTypeEvalContext) ||
+           isDecoratedAsDynamic(cls, true) ||
+           hasUnresolvedDynamicMember(type, reference, name, myTypeEvalContext) ||
+           isAwaitOnGeneratorBasedCoroutine(name, reference, cls)
+  }
+
+  private fun hasUnknownAttrsDecorator(type: PyFunctionTypeImpl): Boolean {
+    val callable = type.callable
+    return callable is PyFunction && PyKnownDecoratorUtil.hasUnknownOrUpdatingAttributesDecorator(callable, myTypeEvalContext)
+  }
+
+  /** Python 3.7+ module-level `__getattr__` defers unresolved attribute lookups to runtime. */
+  private fun moduleDefinesGetAttr(type: PyModuleType): Boolean {
+    val module = type.module
+    return module.languageLevel.isAtLeast(LanguageLevel.PYTHON37) && definesGetAttr(module, myTypeEvalContext)
+  }
+
+  private fun isIgnoredByExtension(type: PyType, name: String): Boolean =
+    PyInspectionExtension.EP_NAME.extensionList.any { it.ignoreUnresolvedMember(type, name, myTypeEvalContext) }
 
   private fun findStrictUnionMemberMissingAttribute(type: PyType, ref: PsiReference, name: String): PyType? {
     if (type !is PyUnionType || !PyUnionType.isStrictSemanticsEnabled()) {
