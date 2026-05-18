@@ -77,7 +77,7 @@ internal class DynamicPluginsSupportImpl(
         InstalledPluginsState.getInstance().isRestartRequired = true
         return@withContext DynamicPluginsTransitionResult.Incomplete()
       }
-      loadGroups(targetState, loadSteps.map { it.runtimeModuleGroup })
+      loadGroups(targetState, loadSteps.map { it.runtimeModuleGroup }, sequence.exactRuntimeModuleGroupAlignment.values.toList())
 
       val trulyCollected = classloaderUnloadAwaitStrategy.awaitClassloadersUnloadedPostTransition(classloadersToUnload)
       if (!trulyCollected) {
@@ -207,7 +207,7 @@ internal class DynamicPluginsSupportImpl(
   /**
    * Applies new state, must be called even if there is nothing to load after unload
    */
-  private suspend fun loadGroups(targetPluginSet: PluginSet, groups: List<RuntimeModuleGroup>) {
+  private suspend fun loadGroups(targetPluginSet: PluginSet, groups: List<RuntimeModuleGroup>, reusedGroups: List<RuntimeModuleGroup>) {
     withProgressText(IdeBundle.message("progress.text.loading.n.modules", groups.size)) {
       if (groups.isEmpty()) {
         application.runWriteAction {
@@ -224,7 +224,7 @@ internal class DynamicPluginsSupportImpl(
         }
       }
       try {
-        attachClassLoaders(groups, targetPluginSet)
+        attachClassLoaders(targetPluginSet, groups, reusedGroups)
         val listenerCallbacks = mutableListOf<ExtensionPointDeferredListenersNotification>()
         edtWriteAction { // listeners are expected to be called on EDT FIXME
           val descriptors = groups.flatMap { it.sortedDescriptors }
@@ -257,8 +257,13 @@ internal class DynamicPluginsSupportImpl(
     }
   }
 
-  private fun attachClassLoaders(groups: List<RuntimeModuleGroup>, pluginSet: PluginSet) {
+  private fun attachClassLoaders(pluginSet: PluginSet, groups: List<RuntimeModuleGroup>, reusedGroups: List<RuntimeModuleGroup>) {
     val configurator = ClassLoaderConfigurator(pluginSet)
+    for (group in reusedGroups) {
+      for (plugin in group.sortedDescriptors.filterIsInstance<PluginMainDescriptor>()) {
+        configurator.keepClassLoaderOf(plugin)
+      }
+    }
     for (group in groups) {
       for (descriptor in group.sortedDescriptors.filterIsInstance<PluginModuleDescriptor>()) {
         configurator.configureModule(descriptor)

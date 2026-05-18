@@ -88,6 +88,12 @@ class ClassLoaderConfigurator(
     }
   }
 
+  fun keepClassLoaderOf(plugin: PluginMainDescriptor) { // FIXME this doesn't look right, but it'll do for now
+    val classloader = plugin.pluginClassLoader as? PluginClassLoader
+                      ?: return
+    mainToClassPath.putIfAbsent(plugin.pluginId, MainPluginDescriptorClassPathInfo(classloader))
+  }
+
   private fun configureContentModule(module: ContentModuleDescriptor): Boolean {
     if (module.packagePrefix == null && module.pluginId != PluginManagerCore.CORE_ID && module.ownClassPath == null && module.moduleLoadingRule != ModuleLoadingRule.EMBEDDED) {
       throw PluginException("Package is not specified (module=$module)", module.pluginId)
