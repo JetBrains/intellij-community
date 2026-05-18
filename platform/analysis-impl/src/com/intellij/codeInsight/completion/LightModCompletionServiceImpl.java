@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
 import com.intellij.codeInsight.lookup.Classifier;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.WeighingContext;
+import com.intellij.modcompletion.ModCompletionItem;
 import com.intellij.modcompletion.ModCompletionItemProvider;
 import com.intellij.modcompletion.ModCompletionResult;
 import com.intellij.openapi.editor.Document;
@@ -21,6 +22,7 @@ import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -77,13 +79,20 @@ public final class LightModCompletionServiceImpl {
     Map<CompletionSorterImpl, Set<LookupElement>> allItems = new LinkedHashMap<>();
     for (ModCompletionItemProvider provider : providers) {
       CompletionSorterImpl sorter = (CompletionSorterImpl)provider.getSorter(context);
-      Classifier<LookupElement> classifier = sortMap.computeIfAbsent(sorter, s -> s.buildClassifier(Classifier.empty()));
-      provider.provideItems(context, item -> {
-        if (matcher.prefixMatches(item.mainLookupString()) ||
-            ContainerUtil.exists(item.additionalLookupStrings(), matcher::prefixMatches)) {
-          CompletionItemLookupElement le = new CompletionItemLookupElement(item);
-          classifier.addElement(le, processingContext);
-          allItems.computeIfAbsent(sorter, k -> new LinkedHashSet<>()).add(le);
+      provider.provideItems(context, new ModCompletionResult() {
+        @Nullable Classifier<LookupElement> classifier;
+
+        @Override
+        public void accept(ModCompletionItem item) {
+          if (matcher.prefixMatches(item.mainLookupString()) ||
+              ContainerUtil.exists(item.additionalLookupStrings(), matcher::prefixMatches)) {
+            CompletionItemLookupElement le = new CompletionItemLookupElement(item);
+            if (classifier == null) {
+              classifier = sortMap.computeIfAbsent(sorter, s -> s.buildClassifier(Classifier.empty()));
+            }
+            classifier.addElement(le, processingContext);
+            allItems.computeIfAbsent(sorter, k -> new LinkedHashSet<>()).add(le);
+          }
         }
       });
     }
