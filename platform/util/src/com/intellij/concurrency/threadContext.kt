@@ -290,6 +290,7 @@ fun resetThreadContext(): AccessToken {
  * This function is often used before dispatching the AWT events.
  */
 fun <T> resetThreadContext(action: () -> T): T {
+  @Suppress("UnusedVariable", "unused") val existingThreadContext = currentThreadContext() // we capture this property for debugging lost thread contexts
   return resetThreadContext().use {
     action()
   }
