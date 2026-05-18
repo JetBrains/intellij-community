@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
@@ -74,6 +75,7 @@ import javax.swing.RootPaneContainer
 abstract class NonModalWindowWrapper(
   protected val project: Project,
   private val floatModeKey: String,
+  private val dimensionKey: String? = null,
 ) : Disposable, UiDataProvider {
 
   // ── State ────────────────────────────────────────────────────────────────────
@@ -173,7 +175,14 @@ abstract class NonModalWindowWrapper(
     this.content = content
     this.minWindowSize = minSize
     activeWindow = createAwtWindow(isFloat, content, minSize, initialSize)
+    loadAndRegisterWindowState(activeWindow)
     installWindowListeners()
+  }
+
+  private fun loadAndRegisterWindowState(window: Window) {
+    val key = dimensionKey ?: return
+    val state = WindowStateService.getInstance(project).getState(key, window)
+    state?.applyTo(window)
   }
 
   // ── Window creation and mode switching ──────────────────────────────────────
@@ -266,6 +275,7 @@ abstract class NonModalWindowWrapper(
     installWindowListeners()
     savedDefaultButton?.let { (activeWindow as RootPaneContainer).rootPane.defaultButton = it }
     activeWindow.bounds = bounds
+    dimensionKey?.let { WindowStateService.getInstance(project).getState(it, activeWindow) }
     if (wasVisible) {
       activeWindow.isVisible = true
       activeWindow.toFront()

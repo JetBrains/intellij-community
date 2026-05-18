@@ -80,11 +80,14 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
   groups: List<ConfigurableGroup>,
   configurable: Configurable?,
   filter: String?,
-) : NonModalWindowWrapper(project, FLOAT_MODE_KEY) {
+) : NonModalWindowWrapper(project, FLOAT_MODE_KEY, DIMENSION_KEY) {
 
   companion object {
     /** Stored preference key: `true` = Float mode, `false` = Window mode. Default: Float. */
     private const val FLOAT_MODE_KEY = "ide.settings.window.float"
+
+    /** Window state service key for persisting size and position. Shared with [SettingsDialog] */
+    private const val DIMENSION_KEY = "SettingsEditor"
 
     @Volatile
     private var ourInstance: SettingsNonModalDialog? = null
