@@ -1053,6 +1053,8 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.help.impl.HelpUsageCollector"/>
     <statistics.validation.customValidationRule
+      implementation="com.intellij.help.impl.HelpTopicCustomValidationRule"/>
+    <statistics.validation.customValidationRule
       implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.FileNamePatternCustomValidationRule"/>
     <statistics.validation.customValidationRule
       implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.BundledFileTemplateValidationRule"/>

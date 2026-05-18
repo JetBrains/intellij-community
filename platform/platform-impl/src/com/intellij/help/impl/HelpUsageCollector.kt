@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.help.impl
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -8,8 +8,8 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object HelpUsageCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("help.usage", 2)
-  private val HELP_ID_FIELD = EventFields.StringValidatedByInlineRegexp("help_id", "[a-zA-Z0-9_.\\-]+")
+  private val GROUP = EventLogGroup("help.usage", 3)
+  private val HELP_ID_FIELD = EventFields.StringValidatedByCustomRule("help_id", HelpTopicCustomValidationRule::class.java)
   private val HELP_OPENED_EVENT = GROUP.registerEvent("opened", HELP_ID_FIELD)
 
   override fun getGroup(): EventLogGroup = GROUP
