@@ -137,7 +137,10 @@ interface TestContainer {
       }
     })
 
-    require(ide.productCode == testCase.ideInfo.productCode) { "Product code ${ide.productCode} must be the same as ${testCase.ideInfo.productCode}. IDE: $ide . TestCase: $testCase" }
+    require(ide.productCode == testCase.ideInfo.productCode ||
+            // some 253 versions(e.g. 253.28294.334) of IC are actually IU, seems like it is due to single distributive (SID-119)
+            (ide.productCode == "IU" && testCase.ideInfo.productCode == "IC" && ide.isMajorBuildVersionAtLeast(253))
+    ) { "Product code ${ide.productCode} must be the same as ${testCase.ideInfo.productCode}. IDE: $ide . TestCase: $testCase" }
 
     val testDirectory = run {
       val commonPath = (GlobalPaths.instance.testsDirectory / "${testCase.ideInfo.productCode}-$buildNumber") / testName

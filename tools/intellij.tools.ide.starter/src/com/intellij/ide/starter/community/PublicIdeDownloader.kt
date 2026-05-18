@@ -10,6 +10,7 @@ import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.util.system.CpuArch
 import com.intellij.util.system.OS
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.time.LocalDate
 import kotlin.io.path.exists
@@ -17,17 +18,22 @@ import kotlin.io.path.exists
 open class PublicIdeDownloader : IdeDownloader {
 
   /** Filter release map: <ProductCode, List of releases> */
-  private fun findSpecificRelease(
+  @ApiStatus.Internal
+  fun findSpecificRelease(
     releaseInfoMap: Map<String, List<ReleaseInfo>>,
     filteringParams: ProductInfoRequestParameters,
   ): ReleaseInfo {
     try {
-      val sortedByDate = releaseInfoMap.values.first().sortedByDescending { it.date }
+      val releaseInfo = releaseInfoMap.values.singleOrNull() ?: error("There is one release info expected")
+      val sortedByDate = releaseInfo.sortedByDescending { it.date }
 
       val build = when {
         filteringParams.majorVersion.isNotBlank() -> sortedByDate.first { it.majorVersion == filteringParams.majorVersion }
         // find the latest release / eap, if no specific params were provided
-        filteringParams.versionNumber.isBlank() && filteringParams.buildNumber.isBlank() -> sortedByDate.first()
+        filteringParams.versionNumber.isBlank() && filteringParams.buildNumber.isBlank() -> {
+          val latestMajor = sortedByDate.maxOf { it.majorVersion }
+          sortedByDate.first { it.majorVersion == latestMajor }
+        }
         filteringParams.versionNumber.isNotBlank() -> {
           sortedByDate.first {
             // Rider (RD) might have versions suffixes after "-". E.g., 2024.3-EAP5. So we take the part before '-'.
@@ -35,7 +41,7 @@ open class PublicIdeDownloader : IdeDownloader {
             version == filteringParams.versionNumber
           }
         }
-        filteringParams.buildNumber.isNotBlank() -> sortedByDate.firstOrNull() { it.build == filteringParams.buildNumber }
+        filteringParams.buildNumber.isNotBlank() -> sortedByDate.firstOrNull { it.build == filteringParams.buildNumber }
                                                     ?: error("Build not found for $filteringParams")
         else -> null
       }
