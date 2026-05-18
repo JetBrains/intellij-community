@@ -1036,7 +1036,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup,
     }
     Dimension size = getStoredSize();
     if (size != null) return size;
-    return myComponent.getPreferredSize();
+    return myContent.getPreferredSize();
   }
 
   @Override
