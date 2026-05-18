@@ -672,7 +672,13 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       var childLocation = new Point(container.getLocationOnScreen().x + container.getWidth() - STEP_X_PADDING, y);
       if (ClientSystemInfo.isWaylandToolkit()) {
         SwingUtilities.convertPointFromScreen(childLocation, container);
-        var childBounds = new Rectangle(childLocation, myChild.getPreferredContentSize());
+        var childSize = myChild.getPreferredContentSize();
+        var minChildSize = myChild.getMinimumSize();
+        if (minChildSize != null) {
+          childSize.width = Math.max(childSize.width, minChildSize.width);
+          childSize.height = Math.max(childSize.height, minChildSize.height);
+        }
+        var childBounds = new Rectangle(childLocation, childSize);
         WaylandUtilKt.moveToFitChildPopupX(childBounds, container);
         childLocation = childBounds.getLocation();
         SwingUtilities.convertPointToScreen(childLocation, container);
