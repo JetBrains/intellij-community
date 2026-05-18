@@ -1178,7 +1178,7 @@ class DynamicPluginsTest {
         includePackageClassFiles<DefaultService>()
       }.installAt(pluginsDir)
       val foo = loadDescriptorInTest(fooPath)
-      assertThat(DynamicPlugins.loadPlugin(foo)).isEqualTo(dynamicServiceOverridesAllowed)
+      assertThat(DynamicPlugins.checkCanLoadWithoutRestart(foo) == null).isEqualTo(dynamicServiceOverridesAllowed)
     }
   }
 
