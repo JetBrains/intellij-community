@@ -20,6 +20,7 @@ jvm_library(
     "@lib//:kotlin-tooling-core",
     "//plugins/kotlin/base/indices",
     "//platform/util/jdom",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.servicesView:moduleSet-plugin-servicesView",
   ]
 )
 
@@ -111,7 +112,10 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/util/jdom:jdom_test_lib",
   ],
-  runtime_deps = [":kotlin-gradle-multiplatform-tests"]
+  runtime_deps = [
+    ":kotlin-gradle-multiplatform-tests",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.servicesView:moduleSet-plugin-servicesView_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.kotlin.gradle.multiplatform.tests` end
 
