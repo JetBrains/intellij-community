@@ -411,6 +411,9 @@ class JavaDocParser(
               dataSinceComma = true
               parseMaybeGenericType(false)
             }
+            else {
+              builder.advanceLexer()
+            }
           }
           else if (type !== JavaDocSyntaxTokenType.DOC_COMMA) {
             break

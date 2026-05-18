@@ -241,6 +241,7 @@ public abstract class AbstractBasicJavadocParsingTest extends AbstractBasicJavaP
   public void testReferenceLinkMarkdown13() { doTest(true); }
   public void testReferenceLinkMarkdown14() { doTest(true); }
   public void testReferenceLinkMarkdown15() { doTest(true); }
+  public void testReferenceLinkMarkdown16() { doTest(true); }
 
   public void testNestedTag0Markdown() { doTest(true); }
   public void testNestedTag1Markdown() { doTest(true); }
