@@ -994,38 +994,36 @@ class DynamicPluginsTest {
 
   @Test
   fun `IJPL-233642 registry access of key from same plugin with multiple modules`() {
-    val fooPath = plugin("foo") {
-      content {
-        module("foo.core", loadingRule = ModuleLoadingRuleValue.EMBEDDED) {
-          isSeparateJar = true
-          extensions("""
+    StartupManagerImpl.addActivityEpListener(projectRule.project)
+    val pluginSet = buildPluginSet(pluginsDir, configureClassLoaders = false) {
+      plugin("foo") {
+        content {
+          module("foo.core", loadingRule = ModuleLoadingRuleValue.EMBEDDED) {
+            isSeparateJar = true
+            extensions("""
             <postStartupActivity implementation="${FooCoreAppActivity::class.qualifiedName!!}"/>
           """.trimIndent())
-          includePackageClassFiles<FooCoreAppActivity>()
-        }
-        module("foo.acp", loadingRule = ModuleLoadingRuleValue.OPTIONAL) {
-          dependencies {
-            module("foo.core")
+            includePackageClassFiles<FooCoreAppActivity>()
           }
-          isSeparateJar = true
-          extensions("""
+          module("foo.acp", loadingRule = ModuleLoadingRuleValue.OPTIONAL) {
+            dependencies {
+              module("foo.core")
+            }
+            isSeparateJar = true
+            extensions("""
             <registryKey defaultValue="true"
                  description="Foo foo"
                  key="foo.module.registry.key"/>
           """.trimIndent())
+          }
         }
       }
-    }.installAt(pluginsDir)
-    StartupManagerImpl.addActivityEpListener(projectRule.project)
-    val foo = loadDescriptorInTest(fooPath)
+    }
+    val foo = pluginSet.getPlugin("foo")
     val fooCore = foo.contentModules.first { it.moduleId.name == "foo.core" }
-    try {
-      assertThat(DynamicPlugins.loadPlugins(listOf(foo), null)).isTrue
+    loadPluginInTest(foo) {
       val coreClass = application.getTestHandleService<FooCore, _, _>(fooCore)!!
       coreClass.test(Unit)
-    }
-    finally {
-      assertThat(DynamicPlugins.unloadPlugins(listOf(foo), null)).isTrue
     }
   }
 
