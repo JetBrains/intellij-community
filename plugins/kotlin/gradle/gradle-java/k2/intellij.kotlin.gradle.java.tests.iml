@@ -59,6 +59,7 @@
     <orderEntry type="module" module-name="intellij.platform.execution.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.smRunner" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testRunner" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.junit" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlin-tooling-core" level="project" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.kotlin.gradle.java" />

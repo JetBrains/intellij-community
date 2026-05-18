@@ -152,6 +152,8 @@ jvm_library(
     "//platform/smRunner:smRunner_test_lib",
     "//platform/testRunner",
     "//platform/testRunner:testRunner_test_lib",
+    "//plugins/junit",
+    "//plugins/junit:junit_test_lib",
     "@lib//:kotlin-tooling-core",
   ],
   runtime_deps = [
