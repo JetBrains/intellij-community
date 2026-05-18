@@ -184,6 +184,7 @@ class MergeConflictModel(
                         affectedIndexes = affected) {
       resetAllChanges()
       replaceAllChanges(side)
+      markReviewed()
     }
   }
 

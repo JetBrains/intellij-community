@@ -183,6 +183,7 @@ open class MultipleFileMergeDialog(
     val haveUnacceptableFiles = selectedFiles.any { mergeSession != null && mergeSession !is MergeSessionEx && !mergeSession.canMerge(it) }
 
     mergeFlowDelegate.onTreeChanged(selectedFiles,
+                                    processedFiles = processedFiles,
                                     unmergeableFileSelected = haveUnmergeableFiles,
                                     unacceptableFileSelected = haveUnacceptableFiles)
   }

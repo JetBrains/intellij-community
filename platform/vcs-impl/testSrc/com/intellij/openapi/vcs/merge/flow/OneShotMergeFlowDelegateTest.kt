@@ -45,7 +45,10 @@ class OneShotMergeFlowDelegateTest : BasePlatformTestCase() {
     )
 
     val panel = delegate.createCenterPanel()
-    delegate.onTreeChanged(listOf(secondFile), unmergeableFileSelected = false, unacceptableFileSelected = false)
+    delegate.onTreeChanged(listOf(secondFile),
+                           processedFiles = emptyList(),
+                           unmergeableFileSelected = false,
+                           unacceptableFileSelected = false)
     val buttons = UIUtil.findComponentsOfType(panel, JButton::class.java).filter { it.text == "First" || it.text == "Second" }
     assertEquals(listOf("First", "Second"), buttons.map(JButton::getText))
     buttons.first().doClick()

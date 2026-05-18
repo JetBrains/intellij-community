@@ -132,7 +132,12 @@ internal class OneShotMergeFlowDelegate(
     return listOf(cancelAction)
   }
 
-  override fun onTreeChanged(selectedFiles: List<VirtualFile>, unmergeableFileSelected: Boolean, unacceptableFileSelected: Boolean) {
+  override fun onTreeChanged(
+    selectedFiles: List<VirtualFile>,
+    processedFiles: List<VirtualFile>,
+    unmergeableFileSelected: Boolean,
+    unacceptableFileSelected: Boolean,
+  ) {
     selectionHintFiles = selectedFiles
     val haveSelection = selectedFiles.any()
     acceptYoursButton.isEnabled = haveSelection && !unacceptableFileSelected

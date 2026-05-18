@@ -268,9 +268,16 @@ internal class IterativeMergeFlowDelegate(
   override fun createActions(): List<Action> = emptyList()
 
   private lateinit var state: IterativeMergeDialogState
-  override fun onTreeChanged(selectedFiles: List<VirtualFile>, unmergeableFileSelected: Boolean, unacceptableFileSelected: Boolean) {
+  override fun onTreeChanged(
+    selectedFiles: List<VirtualFile>,
+    processedFiles: List<VirtualFile>,
+    unmergeableFileSelected: Boolean,
+    unacceptableFileSelected: Boolean,
+  ) {
+    val iterativeFiles = files - processedFiles.toSet()
     state = IterativeMergeDialogState(
       selectedFiles = selectedFiles,
+      filesThatShouldBeResolvedIteratively = iterativeFiles,
       unmergeableFileSelected = unmergeableFileSelected,
       unacceptableFileSelected = unacceptableFileSelected,
       resolvedFilesSelected = selectedFiles.any { iterativeDataHolder.isFileResolved(it) },
@@ -278,7 +285,7 @@ internal class IterativeMergeFlowDelegate(
       onlyRevertableFilesSelected = selectedFiles.isNotEmpty() && selectedFiles.all {
         iterativeDataHolder.getMergeConflictModel(it)?.getResolvedChanges()?.isNotEmpty() == true
       },
-      allFilesResolvedAndReviewed = files.all {
+      allFilesResolvedAndReviewed = iterativeFiles.all {
         val model = iterativeDataHolder.getMergeConflictModel(it)
         model?.wasReviewed == true && model.getUnresolvedChanges().isEmpty()
       })
@@ -318,7 +325,8 @@ internal class IterativeMergeFlowDelegate(
       else VcsBundle.message("multiple.file.iterative.merge.resolve.manually")
     }
 
-    acceptAndFinishButton.isEnabled = table.isEnabled && files.all { iterativeDataHolder.isFileResolved(it) }
+    acceptAndFinishButton.isEnabled =
+      table.isEnabled && state.filesThatShouldBeResolvedIteratively.all { iterativeDataHolder.isFileResolved(it) }
 
     if (state.allFilesResolvedAndReviewed) {
       reviewOrResolveButton.isVisible = false
@@ -659,6 +667,10 @@ private class InlineButtonRenderer(
 
 private data class IterativeMergeDialogState(
   val selectedFiles: List<VirtualFile>,
+  // The `files` param contains ALL the files in the merge conflict,
+  // which may include files that are binary or using external tools for resolving.
+  // Those files will not trigger an iterative merge and will not have a model.
+  val filesThatShouldBeResolvedIteratively: List<VirtualFile>,
   val unmergeableFileSelected: Boolean,
   val unacceptableFileSelected: Boolean,
   val resolvedFilesSelected: Boolean,
