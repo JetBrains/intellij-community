@@ -318,7 +318,7 @@ class NonBlockingFlushQueue(private val threadingSupport: ThreadingSupport) {
           "Execution of Write-Intent-Locked runnables is not allowed in UI_ONLY mode"
         }
         // let's try to execute the runnable
-        val success = !(threadingSupport.isWriteActionPending() || threadingSupport.isWriteActionInProgress()) && threadingSupport.tryRunWriteIntentReadAction {
+        val success = (threadingSupport.isWriteAccessAllowed() || !(threadingSupport.isWriteActionPending() || threadingSupport.isWriteActionInProgress()) )&& threadingSupport.tryRunWriteIntentReadAction {
           synchronized(lockObject) {
             writeIntentQueue.pollFirst() // remove runnable from writeIntentQueue
           }
