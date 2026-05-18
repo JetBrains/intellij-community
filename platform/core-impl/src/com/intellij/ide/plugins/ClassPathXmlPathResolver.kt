@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
-import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.pluginSystem.parser.impl.LoadPathUtil
 import com.intellij.platform.pluginSystem.parser.impl.LoadedXIncludeReference
@@ -21,7 +20,6 @@ import org.jetbrains.annotations.ApiStatus.Internal
 class ClassPathXmlPathResolver(
   private val classLoader: ClassLoader,
   @JvmField val isRunningFromSourcesWithoutDevBuild: Boolean,
-  private val isOptionalProductModule: (moduleId: String) -> Boolean,
 ) : PathResolver, XIncludeLoader {
   override val isFlat: Boolean
     get() = true
@@ -63,14 +61,6 @@ class ClassPathXmlPathResolver(
       when {
         isRunningFromSourcesWithoutDevBuild && isV2ModulePath(path) && dataLoader.emptyDescriptorIfCannotResolve -> {
           log.trace("Cannot resolve $path (dataLoader=$dataLoader, classLoader=$classLoader). ")
-          return PluginDescriptorBuilder.builder().apply {
-            visibility = ModuleVisibilityValue.PUBLIC
-            `package` = "unresolved.$moduleId"
-          }
-        }
-        isOptionalProductModule(moduleId) -> {
-          // this check won't be needed when we are able to load optional modules directly from product-modules.xml
-          log.debug { "Skip module '$path' since its descriptor cannot be found and it's optional" }
           return PluginDescriptorBuilder.builder().apply {
             visibility = ModuleVisibilityValue.PUBLIC
             `package` = "unresolved.$moduleId"

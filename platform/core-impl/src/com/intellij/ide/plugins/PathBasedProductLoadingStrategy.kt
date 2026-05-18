@@ -43,7 +43,5 @@ internal class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
     )
   }
 
-  override fun isOptionalProductModule(moduleId: String): Boolean = false
-
   override fun findProductContentModuleClassesRoot(moduleId: PluginModuleId, moduleDir: Path): Path = moduleDir.resolve("${moduleId.name}.jar")
 }

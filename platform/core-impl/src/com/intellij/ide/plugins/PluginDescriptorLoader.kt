@@ -651,7 +651,7 @@ internal fun CoroutineScope.loadPluginDescriptorsForPathBasedLoader(
       val isGateway = PlatformUtils.isGateway()
       loadCoreProductPlugin(
         loadingContext = loadingContext,
-        pathResolver = ClassPathXmlPathResolver(classLoader = mainClassLoader, isRunningFromSourcesWithoutDevBuild = false, isOptionalProductModule = { false }),
+        pathResolver = ClassPathXmlPathResolver(classLoader = mainClassLoader, isRunningFromSourcesWithoutDevBuild = false),
         useCoreClassLoader = platformPrefix.startsWith("CodeServer") || forceUseCoreClassloader(),
         // GatewayStarter.kt adds JARs from the main IDE to the classpath and runs it with platformPrefix=Gateway.
         // So, there are two plugin.xml files in the product classpath (IDEA's one and Gateway's one - our cache contains product's ones).
@@ -1204,7 +1204,7 @@ fun loadDescriptorsFromClassPathInTest(
               resource = url,
               filename = filename,
               loadingContext = loadingContext,
-              pathResolver = ClassPathXmlPathResolver(classLoader = loader, isRunningFromSourcesWithoutDevBuild = false, isOptionalProductModule = { false }),
+              pathResolver = ClassPathXmlPathResolver(classLoader = loader, isRunningFromSourcesWithoutDevBuild = false),
               useCoreClassLoader = true,
               pool = zipPool,
               libDir = null,

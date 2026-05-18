@@ -137,7 +137,6 @@ private fun CoroutineScope.deprecatedLoadCoreModules(
   val pathResolver = ClassPathXmlPathResolver(
     classLoader = classLoader,
     isRunningFromSourcesWithoutDevBuild = isRunningFromSources && !isInDevServerMode,
-    isOptionalProductModule = { ProductLoadingStrategy.strategy.isOptionalProductModule(it) },
   )
   val useCoreClassLoader = pathResolver.isRunningFromSourcesWithoutDevBuild || platformPrefix.startsWith("CodeServer") || forceUseCoreClassloader()
 

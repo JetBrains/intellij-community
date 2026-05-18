@@ -108,7 +108,6 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     val classpathPathResolver = ClassPathXmlPathResolver(
       classLoader = mainClassLoader,
       isRunningFromSourcesWithoutDevBuild = false,
-      isOptionalProductModule = { moduleId -> this@ModuleBasedProductLoadingStrategy.isOptionalProductModule(moduleId) },
     )
     val useCoreClassLoader = platformPrefix.startsWith("CodeServer") || java.lang.Boolean.getBoolean("idea.force.use.core.classloader")
     val corePlugin = scope.async(Dispatchers.IO) {
@@ -289,10 +288,6 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
         else parent.parent
       }
       .find { it.parent == bundledPluginsDir }
-  }
-
-  override fun isOptionalProductModule(moduleId: String): Boolean {
-    return false
   }
 
   override fun findProductContentModuleClassesRoot(moduleId: PluginModuleId, moduleDir: Path): Path? {
