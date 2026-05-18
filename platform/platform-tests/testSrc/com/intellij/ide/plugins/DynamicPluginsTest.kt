@@ -94,8 +94,6 @@ import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.ui.switcher.ShowQuickActionPopupAction
 import com.intellij.util.KeyedLazyInstanceEP
 import com.intellij.util.application
-import com.intellij.util.io.directoryContent
-import com.intellij.util.io.java.classFile
 import com.intellij.util.ui.UIUtil
 import org.junit.Assume
 import org.junit.Ignore
@@ -431,82 +429,37 @@ class DynamicPluginsTest {
   }
 
   @Test
-  fun loadModuleClassloader() {
-    val fooJar = "foo.jar"
-    val barJar = "bar.jar"
-
-    val pluginsPath = directoryContent {
-      zip(fooJar) {
-        dir("META-INF") {
-          file(
-            name = "plugin.xml",
-            text = """<idea-plugin package="foo">
-                     |  <id>foo</id>
-                     |  <content namespace="test_ns">
-                     |    <module name="foo.bar"/>
-                     |  </content>
-                     |</idea-plugin>""".trimIndent(),
-          )
+  fun `cross-dependent content modules loading with classloading check`() {
+    val pluginSet = buildPluginSet(pluginsDir, configureClassLoaders = false) {
+      plugin("foo") {
+        packagePrefix = FooBarService::class.java.packageName.let { it.substring(0, it.lastIndexOf('.')) }
+        content(namespace = "test_ns") {
+          module("foo.bar") {
+            packagePrefix = FooBarService::class.java.packageName
+            dependencies { plugin("bar") }
+          }
         }
-        file(
-          name = "foo.bar.xml",
-          text = """<idea-plugin package="foo.bar">
-                   |  <dependencies>
-                   |    <plugin id="bar"/>
-                   |  </dependencies>
-                   |</idea-plugin>""".trimIndent(),
-        )
-        classFile("foo.Foo") {}
-        classFile("foo.bar.BarImpl") {}
+        includePackageClassFiles<FooBarService>()
       }
-      zip(barJar) {
-        dir("META-INF") {
-          file(
-            name = "plugin.xml",
-            text = """<idea-plugin> <!-- no package prefix -->
-                     |  <id>bar</id>
-                     |  <content namespace="test_ns">
-                     |    <module name="bar.foo"/>
-                     |  </content>
-                     |</idea-plugin>""".trimIndent(),
-          )
+      plugin("bar") {
+        content(namespace = "test_ns") {
+          module("bar.foo") {
+            packagePrefix = BarService::class.java.packageName
+            dependencies { plugin("foo") }
+          }
         }
-        file(
-          name = "bar.foo.xml",
-          text = """<idea-plugin package="bar.foo">
-                   |  <dependencies>
-                   |    <plugin id="foo"/>
-                   |  </dependencies>
-                   |</idea-plugin>""".trimIndent(),
-        )
-        classFile("bar.Bar") {}
-        classFile("bar.foo.FooImpl") {}
-      }
-    }.generateInTempDir()
-
-    fun forNameInModuleClassloader(className: String, moduleName: String): Class<*>? {
-      return findEnabledModuleByName(moduleName)?.classLoader?.let {
-        Class.forName(className, true, it)
+        includePackageClassFiles<BarService>()
       }
     }
+    val (foo, bar) = pluginSet.getEnabledPlugins("foo", "bar")
+    val fooBar = foo.contentModules.first()
+    val barFoo = bar.contentModules.first()
 
-    val barDescriptor = loadDescriptorInTest(pluginsPath.resolve(barJar))
-    try {
-      assertThat(DynamicPlugins.loadPlugin(barDescriptor)).isTrue()
-
-      val foo = loadDescriptorInTest(pluginsPath.resolve(fooJar))
-      try {
-        assertThat(DynamicPlugins.loadPlugin(foo)).isTrue()
-
-        assertThat(forNameInModuleClassloader("bar.foo.FooImpl", "bar.foo")).isNotNull
-        assertThat(forNameInModuleClassloader("foo.bar.BarImpl", "foo.bar")).isNotNull
+    loadPluginInTest(bar) {
+      loadPluginInTest(foo) {
+        assertThat(fooBar.loadClassInsideSelf<FooBarService>()).isNotNull
+        assertThat(barFoo.loadClassInsideSelf<BarService>()).isNotNull
       }
-      finally {
-        unloadAndUninstallPlugin(foo)
-      }
-    }
-    finally {
-      unloadAndUninstallPlugin(barDescriptor)
     }
   }
 
