@@ -7,7 +7,6 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -15,7 +14,6 @@ import com.intellij.psi.PsiPolyVariantReference
 import com.intellij.psi.PsiReference
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
-import com.intellij.util.ObjectUtils
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.addIfNotNull
 import com.jetbrains.python.PyCustomType
@@ -31,26 +29,15 @@ import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.documentation.docstrings.DocStringTypeReference
 import com.jetbrains.python.inspections.PyInspectionExtension
 import com.jetbrains.python.inspections.PyInspectionVisitor
-import com.jetbrains.python.inspections.quickfix.AddFieldQuickFix
-import com.jetbrains.python.inspections.quickfix.AddFunctionQuickFix
-import com.jetbrains.python.inspections.quickfix.AddMethodQuickFix
-import com.jetbrains.python.inspections.quickfix.CreateClassQuickFix
 import com.jetbrains.python.inspections.quickfix.PyRenameUnresolvedRefQuickFix
-import com.jetbrains.python.inspections.quickfix.UnresolvedRefCreateFunctionQuickFix
-import com.jetbrains.python.inspections.quickfix.UnresolvedRefTrueFalseQuickFix
-import com.jetbrains.python.inspections.quickfix.UnresolvedReferenceAddParameterQuickFix
-import com.jetbrains.python.inspections.quickfix.UnresolvedReferenceAddSelfQuickFix
 import com.jetbrains.python.psi.AccessDirection
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PsiReferenceEx
-import com.jetbrains.python.psi.PyAnnotation
-import com.jetbrains.python.psi.PyAssignmentStatement
 import com.jetbrains.python.psi.PyAugAssignmentStatement
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyCallSiteExpression
 import com.jetbrains.python.psi.PyCallable
 import com.jetbrains.python.psi.PyClass
-import com.jetbrains.python.psi.PyDecorator
 import com.jetbrains.python.psi.PyElement
 import com.jetbrains.python.psi.PyExceptPart
 import com.jetbrains.python.psi.PyExpression
@@ -58,7 +45,6 @@ import com.jetbrains.python.psi.PyFromImportStatement
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyIfStatement
 import com.jetbrains.python.psi.PyImportElement
-import com.jetbrains.python.psi.PyImportStatement
 import com.jetbrains.python.psi.PyImportStatementBase
 import com.jetbrains.python.psi.PyKeywordPattern
 import com.jetbrains.python.psi.PyKnownDecoratorUtil
@@ -71,7 +57,6 @@ import com.jetbrains.python.psi.PyTryExceptStatement
 import com.jetbrains.python.psi.PyTryPart
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.PyBuiltinCache.Companion.getInstance
-import com.jetbrains.python.psi.impl.PyCallExpressionNavigator
 import com.jetbrains.python.psi.impl.PyImportStatementNavigator
 import com.jetbrains.python.psi.impl.references.PyFromImportNameReference
 import com.jetbrains.python.psi.impl.references.PyImportReference
@@ -81,7 +66,6 @@ import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyClassMembersProvider
 import com.jetbrains.python.psi.types.PyClassType
-import com.jetbrains.python.psi.types.PyClassTypeImpl
 import com.jetbrains.python.psi.types.PyCompositeType
 import com.jetbrains.python.psi.types.PyFunctionTypeImpl
 import com.jetbrains.python.psi.types.PyImportedModuleType
@@ -97,7 +81,6 @@ import com.jetbrains.python.psi.types.PyTypeVarType
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import one.util.streamex.StreamEx
-import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.function.Function
 
@@ -419,11 +402,11 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
         fixes.addAll(reference.getQuickFixes(myTypeEvalContext))
       }
       spec.qualifierType != null -> {
-        fixes.addAll(getCreateMemberFromUsageFixes(spec.qualifierType, reference, spec.refText))
+        fixes.addAll(getCreateMemberFromUsageFixes(myTypeEvalContext, spec.qualifierType, reference, spec.refText))
       }
       spec.fallbackToUnqualifiedFix -> {
         fixes.addAll(getAutoImportFixes(spec.node, reference, element))
-        fixes.addIfNotNull(getCreateClassFix(spec.refText, element))
+        fixes.addIfNotNull(getCreateClassFix(myTypeEvalContext, spec.refText, element))
       }
       element is PyReferenceExpression && !element.isQualified -> {
         fixes.addIfNotNull(getTrueFalseQuickFix(spec.refText))
@@ -657,74 +640,6 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
 
   protected open fun getImportStatementQuickFixes(element: PsiElement): List<LocalQuickFix> = emptyList()
 
-  private fun getCreateClassFix(@NonNls refText: @NonNls String, element: PsiElement?): LocalQuickFix? {
-    if (refText.length > 2 && refText[0].isUpperCase() && refText.uppercase() != refText) {
-      if (element is PyQualifiedExpression) {
-        var qualifier = element.getQualifier()
-        if (qualifier == null) {
-          val fromImport = PsiTreeUtil.getParentOfType(element, PyFromImportStatement::class.java)
-          if (fromImport != null) qualifier = fromImport.importSource
-        }
-        var destination: PsiFile? = null
-        if (qualifier != null) {
-          val type = myTypeEvalContext.getType(qualifier)
-          if (type is PyModuleType) {
-            destination = type.module
-          }
-          else {
-            return null
-          }
-        }
-        if (destination == null) {
-          val injectionManager = InjectedLanguageManager.getInstance(element.getProject())
-          val injectionHost = injectionManager.getInjectionHost(element)
-          destination = ObjectUtils.chooseNotNull<PsiElement>(injectionHost, element).getContainingFile()
-        }
-        return CreateClassQuickFix(refText, destination)
-      }
-    }
-    return null
-  }
-
-  private fun getCreateMemberFromUsageFixes(
-    type: PyType,
-    reference: PsiReference,
-    refText: String,
-  ): MutableList<LocalQuickFix> {
-    val result: MutableList<LocalQuickFix> = ArrayList()
-    val element = reference.getElement()
-    if (type is PyClassType) {
-      val cls = type.getPyClass()
-      if (!getInstance(element).isBuiltin(cls)) {
-        if (element.getParent() is PyCallExpression) {
-          result.add(AddMethodQuickFix(refText, cls.getName(), true))
-        }
-        else if (reference !is PyOperatorReference) {
-          result.add(AddFieldQuickFix(refText, "None", type.name, true))
-        }
-      }
-    }
-    else if (type is PyModuleType) {
-      val isQualifiedRefInsideImport =
-        element is PyReferenceExpression && element.isQualified && PsiTreeUtil.getParentOfType(
-          element,
-          PyImportStatementBase::class.java
-        ) != null
-      if (!isQualifiedRefInsideImport) {
-        val file = type.module
-        val createClassQuickFix = getCreateClassFix(refText, element)
-        if (createClassQuickFix != null) {
-          result.add(createClassQuickFix)
-        }
-        else {
-          result.add(AddFunctionQuickFix(refText, file.getName()))
-        }
-      }
-    }
-    return result
-  }
-
-
   protected open fun getAutoImportFixes(node: PyElement, reference: PsiReference, element: PsiElement): List<LocalQuickFix> = emptyList()
 
   @VisibleForTesting
@@ -800,90 +715,6 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
       }
 
       return null
-    }
-
-    /**
-     * Return the canonical qualified names for a reference (even for an unresolved one).
-     * If reference is qualified and its qualifier has union type, all possible canonical names will be returned.
-     */
-    private fun getCreateFunctionQuickFix(expr: PyReferenceExpression): LocalQuickFix? {
-      val callExpression = PyCallExpressionNavigator.getPyCallExpressionByCallee(expr)
-      if (callExpression != null && (callExpression.callee !is PyQualifiedExpression ||
-                                     (callExpression.callee as PyQualifiedExpression).getQualifier() == null)
-      ) {
-        return UnresolvedRefCreateFunctionQuickFix(expr)
-      }
-      return null
-    }
-
-    private fun getAddParameterQuickFix(refName: String?, expr: PyReferenceExpression?): LocalQuickFix? {
-      val parentFunction = PsiTreeUtil.getParentOfType(expr, PyFunction::class.java)
-      val decorator = PsiTreeUtil.getParentOfType(expr, PyDecorator::class.java)
-      val annotation = PsiTreeUtil.getParentOfType(expr, PyAnnotation::class.java)
-      val importStatement = PsiTreeUtil.getParentOfType(expr, PyImportStatement::class.java)
-      if (parentFunction != null && decorator == null && annotation == null && importStatement == null) {
-        return UnresolvedReferenceAddParameterQuickFix(refName)
-      }
-      return null
-    }
-
-    private fun getTrueFalseQuickFix(refText: String): LocalQuickFix? {
-      if (refText == "true" || refText == "false") {
-        return UnresolvedRefTrueFalseQuickFix(refText)
-      }
-      return null
-    }
-
-    private fun getAddSelfFixes(
-      typeEvalContext: TypeEvalContext,
-      node: PyElement?,
-      expr: PyReferenceExpression,
-    ): MutableList<LocalQuickFix> {
-      val result: MutableList<LocalQuickFix> = ArrayList()
-      val containedClass = PsiTreeUtil.getParentOfType(node, PyClass::class.java)
-      val function = PsiTreeUtil.getParentOfType(node, PyFunction::class.java)
-      if (containedClass != null && function != null) {
-        val parameters = function.getParameterList().getParameters()
-        if (parameters.size == 0) return mutableListOf()
-        val qualifier = parameters[0]!!.getText()
-        val decoratorList = function.getDecoratorList()
-        var isClassMethod = false
-        if (decoratorList != null) {
-          for (decorator in decoratorList.getDecorators()) {
-            val callee = decorator.callee
-            if (callee != null && PyNames.CLASSMETHOD == callee.getText()) {
-              isClassMethod = true
-            }
-          }
-        }
-        for (target in containedClass.getInstanceAttributes()) {
-          if (!isClassMethod && node?.name == target.name) {
-            result.add(UnresolvedReferenceAddSelfQuickFix(expr, qualifier))
-          }
-        }
-        for (statement in containedClass.statementList.getStatements()) {
-          if (statement is PyAssignmentStatement) {
-            val lhsExpression = statement.leftHandSideExpression
-            if (lhsExpression != null && lhsExpression.getText() == expr.getText()) {
-              val assignedValue = statement.assignedValue
-              if (assignedValue is PyCallExpression) {
-                val type = typeEvalContext.getType(assignedValue)
-                if (type is PyClassTypeImpl) {
-                  if (assignedValue.isCalleeText(PyNames.PROPERTY)) {
-                    result.add(UnresolvedReferenceAddSelfQuickFix(expr, qualifier))
-                  }
-                }
-              }
-            }
-          }
-        }
-        for (method in containedClass.getMethods()) {
-          if (expr.getText() == method.getName()) {
-            result.add(UnresolvedReferenceAddSelfQuickFix(expr, qualifier))
-          }
-        }
-      }
-      return result
     }
 
     private fun hasUnresolvedDynamicMember(
