@@ -1,11 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
-import com.intellij.codeInsight.completion.InsertHandler;
-import com.intellij.codeInsight.completion.InsertionContext;
-import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInspection.reference.PsiMemberReference;
+import com.intellij.java.completion.modcommand.JavaModCompletionUtils;
+import com.intellij.modcompletion.CommonCompletionItem;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionList;
@@ -58,8 +56,7 @@ import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflection
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.replaceText;
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.withPriority;
 
-public class JavaLangInvokeHandleReference extends PsiReferenceBase<PsiLiteralExpression>
-  implements InsertHandler<LookupElement>, PsiMemberReference {
+public class JavaLangInvokeHandleReference extends PsiReferenceBase<PsiLiteralExpression> implements PsiMemberReference {
 
   private final PsiExpression myContext;
 
@@ -147,19 +144,19 @@ public class JavaLangInvokeHandleReference extends PsiReferenceBase<PsiLiteralEx
     return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
   }
 
-  private Object[] lookupMethods(@NotNull ReflectiveClass ownerClass, Predicate<? super PsiMethod> filter) {
+  private static Object[] lookupMethods(@NotNull ReflectiveClass ownerClass, Predicate<? super PsiMethod> filter) {
     return ownerClass.getPsiClass().getVisibleSignatures()
       .stream()
       .map(MethodSignatureBackedByPsiMethod::getMethod)
       .filter(filter)
       .sorted(Comparator.comparingInt((PsiMethod method) -> getMethodSortOrder(method)).thenComparing(PsiMethod::getName))
-      .map(method -> withPriority(lookupMethod(method, this),
+      .map(method -> withPriority(lookupMethod(method, JavaLangInvokeHandleReference::handler),
                                   -getMethodSortOrder(method)))
       .filter(Objects::nonNull)
       .toArray();
   }
 
-  private Object[] lookupFields(@NotNull ReflectiveClass ownerClass, Predicate<? super PsiField> filter) {
+  private static Object[] lookupFields(@NotNull ReflectiveClass ownerClass, Predicate<? super PsiField> filter) {
     final Set<String> uniqueNames = new HashSet<>();
     return Arrays.stream(ownerClass.getPsiClass().getAllFields())
       .filter(field -> field != null &&
@@ -167,7 +164,11 @@ public class JavaLangInvokeHandleReference extends PsiReferenceBase<PsiLiteralEx
                        uniqueNames.add(field.getName()))
       .filter(filter)
       .sorted(Comparator.comparing((PsiField field) -> isPublic(field) ? 0 : 1).thenComparing(PsiField::getName))
-      .map(field -> withPriority(JavaLookupElementBuilder.forField(field).withInsertHandler(this), isPublic(field)))
+      .map(field -> JavaModCompletionUtils.forField(field).withAdditionalUpdater((completionStart, updater) -> {
+        String typeText = getTypeText(field.getType());
+        String text = ", " + typeText + ".class";
+        replaceText(updater, completionStart, text);
+      }).withPriority(isPublic(field) ? 0 : -1))
       .toArray();
   }
 
@@ -187,19 +188,11 @@ public class JavaLangInvokeHandleReference extends PsiReferenceBase<PsiLiteralEx
     return isRegularMethod(method) && method.hasModifierProperty(PsiModifier.STATIC);
   }
 
-  @Override
-  public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
-    final Object object = item.getObject();
-
-    if (object instanceof ReflectiveSignature) {
-      final String text = ", " + getMethodTypeExpressionText((ReflectiveSignature)object);
-      replaceText(context, text);
-    }
-    else if (object instanceof PsiField field) {
-      final String typeText = getTypeText(field.getType());
-      final String text = ", " + typeText + ".class";
-      replaceText(context, text);
-    }
+  private static CommonCompletionItem.UpdateHandler handler(ReflectiveSignature signature) {
+    return (completionStart, updater) -> {
+      String text = ", " + getMethodTypeExpressionText(signature);
+      replaceText(updater, completionStart, text);
+    };
   }
 
   static class JavaLangInvokeHandleReferenceProvider extends PsiReferenceProvider {
@@ -214,7 +207,7 @@ public class JavaLangInvokeHandleReference extends PsiReferenceBase<PsiLiteralEx
           return new PsiReference[]{new JavaLangInvokeHandleReference(literal, qualifier)};
         }
       }
-      return PsiReference.EMPTY_ARRAY;
+      return EMPTY_ARRAY;
     }
   }
 }

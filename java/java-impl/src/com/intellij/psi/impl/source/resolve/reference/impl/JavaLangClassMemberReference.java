@@ -1,12 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
-import com.intellij.codeInsight.completion.InsertHandler;
-import com.intellij.codeInsight.completion.InsertionContext;
-import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInspection.reference.PsiMemberReference;
+import com.intellij.java.completion.modcommand.JavaModCompletionUtils;
 import com.intellij.lang.jvm.JvmModifier;
+import com.intellij.modcompletion.CommonCompletionItem;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -55,8 +53,7 @@ import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflection
 /**
  * @author Konstantin Bulenkov
  */
-public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExpression>
-  implements InsertHandler<LookupElement>, PsiMemberReference {
+public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExpression> implements PsiMemberReference {
   private final PsiExpression myContext;
 
   public JavaLangClassMemberReference(@NotNull PsiLiteralExpression literal, @NotNull PsiExpression context) {
@@ -130,30 +127,30 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
         return switch (type) {
           case GET_DECLARED_FIELD -> Arrays.stream(ownerClass.getPsiClass().getFields())
             .sorted(Comparator.comparing(PsiField::getName))
-            .map(field -> JavaLookupElementBuilder.forField(field))
+            .map(field -> JavaModCompletionUtils.forField(field))
             .toArray();
           case GET_FIELD -> StreamEx.of(ownerClass.getPsiClass().getAllFields())
             .filter(field -> isPotentiallyAccessible(field, ownerClass))
             .distinct(field -> field.getName())
             .sorted(Comparator.comparingInt((PsiField field) -> isPublic(field) ? 0 : 1).thenComparing(PsiField::getName))
-            .map(field -> withPriority(JavaLookupElementBuilder.forField(field), isPublic(field)))
+            .map(field -> JavaModCompletionUtils.forField(field).withPriority(isPublic(field) ? 0 : -1))
             .toArray();
           case GET_DECLARED_METHOD -> StreamEx.of(ownerClass.getPsiClass().getMethods())
             .filter(method -> isRegularMethod(method))
             .sorted(Comparator.comparing(PsiMethod::getName))
-            .map(method -> lookupMethod(method, this))
+            .map(method -> lookupMethod(method, JavaLangClassMemberReference::handler))
             .nonNull()
             .toArray();
           case GET_METHOD -> StreamEx.of(ownerClass.getPsiClass().getVisibleSignatures())
             .map(MethodSignatureBackedByPsiMethod::getMethod)
             .filter(method -> isRegularMethod(method) && isPotentiallyAccessible(method, ownerClass))
             .sorted(Comparator.comparingInt((PsiMethod method) -> getMethodSortOrder(method)).thenComparing(PsiMethod::getName))
-            .map(method -> withPriority(lookupMethod(method, this), -getMethodSortOrder(method)))
+            .map(method -> withPriority(lookupMethod(method, JavaLangClassMemberReference::handler), -getMethodSortOrder(method)))
             .nonNull()
             .toArray();
           case NEW_UPDATER -> Arrays.stream(ownerClass.getPsiClass().getFields())
             .sorted(Comparator.comparingInt((PsiField field) -> isAtomicallyUpdateable(field) ? 0 : 1).thenComparing(PsiField::getName))
-            .map(field -> withPriority(JavaLookupElementBuilder.forField(field), isAtomicallyUpdateable(field)))
+            .map(field -> JavaModCompletionUtils.forField(field).withPriority(isAtomicallyUpdateable(field) ? 0 : -1))
             .toArray();
           default -> EMPTY_ARRAY;
         };
@@ -183,13 +180,11 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
     return null;
   }
 
-  @Override
-  public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
-    final Object object = item.getObject();
-    if (object instanceof ReflectiveSignature signature) {
+  private static CommonCompletionItem.UpdateHandler handler(ReflectiveSignature signature) {
+    return (completionStart, updater) -> {
       final String text = signature.getText(false, false, type -> type + ".class");
-      replaceText(context, text.isEmpty() ? "" : ", " + text);
-    }
+      replaceText(updater, completionStart, text.isEmpty() ? "" : ", " + text);
+    };
   }
 
 

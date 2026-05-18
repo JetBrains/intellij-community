@@ -74,8 +74,11 @@ final class PsiReferenceCompletionItemProvider implements ModCompletionItemProvi
     if (object == null) {
       return null;
     }
+    if (object instanceof ModCompletionItem item) {
+      return item;
+    }
     if (object instanceof LookupElement) {
-      // Not supported yet
+      // Not supported
       return null;
     }
 

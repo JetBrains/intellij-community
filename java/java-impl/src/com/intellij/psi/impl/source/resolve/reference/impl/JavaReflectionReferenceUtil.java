@@ -1,18 +1,18 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
-import com.intellij.codeInsight.completion.InsertHandler;
-import com.intellij.codeInsight.completion.InsertionContext;
-import com.intellij.codeInsight.completion.PrioritizedLookupElement;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcompletion.CommonCompletionItem;
+import com.intellij.modcompletion.ModCompletionItemPresentation;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.util.text.MarkupText;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiArrayInitializerExpression;
@@ -22,6 +22,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassInitializer;
 import com.intellij.psi.PsiClassObjectAccessExpression;
 import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiEllipsisType;
@@ -405,17 +406,7 @@ public final class JavaReflectionReferenceUtil {
     return joiner.toString();
   }
 
-  @ApiStatus.Internal
-  public static void shortenArgumentsClassReferences(@NotNull InsertionContext context) {
-    final PsiElement parameter = PsiUtilCore.getElementAtOffset(context.getFile(), context.getStartOffset());
-    final PsiExpressionList parameterList = PsiTreeUtil.getParentOfType(parameter, PsiExpressionList.class);
-    if (parameterList != null && parameterList.getParent() instanceof PsiMethodCallExpression) {
-      JavaCodeStyleManager.getInstance(context.getProject()).shortenClassReferences(parameterList);
-    }
-  }
-
-  @ApiStatus.Internal
-  public static void shortenArgumentsClassReferences(@NotNull ModPsiUpdater context) {
+  static void shortenArgumentsClassReferences(@NotNull ModPsiUpdater context) {
     final PsiElement parameter = PsiUtilCore.getElementAtOffset(context.getPsiFile(), context.getCaretOffset());
     final PsiExpressionList parameterList = PsiTreeUtil.getParentOfType(parameter, PsiExpressionList.class);
     if (parameterList != null && parameterList.getParent() instanceof PsiMethodCallExpression) {
@@ -423,14 +414,8 @@ public final class JavaReflectionReferenceUtil {
     }
   }
 
-  @ApiStatus.Internal
-  public static @NotNull LookupElement withPriority(@NotNull LookupElement lookupElement, boolean hasPriority) {
-    return hasPriority ? lookupElement : PrioritizedLookupElement.withPriority(lookupElement, -1);
-  }
-
-  @ApiStatus.Internal
-  public static @Nullable LookupElement withPriority(@Nullable LookupElement lookupElement, int priority) {
-    return priority == 0 || lookupElement == null ? lookupElement : PrioritizedLookupElement.withPriority(lookupElement, priority);
+  static @Nullable CommonCompletionItem withPriority(@Nullable CommonCompletionItem lookupElement, int priority) {
+    return priority == 0 || lookupElement == null ? lookupElement : lookupElement.withPriority(priority);
   }
 
   @ApiStatus.Internal
@@ -444,26 +429,28 @@ public final class JavaReflectionReferenceUtil {
     return methodCall != null ? methodCall.getMethodExpression().getReferenceName() : null;
   }
 
-  @ApiStatus.Internal
-  public static @Nullable LookupElement lookupMethod(@NotNull PsiMethod method, @Nullable InsertHandler<LookupElement> insertHandler) {
+  static @Nullable CommonCompletionItem lookupMethod(@NotNull PsiMethod method,
+                                                     @NotNull Function<ReflectiveSignature, CommonCompletionItem.UpdateHandler> updater) {
     final ReflectiveSignature signature = getMethodSignature(method);
     return signature != null
-           ? LookupElementBuilder.create(signature, method.getName())
-             .withIcon(signature.getIcon())
-             .withTailText(signature.getShortArgumentTypes())
-             .withInsertHandler(insertHandler)
+           ? new CommonCompletionItem(method.getName())
+             .withObject(signature)
+             .withPresentation(
+               new ModCompletionItemPresentation(MarkupText.plainText(method.getName() + signature.getShortArgumentTypes()))
+                 .withMainIcon(() -> signature.getIcon()))
+             .withAdditionalUpdater(updater.apply(signature))
            : null;
   }
 
-  @ApiStatus.Internal
-  public static void replaceText(@NotNull InsertionContext context, @NotNull String text) {
-    final PsiElement newElement = PsiUtilCore.getElementAtOffset(context.getFile(), context.getStartOffset());
+  static void replaceText(@NotNull ModPsiUpdater context, int completionStart, @NotNull String text) {
+    final PsiElement newElement = PsiUtilCore.getElementAtOffset(context.getPsiFile(), completionStart);
     final PsiElement params = newElement.getParent().getParent();
     final int end = params.getTextRange().getEndOffset() - 1;
     final int start = Math.min(newElement.getTextRange().getEndOffset(), end);
 
-    context.getDocument().replaceString(start, end, text);
-    context.commitDocument();
+    Document document = context.getDocument();
+    document.replaceString(start, end, text);
+    PsiDocumentManager.getInstance(context.getProject()).commitDocument(document);
     shortenArgumentsClassReferences(context);
   }
 
@@ -872,6 +859,7 @@ public final class JavaReflectionReferenceUtil {
       return PsiNameHelper.getShortClassName(myReturnType);
     }
 
+    @NlsSafe
     public @NotNull String getShortArgumentTypes() {
       return getText(false, PsiNameHelper::getShortClassName);
     }

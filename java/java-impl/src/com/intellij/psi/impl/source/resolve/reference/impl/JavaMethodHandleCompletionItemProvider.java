@@ -25,7 +25,6 @@ import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.PlatformIcons;
 import com.intellij.util.ArrayUtilRt;
@@ -62,7 +61,7 @@ import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflection
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.getMethodTypeExpressionText;
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.getReflectiveClass;
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.getTypeText;
-import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.shortenArgumentsClassReferences;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.replaceText;
 
 @NotNullByDefault
 public final class JavaMethodHandleCompletionItemProvider implements DumbAware, ModCompletionItemProvider {
@@ -224,14 +223,7 @@ public final class JavaMethodHandleCompletionItemProvider implements DumbAware, 
         Document document = updater.getDocument();
         document.deleteString(completionStart, updater.getCaretOffset());
         PsiDocumentManager.getInstance(updater.getProject()).commitDocument(document);
-        PsiElement newElement = PsiUtilCore.getElementAtOffset(updater.getPsiFile(), completionStart);
-        PsiElement params = newElement.getParent().getParent();
-        int end = params.getTextRange().getEndOffset() - 1;
-        int start = Math.min(newElement.getTextRange().getEndOffset(), end);
-
-        document.replaceString(start, end, text);
-        PsiDocumentManager.getInstance(updater.getProject()).commitDocument(document);
-        shortenArgumentsClassReferences(updater);
+        replaceText(updater, completionStart, text);
       }));
   }
 

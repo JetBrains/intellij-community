@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.completion.JavaClassReferenceCompletionContributor;
+import com.intellij.java.completion.modcommand.JavaModCompletionUtils;
 import com.intellij.java.completion.modcommand.NonImportedClassProvider;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcompletion.CommonCompletionItem;
@@ -11,7 +12,6 @@ import com.intellij.modcompletion.ModCompletionItemProvider;
 import com.intellij.modcompletion.ModCompletionResult;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.MarkupText;
 import com.intellij.patterns.ElementPattern;
@@ -31,8 +31,6 @@ import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ProcessingContext;
@@ -154,16 +152,8 @@ public final class JavaReflectionCompletionItemProvider implements DumbAware, Mo
   private static void addConstructorParameterTypes(PsiClass psiClass, boolean isDeclared, ModCompletionResult result) {
     PsiMethod[] constructors = psiClass.getConstructors();
     for (PsiMethod constructor : constructors) {
-      String lookupString = constructor.getName();
-      String parametersPresentation = PsiFormatUtil.formatMethod(constructor, PsiSubstitutor.EMPTY,
-                                            PsiFormatUtilBase.SHOW_PARAMETERS,
-                                            PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE);
       String parametersText = getParameterTypesText(constructor);
-      CommonCompletionItem item = new CommonCompletionItem(lookupString)
-        .withObject(constructor)
-        .withPresentation(new ModCompletionItemPresentation(
-          MarkupText.plainText(constructor.getName() + parametersPresentation))
-                            .withMainIcon(() -> constructor.getIcon(Iconable.ICON_FLAG_VISIBILITY)))
+      CommonCompletionItem item = JavaModCompletionUtils.forMethod(constructor, PsiSubstitutor.EMPTY)
         .withPriority(isDeclared && !isPublic(constructor) ? -1 : 0)
         .withAdditionalUpdater((_, updater) -> {
           if (parametersText != null) {

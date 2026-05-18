@@ -8,6 +8,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.PresentableLookupValue;
 import com.intellij.diagnostic.PluginException;
+import com.intellij.modcompletion.ModCompletionItem;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Key;
@@ -177,6 +178,9 @@ public class CompletionData {
 
   public static @NotNull LookupElement objectToLookupItem(final @NotNull Object object) {
     if (object instanceof LookupElement lookupElement) return lookupElement;
+    if (object instanceof ModCompletionItem item) {
+      return new CompletionItemLookupElement(item);
+    }
 
     String s = null;
     TailType tailType = TailTypes.noneType();
