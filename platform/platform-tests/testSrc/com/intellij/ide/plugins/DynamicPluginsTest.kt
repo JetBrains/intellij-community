@@ -337,19 +337,6 @@ class DynamicPluginsTest {
   }
 
   @Test
-  fun loadNonDynamicEP() {
-    val epName = "one.foo"
-    val plugin = plugin("nonDynamic") {
-      dependsIntellijModulesLang()
-      extensionPoints = """<extensionPoint qualifiedName="$epName" interface="java.lang.Runnable"/>"""
-      extensions("""<foo implementation="${MyRunnable::class.java.name}"/>""", "one")
-    }
-    val descriptor = loadDescriptorInTest(plugin, pluginsDir)
-    assertThat(DynamicPlugins.checkCanUnloadWithoutRestart(descriptor))
-      .isEqualTo("Plugin '${descriptor.pluginId}' is not unload-safe because of extension to non-dynamic EP '$epName'")
-  }
-
-  @Test
   fun loadOptionalDependency() {
     // match production - on plugin load/unload ActionManager is already initialized
     val actionManager = ActionManager.getInstance()
@@ -1009,6 +996,38 @@ class DynamicPluginsTest {
         }
       }
     }
+  }
+
+  @Test
+  fun `loading of plugin with an extension of non-dynamic EP is prohibited - even if EP is registered in the same plugin`() {
+    val epName = "one.foo"
+    val pluginSet = buildPluginSet(pluginsDir, configureClassLoaders = false) {
+      plugin("nonDynamic") {
+        extensionPoints = """<extensionPoint qualifiedName="$epName" interface="java.lang.Runnable"/>"""
+        extensions("""<foo implementation="${MyRunnable::class.java.name}"/>""", "one")
+      }
+    }
+    val plugin = pluginSet.getPlugin("nonDynamic")
+    if (isNewSupportEnabled()) {
+      assertThat(DynamicPlugins.checkCanLoadWithoutRestart(plugin))
+        .isEqualTo("plugin 'nonDynamic' (nonDynamic, 262.SNAPSHOT) cannot be loaded/unloaded dynamically because it uses non-dynamic extension point 'one.foo' from plugin 'nonDynamic' (nonDynamic, 262.SNAPSHOT).")
+    } else {
+      assertThat(DynamicPlugins.checkCanLoadWithoutRestart(plugin))
+        .isEqualTo("Plugin '${plugin.pluginId}' is not unload-safe because of extension to non-dynamic EP '$epName'")
+    }
+  }
+
+  @Test
+  fun `loading of plugin with an extension of dynamic EP is allowed - EP is registered in the same plugin`() {
+    val epName = "one.foo"
+    val pluginSet = buildPluginSet(pluginsDir, configureClassLoaders = false) {
+      plugin("dynamic") {
+        extensionPoints = """<extensionPoint qualifiedName="$epName" interface="java.lang.Runnable" dynamic="true"/>"""
+        extensions("""<foo implementation="${MyRunnable::class.java.name}"/>""", "one")
+      }
+    }
+    val plugin = pluginSet.getPlugin("dynamic")
+    assertThat(DynamicPlugins.checkCanLoadWithoutRestart(plugin)).isNull()
   }
 
   @Test

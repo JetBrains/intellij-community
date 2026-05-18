@@ -584,6 +584,13 @@ private object DynamicPluginsValidators {
       //  continue
       //}
       val epResult = elementsModel.getExtensionPoint(epFqn)
+                     ?: run { // look up locally
+                       // TODO there might be a case when EP is taken from, say, another embedded content module, but there is no explicit dependencies between them,
+                       //  so they can be ordered arbitrarily and this lookup will fail – may require fixing
+                       descriptor.lookupInAllScopes {
+                         it.extensionPoints.find { ep -> ep.getQualifiedName(descriptor) == epFqn }
+                       }?.let { descriptor to it }
+                     }
       if (epResult == null) {
         return DynamicTransitionIsNotPossibleReason.of(
           "${descriptor.shortLogDescription} cannot be loaded/unloaded dynamically because it uses extension point '$epFqn' which was not found."
@@ -596,6 +603,13 @@ private object DynamicPluginsValidators {
         )
       }
     }
+    return null
+  }
+
+  private fun <T> IdeaPluginDescriptorImpl.lookupInAllScopes(body: (ContainerDescriptor) -> T?): T? {
+    body(appContainerDescriptor)?.let { return it }
+    body(projectContainerDescriptor)?.let { return it }
+    body(moduleContainerDescriptor)?.let { return it }
     return null
   }
 
