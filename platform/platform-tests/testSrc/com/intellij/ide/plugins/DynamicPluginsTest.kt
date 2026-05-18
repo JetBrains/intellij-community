@@ -1277,11 +1277,21 @@ class DynamicPluginsTest {
     }
     val (ai, completion, scala) = pluginSet.getEnabledPlugins("ai", "completion", "scala")
     loadPluginInTest(completion) {
+      val completionMainClassLoader = completion.pluginClassLoader
+      assertThat(completionMainClassLoader).isNotNull()
+      val completionAi = completion.contentModules.first()
+      assertThat(completionAi.pluginClassLoader).isNull()
+      assertThat(completionAi.isLoaded).isFalse
       loadPluginInTest(scala) {
         loadPluginInTest(ai) {
           val scalaAiCompletion = PluginManagerCore.getPlugin(PluginId("scala"))!!.contentModules[0] as ContentModuleDescriptor
           assert(PluginManagerCore.getPluginSet().isModuleEnabled(PluginModuleId("scala.ai.completion", PluginModuleId.JETBRAINS_NAMESPACE)))
-          assert(scalaAiCompletion.isLoaded)
+          assertThat(scalaAiCompletion.isLoaded).isTrue
+
+          assertThat(completion.pluginClassLoader).isEqualTo(completionMainClassLoader)
+          assertThat(completionAi.isLoaded).isTrue
+          // check that newly configured classloader refers to existing main completion classloader
+          assertThat(completionAi).hasExactDirectParentClassloaders(completion, ai)
         }
       }
     }
@@ -1321,6 +1331,7 @@ class DynamicPluginsTest {
           val scalaAiCompletion = PluginManagerCore.getPlugin(PluginId("scala"))!!.contentModules[0] as ContentModuleDescriptor
           assert(PluginManagerCore.getPluginSet().isModuleEnabled(PluginModuleId("scala.ai.completion", PluginModuleId.JETBRAINS_NAMESPACE)))
           assert(scalaAiCompletion.isLoaded)
+          assert(completion.contentModules.first().isLoaded)
         }
       }
     }
