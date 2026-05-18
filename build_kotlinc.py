@@ -64,6 +64,7 @@ def build_kotlin_compiler(args):
         f'-PdeployVersion={args.kotlinc_version}',
         f'-Pbuild.number={args.kotlinc_version}',
         '-Pteamcity=true',  # Makes this a release build rather than a dev build.
+        '-Pkotlin.build.cache.local.enabled=true',  # Enables disk cache (shared across incremental CI builds).
     ]
     run_subprocess(cmd, args.cmd_env, 'Building the Kotlin compiler')
 
