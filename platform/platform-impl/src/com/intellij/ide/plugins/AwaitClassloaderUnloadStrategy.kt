@@ -109,8 +109,19 @@ internal class AwaitClassloaderUnloadAsyncPostTransition : AwaitClassloaderUnloa
       })
       notification.addAction(object : AnAction(IdeBundle.message("action.save.memory.snapshot.text")), DumbAware {
         override fun actionPerformed(e: AnActionEvent) {
-          service<DynamicPluginsSupportService>().coroutineScope.launch(CoroutineName("memory snapshot") + Dispatchers.IO) {
-            saveMemorySnapshot(classloaders.firstOrNull()?.pluginId ?: PluginId.getId("unknown"))
+          val project = e.project
+          service<DynamicPluginsSupportService>().coroutineScope.launch(CoroutineName("saving memory snapshot") + Dispatchers.IO) {
+            fun doSave() {
+              saveMemorySnapshot(classloaders.firstOrNull()?.pluginId ?: PluginId.getId("unknown"))
+            }
+            if (project != null) {
+              withBackgroundProgress(project, IdeBundle.message("progress.title.saving.memory.snapshot")) {
+                doSave()
+              }
+            } else {
+              doSave()
+            }
+            notification.expire()
           }
         }
       })
