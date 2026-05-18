@@ -17,6 +17,7 @@ import com.intellij.ide.plugins.cl.PluginAwareClassLoader.UNLOAD_IN_PROGRESS
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.actionSystem.impl.canUnloadActionGroup
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
@@ -231,7 +232,7 @@ internal class DynamicPluginsSupportImpl(
       try {
         attachClassLoaders(groups, targetPluginSet)
         val listenerCallbacks = mutableListOf<ExtensionPointDeferredListenersNotification>()
-        application.runWriteAction {
+        edtWriteAction { // listeners are expected to be called on EDT FIXME
           val descriptors = groups.flatMap { it.sortedDescriptors }
           registerDescriptors(application as ApplicationImpl, descriptors.asSequence(), listenerCallbacks)
           clearCachedValues()
