@@ -84,7 +84,7 @@ public final class PluginsTabFactory implements WelcomeTabFactory {
     BorderLayoutPanel pluginsPanel = JBUI.Panels.simplePanel(mainPanel).addToTop(topComponent)
       .withBorder(JBUI.Borders.customLine(JBColor.border(), 0, 1, 0, 0));
     if (topComponent instanceof TabbedPaneHeaderComponent tabbedPanel) {
-      tabbedPanel.setWeclomeScreen(true);
+      tabbedPanel.setWelcomeScreen(true);
     }
     return pluginsPanel;
   }
