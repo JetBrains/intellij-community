@@ -502,27 +502,25 @@ class DynamicPluginsTest {
 
   @Test
   fun `extension point from an embedded content module used in main descriptor`() {
-    val fooPath = plugin("foo") {
-      content {
-        module("foo.emb", loadingRule = ModuleLoadingRuleValue.EMBEDDED) {
-          isSeparateJar = true
-          extensionPoint<FooExtension>(FooExtension.EP_FQN, dynamic = true)
-          includePackageClassFiles<FooExtension>()
+    val pluginSet = buildPluginSet(pluginsDir, configureClassLoaders = false) {
+      plugin("foo") {
+        content {
+          module("foo.emb", loadingRule = ModuleLoadingRuleValue.EMBEDDED) {
+            isSeparateJar = true
+            extensionPoint<FooExtension>(FooExtension.EP_FQN, dynamic = true)
+            includePackageClassFiles<FooExtension>()
+          }
         }
+        extension<FooExtensionImpl>(FooExtension.EP_FQN)
+        includePackageClassFiles<FooExtensionImpl>()
       }
-      extension<FooExtensionImpl>(FooExtension.EP_FQN)
-      includePackageClassFiles<FooExtensionImpl>()
-    }.installAt(pluginsDir)
-    val foo = loadDescriptorInTest(fooPath)
+    }
+    val foo = pluginSet.getEnabledPlugin("foo")
     val fooEmb = foo.contentModules.first()
-    try {
-      assertThat(DynamicPlugins.loadPlugins(listOf(foo), null)).isTrue
+    loadPluginInTest(foo) {
       assertThat(application.extensionArea.getExtensionPoint<Any>(FooExtension.EP_FQN).extensions.size).isEqualTo(1)
       val epService = application.getTestHandleService<FooExtensionService, _, _>(fooEmb)!!
       epService.test(Unit)
-    }
-    finally {
-      assertThat(DynamicPlugins.unloadPlugins(listOf(foo), null)).isTrue
     }
   }
 

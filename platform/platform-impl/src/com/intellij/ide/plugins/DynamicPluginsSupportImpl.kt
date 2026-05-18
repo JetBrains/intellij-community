@@ -409,13 +409,8 @@ private object DynamicPluginsValidators {
   }
 
   fun validateGroupCanBeLoaded(group: RuntimeModuleGroup, elementsModel: MutableAppElementsModel): DynamicTransitionIsNotPossibleReason? {
-    val validators: List<(IdeaPluginDescriptorImpl) -> DynamicTransitionIsNotPossibleReason?> = listOfNotNull(
-      { validateDescriptorHasAllExtensionsFromDynamicEPs(it, elementsModel) }
-    )
-    for (descriptor in group.sortedDescriptors) {
-      validators.firstNotNullOfOrNull { it(descriptor) }
-        ?.let { return it }
-    }
+    validateModuleGroupHasAllExtensionsFromDynamicEPs(group, elementsModel)
+      ?.let { return it }
     return null
   }
 
@@ -430,12 +425,13 @@ private object DynamicPluginsValidators {
       // ::validateIsNotDependsSubDescriptor, // TODO since ResolvedPluginSet now maintains proper RuntimeModuleGraph model, perhaps we can get rid of this constraint
       ::validateDescriptorHasNoServiceOverrides.takeIf { !allowServiceOverridesUnloading },
       ::validateDescriptorUsesPluginClassloader.takeIf { !allowUnloadingWhenRunFromSources },
-      { validateDescriptorHasAllExtensionsFromDynamicEPs(it, elementsModel) }
     )
     for (descriptor in group.sortedDescriptors.asReversed()) {
       validators.firstNotNullOfOrNull { it(descriptor) }
         ?.let { return it }
     }
+    validateModuleGroupHasAllExtensionsFromDynamicEPs(group, elementsModel)
+      ?.let { return it }
     return null
   }
 
@@ -569,38 +565,34 @@ private object DynamicPluginsValidators {
     return null
   }
 
-  fun validateDescriptorHasAllExtensionsFromDynamicEPs(
-    descriptor: IdeaPluginDescriptorImpl,
+  fun validateModuleGroupHasAllExtensionsFromDynamicEPs(
+    group: RuntimeModuleGroup,
     elementsModel: MutableAppElementsModel,
   ): DynamicTransitionIsNotPossibleReason? {
-    for (epFqn in descriptor.extensions.keys) {
-      // TODO there were these hard-coded exclusions in the previous impl, let's try to live without them for now
-      //// special case Kotlin EPs registered via code in Kotlin compiler
-      //if (epName.startsWith("org.jetbrains.kotlin") && descriptor.pluginId.idString == "org.jetbrains.kotlin") {
-      //  continue
-      //}
-      //// Workaround until SID-207 fixed
-      //if (epName.startsWith("Pythonid.template") && descriptor.pluginId.idString in listOf("com.intellij.python.django", "org.jetbrains.dbt")) {
-      //  continue
-      //}
-      val epResult = elementsModel.getExtensionPoint(epFqn)
-                     ?: run { // look up locally
-                       // TODO there might be a case when EP is taken from, say, another embedded content module, but there is no explicit dependencies between them,
-                       //  so they can be ordered arbitrarily and this lookup will fail – may require fixing
-                       descriptor.lookupInAllScopes {
-                         it.extensionPoints.find { ep -> ep.getQualifiedName(descriptor) == epFqn }
-                       }?.let { descriptor to it }
-                     }
-      if (epResult == null) {
-        return DynamicTransitionIsNotPossibleReason.of(
-          "${descriptor.shortLogDescription} cannot be loaded/unloaded dynamically because it uses extension point '$epFqn' which was not found."
-        )
-      }
-      val (source, ep) = epResult
-      if (!ep.isDynamic) {
-        return DynamicTransitionIsNotPossibleReason.of(
-          "${descriptor.shortLogDescription} cannot be loaded/unloaded dynamically because it uses non-dynamic extension point '$epFqn' from ${source.shortLogDescription}."
-        )
+    val ownElementsModel by lazy { MutableAppElementsModel().apply { register(group) } }
+    for (descriptor in group.sortedDescriptors) {
+      for (epFqn in descriptor.extensions.keys) {
+        // TODO there were these hard-coded exclusions in the previous impl, let's try to live without them for now
+        //// special case Kotlin EPs registered via code in Kotlin compiler
+        //if (epName.startsWith("org.jetbrains.kotlin") && descriptor.pluginId.idString == "org.jetbrains.kotlin") {
+        //  continue
+        //}
+        //// Workaround until SID-207 fixed
+        //if (epName.startsWith("Pythonid.template") && descriptor.pluginId.idString in listOf("com.intellij.python.django", "org.jetbrains.dbt")) {
+        //  continue
+        //}
+        val epResult = elementsModel.getExtensionPoint(epFqn) ?: ownElementsModel.getExtensionPoint(epFqn)
+        if (epResult == null) {
+          return DynamicTransitionIsNotPossibleReason.of(
+            "${descriptor.shortLogDescription} cannot be loaded/unloaded dynamically because it uses extension point '$epFqn' which was not found."
+          )
+        }
+        val (source, ep) = epResult
+        if (!ep.isDynamic) {
+          return DynamicTransitionIsNotPossibleReason.of(
+            "${descriptor.shortLogDescription} cannot be loaded/unloaded dynamically because it uses non-dynamic extension point '$epFqn' from ${source.shortLogDescription}."
+          )
+        }
       }
     }
     return null
