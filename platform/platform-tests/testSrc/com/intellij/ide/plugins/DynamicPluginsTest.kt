@@ -447,7 +447,7 @@ class DynamicPluginsTest {
       loadPluginInTest(bar) {
         val barService = application.getTestHandleService<BarService, _, _>(bar)!!
         barService.test(Unit)
-        val fooBarClass = foo.loadClassInsideSelf<FooBarService>() // loaded because packed into the same jar with the main descriptor
+        val fooBarClass = foo.loadClassInsideSelf<FooBarService>()!! // loaded because packed into the same jar with the main descriptor
         if (isNewSupportEnabled()) {
           assertThat(application.getService(fooBarClass)).isNotNull()
           assertThat(foo.dependencies.first().subDescriptor!!.isMarkedForLoading).isTrue
@@ -874,7 +874,7 @@ class DynamicPluginsTest {
       val enabled = PluginEnabler.getInstance().enable(listOf(plugin))
       assertThat(enabled).isTrue()
       assertThat(plugin.isEnabled).isTrue()
-      assertThat(application.getService(plugin.loadClassInsideSelf<MyPersistentComponent>())).isNotNull()
+      assertThat(application.getService(plugin.loadClassInsideSelf<MyPersistentComponent>()!!)).isNotNull()
     }
   }
 
@@ -1366,6 +1366,7 @@ private fun assertDisabledDependencyLoadingError(pluginId: PluginId, dependencyI
 
 /** note: can't cast the output to [T], [T] can only be loaded by the isolated classloader of [descriptor] */
 private inline fun <reified T: PluginTestHandle<I, O>, I, O> ComponentManager.getTestHandleService(descriptor: IdeaPluginDescriptorImpl): PluginTestHandle<I, O>? {
+  val serviceClass = descriptor.loadClassInsideSelf<T>() ?: return null
   @Suppress("UNCHECKED_CAST")
-  return getService(descriptor.loadClassInsideSelf<T>()) as PluginTestHandle<I, O>?
+  return getService(serviceClass) as PluginTestHandle<I, O>?
 }

@@ -66,7 +66,7 @@ internal fun IdeaPluginDescriptorImpl.loadClassInsideSelf(fqn: String): Class<*>
   return (classLoader as PluginClassLoader).loadClassInsideSelf(fqn) ?: error("Class '$fqn' not found in $this")
 }
 
-internal inline fun <reified T> IdeaPluginDescriptorImpl.loadClassInsideSelf(): Class<*> {
+internal inline fun <reified T> IdeaPluginDescriptorImpl.loadClassInsideSelf(): Class<*>? {
   val fqn = T::class.qualifiedName!!
-  return ((classLoader as PluginClassLoader).loadClassInsideSelf(fqn) ?: error("Class '$fqn' not found in $this"))
+  return (classLoader as PluginClassLoader).loadClassInsideSelf(fqn)
 }
