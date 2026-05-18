@@ -21,6 +21,7 @@ abstract class TypeEvalContext protected constructor() {
   abstract fun allowReturnTypes(element: PsiElement): Boolean
   abstract fun allowCallContext(element: PsiElement): Boolean
   abstract fun maySwitchToAST(element: PsiElement): Boolean
+
   @ApiStatus.Internal
   open fun isExternal(): Boolean = false
   abstract fun withTracing(): TypeEvalContext
@@ -47,6 +48,9 @@ abstract class TypeEvalContext protected constructor() {
 
   @ApiStatus.Internal
   abstract fun getContextTypeCache(): MutableMap<Pair<Any, Any>, PyType?>
+
+  @ApiStatus.Internal
+  abstract fun getVarianceCache(): MutableMap<PyTypeParameterType, PyTypeParameterType.Variance>
   abstract fun getKnownType(element: PyTypedElement): PyType?
   abstract fun getKnownReturnType(callable: PyCallable): PyType?
 

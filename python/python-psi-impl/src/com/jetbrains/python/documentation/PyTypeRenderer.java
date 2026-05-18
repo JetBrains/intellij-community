@@ -16,6 +16,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.ast.PyAstSingleStarParameter;
 import com.jetbrains.python.ast.PyAstSlashParameter;
+import com.jetbrains.python.ast.PyAstTypeParameter;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -44,7 +45,6 @@ import com.jetbrains.python.psi.types.PySelfType;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeParameterType;
-import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.PyTypeVarTupleType;
 import com.jetbrains.python.psi.types.PyTypeVarType;
 import com.jetbrains.python.psi.types.PyTypeVisitorExt;
@@ -580,17 +580,18 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     return result.toFragment();
   }
 
-  static @Nullable PsiElement findReferenceOrTypeParameter(@Nullable PsiElement originalElement) {
-    if (originalElement == null) return originalElement;
+  static @Nullable PyTypedElement findReferenceOrTypeParameter(@Nullable PsiElement originalElement) {
+    if (originalElement == null) return null;
+    if (originalElement instanceof PyTypeParameter typeParam) return typeParam;
     if (originalElement instanceof PyReferenceExpression refExpr) return refExpr;
     if (originalElement.getParent() instanceof PyTypeParameter typeParam) return typeParam;
     if (originalElement.getParent() instanceof PyReferenceExpression refExpr) return refExpr;
     PsiElement prevElement = PsiTreeUtil.prevLeaf(originalElement, true);
-    if (prevElement == null) return originalElement;
+    if (prevElement == null) return null;
     if (prevElement.getParent() instanceof PyTypeParameter typeParam) return typeParam;
     if (prevElement instanceof PyReferenceExpression refExpr) return refExpr;
     if (prevElement.getParent() instanceof PyReferenceExpression refExpr) return refExpr;
-    return originalElement;
+    return null;
   }
 
   @NotNull HtmlChunk describeTypeParameter(@NotNull PyTypeParameter typeParameter,
@@ -601,7 +602,7 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
                                            @NotNull TypeEvalContext context) {
     PyTypeVarType.Variance variance = null;
     if (showVariance) {
-      PsiElement refExpr = findReferenceOrTypeParameter(originalElement);
+      PyTypedElement refExpr = findReferenceOrTypeParameter(originalElement);
       boolean effectivelyInvariant = isEffectivelyInvariant(refExpr, context);
       variance = effectivelyInvariant
                  ? PyTypeVarType.Variance.INVARIANT
@@ -625,20 +626,17 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     var bound = typeParameter instanceof PyTypeVarType typeVar ? typeVar.getBound() : null;
     var defaultTypeRef = typeParameter.getDefaultType();
     var defaultType = defaultTypeRef != null ? defaultTypeRef.get() : null;
-    return describeTypeParameter(
-      null,
-      // PyTypeParameterTypes have the stars in the name but PyTypeParameters don't
-      typeParameter.getName().replaceFirst("\\*+", ""),
-      bound != null ? render(bound) : null,
-      defaultType != null ? render(defaultType) : null,
-      switch (typeParameter) {
-        case PyTypeVarType ignored -> PyTypeParameter.Kind.TypeVar;
-        case PyTypeVarTupleType ignored -> PyTypeParameter.Kind.TypeVarTuple;
-        case PyParamSpecType ignored -> PyTypeParameter.Kind.ParamSpec;
-        default -> null;
-      },
-      false
-    );
+    // PyTypeParameterTypes have the stars in the name but PyTypeParameters don't
+    String name = typeParameter.getName().replaceFirst("\\*+", "");
+    HtmlChunk renderedBound = bound != null ? render(bound) : null;
+    HtmlChunk renderedType = defaultType != null ? render(defaultType) : null;
+    PyAstTypeParameter.Kind parameterKind = switch (typeParameter) {
+      case PyTypeVarType ignored -> PyTypeParameter.Kind.TypeVar;
+      case PyTypeVarTupleType ignored -> PyTypeParameter.Kind.TypeVarTuple;
+      case PyParamSpecType ignored -> PyTypeParameter.Kind.ParamSpec;
+      default -> null;
+    };
+    return describeTypeParameter(null, name, renderedBound, renderedType, parameterKind, false);
   }
 
   private @NotNull HtmlChunk describeTypeParameter(

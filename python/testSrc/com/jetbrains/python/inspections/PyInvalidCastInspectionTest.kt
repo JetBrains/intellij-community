@@ -20,7 +20,7 @@ class PyInvalidCastInspectionTest : PyInspectionTestCase() {
         cast(object, 1)  # ok
         
         lint = [1, 2, 3]
-        cast(list[object], lint)  # ok
+        <warning descr="Cast of type 'list[int]' to type 'list[object]' may be a mistake because they are not in the same inheritance hierarchy. If this was intentional, cast the expression to 'object' first.">cast(list[object], lint)</warning>  # ok
       """.trimIndent()
     )
   }
@@ -64,8 +64,7 @@ class PyInvalidCastInspectionTest : PyInspectionTestCase() {
         from typing import cast, Sequence
 
         lint = [1, 2, 3]
-        # should actually fail because a `list[int]` can never be a `list[object]`
-        cast(list[object], lint)
+        <warning descr="Cast of type 'list[int]' to type 'list[object]' may be a mistake because they are not in the same inheritance hierarchy. If this was intentional, cast the expression to 'object' first.">cast(list[object], lint)</warning>
 
         cast(Sequence[object], lint)  # ok
       """.trimIndent()

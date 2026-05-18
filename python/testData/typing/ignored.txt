@@ -23,7 +23,6 @@ literals_literalstring.py
 literals_semantics.py
 namedtuples_define_class.py
 namedtuples_usage.py
-narrowing_typeis.py
 overloads_consistency.py
 overloads_evaluation.py
 protocols_class_objects.py

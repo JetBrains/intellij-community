@@ -316,7 +316,7 @@ internal class PyExpectedVarianceJudgmentTest : PyCodeInsightTestCase() {
     from typing import Callable
     class A[T]:
         def f(self, t: "Callable[[T], None]") : ...
-    #                             └ EXPECTED_VARIANCE CONTRAVARIANT FIXME COVARIANT # requires PY-87942
+    #                             └ EXPECTED_VARIANCE COVARIANT
     """.trimIndent())
 
   @Test
@@ -344,14 +344,14 @@ internal class PyExpectedVarianceJudgmentTest : PyCodeInsightTestCase() {
     #              └ EXPECTED_VARIANCE COVARIANT
     """.trimIndent())
 
+  // Expect null to avoid variance compatibility inspection check
+
   @Test
   fun `Type argument of self type`() = test("""
     class K[T]:
         def m1(self: "K[T]", x: T) -> None: ...
-    #                   └ EXPECTED_VARIANCE CONTRAVARIANT
+    #                   └ EXPECTED_VARIANCE NULL
     """.trimIndent())
-
-  // Expect null to avoid variance compatibility inspection check
 
   @Test
   fun `Generic class dunder init special case`() = test("""

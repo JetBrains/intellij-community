@@ -111,6 +111,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import static com.intellij.psi.util.PsiTreeUtil.getStubOrPsiParent;
 import static com.jetbrains.python.ast.PyAstFunction.Modifier.CLASSMETHOD;
 import static com.jetbrains.python.ast.PyAstFunction.Modifier.STATICMETHOD;
 
@@ -750,11 +751,12 @@ public final class PyUtil {
    */
   public static @Nullable PsiElement getFragmentContextAwareParent(@Nullable PsiElement element) {
     if (element == null) return null;
-    if (element.getParent() == null) return null;
-    if (element.getParent().getParent() instanceof PyExpressionCodeFragment) {
-      return element.getContainingFile().getContext();
+    var parent = getStubOrPsiParent(element);
+    if (parent == null) return null;
+    if (parent instanceof PyExpressionStatement && getStubOrPsiParent(parent) instanceof PyExpressionCodeFragment fragment) {
+      return fragment.getContext();
     }
-    return element.getParent();
+    return parent;
   }
 
   public static boolean isRoot(PsiFileSystemItem directory) {

@@ -1986,17 +1986,17 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   // PY-63820
   public void testVariadicGenericEmptyArgsCall() {
     runWithLanguageLevel(LanguageLevel.getLatest(), () -> doTestByText("""
-                   from typing import TypeVarTuple
-                   
-                   Ts = TypeVarTuple('Ts')
-                   
-                   
-                   def foo(*args: *Ts) -> None:
-                       pass
-                   
-                   
-                   foo()
-                   """));
+                                                                         from typing import TypeVarTuple
+                                                                         
+                                                                         Ts = TypeVarTuple('Ts')
+                                                                         
+                                                                         
+                                                                         def foo(*args: *Ts) -> None:
+                                                                             pass
+                                                                         
+                                                                         
+                                                                         foo()
+                                                                         """));
   }
 
   // PY-53105
@@ -4467,6 +4467,232 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  @TestFor(issues = "PY-76814")
+  public void testSupertypesOfCovariance() {
+    doTestByText("""
+                   class D[T]:
+                       def get(self) -> T: pass
+                   
+                   d_int : D[int] = D[int]()
+                   d_obj : D[object] = D[object]()
+                   
+                   d_int = <warning descr="Expected type 'D[int]', got 'D[object]' instead">d_obj</warning> # E
+                   d_obj = d_int # ok
+                   """);
+  }
+
+  @TestFor(issues = "PY-76814")
+  public void testSupertypesOfCovarianceWithOuterSubtype() {
+    doTestByText("""
+                   class D[T]:
+                       def get(self) -> T: pass
+                   class E(D[int]): ...
+                   
+                   d_int : E = E()
+                   d_obj : D[object] = D[object]()
+                   
+                   d_int = <warning descr="Expected type 'E', got 'D[object]' instead">d_obj</warning> # E
+                   d_obj = d_int # ok
+                   """);
+  }
+
+  @TestFor(issues = "PY-76814")
+  public void testSupertypesOfContravariance() {
+    doTestByText("""
+                   class D[T]:
+                       def set(self, val: T): pass
+                   
+                   d_int : D[int] = D[int]()
+                   d_obj : D[object] = D[object]()
+                   
+                   d_int = d_obj # ok
+                   d_obj = <warning descr="Expected type 'D[object]', got 'D[int]' instead">d_int</warning> # E
+                   """);
+  }
+
+  @TestFor(issues = "PY-76814")
+  public void testSupertypesOfContravarianceWithOuterSubtype() {
+    doTestByText("""
+                   class D[T]:
+                       def set(self, val: T): pass
+                   class E(D[object]): ...
+                   
+                   d_int : D[int] = D[int]()
+                   d_obj : E = E()
+                   
+                   d_int = d_obj # ok
+                   d_obj = <warning descr="Expected type 'E', got 'D[int]' instead">d_int</warning> # E
+                   """);
+  }
+
+  @TestFor(issues = "PY-76814")
+  public void testSupertypesOfMixedVarianceCo() {
+    doTestByText("""
+                   class A[T]: # T is covariant
+                       def get(self) -> T: ...
+                   
+                   class B[S](A[S]): # S is invariant
+                       def set(self, s: S): ...
+                       def get(self) -> S: ...
+                   
+                   a : A[object] = A[object]()
+                   b : B[int] = B[int]()
+                   
+                   a = b # Ok
+                   b = <warning descr="Expected type 'B[int]', got 'A[object]' instead">a</warning> # E
+                   """);
+  }
+
+  @TestFor(issues = "PY-76814")
+  public void testSupertypesOfMixedVarianceCoErr() {
+    doTestByText("""
+                   class A[T]: # T is covariant
+                       def get(self) -> T: ...
+                   
+                   class B[S](A[S]): # S is invariant
+                       def set(self, s: S): ...
+                       def get(self) -> S: ...
+                   
+                   a : A[int] = A[int]()
+                   b : B[object] = B[object]()
+                   
+                   a = <warning descr="Expected type 'A[int]', got 'B[object]' instead">b</warning> # E
+                   b = <warning descr="Expected type 'B[object]', got 'A[int]' instead">a</warning> # E
+                   """);
+  }
+
+  @TestFor(issues = "PY-76814")
+  public void testSupertypesOfMixedVarianceContra() {
+    doTestByText("""
+                   class A[T]: # T is contravariant
+                       def set(self, t: T): ...
+                   
+                   class B[S](A[S]): # S is invariant
+                       def set(self, s: S): ...
+                       def get(self) -> S: ...
+                   
+                   a : A[int] = A[int]()
+                   b : B[object] = B[object]()
+                   
+                   a = b # Ok
+                   b = <warning descr="Expected type 'B[object]', got 'A[int]' instead">a</warning> # E
+                   """);
+  }
+
+  @TestFor(issues = "PY-76814")
+  public void testSupertypesOfMixedVarianceContraErr() {
+    doTestByText("""
+                   class A[T]: # T is contravariant
+                       def set(self, t: T): ...
+                   
+                   class B[S](A[S]): # S is invariant
+                       def set(self, s: S): ...
+                       def get(self) -> S: ...
+                   
+                   a : A[object] = A[object]()
+                   b : B[int] = B[int]()
+                   
+                   a = <warning descr="Expected type 'A[object]', got 'B[int]' instead">b</warning> # E
+                   b = <warning descr="Expected type 'B[int]', got 'A[object]' instead">a</warning> # E
+                   """);
+  }
+
+  @TestFor(issues = "PY-79221")
+  public void testErrorWhenReturningIncompatibleTypeDueToVariance() {
+    doTestByText("""
+                   data: list[int]
+                   
+                   def f() -> list[object]:
+                      return <warning descr="Expected type 'list[object]', got 'list[int]' instead">data</warning> # expect error
+                   """);
+  }
+
+  @TestFor(issues = "PY-79221")
+  public void testSameTypeArgumentForTypeParametersWithDifferentVariance() {
+    doTestByText("""
+                   from typing import Generic, TypeVar
+                   
+                   T_Co = TypeVar("T_Co", covariant=True)
+                   T_Contra = TypeVar("T_Contra", contravariant=True)
+                   
+                   class CoContra(Generic[T_Co, T_Contra]):
+                       pass
+                   
+                   def f[T1, T2](x: CoContra[T1, T2]):
+                       pass
+                   
+                   def g(x: CoContra[None, None]):
+                       f(x)
+                   """);
+  }
+
+  @TestFor(issues = "PY-89564")
+  public void testNoSubtypeIssueOnCreationExpressionInReturn() {
+    doTestByText("""
+                   def f() -> list[object]:
+                      return [1, 2]
+                   """);
+  }
+
+  @TestFor(issues = "PY-89564")
+  public void testNoSubtypeIssueOnCreationExpressionAsArgument() {
+    doTestByText("""
+                   def f(a: list[object]): ...
+                   f([1, 2])
+                   """);
+  }
+
+  @TestFor(issues = "PY-89564")
+  public void testNoSubtypeIssueOnCreationExpressionAssignmentValue() {
+    doTestByText("""
+                   x: list[object] = [1, 2]
+                   """);
+  }
+
+  @TestFor(issues = "PY-89564")
+  public void testNoSubtypeIssueOnCreationExpressionInYield() {
+    doTestByText("""
+                   from typing import Generator
+
+                   def f() -> Generator[list[object], None, None]:
+                       yield [1, 2]
+                   """);
+  }
+
+  @TestFor(issues = "PY-89564")
+  public void testNoSubtypeIssueOnCreationExpressionInYieldFrom() {
+    doTestByText("""
+                   from typing import Generator
+
+                   def f() -> Generator[list[object], None, None]:
+                       yield from [[1, 2]]
+                   """);
+  }
+
+  @TestFor(issues = "PY-89564")
+  public void testNoSubtypeIssueOnCreationExpressionParameterDefault() {
+    doTestByText("""
+                   def f(a: list[object] = [1, 2]) -> None:
+                       pass
+                   """);
+  }
+
+  @TestFor(issues = "PY-89564")
+  public void testNoSubtypeIssueOnCreationExpressionKeywordOnlyParameterDefault() {
+    doTestByText("""
+                   def f(*, a: list[object] = [1, 2]) -> None:
+                       pass
+                   """);
+  }
+
+  @TestFor(issues = "PY-89564")
+  public void testNoSubtypeIssueOnNestedCreationExpressionParameterDefault() {
+    doTestByText("""
+                   def f(a: list[list[object]] = [[1, 2]]) -> None:
+                       pass
+                   """);
+  }
+
   // PY-86902
   public void testVarPositionalParamAssignment() {
     doTestByText("""
@@ -4649,7 +4875,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    
                    class Node:
                        next: Self | None
-
+                   
                    c: Node
                    c.next = Node()
                    """);
@@ -4659,27 +4885,27 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testIterDefinedInMetaclass() {
     myFixture.enableInspections(PyAssertTypeInspection.class);
     doTestByText("""
-     from collections.abc import Iterator
-     from typing import assert_type
-     
-     # always has the the highest priority on type
-     class MyIterMeta(type):
-         def __iter__(self) -> Iterator[int]: ...
-     
-     class MyClass(metaclass=MyIterMeta): ...
-     
-     class MyRedefinedIter(MyClass):
-         def __iter__(self) -> Iterator[bool]: ...
-     
-     # str redefines __iter__
-     class MyFromStr(str, MyRedefinedIter): ...
-     
-     assert_type(iter(MyClass), Iterator[int])
-     assert_type(iter(MyRedefinedIter), Iterator[int])
-     assert_type(iter(MyFromStr), Iterator[int])
-     assert_type(iter(MyRedefinedIter()), Iterator[bool])
-     assert_type(iter(MyFromStr()), Iterator[str])
-     """);
+                   from collections.abc import Iterator
+                   from typing import assert_type
+                   
+                   # always has the the highest priority on type
+                   class MyIterMeta(type):
+                       def __iter__(self) -> Iterator[int]: ...
+                   
+                   class MyClass(metaclass=MyIterMeta): ...
+                   
+                   class MyRedefinedIter(MyClass):
+                       def __iter__(self) -> Iterator[bool]: ...
+                   
+                   # str redefines __iter__
+                   class MyFromStr(str, MyRedefinedIter): ...
+                   
+                   assert_type(iter(MyClass), Iterator[int])
+                   assert_type(iter(MyRedefinedIter), Iterator[int])
+                   assert_type(iter(MyFromStr), Iterator[int])
+                   assert_type(iter(MyRedefinedIter()), Iterator[bool])
+                   assert_type(iter(MyFromStr()), Iterator[str])
+                   """);
   }
 
   // PY-87344
@@ -4721,22 +4947,22 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
-  @TestFor(issues="PY-57621")
+  @TestFor(issues = "PY-57621")
   public void testTupleInGenericExplicitIsValid() {
     doTestByText("""
-      from typing import Literal
-      
-      class A[T]:
-          def __init__(self, t: T): ...
-      
-      A[list[tuple[Literal[1]]]]([(1,)])
-      
-      _: list[tuple[Literal[1]]] = [(1,)]
-      _: list[tuple[int]] = [(1,)]
-      """);
+                   from typing import Literal
+                   
+                   class A[T]:
+                       def __init__(self, t: T): ...
+                   
+                   A[list[tuple[Literal[1]]]]([(1,)])
+                   
+                   _: list[tuple[Literal[1]]] = [(1,)]
+                   _: list[tuple[int]] = [(1,)]
+                   """);
   }
 
-  @TestFor(issues="PY-52839")
+  @TestFor(issues = "PY-52839")
   public void testOverloadAssignabilityToCallable() {
     doTestByText("""
                    from typing import Callable, overload
@@ -4755,7 +4981,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
-  @TestFor(issues="PY-52839")
+  @TestFor(issues = "PY-52839")
   public void testAssignabilityToOverload() {
     doTestByText("""
                    from typing import Callable, overload
@@ -4783,7 +5009,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    def bar(x: str) -> int: ...
                    
                    def bar(x: object) -> object: ...
-
+                   
                    def baz(x: int) -> int: ...
                    
                    l = [foo]
@@ -4794,43 +5020,43 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
-  @TestFor(issues="PY-52839")
+  @TestFor(issues = "PY-52839")
   public void testOverloadWithCallableProtocol() {
     doTestByText("""
                    from typing import overload, Protocol
-
+                   
                    class ConverterProtocol(Protocol):
                        @overload
                        def __call__(self, x: int) -> str: ...
-
+                   
                        @overload
                        def __call__(self, x: str) -> int: ...
-
+                   
                    class CompatibleCallable:
                        @overload
                        def __call__(self, x: str) -> int: ...
                    
                        @overload
                        def __call__(self, x: int) -> str: ...
-
+                   
                        def __call__(self, x: object) -> object: ...
-
+                   
                    class IncompatibleCallable:
                        @overload
                        def __call__(self, x: int) -> int: ...
-
+                   
                        @overload
                        def __call__(self, x: str) -> str: ...
-
+                   
                        def __call__(self, x: object) -> object: ...
-
-
+                   
+                   
                    @overload
                    def converter_func(x: str) -> int: ...
                    
                    @overload
                    def converter_func(x: int) -> str: ...
-
+                   
                    def converter_func(x: object) -> object: ...
                    
                    @overload
@@ -4838,52 +5064,52 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    
                    @overload
                    def bad_converter_func(x: int) -> int: ...
-
+                   
                    def bad_converter_func(x: object) -> object: ...
-
+                   
                    c1: ConverterProtocol = CompatibleCallable()  # ok
                    c2: ConverterProtocol = <warning descr="Expected type 'ConverterProtocol', got 'IncompatibleCallable' instead">IncompatibleCallable()</warning>
                    c3: ConverterProtocol = converter_func  # ok
                    c3: ConverterProtocol = <warning descr="Expected type 'ConverterProtocol', got 'Overload[(x: str) -> str, (x: int) -> int]' instead">bad_converter_func</warning>
-
+                   
                    def t(c: ConverterProtocol):
                        l3 = [converter_func]
                        l3.append(c)
-
+                   
                        l4 = [bad_converter_func]
                        l4.append(<warning descr="Expected type 'Overload[(x: str) -> str, (x: int) -> int]' (matched generic type '_T'), got 'ConverterProtocol' instead">c</warning>)
                    """);
   }
 
-  @TestFor(issues="PY-52839")
+  @TestFor(issues = "PY-52839")
   public void testOverloadSubsetMatching() {
     doTestByText("""
                    from typing import overload, Callable
-
+                   
                    @overload
                    def many_overloads(x: int) -> int: ...
-
+                   
                    @overload
                    def many_overloads(x: str) -> str: ...
-
+                   
                    @overload
                    def many_overloads(x: float) -> float: ...
-
+                   
                    def many_overloads(x: object) -> object: ...
-
-
+                   
+                   
                    @overload
                    def few_overloads(x: str) -> str: ...
-
+                   
                    @overload
                    def few_overloads(x: int) -> int: ...
                    
                    def few_overloads(x: object) -> object: ...
-
+                   
                    # Assigning to list infers the overload type
                    l1 = [few_overloads]
                    l1.append(many_overloads)  # ok
-
+                   
                    l2 = [many_overloads]
                    l2.append(<warning descr="Expected type 'Overload[(x: int) -> int, (x: str) -> str, (x: float | int) -> float | int]' (matched generic type '_T'), got 'Overload[(x: str) -> str, (x: int) -> int]' instead">few_overloads</warning>)
                    """);

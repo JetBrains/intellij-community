@@ -69,8 +69,12 @@ import com.jetbrains.python.inspections.PyVarianceInspection
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection
 import com.jetbrains.python.namespacePackages.PyNamespacePackagesService
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PyReferenceExpression
+import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.PyTypedElement
+import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.IntentionalUnstubbing
 import com.jetbrains.python.psi.impl.PyBuiltinCache.Companion.getInstance
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher
@@ -430,6 +434,15 @@ abstract class PyCodeInsightTestCase {
       }
     }
 
+    if (parent is PyStringLiteralExpression) {
+      val offsetStart = expectedAssertion.codeOffsetStart - parent.textRange.startOffset - 1
+      val strLitValue = parent.stringValue
+      val syntheticElement = PyUtil.createExpressionFromFragment(strLitValue, parent)
+                             ?: throw AssertionError("Expression not found in string literal '$strLitValue' at pos $offsetStart")
+      parent = PsiTreeUtil.getParentOfType(syntheticElement.findElementAt(offsetStart), PyExpression::class.java)
+                       ?: throw AssertionError("Expression not found in string literal '$strLitValue' at pos $offsetStart")
+    }
+
     val actualContent = when (PyTestAssertionType.fromValue(expectedAssertion.type)) {
       PyTestAssertionType.TYPE -> assertType(expectedAssertion, parent)
       PyTestAssertionType.IS_BUILTIN -> assertIsBuiltin(parent)
@@ -473,13 +486,13 @@ abstract class PyCodeInsightTestCase {
 
   private fun assertExpectedVariance(element: PsiElement): String {
     val context = userInitiated(element.project, element.containingFile)
-    val actualVariance = getExpectedVariance(element, context)
+    val actualVariance = if (element is PyReferenceExpression) getExpectedVariance(element, context) else null
     return actualVariance?.name ?: "NULL"
   }
 
   private fun assertInferredVariance(element: PsiElement): String {
     val context = userInitiated(element.project, element.containingFile)
-    val actualVariance = getDeclaredOrInferredVariance(element, context)
+    val actualVariance = if (element is PyTypedElement) getDeclaredOrInferredVariance(element, context) else null
     return actualVariance?.name ?: "NULL"
   }
 }

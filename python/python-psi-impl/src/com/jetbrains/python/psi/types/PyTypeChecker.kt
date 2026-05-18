@@ -4,6 +4,8 @@ package com.jetbrains.python.psi.types
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.component1
+import com.intellij.openapi.util.component2
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.util.ArrayUtil
@@ -36,9 +38,13 @@ import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.impl.PyTypeProvider
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyCallableParameterMapping.mapCallableParameters
+import com.jetbrains.python.psi.types.PyInferredVarianceJudgment.getDeclaredOrInferredVariance
 import com.jetbrains.python.psi.types.PyLiteralStringType.Companion.match
 import com.jetbrains.python.psi.types.PyLiteralType.Companion.match
 import com.jetbrains.python.psi.types.PyRecursiveTypeVisitor.PyTypeTraverser
+import com.jetbrains.python.psi.types.PyTypeChecker.match
+import com.jetbrains.python.psi.types.PyTypeParameterMapping.Option.USE_DEFAULTS
+import com.jetbrains.python.psi.types.PyTypeParameterType.Variance
 import com.jetbrains.python.psi.types.PyTypeUtil.derefOrUnknown
 import com.jetbrains.python.psi.types.PyTypeUtil.toStream
 import com.jetbrains.python.pyi.PyiFile
@@ -47,6 +53,7 @@ import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import org.jetbrains.annotations.ApiStatus
 import java.util.Collections
 import java.util.Optional
+import kotlin.jvm.optionals.getOrElse
 
 object PyTypeChecker {
   /**
@@ -460,7 +467,7 @@ object PyTypeChecker {
             .all { singleExpectedType -> match(singleExpectedType, repeatedActualType, context).orElse(false)!! }
         }
         else {
-          return matchTypeParameters(expected.elementTypes, actual.elementTypes, context)
+          return matchTypeParameters(null, expected.elementTypes, actual.elementTypes, context)
         }
       }
     }
@@ -481,7 +488,7 @@ object PyTypeChecker {
       if (expected is PyTypeVarTupleType && safeActual is PyUnpackedTupleType) {
         val bound = expected.bound
         val match = if (bound is PyUnpackedTupleType) {
-           match(bound, actual, context)
+          match(bound, actual, context)
         }
         else {
           safeActual.elementTypes.all {
@@ -912,7 +919,7 @@ object PyTypeChecker {
         return Optional.of(false)
       }
 
-      return Optional.of(matchTypeParameters(expected.elementTypes, actual.elementTypes, context))
+      return Optional.of(matchTypeParameters(expected, expected.elementTypes, actual.elementTypes, context))
     }
 
     if (expected.isHomogeneous && !actual.isHomogeneous) {
@@ -1254,33 +1261,69 @@ object PyTypeChecker {
     val expectedElementTypes = expected.elementTypes
     val actualElementTypes = actual.elementTypes
     if (context.reversedSubstitutions) {
-      return matchTypeParameters(actualElementTypes, expectedElementTypes, context.resetSubstitutions())
+      return matchTypeParameters(actual, actualElementTypes, expectedElementTypes, context.resetSubstitutions())
     }
     else {
-      return matchTypeParameters(expectedElementTypes, actualElementTypes, context)
+      return matchTypeParameters(expected, expectedElementTypes, actualElementTypes, context)
     }
   }
 
   private fun matchTypeParameters(
+    genericType: PyCollectionType?,
     expectedTypeParameters: List<PyType?>,
     actualTypeParameters: List<PyType?>,
     context: MatchContext,
   ): Boolean {
-    val mapping =
-      PyTypeParameterMapping.mapByShape(expectedTypeParameters, actualTypeParameters, PyTypeParameterMapping.Option.USE_DEFAULTS)
-    if (mapping == null) {
-      return false
-    }
-    for (pair in mapping.mappedTypes) {
+    val mapping = PyTypeParameterMapping.mapByShape(expectedTypeParameters, actualTypeParameters, USE_DEFAULTS) ?: return false
+    for ((typeArgIndex, pair) in mapping.mappedTypes.withIndex()) {
+      val (first, second) = pair
+      val variance = findTypeParameterVariance(genericType, typeArgIndex, context)
+
       val matched = if (context.reversedSubstitutions)
-        match(pair.getSecond(), pair.getFirst(), context)
+        matchCapturedType(variance, second, first, context)
       else
-        match(pair.getFirst(), pair.getSecond(), context)
-      if (!matched.orElse(true)!!) {
+        matchCapturedType(variance, first, second, context)
+      if (!matched) {
         return false
       }
     }
     return true
+  }
+
+  private fun findTypeParameterVariance(
+    genericType: PyCollectionType?,
+    typeArgumentIndex: Int,
+    context: MatchContext,
+  ): Variance {
+    if (genericType == null) return Variance.COVARIANT
+    if (genericType is PyTupleType) return Variance.COVARIANT
+    val genericDefType = findGenericDefinitionType(genericType.pyClass, context.context)
+    val typeParameter = genericDefType?.elementTypes?.getOrNull(typeArgumentIndex) as? PyTypeParameterType
+    if (typeParameter == null) return Variance.COVARIANT
+    if (typeParameter !is PyTypeVarType) return Variance.COVARIANT // TODO: PY-89623
+    return getDeclaredOrInferredVariance(typeParameter, context.context)
+  }
+
+  private fun matchCapturedType(
+    variance: Variance,
+    expectedType: PyType?,
+    actualType: PyType?,
+    context: MatchContext,
+  ): Boolean {
+    if (expectedType is PyTypeParameterType && actualType is PyTypeParameterType) {
+      return match(expectedType, actualType, context).getOrElse { false }
+    }
+
+    return when (variance) {
+      Variance.INVARIANT -> {
+        match(expectedType, actualType, context).getOrElse { false }
+        && match(actualType, expectedType, context).getOrElse { false }
+      }
+      Variance.COVARIANT -> match(expectedType, actualType, context).getOrElse { false }
+      Variance.CONTRAVARIANT -> match(actualType, expectedType, context.reverseSubstitutions()).getOrElse { false }
+      Variance.BIVARIANT -> match(expectedType, actualType, context).getOrElse { false }
+      else -> false
+    }
   }
 
   private fun matchNumericTypes(expected: PyType?, actual: PyType?): Boolean {
@@ -1437,7 +1480,7 @@ object PyTypeChecker {
         else {
           existingSubstitutions.putParamSpec(paramSpecType, PyCallableParameterListTypeImpl(
             listOf(PyCallableParameterImpl.positionalContainerNonPsi("args", null),
-                   PyCallableParameterImpl.keywordContainerNonPsi("kwargs", null))), KeyImpl
+                              PyCallableParameterImpl.keywordContainerNonPsi("kwargs", null))), KeyImpl
           )
         }
       }
@@ -1774,8 +1817,10 @@ object PyTypeChecker {
       }
     }
     if (!matchContainer(
-        PyCallExpressionHelper.getMappedPositionalContainer(arguments), PyCallExpressionHelper.getArgumentsMappedToPositionalContainer(arguments),
-        substitutions, context
+        PyCallExpressionHelper.getMappedPositionalContainer(arguments),
+        PyCallExpressionHelper.getArgumentsMappedToPositionalContainer(arguments),
+        substitutions,
+        context
       )
     ) {
       return null
@@ -2078,7 +2123,7 @@ object PyTypeChecker {
         expectedTypeParams,
         actualTypeParams,
         PyTypeParameterMapping.Option.MAP_UNMATCHED_EXPECTED_TYPES_TO_ANY,
-        PyTypeParameterMapping.Option.USE_DEFAULTS,
+        USE_DEFAULTS,
       ) ?: return null
       return substitute(genericType, substitutions, context)
     }
@@ -2199,7 +2244,12 @@ object PyTypeChecker {
       }
     }
 
-    constructor(typeVars: Map<PyTypeVarType, Ref<PyType?>?>, typeVarTuples: Map<PyTypeVarTupleType, PyPositionalVariadicType?>, paramSpecs: Map<PyParamSpecType, PyCallableParameterVariadicType?>, qualifierType: PyType?) : this() {
+    constructor(
+      typeVars: Map<PyTypeVarType, Ref<PyType?>?>,
+      typeVarTuples: Map<PyTypeVarTupleType, PyPositionalVariadicType?>,
+      paramSpecs: Map<PyParamSpecType, PyCallableParameterVariadicType?>,
+      qualifierType: PyType?,
+    ) : this() {
       for ((key, value) in typeVars) {
         putTypeVar(key, value, KeyImpl)
       }
@@ -2208,7 +2258,11 @@ object PyTypeChecker {
       this.qualifierType = qualifierType
     }
 
-    fun addToCopy(typeVars: Map<PyTypeVarType, Ref<PyType?>?>?, typeVarTuples: Map<PyTypeVarTupleType, PyPositionalVariadicType>?, paramSpecs: Map<PyParamSpecType, PyCallableParameterVariadicType>?) : GenericSubstitutions {
+    fun addToCopy(
+      typeVars: Map<PyTypeVarType, Ref<PyType?>?>?,
+      typeVarTuples: Map<PyTypeVarTupleType, PyPositionalVariadicType>?,
+      paramSpecs: Map<PyParamSpecType, PyCallableParameterVariadicType>?,
+    ): GenericSubstitutions {
       val newTypeVars = LinkedHashMap(this.typeVars);
       if (typeVars != null) {
         newTypeVars.putAll(typeVars);

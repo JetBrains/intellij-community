@@ -1142,7 +1142,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
      * their saved text chunks into [com.jetbrains.python.psi.PyExpressionCodeFragment] and extracting top-level expressions
      * from them. Otherwise, get superclass expressions directly from AST.
      */
-    private fun getSuperClassExpressions(pyClass: PyClass): List<PyExpression> {
+    fun getSuperClassExpressions(pyClass: PyClass): List<PyExpression> {
       val classStub = pyClass.stub
       if (classStub == null) {
         return pyClass.superClassExpressions.toList()

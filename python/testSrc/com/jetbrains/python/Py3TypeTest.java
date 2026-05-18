@@ -445,13 +445,13 @@ public class Py3TypeTest extends PyTestCase {
     doTest("int | Any",
            """
              from typing import Any, TypeGuard
-
+             
              def is_positive_integer(value: Any) -> TypeGuard[int]:
                  return isinstance(value, int) and value > 0
-
+             
              def bar() -> object:
                  return 321
-
+             
              def foo():
                  for i in range(1, 100):
                      if i > 1:
@@ -482,12 +482,12 @@ public class Py3TypeTest extends PyTestCase {
              class D:
                  def bar() -> A:
                      return A()
-
+             
              def foo(b):
                  x = A()
                  while b:
                      x = x.bar()
-
+             
                  expr = x""");
   }
 
@@ -3253,7 +3253,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testTypeAliasesWithTypeIs() {
-    doTest("list[str]", """
+    doTest("list[object] & list[str]", """
       from typing import List
       from typing_extensions import TypeIs
       
@@ -3269,7 +3269,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testTypeAliasWithGenericTypeIs() {
-    doTest("list[str]", """
+    doTest("list[object] & list[str]", """
       from typing import List
       from typing_extensions import TypeIs
       
@@ -5498,7 +5498,7 @@ public class Py3TypeTest extends PyTestCase {
     doTest("set[Variant]", """
       from enum import StrEnum
       from typing import Self
-
+      
       class Variant(StrEnum):
           CREATED = "created"
       
@@ -5528,13 +5528,13 @@ public class Py3TypeTest extends PyTestCase {
   // PY-88321
   public void testListLiteralOfClassFloat() {
     doTest("list[type[float]]", """
-      expr = [float]
-    """);
+        expr = [float]
+      """);
   }
 
   // PY-88234
   public void testQualifiedAttributeTypeNotConfusedWithSameNameParameter() {
-    doTest( "int | str", """    
+    doTest("int | str", """    
       class Beta:
           x: int
       
@@ -5583,46 +5583,46 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
-  @TestFor(issues="PY-57621")
+  @TestFor(issues = "PY-57621")
   public void testTupleInListWidens() {
     doTest("list[tuple[int, str]]", """
-      t = (1, 'hello')
-      expr = [t]
-    """);
+        t = (1, 'hello')
+        expr = [t]
+      """);
   }
 
-  @TestFor(issues="PY-57621")
+  @TestFor(issues = "PY-57621")
   public void testTupleInTupleIsLiteral() {
     var t = "tuple[Literal[1], Literal['hello']]";
     doTest("tuple[" + t + ", " + t + "]", """
-      t = (1, 'hello')
-      expr = (t, t)
-    """);
+        t = (1, 'hello')
+        expr = (t, t)
+      """);
   }
 
-  @TestFor(issues="PY-57621")
+  @TestFor(issues = "PY-57621")
   public void testTupleInGenericWidens() {
     doTest("list[tuple[int, str]]", """
-      def f[T](t: T) -> list[T]: ...
-      expr = f((1, "hello"))
-    """);
+        def f[T](t: T) -> list[T]: ...
+        expr = f((1, "hello"))
+      """);
   }
 
-  @TestFor(issues="PY-57621")
+  @TestFor(issues = "PY-57621")
   public void testTupleAsGenericInTupleNarrows() {
     var t = "tuple[Literal[1], Literal['hello']]";
     doTest("tuple[list[tuple[int, str]], " + t + "]" + " | " + t, """
-      def f[T](t: T) -> tuple[list[T], T] | T: ...
-      expr = f((1, 'hello'))
-    """);
+        def f[T](t: T) -> tuple[list[T], T] | T: ...
+        expr = f((1, 'hello'))
+      """);
   }
 
-  @TestFor(issues="PY-57621")
+  @TestFor(issues = "PY-57621")
   public void testTupleAsBareTypeVariableIsLiteral() {
     doTest("tuple[Literal[1], Literal[\"hello\"]]", """
-      def f[T](t: T) -> T: ...
-      expr = f((1, "hello"))
-    """);
+        def f[T](t: T) -> T: ...
+        expr = f((1, "hello"))
+      """);
   }
 
   public void testOverloadImpl() {
@@ -5682,7 +5682,7 @@ public class Py3TypeTest extends PyTestCase {
       
       class B(A):
           ...
-
+      
       expr = B().foo()
       """);
   }

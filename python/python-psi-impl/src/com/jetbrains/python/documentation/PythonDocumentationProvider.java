@@ -191,7 +191,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
       if (type instanceof PyClassType classType && PyTypingTypeProvider.TYPE_VAR.equals(classType.getClassQName())) {
         Ref<PyType> typeRef = PyTypingTypeProvider.getType(value, context);
         if (typeRef != null && typeRef.get() instanceof PyTypeVarType valueType) {
-          PsiElement refExpr = findReferenceOrTypeParameter(originalElement);
+          PyTypedElement refExpr = findReferenceOrTypeParameter(originalElement);
           if (refExpr != null) {
             if (isEffectivelyInvariant(refExpr, context)) {
               if (valueType.getVariance() != PyTypeVarType.Variance.INVARIANT) {

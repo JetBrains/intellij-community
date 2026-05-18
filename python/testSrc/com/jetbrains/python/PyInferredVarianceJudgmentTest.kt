@@ -187,6 +187,14 @@ class PyInferredVarianceJudgmentTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
+  fun `Generic class final attribute in quotes`() = test("""
+    from typing import Final
+    class A[T]:
+    #       └ INFERRED_VARIANCE COVARIANT
+        attr: Final["T"] # ISSUES *
+    """.trimIndent())
+
+  @Test
   fun `Generic class final attribute callable parameter`() = test("""
     from typing import Final, Callable
     class A[T]:
@@ -658,6 +666,49 @@ class PyInferredVarianceJudgmentTest : PyCodeInsightTestCase() {
     #       └ INFERRED_VARIANCE BIVARIANT
         def __init__(self, t: T):
             self.t = t # introduction of public attribute without class declaration
+    """.trimIndent())
+
+  @Test
+  fun `Implicit generic final class attributes`() = test("""
+    from typing import Final
+    class A[T]:
+    #       └ INFERRED_VARIANCE COVARIANT
+        def __init__(self, t: T):
+            self.t : Final[T] = t
+    """.trimIndent())
+
+  @Test
+  fun `Implicit generic final class attributes multi file setup`() = test("""
+    from lib import A
+    class B[S](A[S]):
+    #       └ INFERRED_VARIANCE COVARIANT
+        def __init__(self):
+            ...
+    """.trimIndent(),
+                      "lib.py" to """
+            from typing import Final
+            class A[T]:
+                def __init__(self, t: T):
+                    tmp = t
+                    self.t : Final[T] = t
+            """)
+
+  @Test
+  fun `Implicit generic protected class attributes`() = test("""
+    from typing import Final
+    class A[T]:
+    #       └ INFERRED_VARIANCE BIVARIANT
+        def __init__(self, t: T):
+            self._t = t
+    """.trimIndent())
+
+  @Test
+  fun `Implicit generic private class attributes`() = test("""
+    from typing import Final
+    class A[T]:
+    #       └ INFERRED_VARIANCE BIVARIANT
+        def __init__(self, t: T):
+            self.__t = t
     """.trimIndent())
 
   // Note that inferred return types depend on the capability of the context:

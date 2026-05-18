@@ -47,14 +47,22 @@ open class TypeEvalContextImpl internal constructor(
 
   @ApiStatus.Internal
   val typeEngine: PyTypeEngine? = constraints.myOrigin?.let {
-    ModuleUtilCore.findModuleForFile(it) }?.let { module ->
+    ModuleUtilCore.findModuleForFile(it)
+  }?.let { module ->
     PyTypeEngineProvider.createTypeResolver(module)
   }
-  protected val myEvaluated: MutableMap<PyTypedElement?, PyType?> = getConcurrentMapForCaching()
-  protected val myEvaluatedReturn: MutableMap<PyCallable?, PyType?> = getConcurrentMapForCaching()
-  protected val contextTypeCache: ConcurrentMap<Pair<Any, Any>, PyType> = getConcurrentMapForCaching()
+  protected val myEvaluated: MutableMap<PyTypedElement?, PyType?> = getConcurrentMapForCachingTypes()
+  protected val myEvaluatedReturn: MutableMap<PyCallable?, PyType?> = getConcurrentMapForCachingTypes()
+  protected val contextTypeCache: ConcurrentMap<Pair<Any, Any>, PyType> = getConcurrentMapForCachingTypes()
+  protected val myVarianceCache: MutableMap<PyTypeParameterType, PyTypeParameterType.Variance> = getConcurrentMapForCaching()
 
-  internal constructor(allowDataFlow: Boolean, allowStubToAST: Boolean, allowCallContext: Boolean, isExternal: Boolean, origin: PsiFile?) : this(
+  internal constructor(
+    allowDataFlow: Boolean,
+    allowStubToAST: Boolean,
+    allowCallContext: Boolean,
+    isExternal: Boolean,
+    origin: PsiFile?,
+  ) : this(
     TypeEvalConstraints(allowDataFlow, allowStubToAST, allowCallContext, isExternal, origin)
   )
 
@@ -255,6 +263,11 @@ open class TypeEvalContextImpl internal constructor(
     return contextTypeCache
   }
 
+  @ApiStatus.Internal
+  override fun getVarianceCache(): MutableMap<PyTypeParameterType, PyTypeParameterType.Variance> {
+    return myVarianceCache
+  }
+
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other == null || javaClass != other.javaClass) return false
@@ -301,9 +314,9 @@ open class TypeEvalContextImpl internal constructor(
 
   class AssumptionContext(val myParent: TypeEvalContextImpl, element: PyTypedElement, type: PyType?) :
     TypeEvalContextImpl(myParent.constraints) {
-    
+
     val myInstructionCache: MutableMap<List<Any>, PyType> = ConcurrentHashMap()
-    
+
     init {
       myEvaluated[element] = type ?: PyNullType
     }
@@ -332,14 +345,14 @@ open class TypeEvalContextImpl internal constructor(
       // Otherwise, it can be equal to other AssumptionContext with same constraints
       return this === other
     }
-    
+
     fun getKnownTypeForInstruction(anchor: PyExpression, deducedType: PyType, num: Int): PyType? {
       if (myParent is AssumptionContext) {
         return myParent.getKnownTypeForInstruction(anchor, deducedType, num)
       }
       return myInstructionCache.get(listOf(anchor, deducedType, num))
     }
-    
+
     fun setKnownTypeForInstruction(anchor: PyExpression, deducedType: PyType, num: Int, type: PyType) {
       if (myParent is AssumptionContext) {
         myParent.setKnownTypeForInstruction(anchor, deducedType, num, type)
@@ -420,7 +433,11 @@ open class TypeEvalContextImpl internal constructor(
 
   @ApiStatus.Internal
   companion object {
-    private fun <T> getConcurrentMapForCaching(): ConcurrentMap<T & Any, PyType> {
+    private fun <T> getConcurrentMapForCachingTypes(): ConcurrentMap<T & Any, PyType> {
+      return getConcurrentMapForCaching()
+    }
+
+    private fun <T, V> getConcurrentMapForCaching(): ConcurrentMap<T & Any, V & Any> {
       // In the current implementation, this value is only used to initialize the map and is basically ignored
       // Just in case, set it to a reasonable value
       // `Runtime.availableProcessors` shouldn't be called here, as that is a potentially expensive operation
