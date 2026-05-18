@@ -714,7 +714,7 @@ private fun readContent(reader: XMLStreamReader2, builder: PluginDescriptorBuild
       }
       else if (builder.namespace != namespace) {
         LOG.error("Some 'content' tag already set namespace ('${builder.namespace}'), but a different namespace '$namespace' is specified at ${reader.location}; " +
-                  "it will be ignored because multiple namespace in a single plugin aren't allowed")
+                  "it will be ignored because multiple namespace in a single plugin aren't allowed for now (see IJPL-245093)")
       }
     }
   }

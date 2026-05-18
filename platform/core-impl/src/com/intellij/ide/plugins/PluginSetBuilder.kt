@@ -450,6 +450,6 @@ private fun getAllPluginDependencies(plugin: IdeaPluginDescriptorImpl): Sequence
 
 private val PluginModuleDescriptor.namespace: String?
   get() = when (this) {
-    is ContentModuleDescriptor -> parent.namespace
+    is ContentModuleDescriptor -> parent.namespace //the namespace specified in `content` tag should be used instead, see IJPL-245093
     is PluginMainDescriptor -> namespace
   }
