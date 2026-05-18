@@ -9,6 +9,7 @@
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.remoteServers"/>
+    <module name="intellij.platform.remoteServers.impl"/>
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->

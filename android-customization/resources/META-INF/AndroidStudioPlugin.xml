@@ -10,9 +10,6 @@
   <module value="com.intellij.modules.python-in-non-pycharm-ide-capable"/>
 
   <xi:include href="/META-INF/PlatformLangPlugin.xml"/>
-  <xi:include href="intellij.platform.remoteServers.impl.xml">
-    <xi:fallback/>
-  </xi:include>
   <xi:include href="/META-INF/DesignerCorePlugin.xml">
     <xi:fallback/>
   </xi:include>
@@ -23,6 +20,7 @@
   <xi:include href="/META-INF/intellij.moduleSets.rd.common.xml"/>
   <!-- region additional -->
   <content namespace="jetbrains">
+    <module name="intellij.platform.remoteServers.impl" loading="embedded"/>
     <module name="intellij.platform.coverage"/>
     <module name="intellij.platform.coverage.agent"/>
     <module name="intellij.xml.xmlbeans"/>

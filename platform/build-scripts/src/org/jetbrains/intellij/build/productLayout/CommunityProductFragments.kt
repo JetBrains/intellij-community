@@ -25,8 +25,8 @@ object CommunityProductFragments {
     alias("com.intellij.modules.all")
     alias("com.intellij.modules.jsp.base")
 
-    // Optional plugin support (with fallback)
-    deprecatedInclude("intellij.platform.remoteServers.impl", "intellij.platform.remoteServers.impl.xml", optional = true)
+    // Optional plugin support
+    embeddedModule("intellij.platform.remoteServers.impl")
     deprecatedInclude("intellij.uiDesigner", "META-INF/DesignerCorePlugin.xml", optional = true)
 
     // Extensions block (UTM tracking, new UI onboarding)
@@ -53,7 +53,7 @@ object CommunityProductFragments {
     alias("com.intellij.modules.pycharm")
 
     // Optional remote servers support
-    deprecatedInclude("intellij.platform.remoteServers.impl", "intellij.platform.remoteServers.impl.xml", optional = true)
+    embeddedModule("intellij.platform.remoteServers.impl")
 
     // Extensions and actions block (PyCharm-specific customization)
     deprecatedInclude("intellij.pycharm.community", "META-INF/pycharm-core.xml")

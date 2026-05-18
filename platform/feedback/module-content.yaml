@@ -1,0 +1,13 @@
+- name: dist.all/lib/intellij.platform.feedback.jar
+  modules:
+  - name: intellij.platform.feedback
+  - name: intellij.platform.icons.api.rendering
+  - name: intellij.platform.icons.impl
+  - name: intellij.platform.ide.bootstrap
+  - name: intellij.platform.ide.bootstrap.eel
+  - name: intellij.platform.ide.bootstrap.kernel
+  - name: intellij.platform.ide.internal
+  - name: intellij.platform.ide.updateChecker
+  library: googlecode.plist.dd
+  files:
+  - name: $MAVEN_REPOSITORY$/com/googlecode/plist/dd-plist/1/dd-plist-1.jar
