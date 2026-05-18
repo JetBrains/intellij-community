@@ -189,7 +189,8 @@ public final class PagedFileStorage implements Forceable/*, PagedStorage*/, Clos
 
   public DirectBufferWrapper getByteBuffer(long address, boolean modify) throws IOException {
     long page = address / myPageSize;
-    assert page >= 0 && page <= FilePageCache.MAX_PAGES_COUNT : address + " in " + myFile;
+    assert (page >= 0 && page <= FilePageCache.MAX_PAGES_COUNT)
+      : address + " (page=" + page + ") in " + myFile;
     return getBufferWrapper(page, modify, true);
   }
 

@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayoutProviderKt;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -26,23 +27,24 @@ import static org.junit.Assume.assumeTrue;
 
 public class PagedFileStorageTest {
   private static final Logger LOG = Logger.getInstance(PagedFileStorageTest.class);
+
   @Rule public TempDirectory tempDir = new TempDirectory();
 
-  private final StorageLockContext lock = new StorageLockContext();
+  private final StorageLockContext storageLockContext = new StorageLockContext();
   private Path file;
   private PagedFileStorage pagedFileStorage;
 
   @Before
   public void setUp() throws IOException {
-    file = tempDir.newFile("storage").toPath();
-    withLock(lock, () -> {
-      pagedFileStorage = new PagedFileStorage(file, lock, DEFAULT_PAGE_SIZE, false, false);
+    file = tempDir.newFileNio("storage");
+    withLock(storageLockContext, () -> {
+      pagedFileStorage = new PagedFileStorage(file, storageLockContext, DEFAULT_PAGE_SIZE, false, false);
     });
   }
 
   @After
   public void tearDown() throws IOException {
-    withLock(lock, () -> {
+    withLock(storageLockContext, () -> {
       pagedFileStorage.close();
       Path l = file.resolveSibling(file.getFileName() + ".len");
       assertTrue(l.toString(), !Files.exists(l) || Files.deleteIfExists(l));
@@ -52,7 +54,7 @@ public class PagedFileStorageTest {
 
   @Test
   public void testResizing() throws IOException {
-    withLock(lock, () -> {
+    withLock(storageLockContext, () -> {
       assertEquals(0, Files.size(file));
 
       pagedFileStorage.resize(12345);
@@ -65,7 +67,7 @@ public class PagedFileStorageTest {
 
   @Test
   public void testFillingWithZerosAfterResize() throws IOException {
-    withLock(lock, () -> {
+    withLock(storageLockContext, () -> {
       pagedFileStorage.resize(1000);
 
       for (int i = 0; i < 1000; i++) {
@@ -79,8 +81,8 @@ public class PagedFileStorageTest {
     Path newPath = tempDir.newFile("storage-1").toPath();
     long freeSpace = Files.getFileStore(newPath).getUsableSpace();
     assumeTrue("test requires at least 2Gb of empty disk space", 2L * IOUtil.GiB < freeSpace);
-    withLock(lock, () -> {
-      try (ResizeableMappedFile file = new ResizeableMappedFile(newPath, 2000000, lock, -1, false)) {
+    withLock(storageLockContext, () -> {
+      try (ResizeableMappedFile file = new ResizeableMappedFile(newPath, 2000000, storageLockContext, -1, false)) {
         LOG.debug("writing...");
         long t = System.currentTimeMillis();
         for (int index = 0, pct = 0; index <= 2000000000; index += 2000000, pct++) {
@@ -113,9 +115,9 @@ public class PagedFileStorageTest {
   @Test
   public void testResizeableMappedFile2() throws IOException {
     Path newPath = tempDir.newFile("storage-2").toPath();
-    withLock(lock, () -> {
+    withLock(storageLockContext, () -> {
       int initialSize = 4096;
-      try (ResizeableMappedFile file = new ResizeableMappedFile(newPath, initialSize, lock, IOUtil.MiB, false)) {
+      try (ResizeableMappedFile file = new ResizeableMappedFile(newPath, initialSize, storageLockContext, IOUtil.MiB, false)) {
         byte[] bytes = StringUtil.repeat("1", initialSize + 2).getBytes(StandardCharsets.UTF_8);
         assertTrue(bytes.length > initialSize);
 
