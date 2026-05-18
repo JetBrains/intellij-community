@@ -17,7 +17,6 @@ import com.intellij.testFramework.common.waitUntilAssertSucceedsBlocking
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.tree.TreeVisitor
-import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.tree.TreeUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
@@ -200,8 +199,8 @@ class BuildTreeConsoleViewTest : LightPlatformTestCase() {
 
   override fun tearDown() {
     RunAll(
-      ThrowableRunnable { Disposer.dispose(treeConsoleView) },
-      ThrowableRunnable { super.tearDown() }
+      { Disposer.dispose(treeConsoleView) },
+      { super.tearDown() }
     ).run()
   }
 }

@@ -1270,7 +1270,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     val module = ModuleManager.getInstance(project).findModuleByName(moduleDescriptor.moduleName)!!
     try {
 
-      WriteAction.runAndWait<RuntimeException?>(ThrowableRunnable {
+      WriteAction.runAndWait<RuntimeException?> {
         var path = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk().getHomePath()!!
         if (caseInsensitive) path = breakPath(path)
         val jdk = ProjectJdkTable.getInstance(project).findJdk(name)
@@ -1278,7 +1278,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
         ProjectJdkTable.getInstance(project).addJdk(jdk, project)
         ModuleRootModificationUtil.setModuleSdk(module, jdk)
-      })
+      }
 
       IdeaTestUtil.withLevel(module, level) {
         block()
@@ -1286,13 +1286,13 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
     }
     finally {
-      WriteAction.runAndWait<RuntimeException?>(ThrowableRunnable {
+      WriteAction.runAndWait<RuntimeException?> {
         ModuleRootModificationUtil.setModuleSdk(module, projectDescriptor.sdk)
         val jdkTable = ProjectJdkTable.getInstance(project)
         jdkTable.findJdk(name)?.also { jdk ->
           jdkTable.removeJdk(jdk)
         }
-      })
+      }
     }
   }
 

@@ -131,7 +131,7 @@ fun rethrowLoggedErrorsIn(executable: ThrowableRunnable<*>) {
  */
 @Internal
 fun assertNothingLogged(failOnWarn: Boolean = false, code: () -> Unit) {
-  LoggedErrorProcessor.executeWith(object : LoggedErrorProcessor() {
+  LoggedErrorProcessor.executeWith<Throwable>(object : LoggedErrorProcessor() {
     override fun processWarn(category: String, message: String, t: Throwable?): Boolean {
       if (failOnWarn) {
         throw AssertionError("Unexpected warn $category: $message", t)
@@ -149,9 +149,9 @@ fun assertNothingLogged(failOnWarn: Boolean = false, code: () -> Unit) {
     ): Set<Action?> {
       throw AssertionError("Unexpected error $category: $message ${details.joinToString(", ")}", t)
     }
-  }, ThrowableRunnable {
+  }) {
     code()
-  })
+  }
 }
 
 

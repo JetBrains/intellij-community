@@ -15,7 +15,6 @@ import com.intellij.platform.debugger.impl.shared.proxy.XDependentBreakpointMana
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointInstallationInfo
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointTypeProxy
-import com.intellij.util.ThrowableRunnable
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XBreakpointListener
@@ -113,9 +112,9 @@ private class MonolithBreakpointManager(val breakpointManager: XBreakpointManage
     if (breakpoint !is MonolithBreakpointProxy) {
       return
     }
-    WriteAction.run<RuntimeException?>(ThrowableRunnable {
+    WriteAction.run<RuntimeException?> {
       breakpointManager.restoreLastRemovedBreakpoint()
-    })
+    }
   }
 
   override fun copyLineBreakpoint(breakpoint: XLineBreakpointProxy, file: VirtualFile, line: Int) {

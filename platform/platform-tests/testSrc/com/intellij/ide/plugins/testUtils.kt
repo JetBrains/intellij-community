@@ -2,7 +2,6 @@
 package com.intellij.ide.plugins
 
 import com.intellij.testFramework.LoggedErrorProcessor
-import com.intellij.util.ThrowableRunnable
 import java.util.concurrent.atomic.AtomicReference
 
 
@@ -21,6 +20,6 @@ internal fun <R> runAndReturnWithLoggedErrors(body: () -> R): Pair<R, List<Throw
       errors.getAndUpdate { it.add(t!!); it }
       return Action.NONE
     }
-  }, ThrowableRunnable { result.set(body()) })
+  }) { result.set(body()) }
   return result.get() to errors.get()
 }

@@ -11,7 +11,6 @@ import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.fixtures.BuildViewTestFixture
-import com.intellij.util.ThrowableRunnable
 import org.jetbrains.annotations.NotNull
 import org.junit.Test
 import java.io.File
@@ -28,8 +27,8 @@ class KotlincOutputParserTest : LightPlatformTestCase() {
 
   override fun tearDown() {
     RunAll(
-      ThrowableRunnable { if (::buildViewTestFixture.isInitialized) buildViewTestFixture.tearDown() },
-      ThrowableRunnable { super.tearDown() }
+      { if (::buildViewTestFixture.isInitialized) buildViewTestFixture.tearDown() },
+      { super.tearDown() }
     ).run()
   }
 

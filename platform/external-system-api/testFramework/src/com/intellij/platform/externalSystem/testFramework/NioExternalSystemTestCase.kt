@@ -92,8 +92,8 @@ abstract class NioExternalSystemTestCase : UsefulTestCase() {
     project = myTestFixture.getProject()
     testDir = Path.of(myProject.basePath!!)
 
-    EdtTestUtil.runInEdtAndWait<RuntimeException?>(ThrowableRunnable {
-      ApplicationManager.getApplication().runWriteAction(Runnable {
+    EdtTestUtil.runInEdtAndWait<RuntimeException> {
+      ApplicationManager.getApplication().runWriteAction {
         try {
           setUpInWriteAction()
         }
@@ -106,8 +106,8 @@ abstract class NioExternalSystemTestCase : UsefulTestCase() {
           }
           throw RuntimeException(e)
         }
-      })
-    })
+      }
+    }
 
     val allowedRoots: MutableList<String> = ArrayList()
     collectAllowedRoots(allowedRoots)
@@ -143,22 +143,22 @@ abstract class NioExternalSystemTestCase : UsefulTestCase() {
   @Throws(Exception::class)
   public override fun tearDown() {
     RunAll(
-      ThrowableRunnable {
+      {
         if (project != null && !project!!.isDisposed()) {
           project!!.getExternalConfigurationDir().delete()
         }
       },
-      ThrowableRunnable { EdtTestUtil.runInEdtAndWait<RuntimeException?>(ThrowableRunnable { tearDownFixtures() }) },
-      ThrowableRunnable { project = null },
-      ThrowableRunnable {
+      { EdtTestUtil.runInEdtAndWait<RuntimeException?> { tearDownFixtures() } },
+      { project = null },
+      {
         if (testDir != null) {
           NioFiles.deleteRecursively(testDir!!)
         }
       },
-      ThrowableRunnable { ExternalSystemProgressNotificationManagerImpl.assertListenersReleased() },
-      ThrowableRunnable { cleanupListeners() },
-      ThrowableRunnable { super.tearDown() },
-      ThrowableRunnable { resetClassFields(javaClass) }
+      { ExternalSystemProgressNotificationManagerImpl.assertListenersReleased() },
+      { cleanupListeners() },
+      { super.tearDown() },
+      { resetClassFields(javaClass) }
     ).run()
   }
 
@@ -331,14 +331,14 @@ abstract class NioExternalSystemTestCase : UsefulTestCase() {
 
   fun setFileContent(file: VirtualFile, content: String, advanceStamps: Boolean) {
     try {
-      WriteAction.runAndWait<IOException?>(ThrowableRunnable {
+      WriteAction.runAndWait<IOException?> {
         if (advanceStamps) {
           file.setBinaryContent(content.toByteArray(StandardCharsets.UTF_8), -1, file.getTimeStamp() + 4000)
         }
         else {
           file.setBinaryContent(content.toByteArray(StandardCharsets.UTF_8), file.modificationStamp, file.getTimeStamp())
         }
-      })
+      }
     }
     catch (e: IOException) {
       throw RuntimeException(e)

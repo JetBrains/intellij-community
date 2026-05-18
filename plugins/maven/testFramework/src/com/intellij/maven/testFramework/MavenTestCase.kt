@@ -6,7 +6,11 @@ import com.intellij.diagnostic.ThreadDumper
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.module.JavaModuleType
@@ -24,7 +28,11 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.openapi.util.io.*
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.NioFiles
+import com.intellij.openapi.util.io.findOrCreateFile
+import com.intellij.openapi.util.io.toCanonicalPath
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
@@ -33,7 +41,12 @@ import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.platform.testFramework.eelJava.EelTestJdkProvider
-import com.intellij.testFramework.*
+import com.intellij.testFramework.EdtTestUtil
+import com.intellij.testFramework.LoggedErrorProcessor
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.RunAll
+import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.utils.io.createFile
@@ -47,7 +60,15 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.maven.indices.MavenIndicesManager
 import org.jetbrains.idea.maven.model.MavenConstants
-import org.jetbrains.idea.maven.project.*
+import org.jetbrains.idea.maven.project.MavenGeneralSettings
+import org.jetbrains.idea.maven.project.MavenImportListener
+import org.jetbrains.idea.maven.project.MavenImportingSettings
+import org.jetbrains.idea.maven.project.MavenInSpecificPath
+import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.project.MavenSettingsCache
+import org.jetbrains.idea.maven.project.MavenWorkspacePersistedSettings
+import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.server.MavenServerConnector
 import org.jetbrains.idea.maven.server.MavenServerConnectorImpl
 import org.jetbrains.idea.maven.server.MavenServerManager
@@ -61,10 +82,15 @@ import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.io.path.*
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.createDirectory
+import kotlin.io.path.createParentDirectories
+import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.readBytes
 
 abstract class MavenTestCase : UsefulTestCase() {
   protected var mavenProgressIndicator: MavenProgressIndicator? = null
@@ -220,23 +246,21 @@ abstract class MavenTestCase : UsefulTestCase() {
 
   override fun tearDown() {
     RunAll(
-      ThrowableRunnable {
-        myProject?.serviceIfCreated<MavenProgressTracker>()?.assertProgressTasksCompleted()
-      },
-      ThrowableRunnable { MavenServerManager.getInstance().closeAllConnectorsAndWait() },
-      ThrowableRunnable { checkAllMavenConnectorsDisposed() },
-      ThrowableRunnable { tearDownJdk() },
-      ThrowableRunnable { myProject = null },
-      ThrowableRunnable {
+      { myProject?.serviceIfCreated<MavenProgressTracker>()?.assertProgressTasksCompleted() },
+      { MavenServerManager.getInstance().closeAllConnectorsAndWait() },
+      { checkAllMavenConnectorsDisposed() },
+      { tearDownJdk() },
+      { myProject = null },
+      {
         val defaultProject = ProjectManager.getInstance().defaultProject
         val mavenIndicesManager = defaultProject.getServiceIfCreated(MavenIndicesManager::class.java)
         if (mavenIndicesManager != null) {
           Disposer.dispose(mavenIndicesManager)
         }
       },
-      ThrowableRunnable { doTearDownFixtures() },
-      ThrowableRunnable { deleteDirOnTearDown(myDir) },
-      ThrowableRunnable { super.tearDown() }
+      { doTearDownFixtures() },
+      { deleteDirOnTearDown(myDir) },
+      { super.tearDown() }
     ).run()
   }
 

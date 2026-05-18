@@ -40,8 +40,8 @@ class BuildViewTest : LightPlatformTestCase() {
 
   override fun tearDown() {
     RunAll(
-      ThrowableRunnable { if (::buildViewTestFixture.isInitialized) buildViewTestFixture.tearDown() },
-      ThrowableRunnable { super.tearDown() }
+      { if (::buildViewTestFixture.isInitialized) buildViewTestFixture.tearDown() },
+      { super.tearDown() }
     ).run()
   }
 

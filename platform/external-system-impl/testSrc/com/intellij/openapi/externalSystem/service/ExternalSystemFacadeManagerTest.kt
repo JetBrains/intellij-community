@@ -20,7 +20,6 @@ import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import com.intellij.util.ThrowableRunnable
 import com.intellij.util.io.URLUtil
 import junit.framework.TestCase
 import java.net.URL
@@ -44,8 +43,8 @@ class ExternalSystemFacadeManagerTest : UsefulTestCase() {
 
   override fun tearDown() {
     RunAll(
-      ThrowableRunnable { ApplicationManager.getApplication().invokeAndWait { testFixture.tearDown() } },
-      ThrowableRunnable { super.tearDown() }
+      { ApplicationManager.getApplication().invokeAndWait { testFixture.tearDown() } },
+      { super.tearDown() }
     ).run()
   }
 

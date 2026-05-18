@@ -15,7 +15,6 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.RunAll
 import com.intellij.util.ArrayUtil
 import com.intellij.util.Function
-import com.intellij.util.ThrowableRunnable
 import com.intellij.util.text.VersionComparatorUtil
 import com.intellij.workspaceModel.ide.legacyBridge.SourceRootTypeRegistry
 import junit.framework.TestCase
@@ -140,12 +139,12 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
 
   override fun tearDown() {
     RunAll(
-      ThrowableRunnable {
+      {
         if (myWrapperTestFixture != null) {
           myWrapperTestFixture!!.tearDown()
         }
       },
-      ThrowableRunnable { super.tearDown() }).run()
+      { super.tearDown() }).run()
   }
 
   protected val defaultLanguageLevel: LanguageLevel

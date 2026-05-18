@@ -5,8 +5,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.AstLoadingFilter
 import com.intellij.util.PsiIconUtil
-import com.intellij.util.ThrowableRunnable
-import java.util.function.Supplier
 
 class XmlIconsAstLoadingTest : BasePlatformTestCase() {
 
@@ -33,8 +31,8 @@ class XmlIconsAstLoadingTest : BasePlatformTestCase() {
       </project>
     """.trimIndent())
 
-    AstLoadingFilter.disallowTreeLoading(ThrowableRunnable {
+    AstLoadingFilter.disallowTreeLoading<Throwable>({
       PsiIconUtil.getIconFromProviders(file, 0)
-    }, Supplier { "IconProvider must not access PSI of files directly! Use either indexes or GistManager to cache computation" })
+    }, { "IconProvider must not access PSI of files directly! Use either indexes or GistManager to cache computation" })
   }
 }

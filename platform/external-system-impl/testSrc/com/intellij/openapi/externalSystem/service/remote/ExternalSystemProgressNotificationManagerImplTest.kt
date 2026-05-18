@@ -15,7 +15,6 @@ import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import com.intellij.util.ThrowableRunnable
 import org.assertj.core.api.Assertions.assertThat
 
 class ExternalSystemProgressNotificationManagerImplTest : UsefulTestCase() {
@@ -35,8 +34,8 @@ class ExternalSystemProgressNotificationManagerImplTest : UsefulTestCase() {
 
   override fun tearDown() {
     RunAll(
-      ThrowableRunnable { testFixture.tearDown() },
-      ThrowableRunnable { super.tearDown() }
+      { testFixture.tearDown() },
+      { super.tearDown() }
     ).run()
   }
 

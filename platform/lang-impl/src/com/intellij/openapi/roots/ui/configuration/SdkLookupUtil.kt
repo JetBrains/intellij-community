@@ -8,7 +8,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkType
-import com.intellij.util.ThrowableRunnable
 import java.util.function.Consumer
 
 /**
@@ -43,9 +42,7 @@ fun lookupAndSetupSdkBlocking(project: Project, indicator: ProgressIndicator, sd
 
   try {
     if (sdk != null) {
-      WriteAction.runAndWait(
-        ThrowableRunnable { applySdk.accept(sdk) }
-      )
+      WriteAction.runAndWait<Throwable> { applySdk.accept(sdk) }
     }
   }
   catch (t: Throwable) {

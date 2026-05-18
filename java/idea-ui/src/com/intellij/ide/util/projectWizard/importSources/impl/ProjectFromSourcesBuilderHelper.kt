@@ -20,7 +20,12 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.*
+import com.intellij.openapi.roots.CompilerModuleExtension
+import com.intellij.openapi.roots.IdeaModifiableModelsProvider
+import com.intellij.openapi.roots.ModifiableModelsProvider
+import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
@@ -32,7 +37,6 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.ArrayUtil
-import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -193,9 +197,9 @@ internal class ProjectFromSourcesBuilderHelper(private val project: Project,
           val library = moduleLibraryTable.createLibrary()
           val modifiableModel = library.modifiableModel
           modifiableModel.addRoot(VfsUtil.getUrlForLibraryRoot(file), OrderRootType.CLASSES)
-          WriteAction.runAndWait(ThrowableRunnable {
+          WriteAction.runAndWait<Throwable> {
             modifiableModel.commit()
-          })
+          }
         }
       }
     }

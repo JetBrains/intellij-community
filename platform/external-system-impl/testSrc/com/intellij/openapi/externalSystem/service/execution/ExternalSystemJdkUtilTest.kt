@@ -31,7 +31,6 @@ import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.util.EnvironmentUtil
 import com.intellij.util.SystemProperties
-import com.intellij.util.ThrowableRunnable
 import com.intellij.util.lang.JavaVersion
 import org.assertj.core.api.Assertions.assertThat
 import org.jdom.Element
@@ -55,8 +54,8 @@ class ExternalSystemJdkUtilTest : UsefulTestCase() {
 
   override fun tearDown() {
     RunAll(
-      ThrowableRunnable { testFixture.tearDown() },
-      ThrowableRunnable { super.tearDown() }
+      { testFixture.tearDown() },
+      { super.tearDown() }
     ).run()
   }
 

@@ -2,7 +2,6 @@
 package com.intellij.psi.impl.file.impl
 
 import com.intellij.psi.impl.DebugUtil
-import com.intellij.util.ThrowableRunnable
 
 internal class InvalidFileProcessor(
   private val fileManager: FileManagerImpl,
@@ -19,9 +18,9 @@ internal class InvalidFileProcessor(
     vFileToViewProviderMap.replaceAll(fileToPsiFileMap)
     markInvalidations(originalFileToPsiFileMap)
 
-    DebugUtil.performPsiModification("possible invalidate psi after move or delete", ThrowableRunnable {
+    DebugUtil.performPsiModification<Throwable>("possible invalidate psi after move or delete") {
       fileManager.possiblyInvalidatePhysicalPsi()
-    })
+    }
   }
 
   /**
@@ -54,13 +53,13 @@ internal class InvalidFileProcessor(
   private fun markInvalidations(originalFileToPsiFileMap: List<FileViewProviderCache.Entry>) {
     if (originalFileToPsiFileMap.isEmpty()) return
 
-    DebugUtil.performPsiModification(null, ThrowableRunnable {
+    DebugUtil.performPsiModification<Throwable>(null)  {
       for (entry in originalFileToPsiFileMap) {
         val viewProvider = entry.provider
         if (vFileToViewProviderMap.getRaw(entry.file, entry.context) !== viewProvider) {
           fileManager.markInvalidated(viewProvider)
         }
       }
-    })
+    }
   }
 }
