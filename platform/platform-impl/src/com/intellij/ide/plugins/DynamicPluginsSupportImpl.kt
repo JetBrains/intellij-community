@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.configurationStore.StoreUtil.saveDocumentsAndProjectsAndApp
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.cancelAndJoinBlocking
@@ -64,6 +65,12 @@ internal class DynamicPluginsSupportImpl(
       val dynamicTransitionIsNotPossibleReason = validateTransitionSequenceCanBePerformedDynamically(sequence)
       if (dynamicTransitionIsNotPossibleReason != null) {
         return@withContext dynamicTransitionIsNotPossibleReason.let(DynamicPluginsTransitionResult::Invalid)
+      }
+
+      withContext(Dispatchers.EDT) { // TODO should be converted into pre-reconfiguration listener
+        withProgressText(IdeBundle.message("progress.text.dynamic.plugins.saving.settings")) {
+          saveDocumentsAndProjectsAndApp(true)
+        }
       }
 
       val unloadSteps = sequence.transitionSequence.takeWhile { it.action == RuntimeModuleGroupAction.UNLOAD }

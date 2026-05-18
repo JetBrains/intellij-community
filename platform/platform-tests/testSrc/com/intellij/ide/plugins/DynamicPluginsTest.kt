@@ -204,8 +204,7 @@ class DynamicPluginsTest {
 
   @Test
   fun `PSC data is preserved between unload and load`() {
-    val data = System.currentTimeMillis().toString()
-
+    val data = "hello world"
     val pluginSet = buildPluginSet(pluginsDir) {
       plugin("psc") {
         applicationService<MyPersistentComponentImpl, MyPersistentComponent>()
@@ -214,7 +213,6 @@ class DynamicPluginsTest {
       }
     }
     val plugin = pluginSet.getEnabledPlugin("psc")
-
     loadPluginInTest(plugin) {
       val handle = application.getTestHandleService<MyPersistentComponent, _, _>(plugin)!!
       handle.test(data)
