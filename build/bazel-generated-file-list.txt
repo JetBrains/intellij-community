@@ -512,6 +512,7 @@ mps/build/intellij.mps.resources
 notebooks/notebook-ui
 notebooks/visualization
 platform/acp
+platform/acp/tests
 platform/analysis-api
 platform/analysis-impl
 platform/backend

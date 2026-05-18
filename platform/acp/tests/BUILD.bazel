@@ -1,0 +1,37 @@
+### auto-generated section `iml intellij.platform.acp.tests` start
+exports_files([
+  "intellij.platform.acp.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.acp.tests` end
+
+### auto-generated section `build intellij.platform.acp.tests` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  associates = ["//platform/acp"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:junit5",
+    "//libraries/assertj-core",
+  ],
+  runtime_deps = [":tests"]
+)
+### auto-generated section `build intellij.platform.acp.tests` end
+
+### auto-generated section `test intellij.platform.acp.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
+)
+### auto-generated section `test intellij.platform.acp.tests` end
