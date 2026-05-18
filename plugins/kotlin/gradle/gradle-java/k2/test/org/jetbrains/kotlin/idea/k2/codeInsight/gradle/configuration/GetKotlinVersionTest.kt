@@ -1,10 +1,12 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeInsight.gradle.configuration
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.vfs.writeText
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.runInEdtAndWait
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.GradleBuildScriptSupport
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.getBuildScriptPsiFile
@@ -14,6 +16,9 @@ import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 
 class GetKotlinVersionTest : MultiplePluginVersionGradleImportingTestCase() {
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
 
     @Test
     @TargetVersions("7.6.3+")
@@ -125,7 +130,9 @@ class GetKotlinVersionTest : MultiplePluginVersionGradleImportingTestCase() {
     }
 
     private fun getTopLevelBuildScriptPsiFile(): PsiFile {
-        val topLevelBuildScriptPsiFile = myProject.getTopLevelBuildScriptPsiFile()
+        val topLevelBuildScriptPsiFile = runReadActionBlocking {
+            myProject.getTopLevelBuildScriptPsiFile()
+        }
         assertNotNull(topLevelBuildScriptPsiFile)
         return topLevelBuildScriptPsiFile!!
     }
