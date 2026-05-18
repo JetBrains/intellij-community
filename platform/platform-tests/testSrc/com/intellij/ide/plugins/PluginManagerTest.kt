@@ -339,6 +339,7 @@ class PluginManagerTest {
         coreLoader = PluginManagerTest::class.java.getClassLoader(),
         parentActivity = null,
         reportingPolicy = PluginLoadingErrorReportingPolicy.TEST,
+        configureClassLoaders = true,
       )
     }
 

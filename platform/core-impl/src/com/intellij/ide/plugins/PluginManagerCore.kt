@@ -532,6 +532,7 @@ object PluginManagerCore {
     coreLoader: ClassLoader,
     parentActivity: Activity?,
     reportingPolicy: PluginLoadingErrorReportingPolicy,
+    configureClassLoaders: Boolean,
   ): PluginManagerState {
     var initStagesActivity = parentActivity?.startChild("selectPluginsToLoad") // no safe end() call, because if it fails, it won't matter
     val excludedFromLoading = IdentityHashMap<PluginMainDescriptor, PluginNonLoadReason>()
@@ -631,8 +632,10 @@ object PluginManagerCore {
       checkEssentialPluginsAreAvailable(idMap, initContext.essentialPlugins, pluginNonLoadReasons)
     }
 
-    initStagesActivity = initStagesActivity?.endAndStart("ClassLoaderConfigurator")
-    ClassLoaderConfigurator(pluginSet, coreLoader).configure()
+    if (configureClassLoaders) {
+      initStagesActivity = initStagesActivity?.endAndStart("ClassLoaderConfigurator")
+      ClassLoaderConfigurator(pluginSet, coreLoader).configure()
+    }
 
     initStagesActivity?.end()
     return PluginManagerState(
@@ -931,6 +934,7 @@ object PluginManagerCore {
         coreLoader = coreLoader,
         parentActivity = tracerShim.getTraceActivity(),
         reportingPolicy = PluginLoadingErrorReportingPolicy.forCurrentProduct(),
+        configureClassLoaders = true,
       )
       val pluginState = pluginsState
       pluginState.pluginsToDisable = initResult.pluginToDisable

@@ -100,7 +100,7 @@ class PluginSetTestBuilder private constructor(
     return loadingContext to PluginsDiscoveryResult.build(listOf(pluginList))
   }
 
-  fun buildState(): PluginManagerState {
+  fun buildState(configureClassLoaders: Boolean = true): PluginManagerState {
     val initContext = buildInitContext()
     val loadingContext = PluginDescriptorLoadingContext(getBuildNumberForDefaultDescriptorVersion = { productBuildNumber })
     val pluginList = withInitContextForLoadingRuleDetermination(initContext) { // FIXME this should not exist
@@ -113,6 +113,7 @@ class PluginSetTestBuilder private constructor(
       discoveredPlugins = discoveredPlugins,
       coreLoader = customCoreLoader ?: UrlClassLoader.build().get(),
       parentActivity = null,
+      configureClassLoaders = configureClassLoaders,
       reportingPolicy = PluginLoadingErrorReportingPolicy.TEST,
     )
   }
