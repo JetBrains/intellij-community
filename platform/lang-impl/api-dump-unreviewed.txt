@@ -9364,7 +9364,6 @@ c:com.intellij.ide.projectView.impl.ProjectViewTree
 - setModel(javax.swing.tree.TreeModel):V
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 f:com.intellij.ide.projectView.impl.PsiFileUrl
-- com.intellij.ide.projectView.impl.AbstractUrl
 - <init>(java.lang.String):V
 - equals(java.lang.Object):Z
 - hashCode():I

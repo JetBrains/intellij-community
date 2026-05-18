@@ -14,6 +14,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * This class is used only for converting old 'favorites' settings to bookmarks, shouldn't be used in new code.
+ */
+@ApiStatus.Internal
 @ApiStatus.NonExtendable
 public abstract class AbstractUrl {
   @ApiStatus.Internal

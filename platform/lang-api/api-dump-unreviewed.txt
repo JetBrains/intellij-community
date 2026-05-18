@@ -2166,13 +2166,6 @@ com.intellij.ide.projectView.ProjectViewSelectionListener
 - a:onChanged():V
 f:com.intellij.ide.projectView.ProjectViewSelectionTopicKt
 - sf:PROJECT_VIEW_SELECTION_TOPIC:com.intellij.util.messages.Topic
-Fa:com.intellij.ide.projectView.impl.AbstractUrl
-- createUrl(java.lang.String,java.lang.String,java.lang.String):com.intellij.ide.projectView.impl.AbstractUrl
-- equals(java.lang.Object):Z
-- getType():java.lang.String
-- getURL():java.lang.String
-- hashCode():I
-- write(org.jdom.Element):V
 c:com.intellij.ide.todo.TodoPanelSettings
 - areFlattenPackages:Z
 - areModulesShown:Z
