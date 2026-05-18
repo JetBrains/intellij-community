@@ -101,20 +101,25 @@ internal class TerminalToolWindowTabsManagerImpl(
   }
 
   override fun detachTab(tab: TerminalToolWindowTab): TerminalView {
+    var wasContentRemoved = false
     TerminalTabCloseListener.executeContentOperationSilently(tab.content) {
       tab.content.putUserData(TAB_DETACHED_KEY, Unit)
-      val manager = tab.content.manager
-      if (manager != null) {
-        manager.removeContent(tab.content, true)
+      val contentManager = tab.content.manager
+      if (contentManager != null) {
+        contentManager.removeContent(tab.content, true)
+        wasContentRemoved = true
       }
       else {
         // tabs created with TerminalToolWindowTabBuilder.shouldAddToToolWindow(false) don't have ContentManager
         tab.content.release()
       }
     }
-    val toolWindow = getToolWindow()
-    if (toolWindow.contentManager.isEmpty) {
-      toolWindow.hide()
+    // Prevent unnecessary tool window initialization if the tab wasn't added to it (shouldAddToToolWindow(false)).
+    if (wasContentRemoved) {
+      val toolWindow = getToolWindow()
+      if (toolWindow.contentManager.isEmpty) {
+        toolWindow.hide()
+      }
     }
 
     project.messageBus.syncPublisher(TerminalTabsManagerListener.TOPIC).tabDetached(tab)
