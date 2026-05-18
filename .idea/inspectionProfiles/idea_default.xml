@@ -49,6 +49,7 @@
     <inspection_tool class="81c39993-de39-3a30-9c64-ab89d04bb566" enabled="true" level="TEXT ATTRIBUTES" enabled_by_default="false" editorAttributes="INFO_ATTRIBUTES">
       <scope name="Production" level="TEXT ATTRIBUTES" enabled="true" editorAttributes="INFO_ATTRIBUTES" />
     </inspection_tool>
+    <inspection_tool class="2f2f891d-a1a8-40ae-b3cb-e52290744728" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="92d42a73-fb88-340b-88e5-4f09e27f9db6" enabled="true" level="WEAK WARNING" enabled_by_default="false" editorAttributes="INFO_ATTRIBUTES">
       <scope name="Go" level="WEAK WARNING" enabled="true" />
     </inspection_tool>
@@ -3781,6 +3782,17 @@
         <constraint name="FieldName" within="" contains="" />
         <constraint name="FieldType" regexp="Collection" within="" contains="" />
       </searchConfiguration>
+      <replaceConfiguration name="Use runReadActionBlocking instead of Application.runReadAction" uuid="2f2f891d-a1a8-40ae-b3cb-e52290744728" description="Application.runReadAction should be replaced with runReadActionBlocking" suppressId="UseRunReadActionBlockingShortcut" problemDescriptor="Use runReadActionBlocking instead of Application.runReadAction" text="$application$.runReadAction { $Parameter$ -&gt; $Expr$ }" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.application.runReadActionBlocking { $Expr$ }">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="Expr" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="application" regexp="(ApplicationManager\.getApplication\(\))|(application)" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use runReadActionBlocking instead of Application.runReadAction" uuid="2f2f891d-a1a8-40ae-b3cb-e52290744728" description="Application.runReadAction should be replaced with ReadAction.runBlocking" suppressId="UseRunReadActionBlockingShortcut" problemDescriptor="Use ReadAction.runBlocking instead of Application.runReadAction" text="$application$.runReadAction($runnable$)" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.application.ReadAction.runBlocking($runnable$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="application" nameOfExprType="com.intellij.openapi.application.Application" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="runnable" nameOfExprType="java.lang.Runnable" within="" contains="" />
+      </replaceConfiguration>
       <replaceConfiguration name="Use Strings.areSameInstance instead of ==" description="Comparing Strings by references usually indicate a mistake, if you really need to do this (for performance reeasons or to implement &quot;Sentinel&quot; pattern), use Strings.areSameInstance method to make the intention explicit and get rid of warning." suppressId="StringEqualitySSR" problemDescriptor="Use !Strings.areSameInstance instead of '!=' if you really need to compare strings by reference" text="$s1$ == $s2$" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.openapi.util.text.Strings.areSameInstance($s1$, $s2$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="s1" nameOfExprType="java\.lang\.String" within="" contains="" />
