@@ -1,6 +1,6 @@
 # Type checkers that we test our stubs against. These should always
 # be pinned to a specific version to make failure reproducible.
-mypy==2.0.0
+mypy==2.1.0
 pyright==1.1.409
 
 # Libraries used by our various scripts.

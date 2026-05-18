@@ -43,6 +43,7 @@ class MenuEditor:
         after: None = None,
         before: _MenuItem | None = None,
     ) -> MenuEntry: ...
+
     @overload
     def createMenu(
         self,
@@ -65,10 +66,12 @@ class MenuEditor:
         after: None = None,
         before: _MenuItem | None = None,
     ) -> Menu: ...
+
     @overload
     def createSeparator(self, parent: Menu, after: _MenuItem | None = None, before: None = None) -> Separator: ...
     @overload
     def createSeparator(self, parent: Menu, after: None = None, before: _MenuItem | None = None) -> Separator: ...
+
     @overload
     def moveMenuEntry(
         self,
@@ -87,6 +90,7 @@ class MenuEditor:
         after: None = None,
         before: _MenuItem | None = None,
     ) -> MenuEntry: ...
+
     @overload
     def moveMenu(
         self, menu: Menu, oldparent: Menu, newparent: Menu, after: _MenuItem | None = None, before: None = None
@@ -95,6 +99,7 @@ class MenuEditor:
     def moveMenu(
         self, menu: Menu, oldparent: Menu, newparent: Menu, after: None = None, before: _MenuItem | None = None
     ) -> Menu: ...
+
     @overload
     def moveSeparator(
         self, separator: Separator, parent: Menu, after: _MenuItem | None = None, before: None = None
@@ -103,6 +108,7 @@ class MenuEditor:
     def moveSeparator(
         self, separator: Separator, parent: Menu, after: None = None, before: _MenuItem | None = None
     ) -> Separator: ...
+
     @overload
     def copyMenuEntry(
         self, menuentry: MenuEntry, oldparent: Unused, newparent: Menu, after: _MenuItem | None = None, before: None = None
@@ -111,6 +117,7 @@ class MenuEditor:
     def copyMenuEntry(
         self, menuentry: MenuEntry, oldparent: Unused, newparent: Menu, after: None = None, before: _MenuItem | None = None
     ) -> MenuEntry: ...
+
     def editMenuEntry(
         self,
         menuentry: MenuEntry,

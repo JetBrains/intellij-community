@@ -38,6 +38,7 @@ def bisect_left(
 def bisect_left(
     a: SupportsGetItem[int, _T], x: SupportsRichComparisonT, lo: int = 0, *, hi: int, key: Callable[[_T], SupportsRichComparisonT]
 ) -> int: ...
+
 @overload
 def bisect_right(
     a: SupportsLenAndGetItem[SupportsRichComparisonT],
@@ -72,6 +73,7 @@ def bisect_right(
 def bisect_right(
     a: SupportsGetItem[int, _T], x: SupportsRichComparisonT, lo: int = 0, *, hi: int, key: Callable[[_T], SupportsRichComparisonT]
 ) -> int: ...
+
 @overload
 def insort_left(
     a: MutableSequence[SupportsRichComparisonT],
@@ -85,6 +87,7 @@ def insort_left(
 def insort_left(
     a: MutableSequence[_T], x: _T, lo: int = 0, hi: int | None = None, *, key: Callable[[_T], SupportsRichComparisonT]
 ) -> None: ...
+
 @overload
 def insort_right(
     a: MutableSequence[SupportsRichComparisonT],

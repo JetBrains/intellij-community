@@ -3,7 +3,7 @@ from _io import _BufferedReaderStream
 from collections.abc import Iterable, Iterator, Mapping
 from socket import SocketIO
 from typing import Any, Literal, NamedTuple, TypedDict, overload, type_check_only
-from typing_extensions import NotRequired, override
+from typing_extensions import NotRequired
 
 from docker._types import ContainerWeightDevice, WaitContainerResponse
 from docker.transport.sshconn import SSHSocket
@@ -38,6 +38,7 @@ class Container(Model):
     def health(self) -> str: ...
     @property
     def ports(self) -> dict[str, list[dict[str, str]] | None]: ...
+
     @overload
     def attach(
         self,
@@ -72,6 +73,7 @@ class Container(Model):
     def attach(
         self, *, stdout: bool = True, stderr: bool = True, stream: Literal[True], logs: bool = False, demux: Literal[True]
     ) -> CancellableStream[tuple[bytes | None, bytes | None]]: ...
+
     def attach_socket(self, **kwargs) -> SocketIO | _BufferedReaderStream | SSHSocket: ...
     def commit(self, repository: str | None = None, tag: str | None = None, **kwargs) -> Image: ...
     def diff(self) -> list[dict[str, int | str]]: ...
@@ -96,6 +98,7 @@ class Container(Model):
         self, path: str, chunk_size: int | None = 2097152, encode_stream: bool = False
     ) -> tuple[Iterator[bytes], dict[str, Any] | None]: ...
     def kill(self, signal: str | int | None = None) -> None: ...
+
     @overload
     def logs(
         self,
@@ -122,6 +125,7 @@ class Container(Model):
         follow: bool | None = None,
         until: datetime.datetime | float | None = None,
     ) -> bytes: ...
+
     def pause(self) -> None: ...
     def put_archive(self, path: str, data) -> bool: ...
     def remove(self, *, v: bool = False, link: bool = False, force: bool = False) -> None: ...
@@ -154,6 +158,7 @@ class Container(Model):
 
 class ContainerCollection(Collection[Container]):
     model: type[Container]
+
     @overload
     def run(
         self,
@@ -344,7 +349,7 @@ class ContainerCollection(Collection[Container]):
         volumes_from: list[str] | None = None,
         working_dir: str | None = None,
     ) -> Container: ...
-    @override
+
     def create(  # type: ignore[override]
         self,
         image: str | Image,
@@ -436,7 +441,6 @@ class ContainerCollection(Collection[Container]):
         volumes_from: list[str] | None = None,
         working_dir: str | None = None,
     ) -> Container: ...
-    @override
     def get(self, container_id: str) -> Container: ...
     def list(
         self,

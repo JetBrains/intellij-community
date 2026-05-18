@@ -56,28 +56,33 @@ class ShapeBuilder:
     @overload
     @staticmethod
     def new_path(tag, clipping_path: Literal[False] = False) -> PaintedPath: ...
+
     @overload
     @classmethod
     def rect(cls, tag, clipping_path: Literal[True]) -> ClippingPath: ...
     @overload
     @classmethod
     def rect(cls, tag, clipping_path: Literal[False] = False) -> PaintedPath: ...
+
     @overload
     @classmethod
     def circle(cls, tag, clipping_path: Literal[True]) -> ClippingPath: ...
     @overload
     @classmethod
     def circle(cls, tag, clipping_path: Literal[False] = False) -> PaintedPath: ...
+
     @overload
     @classmethod
     def ellipse(cls, tag, clipping_path: Literal[True]) -> ClippingPath: ...
     @overload
     @classmethod
     def ellipse(cls, tag, clipping_path: Literal[False] = False) -> PaintedPath: ...
+
     @classmethod
     def line(cls, tag) -> PaintedPath: ...
     @classmethod
     def polyline(cls, tag) -> PaintedPath: ...
+
     @overload
     @classmethod
     def polygon(cls, tag, clipping_path: Literal[True]) -> ClippingPath: ...

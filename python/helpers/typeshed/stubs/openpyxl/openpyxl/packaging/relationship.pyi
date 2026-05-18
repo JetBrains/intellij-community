@@ -21,6 +21,7 @@ class Relationship(Serialisable):
     TargetMode: String[Literal[True]]
     Id: String[Literal[True]]
     id: Alias
+
     @overload
     def __init__(
         self, Id: str, Type: Unused = None, *, type: str, Target: str | None = None, TargetMode: str | None = None

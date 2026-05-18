@@ -24,10 +24,12 @@ def postfork_chain_hook() -> None: ...
 class postfork(Generic[_P, _T]):
     wid: int
     f: Callable[_P, _T] | None
+
     @overload
     def __init__(self: postfork[..., Any], f: int) -> None: ...
     @overload
     def __init__(self: postfork[_P, _T], f: Callable[_P, _T]) -> None: ...  # pyright: ignore[reportInvalidTypeVarUse]  #11780
+
     @overload
     def __call__(self, f: Callable[_P2, _T2], /) -> postfork[_P2, _T2]: ...
     @overload
@@ -52,14 +54,17 @@ def spool_decorate(
 def spool_decorate(
     f: None = None, pass_arguments: bool = False, _class: type[_spoolraw[..., Any]] = ...
 ) -> Callable[[Callable[_P, _SR]], _spoolraw[_P, _SR]]: ...
+
 @overload
 def spoolraw(f: Callable[_P, _SR], pass_arguments: bool = False) -> _spoolraw[_P, _SR]: ...
 @overload
 def spoolraw(f: None = None, pass_arguments: bool = False) -> Callable[[Callable[_P, _SR]], _spoolraw[_P, _SR]]: ...
+
 @overload
 def spool(f: Callable[_P, _SR], pass_arguments: bool = False) -> _spool[_P, _SR]: ...
 @overload
 def spool(f: None = None, pass_arguments: bool = False) -> Callable[[Callable[_P, _SR]], _spool[_P, _SR]]: ...
+
 @overload
 def spoolforever(f: Callable[_P, _SR], pass_arguments: bool = False) -> _spoolforever[_P, _SR]: ...
 @overload
@@ -68,11 +73,14 @@ def spoolforever(f: None = None, pass_arguments: bool = False) -> Callable[[Call
 class mulefunc(Generic[_P, _T]):
     fname: str | None
     mule: int
+
     @overload
     def __init__(self: mulefunc[..., Any], f: int) -> None: ...
     @overload
     def __init__(self: mulefunc[_P, _T], f: Callable[_P, _T]) -> None: ...  # pyright: ignore[reportInvalidTypeVarUse]  #11780
+
     def real_call(self, *args: _P.args, **kwargs: _P.kwargs) -> None: ...
+
     @overload
     def __call__(self, f: Callable[_P2, _T2], /) -> mulefunc[_P2, _T2]: ...
     @overload

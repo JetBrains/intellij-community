@@ -9,6 +9,7 @@ from .geometry import LinearRing, LineString, MultiLineString, MultiPolygon, Pol
 from .lib import Geometry
 
 def patch_from_polygon(polygon: Polygon | MultiPolygon, **kwargs: Any) -> PathPatch: ...
+
 @overload
 def plot_polygon(
     polygon: Polygon | MultiPolygon,
@@ -43,6 +44,7 @@ def plot_polygon(
     linewidth: float | None = None,
     **kwargs: Any,
 ) -> PathPatch: ...
+
 @overload
 def plot_line(
     line: LineString | LinearRing | MultiLineString,
@@ -71,6 +73,7 @@ def plot_line(
     linewidth: float = 2,
     **kwargs: Any,
 ) -> PathPatch: ...
+
 def plot_points(
     geom: Geometry, ax: Axes | None = None, color: ColorType | None = None, marker: str = "o", **kwargs: Any
 ) -> Line2D: ...

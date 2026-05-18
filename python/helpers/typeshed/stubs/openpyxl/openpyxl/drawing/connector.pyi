@@ -71,6 +71,7 @@ class Shape(Serialisable):
     graphicalProperties: Alias
     style: Typed[ShapeStyle, Literal[True]]
     txBody: Typed[RichText, Literal[True]]
+
     @overload
     def __init__(
         self,

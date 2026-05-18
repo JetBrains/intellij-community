@@ -313,6 +313,7 @@ class IndexableBuffer(Buffer, Protocol):
 
 class SupportsGetItemBuffer(SliceableBuffer, IndexableBuffer, Protocol):
     def __contains__(self, x: Any, /) -> bool: ...
+
     @overload
     def __getitem__(self, slice: slice[SupportsIndex | None], /) -> Sequence[int]: ...
     @overload

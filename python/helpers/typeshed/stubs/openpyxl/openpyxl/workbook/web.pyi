@@ -26,6 +26,7 @@ class WebPublishObject(Serialisable):
     destinationFile: String[Literal[False]]
     title: String[Literal[True]]
     autoRepublish: Bool[Literal[True]]
+
     @overload
     def __init__(
         self,

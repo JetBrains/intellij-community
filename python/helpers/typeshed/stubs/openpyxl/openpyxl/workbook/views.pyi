@@ -72,6 +72,7 @@ class CustomWorkbookView(Serialisable):
     showObjects: NoneSet[_CustomWorkbookViewShowObjects]
     extLst: Typed[ExtensionList, Literal[True]]
     __elements__: ClassVar[tuple[str, ...]]
+
     @overload
     def __init__(
         self,

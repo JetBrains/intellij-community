@@ -30,6 +30,7 @@ class wsgify(Generic[_P, _RequestT_contra]):
     args: tuple[Any, ...]
     kwargs: dict[str, Any]
     middleware_wraps: WSGIApplication | None
+
     # NOTE: We disallow passing args/kwargs using this direct API, because
     #       we can't really make it work as a decorator this way, these
     #       arguments should only really be used indirectly through the
@@ -92,10 +93,12 @@ class wsgify(Generic[_P, _RequestT_contra]):
         kwargs: None = None,
         middleware_wraps: _AppT_contra,
     ) -> None: ...
+
     @overload
     def __get__(self, obj: None, type: type[_S]) -> _unbound_wsgify[_P, _S, _RequestT_contra]: ...
     @overload
     def __get__(self, obj: object, type: type | None = None) -> Self: ...
+
     @overload
     def __call__(self, env: WSGIEnvironment, /, start_response: StartResponse) -> Iterable[bytes]: ...
     @overload
@@ -104,6 +107,7 @@ class wsgify(Generic[_P, _RequestT_contra]):
     def __call__(self, req: _RequestT_contra) -> _AnyResponse: ...
     @overload
     def __call__(self, req: _RequestT_contra, *args: _P.args, **kw: _P.kwargs) -> _AnyResponse: ...
+
     def get(self, url: str, **kw: Any) -> _AnyResponse: ...
     def post(
         self, url: str, POST: str | bytes | Mapping[Any, Any] | Mapping[Any, list[Any] | tuple[Any, ...]] | None = None, **kw: Any
@@ -114,6 +118,7 @@ class wsgify(Generic[_P, _RequestT_contra]):
     def clone(self, func: _RequestHandler[_RequestT_contra, _P] | None = None, **kw: Never) -> Self: ...
     @property
     def undecorated(self) -> _RequestHandler[_RequestT_contra, _P] | None: ...
+
     @overload
     @classmethod
     def middleware(
@@ -166,6 +171,7 @@ class _UnboundMiddleware(Generic[_P, _AppT_contra, _RequestT_contra]):
         app: _AppT_contra | None,
         kw: dict[str, Any],
     ) -> None: ...
+
     @overload
     def __call__(self, func: None, app: _AppT_contra | None = None) -> Self: ...
     @overload
@@ -187,6 +193,7 @@ class _MiddlewareFactory(Generic[_P, _AppT_contra, _RequestT_contra]):
         middleware: _Middleware[_RequestT_contra, _AppT_contra, _P],
         kw: dict[str, Any],
     ) -> None: ...
+
     # NOTE: Technically you are not allowed to pass args, but we give up all kinds
     #       of other safety if we don't use ParamSpec
     @overload

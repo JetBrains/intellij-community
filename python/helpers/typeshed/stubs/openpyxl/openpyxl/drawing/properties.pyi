@@ -85,6 +85,7 @@ class NonVisualDrawingProps(Serialisable):
     extLst: Typed[ExtensionList, Literal[True]]
     # Source incorrectly uses a list here instead of a tuple
     __elements__: ClassVar[list[str]]  # type: ignore[assignment]
+
     @overload
     def __init__(
         self,

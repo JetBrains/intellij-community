@@ -25,6 +25,7 @@ class ZoneInfoFile:
     zones: dict[str, _tzfile]
     metadata: _MetadataType | None
     def __init__(self, zonefile_stream: _Fileobj | None = None) -> None: ...
+
     @overload
     def get(self, name: str, default: None = None) -> _tzfile | None: ...
     @overload

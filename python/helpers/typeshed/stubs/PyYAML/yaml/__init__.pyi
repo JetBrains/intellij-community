@@ -49,6 +49,7 @@ def emit(
     allow_unicode: bool | None = None,
     line_break: str | None = None,
 ): ...
+
 @overload
 def serialize_all(
     nodes,
@@ -100,6 +101,7 @@ def serialize_all(
     version: tuple[int, int] | None = None,
     tags: Mapping[str, str] | None = None,
 ) -> bytes: ...
+
 @overload
 def serialize(
     node,
@@ -151,6 +153,7 @@ def serialize(
     version: tuple[int, int] | None = None,
     tags: Mapping[str, str] | None = None,
 ) -> bytes: ...
+
 @overload
 def dump_all(
     documents: Iterable[Any],
@@ -211,6 +214,7 @@ def dump_all(
     tags: Mapping[str, str] | None = None,
     sort_keys: bool = True,
 ) -> bytes: ...
+
 @overload
 def dump(
     data: Any,
@@ -271,6 +275,7 @@ def dump(
     tags: Mapping[str, str] | None = None,
     sort_keys: bool = True,
 ) -> bytes: ...
+
 @overload
 def safe_dump_all(
     documents: Iterable[Any],
@@ -328,6 +333,7 @@ def safe_dump_all(
     tags: Mapping[str, str] | None = None,
     sort_keys: bool = True,
 ) -> bytes: ...
+
 @overload
 def safe_dump(
     data: Any,
@@ -385,6 +391,7 @@ def safe_dump(
     tags: Mapping[str, str] | None = None,
     sort_keys: bool = True,
 ) -> bytes: ...
+
 def add_implicit_resolver(
     tag: str,
     regexp: Pattern[str],
@@ -399,12 +406,14 @@ def add_path_resolver(
     Loader: type[BaseResolver] | None = None,
     Dumper: type[BaseResolver] = ...,
 ) -> None: ...
+
 @overload
 def add_constructor(
     tag: str, constructor: Callable[[Loader | FullLoader | UnsafeLoader, Node], Any], Loader: None = None
 ) -> None: ...
 @overload
 def add_constructor(tag: str, constructor: Callable[[_Constructor, Node], Any], Loader: type[_Constructor]) -> None: ...
+
 @overload
 def add_multi_constructor(
     tag_prefix: str, multi_constructor: Callable[[Loader | FullLoader | UnsafeLoader, str, Node], Any], Loader: None = None
@@ -413,10 +422,12 @@ def add_multi_constructor(
 def add_multi_constructor(
     tag_prefix: str, multi_constructor: Callable[[_Constructor, str, Node], Any], Loader: type[_Constructor]
 ) -> None: ...
+
 @overload
 def add_representer(data_type: type[_T], representer: Callable[[Dumper, _T], Node]) -> None: ...
 @overload
 def add_representer(data_type: type[_T], representer: Callable[[_Representer, _T], Node], Dumper: type[_Representer]) -> None: ...
+
 @overload
 def add_multi_representer(data_type: type[_T], multi_representer: Callable[[Dumper, _T], Node]) -> None: ...
 @overload

@@ -33,6 +33,7 @@ class Properties(Serialisable):
     colHidden: Bool[Literal[True]]
     __elements__: ClassVar[tuple[str, ...]]
     anchor: ObjectAnchor | None
+
     @overload
     def __init__(
         self,

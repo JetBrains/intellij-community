@@ -18,6 +18,7 @@ class Reference(Strict):
     max_col: MinMax[int, Literal[False]]
     range_string: String[Literal[True]]
     worksheet: _WorkbookChild | ReadOnlyWorksheet | DummyWorksheet
+
     @overload
     def __init__(
         self,
@@ -39,6 +40,7 @@ class Reference(Strict):
         max_row: ConvertibleToInt | None = None,
         range_string: str | None = None,
     ) -> None: ...
+
     def __len__(self) -> int: ...
     def __eq__(self, other: object) -> bool: ...
     @property

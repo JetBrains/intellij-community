@@ -49,6 +49,7 @@ class Address:
         city: str,
         country: str | None = None,
     ) -> StructuredAddress: ...
+
     @staticmethod
     def parse_country(country: str | None) -> str: ...
 
@@ -102,6 +103,7 @@ class QRBill:
     currency: Literal["CHF", "EUR"]
     additional_information: str
     billing_information: str
+
     @overload
     def __init__(
         self,
@@ -166,6 +168,7 @@ class QRBill:
         payment_line: bool = True,
         font_factor: int = 1,
     ) -> None: ...
+
     @property
     def title_font_info(self) -> dict[str, Any]: ...
     @property

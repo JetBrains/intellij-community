@@ -6,6 +6,7 @@ class CustomerRecommendationsPayload:
     session_id: str
     is_in_paypal_network: bool
     recommendations: CustomerRecommendations
+
     @overload
     def __init__(
         self,

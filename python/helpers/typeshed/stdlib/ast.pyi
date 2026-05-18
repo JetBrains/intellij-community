@@ -417,6 +417,7 @@ class AnnAssign(stmt):
     annotation: expr
     value: expr | None
     simple: int
+
     @overload
     def __init__(
         self,
@@ -756,7 +757,6 @@ class ImportFrom(stmt):
             is_lazy: bool | None = None,
             **kwargs: Unpack[_Attributes],
         ) -> None: ...
-
     elif sys.version_info >= (3, 13):
         @overload
         def __init__(self, module: str | None, names: list[alias], level: int, **kwargs: Unpack[_Attributes]) -> None: ...
@@ -1108,6 +1108,7 @@ class Constant(expr):
         @n.setter
         @deprecated("Removed in Python 3.14. Use `value` instead.")
         def n(self, value: _ConstantValue) -> None: ...
+
         @property
         @deprecated("Removed in Python 3.14. Use `value` instead.")
         def s(self) -> _ConstantValue: ...
@@ -1410,6 +1411,7 @@ class keyword(AST):
     end_col_offset: int | None
     arg: str | None
     value: expr
+
     @overload
     def __init__(self, arg: str | None, value: expr, **kwargs: Unpack[_Attributes]) -> None: ...
     @overload
@@ -1815,7 +1817,6 @@ if sys.version_info >= (3, 15):
         optimize: Literal[-1, 0, 1, 2] = -1,
         module: str | None = None,
     ) -> mod: ...
-
 elif sys.version_info >= (3, 13):
     @overload
     def parse(
@@ -1904,7 +1905,6 @@ elif sys.version_info >= (3, 13):
         feature_version: None | int | tuple[int, int] = None,
         optimize: Literal[-1, 0, 1, 2] = -1,
     ) -> mod: ...
-
 else:
     @overload
     def parse(

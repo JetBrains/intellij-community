@@ -1,6 +1,6 @@
+# requires a version of urllib3 with a py.typed file
 version = "~=2.33.0"
 upstream-repository = "https://github.com/psf/requests"
-# requires a version of urllib3 with a py.typed file
 dependencies = ["urllib3>=2"]
 extra-description = """\
     Note: `types-requests` has required `urllib3>=2` since v2.31.0.7. \
@@ -8,6 +8,7 @@ extra-description = """\
     that must also have `urllib3<2` installed into it, \
     you will have to use `types-requests<2.31.0.7`.\
     """
+obsolete-since = "2.34.0" # Released on 2026-05-11
 
 [tool.stubtest]
 extras = ["socks"]

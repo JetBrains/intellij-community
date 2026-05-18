@@ -31,6 +31,9 @@ __all__ = [
     "version",
 ]
 
+if sys.version_info >= (3, 15):
+    __all__ += ["PackagePath", "MetadataNotFound", "SimplePath"]
+
 _SimplePath: TypeAlias = SimplePath
 
 def packages_distributions() -> Mapping[str, list[str]]: ...
@@ -38,6 +41,9 @@ def packages_distributions() -> Mapping[str, list[str]]: ...
 class PackageNotFoundError(ModuleNotFoundError):
     @property
     def name(self) -> str: ...  # type: ignore[override]
+
+if sys.version_info >= (3, 15):
+    class MetadataNotFound(FileNotFoundError): ...
 
 if sys.version_info >= (3, 13):
     _EntryPointBase = object
@@ -156,12 +162,14 @@ else:
 if sys.version_info < (3, 12):
     class Deprecated(Generic[_KT, _VT]):
         def __getitem__(self, name: _KT) -> _VT: ...
+
         @overload
         def get(self, name: _KT, default: None = None) -> _VT | None: ...
         @overload
         def get(self, name: _KT, default: _VT) -> _VT: ...
         @overload
         def get(self, name: _KT, default: _T) -> _VT | _T: ...
+
         def __iter__(self) -> Iterator[_KT]: ...
         def __contains__(self, *args: object) -> bool: ...
         def keys(self) -> dict_keys[_KT, _VT]: ...
@@ -175,6 +183,7 @@ if sys.version_info < (3, 12):
         def groups(self) -> set[str]: ...
         @property
         def names(self) -> set[str]: ...
+
         @overload
         def select(self) -> Self: ...
         @overload
@@ -203,7 +212,9 @@ class FileHash:
     value: str
     def __init__(self, spec: str) -> None: ...
 
-if sys.version_info >= (3, 12):
+if sys.version_info >= (3, 15):
+    _distribution_parent = abc.ABC
+elif sys.version_info >= (3, 12):
     class DeprecatedNonAbstract: ...
     _distribution_parent = DeprecatedNonAbstract
 else:
@@ -216,6 +227,7 @@ class Distribution(_distribution_parent):
     def locate_file(self, path: StrPath) -> _SimplePath: ...
     @classmethod
     def from_name(cls, name: str) -> Distribution: ...
+
     @overload
     @classmethod
     def discover(cls, *, context: DistributionFinder.Context) -> Iterable[Distribution]: ...
@@ -224,6 +236,7 @@ class Distribution(_distribution_parent):
     def discover(
         cls, *, context: None = None, name: str | None = ..., path: list[str] = ..., **kwargs: Any
     ) -> Iterable[Distribution]: ...
+
     @staticmethod
     def at(path: StrPath) -> PathDistribution: ...
     @property
@@ -269,12 +282,14 @@ class PathDistribution(Distribution):
     def locate_file(self, path: StrPath) -> _SimplePath: ...
 
 def distribution(distribution_name: str) -> Distribution: ...
+
 @overload
 def distributions(*, context: DistributionFinder.Context) -> Iterable[Distribution]: ...
 @overload
 def distributions(
     *, context: None = None, name: str | None = ..., path: list[str] = ..., **kwargs: Any
 ) -> Iterable[Distribution]: ...
+
 def metadata(distribution_name: str) -> PackageMetadata: ...
 
 if sys.version_info >= (3, 12):

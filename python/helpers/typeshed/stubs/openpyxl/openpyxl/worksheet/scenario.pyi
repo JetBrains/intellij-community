@@ -43,6 +43,7 @@ class Scenario(Serialisable):
     comment: String[Literal[True]]
     __elements__: ClassVar[tuple[str, ...]]
     __attrs__: ClassVar[tuple[str, ...]]
+
     @overload
     def __init__(
         self,
@@ -66,6 +67,7 @@ class Scenario(Serialisable):
         user: str | None = None,
         comment: str | None = None,
     ) -> None: ...
+
     @property
     def count(self) -> int: ...
 

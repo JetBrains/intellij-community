@@ -39,6 +39,7 @@ class _FieldsOrder(dict[type[ast.AST], tuple[str, ...]]):
 _OmitType: TypeAlias = str | tuple[str, ...] | None
 
 def iter_child_nodes(node: ast.AST, omit: _OmitType = None, _fields_order: _FieldsOrder = ...) -> Iterator[ast.AST]: ...
+
 @overload
 def convert_to_value(item: ast.Constant) -> Any: ...  # type: ignore[overload-overlap]  # See ast.Constant.value for possible return types
 @overload
@@ -47,6 +48,7 @@ def convert_to_value(item: ast.Tuple) -> tuple[Any, ...]: ...  # type: ignore[ov
 def convert_to_value(item: ast.Name) -> VariableKey: ...  # type: ignore[overload-overlap]
 @overload
 def convert_to_value(item: ast.AST) -> UnhandledKeyType: ...
+
 def is_notimplemented_name_node(node: ast.AST) -> bool: ...
 
 class Binding:
@@ -185,14 +187,17 @@ class Checker:
         file_tokens: Unused = (),
     ) -> None: ...
     def deferFunction(self, callable: Callable[..., Any]) -> None: ...
+
     @property
     def futuresAllowed(self) -> bool: ...
     @futuresAllowed.setter
     def futuresAllowed(self, value: Literal[False]) -> None: ...
+
     @property
     def annotationsFutureEnabled(self) -> bool: ...
     @annotationsFutureEnabled.setter
     def annotationsFutureEnabled(self, value: Literal[True]) -> None: ...
+
     @property
     def scope(self) -> Scope: ...
     @contextmanager

@@ -191,6 +191,7 @@ def draw_networkx_nodes(  # keep in sync with _DrawNetworkxKwds above
     margins: float | tuple[float, float] | None = None,
     hide_ticks: bool = True,
 ) -> PathCollection: ...
+
 @overload  # arrows=None -> LineCollection if G is undirected, list[FancyArrowPatch] if G is directed
 def draw_networkx_edges(  # keep in sync with _DrawNetworkxKwds above
     G: Graph[_Node],
@@ -288,6 +289,7 @@ def draw_networkx_edges(
     node_shape: str = "o",
     hide_ticks: bool = True,
 ) -> LineCollection: ...
+
 def draw_networkx_labels(  # keep in sync with _DrawNetworkxKwds above
     G: Graph[_Node],
     pos: Mapping[_Node, Collection[float]],

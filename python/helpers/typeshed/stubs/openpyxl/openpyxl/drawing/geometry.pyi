@@ -530,6 +530,7 @@ class CustomGeometry2D(Serialisable):
     cxnLst: Typed[ConnectionSiteList, Literal[True]]
     pathLst: Typed[Path2DList, Literal[False]]
     rect: GeomRect | None
+
     @overload
     def __init__(
         self,

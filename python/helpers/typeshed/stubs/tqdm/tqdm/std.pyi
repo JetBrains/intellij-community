@@ -61,6 +61,7 @@ class tqdm(Comparable, Generic[_T]):
         initial: float | None = 0,
         colour: str | None = None,
     ) -> str: ...
+
     @overload
     def __init__(
         self,
@@ -123,6 +124,7 @@ class tqdm(Comparable, Generic[_T]):
         gui: bool = False,
         **kwargs,
     ) -> None: ...
+
     def __new__(cls, *_, **__) -> Self: ...
     @classmethod
     def write(cls, s: str, file: SupportsWrite[str] | None = None, end: str = "\n", nolock: bool = False) -> None: ...
@@ -223,6 +225,7 @@ class tqdm(Comparable, Generic[_T]):
     @property
     def format_dict(self) -> MutableMapping[str, Any]: ...
     def display(self, msg: str | None = None, pos: int | None = None) -> None: ...
+
     @overload
     @classmethod
     def wrapattr(

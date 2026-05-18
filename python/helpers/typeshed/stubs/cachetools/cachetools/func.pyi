@@ -24,14 +24,17 @@ def fifo_cache(
 ) -> Callable[[Callable[..., _R]], _cachetools_cache_wrapper[_R]]: ...
 @overload
 def fifo_cache(maxsize: Callable[..., _R], typed: bool = False) -> _cachetools_cache_wrapper[_R]: ...
+
 @overload
 def lfu_cache(maxsize: int | None = 128, typed: bool = False) -> Callable[[Callable[..., _R]], _cachetools_cache_wrapper[_R]]: ...
 @overload
 def lfu_cache(maxsize: Callable[..., _R], typed: bool = False) -> _cachetools_cache_wrapper[_R]: ...
+
 @overload
 def lru_cache(maxsize: int | None = 128, typed: bool = False) -> Callable[[Callable[..., _R]], _cachetools_cache_wrapper[_R]]: ...
 @overload
 def lru_cache(maxsize: Callable[..., _R], typed: bool = False) -> _cachetools_cache_wrapper[_R]: ...
+
 @overload
 def rr_cache(
     maxsize: int | None = 128, choice: Callable[[Sequence[_T]], _T] = ..., typed: bool = False
@@ -40,6 +43,7 @@ def rr_cache(
 def rr_cache(
     maxsize: Callable[..., _R], choice: Callable[[Sequence[_T]], _T] = ..., typed: bool = False
 ) -> _cachetools_cache_wrapper[_R]: ...
+
 @overload
 def ttl_cache(
     maxsize: int | None = 128, ttl: Any = 600, timer: Callable[[], _T] = ..., typed: bool = False

@@ -51,10 +51,12 @@ def is_geometry_type(data: object) -> bool: ...
 class GeoPandasBase:
     @property
     def area(self) -> pd.Series[float]: ...
+
     @property
     def crs(self) -> CRS | None: ...
     @crs.setter
     def crs(self, value: _ConvertibleToCRS | None) -> None: ...
+
     @property
     def geom_type(self) -> pd.Series[str]: ...
     @property
@@ -212,6 +214,7 @@ class GeoPandasBase:
     def hilbert_distance(
         self, total_bounds: tuple[float, float, float, float] | Iterable[float] | None = None, level: int = 16
     ) -> pd.Series[int]: ...
+
     @overload
     def sample_points(
         self,
@@ -232,7 +235,9 @@ class GeoPandasBase:
         rng: int | ArrayLike | SeedSequence | BitGenerator | RandomGenerator | None = None,
         **kwargs,
     ) -> GeoSeries: ...
+
     def build_area(self, node: bool = True) -> GeoSeries: ...
+
     @overload
     def polygonize(self, node: bool = True, full: Literal[False] = False) -> GeoSeries: ...
     @overload

@@ -32,6 +32,7 @@ def subs_list_to_dict(
 def subs_list_to_dict(
     subs: list[dict[str, Any]] | None, /, *, lang: str | None = "und", ext: str | None = None
 ) -> dict[str, list[dict[str, Any]]]: ...
+
 @overload
 def find_element(*, attr: str, value: str, tag: str | None = None, html: bool = False, regex: bool = False) -> str: ...
 @overload
@@ -51,6 +52,7 @@ def find_element(
     html: bool = False,
     regex: bool = False,
 ) -> str: ...
+
 @overload
 def find_elements(*, cls: str, html: bool = False) -> list[str]: ...
 @overload
@@ -65,6 +67,7 @@ def find_elements(
     html: bool = False,
     regex: bool = False,
 ) -> list[str]: ...
+
 def trim_str(*, start: str | None = None, end: str | None = None) -> Callable[[str], str]: ...
 
 # Returns a callable f(items) which calls func(*items, **kwargs).
@@ -79,6 +82,7 @@ def get_first(
     is_user_input: bool | type[NO_DEFAULT] = ...,
     traverse_string: bool = False,
 ) -> Any: ...
+
 @overload
 def dict_get(d: str, key_or_keys: str | Collection[str]) -> Any | None: ...
 @overload

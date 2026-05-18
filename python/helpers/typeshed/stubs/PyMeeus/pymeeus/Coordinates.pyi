@@ -21,6 +21,7 @@ def mean_obliquity(
 def mean_obliquity(
     year: int, month: int, day: int, /, *, leap_seconds: float = 0, local: bool = False, utc: bool = False
 ) -> Angle: ...
+
 @overload
 def true_obliquity(
     a: Epoch | list[float] | tuple[float, ...] | datetime.date,
@@ -34,6 +35,7 @@ def true_obliquity(
 def true_obliquity(
     year: int, month: int, day: int, /, *, leap_seconds: float = 0, local: bool = False, utc: bool = False
 ) -> Angle: ...
+
 @overload
 def nutation_longitude(
     a: Epoch | list[float] | tuple[float, ...] | datetime.date,
@@ -47,6 +49,7 @@ def nutation_longitude(
 def nutation_longitude(
     year: int, month: int, day: int, /, *, leap_seconds: float = 0, local: bool = False, utc: bool = False
 ) -> Angle: ...
+
 @overload
 def nutation_obliquity(
     a: Epoch | list[float] | tuple[float, ...] | datetime.date,
@@ -60,6 +63,7 @@ def nutation_obliquity(
 def nutation_obliquity(
     year: int, month: int, day: int, /, *, leap_seconds: float = 0, local: bool = False, utc: bool = False
 ) -> Angle: ...
+
 def precession_equatorial(
     start_epoch: Epoch,
     final_epoch: Epoch,

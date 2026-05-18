@@ -77,12 +77,15 @@ class SpawnBase(Generic[AnyStr]):
         encoding: str | None = None,
         codec_errors: str = "strict",
     ) -> None: ...
+
     @property
     def buffer(self) -> AnyStr: ...
     @buffer.setter
     def buffer(self, value: AnyStr) -> None: ...
+
     def read_nonblocking(self, size: int = 1, timeout: float | None = None) -> AnyStr: ...
     def compile_pattern_list(self, patterns: _InputRePattern | list[_InputRePattern]) -> list[_CompiledRePattern[AnyStr]]: ...
+
     @overload
     def expect(
         self,
@@ -100,6 +103,7 @@ class SpawnBase(Generic[AnyStr]):
         *,
         async_: Literal[True],
     ) -> Awaitable[int]: ...
+
     @overload
     def expect_list(
         self,
@@ -117,6 +121,7 @@ class SpawnBase(Generic[AnyStr]):
         *,
         async_: Literal[True],
     ) -> Awaitable[int]: ...
+
     @overload
     def expect_exact(
         self,
@@ -134,6 +139,7 @@ class SpawnBase(Generic[AnyStr]):
         *,
         async_: Literal[True],
     ) -> Awaitable[int]: ...
+
     def expect_loop(self, searcher: _Searcher[AnyStr], timeout: float | None = -1, searchwindowsize: int | None = -1) -> int: ...
     def read(self, size: int = -1) -> AnyStr: ...
     def readline(self, size: int = -1) -> AnyStr: ...

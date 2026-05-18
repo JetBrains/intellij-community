@@ -12,6 +12,7 @@ sphinx: ModuleType
 
 @deprecated("The `recommonmark` package is unmaintained and deprecated; will be removed in Docutils 1.0.")
 def is_literal(node: nodes.Node) -> bool: ...
+
 @deprecated("The `recommonmark` package is unmaintained and deprecated; will be removed in Docutils 1.0.")
 class _CommonMarkParser:
     default_config: ClassVar[dict[str, None]]

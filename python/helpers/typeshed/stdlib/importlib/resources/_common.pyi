@@ -18,6 +18,7 @@ if sys.version_info >= (3, 11):
         def package_to_anchor(
             func: Callable[[Anchor | None], Traversable],
         ) -> Callable[[Anchor | None, Anchor | None], Traversable]: ...
+
         @overload
         def files(anchor: Anchor | None = None) -> Traversable: ...
         @overload

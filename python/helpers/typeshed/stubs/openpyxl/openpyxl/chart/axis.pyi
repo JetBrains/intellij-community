@@ -85,6 +85,7 @@ class _BaseAxis(Serialisable):
     crosses: NestedNoneSet[_BaseAxisCrosses]
     crossesAt: NestedFloat[Literal[True]]
     __elements__: ClassVar[tuple[str, ...]]
+
     @overload
     def __init__(
         self,

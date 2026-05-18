@@ -1,22 +1,20 @@
-# ============================================
-# TODO: Allowlist entries that should be fixed
-# ============================================
-
-_pyrepl.fancy_termios
-_pyrepl.unix_console
-_pyrepl.unix_eventqueue
-ctypes.c_double_complex._type_
-ctypes.c_float_complex._type_
-ctypes.c_longdouble_complex._type_
-os.NODEV
-os.__all__
-posix.NODEV
-readline.get_pre_input_hook
-
-
 # =============================================================
 # Allowlist entries that cannot or should not be fixed; >= 3.15
 # =============================================================
+
+# Depends on the ncurses version used to build Python.
+(_curses.BUTTON5_CLICKED)?
+(_curses.BUTTON5_DOUBLE_CLICKED)?
+(_curses.BUTTON5_PRESSED)?
+(_curses.BUTTON5_RELEASED)?
+(_curses.BUTTON5_TRIPLE_CLICKED)?
+
+# Platform/build availability differs across Darwin builds.
+(_socket.SO_BINDTODEVICE)?
+(errno.ENOTCAPABLE)?
+
+# Depends on how readline was built.
+readline.get_pre_input_hook
 
 # Internal implementation details of the sampling profiler.
 profiling.sampling.live_collector

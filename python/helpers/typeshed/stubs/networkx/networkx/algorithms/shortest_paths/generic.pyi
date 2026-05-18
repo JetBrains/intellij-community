@@ -17,6 +17,7 @@ __all__ = [
 
 @_dispatchable
 def has_path(G: Graph[_Node], source: _Node, target: _Node) -> bool: ...
+
 @overload  # both source and target are specified => (s -> t)
 def shortest_path(
     G: Graph[_Node],
@@ -72,6 +73,7 @@ def shortest_path(  # source and target are not specified => generator of (t, {s
     backend: str | None = None,
     **backend_kwargs,
 ) -> Generator[tuple[_Node, dict[str, list[_Node]]]]: ...
+
 @overload  # both source and target are specified => len(s -> t)
 def shortest_path_length(
     G: Graph[_Node],
@@ -127,6 +129,7 @@ def shortest_path_length(  # source and target are not specified => generator of
     backend: str | None = None,
     **backend_kwargs,
 ) -> Generator[tuple[_Node, dict[_Node, float]]]: ...
+
 @_dispatchable
 def average_shortest_path_length(
     G: Graph[_Node], weight: str | _WeightFunc[_Node] | None = None, method: str | None = None

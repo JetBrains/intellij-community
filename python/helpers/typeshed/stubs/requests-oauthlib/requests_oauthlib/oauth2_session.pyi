@@ -53,27 +53,33 @@ class OAuth2Session(requests.Session):
         pkce=None,
         **kwargs,
     ) -> None: ...
+
     @property
     def scope(self) -> Incomplete | None: ...  # oauthlib.oauth2.Client.scope
     @scope.setter
     def scope(self, value: Incomplete | None) -> None: ...
+
     def new_state(self): ...
+
     @property
     def client_id(self) -> Incomplete | None: ...  # oauthlib.oauth2.Client.client_id
     @client_id.setter
     def client_id(self, value: Incomplete | None) -> None: ...
     @client_id.deleter
     def client_id(self) -> None: ...
+
     @property
     def token(self): ...  # oauthlib.oauth2.Client.token
     @token.setter
     def token(self, value) -> None: ...
+
     @property
     def access_token(self): ...  # oauthlib.oauth2.Client.access_token
     @access_token.setter
     def access_token(self, value) -> None: ...
     @access_token.deleter
     def access_token(self) -> None: ...
+
     @property
     def authorized(self) -> bool: ...
     def authorization_url(self, url: str, state=None, **kwargs) -> tuple[str, str]: ...
@@ -133,6 +139,7 @@ class OAuth2Session(requests.Session):
         cert: requests.sessions._Cert | None = None,
         json=None,
     ) -> requests.Response: ...
+
     @overload
     def register_compliance_hook(self, hook_type: Literal["access_token_response"], hook: _AccessTokenResponseHook) -> None: ...
     @overload

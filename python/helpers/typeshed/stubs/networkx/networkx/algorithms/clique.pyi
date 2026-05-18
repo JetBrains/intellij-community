@@ -2,7 +2,7 @@ from _typeshed import Incomplete
 from collections.abc import Generator, Iterable, Iterator
 from typing import overload
 
-from networkx.classes.graph import Graph, _Node
+from networkx.classes.graph import Graph, _EdgeData, _Node, _NodeData
 from networkx.utils.backends import _dispatchable
 
 __all__ = [
@@ -23,17 +23,24 @@ def find_cliques(G: Graph[_Node], nodes: Iterable[Incomplete] | None = None) -> 
 @_dispatchable
 def find_cliques_recursive(G: Graph[_Node], nodes: Iterable[Incomplete] | None = None) -> Iterator[list[_Node]]: ...
 @_dispatchable
-def make_max_clique_graph(G: Graph[_Node], create_using: Graph[_Node] | None = None) -> Graph[_Node]: ...
+def make_max_clique_graph(
+    G: Graph[_Node], create_using: Graph[_Node, _NodeData, _EdgeData] | None = None
+) -> Graph[_Node, _NodeData, _EdgeData]: ...
 @_dispatchable
 def make_clique_bipartite(
-    G: Graph[_Node], fpos: bool | None = None, create_using: Graph[_Node] | None = None, name=None
+    G: Graph[_Node, _NodeData, _EdgeData],
+    fpos: bool | None = None,
+    create_using: Graph[_Node, _NodeData, _EdgeData] | None = None,
+    name=None,
 ) -> Graph[_Node]: ...
+
 @overload
 def node_clique_number(
     G: Graph[_Node], nodes=None, cliques: Iterable[Incomplete] | None = None, separate_nodes=False
 ) -> dict[_Node, int]: ...
 @overload
 def node_clique_number(G: Graph[_Node], nodes=None, cliques: Iterable[Incomplete] | None = None, separate_nodes=False) -> int: ...
+
 def number_of_cliques(G: Graph[_Node], nodes=None, cliques=None) -> int | dict[Incomplete, Incomplete]: ...
 @_dispatchable
 def max_weight_clique(G: Graph[_Node], weight="weight") -> tuple[list[Incomplete], int]: ...

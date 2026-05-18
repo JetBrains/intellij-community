@@ -22,6 +22,7 @@ class PolymorphicFunction(Callable[_P, _R_co], metaclass=abc.ABCMeta):
     def get_concrete_function(
         self, *args: ContainerGeneric[tf.TypeSpec[Any]], **kwargs: ContainerGeneric[tf.TypeSpec[Any]]
     ) -> ConcreteFunction[_P, _R_co]: ...
+
     def experimental_get_compiler_ir(self, *args, **kwargs): ...
 
 GenericFunction = PolymorphicFunction

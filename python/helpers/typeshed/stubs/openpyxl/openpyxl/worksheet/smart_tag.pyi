@@ -17,6 +17,7 @@ class CellSmartTag(Serialisable):
     deleted: Bool[Literal[True]]
     xmlBased: Bool[Literal[True]]
     __elements__: ClassVar[tuple[str, ...]]
+
     @overload
     def __init__(
         self,

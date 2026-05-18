@@ -12,6 +12,7 @@ _PointLike: TypeAlias = Point | Iterable[float] | ArrayLikeSeq[float]
 
 class Point(BaseGeometry):
     __slots__: list[str] = []
+
     @overload  # no args: empty point
     def __new__(self) -> Self: ...
     @overload  # one arg: (x, y[, z]) tuple or a Point instance
@@ -20,6 +21,7 @@ class Point(BaseGeometry):
     def __new__(self, x: float, y: float, /) -> Self: ...
     @overload  # three args: (x, y, z) tuple
     def __new__(self, x: float, y: float, z: float, /) -> Self: ...
+
     @property
     def x(self) -> float: ...
     @property

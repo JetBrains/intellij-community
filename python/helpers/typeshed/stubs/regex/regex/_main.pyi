@@ -82,6 +82,7 @@ def compile(
     cache_pattern: bool | None = None,
     **kwargs: Any,
 ) -> Pattern[AnyStr]: ...
+
 @overload
 def search(
     pattern: str | Pattern[str],
@@ -108,6 +109,7 @@ def search(
     ignore_unused: bool = False,
     **kwargs: Any,
 ) -> Match[bytes] | None: ...
+
 @overload
 def match(
     pattern: str | Pattern[str],
@@ -163,6 +165,7 @@ def fullmatch(
     ignore_unused: bool = False,
     **kwargs: Any,
 ) -> Match[bytes] | None: ...
+
 @overload
 def split(
     pattern: str | Pattern[str],
@@ -185,6 +188,7 @@ def split(
     ignore_unused: bool = False,
     **kwargs: Any,
 ) -> list[bytes | Any]: ...
+
 @overload
 def splititer(
     pattern: str | Pattern[str],
@@ -207,6 +211,7 @@ def splititer(
     ignore_unused: bool = False,
     **kwargs: Any,
 ) -> _regex.Splitter[bytes]: ...
+
 @overload
 def findall(
     pattern: str | Pattern[str],
@@ -233,6 +238,7 @@ def findall(
     ignore_unused: bool = False,
     **kwargs: Any,
 ) -> list[Any]: ...
+
 @overload
 def finditer(
     pattern: str | Pattern[str],
@@ -261,6 +267,7 @@ def finditer(
     ignore_unused: bool = False,
     **kwargs: Any,
 ) -> _regex.Scanner[bytes]: ...
+
 @overload
 def sub(
     pattern: str | Pattern[str],
@@ -289,6 +296,7 @@ def sub(
     ignore_unused: bool = False,
     **kwargs: Any,
 ) -> bytes: ...
+
 @overload
 def subf(
     pattern: str | Pattern[str],
@@ -317,6 +325,7 @@ def subf(
     ignore_unused: bool = False,
     **kwargs: Any,
 ) -> bytes: ...
+
 @overload
 def subn(
     pattern: str | Pattern[str],
@@ -345,6 +354,7 @@ def subn(
     ignore_unused: bool = False,
     **kwargs: Any,
 ) -> tuple[bytes, int]: ...
+
 @overload
 def subfn(
     pattern: str | Pattern[str],
@@ -373,11 +383,14 @@ def subfn(
     ignore_unused: bool = False,
     **kwargs: Any,
 ) -> tuple[bytes, int]: ...
+
 def purge() -> None: ...
+
 @overload
 def cache_all(value: bool = True) -> None: ...
 @overload
 def cache_all(value: None) -> bool: ...
+
 def escape(pattern: AnyStr, special_only: bool = True, literal_spaces: bool = False) -> AnyStr: ...
 
 DEFAULT_VERSION = RegexFlag.VERSION0
@@ -398,6 +411,7 @@ class Pattern(Generic[AnyStr]):
     def pattern(self) -> AnyStr: ...
     @property
     def named_lists(self) -> Mapping[str, frozenset[AnyStr]]: ...
+
     @overload
     def search(
         self: Pattern[str],
@@ -418,6 +432,7 @@ class Pattern(Generic[AnyStr]):
         partial: bool = False,
         timeout: float | None = None,
     ) -> Match[bytes] | None: ...
+
     @overload
     def match(
         self: Pattern[str],
@@ -438,7 +453,9 @@ class Pattern(Generic[AnyStr]):
         partial: bool = False,
         timeout: float | None = None,
     ) -> Match[bytes] | None: ...
+
     prefixmatch = match
+
     @overload
     def fullmatch(
         self: Pattern[str],
@@ -459,6 +476,7 @@ class Pattern(Generic[AnyStr]):
         partial: bool = False,
         timeout: float | None = None,
     ) -> Match[bytes] | None: ...
+
     @overload
     def split(
         self: Pattern[str], string: str, maxsplit: int = 0, concurrent: bool | None = None, timeout: float | None = None
@@ -471,6 +489,7 @@ class Pattern(Generic[AnyStr]):
         concurrent: bool | None = None,
         timeout: float | None = None,
     ) -> list[bytes | Any]: ...
+
     @overload
     def splititer(
         self: Pattern[str], string: str, maxsplit: int = 0, concurrent: bool | None = None, timeout: float | None = None
@@ -483,6 +502,7 @@ class Pattern(Generic[AnyStr]):
         concurrent: bool | None = None,
         timeout: float | None = None,
     ) -> _regex.Splitter[bytes]: ...
+
     @overload
     def findall(
         self: Pattern[str],
@@ -503,6 +523,7 @@ class Pattern(Generic[AnyStr]):
         concurrent: bool | None = None,
         timeout: float | None = None,
     ) -> list[Any]: ...
+
     @overload
     def finditer(
         self: Pattern[str],
@@ -525,6 +546,7 @@ class Pattern(Generic[AnyStr]):
         partial: bool = False,
         timeout: float | None = None,
     ) -> _regex.Scanner[bytes]: ...
+
     @overload
     def sub(
         self: Pattern[str],
@@ -547,6 +569,7 @@ class Pattern(Generic[AnyStr]):
         concurrent: bool | None = None,
         timeout: float | None = None,
     ) -> bytes: ...
+
     @overload
     def subf(
         self: Pattern[str],
@@ -569,6 +592,7 @@ class Pattern(Generic[AnyStr]):
         concurrent: bool | None = None,
         timeout: float | None = None,
     ) -> bytes: ...
+
     @overload
     def subn(
         self: Pattern[str],
@@ -591,6 +615,7 @@ class Pattern(Generic[AnyStr]):
         concurrent: bool | None = None,
         timeout: float | None = None,
     ) -> tuple[bytes, int]: ...
+
     @overload
     def subfn(
         self: Pattern[str],
@@ -613,6 +638,7 @@ class Pattern(Generic[AnyStr]):
         concurrent: bool | None = None,
         timeout: float | None = None,
     ) -> tuple[bytes, int]: ...
+
     @overload
     def scanner(
         self: Pattern[str],
@@ -635,6 +661,7 @@ class Pattern(Generic[AnyStr]):
         partial: bool = False,
         timeout: float | None = None,
     ) -> _regex.Scanner[bytes]: ...
+
     def __copy__(self) -> Self: ...
     def __deepcopy__(self, memo: Unused, /) -> Self: ...
     def __class_getitem__(cls, item: Any, /) -> GenericAlias: ...
@@ -661,58 +688,72 @@ class Match(Generic[AnyStr]):
     def fuzzy_counts(self) -> tuple[int, int, int]: ...
     @property
     def fuzzy_changes(self) -> tuple[list[int], list[int], list[int]]: ...
+
     @overload
     def group(self, group: Literal[0] = 0, /) -> AnyStr: ...
     @overload
     def group(self, group: int | str = ..., /) -> AnyStr | Any: ...
     @overload
     def group(self, group1: int | str, group2: int | str, /, *groups: int | str) -> tuple[AnyStr | Any, ...]: ...
+
     @overload
     def groups(self, default: None = None) -> tuple[AnyStr | Any, ...]: ...
     @overload
     def groups(self, default: _T) -> tuple[AnyStr | _T, ...]: ...
+
     @overload
     def groupdict(self, default: None = None) -> dict[str, AnyStr | Any]: ...
     @overload
     def groupdict(self, default: _T) -> dict[str, AnyStr | _T]: ...
+
     @overload
     def span(self, group: int | str = ..., /) -> tuple[int, int]: ...
     @overload
     def span(self, group1: int | str, group2: int | str, /, *groups: int | str) -> tuple[tuple[int, int], ...]: ...
+
     @overload
     def spans(self, group: int | str = ..., /) -> list[tuple[int, int]]: ...
     @overload
     def spans(self, group1: int | str, group2: int | str, /, *groups: int | str) -> tuple[list[tuple[int, int]], ...]: ...
+
     @overload
     def start(self, group: int | str = ..., /) -> int: ...
     @overload
     def start(self, group1: int | str, group2: int | str, /, *groups: int | str) -> tuple[int, ...]: ...
+
     @overload
     def starts(self, group: int | str = ..., /) -> list[int]: ...
     @overload
     def starts(self, group1: int | str, group2: int | str, /, *groups: int | str) -> tuple[list[int], ...]: ...
+
     @overload
     def end(self, group: int | str = ..., /) -> int: ...
     @overload
     def end(self, group1: int | str, group2: int | str, /, *groups: int | str) -> tuple[int, ...]: ...
+
     @overload
     def ends(self, group: int | str = ..., /) -> list[int]: ...
     @overload
     def ends(self, group1: int | str, group2: int | str, /, *groups: int | str) -> tuple[list[int], ...]: ...
+
     def expand(self, template: AnyStr, /) -> AnyStr: ...
     def expandf(self, format: AnyStr, /) -> AnyStr: ...
+
     @overload
     def captures(self, group: int | str = ..., /) -> list[AnyStr]: ...
     @overload
     def captures(self, group1: int | str, group2: int | str, /, *groups: int | str) -> tuple[list[AnyStr], ...]: ...
+
     def capturesdict(self) -> dict[str, list[AnyStr]]: ...
     def detach_string(self) -> None: ...
     def allcaptures(self) -> tuple[list[AnyStr]]: ...
     def allspans(self) -> tuple[list[tuple[int, int]]]: ...
+
     @overload
     def __getitem__(self, key: Literal[0], /) -> AnyStr: ...
     @overload
     def __getitem__(self, key: int | str, /) -> AnyStr | Any: ...
+
     def __copy__(self) -> Self: ...
     def __deepcopy__(self, memo: Unused, /) -> Self: ...
     def __class_getitem__(cls, item: Any, /) -> GenericAlias: ...

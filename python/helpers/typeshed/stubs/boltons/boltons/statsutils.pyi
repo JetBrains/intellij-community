@@ -9,6 +9,7 @@ class _StatsProperty:
     internal_name: str
     __doc__: str | None
     def __init__(self, name: str, func: Callable[..., Any]) -> None: ...
+
     @overload
     def __get__(self, obj: None, objtype: object = None) -> Self: ...
     @overload
@@ -17,6 +18,7 @@ class _StatsProperty:
 class Stats:
     data: list[float]
     default: float
+
     @overload
     def __init__(self, data: list[float], default: float = 0.0, *, use_copy: Literal[False], is_sorted: bool = False) -> None: ...
     @overload
@@ -25,6 +27,7 @@ class Stats:
     def __init__(
         self, data: Iterable[float], default: float = 0.0, use_copy: Literal[True] = True, is_sorted: bool = False
     ) -> None: ...
+
     def __len__(self) -> int: ...
     def __iter__(self) -> Iterator[float]: ...
     def clear_cache(self) -> None: ...

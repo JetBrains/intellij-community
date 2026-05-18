@@ -50,6 +50,7 @@ if sys.version_info >= (3, 14):
     def POINTER(cls: None) -> type[c_void_p]: ...
     @overload
     def POINTER(cls: type[_CT]) -> type[_Pointer[_CT]]: ...
+
     def pointer(obj: _CT) -> _Pointer[_CT]: ...
 
 else:
@@ -333,17 +334,26 @@ if sys.version_info >= (3, 14) and sys.platform != "win32":
     # https://github.com/python/cpython/issues/148464
 
     class c_double_complex(_SimpleCData[complex]):
-        _type_: ClassVar[Literal["D"]]
+        if sys.version_info >= (3, 15):
+            _type_: ClassVar[Literal["Zd"]]
+        else:
+            _type_: ClassVar[Literal["D"]]
         __ctype_be__: ClassVar[type[Self]]
         __ctype_le__: ClassVar[type[Self]]
 
     class c_float_complex(_SimpleCData[complex]):
-        _type_: ClassVar[Literal["F"]]
+        if sys.version_info >= (3, 15):
+            _type_: ClassVar[Literal["Zf"]]
+        else:
+            _type_: ClassVar[Literal["F"]]
         __ctype_be__: ClassVar[type[Self]]
         __ctype_le__: ClassVar[type[Self]]
 
     class c_longdouble_complex(_SimpleCData[complex]):
-        _type_: ClassVar[Literal["G"]]
+        if sys.version_info >= (3, 15):
+            _type_: ClassVar[Literal["Zg"]]
+        else:
+            _type_: ClassVar[Literal["G"]]
 
 class c_char(_SimpleCData[bytes]):
     _type_: ClassVar[Literal["c"]]

@@ -42,6 +42,7 @@ def write_elem_start(
     new_nsmap: dict[str, str] | None = None,
     **kwargs: Unused,
 ) -> tuple[str | None, dict[str, str], str | None, dict[str, str] | None, bool]: ...
+
 @overload
 def tostring(
     element: ET.Element[Any],
@@ -84,6 +85,7 @@ def tostring(
     minimal_ns_only: bool = False,
     tree_cls: type[ET.ElementTree] = ...,
 ) -> Any: ...
+
 @overload
 def tostringlist(
     element: ET.Element[Any],
@@ -126,6 +128,7 @@ def tostringlist(
     minimal_ns_only: bool = False,
     tree_cls: type[ET.ElementTree] = ...,
 ) -> list[Any]: ...
+
 @overload
 def compat_tostring(
     element: ET.Element[Any],

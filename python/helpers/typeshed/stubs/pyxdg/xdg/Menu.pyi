@@ -73,6 +73,7 @@ class Layout:
         inline_header: bool = True,
         inline_alias: bool = False,
     ) -> None: ...
+
     @property
     def order(self) -> list[list[str]]: ...
     @order.setter

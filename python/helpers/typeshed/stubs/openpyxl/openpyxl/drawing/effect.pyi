@@ -65,6 +65,7 @@ class ColorChangeEffect(Serialisable):
     useA: Bool[Literal[True]]
     clrFrom: Typed[Color, Literal[False]]
     clrTo: Typed[Color, Literal[False]]
+
     @overload
     def __init__(self, useA: _ConvertibleToBool | None = None, *, clrFrom: Color, clrTo: Color) -> None: ...
     @overload
@@ -149,6 +150,7 @@ class OuterShadow(ColorChoice):
     # schemeClr = ColorChoice.schemeClr
     # prstClr = ColorChoice.prstClr
     __elements__: ClassVar[tuple[str, ...]]
+
     @overload
     def __init__(
         self,

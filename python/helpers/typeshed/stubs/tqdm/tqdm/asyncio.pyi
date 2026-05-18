@@ -82,6 +82,7 @@ class tqdm_asyncio(std_tqdm[_T]):
         colour: str | None = ...,
         delay: float | None = ...,
     ) -> list[_T]: ...
+
     @overload
     def __init__(
         self,

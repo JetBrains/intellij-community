@@ -59,6 +59,7 @@ _SyslogAddressType: TypeAlias = (
 )
 
 def parse_syslog_address(addr: str) -> _SyslogAddressType: ...
+
 @type_check_only
 class _LogLevels(TypedDict):
     critical: _CriticalIntType

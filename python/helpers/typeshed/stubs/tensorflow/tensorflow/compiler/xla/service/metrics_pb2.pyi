@@ -167,6 +167,7 @@ class JobInfo(google.protobuf.message.Message):
             b"user",
         ],
     ) -> None: ...
+
     @typing.overload
     def WhichOneof(self, oneof_group: typing.Literal["_cell", b"_cell"]) -> typing.Literal["cell"] | None: ...
     @typing.overload

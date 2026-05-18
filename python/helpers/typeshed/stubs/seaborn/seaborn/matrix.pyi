@@ -62,6 +62,7 @@ def heatmap(
     antialiased: bool = False,
     **kwargs,
 ) -> Axes: ...
+
 @type_check_only
 class _Dendogram(TypedDict):
     icoord: list[list[float]]

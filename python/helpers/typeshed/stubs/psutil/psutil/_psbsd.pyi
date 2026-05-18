@@ -206,6 +206,7 @@ if sys.platform != "linux" and sys.platform != "win32" and sys.platform != "darw
         def cpu_affinity_get(self) -> list[int]: ...  # only FreeBSD
         def cpu_affinity_set(self, cpus: list[int]) -> None: ...  # only FreeBSD
         def memory_maps(self) -> list[tuple[str, str, str, int, int, int, int]]: ...  # only FreeBSD
+
         @overload
         def rlimit(self, resource: int, limits: tuple[int, int]) -> None: ...  # only FreeBSD
         @overload

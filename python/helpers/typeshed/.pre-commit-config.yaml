@@ -27,7 +27,7 @@ repos:
           - "--unsafe-fixes"
         files: '.*test_cases/.+\.py$'
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 26.3.1
+    rev: 26.5.0
     hooks:
       - id: black
   - repo: https://github.com/pycqa/flake8
@@ -36,7 +36,7 @@ repos:
       - id: flake8
         language: python
         additional_dependencies:
-          - "flake8-pyi==25.5.0"
+          - "flake8-pyi==26.5.0"
         types: [file]
         types_or: [python, pyi]
   - repo: meta

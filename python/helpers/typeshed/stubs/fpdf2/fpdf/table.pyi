@@ -72,6 +72,7 @@ class Row:
     @property
     def max_rowspan(self) -> int: ...
     def convert_spans(self, active_rowspans: SupportsItems[int, int]) -> tuple[dict[int, int], list[int]]: ...
+
     @overload
     def cell(
         self,

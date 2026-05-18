@@ -26,6 +26,7 @@ def contains(
 def contains(
     geometry: Geometry | PreparedGeometry[Geometry], x: ArrayLike[float], y: ArrayLike[float]
 ) -> np.bool_ | NDArray[np.bool_]: ...
+
 @overload
 @deprecated("Use 'shapely.intersects_xy' instead (available since shapely 2.0.0).")
 def touches(geometry: Geometry | PreparedGeometry[Geometry], x: float, y: float) -> np.bool_: ...

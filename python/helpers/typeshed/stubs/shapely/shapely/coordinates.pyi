@@ -24,7 +24,9 @@ def transform(
     *,
     interleaved: bool = True,
 ) -> GeoArray: ...
+
 def count_coordinates(geometry: OptGeoArrayLike) -> int: ...
+
 @overload
 def get_coordinates(
     geometry: OptGeoArrayLike, include_z: bool = False, return_index: Literal[False] = False, *, include_m: bool = False
@@ -45,6 +47,7 @@ def get_coordinates(
 def get_coordinates(
     geometry: OptGeoArrayLike, include_z: bool, return_index: bool, *, include_m: bool = False
 ) -> NDArray[np.float64] | tuple[NDArray[np.float64], NDArray[np.int64]]: ...
+
 @overload
 def set_coordinates(geometry: GeoT, coordinates: ArrayLikeSeq[float]) -> GeoT: ...
 @overload

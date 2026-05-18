@@ -9,6 +9,7 @@ from .tokens import Token
 
 def get_version_string() -> str: ...
 def get_version() -> tuple[int, int, int]: ...
+
 @disjoint_base
 class Mark:
     name: Any

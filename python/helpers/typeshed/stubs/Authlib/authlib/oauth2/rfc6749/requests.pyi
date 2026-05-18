@@ -41,11 +41,13 @@ class OAuth2Request(OAuth2Payload):
     authorization_code: Incomplete | None
     refresh_token: Incomplete | None
     credential: Incomplete | None
+
     @overload
     def __init__(self, method: str, uri: str, body: None = None, headers: Mapping[str, str] | None = None) -> None: ...
     @overload
     @deprecated("The `body` parameter in OAuth2Request is deprecated. Use the payload system instead.")
     def __init__(self, method: str, uri: str, body, headers: Mapping[str, str] | None = None) -> None: ...
+
     @property
     def args(self) -> dict[str, str | None]: ...
     @property

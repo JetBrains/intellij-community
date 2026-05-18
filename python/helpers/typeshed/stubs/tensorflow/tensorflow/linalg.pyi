@@ -37,6 +37,7 @@ def matmul(
     grad_b: _bool = False,
     name: str | None = None,
 ) -> RaggedTensor: ...
+
 def set_diag(
     input: TensorCompatible,
     diagonal: TensorCompatible,

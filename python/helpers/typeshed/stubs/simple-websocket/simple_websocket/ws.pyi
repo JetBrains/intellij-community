@@ -3,7 +3,7 @@ import threading
 from _typeshed import FileDescriptorLike
 from _typeshed.wsgi import WSGIEnvironment
 from collections.abc import Callable
-from selectors import SelectorKey, _EventMask
+from selectors import SelectorKey
 from ssl import SSLContext
 from typing import Any, Protocol, type_check_only
 
@@ -27,9 +27,9 @@ class _EventClassProtocol(Protocol):
 @type_check_only
 class _SelectorClassProtocol(Protocol):
     # the signature of `register` here is the same as `selectors._BaseSelectorImpl` from the stdlib
-    def register(self, fileobj: FileDescriptorLike, events: _EventMask, data: Any = None) -> SelectorKey: ...
+    def register(self, fileobj: FileDescriptorLike, events: int, data: Any = None) -> SelectorKey: ...
     # the signature of `select` here is the same as `selectors.DefaultSelector` from the stdlib
-    def select(self, timeout: float | None = None) -> list[tuple[SelectorKey, _EventMask]]: ...
+    def select(self, timeout: float | None = None) -> list[tuple[SelectorKey, int]]: ...
     def close(self) -> None: ...
 
 class Base:

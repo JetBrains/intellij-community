@@ -18,6 +18,7 @@ class ResponseHeaders(MultiDict[str, str]):
     def __contains__(self, key: object) -> bool: ...
     has_key = __contains__
     def setdefault(self, key: str, default: str) -> str: ...  # type: ignore[override]
+
     @overload
     def pop(self, key: str) -> str: ...
     @overload
