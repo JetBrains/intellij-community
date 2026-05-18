@@ -704,7 +704,7 @@ object PluginManagerCore {
       .groupBy { it.pluginId }
       .mapValues {
         if (it.value.size == 1) it.value.first()
-        else it.value.sortedWith { o1, o2 -> VersionComparatorUtil.compare(o1.version, o2.version) }.last() // take the latest version among excluded disregarding compatibility
+        else it.value.maxWith { o1, o2 -> VersionComparatorUtil.compare(o1.version, o2.version) } // take the latest version among excluded disregarding compatibility
       }
     val allPlugins = resolvedPluginSet.originalPluginSet.plugins + mostRecentExcludedPlugins.values
     val broadResolveContext = lazy { AmbiguousPluginSet.build(allPlugins) }
