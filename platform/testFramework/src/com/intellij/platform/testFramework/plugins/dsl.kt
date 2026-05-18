@@ -89,12 +89,6 @@ fun PluginSpecBuilder.action(classFqn: String, id: String = classFqn) {
 
 inline fun <reified T> PluginSpecBuilder.action(id: String = T::class.java.name): Unit = action(T::class.java.name, id)
 
-fun PluginSpecBuilder.appService(classFqn: String) {
-  extensions("""<applicationService serviceImplementation="${classFqn}" />""")
-}
-
-inline fun <reified T> PluginSpecBuilder.appService(): Unit = appService(T::class.java.name)
-
 fun PluginSpecBuilder.extensionPoint(interfaceFqn: String, epFqn: String, dynamic: Boolean) {
   extensionPoints += """
     <extensionPoint qualifiedName="$epFqn" interface="$interfaceFqn" dynamic="$dynamic"/>
@@ -131,6 +125,12 @@ fun PluginSpecBuilder.applicationService(implFqn: String, iface: String) {
 inline fun <reified Impl, reified Iface> PluginSpecBuilder.applicationService() {
   applicationService(Impl::class.java.name, Iface::class.java.name)
 }
+
+fun PluginSpecBuilder.applicationServiceImpl(implFqn: String) {
+  extensions("""<applicationService serviceImplementation="${implFqn}" />""")
+}
+
+inline fun <reified Impl> PluginSpecBuilder.applicationServiceImpl(): Unit = applicationServiceImpl(Impl::class.java.name)
 
 inline fun <reified T> PluginSpecBuilder.includeClassFile(): Unit =
   includeClassFile(T::class.java.name, T::class.java.classLoader)

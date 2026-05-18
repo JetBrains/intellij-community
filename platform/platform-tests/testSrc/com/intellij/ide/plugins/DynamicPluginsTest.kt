@@ -65,9 +65,9 @@ import com.intellij.platform.testFramework.loadExtensionWithText
 import com.intellij.platform.testFramework.plugins.PluginSpec
 import com.intellij.platform.testFramework.plugins.PluginTestHandle
 import com.intellij.platform.testFramework.plugins.action
-import com.intellij.platform.testFramework.plugins.appService
 import com.intellij.platform.testFramework.plugins.applicationListener
 import com.intellij.platform.testFramework.plugins.applicationService
+import com.intellij.platform.testFramework.plugins.applicationServiceImpl
 import com.intellij.platform.testFramework.plugins.buildDistributionArchive
 import com.intellij.platform.testFramework.plugins.buildMainJar
 import com.intellij.platform.testFramework.plugins.content
@@ -515,12 +515,12 @@ class DynamicPluginsTest {
     val pluginSet = buildPluginSet(pluginsDir, configureClassLoaders = false) {
       plugin("foo") {
         depends("bar", "bar.xml") {
-          appService<FooBarService>()
+          applicationServiceImpl<FooBarService>()
         }
         includePackageClassFiles<FooBarService>()
       }
       plugin("bar") {
-        appService<BarService>()
+        applicationServiceImpl<BarService>()
         includePackageClassFiles<BarService>()
       }
     }

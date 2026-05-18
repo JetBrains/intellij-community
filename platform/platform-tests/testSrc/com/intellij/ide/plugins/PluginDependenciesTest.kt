@@ -7,7 +7,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
 import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
-import com.intellij.platform.testFramework.plugins.appService
+import com.intellij.platform.testFramework.plugins.applicationServiceImpl
 import com.intellij.platform.testFramework.plugins.content
 import com.intellij.platform.testFramework.plugins.dependencies
 import com.intellij.platform.testFramework.plugins.depends
@@ -720,7 +720,7 @@ internal class PluginDependenciesTest {
     plugin("bar") {
       depends("foo", configFile = "foo.xml") {
         depends("baz", configFile = "baz.xml") {
-          appService("service")
+          applicationServiceImpl("service")
         }
       }
     }.installAt(pluginDirPath)
@@ -1151,7 +1151,7 @@ internal class PluginDependenciesTest {
       plugin("optional.target") { vendor = "JetBrains" }.installAt(pluginDirPath)
 
       plugin("external.consumer") {
-        depends("optional.target", configFile = "optional.xml") { appService("optional.service") }
+        depends("optional.target", configFile = "optional.xml") { applicationServiceImpl("optional.service") }
         content {
           module("external.consumer.module", ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "external.consumer.module" }
         }
@@ -1159,7 +1159,7 @@ internal class PluginDependenciesTest {
 
       plugin("jetbrains.consumer") {
         vendor = "JetBrains"
-        depends("optional.target", configFile = "optional.xml") { appService("optional.service") }
+        depends("optional.target", configFile = "optional.xml") { applicationServiceImpl("optional.service") }
         content {
           module("jetbrains.consumer.module", ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "jetbrains.consumer.module" }
         }
