@@ -97,6 +97,7 @@ import com.intellij.util.application
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.java.classFile
 import com.intellij.util.ui.UIUtil
+import org.junit.Assume
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
@@ -1251,31 +1252,33 @@ class DynamicPluginsTest {
 
   @Test
   fun `IJPL-218420 dependent modules loading order is correct`() {
-    val ai = plugin("ai") {}
-    val completion = plugin("completion") {
-      content(namespace = "jetbrains") {
-        module("completion.ai") {
-          dependencies {
-            plugin("ai")
-          }
-          moduleVisibility = ModuleVisibilityValue.PUBLIC
-        }
-      }
-    }
-    val scala = plugin("scala") {
-      content(namespace = "jetbrains") {
-        module("scala.ai.completion") {
-          dependencies {
-            plugin("ai")
-            module("completion.ai")
+    val pluginSet = buildPluginSet(pluginsDir, configureClassLoaders = false) {
+      plugin("ai") {}
+      plugin("completion") {
+        content(namespace = "jetbrains") {
+          module("completion.ai") {
+            dependencies {
+              plugin("ai")
+            }
+            moduleVisibility = ModuleVisibilityValue.PUBLIC
           }
         }
       }
+      plugin("scala") {
+        content(namespace = "jetbrains") {
+          module("scala.ai.completion") {
+            dependencies {
+              plugin("ai")
+              module("completion.ai")
+            }
+          }
+        }
+      }
     }
-
-    loadPluginWithText(completion).use {
-      loadPluginWithText(scala).use {
-        loadPluginWithText(ai).use {
+    val (ai, completion, scala) = pluginSet.getEnabledPlugins("ai", "completion", "scala")
+    loadPluginInTest(completion) {
+      loadPluginInTest(scala) {
+        loadPluginInTest(ai) {
           val scalaAiCompletion = PluginManagerCore.getPlugin(PluginId("scala"))!!.contentModules[0] as ContentModuleDescriptor
           assert(PluginManagerCore.getPluginSet().isModuleEnabled(PluginModuleId("scala.ai.completion", PluginModuleId.JETBRAINS_NAMESPACE)))
           assert(scalaAiCompletion.isLoaded)
@@ -1284,40 +1287,47 @@ class DynamicPluginsTest {
     }
   }
 
-
-  @Ignore
   @Test
   fun `IJPL-218420 dependent modules loading order is correct - transitive dependency`() {
-    val ai = plugin("ai") {}
-    val completion = plugin("completion") {
-      content {
-        module("completion.ai") {
-          dependencies {
-            plugin("ai")
+    assumeNewSupportEnabled()
+    val pluginSet = buildPluginSet(pluginsDir, configureClassLoaders = false) {
+      plugin("ai") {}
+      plugin("completion") {
+        content(namespace = "jetbrains") {
+          module("completion.ai") {
+            dependencies {
+              plugin("ai")
+            }
+            moduleVisibility = ModuleVisibilityValue.PUBLIC
           }
         }
       }
-    }
-    val scala = plugin("scala") {
-      content {
-        module("scala.ai.completion") {
-          dependencies {
-            // plugin("ai") // FIXME in this case dependency on 'ai' is transitive, yet, the dynamic loading processes only direct dependents
-            module("completion.ai")
+      plugin("scala") {
+        content(namespace = "jetbrains") {
+          module("scala.ai.completion") {
+            dependencies {
+              // plugin("ai") - no direct dependency
+              module("completion.ai")
+            }
           }
         }
       }
     }
 
-    loadPluginWithText(completion).use {
-      loadPluginWithText(scala).use {
-        loadPluginWithText(ai).use {
+    val (ai, completion, scala) = pluginSet.getEnabledPlugins("ai", "completion", "scala")
+    loadPluginInTest(completion) {
+      loadPluginInTest(scala) {
+        loadPluginInTest(ai) {
           val scalaAiCompletion = PluginManagerCore.getPlugin(PluginId("scala"))!!.contentModules[0] as ContentModuleDescriptor
           assert(PluginManagerCore.getPluginSet().isModuleEnabled(PluginModuleId("scala.ai.completion", PluginModuleId.JETBRAINS_NAMESPACE)))
           assert(scalaAiCompletion.isLoaded)
         }
       }
     }
+  }
+
+  private fun assumeNewSupportEnabled() {
+    Assume.assumeTrue("new dynamic plugins support is enabled", DynamicPluginsSupport.getInstance() != null)
   }
 }
 
