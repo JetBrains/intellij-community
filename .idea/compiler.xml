@@ -4,7 +4,8 @@
     <option name="BUILD_JARS_ON_MAKE" value="false" />
   </component>
   <component name="CompilerConfiguration">
-    <option name="BUILD_PROCESS_HEAP_SIZE" value="10000" />
+    <!-- JPS compilation was broken on puprose, for details see MRI-3677 -->
+    <option name="BUILD_PROCESS_HEAP_SIZE" value="1" />
     <option name="BUILD_PROCESS_ADDITIONAL_VM_OPTIONS" value="-Dorg.jetbrains.jps.incremental.dependencies.resolution.retry.download.corrupted.zip=true" />
     <resourceExtensions>
       <entry name=".+\.(properties|gif|png|jpeg|jpg|xml|dtd|tld|xsd|ft|html|template)" />
