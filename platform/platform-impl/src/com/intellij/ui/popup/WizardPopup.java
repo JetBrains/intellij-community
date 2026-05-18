@@ -238,27 +238,62 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
 
       Dimension size = getContent().getPreferredSize();
       Dimension minimumSize = getMinimumSize();
+
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("START Showing a WizardPopup requested at screen(" + aScreenX + "," + aScreenY + "), " +
+                  "pref size " + size + ", min size " + minimumSize);
+      }
+
       size.width = Math.max(size.width, minimumSize.width);
       size.height = Math.max(size.height, minimumSize.height);
       Rectangle targetBounds = new Rectangle(new Point(aScreenX, aScreenY), size);
 
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("The initial target bounds are " + targetBounds);
+      }
+
       if (getParent() != null && alignByParentBounds) {
         final Rectangle parentBounds = getParent().getBounds();
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Trying to align to parent bounds " + parentBounds);
+        }
         parentBounds.x += STEP_X_PADDING;
         parentBounds.width -= STEP_X_PADDING * 2;
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("The parent bounds corrected for padding: " + parentBounds);
+        }
         var screenRectangle = ScreenUtil.getScreenRectangle(
           parentBounds.x + parentBounds.width / 2,
           parentBounds.y + parentBounds.height / 2
         );
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("The parent screen rectangle: " + screenRectangle);
+        }
         ScreenUtil.moveToFit(targetBounds, screenRectangle, null);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("The target bounds fit to screen: " + targetBounds);
+        }
         if (parentBounds.intersects(targetBounds)) {
           targetBounds.x = getParent().getBounds().x - targetBounds.width - STEP_X_PADDING;
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("The target bounds aligned to the parent's X: " + targetBounds);
+          }
           if (targetBounds.x < screenRectangle.x) { // prevent the child popup from appearing on another monitor
             targetBounds.x = screenRectangle.x;
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("The target bounds fit to screen again: " + targetBounds);
+            }
           }
         }
-      } else {
+        else {
+          LOG.debug("No intersection with the parent bounds, no alignment needed");
+        }
+      }
+      else {
         ScreenUtil.moveToFit(targetBounds, ScreenUtil.getScreenRectangle(aScreenX + 1, aScreenY + 1), null);
+      }
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("END the WizardPopup part, delegating to super(), the target bounds: " + targetBounds);
       }
       newOptions = new PopupShowOptionsBuilder()
         .withOwner(owner)
