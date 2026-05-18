@@ -129,7 +129,7 @@ internal class ContentModuleDependencyResolutionTest {
 
   private fun buildPluginSet(builder: PluginSetSpecBuilder.() -> Unit): PluginSet {
     val pluginsDirPath = inMemoryFs.fs.getPath("/").resolve("plugins")
-    val state = buildPluginSetState(pluginsDirPath, builder)
+    val state = buildPluginSetState(pluginsDirPath, builder = builder)
     loadingErrors = state.loadingErrors
     return state.pluginSet
   }

@@ -68,6 +68,6 @@ internal class ContentModuleVisibilityCheckTest {
 
   private fun buildPluginSet(builder: PluginSetSpecBuilder.() -> Unit): PluginSet {
     val pluginsDirPath = inMemoryFs.fs.getPath("/").resolve("plugins")
-    return com.intellij.platform.pluginSystem.testFramework.buildPluginSet(pluginsDirPath, builder)
+    return com.intellij.platform.pluginSystem.testFramework.buildPluginSet(pluginsDirPath, builder = builder)
   }
 }

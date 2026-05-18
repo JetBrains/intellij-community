@@ -15,13 +15,13 @@ import com.intellij.platform.testFramework.plugins.plugin as buildPlugin
  *                       [com.intellij.testFramework.rules.InMemoryFsExtension]
  */
 //todo: move this to some testFramework module
-fun buildPluginSet(pluginsDirPath: Path, builder: PluginSetSpecBuilder.() -> Unit): PluginSet {
-  return buildPluginSetState(pluginsDirPath, builder).pluginSet
+fun buildPluginSet(pluginsDirPath: Path, configureClassLoaders: Boolean = true, builder: PluginSetSpecBuilder.() -> Unit): PluginSet {
+  return buildPluginSetState(pluginsDirPath, configureClassLoaders, builder).pluginSet
 }
 
-fun buildPluginSetState(pluginsDirPath: Path, builder: PluginSetSpecBuilder.() -> Unit): PluginManagerState {
+fun buildPluginSetState(pluginsDirPath: Path, configureClassLoaders: Boolean = true, builder: PluginSetSpecBuilder.() -> Unit): PluginManagerState {
   builder(PluginSetSpecBuilder(pluginsDirPath))
-  return PluginSetTestBuilder.fromPath(pluginsDirPath).buildState()
+  return PluginSetTestBuilder.fromPath(pluginsDirPath).buildState(configureClassLoaders)
 }
 
 @PluginBuilderDsl
