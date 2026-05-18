@@ -656,6 +656,7 @@ private class RemoveFileSetsRegistrarImpl(
     val rootFile = root.virtualFile
     if (rootFile == null) {
       nonExistingFilesRegistry.unregisterUrl(root, entity, storageKind)
+      removePackagePrefixFileSets(entity, customData)
     }
     else {
       registerFileSet(rootFile, kind, entity, customData)
@@ -673,6 +674,10 @@ private class RemoveFileSetsRegistrarImpl(
     }
 
     fileSets.removeValueIf(root, removeCondition)
+    removePackagePrefixFileSets(entity, customData)
+  }
+
+  private fun removePackagePrefixFileSets(entity: WorkspaceEntity, customData: WorkspaceFileSetData?) {
     if (customData is JvmPackageRootDataInternal) {
       fileSetsByPackagePrefix.removeByPrefixAndPointer(customData.packagePrefix, entity.createPointer())
     }
