@@ -345,6 +345,41 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     }
   }
 
+  suspend fun disablePluginsWithDependencies(pluginIds: List<PluginId>, project: Project?): ApplyPluginsStateResult {
+    if (pluginIds.isEmpty()) {
+      return ApplyPluginsStateResult()
+    }
+
+    val initialPluginState = collectInitialPluginState()
+    val pluginIdMap = buildPluginIdMap()
+    val contentModuleIdMap = getPluginSet().buildContentModuleIdMap()
+    val dependenciesByPlugin =
+      collectEnabledPluginDependencies(initialPluginState.pluginStates, emptySet(), pluginIdMap, contentModuleIdMap)
+    val pluginIdsToDisable = LinkedHashSet(pluginIds)
+    for ((pluginId, dependencies) in dependenciesByPlugin) {
+      if (pluginId !in pluginIds && !InstalledPluginsTableModel.isDisabled(pluginId, initialPluginState.pluginStates) &&
+          dependencies.any { it in pluginIds }) {
+        pluginIdsToDisable.add(pluginId)
+      }
+    }
+
+    val descriptors = pluginIdsToDisable.toPluginDescriptors()
+    if (descriptors.isEmpty()) {
+      return ApplyPluginsStateResult()
+    }
+
+    return withContext(Dispatchers.EDT) {
+      val pluginEnabler = PluginEnabler.getInstance()
+      val disabledWithoutRestart = if (pluginEnabler is DynamicPluginEnabler) {
+        pluginEnabler.disable(descriptors, project, null)
+      }
+      else {
+        pluginEnabler.disable(descriptors)
+      }
+      ApplyPluginsStateResult(needRestart = !disabledWithoutRestart)
+    }
+  }
+
   private suspend fun applySingleSession(
     session: PluginManagerSession,
     parent: JComponent?,
