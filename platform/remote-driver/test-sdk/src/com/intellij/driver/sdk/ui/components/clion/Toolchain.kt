@@ -68,7 +68,7 @@ sealed class Toolchain(
     debugger: Debugger = Debugger.MINGW_CUSTOM_GDB,
     buildTool: BuildTool = BuildTool.DEFAULT,
     name: ToolchainNames = ToolchainNames.MINGW_GDB,
-    toolset: Toolset = Toolset(kind = "MINGW", path = "\"C:\\Tools\\msys2\\mingw64\"")
+    toolset: Toolset = Toolset(kind = "MINGW", path = "C:/Tools/msys2/mingw64")
   ) : Toolchain(name, compiler, debugger, buildTool, toolset)
 
   class MingwCustomGDB(
@@ -84,7 +84,7 @@ sealed class Toolchain(
     debugger: Debugger = Debugger.BUNDLED_LLDB,
     buildTool: BuildTool = BuildTool.DEFAULT,
     name: ToolchainNames = ToolchainNames.MSVC,
-    toolset: Toolset = Toolset(kind = "MSVC", path = "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2026\\BuildTools\"")
+    toolset: Toolset = Toolset(kind = "MSVC", path = "C:/Program Files (x86)/Microsoft Visual Studio/2026/BuildTools")
   ) : Toolchain(name, compiler, debugger, buildTool, toolset)
 
   class Cygwin(
@@ -92,14 +92,16 @@ sealed class Toolchain(
     debugger: Debugger = Debugger.CYGWIN_GDB,
     buildTool: BuildTool = BuildTool.DEFAULT,
     name: ToolchainNames = ToolchainNames.CYGWIN,
-  ) : Toolchain(name, compiler, debugger, buildTool)
+    toolset: Toolset = Toolset(kind = "CYGWIN", path = "C:/Tools/cygwin")
+  ) : Toolchain(name, compiler, debugger, buildTool, toolset)
 
   class WSL(
     compiler: Compiler = Compiler.DEFAULT,
     debugger: Debugger = Debugger.WSL_DEBUGGER,
     buildTool: BuildTool = BuildTool.GMAKE,
     name: ToolchainNames = ToolchainNames.WSL,
-  ) : Toolchain(name, compiler, debugger, buildTool)
+    toolset: Toolset = Toolset(kind = "WSL", path = "Ubuntu")
+  ) : Toolchain(name, compiler, debugger, buildTool, toolset)
 
   class Docker(
     compiler: Compiler = Compiler.DEFAULT,
