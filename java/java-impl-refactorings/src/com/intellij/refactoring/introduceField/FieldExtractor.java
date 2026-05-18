@@ -14,6 +14,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiAssignmentExpression;
 import com.intellij.psi.PsiCallExpression;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
@@ -208,7 +209,8 @@ final class FieldExtractor {
   }
 
   static ToFieldContext getContext(@NotNull FieldHelper helper,
-                                   @NotNull PsiLocalVariable psiLocalVariable) {
+                                   @NotNull PsiLocalVariable psiLocalVariable,
+                                   boolean checkType) {
     final PsiElement parent = psiLocalVariable.getParent();
     if (!(parent instanceof PsiDeclarationStatement)) {
       String message =
@@ -224,6 +226,10 @@ final class FieldExtractor {
     String validationMessage = helper.checkOccurrences(psiLocalVariable);
     if (validationMessage != null) {
       return new ToFieldContext.Error(validationMessage);
+    }
+    FieldHelper.InvalidInitializer invalidInitializer = helper.checkInitializer(null, psiLocalVariable);
+    if (checkType && invalidInitializer != null) {
+      return new ToFieldContext.Error(invalidInitializer.message());
     }
     VariableToFieldCandidatesContext
       variableToFieldCandidatesContext =
@@ -247,7 +253,8 @@ final class FieldExtractor {
   }
 
   static ToFieldContext getContext(@NotNull FieldHelper helper,
-                                   @NotNull PsiExpression selectedExpr) {
+                                   @NotNull PsiExpression selectedExpr,
+                                   boolean checkType) {
     if (!helper.isConstant() &&
         isInSuperOrThis(selectedExpr) &&
         isStaticFinalInitializer(selectedExpr, helper.isConstant()) != null) {
@@ -312,6 +319,19 @@ final class FieldExtractor {
       return new ToFieldContext.Error(validationMessage);
     }
 
+    FieldHelper.InvalidInitializer invalidInitializer = helper.checkInitializer(selectedExpr, null);
+    if (checkType && invalidInitializer != null) {
+      return new ToFieldContext.Error(invalidInitializer.message());
+    }
+
+    if (checkType && selectedExpr.getType() == null &&
+        !(selectedExpr.getParent() instanceof PsiAssignmentExpression assignmentExpression &&
+          (assignmentExpression.getLExpression() == selectedExpr ||
+           assignmentExpression.getRExpression() == null ||
+           assignmentExpression.getRExpression().getType() == null))) {
+      return new ToFieldContext.Error(
+        RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("invalid.expression.context")));
+    }
 
     return new ToFieldContext.ExpressionContext(selectedExpr, element, file, tempType, parentClass,
                                                 proposedClasses);
@@ -322,14 +342,14 @@ final class FieldExtractor {
     if (psiFile == null) {
       return new ToFieldContext.Error(RefactoringBundle.message("refactoring.cannot.be.performed"));
     }
-    return getContext(myHelper, selectedExpr);
+    return getContext(myHelper, selectedExpr, true);
   }
 
   @NotNull ToFieldContext getContext(@Nullable PsiFile psiFile, @NotNull PsiLocalVariable selectedVariable) {
     if (psiFile == null) {
       return new ToFieldContext.Error(RefactoringBundle.message("refactoring.cannot.be.performed"));
     }
-    return getContext(myHelper, selectedVariable);
+    return getContext(myHelper, selectedVariable, true);
   }
 
   @NotNull AvailableSettings getAvailableSettings(@NotNull ToFieldContext.VariableContext context) {

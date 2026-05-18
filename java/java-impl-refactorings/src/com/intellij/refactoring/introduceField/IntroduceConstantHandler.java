@@ -5,7 +5,6 @@ import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -76,7 +75,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler imple
 
   @Override
   protected boolean invokeImpl(final Project project, final PsiLocalVariable localVariable, final Editor editor) {
-    JavaIntroduceFieldService.ToFieldContext context = FieldExtractor.getContext(myHelper, localVariable);
+    JavaIntroduceFieldService.ToFieldContext context = FieldExtractor.getContext(myHelper, localVariable, false);
     if (context instanceof JavaIntroduceFieldService.ToFieldContext.Error(String errorMessage)) {
       CommonRefactoringUtil.showErrorHint(project, editor, errorMessage, getRefactoringNameText(), getHelpID());
       return false;
@@ -127,34 +126,14 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler imple
       type = ((InplaceIntroduceConstantPopup)activeIntroducer).getType();
     }
 
-    if (localVariable == null) {
-      final PsiElement errorElement = FieldExtractor.isStaticFinalInitializer(expr, true);
-      if (errorElement != null) {
-        String message =
-          RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("selected.expression.cannot.be.a.constant.initializer"));
-        CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringNameText(), getHelpID());
-        highlightError(project, editor, errorElement);
-        return null;
+    FieldHelper.InvalidInitializer invalidInitializer = myHelper.checkInitializer(expr, localVariable);
+    if (invalidInitializer != null) {
+      CommonRefactoringUtil.showErrorHint(project, editor, invalidInitializer.message(), getRefactoringNameText(), getHelpID());
+      if (invalidInitializer.errorElement() != null) {
+        highlightError(project, editor, invalidInitializer.errorElement());
       }
+      return null;
     }
-    else {
-      final PsiExpression initializer = localVariable.getInitializer();
-      if (initializer == null) {
-        String message = RefactoringBundle
-          .getCannotRefactorMessage(JavaRefactoringBundle.message("variable.does.not.have.an.initializer", localVariable.getName()));
-        CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringNameText(), getHelpID());
-        return null;
-      }
-      final PsiElement errorElement = FieldExtractor.isStaticFinalInitializer(initializer, true);
-      if (errorElement != null) {
-        String message = RefactoringBundle.getCannotRefactorMessage(
-          JavaRefactoringBundle.message("initializer.for.variable.cannot.be.a.constant.initializer", localVariable.getName()));
-        CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringNameText(), getHelpID());
-        highlightError(project, editor, errorElement);
-        return null;
-      }
-    }
-
 
     final TypeSelectorManagerImpl typeSelectorManager = new TypeSelectorManagerImpl(project, type, containingMethod, expr, occurrences);
     if (editor != null && editor.getSettings().isVariableInplaceRenameEnabled() &&

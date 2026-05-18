@@ -2,6 +2,6 @@ class Test {
   class C {}
 
   void foo() {
-    C c<caret>c;
+    C c<caret> = new C();
   }
 }

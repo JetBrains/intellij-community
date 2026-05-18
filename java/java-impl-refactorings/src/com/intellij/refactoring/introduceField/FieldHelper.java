@@ -4,6 +4,7 @@ package com.intellij.refactoring.introduceField;
 
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiModifier;
@@ -152,4 +153,40 @@ interface FieldHelper {
    */
   @NotNull SuggestedNameInfo getSuggestedNameInfo(@NotNull JavaIntroduceFieldService.ToFieldContext.ExpressionContext context,
                                                   @NotNull FieldExtractor.SettingParameters parameters);
+
+  /**
+   * Validates that the given expression and/or local variable can serve as a
+   * valid initializer for the field/constant being introduced.
+   * <p>
+   * "Introduce Constant" requires the initializer to be eligible as a
+   * {@code static final} initializer (no references to local variables /
+   * parameters / instance state). "Introduce Field" has no such restriction,
+   * so the default implementation accepts everything.
+   *
+   * @param expr          the expression selected by the user, or {@code null}
+   *                      when a local variable is being promoted
+   * @param localVariable the local variable to convert, or {@code null} when
+   *                      an expression is being extracted directly
+   * @return a description of the validation failure containing a localized
+   *         dialog-ready message and the offending PSI element to highlight,
+   *         or {@code null} if the input is acceptable
+   */
+  default @Nullable InvalidInitializer checkInitializer(@Nullable PsiExpression expr,
+                                                        @Nullable PsiLocalVariable localVariable) {
+    return null;
+  }
+
+  /**
+   * Outcome of {@link #checkInitializer}: the value is rejected because it cannot
+   * serve as the initializer for the field/constant being introduced.
+   *
+   * @param message      localized, dialog-ready explanation of why the
+   *                     initializer is rejected
+   * @param errorElement the specific PSI element to highlight in the editor;
+   *                     {@code null} when no precise sub-element can be
+   *                     pinpointed (e.g. a local variable with no initializer)
+   */
+  record InvalidInitializer(@NlsContexts.DialogMessage @NotNull String message,
+                            @Nullable PsiElement errorElement) {
+  }
 }

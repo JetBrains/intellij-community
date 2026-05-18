@@ -7,6 +7,7 @@ import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiModifier;
@@ -139,5 +140,33 @@ final class IntroduceConstantHelper implements FieldHelper {
       IntroduceConstantDialog.createNameSuggestionGenerator(null, expressionContextContext.selectedExpr(), codeStyleManager, null,
                                                             expressionContextContext.parentClass());
     return generator.getSuggestedNameInfo(expressionContextContext.tempType());
+  }
+
+  @Override
+  public @Nullable InvalidInitializer checkInitializer(@Nullable PsiExpression expr,
+                                                       @Nullable PsiLocalVariable localVariable) {
+    if (localVariable == null) {
+      if (expr == null) return null;
+      PsiElement errorElement = FieldExtractor.isStaticFinalInitializer(expr, true);
+      if (errorElement != null) {
+        String message = RefactoringBundle.getCannotRefactorMessage(
+          JavaRefactoringBundle.message("selected.expression.cannot.be.a.constant.initializer"));
+        return new InvalidInitializer(message, errorElement);
+      }
+      return null;
+    }
+    PsiExpression initializer = localVariable.getInitializer();
+    if (initializer == null) {
+      String message = RefactoringBundle.getCannotRefactorMessage(
+        JavaRefactoringBundle.message("variable.does.not.have.an.initializer", localVariable.getName()));
+      return new InvalidInitializer(message, null);
+    }
+    PsiElement errorElement = FieldExtractor.isStaticFinalInitializer(initializer, true);
+    if (errorElement != null) {
+      String message = RefactoringBundle.getCannotRefactorMessage(
+        JavaRefactoringBundle.message("initializer.for.variable.cannot.be.a.constant.initializer", localVariable.getName()));
+      return new InvalidInitializer(message, errorElement);
+    }
+    return null;
   }
 }

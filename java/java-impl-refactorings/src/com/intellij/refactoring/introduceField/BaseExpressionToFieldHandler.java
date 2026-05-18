@@ -96,7 +96,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
   @Override
   protected boolean invokeImpl(Project project, @NotNull PsiExpression selectedExpr, Editor editor) {
-    ToFieldContext context = FieldExtractor.getContext(myHelper, selectedExpr);
+    ToFieldContext context = FieldExtractor.getContext(myHelper, selectedExpr, false);
     if (context instanceof ToFieldContext.Error(@NlsContexts.DialogMessage String message)) {
       CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), getHelpID());
       return false;
