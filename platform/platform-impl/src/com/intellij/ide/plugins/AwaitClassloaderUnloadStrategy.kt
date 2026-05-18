@@ -6,6 +6,7 @@ import com.intellij.ide.actions.RevealFileAction
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.DynamicPluginsLegacyImpl.analyzeSnapshot
 import com.intellij.ide.plugins.DynamicPluginsLegacyImpl.clearCachesAfterUnload
+import com.intellij.ide.plugins.PluginUtils.asSanitizedPathElement
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
@@ -36,6 +37,7 @@ import kotlinx.coroutines.withTimeout
 import java.nio.file.Paths
 import java.text.SimpleDateFormat
 import java.util.Date
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 private val LOG get() = Logger.getInstance(AwaitClassloaderUnloadStrategy::class.java)
@@ -78,6 +80,7 @@ internal class AwaitClassloaderUnloadAsyncPostTransition : AwaitClassloaderUnloa
       return true
     }
     service<DynamicPluginsSupportService>().coroutineScope.launch(Dispatchers.EDT) {
+      delay(3.seconds) // give time for theme plugins to unload without showing a progress bar
       val project = ProjectUtil.getActiveProject() ?: ProjectUtil.getOpenProjects().firstOrNull() // TODO this is kinda clumsy
       if (project != null) {
         withBackgroundProgress(project, IdeBundle.message("progress.text.waiting.for.plugins.to.fully.unload")) {
@@ -111,12 +114,21 @@ internal class AwaitClassloaderUnloadAsyncPostTransition : AwaitClassloaderUnloa
   }
 
   private suspend fun awaitUnload(classloaders: WeakList<PluginClassLoader>): Boolean {
-    repeat(30) {
-      delay(1.seconds)
-      if (classloaders.firstOrNull() == null) return true
+    try {
+      withTimeout(15.seconds) {
+        while (true) {
+          if (classloaders.firstOrNull() == null) {
+            return@withTimeout
+          }
+          delay(250.milliseconds)
+        }
+      }
     }
+    catch (e: TimeoutCancellationException) { }
     GCWatcher.tracking(classloaders).tryCollect(1)
-    if (classloaders.firstOrNull() == null) return true
+    if (classloaders.firstOrNull() == null) {
+      return true
+    }
     return false
   }
 }
@@ -134,7 +146,8 @@ private suspend fun awaitClassLoadersGetGarbageCollected(classloaders: WeakList<
         clearCachesAfterUnload(classloaders) // TODO :ded-smile:
       }
     }
-  } catch (e: CancellationException) {
+  }
+  catch (e: CancellationException) {
     withContext(NonCancellable) {
       if (Registry.`is`("ide.plugins.snapshot.on.unload.fail") && !application.isUnitTestMode && MemoryDumpHelper.memoryDumpAvailable()) {
         saveMemorySnapshot(classloaders.firstOrNull()?.pluginId ?: PluginId.getId("unknown"))
@@ -146,7 +159,7 @@ private suspend fun awaitClassLoadersGetGarbageCollected(classloaders: WeakList<
 
 private fun saveMemorySnapshot(pluginId: PluginId) {
   val snapshotDate = SimpleDateFormat("dd.MM.yyyy_HH.mm.ss").format(Date())
-  val snapshotFileName = "unload-$pluginId-$snapshotDate.hprof"
+  val snapshotFileName = "unload-${pluginId.asSanitizedPathElement()}-$snapshotDate.hprof"
   val snapshotPath = System.getProperty("memory.snapshots.path", SystemProperties.getUserHome()) + "/" + snapshotFileName
 
   MemoryDumpHelper.captureMemoryDump(snapshotPath)
