@@ -2,6 +2,7 @@
 package com.intellij.psi.impl.file;
 
 import com.intellij.codeInsight.completion.scope.JavaCompletionHints;
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.core.CoreJavaDirectoryService;
 import com.intellij.lang.Language;
@@ -41,6 +42,10 @@ import com.intellij.psi.impl.source.tree.java.PsiCompositeModifierList;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.search.CodeInsightContextAwareSearchScopes;
+import com.intellij.psi.search.CodeInsightContextByScope;
+import com.intellij.psi.search.CodeInsightContextFileInfo;
+import com.intellij.psi.search.DoesNotContainFileInfo;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.util.CachedValue;
@@ -62,6 +67,7 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -78,7 +84,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   private volatile SoftReference<Map<GlobalSearchScope, Map<String, PsiClass[]>>> myClassCache;
   private volatile CachedValue<Collection<PsiDirectory>> myDirectories;
   private volatile CachedValue<Collection<PsiDirectory>> myDirectoriesWithLibSources;
-  private volatile CachedValue<Collection<PsiFile>> myFiles;
+  private volatile CachedValue<Collection<VirtualFile>> myFiles;
   private volatile SoftReference<Map<GlobalSearchScope, Map<String, PsiClass[]>>> myDumbModeFullCache;
   private volatile SoftReference<Map<Pair<GlobalSearchScope, String>, PsiClass[]>> myDumbModePartialCache;
 
@@ -107,7 +113,21 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     if (myFiles == null) {
       myFiles = createCachedFiles();
     }
-    return ContainerUtil.filter(myFiles.getValue(), d -> scope.contains(d.getVirtualFile()));
+
+    Collection<VirtualFile> value = myFiles.getValue();
+    if (value.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    PsiManager psiManager = PsiManager.getInstance(getProject());
+    return ContainerUtil.mapNotNull(value, file -> {
+      CodeInsightContextFileInfo info = CodeInsightContextAwareSearchScopes.getFileContextInfo(scope, file);
+      if (info instanceof DoesNotContainFileInfo) {
+        return null;
+      }
+      CodeInsightContext context = CodeInsightContextByScope.getCodeInsightContextScopeFile(file, getProject(), scope);
+      return psiManager.findFile(file, context);
+    });
   }
 
   private @NotNull CachedValue<Collection<PsiDirectory>> createCachedDirectories(final boolean includeLibrarySources) {
@@ -123,10 +143,10 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     }, false);
   }
 
-  private @NotNull CachedValue<Collection<PsiFile>> createCachedFiles() {
+  private @NotNull CachedValue<Collection<VirtualFile>> createCachedFiles() {
     return CachedValuesManager.getManager(getProject()).createCachedValue(() -> {
-      Collection<PsiFile> result = new ArrayList<>();
-      Processor<PsiFile> processor = Processors.cancelableCollectProcessor(result);
+      Collection<VirtualFile> result = new ArrayList<>();
+      Processor<VirtualFile> processor = Processors.cancelableCollectProcessor(result);
       getFacade().processPackageFiles(this, allScope(), processor);
       return CachedValueProvider.Result.create(result, PsiPackageImplementationHelper.getInstance().getDirectoryCachedValueDependencies(this));
     }, false);

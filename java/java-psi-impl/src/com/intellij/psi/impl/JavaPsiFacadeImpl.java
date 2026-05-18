@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.jvm.JvmClass;
@@ -20,6 +20,7 @@ import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JvmPsiConversionHelper;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
@@ -453,7 +454,7 @@ public final class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
    */
   public void processPackageFiles(@NotNull PsiPackage psiPackage,
                                   @NotNull GlobalSearchScope scope,
-                                  @NotNull Processor<? super PsiFile> consumer) {
+                                  @NotNull Processor<? super VirtualFile> consumer) {
     for (PsiElementFinder finder : filteredFinders()) {
       try {
         if (!finder.processPackageFiles(psiPackage, scope, consumer)) {

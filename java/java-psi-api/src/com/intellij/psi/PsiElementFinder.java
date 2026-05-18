@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Predicates;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
@@ -172,7 +173,7 @@ public abstract class PsiElementFinder implements PossiblyDumbAware {
    */
   public boolean processPackageFiles(@NotNull PsiPackage psiPackage,
                                      @NotNull GlobalSearchScope scope,
-                                     @NotNull Processor<? super PsiFile> consumer) {
+                                     @NotNull Processor<? super VirtualFile> consumer) {
     return true;
   }
 

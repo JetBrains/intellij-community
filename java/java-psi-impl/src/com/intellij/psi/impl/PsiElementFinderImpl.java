@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.application.ReadActionProcessor;
@@ -212,18 +212,13 @@ public final class PsiElementFinderImpl extends PsiElementFinder implements Dumb
   @Override
   public boolean processPackageFiles(@NotNull PsiPackage psiPackage,
                                      final @NotNull GlobalSearchScope scope,
-                                     final @NotNull Processor<? super PsiFile> consumer) {
-    final PsiManager psiManager = PsiManager.getInstance(myProject);
+                                     final @NotNull Processor<? super VirtualFile> consumer) {
     return PackageIndex.getInstance(myProject)
       .getFilesByPackageName(psiPackage.getQualifiedName())
       .forEach(new ReadActionProcessor<VirtualFile>() {
         @Override
-        public boolean processInReadAction(final VirtualFile dir) {
-          if (scope.contains(dir)) {
-            PsiFile psiFile = psiManager.findFile(dir);
-            if (psiFile != null && !consumer.process(psiFile)) return false;
-          }
-          return true;
+        public boolean processInReadAction(VirtualFile file) {
+          return !scope.contains(file) || consumer.process(file);
         }
       });
   }
