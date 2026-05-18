@@ -42,6 +42,8 @@ import org.jetbrains.annotations.Nullable;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXNotRecognizedException;
+import org.xml.sax.SAXNotSupportedException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
@@ -282,8 +284,22 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     LOG.error(file.getPath(), exception);
   }
 
-  private interface Holder {
-    SAXParserFactory FACTORY = SAXParserFactory.newInstance();
+  @SuppressWarnings("HttpUrlsUsage")
+  private static final class Holder {
+    static final SAXParserFactory FACTORY;
+
+    static {
+      SAXParserFactory factory = SAXParserFactory.newInstance();
+      try {
+        factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+      }
+      catch (SAXNotRecognizedException | SAXNotSupportedException | ParserConfigurationException e) {
+        // ignore
+      }
+      FACTORY = factory;
+    }
   }
 
   protected void duplicateError(@NotNull VirtualFile virtualFile,
