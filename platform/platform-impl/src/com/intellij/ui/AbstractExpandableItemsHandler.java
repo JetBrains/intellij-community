@@ -396,8 +396,14 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     updateAlarm.cancel();
     if (myPopup.isVisible()) {
       myPopup.setVisible(false);
+    }
+
+    if (myKey != null) {
+      // Restore the element state to its initial state even when myPopup is not shown.
+      // Needed for inactive windows: the element rendering is updated on mouse hover, but myPopup is not shown.
       repaintKeyItem();
     }
+
     myKey = null;
   }
 
