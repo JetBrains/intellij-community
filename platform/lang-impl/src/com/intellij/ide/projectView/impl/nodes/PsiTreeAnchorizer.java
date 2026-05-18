@@ -2,7 +2,6 @@
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.util.treeView.TreeAnchorizer;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -35,9 +34,8 @@ public final class PsiTreeAnchorizer extends TreeAnchorizer {
 
   @Override
   public void freeAnchor(final Object element) {
-    if (element instanceof SmartPsiElementPointer) {
-      ApplicationManager.getApplication().runReadAction(() -> {
-        SmartPsiElementPointer<?> pointer = (SmartPsiElementPointer<?>)element;
+    if (element instanceof SmartPsiElementPointer<?> pointer) {
+      ReadAction.runBlocking(() -> {
         Project project = pointer.getProject();
         if (!project.isDisposed()) {
           SmartPointerManager.getInstance(project).removePointer(pointer);

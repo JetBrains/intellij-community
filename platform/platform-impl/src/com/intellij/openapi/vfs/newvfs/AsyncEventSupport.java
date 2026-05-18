@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -138,7 +139,7 @@ public final class AsyncEventSupport {
       long startNs = System.nanoTime();
       boolean canceled = false;
       try {
-        ApplicationManager.getApplication().runReadAction(() -> ContainerUtil.addIfNotNull(appliers, listener.prepareChange(events)));
+        ReadAction.runBlocking(() -> ContainerUtil.addIfNotNull(appliers, listener.prepareChange(events)));
       }
       catch (ProcessCanceledException e) {
         canceled = true;

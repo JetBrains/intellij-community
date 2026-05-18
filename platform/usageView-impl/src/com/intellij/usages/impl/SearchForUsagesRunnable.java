@@ -351,7 +351,7 @@ final class SearchForUsagesRunnable implements Runnable {
 
       Usage firstUsage = myFirstUsage.get();
       if (firstUsage != null) {
-        ApplicationManager.getApplication().runReadAction(() -> usageView.appendUsage(firstUsage));
+        ReadAction.runBlocking(() -> usageView.appendUsage(firstUsage));
       }
       return usageView;
     }
@@ -446,7 +446,7 @@ final class SearchForUsagesRunnable implements Runnable {
         }
         tooManyUsagesStatus.pauseProcessingIfTooManyUsages();
         if (usageView != null) {
-          ApplicationManager.getApplication().runReadAction(() -> usageView.appendUsage(usage));
+          ReadAction.runBlocking(() -> usageView.appendUsage(usage));
         }
       }
       return true;

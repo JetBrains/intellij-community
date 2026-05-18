@@ -433,6 +433,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
           }
 
           // wait for write action to complete
+          //noinspection UseRunReadActionBlockingShortcut
           ApplicationManager.getApplication().runReadAction(EmptyRunnable.getInstance());
         }
         finally {
@@ -1214,9 +1215,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
                                   @NotNull Set<? super PsiFile> visitedFiles,
                                   @NotNull Predicate<? super ProblemDescriptor> shouldApplyFix) {
     try {
-      TextRange restrictRange =
-        range == null ? file.getTextRange() : range;
-      ApplicationManager.getApplication().runReadAction(() -> {
+      TextRange restrictRange = range == null ? file.getTextRange() : range;
+      ReadAction.runBlocking(() -> {
         Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
           runInspectionEngine(localTools, file, restrictRange, restrictRange, true,
                               myProgressIndicator,

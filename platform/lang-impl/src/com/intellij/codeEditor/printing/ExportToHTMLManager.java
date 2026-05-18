@@ -5,7 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorBundle;
@@ -142,7 +142,7 @@ final class ExportToHTMLManager {
           selectionStart = firstLine = selectionEnd = 0;
         }
         ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-          ApplicationManager.getApplication().runReadAction(() -> {
+          ReadAction.runBlocking(() -> {
             if (!psiFile.isValid()) {
               return;
             }
@@ -188,7 +188,7 @@ final class ExportToHTMLManager {
       return true;
     }
 
-    ApplicationManager.getApplication().runReadAction(() -> {
+    ReadAction.runBlocking(() -> {
       if (!psiFile.isValid()) {
         return;
       }
@@ -286,7 +286,7 @@ final class ExportToHTMLManager {
       List<PsiFile> filesList = new ArrayList<>();
       boolean isRecursive = myExportToHTMLSettings.isIncludeSubdirectories();
 
-      ApplicationManager.getApplication().runReadAction(() -> {
+      ReadAction.runBlocking(() -> {
         try {
           addToPsiFileList(myPsiDirectory, filesList, isRecursive, outDir);
         }

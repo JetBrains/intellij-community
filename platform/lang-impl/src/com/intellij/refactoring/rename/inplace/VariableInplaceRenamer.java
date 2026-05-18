@@ -480,7 +480,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
               }
             }
 
-            final Runnable runnable = () -> ApplicationManager.getApplication().runReadAction(() -> renamer.findUsages(usages, false, false));
+            Runnable runnable = () -> ReadAction.runBlocking(() -> renamer.findUsages(usages, false, false));
 
             if (!ProgressManager.getInstance()
               .runProcessWithProgressSynchronously(runnable, RefactoringBundle.message("searching.for.variables"), true, myProject)) {

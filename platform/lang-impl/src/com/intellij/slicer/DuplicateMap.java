@@ -1,8 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.slicer;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.CollectionFactory;
@@ -34,7 +33,7 @@ public final class DuplicateMap {
   private final Map<SliceUsage, SliceNode> myDuplicates = CollectionFactory.createCustomHashingStrategyMap(USAGE_INFO_EQUALITY);
 
   SliceNode putNodeCheckDupe(@NotNull SliceNode node) {
-    return ApplicationManager.getApplication().runReadAction((Computable<? extends SliceNode>)() -> {
+    return ReadAction.computeBlocking(() -> {
       SliceUsage usage = node.getValue();
       return myDuplicates.putIfAbsent(usage, node);
     });

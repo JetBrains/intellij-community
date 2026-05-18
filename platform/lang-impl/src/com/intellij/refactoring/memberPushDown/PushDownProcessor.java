@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.memberPushDown;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Ref;
@@ -100,7 +100,7 @@ public class PushDownProcessor<MemberInfo extends MemberInfoBase<Member>,
         return false;
       }
     }
-    Runnable runnable = () -> ApplicationManager.getApplication().runReadAction(() -> {
+    Runnable runnable = () -> ReadAction.runBlocking(() -> {
       if (mySubClassData != null) {
         myDelegate.checkTargetClassConflicts(null, myPushDownData, conflicts, mySubClassData);
       }

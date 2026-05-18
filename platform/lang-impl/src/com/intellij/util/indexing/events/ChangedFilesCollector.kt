@@ -4,6 +4,7 @@ package com.intellij.util.indexing.events
 import com.intellij.history.LocalHistory
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -83,12 +84,12 @@ class ChangedFilesCollector internal constructor(coroutineScope: CoroutineScope)
 
   fun clear() {
     dirtyFiles.clear()
-    ApplicationManager.getApplication().runReadAction {
+    runReadActionBlocking {
       if (ApplicationManager.getApplication() == null) {
         // If the application is already disposed (ApplicationManager.getApplication() == null)
         // it means that this method is invoked via ShutDownTracker and the process will be shut down
         // so we don't need to clear collectors.
-        return@runReadAction
+        return@runReadActionBlocking
       }
       processFilesInReadAction { true }
     }

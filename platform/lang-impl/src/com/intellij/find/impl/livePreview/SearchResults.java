@@ -228,7 +228,7 @@ public class SearchResults implements DocumentListener, CaretListener {
     SearchArea searchArea = getSearchArea(editor, findModel);
 
     List<FindResult> results = new ArrayList<>();
-    ApplicationManager.getApplication().runReadAction(() -> {
+    ReadAction.runBlocking(() -> {
       Project project = getProject();
       if (myDisposed || project.isDisposed()) return;
 
@@ -241,15 +241,15 @@ public class SearchResults implements DocumentListener, CaretListener {
       long documentTimeStamp = editor.getDocument().getModificationStamp();
 
       UIUtil.invokeLaterIfNeeded(() ->
-        WriteIntentReadAction.run(() -> {
-        if (editor.getDocument().getModificationStamp() == documentTimeStamp) {
-          searchCompleted(results, editor, findModel, toChangeSelection, next, stamp);
-          result.setDone();
-        }
-        else {
-          result.setRejected();
-        }
-      }));
+                                   WriteIntentReadAction.run(() -> {
+                                     if (editor.getDocument().getModificationStamp() == documentTimeStamp) {
+                                       searchCompleted(results, editor, findModel, toChangeSelection, next, stamp);
+                                       result.setDone();
+                                     }
+                                     else {
+                                       result.setRejected();
+                                     }
+                                   }));
     });
     return result;
   }

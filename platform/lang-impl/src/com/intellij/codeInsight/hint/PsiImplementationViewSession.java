@@ -118,7 +118,7 @@ public final class PsiImplementationViewSession implements ImplementationViewSes
   static PsiElement @NotNull [] filterElements(final PsiElement @NotNull [] targetElements) {
     final Set<PsiElement> unique = new LinkedHashSet<>(Arrays.asList(targetElements));
     for (final PsiElement elt : targetElements) {
-      ApplicationManager.getApplication().runReadAction(() -> {
+      ReadAction.runBlocking(() -> {
         final PsiFile containingFile = elt.getContainingFile();
         LOG.assertTrue(containingFile != null, elt);
         PsiFile psiFile = containingFile.getOriginalFile();

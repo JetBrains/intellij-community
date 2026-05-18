@@ -51,6 +51,7 @@ import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.readActionUndispatched
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
@@ -1470,7 +1471,7 @@ internal suspend inline fun <R> readActionUndispatchedForActionExpand(noinline b
   }
   else {
     @Suppress("ForbiddenInSuspectContextMethod")
-    return ApplicationManager.getApplication().runReadAction<R, Throwable> { block() }
+    return runReadActionBlocking { block() }
   }
 }
 

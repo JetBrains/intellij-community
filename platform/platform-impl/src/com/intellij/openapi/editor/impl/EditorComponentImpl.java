@@ -897,6 +897,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
       return this;
     }
 
+    @SuppressWarnings("UseRunReadActionBlockingShortcut")
     @Override
     public void render(Runnable runnable) {
       ApplicationManager.getApplication().runReadAction(runnable);

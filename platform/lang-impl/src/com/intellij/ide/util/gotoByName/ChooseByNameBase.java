@@ -36,6 +36,7 @@ import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -1714,7 +1715,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
               }
             };
 
-            ApplicationManager.getApplication().runReadAction(() -> {
+            ReadAction.runBlocking(() -> {
               myCalcUsagesThread.addElementsByPattern(text, collected, indicator, everywhere);
 
               indicator.setText(LangBundle.message("progress.text.prepare"));

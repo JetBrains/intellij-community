@@ -32,7 +32,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -330,7 +329,9 @@ public final class CodeInsightTestUtil {
     Out result = annotator.doAnnotate(in);
     resultChecker.accept(result);
     return AnnotationSessionImpl.computeWithSession(psiFile, false, annotator, annotationHolder -> {
-      ApplicationManager.getApplication().runReadAction(() -> ((AnnotationHolderImpl)annotationHolder).applyExternalAnnotatorWithContext(psiFile, result));
+      ReadAction.runBlocking(
+        () -> ((AnnotationHolderImpl)annotationHolder).applyExternalAnnotatorWithContext(psiFile, result)
+      );
       ((AnnotationHolderImpl)annotationHolder).assertAllAnnotationsCreated();
       return List.copyOf(((AnnotationHolderImpl)annotationHolder));
     });

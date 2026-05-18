@@ -264,7 +264,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    final Runnable runnable = () -> ApplicationManager.getApplication().runReadAction(() -> {
+    Runnable runnable = () -> ReadAction.runBlocking(() -> {
       Tracer tracer = TelemetryManager.Companion.getTracer(new Scope("RenameProcessorScope"));
       TraceKt.use(tracer.spanBuilder("RenameProcessor"), _ -> {
         for (AutomaticRenamer renamer : myRenamers) {

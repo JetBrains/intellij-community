@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.DumbModeBlockedFunctionality;
 import com.intellij.openapi.project.DumbService;
@@ -17,7 +16,7 @@ public abstract class UsageInfoSearcherAdapter implements UsageSearcher {
   protected void processUsages(final @NotNull Processor<? super Usage> processor, @NotNull Project project) {
     final Ref<UsageInfo[]> refUsages = new Ref<>();
     final Ref<Boolean> dumbModeOccurred = new Ref<>();
-    ApplicationManager.getApplication().runReadAction(() -> {
+    ReadAction.runBlocking(() -> {
       try {
         refUsages.set(findUsages());
       }
@@ -33,7 +32,7 @@ public abstract class UsageInfoSearcherAdapter implements UsageSearcher {
     final Usage[] usages = ReadAction.computeBlocking(() -> UsageInfo2UsageAdapter.convert(refUsages.get()));
 
     for (final Usage usage : usages) {
-      ApplicationManager.getApplication().runReadAction(() -> {
+      ReadAction.runBlocking(() -> {
         processor.process(usage);
       });
     }

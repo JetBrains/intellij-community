@@ -655,7 +655,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
     var defaultBreakpoints = createDefaultBreakpoints();
 
     // make sure that no RW lock is taken under myLock
-    ApplicationManager.getApplication().runReadAction(() -> {
+    ReadAction.runBlocking(() -> {
       withLockMaybeCancellable(myLock, () -> {
         myBreakpointsDialogSettings = state.getBreakpointsDialogProperties();
 

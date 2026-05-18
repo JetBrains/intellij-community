@@ -8,7 +8,7 @@ package com.intellij.tools;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -94,7 +94,7 @@ public final class ScanSourceCommentsAction extends AnAction {
 
   private void scanCommentsInFile(final Project project, final VirtualFile vFile) {
     if (!vFile.isDirectory() && vFile.getFileType() instanceof LanguageFileType) {
-      ApplicationManager.getApplication().runReadAction(() -> {
+      ReadAction.runBlocking(() -> {
         PsiFile psiFile = PsiManager.getInstance(project).findFile(vFile);
         if (psiFile == null) return;
 

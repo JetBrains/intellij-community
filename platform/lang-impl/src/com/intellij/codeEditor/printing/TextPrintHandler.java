@@ -12,7 +12,6 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -267,11 +266,9 @@ public final class TextPrintHandler extends PrintActionHandler {
   private static TextPainter initTextPainter(final @NotNull DocumentEx doc, final @NotNull Project project,
                                              final @NotNull String fileName) {
     final TextPainter[] res = new TextPainter[1];
-    ApplicationManager.getApplication().runReadAction(
-      () -> {
-        res[0] = doInitTextPainter(doc, project, fileName);
-      }
-    );
+    ReadAction.runBlocking(() -> {
+      res[0] = doInitTextPainter(doc, project, fileName);
+    });
     return res[0];
   }
 

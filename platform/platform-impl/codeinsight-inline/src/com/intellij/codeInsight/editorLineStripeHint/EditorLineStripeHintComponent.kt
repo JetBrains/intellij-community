@@ -3,7 +3,7 @@ package com.intellij.codeInsight.editorLineStripeHint
 
 import com.intellij.codeInsight.daemon.impl.HintRenderer
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
@@ -69,7 +69,7 @@ open class EditorLineStripeHintComponent(
   fun reposition() {
     val width = editor.scrollingModel.visibleArea.width
     setSize(width / 2, editor.lineHeight)
-    ApplicationManager.getApplication().runReadAction {
+    runReadActionBlocking {
       val lineStripeY = getLineStripeY()
       val startPositionOfEolStripe = (width / 3) * 2
       val stripeVisibleWidth = getStripeVisibleWidth()

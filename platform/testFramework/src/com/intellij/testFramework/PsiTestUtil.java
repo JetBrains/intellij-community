@@ -3,6 +3,7 @@ package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -166,7 +167,7 @@ public final class PsiTestUtil {
   }
 
   public static void addExcludedRoot(@NotNull Module module, @NotNull VirtualFile dir) {
-    ModuleRootModificationUtil.updateModel(module, model -> ApplicationManager.getApplication().runReadAction(() -> {
+    ModuleRootModificationUtil.updateModel(module, model -> ReadAction.runBlocking(() -> {
       findContentEntryWithAssertion(model, dir).addExcludeFolder(dir);
     }));
     IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());

@@ -756,6 +756,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     }, progress);
   }
 
+  @SuppressWarnings("UseRunReadActionBlockingShortcut")
   @Override
   public boolean runInReadActionWithWriteActionPriority(@NotNull Runnable action, @Nullable ProgressIndicator indicator) {
     ApplicationManager.getApplication().runReadAction(action);

@@ -14,7 +14,7 @@ import com.intellij.internal.statistic.eventLog.events.PrimitiveEventField
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.utils.PluginInfo
-import com.intellij.util.application
+import com.intellij.openapi.application.runReadActionBlocking
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.locks.ReentrantLock
@@ -171,7 +171,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
 
     override fun onRequest(event: InlineCompletionEventType.Request): Unit = lock.withLock {
       invocationTracker = InlineCompletionInvocationTracker(event).also {
-        application.runReadAction { it.captureContext(event.request.editor, event.request.endOffset) }
+        runReadActionBlocking { it.captureContext(event.request.editor, event.request.endOffset) }
       }
       showTracker = null // Just in case
     }

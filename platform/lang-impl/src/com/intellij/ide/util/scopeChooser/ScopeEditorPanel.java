@@ -16,7 +16,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -775,7 +775,7 @@ public final class ScopeEditorPanel implements Disposable {
   private void updateTreeModel(final boolean requestFocus, PanelProgressIndicator progress) throws ProcessCanceledException {
     Runnable updateModel = () -> {
       final ProcessCanceledException[] ex = new ProcessCanceledException[1];
-      ApplicationManager.getApplication().runReadAction(() -> {
+      ReadAction.runBlocking(() -> {
         if (myProject.isDisposed()) return;
         try {
           myTreeExpansionMonitor.freeze();

@@ -276,6 +276,7 @@ final class ApplierCompleter<T> extends ForkJoinTask<Void> {
           r.run();
         }
         else {
+          //noinspection UseRunReadActionBlockingShortcut
           ApplicationManager.getApplication().runReadAction(r);
         }
       }

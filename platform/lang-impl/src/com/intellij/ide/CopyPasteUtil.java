@@ -40,6 +40,7 @@ public final class CopyPasteUtil {
         updateByTransferable(newTransferable);
       }
       else {
+        //noinspection UseRunReadActionBlockingShortcut
         application.runReadAction(() -> {
           updateByTransferable(oldTransferable);
           updateByTransferable(newTransferable);

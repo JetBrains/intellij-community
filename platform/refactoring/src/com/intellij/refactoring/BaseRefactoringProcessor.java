@@ -399,7 +399,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     Factory<UsageSearcher> factory = () -> new UsageInfoSearcherAdapter() {
       @Override
       public void generate(final @NotNull Processor<? super Usage> processor) {
-        ApplicationManager.getApplication().runReadAction(() -> {
+        ReadAction.runBlocking(() -> {
           for (int i = 0; i < elements.length; i++) {
             elements[i] = targets[i].getElement();
           }
@@ -553,8 +553,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     final UsageTarget[] targets = PsiElement2UsageTargetAdapter.convert(initialElements, true);
     final Ref<Usage[]> convertUsagesRef = new Ref<>();
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      () -> ApplicationManager.getApplication().runReadAction(
-        () -> convertUsagesRef.set(UsageInfo2UsageAdapter.convert(usageInfos))),
+      () -> ReadAction.runBlocking(() -> convertUsagesRef.set(UsageInfo2UsageAdapter.convert(usageInfos))),
       RefactoringBundle.message("refactoring.preprocess.usages.progress"), true, myProject)) return;
 
     if (convertUsagesRef.isNull()) return;

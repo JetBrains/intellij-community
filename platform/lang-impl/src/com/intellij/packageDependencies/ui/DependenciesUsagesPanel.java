@@ -18,6 +18,7 @@ package com.intellij.packageDependencies.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -61,12 +62,12 @@ public class DependenciesUsagesPanel extends UsagesPanel {
       final ProgressIndicator progress = new PanelProgressIndicator(component -> setToComponent(component));
       myCurrentProgress = progress;
       ProgressManager.getInstance().runProcess(() -> {
-        ApplicationManager.getApplication().runReadAction(() -> {
+        ReadAction.runBlocking(() -> {
           UsageInfo[] usages = UsageInfo.EMPTY_ARRAY;
           Set<PsiFile> elementsToSearch = null;
 
           try {
-            if (myBuilders.get(0).isBackward()){
+            if (myBuilders.get(0).isBackward()) {
               elementsToSearch = searchIn;
               usages = FindDependencyUtil.findBackwardDependencies(myBuilders, searchFor, searchIn);
             }
@@ -86,8 +87,9 @@ public class DependenciesUsagesPanel extends UsagesPanel {
             final UsageInfo[] finalUsages = usages;
             final PsiElement[] _elementsToSearch =
               elementsToSearch != null ? PsiUtilCore.toPsiElementArray(elementsToSearch) : PsiElement.EMPTY_ARRAY;
-            ApplicationManager.getApplication().invokeLater(() -> showUsages(_elementsToSearch, finalUsages), ModalityState.stateForComponent(
-              this));
+            ApplicationManager.getApplication()
+              .invokeLater(() -> showUsages(_elementsToSearch, finalUsages), ModalityState.stateForComponent(
+                this));
           }
         });
         myCurrentProgress = null;

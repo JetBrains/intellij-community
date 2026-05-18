@@ -11,7 +11,7 @@ import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -106,7 +106,7 @@ public final class OutputFileUtil {
 
             if (file != null) {
               file.refresh(false, false);
-              ApplicationManager.getApplication().runReadAction(() -> {
+              ReadAction.runBlocking(() -> {
                 FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file), true);
               });
             }

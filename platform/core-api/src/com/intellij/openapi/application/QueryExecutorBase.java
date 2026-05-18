@@ -69,7 +69,8 @@ public abstract class QueryExecutorBase<Result, Params> implements QueryExecutor
           return toContinue.get();
         }
       }
-      
+
+      //noinspection UseRunReadActionBlockingShortcut
       ApplicationManager.getApplication().runReadAction(runnable);
     }
     else {

@@ -3,7 +3,7 @@ package com.intellij.find.findUsages.similarity;
 
 import com.intellij.ide.scratch.RootType;
 import com.intellij.ide.scratch.ScratchFileService;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -125,7 +125,7 @@ class ExportClusteringResultActionLink extends ActionLink {
 
   public static @NotNull PsiElement getElement(@NotNull UsageInfo2UsageAdapter usage) {
     Ref<PsiElement> elementRef = new Ref<>();
-    ApplicationManager.getApplication().runReadAction(() -> {
+    ReadAction.runBlocking(() -> {
       elementRef.set(usage.getElement());
     });
     return elementRef.get();
@@ -134,7 +134,7 @@ class ExportClusteringResultActionLink extends ActionLink {
   public static @NotNull String getUsageId(@NotNull PsiElement element) {
     Ref<String> fileNameRef = new Ref<>();
     Ref<TextRange> elementTextRange = new Ref<>();
-    ApplicationManager.getApplication().runReadAction(() -> {
+    ReadAction.runBlocking(() -> {
       VirtualFile containingVirtualFile = element.getContainingFile().getVirtualFile();
       assert containingVirtualFile != null;
       VirtualFile rootForFile = ProjectFileIndex.getInstance(element.getProject()).getSourceRootForFile(containingVirtualFile);
@@ -149,7 +149,7 @@ class ExportClusteringResultActionLink extends ActionLink {
 
   private static @NotNull String getUsageLineSnippet(@NotNull Project project, @NotNull PsiElement element) {
     Ref<String> usageLineSnippet = new Ref<>("");
-    ApplicationManager.getApplication().runReadAction(() -> {
+    ReadAction.runBlocking(() -> {
       PsiDocumentManager docManager = PsiDocumentManager.getInstance(project);
       Document doc = docManager.getDocument(element.getContainingFile());
       if (doc != null) {

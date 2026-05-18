@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -94,8 +93,13 @@ public abstract class MemberNodeBase<M extends PsiElement> extends CheckedTreeNo
 
   private List<M> findCallers() {
     if (getMember() == null) return Collections.emptyList();
-    final Ref<List<M>> callers = new Ref<>();
-    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> callers.set(ContainerUtil.filter(computeCallers(), getFilter()))), RefactoringBundle.message("caller.chooser.looking.for.callers"), true, myProject)) {
+    Ref<List<M>> callers = new Ref<>();
+
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> ReadAction.runBlocking(() -> {
+        callers.set(ContainerUtil.filter(computeCallers(), getFilter()));
+      }), RefactoringBundle.message("caller.chooser.looking.for.callers"), true, myProject)) {
+
       myCancelCallback.run();
       return Collections.emptyList();
     }

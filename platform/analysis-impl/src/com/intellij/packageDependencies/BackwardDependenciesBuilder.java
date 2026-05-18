@@ -18,7 +18,6 @@ package com.intellij.packageDependencies;
 
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -99,7 +98,7 @@ public class BackwardDependenciesBuilder extends DependenciesBuilder {
             indicator.setFraction(((double)++myFileCount) / myTotalFileCount);
           }
         }
-        ApplicationManager.getApplication().runReadAction(() -> {
+        ReadAction.runBlocking(() -> {
           PsiFile file = psiManager.findFile(virtualFile);
           if (file != null) {
             final PsiElement navigationElement = file.getNavigationElement();

@@ -249,6 +249,7 @@ public final class JobLauncherImpl extends JobLauncher {
         }
       }, progress);
       if (runInReadAction) {
+        //noinspection UseRunReadActionBlockingShortcut
         ApplicationManager.getApplication().runReadAction(runnable);
       }
       else {

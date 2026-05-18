@@ -18,6 +18,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -247,7 +248,7 @@ public final class SaveProjectAsTemplateAction extends AnAction implements DumbA
   public static Map<String, String> computeParameters(final Project project, boolean replaceParameters) {
     final Map<String, String> parameters = new HashMap<>();
     if (replaceParameters) {
-      ApplicationManager.getApplication().runReadAction(() -> {
+      ReadAction.runBlocking(() -> {
         for (ProjectTemplateParameterFactory extension : ProjectTemplateParameterFactory.EP_NAME.getExtensionList()) {
           String value = extension.detectParameterValue(project);
           if (value != null) {

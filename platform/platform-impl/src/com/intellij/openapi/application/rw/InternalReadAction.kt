@@ -18,7 +18,6 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.job
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
-import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.resume
 
 internal class InternalReadAction<T>(
@@ -29,6 +28,7 @@ internal class InternalReadAction<T>(
 ) {
   private val application: ApplicationEx = ApplicationManager.getApplication() as ApplicationEx
 
+  @Suppress("UseRunReadActionBlockingShortcut")
   private fun <T, E : Throwable> executeRead(action: ThrowableComputable<T, E>): T {
     return application.runReadAction(action)
   }
@@ -76,7 +76,7 @@ internal class InternalReadAction<T>(
   }
 
   private suspend fun readLoop(): T {
-    val loopJob = coroutineContext.job
+    val loopJob = currentCoroutineContext().job
     while (true) {
       loopJob.ensureActive()
       if (application.isWriteActionPending || application.isWriteActionInProgress) {
