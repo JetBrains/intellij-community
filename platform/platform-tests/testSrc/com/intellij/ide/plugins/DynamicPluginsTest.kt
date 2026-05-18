@@ -93,7 +93,6 @@ import com.intellij.util.KeyedLazyInstanceEP
 import com.intellij.util.application
 import com.intellij.util.ui.UIUtil
 import org.junit.Assume
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import java.lang.ref.WeakReference
@@ -161,12 +160,9 @@ class DynamicPluginsTest {
     app.messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(UISettings())
   }
 
-  // FIXME: Previously when listeners plugin was loaded it wasn't assigned a classloader, and because of that it was treated as not loaded by some checks.
-  //    Now, it is assigned a classloader and new "is this operation dynamic" checks start to work and they now prevent loading.
-  //    New dynamic plugin loading implementation will fix this properly.
-  @Ignore
   @Test
   fun `loading of a plugin also loads dependent content modules of other plugins`() {
+    assumeNewSupportEnabled()
     val pluginSet = buildPluginSet(pluginsDir) {
       plugin("foo") { }
       plugin("listeners") {
@@ -190,7 +186,7 @@ class DynamicPluginsTest {
       application.messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(UISettings())
       assertThat(mainListenerInvokedCount.get()).isEqualTo(1)
       loadPluginInTest(foo) {
-        val fooListenerHandle = application.getTestHandleService<MyFooUISettingsListenerService, _, _>(foo)!!
+        val fooListenerHandle = application.getTestHandleService<MyFooUISettingsListenerService, _, _>(listeners.contentModules.first())!!
         fooListenerHandle.test { fooListenerInvokedCount.incrementAndGet() }
         application.messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(UISettings())
         assertThat(mainListenerInvokedCount.get()).isEqualTo(2)
