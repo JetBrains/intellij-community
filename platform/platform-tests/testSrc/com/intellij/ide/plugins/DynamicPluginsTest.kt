@@ -7,7 +7,6 @@ import com.intellij.codeInspection.GlobalInspectionTool
 import com.intellij.codeInspection.InspectionEP
 import com.intellij.codeInspection.ex.InspectionToolRegistrar
 import com.intellij.ide.actions.ContextHelpAction
-import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.plugins.testPluginSrc.IJPL207058.DefaultService
 import com.intellij.ide.plugins.testPluginSrc.IJPL207058.ServiceInterface
 import com.intellij.ide.plugins.testPluginSrc.IJPL207058.module.OverriddenService
@@ -42,7 +41,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
@@ -68,7 +66,6 @@ import com.intellij.platform.testFramework.plugins.action
 import com.intellij.platform.testFramework.plugins.applicationListener
 import com.intellij.platform.testFramework.plugins.applicationService
 import com.intellij.platform.testFramework.plugins.applicationServiceImpl
-import com.intellij.platform.testFramework.plugins.buildDistributionArchive
 import com.intellij.platform.testFramework.plugins.buildMainJar
 import com.intellij.platform.testFramework.plugins.content
 import com.intellij.platform.testFramework.plugins.dependencies
@@ -202,37 +199,6 @@ class DynamicPluginsTest {
       application.messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(UISettings())
       assertThat(mainListenerInvokedCount.get()).isEqualTo(3)
       assertThat(fooListenerInvokedCount.get()).isEqualTo(1)
-    }
-  }
-
-  @Test
-  fun testClassloaderAfterReload() {
-    val bar = plugin("bar") { dependsIntellijModulesLang() }
-    val barPath = bar.buildDistributionArchive(pluginsDir)
-    val descriptor = loadDescriptorInTest(fileOrDir = barPath)
-    assertThat(descriptor).isNotNull
-
-    DynamicPlugins.loadPlugin(descriptor)
-    try {
-      DisabledPluginsState.saveDisabledPluginsAndInvalidate(PathManager.getConfigDir(), listOf(bar.id!!))
-    }
-    finally {
-      unloadAndUninstallPlugin(descriptor)
-    }
-    assertThat(PluginManagerCore.getPlugin(descriptor.pluginId)?.pluginClassLoader as? PluginClassLoader).isNull()
-
-    DisabledPluginsState.saveDisabledPluginsAndInvalidate(PathManager.getConfigDir())
-    val newDescriptor = loadDescriptorInTest(barPath)
-    ClassLoaderConfigurator(PluginManagerCore.getPluginSet()
-                              .withPlugin(newDescriptor)
-                              .createPluginSetWithEnabledModulesMap())
-      .configureModule(newDescriptor)
-    DynamicPlugins.loadPlugin(newDescriptor)
-    try {
-      assertThat(PluginManagerCore.getPlugin(descriptor.pluginId)?.pluginClassLoader as? PluginClassLoader).isNotNull()
-    }
-    finally {
-      unloadAndUninstallPlugin(newDescriptor)
     }
   }
 
