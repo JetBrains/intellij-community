@@ -419,14 +419,22 @@ class ExplanationVisitor extends RegExpRecursiveElementVisitor {
   public void visitRegExpClosure(RegExpClosure closure) {
     RegExpQuantifier quantifier = closure.getQuantifier();
     String explanation = "matches ";
+    boolean addSuffix = true;
     if (quantifier.isCounted()) {
       String min = numText(quantifier.getMin(), "0");
       String max = numText(quantifier.getMax(), null);
-      explanation += (max == null)
-                     ? min + " or more times"
-                     : min.equals(max)
-                       ? "exactly " + min + " times"
-                       : "between " + min + " and " + max + " times";
+      if (max == null) {
+        explanation += min + " or more times";
+      }
+      else {
+        if (min.equals(max)) {
+          explanation += "exactly " + min + " times";
+          addSuffix = false;
+        }
+        else {
+          explanation += "between " + min + " and " + max + " times";
+        }
+      }
     }
     else {
       ASTNode token = quantifier.getToken();
@@ -445,11 +453,13 @@ class ExplanationVisitor extends RegExpRecursiveElementVisitor {
         assert false;
       }
     }
-    if (quantifier.isReluctant()) {
-      explanation += ", as few times as possible";
-    }
-    else {
-      explanation += ", as many times as possible";
+    if (addSuffix) {
+      if (quantifier.isReluctant()) {
+        explanation += ", as few times as possible";
+      }
+      else {
+        explanation += ", as many times as possible";
+      }
     }
     if (quantifier.isPossessive()) {
       explanation += ", without backtracking";
