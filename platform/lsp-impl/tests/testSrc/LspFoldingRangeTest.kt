@@ -6,6 +6,7 @@ import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.lspServerSupportFixture
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.common.waitUntilAssertSucceeds
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.moduleFixture
@@ -14,7 +15,6 @@ import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import org.eclipse.lsp4j.FoldingRange
 import org.eclipse.lsp4j.FoldingRangeKind
 import org.eclipse.lsp4j.jsonrpc.messages.Either
-import kotlinx.coroutines.delay
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
@@ -200,24 +200,16 @@ internal class LspFoldingRangeTest {
     }
   }
 
-  private suspend fun checkFoldRegionsRetrying(expectedCount: Int, check: ((Array<FoldRegion>) -> Unit)? = null) {
-    repeat(30) {
-      delay(100)
-      val success = readAction {
+  private suspend fun checkFoldRegionsRetrying(
+    expectedCount: Int,
+    check: ((Array<FoldRegion>) -> Unit)? = null,
+  ) {
+    waitUntilAssertSucceeds(message = "Expected $expectedCount LSP fold regions") {
+      readAction {
         val regions = codeInsightFixture.editor.foldingModel.allFoldRegions
-        if (regions.size == expectedCount) {
-          check?.invoke(regions)
-          true
-        }
-        else {
-          false
-        }
+        assertEquals(expectedCount, regions.size)
+        check?.invoke(regions)
       }
-      if (success) return
-    }
-    readAction {
-      val regions = codeInsightFixture.editor.foldingModel.allFoldRegions
-      assertEquals(expectedCount, regions.size)
     }
   }
 }
