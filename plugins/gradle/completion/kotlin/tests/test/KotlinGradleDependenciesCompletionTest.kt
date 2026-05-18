@@ -4,7 +4,6 @@ package com.intellij.gradle.completion.kotlin
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource
@@ -80,6 +79,68 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
     @BaseGradleVersionSource
     @TestMetadata("configurationOnTopLevelPartialInput.test")
     fun `test configuration completion on top level partial input`(gradleVersion: GradleVersion) = verifyCompletion(gradleVersion)
+
+    @ParameterizedTest
+    @GradleTestSource(value = "9.4.0")
+    fun `test configuration without the accessor class is completed in quotes`(gradleVersion: GradleVersion) =
+        test(gradleVersion, KOTLIN_JVM_PROJECT) {
+            val buildScriptFile = writeTextAndCommit(
+                "build.gradle.kts", """
+                    val customSourceSet by sourceSets.registering {}
+                    dependencies {
+                        customSourceSet<caret>
+                    }
+                """.trimIndent()
+            )
+            runInEdtAndWait {
+                fixture.configureFromExistingVirtualFile(buildScriptFile)
+                fixture.completeBasic()
+                fixture.assertPreferredCompletionItems(0, "customSourceSetAnnotationProcessor", "customSourceSetApi")
+                fixture.finishLookup(Lookup.REPLACE_SELECT_CHAR)
+                fixture.checkResult(
+                    """
+                        val customSourceSet by sourceSets.registering {}
+                        dependencies {
+                            "customSourceSetAnnotationProcessor"(<caret>)
+                        }
+                    """.trimIndent()
+                )
+            }
+        }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun `test source set configuration is completed without quotes for Gradle 9,5,0 because it has an accessor class`(
+        gradleVersion: GradleVersion
+    ) = test(gradleVersion, KOTLIN_JVM_PROJECT) {
+        val buildScriptFile = writeTextAndCommit(
+            "build.gradle.kts", """
+                val customSourceSet by sourceSets.registering {}
+                dependencies {
+                    customSourceSet<caret>
+                }
+            """.trimIndent()
+        )
+        runInEdtAndWait {
+            fixture.configureFromExistingVirtualFile(buildScriptFile)
+            fixture.completeBasic()
+            fixture.assertPreferredCompletionItems(0, "customSourceSetAnnotationProcessor", "customSourceSetApi")
+            fixture.finishLookup(Lookup.REPLACE_SELECT_CHAR)
+            fixture.type("\"org.junit.jupiter:junit-jupiter:6.0.0\"")
+            fixture.checkResult(
+                """
+                    val customSourceSet by sourceSets.registering {}
+                    dependencies {
+                        customSourceSetAnnotationProcessor("org.junit.jupiter:junit-jupiter:6.0.0"<caret>)
+                    }
+                """.trimIndent()
+            )
+            // In Gradle 9.5.0, configurations created for source sets have accessor classes, so there should be no unresolved highlighting.
+            fixture.testHighlighting()
+            // PROBLEM: despite the presence of the accessor class, the Gradle build fails because it cannot resolve the configuration.
+            // TODO check if the sync fails to highlight the problem of the test.
+        }
+    }
 
     @ParameterizedTest
     @BaseGradleVersionSource(
@@ -650,6 +711,7 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
             implementation<colon>testFixtures
         """
 
+        // TODO rename
         val KOTLIN_JVM_PROJECT: GradleTestFixtureBuilder = GradleTestFixtureBuilder.create("kotlin-jvm-project") { gradleVersion ->
             withSettingsFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
                 setProjectName("kotlin-jvm-project")

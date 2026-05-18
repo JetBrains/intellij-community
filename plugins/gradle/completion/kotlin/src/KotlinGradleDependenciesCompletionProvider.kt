@@ -30,6 +30,7 @@ import com.intellij.gradle.completion.GradleScriptDependencyCompletionPosition.O
 import com.intellij.gradle.completion.GradleScriptDependencyCompletionPosition.TOP_LEVEL
 import com.intellij.gradle.completion.GradleScriptDependencyCompletionPosition.VERSION
 import com.intellij.gradle.completion.getCompletionContext
+import com.intellij.gradle.completion.kotlin.insertHandler.KotlinGradleConfigurationInsertHandler
 import com.intellij.gradle.completion.icon
 import com.intellij.gradle.completion.lookup.DependencyReturningMethodLookupProvider
 import com.intellij.gradle.completion.removeDummySuffix
@@ -150,9 +151,12 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
 
   private fun suggestConfigurations(result: CompletionResultSet, parameters: CompletionParameters) {
     val dependencyConfigurations = getConfigurationsForDependencies(parameters.originalFile)
-    val callWithArgInsertHandler = ParenthesesInsertHandler.getInstance(true, false, false, true, false)
-    val lookup = dependencyConfigurations.map {
-      LookupElementBuilder.create(it).withInsertHandler(callWithArgInsertHandler).withIcon(GradleIcons.Gradle)
+    val lookup = dependencyConfigurations.map { configurationName ->
+      LookupElementBuilder.create(configurationName)
+        .withInsertHandler(KotlinGradleConfigurationInsertHandler(
+          isConfigurationNamePsiResolvable(configurationName, parameters.position)
+        ))
+        .withIcon(GradleIcons.Gradle)
         .withTypeText("Gradle Configuration")
     }
     result.addAllElements(lookup)

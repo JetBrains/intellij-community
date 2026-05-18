@@ -262,6 +262,14 @@ private fun GradleExtensionsSettings.GradleConfiguration.canBeUsedInDependencies
 /** Starts with a letter or underscore, then might contain only letters, digits, and underscores */
 private val kotlinMethodNamePattern = Regex("^[a-zA-Z_][a-zA-Z0-9_]*$")
 
+internal fun isConfigurationNamePsiResolvable(configurationName: String, context: PsiElement): Boolean =
+  isNameResolvableToMethod(
+    methodName = configurationName,
+    returnType = GRADLE_DEPENDENCY_CLASS_ID,
+    receiverType = GRADLE_DEPENDENCY_HANDLER_CLASS_ID,
+    context
+  )
+
 private val PsiElement.surroundingArgumentsSize
     get(): Int =
         this.getParentOfType<KtValueArgumentList>(strict = true, stopAt = arrayOf(KtCallExpression::class.java))?.arguments?.size ?: 0
