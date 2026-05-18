@@ -60,6 +60,7 @@ internal object CommonFileIconsByExtension {
     "hcl" to AllIcons.FileTypes.Terraform,
     "cpp" to AllIcons.FileTypes.Cpp,
     "rb" to AllIcons.Language.Ruby,
+    "rs" to AllIcons.FileTypes.Rust,
     "rst" to AllIcons.FileTypes.Rst,
     "tab" to AllIcons.FileTypes.Csv,
     "jsx" to AllIcons.FileTypes.JavaScript,
