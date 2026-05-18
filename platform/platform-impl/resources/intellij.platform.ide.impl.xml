@@ -100,7 +100,7 @@
     <applicationActivity implementation="com.intellij.ide.debug.ImageDebugUtilLoader"/>
     <registryKey
       key="universal.file.chooser.is.enabled"
-      defaultValue="false"
+      defaultValue="true"
       description="Enable the universal file chooser dialog"
     />
     <registryKey
