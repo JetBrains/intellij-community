@@ -109,6 +109,7 @@ object UniversalFileChooser {
   @JvmStatic
   fun canUseIn(project: Project?): Boolean {
     return Registry.`is`("universal.file.chooser.is.enabled")
+           && SystemProperties.getBooleanProperty("universal.file.chooser.is.enabled", true) != false
   }
 
   @JvmStatic
