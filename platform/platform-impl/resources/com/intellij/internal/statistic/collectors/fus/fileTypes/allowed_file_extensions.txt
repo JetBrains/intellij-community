@@ -1277,6 +1277,7 @@ smali
 st
 cs
 tpl
+qtpl
 smithy
 smk
 snakefile
