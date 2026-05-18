@@ -125,97 +125,39 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
             super.visitPyTargetExpression(node)
         }
 
-        checkSlotsAndProperties(node)
-        checkStrictClassAttributes(node)
-        checkStrictInstanceAttributes(node)
+        checkAttributeAssignment(node)
     }
 
-    private fun checkSlotsAndProperties(node: PyQualifiedExpression) {
-        val qualifier = node.getQualifier()
-        val attrName = node.getReferencedName()
-        if (qualifier != null && attrName != null) {
-            val type: PyType? = replaceSelfWithItsScopeClass(myTypeEvalContext.getType(qualifier))
-            if (type is PyClassLikeType &&
-                !type.isAttributeWritable(attrName, myTypeEvalContext)
-            ) {
-                val nameNode = node.getNameElement()
-                val e = if (nameNode != null) nameNode.getPsi() else node
-                registerProblem(e, PyPsiBundle.message("INSP.unresolved.refs.class.object.has.no.attribute", type.name, attrName))
-            }
-        }
-    }
+    private fun checkAttributeAssignment(node: PyQualifiedExpression) {
+        val qualifier = node.qualifier ?: return
+        val attrName = node.referencedName ?: return
+        val type = replaceSelfWithItsScopeClass(myTypeEvalContext.getType(qualifier)) ?: return
+        val anchor = node.nameElement?.psi ?: node
 
-    private fun checkStrictClassAttributes(node: PyQualifiedExpression) {
-        if (!myStrictClassAttributes) return
-
-        val qualifier = node.getQualifier()
-        val attrName = node.getReferencedName()
-        if (qualifier == null || attrName == null) return
-
-        val type = myTypeEvalContext.getType(qualifier)
-
-        if (type !is PyClassType || !type.isDefinition()) return
-        if (PyUtil.isObjectClass(type.getPyClass())) return
-        if (!ContainerUtil.isEmpty(
-                type.resolveMember(
-                  attrName, node as? PyExpression,
-                  AccessDirection.READ, resolveContext
-                )
-            )
-        ) {
+        if (type is PyClassLikeType && !type.isAttributeWritable(attrName, myTypeEvalContext)) {
+            registerProblem(anchor,
+                            PyPsiBundle.message("INSP.unresolved.refs.class.object.has.no.attribute", type.name, attrName))
             return
         }
-        if (isDeclaredInSlots(type, attrName)) return
 
+        if (type !is PyClassType) return
+        if (PyUtil.isObjectClass(type.getPyClass())) return
+
+        val isDefinition = type.isDefinition()
+        val strictCheckEnabled = if (isDefinition) myStrictClassAttributes else myStrictInstanceAttributes
+        if (!strictCheckEnabled) return
+
+        if (!ContainerUtil.isEmpty(type.resolveMember(attrName, node as? PyExpression,
+                                                     AccessDirection.READ, resolveContext))) return
+        if (isDeclaredInSlots(type, attrName)) return
+        // Instance-side only: a user-defined __setattr__ accepts arbitrary attribute assignments.
+        if (!isDefinition && overridesSetAttr(type.getPyClass())) return
         val reference = node.getReference()
         if (reference != null && ignoreUnresolvedMemberForType(type, reference, attrName)) return
 
-        val nameNode = node.getNameElement()
-        val e = if (nameNode != null) nameNode.getPsi() else node
-        registerProblem(
-            e,
-            PyPsiBundle.message("INSP.unresolved.refs.unresolved.attribute.for.class", attrName, type.name),
-            ProblemHighlightType.WARNING
-        )
-    }
-
-    // PY-87799
-    private fun checkStrictInstanceAttributes(node: PyQualifiedExpression) {
-        if (!myStrictInstanceAttributes) return
-
-        val qualifier = node.getQualifier()
-        val attrName = node.getReferencedName()
-        if (qualifier == null || attrName == null) return
-
-        val type: PyType? = replaceSelfWithItsScopeClass(myTypeEvalContext.getType(qualifier))
-
-        if (type !is PyClassType || type.isDefinition()) return
-        if (PyUtil.isObjectClass(type.getPyClass())) return
-        // Slot violations and read-only properties are reported by checkSlotsAndProperties; avoid double-reporting.
-        if (!type.isAttributeWritable(attrName, myTypeEvalContext)) return
-        if (!ContainerUtil.isEmpty(
-                type.resolveMember(
-                  attrName, node as? PyExpression,
-                  AccessDirection.READ, resolveContext
-                )
-            )
-        ) {
-            return
-        }
-        if (isDeclaredInSlots(type, attrName)) return
-        // A user-defined __setattr__ accepts arbitrary attribute assignments.
-        if (overridesSetAttr(type.getPyClass())) return
-
-        val reference = node.getReference()
-        if (reference != null && ignoreUnresolvedMemberForType(type, reference, attrName)) return
-
-        val nameNode = node.getNameElement()
-        val e = if (nameNode != null) nameNode.getPsi() else node
-        registerProblem(
-            e,
-            PyPsiBundle.message("INSP.unresolved.refs.unresolved.attribute.for.class", attrName, type.name),
-            ProblemHighlightType.WARNING
-        )
+        registerProblem(anchor,
+                        PyPsiBundle.message("INSP.unresolved.refs.unresolved.attribute.for.class", attrName, type.name),
+                        ProblemHighlightType.WARNING)
     }
 
     private fun overridesSetAttr(cls: PyClass): Boolean {
