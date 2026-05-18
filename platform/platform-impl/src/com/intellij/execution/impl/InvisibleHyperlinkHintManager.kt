@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.MouseShortcut
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
@@ -133,7 +134,9 @@ internal class InvisibleHyperlinkHintManager(private val editor: Editor, parentD
     val component = createHintLabel(object : HyperlinkAdapter() {
       override fun hyperlinkActivated(e: HyperlinkEvent) {
         linkFollowed = true
-        action()
+        // Use Write Intent Lock like EditorImpl.MyMouseAdapter.mouseReleased does.
+        // This ensures consistent threading regardless of how the action is triggered.
+        WriteIntentReadAction.run(action)
         cancelPopup()
         EditorHyperlinkUsageCollector.logInvisibleHyperlinkFollowed(HyperlinkFollowedPlace.POPUP_LINK_CLICKED)
       }
