@@ -51,8 +51,6 @@
                     serviceImplementation="com.intellij.psi.impl.PsiModificationTrackerImpl"/>
     <projectService serviceInterface="com.intellij.psi.PsiFileFactory"
                     serviceImplementation="com.intellij.psi.impl.PsiFileFactoryImpl"/>
-    <projectService serviceInterface="com.intellij.psi.impl.file.PsiDirectoryFactory" open="true"
-                    serviceImplementation="com.intellij.psi.impl.file.PsiDirectoryFactoryImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.vfs.VirtualFileSetFactory"
                         serviceImplementation="com.intellij.openapi.vfs.CompactVirtualFileSetFactory"/>
     <applicationService serviceInterface="com.intellij.diagnostic.PluginProblemReporter"

@@ -99,6 +99,7 @@
 
     <metaLanguageProvider implementation="com.intellij.lang.jvm.JvmMetaLanguage$Provider"/>
     <java.elementFinder implementation="com.intellij.psi.impl.PsiElementFinderImpl" id="java" order="first"/>
+
     <treeGenerator implementation="com.intellij.psi.impl.source.tree.JavaTreeGenerator"/>
     <itemPresentationProvider forClass="com.intellij.psi.PsiJavaModule"
                               implementationClass="com.intellij.psi.presentation.java.JavaModulePresentationProvider"/>
