@@ -336,6 +336,11 @@ fun TestFixture<Module>.sourceRootFixture(
     }
     initialized(directory) {
       edtWriteAction {
+        if (!module.isDisposed) {
+          ModuleRootModificationUtil.updateModel(module) { model ->
+            model.contentEntries.firstOrNull { it.file == directoryVfs }?.let(model::removeContentEntry)
+          }
+        }
         directory.delete()
       }
     }
