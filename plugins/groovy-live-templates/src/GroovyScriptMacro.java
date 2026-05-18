@@ -20,10 +20,17 @@ import groovy.lang.GroovyShell;
 import groovy.lang.Script;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.LinkedHashSet;
 
 /**
  * @author Maxim.Mossienko
@@ -65,7 +72,7 @@ public final class GroovyScriptMacro extends Macro {
       if (result == null) return null;
 
       String text = result.toString();
-      GroovyShell shell = new GroovyShell(language == null ? null : language.getClass().getClassLoader());
+      GroovyShell shell = createGroovyShell(language == null ? null : language.getClass().getClassLoader());
       File possibleFile = new File(text);
       Script script = possibleFile.exists() ? shell.parse(possibleFile) :  shell.parse(text);
       Binding binding = new Binding();
@@ -89,6 +96,65 @@ public final class GroovyScriptMacro extends Macro {
     } catch (Exception | Error e) {
       LOG.info(e);
       return StringUtil.convertLineSeparators(e.getLocalizedMessage());
+    }
+  }
+
+  @VisibleForTesting
+  public static @NotNull GroovyShell createGroovyShell(@Nullable ClassLoader languageClassLoader) {
+    ClassLoader macroClassLoader = GroovyScriptMacro.class.getClassLoader();
+    if (languageClassLoader == null || languageClassLoader == macroClassLoader) {
+      return new GroovyShell(macroClassLoader);
+    }
+    return new GroovyShell(new TemplateScriptClassLoader(macroClassLoader, languageClassLoader));
+  }
+
+  private static final class TemplateScriptClassLoader extends ClassLoader {
+    private final @NotNull ClassLoader myPrimary;
+    private final @NotNull ClassLoader mySecondary;
+
+    private TemplateScriptClassLoader(@NotNull ClassLoader primary, @NotNull ClassLoader secondary) {
+      super(null);
+      myPrimary = primary;
+      mySecondary = secondary;
+    }
+
+    @Override
+    protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+      synchronized (getClassLoadingLock(name)) {
+        Class<?> loadedClass = findLoadedClass(name);
+        if (loadedClass == null) {
+          loadedClass = loadClass(name, myPrimary, mySecondary);
+        }
+        if (resolve) {
+          resolveClass(loadedClass);
+        }
+        return loadedClass;
+      }
+    }
+
+    @Override
+    public URL getResource(String name) {
+      URL resource = myPrimary.getResource(name);
+      return resource == null ? mySecondary.getResource(name) : resource;
+    }
+
+    @Override
+    public Enumeration<URL> getResources(String name) throws IOException {
+      LinkedHashSet<URL> resources = new LinkedHashSet<>();
+      resources.addAll(Collections.list(myPrimary.getResources(name)));
+      resources.addAll(Collections.list(mySecondary.getResources(name)));
+      return Collections.enumeration(resources);
+    }
+
+    private static @NotNull Class<?> loadClass(@NotNull String name,
+                                               @NotNull ClassLoader primary,
+                                               @NotNull ClassLoader secondary) throws ClassNotFoundException {
+      try {
+        return primary.loadClass(name);
+      }
+      catch (ClassNotFoundException ignored) {
+        return secondary.loadClass(name);
+      }
     }
   }
 
