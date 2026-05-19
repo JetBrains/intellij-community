@@ -33,7 +33,6 @@ import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.assertNotNull
-import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.params.ParameterizedTest
 import kotlin.test.assertTrue
 
@@ -235,59 +234,41 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
         }
     }
 
-    @ParameterizedTest(name = "[{index}] {0}, `{1}` -> `{2}`")
+    @ParameterizedTest(name = "[{index}] {0}, {1}({2}) -> {1}({3})")
     @BaseGradleVersionSource(
         """
-        platfo<caret>           : platform(<caret>),
-        enforcedPlatfo<caret>   : enforcedPlatform(<caret>),
-        proje<caret>            : project(<caret>),
-        kotl<caret>             : kotlin(<caret>),
-        embeddedKotl<caret>     : embeddedKotlin(<caret>),
-        testFixtur<caret>       : testFixtures(<caret>),
-        fil<caret>              : files(<caret>),
-        fileTr<caret>           : fileTree(<caret>),
-        variant<caret>          : variantOf(<caret>)
+            implementation, 
+            \"implementation\"
+        """,
+        """
+            platfo<caret>           : platform(<caret>),
+            enforcedPlatfo<caret>   : enforcedPlatform(<caret>),
+            proje<caret>            : project(<caret>),
+            kotl<caret>             : kotlin(<caret>),
+            embeddedKotl<caret>     : embeddedKotlin(<caret>),
+            testFixtur<caret>       : testFixtures(<caret>),
+            fil<caret>              : files(<caret>),
+            fileTr<caret>           : fileTree(<caret>),
+            variant<caret>          : variantOf(<caret>),
+            gradleA<caret>          : gradleApi()<caret>,
+            gradleTe<caret>         : gradleTestKit()<caret>
         """
     )
     fun `test scope argument - complete Dependency-returning method with args and put caret inside brackets`(
         gradleVersion: GradleVersion,
+        configuration: String,
         input: String,
         expected: String,
     ) {
         test(gradleVersion, KOTLIN_GRADLE_COMPLETION_FIXTURE) {
-            val file = writeTextAndCommit("build.gradle.kts", "dependencies { implementation($input) }")
+            val file = writeTextAndCommit("build.gradle.kts", "dependencies { $configuration($input) }")
             runInEdtAndWait {
                 codeInsightFixture.configureFromExistingVirtualFile(file)
                 val isAutocompleted = codeInsightFixture.completeBasic() == null
                 if (!isAutocompleted) {
                     codeInsightFixture.finishLookup(Lookup.REPLACE_SELECT_CHAR)
                 }
-                codeInsightFixture.checkResult("dependencies { implementation($expected) }")
-            }
-        }
-    }
-
-    @ParameterizedTest(name = "[{index}] {0}, `{1}` -> `{2}`")
-    @BaseGradleVersionSource(
-        """ 
-        gradleA<caret>  : gradleApi()<caret>,
-        gradleTe<caret> : gradleTestKit()<caret>
-        """
-    )
-    fun `test scope argument - complete Dependency-returning method without args and put caret after brackets`(
-        gradleVersion: GradleVersion,
-        input: String,
-        expected: String
-    ) {
-        test(gradleVersion, KOTLIN_GRADLE_COMPLETION_FIXTURE) {
-            val file = writeTextAndCommit("build.gradle.kts", "dependencies { implementation($input) }")
-            runInEdtAndWait {
-                codeInsightFixture.configureFromExistingVirtualFile(file)
-                val elements = codeInsightFixture.completeBasic()
-                assertNull(elements) {
-                    "The only element was expected to be autocompleted, but there are multiple suggestions: ${elements.contentToString()}"
-                }
-                codeInsightFixture.checkResult("dependencies { implementation($expected) }")
+                codeInsightFixture.checkResult("dependencies { $configuration($expected) }")
             }
         }
     }
@@ -335,12 +316,19 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
         verifyVersionCatalogCompletion(gradleVersion)
 
     @ParameterizedTest
+    @BaseGradleVersionSource
+    @TestMetadata("versionCatalogs/quotedScopeArgument")
+    fun `test version catalog completion in an argument of a quoted scope`(gradleVersion: GradleVersion) =
+        verifyCompletion(gradleVersion)
+
+    @ParameterizedTest
     @BaseGradleVersionSource(
         """
         implementation(platform(li<caret>)),
         implementation(enforcedPlatform(li<caret>)),
         testImplementation(testFixtures(li<caret>)),
-        implementation(variantOf(li<caret>))
+        implementation(variantOf(li<caret>)),
+        "customSourceSetImplementation"(variantOf(li<caret>))
         """
     )
     fun `test version catalog completion in allowed DependencyHandler methods`(gradleVersion: GradleVersion, expression: String) {
@@ -706,7 +694,8 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
             testRuntimeOnly,
             implementation<colon>platform,
             implementation<colon>enforcedPlatform,
-            implementation<colon>testFixtures
+            implementation<colon>testFixtures,
+            \"customSourceSetImplementation\"
         """
 
         private val KOTLIN_GRADLE_COMPLETION_FIXTURE = GradleTestFixtureBuilder.create("KotlinGradleDependenciesCompletionTest") { gradleVersion ->
