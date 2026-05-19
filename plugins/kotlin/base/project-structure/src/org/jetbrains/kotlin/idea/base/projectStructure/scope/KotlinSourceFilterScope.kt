@@ -2,18 +2,12 @@
 
 package org.jetbrains.kotlin.idea.base.projectStructure.scope
 
-import com.intellij.ide.highlighter.JavaClassFileType
-import com.intellij.ide.highlighter.JavaFileType
-import com.intellij.openapi.fileTypes.FileTypeRegistry
-import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.DelegatingGlobalSearchScope
 import com.intellij.psi.search.GlobalSearchScope
-import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindMatcher
-import org.jetbrains.kotlin.load.java.AbstractJavaClassFinder
 
 @Suppress("EqualsOrHashCode") // DelegatingGlobalSearchScope requires to provide calcHashCode()
 class KotlinSourceFilterScope private constructor(
@@ -24,26 +18,7 @@ class KotlinSourceFilterScope private constructor(
     override fun getProject() = project
 
     override fun contains(file: VirtualFile): Boolean {
-        val baseScope = this.myBaseScope
-
-        if (baseScope is AbstractJavaClassFinder.FilterOutKotlinSourceFilesScope) {
-            // KTIJ-20095: FilterOutKotlinSourceFilesScope optimization to avoid heavy file.fileType calculation
-            val extension = file.extension
-            val ktFile = when {
-                file.isDirectory -> false
-                extension == KotlinFileType.EXTENSION -> true
-                extension == JavaFileType.DEFAULT_EXTENSION || extension == JavaClassFileType.INSTANCE.defaultExtension -> false
-                else -> {
-                    val fileTypeRegistry = FileTypeRegistry.getInstance()
-                    val fileTypeByFileName = fileTypeRegistry.getFileTypeByFileName(file.name)
-
-                    fileTypeByFileName == KotlinFileType.INSTANCE
-                            || fileTypeByFileName == FileTypes.UNKNOWN && fileTypeRegistry.isFileOfType(file, KotlinFileType.INSTANCE)
-                }
-            }
-
-            if (ktFile || !baseScope.base.contains(file)) return false
-        } else if (!super.contains(file)) {
+        if (!super.contains(file)) {
             return false
         }
 
