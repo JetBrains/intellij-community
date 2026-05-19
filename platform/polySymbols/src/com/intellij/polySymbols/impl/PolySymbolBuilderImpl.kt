@@ -12,6 +12,7 @@ import com.intellij.polySymbols.documentation.PolySymbolDocumentationBuilder
 import com.intellij.polySymbols.BuiltPolySymbol
 import com.intellij.polySymbols.PolySymbolBuilder
 import com.intellij.polySymbols.PolySymbolDeclarationSite
+import com.intellij.polySymbols.impl.DependencyScope.Companion.dependencyScope
 import com.intellij.polySymbols.patterns.PolySymbolPatternBuilder
 import com.intellij.psi.PsiElement
 
@@ -165,11 +166,8 @@ internal class PolySymbolBuilderImpl(
       }
     }
 
-    val source: DependencySource =
-      if (depSpecs.isEmpty()) EMPTY_DEPENDENCY_SOURCE
-      else DependencySource.FromSpecs(depSpecs.toList())
-
-    val initialScope = DependencyScope(resolveSnapshot())
+    val source = DependencySource.fromSpecs(depSpecs.toList())
+    val initialScope = source.dependencyScope()
     val config = toBuiltConfig()
 
     return when (mode) {

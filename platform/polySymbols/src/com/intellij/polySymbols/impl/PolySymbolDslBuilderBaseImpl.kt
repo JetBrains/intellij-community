@@ -94,13 +94,4 @@ internal abstract class PolySymbolDslBuilderBaseImpl : PolySymbolDslBuilderBase 
     depSpecs += DepSpec.FromGenericObject(`object`, pointerProvider)
     return DependencyHandleImpl(idx)
   }
-
-  internal fun resolveSnapshot(): List<Any> {
-    if (depSpecs.isEmpty()) return emptyList()
-    val values = ArrayList<Any>(depSpecs.size)
-    for (spec in depSpecs) {
-      values += spec.currentValue()
-    }
-    return values
-  }
 }

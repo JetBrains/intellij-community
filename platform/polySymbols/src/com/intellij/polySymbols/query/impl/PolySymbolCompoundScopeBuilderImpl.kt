@@ -7,6 +7,8 @@ import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.impl.DepSpec
 import com.intellij.polySymbols.impl.DependencyHandleImpl
 import com.intellij.polySymbols.impl.DependencyScope
+import com.intellij.polySymbols.impl.DependencyScope.Companion.dependencyScope
+import com.intellij.polySymbols.impl.DependencySource
 import com.intellij.polySymbols.impl.checkNoPsiCapture
 import com.intellij.polySymbols.query.PolySymbolCompoundScope
 import com.intellij.polySymbols.query.PolySymbolCompoundScopeBuilder
@@ -57,9 +59,10 @@ internal class PolySymbolCompoundScopeBuilderImpl(
 
   fun build(): PolySymbolCompoundScope {
     val body = initBody ?: error("polySymbolCompoundScope: initialize { } was not called.")
-    val originalValues = depSpecs.map { it.currentValue() }
-    val pointers = depSpecs.map { it.toPointer() }
-    return BuiltPolySymbolCompoundScope(originalValues, pointers, requiresResolveValue, priorityValue, body)
+
+    val source = DependencySource.fromSpecs(depSpecs.toList())
+    val initialScope = source.dependencyScope()
+    return BuiltPolySymbolCompoundScope(source, initialScope, requiresResolveValue, priorityValue, body)
   }
 }
 
@@ -78,8 +81,8 @@ private class PolySymbolCompoundScopeInitializerImpl(
 }
 
 private class BuiltPolySymbolCompoundScope(
-  private val originalValues: List<Any>,
-  private val pointers: List<Pointer<out Any>>,
+  private val dependencySource: DependencySource,
+  private val dependencyScope: DependencyScope,
   private val requiresResolveValue: Boolean,
   private val priorityValue: PolySymbol.Priority?,
   private val initBody: PolySymbolCompoundScopeInitializer.() -> Unit,
@@ -91,37 +94,43 @@ private class BuiltPolySymbolCompoundScope(
   override fun requiresResolve(): Boolean = requiresResolveValue
 
   override fun build(queryExecutor: PolySymbolQueryExecutor, consumer: (PolySymbolScope) -> Unit) {
-    val resolved = pointers.map { it.dereference() ?: return }
-    DependencyScope(resolved).withinScope {
+    dependencyScope.withinScope {
       PolySymbolCompoundScopeInitializerImpl(queryExecutor, consumer).initBody()
     }
   }
 
   override fun createPointer(): Pointer<out PolySymbolCompoundScope> {
-    if (pointers.isEmpty()) return Pointer.hardPointer(this)
-    val deps = pointers
+    if (dependencySource.isEmpty) return Pointer.hardPointer(this)
+    val pointerSource = dependencySource.asFromPointers()
     val body = initBody
-    val r = requiresResolveValue
-    val p = priorityValue
+    val requiresResolveValue = requiresResolveValue
+    val priorityValue = priorityValue
     return Pointer {
-      val resolved = deps.map { it.dereference() ?: return@Pointer null }
-      BuiltPolySymbolCompoundScope(resolved, deps, r, p, body)
+      BuiltPolySymbolCompoundScope(
+        pointerSource, pointerSource.dependencyScope() ?: return@Pointer null,
+        requiresResolveValue, priorityValue, body
+      )
     }
   }
 
   override fun equals(other: Any?): Boolean =
-    other === this ||
-    other is BuiltPolySymbolCompoundScope &&
-    other.originalValues == originalValues &&
-    other.initBody === initBody
+    other === this
+    || other is BuiltPolySymbolCompoundScope
+    && other.priorityValue == priorityValue
+    && other.requiresResolveValue == requiresResolveValue
+    && other.dependencyScope.resolved == dependencyScope.resolved
+    && other.initBody::class === initBody::class
 
-  override fun hashCode(): Int =
-    31 * originalValues.hashCode() + System.identityHashCode(initBody)
+  override fun hashCode(): Int {
+    var result = dependencyScope.resolved.hashCode()
+    result = 31 * result + initBody::class.hashCode()
+    result = 31 * result + requiresResolveValue.hashCode()
+    result = 31 * result + priorityValue.hashCode()
+    return result
+  }
 }
 
 internal fun buildPolySymbolCompoundScope(
   configure: PolySymbolCompoundScopeBuilder.() -> Unit,
-): PolySymbolCompoundScope {
-  checkNoPsiCapture(configure, "polySymbolCompoundScope.configure")
-  return PolySymbolCompoundScopeBuilderImpl(configure).build()
-}
+): PolySymbolCompoundScope =
+  PolySymbolCompoundScopeBuilderImpl(configure).build()

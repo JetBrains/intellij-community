@@ -37,7 +37,7 @@ internal fun <T : Any> DependencyHandle<T>.readInScope(): T =
  * Receiver of every DSL getter lambda. Carries the pre-resolved values for
  * all declared dependencies of the currently-materialized symbol.
  */
-internal class DependencyScope internal constructor(internal val resolved: List<Any>) {
+internal class DependencyScope private constructor(internal val resolved: List<Any>) {
 
   /**
    * Runs [block] with this scope set as the ambient dependency scope,
@@ -67,6 +67,17 @@ internal class DependencyScope internal constructor(internal val resolved: List<
     }
     finally {
       currentDependencyScope.set(prev)
+    }
+  }
+
+  companion object {
+
+    fun DependencySource.FromPointers.dependencyScope(): DependencyScope? {
+      return DependencyScope(snapshot() ?: return null)
+    }
+
+    fun DependencySource.FromSpecs.dependencyScope(): DependencyScope {
+      return DependencyScope(snapshot())
     }
   }
 }

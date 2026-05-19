@@ -19,6 +19,7 @@ import com.intellij.polySymbols.documentation.PolySymbolDocumentationTarget
 import com.intellij.polySymbols.BuiltPolySymbol
 import com.intellij.polySymbols.DependencyHandle
 import com.intellij.polySymbols.PolySymbolDeclarationSite
+import com.intellij.polySymbols.impl.DependencyScope.Companion.dependencyScope
 import com.intellij.polySymbols.patterns.PolySymbolPattern
 import com.intellij.polySymbols.patterns.PolySymbolPatternBuilder
 import com.intellij.polySymbols.patterns.polySymbolPattern
@@ -29,8 +30,6 @@ import com.intellij.polySymbols.search.PsiSourcedPolySymbol
 import com.intellij.polySymbols.utils.PolySymbolDeclaredInPsi
 import com.intellij.psi.PsiElement
 import javax.swing.Icon
-
-internal val EMPTY_DEPENDENCY_SOURCE: DependencySource = DependencySource.FromSpecs(emptyList())
 
 /**
  * Snapshot of the mode-independent state captured at `build()` time.
@@ -263,12 +262,11 @@ internal abstract class BuiltPolySymbolBase(
 
   protected fun createPointerImpl(): Pointer<out PolySymbol> {
     if (dependencySource.isEmpty) return Pointer.hardPointer(this)
-    val pointerSource = DependencySource.FromPointers(dependencySource.pointers())
+    val pointerSource = dependencySource.asFromPointers()
     val config = config
     val self: (BuiltConfig, DependencySource, DependencyScope) -> PolySymbol = buildConstructor()
     return Pointer {
-      val snapshot = pointerSource.snapshot() ?: return@Pointer null
-      self(config, pointerSource, DependencyScope(snapshot))
+      self(config, pointerSource, pointerSource.dependencyScope() ?: return@Pointer null)
     }
   }
 

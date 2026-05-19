@@ -12,13 +12,17 @@ import com.intellij.model.Pointer
 internal sealed interface DependencySource {
   val isEmpty: Boolean
 
-  /** Snapshot the current values of all deps. Null on failure. */
-  fun snapshot(): List<Any>?
+  fun asFromPointers(): FromPointers
 
-  /** Pointer list for long-term survival — materialized lazily by [FromSpecs]. */
-  fun pointers(): List<Pointer<out Any>>
+  interface FromSpecs : DependencySource {
+    fun snapshot(): List<Any>
+  }
 
-  class FromSpecs(val specs: List<DepSpec<*>>) : DependencySource {
+  interface FromPointers : DependencySource {
+    fun snapshot(): List<Any>?
+  }
+
+  private class FromSpecsImpl(val specs: List<DepSpec<*>>) : FromSpecs {
     override val isEmpty: Boolean get() = specs.isEmpty()
     override fun snapshot(): List<Any> {
       val values = ArrayList<Any>(specs.size)
@@ -30,17 +34,28 @@ internal sealed interface DependencySource {
       specs.map { it.toPointer() }
     }
 
-    override fun pointers(): List<Pointer<out Any>> = lazyPointers
+    override fun asFromPointers(): FromPointers =
+      FromPointersImpl(lazyPointers)
   }
 
-  class FromPointers(private val pointers: List<Pointer<out Any>>) : DependencySource {
+  private class FromPointersImpl(private val pointers: List<Pointer<out Any>>) : FromPointers {
     override val isEmpty: Boolean get() = pointers.isEmpty()
+
     override fun snapshot(): List<Any>? {
       val values = ArrayList<Any>(pointers.size)
       for (pointer in pointers) values += pointer.dereference() ?: return null
       return values
     }
 
-    override fun pointers(): List<Pointer<out Any>> = pointers
+    override fun asFromPointers(): FromPointers = this
+  }
+
+
+  companion object {
+    private val EMPTY_DEPENDENCY_SOURCE: FromSpecs = FromSpecsImpl(emptyList())
+
+    fun fromSpecs(specs: List<DepSpec<*>>): FromSpecs {
+      return if (specs.isEmpty()) EMPTY_DEPENDENCY_SOURCE else FromSpecsImpl(specs)
+    }
   }
 }

@@ -7,9 +7,10 @@ import com.intellij.polySymbols.PolySymbolApiStatus
 import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolModifier
 import com.intellij.polySymbols.PolySymbolProperty
-import com.intellij.polySymbols.impl.PolySymbolDslBuilderBaseImpl
 import com.intellij.polySymbols.impl.DependencyScope
+import com.intellij.polySymbols.impl.DependencyScope.Companion.dependencyScope
 import com.intellij.polySymbols.impl.DependencySource
+import com.intellij.polySymbols.impl.PolySymbolDslBuilderBaseImpl
 import com.intellij.polySymbols.patterns.MatchPropertyOverridesBuilder
 import javax.swing.Icon
 
@@ -34,10 +35,10 @@ internal class MatchPropertyOverridesBuilderImpl : PolySymbolDslBuilderBaseImpl(
         && propertyGetters.isEmpty()) {
       return null
     }
-    val resolved = resolveSnapshot()
+    val source = DependencySource.fromSpecs(depSpecs.toList())
     return MatchPropertyOverrideSymbol(
-      source = DependencySource.FromSpecs(depSpecs.toList()),
-      scope = DependencyScope(resolved),
+      source = source,
+      scope = source.dependencyScope(),
       priorityGetter = priorityGetter,
       priorityValue = priorityValue,
       apiStatusGetter = apiStatusGetter,
@@ -106,7 +107,7 @@ private class MatchPropertyOverrideSymbol(
 
   override fun createPointer(): Pointer<out PolySymbol> {
     if (source.isEmpty) return Pointer.hardPointer(this)
-    val pointerSource = DependencySource.FromPointers(source.pointers())
+    val pointerSource = source.asFromPointers()
     val priorityValue = priorityValue
     val priorityGetter = priorityGetter
     val apiStatusValue = apiStatusValue
@@ -118,10 +119,9 @@ private class MatchPropertyOverrideSymbol(
     val propertyValues = propertyValues
     val propertyGetters = propertyGetters
     return Pointer {
-      val snapshot = pointerSource.snapshot() ?: return@Pointer null
       MatchPropertyOverrideSymbol(
         source = pointerSource,
-        scope = DependencyScope(snapshot),
+        scope = pointerSource.dependencyScope() ?: return@Pointer null,
         priorityValue = priorityValue,
         priorityGetter = priorityGetter,
         apiStatusValue = apiStatusValue,
