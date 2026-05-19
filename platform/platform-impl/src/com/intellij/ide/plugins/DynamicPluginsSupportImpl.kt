@@ -188,7 +188,9 @@ internal class DynamicPluginsSupportImpl(
 
         classloadersToUnload.addAll(groupsToUnload.mapNotNull { getAssociatedClassloader(it) as? PluginClassLoader })
         classloadersToUnload.forEach { it.state = UNLOAD_IN_PROGRESS } // triggers plugin scope cancellation
-        cancelAndJoinPluginScopes(classloadersToUnload)
+        withProgressText(IdeBundle.message("progress.text.finishing.plugin.tasks")) {
+          cancelAndJoinPluginScopes(classloadersToUnload)
+        }
 
         edtWriteAction {
           for (group in groupsToUnload) {
