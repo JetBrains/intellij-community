@@ -164,6 +164,7 @@ private const val GIT_DIR_PREFIX = "gitdir:"
  * or follows the `gitdir: <path>` pointer when it's a regular file (submodule/worktree layout).
  * Relative pointer paths are resolved against [dotGit]'s parent.
  */
+@Internal
 @VisibleForTesting
 fun resolveGitDir(dotGit: Path): Path? {
   val attrs = try { Files.readAttributes(dotGit, BasicFileAttributes::class.java) } catch (_: Exception) { return null }
@@ -183,6 +184,7 @@ fun resolveGitDir(dotGit: Path): Path? {
  * If [gitDir] is a worktree gitdir, reads its `commondir` pointer and returns the resolved path to the
  * main repository's git directory; otherwise `null`. Relative pointer paths are resolved against [gitDir].
  */
+@Internal
 @VisibleForTesting
 fun readCommonDir(gitDir: Path): Path? {
   val commonDirFile = gitDir.resolve("commondir")
@@ -196,6 +198,7 @@ fun readCommonDir(gitDir: Path): Path? {
 private val REMOTE_HEADER = Regex("""^\[remote\s+"([^"]+)"]$""", RegexOption.IGNORE_CASE)
 private val SECTION_HEADER = Regex("""^\[.*]$""")
 
+@Internal
 @VisibleForTesting
 fun parseRemoteUrlsFromConfig(configFile: Path): List<GitRemote> {
   val lines = try {
@@ -248,6 +251,7 @@ private fun normalizeGitUrl(url: String): String? {
   return "${host.lowercase()}/$cleanPath"
 }
 
+@Internal
 @VisibleForTesting
 fun parseHostAndPath(url: String): Pair<String, String>? {
   val schemeMatch = SCHEME_HEAD.find(url)
