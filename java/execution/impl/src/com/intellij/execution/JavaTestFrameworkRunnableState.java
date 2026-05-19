@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
@@ -29,8 +29,8 @@ import com.intellij.execution.target.EelTargetEnvironmentRequest;
 import com.intellij.execution.target.HostPort;
 import com.intellij.execution.target.ResolvedPortBinding;
 import com.intellij.execution.target.TargetEnvironment;
-import com.intellij.execution.target.TargetProcessHandlers;
 import com.intellij.execution.target.TargetEnvironmentRequest;
+import com.intellij.execution.target.TargetProcessHandlers;
 import com.intellij.execution.target.TargetProgressIndicator;
 import com.intellij.execution.target.TargetedCommandLine;
 import com.intellij.execution.target.TargetedCommandLineBuilder;
@@ -92,6 +92,7 @@ import com.intellij.util.net.NetUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -241,6 +242,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     return null;
   }
 
+  @Contract("null -> false; !null -> true")
   protected boolean configureByModule(Module module) {
     return module != null;
   }
@@ -527,7 +529,6 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     Module module = configurationModule.getModule();
     if (configureByModule(module)) {
       JavaParametersUtil.configureModule(configurationModule, javaParameters, pathType, jreHome);
-      LOG.assertTrue(module != null);
       if (JavaSdkUtil.isJdkAtLeast(javaParameters.getJdk(), JavaSdkVersion.JDK_1_9)) {
         configureModulePath(javaParameters, module);
       }
@@ -671,7 +672,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   }
 
   private static boolean toChangeWorkingDirectory(final String workingDirectory) {
-    //noinspection deprecation
+    //noinspection removal
     return PathMacroUtil.DEPRECATED_MODULE_DIR.equals(workingDirectory) ||
            PathMacroUtil.MODULE_WORKING_DIR.equals(workingDirectory) ||
            ProgramParametersConfigurator.MODULE_WORKING_DIR.equals(workingDirectory);
