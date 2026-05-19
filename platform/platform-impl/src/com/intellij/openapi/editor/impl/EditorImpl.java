@@ -178,6 +178,7 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.IslandsState;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.NewUI;
+import com.intellij.ui.codeFloatingToolbar.CodeFloatingToolbar;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
@@ -499,7 +500,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private boolean myCurrentDragIsSubstantial;
   private boolean myForcePushHappened;
   private boolean myMouseIsInDrag;
-  private boolean myIsInFocus = true;
 
   private @Nullable VisualPosition mySuppressedByBreakpointsLastPressPosition;
 
@@ -880,9 +880,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void setFocusGained() {
-    if (myIsInFocus) return;
-
-    myIsInFocus = true;
     mySelectionModel.reinitSettings();
     for (Caret caret : myCaretModel.getAllCarets()) {
       if (caret.hasSelection()) {
@@ -893,7 +890,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public void focusLost(@NotNull FocusEvent e) {
-    myIsInFocus = false;
     myFocusKeepSelectionOnMousePress = false;
     mySelectionModel.reinitSettings();
 
@@ -906,7 +902,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   boolean isInFocus() {
-    return myIsInFocus;
+    Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    if (focusOwner == null) return false;
+    if (SwingUtilities.isDescendingFrom(focusOwner, myPanel)) return true;
+
+    var floating = CodeFloatingToolbar.getToolbar(this);
+    var hintComponent = floating != null ? floating.getHintComponent() : null;
+
+    var hintWindow = hintComponent != null ? SwingUtilities.getWindowAncestor(hintComponent) : null;
+
+    for (var w = SwingUtilities.getWindowAncestor(focusOwner); w != null; w = w.getOwner()) {
+      if (w == hintWindow) return true;
+    }
+
+    return false;
   }
 
   private void queueErrorStipeRepaintRequest(int start, int end) {
