@@ -29,9 +29,9 @@ interface AcpAgentStartConfig {
      */
     fun create(
       command: String,
-      baseArgs: List<String> = emptyList(),
-      acpArgs: List<String> = emptyList(),
-      env: Map<String, String> = emptyMap(),
+      baseArgs: List<String>,
+      acpArgs: List<String>,
+      env: Map<String, String>,
     ): AcpAgentStartConfig = AcpAgentStartConfigImpl(command, baseArgs, acpArgs, env)
   }
 }
