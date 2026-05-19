@@ -23,8 +23,6 @@ import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantLock
 import java.util.function.Consumer
-import kotlin.time.Duration.Companion.seconds
-import kotlin.time.measureTime
 
 /**
  * Stores mapping (file -> FileProviderMap(context -> Weak(FileViewProvider)))
@@ -251,31 +249,16 @@ internal class MultiverseFileViewProviderCache(
 
   @RequiresWriteLock
   override fun markPossiblyInvalidated() {
-    val pointersInvalidationDuration = measureTime {
-      SmartPointerManagerEx.getInstanceEx(project).possiblyInvalidate()
-    }
-
-    if (pointersInvalidationDuration >= 1.seconds) {
-      log.error("Too long pointer invalidation: $pointersInvalidationDuration")
-    }
-
-    var mapSize = 0
-    val providersInvalidationDuration = measureTime {
-      doIfInitialized { map ->
-        map.forEach { (_, map: FileProviderMap?) ->
-          if (map != null) {
-            map.isPossiblyInvalidated = true
-            map.forEach { _, provider ->
-              provider.markPossiblyInvalidated()
-              mapSize++
-            }
+    SmartPointerManagerEx.getInstanceEx(project).possiblyInvalidate()
+    doIfInitialized { map ->
+      map.forEach { (_, map: FileProviderMap?) ->
+        if (map != null) {
+          map.isPossiblyInvalidated = true
+          map.forEach { _, provider ->
+            provider.markPossiblyInvalidated()
           }
         }
       }
-    }
-
-    if (providersInvalidationDuration >= 1.seconds) {
-      log.error("Too long providers invalidation: $providersInvalidationDuration. Providers: $mapSize")
     }
   }
 
