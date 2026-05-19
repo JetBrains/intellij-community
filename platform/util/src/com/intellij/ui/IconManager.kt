@@ -76,6 +76,9 @@ interface IconManager {
 
   fun createLayered(vararg icons: Icon): Icon
 
+  @ApiStatus.Experimental
+  fun createIconWithOverlay(mainIcon: Icon, overlayIcon: Icon): Icon = mainIcon
+
   fun colorize(g: Graphics2D, source: Icon, color: Color): Icon = source
 
   /**

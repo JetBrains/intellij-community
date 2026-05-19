@@ -2,6 +2,7 @@
 package com.intellij.ui.icons
 
 import com.intellij.ui.scale.ScaleContext
+import com.intellij.ui.svg.ParsedSvgDocument
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
@@ -16,6 +17,9 @@ interface ImageDataLoader {
     get() = null
 
   fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): Image?
+
+  @Experimental
+  fun loadSvgDocument(parameters: LoadIconParameters, scaleContext: ScaleContext): ParsedSvgDocument? = null
 
   val url: URL?
 

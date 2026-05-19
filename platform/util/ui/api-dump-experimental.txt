@@ -2,6 +2,9 @@ f:com.intellij.ui.ColorUtil
 - *s:editorFaded(java.awt.Color,Z):java.awt.Color
 f:com.intellij.ui.ComponentUtil
 - *s:isShowing(java.awt.Component,Z):Z
+*:com.intellij.ui.icons.IconWithShape
+- javax.swing.Icon
+- a:getShape():java.awt.Shape
 f:com.intellij.ui.render.RenderingUtil
 - *sf:PAINT_HOVERED_BACKGROUND:com.intellij.openapi.util.Key
 *f:com.intellij.util.ui.JLabelUtil

@@ -9,8 +9,10 @@ import com.intellij.ui.IconManager
 import com.intellij.ui.NewUiValue
 import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.ScaleContext
+import com.intellij.ui.svg.ParsedSvgDocument
 import com.intellij.ui.svg.SvgCacheClassifier
 import com.intellij.ui.svg.colorPatcherDigestShim
+import com.intellij.ui.svg.createJSvgDocument
 import com.intellij.ui.svg.loadAndCacheIfApplicable
 import com.intellij.util.SVGLoader
 import kotlinx.serialization.Serializable
@@ -55,6 +57,9 @@ private class RasterizedImageDataLoader(override val path: String,
                                         private val classLoaderRef: WeakReference<ClassLoader>,
                                         private val cacheKey: Int,
                                         override val flags: Int) : ImageDataLoader {
+  private val isSvg: Boolean
+    get() = cacheKey != 0
+  
   override fun getCoords(): Pair<String, ClassLoader>? = classLoaderRef.get()?.let { path to it }
 
   override fun serializeToByteArray(): ImageDataLoaderDescriptor {
@@ -74,7 +79,6 @@ private class RasterizedImageDataLoader(override val path: String,
     val classLoader = classLoaderRef.get() ?: return null
     try {
       val start = StartUpMeasurer.getCurrentTimeIfEnabled()
-      val isSvg = cacheKey != 0
       val image = loadRasterized(path = path,
                                  scaleContext = scaleContext,
                                  parameters = parameters,
@@ -129,6 +133,12 @@ private class RasterizedImageDataLoader(override val path: String,
 
   override fun isMyClassLoader(classLoader: ClassLoader) = classLoaderRef.get() === classLoader
 
+  override fun loadSvgDocument(parameters: LoadIconParameters, scaleContext: ScaleContext): ParsedSvgDocument? {
+    if (!isSvg) return null
+    val classLoader = classLoaderRef.get() ?: return null
+    return loadSvgDocumentFromClassResource(classLoader, path)
+  }
+
   override fun toString() = "RasterizedImageDataLoader(classLoader=${classLoaderRef.get()}, path=$path)"
 }
 
@@ -137,11 +147,13 @@ private class PatchedRasterizedImageDataLoader(override val path: String,
                                                override val flags: Int) : ImageDataLoader {
   override fun getCoords(): Pair<String, ClassLoader>? = classLoaderRef.get()?.let { path to it }
 
+  private val isSvg: Boolean
+      get() = path.endsWith(".svg")
+
   override fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): Image? {
     val classLoader = classLoaderRef.get() ?: return null
     try {
       val start = StartUpMeasurer.getCurrentTimeIfEnabled()
-      val isSvg = path.endsWith(".svg")
 
       val scale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat()
       val dotIndex = path.lastIndexOf('.')
@@ -176,6 +188,12 @@ private class PatchedRasterizedImageDataLoader(override val path: String,
   override fun patch(transform: IconTransform): ImageDataLoader? = null
 
   override fun isMyClassLoader(classLoader: ClassLoader) = classLoaderRef.get() === classLoader
+
+  override fun loadSvgDocument(parameters: LoadIconParameters, scaleContext: ScaleContext): ParsedSvgDocument? {
+    if (!isSvg) return null
+    val classLoader = classLoaderRef.get() ?: return null
+    return loadSvgDocumentFromClassResource(classLoader, path)
+  }
 
   override fun toString() = "PatchedRasterizedImageDataLoader(classLoader=${classLoaderRef.get()}, path=$path)"
 }
@@ -305,4 +323,11 @@ private fun loadSvgFromClassResource(classLoader: ClassLoader?,
                                   colorPatcher = colorPatcherProvider?.attributeForPath(path)) {
     getResourceData(path = path, resourceClass = null, classLoader = classLoader)
   }
+}
+
+private fun loadSvgDocumentFromClassResource(
+  classLoader: ClassLoader?,
+  path: String,
+): ParsedSvgDocument? {
+  return createJSvgDocument(getResourceData(path = path, resourceClass = null, classLoader = classLoader) ?: return null)
 }
