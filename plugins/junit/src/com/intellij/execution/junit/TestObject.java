@@ -114,6 +114,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.MissingResourceException;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
@@ -640,12 +641,20 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
   private static GlobalSearchScope getScopeForJUnit(@Nullable Module module, Project project) {
     if (module == null) return GlobalSearchScope.allScope(project);
-    return switch (Registry.stringValue("junit.version.detection.scope")) {
+
+    String scope;
+    try {
+      scope = Registry.get("junit.version.detection.scope").getSelectedOption();
+    } catch (MissingResourceException ignored) {
+      scope = "withDependenciesAndLibraries";
+    }
+
+    return switch (scope) {
       case "runtime" -> GlobalSearchScope.moduleRuntimeScope(module, true);
       case "module" -> GlobalSearchScope.moduleScope(module);
       case "testsWithDependents" -> GlobalSearchScope.moduleTestsWithDependentsScope(module);
       case "withLibraries" -> GlobalSearchScope.moduleWithLibrariesScope(module);
-      default -> GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, true);
+      case null, default -> GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, true);
     };
   }
 
