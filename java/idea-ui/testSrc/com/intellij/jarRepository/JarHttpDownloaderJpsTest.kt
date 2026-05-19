@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ex.PathManagerEx.findFileUnderCommunityH
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.doNotEnableExternalStorageByDefaultInTests
+import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
@@ -127,6 +128,7 @@ class JarHttpDownloaderJpsTest {
   fun happy_case() = testRepositoryLibraryUtils(projectTestData) { project, utils ->
 
     val libraryRelease = getLibrary(project, "apache.commons.math3") as LibraryEx
+    assertLibraryRootsUnderTestM2(libraryRelease)
     val promise = JarHttpDownloaderJps.getInstance(project).downloadLibraryFilesAsync(libraryRelease)
     promise!!.await()
 
@@ -141,6 +143,7 @@ class JarHttpDownloaderJpsTest {
   @Test
   fun bad_checksum() = testRepositoryLibraryUtils(projectTestData) { project, utils ->
     val libraryRelease = getLibrary(project, "apache.commons.math3.bad.checksum") as LibraryEx
+    assertLibraryRootsUnderTestM2(libraryRelease)
     val promise = JarHttpDownloaderJps.getInstance(project).downloadLibraryFilesAsync(libraryRelease)
 
     val exception = assertFailsWith<IllegalStateException> {
@@ -185,6 +188,25 @@ class JarHttpDownloaderJpsTest {
       .getLibraryTable(project)
       .getLibraryByName(name)
     ?: error("Library '$name' was not found in ${project.basePath}")
+
+  // Verifies the library's classes/sources roots resolve to the test's temp m2 directory, not a system-wide
+  // path. Without this, environments where the macro falls back to ~/.m2/repository or to a custom
+  // localRepository from ~/.m2/settings.xml would fail downstream with a confusing
+  // "root path ... does not belong to local maven repository cache" error.
+  private fun assertLibraryRootsUnderTestM2(library: LibraryEx) {
+    val m2 = FileUtil.toSystemIndependentName(m2DirectoryPath.absolutePathString())
+    val roots = (library.getUrls(OrderRootType.CLASSES).asList() + library.getUrls(OrderRootType.SOURCES).asList())
+    assertTrue(roots.isNotEmpty(), "Library '${library.name}' has no CLASSES/SOURCES roots")
+    for (url in roots) {
+      assertTrue(
+        url.contains(m2),
+        "Library '${library.name}' root '$url' must be under the test m2 directory '$m2', " +
+        "but it points to a system-wide path. Library XML must reference the test-specific macro " +
+        "$TEST_MAVEN_LOCAL_REPOSITORY_MACRO (wrapped in dollar signs), not MAVEN_REPOSITORY, " +
+        "otherwise ~/.m2/settings.xml or environment overrides on the build agent leak into the test",
+      )
+    }
+  }
 
   private val projectTestData = findFileUnderCommunityHome("java/idea-ui/testData/testProjectJarHttpDownloader").toPath()
 
