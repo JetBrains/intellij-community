@@ -8,6 +8,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.writeText
+import com.intellij.psi.PsiFile
 import com.intellij.python.community.impl.conda.environmentYml.CondaEnvironmentYmlSdkUtils.ENV_YAML_FILE_NAME
 import com.intellij.python.community.impl.conda.environmentYml.CondaEnvironmentYmlSdkUtils.ENV_YML_FILE_NAME
 import com.intellij.python.community.impl.conda.environmentYml.format.CondaEnvironmentYmlParser
@@ -21,12 +22,16 @@ import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.common.toPythonPackages
+import com.jetbrains.python.packaging.management.DependenciesExporter
 import com.jetbrains.python.packaging.management.PyWorkspaceMember
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManagerEngine
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
+import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
 import com.jetbrains.python.packaging.pip.PipPackageManagerEngine
+import com.jetbrains.python.packaging.utils.PyPackageCoroutine
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import java.nio.file.Path
@@ -43,6 +48,18 @@ class CondaPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pro
 
   private val condaPackageEngine = CondaPackageManagerEngine(sdk)
   private val pipPackageEngine = PipPackageManagerEngine(project, sdk)
+
+  override val dependenciesExporter: DependenciesExporter
+    get() = object : DependenciesExporter {
+      override fun export(file: PsiFile) {
+        PyPackageCoroutine.launch(project, Dispatchers.IO) {
+          PythonPackageManagerUI.forPackageManager(this@CondaPackageManager)
+            .executeCommand(PyBundle.message("action.CondaExportAction.text")) {
+              exportEnv(file.virtualFile)
+            }
+        }
+      }
+    }
 
   override suspend fun syncLockedCommand(): PyResult<Unit> {
     val requirementsFile = getRootDependenciesFile()

@@ -15,6 +15,7 @@ import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfoData
 import com.intellij.python.junit5Tests.framework.metaInfo.TestMethodInfoData
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.test.env.junit5.pyVenvFixture
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.TestApplicationManager
 import com.intellij.testFramework.TestDataPath
@@ -28,9 +29,12 @@ import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
+import com.jetbrains.python.inspections.dependencies.DependenciesInspection
+import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
+import com.jetbrains.python.packaging.management.PythonPackageManagerProvider
+import com.jetbrains.python.packaging.management.TestPackageManagerProvider
 import com.jetbrains.python.packaging.management.TestPythonPackageManagerService
-import com.jetbrains.python.requirements.inspections.tools.RequirementInspection
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -42,7 +46,7 @@ import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.copyToRecursively
 
 /**
- * Inspection tests for [RequirementInspection] (migrated from JUnit3).
+ * Inspection tests for [com.jetbrains.python.requirements.inspections.tools.RequirementsDependenciesInspectionProvider] (migrated from JUnit3).
  *
  * Each test method name matches a subdirectory under `testData/requirements/inspections/`.
  * The directory's contents are copied into the project root before the test runs; the test then
@@ -53,7 +57,7 @@ import kotlin.io.path.copyToRecursively
 @TestDataPath($$"$CONTENT_ROOT/../testData/requirements/inspections")
 @PyEnvTestCase
 @Timeout(60)
-internal class UnsatisfiedRequirementInspectionTest {
+internal class RequirementsDependenciesInspectionProviderTest {
   private val tempPathFixture = tempPathFixture()
   private val projectFixture = projectFixture(tempPathFixture, openAfterCreation = true)
   private val moduleFixture = projectFixture.moduleFixture(tempPathFixture, addPathToSourceRoot = true)
@@ -67,8 +71,8 @@ internal class UnsatisfiedRequirementInspectionTest {
 
   private val codeInsightFixture = pyCodeInsightFixture(projectFixture, tempPathFixture)
 
-  private val project get() = projectFixture.get()
-  private val fixture get() = codeInsightFixture.get()
+  private val project by projectFixture
+  private val fixture by codeInsightFixture
 
   private lateinit var testDataDir: NioPath
 
@@ -82,7 +86,7 @@ internal class UnsatisfiedRequirementInspectionTest {
     IndexingTestUtil.waitUntilIndexesAreReady(project)
 
     InspectionProfileImpl.INIT_INSPECTIONS = true
-    fixture.enableInspections(RequirementInspection::class.java)
+    fixture.enableInspections(DependenciesInspection::class.java)
   }
 
   @AfterEach
@@ -92,6 +96,7 @@ internal class UnsatisfiedRequirementInspectionTest {
 
   @Test
   fun unsatisfiedRequirement() {
+    setupPackageManager()
     fixture.configureFromTempProjectFile("requirements.txt")
     fixture.checkHighlighting(true, false, true, false)
     assertTrue(fixture.availableIntentions.any { it.text == "Install package mypy" })
@@ -99,6 +104,7 @@ internal class UnsatisfiedRequirementInspectionTest {
 
   @Test
   fun pyProjectTomlUnsatisfiedRequirement() {
+    setupPackageManager()
     fixture.configureFromTempProjectFile(PY_PROJECT_TOML)
     fixture.checkHighlighting(true, false, true, false)
     val warnings = fixture.doHighlighting(HighlightSeverity.WARNING)
@@ -119,6 +125,7 @@ internal class UnsatisfiedRequirementInspectionTest {
 
   @Test
   fun pyProjectTomlExtrasNotFlagged() {
+    setupPackageManager()
     TestPythonPackageManagerService.replacePythonPackageManagerServiceWithTestInstance(
       project, listOf(PythonPackage("uvicorn", "0.35.0", false))
     )
@@ -132,9 +139,36 @@ internal class UnsatisfiedRequirementInspectionTest {
 
   @Test
   fun emptyRequirementsFile() {
+    setupPackageManager()
     fixture.configureFromTempProjectFile("requirements.txt")
     fixture.checkHighlighting(true, false, true, false)
     assertTrue(fixture.availableIntentions.any { it.text == "Add imported packages to requirements…" })
+  }
+
+  @Test
+  fun pyProjectTomlOutdated() {
+    setupPackageManager(
+      TestPackageManagerProvider()
+        .withPackageInstalled(
+          PythonPackage("django", "1.3.1", false),
+          PythonPackage("flask", "1.0", false),
+          PythonPackage("requests", "1.22.0", false)
+        )
+        .withOutdatedPackages(
+          PythonOutdatedPackage("django", "1.3.1", "5.0.0"),
+          PythonOutdatedPackage("flask", "1.0", "3.0.0"),
+        )
+    )
+    fixture.configureFromTempProjectFile(PY_PROJECT_TOML)
+    fixture.checkHighlighting(true, false, true, false)
+  }
+
+  private fun setupPackageManager(provider: TestPackageManagerProvider = TestPackageManagerProvider()) {
+    ExtensionTestUtil.maskExtensions(
+      PythonPackageManagerProvider.EP_NAME,
+      listOf(provider),
+      fixture.testRootDisposable,
+    )
   }
 }
 

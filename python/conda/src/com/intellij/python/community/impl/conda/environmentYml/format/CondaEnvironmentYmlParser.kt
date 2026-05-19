@@ -71,7 +71,7 @@ object CondaEnvironmentYmlParser {
     return result
   }
 
-  private fun parseCondaDep(dep: String): PyRequirement? {
+  fun parseCondaDep(dep: String): PyRequirement? {
     // Skip URL-based, local file, git dependencies, and pip itself
 
     if (dep.startsWith("http") ||

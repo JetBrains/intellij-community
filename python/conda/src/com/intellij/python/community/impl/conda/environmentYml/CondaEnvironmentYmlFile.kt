@@ -20,4 +20,5 @@ data class CondaEnvironmentYmlFile(override val virtualFile: VirtualFile) : PyDe
 object CondaEnvironmentYmlSdkUtils {
   const val ENV_YML_FILE_NAME: String = "environment.yml"
   const val ENV_YAML_FILE_NAME: String = "environment.yaml"
+  val envFileNames: Set<String> = setOf(ENV_YML_FILE_NAME, ENV_YAML_FILE_NAME)
 }

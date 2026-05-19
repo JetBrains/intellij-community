@@ -164,6 +164,11 @@ class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManage
     return this
   }
 
+  fun withOutdatedPackages(packages: List<PythonOutdatedPackage>): TestPythonPackageManager {
+    this.outdatedPackages = packages.associateBy { it.name }
+    return this
+  }
+
   companion object {
     @JvmField
     val REQUIREMENTS_PROVIDER_KEY: Key<RequirementsProviderType> = Key<RequirementsProviderType>("REQUIREMENTS_PROVIDER_KEY")

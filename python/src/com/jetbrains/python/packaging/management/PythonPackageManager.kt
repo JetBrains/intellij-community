@@ -16,9 +16,11 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Key
+import com.intellij.psi.PsiFile
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
 import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.errorProcessing.PyResult
@@ -119,6 +121,9 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
   internal open val treeProvider: DependencyTreeProvider? = null
 
   abstract val repositoryManager: PythonRepositoryManager
+
+  @ApiStatus.Internal
+  open val dependenciesExporter: DependenciesExporter? = null
 
   @ApiStatus.Internal
   suspend fun syncLocked(): PyResult<List<PythonPackage>> {
@@ -415,6 +420,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
     initializationJob.join()
   }
 
+
   private suspend fun initInstalledPackages() {
     try {
       if (isInited.getAndSet(true))
@@ -557,3 +563,12 @@ fun PythonPackageManager.listDeclaredPackagesAsync(): List<PythonPackage>? = run
 @ApiStatus.Internal
 @JvmInline
 value class PyWorkspaceMember(val name: String)
+
+/**
+ * Defines behavior that generates a dependencies file (e.g., `requirements.txt` for pip or `environment.yml` for conda).
+ */
+@ApiStatus.Internal
+interface DependenciesExporter {
+  @RequiresEdt
+  fun export(file: PsiFile)
+}

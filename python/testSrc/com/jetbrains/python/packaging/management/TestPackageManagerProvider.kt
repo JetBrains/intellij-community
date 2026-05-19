@@ -3,6 +3,7 @@ package com.jetbrains.python.packaging.management
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import org.jetbrains.annotations.TestOnly
@@ -13,6 +14,7 @@ class TestPackageManagerProvider : PythonPackageManagerProvider {
   private var packageDetails: PythonPackageDetails? = null
   private var packageInstalled: List<PythonPackage> = emptyList()
   private var packageVersions = mapOf<String, List<String>>()
+  private var packageOutdated: List<PythonOutdatedPackage> = emptyList()
 
   fun withPackageNames(packageNames: List<String>): TestPackageManagerProvider {
     this.packageNames = packageNames
@@ -34,12 +36,17 @@ class TestPackageManagerProvider : PythonPackageManagerProvider {
     return this
   }
 
+  fun withOutdatedPackages(vararg packages: PythonOutdatedPackage): TestPackageManagerProvider {
+    this.packageOutdated = packages.toList()
+    return this
+  }
 
   override fun createPackageManagerForSdk(project: Project, sdk: Sdk): PythonPackageManager {
     return TestPythonPackageManager(project, sdk)
       .withPackageNames(packageNames)
       .withPackageDetails(packageDetails)
       .withPackageInstalled(packageInstalled)
+      .withOutdatedPackages(packageOutdated)
       .withRepoPackagesVersions(packageVersions)
   }
 }
