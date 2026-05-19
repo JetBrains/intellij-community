@@ -7,6 +7,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import it.unimi.dsi.fastutil.objects.Object2IntMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.java.JavaResourceRootType
+import org.jetbrains.jps.model.java.JavaSourceRootType
+import org.jetbrains.kotlin.config.KotlinSourceRootType
 import org.jetbrains.kotlin.idea.base.projectStructure.KotlinBaseProjectStructureBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.ModuleSourcesScope.SourceRootKind
 
@@ -77,10 +79,14 @@ private fun calculateRootsSet(module: Module, sourceRootKind: SourceRootKind): L
         contentEntry
             .sourceFolders
             .filter { sourceFolder ->
-                when {
-                    sourceFolder.rootType is JavaResourceRootType -> false
-                    sourceRootKind == SourceRootKind.PRODUCTION -> !sourceFolder.isTestSource
-                    sourceRootKind == SourceRootKind.TESTS -> sourceFolder.isTestSource
+                when (sourceFolder.rootType) {
+                    is JavaResourceRootType -> false
+                    is JavaSourceRootType, is KotlinSourceRootType -> {
+                        when (sourceRootKind) {
+                            SourceRootKind.PRODUCTION -> !sourceFolder.isTestSource
+                            SourceRootKind.TESTS -> sourceFolder.isTestSource
+                        }
+                    }
                     else -> false
                 }
             }
