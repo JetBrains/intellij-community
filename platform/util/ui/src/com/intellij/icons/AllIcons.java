@@ -502,7 +502,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon SourceMap = load("expui/fileTypes/sourceMap.svg", -252663656, 2);
     /** 16x16 */ public static final @NotNull Icon Sql = load("expui/fileTypes/sql.svg", 649447332, 2);
     /** 16x16 */ public static final @NotNull Icon SwiftLang = load("expui/fileTypes/swiftLang.svg", 286491144, 2);
-    /** 16x16 */ public static final @NotNull Icon Terraform = load("expui/fileTypes/terraform.svg", 460683072, 2);
+    /** 16x16 */ public static final @NotNull Icon Terraform = load("expui/fileTypes/terraform.svg", 15103612, 2);
     /** 16x16 */ public static final @NotNull Icon Text = load("expui/fileTypes/text.svg", "fileTypes/text.svg", -444897274, 0);
     /** 16x16 */ public static final @NotNull Icon Toml = load("expui/fileTypes/toml.svg", 1967853425, 2);
     /** 16x16 */ public static final @NotNull Icon UiForm = load("expui/fileTypes/uiForm.svg", "fileTypes/uiForm.svg", -734581860, 0);
