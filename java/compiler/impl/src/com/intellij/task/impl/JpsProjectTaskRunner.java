@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.task.impl;
 
 import com.intellij.compiler.impl.CompileDriver;
@@ -101,7 +101,7 @@ public final class JpsProjectTaskRunner extends ProjectTaskRunner {
   }
 
   @Override
-  public boolean canRun(@NotNull ProjectTask projectTask) {
+  public boolean canRun(@NotNull Project project, @NotNull ProjectTask projectTask, @Nullable ProjectTaskContext context) {
     return projectTask instanceof ModuleBuildTask || projectTask instanceof EmptyCompileScopeBuildTask ||
            (projectTask instanceof ProjectModelBuildTask && ((ProjectModelBuildTask<?>)projectTask).getBuildableElement() instanceof Artifact);
   }
@@ -368,8 +368,8 @@ public final class JpsProjectTaskRunner extends ProjectTaskRunner {
     private void notifyFinished() {
       if (myCollectingStopped && myNotifications.isEmpty()) {
         myPromise.setResult(myAborted && myErrors > 0 ? FAILED_AND_ABORTED :
-                            myAborted ? TaskRunnerResults.ABORTED : 
-                            myErrors > 0 ? TaskRunnerResults.FAILURE : 
+                            myAborted ? TaskRunnerResults.ABORTED :
+                            myErrors > 0 ? TaskRunnerResults.FAILURE :
                             TaskRunnerResults.SUCCESS);
       }
     }

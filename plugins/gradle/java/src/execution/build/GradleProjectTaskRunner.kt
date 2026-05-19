@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.build
 
 import com.intellij.build.BuildViewManager
@@ -187,10 +187,6 @@ class GradleProjectTaskRunner : ProjectTaskRunner() {
     if (context != null && context.runConfiguration is JavaScratchConfiguration) {
       return false
     }
-    return canRun(projectTask)
-  }
-
-  override fun canRun(projectTask: ProjectTask): Boolean {
     if (projectTask is ModuleBuildTask) {
       return isDelegatedBuildEnabled(projectTask.module)
     }
