@@ -52,6 +52,9 @@
 - name: lib/modules/intellij.debugger.logpoints.frontend.jar
   contentModules:
   - name: intellij.debugger.logpoints.frontend
+- name: lib/modules/intellij.debugger.logpoints.frontend.split.jar
+  contentModules:
+  - name: intellij.debugger.logpoints.frontend.split
 - name: lib/modules/intellij.debugger.logpoints.java.jar
   contentModules:
   - name: intellij.debugger.logpoints.java
