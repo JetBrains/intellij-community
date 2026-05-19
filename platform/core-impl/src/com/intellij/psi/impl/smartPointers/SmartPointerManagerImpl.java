@@ -10,6 +10,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -21,7 +22,7 @@ import com.intellij.psi.SmartPsiFileRange;
 import com.intellij.psi.impl.PsiDocumentManagerEx;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.concurrency.annotations.RequiresWriteLock;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -36,7 +37,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentMap;
 
-import static com.intellij.codeInsight.multiverse.CodeInsightContexts.isSharedSourceSupportEnabled;
 import static com.intellij.reference.SoftReference.dereference;
 
 @ApiStatus.Internal
@@ -47,6 +47,7 @@ public final class SmartPointerManagerImpl extends SmartPointerManagerEx {
   private final Project myProject;
   private final PsiDocumentManagerEx myPsiDocManager;
   private final Key<WeakReference<SmartPointerTracker>> LIGHT_TRACKER_KEY;
+  private final IncrementInWriteActionOnlyModTracker myPossiblyInvalidationModCounter = new IncrementInWriteActionOnlyModTracker();
   private final ConcurrentMap<VirtualFile, SmartPointerTracker> myPhysicalTrackers = CollectionFactory.createConcurrentWeakValueMap();
 
   public SmartPointerManagerImpl(@NotNull Project project) {
@@ -214,7 +215,7 @@ public final class SmartPointerManagerImpl extends SmartPointerManagerEx {
     synchronized (myPhysicalTrackers) {
       SmartPointerTracker tracker = getTracker(file);
       if (tracker == null) {
-        tracker = new SmartPointerTracker();
+        tracker = new SmartPointerTracker(myPossiblyInvalidationModCounter.getModificationCount());
         if (file instanceof LightVirtualFile) {
           file.putUserData(LIGHT_TRACKER_KEY, new WeakReference<>(tracker));
         }
@@ -263,18 +264,16 @@ public final class SmartPointerManagerImpl extends SmartPointerManagerEx {
     return myPsiDocManager;
   }
 
-  @RequiresWriteLock
   @Override
-  public void possiblyInvalidate() {
-    if (!isSharedSourceSupportEnabled(myProject)) {
-      return;
-    }
-    synchronized (myPhysicalTrackers) {
-      for (SmartPointerTracker value : myPhysicalTrackers.values()) {
-        if (value != null) {
-          value.possiblyInvalidate();
-        }
-      }
+  public @NotNull SimpleModificationTracker getPossiblyInvalidationModCounter() {
+    return myPossiblyInvalidationModCounter;
+  }
+
+  private static final class IncrementInWriteActionOnlyModTracker extends SimpleModificationTracker {
+    @Override
+    public void incModificationCount() {
+      ThreadingAssertions.assertWriteAccess();
+      super.incModificationCount();
     }
   }
 }

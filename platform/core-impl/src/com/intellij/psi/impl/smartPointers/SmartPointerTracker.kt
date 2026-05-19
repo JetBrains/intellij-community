@@ -6,7 +6,6 @@ import com.intellij.codeInsight.multiverse.CodeInsightContextManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.impl.FrozenDocument
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.openapi.util.Segment
 import com.intellij.openapi.vfs.VirtualFile
@@ -14,7 +13,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.CommonProcessors
 import com.intellij.util.Processor
-import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -33,9 +31,9 @@ import java.util.Arrays
  * Once [SmartPsiElementPointerImpl] is garbage-collected, the corresponding [SelfElementInfo] is removed from [MarkerCache].
  */
 @ApiStatus.Internal
-class SmartPointerTracker {
+class SmartPointerTracker(initialModCount: Long) {
   @Volatile
-  private var isPossiblyInvalidated: Boolean = false
+  private var validationModCount: Long = initialModCount
   private val selfInfoList = WeakPointerReferenceList()
   private val fileInfoList = WeakPointerReferenceList()
   private val markerCache = MarkerCache(this)
@@ -203,14 +201,8 @@ class SmartPointerTracker {
   @Synchronized
   fun getSize(): Int = selfInfoList.size
 
-  @RequiresWriteLock
-  @Synchronized
-  fun possiblyInvalidate() {
-    isPossiblyInvalidated = true
-  }
-
-  fun isContextPossiblyInvalidated(): Boolean =
-    isPossiblyInvalidated // does not require synchronization, only writes should be synchronized
+  fun isPossiblyInvalidated(manager: SmartPointerManagerEx): Boolean =
+    manager.possiblyInvalidationModCounter.modificationCount > validationModCount
 
   @Synchronized
   internal fun pushContextMapping(mapping: Map<CodeInsightContext, CodeInsightContext?>) {
@@ -228,10 +220,11 @@ class SmartPointerTracker {
     get() = this.elementInfo as SelfElementInfo
 
   @Synchronized
-  fun revalidate(virtualFile: VirtualFile, project: Project) {
-    if (!isPossiblyInvalidated) return
+  fun revalidate(virtualFile: VirtualFile, manager: SmartPointerManagerEx) {
+    val currentModCount = manager.possiblyInvalidationModCounter.modificationCount
+    if (validationModCount >= currentModCount) return
 
-    isPossiblyInvalidated = false
+    validationModCount = currentModCount
 
     val allInfos = getSortedInfos() + getFileInfos()
     if (allInfos.isEmpty()) {
@@ -258,7 +251,7 @@ class SmartPointerTracker {
 
     // Fallback: no stored mappings available
     val oldContexts = allInfos.mapNotNullTo(mutableSetOf()) { it.fileHolder.context }
-    val actualContexts = CodeInsightContextManager.getInstance(project).getCodeInsightContexts(virtualFile).toSet()
+    val actualContexts = CodeInsightContextManager.getInstance(manager.project).getCodeInsightContexts(virtualFile).toSet()
     val deadContexts = oldContexts.subtract(actualContexts)
 
     if (deadContexts.isEmpty()) {
@@ -333,8 +326,8 @@ class SmartPointerTracker {
       pointer.pointerReference = this
     }
 
-    fun isContextPossiblyInvalidated(): Boolean =
-      tracker.isContextPossiblyInvalidated()
+    fun isPossiblyInvalidated(manager: SmartPointerManagerEx): Boolean =
+      tracker.isPossiblyInvalidated(manager)
 
     fun delete() {
       tracker.removeReference(this)

@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.FrozenDocument;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -76,7 +77,20 @@ public abstract class SmartPointerManagerEx extends SmartPointerManager implemen
 
   public abstract @NotNull PsiDocumentManagerEx getPsiDocumentManager();
 
-  public abstract void possiblyInvalidate();
+  /**
+   * A modification tracker corresponding to possible invalidation of live smart pointers in the project.
+   * It's allowed to increment the counter only in write action.
+   * <p>
+   * Increment it under write lock when something globally changes the meaning of pointer targets without
+   * necessarily destroying the referenced PSI (typically a module-roots change). Existing trackers
+   * stay attached to their files; they are lazily revalidated on the next pointer access by comparing
+   * the tracker's stored generation against the current one.
+   * <p>
+   * A smart pointer is considered possibly invalidated when the generation stored in its tracker is
+   * strictly less than this value; resolving the pointer triggers a revalidation that brings the
+   * tracker's stored generation up to date.
+   */
+  public abstract @NotNull SimpleModificationTracker getPossiblyInvalidationModCounter();
 
   public static @NotNull SmartPointerManagerEx getInstanceEx(@NotNull Project project) {
     return (SmartPointerManagerEx)getInstance(project);

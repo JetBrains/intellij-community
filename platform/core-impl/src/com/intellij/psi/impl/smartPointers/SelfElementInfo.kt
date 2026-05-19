@@ -126,7 +126,7 @@ open class SelfElementInfo internal constructor(
       fileHolder = FileHolder.createInterned(holder.virtualFile, null, tracker)
       return null
     }
-    tracker?.revalidate(vfile, manager.project)
+    tracker?.revalidate(vfile, manager)
     return restoreFileFromVirtual({ fileHolder }, manager.project, language, manager.getTracker(vfile))
   }
 
@@ -187,7 +187,8 @@ open class SelfElementInfo internal constructor(
         val vfile = restoreVFile(fileHolder().virtualFile) ?: return@runReadActionBlocking null
 
         // updates file-holders for all pointers of the file
-        tracker?.revalidate(vfile, project)
+        val smartPointerManager = SmartPointerManagerEx.getInstanceEx(project)
+        tracker?.revalidate(vfile, smartPointerManager)
 
         val context = fileHolder().context ?: return@runReadActionBlocking null
         val file = withAllowedIrrelevantContexts {

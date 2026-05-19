@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.FrozenDocument;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -78,7 +79,7 @@ public class MockSmartPointerManager extends SmartPointerManagerEx {
 
   @Override
   public @NotNull SmartPointerTracker getOrCreateTracker(@NotNull VirtualFile file) {
-    return new SmartPointerTracker();
+    return new SmartPointerTracker(0);
   }
 
   @Override
@@ -102,7 +103,8 @@ public class MockSmartPointerManager extends SmartPointerManagerEx {
   }
 
   @Override
-  public void possiblyInvalidate() {
+  public @NotNull SimpleModificationTracker getPossiblyInvalidationModCounter() {
+    return new SimpleModificationTracker(); // no-op
   }
 
   @Override

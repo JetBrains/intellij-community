@@ -249,7 +249,7 @@ internal class MultiverseFileViewProviderCache(
 
   @RequiresWriteLock
   override fun markPossiblyInvalidated() {
-    SmartPointerManagerEx.getInstanceEx(project).possiblyInvalidate()
+    SmartPointerManagerEx.getInstanceEx(project).possiblyInvalidationModCounter.incModificationCount()
     doIfInitialized { map ->
       map.forEach { (_, map: FileProviderMap?) ->
         if (map != null) {
