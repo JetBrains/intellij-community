@@ -93,7 +93,7 @@ class KmpSyntaxNode internal constructor(
     startLexemeIndex: Int = this.startLexemeIndex,
     nextMarkerStartLexemeIndex: Int = this.nextMarkerStartLexemeIndex,
     markerIndex: Int = this.markerIndex,
-    documentLanguage: SyntaxLanguage?,
+    documentLanguage: SyntaxLanguage? = null,
   ): KmpSyntaxNode = KmpSyntaxNode(
     parent = parent,
     prevSibling = prevSibling,
@@ -170,7 +170,7 @@ class KmpSyntaxNode internal constructor(
       when {
         ast.kind(markerIndex) == MarkerKind.Error -> null
         isChameleon() -> (chameleonSyntaxNode?.firstChild() as KmpSyntaxNode?)
-          ?.copy(parent = this, documentLanguage = null)
+          ?.copy(parent = this)
 
         ast.collapsed(markerIndex) -> null // this is a collapsed non-lazy-parseable node, meaning it's a leaf
 
@@ -182,7 +182,6 @@ class KmpSyntaxNode internal constructor(
               nextMarkerStartLexemeIndex = startLexemeIndex,
               prevSibling = null,
               parent = this,
-              documentLanguage = null,
             )
 
             childMarkerIndex == -1 -> null
@@ -191,7 +190,6 @@ class KmpSyntaxNode internal constructor(
               prevSibling = null,
               nextMarkerStartLexemeIndex = startLexemeIndex + ast.lexemeRelOffset(childMarkerIndex),
               parent = this,
-              documentLanguage = null,
             )
 
 
@@ -203,7 +201,7 @@ class KmpSyntaxNode internal constructor(
     }
 
     isChameleon() && !isCopyOfParent() -> {
-      (chameleonSyntaxNode?.firstChild() as KmpSyntaxNode?)?.copy(parent = this, documentLanguage = null)
+      (chameleonSyntaxNode?.firstChild() as KmpSyntaxNode?)?.copy(parent = this)
     }
 
     else -> {
@@ -271,7 +269,6 @@ class KmpSyntaxNode internal constructor(
         nextMarkerStartLexemeIndex = startLexemeIndex,
         markerIndex = markerIndex,
         prevSibling = this,
-        documentLanguage = null,
       )
 
       else -> null
@@ -293,7 +290,7 @@ class KmpSyntaxNode internal constructor(
           ),
           tokens,
           languageProvider,
-          documentLanguage = null,
+          documentLanguage = this.language,
         )
 
         else -> {
@@ -315,7 +312,7 @@ class KmpSyntaxNode internal constructor(
             ),
             chameleonTokens,
             languageProvider,
-            documentLanguage = null,
+            documentLanguage = this.language,
           )
         }
       }
