@@ -16,9 +16,11 @@ import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.ide.productMode.IdeProductMode
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.agent.rpc.TerminalAgentLaunchSpecDto
@@ -33,12 +35,14 @@ object TerminalAgentResolver {
 
     val eelApi = eelDescriptor.toEelApi()
     return coroutineScope {
-      // Resolve each agent in parallel because checking sequentially can be slow for remote environments with big latency.
-      TerminalAgent.getAllTerminalAgents().map { agent ->
-        async {
-          getAvailableAgent(agent, eelApi)
-        }
-      }.awaitAll().filterNotNull()
+      withContext(Dispatchers.IO) {
+        // Resolve each agent in parallel because checking sequentially can be slow for remote environments with big latency.
+        TerminalAgent.getAllTerminalAgents().map { agent ->
+          async {
+            getAvailableAgent(agent, eelApi)
+          }
+        }.awaitAll().filterNotNull()
+      }
     }
   }
 
@@ -78,9 +82,11 @@ object TerminalAgentResolver {
     terminalAgent: TerminalAgent,
     eelApi: EelApi,
   ): @NativePath String? {
-    return when (eelApi.descriptor.osFamily) {
-      EelOsFamily.Windows -> findWindowsBinaryPath(terminalAgent, eelApi)
-      EelOsFamily.Posix -> findPosixBinaryPath(terminalAgent, eelApi)
+    return withContext(Dispatchers.IO) {
+      when (eelApi.descriptor.osFamily) {
+        EelOsFamily.Windows -> findWindowsBinaryPath(terminalAgent, eelApi)
+        EelOsFamily.Posix -> findPosixBinaryPath(terminalAgent, eelApi)
+      }
     }
   }
 
