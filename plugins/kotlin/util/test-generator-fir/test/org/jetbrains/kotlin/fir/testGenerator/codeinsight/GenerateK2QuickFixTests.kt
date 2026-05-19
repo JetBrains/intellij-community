@@ -233,6 +233,11 @@ internal fun MutableTWorkspace.generateK2FixTests() {
                 testMethodName = testMethodName,
             )
             model(
+                "$idea/quickfix/typeMismatch",
+                pattern = pattern,
+                testMethodName = testMethodName,
+            )
+            model(
                 "$idea/quickfix/moveToSealedParent",
                 pattern = pattern,
                 testMethodName = testMethodName,

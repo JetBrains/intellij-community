@@ -100,6 +100,10 @@ internal object CastExpressionFixFactories {
         createFixes(diagnostic.isMismatchDueToNullability, diagnostic.actualType, diagnostic.expectedType, diagnostic.psi)
     }
 
+    val javaTypeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.JavaTypeMismatch ->
+        createFixes(false, diagnostic.actualType, diagnostic.expectedType, diagnostic.psi)
+    }
+
     val initializerTypeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.InitializerTypeMismatch ->
         val initializer = diagnostic.initializer ?: return@ModCommandBased emptyList()
 

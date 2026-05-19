@@ -1432,6 +1432,72 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/typeMismatch")
+    public abstract static class TypeMismatch extends AbstractHighLevelQuickFixMultiFileTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/typeMismatch/definitelyNonNullableTypes")
+        public static class DefinitelyNonNullableTypes extends AbstractHighLevelQuickFixMultiFileTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+            }
+
+            @TestMetadata("changeParameterTypeIsDisabledWhenDnnFeatureIsOff.test")
+            public void testChangeParameterTypeIsDisabledWhenDnnFeatureIsOff() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/definitelyNonNullableTypes/changeParameterTypeIsDisabledWhenDnnFeatureIsOff.test");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/typeMismatch/genericVarianceViolation")
+        public static class GenericVarianceViolation extends AbstractHighLevelQuickFixMultiFileTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+            }
+
+            @TestMetadata("basicMultiple.before.Main.kt")
+            public void testBasicMultiple() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/genericVarianceViolation/basicMultiple.before.Main.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/typeMismatch")
+        public static class Uncategorized extends AbstractHighLevelQuickFixMultiFileTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+            }
+
+            @TestMetadata("addArrayOfTypeForJavaAnnotation.before.Main.kt")
+            public void testAddArrayOfTypeForJavaAnnotation() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/addArrayOfTypeForJavaAnnotation.before.Main.kt");
+            }
+
+            @TestMetadata("paramTypeInOverrides.before.Main.kt")
+            public void testParamTypeInOverrides() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/paramTypeInOverrides.before.Main.kt");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/moveToSealedParent")
     public static class MoveToSealedParent extends AbstractHighLevelQuickFixMultiFileTest {
         @java.lang.Override

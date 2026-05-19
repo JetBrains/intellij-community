@@ -1,7 +1,5 @@
 // FILE: first.before.kt
-// "Change parameter 'value' type of primary constructor of class 'Derived' to 'T & Any'" "false"
-// LANGUAGE_VERSION: 1.6
-// COMPILER_ARGUMENTS: -Xenhance-type-parameter-types-to-def-not-null
+// "Change parameter 'value' type of primary constructor of class 'Derived' to 'T & Any'" "true"
 // ERROR: Type mismatch: inferred type is T but T & Any was expected
 // ACTION: Add 'Any' as upper bound for T to make it non-nullable
 // ACTION: Add names in comment to call arguments
@@ -16,3 +14,12 @@ import org.jetbrains.annotations.NotNull;
 public class Base<T> {
     public Base(@NotNull T value) {}
 }
+// FILE: first.after.kt
+// "Change parameter 'value' type of primary constructor of class 'Derived' to 'T & Any'" "true"
+// ERROR: Type mismatch: inferred type is T but T & Any was expected
+// ACTION: Add 'Any' as upper bound for T to make it non-nullable
+// ACTION: Add names in comment to call arguments
+// ACTION: Add non-null asserted (value!!) call
+// ACTION: Cast expression 'value' to 'T & Any'
+
+class Derived<T>(value: T & Any) : Base<T>(<caret>value) {}
