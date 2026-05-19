@@ -4,14 +4,20 @@ package com.intellij.platform.workspace.storage.tests
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.impl.exceptions.SymbolicIdAlreadyExistsException
+import com.intellij.platform.workspace.storage.testEntities.entities.ChildEntityWithSymbolicId
+import com.intellij.platform.workspace.storage.testEntities.entities.ChildNameIdWithParentId
 import com.intellij.platform.workspace.storage.testEntities.entities.LinkedListEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.LinkedListEntityId
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.platform.workspace.storage.testEntities.entities.NamedEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ParentEntityWithSymbolicId
+import com.intellij.platform.workspace.storage.testEntities.entities.ParentNameId
 import com.intellij.platform.workspace.storage.testEntities.entities.XChildEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.XParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyChildEntityWithSymbolicId
 import com.intellij.platform.workspace.storage.testEntities.entities.modifyLinkedListEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.modifyNamedEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyParentEntityWithSymbolicId
 import com.intellij.platform.workspace.storage.testEntities.entities.modifyXParentEntity
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
@@ -156,5 +162,94 @@ class EntityWithSymbolicIdInPStorageTest {
       }
     }
     assertOneElement(builder.entities(NamedEntity::class.java).toList().filter { it.myName == "MyName" })
+  }
+
+  @Test
+  fun `add parent and child that uses its id`() {
+    val parentName = "parentName"
+    val childName = "childName"
+    val parentId = ParentNameId(parentName)
+    val childId = ChildNameIdWithParentId(childName, parentId)
+    
+    val parentEntity = builder addEntity ParentEntityWithSymbolicId(parentName, MySource)
+    builder.assertConsistency()
+    val childEntity = builder addEntity ChildEntityWithSymbolicId(childName, MySource) addChild@{
+      builder.modifyParentEntityWithSymbolicId(parentEntity) modifyParent@{
+        this@addChild.parent = this@modifyParent
+      }
+    }
+    builder.assertConsistency()
+    assertEquals(parentEntity, parentId.resolve(builder))
+    assertEquals(childEntity, childId.resolve(builder.toSnapshot()))
+    builder.removeEntity(parentEntity)
+    builder.assertConsistency()
+    Assertions.assertNull(parentId.resolve(builder))
+    Assertions.assertNull(childId.resolve(builder))
+  }
+
+  @Test
+  fun `add parent and child that uses its id then change parent`() {
+    val parentName1 = "parentName1"
+    val parentId1 = ParentNameId(parentName1)
+    val childName = "childName"
+    val childId1 = ChildNameIdWithParentId(childName, parentId1)
+
+    val parentEntity1 = builder addEntity ParentEntityWithSymbolicId(parentName1, MySource)
+    builder.assertConsistency()
+    val childEntity = builder addEntity ChildEntityWithSymbolicId(childName, MySource) addChild@{
+      builder.modifyParentEntityWithSymbolicId(parentEntity1) modifyParent@{
+        this@addChild.parent = this@modifyParent
+      }
+    }
+    builder.assertConsistency()
+    assertEquals(parentEntity1, parentId1.resolve(builder))
+    assertEquals(childEntity, childId1.resolve(builder.toSnapshot()))
+
+    val parentName2 = "parentName2"
+    val parentId2 = ParentNameId(parentName2)
+    val childId2 = ChildNameIdWithParentId(childName, parentId2)
+    val parentEntity2 = builder.modifyParentEntityWithSymbolicId(parentEntity1) {
+      myName = parentName2
+    }
+    val newChildEntity = parentEntity2.children.first()
+    builder.assertConsistency()
+    Assertions.assertNull(parentId1.resolve(builder))
+    assertEquals(parentEntity2, parentId2.resolve(builder))
+    Assertions.assertNull(childId1.resolve(builder))
+    assertEquals(newChildEntity, childId2.resolve(builder.toSnapshot()))
+  }
+
+  @Test
+  fun `add parent and try to add same name children`() {
+    val childName = "childName"
+
+    val parentEntity = builder addEntity ParentEntityWithSymbolicId("parentName", MySource)
+    builder.assertConsistency()
+    builder addEntity ChildEntityWithSymbolicId(childName, MySource) addChild@{
+      builder.modifyParentEntityWithSymbolicId(parentEntity) modifyParent@{
+        this@addChild.parent = this@modifyParent
+      }
+    }
+    assertErrorLogged<SymbolicIdAlreadyExistsException> {
+      builder addEntity ChildEntityWithSymbolicId(childName, MySource) addChild@{
+        builder.modifyParentEntityWithSymbolicId(parentEntity) modifyParent@{
+          this@addChild.parent = this@modifyParent
+        }
+      }
+    }
+    assertEquals(1, parentEntity.children.size)
+    val anotherChild = builder addEntity ChildEntityWithSymbolicId("another name", MySource) addChild@{
+      builder.modifyParentEntityWithSymbolicId(parentEntity) modifyParent@{
+        this@addChild.parent = this@modifyParent
+      }
+    }
+    builder.assertConsistency()
+    assertEquals(2, parentEntity.children.size)
+    assertErrorLogged<SymbolicIdAlreadyExistsException> {
+      builder.modifyChildEntityWithSymbolicId(anotherChild) {
+        this.myName = childName
+      }
+    }
+    assertEquals(1, parentEntity.children.size)
   }
 }

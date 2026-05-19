@@ -1,0 +1,306 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(EntityStorageInstrumentationApi::class)
+
+package com.intellij.platform.workspace.storage.testEntities.entities.impl
+
+import com.intellij.platform.workspace.storage.ConnectionId
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.SymbolicEntityId
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
+import com.intellij.platform.workspace.storage.impl.EntityLink
+import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.platform.workspace.storage.impl.SoftLinkable
+import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
+import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
+import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
+import com.intellij.platform.workspace.storage.instrumentation.instrumentation
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+import com.intellij.platform.workspace.storage.testEntities.entities.ChildEntityWithSymbolicId
+import com.intellij.platform.workspace.storage.testEntities.entities.ChildEntityWithSymbolicIdBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.ChildNameIdWithParentId
+import com.intellij.platform.workspace.storage.testEntities.entities.ParentEntityWithSymbolicId
+import com.intellij.platform.workspace.storage.testEntities.entities.ParentEntityWithSymbolicIdBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.ParentNameId
+
+@GeneratedCodeApiVersion(3)
+@GeneratedCodeImplVersion(7)
+@OptIn(WorkspaceEntityInternalApi::class)
+internal class ChildEntityWithSymbolicIdImpl(private val dataSource: ChildEntityWithSymbolicIdData) : ChildEntityWithSymbolicId,
+                                                                                                      WorkspaceEntityBase(dataSource) {
+
+  private companion object {
+    internal val PARENT_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentEntityWithSymbolicId::class.java,
+                                                                          ChildEntityWithSymbolicId::class.java,
+                                                                          ConnectionId.ConnectionType.ONE_TO_MANY,
+                                                                          false)
+    private val connections = listOf<ConnectionId>(PARENT_CONNECTION_ID)
+
+  }
+
+  override val symbolicId: ChildNameIdWithParentId = ChildNameIdWithParentId(dataSource.myName, dataSource.parentSymbolicId_Synthetic)
+
+  override val myName: String
+    get() {
+      readField("myName")
+      return dataSource.myName
+    }
+  override val parent: ParentEntityWithSymbolicId
+    get() = snapshot.instrumentation.getParent(PARENT_CONNECTION_ID, this) as? ParentEntityWithSymbolicId
+            ?: error("Parent parent not found for ChildEntityWithSymbolicId")
+
+  override val entitySource: EntitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
+
+  override fun connectionIdList(): List<ConnectionId> {
+    return connections
+  }
+
+
+  internal class Builder(result: ChildEntityWithSymbolicIdData?) :
+    ModifiableWorkspaceEntityBase<ChildEntityWithSymbolicId, ChildEntityWithSymbolicIdData>(result), ChildEntityWithSymbolicIdBuilder {
+    internal constructor() : this(ChildEntityWithSymbolicIdData())
+
+    override fun applyToBuilder(builder: MutableEntityStorage) {
+      if (this.diff != null) {
+        if (existsInBuilder(builder)) {
+          this.diff = builder
+          return
+        }
+        else {
+          error("Entity ChildEntityWithSymbolicId is already created in a different builder")
+        }
+      }
+      this.diff = builder
+      addToBuilder()
+      this.id = getEntityData().createEntityId()
+// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+// Builder may switch to snapshot at any moment and lock entity data to modification
+      this.currentEntityData = null
+// Process linked entities that are connected without a builder
+      processLinkedEntities(builder)
+      checkInitialization() // TODO uncomment and check failed tests
+    }
+
+    private fun checkInitialization() {
+      val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
+      if (!getEntityData().isMyNameInitialized()) {
+        error("Field ChildEntityWithSymbolicId#myName should be initialized")
+      }
+      if (_diff != null) {
+        if (_diff.instrumentation.getParentBuilder(PARENT_CONNECTION_ID, this) == null) {
+          error("Field ChildEntityWithSymbolicId#parent should be initialized")
+        }
+      }
+      else {
+        if (this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)] == null) {
+          error("Field ChildEntityWithSymbolicId#parent should be initialized")
+        }
+      }
+      if (!getEntityData().isParentSymbolicId_SyntheticInitialized()) {
+        error("Field ChildEntityWithSymbolicId#parent should be initialized")
+      }
+    }
+
+    override fun connectionIdList(): List<ConnectionId> {
+      return connections
+    }
+
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as ChildEntityWithSymbolicId
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.myName != dataSource.myName) this.myName = dataSource.myName
+      updateChildToParentReferences(parents)
+    }
+
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).entitySource = value
+        changedProperty.add("entitySource")
+
+      }
+    override var myName: String
+      get() = getEntityData().myName
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).myName = value
+        changedProperty.add("myName")
+      }
+    override var parent: ParentEntityWithSymbolicIdBuilder
+      get() {
+        val _diff = diff
+        return if (_diff != null) {
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENT_CONNECTION_ID,
+                                                                           this) as? ParentEntityWithSymbolicIdBuilder)
+          ?: (this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)] as? ParentEntityWithSymbolicIdBuilder)
+          ?: error("parent is null for ChildEntityWithSymbolicId")
+        }
+        else {
+          (this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)] as? ParentEntityWithSymbolicIdBuilder)
+          ?: error("parent is null for ChildEntityWithSymbolicId")
+        }
+      }
+      set(value) {
+        checkModificationAllowed()
+        val _diff = diff
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
+// Setting backref of the list
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
+            val data = (value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+            value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] = data
+          }
+// else you're attaching a new entity to an existing entity that is not modifiable
+          _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
+        }
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
+          _diff.instrumentation.addChild(PARENT_CONNECTION_ID, value, this)
+        }
+        else {
+// Setting backref of the list
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
+            val data = (value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+            value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] = data
+          }
+// else you're attaching a new entity to an existing entity that is not modifiable
+          this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)] = value
+        }
+        changedProperty.add("parent")
+        getEntityData(true).parentSymbolicId_Synthetic = ParentNameId(value.myName)
+        changedProperty.add("parentSymbolicId_Synthetic")
+      }
+
+    override fun getEntityClass(): Class<ChildEntityWithSymbolicId> = ChildEntityWithSymbolicId::class.java
+  }
+
+}
+
+@OptIn(WorkspaceEntityInternalApi::class)
+internal class ChildEntityWithSymbolicIdData : WorkspaceEntityData<ChildEntityWithSymbolicId>(), SoftLinkable {
+  lateinit var myName: String
+
+  lateinit var parentSymbolicId_Synthetic: ParentNameId
+
+  internal fun isMyNameInitialized(): Boolean = ::myName.isInitialized
+
+  internal fun isParentSymbolicId_SyntheticInitialized(): Boolean = ::parentSymbolicId_Synthetic.isInitialized
+
+  override fun getLinks(): Set<SymbolicEntityId<*>> {
+    val result = HashSet<SymbolicEntityId<*>>()
+    result.add(parentSymbolicId_Synthetic)
+    return result
+  }
+
+  override fun index(index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
+    index.index(this, parentSymbolicId_Synthetic)
+  }
+
+  override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
+// TODO verify logic
+    val mutablePreviousSet = HashSet(prev)
+    val removedItem_parentSymbolicId_Synthetic = mutablePreviousSet.remove(parentSymbolicId_Synthetic)
+    if (!removedItem_parentSymbolicId_Synthetic) {
+      index.index(this, parentSymbolicId_Synthetic)
+    }
+    for (removed in mutablePreviousSet) {
+      index.remove(this, removed)
+    }
+  }
+
+  override fun updateLink(oldLink: SymbolicEntityId<*>, newLink: SymbolicEntityId<*>): Boolean {
+    var changed = false
+    val parentSymbolicId_Synthetic_data = if (parentSymbolicId_Synthetic == oldLink) {
+      changed = true
+      newLink as ParentNameId
+    }
+    else {
+      null
+    }
+    if (parentSymbolicId_Synthetic_data != null) {
+      parentSymbolicId_Synthetic = parentSymbolicId_Synthetic_data
+    }
+    return changed
+  }
+
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ChildEntityWithSymbolicId> {
+    val modifiable = ChildEntityWithSymbolicIdImpl.Builder(null)
+    modifiable.diff = diff
+    modifiable.id = createEntityId()
+    return modifiable
+  }
+
+  override fun createEntity(snapshot: EntityStorageInstrumentation): ChildEntityWithSymbolicId {
+    val entityId = createEntityId()
+    return snapshot.initializeEntity(entityId) {
+      val entity = ChildEntityWithSymbolicIdImpl(this)
+      entity.snapshot = snapshot
+      entity.id = entityId
+      entity
+    }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.workspace.storage.testEntities.entities.ChildEntityWithSymbolicId") as EntityMetadata
+  }
+
+  override fun getEntityInterface(): Class<out WorkspaceEntity> {
+    return ChildEntityWithSymbolicId::class.java
+  }
+
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
+    return ChildEntityWithSymbolicId(myName, entitySource) {
+      parents.filterIsInstance<ParentEntityWithSymbolicIdBuilder>().singleOrNull()?.let { this.parent = it }
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(ParentEntityWithSymbolicId::class.java)
+    return res
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (other == null) return false
+    if (this.javaClass != other.javaClass) return false
+    other as ChildEntityWithSymbolicIdData
+    if (this.entitySource != other.entitySource) return false
+    if (this.myName != other.myName) return false
+    return true
+  }
+
+  override fun equalsIgnoringEntitySource(other: Any?): Boolean {
+    if (other == null) return false
+    if (this.javaClass != other.javaClass) return false
+    other as ChildEntityWithSymbolicIdData
+    if (this.myName != other.myName) return false
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = entitySource.hashCode()
+    result = 31 * result + myName.hashCode()
+    return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + myName.hashCode()
+    return result
+  }
+}

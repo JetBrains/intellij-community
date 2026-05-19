@@ -244,7 +244,6 @@ is DerivedDerivedDataClass -> {
 }
 return result
 }
-
 override fun index(index: WorkspaceMutableIndex<SymbolicEntityId<*>>){
 index.index(this, moduleId)
 val _sealedDataClassProperty = sealedDataClassProperty
@@ -258,7 +257,6 @@ is DerivedDerivedDataClass -> {
 }
 }
 }
-
 override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>){
 // TODO verify logic
 val mutablePreviousSet = HashSet(prev)
@@ -280,7 +278,6 @@ for (removed in mutablePreviousSet){
 index.remove(this, removed)
 }
 }
-
 override fun updateLink(oldLink: SymbolicEntityId<*>, newLink: SymbolicEntityId<*>): Boolean{
 var changed = false
 val moduleId_data = if (moduleId == oldLink){
@@ -310,7 +307,6 @@ sealedDataClassProperty = res_sealedDataClassProperty
 }
 return changed
 }
-
 override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ChildEntity>{
 val modifiable = ChildEntityImpl.Builder(null)
 modifiable.diff = diff

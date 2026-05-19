@@ -248,6 +248,11 @@ abstract class AbstractEntityCodeGenTest {
   fun testVisibilityModifier() {
     doTest()
   }
+  
+  @Test
+  fun testChildIdUsesParentId() {
+    doTest()
+  }
 
   private fun doTestAndCheckErrorMessage(expectedMessage: String) {
     val exception = Assertions.assertThrows(IllegalStateException::class.java) {

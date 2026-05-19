@@ -89,3 +89,38 @@ interface ComposedIdSoftRefEntity : WorkspaceEntityWithSymbolicId {
   override val symbolicId: ComposedId get() = ComposedId(myName, link)
 
 }
+
+// ------------------------------ Persistent Id ---------------
+
+data class ParentNameId(private val name: String) : SymbolicEntityId<ParentEntityWithSymbolicId> {
+  override val presentableName: String
+    get() = name
+
+  override fun toString(): String = name
+}
+
+data class ChildNameIdWithParentId(private val name: String, private val parentId: ParentNameId) : SymbolicEntityId<ChildEntityWithSymbolicId> {
+  override val presentableName: String
+    get() = "$name (${parentId.presentableName})"
+
+  override fun toString(): String = "$name (${parentId.presentableName})"
+}
+
+// ------------------------- Entity with SymbolicId which uses parent's SymbolicId ------------------
+
+interface ParentEntityWithSymbolicId : WorkspaceEntityWithSymbolicId {
+  val myName: String
+  val children: List<ChildEntityWithSymbolicId>
+
+  override val symbolicId: ParentNameId 
+    get() = ParentNameId(myName)
+}
+
+interface ChildEntityWithSymbolicId : WorkspaceEntityWithSymbolicId {
+  val myName: String
+  @Parent
+  val parent: ParentEntityWithSymbolicId
+
+  override val symbolicId: ChildNameIdWithParentId
+    get() = ChildNameIdWithParentId(myName, parent.symbolicId)
+}
