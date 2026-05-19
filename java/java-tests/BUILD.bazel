@@ -337,6 +337,10 @@ jvm_library(
     "//platform/smRunner:smRunner-tests_test_lib",
     "//platform/testRunner",
     "//platform/testRunner:testRunner_test_lib",
+    "//java/java-features-trainer:featuresTrainer",
+    "//java/java-features-trainer:featuresTrainer_test_lib",
+    "//plugins/ide-features-trainer:featuresTrainer",
+    "//plugins/ide-features-trainer:featuresTrainer_test_lib",
   ],
   exports = [
     "//plugins/java-i18n",
