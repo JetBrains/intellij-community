@@ -169,6 +169,11 @@ public abstract class K2JvmBasicCompletionFullJdkTestGenerated extends AbstractK
             runTest("../../completion/testData/basic/fullJdk/lambdaSignature/ParameterName23.kt");
         }
 
+        @TestMetadata("ParameterName24.kt")
+        public void testParameterName24() throws Exception {
+            runTest("../../completion/testData/basic/fullJdk/lambdaSignature/ParameterName24.kt");
+        }
+
         @TestMetadata("ParameterName3.kt")
         public void testParameterName3() throws Exception {
             runTest("../../completion/testData/basic/fullJdk/lambdaSignature/ParameterName3.kt");
