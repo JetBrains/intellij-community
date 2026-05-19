@@ -360,6 +360,14 @@
                      language="kotlin"
                      key="inspection.equals.or.hash.code.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.ConflictingExtensionPropertyInspection"
+                      groupPath="Kotlin"
+                      groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
+                      enabledByDefault="true"
+                      level="WARNING"
+                      language="kotlin"
+                      key="inspection.conflicting.extension.property.display.name" bundle="messages.KotlinBundle"/>
+
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.expressions.ReplaceSizeCheckWithIsNotEmptyInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"

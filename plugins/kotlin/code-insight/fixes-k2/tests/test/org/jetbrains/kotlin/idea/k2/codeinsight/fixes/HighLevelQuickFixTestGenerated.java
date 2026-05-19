@@ -11152,6 +11152,90 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/migration/conflictingExtension")
+    public static class ConflictingExtension extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("explicitThis.kt")
+        public void testExplicitThis() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/migration/conflictingExtension/explicitThis.kt");
+        }
+
+        @TestMetadata("markHiddenAndDeprecated.kt")
+        public void testMarkHiddenAndDeprecated() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/migration/conflictingExtension/markHiddenAndDeprecated.kt");
+        }
+
+        @TestMetadata("memberExtension.kt")
+        public void testMemberExtension() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/migration/conflictingExtension/memberExtension.kt");
+        }
+
+        @TestMetadata("returnInGetter.kt")
+        public void testReturnInGetter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/migration/conflictingExtension/returnInGetter.kt");
+        }
+
+        @TestMetadata("setterWithExpressionBody.kt")
+        public void testSetterWithExpressionBody() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/migration/conflictingExtension/setterWithExpressionBody.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/migration/conflictingExtension/simple.kt");
+        }
+
+        @TestMetadata("valInsteadOfVar.kt")
+        public void testValInsteadOfVar() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/migration/conflictingExtension/valInsteadOfVar.kt");
+        }
+
+        @TestMetadata("varInsteadOfVal.kt")
+        public void testVarInsteadOfVal() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/migration/conflictingExtension/varInsteadOfVal.kt");
+        }
+
+        @TestMetadata("withSetter.kt")
+        public void testWithSetter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/migration/conflictingExtension/withSetter.kt");
+        }
+
+        @TestMetadata("wrongExplicitThis.kt")
+        public void testWrongExplicitThis() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/migration/conflictingExtension/wrongExplicitThis.kt");
+        }
+
+        @TestMetadata("wrongExplicitThis2.kt")
+        public void testWrongExplicitThis2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/migration/conflictingExtension/wrongExplicitThis2.kt");
+        }
+
+        @TestMetadata("wrongGetter.kt")
+        public void testWrongGetter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/migration/conflictingExtension/wrongGetter.kt");
+        }
+
+        @TestMetadata("wrongGetter2.kt")
+        public void testWrongGetter2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/migration/conflictingExtension/wrongGetter2.kt");
+        }
+
+        @TestMetadata("wrongSetter.kt")
+        public void testWrongSetter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/migration/conflictingExtension/wrongSetter.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/nullables")
     public abstract static class Nullables extends AbstractHighLevelQuickFixTest {
         @RunWith(JUnit3RunnerWithInners.class)

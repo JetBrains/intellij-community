@@ -1,4 +1,4 @@
-// "Delete redundant extension property" "true"
+// "Safe delete 'name'" "true"
 package utils
 
 import java.io.File

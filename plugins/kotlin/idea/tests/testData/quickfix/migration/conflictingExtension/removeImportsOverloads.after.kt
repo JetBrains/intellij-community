@@ -1,9 +1,7 @@
-// "Delete redundant extension property" "true"
+// "Safe delete 'name'" "true"
 package utils
 
-import java.io.File
-
-val Thread.name: String
+<selection><caret></selection>val Thread.name: String
     get() = getName()
 
 // WITH_STDLIB

@@ -134,6 +134,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/moveTypeAliasToTopLevel", pattern = pattern)
             model("$idea/quickfix/namedLambdaContextParameter", pattern = pattern)
             model("$idea/quickfix/navigateToConflictingDeclaration", pattern = pattern)
+            model("$idea/quickfix/migration/conflictingExtension", pattern = pattern)
             model("$idea/quickfix/nullables", pattern = pattern)
             model("$idea/quickfix/obsoleteKotlinJsPackages", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/optimizeImports", pattern = pattern, isIgnored = true)
@@ -234,6 +235,11 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             )
             model(
                 "$idea/quickfix/typeMismatch",
+                pattern = pattern,
+                testMethodName = testMethodName,
+            )
+            model(
+                "$idea/quickfix/migration/conflictingExtension",
                 pattern = pattern,
                 testMethodName = testMethodName,
             )

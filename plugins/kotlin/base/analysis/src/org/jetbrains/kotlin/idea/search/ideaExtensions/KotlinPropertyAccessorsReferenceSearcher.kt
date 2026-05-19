@@ -12,6 +12,7 @@ import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.util.Processor
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.asJava.syntheticAccessors
+import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.util.restrictToKotlinSources
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtProperty
@@ -23,6 +24,18 @@ class KotlinPropertyAccessorsReferenceSearcher : QueryExecutorBase<PsiReference,
             val onlyKotlinFiles = queryParameters.effectiveSearchScope.restrictToKotlinSources()
             if (SearchScope.isEmptyScope(onlyKotlinFiles)) return@runReadAction null
 
+            (method.unwrapped as? KtProperty)?.let { property ->
+                val name = property.name
+                if (name != null) {
+                    queryParameters.optimizer!!.searchWord(
+                        name,
+                        queryParameters.effectiveSearchScope,
+                        UsageSearchContext.IN_FOREIGN_LANGUAGES,
+                        true,
+                        property
+                    )
+                }
+            }
             val propertyNames = propertyNames(method)
             ({
                 for (propertyName in propertyNames) {
