@@ -19776,6 +19776,164 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/convertExplicitContextArgumentToImplicit")
+    public static class ConvertExplicitContextArgumentToImplicit extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("ambiguousContextParameter.kt")
+        public void testAmbiguousContextParameter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertExplicitContextArgumentToImplicit/ambiguousContextParameter.kt");
+        }
+
+        @TestMetadata("multipleContextParameters.kt")
+        public void testMultipleContextParameters() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertExplicitContextArgumentToImplicit/multipleContextParameters.kt");
+        }
+
+        @TestMetadata("multipleContextParametersInExplicitBlock.kt")
+        public void testMultipleContextParametersInExplicitBlock() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertExplicitContextArgumentToImplicit/multipleContextParametersInExplicitBlock.kt");
+        }
+
+        @TestMetadata("multipleContextParametersPartialInContext.kt")
+        public void testMultipleContextParametersPartialInContext() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertExplicitContextArgumentToImplicit/multipleContextParametersPartialInContext.kt");
+        }
+
+        @TestMetadata("multipleContextParametersReversedOrder.kt")
+        public void testMultipleContextParametersReversedOrder() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertExplicitContextArgumentToImplicit/multipleContextParametersReversedOrder.kt");
+        }
+
+        @TestMetadata("notApplicable_impureContextArgument.kt")
+        public void testNotApplicable_impureContextArgument() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertExplicitContextArgumentToImplicit/notApplicable_impureContextArgument.kt");
+        }
+
+        @TestMetadata("notApplicable_impurePreviousArgument.kt")
+        public void testNotApplicable_impurePreviousArgument() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertExplicitContextArgumentToImplicit/notApplicable_impurePreviousArgument.kt");
+        }
+
+        @TestMetadata("notApplicable_overloadDisambiguation.kt")
+        public void testNotApplicable_overloadDisambiguation() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertExplicitContextArgumentToImplicit/notApplicable_overloadDisambiguation.kt");
+        }
+
+        @TestMetadata("notApplicable_regularNamedArg.kt")
+        public void testNotApplicable_regularNamedArg() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertExplicitContextArgumentToImplicit/notApplicable_regularNamedArg.kt");
+        }
+
+        @TestMetadata("preservesCommentOnPrecedingArg.kt")
+        public void testPreservesCommentOnPrecedingArg() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertExplicitContextArgumentToImplicit/preservesCommentOnPrecedingArg.kt");
+        }
+
+        @TestMetadata("qualifiedCall.kt")
+        public void testQualifiedCall() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertExplicitContextArgumentToImplicit/qualifiedCall.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertExplicitContextArgumentToImplicit/simple.kt");
+        }
+
+        @TestMetadata("thisAlreadyInContext.kt")
+        public void testThisAlreadyInContext() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertExplicitContextArgumentToImplicit/thisAlreadyInContext.kt");
+        }
+
+        @TestMetadata("valueAlreadyInContext.kt")
+        public void testValueAlreadyInContext() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertExplicitContextArgumentToImplicit/valueAlreadyInContext.kt");
+        }
+
+        @TestMetadata("valueAlreadyInContextDifferentName.kt")
+        public void testValueAlreadyInContextDifferentName() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertExplicitContextArgumentToImplicit/valueAlreadyInContextDifferentName.kt");
+        }
+
+        @TestMetadata("valueAlreadyInContextInsideLambda.kt")
+        public void testValueAlreadyInContextInsideLambda() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertExplicitContextArgumentToImplicit/valueAlreadyInContextInsideLambda.kt");
+        }
+
+        @TestMetadata("valueAlreadyInExplicitContextBlock.kt")
+        public void testValueAlreadyInExplicitContextBlock() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertExplicitContextArgumentToImplicit/valueAlreadyInExplicitContextBlock.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/convertImplicitContextArgumentToExplicit")
+    public static class ConvertImplicitContextArgumentToExplicit extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("addSingleContextArgument.kt")
+        public void testAddSingleContextArgument() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertImplicitContextArgumentToExplicit/addSingleContextArgument.kt");
+        }
+
+        @TestMetadata("fromFunctionContextParameter.kt")
+        public void testFromFunctionContextParameter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertImplicitContextArgumentToExplicit/fromFunctionContextParameter.kt");
+        }
+
+        @TestMetadata("multipleContextParameters.kt")
+        public void testMultipleContextParameters() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertImplicitContextArgumentToExplicit/multipleContextParameters.kt");
+        }
+
+        @TestMetadata("notApplicable_noContextParameters.kt")
+        public void testNotApplicable_noContextParameters() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertImplicitContextArgumentToExplicit/notApplicable_noContextParameters.kt");
+        }
+
+        @TestMetadata("notApplicable_underscoreName.kt")
+        public void testNotApplicable_underscoreName() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertImplicitContextArgumentToExplicit/notApplicable_underscoreName.kt");
+        }
+
+        @TestMetadata("preservesComments.kt")
+        public void testPreservesComments() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertImplicitContextArgumentToExplicit/preservesComments.kt");
+        }
+
+        @TestMetadata("preservesTrailingComment.kt")
+        public void testPreservesTrailingComment() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertImplicitContextArgumentToExplicit/preservesTrailingComment.kt");
+        }
+
+        @TestMetadata("sharedContextBlock.kt")
+        public void testSharedContextBlock() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertImplicitContextArgumentToExplicit/sharedContextBlock.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertImplicitContextArgumentToExplicit/simple.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference")
     public static class RedundantCompanionReference extends AbstractK2LocalInspectionTest {
         @java.lang.Override

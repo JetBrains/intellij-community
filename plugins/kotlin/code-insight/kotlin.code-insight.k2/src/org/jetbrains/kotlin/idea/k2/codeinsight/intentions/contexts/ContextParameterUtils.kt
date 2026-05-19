@@ -4,6 +4,9 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions.contexts
 
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfo
@@ -11,6 +14,9 @@ import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSign
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinMethodDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinParameterInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.checkSuperMethods
+import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtContextParameterList
@@ -113,4 +119,13 @@ object ContextParameterUtils {
      */
     fun isAnonymousParameter(ktParameter: KtParameter): Boolean =
         ktParameter.name.let { name -> !name.isNullOrEmpty() && name.all { char -> char == '_' }}
+
+    /**
+     * Checks if the given call expression is a call to the `kotlin.context` function.
+     */
+    @OptIn(KaExperimentalApi::class)
+    fun KaSession.isKotlinContextCall(call: KtCallExpression): Boolean {
+        val symbol = call.calleeExpression?.mainReference?.resolveToSymbol() as? KaFunctionSymbol ?: return false
+        return symbol.callableId?.asSingleFqName() == FqName("kotlin.context")
+    }
 }

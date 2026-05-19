@@ -636,6 +636,8 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                     "replaceManualRangeWithIndicesCalls", // K2-only
                     "convertLongToDuration", // K2-only
                     "customComponentDestructuringMigration", // K2-only
+                    "convertExplicitContextArgumentToImplicit", // K2-only
+                    "convertImplicitContextArgumentToExplicit", // K2-only
                 )
             )
         }

@@ -250,15 +250,16 @@ class CommentSaver(originalElements: PsiChildRange, private val saveLineBreaks: 
         restore(PsiChildRange.singleElement(resultElement), forceAdjustIndent, isCommentBeneathSingleLine, isCommentInside)
     }
 
-    fun restore(resultElement: PsiElement, forceAdjustIndent: Boolean = false) {
-        restore(PsiChildRange.singleElement(resultElement), forceAdjustIndent)
+    fun restore(resultElement: PsiElement, forceAdjustIndent: Boolean = false, preserveTrailingComments: Boolean = false) {
+        restore(PsiChildRange.singleElement(resultElement), forceAdjustIndent, preserveTrailingComments = preserveTrailingComments)
     }
 
     fun restore(
         resultElements: PsiChildRange,
         forceAdjustIndent: Boolean = false,
         isCommentBeneathSingleLine: Boolean = false,
-        isCommentInside: Boolean = false
+        isCommentInside: Boolean = false,
+        preserveTrailingComments: Boolean = false
     ) {
         assert(!isFinished)
         assert(!resultElements.isEmpty)
@@ -281,7 +282,7 @@ class CommentSaver(originalElements: PsiChildRange, private val saveLineBreaks: 
                     })
                 }
 
-                restoreComments(resultElements, isCommentBeneathSingleLine, isCommentInside)
+                restoreComments(resultElements, isCommentBeneathSingleLine, isCommentInside, preserveTrailingComments)
 
                 restoreLineBreaks()
 
@@ -315,7 +316,8 @@ class CommentSaver(originalElements: PsiChildRange, private val saveLineBreaks: 
     private fun restoreComments(
         resultElements: PsiChildRange,
         isCommentBeneathSingleLine: Boolean = false,
-        isCommentInside: Boolean = false
+        isCommentInside: Boolean = false,
+        preserveTrailingComments: Boolean = false
     ) {
         var putAbandonedCommentsAfter = resultElements.last!!
 
@@ -362,19 +364,30 @@ class CommentSaver(originalElements: PsiChildRange, private val saveLineBreaks: 
                     }
                 }
             } else {
-                val parent = putAbandonedCommentsAfter.parent
-                //move comment out of argument, similar to parser
-                restored = (if (parent is KtValueArgument) parent.parent.addBefore(comment, parent)
-                else parent.addBefore(comment, putAbandonedCommentsAfter)) as PsiComment
+                val isTrailingComment = preserveTrailingComments &&
+                        comment.tokenType == KtTokens.EOL_COMMENT &&
+                        !commentTreeElement.spaceBefore.contains('\n')
 
-                if (isCommentInside) {
-                    val element = resultElements.first
-                    val innerExpression = element?.lastChild?.getPrevSiblingIgnoringWhitespace()
-                    innerExpression?.add(psiFactory.createWhiteSpace())
-                    innerExpression?.add(restored)
-                    restored.delete()
+                if (isTrailingComment) {
+                    val lastElement = resultElements.last!!
+                    val parent = lastElement.parent
+                    parent.addAfter(psiFactory.createWhiteSpace(" "), lastElement)
+                    restored = parent.addAfter(comment, lastElement.nextSibling) as PsiComment
+                } else {
+                    val parent = putAbandonedCommentsAfter.parent
+                    //move comment out of argument, similar to parser
+                    restored = (if (parent is KtValueArgument) parent.parent.addBefore(comment, parent)
+                    else parent.addBefore(comment, putAbandonedCommentsAfter)) as PsiComment
+
+                    if (isCommentInside) {
+                        val element = resultElements.first
+                        val innerExpression = element?.lastChild?.getPrevSiblingIgnoringWhitespace()
+                        innerExpression?.add(psiFactory.createWhiteSpace())
+                        innerExpression?.add(restored)
+                        restored.delete()
+                    }
+                    putAbandonedCommentsAfter = restored
                 }
-                putAbandonedCommentsAfter = restored
             }
 
             // shift (possible contained) comment in expression underneath braces

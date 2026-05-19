@@ -1,0 +1,16 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+// COMPILER_ARGUMENTS: -Xexplicit-context-arguments
+
+class Logger
+class Database
+
+context(log: Logger, db: Database)
+fun saveWithLog(data: String) {}
+
+fun test() {
+    val logger = Logger()
+    val database = Database()
+    context(logger, database) {
+        <caret>saveWithLog(data = "hello")
+    }
+}

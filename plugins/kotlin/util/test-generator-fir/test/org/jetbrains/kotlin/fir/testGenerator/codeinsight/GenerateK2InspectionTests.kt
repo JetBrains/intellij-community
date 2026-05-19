@@ -157,6 +157,8 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/orInWhenGuard")
             model("${idea}/inspectionsLocal/customComponentDestructuringMigration")
             model("${idea}/inspectionsLocal/convertFromMultiDollarToRegularString")
+            model("${idea}/inspectionsLocal/convertExplicitContextArgumentToImplicit")
+            model("${idea}/inspectionsLocal/convertImplicitContextArgumentToExplicit")
             model("${idea}/inspectionsLocal/redundantCompanionReference")
             model("${idea}/inspectionsLocal/replacePutWithAssignment")
             model("${idea}/inspectionsLocal/replaceRangeStartEndInclusiveWithFirstLast")
