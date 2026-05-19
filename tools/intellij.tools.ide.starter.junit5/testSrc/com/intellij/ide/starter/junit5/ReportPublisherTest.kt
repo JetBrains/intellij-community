@@ -5,17 +5,20 @@ import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.ide.InstalledIde
 import com.intellij.ide.starter.junit5.config.KillOutdatedProcessesAfterEach
 import com.intellij.ide.starter.models.IDEStartResult
+import com.intellij.ide.starter.models.IdeInfo
+import com.intellij.ide.starter.models.TestCase
 import com.intellij.ide.starter.path.IDEDataPaths
+import com.intellij.ide.starter.project.LocalProjectInfo
 import com.intellij.ide.starter.report.publisher.ReportPublisher
 import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.tools.ide.performanceTesting.commands.CommandChain
-import examples.data.IdeaCommunityCases
-import examples.data.TestCases
+import com.intellij.tools.ide.starter.product.idea.ultimate.IdeaUltimate
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.io.TempDir
 import org.kodein.di.direct
 import org.kodein.di.instance
 import org.mockito.Mock
@@ -25,6 +28,7 @@ import org.mockito.Mockito.spy
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 import org.mockito.junit.jupiter.MockitoExtension
+import java.nio.file.Path
 
 @ExtendWith(MockitoExtension::class)
 @ExtendWith(KillOutdatedProcessesAfterEach::class)
@@ -48,14 +52,14 @@ class ReportPublisherTest {
   private lateinit var ideTestContext: IDETestContext
 
   @BeforeEach
-  fun before() {
+  fun before(@TempDir projectDir: Path) {
     //TODO(Find a way to mock on stage of init of di, due to it little bit dirty approach to put them directly in IDETestContext publishers)
     publishers = di.direct.instance()
     publisherSpy = spy(publishers[0])
     ideTestContext = IDETestContext(
       ideDataPaths,
       installedIDE,
-      IdeaCommunityCases.GradleJitPackSimple,
+      TestCase(IdeInfo.IdeaUltimate, LocalProjectInfo(projectDir)).useRelease(),
       "Test method",
       null,
       publishers = listOf(publisherSpy),

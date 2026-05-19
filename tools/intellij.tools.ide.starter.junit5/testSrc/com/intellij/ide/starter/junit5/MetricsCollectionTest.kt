@@ -1,6 +1,9 @@
 package com.intellij.ide.starter.junit5
 
 import com.intellij.ide.starter.di.di
+import com.intellij.ide.starter.models.IdeInfo
+import com.intellij.ide.starter.models.TestCase
+import com.intellij.ide.starter.project.LocalProjectInfo
 import com.intellij.ide.starter.runner.CurrentTestMethod
 import com.intellij.ide.starter.runner.Starter
 import com.intellij.tools.ide.metrics.collector.metrics.MetricsSelectionStrategy
@@ -11,12 +14,14 @@ import com.intellij.tools.ide.metrics.collector.starter.publishing.addSpanCollec
 import com.intellij.tools.ide.metrics.collector.telemetry.SpanFilter
 import com.intellij.tools.ide.performanceTesting.commands.CommandChain
 import com.intellij.tools.ide.performanceTesting.commands.exitApp
-import examples.data.IdeaCommunityCases
+import com.intellij.tools.ide.starter.product.idea.ultimate.IdeaUltimate
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldNotBeEmpty
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
 import org.kodein.di.DI
+import java.nio.file.Path
 import kotlin.time.Duration.Companion.minutes
 
 fun initDI() {
@@ -45,11 +50,12 @@ class MetricsCollectionTest {
   }
 
   @Test
-  fun testCollectionMetrics() {
+  fun testCollectionMetrics(@TempDir projectDir: Path) {
     val metricPrefixes = listOf("jps.", "workspaceModel.", "FilePageCache.")
     val spanNames = listOf("project.opening")
 
-    val context = Starter.newContext(CurrentTestMethod.get()!!.displayName, IdeaCommunityCases.GradleJitPackSimple)
+    val testCase = TestCase(IdeInfo.IdeaUltimate, LocalProjectInfo(projectDir)).useRelease()
+    val context = Starter.newContext(CurrentTestMethod.displayName(), testCase)
       .prepareProjectCleanImport()
 
     val exitCommandChain = CommandChain().exitApp()
