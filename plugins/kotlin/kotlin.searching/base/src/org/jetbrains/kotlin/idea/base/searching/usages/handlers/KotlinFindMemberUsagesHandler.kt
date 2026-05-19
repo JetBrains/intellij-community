@@ -295,6 +295,7 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
         private val kotlinOptions = options as KotlinCallableFindUsagesOptions
 
         override fun buildTaskList(forHighlight: Boolean): Boolean {
+            if (!super.buildTaskList(forHighlight)) return false
             val referenceProcessor = createReferenceProcessor(processor)
             val uniqueProcessor = CommonProcessors.UniqueProcessor(processor)
 

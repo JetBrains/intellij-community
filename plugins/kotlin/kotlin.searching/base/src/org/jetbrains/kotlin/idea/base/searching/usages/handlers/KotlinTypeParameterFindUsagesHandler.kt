@@ -31,6 +31,7 @@ class KotlinTypeParameterFindUsagesHandler(
         options: FindUsagesOptions
     ): Searcher = object : Searcher(element, processor, options) {
         override fun buildTaskList(forHighlight: Boolean): Boolean {
+            if (!super.buildTaskList(forHighlight)) return false
             addTask {
                 runReadAction {
                     val searchScope = element.useScope().intersectWith(options.searchScope)
