@@ -11,6 +11,4 @@
                 />
 
   <extensions <error descr="Use defaultExtensionNs instead">xmlns="<error descr="URI is not registered (Settings | Languages & Frameworks | Schemas and DTDs)">com.intellij</error>"</error>/>
-
-  <<error descr="Element helpset is not allowed here">helpset</error> file="help.jar" path="/Help.hs"/>
 </idea-plugin>
