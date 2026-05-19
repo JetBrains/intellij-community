@@ -26,6 +26,7 @@ import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlEntityDecl;
 import com.intellij.psi.xml.XmlEntityRef;
 import com.intellij.psi.xml.XmlTokenType;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author maxim.mossienko
@@ -36,7 +37,7 @@ public class XmlConditionalSectionImpl extends XmlElementImpl implements XmlCond
   }
 
   @Override
-  public boolean isIncluded(PsiFile targetFile) {
+  public boolean isIncluded(@Nullable PsiFile targetFile) {
     ASTNode child = findChildByType(XmlTokenType.XML_CONDITIONAL_SECTION_START);
 
     if (child != null) {

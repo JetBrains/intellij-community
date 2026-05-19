@@ -12,6 +12,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.XmlEntityDecl;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -21,7 +22,7 @@ public final class XmlEntityCache {
   public static final Object LOCK = new Object();
   private static final Key<Map<String,CachedValue<XmlEntityDecl>>> XML_ENTITY_DECL_MAP = Key.create("XML_ENTITY_DECL_MAP");
 
-  public static void cacheParticularEntity(PsiFile file, XmlEntityDecl decl) {
+  public static void cacheParticularEntity(@NotNull PsiFile file, XmlEntityDecl decl) {
     synchronized(LOCK) {
       final Map<String, CachedValue<XmlEntityDecl>> cachingMap = getCachingMap(file);
       final String name = decl.getName();

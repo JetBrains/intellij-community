@@ -74,7 +74,7 @@ public final class XmlPsiUtil {
   public static boolean processXmlElementChildren(final XmlElement element,
                                                   final PsiElementProcessor<? super PsiElement> processor,
                                                   final boolean deepFlag) {
-    final XmlPsiUtil.XmlElementProcessor p = new XmlPsiUtil.XmlElementProcessor(element.getContainingFile(), processor);
+    final XmlPsiUtil.XmlElementProcessor p = new XmlPsiUtil.XmlElementProcessor(element, processor);
 
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (!p.processElement(child, deepFlag, false, true)) return false;
@@ -101,12 +101,20 @@ public final class XmlPsiUtil {
 
   private static class XmlElementProcessor {
     private final PsiElementProcessor<? super PsiElement> processor;
-    private final PsiFile targetFile;
+    private final PsiElement targetContext;
+    private @Nullable Ref<PsiFile> _targetFile;
     private final Set<String> visitedEntities = new HashSet<>();
 
-    XmlElementProcessor(PsiFile _targetFile, @NotNull PsiElementProcessor<? super PsiElement> _processor) {
+    XmlElementProcessor(PsiElement _targetContext, @NotNull PsiElementProcessor<? super PsiElement> _processor) {
+      targetContext = _targetContext;
       processor = _processor;
-      targetFile = _targetFile;
+    }
+
+    private @Nullable PsiFile getTargetFile() {
+      if (_targetFile == null) {
+        _targetFile = Ref.create(targetContext.isValid() ? targetContext.getContainingFile() : null);
+      }
+      return _targetFile.get();
     }
 
     private boolean processXmlElements(PsiElement element, boolean deepFlag, boolean wideFlag, boolean processIncludes) {
@@ -116,7 +124,7 @@ public final class XmlPsiUtil {
 
       if (element instanceof XmlEntityRef ref) {
         if (!visitedEntities.add(ref.getText())) return true;
-        PsiElement newElement = parseEntityRef(targetFile, ref);
+        PsiElement newElement = parseEntityRef(getTargetFile(), ref);
 
         while (newElement != null) {
           if (!processElement(newElement, deepFlag, wideFlag, processIncludes)) return false;
@@ -126,7 +134,7 @@ public final class XmlPsiUtil {
         return true;
       }
       else if (element instanceof XmlConditionalSection xmlConditionalSection) {
-        if (!xmlConditionalSection.isIncluded(targetFile)) return true;
+        if (!xmlConditionalSection.isIncluded(getTargetFile())) return true;
         startFrom = xmlConditionalSection.getBodyStart();
       }
       else if (processIncludes && isXInclude(element)) {
@@ -167,14 +175,17 @@ public final class XmlPsiUtil {
         }
         else if (!processor.execute(child)) return false;
       }
-      if (targetFile != null && child instanceof XmlEntityDecl xmlEntityDecl) {
-        XmlEntityCache.cacheParticularEntity(targetFile, xmlEntityDecl);
+      if (child instanceof XmlEntityDecl xmlEntityDecl) {
+        var targetFile = getTargetFile();
+        if (targetFile != null) {
+          XmlEntityCache.cacheParticularEntity(targetFile, xmlEntityDecl);
+        }
       }
       return true;
     }
   }
 
-  private static @Nullable PsiElement parseEntityRef(PsiFile targetFile, XmlEntityRef ref) {
+  private static @Nullable PsiElement parseEntityRef(@Nullable PsiFile targetFile, XmlEntityRef ref) {
     if (PlatformUtils.isJetBrainsClient()) return null;
 
     XmlEntityContextType type = getContextType(ref);

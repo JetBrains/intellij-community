@@ -4,6 +4,7 @@ package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
@@ -24,6 +25,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class XmlElementImpl extends CompositePsiElement implements XmlElement {
+
+  private static final Key<Language> LANGUAGE_KEY = Key.create("html.element.language");
+
   public XmlElementImpl(IElementType type) {
     super(type);
   }
@@ -70,7 +74,12 @@ public abstract class XmlElementImpl extends CompositePsiElement implements XmlE
 
   @Override
   public @NotNull Language getLanguage() {
-    return getContainingFile().getLanguage();
+    Language language = getUserData(LANGUAGE_KEY);
+    if (language == null) {
+      language = getParent().getLanguage();
+      putUserData(LANGUAGE_KEY, language);
+    }
+    return language;
   }
 
   protected static @Nullable String getNameFromEntityRef(final CompositeElement compositeElement, final IElementType xmlEntityDeclStart) {
