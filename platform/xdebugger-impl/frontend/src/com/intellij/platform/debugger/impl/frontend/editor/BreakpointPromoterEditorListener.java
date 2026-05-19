@@ -113,7 +113,6 @@ public final class BreakpointPromoterEditorListener implements EditorMouseMotion
   private void clear(EditorGutterComponentEx gutter) {
     updateActiveLineNumberIcon(gutter, null, null, null, false);
     myLastIcon = null;
-    TooltipController.getInstance().cancelTooltips();
   }
   private void onBreakpointTypeResolved(EditorGutterComponentEx gutter,
                                         XSourcePositionImpl position,
