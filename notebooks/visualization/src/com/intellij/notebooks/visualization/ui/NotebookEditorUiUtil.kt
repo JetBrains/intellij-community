@@ -89,7 +89,6 @@ fun EditorEx.addNotebookCellComponentInlay(
     componentContainer?.remove(component)
   }
 
-  updateUiOnParentResizeImpl(component.parent as JComponent, WeakReference(component))
   component.revalidate()
   inlay.update()
   return inlay
