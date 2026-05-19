@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -42,8 +41,6 @@ import static com.intellij.reference.SoftReference.dereference;
 
 @ApiStatus.Internal
 public final class SmartPointerManagerImpl extends SmartPointerManagerEx {
-  private static final int SMART_POINTER_INVALIDATION_THRESHOLD_MS = Registry.intValue("smart.pointer.invalidation.threshold.ms");
-
   private static final Logger LOG = Logger.getInstance(SmartPointerManagerImpl.class);
   private static final Key<Reference<SmartPsiElementPointerImpl<?>>> CACHED_SMART_POINTER_KEY = Key.create("CACHED_SMART_POINTER_KEY");
 
@@ -272,23 +269,11 @@ public final class SmartPointerManagerImpl extends SmartPointerManagerEx {
     if (!isSharedSourceSupportEnabled(myProject)) {
       return;
     }
-
-    long started = System.currentTimeMillis();
-    int physicalTrackerSize = -1;
-    try {
-      synchronized (myPhysicalTrackers) {
-        physicalTrackerSize = myPhysicalTrackers.size();
-        for (SmartPointerTracker value : myPhysicalTrackers.values()) {
-          if (value != null) {
-            value.possiblyInvalidate();
-          }
+    synchronized (myPhysicalTrackers) {
+      for (SmartPointerTracker value : myPhysicalTrackers.values()) {
+        if (value != null) {
+          value.possiblyInvalidate();
         }
-      }
-    }
-    finally {
-      long duration = System.currentTimeMillis() - started;
-      if (duration > SMART_POINTER_INVALIDATION_THRESHOLD_MS) {
-        LOG.error("Too long pointer invalidation: " + duration + ". Number of trackers: " + physicalTrackerSize + ".");
       }
     }
   }
