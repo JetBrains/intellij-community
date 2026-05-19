@@ -40,6 +40,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class BookmarkManagerTest extends AbstractEditorTest {
   private static final int DEFAULT_SWITCH_CYCLES = 2;
@@ -136,7 +138,126 @@ public class BookmarkManagerTest extends AbstractEditorTest {
     Document document = getEditor().getDocument();
     getEditor().getSelectionModel().setSelection(document.getLineStartOffset(2) - 1, document.getLineEndOffset(2));
     delete();
-    assertTrue(getManager().getBookmarks().isEmpty());
+    List<Bookmark> after = getManager().getBookmarks();
+    assertEquals(1, after.size());
+    assertInstanceOf(after.getFirst(), InvalidBookmark.class);
+    assertEquals("Memorial must carry the deleted line's text",
+                 "        int i = 1;", after.getFirst().getAttributes().get("lineText"));
+  }
+
+  public void testBookmarkSurvivesLineDeleteAndContentRestore() {
+    @NonNls String initial = "line 0\nline 1\noriginal line 2\nline 3\n";
+    init(initial, PlainTextFileType.INSTANCE);
+    Document document = getEditor().getDocument();
+
+    addBookmark(2);
+    assertEquals(1, getManager().getBookmarks().size());
+
+    getEditor().getSelectionModel().setSelection(document.getLineStartOffset(2) - 1, document.getLineEndOffset(2));
+    delete();
+    List<Bookmark> afterDelete = getManager().getBookmarks();
+    assertEquals(1, afterDelete.size());
+    assertInstanceOf(afterDelete.getFirst(), InvalidBookmark.class);
+
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> document.setText(initial));
+
+    List<Bookmark> afterRestore = getManager().getBookmarks();
+    assertEquals(1, afterRestore.size());
+    assertInstanceOf(afterRestore.getFirst(), LineBookmark.class);
+    assertEquals("original line 2", afterRestore.getFirst().getAttributes().get("lineText"));
+    assertEquals(2, ((LineBookmark)afterRestore.getFirst()).getLine());
+  }
+
+  public void testFirstEditLeavesOneMemorialFurtherEditsAreSilent() {
+    @NonNls String text = "line 0\nline 1\noriginal\nline 3\n";
+    init(text, PlainTextFileType.INSTANCE);
+    Document document = getEditor().getDocument();
+    String originalLineText = LineBookmarkProvider.Util.readLineText(document, 2);
+    assertNotNull(originalLineText);
+
+    addBookmark(2);
+    assertEquals(1, getManager().getBookmarks().size());
+
+    editLineTo(document, 2, "first edit");
+    PlatformTestUtil.waitWithEventsDispatching(
+      "first memorial did not appear",
+      () -> getManager().getBookmarks().stream().anyMatch(InvalidBookmark.class::isInstance),
+      15);
+    assertEquals("First edit should produce exactly one memorial",
+                 1, getManager().getBookmarks().stream().filter(InvalidBookmark.class::isInstance).count());
+    String memorialText = getManager().getBookmarks().stream()
+      .filter(InvalidBookmark.class::isInstance).findFirst().orElseThrow()
+      .getAttributes().get("lineText");
+    assertEquals(originalLineText, memorialText);
+
+    editLineTo(document, 2, "second edit");
+    PlatformTestUtil.waitWithEventsDispatching(
+      "live bookmark text did not pick up the second edit",
+      () -> getManager().getBookmarks().stream()
+        .filter(LineBookmark.class::isInstance)
+        .anyMatch(b -> "second edit".equals(b.getAttributes().get("lineText"))),
+      15);
+    assertEquals("Second in-branch edit must NOT add a new memorial",
+                 1, getManager().getBookmarks().stream().filter(InvalidBookmark.class::isInstance).count());
+
+    editLineTo(document, 2, "third edit");
+    PlatformTestUtil.waitWithEventsDispatching(
+      "live bookmark text did not pick up the third edit",
+      () -> getManager().getBookmarks().stream()
+        .filter(LineBookmark.class::isInstance)
+        .anyMatch(b -> "third edit".equals(b.getAttributes().get("lineText"))),
+      15);
+    assertEquals("Third in-branch edit must NOT add a new memorial",
+                 1, getManager().getBookmarks().stream().filter(InvalidBookmark.class::isInstance).count());
+  }
+
+  public void testMemorialFlagResetsAcrossBranches() {
+    @NonNls String branch1Initial = "line 0\nline 1\nA\nline 3\n";
+    init(branch1Initial, PlainTextFileType.INSTANCE);
+    Document document = getEditor().getDocument();
+
+    addBookmark(2);
+    editLineTo(document, 2, "B");
+    PlatformTestUtil.waitWithEventsDispatching(
+      "memorial 'A' did not appear after branch-1 edit",
+      () -> memorialLineTexts().contains("A"),
+      15);
+
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> document.setText(branch1Initial));
+    PlatformTestUtil.waitWithEventsDispatching(
+      "live bookmark did not resurrect to 'A' after whole-text-replace",
+      () -> getManager().getBookmarks().stream()
+        .filter(LineBookmark.class::isInstance)
+        .anyMatch(b -> "A".equals(b.getAttributes().get("lineText"))),
+      15);
+
+    editLineTo(document, 2, "C");
+    PlatformTestUtil.waitWithEventsDispatching(
+      "branch-2 edit memorial 'A' did not appear",
+      () -> memorialLineTexts().contains("A") && memorialLineTexts().contains("B"),
+      15);
+    Set<String> memorials = memorialLineTexts();
+    assertTrue("Memorial set must contain branch-1 demoted live 'B', got: " + memorials,
+               memorials.contains("B"));
+    assertTrue("Memorial set must contain the branch-2 pre-edit text 'A', got: " + memorials,
+               memorials.contains("A"));
+    assertEquals("Live bookmark should now carry the branch-2 edit text 'C', got: " + getManager().getBookmarks(),
+                 "C", getManager().getBookmarks().stream()
+                   .filter(LineBookmark.class::isInstance).findFirst().orElseThrow()
+                   .getAttributes().get("lineText"));
+  }
+
+  private void editLineTo(Document document, int line, @NonNls String newText) {
+    int start = document.getLineStartOffset(line);
+    int end = document.getLineEndOffset(line);
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> document.replaceString(start, end, newText));
+  }
+
+  private Set<String> memorialLineTexts() {
+    return getManager().getBookmarks().stream()
+      .filter(InvalidBookmark.class::isInstance)
+      .map(b -> b.getAttributes().get("lineText"))
+      .collect(Collectors.toSet());
   }
 
   public void testTwoBookmarksOnSameLine1() {

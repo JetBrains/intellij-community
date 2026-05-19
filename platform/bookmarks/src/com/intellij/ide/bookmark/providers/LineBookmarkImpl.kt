@@ -13,7 +13,8 @@ class LineBookmarkImpl @ApiStatus.Internal constructor(
   override val provider: LineBookmarkProvider,
   file: VirtualFile,
   line: Int,
-  expectedText: String? = null
+  expectedText: String? = null,
+  internal val memorialAdded: Boolean = false,
 ) : LineBookmark {
   constructor(provider: LineBookmarkProvider, file: VirtualFile, line: Int) : this(provider, file, line, null)
 

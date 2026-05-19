@@ -12,10 +12,13 @@ import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.util.treeView.AbstractTreeNodeCache
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleTextAttributes
 
 internal class GroupNode(project: Project, group: BookmarkGroup) : AbstractTreeNode<BookmarkGroup>(project, group) {
   private val cache = AbstractTreeNodeCache<Bookmark, AbstractTreeNode<*>>(this) { it.createNode() }
+
+  internal val groupingFileNodes: MutableMap<VirtualFile, FileNode> = mutableMapOf()
 
   override fun getChildren(): List<AbstractTreeNode<*>> {
     var bookmarks = value.getBookmarks()
