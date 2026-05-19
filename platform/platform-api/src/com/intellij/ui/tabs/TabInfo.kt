@@ -122,6 +122,7 @@ class TabInfo(var component: JComponent) : Queryable, PlaceProvider {
     private set
 
   private var defaultAttributes: SimpleTextAttributes? = null
+  private var usesDefaultTextAttributes = true
 
   var isEnabled: Boolean = true
     set(enabled) {
@@ -153,13 +154,14 @@ class TabInfo(var component: JComponent) : Queryable, PlaceProvider {
     }
 
   fun setText(text: @NlsContexts.TabTitle String): TabInfo {
-    val attributes = coloredText.attributes
-    val textAttributes = attributes.singleOrNull()
+    val oldText = coloredText.toString()
+    val textAttributes = coloredText.attributes.singleOrNull()
     val defaultAttributes = getDefaultAttributes()
-    if (coloredText.toString() != text || textAttributes != defaultAttributes) {
-      clearText(false)
-      @Suppress("DialogTitleCapitalization")
-      append(text, defaultAttributes)
+    if (oldText != text || textAttributes != defaultAttributes) {
+      coloredText.clear()
+      coloredText.append(text, defaultAttributes)
+      usesDefaultTextAttributes = true
+      changeSupport.firePropertyChange(TEXT, oldText, text)
     }
     return this
   }
@@ -192,6 +194,7 @@ class TabInfo(var component: JComponent) : Queryable, PlaceProvider {
   fun clearText(invalidate: Boolean): TabInfo {
     val old = coloredText.toString()
     coloredText.clear()
+    usesDefaultTextAttributes = true
     if (invalidate) {
       changeSupport.firePropertyChange(TEXT, old, coloredText.toString())
     }
@@ -201,6 +204,7 @@ class TabInfo(var component: JComponent) : Queryable, PlaceProvider {
   fun append(fragment: @NlsContexts.Label String, attributes: SimpleTextAttributes): TabInfo {
     val old = coloredText.toString()
     coloredText.append(fragment, attributes)
+    usesDefaultTextAttributes = false
     changeSupport.firePropertyChange(TEXT, old, coloredText.toString())
     return this
   }
@@ -344,7 +348,8 @@ class TabInfo(var component: JComponent) : Queryable, PlaceProvider {
   }
 
   private fun update() {
-    setText(text)
+    if (usesDefaultTextAttributes)
+      setText(text)
   }
 
   fun revalidate() {
