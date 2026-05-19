@@ -64,7 +64,7 @@ public final class TerminalContainer {
     myForceHideUiWhenSessionEnds = true;
     TtyConnector connector = myTerminalWidget.getTtyConnector();
     if (connector != null && connector.isConnected()) {
-      connector.close();
+      ApplicationManager.getApplication().executeOnPooledThread(() -> connector.close());
     }
     else {
       // When "Close session when it ends" is off, terminal session is shown even with terminated process.
