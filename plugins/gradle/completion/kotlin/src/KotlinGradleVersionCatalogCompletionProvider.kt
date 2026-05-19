@@ -32,19 +32,18 @@ internal class KotlinGradleVersionCatalogCompletionProvider : CompletionProvider
                 doAddCompletions(result, input, element, defaultSectionsFilter = setOf(VersionCatalogSection.PLUGINS))
 
             insideScriptBlockPattern(DEPENDENCIES).accepts(element) -> {
-                val sortedResult = result.withRelevanceSorter(CompletionSorter.defaultSorter(parameters, result.prefixMatcher)
-                    .weighBefore("middleMatching", GradleVersionCatalogWeigher)
-                )
-                when {
-                    element.isOnTheTopLevelOfScriptBlock(DEPENDENCIES) -> return
-
+                if (element.isDependencyArgumentWithoutQuotes()) {
                     // dependencies { implementation(<caret>) }
-                    element.isDependencyArgumentWithoutQuotes() -> {
-                        val defaultSections = setOf(VersionCatalogSection.LIBRARIES, VersionCatalogSection.BUNDLES)
-                        doAddCompletions(sortedResult, input, element, defaultSectionsFilter = defaultSections)
-                    }
+                    // dependencies { implementation(platform(<caret>)) }
+                    val sortedResult = result.withRelevanceSorter(
+                        CompletionSorter.defaultSorter(parameters, result.prefixMatcher)
+                            .weighBefore("middleMatching", GradleVersionCatalogWeigher)
+                    )
+                    val defaultSections = setOf(VersionCatalogSection.LIBRARIES, VersionCatalogSection.BUNDLES)
+                    doAddCompletions(sortedResult, input, element, defaultSectionsFilter = defaultSections)
                 }
             }
+
             else ->
                 doAddCompletions(result, input, element)
         }
