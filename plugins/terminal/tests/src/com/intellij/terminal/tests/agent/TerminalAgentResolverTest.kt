@@ -330,6 +330,108 @@ internal class TerminalAgentResolverTest : BasePlatformTestCase() {
     }
   }
 
+  @Test
+  fun `posix prefers codex found in PATH over known locations`() {
+    runBlocking {
+      val codex = bundledAgentByKey("codex")
+      val homePath = "/home/Someone.Else"
+      val eelApi = mockEelApi(
+        osFamily = EelOsFamily.Posix,
+        binaryName = "codex",
+        pathResults = listOf("/opt/codex/codex"),
+        homePath = homePath,
+        existingFiles = setOf("$homePath/.local/bin/codex", "/usr/local/bin/codex"),
+      )
+
+      val binaryPath = findTerminalAgentBinaryPath(codex, eelApi)
+
+      assertThat(binaryPath).isEqualTo("/opt/codex/codex")
+    }
+  }
+
+  @Test
+  fun `windows matches binary name case-insensitively in known location`() {
+    runBlocking {
+      val codex = bundledAgentByKey("codex")
+      val homePath = "C:\\Users\\Someone.Else"
+      val expectedPath = "$homePath\\AppData\\Roaming\\npm\\Codex.exe"
+      val eelApi = mockEelApi(
+        osFamily = EelOsFamily.Windows,
+        binaryName = "codex",
+        pathResults = emptyList(),
+        homePath = homePath,
+        existingFiles = setOf(expectedPath),
+      )
+
+      val binaryPath = findTerminalAgentBinaryPath(codex, eelApi)
+
+      assertThat(binaryPath).isEqualTo(expectedPath)
+    }
+  }
+
+  @Test
+  fun `windows matches extension case-insensitively in known location`() {
+    runBlocking {
+      val codex = bundledAgentByKey("codex")
+      val homePath = "C:\\Users\\Someone.Else"
+      val expectedPath = "$homePath\\AppData\\Roaming\\npm\\codex.EXE"
+      val eelApi = mockEelApi(
+        osFamily = EelOsFamily.Windows,
+        binaryName = "codex",
+        pathResults = emptyList(),
+        homePath = homePath,
+        existingFiles = setOf(expectedPath),
+      )
+
+      val binaryPath = findTerminalAgentBinaryPath(codex, eelApi)
+
+      assertThat(binaryPath).isEqualTo(expectedPath)
+    }
+  }
+
+  @Test
+  fun `windows ignores unrelated files in known location`() {
+    runBlocking {
+      val codex = bundledAgentByKey("codex")
+      val homePath = "C:\\Users\\Someone.Else"
+      val expectedPath = "$homePath\\AppData\\Roaming\\npm\\codex.cmd"
+      val eelApi = mockEelApi(
+        osFamily = EelOsFamily.Windows,
+        binaryName = "codex",
+        pathResults = emptyList(),
+        homePath = homePath,
+        existingFiles = setOf(
+          "$homePath\\AppData\\Roaming\\npm\\unrelated.exe",
+          "$homePath\\AppData\\Roaming\\npm\\codexlike.exe",
+          expectedPath,
+        ),
+      )
+
+      val binaryPath = findTerminalAgentBinaryPath(codex, eelApi)
+
+      assertThat(binaryPath).isEqualTo(expectedPath)
+    }
+  }
+
+  @Test
+  fun `windows ignores binary without extension in known location`() {
+    runBlocking {
+      val codex = bundledAgentByKey("codex")
+      val homePath = "C:\\Users\\Someone.Else"
+      val eelApi = mockEelApi(
+        osFamily = EelOsFamily.Windows,
+        binaryName = "codex",
+        pathResults = emptyList(),
+        homePath = homePath,
+        existingFiles = setOf("$homePath\\AppData\\Roaming\\npm\\codex"),
+      )
+
+      val binaryPath = findTerminalAgentBinaryPath(codex, eelApi)
+
+      assertThat(binaryPath).isNull()
+    }
+  }
+
   private fun bundledAgentByKey(agentKey: String) = bundledAgentByKey(TerminalAgent.AgentKey(agentKey))
 
   private fun bundledAgentByKey(agentKey: TerminalAgent.AgentKey) =
@@ -342,21 +444,9 @@ internal class TerminalAgentResolverTest : BasePlatformTestCase() {
     homePath: String = if (osFamily == EelOsFamily.Windows) "C:\\Users\\tester" else "/home/tester",
     existingFiles: Set<String> = emptySet(),
   ): EelApi {
-    val pathResultsByBinaryName = LinkedHashMap<String, List<String>>()
-    when (osFamily) {
-      EelOsFamily.Posix -> {
-        pathResultsByBinaryName[binaryName] = pathResults
-      }
-      EelOsFamily.Windows -> {
-        for (extension in WINDOWS_EXECUTABLE_EXTENSIONS) {
-          pathResultsByBinaryName["$binaryName.$extension"] = pathResults.filter {
-            it.endsWith(".$extension", ignoreCase = true)
-          }
-        }
-      }
-    }
-
-    return mockEelApi(osFamily, pathResultsByBinaryName, homePath, existingFiles)
+    // The resolver calls `findExeFilesInPath(binaryName)` once per agent (no extension on Windows
+    // either — extensions are filtered from the returned list afterwards), so we stub a single entry.
+    return mockEelApi(osFamily, mapOf(binaryName to pathResults), homePath, existingFiles)
   }
 
   private suspend fun mockEelApi(
@@ -367,6 +457,8 @@ internal class TerminalAgentResolverTest : BasePlatformTestCase() {
   ): EelApi {
     val descriptor = mock<EelDescriptor>()
     whenever(descriptor.osFamily).thenReturn(osFamily)
+
+    val separator = if (osFamily == EelOsFamily.Windows) '\\' else '/'
 
     val parsedResultsByBinaryName = pathResultsByBinaryName.mapValues { (_, pathResults) ->
       pathResults.map { EelPath.parse(it, descriptor) }
@@ -391,11 +483,31 @@ internal class TerminalAgentResolverTest : BasePlatformTestCase() {
     val userInfo = mock<EelUserInfo>()
     whenever(userInfo.home).thenReturn(homeEelPath)
 
+    // Pre-compute `listDirectoryWithAttrs` results per parent directory so the stub does a
+    // thread-safe map lookup instead of constructing new mocks on each parallel invocation.
+    val listingByParent: Map<String, List<Pair<String, EelFileInfo>>> = existingFiles
+      .groupBy { it.substringBeforeLast(separator) }
+      .mapValues { (_, fullPaths) ->
+        fullPaths.map { fullPath -> fullPath.substringAfterLast(separator) to regularFileInfo }
+      }
+    val listResultByParent: Map<String, EelResult.Ok<Collection<Pair<String, EelFileInfo>>>> =
+      listingByParent.mapValues { (_, children) ->
+        val ok = mock<EelResult.Ok<Collection<Pair<String, EelFileInfo>>>>()
+        whenever(ok.value).thenReturn(children)
+        ok
+      }
+    val emptyListResult = mock<EelResult.Ok<Collection<Pair<String, EelFileInfo>>>>()
+    whenever(emptyListResult.value).thenReturn(emptyList())
+
     val fileSystem = mock<EelFileSystemApi>()
     whenever(fileSystem.user).thenReturn(userInfo)
     whenever(fileSystem.stat(any(), eq(EelFileSystemApi.SymlinkPolicy.RESOLVE_AND_FOLLOW))).thenAnswer { invocation ->
       val path = invocation.getArgument<EelPath>(0).toString()
       if (path in existingFiles) regularFileResult else missingFileResult
+    }
+    whenever(fileSystem.listDirectoryWithAttrs(any<EelFileSystemApi.ListDirectoryWithAttrsArgs>())).thenAnswer { invocation ->
+      val args = invocation.getArgument<EelFileSystemApi.ListDirectoryWithAttrsArgs>(0)
+      listResultByParent[args.path.toString()] ?: emptyListResult
     }
 
     val eelApi = mock<EelApi>()
@@ -403,9 +515,5 @@ internal class TerminalAgentResolverTest : BasePlatformTestCase() {
     whenever(eelApi.exec).thenReturn(exec)
     whenever(eelApi.fs).thenReturn(fileSystem)
     return eelApi
-  }
-
-  companion object {
-    private val WINDOWS_EXECUTABLE_EXTENSIONS = listOf("exe", "bat", "cmd", "ps1")
   }
 }
