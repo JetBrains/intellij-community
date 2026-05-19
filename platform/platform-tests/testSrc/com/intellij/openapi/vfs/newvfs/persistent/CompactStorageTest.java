@@ -19,28 +19,95 @@ import java.nio.file.Path;
 import java.util.Random;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
 
 public class CompactStorageTest extends StorageTestBase {
-  @NotNull
+
+  private static final int CREATED_RECORDS_COUNT = 2000;
+
   @Override
-  protected Storage createStorage(@NotNull Path fileName) throws IOException {
+  protected @NotNull Storage createStorage(@NotNull Path fileName) throws IOException {
     return new CompactStorage(fileName);
+  }
+
+  @Test
+  public void recordsInserted_couldBeReadBackViaIterator() throws IOException {
+    for (int i = 0; i < CREATED_RECORDS_COUNT; ++i) {
+      createTestRecord(myStorage);
+    }
+    assertThat(countLiveLogicalRecords()).isEqualTo(CREATED_RECORDS_COUNT);
+
+    RecordIdIterator recordIdIterator = myStorage.createRecordIdIterator();
+    while (recordIdIterator.hasNextId()) {
+      boolean validId = recordIdIterator.validId();
+      int nextId = recordIdIterator.nextId();
+      if (!validId) continue;
+      checkTestRecord(nextId);
+    }
+  }
+
+  @Test
+  public void recordsInserted_couldBeReadBackViaIterator_afterReopen() throws IOException {
+    for (int i = 0; i < CREATED_RECORDS_COUNT; ++i) {
+      createTestRecord(myStorage);
+    }
+    assertThat(countLiveLogicalRecords()).isEqualTo(CREATED_RECORDS_COUNT);
+
+    //reopen storage:
+    Disposer.dispose(myStorage);
+    setUpStorage();
+    assertThat(countLiveLogicalRecords()).isEqualTo(CREATED_RECORDS_COUNT);
+
+    RecordIdIterator recordIdIterator = myStorage.createRecordIdIterator();
+    while (recordIdIterator.hasNextId()) {
+      boolean validId = recordIdIterator.validId();
+      int nextId = recordIdIterator.nextId();
+      if (!validId) continue;
+      checkTestRecord(nextId);
+    }
+  }
+
+  @Test
+  public void deletedRecords_areSkippedDuringIteration() throws IOException {
+    IntList recordsList = new IntArrayList();
+    for (int i = 0; i < CREATED_RECORDS_COUNT; i++) {
+      recordsList.add(createTestRecord(myStorage));
+    }
+    for (int i = 0; i < CREATED_RECORDS_COUNT / 2; i++) {
+      myStorage.deleteRecord(recordsList.getInt(i));
+    }
+    int logicalRecordCount = countLiveLogicalRecords();
+    assertThat(logicalRecordCount).isEqualTo(CREATED_RECORDS_COUNT / 2);
+
+    int removedRecordId = recordsList.getInt(0);
+    assertThat(myStorage.readStream(removedRecordId).available())
+      .describedAs("No content for reading removed record")
+      .isEqualTo(0);
+
+    RecordIdIterator recordIdIterator = myStorage.createRecordIdIterator();
+    while (recordIdIterator.hasNextId()) {
+      boolean validId = recordIdIterator.validId();
+      int nextId = recordIdIterator.nextId();
+      if (!validId) continue;
+      checkTestRecord(nextId);
+    }
+
+    assertThat(countLiveLogicalRecords()).isEqualTo(CREATED_RECORDS_COUNT / 2);
   }
 
   @Test
   public void testCompactAndIterators() throws IOException {
     IntList recordsList = new IntArrayList();
     // 1000 records after deletion greater than 3M limit for init time compaction
-    final int recordCount = 2000;
-    for (int i = 0; i < recordCount; ++i) {
+    for (int i = 0; i < CREATED_RECORDS_COUNT; i++) {
       recordsList.add(createTestRecord(myStorage));
     }
-    final int physicalRecordCount = myStorage.getLiveRecordsCount();
-    for (int i = 0; i < recordCount / 2; ++i) {
+    int physicalRecordCount = myStorage.getLiveRecordsCount();
+    for (int i = 0; i < CREATED_RECORDS_COUNT / 2; i++) {
       myStorage.deleteRecord(recordsList.getInt(i));
     }
     int logicalRecordCount = countLiveLogicalRecords();
-    assertThat(logicalRecordCount).isEqualTo(recordCount / 2);
+    assertThat(logicalRecordCount).isEqualTo(CREATED_RECORDS_COUNT / 2);
 
     int removedRecordId = recordsList.getInt(0);
     assertThat(myStorage.readStream(removedRecordId).available()).describedAs("No content for reading removed record").isEqualTo(0);
@@ -51,53 +118,57 @@ public class CompactStorageTest extends StorageTestBase {
     setUpStorage();
     assertThat(myStorage.getLiveRecordsCount()).isEqualTo(physicalRecordCount / 2);
 
-    logicalRecordCount = 0;
 
     RecordIdIterator recordIdIterator = myStorage.createRecordIdIterator();
     while (recordIdIterator.hasNextId()) {
       boolean validId = recordIdIterator.validId();
       int nextId = recordIdIterator.nextId();
       if (!validId) continue;
-      ++logicalRecordCount;
       checkTestRecord(nextId);
     }
 
-    assertThat(logicalRecordCount).isEqualTo(recordCount / 2);
+    assertThat(countLiveLogicalRecords()).isEqualTo(CREATED_RECORDS_COUNT / 2);
   }
 
   protected int countLiveLogicalRecords() throws IOException {
     RecordIdIterator recordIdIterator = myStorage.createRecordIdIterator();
     int logicalRecordCount = 0;
-
-    while(recordIdIterator.hasNextId()) {
+    while (recordIdIterator.hasNextId()) {
       boolean validId = recordIdIterator.validId();
       recordIdIterator.nextId();
       if (!validId) continue;
-      ++logicalRecordCount;
+      logicalRecordCount++;
     }
     return logicalRecordCount;
   }
 
-  private static final int TIMES_LIMIT = 10000;
+  private static final int INTS_PER_RECORD = 10000;
 
-  static int createTestRecord(Storage storage) throws IOException {
-    final int r = storage.createNewRecord();
+  /** Creates a new record in the storage and fills it with TIMES_LIMIT ints generated by `Random(recordId).nextInt()` */
+  static int createTestRecord(@NotNull Storage storage) throws IOException {
+    int recordId = storage.createNewRecord();
 
-    try (DataOutputStream out = new DataOutputStream(storage.appendStream(r))) {
-      Random random = new Random(r);
-      for (int i = 0; i < TIMES_LIMIT; i++) {
+    try (DataOutputStream out = new DataOutputStream(storage.appendStream(recordId))) {
+      Random random = new Random(recordId);
+      for (int i = 0; i < INTS_PER_RECORD; i++) {
         out.writeInt(random.nextInt());
       }
     }
 
-    return r;
+    return recordId;
   }
 
   private void checkTestRecord(int id) throws IOException {
     try (DataInputStream stream = myStorage.readStream(id)) {
       Random random = new Random(id);
-      for (int i = 0; i < TIMES_LIMIT; i++) {
-        assertThat(stream.readInt()).isEqualTo(random.nextInt());
+      for (int i = 0; i < INTS_PER_RECORD; i++) {
+        int expected = random.nextInt();
+        int actual = stream.readInt();
+        assertEquals(
+          "[id: " + id + "][offset: " + i + "]",
+          expected,
+          actual
+        );
       }
     }
   }
