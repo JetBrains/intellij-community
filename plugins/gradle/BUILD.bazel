@@ -243,6 +243,8 @@ jvm_library(
     "//libraries/guava",
     "//platform/forms_rt:java-guiForms-rt",
     "//plugins/repository-search/completion",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.todoView:moduleSet-plugin-todoView",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.structureView:moduleSet-plugin-structureView",
   ]
 )
 
@@ -395,6 +397,8 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io_test_lib",
     "//platform/ide-core:ide-core_test_lib",
     "//platform/execution.dashboard:execution.dashboard_test_lib",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.todoView:moduleSet-plugin-todoView_test_lib",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.structureView:moduleSet-plugin-structureView_test_lib",
   ]
 )
 ### auto-generated section `build intellij.gradle.tests` end
