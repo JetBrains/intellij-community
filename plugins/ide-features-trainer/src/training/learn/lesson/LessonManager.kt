@@ -193,7 +193,8 @@ class LessonManager {
     learnPanel?.addMessages(TextParagraph(allParts), LessonMessagePane.MessageProperties(LessonMessagePane.MessageState.RESTORE))
   }
 
-  fun lessonShouldBeOpenedCompleted(lesson: Lesson): Boolean = lesson.passed && currentLesson != lesson
+  fun lessonShouldBeOpenedCompleted(lesson: Lesson): Boolean =
+    !lesson.alwaysRestart && lesson.passed && currentLesson != lesson
 
   fun focusTask() {
     if (lessonIsRunning()) {
