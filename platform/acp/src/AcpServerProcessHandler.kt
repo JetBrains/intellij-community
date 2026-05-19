@@ -1,4 +1,4 @@
-package com.intellij.platform.acp.api
+package com.intellij.platform.acp
 
 import com.intellij.platform.eel.EelProcess
 import kotlinx.coroutines.Deferred
