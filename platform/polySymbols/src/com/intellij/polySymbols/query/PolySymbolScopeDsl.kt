@@ -9,9 +9,11 @@ import com.intellij.polySymbols.PolySymbolBuilder
 import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
+import com.intellij.polySymbols.DependencyHandle
 import com.intellij.polySymbols.query.impl.ProjectPolySymbolScopeCachedBuilderImpl
 import com.intellij.polySymbols.query.impl.PsiPolySymbolScopeCachedBuilderImpl
 import com.intellij.polySymbols.query.impl.UserDataHolderPolySymbolScopeCachedBuilderImpl
+import com.intellij.polySymbols.query.impl.buildPolySymbolCompoundScope
 import com.intellij.polySymbols.query.impl.buildPolySymbolScope
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
@@ -90,6 +92,16 @@ fun polySymbolScope(
   configure: PolySymbolScopeBuilder.() -> Unit,
 ): PolySymbolScope =
   buildPolySymbolScope(configure)
+
+/**
+ * Build a [PolySymbolCompoundScope] with the DSL. Declare dependencies via
+ * [PolySymbolCompoundScopeBuilder.dependency] and emit scopes inside
+ * [PolySymbolCompoundScopeBuilder.initialize].
+ */
+fun polySymbolCompoundScope(
+  configure: PolySymbolCompoundScopeBuilder.() -> Unit,
+): PolySymbolCompoundScope =
+  buildPolySymbolCompoundScope(configure)
 
 
 @PolySymbolScopeDsl
@@ -267,4 +279,54 @@ interface PsiPolySymbolScopeCachedInitializer<T : PsiElement, K> : PolySymbolSco
 interface PolySymbolScopeCachedInitializer<T : UserDataHolder, K> : PolySymbolScopeCachedInitializerBase<K> {
 
   val dataHolder: T
+}
+
+/**
+ * Receiver of the [PolySymbolCompoundScopeBuilder.initialize] body. Provides access to the
+ * [queryExecutor] and methods to emit inner [PolySymbolScope]s to the compound scope.
+ */
+@PolySymbolScopeDsl
+@ApiStatus.NonExtendable
+interface PolySymbolCompoundScopeInitializer {
+
+  val queryExecutor: PolySymbolQueryExecutor
+
+  /** Emit a single scope. */
+  fun add(scope: PolySymbolScope)
+
+  /** Emit a collection of scopes. */
+  fun addAll(scopes: Iterable<PolySymbolScope>)
+
+  /** Operator form of [add]. */
+  operator fun PolySymbolScope.unaryPlus()
+
+  /** Operator form of [addAll]. */
+  operator fun Iterable<PolySymbolScope>.unaryPlus()
+}
+
+/**
+ * Builder receiver for the [polySymbolCompoundScope] factory. Declare optional priority and
+ * `requiresResolve` flag, register dependencies via [dependency], and emit scopes in [initialize].
+ */
+@PolySymbolScopeDsl
+@ApiStatus.NonExtendable
+interface PolySymbolCompoundScopeBuilder {
+
+  fun requiresResolve(value: Boolean)
+
+  fun priority(priority: PolySymbol.Priority)
+
+  /**
+   * Declare a [PsiElement] dependency tracked via a smart pointer.
+   * The returned [DependencyHandle] can be accessed (via `by`, `.value`, or `invoke()`)
+   * inside the [initialize] body, where the dependency scope is active.
+   */
+  fun <T : PsiElement> dependency(element: T): DependencyHandle<T>
+
+  /**
+   * Declare a generic dependency with a custom pointer provider.
+   */
+  fun <T : Any> dependency(`object`: T, pointerProvider: (T) -> Pointer<out T>): DependencyHandle<T>
+
+  fun initialize(body: PolySymbolCompoundScopeInitializer.() -> Unit)
 }

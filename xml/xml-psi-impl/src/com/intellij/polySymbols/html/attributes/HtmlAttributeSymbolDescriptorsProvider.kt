@@ -6,8 +6,8 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolModifier
 import com.intellij.polySymbols.html.HTML_ATTRIBUTES
-import com.intellij.polySymbols.html.HtmlSymbolQueryScopeContributor
 import com.intellij.polySymbols.html.attributes.HtmlAttributeSymbolDescriptor.Companion.toAttributeDescriptor
+import com.intellij.polySymbols.html.htmlContextualSymbolScope
 import com.intellij.polySymbols.html.elements.HtmlElementSymbolDescriptor
 import com.intellij.polySymbols.html.hasOnlyStandardHtmlSymbols
 import com.intellij.polySymbols.html.hasOnlyStandardHtmlSymbolsOrExtensions
@@ -27,7 +27,7 @@ class HtmlAttributeSymbolDescriptorsProvider : XmlAttributeDescriptorsProvider {
       XmlAttributeDescriptor.EMPTY
     else {
       val queryExecutor = PolySymbolQueryExecutorFactory.create(context)
-      val additionalScope = listOf(HtmlSymbolQueryScopeContributor.HtmlContextualSymbolScope(context.firstChild))
+      val additionalScope = listOf(htmlContextualSymbolScope(context.firstChild))
       queryExecutor
         .listSymbolsQuery(HTML_ATTRIBUTES, expandPatterns = true)
         .exclude(PolySymbolModifier.ABSTRACT, PolySymbolModifier.VIRTUAL)
@@ -50,7 +50,7 @@ class HtmlAttributeSymbolDescriptorsProvider : XmlAttributeDescriptorsProvider {
       val additionalScope = if (attribute != null)
         emptyList()
       else
-        listOf(HtmlSymbolQueryScopeContributor.HtmlContextualSymbolScope(context.firstChild))
+        listOf(htmlContextualSymbolScope(context.firstChild))
 
       queryExecutor
         .nameMatchQuery(HTML_ATTRIBUTES, attributeName)

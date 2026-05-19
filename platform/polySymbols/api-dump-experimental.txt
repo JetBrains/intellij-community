@@ -796,6 +796,18 @@
 - f:getSymbols(com.intellij.polySymbols.PolySymbolKind,com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams,com.intellij.polySymbols.query.PolySymbolQueryStack):java.util.List
 - f:isExclusiveFor(com.intellij.polySymbols.PolySymbolKind):Z
 - p:requiresResolve():Z
+*:com.intellij.polySymbols.query.PolySymbolCompoundScopeBuilder
+- a:dependency(com.intellij.psi.PsiElement):com.intellij.polySymbols.DependencyHandle
+- a:dependency(java.lang.Object,kotlin.jvm.functions.Function1):com.intellij.polySymbols.DependencyHandle
+- a:initialize(kotlin.jvm.functions.Function1):V
+- a:priority(com.intellij.polySymbols.PolySymbol$Priority):V
+- a:requiresResolve(Z):V
+*:com.intellij.polySymbols.query.PolySymbolCompoundScopeInitializer
+- a:add(com.intellij.polySymbols.query.PolySymbolScope):V
+- a:addAll(java.lang.Iterable):V
+- a:getQueryExecutor():com.intellij.polySymbols.query.PolySymbolQueryExecutor
+- a:unaryPlus(com.intellij.polySymbols.query.PolySymbolScope):V
+- a:unaryPlus(java.lang.Iterable):V
 *:com.intellij.polySymbols.query.PolySymbolDefaultIconProvider
 - *sf:Companion:com.intellij.polySymbols.query.PolySymbolDefaultIconProvider$Companion
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
@@ -1087,6 +1099,7 @@
 *@:com.intellij.polySymbols.query.PolySymbolScopeDsl
 - java.lang.annotation.Annotation
 *f:com.intellij.polySymbols.query.PolySymbolScopeDslKt
+- sf:polySymbolCompoundScope(kotlin.jvm.functions.Function1):com.intellij.polySymbols.query.PolySymbolCompoundScope
 - sf:polySymbolScope(kotlin.jvm.functions.Function1):com.intellij.polySymbols.query.PolySymbolScope
 - sf:polySymbolScopeCached(com.intellij.openapi.project.Project,com.intellij.openapi.util.UserDataHolder,java.lang.Object,kotlin.jvm.functions.Function1):com.intellij.polySymbols.query.PolySymbolScope
 - sf:polySymbolScopeCached(com.intellij.openapi.project.Project,com.intellij.openapi.util.UserDataHolder,kotlin.jvm.functions.Function1):com.intellij.polySymbols.query.PolySymbolScope

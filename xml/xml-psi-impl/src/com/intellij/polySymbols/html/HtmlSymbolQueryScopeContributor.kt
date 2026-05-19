@@ -17,16 +17,14 @@ import com.intellij.polySymbols.js.JS_EVENTS
 import com.intellij.polySymbols.query.PolySymbolCompoundScope
 import com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams
 import com.intellij.polySymbols.query.PolySymbolNameMatchQueryParams
-import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 import com.intellij.polySymbols.query.PolySymbolQueryScopeContributor
 import com.intellij.polySymbols.query.PolySymbolQueryScopeProviderRegistrar
 import com.intellij.polySymbols.query.PolySymbolQueryStack
 import com.intellij.polySymbols.query.PolySymbolScope
-import com.intellij.polySymbols.utils.PolySymbolPrioritizedScope
+import com.intellij.polySymbols.query.polySymbolCompoundScope
 import com.intellij.polySymbols.utils.match
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
-import com.intellij.psi.createSmartPointer
 import com.intellij.psi.html.HtmlTag
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parentOfTypes
@@ -44,65 +42,10 @@ class HtmlSymbolQueryScopeContributor : PolySymbolQueryScopeContributor {
       .forPsiLocation(XmlElement::class.java)
       .contributeScopeProvider { location ->
         listOfNotNull(
-          location.takeIf { it !is XmlTag }?.let { HtmlContextualSymbolScope(it) },
+          location.takeIf { it !is XmlTag }?.let { htmlContextualSymbolScope(it) },
           location.parentOfType<HtmlTag>(withSelf = true)?.let { StandardHtmlSymbolScope(it) },
         )
       }
-  }
-
-  @ApiStatus.Internal
-  class HtmlContextualSymbolScope(private val location: PsiElement) : PolySymbolCompoundScope(), PolySymbolPrioritizedScope {
-
-    init {
-      assert(location !is XmlTag) { "Cannot create HtmlContextualPolySymbolsScope on a tag." }
-    }
-
-    override val priority: PolySymbol.Priority
-      get() = PolySymbol.Priority.HIGHEST
-
-    override fun requiresResolve(): Boolean = false
-
-    override fun build(queryExecutor: PolySymbolQueryExecutor, consumer: (PolySymbolScope) -> Unit) {
-      val context = location.parentOfTypes(XmlTag::class, XmlAttribute::class)
-      val element = (context as? XmlTag) ?: (context as? XmlAttribute)?.parent ?: return
-      val elementScope =
-        element.takeIf { queryExecutor.allowResolve }
-          ?.descriptor?.asSafely<HtmlElementSymbolDescriptor>()?.symbol?.queryScope
-        ?: queryExecutor.nameMatchQuery(HTML_ELEMENTS, element.name)
-          .exclude(PolySymbolModifier.ABSTRACT)
-          .run()
-          .flatMap { it.queryScope }
-
-      elementScope.forEach(consumer)
-
-      val attribute = context as? XmlAttribute ?: return
-      attribute.takeIf { queryExecutor.allowResolve }
-        ?.descriptor
-        ?.asSafely<HtmlAttributeSymbolDescriptor>()
-        ?.symbol
-        ?.queryScope
-        ?.forEach(consumer)
-      ?: queryExecutor.nameMatchQuery(HTML_ATTRIBUTES, attribute.name)
-        .additionalScope(elementScope)
-        .exclude(PolySymbolModifier.ABSTRACT)
-        .run()
-        .flatMap { it.queryScope }
-        .forEach(consumer)
-    }
-
-    override fun createPointer(): Pointer<out PolySymbolCompoundScope> {
-      val attributePtr = location.createSmartPointer()
-      return Pointer {
-        attributePtr.dereference()?.let { HtmlContextualSymbolScope(location) }
-      }
-    }
-
-    override fun equals(other: Any?): Boolean =
-      other === this ||
-      other is HtmlContextualSymbolScope && other.location == location
-
-    override fun hashCode(): Int =
-      location.hashCode()
   }
 
   private class StandardHtmlSymbolScope(private val tag: HtmlTag) : PolySymbolScope {
@@ -204,3 +147,28 @@ class HtmlSymbolQueryScopeContributor : PolySymbolQueryScopeContributor {
 
 }
 
+@ApiStatus.Internal
+fun htmlContextualSymbolScope(location: PsiElement): PolySymbolCompoundScope {
+  require(location !is XmlTag) { "Cannot create HtmlContextualPolySymbolsScope on a tag." }
+  return polySymbolCompoundScope {
+    requiresResolve(false)
+    priority(PolySymbol.Priority.HIGHEST)
+    val location by dependency(location)
+    initialize {
+      val context = location.parentOfTypes(XmlTag::class, XmlAttribute::class)
+      val htmlElement = (context as? XmlTag) ?: (context as? XmlAttribute)?.parent ?: return@initialize
+      val elementScope =
+        htmlElement.takeIf { queryExecutor.allowResolve }
+          ?.descriptor?.asSafely<HtmlElementSymbolDescriptor>()?.symbol?.queryScope
+        ?: queryExecutor.nameMatchQuery(HTML_ELEMENTS, htmlElement.name)
+          .exclude(PolySymbolModifier.ABSTRACT).run().flatMap { it.queryScope }
+      elementScope.forEach(::add)
+      val attribute = context as? XmlAttribute ?: return@initialize
+      attribute.takeIf { queryExecutor.allowResolve }
+        ?.descriptor?.asSafely<HtmlAttributeSymbolDescriptor>()?.symbol?.queryScope?.forEach(::add)
+        ?: queryExecutor.nameMatchQuery(HTML_ATTRIBUTES, attribute.name)
+          .additionalScope(elementScope).exclude(PolySymbolModifier.ABSTRACT).run()
+          .flatMap { it.queryScope }.forEach(::add)
+    }
+  }
+}
