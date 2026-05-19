@@ -253,14 +253,7 @@ inline fun communityMacCustomizer(
   bundleIdentifier = "com.jetbrains.intellij.ce"
   dmgImagePath = "build/conf/ideaCE/mac/images/dmg_background.tiff"
 
-  rootDirectoryName { appInfo, _ ->
-    if (appInfo.isEAP) {
-      "IntelliJ IDEA ${appInfo.majorVersion}.${appInfo.minorVersionMainPart} CE EAP.app"
-    }
-    else {
-      "IntelliJ IDEA CE.app"
-    }
-  }
+  rootDirectoryName { _, _ -> "IntelliJ IDEA OSS.app" }
 
   executableFilePatterns { base, _, _, _ ->
     val kotlinExecutables = KotlinBinaries.kotlinCompilerExecutables
