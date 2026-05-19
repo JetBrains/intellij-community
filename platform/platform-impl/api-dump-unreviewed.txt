@@ -2887,14 +2887,6 @@ f:com.intellij.ide.plugins.CountIcon
 f:com.intellij.ide.plugins.CreateAllServicesAndExtensionsActionKt
 - sf:ACTION_ID:java.lang.String
 - sf:performAction():V
-f:com.intellij.ide.plugins.CustomPluginRepositoryService
-- com.intellij.ide.plugins.auth.PluginRepositoryAuthListener
-- <init>():V
-- authenticationChanged():V
-- clearCache():V
-- getCustomRepositoryPluginMap():java.util.Map
-- getCustomRepositoryPlugins():java.util.Collection
-- s:getInstance():com.intellij.ide.plugins.CustomPluginRepositoryService
 f:com.intellij.ide.plugins.DefaultPluginManagementPolicy
 - <init>():V
 - canEnablePlugin(com.intellij.ide.plugins.IdeaPluginDescriptor):Z

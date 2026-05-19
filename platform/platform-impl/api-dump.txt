@@ -316,14 +316,6 @@ f:com.intellij.ide.plugins.RepositoryHelper
 com.intellij.ide.plugins.UIComponentVirtualFile$Content
 - a:createComponent():javax.swing.JComponent
 - getPreferredFocusedComponent(javax.swing.JComponent):javax.swing.JComponent
-com.intellij.ide.plugins.auth.PluginRepositoryAuthListener
-- sf:PLUGIN_REPO_AUTH_CHANGED_TOPIC:com.intellij.util.messages.Topic
-- a:authenticationChanged():V
-- s:notifyAuthChanged():V
-com.intellij.ide.plugins.auth.PluginRepositoryAuthProvider
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- a:canHandle(java.lang.String):Z
-- a:getAuthHeaders(java.lang.String):java.util.Map
 bf:com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate$$serializer

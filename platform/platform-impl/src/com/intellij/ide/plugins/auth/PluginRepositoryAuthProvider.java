@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins.auth;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -16,6 +17,7 @@ import java.util.Map;
  * {@link PluginRepositoryAuthListener#notifyAuthChanged()} so that the cached responses that may have failed due to the lack
  * of authentication are invalidated.
  */
+@ApiStatus.Internal
 public interface PluginRepositoryAuthProvider {
 
   ExtensionPointName<PluginRepositoryAuthProvider> EP_NAME = ExtensionPointName.create("com.intellij.pluginRepositoryAuthProvider");
@@ -26,7 +28,6 @@ public interface PluginRepositoryAuthProvider {
    * @return {@link Collections#emptyMap()} if URL should not be handled or no credentials are available
    */
   @NotNull Map<@NotNull String, @NotNull String> getAuthHeaders(@NotNull String url);
-
 
   boolean canHandle(@NotNull String url);
 }

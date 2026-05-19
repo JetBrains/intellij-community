@@ -3,11 +3,13 @@ package com.intellij.ide.plugins.auth;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Post to {@link PluginRepositoryAuthListener#PLUGIN_REPO_AUTH_CHANGED_TOPIC} to invalidate custom plugin repo caches
  * @see PluginRepositoryAuthProvider
  */
+@ApiStatus.Internal
 public interface PluginRepositoryAuthListener {
 
   Topic<PluginRepositoryAuthListener> PLUGIN_REPO_AUTH_CHANGED_TOPIC =
