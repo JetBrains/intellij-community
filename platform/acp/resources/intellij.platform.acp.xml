@@ -7,10 +7,10 @@
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <applicationService
-        serviceInterface="com.intellij.platform.acp.api.AcpAgentsCatalog"
-        serviceImplementation="com.intellij.platform.acp.api.DefaultAcpAgentsCatalog"/>
+        serviceInterface="com.intellij.platform.acp.AcpAgentsCatalog"
+        serviceImplementation="com.intellij.platform.acp.DefaultAcpAgentsCatalog"/>
     <projectService
-        serviceInterface="com.intellij.platform.acp.api.AcpProcessLauncher"
-        serviceImplementation="com.intellij.platform.acp.api.DefaultAcpProcessLauncher"/>
+        serviceInterface="com.intellij.platform.acp.AcpProcessLauncher"
+        serviceImplementation="com.intellij.platform.acp.DefaultAcpProcessLauncher"/>
   </extensions>
 </idea-plugin>

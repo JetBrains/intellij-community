@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.acp.api
+package com.intellij.platform.acp
 
-import com.intellij.platform.acp.api.impl.AcpAgentStartConfigImpl
+import com.intellij.platform.acp.impl.AcpAgentStartConfigImpl
 
 /**
  * Configuration for starting an ACP agent process.
