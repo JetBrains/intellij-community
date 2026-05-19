@@ -483,10 +483,6 @@ class WriteAheadLogFileChannelOverCircularBufferTest {
 
   @Suppress("ArrayInDataClass")
   private data class TestCase(val initialContent: ByteArray, val writes: List<Write>) {
-    fun applyInitialState(channel: FileChannel) {
-      channel.write(ByteBuffer.wrap(initialContent))
-    }
-
     fun applyInitialState(path: Path) {
       Files.write(path, initialContent)
     }
@@ -528,6 +524,10 @@ private fun channelsAccessor(
   ): T? {
     require(path == channelPath) { "Only [$channelPath] could be accessed, but [$path] requested" }
     return operation.execute(channel)
+  }
+
+  override fun closeChannel(path: Path) {
+    channel.close()
   }
 }
 

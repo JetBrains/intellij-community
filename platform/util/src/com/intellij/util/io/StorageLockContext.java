@@ -202,6 +202,11 @@ public final class StorageLockContext {
     }
   }
 
+  @ApiStatus.Internal
+  public ChannelsAccessor getChannelsAccessor() {
+    return channelsAccessor;
+  }
+
   public static void forceDirectMemoryCache() {
     DEFAULT_FILE_PAGE_CACHE.flushBuffers();
   }

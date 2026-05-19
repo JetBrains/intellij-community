@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.circular;
 
-import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.blobstorage.ByteBufferWriter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -65,6 +64,7 @@ public interface CircularBytesBuffer extends Closeable, Flushable {
   }
 
   /** Thrown by append-methods when there is no free space left in the queue for the new entry. */
+  @SuppressWarnings("unused")
   class QueueFullException extends Exception {
     public QueueFullException() {
     }

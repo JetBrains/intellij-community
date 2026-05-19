@@ -23,6 +23,8 @@ public interface ChannelsAccessor {
                             @NotNull FileChannelIdempotentOperation<T> operation,
                             boolean readOnly) throws IOException;
 
+  void closeChannel(@NotNull Path path) throws IOException;
+
   @FunctionalInterface
   interface FileChannelOperation<T> {
     T execute(@NotNull FileChannel channel) throws IOException;

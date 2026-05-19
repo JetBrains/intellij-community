@@ -26,8 +26,6 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 
-import static com.intellij.util.io.PageCacheUtils.CHANNELS_CACHE;
-
 @Internal
 public final class PagedFileStorage implements Forceable/*, PagedStorage*/, Closeable, CleanableStorage {
   static final Logger LOG = Logger.getInstance(PagedFileStorage.class);
@@ -116,7 +114,7 @@ public final class PagedFileStorage implements Forceable/*, PagedStorage*/, Clos
         return executeOp(ch -> {
           ch.position(0);
           return consumer.fun(Channels.newInputStream(ch));
-        }, true);
+        }, /*readOnly: */ true);
       }
       catch (NoSuchFileException ignored) {
         return consumer.fun(new ByteArrayInputStream(ArrayUtil.EMPTY_BYTE_ARRAY));
@@ -131,7 +129,7 @@ public final class PagedFileStorage implements Forceable/*, PagedStorage*/, Clos
         return executeOp(ch -> {
           ch.position(0);
           return consumer.fun(ch);
-        }, true);
+        }, /*readOnly: */ true);
       }
       catch (NoSuchFileException ignored) {
         return consumer.fun(Channels.newChannel(new ByteArrayInputStream(ArrayUtil.EMPTY_BYTE_ARRAY)));
@@ -335,7 +333,10 @@ public final class PagedFileStorage implements Forceable/*, PagedStorage*/, Clos
         myStorageIndex = -1;
       },
       () -> {
-        CHANNELS_CACHE.closeChannel(myFile);
+        //Close channel so that
+        // 1) all the data reaches the disk
+        // 2) the file could be moved/removed/etc
+        myStorageLockContext.getChannelsAccessor().closeChannel(myFile);
       }
     );
   }

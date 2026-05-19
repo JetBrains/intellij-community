@@ -147,8 +147,9 @@ public final class OpenChannelsCache
     }
   }
 
+  @Override
   @VisibleForTesting
-  public void closeChannel(Path path) throws IOException {
+  public void closeChannel(@NotNull Path path) throws IOException {
     synchronized (cacheLock) {
       ChannelDescriptor descriptor = cachedChannels.remove(path);
 

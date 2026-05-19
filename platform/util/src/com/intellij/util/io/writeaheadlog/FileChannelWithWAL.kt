@@ -39,6 +39,7 @@ class FileChannelWithWAL @Throws(IOException::class) constructor(
   writeAheadLog: WriteAheadLog,
   channelsAccessor: ChannelsAccessor,
   private val readOnly: Boolean,
+  private val closeUnderlyingChannelOnClose: Boolean = true,
   private val applyUnfinishedOnRead: Boolean = APPLY_UNFINISHED_ON_READ,
 ) : FileChannel(), Resilient {
 
@@ -203,6 +204,9 @@ class FileChannelWithWAL @Throws(IOException::class) constructor(
   @Throws(IOException::class)
   protected override fun implCloseChannel() {
     perFileWriter.flush()
+    if (closeUnderlyingChannelOnClose) {
+      channelOpExecutor.close()
+    }
   }
 
   override fun <T> executeOperation(operation: FileChannelIdempotentOperation<T>): T {
@@ -319,7 +323,9 @@ class FileChannelWithWAL @Throws(IOException::class) constructor(
           override fun <T> invoke(op: FileChannelOperation<T>): T {
             return channelsAccessor.executeOp<T>(path, op, readOnly)
           }
+
           override fun close() {
+            channelsAccessor.closeChannel(path)
           }
         }
       }

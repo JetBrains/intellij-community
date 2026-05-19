@@ -123,6 +123,10 @@ public final class PageCacheUtils {
     }
 
     @Override
+    public void closeChannel(@NotNull Path path) {
+    }
+
+    @Override
     public @NotNull CachedChannelsStatistics getStatistics() {
       return new CachedChannelsStatistics(0, 0, 0, /*bypassedCache: */ operationsExecuted.get(), 0);
     }
