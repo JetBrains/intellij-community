@@ -20,5 +20,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <registryKey key="workspaceModel.update.under.wa" defaultValue="false" restartRequired="false"
                  description="Disable workspace model initial 2 attempts to execute updater without write action"/>
+    <registryKey key="order.enumerator.traversal" defaultValue="[dfs|bfs*]" restartRequired="false"
+                 description="Graph traversal strategy: bfs emits own entries before dep modules, dfs uses legacy depth-first order"/>
   </extensions>
 </idea-plugin>

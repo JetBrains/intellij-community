@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution
 
 import com.intellij.execution.configurations.JavaParameters
@@ -999,7 +999,15 @@ class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCase() 
       <groupId>test</groupId>
       <artifactId>m2</artifactId>
       <version>1</version>
-      
+      <dependencies>
+        <dependency>
+          <groupId>junit</groupId>
+          <artifactId>junit</artifactId>
+          <version>4.1</version>
+          <scope>provided</scope>
+          <optional>true</optional>
+        </dependency>
+      </dependencies>
       """.trimIndent())
 
     importProjects(m1, m2)
@@ -1049,9 +1057,10 @@ class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCase() 
                                 "$projectPath/user/output",
                                 "$projectPath/m1/target/test-classes",
                                 "$projectPath/m1/target/classes",
+                                "$repositoryPathCanonical/junit/junit/4.0/junit-4.0.jar",
                                 "$projectPath/m2/target/test-classes",
                                 "$projectPath/m2/target/classes",
-                                "$repositoryPathCanonical/junit/junit/4.0/junit-4.0.jar")
+                                "$repositoryPathCanonical/junit/junit/4.1/junit-4.1.jar")
 
     assertCompileProductionClasspath("m1",
                                      "$projectPath/m1/target/classes",
