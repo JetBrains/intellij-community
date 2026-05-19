@@ -180,6 +180,7 @@ private suspend fun createSdkImpl(
     is SdkCreationRequest.TargetSdk -> request.path
   }
 
+  @Suppress("SETUP_SDK_DIRECTLY")  // This is the only place calling this method is allowed
   val sdk = SdkConfigurationUtil.createSdk(
     existingSdks,
     pythonPath,

@@ -2356,6 +2356,24 @@
       <replaceConfiguration name="Do not hardcode &quot;.venv&quot;, use constant" description="It is better to use constant from the suggested class. Moreover, read doc carefully. It could be you do not need it. " suppressId="VENV_IS_OK" problemDescriptor="&quot;.venv&quot; hardcoded instead of a constant" text="&quot;.venv&quot;" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.jetbrains.python.venvReader.VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME">
         <constraint name="__context__" within="" contains="" />
       </replaceConfiguration>
+      <searchConfiguration name="Do not setupSdk directory" description="User `createSdk.kt` funcs of `FileSystem#setupSdk`" suppressId="SETUP_SDK_DIRECTLY" problemDescriptor="DoNotSetupSdkDirectory" text="$Before$.$MethodCall$($Parameter$)" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Before" nameOfExprType="SdkConfigurationUtil" minCount="0" within="" contains="" />
+        <constraint name="MethodCall" regexp="createSdk" target="true" within="" contains="" />
+        <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Do not setupSdk directory" text="$Before$.$MethodCall$($Parameter$)" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Before" nameOfExprType="SdkConfigurationUtil" minCount="0" within="" contains="" />
+        <constraint name="MethodCall" regexp="setupSdk" target="true" within="" contains="" />
+        <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Do not setupSdk directory" text="$Before$.$MethodCall$($Parameter$)" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Before" nameOfExprType="SdkConfigurationUtil" minCount="0" within="" contains="" />
+        <constraint name="MethodCall" regexp="addSdk" target="true" within="" contains="" />
+        <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
+      </searchConfiguration>
       <searchConfiguration name="Do not use jdi mirrorOf directly" problemDescriptor="Do not use jdi mirrorOf directly - use DebuggerUtilsEx.mirrorOfString instead" text="$Instance$.mirrorOf($Parameter$)" recursive="true" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false">
         <constraint name="__context__" within="" contains="" />
         <constraint name="Instance" nameOfExprType="com\.sun\.jdi\.VirtualMachine" exprTypeWithinHierarchy="true" within="" contains="" />
@@ -4074,6 +4092,9 @@
     </inspection_tool>
     <inspection_tool class="acb41802-9e8a-3e32-8b29-0e1d0a2aa770" enabled="true" level="WARNING" enabled_by_default="false">
       <scope name="EntityStorage" level="WARNING" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="b1ea9b48-958a-3fb9-b7b0-56879a7275b0" enabled="true" level="WARNING" enabled_by_default="false">
+      <scope name="Python" level="Strong Warning" enabled="true" editorAttributes="Strong Warning" />
     </inspection_tool>
     <inspection_tool class="be0e4d0f-a75b-39d7-8c95-5c554e8fcb40" enabled="true" level="WARNING" enabled_by_default="false">
       <scope name="Go" level="WARNING" enabled="true" />
