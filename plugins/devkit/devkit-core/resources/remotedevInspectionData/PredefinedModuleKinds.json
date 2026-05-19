@@ -6,7 +6,6 @@
   {"moduleName": "com.intellij.jetbrains.client", "moduleKind": "frontend"},
   {"moduleName": "com.intellij.jetbrains.client.driver", "moduleKind": "frontend"},
   {"moduleName": "com.intellij.jetbrains.client.git", "moduleKind": "frontend"},
-  {"moduleName": "com.intellij.jetbrains.client.performanceTesting", "moduleKind": "frontend"},
   {"moduleName": "intellij.cwm.frontend", "moduleKind": "frontend"},
   {"moduleName": "intellij.cwm.connection.frontend.split", "moduleKind": "frontend"},
 

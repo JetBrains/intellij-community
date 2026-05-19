@@ -55,7 +55,7 @@ class RemoteDevBackgroundRun(
     waitFor("Frontend has a visible IDE frame", timeout = 100.seconds) { driver.hasVisibleWindow() }
   }
 
-  @Remote("com.jetbrains.thinclient.lux.LuxClientService", plugin = "com.intellij.jetbrains.client.performanceTesting")
+  @Remote("com.jetbrains.thinclient.lux.LuxClientService", plugin = "com.jetbrains.performancePlugin/intellij.performanceTesting.frontend.split")
   interface LuxClientService {
     fun getMaybeInstance(): LuxClientService?
   }

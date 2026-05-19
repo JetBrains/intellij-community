@@ -5,7 +5,7 @@ import com.intellij.driver.model.RdTarget
 
 @Remote("com.jetbrains.thinclient.editors.FrontendGuestNavigationService",
         rdTarget = RdTarget.FRONTEND,
-        plugin = "com.intellij.jetbrains.client.performanceTesting")
+        plugin = "com.jetbrains.performancePlugin/intellij.performanceTesting.frontend.split")
 interface FrontendGuestNavigationService {
   fun navigateViaBackend(pathRelativeToBasePath: String, offset: Int)
 }

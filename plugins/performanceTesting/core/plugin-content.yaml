@@ -15,6 +15,9 @@
 - name: lib/modules/intellij.performanceTesting.frontend.jar
   contentModules:
   - name: intellij.performanceTesting.frontend
+- name: lib/modules/intellij.performanceTesting.frontend.split.jar
+  contentModules:
+  - name: intellij.performanceTesting.frontend.split
 - name: lib/modules/intellij.performanceTesting.remoteDriver.compose.jar
   contentModules:
   - name: intellij.performanceTesting.remoteDriver.compose
