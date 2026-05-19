@@ -136,11 +136,11 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : JetBrai
 
   protected open suspend fun bundleExternalPlugins(context: BuildContext, targetDirectory: Path) {}
 
-  override fun createWindowsCustomizer(projectHome: Path): WindowsDistributionCustomizer = communityWindowsCustomizer(communityHomeDir)
+  override fun createWindowsCustomizer(projectHome: Path): WindowsDistributionCustomizer = ideaCommunityWindowsCustomizer(communityHomeDir)
 
-  override fun createLinuxCustomizer(projectHome: Path): LinuxDistributionCustomizer = communityLinuxCustomizer(communityHomeDir)
+  override fun createLinuxCustomizer(projectHome: Path): LinuxDistributionCustomizer = ideaCommunityLinuxCustomizer(communityHomeDir)
 
-  override fun createMacCustomizer(projectHome: Path): MacDistributionCustomizer = communityMacCustomizer(communityHomeDir)
+  override fun createMacCustomizer(projectHome: Path): MacDistributionCustomizer = ideaCommunityMacCustomizer(communityHomeDir)
 
   override fun getSystemSelector(appInfo: ApplicationInfoProperties, buildNumber: String): String {
     return "IdeaIC${appInfo.majorVersion}.${appInfo.minorVersionMainPart}"
@@ -222,7 +222,7 @@ fun intellijCommunityBaseFragment(platformPrefix: String? = null): ProductModule
   deprecatedInclude("intellij.idea.community.customization", "META-INF/community-customization.xml")
 }
 
-inline fun communityWindowsCustomizer(
+inline fun ideaCommunityWindowsCustomizer(
   projectHome: Path,
   configure: WindowsCustomizerBuilder.() -> Unit = {}
 ): WindowsDistributionCustomizer = windowsCustomizer(projectHome) {
@@ -241,7 +241,7 @@ inline fun communityWindowsCustomizer(
   configure()
 }
 
-inline fun communityMacCustomizer(
+inline fun ideaCommunityMacCustomizer(
   projectHome: Path,
   configure: MacCustomizerBuilder.() -> Unit = {}
 ): MacDistributionCustomizer = macCustomizer(projectHome) {
@@ -263,7 +263,7 @@ inline fun communityMacCustomizer(
   configure()
 }
 
-inline fun communityLinuxCustomizer(
+inline fun ideaCommunityLinuxCustomizer(
   projectHome: Path,
   configure: LinuxCustomizerBuilder.() -> Unit = {}
 ): LinuxDistributionCustomizer = linuxCustomizer(projectHome) {
