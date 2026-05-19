@@ -5,7 +5,7 @@ Reports declarations that can be destructured.
 <pre><code>
   data class My(val first: String, val second: Int, val third: Boolean)
 
-  fun foo(list: List&lt;My>) {
+  fun foo(list: List&lt;My&gt;) {
       list.forEach { my ->
           println(my.second)
           println(my.third)
@@ -16,7 +16,7 @@ Reports declarations that can be destructured.
 <pre><code>
   data class My(val first: String, val second: Int, val third: Boolean)
 
-  fun foo(list: List&lt;My>) {
+  fun foo(list: List&lt;My&gt;) {
       list.forEach { (_, second, third) ->
           println(second)
           println(third)

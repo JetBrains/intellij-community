@@ -1,26 +1,24 @@
 <html>
 <body>
-Reports declarations that can be destructured.
+Enforces using Kotlin idiomatic destructured declarations in <code>for</code> loops when only components of class are used.
 <p><b>Example:</b></p>
 <pre><code>
   data class My(val first: String, val second: Int, val third: Boolean)
 
-  fun foo(list: List&lt;My>) {
-      list.forEach { my ->
-          println(my.second)
-          println(my.third)
-      }
+  fun foo(list: List&lt;My&gt;) {
+    for (item in list) {
+      println("${item.second} ${item.third}")
+    }
   }
 </code></pre>
 <p>The quick-fix destructures the declaration and introduces new variables with names from the corresponding class:</p>
 <pre><code>
   data class My(val first: String, val second: Int, val third: Boolean)
 
-  fun foo(list: List&lt;My>) {
-      list.forEach { (_, second, third) ->
-          println(second)
-          println(third)
-      }
+  fun foo(list: List&lt;My&gt;) {
+    for ((_, second, third) in list) {
+      println("$second $third")
+    }
   }
 </code></pre>
 </body>
