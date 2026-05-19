@@ -16,20 +16,6 @@ public class JiraVersion implements Comparable<JiraVersion> {
 
   private final int myMajorNumber, myMinorNumber, myMicroNumber;
 
-  public JiraVersion(int majorNumber) {
-    this(majorNumber, 0, 0);
-  }
-
-  public JiraVersion(int majorNumber, int minorNumber) {
-    this(majorNumber, minorNumber, 0);
-  }
-
-  public JiraVersion(int majorNumber, int minorNumber, int microNumber) {
-    myMajorNumber = majorNumber;
-    myMinorNumber = minorNumber;
-    myMicroNumber = microNumber;
-  }
-
   public JiraVersion(@NotNull String version) {
     Matcher m = VERSION_PATTERN.matcher(version);
     if (!m.matches()) {
@@ -46,10 +32,6 @@ public class JiraVersion implements Comparable<JiraVersion> {
 
   public int getMinorNumber() {
     return myMinorNumber;
-  }
-
-  public int getMicroNumber() {
-    return myMicroNumber;
   }
 
   @Override

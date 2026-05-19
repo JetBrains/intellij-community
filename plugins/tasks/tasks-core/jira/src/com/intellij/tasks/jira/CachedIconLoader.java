@@ -29,19 +29,6 @@ public final class CachedIconLoader {
 	private CachedIconLoader() {
 	}
 
-	public static Icon getIcon(URL url) {
-		if (url != null) {
-			String key = url.toString();
-			if (!icons.containsKey(key)) {
-				Icon i = new ImageIcon(url);
-				icons.put(key, i);
-			}
-			return icons.get(key);
-		} else {
-			return null;
-		}
-	}
-
 	public static Icon getIcon(String urlString) {
 		if (urlString != null) {
 			if (!icons.containsKey(urlString)) {
