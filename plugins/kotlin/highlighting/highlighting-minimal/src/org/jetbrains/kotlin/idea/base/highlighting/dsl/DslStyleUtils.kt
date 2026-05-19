@@ -9,8 +9,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.NlsContexts.DetailedDescription
 import com.intellij.openapi.util.ScalableIcon
 import com.intellij.ui.LayeredIcon
-import com.intellij.util.ui.ColorsIcon
-import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.ColorIcon
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -67,12 +66,14 @@ object DslStyleUtils {
         val markersColor = globalScheme.getAttributes(styleById(styleId)).foregroundColor
         val icon = LayeredIcon(2)
         val defaultIcon = KotlinIcons.DSL_MARKER_ANNOTATION
+        val colorIcon = ColorIcon(defaultIcon.iconHeight / 2, markersColor) as ScalableIcon
+
         icon.setIcon(defaultIcon, 0)
         icon.setIcon(
-            (ColorsIcon(defaultIcon.iconHeight / 2, markersColor) as ScalableIcon).scale(JBUI.pixScale()),
+            colorIcon,
             1,
-            defaultIcon.iconHeight / 2,
-            defaultIcon.iconWidth / 2
+            defaultIcon.iconHeight / 2 + 1,
+            defaultIcon.iconWidth / 2 + 1
         )
         return icon
     }

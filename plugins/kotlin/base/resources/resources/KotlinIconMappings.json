@@ -25,6 +25,7 @@
                             "annotationKotlin.svg": "org/jetbrains/kotlin/idea/icons/annotationKotlin.svg",
                             "classInitializerKotlin.svg": "org/jetbrains/kotlin/idea/icons/classInitializerKotlin.svg",
                             "classKotlin.svg": "org/jetbrains/kotlin/idea/icons/classKotlin.svg",
+                            "dslMarkerAnnotation.svg": "org/jetbrains/kotlin/idea/icons/dslMarkerAnnotation.svg",
                             "enumKotlin.svg": "org/jetbrains/kotlin/idea/icons/enumKotlin.svg",
                             "expect.svg": "org/jetbrains/kotlin/idea/icons/expect.svg",
                             "fieldValue.svg": "org/jetbrains/kotlin/idea/icons/field_value.svg",

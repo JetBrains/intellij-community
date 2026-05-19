@@ -1,0 +1,15 @@
+<!-- Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<svg fill="none" width="14" height="14" version="1.1" viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <mask id="cutout-mask">
+            <rect width="16" height="16" fill="#fff"/>
+            <g stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3">
+                <rect x="9.5" y="9.5" width="6" height="6" rx="1.5" fill="#000" stroke="#000"/>
+            </g>
+        </mask>
+    </defs>
+    <g transform="matrix(.857 0 0 .857 .143 .143)" mask="url(#cutout-mask)">
+        <circle cx="8" cy="8" r="7" fill="#43454A"/>
+        <path d="m9.73 5.39v0.974h-0.0298c-0.345-0.669-0.984-1.05-1.83-1.05-1.49 0-2.61 1.17-2.61 2.74s1.12 2.74 2.61 2.74c0.94 0 1.72-0.437 2.13-1.12 0.439 0.681 1.26 1.1 2.29 1.1 1.63 0 2.71-1.15 2.71-2.83 0-3.81-3.15-6.92-7-6.92s-7 3.19-7 7.08c0 3.81 3.15 6.92 7 6.92 1.85 0 3.52-0.764 4.43-1.59l-0.724-0.797c-0.813 0.724-2.12 1.38-3.71 1.38-3.3 0-5.99-2.66-5.99-5.91 0-3.34 2.7-6.07 5.99-6.07 3.3 0 5.99 2.66 5.99 5.91 0 1.11-0.668 1.87-1.71 1.87-0.941 0-1.63-0.595-1.63-1.46v-2.94zm-1.77 4.51c-0.966 0-1.69-0.797-1.69-1.85s0.724-1.85 1.69-1.85 1.69 0.797 1.69 1.85-0.724 1.85-1.69 1.85z" fill="#CED0D6"/>
+    </g>
+</svg>
