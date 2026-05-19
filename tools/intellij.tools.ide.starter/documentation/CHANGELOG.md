@@ -1,3 +1,16 @@
+## 2026.2
+
+* Examples were moved to a separate github repo: [ide-starter-examples](https://github.com/JetBrains/ide-starter-examples)
+* Source code was moved to the community code base.
+  Most of the modules you are interested in could be found [here]([https://github.com/JetBrains/intellij-community/tree/master/tools](https://github.com/JetBrains/intellij-community/tree/master/tools)).
+
+### Breaking changes
+* If you want to use default IdeInfo of a certain IDE, you need to add 
+`testImplementation("com.jetbrains.intellij.tools:ide-starter-product-idea-ultimate:LATEST-EAP-SNAPSHOT")` dependency
+* To make tests work, please add `jvmArgs("--add-opens=java.base/sun.nio.fs=ALL-UNNAMED")` as done in examples
+* IC test cases were dropped as IC was merged with IU in 2025.3 version
+* Please update to `jvmToolchain(25)` and `kotlin("jvm") version "2.3.0"` to be able to run recent IDE versions
+
 ## 2025.1
 
 ### Improvements
