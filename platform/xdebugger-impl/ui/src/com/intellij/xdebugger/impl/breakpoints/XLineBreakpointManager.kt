@@ -98,6 +98,7 @@ class XLineBreakpointManager(
   )
 
   private var myDragDetected = false
+  private var immediateUiUpdateOnEdtAllowed = true
 
   init {
     val disposable = cs.asDisposable()
@@ -332,12 +333,30 @@ class XLineBreakpointManager(
     }
   }
 
+  private fun isImmediateUiUpdateAllowed(): Boolean {
+    return EDT.isCurrentThreadEdt() && immediateUiUpdateOnEdtAllowed
+  }
+
+  private inline fun withImmediateUiUpdateDisabled(block: () -> Unit) {
+    if (!EDT.isCurrentThreadEdt()) {
+      block()
+      return
+    }
+    immediateUiUpdateOnEdtAllowed = false
+    try {
+      block()
+    }
+    finally {
+      immediateUiUpdateOnEdtAllowed = true
+    }
+  }
+
   override fun breakpointChanged(breakpoint: XLightLineBreakpointProxy) {
-    if (EDT.isCurrentThreadEdt()) {
+    if (isImmediateUiUpdateAllowed()) {
       updateBreakpointNow(breakpoint)
     }
     else {
-      queueBreakpointUpdate(breakpoint, null)
+      queueBreakpointUpdate(breakpoint)
     }
   }
 
@@ -410,8 +429,14 @@ class XLineBreakpointManager(
       val breakpoints = getDocumentBreakpointProxies(document)
       if (breakpoints.isEmpty()) return false
 
-      // Update position immediately to avoid races with doUpdateUI
-      breakpoints.forEach { it.fastUpdatePosition() }
+      // fastUpdatePosition leads to the breakpointChanged call,
+      // but for the document update we do not need immediate UI update
+      withImmediateUiUpdateDisabled {
+        // Update position immediately to avoid races with doUpdateUI
+        // We must mark the range as dirty so that no other asynchronous repaint makes breakpoint presentation incorrect.
+        breakpoints.forEach { it.fastUpdatePosition() }
+      }
+
       scheduleDocumentUpdate(document)
       return true
     }
