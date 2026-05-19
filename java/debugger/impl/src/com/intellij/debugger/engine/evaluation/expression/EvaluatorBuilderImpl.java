@@ -983,9 +983,11 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
               return;
             }
           }
-          Evaluator objectEvaluator = new ThisEvaluator(traverser);
+          FieldEvaluator.TargetClassFilter classFilter = FieldEvaluator.createClassFilter(positionClass);
+          String fieldName = "val$" + localName;
           myResult = createFallbackEvaluator(
-            new FieldEvaluator(objectEvaluator, FieldEvaluator.createClassFilter(positionClass), "val$" + localName),
+            new FieldEvaluator(new ThisEvaluator(), classFilter, fieldName),
+            new FieldEvaluator(new ThisEvaluator(traverser), classFilter, fieldName),
             new LocalVariableEvaluator(localName, true));
           return;
         }
@@ -1053,21 +1055,23 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
       }
     }
 
-    private static Evaluator createFallbackEvaluator(final Evaluator primary, final Evaluator fallback) {
+    private static Evaluator createFallbackEvaluator(final Evaluator... evaluators) {
+      LOG.assertTrue(evaluators.length > 0);
       return new ModifiableEvaluator() {
         @Override
         public @NotNull ModifiableValue evaluateModifiable(@NotNull EvaluationContextImpl context) throws EvaluateException {
-          try {
-            return primary.evaluateModifiable(context);
-          }
-          catch (EvaluateException e) {
+          EvaluateException firstException = null;
+          for (Evaluator evaluator : evaluators) {
             try {
-              return fallback.evaluateModifiable(context);
+              return evaluator.evaluateModifiable(context);
             }
-            catch (EvaluateException e1) {
-              throw e;
+            catch (EvaluateException e) {
+              if (firstException == null) {
+                firstException = e;
+              }
             }
           }
+          throw firstException;
         }
       };
     }
