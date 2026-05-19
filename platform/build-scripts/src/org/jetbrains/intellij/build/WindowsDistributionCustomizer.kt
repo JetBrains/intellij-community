@@ -218,36 +218,6 @@ class WindowsCustomizerBuilder @PublishedApi internal constructor(private val pr
   }
 }
 
-/**
- * Creates a [WindowsDistributionCustomizer] with the open source build defaults using a builder DSL.
- *
- * Example usage:
- * ```kotlin
- * communityWindowsCustomizer(projectHome) {
- *   // override or extend the defaults
- *   fileAssociations += "xml"
- * }
- * ```
- */
-inline fun communityWindowsCustomizer(
-  projectHome: Path,
-  configure: WindowsCustomizerBuilder.() -> Unit = {}
-): WindowsDistributionCustomizer = windowsCustomizer(projectHome) {
-  icoPath = "build/conf/ideaCE/win/images/idea_CE.ico"
-  icoPathForEAP = "build/conf/ideaCE/win/images/idea_CE_EAP.ico"
-  installerImagesPath = "build/conf/ideaCE/win/images"
-  fileAssociations = listOf("java", "gradle", "groovy", "kt", "kts", "pom")
-
-  fullName { "IntelliJ IDEA Open Source" }
-  installDirNameHandler { "IntelliJ IDEA OSS" }
-
-  uninstallFeedbackUrl { appInfo ->
-    "https://www.jetbrains.com/idea/uninstall/?edition=IC-${appInfo.majorVersion}.${appInfo.minorVersion}"
-  }
-
-  configure()
-}
-
 abstract class WindowsDistributionCustomizer {
   /**
    * Path to a 256x256 .ico file for Windows distribution.
