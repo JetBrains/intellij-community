@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notebooks.ui.visualization.markerRenderers
 
+import com.intellij.notebooks.ui.visualization.NotebookUtil.overlappingVerticalScrollbarLeftShift
+import com.intellij.notebooks.ui.visualization.NotebookUtil.visibleNotebookCellWidth
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -19,13 +21,16 @@ object NotebookCellHighlighterRenderer : CustomHighlighterRenderer {
 
     val g = graphics.create()
     try {
-      val scrollbarWidth = editor.scrollPane.verticalScrollBar.width
-      val oldBounds = g.clipBounds
       val visibleArea = editor.scrollingModel.visibleArea
+      val trimStartX = visibleArea.x + editor.overlappingVerticalScrollbarLeftShift() + editor.visibleNotebookCellWidth()
+      val trimWidth = visibleArea.x + visibleArea.width - trimStartX
+      if (trimWidth <= 0) return
+
+      val oldBounds = g.clipBounds
       g.setClip(
-        visibleArea.x + visibleArea.width - scrollbarWidth,
+        trimStartX,
         oldBounds.y,
-        scrollbarWidth,
+        trimWidth,
         oldBounds.height
       )
 

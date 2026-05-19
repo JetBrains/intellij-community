@@ -4,13 +4,14 @@ package com.intellij.notebooks.visualization.ui.providers.frame
 import com.intellij.notebooks.jupyter.core.jupyter.CellType
 import com.intellij.notebooks.ui.afterDistinctChange
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
+import com.intellij.notebooks.ui.visualization.NotebookUtil.overlappingVerticalScrollbarLeftShift
+import com.intellij.notebooks.ui.visualization.NotebookUtil.visibleNotebookCellWidth
 import com.intellij.notebooks.visualization.ui.EditorCell
 import com.intellij.notebooks.visualization.ui.notebookEditor
 import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeNotifier
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.ui.components.JBScrollPane
 import kotlinx.coroutines.FlowPreview
 import java.awt.geom.Line2D
 
@@ -87,9 +88,10 @@ class EditorCellFrameManager(private val editorCell: EditorCell) : Disposable { 
       .mapNotNull { it.bounds }
       .maxByOrNull { it.x + it.width }
 
-    val xFromInlay = upperInlayBounds?.let { it.x + it.width - PIXEL_GRID_OFFSET }
-                     ?: lowerInlayBounds?.let { it.x + it.width - PIXEL_GRID_OFFSET }
-    val x = xFromInlay ?: calculateRightBorderXFromViewport()
+    val viewportRightX = calculateRightBorderXFromViewport()
+    val inlayRightX = upperInlayBounds?.let { it.x + it.width - PIXEL_GRID_OFFSET }
+                      ?: lowerInlayBounds?.let { it.x + it.width - PIXEL_GRID_OFFSET }
+    val x = inlayRightX?.let { maxOf(it, viewportRightX) } ?: viewportRightX
 
     if (upperInlayBounds != null && lowerInlayBounds != null) {
       val startY = (upperInlayBounds.y + upperInlayBounds.height - editor.notebookAppearance.cellBorderHeight / 2).toDouble() + PIXEL_GRID_OFFSET
@@ -105,17 +107,8 @@ class EditorCellFrameManager(private val editorCell: EditorCell) : Disposable { 
 
   private fun calculateRightBorderXFromViewport(): Double {
     val visibleArea = editor.scrollingModel.visibleArea
-    val scrollBarWidth = editor.scrollPane.verticalScrollBar.width
-    val flipProperty = editor.scrollPane.getClientProperty(JBScrollPane.Flip::class.java)
-
-    val leftShift = if (flipProperty === JBScrollPane.Flip.HORIZONTAL || flipProperty === JBScrollPane.Flip.BOTH) {
-      scrollBarWidth
-    }
-    else {
-      0
-    }
-
-    val visibleWidth = (visibleArea.width - scrollBarWidth).coerceAtLeast(0)
+    val leftShift = editor.overlappingVerticalScrollbarLeftShift()
+    val visibleWidth = editor.visibleNotebookCellWidth()
     return visibleArea.x + leftShift + visibleWidth - PIXEL_GRID_OFFSET
   }
 
