@@ -10,7 +10,7 @@ import org.jetbrains.annotations.ApiStatus
 interface TransferredWriteActionService {
 
   /**
-   * Executes [action] syncrhonously on EDT under write action.
+   * Executes [action] synchronously on EDT under write action.
    * This function is semantically equivalent to [javax.swing.SwingUtilities.invokeAndWait]
    *
    * The difference is that raw `invokeAndWait` is prone to deadlocks:
@@ -32,7 +32,7 @@ interface TransferredWriteActionService {
    */
   @RequiresWriteLock
   @RequiresBackgroundThread
-  fun runOnEdtWithTransferredWriteActionAndWait(action: Runnable)
+  fun runOnEdtWithTransferredWriteActionAndWait(@RequiresEdt @RequiresWriteLock action: Runnable)
 
   /**
    * Executes [action] synchronously on a background thread under write action.
@@ -45,5 +45,5 @@ interface TransferredWriteActionService {
    */
   @RequiresWriteLock
   @RequiresEdt
-  fun <T> runOnBackgroundThreadWithTransferredWriteActionAndWait(action: Runnable)
+  fun <T> runOnBackgroundThreadWithTransferredWriteActionAndWait(@RequiresBackgroundThread @RequiresWriteLock action: Runnable)
 }
