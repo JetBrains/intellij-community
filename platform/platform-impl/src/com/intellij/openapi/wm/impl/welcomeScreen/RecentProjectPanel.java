@@ -615,6 +615,7 @@ public class RecentProjectPanel extends JPanel {
 
   public static final class FilePathChecker implements Disposable, PowerSaveMode.Listener {
     private static final int MIN_AUTO_UPDATE_MILLIS = 2500;
+    private static final int PATH_PROBE_TIMEOUT_MILLIS = 3000;
     private ScheduledExecutorService service;
     private final Set<String> invalidPaths = Collections.synchronizedSet(new HashSet<>());
 
@@ -696,7 +697,10 @@ public class RecentProjectPanel extends JPanel {
         final long startTime = System.currentTimeMillis();
         boolean pathIsValid;
         try {
-          pathIsValid = !RecentProjectsManagerBase.Companion.isFileSystemPath(path) || isPathAvailable(path);
+          // remote IJent paths may deploy on probe - cap to keep checker pool free (IJPL-245202)
+          pathIsValid = ApplicationManager.getApplication().executeOnPooledThread(
+            () -> !RecentProjectsManagerBase.Companion.isFileSystemPath(path) || isPathAvailable(path)
+          ).get(PATH_PROBE_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
         }
         catch (Exception e) {
           pathIsValid = false;

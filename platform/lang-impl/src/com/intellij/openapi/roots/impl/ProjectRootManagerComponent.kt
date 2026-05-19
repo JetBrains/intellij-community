@@ -58,6 +58,7 @@ import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
 import com.intellij.workspaceModel.core.fileIndex.impl.PlatformInternalWorkspaceFileIndexContributor
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
@@ -234,8 +235,15 @@ open class ProjectRootManagerComponent(
     else {
       coroutineScope.launch {
         val job = launch(start = CoroutineStart.LAZY) {
-          val watchRoots = readAction { collectWatchRoots(newDisposable) }
-          postCollect(newDisposable = newDisposable, oldDisposable = oldDisposable, watchRoots = watchRoots)
+          // remote IJent VFPs may throw on deploy - don't fail project open (IJPL-245202)
+          try {
+            val watchRoots = readAction { collectWatchRoots(newDisposable) }
+            postCollect(newDisposable = newDisposable, oldDisposable = oldDisposable, watchRoots = watchRoots)
+          }
+          catch (e: Throwable) {
+            if (e is CancellationException) throw e
+            LOG.warn("Failed to collect watch roots for $project", e)
+          }
         }
         collectWatchRootsJob.getAndSet(job)?.cancelAndJoin()
         job.start()

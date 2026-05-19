@@ -14,7 +14,6 @@ import java.nio.file.FileSystem
 import java.nio.file.FileSystemAlreadyExistsException
 import java.nio.file.Files
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.io.path.pathString
 
 
 class TcpEelMrfsBackend(private val scope: CoroutineScope) : MultiRoutingFileSystemBackend {
@@ -22,13 +21,13 @@ class TcpEelMrfsBackend(private val scope: CoroutineScope) : MultiRoutingFileSys
     private val LOG = logger<TcpEelMrfsBackend>()
   }
 
-  private val cache = ConcurrentHashMap<String, FileSystem>()
+  private val cache = ConcurrentHashMap<TcpEelDescriptor, FileSystem>()
 
   override fun compute(localFS: FileSystem, sanitizedPath: String): FileSystem? {
     val (internalName, osFamily) = TcpEelPathParser.extractInternalMachineId(sanitizedPath) ?: return null
     val descriptor = TcpEelPathParser.toDescriptor(internalName, osFamily) ?: return null
 
-    return cache.computeIfAbsent("$internalName-${osFamily.name.lowercase()}") { createFilesystem(internalName, localFS, descriptor) }
+    return cache.computeIfAbsent(descriptor) { createFilesystem(internalName, localFS, descriptor) }
   }
 
   private fun createFilesystem(internalName: String, localFS: FileSystem, descriptor: TcpEelDescriptor): FileSystem {
@@ -58,7 +57,8 @@ class TcpEelMrfsBackend(private val scope: CoroutineScope) : MultiRoutingFileSys
   }
 
   override fun getCustomRoots(): Collection<@MultiRoutingFileSystemPath String> {
-    return cache.values.flatMap { it.rootDirectories }.map { it.pathString }
+    // no I/O - called from read actions; FileSystem.rootDirectories would deploy IJent (IJPL-245202)
+    return cache.keys.map { it.rootPathString }
   }
 
   override fun getCustomFileStores(localFS: FileSystem): Collection<FileStore> {

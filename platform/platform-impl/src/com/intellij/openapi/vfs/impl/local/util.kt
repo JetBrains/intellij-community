@@ -34,6 +34,7 @@ import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.buildPrefetchContext
 import com.intellij.platform.eel.provider.canReadPermissionsDirectly
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.getResolvedEelMachine
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.eel.provider.toEelApiBlocking
 import com.intellij.platform.eel.provider.transformPath
@@ -84,7 +85,9 @@ fun readAttributesUsingEel(nioPath: Path): FileAttributes {
       return FileAttributes.fromNio(directAccessNioPath, nioAttributes)
     }
     return fsBlocking {
-      val eelFsApi = eelPath.descriptor.toEelApi().fs
+      // stale persisted descriptor (machine deregistered) - surface as not-found (IJPL-245202)
+      val machine = eelPath.descriptor.getResolvedEelMachine() ?: throw NoSuchFileException(nioPath.toString())
+      val eelFsApi = machine.toEelApi(eelPath.descriptor).fs
       val fileInfo = eelFsApi.stat(eelPath).eelIt().getOrThrowFileSystemException()
       toVfs(eelPath, fileInfo, eelFsApi)
     }
