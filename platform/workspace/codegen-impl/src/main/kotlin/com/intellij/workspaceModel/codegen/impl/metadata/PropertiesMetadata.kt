@@ -15,6 +15,7 @@ import com.intellij.workspaceModel.codegen.impl.metadata.model.getParameterizedT
 import com.intellij.workspaceModel.codegen.impl.writer.entityImplementation.refsConnectionType
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.isComputable
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.isEntityRef
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.isReplaceBySourceKey
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.unwrapReferenceType
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.withDefault
 import com.intellij.workspaceModel.codegen.impl.writer.symbolicIdFieldName
@@ -48,7 +49,7 @@ private fun MetadataContext.buildOwnPropertyMetadata(objProperty: ObjProperty<*,
     isComputable = objProperty.isComputable,
     isOpen = objProperty.open,
     withDefault = objProperty.withDefault,
-    isKey = if (objProperty is OwnProperty) objProperty.isKey else false
+    isKey = objProperty is OwnProperty && objProperty.isReplaceBySourceKey
   )
 }
 

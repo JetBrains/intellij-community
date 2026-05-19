@@ -24,6 +24,7 @@ import com.intellij.workspaceModel.codegen.impl.writer.entitySourceFieldName
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.hasSetter
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.isOverride
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.isReferenceType
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.isReplaceBySourceKey
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaFullName
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaImplBuilderName
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaImplName
@@ -168,7 +169,7 @@ fun CodeContext.entityDataClassCode(objClass: ObjClass<*>) {
       line("return res")
     }
 
-    val keyFields = getAllProperties(objClass).filter { it.isKey }
+    val keyFields = getAllProperties(objClass).filter { it.isReplaceBySourceKey }
     section("override fun equals(other: Any?): Boolean") {
       line("if (other == null) return false")
       line("if (this.javaClass != other.javaClass) return false")

@@ -15,6 +15,7 @@ group = "com.jetbrains.intellij.platform"
 version = "$codegenApiVersion.$codegenImplMajorVersion.$codegenImplMinorVersion"
 
 repositories {
+  mavenLocal()
   mavenCentral()
   maven {
     url = uri("https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies")
@@ -44,7 +45,7 @@ publishing {
 
 dependencies {
   implementation("org.jetbrains.kotlin:kotlin-reflect")
-  implementation("com.jetbrains.intellij.platform:workspace-model-codegen:0.0.9")
+  implementation("com.jetbrains.intellij.platform:workspace-model-codegen:0.0.10")
 }
 
 

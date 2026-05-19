@@ -37,6 +37,7 @@ import com.intellij.workspaceModel.codegen.impl.writer.getJavaType
 import com.intellij.workspaceModel.codegen.impl.writer.symbolicIdFieldName
 import com.intellij.workspaceModel.codegen.impl.writer.symbolicIdImplCode
 import com.intellij.workspaceModel.codegen.impl.writer.toQualifiedName
+import com.intellij.workspaceModel.codegen.impl.writer.getToStringProperty
 
 fun CodeContext.entityImplementationClassCode(objClass: ObjClass<*>) {
   val inheritanceModifier = when {
@@ -80,6 +81,8 @@ fun CodeContext.entityImplementationClassCode(objClass: ObjClass<*>) {
       if (hasConnections) +"return connections"
       else +"return emptyList()"
     }
+
+    customToString(objClass)
 
     entityBuilderImplementationCode(objClass, hasConnections)
   }
@@ -228,4 +231,9 @@ internal fun GeneratorContext.getReferencedField(objProperty: ObjProperty<*, *>)
   }
   val referencedField = declaredReferenceFromChild[0]
   return referencedField
+}
+
+private fun CodeContext.customToString(objClass: ObjClass<*>) {
+  val toStringProperty = getToStringProperty(objClass) ?: return
+  +"override fun toString() = ${toStringProperty.property.name}"
 }

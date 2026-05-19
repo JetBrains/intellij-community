@@ -151,7 +151,7 @@ private fun GeneratorContext.buildOwnProperty(objProperty: ObjProperty<*, *>, va
     isComputable = objProperty.isComputable,
     isOpen = objProperty.open,
     withDefault = objProperty.withDefault,
-    isKey = if (objProperty is OwnProperty) objProperty.isKey else false
+    isKey = objProperty is OwnProperty && objProperty.isReplaceBySourceKey
   )
 
 private fun GeneratorContext.buildExtProperty(extProperty: ExtProperty<*, *>, valueTypeBuilder: MetadataBuilder<ValueType<*>>): String =

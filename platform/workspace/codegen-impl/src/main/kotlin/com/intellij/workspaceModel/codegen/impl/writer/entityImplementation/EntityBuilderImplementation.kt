@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.codegen.impl.writer.entityImplementation
 
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
+import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 import com.intellij.workspaceModel.codegen.impl.dsl.CodeContext
 import com.intellij.workspaceModel.codegen.impl.writer.ConnectionId
@@ -20,6 +21,7 @@ import com.intellij.workspaceModel.codegen.impl.writer.getAllProperties
 import com.intellij.workspaceModel.codegen.impl.writer.referencesInSymbolicId
 import com.intellij.workspaceModel.codegen.impl.writer.symbolicIdIsInitializedCode
 import com.intellij.workspaceModel.codegen.impl.writer.symbolicIdReferenceCode
+import com.intellij.workspaceModel.codegen.impl.writer.getToStringProperty
 
 fun CodeContext.entityBuilderImplementationCode(objClass: ObjClass<*>, hasConnections: Boolean) {
   section("internal class Builder(result: ${objClass.javaDataName}?): ${ModifiableWorkspaceEntityBase}<${objClass.javaFullName}, ${objClass.javaDataName}>(result), ${objClass.compatibleJavaBuilderName}") {
@@ -126,6 +128,8 @@ fun CodeContext.entityBuilderImplementationCode(objClass: ObjClass<*>, hasConnec
     }
 
     +"override fun getEntityClass(): Class<${objClass.javaFullName}> = ${objClass.javaFullName}::class.java"
+
+    customBuilderToString(objClass)
     
     if (!referencesInSymbolicId.isNullOrEmpty()) {
       section("override fun updateSymbolicId(parent: WorkspaceEntityBuilder<*>, connectionId: ConnectionId)") {
@@ -138,5 +142,10 @@ fun CodeContext.entityBuilderImplementationCode(objClass: ObjClass<*>, hasConnec
       }
     }
   }
+}
+
+private fun CodeContext.customBuilderToString(objClass: ObjClass<*>) {
+  val toStringProperty = getToStringProperty(objClass) ?: return
+  +"override fun toString()=${toStringProperty.expression}"
 }
 

@@ -4,10 +4,12 @@ import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.OwnProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
+import com.intellij.workspaceModel.codegen.impl.dsl.GeneratorContext
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.isComputable
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.isEntityRef
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.isReferenceType
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.ownExtensions
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.safeAnnotations
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.unwrapValueType
 
 internal fun getAllReferenceProperties(objClass: ObjClass<*>, onlyParents: Boolean = false): List<OwnProperty<*, *>> {
@@ -50,7 +52,7 @@ private object PropertiesCache {
   operator fun get(objClass: ObjClass<*>): List<OwnProperty<*, *>> {
     return cache[objClass] ?: collectProperties(objClass)
   }
-  
+
   fun getReferences(objClass: ObjClass<*>): List<Pair<OwnProperty<*, *>, ValueType.ObjRef<*>>> {
     return referencesCache[objClass] ?: collectReferenceProperties(objClass)
   }
@@ -74,7 +76,7 @@ private object PropertiesCache {
       propertiesByName[property.name] = property
     }
   }
-  
+
   private fun collectReferenceProperties(objClass: ObjClass<*>): List<Pair<OwnProperty<*, *>, ValueType.ObjRef<*>>> {
     val result: List<Pair<OwnProperty<*, *>, ValueType.ObjRef<*>>> = PropertiesCache[objClass].filter { !it.isComputable }.mapNotNull {
       val unwrapped = unwrapValueType(it.valueType)
@@ -101,4 +103,29 @@ fun collectionProperties(objClass: ObjClass<*>): List<OwnProperty<*, *>> {
     if (objProperty.valueType.isReferenceType()) return@filter false
     return@filter objProperty.valueType is ValueType.Collection<*, *>
   }
+}
+
+data class ToStringPropertyData(val property: OwnProperty<*, *>, val expression: String)
+
+fun GeneratorContext.getToStringProperty(objClass: ObjClass<*>): ToStringPropertyData? {
+  val toStringProperties = getAllProperties(objClass, withComputable = true)
+    .filter { field -> field.safeAnnotations.firstOrNull { it.fqName == ToString.decoded } != null }
+  if (toStringProperties.isEmpty()) return null
+  if (toStringProperties.size != 1) {
+    reportPropertyError("More than one @ToString property is not allowed", toStringProperties.first())
+    return null
+  }
+  val toStringProperty = toStringProperties.single()
+  val valueType = toStringProperty.valueType.let { if (it is ValueType.Optional<*>) it.type else it }
+  if (valueType !is ValueType.String) {
+    reportPropertyError("@ToString property has to have String(?) type, encountered $valueType", toStringProperty)
+    return null
+  }
+  val valueKind = toStringProperty.valueKind
+  if (valueKind !is ObjProperty.ValueKind.Computable) {
+    reportPropertyError("@ToString property should be computable", toStringProperty)
+    return null
+  }
+  val expression = valueKind.expression
+  return ToStringPropertyData(toStringProperty, expression)
 }
