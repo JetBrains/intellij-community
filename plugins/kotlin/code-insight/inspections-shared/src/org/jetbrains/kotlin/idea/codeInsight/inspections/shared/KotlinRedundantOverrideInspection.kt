@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.allOverriddenSymbolsWit
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.utils.AccessorUtils.canBePropertyAccessor
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
@@ -47,7 +48,6 @@ import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.namedFunctionVisitor
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getCallNameExpression
-import org.jetbrains.kotlin.synthetic.canBePropertyAccessor
 
 internal class KotlinRedundantOverrideInspection : KotlinApplicableInspectionBase.Simple<KtNamedFunction, Unit>(), CleanupLocalInspectionTool {
     override fun getProblemDescription(element: KtNamedFunction, context: Unit): @InspectionMessage String =

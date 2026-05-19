@@ -50,6 +50,7 @@ import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.utils.AccessorUtils.canBePropertyAccessor
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.utils.isRedundantBackticks
 import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertToBlockBodyUtils
 import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertToBlockBodyUtils.ConvertExpressionToBlockBodyData
@@ -84,7 +85,6 @@ import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
-import org.jetbrains.kotlin.synthetic.canBePropertyAccessor
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 

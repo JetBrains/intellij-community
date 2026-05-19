@@ -19,6 +19,7 @@ jvm_library(
   resource_strip_prefix = "resources",
   kotlinc_opts = ":custom_scripting.k1",
   deps = [
+    "@lib//:kotlinc-kotlin-compiler-fe10",
     "//platform/core-api:core",
     "//platform/projectModel-api:projectModel",
     "@lib//:kotlin-stdlib",
