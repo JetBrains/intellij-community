@@ -14,7 +14,7 @@ import com.intellij.refactoring.rename.RenameHandlerRegistry
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 
 open class RenameIdentifierFix : LocalQuickFix {
-    override fun getName() = KotlinBundle.message("rename.identifier.fix.text")
+    override fun getName(): String = KotlinBundle.message("rename.identifier.fix.text")
     override fun getFamilyName(): String = name
 
     override fun availableInBatchMode(): Boolean {

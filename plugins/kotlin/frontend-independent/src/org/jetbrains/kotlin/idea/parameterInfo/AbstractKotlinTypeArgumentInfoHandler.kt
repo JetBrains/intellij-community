@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtTypeArgumentList
+import org.jetbrains.kotlin.psi.KtTypeParameterListOwner
 import org.jetbrains.kotlin.psi.KtTypeProjection
 import org.jetbrains.kotlin.psi.KtVariableDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
@@ -30,11 +31,11 @@ abstract class AbstractKotlinTypeArgumentInfoHandler :
     override fun getActualParameterDelimiterType(): KtSingleValueToken = KtTokens.COMMA
     override fun getActualParametersRBraceType(): KtSingleValueToken = KtTokens.GT
 
-    override fun getArgumentListClass() = KtTypeArgumentList::class.java
+    override fun getArgumentListClass(): Class<KtTypeArgumentList> = KtTypeArgumentList::class.java
 
-    override fun getActualParameters(o: KtTypeArgumentList) = o.arguments.toTypedArray()
+    override fun getActualParameters(o: KtTypeArgumentList): Array<KtTypeProjection> = o.arguments.toTypedArray()
 
-    override fun getArgListStopSearchClasses() =
+    override fun getArgListStopSearchClasses(): Set<Class<out KtTypeParameterListOwner>> =
         setOf(KtNamedFunction::class.java, KtVariableDeclaration::class.java, KtClassOrObject::class.java)
 
     override fun showParameterInfo(element: KtTypeArgumentList, context: CreateParameterInfoContext) {
@@ -142,15 +143,14 @@ abstract class AbstractKotlinTypeArgumentInfoHandler :
                 append(" where ")
 
                 var needComma = false
-                for (parameter in candidateInfo.typeParameters) {
-                    val upperBounds = parameter.upperBounds
+                for ((name, _, _, upperBounds) in candidateInfo.typeParameters) {
                     if (upperBounds.size > 1) {
-                        for (upperBound in upperBounds) {
+                        for ((_, renderedType) in upperBounds) {
                             if (needComma) append(", ")
                             needComma = true
-                            append(parameter.name)
+                            append(name)
                             append(" : ")
-                            append(upperBound.renderedType)
+                            append(renderedType)
                         }
                     }
                 }

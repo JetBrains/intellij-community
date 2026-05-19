@@ -19,7 +19,8 @@ interface KotlinAutoImportsFilter {
     fun filterSuggestions(suggestions: Collection<FqName>): Collection<FqName>
 
     companion object {
-        val EP_NAME = ExtensionPointName.create<KotlinAutoImportsFilter>("org.jetbrains.kotlin.idea.codeInsight.unambiguousImports")
+        val EP_NAME: ExtensionPointName<KotlinAutoImportsFilter> =
+            ExtensionPointName.create("org.jetbrains.kotlin.idea.codeInsight.unambiguousImports")
 
         private fun findRelevantExtension(file: KtFile, suggestions: Collection<FqName>): KotlinAutoImportsFilter? =
             EP_NAME.findFirstSafe { it.forceAutoImportForElement(file, suggestions) }

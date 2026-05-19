@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 object StarProjectionUtils {
     @IntentionFamilyName
-    val starProjectionFixFamilyName = KotlinBundle.message("fix.add.star.projection.family")
+    val starProjectionFixFamilyName: String = KotlinBundle.message("fix.add.star.projection.family")
 
     data class ChangeToStarProjectionFixInfo(
         val binaryExpr: KtBinaryExpressionWithTypeRHS?,

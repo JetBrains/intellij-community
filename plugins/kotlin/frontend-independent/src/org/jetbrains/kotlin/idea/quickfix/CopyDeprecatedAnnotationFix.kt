@@ -5,11 +5,11 @@ import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtElement
 
-val MESSAGE_ARGUMENT = Name.identifier("message")
-val REPLACE_WITH_ARGUMENT = Name.identifier("replaceWith")
-val LEVEL_ARGUMENT = Name.identifier("level")
-val EXPRESSION_ARGUMENT = Name.identifier("expression")
-val IMPORTS_ARGUMENT = Name.identifier("imports")
+val MESSAGE_ARGUMENT: Name = Name.identifier("message")
+val REPLACE_WITH_ARGUMENT: Name = Name.identifier("replaceWith")
+val LEVEL_ARGUMENT: Name = Name.identifier("level")
+val EXPRESSION_ARGUMENT: Name = Name.identifier("expression")
+val IMPORTS_ARGUMENT: Name = Name.identifier("imports")
 
 class CopyDeprecatedAnnotationFix(
     element: KtElement,

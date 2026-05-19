@@ -9,6 +9,8 @@ import com.intellij.codeInsight.template.ExpressionContext
 import com.intellij.codeInsight.template.TemplateBuilderImpl
 import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.TextResult
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -30,8 +32,8 @@ import kotlin.math.min
 
 abstract class AbstractRenameUnresolvedReferenceFix(element: KtNameReferenceExpression) : KotlinQuickFixAction<KtNameReferenceExpression>(element) {
     companion object {
-        private val INPUT_VARIABLE_NAME = "INPUT_VAR"
-        private val OTHER_VARIABLE_NAME = "OTHER_VAR"
+        private const val INPUT_VARIABLE_NAME = "INPUT_VAR"
+        private const val OTHER_VARIABLE_NAME = "OTHER_VAR"
     }
 
     private class ReferenceNameExpression(
@@ -49,9 +51,9 @@ abstract class AbstractRenameUnresolvedReferenceFix(element: KtNameReferenceExpr
         override fun calculateLookupItems(context: ExpressionContext) = if (items.size <= 1) null else items
     }
 
-    override fun getText() = QuickFixBundle.message("rename.wrong.reference.text")
+    override fun getText(): @IntentionName String = QuickFixBundle.message("rename.wrong.reference.text")
 
-    override fun getFamilyName() = QuickFixBundle.message("rename.wrong.reference.family")
+    override fun getFamilyName(): @IntentionFamilyName String = QuickFixBundle.message("rename.wrong.reference.family")
 
     override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean {
         val element = element ?: return false

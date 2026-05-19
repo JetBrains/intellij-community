@@ -29,15 +29,15 @@ class NumberConversionFix(
 
         companion object {
 
-            val EXPRESSION = ActionNameProvider {
+            val EXPRESSION: ActionNameProvider = ActionNameProvider {
                 KotlinBundle.message("convert.expression.to.0", it.typePresentation)
             }
 
-            val LEFT_HAND_SIDE = ActionNameProvider {
+            val LEFT_HAND_SIDE: ActionNameProvider = ActionNameProvider {
                 KotlinBundle.message("convert.left.hand.side.to.0", it.typePresentation)
             }
 
-            val RIGHT_HAND_SIDE = ActionNameProvider {
+            val RIGHT_HAND_SIDE: ActionNameProvider = ActionNameProvider {
                 KotlinBundle.message("convert.right.hand.side.to.0", it.typePresentation)
             }
         }

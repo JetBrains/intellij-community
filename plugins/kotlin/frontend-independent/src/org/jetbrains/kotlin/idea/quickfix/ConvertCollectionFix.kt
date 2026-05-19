@@ -38,9 +38,9 @@ class ConvertCollectionFix(
         ArrayViaList("toList().toTypedArray()", FqName("kotlin.Array"), nameOverride = "Array"),
         ;
 
-        val displayName get() = nameOverride ?: name
+        val displayName: String get() = nameOverride ?: name
 
-        fun specializeFor(sourceType: CollectionType) = when {
+        fun specializeFor(sourceType: CollectionType): CollectionType = when {
             this == Array && sourceType == Sequence -> ArrayViaList
             this == Array && sourceType == Iterable -> ArrayViaList
             else -> this
