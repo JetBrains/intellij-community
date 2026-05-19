@@ -18,6 +18,8 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.application.PathManager.getSystemDir
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.application.impl.LaterInvocator
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager.Companion.getInstance
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkException
@@ -1348,8 +1350,39 @@ object MavenUtil {
   @Throws(IOException::class, JDOMException::class)
   private fun getDomRootElement(file: Path?): Element? {
     if (file == null) return null
-    val reader = InputStreamReader(Files.newInputStream(file), StandardCharsets.UTF_8)
-    return JDOMUtil.load(reader)
+    return MavenSettingsDomReader.getInstance().read(file)
+  }
+
+  @Service(Service.Level.APP)
+  private class MavenSettingsDomReader {
+    private val relay: DiskQueryRelay<Path, Element?> = DiskQueryRelay { file ->
+      Files.newInputStream(file).use { stream ->
+        JDOMUtil.load(InputStreamReader(stream, StandardCharsets.UTF_8))
+      }
+    }
+
+    @Throws(IOException::class, JDOMException::class)
+    fun read(file: Path): Element? {
+      try {
+        return relay.accessDiskWithCheckCanceled(file)
+      }
+      catch (e: RuntimeException) {
+        // accessDiskWithCheckCanceled propagates Future.get() failures via ExceptionUtil.rethrow,
+        // which wraps the ExecutionException in a RuntimeException. Restore the original cause
+        // so callers can match on IOException/JDOMException.
+        val cause = (e.cause as? ExecutionException)?.cause ?: throw e
+        ExceptionUtil.rethrowUnchecked(cause)
+        when (cause) {
+          is IOException -> throw cause
+          is JDOMException -> throw cause
+          else -> throw e
+        }
+      }
+    }
+
+    companion object {
+      fun getInstance(): MavenSettingsDomReader = service<MavenSettingsDomReader>()
+    }
   }
 
   private fun getElementWithRegardToNamespace(parent: Element?, childName: String?, namespaces: MutableList<String?>): Element? {
