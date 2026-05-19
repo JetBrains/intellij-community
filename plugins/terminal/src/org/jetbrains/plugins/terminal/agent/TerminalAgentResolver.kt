@@ -9,12 +9,14 @@ import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.annotations.NativePath
 import com.intellij.platform.eel.fs.EelFileInfo
 import com.intellij.platform.eel.fs.EelFileSystemApi
+import com.intellij.platform.eel.fs.listDirectoryWithAttrs
 import com.intellij.platform.eel.getOrNull
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.ide.productMode.IdeProductMode
+import com.intellij.util.PathUtil
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -111,19 +113,51 @@ object TerminalAgentResolver {
     eelApi: EelApi,
   ): String? = coroutineScope {
     // Launch PATH and known-location lookups in parallel because checking sequentially can be slow for remote environments with big latency.
-    val pathLookups: List<Deferred<EelPath?>> = terminalAgent.windowsExecutableExtensions.map { extension ->
+    val pathLookup: Deferred<EelPath?> = async {
+      // Returned list should contain files with extensions as well
+      val paths = eelApi.exec.findExeFilesInPath(terminalAgent.binaryName)
+      terminalAgent.windowsExecutableExtensions.firstNotNullOfOrNull { extension ->
+        paths.findPathWithExtension(extension)
+      }
+    }
+    val knownLocationLookups: List<Deferred<EelPath?>> = terminalAgent.windowsKnownLocationCandidates.map { location ->
       async {
-        eelApi.exec.findExeFilesInPath("${terminalAgent.binaryName}.$extension").firstOrNull()
+        findExistingPathWithExtension(eelApi, terminalAgent.binaryName, location, terminalAgent.windowsExecutableExtensions)
       }
     }
-    val knownLocationLookups: List<Deferred<EelPath?>> = terminalAgent.windowsKnownLocationCandidates.flatMap { candidate ->
-      terminalAgent.windowsExecutableExtensions.map { extension ->
-        async {
-          findExistingBinaryPath(eelApi, terminalAgent.binaryName, candidate, extension)
+    (listOf(pathLookup) + knownLocationLookups).awaitAll().firstNotNullOfOrNull { it }?.toString()
+  }
+
+  private suspend fun findExistingPathWithExtension(
+    eelApi: EelApi,
+    binaryName: String,
+    location: String,
+    possibleExtensions: List<String>,
+  ): EelPath? {
+    check(eelApi.descriptor.osFamily == EelOsFamily.Windows) { "Only for Windows: assumes that file system is case-insensitive" }
+
+    val locationPath = resolveKnownLocationCandidate(location, eelApi) ?: return null
+    val paths: List<EelPath> = eelApi.fs.listDirectoryWithAttrs(locationPath).resolveAndFollow().eelIt()
+      .getOrNull()
+      .orEmpty()
+      .mapNotNull { (fileName, fileInfo) ->
+        val extension = PathUtil.getFileExtension(fileName)
+        val fileNameWithoutExt = if (extension != null) fileName.removeSuffix(".$extension") else fileName
+        if (fileNameWithoutExt.equals(binaryName, ignoreCase = true) && fileInfo.type is EelFileInfo.Type.Regular) {
+          locationPath.resolve(fileName)
         }
+        else null
       }
+    return possibleExtensions.firstNotNullOfOrNull { extension ->
+      paths.findPathWithExtension(extension)
     }
-    (pathLookups + knownLocationLookups).awaitAll().firstNotNullOfOrNull { it }?.toString()
+  }
+
+  private fun List<EelPath>.findPathWithExtension(extension: String): EelPath? {
+    return find { path ->
+      val pathExt = PathUtil.getFileExtension(path.fileName)
+      pathExt != null && pathExt.equals(extension, ignoreCase = true)
+    }
   }
 
   private suspend fun findExistingBinaryPath(
