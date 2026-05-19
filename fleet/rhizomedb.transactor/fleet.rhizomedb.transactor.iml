@@ -19,7 +19,6 @@
                 <arg>$MAVEN_REPOSITORY$/com/jetbrains/fleet/rpc-compiler-plugin/2.4.0-RC-0.1/rpc-compiler-plugin-2.4.0-RC-0.1.jar</arg>
               </args>
             </arrayArg>
-            <arrayArg name="pluginOptions" />
           </arrayArguments>
         </compilerArguments>
       </configuration>
@@ -44,7 +43,6 @@
     <orderEntry type="module" module-name="fleet.reporting.api" />
     <orderEntry type="module" module-name="fleet.reporting.shared" />
     <orderEntry type="module" module-name="fleet.multiplatform.shims" />
-    <orderEntry type="module" module-name="intellij.libraries.fastutil" />
     <orderEntry type="module" module-name="fleet.bifurcan" />
     <orderEntry type="module" module-name="fleet.fastutil" />
   </component>

@@ -78,9 +78,6 @@ kotlin {
     implementation(jps.org.jetbrains.intellij.deps.kotlinx.kotlinx.coroutines.core.jvm930800474.get().let { "${it.group}:kotlinx-coroutines-core:${it.version}" }) {
       isTransitive = false
     }
-    implementation(jps.org.jetbrains.intellij.deps.fastutil.intellij.deps.fastutil1191883795.get().let { "${it.group}:${it.name}:${it.version}" }) {
-      isTransitive = false
-    }
     implementation(project(":fleet.rhizomedb"))
     api(project(":fleet.util.core"))
     api(project(":fleet.rpc"))
