@@ -21,7 +21,7 @@ import org.jetbrains.intellij.build.impl.PluginLayout
  * Default bundled plugins for all products.
  */
 val DEFAULT_BUNDLED_PLUGINS: PersistentList<String> = persistentListOf(
-  "intellij.moduleSet.plugin.acp",
+  "intellij.platform.acp.plugin",
   "intellij.platform.images",
   "intellij.dev"
 )
