@@ -44,11 +44,10 @@ interface FileSystem<P : PathHolder> {
    */
   suspend fun getSystemPythonFromSelection(pathToPython: P, requireSystemPython: Boolean): PyResult<DetectedSelectableInterpreter<P>>
 
-  // TODO sdkAdditionalData should become non-nullable when we start passing proper additional data at the time of SDK creation everywhere
   suspend fun setupSdk(
     project: Project?,
     pythonBinaryPath: P,
-    sdkAdditionalData: PythonSdkAdditionalData?,
+    sdkAdditionalData: PythonSdkAdditionalData,
     targetPanelExtension: TargetPanelExtension?,
   ): PyResult<Sdk>
 

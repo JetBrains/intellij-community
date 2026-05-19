@@ -8,16 +8,13 @@ import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.ide.projectView.actions.MarkRootsManager
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
@@ -25,34 +22,25 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.ex.temp.TempFileSystem
 import com.intellij.platform.eel.EelApi
 import com.intellij.python.community.services.systemPython.SystemPythonService
-import com.jetbrains.python.PyBundle
-import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.isCondaVirtualEnv
-import com.jetbrains.python.isNonToolVirtualEnv
-import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
-import com.jetbrains.python.sdk.add.v2.PathHolder
-import com.jetbrains.python.sdk.flavors.PyFlavorAndData
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
 import com.intellij.webcore.packaging.PackagesNotificationPanel
+import com.jetbrains.python.PyBundle
+import com.jetbrains.python.isCondaVirtualEnv
+import com.jetbrains.python.isNonToolVirtualEnv
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
+import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil.isPythonSdk
 import com.jetbrains.python.sdk.readOnly.PythonSdkReadOnlyProvider
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.createDetectedSdk
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.nio.file.InvalidPathException
 import java.nio.file.Path
-import kotlin.io.path.Path
 import kotlin.io.path.div
 import kotlin.io.path.pathString
 
@@ -174,57 +162,6 @@ fun filterAssociatedSdks(module: Module, existingSdks: List<Sdk>): List<Sdk> {
   return existingSdks.filter { isPythonSdk(it) && it.isAssociatedWithModule(module) }
 }
 
-/**
- * Please use [com.jetbrains.python.sdk.add.v2.FileSystem.setupSdk] instead
- */
-@Internal
-internal suspend fun <P : PathHolder> createSdk(
-  pythonBinaryPath: P,
-  suggestedSdkName: String? = null,
-  sdkAdditionalData: PythonSdkAdditionalData? = null,
-): PyResult<Sdk> {
-  val sdkType = PythonSdkType.getInstance()
-  val existingSdks = PythonSdkUtil.getAllSdks()
-
-  // for remote sdks we can't distinguish target environment configurations (docker the worst case)
-  if (sdkAdditionalData !is PyTargetAwareAdditionalData) {
-    existingSdks.find {
-      it.sdkAdditionalData?.javaClass == sdkAdditionalData?.javaClass &&
-      it.homePath == pythonBinaryPath.toString()
-    }?.let {
-      return PyResult.success(it)
-    }
-  }
-
-  val sdk = when (pythonBinaryPath) {
-    is PathHolder.Eel -> {
-      val pythonBinaryVirtualFile = withContext(Dispatchers.IO) {
-        VirtualFileManager.getInstance().refreshAndFindFileByNioPath(pythonBinaryPath.path)
-      } ?: return PyResult.localizedError(PyBundle.message("python.sdk.python.executable.not.found", pythonBinaryPath))
-
-      SdkConfigurationUtil.setupSdk(
-        existingSdks.toTypedArray(),
-        pythonBinaryVirtualFile,
-        sdkType,
-        false,
-        sdkAdditionalData,
-        suggestedSdkName
-      )
-    }
-    is PathHolder.Target -> {
-      SdkConfigurationUtil.createSdk(
-        existingSdks,
-        pythonBinaryPath.pathString,
-        sdkType,
-        sdkAdditionalData,
-        suggestedSdkName
-      ).also { sdk -> sdkType.setupSdkPaths(sdk) }
-    }
-  }
-
-  return sdk?.let { PyResult.success(it) }
-         ?: PyResult.localizedError(PyBundle.message("python.sdk.failed.to.create.interpreter.title"))
-}
 
 internal fun showSdkExecutionException(sdk: Sdk?, e: ExecutionException, @NlsContexts.DialogTitle title: String) {
   runInEdt {
@@ -239,7 +176,7 @@ fun Sdk.isAssociatedWithModule(module: Module?): Boolean {
   val associatedPath = associatedModulePath
   if (basePath != null && associatedPath == basePath) return true
   if (isAssociatedWithAnotherModule(module)) return false
-  return (module !=null && isLocatedInsideModule(module)) || containsModuleName(module)
+  return (module != null && isLocatedInsideModule(module)) || containsModuleName(module)
 }
 
 @Internal
@@ -249,55 +186,9 @@ fun Sdk.isAssociatedWithAnotherModule(module: Module?): Boolean {
   return basePath != associatedPath
 }
 
-@Internal
-suspend fun Sdk.setupAssociated(
-  existingSdks: List<Sdk>,
-  associatedModulePath: String?,
-  doAssociate: Boolean,
-  flavorAndData: PyFlavorAndData<*, *> = PyFlavorAndData.UNKNOWN_FLAVOR_DATA,
-): PyResult<Sdk> = withContext(Dispatchers.IO) {
-  if (!isSdkSeemsValid) {
-    return@withContext PyResult.localizedError(PyBundle.message("python.sdk.error.invalid.interpreter.selected", homePath))
-  }
-
-  val homePath = homePath
-  if (homePath == null) {
-    // e.g. directory is not there anymore
-    return@withContext PyResult.localizedError(PyBundle.message("python.sdk.provided.path.is.invalid", null))
-  }
-
-  val homeDir = homeDirectory
-  if (homeDir == null) {
-    return@withContext PyResult.localizedError(PyBundle.message("python.sdk.provided.path.is.invalid", null))
-  }
-
-  val data = targetEnvConfiguration?.let { targetConfig ->
-    PyTargetAwareAdditionalData(flavorAndData).also {
-      it.targetEnvironmentConfiguration = targetConfig
-    }
-  } ?: PythonSdkAdditionalData(flavorAndData)
-
-  if (doAssociate && associatedModulePath != null) {
-    data.associatedModulePath = associatedModulePath
-  }
-
-  val sdk = withContext(Dispatchers.EDT) {
-    SdkConfigurationUtil.setupSdk(
-      existingSdks.toTypedArray(),
-      homeDir,
-      PythonSdkType.getInstance(),
-      data,
-      null)
-
-  }
-  PyResult.success(sdk)
-}
-
-
 /**
  * Please set sdk on module level: [Module.pythonSdk]
  */
-@get:ApiStatus.Obsolete
 @set:ApiStatus.Obsolete
 var Project.pythonSdk: Sdk?
   get() {
@@ -433,13 +324,10 @@ internal val Sdk.remoteSourcesLocalPath: Path
             }.hashCode().toString())
 
 
-
+/**
+ * Configures [targetCommandLineBuilder] (sets a binary path and other stuff) so it could run python on this target
+ */
 @Internal
-@Deprecated("Use module.pythonSdk", replaceWith = ReplaceWith("module.pythonSdk"), level = DeprecationLevel.ERROR)
-fun setPythonSdk(module: Module, sdk: Sdk) {
-  module.pythonSdk = sdk
+fun Sdk.configureBuilderToRunPythonOnTarget(targetCommandLineBuilder: TargetedCommandLineBuilder) {
+  getOrCreateAdditionalData().flavorAndData.data.prepareTargetCommandLine(this, targetCommandLineBuilder)
 }
-
-@Internal
-@Deprecated("Use module.pythonSdk", replaceWith = ReplaceWith("module.pythonSdk"), level = DeprecationLevel.ERROR)
-fun getPythonSdk(module: Module): Sdk? = module.pythonSdk

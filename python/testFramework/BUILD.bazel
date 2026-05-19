@@ -9,6 +9,7 @@ jvm_library(
   resources = glob(["resources/**/*"]),
   resource_strip_prefix = "resources",
   deps = [
+    "//python/python-venv:venv",
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/core-ui",
@@ -36,6 +37,7 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   runtime_deps = [
     ":testFramework",
+    "//python/python-venv:venv_test_lib",
     "//platform/analysis-api:analysis_test_lib",
     "//platform/core-api:core_test_lib",
     "//platform/core-ui:core-ui_test_lib",

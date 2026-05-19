@@ -7,6 +7,7 @@ import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonBinary
+import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -34,8 +35,9 @@ interface PyEnvironment : AutoCloseable {
 
   suspend fun prepareSdk(): Sdk = withContext(Dispatchers.IO) {
     val vfsFile = VfsUtil.findFile(pythonPath, true) ?: error("Cannot find Python executable: ${pythonPath}")
+    val data = PythonSdkAdditionalData(osSpecificSdkFlavorAndData)
     SdkConfigurationUtil.setupSdk(emptyArray(), vfsFile,
-                                  SdkType.findByName(PyNames.PYTHON_SDK_ID_NAME)!!, null, null)
+                                  SdkType.findByName(PyNames.PYTHON_SDK_ID_NAME)!!, data, null)
   }
 
   /**

@@ -40,10 +40,10 @@ import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.configuration.CONDA_TOOL_ID
 import com.jetbrains.python.sdk.configuration.PIPENV_TOOL_ID
 import com.jetbrains.python.sdk.configuration.VENV_TOOL_ID
+import com.jetbrains.python.sdk.createSdkGuessingTypeByPath
 import com.jetbrains.python.sdk.excludeInnerVirtualEnv
 import com.jetbrains.python.sdk.installSdkIfNeeded
 import com.jetbrains.python.sdk.moduleIfExists
-import com.jetbrains.python.sdk.persist
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
 import com.jetbrains.python.sdk.setAssociationToModule
@@ -205,27 +205,18 @@ internal suspend fun <P : PathHolder> PythonSelectableInterpreter<P>.setupSdk(
   targetPanelExtension: TargetPanelExtension?,
   isAssociateWithModule: Boolean,
 ): PyResult<Sdk> {
-  if (this is ExistingSelectableInterpreter) {
-    return PyResult.success(sdkWrapper.sdk)
+  when (this) {
+    is ExistingSelectableInterpreter -> return PyResult.success(sdkWrapper.sdk)
+    is DetectedSelectableInterpreter, is InstallableSelectableInterpreter, is ManuallyAddedSelectableInterpreter -> Unit
   }
 
-  val newSdk = fileSystem.setupSdk(
-    project = moduleOrProject.project,
-    pythonBinaryPath = homePath!!,
-    sdkAdditionalData = null,
-    targetPanelExtension = targetPanelExtension
-  ).getOr { return it }
+  val homePath = this@setupSdk.homePath!!
 
-  val module = PyProjectCreateHelpers.getModule(moduleOrProject, newSdk.homeDirectory)
-  if (isAssociateWithModule && module != null) {
-    newSdk.setAssociationToModule(module)
-  }
-  newSdk.persist()
-
-  moduleOrProject.project.excludeInnerVirtualEnv(newSdk)
-
-  return PyResult.success(newSdk)
+  // Do our best to guess the flavor
+  return createSdkGuessingTypeByPath(homePath, fileSystem, moduleOrProject, targetPanelExtension, isAssociateWithModule)
 }
+
+
 
 internal fun savePathForEelOnly(pathHolder: PathHolder, pathPersister: (Path) -> Unit) {
   when (pathHolder) {

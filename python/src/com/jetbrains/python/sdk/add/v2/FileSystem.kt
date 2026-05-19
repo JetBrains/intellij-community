@@ -68,8 +68,6 @@ import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.asBinToExecute
 import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.createSdk
-import com.jetbrains.python.sdk.flavors.PyFlavorAndData
-import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.sdk.getSdksToInstall
 import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.sdk.impl.resolvePythonBinary
@@ -135,10 +133,10 @@ data class EelFileSystem(
   override suspend fun setupSdk(
     project: Project?,
     pythonBinaryPath: PathHolder.Eel,
-    sdkAdditionalData: PythonSdkAdditionalData?,
+    sdkAdditionalData: PythonSdkAdditionalData,
     targetPanelExtension: TargetPanelExtension?,
   ): PyResult<Sdk> {
-    return createSdk(pythonBinaryPath, null, sdkAdditionalData)
+    return createSdk(pythonBinaryPath, sdkAdditionalData)
   }
 
   override fun parsePath(raw: String): PyResult<PathHolder.Eel> = try {
@@ -408,16 +406,16 @@ data class TargetFileSystem(
     }
   }
 
-  override suspend fun setupSdk(
+    override suspend fun setupSdk(
     project: Project?,
     pythonBinaryPath: PathHolder.Target,
-    sdkAdditionalData: PythonSdkAdditionalData?,
+    sdkAdditionalData: PythonSdkAdditionalData,
     targetPanelExtension: TargetPanelExtension?,
   ): PyResult<Sdk> {
     val languageLevel = getBinaryToExec(pythonBinaryPath).validatePythonAndGetInfo().getOr { return it }.languageLevel
 
     val (additionalData, customSdkSuggestedName) = run {
-      val flavorAndData = sdkAdditionalData?.flavorAndData ?: PyFlavorAndData(PyFlavorData.Empty, VirtualEnvSdkFlavor.getInstance())
+      val flavorAndData = sdkAdditionalData.flavorAndData
       val data = PyTargetAwareAdditionalData(flavorAndData).also {
         it.interpreterPath = pythonBinaryPath.toString()
         it.targetEnvironmentConfiguration = targetEnvironmentConfiguration
@@ -432,8 +430,8 @@ data class TargetFileSystem(
 
     return createSdk(
       pythonBinaryPath,
-      customSdkSuggestedName,
-      additionalData
+      additionalData,
+      customSdkSuggestedName
     )
   }
 

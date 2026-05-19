@@ -9,13 +9,16 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.junit5Tests.framework.env.SdkFixture
 import com.intellij.python.test.env.core.PyEnvironment
 import com.intellij.python.venv.createVenv
+import com.intellij.python.venv.createVenvAdditionalData
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
 import com.jetbrains.python.getOrThrow
+import com.jetbrains.python.sdk.SdkCreationAdvancedOpts
+import com.jetbrains.python.sdk.add.v2.PathHolder
+import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.persist
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.setAssociationToModule
-import com.jetbrains.python.tools.createSdk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
@@ -24,27 +27,27 @@ import java.nio.file.Path
  * Create virtual env in [where]. If [addToSdkTable] then also added to the project jdk table
  */
 fun TestFixture<SdkFixture<PyEnvironment>>.pyVenvFixture(
-  where: TestFixture<Path>,
-  addToSdkTable: Boolean,
-  moduleFixture: TestFixture<Module>? = null,
+    where: TestFixture<Path>,
+    addToSdkTable: Boolean,
+    moduleFixture: TestFixture<Module>? = null,
 ): TestFixture<Sdk> = testFixture {
-  val env = this@pyVenvFixture.init().env
-  withContext(Dispatchers.EDT) {
-    val module = moduleFixture?.init()
-    val venvDir = where.init().resolve(".venv")
-    val venvPython = createVenv(env.pythonPath, venvDir).getOrThrow()
-    val venvSdk = withContext(Dispatchers.IO) { createSdk(venvPython) }
-    if (addToSdkTable) {
-      venvSdk.persist()
-      if (module != null) {
-        module.pythonSdk = venvSdk
-        venvSdk.setAssociationToModule(module)
-      }
+    val env = this@pyVenvFixture.init().env
+    withContext(Dispatchers.EDT) {
+        val module = moduleFixture?.init()
+        val venvDir = where.init().resolve(".venv")
+        val venvPython = createVenv(env.pythonPath, venvDir).getOrThrow()
+        val venvSdk = createSdk(PathHolder.Eel(venvPython), createVenvAdditionalData(), advancedOpts = SdkCreationAdvancedOpts(persist = addToSdkTable)).orThrow()
+        if (addToSdkTable) {
+            venvSdk.persist()
+            if (module != null) {
+                module.pythonSdk = venvSdk
+                venvSdk.setAssociationToModule(module)
+            }
+        }
+        initialized(venvSdk) {
+            edtWriteAction {
+                ProjectJdkTable.getInstance().removeJdk(venvSdk)
+            }
+        }
     }
-    initialized(venvSdk) {
-      edtWriteAction {
-        ProjectJdkTable.getInstance().removeJdk(venvSdk)
-      }
-    }
-  }
 }

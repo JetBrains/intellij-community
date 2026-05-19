@@ -13,6 +13,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [
+    "//python/python-venv:venv",
     "@lib//:jetbrains-annotations",
     "//python/openapi:community",
     "@lib//:kotlin-stdlib",
@@ -40,6 +41,8 @@ jvm_library(
   resource_strip_prefix = "resources",
   resource_jars = [":core_test_resources"],
   deps = [
+    "//python/python-venv:venv",
+    "//python/python-venv:venv_test_lib",
     "@lib//:jetbrains-annotations",
     "//python/openapi:community",
     "//python/openapi:community_test_lib",
@@ -68,6 +71,8 @@ jvm_library(
     "//platform/lang-impl:lang-impl_test_lib",
     "//platform/lang-core",
     "//platform/lang-core:lang-core_test_lib",
+    "//python/python-sdk:sdk",
+    "//python/python-sdk:sdk_test_lib",
   ],
   runtime_deps = [":core"]
 )

@@ -29,6 +29,13 @@ public final class MacPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empt
   private MacPythonSdkFlavor() {
   }
 
+  @NotNull
+  public static MacPythonSdkFlavor getInstance() {
+    var extension = EP_NAME.findExtension(MacPythonSdkFlavor.class);
+    assert extension != null : "No mac flavor found, installation broken?";
+    return extension;
+  }
+
   @Override
   public boolean isApplicable() {
     return SystemInfo.isMac;
