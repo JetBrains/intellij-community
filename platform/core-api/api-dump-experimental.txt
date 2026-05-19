@@ -407,7 +407,9 @@ com.intellij.psi.SyntheticElement
 - *sf:NoContextFileInfo():com.intellij.psi.search.NoContextFileInfo
 - *sf:NoContextInformation():com.intellij.psi.search.NoContextInformation
 - *sf:contains(com.intellij.psi.search.SearchScope,com.intellij.openapi.vfs.VirtualFile,com.intellij.codeInsight.multiverse.CodeInsightContext):Z
-- *sf:createContainingContextFileInfo(java.util.Collection):com.intellij.psi.search.CodeInsightContextFileInfo
+- *sf:createContainingContextFileInfo(java.util.Collection,com.intellij.openapi.vfs.VirtualFile,com.intellij.psi.search.SearchScope):com.intellij.psi.search.CodeInsightContextFileInfo
+- *sf:createContainingContextFileInfo(java.util.Collection,kotlin.jvm.functions.Function0):com.intellij.psi.search.CodeInsightContextFileInfo
+- *sf:createContainingContextFileInfo(java.util.Collection,Z):com.intellij.psi.search.CodeInsightContextFileInfo
 - *sf:getCodeInsightContextInfo(com.intellij.psi.search.SearchScope):com.intellij.psi.search.CodeInsightContextInfo
 - *sf:getCorrespondingContexts(com.intellij.psi.search.SearchScope,com.intellij.openapi.vfs.VirtualFile):java.util.Collection
 - *sf:getFileContextInfo(com.intellij.psi.search.SearchScope,com.intellij.openapi.vfs.VirtualFile):com.intellij.psi.search.CodeInsightContextFileInfo

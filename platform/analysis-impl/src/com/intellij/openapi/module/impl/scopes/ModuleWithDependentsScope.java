@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module.impl.scopes;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
@@ -169,7 +169,7 @@ public final class ModuleWithDependentsScope extends GlobalSearchScope implement
     Project project = Objects.requireNonNull(getProject()); // project is notnull.
     ProjectModelContextBridge bridge = ProjectModelContextBridge.getInstance(project);
     List<ModuleContext> contexts = ContainerUtil.mapNotNull(testModuleIntersection, m -> bridge.getContext(m));
-    return CodeInsightContextAwareSearchScopes.createContainingContextFileInfo(contexts);
+    return CodeInsightContextAwareSearchScopes.createContainingContextFileInfo(contexts, !contexts.isEmpty());
   }
 
   @ApiStatus.Internal

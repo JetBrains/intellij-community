@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module.impl.scopes;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
@@ -59,14 +59,13 @@ public class ModulesScope extends GlobalSearchScope implements CodeInsightContex
   public @NotNull CodeInsightContextFileInfo getFileInfo(@NotNull VirtualFile file) {
     Set<Module> modulesOfFile = myProjectFileIndex.getModulesForFile(file, true);
     Collection<Module> intersection = ContainerUtil.intersection(myModules, modulesOfFile);
-    if (!intersection.isEmpty()) {
-      ProjectModelContextBridge bridge = ProjectModelContextBridge.getInstance(Objects.requireNonNull(getProject()));
-      List<ModuleContext> contexts = ContainerUtil.mapNotNull(intersection, m -> bridge.getContext(m));
-      return CodeInsightContextAwareSearchScopes.createContainingContextFileInfo(contexts);
-    }
-    else {
+    if (intersection.isEmpty()) {
       return CodeInsightContextAwareSearchScopes.DoesNotContainFileInfo();
     }
+
+    ProjectModelContextBridge bridge = ProjectModelContextBridge.getInstance(Objects.requireNonNull(getProject()));
+    List<ModuleContext> contexts = ContainerUtil.mapNotNull(intersection, m -> bridge.getContext(m));
+    return CodeInsightContextAwareSearchScopes.createContainingContextFileInfo(contexts, !contexts.isEmpty());
   }
 
   @ApiStatus.Experimental

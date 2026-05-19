@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module.impl.scopes
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext
@@ -112,8 +112,11 @@ abstract class RootContainerScope internal constructor(
     }
 
     val roots = myProjectFileIndex.getModuleSourceOrLibraryClassesRoots(file)
-    if (roots.isEmpty()) return DoesNotContainFileInfo()
+    if (roots.isEmpty()) {
+      return DoesNotContainFileInfo()
+    }
 
+    var descriptorWasFoundButDidNotYieldContext = false
     val result = SmartHashSet<CodeInsightContext>()
     for (rootDescriptor in roots) {
       val descriptor = rootContainer.getRootDescriptor(rootDescriptor)
@@ -122,9 +125,13 @@ abstract class RootContainerScope internal constructor(
         if (context != null) {
           result.add(context)
         }
+        else {
+          // this can happen in tests when sdks are constructed on the fly and are not associated with real workspace entities
+          descriptorWasFoundButDidNotYieldContext = true
+        }
       }
     }
-    return createContainingContextFileInfo(result)
+    return createContainingContextFileInfo(result, !result.isEmpty() || descriptorWasFoundButDidNotYieldContext)
   }
 
   private fun convertToContext(descriptor: ScopeRootDescriptor): CodeInsightContext? {

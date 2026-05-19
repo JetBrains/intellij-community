@@ -1,11 +1,17 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext
 import com.intellij.openapi.vfs.VirtualFile
 
 internal fun createCodeInsightContextInfoUnion(scopes: Array<out GlobalSearchScope>): CodeInsightContextInfo {
-  if (scopes.isEmpty() || scopes.none { scope -> scope is CodeInsightContextAwareSearchScope }) {
+  require(scopes.size >= 2)
+
+  // Mirror createIntersectionCodeInsightContextInfo: only wrap in an ActualCodeInsightContextInfo
+  // when at least one scope actually contributes one. A scope that is `CodeInsightContextAwareSearchScope`
+  // but returns `NoContextInformation` carries no extra info and would just make consumers go through
+  // the indirect path for the same answer.
+  if (scopes.none { scope -> (scope as? CodeInsightContextAwareSearchScope)?.codeInsightContextInfo is ActualCodeInsightContextInfo }) {
     return NoContextInformation()
   }
   return CodeInsightContextInfoUnion(scopes)
@@ -53,6 +59,6 @@ private class CodeInsightContextInfoUnion(
       .flatMap { info -> info.contexts }
       .distinct()
 
-    return createContainingContextFileInfo(knownContexts)
+    return createContainingContextFileInfo(knownContexts, true)
   }
 }
