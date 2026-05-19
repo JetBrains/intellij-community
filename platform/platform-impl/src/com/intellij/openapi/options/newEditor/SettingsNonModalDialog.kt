@@ -301,7 +301,15 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
         true
       }
       Messages.NO -> { editor.cancel(null); true }
-      else -> false
+      else -> {
+        // After Cancel the IDE-close veto returns; on Windows the IDE main frame reclaims
+        // focus, hiding the independent Settings JFrame (Window mode). Restore it on top.
+        EventQueue.invokeLater {
+          activeWindow.toFront()
+          activeWindow.requestFocus()
+        }
+        false
+      }
     }
   }
 
