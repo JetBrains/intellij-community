@@ -2930,16 +2930,6 @@ a:com.intellij.ide.plugins.MultiPanel
 - <init>():V
 - p:create(java.lang.Integer):javax.swing.JComponent
 - p:prepare(java.lang.Integer):java.lang.Integer
-f:com.intellij.ide.plugins.PendingDynamicPluginInstall
-- <init>(java.nio.file.Path,com.intellij.ide.plugins.IdeaPluginDescriptorImpl):V
-- f:component1():java.nio.file.Path
-- f:component2():com.intellij.ide.plugins.IdeaPluginDescriptorImpl
-- f:copy(java.nio.file.Path,com.intellij.ide.plugins.IdeaPluginDescriptorImpl):com.intellij.ide.plugins.PendingDynamicPluginInstall
-- bs:copy$default(com.intellij.ide.plugins.PendingDynamicPluginInstall,java.nio.file.Path,com.intellij.ide.plugins.IdeaPluginDescriptorImpl,I,java.lang.Object):com.intellij.ide.plugins.PendingDynamicPluginInstall
-- equals(java.lang.Object):Z
-- f:getFile():java.nio.file.Path
-- f:getPluginDescriptor():com.intellij.ide.plugins.IdeaPluginDescriptorImpl
-- hashCode():I
 e:com.intellij.ide.plugins.PluginEnableDisableAction
 - java.lang.Enum
 - sf:DISABLE_GLOBALLY:com.intellij.ide.plugins.PluginEnableDisableAction
@@ -2984,8 +2974,6 @@ f:com.intellij.ide.plugins.PluginInstallCallbackData
 f:com.intellij.ide.plugins.PluginInstaller
 - sf:UNKNOWN_HOST_MARKER:java.lang.String
 - s:addStateListener(com.intellij.ide.plugins.PluginStateListener):V
-- s:installAndLoadDynamicPlugin(java.nio.file.Path,com.intellij.ide.plugins.IdeaPluginDescriptorImpl):Z
-- s:installAndLoadDynamicPlugin(java.nio.file.Path,javax.swing.JComponent,com.intellij.ide.plugins.IdeaPluginDescriptorImpl):Z
 - s:rootEntryName(java.nio.file.Path):java.lang.String
 - s:unpackPlugin(java.nio.file.Path,java.nio.file.Path):java.nio.file.Path
 f:com.intellij.ide.plugins.PluginManagerMain

@@ -394,6 +394,7 @@ public final class PluginInstaller {
     }
   }
 
+  @ApiStatus.Internal
   public static boolean installAndLoadDynamicPlugin(@NotNull Path file, @NotNull IdeaPluginDescriptorImpl descriptor) {
     return installAndLoadDynamicPlugin(file, null, descriptor);
   }
@@ -401,6 +402,7 @@ public final class PluginInstaller {
   /**
    * @return {@code true} if plugin was successfully installed without a restart, {@code false} if restart is required
    */
+  @ApiStatus.Internal
   public static boolean installAndLoadDynamicPlugin(
     @NotNull Path file,
     @Nullable JComponent parent,

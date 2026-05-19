@@ -3,7 +3,6 @@ com/intellij/diagnostic/ActivityCategory
 com/intellij/ide/actions/cache/RecoveryScope
 com/intellij/ide/errorTreeView/NewErrorTreeViewPanel$MessageViewState
 com/intellij/ide/gdpr/ConsentAttributes
-com/intellij/ide/plugins/IdeaPluginDescriptorImpl
 com/intellij/ide/plugins/marketplace/MarketplacePluginDownloadService
 com/intellij/ide/ui/LafReference
 com/intellij/ide/ui/laf/UIThemeExportableBean
