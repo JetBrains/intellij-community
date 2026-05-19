@@ -18,7 +18,6 @@ import com.intellij.tasks.impl.gson.TaskGsonUtil;
 import com.intellij.tasks.jira.rest.JiraRestApi;
 import com.intellij.tasks.jira.rest.api2.JiraRestApi2;
 import com.intellij.tasks.jira.rest.api3.JiraRestApiCloud3;
-import com.intellij.tasks.jira.soap.JiraLegacyApi;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.apache.commons.httpclient.Cookie;
@@ -26,7 +25,6 @@ import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.HttpStatus;
-import org.apache.commons.httpclient.StatusLine;
 import org.apache.commons.httpclient.auth.HttpAuthenticator;
 import org.apache.commons.httpclient.cookie.CookiePolicy;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -54,7 +52,6 @@ public final class JiraRepository extends BaseRepositoryImpl {
   private static final Logger LOG = Logger.getInstance(JiraRepository.class);
   public static final String REST_API_PATH = "/rest/api/latest";
 
-  private static final boolean LEGACY_API_ONLY = Boolean.getBoolean("tasks.jira.legacy.api.only");
   private static final boolean BASIC_AUTH_ONLY = Boolean.getBoolean("tasks.jira.basic.auth.only");
   private static final boolean REDISCOVER_API = Boolean.getBoolean("tasks.jira.rediscover.api");
 
@@ -118,16 +115,14 @@ public final class JiraRepository extends BaseRepositoryImpl {
   public Task[] getIssues(@Nullable String query, int max, long since) throws Exception {
     ensureApiVersionDiscovered();
     String resultQuery = StringUtil.notNullize(query);
-    if (isJqlSupported()) {
-      if (StringUtil.isNotEmpty(mySearchQuery) && StringUtil.isNotEmpty(query)) {
-        resultQuery = String.format("summary ~ '%s' and ", query) + mySearchQuery;
-      }
-      else if (StringUtil.isNotEmpty(query)) {
-        resultQuery = String.format("summary ~ '%s'", query);
-      }
-      else {
-        resultQuery = mySearchQuery;
-      }
+    if (StringUtil.isNotEmpty(mySearchQuery) && StringUtil.isNotEmpty(query)) {
+      resultQuery = String.format("summary ~ '%s' and ", query) + mySearchQuery;
+    }
+    else if (StringUtil.isNotEmpty(query)) {
+      resultQuery = String.format("summary ~ '%s'", query);
+    }
+    else {
+      resultQuery = mySearchQuery;
     }
     List<Task> tasksFound = myApiVersion.findTasks(resultQuery, max);
     // JQL matching doesn't allow to do something like "summary ~ query or key = query"
@@ -173,29 +168,8 @@ public final class JiraRepository extends BaseRepositoryImpl {
   }
 
   public @NotNull JiraRemoteApi discoverApiVersion() throws Exception {
-    if (LEGACY_API_ONLY) {
-      LOG.info("Intentionally using only legacy JIRA API");
-      return createLegacyApi();
-    }
-
-    String responseBody;
     GetMethod method = new GetMethod(getRestUrl("serverInfo"));
-    try {
-      responseBody = executeMethod(method);
-    }
-    catch (Exception e) {
-      // probably JIRA version prior 4.2
-      // It's not safe to call HttpMethod.getStatusCode() directly, because it will throw NPE
-      // if response was not received (connection lost etc.) and hasBeenUsed()/isRequestSent() are
-      // not the way to check it safely.
-      StatusLine status = method.getStatusLine();
-      if (status != null && status.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
-        return createLegacyApi();
-      }
-      else {
-        throw e;
-      }
-    }
+    String responseBody = executeMethod(method);
     JsonObject serverInfo = GSON.fromJson(responseBody, JsonObject.class);
     // when JIRA 4.x support will be dropped 'versionNumber' array in response
     // may be used instead version string parsing
@@ -249,21 +223,8 @@ public final class JiraRepository extends BaseRepositoryImpl {
     return false;
   }
 
-  private JiraLegacyApi createLegacyApi() {
-    try {
-      String version = JiraLegacyApi.fetchJiraVersion(getUrl(), getHttpClient());
-      if (version != null) {
-        myJiraVersion = version;
-      }
-    }
-    catch (Exception e) {
-      LOG.error("Cannot find out JIRA version via XML-RPC", e);
-    }
-    return new JiraLegacyApi(this);
-  }
-
   private void ensureApiVersionDiscovered() throws Exception {
-    if (myApiVersion == null || LEGACY_API_ONLY || REDISCOVER_API) {
+    if (myApiVersion == null || REDISCOVER_API) {
       myApiVersion = discoverApiVersion();
     }
   }
@@ -290,7 +251,7 @@ public final class JiraRepository extends BaseRepositoryImpl {
       }
     }
     else {
-      boolean enableBasicAuthentication = !(isRestApiSupported() && containsCookie(client, AUTH_COOKIE_NAME));
+      boolean enableBasicAuthentication = !containsCookie(client, AUTH_COOKIE_NAME);
       if (enableBasicAuthentication != isUseHttpAuthentication()) {
         LOG.info("Basic authentication for subsequent requests was " + (enableBasicAuthentication ? "enabled" : "disabled"));
       }
@@ -399,21 +360,7 @@ public final class JiraRepository extends BaseRepositoryImpl {
 
   @Override
   protected int getFeatures() {
-    int features = super.getFeatures();
-    if (isRestApiSupported()) {
-      return features | TIME_MANAGEMENT | STATE_UPDATING;
-    }
-    else {
-      return features & ~NATIVE_SEARCH & ~STATE_UPDATING & ~TIME_MANAGEMENT;
-    }
-  }
-
-  private boolean isRestApiSupported() {
-    return myApiVersion == null || myApiVersion.getType() != JiraRemoteApi.ApiType.LEGACY;
-  }
-
-  public boolean isJqlSupported() {
-    return isRestApiSupported();
+    return super.getFeatures() | TIME_MANAGEMENT | STATE_UPDATING;
   }
 
   public String getSearchQuery() {

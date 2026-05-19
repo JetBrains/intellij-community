@@ -80,16 +80,8 @@ public final class JiraRepositoryEditor extends BaseRepositoryEditor<JiraReposit
   }
 
   private void adjustSettingsForServerProperties() {
-    if (myRepository.isJqlSupported()) {
-      mySearchQueryField.setEnabled(true);
-      myNoteLabel.setVisible(false);
-    }
-    else {
-      mySearchQueryField.setEnabled(false);
-      myNoteLabel.setText(
-        TaskBundle.message("label.jql.search.cannot.be.used.in.jira.versions.prior.your.version", myRepository.getPresentableVersion()));
-      myNoteLabel.setVisible(true);
-    }
+    mySearchQueryField.setEnabled(true);
+    myNoteLabel.setVisible(false);
 
     if (myRepository.isInCloud()) {
       myUsernameLabel.setVisible(true);

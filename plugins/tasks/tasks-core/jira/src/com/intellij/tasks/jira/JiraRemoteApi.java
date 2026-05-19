@@ -7,7 +7,6 @@ import com.intellij.tasks.Task;
 import com.intellij.tasks.jira.rest.api2.JiraRestApi2;
 import com.intellij.tasks.jira.rest.api20alpha1.JiraRestApi20Alpha1;
 import com.intellij.tasks.jira.rest.api3.JiraRestApiCloud3;
-import com.intellij.tasks.jira.soap.JiraLegacyApi;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,12 +43,6 @@ public abstract class JiraRemoteApi {
   public abstract @NotNull ApiType getType();
 
   public enum ApiType {
-    LEGACY("XML-RPC + RSS") {
-      @Override
-      public @NotNull JiraLegacyApi createApi(@NotNull JiraRepository repository) {
-        return new JiraLegacyApi(repository);
-      }
-    },
     REST_2_0("REST 2.0") {
       @Override
       public @NotNull JiraRestApi2 createApi(@NotNull JiraRepository repository) {
