@@ -36,4 +36,9 @@ public interface BatchingFileSystem {
   default @NotNull Map<@NotNull String, @NotNull FileAttributes> listWithAttributes(@NotNull VirtualFile dir) {
     return listWithAttributes(dir, null);
   }
+
+  default @NotNull Map<@NotNull String, @NotNull FileAttributes> listWithAttributesWindows(@NotNull VirtualFile dir) {
+    return listWithAttributes(dir, null);
+  }
+
 }

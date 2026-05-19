@@ -16,6 +16,8 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFilePointerCapableFileSystem;
 import com.intellij.openapi.vfs.impl.SymlinksCapableFileSystem;
+import com.intellij.openapi.vfs.impl.local.windows.WindowsBufferedDirectoryIterator;
+import com.intellij.openapi.vfs.impl.local.windows.WindowsBufferedDirectoryStream;
 import com.intellij.openapi.vfs.newvfs.FileNavigator;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
@@ -43,9 +45,12 @@ import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -421,6 +426,29 @@ public class LocalFileSystemImpl
       return Collections.emptyMap();
     }
     return myChildrenAttrGetter.accessDiskWithCheckCanceled(new Pair<>(dir, childrenNames));
+  }
+
+  @Override
+  public @NotNull Map<@NotNull String, @NotNull FileAttributes> listWithAttributesWindows(@NotNull VirtualFile dir) {
+    return listWithAttributesImplWindows(dir.toNioPath());
+  }
+
+  public static Map<String, FileAttributes> listWithAttributesImplWindows(@NotNull Path dir) {
+    if (OS.CURRENT != OS.Windows || !Files.isDirectory(dir)) return HashMap.newHashMap(0);
+    try (final WindowsBufferedDirectoryStream stream = new WindowsBufferedDirectoryStream(dir)) {
+      final int expectedSize = 10;
+      final Map<String, FileAttributes> childrenWithAttributes = createFilePathMap(expectedSize, true);
+
+      for (final Pair<Path, BasicFileAttributes> pathAndAttr : stream) {
+        final var path = pathAndAttr.getFirst();
+        final var basicAttrs = pathAndAttr.getSecond();
+
+        final var attributes = amendAttributes(path, FileAttributes.fromNio(path, basicAttrs));
+        childrenWithAttributes.put(path.getFileName().toString(), attributes);
+      }
+
+      return childrenWithAttributes;
+    }
   }
 
   protected static Map<String, FileAttributes> listWithAttributesImpl(@NotNull Path dir, @Nullable Set<String> filter) {

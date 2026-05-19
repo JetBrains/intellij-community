@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.text.Strings;
@@ -10,6 +11,7 @@ import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.keyFMap.KeyFMap;
+import com.intellij.util.system.OS;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,10 +21,14 @@ import org.jetbrains.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Objects;
 
 import static com.intellij.util.SystemProperties.getBooleanProperty;
+import static com.intellij.util.containers.CollectionFactory.createFilePathMap;
 
 /**
  * Non-cached implementation of {@link VirtualFile}.
@@ -164,6 +170,14 @@ public final class TransientVirtualFileImpl extends VirtualFile implements Cache
 
   @Override
   public VirtualFile[] getChildren() {
+    if (OS.CURRENT == OS.Windows && fileSystem instanceof BatchingFileSystem bfs) {
+      return bfs.listWithAttributesWindows(this).entrySet().stream()
+        .map(entry -> {
+          final var childName = entry.getKey();
+          final var attributes = entry.getValue();
+          return new TransientVirtualFileImpl(childName, path + '/' + childName, fileSystem, this, attributes);
+        }).toArray(VirtualFile[]::new);
+    }
     //MAYBE RC: cache children once calculated?
     String[] childNames = fileSystem.list(this);
     return Arrays.stream(childNames)
