@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.jira.soap;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,18 +10,25 @@ import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.tasks.jira.JiraRemoteApi;
 import com.intellij.tasks.jira.JiraRepository;
 import com.intellij.util.containers.ContainerUtil;
+import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.NameValuePair;
 import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.xmlrpc.CommonsXmlRpcTransport;
+import org.apache.xmlrpc.XmlRpcClient;
+import org.apache.xmlrpc.XmlRpcRequest;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.net.URL;
 import java.util.Collections;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Set;
+import java.util.Vector;
 
 /**
  * Legacy integration restored due to IDEA-120595.
@@ -109,5 +116,15 @@ public final class JiraLegacyApi extends JiraRemoteApi {
   @Override
   public void updateTimeSpend(@NotNull LocalTask task, @NotNull String timeSpent, String comment) throws Exception {
     throw new Exception(TaskBundle.message("jira.failure.no.time.spent"));
+  }
+
+  @SuppressWarnings("UseOfObsoleteCollectionType")
+  public static String fetchJiraVersion(@NotNull String url, HttpClient httpClient) throws Exception {
+    XmlRpcClient client = new XmlRpcClient(url);
+    Vector<String> parameters = new Vector<>(Collections.singletonList(""));
+    XmlRpcRequest request = new XmlRpcRequest("jira1.getServerInfo", parameters);
+    @SuppressWarnings("unchecked") Hashtable<String, Object> response =
+      (Hashtable<String, Object>)client.execute(request, new CommonsXmlRpcTransport(new URL(url), httpClient));
+    return response != null ? (String)response.get("version") : null;
   }
 }

@@ -30,9 +30,6 @@ import org.apache.commons.httpclient.StatusLine;
 import org.apache.commons.httpclient.auth.HttpAuthenticator;
 import org.apache.commons.httpclient.cookie.CookiePolicy;
 import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.xmlrpc.CommonsXmlRpcTransport;
-import org.apache.xmlrpc.XmlRpcClient;
-import org.apache.xmlrpc.XmlRpcRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,18 +39,14 @@ import java.io.Reader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-import java.util.Hashtable;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.Vector;
 import java.util.regex.Pattern;
 
 /**
  * @author Dmitry Avdeev
  */
-@SuppressWarnings("UseOfObsoleteCollectionType")
 @Tag("JIRA")
 public final class JiraRepository extends BaseRepositoryImpl {
 
@@ -258,13 +251,9 @@ public final class JiraRepository extends BaseRepositoryImpl {
 
   private JiraLegacyApi createLegacyApi() {
     try {
-      XmlRpcClient client = new XmlRpcClient(getUrl());
-      Vector<String> parameters = new Vector<>(Collections.singletonList(""));
-      XmlRpcRequest request = new XmlRpcRequest("jira1.getServerInfo", parameters);
-      @SuppressWarnings("unchecked") Hashtable<String, Object> response =
-        (Hashtable<String, Object>)client.execute(request, new CommonsXmlRpcTransport(new URL(getUrl()), getHttpClient()));
-      if (response != null) {
-        myJiraVersion = (String)response.get("version");
+      String version = JiraLegacyApi.fetchJiraVersion(getUrl(), getHttpClient());
+      if (version != null) {
+        myJiraVersion = version;
       }
     }
     catch (Exception e) {

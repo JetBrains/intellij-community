@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.tasks.jira.soap;
 
@@ -20,12 +20,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * Slightly refactored original version of {@link JIRAIssue} adapter for SOAP version of JIRA API.
- *
- * @author Mikhail Golubev
- * @author Dmitry Avdeev
- */
 final class JiraSoapTask extends JiraTask {
   private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss Z", Locale.US);
 
