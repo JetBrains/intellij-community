@@ -4891,7 +4891,7 @@ a:com.intellij.task.ProjectTaskRunner
 - <init>():V
 - canRun(com.intellij.openapi.project.Project,com.intellij.task.ProjectTask):Z
 - canRun(com.intellij.openapi.project.Project,com.intellij.task.ProjectTask,com.intellij.task.ProjectTaskContext):Z
-- a:canRun(com.intellij.task.ProjectTask):Z
+- canRun(com.intellij.task.ProjectTask):Z
 - createExecutionEnvironment(com.intellij.openapi.project.Project,com.intellij.task.ExecuteRunConfigurationTask,com.intellij.execution.Executor):com.intellij.execution.runners.ExecutionEnvironment
 - run(com.intellij.openapi.project.Project,com.intellij.task.ProjectTaskContext,com.intellij.task.ProjectTask[]):org.jetbrains.concurrency.Promise
 a:com.intellij.ui.FileColorManager
