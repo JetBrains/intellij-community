@@ -24,6 +24,11 @@
                             order="first"
                             implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.java.KotlinCompanionMemberContributor"/>
 
+    <weigher key="completion"
+             implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.java.DeprioritizeSuspendWeigher"
+             id="deprioritizeSuspend"
+             order="first"/>
+
     <statistician key="completion" implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.KotlinCompletionStatistician"/>
     <lookup.charFilter implementation="org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionCharFilter"/>
 
