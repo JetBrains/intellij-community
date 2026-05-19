@@ -4,6 +4,7 @@ package com.intellij.util.io;
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThrowableNotNullFunction;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.io.ChannelsAccessor.FileChannelOperation;
@@ -28,7 +29,7 @@ import java.nio.file.Path;
 import static com.intellij.util.io.PageCacheUtils.CHANNELS_CACHE;
 
 @Internal
-public final class PagedFileStorage implements Forceable/*, PagedStorage*/, Closeable {
+public final class PagedFileStorage implements Forceable/*, PagedStorage*/, Closeable, CleanableStorage {
   static final Logger LOG = Logger.getInstance(PagedFileStorage.class);
 
   private static final int DEFAULT_PAGE_SIZE = PageCacheUtils.DEFAULT_PAGE_SIZE;
@@ -478,6 +479,12 @@ public final class PagedFileStorage implements Forceable/*, PagedStorage*/, Clos
 
   public boolean isReadOnly() {
     return myReadOnly;
+  }
+
+  @Override
+  public void closeAndClean() throws IOException {
+    close();
+    NioFiles.deleteRecursively(myFile);
   }
 
   private static byte[] getThreadLocalTypedIOBuffer() {
