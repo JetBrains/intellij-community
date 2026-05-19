@@ -110,6 +110,45 @@ public abstract class K2KotlinInJavaCompletionTestGenerated extends AbstractK2Ko
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../completion/testData/inJava/suspend")
+    public static class Suspend extends AbstractK2KotlinInJavaCompletionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("SuspendFunctionAlwaysLast.java")
+        public void testSuspendFunctionAlwaysLast() throws Exception {
+            runTest("../../completion/testData/inJava/suspend/SuspendFunctionAlwaysLast.java");
+        }
+
+        @TestMetadata("SuspendFunctionBelowNonTypeMatch.java")
+        public void testSuspendFunctionBelowNonTypeMatch() throws Exception {
+            runTest("../../completion/testData/inJava/suspend/SuspendFunctionBelowNonTypeMatch.java");
+        }
+
+        @TestMetadata("SuspendFunctionDeprioritized.java")
+        public void testSuspendFunctionDeprioritized() throws Exception {
+            runTest("../../completion/testData/inJava/suspend/SuspendFunctionDeprioritized.java");
+        }
+
+        @TestMetadata("SuspendFunctionWithProperty.java")
+        public void testSuspendFunctionWithProperty() throws Exception {
+            runTest("../../completion/testData/inJava/suspend/SuspendFunctionWithProperty.java");
+        }
+
+        @TestMetadata("SuspendFunctionsMultiple.java")
+        public void testSuspendFunctionsMultiple() throws Exception {
+            runTest("../../completion/testData/inJava/suspend/SuspendFunctionsMultiple.java");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../completion/testData/inJava")
     public static class Uncategorized extends AbstractK2KotlinInJavaCompletionTest {
         @java.lang.Override
