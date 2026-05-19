@@ -14,6 +14,8 @@ import com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.util.io.URLUtil.urlToPath
+import org.jetbrains.idea.maven.dom.MavenDomUtil
+import org.jetbrains.idea.maven.dom.MavenPropertyResolver
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.utils.MavenLog
 import java.io.File
@@ -117,4 +119,25 @@ internal class MavenEncodingConfigurator : MavenWorkspaceConfigurator {
       return null
     }
   }
+}
+
+fun MavenProject.getResourceEncoding(project: Project): String? {
+  val pluginConfiguration = getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin")
+  if (pluginConfiguration != null) {
+    val encoding = pluginConfiguration.getChildTextTrim("encoding") ?: return null
+    if (encoding.startsWith("$")) {
+      val domModel = MavenDomUtil.getMavenDomProjectModel(project, file)
+      if (domModel == null) {
+        MavenLog.LOG.warn("cannot get MavenDomProjectModel to find encoding")
+        return sourceEncoding
+      }
+      else {
+        MavenPropertyResolver.resolve(encoding, domModel)
+      }
+    }
+    else {
+      return encoding
+    }
+  }
+  return sourceEncoding
 }

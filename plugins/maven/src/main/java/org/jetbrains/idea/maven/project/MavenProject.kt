@@ -16,9 +16,6 @@ import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.idea.maven.dom.MavenDomUtil
-import org.jetbrains.idea.maven.dom.MavenPropertyResolver
-import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 import org.jetbrains.idea.maven.importing.MavenExtraArtifactType
 import org.jetbrains.idea.maven.importing.MavenImporter
 import org.jetbrains.idea.maven.model.*
@@ -680,31 +677,6 @@ class MavenProject(val file: VirtualFile) {
     get() {
       return myState.properties!!.getProperty("project.build.sourceEncoding")
     }
-
-  fun getResourceEncoding(project: Project): String? {
-    val pluginConfiguration: Element? = getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin")
-    if (pluginConfiguration != null) {
-      val encoding: String? = pluginConfiguration.getChildTextTrim("encoding")
-      if (encoding == null) {
-        return null
-      }
-
-      if (encoding.startsWith("$")) {
-        val domModel: MavenDomProjectModel? = MavenDomUtil.getMavenDomProjectModel(project, this.file)
-        if (domModel == null) {
-          MavenLog.LOG.warn("cannot get MavenDomProjectModel to find encoding")
-          return sourceEncoding
-        }
-        else {
-          MavenPropertyResolver.resolve(encoding, domModel)
-        }
-      }
-      else {
-        return encoding
-      }
-    }
-    return sourceEncoding
-  }
 
   val properties: Properties
     get() {
