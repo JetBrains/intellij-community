@@ -4,6 +4,7 @@ package com.intellij.featureStatistics;
 import com.intellij.BundleBase;
 import com.intellij.DynamicBundle;
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -15,6 +16,7 @@ import java.util.HashMap;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
+@ApiStatus.Internal
 public final class FeatureStatisticsBundle {
   public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return BundleBase.messageOrDefault(getBundle(key), key, null, params);

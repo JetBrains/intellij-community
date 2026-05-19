@@ -3,12 +3,17 @@ package com.intellij.find;
 
 import com.intellij.DynamicBundle;
 import com.intellij.core.CoreDeprecatedMessagesBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
+/**
+ * Internal. Plugins may not reuse messages of the platform as they are not considered API.
+ */
+@ApiStatus.Internal
 public final class FindBundle {
   public static final String BUNDLE = "messages.FindBundle";
 

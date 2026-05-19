@@ -6,6 +6,9 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 
+/**
+ * Internal. Plugins may not reuse messages of the platform as they are not considered API.
+ */
 @ApiStatus.Internal
 object CoreBundle {
   private const val BUNDLE: String = "messages.CoreBundle"

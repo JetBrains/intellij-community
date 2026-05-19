@@ -4,6 +4,7 @@ package com.intellij.lang;
 
 import com.intellij.DynamicBundle;
 import com.intellij.ide.IdeDeprecatedMessagesBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -12,6 +13,10 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.Locale;
 import java.util.function.Supplier;
 
+/**
+ * Internal. Plugins may not reuse messages of the platform as they are not considered API.
+ */
+@ApiStatus.Internal
 public final class LangBundle {
   public static final @NonNls String BUNDLE = "messages.LangBundle";
   private static final DynamicBundle INSTANCE = new DynamicBundle(LangBundle.class, BUNDLE);

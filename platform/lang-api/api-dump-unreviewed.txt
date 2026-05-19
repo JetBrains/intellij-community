@@ -2299,11 +2299,6 @@ a:com.intellij.lang.ExpressionTypeProvider
 - a:getExpressionsAt(com.intellij.psi.PsiElement):java.util.List
 - a:getInformationHint(com.intellij.psi.PsiElement):java.lang.String
 - hasAdvancedInformation():Z
-f:com.intellij.lang.LangBundle
-- sf:BUNDLE:java.lang.String
-- s:getLocale():java.util.Locale
-- s:message(java.lang.String,java.lang.Object[]):java.lang.String
-- s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
 f:com.intellij.lang.LanguageDependentMembersRefactoringSupport
 - com.intellij.lang.LanguageExtension
 - sf:INSTANCE:com.intellij.lang.LanguageDependentMembersRefactoringSupport

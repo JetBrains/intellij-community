@@ -25,7 +25,6 @@ a:com.intellij.execution.ui.utils.AbstractFragmentBuilder
 @:com.intellij.execution.ui.utils.FragmentsDsl
 f:com.intellij.execution.util.ExecutionErrorDialog
 f:com.intellij.featureStatistics.FeatureDescriptor
-f:com.intellij.featureStatistics.FeatureStatisticsBundle
 c:com.intellij.featureStatistics.FeatureStatisticsBundleEP
 c:com.intellij.featureStatistics.GroupDescriptor
 f:com.intellij.featureStatistics.ProductivityFeatureNames
@@ -41,7 +40,6 @@ c:com.intellij.ide.FileEditorSelectInContext
 c:com.intellij.ide.FileSelectInContext
 c:com.intellij.ide.HelpTooltip
 e:com.intellij.ide.HelpTooltip$Alignment
-f:com.intellij.ide.IdeBundle
 f:com.intellij.ide.NewProjectWizardLegacy
 c:com.intellij.ide.OccurenceNavigator$OccurenceInfo
 a:com.intellij.ide.OccurenceNavigatorSupport
@@ -130,7 +128,6 @@ f:com.intellij.ide.warmup.WarmupStatus$InProgress
 f:com.intellij.ide.warmup.WarmupStatus$NotStarted
 a:com.intellij.ide.wizard.AbstractWizard
 f:com.intellij.ide.wizard.AbstractWizard$TallImageComponent
-f:com.intellij.idea.ActionsBundle
 com.intellij.internal.inspector.UiInspectorContextProvider
 com.intellij.internal.inspector.UiInspectorCustomComponentChildProvider
 com.intellij.internal.inspector.UiInspectorCustomComponentProvider
@@ -191,7 +188,6 @@ c:com.intellij.openapi.diagnostic.SubmittedReportInfo
 e:com.intellij.openapi.diagnostic.SubmittedReportInfo$SubmissionStatus
 c:com.intellij.openapi.editor.DisposableEditorPanel
 c:com.intellij.openapi.editor.DocumentFragment
-f:com.intellij.openapi.editor.EditorBundle
 a:com.intellij.openapi.editor.EditorCopyPasteHelper
 f:com.intellij.openapi.editor.EditorCopyPasteHelper$CopyPasteOptions
 c:com.intellij.openapi.editor.EditorCopyPasteHelper$TooLargeContentException
@@ -238,7 +234,6 @@ a:com.intellij.openapi.help.WebHelpProvider
 com.intellij.openapi.ide.CutElementMarker
 c:com.intellij.openapi.ide.KillRingTransferable
 com.intellij.openapi.ide.SmartSelectProvider
-f:com.intellij.openapi.keymap.KeyMapBundle
 e:com.intellij.openapi.keymap.KeymapExtension$KeymapLocation
 a:com.intellij.openapi.keymap.KeymapGroupFactory
 a:com.intellij.openapi.keymap.KeymapManager

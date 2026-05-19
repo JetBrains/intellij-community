@@ -2,12 +2,17 @@
 package com.intellij.ide;
 
 import com.intellij.DynamicBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
+/**
+ * Internal. Plugins may not reuse messages of the platform as they are not considered API.
+ */
+@ApiStatus.Internal
 public final class IdeBundle {
   public static final String BUNDLE = "messages.IdeBundle";
 

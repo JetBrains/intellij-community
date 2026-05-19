@@ -382,8 +382,6 @@ f:com.intellij.featureStatistics.FeatureDescriptor
 - getUtilityScore():I
 - isNeedToBeShownInGuide():Z
 - isUnused():Z
-f:com.intellij.featureStatistics.FeatureStatisticsBundle
-- s:message(java.lang.String,java.lang.Object[]):java.lang.String
 c:com.intellij.featureStatistics.FeatureStatisticsBundleEP
 - com.intellij.serviceContainer.LazyExtensionInstance
 - com.intellij.openapi.extensions.PluginAware
@@ -582,10 +580,6 @@ pc:com.intellij.ide.HelpTooltip$OverTipMouseListener
 - mouseExited(java.awt.event.MouseEvent):V
 f:com.intellij.ide.HelpTooltipKt
 - sf:setToolTipText(javax.swing.JComponent,com.intellij.openapi.util.text.HtmlChunk):V
-f:com.intellij.ide.IdeBundle
-- sf:BUNDLE:java.lang.String
-- s:message(java.lang.String,java.lang.Object[]):java.lang.String
-- s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
 f:com.intellij.ide.NewProjectWizardLegacy
 - <init>():V
 - s:isAvailable():Z
@@ -1394,13 +1388,6 @@ f:com.intellij.ide.wizard.AbstractWizard$TallImageComponent
 - getPreferredSize():java.awt.Dimension
 - paintIcon(java.awt.Graphics):V
 - setIcon(javax.swing.Icon):V
-f:com.intellij.idea.ActionsBundle
-- sf:IDEA_ACTIONS_BUNDLE:java.lang.String
-- s:actionDescription(java.lang.String):java.lang.String
-- s:actionText(java.lang.String):java.lang.String
-- s:groupText(java.lang.String):java.lang.String
-- s:message(java.lang.String,java.lang.Object[]):java.lang.String
-- s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
 f:com.intellij.internal.inspector.PropertyBean
 - sf:Companion:com.intellij.internal.inspector.PropertyBean$Companion
 - <init>(java.lang.String,java.lang.Object):V
@@ -2033,10 +2020,6 @@ c:com.intellij.openapi.editor.DocumentFragment
 - getDocument():com.intellij.openapi.editor.Document
 - getTextRange():com.intellij.openapi.util.TextRange
 - hashCode():I
-f:com.intellij.openapi.editor.EditorBundle
-- sf:BUNDLE:java.lang.String
-- s:message(java.lang.String,java.lang.Object[]):java.lang.String
-- s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
 a:com.intellij.openapi.editor.EditorCopyPasteHelper
 - sf:TRIM_TEXT_ON_PASTE_KEY:java.lang.String
 - <init>():V
@@ -2411,10 +2394,6 @@ com.intellij.openapi.ide.SmartSelectProvider
 - a:getSource(com.intellij.openapi.actionSystem.DataContext):java.lang.Object
 - a:increaseSelection(java.lang.Object):V
 - isEnabled(com.intellij.openapi.actionSystem.DataContext):Z
-f:com.intellij.openapi.keymap.KeyMapBundle
-- sf:BUNDLE:java.lang.String
-- s:message(java.lang.String,java.lang.Object[]):java.lang.String
-- s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
 com.intellij.openapi.keymap.Keymap
 - com.intellij.openapi.options.Scheme
 - a:addShortcut(java.lang.String,com.intellij.openapi.actionSystem.Shortcut):V

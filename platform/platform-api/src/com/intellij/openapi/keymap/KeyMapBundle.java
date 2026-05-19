@@ -3,6 +3,7 @@
 package com.intellij.openapi.keymap;
 
 import com.intellij.DynamicBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -10,6 +11,10 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
+/**
+ * Internal. Plugins may not reuse messages of the platform as they are not considered API.
+ */
+@ApiStatus.Internal
 public final class KeyMapBundle {
   public static final @NonNls String BUNDLE = "messages.KeyMapBundle";
   private static final DynamicBundle INSTANCE = new DynamicBundle(KeyMapBundle.class, BUNDLE);

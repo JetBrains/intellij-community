@@ -2463,10 +2463,6 @@ a:com.intellij.featureStatistics.FeatureUsageTracker
 - a:triggerFeatureUsed(java.lang.String):V
 - a:triggerFeatureUsedByAction(java.lang.String):V
 - a:triggerFeatureUsedByIntention(java.lang.Class):V
-f:com.intellij.find.FindBundle
-- sf:BUNDLE:java.lang.String
-- s:message(java.lang.String,java.lang.Object[]):java.lang.String
-- s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
 a:com.intellij.find.FindSettings
 - <init>():V
 - a:getCustomScope():java.lang.String
