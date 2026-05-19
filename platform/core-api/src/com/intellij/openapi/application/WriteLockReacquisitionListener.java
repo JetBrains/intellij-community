@@ -9,5 +9,7 @@ import java.util.EventListener;
 public interface WriteLockReacquisitionListener<T> extends EventListener {
   void beforeWriteLockReacquired(T v);
 
+  void afterWriteLockReacquired(T v);
+
   T beforeWriteLockTemporarilyReleased();
 }

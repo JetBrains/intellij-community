@@ -1344,6 +1344,11 @@ class NestedLocksThreadingSupport : ThreadingSupport {
           val newWritePermit = runSuspendMaybeConsuming(false) {
             rootWriteIntentPermit.acquireWriteActionPermit()
           }
+          myWriteLockReacquisitionListener.zip(listOfReacquisitionData).forEachGuaranteed { (listener, data) ->
+            @Suppress("UNCHECKED_CAST")
+            val castedListener: WriteLockReacquisitionListener<Any> = listener as WriteLockReacquisitionListener<Any>
+            castedListener.afterWriteLockReacquired(data)
+          }
           hack_setThisLevelPermit(newWritePermit)
           val newWritePermits = Array(exposedPermitData.writeIntentStack.size) {
             runSuspendMaybeConsuming(false) {
