@@ -49,7 +49,6 @@ public final class OpenChannelsCache
 
   private final @NotNull FileChannelOpener channelOpener;
 
-  @VisibleForTesting
   public OpenChannelsCache(int capacity,
                            @NotNull FileChannelOpener channelOpener) {
     this.capacity = capacity;

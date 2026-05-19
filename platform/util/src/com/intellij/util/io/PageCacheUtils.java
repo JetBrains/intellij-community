@@ -89,16 +89,16 @@ public final class PageCacheUtils {
   static final float HEAP_CAPACITY_FRACTION = getFloatProperty("vfs.lock-free-impl.heap-capacity-ratio", 0.1f);
 
 
-  private static final int CHANNELS_CACHE_CAPACITY = getIntProperty("paged.file.storage.open.channel.cache.capacity", 400);
+  public static final int CHANNELS_CACHE_CAPACITY = getIntProperty("paged.file.storage.open.channel.cache.capacity", 400);
 
   //@formatter:on
 
-  private static final ChannelsAccessor.FileChannelOpener RESILIENT_CHANNEL_OPENER = (path, readOnly) -> {
+  public static final ChannelsAccessor.FileChannelOpener RESILIENT_CHANNEL_OPENER = (path, readOnly) -> {
     return new ResilientFileChannel(path, readOnly ? new OpenOption[]{READ} : new OpenOption[]{READ, WRITE, CREATE});
   };
 
   /** Channels cache-bypassing accessor */
-  static final ChannelsAccessor CHANNELS_NO_CACHE = new ChannelsAccessor() {
+  public static final ChannelsAccessor CHANNELS_NO_CACHE = new ChannelsAccessor() {
 
     private final AtomicInteger operationsExecuted = new AtomicInteger(0);
 

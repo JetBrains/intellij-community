@@ -56,18 +56,42 @@ public final class StorageLockContext {
   private final ChannelsAccessor channelsAccessor;
 
 
-  private StorageLockContext(@NotNull FilePageCache legacyFilePageCache,
-                             @Nullable FilePageCacheLockFree newFilePageCacheLockFree,
-                             boolean useReadWriteLock,
-                             boolean cacheChannels,
-                             boolean disableAssertions) {
+  @ApiStatus.Internal
+  public StorageLockContext(boolean useReadWriteLock,
+                            @NotNull ChannelsAccessor channelsAccessor) {
+    this(
+      DEFAULT_FILE_PAGE_CACHE, DEFAULT_FILE_PAGE_CACHE_NEW,
+      useReadWriteLock,
+      /*disableAssertions:*/false,
+      channelsAccessor
+    );
+  }
+
+  @ApiStatus.Internal
+  public StorageLockContext(@NotNull FilePageCache legacyFilePageCache,
+                            @Nullable FilePageCacheLockFree newFilePageCacheLockFree,
+                            boolean useReadWriteLock,
+                            boolean disableAssertions,
+                            @NotNull ChannelsAccessor channelsAccessor) {
     this.useReadWriteLock = useReadWriteLock;
     this.disableAssertions = disableAssertions;
 
     this.legacyFilePageCache = legacyFilePageCache;
     this.newFilePageCache = newFilePageCacheLockFree;
 
-    channelsAccessor = cacheChannels ? PageCacheUtils.CHANNELS_CACHE : PageCacheUtils.CHANNELS_NO_CACHE;
+    this.channelsAccessor = channelsAccessor;
+  }
+
+  private StorageLockContext(@NotNull FilePageCache legacyFilePageCache,
+                             @Nullable FilePageCacheLockFree newFilePageCacheLockFree,
+                             boolean useReadWriteLock,
+                             boolean cacheChannels,
+                             boolean disableAssertions) {
+    this(legacyFilePageCache, newFilePageCacheLockFree,
+         useReadWriteLock,
+         disableAssertions,
+         cacheChannels ? PageCacheUtils.CHANNELS_CACHE : PageCacheUtils.CHANNELS_NO_CACHE
+    );
   }
 
   @VisibleForTesting
@@ -88,7 +112,7 @@ public final class StorageLockContext {
 
   public StorageLockContext(boolean useReadWriteLock,
                             boolean cacheChannels) {
-    this(useReadWriteLock, cacheChannels, false);
+    this(useReadWriteLock, cacheChannels, /*disableAssertions: */false);
   }
 
   public StorageLockContext(boolean useReadWriteLock) {
