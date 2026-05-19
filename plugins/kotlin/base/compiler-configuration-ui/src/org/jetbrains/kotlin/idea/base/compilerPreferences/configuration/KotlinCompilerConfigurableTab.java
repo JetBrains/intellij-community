@@ -23,7 +23,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.MutableCollectionComboBoxModel;
 import com.intellij.ui.PopupMenuListenerAdapter;
 import com.intellij.ui.RawCommandLineEditor;
-import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.ui.ThreeStateCheckBox;
@@ -33,7 +32,6 @@ import kotlin.collections.ArraysKt;
 import kotlin.collections.CollectionsKt;
 import kotlin.enums.EnumEntries;
 import kotlin.jvm.functions.Function0;
-import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,9 +79,7 @@ import javax.swing.event.PopupMenuEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -97,30 +93,6 @@ import static org.jetbrains.kotlin.idea.base.compilerPreferences.facet.Descripti
 
 public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
   private static final Logger LOG = Logger.getInstance(KotlinCompilerConfigurableTab.class);
-  private static final Map<String, @NlsSafe String> moduleKindDescriptions = new LinkedHashMap<>();
-  private static final Map<String, @NlsSafe String> sourceMapSourceEmbeddingDescriptions = new LinkedHashMap<>();
-  private static final int MAX_WARNING_SIZE = 75;
-
-  static {
-    moduleKindDescriptions.put(K2JsArgumentConstants.MODULE_PLAIN,
-                               KotlinBaseCompilerConfigurationUiBundle.message("configuration.description.plain.put.to.global.scope"));
-    moduleKindDescriptions.put(K2JsArgumentConstants.MODULE_AMD,
-                               KotlinBaseCompilerConfigurationUiBundle.message("configuration.description.amd"));
-    moduleKindDescriptions.put(K2JsArgumentConstants.MODULE_COMMONJS,
-                               KotlinBaseCompilerConfigurationUiBundle.message("configuration.description.commonjs"));
-    moduleKindDescriptions.put(K2JsArgumentConstants.MODULE_UMD, KotlinBaseCompilerConfigurationUiBundle.message(
-      "configuration.description.umd.detect.amd.or.commonjs.if.available.fallback.to.plain"));
-
-    sourceMapSourceEmbeddingDescriptions
-      .put(K2JsArgumentConstants.SOURCE_MAP_SOURCE_CONTENT_NEVER,
-           KotlinBaseCompilerConfigurationUiBundle.message("configuration.description.never"));
-    sourceMapSourceEmbeddingDescriptions
-      .put(K2JsArgumentConstants.SOURCE_MAP_SOURCE_CONTENT_ALWAYS,
-           KotlinBaseCompilerConfigurationUiBundle.message("configuration.description.always"));
-    sourceMapSourceEmbeddingDescriptions.put(K2JsArgumentConstants.SOURCE_MAP_SOURCE_CONTENT_INLINING,
-                                             KotlinBaseCompilerConfigurationUiBundle.message(
-                                               "configuration.description.when.inlining.a.function.from.other.module.with.embedded.sources"));
-  }
 
   private final KotlinCompilerConfigurableUi ui = new KotlinCompilerConfigurableUi(() -> {
       updateOutputDirEnabled();
@@ -190,10 +162,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
         }
       );
       CollectionsKt.sort(modulesOverridingProjectSettings);
-      if (!modulesOverridingProjectSettings.isEmpty()) {
-          ui.warningLabel.setVisible(true);
-          ui.warningLabel.setText(buildOverridingModulesWarning(modulesOverridingProjectSettings));
-      }
+      ui.updateWarning(modulesOverridingProjectSettings);
     }
   }
 
@@ -214,8 +183,6 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
                      KotlinBaseCompilerConfigurationUiBundle.message("configuration.title.choose.output.directory"),
                      false, project);
 
-    fillModuleKindList();
-    fillSourceMapSourceEmbeddingList();
     fillJvmVersionList();
 
     ui.generateSourceMapsCheckBox.setThirdStateEnabled(isMultiEditor);
@@ -229,71 +196,6 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
     }
 
     updateOutputDirEnabled();
-  }
-
-  private static int calculateNameCountToShowInWarning(List<String> allNames) {
-    int lengthSoFar = 0;
-    int size = allNames.size();
-    for (int i = 0; i < size; i++) {
-      lengthSoFar = (i > 0 ? lengthSoFar + 2 : 0) + allNames.get(i).length();
-      if (lengthSoFar > MAX_WARNING_SIZE) return i;
-    }
-    return size;
-  }
-
-  private static @NotNull @NlsSafe String buildOverridingModulesWarning(List<String> modulesOverridingProjectSettings) {
-    int nameCountToShow = calculateNameCountToShowInWarning(modulesOverridingProjectSettings);
-    int allNamesCount = modulesOverridingProjectSettings.size();
-    if (nameCountToShow == 0) {
-      return KotlinBaseCompilerConfigurationUiBundle.message("configuration.warning.text.modules.override.project.settings",
-                                                             String.valueOf(allNamesCount));
-    }
-
-    StringBuilder builder = new StringBuilder();
-    builder.append("<html>");
-    builder.append(
-        KotlinBaseCompilerConfigurationUiBundle.message("configuration.warning.text.following.modules.override.project.settings"))
-      .append(" ");
-    CollectionsKt.joinTo(
-      modulesOverridingProjectSettings.subList(0, nameCountToShow),
-      builder,
-      ", ",
-      "",
-      "",
-      -1,
-      "",
-      new Function1<>() {
-        @Override
-        public CharSequence invoke(String s) {
-          return "<strong>" + s + "</strong>";
-        }
-      }
-    );
-    if (nameCountToShow < allNamesCount) {
-      builder.append(" ").append(KotlinBaseCompilerConfigurationUiBundle.message("configuration.text.and")).append(" ")
-        .append(allNamesCount - nameCountToShow)
-        .append(" ").append(KotlinBaseCompilerConfigurationUiBundle.message("configuration.text.other.s"));
-    }
-    return builder.toString();
-  }
-
-  @Nls
-  private static @NotNull
-  String getModuleKindDescription(@Nullable String moduleKind) {
-    if (moduleKind == null) return "";
-    String result = moduleKindDescriptions.get(moduleKind);
-    assert result != null : "Module kind " + moduleKind + " was not added to combobox, therefore it should not be here";
-    return result;
-  }
-
-  @Nls
-  private static @NotNull
-  String getSourceMapSourceEmbeddingDescription(@Nullable String sourceMapSourceEmbeddingId) {
-    if (sourceMapSourceEmbeddingId == null) return "";
-    String result = sourceMapSourceEmbeddingDescriptions.get(sourceMapSourceEmbeddingId);
-    assert result != null : "Source map source embedding mode " + sourceMapSourceEmbeddingId +
-                            " was not added to combobox, therefore it should not be here";
-    return result;
   }
 
   private static @NotNull @NlsSafe String getModuleKindOrDefault(@Nullable String moduleKindId) {
@@ -560,22 +462,6 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
 
   public void setTargetPlatform(@Nullable IdePlatformKind targetPlatform) {
     ui.k2jsGroup.visible(JsIdePlatformUtil.isJavaScript(targetPlatform));
-  }
-
-  private void fillModuleKindList() {
-    for (@Nls String moduleKind : moduleKindDescriptions.keySet()) {
-        ui.moduleKindComboBox.addItem(moduleKind);
-    }
-
-    ui.moduleKindComboBox.setRenderer(BuilderKt.textListCellRenderer("", o -> getModuleKindDescription(o)));
-  }
-
-  private void fillSourceMapSourceEmbeddingList() {
-    for (@Nls String moduleKind : sourceMapSourceEmbeddingDescriptions.keySet()) {
-        ui.sourceMapEmbedSources.addItem(moduleKind);
-    }
-
-    ui.sourceMapEmbedSources.setRenderer(BuilderKt.textListCellRenderer("", o -> getSourceMapSourceEmbeddingDescription(o)));
   }
 
   @Override
