@@ -3,9 +3,11 @@
 package org.jetbrains.kotlin.j2k
 
 import com.intellij.openapi.progress.ProgressIndicator
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.psi.KtFile
 
+@ApiStatus.Internal
 interface ExternalCodeProcessing {
     fun prepareWriteOperation(progress: ProgressIndicator?): () -> Unit
 

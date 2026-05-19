@@ -31,6 +31,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
@@ -43,11 +44,11 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.codeInsight.pathBeforeJavaToKotlinConversion
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider.Companion.isK2Mode
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument
@@ -60,9 +61,11 @@ import org.jetbrains.kotlin.idea.util.getAllFilesRecursively
 import org.jetbrains.kotlin.j2k.ConverterSettings
 import org.jetbrains.kotlin.j2k.J2kConverterExtension
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_NEW
-import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K2
 import org.jetbrains.kotlin.j2k.J2kPostprocessorExtension
 import org.jetbrains.kotlin.j2k.J2kPreprocessorExtension
+import org.jetbrains.kotlin.j2k.convertJavaFilesToKotlin
+import org.jetbrains.kotlin.j2k.getJ2kKind
+import org.jetbrains.kotlin.nj2k.KotlinNJ2KBundle
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import java.io.IOException
@@ -192,6 +195,9 @@ object JavaToKotlinActionHandler {
     @NlsSafe
     val title: String = KotlinBundle.message("action.j2k.name")
 
+    @Nls
+    private val phaseDescription: String = KotlinNJ2KBundle.message("j2k.phase.converting")
+
     suspend fun convertFiles(
         files: List<PsiJavaFile>,
         project: Project,
@@ -204,19 +210,23 @@ object JavaToKotlinActionHandler {
         postprocessorExtensions: List<J2kPostprocessorExtension> = J2kPostprocessorExtension.EP_NAME.extensionList
     ) {
         val javaFiles = files.filter { it.virtualFile.isWritable }.ifEmpty { return }
-
         val j2kKind = getJ2kKind()
-        val converter = J2kConverterExtension.extension(j2kKind).createJavaToKotlinConverter(project, module, settings)
-        val postProcessor = J2kConverterExtension.extension(j2kKind).createPostProcessor()
 
         val (result, conversionTime) = measureTimedValue {
-            converter.filesToKotlin(
-                javaFiles,
-                postProcessor,
-                bodyFilter = bodyFilter,
-                preprocessorExtensions = preprocessorExtensions,
-                postprocessorExtensions = postprocessorExtensions
-            )
+            withModalProgress(project, phaseDescription) {
+                withCommandOnEdt(project) {
+                    convertJavaFilesToKotlin(
+                        files = javaFiles,
+                        project = project,
+                        module = module,
+                        bodyFilter = bodyFilter,
+                        settings = settings,
+                        preprocessorExtensions = preprocessorExtensions,
+                        postprocessorExtensions = postprocessorExtensions,
+                        j2kKind = j2kKind,
+                    )
+                }
+            }
         }
 
         // TODO: Support K2 J2K in FUS
@@ -349,11 +359,6 @@ private fun isBuiltInActionEnabled(e: AnActionEvent): Boolean {
     }
 
     return files.any(::isWritableJavaFile)
-}
-
-private fun getJ2kKind(): J2kConverterExtension.Kind = when {
-    isK2Mode() -> K2
-    else -> K1_NEW
 }
 
 suspend inline fun <T> withCommandOnEdt(project: Project, action: () -> T): T {

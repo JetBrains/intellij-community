@@ -7,7 +7,6 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiExpression
@@ -17,15 +16,15 @@ import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiPackageStatement
 import com.intellij.psi.PsiStatement
 import com.intellij.psi.PsiWhiteSpace
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
-import org.jetbrains.kotlin.idea.actions.withCommandOnEdt
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModuleOfTypeSafe
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleWithElementSourceModuleKindOrProduction
+import org.jetbrains.kotlin.j2k.ConversionResult
 import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.ConverterSettings
-import org.jetbrains.kotlin.j2k.ConvertionResult
 import org.jetbrains.kotlin.j2k.ElementResult
 import org.jetbrains.kotlin.j2k.IdeaReferenceSearcher
 import org.jetbrains.kotlin.j2k.J2kPostprocessorExtension
@@ -50,6 +49,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.resolve.ImportPath
 
+@ApiStatus.Internal
 class NewJavaToKotlinConverter(
     val project: Project,
     val targetModule: Module?,
@@ -58,41 +58,38 @@ class NewJavaToKotlinConverter(
 ) : JavaToKotlinConverter() {
     val phasesCount: Int = J2KConversionPhase.entries.size
     val referenceSearcher: ReferenceSearcher = IdeaReferenceSearcher
-    private val phaseDescription: String = KotlinNJ2KBundle.message("j2k.phase.converting")
 
     override suspend fun filesToKotlin(
         files: List<PsiJavaFile>,
         postProcessor: PostProcessor,
         bodyFilter: ((PsiElement) -> Boolean)?,
         preprocessorExtensions: List<J2kPreprocessorExtension>,
-        postprocessorExtensions: List<J2kPostprocessorExtension>
-    ): ConvertionResult = withModalProgress(project, phaseDescription) {
-        withCommandOnEdt(project) {
-            PreprocessorExtensionsRunner.runProcessors(project, files, preprocessorExtensions)
+        postprocessorExtensions: List<J2kPostprocessorExtension>,
+    ): ConversionResult {
+        PreprocessorExtensionsRunner.runProcessors(project, files, preprocessorExtensions)
 
-            val (results, externalCodeProcessing, context) = readAction {
-                elementsToKotlin(files, bodyFilter)
-            }
-
-            val kotlinFiles = results.filterNotNull().mapIndexed { i, result ->
-                val javaFile = files[i]
-                edtWriteAction {
-                    KtPsiFactory.contextual(javaFile.parent ?: javaFile)
-                        .createPhysicalFile(javaFile.name.replace(".java", ".kt"), result.text)
-                        .also { it.addImports(result.importsToAdd) }
-                }
-            }
-
-            postProcessor.doAdditionalProcessing(MultipleFilesPostProcessingTarget(kotlinFiles), context)
-
-            PostprocessorExtensionsRunner.runProcessors(project, kotlinFiles, postprocessorExtensions)
-
-            val (javaLines, kotlinLines) = readAction {
-                files.sumOf { StringUtil.getLineBreakCount(it.text) } to kotlinFiles.sumOf { StringUtil.getLineBreakCount(it.text) }
-            }
-
-            ConvertionResult(files.zip(kotlinFiles.map { it.text }).toMap(), externalCodeProcessing, javaLines, kotlinLines)
+        val (results, externalCodeProcessing, context) = readAction {
+            elementsToKotlin(files, bodyFilter)
         }
+
+        val kotlinFiles = results.filterNotNull().mapIndexed { i, result ->
+            val javaFile = files[i]
+            edtWriteAction {
+                KtPsiFactory.contextual(javaFile.parent ?: javaFile)
+                    .createPhysicalFile(javaFile.name.replace(".java", ".kt"), result.text)
+                    .also { it.addImports(result.importsToAdd) }
+            }
+        }
+
+        postProcessor.doAdditionalProcessing(MultipleFilesPostProcessingTarget(kotlinFiles), context)
+
+        PostprocessorExtensionsRunner.runProcessors(project, kotlinFiles, postprocessorExtensions)
+
+        val (javaLines, kotlinLines) = readAction {
+            files.sumOf { StringUtil.getLineBreakCount(it.text) } to kotlinFiles.sumOf { StringUtil.getLineBreakCount(it.text) }
+        }
+
+        return ConversionResult(files.zip(kotlinFiles.map { it.text }).toMap(), externalCodeProcessing, javaLines, kotlinLines)
     }
 
     fun elementsToKotlin(

@@ -46,8 +46,8 @@ class OldJavaToKotlinConverter(
         postProcessor: PostProcessor,
         bodyFilter: ((PsiElement) -> Boolean)?,
         preprocessorExtensions: List<J2kPreprocessorExtension>,
-        postprocessorExtensions: List<J2kPostprocessorExtension>
-    ): ConvertionResult {
+        postprocessorExtensions: List<J2kPostprocessorExtension>,
+    ): ConversionResult {
         val withProgressProcessor = OldWithProgressProcessor(null, files)
         val (results, externalCodeProcessing) = ApplicationManager.getApplication().runReadAction(Computable {
             elementsToKotlin(files, withProgressProcessor)
@@ -74,7 +74,7 @@ class OldJavaToKotlinConverter(
             }
         }
 
-        return ConvertionResult(files.zip(texts).toMap(), externalCodeProcessing)
+        return ConversionResult(files.zip(texts).toMap(), externalCodeProcessing)
     }
 
     override fun elementsToKotlin(inputElements: List<PsiElement>, processor: WithProgressProcessor): Result {

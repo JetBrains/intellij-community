@@ -3,8 +3,10 @@
 package org.jetbrains.kotlin.j2k
 
 import com.intellij.psi.PsiJavaFile
+import org.jetbrains.annotations.ApiStatus
 
-data class ConvertionResult(
+@ApiStatus.Internal
+data class ConversionResult(
     val kotlinCodeByJavaFile: Map<PsiJavaFile, String>,
     val externalCodeProcessing: ExternalCodeProcessing?,
     val javaLines: Int = 0,
