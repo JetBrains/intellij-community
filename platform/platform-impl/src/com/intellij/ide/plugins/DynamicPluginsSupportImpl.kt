@@ -180,13 +180,6 @@ internal class DynamicPluginsSupportImpl(
           detachClassLoaders(groupsToUnload)
           clearCachesAfterUnload(classloadersToUnload) // expects EDT
         }
-
-        val collected = classloaderUnloadAwaitStrategy.awaitClassloadersUnloadedBeforeLoad(classloadersToUnload)
-        for (plugin in affectedPlugins) {
-          DynamicPluginsUsagesCollector.logDescriptorUnload(plugin, success = collected)
-        }
-
-        return@withProgressText collected to classloadersToUnload
       }
       catch (e: Exception) {
         LOG.error("Unloading failed", e)
@@ -205,6 +198,12 @@ internal class DynamicPluginsSupportImpl(
           }
         }
       }
+
+      val collected = classloaderUnloadAwaitStrategy.awaitClassloadersUnloadedBeforeLoad(classloadersToUnload)
+      for (plugin in affectedPlugins) {
+        DynamicPluginsUsagesCollector.logDescriptorUnload(plugin, success = collected)
+      }
+      return@withProgressText collected to classloadersToUnload
     }
   }
 
