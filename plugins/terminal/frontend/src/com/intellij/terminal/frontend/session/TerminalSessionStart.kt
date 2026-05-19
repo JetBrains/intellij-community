@@ -18,9 +18,11 @@ import com.jediterm.terminal.model.JediTermTypeAheadModel
 import com.jediterm.terminal.model.StyleState
 import com.jediterm.terminal.model.TerminalTextBuffer
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.LocalTerminalTtyConnector
 import org.jetbrains.plugins.terminal.ShellStartupOptions
@@ -93,9 +95,13 @@ fun createTerminalSession(
   // For the case when coroutine scope is canceled externally
   coroutineScope.awaitCancellationAndInvoke {
     val starter = services.terminalStarter
-    starter.close() // close in background
     starter.ttyConnector.waitFor(STOP_EMULATOR_TIMEOUT) {
       starter.requestEmulatorStop()
+    }
+    // Close the connector synchronously while we are in the NonCancellable context
+    // We delay coroutine scope closing to ensure that the process is terminated before IDE is closed.
+    withContext(Dispatchers.IO) {
+      starter.ttyConnector.close()
     }
   }
 

@@ -58,7 +58,7 @@ public class LocalTerminalTtyConnector extends PtyProcessTtyConnector {
       }, 1000, TimeUnit.MILLISECONDS);
     }
     else if (myProcess instanceof IjentChildPtyProcessAdapter && myShellProcessHolder.isPosix()) {
-      myShellProcessHolder.terminatePosixShell();
+      myShellProcessHolder.terminatePosixShellBlocking();
     }
     else {
       if (myProcess instanceof WinConPtyProcess winConPtyProcess && !winConPtyProcess.isBundledConPtyLibrary()) {
