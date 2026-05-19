@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.acp.api.impl
+package com.intellij.platform.acp.impl
 
-import com.intellij.platform.acp.api.AcpAgentStartConfig
+import com.intellij.platform.acp.AcpAgentStartConfig
 
 internal class AcpAgentStartConfigImpl(
   override val command: String,
