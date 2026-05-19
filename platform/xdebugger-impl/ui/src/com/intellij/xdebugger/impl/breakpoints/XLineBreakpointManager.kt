@@ -319,6 +319,11 @@ class XLineBreakpointManager(
   ) {
     val toRemove = candidates.filterNot { it.shouldMoveToNextLine(occupiedLines) }.map { it.breakpoint }
     removeBreakpoints(toRemove)
+
+    val savedBreakpoints = candidates.mapTo(mutableSetOf()) { it.breakpoint } - toRemove.toSet()
+    for (breakpoint in savedBreakpoints) {
+      updateBreakpointNow(breakpoint)
+    }
   }
 
   private suspend fun InterLineSaveCandidateBreakpoint.shouldMoveToNextLine(
