@@ -566,6 +566,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/addConversionCall/toByteExtraParenthesis.kt");
         }
 
+        @TestMetadata("toInt.kt")
+        public void testToInt() throws Exception {
+            runTest("testData/quickfix/addConversionCall/toInt.kt");
+        }
+
         @TestMetadata("toShort.kt")
         public void testToShort() throws Exception {
             runTest("testData/quickfix/addConversionCall/toShort.kt");

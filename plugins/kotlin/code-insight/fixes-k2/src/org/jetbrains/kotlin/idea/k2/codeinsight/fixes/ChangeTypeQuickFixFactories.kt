@@ -73,7 +73,6 @@ import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtPsiUtil
-import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.KtReturnExpression
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -441,12 +440,7 @@ internal object ChangeTypeQuickFixFactories {
             val actualType = getActualType(diagnostic.actualType, expression)
             val expectedType = diagnostic.expectedType
             if (actualType.semanticallyEquals(expectedType)) {
-                return@ModCommandBased emptyList()
-            }
-
-            val property = (expression as? KtReferenceExpression)?.mainReference?.resolve() as? KtProperty
-            if (property != null) {
-                registerVariableTypeFixes(property, actualType, expectedType)
+                emptyList()
             } else {
                 registerExpressionTypeFixes(expression, expectedType, actualType)
             }

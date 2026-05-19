@@ -709,6 +709,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/addConversionCall/toByteExtraParenthesis.kt");
         }
 
+        @TestMetadata("toInt.kt")
+        public void testToInt() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addConversionCall/toInt.kt");
+        }
+
         @TestMetadata("toShort.kt")
         public void testToShort() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/addConversionCall/toShort.kt");
