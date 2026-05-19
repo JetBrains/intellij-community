@@ -97,7 +97,7 @@ class MavenFolderResolver(private val project: Project) {
     for (goalResult in goalResults) {
       val mavenProject = fileToProject.getOrDefault(goalResult.file, null)
       if (null != mavenProject && MavenUtil.shouldResetDependenciesAndFolders(goalResult.problems)) {
-        val changes = mavenProject.setFolders(goalResult.folders)
+        val changes = mavenProject.setFolders(goalResult.folders.mavenSources)
         tree.fireFoldersResolved(Pair.create(mavenProject, changes))
       }
     }

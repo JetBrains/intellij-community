@@ -20,7 +20,6 @@ import org.jetbrains.idea.maven.importing.MavenExtraArtifactType
 import org.jetbrains.idea.maven.importing.MavenImporter
 import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.plugins.api.MavenModelPropertiesPatcher
-import org.jetbrains.idea.maven.server.MavenGoalExecutionResult
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil.hasArtifactFile
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -186,10 +185,15 @@ class MavenProject(val file: VirtualFile) {
     return snapshot.getChanges(myState)
   }
 
+  /**
+   * Required only for the folders update after source generation (e.g., after running
+   * `generate-sources`/`generate-test-sources` goals), when newly produced source roots
+   * need to be reflected on the existing [MavenProject] without a full re-resolve.
+   */
   @Internal
-  fun setFolders(folders: MavenGoalExecutionResult.Folders): MavenProjectChanges {
+  fun setFolders(mavenSources: List<MavenSource>): MavenProjectChanges {
     val newState = myState.copy(
-      mavenSources = folders.mavenSources
+      mavenSources = mavenSources
     )
     return setState(newState)
   }
