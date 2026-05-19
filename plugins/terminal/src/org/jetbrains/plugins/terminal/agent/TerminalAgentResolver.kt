@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelOsFamily
+import com.intellij.platform.eel.annotations.NativePath
 import com.intellij.platform.eel.fs.EelFileInfo
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.getOrNull
@@ -14,6 +15,10 @@ import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.ide.productMode.IdeProductMode
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.agent.rpc.TerminalAgentLaunchSpecDto
@@ -27,12 +32,25 @@ object TerminalAgentResolver {
     if (!isAgentsResolutionAvailable(eelDescriptor)) return emptyList()
 
     val eelApi = eelDescriptor.toEelApi()
-    return TerminalAgent.getAllTerminalAgents().mapNotNull { agent ->
-      when {
-        findBinaryPath(agent, eelApi) != null -> TerminalAvailableAgentDto(agent.agentKey, TerminalAgentMode.RUN)
-        agent.getInstallCommand(eelDescriptor.osFamily) != null -> TerminalAvailableAgentDto(agent.agentKey, TerminalAgentMode.INSTALL_AND_RUN)
-        else -> null
+    return coroutineScope {
+      // Resolve each agent in parallel because checking sequentially can be slow for remote environments with big latency.
+      TerminalAgent.getAllTerminalAgents().map { agent ->
+        async {
+          getAvailableAgent(agent, eelApi)
+        }
+      }.awaitAll().filterNotNull()
+    }
+  }
+
+  private suspend fun getAvailableAgent(agent: TerminalAgent, eelApi: EelApi): TerminalAvailableAgentDto? {
+    return when {
+      findBinaryPath(agent, eelApi) != null -> {
+        TerminalAvailableAgentDto(agent.agentKey, TerminalAgentMode.RUN)
       }
+      agent.getInstallCommand(eelApi.descriptor.osFamily) != null -> {
+        TerminalAvailableAgentDto(agent.agentKey, TerminalAgentMode.INSTALL_AND_RUN)
+      }
+      else -> null
     }
   }
 
@@ -59,7 +77,7 @@ object TerminalAgentResolver {
   suspend fun findBinaryPath(
     terminalAgent: TerminalAgent,
     eelApi: EelApi,
-  ): String? {
+  ): @NativePath String? {
     return when (eelApi.descriptor.osFamily) {
       EelOsFamily.Windows -> findWindowsBinaryPath(terminalAgent, eelApi)
       EelOsFamily.Posix -> findPosixBinaryPath(terminalAgent, eelApi)
@@ -69,52 +87,49 @@ object TerminalAgentResolver {
   private suspend fun findPosixBinaryPath(
     terminalAgent: TerminalAgent,
     eelApi: EelApi,
-  ): String? {
-    return eelApi.exec.findExeFilesInPath(terminalAgent.binaryName).firstOrNull()?.toString()
-           ?: findPosixKnownLocationBinaryPath(terminalAgent, eelApi)
+  ): String? = coroutineScope {
+    // Launch PATH and known-location lookups in parallel because checking sequentially can be slow for remote environments with big latency.
+    val pathLookup: Deferred<EelPath?> = async {
+      eelApi.exec.findExeFilesInPath(terminalAgent.binaryName).firstOrNull()
+    }
+    val knownLocationLookups: List<Deferred<EelPath?>> = terminalAgent.posixKnownLocationCandidates.map { candidate ->
+      async {
+        findExistingBinaryPath(eelApi, terminalAgent.binaryName, candidate)
+      }
+    }
+    (listOf(pathLookup) + knownLocationLookups).awaitAll().firstNotNullOfOrNull { it }?.toString()
   }
 
   private suspend fun findWindowsBinaryPath(
     terminalAgent: TerminalAgent,
     eelApi: EelApi,
-  ): String? {
-    for (extension in terminalAgent.windowsExecutableExtensions) {
-      val path = eelApi.exec.findExeFilesInPath("${terminalAgent.binaryName}.$extension").firstOrNull()
-      if (path != null) {
-        return path.toString()
+  ): String? = coroutineScope {
+    // Launch PATH and known-location lookups in parallel because checking sequentially can be slow for remote environments with big latency.
+    val pathLookups: List<Deferred<EelPath?>> = terminalAgent.windowsExecutableExtensions.map { extension ->
+      async {
+        eelApi.exec.findExeFilesInPath("${terminalAgent.binaryName}.$extension").firstOrNull()
       }
     }
-    return findWindowsKnownLocationBinaryPath(terminalAgent, eelApi)
-  }
-
-  private suspend fun findPosixKnownLocationBinaryPath(
-    terminalAgent: TerminalAgent,
-    eelApi: EelApi,
-  ): String? {
-    for (candidate in terminalAgent.posixKnownLocationCandidates) {
-      val folder = resolveKnownLocationCandidate(candidate, eelApi) ?: continue
-      val path = folder.resolve(terminalAgent.binaryName)
-      if (eelApi.fs.isRegularFile(path)) {
-        return path.toString()
-      }
-    }
-    return null
-  }
-
-  private suspend fun findWindowsKnownLocationBinaryPath(
-    terminalAgent: TerminalAgent,
-    eelApi: EelApi,
-  ): String? {
-    for (candidate in terminalAgent.windowsKnownLocationCandidates) {
-      val folder = resolveKnownLocationCandidate(candidate, eelApi) ?: continue
-      for (extension in terminalAgent.windowsExecutableExtensions) {
-        val path = folder.resolve("${terminalAgent.binaryName}.$extension")
-        if (eelApi.fs.isRegularFile(path)) {
-          return path.toString()
+    val knownLocationLookups: List<Deferred<EelPath?>> = terminalAgent.windowsKnownLocationCandidates.flatMap { candidate ->
+      terminalAgent.windowsExecutableExtensions.map { extension ->
+        async {
+          findExistingBinaryPath(eelApi, terminalAgent.binaryName, candidate, extension)
         }
       }
     }
-    return null
+    (pathLookups + knownLocationLookups).awaitAll().firstNotNullOfOrNull { it }?.toString()
+  }
+
+  private suspend fun findExistingBinaryPath(
+    eelApi: EelApi,
+    binaryName: String,
+    location: String,
+    extension: String? = null,
+  ): EelPath? {
+    val folder = resolveKnownLocationCandidate(location, eelApi) ?: return null
+    val name = if (extension != null) "$binaryName.$extension" else binaryName
+    val path = folder.resolve(name)
+    return if (eelApi.fs.isRegularFile(path)) path else null
   }
 
   private fun resolveKnownLocationCandidate(candidate: String, eelApi: EelApi): EelPath? {
