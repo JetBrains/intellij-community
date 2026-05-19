@@ -17,6 +17,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -116,7 +117,12 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
     PsiClass aClass = session.elementToSearch;
     Project project = PsiUtilCore.getProjectInReadAction(aClass);
     if (DumbService.isDumb(project)) {
-      return List.of();
+      // Fail fast instead of blocking the calling thread in ReadAction.nonBlocking(...).inSmartMode(...).executeSynchronously()
+      // which would freeze the search until indexes become ready.
+      // ExecutorsQuery handles IndexNotReadyException by skipping this executor, so the overall search keeps working
+      // (other executors may still contribute results) and the situation is visible in logs instead of being silently empty.
+      // see com.intellij.openapi.project.DumbService.runReadActionInSmartMode(java.lang.Runnable)
+      throw IndexNotReadyException.create();
     }
 
     Callable<List<SamDescriptor>> runnable = () -> {
@@ -148,7 +154,8 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
       }
       return descriptors;
     };
-    return ReadAction.nonBlocking(runnable).inSmartMode(project).executeSynchronously();
+    return ReadAction.nonBlocking(runnable)
+      .executeSynchronously();
   }
 
   private static @NotNull Set<VirtualFile> getLikelyFiles(@NotNull List<? extends SamDescriptor> descriptors,
