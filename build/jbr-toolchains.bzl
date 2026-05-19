@@ -1,9 +1,5 @@
 load("@rules_java//toolchains:remote_java_repository.bzl", "remote_java_repository")
 
-JBR21_VERSION = "21.0.10"
-JBR21_BUILD_VERSION = "1163.108"
-_JBR21_ARCHIVE_BUILD_VERSION = "b" + JBR21_BUILD_VERSION
-
 def _remote_jbr25_repos():
     remote_java_repository(
         name = "remotejbr25_linux",
