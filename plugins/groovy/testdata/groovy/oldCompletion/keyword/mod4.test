@@ -41,6 +41,7 @@ trait
 transient
 true
 try
+var
 void
 volatile
 while

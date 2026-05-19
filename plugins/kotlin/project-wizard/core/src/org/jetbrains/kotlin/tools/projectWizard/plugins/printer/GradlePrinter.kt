@@ -134,7 +134,8 @@ class GradlePrinter(val dsl: GradleDsl, override val indent: Int = 4) : BuildFil
             "switch", "synchronized", "this",
             "threadsafe", "throw", "throws",
             "transient", "true", "try",
-            "void", "volatile", "while"
+            "var", "void", "volatile",
+            "while"
         )
     }
 }

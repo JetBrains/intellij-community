@@ -1,12 +1,6 @@
-package a.b.c
-
-import org.*
-
-class A  { <caret>
-  def foo() {
-    switch (k){
-
-    }
+class Foo {
+  <caret> foo() {
+  
   }
 }
 -----
@@ -14,28 +8,23 @@ abstract
 boolean
 byte
 char
-class
 def
 double
-enum
 final
 float
+if
 int
-interface
 long
 native
 non-sealed
 private
 protected
 public
-record
 sealed
 short
 static
 strictfp
 synchronized
-trait
 transient
-var
 void
 volatile

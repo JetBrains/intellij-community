@@ -31,5 +31,6 @@ synchronized
 throws
 trait
 transient
+var
 void
 volatile

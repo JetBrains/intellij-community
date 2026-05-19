@@ -22,7 +22,7 @@ class GroovyForeachCompletionTest : GroovyCompletionTestBase() {
 
   fun testIndexVariableAccess() = doVariantableTest("idx", "identity", "void")
 
-  fun testValueVariableAccess() = doVariantableTest("value", "metaPropertyValues", "findIndexValues", "findIndexValues", "getMetaPropertyValues")
+  fun testValueVariableAccess() = doVariantableTest("value", "var", "metaPropertyValues", "findIndexValues", "findIndexValues", "getMetaPropertyValues")
 
-  fun testValueVariableAccessWithIndexVariable() = doVariantableTest("value", "metaPropertyValues", "findIndexValues", "findIndexValues", "getMetaPropertyValues")
+  fun testValueVariableAccessWithIndexVariable() = doVariantableTest("value", "var", "metaPropertyValues", "findIndexValues", "findIndexValues", "getMetaPropertyValues")
 }

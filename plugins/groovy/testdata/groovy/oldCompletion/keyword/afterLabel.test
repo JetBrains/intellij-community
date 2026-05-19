@@ -23,5 +23,6 @@ this
 throw
 true
 try
+var
 void
 while

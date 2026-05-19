@@ -1,14 +1,4 @@
-package a.b.c
-
-<caret>import org.*
-
-class A {
-  def foo() {
-    switch (k){
-
-    }
-  }
-}
+<caret> foo() {}
 -----
 abstract
 assert
@@ -22,17 +12,18 @@ enum
 false
 final
 float
+foo
 for
 if
 import
 int
 interface
-k
 long
 native
 new
 non-sealed
 null
+package
 private
 protected
 public
@@ -51,7 +42,6 @@ trait
 transient
 true
 try
-var
 void
 volatile
 while

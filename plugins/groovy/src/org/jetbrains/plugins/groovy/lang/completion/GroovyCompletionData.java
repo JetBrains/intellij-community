@@ -40,6 +40,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrDoWhileStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
@@ -71,6 +72,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTypeCastExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumTypeDefinition;
@@ -239,6 +241,9 @@ public final class GroovyCompletionData {
         if (suggestFinalDef(position) || PsiJavaPatterns
           .psiElement().afterLeaf(PsiJavaPatterns.psiElement().withText("(").withParent(GrForStatement.class)).accepts(position)) {
           addKeywords(consumer, true, JavaKeywords.FINAL, "def");
+          if (!isVarDisallowed(position)) {
+            addKeywords(consumer, true, "var");
+          }
         }
       }
     }
@@ -810,7 +815,7 @@ public final class GroovyCompletionData {
       return true;
     }
     if (GroovyCompletionUtil.isFirstElementAfterPossibleModifiersInVariableDeclaration(context, false) &&
-        !PsiJavaPatterns.psiElement().afterLeaf("def").accepts(context)) {
+        !PsiJavaPatterns.psiElement().afterLeaf("def", "var").accepts(context)) {
       return true;
     }
 
@@ -863,5 +868,33 @@ public final class GroovyCompletionData {
     return context.getParent() instanceof GrExpression &&
         context.getParent().getParent() instanceof GroovyFile &&
         GroovyCompletionUtil.isNewStatement(context, false);
+  }
+
+  /// @return Whether the `var` keyword is disallowed
+  /// in practice, only for methods since var as a contextual keyword since Groovy 3.0
+  private static boolean isVarDisallowed(PsiElement context) {
+    if (!GroovyConfigUtils.isAtLeastGroovy30(context)) {
+      return true;
+    }
+
+    // Caret right before a method in a class
+    if (context.getParent() instanceof GrReferenceElement &&
+        context.getParent().getParent() instanceof GrTypeElement &&
+        context.getParent().getParent().getParent() instanceof GrMethod &&
+        context.getParent().getParent().getParent().getParent() instanceof GrTypeDefinitionBody) {
+      return true;
+    }
+
+    // Caret before a function in a Groovy script
+    // The PSI tree feels a bit cursed in this case 
+    if (context.getParent() instanceof GrReferenceExpression refExpression &&
+        refExpression.getParent() instanceof GrApplicationStatement applicationStatement
+    ) {
+      GroovyPsiElement[] arguments = applicationStatement.getArgumentList().getAllArguments();
+      if (arguments.length == 1 && arguments[0] instanceof GrMethodCallExpression) {
+        return true;
+      }
+    }
+    return false;
   }
 }
