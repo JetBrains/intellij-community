@@ -1946,6 +1946,9 @@
            class="com.intellij.ide.browsers.actions.OpenInBrowserBaseGroupAction$OpenInBrowserEditorContextBarGroupAction">
       <add-to-group group-id="OpenInBrowserEditorContextBarGroup" anchor="last"/>
     </group>
+
+    <action class="com.intellij.openapi.updateSettings.impl.PluginUpdateSourcesResetAction" internal="true"
+            id="PluginUpdateSourcesResetAction"/>
   </actions>
 
   <actions resource-bundle="messages.MinimapBundle">
