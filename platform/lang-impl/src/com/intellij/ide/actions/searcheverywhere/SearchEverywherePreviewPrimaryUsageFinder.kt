@@ -10,7 +10,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiNamedElement
 import com.intellij.usageView.UsageInfo
+import com.intellij.usages.impl.UsagePreviewPanel
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
 
@@ -51,6 +53,11 @@ class PreviewPrimaryUsageFinderImpl : SearchEverywherePreviewPrimaryUsageFinder 
   }
 
   override fun readRangeFromUsageInfo(info: UsageInfo): Pair<Int, Int>? {
+    val element = info.element
+    if (element != null && element.isValid && element is PsiNamedElement && element !is PsiFile) {
+      val nameRange = UsagePreviewPanel.getNameElementTextRange(element)
+      return nameRange.startOffset to nameRange.endOffset
+    }
     val range = info.smartPointer.psiRange ?: try {
       info.navigationRange
     }
