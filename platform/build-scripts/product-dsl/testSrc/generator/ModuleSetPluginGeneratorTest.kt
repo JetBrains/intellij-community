@@ -209,9 +209,10 @@ class ModuleSetPluginGeneratorTest {
       .readText()
 
     assertThat(pluginXml)
-      .contains("<idea-plugin implementation-detail=\"true\">")
+      .contains("<idea-plugin>")
       .contains("<name>Recent Files</name>")
       .contains("<description>Generated plugin wrapper for module set recentFiles.</description>")
+      .doesNotContain("implementation-detail")
       .doesNotContain("<resource-bundle>")
       .doesNotContain("%module.set.plugin.recentFiles.name%")
 

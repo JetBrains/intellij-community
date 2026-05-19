@@ -371,7 +371,7 @@ private fun renderPluginXml(moduleSet: ModuleSet, contentModules: List<ContentMo
   return buildString {
     appendLine("<!-- DO NOT EDIT: This file is auto-generated from moduleSet(\"${moduleSet.name}\") -->")
     appendLine("<!-- To regenerate, run: `Generate Product Layouts` or `bazel run //platform/buildScripts:plugin-model-tool` -->")
-    appendLine("<idea-plugin implementation-detail=\"true\">")
+    appendLine("<idea-plugin>")
     appendLine("  <id>$pluginId</id>")
     appendLine("  <name>$displayName</name>")
     appendLine("  <description>$description</description>")

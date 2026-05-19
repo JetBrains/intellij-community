@@ -1,6 +1,6 @@
 <!-- DO NOT EDIT: This file is auto-generated from moduleSet("servicesView") -->
 <!-- To regenerate, run: `Generate Product Layouts` or `bazel run //platform/buildScripts:plugin-model-tool` -->
-<idea-plugin implementation-detail="true">
+<idea-plugin>
   <id>com.intellij.moduleSet.servicesView</id>
   <name>Services View</name>
   <description>Generated plugin wrapper for module set servicesView.</description>

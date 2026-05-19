@@ -1,6 +1,6 @@
 <!-- DO NOT EDIT: This file is auto-generated from moduleSet("vcs.frontend") -->
 <!-- To regenerate, run: `Generate Product Layouts` or `bazel run //platform/buildScripts:plugin-model-tool` -->
-<idea-plugin implementation-detail="true">
+<idea-plugin>
   <id>com.intellij.moduleSet.vcs.frontend</id>
   <name>Vcs Frontend</name>
   <description>Generated plugin wrapper for module set vcs.frontend.</description>
