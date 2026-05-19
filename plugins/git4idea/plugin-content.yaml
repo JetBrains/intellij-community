@@ -1,15 +1,24 @@
 - name: lib/git4idea-rt.jar
   modules:
   - name: intellij.vcs.git.rt
+- name: lib/modules/intellij.vcs.git.backend.split.jar
+  contentModules:
+  - name: intellij.vcs.git.backend.split
 - name: lib/modules/intellij.vcs.git.coverage.jar
   contentModules:
   - name: intellij.vcs.git.coverage
 - name: lib/modules/intellij.vcs.git.frontend.jar
   contentModules:
   - name: intellij.vcs.git.frontend
+- name: lib/modules/intellij.vcs.git.frontend.split.jar
+  contentModules:
+  - name: intellij.vcs.git.frontend.split
 - name: lib/modules/intellij.vcs.git.localHistory.jar
   contentModules:
   - name: intellij.vcs.git.localHistory
+- name: lib/modules/intellij.vcs.git.model.generated.jar
+  contentModules:
+  - name: intellij.vcs.git.model.generated
 - name: lib/modules/intellij.vcs.git.terminal.jar
   contentModules:
   - name: intellij.vcs.git.terminal
