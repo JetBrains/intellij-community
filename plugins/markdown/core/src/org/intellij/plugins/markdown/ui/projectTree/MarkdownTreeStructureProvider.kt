@@ -3,12 +3,14 @@ package org.intellij.plugins.markdown.ui.projectTree
 
 import com.intellij.ide.projectView.TreeStructureProvider
 import com.intellij.ide.projectView.ViewSettings
+import com.intellij.ide.projectView.impl.nodes.BasePsiNode
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiFile
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
+import org.intellij.plugins.markdown.lang.MarkdownFileType
 import org.intellij.plugins.markdown.settings.MarkdownSettings
+
+private val extensionsToFold = listOf("pdf", "docx", "html", "md")
 
 class MarkdownTreeStructureProvider(private val project: Project) : TreeStructureProvider {
   override fun modify(
@@ -16,15 +18,15 @@ class MarkdownTreeStructureProvider(private val project: Project) : TreeStructur
     children: MutableCollection<AbstractTreeNode<*>>,
     settings: ViewSettings?
   ): MutableCollection<AbstractTreeNode<*>> {
-    if (children.find { it.value is MarkdownFile } == null) {
+    if (parent is MarkdownViewNode) return children
+    if (children.none { it.markdownVirtualFile() != null }) {
       return children
     }
     val result = mutableListOf<AbstractTreeNode<*>>()
     val childrenToRemove = mutableListOf<AbstractTreeNode<*>>()
     for (child in children) {
-      val childValue = (child.value as? MarkdownFile)
-      val childVirtualFile = childValue?.virtualFile
-      if (childVirtualFile != null && parent.value !is MarkdownFileNode) {
+      val childVirtualFile = child.markdownVirtualFile()
+      if (childVirtualFile != null) {
         val markdownChildren = findMarkdownFileNodeChildren(childVirtualFile, children)
         if (markdownChildren.size <= 1) {
           result.add(child)
@@ -46,7 +48,7 @@ class MarkdownTreeStructureProvider(private val project: Project) : TreeStructur
   ): MutableCollection<AbstractTreeNode<*>> {
     val fileName = markdownFile.nameWithoutExtension
     return children.asSequence().filter { node ->
-      val file = (node.value as? PsiFile)?.virtualFile
+      val file = (node as? BasePsiNode<*>)?.virtualFile
       file?.let { isDocumentsGroupingEnabled(it, fileName) } == true
     }.toMutableList()
   }
@@ -56,17 +58,16 @@ class MarkdownTreeStructureProvider(private val project: Project) : TreeStructur
     children: MutableCollection<AbstractTreeNode<*>>,
     settings: ViewSettings?
   ): MarkdownViewNode {
-    val nodeChildren = children.mapNotNull { it.value as? PsiFile }
-    val markdownNode = MarkdownFileNode(markdownFile.nameWithoutExtension, nodeChildren)
+    val markdownNode = MarkdownFileNode(markdownFile.nameWithoutExtension)
     return MarkdownViewNode(project, markdownNode, settings, children)
   }
 
   private fun isDocumentsGroupingEnabled(file: VirtualFile, fileName: String) =
-    file.extension?.lowercase() in extensionsToFold &&
+    (file.fileType == MarkdownFileType.INSTANCE || file.extension?.lowercase() in extensionsToFold) &&
     file.nameWithoutExtension == fileName &&
     MarkdownSettings.getInstance(project).isFileGroupingEnabled
 
-  companion object {
-    private val extensionsToFold = listOf("pdf", "docx", "html", "md")
-  }
+
+  private fun AbstractTreeNode<*>.markdownVirtualFile(): VirtualFile? =
+    (this as? BasePsiNode<*>)?.virtualFile?.takeIf { it.fileType == MarkdownFileType.INSTANCE }
 }
