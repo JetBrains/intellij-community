@@ -33,6 +33,8 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.platform.pluginSystem.parser.impl.elements.ActionElement.ActionElementName
+import com.intellij.platform.util.progress.SequentialProgressReporter
+import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.platform.util.progress.withProgressText
 import com.intellij.util.application
 import com.intellij.util.concurrency.TransferredWriteActionService
@@ -50,49 +52,62 @@ internal class DynamicPluginsSupportImpl(
 
   override suspend fun validateDynamicTransitionPossible(targetState: PluginSet): DynamicPluginsTransitionResult.Invalid? {
     return withContext(Dispatchers.Default) {
-      val target = targetState.resolvedPluginSet ?: error("resolved plugin set is not set")
-      val current = getCurrentlyLoadedPluginSet()
-      val sequence = buildTransitionSequence(current, target).also { LOG.debug { it.getExplanationLogMessage() } }
-      validateTransitionSequenceCanBePerformedDynamically(sequence)?.let(DynamicPluginsTransitionResult::Invalid)
+      reportSequentialProgress { reporter ->
+        val target = targetState.resolvedPluginSet ?: error("resolved plugin set is not set")
+        val current = getCurrentlyLoadedPluginSet()
+        val sequence = buildTransitionSequence(current, target).also { LOG.debug { it.getExplanationLogMessage() } }
+        validateTransitionSequenceCanBePerformedDynamically(sequence, reporter)?.let(DynamicPluginsTransitionResult::Invalid)
+      }
     }
   }
 
   // assumes that the caller already holds all necessary locks
   override suspend fun performDynamicTransition(targetState: PluginSet): DynamicPluginsTransitionResult {
     return withContext(Dispatchers.Default) {
-      val current = getCurrentlyLoadedPluginSet()
-      val target = targetState.resolvedPluginSet ?: error("resolved plugin set is not set")
-      val sequence = buildTransitionSequence(current, target).also {
-        LOG.info(it.getExplanationLogMessage())
+      reportSequentialProgress { reporter ->
+        val current = getCurrentlyLoadedPluginSet()
+        val target = targetState.resolvedPluginSet ?: error("resolved plugin set is not set")
+        val sequence = buildTransitionSequence(current, target).also {
+          LOG.info(it.getExplanationLogMessage())
+        }
+
+        val dynamicTransitionIsNotPossibleReason = validateTransitionSequenceCanBePerformedDynamically(sequence, reporter)
+        if (dynamicTransitionIsNotPossibleReason != null) {
+          return@withContext dynamicTransitionIsNotPossibleReason.let(DynamicPluginsTransitionResult::Invalid)
+        }
+
+        saveAllSettings() // TODO should be converted to pre-reconfiguration listener
+
+        val unloadSteps = sequence.transitionSequence.takeWhile { it.action == RuntimeModuleGroupAction.UNLOAD }
+        val loadSteps = sequence.transitionSequence.drop(unloadSteps.size).takeWhile { it.action == RuntimeModuleGroupAction.LOAD }
+        check(unloadSteps.size + loadSteps.size == sequence.transitionSequence.size) { "All loading actions are expected to come after all unloading actions" }
+
+        val pluginsToLoad = loadSteps.asSequence().flatMap { it.runtimeModuleGroup.sortedDescriptors }.filterIsInstance<PluginMainDescriptor>().associateBy { it.pluginId }
+        val (successfullyUnloaded, classloadersToUnload) = unloadGroups(
+          groupsToUnload = unloadSteps.map { it.runtimeModuleGroup },
+          pluginsToBeLoadedLater = pluginsToLoad,
+          reporter = reporter,
+        )
+        if (!successfullyUnloaded) {
+          // broken state, require restart
+          InstalledPluginsState.getInstance().isRestartRequired = true
+          return@withContext DynamicPluginsTransitionResult.Incomplete()
+        }
+
+        loadGroups(
+          targetPluginSet = targetState,
+          groups = loadSteps.map { it.runtimeModuleGroup },
+          reusedGroups = sequence.exactRuntimeModuleGroupAlignment.values.toList(),
+          reporter = reporter,
+        )
+        val trulyCollected = classloaderUnloadAwaitStrategy.awaitClassloadersUnloadedPostTransition(classloadersToUnload)
+        if (!trulyCollected) {
+          InstalledPluginsState.getInstance().isRestartRequired = true
+          return@withContext DynamicPluginsTransitionResult.Incomplete()
+        }
+
+        return@withContext DynamicPluginsTransitionResult.Success()
       }
-
-      val dynamicTransitionIsNotPossibleReason = validateTransitionSequenceCanBePerformedDynamically(sequence)
-      if (dynamicTransitionIsNotPossibleReason != null) {
-        return@withContext dynamicTransitionIsNotPossibleReason.let(DynamicPluginsTransitionResult::Invalid)
-      }
-
-      saveAllSettings() // TODO should be converted to pre-reconfiguration listener
-
-      val unloadSteps = sequence.transitionSequence.takeWhile { it.action == RuntimeModuleGroupAction.UNLOAD }
-      val loadSteps = sequence.transitionSequence.drop(unloadSteps.size).takeWhile { it.action == RuntimeModuleGroupAction.LOAD }
-      check(unloadSteps.size + loadSteps.size == sequence.transitionSequence.size) { "All loading actions are expected to come after all unloading actions" }
-
-      val pluginsToLoad = loadSteps.asSequence().flatMap { it.runtimeModuleGroup.sortedDescriptors }.filterIsInstance<PluginMainDescriptor>().associateBy { it.pluginId }
-      val (successfullyUnloaded, classloadersToUnload) = unloadGroups(unloadSteps.map { it.runtimeModuleGroup }, pluginsToLoad)
-      if (!successfullyUnloaded) {
-        // broken state, require restart
-        InstalledPluginsState.getInstance().isRestartRequired = true
-        return@withContext DynamicPluginsTransitionResult.Incomplete()
-      }
-      loadGroups(targetState, loadSteps.map { it.runtimeModuleGroup }, sequence.exactRuntimeModuleGroupAlignment.values.toList())
-
-      val trulyCollected = classloaderUnloadAwaitStrategy.awaitClassloadersUnloadedPostTransition(classloadersToUnload)
-      if (!trulyCollected) {
-        InstalledPluginsState.getInstance().isRestartRequired = true
-        return@withContext DynamicPluginsTransitionResult.Incomplete()
-      }
-
-      return@withContext DynamicPluginsTransitionResult.Success()
     }
   }
 
@@ -105,42 +120,45 @@ internal class DynamicPluginsSupportImpl(
     }
   }
 
-  private suspend fun validateTransitionSequenceCanBePerformedDynamically(sequence: TransitionSequence): DynamicTransitionIsNotPossibleReason? {
-    return withProgressText(IdeBundle.message("progress.text.validating.dynamic.reconfiguration")) {
+  private suspend fun validateTransitionSequenceCanBePerformedDynamically(
+    sequence: TransitionSequence,
+    reporter: SequentialProgressReporter,
+  ): DynamicTransitionIsNotPossibleReason? {
+    return reporter.indeterminateStep(IdeBundle.message("progress.text.validating.dynamic.reconfiguration")) {
       val elementsModel = MutableAppElementsModel()
       for (group in sequence.currentState.runtimeModuleGroupGraph.sortedGroups) {
         elementsModel.register(group)
-          ?.let { return@withProgressText DynamicTransitionIsNotPossibleReason.of(it) }
+          ?.let { return@indeterminateStep DynamicTransitionIsNotPossibleReason.of(it) }
       }
       for (step in sequence.transitionSequence) {
         validateGroupConformsCommonDynamicConstraints(step.runtimeModuleGroup)
-          ?.let { return@withProgressText it }
+          ?.let { return@indeterminateStep it }
         when (step.action) {
           RuntimeModuleGroupAction.UNLOAD -> {
             validateProductRulesPermitUnloading(step.runtimeModuleGroup)
-              ?.let { return@withProgressText it }
+              ?.let { return@indeterminateStep it }
             validateGroupCanBeUnloaded(
               step.runtimeModuleGroup,
               elementsModel,
               allowDynamicServiceOverrides,
               allowUnloadingWhenRunFromSources
-            )?.let { return@withProgressText it }
+            )?.let { return@indeterminateStep it }
 
             elementsModel.unregister(step.runtimeModuleGroup)
-              ?.let { return@withProgressText DynamicTransitionIsNotPossibleReason.of(it) }
+              ?.let { return@indeterminateStep DynamicTransitionIsNotPossibleReason.of(it) }
           }
           RuntimeModuleGroupAction.LOAD -> {
             validateProductRulesPermitLoading(step.runtimeModuleGroup)
-              ?.let { return@withProgressText it }
+              ?.let { return@indeterminateStep it }
             validateGroupCanBeLoaded(step.runtimeModuleGroup, elementsModel, allowDynamicServiceOverrides)
-              ?.let { return@withProgressText it }
+              ?.let { return@indeterminateStep it }
 
             elementsModel.register(step.runtimeModuleGroup)
-              ?.let { return@withProgressText DynamicTransitionIsNotPossibleReason.of(it) }
+              ?.let { return@indeterminateStep DynamicTransitionIsNotPossibleReason.of(it) }
           }
         }
       }
-      return@withProgressText null
+      return@indeterminateStep null
     }.also {
       if (it != null) LOG.warn("Dynamic plugins transition is not possible: ${it.logMessage}")
     }
@@ -149,12 +167,13 @@ internal class DynamicPluginsSupportImpl(
   private suspend fun unloadGroups(
     groupsToUnload: List<RuntimeModuleGroup>,
     pluginsToBeLoadedLater: Map<PluginId, PluginMainDescriptor>,
+    reporter: SequentialProgressReporter,
   ): Pair<Boolean, WeakList<PluginClassLoader>> {
     val classloadersToUnload = WeakList<PluginClassLoader>()
     if (groupsToUnload.isEmpty()) {
       return true to classloadersToUnload
     }
-    return withProgressText(IdeBundle.message("progress.text.unloading.n.modules", groupsToUnload.size)) {
+    return reporter.indeterminateStep(IdeBundle.message("progress.text.unloading.n.modules", groupsToUnload.size)) {
       val affectedPlugins = groupsToUnload.asSequence().flatMap { it.sortedDescriptors.asReversed() }.filterIsInstance<PluginMainDescriptor>()
       try {
         withContext(Dispatchers.EDT) {
@@ -203,7 +222,7 @@ internal class DynamicPluginsSupportImpl(
       for (plugin in affectedPlugins) {
         DynamicPluginsUsagesCollector.logDescriptorUnload(plugin, success = collected)
       }
-      return@withProgressText collected to classloadersToUnload
+      return@indeterminateStep collected to classloadersToUnload
     }
   }
 
@@ -223,13 +242,18 @@ internal class DynamicPluginsSupportImpl(
   /**
    * Applies new state, must be called even if there is nothing to load after unload
    */
-  private suspend fun loadGroups(targetPluginSet: PluginSet, groups: List<RuntimeModuleGroup>, reusedGroups: List<RuntimeModuleGroup>) {
-    withProgressText(IdeBundle.message("progress.text.loading.n.modules", groups.size)) {
+  private suspend fun loadGroups(
+    targetPluginSet: PluginSet,
+    groups: List<RuntimeModuleGroup>,
+    reusedGroups: List<RuntimeModuleGroup>,
+    reporter: SequentialProgressReporter,
+  ) {
+    reporter.indeterminateStep(IdeBundle.message("progress.text.loading.n.modules", groups.size)) {
       if (groups.isEmpty()) {
         application.runWriteAction {
           PluginManagerCore.setPluginSet(targetPluginSet)
         }
-        return@withProgressText
+        return@indeterminateStep
       }
 
       val affectedPlugins = groups.asSequence().flatMap { it.sortedDescriptors }.filterIsInstance<PluginMainDescriptor>()
