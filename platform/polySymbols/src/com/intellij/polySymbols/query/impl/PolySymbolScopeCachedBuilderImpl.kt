@@ -19,6 +19,7 @@ import com.intellij.polySymbols.query.PolySymbolScopeCachedBuilderBase
 import com.intellij.polySymbols.query.PolySymbolScopeCachedInitializer
 import com.intellij.polySymbols.query.PolySymbolScopeCachedInitializerBase
 import com.intellij.polySymbols.utils.PolySymbolScopeWithCache
+import com.intellij.polySymbols.utils.ReferencingPolySymbol
 import com.intellij.polySymbols.query.ProjectPolySymbolScopeCachedBuilder
 import com.intellij.polySymbols.query.ProjectPolySymbolScopeCachedInitializer
 import com.intellij.polySymbols.query.PsiPolySymbolScopeCachedBuilder
@@ -32,9 +33,6 @@ internal abstract class AbstractBuilder<K>(
 ) : PolySymbolScopeCachedBuilderBase<K> {
 
   val providesKinds: MutableSet<PolySymbolKind> = mutableSetOf()
-
-  var providesPredicate: ((PolySymbolKind) -> Boolean)? = null
-    private set
 
   val exclusiveForKinds: MutableSet<PolySymbolKind> = mutableSetOf()
 
@@ -56,11 +54,6 @@ internal abstract class AbstractBuilder<K>(
 
   final override fun provides(kinds: Collection<PolySymbolKind>) {
     providesKinds.addAll(kinds)
-  }
-
-  final override fun provides(predicate: (PolySymbolKind) -> Boolean) {
-    checkNoPsiCapture(predicate, "polySymbolScopeCached.provides")
-    providesPredicate = predicate
   }
 
   final override fun exclusiveFor(vararg kinds: PolySymbolKind) {
@@ -125,7 +118,6 @@ internal class ProjectPolySymbolScopeCachedBuilderImpl<K>(
       scopeClass = configureRef::class.java,
       userKey = keyRef,
       providesKinds = providesKinds.toHashSet(),
-      providesPredicate = providesPredicate,
       exclusiveForKinds = exclusiveForKinds.toHashSet(),
       exclusiveForPredicate = exclusiveForPredicate,
       requiresResolveValue = requiresResolveValue,
@@ -175,7 +167,6 @@ internal class PsiPolySymbolScopeCachedBuilderImpl<T : PsiElement, K>(
       scopeClass = configureRef::class.java,
       userKey = keyRef,
       providesKinds = providesKinds.toHashSet(),
-      providesPredicate = providesPredicate,
       exclusiveForKinds = exclusiveForKinds.toHashSet(),
       exclusiveForPredicate = exclusiveForPredicate,
       requiresResolveValue = requiresResolveValue,
@@ -236,7 +227,6 @@ internal class UserDataHolderPolySymbolScopeCachedBuilderImpl<T : UserDataHolder
       scopeClass = configureRef::class.java,
       userKey = keyRef,
       providesKinds = providesKinds.toHashSet(),
-      providesPredicate = providesPredicate,
       exclusiveForKinds = exclusiveForKinds.toHashSet(),
       exclusiveForPredicate = exclusiveForPredicate,
       requiresResolveValue = requiresResolveValue,
@@ -293,6 +283,15 @@ private abstract class AbstractCachedInitializer<K>(
   ) {
     consumer(polySymbol(kind, name, body))
   }
+
+  final override fun referenceSymbols(
+    kind: PolySymbolKind,
+    displayName: String,
+    vararg referencedKinds: PolySymbolKind,
+    priority: PolySymbol.Priority?,
+  ) {
+    consumer(ReferencingPolySymbol.create(kind, displayName, *referencedKinds, priority = priority))
+  }
 }
 
 private class ProjectCachedInitializerImpl<K>(
@@ -329,7 +328,6 @@ internal class BuiltPolySymbolScopeWithCache<T : UserDataHolder, K>(
   scopeClass: Class<*>,
   private val userKey: K,
   private val providesKinds: Set<PolySymbolKind>,
-  private val providesPredicate: ((PolySymbolKind) -> Boolean)?,
   private val exclusiveForKinds: Set<PolySymbolKind>,
   private val exclusiveForPredicate: ((PolySymbolKind) -> Boolean)?,
   private val requiresResolveValue: Boolean,
@@ -347,8 +345,7 @@ internal class BuiltPolySymbolScopeWithCache<T : UserDataHolder, K>(
   private val reconstruct: (T) -> BuiltPolySymbolScopeWithCache<T, K>,
 ) : PolySymbolScopeWithCache<T, Pair<Class<*>, K>>(project, dataHolder, scopeClass to userKey) {
 
-  override fun provides(kind: PolySymbolKind): Boolean =
-    kind in providesKinds || providesPredicate?.invoke(kind) == true
+  override fun provides(kind: PolySymbolKind): Boolean = kind in providesKinds
 
   override fun isExclusiveFor(kind: PolySymbolKind): Boolean =
     kind in exclusiveForKinds || exclusiveForPredicate?.invoke(kind) == true

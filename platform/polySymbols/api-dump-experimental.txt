@@ -1056,45 +1056,34 @@
 - getSymbols(com.intellij.polySymbols.PolySymbolKind,com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams,com.intellij.polySymbols.query.PolySymbolQueryStack):java.util.List
 - isExclusiveFor(com.intellij.polySymbols.PolySymbolKind):Z
 *:com.intellij.polySymbols.query.PolySymbolScopeBuilder
+- com.intellij.polySymbols.query.PolySymbolScopeBuilderBase
+- a:initialize(kotlin.jvm.functions.Function1):V
+*:com.intellij.polySymbols.query.PolySymbolScopeBuilderBase
 - a:exclusiveFor(java.util.Collection):V
 - a:exclusiveFor(kotlin.jvm.functions.Function1):V
 - a:exclusiveFor(com.intellij.polySymbols.PolySymbolKind[]):V
 - a:filterCodeCompletions(kotlin.jvm.functions.Function2):V
 - a:filterNameMatches(kotlin.jvm.functions.Function2):V
-- a:initialize(kotlin.jvm.functions.Function1):V
 - a:provides(java.util.Collection):V
-- a:provides(kotlin.jvm.functions.Function1):V
 - a:provides(com.intellij.polySymbols.PolySymbolKind[]):V
+- a:requiresResolve(Z):V
 *:com.intellij.polySymbols.query.PolySymbolScopeCachedBuilder
 - com.intellij.polySymbols.query.PolySymbolScopeCachedBuilderBase
 - a:getDataHolder():com.intellij.openapi.util.UserDataHolder
 - a:initialize(kotlin.jvm.functions.Function1):V
 - a:pointer(kotlin.jvm.functions.Function1):V
 *:com.intellij.polySymbols.query.PolySymbolScopeCachedBuilderBase
-- a:exclusiveFor(java.util.Collection):V
-- a:exclusiveFor(kotlin.jvm.functions.Function1):V
-- a:exclusiveFor(com.intellij.polySymbols.PolySymbolKind[]):V
-- a:filterCodeCompletions(kotlin.jvm.functions.Function2):V
-- a:filterNameMatches(kotlin.jvm.functions.Function2):V
+- com.intellij.polySymbols.query.PolySymbolScopeBuilderBase
 - a:getKey():java.lang.Object
 - a:getProject():com.intellij.openapi.project.Project
-- a:provides(java.util.Collection):V
-- a:provides(kotlin.jvm.functions.Function1):V
-- a:provides(com.intellij.polySymbols.PolySymbolKind[]):V
-- a:requiresResolve(Z):V
 *:com.intellij.polySymbols.query.PolySymbolScopeCachedInitializer
 - com.intellij.polySymbols.query.PolySymbolScopeCachedInitializerBase
 - a:getDataHolder():com.intellij.openapi.util.UserDataHolder
 *:com.intellij.polySymbols.query.PolySymbolScopeCachedInitializerBase
-- a:add(com.intellij.polySymbols.PolySymbol):V
-- a:addAll(java.lang.Iterable):V
-- a:addSymbol(com.intellij.polySymbols.PolySymbolKind,java.lang.String,kotlin.jvm.functions.Function1):V
-- bs:addSymbol$default(com.intellij.polySymbols.query.PolySymbolScopeCachedInitializerBase,com.intellij.polySymbols.PolySymbolKind,java.lang.String,kotlin.jvm.functions.Function1,I,java.lang.Object):V
+- com.intellij.polySymbols.query.PolySymbolScopeInitializer
 - a:cacheDependencies(java.lang.Object[]):V
 - a:getKey():java.lang.Object
 - a:getProject():com.intellij.openapi.project.Project
-- a:unaryPlus(com.intellij.polySymbols.PolySymbol):V
-- a:unaryPlus(java.lang.Iterable):V
 *@:com.intellij.polySymbols.query.PolySymbolScopeDsl
 - java.lang.annotation.Annotation
 *f:com.intellij.polySymbols.query.PolySymbolScopeDslKt
@@ -1109,6 +1098,8 @@
 - a:addAll(java.lang.Iterable):V
 - a:addSymbol(com.intellij.polySymbols.PolySymbolKind,java.lang.String,kotlin.jvm.functions.Function1):V
 - bs:addSymbol$default(com.intellij.polySymbols.query.PolySymbolScopeInitializer,com.intellij.polySymbols.PolySymbolKind,java.lang.String,kotlin.jvm.functions.Function1,I,java.lang.Object):V
+- a:referenceSymbols(com.intellij.polySymbols.PolySymbolKind,java.lang.String,com.intellij.polySymbols.PolySymbolKind[],com.intellij.polySymbols.PolySymbol$Priority):V
+- bs:referenceSymbols$default(com.intellij.polySymbols.query.PolySymbolScopeInitializer,com.intellij.polySymbols.PolySymbolKind,java.lang.String,com.intellij.polySymbols.PolySymbolKind[],com.intellij.polySymbols.PolySymbol$Priority,I,java.lang.Object):V
 - a:unaryPlus(com.intellij.polySymbols.PolySymbol):V
 - a:unaryPlus(java.lang.Iterable):V
 *:com.intellij.polySymbols.query.PolySymbolThreadLocalCacheKeyProvider

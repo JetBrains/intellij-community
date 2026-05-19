@@ -11,6 +11,7 @@ import com.intellij.polySymbols.impl.SearchMap
 import com.intellij.polySymbols.impl.checkNoPsiCapture
 import com.intellij.polySymbols.polySymbol
 import com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams
+import com.intellij.polySymbols.utils.ReferencingPolySymbol
 import com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams
 import com.intellij.polySymbols.query.PolySymbolNameMatchQueryParams
 import com.intellij.polySymbols.query.PolySymbolNamesProvider
@@ -37,9 +38,9 @@ private const val LINEAR_THRESHOLD = 5
  */
 internal class BasicPolySymbolScope(
   private val providesKinds: Set<PolySymbolKind>,
-  private val providesPredicate: ((PolySymbolKind) -> Boolean)?,
   private val exclusiveForKinds: Set<PolySymbolKind>,
   private val exclusiveForPredicate: ((PolySymbolKind) -> Boolean)?,
+  private val requiresResolveValue: Boolean,
   private val codeCompletionFilter: ((PolySymbolKind, List<PolySymbolCodeCompletionItem>) -> List<PolySymbolCodeCompletionItem>)?,
   private val nameMatchFilter: ((PolySymbolQualifiedName, List<PolySymbol>) -> List<PolySymbol>)?,
   private val symbolsSupplier: () -> List<PolySymbol>,
@@ -53,8 +54,7 @@ internal class BasicPolySymbolScope(
     else null
   }
 
-  private fun provides(kind: PolySymbolKind): Boolean =
-    kind in providesKinds || providesPredicate?.invoke(kind) == true
+  private fun provides(kind: PolySymbolKind): Boolean = kind in providesKinds
 
   override fun isExclusiveFor(kind: PolySymbolKind): Boolean =
     kind in exclusiveForKinds || exclusiveForPredicate?.invoke(kind) == true
@@ -62,18 +62,21 @@ internal class BasicPolySymbolScope(
   override fun createPointer(): Pointer<BasicPolySymbolScope> {
     val symbolPtrs = symbols.map { it.createPointer() }
     val providesKinds = providesKinds
-    val providesPredicate = providesPredicate
     val exclusiveForKinds = exclusiveForKinds
     val exclusiveForPredicate = exclusiveForPredicate
+    val requiresResolveValue = requiresResolveValue
     val codeCompletionFilter = codeCompletionFilter
     val nameMatchFilter = nameMatchFilter
     return Pointer {
       val derefed = symbolPtrs.mapNotNull { it.dereference() }
       if (derefed.size != symbolPtrs.size) return@Pointer null
       BasicPolySymbolScope(
-        providesKinds, providesPredicate,
-        exclusiveForKinds, exclusiveForPredicate,
-        codeCompletionFilter, nameMatchFilter,
+        providesKinds = providesKinds,
+        exclusiveForKinds = exclusiveForKinds,
+        exclusiveForPredicate = exclusiveForPredicate,
+        requiresResolveValue = requiresResolveValue,
+        codeCompletionFilter = codeCompletionFilter,
+        nameMatchFilter = nameMatchFilter,
         symbolsSupplier = { derefed },
       )
     }
@@ -84,6 +87,7 @@ internal class BasicPolySymbolScope(
     params: PolySymbolListSymbolsQueryParams,
     stack: PolySymbolQueryStack,
   ): List<PolySymbol> {
+    if (requiresResolveValue && !params.queryExecutor.allowResolve) return emptyList()
     if (!provides(kind)) return emptyList()
     val mapCache = this.mapCache
     return if (mapCache == null)
@@ -97,6 +101,7 @@ internal class BasicPolySymbolScope(
     params: PolySymbolNameMatchQueryParams,
     stack: PolySymbolQueryStack,
   ): List<PolySymbol> {
+    if (requiresResolveValue && !params.queryExecutor.allowResolve) return emptyList()
     if (!provides(qualifiedName.kind)) return emptyList()
     val mapCache = this.mapCache
     val base = if (mapCache == null)
@@ -114,6 +119,7 @@ internal class BasicPolySymbolScope(
     params: PolySymbolCodeCompletionQueryParams,
     stack: PolySymbolQueryStack,
   ): List<PolySymbolCodeCompletionItem> {
+    if (requiresResolveValue && !params.queryExecutor.allowResolve) return emptyList()
     if (!provides(qualifiedName.kind)) return emptyList()
     val mapCache = this.mapCache
     val base = if (mapCache == null)
@@ -173,14 +179,23 @@ internal class PolySymbolScopeInitializerImpl : PolySymbolScopeInitializer {
   ) {
     _symbols += polySymbol(kind, name, body)
   }
+
+  override fun referenceSymbols(
+    kind: PolySymbolKind,
+    displayName: String,
+    vararg referencedKinds: PolySymbolKind,
+    priority: PolySymbol.Priority?,
+  ) {
+    _symbols += ReferencingPolySymbol.create(kind, displayName, *referencedKinds, priority = priority)
+  }
 }
 
 internal class PolySymbolScopeBuilderImpl : PolySymbolScopeBuilder {
 
   private val providesKinds: MutableSet<PolySymbolKind> = mutableSetOf()
-  private var providesPredicate: ((PolySymbolKind) -> Boolean)? = null
   private val exclusiveForKinds: MutableSet<PolySymbolKind> = mutableSetOf()
   private var exclusiveForPredicate: ((PolySymbolKind) -> Boolean)? = null
+  private var requiresResolveValue: Boolean = true
   private var initBody: (PolySymbolScopeInitializer.() -> Unit)? = null
   private var codeCompletionFilter: ((PolySymbolKind, List<PolySymbolCodeCompletionItem>) -> List<PolySymbolCodeCompletionItem>)? = null
   private var nameMatchFilter: ((PolySymbolQualifiedName, List<PolySymbol>) -> List<PolySymbol>)? = null
@@ -191,11 +206,6 @@ internal class PolySymbolScopeBuilderImpl : PolySymbolScopeBuilder {
 
   override fun provides(kinds: Collection<PolySymbolKind>) {
     providesKinds.addAll(kinds)
-  }
-
-  override fun provides(predicate: (PolySymbolKind) -> Boolean) {
-    checkNoPsiCapture(predicate, "polySymbolScope.provides")
-    providesPredicate = predicate
   }
 
   override fun exclusiveFor(vararg kinds: PolySymbolKind) {
@@ -209,6 +219,10 @@ internal class PolySymbolScopeBuilderImpl : PolySymbolScopeBuilder {
   override fun exclusiveFor(predicate: (PolySymbolKind) -> Boolean) {
     checkNoPsiCapture(predicate, "polySymbolScope.exclusiveFor")
     exclusiveForPredicate = predicate
+  }
+
+  override fun requiresResolve(value: Boolean) {
+    requiresResolveValue = value
   }
 
   override fun filterCodeCompletions(
@@ -234,21 +248,20 @@ internal class PolySymbolScopeBuilderImpl : PolySymbolScopeBuilder {
   fun build(): PolySymbolScope {
     val body = initBody ?: error("polySymbolScope: initialize { } was not called.")
     val frozenKinds = providesKinds.toHashSet()
-    val predicate = providesPredicate
     val codeCompletionFilter = codeCompletionFilter
     val nameMatchFilter = nameMatchFilter
     return BasicPolySymbolScope(
       providesKinds = frozenKinds,
-      providesPredicate = predicate,
       exclusiveForKinds = exclusiveForKinds.toHashSet(),
       exclusiveForPredicate = exclusiveForPredicate,
+      requiresResolveValue = requiresResolveValue,
       codeCompletionFilter = codeCompletionFilter,
       nameMatchFilter = nameMatchFilter,
       symbolsSupplier = {
         val initializer = PolySymbolScopeInitializerImpl()
         body.invoke(initializer)
         val symbols = initializer.symbols
-        symbols.find { it.kind !in frozenKinds && predicate?.invoke(it.kind) != true }?.let {
+        symbols.find { it.kind !in frozenKinds }?.let {
           throw IllegalArgumentException(
             "Symbol $it kind ${it.kind} is not provided by this scope. " +
             "Use `provides` to specify supported symbol kinds."

@@ -91,17 +91,14 @@ fun polySymbolScope(
 ): PolySymbolScope =
   buildPolySymbolScope(configure)
 
+
 @PolySymbolScopeDsl
 @ApiStatus.NonExtendable
-interface PolySymbolScopeCachedBuilderBase<K> {
-
-  val project: Project
-
-  val key: K
+interface PolySymbolScopeBuilderBase {
 
   /**
    * Restrict the scope to a fixed set of [PolySymbolKind]s. Multiple calls are
-   * additive. Combined with the predicate overload via logical OR.
+   * additive.
    */
   fun provides(vararg kinds: PolySymbolKind)
 
@@ -109,14 +106,6 @@ interface PolySymbolScopeCachedBuilderBase<K> {
    * Additive collection-form overload of [provides].
    */
   fun provides(kinds: Collection<PolySymbolKind>)
-
-  /**
-   * Restrict the scope via a predicate. Combined with the [provides] set via
-   * logical OR; overwrites any previous predicate-form call.
-   */
-  fun provides(predicate: (PolySymbolKind) -> Boolean)
-
-  fun requiresResolve(value: Boolean)
 
   /**
    * Mark this scope as exclusive for a fixed set of [PolySymbolKind]s. Multiple
@@ -136,9 +125,39 @@ interface PolySymbolScopeCachedBuilderBase<K> {
    */
   fun exclusiveFor(predicate: (PolySymbolKind) -> Boolean)
 
+  fun requiresResolve(value: Boolean)
+
   fun filterCodeCompletions(filter: (kind: PolySymbolKind, items: List<PolySymbolCodeCompletionItem>) -> List<PolySymbolCodeCompletionItem>)
 
-  fun filterNameMatches(filter: (qualifiedName: PolySymbolQualifiedName, matches: List<PolySymbol>) -> List<PolySymbol>)
+  fun filterNameMatches(filter: (name: PolySymbolQualifiedName, matches: List<PolySymbol>) -> List<PolySymbol>)
+
+}
+
+/**
+ * Builder receiver for the non-cached [polySymbolScope] factory. Declare the
+ * scope's provided kinds, filters, and — via [initialize] — its symbols. The
+ * [initialize] body runs lazily on first query or [PolySymbolScope.createPointer].
+ */
+@PolySymbolScopeDsl
+@ApiStatus.NonExtendable
+interface PolySymbolScopeBuilder: PolySymbolScopeBuilderBase {
+
+  /**
+   * Declare the scope's symbols lazily. The [body] runs the first time the
+   * scope is queried (`getSymbols`, `getMatchingSymbols`, `getCodeCompletions`)
+   * or [PolySymbolScope.createPointer] is invoked.
+   */
+  fun initialize(body: PolySymbolScopeInitializer.() -> Unit)
+}
+
+@PolySymbolScopeDsl
+@ApiStatus.NonExtendable
+interface PolySymbolScopeCachedBuilderBase<K>: PolySymbolScopeBuilderBase {
+
+  val project: Project
+
+  val key: K
+
 }
 
 @PolySymbolScopeDsl
@@ -172,119 +191,6 @@ interface PolySymbolScopeCachedBuilder<T : UserDataHolder, K> : PolySymbolScopeC
   fun initialize(body: PolySymbolScopeCachedInitializer<T, K>.() -> Unit)
 }
 
-@PolySymbolScopeDsl
-@ApiStatus.NonExtendable
-interface PolySymbolScopeCachedInitializerBase<K> {
-
-  val project: Project
-
-  val key: K
-
-  /**
-   * Register one or more cache dependency trackers. The accumulated set must
-   * end up non-empty — use [com.intellij.openapi.util.ModificationTracker.NEVER_CHANGED]
-   * for scopes that never change.
-   */
-  fun cacheDependencies(vararg dependencies: Any)
-
-  /** Emit a single symbol to the scope. */
-  fun add(symbol: PolySymbol)
-
-  /** Emit a collection of symbols to the scope. */
-  fun addAll(symbols: Iterable<PolySymbol>)
-
-  /** Operator form of [add]. */
-  operator fun PolySymbol.unaryPlus()
-
-  /** Operator form of [addAll]. */
-  operator fun Iterable<PolySymbol>.unaryPlus()
-
-  /**
-   * Convenience: build a [PolySymbol] with the existing
-   * [com.intellij.polySymbols.polySymbol] DSL and add it to this scope in
-   * one call. Equivalent to `add(polySymbol(kind, name) { ... })`.
-   */
-  fun addSymbol(
-    kind: PolySymbolKind,
-    name: String,
-    body: PolySymbolBuilder.() -> Unit = {},
-  )
-}
-
-@PolySymbolScopeDsl
-@ApiStatus.NonExtendable
-interface ProjectPolySymbolScopeCachedInitializer<K> : PolySymbolScopeCachedInitializerBase<K>
-
-@PolySymbolScopeDsl
-@ApiStatus.NonExtendable
-interface PsiPolySymbolScopeCachedInitializer<T : PsiElement, K> : PolySymbolScopeCachedInitializerBase<K> {
-
-  val element: T
-}
-
-@PolySymbolScopeDsl
-@ApiStatus.NonExtendable
-interface PolySymbolScopeCachedInitializer<T : UserDataHolder, K> : PolySymbolScopeCachedInitializerBase<K> {
-
-  val dataHolder: T
-}
-
-/**
- * Builder receiver for the non-cached [polySymbolScope] factory. Declare the
- * scope's provided kinds, filters, and — via [initialize] — its symbols. The
- * [initialize] body runs lazily on first query or [PolySymbolScope.createPointer].
- */
-@PolySymbolScopeDsl
-@ApiStatus.NonExtendable
-interface PolySymbolScopeBuilder {
-
-  /**
-   * Restrict the scope to a fixed set of [PolySymbolKind]s. Multiple calls are
-   * additive.
-   */
-  fun provides(vararg kinds: PolySymbolKind)
-
-  /**
-   * Additive collection-form overload of [provides].
-   */
-  fun provides(kinds: Collection<PolySymbolKind>)
-
-  /**
-   * Restrict the scope via a predicate. Combined with the [provides] set via
-   * logical OR; overwrites any previous predicate-form call.
-   */
-  fun provides(predicate: (PolySymbolKind) -> Boolean)
-
-  /**
-   * Mark this scope as exclusive for a fixed set of [PolySymbolKind]s. Multiple
-   * calls are additive. Mirrors [PolySymbolScope.isExclusiveFor].
-   */
-  fun exclusiveFor(vararg kinds: PolySymbolKind)
-
-  /**
-   * Additive collection-form overload of [exclusiveFor].
-   */
-  fun exclusiveFor(kinds: Collection<PolySymbolKind>)
-
-  /**
-   * Mark this scope as exclusive via a predicate. Combined with the
-   * [exclusiveFor] set via logical OR; overwrites any previous
-   * predicate-form call.
-   */
-  fun exclusiveFor(predicate: (PolySymbolKind) -> Boolean)
-
-  fun filterCodeCompletions(filter: (kind: PolySymbolKind, items: List<PolySymbolCodeCompletionItem>) -> List<PolySymbolCodeCompletionItem>)
-
-  fun filterNameMatches(filter: (name: PolySymbolQualifiedName, matches: List<PolySymbol>) -> List<PolySymbol>)
-
-  /**
-   * Declare the scope's symbols lazily. The [body] runs the first time the
-   * scope is queried (`getSymbols`, `getMatchingSymbols`, `getCodeCompletions`)
-   * or [PolySymbolScope.createPointer] is invoked.
-   */
-  fun initialize(body: PolySymbolScopeInitializer.() -> Unit)
-}
-
 /**
  * Receiver of the [PolySymbolScopeBuilder.initialize] body. Collects the scope's
  * symbols. No `project`/`key`/`dataHolder` context — the non-cached scope carries
@@ -316,4 +222,49 @@ interface PolySymbolScopeInitializer {
     name: String,
     body: PolySymbolBuilder.() -> Unit = {},
   )
+
+  /**
+   * Convenience method: adds a ReferencingPolySymbol to the scope.
+   */
+  fun referenceSymbols(
+    kind: PolySymbolKind,
+    displayName: String,
+    vararg referencedKinds: PolySymbolKind,
+    priority: PolySymbol.Priority? = null,
+  )
+}
+
+@PolySymbolScopeDsl
+@ApiStatus.NonExtendable
+interface PolySymbolScopeCachedInitializerBase<K>: PolySymbolScopeInitializer {
+
+  val project: Project
+
+  val key: K
+
+  /**
+   * Register one or more cache dependency trackers. The accumulated set must
+   * end up non-empty — use [com.intellij.openapi.util.ModificationTracker.NEVER_CHANGED]
+   * for scopes that never change.
+   */
+  fun cacheDependencies(vararg dependencies: Any)
+
+}
+
+@PolySymbolScopeDsl
+@ApiStatus.NonExtendable
+interface ProjectPolySymbolScopeCachedInitializer<K> : PolySymbolScopeCachedInitializerBase<K>
+
+@PolySymbolScopeDsl
+@ApiStatus.NonExtendable
+interface PsiPolySymbolScopeCachedInitializer<T : PsiElement, K> : PolySymbolScopeCachedInitializerBase<K> {
+
+  val element: T
+}
+
+@PolySymbolScopeDsl
+@ApiStatus.NonExtendable
+interface PolySymbolScopeCachedInitializer<T : UserDataHolder, K> : PolySymbolScopeCachedInitializerBase<K> {
+
+  val dataHolder: T
 }
