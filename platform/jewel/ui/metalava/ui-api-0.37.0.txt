@@ -232,12 +232,14 @@ package org.jetbrains.jewel.ui.component {
   public final class ButtonKt {
     method @androidx.compose.runtime.Composable public static void DefaultButton(kotlin.jvm.functions.Function0<kotlin.Unit> onClick, optional androidx.compose.ui.Modifier modifier, optional boolean enabled, optional androidx.compose.foundation.interaction.MutableInteractionSource interactionSource, optional org.jetbrains.jewel.ui.component.styling.ButtonStyle style, optional androidx.compose.ui.text.TextStyle textStyle, kotlin.jvm.functions.Function0<kotlin.Unit> content);
     method @androidx.compose.runtime.Composable public static void DefaultSlimButton(kotlin.jvm.functions.Function0<kotlin.Unit> onClick, optional androidx.compose.ui.Modifier modifier, optional boolean enabled, optional androidx.compose.foundation.interaction.MutableInteractionSource interactionSource, optional org.jetbrains.jewel.ui.component.styling.ButtonStyle style, optional androidx.compose.ui.text.TextStyle textStyle, kotlin.jvm.functions.Function0<kotlin.Unit> content);
+    method @androidx.compose.runtime.Composable public static void DefaultSplitButton(kotlin.jvm.functions.Function0<kotlin.Unit> onClick, boolean expanded, kotlin.jvm.functions.Function1<? super java.lang.Boolean,kotlin.Unit> onExpandedChange, optional androidx.compose.ui.Modifier modifier, optional boolean enabled, optional androidx.compose.foundation.interaction.MutableInteractionSource interactionSource, optional org.jetbrains.jewel.ui.component.styling.SplitButtonStyle style, optional androidx.compose.ui.text.TextStyle textStyle, kotlin.jvm.functions.Function0<kotlin.Unit> content);
     method @androidx.compose.runtime.Composable public static void DefaultSplitButton(kotlin.jvm.functions.Function0<kotlin.Unit> onClick, kotlin.jvm.functions.Function0<kotlin.Unit> popupContainer, optional androidx.compose.ui.Modifier modifier, optional androidx.compose.ui.Modifier popupModifier, optional float maxPopupHeight, optional float maxPopupWidth, optional boolean enabled, optional androidx.compose.foundation.interaction.MutableInteractionSource interactionSource, optional org.jetbrains.jewel.ui.component.styling.SplitButtonStyle style, optional androidx.compose.ui.text.TextStyle textStyle, optional org.jetbrains.jewel.ui.component.styling.MenuStyle menuStyle, optional kotlin.jvm.functions.Function0<kotlin.Unit> secondaryOnClick, kotlin.jvm.functions.Function0<kotlin.Unit> content);
     method @Deprecated @androidx.compose.runtime.Composable public static void DefaultSplitButton(kotlin.jvm.functions.Function0<kotlin.Unit> onClick, kotlin.jvm.functions.Function0<kotlin.Unit> secondaryOnClick, optional androidx.compose.ui.Modifier modifier, optional boolean enabled, optional androidx.compose.foundation.interaction.MutableInteractionSource interactionSource, optional org.jetbrains.jewel.ui.component.styling.SplitButtonStyle style, optional androidx.compose.ui.text.TextStyle textStyle, optional org.jetbrains.jewel.ui.component.styling.MenuStyle menuStyle, kotlin.jvm.functions.Function0<kotlin.Unit> content, kotlin.jvm.functions.Function0<kotlin.Unit> popupContainer);
     method @Deprecated @androidx.compose.runtime.Composable public static void DefaultSplitButton(kotlin.jvm.functions.Function0<kotlin.Unit> onClick, kotlin.jvm.functions.Function0<kotlin.Unit> secondaryOnClick, optional androidx.compose.ui.Modifier modifier, optional boolean enabled, optional androidx.compose.foundation.interaction.MutableInteractionSource interactionSource, optional org.jetbrains.jewel.ui.component.styling.SplitButtonStyle style, optional androidx.compose.ui.text.TextStyle textStyle, optional org.jetbrains.jewel.ui.component.styling.MenuStyle menuStyle, kotlin.jvm.functions.Function0<kotlin.Unit> content, kotlin.jvm.functions.Function1<? super org.jetbrains.jewel.ui.component.MenuScope,kotlin.Unit> menuContent);
     method @androidx.compose.runtime.Composable public static void DefaultSplitButton(kotlin.jvm.functions.Function0<kotlin.Unit> onClick, kotlin.jvm.functions.Function1<? super org.jetbrains.jewel.ui.component.MenuScope,kotlin.Unit> menuContent, optional androidx.compose.ui.Modifier modifier, optional androidx.compose.ui.Modifier popupModifier, optional float maxPopupHeight, optional float maxPopupWidth, optional boolean enabled, optional androidx.compose.foundation.interaction.MutableInteractionSource interactionSource, optional org.jetbrains.jewel.ui.component.styling.SplitButtonStyle style, optional androidx.compose.ui.text.TextStyle textStyle, optional org.jetbrains.jewel.ui.component.styling.MenuStyle menuStyle, optional kotlin.jvm.functions.Function0<kotlin.Unit> secondaryOnClick, kotlin.jvm.functions.Function0<kotlin.Unit> content);
     method @androidx.compose.runtime.Composable public static void OutlinedButton(kotlin.jvm.functions.Function0<kotlin.Unit> onClick, optional androidx.compose.ui.Modifier modifier, optional boolean enabled, optional androidx.compose.foundation.interaction.MutableInteractionSource interactionSource, optional org.jetbrains.jewel.ui.component.styling.ButtonStyle style, optional androidx.compose.ui.text.TextStyle textStyle, kotlin.jvm.functions.Function0<kotlin.Unit> content);
     method @androidx.compose.runtime.Composable public static void OutlinedSlimButton(kotlin.jvm.functions.Function0<kotlin.Unit> onClick, optional androidx.compose.ui.Modifier modifier, optional boolean enabled, optional androidx.compose.foundation.interaction.MutableInteractionSource interactionSource, optional org.jetbrains.jewel.ui.component.styling.ButtonStyle style, optional androidx.compose.ui.text.TextStyle textStyle, kotlin.jvm.functions.Function0<kotlin.Unit> content);
+    method @androidx.compose.runtime.Composable public static void OutlinedSplitButton(kotlin.jvm.functions.Function0<kotlin.Unit> onClick, boolean expanded, kotlin.jvm.functions.Function1<? super java.lang.Boolean,kotlin.Unit> onExpandedChange, optional androidx.compose.ui.Modifier modifier, optional boolean enabled, optional androidx.compose.foundation.interaction.MutableInteractionSource interactionSource, optional org.jetbrains.jewel.ui.component.styling.SplitButtonStyle style, optional androidx.compose.ui.text.TextStyle textStyle, kotlin.jvm.functions.Function0<kotlin.Unit> content);
     method @androidx.compose.runtime.Composable public static void OutlinedSplitButton(kotlin.jvm.functions.Function0<kotlin.Unit> onClick, kotlin.jvm.functions.Function0<kotlin.Unit> popupContainer, optional androidx.compose.ui.Modifier modifier, optional androidx.compose.ui.Modifier popupModifier, optional float maxPopupHeight, optional float maxPopupWidth, optional boolean enabled, optional androidx.compose.foundation.interaction.MutableInteractionSource interactionSource, optional org.jetbrains.jewel.ui.component.styling.SplitButtonStyle style, optional androidx.compose.ui.text.TextStyle textStyle, optional org.jetbrains.jewel.ui.component.styling.MenuStyle menuStyle, optional kotlin.jvm.functions.Function0<kotlin.Unit> secondaryOnClick, kotlin.jvm.functions.Function0<kotlin.Unit> content);
     method @Deprecated @androidx.compose.runtime.Composable public static void OutlinedSplitButton(kotlin.jvm.functions.Function0<kotlin.Unit> onClick, kotlin.jvm.functions.Function0<kotlin.Unit> secondaryOnClick, optional androidx.compose.ui.Modifier modifier, optional boolean enabled, optional androidx.compose.foundation.interaction.MutableInteractionSource interactionSource, optional org.jetbrains.jewel.ui.component.styling.SplitButtonStyle style, optional androidx.compose.ui.text.TextStyle textStyle, optional org.jetbrains.jewel.ui.component.styling.MenuStyle menuStyle, kotlin.jvm.functions.Function0<kotlin.Unit> content, kotlin.jvm.functions.Function0<kotlin.Unit> popupContainer);
     method @Deprecated @androidx.compose.runtime.Composable public static void OutlinedSplitButton(kotlin.jvm.functions.Function0<kotlin.Unit> onClick, kotlin.jvm.functions.Function0<kotlin.Unit> secondaryOnClick, optional androidx.compose.ui.Modifier modifier, optional boolean enabled, optional androidx.compose.foundation.interaction.MutableInteractionSource interactionSource, optional org.jetbrains.jewel.ui.component.styling.SplitButtonStyle style, optional androidx.compose.ui.text.TextStyle textStyle, optional org.jetbrains.jewel.ui.component.styling.MenuStyle menuStyle, kotlin.jvm.functions.Function0<kotlin.Unit> content, kotlin.jvm.functions.Function1<? super org.jetbrains.jewel.ui.component.MenuScope,kotlin.Unit> menuContent);
@@ -457,6 +459,8 @@ package org.jetbrains.jewel.ui.component {
     method @androidx.compose.runtime.Composable public static void Icon(androidx.compose.ui.graphics.painter.Painter painter, String? contentDescription, androidx.compose.ui.graphics.ColorFilter? colorFilter, optional androidx.compose.ui.Modifier modifier);
     method @androidx.compose.runtime.Composable public static void Icon(androidx.compose.ui.graphics.painter.Painter painter, String? contentDescription, optional androidx.compose.ui.Modifier modifier, optional long tint);
     method @androidx.compose.runtime.Composable public static void Icon(androidx.compose.ui.graphics.vector.ImageVector imageVector, String? contentDescription, optional androidx.compose.ui.Modifier modifier, optional long tint);
+    method @androidx.compose.runtime.Composable public static void Icon(com.intellij.platform.icons.Icon icon, String? contentDescription, optional androidx.compose.ui.Modifier modifier, optional com.intellij.platform.icons.scale.IconScale? scale);
+    method @androidx.compose.runtime.Composable public static void Icon(String? contentDescription, optional androidx.compose.ui.Modifier modifier, optional com.intellij.platform.icons.scale.IconScale? scale, kotlin.jvm.functions.Function1<? super com.intellij.platform.icons.design.IconDesigner,kotlin.Unit> iconDesigner);
     method @androidx.compose.runtime.Composable public static void Icon(org.jetbrains.jewel.ui.icon.IconKey key, String? contentDescription, optional androidx.compose.ui.Modifier modifier, optional Class<? extends java.lang.Object?> iconClass, androidx.compose.ui.graphics.ColorFilter? colorFilter, org.jetbrains.jewel.ui.painter.PainterHint hint);
     method @androidx.compose.runtime.Composable public static void Icon(org.jetbrains.jewel.ui.icon.IconKey key, String? contentDescription, optional androidx.compose.ui.Modifier modifier, optional Class<? extends java.lang.Object?> iconClass, androidx.compose.ui.graphics.ColorFilter? colorFilter, org.jetbrains.jewel.ui.painter.PainterHint... hints);
     method @androidx.compose.runtime.Composable public static void Icon(org.jetbrains.jewel.ui.icon.IconKey key, String? contentDescription, optional androidx.compose.ui.Modifier modifier, optional Class<? extends java.lang.Object?> iconClass, optional long tint, org.jetbrains.jewel.ui.painter.PainterHint hint);
@@ -3040,6 +3044,26 @@ package org.jetbrains.jewel.ui.icon {
     property public abstract Class<? extends java.lang.Object?> iconClass;
   }
 
+  public final class IconKeyKt {
+    method public static void iconKey(com.intellij.platform.icons.design.IconDesigner, org.jetbrains.jewel.ui.icon.IconKey iconKey, optional com.intellij.platform.icons.modifiers.IconModifier modifier);
+  }
+
+  public final class IconUtilsKt {
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static void badge(com.intellij.platform.icons.design.IconDesigner, long color, optional com.intellij.platform.icons.design.Shape shape, optional com.intellij.platform.icons.design.IconAlign align, optional com.intellij.platform.icons.design.IconUnit cutout, optional com.intellij.platform.icons.modifiers.IconModifier modifier);
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static com.intellij.platform.icons.design.Circle circle(float radius);
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static com.intellij.platform.icons.scale.FillAreaScale fillArea(float width, float heigth);
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static com.intellij.platform.icons.scale.FitAreaScale fitArea(float width, float heigth);
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static com.intellij.platform.icons.design.Rectangle rectangle(float width, float heigth);
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static com.intellij.platform.icons.modifiers.IconModifier stroke(com.intellij.platform.icons.modifiers.IconModifier, long composeColor);
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static com.intellij.platform.icons.modifiers.IconModifier tintColor(com.intellij.platform.icons.modifiers.IconModifier, long composeColor, optional int blendMode);
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static int toCompose(com.intellij.platform.icons.design.BlendMode);
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static long toCompose(com.intellij.platform.icons.design.Color);
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static androidx.compose.ui.graphics.ColorFilter toCompose(com.intellij.platform.icons.filters.ColorFilter);
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static com.intellij.platform.icons.design.BlendMode toIconsBlendMode(int);
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static com.intellij.platform.icons.design.Color toIconsColor(long);
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static com.intellij.platform.icons.design.DisplayPoint toIconsDp(float);
+  }
+
   @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class IntelliJIconKey implements org.jetbrains.jewel.ui.icon.IconKey {
     ctor public IntelliJIconKey(String oldUiPath, String newUiPath, Class<? extends java.lang.Object?> iconClass);
     method public Class<? extends java.lang.Object?> getIconClass();
@@ -3179,10 +3203,6 @@ package org.jetbrains.jewel.ui.icons {
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey MenuOpen;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey MenuPaste;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey MenuSaveall;
-    field @Deprecated @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Menu_cut;
-    field @Deprecated @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Menu_open;
-    field @Deprecated @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Menu_paste;
-    field @Deprecated @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Menu_saveall;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Minimap;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey ModuleDirectory;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey More;
@@ -3256,7 +3276,6 @@ package org.jetbrains.jewel.ui.icons {
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey RunAll;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey RunAnything;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey RunToCursor;
-    field @Deprecated @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Run_anything;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Scratch;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Search;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey SearchNewLine;
@@ -3271,7 +3290,6 @@ package org.jetbrains.jewel.ui.icons {
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey ShowCode;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey ShowImportStatements;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey ShowReadAccess;
-    field @Deprecated @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.ScheduledForRemoval public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey ShowViewer;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey ShowWriteAccess;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey SplitHorizontally;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey SplitVertically;
@@ -3509,6 +3527,8 @@ package org.jetbrains.jewel.ui.icons {
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey MagicResolveToolbar;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Remove;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Revert;
+    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey SideBySide;
+    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Unified;
   }
 
   @SuppressCompatibility public static final class AllIconsKeys.Duplicates {
@@ -3526,17 +3546,26 @@ package org.jetbrains.jewel.ui.icons {
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Any_type;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Archive;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Aspectj;
+    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Bazel;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey BinaryData;
+    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey C;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Config;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Contexts;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey ContextsModifier;
+    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Cpp;
+    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Csharp;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Css;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Csv;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Custom;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Diagram;
+    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Docker;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Dtd;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Font;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Gitignore;
+    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Gradle;
+    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Graphql;
+    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Groovy;
+    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey H;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Hprof;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Htaccess;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Html;
@@ -3548,20 +3577,29 @@ package org.jetbrains.jewel.ui.icons {
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey JavaClass;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey JavaOutsideSource;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey JavaScript;
+    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Jenkins;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Jfr;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Json;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey JsonSchema;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Jsp;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Jspx;
+    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Jupyter;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Manifest;
+    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Markdown;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey MicrosoftWindows;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Perl;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Properties;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Regexp;
+    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Rst;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey SourceMap;
+    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Sql;
+    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey SwiftLang;
+    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Terraform;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Text;
+    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Toml;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey UiForm;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Unknown;
+    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Vue;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey WsdlFile;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Xhtml;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Xml;
@@ -3669,7 +3707,6 @@ package org.jetbrains.jewel.ui.icons {
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey LayoutPreviewOnly;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Learn;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey LinkDropTriangle;
-    field @Deprecated @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey LocalizationSettings;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Locate;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey LockedUltimate;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Menu;
@@ -3829,7 +3866,6 @@ package org.jetbrains.jewel.ui.icons {
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey OutgoingChangesOn;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Pipette;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey PipetteRollover;
-    field @Deprecated @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Pipette_rollover;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey PowerSaveMode;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Rating;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Rating1;
@@ -4062,7 +4098,6 @@ package org.jetbrains.jewel.ui.icons {
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey IdeaModule;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey IdeaProject;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Include;
-    field @Deprecated @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.ScheduledForRemoval public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey InspectionResults;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Interface;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey JarDirectory;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey JavaDocFolder;
@@ -4078,6 +4113,7 @@ package org.jetbrains.jewel.ui.icons {
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Locked;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey LogFolder;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey McpServer;
+    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey McpServerWidget;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Method;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey MethodReference;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Mnemonic;
@@ -4125,7 +4161,6 @@ package org.jetbrains.jewel.ui.icons {
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey ResourceBundle;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey RunnableMark;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey RwAccess;
-    field @Deprecated @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Rw_access;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey SecurityRole;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Services;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Servlet;
@@ -4158,7 +4193,6 @@ package org.jetbrains.jewel.ui.icons {
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey WarningIntroduction;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey WarningMark;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey WebFolder;
-    field @Deprecated @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.ScheduledForRemoval public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Weblistener;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Word;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Workspace;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey WriteAccess;
@@ -4269,7 +4303,6 @@ package org.jetbrains.jewel.ui.icons {
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey ApacheIgnite;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey ApachePhoenix;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Athena;
-    field @Deprecated @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.ScheduledForRemoval public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Aws;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Azure;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey BigQuery;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Cassandra;
@@ -4496,7 +4529,6 @@ package org.jetbrains.jewel.ui.icons {
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey ToolWindowDebugger;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey ToolWindowDevMode;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey ToolWindowDuplicates;
-    field @Deprecated @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.ScheduledForRemoval public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey ToolWindowFavorites;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey ToolWindowFind;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey ToolWindowHierarchy;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey ToolWindowInspection;
