@@ -1,6 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
+import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindOutcome
+import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindReport
+import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindRequest
+import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindStatus
+import com.intellij.agent.workbench.chat.AgentChatPendingTabSnapshot
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionThread
@@ -13,6 +18,7 @@ import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntry
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
+import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -189,6 +195,16 @@ class AgentSessionLaunchServiceTest {
         }
       }
     }
+  }
+
+  @Test
+  fun openCodexThreadRebindsMatchingPendingTabBeforeOpening() {
+    assertOpenThreadRebindsMatchingPendingTabBeforeOpening(AgentSessionProvider.CODEX)
+  }
+
+  @Test
+  fun openClaudeThreadRebindsMatchingPendingTabBeforeOpening() {
+    assertOpenThreadRebindsMatchingPendingTabBeforeOpening(AgentSessionProvider.CLAUDE)
   }
 
   @Test
@@ -391,6 +407,71 @@ class AgentSessionLaunchServiceTest {
     }
   }
 
+  private fun assertOpenThreadRebindsMatchingPendingTabBeforeOpening(provider: AgentSessionProvider) {
+    val descriptor = TestAgentSessionProviderDescriptor(
+      provider = provider,
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = true,
+      supportsPendingEditorTabRebind = true,
+    )
+    val pendingCreatedAtMs = 1_000L
+    val pendingThreadIdentity = buildAgentSessionIdentity(provider, "new-pending-open")
+    val resolvedThread = thread(
+      id = "resolved-open",
+      updatedAt = pendingCreatedAtMs + 200L,
+      title = "Resolved open",
+      provider = provider,
+    )
+    val pendingTab = AgentChatPendingTabSnapshot(
+      projectPath = PROJECT_PATH,
+      pendingTabKey = "pending-$pendingThreadIdentity",
+      pendingThreadIdentity = pendingThreadIdentity,
+      pendingCreatedAtMs = pendingCreatedAtMs,
+      pendingFirstInputAtMs = null,
+      pendingLaunchMode = "standard",
+    )
+    val rebindInvocations = CopyOnWriteArrayList<AgentChatPendingTabRebindRequest>()
+    val chatOpenExecutor = RecordingChatOpenExecutor(
+      onOpenChat = { _, _ ->
+        assertThat(rebindInvocations).hasSize(1)
+      }
+    )
+
+    AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(descriptor))) {
+      runBlocking(Dispatchers.Default) {
+        withTestServiceAndLaunch(
+          sessionSourcesProvider = { listOf(ScriptedSessionSource(provider = provider)) },
+          projectEntriesProvider = { listOf(openTestProjectEntry(PROJECT_PATH, "Project A")) },
+          chatOpenExecutor = chatOpenExecutor,
+          openPendingAgentChatTabsProvider = { requestedProvider ->
+            if (requestedProvider == provider) mapOf(PROJECT_PATH to listOf(pendingTab)) else emptyMap()
+          },
+          openAgentChatPendingTabsBinderWithProvider = { requestedProvider, requestsByPath ->
+            assertThat(requestedProvider.value).isEqualTo(provider.value)
+            requestsByPath.values.flatten().forEach(rebindInvocations::add)
+            successfulPendingRebindReport(requestsByPath)
+          },
+        ) { _, launchService ->
+          launchService.openChatThread(
+            path = PROJECT_PATH,
+            thread = resolvedThread,
+            entryPoint = AgentWorkbenchEntryPoint.TREE_ROW,
+          )
+
+          waitForCondition { chatOpenExecutor.openChatCalls.get() == 1 }
+
+          val rebindRequest = rebindInvocations.single()
+          assertThat(rebindRequest.pendingTabKey).isEqualTo("pending-$pendingThreadIdentity")
+          assertThat(rebindRequest.pendingThreadIdentity).isEqualTo(pendingThreadIdentity)
+          assertThat(rebindRequest.target.provider).isEqualTo(provider)
+          assertThat(rebindRequest.target.threadIdentity).isEqualTo(buildAgentSessionIdentity(provider, resolvedThread.id))
+          assertThat(rebindRequest.target.threadId).isEqualTo(resolvedThread.id)
+          assertThat(checkNotNull(chatOpenExecutor.lastOpenChatRequest.get()).thread.id).isEqualTo(resolvedThread.id)
+        }
+      }
+    }
+  }
+
   private fun testDescriptor(
     supportsUnarchiveThread: Boolean,
     unarchiveThreadHandler: suspend (String, String) -> Boolean,
@@ -417,6 +498,31 @@ class AgentSessionLaunchServiceTest {
       listFromOpenProject = { path, _ -> if (path == PROJECT_PATH) threads.toList() else emptyList() },
     )
   }
+}
+
+private fun successfulPendingRebindReport(
+  requestsByPath: Map<String, List<AgentChatPendingTabRebindRequest>>,
+): AgentChatPendingTabRebindReport {
+  val outcomesByPath = LinkedHashMap<String, List<AgentChatPendingTabRebindOutcome>>()
+  var requestedBindings = 0
+  for ((path, requests) in requestsByPath) {
+    requestedBindings += requests.size
+    outcomesByPath[path] = requests.map { request ->
+      AgentChatPendingTabRebindOutcome(
+        projectPath = path,
+        request = request,
+        status = AgentChatPendingTabRebindStatus.REBOUND,
+        reboundFiles = 1,
+      )
+    }
+  }
+  return AgentChatPendingTabRebindReport(
+    requestedBindings = requestedBindings,
+    reboundBindings = requestedBindings,
+    reboundFiles = requestedBindings,
+    updatedPresentations = requestedBindings,
+    outcomesByPath = outcomesByPath,
+  )
 }
 
 private fun activeThreadIds(state: AgentSessionsState): List<String> {

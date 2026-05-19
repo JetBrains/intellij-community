@@ -263,6 +263,63 @@ class AgentSessionRenameServiceTest {
   }
 
   @Test
+  fun canRenameThreadInTreeRejectsPendingNewThreadIds() {
+    val backendDescriptor = TestAgentSessionProviderDescriptor(
+      provider = AgentSessionProvider.CODEX,
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = true,
+      threadRenameHandlerOverride = backendRenameHandler { _, _, _ -> true },
+    )
+    val dispatchDescriptor = TestAgentSessionProviderDescriptor(
+      provider = AgentSessionProvider.CLAUDE,
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = true,
+      threadRenameHandlerOverride = dispatchRenameHandler(AgentThreadRenameContext.TREE_POPUP),
+    )
+
+    @Suppress("RAW_SCOPE_CREATION")
+    val scope = kotlinx.coroutines.CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    val service = AgentSessionRenameService(
+      serviceScope = scope,
+      refreshProviderForPath = { _, _ -> error("refresh should not be called for pending thread rename") },
+      findProviderDescriptor = { provider ->
+        when (provider) {
+          AgentSessionProvider.CODEX -> backendDescriptor
+          AgentSessionProvider.CLAUDE -> dispatchDescriptor
+          else -> null
+        }
+      },
+      dispatchRenameInEditorTab = { _, _, _ -> error("editor rename dispatch should not be used") },
+      dispatchRenameFromTree = { _, _, _ -> error("tree rename dispatch should not be used") },
+      notifyRenameFailure = { error("rename failure notification should not be shown") },
+    )
+
+    try {
+      val backendTarget = SessionActionTarget.Thread(
+        path = "/work/project",
+        provider = AgentSessionProvider.CODEX,
+        threadId = "new-codex-pending",
+        title = "New Thread",
+      )
+      val dispatchTarget = SessionActionTarget.Thread(
+        path = "/work/project",
+        provider = AgentSessionProvider.CLAUDE,
+        threadId = "new-claude-pending",
+        title = "New Thread",
+        thread = threadModel(provider = AgentSessionProvider.CLAUDE, id = "new-claude-pending", title = "New Thread"),
+      )
+
+      assertThat(service.canRenameThreadInTree(backendTarget)).isFalse()
+      assertThat(service.canRenameThreadInTree(dispatchTarget)).isFalse()
+      assertThat(service.renameThreadFromTree(ProjectManager.getInstance().defaultProject, backendTarget, "Renamed")).isNull()
+      assertThat(service.renameThreadFromTree(ProjectManager.getInstance().defaultProject, dispatchTarget, "Renamed")).isNull()
+    }
+    finally {
+      scope.cancel()
+    }
+  }
+
+  @Test
   fun renameThreadDispatchesFromTreeAndRefreshes(): Unit = runBlocking(Dispatchers.Default) {
     var refreshCalls = 0
     var dispatchedProject = ProjectManager.getInstance().defaultProject

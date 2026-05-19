@@ -16,13 +16,149 @@ internal data class PendingTabMatchResult(
   @JvmField val noMatchPendingThreadIdentitiesByPath: Map<String, Set<String>>,
 )
 
+internal data class TimestampedRebindSubject(
+  @JvmField val key: String,
+  @JvmField val timestampMs: Long?,
+)
+
+internal data class TimestampedRebindCandidate<T>(
+  @JvmField val identity: String,
+  @JvmField val updatedAtMs: Long,
+  @JvmField val value: T,
+)
+
+internal data class TimestampedRebindBinding<T>(
+  @JvmField val subjectKey: String,
+  @JvmField val candidate: T,
+)
+
+internal data class TimestampedRebindMatchResult<T>(
+  @JvmField val bindings: List<TimestampedRebindBinding<T>>,
+  @JvmField val ambiguousSubjectKeys: Set<String>,
+  @JvmField val noMatchSubjectKeys: Set<String>,
+)
+
+internal object TimestampedRebindMatcher {
+  fun <T> match(
+    subjects: List<TimestampedRebindSubject>,
+    candidates: List<TimestampedRebindCandidate<T>>,
+    unavailableCandidateIdentities: Set<String> = emptySet(),
+    preWindowMs: Long,
+    postWindowMs: Long,
+  ): TimestampedRebindMatchResult<T> {
+    if (subjects.isEmpty() || candidates.isEmpty()) {
+      return TimestampedRebindMatchResult(
+        bindings = emptyList(),
+        ambiguousSubjectKeys = emptySet(),
+        noMatchSubjectKeys = subjects.mapTo(LinkedHashSet(), TimestampedRebindSubject::key),
+      )
+    }
+
+    val uniqueSubjects = subjects
+      .asSequence()
+      .distinctBy { it.key }
+      .toList()
+    val subjectByKey = uniqueSubjects.associateBy { it.key }
+    val candidateByIdentity = deduplicateCandidates(candidates, unavailableCandidateIdentities)
+    val subjectEdges = LinkedHashMap<String, LinkedHashSet<String>>(uniqueSubjects.size)
+    val candidateEdges = LinkedHashMap<String, LinkedHashSet<String>>(candidateByIdentity.size)
+    val initialEdgeCounts = LinkedHashMap<String, Int>(uniqueSubjects.size)
+
+    for (subject in uniqueSubjects) {
+      val connectedCandidates = LinkedHashSet<String>()
+      val timestamp = subject.timestampMs
+      if (timestamp != null) {
+        val minTimestamp = timestamp - preWindowMs
+        val maxTimestamp = timestamp + postWindowMs
+        for ((candidateIdentity, candidate) in candidateByIdentity) {
+          val updatedAt = candidate.updatedAtMs
+          if (updatedAt <= 0L) {
+            continue
+          }
+          if (updatedAt in minTimestamp..maxTimestamp) {
+            connectedCandidates.add(candidateIdentity)
+            candidateEdges.getOrPut(candidateIdentity) { LinkedHashSet() }.add(subject.key)
+          }
+        }
+      }
+      subjectEdges[subject.key] = connectedCandidates
+      initialEdgeCounts[subject.key] = connectedCandidates.size
+    }
+
+    val bindings = LinkedHashMap<String, T>()
+    while (true) {
+      val forcedPairs = subjectEdges.entries
+        .asSequence()
+        .filter { it.value.size == 1 }
+        .map { it.key to it.value.first() }
+        .filter { (subjectKey, candidateIdentity) ->
+          candidateEdges[candidateIdentity]?.let { subjectKeys -> subjectKeys.size == 1 && subjectKey in subjectKeys } == true
+        }
+        .toList()
+      if (forcedPairs.isEmpty()) {
+        break
+      }
+
+      for ((subjectKey, candidateIdentity) in forcedPairs) {
+        if (subjectKey !in subjectEdges || candidateIdentity !in candidateEdges) {
+          continue
+        }
+        val target = candidateByIdentity[candidateIdentity] ?: continue
+        bindings[subjectKey] = target.value
+
+        subjectEdges.remove(subjectKey)
+        candidateEdges.remove(candidateIdentity)
+        subjectEdges.values.forEach { it.remove(candidateIdentity) }
+        candidateEdges.values.forEach { it.remove(subjectKey) }
+      }
+    }
+
+    val ambiguousSubjectKeys = LinkedHashSet<String>()
+    val noMatchSubjectKeys = LinkedHashSet<String>()
+    for ((subjectKey, remainingEdges) in subjectEdges) {
+      if (subjectKey !in subjectByKey) continue
+      val initialEdgeCount = initialEdgeCounts[subjectKey] ?: 0
+      if (remainingEdges.isNotEmpty() || initialEdgeCount > 0) {
+        ambiguousSubjectKeys.add(subjectKey)
+      }
+      else {
+        noMatchSubjectKeys.add(subjectKey)
+      }
+    }
+
+    return TimestampedRebindMatchResult(
+      bindings = bindings.entries
+        .sortedBy { it.key }
+        .map { (subjectKey, candidate) -> TimestampedRebindBinding(subjectKey = subjectKey, candidate = candidate) },
+      ambiguousSubjectKeys = ambiguousSubjectKeys,
+      noMatchSubjectKeys = noMatchSubjectKeys,
+    )
+  }
+
+  private fun <T> deduplicateCandidates(
+    candidates: List<TimestampedRebindCandidate<T>>,
+    unavailableCandidateIdentities: Set<String>,
+  ): Map<String, TimestampedRebindCandidate<T>> {
+    val result = LinkedHashMap<String, TimestampedRebindCandidate<T>>()
+    for (candidate in candidates) {
+      if (candidate.identity in unavailableCandidateIdentities) {
+        continue
+      }
+      val existing = result[candidate.identity]
+      if (existing == null || candidate.updatedAtMs >= existing.updatedAtMs) {
+        result[candidate.identity] = candidate
+      }
+    }
+    return result
+  }
+}
+
 internal object PendingAgentChatTabMatcher {
   fun match(
-      pendingTabsByPath: Map<String, List<AgentChatPendingTabSnapshot>>,
-      candidatesByPath: Map<String, List<AgentChatTabRebindTarget>>,
-      openConcreteIdentitiesByPath: Map<String, Set<String>>,
-      preWindowMs: Long,
-      postWindowMs: Long,
+    pendingTabsByPath: Map<String, List<AgentChatPendingTabSnapshot>>,
+    candidatesByPath: Map<String, List<AgentChatTabRebindTarget>>,
+    preWindowMs: Long,
+    postWindowMs: Long,
   ): PendingTabMatchResult {
     val bindingsByPath = LinkedHashMap<String, List<PendingTabBinding>>()
     val ambiguousByPath = LinkedHashMap<String, Set<String>>()
@@ -33,11 +169,9 @@ internal object PendingAgentChatTabMatcher {
         continue
       }
       val pathCandidates = candidatesByPath[path].orEmpty()
-      val concreteIdentities = openConcreteIdentitiesByPath[path].orEmpty()
       val pathResult = matchPath(
         pendingTabs = pendingTabs,
         candidates = pathCandidates,
-        openConcreteIdentities = concreteIdentities,
         preWindowMs = preWindowMs,
         postWindowMs = postWindowMs,
       )
@@ -60,93 +194,47 @@ internal object PendingAgentChatTabMatcher {
   }
 
   private fun matchPath(
-      pendingTabs: List<AgentChatPendingTabSnapshot>,
-      candidates: List<AgentChatTabRebindTarget>,
-      openConcreteIdentities: Set<String>,
-      preWindowMs: Long,
-      postWindowMs: Long,
+    pendingTabs: List<AgentChatPendingTabSnapshot>,
+    candidates: List<AgentChatTabRebindTarget>,
+    preWindowMs: Long,
+    postWindowMs: Long,
   ): PathMatchResult {
     val uniquePendingTabs = pendingTabs
       .asSequence()
       .distinctBy { it.pendingTabKey }
       .toList()
     val pendingTabByKey = uniquePendingTabs.associateBy { it.pendingTabKey }
-    val candidateByIdentity = deduplicateCandidates(candidates)
-      .filterKeys { it !in openConcreteIdentities }
-    val pendingEdges = LinkedHashMap<String, LinkedHashSet<String>>(uniquePendingTabs.size)
-    val candidateEdges = LinkedHashMap<String, LinkedHashSet<String>>(candidateByIdentity.size)
-    val initialEdgeCounts = LinkedHashMap<String, Int>(uniquePendingTabs.size)
+    val matchResult = TimestampedRebindMatcher.match(
+      subjects = uniquePendingTabs.map { pendingTab ->
+        TimestampedRebindSubject(
+          key = pendingTab.pendingTabKey,
+          timestampMs = pendingTab.pendingFirstInputAtMs ?: pendingTab.pendingCreatedAtMs,
+        )
+      },
+      candidates = candidates.map { candidate ->
+        TimestampedRebindCandidate(
+          identity = candidate.threadIdentity,
+          updatedAtMs = candidate.threadUpdatedAt,
+          value = candidate,
+        )
+      },
+      preWindowMs = preWindowMs,
+      postWindowMs = postWindowMs,
+    )
 
-    for (pendingTab in uniquePendingTabs) {
-      val baseTimestamp = pendingTab.pendingFirstInputAtMs ?: pendingTab.pendingCreatedAtMs
-      val connectedCandidates = LinkedHashSet<String>()
-      if (baseTimestamp != null) {
-        val minTimestamp = baseTimestamp - preWindowMs
-        val maxTimestamp = baseTimestamp + postWindowMs
-        for ((candidateIdentity, candidate) in candidateByIdentity) {
-          val updatedAt = candidate.threadUpdatedAt
-          if (updatedAt <= 0L) {
-            continue
-          }
-          if (updatedAt in minTimestamp..maxTimestamp) {
-            connectedCandidates.add(candidateIdentity)
-            candidateEdges.getOrPut(candidateIdentity) { LinkedHashSet() }.add(pendingTab.pendingTabKey)
-          }
-        }
-      }
-      pendingEdges[pendingTab.pendingTabKey] = connectedCandidates
-      initialEdgeCounts[pendingTab.pendingTabKey] = connectedCandidates.size
-    }
+    val ambiguousPendingIdentities = matchResult.ambiguousSubjectKeys
+      .mapNotNullTo(LinkedHashSet()) { pendingTabKey -> pendingTabByKey[pendingTabKey]?.pendingThreadIdentity }
+    val noMatchPendingIdentities = matchResult.noMatchSubjectKeys
+      .mapNotNullTo(LinkedHashSet()) { pendingTabKey -> pendingTabByKey[pendingTabKey]?.pendingThreadIdentity }
 
-    val bindings = LinkedHashMap<String, AgentChatTabRebindTarget>()
-    while (true) {
-      val forcedPairs = pendingEdges.entries
-        .asSequence()
-        .filter { it.value.size == 1 }
-        .map { it.key to it.value.first() }
-        .filter { (pendingTabKey, candidateIdentity) ->
-          candidateEdges[candidateIdentity]?.let { pendingSet -> pendingSet.size == 1 && pendingTabKey in pendingSet } == true
-        }
-        .toList()
-      if (forcedPairs.isEmpty()) {
-        break
-      }
-
-      for ((pendingTabKey, candidateIdentity) in forcedPairs) {
-        if (pendingTabKey !in pendingEdges || candidateIdentity !in candidateEdges) {
-          continue
-        }
-        val target = candidateByIdentity[candidateIdentity] ?: continue
-        bindings[pendingTabKey] = target
-
-        pendingEdges.remove(pendingTabKey)
-        candidateEdges.remove(candidateIdentity)
-        pendingEdges.values.forEach { it.remove(candidateIdentity) }
-        candidateEdges.values.forEach { it.remove(pendingTabKey) }
-      }
-    }
-
-    val ambiguousPendingIdentities = LinkedHashSet<String>()
-    val noMatchPendingIdentities = LinkedHashSet<String>()
-    for ((pendingTabKey, remainingEdges) in pendingEdges) {
-      val pendingTab = pendingTabByKey[pendingTabKey] ?: continue
-      val initialEdgeCount = initialEdgeCounts[pendingTabKey] ?: 0
-      if (remainingEdges.isNotEmpty() || initialEdgeCount > 0) {
-        ambiguousPendingIdentities.add(pendingTab.pendingThreadIdentity)
-      }
-      else {
-        noMatchPendingIdentities.add(pendingTab.pendingThreadIdentity)
-      }
-    }
-
-    val orderedBindings = bindings.entries
-      .sortedBy { it.key }
-      .mapNotNull { (pendingTabKey, target) ->
+    val orderedBindings = matchResult.bindings
+      .mapNotNull { binding ->
+        val pendingTabKey = binding.subjectKey
         val pendingTab = pendingTabByKey[pendingTabKey] ?: return@mapNotNull null
         PendingTabBinding(
           pendingTabKey = pendingTabKey,
           pendingThreadIdentity = pendingTab.pendingThreadIdentity,
-          target = target,
+          target = binding.candidate,
         )
       }
 
@@ -155,17 +243,6 @@ internal object PendingAgentChatTabMatcher {
       ambiguousPendingThreadIdentities = ambiguousPendingIdentities,
       noMatchPendingThreadIdentities = noMatchPendingIdentities,
     )
-  }
-
-  private fun deduplicateCandidates(candidates: List<AgentChatTabRebindTarget>): Map<String, AgentChatTabRebindTarget> {
-    val result = LinkedHashMap<String, AgentChatTabRebindTarget>()
-    for (candidate in candidates) {
-      val existing = result[candidate.threadIdentity]
-      if (existing == null || candidate.threadUpdatedAt >= existing.threadUpdatedAt) {
-        result[candidate.threadIdentity] = candidate
-      }
-    }
-    return result
   }
 
   private data class PathMatchResult(

@@ -64,6 +64,9 @@ class AgentChatEditorServiceTest {
   private val projectFixture = projectFixture(openAfterCreation = true)
   private val project get() = projectFixture.get()
   private val fileEditorManagerFixture = projectFixture.fileEditorManagerFixture()
+  private val dedicatedProjectFixture = projectFixture(openAfterCreation = true)
+  private val dedicatedProject get() = dedicatedProjectFixture.get()
+  private val dedicatedFileEditorManagerFixture = dedicatedProjectFixture.fileEditorManagerFixture()
 
   private val projectPath = "/work/project-a"
   private val codexCommand = listOf("codex", "resume", "thread-1")
@@ -73,6 +76,7 @@ class AgentChatEditorServiceTest {
   fun setUp(): Unit = timeoutRunBlocking {
     runInUi {
       fileEditorManagerFixture.get()
+      dedicatedFileEditorManagerFixture.get()
       FileEditorProvider.EP_FILE_EDITOR_PROVIDER.point.registerExtension(
         TestChatFileEditorProvider(),
         LoadingOrder.FIRST,
@@ -87,6 +91,7 @@ class AgentChatEditorServiceTest {
     service<AgentThreadPresentationStore>().clearForTests()
     withTimeout(30.seconds) {
       project.waitForSmartMode()
+      dedicatedProject.waitForSmartMode()
     }
   }
 
@@ -1152,7 +1157,7 @@ class AgentChatEditorServiceTest {
   }
 
   @Test
-  fun testRebindOpenPendingCodexTabsFailsWhenConcreteIdentityIsAlreadyOpen(): Unit = timeoutRunBlocking {
+  fun testRebindOpenPendingCodexTabsReusesPendingTabWhenConcreteIdentityIsAlreadyOpen(): Unit = timeoutRunBlocking {
     openChatInModal(
       threadIdentity = "CODEX:new-1",
       shellCommand = listOf("codex"),
@@ -1178,17 +1183,82 @@ class AgentChatEditorServiceTest {
             target = rebindTarget(
               threadIdentity = "CODEX:thread-2",
               threadId = "thread-2",
-              threadTitle = "Should not replace",
-              threadActivity = AgentThreadActivity.READY,
+              threadTitle = "Recovered thread",
+              threadActivity = AgentThreadActivity.UNREAD,
             ),
           )
         )
       )
     )
-    assertThat(rebindReport.reboundBindings).isEqualTo(0)
+    assertThat(rebindReport.reboundBindings).isEqualTo(1)
     assertThat(rebindReport.outcomesByPath[projectPath].orEmpty().single().status)
-      .isEqualTo(AgentChatPendingTabRebindStatus.TARGET_ALREADY_OPEN)
-    assertThat(openedChatFiles().map { it.threadIdentity }).contains("CODEX:new-1", "CODEX:thread-2")
+      .isEqualTo(AgentChatPendingTabRebindStatus.REBOUND)
+
+    val files = openedChatFiles()
+    assertThat(files).hasSize(1)
+    assertThat(files.single().threadIdentity).isEqualTo("CODEX:thread-2")
+    assertThat(files.single().threadId).isEqualTo("thread-2")
+    assertThat(files.single().threadTitle).isEqualTo("Recovered thread")
+    assertThat(files.single().threadActivity).isEqualTo(AgentThreadActivity.UNREAD)
+  }
+
+  @Test
+  fun testRebindOpenPendingClaudeTabsReusesPendingTabWhenConcreteIdentityIsAlreadyOpen(): Unit = timeoutRunBlocking {
+    openChatInModal(
+      threadIdentity = "CLAUDE:new-1",
+      shellCommand = listOf("claude"),
+      threadId = "",
+      threadTitle = "Pending one",
+      subAgentId = null,
+    )
+    openChatInModal(
+      threadIdentity = "CLAUDE:thread-2",
+      shellCommand = listOf("claude", "--resume", "thread-2"),
+      threadId = "thread-2",
+      threadTitle = "Already open",
+      subAgentId = null,
+    )
+
+    val pendingTab = openedChatFiles().first { it.threadIdentity == "CLAUDE:new-1" }
+    val rebindReport = rebindOpenPendingAgentChatTabs(
+      provider = AgentSessionProvider.CLAUDE,
+      requestsByProjectPath = mapOf(
+        projectPath to listOf(
+          AgentChatPendingTabRebindRequest(
+            pendingTabKey = pendingTab.tabKey,
+            pendingThreadIdentity = "CLAUDE:new-1",
+            target = rebindTarget(
+              provider = AgentSessionProvider.CLAUDE,
+              threadIdentity = "CLAUDE:thread-2",
+              threadId = "thread-2",
+              threadTitle = "Recovered Claude thread",
+              threadActivity = AgentThreadActivity.UNREAD,
+            ),
+          )
+        )
+      )
+    )
+
+    assertThat(rebindReport.reboundBindings).isEqualTo(1)
+    assertThat(rebindReport.outcomesByPath[projectPath].orEmpty().single().status)
+      .isEqualTo(AgentChatPendingTabRebindStatus.REBOUND)
+
+    val files = openedChatFiles()
+    assertThat(files).hasSize(1)
+    assertThat(files.single().threadIdentity).isEqualTo("CLAUDE:thread-2")
+    assertThat(files.single().threadId).isEqualTo("thread-2")
+    assertThat(files.single().threadTitle).isEqualTo("Recovered Claude thread")
+    assertThat(files.single().threadActivity).isEqualTo(AgentThreadActivity.UNREAD)
+  }
+
+  @Test
+  fun testRebindOpenPendingCodexTabsClosesConcreteTabInAnotherOpenProject(): Unit = timeoutRunBlocking {
+    assertRebindOpenPendingTabsClosesConcreteTabInAnotherOpenProject(AgentSessionProvider.CODEX)
+  }
+
+  @Test
+  fun testRebindOpenPendingClaudeTabsClosesConcreteTabInAnotherOpenProject(): Unit = timeoutRunBlocking {
+    assertRebindOpenPendingTabsClosesConcreteTabInAnotherOpenProject(AgentSessionProvider.CLAUDE)
   }
 
   @Test
@@ -1627,10 +1697,72 @@ class AgentChatEditorServiceTest {
     }
   }
 
-  private suspend fun openedChatFiles(): List<AgentChatVirtualFile> {
+  private suspend fun openedChatFiles(targetProject: Project = project): List<AgentChatVirtualFile> {
     return runInUi {
-      FileEditorManager.getInstance(project).openFiles.filterIsInstance<AgentChatVirtualFile>()
+      FileEditorManager.getInstance(targetProject).openFiles.filterIsInstance<AgentChatVirtualFile>()
     }
+  }
+
+  private suspend fun assertRebindOpenPendingTabsClosesConcreteTabInAnotherOpenProject(provider: AgentSessionProvider) {
+    val providerPrefix = providerIdentityPrefix(provider)
+    val pendingThreadId = "new-cross-project-${provider.value}"
+    val targetThreadId = "thread-cross-project-${provider.value}"
+    val pendingIdentity = "$providerPrefix:$pendingThreadId"
+    val targetIdentity = "$providerPrefix:$targetThreadId"
+
+    openChatInModal(
+      threadIdentity = pendingIdentity,
+      shellCommand = newThreadCommand(provider),
+      threadId = "",
+      threadTitle = "Pending ${provider.value}",
+      subAgentId = null,
+      pendingCreatedAtMs = 1_000L,
+      pendingLaunchMode = "standard",
+      targetProject = project,
+    )
+    openChatInModal(
+      threadIdentity = targetIdentity,
+      shellCommand = resumeThreadCommand(provider, targetThreadId),
+      threadId = targetThreadId,
+      threadTitle = "Already open ${provider.value}",
+      subAgentId = null,
+      targetProject = dedicatedProject,
+    )
+
+    val pendingTab = openedChatFiles(project).single { file -> file.threadIdentity == pendingIdentity }
+    val rebindReport = rebindOpenPendingAgentChatTabs(
+      provider = provider,
+      requestsByProjectPath = mapOf(
+        projectPath to listOf(
+          AgentChatPendingTabRebindRequest(
+            pendingTabKey = pendingTab.tabKey,
+            pendingThreadIdentity = pendingIdentity,
+            target = rebindTarget(
+              provider = provider,
+              threadIdentity = targetIdentity,
+              threadId = targetThreadId,
+              threadTitle = "Recovered ${provider.value}",
+              threadActivity = AgentThreadActivity.UNREAD,
+            ),
+          )
+        )
+      )
+    )
+
+    assertThat(rebindReport.reboundBindings).isEqualTo(1)
+    assertThat(rebindReport.outcomesByPath[projectPath].orEmpty().single().status)
+      .isEqualTo(AgentChatPendingTabRebindStatus.REBOUND)
+
+    val sourceProjectFiles = openedChatFiles(project)
+    val dedicatedProjectFiles = openedChatFiles(dedicatedProject)
+    assertThat(sourceProjectFiles).hasSize(1)
+    assertThat(dedicatedProjectFiles).isEmpty()
+
+    val reboundFile = sourceProjectFiles.single()
+    assertThat(reboundFile.threadIdentity).isEqualTo(targetIdentity)
+    assertThat(reboundFile.threadId).isEqualTo(targetThreadId)
+    assertThat(reboundFile.threadTitle).isEqualTo("Recovered ${provider.value}")
+    assertThat(reboundFile.threadActivity).isEqualTo(AgentThreadActivity.UNREAD)
   }
 
   private suspend fun openChatInModal(
@@ -1650,6 +1782,7 @@ class AgentChatEditorServiceTest {
     initialMessageToken: String? = null,
     persistSnapshot: Boolean = true,
     deferredStartState: AgentChatDeferredStartState? = null,
+    targetProject: Project = project,
   ) {
     val effectivePostStartDispatchSteps = postStartDispatchSteps.ifEmpty {
       initialComposedMessage
@@ -1666,7 +1799,7 @@ class AgentChatEditorServiceTest {
       initialMessageToken = initialMessageToken,
     )
     openChat(
-      project = project,
+      project = targetProject,
       projectPath = projectPath,
       threadIdentity = threadIdentity,
       shellCommand = shellCommand,
@@ -1682,12 +1815,36 @@ class AgentChatEditorServiceTest {
       deferredStartState = deferredStartState,
     )
     waitForCondition(timeoutMs = 10_000) {
-      openedChatFiles().any { file ->
+      openedChatFiles(targetProject).any { file ->
         file.threadIdentity == threadIdentity &&
         file.subAgentId == subAgentId &&
         file.threadId == threadId &&
         file.threadTitle == threadTitle
       }
+    }
+  }
+
+  private fun providerIdentityPrefix(provider: AgentSessionProvider): String {
+    return when (provider) {
+      AgentSessionProvider.CODEX -> "CODEX"
+      AgentSessionProvider.CLAUDE -> "CLAUDE"
+      else -> error("Unsupported test provider: $provider")
+    }
+  }
+
+  private fun newThreadCommand(provider: AgentSessionProvider): List<String> {
+    return when (provider) {
+      AgentSessionProvider.CODEX -> listOf("codex")
+      AgentSessionProvider.CLAUDE -> listOf("claude")
+      else -> error("Unsupported test provider: $provider")
+    }
+  }
+
+  private fun resumeThreadCommand(provider: AgentSessionProvider, threadId: String): List<String> {
+    return when (provider) {
+      AgentSessionProvider.CODEX -> listOf("codex", "resume", threadId)
+      AgentSessionProvider.CLAUDE -> listOf("claude", "--resume", threadId)
+      else -> error("Unsupported test provider: $provider")
     }
   }
 

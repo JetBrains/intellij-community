@@ -17,6 +17,7 @@ import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntry
 import com.intellij.agent.workbench.sessions.util.SingleFlightActionGate
 import com.intellij.agent.workbench.sessions.util.SingleFlightPolicy
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
+import com.intellij.agent.workbench.sessions.util.isAgentSessionNewSessionId
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
@@ -65,11 +66,12 @@ class AgentSessionRenameService internal constructor(
   private val actionGate = SingleFlightActionGate()
 
   fun canRenameThreadInTree(target: SessionActionTarget.Thread): Boolean {
-    val renameHandler = findProviderDescriptor(target.provider)?.threadRenameHandler ?: return false
-    if (AgentThreadRenameContext.TREE_POPUP !in renameHandler.supportedContexts) {
+    if (isAgentSessionNewSessionId(target.threadId)) {
       return false
     }
-    return renameHandler !is AgentThreadRenameHandler.ChatDispatch || target.thread != null
+    val renameHandler = findProviderDescriptor(target.provider)?.threadRenameHandler ?: return false
+    return AgentThreadRenameContext.TREE_POPUP in renameHandler.supportedContexts &&
+           (renameHandler !is AgentThreadRenameHandler.ChatDispatch || target.thread != null)
   }
 
   fun canRenameThreadInEditorTab(context: AgentChatEditorTabActionContext, target: SessionActionTarget.Thread): Boolean {
@@ -114,6 +116,9 @@ class AgentSessionRenameService internal constructor(
     context: AgentChatEditorTabActionContext?,
     renameContext: AgentThreadRenameContext,
   ): Job? {
+    if (isAgentSessionNewSessionId(target.threadId)) {
+      return null
+    }
     val normalizedRequestedName = normalizeRenamedThreadTitle(requestedName) ?: return null
     val currentTitle = normalizeRenamedThreadTitle(target.title)
     if (normalizedRequestedName == currentTitle) {
@@ -210,10 +215,8 @@ private fun matchesConcreteEditorThread(
   target: SessionActionTarget.Thread,
 ): Boolean {
   val threadCoordinates = context.threadCoordinates ?: return false
-  if (threadCoordinates.isPending) {
-    return false
-  }
   return context.path == target.path &&
+         !threadCoordinates.isPending &&
          threadCoordinates.provider == target.provider &&
          threadCoordinates.sessionId == target.threadId
 }

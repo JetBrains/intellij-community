@@ -3048,6 +3048,16 @@ class AgentSessionRefreshCoordinatorTest {
   }
 
   @Test
+  fun pendingCodexScopedRefreshRebindsWhenResolvedThreadIsAlreadyOpen() = runBlocking(Dispatchers.Default) {
+    assertPendingScopedRefreshRebindsWhenResolvedThreadIsAlreadyOpen(AgentSessionProvider.CODEX)
+  }
+
+  @Test
+  fun pendingClaudeScopedRefreshRebindsWhenResolvedThreadIsAlreadyOpen() = runBlocking(Dispatchers.Default) {
+    assertPendingScopedRefreshRebindsWhenResolvedThreadIsAlreadyOpen(AgentSessionProvider.CLAUDE)
+  }
+
+  @Test
   fun pendingCodexScopedRefreshRebindsOnlyNewThreadIdsWhenBaselineKnown() = runBlocking(Dispatchers.Default) {
     val closedRefreshInvocations = AtomicInteger(0)
     val rebindInvocations = mutableListOf<PendingCodexRebindInvocation>()
@@ -4144,6 +4154,94 @@ class AgentSessionRefreshCoordinatorTest {
           newThreadRebindRequestedAtMs = staleRequestedAtMs,
         )
       )
+    }
+  }
+
+  private suspend fun assertPendingScopedRefreshRebindsWhenResolvedThreadIsAlreadyOpen(provider: AgentSessionProvider) {
+    val closedRefreshInvocations = AtomicInteger(0)
+    val rebindInvocations = mutableListOf<PendingCodexRebindInvocation>()
+    val scopedRefreshSignals = MutableSharedFlow<Set<String>>(replay = 1, extraBufferCapacity = 1)
+    val pendingCreatedAtMs = System.currentTimeMillis() - 1_000L
+    val pendingThreadId = "new-already-open-${provider.value}"
+    val resolvedThreadId = "${provider.value}-resolved-already-open"
+    val resolvedThreadIdentity = buildAgentSessionIdentity(provider, resolvedThreadId)
+
+    val source = ScriptedSessionSource(
+      provider = provider,
+      supportsUpdates = false,
+      listFromClosedProject = { path ->
+        if (path != PROJECT_PATH) {
+          emptyList()
+        }
+        else {
+          closedRefreshInvocations.incrementAndGet()
+          listOf(
+            thread(
+              id = resolvedThreadId,
+              updatedAt = pendingCreatedAtMs + 200L,
+              title = "Resolved ${provider.value}",
+              provider = provider,
+            )
+          )
+        }
+      },
+    )
+    val pendingTab = pendingTab(
+      provider = provider,
+      pendingThreadIdentity = buildAgentSessionIdentity(provider, pendingThreadId),
+      pendingCreatedAtMs = pendingCreatedAtMs,
+      pendingLaunchMode = "standard",
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { true },
+      openChatPathsProvider = { setOf(PROJECT_PATH) },
+      codexScopedRefreshSignalsProvider = { scopedRefreshSignals },
+      openPendingCodexTabsProvider = {
+        if (provider == AgentSessionProvider.CODEX) mapOf(PROJECT_PATH to listOf(pendingTab)) else emptyMap()
+      },
+      openPendingClaudeTabsProvider = {
+        if (provider == AgentSessionProvider.CLAUDE) mapOf(PROJECT_PATH to listOf(pendingTab)) else emptyMap()
+      },
+      openConcreteChatThreadIdentitiesByPathProvider = {
+        mapOf(PROJECT_PATH to setOf(resolvedThreadIdentity))
+      },
+      openChatPendingTabsBinder = { requestsByPath ->
+        requestsByPath.forEach { (path, requests) ->
+          requests.forEach { request ->
+            rebindInvocations.add(
+              PendingCodexRebindInvocation(
+                path = path,
+                pendingTabKey = request.pendingTabKey,
+                pendingThreadIdentity = request.pendingThreadIdentity,
+                target = request.target,
+              )
+            )
+          }
+        }
+        successfulPendingCodexRebindReport(requestsByPath)
+      },
+    ) { coordinator, stateStore ->
+      coordinator.observeSessionSourceUpdates()
+      scopedRefreshSignals.tryEmit(setOf(PROJECT_PATH))
+
+      waitForCondition {
+        closedRefreshInvocations.get() > 0 && rebindInvocations.isNotEmpty()
+      }
+
+      val invocation = rebindInvocations.single()
+      assertThat(invocation.path).isEqualTo(PROJECT_PATH)
+      assertThat(invocation.pendingThreadIdentity).isEqualTo(buildAgentSessionIdentity(provider, pendingThreadId))
+      assertThat(invocation.target.threadIdentity).isEqualTo(resolvedThreadIdentity)
+      assertThat(invocation.target.threadId).isEqualTo(resolvedThreadId)
+      assertThat(invocation.target.provider).isEqualTo(provider)
+      assertThat(
+        stateStore.snapshot().projects.firstOrNull { project -> project.path == PROJECT_PATH }
+          ?.threads
+          .orEmpty()
+          .map { thread -> thread.id }
+      ).doesNotContain(pendingThreadId)
     }
   }
 

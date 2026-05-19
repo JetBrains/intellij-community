@@ -537,7 +537,7 @@ suspend fun rebindOpenPendingAgentChatTabs(
       .filter { request -> request.hasConcreteTargetForProvider(provider) }
       .map { request -> request.target }
   )
-  val report = withContext(Dispatchers.UI) {
+  val report = withContext(Dispatchers.UiWithModelAccess) {
     val openTabsSnapshot = collectOpenAgentChatTabsSnapshot()
 
     var reboundBindings = 0
@@ -599,23 +599,6 @@ suspend fun rebindOpenPendingAgentChatTabs(
           continue
         }
 
-        val targetIdentityAlreadyOpen = openTabsSnapshot.isConcreteThreadIdentityOpenInAnyManager(
-          normalizedPath = normalizedPath,
-          managers = managers,
-          threadIdentity = request.target.threadIdentity,
-        )
-        if (targetIdentityAlreadyOpen) {
-          outcomes.add(
-            AgentChatPendingTabRebindOutcome(
-              projectPath = normalizedPath,
-              request = request,
-              status = AgentChatPendingTabRebindStatus.TARGET_ALREADY_OPEN,
-              reboundFiles = 0,
-            )
-          )
-          continue
-        }
-
         val launchSpec = launchSpecsByTarget[request.target.toRebindLaunchSpecKey()]
         if (launchSpec == null) {
           outcomes.add(
@@ -627,6 +610,29 @@ suspend fun rebindOpenPendingAgentChatTabs(
             )
           )
           continue
+        }
+
+        val targetIdentityAlreadyOpen = openTabsSnapshot.isTopLevelConcreteThreadIdentityOpen(
+          normalizedPath = normalizedPath,
+          threadIdentity = request.target.threadIdentity,
+        )
+        if (targetIdentityAlreadyOpen) {
+          val closedTabs = openTabsSnapshot.closeTopLevelConcreteTabs(
+            normalizedPath = normalizedPath,
+            provider = provider,
+            threadIdentity = request.target.threadIdentity,
+          )
+          if (closedTabs == 0) {
+            outcomes.add(
+              AgentChatPendingTabRebindOutcome(
+                projectPath = normalizedPath,
+                request = request,
+                status = AgentChatPendingTabRebindStatus.TARGET_ALREADY_OPEN,
+                reboundFiles = 0,
+              )
+            )
+            continue
+          }
         }
 
         val previousPresentationKey = pendingFile.presentationKeyOrNull()

@@ -9,7 +9,12 @@ package com.intellij.agent.workbench.sessions.service
 
 import com.intellij.agent.workbench.chat.AgentChatDeferredStartPhase
 import com.intellij.agent.workbench.chat.AgentChatDeferredStartState
+import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindReport
+import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindRequest
+import com.intellij.agent.workbench.chat.AgentChatPendingTabSnapshot
+import com.intellij.agent.workbench.chat.collectOpenPendingAgentChatTabsByPath
 import com.intellij.agent.workbench.chat.openChat
+import com.intellij.agent.workbench.chat.rebindOpenPendingAgentChatTabs
 import com.intellij.agent.workbench.chat.serializeAgentChatLaunchMode
 import com.intellij.agent.workbench.chat.updateAgentChatDeferredStartState
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
@@ -23,6 +28,8 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchError
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchResult
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
+import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy.PENDING_THREAD_MATCH_POST_WINDOW_MS
+import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy.PENDING_THREAD_MATCH_PRE_WINDOW_MS
 import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchContributors
 import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchSpecs
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchPlan
@@ -49,6 +56,7 @@ import com.intellij.agent.workbench.sessions.util.SingleFlightPolicy
 import com.intellij.agent.workbench.sessions.util.SingleFlightProgressRequest
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionNewIdentity
+import com.intellij.agent.workbench.sessions.util.isAgentSessionNewSessionId
 import com.intellij.agent.workbench.sessions.util.parseAgentSessionIdentity
 import com.intellij.agent.workbench.sessions.util.resolveAgentSessionId
 import com.intellij.ide.impl.OpenProjectTask
@@ -193,6 +201,12 @@ class AgentSessionLaunchService internal constructor(
   private val uiPreferencesState: AgentSessionUiPreferencesStateService = AgentSessionUiPreferencesStateService(),
   private val providerSettingsService: AgentSessionProviderSettingsService = service(),
   private val chatOpenExecutor: AgentSessionChatOpenExecutor = DefaultAgentSessionChatOpenExecutor,
+  private val openPendingAgentChatTabsProvider: suspend (AgentSessionProvider) -> Map<String, List<AgentChatPendingTabSnapshot>> =
+    ::collectOpenPendingAgentChatTabsByPath,
+  private val openAgentChatPendingTabsBinder: suspend (
+    AgentSessionProvider,
+    Map<String, List<AgentChatPendingTabRebindRequest>>,
+  ) -> AgentChatPendingTabRebindReport = ::rebindOpenPendingAgentChatTabs,
   private val archivedSessionsRefreshIfLoaded: () -> Unit = {},
 ) {
   @Suppress("unused")
@@ -313,6 +327,11 @@ class AgentSessionLaunchService internal constructor(
             return@launchDropAction
           }
         }
+        rebindMatchingPendingTabBeforeOpen(
+          normalizedPath = normalizedPath,
+          thread = effectiveThread,
+          descriptor = descriptor,
+        )
         val effectiveInitialMessageDispatchPlan = if (initialMessageDispatchPlan != AgentInitialMessageDispatchPlan.EMPTY) {
           initialMessageDispatchPlan
         }
@@ -371,6 +390,72 @@ class AgentSessionLaunchService internal constructor(
         promptLaunchResolved?.invoke(AgentPromptLaunchResult.failure(AgentPromptLaunchError.INTERNAL_ERROR))
         throw t
       }
+    }
+  }
+
+  private suspend fun rebindMatchingPendingTabBeforeOpen(
+    normalizedPath: String,
+    thread: AgentSessionThread,
+    descriptor: AgentSessionProviderDescriptor?,
+  ) {
+    if (descriptor?.supportsPendingEditorTabRebind != true) {
+      return
+    }
+    if (thread.archived || isAgentSessionNewSessionId(thread.id)) {
+      return
+    }
+
+    val pendingTabs = try {
+      openPendingAgentChatTabsProvider(thread.provider)[normalizedPath].orEmpty()
+    }
+    catch (t: Throwable) {
+      if (t is CancellationException) throw t
+      LOG.warn("Failed to collect pending tabs before opening ${thread.provider}:${thread.id}", t)
+      return
+    }
+    if (pendingTabs.isEmpty()) {
+      return
+    }
+
+    val target = buildAgentSessionChatRebindTarget(
+      path = normalizedPath,
+      provider = thread.provider,
+      threadId = thread.id,
+      title = thread.title,
+      activity = thread.activity,
+      updatedAt = thread.updatedAt,
+    )
+    val matchResult = PendingAgentChatTabMatcher.match(
+      pendingTabsByPath = mapOf(normalizedPath to pendingTabs),
+      candidatesByPath = mapOf(normalizedPath to listOf(target)),
+      preWindowMs = PENDING_THREAD_MATCH_PRE_WINDOW_MS,
+      postWindowMs = PENDING_THREAD_MATCH_POST_WINDOW_MS,
+    )
+    val bindings = matchResult.bindingsByPath[normalizedPath].orEmpty()
+    if (bindings.isEmpty()) {
+      return
+    }
+
+    val requestsByPath = mapOf(
+      normalizedPath to bindings.map { binding ->
+        AgentChatPendingTabRebindRequest(
+          pendingTabKey = binding.pendingTabKey,
+          pendingThreadIdentity = binding.pendingThreadIdentity,
+          target = binding.target,
+        )
+      }
+    )
+    val report = try {
+      openAgentChatPendingTabsBinder(thread.provider, requestsByPath)
+    }
+    catch (t: Throwable) {
+      if (t is CancellationException) throw t
+      LOG.warn("Failed to rebind pending tab before opening ${thread.provider}:${thread.id}", t)
+      return
+    }
+    LOG.debug {
+      "Pending tab pre-open rebind for ${thread.provider.value}:$normalizedPath:${thread.id} " +
+      "requested=${report.requestedBindings}, rebound=${report.reboundBindings}, outcomes=${report.outcomesByPath.size}"
     }
   }
 

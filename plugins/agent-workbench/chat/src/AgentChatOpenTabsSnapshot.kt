@@ -50,7 +50,8 @@ internal fun collectOpenAgentChatTabsSnapshot(
   val filesByTabKey = LinkedHashMap<String, AgentChatVirtualFile>()
   val managerByFile = LinkedHashMap<AgentChatVirtualFile, LinkedHashSet<FileEditorManagerEx>>()
   val concreteThreadIdentitiesByPath = LinkedHashMap<String, LinkedHashSet<String>>()
-  val concreteThreadIdentitiesByPathAndManager = LinkedHashMap<String, LinkedHashMap<FileEditorManagerEx, LinkedHashSet<String>>>()
+  val concreteThreadIdentitiesByPathAndManager = ConcreteThreadIdentitiesByManager()
+  val topLevelConcreteThreadIdentitiesByPathAndManager = ConcreteThreadIdentitiesByManager()
   val pendingFilesByProviderAndPathAndTabKey =
     LinkedHashMap<AgentSessionProvider, LinkedHashMap<String, LinkedHashMap<String, AgentChatVirtualFile>>>()
   val concreteFilesByProviderAndPathAndTabKey =
@@ -133,6 +134,12 @@ internal fun collectOpenAgentChatTabsSnapshot(
           .computeIfAbsent(provider) { LinkedHashMap() }
           .computeIfAbsent(normalizedProjectPath) { LinkedHashMap() }
           .putIfAbsent(chatFile.tabKey, chatFile)
+        if (exManager != null) {
+          topLevelConcreteThreadIdentitiesByPathAndManager
+            .computeIfAbsent(normalizedProjectPath) { LinkedHashMap() }
+            .computeIfAbsent(exManager) { LinkedHashSet() }
+            .add(chatFile.threadIdentity)
+        }
       }
     }
   }
@@ -143,6 +150,7 @@ internal fun collectOpenAgentChatTabsSnapshot(
     managerByFile = managerByFile,
     concreteThreadIdentitiesByPath = concreteThreadIdentitiesByPath,
     concreteThreadIdentitiesByPathAndManager = concreteThreadIdentitiesByPathAndManager,
+    topLevelConcreteThreadIdentitiesByPathAndManager = topLevelConcreteThreadIdentitiesByPathAndManager,
     pendingFilesByProviderAndPathAndTabKey = pendingFilesByProviderAndPathAndTabKey,
     concreteFilesByProviderAndPathAndTabKey = concreteFilesByProviderAndPathAndTabKey,
     openProjectPaths = openProjectPaths,
@@ -164,12 +172,15 @@ internal data class AgentChatSelectedTopLevelConcreteTab(
   @JvmField val threadId: String,
 )
 
+private typealias ConcreteThreadIdentitiesByManager = LinkedHashMap<String, LinkedHashMap<FileEditorManagerEx, LinkedHashSet<String>>>
+
 internal class AgentChatOpenTabsSnapshot(
   private val entries: List<AgentChatOpenFileEntry>,
   private val filesByTabKey: LinkedHashMap<String, AgentChatVirtualFile>,
   private val managerByFile: LinkedHashMap<AgentChatVirtualFile, LinkedHashSet<FileEditorManagerEx>>,
   private val concreteThreadIdentitiesByPath: LinkedHashMap<String, LinkedHashSet<String>>,
-  private val concreteThreadIdentitiesByPathAndManager: LinkedHashMap<String, LinkedHashMap<FileEditorManagerEx, LinkedHashSet<String>>>,
+  private val concreteThreadIdentitiesByPathAndManager: ConcreteThreadIdentitiesByManager,
+  private val topLevelConcreteThreadIdentitiesByPathAndManager: ConcreteThreadIdentitiesByManager,
   private val pendingFilesByProviderAndPathAndTabKey:
   LinkedHashMap<AgentSessionProvider, LinkedHashMap<String, LinkedHashMap<String, AgentChatVirtualFile>>>,
   private val concreteFilesByProviderAndPathAndTabKey:
@@ -179,6 +190,8 @@ internal class AgentChatOpenTabsSnapshot(
   val selectedChatThreadIdentity: Pair<AgentSessionProvider, String>?,
   private val selectedTopLevelConcreteChatTab: AgentChatSelectedTopLevelConcreteTab?,
 ) {
+  private val closedTopLevelConcreteEntries = LinkedHashSet<AgentChatOpenFileEntry>()
+
   fun findFileByTabKey(tabKey: String): AgentChatVirtualFile? {
     return filesByTabKey[tabKey]
   }
@@ -321,17 +334,50 @@ internal class AgentChatOpenTabsSnapshot(
     }
   }
 
+  fun isTopLevelConcreteThreadIdentityOpen(
+    normalizedPath: String,
+    threadIdentity: String,
+  ): Boolean {
+    return topLevelConcreteThreadIdentitiesByPathAndManager[normalizedPath].orEmpty().values.any { identities ->
+      threadIdentity in identities
+    }
+  }
+
+  fun closeTopLevelConcreteTabs(
+    normalizedPath: String,
+    provider: AgentSessionProvider,
+    threadIdentity: String,
+  ): Int {
+    var closedTabs = 0
+    for (entry in entries) {
+      val chatFile = entry.file
+      if (
+        entry.normalizedProjectPath == normalizedPath &&
+        chatFile.provider == provider &&
+        !chatFile.isPendingThread &&
+        chatFile.subAgentId == null &&
+        chatFile.threadIdentity == threadIdentity &&
+        closedTopLevelConcreteEntries.add(entry)
+      ) {
+        entry.manager.closeFile(chatFile)
+        val manager = entry.manager as? FileEditorManagerEx
+        if (manager != null) {
+          concreteThreadIdentitiesByPathAndManager[normalizedPath]?.get(manager)?.remove(threadIdentity)
+          topLevelConcreteThreadIdentitiesByPathAndManager[normalizedPath]?.get(manager)?.remove(threadIdentity)
+        }
+        closedTabs++
+      }
+    }
+    return closedTabs
+  }
+
   fun recordConcreteThreadIdentityOpen(
     normalizedPath: String,
     managers: Set<FileEditorManagerEx>,
     threadIdentity: String,
   ) {
-    for (manager in managers) {
-      concreteThreadIdentitiesByPathAndManager
-        .computeIfAbsent(normalizedPath) { LinkedHashMap() }
-        .computeIfAbsent(manager) { LinkedHashSet() }
-        .add(threadIdentity)
-    }
+    recordConcreteThreadIdentity(concreteThreadIdentitiesByPathAndManager, normalizedPath, managers, threadIdentity)
+    recordConcreteThreadIdentity(topLevelConcreteThreadIdentitiesByPathAndManager, normalizedPath, managers, threadIdentity)
   }
 
   fun replaceConcreteThreadIdentity(
@@ -340,13 +386,20 @@ internal class AgentChatOpenTabsSnapshot(
     previousIdentity: String,
     threadIdentity: String,
   ) {
-    for (manager in managers) {
-      concreteThreadIdentitiesByPathAndManager[normalizedPath]?.get(manager)?.remove(previousIdentity)
-      concreteThreadIdentitiesByPathAndManager
-        .computeIfAbsent(normalizedPath) { LinkedHashMap() }
-        .computeIfAbsent(manager) { LinkedHashSet() }
-        .add(threadIdentity)
-    }
+    replaceConcreteThreadIdentity(
+      identitiesByManager = concreteThreadIdentitiesByPathAndManager,
+      normalizedPath = normalizedPath,
+      managers = managers,
+      previousIdentity = previousIdentity,
+      threadIdentity = threadIdentity,
+    )
+    replaceConcreteThreadIdentity(
+      identitiesByManager = topLevelConcreteThreadIdentitiesByPathAndManager,
+      normalizedPath = normalizedPath,
+      managers = managers,
+      previousIdentity = previousIdentity,
+      threadIdentity = threadIdentity,
+    )
   }
 
   fun closeMatchingOpenTabs(projectPath: String, threadIdentity: String, subAgentId: String?): Int {
@@ -387,6 +440,36 @@ internal class AgentChatOpenTabsSnapshot(
       concreteTabsAwaitingNewThreadRebindByProvider = concreteTabsByProvider,
       concreteThreadIdentitiesByPath = concreteThreadIdentitiesByPath(),
     )
+  }
+}
+
+private fun recordConcreteThreadIdentity(
+  identitiesByManager: ConcreteThreadIdentitiesByManager,
+  normalizedPath: String,
+  managers: Set<FileEditorManagerEx>,
+  threadIdentity: String,
+) {
+  for (manager in managers) {
+    identitiesByManager
+      .computeIfAbsent(normalizedPath) { LinkedHashMap() }
+      .computeIfAbsent(manager) { LinkedHashSet() }
+      .add(threadIdentity)
+  }
+}
+
+private fun replaceConcreteThreadIdentity(
+  identitiesByManager: ConcreteThreadIdentitiesByManager,
+  normalizedPath: String,
+  managers: Set<FileEditorManagerEx>,
+  previousIdentity: String,
+  threadIdentity: String,
+) {
+  for (manager in managers) {
+    identitiesByManager[normalizedPath]?.get(manager)?.remove(previousIdentity)
+    identitiesByManager
+      .computeIfAbsent(normalizedPath) { LinkedHashMap() }
+      .computeIfAbsent(manager) { LinkedHashSet() }
+      .add(threadIdentity)
   }
 }
 

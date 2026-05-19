@@ -7,6 +7,7 @@ import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindReport
 import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindRequest
 import com.intellij.agent.workbench.chat.AgentChatPendingTabSnapshot
 import com.intellij.agent.workbench.chat.collectOpenConcreteAgentChatThreadIdentitiesByPath
+import com.intellij.agent.workbench.chat.collectOpenPendingAgentChatTabsByPath
 import com.intellij.agent.workbench.chat.collectOpenPendingCodexTabsByPath
 import com.intellij.agent.workbench.chat.rebindOpenPendingCodexTabs
 import com.intellij.agent.workbench.common.AgentThreadActivity
@@ -330,6 +331,13 @@ internal suspend fun withTestServiceAndLaunch(
   openAgentChatPendingTabsBinder: suspend (
     Map<String, List<AgentChatPendingTabRebindRequest>>,
   ) -> AgentChatPendingTabRebindReport = ::rebindOpenPendingCodexTabs,
+  openPendingAgentChatTabsProvider: suspend (AgentSessionProvider) -> Map<String, List<AgentChatPendingTabSnapshot>> = { provider ->
+    if (provider == AgentSessionProvider.CODEX) openPendingCodexTabsProvider() else collectOpenPendingAgentChatTabsByPath(provider)
+  },
+  openAgentChatPendingTabsBinderWithProvider: suspend (
+    AgentSessionProvider,
+    Map<String, List<AgentChatPendingTabRebindRequest>>,
+  ) -> AgentChatPendingTabRebindReport = { _, requestsByPath -> openAgentChatPendingTabsBinder(requestsByPath) },
   archivedSessionsRefreshIfLoaded: () -> Unit = {},
   action: suspend (AgentSessionStateSyncTestFacade, AgentSessionLaunchService) -> Unit,
 ) {
@@ -342,6 +350,8 @@ internal suspend fun withTestServiceAndLaunch(
     openPendingCodexTabsProvider = openPendingCodexTabsProvider,
     openConcreteChatThreadIdentitiesByPathProvider = openConcreteChatThreadIdentitiesByPathProvider,
     openAgentChatPendingTabsBinder = openAgentChatPendingTabsBinder,
+    openPendingAgentChatTabsProvider = openPendingAgentChatTabsProvider,
+    openAgentChatPendingTabsBinderWithProvider = openAgentChatPendingTabsBinderWithProvider,
     archivedSessionsRefreshIfLoaded = archivedSessionsRefreshIfLoaded,
     action = action,
   )
@@ -360,6 +370,13 @@ internal suspend fun withService(
   openAgentChatPendingTabsBinder: suspend (
     Map<String, List<AgentChatPendingTabRebindRequest>>,
   ) -> AgentChatPendingTabRebindReport = ::rebindOpenPendingCodexTabs,
+  openPendingAgentChatTabsProvider: suspend (AgentSessionProvider) -> Map<String, List<AgentChatPendingTabSnapshot>> = { provider ->
+    if (provider == AgentSessionProvider.CODEX) openPendingCodexTabsProvider() else collectOpenPendingAgentChatTabsByPath(provider)
+  },
+  openAgentChatPendingTabsBinderWithProvider: suspend (
+    AgentSessionProvider,
+    Map<String, List<AgentChatPendingTabRebindRequest>>,
+  ) -> AgentChatPendingTabRebindReport = { _, requestsByPath -> openAgentChatPendingTabsBinder(requestsByPath) },
   archivedSessionsRefreshIfLoaded: () -> Unit = {},
   action: suspend (AgentSessionStateSyncTestFacade) -> Unit,
 ) {
@@ -372,6 +389,8 @@ internal suspend fun withService(
     openPendingCodexTabsProvider = openPendingCodexTabsProvider,
     openConcreteChatThreadIdentitiesByPathProvider = openConcreteChatThreadIdentitiesByPathProvider,
     openAgentChatPendingTabsBinder = openAgentChatPendingTabsBinder,
+    openPendingAgentChatTabsProvider = openPendingAgentChatTabsProvider,
+    openAgentChatPendingTabsBinderWithProvider = openAgentChatPendingTabsBinderWithProvider,
     archivedSessionsRefreshIfLoaded = archivedSessionsRefreshIfLoaded,
   ) { service, _ ->
     action(service)
@@ -391,6 +410,13 @@ internal suspend fun withServiceAndLaunch(
   openAgentChatPendingTabsBinder: suspend (
     Map<String, List<AgentChatPendingTabRebindRequest>>,
   ) -> AgentChatPendingTabRebindReport = ::rebindOpenPendingCodexTabs,
+  openPendingAgentChatTabsProvider: suspend (AgentSessionProvider) -> Map<String, List<AgentChatPendingTabSnapshot>> = { provider ->
+    if (provider == AgentSessionProvider.CODEX) openPendingCodexTabsProvider() else collectOpenPendingAgentChatTabsByPath(provider)
+  },
+  openAgentChatPendingTabsBinderWithProvider: suspend (
+    AgentSessionProvider,
+    Map<String, List<AgentChatPendingTabRebindRequest>>,
+  ) -> AgentChatPendingTabRebindReport = { _, requestsByPath -> openAgentChatPendingTabsBinder(requestsByPath) },
   archivedSessionsRefreshIfLoaded: () -> Unit = {},
   action: suspend (AgentSessionStateSyncTestFacade, AgentSessionLaunchService) -> Unit,
 ) {
@@ -404,6 +430,8 @@ internal suspend fun withServiceAndLaunch(
     openPendingCodexTabsProvider = openPendingCodexTabsProvider,
     openConcreteChatThreadIdentitiesByPathProvider = openConcreteChatThreadIdentitiesByPathProvider,
     openAgentChatPendingTabsBinder = openAgentChatPendingTabsBinder,
+    openPendingAgentChatTabsProvider = openPendingAgentChatTabsProvider,
+    openAgentChatPendingTabsBinderWithProvider = openAgentChatPendingTabsBinderWithProvider,
     archivedSessionsRefreshIfLoaded = archivedSessionsRefreshIfLoaded,
   ) { service, _, launchService ->
     action(service, launchService)
@@ -425,6 +453,13 @@ internal suspend fun withServiceAndArchive(
   openAgentChatPendingTabsBinder: suspend (
     Map<String, List<AgentChatPendingTabRebindRequest>>,
   ) -> AgentChatPendingTabRebindReport = ::rebindOpenPendingCodexTabs,
+  openPendingAgentChatTabsProvider: suspend (AgentSessionProvider) -> Map<String, List<AgentChatPendingTabSnapshot>> = { provider ->
+    if (provider == AgentSessionProvider.CODEX) openPendingCodexTabsProvider() else collectOpenPendingAgentChatTabsByPath(provider)
+  },
+  openAgentChatPendingTabsBinderWithProvider: suspend (
+    AgentSessionProvider,
+    Map<String, List<AgentChatPendingTabRebindRequest>>,
+  ) -> AgentChatPendingTabRebindReport = { _, requestsByPath -> openAgentChatPendingTabsBinder(requestsByPath) },
   archivedSessionsRefreshIfLoaded: () -> Unit = {},
   action: suspend (AgentSessionStateSyncTestFacade, AgentSessionArchiveService) -> Unit,
 ) {
@@ -439,6 +474,8 @@ internal suspend fun withServiceAndArchive(
     openPendingCodexTabsProvider = openPendingCodexTabsProvider,
     openConcreteChatThreadIdentitiesByPathProvider = openConcreteChatThreadIdentitiesByPathProvider,
     openAgentChatPendingTabsBinder = openAgentChatPendingTabsBinder,
+    openPendingAgentChatTabsProvider = openPendingAgentChatTabsProvider,
+    openAgentChatPendingTabsBinderWithProvider = openAgentChatPendingTabsBinderWithProvider,
     archivedSessionsRefreshIfLoaded = archivedSessionsRefreshIfLoaded,
   ) { service, archiveService, _ ->
     action(service, archiveService)
@@ -460,6 +497,13 @@ internal suspend fun withServiceAndArchiveAndLaunch(
   openAgentChatPendingTabsBinder: suspend (
     Map<String, List<AgentChatPendingTabRebindRequest>>,
   ) -> AgentChatPendingTabRebindReport = ::rebindOpenPendingCodexTabs,
+  openPendingAgentChatTabsProvider: suspend (AgentSessionProvider) -> Map<String, List<AgentChatPendingTabSnapshot>> = { provider ->
+    if (provider == AgentSessionProvider.CODEX) openPendingCodexTabsProvider() else collectOpenPendingAgentChatTabsByPath(provider)
+  },
+  openAgentChatPendingTabsBinderWithProvider: suspend (
+    AgentSessionProvider,
+    Map<String, List<AgentChatPendingTabRebindRequest>>,
+  ) -> AgentChatPendingTabRebindReport = { _, requestsByPath -> openAgentChatPendingTabsBinder(requestsByPath) },
   archivedSessionsRefreshIfLoaded: () -> Unit = {},
   action: suspend (AgentSessionStateSyncTestFacade, AgentSessionArchiveService, AgentSessionLaunchService) -> Unit,
 ) {
@@ -486,11 +530,14 @@ internal suspend fun withServiceAndArchiveAndLaunch(
       scheduleVfsRefresh = {},
       openAgentChatSnapshotProvider = {
         buildOpenChatRefreshSnapshot(
-          pendingTabsByProvider = mapOf(AgentSessionProvider.CODEX to openPendingCodexTabsProvider()),
+          pendingTabsByProvider = mapOf(
+            AgentSessionProvider.CODEX to openPendingAgentChatTabsProvider(AgentSessionProvider.CODEX),
+            AgentSessionProvider.CLAUDE to openPendingAgentChatTabsProvider(AgentSessionProvider.CLAUDE),
+          ),
           concreteThreadIdentitiesByPath = openConcreteChatThreadIdentitiesByPathProvider(),
         )
       },
-      openAgentChatPendingTabsBinder = { _, requestsByPath -> openAgentChatPendingTabsBinder(requestsByPath) },
+      openAgentChatPendingTabsBinder = openAgentChatPendingTabsBinderWithProvider,
       providerDescriptorProvider = { provider -> testIntegrationProviderDescriptor(provider) },
       subscribeToProjectLifecycle = false,
     )
@@ -504,6 +551,8 @@ internal suspend fun withServiceAndArchiveAndLaunch(
         stateStore = stateStore,
         syncService = syncService,
         uiPreferencesState = uiPreferencesState,
+        openPendingAgentChatTabsProvider = openPendingAgentChatTabsProvider,
+        openAgentChatPendingTabsBinder = openAgentChatPendingTabsBinderWithProvider,
         archivedSessionsRefreshIfLoaded = archivedSessionsRefreshIfLoaded,
       )
     }
@@ -514,6 +563,8 @@ internal suspend fun withServiceAndArchiveAndLaunch(
         syncService = syncService,
         uiPreferencesState = uiPreferencesState,
         chatOpenExecutor = chatOpenExecutor,
+        openPendingAgentChatTabsProvider = openPendingAgentChatTabsProvider,
+        openAgentChatPendingTabsBinder = openAgentChatPendingTabsBinderWithProvider,
         archivedSessionsRefreshIfLoaded = archivedSessionsRefreshIfLoaded,
       )
     }
