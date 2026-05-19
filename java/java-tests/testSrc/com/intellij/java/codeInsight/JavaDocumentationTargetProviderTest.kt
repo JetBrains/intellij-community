@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight
 
+import com.intellij.lang.documentation.impl.documentationTargets
 import com.intellij.lang.java.JavaDocumentationTarget
-import com.intellij.lang.java.JavaDocumentationTargetProvider
 import com.intellij.openapi.application.readAction
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.psi.PsiAnnotationMethod
@@ -30,7 +30,7 @@ class JavaDocumentationTargetProviderTest : LightJavaCodeInsightFixtureTestCase(
     val offset = myFixture.editor.caretModel.offset
     return timeoutRunBlocking {
       readAction {
-        JavaDocumentationTargetProvider().documentationTargets(file, offset)
+        documentationTargets(file, offset)
       }
     }
   }
@@ -112,8 +112,6 @@ class JavaDocumentationTargetProviderTest : LightJavaCodeInsightFixtureTestCase(
 
   fun testMethodTarget() {
     val method = assertSingleTargetElement<PsiMethod>(
-      "<caret>public String foo(Object o) {}",
-      "public<caret> String foo(Object o) {}",
       "public String <caret>foo(Object o) {}",
       "public String foo<caret>(Object o) {}",
       "public String foo<caret> (Object o) {}",
@@ -123,12 +121,12 @@ class JavaDocumentationTargetProviderTest : LightJavaCodeInsightFixtureTestCase(
   }
 
   fun testMethodCallTarget() {
-    val method = assertSingleTargetElement<PsiMethodCallExpression>(
+    val method = assertSingleTargetElement<PsiMethod>(
       "void foo(int a) {} void bar() { <caret>foo(); }",
       "void foo(int a) {} void bar() { foo<caret>(); }",
     )
 
-    assertEquals("foo", method.methodExpression.qualifiedName)
+    assertEquals("foo", method.name)
   }
 
   fun testMethodCallExpressionTarget() {
@@ -154,34 +152,40 @@ class JavaDocumentationTargetProviderTest : LightJavaCodeInsightFixtureTestCase(
     assertTarget<PsiMethodCallExpression>(
       "void foo() { new StringBuilder().app<caret>end(); }",
       "void foo() { new StringBuilder().append<caret>(); }",
-      "void foo() { new StringBuilder().append<caret>(1); }",
-      "void foo() { new StringBuilder().app<caret>end(1); }",
     ) { code, target, callExpr ->
       assertFalse("candidates shown for $code", target.showAllCandidates)
       assertEquals("append", callExpr.methodExpression.referenceName)
+    }
+
+    assertTarget<PsiMethod>(
+      "void foo() { new StringBuilder().app<caret>end(1); }",
+      "void foo() { new StringBuilder().append<caret>(1); }",
+    ) { code, target, method ->
+      assertFalse("candidates shown for $code", target.showAllCandidates)
+      assertEquals("append", method.name)
     }
   }
 
   fun testNewExpressionCandidates() {
     assertTarget<PsiNewExpression>(
       "void foo() { new StringBuilder(<caret>).append(1); }",
-      "void foo() { new StringBuilder(<caret>; }",
+      "void foo() { new StringBuilder(<caret> }",
+      "void foo() { new StringBuilder<caret>",
     ) { code, target, newExpr ->
       assertTrue("candidates not shown: `$code`", target.showAllCandidates)
       assertEquals("java.lang.StringBuilder", newExpr.classReference?.qualifiedName)
     }
 
-    assertTarget<PsiNewExpression>(
+    assertTarget<PsiMethod>(
       "void foo() { new String<caret>Builder().append(1); }",
     ) { code, target, newExpr ->
       assertFalse("candidates shown: `$code`", target.showAllCandidates)
-      assertEquals("java.lang.StringBuilder", newExpr.classReference?.qualifiedName)
+      assertEquals("java.lang.StringBuilder", newExpr.containingClass?.qualifiedName)
     }
   }
 
   fun testAnnotationTarget() {
     val ann = assertSingleTargetElement<PsiClass>(
-      "public <caret>@Deprecated String foo(Object o) {}",
       "public @D<caret>eprecated String foo(Object o) {}",
       "public @Deprecated<caret> String foo(Object o) {}",
     )
@@ -195,7 +199,6 @@ class JavaDocumentationTargetProviderTest : LightJavaCodeInsightFixtureTestCase(
       public @interface Foo { booolean forRemoval() default false; }
       """,
       "public @Foo(<caret>forRemoval = true) String foo(Object o) {}",
-      "public @Foo(forRemoval <caret>= true) String foo(Object o) {}",
     )
     assertEquals("forRemoval", method.name)
   }
@@ -224,7 +227,6 @@ class JavaDocumentationTargetProviderTest : LightJavaCodeInsightFixtureTestCase(
       "public String foo(Object b<caret>ar) {}",
       "public String foo(Object bar<caret>) {}",
       "public String foo(Object bar<caret> ) {}",
-      "public String foo(Object bar <caret>) {}",
     )
     assertEquals("bar", parameter.name)
   }
@@ -239,20 +241,11 @@ class JavaDocumentationTargetProviderTest : LightJavaCodeInsightFixtureTestCase(
   fun testClassTarget() {
     val cls = assertSingleTargetElementInFile<PsiClass>(
       "A.java",
-      "cl<caret>ass A {}",
-      "class<caret> A {}",
       "class <caret>A {}",
       "class A<caret> {}",
       "/** test <caret> test */ class A {}",
     )
     assertEquals("A", cls.name)
-  }
-
-  fun testNewExpressionClassTarget() {
-    assertSingleTargetElement<PsiNewExpression>(
-      "class A { StringBuilder s = new <caret>StringBuilder(); }",
-      "class A { StringBuilder s = new StringBuilder<caret>(); }",
-    )
   }
 
   fun testNewExpressionTarget() {
@@ -324,11 +317,8 @@ class JavaDocumentationTargetProviderTest : LightJavaCodeInsightFixtureTestCase(
   fun testModuleTarget() {
     val module = assertSingleTargetElementInFile<PsiJavaModule>(
       "module-info.java",
-      "mo<caret>dule m { }",
-      "module<caret> m { }",
       "module <caret>m { }",
       "module m<caret> { }",
-      "module m <caret>{ }",
       "/** test <caret> test */ module m { }",
     )
     assertEquals("m", module.name)
@@ -338,8 +328,6 @@ class JavaDocumentationTargetProviderTest : LightJavaCodeInsightFixtureTestCase(
     val clazz = assertSingleTargetElement<PsiClass>(
       "class A { public A(String s) {} } void main() { new A(<caret>String.class.getName()); }",
       "class A { public A(String s) {} } void main() { new A(String<caret>.class.getName()); }",
-      "class A { public A(String s) {} } void main() { new A(String.<caret>class.getName()); }",
-      "class A { public A(String s) {} } void main() { new A(String.class<caret>.getName()); }",
     )
     assertEquals("java.lang.String", clazz.qualifiedName)
   }
@@ -347,7 +335,6 @@ class JavaDocumentationTargetProviderTest : LightJavaCodeInsightFixtureTestCase(
   fun testPackage() {
     val pack = assertSingleTargetElement<PsiPackage>(
       "package java.ut<caret>il;",
-      "pac<caret>kage java.util;",
     )
     assertEquals("java.util", pack.qualifiedName)
   }

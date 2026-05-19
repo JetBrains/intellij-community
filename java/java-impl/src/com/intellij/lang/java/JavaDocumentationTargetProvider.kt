@@ -4,108 +4,24 @@ package com.intellij.lang.java
 import com.intellij.codeInsight.completion.CompletionMemory
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.backend.documentation.DocumentationTarget
-import com.intellij.platform.backend.documentation.DocumentationTargetProvider
 import com.intellij.platform.backend.documentation.InlineDocumentation
 import com.intellij.platform.backend.documentation.InlineDocumentationProvider
 import com.intellij.platform.backend.documentation.PsiDocumentationTargetProvider
-import com.intellij.psi.JavaTokenType
-import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiCallExpression
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiClassObjectAccessExpression
 import com.intellij.psi.PsiDocCommentBase
 import com.intellij.psi.PsiDocCommentOwner
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiExpressionList
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiIdentifier
 import com.intellij.psi.PsiJavaCodeReferenceElement
 import com.intellij.psi.PsiJavaDocumentedElement
 import com.intellij.psi.PsiJavaFile
-import com.intellij.psi.PsiJavaModule
-import com.intellij.psi.PsiJavaModuleReferenceElement
-import com.intellij.psi.PsiJavaReference
-import com.intellij.psi.PsiKeyword
-import com.intellij.psi.PsiLiteralExpression
 import com.intellij.psi.PsiMethodCallExpression
-import com.intellij.psi.PsiModifierList
-import com.intellij.psi.PsiNameValuePair
 import com.intellij.psi.PsiNewExpression
-import com.intellij.psi.PsiPackageStatement
-import com.intellij.psi.PsiWhiteSpace
-import com.intellij.psi.impl.FakePsiElement
-import com.intellij.psi.impl.source.javadoc.PsiDocParamRef
-import com.intellij.psi.impl.source.tree.java.PsiJavaTokenImpl
-import com.intellij.psi.javadoc.PsiDocComment
+import com.intellij.psi.PsiReferenceExpression
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
 import org.jetbrains.annotations.Nls
-
-public class JavaDocumentationTargetProvider : DocumentationTargetProvider {
-  override fun documentationTargets(file: PsiFile, offset: Int): List<DocumentationTarget> {
-    if (file !is PsiJavaFile) return emptyList()
-
-    val originalElement = file.findElementAt(offset) ?: return emptyList()
-    if (originalElement.language !is JavaLanguage) return emptyList()
-    var element = originalElement
-
-    // Handle `element<caret> `/`element<caret>(` case
-    val whiteSpaceStart = element is PsiWhiteSpace && offset == element.textRange.startOffset
-    val token = element is PsiJavaTokenImpl && element.tokenType !== JavaTokenType.AT
-    val error = element is PsiErrorElement
-    if (whiteSpaceStart || token || error) {
-      val prevLeaf = PsiTreeUtil.prevCodeLeaf(element)
-      if (prevLeaf != null) element = prevLeaf
-    }
-
-    if (element.parent is PsiLiteralExpression) element = element.parent
-
-    val parent = element.parent
-
-    // list all candidates for `new Foo(<caret>)` / `foo.bar(<caret>)`
-    val forceCandidatesTarget: PsiCallExpression? = when (parent) {
-      is PsiExpressionList if parent.parent is PsiMethodCallExpression -> parent.parent
-      is PsiExpressionList if parent.parent is PsiNewExpression -> parent.parent
-      else -> null
-    } as PsiCallExpression?
-
-    if (forceCandidatesTarget != null) {
-      // The user just picked an overload via completion: prefer the chosen method over a candidate list.
-      val chosen = CompletionMemory.getChosenMethod(forceCandidatesTarget)
-      if (chosen != null) return listOf(JavaDocumentationTarget(chosen, element))
-      return listOf(JavaDocumentationTarget(forceCandidatesTarget, element, showAllCandidates = true))
-    }
-
-    var target: PsiElement =
-      when {
-        element is PsiKeyword && parent is PsiClass -> parent
-        element is PsiKeyword && parent is PsiJavaModule -> parent
-        element is PsiKeyword && parent is PsiPackageStatement -> parent.packageReference
-        parent is PsiClassObjectAccessExpression -> parent.operand.innermostComponentReferenceElement
-        parent is PsiJavaModuleReferenceElement -> parent.parent
-        parent is PsiJavaCodeReferenceElement && parent.parent is PsiMethodCallExpression -> parent.parent
-        parent is PsiJavaCodeReferenceElement && parent.parent is PsiNewExpression -> parent.parent
-        parent is PsiDocParamRef -> parent.reference?.resolve()
-        parent is PsiModifierList -> parent.parent
-        parent is PsiNameValuePair -> parent.reference?.resolve()
-        parent is PsiAnnotation -> parent.nameReferenceElement
-        parent is PsiDocComment -> parent.owner
-        element is PsiIdentifier -> parent
-        element is FakePsiElement -> PsiTreeUtil.getParentOfType<PsiDocCommentBase>(originalElement)?.owner ?: element
-        else -> null
-      } ?: return emptyList()
-
-    if (target is PsiJavaReference) {
-      return target.multiResolve(false)
-        .mapNotNull { it.element }
-        .map { JavaDocumentationTarget(it, element) }
-        .toList()
-    }
-
-    return listOf(JavaDocumentationTarget(target, element))
-  }
-}
 
 public class JavaPsiDocumentationTargetProvider: PsiDocumentationTargetProvider {
   override fun documentationTarget(
@@ -113,7 +29,28 @@ public class JavaPsiDocumentationTargetProvider: PsiDocumentationTargetProvider 
     originalElement: PsiElement?,
   ): DocumentationTarget? {
     if (element.language !is JavaLanguage) return null
-    return JavaDocumentationTarget(element, originalElement)
+
+    // list all candidates for `new Foo(<caret>)` / `foo.bar(<caret>)`
+    val forceCandidatesTarget: PsiCallExpression? = when (element) {
+      is PsiExpressionList if element.parent is PsiMethodCallExpression -> element.parent
+      is PsiJavaCodeReferenceElement if element.parent is PsiNewExpression -> element.parent
+      is PsiExpressionList if element.parent is PsiNewExpression -> element.parent
+      else -> null
+    } as PsiCallExpression?
+
+    if (forceCandidatesTarget != null) {
+      // The user just picked an overload via completion: prefer the chosen method over a candidate list.
+      val chosen = CompletionMemory.getChosenMethod(forceCandidatesTarget)
+      if (chosen != null) return JavaDocumentationTarget(chosen, originalElement)
+      return JavaDocumentationTarget(forceCandidatesTarget, originalElement, showAllCandidates = true)
+    }
+
+    val target = when (element) {
+      is PsiReferenceExpression -> element.parent
+      else -> element
+    }
+
+    return JavaDocumentationTarget(target, originalElement)
   }
 }
 

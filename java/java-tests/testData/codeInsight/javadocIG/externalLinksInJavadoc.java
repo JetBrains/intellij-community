@@ -1,7 +1,7 @@
 class C {
   /**
 	 * description
-	 * See <a href="https://link.ad<caret>dress.com">link text</a>
+	 * See <a href="https://link.address.com">link<caret> text</a>
 	 */
 	 void m() {}
 }
