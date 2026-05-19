@@ -223,11 +223,12 @@ abstract class NonModalWindowWrapper(
       }
     }
     else {
-      WindowFrame(title).also { frame ->
+      WindowFrame().also { frame ->
         frame.contentPane.layout = BorderLayout()
         val frameContent = if (IdeFrameDecorator.isCustomDecorationActive())
           CustomFrameDialogContent.getCustomContentHolder(frame, content, false) else content
         frame.contentPane.add(frameContent)
+        frame.title = title
         frame.minimumSize = minSize
         frame.size = size
         frame.setLocationRelativeTo(getIdeJFrame())
@@ -257,7 +258,7 @@ abstract class NonModalWindowWrapper(
     override fun uiDataSnapshot(sink: DataSink): Unit = this@NonModalWindowWrapper.uiDataSnapshot(sink)
   }
 
-  private inner class WindowFrame(title: String) : JFrame(title), UiDataProvider {
+  private inner class WindowFrame : JFrame(), UiDataProvider {
     init {
       defaultCloseOperation = DO_NOTHING_ON_CLOSE
       background = UIUtil.getPanelBackground()
