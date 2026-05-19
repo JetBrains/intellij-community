@@ -23,9 +23,13 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.BrowserLink;
 import com.intellij.ui.components.JBFontScaler;
+import com.intellij.ui.components.JBHtmlPane;
+import com.intellij.ui.components.JBHtmlPaneConfiguration;
+import com.intellij.ui.components.JBHtmlPaneStyleConfiguration;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.SingleEdtTaskScheduler;
+import com.intellij.util.ui.ExtendableHTMLViewFactory;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBValue;
@@ -154,6 +158,8 @@ public class HelpTooltip {
   private final SingleEdtTaskScheduler popupAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler(UiDispatcherKind.RELAX);
   private boolean isOverPopup;
   private boolean isMultiline;
+  /** Owner component captured in {@link #scheduleShow}; used for screen-relative width detection in the long-text auto-wrap path. */
+  private @Nullable WeakReference<Component> popupOwner;
   private int myInitialDelay = -1;
   private int myHideDelay = -1;
   private String myToolTipText;
@@ -544,6 +550,8 @@ public class HelpTooltip {
 
   @ApiStatus.Internal
   public @NotNull JPanel createTipPanel() {
+    isMultiline = false;
+
     JPanel tipPanel = new JPanel();
     tipPanel.setLayout(new VerticalLayout(JBUI.getInt("HelpTooltip.verticalGap", 4)));
     tipPanel.setBackground(UIUtil.getToolTipBackground());
@@ -553,7 +561,7 @@ public class HelpTooltip {
     boolean hasDescription = Strings.isNotEmpty(description);
 
     if (hasTitle) {
-      tipPanel.add(new Header(hasDescription), VerticalLayout.TOP);
+      tipPanel.add(createTitleComponent(hasDescription), VerticalLayout.TOP);
     }
 
     if (hasDescription) {
@@ -585,6 +593,53 @@ public class HelpTooltip {
     tipPanel.setBorder(textBorder(isMultiline));
 
     return tipPanel;
+  }
+
+  private @NotNull JComponent createTitleComponent(boolean hasDescription) {
+    var popupOwner = this.popupOwner == null ? null : this.popupOwner.get();
+    var singleLineTitle = new Header(hasDescription);
+    if (popupOwner != null && popupOwner.isShowing()) {
+      Rectangle screen = ScreenUtil.getScreenRectangle(popupOwner);
+      int maxWidth = (int)(screen.width * 0.9);
+      int maxHeight = (int)(screen.height * 0.9);
+      if (singleLineTitle.getPreferredSize().width > maxWidth) {
+        isMultiline = true;
+        return createLongHtmlTextTitle(getHtmlTitle(), singleLineTitle.getFont(), maxWidth, maxHeight);
+      }
+    }
+    return singleLineTitle;
+  }
+
+  private static @NotNull JBHtmlPane createLongHtmlTextTitle(
+    @NotNull @TooltipTitle String htmlTitle,
+    @NotNull Font font,
+    int maxWidth,
+    int maxHeight
+  ) {
+    var htmlPane = configureHtmlPane(new JBHtmlPane(
+      new JBHtmlPaneStyleConfiguration(),
+      JBHtmlPaneConfiguration.builder()
+        .extensions(ExtendableHTMLViewFactory.Extensions.WORD_WRAP)
+        .build()
+    ));
+    htmlPane.setText(htmlTitle);
+    htmlPane.setFont(font);
+    htmlPane.setSize(new Dimension(maxWidth, maxHeight));
+    Dimension wrapped = htmlPane.getPreferredSize();
+    htmlPane.setPreferredSize(new Dimension(Math.min(wrapped.width, maxWidth), Math.min(wrapped.height, maxHeight)));
+    htmlPane.setMaximumSize(new Dimension(maxWidth, maxHeight));
+    return htmlPane;
+  }
+
+  private static @NotNull JBHtmlPane configureHtmlPane(@NotNull JBHtmlPane htmlPane) {
+    htmlPane.setEditable(false);
+    htmlPane.setOpaque(false);
+    htmlPane.setBorder(JBUI.Borders.empty());
+    htmlPane.setMargin(JBUI.emptyInsets());
+    htmlPane.setForeground(UIUtil.getToolTipForeground());
+    htmlPane.setBackground(UIUtil.getToolTipBackground());
+    htmlPane.setFocusable(false);
+    return htmlPane;
   }
 
   private void installMouseListeners(@NotNull JComponent owner) {
@@ -716,6 +771,7 @@ public class HelpTooltip {
       }
 
       Component owner = e.getComponent();
+      popupOwner = new WeakReference<>(owner);
       String text = owner instanceof JComponent ? ((JComponent)owner).getToolTipText(e) : null;
       if (myPopup != null && !myPopup.isDisposed()) {
         if (Strings.isEmpty(text) && Strings.isEmpty(myToolTipText)) {
@@ -758,6 +814,7 @@ public class HelpTooltip {
       }
       myPopup = null;
       myToolTipText = null;
+      popupOwner = null;
     }
   }
 
@@ -850,7 +907,7 @@ public class HelpTooltip {
       setFont(deriveHeaderFont(getFont()));
       setForeground(UIUtil.getToolTipForeground());
 
-      String currentTitle = Objects.requireNonNullElse(title != null ? title.get() : null, "");
+      String currentTitle = getNonNullTitle();
       if (obeyWidth || currentTitle.length() > MAX_WIDTH.get()) {
         View v = BasicHTML.createHTMLView(this, String.format("<html>%s%s</html>", currentTitle, getShortcutAsHTML()));
         float width = v.getPreferredSpan(View.X_AXIS);
@@ -862,15 +919,24 @@ public class HelpTooltip {
         setSizeForWidth(width);
       }
       else {
-        setText(BasicHTML.isHTMLString(currentTitle) ?
-                currentTitle :
-                HtmlChunk.div().addRaw(currentTitle).addRaw(getShortcutAsHTML()).wrapWith(html()).toString());
+        setText(getHtmlTitle());
       }
     }
+  }
 
-    private @NlsSafe String getShortcutAsHTML() {
-      return getShortcutAsHtml(shortcut);
-    }
+  private @NotNull @TooltipTitle String getHtmlTitle() {
+    String currentTitle = getNonNullTitle();
+    return BasicHTML.isHTMLString(currentTitle) ?
+           currentTitle :
+           HtmlChunk.div().addRaw(currentTitle).addRaw(getShortcutAsHTML()).wrapWith(html()).toString();
+  }
+
+  private @NlsSafe String getShortcutAsHTML() {
+    return getShortcutAsHtml(shortcut);
+  }
+
+  private @NotNull @TooltipTitle String getNonNullTitle() {
+    return Objects.requireNonNullElse(title != null ? title.get() : null, "");
   }
 
   private final class Paragraph extends BoundWidthLabel {
