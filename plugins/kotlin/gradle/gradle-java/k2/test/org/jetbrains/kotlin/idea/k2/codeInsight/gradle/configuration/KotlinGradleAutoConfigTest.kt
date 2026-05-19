@@ -1,9 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeInsight.gradle.configuration
 
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.runInEdtAndGet
 import kotlinx.coroutines.runBlocking
@@ -33,9 +32,9 @@ class KotlinGradleAutoConfigTest : KotlinGradleImportingTestCase() {
             val oldValue = registryValue.asBoolean()
             registryValue.setValue(true, testRootDisposable)
             try {
-                val module = ReadAction.nonBlocking<Module> {
+                val module = runReadActionBlocking {
                     ModuleManager.getInstance(myProject).findModuleByName(moduleName)!!
-                }.executeSynchronously()
+                }
 
                 val settings = runBlocking { findGradleModuleConfigurator().calculateAutoConfigSettings(module) }
                 if (expectedSuccess) {
