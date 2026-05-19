@@ -153,7 +153,7 @@ private suspend fun awaitClassLoadersGetGarbageCollected(classloaders: WeakList<
   try {
     while (true) {
       val collected = withContext(Dispatchers.IO) {
-        GCWatcher.tracking(classloaders).tryCollect(100)
+        GCWatcher.tracking(classloaders).tryCollect(50)
       }
       if (collected) {
         return
