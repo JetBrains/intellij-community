@@ -921,14 +921,14 @@
     },
     {
       "name": "mcp__jetbrains__reformat_file",
-      "description": "Reformats a specified file in the JetBrains IDE.",
+      "description": "Reformats the specified files in the JetBrains IDE.",
       "input_schema": {
         "type": "object",
         "properties": {
-          "path": { "type": "string", "description": "Path relative to the project root" },
+          "files": { "type": "array", "description": "List of project-relative file paths to reformat.", "items": { "type": "string" } },
           "projectPath": { "type": "string", "description": "The project path." }
         },
-        "required": ["path"]
+        "required": ["files"]
       }
     },
     {

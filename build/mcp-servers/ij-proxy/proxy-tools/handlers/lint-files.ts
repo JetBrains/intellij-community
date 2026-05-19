@@ -24,13 +24,26 @@ export async function handleLintFilesTool(
   callUpstreamTool: UpstreamToolCaller,
   capabilities: AnalysisCapabilities
 ): Promise<string> {
-  const filePaths = normalizeFilePaths(args.file_paths)
+  const files = normalizeFiles(args)
   const minSeverity = normalizeMinSeverity(args.min_severity)
   const timeout = toPositiveInt(args.timeout, undefined, 'timeout')
 
-  if (capabilities.hasLintFiles) {
+  if (capabilities.hasLintFilesFiles) {
     const result = await callUpstreamTool('lint_files', {
-      file_paths: filePaths,
+      files,
+      min_severity: minSeverity,
+      ...(timeout !== undefined ? {timeout} : {})
+    })
+    const structured = extractStructuredContent(result)
+    if (structured == null) {
+      throw new Error('Upstream lint_files returned unexpected result')
+    }
+    return JSON.stringify(structured)
+  }
+
+  if (capabilities.hasLintFilesFilePaths) {
+    const result = await callUpstreamTool('lint_files', {
+      file_paths: files,
       min_severity: minSeverity,
       ...(timeout !== undefined ? {timeout} : {})
     })
@@ -45,19 +58,24 @@ export async function handleLintFilesTool(
     throw new Error('lint_files is not supported by this IDE version')
   }
 
-  return await lintFilesLegacy(filePaths, minSeverity, timeout, callUpstreamTool)
+  return await lintFilesLegacy(files, minSeverity, timeout, callUpstreamTool)
 }
 
-function normalizeFilePaths(value: unknown): string[] {
+function normalizeFiles(args: ToolArgs): string[] {
+  if (Object.prototype.hasOwnProperty.call(args, 'file_paths')) {
+    throw new Error('file_paths is no longer supported; use files')
+  }
+
+  const value = args.files
   if (!Array.isArray(value)) {
-    throw new Error('file_paths must be an array of non-empty strings')
+    throw new Error('files must be an array of non-empty strings')
   }
 
   const result: string[] = []
   const seen = new Set<string>()
   for (const rawPath of value) {
     if (typeof rawPath !== 'string' || rawPath.trim().length === 0) {
-      throw new Error('file_paths must contain non-empty strings')
+      throw new Error('files must contain non-empty strings')
     }
     const normalizedPath = rawPath.trim()
     if (seen.has(normalizedPath)) continue
@@ -66,7 +84,7 @@ function normalizeFilePaths(value: unknown): string[] {
   }
 
   if (result.length === 0) {
-    throw new Error('file_paths must contain at least one path')
+    throw new Error('files must contain at least one path')
   }
   return result
 }

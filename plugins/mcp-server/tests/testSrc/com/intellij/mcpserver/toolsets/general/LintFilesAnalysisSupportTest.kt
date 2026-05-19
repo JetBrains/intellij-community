@@ -350,7 +350,7 @@ class LintFilesAnalysisSupportTest : GeneralMcpToolsetTestBase() {
       testMcpTool(
         AnalysisToolset::lint_files.name,
         buildJsonObject {
-          put("file_paths", buildJsonArray {
+          put("files", buildJsonArray {
             add(JsonPrimitive(mainPath))
           })
           put("timeout", JsonPrimitive(100))

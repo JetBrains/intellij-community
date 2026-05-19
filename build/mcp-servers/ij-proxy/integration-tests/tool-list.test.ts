@@ -17,6 +17,20 @@ function assertExcludesAll(names, excluded) {
   }
 }
 
+async function findListedTool(proxyClient, name) {
+  const listResponse = await proxyClient.send('tools/list')
+  const tool = listResponse.result.tools.find((candidate) => candidate.name === name)
+  ok(tool)
+  return tool
+}
+
+function assertReformatFilesSchema(tool) {
+  const properties = tool.inputSchema?.properties ?? {}
+  ok('files' in properties)
+  ok(!('path' in properties))
+  ok(!('paths' in properties))
+}
+
 describe('ij MCP proxy tool list', {timeout: SUITE_TIMEOUT_MS}, () => {
   const defaultHasSearchSymbol = defaultUpstreamTools.some((tool) => tool.name === 'search_symbol')
   const readOnlyAnnotations = {readOnlyHint: true, openWorldHint: false}
@@ -48,6 +62,13 @@ describe('ij MCP proxy tool list', {timeout: SUITE_TIMEOUT_MS}, () => {
   ]
   const upstreamToolsWithLintFiles = [
     buildUpstreamTool('lint_files', {
+      files: {type: 'array', items: {type: 'string'}},
+      min_severity: {type: 'string'},
+      timeout: {type: 'number'}
+    }, ['files'])
+  ]
+  const upstreamToolsWithLegacyBatchLintFiles = [
+    buildUpstreamTool('lint_files', {
       file_paths: {type: 'array', items: {type: 'string'}},
       min_severity: {type: 'string'},
       timeout: {type: 'number'}
@@ -58,11 +79,16 @@ describe('ij MCP proxy tool list', {timeout: SUITE_TIMEOUT_MS}, () => {
       path: {type: 'string'}
     }, ['path'])
   ]
-  const upstreamToolsWithReformatFilePaths = [
+  const upstreamToolsWithLegacyReformatFilePaths = [
     buildUpstreamTool('reformat_file', {
       path: {type: 'string'},
       paths: {type: 'array', items: {type: 'string'}}
     })
+  ]
+  const upstreamToolsWithReformatFileFiles = [
+    buildUpstreamTool('reformat_file', {
+      files: {type: 'array', items: {type: 'string'}}
+    }, ['files'])
   ]
 
   it('exposes proxy tools and hides replaced/blocked upstream tools', async () => {
@@ -181,33 +207,39 @@ describe('ij MCP proxy tool list', {timeout: SUITE_TIMEOUT_MS}, () => {
 
   it('passes through upstream lint_files schema when lint_files is available', async () => {
     await withProxy({tools: upstreamToolsWithLintFiles}, async ({proxyClient}) => {
-      const listResponse = await proxyClient.send('tools/list')
-      const lintTool = listResponse.result.tools.find((tool) => tool.name === 'lint_files')
-      ok(lintTool)
+      const lintTool = await findListedTool(proxyClient, 'lint_files')
       const properties = lintTool.inputSchema?.properties ?? {}
-      ok('file_paths' in properties)
+      ok('files' in properties)
       ok(!('filePath' in properties))
     })
   })
 
-  it('exposes reformat_file paths schema for legacy upstreams', async () => {
-    await withProxy({tools: upstreamToolsWithLegacyReformatFile}, async ({proxyClient}) => {
-      const listResponse = await proxyClient.send('tools/list')
-      const reformatTool = listResponse.result.tools.find((tool) => tool.name === 'reformat_file')
-      ok(reformatTool)
-      const properties = reformatTool.inputSchema?.properties ?? {}
-      ok('path' in properties)
-      ok('paths' in properties)
+  it('exposes files proxy schema for legacy upstream lint_files', async () => {
+    await withProxy({tools: upstreamToolsWithLegacyBatchLintFiles}, async ({proxyClient}) => {
+      const lintTool = await findListedTool(proxyClient, 'lint_files')
+      const properties = lintTool.inputSchema?.properties ?? {}
+      ok('files' in properties)
+      ok(!('file_paths' in properties))
     })
   })
 
-  it('passes through upstream reformat_file schema when paths is available', async () => {
-    await withProxy({tools: upstreamToolsWithReformatFilePaths}, async ({proxyClient}) => {
-      const listResponse = await proxyClient.send('tools/list')
-      const reformatTool = listResponse.result.tools.find((tool) => tool.name === 'reformat_file')
-      ok(reformatTool)
+  it('exposes reformat_file files schema for legacy upstreams', async () => {
+    await withProxy({tools: upstreamToolsWithLegacyReformatFile}, async ({proxyClient}) => {
+      assertReformatFilesSchema(await findListedTool(proxyClient, 'reformat_file'))
+    })
+  })
+
+  it('exposes files proxy schema for legacy upstream reformat_file paths', async () => {
+    await withProxy({tools: upstreamToolsWithLegacyReformatFilePaths}, async ({proxyClient}) => {
+      assertReformatFilesSchema(await findListedTool(proxyClient, 'reformat_file'))
+    })
+  })
+
+  it('passes through upstream reformat_file schema when files is available', async () => {
+    await withProxy({tools: upstreamToolsWithReformatFileFiles}, async ({proxyClient}) => {
+      const reformatTool = await findListedTool(proxyClient, 'reformat_file')
       const properties = reformatTool.inputSchema?.properties ?? {}
-      ok('paths' in properties)
+      ok('files' in properties)
     })
   })
 

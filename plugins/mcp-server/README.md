@@ -173,7 +173,7 @@ idiomatic; the framework trims leading margins (`|`) consistently.
 )
 suspend fun lint_files(
   @McpDescription("List of project-relative file paths to analyze. Duplicate paths are ignored after normalization.")
-  file_paths: List<String>,
+  files: List<String>,
   /* … */
 ): LintFilesResult
 ```

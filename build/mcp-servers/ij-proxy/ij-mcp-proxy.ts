@@ -785,14 +785,14 @@ async function callLintFilesViaProxyOrNative(side: 'idea' | 'rider', args: ToolA
     if (ideaProxyToolCall && ideaProxyToolNames.has('lint_files')) {
       return await ideaProxyToolCall('lint_files', {...args})
     }
-    if (ideaUpstream?.analysisCapabilities.hasLintFiles) {
+    if (ideaUpstream?.analysisCapabilities.hasLintFilesFiles) {
       return await ideaUpstream.callToolForClient('lint_files', {...args})
     }
   } else {
     if (riderProxyToolCall && riderProxyToolNames.has('lint_files')) {
       return await riderProxyToolCall('lint_files', {...args})
     }
-    if (riderUpstream?.analysisCapabilities.hasLintFiles) {
+    if (riderUpstream?.analysisCapabilities.hasLintFilesFiles) {
       return await riderUpstream.callToolForClient('lint_files', {...args})
     }
   }
@@ -805,6 +805,9 @@ async function callReformatFileViaProxyOrNative(side: 'idea' | 'rider', args: To
     if (ideaProxyToolCall && ideaProxyToolNames.has('reformat_file')) {
       return String(await ideaProxyToolCall('reformat_file', {...args}))
     }
+    if (ideaUpstream?.formattingCapabilities.hasReformatFileFiles) {
+      return extractTextFromResult(await ideaUpstream.callToolForClient('reformat_file', {...args})) ?? 'ok'
+    }
     if (ideaUpstream?.formattingCapabilities.hasReformatFile) {
       return await handleReformatFileTool(
         args,
@@ -815,6 +818,9 @@ async function callReformatFileViaProxyOrNative(side: 'idea' | 'rider', args: To
   } else {
     if (riderProxyToolCall && riderProxyToolNames.has('reformat_file')) {
       return String(await riderProxyToolCall('reformat_file', {...args}))
+    }
+    if (riderUpstream?.formattingCapabilities.hasReformatFileFiles) {
+      return extractTextFromResult(await riderUpstream.callToolForClient('reformat_file', {...args})) ?? 'ok'
     }
     if (riderUpstream?.formattingCapabilities.hasReformatFile) {
       return await handleReformatFileTool(
@@ -838,7 +844,7 @@ async function callSingleLintFilesTool(args: ToolArgs): Promise<ToolOutput> {
 
 async function callSplitMergedLintFiles(args: ToolArgs): Promise<ToolOutput> {
   const normalizedArgs = normalizeLintFilesArgs(args)
-  const normalizedFilePaths = normalizedArgs.file_paths as string[]
+  const normalizedFilePaths = normalizedArgs.files as string[]
 
   let splitArgs: {ideaArgs?: ToolArgs; riderArgs?: ToolArgs}
   try {
@@ -888,7 +894,7 @@ async function callSplitMergedReformatFile(args: ToolArgs): Promise<ToolOutput> 
 
   let splitArgs: {ideaArgs?: ToolArgs; riderArgs?: ToolArgs}
   try {
-    splitArgs = splitPathListArgsByIde(normalizedArgs, projectPath, 'paths')
+    splitArgs = splitPathListArgsByIde(normalizedArgs, projectPath)
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     return makeToolError(message)
@@ -921,7 +927,7 @@ async function callReformatFileForSide(side: 'idea' | 'rider', args: ToolArgs): 
 async function callLintFilesForSide(side: 'idea' | 'rider', args: ToolArgs): Promise<LintFilesToolResult> {
   const normalizedArgs = normalizeLintFilesArgs(args)
   const result = parseLintFilesToolResult(await callLintFilesViaProxyOrNative(side, normalizedArgs))
-  const filePaths = normalizedArgs.file_paths as string[]
+  const filePaths = normalizedArgs.files as string[]
   const items = orderLintItems(filePaths, result.items)
   return result.more === true ? {items, more: true} : {items}
 }
@@ -947,11 +953,15 @@ function getSingleReformatFileSide(): 'idea' | 'rider' {
 }
 
 function normalizeLintFilesArgs(args: ToolArgs): ToolArgs {
-  const filePaths = normalizeLintFilePathsArg(args.file_paths)
+  if (Object.prototype.hasOwnProperty.call(args, 'file_paths')) {
+    throw new Error('file_paths is no longer supported; use files')
+  }
+
+  const files = normalizeLintFilesArg(args.files)
   const timeout = normalizeLintTimeoutArg(args.timeout)
   const normalizedArgs: ToolArgs = {
     ...args,
-    file_paths: filePaths
+    files
   }
   if (timeout !== undefined) {
     normalizedArgs.timeout = timeout
@@ -961,16 +971,16 @@ function normalizeLintFilesArgs(args: ToolArgs): ToolArgs {
   return normalizedArgs
 }
 
-function normalizeLintFilePathsArg(value: unknown): string[] {
+function normalizeLintFilesArg(value: unknown): string[] {
   if (!Array.isArray(value)) {
-    throw new Error('file_paths must be an array of non-empty strings')
+    throw new Error('files must be an array of non-empty strings')
   }
 
   const result: string[] = []
   const seen = new Set<string>()
   for (const rawPath of value) {
     if (typeof rawPath !== 'string' || rawPath.trim().length === 0) {
-      throw new Error('file_paths must contain non-empty strings')
+      throw new Error('files must contain non-empty strings')
     }
 
     const normalizedPath = rawPath.trim()
@@ -980,7 +990,7 @@ function normalizeLintFilePathsArg(value: unknown): string[] {
   }
 
   if (result.length === 0) {
-    throw new Error('file_paths must contain at least one path')
+    throw new Error('files must contain at least one path')
   }
   return result
 }

@@ -70,19 +70,19 @@ class AnalysisToolset : McpToolset {
         |Note: Lines and Columns are 1-based.
     """)
   suspend fun lint_files(
-    @McpDescription("List of project-relative file paths to analyze. Duplicate paths are ignored after normalization.")
-    file_paths: List<String>,
+    @McpDescription("List of project-relative files to analyze. Duplicate paths are ignored after normalization.")
+    files: List<String>,
     @McpDescription("Minimum severity to include: `warning` or `error`. Defaults to `warning`.")
     min_severity: String = LintMinSeverity.WARNING.apiValue,
     @McpDescription(Constants.TIMEOUT_MILLISECONDS_DESCRIPTION)
     timeout: Int = LINT_FILES_DEFAULT_TIMEOUT_MILLISECONDS_VALUE,
   ): LintFilesResult {
-    currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.collecting.file.problems.batch", file_paths.size))
+    currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.collecting.file.problems.batch", files.size))
     return collectLintFiles(
-      filePaths = file_paths,
+      filePaths = files,
       minSeverityValue = min_severity,
       timeout = timeout,
-      progressTitle = McpServerBundle.message("progress.title.analyzing.files", file_paths.size),
+      progressTitle = McpServerBundle.message("progress.title.analyzing.files", files.size),
       useBatchTimeouts = true,
     )
   }

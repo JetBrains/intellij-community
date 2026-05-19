@@ -8,13 +8,17 @@ const legacyReformatTool = buildUpstreamTool('reformat_file', {
   path: {type: 'string'}
 }, ['path'])
 
-const nativeReformatTool = buildUpstreamTool('reformat_file', {
+const legacyBatchReformatTool = buildUpstreamTool('reformat_file', {
   path: {type: 'string'},
   paths: {type: 'array', items: {type: 'string'}}
 })
 
+const nativeReformatTool = buildUpstreamTool('reformat_file', {
+  files: {type: 'array', items: {type: 'string'}}
+}, ['files'])
+
 describe('ij MCP proxy reformat_file compatibility', {timeout: SUITE_TIMEOUT_MS}, () => {
-  it('exposes paths for legacy reformat_file and calls upstream once per unique path', async () => {
+  it('exposes files for legacy reformat_file and calls upstream once per unique file', async () => {
     const calls: Array<{path: unknown; paths: unknown}> = []
 
     await withProxy({
@@ -29,14 +33,14 @@ describe('ij MCP proxy reformat_file compatibility', {timeout: SUITE_TIMEOUT_MS}
       const reformatTool = listResponse.result.tools.find((tool) => tool.name === 'reformat_file')
       ok(reformatTool)
       const properties = reformatTool.inputSchema?.properties ?? {}
-      ok('path' in properties)
-      ok('paths' in properties)
+      ok('files' in properties)
+      ok(!('path' in properties))
+      ok(!('paths' in properties))
 
       const response = await proxyClient.send('tools/call', {
         name: 'reformat_file',
         arguments: {
-          path: ' src/Main.kt ',
-          paths: ['src/Second.kt', 'src/Main.kt']
+          files: [' src/Main.kt ', 'src/Second.kt', 'src/Main.kt']
         }
       })
 
@@ -49,11 +53,11 @@ describe('ij MCP proxy reformat_file compatibility', {timeout: SUITE_TIMEOUT_MS}
     ])
   })
 
-  it('normalizes old path callers to native paths batch calls', async () => {
+  it('translates files to legacy paths batch calls', async () => {
     const calls: Array<{path: unknown; paths: unknown}> = []
 
     await withProxy({
-      tools: [nativeReformatTool],
+      tools: [legacyBatchReformatTool],
       onToolCall({name, args}) {
         strictEqual(name, 'reformat_file')
         calls.push({path: args.path, paths: args.paths})
@@ -64,8 +68,7 @@ describe('ij MCP proxy reformat_file compatibility', {timeout: SUITE_TIMEOUT_MS}
       const response = await proxyClient.send('tools/call', {
         name: 'reformat_file',
         arguments: {
-          path: 'src/Main.kt',
-          paths: ['src/Second.kt', 'src/Main.kt']
+          files: ['src/Main.kt', 'src/Second.kt', 'src/Main.kt']
         }
       })
 
@@ -75,6 +78,64 @@ describe('ij MCP proxy reformat_file compatibility', {timeout: SUITE_TIMEOUT_MS}
     deepStrictEqual(calls, [
       {path: undefined, paths: ['src/Main.kt', 'src/Second.kt']}
     ])
+  })
+
+  it('passes files through to native reformat_file', async () => {
+    const calls: Array<{files: unknown}> = []
+
+    await withProxy({
+      tools: [nativeReformatTool],
+      onToolCall({name, args}) {
+        strictEqual(name, 'reformat_file')
+        calls.push({files: args.files})
+        return {text: 'ok'}
+      }
+    }, async ({proxyClient}) => {
+      await proxyClient.send('tools/list')
+      const response = await proxyClient.send('tools/call', {
+        name: 'reformat_file',
+        arguments: {
+          files: ['src/Main.kt', 'src/Second.kt']
+        }
+      })
+
+      strictEqual(response.result.content[0].text, 'ok')
+    })
+
+    deepStrictEqual(calls, [
+      {files: ['src/Main.kt', 'src/Second.kt']}
+    ])
+  })
+
+  it('rejects legacy path client arguments before calling upstream', async () => {
+    let calls = 0
+
+    await withProxy({
+      tools: [nativeReformatTool],
+      onToolCall() {
+        calls += 1
+        return {text: 'ok'}
+      }
+    }, async ({proxyClient}) => {
+      await proxyClient.send('tools/list')
+      const pathResponse = await proxyClient.send('tools/call', {
+        name: 'reformat_file',
+        arguments: {path: 'src/Main.kt'}
+      })
+      const pathsResponse = await proxyClient.send('tools/call', {
+        name: 'reformat_file',
+        arguments: {paths: ['src/Main.kt']}
+      })
+
+      ok(pathResponse.result?.isError)
+      const pathMessage = pathResponse.result?.content?.[0]?.text ?? ''
+      ok(pathMessage.includes('path is no longer supported; use files'))
+      ok(pathsResponse.result?.isError)
+      const pathsMessage = pathsResponse.result?.content?.[0]?.text ?? ''
+      ok(pathsMessage.includes('paths is no longer supported; use files'))
+    })
+
+    strictEqual(calls, 0)
   })
 
   it('rejects empty reformat_file requests before calling upstream', async () => {
@@ -90,12 +151,12 @@ describe('ij MCP proxy reformat_file compatibility', {timeout: SUITE_TIMEOUT_MS}
       await proxyClient.send('tools/list')
       const response = await proxyClient.send('tools/call', {
         name: 'reformat_file',
-        arguments: {paths: []}
+        arguments: {files: []}
       })
 
       ok(response.result?.isError)
       const message = response.result?.content?.[0]?.text ?? ''
-      ok(message.includes('path or paths must contain at least one path'))
+      ok(message.includes('files must contain at least one path'))
     })
 
     strictEqual(calls, 0)

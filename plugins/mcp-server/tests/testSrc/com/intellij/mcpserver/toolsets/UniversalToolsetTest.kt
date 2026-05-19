@@ -60,7 +60,7 @@ class UniversalToolsetTest : GeneralMcpToolsetTestBase() {
     testMcpTool(
       UniversalToolset::execute_tool.name,
       buildJsonObject {
-        put("command", JsonPrimitive("reformat_file --paths '[\"src/Main.java\"]'"))
+        put("command", JsonPrimitive("reformat_file --files '[\"src/Main.java\"]'"))
       },
       "ok"
     )
@@ -212,7 +212,7 @@ class UniversalToolsetTest : GeneralMcpToolsetTestBase() {
     ) { result ->
       assert(result.isError == true) { "Should return an error for missing required parameter" }
       val textContent = result.textContent
-      assert(textContent.text.contains("Missing required parameters") || textContent.text.contains("paths")) {
+      assert(textContent.text.contains("Missing required parameters") || textContent.text.contains("files")) {
         "Error message should mention missing required parameter"
       }
     }

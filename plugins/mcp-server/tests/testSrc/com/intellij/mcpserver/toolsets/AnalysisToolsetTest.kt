@@ -408,7 +408,7 @@ class AnalysisToolsetTest : GeneralMcpToolsetTestBase() {
     testMcpTool(
       AnalysisToolset::lint_files.name,
       buildJsonObject {
-        put("file_paths", buildJsonArray {
+        put("files", buildJsonArray {
           add(JsonPrimitive(project.projectDirectory.relativizeIfPossible(mainJavaFile)))
           add(JsonPrimitive(project.projectDirectory.relativizeIfPossible(mainJavaFile)))
           add(JsonPrimitive(project.projectDirectory.relativizeIfPossible(testJavaFile)))
@@ -428,7 +428,7 @@ class AnalysisToolsetTest : GeneralMcpToolsetTestBase() {
     testMcpTool(
       AnalysisToolset::lint_files.name,
       buildJsonObject {
-        put("file_paths", buildJsonArray {
+        put("files", buildJsonArray {
           add(JsonPrimitive(project.projectDirectory.relativizeIfPossible(mainJavaFile)))
         })
         put("timeout", JsonPrimitive(0))
@@ -472,7 +472,7 @@ class AnalysisToolsetTest : GeneralMcpToolsetTestBase() {
       testMcpTool(
         AnalysisToolset::lint_files.name,
         buildJsonObject {
-          put("file_paths", buildJsonArray {
+          put("files", buildJsonArray {
             add(JsonPrimitive(mainPath))
             add(JsonPrimitive(classPath))
           })
@@ -500,7 +500,7 @@ class AnalysisToolsetTest : GeneralMcpToolsetTestBase() {
       testMcpTool(
         AnalysisToolset::lint_files.name,
         buildJsonObject {
-          put("file_paths", buildJsonArray {
+          put("files", buildJsonArray {
             add(JsonPrimitive(mainPath))
             add(JsonPrimitive(classPath))
           })
@@ -527,7 +527,7 @@ class AnalysisToolsetTest : GeneralMcpToolsetTestBase() {
       testMcpTool(
         AnalysisToolset::lint_files.name,
         buildJsonObject {
-          put("file_paths", buildJsonArray {
+          put("files", buildJsonArray {
             add(JsonPrimitive(mainPath))
             add(JsonPrimitive(classPath))
           })
@@ -557,7 +557,7 @@ class AnalysisToolsetTest : GeneralMcpToolsetTestBase() {
       testMcpTool(
         AnalysisToolset::lint_files.name,
         buildJsonObject {
-          put("file_paths", buildJsonArray {
+          put("files", buildJsonArray {
             add(JsonPrimitive(mainPath))
             add(JsonPrimitive(classPath))
           })
@@ -609,7 +609,7 @@ class AnalysisToolsetTest : GeneralMcpToolsetTestBase() {
       testMcpTool(
         AnalysisToolset::lint_files.name,
         buildJsonObject {
-          put("file_paths", buildJsonArray {
+          put("files", buildJsonArray {
             add(JsonPrimitive(mainPath))
             add(JsonPrimitive(classPath))
             add(JsonPrimitive(testPath))

@@ -23511,10 +23511,20 @@ function findSequence(haystack, needle, startIndex = 0, preferEnd = !1) {
 
 // proxy-tools/handlers/lint-files.ts
 async function handleLintFilesTool(args, callUpstreamTool, capabilities) {
-  let filePaths = normalizeFilePaths(args.file_paths), minSeverity = normalizeMinSeverity(args.min_severity), timeout = toPositiveInt(args.timeout, void 0, "timeout");
-  if (capabilities.hasLintFiles) {
+  let files = normalizeFiles(args), minSeverity = normalizeMinSeverity(args.min_severity), timeout = toPositiveInt(args.timeout, void 0, "timeout");
+  if (capabilities.hasLintFilesFiles) {
     let result = await callUpstreamTool("lint_files", {
-      file_paths: filePaths,
+      files,
+      min_severity: minSeverity,
+      ...timeout !== void 0 ? { timeout } : {}
+    }), structured = extractStructuredContent(result);
+    if (structured == null)
+      throw Error("Upstream lint_files returned unexpected result");
+    return JSON.stringify(structured);
+  }
+  if (capabilities.hasLintFilesFilePaths) {
+    let result = await callUpstreamTool("lint_files", {
+      file_paths: files,
       min_severity: minSeverity,
       ...timeout !== void 0 ? { timeout } : {}
     }), structured = extractStructuredContent(result);
@@ -23524,22 +23534,25 @@ async function handleLintFilesTool(args, callUpstreamTool, capabilities) {
   }
   if (!capabilities.supportsLintFiles)
     throw Error("lint_files is not supported by this IDE version");
-  return await lintFilesLegacy(filePaths, minSeverity, timeout, callUpstreamTool);
+  return await lintFilesLegacy(files, minSeverity, timeout, callUpstreamTool);
 }
-function normalizeFilePaths(value) {
+function normalizeFiles(args) {
+  if (Object.prototype.hasOwnProperty.call(args, "file_paths"))
+    throw Error("file_paths is no longer supported; use files");
+  let value = args.files;
   if (!Array.isArray(value))
-    throw Error("file_paths must be an array of non-empty strings");
+    throw Error("files must be an array of non-empty strings");
   let result = [], seen = /* @__PURE__ */ new Set;
   for (let rawPath of value) {
     if (typeof rawPath !== "string" || rawPath.trim().length === 0)
-      throw Error("file_paths must contain non-empty strings");
+      throw Error("files must contain non-empty strings");
     let normalizedPath = rawPath.trim();
     if (seen.has(normalizedPath))
       continue;
     seen.add(normalizedPath), result.push(normalizedPath);
   }
   if (result.length === 0)
-    throw Error("file_paths must contain at least one path");
+    throw Error("files must contain at least one path");
   return result;
 }
 function normalizeMinSeverity(value) {
@@ -23811,46 +23824,54 @@ function isTruncationError(error48) {
 async function handleReformatFileTool(args, callUpstreamTool, capabilities) {
   if (!capabilities.supportsReformatFile)
     throw Error("reformat_file is not supported by this IDE version");
-  let paths = normalizeReformatFilePaths(args);
+  let files = normalizeReformatFileFiles(args);
+  if (capabilities.hasReformatFileFiles)
+    return await callNativeFilesReformat(files, callUpstreamTool);
   if (capabilities.hasReformatFilePaths)
-    return await callNativeBatchReformat(paths, callUpstreamTool);
-  return await callLegacyReformat(paths, callUpstreamTool);
+    return await callNativePathsReformat(files, callUpstreamTool);
+  return await callLegacyReformat(files, callUpstreamTool);
 }
 function normalizeReformatFileArgs(args) {
-  let normalizedArgs = {
+  return {
     ...args,
-    paths: normalizeReformatFilePaths(args)
+    files: normalizeReformatFileFiles(args)
   };
-  return delete normalizedArgs.path, normalizedArgs;
 }
-function normalizeReformatFilePaths(args) {
+function normalizeReformatFileFiles(args) {
+  if (Object.prototype.hasOwnProperty.call(args, "path"))
+    throw Error("path is no longer supported; use files");
+  if (Object.prototype.hasOwnProperty.call(args, "paths"))
+    throw Error("paths is no longer supported; use files");
+  let rawFiles = args.files;
+  if (!Array.isArray(rawFiles))
+    throw Error("files must be an array of non-empty strings");
   let result = [], seen = /* @__PURE__ */ new Set;
-  if (addPath(args.path, result, seen, "path"), args.paths !== void 0 && args.paths !== null) {
-    if (!Array.isArray(args.paths))
-      throw Error("paths must be an array of non-empty strings");
-    for (let rawPath of args.paths)
-      addPath(rawPath, result, seen, "paths");
-  }
+  for (let rawFile of rawFiles)
+    addFile(rawFile, result, seen);
   if (result.length === 0)
-    throw Error("path or paths must contain at least one path");
+    throw Error("files must contain at least one path");
   return result;
 }
-function addPath(value, result, seen, label) {
-  if (value === void 0 || value === null)
-    return;
-  let path4 = requireString(value, label).trim();
+function addFile(value, result, seen) {
+  let path4 = requireString(value, "files").trim();
+  if (path4.length === 0)
+    throw Error("files must contain non-empty strings");
   if (seen.has(path4))
     return;
   seen.add(path4), result.push(path4);
 }
-async function callNativeBatchReformat(paths, callUpstreamTool) {
-  let result = await callUpstreamTool("reformat_file", { paths });
+async function callNativeFilesReformat(files, callUpstreamTool) {
+  let result = await callUpstreamTool("reformat_file", { files });
   return extractTextFromResult(result) ?? "ok";
 }
-async function callLegacyReformat(paths, callUpstreamTool) {
+async function callNativePathsReformat(files, callUpstreamTool) {
+  let result = await callUpstreamTool("reformat_file", { paths: files });
+  return extractTextFromResult(result) ?? "ok";
+}
+async function callLegacyReformat(files, callUpstreamTool) {
   let lastText = null;
-  for (let path4 of paths) {
-    let result = await callUpstreamTool("reformat_file", { path: path4 });
+  for (let file2 of files) {
+    let result = await callUpstreamTool("reformat_file", { path: file2 });
     lastText = extractTextFromResult(result) ?? lastText;
   }
   return lastText ?? "ok";
@@ -24793,7 +24814,7 @@ function createSearchSymbolSchema() {
 }
 function createLintFilesSchema() {
   return objectSchema({
-    file_paths: {
+    files: {
       type: "array",
       description: "List of project-relative file paths to analyze. Duplicate paths are ignored after normalization.",
       items: {
@@ -24808,22 +24829,18 @@ function createLintFilesSchema() {
       type: "number",
       description: "Timeout in milliseconds for the full batch."
     }
-  }, ["file_paths"]);
+  }, ["files"]);
 }
 function createReformatFileSchema() {
   return objectSchema({
-    path: {
-      type: "string",
-      description: "Project-relative file path to reformat. Deprecated: prefer paths for batch formatting."
-    },
-    paths: {
+    files: {
       type: "array",
       description: "List of project-relative file paths to reformat. Duplicate paths are ignored after normalization.",
       items: {
         type: "string"
       }
     }
-  });
+  }, ["files"]);
 }
 function createApplyPatchSchema() {
   return objectSchema({
@@ -24959,7 +24976,7 @@ var TOOL_VARIANTS = [
     handlerFactory: ({ callUpstreamTool, analysisCapabilities }) => (args) => handleLintFilesTool(args, callUpstreamTool, analysisCapabilities),
     annotations: READ_ONLY_TOOL_ANNOTATIONS,
     upstreamNames: ["get_file_problems"],
-    expose: ({ analysisCapabilities }) => !analysisCapabilities.hasLintFiles && analysisCapabilities.supportsLintFiles
+    expose: ({ analysisCapabilities }) => !analysisCapabilities.hasLintFilesFiles && analysisCapabilities.supportsLintFiles
   },
   {
     name: "reformat_file",
@@ -24967,7 +24984,7 @@ var TOOL_VARIANTS = [
     schemaFactory: () => createReformatFileSchema(),
     handlerFactory: ({ callUpstreamTool, formattingCapabilities }) => (args) => handleReformatFileTool(args, callUpstreamTool, formattingCapabilities),
     upstreamNames: ["reformat_file"],
-    expose: ({ formattingCapabilities }) => formattingCapabilities.hasReformatFile && !formattingCapabilities.hasReformatFilePaths
+    expose: ({ formattingCapabilities }) => formattingCapabilities.hasReformatFile && !formattingCapabilities.hasReformatFileFiles
   },
   {
     name: "list_dir",
@@ -25089,33 +25106,43 @@ function resolveReadCapabilities(upstreamTools) {
   };
 }
 function resolveAnalysisCapabilities(upstreamTools) {
-  let names = /* @__PURE__ */ new Set;
+  let names = /* @__PURE__ */ new Set, hasLintFiles = !1, hasLintFilesFiles = !1, hasLintFilesFilePaths = !1;
   for (let tool of upstreamTools ?? []) {
     let name = typeof tool?.name === "string" ? tool.name : "";
     if (name)
       names.add(name);
+    if (name !== "lint_files")
+      continue;
+    hasLintFiles = !0;
+    let properties = tool.inputSchema?.properties;
+    if (properties && typeof properties === "object")
+      hasLintFilesFiles = hasLintFilesFiles || Object.prototype.hasOwnProperty.call(properties, "files"), hasLintFilesFilePaths = hasLintFilesFilePaths || Object.prototype.hasOwnProperty.call(properties, "file_paths");
   }
-  let hasLintFiles = names.has("lint_files");
   return {
     capabilities: {
       hasLintFiles,
+      hasLintFilesFiles,
+      hasLintFilesFilePaths,
       supportsLintFiles: hasLintFiles || names.has("get_file_problems")
     }
   };
 }
 function resolveFormattingCapabilities(upstreamTools) {
-  let hasReformatFile = !1, hasReformatFilePaths = !1;
+  let hasReformatFile = !1, hasReformatFileFiles = !1, hasReformatFilePaths = !1;
   for (let tool of upstreamTools ?? []) {
     if (tool?.name !== "reformat_file")
       continue;
     hasReformatFile = !0;
     let properties = tool.inputSchema?.properties;
+    if (properties && typeof properties === "object" && Object.prototype.hasOwnProperty.call(properties, "files"))
+      hasReformatFileFiles = !0;
     if (properties && typeof properties === "object" && Object.prototype.hasOwnProperty.call(properties, "paths"))
       hasReformatFilePaths = !0;
   }
   return {
     capabilities: {
       hasReformatFile,
+      hasReformatFileFiles,
       hasReformatFilePaths,
       supportsReformatFile: hasReformatFile
     }
@@ -25416,7 +25443,7 @@ function isRiderPath(filePath, projectRoot) {
     return !1;
   return relative === RIDER_PROJECT_SUBPATH || relative.startsWith(RIDER_PROJECT_SUBPATH + path9.sep);
 }
-function splitPathListArgsByIde(args, projectRoot, argName = "file_paths") {
+function splitPathListArgsByIde(args, projectRoot, argName = "files") {
   let rawPaths = args[argName];
   if (!Array.isArray(rawPaths))
     throw Error(`${argName} must be an array of strings`);
@@ -25901,12 +25928,12 @@ async function callLintFilesViaProxyOrNative(side, args) {
   if (side === "idea") {
     if (ideaProxyToolCall && ideaProxyToolNames.has("lint_files"))
       return await ideaProxyToolCall("lint_files", { ...args });
-    if (ideaUpstream?.analysisCapabilities.hasLintFiles)
+    if (ideaUpstream?.analysisCapabilities.hasLintFilesFiles)
       return await ideaUpstream.callToolForClient("lint_files", { ...args });
   } else {
     if (riderProxyToolCall && riderProxyToolNames.has("lint_files"))
       return await riderProxyToolCall("lint_files", { ...args });
-    if (riderUpstream?.analysisCapabilities.hasLintFiles)
+    if (riderUpstream?.analysisCapabilities.hasLintFilesFiles)
       return await riderUpstream.callToolForClient("lint_files", { ...args });
   }
   throw Error(`Tool 'lint_files' is not supported by the ${side === "idea" ? "IDEA" : "Rider"} upstream.`);
@@ -25915,11 +25942,15 @@ async function callReformatFileViaProxyOrNative(side, args) {
   if (side === "idea") {
     if (ideaProxyToolCall && ideaProxyToolNames.has("reformat_file"))
       return String(await ideaProxyToolCall("reformat_file", { ...args }));
+    if (ideaUpstream?.formattingCapabilities.hasReformatFileFiles)
+      return extractTextFromResult(await ideaUpstream.callToolForClient("reformat_file", { ...args })) ?? "ok";
     if (ideaUpstream?.formattingCapabilities.hasReformatFile)
       return await handleReformatFileTool(args, (name, toolArgs) => ideaUpstream.callTool(name, toolArgs), ideaUpstream.formattingCapabilities);
   } else {
     if (riderProxyToolCall && riderProxyToolNames.has("reformat_file"))
       return String(await riderProxyToolCall("reformat_file", { ...args }));
+    if (riderUpstream?.formattingCapabilities.hasReformatFileFiles)
+      return extractTextFromResult(await riderUpstream.callToolForClient("reformat_file", { ...args })) ?? "ok";
     if (riderUpstream?.formattingCapabilities.hasReformatFile)
       return await handleReformatFileTool(args, (name, toolArgs) => riderUpstream.callTool(name, toolArgs), riderUpstream.formattingCapabilities);
   }
@@ -25930,7 +25961,7 @@ async function callSingleLintFilesTool(args) {
   return createLintFilesToolOutput(result.more === !0 ? { items, more: !0 } : { items });
 }
 async function callSplitMergedLintFiles(args) {
-  let normalizedArgs = normalizeLintFilesArgs(args), normalizedFilePaths = normalizedArgs.file_paths, splitArgs;
+  let normalizedArgs = normalizeLintFilesArgs(args), normalizedFilePaths = normalizedArgs.files, splitArgs;
   try {
     splitArgs = splitPathListArgsByIde(normalizedArgs, projectPath);
   } catch (error48) {
@@ -25965,7 +25996,7 @@ async function callSingleReformatFileTool(args) {
 async function callSplitMergedReformatFile(args) {
   let normalizedArgs = normalizeReformatFileArgs(args), splitArgs;
   try {
-    splitArgs = splitPathListArgsByIde(normalizedArgs, projectPath, "paths");
+    splitArgs = splitPathListArgsByIde(normalizedArgs, projectPath);
   } catch (error48) {
     let message = error48 instanceof Error ? error48.message : String(error48);
     return makeToolError(message);
@@ -25988,7 +26019,7 @@ async function callReformatFileForSide(side, args) {
   return await callReformatFileViaProxyOrNative(side, normalizedArgs);
 }
 async function callLintFilesForSide(side, args) {
-  let normalizedArgs = normalizeLintFilesArgs(args), result = parseLintFilesToolResult(await callLintFilesViaProxyOrNative(side, normalizedArgs)), filePaths = normalizedArgs.file_paths, items = orderLintItems(filePaths, result.items);
+  let normalizedArgs = normalizeLintFilesArgs(args), result = parseLintFilesToolResult(await callLintFilesViaProxyOrNative(side, normalizedArgs)), filePaths = normalizedArgs.files, items = orderLintItems(filePaths, result.items);
   return result.more === !0 ? { items, more: !0 } : { items };
 }
 function getSingleLintFilesSide() {
@@ -26006,9 +26037,11 @@ function getSingleReformatFileSide() {
   throw Error("Tool 'reformat_file' is not available because no upstream is connected.");
 }
 function normalizeLintFilesArgs(args) {
-  let filePaths = normalizeLintFilePathsArg(args.file_paths), timeout = normalizeLintTimeoutArg(args.timeout), normalizedArgs = {
+  if (Object.prototype.hasOwnProperty.call(args, "file_paths"))
+    throw Error("file_paths is no longer supported; use files");
+  let files = normalizeLintFilesArg(args.files), timeout = normalizeLintTimeoutArg(args.timeout), normalizedArgs = {
     ...args,
-    file_paths: filePaths
+    files
   };
   if (timeout !== void 0)
     normalizedArgs.timeout = timeout;
@@ -26016,20 +26049,20 @@ function normalizeLintFilesArgs(args) {
     delete normalizedArgs.timeout;
   return normalizedArgs;
 }
-function normalizeLintFilePathsArg(value) {
+function normalizeLintFilesArg(value) {
   if (!Array.isArray(value))
-    throw Error("file_paths must be an array of non-empty strings");
+    throw Error("files must be an array of non-empty strings");
   let result = [], seen = /* @__PURE__ */ new Set;
   for (let rawPath of value) {
     if (typeof rawPath !== "string" || rawPath.trim().length === 0)
-      throw Error("file_paths must contain non-empty strings");
+      throw Error("files must contain non-empty strings");
     let normalizedPath = rawPath.trim();
     if (seen.has(normalizedPath))
       continue;
     seen.add(normalizedPath), result.push(normalizedPath);
   }
   if (result.length === 0)
-    throw Error("file_paths must contain at least one path");
+    throw Error("files must contain at least one path");
   return result;
 }
 function normalizeLintTimeoutArg(value) {

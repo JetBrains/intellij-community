@@ -31,7 +31,9 @@ class FormattingToolsetTest : GeneralMcpToolsetTestBase() {
     testMcpTool(
       FormattingToolset::reformat_file.name,
       buildJsonObject {
-        put("path", JsonPrimitive(project.projectDirectory.relativizeIfPossible(mainJavaFile)))
+        put("files", buildJsonArray {
+          add(JsonPrimitive(project.projectDirectory.relativizeIfPossible(mainJavaFile)))
+        })
       },
       "ok"
     )
@@ -83,7 +85,7 @@ class FormattingToolsetTest : GeneralMcpToolsetTestBase() {
         testMcpTool(
           FormattingToolset::reformat_file.name,
           buildJsonObject {
-            put("paths", buildJsonArray {
+            put("files", buildJsonArray {
               add(JsonPrimitive("src/ReformatTarget.kt"))
               add(JsonPrimitive("src/ReformatSecondTarget.kt"))
             })

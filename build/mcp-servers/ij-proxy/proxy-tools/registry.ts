@@ -191,7 +191,7 @@ const TOOL_VARIANTS: ToolVariant[] = [
       handleLintFilesTool(args, callUpstreamTool, analysisCapabilities),
     annotations: READ_ONLY_TOOL_ANNOTATIONS,
     upstreamNames: ['get_file_problems'],
-    expose: ({analysisCapabilities}) => !analysisCapabilities.hasLintFiles && analysisCapabilities.supportsLintFiles
+    expose: ({analysisCapabilities}) => !analysisCapabilities.hasLintFilesFiles && analysisCapabilities.supportsLintFiles
   },
   {
     name: 'reformat_file',
@@ -200,7 +200,7 @@ const TOOL_VARIANTS: ToolVariant[] = [
     handlerFactory: ({callUpstreamTool, formattingCapabilities}) => (args) =>
       handleReformatFileTool(args, callUpstreamTool, formattingCapabilities),
     upstreamNames: ['reformat_file'],
-    expose: ({formattingCapabilities}) => formattingCapabilities.hasReformatFile && !formattingCapabilities.hasReformatFilePaths
+    expose: ({formattingCapabilities}) => formattingCapabilities.hasReformatFile && !formattingCapabilities.hasReformatFileFiles
   },
   {
     name: 'list_dir',

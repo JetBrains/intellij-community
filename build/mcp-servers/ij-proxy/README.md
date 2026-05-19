@@ -91,7 +91,7 @@ Each proxy command maps to one or more JetBrains MCP tools. Search tool mapping 
 - `apply_patch`: Matches Codex `apply_patch` and accepts unified git diff compatibility input (raw or wrapped in `*** Begin Patch` / `*** End Patch`). Uses native `read_file` when available, falls back to legacy file reads for older upstream IDEs, and writes through `create_new_file` plus `git rm`/`git mv` for delete/move.
 - `apply_patch` unified hunk compatibility: coordinate-only headers like `@@ -1,3 +1,4 @@` are treated as metadata (not search hints). See `apply-patch-unified-hunk-header-spec.md`.
 - `rename`: Uses `rename_refactoring`.
-- `reformat_file`: Accepts `paths` for batch formatting and falls back to repeated legacy `path` calls for older upstream IDEs.
+- `reformat_file`: Accepts `files` for batch formatting and falls back to older upstream `paths` or repeated legacy `path` calls internally.
 
 Example `.mcp.toml` entry (Codex):
 

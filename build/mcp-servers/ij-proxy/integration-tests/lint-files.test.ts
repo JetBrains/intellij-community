@@ -11,6 +11,12 @@ const legacyLintTool = buildUpstreamTool('get_file_problems', {
 }, ['filePath'])
 
 const nativeLintTool = buildUpstreamTool('lint_files', {
+  files: {type: 'array', items: {type: 'string'}},
+  min_severity: {type: 'string'},
+  timeout: {type: 'number'}
+}, ['files'])
+
+const legacyBatchLintTool = buildUpstreamTool('lint_files', {
   file_paths: {type: 'array', items: {type: 'string'}},
   min_severity: {type: 'string'},
   timeout: {type: 'number'}
@@ -60,7 +66,7 @@ describe('ij MCP proxy lint_files legacy compatibility', {timeout: SUITE_TIMEOUT
       await proxyClient.send('tools/list')
       const response = await proxyClient.send('tools/call', {
         name: 'lint_files',
-        arguments: {file_paths: ['src/Main.kt', 'src/Clean.kt']}
+        arguments: {files: ['src/Main.kt', 'src/Clean.kt']}
       })
 
       const parsed = JSON.parse(response.result.content[0].text)
@@ -85,7 +91,7 @@ describe('ij MCP proxy lint_files legacy compatibility', {timeout: SUITE_TIMEOUT
       await proxyClient.send('tools/list')
       const response = await proxyClient.send('tools/call', {
         name: 'lint_files',
-        arguments: {file_paths: ['src/Main.kt', 'src/Clean.kt']}
+        arguments: {files: ['src/Main.kt', 'src/Clean.kt']}
       })
 
       const parsed = JSON.parse(response.result.content[0].text)
@@ -120,7 +126,7 @@ describe('ij MCP proxy lint_files legacy compatibility', {timeout: SUITE_TIMEOUT
       await proxyClient.send('tools/list')
       const response = await proxyClient.send('tools/call', {
         name: 'lint_files',
-        arguments: {file_paths: ['src/Main.kt', 'src/Clean.kt', 'src/After.kt']}
+        arguments: {files: ['src/Main.kt', 'src/Clean.kt', 'src/After.kt']}
       })
 
       const parsed = JSON.parse(response.result.content[0].text)
@@ -132,11 +138,11 @@ describe('ij MCP proxy lint_files legacy compatibility', {timeout: SUITE_TIMEOUT
     deepStrictEqual(calls, ['src/Main.kt', 'src/Clean.kt'])
   })
 
-  it('treats null timeout as omitted for native lint_files', async () => {
+  it('translates files to legacy batch lint_files and treats null timeout as omitted', async () => {
     const calls: Array<{filePaths: string[]; timeout: unknown}> = []
 
     await withProxy({
-      tools: [nativeLintTool],
+      tools: [legacyBatchLintTool],
       onToolCall({name, args}) {
         strictEqual(name, 'lint_files')
         calls.push({filePaths: (args.file_paths as string[]).slice(), timeout: args.timeout})
@@ -149,7 +155,7 @@ describe('ij MCP proxy lint_files legacy compatibility', {timeout: SUITE_TIMEOUT
       await proxyClient.send('tools/list')
       const response = await proxyClient.send('tools/call', {
         name: 'lint_files',
-        arguments: {file_paths: ['src/Main.kt'], timeout: null}
+        arguments: {files: ['src/Main.kt'], timeout: null}
       })
 
       const parsed = JSON.parse(response.result.content[0].text)
@@ -158,6 +164,30 @@ describe('ij MCP proxy lint_files legacy compatibility', {timeout: SUITE_TIMEOUT
     })
 
     deepStrictEqual(calls, [{filePaths: ['src/Main.kt'], timeout: undefined}])
+  })
+
+  it('rejects legacy file_paths client arguments before calling upstream', async () => {
+    let calls = 0
+
+    await withProxy({
+      tools: [nativeLintTool],
+      onToolCall() {
+        calls += 1
+        return nativeLintResponse([])
+      }
+    }, async ({proxyClient}) => {
+      await proxyClient.send('tools/list')
+      const response = await proxyClient.send('tools/call', {
+        name: 'lint_files',
+        arguments: {file_paths: ['src/Main.kt']}
+      })
+
+      ok(response.result?.isError)
+      const message = response.result?.content?.[0]?.text ?? ''
+      ok(message.includes('file_paths is no longer supported; use files'))
+    })
+
+    strictEqual(calls, 0)
   })
 
   it('calls native lint_files once and preserves request order', async () => {
@@ -176,7 +206,7 @@ describe('ij MCP proxy lint_files legacy compatibility', {timeout: SUITE_TIMEOUT
       tools: [nativeLintTool],
       onToolCall({name, args}) {
         strictEqual(name, 'lint_files')
-        const filePaths = (args.file_paths as string[]).slice()
+        const filePaths = (args.files as string[]).slice()
         calls.push({filePaths, timeout: args.timeout as number | undefined})
         return nativeLintResponse(filePaths.slice().reverse().map((filePath) => ({
           filePath,
@@ -187,7 +217,7 @@ describe('ij MCP proxy lint_files legacy compatibility', {timeout: SUITE_TIMEOUT
       await proxyClient.send('tools/list')
       const response = await proxyClient.send('tools/call', {
         name: 'lint_files',
-        arguments: {file_paths: requestedPaths, timeout: 500}
+        arguments: {files: requestedPaths, timeout: 500}
       })
 
       const parsed = JSON.parse(response.result.content[0].text)
@@ -212,7 +242,7 @@ describe('ij MCP proxy lint_files legacy compatibility', {timeout: SUITE_TIMEOUT
       tools: [nativeLintTool],
       onToolCall({name, args}) {
         strictEqual(name, 'lint_files')
-        const filePaths = (args.file_paths as string[]).slice()
+        const filePaths = (args.files as string[]).slice()
         calls.push(filePaths)
         return nativeLintResponse(filePaths.slice(0, 5).reverse().map((filePath) => ({
           filePath,
@@ -223,7 +253,7 @@ describe('ij MCP proxy lint_files legacy compatibility', {timeout: SUITE_TIMEOUT
       await proxyClient.send('tools/list')
       const response = await proxyClient.send('tools/call', {
         name: 'lint_files',
-        arguments: {file_paths: requestedPaths, timeout: 500}
+        arguments: {files: requestedPaths, timeout: 500}
       })
 
       const parsed = JSON.parse(response.result.content[0].text)

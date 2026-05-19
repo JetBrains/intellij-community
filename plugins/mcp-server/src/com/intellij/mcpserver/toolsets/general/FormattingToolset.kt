@@ -34,14 +34,12 @@ class FormattingToolset : McpToolset {
         |Use this tool to apply code formatting rules to files identified by their project-relative paths.
   """)
   suspend fun reformat_file(
-    @McpDescription("Project-relative file path to reformat. Deprecated: prefer `paths` for batch formatting.")
-    path: String? = null,
-    @McpDescription("List of project-relative file paths to reformat. Duplicate paths are ignored after normalization.")
-    paths: List<String>? = null,
+    @McpDescription("List of project-relative files to reformat. Duplicate paths are ignored after normalization.")
+    files: List<String>,
   ): String {
     val context = currentCoroutineContext()
     val project = context.project
-    val requestedFiles = prepareRequestedFormattingFiles(project, path, paths)
+    val requestedFiles = prepareRequestedFormattingFiles(project, files)
     context.reportToolActivity(McpServerBundle.message("tool.activity.formatting.files", requestedFiles.size))
     val commandName: @NlsContexts.Command String = reformatCommandName(requestedFiles)
 
@@ -88,17 +86,15 @@ private fun reformatCommandName(requestedFiles: List<RequestedFormattingFile>): 
 
 private suspend fun prepareRequestedFormattingFiles(
   project: Project,
-  path: String?,
-  paths: List<String>?,
+  files: List<String>,
 ): List<RequestedFormattingFile> {
+  if (files.isEmpty()) {
+    mcpFail("files must contain at least one path")
+  }
+
   val requestedFiles = LinkedHashMap<Path, String>()
   val projectDirectory = project.projectDirectory
-  addRequestedFormattingFile(requestedFiles, projectDirectory, path)
-  paths?.forEach { addRequestedFormattingFile(requestedFiles, projectDirectory, it) }
-
-  if (requestedFiles.isEmpty()) {
-    mcpFail("path or paths must contain at least one path")
-  }
+  files.forEach { addRequestedFormattingFile(requestedFiles, projectDirectory, it) }
 
   val localFileSystem = LocalFileSystem.getInstance()
   val psiManager = PsiManager.getInstance(project)
@@ -114,7 +110,7 @@ private suspend fun prepareRequestedFormattingFiles(
 private fun addRequestedFormattingFile(requestedFiles: MutableMap<Path, String>, projectDirectory: Path, rawPath: String?) {
   if (rawPath == null) return
 
-  val path = rawPath.trim().ifEmpty { mcpFail("paths must not contain blank paths") }
+  val path = rawPath.trim().ifEmpty { mcpFail("files must not contain blank paths") }
   val resolvedPath = resolveExistingRegularFileInProject(pathInProject = path, projectDirectory = projectDirectory)
   requestedFiles.putIfAbsent(resolvedPath, path)
 }

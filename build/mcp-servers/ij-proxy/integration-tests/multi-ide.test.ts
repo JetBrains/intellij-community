@@ -166,10 +166,10 @@ describe('ij MCP proxy multi-IDE', {timeout: SUITE_TIMEOUT_MS}, () => {
       timeout: {type: 'number'}
     }, ['filePath'])
     const lintFilesTool = buildUpstreamTool('lint_files', {
-      file_paths: {type: 'array', items: {type: 'string'}},
+      files: {type: 'array', items: {type: 'string'}},
       min_severity: {type: 'string'},
       timeout: {type: 'number'}
-    }, ['file_paths'])
+    }, ['files'])
 
     await withConfiguredDualProxy({
       ideaTools: [legacyLintTool],
@@ -191,7 +191,7 @@ describe('ij MCP proxy multi-IDE', {timeout: SUITE_TIMEOUT_MS}, () => {
       },
       riderOnToolCall({name, args}) {
         ok(name === 'lint_files')
-        strictEqual(JSON.stringify(args.file_paths), JSON.stringify(['Psi/Foo.cs']))
+        strictEqual(JSON.stringify(args.files), JSON.stringify(['Psi/Foo.cs']))
         strictEqual(args.min_severity ?? 'warning', 'warning')
         return {
           structuredContent: {
@@ -210,7 +210,7 @@ describe('ij MCP proxy multi-IDE', {timeout: SUITE_TIMEOUT_MS}, () => {
 
       const response = await proxyClient.send('tools/call', {
         name: 'lint_files',
-        arguments: {file_paths: ['src/Main.kt', 'dotnet/Psi/Foo.cs']}
+        arguments: {files: ['src/Main.kt', 'dotnet/Psi/Foo.cs']}
       })
 
       const parsed = JSON.parse(response.result.content[0].text)
@@ -229,10 +229,10 @@ describe('ij MCP proxy multi-IDE', {timeout: SUITE_TIMEOUT_MS}, () => {
 
   it('calls native lint_files once per IDE and preserves original interleaved order', async () => {
     const lintFilesTool = buildUpstreamTool('lint_files', {
-      file_paths: {type: 'array', items: {type: 'string'}},
+      files: {type: 'array', items: {type: 'string'}},
       min_severity: {type: 'string'},
       timeout: {type: 'number'}
-    }, ['file_paths'])
+    }, ['files'])
     const requestedPaths = [
       'src/File1.kt',
       'dotnet/Psi/File1.cs',
@@ -253,7 +253,7 @@ describe('ij MCP proxy multi-IDE', {timeout: SUITE_TIMEOUT_MS}, () => {
       riderTools: [lintFilesTool],
       ideaOnToolCall({name, args}) {
         strictEqual(name, 'lint_files')
-        const filePaths = args.file_paths as string[]
+        const filePaths = args.files as string[]
         const items = filePaths.slice().reverse().map((filePath) => ({
           filePath,
           problems: [{severity: 'WARNING', description: filePath, lineText: `idea:${filePath}`, line: 1, column: 1}]
@@ -265,7 +265,7 @@ describe('ij MCP proxy multi-IDE', {timeout: SUITE_TIMEOUT_MS}, () => {
       },
       riderOnToolCall({name, args}) {
         strictEqual(name, 'lint_files')
-        const filePaths = args.file_paths as string[]
+        const filePaths = args.files as string[]
         const items = filePaths.slice().reverse().map((filePath) => ({
           filePath,
           problems: [{severity: 'WARNING', description: filePath, lineText: `rider:${filePath}`, line: 1, column: 1}]
@@ -279,12 +279,12 @@ describe('ij MCP proxy multi-IDE', {timeout: SUITE_TIMEOUT_MS}, () => {
       await proxyClient.send('tools/list')
       const response = await proxyClient.send('tools/call', {
         name: 'lint_files',
-        arguments: {file_paths: requestedPaths, timeout: 500}
+        arguments: {files: requestedPaths, timeout: 500}
       })
 
       const parsed = JSON.parse(response.result.content[0].text)
       deepStrictEqual(parsed.items.map((item) => item.filePath), requestedPaths)
-      deepStrictEqual(ideaCalls.map((call) => call.args.file_paths), [[
+      deepStrictEqual(ideaCalls.map((call) => call.args.files), [[
         'src/File1.kt',
         'src/File2.kt',
         'src/File3.kt',
@@ -292,7 +292,7 @@ describe('ij MCP proxy multi-IDE', {timeout: SUITE_TIMEOUT_MS}, () => {
         'src/File5.kt',
         'src/File6.kt'
       ]])
-      deepStrictEqual(riderCalls.map((call) => call.args.file_paths), [[
+      deepStrictEqual(riderCalls.map((call) => call.args.files), [[
         'Psi/File1.cs',
         'Psi/File2.cs',
         'Psi/File3.cs',
@@ -305,25 +305,22 @@ describe('ij MCP proxy multi-IDE', {timeout: SUITE_TIMEOUT_MS}, () => {
     })
   })
 
-  it('splits reformat_file paths across IDEA and Rider', async () => {
+  it('splits reformat_file files across IDEA and Rider', async () => {
     const reformatTool = buildUpstreamTool('reformat_file', {
-      path: {type: 'string'},
-      paths: {type: 'array', items: {type: 'string'}}
-    })
+      files: {type: 'array', items: {type: 'string'}}
+    }, ['files'])
 
     await withConfiguredDualProxy({
       ideaTools: [reformatTool],
       riderTools: [reformatTool],
       ideaOnToolCall({name, args}) {
         strictEqual(name, 'reformat_file')
-        deepStrictEqual(args.paths, ['src/File1.kt', 'src/File2.kt'])
-        ok(!('path' in args))
+        deepStrictEqual(args.files, ['src/File1.kt', 'src/File2.kt'])
         return {text: 'ok'}
       },
       riderOnToolCall({name, args}) {
         strictEqual(name, 'reformat_file')
-        deepStrictEqual(args.paths, ['Psi/File1.cs', 'Psi/File2.cs'])
-        ok(!('path' in args))
+        deepStrictEqual(args.files, ['Psi/File1.cs', 'Psi/File2.cs'])
         return {text: 'ok'}
       }
     }, async ({proxyClient, ideaCalls, riderCalls}) => {
@@ -331,7 +328,7 @@ describe('ij MCP proxy multi-IDE', {timeout: SUITE_TIMEOUT_MS}, () => {
       const response = await proxyClient.send('tools/call', {
         name: 'reformat_file',
         arguments: {
-          paths: ['src/File1.kt', 'dotnet/Psi/File1.cs', 'src/File2.kt', 'dotnet/Psi/File2.cs']
+          files: ['src/File1.kt', 'dotnet/Psi/File1.cs', 'src/File2.kt', 'dotnet/Psi/File2.cs']
         }
       })
 

@@ -169,22 +169,22 @@ describe('ij MCP proxy routing', () => {
   describe('splitPathListArgsByIde', () => {
     it('splits mixed batches across IDEs', () => {
       const result = splitPathListArgsByIde({
-        file_paths: ['src/Main.java', 'dotnet/Foo.cs', 'dotnet/sub/Bar.cs']
+        files: ['src/Main.java', 'dotnet/Foo.cs', 'dotnet/sub/Bar.cs']
       }, PROJECT_ROOT)
 
-      deepStrictEqual(result.ideaArgs, {file_paths: ['src/Main.java']})
-      deepStrictEqual(result.riderArgs, {file_paths: ['Foo.cs', 'sub/Bar.cs']})
+      deepStrictEqual(result.ideaArgs, {files: ['src/Main.java']})
+      deepStrictEqual(result.riderArgs, {files: ['Foo.cs', 'sub/Bar.cs']})
     })
 
     it('preserves sibling arguments', () => {
       const result = splitPathListArgsByIde({
-        file_paths: ['dotnet/Foo.cs'],
+        files: ['dotnet/Foo.cs'],
         min_severity: 'warning',
         timeout: 1000
       }, PROJECT_ROOT)
 
       deepStrictEqual(result.riderArgs, {
-        file_paths: ['Foo.cs'],
+        files: ['Foo.cs'],
         min_severity: 'warning',
         timeout: 1000
       })

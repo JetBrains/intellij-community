@@ -35,10 +35,10 @@ describe('ij MCP proxy tool call timeout', {timeout: SUITE_TIMEOUT_MS}, () => {
 
   it('uses the build timeout for lint_files', async () => {
     const lintFilesTool = buildUpstreamTool('lint_files', {
-      file_paths: {type: 'array', items: {type: 'string'}},
+      files: {type: 'array', items: {type: 'string'}},
       min_severity: {type: 'string'},
       timeout: {type: 'number'}
-    }, ['file_paths'])
+    }, ['files'])
 
     await withProxy({
       tools: [lintFilesTool],
@@ -60,7 +60,7 @@ describe('ij MCP proxy tool call timeout', {timeout: SUITE_TIMEOUT_MS}, () => {
       await proxyClient.send('tools/list')
       const response = await proxyClient.send('tools/call', {
         name: 'lint_files',
-        arguments: {file_paths: ['src/Main.kt']}
+        arguments: {files: ['src/Main.kt']}
       })
 
       ok(!response.result?.isError)
@@ -110,8 +110,8 @@ describe('ij MCP proxy tool call timeout', {timeout: SUITE_TIMEOUT_MS}, () => {
 
   it('arguments.timeout overrides build timeout for _LONG_TIMEOUT_TOOLS', async () => {
     const lintFilesTool = buildUpstreamTool('lint_files', {
-      file_paths: {type: 'array', items: {type: 'string'}}
-    }, ['file_paths'])
+      files: {type: 'array', items: {type: 'string'}}
+    }, ['files'])
 
     await withProxy({
       tools: [lintFilesTool],
@@ -130,7 +130,7 @@ describe('ij MCP proxy tool call timeout', {timeout: SUITE_TIMEOUT_MS}, () => {
       await proxyClient.send('tools/list')
       const response = await proxyClient.send('tools/call', {
         name: 'lint_files',
-        arguments: {file_paths: ['src/Main.kt'], timeout: 200}
+        arguments: {files: ['src/Main.kt'], timeout: 200}
       })
 
       ok(response.result?.isError)

@@ -77,15 +77,26 @@ export function resolveAnalysisCapabilities(
   upstreamTools: ToolSpecLike[] | undefined
 ): {capabilities: AnalysisCapabilities} {
   const names = new Set<string>()
+  let hasLintFiles = false
+  let hasLintFilesFiles = false
+  let hasLintFilesFilePaths = false
   for (const tool of upstreamTools ?? []) {
     const name = typeof tool?.name === 'string' ? tool.name : ''
     if (name) names.add(name)
+    if (name !== 'lint_files') continue
+    hasLintFiles = true
+    const properties = tool.inputSchema?.properties
+    if (properties && typeof properties === 'object') {
+      hasLintFilesFiles = hasLintFilesFiles || Object.prototype.hasOwnProperty.call(properties, 'files')
+      hasLintFilesFilePaths = hasLintFilesFilePaths || Object.prototype.hasOwnProperty.call(properties, 'file_paths')
+    }
   }
 
-  const hasLintFiles = names.has('lint_files')
   return {
     capabilities: {
       hasLintFiles,
+      hasLintFilesFiles,
+      hasLintFilesFilePaths,
       supportsLintFiles: hasLintFiles || names.has('get_file_problems')
     }
   }
@@ -95,11 +106,17 @@ export function resolveFormattingCapabilities(
   upstreamTools: ToolSpecLike[] | undefined
 ): {capabilities: FormattingCapabilities} {
   let hasReformatFile = false
+  let hasReformatFileFiles = false
   let hasReformatFilePaths = false
   for (const tool of upstreamTools ?? []) {
     if (tool?.name !== 'reformat_file') continue
     hasReformatFile = true
     const properties = tool.inputSchema?.properties
+    if (properties &&
+        typeof properties === 'object' &&
+        Object.prototype.hasOwnProperty.call(properties, 'files')) {
+      hasReformatFileFiles = true
+    }
     if (properties &&
         typeof properties === 'object' &&
         Object.prototype.hasOwnProperty.call(properties, 'paths')) {
@@ -110,6 +127,7 @@ export function resolveFormattingCapabilities(
   return {
     capabilities: {
       hasReformatFile,
+      hasReformatFileFiles,
       hasReformatFilePaths,
       supportsReformatFile: hasReformatFile
     }
