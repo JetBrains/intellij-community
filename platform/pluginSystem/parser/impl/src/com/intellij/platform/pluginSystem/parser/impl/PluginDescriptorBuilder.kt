@@ -26,7 +26,7 @@ interface PluginDescriptorBuilder {
   var isSeparateJar: Boolean
 
   var visibility: ModuleVisibilityValue
-  var namespace: String?
+  var firstNamespaceOfContentTag: String?
 
   var url: String?
   var vendor: String?

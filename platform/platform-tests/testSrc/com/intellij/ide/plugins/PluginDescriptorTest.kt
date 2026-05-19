@@ -463,8 +463,7 @@ class PluginDescriptorTest {
   @Test
   fun `namespace and visibility of content modules`() {
     val pluginPath = plugin("foo") {
-      namespace = "my.namespace"
-      content {
+      content(namespace = "my.namespace") {
         module("foo.internal") {
           moduleVisibility = ModuleVisibilityValue.INTERNAL
         }
@@ -482,15 +481,23 @@ class PluginDescriptorTest {
     assertThat(contentModules[0].visibility).isEqualTo(ModuleVisibility.INTERNAL)
     assertThat(contentModules[1].visibility).isEqualTo(ModuleVisibility.PRIVATE)
     assertThat(contentModules[2].visibility).isEqualTo(ModuleVisibility.PUBLIC)
-    assertThat(foo.namespace).isEqualTo("my.namespace")
+    assertThat(contentModules[0].moduleId.namespace).isEqualTo("my.namespace")
   }
 
   @Test
   fun `multiple namespaces in content tags`() {
-    val (plugin, errors) = runAndReturnWithLoggedErrors { loadDescriptorFromTestDataDir("multipleNamespaces") as PluginMainDescriptor }
-    assertThat(errors.joinToString { it.message ?: "" }).contains("already set namespace", "my.namespace.1", "my.namespace.2")
+    val pluginPath = plugin("foo") {
+      content(namespace = "my.namespace.1") {
+        module("module1") {}
+      }
+      content(namespace = "my.namespace.2") {
+        module("module2") {}
+      }
+    }.installAt(pluginDirPath)
+    val plugin = loadDescriptorInTest(pluginPath)
     assertThat(plugin).hasExactlyEnabledContentModules("module1", "module2")
-    assertThat(plugin.namespace).isEqualTo("my.namespace.1")
+    assertThat(plugin.contentModules[0].moduleId).isEqualTo(PluginModuleId("module1", "my.namespace.1"))
+    assertThat(plugin.contentModules[1].moduleId).isEqualTo(PluginModuleId("module2", "my.namespace.2"))
   }
 
   @Test

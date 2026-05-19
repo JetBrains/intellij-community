@@ -706,17 +706,9 @@ private fun readContentModuleAttributes(
 }
 
 private fun readContent(reader: XMLStreamReader2, builder: PluginDescriptorBuilder, readContext: PluginDescriptorReaderContext) {
-  for (i in 0 until reader.attributeCount) {
-    if (reader.getAttributeLocalName(i) == PluginXmlConst.CONTENT_NAMESPACE_ATTR) {
-      val namespace = readContext.interner.name(reader.getAttributeValue(i))
-      if (builder.namespace == null) {
-        builder.namespace = namespace
-      }
-      else if (builder.namespace != namespace) {
-        LOG.error("Some 'content' tag already set namespace ('${builder.namespace}'), but a different namespace '$namespace' is specified at ${reader.location}; " +
-                  "it will be ignored because multiple namespace in a single plugin aren't allowed for now (see IJPL-245093)")
-      }
-    }
+  val namespace = readNamespaceAttribute(reader, readContext)
+  if (builder.firstNamespaceOfContentTag == null) {
+    builder.firstNamespaceOfContentTag = namespace
   }
 
   consumeChildElements(reader) { elementName ->
@@ -736,6 +728,7 @@ private fun readContent(reader: XMLStreamReader2, builder: PluginDescriptorBuild
       builder.addContentModule(
         ContentModuleElement(
           name = name,
+          namespace = namespace,
           loadingRule = attrs.loadingRule,
           requiredIfAvailable = attrs.requiredIfAvailable,
           embeddedDescriptorContent = null,
@@ -750,6 +743,7 @@ private fun readContent(reader: XMLStreamReader2, builder: PluginDescriptorBuild
       builder.addContentModule(
         ContentModuleElement(
           name = name,
+          namespace = namespace,
           loadingRule = attrs.loadingRule,
           requiredIfAvailable = attrs.requiredIfAvailable,
           embeddedDescriptorContent = descriptorContent,
@@ -771,6 +765,16 @@ private fun readContent(reader: XMLStreamReader2, builder: PluginDescriptorBuild
     }
   }
   assert(reader.isEndElement)
+}
+
+private fun readNamespaceAttribute(reader: XMLStreamReader2, readContext: PluginDescriptorReaderContext?): String? {
+  for (i in 0 until reader.attributeCount) {
+    if (reader.getAttributeLocalName(i) == PluginXmlConst.CONTENT_NAMESPACE_ATTR) {
+      val namespaceValue = reader.getAttributeValue(i)
+      return readContext?.interner?.name(namespaceValue) ?: namespaceValue
+    }
+  }
+  return null
 }
 
 private fun readDependencies(reader: XMLStreamReader2, builder: PluginDescriptorBuilder, interner: XmlInterner) {
@@ -1096,9 +1100,10 @@ private fun parseElementForContentAndIncludes(reader: XMLStreamReader2): Content
       }
       PluginXmlConst.CONTENT_ELEM -> {
         // Parse content modules
+        val namespace = readNamespaceAttribute(reader, readContext = null)
         consumeChildElements(reader) { childName ->
           if (childName == PluginXmlConst.CONTENT_MODULE_ELEM) {
-            contentModules.add(readContentModuleElement(reader))
+            contentModules.add(readContentModuleElement(reader, namespace))
           }
           else {
             reader.skipElement()
@@ -1145,7 +1150,7 @@ private fun parseElementForContentAndIncludes(reader: XMLStreamReader2): Content
   return ContentParseResult(contentModules, xIncludePaths, moduleDependencies, pluginDependencies, pluginAliases)
 }
 
-private fun readContentModuleElement(reader: XMLStreamReader2): ContentModuleElement {
+private fun readContentModuleElement(reader: XMLStreamReader2, namespace: String?): ContentModuleElement {
   val attrs = readContentModuleAttributes(reader)
   val name = attrs.name
   if (name.isNullOrEmpty()) {
@@ -1154,6 +1159,7 @@ private fun readContentModuleElement(reader: XMLStreamReader2): ContentModuleEle
   reader.skipElement()
   return ContentModuleElement(
     name = name,
+    namespace = namespace,
     loadingRule = attrs.loadingRule,
     requiredIfAvailable = attrs.requiredIfAvailable,
     embeddedDescriptorContent = null,

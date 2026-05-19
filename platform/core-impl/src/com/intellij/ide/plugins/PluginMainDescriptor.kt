@@ -76,13 +76,15 @@ class PluginMainDescriptor(
   override val pluginAliases: List<PluginId> = super.pluginAliases.let(::addCorePluginAliases)
 
   /**
-   * Explicitly set namespace for content modules of the plugin
+   * An implicit namespace temporarily used for the plugin descriptor module.
+   * Namespaces are specified only for content modules. However, currently there are some plugins that declare dependencies on internal modules directly in their `plugin.xml`
+   * files (IJPL-245093). To make this work, the first namespace of a `content` tag is used as an implicit namespace for the plugin descriptor module.
    */
-  val namespace: String? = raw.namespace
+  val implicitNamespaceForPluginDescriptorModule: String? = raw.firstNamespaceOfContentTag
 
   /**
-   * Implicit namespace used in [PluginModuleId] instances for dependencies between plugins modules if the explicit [namespace] is not set.
-   * Currently, it's not necessary to specify the namespace explicitly if all modules are private and don't depend on internal modules, but it's still convenient to have some
+   * Implicit namespace used in [PluginModuleId] instances if the explicit [ContentModuleElement.namespace] is not set.
+   * Currently, it's not necessary to specify the namespace explicitly if a module is private and doesn't depend on internal modules, but it's still convenient to have some
    * namespace for debugging and logging.
    */
   internal val implicitNamespaceForPrivateModules by lazy { $$"$${id.idString}_$implicit" }
@@ -92,7 +94,7 @@ class PluginMainDescriptor(
    */
   @VisibleForTesting
   val content: PluginContentDescriptor =
-    raw.contentModules.takeIf { it.isNotEmpty() }?.let { convertContentModules(it, namespace ?: implicitNamespaceForPrivateModules) }
+    raw.contentModules.takeIf { it.isNotEmpty() }?.let { convertContentModules(it) }
     ?: PluginContentDescriptor.EMPTY
 
   val contentModules: List<ContentModuleDescriptor>
@@ -191,7 +193,7 @@ class PluginMainDescriptor(
            productModeAliasesForCorePlugin()
   }
 
-  private fun convertContentModules(contentElements: List<ContentModuleElement>, namespace: String): PluginContentDescriptor {
+  private fun convertContentModules(contentElements: List<ContentModuleElement>): PluginContentDescriptor {
     val modules = contentElements.map { elem ->
       val index = elem.name.lastIndexOf('/')
       val configFile: String? = if (index == -1) {
@@ -200,6 +202,7 @@ class PluginMainDescriptor(
       else {
         "${elem.name.substring(0, index)}.${elem.name.substring(index + 1)}.xml"
       }
+      val namespace = elem.namespace ?: implicitNamespaceForPrivateModules
       val moduleId = PluginModuleId(elem.name, namespace)
       PluginContentDescriptor.ModuleItem(
         moduleId = moduleId,

@@ -221,10 +221,13 @@ internal class PluginModelValidator(
 
       val moduleNameToLoadingRule = pluginInfo.descriptor.contentModules
         .associateBy({ it.name }, { it.loadingRule })
+      val moduleNameToNamespace = pluginInfo.descriptor.contentModules
+        .associateBy({ it.name }, { it.namespace })
       checkDependencies(
         dependenciesElements = descriptor.dependencies,
         referencingModuleInfo = pluginInfo,
         referencingPluginInfo = pluginInfo,
+        referencingModuleNamespace = pluginInfo.descriptor.firstNamespaceOfContentTag,
         moduleNameToInfo = moduleNameToInfo,
         sourceModuleNameToPluginFileInfo = sourceModuleNameToPluginFileInfo,
         contentModuleToContainingPlugins = contentModuleToContainingPlugins,
@@ -249,6 +252,7 @@ internal class PluginModelValidator(
           dependenciesElements = contentModuleInfo.descriptor.dependencies,
           referencingModuleInfo = contentModuleInfo,
           referencingPluginInfo = pluginInfo,
+          referencingModuleNamespace = moduleNameToNamespace[contentModuleInfo.name],
           moduleNameToInfo = moduleNameToInfo,
           sourceModuleNameToPluginFileInfo = sourceModuleNameToPluginFileInfo,
           contentModuleToContainingPlugins = contentModuleToContainingPlugins,
@@ -440,6 +444,7 @@ internal class PluginModelValidator(
     dependenciesElements: List<DependenciesElement>,
     referencingModuleInfo: ModuleInfo,
     referencingPluginInfo: ModuleInfo,
+    referencingModuleNamespace: String?,
     moduleNameToInfo: Map<String, ModuleInfo>,
     sourceModuleNameToPluginFileInfo: Map<String, PluginDescriptorFileInfo>,
     contentModuleToContainingPlugins: HashMap<String, MutableList<ModuleInfo>>,
@@ -588,19 +593,24 @@ internal class PluginModelValidator(
                 }
               }
               ModuleVisibilityValue.INTERNAL -> {
-                val referencingNamespace = referencingPluginInfo.descriptor.namespace
-                val containingPluginFromAnotherNamespace = containingPlugins.find { it.descriptor.namespace != referencingNamespace }
-                if (containingPluginFromAnotherNamespace != null) {
-                  val declaringNamespace = containingPluginFromAnotherNamespace.descriptor.namespace
+                val containingPluginToDifferentNamespace = containingPlugins.firstNotNullOfOrNull { pluginInfo ->
+                  val contentElement = pluginInfo.descriptor.contentModules.find { it.name == moduleName } ?: error("Module '$moduleName' not found in plugin '${pluginInfo.pluginId}'")
+                  if (contentElement.namespace != referencingModuleNamespace) {
+                    pluginInfo to contentElement.namespace
+                  }
+                  else null
+                }
+                if (containingPluginToDifferentNamespace != null) {
+                  val (containingPluginFromAnotherNamespace, declaringNamespace) = containingPluginToDifferentNamespace
                   val declaringNamespaceText =
                     if (declaringNamespace != null) "with namespace '$declaringNamespace'"
                     else "without namespace"
                   val referencingNamespaceText =
-                    if (referencingNamespace != null) "from another namespace '$referencingNamespace'"
+                    if (referencingModuleNamespace != null) "from another namespace '$referencingModuleNamespace'"
                     else "without namespace"
                   val setNamespaceFixText = when {
-                    declaringNamespace == null && referencingNamespace != null -> " or set the namespace to '$referencingNamespace' in '${containingPluginFromAnotherNamespace.pluginId}' plugin"
-                    declaringNamespace != null && referencingNamespace == null -> " or set the namespace to '$declaringNamespace' in '${referencingPluginInfo.pluginId}' plugin"
+                    declaringNamespace == null && referencingModuleNamespace != null -> " or set the namespace to '$referencingModuleNamespace' in '${containingPluginFromAnotherNamespace.pluginId}' plugin"
+                    declaringNamespace != null && referencingModuleNamespace == null -> " or set the namespace to '$declaringNamespace' in '${referencingPluginInfo.pluginId}' plugin"
                     else -> " or set the same namespace in both ${containingPluginFromAnotherNamespace.pluginId} and '${referencingPluginInfo.pluginId}' plugins"
                   }
                   registerError("""
@@ -635,7 +645,7 @@ internal class PluginModelValidator(
     contentModuleNameToFileInfo: Map<String, ContentModuleDescriptorFileInfo>,
     moduleNameToInfo: MutableMap<String, ModuleInfo>,
   ) {
-    val nonPrivateModules = ArrayList<String>()
+    val nonPrivateModulesWithoutNamespace = ArrayList<String>()
     for (contentElement in contentElements) {
       fun registerError(message: String, additionalParams: Map<String, Any?> = emptyMap()) {
         reportError(
@@ -647,6 +657,7 @@ internal class PluginModelValidator(
           ) + additionalParams,
         )
       }
+      checkNamespace(contentElement.namespace, referencingModuleInfo.descriptor, referencingModuleInfo)
 
       val moduleName = contentElement.name
 
@@ -683,8 +694,8 @@ internal class PluginModelValidator(
       }
 
       val moduleDescriptor = moduleDescriptorFileInfo.descriptor
-      if (moduleDescriptor.moduleVisibility != ModuleVisibilityValue.PRIVATE) {
-        nonPrivateModules.add(moduleName)
+      if (moduleDescriptor.moduleVisibility != ModuleVisibilityValue.PRIVATE && contentElement.namespace == null) {
+        nonPrivateModulesWithoutNamespace.add(moduleName)
       }
       val moduleInfo = SourceCodeBasedPluginModelBuilder.createModuleFileInfo(moduleDescriptorFileInfo, moduleName, moduleNameToInfo)
       referencingModuleInfo.content.add(moduleInfo)
@@ -717,16 +728,16 @@ internal class PluginModelValidator(
       }
     }
 
-    if (nonPrivateModules.isNotEmpty() && referencingModuleInfo.descriptor.namespace == null) {
+    if (nonPrivateModulesWithoutNamespace.isNotEmpty()) {
       reportError("""
         |Namespace is required for plugins with non-private content modules. 
-        |However, plugin '${referencingModuleInfo.pluginId}' has ${if (nonPrivateModules.size > 1) "${nonPrivateModules.size} non-private modules" else "a non-private module '${nonPrivateModules.single()}'"},
+        |However, plugin '${referencingModuleInfo.pluginId}' has ${if (nonPrivateModulesWithoutNamespace.size > 1) "${nonPrivateModulesWithoutNamespace.size} non-private modules" else "a non-private module '${nonPrivateModulesWithoutNamespace.single()}'"},
         |but doesn't specify 'namespace' attribute in 'content' tag.
         """.trimMargin(),
                   referencingModuleInfo.sourceModule,
                   mapOf(
                     "referencedDescriptorFile" to referencingModuleInfo.descriptorFile,
-                    "nonPrivateModules" to nonPrivateModules.joinToString(),
+                    "nonPrivateModules" to nonPrivateModulesWithoutNamespace.joinToString(),
                   ))
     }
   }
@@ -826,15 +837,17 @@ internal class PluginModelValidator(
                   sourceModule,
                   params = mapOf("descriptorFile" to moduleInfo.descriptorFile))
     }
-    val namespace = pluginDescriptor.namespace
+  }
+
+  private fun checkNamespace(namespace: String?, pluginDescriptor: RawPluginDescriptor, moduleInfo: ModuleInfo) {
     if (namespace != null) {
       when {
         pluginDescriptor.vendor == "JetBrains" && namespace != namespaceAssociatedWithJetBrainsVendor -> {
           reportError("""
-                       |Plugin '${pluginDescriptor.id}' has JetBrains as vendor, but specifies namespace '$namespace' for its content modules which isn't associated with JetBrains at the Marketplace.
-                       |Use namespace="$namespaceAssociatedWithJetBrainsVendor" for JetBrains plugins.
-                       """.trimMargin(),
-                      sourceModule,
+                         |Plugin '${pluginDescriptor.id}' has JetBrains as vendor, but specifies namespace '$namespace' for its content modules which isn't associated with JetBrains at the Marketplace.
+                         |Use namespace="$namespaceAssociatedWithJetBrainsVendor" for JetBrains plugins.
+                         """.trimMargin(),
+                      moduleInfo.sourceModule,
                       mapOf(
                         "referencedDescriptorFile" to moduleInfo.descriptorFile
                       )
@@ -843,7 +856,7 @@ internal class PluginModelValidator(
         !namespaceRegex.matches(namespace) || namespace.length !in 5..30 -> {
           reportError(
             "Invalid namespace format: '$namespace'. Namespace must start with a letter or number and can contain letters, numbers, underscores, or hyphens, and must be between 5 and 30 characters long.",
-            sourceModule,
+            moduleInfo.sourceModule,
             mapOf(
               "referencedDescriptorFile" to moduleInfo.descriptorFile
             )

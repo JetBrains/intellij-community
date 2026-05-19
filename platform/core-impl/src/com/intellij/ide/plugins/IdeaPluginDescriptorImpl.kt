@@ -421,7 +421,7 @@ internal fun convertDependencies(dependencies: List<DependenciesElement>, parent
 
   val moduleDeps = ArrayList<PluginModuleId>()
   val pluginDeps = ArrayList<PluginId>()
-  var cachedContentModuleNames: Set<String>? = null
+  var cachedContentModuleNameToNamespace: Map<String, String>? = null
   for (dep in dependencies) {
     when (dep) {
       is DependenciesElement.PluginDependency -> pluginDeps.add(PluginId.getId(dep.pluginId))
@@ -429,10 +429,10 @@ internal fun convertDependencies(dependencies: List<DependenciesElement>, parent
         val namespace =
           dep.namespace
           ?: run {
-            if (cachedContentModuleNames == null) {
-              cachedContentModuleNames = parent?.content?.modules?.mapTo(HashSet()) { it.moduleId.name } ?: emptySet()
+            if (cachedContentModuleNameToNamespace == null) {
+              cachedContentModuleNameToNamespace = parent?.content?.modules?.associateBy({ it.moduleId.name }, { it.moduleId.namespace }) ?: emptyMap()
             }
-            if (dep.moduleName in cachedContentModuleNames) parent!!.namespace ?: parent.implicitNamespaceForPrivateModules else null
+            cachedContentModuleNameToNamespace[dep.moduleName]
           }
           ?: PluginModuleId.JETBRAINS_NAMESPACE
         moduleDeps.add(PluginModuleId(dep.moduleName, namespace))

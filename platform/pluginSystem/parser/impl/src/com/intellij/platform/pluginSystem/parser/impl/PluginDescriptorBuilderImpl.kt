@@ -27,7 +27,7 @@ internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {
   override var isSeparateJar: Boolean = false
 
   override var visibility: ModuleVisibilityValue = ModuleVisibilityValue.PRIVATE
-  override var namespace: String? = null
+  override var firstNamespaceOfContentTag: String? = null
 
   override var url: String? = null
   override var vendor: String? = null
@@ -157,7 +157,7 @@ internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {
     projectElementsContainer = projectContainerBuilder.build(),
     moduleElementsContainer = moduleContainerBuilder.build(),
     extensions = extensions,
-    namespace = namespace,
+    firstNamespaceOfContentTag = firstNamespaceOfContentTag,
     contentModules = contentModules,
     moduleVisibility = visibility,
     dependencies = dependencies,

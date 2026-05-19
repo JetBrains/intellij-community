@@ -30,7 +30,6 @@ class PluginSpec internal constructor(
 
   val pluginAliases: List<String>,
   val incompatibleWith: List<String>,
-  val namespace: String?,
   val content: List<ContentModuleSpec>,
 
   val resourceBundle: String?,
@@ -71,7 +70,6 @@ class PluginSpecBuilder(
   var moduleVisibility: ModuleVisibilityValue = ModuleVisibilityValue.PRIVATE,
   var pluginAliases: List<String> = emptyList(),
   var incompatibleWith: List<String> = emptyList(),
-  var namespace: String? = null,
   internal var content: List<ContentModuleSpec> = emptyList(),
 
   var resourceBundle: String? = null,
@@ -93,7 +91,6 @@ class PluginSpecBuilder(
     vendor = vendor, description = description, pluginDependencies = pluginDependencies, moduleDependencies = moduleDependencies,
     moduleVisibility = moduleVisibility,
     pluginMainModuleDependencies = pluginMainModuleDependencies, pluginAliases = pluginAliases, incompatibleWith = incompatibleWith,
-    namespace = namespace,
     content = content, resourceBundle = resourceBundle, actions = actions, applicationListeners = applicationListeners,
     extensionPoints = extensionPoints, extensions = extensions, body = body, classFiles = classFiles, packageClassFiles = packageClassFiles
   )
@@ -101,7 +98,8 @@ class PluginSpecBuilder(
 
 @PluginBuilderDsl
 class ContentModuleSpec internal constructor(
-  val moduleId: String,
+  val moduleName: String,
+  val namespace: String?,
   val loadingRule: ModuleLoadingRuleValue,
   val requiredIfAvailable: String?,
   val spec: PluginSpec,

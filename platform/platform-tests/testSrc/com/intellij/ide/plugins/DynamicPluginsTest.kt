@@ -1085,8 +1085,7 @@ class DynamicPluginsTest {
   fun `enabling a plugin will not load actions form a module with an unsatisfied dependency`() {
     val barPluginPath = plugin("bar") {}.installAt(pluginsDir)
     val fooPluginPath = plugin("foo") {
-      namespace = "test_ns"
-      content {
+      content(namespace = "test_ns") {
         module("foo.a") {
           dependencies {
             plugin("bar")

@@ -66,8 +66,12 @@ class RawPluginDescriptor(
    * */
   val extensions: Map<String, List<ExtensionElement>>,
 
-  /** Specifies namespace for content modules of the plugin */
-  val namespace: String?,
+  /**
+   * A first namespace specified in some `content` tag in the plugin descriptor.
+   * It works even if there are no actual content modules defined in that tag.
+   * This property is temporarily needed until IJPL-245093 is fixed.
+   */
+  val firstNamespaceOfContentTag: String?,
 
   val contentModules: List<ContentModuleElement>,
 

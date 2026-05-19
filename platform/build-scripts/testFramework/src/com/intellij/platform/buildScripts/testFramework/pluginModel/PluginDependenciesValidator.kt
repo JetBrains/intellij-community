@@ -310,13 +310,12 @@ class PluginDependenciesValidator private constructor(
     val raw = PluginDescriptorBuilder.builder().apply {
       this.id = pluginId
       if (moduleIds.isNotEmpty()) {
-        // namespace is required for ClassLoaderConfigurator (packagePrefix != null on content modules)
-        this.namespace = "jetbrains"
         for (moduleId in moduleIds) {
           // The `package` attribute on the embedded descriptor keeps jarFiles null on the content
           // module (loadPluginSubDescriptors won't set it), so checkPluginSet skips it.
           addContentModule(ContentModuleElement(
             name = moduleId,
+            namespace = "jetbrains",
             loadingRule = ModuleLoadingRuleValue.OPTIONAL,
             requiredIfAvailable = null,
             embeddedDescriptorContent = "<idea-plugin package=\"com.stub.$moduleId\" visibility=\"public\"/>".toCharArray(),

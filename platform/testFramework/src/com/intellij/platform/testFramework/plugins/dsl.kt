@@ -55,20 +55,14 @@ fun PluginSpecBuilder.content(namespace: String? = null, body: ContentScope.() -
 }
 
 fun ContentScope.module(
-  moduleId: String,
+  moduleName: String,
   loadingRule: ModuleLoadingRuleValue = ModuleLoadingRuleValue.OPTIONAL,
   requiredIfAvailable: String? = null,
   body: PluginSpecBuilder.() -> Unit,
 ) {
   val moduleBuilder = PluginSpecBuilder()
   moduleBuilder.body()
-  if (namespace != null) {
-    if (plugin.namespace != null && plugin.namespace != namespace) {
-      error("Only one namespace is allowed in a plugin, but two namespaces ('${plugin.namespace}' and '$namespace') are specified for '${plugin.id}'")
-    }
-    plugin.namespace = namespace
-  }
-  plugin.content += ContentModuleSpec(moduleId, loadingRule, requiredIfAvailable, moduleBuilder.build())
+  plugin.content += ContentModuleSpec(moduleName, namespace, loadingRule, requiredIfAvailable, moduleBuilder.build())
 }
 
 @Deprecated("use overload with ModuleLoadingRuleValue instead")

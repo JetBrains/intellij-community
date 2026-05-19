@@ -23,7 +23,7 @@ private val LOG get() = logger<PluginPackagingConfig>()
 
 open class PluginPackagingConfig {
   open val ContentModuleSpec.descriptorFilename: String get() {
-    return "${moduleId.replace('/', '.')}.xml"
+    return "${moduleName.replace('/', '.')}.xml"
   }
 
   open val ContentModuleSpec.embedToPluginXml: Boolean get() {
@@ -31,7 +31,7 @@ open class PluginPackagingConfig {
   }
 
   open val ContentModuleSpec.jarFilename: String get() {
-    return "${moduleId.replace('/', '.')}.jar"
+    return "${moduleName.replace('/', '.')}.jar"
   }
 
   open val ContentModuleSpec.packageToMainJar: Boolean get() {
@@ -90,19 +90,22 @@ fun PluginSpec.buildXml(config: PluginPackagingConfig = PluginPackagingConfig())
       appendLine("""<incompatible-with>${plugin}</incompatible-with>""")
     }
     if (content.isNotEmpty()) {
-      val attributes = if (namespace != null) """ namespace="$namespace"""" else ""
-      appendLine("<content$attributes>")
-      for (module in content) {
-        val loadingAttribute = module.loadingRule.takeIf { it != ModuleLoadingRuleValue.OPTIONAL }?.let { "loading=\"${it.xmlValue}\" " }.orEmpty() +
-                               module.requiredIfAvailable?.let { "required-if-available=\"$it\" " }.orEmpty()
-        val tag = """module name="${module.moduleId}" $loadingAttribute"""
-        if (module.embedToPluginXml) {
-          appendLine("<$tag><![CDATA[${module.spec.buildXml(config)}]]></module>")
-        } else {
-          appendLine("<$tag/>")
+      content.groupBy { it.namespace }.forEach { (namespace, contentModuleSpecs) ->
+        val attributes = if (namespace != null) """ namespace="$namespace"""" else ""
+
+        appendLine("<content$attributes>")
+        for (module in contentModuleSpecs) {
+          val loadingAttribute = module.loadingRule.takeIf { it != ModuleLoadingRuleValue.OPTIONAL }?.let { "loading=\"${it.xmlValue}\" " }.orEmpty() +
+                                 module.requiredIfAvailable?.let { "required-if-available=\"$it\" " }.orEmpty()
+          val tag = """module name="${module.moduleName}" $loadingAttribute"""
+          if (module.embedToPluginXml) {
+            appendLine("<$tag><![CDATA[${module.spec.buildXml(config)}]]></module>")
+          } else {
+            appendLine("<$tag/>")
+          }
         }
+        appendLine("</content>")
       }
-      appendLine("</content>")
     }
     if (resourceBundle != null) appendLine("""<resource-bundle>$resourceBundle</resource-bundle>""")
     if (actions != null) appendLine("<actions>\n$actions\n</actions>")

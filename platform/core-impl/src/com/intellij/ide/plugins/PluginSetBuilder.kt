@@ -347,11 +347,10 @@ class PluginSetBuilder(
       val errorMessage = when (targetModule.visibility) {
         ModuleVisibility.PUBLIC -> null
         ModuleVisibility.INTERNAL -> {
-          if (targetModule.parent.namespace != null && targetModule.parent.namespace == sourceModule.namespace) null
+          if (targetModule.moduleId.namespace == sourceModule.namespace) null
           else {
             val sourceNamespace = sourceModule.namespace?.let { "is from namespace '$it'" } ?: "has no namespace specified"
-            val targetNamespace = targetModule.parent.namespace?.let { "namespace '$it'" } ?: "unspecified namespace"
-            "it $sourceNamespace and depends on module '${targetModule.contentModuleName}' which is registered in '${targetModule.parent.pluginId}' plugin with internal visibility in $targetNamespace"
+            "it $sourceNamespace and depends on module '${targetModule.contentModuleName}' which is registered in '${targetModule.parent.pluginId}' plugin with internal visibility in namespace '${targetModule.moduleId.namespace}'"
           }
         }
         ModuleVisibility.PRIVATE -> {
@@ -455,6 +454,6 @@ private fun getAllPluginDependencies(plugin: IdeaPluginDescriptorImpl): Sequence
 
 private val PluginModuleDescriptor.namespace: String?
   get() = when (this) {
-    is ContentModuleDescriptor -> parent.namespace //the namespace specified in `content` tag should be used instead, see IJPL-245093
-    is PluginMainDescriptor -> namespace
+    is ContentModuleDescriptor -> moduleId.namespace
+    is PluginMainDescriptor -> implicitNamespaceForPluginDescriptorModule
   }
