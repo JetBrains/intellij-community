@@ -8,7 +8,7 @@ import com.intellij.build.SuccessfulStepsToggleAction
 import com.intellij.build.WarningsToggleAction
 import com.intellij.ide.OccurenceNavigator
 import com.intellij.ide.rpc.ComponentDirectTransferId
-import com.intellij.ide.rpc.getComponent
+import com.intellij.ide.rpc.getComponentWithDisposable
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -16,6 +16,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
@@ -41,19 +43,32 @@ internal class FrontendBuildView(
   }
 
   init {
-    val console = consoleComponent.getComponent()
+    val console = consoleComponent.getComponentWithDisposable()
+    if (console == null) {
+      logger<FrontendBuildView>().error("Couldn't deserialize console component")
+    }
     if (treeViewId != null) {
       treeView = BuildTreeView(project, scope, treeViewId, false)
       restoreSavedFiltering(treeView)
       val splitter = OnePixelSplitter(BuildTreeConsoleView.SPLITTER_PROPERTY, BuildTreeConsoleView.SPLITTER_DEFAULT_PROPORTION).apply {
         firstComponent = treeView
-        secondComponent = console
+        if (console != null) {
+          secondComponent = console.component
+          console.disposable.whenDisposed {
+            secondComponent = null
+          }
+        }
       }
       add(splitter)
     }
     else {
       treeView = null
-      add(console)
+      if (console != null) {
+        add(console.component)
+        console.disposable.whenDisposed {
+          remove(console.component)
+        }
+      }
     }
   }
 
