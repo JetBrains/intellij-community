@@ -48,10 +48,6 @@ object CommunityPlatformPlugins {
     module("intellij.debugger.streams.backend")
   }
 
-  fun acp(): ModuleSet = plugin("acp") {
-    module("intellij.platform.acp")
-  }
-
   fun gridCore(): ModuleSet = plugin("grid.core") {
     module("intellij.grid")
     module("intellij.grid.types")

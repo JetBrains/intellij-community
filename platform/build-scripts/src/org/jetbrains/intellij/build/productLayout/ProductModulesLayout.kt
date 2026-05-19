@@ -23,7 +23,6 @@ import org.jetbrains.intellij.build.impl.PluginLayout
 val DEFAULT_BUNDLED_PLUGINS: PersistentList<String> = persistentListOf(
   "intellij.dev",
   "intellij.jcef.plugin",
-  "intellij.moduleSet.plugin.acp",
   "intellij.moduleSet.plugin.grid.core",
   "intellij.moduleSet.plugin.recentFiles",
   "intellij.moduleSet.plugin.structuralSearch",
@@ -31,6 +30,7 @@ val DEFAULT_BUNDLED_PLUGINS: PersistentList<String> = persistentListOf(
   "intellij.moduleSet.plugin.servicesView",
   "intellij.moduleSet.plugin.todoView",
   "intellij.moduleSet.plugin.vcs.frontend",
+  "intellij.platform.acp.plugin",
   "intellij.platform.images",
 )
 
