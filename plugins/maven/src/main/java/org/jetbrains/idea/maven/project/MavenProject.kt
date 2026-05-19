@@ -5,7 +5,6 @@ import com.intellij.execution.configurations.ParametersList
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -16,7 +15,6 @@ import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.idea.maven.importing.MavenExtraArtifactType
 import org.jetbrains.idea.maven.importing.MavenImporter
 import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.plugins.api.MavenModelPropertiesPatcher
@@ -727,14 +725,6 @@ class MavenProject(val file: VirtualFile) {
     get() {
       return myState.remotePluginRepositories
     }
-
-  fun getClassifierAndExtension(artifact: MavenArtifact, type: MavenExtraArtifactType): Pair<String, String> {
-    for (each: MavenImporter in MavenImporter.getSuitableImporters(this)) {
-      val result: Pair<String, String>? = each.getExtraArtifactClassifierAndExtension(artifact, type)
-      if (result != null) return result
-    }
-    return Pair.create(type.defaultClassifier, type.defaultExtension)
-  }
 
   val dependencyArtifactIndex: MavenArtifactIndex
     get() {
