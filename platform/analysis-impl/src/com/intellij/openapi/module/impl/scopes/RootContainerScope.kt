@@ -15,7 +15,6 @@ import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleSourceOrderEntry
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.roots.SingleFileSourcesTracker
 import com.intellij.openapi.roots.impl.LibraryRootDescriptor
 import com.intellij.openapi.roots.impl.ModuleRootDescriptor
 import com.intellij.openapi.roots.impl.RootDescriptor
@@ -28,7 +27,6 @@ import com.intellij.psi.search.CodeInsightContextFileInfo
 import com.intellij.psi.search.CodeInsightContextInfo
 import com.intellij.psi.search.DoesNotContainFileInfo
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.search.NoContextFileInfo
 import com.intellij.psi.search.UnionCapableScope
 import com.intellij.psi.search.createContainingContextFileInfo
 import com.intellij.util.containers.SmartHashSet
@@ -45,18 +43,11 @@ abstract class RootContainerScope internal constructor(
     ActualCodeInsightContextInfo,
     UnionCapableScope {
 
-  private val mySingleFileSourcesTracker: SingleFileSourcesTracker = SingleFileSourcesTracker.getInstance(project)
-
   protected val myProjectFileIndex: ProjectFileIndex = ProjectRootManager.getInstance(project).getFileIndex()
 
   internal abstract val mainModules: Collection<Module>
 
   override fun contains(file: VirtualFile): Boolean {
-    // in case of single file source
-    if (mainModules.any { mySingleFileSourcesTracker.isSourceDirectoryInModule(file, it) }) {
-      return true
-    }
-
     if (this.isSharedSourceSupportEnabled) {
       val roots = myProjectFileIndex.getModuleSourceOrLibraryClassesRoots(file)
       return roots.any { root -> rootContainer.getRootDescriptor(root) != null }
@@ -71,16 +62,6 @@ abstract class RootContainerScope internal constructor(
   override fun contains(file: VirtualFile, context: CodeInsightContext): Boolean {
     if (!this.isSharedSourceSupportEnabled) {
       return contains(file)
-    }
-
-    // in case of single file source
-    if (context is ModuleContext) {
-      if (mainModules.any {
-          context.getModule() === it && mySingleFileSourcesTracker.isSourceDirectoryInModule(file, it)
-        }) {
-        // todo IJPL-339 is it correct???
-        return true
-      }
     }
 
     val rootDescriptor = convertContextToRootDescriptor(file, context) ?: return false
@@ -105,12 +86,6 @@ abstract class RootContainerScope internal constructor(
 
   @ApiStatus.Experimental
   override fun getFileInfo(file: VirtualFile): CodeInsightContextFileInfo {
-    //in case of single file source
-    if (mainModules.any { mySingleFileSourcesTracker.isSourceDirectoryInModule(file, it) }) {
-      // todo IJPL-339 support bazel in search scopes???
-      return NoContextFileInfo()
-    }
-
     val roots = myProjectFileIndex.getModuleSourceOrLibraryClassesRoots(file)
     if (roots.isEmpty()) {
       return DoesNotContainFileInfo()

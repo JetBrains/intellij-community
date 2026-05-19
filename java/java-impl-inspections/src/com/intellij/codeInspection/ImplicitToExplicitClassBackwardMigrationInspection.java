@@ -8,7 +8,6 @@ import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.SingleFileSourcesTracker;
 import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.JavaFeature;
@@ -208,9 +207,6 @@ public final class ImplicitToExplicitClassBackwardMigrationInspection extends Ab
       PsiPackageStatement packageStatement = javaFile.getPackageStatement();
       if (packageStatement != null) return;
       String packageName = dirPackage.getQualifiedName();
-      SingleFileSourcesTracker singleFileSourcesTracker = SingleFileSourcesTracker.getInstance(originalFile.getProject());
-      String singleFileSourcePackageName = singleFileSourcesTracker.getPackageNameForSingleFileSource(originalFile.getVirtualFile());
-      if (singleFileSourcePackageName != null) packageName = singleFileSourcePackageName;
       if (packageName.isEmpty()) return;
       if (!PsiDirectoryFactory.getInstance(javaFile.getProject()).isValidPackageName(packageName)) return;
       AdjustPackageNameFix.applyFix(javaFile, originalFile, originalFile.getContainingDirectory());

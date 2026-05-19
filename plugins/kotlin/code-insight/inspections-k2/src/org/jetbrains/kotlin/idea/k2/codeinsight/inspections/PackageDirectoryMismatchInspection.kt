@@ -10,7 +10,6 @@ import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.SingleFileSourcesTracker
 import com.intellij.openapi.ui.Messages
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
@@ -53,11 +52,7 @@ class PackageDirectoryMismatchInspection : AbstractKotlinInspection() {
             else
                 "'${qualifiedName.replace('.', '/')}'"
 
-            val singleFileSourcesTracker = SingleFileSourcesTracker.getInstance(file.project)
-            val isSingleFileSource = singleFileSourcesTracker.isSingleFileSource(file.virtualFile)
-            if (!isSingleFileSource) {
-                fixes += MoveFileToPackageFix(dirName)
-            }
+            fixes += MoveFileToPackageFix(dirName)
 
             val fqNameByDirectory = file.getFqNameByDirectory()
             when {
@@ -68,7 +63,7 @@ class PackageDirectoryMismatchInspection : AbstractKotlinInspection() {
                     fixes += ChangePackageFix("'${fqNameByDirectory.asString()}'", fqNameByDirectory)
             }
             val fqNameWithImplicitPrefix = file.parent?.getFqNameWithImplicitPrefix()
-            if (!isSingleFileSource && fqNameWithImplicitPrefix != null && fqNameWithImplicitPrefix != fqNameByDirectory) {
+            if (fqNameWithImplicitPrefix != null && fqNameWithImplicitPrefix != fqNameByDirectory) {
                 fixes += ChangePackageFix("'${fqNameWithImplicitPrefix.asString()}'", fqNameWithImplicitPrefix)
             }
 
