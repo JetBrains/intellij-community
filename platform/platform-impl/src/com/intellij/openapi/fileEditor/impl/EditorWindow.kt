@@ -1067,7 +1067,7 @@ class EditorWindow internal constructor(
     }
 
     val limit = tabLimit
-    fun isUnderLimit(): Boolean = tabbedPane.tabCount <= limit || tabbedPane.tabCount == 0 || !isAnyTabClosable(fileToIgnore)
+    fun isUnderLimit(): Boolean = (tabbedPane.tabCount - tabsExcludedFromLimitCount()) <= limit || tabbedPane.tabCount == 0 || !isAnyTabClosable(fileToIgnore)
 
     if (isUnderLimit()) {
       return
@@ -1169,6 +1169,10 @@ class EditorWindow internal constructor(
       return false
     }
     return isFileOpen(file) && file != fileToIgnore && !isFilePinned(file) && isClosingAllowed(file)
+  }
+
+  private fun tabsExcludedFromLimitCount(): Int {
+    return tabbedPane.tabs.tabs.count { !isClosingAllowed(it.composite.file) }
   }
 
   private fun isClosingAllowed(file: VirtualFile): Boolean {

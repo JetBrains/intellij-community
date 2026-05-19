@@ -4,7 +4,8 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * This extension point allows to specify if editor can be closed by tabs limit
+ * Allows editor tabs to prevent automatic closing when the tab limit is exceeded.
+ * Tabs that are not allowed to close are also excluded from the tab-limit count.
  */
 @ApiStatus.Internal
 @ApiStatus.Experimental
