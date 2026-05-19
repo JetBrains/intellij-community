@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.textmate.language.syntax.highlighting;
 
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.util.containers.ContainerUtil;
@@ -14,6 +15,33 @@ public final class TextMateTheme {
   public static final TextMateTheme INSTANCE = new TextMateTheme("IntelliJ");
 
   private static final TextMateDefaultColorsProvider DEFAULT_COLORS_PROVIDER = new TextMateDefaultColorsProvider();
+
+  private static final Map<CharSequence, TextAttributesKey> EXTENSIONS_KEY_MAPPING = new HashMap<>() {{
+    // Java
+    put("comment.block.javadoc.java", DefaultLanguageHighlighterColors.DOC_COMMENT);
+    put("comment.block.java punctuation.definition.comment.java",
+        DefaultLanguageHighlighterColors.BLOCK_COMMENT);
+    put("comment.block.javadoc.java punctuation.definition.comment.java",
+        DefaultLanguageHighlighterColors.DOC_COMMENT);
+    put("keyword.other.documentation.javadoc.java", DefaultLanguageHighlighterColors.DOC_COMMENT_TAG);
+    put("meta.declaration.annotation.java punctuation.definition.annotation.java",
+        DefaultLanguageHighlighterColors.METADATA);
+    put("storage.type.annotation.java", DefaultLanguageHighlighterColors.METADATA);
+    put("storage.type.java", DefaultLanguageHighlighterColors.CLASS_NAME);
+    put("storage.type.object.array.java", DefaultLanguageHighlighterColors.CLASS_NAME);
+    put("meta.method-call.java entity.name.function.java",
+        DefaultLanguageHighlighterColors.FUNCTION_CALL);
+    put("meta.function-call.java entity.name.function.java",
+        DefaultLanguageHighlighterColors.FUNCTION_CALL);
+    put("meta.class.body.java meta.definition.variable.java variable.other.definition.java",
+        DefaultLanguageHighlighterColors.INSTANCE_FIELD);
+    put("meta.method.body.java meta.definition.variable.java variable.other.definition.java",
+        DefaultLanguageHighlighterColors.LOCAL_VARIABLE);
+    put("meta.package.java storage.modifier.package.java", DefaultLanguageHighlighterColors.IDENTIFIER);
+    put("meta.import.java storage.modifier.import.java", DefaultLanguageHighlighterColors.IDENTIFIER);
+    put("punctuation.definition.string.begin.java", DefaultLanguageHighlighterColors.STRING);
+    put("punctuation.definition.string.end.java", DefaultLanguageHighlighterColors.STRING);
+  }};
 
   private static final Map<CharSequence, CharSequence> EXTENSIONS_MAPPING = new HashMap<>() {{
     // XmlHighlighterColors
@@ -160,7 +188,8 @@ public final class TextMateTheme {
   }};
 
   private static final @NotNull Set<CharSequence> RULES =
-    ContainerUtil.union(DEFAULT_COLORS_PROVIDER.getAllDefaultKeys(), EXTENSIONS_MAPPING.keySet());
+    ContainerUtil.union(ContainerUtil.union(DEFAULT_COLORS_PROVIDER.getAllDefaultKeys(), EXTENSIONS_MAPPING.keySet()),
+                        EXTENSIONS_KEY_MAPPING.keySet());
 
   private final @NotNull String myName;
 
@@ -181,6 +210,11 @@ public final class TextMateTheme {
   }
 
   public @NotNull TextAttributesKey getTextAttributesKey(CharSequence highlightingRule) {
+    TextAttributesKey directKey = EXTENSIONS_KEY_MAPPING.get(highlightingRule);
+    if (directKey != null) {
+      return directKey;
+    }
+
     CharSequence keyName = EXTENSIONS_MAPPING.get(highlightingRule);
     TextAttributesKey extendedKey = keyName != null ? TextAttributesKey.find(keyName.toString()) : null;
     return extendedKey == null ? DEFAULT_COLORS_PROVIDER.getTextAttributesKey(highlightingRule) : extendedKey;
