@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.serviceAsync
@@ -104,7 +105,8 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
       presentationFactory.reset()
       updateMenuActions(forceRebuild = true)
     })
-    var context = Dispatchers.EDT + ModalityState.any().asContextElement()
+    // we must not acquire write-intent lock here -- otherwise the fast-track action update could freeze for 1 second becuase of background write actions
+    var context = Dispatchers.UiWithModelAccess + ModalityState.any().asContextElement()
     if (StartUpMeasurer.isEnabled()) {
       context += rootTask() + CoroutineName("ide menu bar actions init")
     }
