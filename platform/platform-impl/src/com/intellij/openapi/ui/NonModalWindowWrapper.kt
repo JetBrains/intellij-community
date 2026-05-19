@@ -103,6 +103,13 @@ abstract class NonModalWindowWrapper(
   /** OS title bar text. */
   protected abstract fun getWindowTitle(): String
 
+  /**
+   * Returns the string set as the AWT accessible name of the window.
+   * Defaults to [getWindowTitle]. Override to return a shorter name
+   * (e.g. without the project-name suffix) for accessibility and UI-test locators.
+   */
+  protected open fun getAccessibleWindowName(): String = getWindowTitle()
+
   /** Component to focus when the window first becomes visible. */
   protected open fun getPreferredFocusComponent(): JComponent? = null
 
@@ -205,6 +212,7 @@ abstract class NonModalWindowWrapper(
         dialog.setLocationRelativeTo(dialog.owner)
         dialog.glassPane = IdeGlassPaneImpl(dialog.rootPane)
         ComponentUtil.decorateWindowHeader(dialog.rootPane)
+        dialog.accessibleContext.accessibleName = getAccessibleWindowName()
         val wd = Disposer.newDisposable(frameDisposable)
         windowDisposable = wd
         ToolbarService.getInstance().setTransparentTitleBar(
@@ -225,6 +233,7 @@ abstract class NonModalWindowWrapper(
         frame.setLocationRelativeTo(getIdeJFrame())
         frame.glassPane = IdeGlassPaneImpl(frame.rootPane)
         ComponentUtil.decorateWindowHeader(frame.rootPane)
+        frame.accessibleContext.accessibleName = getAccessibleWindowName()
         val wd = Disposer.newDisposable(frameDisposable)
         windowDisposable = wd
         ToolbarService.getInstance().setTransparentTitleBar(

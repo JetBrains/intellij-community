@@ -14,6 +14,7 @@ import com.intellij.driver.sdk.ui.components.elements.textField
 import com.intellij.driver.sdk.ui.should
 import com.intellij.driver.sdk.ui.ui
 import javax.swing.JDialog
+import javax.swing.JFrame
 import javax.swing.JTextField
 import kotlin.time.Duration.Companion.seconds
 
@@ -21,7 +22,7 @@ fun IdeaFrameUI.settingsDialog(action: SettingsDialogUiComponent.() -> Unit = {}
 fun WelcomeScreenUI.settingsDialog(action: SettingsDialogUiComponent.() -> Unit = {}): SettingsDialogUiComponent = driver.ui.onSettingsDialog(action = action)
 
 private fun Finder.onSettingsDialog(
-  locator: QueryBuilder.() -> String = { and(byType(JDialog::class.java), byAccessibleName("Settings")) },
+  locator: QueryBuilder.() -> String = { and(or(byType(JDialog::class.java), byType(JFrame::class.java)), byAccessibleName("Settings")) },
   action: SettingsDialogUiComponent.() -> Unit,
 ): SettingsDialogUiComponent =
   x(SettingsDialogUiComponent::class.java, locator).apply(action)

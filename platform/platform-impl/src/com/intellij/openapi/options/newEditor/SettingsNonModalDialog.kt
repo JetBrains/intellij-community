@@ -168,6 +168,8 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
 
   override fun getWindowTitle(): String = "${CommonBundle.settingsTitle()} \u2013 ${project.name}"
 
+  override fun getAccessibleWindowName(): String = CommonBundle.settingsTitle()
+
   override fun getPreferredFocusComponent(): JComponent? =
     editor.getPreferredFocusedComponent() ?: mainPanel
 
