@@ -500,6 +500,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private boolean myCurrentDragIsSubstantial;
   private boolean myForcePushHappened;
   private boolean myMouseIsInDrag;
+  private boolean myIsCurrentlyInFocus = true;
 
   private @Nullable VisualPosition mySuppressedByBreakpointsLastPressPosition;
 
@@ -871,7 +872,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     SwingUtilities.invokeLater(() -> {
       if (isDisposed()) return;
 
-      if (myFocusKeepSelectionOnMousePress && myMousePressedEvent != null) {
+      if (shouldKeepSelectionInactiveOnMousePress()) {
         return;
       }
 
@@ -880,6 +881,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void setFocusGained() {
+    if (myIsCurrentlyInFocus) return;
+    updateFocus();
+
     mySelectionModel.reinitSettings();
     for (Caret caret : myCaretModel.getAllCarets()) {
       if (caret.hasSelection()) {
@@ -890,6 +894,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public void focusLost(@NotNull FocusEvent e) {
+    updateFocus();
+
     myFocusKeepSelectionOnMousePress = false;
     mySelectionModel.reinitSettings();
 
@@ -901,10 +907,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     fireFocusLost(e);
   }
 
-  boolean isInFocus() {
+  void updateFocus() {
     Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-    if (focusOwner == null) return false;
-    if (SwingUtilities.isDescendingFrom(focusOwner, myPanel)) return true;
+    if (focusOwner == null) {
+      myIsCurrentlyInFocus = false;
+      return;
+    }
+
+    if (SwingUtilities.isDescendingFrom(focusOwner, myPanel)) {
+      myIsCurrentlyInFocus = true;
+      return;
+    }
 
     var floating = CodeFloatingToolbar.getToolbar(this);
     var hintComponent = floating != null ? floating.getHintComponent() : null;
@@ -912,10 +925,24 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     var hintWindow = hintComponent != null ? SwingUtilities.getWindowAncestor(hintComponent) : null;
 
     for (var w = SwingUtilities.getWindowAncestor(focusOwner); w != null; w = w.getOwner()) {
-      if (w == hintWindow) return true;
+      if (w == hintWindow) {
+        myIsCurrentlyInFocus = true;
+        return;
+      }
     }
 
-    return false;
+    myIsCurrentlyInFocus = false;
+  }
+
+  boolean isInFocus() {
+    if (!shouldKeepSelectionInactiveOnMousePress()) {
+      updateFocus();
+    }
+    return myIsCurrentlyInFocus;
+  }
+
+  private boolean shouldKeepSelectionInactiveOnMousePress() {
+    return myFocusKeepSelectionOnMousePress && myMousePressedEvent != null;
   }
 
   private void queueErrorStipeRepaintRequest(int start, int end) {
