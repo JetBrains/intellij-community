@@ -18,8 +18,6 @@ internal class DefaultAcpProcessLauncher(@Suppress("unused") private val project
     projectDir: Path,
     processLifetimeCoroutineScope: CoroutineScope,
   ): AcpServerProcessHandler {
-    throw AcpProcessLaunchException(
-      "Cannot launch ACP agent '$agentName': the AI Assistant plugin is required to run ACP agents."
-    )
+    throw AcpProcessLaunchException.AiAssistantPluginMissing(agentName)
   }
 }

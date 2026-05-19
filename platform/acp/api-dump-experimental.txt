@@ -63,10 +63,58 @@
 - getFullId():java.lang.String
 - getRawId():java.lang.String
 - hashCode():I
-*f:com.intellij.platform.acp.api.AcpProcessLaunchException
-- java.lang.RuntimeException
-- <init>(java.lang.String,java.lang.Throwable):V
+*a:com.intellij.platform.acp.api.AcpProcessLaunchException
+- java.lang.Exception
 - b:<init>(java.lang.String,java.lang.Throwable,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- a:getAgentName():java.lang.String
+- a:toUserMessage():java.lang.String
+*f:com.intellij.platform.acp.api.AcpProcessLaunchException$AiAssistantPluginMissing
+- com.intellij.platform.acp.api.AcpProcessLaunchException
+- <init>(java.lang.String):V
+- getAgentName():java.lang.String
+- toUserMessage():java.lang.String
+*f:com.intellij.platform.acp.api.AcpProcessLaunchException$CommandIsBlank
+- com.intellij.platform.acp.api.AcpProcessLaunchException
+- <init>(java.lang.String):V
+- getAgentName():java.lang.String
+- toUserMessage():java.lang.String
+*f:com.intellij.platform.acp.api.AcpProcessLaunchException$ConfigResolutionFailed
+- com.intellij.platform.acp.api.AcpProcessLaunchException
+- <init>(java.lang.String,java.lang.Throwable):V
+- getAgentName():java.lang.String
+- toUserMessage():java.lang.String
+*f:com.intellij.platform.acp.api.AcpProcessLaunchException$ExecutableNotFound
+- com.intellij.platform.acp.api.AcpProcessLaunchException
+- <init>(java.lang.String,java.lang.String):V
+- getAgentName():java.lang.String
+- f:getCommand():java.lang.String
+- toUserMessage():java.lang.String
+*f:com.intellij.platform.acp.api.AcpProcessLaunchException$InvalidPath
+- com.intellij.platform.acp.api.AcpProcessLaunchException
+- <init>(java.lang.String,java.lang.Throwable):V
+- getAgentName():java.lang.String
+- toUserMessage():java.lang.String
+*f:com.intellij.platform.acp.api.AcpProcessLaunchException$ProcessSpawnFailed
+- com.intellij.platform.acp.api.AcpProcessLaunchException
+- <init>(java.lang.String,java.lang.Throwable):V
+- getAgentName():java.lang.String
+- toUserMessage():java.lang.String
+*f:com.intellij.platform.acp.api.AcpProcessLaunchException$ProjectDirectoryUnavailable
+- com.intellij.platform.acp.api.AcpProcessLaunchException
+- <init>(java.lang.String):V
+- getAgentName():java.lang.String
+- toUserMessage():java.lang.String
+*f:com.intellij.platform.acp.api.AcpProcessLaunchException$RuntimeDownloadFailed
+- com.intellij.platform.acp.api.AcpProcessLaunchException
+- <init>(java.lang.String,java.lang.String):V
+- getAgentName():java.lang.String
+- f:getRuntimeName():java.lang.String
+- toUserMessage():java.lang.String
+*f:com.intellij.platform.acp.api.AcpProcessLaunchException$Unknown
+- com.intellij.platform.acp.api.AcpProcessLaunchException
+- <init>(java.lang.String,java.lang.Throwable):V
+- getAgentName():java.lang.String
+- toUserMessage():java.lang.String
 *:com.intellij.platform.acp.api.AcpProcessLauncher
 - *sf:Companion:com.intellij.platform.acp.api.AcpProcessLauncher$Companion
 - a:startProcess(java.lang.String,com.intellij.platform.acp.api.AcpAgentStartConfig,java.nio.file.Path,kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation):java.lang.Object
