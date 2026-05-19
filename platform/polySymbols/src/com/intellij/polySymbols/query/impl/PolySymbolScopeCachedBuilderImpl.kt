@@ -109,6 +109,7 @@ internal class ProjectPolySymbolScopeCachedBuilderImpl<K>(
   fun build(): BuiltPolySymbolScopeWithCache<Project, K> {
     configure(this)
     val body = initBody ?: error("polySymbolScopeCached: initialize { } was not called.")
+    check(providesKinds.isNotEmpty()) { "polySymbolScopeCached: provides() must be called with at least one kind." }
     val projectRef = project
     val keyRef = key
     val configureRef = configure
@@ -159,6 +160,7 @@ internal class PsiPolySymbolScopeCachedBuilderImpl<T : PsiElement, K>(
   fun build(): BuiltPolySymbolScopeWithCache<T, K> {
     configure(this)
     val body = initBody ?: error("polySymbolScopeCached: initialize { } was not called.")
+    check(providesKinds.isNotEmpty()) { "polySymbolScopeCached: provides() must be called with at least one kind." }
     val keyRef = key
     val configureRef = configure
     return BuiltPolySymbolScopeWithCache(
@@ -216,6 +218,7 @@ internal class UserDataHolderPolySymbolScopeCachedBuilderImpl<T : UserDataHolder
   fun build(): BuiltPolySymbolScopeWithCache<T, K> {
     configure(this)
     val body = initBody ?: error("polySymbolScopeCached: initialize { } was not called.")
+    check(providesKinds.isNotEmpty()) { "polySymbolScopeCached: provides() must be called with at least one kind." }
     val pointer = pointerProvider
                   ?: error("polySymbolScopeCached: pointer { } is required for non-PsiElement/non-Project holders.")
     val projectRef = project

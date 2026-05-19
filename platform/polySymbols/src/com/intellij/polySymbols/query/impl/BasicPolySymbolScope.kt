@@ -247,6 +247,7 @@ internal class PolySymbolScopeBuilderImpl : PolySymbolScopeBuilder {
 
   fun build(): PolySymbolScope {
     val body = initBody ?: error("polySymbolScope: initialize { } was not called.")
+    check(providesKinds.isNotEmpty()) { "polySymbolScope: provides() must be called with at least one kind." }
     val frozenKinds = providesKinds.toHashSet()
     val codeCompletionFilter = codeCompletionFilter
     val nameMatchFilter = nameMatchFilter
