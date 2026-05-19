@@ -269,14 +269,8 @@ inline fun communityLinuxCustomizer(
 ): LinuxDistributionCustomizer = linuxCustomizer(projectHome) {
   iconPngPath = "build/conf/ideaCE/linux/images/icon_CE_128.png"
   iconPngPathForEAP = "build/conf/ideaCE/linux/images/icon_CE_EAP_128.png"
-  snaps += LinuxDistributionCustomizer.Snap(
-    name = "intellij-idea",
-    description =
-      "The most intelligent Java IDE. Every aspect of IntelliJ IDEA is specifically designed to maximize developer productivity. " +
-      "Together, powerful static code analysis and ergonomic design make development not only productive but also an enjoyable experience."
-  )
 
-  rootDirectoryName { _, buildNumber -> "idea-IC-$buildNumber" }
+  rootDirectoryName { _, _ -> "idea-oss" }
 
   executableFilePatterns { base, _, _, _, _ ->
     base.plus(KotlinBinaries.kotlinCompilerExecutables).filterNot { it == "plugins/**/*.sh" }
