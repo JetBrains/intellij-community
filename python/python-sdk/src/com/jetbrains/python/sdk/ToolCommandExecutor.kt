@@ -22,7 +22,8 @@ import kotlin.time.Duration.Companion.minutes
  * [toolName] (i.e `poetry`).
  * [additionalSearchPaths] additional paths to look for [toolName]
  */
-internal data class ToolCommandExecutor(
+@ApiStatus.Internal
+data class ToolCommandExecutor(
   private val toolName: @NlsSafe String,
   private val additionalSearchPaths: List<ToolSearchPath> = emptyList(),
   private val getToolPathFromSettings: PropertiesComponent.() -> @SystemIndependent String?,
@@ -86,7 +87,8 @@ internal data class ToolCommandExecutor(
     parsePath(path).successOrNull?.takeIf { validateExecutable(it).isSuccess && filter(it) }
 }
 
-internal suspend fun <P : PathHolder> ToolCommandExecutor.runTool(
+@ApiStatus.Internal
+suspend fun <P : PathHolder> ToolCommandExecutor.runTool(
   fileSystem: FileSystem<P>,
   pathFromSdk: FullPathOnTarget?,
   dirPath: Path?,
