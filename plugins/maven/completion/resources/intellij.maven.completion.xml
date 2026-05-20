@@ -6,6 +6,11 @@
   </dependencies>
   <!-- endregion -->
 
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="maven.dependency.completion.contributor.local" defaultValue="true"
+                 description="Maven local repository dependency completion contributor enabled"/>
+  </extensions>
+
   <extensions defaultExtensionNs="org.jetbrains.idea.reposearch">
     <provider implementation="com.intellij.maven.completion.provider.MavenCompletionProviderFactory"/>
     <contributor implementation="com.intellij.maven.completion.MavenLocalDependencyCompletionContributor"/>

@@ -6,6 +6,7 @@ import com.intellij.maven.completion.provider.ProjectModulesCompletionProvider
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
@@ -23,10 +24,14 @@ import java.nio.file.Path
 
 @ApiStatus.Internal
 internal class MavenLocalDependencyCompletionContributor : DependencyCompletionContributor {
-  override val buildSystemId: ProjectSystemId = MavenUtil.SYSTEM_ID
   override val source: DependencyCompletionContributionSource = DependencyCompletionContributionSource.LOCAL
 
-  // TODO: isEnabled
+  override val buildSystemId: ProjectSystemId = MavenUtil.SYSTEM_ID
+
+  override fun isEnabled(): Boolean {
+    return Registry.`is`("maven.dependency.completion.contributor.local")
+  }
+
   // TODO: pass project as an optional parameter (?)
   private fun findProject(eelDescriptor: EelDescriptor): Project? =
     ProjectManager.getInstance().openProjects.firstOrNull { project ->
