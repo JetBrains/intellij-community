@@ -6,8 +6,6 @@ import com.intellij.lang.properties.PropertiesUtilBase;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Pair;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.radComponents.RadComponent;
@@ -22,27 +20,15 @@ import java.util.Map;
 
 
 public final class StringDescriptorManager {
-  private Module myModule;
+  private final Module myModule;
   private final Map<Pair<Locale, String>, PropertiesFile> myPropertiesFileCache = ContainerUtil.createSoftValueMap();
 
   public StringDescriptorManager(@NotNull Module module) {
     myModule = module;
-    module.getProject().getMessageBus().connect().subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
-      @Override
-      public void rootsChanged(@NotNull ModuleRootEvent event) {
-        synchronized(myPropertiesFileCache) {
-          myPropertiesFileCache.clear();
-        }
-      }
-    });
   }
 
   public static StringDescriptorManager getInstance(Module module) {
-    StringDescriptorManager service = module.getService(StringDescriptorManager.class);
-    if (service != null) {
-      service.myModule = module;
-    }
-    return service;
+    return StringDescriptorManagerFactory.getInstance(module.getProject()).getService(module);
   }
 
   public @Nullable String resolve(@NotNull RadComponent component, @Nullable StringDescriptor descriptor) {
@@ -98,5 +84,9 @@ public final class StringDescriptorManager {
       }
     }
     return null;
+  }
+
+  void clear() {
+    myPropertiesFileCache.clear();
   }
 }

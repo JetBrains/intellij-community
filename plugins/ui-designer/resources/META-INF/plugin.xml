@@ -90,8 +90,6 @@
     <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.CustomCreateProperty"/>
     <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.ClientPropertiesProperty"/>
 
-    <moduleService serviceImplementation="com.intellij.uiDesigner.StringDescriptorManager"/>
-
     <annotator language="JAVA" implementationClass="com.intellij.uiDesigner.binding.FormClassAnnotator"/>
 
     <cacheBuilder fileType="GUI_DESIGNER_FORM" wordsScannerClass="com.intellij.uiDesigner.binding.FormWordsScanner"/>
