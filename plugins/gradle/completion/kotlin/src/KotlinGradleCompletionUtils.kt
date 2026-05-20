@@ -2,7 +2,6 @@
 package com.intellij.gradle.completion.kotlin
 
 import com.intellij.codeInsight.completion.CompletionParameters
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PlatformPatterns.psiFile
@@ -33,9 +32,6 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SCRIPT_NAME
 import org.jetbrains.plugins.gradle.util.useDependencyCompletionService
-import java.io.IOException
-
-private val LOG = Logger.getInstance("KotlinGradleScriptCompletionUtils")
 
 internal fun isGradleDependenciesCompletionEnabled(parameters: CompletionParameters): Boolean =
   useDependencyCompletionService() && !parameters.isAndroidProject()
@@ -43,17 +39,6 @@ internal fun isGradleDependenciesCompletionEnabled(parameters: CompletionParamet
 private fun CompletionParameters.isAndroidProject(): Boolean {
   val snapshot = this.originalFile.manager.project.workspaceModel.currentSnapshot
   return snapshot.entities<FacetEntity>().any { it.name == "Android" }
-}
-
-internal fun readLinesFromFile(path: String): List<String> {
-  try {
-    val stream = object {}::class.java.getResourceAsStream(path) ?: return emptyList()
-    return stream.bufferedReader().readLines()
-  }
-  catch (e: IOException) {
-    LOG.error("Failed to read from $path", e)
-    return emptyList()
-  }
 }
 
 internal const val PLUGINS = "plugins"
