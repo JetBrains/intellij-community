@@ -120,6 +120,7 @@ internal class AsyncCompletion(project: Project?) : CompletionThreadingBase() {
   private val workingQueue = LinkedBlockingQueue<AddingEvent>()
 
   private val coroutineScope = ScopeHolder.getScope(project)
+  private val completionAsyncDispatcher = Dispatchers.IO.limitedParallelism(5) // using a separate dispatcher to overcome starvation in IO dispatcher
 
   override fun startThread(progressIndicator: ProgressIndicator?, runnable: Runnable): Deferred<*> {
     val startSemaphore = Semaphore()
@@ -136,7 +137,7 @@ internal class AsyncCompletion(project: Project?) : CompletionThreadingBase() {
           }
         }, progressIndicator)
     }
-    val future = coroutineScope.async(Dispatchers.IO + ClientId.coroutineContext()) {
+    val future = coroutineScope.async(completionAsyncDispatcher + ClientId.coroutineContext()) {
       try {
         task()
       }
