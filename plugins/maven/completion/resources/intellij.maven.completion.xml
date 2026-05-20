@@ -2,11 +2,13 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.repository.search.common"/>
+    <module name="intellij.repository.search.completion"/>
   </dependencies>
   <!-- endregion -->
 
   <extensions defaultExtensionNs="org.jetbrains.idea.reposearch">
     <provider implementation="com.intellij.maven.completion.provider.MavenCompletionProviderFactory"/>
+    <contributor implementation="com.intellij.maven.completion.MavenLocalDependencyCompletionContributor"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.maven">

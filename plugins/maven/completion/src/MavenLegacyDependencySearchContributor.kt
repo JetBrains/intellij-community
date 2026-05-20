@@ -1,16 +1,30 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.completion
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
+import com.intellij.repository.search.completion.api.DependencyCompletionContextImpl
+import com.intellij.repository.search.completion.api.DependencyCompletionRequest
+import com.intellij.repository.search.completion.api.DependencyCompletionService
+import com.intellij.repository.search.completion.api.DependencyGroupCompletionRequest
+import com.intellij.repository.search.completion.api.DependencyVersionCompletionRequest
 import org.jetbrains.idea.maven.completion.MavenDependencySearchContributor
-import org.jetbrains.idea.maven.model.MavenDependencyCompletionItem
 import org.jetbrains.idea.maven.model.MavenRepoArtifactInfo
-import org.jetbrains.idea.reposearch.DependencySearchService
-import org.jetbrains.idea.reposearch.RepositoryArtifactData
-import org.jetbrains.idea.reposearch.SearchParameters
+import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
+import org.jetbrains.idea.maven.utils.MavenUtil
+import java.nio.file.Path
 import java.util.function.Consumer
+import kotlinx.coroutines.flow.toList
 
+// TODO: rename
 internal class MavenLegacyDependencySearchContributor : MavenDependencySearchContributor {
+
+  private fun createContext(project: Project) = DependencyCompletionContextImpl(
+    Path.of(project.basePath ?: "").getEelDescriptor(),
+    MavenUtil.SYSTEM_ID,
+  )
 
   override suspend fun fulltextSearch(
       project: Project,
@@ -19,8 +33,9 @@ internal class MavenLegacyDependencySearchContributor : MavenDependencySearchCon
       useLocalOnly: Boolean,
       consumer: Consumer<MavenRepoArtifactInfo>,
   ) {
-    val parameters = SearchParameters(useCache, useLocalOnly)
-    DependencySearchService.getInstance(project).fulltextSearchAsync(searchString, parameters, consumer.toLegacy())
+    collectGrouped(DependencyCompletionRequest(searchString, createContext(project))) { gId, aId, versions ->
+      consumer.accept(MavenRepositoryArtifactInfo(gId, aId, versions))
+    }
   }
 
   override suspend fun suggestPrefix(
@@ -31,41 +46,40 @@ internal class MavenLegacyDependencySearchContributor : MavenDependencySearchCon
       useLocalOnly: Boolean,
       consumer: Consumer<MavenRepoArtifactInfo>,
   ) {
-    val parameters = SearchParameters(useCache, useLocalOnly)
-    DependencySearchService.getInstance(project).suggestPrefixAsync(groupId, artifactId, parameters, consumer.toLegacy())
-  }
-
-  override suspend fun getGroupIds(project: Project, pattern: String?): Set<String> {
-    return DependencySearchService.getInstance(project).getGroupIds(pattern)
-  }
-
-  override suspend fun getArtifactIds(project: Project, groupId: String): Set<String> {
-    return DependencySearchService.getInstance(project).getArtifactIds(groupId)
-  }
-
-  override suspend fun getVersions(project: Project, groupId: String, artifactId: String): Set<String> {
-    return DependencySearchService.getInstance(project).getVersionsAsync(groupId, artifactId)
-  }
-
-  private class LegacyMavenRepoArtifactInfo(groupId: String, artifactId: String, items: Array<MavenDependencyCompletionItem>) :
-    MavenRepoArtifactInfo(groupId, artifactId, items), RepositoryArtifactData {
-
-    constructor(info: MavenRepoArtifactInfo) : this(info.groupId, info.artifactId, info.items)
-
-    override fun getKey() = "$groupId:$artifactId"
-
-    override fun mergeWith(another: RepositoryArtifactData): RepositoryArtifactData {
-      if (another !is MavenRepoArtifactInfo) {
-        throw IllegalArgumentException()
-      }
-      return LegacyMavenRepoArtifactInfo(groupId, artifactId, items + another.items)
+    collectGrouped(DependencyCompletionRequest("$groupId:$artifactId", createContext(project))) { gId, aId, versions ->
+      consumer.accept(MavenRepositoryArtifactInfo(gId, aId, versions))
     }
   }
 
-  private fun Consumer<MavenRepoArtifactInfo>.toLegacy(): Consumer<RepositoryArtifactData> =
-      Consumer { data ->
-          if (data is MavenRepoArtifactInfo) {
-              accept(LegacyMavenRepoArtifactInfo(data))
-          }
-      }
+  override suspend fun getGroupIds(project: Project, pattern: String?): Set<String> {
+    val request = DependencyGroupCompletionRequest(pattern ?: "", "", createContext(project))
+    return service<DependencyCompletionService>().suggestGroupCompletions(request).toList().map { it.result }.toSet()
+  }
+
+  override suspend fun getArtifactIds(project: Project, groupId: String): Set<String> {
+    val request = DependencyArtifactCompletionRequest(groupId, "", createContext(project))
+    return service<DependencyCompletionService>().suggestArtifactCompletions(request).toList().map { it.result }.toSet()
+  }
+
+  override suspend fun getVersions(project: Project, groupId: String, artifactId: String): Set<String> {
+    val request = DependencyVersionCompletionRequest(groupId, artifactId, "", createContext(project))
+    return service<DependencyCompletionService>().suggestVersionCompletions(request).toList().map { it.result }.toSet()
+  }
+
+  private suspend fun collectGrouped(
+      request: DependencyCompletionRequest,
+      block: (String, String, List<String>) -> Unit,
+  ) {
+    val grouped = mutableMapOf<String, MutableList<String>>()
+    val coords = mutableMapOf<String, Pair<String, String>>()
+    service<DependencyCompletionService>().suggestCompletions(request).collect { r ->
+      val key = "${r.groupId}:${r.artifactId}"
+      coords[key] = r.groupId to r.artifactId
+      grouped.getOrPut(key) { mutableListOf() }.add(r.version)
+    }
+    for ((key, versions) in grouped) {
+      val (gId, aId) = coords[key]!!
+      block(gId, aId, versions)
+    }
+  }
 }

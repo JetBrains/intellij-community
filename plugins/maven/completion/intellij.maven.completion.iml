@@ -20,5 +20,8 @@
     <orderEntry type="module" module-name="intellij.platform.backend.observation" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
+    <orderEntry type="module" module-name="intellij.platform.eel" />
+    <orderEntry type="module" module-name="intellij.platform.eel.provider" />
+    <orderEntry type="module" module-name="intellij.repository.search.completion" />
   </component>
 </module>
