@@ -1545,6 +1545,30 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/specifySuperExplicitly")
+    public static class SpecifySuperExplicitly extends AbstractHighLevelQuickFixMultiFileTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+        }
+
+        @TestMetadata("abstractSuperCall4.before.Main.kt")
+        public void testAbstractSuperCall4() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/specifySuperExplicitly/abstractSuperCall4.before.Main.kt");
+        }
+
+        @TestMetadata("abstractSuperCallWithExplicitSuper3.before.Main.kt")
+        public void testAbstractSuperCallWithExplicitSuper3() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/specifySuperExplicitly/abstractSuperCallWithExplicitSuper3.before.Main.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/migration/conflictingExtension")
     public static class ConflictingExtension extends AbstractHighLevelQuickFixMultiFileTest {
         @java.lang.Override

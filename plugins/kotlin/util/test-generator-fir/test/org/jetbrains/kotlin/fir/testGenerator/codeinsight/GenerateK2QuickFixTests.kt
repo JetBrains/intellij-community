@@ -244,6 +244,11 @@ internal fun MutableTWorkspace.generateK2FixTests() {
                 testMethodName = testMethodName,
             )
             model(
+                "$idea/quickfix/specifySuperExplicitly",
+                pattern = pattern,
+                testMethodName = testMethodName,
+            )
+            model(
                 "$idea/quickfix/migration/conflictingExtension",
                 pattern = pattern,
                 testMethodName = testMethodName,

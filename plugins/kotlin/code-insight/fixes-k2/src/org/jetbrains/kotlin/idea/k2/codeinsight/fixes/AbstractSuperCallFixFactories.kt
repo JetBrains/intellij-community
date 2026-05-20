@@ -170,8 +170,8 @@ private class SpecifySuperTypeExplicitlyFix(
         updater: ModPsiUpdater,
     ) {
         val containingClass = element.getNonStrictParentOfType<KtClassOrObject>() ?: return
-        element.specifySuperType(superType)
         containingClass.addSuperTypeListEntryIfNotExists(superType)
+        element.specifySuperType(superType)
     }
 }
 
