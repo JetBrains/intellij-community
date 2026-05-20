@@ -131,10 +131,10 @@ internal class CodexAgentSessionProviderDescriptor(
   ): AgentSessionTerminalLaunchSpec {
     val executable = executableResolver()
     val command = if (launchMode == AgentSessionLaunchMode.YOLO) {
-      listOf(executable, "-c", CODEX_AUTO_UPDATE_CONFIG, "--yolo", "resume", sessionId)
+      buildCodexBaseCommand(executable) + listOf("--yolo", "resume", sessionId)
     }
     else {
-      listOf(executable, "-c", CODEX_AUTO_UPDATE_CONFIG, "resume", sessionId)
+      buildCodexBaseCommand(executable) + listOf("resume", sessionId)
     }
     return AgentSessionTerminalLaunchSpec(
       command = command,
@@ -144,10 +144,10 @@ internal class CodexAgentSessionProviderDescriptor(
   override suspend fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec {
     val executable = executableResolver()
     val command = if (mode == AgentSessionLaunchMode.YOLO) {
-      listOf(executable, "-c", CODEX_AUTO_UPDATE_CONFIG, "--yolo")
+      buildCodexBaseCommand(executable) + "--yolo"
     }
     else {
-      listOf(executable, "-c", CODEX_AUTO_UPDATE_CONFIG)
+      buildCodexBaseCommand(executable)
     }
     return AgentSessionTerminalLaunchSpec(command = command)
   }
@@ -250,4 +250,17 @@ private object SharedServiceCodexThreadMutationBackend : CodexThreadMutationBack
   }
 }
 
+private fun buildCodexBaseCommand(executable: String): List<String> {
+  return listOf(
+    executable,
+    "-c",
+    CODEX_AUTO_UPDATE_CONFIG,
+    "-c",
+    CODEX_TERMINAL_TITLE_CONFIG,
+  )
+}
+
 private const val CODEX_AUTO_UPDATE_CONFIG: String = "check_for_update_on_startup=false"
+// Codex writes the concrete thread id into the terminal title. Agent Chat uses it as an early rebind signal before
+// app-server refresh can reliably read the thread.
+private const val CODEX_TERMINAL_TITLE_CONFIG: String = "tui.terminal_title=[\"thread\"]"

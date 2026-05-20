@@ -5,6 +5,7 @@ package com.intellij.agent.workbench.codex.sessions.backend.appserver
 import com.intellij.agent.workbench.codex.common.CodexAppServerNotification
 import com.intellij.agent.workbench.codex.common.CodexAppServerNotificationKind
 import com.intellij.agent.workbench.codex.common.CodexAppServerStartedThread
+import com.intellij.agent.workbench.codex.common.CodexAppServerException
 import com.intellij.agent.workbench.codex.common.CodexThreadActiveFlag
 import com.intellij.agent.workbench.codex.common.CodexThreadActivitySnapshot
 import com.intellij.agent.workbench.codex.common.CodexThreadStatusKind
@@ -163,6 +164,35 @@ class CodexAppServerRefreshHintsProviderTest {
         assertThat(requestedThreadIds).containsExactly("thread-real")
         assertThat(hintsByPath.getValue("/work/project").activities())
             .containsExactlyEntriesOf(mapOf("thread-real" to AgentThreadActivity.READY))
+    }
+
+    @Test
+    fun prefetchSkipsTransientThreadNotLoadedError(): Unit = runBlocking(Dispatchers.Default) {
+        val provider = CodexAppServerRefreshHintsProvider(
+            readThreadActivitySnapshot = { threadId ->
+                if (threadId == "thread-loading") {
+                    throw CodexAppServerException("thread not loaded: $threadId")
+                }
+                snapshot(
+                    threadId = threadId,
+                    statusKind = CodexThreadStatusKind.IDLE,
+                )
+            },
+            notifications = emptyFlow(),
+        )
+
+        val hintsByPath = provider.prefetchRefreshHints(
+            paths = listOf("/work/project"),
+            refreshThreadSeedsByPath = mapOf(
+                "/work/project" to linkedSetOf(
+                    refreshThreadSeed("thread-loading"),
+                    refreshThreadSeed("thread-ready"),
+                ),
+            ),
+        )
+
+        assertThat(hintsByPath.getValue("/work/project").activities())
+            .containsExactlyEntriesOf(mapOf("thread-ready" to AgentThreadActivity.READY))
     }
 
     @Test

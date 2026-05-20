@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.codex.sessions
 
+import com.intellij.agent.workbench.codex.common.CodexAppServerException
 import com.intellij.agent.workbench.codex.common.CodexThread
 import com.intellij.agent.workbench.codex.common.CodexThreadActiveFlag
 import com.intellij.agent.workbench.codex.common.CodexThreadSourceKind
@@ -11,6 +12,7 @@ import com.intellij.agent.workbench.codex.sessions.backend.appserver.CodexAppSer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.io.TempDir
@@ -131,6 +133,49 @@ class CodexAppServerSessionBackendTest {
       assertThat(parent.activity).isEqualTo(CodexSessionActivity.NEEDS_INPUT)
       assertThat(parent.summaryActivity).isEqualTo(CodexSessionActivity.READY)
     }
+  }
+
+  @Test
+  fun refreshThreadsSkipsTransientThreadNotLoadedError() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-thread-loading")
+      Files.createDirectories(projectDir)
+      val readCalls = ArrayList<String>()
+      val backend = CodexAppServerSessionBackend(
+        listThreadsForProject = { emptyList() },
+        readThread = { threadId ->
+          readCalls.add(threadId)
+          throw CodexAppServerException("thread not loaded: $threadId")
+        },
+        archiveThread = {},
+      )
+
+      val result = backend.refreshThreads(path = projectDir.toString(), threadIds = setOf("thread-new"), openProject = null)
+
+      assertThat(readCalls).containsExactly("thread-new")
+      assertThat(result).isNotNull
+      assertThat(result?.isComplete).isFalse()
+      assertThat(result?.threads).isEmpty()
+    }
+  }
+
+  @Test
+  fun refreshThreadsRethrowsUnexpectedReadError() {
+    val projectDir = tempDir.resolve("project-read-failure")
+    Files.createDirectories(projectDir)
+    val backend = CodexAppServerSessionBackend(
+      listThreadsForProject = { emptyList() },
+      readThread = { throw CodexAppServerException("boom") },
+      archiveThread = {},
+    )
+
+    assertThatThrownBy {
+      runBlocking(Dispatchers.Default) {
+        backend.refreshThreads(path = projectDir.toString(), threadIds = setOf("thread-failed"), openProject = null)
+      }
+    }
+      .isInstanceOf(CodexAppServerException::class.java)
+      .hasMessage("boom")
   }
 
   @Test

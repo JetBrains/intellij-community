@@ -37,7 +37,7 @@ class CodexNewThreadPromptLaunchIntegrationTest {
     assertThat(observation.normalizedPath).isEqualTo(PROJECT_PATH)
     assertThat(observation.identity).startsWith("codex:new-")
     assertThat(observation.launchSpec.command)
-      .containsExactly("codex", "-c", "check_for_update_on_startup=false")
+      .containsExactlyElementsOf(CODEX_BASE_COMMAND)
     assertThat(observation.startupLaunchSpecOverride).isNull()
     assertThat(observation.postStartDispatchSteps.map { it.text }).containsExactly("/plan", "Plan this refactor")
     assertThat(observation.initialMessageToken).isNotNull()
@@ -63,7 +63,7 @@ class CodexNewThreadPromptLaunchIntegrationTest {
     assertThat(observation.normalizedPath).isEqualTo(PROJECT_PATH)
     assertThat(observation.identity).startsWith("codex:new-")
     assertThat(observation.launchSpec.command)
-      .containsExactly("codex", "-c", "check_for_update_on_startup=false")
+      .containsExactlyElementsOf(CODEX_BASE_COMMAND)
     assertThat(observation.startupLaunchSpecOverride).isNull()
     assertThat(observation.postStartDispatchSteps.map { it.text }).containsExactly("/plan", "Refactor selected code")
     assertThat(observation.initialMessageToken).isNotNull()
@@ -88,9 +88,9 @@ class CodexNewThreadPromptLaunchIntegrationTest {
     assertThat(observation.normalizedPath).isEqualTo(PROJECT_PATH)
     assertThat(observation.identity).startsWith("codex:new-")
     assertThat(observation.launchSpec.command)
-      .containsExactly("codex", "-c", "check_for_update_on_startup=false")
+      .containsExactlyElementsOf(CODEX_BASE_COMMAND)
     assertThat(observation.startupLaunchSpecOverride?.command)
-      .containsExactly("codex", "-c", "check_for_update_on_startup=false", "--", "Refactor selected code")
+      .containsExactlyElementsOf(CODEX_BASE_COMMAND + listOf("--", "Refactor selected code"))
     assertThat(observation.postStartDispatchSteps.single().text).isEqualTo("Refactor selected code")
     assertThat(observation.initialMessageToken).isNotNull()
   }
@@ -105,3 +105,11 @@ private fun descriptor(): CodexAgentSessionProviderDescriptor {
 }
 
 private const val PROJECT_PATH: String = "/work/project-a"
+
+private val CODEX_BASE_COMMAND: List<String> = listOf(
+  "codex",
+  "-c",
+  "check_for_update_on_startup=false",
+  "-c",
+  "tui.terminal_title=[\"thread\"]",
+)

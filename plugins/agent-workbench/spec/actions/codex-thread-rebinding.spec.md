@@ -25,8 +25,16 @@ Codex starts new threads before the concrete provider thread id is known. Workbe
   [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
   [@test] ../../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
 
+- Codex launch specs must configure `tui.terminal_title=["thread"]` so the terminal title exposes the concrete thread id. Agent Chat may use this title as an early rebind signal before app-server refresh can reliably read the thread.
+  [@test] ../../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
+  [@test] ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
+
 - Codex plan-mode launches with a non-empty stripped prompt use the normal pending PTY path and enqueue post-start dispatch steps: `/plan`, then prompt body.
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
+  [@test] ../../codex/sessions/testSrc/CodexNewThreadPromptLaunchIntegrationTest.kt
+
+- Title-based rebind must preserve queued post-start dispatch metadata, but startup-command fallback prompts must not be snapshotted after the startup command has been used.
+  [@test] ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
   [@test] ../../codex/sessions/testSrc/CodexNewThreadPromptLaunchIntegrationTest.kt
 
 - Provider refresh may auto-rebind pending Codex tabs only to newly discovered concrete thread ids for the same normalized path. Matching must be one-to-one, timestamp-bounded, and skip ambiguous candidates.

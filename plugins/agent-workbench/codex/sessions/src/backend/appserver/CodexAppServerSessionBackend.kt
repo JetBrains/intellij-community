@@ -16,6 +16,7 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -78,7 +79,7 @@ class CodexAppServerSessionBackend(
     val fetchedThreadsById = LinkedHashMap<String, CodexThread>(threadIds.size)
     val parentThreadIdsToFetch = LinkedHashSet<String>()
     for (threadId in threadIds) {
-      val thread = readThread(threadId) ?: continue
+      val thread = readThreadIfLoaded(threadId) ?: continue
       if (thread.cwd != cwdFilter) {
         continue
       }
@@ -93,7 +94,7 @@ class CodexAppServerSessionBackend(
       if (parentThreadId in fetchedThreadsById) {
         continue
       }
-      val parentThread = readThread(parentThreadId) ?: continue
+      val parentThread = readThreadIfLoaded(parentThreadId) ?: continue
       if (parentThread.cwd == cwdFilter) {
         fetchedThreadsById[parentThread.id] = parentThread
       }
@@ -180,6 +181,24 @@ class CodexAppServerSessionBackend(
     }
 
     return result
+  }
+
+  private suspend fun readThreadIfLoaded(threadId: String): CodexThread? {
+    return try {
+      readThread(threadId)
+    }
+    catch (e: Throwable) {
+      if (e is CancellationException) {
+        throw e
+      }
+      if (e.isCodexThreadNotLoadedError()) {
+        LOG.debug { "Skipped Codex app-server refresh for unloaded threadId=$threadId: ${e.message}" }
+        null
+      }
+      else {
+        throw e
+      }
+    }
   }
 }
 

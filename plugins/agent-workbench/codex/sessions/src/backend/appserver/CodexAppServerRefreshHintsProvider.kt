@@ -105,7 +105,12 @@ internal class CodexAppServerRefreshHintsProvider(
                 threadId to readThreadActivitySnapshot(threadId)
               }
               catch (t: Throwable) {
-                LOG.warn("Failed to read Codex thread activity snapshot for threadId=$threadId", t)
+                if (t.isCodexThreadNotLoadedError()) {
+                  LOG.debug { "Skipped Codex app-server activity snapshot for unloaded threadId=$threadId: ${t.message}" }
+                }
+                else {
+                  LOG.warn("Failed to read Codex thread activity snapshot for threadId=$threadId", t)
+                }
                 threadId to null
               }
             }

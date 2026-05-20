@@ -94,6 +94,7 @@ internal class AgentChatFileEditor(
   private var initializationJob: Job? = null
   private var disposed: Boolean = false
   private var pendingThreadRefreshController: AgentChatPendingThreadRefreshController? = null
+  private var codexTerminalTitleThreadRebindController: AgentChatDisposableController? = null
   private var concreteThreadRebindController: AgentChatConcreteThreadRebindController? = null
   private var initialMessageDispatcher: AgentChatInitialMessageDispatcher? = null
   private var scopedTerminalRefreshController: AgentChatDisposableController? = null
@@ -166,6 +167,8 @@ internal class AgentChatFileEditor(
     initialMessageDispatcher = null
     pendingThreadRefreshController?.dispose()
     pendingThreadRefreshController = null
+    codexTerminalTitleThreadRebindController?.dispose()
+    codexTerminalTitleThreadRebindController = null
     concreteThreadRebindController?.dispose()
     concreteThreadRebindController = null
     scopedTerminalRefreshController?.dispose()
@@ -289,6 +292,11 @@ internal class AgentChatFileEditor(
       )
       tab = createdTab
       file.updateStartupIntent(null)
+      if (suppressInitialMessageDispatch) {
+        // The startup command already carried this prompt; do not snapshot and replay the fallback after title rebind
+        // or restore.
+        file.clearInitialMessageDispatchMetadata()
+      }
       if (file.isPendingThread) {
         file.updateRestoreOnRestart(false)
       }
@@ -319,6 +327,11 @@ internal class AgentChatFileEditor(
         messageDispatcher.schedule(createdTab)
       }
       scopedTerminalRefreshController = createAgentChatScopedTerminalRefreshController(file, createdTab, providerDescriptor)
+      codexTerminalTitleThreadRebindController = createCodexTerminalTitleThreadRebindController(
+        file = file,
+        tab = createdTab,
+        tabSnapshotWriter = tabSnapshotWriter,
+      )
       patchFoldController = behavior.createPatchFoldController(createdTab)
       semanticRegionController = behavior.createSemanticRegionController(createdTab)
       installPendingContextInterceptor(createdTab)

@@ -24,6 +24,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.terminal.TerminalTitle
 import com.intellij.terminal.frontend.view.TerminalKeyEvent
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
 import kotlinx.coroutines.CoroutineDispatcher
@@ -93,6 +94,291 @@ class AgentChatFileEditorLifecycleTest {
   @Test
   fun codexPatchFoldingIsNotInstalledWithoutApplication() {
     assertThat(shouldInstallAgentChatPatchFolding(AgentSessionProvider.CODEX)).isFalse()
+  }
+
+  @Test
+  fun codexTerminalTitleParserExtractsFullThreadId() {
+    val threadId = "018f4b30-f1b2-7000-9b4d-abcdef123456"
+
+    assertThat(extractCodexThreadIdFromTerminalTitle("Codex · $threadId · /work/project-a"))
+      .isEqualTo(threadId)
+    assertThat(extractCodexThreadIdFromTerminalTitle("CODEX · 018F4B30-F1B2-7000-9B4D-ABCDEF123456"))
+      .isEqualTo(threadId)
+    assertThat(extractCodexThreadIdFromTerminalTitle("Codex · Fix indexing bug · /work/project-a"))
+      .isNull()
+  }
+
+  @Test
+  fun codexTerminalTitleRebindsPendingTabToObservedThreadId() {
+    val threadId = "018f4b30-f1b2-7000-9b4d-abcdef123456"
+    val file = pendingTestFile()
+    val title = TerminalTitle()
+    val snapshotWriter = RecordingSnapshotWriter()
+    val requests = mutableListOf<AgentChatPendingTabRebindRequest>()
+    val refreshThreadIds = mutableListOf<String?>()
+    val controllerScope = unconfinedTestScope()
+    val controller = CodexTerminalTitleThreadRebindController(
+      file = file,
+      tabSnapshotWriter = snapshotWriter,
+      rebindPendingTabs = { provider, requestsByPath ->
+        assertThat(provider.value).isEqualTo(AgentSessionProvider.CODEX.value)
+        val request = requestsByPath.getValue(file.projectPath).single()
+        requests += request
+        file.rebindPendingThread(
+          threadIdentity = request.target.threadIdentity,
+          threadId = request.target.threadId,
+          threadTitle = request.target.threadTitle,
+          threadActivity = request.target.threadActivity,
+        )
+        AgentChatPendingTabRebindReport(
+          requestedBindings = 1,
+          reboundBindings = 1,
+          reboundFiles = 1,
+          updatedPresentations = 1,
+          outcomesByPath = emptyMap(),
+        )
+      },
+      notifyRefresh = { _, _, refreshedThreadId, _ ->
+        refreshThreadIds += refreshedThreadId
+      },
+    )
+
+    try {
+      controller.attach(terminalTitle = title, parentScope = controllerScope)
+      title.change { applicationTitle = "Codex · $threadId · /work/project-a" }
+
+      assertThat(requests).hasSize(1)
+      val request = requests.single()
+      assertThat(request.pendingTabKey).isEqualTo(file.tabKey)
+      assertThat(request.pendingThreadIdentity).isEqualTo("codex:new-thread")
+      assertThat(request.target.threadIdentity).isEqualTo("codex:$threadId")
+      assertThat(request.target.threadId).isEqualTo(threadId)
+      assertThat(file.threadIdentity).isEqualTo("codex:$threadId")
+      assertThat(file.threadId).isEqualTo(threadId)
+      assertThat(file.isPendingThread).isFalse()
+      assertThat(snapshotWriter.snapshots.single().identity.threadIdentity).isEqualTo("codex:$threadId")
+      assertThat(refreshThreadIds).containsExactly(threadId)
+
+      title.change { applicationTitle = "Codex · $threadId" }
+
+      assertThat(requests).hasSize(1)
+    }
+    finally {
+      controller.dispose()
+      controllerScope.cancel()
+    }
+  }
+
+  @Test
+  fun codexTerminalTitleRebindKeepsPendingPostStartInitialMessageDispatch() {
+    val threadId = "018f4b30-f1b2-7000-9b4d-abcdef123456"
+    val initialMessage = "Refactor selected code"
+    val file = pendingTestFile()
+    file.updateInitialMessageMetadata(
+      initialMessageDispatchSteps = listOf(
+        AgentInitialMessageDispatchStep(
+          text = "/plan",
+          timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
+          completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
+        ),
+        AgentInitialMessageDispatchStep(
+          text = initialMessage,
+          timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
+        )
+      ),
+      initialMessageDispatchStepIndex = 0,
+      initialMessageToken = "token-1",
+      initialMessageSent = false,
+    )
+    val title = TerminalTitle()
+    val snapshotWriter = RecordingSnapshotWriter()
+    val controllerScope = unconfinedTestScope()
+    val controller = CodexTerminalTitleThreadRebindController(
+      file = file,
+      tabSnapshotWriter = snapshotWriter,
+      rebindPendingTabs = { _, requestsByPath ->
+        val request = requestsByPath.getValue(file.projectPath).single()
+        file.rebindPendingThread(
+          threadIdentity = request.target.threadIdentity,
+          threadId = request.target.threadId,
+          threadTitle = request.target.threadTitle,
+          threadActivity = request.target.threadActivity,
+        )
+        AgentChatPendingTabRebindReport(
+          requestedBindings = 1,
+          reboundBindings = 1,
+          reboundFiles = 1,
+          updatedPresentations = 1,
+          outcomesByPath = emptyMap(),
+        )
+      },
+    )
+
+    try {
+      controller.attach(terminalTitle = title, parentScope = controllerScope)
+      title.change { applicationTitle = "Codex · $threadId · /work/project-a" }
+
+      assertThat(file.threadIdentity).isEqualTo("codex:$threadId")
+      assertThat(file.hasPendingInitialMessageForDispatch()).isTrue()
+      assertThat(file.initialMessageToken).isEqualTo("token-1")
+      assertThat(file.initialComposedMessage).isEqualTo("/plan")
+      val snapshot = snapshotWriter.snapshots.single()
+      assertThat(snapshot.identity.threadIdentity).isEqualTo("codex:$threadId")
+      assertThat(snapshot.runtime.initialMessageDispatchSteps.map { it.text }).containsExactly("/plan", initialMessage)
+      assertThat(snapshot.runtime.initialMessageToken).isEqualTo("token-1")
+      assertThat(snapshot.runtime.initialMessageSent).isFalse()
+    }
+    finally {
+      controller.dispose()
+      controllerScope.cancel()
+    }
+  }
+
+  @Test
+  fun suppressedStartupCommandDispatchClearsInitialMessageFallbackBeforeRebindSnapshot() {
+    val initialMessage = "Refactor selected code"
+    val file = pendingTestFile()
+    file.setStartupLaunchSpecOverride(
+      AgentSessionTerminalLaunchSpec(command = listOf("codex", "--", initialMessage)),
+      suppressInitialMessageDispatch = true,
+    )
+    file.updateInitialMessageMetadata(
+      initialMessageDispatchSteps = listOf(
+        AgentInitialMessageDispatchStep(
+          text = initialMessage,
+          timeoutPolicy = AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK,
+        )
+      ),
+      initialMessageDispatchStepIndex = 0,
+      initialMessageToken = "token-startup",
+      initialMessageSent = false,
+    )
+    val terminalTabs = FakeAgentChatTerminalTabs()
+    val editor = testEditor(file = file, terminalTabs = terminalTabs)
+
+    editor.selectNotify()
+
+    assertThat(terminalTabs.createCalls).isEqualTo(1)
+    assertThat(terminalTabs.tab.sentTexts).isEmpty()
+    assertThat(file.hasPendingInitialMessageForDispatch()).isFalse()
+    assertThat(file.initialMessageDispatchSteps).isEmpty()
+    assertThat(file.initialMessageToken).isNull()
+    assertThat(file.toSnapshot().runtime.initialMessageDispatchSteps).isEmpty()
+    assertThat(file.toSnapshot().runtime.initialMessageToken).isNull()
+  }
+
+  @Test
+  fun codexTerminalTitleRebindDoesNotPersistClearedStartupCommandFallback() {
+    val threadId = "018f4b30-f1b2-7000-9b4d-abcdef123456"
+    val file = pendingTestFile()
+    file.updateInitialMessageMetadata(
+      initialMessageDispatchSteps = listOf(
+        AgentInitialMessageDispatchStep(
+          text = "Refactor selected code",
+          timeoutPolicy = AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK,
+        )
+      ),
+      initialMessageDispatchStepIndex = 0,
+      initialMessageToken = "token-startup",
+      initialMessageSent = false,
+    )
+    file.clearInitialMessageDispatchMetadata()
+    val title = TerminalTitle()
+    val snapshotWriter = RecordingSnapshotWriter()
+    val controllerScope = unconfinedTestScope()
+    val controller = CodexTerminalTitleThreadRebindController(
+      file = file,
+      tabSnapshotWriter = snapshotWriter,
+      rebindPendingTabs = { _, requestsByPath ->
+        val request = requestsByPath.getValue(file.projectPath).single()
+        file.rebindPendingThread(
+          threadIdentity = request.target.threadIdentity,
+          threadId = request.target.threadId,
+          threadTitle = request.target.threadTitle,
+          threadActivity = request.target.threadActivity,
+        )
+        AgentChatPendingTabRebindReport(
+          requestedBindings = 1,
+          reboundBindings = 1,
+          reboundFiles = 1,
+          updatedPresentations = 1,
+          outcomesByPath = emptyMap(),
+        )
+      },
+    )
+
+    try {
+      controller.attach(terminalTitle = title, parentScope = controllerScope)
+      title.change { applicationTitle = "Codex · $threadId · /work/project-a" }
+
+      val snapshot = snapshotWriter.snapshots.single()
+      assertThat(snapshot.identity.threadIdentity).isEqualTo("codex:$threadId")
+      assertThat(snapshot.runtime.initialMessageDispatchSteps).isEmpty()
+      assertThat(snapshot.runtime.initialMessageToken).isNull()
+      assertThat(snapshot.runtime.initialMessageSent).isFalse()
+    }
+    finally {
+      controller.dispose()
+      controllerScope.cancel()
+    }
+  }
+
+  @Test
+  fun codexTerminalTitleRebindsConcreteTabAfterNewThreadCommand() {
+    val threadId = "018f4b30-f1b2-7000-9b4d-abcdef123456"
+    val file = testFile()
+    file.updateNewThreadRebindRequestedAtMs(2_000L)
+    val title = TerminalTitle()
+    val snapshotWriter = RecordingSnapshotWriter()
+    val requests = mutableListOf<AgentChatConcreteTabRebindRequest>()
+    val refreshThreadIds = mutableListOf<String?>()
+    val controllerScope = unconfinedTestScope()
+    val controller = CodexTerminalTitleThreadRebindController(
+      file = file,
+      tabSnapshotWriter = snapshotWriter,
+      rebindConcreteTabs = { provider, requestsByPath ->
+        assertThat(provider.value).isEqualTo(AgentSessionProvider.CODEX.value)
+        val request = requestsByPath.getValue(file.projectPath).single()
+        requests += request
+        file.rebindConcreteThread(
+          threadIdentity = request.target.threadIdentity,
+          threadId = request.target.threadId,
+          threadTitle = request.target.threadTitle,
+          threadActivity = request.target.threadActivity,
+        )
+        AgentChatConcreteTabRebindReport(
+          requestedBindings = 1,
+          reboundBindings = 1,
+          reboundFiles = 1,
+          updatedPresentations = 1,
+          outcomesByPath = emptyMap(),
+        )
+      },
+      notifyRefresh = { _, _, refreshedThreadId, _ ->
+        refreshThreadIds += refreshedThreadId
+      },
+    )
+
+    try {
+      controller.attach(terminalTitle = title, parentScope = controllerScope)
+      title.change { applicationTitle = "Codex · $threadId · /work/project-a" }
+
+      assertThat(requests).hasSize(1)
+      val request = requests.single()
+      assertThat(request.tabKey).isEqualTo(file.tabKey)
+      assertThat(request.currentThreadIdentity).isEqualTo("CODEX:thread-1")
+      assertThat(request.newThreadRebindRequestedAtMs).isEqualTo(2_000L)
+      assertThat(request.target.threadIdentity).isEqualTo("codex:$threadId")
+      assertThat(file.threadIdentity).isEqualTo("codex:$threadId")
+      assertThat(file.threadId).isEqualTo(threadId)
+      assertThat(file.newThreadRebindRequestedAtMs).isNull()
+      assertThat(snapshotWriter.snapshots.single().identity.threadIdentity).isEqualTo("codex:$threadId")
+      assertThat(refreshThreadIds).containsExactly(threadId)
+    }
+    finally {
+      controller.dispose()
+      controllerScope.cancel()
+    }
   }
 
   @Test
@@ -1738,6 +2024,12 @@ private fun testEditor(
     pendingScopedRefreshRetryIntervalMs = pendingScopedRefreshRetryIntervalMs,
     editorCoroutineScope = editorCoroutineScope,
   ).also(editorsToDispose::add)
+}
+
+private fun unconfinedTestScope(): CoroutineScope {
+  return object : CoroutineScope {
+    override val coroutineContext: CoroutineContext = Job() + Dispatchers.Unconfined
+  }
 }
 
 private object PausedCoroutineDispatcher : CoroutineDispatcher() {

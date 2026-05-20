@@ -38,13 +38,13 @@ class CodexAgentSessionProviderDescriptorTest {
   @Test
   fun buildResumeLaunchSpec(): Unit = runBlocking(Dispatchers.Default) {
     assertThat(bridge.buildResumeLaunchSpec("thread-1").command)
-      .containsExactly("codex", "-c", "check_for_update_on_startup=false", "resume", "thread-1")
+      .containsExactlyElementsOf(CODEX_BASE_COMMAND + listOf("resume", "thread-1"))
   }
 
   @Test
   fun buildYoloResumeLaunchSpec(): Unit = runBlocking(Dispatchers.Default) {
     assertThat(bridge.buildResumeLaunchSpec("thread-1", AgentSessionLaunchMode.YOLO).command)
-      .containsExactly("codex", "-c", "check_for_update_on_startup=false", "--yolo", "resume", "thread-1")
+      .containsExactlyElementsOf(CODEX_BASE_COMMAND + listOf("--yolo", "resume", "thread-1"))
   }
 
   @Test
@@ -55,9 +55,9 @@ class CodexAgentSessionProviderDescriptorTest {
   @Test
   fun buildNewSessionLaunchSpec(): Unit = runBlocking(Dispatchers.Default) {
     assertThat(bridge.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD).command)
-      .containsExactly("codex", "-c", "check_for_update_on_startup=false")
+      .containsExactlyElementsOf(CODEX_BASE_COMMAND)
     assertThat(bridge.buildNewSessionLaunchSpec(AgentSessionLaunchMode.YOLO).command)
-      .containsExactly("codex", "-c", "check_for_update_on_startup=false", "--yolo")
+      .containsExactlyElementsOf(CODEX_BASE_COMMAND + "--yolo")
   }
 
   @Test
@@ -68,7 +68,7 @@ class CodexAgentSessionProviderDescriptorTest {
         initialMessagePlan = AgentInitialMessagePlan(message = "-draft plan\nstep 2"),
       ).command
     )
-      .containsExactly("codex", "-c", "check_for_update_on_startup=false", "--yolo", "--", "-draft plan\nstep 2")
+      .containsExactlyElementsOf(CODEX_BASE_COMMAND + listOf("--yolo", "--", "-draft plan\nstep 2"))
   }
 
   @Test
@@ -81,7 +81,7 @@ class CodexAgentSessionProviderDescriptorTest {
         initialMessagePlan = AgentInitialMessagePlan(message = "Summarize changes"),
       ).command
     )
-      .containsExactly("codex", "-c", "check_for_update_on_startup=false", "resume", "thread-1", "--", "Summarize changes")
+      .containsExactlyElementsOf(CODEX_BASE_COMMAND + listOf("resume", "thread-1", "--", "Summarize changes"))
   }
 
   @Test
@@ -408,3 +408,11 @@ private fun emptySource(): AgentSessionSource {
     override suspend fun listThreadsFromClosedProject(path: String): List<AgentSessionThread> = emptyList()
   }
 }
+
+private val CODEX_BASE_COMMAND: List<String> = listOf(
+  "codex",
+  "-c",
+  "check_for_update_on_startup=false",
+  "-c",
+  "tui.terminal_title=[\"thread\"]",
+)

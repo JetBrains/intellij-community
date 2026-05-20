@@ -335,6 +335,16 @@ internal class AgentChatVirtualFile internal constructor(
   }
 
   @Synchronized
+  fun clearInitialMessageDispatchMetadata(): Boolean {
+    return updateInitialMessageMetadata(
+      initialMessageDispatchSteps = emptyList(),
+      initialMessageDispatchStepIndex = 0,
+      initialMessageToken = null,
+      initialMessageSent = false,
+    )
+  }
+
+  @Synchronized
   fun updateInitialMessageMetadata(
     initialComposedMessage: String?,
     initialMessageToken: String?,
@@ -499,13 +509,15 @@ internal class AgentChatVirtualFile internal constructor(
     if (updateNewThreadRebindRequestedAtMs(newThreadRebindRequestedAtMs = null)) {
       changed = true
     }
-    if (updateInitialMessageMetadata(
-        initialMessageDispatchSteps = emptyList(),
-        initialMessageDispatchStepIndex = 0,
-        initialMessageToken = null,
-        initialMessageSent = false,
-      )) {
-      changed = true
+    if (currentPendingInitialMessageStep() == null) {
+      if (updateInitialMessageMetadata(
+          initialMessageDispatchSteps = emptyList(),
+          initialMessageDispatchStepIndex = 0,
+          initialMessageToken = null,
+          initialMessageSent = false,
+        )) {
+        changed = true
+      }
     }
     if (updateStartupIntent(null)) {
       changed = true
