@@ -3,7 +3,7 @@ package com.intellij.roots
 
 import com.intellij.idea.TestFor
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.vfs.writeText
@@ -57,7 +57,7 @@ class ProjectRootManagerImplTest {
       Assertions.assertThat(ProjectRootManagerEx.getInstanceEx(project).projectSdkName).isEqualTo("corretto-11")
 
       val projectFile = project.projectFile!!
-      writeAction {
+      edtWriteAction {
         // change: different JDK, same compiler output => should generate JDK change event
         projectFile.writeText($$"""
           <?xml version="1.0" encoding="UTF-8"?>
@@ -101,7 +101,7 @@ class ProjectRootManagerImplTest {
       Assertions.assertThat(ProjectRootManagerEx.getInstanceEx(project).projectSdkName).isEqualTo("corretto-11")
 
       val projectFile = project.projectFile!!
-      writeAction {
+      edtWriteAction {
         // change: same JDK, different compiler output => should be no JDK change event
         projectFile.writeText($$"""
           <?xml version="1.0" encoding="UTF-8"?>

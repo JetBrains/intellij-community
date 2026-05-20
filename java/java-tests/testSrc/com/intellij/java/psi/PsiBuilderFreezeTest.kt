@@ -9,7 +9,7 @@ import com.intellij.lang.PsiBuilder
 import com.intellij.lang.impl.PsiBuilderImpl
 import com.intellij.lang.java.JavaParserDefinition
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.impl.source.tree.SharedImplUtil
 import com.intellij.testFramework.junit5.TestApplication
@@ -42,7 +42,7 @@ internal class PsiBuilderFreezeTest {
     val lang = JavaFileType.INSTANCE.language
     val parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang)
     assertNotNull(parserDefinition)
-    writeAction {
+    edtWriteAction {
       psiFile.fileDocument.setText(text)
     }
     return readAction {
@@ -91,7 +91,7 @@ internal class PsiBuilderFreezeTest {
 
     delay(writeAccessDelay)
 
-    writeAction {} // restart all read actions
+    edtWriteAction {} // restart all read actions
 
     delay(50.milliseconds)
 

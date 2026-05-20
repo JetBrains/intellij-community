@@ -5,7 +5,7 @@ import com.intellij.CommonBundle
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.debug
@@ -193,7 +193,7 @@ class ExtractModuleService(
         val dependencyCleaner = ModuleDependenciesCleaner(module, usedModules)
         val dependenciesToRemove = dependencyCleaner.findDependenciesToRemove(moduleFileProcessor)
         progressReporter.itemStep(JavaUiBundle.message("progress.step.extract.module.extracting"))
-        writeAction {
+        edtWriteAction {
           extractModule(directory, module, targetModuleCreator, usedModules, usedLibraries, packageDependentModules)
           dependencyCleaner.removeDependencies(dependenciesToRemove)
         }

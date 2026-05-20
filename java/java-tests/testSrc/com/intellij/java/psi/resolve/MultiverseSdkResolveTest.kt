@@ -2,7 +2,7 @@
 package com.intellij.java.psi.resolve
 
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.ModuleRootManager
@@ -41,7 +41,7 @@ internal class MultiverseSdkResolveTest {
     val setupSdk = testFixture {
       val project = projectFixture.init()
       val sdk = IdeaTestUtil.getMockJdk21()
-      writeAction {
+      edtWriteAction {
         ProjectJdkTable.getInstance(project).addJdk(sdk, project)
         val module = ModuleManager.getInstance(project).modules.find { it.name == "foo" }!!
         ModuleRootManager.getInstance(module).modifiableModel.apply {

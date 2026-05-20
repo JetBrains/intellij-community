@@ -8,7 +8,7 @@ import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.codeInsight.multiverse.ProjectModelContextBridge
 import com.intellij.codeInsight.multiverse.SingleEditorContext
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.Module
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeVisionFixture
@@ -325,7 +325,7 @@ internal class JavaMultiverseCodeVisionProviderTest {
 
   private suspend fun addFileToSourceRoot(sourceRoot: PsiDirectory, fileName: String, fileContent: String) {
     withContext(Dispatchers.EDT) {
-      writeAction {
+      edtWriteAction {
         sourceRoot.createFile(fileName).also {
           it.virtualFile.setBinaryContent(fileContent.toByteArray())
         }
