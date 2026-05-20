@@ -7,7 +7,7 @@ import com.intellij.find.usages.impl.DefaultUsageSearchParameters
 import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.Inlay
@@ -226,7 +226,7 @@ internal class LspNotebookDocumentProtocolTest {
         params.notebookDocument.uri == fileUri
       }
 
-      writeAction {
+      edtWriteAction {
         codeInsightFixture.editor.document.setText("cell zero modified\n---\ncell one")
       }
 
@@ -248,7 +248,7 @@ internal class LspNotebookDocumentProtocolTest {
         params.notebookDocument.uri == fileUri
       }
 
-      writeAction {
+      edtWriteAction {
         codeInsightFixture.editor.document.setText("cell zero modified\n---\ncell one modified")
       }
 

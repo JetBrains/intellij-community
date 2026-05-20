@@ -1,6 +1,6 @@
 package com.intellij.platform.lsp
 
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.platform.lsp.common.TestNotebookDocumentAdapter
 import com.intellij.platform.lsp.common.configureServerSession
@@ -57,7 +57,7 @@ internal class LspTextDocumentIncrementalSyncTest {
       it.contentChanges[0].text == "modified"
     }
 
-    writeAction {
+    edtWriteAction {
       CommandProcessor.getInstance().executeCommand(project, {
         codeInsightFixture.editor.document.replaceString(0, "original text".length, "modified")
       }, "test", null)
@@ -116,7 +116,7 @@ internal class LspNotebookIncrementalSyncTest {
       params.notebookDocument.uri == fileUri
     }
 
-    writeAction {
+    edtWriteAction {
       CommandProcessor.getInstance().executeCommand(project, {
         codeInsightFixture.editor.document.replaceString(0, "cell zero".length, "cell zero modified")
       }, "test", null)

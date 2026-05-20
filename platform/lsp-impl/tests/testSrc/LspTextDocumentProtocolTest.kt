@@ -5,7 +5,7 @@ import com.intellij.core.CoreBundle
 import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.Inlay
@@ -180,7 +180,7 @@ internal class LspTextDocumentProtocolTest {
         it.textDocument.uri == fileUri
       }
 
-      writeAction {
+      edtWriteAction {
         codeInsightFixture.editor.document.setText("modified content")
       }
 
@@ -198,7 +198,7 @@ internal class LspTextDocumentProtocolTest {
       }
 
       // Modify document to make it dirty, then save
-      writeAction {
+      edtWriteAction {
         codeInsightFixture.editor.document.setText("saved content")
       }
 
