@@ -151,16 +151,50 @@ internal class TreeStateTest : BasePlatformTestCase() {
     )
   }
 
-  fun `test restore cached presentation - missing cached sibling`() {
+  fun `test restore cached presentation - extra cached siblings in the beginning and the end`() {
     cachedPresentationTest(
       inputToSave = """
+       +root
+        -extra1
+        +a1
+         *a1.1
+        -a2
+         *a2.1
+         *a2.2
+        *a4
+        *extra2
+      """.trimIndent(),
+      inputToRestore = """
        +root
         +a1
          *a1.1
         -a2
          *a2.1
          *a2.2
-        *a3
+        *a4
+      """.trimIndent(),
+      expectedLoadedNodes = listOf(
+        "/root",
+        "/root/a1",
+        "/root/a1/a1.1",
+        "/root/a2",
+        "/root/a4",
+      )
+    )
+  }
+
+  fun `test restore cached presentation - extra cached siblings in the middle`() {
+    cachedPresentationTest(
+      inputToSave = """
+       +root
+        +a1
+         *a1.1
+        -extra1
+        -a2
+         *a2.1
+         *a2.2
+        *extra2
+        *extra3
         *a4
       """.trimIndent(),
       inputToRestore = """
@@ -178,6 +212,148 @@ internal class TreeStateTest : BasePlatformTestCase() {
         "/root/a1/a1.1",
         "/root/a2",
         "/root/a4",
+      )
+    )
+  }
+
+  fun `test restore cached presentation - missing cached siblings in the beginning and the end`() {
+    cachedPresentationTest(
+      inputToSave = """
+       +root
+        +a1
+         *a1.1
+        -a2
+         *a2.1
+         *a2.2
+        *a4
+      """.trimIndent(),
+      inputToRestore = """
+       +root
+        -missing1
+        +a1
+         *a1.1
+        -a2
+         *a2.1
+         *a2.2
+        *a4
+        *missing2
+      """.trimIndent(),
+      expectedLoadedNodes = listOf(
+        "/root",
+        "/root/missing1",
+        "/root/a1",
+        "/root/a1/a1.1",
+        "/root/a2",
+        "/root/a4",
+        "/root/missing2",
+      )
+    )
+  }
+
+  fun `test restore cached presentation - missing cached siblings in the middle`() {
+    cachedPresentationTest(
+      inputToSave = """
+       +root
+        +a1
+         *a1.1
+        -a2
+         *a2.1
+         *a2.2
+        *a4
+      """.trimIndent(),
+      inputToRestore = """
+       +root
+        +a1
+         *a1.1
+        -missing1
+        -a2
+         *a2.1
+         *a2.2
+        *missing2
+        *missing3
+        *a4
+      """.trimIndent(),
+      expectedLoadedNodes = listOf(
+        "/root",
+        "/root/a1",
+        "/root/a1/a1.1",
+        "/root/missing1",
+        "/root/a2",
+        "/root/missing2",
+        "/root/missing3",
+        "/root/a4",
+      )
+    )
+  }
+
+  fun `test restore cached presentation - replaced siblings in the beginning and the end`() {
+    cachedPresentationTest(
+      inputToSave = """
+       +root
+        -a0
+        +a1
+         *a1.1
+        -a2
+         *a2.1
+         *a2.2
+        *a3
+        *a4
+      """.trimIndent(),
+      inputToRestore = """
+       +root
+        -x0
+        +a1
+         *a1.1
+        -a2
+         *a2.1
+         *a2.2
+        *a3
+        *x4
+      """.trimIndent(),
+      expectedLoadedNodes = listOf(
+        "/root",
+        "/root/x0",
+        "/root/a1",
+        "/root/a1/a1.1",
+        "/root/a2",
+        "/root/a3",
+        "/root/x4",
+      )
+    )
+  }
+
+  fun `test restore cached presentation - replaced siblings in the middle`() {
+    cachedPresentationTest(
+      inputToSave = """
+       +root
+        +a1
+         *a1.1
+        -a2
+        -a3
+         *a3.1
+         *a3.2
+        *a4
+        *a5
+      """.trimIndent(),
+      inputToRestore = """
+       +root
+        +a1
+         *a1.1
+        -x2
+        -a3
+         *a3.1
+         *a3.2
+        *x4
+        *a5
+      """.trimIndent(),
+      expectedLoadedNodes = listOf(
+        "/root",
+        "/root/a1",
+        "/root/a1/a1.1",
+        "/root/x2",
+        "/root/a3",
+        "/root/x4",
+        "/root/a5",
       )
     )
   }
