@@ -2,6 +2,7 @@
 package com.jetbrains.python;
 
 import com.google.common.collect.ImmutableList;
+import com.intellij.idea.TestFor;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -1034,6 +1035,23 @@ public class PyTypeTest extends PyTestCase {
              
              c = C()
              expr = c.foo
+             """);
+  }
+
+  @TestFor(issues = "PY-76219")
+  public void testPropertyDecoratorType() {
+    doTest("str",
+           """
+             from typing_extensions import reveal_type
+             
+             class K:
+                 _text: str
+                 @property
+                 def text(self) -> str:
+                     return self._text
+             
+             def bar[T:K](k : T):
+                 expr = k.text
              """);
   }
 
