@@ -974,6 +974,41 @@ class DebouncedUpdatesTest {
     }
   }
 
+  @Test
+  fun `test component queue can be created from a background thread`() {
+    // IJPL-245313: launchOnShow asserts EDT internally; forComponent(...).runLatest(...)
+    // must hop to EDT internally so the builder works from any thread.
+    timeoutRunBlocking(timeout = 30.seconds) {
+      withForcedRespectIsShowingClientProperty {
+        val component = JLabel()
+        val executedValues = CopyOnWriteArrayList<Int>()
+
+        val queue = withContext(Dispatchers.Default) {
+          assertTrue(!com.intellij.util.ui.EDT.isCurrentThreadEdt(),
+                     "precondition: builder must be invoked off EDT")
+          DebouncedUpdates.forComponent<Int>(component, "test-bg-create", 50.milliseconds)
+            .runLatest { value ->
+              executedValues.add(value)
+            }
+        }
+
+        // Queue an item from a background thread before the component is shown.
+        // It should be buffered in the processing channel until the EDT hop completes
+        // and the component becomes showing.
+        withContext(Dispatchers.Default) {
+          queue.queue(1)
+        }
+
+        withContext(Dispatchers.EDT) {
+          withShowingChanged { container.add(component) }
+          yield()
+        }
+
+        assertEquals(listOf(1), awaitValue(listOf(1)) { executedValues.toList() })
+      }
+    }
+  }
+
   private fun edtTest(block: suspend CoroutineScope.() -> Unit) {
     timeoutRunBlocking(timeout = 30.seconds) {
       withForcedRespectIsShowingClientProperty {

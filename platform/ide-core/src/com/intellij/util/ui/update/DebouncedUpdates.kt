@@ -4,6 +4,7 @@
 package com.intellij.util.ui.update
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.logger
@@ -16,6 +17,7 @@ import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
@@ -868,13 +870,15 @@ private class SingleComponentQueue<T>(
     processLatestAndForward(delay, restartTimerOnAdd)
   }
 
-  // Component scope job for action execution (only when showing)
-  private val actionProcessingJob: Job = component.launchOnShow("$name-action-processor") {
-    processFromSecondChannel(context, action)
-  }
-
+  // Lifetime owner. Hops to EDT before calling launchOnShow, which requires EDT to install a Swing
+  // HierarchyListener, so forComponent(...).runLatest(...) can be invoked from any thread.
   @OptIn(DelicateCoroutinesApi::class)
   override val job: Job = GlobalScope.launch(CoroutineName(name)) {
+    val actionProcessingJob = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      component.launchOnShow("$name-action-processor") {
+        processFromSecondChannel(context, action)
+      }
+    }
     try {
       awaitCancellation()
     } finally {
