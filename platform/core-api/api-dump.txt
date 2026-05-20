@@ -525,8 +525,6 @@ com.intellij.openapi.application.ReadConstraint
 - a:awaitConstraint(kotlin.coroutines.Continuation):java.lang.Object
 - a:isSatisfied():Z
 com.intellij.openapi.application.ReadResult
-- s:value(java.lang.Object):com.intellij.openapi.application.ReadResult
-- s:writeAction(kotlin.jvm.functions.Function0):com.intellij.openapi.application.ReadResult
 f:com.intellij.openapi.application.WriteAction
 - s:compute(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 - s:computeAndWait(com.intellij.openapi.util.ThrowableComputable):java.lang.Object

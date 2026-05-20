@@ -13,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainCoroutineDispatcher
 import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.CoroutineContext
@@ -135,26 +136,17 @@ suspend fun <T> constrainedReadActionBlocking(vararg constraints: ReadConstraint
   return readWriteActionSupport().executeReadAction(constraints.toList(), blocking = true, action = action)
 }
 
-sealed interface ReadResult<out R> {
+/**
+ * Use [ReadAndWriteScope.value] or [ReadAndWriteScope.writeAction] to get an instance of this class
+ */
+@ApiStatus.NonExtendable
+interface ReadResult<out R>
 
-  @Internal
-  class Value<out V> internal constructor(val value: V) : ReadResult<V>
-
-  @Internal
-  class WriteAction<out V> internal constructor(val action: () -> V) : ReadResult<V>
-
-  @Internal
-  companion object : ReadAndWriteScope {
-
-    @JvmStatic
-    override fun <R> value(value: R): ReadResult<R> = Value(value)
-
-    @JvmStatic
-    override fun <R> writeAction(action: () -> R): ReadResult<R> = WriteAction(action)
-  }
-}
-
-sealed interface ReadAndWriteScope {
+/**
+ * DSL for building results of [readAndEdtWriteAction] or [readAndBackgroundWriteAction]
+ */
+@ApiStatus.NonExtendable
+interface ReadAndWriteScope {
   fun <R> value(value: R): ReadResult<R>
   fun <R> writeAction(action: () -> R): ReadResult<R>
 }

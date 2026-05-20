@@ -81,6 +81,17 @@ class PlatformReadWriteActionSupport : ReadWriteActionSupport {
     }
   }
 
+
+  private sealed interface ReadResultImpl<out R> : ReadResult<R> {
+    class WriteAction<out V>(val action: () -> V) : ReadResultImpl<V>
+    class Value<out V>(val value: V) : ReadResultImpl<V>
+  }
+
+  private object ReadAndWriteScopeImpl : ReadAndWriteScope {
+    override fun <R> value(value: R): ReadResultImpl<R> = ReadResultImpl.Value(value)
+    override fun <R> writeAction(action: () -> R): ReadResultImpl<R> = ReadResultImpl.WriteAction(action)
+  }
+
   override suspend fun <X> executeReadAndWriteAction(
     constraints: Array<out ReadConstraint>,
     runWriteActionOnEdt: Boolean,
@@ -89,13 +100,16 @@ class PlatformReadWriteActionSupport : ReadWriteActionSupport {
   ): X {
     while (true) {
       val (readResult: ReadResult<X>, stamp: Long) = executeReadAction(constraints.toList(), undispatched = undispatched, blocking = false) {
-        Pair(ReadResult.Companion.action(), AsyncExecutionServiceImpl.getWriteActionCounter())
+        Pair(ReadAndWriteScopeImpl.action(), AsyncExecutionServiceImpl.getWriteActionCounter())
+      }
+      require(readResult is ReadResultImpl<X>) {
+        "Unexpected implementation of `ReadResult`: Expected ReadResultImpl, got ${readResult::class.simpleName}"
       }
       when (readResult) {
-        is ReadResult.Value -> {
+        is ReadResultImpl.Value -> {
           return readResult.value
         }
-        is ReadResult.WriteAction -> {
+        is ReadResultImpl.WriteAction -> {
           val lock = application.threadingSupport
           val writeResult = if (runWriteActionOnEdt || lock == null) {
             executeWriteActionOnEdt(stamp, readResult.action)
