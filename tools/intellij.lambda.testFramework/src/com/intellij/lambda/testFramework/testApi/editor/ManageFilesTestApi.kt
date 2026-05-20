@@ -5,7 +5,7 @@ import com.intellij.lambda.testFramework.testApi.executeAction
 import com.intellij.lambda.testFramework.testApi.getProject
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileEditor
@@ -247,7 +247,7 @@ context(lambdaBackendContext: LambdaBackendContext)
 private suspend fun doOpenFile(relativePath: String, project: Project) {
   val fileEditorManager = FileEditorManager.getInstance(project)
   val virtualFile = getVirtualFileByRelativePath(relativePath)
-  writeAction {
+  edtWriteAction {
     fileEditorManager.openFile(virtualFile, true)
   }
 }
