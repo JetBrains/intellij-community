@@ -156,7 +156,6 @@ data class EelFileSystem(
       !path.path.exists() -> PyResult.localizedError(message("sdk.create.not.executable.does.not.exist.error"))
       path.path.isDirectory() -> PyResult.localizedError(message("sdk.create.executable.directory.error"))
       !path.path.isExecutable() -> PyResult.localizedError(message("sdk.create.binary.not.executable"))
-      path.path.getEelDescriptor().toEelApi() != eelApi -> PyResult.localizedError(message("sdk.create.binary.eel.not.matching"))
       else -> PyResult.success(Unit)
     }
   }
