@@ -1,5 +1,6 @@
 package com.intellij.mcpserver.settings
 
+import com.intellij.mcpserver.McpTool
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.SimplePersistentStateComponent
@@ -44,6 +45,13 @@ internal class McpToolDisallowListSettings : SimplePersistentStateComponent<McpT
       state.legacyToolStates.clear()
       _toolStatesFlow.value = value
     }
+
+  fun toolStateFor(tool: McpTool): ToolState {
+    val states = toolStates
+    return states[tool.descriptor.fullyQualifiedName]
+           ?: states[tool.descriptor.name]
+           ?: ToolState()
+  }
 
   data class ToolState(
     val enabled: Boolean = true,
