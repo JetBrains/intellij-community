@@ -36,19 +36,6 @@ internal class MavenDependencySearchContributorImpl : MavenDependencySearchContr
     }
   }
 
-  override suspend fun suggestPrefix(
-      project: Project,
-      groupId: String,
-      artifactId: String,
-      useCache: Boolean,
-      useLocalOnly: Boolean,
-      consumer: Consumer<MavenRepoArtifactInfo>,
-  ) {
-    collectGrouped(DependencyCompletionRequest("$groupId:$artifactId", createContext(project))) { gId, aId, versions ->
-      consumer.accept(MavenRepoArtifactInfo(gId, aId, versions))
-    }
-  }
-
   override suspend fun getGroupIds(project: Project, pattern: String?): Set<String> {
     val request = DependencyGroupCompletionRequest(pattern ?: "", "", createContext(project))
     return service<DependencyCompletionService>().suggestGroupCompletions(request).toList().map { it.result }.toSet()

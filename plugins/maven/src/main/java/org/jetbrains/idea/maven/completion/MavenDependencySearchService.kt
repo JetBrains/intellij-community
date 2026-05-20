@@ -30,16 +30,6 @@ class MavenDependencySearchService(private val project: Project) {
     providers.forEach { it.fulltextSearch(project, searchString, useCache, useLocalOnly, consumer) }
   }
 
-  suspend fun suggestPrefix(
-      groupId: String,
-      artifactId: String,
-      useCache: Boolean,
-      useLocalOnly: Boolean,
-      consumer: Consumer<MavenRepoArtifactInfo>
-  ) {
-    providers.forEach { it.suggestPrefix(project, groupId, artifactId, useCache, useLocalOnly, consumer) }
-  }
-
   suspend fun getGroupIds(pattern: String?): Set<String> {
     return providers.flatMap { it.getGroupIds(project, pattern) }.toSet()
   }

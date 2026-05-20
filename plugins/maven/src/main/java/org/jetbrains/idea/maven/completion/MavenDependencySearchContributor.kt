@@ -15,15 +15,6 @@ interface MavenDependencySearchContributor {
     consumer: Consumer<MavenRepoArtifactInfo>,
   )
 
-  suspend fun suggestPrefix(
-    project: Project,
-    groupId: String,
-    artifactId: String,
-    useCache: Boolean,
-    useLocalOnly: Boolean,
-    consumer: Consumer<MavenRepoArtifactInfo>,
-  )
-
   suspend fun getGroupIds(project: Project, pattern: String?): Set<String>
 
   suspend fun getArtifactIds(project: Project, groupId: String): Set<String>
