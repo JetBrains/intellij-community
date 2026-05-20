@@ -14,6 +14,8 @@ class J {
 
             void foo() {
                 // comment 6
+                /// three slash comment
+                //// four slash comment
             }
         }
 

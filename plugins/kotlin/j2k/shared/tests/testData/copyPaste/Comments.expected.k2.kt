@@ -11,6 +11,8 @@ fun foo() {
             //comment 5
             fun foo() {
                 // comment 6
+                /// three slash comment
+                //// four slash comment
             }
         } // comment 7
     } // comment 8

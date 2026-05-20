@@ -5,8 +5,10 @@ package org.jetbrains.kotlin.nj2k.tree
 import org.jetbrains.kotlin.utils.SmartList
 
 class JKComment(val text: String, val indent: String? = null) {
-    val isSingleLine: Boolean = text.startsWith("//")
+    val isSingleLine: Boolean = text.isASingleLineComment()
 }
+
+fun String.isASingleLineComment(): Boolean = this.startsWith("//")
 
 class JKTokenElementImpl(override val text: String) : JKTokenElement {
     override val commentsBefore: MutableList<JKComment> = SmartList()

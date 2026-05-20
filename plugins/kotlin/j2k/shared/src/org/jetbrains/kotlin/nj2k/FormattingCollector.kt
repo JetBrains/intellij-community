@@ -14,6 +14,7 @@ import com.intellij.psi.javadoc.PsiDocComment
 import org.jetbrains.kotlin.idea.j2k.IdeaDocCommentConverter
 import org.jetbrains.kotlin.nj2k.tree.JKComment
 import org.jetbrains.kotlin.nj2k.tree.JKFormattingOwner
+import org.jetbrains.kotlin.nj2k.tree.isASingleLineComment
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class FormattingCollector {
@@ -44,16 +45,15 @@ class FormattingCollector {
 
     private fun PsiElement.asComment(): JKComment? {
         if (this in commentCache) return commentCache.getValue(this)
-        val token = when (this) {
-            is PsiDocComment -> JKComment(
-                IdeaDocCommentConverter.convertDocComment(
-                    this
-                )
-            )
+        if (this !is PsiComment) return null
 
-            is PsiComment -> JKComment(text, indent())
-            else -> null
-        } ?: return null
+        val token = if (this is PsiDocComment && !text.isASingleLineComment()) {
+            JKComment(IdeaDocCommentConverter.convertDocComment(this))
+        } else {
+            // In some cases a single line comment, e.g. `////`, is parsed as PsiDocComment
+            JKComment(text, indent())
+        }
+
         commentCache[this] = token
         return token
     }
