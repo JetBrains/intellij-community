@@ -56,8 +56,6 @@ class BundledRuntimeImpl(
       return when {
         // no JCEF distribution for musl, see https://github.com/JetBrains/JetBrainsRuntime/releases
         LibcImpl.current(OsFamily.currentOs) == LinuxLibcImpl.MUSL -> JetBrainsRuntimeDistribution.LIGHTWEIGHT.artifactPrefix
-        // required as a runtime for debugger tests
-        System.getProperty("intellij.build.jbr.setupSdk", "false").toBoolean() -> "jbrsdk-"
         bundledRuntimePrefix != null -> bundledRuntimePrefix
         productProperties != null -> productProperties.runtimeDistribution.artifactPrefix
         else -> JetBrainsRuntimeDistribution.JCEF.artifactPrefix
