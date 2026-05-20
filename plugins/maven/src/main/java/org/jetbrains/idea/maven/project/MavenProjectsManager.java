@@ -16,7 +16,6 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
@@ -175,12 +174,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   public Path getRepositoryPath() {
     return MavenSettingsCache.getInstance(myProject).getEffectiveUserLocalRepo();
   }
-
-  @ApiStatus.Internal
-  public int getFilterConfigCrc(@NotNull ProjectFileIndex projectFileIndex) {
-    return getProjectsTree().getFilterConfigCrc(projectFileIndex);
-  }
-
 
   @TestOnly
   public void initForTests() {
