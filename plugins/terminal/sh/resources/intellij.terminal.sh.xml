@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.plugins.terminal.sh">
+<idea-plugin>
   <dependencies>
     <module name="intellij.sh.core"/>
   </dependencies>

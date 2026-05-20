@@ -1,4 +1,4 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="org.jetbrains.plugins.terminal" allow-bundled-update="true">
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" allow-bundled-update="true">
   <name>Terminal</name>
   <category>Other Tools</category>
   <id>org.jetbrains.plugins.terminal</id>
@@ -52,11 +52,11 @@
   </content>
 
   <resource-bundle>messages.TerminalBundle</resource-bundle>
-  <xi:include href="/META-INF/terminal.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/terminal.xml"/>
 
   <actions>
     <action id="Terminal.OpenInTerminal" class="org.jetbrains.plugins.terminal.action.RevealFileInTerminalAction"
-            icon="org.jetbrains.plugins.terminal.TerminalIcons.OpenTerminal_13x13">
+            icon="com.intellij.terminal.icons.TerminalIcons.OpenTerminal_13x13">
       <add-to-group group-id="RevealGroup" anchor="last"/>
       <override-text place="RevealInPopup"/>
       <add-to-group group-id="TouchBarDefault_alt" anchor="last"/>
