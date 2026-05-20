@@ -154,6 +154,9 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
         ))
         .withIcon(GradleIcons.Gradle)
         .withTypeText("Gradle Configuration")
+        .also {
+          it.putUserData(BaseCompletionLookupArranger.FORCE_MIDDLE_MATCH, Any())
+        }
     }
     result.addAllElements(lookup)
   }

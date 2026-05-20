@@ -74,7 +74,6 @@ internal class KotlinGradleDependenciesCompletionTest : AbstractKotlinGradleComp
   fun `test completion before 8,2 also shows configurations that couldn't be used in dependencies block`(gradleVersion: GradleVersion) =
     verifyCompletion(gradleVersion)
 
-  // TODO IDEA-384698 Fix the order. Server results shouldn't appear above matching configuration names
   @ParameterizedTest
   @BaseGradleVersionSource
   @TestMetadata("configurationOnTopLevelPartialInput.test")
