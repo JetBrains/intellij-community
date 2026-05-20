@@ -10,8 +10,6 @@ import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.isWindows
 import it.unimi.dsi.fastutil.chars.CharOpenHashSet
 import it.unimi.dsi.fastutil.chars.CharSet
-import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalGenericFileFilter.Companion.FILENAME_MAX
-import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalGenericFileFilter.Companion.PATH_MIN
 
 internal class TerminalRelativePathLinkFinder(
   private val project: Project,

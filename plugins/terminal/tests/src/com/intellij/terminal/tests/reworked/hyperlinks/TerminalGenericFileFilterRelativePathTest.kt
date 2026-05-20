@@ -10,6 +10,7 @@ import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelOsFamily
 import org.assertj.core.api.Assertions
 import org.jetbrains.plugins.terminal.block.hyperlinks.TerminalHyperlinkFilterContext
+import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.FILENAME_MAX
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalGenericFileFilter
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalOpenFileHyperlinkInfo
 import org.junit.Before
@@ -177,7 +178,7 @@ internal class TerminalGenericFileFilterRelativePathTest {
 
   @Test
   fun `ignore paths that exceed FILENAME_MAX per segment`() {
-    val longSegment = "a".repeat(TerminalGenericFileFilter.FILENAME_MAX + 1)
+    val longSegment = "a".repeat(FILENAME_MAX + 1)
     assertNoLinks("src/$longSegment.kt")
   }
 
