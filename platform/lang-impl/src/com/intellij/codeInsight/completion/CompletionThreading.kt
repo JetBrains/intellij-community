@@ -1,10 +1,11 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion
 
 import com.intellij.codeInsight.completion.CompletionThreadingBase.Companion.isInBatchUpdate
 import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
@@ -16,6 +17,7 @@ import com.intellij.util.Consumer
 import com.intellij.util.concurrency.Semaphore
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Runnable
@@ -106,10 +108,18 @@ internal fun tryReadOrCancel(indicator: ProgressIndicator, runnable: Runnable) {
   indicator.checkCanceled()
 }
 
+@Service(Service.Level.APP, Service.Level.PROJECT)
+private class ScopeHolder(val scope: CoroutineScope) {
+  companion object {
+    fun getScope(project: Project?): CoroutineScope = (project?.service<ScopeHolder>() ?: service<ScopeHolder>()).scope
+  }
+}
+
 internal class AsyncCompletion(project: Project?) : CompletionThreadingBase() {
   private val batchList = ArrayList<CompletionResult>()
   private val workingQueue = LinkedBlockingQueue<AddingEvent>()
-  private val coroutineScope = ((project ?: ApplicationManagerEx.getApplicationEx()) as ComponentManagerEx).getCoroutineScope()
+
+  private val coroutineScope = ScopeHolder.getScope(project)
 
   override fun startThread(progressIndicator: ProgressIndicator?, runnable: Runnable): Deferred<*> {
     val startSemaphore = Semaphore()
