@@ -1436,6 +1436,16 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON314);
   }
 
+  // PY-88664, PEP 810
+  public void testLazyImport() {
+    doTest(LanguageLevel.PYTHON315);
+  }
+
+  // PY-88664, PEP 810: `lazy` outside import context stays an identifier
+  public void testLazyImportNotAKeyword() {
+    doTest(LanguageLevel.PYTHON315);
+  }
+
   public void doTest() {
     doTest(LanguageLevel.PYTHON26);
   }

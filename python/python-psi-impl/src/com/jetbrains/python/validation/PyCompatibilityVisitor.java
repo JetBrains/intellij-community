@@ -68,6 +68,7 @@ import com.jetbrains.python.psi.PyForStatement;
 import com.jetbrains.python.psi.PyFormattedStringElement;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyIfStatement;
+import com.jetbrains.python.psi.PyFromImportStatement;
 import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyImportStatement;
 import com.jetbrains.python.psi.PyKeywordArgument;
@@ -174,6 +175,12 @@ public abstract class PyCompatibilityVisitor extends PyElementVisitor {
   @Override
   public void visitPyImportStatement(@NotNull PyImportStatement node) {
     super.visitPyImportStatement(node);
+
+    if (node.isLazy()) {
+      registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON315),
+                                     PyPsiBundle.message("INSP.compatibility.feature.support.lazy.imports"),
+                                     node.getFirstChild());
+    }
 
     final PyIfStatement ifParent = PsiTreeUtil.getParentOfType(node, PyIfStatement.class);
     if (ifParent != null) return;
@@ -876,6 +883,16 @@ public abstract class PyCompatibilityVisitor extends PyElementVisitor {
     registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON310),
                                    PyPsiBundle.message("INSP.compatibility.feature.support.match.statements"),
                                    matchStatement.getFirstChild());
+  }
+
+  @Override
+  public void visitPyFromImportStatement(@NotNull PyFromImportStatement node) {
+    super.visitPyFromImportStatement(node);
+    if (node.isLazy()) {
+      registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON315),
+                                     PyPsiBundle.message("INSP.compatibility.feature.support.lazy.imports"),
+                                     node.getFirstChild());
+    }
   }
 
   @Override

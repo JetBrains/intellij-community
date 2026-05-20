@@ -364,18 +364,21 @@ public final class PyElementGeneratorImpl extends PyElementGenerator {
 
   @Override
   public @NotNull PyFromImportStatement createFromImportStatement(@NotNull LanguageLevel languageLevel, @NotNull String qualifier,
-                                                                  @NotNull String name, @Nullable String alias) {
+                                                                  @NotNull String name, @Nullable String alias, boolean lazy) {
     final String asClause = StringUtil.isNotEmpty(alias) ? " as " + alias : "";
-    final String statement = "from " + qualifier + " import " + name + asClause;
+    final String lazyPrefix = lazy ? "lazy " : "";
+    final String statement = lazyPrefix + "from " + qualifier + " import " + name + asClause;
     return createFromText(languageLevel, PyFromImportStatement.class, statement);
   }
 
   @Override
   public @NotNull PyImportStatement createImportStatement(@NotNull LanguageLevel languageLevel,
                                                           @NotNull String name,
-                                                          @Nullable String alias) {
+                                                          @Nullable String alias,
+                                                          boolean lazy) {
     final String asClause = StringUtil.isNotEmpty(alias) ? " as " + alias : "";
-    final String statement = "import " + name + asClause;
+    final String lazyPrefix = lazy ? "lazy " : "";
+    final String statement = lazyPrefix + "import " + name + asClause;
     return createFromText(languageLevel, PyImportStatement.class, statement);
   }
 
