@@ -29427,6 +29427,39 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/duplicateArgumentsInSetOfAndMapOfFunctions")
+    public static class DuplicateArgumentsInSetOfAndMapOfFunctions extends AbstractK2LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("duplicatesInMapOf.kt")
+        public void testDuplicatesInMapOf() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/duplicateArgumentsInSetOfAndMapOfFunctions/duplicatesInMapOf.kt");
+        }
+
+        @TestMetadata("duplicatesInSetOf.kt")
+        public void testDuplicatesInSetOf() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/duplicateArgumentsInSetOfAndMapOfFunctions/duplicatesInSetOf.kt");
+        }
+
+        @TestMetadata("duplicatesInSetOfNulls.kt")
+        public void testDuplicatesInSetOfNulls() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/duplicateArgumentsInSetOfAndMapOfFunctions/duplicatesInSetOfNulls.kt");
+        }
+
+        @TestMetadata("noDuplicatesInMapOf.kt")
+        public void testNoDuplicatesInMapOf() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/duplicateArgumentsInSetOfAndMapOfFunctions/noDuplicatesInMapOf.kt");
+        }
+
+        @TestMetadata("noDuplicatesInSetOf.kt")
+        public void testNoDuplicatesInSetOf() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/duplicateArgumentsInSetOfAndMapOfFunctions/noDuplicatesInSetOf.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/removeExplicitTypeArguments")
     public static class RemoveExplicitTypeArgumentsFormerIntentionTest extends AbstractK2LocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {

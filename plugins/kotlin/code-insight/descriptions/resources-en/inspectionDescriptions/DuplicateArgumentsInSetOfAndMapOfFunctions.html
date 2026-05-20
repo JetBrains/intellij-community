@@ -1,0 +1,77 @@
+<html>
+<body>
+Reports duplicate constant elements in set factory functions and duplicate constant keys in map factory functions.
+<p>
+    Duplicate entries in collection factory functions are often unintended and may indicate a bug or typo.
+    In set factory functions, duplicate elements are ignored because sets can contain only unique elements.
+    In map factory functions, entries with the same key overwrite earlier entries, and only the last value associated with the key is
+    retained.
+</p>
+
+<p>
+    The inspection applies to the following map factory functions:
+</p>
+<ul>
+    <li><code>mapOf()</code></li>
+    <li><code>mutableMapOf()</code></li>
+    <li><code>hashMapOf()</code></li>
+    <li><code>linkedMapOf()</code></li>
+    <li><code>sortedMapOf()</code></li>
+</ul>
+
+<p>
+    Duplicate map keys are detected for entries created using the <code>to</code> operator.
+</p>
+
+<p>
+    The inspection applies to the following set factory functions:
+</p>
+<ul>
+    <li><code>setOf()</code></li>
+    <li><code>mutableSetOf()</code></li>
+    <li><code>hashSetOf()</code></li>
+    <li><code>linkedSetOf()</code></li>
+    <li><code>sortedSetOf()</code></li>
+</ul>
+
+<p>
+    The inspection reports arguments whose values can be evaluated as compile-time constants, including constant literals and <code>const
+    val</code> references.
+</p>
+
+<p><b>Examples:</b></p>
+
+<pre><code>
+val numbers = setOf(1, 1, 2)
+</code></pre>
+
+<p>
+    The value <code>1</code> appears multiple times.
+</p>
+
+<pre><code>
+val mapping = mapOf(
+    1 to "first",
+    1 to "second",
+)
+</code></pre>
+
+<p>
+    Both entries use the same key.
+</p>
+
+<p><b>Example with <code>const val</code>:</b></p>
+
+<pre><code>
+const val ID = 42
+
+val ids = setOf(ID, 42)
+</code></pre>
+
+<p>
+    Both arguments evaluate to the same constant value.
+</p>
+
+<!-- tooltip end -->
+</body>
+</html>
