@@ -2976,16 +2976,6 @@ f:com.intellij.ide.plugins.PluginInstaller
 - s:addStateListener(com.intellij.ide.plugins.PluginStateListener):V
 - s:rootEntryName(java.nio.file.Path):java.lang.String
 - s:unpackPlugin(java.nio.file.Path,java.nio.file.Path):java.nio.file.Path
-f:com.intellij.ide.plugins.PluginManagerMain
-- s:checkThirdPartyPluginsAllowed(java.util.Collection):Z
-- s:downloadPlugins(java.util.List,java.util.Collection,Z,java.lang.Runnable,com.intellij.ide.plugins.PluginEnabler,com.intellij.openapi.application.ModalityState,java.util.function.Consumer):Z
-- s:downloadPluginsAndCleanup(java.util.List,java.util.Collection,java.lang.Runnable,com.intellij.ide.plugins.PluginEnabler,com.intellij.openapi.application.ModalityState,java.lang.Runnable):Z
-- s:downloadPluginsModal(java.util.List,java.util.Collection,Z,java.lang.Runnable,com.intellij.ide.plugins.PluginEnabler,com.intellij.openapi.application.ModalityState,java.util.function.Consumer):Z
-- s:notifyPluginsUpdated(com.intellij.openapi.project.Project):V
-- s:suggestToEnableInstalledDependantPlugins(com.intellij.ide.plugins.PluginEnabler,java.util.List):Z
-f:com.intellij.ide.plugins.PluginManagerMain$MyHyperlinkListener
-- com.intellij.ui.HyperlinkAdapter
-- <init>():V
 f:com.intellij.ide.plugins.PluginManagerUISettings
 - com.intellij.openapi.components.PersistentStateComponent
 - com.intellij.openapi.progress.PerformInBackgroundOption

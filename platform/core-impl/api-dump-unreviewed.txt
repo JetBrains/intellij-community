@@ -360,19 +360,9 @@ c:com.intellij.ide.highlighter.custom.tokens.WhitespaceParser
 - <init>():V
 - hasToken(I):Z
 f:com.intellij.ide.plugins.PluginManager
-- sf:EXPLICIT_BIG_NUMBER_PATTERN:java.util.regex.Pattern
-- sf:INSTALLED_TXT:java.lang.String
-- s:disablePlugin(java.lang.String):Z
-- enablePlugin(com.intellij.openapi.extensions.PluginId):Z
-- s:enablePlugin(java.lang.String):Z
-- findEnabledPlugin(com.intellij.openapi.extensions.PluginId):com.intellij.ide.plugins.IdeaPluginDescriptor
 - s:getInstance():com.intellij.ide.plugins.PluginManager
-- s:getLoadedPlugins():java.util.List
 - s:getOnceInstalledIfExists():java.nio.file.Path
-- s:getPlugin(com.intellij.openapi.extensions.PluginId):com.intellij.ide.plugins.IdeaPluginDescriptor
-- s:getPluginByClass(java.lang.Class):com.intellij.openapi.extensions.PluginDescriptor
 - s:getPluginByClassName(java.lang.String):com.intellij.openapi.extensions.PluginId
-- s:getPlugins():com.intellij.ide.plugins.IdeaPluginDescriptor[]
 - s:isPluginInstalled(com.intellij.openapi.extensions.PluginId):Z
 f:com.intellij.ide.plugins.PluginManagerCore
 - sf:CORE_ID:com.intellij.openapi.extensions.PluginId

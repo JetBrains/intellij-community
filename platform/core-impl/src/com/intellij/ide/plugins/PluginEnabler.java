@@ -11,8 +11,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.Set;
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 public interface PluginEnabler {
+  @ApiStatus.Internal
   interface Headless extends PluginEnabler {
     boolean isIgnoredDisabledPlugins();
 

@@ -54,6 +54,7 @@ internal val FLEET_BACKEND_PLUGINS_THIRD_PARTY_ACCEPT = System.getProperty("flee
  * See [Plugin Model](https://youtrack.jetbrains.com/articles/IJPL-A-31/Plugin-Model) documentation.
  *
  * @implNote Prefer to use only JDK classes. Any post-start-up functionality should be placed in [PluginManager] class.
+ * @see PluginDetailsService for information about plugins for applied functionality
  */
 @OptIn(LowLevelLocalMachineAccess::class)
 object PluginManagerCore {

@@ -5,7 +5,6 @@ import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.ApiStatus;
@@ -22,9 +21,15 @@ import java.util.stream.Stream;
 
 import static com.intellij.ide.plugins.PluginManagerCore.CORE_ID;
 
+/**
+ * @see PluginDetailsService for information about plugins for applied functionality
+ */
 @Service
 public final class PluginManager {
+  @ApiStatus.Internal
   public static final String INSTALLED_TXT = "installed.txt";
+
+  @ApiStatus.Internal
   public static final Pattern EXPLICIT_BIG_NUMBER_PATTERN = Pattern.compile("(.*)\\.(9{4,}+|10{4,}+)");
 
   public static @NotNull PluginManager getInstance() {
@@ -41,12 +46,21 @@ public final class PluginManager {
     return Files.isRegularFile(onceInstalledFile) ? onceInstalledFile : null;
   }
 
-  /** @deprecated Use {@link PluginManagerCore#getPlugin(PluginId)} */
+  /**
+   * Internal. Use {@link PluginDetailsService} instead in plugins.
+   *
+   * @deprecated Use {@link PluginManagerCore#getPlugin(PluginId)}
+   */
   @Deprecated
+  @ApiStatus.Internal
   public static @Nullable IdeaPluginDescriptor getPlugin(@Nullable PluginId id) {
     return PluginManagerCore.getPlugin(id);
   }
 
+  /**
+   * Internal. Use {@link PluginDetailsService} instead in plugins.
+   */
+  @ApiStatus.Internal
   public static IdeaPluginDescriptor @NotNull [] getPlugins() {
     return PluginManagerCore.getPlugins();
   }
@@ -60,6 +74,7 @@ public final class PluginManager {
    * started from sources, because in that case the single classloader loads classes from all the plugins. So if you know ID of the plugin,
    * it's better to use {@link #findEnabledPlugin(PluginId)} instead.
    */
+  @ApiStatus.Internal
   public static @Nullable PluginDescriptor getPluginByClass(@NotNull Class<?> aClass) {
     ClassLoader loader = aClass.getClassLoader();
     return loader instanceof PluginAwareClassLoader ? ((PluginAwareClassLoader)loader).getPluginDescriptor() : null;
@@ -82,31 +97,35 @@ public final class PluginManager {
     return (id == null || CORE_ID.equals(id)) ? null : id;
   }
 
+  /**
+   * Internal. Use {@link PluginDetailsService} instead in plugins.
+   */
+  @ApiStatus.Internal
   public static @NotNull List<? extends IdeaPluginDescriptor> getLoadedPlugins() {
     return PluginManagerCore.getLoadedPlugins();
   }
 
+  @ApiStatus.Internal
   public static boolean disablePlugin(@NotNull String id) {
     return PluginManagerCore.disablePlugin(PluginId.getId(id));
   }
 
   /** @deprecated Use {@link PluginManagerCore#enablePlugin(PluginId)} */
   @Deprecated
+  @ApiStatus.Internal
   public static boolean enablePlugin(@NotNull String id) {
     return PluginManagerCore.enablePlugin(PluginId.getId(id));
   }
 
+  @ApiStatus.Internal
   public boolean enablePlugin(@NotNull PluginId id) {
     return PluginManagerCore.enablePlugin(id);
   }
 
-  /** @deprecated Use own logger. */
-  @Deprecated
+  /**
+   * Internal. Use {@link PluginDetailsService} instead in plugins.
+   */
   @ApiStatus.Internal
-  public static @NotNull Logger getLogger() {
-    return PluginManagerCore.getLogger();
-  }
-
   public @Nullable IdeaPluginDescriptor findEnabledPlugin(@NotNull PluginId id) {
     return PluginManagerCore.getPluginSet().findEnabledPlugin(id);
   }

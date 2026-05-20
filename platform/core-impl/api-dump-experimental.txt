@@ -8,18 +8,49 @@
 - <init>(java.util.List,java.util.List):V
 - f:getModuleIds():java.util.List
 - f:getPluginIds():java.util.List
-*:com.intellij.ide.plugins.PluginEnabler
-- sf:HEADLESS:com.intellij.ide.plugins.PluginEnabler$Headless
-- a:disable(java.util.Collection):Z
-- disableById(java.util.Set):Z
-- a:enable(java.util.Collection):Z
-- enableById(java.util.Set):Z
-- s:getInstance():com.intellij.ide.plugins.PluginEnabler
-- a:isDisabled(com.intellij.openapi.extensions.PluginId):Z
-*:com.intellij.ide.plugins.PluginEnabler$Headless
-- com.intellij.ide.plugins.PluginEnabler
-- a:isIgnoredDisabledPlugins():Z
-- a:setIgnoredDisabledPlugins(Z):V
+*f:com.intellij.ide.plugins.PluginDetailsService
+- *sf:Companion:com.intellij.ide.plugins.PluginDetailsService$Companion
+- <init>():V
+- f:findDetails(com.intellij.openapi.extensions.PluginId):com.intellij.ide.plugins.PluginDetailsService$PluginDetails
+- f:getActivePlugins():kotlin.sequences.Sequence
+- sf:getInstance():com.intellij.ide.plugins.PluginDetailsService
+- f:isDisabled(com.intellij.openapi.extensions.PluginId):Z
+- f:isLoaded(com.intellij.openapi.extensions.PluginId):Z
+- f:isPartOfInstallation(com.intellij.openapi.extensions.PluginId):Z
+*f:com.intellij.ide.plugins.PluginDetailsService$Companion
+- f:getInstance():com.intellij.ide.plugins.PluginDetailsService
+*:com.intellij.ide.plugins.PluginDetailsService$ModuleDependencyInfo
+- a:isOptional():Z
+*f:com.intellij.ide.plugins.PluginDetailsService$ModuleDependencyInfo$OnModule
+- com.intellij.ide.plugins.PluginDetailsService$ModuleDependencyInfo
+- <init>(java.lang.String,Z):V
+- f:getName():java.lang.String
+- isOptional():Z
+*f:com.intellij.ide.plugins.PluginDetailsService$ModuleDependencyInfo$OnPlugin
+- com.intellij.ide.plugins.PluginDetailsService$ModuleDependencyInfo
+- <init>(com.intellij.openapi.extensions.PluginId,Z):V
+- f:getPluginId():com.intellij.openapi.extensions.PluginId
+- isOptional():Z
+*f:com.intellij.ide.plugins.PluginDetailsService$PluginDetails
+- <init>(com.intellij.openapi.extensions.PluginId,java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.ide.plugins.PluginDetailsService$PluginVendorInfo,java.util.Set,java.util.Set,Z):V
+- f:getChangeNotes():java.lang.String
+- f:getDependencies():java.util.Set
+- f:getDescription():java.lang.String
+- f:getId():com.intellij.openapi.extensions.PluginId
+- f:getModules():java.util.Set
+- f:getName():java.lang.String
+- f:getVendor():com.intellij.ide.plugins.PluginDetailsService$PluginVendorInfo
+- f:getVersion():java.lang.String
+- f:isPartOfInstallation():Z
+*f:com.intellij.ide.plugins.PluginDetailsService$PluginModuleInfo
+- <init>(java.lang.String):V
+- f:getName():java.lang.String
+*f:com.intellij.ide.plugins.PluginDetailsService$PluginVendorInfo
+- <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String):V
+- f:getEmail():java.lang.String
+- f:getName():java.lang.String
+- f:getOrganization():java.lang.String
+- f:getUrl():java.lang.String
 *:com.intellij.ide.plugins.PluginNonLoadReason
 - a:getDetailedMessage():java.lang.String
 - a:getLogMessage():java.lang.String
