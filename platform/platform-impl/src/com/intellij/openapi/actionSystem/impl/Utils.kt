@@ -66,6 +66,7 @@ import com.intellij.openapi.progress.impl.ProgressManagerImpl
 import com.intellij.openapi.progress.prepareThreadContext
 import com.intellij.openapi.progress.util.PotemkinOverlayProgress
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
+import com.intellij.openapi.progress.util.SuvorovProgress
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.util.IntellijInternalApi
@@ -105,6 +106,7 @@ import io.opentelemetry.context.Context
 import io.opentelemetry.context.ContextKey
 import io.opentelemetry.extension.kotlin.asContextElement
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -1394,6 +1396,12 @@ private object AltEdtDispatcher : CoroutineDispatcher() {
           val runnable = queue.poll(1, TimeUnit.MILLISECONDS)
           if (runnable != null) {
             runnable.run()
+          } else {
+            // so the queue of action's runnable does not have anything.
+            // At this point, we might be blocked by a background write action that has just submitted invokeAndWait.
+            // It is important to unblock the system (some actions could be waiting for this background WA),
+            // so here we are dispatching important events synchronously
+            SuvorovProgress.dispatchImportantEvents()
           }
         }
       }

@@ -21,6 +21,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.KeyStrokeAdapter
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.application
+import com.intellij.util.ui.EDT
 import com.intellij.util.ui.GraphicsUtil
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -112,6 +113,13 @@ object SuvorovProgress {
         rwService.signalWriteActionNeedsToBeRetried()
       }
     }
+  }
+
+  fun dispatchImportantEvents() {
+    require(EDT.isCurrentThreadEdt()) { "Synchronous dispatch of important events must be performed on EDT" }
+    do {
+      val dispatchResult = eternalStealer.dispatchExistingEvent(0, null)
+    } while (dispatchResult == EternalEventStealer.DispatchResult.EVENT_PROCESSED)
   }
 
   @JvmStatic
