@@ -25,7 +25,7 @@ class HeapDumpReportTextTest {
 
     val report = invokeGetHeapDumpReportText(
       reportText,
-      reason = "UserInvoked",
+      reason = "OutOfMemory",
       liveStats = liveStats,
       heapStats = heapStats,
     )
@@ -39,6 +39,7 @@ class HeapDumpReportTextTest {
         Maximum heap size: 2.14GB
         Committed heap size: 1.07GB
         Free heap size: 512MB
+        Report reason: OutOfMemory
 
         ${sectionHeader("Platform Statistics")}
         Projects open: 1

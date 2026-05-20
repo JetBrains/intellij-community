@@ -24,7 +24,6 @@ import com.intellij.diagnostic.hprofDatabase
 import com.intellij.diagnostic.report.HeapReportProperties
 import com.intellij.diagnostic.report.MemoryReportReason
 import com.intellij.ide.actions.RevealFileAction
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
@@ -41,9 +40,6 @@ import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.application
 import java.nio.file.Files
 import java.nio.file.Path
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 import kotlin.io.path.exists
 import kotlin.math.max
 
@@ -61,8 +57,6 @@ internal class HeapDumpSnapshotRunnable(
   private val analysisOption: AnalysisOption) : Runnable {
 
   companion object {
-    const val MINIMUM_USED_MEMORY_TO_CAPTURE_HEAP_DUMP_IN_MB: Int = 800
-    const val NEXT_CHECK_TIMESTAMP_KEY: String = "heap.dump.snapshot.next.check.timestamp"
     private val LOG = Logger.getInstance(HeapDumpSnapshotRunnable::class.java)
   }
 
@@ -75,43 +69,9 @@ internal class HeapDumpSnapshotRunnable(
   override fun run() {
     LOG.info("HeapDumpSnapshotRunnable started: reason=$reason, analysisOption=$analysisOption")
 
-    val userInvoked = reason.isUserInvoked()
-
-    if (!userInvoked) {
-      if (ApplicationManager.getApplication().isUnitTestMode) {
-        LOG.info("Disabled for tests.")
-        return
-      }
-
-      if (!ApplicationManager.getApplication().isEAP) {
-        LOG.info("Heap dump analysis is enabled only on EAP builds.")
-        return
-      }
-
-      // Analysis uses memory-mapped files to analyze heap dumps. This may require larger virtual memory address
-      // space, so limiting the capture/analyze to 64-bit platforms only.
-      if (System.getProperty("sun.arch.data.model") != "64") {
-        LOG.info("Heap dump analysis supported only on 64-bit platforms.")
-        return
-      }
-
-      // capture heap dumps that are larger than a threshold
-      val usedMemoryMB = usedMemory(false) / 1_000_000
-
-      // Capture only large memory heaps, unless explicitly requested by the user
-      if (usedMemoryMB < MINIMUM_USED_MEMORY_TO_CAPTURE_HEAP_DUMP_IN_MB) {
-        LOG.info("Heap dump too small: $usedMemoryMB MB < $MINIMUM_USED_MEMORY_TO_CAPTURE_HEAP_DUMP_IN_MB MB")
-        return
-      }
-
-      val nextCheckPropertyMs = PropertiesComponent.getInstance().getLong(NEXT_CHECK_TIMESTAMP_KEY, 0)
-      val currentTimestampMs = System.currentTimeMillis()
-
-      if (nextCheckPropertyMs > currentTimestampMs) {
-        val nextCheckDateString = SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z", Locale.US).format(Date(nextCheckPropertyMs))
-        LOG.info("Don't ask for snapshot until $nextCheckDateString.")
-        return
-      }
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      LOG.info("Disabled for tests.")
+      return
     }
 
     if (analysisOption == AnalysisOption.SCHEDULE_ON_NEXT_START) {
@@ -126,20 +86,17 @@ internal class HeapDumpSnapshotRunnable(
     // Check if there is enough space
     if (spaceInMB < estimatedRequiredMB) {
       LOG.info("Not enough space for heap dump: $spaceInMB MB < $estimatedRequiredMB MB")
-      // If invoked by the user action, show a message why a heap dump cannot be captured.
-      if (userInvoked) {
-        val message = DiagnosticBundle.message("heap.dump.snapshot.no.space", hprofPath.parent.toString(),
-                                            estimatedRequiredMB, spaceInMB)
-        Messages.showErrorDialog(message, DiagnosticBundle.message("heap.dump.snapshot.title"))
-      }
+      // Show a message why a heap dump cannot be captured.
+      val message = DiagnosticBundle.message("heap.dump.snapshot.no.space", hprofPath.parent.toString(),
+                                          estimatedRequiredMB, spaceInMB)
+      Messages.showErrorDialog(message, DiagnosticBundle.message("heap.dump.snapshot.title"))
       return
     }
 
     LOG.info("Capturing heap dump.")
 
     // Start heap capture as a modal task.
-    // Offer restart only if explicitly invoked by user action.
-    CaptureHeapDumpTask(hprofPath, reason, analysisOption, userInvoked).queue()
+    CaptureHeapDumpTask(hprofPath, reason, analysisOption).queue()
   }
 
   private fun estimateRequiredFreeSpaceInMB(): Long {
@@ -148,12 +105,11 @@ internal class HeapDumpSnapshotRunnable(
 
   class CaptureHeapDumpTask(private val hprofPath: Path,
                             private val reason: MemoryReportReason,
-                            private val analysisOption: AnalysisOption,
-                            private val restart: Boolean)
+                            private val analysisOption: AnalysisOption)
     : Task.Modal(null, DiagnosticBundle.message("heap.dump.snapshot.task.title"), false) {
 
     override fun onSuccess() {
-      if (analysisOption == AnalysisOption.SCHEDULE_ON_NEXT_START && restart) {
+      if (analysisOption == AnalysisOption.SCHEDULE_ON_NEXT_START) {
         ApplicationManager.getApplication().invokeLater(this::confirmRestart, ModalityState.nonModal())
       }
     }
@@ -180,10 +136,7 @@ internal class HeapDumpSnapshotRunnable(
       indicator.isIndeterminate = true
 
       val productName = ApplicationNamesInfo.getInstance().fullProductName
-      if (reason.isUserInvoked())
-        indicator.text = DiagnosticBundle.message("heap.dump.snapshot.indicator.text", productName)
-      else
-        indicator.text = DiagnosticBundle.message("heap.dump.snapshot.indicator.low.memory.text", productName)
+      indicator.text = DiagnosticBundle.message("heap.dump.snapshot.indicator.text", productName)
 
       // TODO: Rewrite to remove this delay. Task.queue() shows progress dialog with 300ms delay currently without
       //   an API to lower this or get notified the window is shown. Creating a heap dump is a long-running operation

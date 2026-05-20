@@ -159,7 +159,8 @@ internal fun getHeapDumpReportText(reportText: String, heapProperties: HeapRepor
     if (heapProperties.heapStats.isNotEmpty()) {
       append("\n\n")
       appendLine(sectionHeader("Heap Statistics"))
-      append(heapProperties.heapStats.trimEnd())
+      appendLine(heapProperties.heapStats.trimEnd())
+      append("Report reason: ${heapProperties.reason}")
     }
   }
   val liveStats = buildString {

@@ -18,13 +18,7 @@ package com.intellij.diagnostic.report
 
 internal enum class MemoryReportReason {
   None,
-  UserInvoked,
   InternalUserInvoked,
   FrequentLowMemoryNotification,
-  LowMemory,
-  OutOfMemory;
-
-  fun isUserInvoked(): Boolean {
-    return this == UserInvoked || this == InternalUserInvoked
-  }
+  OutOfMemory
 }

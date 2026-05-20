@@ -29,6 +29,7 @@ import java.util.Set;
 import static com.intellij.openapi.util.LowMemoryWatcher.LowMemoryWatcherType.ONLY_AFTER_GC;
 import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.PlatformMetrics;
 import static com.intellij.util.SystemProperties.getFloatProperty;
+import static com.intellij.util.SystemProperties.getIntProperty;
 import static com.intellij.util.SystemProperties.getLongProperty;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -49,6 +50,7 @@ public final class LowMemoryNotifier implements Disposable {
   private static final long SUMMARISING_WINDOW_MS = getLongProperty("LowMemoryNotifier.SUMMARISING_WINDOW_MS", MINUTES.toMillis(15));
   private static final long THROTTLING_PERIOD_MS = getLongProperty("LowMemoryNotifier.THROTTLING_PERIOD_MS", SECONDS.toMillis(20));
   private static final double LONG_TERM_MEMORY_DEFICIT_THRESHOLD = getFloatProperty("LowMemoryNotifier.LONG_TERM_MEMORY_DEFICIT_THRESHOLD", 5);
+  private static final int MINIMUM_MAX_MEMORY_TO_CAPTURE_HEAP_DUMP_IN_MB = getIntProperty("LowMemoryNotifier.MINIMUM_MAX_MEMORY_TO_CAPTURE_HEAP_DUMP_IN_MB", 800); // should be defined per product
 
   private final ThrottlingWindowedFilter throttlingFilter = new ThrottlingWindowedFilter(
     SUMMARISING_WINDOW_MS,
@@ -118,10 +120,14 @@ public final class LowMemoryNotifier implements Disposable {
       .setSuggestionType(true);
 
     if (!fromCrashReport) {
-      notification.addAction(NotificationAction.createSimpleExpiring(
-        IdeBundle.message("low.memory.notification.analyze.action"),
-        () -> new HeapDumpSnapshotRunnable(MemoryReportReason.UserInvoked, HeapDumpSnapshotRunnable.AnalysisOption.SCHEDULE_ON_NEXT_START).run()
-      ));
+      // Only process heap OOME when max heap size (-Xmx) is above defined threshold
+      if (MemoryKind.HEAP.equals(kind) && Runtime.getRuntime().maxMemory() / 1_000_000 >= MINIMUM_MAX_MEMORY_TO_CAPTURE_HEAP_DUMP_IN_MB) {
+        notification.addAction(NotificationAction.createSimpleExpiring(
+          IdeBundle.message("low.memory.notification.analyze.action"),
+          () -> new HeapDumpSnapshotRunnable(oomError ? MemoryReportReason.OutOfMemory : MemoryReportReason.FrequentLowMemoryNotification,
+                                             HeapDumpSnapshotRunnable.AnalysisOption.SCHEDULE_ON_NEXT_START).run()
+        ));
+      }
     }
 
     var userOptionsFile = EditMemorySettingsService.getInstance().getUserOptionsFile();
