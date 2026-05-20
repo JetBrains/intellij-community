@@ -53,7 +53,6 @@
 - getModuleId():com.intellij.platform.runtime.repository.RuntimeModuleId
 - getRequiredIfAvailableId():com.intellij.platform.runtime.repository.RuntimeModuleId
 - hashCode():I
-- resolve(com.intellij.platform.runtime.repository.RuntimeModuleRepository):com.intellij.platform.runtime.repository.IncludedRuntimeModule
 *f:com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
 - <init>(java.lang.String,java.util.List,java.util.List):V
 - s:create(com.intellij.platform.runtime.repository.RuntimeModuleId,com.intellij.platform.runtime.repository.RuntimeModuleVisibility,java.util.List,java.util.List):com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor

@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.runtime.product.serialization.ProductModulesSerialization
-import com.intellij.platform.runtime.repository.RuntimeModuleDescriptor
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleLoadingRule
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
@@ -66,12 +65,6 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     get() = currentMode.id
 
   override fun addMainModuleGroupToClassPath(bootstrapClassLoader: ClassLoader) {
-    fun collectDependencies(module: RuntimeModuleDescriptor, result: MutableSet<RuntimeModuleDescriptor>) {
-      if (result.add(module)) {
-        module.dependencies.forEach { collectDependencies(it, result) }
-      }
-    }
-    
     val logger = logger<ModuleBasedProductLoadingStrategy>()
     val tracing = logger.isTraceEnabled
 
