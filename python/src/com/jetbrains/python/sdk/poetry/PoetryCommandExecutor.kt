@@ -26,6 +26,8 @@ import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.sdk.ToolCommandExecutor
 import com.jetbrains.python.sdk.ToolSearchPath
 import com.jetbrains.python.sdk.add.v2.EelFileSystem
+import com.jetbrains.python.sdk.add.v2.FileSystem
+import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.toEelFileSystem
 import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.pyRichSdkAsync
@@ -78,11 +80,18 @@ suspend fun runPoetry(
 
 
 /**
+ * Returns the configured poetry executable or detects it automatically on the given [fileSystem].
+ */
+@Internal
+suspend fun <P : PathHolder> getPoetryExecutable(fileSystem: FileSystem<P>): P? =
+  POETRY_TOOL.getToolExecutable(fileSystem, pathFromSdk = null)
+
+/**
  * Returns the configured poetry executable or detects it automatically.
  */
 @Internal
 suspend fun getPoetryExecutable(eel: EelApi = localEel): Path? =
-  POETRY_TOOL.getToolExecutable(EelFileSystem(eel), pathFromSdk = null)?.path
+  getPoetryExecutable(EelFileSystem(eel))?.path
 
 /**
  * Runs poetry command for the specified Poetry SDK.

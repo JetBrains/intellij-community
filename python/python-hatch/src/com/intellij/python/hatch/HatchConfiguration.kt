@@ -5,9 +5,10 @@ import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.provider.localEel
 import com.jetbrains.python.Result
-import com.jetbrains.python.sdk.detectTool
+import com.jetbrains.python.sdk.ToolCommandExecutor
+import com.jetbrains.python.sdk.add.v2.FileSystem
+import com.jetbrains.python.sdk.add.v2.PathHolder
 import java.nio.file.Path
-import kotlin.io.path.isExecutable
 
 object HatchConfiguration {
   private const val PYCHARM_HATCH_LOCAL_EXECUTABLE_PATH_SETTING: String = "PyCharm.Hatch.Local.Executable.Path"
@@ -16,28 +17,20 @@ object HatchConfiguration {
     get() = PropertiesComponent.getInstance().getValue(PYCHARM_HATCH_LOCAL_EXECUTABLE_PATH_SETTING)?.let { Path.of(it) }
     set(value) = PropertiesComponent.getInstance().setValue(PYCHARM_HATCH_LOCAL_EXECUTABLE_PATH_SETTING, value?.toString())
 
-  fun getPersistedPathForTarget(eelApi: EelApi = localEel): Path? = when {
-    eelApi is LocalEelApi -> localHatchExecutablePath
-    else -> null
-  }
+  private val HATCH_TOOL = ToolCommandExecutor(
+    "hatch",
+    getToolPathFromSettings = { getValue(PYCHARM_HATCH_LOCAL_EXECUTABLE_PATH_SETTING) }
+  )
 
   fun persistPathForTarget(eelApi: EelApi = localEel, hatchExecutablePath: Path?) {
     if (eelApi is LocalEelApi) localHatchExecutablePath = hatchExecutablePath
   }
 
-  suspend fun getOrDetectHatchExecutablePath(eelApi: EelApi = localEel): Result<Path, HatchError> {
-    val path = getPersistedPathForTarget(eelApi) ?: run {
-      detectHatchExecutable(eelApi)?.also { persistPathForTarget(eelApi, it) }
+  suspend fun <P : PathHolder> getOrDetectHatchExecutablePath(fileSystem: FileSystem<P>): Result<P, HatchError> {
+    val path = HATCH_TOOL.getToolExecutable(fileSystem, null) ?: return Result.failure(HatchExecutableNotFoundHatchError(null))
+    if (fileSystem.isLocal) {
+      persistPathForTarget(localEel, Path.of(path.toString()))
     }
-
-    val result = when {
-      path?.isExecutable() != true -> Result.failure(HatchExecutableNotFoundHatchError(path))
-      else -> Result.success(path)
-    }
-
-    return result
+    return Result.success(path)
   }
-
-  suspend fun detectHatchExecutable(eelApi: EelApi): Path? = detectTool("hatch", eelApi)
 }
-

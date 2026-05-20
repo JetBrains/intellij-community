@@ -247,6 +247,8 @@
 
     <applicationService serviceImplementation="com.jetbrains.python.packaging.pip.PypiPackageCache"/>
     <applicationService serviceImplementation="com.jetbrains.python.packaging.PyPackageService"/>
+    <applicationService serviceInterface="com.jetbrains.python.sdk.add.v2.EelFileSystemFactory"
+                        serviceImplementation="com.jetbrains.python.sdk.add.v2.EelFileSystemFactoryImpl"/>
     <projectService serviceInterface="com.jetbrains.python.module.PyModuleService"
                     serviceImplementation="com.jetbrains.python.module.PyModuleServiceImpl"/>
     <applicationService serviceInterface="com.jetbrains.python.psi.resolve.PackageAvailabilityService"

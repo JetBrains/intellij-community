@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.hatch.run
 
+import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.hatch.HatchConfiguration
 import com.intellij.python.hatch.runtime.HatchConstants
 import com.jetbrains.python.PyBundle
@@ -9,11 +10,12 @@ import com.jetbrains.python.run.features.PyRunToolData
 import com.jetbrains.python.run.features.PyRunToolId
 import com.jetbrains.python.run.features.PyRunToolParameters
 import com.jetbrains.python.run.features.PySdkRunToolProvider
+import com.jetbrains.python.sdk.add.v2.toFileSystem
 
 internal class HatchRunToolProvider : PySdkRunToolProvider<HatchSdkAdditionalData>(HatchSdkAdditionalData::class.java) {
 
   override suspend fun getRunToolParameters(data: HatchSdkAdditionalData): PyRunToolParameters {
-    val hatchPath = HatchConfiguration.getOrDetectHatchExecutablePath().getOr { error("Unable to find hatch executable.") }
+    val hatchPath = HatchConfiguration.getOrDetectHatchExecutablePath(localEel.toFileSystem()).getOr { error("Unable to find hatch executable.") }
     val env = mutableMapOf<String, String>()
     data.hatchEnvironmentName?.let {
       env += HatchConstants.AppEnvVars.ENV to it

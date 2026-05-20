@@ -4,6 +4,7 @@ package com.jetbrains.python.hatch.sdk.configuration
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.python.common.tools.ToolId
 import com.intellij.python.hatch.HatchVirtualEnvironment
@@ -17,6 +18,7 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.hatch.sdk.createSdk
 import com.jetbrains.python.onSuccess
 import com.jetbrains.python.orLogException
+import com.jetbrains.python.sdk.add.v2.toFileSystem
 import com.jetbrains.python.sdk.configuration.CheckToml
 import com.jetbrains.python.sdk.configuration.CreateSdkInfo
 import com.jetbrains.python.sdk.configuration.EnvCheckerResult
@@ -50,7 +52,7 @@ internal class PyHatchSdkConfiguration : PyProjectTomlConfigurationExtension {
     module: Module, checkToml: CheckToml,
   ): EnvCheckerResult = reportRawProgress {
     it.text(PyBundle.message("sdk.set.up.hatch.project.analysis"))
-    val hatchService = module.getHatchService().getOr { return EnvCheckerResult.CannotConfigure }
+    val hatchService = module.getHatchService(localEel.toFileSystem()).getOr { return EnvCheckerResult.CannotConfigure }
     val canManage = if (checkToml) hatchService.isHatchManagedProject() else true
     val intentionName = PyBundle.message("sdk.set.up.hatch.environment")
     val envNotFound = EnvCheckerResult.EnvNotFound(intentionName)
@@ -75,7 +77,7 @@ internal class PyHatchSdkConfiguration : PyProjectTomlConfigurationExtension {
     project = module.project,
     msg = PyBundle.message("sdk.set.up.hatch.environment")
   ) {
-    val hatchService = module.getHatchService().getOr { return@runWithModalBlockingOrInBackground it }
+    val hatchService = module.getHatchService(localEel.toFileSystem()).getOr { return@runWithModalBlockingOrInBackground it }
 
     val environment = if (envExists) {
       val defaultEnv = hatchService.findDefaultVirtualEnvironmentOrNull()

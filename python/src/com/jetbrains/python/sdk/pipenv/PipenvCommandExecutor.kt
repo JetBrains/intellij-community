@@ -11,6 +11,7 @@ import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.ToolCommandExecutor
 import com.jetbrains.python.sdk.add.v2.EelFileSystem
+import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.toEelFileSystem
 import com.jetbrains.python.sdk.createSdk
@@ -49,11 +50,18 @@ suspend fun <T> runPipEnv(dirPath: Path?, vararg args: String, transformer: Proc
   )
 
 /**
+ * Returns the configured pipenv executable or detects it automatically on the given [fileSystem].
+ */
+@Internal
+suspend fun <P : PathHolder> getPipEnvExecutable(fileSystem: FileSystem<P>): P? =
+  PIPENV_TOOL.getToolExecutable(fileSystem, pathFromSdk = null)
+
+/**
  * Returns the configured pipenv executable or detects it automatically.
  */
 @Internal
 suspend fun getPipEnvExecutable(eel: EelApi = localEel): Path? =
-  PIPENV_TOOL.getToolExecutable(EelFileSystem(eel), pathFromSdk = null)?.path
+  getPipEnvExecutable(EelFileSystem(eel))?.path
 
 /**
  * Sets up the pipenv environment under the modal progress window.

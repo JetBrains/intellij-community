@@ -23,6 +23,8 @@ import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.sdk.add.v2.FileSystem
+import com.jetbrains.python.sdk.add.v2.PathHolder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -42,9 +44,15 @@ internal class CliBasedHatchService private constructor(
   private val hatchRuntime: HatchRuntime,
 ) : HatchService {
   companion object {
-    suspend operator fun invoke(workingDirectoryPath: Path?, hatchExecutablePath: Path? = null, hatchEnvironmentName: String? = null): PyResult<CliBasedHatchService> {
+    suspend operator fun invoke(
+      fileSystem: FileSystem<PathHolder.Eel>,
+      workingDirectoryPath: Path?,
+      hatchExecutablePath: Path? = null,
+      hatchEnvironmentName: String? = null,
+    ): PyResult<CliBasedHatchService> {
       val envVars = hatchEnvironmentName?.let { mapOf(HatchConstants.AppEnvVars.ENV to it) } ?: emptyMap()
       val hatchRuntime = createHatchRuntime(
+        fileSystem = fileSystem,
         hatchExecutablePath = hatchExecutablePath,
         workingDirectoryPath = workingDirectoryPath,
         envVars = envVars
@@ -131,7 +139,10 @@ internal class CliBasedHatchService private constructor(
     ))
   }
 
-  override suspend fun createVirtualEnvironment(basePythonBinaryPath: PythonBinary?, envName: String?): PyResult<PythonVirtualEnvironment.Existing> {
+  override suspend fun createVirtualEnvironment(
+    basePythonBinaryPath: PythonBinary?,
+    envName: String?,
+  ): PyResult<PythonVirtualEnvironment.Existing> {
     val pythonBasedRuntime = basePythonBinaryPath?.let { path ->
       hatchRuntime.withBasePythonBinaryPath(path).getOr { return it }
     } ?: hatchRuntime

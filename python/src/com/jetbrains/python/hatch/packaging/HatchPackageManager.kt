@@ -3,6 +3,7 @@ package com.jetbrains.python.hatch.packaging
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.hatch.HatchService
 import com.intellij.python.hatch.getHatchService
 import com.intellij.python.pyproject.PY_PROJECT_TOML
@@ -12,6 +13,7 @@ import com.jetbrains.python.hatch.sdk.isHatch
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManagerProvider
 import com.jetbrains.python.packaging.pip.PipPythonPackageManager
+import com.jetbrains.python.sdk.add.v2.toFileSystem
 import java.nio.file.Path
 
 internal class HatchPackageManager(project: Project, sdk: Sdk) : PipPythonPackageManager(project, sdk) {
@@ -30,7 +32,7 @@ internal class HatchPackageManager(project: Project, sdk: Sdk) : PipPythonPackag
   suspend fun getHatchService(): PyResult<HatchService> {
     val data = getSdkAdditionalData()
     val workingDirectory = data.hatchWorkingDirectory
-    return workingDirectory.getHatchService(hatchEnvironmentName = data.hatchEnvironmentName)
+    return workingDirectory.getHatchService(fileSystem = localEel.toFileSystem(), hatchEnvironmentName = data.hatchEnvironmentName)
   }
 
   override val dependenciesFilesRelativePaths: List<Path>

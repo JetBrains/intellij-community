@@ -4,6 +4,7 @@ package com.jetbrains.python.sdk.add.v2.hatch
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
+import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.BinaryToExec
 import com.intellij.python.hatch.HatchConfiguration.getOrDetectHatchExecutablePath
@@ -12,14 +13,13 @@ import com.intellij.python.hatch.getHatchService
 import com.jetbrains.python.Result
 import com.jetbrains.python.Result.Companion.success
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.getOrNull
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows
-import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.PythonToolViewModel
 import com.jetbrains.python.sdk.add.v2.ToolValidator
 import com.jetbrains.python.sdk.add.v2.ValidatedPath
+import com.jetbrains.python.sdk.add.v2.toFileSystem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -48,12 +48,7 @@ class HatchViewModel<P : PathHolder>(
     toolVersionPrefix = "hatch",
     backProperty = hatchExecutable,
     propertyGraph = propertyGraph,
-    defaultPathSupplier = {
-      when (fileSystem) {
-        is EelFileSystem -> getOrDetectHatchExecutablePath(fileSystem.eelApi).getOrNull()?.let { PathHolder.Eel(it) } as P?
-        else -> null
-      }
-    }
+    defaultPathSupplier = { getOrDetectHatchExecutablePath(fileSystem).successOrNull }
   )
 
   override fun initialize(scope: CoroutineScope) {
@@ -78,7 +73,7 @@ class HatchViewModel<P : PathHolder>(
     val hatchExecutablePath = (hatchExecutable as? BinOnEel)?.path
                               ?: return@withContext Result.failure(HatchUIError.HatchExecutablePathIsNotValid(hatchExecutable.toString()))
     val hatchWorkingDirectory = generateSequence(projectPath) { it.parent }.firstOrNull { it.isDirectory() }
-    val hatchService = hatchWorkingDirectory.getHatchService(hatchExecutablePath).getOr { return@withContext it }
+    val hatchService = hatchWorkingDirectory.getHatchService(localEel.toFileSystem(), hatchExecutablePath).getOr { return@withContext it }
 
     val hatchEnvironments = hatchService.findVirtualEnvironments().getOr { return@withContext it }
     val availableEnvironments = when {

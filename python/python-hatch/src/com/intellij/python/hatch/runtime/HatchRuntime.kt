@@ -1,7 +1,5 @@
 package com.intellij.python.hatch.runtime
 
-import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.ExecOptions
@@ -21,6 +19,8 @@ import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonHomePath
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.sdk.add.v2.FileSystem
+import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.impl.resolvePythonBinary
 import java.nio.file.Path
 import kotlin.io.path.isDirectory
@@ -88,13 +88,13 @@ class HatchRuntime(
 
 
 suspend fun createHatchRuntime(
+  fileSystem: FileSystem<PathHolder.Eel>,
   hatchExecutablePath: Path?,
   workingDirectoryPath: Path?,
   envVars: Map<String, String> = emptyMap(),
-  eelApi: EelApi = localEel,
 ): Result<HatchRuntime, HatchError> {
   val actualHatchExecutable = hatchExecutablePath
-                              ?: HatchConfiguration.getOrDetectHatchExecutablePath(eelApi).getOr { return it }
+                              ?: HatchConfiguration.getOrDetectHatchExecutablePath(fileSystem).getOr { return it }.path
   if (workingDirectoryPath?.isDirectory() != true) {
     return Result.failure(WorkingDirectoryNotFoundHatchError(workingDirectoryPath))
   }
