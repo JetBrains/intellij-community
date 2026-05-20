@@ -1498,6 +1498,53 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/when")
+    public abstract static class When extends AbstractHighLevelQuickFixMultiFileTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/when/contextSensitiveResolution")
+        public static class ContextSensitiveResolution extends AbstractHighLevelQuickFixMultiFileTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+            }
+
+            @TestMetadata("addRemainingBranchesEnumAnotherPackage.before.Main.kt")
+            public void testAddRemainingBranchesEnumAnotherPackage() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/when/contextSensitiveResolution/addRemainingBranchesEnumAnotherPackage.before.Main.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/when")
+        public static class Uncategorized extends AbstractHighLevelQuickFixMultiFileTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+            }
+
+            @TestMetadata("addRemainingBranchesAnotherPackage.before.Main.kt")
+            public void testAddRemainingBranchesAnotherPackage() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/when/addRemainingBranchesAnotherPackage.before.Main.kt");
+            }
+
+            @TestMetadata("addRemainingBranchesAnotherPackageAll.before.Main.kt")
+            public void testAddRemainingBranchesAnotherPackageAll() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/when/addRemainingBranchesAnotherPackageAll.before.Main.kt");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/migration/conflictingExtension")
     public static class ConflictingExtension extends AbstractHighLevelQuickFixMultiFileTest {
         @java.lang.Override

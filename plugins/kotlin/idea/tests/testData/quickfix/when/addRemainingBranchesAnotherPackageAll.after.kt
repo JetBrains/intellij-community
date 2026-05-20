@@ -3,13 +3,12 @@
 
 package u
 
-import e.OwnEnum
 import e.OwnEnum.*
 import e.getOwnEnum
 
 fun mainContext() {
     val ownLocal = getOwnEnum()
-    when (ownLocal) {
+    <selection><caret></selection>when (ownLocal) {
         RED -> TODO()
         GREEN -> TODO()
         BLUE -> TODO()
