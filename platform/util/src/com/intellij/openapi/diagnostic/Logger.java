@@ -20,20 +20,20 @@ import java.util.function.Function;
  * <p>
  * Production mode:
  * <ul>
- * <li>The log messages go to {@code %system%/log/idea.log}.
- * <li>Error and warning messages go to {@link System#err}. To suppress them, set {@code -Didea.log.console=false}.
- * <li>Error, warning and info messages go to the log file.
+ * <li>Logs are written to {@code com.intellij.openapi.application.PathManager.getLogDir()}.
+ * <li>Messages go to {@link System#err} according to the {@code idea.console.log.level} property value ({@code "error"}, {@code "warning"}, etc.)
+ * <li>Error, warning, and info messages go to the log file.
  * <li>Debug and trace messages are dropped by default.
- * <li>In EAP versions or if the {@code idea.fatal.error.notification} system property is set to {@code true},
- * errors additionally result in an 'IDE Internal Error'.
+ * <li>If the {@code idea.fatal.error.notification} system property is set to {@code true},
+ * errors additionally result in the 'IDE Internal Error' dialog.
  * See {@link com.intellij.diagnostic.DialogAppender DialogAppender} for more details.
  * <li>The log level of each logger can be adjusted in
  * <a href="https://plugins.jetbrains.com/docs/intellij/ide-infrastructure.html#logging">Help | Diagnostic Tools | Debug Log Settings</a>.
  * </ul>
  * <p>
- * Test mode in tests that extend {@code UsefulTestCase}:
+ * Test mode in tests that use {@code TestLoggerFactory}:
  * <ul>
- * <li>The log messages go to {@code %system%/testlog/idea.log}.
+ * <li>Logs are written to {@code com.intellij.testFramework.TestLoggerFactory.getTestLogDir()}.
  * <li>Error and warning messages go directly to the console.
  * <li>Error messages additionally throw an {@link AssertionError}.
  * <li>Info and debug messages are buffered in memory.
@@ -89,11 +89,13 @@ public abstract class Logger {
     ourFactory = factory;
   }
 
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  @SuppressWarnings({"UseOfSystemOutOrSystemErr", "JavaPrintToLogpoint"})
   private static void logFactoryChanged(Class<? extends Factory> factory) {
     if (Boolean.getBoolean("idea.log.logger.factory.changed")) {
-      System.out.println("Changing log factory from " + ourFactory.getClass().getCanonicalName() +
-                         " to " + factory.getCanonicalName() + '\n' + ExceptionUtil.getThrowableText(new Throwable()));
+      System.out.println(
+        "Changing log factory from " + ourFactory.getClass().getCanonicalName() +
+        " to " + factory.getCanonicalName() + '\n' + ExceptionUtil.getThrowableText(new Throwable())
+      );
     }
   }
 
@@ -266,8 +268,8 @@ public abstract class Logger {
   /**
    * Log a message at trace level, which is finer-grained than debug level.
    * <p>
-   * Use this method instead of {@link #debug(String)} for internal events of a subsystem,
-   * to avoid overwhelming the log if 'debug' level is enabled.
+   * Use this method instead of {@link #debug(String)} for internal events of a subsystem
+   * to avoid overwhelming the log if the 'debug' level is enabled.
    * <p>
    * In production mode, trace messages are disabled by default.
    * They can be enabled by appending a <code>:trace</code> suffix in
@@ -277,8 +279,7 @@ public abstract class Logger {
    * use {@code TestLoggerFactory.enableTraceLogging} to enable them.
    * At the end of a test that fails, these messages go to the console; otherwise, they are dropped.
    *
-   * @param message should be a plain string literal,
-   *                or the call should be enclosed in {@link #isTraceEnabled()}
+   * @param message should be a plain string literal, or the call should be enclosed in {@link #isTraceEnabled()}
    */
   public void trace(String message) {
     debug(message);
@@ -334,7 +335,7 @@ public abstract class Logger {
   public abstract void info(String message, @Nullable Throwable t);
 
   /**
-   * Log a message at warning level.
+   * Log a message at the warning level.
    * <p>
    * In production mode, warning messages are enabled by default.
    * <p>
@@ -429,7 +430,7 @@ public abstract class Logger {
   }
 
   /**
-   * Log a stack trace at error level.
+   * Log a stack trace at the error level.
    * <p>
    * In production mode, error messages are enabled by default.
    * In EAP versions, error messages result in an 'IDE Internal Error'.

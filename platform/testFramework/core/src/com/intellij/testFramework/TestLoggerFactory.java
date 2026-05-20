@@ -68,8 +68,9 @@ public final class TestLoggerFactory implements Logger.Factory {
   /** If true, print '[threadName]' (30 chars max) on each log line. Default is false to keep a legacy log format. */
   private static final boolean LOG_THREAD_NAME = Boolean.getBoolean("idea.test.log.thread.name");
 
-  // store log contents here, as a list of (timestamp, message) records, to optimize for append speed
+  // store log contents here, as a list of (timestamp, message) records, to optimize for appending speed
   private final Deque<Record> myBuffer = new ArrayDeque<>(8192); // guarded by myBuffer
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private int length; // total length of myBuffer in characters, approx
   private long myTestStartedMillis;
   private boolean myInitialized;
@@ -109,7 +110,10 @@ public final class TestLoggerFactory implements Logger.Factory {
       var customConfigPath = System.getProperty(PathManager.PROPERTY_LOG_CONFIG_FILE);
       var logProperties = customConfigPath != null ? Path.of(customConfigPath) : PathManager.getHomeDir().resolve("test-log.properties");
       if (Files.exists(logProperties)) {
-        if (customConfigPath != null) System.out.println("Configuring j.u.l.LogManager from file: " + logProperties);
+        if (customConfigPath != null) {
+          //noinspection JavaPrintToLogpoint
+          System.out.println("Configuring j.u.l.LogManager from file: " + logProperties);
+        }
         try (var in = new BufferedInputStream(Files.newInputStream(logProperties))) {
           LogManager.getLogManager().readConfiguration(in);
         }
@@ -121,7 +125,7 @@ public final class TestLoggerFactory implements Logger.Factory {
       var logDir = Files.createDirectories(getTestLogDir());
       var logFile = logDir.resolve(LOG_FILE_NAME);
       JulLogger.clearHandlers();
-      JulLogger.configureLogFileAndConsole(logFile, false, true, false, true, null, null, null);
+      JulLogger.configureStandardLoggers(LogLevel.WARNING, false, logFile, false, true, null);
 
       if (myEchoDebugToStdout) {
         addConsoleAppenderForDebugRecords();
@@ -358,8 +362,8 @@ public final class TestLoggerFactory implements Logger.Factory {
       if (factory != null) {
         factory.saveFixtureLogs(isStatic);
         factory.dumpLogBuffer(false, testName);
-        // JUnit5 dumps logs even when fixture fails, which is different with JUnit4 setUp behavior.
-        // So we want to clear both logs to not print myBufferStaticFixtureInit twice when instance fixture failed
+        // JUnit 5 dumps logs even when a fixture fails, which is different with JUnit 4 `setUp` behavior.
+        // So we want to clear both logs to not print `myBufferStaticFixtureInit` twice when the instance fixture failed.
         factory.clearFixtureLogs(true);
         factory.clearFixtureLogs(false);
       }
@@ -426,7 +430,7 @@ public final class TestLoggerFactory implements Logger.Factory {
     }
   }
 
-  /// Publishes `artifactPath` as a build artifact if the current test fails on TeamCity under 'debug-artifacts' directory.
+  /// Publishes `artifactPath` as a build artifact if the current test fails on TeamCity under the 'debug-artifacts' directory.
   /// @param artifactPath path to a file or directory to be published
   /// @param artifactName meaningful name under which the artifact will be published; the name of the current test will be added as a prefix
   ///                     automatically; and if multiple artifacts with the same `artifactName` are added during execution of the test,
@@ -523,7 +527,7 @@ public final class TestLoggerFactory implements Logger.Factory {
           onTestStarted();
         }
       })
-      .around((base, description) -> new Statement() {
+      .around((base, _) -> new Statement() {
         @Override
         public void evaluate() {
           recordErrorsLoggedInTheCurrentThreadAndReportThemAsFailures(() -> base.evaluate());
@@ -626,6 +630,7 @@ public final class TestLoggerFactory implements Logger.Factory {
     }
 
     @Override
+    @SuppressWarnings("TestOnlyProblems")
     public boolean isDebugEnabled() {
       return !isInStressTest() || super.isDebugEnabled();
     }
@@ -670,8 +675,7 @@ public final class TestLoggerFactory implements Logger.Factory {
   private static class FilteringLogToStdoutJulHandler extends LogToStdoutJulHandler {
     FilteringLogToStdoutJulHandler(Level level) {
       super();
-
-      // we'd like to capture all records with level or finer than the level
+      // we'd like to capture all records with level or finer than the level,
       // so we set level to all and do actual level filtering with the filter
       setFilter(record -> record.getLevel().intValue() <= level.intValue());
     }

@@ -1,11 +1,13 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cmdline;
 
+import com.intellij.openapi.diagnostic.IdeaLogRecordFormatter;
+import com.intellij.openapi.diagnostic.InMemoryHandler;
 import com.intellij.openapi.diagnostic.JulLogger;
+import com.intellij.openapi.diagnostic.LogLevel;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.GlobalOptions;
 
 import java.io.BufferedInputStream;
@@ -15,13 +17,9 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.logging.Filter;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
@@ -37,35 +35,42 @@ public final class LogSetup {
     if (!Boolean.parseBoolean(System.getProperty(GlobalOptions.USE_DEFAULT_FILE_LOGGING_OPTION, "true"))) {
       return;
     }
+
     try {
-      String logDir = System.getProperty(GlobalOptions.LOG_DIR_OPTION, null);
-      Path configFile = logDir == null ? Paths.get(LOG_CONFIG_FILE_NAME) : Paths.get(logDir, LOG_CONFIG_FILE_NAME);
+      var logDir = System.getProperty(GlobalOptions.LOG_DIR_OPTION, null);
+      var configFile = logDir == null ? Path.of(LOG_CONFIG_FILE_NAME) : Path.of(logDir, LOG_CONFIG_FILE_NAME);
       ensureLogConfigExists(configFile);
-      Path logFilePath = logDir != null ? Paths.get(logDir, LOG_FILE_NAME) : Paths.get(LOG_FILE_NAME);
+      var logFilePath = logDir != null ? Path.of(logDir, LOG_FILE_NAME) : Path.of(LOG_FILE_NAME);
 
-      Filter filter = null;
-      Path failedBuildLogPath = null;
+      JulLogger.clearHandlers();
+
       if (Boolean.getBoolean((GlobalOptions.USE_IN_MEMORY_FAILED_BUILD_LOGGER))) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
-        String timestamp = dateFormat.format(new Date());
-        String failedBuildLogName = FAILED_BUILD_LOG_FILE_NAME_PREFIX + timestamp + ".log";
-        failedBuildLogPath = logDir != null ? Paths.get(logDir, failedBuildLogName) : Paths.get(failedBuildLogName);
+        var filter = acceptConfig(configFile);
 
-        JulLogger.clearHandlers();
+        JulLogger.configureStandardLoggers(LogLevel.WARNING, true, logFilePath, true, false, null);
 
-        List<String> classesToFilter = acceptConfig(configFile);
-        if (!classesToFilter.isEmpty()) {
-          filter = record -> record.getLevel().intValue() > Level.FINE.intValue() ||
-                             !ContainerUtil.exists(classesToFilter, record.getLoggerName()::startsWith);
+        var rootLogger = java.util.logging.Logger.getLogger("");
+
+        var timestamp = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss").format(LocalDateTime.now());
+        var failedBuildLogName = FAILED_BUILD_LOG_FILE_NAME_PREFIX + timestamp + ".log";
+        var failedBuildLogPath = logDir != null ? Path.of(logDir, failedBuildLogName) : Path.of(failedBuildLogName);
+        var inMemoryHandler = new InMemoryHandler(failedBuildLogPath);
+        inMemoryHandler.setFormatter(new IdeaLogRecordFormatter());
+        inMemoryHandler.setLevel(Level.FINEST);
+        rootLogger.addHandler(inMemoryHandler);
+
+        if (filter != null) {
+          for (var handler : rootLogger.getHandlers()) {
+            handler.setFilter(filter);
+          }
         }
       }
       else {
-        JulLogger.clearHandlers();
         try (InputStream in = new BufferedInputStream(Files.newInputStream(configFile))) {
           LogManager.getLogManager().readConfiguration(in);
         }
+        JulLogger.configureStandardLoggers(LogLevel.WARNING, true, logFilePath, true, false, null);
       }
-      JulLogger.configureLogFileAndConsole(logFilePath, true, true, true, false, null, filter, failedBuildLogPath);
     }
     catch (IOException e) {
       //noinspection UseOfSystemOutOrSystemErr
@@ -77,40 +82,37 @@ public final class LogSetup {
     Logger.setFactory(category -> new JulLogger(java.util.logging.Logger.getLogger(category)));
   }
 
-  private static List<String> acceptConfig(Path configFile) throws IOException {
-    List<String> classesToFilter = new LinkedList<>();
-    try (InputStream in = new BufferedInputStream(Files.newInputStream(configFile))) {
-      byte[] configBytes = in.readAllBytes();
-      String configContent = new String(configBytes, StandardCharsets.UTF_8);
+  private static @Nullable Filter acceptConfig(Path configFile) throws IOException {
+    String filterPrefix;
 
-      List<String> lines = new ArrayList<>(Arrays.asList(configContent.split("\n")));
-      boolean isDebugLoggingEnabled = false;
-
-      for (String line : lines) {
-        if (line.equals("\\#org.jetbrains.jps.level=FINER")) {
-          isDebugLoggingEnabled = true;
-          break;
-        }
-      }
-
-      if (!isDebugLoggingEnabled) {
-        lines.add("\\#org.jetbrains.jps.level=FINER");
-        classesToFilter.add("#org.jetbrains.jps");
-      }
-
-      configContent = String.join("\n", lines);
-
-      try (InputStream updatedIn = new ByteArrayInputStream(configContent.getBytes(StandardCharsets.UTF_8))) {
-        LogManager.getLogManager().readConfiguration(updatedIn);
-      }
+    var lines = Files.readAllLines(configFile);
+    var debugLoggingEnabled = lines.contains("\\#org.jetbrains.jps.level=FINER");
+    if (!debugLoggingEnabled) {
+      lines = new ArrayList<>(lines);
+      lines.add("\\#org.jetbrains.jps.level=FINER");
+      filterPrefix = "#org.jetbrains.jps";
     }
-    return classesToFilter;
+    else {
+      filterPrefix = null;
+    }
+
+    var configBytes = String.join("\n", lines).getBytes(StandardCharsets.UTF_8);
+    try (var updatedIn = new ByteArrayInputStream(configBytes)) {
+      LogManager.getLogManager().readConfiguration(updatedIn);
+    }
+
+    if (filterPrefix == null) {
+      return null;
+    }
+    else {
+      return rec -> rec.getLevel().intValue() > Level.FINE.intValue() || !rec.getLoggerName().startsWith(filterPrefix);
+    }
   }
 
-  private static void ensureLogConfigExists(@NotNull Path logConfig) throws IOException {
+  private static void ensureLogConfigExists(Path logConfig) throws IOException {
     if (!Files.exists(logConfig)) {
       Files.createDirectories(logConfig.getParent());
-      try (InputStream in = readDefaultLogConfig()) {
+      try (var in = readDefaultLogConfig()) {
         if (in != null) {
           Files.copy(in, logConfig);
         }

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.openapi.util.ShutDownTracker;
@@ -115,8 +115,9 @@ public class JulLogger extends Logger {
 
   @Override
   public void setLevel(@Nullable LogLevel level) {
-    myLogger.setLevel(level==null?null:level.getLevel());
+    myLogger.setLevel(level == null ? null : level.getLevel());
   }
+
   public LogLevel getLevel() {
     Level level = myLogger.getLevel();
     return level==null?null:LogLevel.from(level);
@@ -132,6 +133,10 @@ public class JulLogger extends Logger {
     }
   }
 
+  /** @deprecated use {@link #configureStandardLoggers} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  @SuppressWarnings("unused")
   public static void configureLogFileAndConsole(
     @NotNull Path logFilePath,
     boolean appendToFile,
@@ -142,61 +147,46 @@ public class JulLogger extends Logger {
     @Nullable Filter filter,
     @Nullable Path inMemoryLogPath
   ) {
+    LogLevel consoleLogLevel = enableConsoleLogger ? LogLevel.WARNING : LogLevel.OFF;
+    configureStandardLoggers(consoleLogLevel, showDateInConsole, logFilePath, appendToFile, writeAttachments, onRotate);
+  }
+
+  public static void configureStandardLoggers(
+    @NotNull LogLevel consoleLogLevel, boolean showDateInConsole,
+    @NotNull Path logFilePath, boolean appendToFile, boolean writeAttachments, @Nullable Runnable onRotate
+  ) {
     java.util.logging.Logger rootLogger = java.util.logging.Logger.getLogger("");
     IdeaLogRecordFormatter layout = new IdeaLogRecordFormatter();
 
-    rootLogger.addHandler(configureFileHandler(logFilePath, appendToFile, onRotate, LOG_FILE_SIZE_LIMIT, LOG_FILE_COUNT, layout, filter));
+    rootLogger.addHandler(configureFileHandler(logFilePath, appendToFile, onRotate, LOG_FILE_SIZE_LIMIT, LOG_FILE_COUNT, layout));
 
     if (writeAttachments) {
-      rootLogger.addHandler(configureAttachmentHandler(logFilePath, filter));
+      rootLogger.addHandler(new AttachmentHandler(logFilePath));
     }
 
-    if (enableConsoleLogger) {
-      rootLogger.addHandler(configureConsoleHandler(showDateInConsole, layout, filter));
-    }
-
-    if (inMemoryLogPath != null) {
-      rootLogger.addHandler(configureInMemoryHandler(inMemoryLogPath, filter));
+    if (consoleLogLevel != LogLevel.OFF) {
+      rootLogger.addHandler(configureConsoleHandler(consoleLogLevel, showDateInConsole, layout));
     }
   }
 
-  private static @NotNull Handler configureAttachmentHandler(@NotNull Path path, @Nullable Filter filter) {
-    AttachmentHandler handler = new AttachmentHandler(path);
-    if (filter != null) handler.setFilter(filter);
-    return handler;
-  }
-
-  private static @NotNull Handler configureConsoleHandler(boolean showDateInConsole, @NotNull IdeaLogRecordFormatter layout, @Nullable Filter filter) {
+  private static Handler configureConsoleHandler(LogLevel logLevel, boolean showDateInConsole, IdeaLogRecordFormatter layout) {
     OptimizedConsoleHandler consoleHandler = new OptimizedConsoleHandler();
     consoleHandler.setFormatter(new IdeaLogRecordFormatter(showDateInConsole, layout));
-    boolean useSevereLogLevel = Boolean.parseBoolean(System.getProperty("intellij.console.use.severe.log.level", "false"));
-    Level level = useSevereLogLevel ? Level.SEVERE : Level.WARNING;
-    consoleHandler.setLevel(level);
-    if (filter != null) consoleHandler.setFilter(filter);
+    consoleHandler.setLevel(logLevel.getLevel());
     return consoleHandler;
   }
 
-  private static @NotNull Handler configureInMemoryHandler(@NotNull Path logFilePath, @Nullable Filter filter) {
-    InMemoryHandler inMemoryHandler = new InMemoryHandler(logFilePath);
-    inMemoryHandler.setFormatter(new IdeaLogRecordFormatter());
-    inMemoryHandler.setLevel(Level.FINEST);
-    if (filter != null) inMemoryHandler.setFilter(filter);
-    return inMemoryHandler;
-  }
-
-  private static @NotNull Handler configureFileHandler(
-    @NotNull Path logFilePath,
+  private static Handler configureFileHandler(
+    Path logFilePath,
     boolean appendToFile,
     @Nullable Runnable onRotate,
     @SuppressWarnings("SameParameterValue") long limit,
     @SuppressWarnings("SameParameterValue") int count,
-    @NotNull IdeaLogRecordFormatter layout,
-    @Nullable Filter filter
+    IdeaLogRecordFormatter layout
   ) {
     RollingFileHandler fileHandler = new RollingFileHandler(logFilePath, limit, count, appendToFile, onRotate);
     fileHandler.setFormatter(layout);
     fileHandler.setLevel(Level.FINEST);
-    if (filter != null) fileHandler.setFilter(filter);
     return fileHandler;
   }
 

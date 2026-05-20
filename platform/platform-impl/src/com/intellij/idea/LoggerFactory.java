@@ -6,10 +6,12 @@ import com.intellij.diagnostic.JsonLogHandler;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.JulLogger;
+import com.intellij.openapi.diagnostic.LogLevel;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
+import java.util.Locale;
 import java.util.logging.Level;
 
 public final class LoggerFactory implements Logger.Factory {
@@ -25,23 +27,36 @@ public final class LoggerFactory implements Logger.Factory {
     var rootLogger = java.util.logging.Logger.getLogger("");
     rootLogger.setLevel(Level.INFO);
 
-    var logToJsonStdout = Boolean.getBoolean("intellij.log.to.json.stdout");
-    if (logToJsonStdout) {
+    var consoleLogLevel = LogLevel.OFF;
+    if (Boolean.getBoolean("intellij.log.to.json.stdout")) {
       System.setProperty("intellij.log.stdout", "false");
-      var jsonLogHandler = new JsonLogHandler();
-      rootLogger.addHandler(jsonLogHandler);
+      rootLogger.addHandler(new JsonLogHandler());
+    }
+    else {
+      var consoleLogLevelValue = System.getProperty("intellij.console.log.level");
+      if (consoleLogLevelValue != null) {
+        try {
+          consoleLogLevel = LogLevel.valueOf(consoleLogLevelValue.toUpperCase(Locale.ROOT));
+        }
+        catch (IllegalArgumentException _) { }
+      }
+      // legacy properties
+      else if (Boolean.getBoolean("intellij.console.use.severe.log.level")) {
+        consoleLogLevel = LogLevel.ERROR;
+      }
+      else if (Boolean.getBoolean("idea.log.console") || AppMode.isRunningFromDevBuild()) {
+        consoleLogLevel = LogLevel.WARNING;
+      }
     }
 
-    var enableConsoleLogger = !logToJsonStdout && Boolean.parseBoolean(System.getProperty("idea.log.console", "true"));
     var append = Boolean.parseBoolean(System.getProperty("idea.log.append", "true"));
 
     var writeAttachments = Boolean.parseBoolean(
       System.getProperty("idea.log.persist.attachments", System.getProperty(ApplicationManagerEx.IS_INTERNAL_PROPERTY))
     );
 
-    JulLogger.configureLogFileAndConsole(
-      getLogFilePath(), append, enableConsoleLogger, true, writeAttachments,
-      () -> IdeaLogger.dropFrequentExceptionsCaches(), null, null
+    JulLogger.configureStandardLoggers(
+      consoleLogLevel, true, getLogFilePath(), append, writeAttachments, IdeaLogger::dropFrequentExceptionsCaches
     );
 
     if (!AppMode.isCommandLine() || ApplicationManagerEx.isInIntegrationTest()) {
