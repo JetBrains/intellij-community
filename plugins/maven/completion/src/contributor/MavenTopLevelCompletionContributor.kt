@@ -4,7 +4,9 @@ package com.intellij.maven.completion.contributor
 import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.CompletionSorter
 import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
 import com.intellij.maven.completion.contributor.insert.MavenTopLevelDependencyInsertionHandler
 import com.intellij.maven.completion.getCompletionContext
 import com.intellij.maven.completion.icon
@@ -17,6 +19,8 @@ import org.jetbrains.idea.maven.dom.model.completion.MavenCoordinateCompletionCo
 import org.jetbrains.idea.maven.model.MavenRepoArtifactInfo
 import com.intellij.repository.search.completion.api.DependencyCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionService
+import com.intellij.repository.search.completion.lookup.StrictOrderWeigher
+import com.intellij.repository.search.completion.lookup.StrictOrderWeigherData
 
 abstract class MavenTopLevelCompletionContributor(val myName: String) : CompletionContributor() {
 
@@ -35,15 +39,17 @@ abstract class MavenTopLevelCompletionContributor(val myName: String) : Completi
     result.restartCompletionWhenNothingMatches()
 
     val request = DependencyCompletionRequest(trimDummy(xmlText.value), parameters.getCompletionContext())
+    val resultSet = result.withRelevanceSorter(CompletionSorter.emptySorter().weigh(StrictOrderWeigher()))
+    var index = 0
     runBlockingCancellable {
       service<DependencyCompletionService>()
         .suggestCompletions(request)
         .collect { item ->
-          result.addElement(
-            MavenDependencyCompletionUtil.lookupElement(MavenRepoArtifactInfo(item.groupId, item.artifactId, listOf(item.version)))
+          val lookupElement = MavenDependencyCompletionUtil.lookupElement(MavenRepoArtifactInfo(item.groupId, item.artifactId, listOf(item.version)))
               .withIcon(item.icon)
               .withInsertHandler(MavenTopLevelDependencyInsertionHandler.INSTANCE)
-          )
+          lookupElement.putUserData(StrictOrderWeigher.ORDER_KEY, StrictOrderWeigherData(item.source, index++))
+          resultSet.addElement(MLRankingIgnorable.wrap(lookupElement))
         }
     }
   }
