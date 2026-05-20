@@ -10,7 +10,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.coroutineToIndicator
@@ -228,7 +228,7 @@ class JdkUpdateNotification(
 
     try {
       withContext(Dispatchers.EDT) {
-        writeAction {
+        edtWriteAction {
           jdk.sdkModificator.apply {
             removeAllRoots()
             homePath = newJdkHome.invariantSeparatorsPathString
