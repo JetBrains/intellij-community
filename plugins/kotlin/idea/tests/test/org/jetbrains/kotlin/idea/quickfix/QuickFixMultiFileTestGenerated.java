@@ -115,6 +115,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractK1QuickFixM
             KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
         }
 
+        @TestMetadata("noSam.test")
+        public void testNoSam() throws Exception {
+            runTest("testData/quickfix/addSpreadOperatorForArrayAsVarargAfterSam/noSam.test");
+        }
+
         @TestMetadata("withError.test")
         public void testWithError() throws Exception {
             runTest("testData/quickfix/addSpreadOperatorForArrayAsVarargAfterSam/withError.test");
@@ -123,11 +128,6 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractK1QuickFixM
         @TestMetadata("withWarning.test")
         public void testWithWarning() throws Exception {
             runTest("testData/quickfix/addSpreadOperatorForArrayAsVarargAfterSam/withWarning.test");
-        }
-
-        @TestMetadata("withoutWarning.test")
-        public void testWithoutWarning() throws Exception {
-            runTest("testData/quickfix/addSpreadOperatorForArrayAsVarargAfterSam/withoutWarning.test");
         }
     }
 

@@ -3380,6 +3380,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/changeToUseSpreadOperator/multipleParams.kt");
         }
 
+        @TestMetadata("negative.kt")
+        public void testNegative() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeToUseSpreadOperator/negative.kt");
+        }
+
         @TestMetadata("nestedGeneric.kt")
         public void testNestedGeneric() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/changeToUseSpreadOperator/nestedGeneric.kt");

@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaCapturedType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -35,7 +36,7 @@ internal object ChangeToUseSpreadOperatorFixFactory {
         }
 
         val buildType = substituteErrorAndTypeParameterTypesWithStarTypeProjections(diagnostic.expectedType) ?: return@ModCommandBased emptyList()
-        if (!arrayElementType.isSubtypeOf(buildType)) return@ModCommandBased emptyList()
+        if (arrayElementType !is KaErrorType && !arrayElementType.isSubtypeOf(buildType)) return@ModCommandBased emptyList()
 
         listOf(
             ChangeToUseSpreadOperatorFix(element)
@@ -66,6 +67,8 @@ private fun KaSession.substituteErrorAndTypeParameterTypesWithStarTypeProjection
                 }
             }
         }
+
+        is KaFlexibleType -> substituteErrorAndTypeParameterTypesWithStarTypeProjections(type.lowerBound)
 
         else -> null
     }

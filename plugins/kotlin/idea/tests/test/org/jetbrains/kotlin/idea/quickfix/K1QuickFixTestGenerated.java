@@ -3943,6 +3943,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/changeToUseSpreadOperator/multipleParams.kt");
         }
 
+        @TestMetadata("negative.kt")
+        public void testNegative() throws Exception {
+            runTest("testData/quickfix/changeToUseSpreadOperator/negative.kt");
+        }
+
         @TestMetadata("nestedGeneric.kt")
         public void testNestedGeneric() throws Exception {
             runTest("testData/quickfix/changeToUseSpreadOperator/nestedGeneric.kt");

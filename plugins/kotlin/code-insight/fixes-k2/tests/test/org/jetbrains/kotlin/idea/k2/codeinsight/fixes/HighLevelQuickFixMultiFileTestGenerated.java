@@ -1498,6 +1498,35 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/addSpreadOperatorForArrayAsVarargAfterSam")
+    public static class AddSpreadOperatorForArrayAsVarargAfterSam extends AbstractHighLevelQuickFixMultiFileTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+        }
+
+        @TestMetadata("noSam.test")
+        public void testNoSam() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addSpreadOperatorForArrayAsVarargAfterSam/noSam.test");
+        }
+
+        @TestMetadata("withError.test")
+        public void testWithError() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addSpreadOperatorForArrayAsVarargAfterSam/withError.test");
+        }
+
+        @TestMetadata("withWarning.test")
+        public void testWithWarning() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addSpreadOperatorForArrayAsVarargAfterSam/withWarning.test");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/when")
     public abstract static class When extends AbstractHighLevelQuickFixMultiFileTest {
         @RunWith(JUnit3RunnerWithInners.class)
