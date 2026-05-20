@@ -66,6 +66,7 @@ import org.jetbrains.kotlin.j2k.J2kPreprocessorExtension
 import org.jetbrains.kotlin.j2k.convertJavaFilesToKotlin
 import org.jetbrains.kotlin.j2k.getJ2kKind
 import org.jetbrains.kotlin.nj2k.KotlinNJ2KBundle
+import org.jetbrains.kotlin.nj2k.externalCodeProcessing.ExternalUsagesFixer
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import java.io.IOException
@@ -239,9 +240,9 @@ object JavaToKotlinActionHandler {
         )
 
         val externalCodeProcessing = result.externalCodeProcessing
-        val externalCodeUpdate = if (enableExternalCodeProcessing && externalCodeProcessing != null) readAction {
-            externalCodeProcessing.prepareWriteOperation(null)
-        } else null
+        val usages = if (enableExternalCodeProcessing && externalCodeProcessing != null) readAction {
+            result.externalCodeProcessing.collectUsages()
+        } else emptyList()
 
         val userConfirmed = !askExternalCodeProcessing || withContext(Dispatchers.EDT) {
             Messages.showYesNoDialog(
@@ -269,9 +270,9 @@ object JavaToKotlinActionHandler {
                     }
                 }
 
-                if (userConfirmed) {
+                if (userConfirmed && usages.isNotEmpty()) {
                     edtWriteAction {
-                        externalCodeUpdate?.invoke()
+                        ExternalUsagesFixer(usages).fix()
                     }
                 }
             }

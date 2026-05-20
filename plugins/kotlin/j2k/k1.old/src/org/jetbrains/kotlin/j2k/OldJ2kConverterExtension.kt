@@ -26,7 +26,7 @@ private class OldJ2kConverterExtension : J2kConverterExtension() {
         settings: ConverterSettings,
         targetFile: KtFile?
     ): JavaToKotlinConverter =
-        OldJavaToKotlinConverter(project, settings)
+        OldJavaToKotlinConverter(settings)
 
     override fun createPostProcessor(formatCode: Boolean): PostProcessor =
         OldJ2kPostProcessor(formatCode)
