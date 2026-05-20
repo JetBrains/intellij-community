@@ -93,7 +93,7 @@ object ToExtensionFunctionWithNonNullableReceiver : Transformation {
 }
 
 object ToExtensionFunctionWithNullableReceiver : Transformation {
-    override fun invoke(callExpression: KtCallExpression, replacement: Replacement) =
+    override fun invoke(callExpression: KtCallExpression, replacement: Replacement): Unit =
         ToExtensionFunctionWithNonNullableReceiver(callExpression, replacement)
 
     override fun isApplicableByPsi(callExpression: KtCallExpression): Boolean =
@@ -101,7 +101,7 @@ object ToExtensionFunctionWithNullableReceiver : Transformation {
 }
 
 object ToExtensionFunctionWithNullableReceiverForMutableCollection : Transformation {
-    override fun invoke(callExpression: KtCallExpression, replacement: Replacement) =
+    override fun invoke(callExpression: KtCallExpression, replacement: Replacement): Unit =
         ToExtensionFunctionWithNonNullableReceiver(callExpression, replacement)
 
     override fun isApplicableByPsi(callExpression: KtCallExpression): Boolean =

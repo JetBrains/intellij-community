@@ -266,8 +266,8 @@ data class Replacement(
 ) {
     private fun String.shortName() = takeLastWhile { it != '.' }
 
-    val javaMethodShortName = javaMethodFqName.shortName()
-    val kotlinFunctionShortName = kotlinFunctionFqName.shortName()
+    val javaMethodShortName: String = javaMethodFqName.shortName()
+    val kotlinFunctionShortName: String = kotlinFunctionFqName.shortName()
 
-    val shouldAddImport = kotlinFunctionFqName.startsWith("kotlin.math")
+    val shouldAddImport: Boolean = kotlinFunctionFqName.startsWith("kotlin.math")
 }

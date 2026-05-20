@@ -19,48 +19,46 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.psi.binaryExpressionVisitor
 
 class ConvertToStringTemplateInspection :
-  KotlinApplicableInspectionBase.Simple<KtBinaryExpression, ConvertToStringTemplateInspection.Context>() {
+    KotlinApplicableInspectionBase.Simple<KtBinaryExpression, ConvertToStringTemplateInspection.Context>() {
 
     override fun buildVisitor(
-      holder: ProblemsHolder,
-      isOnTheFly: Boolean,
-    ) = object : KtVisitorVoid() {
-
-        override fun visitBinaryExpression(expression: KtBinaryExpression) {
-            visitTargetElement(expression, holder, isOnTheFly)
-        }
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean,
+    ): KtVisitorVoid = binaryExpressionVisitor {
+        visitTargetElement(it, holder, isOnTheFly)
     }
 
     data class Context(val replacement: SmartPsiElementPointer<KtStringTemplateExpression>)
 
     override fun createQuickFix(
-      element: KtBinaryExpression,
-      context: Context,
+        element: KtBinaryExpression,
+        context: Context,
     ): KotlinModCommandQuickFix<KtBinaryExpression> = object : KotlinModCommandQuickFix<KtBinaryExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("convert.concatenation.to.template")
 
         override fun applyFix(
-          project: Project,
-          element: KtBinaryExpression,
-          updater: ModPsiUpdater,
+            project: Project,
+            element: KtBinaryExpression,
+            updater: ModPsiUpdater,
         ) {
             context.replacement.element?.let { element.replaced(it) }
         }
     }
 
-    override fun KaSession.prepareContext(element: KtBinaryExpression): Context? {
-        if (!canConvertToStringTemplate(element) || !isFirstStringPlusExpressionWithoutNewLineInOperands(element)) return null
-        return Context(buildStringTemplateForBinaryExpression(element).createSmartPointer())
-    }
+    override fun KaSession.prepareContext(element: KtBinaryExpression): Context? =
+        if (!canConvertToStringTemplate(element) || !isFirstStringPlusExpressionWithoutNewLineInOperands(element)) {
+            null
+        } else {
+            Context(buildStringTemplateForBinaryExpression(element).createSmartPointer())
+        }
 
-    override fun isApplicableByPsi(element: KtBinaryExpression): Boolean {
-        if (element.operationToken != KtTokens.PLUS) return false
-        return element.containNoNewLine()
-    }
+    override fun isApplicableByPsi(element: KtBinaryExpression): Boolean =
+        element.operationToken == KtTokens.PLUS && element.containNoNewLine()
 
     override fun getProblemDescription(element: KtBinaryExpression, context: Context): String =
         KotlinBundle.message("convert.concatenation.to.template.before.text")

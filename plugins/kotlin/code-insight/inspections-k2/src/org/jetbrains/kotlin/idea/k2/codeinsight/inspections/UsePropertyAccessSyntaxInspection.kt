@@ -412,7 +412,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
         }
 
         return if (valueArguments.isEmpty()) {
-            return if (PropertyUtilBase.isIsGetterName(methodName)) {
+            if (PropertyUtilBase.isIsGetterName(methodName)) {
                 PropertyAccessorKind.Getter.IsGetter
             } else {
                 PropertyAccessorKind.Getter.GetGetter
@@ -669,14 +669,14 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
         ) KotlinBundle.message("use.of.setter.method.instead.of.property.access.syntax")
         else KotlinBundle.message("use.of.getter.method.instead.of.property.access.syntax")
 
-    val propertiesNotToReplace = NotPropertiesService.DEFAULT.map(::FqNameUnsafe).toMutableSet()
+    val propertiesNotToReplace: MutableSet<FqNameUnsafe> = NotPropertiesService.DEFAULT.map(::FqNameUnsafe).toMutableSet()
 
     // Serialized setting
     @Suppress("MemberVisibilityCanBePrivate")
-    var fqNameStrings = NotPropertiesService.DEFAULT.toMutableList()
+    var fqNameStrings: MutableList<String> = NotPropertiesService.DEFAULT.toMutableList()
 
     @Suppress("MemberVisibilityCanBePrivate")
-    var reportNonTrivialAccessors = false
+    var reportNonTrivialAccessors: Boolean = false
 
     override fun readSettings(node: Element) {
         super.readSettings(node)

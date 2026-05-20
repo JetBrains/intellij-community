@@ -115,7 +115,7 @@ class KtClassDef(
     private fun correctFqName(fqNameUnsafe: FqNameUnsafe): String =
         JavaToKotlinClassMap.mapKotlinToJava(fqNameUnsafe)?.asFqNameString() ?: fqNameUnsafe.asString()
 
-    fun asConstraint() = when {
+    fun asConstraint(): TypeConstraint.Exact = when {
         kind == KaClassKind.OBJECT -> TypeConstraints.singleton(this)
         else -> TypeConstraints.exactClass(this)
     }
