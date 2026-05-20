@@ -17,7 +17,13 @@ import org.codehaus.groovy.control.MultipleCompilationErrorsException;
 import org.codehaus.groovy.control.messages.SyntaxErrorMessage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
+import java.io.IOException;
+import java.net.URL;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Objects;
 
@@ -30,7 +36,8 @@ public final class GroovyStructuralSearchScriptEngine implements StructuralSearc
                                          @NotNull String scriptText,
                                          @NotNull MatchOptions matchOptions) throws MalformedPatternException {
     try {
-      final GroovyShell shell = new GroovyShell(Objects.requireNonNull(matchOptions.getDialect()).getClass().getClassLoader());
+      final ClassLoader dialectClassLoader = Objects.requireNonNull(matchOptions.getDialect()).getClass().getClassLoader();
+      final GroovyShell shell = createGroovyShell(dialectClassLoader);
       return new GroovyCompiledScript(shell.parse(scriptText, scriptName + ScriptSupport.UUID + ".groovy"));
     }
     catch (CompilationFailedException e) {
@@ -60,6 +67,65 @@ public final class GroovyStructuralSearchScriptEngine implements StructuralSearc
       }
     }
     return null;
+  }
+
+  @VisibleForTesting
+  public static @NotNull GroovyShell createGroovyShell(@Nullable ClassLoader dialectClassLoader) {
+    ClassLoader engineClassLoader = GroovyStructuralSearchScriptEngine.class.getClassLoader();
+    if (dialectClassLoader == null || dialectClassLoader == engineClassLoader) {
+      return new GroovyShell(engineClassLoader);
+    }
+    return new GroovyShell(new StructuralSearchScriptClassLoader(engineClassLoader, dialectClassLoader));
+  }
+
+  private static final class StructuralSearchScriptClassLoader extends ClassLoader {
+    private final @NotNull ClassLoader myPrimary;
+    private final @NotNull ClassLoader mySecondary;
+
+    private StructuralSearchScriptClassLoader(@NotNull ClassLoader primary, @NotNull ClassLoader secondary) {
+      super(null);
+      myPrimary = primary;
+      mySecondary = secondary;
+    }
+
+    @Override
+    protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+      synchronized (getClassLoadingLock(name)) {
+        Class<?> loadedClass = findLoadedClass(name);
+        if (loadedClass == null) {
+          loadedClass = loadClass(name, myPrimary, mySecondary);
+        }
+        if (resolve) {
+          resolveClass(loadedClass);
+        }
+        return loadedClass;
+      }
+    }
+
+    @Override
+    public URL getResource(String name) {
+      URL resource = myPrimary.getResource(name);
+      return resource == null ? mySecondary.getResource(name) : resource;
+    }
+
+    @Override
+    public Enumeration<URL> getResources(String name) throws IOException {
+      LinkedHashSet<URL> resources = new LinkedHashSet<>();
+      resources.addAll(Collections.list(myPrimary.getResources(name)));
+      resources.addAll(Collections.list(mySecondary.getResources(name)));
+      return Collections.enumeration(resources);
+    }
+
+    private static @NotNull Class<?> loadClass(@NotNull String name,
+                                               @NotNull ClassLoader primary,
+                                               @NotNull ClassLoader secondary) throws ClassNotFoundException {
+      try {
+        return primary.loadClass(name);
+      }
+      catch (ClassNotFoundException ignored) {
+        return secondary.loadClass(name);
+      }
+    }
   }
 
   private static final class GroovyCompiledScript implements CompiledScript {
