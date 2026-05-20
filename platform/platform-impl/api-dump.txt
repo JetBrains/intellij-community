@@ -216,6 +216,15 @@ com.intellij.ide.actions.SettingsEntryPointAction$IconCustomizer
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:getCustomIcon(com.intellij.ui.BadgeIconSupplier):javax.swing.Icon
 - getSecondIcon():javax.swing.Icon
+f:com.intellij.ide.actions.ToggleZenModeAction
+- com.intellij.openapi.project.DumbAwareAction
+- sf:Companion:com.intellij.ide.actions.ToggleZenModeAction$Companion
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
+f:com.intellij.ide.actions.ToggleZenModeAction$Companion
+- f:isZenModeEnabled(com.intellij.openapi.project.Project):Z
 a:com.intellij.ide.actions.WindowAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.project.DumbAware

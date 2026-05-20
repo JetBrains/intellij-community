@@ -11,7 +11,6 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import org.jetbrains.annotations.ApiStatus.Internal
 
-@Internal
 class ToggleZenModeAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
   companion object {
     private fun isFullScreenApplicable() = WindowManager.getInstance().isFullScreenSupportedInCurrentOS
