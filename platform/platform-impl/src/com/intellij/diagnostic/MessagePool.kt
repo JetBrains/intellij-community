@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.diagnostic.MessagePoolAdvisor.AfterEntryAddedEvent
@@ -35,19 +35,17 @@ object MessagePool {
   private val myErrors: MutableList<AbstractMessage> = ContainerUtil.createLockFreeCopyOnWriteList()
   private val myAdvisors: MutableList<MessagePoolAdvisor> = ContainerUtil.createLockFreeCopyOnWriteList()
 
-  @Deprecated("use {@link #addErrorMessage(AbstractMessage)} instead ")
+  @Suppress("DeprecatedCallableAddReplaceWith")
+  @Deprecated("use 'addErrorMessage' instead", level = DeprecationLevel.ERROR)
   fun addIdeFatalMessage(event: IdeaLoggingEvent) {
-    addIdeFatalMessage(
+    addErrorMessage(
       if (event.data is AbstractMessage) event.data as AbstractMessage
-      else LogMessage(
-        event.throwable,
-        event.message,
-        mutableListOf<Attachment>()
-      )
+      else LogMessage(event.throwable, event.message, mutableListOf<Attachment>())
     )
   }
 
-  @Deprecated("use {@link #addErrorMessage(AbstractMessage)} instead ")
+  @Suppress("DeprecatedCallableAddReplaceWith")
+  @Deprecated("use 'addErrorMessage' instead", level = DeprecationLevel.ERROR)
   fun addIdeFatalMessage(message: AbstractMessage) {
     addErrorMessage(message)
   }
@@ -91,19 +89,15 @@ object MessagePool {
     notifyPoolCleared()
   }
 
-  /**
-   * Noop, unsupported
-   */
+  /** No-op, unsupported */
   @Deprecated("Use MessagePoolAdvisor")
-  fun addListener(@Suppress("unused") listener: MessagePoolListener) {
-  }
+  @Suppress("removal", "DEPRECATION")
+  fun addListener(@Suppress("unused") listener: MessagePoolListener) { }
 
-  /**
-   * Noop, unsupported
-   */
+  /** No-op, unsupported */
   @Deprecated("Use MessagePoolAdvisor")
-  fun removeListener(@Suppress("unused") listener: MessagePoolListener) {
-  }
+  @Suppress("removal", "DEPRECATION")
+  fun removeListener(@Suppress("unused") listener: MessagePoolListener) { }
 
   fun addAdvisor(advisor: MessagePoolAdvisor) {
     myAdvisors.add(advisor)
@@ -153,7 +147,5 @@ object MessagePool {
 
   class TooManyErrorsException internal constructor() : Exception(DiagnosticBundle.message("error.monitor.too.many.errors"))
 
-  private fun shallAddSilently(message: AbstractMessage): Boolean {
-    return SlowOperations.isMyMessage(message.getThrowable().message)
-  }
+  private fun shallAddSilently(message: AbstractMessage): Boolean = SlowOperations.isMyMessage(message.getThrowable().message)
 }

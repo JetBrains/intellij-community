@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.diagnostic.ITNProxy.appInfoString
@@ -86,7 +86,7 @@ internal class IdeaFreezeReporter : PerformanceListener {
       // only report to JB
       val plugin = PluginManagerCore.getPlugin(PluginUtil.getInstance().findPluginId(event.throwable))
       if (plugin == null || PluginManagerCore.isDevelopedByJetBrains(plugin)) {
-        MessagePool.getInstance().addIdeFatalMessage(event)
+        MessagePool.getInstance().addErrorMessage(event)
       }
     }
 

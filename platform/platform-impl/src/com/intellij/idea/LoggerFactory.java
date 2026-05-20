@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea;
 
 import com.intellij.diagnostic.DialogAppender;
@@ -44,9 +44,9 @@ public final class LoggerFactory implements Logger.Factory {
       () -> IdeaLogger.dropFrequentExceptionsCaches(), null, null
     );
 
-    var dialogAppender = new DialogAppender();
-    dialogAppender.setLevel(Level.SEVERE);
-    rootLogger.addHandler(dialogAppender);
+    if (!AppMode.isCommandLine() || ApplicationManagerEx.isInIntegrationTest()) {
+      rootLogger.addHandler(new DialogAppender());
+    }
   }
 
   @Override
