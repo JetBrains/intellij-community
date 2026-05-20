@@ -7,13 +7,16 @@
   <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
-    <registryKey key="maven.dependency.completion.contributor.local" defaultValue="true"
-                 description="Maven local repository dependency completion contributor enabled"/>
+    <registryKey key="maven.dependency.completion.contributor.local.index" defaultValue="true"
+                 description="Maven local index-based dependency completion contributor enabled"/>
+    <registryKey key="maven.dependency.completion.contributor.local.modules" defaultValue="true"
+                 description="Maven project modules dependency completion contributor enabled"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.reposearch">
     <provider implementation="com.intellij.maven.completion.provider.MavenCompletionProviderFactory"/>
-    <contributor implementation="com.intellij.maven.completion.MavenLocalDependencyCompletionContributor"/>
+    <contributor implementation="com.intellij.maven.completion.MavenIndexBasedCompletionContributor"/>
+    <contributor implementation="com.intellij.maven.completion.MavenProjectModulesCompletionContributor"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.maven">

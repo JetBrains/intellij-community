@@ -1,12 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.completion
 
-import com.intellij.maven.completion.provider.IndexBasedCompletionProvider
-import com.intellij.maven.completion.provider.ProjectModulesCompletionProvider
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
@@ -18,68 +17,94 @@ import com.intellij.repository.search.completion.api.DependencyGroupCompletionRe
 import com.intellij.repository.search.completion.api.DependencyPartCompletionResult
 import com.intellij.repository.search.completion.api.DependencyVersionCompletionRequest
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.indices.MavenIndicesManager
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.nio.file.Path
+import kotlin.math.min
 
 @ApiStatus.Internal
-internal class MavenLocalDependencyCompletionContributor : DependencyCompletionContributor {
+internal class MavenIndexBasedCompletionContributor : DependencyCompletionContributor {
   override val source: DependencyCompletionContributionSource = DependencyCompletionContributionSource.LOCAL
 
   override val buildSystemId: ProjectSystemId = MavenUtil.SYSTEM_ID
 
   override fun isEnabled(): Boolean {
-    return Registry.`is`("maven.dependency.completion.contributor.local")
+    return Registry.`is`("maven.dependency.completion.contributor.local.index")
   }
 
-  // TODO: pass project as an optional parameter (?)
+  // TODO: pass project as an optional parameter
   private fun findProject(eelDescriptor: EelDescriptor): Project? =
     ProjectManager.getInstance().openProjects.firstOrNull { project ->
       project.basePath?.let { Path.of(it).getEelDescriptor() } == eelDescriptor
     }
 
+  private fun gavIndex(eelDescriptor: EelDescriptor) =
+    findProject(eelDescriptor)?.let { MavenIndicesManager.getInstance(it).getCommonGavIndex() }
+
   override suspend fun search(request: DependencyCompletionRequest): List<DependencyCompletionResult> {
-    val project = findProject(request.context.eelDescriptor) ?: return emptyList()
+    val index = gavIndex(request.context.eelDescriptor) ?: return emptyList()
     val searchString = request.searchString
-    val providers = listOf(IndexBasedCompletionProvider(project), ProjectModulesCompletionProvider(project))
-    return providers.flatMap { provider ->
-      val artifacts = if (searchString.contains(":")) {
-        val parts = searchString.split(":", limit = 2)
-        provider.suggestPrefix(parts[0], parts.getOrElse(1) { "" })
-      }
-      else {
-        provider.fulltextSearch(searchString)
-      }
-      artifacts.flatMap { info ->
-        info.items.map { item ->
-          DependencyCompletionResult(info.groupId, info.artifactId, item.version ?: "", source = source)
+    val (groupQuery, artifactQuery) = if (searchString.contains(":")) {
+      val parts = searchString.split(":", limit = 2)
+      parts[0] to parts.getOrElse(1) { "" }
+    }
+    else {
+      searchString to ""
+    }
+    MavenLog.LOG.debug("Index: get local maven artifacts started")
+    val result = buildList {
+      for (groupId in index.groupIds) {
+        if (groupQuery.isNotEmpty() && !nonExactMatches(groupId, groupQuery)) continue
+        for (artifactId in index.getArtifactIds(groupId)) {
+          if (artifactQuery.isNotEmpty() && !nonExactMatches(artifactId, artifactQuery)) continue
+          for (version in index.getVersions(groupId, artifactId)) {
+            add(DependencyCompletionResult(groupId, artifactId, version, source = source))
+          }
+          MavenLog.LOG.debug("Index: local maven artifact found $groupId:$artifactId")
         }
       }
     }
+    MavenLog.LOG.debug("Index: get local maven artifacts finished")
+    return result
+  }
+
+  private fun nonExactMatches(template: String, real: String): Boolean {
+    val splittedTemplate = template.split(delimiters = charArrayOf('-', '.'))
+    val splittedReal = real.split(delimiters = charArrayOf('-', '.'))
+    if (splittedTemplate.size == 1 || splittedReal.size == 1) {
+      return StringUtil.startsWith(template, real) || StringUtil.startsWith(real, template)
+    }
+    var matches = 0
+    for (i in 0 until min(splittedReal.size, splittedTemplate.size)) {
+      if (StringUtil.startsWith(splittedTemplate[i], splittedReal[i]) ||
+          StringUtil.startsWith(splittedReal[i], splittedTemplate[i])) {
+        matches += 1
+      }
+      if (matches >= 2) return true
+    }
+    return false
   }
 
   override suspend fun getGroups(request: DependencyGroupCompletionRequest): List<DependencyPartCompletionResult> {
-    val project = findProject(request.context.eelDescriptor) ?: return emptyList()
+    val index = gavIndex(request.context.eelDescriptor) ?: return emptyList()
     val prefix = request.groupPrefix
-    val index = MavenIndicesManager.getInstance(project).getCommonGavIndex()
     return index.groupIds
       .filter { prefix.isEmpty() || it.contains(prefix, ignoreCase = true) }
       .map { DependencyPartCompletionResult(it, source) }
   }
 
   override suspend fun getArtifacts(request: DependencyArtifactCompletionRequest): List<DependencyPartCompletionResult> {
-    val project = findProject(request.context.eelDescriptor) ?: return emptyList()
+    val index = gavIndex(request.context.eelDescriptor) ?: return emptyList()
     val prefix = request.artifactPrefix
-    val index = MavenIndicesManager.getInstance(project).getCommonGavIndex()
     return index.getArtifactIds(request.group)
       .filter { prefix.isEmpty() || it.contains(prefix, ignoreCase = true) }
       .map { DependencyPartCompletionResult(it, source) }
   }
 
   override suspend fun getVersions(request: DependencyVersionCompletionRequest): List<DependencyPartCompletionResult> {
-    val project = findProject(request.context.eelDescriptor) ?: return emptyList()
+    val index = gavIndex(request.context.eelDescriptor) ?: return emptyList()
     val prefix = request.versionPrefix
-    val index = MavenIndicesManager.getInstance(project).getCommonGavIndex()
     return index.getVersions(request.group, request.artifact)
       .filter { prefix.isEmpty() || it.contains(prefix, ignoreCase = true) }
       .map { DependencyPartCompletionResult(it, source) }
