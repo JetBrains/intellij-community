@@ -40,9 +40,6 @@ internal val PLATFORM_CORE_MODULES = java.util.List.of(
 
   "intellij.platform.runtime.product",
 
-  // do we need it?
-  "intellij.platform.sqlite",
-
   "intellij.platform.bookmarks",
 )
 

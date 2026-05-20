@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.platform.sqlite.jar
+  modules:
+  - name: intellij.platform.sqlite
+  library: sqlite-native
+  files:
+  - name: $MAVEN_REPOSITORY$/org/sqlite/native/3/native-3.jar

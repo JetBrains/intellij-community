@@ -6,6 +6,8 @@ jvm_library(
   module_name = "intellij.platform.sqlite",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   deps = [
     "//platform/util",
     "@lib//:kotlin-stdlib",
@@ -24,7 +26,8 @@ jvm_library(
     ":sqlite",
     "//platform/util:util_test_lib",
     "//platform/util-ex:util-ex_test_lib",
-    "@lib//:junit5",
+    "//libraries/junit5",
+    "//libraries/junit5:junit5_test_lib",
     "//libraries/assertj-core",
     "//libraries/assertj-core:assertj-core_test_lib",
     "//libraries/kotlinx/coroutines/core",

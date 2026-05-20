@@ -1,0 +1,8 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.util.ex"/>
+  </dependencies>
+  <!-- endregion -->
+  <!-- This descriptor is added to allow loading the SQLite module as a separate content module inside the IDE. -->
+</idea-plugin>
