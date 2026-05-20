@@ -215,9 +215,6 @@ class MavenProject(val file: VirtualFile) {
   internal val profilesXmlFile: VirtualFile?
     get() = null
 
-  val profilesXmlNioFile: Path?
-    get() = MavenUtil.getProfilesXmlNioFile(file)
-
   fun hasReadingErrors(): Boolean {
     return myState.readingProblems.any { it.isError }
   }
