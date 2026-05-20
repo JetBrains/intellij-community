@@ -13,6 +13,7 @@ import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.java.LanguageLevel
+import org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes
 import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
@@ -113,6 +114,7 @@ internal class BazelBuildFileGenerator(
   @JvmField
   val javaExtensionService: JpsJavaExtensionService = JpsJavaExtensionService.getInstance()
   private val projectJavacSettings = javaExtensionService.getCompilerConfiguration(project)
+  private val projectCompileExcludes = computeProjectCompileExcludes(projectDir = projectDir, compilerExcludes = projectJavacSettings.compilerExcludes)
   private val projectLanguageLevel: LanguageLevel = run {
     val projectExtension = javaExtensionService.getProjectExtension(project)
                            ?: error("Project-level language version is not defined: JpsJavaProjectExtension is missing on project ${project.name}")
@@ -156,7 +158,12 @@ internal class BazelBuildFileGenerator(
       throw IllegalStateException("Computed dir for BUILD.bazel for community module ${module.name} is not under community directory")
     }
 
-    val resourceDescriptors = computeResources(module = module, contentRoots = contentRoots, bazelBuildDir = bazelBuildDir, type = JavaResourceRootType.RESOURCE)
+    val packageExcludes = computePackageRelativeExcludes(
+      projectDir = projectDir,
+      bazelBuildFileDir = bazelBuildDir,
+      projectCompileExcludes = projectCompileExcludes,
+    )
+    val resourceDescriptors = computeResources(module = module, contentRoots = contentRoots, bazelBuildDir = bazelBuildDir, type = JavaResourceRootType.RESOURCE, packageExcludes = packageExcludes)
 
     val imlFile = imlDir.resolve("${module.name}.iml")
     val moduleContent = ModuleDescriptor(
@@ -165,10 +172,10 @@ internal class BazelBuildFileGenerator(
       contentRoots = contentRoots,
       bazelBuildFileDir = bazelBuildDir,
       isCommunity = isCommunity,
-      sources = computeSources(module = module, contentRoots = contentRoots, bazelBuildDir = bazelBuildDir, type = JavaSourceRootType.SOURCE),
+      sources = computeSources(module = module, contentRoots = contentRoots, bazelBuildDir = bazelBuildDir, type = JavaSourceRootType.SOURCE, packageExcludes = packageExcludes),
       resources = resourceDescriptors,
-      testSources = computeSources(module = module, contentRoots = contentRoots, bazelBuildDir = bazelBuildDir, type = JavaSourceRootType.TEST_SOURCE),
-      testResources = computeResources(module = module, contentRoots = contentRoots, bazelBuildDir = bazelBuildDir, type = JavaResourceRootType.TEST_RESOURCE),
+      testSources = computeSources(module = module, contentRoots = contentRoots, bazelBuildDir = bazelBuildDir, type = JavaSourceRootType.TEST_SOURCE, packageExcludes = packageExcludes),
+      testResources = computeResources(module = module, contentRoots = contentRoots, bazelBuildDir = bazelBuildDir, type = JavaResourceRootType.TEST_RESOURCE, packageExcludes = packageExcludes),
       targetName = jpsModuleNameToBazelBuildName(module = module, baseBuildDir = bazelBuildDir, communityRoot = communityRoot, ultimateRoot = ultimateRoot),
       relativePathFromProjectRoot = if (isCommunity) {
         bazelBuildDir.relativeTo(communityRoot)
@@ -665,7 +672,7 @@ internal class BazelBuildFileGenerator(
       }
       if (customModule == null) {
         if (directResources != null) {
-          option("resources", glob(directResources.fileGlobs, allowEmpty = false))
+          option("resources", glob(directResources.fileGlobs, exclude = directResources.excludes, allowEmpty = directResources.excludes.isNotEmpty()))
           option("resource_strip_prefix", directResources.stripPrefix)
         }
         if (resourceJarTargets.isNotEmpty()) {
@@ -710,7 +717,7 @@ internal class BazelBuildFileGenerator(
 
       option("srcs", sourcesToGlob(moduleDescriptor.testSources, moduleDescriptor))
       if (directTestResources != null) {
-        option("resources", glob(directTestResources.fileGlobs, allowEmpty = false))
+        option("resources", glob(directTestResources.fileGlobs, exclude = directTestResources.excludes, allowEmpty = directTestResources.excludes.isNotEmpty()))
         option("resource_strip_prefix", directTestResources.stripPrefix)
       }
       if (testResourceJarTargets.isNotEmpty()) {
@@ -809,6 +816,7 @@ internal class BazelBuildFileGenerator(
   private data class ResourcesInfo(
     val fileGlobs: List<String>,
     val stripPrefix: String,
+    val excludes: List<String>,
   )
 
   private data class GenerateResourcesResult(
@@ -861,7 +869,7 @@ internal class BazelBuildFileGenerator(
         val name = "${module.targetName}$targetNameSuffix" + (if (i == 0) "" else "_$i")
         target("resourcegroup") {
           option("name", name)
-          option("srcs", glob(resource.files, allowEmpty = false))
+          option("srcs", glob(resource.files, exclude = resource.excludes, allowEmpty = resource.excludes.isNotEmpty()))
           if (resource.baseDirectory.isNotEmpty()) {
             option("strip_prefix", resource.baseDirectory)
           }
@@ -877,7 +885,8 @@ internal class BazelBuildFileGenerator(
     return GenerateResourcesResult(
       resources = ResourcesInfo(
         fileGlobs = directResources.files,
-        stripPrefix = directResources.baseDirectory
+        stripPrefix = directResources.baseDirectory,
+        excludes = directResources.excludes,
       ),
       resourceJarsTargets = resourceJarsTargets
     )
@@ -971,12 +980,19 @@ private fun getTestClasspathModule(module: ModuleDescriptor, moduleList: ModuleL
   return mainModuleName?.let { moduleList.getModuleDescriptor(it) }
 }
 
-private fun computeSources(module: JpsModule, contentRoots: List<Path>, bazelBuildDir: Path, type: JpsModuleSourceRootType<*>): List<SourceDirDescriptor> {
+private fun computeSources(
+  module: JpsModule,
+  contentRoots: List<Path>,
+  bazelBuildDir: Path,
+  type: JpsModuleSourceRootType<*>,
+  packageExcludes: List<String>,
+): List<SourceDirDescriptor> {
   return module.sourceRoots.asSequence()
     .filter { it.rootType == type }
     .flatMap { root ->
       val rootDir = root.path
       var prefix = resolveRelativeToBazelBuildFileDirectory(childDir = rootDir, contentRoots = contentRoots, bazelBuildDir = bazelBuildDir, module = module).invariantSeparatorsPathString
+      val rootPrefix = prefix
       if (prefix.isNotEmpty()) {
         prefix += "/"
       }
@@ -992,37 +1008,60 @@ private fun computeSources(module: JpsModule, contentRoots: List<Path>, bazelBui
           excludes.add("$relativeExcludedPath/**/*")
         }
       }
+      excludes.addAll(compileExcludesForRoot(packageExcludes = packageExcludes, rootPrefix = rootPrefix))
+      val sourceExcludes = excludes.distinct()
 
       if (type == JavaSourceRootType.SOURCE || type == JavaSourceRootType.TEST_SOURCE) {
         if (!(root.properties as JavaSourceRootProperties).isForGeneratedSources) {
-          sequenceOf(SourceDirDescriptor(glob = listOf("$prefix**/*.kt", "$prefix**/*.java", "$prefix**/*.form"), excludes = excludes))
+          sequenceOf(SourceDirDescriptor(glob = listOf("$prefix**/*.kt", "$prefix**/*.java", "$prefix**/*.form"), excludes = sourceExcludes))
         }
         else {
-          sequenceOf(SourceDirDescriptor(glob = listOf("$prefix**/*.kt", "$prefix**/*.java"), excludes = excludes))
+          sequenceOf(SourceDirDescriptor(glob = listOf("$prefix**/*.kt", "$prefix**/*.java"), excludes = sourceExcludes))
         }
       }
       else {
-        sequenceOf(SourceDirDescriptor(glob = listOf("$prefix**/*"), excludes = excludes))
+        sequenceOf(SourceDirDescriptor(glob = listOf("$prefix**/*"), excludes = sourceExcludes))
       }
     }
     .toList()
 }
 
-private fun computeResources(module: JpsModule, contentRoots: List<Path>, bazelBuildDir: Path, type: JavaResourceRootType): List<ResourceDescriptor> {
+private fun computeResources(
+  module: JpsModule,
+  contentRoots: List<Path>,
+  bazelBuildDir: Path,
+  type: JavaResourceRootType,
+  packageExcludes: List<String>,
+): List<ResourceDescriptor> {
   return module.sourceRoots
     .asSequence()
     .filter { it.rootType == type }
     .map { root ->
       val prefix = resolveRelativeToBazelBuildFileDirectory(root.path, contentRoots, bazelBuildDir, module = module).invariantSeparatorsPathString
+      val excludes = compileExcludesForRoot(packageExcludes = packageExcludes, rootPrefix = prefix)
       val relativeOutputPath = (root.properties as JavaResourceRootProperties).relativeOutputPath
       ResourceDescriptor(
         baseDirectory = prefix,
         files = listOf("${if (prefix.isEmpty()) "" else "$prefix/"}**/*"),
         relativeOutputPath = relativeOutputPath,
-        root = root.path
+        root = root.path,
+        excludes = excludes,
       )
     }
     .toList()
+}
+
+private fun compileExcludesForRoot(packageExcludes: List<String>, rootPrefix: String): List<String> {
+  if (packageExcludes.isEmpty() || rootPrefix.isEmpty()) {
+    return packageExcludes
+  }
+
+  return packageExcludes.filter { pattern ->
+    pattern == "**/*" ||
+    pattern == rootPrefix ||
+    pattern == "$rootPrefix/**/*" ||
+    pattern.startsWith("$rootPrefix/")
+  }
 }
 
 private fun checkAndGetRelativePath(parentDir: Path, childDir: Path): Path {
@@ -1352,3 +1391,67 @@ private fun getUniqueSegmentName(labels: List<String>): Map<String, String> {
 }
 
 private val LOG = Logger.getLogger("build-files")
+
+internal fun computeProjectCompileExcludes(projectDir: Path, compilerExcludes: JpsCompilerExcludes): List<String> {
+  val normalizedProjectDir = projectDir.toAbsolutePath().normalize()
+  val patterns = ArrayList<String>()
+
+  for (file in compilerExcludes.excludedFiles) {
+    toProjectRelativePattern(projectDir = normalizedProjectDir, file = file.toPath())?.let { patterns.add(it) }
+  }
+  for (directory in compilerExcludes.excludedDirectories) {
+    toProjectRelativePattern(projectDir = normalizedProjectDir, file = directory.toPath())?.let { patterns.add("$it/*") }
+  }
+  for (directory in compilerExcludes.recursivelyExcludedDirectories) {
+    toProjectRelativePattern(projectDir = normalizedProjectDir, file = directory.toPath())?.let { patterns.add("$it/**/*") }
+  }
+
+  return patterns.distinct()
+}
+
+private fun toProjectRelativePattern(projectDir: Path, file: Path): String? {
+  val path = file.toAbsolutePath().normalize()
+  if (!path.startsWith(projectDir)) {
+    return null
+  }
+
+  val relativePath = projectDir.relativize(path).invariantSeparatorsPathString
+  require(relativePath.isNotEmpty()) {
+    "Project root cannot be excluded from compilation: $file"
+  }
+  return relativePath
+}
+
+// Filters [projectCompileExcludes] (root-relative glob patterns) down to those that apply to the Bazel
+// package located at [bazelBuildFileDir], and converts them to package-relative patterns suitable for
+// Bazel's `glob(..., exclude = [...])`.
+//
+// Patterns that don't fall under [bazelBuildFileDir] are ignored. A pattern that exactly equals the
+// package path becomes a recursive '**/*' exclude for that package.
+internal fun computePackageRelativeExcludes(
+  projectDir: Path,
+  bazelBuildFileDir: Path,
+  projectCompileExcludes: List<String>,
+): List<String> {
+  if (projectCompileExcludes.isEmpty()) {
+    return emptyList()
+  }
+
+  val packagePath = projectDir.relativize(bazelBuildFileDir).invariantSeparatorsPathString
+  if (packagePath.startsWith("..")) {
+    // Bazel package is outside the project root; project-level excludes don't apply.
+    return emptyList()
+  }
+
+  val prefix = if (packagePath.isEmpty()) "" else "$packagePath/"
+  return projectCompileExcludes.mapNotNull { pattern ->
+    when {
+      packagePath.isEmpty() -> pattern
+      pattern == packagePath -> "**/*"
+      pattern.startsWith(prefix) -> pattern.removePrefix(prefix)
+      else -> null
+    }
+  }.sortedBy { compileExcludeSortKey(it) }
+}
+
+private fun compileExcludeSortKey(pattern: String): String = pattern.lowercase().replace('/', '{')

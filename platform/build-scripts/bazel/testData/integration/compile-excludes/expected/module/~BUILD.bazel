@@ -1,0 +1,58 @@
+### auto-generated section `build intellij.module` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "module_resources",
+  srcs = glob(["excludedResources/**/*"], allow_empty = True, exclude = ["excludedResources/**/*"]),
+  strip_prefix = "excludedResources"
+)
+
+resourcegroup(
+  name = "module_resources_1",
+  srcs = glob(["fileOnlyResources/**/*"], allow_empty = True, exclude = ["fileOnlyResources/META-INF/only-resource.xml"]),
+  strip_prefix = "fileOnlyResources"
+)
+
+jvm_library(
+  name = "module",
+  module_name = "intellij.module",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True, exclude = [
+    "src/excludedDir/**/*",
+    "src/SingleFile.kt",
+  ]),
+  resources = glob(["resources/**/*"], allow_empty = True, exclude = ["resources/excluded/**/*"]),
+  resource_strip_prefix = "resources",
+  resource_jars = [
+    ":module_resources",
+    ":module_resources_1",
+  ],
+  kotlinc_opts = "@community//:k21"
+)
+
+jvm_library(
+  name = "module_test_lib",
+  testonly = True,
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True, exclude = ["testSrc/excludedTestDir/**/*"]),
+  resources = glob(["testResources/**/*"]),
+  resource_strip_prefix = "testResources",
+  kotlinc_opts = "@community//:k21",
+  associates = [":module"]
+)
+### auto-generated section `build intellij.module` end
+
+### auto-generated section `iml intellij.module` start
+exports_files([
+  "intellij.module.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.module` end
+
+### auto-generated section `test intellij.module` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "module_test",
+  runtime_deps = [":module_test_lib"]
+)
+### auto-generated section `test intellij.module` end
