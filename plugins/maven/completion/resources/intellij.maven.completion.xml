@@ -10,6 +10,25 @@
     <completion.contributor language="XML"
                             implementationClass="com.intellij.maven.completion.contributor.MavenDependencyTopLevelCompletionContributor"/>
 
+    <completion.contributor language="XML"
+                            implementationClass="com.intellij.maven.completion.contributor.MavenVersionCompletionContributor"/>
+
+    <completion.contributor language="XML"
+                            implementationClass="com.intellij.maven.completion.contributor.MavenGroupIdCompletionContributor"/>
+
+    <completion.contributor language="XML"
+                            implementationClass="com.intellij.maven.completion.contributor.MavenArtifactIdCompletionContributor"/>
+
+    <completion.contributor language="XML"
+                            implementationClass="com.intellij.maven.completion.contributor.MavenDependenciesCompletionContributor"/>
+
+    <completion.contributor language="XML"
+                            implementationClass="com.intellij.maven.completion.contributor.MavenPluginCompletionContributor"/>
+
+    <completion.contributor language="XML"
+                            implementationClass="com.intellij.maven.completion.contributor.MavenExtensionCompletionContributor"/>
+
+
     <registryKey key="maven.dependency.completion.contributor.local.index" defaultValue="true"
                  description="Maven local index-based dependency completion contributor enabled"/>
     <registryKey key="maven.dependency.completion.contributor.local.modules" defaultValue="true"

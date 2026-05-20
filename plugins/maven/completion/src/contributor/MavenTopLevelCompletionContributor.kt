@@ -10,18 +10,17 @@ import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
 import com.intellij.maven.completion.contributor.insert.MavenTopLevelDependencyInsertionHandler
 import com.intellij.maven.completion.getCompletionContext
 import com.intellij.maven.completion.icon
-import com.intellij.repository.search.completion.lookup.DependencyCompletionFuzzyMatcher
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.psi.xml.XmlTag
 import com.intellij.psi.xml.XmlText
-import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
-import org.jetbrains.idea.maven.dom.model.completion.MavenCoordinateCompletionContributor.Companion.trimDummy
-import org.jetbrains.idea.maven.model.MavenRepoArtifactInfo
 import com.intellij.repository.search.completion.api.DependencyCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionService
+import com.intellij.repository.search.completion.lookup.DependencyCompletionFuzzyMatcher
 import com.intellij.repository.search.completion.lookup.StrictOrderWeigher
 import com.intellij.repository.search.completion.lookup.StrictOrderWeigherData
+import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
+import org.jetbrains.idea.maven.model.MavenRepoArtifactInfo
 
 abstract class MavenTopLevelCompletionContributor(val myName: String) : CompletionContributor() {
 
@@ -39,7 +38,7 @@ abstract class MavenTopLevelCompletionContributor(val myName: String) : Completi
 
     result.restartCompletionWhenNothingMatches()
 
-    val searchString = trimDummy(xmlText.value)
+    val searchString = MavenCoordinateCompletionContributor.trimDummy(xmlText.value)
     val request = DependencyCompletionRequest(searchString, parameters.getCompletionContext())
     val resultSet = result.withPrefixMatcher(DependencyCompletionFuzzyMatcher(searchString))
       .withRelevanceSorter(CompletionSorter.emptySorter().weigh(StrictOrderWeigher()))
