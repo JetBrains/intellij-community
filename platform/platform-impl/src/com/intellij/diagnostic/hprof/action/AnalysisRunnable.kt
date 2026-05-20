@@ -21,6 +21,7 @@ import com.intellij.diagnostic.HeapDumpAnalysisSupport
 import com.intellij.diagnostic.hprof.analysis.HProfAnalysis
 import com.intellij.diagnostic.hprof.analysis.analyzeGraph
 import com.intellij.diagnostic.hprof.util.HeapDumpAnalysisNotificationGroup
+import com.intellij.diagnostic.hprof.util.HeapReportUtils.sectionHeader
 import com.intellij.diagnostic.report.HeapReportProperties
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.actions.ShowLogAction
@@ -152,10 +153,23 @@ internal class AnalysisRunnable(
     }
   }
 }
-private const val SECTION_SEPARATOR = "================"
 
 internal fun getHeapDumpReportText(reportText: String, heapProperties: HeapReportProperties): String {
-  return "${reportText}${SECTION_SEPARATOR}\n${heapProperties.liveStats}"
+  val heapStats = buildString {
+    if (heapProperties.heapStats.isNotEmpty()) {
+      append("\n\n")
+      appendLine(sectionHeader("Heap Statistics"))
+      append(heapProperties.heapStats.trimEnd())
+    }
+  }
+  val liveStats = buildString {
+    if (heapProperties.liveStats.isNotEmpty()) {
+      append("\n\n")
+      appendLine(sectionHeader("Platform Statistics"))
+      append(heapProperties.liveStats.trimEnd())
+    }
+  }
+  return "${reportText.trimEnd()}${heapStats}${liveStats}"
 }
 
 internal class ShowReportDialog(reportText: String, heapProperties: HeapReportProperties) : DialogWrapper(false) {

@@ -57,7 +57,7 @@ class AnalyzeReportAction : DumbAwareAction() {
       e.project, null)
     val files = fileChooser.choose(e.project, null)
     if (files.isEmpty()) return
-    AnalysisRunnable(files[0].toNioPath(), HeapReportProperties(MemoryReportReason.InternalUserInvoked, ""), false).run()
+    AnalysisRunnable(files[0].toNioPath(), HeapReportProperties(MemoryReportReason.InternalUserInvoked, "", ""), false).run()
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {

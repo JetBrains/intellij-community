@@ -56,6 +56,7 @@ internal open class HeapDumpAnalysisSupport {
       it.name("path").value(hprofPath.toString())
       it.name("reason").value(reportProperties.reason.toString())
       it.name("liveStats").value(reportProperties.liveStats)
+      it.name("heapStats").value(reportProperties.heapStats)
       it.endObject()
     }
   }
@@ -80,6 +81,7 @@ internal class AnalyzePendingSnapshotActivity: ProjectActivity {
 
     var path: String? = null
     var liveStats: String? = null
+    var heapStats: String? = null
     var reason: MemoryReportReason? = null
     try {
       val reader = JsonReader(jsonPath.bufferedReader())
@@ -90,6 +92,7 @@ internal class AnalyzePendingSnapshotActivity: ProjectActivity {
             "path" -> path = it.nextString()
             "reason" -> reason = MemoryReportReason.valueOf(it.nextString())
             "liveStats" -> liveStats = it.nextString()
+            "heapStats" -> heapStats = it.nextString()
           }
         }
         it.endObject()
@@ -102,7 +105,7 @@ internal class AnalyzePendingSnapshotActivity: ProjectActivity {
     path?.let {
       val hprofPath = Path.of(it)
       if (hprofPath.exists()) {
-        val heapProperties = HeapReportProperties(reason ?: MemoryReportReason.None, liveStats ?: "")
+        val heapProperties = HeapReportProperties(reason ?: MemoryReportReason.None, liveStats ?: "", heapStats ?: "")
         AnalysisRunnable(hprofPath, heapProperties, false).run()
       }
     }

@@ -17,6 +17,7 @@ package com.intellij.diagnostic.hprof.action
 
 import com.intellij.diagnostic.DiagnosticBundle
 import com.intellij.diagnostic.HeapDumpAnalysisSupport
+import com.intellij.diagnostic.hprof.analysis.HeapStats
 import com.intellij.diagnostic.hprof.analysis.LiveInstanceStats
 import com.intellij.diagnostic.hprof.util.HeapDumpAnalysisNotificationGroup
 import com.intellij.diagnostic.hprofDatabase
@@ -193,6 +194,7 @@ internal class HeapDumpSnapshotRunnable(
       captureSnapshot()
 
       var liveStats = ""
+      var heapStats = ""
       application.invokeAndWait {
         liveStats = try {
           LiveInstanceStats().createReport()
@@ -200,8 +202,14 @@ internal class HeapDumpSnapshotRunnable(
         catch (e: Error) {
           "Error while gathering live statistics: ${ExceptionUtil.getThrowableText(e)}\n"
         }
+        heapStats = try {
+          HeapStats().createReport()
+        }
+        catch (e: Error) {
+          "Error while gathering heap statistics: ${ExceptionUtil.getThrowableText(e)}\n"
+        }
       }
-      val reportProperties = HeapReportProperties(reason, liveStats)
+      val reportProperties = HeapReportProperties(reason, liveStats, heapStats)
 
       LOG.info("Memory snapshot saved for analysis: '$hprofPath'")
 
