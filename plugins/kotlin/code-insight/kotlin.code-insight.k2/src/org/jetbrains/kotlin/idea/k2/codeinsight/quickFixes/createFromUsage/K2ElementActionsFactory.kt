@@ -101,6 +101,7 @@ class K2ElementActionsFactory : JvmElementActionsFactory() {
         val parameters = request.expectedParameters
 
         val changePrimaryConstructorAction = run {
+            if (request is CreateConstructorFromKotlinUsageRequest) return@run null
             val primaryConstructor = targetKtClass.primaryConstructor ?: return@run null
             val lightMethod = primaryConstructor.toLightMethods().firstOrNull() ?: return@run null
             val project = targetKtClass.project
