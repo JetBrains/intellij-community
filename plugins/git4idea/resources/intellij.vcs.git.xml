@@ -123,6 +123,7 @@
     </group>
 
     <group id="Git.MainMenu.MergeActions" class="git4idea.actions.GitRepositoryStateActionGroup$Merge" icon="AllIcons.Vcs.Merge">
+      <action id="Git.Merge.Commit" class="git4idea.actions.GitMergeCommitAction"/>
       <action id="Git.Merge.Abort" class="git4idea.actions.GitAbortOperationAction$Merge"/>
     </group>
 
@@ -523,6 +524,7 @@
       <reference ref="Git.RevertResolved"/>
       <reference ref="Git.Rebase.Continue"/>
       <reference ref="Git.Rebase.Abort"/>
+      <reference ref="Git.Merge.Commit"/>
       <reference ref="Git.Merge.Abort"/>
       <reference ref="Git.CherryPick.Continue"/>
       <reference ref="Git.CherryPick.Abort"/>

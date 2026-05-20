@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.toolbar
 
 import com.intellij.openapi.actionSystem.ActionButtonComponent
@@ -52,7 +52,8 @@ private fun createToolbar(): ActionToolbar {
 private val RESOLVE_ACTIONS: Set<String> = setOf(
   "Git.ResolveConflicts",
   "Git.Rebase.Continue",
-  "Git.CherryPick.Continue"
+  "Git.CherryPick.Continue",
+  "Git.Merge.Commit"
 )
 
 private val ABORT_ACTIONS: Set<String> = setOf(
