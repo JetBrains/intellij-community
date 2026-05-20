@@ -7,6 +7,7 @@ import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.maven.completion.contributor.insert.MavenTopLevelDependencyInsertionHandler
 import com.intellij.maven.completion.getCompletionContext
+import com.intellij.maven.completion.icon
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.components.service
 import com.intellij.psi.xml.XmlTag
@@ -40,6 +41,7 @@ abstract class MavenTopLevelCompletionContributor(val myName: String) : Completi
         .collect { item ->
           result.addElement(
             MavenDependencyCompletionUtil.lookupElement(MavenRepoArtifactInfo(item.groupId, item.artifactId, listOf(item.version)))
+              .withIcon(item.icon)
               .withInsertHandler(MavenTopLevelDependencyInsertionHandler.INSTANCE)
           )
         }
