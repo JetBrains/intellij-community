@@ -13,6 +13,7 @@ import com.intellij.agent.workbench.common.session.AgentSubAgent
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchRequest
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
@@ -192,6 +193,47 @@ class AgentSessionLaunchServiceTest {
           val openRequest = checkNotNull(chatOpenExecutor.lastOpenChatRequest.get())
           assertThat(openRequest.thread.id).isEqualTo(activeThread.id)
           assertThat(openRequest.launchMode).isEqualTo(AgentSessionLaunchMode.YOLO)
+        }
+      }
+    }
+  }
+
+  @Test
+  fun createNewSessionUsesPreallocatedLaunchSpecSessionIdAsConcreteIdentity() {
+    val provider = AgentSessionProvider.CLAUDE
+    val preallocatedSessionId = "a174b4df-e942-49fe-bb30-8b5f8e7f4857"
+    val descriptor = TestAgentSessionProviderDescriptor(
+      provider = provider,
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = true,
+      newSessionLaunchSpecProvider = { mode ->
+        assertThat(mode).isEqualTo(AgentSessionLaunchMode.STANDARD)
+        AgentSessionTerminalLaunchSpec(
+          command = listOf("test", "new"),
+          preallocatedSessionId = preallocatedSessionId,
+        )
+      },
+    )
+    val chatOpenExecutor = RecordingChatOpenExecutor()
+
+    AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(descriptor))) {
+      runBlocking(Dispatchers.Default) {
+        withTestServiceAndLaunch(
+          sessionSourcesProvider = { listOf(ScriptedSessionSource(provider = provider)) },
+          projectEntriesProvider = { listOf(openTestProjectEntry(PROJECT_PATH, "Project A")) },
+          chatOpenExecutor = chatOpenExecutor,
+        ) { _, launchService ->
+          launchService.createNewSession(
+            path = PROJECT_PATH,
+            provider = provider,
+            entryPoint = AgentWorkbenchEntryPoint.TREE_POPUP,
+          )
+
+          waitForCondition { chatOpenExecutor.openNewChatCalls.get() == 1 }
+
+          val openRequest = checkNotNull(chatOpenExecutor.lastOpenNewChatRequest.get())
+          assertThat(openRequest.identity).isEqualTo(buildAgentSessionIdentity(provider, preallocatedSessionId))
+          assertThat(openRequest.launchSpec.preallocatedSessionId).isEqualTo(preallocatedSessionId)
         }
       }
     }

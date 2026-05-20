@@ -26,12 +26,19 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.util.UUID
 
 @TestApplication
 class ClaudeAgentSessionProviderDescriptorTest {
   private val bridge = ClaudeAgentSessionProviderDescriptor(
     executableResolver = { ClaudeCliSupport.CLAUDE_COMMAND },
   )
+
+  private fun assertValidUuid(sessionId: String?): String {
+    val value = checkNotNull(sessionId)
+    assertThat(UUID.fromString(value).toString()).isEqualTo(value)
+    return value
+  }
 
   @Test
   fun buildResumeLaunchSpec(): Unit = runBlocking(Dispatchers.Default) {
@@ -51,14 +58,20 @@ class ClaudeAgentSessionProviderDescriptorTest {
 
   @Test
   fun buildYoloLaunchSpec(): Unit = runBlocking(Dispatchers.Default) {
-    assertThat(bridge.buildNewSessionLaunchSpec(AgentSessionLaunchMode.YOLO).command)
-      .containsExactly("claude", "--dangerously-skip-permissions")
+    val launchSpec = bridge.buildNewSessionLaunchSpec(AgentSessionLaunchMode.YOLO)
+    val sessionId = assertValidUuid(launchSpec.preallocatedSessionId)
+
+    assertThat(launchSpec.command)
+      .containsExactly("claude", "--dangerously-skip-permissions", "--session-id", sessionId)
   }
 
   @Test
   fun buildStandardLaunchSpec(): Unit = runBlocking(Dispatchers.Default) {
-    assertThat(bridge.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD).command)
-      .containsExactly("claude", "--permission-mode", "default")
+    val launchSpec = bridge.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
+    val sessionId = assertValidUuid(launchSpec.preallocatedSessionId)
+
+    assertThat(launchSpec.command)
+      .containsExactly("claude", "--permission-mode", "default", "--session-id", sessionId)
   }
 
   @Test
@@ -93,9 +106,11 @@ class ClaudeAgentSessionProviderDescriptorTest {
       baseLaunchSpec = baseLaunchSpec,
       initialMessagePlan = AgentInitialMessagePlan(message = "Refactor this"),
     )
+    val sessionId = checkNotNull(baseLaunchSpec.preallocatedSessionId)
 
     assertThat(launchSpec.command)
-      .containsExactly("claude", "--permission-mode", "default", "--", "Refactor this")
+      .containsExactly("claude", "--permission-mode", "default", "--session-id", sessionId, "--", "Refactor this")
+    assertThat(launchSpec.preallocatedSessionId).isEqualTo(sessionId)
   }
 
   @Test
@@ -109,9 +124,11 @@ class ClaudeAgentSessionProviderDescriptorTest {
         mode = AgentInitialMessageMode.PLAN,
       ),
     )
+    val sessionId = checkNotNull(baseLaunchSpec.preallocatedSessionId)
 
     assertThat(launchSpec.command)
-      .containsExactly("claude", "--permission-mode", "plan", "--", "Refactor this")
+      .containsExactly("claude", "--permission-mode", "plan", "--session-id", sessionId, "--", "Refactor this")
+    assertThat(launchSpec.preallocatedSessionId).isEqualTo(sessionId)
   }
 
   @Test
@@ -122,9 +139,11 @@ class ClaudeAgentSessionProviderDescriptorTest {
       baseLaunchSpec = baseLaunchSpec,
       initialMessagePlan = AgentInitialMessagePlan(message = "/planner Refactor this"),
     )
+    val sessionId = checkNotNull(baseLaunchSpec.preallocatedSessionId)
 
     assertThat(launchSpec.command)
-      .containsExactly("claude", "--permission-mode", "default", "--", "/planner Refactor this")
+      .containsExactly("claude", "--permission-mode", "default", "--session-id", sessionId, "--", "/planner Refactor this")
+    assertThat(launchSpec.preallocatedSessionId).isEqualTo(sessionId)
   }
 
   @Test

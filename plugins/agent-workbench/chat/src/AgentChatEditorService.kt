@@ -7,6 +7,7 @@ package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
+import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AgentPromptAddContextToTargetResult
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
@@ -191,6 +192,8 @@ suspend fun openChat(
   pendingFirstInputAtMs: Long? = null,
   pendingLaunchMode: String? = null,
   launchMode: String? = null,
+  newSessionProvider: AgentSessionProvider? = null,
+  newSessionLaunchMode: AgentSessionLaunchMode? = null,
   initialMessageDispatchPlan: AgentInitialMessageDispatchPlan = AgentInitialMessageDispatchPlan.EMPTY,
   persistSnapshot: Boolean = true,
   deferredStartState: AgentChatDeferredStartState? = null,
@@ -216,7 +219,10 @@ suspend fun openChat(
     null
   }
   val startupIntentForTab = if (isNewTab && persistSnapshot) {
-    pendingProviderForThreadIdentity(threadIdentity)?.let { provider ->
+    buildNewSessionStartupIntent(
+      provider = newSessionProvider,
+      launchMode = newSessionLaunchMode,
+    ) ?: pendingProviderForThreadIdentity(threadIdentity)?.let { provider ->
       AgentChatStartupIntent.NewSession(provider = provider, launchMode = parseAgentChatLaunchMode(pendingLaunchMode))
     }
   }
@@ -330,6 +336,17 @@ suspend fun openChat(
   return file
 }
 
+private fun buildNewSessionStartupIntent(
+  provider: AgentSessionProvider?,
+  launchMode: AgentSessionLaunchMode?,
+): AgentChatStartupIntent.NewSession? {
+  val resolvedProvider = provider ?: return null
+  return AgentChatStartupIntent.NewSession(
+    provider = resolvedProvider,
+    launchMode = launchMode ?: AgentSessionLaunchMode.STANDARD,
+  )
+}
+
 fun persistAgentChatTabMetadata(file: VirtualFile) {
   if (file !is AgentChatVirtualFile) return
   file.updateRestoreOnRestart(true)
@@ -352,6 +369,8 @@ suspend fun updateAgentChatDeferredStartState(
   threadActivity: AgentThreadActivity? = null,
   startupLaunchSpecOverride: AgentSessionTerminalLaunchSpec? = null,
   initialMessageDispatchPlan: AgentInitialMessageDispatchPlan? = null,
+  newSessionProvider: AgentSessionProvider? = null,
+  newSessionLaunchMode: AgentSessionLaunchMode? = null,
   persistSnapshot: Boolean = false,
   forgetPersistedSnapshot: Boolean = false,
 ) {
@@ -378,7 +397,12 @@ suspend fun updateAgentChatDeferredStartState(
   if (persistSnapshot) {
     chatFile.updateRestoreOnRestart(true)
     if (deferredStartState?.phase == AgentChatDeferredStartPhase.READY_TO_START) {
-      chatFile.updateStartupIntent(resolveAgentChatNewSessionStartupIntent(chatFile))
+      chatFile.updateStartupIntent(
+        buildNewSessionStartupIntent(
+          provider = newSessionProvider,
+          launchMode = newSessionLaunchMode,
+        ) ?: resolveAgentChatNewSessionStartupIntent(chatFile)
+      )
     }
     persistAgentChatTabMetadata(chatFile)
   }

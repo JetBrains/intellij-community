@@ -7,14 +7,14 @@ import org.junit.jupiter.api.Test
 class ClaudeCliSupportTest {
   @Test
   fun buildNewSessionCommandNormal() {
-    assertThat(ClaudeCliSupport.buildNewSessionCommand(yolo = false))
-      .containsExactly("claude", "--permission-mode", "default")
+    assertThat(ClaudeCliSupport.buildNewSessionCommand(yolo = false, sessionId = "session-1"))
+      .containsExactly("claude", "--permission-mode", "default", "--session-id", "session-1")
   }
 
   @Test
   fun buildNewSessionCommandYolo() {
-    assertThat(ClaudeCliSupport.buildNewSessionCommand(yolo = true))
-      .containsExactly("claude", "--dangerously-skip-permissions")
+    assertThat(ClaudeCliSupport.buildNewSessionCommand(yolo = true, sessionId = "session-1"))
+      .containsExactly("claude", "--dangerously-skip-permissions", "--session-id", "session-1")
   }
 
   @Test
@@ -25,8 +25,8 @@ class ClaudeCliSupportTest {
 
   @Test
   fun buildNewSessionCommandUsesProvidedAbsoluteExecutable() {
-    assertThat(ClaudeCliSupport.buildNewSessionCommand(yolo = false, executable = "/opt/tools/claude"))
-      .containsExactly("/opt/tools/claude", "--permission-mode", "default")
+    assertThat(ClaudeCliSupport.buildNewSessionCommand(yolo = false, sessionId = "session-1", executable = "/opt/tools/claude"))
+      .containsExactly("/opt/tools/claude", "--permission-mode", "default", "--session-id", "session-1")
   }
 
   @Test

@@ -34,6 +34,9 @@ class TestAgentSessionProviderDescriptor(
   override val supportsArchiveThread: Boolean = false,
   override val supportsUnarchiveThread: Boolean = false,
   private val onCliAvailable: () -> Unit = {},
+  private val newSessionLaunchSpecProvider: suspend (AgentSessionLaunchMode) -> AgentSessionTerminalLaunchSpec = { mode ->
+    AgentSessionTerminalLaunchSpec(command = listOf("test", "new", mode.name))
+  },
   private val archiveThreadHandler: suspend (String, String) -> Boolean = { _, _ -> false },
   private val unarchiveThreadHandler: suspend (String, String) -> Boolean = { _, _ -> false },
 ) : AgentSessionProviderDescriptor {
@@ -77,7 +80,7 @@ class TestAgentSessionProviderDescriptor(
   }
 
   override suspend fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec {
-    return AgentSessionTerminalLaunchSpec(command = listOf("test", "new", mode.name))
+    return newSessionLaunchSpecProvider(mode)
   }
 
   override fun buildInitialMessagePlan(request: AgentPromptInitialMessageRequest): AgentInitialMessagePlan {

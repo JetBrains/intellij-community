@@ -41,7 +41,7 @@ These contracts keep shared identity, command mapping, provider capabilities, pr
   [@test] ../junie/sessions/testSrc/JunieAgentSessionProviderDescriptorTest.kt
   [@test] ../sessions/testSrc/AgentSessionLaunchServiceTest.kt
 
-- New-thread command mapping after executable token is canonical: Codex standard/YOLO, Claude standard/YOLO, and Junie standard/YOLO are defined by provider descriptors and tested there.
+- New-thread command mapping after executable token is canonical: Codex standard/YOLO, Claude standard/YOLO with a preallocated `--session-id <uuid>`, and Junie standard/YOLO are defined by provider descriptors and tested there.
   [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
   [@test] ../claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
   [@test] ../junie/sessions/testSrc/JunieAgentSessionProviderDescriptorTest.kt

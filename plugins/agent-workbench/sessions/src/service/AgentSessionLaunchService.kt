@@ -124,6 +124,7 @@ internal interface AgentSessionChatOpenExecutor {
     identity: String,
     launchSpec: AgentSessionTerminalLaunchSpec,
     initialMessageDispatchPlan: AgentInitialMessageDispatchPlan,
+    launchMode: AgentSessionLaunchMode?,
     preferredDedicatedFrame: Boolean?,
     openedChatHandler: (suspend (Project, VirtualFile) -> Unit)?,
     threadTitle: String? = null,
@@ -177,6 +178,7 @@ private object DefaultAgentSessionChatOpenExecutor : AgentSessionChatOpenExecuto
     identity: String,
     launchSpec: AgentSessionTerminalLaunchSpec,
     initialMessageDispatchPlan: AgentInitialMessageDispatchPlan,
+    launchMode: AgentSessionLaunchMode?,
     preferredDedicatedFrame: Boolean?,
     openedChatHandler: (suspend (Project, VirtualFile) -> Unit)?,
     threadTitle: String?,
@@ -186,6 +188,7 @@ private object DefaultAgentSessionChatOpenExecutor : AgentSessionChatOpenExecuto
       identity = identity,
       launchSpec = launchSpec,
       initialMessageDispatchPlan = initialMessageDispatchPlan,
+      launchMode = launchMode,
       preferredDedicatedFrame = preferredDedicatedFrame,
       openedChatHandler = openedChatHandler,
       threadTitle = threadTitle,
@@ -653,9 +656,7 @@ class AgentSessionLaunchService internal constructor(
         else {
           withContributors
         }
-        val identity = baseLaunchSpec.containerSessionId?.let { sessionId ->
-          buildAgentSessionIdentity(provider, sessionId)
-        } ?: buildAgentSessionNewIdentity(provider)
+        val identity = buildNewSessionIdentity(provider = provider, launchSpec = launchSpec)
         val initialMessageDispatchPlan = buildInitialMessageDispatchPlan(
           descriptor = descriptor,
           baseLaunchSpec = launchSpec,
@@ -679,6 +680,7 @@ class AgentSessionLaunchService internal constructor(
             identity = identity,
             launchSpec = launchSpec,
             initialMessageDispatchPlan = initialMessageDispatchPlan,
+            launchMode = mode,
             preferredDedicatedFrame = preferredDedicatedFrame,
             openedChatHandler = openedChatHandler,
             threadTitle = threadTitle,
@@ -742,7 +744,7 @@ class AgentSessionLaunchService internal constructor(
       provider = provider,
       launchSpec = baseLaunchSpec,
     )
-    val identity = buildAgentSessionNewIdentity(provider)
+    val identity = buildNewSessionIdentity(provider = provider, launchSpec = launchSpec)
     val waitingState = AgentChatDeferredStartState(
       phase = AgentChatDeferredStartPhase.WAITING,
       title = waitingTitle,
@@ -754,6 +756,7 @@ class AgentSessionLaunchService internal constructor(
         normalizedPath = normalizedPath,
         identity = identity,
         launchSpec = launchSpec,
+        launchMode = mode,
         preferredDedicatedFrame = preferredDedicatedFrame,
         openedChatHandler = openedChatHandler,
         threadTitle = threadTitle,
@@ -784,6 +787,8 @@ class AgentSessionLaunchService internal constructor(
             threadActivity = com.intellij.agent.workbench.common.AgentThreadActivity.READY,
             startupLaunchSpecOverride = initialMessageDispatchPlan.startupLaunchSpecOverride,
             initialMessageDispatchPlan = initialMessageDispatchPlan,
+            newSessionProvider = provider,
+            newSessionLaunchMode = mode,
             persistSnapshot = true,
           )
           if (descriptor.refreshPathAfterCreateNewSession) {
@@ -1048,6 +1053,14 @@ private fun buildInitialMessageDispatchPlan(
   )
 }
 
+private fun buildNewSessionIdentity(
+  provider: AgentSessionProvider,
+  launchSpec: AgentSessionTerminalLaunchSpec,
+): String {
+  val sessionId = launchSpec.preallocatedSessionId ?: launchSpec.containerSessionId
+  return sessionId?.let { buildAgentSessionIdentity(provider, it) } ?: buildAgentSessionNewIdentity(provider)
+}
+
 private fun buildStartupLaunchSpecOverride(
   descriptor: AgentSessionProviderDescriptor,
   baseLaunchSpec: AgentSessionTerminalLaunchSpec,
@@ -1175,6 +1188,7 @@ private suspend fun openAgentSessionNewChat(
   identity: String,
   launchSpec: AgentSessionTerminalLaunchSpec,
   initialMessageDispatchPlan: AgentInitialMessageDispatchPlan,
+  launchMode: AgentSessionLaunchMode?,
   preferredDedicatedFrame: Boolean?,
   openedChatHandler: (suspend (Project, VirtualFile) -> Unit)? = null,
   threadTitle: String? = null,
@@ -1188,6 +1202,7 @@ private suspend fun openAgentSessionNewChat(
       launchSpec = launchSpec,
       title = title,
       initialMessageDispatchPlan = initialMessageDispatchPlan,
+      launchMode = launchMode,
       openedChatHandler = openedChatHandler,
     )
     return
@@ -1200,6 +1215,7 @@ private suspend fun openAgentSessionNewChat(
     launchSpec = launchSpec,
     title = title,
     initialMessageDispatchPlan = initialMessageDispatchPlan,
+    launchMode = launchMode,
     openedChatHandler = openedChatHandler,
   )
 }
@@ -1213,6 +1229,7 @@ private suspend fun openAgentSessionDeferredNewChat(
   normalizedPath: String,
   identity: String,
   launchSpec: AgentSessionTerminalLaunchSpec,
+  launchMode: AgentSessionLaunchMode?,
   preferredDedicatedFrame: Boolean?,
   openedChatHandler: (suspend (Project, VirtualFile) -> Unit)? = null,
   threadTitle: String? = null,
@@ -1225,6 +1242,7 @@ private suspend fun openAgentSessionDeferredNewChat(
       normalizedPath = normalizedPath,
       identity = identity,
       launchSpec = launchSpec,
+      launchMode = launchMode,
       title = title,
       openedChatHandler = openedChatHandler,
       waitingState = waitingState,
@@ -1236,6 +1254,7 @@ private suspend fun openAgentSessionDeferredNewChat(
     projectPath = normalizedPath,
     identity = identity,
     launchSpec = launchSpec,
+    launchMode = launchMode,
     title = title,
     openedChatHandler = openedChatHandler,
     waitingState = waitingState,
@@ -1248,6 +1267,7 @@ private suspend fun openNewChatInDedicatedFrame(
   launchSpec: AgentSessionTerminalLaunchSpec,
   title: String,
   initialMessageDispatchPlan: AgentInitialMessageDispatchPlan,
+  launchMode: AgentSessionLaunchMode?,
   openedChatHandler: (suspend (Project, VirtualFile) -> Unit)? = null,
 ) {
   val dedicatedProjectPath = AgentWorkbenchDedicatedFrameProjectManager.dedicatedProjectPath()
@@ -1261,6 +1281,7 @@ private suspend fun openNewChatInDedicatedFrame(
       launchSpec = launchSpec,
       title = title,
       initialMessageDispatchPlan = initialMessageDispatchPlan,
+      launchMode = launchMode,
       openedChatHandler = openedChatHandler,
     )
     return
@@ -1286,6 +1307,7 @@ private suspend fun openNewChatInDedicatedFrame(
     launchSpec = launchSpec,
     title = title,
     initialMessageDispatchPlan = initialMessageDispatchPlan,
+    launchMode = launchMode,
     openedChatHandler = openedChatHandler,
   )
 }
@@ -1294,6 +1316,7 @@ private suspend fun openDeferredNewChatInDedicatedFrame(
   normalizedPath: String,
   identity: String,
   launchSpec: AgentSessionTerminalLaunchSpec,
+  launchMode: AgentSessionLaunchMode?,
   title: String,
   openedChatHandler: (suspend (Project, VirtualFile) -> Unit)? = null,
   waitingState: AgentChatDeferredStartState,
@@ -1307,6 +1330,7 @@ private suspend fun openDeferredNewChatInDedicatedFrame(
       projectPath = normalizedPath,
       identity = identity,
       launchSpec = launchSpec,
+      launchMode = launchMode,
       title = title,
       openedChatHandler = openedChatHandler,
       waitingState = waitingState,
@@ -1331,6 +1355,7 @@ private suspend fun openDeferredNewChatInDedicatedFrame(
     projectPath = normalizedPath,
     identity = identity,
     launchSpec = launchSpec,
+    launchMode = launchMode,
     title = title,
     openedChatHandler = openedChatHandler,
     waitingState = waitingState,
@@ -1344,10 +1369,12 @@ private suspend fun openNewChatInProject(
   launchSpec: AgentSessionTerminalLaunchSpec,
   title: String,
   initialMessageDispatchPlan: AgentInitialMessageDispatchPlan,
+  launchMode: AgentSessionLaunchMode?,
   openedChatHandler: (suspend (Project, VirtualFile) -> Unit)? = null,
 ) {
   val threadId = resolveAgentSessionId(identity)
   val pendingMetadata = resolvePendingSessionMetadata(identity = identity, launchSpec = launchSpec)
+  val provider = parseAgentSessionIdentity(identity)?.provider
   val file = openChat(
     project = project,
     projectPath = projectPath,
@@ -1360,7 +1387,9 @@ private suspend fun openNewChatInProject(
     threadActivity = com.intellij.agent.workbench.common.AgentThreadActivity.READY,
     pendingCreatedAtMs = pendingMetadata?.createdAtMs,
     pendingLaunchMode = pendingMetadata?.launchMode,
-    launchMode = pendingMetadata?.launchMode,
+    launchMode = serializeAgentChatLaunchMode(launchMode) ?: pendingMetadata?.launchMode,
+    newSessionProvider = provider,
+    newSessionLaunchMode = launchMode,
     initialMessageDispatchPlan = initialMessageDispatchPlan,
   )
   focusProjectWindow(project)
@@ -1372,12 +1401,14 @@ private suspend fun openDeferredNewChatInProject(
   projectPath: String,
   identity: String,
   launchSpec: AgentSessionTerminalLaunchSpec,
+  launchMode: AgentSessionLaunchMode?,
   title: String,
   openedChatHandler: (suspend (Project, VirtualFile) -> Unit)? = null,
   waitingState: AgentChatDeferredStartState,
 ): DeferredAgentSessionChatOpenResult {
   val threadId = resolveAgentSessionId(identity)
   val pendingMetadata = resolvePendingSessionMetadata(identity = identity, launchSpec = launchSpec)
+  val provider = parseAgentSessionIdentity(identity)?.provider
   val file = openChat(
     project = project,
     projectPath = projectPath,
@@ -1390,7 +1421,9 @@ private suspend fun openDeferredNewChatInProject(
     threadActivity = com.intellij.agent.workbench.common.AgentThreadActivity.READY,
     pendingCreatedAtMs = pendingMetadata?.createdAtMs,
     pendingLaunchMode = pendingMetadata?.launchMode,
-    launchMode = pendingMetadata?.launchMode,
+    launchMode = serializeAgentChatLaunchMode(launchMode) ?: pendingMetadata?.launchMode,
+    newSessionProvider = provider,
+    newSessionLaunchMode = launchMode,
     initialMessageDispatchPlan = AgentInitialMessageDispatchPlan.EMPTY,
     persistSnapshot = false,
     deferredStartState = waitingState,

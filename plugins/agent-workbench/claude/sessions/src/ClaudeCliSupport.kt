@@ -46,9 +46,16 @@ object ClaudeCliSupport {
   suspend fun resolveExecutableOrDefaultViaTerminalResolver(): String =
     findExecutableViaTerminalResolver() ?: CLAUDE_COMMAND
 
-  fun buildNewSessionCommand(yolo: Boolean, executable: String = CLAUDE_COMMAND): List<String> =
-    if (yolo) listOf(executable, "--dangerously-skip-permissions")
-    else listOf(executable, PERMISSION_MODE_FLAG, PERMISSION_MODE_DEFAULT)
+  fun buildNewSessionCommand(
+    yolo: Boolean,
+    sessionId: String,
+    executable: String = CLAUDE_COMMAND,
+  ): List<String> = if (yolo) {
+    listOf(executable, "--dangerously-skip-permissions", SESSION_ID_FLAG, sessionId)
+  }
+  else {
+    listOf(executable, PERMISSION_MODE_FLAG, PERMISSION_MODE_DEFAULT, SESSION_ID_FLAG, sessionId)
+  }
 
   fun buildResumeCommand(
     sessionId: String,
@@ -77,3 +84,4 @@ object ClaudeCliSupport {
 internal const val PERMISSION_MODE_FLAG: String = "--permission-mode"
 internal const val PERMISSION_MODE_DEFAULT: String = "default"
 internal const val PERMISSION_MODE_PLAN: String = "plan"
+private const val SESSION_ID_FLAG: String = "--session-id"

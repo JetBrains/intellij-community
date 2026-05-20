@@ -20,6 +20,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameHan
 import com.intellij.agent.workbench.sessions.core.providers.buildPlanModeInitialMessagePlan
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import java.util.UUID
 import javax.swing.Icon
 import javax.swing.JComponent
 
@@ -207,9 +208,15 @@ internal fun buildClaudeNewSessionLaunchSpec(
   mode: AgentSessionLaunchMode,
   executable: String = ClaudeCliSupport.CLAUDE_COMMAND,
 ): AgentSessionTerminalLaunchSpec {
+  val sessionId = UUID.randomUUID().toString()
   return AgentSessionTerminalLaunchSpec(
-    command = ClaudeCliSupport.buildNewSessionCommand(yolo = mode == AgentSessionLaunchMode.YOLO, executable = executable),
+    command = ClaudeCliSupport.buildNewSessionCommand(
+      yolo = mode == AgentSessionLaunchMode.YOLO,
+      sessionId = sessionId,
+      executable = executable,
+    ),
     envVariables = mapOf(CLAUDE_DISABLE_AUTO_UPDATER_ENV to CLAUDE_DISABLE_AUTO_UPDATER_VALUE),
+    preallocatedSessionId = sessionId,
   )
 }
 

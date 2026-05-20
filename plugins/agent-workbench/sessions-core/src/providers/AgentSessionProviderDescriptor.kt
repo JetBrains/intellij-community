@@ -263,4 +263,9 @@ data class AgentSessionTerminalLaunchSpec(
    * The ID is also passed to Claude Code as `AGENT_CONTAINER_SESSION_ID` env var.
    */
   @JvmField val containerSessionId: String? = null,
+  /**
+   * Provider-allocated concrete session id for new-session launches.
+   * When set, Agent Chat opens the tab with the concrete identity immediately instead of a synthetic `new-*` id.
+   */
+  @JvmField val preallocatedSessionId: String? = null,
 )

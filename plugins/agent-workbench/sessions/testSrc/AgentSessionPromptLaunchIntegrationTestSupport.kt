@@ -201,6 +201,7 @@ internal class RecordingChatOpenExecutor(
     identity: String,
     launchSpec: AgentSessionTerminalLaunchSpec,
     initialMessageDispatchPlan: AgentInitialMessageDispatchPlan,
+    launchMode: AgentSessionLaunchMode?,
     preferredDedicatedFrame: Boolean?,
     openedChatHandler: (suspend (Project, VirtualFile) -> Unit)?,
     threadTitle: String?,
@@ -212,6 +213,7 @@ internal class RecordingChatOpenExecutor(
       startupLaunchSpecOverride = initialMessageDispatchPlan.startupLaunchSpecOverride,
       postStartDispatchSteps = initialMessageDispatchPlan.postStartDispatchSteps,
       initialMessageToken = initialMessageDispatchPlan.initialMessageToken,
+      launchMode = launchMode,
       preferredDedicatedFrame = preferredDedicatedFrame,
     )
     val callIndex = openNewChatCalls.incrementAndGet()
@@ -242,6 +244,7 @@ internal data class OpenNewChatRequest(
   @JvmField val startupLaunchSpecOverride: AgentSessionTerminalLaunchSpec?,
   @JvmField val postStartDispatchSteps: List<AgentInitialMessageDispatchStep>,
   @JvmField val initialMessageToken: String?,
+  @JvmField val launchMode: AgentSessionLaunchMode?,
   @JvmField val preferredDedicatedFrame: Boolean?,
 ) {
   val initialComposedMessage: String?

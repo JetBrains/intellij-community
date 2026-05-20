@@ -1,6 +1,7 @@
 package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchPlan
@@ -365,6 +366,62 @@ class AgentChatEditorServiceTest {
     val file = openedChatFiles().single()
     assertThat(file.threadActivity).isEqualTo(AgentThreadActivity.READY)
     assertThat(file.toSnapshot().runtime.threadActivity).isEqualTo(AgentThreadActivity.READY)
+  }
+
+  @Test
+  fun concreteNewSessionTabPersistsExplicitStartupIntent(): Unit = timeoutRunBlocking {
+    openChatInModal(
+      threadIdentity = "CLAUDE:a174b4df-e942-49fe-bb30-8b5f8e7f4857",
+      shellCommand = listOf("claude", "--session-id", "a174b4df-e942-49fe-bb30-8b5f8e7f4857"),
+      threadId = "a174b4df-e942-49fe-bb30-8b5f8e7f4857",
+      threadTitle = "New Claude thread",
+      subAgentId = null,
+      newSessionProvider = AgentSessionProvider.CLAUDE,
+      newSessionLaunchMode = AgentSessionLaunchMode.YOLO,
+    )
+
+    val file = openedChatFiles().single()
+    assertThat(file.startupIntent()).isEqualTo(
+      AgentChatStartupIntent.NewSession(
+        provider = AgentSessionProvider.CLAUDE,
+        launchMode = AgentSessionLaunchMode.YOLO,
+      )
+    )
+  }
+
+  @Test
+  fun deferredConcreteNewSessionTabPersistsExplicitStartupIntentWhenStarted(): Unit = timeoutRunBlocking {
+    val file = AgentChatVirtualFile(
+      projectPath = projectPath,
+      threadIdentity = "CLAUDE:c9de00bb-4587-438a-99cc-e8467b4eeb10",
+      shellCommand = listOf("claude", "--session-id", "c9de00bb-4587-438a-99cc-e8467b4eeb10"),
+      threadId = "c9de00bb-4587-438a-99cc-e8467b4eeb10",
+      threadTitle = "Deferred Claude thread",
+      subAgentId = null,
+    )
+    file.updateRestoreOnRestart(false)
+    file.updateDeferredStartState(
+      AgentChatDeferredStartState(
+        phase = AgentChatDeferredStartPhase.WAITING,
+        title = "Preparing Claude thread",
+      )
+    )
+
+    updateAgentChatDeferredStartState(
+      project = project,
+      file = file,
+      deferredStartState = AgentChatDeferredStartState(AgentChatDeferredStartPhase.READY_TO_START, title = ""),
+      newSessionProvider = AgentSessionProvider.CLAUDE,
+      newSessionLaunchMode = AgentSessionLaunchMode.YOLO,
+      persistSnapshot = true,
+    )
+
+    assertThat(file.startupIntent()).isEqualTo(
+      AgentChatStartupIntent.NewSession(
+        provider = AgentSessionProvider.CLAUDE,
+        launchMode = AgentSessionLaunchMode.YOLO,
+      )
+    )
   }
 
   @Test
@@ -1777,6 +1834,8 @@ class AgentChatEditorServiceTest {
     pendingCreatedAtMs: Long? = null,
     pendingFirstInputAtMs: Long? = null,
     pendingLaunchMode: String? = null,
+    newSessionProvider: AgentSessionProvider? = null,
+    newSessionLaunchMode: AgentSessionLaunchMode? = null,
     initialComposedMessage: String? = null,
     postStartDispatchSteps: List<AgentInitialMessageDispatchStep> = emptyList(),
     initialMessageToken: String? = null,
@@ -1810,6 +1869,8 @@ class AgentChatEditorServiceTest {
       pendingCreatedAtMs = pendingCreatedAtMs,
       pendingFirstInputAtMs = pendingFirstInputAtMs,
       pendingLaunchMode = pendingLaunchMode,
+      newSessionProvider = newSessionProvider,
+      newSessionLaunchMode = newSessionLaunchMode,
       initialMessageDispatchPlan = initialMessageDispatchPlan,
       persistSnapshot = persistSnapshot,
       deferredStartState = deferredStartState,
