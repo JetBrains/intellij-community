@@ -77,8 +77,8 @@ public abstract class IntentionSettingsTree {
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
-        TreePath path = e.getPath();
-        Object userObject = ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
+        TreePath path = e.getNewLeadSelectionPath();
+        Object userObject = path == null ? null : ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
         selectionChanged(userObject);
       }
     });
