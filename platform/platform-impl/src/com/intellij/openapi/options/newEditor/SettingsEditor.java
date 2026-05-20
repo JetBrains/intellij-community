@@ -215,7 +215,8 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
         if (oldConfigurable != null) {
           checkModified(oldConfigurable);
           if (myUseLeaveState) {
-            myLeaveState.put(oldConfigurable, oldConfigurable.isModified());
+            Boolean modified = isModifiedSafely(oldConfigurable);
+            if (modified != null) myLeaveState.put(oldConfigurable, modified);
           }
         }
         Promise<? super Object> result = editor.select(configurable);
