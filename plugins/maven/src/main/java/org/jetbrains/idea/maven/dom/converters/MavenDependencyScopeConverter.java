@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.dom.converters;
 import com.intellij.util.xml.ConvertContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependencyManagement;
+import org.jetbrains.idea.maven.importing.MavenDependencyTypes;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenProject;
 
@@ -31,7 +32,7 @@ public class MavenDependencyScopeConverter extends MavenProjectConstantListConve
 
   @Override
   protected Collection<String> getValues(@NotNull ConvertContext context, @NotNull MavenProject project) {
-    Set<String> scopes = project.getSupportedDependencyScopes();
+    Set<String> scopes = MavenDependencyTypes.getSupportedDependencyScopes(project);
 
     boolean isDependencyManagement = context.getInvocationElement().getParentOfType(MavenDomDependencyManagement.class, false) != null;
     if (isDependencyManagement) scopes.add(MavenConstants.SCOPE_IMPORT);

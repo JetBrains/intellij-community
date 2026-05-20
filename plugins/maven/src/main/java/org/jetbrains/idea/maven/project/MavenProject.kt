@@ -2,7 +2,6 @@
 package org.jetbrains.idea.maven.project
 
 import com.intellij.execution.configurations.ParametersList
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
@@ -10,12 +9,10 @@ import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
-import com.intellij.util.containers.ContainerUtil
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.idea.maven.importing.MavenImporter
 import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.plugins.api.MavenModelPropertiesPatcher
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil.hasArtifactFile
@@ -559,29 +556,6 @@ class MavenProject(val file: VirtualFile) {
       return myState.dependencyTree
     }
 
-
-  fun getDependencyTypesFromImporters(type: SupportedRequestType): Set<String> {
-    val res: MutableSet<String> = HashSet()
-
-    for (each: MavenImporter in MavenImporter.getSuitableImporters(this)) {
-      each.getSupportedDependencyTypes(res, type)
-    }
-
-    return res
-  }
-
-  val supportedDependencyScopes: Set<String>
-    get() {
-      val result: MutableSet<String> = ContainerUtil.newHashSet(MavenConstants.SCOPE_COMPILE,
-                                                                MavenConstants.SCOPE_PROVIDED,
-                                                                MavenConstants.SCOPE_RUNTIME,
-                                                                MavenConstants.SCOPE_TEST,
-                                                                MavenConstants.SCOPE_SYSTEM)
-      for (each: MavenImporter in MavenImporter.getSuitableImporters(this)) {
-        each.getSupportedDependencyScopes(result)
-      }
-      return result
-    }
 
   @Internal
   @Deprecated("Do not add dependencies to Maven project. Instead, add dependencies to [com.intellij.platform.workspace.jps.entities.ModuleEntity]")

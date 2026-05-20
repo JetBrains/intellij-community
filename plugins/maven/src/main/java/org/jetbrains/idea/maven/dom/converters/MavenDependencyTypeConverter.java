@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.dom.converters;
 
 import com.intellij.util.xml.ConvertContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.importing.MavenDependencyTypes;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -38,7 +39,7 @@ public class MavenDependencyTypeConverter extends MavenProjectConstantListConver
 
     res.add(MavenConstants.TYPE_POM);
 
-    res.addAll(project.getDependencyTypesFromImporters(SupportedRequestType.FOR_COMPLETION));
+    res.addAll(MavenDependencyTypes.getDependencyTypesFromImporters(project, SupportedRequestType.FOR_COMPLETION));
 
     return res;
   }

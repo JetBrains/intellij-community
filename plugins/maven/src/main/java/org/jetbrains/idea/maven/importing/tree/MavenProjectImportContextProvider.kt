@@ -14,6 +14,7 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.util.containers.ContainerUtil
 import org.jdom.Element
 import org.jetbrains.idea.maven.buildtool.MavenSyncSession
+import org.jetbrains.idea.maven.importing.getDependencyTypesFromImporters
 import org.jetbrains.idea.maven.importing.MavenImportUtil.MAIN_SUFFIX
 import org.jetbrains.idea.maven.importing.MavenImportUtil.TEST_SUFFIX
 import org.jetbrains.idea.maven.importing.MavenImportUtil.adjustLevelAndNotify
