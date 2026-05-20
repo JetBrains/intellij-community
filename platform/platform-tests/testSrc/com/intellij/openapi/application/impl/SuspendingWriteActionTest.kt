@@ -7,7 +7,6 @@ import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
@@ -180,7 +179,7 @@ class SuspendingWriteActionTest {
       }
       listener.assertCorrectClassPassed(writeLambda) {
         runBlocking {
-          writeAction(writeLambda)
+          edtWriteAction(writeLambda)
         }
       }
       listener.assertCorrectClassPassed(writeLambda) {

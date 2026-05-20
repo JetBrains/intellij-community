@@ -4,7 +4,7 @@ package com.intellij.workspaceModel.core.fileIndex
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.SkipAddingToWatchedRoots
 import com.intellij.openapi.vfs.VirtualFile
@@ -251,7 +251,7 @@ class WorkspaceFileIndexListenerTest {
 
     listener.clear()
 
-    writeAction {
+    edtWriteAction {
       root.rename(null, "dirtyRootRenamed")
     }
 

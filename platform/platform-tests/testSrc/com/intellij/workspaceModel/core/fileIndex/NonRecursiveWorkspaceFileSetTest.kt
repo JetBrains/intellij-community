@@ -3,7 +3,7 @@ package com.intellij.workspaceModel.core.fileIndex
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootModificationUtil
@@ -52,7 +52,7 @@ class NonRecursiveWorkspaceFileSetTest {
 
   @BeforeEach
   fun setUp() = runBlocking {
-    writeAction {
+    edtWriteAction {
       module = projectModel.createModule()
       excludedRoot = projectModel.baseProjectDir.newVirtualDirectory("root/exc")
       ModuleRootModificationUtil.addContentRoot(module, excludedRoot.parent)

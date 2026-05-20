@@ -13,7 +13,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -231,7 +231,7 @@ class BuildersGeneratorTest {
         if (!Files.exists(path)) Files.createFile(path)
         val virtualFile = VfsUtil.findFile(path, true)!!
         val (_, newContent) = contentPair
-        writeAction {
+        edtWriteAction {
           if (newContent.isPresent) {
             virtualFile.writeText(newContent.get())
           }
@@ -289,7 +289,7 @@ class BuildersGeneratorTest {
   }
 
   private suspend fun synchronizeVariousCaches(tempProject: Project) {
-    writeAction {
+    edtWriteAction {
       FileDocumentManager.getInstance().saveAllDocuments()
     }
     IndexingTestUtil.suspendUntilIndexesAreReady(tempProject)
@@ -343,7 +343,7 @@ class BuildersGeneratorTest {
 
     val libraries = mutableSetOf<JpsLibrary>()
 
-    val newEelModule: Module = writeAction {
+    val newEelModule: Module = edtWriteAction {
       val projectModel = ModuleManager.getInstance(tempProject).getModifiableModel()
 
       val jpsModuleQueue = mutableListOf(ultimateProject.findModuleByName(moduleName)!!)

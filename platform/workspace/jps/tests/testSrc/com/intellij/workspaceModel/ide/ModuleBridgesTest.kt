@@ -7,7 +7,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.application.runWriteActionAndWait
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.impl.stores.stateStore as moduleStateStore
@@ -177,7 +177,7 @@ class ModuleBridgesTest {
     val newModuleName = "xxx_renamed"
     val moduleManager = ModuleManager.getInstance(project)
 
-    val module = writeAction { moduleManager.newModule(temporaryDirectoryRule.newDirectoryPath(), "PYTHON_MODULE") }
+    val module = edtWriteAction { moduleManager.newModule(temporaryDirectoryRule.newDirectoryPath(), "PYTHON_MODULE") }
     try {
       project.workspaceModel.update("...") { storage ->
         val moduleEntity = module.findModuleEntity(storage)!!
@@ -190,7 +190,7 @@ class ModuleBridgesTest {
       Assertions.assertThat(project.modules.map { it.name }).containsExactly(newModuleName)
     }
     finally {
-      writeAction {
+      edtWriteAction {
         moduleManager.disposeModule(module)
       }
     }
