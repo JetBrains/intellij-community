@@ -547,6 +547,12 @@
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.ListenerImplementationMustNotBeDisposableInspection"/>
 
+    <localInspection language="UAST" shortName="DebugOnlyTestExtension"
+                     groupPathKey="inspections.group.path"
+                     key="inspections.debug.only.test.extension.display.name" groupKey="inspections.group.code"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.DebugOnlyTestExtensionInspection"/>
+
     <localInspection language="UAST"
                      key="inspection.potential.deadlock.during.service.init.display.name"
                      shortName="PotentialDeadlockInServiceInitialization"
