@@ -6,29 +6,29 @@ import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler
 import com.intellij.codeInsight.lookup.LookupElement
 
-internal class KotlinGradleConfigurationInsertHandler(val isPsiResolvable: Boolean): InsertHandler<LookupElement> {
-    private val parenthesesInsertHandler = ParenthesesInsertHandler.getInstance(
-        /* hasParameters = */ true,
-        /* spaceBeforeParentheses = */ false,
-        /* spaceBetweenParentheses = */ false,
-        /* insertRightParenthesis = */ true,
-        /* allowParametersOnNextLine = */ false,
-    )
+internal class KotlinGradleConfigurationInsertHandler(val isPsiResolvable: Boolean) : InsertHandler<LookupElement> {
+  private val parenthesesInsertHandler = ParenthesesInsertHandler.getInstance(
+    /* hasParameters = */ true,
+    /* spaceBeforeParentheses = */ false,
+    /* spaceBetweenParentheses = */ false,
+    /* insertRightParenthesis = */ true,
+    /* allowParametersOnNextLine = */ false,
+  )
 
-    override fun handleInsert(
-        context: InsertionContext,
-        item: LookupElement
-    ) {
-        if (!isPsiResolvable) {
-            insertQuotesToWrapName(context)
-        }
-        parenthesesInsertHandler.handleInsert(context, item)
+  override fun handleInsert(
+    context: InsertionContext,
+    item: LookupElement,
+  ) {
+    if (!isPsiResolvable) {
+      insertQuotesToWrapName(context)
     }
+    parenthesesInsertHandler.handleInsert(context, item)
+  }
 
-    private fun insertQuotesToWrapName(context: InsertionContext) {
-        val document = context.document
-        val startOffset = context.startOffset
-        document.insertString(context.tailOffset, "\"")
-        document.insertString(startOffset, "\"")
-    }
+  private fun insertQuotesToWrapName(context: InsertionContext) {
+    val document = context.document
+    val startOffset = context.startOffset
+    document.insertString(context.tailOffset, "\"")
+    document.insertString(startOffset, "\"")
+  }
 }

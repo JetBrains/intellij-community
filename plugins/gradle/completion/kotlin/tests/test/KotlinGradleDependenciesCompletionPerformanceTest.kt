@@ -1,20 +1,20 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.completion.kotlin
 
+import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.gradle.completion.GradleLocalDependencyCompletionContributor
 import com.intellij.gradle.completion.indexer.GradleLocalRepositoryIndexer
 import com.intellij.gradle.completion.indexer.GradleLocalRepositoryIndexerTestImpl
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.codeInsight.completion.CompletionType
-import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.platform.eel.provider.LocalEelDescriptor
-import com.intellij.repository.search.completion.api.DependencyCompletionService
-import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.ex.RangeMarkerEx
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.repository.search.completion.api.DependencyCompletionService
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.replaceService
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
@@ -27,10 +27,10 @@ import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
-import org.junit.jupiter.api.BeforeEach
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInfo
 import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.params.ParameterizedTest
@@ -113,7 +113,7 @@ internal class KotlinGradleDependenciesCompletionPerformanceTest : AbstractKotli
     input: String,
     expectedElements: List<String>,
     gradleVersion: GradleVersion,
-    testInfo: TestInfo
+    testInfo: TestInfo,
   ) {
     test(gradleVersion, COMPLETION_FIXTURE) {
       val file = writeTextAndCommit("build.gradle.kts", "dependencies { $input }")
@@ -151,7 +151,7 @@ internal class KotlinGradleDependenciesCompletionPerformanceTest : AbstractKotli
 
   private fun assertLookupIsValid(
     lookup: Array<out LookupElement>?,
-    expectedElements: List<String>
+    expectedElements: List<String>,
   ) {
     assertNotNull(lookup) {
       "Autocompletion was not expected ('fixture.complete(CompletionType.BASIC)' returned null)"
@@ -182,15 +182,15 @@ internal class KotlinGradleDependenciesCompletionPerformanceTest : AbstractKotli
         }
         withFile(
           "gradle/libs.versions.toml", """
-              [versions]
-              my-version = "1.0.0"
-              [plugins]
-              my-plugin = "my.plugin:1.0.0"
-              [libraries]
-              my-library-aaa = "com.example:my-library-aaa:1.0.0"
-              my-library-bbb = "com.example:my-library-bbb:1.0.0"
-              [bundles]
-              my-bundle-aaa = ["my-library-aaa", "my-library-bbb"]
+            [versions]
+            my-version = "1.0.0"
+            [plugins]
+            my-plugin = "my.plugin:1.0.0"
+            [libraries]
+            my-library-aaa = "com.example:my-library-aaa:1.0.0"
+            my-library-bbb = "com.example:my-library-bbb:1.0.0"
+            [bundles]
+            my-bundle-aaa = ["my-library-aaa", "my-library-bbb"]
           """.trimIndent()
         )
       }

@@ -12,7 +12,6 @@ import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.completion.LookupActionKeys.SUPPRESS_QUICK_DEFINITION
 import com.intellij.codeInsight.completion.LookupActionKeys.SUPPRESS_QUICK_DOCUMENTATION
 import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
-import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.gradle.completion.DependencyCompletionLoadingAdvertiser
@@ -30,17 +29,14 @@ import com.intellij.gradle.completion.GradleScriptDependencyCompletionPosition.O
 import com.intellij.gradle.completion.GradleScriptDependencyCompletionPosition.TOP_LEVEL
 import com.intellij.gradle.completion.GradleScriptDependencyCompletionPosition.VERSION
 import com.intellij.gradle.completion.getCompletionContext
-import com.intellij.gradle.completion.kotlin.insertHandler.KotlinGradleConfigurationInsertHandler
 import com.intellij.gradle.completion.icon
+import com.intellij.gradle.completion.kotlin.insertHandler.KotlinGradleConfigurationInsertHandler
 import com.intellij.gradle.completion.lookup.DependencyReturningMethodLookupProvider
 import com.intellij.gradle.completion.removeDummySuffix
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerCore.isDisabled
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingCancellable
-import com.intellij.platform.backend.workspace.workspaceModel
-import com.intellij.platform.workspace.jps.entities.FacetEntity
-import com.intellij.platform.workspace.storage.entities
 import com.intellij.psi.PsiElement
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionRequest
@@ -115,7 +111,7 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
 
       // implementation(pl<caret>) -> implementation(platform(<caret>))
       positionElement.isSingleDependencyArgumentWithoutQuotesAndDots() ->
-          result.addAllElements(DependencyReturningMethodLookupProvider.getElements())
+        result.addAllElements(DependencyReturningMethodLookupProvider.getElements())
     }
   }
 

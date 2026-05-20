@@ -18,25 +18,25 @@ import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
  */
 @ApiStatus.Internal
 internal object GradleVersionCatalogExpressionInsertHandler : InsertHandler<LookupElement> {
-    override fun handleInsert(context: InsertionContext, item: LookupElement) {
-        context.commitDocument()
-        val docManager = PsiDocumentManager.getInstance(context.project)
-        val psiFile = docManager.getPsiFile(context.document) ?: return
-        val element = psiFile.findElementAt(context.startOffset) ?: return
-        val wholeDotExpression = getTopmostDotQualifiedExpression(element) ?: return
-        val endOffset = wholeDotExpression.endOffset
-        context.document.replaceString(
-            context.startOffset,
-            endOffset,
-            item.lookupString
-        )
-    }
+  override fun handleInsert(context: InsertionContext, item: LookupElement) {
+    context.commitDocument()
+    val docManager = PsiDocumentManager.getInstance(context.project)
+    val psiFile = docManager.getPsiFile(context.document) ?: return
+    val element = psiFile.findElementAt(context.startOffset) ?: return
+    val wholeDotExpression = getTopmostDotQualifiedExpression(element) ?: return
+    val endOffset = wholeDotExpression.endOffset
+    context.document.replaceString(
+      context.startOffset,
+      endOffset,
+      item.lookupString
+    )
+  }
 }
 
 private fun getTopmostDotQualifiedExpression(element: PsiElement): KtDotQualifiedExpression? {
-    var result = element.parentOfType<KtDotQualifiedExpression>(withSelf = true) ?: return null
-    while (result.parent is KtDotQualifiedExpression) {
-        result = result.parent as KtDotQualifiedExpression
-    }
-    return result
+  var result = element.parentOfType<KtDotQualifiedExpression>(withSelf = true) ?: return null
+  while (result.parent is KtDotQualifiedExpression) {
+    result = result.parent as KtDotQualifiedExpression
+  }
+  return result
 }

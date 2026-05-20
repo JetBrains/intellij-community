@@ -17,29 +17,25 @@ object DependencyReturningMethodLookupProvider {
    */
   fun getElements(): List<LookupElement> {
     return listOf(
-      lookupForMethod("platform",         hasParameters = true),
+      lookupForMethod("platform", hasParameters = true),
       lookupForMethod("enforcedPlatform", hasParameters = true),
-      lookupForMethod("project",          hasParameters = true),
-      lookupForMethod("kotlin",           hasParameters = true),
-      lookupForMethod("embeddedKotlin",   hasParameters = true),
-      lookupForMethod("testFixtures",     hasParameters = true),
-      lookupForMethod("files",            hasParameters = true),
-      lookupForMethod("fileTree",         hasParameters = true),
-      lookupForMethod("variantOf",        hasParameters = true),
-      lookupForMethod("gradleApi",        hasParameters = false),
-      lookupForMethod("gradleTestKit",    hasParameters = false),
+      lookupForMethod("project", hasParameters = true),
+      lookupForMethod("kotlin", hasParameters = true),
+      lookupForMethod("embeddedKotlin", hasParameters = true),
+      lookupForMethod("testFixtures", hasParameters = true),
+      lookupForMethod("files", hasParameters = true),
+      lookupForMethod("fileTree", hasParameters = true),
+      lookupForMethod("variantOf", hasParameters = true),
+      lookupForMethod("gradleApi", hasParameters = false),
+      lookupForMethod("gradleTestKit", hasParameters = false),
     )
   }
 
   private fun lookupForMethod(name: String, hasParameters: Boolean): LookupElement {
-    val insertHandler = if (hasParameters)
-      ParenthesesInsertHandler.getInstance(true)
-    else
-      ParenthesesInsertHandler.getInstance(false)
+    val insertHandler = if (hasParameters) ParenthesesInsertHandler.getInstance(true)
+    else ParenthesesInsertHandler.getInstance(false)
 
-      return LookupElementBuilder.create(name)
-      .withInsertHandler(insertHandler)
-      .withIcon(IconManager.getInstance().getPlatformIcon(PlatformIcons.Method))
-      .withTypeText("Dependency returning method")
+    return LookupElementBuilder.create(name).withInsertHandler(insertHandler)
+      .withIcon(IconManager.getInstance().getPlatformIcon(PlatformIcons.Method)).withTypeText("Dependency returning method")
   }
 }

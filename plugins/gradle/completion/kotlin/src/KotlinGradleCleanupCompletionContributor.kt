@@ -18,65 +18,65 @@ import org.jetbrains.kotlin.idea.base.codeInsight.contributorClass as kotlinCont
 
 @ApiStatus.Internal
 class KotlinGradleCleanupCompletionContributor : CompletionContributor() {
-    init {
-        extend(CompletionType.BASIC, insideScriptBlockPattern(DEPENDENCIES), RemainingCompletionContributorsFilterer())
-    }
+  init {
+    extend(CompletionType.BASIC, insideScriptBlockPattern(DEPENDENCIES), RemainingCompletionContributorsFilterer())
+  }
 }
 
 private class RemainingCompletionContributorsFilterer : CompletionProvider<CompletionParameters>() {
-    override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
-        if (!isGradleDependenciesCompletionEnabled(parameters)) return
-        // don't ignore other contributors in cases when Gradle completion doesn't suggest anything
-        if (!isCaseCoveredByGradleCompletion(parameters.position)) return
+  override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
+    if (!isGradleDependenciesCompletionEnabled(parameters)) return
+    // don't ignore other contributors in cases when Gradle completion doesn't suggest anything
+    if (!isCaseCoveredByGradleCompletion(parameters.position)) return
 
-        if (parameters.invocationCount >= 2) return
-        // Hide ignored contributors for autocompletion (0 invocations) and first-time invoked completion
+    if (parameters.invocationCount >= 2) return
+    // Hide ignored contributors for autocompletion (0 invocations) and first-time invoked completion
 
-        val sortedResult = prioritizeGradleCompletion(result)
-        sortedResult.runRemainingContributors(parameters) { otherResult ->
-            if (isContributorIgnored(otherResult)) return@runRemainingContributors
-            sortedResult.passResult(otherResult)
-        }
+    val sortedResult = prioritizeGradleCompletion(result)
+    sortedResult.runRemainingContributors(parameters) { otherResult ->
+      if (isContributorIgnored(otherResult)) return@runRemainingContributors
+      sortedResult.passResult(otherResult)
     }
+  }
 
-    private fun isCaseCoveredByGradleCompletion(element: PsiElement): Boolean {
-        return element.isOnTheTopLevelOfScriptBlock(DEPENDENCIES)
-                || element.isDependencyArgumentInsideQuotes()
-                || element.isDependencyArgumentWithoutQuotes()
-                || element.isExcludeArgument()
-    }
+  private fun isCaseCoveredByGradleCompletion(element: PsiElement): Boolean {
+    return element.isOnTheTopLevelOfScriptBlock(DEPENDENCIES)
+           || element.isDependencyArgumentInsideQuotes()
+           || element.isDependencyArgumentWithoutQuotes()
+           || element.isExcludeArgument()
+  }
 }
 
 private fun prioritizeGradleCompletion(result: CompletionResultSet): CompletionResultSet {
-    val weigher = object : LookupElementWeigher("gradle.completion") {
-        override fun weigh(element: LookupElement): Comparable<Int> {
-            val clazz = getContributorClass(element)
-            if (clazz != KotlinGradleScriptCompletionContributor::class.java) {
-                return Int.MAX_VALUE // put on bottom results from non-Gradle contributors
-            }
-            return 0
-        }
+  val weigher = object : LookupElementWeigher("gradle.completion") {
+    override fun weigh(element: LookupElement): Comparable<Int> {
+      val clazz = getContributorClass(element)
+      if (clazz != KotlinGradleScriptCompletionContributor::class.java) {
+        return Int.MAX_VALUE // put on bottom results from non-Gradle contributors
+      }
+      return 0
     }
-    return result.withRelevanceSorter(CompletionSorter.emptySorter().weigh(weigher))
+  }
+  return result.withRelevanceSorter(CompletionSorter.emptySorter().weigh(weigher))
 }
 
 private fun isContributorIgnored(otherResult: CompletionResult): Boolean {
-    val contributorClass = getContributorClass(otherResult.lookupElement) ?: return false
-    return contributorClass.name in ignoredContributors
-            || isProducedByK2Contributor(otherResult.lookupElement)
+  val contributorClass = getContributorClass(otherResult.lookupElement) ?: return false
+  return contributorClass.name in ignoredContributors
+         || isProducedByK2Contributor(otherResult.lookupElement)
 }
 
 private fun isProducedByK2Contributor(lookupElement: LookupElement): Boolean {
-    val contributorClass = lookupElement.kotlinContributorClass ?: return false
-    return generateSequence(contributorClass) { it.superclass }
-        .any { it.name == "org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionContributor" }
+  val contributorClass = lookupElement.kotlinContributorClass ?: return false
+  return generateSequence(contributorClass) { it.superclass }
+    .any { it.name == "org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionContributor" }
 }
 
 private val ignoredContributors = setOf(
-    "com.intellij.codeInsight.completion.LegacyCompletionContributor",          // `java`, `javax`, `jdk`, `META-INF`, etc.
-    "com.intellij.lang.properties.references.PropertiesCompletionContributor",  // properties from */src/main/resources/*.properties file
-    "com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor", // interface, ifn, fun, etc.
+  "com.intellij.codeInsight.completion.LegacyCompletionContributor",          // `java`, `javax`, `jdk`, `META-INF`, etc.
+  "com.intellij.lang.properties.references.PropertiesCompletionContributor",  // properties from */src/main/resources/*.properties file
+  "com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor", // interface, ifn, fun, etc.
 )
 
 private fun getContributorClass(lookupElement: LookupElement): Class<CompletionContributor>? =
-    lookupElement.getUserData(LOOKUP_ELEMENT_CONTRIBUTOR)?.javaClass
+  lookupElement.getUserData(LOOKUP_ELEMENT_CONTRIBUTOR)?.javaClass
