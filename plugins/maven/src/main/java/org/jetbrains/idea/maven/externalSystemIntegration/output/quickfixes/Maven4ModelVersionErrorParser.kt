@@ -11,7 +11,7 @@ import com.intellij.build.output.BuildOutputInstantReader
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.Cancellation.checkCancelled
@@ -276,16 +276,16 @@ class UpdateVersionQuickFix(val path: Path) : BuildIssueQuickFix {
         for (file in filesToUpdate) {
           checkCancelled()
           reporter.text(MavenProjectBundle.message("maven.project.updating.model.updatingFiles", file.parent.name))
-          writeAction {
-            if (!file.isValid()) return@writeAction
+          edtWriteAction {
+            if (!file.isValid()) return@edtWriteAction
             file.refresh(false, false)
             val psiFile = PsiManager.getInstance(project).findFile(file)
-            if (psiFile == null) return@writeAction
-            if (psiFile !is XmlFile) return@writeAction
+            if (psiFile == null) return@edtWriteAction
+            if (psiFile !is XmlFile) return@edtWriteAction
             val documentManager = PsiDocumentManager.getInstance(project)
-            val document = documentManager.getDocument(psiFile) ?: return@writeAction
+            val document = documentManager.getDocument(psiFile) ?: return@edtWriteAction
 
-            val model = MavenDomUtil.getMavenDomModel(psiFile, MavenDomProjectModel::class.java) ?: return@writeAction
+            val model = MavenDomUtil.getMavenDomModel(psiFile, MavenDomProjectModel::class.java) ?: return@edtWriteAction
             val modelVersion = model.modelVersion
             executeCommand(project, MavenProjectBundle.message("maven.project.updating.model.command.name")) {
               if (modelVersion.exists()) {

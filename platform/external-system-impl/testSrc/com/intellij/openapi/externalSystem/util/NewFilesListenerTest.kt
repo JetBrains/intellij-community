@@ -2,7 +2,7 @@
 package com.intellij.openapi.externalSystem.util
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.externalSystem.autoimport.changes.NewFilesListener
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.writeText
@@ -38,7 +38,7 @@ internal class NewFilesListenerTest {
     val canonicalFileNames = (0..100).map { "$it.txt" }
     for (fileName in canonicalFileNames) {
       val f = VfsTestUtil.createFile(dir, fileName)
-      writeAction {
+      edtWriteAction {
         f.writeText("hello")
       }
     }

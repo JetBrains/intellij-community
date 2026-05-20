@@ -2,7 +2,7 @@
 package com.intellij.openapi.externalSystem.service.project.manage
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.externalSystem.ExternalSystemManager
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
 import com.intellij.openapi.externalSystem.model.DataNode
@@ -58,7 +58,7 @@ abstract class ExternalSystemModuleDataServiceTestCase {
     val modelsProvider = IdeModifiableModelsProviderImpl(project)
     disposable.whenDisposed {
       runBlocking {
-        writeAction {
+        edtWriteAction {
           modelsProvider.dispose()
         }
       }

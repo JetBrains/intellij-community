@@ -5,7 +5,7 @@ import com.intellij.build.SyncViewManager
 import com.intellij.build.events.BuildEvent
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -89,7 +89,7 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
   fun `test maven sync with old JDK`() = runBlocking {
     assumeMaven4()
     val sdk = createTestSdk11()
-    writeAction {
+    edtWriteAction {
       ProjectJdkTable.getInstance(project).addJdk(sdk, testRootDisposable)
       ProjectRootManager.getInstance(project).setProjectSdk(sdk);
     }
@@ -100,7 +100,7 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
       assertEvent { it.message.contains("Maven JDK Version for Importer Is Too Low") }
     }
     finally {
-      writeAction {
+      edtWriteAction {
         ProjectJdkTable.getInstance(project).removeJdk(sdk)
         ProjectRootManager.getInstance(project).setProjectSdk(null)
       }
@@ -113,7 +113,7 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
     val sdkModificator = sdk.sdkModificator
     sdkModificator.homePath = "jdk11-home-path"
     sdkModificator.versionString = "11"
-    writeAction { sdkModificator.commitChanges() }
+    edtWriteAction { sdkModificator.commitChanges() }
     return sdk
   }
 

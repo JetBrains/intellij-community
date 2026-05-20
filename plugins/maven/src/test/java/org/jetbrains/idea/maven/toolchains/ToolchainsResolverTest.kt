@@ -2,7 +2,7 @@
 package org.jetbrains.idea.maven.toolchains
 
 import com.intellij.maven.testFramework.MavenTestCase
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import kotlinx.coroutines.runBlocking
@@ -56,7 +56,7 @@ internal class ToolchainsResolverTest : MavenTestCase() {
     }
     finally {
       if (jdk != null) {
-        writeAction {
+        edtWriteAction {
           SdkConfigurationUtil.removeSdk(jdk)
         }
       }
