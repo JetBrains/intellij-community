@@ -56,8 +56,6 @@ import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.isDirectory
-import kotlin.io.path.isExecutable
-import kotlin.io.path.isRegularFile
 
 @OptIn(EelDelicateApi::class)
 @ApiStatus.Internal
@@ -387,7 +385,7 @@ private suspend fun findExeFilesInPath(binaryName: String, logger: Logger): List
       if (SystemInfo.isWindows) {
         pathsToProbe.addAll(PathEnvironmentVariableUtil.getWindowsExecutableFileExtensions().map { ext -> Path(binaryName + ext) })
       }
-      pathsToProbe.filter { exeFile -> exeFile.isRegularFile() && exeFile.isExecutable() }
+      pathsToProbe.filter { exeFile -> exeFile.canBeExecuted() }
     }
   }
   else {
@@ -402,7 +400,7 @@ private suspend fun findExeFilesInPath(binaryName: String, logger: Logger): List
         if (dir.isAbsolute && dir.isDirectory()) {
           for (name in names) {
             val exeFile = dir.resolve(name)
-            if (exeFile.isRegularFile() && exeFile.isExecutable()) {
+            if (exeFile.canBeExecuted()) {
               collector.add(exeFile)
             }
           }
@@ -411,6 +409,16 @@ private suspend fun findExeFilesInPath(binaryName: String, logger: Logger): List
     }
   }
   return@withContext result.map { EelPath.parse(it.absolutePathString(), LocalEelDescriptor) }
+}
+
+/**
+ * @return true if this file can be specified as executable when spawning a process
+ */
+private fun Path.canBeExecuted(): Boolean {
+  if (!Files.isExecutable(this)) return false
+  // On Windows and Unix, directories pass the isExecutable check.
+  // Files.isRegularFile is not used because it returns false for Windows reparse points.
+  return !Files.isDirectory(this)
 }
 
 private fun toPath(pathStr: String, log: Logger): Path? =
