@@ -71,6 +71,7 @@ import com.jetbrains.python.psi.types.PyNarrowedType;
 import com.jetbrains.python.psi.types.PyOverloadType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
+import com.jetbrains.python.psi.types.PyTypeParameterType;
 import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.PyUnsafeUnionType;
@@ -448,6 +449,12 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         if (result != null) {
           return result;
         }
+      }
+    }
+    else if (qualifierType instanceof PyTypeParameterType typeParameterType) {
+      final PyType effectiveBound = typeParameterType.getEffectiveBound();
+      if (effectiveBound != null && effectiveBound != qualifierType) {
+        return getTypeOfProperty(effectiveBound, name, context);
       }
     }
 
