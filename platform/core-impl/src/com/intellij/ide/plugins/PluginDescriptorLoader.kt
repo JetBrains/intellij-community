@@ -235,7 +235,9 @@ fun loadPluginSubDescriptors(
     if (module.descriptorContent == null) {
       val jarFile = moduleDir?.resolve("${module.moduleId.name}.jar")
       if (jarFile != null && Files.exists(jarFile)) {
-        val subRaw = loadModuleFromSeparateJar(pool = pool, jarFile = jarFile, subDescriptorFile = subDescriptorFile, loadingContext = loadingContext)
+        val subRaw = loadModuleFromSeparateJar(pool = pool, jarFile = jarFile, subDescriptorFile = subDescriptorFile,pathResolver = pathResolver,
+                                               loadingContext = loadingContext,
+                                               dataLoader = dataLoader)
         val subDescriptor = descriptor.createContentModule(subRaw, subDescriptorFile, module)
         subDescriptor.ownClassPath = Collections.singletonList(jarFile)
         module.assignDescriptor(subDescriptor)
@@ -781,7 +783,9 @@ private fun loadPluginDescriptor(
       if (input == null) {
         val jarFile = pluginDir.resolve("lib/${if (module.defaultLoadingRule == ModuleLoadingRule.EMBEDDED) "" else "modules/"}${module.moduleId.name}.jar")
         classPath = Collections.singletonList(jarFile)
-        subRaw = loadModuleFromSeparateJar(pool = zipPool, jarFile = jarFile, subDescriptorFile = subDescriptorFile, loadingContext = loadingContext)
+        subRaw = loadModuleFromSeparateJar(pool = zipPool, jarFile = jarFile, subDescriptorFile = subDescriptorFile,pathResolver = pluginPathResolver,
+                                           loadingContext = loadingContext,
+                                           dataLoader = dataLoader)
       }
       else {
         subRaw = PluginDescriptorFromXmlStreamConsumer(loadingContext.readContext, createXIncludeLoader(pluginPathResolver, dataLoader)).let {
@@ -871,13 +875,14 @@ private fun loadModuleFromSeparateJar(
   pool: ZipEntryResolverPool,
   jarFile: Path,
   subDescriptorFile: String,
+  pathResolver: PathResolver,
   loadingContext: PluginDescriptorLoadingContext,
+  dataLoader: DataLoader,
 ): PluginDescriptorBuilder {
   val resolver = pool.load(jarFile)
   try {
     val input = resolver.loadZipEntry(subDescriptorFile) ?: throw IllegalStateException("Module descriptor $subDescriptorFile not found in $jarFile")
-    // product module is always fully resolved and do not contain `xi:include`
-    return PluginDescriptorFromXmlStreamConsumer(loadingContext.readContext, null).let {
+    return PluginDescriptorFromXmlStreamConsumer(loadingContext.readContext, createXIncludeLoader(pathResolver, dataLoader)).let {
       it.consume(input, jarFile.toString())
       it.getBuilder()
     }
