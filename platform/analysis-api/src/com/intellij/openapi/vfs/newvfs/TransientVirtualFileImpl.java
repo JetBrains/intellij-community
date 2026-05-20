@@ -170,14 +170,6 @@ public final class TransientVirtualFileImpl extends VirtualFile implements Cache
 
   @Override
   public VirtualFile[] getChildren() {
-    if (OS.CURRENT == OS.Windows && fileSystem instanceof BatchingFileSystem bfs) {
-      return bfs.listWithAttributesWindows(this).entrySet().stream()
-        .map(entry -> {
-          final var childName = entry.getKey();
-          final var attributes = entry.getValue();
-          return new TransientVirtualFileImpl(childName, path + '/' + childName, fileSystem, this, attributes);
-        }).toArray(VirtualFile[]::new);
-    }
     //MAYBE RC: cache children once calculated?
     String[] childNames = fileSystem.list(this);
     return Arrays.stream(childNames)

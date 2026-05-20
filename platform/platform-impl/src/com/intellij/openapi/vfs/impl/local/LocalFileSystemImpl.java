@@ -410,6 +410,13 @@ public class LocalFileSystemImpl
     if (!dir.isDirectory()) {
       return ArrayUtil.EMPTY_STRING_ARRAY;
     }
+    if (OS.CURRENT == OS.Windows) {
+      try (final var dirStream = new WindowsBufferedDirectoryStream(Path.of(toIoPath(dir)))) {
+        return StreamSupport.stream(dirStream.spliterator(), false)
+          .map(it -> it.getFirst().getFileName().toString())
+          .toArray(String[]::new);
+      }
+    }
     try (var dirStream = Files.newDirectoryStream(Path.of(toIoPath(dir)))) {
       return StreamSupport.stream(dirStream.spliterator(), false)
         .map(it -> it.getFileName().toString())
@@ -426,29 +433,6 @@ public class LocalFileSystemImpl
       return Collections.emptyMap();
     }
     return myChildrenAttrGetter.accessDiskWithCheckCanceled(new Pair<>(dir, childrenNames));
-  }
-
-  @Override
-  public @NotNull Map<@NotNull String, @NotNull FileAttributes> listWithAttributesWindows(@NotNull VirtualFile dir) {
-    return listWithAttributesImplWindows(dir.toNioPath());
-  }
-
-  public static Map<String, FileAttributes> listWithAttributesImplWindows(@NotNull Path dir) {
-    if (OS.CURRENT != OS.Windows || !Files.isDirectory(dir)) return HashMap.newHashMap(0);
-    try (final WindowsBufferedDirectoryStream stream = new WindowsBufferedDirectoryStream(dir)) {
-      final int expectedSize = 10;
-      final Map<String, FileAttributes> childrenWithAttributes = createFilePathMap(expectedSize, true);
-
-      for (final Pair<Path, BasicFileAttributes> pathAndAttr : stream) {
-        final var path = pathAndAttr.getFirst();
-        final var basicAttrs = pathAndAttr.getSecond();
-
-        final var attributes = amendAttributes(path, FileAttributes.fromNio(path, basicAttrs));
-        childrenWithAttributes.put(path.getFileName().toString(), attributes);
-      }
-
-      return childrenWithAttributes;
-    }
   }
 
   protected static Map<String, FileAttributes> listWithAttributesImpl(@NotNull Path dir, @Nullable Set<String> filter) {

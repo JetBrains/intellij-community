@@ -2,7 +2,9 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.NioFiles;
+import com.intellij.openapi.vfs.impl.local.windows.WindowsBufferedDirectoryStream;
 import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2.FetchAttributesFilter;
+import com.intellij.util.system.OS;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,6 +47,20 @@ public final class PlatformNioHelper {
     @NotNull BiPredicate<Path, Result<BasicFileAttributes>> consumer
   ) throws IOException, SecurityException {
     if (filter != null && filter.isEmpty()) return;  // nothing to read
+
+    if (OS.CURRENT == OS.Windows) {
+      try (final var dirStream = new WindowsBufferedDirectoryStream(directory)) {
+        for (final var pathAttrs : dirStream) {
+          final var path = pathAttrs.getFirst();
+          final var attrs = pathAttrs.getSecond();
+
+          if (!consumer.test(path, new Result<>(attrs))) {
+            break;
+          }
+        }
+      }
+      return;
+    }
 
     try (var dirStream = directory.getFileSystem().provider().newDirectoryStream(directory, FetchAttributesFilter.ACCEPT_ALL)) {
       for (var path : dirStream) {
