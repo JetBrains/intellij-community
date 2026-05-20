@@ -317,7 +317,7 @@ internal object ChangeTypeQuickFixFactories {
         KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.NullForNonnullType ->
             val returnExpr = diagnostic.psi.parentOfType<KtReturnExpression>()
                 ?: return@ModCommandBased emptyList()
-            val declaration = analyze(returnExpr) { returnExpr.resolveSymbol()?.psi as? KtCallableDeclaration }
+            val declaration = returnExpr.resolveSymbol()?.psi as? KtCallableDeclaration
                 ?: return@ModCommandBased emptyList()
 
             val withNullability = diagnostic.expectedType.withNullability(true)
