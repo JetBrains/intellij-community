@@ -69,16 +69,16 @@ public final class FilePosition {
     this(file.toPath(), startLine, startColumn, endLine, endColumn);
   }
 
-  public @Nullable Path getFilePath() {
+  public @Nullable Path getPath() {
     return myFile;
   }
 
   /**
-   * @deprecated Use {@link getFilePath}.
+   * @deprecated Use {@link getPath}.
    */
   @Deprecated(since = "2026.2", forRemoval = true)
   public @Nullable File getFile() {
-    return getFilePath().toFile();
+    return getPath().toFile();
   }
 
   public int getStartLine() {

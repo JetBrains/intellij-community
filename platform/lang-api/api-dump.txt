@@ -14,7 +14,7 @@ com.intellij.build.BuildProgressListener
 f:com.intellij.build.FilePosition
 - <init>(java.nio.file.Path,I,I):V
 - <init>(java.nio.file.Path,I,I,I,I):V
-- getFilePath():java.nio.file.Path
+- getPath():java.nio.file.Path
 com.intellij.build.ViewManager
 - a:isBuildContentView():Z
 - a:isConsoleEnabledByDefault():Z
