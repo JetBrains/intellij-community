@@ -96,6 +96,9 @@
 - name: lib/maven-server.jar
   modules:
   - name: intellij.maven.server
+- name: lib/modules/intellij.maven.completion.ex.jar
+  contentModules:
+  - name: intellij.maven.completion.ex
 - name: lib/modules/intellij.maven.completion.jar
   contentModules:
   - name: intellij.maven.completion
