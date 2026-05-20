@@ -23,6 +23,7 @@ import org.jetbrains.intellij.build.impl.PluginLayout
 val DEFAULT_BUNDLED_PLUGINS: PersistentList<String> = persistentListOf(
   "intellij.dev",
   "intellij.jcef.plugin",
+  "intellij.moduleSet.plugin.acp",
   "intellij.moduleSet.plugin.grid.core",
   "intellij.moduleSet.plugin.recentFiles",
   "intellij.moduleSet.plugin.structuralSearch",
