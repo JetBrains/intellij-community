@@ -186,7 +186,7 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
 
       @Override
       public void extensionRemoved(@NotNull TreeStructureProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
-        rebuildCompletely(true);
+        rebuildCompletely(false);
       }
     }, this);
     CompoundProjectViewNodeDecorator.EP.addExtensionPointListener(project, new ExtensionPointListener<>() {
@@ -197,7 +197,7 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
 
       @Override
       public void extensionRemoved(@NotNull ProjectViewNodeDecorator extension, @NotNull PluginDescriptor pluginDescriptor) {
-        rebuildCompletely(true);
+        rebuildCompletely(false);
       }
     }, this);
   }
