@@ -810,5 +810,16 @@
             key="convert.to.comparisons"
             language="kotlin"
     />
+    <localInspection
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.DuplicateArgumentsInSetOfAndMapOfFunctionsInspection"
+            groupPath="Kotlin"
+            groupBundle="messages.KotlinBundle"
+            groupKey="group.names.probable.bugs"
+            enabledByDefault="true"
+            level="WARNING"
+            language="kotlin"
+            bundle="messages.KotlinBundle"
+            key="inspection.duplicate.arguments.in.setof.mapof.functions.display.name"
+    />
   </extensions>
 </idea-plugin>

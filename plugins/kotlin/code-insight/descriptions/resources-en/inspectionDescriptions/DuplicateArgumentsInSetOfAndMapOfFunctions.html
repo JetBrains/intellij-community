@@ -1,0 +1,82 @@
+<!-- Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<html>
+<body>
+Reports duplicate constant elements in set-like collection factory functions and duplicate constant keys in map-like collection factory functions.
+<p>
+    Duplicate entries in collection factory functions are usually unintended and may indicate a bug or typo.
+    In set-like functions, duplicate elements are ignored because sets contain unique elements only.
+    In map-like functions, duplicate keys overwrite previous values, and only the last value associated with the key is retained.
+</p>
+
+<p>
+    The inspection applies to the following map-like functions:
+</p>
+<ul>
+    <li><code>mapOf()</code></li>
+    <li><code>mutableMapOf()</code></li>
+    <li><code>hashMapOf()</code></li>
+    <li><code>linkedMapOf()</code></li>
+    <li><code>sortedMapOf()</code></li>
+</ul>
+
+<p>
+    The inspection applies to the following set-like functions:
+</p>
+<ul>
+    <li><code>setOf()</code></li>
+    <li><code>mutableSetOf()</code></li>
+    <li><code>hashSetOf()</code></li>
+    <li><code>linkedSetOf()</code></li>
+    <li><code>sortedSetOf()</code></li>
+</ul>
+
+<p>
+    The inspection reports duplicates for compile-time constant values such as:
+</p>
+<ul>
+    <li><code>String</code></li>
+    <li><code>Char</code></li>
+    <li>Numeric types (<code>Int</code>, <code>Long</code>, <code>Short</code>, <code>Byte</code>, <code>Float</code>, <code>Double</code>)</li>
+    <li><code>const val</code> references</li>
+</ul>
+
+<p><b>Examples:</b></p>
+
+<pre><code>
+val numbers = setOf(1, 1, 2)
+</code></pre>
+
+<p>
+    The second <code>1</code> is redundant because sets cannot contain duplicate elements.
+</p>
+
+<pre><code>
+val mapping = mapOf(
+    1 to "first",
+    1 to "second",
+)
+</code></pre>
+
+<p>
+    The second entry overwrites the first one because map keys must be unique.
+</p>
+
+<p><b>Example with <code>const val</code>:</b></p>
+
+<pre><code>
+const val ID = 42
+
+val ids = setOf(ID, 42)
+</code></pre>
+
+<p>
+    Both arguments resolve to the same constant value.
+</p>
+
+<p>
+    The quick-fix suggests removing redundant entries or duplicate keys.
+</p>
+
+<!-- tooltip end -->
+</body>
+</html>

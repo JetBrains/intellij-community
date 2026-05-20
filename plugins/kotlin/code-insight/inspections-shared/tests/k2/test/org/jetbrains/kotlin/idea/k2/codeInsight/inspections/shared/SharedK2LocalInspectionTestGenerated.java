@@ -2392,6 +2392,45 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal/duplicateArgumentsInSetOfAndMapOfFunctions")
+    public static class DuplicateArgumentsInSetOfAndMapOfFunctions extends AbstractSharedK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("duplicatesInMapOf.kt")
+        public void testDuplicatesInMapOf() throws Exception {
+            runTest("../testData/inspectionsLocal/duplicateArgumentsInSetOfAndMapOfFunctions/duplicatesInMapOf.kt");
+        }
+
+        @TestMetadata("duplicatesInSetOf.kt")
+        public void testDuplicatesInSetOf() throws Exception {
+            runTest("../testData/inspectionsLocal/duplicateArgumentsInSetOfAndMapOfFunctions/duplicatesInSetOf.kt");
+        }
+
+        @TestMetadata("duplicatesInSetOfNulls.kt")
+        public void testDuplicatesInSetOfNulls() throws Exception {
+            runTest("../testData/inspectionsLocal/duplicateArgumentsInSetOfAndMapOfFunctions/duplicatesInSetOfNulls.kt");
+        }
+
+        @TestMetadata("noDuplicatesInMapOf.kt")
+        public void testNoDuplicatesInMapOf() throws Exception {
+            runTest("../testData/inspectionsLocal/duplicateArgumentsInSetOfAndMapOfFunctions/noDuplicatesInMapOf.kt");
+        }
+
+        @TestMetadata("noDuplicatesInSetOf.kt")
+        public void testNoDuplicatesInSetOf() throws Exception {
+            runTest("../testData/inspectionsLocal/duplicateArgumentsInSetOfAndMapOfFunctions/noDuplicatesInSetOf.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/filterIsInstanceCallWithClassLiteralArgument")
     public static class FilterIsInstanceCallWithClassLiteralArgument extends AbstractSharedK2LocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {
