@@ -250,6 +250,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     DefaultDebugEnvironment debugEnvironment =
       new DefaultDebugEnvironment(myExecutionEnvironment, myRunnableState, debugParameters, false);
     myDebuggerSession = DebuggerManagerEx.getInstanceEx(myProject).attachVirtualMachine(debugEnvironment);
+    assertNotNull("Failed to attach debugger session", myDebuggerSession);
 
     ApplicationManager.getApplication().invokeAndWait(() -> {
       try {
@@ -277,7 +278,6 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       }
     });
 
-    assertNotNull(myDebuggerSession);
     assertNotNull(myDebugProcess);
 
     return myDebuggerSession;
