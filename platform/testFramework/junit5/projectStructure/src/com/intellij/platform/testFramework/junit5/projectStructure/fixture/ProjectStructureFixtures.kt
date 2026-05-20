@@ -4,7 +4,6 @@ package com.intellij.platform.testFramework.junit5.projectStructure.fixture
 import com.intellij.codeInsight.multiverse.MultiverseTestEnabler
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.application.edtWriteAction
-import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
@@ -81,11 +80,11 @@ private fun TestFixture<Project>.sdkFixtureImpl(sdkProvider: suspend TestFixture
     val project = this@sdkFixtureImpl.init()
     val projectJDKTable = ProjectJdkTable.getInstance(project)
     val sdk = sdkProvider(projectJDKTable)
-    writeAction {
+    edtWriteAction {
       projectJDKTable.addJdk(sdk)
     }
     initialized(sdk) {
-      writeAction {
+      edtWriteAction {
         ProjectJdkTable.getInstance(project).removeJdk(sdk)
       }
     }

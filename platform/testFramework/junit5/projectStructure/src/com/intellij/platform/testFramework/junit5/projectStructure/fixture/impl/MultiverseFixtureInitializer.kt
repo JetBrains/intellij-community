@@ -2,7 +2,7 @@
 package com.intellij.platform.testFramework.junit5.projectStructure.fixture.impl
 
 import com.intellij.ide.impl.OpenProjectTask
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -69,7 +69,7 @@ internal class MultiverseFixtureInitializer(
     module.usedSdk?.let { usedSdk ->
       val sdk = structure.getSdk(usedSdk) ?: error("SDK '$usedSdk' isn't found")
       val sdkInstance = findSdk(sdk).init()
-      writeAction {
+      edtWriteAction {
         val model = ModuleRootManager.getInstance(moduleInstance).modifiableModel
         model.sdk = sdkInstance
         model.commit()
@@ -80,7 +80,7 @@ internal class MultiverseFixtureInitializer(
       val dependencyModuleName = dependency.moduleName
       val dependencyModuleFixture = structure.findModuleFixture(dependencyModuleName) ?: error("Module '$dependencyModuleName' isn't found")
       val dependencyModuleInstance = dependencyModuleFixture.init()
-      writeAction {
+      edtWriteAction {
         val model = ModuleRootManager.getInstance(moduleInstance).modifiableModel
         model.addModuleOrderEntry(dependencyModuleInstance)
         model.commit()

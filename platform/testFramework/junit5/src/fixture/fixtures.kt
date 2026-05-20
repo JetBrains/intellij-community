@@ -11,7 +11,6 @@ import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceAsync
@@ -393,7 +392,7 @@ fun TestFixture<PsiFile>.editorFixture(): TestFixture<Editor> = testFixture { _ 
   val file = psiFile.virtualFile
   val editor = withContext(Dispatchers.UiWithModelAccess) {
     val fileEditorManager = project.serviceAsync<FileEditorManager>()
-    writeAction {
+    edtWriteAction {
       val editor = fileEditorManager.openTextEditor(OpenFileDescriptor(project, file), true)
       requireNotNull(editor)
 
@@ -408,7 +407,7 @@ fun TestFixture<PsiFile>.editorFixture(): TestFixture<Editor> = testFixture { _ 
   initialized(editor) {
     withContext(Dispatchers.UiWithModelAccess) {
       val fileEditorManager = project.serviceAsync<FileEditorManager>()
-      writeAction {
+      edtWriteAction {
         fileEditorManager.closeFile(file)
       }
     }
@@ -455,7 +454,7 @@ fun TestFixture<Project>.fileEditorManagerFixture(initDockableContentFactory: Bo
       {
         runBlocking {
           withContext(Dispatchers.UiWithModelAccess) {
-            writeAction {
+            edtWriteAction {
               manager.closeAllFiles()
             }
           }
