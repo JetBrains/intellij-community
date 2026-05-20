@@ -47,7 +47,7 @@ public final class ConstrainedTaskExecutor implements Executor {
     final AsyncPromise<T> promise = new AsyncPromise<>();
     if (myExpiration != null) {
       final Expiration.Handle expirationHandle = myExpiration.invokeOnExpiration(promise::cancel);
-      promise.onProcessed(value -> expirationHandle.unregisterHandler());
+      promise.onProcessed(_ -> expirationHandle.unregisterHandler());
     }
 
     final BooleanSupplier condition = () -> {

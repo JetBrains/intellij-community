@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  * @see ContextMenuPopupHandler default implementation
  */
 public interface EditorPopupHandler {
-  EditorPopupHandler NONE = event -> true;
+  EditorPopupHandler NONE = _ -> true;
 
   /**
    * This method is called when a popup trigger mouse event is received by editor's main area.
