@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
  * contexts such as {@code ModCommand} actions and the LSP language server, where
  * showing a dialog is not possible.
  */
-interface FieldHelper {
+sealed interface FieldHelper permits IntroduceFieldHelper, IntroduceConstantHelper {
   /**
    * Decides whether this helper is applicable to the given element.
    *
