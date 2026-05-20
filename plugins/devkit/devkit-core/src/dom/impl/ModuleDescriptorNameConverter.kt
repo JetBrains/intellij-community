@@ -53,11 +53,12 @@ class ModuleDescriptorNameConverter : ResolvingConverter<IdeaPlugin>() {
   }
 
   override fun fromString(s: String?, context: ConvertContext): IdeaPlugin? {
-    if (s == null || s.isEmpty()) return null
+    if (s.isNullOrEmpty()) return null
     val moduleManager = ModuleManager.getInstance(context.project)
     val (jpsModuleName, descriptorFileName) = getJpsModuleNameAndDescriptorFileName(s)
     return findDescriptorInModuleSources(jpsModuleName, descriptorFileName, moduleManager)
            ?: findDescriptorFileInGradleSubProjectContent(moduleManager, jpsModuleName, descriptorFileName)
+           ?: findDescriptorInAllGradleModuleResources(moduleManager, descriptorFileName)
            ?: findDescriptorInModuleLibraries(context, descriptorFileName)
   }
 
@@ -132,9 +133,8 @@ class ModuleDescriptorNameConverter : ResolvingConverter<IdeaPlugin>() {
       // plugin Gradle projects:
       if (moduleName.endsWith(GRADLE_MAIN_MODULE_SUFFIX)) {
         for (resourceRoot in ModuleRootManager.getInstance(module).getSourceRoots(JavaResourceRootType.RESOURCE)) {
-          val pluginModuleName = moduleName.removeSuffix(GRADLE_MAIN_MODULE_SUFFIX)
           resourceRoot.children
-            .filter { it.extension == "xml" && it.name.startsWith(pluginModuleName) }
+            .filter { it.extension == "xml" }
             .mapNotNull { findIdeaPlugin(resourceRoot, it.name, project)?.apply { putUserData(CONTEXT, ModuleContext.SOURCES_GRADLE) } }
             .forEach { variants.add(it) }
         }
@@ -154,16 +154,28 @@ class ModuleDescriptorNameConverter : ResolvingConverter<IdeaPlugin>() {
   private fun getDisplayName(plugin: IdeaPlugin): String {
     val context = plugin.getUserData(CONTEXT) ?: ModuleContext.SOURCES
     val descriptorFile = DomUtil.getFile(plugin).virtualFile
+    val pluginModuleName = descriptorFile.nameWithoutExtension
     val jpsModuleName = when (context) {
       ModuleContext.SOURCES -> plugin.module!!.name
-      ModuleContext.SOURCES_GRADLE -> plugin.module!!.name.removeSuffix(GRADLE_MAIN_MODULE_SUFFIX)
+      ModuleContext.SOURCES_GRADLE -> normalizeName(plugin.module!!.name, pluginModuleName)
       ModuleContext.LIBRARY -> descriptorFile.parent!!.nameWithoutExtension
     }
-    val pluginModuleName = descriptorFile.nameWithoutExtension
     if (jpsModuleName == pluginModuleName) {
       return pluginModuleName
     }
     return jpsModuleName + SUB_DESCRIPTOR_DELIMITER + pluginModuleName.substringAfterLast(SUB_DESCRIPTOR_FILENAME_DELIMITER)
+  }
+
+  private fun normalizeName(moduleName: String, pluginModuleName: String): String {
+    val rawName = moduleName.removeSuffix(GRADLE_MAIN_MODULE_SUFFIX)
+    return when {
+        pluginModuleName.startsWith(rawName) -> rawName
+        else -> {
+            val unescaped = rawName.replace('_', '.')
+            if (pluginModuleName.startsWith(unescaped)) unescaped
+            else rawName
+        }
+    }
   }
 
   private fun findDescriptorFileInModuleSources(module: Module, fileName: String): IdeaPlugin? {
@@ -186,6 +198,17 @@ class ModuleDescriptorNameConverter : ResolvingConverter<IdeaPlugin>() {
       val ideaPlugin = findIdeaPlugin(candidate, module.project)
       if (ideaPlugin != null) {
         return ideaPlugin
+      }
+    }
+    return null
+  }
+
+  private fun findDescriptorInAllGradleModuleResources(moduleManager: ModuleManager, fileName: String): IdeaPlugin? {
+    for (module in moduleManager.modules) {
+      if (!module.name.endsWith(GRADLE_MAIN_MODULE_SUFFIX)) continue
+      for (resourceRoot in ModuleRootManager.getInstance(module).getSourceRoots(JavaResourceRootType.RESOURCE)) {
+        val ideaPlugin = findIdeaPlugin(resourceRoot.findChild(fileName), module.project)
+        if (ideaPlugin != null) return ideaPlugin
       }
     }
     return null

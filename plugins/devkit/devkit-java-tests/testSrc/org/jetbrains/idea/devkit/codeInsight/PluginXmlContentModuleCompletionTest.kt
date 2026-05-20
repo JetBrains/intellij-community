@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.codeInsight
 
 import com.intellij.codeInsight.lookup.LookupElement
@@ -114,6 +114,63 @@ class PluginXmlContentModuleCompletionTest : JavaCodeInsightFixtureTestCase() {
         "SplitPlugin.backend",
         "SplitPlugin.frontend",
         "SplitPlugin.shared"
+      )
+  }
+
+  fun `test should complete modules in plugin content Gradle module structure with dots in project name`() {
+    myFixture.addModule("modular_plugin", "modular-plugin")
+
+    myFixture.addModule("modular_plugin.backend", "modular-plugin/backend")
+    myFixture.addModule("modular_plugin.frontend", "modular-plugin/frontend")
+    myFixture.addModule("modular_plugin.shared", "modular-plugin/shared")
+
+    myFixture.addModule("modular_plugin.main", "modular-plugin/src/main")
+    myFixture.addModuleWithResourcesRoot("modular_plugin.backend.main", "modular-plugin/backend/src/main", "resources")
+    myFixture.addModuleWithResourcesRoot("modular_plugin.frontend.main", "modular-plugin/frontend/src/main", "resources")
+    myFixture.addModuleWithResourcesRoot("modular_plugin.shared.main", "modular-plugin/shared/src/main", "resources")
+
+    myFixture.addXmlFile(
+      "modular-plugin/backend/src/main/resources/modular.plugin.backend.xml",
+      """
+      <idea-plugin>
+          <dependencies>
+              <module name="modular.plugin.shared"/>
+          </dependencies>
+      </idea-plugin>
+      """.trimIndent())
+
+    myFixture.addXmlFile(
+      "modular-plugin/frontend/src/main/resources/modular.plugin.frontend.xml",
+      """
+      <idea-plugin>
+          <dependencies>
+              <module name="modular.plugin.shared"/>
+          </dependencies>
+      </idea-plugin>
+      """.trimIndent())
+
+    myFixture.addXmlFile(
+      "modular-plugin/shared/src/main/resources/modular.plugin.shared.xml",
+      """
+      <idea-plugin>
+      </idea-plugin>
+      """.trimIndent())
+
+    myFixture.assertThatCompletion(
+      "modular-plugin/src/main/resources/META-INF/plugin.xml",
+      """
+      <idea-plugin>
+        <id>com.example.modularplugin</id>
+        <content>
+          <module name="<caret>"/>
+        </content>
+      </idea-plugin>
+      """.trimIndent()
+    ).extracting<String> { it.lookupString }
+      .containsExactlyInAnyOrder(
+        "modular.plugin.backend",
+        "modular.plugin.frontend",
+        "modular.plugin.shared"
       )
   }
 
