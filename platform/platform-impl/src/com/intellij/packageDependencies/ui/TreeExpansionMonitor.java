@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.openapi.util.Comparing;
@@ -16,6 +16,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashSet;
@@ -27,14 +29,14 @@ import java.util.stream.Collectors;
 import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
 
 public abstract class TreeExpansionMonitor<T> {
-  public static TreeExpansionMonitor<DefaultMutableTreeNode> install(final JTree tree) {
+  public static TreeExpansionMonitor<DefaultMutableTreeNode> install(JTree tree) {
     return install(tree, (o1, o2) -> Comparing.equal(o1.getUserObject(), o2.getUserObject()));
   }
 
-  public static TreeExpansionMonitor<DefaultMutableTreeNode> install(final JTree tree, final BiPredicate<? super DefaultMutableTreeNode, ? super DefaultMutableTreeNode> equality) {
+  public static TreeExpansionMonitor<DefaultMutableTreeNode> install(JTree tree, BiPredicate<? super DefaultMutableTreeNode, ? super DefaultMutableTreeNode> equality) {
     return new TreeExpansionMonitor<>(tree) {
       @Override
-      protected TreePath findPathByNode(final DefaultMutableTreeNode node) {
+      protected TreePath findPathByNode(DefaultMutableTreeNode node) {
         Enumeration<TreeNode> enumeration = ((DefaultMutableTreeNode)tree.getModel().getRoot()).breadthFirstEnumeration();
         while (enumeration.hasMoreElements()) {
           final TreeNode nextElement = enumeration.nextElement();
@@ -56,17 +58,17 @@ public abstract class TreeExpansionMonitor<T> {
 
   protected TreeExpansionMonitor(JTree tree) {
     myTree = tree;
+    myTree.addFocusListener(new FocusAdapter() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        rememberSelection();
+      }
+    });
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
-        if (myFrozen) return;
-        mySelectionNodes = new ArrayList<>();
-        TreePath[] paths = myTree.getSelectionPaths();
-        if (paths != null) {
-          for (TreePath path : paths) {
-            mySelectionNodes.add(getLastNode(path));
-          }
-        }
+        if (myFrozen && !tree.hasFocus()) return;
+        rememberSelection();
       }
     });
 
@@ -96,6 +98,16 @@ public abstract class TreeExpansionMonitor<T> {
     });
   }
 
+  private void rememberSelection() {
+    mySelectionNodes = new ArrayList<>();
+    TreePath[] paths = myTree.getSelectionPaths();
+    if (paths != null) {
+      for (TreePath path : paths) {
+        mySelectionNodes.add(getLastNode(path));
+      }
+    }
+  }
+
   public void freeze() {
     myFrozen = true;
   }
@@ -106,7 +118,7 @@ public abstract class TreeExpansionMonitor<T> {
 
   public void restore() {
     freeze();
-    for (final TreePath myExpandedPath : myExpandedPaths) {
+    for (TreePath myExpandedPath : myExpandedPaths) {
       myTree.expandPath(findPathByNode(getLastNode(myExpandedPath)));
     }
     for (T mySelectionNode : mySelectionNodes) {
@@ -124,7 +136,7 @@ public abstract class TreeExpansionMonitor<T> {
     new AsyncRestorer().restore();
   }
 
-  protected abstract TreePath findPathByNode(final T node);
+  protected abstract TreePath findPathByNode(T node);
 
   public boolean isFreeze() {
     return myFrozen;
