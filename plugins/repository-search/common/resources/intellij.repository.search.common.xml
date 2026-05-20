@@ -9,11 +9,6 @@
   </dependencies>
   <!-- endregion -->
 
-  <extensionPoints>
-    <extensionPoint qualifiedName="org.jetbrains.idea.reposearch.provider"
-                    interface="org.jetbrains.idea.reposearch.DependencySearchProvidersFactory" dynamic="true"/>
-  </extensionPoints>
-
   <extensions defaultExtensionNs="com.intellij">
     <registryKey key="maven.packagesearch.enabled" defaultValue="false"
                  description="Enable package search dependency via https://package-search.services.jetbrains.com"/>
@@ -28,9 +23,5 @@
                  restartRequired="false"/>
 
     <statistics.validation.customValidationRule implementation="org.jetbrains.idea.reposearch.statistics.TopPackageIdValidationRule"/>
-  </extensions>
-
-  <extensions defaultExtensionNs="org.jetbrains.idea.reposearch">
-    <provider implementation="org.jetbrains.idea.packagesearch.PackageSearchProviderFactory"/>
   </extensions>
 </idea-plugin>

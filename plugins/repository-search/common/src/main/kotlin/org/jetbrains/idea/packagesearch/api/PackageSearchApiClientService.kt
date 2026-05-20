@@ -18,7 +18,6 @@ import io.ktor.client.plugins.compression.ContentEncoding
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
-import io.ktor.client.request.headers
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -27,10 +26,7 @@ import kotlinx.document.database.mvstore.MVDataStore
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.idea.maven.model.MavenDependencyCompletionItem
 import org.jetbrains.idea.maven.model.MavenRepoArtifactInfo
-import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
-import org.jetbrains.idea.reposearch.DependencySearchProvider
 import org.jetbrains.idea.reposearch.PluginEnvironment
-import org.jetbrains.idea.reposearch.RepositoryArtifactData
 import org.jetbrains.idea.reposearch.logTrace
 import org.jetbrains.packagesearch.api.PackageSearchApiClientObject
 import org.jetbrains.packagesearch.api.v3.ApiMavenPackage
@@ -47,7 +43,7 @@ import kotlin.io.path.exists
 import kotlin.time.Duration.Companion.seconds
 
 @Service(Service.Level.APP)
-class PackageSearchApiClientService(val coroutineScope: CoroutineScope) : Disposable, DependencySearchProvider {
+class PackageSearchApiClientService(val coroutineScope: CoroutineScope) : Disposable {
 
   private val httpClient = defaultHttpClient(engine = Java, protobuf = false) {
     install(UserAgent) {
@@ -136,7 +132,7 @@ class PackageSearchApiClientService(val coroutineScope: CoroutineScope) : Dispos
 
   @Deprecated("Use directly the client instead (PackageSearcgApiClientService)")
   @ScheduledForRemoval
-  override suspend fun fulltextSearch(searchString: String): List<MavenRepoArtifactInfo> =
+  suspend fun fulltextSearch(searchString: String): List<MavenRepoArtifactInfo> =
     if (searchString.isEmpty()) {
       emptyList<MavenRepoArtifactInfo>()
     }
@@ -154,20 +150,16 @@ class PackageSearchApiClientService(val coroutineScope: CoroutineScope) : Dispos
 
   @Deprecated("Use directly the client instead")
   @ScheduledForRemoval
-  override suspend fun suggestPrefix(groupId: String, artifactId: String): List<MavenRepoArtifactInfo> =
+  suspend fun suggestPrefix(groupId: String, artifactId: String): List<MavenRepoArtifactInfo> =
     if (groupId.isEmpty() && artifactId.isEmpty()) {
       emptyList()
     }
     else {
       fulltextSearch("$groupId:$artifactId")
     }
-
-  override fun isLocal() = false
-
-  override val cacheKey: String = "PackageSearchProvider"
 }
 
-private fun ApiMavenPackage.repositoryArtifactData(): MavenRepositoryArtifactInfo {
+private fun ApiMavenPackage.repositoryArtifactData(): MavenRepoArtifactInfo {
   val versions = versions.all.map {
     MavenDependencyCompletionItem(
       /* groupId = */ groupId,
@@ -176,10 +168,10 @@ private fun ApiMavenPackage.repositoryArtifactData(): MavenRepositoryArtifactInf
       /* type = */ MavenDependencyCompletionItem.Type.REMOTE
     )
   }
-  return MavenRepositoryArtifactInfo(
+  return MavenRepoArtifactInfo(
     /* groupId = */ groupId,
     /* artifactId = */ artifactId,
-    /* version = */ versions.toTypedArray()
+    /* items = */ versions.toTypedArray()
   )
 }
 
