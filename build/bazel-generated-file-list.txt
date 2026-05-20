@@ -506,6 +506,7 @@ libraries/xml-rpc
 libraries/xstream
 libraries/xtext-xbase
 libraries/xz
+module-set-plugins/generated/intellij.moduleSet.plugin.acp
 mps/build
 mps/build/intellij.mps.resources
 notebooks/notebook-ui
