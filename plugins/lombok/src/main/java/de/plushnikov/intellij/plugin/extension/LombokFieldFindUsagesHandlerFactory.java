@@ -9,6 +9,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiRecordComponent;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.usageView.UsageInfo;
@@ -22,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * It should find calls to getters/setters of some field changed by lombok accessors
@@ -88,7 +90,20 @@ public final class LombokFieldFindUsagesHandlerFactory extends FindUsagesHandler
         Arrays.stream(containingClass.getMethods())
           .filter(LombokLightMethodBuilder.class::isInstance)
           .filter(psiMethod -> psiMethod.getNavigationElement() == refPsiField)
-          .forEach(collector::add);
+          .forEach(lombokMethod -> {
+            // Mirror JavaFindUsagesHandler behaviour for physical methods with isSearchForBaseMethod:
+            // search for the deepest super/interface method so that calls through an interface
+            // reference (e.g. interf.getString()) are also reported as usages.
+            // Direct calls on the concrete type (impl.getString()) are still found via
+            // processInexactReference in MethodTextOccurrenceProcessor.
+            PsiMethod[] superMethods = lombokMethod.findDeepestSuperMethods();
+            if (superMethods.length > 0) {
+              Collections.addAll(collector, superMethods);
+            }
+            else {
+              collector.add(lombokMethod);
+            }
+          });
       }
     };
   }
