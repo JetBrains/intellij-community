@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeInsight.gradle
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.vfs.writeText
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
 import org.jetbrains.kotlin.idea.gradleJava.kotlinGradlePluginVersion
 import org.jetbrains.kotlin.idea.gradleTooling.toKotlinToolingVersion
@@ -10,6 +11,9 @@ import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 
 class KotlinGradlePluginVersionImportTest : MultiplePluginVersionGradleImportingTestCase() {
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
 
     @Test
     @TargetVersions("7.6+")
