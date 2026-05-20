@@ -1,4 +1,4 @@
-// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,7 +25,6 @@ import com.intellij.openapi.roots.RootModelProvider;
 import com.intellij.openapi.roots.RootPolicy;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
@@ -39,7 +38,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.MissingResourceException;
 import java.util.Set;
 
 @ApiStatus.Internal
@@ -316,66 +314,21 @@ public abstract class OrderEnumeratorBase extends OrderEnumerator implements Ord
                                 boolean firstLevel,
                                 @NotNull List<? extends OrderEnumerationHandler> customHandlers,
                                 @NotNull PairProcessor<? super OrderEntry, ? super List<? extends OrderEnumerationHandler>> processor) {
-    String orderEnumerationType;
-    try {
-      orderEnumerationType = Registry.get("order.enumerator.traversal").getSelectedOption();
-    } catch (MissingResourceException ignored) {
-      orderEnumerationType = "bfs";
-    }
-    switch (orderEnumerationType) {
-      case "bfs" -> doProcessEntriesBFS(rootModel, processed, firstLevel, customHandlers, processor);
-      case "dfs" -> doProcessEntriesDFS(rootModel, processed, firstLevel, customHandlers, processor);
-      case null, default -> throw new IllegalArgumentException("Invalid order enumeration type: " + orderEnumerationType);
-    }
-  }
+    ProgressManager.checkCanceled();
+    if (processed != null && !processed.add(rootModel.getModule())) return;
 
-  private void doProcessEntriesDFS(@NotNull ModuleRootModel rootModel,
-                                   @Nullable Set<? super Module> processed,
-                                   boolean firstLevel,
-                                   @NotNull List<? extends OrderEnumerationHandler> customHandlers,
-                                   @NotNull PairProcessor<? super OrderEntry, ? super List<? extends OrderEnumerationHandler>> processor) {
     for (OrderEntry entry : rootModel.getOrderEntries()) {
       ProcessEntryAction action = shouldAddOrRecurse(entry, firstLevel, customHandlers);
       if (action.type == ProcessEntryActionType.SKIP) {
         continue;
       }
       if (action.type == ProcessEntryActionType.RECURSE) {
-        doProcessEntriesDFS(getRootModel(action.recurseOnModule), processed, false, customHandlers, processor);
+        doProcessEntries(getRootModel(action.recurseOnModule), processed, false, customHandlers, processor);
         continue;
       }
       assert action.type == ProcessEntryActionType.PROCESS;
       if (!processor.process(entry, customHandlers)) {
         return;
-      }
-    }
-  }
-
-  private void doProcessEntriesBFS(@NotNull ModuleRootModel rootModel,
-                                   @Nullable Set<? super Module> processed,
-                                   boolean firstLevel,
-                                   @NotNull List<? extends OrderEnumerationHandler> customHandlers,
-                                   @NotNull PairProcessor<? super OrderEntry, ? super List<? extends OrderEnumerationHandler>> processor) {
-    ProgressManager.checkCanceled();
-    if (processed != null && !processed.add(rootModel.getModule())) return;
-
-    // Own entries (outputs, direct libraries) are processed before recursing into module dependencies,
-    // so they appear earlier in the resulting classpath and win class resolution over inherited ones.
-    // See: https://docs.oracle.com/javase/8/docs/technotes/tools/unix/classpath.html#JSSOR590
-    for (OrderEntry entry : rootModel.getOrderEntries()) {
-      ProcessEntryAction action = shouldAddOrRecurse(entry, firstLevel, customHandlers);
-      if (action.type == ProcessEntryActionType.PROCESS) {
-        if (!processor.process(entry, customHandlers)) {
-          return;
-        }
-      }
-    }
-    for (OrderEntry entry : rootModel.getOrderEntries()) {
-      ProcessEntryAction action = shouldAddOrRecurse(entry, firstLevel, customHandlers);
-      if (action.type == ProcessEntryActionType.RECURSE) {
-        Module module = action.recurseOnModule;
-        if (module != null) {
-          doProcessEntriesBFS(getRootModel(module), processed, false, customHandlers, processor);
-        }
       }
     }
   }

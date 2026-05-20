@@ -1,4 +1,4 @@
-// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.roots
 
 import com.intellij.openapi.application.runReadAction
@@ -25,7 +25,6 @@ import com.intellij.testFramework.UsefulTestCase.assertOrderedEquals
 import com.intellij.testFramework.UsefulTestCase.assertSame
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.intellij.testFramework.rules.ProjectModelRule
-import com.intellij.util.Consumer
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.junit.Before
 import org.junit.ClassRule
@@ -179,48 +178,6 @@ class OrderEnumeratorTest {
     assertClassRoots(OrderEnumerator.orderEntries(module).withoutSdk().recursively().exportedOnly(), library2Jar)
     assertClassRoots(OrderEnumerator.orderEntries(module).withoutSdk().exportedOnly().recursively())
     assertClassRoots(orderEntriesForModulesList(module).withoutSdk().recursively(), library2Jar, libraryJar)
-  }
-
-  @Test
-  fun testDirectLibrariesPrecedeTransitiveDependencies() {
-    // Module A: source root + output + direct library (lib-a)
-    val moduleA = projectModel.createModule("moduleA")
-    addSourceRoot(moduleA, false)
-    val output = setModuleOutput(moduleA, false)
-    val libAJar = projectModel.baseProjectDir.newEmptyVirtualJarFile("lib-a.jar")
-    val libA = projectModel.addProjectLevelLibrary("lib-a") {
-      it.addRoot(libAJar, OrderRootType.CLASSES)
-    }
-    ModuleRootModificationUtil.addDependency(moduleA, libA, DependencyScope.COMPILE, false)
-
-    // Module B (dep): source root + output + direct library (lib-b)
-    val moduleB = projectModel.createModule("moduleB")
-    addSourceRoot(moduleB, false)
-    val depOutput = setModuleOutput(moduleB, false)
-    val libBJar = projectModel.baseProjectDir.newEmptyVirtualJarFile("lib-b.jar")
-    val libB = projectModel.addProjectLevelLibrary("lib-b") {
-      it.addRoot(libBJar, OrderRootType.CLASSES)
-    }
-    ModuleRootModificationUtil.addDependency(moduleB, libB, DependencyScope.COMPILE, false)
-
-    // check A -> B
-    ModuleRootModificationUtil.addDependency(moduleA, moduleB, DependencyScope.COMPILE, false)
-    assertClassRoots(
-      OrderEnumerator.orderEntries(moduleA).withoutSdk().recursively(),
-      output, libAJar, depOutput, libBJar
-    )
-
-    // check B -> A
-    ModuleRootModificationUtil.updateModel(moduleA, Consumer { model: ModifiableRootModel ->
-      val entry = model.findModuleOrderEntry(moduleB) ?: return@Consumer
-      model.removeOrderEntry(entry)
-    })
-    ModuleRootModificationUtil.addDependency(moduleB, moduleA, DependencyScope.COMPILE, false)
-
-    assertClassRoots(
-      OrderEnumerator.orderEntries(moduleB).withoutSdk().recursively(),
-      depOutput, libBJar, output, libAJar
-    )
   }
 
   @Test
