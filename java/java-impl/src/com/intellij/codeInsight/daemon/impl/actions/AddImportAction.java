@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.application.options.editor.AutoImportOptionsConfigurable;
@@ -19,7 +19,6 @@ import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -265,22 +264,10 @@ public class AddImportAction implements QuestionAction {
       StatisticsManager.getInstance().incUseCount(JavaStatisticsManager.createInfo(null, targetClass));
       PsiFile file = myReference.getElement().getContainingFile();
 
-      // Already inside an outer WriteCommandAction (e.g. OptimizeImportsProcessor's FutureTask on EDT).
-      // ModCommandExecutor.executeInteractively cannot move work off EDT here — its NBRA still runs on
-      // the calling thread under our write lock. Run the plain pipe under a cancellable Potemkin
-      // progress so the user can stop a long advancedResolve.
-      if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
-        ApplicationManagerEx.getApplicationEx().runWriteActionWithCancellableProgressInDispatchThread(
-          QuickFixBundle.message("add.import"),
-          myProject,
-          null,
-          _ -> doAddImport(myReference, targetClass, file)
-        );
-        return;
-      }
-
       ImportOptimizer importOptimizer = getModCommandFriendlyImportOptimizer();
-      if (importOptimizer != null) {
+      if (importOptimizer != null &&
+          //ModCommand can be run only in dispatch thread
+          ApplicationManager.getApplication().isDispatchThread()) {
         runImportOptimizerThatIsModCommandFriendly(myReference, targetClass, file, importOptimizer);
       }
       else {

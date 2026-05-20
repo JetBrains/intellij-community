@@ -123,5 +123,6 @@
                  description="Whether to report methods for which data flow analysis was imprecise"/>
     <!--used together with DeprecationInspection-->
     <registryKey key="kotlin.deprecation.inspection.enabled" defaultValue="false"/>
+    <registryKey key="java.import.with.write.action" defaultValue="false" description="Whether to use WriteAction for import optimization"/>
   </extensions>
 </idea-plugin>
