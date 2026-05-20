@@ -104,7 +104,8 @@ class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPrope
 
     fileAssociations = SUPPORTED_FILE_EXTENSIONS
 
-    fullName { "PyCharm Community Edition" }
+    fullName { "PyCharm Open Source" }
+    installDirNameHandler { "PyCharm OSS" }
 
     copyAdditionalFiles { targetDir, _, context ->
       PyCharmBuildUtils.copySkeletons(context, targetDir, "skeletons-win*.zip")
@@ -126,10 +127,7 @@ class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPrope
       }
     }
 
-    override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String {
-      val suffix = if (appInfo.isEAP) " ${appInfo.majorVersion}.${appInfo.minorVersion} EAP" else ""
-      return "PyCharm CE${suffix}.app"
-    }
+    override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String = "PyCharm OSS.app"
 
     override suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path, arch: JvmArchitecture) {
       super.copyAdditionalFiles(context, targetDir, arch)
@@ -145,17 +143,9 @@ class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPrope
     init {
       iconPngPath = communityHome.resolve("python/build/resources/PyCharmCore128.png")
       iconPngPathForEAP = communityHome.resolve("python/build/resources/PyCharmCore128_EAP.png")
-      snaps += Snap(
-        name = "pycharm-community",
-        description =
-          "Python IDE for professional developers. Save time while PyCharm takes care of the routine. " +
-          "Focus on bigger things and embrace the keyboard-centric approach to get the most of PyCharm’s many productivity features."
-      )
     }
 
-    override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String {
-      return "pycharm-community-${if (appInfo.isEAP) buildNumber else appInfo.fullVersion}"
-    }
+    override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String = "pycharm-oss"
   }
 
   override fun getOutputDirectoryName(appInfo: ApplicationInfoProperties): String = "pycharm-ce"
