@@ -22,9 +22,7 @@ import com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.Absent
 import com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.Alien
 import com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.Present
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.job
 import kotlinx.coroutines.joinAll
@@ -115,7 +113,6 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
   @Volatile
   private var checkers: Set<SpellerTool>? = null
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   private val configurationScope = coroutineScope.childScope("ConfigurationChanged", Dispatchers.Default.limitedParallelism(1))
 
   init {
@@ -124,10 +121,9 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
     connection.subscribe(CONFIG_STATE_TOPIC, this)
   }
 
-  @OptIn(DelicateCoroutinesApi::class)
   private fun heavyInit(): Set<SpellerTool> {
     val checkers = this.checkers
-    if (!checkers.isNullOrEmpty()) return checkers
+    if (checkers != null) return checkers
 
     val set = LinkedHashSet<SpellerTool>()
     runWithCheckCanceled {
@@ -166,7 +162,6 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
     return if (isAlien) Alien else Absent
   }
 
-  @OptIn(DelicateCoroutinesApi::class)
   fun getSuggestions(word: String): Collection<String> {
     val filtered = filterCheckers(word)
     if (filtered.isEmpty()) {
