@@ -39,36 +39,57 @@ class MavenArtifactSearcherTest : MavenIndicesTestCase() {
   }
 
   @Test
-  fun testArtifactSearch() = runBlocking {
-    assertArtifactSearchResults("")
-    assertArtifactSearchResults("j:j", *(JMOCK_VERSIONS + JUNIT_VERSIONS))
-    assertArtifactSearchResults("junit", *JUNIT_VERSIONS)
-    assertArtifactSearchResults("junit 3.", *JUNIT_VERSIONS)
-    assertArtifactSearchResults("uni 3.")
-    assertArtifactSearchResults("juni juni 3.")
-    assertArtifactSearchResults("junit foo", *JUNIT_VERSIONS)
-    assertArtifactSearchResults("juni:juni:3.", *JUNIT_VERSIONS)
-    assertArtifactSearchResults("junit:", *JUNIT_VERSIONS)
-    assertArtifactSearchResults("junit:junit", *JUNIT_VERSIONS)
-    assertArtifactSearchResults("junit:junit:3.", *JUNIT_VERSIONS)
-    assertArtifactSearchResults("junit:junit:4.0", *JUNIT_VERSIONS)
-  }
+  fun `artifact search - empty`() = assertArtifactSearchResults("")
 
   @Test
-  fun testArtifactSearchDash() = runBlocking {
-    assertArtifactSearchResults("commons", *COMMONS_IO_VERSIONS)
-    assertArtifactSearchResults("commons-", *COMMONS_IO_VERSIONS)
-    assertArtifactSearchResults("commons-io", *COMMONS_IO_VERSIONS)
-  }
+  fun `artifact search - j colon j`() = assertArtifactSearchResults("j:j", *(JMOCK_VERSIONS + JUNIT_VERSIONS))
+
+  @Test
+  fun `artifact search - junit`() = assertArtifactSearchResults("junit", *JUNIT_VERSIONS)
+
+  @Test
+  fun `artifact search - junit space version prefix`() = assertArtifactSearchResults("junit 3.", *JUNIT_VERSIONS)
+
+  @Test
+  fun `artifact search - uni partial no match`() = assertArtifactSearchResults("uni 3.")
+
+  @Test
+  fun `artifact search - two partial words no match`() = assertArtifactSearchResults("juni juni 3.")
+
+  @Test
+  fun `artifact search - junit with extra keyword`() = assertArtifactSearchResults("junit foo", *JUNIT_VERSIONS)
+
+  @Test
+  fun `artifact search - typo groupId colon artifactId colon version`() = assertArtifactSearchResults("juni:juni:3.", *JUNIT_VERSIONS)
+
+  @Test
+  fun `artifact search - groupId colon`() = assertArtifactSearchResults("junit:", *JUNIT_VERSIONS)
+
+  @Test
+  fun `artifact search - groupId colon artifactId`() = assertArtifactSearchResults("junit:junit", *JUNIT_VERSIONS)
+
+  @Test
+  fun `artifact search - groupId colon artifactId colon version prefix`() = assertArtifactSearchResults("junit:junit:3.", *JUNIT_VERSIONS)
+
+  @Test
+  fun `artifact search - groupId colon artifactId colon exact version`() = assertArtifactSearchResults("junit:junit:4.0", *JUNIT_VERSIONS)
+
+  @Test
+  fun `artifact search - hyphenated artifact`() = assertArtifactSearchResults("commons", *COMMONS_IO_VERSIONS)
+
+  @Test
+  fun `artifact search - hyphenated artifact with dash`() = assertArtifactSearchResults("commons-", *COMMONS_IO_VERSIONS)
+
+  @Test
+  fun `artifact search - hyphenated artifact full name`() = assertArtifactSearchResults("commons-io", *COMMONS_IO_VERSIONS)
 
   private fun assertArtifactSearchResults(pattern: String, vararg expected: String) {
     val actual: MutableList<String> = ArrayList()
-    var s: StringBuilder
-    for (eachResult in MavenArtifactSearcher().search(project, pattern, 100)) {
-      for (eachVersion in eachResult.searchResults.items) {
-        s = StringBuilder()
-        s.append(eachVersion.groupId).append(":").append(eachVersion.artifactId).append(":").append(eachVersion.version)
-        actual.add(s.toString())
+    runBlocking {
+      for (eachResult in MavenArtifactSearcher().search(project, pattern, 100)) {
+        for (eachVersion in eachResult.searchResults.items) {
+          actual.add("${eachVersion.groupId}:${eachVersion.artifactId}:${eachVersion.version}")
+        }
       }
     }
     assertUnorderedElementsAreEqual(actual, *expected)
