@@ -471,7 +471,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Contexts = load("expui/fileTypes/contexts.svg", "fileTypes/contexts.svg", 589986144, 0);
     /** 16x16 */ public static final @NotNull Icon ContextsModifier = load("expui/fileTypes/contextsModifier.svg", "fileTypes/contextsModifier.svg", 11227132, 0);
     /** 16x16 */ public static final @NotNull Icon Cpp = load("expui/fileTypes/cpp.svg", -1598952131, 2);
-    /** 16x16 */ public static final @NotNull Icon Csharp = load("expui/fileTypes/Csharp.svg", 1076828298, 2);
+    /** 16x16 */ public static final @NotNull Icon Csharp = load("expui/fileTypes/Csharp.svg", "fileTypes/Csharp.svg", 1076828298, 2);
     /** 16x16 */ public static final @NotNull Icon Css = load("expui/fileTypes/css.svg", "fileTypes/css.svg", -1827987051, 0);
     /** 16x16 */ public static final @NotNull Icon Csv = load("expui/fileTypes/csv.svg", -1498141192, 2);
     /** 16x16 */ public static final @NotNull Icon Custom = load("expui/fileTypes/text.svg", "fileTypes/custom.svg", 1692794144, 0);

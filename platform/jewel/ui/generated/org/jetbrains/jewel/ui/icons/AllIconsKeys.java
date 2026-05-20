@@ -1294,7 +1294,7 @@ public final class AllIconsKeys {
     public static final @NotNull IntelliJIconKey Cpp = new IntelliJIconKey("expui/fileTypes/cpp.svg", "expui/fileTypes/cpp.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
-    public static final @NotNull IntelliJIconKey Csharp = new IntelliJIconKey("expui/fileTypes/Csharp.svg", "expui/fileTypes/Csharp.svg", AllIconsKeys.class);
+    public static final @NotNull IntelliJIconKey Csharp = new IntelliJIconKey("fileTypes/Csharp.svg", "expui/fileTypes/Csharp.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey Css = new IntelliJIconKey("fileTypes/css.svg", "expui/fileTypes/css.svg", AllIconsKeys.class);
