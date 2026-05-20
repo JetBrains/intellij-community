@@ -46,7 +46,7 @@ internal class MavenIndexBasedCompletionContributor : DependencyCompletionContri
     val index = gavIndex(request.context.eelDescriptor) ?: return emptyList()
     val searchString = request.searchString
     val (groupQuery, artifactQuery) = if (searchString.contains(":")) {
-      val parts = searchString.split(":", limit = 2)
+      val parts = searchString.split(":")
       parts[0] to parts.getOrElse(1) { "" }
     }
     else {
