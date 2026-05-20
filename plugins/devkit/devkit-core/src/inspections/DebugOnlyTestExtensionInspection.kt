@@ -51,7 +51,7 @@ class DebugOnlyTestExtensionInspection : DevKitUastInspectionBase(UClass::class.
         problemsHolder.registerProblem(
           targetPsi,
           DevKitBundle.message("inspections.debug.only.test.extension.message", simpleName),
-          ProblemHighlightType.WARNING,
+          ProblemHighlightType.ERROR,
         )
       }
     }
