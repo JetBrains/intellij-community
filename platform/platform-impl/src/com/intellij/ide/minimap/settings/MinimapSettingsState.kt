@@ -19,6 +19,6 @@ data class MinimapSettingsState(var enabled: Boolean = false,
                                 var rightAligned: Boolean = true,
                                 var insideScrollbar: Boolean = true) {
   companion object {
-    val FIXED_WIDTH: Int = JBUI.scale(160)
+    val FIXED_WIDTH: Int = JBUI.scale(120)
   }
 }
