@@ -392,13 +392,41 @@ internal class DynamicPluginsSupportImpl(
       return false
     }
     if (currentGroup.sortedDescriptors != targetGroup.sortedDescriptors) {
-      LOG.debug { "Alignment failed for ${currentGroup}: target group has a different set of included descriptors" }
+      LOG.debug {
+        buildString {
+          append("Alignment failed for ${currentGroup}: target group has a different set of included descriptors: ")
+          val addedDescriptors = targetGroup.sortedDescriptors - currentGroup.sortedDescriptors.toSet()
+          val removedDescriptors = currentGroup.sortedDescriptors - targetGroup.sortedDescriptors.toSet()
+          if (addedDescriptors.isEmpty() && removedDescriptors.isEmpty()) {
+            append("same set, different order")
+          } else {
+            if (addedDescriptors.isNotEmpty()) append("added=${addedDescriptors.joinToString(prefix = "[", postfix = "]") { it.shortLogDescription }} ")
+            if (removedDescriptors.isNotEmpty()) append("removed=${removedDescriptors.joinToString(prefix = "[", postfix = "]") { it.shortLogDescription }}")
+          }
+        }
+      }
       return false
     }
-    val currentAlignedDependencies = currentGraph.getDirectDependencies(currentGroup).map { existingAlignment[it] }
+    // if there is no alignment, take the current module group, as it will certainly fail the comparison further and will simplify debug message calculation
+    val currentAlignedDependencies = currentGraph.getDirectDependencies(currentGroup).map { existingAlignment[it] ?: it }
     val targetDependencies = targetGraph.getDirectDependencies(targetGroup)
     if (currentAlignedDependencies != targetDependencies) {
-      LOG.debug { "Alignment failed for ${currentGroup}: target dependency groups don't align with current dependency groups" }
+      LOG.debug {
+        buildString {
+          append("Alignment failed for ${currentGroup}: target dependency groups don't align with current dependency groups: ")
+          @Suppress("UNCHECKED_CAST")
+          val addedDependencies = targetDependencies - currentAlignedDependencies.toSet()
+          val removedDependencies = currentAlignedDependencies - targetDependencies.toSet()
+          if (addedDependencies.isEmpty() && removedDependencies.isEmpty()) {
+            append("same set, different order")
+          } else {
+            if (addedDependencies.isNotEmpty()) append("added=${addedDependencies.joinToString(prefix = "[", postfix = "]") { it.representativeModule.toString() }} ")
+            if (removedDependencies.isNotEmpty()) {
+              append("removed=${removedDependencies.joinToString(prefix = "[", postfix = "]") { it.representativeModule.toString() }}")
+            }
+          }
+        }
+      }
       return false
     }
     return true
