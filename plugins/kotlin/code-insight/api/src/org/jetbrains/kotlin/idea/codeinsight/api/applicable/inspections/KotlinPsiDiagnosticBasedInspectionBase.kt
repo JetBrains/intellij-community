@@ -43,7 +43,7 @@ abstract class KotlinPsiDiagnosticBasedInspectionBase<
 
     @OptIn(KaExperimentalApi::class)
     final override fun KaSession.prepareContext(element: E): C? =
-        element.diagnostics(filter = diagnosticFilter)
+        element.directDiagnostics(filter = diagnosticFilter)
             .firstNotNullOfOrNull { diagnosticType.safeCast(it) }
             ?.let { prepareContextByDiagnostic(element, it) }
 }

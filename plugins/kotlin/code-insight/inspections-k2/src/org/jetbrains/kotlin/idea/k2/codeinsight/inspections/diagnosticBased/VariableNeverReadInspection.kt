@@ -24,7 +24,7 @@ internal class VariableNeverReadInspection : KotlinApplicableInspectionBase<KtNa
     @OptIn(KaExperimentalApi::class)
     override fun KaSession.prepareContext(element: KtNamedDeclaration): Unit? {
         return element
-            .diagnostics(KaDiagnosticCheckerFilter.ONLY_EXTENDED_CHECKERS)
+            .directDiagnostics(KaDiagnosticCheckerFilter.ONLY_EXTENDED_CHECKERS)
             .any { it is KaFirDiagnostic.VariableNeverRead }.asUnit
     }
 

@@ -24,7 +24,7 @@ internal class UnlabeledReturnInsideLambdaInspection : AbstractKotlinInspection(
     @OptIn(KaExperimentalApi::class)
     private fun hasDiagnosticError(returnExpression: KtReturnExpression): Boolean {
         return analyze(returnExpression) {
-            returnExpression.diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS).any {
+            returnExpression.directDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS).any {
                 it.severity == KaSeverity.ERROR
             }
         }

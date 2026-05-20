@@ -91,7 +91,7 @@ internal class RedundantReturnKeywordInspection : KotlinApplicableInspectionBase
      */
     @OptIn(KaExperimentalApi::class)
     override fun KaSession.prepareContext(element: KtReturnExpression): Unit? =
-        element.diagnostics(KaDiagnosticCheckerFilter.ONLY_EXTENDED_CHECKERS)
+        element.directDiagnostics(KaDiagnosticCheckerFilter.ONLY_EXTENDED_CHECKERS)
             .none { it is KaFirDiagnostic.UnreachableCode }
             .asUnit
 

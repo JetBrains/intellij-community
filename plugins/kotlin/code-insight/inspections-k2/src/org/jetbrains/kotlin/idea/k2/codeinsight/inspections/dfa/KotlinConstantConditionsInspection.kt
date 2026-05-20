@@ -492,7 +492,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         @OptIn(KaExperimentalApi::class)
         private fun isCompilationWarning(anchor: KtElement): Boolean {
             val hasWarning = analyze(anchor) {
-                anchor.diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+                anchor.directDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
                     .any { diagnostic -> diagnostic.factoryName in REPEATING_COMPILATION_WARNINGS }
             }
             if (hasWarning) return true

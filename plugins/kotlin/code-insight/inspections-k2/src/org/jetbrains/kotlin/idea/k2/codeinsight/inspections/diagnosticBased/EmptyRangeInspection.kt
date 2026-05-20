@@ -64,7 +64,7 @@ internal class EmptyRangeInspection : KotlinApplicableInspectionBase<KtElement, 
     private fun KaSession.isAvailable(element: KtElement): Boolean =
         //checks if the reference expressions are used in the range
         (element as? KtBinaryExpression)?.let { it.left is KtNameReferenceExpression || it.right is KtNameReferenceExpression } == true ||
-        element.diagnostics(KaDiagnosticCheckerFilter.ONLY_EXPERIMENTAL_CHECKERS).any { it is KaFirDiagnostic.EmptyRange }
+                element.directDiagnostics(KaDiagnosticCheckerFilter.ONLY_EXPERIMENTAL_CHECKERS).any { it is KaFirDiagnostic.EmptyRange }
 
 
     private fun KaSession.determineContextFromElement(element: KtExpression): Context? {

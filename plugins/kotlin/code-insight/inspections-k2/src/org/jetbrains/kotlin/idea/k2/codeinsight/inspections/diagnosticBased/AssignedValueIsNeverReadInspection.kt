@@ -44,7 +44,7 @@ internal class AssignedValueIsNeverReadInspection : KotlinApplicableInspectionBa
     @OptIn(KaExperimentalApi::class)
     override fun KaSession.prepareContext(element: KtSimpleNameExpression): Unit? {
         return element
-            .diagnostics(KaDiagnosticCheckerFilter.ONLY_EXTENDED_CHECKERS)
+            .directDiagnostics(KaDiagnosticCheckerFilter.ONLY_EXTENDED_CHECKERS)
             .any { it is KaFirDiagnostic.AssignedValueIsNeverRead }
             .asUnit
     }

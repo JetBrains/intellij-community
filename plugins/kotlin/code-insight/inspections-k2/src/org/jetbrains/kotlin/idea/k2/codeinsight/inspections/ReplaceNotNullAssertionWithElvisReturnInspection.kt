@@ -71,7 +71,7 @@ internal class ReplaceNotNullAssertionWithElvisReturnInspection :
             KtNamedFunction::class.java
         ) ?: return null
 
-        if (element.diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS).any {
+        if (element.directDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS).any {
                 it is KaFirDiagnostic.UnnecessaryNotNullAssertion
             }
         ) return null
