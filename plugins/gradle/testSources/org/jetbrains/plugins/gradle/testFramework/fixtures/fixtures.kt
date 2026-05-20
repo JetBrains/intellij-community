@@ -34,7 +34,7 @@ fun gradleFixture(
 ): TestFixture<GradleTestFixture> = testFixture {
   val multiProjectFixture = multiProjectFixture().init()
   val gradleJvmFixture = gradleJvmFixture(gradleVersion, javaVersion).init()
-  val fixture = GradleTestFixtureImpl(multiProjectFixture, gradleJvmFixture)
+  val fixture = GradleTestFixtureImpl(multiProjectFixture, gradleJvmFixture, gradleVersion)
   fixture.setUp()
   initialized(fixture) {
     fixture.tearDown()

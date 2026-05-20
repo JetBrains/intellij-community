@@ -14,6 +14,7 @@ import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemImportingTestCase
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestObservation.awaitProjectActivity
 import com.intellij.testFramework.common.runAll
+import org.gradle.util.GradleVersion
 import org.jetbrains.jps.model.java.JdkVersionDetector.JdkVersionInfo
 import org.jetbrains.plugins.gradle.connection.GradleConnectorService.Companion.USE_PRODUCTION_DISPOSE_FOR_TESTS_KEY
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixture
@@ -25,6 +26,7 @@ import java.nio.file.Path
 class GradleTestFixtureImpl(
   private val multiProjectFixture: MultiProjectTestFixture,
   private val gradleJvmFixture: GradleJvmTestFixture,
+  override val gradleVersion: GradleVersion,
 ) : GradleTestFixture {
 
   private lateinit var syncLeakTracker: OperationLeakTracker
