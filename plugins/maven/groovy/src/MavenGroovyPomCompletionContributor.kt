@@ -15,7 +15,8 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.icons.AllIcons
 import com.intellij.lang.xml.XMLLanguage
-import com.intellij.openapi.project.Project
+import com.intellij.maven.completion.getCompletionContext
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
@@ -27,10 +28,13 @@ import com.intellij.psi.impl.source.tree.LeafElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlTag
 import com.intellij.psi.xml.XmlText
+import com.intellij.repository.search.completion.api.DependencyCompletionContext
+import com.intellij.repository.search.completion.api.DependencyCompletionRequest
+import com.intellij.repository.search.completion.api.DependencyCompletionService
+import com.intellij.repository.search.completion.api.DependencyVersionCompletionRequest
 import com.intellij.util.Consumer
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.xml.impl.GenericDomValueReference
-import org.jetbrains.idea.maven.completion.MavenDependencySearchService
 import org.jetbrains.idea.maven.dom.MavenDomUtil.POM_COMPLETION_ORIGINAL_FILE
 import org.jetbrains.idea.maven.dom.MavenVersionComparable
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil.invokeCompletion
@@ -109,17 +113,23 @@ class MavenGroovyPomCompletionContributor : CompletionContributor() {
       }
     }
 
-    if (completeDependency.get()) {
-      val searchService = MavenDependencySearchService.getInstance(project)
+    val context = parameters.getCompletionContext()
 
+    if (completeDependency.get()) {
       runBlockingCancellable {
-        for (groupId in searchService.getGroupIds("")) {
-          for (artifactId in searchService.getArtifactIds(groupId)) {
-            val builder: LookupElement = LookupElementBuilder.create("$groupId:$artifactId")
-              .withIcon(AllIcons.Nodes.PpLib).withInsertHandler(MavenDependencyInsertHandler.INSTANCE)
-            result.addElement(builder)
+        val seen = mutableSetOf<String>()
+        service<DependencyCompletionService>()
+          .suggestCompletions(DependencyCompletionRequest("", context))
+          .collect { depResult ->
+            val key = "${depResult.groupId}:${depResult.artifactId}"
+            if (seen.add(key)) {
+              result.addElement(
+                LookupElementBuilder.create(key)
+                  .withIcon(AllIcons.Nodes.PpLib)
+                  .withInsertHandler(MavenDependencyInsertHandler.INSTANCE)
+              )
+            }
           }
-        }
       }
     }
 
@@ -142,7 +152,7 @@ class MavenGroovyPomCompletionContributor : CompletionContributor() {
             artifactId = argumentValue
           }
         }
-        completeVersions(result, project, groupId, artifactId, "")
+        completeVersions(result, context, groupId, artifactId, "")
       }, Consumer { element: PsiElement? ->
         if (element!!.getParent() is PsiLiteral) {
           val value = (element.getParent() as PsiLiteral).getValue()
@@ -152,7 +162,7 @@ class MavenGroovyPomCompletionContributor : CompletionContributor() {
           if (mavenCoordinates.size < 3) return@Consumer
 
           val prefix = mavenCoordinates[0] + ':' + mavenCoordinates[1] + ':'
-          completeVersions(result, project, mavenCoordinates[0], mavenCoordinates[1], prefix)
+          completeVersions(result, context, mavenCoordinates[0], mavenCoordinates[1], prefix)
         }
       })
     }
@@ -198,7 +208,7 @@ class MavenGroovyPomCompletionContributor : CompletionContributor() {
 
 private fun completeVersions(
   completionResultSet: CompletionResultSet,
-  project: Project,
+  context: DependencyCompletionContext,
   groupId: String?,
   artifactId: String?,
   prefix: String,
@@ -213,18 +223,16 @@ private fun completeVersions(
       })
   )
 
-  val versions: Set<String>
+  if (!groupId.isNullOrBlank()) {
+    runBlockingCancellable {
+      service<DependencyCompletionService>()
+        .suggestVersionCompletions(DependencyVersionCompletionRequest(groupId, artifactId, "", context))
+        .collect { result ->
+          newResultSet.addElement(LookupElementBuilder.create(prefix + result.result))
+        }
+    }
+  }
 
-  if (groupId.isNullOrBlank()) {
-    versions = mutableSetOf()
-  }
-  else {
-    versions = runBlockingCancellable { MavenDependencySearchService.getInstance(project).getVersions(groupId, artifactId) }
-  }
-
-  for (version in versions) {
-    newResultSet.addElement(LookupElementBuilder.create(prefix + version))
-  }
   newResultSet.addElement(LookupElementBuilder.create(prefix + RepositoryLibraryDescription.ReleaseVersionId))
   newResultSet.addElement(LookupElementBuilder.create(prefix + RepositoryLibraryDescription.LatestVersionId))
 }
