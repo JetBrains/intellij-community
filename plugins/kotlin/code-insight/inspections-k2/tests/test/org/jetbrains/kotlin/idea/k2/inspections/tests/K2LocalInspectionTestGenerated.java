@@ -23235,6 +23235,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         public void testUnmarkedClass() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/unmarkedClass.kt");
         }
+
+        @TestMetadata("varargULong.kt")
+        public void testVarargULong() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/varargULong.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

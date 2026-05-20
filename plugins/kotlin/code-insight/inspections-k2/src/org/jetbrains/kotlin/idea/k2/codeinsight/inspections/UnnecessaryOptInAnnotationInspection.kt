@@ -19,12 +19,14 @@ import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.components.expressionType
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.components.type
+import org.jetbrains.kotlin.analysis.api.components.varargArrayType
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.findClass
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
@@ -183,9 +185,23 @@ private class MarkerCollector(private val moduleApiVersion: ApiVersion) {
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun collectMarkers(declaration: KtDeclaration) {
         if (declaration !is KtFunction && declaration !is KtProperty && declaration !is KtParameter) return
+
+        if (declaration is KtParameter && declaration.isVarArg) {
+            // effective type of vararg parameter is corresponding array:
+            // e.g. IntArray for `varargs values: Int`, `ULongArray` for `vararg values: ULong`
+            // hence, corresponding array types are present in declaration implicitly.
+
+            val parameterSymbol =
+                declaration.symbol as? KaValueParameterSymbol
+            val annotatedSymbol =
+                parameterSymbol?.varargArrayType?.expandedSymbol as? KaAnnotatedSymbol
+            annotatedSymbol?.collectMarkers()
+        }
+
         if (!declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return
         val symbol = declaration.symbol as? KaCallableSymbol ?: return
 
@@ -291,6 +307,13 @@ private class OptInMarkerVisitor : KtTreeVisitor<MarkerCollector>() {
             markerCollector.collectMarkers(declaration)
         }
         return super.visitNamedDeclaration(declaration, markerCollector)
+    }
+
+    override fun visitParameter(parameter: KtParameter, markerCollector: MarkerCollector): Void? {
+        analyze(parameter) {
+            markerCollector.collectMarkers(parameter)
+        }
+        return super.visitParameter(parameter, markerCollector)
     }
 
     override fun visitReferenceExpression(expression: KtReferenceExpression, markerCollector: MarkerCollector): Void? {
