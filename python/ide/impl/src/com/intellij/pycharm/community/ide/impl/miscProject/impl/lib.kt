@@ -1,8 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl.miscProject.impl
 
-import com.intellij.ide.GeneralLocalSettings
 import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
@@ -21,7 +21,6 @@ import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBund
 import com.intellij.pycharm.community.ide.impl.miscProject.MiscFileType
 import com.intellij.pycharm.community.ide.impl.miscProject.TemplateFileName
 import com.intellij.python.community.services.systemPython.SystemPythonService
-import com.intellij.util.SystemProperties
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.MessageError
@@ -48,14 +47,10 @@ import kotlin.io.path.createFile
 import kotlin.time.Duration.Companion.milliseconds
 
 internal const val MISC_PROJECT_WITH_WELCOME_NAME: String = "Welcome"
-internal const val MISC_PROJECT_NAME = "PyCharmMiscProject"
+internal const val MISC_PROJECT_NAME: String = "WelcomeScreen"
 
 internal val miscProjectDefaultPath: Path
-  get() {
-    val default = GeneralLocalSettings.getInstance().defaultProjectDirectory
-    val directory = if (default.isEmpty()) Path.of(SystemProperties.getUserHome()) else Path.of(default)
-    return directory.resolve(MISC_PROJECT_NAME)
-  }
+  get() = Path.of(ProjectUtil.getBaseDir()).resolve(MISC_PROJECT_NAME)
 
 /**
  * Creates a project in [projectPath] in a modal window.
