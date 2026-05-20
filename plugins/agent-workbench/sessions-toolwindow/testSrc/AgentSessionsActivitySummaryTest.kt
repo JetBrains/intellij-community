@@ -330,6 +330,45 @@ class AgentSessionsActivitySummaryTest {
   }
 
   @Test
+  fun systemNotificationTrackerIgnoresNonContributingAttentionActivity() {
+    val tracker = AgentSessionsSystemNotificationTracker()
+    tracker.collectNotifications(summary(thread("needs-input", AgentThreadActivity.PROCESSING, 100)), isLoadedState = true)
+
+    assertThat(
+      tracker.collectNotifications(
+        summary(thread("needs-input", AgentThreadActivity.NEEDS_INPUT, 200, summaryActivity = AgentThreadActivity.READY)),
+        isLoadedState = true,
+      )
+    ).isEmpty()
+    assertThat(
+      tracker.collectNotifications(
+        summary(thread("needs-input", AgentThreadActivity.NEEDS_INPUT, 300, summaryActivity = null)),
+        isLoadedState = true,
+      )
+    ).isEmpty()
+    assertThat(
+      tracker.collectNotifications(
+        summary(thread("needs-input", AgentThreadActivity.NEEDS_INPUT, 400, summaryActivity = AgentThreadActivity.NEEDS_INPUT)),
+        isLoadedState = true,
+      )
+    ).hasSize(1)
+  }
+
+  @Test
+  fun systemNotificationTrackerAdvancesWhenCollectedNotificationsAreDiscarded() {
+    val tracker = AgentSessionsSystemNotificationTracker()
+
+    assertThat(tracker.collectNotifications(state(thread("done", AgentThreadActivity.PROCESSING, 100)))).isEmpty()
+    val discardedNotifications = tracker.collectNotifications(state(thread("done", AgentThreadActivity.UNREAD, 200)))
+
+    assertThat(discardedNotifications).hasSize(1)
+    assertThat(tracker.collectNotifications(state(thread("done", AgentThreadActivity.UNREAD, 300)))).isEmpty()
+
+    assertThat(tracker.collectNotifications(state(thread("done", AgentThreadActivity.PROCESSING, 400)))).isEmpty()
+    assertThat(tracker.collectNotifications(state(thread("done", AgentThreadActivity.UNREAD, 500)))).hasSize(1)
+  }
+
+  @Test
   fun systemNotificationTextIncludesThreadTitleAndLocation() {
     val tracker = AgentSessionsSystemNotificationTracker()
     tracker.collectNotifications(worktreeSummary(thread("needs-input", AgentThreadActivity.PROCESSING, 100)), isLoadedState = true)
@@ -460,17 +499,22 @@ class AgentSessionsActivitySummaryTest {
 
   private fun summary(vararg threads: AgentSessionThread): AgentSessionsActivitySummary {
     return buildAgentSessionsActivitySummary(
-      AgentSessionsState(
-        projects = listOf(
-          AgentProjectSessions(
-            path = "/work/project-a",
-            name = "Project A",
-            isOpen = true,
-            hasLoaded = true,
-            threads = threads.toList(),
-          )
-        ),
-      )
+      state(*threads)
+    )
+  }
+
+  private fun state(vararg threads: AgentSessionThread): AgentSessionsState {
+    return AgentSessionsState(
+      lastUpdatedAt = 1_000L,
+      projects = listOf(
+        AgentProjectSessions(
+          path = "/work/project-a",
+          name = "Project A",
+          isOpen = true,
+          hasLoaded = true,
+          threads = threads.toList(),
+        )
+      ),
     )
   }
 

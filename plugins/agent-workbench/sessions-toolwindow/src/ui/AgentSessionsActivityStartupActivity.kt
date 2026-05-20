@@ -9,6 +9,7 @@ import com.intellij.openapi.startup.ProjectActivity
 
 internal class AgentSessionsActivityStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
+    serviceAsync<AgentSessionsSystemNotificationService>()
     project.serviceAsync<AgentSessionsActivityService>()
   }
 }

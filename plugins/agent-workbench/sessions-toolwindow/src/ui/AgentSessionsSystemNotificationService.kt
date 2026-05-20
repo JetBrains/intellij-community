@@ -4,34 +4,34 @@ package com.intellij.agent.workbench.sessions.toolwindow.ui
 // @spec community/plugins/agent-workbench/spec/agent-sessions-tree.spec.md
 
 import com.intellij.agent.workbench.sessions.service.AgentSessionReadService
+import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-@Service(Service.Level.PROJECT)
-internal class AgentSessionsActivityService(
-  private val project: Project,
+@Service(Service.Level.APP)
+internal class AgentSessionsSystemNotificationService(
   scope: CoroutineScope,
 ) {
-  private val _summary = MutableStateFlow(AgentSessionsActivitySummary.EMPTY)
-
-  val summary: StateFlow<AgentSessionsActivitySummary> = _summary.asStateFlow()
+  private val tracker = AgentSessionsSystemNotificationTracker()
 
   init {
     scope.launch(Dispatchers.Default) {
       serviceAsync<AgentSessionReadService>().stateFlow().collect { state ->
-        val nextSummary = buildAgentSessionsActivitySummary(state)
-        _summary.value = nextSummary
-        project.serviceAsync<AgentSessionsStripeIconUpdater>().scheduleUpdate()
+        val notifications = tracker.collectNotifications(state)
+        if (shouldShowAgentSessionsSystemNotifications()) {
+          notifications.forEach { notification -> showAgentSessionsSystemNotification(notification) }
+        }
       }
     }
   }
+}
 
-  fun latestSummary(): AgentSessionsActivitySummary = _summary.value
+internal fun shouldShowAgentSessionsSystemNotifications(
+  application: Application = ApplicationManager.getApplication(),
+): Boolean {
+  return !application.isActive && !application.isUnitTestMode
 }

@@ -39,6 +39,13 @@ internal class AgentSessionsSystemNotificationTracker {
   private var hasLoadedBaseline: Boolean = false
   private var bucketsByThreadKey: Map<AgentSessionsSystemNotificationThreadKey, AgentSessionsActivityBucket> = emptyMap()
 
+  fun collectNotifications(state: AgentSessionsState): List<AgentSessionsSystemNotification> {
+    return collectNotifications(
+      summary = buildAgentSessionsActivitySummary(state),
+      isLoadedState = state.lastUpdatedAt != null,
+    )
+  }
+
   fun collectNotifications(
     summary: AgentSessionsActivitySummary,
     isLoadedState: Boolean,
