@@ -35,12 +35,33 @@ class AllGradleVersionArgumentsProcessorTest {
     fun singleSupportedGradleVersion() = Unit
   }
 
+  //@ParameterizedClass
+  @AllGradleVersionsSource
+  private class TestParametrizedClass(@Suppress("unused") gradleVersion: GradleVersion)
+
+  //@ParameterizedClass
+  @AllGradleVersionsSource
+  @TargetVersions(BASE_GRADLE_VERSION)
+  private class TestParametrizedClassWithSingleSupportedGradleVersion(@Suppress("unused") gradleVersion: GradleVersion)
+
   enum class TestData(
     val gradleVersionsToRun: String?,
     val kotlinClass: KClass<*>,
     val kotlinMethod: KCallable<*>?,
     val expectedGradleVersions: List<String>,
   ) {
+    CLASS_LEVEL_ALL_GRADLE_VERSIONS(
+      gradleVersionsToRun = null,
+      kotlinClass = TestParametrizedClass::class,
+      kotlinMethod = null,
+      expectedGradleVersions = SUPPORTED_GRADLE_VERSIONS,
+    ),
+    CLASS_LEVEL_SINGLE_GRADLE_VERSION(
+      gradleVersionsToRun = null,
+      kotlinClass = TestParametrizedClassWithSingleSupportedGradleVersion::class,
+      kotlinMethod = null,
+      expectedGradleVersions = listOf(BASE_GRADLE_VERSION),
+    ),
     METHOD_LEVEL_ALL_GRADLE_VERSIONS(
       gradleVersionsToRun = null,
       kotlinClass = TestClass::class,
@@ -51,6 +72,18 @@ class AllGradleVersionArgumentsProcessorTest {
       gradleVersionsToRun = null,
       kotlinClass = TestClass::class,
       kotlinMethod = TestClass::singleSupportedGradleVersion,
+      expectedGradleVersions = listOf(BASE_GRADLE_VERSION),
+    ),
+    FIRST_LAST_CLASS_LEVEL_ALL_GRADLE_VERSIONS(
+      gradleVersionsToRun = "FIRST_LAST",
+      kotlinClass = TestParametrizedClass::class,
+      kotlinMethod = null,
+      expectedGradleVersions = listOf(SUPPORTED_GRADLE_VERSIONS.first(), SUPPORTED_GRADLE_VERSIONS.last()),
+    ),
+    FIRST_LAST_CLASS_LEVEL_SINGLE_GRADLE_VERSION(
+      gradleVersionsToRun = "FIRST_LAST",
+      kotlinClass = TestParametrizedClassWithSingleSupportedGradleVersion::class,
+      kotlinMethod = null,
       expectedGradleVersions = listOf(BASE_GRADLE_VERSION),
     ),
     FIRST_LAST_METHOD_LEVEL_ALL_GRADLE_VERSIONS(
