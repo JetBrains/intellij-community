@@ -41,8 +41,8 @@
     <indexingFlavor filetype="CLASS" implementationClass="com.intellij.index.ClassFileIndexingFlavor"/>
     <indexingFlavor filetype="kotlin_builtins" implementationClass="com.intellij.index.KtBuiltInFileIndexingFlavorProvider"/>
 
-    <moduleService serviceInterface="com.intellij.openapi.roots.ModulePackageIndex"
-                   serviceImplementation="com.intellij.openapi.roots.impl.ModulePackageIndexImpl"/>
+    <projectService serviceInterface="com.intellij.openapi.roots.ModulePackageIndexFactory"
+                   serviceImplementation="com.intellij.openapi.roots.impl.ModulePackageIndexFactoryImpl"/>
 
     <implicitToStringSearch implementation="com.intellij.psi.impl.search.ImplicitToStringSearcher"/>
 

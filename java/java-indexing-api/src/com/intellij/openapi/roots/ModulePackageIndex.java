@@ -5,6 +5,6 @@ import com.intellij.openapi.module.Module;
 
 public abstract class ModulePackageIndex extends PackageIndex {
   public static ModulePackageIndex getInstance(Module module) {
-    return module.getService(ModulePackageIndex.class);
+    return module.getProject().getService(ModulePackageIndexFactory.class).getService(module);
   }
 }
