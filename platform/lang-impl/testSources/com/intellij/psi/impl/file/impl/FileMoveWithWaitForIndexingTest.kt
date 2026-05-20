@@ -9,7 +9,7 @@ import com.intellij.codeInsight.multiverse.anyContext
 import com.intellij.codeInsight.multiverse.codeInsightContext
 import com.intellij.codeInsight.multiverse.defaultContext
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -534,13 +534,13 @@ internal class FileMoveWithWaitForIndexingTest {
   @Test
   fun `file after content root is removed`() = doTest {
     // create a temp directory and add as content root
-    val tempDir = writeAction {
+    val tempDir = edtWriteAction {
       project.baseDir.createChildDirectory(this, "tempContentRoot")
     }
     PsiTestUtil.addContentRoot(module1, tempDir)
 
     // create a Java file in the new content root
-    val javaFile = writeAction {
+    val javaFile = edtWriteAction {
       val vf = tempDir.createChildData(this, "Temp.java")
       VfsUtil.saveText(vf, "public class Temp {}")
       vf
@@ -565,13 +565,13 @@ internal class FileMoveWithWaitForIndexingTest {
   @Test
   fun `file and smart pointer after content root is removed`() = doTest {
     // create a temp directory and add as content root
-    val tempDir = writeAction {
+    val tempDir = edtWriteAction {
       project.baseDir.createChildDirectory(this, "tempContentRoot")
     }
     PsiTestUtil.addContentRoot(module1, tempDir)
 
     // create a Java file in the new content root
-    val javaFile = writeAction {
+    val javaFile = edtWriteAction {
       val vf = tempDir.createChildData(this, "Temp.java")
       VfsUtil.saveText(vf, "public class Temp {}")
       vf
@@ -629,7 +629,7 @@ internal class FileMoveWithWaitForIndexingTest {
   }
 
   private suspend fun moveFile(file: VirtualFile, target: VirtualFile) {
-    writeAction {
+    edtWriteAction {
       val message = dumpPsiFiles(file)
       thisLogger().debug("Existing PsiFiles of ${file.path}: " + message)
 
@@ -819,12 +819,12 @@ internal class FileMoveWithWaitForIndexingTest {
 
   @Test
   fun `file and file smart pointer after content root is removed`() = doTest {
-    val tempDir = writeAction {
+    val tempDir = edtWriteAction {
       project.baseDir.createChildDirectory(this, "tempContentRoot")
     }
     PsiTestUtil.addContentRoot(module1, tempDir)
 
-    val javaFile = writeAction {
+    val javaFile = edtWriteAction {
       val vf = tempDir.createChildData(this, "Temp.java")
       VfsUtil.saveText(vf, "public class Temp {}")
       vf

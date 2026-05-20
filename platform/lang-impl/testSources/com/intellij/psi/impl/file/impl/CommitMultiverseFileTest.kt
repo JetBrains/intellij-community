@@ -3,7 +3,7 @@ package com.intellij.psi.impl.file.impl
 
 import com.intellij.codeInsight.multiverse.ProjectModelContextBridge
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.platform.testFramework.junit5.projectStructure.fixture.withSharedSourceEnabled
@@ -74,7 +74,7 @@ internal class CommitMultiverseFileTest {
       FileDocumentManager.getInstance().getDocument(virtualFile)!!
     }
 
-    writeAction {
+    edtWriteAction {
       document.setText("class B {}")
       PsiDocumentManager.getInstance(project).commitDocument(document)
     }
@@ -117,7 +117,7 @@ internal class CommitMultiverseFileTest {
     }
 
     // adding long suffix to all files
-    writeAction {
+    edtWriteAction {
       for (file in files) {
         Assertions.assertEquals(1, psiManager.fileManagerEx.findCachedViewProviders(file).size)
       }

@@ -2,7 +2,7 @@
 package com.intellij.openapi
 
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.serviceContainer.AlreadyDisposedException
@@ -18,8 +18,8 @@ internal class ProjectRootManagerTest {
 
   @Test
   fun testDisposedModule(): Unit = timeoutRunBlocking {
-    val module = writeAction { ModuleManager.getInstance(projectFixture.get()).newNonPersistentModule("someModule", "someId") }
-    writeAction {
+    val module = edtWriteAction { ModuleManager.getInstance(projectFixture.get()).newNonPersistentModule("someModule", "someId") }
+    edtWriteAction {
       ModuleManager.getInstance(projectFixture.get()).disposeModule(module)
     }
     readAction {

@@ -8,7 +8,7 @@ import com.intellij.codeInsight.multiverse.ProjectModelContextBridge
 import com.intellij.codeInsight.multiverse.anyContext
 import com.intellij.codeInsight.multiverse.codeInsightContext
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -223,7 +223,7 @@ internal class FileMoveTest {
   }
 
   private suspend fun moveFile(file: VirtualFile, target: VirtualFile) {
-    writeAction {
+    edtWriteAction {
       val message = dumpPsiFiles(file)
       thisLogger().debug("Existing PsiFiles of ${file.path}: " + message)
 

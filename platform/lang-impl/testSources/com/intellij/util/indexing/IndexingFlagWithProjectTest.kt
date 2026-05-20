@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.junit5.TestApplication
@@ -33,7 +33,7 @@ class IndexingFlagWithProjectTest {
     val depService = project.service<ProjectIndexingDependenciesService>()
     var token = depService.newScanningTokenOnProjectOpen(true)
 
-    val vFile = writeAction {
+    val vFile = edtWriteAction {
       val file = temp.newFile("test", "content".toByteArray())
       VfsUtil.findFileByIoFile(file, true) ?: throw AssertionError("File not found: $file")
     }

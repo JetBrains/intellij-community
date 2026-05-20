@@ -2,7 +2,7 @@
 package com.intellij.psi.impl.file.impl
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
@@ -82,7 +82,7 @@ class PsiVFSListenerTest {
     project.messageBus.connect(testDisposable).subscribe(ModuleRootListener.TOPIC, rootListener)
     PsiManagerEx.getInstanceEx(project).addPsiTreeChangeListener(psiListener, testDisposable)
 
-    writeAction {
+    edtWriteAction {
       ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.getInstance(), changes)
     }
 

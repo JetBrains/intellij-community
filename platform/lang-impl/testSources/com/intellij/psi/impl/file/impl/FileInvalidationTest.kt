@@ -6,7 +6,7 @@ import com.intellij.codeInsight.multiverse.ModuleContext
 import com.intellij.codeInsight.multiverse.codeInsightContext
 import com.intellij.codeInsight.multiverse.defaultContext
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.platform.testFramework.junit5.projectStructure.fixture.multiverseProjectFixture
@@ -47,7 +47,7 @@ internal class FileInvalidationTest {
   fun `test default context invalidates`() = timeoutRunBlocking {
     // Step 1: no modules
     val root = readAction { VfsUtil.findFile(Path(project.basePath!!), false)!! }
-    val virtualFile = writeAction { root.createFile("foo.txt") }
+    val virtualFile = edtWriteAction { root.createFile("foo.txt") }
 
     val psiFileDefaultContext = readAction { PsiManager.getInstance(project).findFile(virtualFile)!! }
 

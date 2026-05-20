@@ -5,7 +5,7 @@ import com.intellij.codeInsight.multiverse.CodeInsightContext
 import com.intellij.codeInsight.multiverse.ModuleContext
 import com.intellij.codeInsight.multiverse.ProjectModelContextBridge
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VfsUtil
@@ -218,7 +218,7 @@ internal class SmartPointerStressAfterFileMoveTest {
   }
 
   private suspend fun createManyFiles(parent: VirtualFile, count: Int): List<VirtualFile> {
-    return writeAction {
+    return edtWriteAction {
       (0 until count).map { i ->
         val vf = parent.createChildData(this, "File$i.txt")
         VfsUtil.saveText(vf, "content_$i")
@@ -242,7 +242,7 @@ internal class SmartPointerStressAfterFileMoveTest {
   }
 
   private suspend fun moveFile(file: VirtualFile, target: VirtualFile) {
-    writeAction {
+    edtWriteAction {
       file.move(this, target)
     }
   }

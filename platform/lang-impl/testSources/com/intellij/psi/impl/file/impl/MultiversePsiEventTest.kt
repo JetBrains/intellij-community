@@ -6,7 +6,7 @@ import com.intellij.codeInsight.multiverse.ProjectModelContextBridge
 import com.intellij.lang.fakeLang.registerFakeLanguage
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
@@ -346,7 +346,7 @@ internal class MultiversePsiEventTest {
     val f1 = findPsiFile(c1)
     val f2 = findPsiFile(c2)
 
-    writeAction {
+    edtWriteAction {
       updateBlock(virtualFile)
     }
 

@@ -9,7 +9,6 @@ import com.intellij.codeInsight.multiverse.anyContext
 import com.intellij.codeInsight.multiverse.codeInsightContext
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.rootManager
 import com.intellij.platform.testFramework.junit5.projectStructure.fixture.withSharedSourceEnabled
@@ -127,7 +126,7 @@ internal class FileContextTest {
           break
         }
 
-        writeAction {
+        edtWriteAction {
           psiManager.fileManager.setViewProvider(virtualFile, null)
         }
       }

@@ -4,7 +4,7 @@ package com.intellij.psi.impl.file.impl
 import com.intellij.codeInsight.multiverse.ModuleContext
 import com.intellij.codeInsight.multiverse.codeInsightContext
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.module.EmptyModuleType
 import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.ModuleManager
@@ -39,7 +39,7 @@ class FileContextInChangingModuleTest {
       }
     }
 
-    val vFile = writeAction {
+    val vFile = edtWriteAction {
       projectRoot.createFile("foo.txt")
     }
 
@@ -69,7 +69,7 @@ class FileContextInChangingModuleTest {
     val model = ModuleManager.getInstanceAsync(project).getModifiableModel()
     val result = block(model)
 
-    writeAction {
+    edtWriteAction {
       model.commit()
     }
 
