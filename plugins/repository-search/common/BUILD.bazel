@@ -21,7 +21,7 @@ jvm_library(
   name = "common",
   module_name = "intellij.repository.search.common",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/main/java/**/*.kt", "src/main/java/**/*.java", "src/main/java/**/*.form", "src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
   resources = glob(["resources/**/*"]),
   resource_strip_prefix = "resources",
   resource_jars = [":common_resources"],
