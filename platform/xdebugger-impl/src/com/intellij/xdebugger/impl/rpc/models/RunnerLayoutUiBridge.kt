@@ -57,7 +57,15 @@ internal class RunnerLayoutUiBridge(
 
   override fun createContent(contentId: @NonNls String, component: JComponent, displayName: @Nls String, icon: Icon?, toFocus: JComponent?): Content {
     // Do not pass component to the fake content, as it will break LUX transfer due to adding content into a UI hierarchy
-    val content = ContentFactory.getInstance().createContent(JLabel(), displayName, false)
+    val fakeComponent = object : JLabel(), Disposable {
+      override fun dispose() {
+        // component might be disposed via com.intellij.ui.content.Content.setShouldDisposeContent
+        if (component is Disposable) {
+          Disposer.dispose(component)
+        }
+      }
+    }
+    val content = ContentFactory.getInstance().createContent(fakeComponent, displayName, false)
     content.putUserData(RunnerLayoutUiImpl.CONTENT_TYPE, contentId)
     content.putUserData(ViewImpl.ID, contentId)
     content.icon = icon
