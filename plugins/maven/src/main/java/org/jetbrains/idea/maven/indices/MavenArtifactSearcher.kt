@@ -5,7 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
-import org.jetbrains.idea.maven.completion.MavenDependencySearchService.Companion.getInstance
+import org.jetbrains.idea.maven.completion.MavenDependencySearchService
 import org.jetbrains.idea.maven.model.MavenRepoArtifactInfo
 import java.util.function.Consumer
 
@@ -15,7 +15,7 @@ class MavenArtifactSearcher : MavenSearcher<MavenArtifactSearchResult>() {
       return mutableListOf()
     }
     val searchResults = ArrayList<MavenRepoArtifactInfo>()
-    val searchService = getInstance(project)
+    val searchService = MavenDependencySearchService.getInstance(project)
     val useLocalProvidersOnly = ApplicationManager.getApplication().isUnitTestMode()
     runBlockingCancellable {
       searchService.fulltextSearch(pattern, false, useLocalProvidersOnly, Consumer {
