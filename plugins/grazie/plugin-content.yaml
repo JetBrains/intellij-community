@@ -100,7 +100,6 @@
   contentModules:
   - name: intellij.grazie.core
   - name: intellij.grazie.json
-  - name: intellij.grazie.markdown
   - name: intellij.grazie.xml
   - name: intellij.grazie.yaml
 - name: lib/intellij.libraries.ai.grazie.spell.gec.engine.local.jar
@@ -138,6 +137,16 @@
 - name: lib/modules/intellij.grazie.java.jar
   contentModules:
   - name: intellij.grazie.java
+- name: lib/modules/intellij.grazie.markdown.jar
+  contentModules:
+  - name: intellij.grazie.markdown
+    libraries:
+      ai.grazie.tasks.library.model.jvm:
+      - name: $MAVEN_REPOSITORY$/ai/grazie/tasks-library/tasks-library-model-jvm/0/tasks-library-model-jvm-0.jar
+  library: ai.grazie.semantic.engine
+  files:
+  - name: $MAVEN_REPOSITORY$/ai/grazie/grazie-rules-llm/0/grazie-rules-llm-0.jar
+  reason: <- intellij.grazie.markdown
 - name: lib/modules/intellij.grazie.properties.jar
   contentModules:
   - name: intellij.grazie.properties

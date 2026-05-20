@@ -3,9 +3,27 @@
   <dependencies>
     <plugin id="org.intellij.plugins.markdown"/>
     <module name="intellij.grazie.core"/>
+    <module name="intellij.libraries.ai.grazie.spell.gec.engine.local"/>
     <module name="intellij.markdown"/>
   </dependencies>
   <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="grazie.specification.semantics.enabled" defaultValue="false" description="Whether to enable semantic agentic Markdown checks"/>
+
+    <localInspection bundle="messages.GrazieBundle" groupKey="specification.group.name" key="specification.inspection.contradiction.name"
+                     shortName="SpecificationContradiction" level="WARNING" enabledByDefault="true" language="Markdown"
+                     implementationClass="com.intellij.grazie.ide.language.markdown.semantics.inspection.SpecificationContradictionInspection"/>
+
+    <localInspection bundle="messages.GrazieBundle" groupKey="specification.group.name" key="specification.inspection.security.name"
+                     shortName="SpecificationSecurity" level="WARNING" enabledByDefault="true" language="Markdown"
+                     implementationClass="com.intellij.grazie.ide.language.markdown.semantics.inspection.SpecificationSecurityInspection"/>
+
+
+    <localInspection bundle="messages.GrazieBundle" groupKey="specification.group.name" key="specification.inspection.semanticCoverage.name"
+                     shortName="SpecificationSemanticCoverage" level="WARNING" enabledByDefault="true" language="Markdown"
+                     implementationClass="com.intellij.grazie.ide.language.markdown.semantics.inspection.SpecificationSematicCoverageInspection"/>
+  </extensions>
 
   <extensions defaultExtensionNs="com.intellij.grazie">
     <textExtractor language="Markdown"

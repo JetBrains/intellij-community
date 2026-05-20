@@ -1,0 +1,73 @@
+package com.intellij.grazie.ide.language.markdown.semantics.inspection
+
+import ai.grazie.api.gateway.client.SuspendableAPIGatewayClient
+import ai.grazie.rules.promptAnalysis.LlmAnalyzer
+import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.ProblemDescriptorBase
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.util.InspectionMessage
+import com.intellij.grazie.cloud.GrazieCloudConnector
+import com.intellij.grazie.ide.language.markdown.semantics.analyzer.Analyzer
+import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiFile
+import com.intellij.util.text.StringSearcher
+
+internal abstract class SpecificationBaseInspection<T> : LocalInspectionTool() {
+
+  abstract fun reportProblem(holder: ProblemsHolder, file: PsiFile, problem: T)
+
+  abstract fun getAnalyzer(file: PsiFile): LlmAnalyzer<T>?
+
+  final override fun buildVisitor(
+    holder: ProblemsHolder,
+    isOnTheFly: Boolean,
+    session: LocalInspectionToolSession,
+  ): PsiElementVisitor {
+    val client = validateAndGetClient(isOnTheFly) ?: return PsiElementVisitor.EMPTY_VISITOR
+
+    return object : PsiElementVisitor() {
+      override fun visitFile(file: PsiFile) {
+        if (!isAgentMarkdownFile(file)) return
+        val analyzer = getAnalyzer(file) ?: return
+        Analyzer.analyze(analyzer, file, client)
+          .forEach { problem -> reportProblem(holder, file, problem) }
+      }
+    }
+  }
+
+  protected fun createProblemDescriptor(file: PsiFile, range: TextRange, @InspectionMessage description: String): ProblemDescriptorBase =
+    ProblemDescriptorBase(
+      file, file, description, emptyArray(),
+      ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+      false, range, true, true
+    )
+
+  protected fun findAllOccurrences(pattern: String, text: String): List<TextRange> {
+    val indexes = StringSearcher(pattern, false, true).findAllOccurrences(text)
+    if (indexes.isEmpty()) {
+      thisLogger().warn("No occurrences found by ${javaClass.name} in text")
+    }
+    return indexes.map { index -> TextRange(index, index + pattern.length) }
+  }
+
+  private fun isAgentMarkdownFile(file: PsiFile): Boolean = AGENT_MARKDOWN_FILE_NAME_PATTERN.matches(file.name)
+
+  private fun validateAndGetClient(isOnTheFly: Boolean): SuspendableAPIGatewayClient? {
+    if (!isOnTheFly) return null
+    if (!Registry.`is`("grazie.specification.semantics.enabled")) return null
+    if (!GrazieCloudConnector.hasAdditionalConnectors()) return null
+    return GrazieCloudConnector.api()
+  }
+
+  companion object {
+    private val AGENT_MARKDOWN_FILE_NAME_PATTERN = Regex(
+      "(agents|agent|ai|claude|copilot-instructions|prompt|skill|system[-_]prompt|spec|architecture)\\.md",
+      RegexOption.IGNORE_CASE,
+    )
+  }
+}

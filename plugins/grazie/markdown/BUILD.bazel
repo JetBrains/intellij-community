@@ -10,11 +10,16 @@ jvm_library(
   resource_strip_prefix = "src/main/resources",
   deps = [
     "@lib//:kotlin-stdlib",
+    "@lib//:ai-grazie-semantic-engine",
+    "@lib//:grazie-markdown-ai-grazie-tasks-library-model-jvm",
     "//plugins/grazie/src:core",
+    "//libraries/ai.grazie.spell.gec.engine.local",
     "//plugins/markdown/core:markdown",
     "//platform/core-api:core",
     "//platform/util",
     "//platform/util-ex",
+    "//platform/analysis-api:analysis",
+    "//platform/analysis-impl",
   ]
 )
 
@@ -27,10 +32,13 @@ jvm_library(
   runtime_deps = [
     ":markdown",
     "//plugins/grazie/src:core_test_lib",
+    "//libraries/ai.grazie.spell.gec.engine.local:ai.grazie.spell.gec.engine.local_test_lib",
     "//plugins/markdown/core:markdown_test_lib",
     "//platform/core-api:core_test_lib",
     "//platform/util:util_test_lib",
     "//platform/util-ex:util-ex_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/analysis-impl:analysis-impl_test_lib",
   ]
 )
 ### auto-generated section `build intellij.grazie.markdown` end

@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="ai.grazie.semantic.engine" type="repository">
+    <properties include-transitive-deps="false" maven-id="ai.grazie:grazie-rules-llm:0.3.202">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/grazie-rules-llm/0.3.202/grazie-rules-llm-0.3.202.jar">
+          <sha256sum>2967f71337aade2a2322153828a3c28f4ce9652643627b706b180b6afdb23d3e</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/grazie-rules-llm/0.3.202/grazie-rules-llm-0.3.202.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/grazie-rules-llm/0.3.202/grazie-rules-llm-0.3.202-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

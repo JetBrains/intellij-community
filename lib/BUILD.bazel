@@ -80,9 +80,9 @@ jvm_import(
 )
 
 copy_file(
-  name = "ai.grazie/grazie-rule-engine-0.3.200.jar_copy",
-  src = "@ai_grazie-grazie-rule-engine-0_3_200_http//file",
-  out = "ai.grazie/grazie-rule-engine-0.3.200.jar",
+  name = "ai.grazie/grazie-rule-engine-0.3.202.jar_copy",
+  src = "@ai_grazie-grazie-rule-engine-0_3_202_http//file",
+  out = "ai.grazie/grazie-rule-engine-0.3.202.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
@@ -98,22 +98,37 @@ copy_file(
 java_library(
   name = "ai-grazie-rule-engine",
   exports = [
-    ":ai_grazie-grazie-rule-engine-0_3_200_http_import",
+    ":ai_grazie-grazie-rule-engine-0_3_202_http_import",
     ":net_fellbaum-jemoji-1_3_1_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "ai_grazie-grazie-rule-engine-0_3_200_http_import",
-  jar = "@ai_grazie-grazie-rule-engine-0_3_200_http//file",
-  source_jar = "@ai_grazie-grazie-rule-engine-0_3_200-sources_http//file"
+  name = "ai_grazie-grazie-rule-engine-0_3_202_http_import",
+  jar = "@ai_grazie-grazie-rule-engine-0_3_202_http//file",
+  source_jar = "@ai_grazie-grazie-rule-engine-0_3_202-sources_http//file"
 )
 
 jvm_import(
   name = "net_fellbaum-jemoji-1_3_1_http_import",
   jar = "@net_fellbaum-jemoji-1_3_1_http//file",
   source_jar = "@net_fellbaum-jemoji-1_3_1-sources_http//file"
+)
+
+copy_file(
+  name = "ai.grazie/grazie-rules-llm-0.3.202.jar_copy",
+  src = "@ai_grazie-grazie-rules-llm-0_3_202_http//file",
+  out = "ai.grazie/grazie-rules-llm-0.3.202.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "ai-grazie-semantic-engine",
+  jar = "@ai_grazie-grazie-rules-llm-0_3_202_http//file",
+  source_jar = "@ai_grazie-grazie-rules-llm-0_3_202-sources_http//file",
+  visibility = ["//visibility:public"]
 )
 
 copy_file(
@@ -3988,6 +4003,13 @@ jvm_import(
   name = "grazie-core-tech-uom-lib-uom-lib-common-1-1",
   jar = "@tech_uom_lib-uom-lib-common-1_1_http//file",
   source_jar = "@tech_uom_lib-uom-lib-common-1_1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "grazie-markdown-ai-grazie-tasks-library-model-jvm",
+  jar = "@ai_grazie_tasks-library-tasks-library-model-jvm-0_4_18_http//file",
+  source_jar = "@ai_grazie_tasks-library-tasks-library-model-jvm-0_4_18-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
