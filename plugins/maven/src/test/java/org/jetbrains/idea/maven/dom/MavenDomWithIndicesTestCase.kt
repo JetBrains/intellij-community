@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.ExtensionTestUtil.maskExtensions
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -29,12 +28,10 @@ import org.jetbrains.idea.maven.indices.MavenIndicesManager.MavenIndexerListener
 import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture
 import org.jetbrains.idea.maven.indices.MavenSystemIndicesManager
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo
-import com.intellij.maven.completion.provider.MavenCompletionProviderFactory
 import org.jetbrains.idea.maven.project.MavenSettingsCache
 import org.jetbrains.idea.maven.server.MavenServerConnector
 import org.jetbrains.idea.maven.server.MavenServerDownloadListener
 import org.jetbrains.idea.maven.utils.MavenLog
-import org.jetbrains.idea.reposearch.DependencySearchService
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 
@@ -42,9 +39,9 @@ abstract class MavenDomWithIndicesTestCase : MavenDomTestCase() {
   protected var myIndicesFixture: MavenIndicesTestFixture? = null
   override fun setUp() = runBlocking {
     super.setUp()
-    maskExtensions(DependencySearchService.EP_NAME,
-                   listOf(MavenCompletionProviderFactory()),
-                   getTestRootDisposable(), false, null)
+    //maskExtensions(DependencySearchService.EP_NAME,
+    //               listOf(MavenCompletionProviderFactory()),
+    //               getTestRootDisposable(), false, null)
     myIndicesFixture = createIndicesFixture()
     myIndicesFixture!!.setUpBeforeImport()
 
