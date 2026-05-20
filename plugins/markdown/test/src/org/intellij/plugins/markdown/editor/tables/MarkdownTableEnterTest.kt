@@ -81,6 +81,24 @@ class MarkdownTableEnterTest: LightPlatformCodeInsightTestCase() {
   }
 
   @Test
+  fun `test shift enter at the row end with CJK header`() {
+    // language=Markdown
+    val before = """
+    | 名字 | 年龄 |
+    |------|------|
+    | 张三 | 25   |<caret>
+    """.trimIndent()
+    // language=Markdown
+    val after = """
+    | 名字 | 年龄 |
+    |------|------|
+    | 张三 | 25   |
+    |      |      |<caret>
+    """.trimIndent()
+    doTest(before, after, shift = true)
+  }
+
+  @Test
   fun `test shift enter at the separator row end`() {
     // language=Markdown
     val before = """

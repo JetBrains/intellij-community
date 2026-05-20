@@ -24,8 +24,14 @@ import org.intellij.plugins.markdown.lang.hasMarkdownType
 import kotlin.time.Duration.Companion.milliseconds
 
 private val TABLE_SEPARATOR = Regex("""\|\s*:?-{3,}""")
-private fun CharSequence.hasFullWidth() = any { isFullWidthCharacter(it.code) }
-private fun CharSequence.hasTableSeparator() = TABLE_SEPARATOR.containsMatchIn(this)
+internal fun CharSequence.hasFullWidth() = any { isFullWidthCharacter(it.code) }
+internal fun CharSequence.hasTableSeparator() = TABLE_SEPARATOR.containsMatchIn(this)
+
+internal fun enableGridMode(editor: EditorImpl) {
+  editor.settings.characterGridWidthMultiplier = 1.0f
+  editor.reinitSettings()
+  editor.characterGrid?.doubleWidthCharacterStrategy = DoubleWidthCharacterStrategy(::isFullWidthCharacter)
+}
 
 internal class MarkdownCharacterGridCustomizer : TextEditorCustomizer {
   override fun customize(textEditor: TextEditor, coroutineScope: CoroutineScope) {
@@ -77,11 +83,5 @@ internal class MarkdownCharacterGridCustomizer : TextEditorCustomizer {
       document.removeDocumentListener(listener)
       enableGridMode(editor)
     }
-  }
-
-  private fun enableGridMode(editor: EditorImpl) {
-    editor.settings.characterGridWidthMultiplier = 1.0f
-    editor.reinitSettings()
-    editor.characterGrid?.doubleWidthCharacterStrategy = DoubleWidthCharacterStrategy(::isFullWidthCharacter)
   }
 }

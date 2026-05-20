@@ -8,9 +8,11 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
+import org.intellij.plugins.markdown.editor.tables.TableCharacterWidthUtils
 import org.intellij.plugins.markdown.editor.tables.TableFormattingUtils.reformatColumnOnChange
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.modifyColumn
 import org.intellij.plugins.markdown.editor.tables.TableUtils
+import org.intellij.plugins.markdown.editor.tables.TableUtils.getColumnCells
 import org.intellij.plugins.markdown.editor.tables.TableUtils.separatorRow
 import org.intellij.plugins.markdown.lang.isMarkdownType
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
@@ -31,6 +33,22 @@ internal class MarkdownTableBackspaceHandler: BackspaceHandlerDelegate() {
     val table = TableUtils.findTable(file, caretOffset) ?: return false
     val cellIndex = TableUtils.findCellIndex(file, caretOffset) ?: return false
     val alignment = table.separatorRow?.getCellAlignment(cellIndex) ?: return false
+
+    val hasFullWidthInColumn = table.getColumnCells(cellIndex, withHeader = true).any { cell ->
+      cell.text.any { c -> TableCharacterWidthUtils.isFullWidthCharacter(c.code) }
+    }
+    if (hasFullWidthInColumn) {
+      executeCommand(table.project) {
+        table.reformatColumnOnChange(
+          document,
+          editor.caretModel.allCarets,
+          cellIndex,
+          trimToMaxContent = true
+        )
+      }
+      return true
+    }
+
     val width = TableUtils.findCell(file, caretOffset)?.textRange?.length ?: table.separatorRow?.getCellRange(cellIndex)?.length ?: 0
     val text = document.charsSequence
     executeCommand(table.project) {

@@ -19,9 +19,16 @@ import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorFontType
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.siblings
 import com.intellij.psi.util.startOffset
@@ -47,7 +54,8 @@ import java.awt.event.MouseEvent
 import java.lang.ref.WeakReference
 import javax.swing.SwingUtilities
 
-internal class HorizontalBarPresentation(private val editor: Editor, private val table: MarkdownTable): BasePresentation() {
+@ApiStatus.Internal
+class HorizontalBarPresentation(private val editor: Editor, private val table: MarkdownTable): BasePresentation() {
   private data class BoundsState(
     val width: Int,
     val height: Int,
@@ -59,12 +67,34 @@ internal class HorizontalBarPresentation(private val editor: Editor, private val
 
   init {
     val document = editor.document
+    scheduleBoundsRefresh(document)
+    val listenerDisposable = Disposer.newDisposable("HorizontalBarPresentation document listener")
+    EditorUtil.disposeWithEditor(editor, listenerDisposable)
+    document.addDocumentListener(object : DocumentListener {
+      override fun documentChanged(event: DocumentEvent) {
+        if (isInvalid) {
+          document.removeDocumentListener(this)
+          return
+        }
+        scheduleBoundsRefresh(document)
+      }
+    }, listenerDisposable)
+  }
+
+  private fun scheduleBoundsRefresh(document: Document) {
     PsiDocumentManager.getInstance(table.project).performForCommittedDocument(document) {
       invokeLater(ModalityState.stateForComponent(editor.contentComponent)) {
-        if (!isInvalid && !table.isSoftWrapping(editor)) {
-          val calculated = calculateCurrentBoundsState(document)
-          boundsState = calculated
-          fireSizeChanged(Dimension(0, 0), Dimension(calculated.width, calculated.height))
+        if (isInvalid || table.isSoftWrapping(editor)) return@invokeLater
+        val previous = boundsState
+        val calculated = calculateCurrentBoundsState(document)
+        if (calculated == previous) return@invokeLater
+        boundsState = calculated
+        val previousSize = Dimension(previous.width, previous.height)
+        val newSize = Dimension(calculated.width, calculated.height)
+        if (previousSize == newSize) {
+          fireUpdateEvent(previousSize)
+        } else {
+          fireSizeChanged(previousSize, newSize)
         }
       }
     }
@@ -117,11 +147,20 @@ internal class HorizontalBarPresentation(private val editor: Editor, private val
     if (isInvalid) {
       return emptyBoundsState
     }
-    //val document = obtainCommittedDocument(table) ?: return emptyBoundsState
     val fontsMetrics = obtainFontMetrics(editor)
     val width = calculateRowWidth(fontsMetrics, document)
     val barsModel = buildBarsModel(fontsMetrics, document)
     return BoundsState(width, barHeight, barsModel)
+  }
+
+  private val gridActive: Boolean
+    get() = (editor as? EditorImpl)?.characterGrid != null
+
+  @TestOnly
+  fun calculateColumnDividerPositionsForTesting(): List<Int> {
+    val header = table.headerRow ?: return emptyList()
+    val fontMetrics = obtainFontMetrics(editor)
+    return calculatePositions(header, editor.document, fontMetrics)
   }
 
   private fun calculateRowWidth(fontMetrics: FontMetrics, document: Document): Int {
@@ -129,7 +168,14 @@ internal class HorizontalBarPresentation(private val editor: Editor, private val
       return 0
     }
     val header = table.headerRow ?: return 0
-    return fontMetrics.stringWidth(document.getText(header.textRange))
+    return if (gridActive) {
+      val range = header.textRange
+      val start = editor.offsetToXY(range.startOffset)
+      val end = editor.offsetToXY(range.endOffset)
+      if (start.y != end.y) 0 else (end.x - start.x).coerceAtLeast(0)
+    } else {
+      fontMetrics.stringWidth(document.getText(header.textRange))
+    }
   }
 
   private fun updateSelectedIndexIfNeeded(index: Int?) {
@@ -154,12 +200,18 @@ internal class HorizontalBarPresentation(private val editor: Editor, private val
       .map { it.startOffset }
     val separatorWidth = fontMetrics.charWidth('|')
     val firstOffset = separators.firstOrNull() ?: return emptyList()
+    val gridActive = gridActive
+    val inlineInlayShift = if (gridActive) editor.inlayModel.getInlineElementsInRange(firstOffset, firstOffset).sumOf { it.widthInPixels } else 0
     val result = ArrayList<Int>()
-    var position = editor.offsetToXY(firstOffset).x + separatorWidth / 2
+    var position = editor.offsetToXY(firstOffset).x + separatorWidth / 2 - inlineInlayShift
     var lastOffset = firstOffset
     result.add(position)
     for (offset in separators.drop(1)) {
-      val length = fontMetrics.stringWidth(document.getText(TextRange(lastOffset, offset)))
+      val length = if (gridActive) {
+        editor.offsetToXY(offset).x - editor.offsetToXY(lastOffset).x
+      } else {
+        fontMetrics.stringWidth(document.getText(TextRange(lastOffset, offset)))
+      }
       position += length
       result.add(position)
       lastOffset = offset

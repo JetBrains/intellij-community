@@ -25,6 +25,28 @@ class MarkdownRemoveRowIntentionTest: LightPlatformCodeInsightFixture4TestCase()
     doTest(before, after)
   }
 
+  @Test
+  fun `test remove row in CJK table keeps remaining rows aligned`() {
+    // language=Markdown
+    @Suppress("MarkdownIncorrectTableFormatting")
+    val before = """
+    | 名字 | 年龄 |
+    |------|------|
+    | 张三 | 25   |
+    | 李四 | 30   |<caret>
+    | 王五 | 28   |
+    """.trimIndent()
+    // language=Markdown
+    @Suppress("MarkdownIncorrectTableFormatting")
+    val after = """
+    | 名字 | 年龄 |
+    |------|------|
+    | 张三 | 25   |
+    | 王五 | 28   |
+    """.trimIndent()
+    doTest(before, after)
+  }
+
   private fun doTest(content: String, after: String) {
     myFixture.configureByText("some.md", content)
     val targetText = MarkdownBundle.message("markdown.remove.row.intention.text")

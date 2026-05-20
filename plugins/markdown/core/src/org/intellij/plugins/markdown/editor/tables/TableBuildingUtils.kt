@@ -45,7 +45,7 @@ internal fun MarkdownTable.buildEmptyRow(builder: StringBuilder = StringBuilder(
   val header = checkNotNull(headerRow)
   builder.append(TableProps.SEPARATOR_CHAR)
   for (cell in header.cells) {
-    repeat(cell.textRange.length) {
+    repeat(TableCharacterWidthUtils.calculateDisplayWidth(cell.text)) {
       builder.append(' ')
     }
     builder.append(TableProps.SEPARATOR_CHAR)
