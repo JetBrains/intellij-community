@@ -5,10 +5,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.idea.maven.indices.MavenIndicesManager
 import org.jetbrains.idea.maven.model.MavenId
-import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
+import org.jetbrains.idea.maven.model.MavenRepoArtifactInfo
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.reposearch.DependencySearchProvider
-import org.jetbrains.idea.reposearch.RepositoryArtifactData
 import kotlin.math.min
 
 /**
@@ -16,13 +15,13 @@ import kotlin.math.min
  */
 internal class IndexBasedCompletionProvider(private val myProject: Project) : DependencySearchProvider {
 
-  override suspend fun fulltextSearch(searchString: String): List<RepositoryArtifactData> =
+  override suspend fun fulltextSearch(searchString: String): List<MavenRepoArtifactInfo> =
     search(MavenId(searchString))
 
-  override suspend fun suggestPrefix(groupId: String, artifactId: String): List<RepositoryArtifactData> =
+  override suspend fun suggestPrefix(groupId: String, artifactId: String): List<MavenRepoArtifactInfo> =
     search(MavenId(groupId, artifactId, null))
 
-  private fun search(mavenId: MavenId): List<RepositoryArtifactData> {
+  private fun search(mavenId: MavenId): List<MavenRepoArtifactInfo> {
     MavenLog.LOG.debug("Index: get local maven artifacts started")
     val result = buildList {
       val index = MavenIndicesManager.getInstance(myProject).getCommonGavIndex()
@@ -36,7 +35,7 @@ internal class IndexBasedCompletionProvider(private val myProject: Project) : De
             continue
           }
           if (artifactId == null) continue
-          val info = MavenRepositoryArtifactInfo(groupId, artifactId, index.getVersions(groupId, artifactId))
+          val info = MavenRepoArtifactInfo(groupId, artifactId, index.getVersions(groupId, artifactId))
           add(info)
           MavenLog.LOG.debug("Index: local maven artifact found ${info.groupId}:${info.artifactId}, completions: ${info.items.size}")
         }

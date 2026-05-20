@@ -26,13 +26,14 @@ import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.all
 import org.jetbrains.concurrency.resolvedPromise
+import org.jetbrains.idea.maven.model.MavenRepoArtifactInfo
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.BiConsumer
 import java.util.function.Consumer
 
-typealias ResultConsumer = (RepositoryArtifactData) -> Unit
+typealias ResultConsumer = (MavenRepoArtifactInfo) -> Unit
 
 
 @ApiStatus.Experimental
@@ -40,8 +41,8 @@ typealias ResultConsumer = (RepositoryArtifactData) -> Unit
 @Deprecated("use DependencyCompletionService")
 class DependencySearchService(private val project: Project, private val cs: CoroutineScope) : Disposable {
   private val executorService = AppExecutorUtil.createBoundedScheduledExecutorService("DependencySearch", 2)
-  private val cache = CollectionFactory.createConcurrentWeakKeyWeakValueMap<String, CompletableFuture<Collection<RepositoryArtifactData>>>()
-  private val deferredCache = CollectionFactory.createConcurrentWeakKeyWeakValueMap<DeferredCacheKey, Deferred<Collection<RepositoryArtifactData>>>()
+  private val cache = CollectionFactory.createConcurrentWeakKeyWeakValueMap<String, CompletableFuture<Collection<MavenRepoArtifactInfo>>>()
+  private val deferredCache = CollectionFactory.createConcurrentWeakKeyWeakValueMap<DeferredCacheKey, Deferred<Collection<MavenRepoArtifactInfo>>>()
   private fun remoteProviders() = EP_NAME.extensionList.flatMap { it.getProviders(project) }.filter { !it.isLocal() }
   private fun localProviders() = EP_NAME.extensionList.flatMap { it.getProviders(project) }.filter { it.isLocal() }
 
@@ -60,21 +61,21 @@ class DependencySearchService(private val project: Project, private val cs: Coro
     if (parameters.useCache()) {
       val cachedValue = foundInCache(cacheKey, consumer)
       if (cachedValue != null) {
-        consumer(PoisonedRepositoryArtifactData.INSTANCE)
+        consumer(PoisonedMavenRepoArtifactInfo.INSTANCE)
         return cachedValue
       }
     }
 
-    val thisNewFuture = CompletableFuture<Collection<RepositoryArtifactData>>()
+    val thisNewFuture = CompletableFuture<Collection<MavenRepoArtifactInfo>>()
     val existingFuture = cache.putIfAbsent(cacheKey, thisNewFuture)
     if (existingFuture != null && parameters.useCache()) {
       val result = fillResultsFromCache(existingFuture, consumer)
-      consumer(PoisonedRepositoryArtifactData.INSTANCE)
+      consumer(PoisonedMavenRepoArtifactInfo.INSTANCE)
       return result
     }
 
 
-    val localResultSet = RepositoryArtifactDataStorage()
+    val localResultSet = MavenRepoArtifactInfoStorage()
     localProviders().forEach { lp -> searchMethod(lp) { localResultSet.add(it) } }
     localResultSet.getAll().forEach(consumer)
 
@@ -82,12 +83,12 @@ class DependencySearchService(private val project: Project, private val cs: Coro
 
     if (parameters.isLocalOnly || remoteProviders.isEmpty()) {
       thisNewFuture.complete(localResultSet.getAll())
-      consumer(PoisonedRepositoryArtifactData.INSTANCE)
+      consumer(PoisonedMavenRepoArtifactInfo.INSTANCE)
       return resolvedPromise(0)
     }
 
     val promises: MutableList<Promise<Void>> = ArrayList(remoteProviders.size)
-    val resultSet = RepositoryArtifactDataStorage()
+    val resultSet = MavenRepoArtifactInfoStorage()
     for (provider in remoteProviders) {
       val promise = AsyncPromise<Void>()
       promises.add(promise)
@@ -110,7 +111,7 @@ class DependencySearchService(private val project: Project, private val cs: Coro
     }
 
     return promises.all(resultSet, ignoreErrors = true).then {
-      consumer(PoisonedRepositoryArtifactData.INSTANCE)
+      consumer(PoisonedMavenRepoArtifactInfo.INSTANCE)
       if (!resultSet.isEmpty() && existingFuture == null) {
         thisNewFuture.complete(resultSet.getAll())
       }
@@ -122,7 +123,7 @@ class DependencySearchService(private val project: Project, private val cs: Coro
   @Deprecated("prefer async method", ReplaceWith("suggestPrefixAsync(groupId, artifactId, parameters, consumer) }"))
   fun suggestPrefix(groupId: String, artifactId: String,
                     parameters: SearchParameters,
-                    consumer: Consumer<RepositoryArtifactData>) = suggestPrefix(groupId, artifactId, parameters) { consumer.accept(it) }
+                    consumer: Consumer<MavenRepoArtifactInfo>) = suggestPrefix(groupId, artifactId, parameters) { consumer.accept(it) }
 
   @Deprecated("prefer async method", ReplaceWith("suggestPrefixAsync(groupId, artifactId, parameters, consumer) }"))
   fun suggestPrefix(groupId: String, artifactId: String,
@@ -159,14 +160,14 @@ class DependencySearchService(private val project: Project, private val cs: Coro
                                          parameters: SearchParameters,
                                          consumer: ResultConsumer,
                                          searchMethod: suspend (DependencySearchProvider, ResultConsumer) -> Unit) {
-    val thisNewDeferred = CompletableDeferred<Collection<RepositoryArtifactData>>()
+    val thisNewDeferred = CompletableDeferred<Collection<MavenRepoArtifactInfo>>()
     val existingDeferred = deferredCache.putIfAbsent(DeferredCacheKey(provider::class.java.name, provider.cacheKey, cacheKey), thisNewDeferred)
     if (existingDeferred != null && parameters.useCache()) {
       fillResultsFromDeferredCache(existingDeferred, consumer)
       return
     }
 
-    val resultSet = RepositoryArtifactDataStorage()
+    val resultSet = MavenRepoArtifactInfoStorage()
     val searchFinished = AtomicBoolean(false)
 
     coroutineScope {
@@ -197,7 +198,7 @@ class DependencySearchService(private val project: Project, private val cs: Coro
     }
   }
 
-  private suspend fun fillResultsFromDeferredCache(deferred: Deferred<Collection<RepositoryArtifactData>>, consumer: ResultConsumer) {
+  private suspend fun fillResultsFromDeferredCache(deferred: Deferred<Collection<MavenRepoArtifactInfo>>, consumer: ResultConsumer) {
     val searchFinished = AtomicBoolean(false)
 
     coroutineScope {
@@ -224,7 +225,7 @@ class DependencySearchService(private val project: Project, private val cs: Coro
 
   suspend fun suggestPrefixAsync(groupId: String, artifactId: String,
                                  parameters: SearchParameters,
-                                 consumer: Consumer<RepositoryArtifactData>) = suggestPrefixAsync(
+                                 consumer: Consumer<MavenRepoArtifactInfo>) = suggestPrefixAsync(
     groupId, artifactId, parameters) { consumer.accept(it) }
 
   suspend fun suggestPrefixAsync(groupId: String, artifactId: String,
@@ -241,7 +242,7 @@ class DependencySearchService(private val project: Project, private val cs: Coro
   @Deprecated("prefer async method", ReplaceWith("fulltextSearchAsync(searchString, parameters, consumer) }"))
   fun fulltextSearch(searchString: String,
                      parameters: SearchParameters,
-                     consumer: Consumer<RepositoryArtifactData>) = fulltextSearch(searchString, parameters) { consumer.accept(it) }
+                     consumer: Consumer<MavenRepoArtifactInfo>) = fulltextSearch(searchString, parameters) { consumer.accept(it) }
 
 
   @Deprecated("prefer async method", ReplaceWith("fulltextSearchAsync(searchString, parameters, consumer) }"))
@@ -256,7 +257,7 @@ class DependencySearchService(private val project: Project, private val cs: Coro
 
   suspend fun fulltextSearchAsync(searchString: String,
                                   parameters: SearchParameters,
-                                  consumer: Consumer<RepositoryArtifactData>) = fulltextSearchAsync(searchString, parameters) {
+                                  consumer: Consumer<MavenRepoArtifactInfo>) = fulltextSearchAsync(searchString, parameters) {
     consumer.accept(it)
   }
 
@@ -272,7 +273,7 @@ class DependencySearchService(private val project: Project, private val cs: Coro
   fun getGroupIds(pattern: String?): Set<String> {
     val result = mutableSetOf<String>()
     fulltextSearch(pattern ?: "", SearchParameters(true, true)) {
-      if (it is MavenRepositoryArtifactInfo) {
+      if (it is MavenRepoArtifactInfo) {
         result.add(it.groupId)
       }
     }
@@ -283,7 +284,7 @@ class DependencySearchService(private val project: Project, private val cs: Coro
     ProgressIndicatorProvider.checkCanceled()
     val result = mutableSetOf<String>()
     fulltextSearch("$groupId:", SearchParameters(true, true)) {
-      if (it is MavenRepositoryArtifactInfo) {
+      if (it is MavenRepoArtifactInfo) {
         if (groupId == it.groupId) {
           result.add(it.artifactId)
         }
@@ -296,7 +297,7 @@ class DependencySearchService(private val project: Project, private val cs: Coro
     ProgressIndicatorProvider.checkCanceled()
     val result = mutableSetOf<String>()
     fulltextSearch("$groupId:$artifactId", SearchParameters(true, true)) {
-      if (it is MavenRepositoryArtifactInfo) {
+      if (it is MavenRepoArtifactInfo) {
         if (groupId == it.groupId && artifactId == it.artifactId) {
           for (item in it.items) {
             if (item.version != null) result.add(item.version!!)
@@ -310,7 +311,7 @@ class DependencySearchService(private val project: Project, private val cs: Coro
   suspend fun getVersionsAsync(groupId: String, artifactId: String): Set<String> {
     val result = mutableSetOf<String>()
     fulltextSearchAsync("$groupId:$artifactId", SearchParameters(true, true)) {
-      if (it is MavenRepositoryArtifactInfo) {
+      if (it is MavenRepoArtifactInfo) {
         if (groupId == it.groupId && artifactId == it.artifactId) {
           for (item in it.items) {
             if (item.version != null) result.add(item.version!!)
@@ -329,11 +330,11 @@ class DependencySearchService(private val project: Project, private val cs: Coro
     return null
   }
 
-  private fun fillResultsFromCache(future: CompletableFuture<Collection<RepositoryArtifactData>>,
+  private fun fillResultsFromCache(future: CompletableFuture<Collection<MavenRepoArtifactInfo>>,
                                    consumer: ResultConsumer): AsyncPromise<Int> {
     val p: AsyncPromise<Int> = AsyncPromise()
     future.whenComplete(
-      BiConsumer { r: Collection<RepositoryArtifactData>, e: Throwable? ->
+      BiConsumer { r: Collection<MavenRepoArtifactInfo>, e: Throwable? ->
         if (e != null) {
           p.setError(e)
         }
@@ -360,15 +361,20 @@ class DependencySearchService(private val project: Project, private val cs: Coro
   }
 
 
-  class RepositoryArtifactDataStorage {
-    private val map = HashMap<String, RepositoryArtifactData>()
+  class MavenRepoArtifactInfoStorage {
+    private val map = HashMap<String, MavenRepoArtifactInfo>()
 
     @Synchronized
-    fun add(data: RepositoryArtifactData) {
-      map.merge(data.key, data) { old, new -> old.mergeWith(new) }
+    fun add(data: MavenRepoArtifactInfo) {
+      map.merge(data.getKey(), data) { old, new -> old.mergeWith(new) }
     }
 
     fun getAll() = map.values
     fun isEmpty() = map.isEmpty()
+
+    private fun MavenRepoArtifactInfo.getKey() = "$groupId:$artifactId"
+    fun MavenRepoArtifactInfo.mergeWith(another: MavenRepoArtifactInfo): MavenRepoArtifactInfo {
+      return MavenRepoArtifactInfo(groupId, artifactId, items + another.items);
+    }
   }
 }

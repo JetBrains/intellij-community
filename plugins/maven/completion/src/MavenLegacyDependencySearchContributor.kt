@@ -12,7 +12,6 @@ import com.intellij.repository.search.completion.api.DependencyGroupCompletionRe
 import com.intellij.repository.search.completion.api.DependencyVersionCompletionRequest
 import org.jetbrains.idea.maven.completion.MavenDependencySearchContributor
 import org.jetbrains.idea.maven.model.MavenRepoArtifactInfo
-import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.nio.file.Path
 import java.util.function.Consumer
@@ -34,7 +33,7 @@ internal class MavenLegacyDependencySearchContributor : MavenDependencySearchCon
       consumer: Consumer<MavenRepoArtifactInfo>,
   ) {
     collectGrouped(DependencyCompletionRequest(searchString, createContext(project))) { gId, aId, versions ->
-      consumer.accept(MavenRepositoryArtifactInfo(gId, aId, versions))
+      consumer.accept(MavenRepoArtifactInfo(gId, aId, versions))
     }
   }
 
@@ -47,7 +46,7 @@ internal class MavenLegacyDependencySearchContributor : MavenDependencySearchCon
       consumer: Consumer<MavenRepoArtifactInfo>,
   ) {
     collectGrouped(DependencyCompletionRequest("$groupId:$artifactId", createContext(project))) { gId, aId, versions ->
-      consumer.accept(MavenRepositoryArtifactInfo(gId, aId, versions))
+      consumer.accept(MavenRepoArtifactInfo(gId, aId, versions))
     }
   }
 
@@ -67,8 +66,8 @@ internal class MavenLegacyDependencySearchContributor : MavenDependencySearchCon
   }
 
   private suspend fun collectGrouped(
-      request: DependencyCompletionRequest,
-      block: (String, String, List<String>) -> Unit,
+    request: DependencyCompletionRequest,
+    consumerAccept: (String, String, List<String>) -> Unit,
   ) {
     val grouped = mutableMapOf<String, MutableList<String>>()
     val coords = mutableMapOf<String, Pair<String, String>>()
@@ -79,7 +78,7 @@ internal class MavenLegacyDependencySearchContributor : MavenDependencySearchCon
     }
     for ((key, versions) in grouped) {
       val (gId, aId) = coords[key]!!
-      block(gId, aId, versions)
+      consumerAccept(gId, aId, versions)
     }
   }
 }

@@ -1,9 +1,12 @@
 package org.jetbrains.idea.reposearch
 
-interface DependencySearchProvider {
-  suspend fun fulltextSearch(searchString: String): List<RepositoryArtifactData>
+import org.jetbrains.idea.maven.model.MavenRepoArtifactInfo
 
-  suspend fun suggestPrefix(groupId: String, artifactId: String): List<RepositoryArtifactData>
+@Deprecated("Use DependencyCompletionContributor instead")
+interface DependencySearchProvider {
+  suspend fun fulltextSearch(searchString: String): List<MavenRepoArtifactInfo>
+
+  suspend fun suggestPrefix(groupId: String, artifactId: String): List<MavenRepoArtifactInfo>
 
   fun isLocal(): Boolean
 

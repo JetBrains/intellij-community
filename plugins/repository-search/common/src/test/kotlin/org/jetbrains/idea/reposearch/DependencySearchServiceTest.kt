@@ -7,6 +7,7 @@ import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.model.MavenRepoArtifactInfo
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import java.util.UUID
 import java.util.concurrent.ConcurrentLinkedDeque
@@ -27,32 +28,32 @@ class DependencySearchServiceTest : LightPlatformTestCase() {
     val testProviderLocal1 = object : TestSearchProvider() {
       override fun isLocal() = true
 
-      override suspend fun suggestPrefix(groupId: String, artifactId: String): List<RepositoryArtifactData> {
-        return listOf(MavenRepositoryArtifactInfo(groupId, artifactId, listOf("0", "1")))
+      override suspend fun suggestPrefix(groupId: String, artifactId: String): List<MavenRepoArtifactInfo> {
+        return listOf(MavenRepoArtifactInfo(groupId, artifactId, listOf("0", "1")))
       }
     }
 
     val testProviderLocal2 = object : TestSearchProvider() {
       override fun isLocal() = true
 
-      override suspend fun suggestPrefix(groupId: String, artifactId: String): List<RepositoryArtifactData> {
-        return listOf(MavenRepositoryArtifactInfo(groupId, artifactId, listOf("2")))
+      override suspend fun suggestPrefix(groupId: String, artifactId: String): List<MavenRepoArtifactInfo> {
+        return listOf(MavenRepoArtifactInfo(groupId, artifactId, listOf("2")))
       }
     }
 
     val testProviderRemote3 = object : TestSearchProvider() {
       override fun isLocal() = false
 
-      override suspend fun suggestPrefix(groupId: String, artifactId: String): List<RepositoryArtifactData> {
-        return listOf(MavenRepositoryArtifactInfo(groupId, artifactId, listOf("3")))
+      override suspend fun suggestPrefix(groupId: String, artifactId: String): List<MavenRepoArtifactInfo> {
+        return listOf(MavenRepoArtifactInfo(groupId, artifactId, listOf("3")))
       }
     }
 
     val testProviderRemote4 = object : TestSearchProvider() {
       override fun isLocal() = false
 
-      override suspend fun suggestPrefix(groupId: String, artifactId: String): List<RepositoryArtifactData> {
-        return listOf(MavenRepositoryArtifactInfo(groupId, artifactId, listOf("4")))
+      override suspend fun suggestPrefix(groupId: String, artifactId: String): List<MavenRepoArtifactInfo> {
+        return listOf(MavenRepoArtifactInfo(groupId, artifactId, listOf("4")))
       }
     }
 
@@ -62,7 +63,7 @@ class DependencySearchServiceTest : LightPlatformTestCase() {
     }), testRootDisposable, false)
     val searchParameters = SearchParameters(false, false)
 
-    val result = ConcurrentLinkedDeque<RepositoryArtifactData>()
+    val result = ConcurrentLinkedDeque<MavenRepoArtifactInfo>()
     dependencySearchService.suggestPrefixAsync("group", "artifact", searchParameters) {
       result.add(it)
     }
@@ -77,13 +78,9 @@ class DependencySearchServiceTest : LightPlatformTestCase() {
     val testProvider = object : TestSearchProvider() {
       override fun isLocal() = false
 
-      override suspend fun fulltextSearch(searchString: String): List<RepositoryArtifactData> {
+      override suspend fun fulltextSearch(searchString: String): List<MavenRepoArtifactInfo> {
         requests++
-        return listOf(object : RepositoryArtifactData {
-          override fun getKey() = searchString
-
-          override fun mergeWith(another: RepositoryArtifactData) = this
-        })
+        return listOf(MavenRepoArtifactInfo(searchString, "", listOf()))
       }
     }
     ExtensionTestUtil.maskExtensions(DependencySearchService.EP_NAME, listOf(DependencySearchProvidersFactory { listOf(testProvider) }),
@@ -103,11 +100,11 @@ class DependencySearchServiceTest : LightPlatformTestCase() {
 
     private val _cacheKey = UUID.randomUUID().toString()
 
-    override suspend fun fulltextSearch(searchString: String): List<RepositoryArtifactData> {
+    override suspend fun fulltextSearch(searchString: String): List<MavenRepoArtifactInfo> {
       TODO("Not yet implemented")
     }
 
-    override suspend fun suggestPrefix(groupId: String, artifactId: String): List<RepositoryArtifactData> {
+    override suspend fun suggestPrefix(groupId: String, artifactId: String): List<MavenRepoArtifactInfo> {
       TODO("Not yet implemented")
     }
 

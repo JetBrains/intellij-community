@@ -26,6 +26,7 @@ import kotlinx.document.database.DataStore
 import kotlinx.document.database.mvstore.MVDataStore
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.idea.maven.model.MavenDependencyCompletionItem
+import org.jetbrains.idea.maven.model.MavenRepoArtifactInfo
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import org.jetbrains.idea.reposearch.DependencySearchProvider
 import org.jetbrains.idea.reposearch.PluginEnvironment
@@ -135,9 +136,9 @@ class PackageSearchApiClientService(val coroutineScope: CoroutineScope) : Dispos
 
   @Deprecated("Use directly the client instead (PackageSearcgApiClientService)")
   @ScheduledForRemoval
-  override suspend fun fulltextSearch(searchString: String): List<RepositoryArtifactData> =
+  override suspend fun fulltextSearch(searchString: String): List<MavenRepoArtifactInfo> =
     if (searchString.isEmpty()) {
-      emptyList<RepositoryArtifactData>()
+      emptyList<MavenRepoArtifactInfo>()
     }
     else {
       client.searchPackages {
@@ -153,7 +154,7 @@ class PackageSearchApiClientService(val coroutineScope: CoroutineScope) : Dispos
 
   @Deprecated("Use directly the client instead")
   @ScheduledForRemoval
-  override suspend fun suggestPrefix(groupId: String, artifactId: String) =
+  override suspend fun suggestPrefix(groupId: String, artifactId: String): List<MavenRepoArtifactInfo> =
     if (groupId.isEmpty() && artifactId.isEmpty()) {
       emptyList()
     }

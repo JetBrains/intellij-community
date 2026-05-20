@@ -3,11 +3,10 @@ package com.intellij.maven.completion.provider
 
 import com.intellij.openapi.project.Project
 import org.jetbrains.idea.maven.model.MavenDependencyCompletionItem
-import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
+import org.jetbrains.idea.maven.model.MavenRepoArtifactInfo
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.reposearch.DependencySearchProvider
-import org.jetbrains.idea.reposearch.RepositoryArtifactData
 
 class ProjectModulesCompletionProvider(private val myProject: Project) : DependencySearchProvider {
 
@@ -15,12 +14,12 @@ class ProjectModulesCompletionProvider(private val myProject: Project) : Depende
 
   override suspend fun suggestPrefix(groupId: String, artifactId: String) = getLocal()
 
-  private fun getLocal(): List<RepositoryArtifactData> {
+  private fun getLocal(): List<MavenRepoArtifactInfo> {
     MavenLog.LOG.debug("Project: get local maven artifacts started")
     val result = MavenProjectsManager.getInstance(myProject).projects.asSequence()
       .map { MavenDependencyCompletionItem(it.mavenId.key) }
       .filter { it.groupId != null && it.artifactId != null }
-      .map { MavenRepositoryArtifactInfo(it.groupId!!, it.artifactId!!, arrayOf(it)) }
+      .map { MavenRepoArtifactInfo(it.groupId!!, it.artifactId!!, arrayOf(it)) }
       .toList()
     MavenLog.LOG.debug("Project: get local maven artifacts finished: " + result.size)
     return result

@@ -7,6 +7,7 @@ import org.jetbrains.idea.maven.model.MavenDependencyCompletionItem
 import org.jetbrains.idea.maven.model.MavenRepoArtifactInfo
 import org.jetbrains.idea.reposearch.RepositoryArtifactData
 
+@Deprecated("Use MavenRepoArtifactInfo instead")
 class MavenRepositoryArtifactInfo(
   groupId: String,
   artifactId: String,
