@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.asContextElement
@@ -130,7 +129,7 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
     coroutineScope.launch {
       initJob.join()
 
-      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      withContext(Dispatchers.UiWithModelAccess + ModalityState.any().asContextElement()) {
         updateRequests.throttle(500).collectLatest { forceRebuild ->
           runCatching {
             if (canUpdate()) {
