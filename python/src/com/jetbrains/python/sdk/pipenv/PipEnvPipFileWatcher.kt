@@ -5,7 +5,7 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -92,7 +92,7 @@ internal class PipEnvPipFileWatcher : EditorFactoryListener {
         notification.expire()
         module.putUserData(notificationActive, null)
         PyPackageCoroutine.launch(module.project) {
-          writeAction {
+          edtWriteAction {
             FileDocumentManager.getInstance().saveAllDocuments()
           }
           when (event.description) {

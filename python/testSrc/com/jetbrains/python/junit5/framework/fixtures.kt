@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.junit5.framework
 
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
@@ -27,12 +27,12 @@ fun TestFixture<Project>.pyMockSdkFixture(module: TestFixture<Module>, sdkProvid
   this@pyMockSdkFixture.init()
   module.init()
   val sdk = sdkProvider()
-  writeAction {
+  edtWriteAction {
     ProjectJdkTable.getInstance().addJdk(sdk)
     ModuleRootModificationUtil.setModuleSdk(module.get(), sdk)
   }
   initialized(sdk) {
-    writeAction {
+    edtWriteAction {
       ModuleRootModificationUtil.setModuleSdk(module.get(), null)
       ProjectJdkTable.getInstance().removeJdk(sdk)
     }

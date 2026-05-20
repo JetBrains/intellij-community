@@ -1,6 +1,6 @@
 package com.intellij.python.junit5Tests.unit.alsoWin.pyproject
 
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.python.pyproject.model.internal.platformBridge.startVenvExclusion
@@ -25,9 +25,9 @@ internal class PyExcludeVenvTest {
   @Test
   fun testExclude(): Unit = timeoutRunBlocking {
     val root = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(tempDirFixture.get())!!
-    val dir1 = writeAction { root.createDirectory(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME) }
+    val dir1 = edtWriteAction { root.createDirectory(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME) }
     startVenvExclusion(module.project)
-    val dir2 = writeAction { root.createDirectory("fopp").createDirectory(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME) }
+    val dir2 = edtWriteAction { root.createDirectory("fopp").createDirectory(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME) }
 
     while (module.rootManager.excludeRoots.size != 2) {
       delay(100.milliseconds)

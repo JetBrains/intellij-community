@@ -1,7 +1,7 @@
 package com.intellij.python.pyproject.model.internal.platformBridge
 
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.FileIndexFacade
@@ -49,7 +49,7 @@ private fun excludeEnvs(project: Project): Job =
         val module = readAction { FileIndexFacade.getInstance(project).getModuleForFile(venvToExclude) } ?: continue
         val rootManager = ModuleRootManager.getInstance(module)
         if (venvToExclude !in rootManager.excludeRoots) {
-          writeAction {
+          edtWriteAction {
             val model = rootManager.modifiableModel
             val currentRoot = model.contentEntries.firstOrNull { root ->
               root.file?.let { VfsUtilCore.isAncestor(it, venvToExclude, false) } == true

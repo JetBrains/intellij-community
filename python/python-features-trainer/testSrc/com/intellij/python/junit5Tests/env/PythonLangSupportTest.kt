@@ -1,7 +1,7 @@
 package com.intellij.python.junit5Tests.env
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -88,7 +88,7 @@ class PythonLangSupportTest {
       Assertions.assertTrue(VanillaPythonWithPythonInfoImpl.createByPythonBinary(pythonBinary).orThrow().pythonInfo.languageLevel.isPy3K, "Sdk is broken")
     }
     finally {
-      writeAction {
+      edtWriteAction {
         ProjectJdkTable.getInstance().removeJdk(sdk)
       }
       withContext(Dispatchers.EDT) {

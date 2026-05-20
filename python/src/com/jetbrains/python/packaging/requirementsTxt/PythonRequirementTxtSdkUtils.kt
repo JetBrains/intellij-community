@@ -3,7 +3,7 @@ package com.jetbrains.python.packaging.requirementsTxt
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -64,7 +64,7 @@ object PythonRequirementTxtSdkUtils {
     }
     else {
       PyPackageCoroutine.launch(project) {
-        writeAction {
+        edtWriteAction {
           sdkModificator.commitChanges()
         }
       }

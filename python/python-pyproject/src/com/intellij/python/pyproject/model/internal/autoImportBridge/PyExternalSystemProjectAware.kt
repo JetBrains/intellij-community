@@ -2,7 +2,7 @@ package com.intellij.python.pyproject.model.internal.autoImportBridge
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.fileLogger
@@ -92,7 +92,7 @@ class PyExternalSystemProjectAware private constructor(
   @ApiStatus.Internal
   @VisibleForTesting
   suspend fun reloadProjectImpl() {
-    writeAction {
+    edtWriteAction {
       // We might get stale files otherwise
       FileDocumentManager.getInstance().saveAllDocuments()
     }

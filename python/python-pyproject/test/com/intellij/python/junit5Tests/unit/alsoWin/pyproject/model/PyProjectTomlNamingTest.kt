@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model
 
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.writeText
 import com.intellij.platform.backend.workspace.workspaceModel
@@ -29,7 +29,7 @@ internal class PyProjectTomlNamingTest {
 
   @Test
   fun `duplicate project names get sequential suffixes`(): Unit = timeoutRunBlocking(30.seconds) {
-    writeAction {
+    edtWriteAction {
       f.root.writePyprojectToml("root")
       f.root.createDirectory("a").writePyprojectToml("dup")
       f.root.createDirectory("b").writePyprojectToml("dup")
@@ -49,7 +49,7 @@ internal class PyProjectTomlNamingTest {
   @Test
   fun `adding duplicate modules on re-sync does not crash`(): Unit = timeoutRunBlocking(30.seconds) {
     // Initial sync: two modules with unique names
-    writeAction {
+    edtWriteAction {
       f.root.writePyprojectToml("root")
       f.root.createDirectory("first").writePyprojectToml("lib")
     }
@@ -58,7 +58,7 @@ internal class PyProjectTomlNamingTest {
     f.assertProjectStructure(ExpectedModule("lib", contentRoot = "first"), ExpectedModule("root", contentRoot = "."))
 
     // Add two more modules with the same name as the existing one
-    writeAction {
+    edtWriteAction {
       f.root.createDirectory("second").writePyprojectToml("lib")
       f.root.createDirectory("third").writePyprojectToml("lib")
     }
@@ -74,7 +74,7 @@ internal class PyProjectTomlNamingTest {
 
   @Test
   fun `renaming a module via pyproject name change works`(): Unit = timeoutRunBlocking(30.seconds) {
-    writeAction {
+    edtWriteAction {
       f.root.writePyprojectToml("root")
       f.root.createDirectory("sub").writePyprojectToml("old-name")
     }
@@ -83,7 +83,7 @@ internal class PyProjectTomlNamingTest {
     f.assertProjectStructure(ExpectedModule("old-name", contentRoot = "sub"), ExpectedModule("root", contentRoot = "."))
 
     // Rename the sub-module via pyproject.toml
-    writeAction {
+    edtWriteAction {
       f.root.findChild("sub")!!.findChild(PY_PROJECT_TOML)!!.writeText("[project]\nname = \"new-name\"")
     }
 
@@ -93,7 +93,7 @@ internal class PyProjectTomlNamingTest {
 
   @Test
   fun `renaming a module to an existing duplicate name gets suffix`(): Unit = timeoutRunBlocking(30.seconds) {
-    writeAction {
+    edtWriteAction {
       f.root.writePyprojectToml("root")
       f.root.createDirectory("a").writePyprojectToml("alpha")
       f.root.createDirectory("b").writePyprojectToml("beta")
@@ -107,7 +107,7 @@ internal class PyProjectTomlNamingTest {
     )
 
     // Change beta's name to "alpha" — "alpha" is taken, so dir b gets "alpha@1"
-    writeAction {
+    edtWriteAction {
       f.root.findChild("b")!!.findChild(PY_PROJECT_TOML)!!.writeText("[project]\nname = \"alpha\"")
     }
 
@@ -121,7 +121,7 @@ internal class PyProjectTomlNamingTest {
 
   @Test
   fun `renaming sub-module to match root module name gets suffix`(): Unit = timeoutRunBlocking(30.seconds) {
-    writeAction {
+    edtWriteAction {
       f.root.writePyprojectToml("pythonproject13")
       f.root.createDirectory("second").writePyprojectToml("pythonproject13x")
     }
@@ -130,7 +130,7 @@ internal class PyProjectTomlNamingTest {
     f.assertProjectStructure(ExpectedModule("pythonproject13", contentRoot = "."), ExpectedModule("pythonproject13x", contentRoot = "second"))
 
     // Change sub-module to same name as root — "pythonproject13" is taken, gets suffix
-    writeAction {
+    edtWriteAction {
       f.root.findChild("second")!!.findChild(PY_PROJECT_TOML)!!.writeText("[project]\nname = \"pythonproject13\"")
     }
 
@@ -144,7 +144,7 @@ internal class PyProjectTomlNamingTest {
    */
   @Test
   fun `swapping module names produces suffixes`(): Unit = timeoutRunBlocking(30.seconds) {
-    writeAction {
+    edtWriteAction {
       f.root.writePyprojectToml("root")
       f.root.createDirectory("a").writePyprojectToml("alpha")
       f.root.createDirectory("b").writePyprojectToml("beta")
@@ -158,7 +158,7 @@ internal class PyProjectTomlNamingTest {
     )
 
     // Swap names — each target is taken, both get @1 suffix
-    writeAction {
+    edtWriteAction {
       f.root.findChild("a")!!.findChild(PY_PROJECT_TOML)!!.writeText("[project]\nname = \"beta\"")
       f.root.findChild("b")!!.findChild(PY_PROJECT_TOML)!!.writeText("[project]\nname = \"alpha\"")
     }
@@ -181,7 +181,7 @@ internal class PyProjectTomlNamingTest {
   @Test
   fun `suffix dropped when duplicates resolved`(): Unit = timeoutRunBlocking(30.seconds) {
     // Initial sync: root + two entries named "dup"
-    writeAction {
+    edtWriteAction {
       f.root.writePyprojectToml("root")
       f.root.createDirectory("a").writePyprojectToml("dup")
       f.root.createDirectory("b").writePyprojectToml("dup")
@@ -198,7 +198,7 @@ internal class PyProjectTomlNamingTest {
     val snapshot = f.project.workspaceModel.currentSnapshot
     val dupModule = snapshot.resolve(ModuleId("dup"))!!
     val dupContentRoot = dupModule.contentRoots.single().url.toPath()
-    writeAction {
+    edtWriteAction {
       VirtualFileManager.getInstance().findFileByNioPath(dupContentRoot)!!
         .findChild(PY_PROJECT_TOML)!!.writeText("[project]\nname = \"other\"")
     }
@@ -229,7 +229,7 @@ internal class PyProjectTomlNamingTest {
     f.addNonPyprojectModule("lib", "javalib", JAVA)
 
     // Sync with one pyproject.toml also named "lib"
-    writeAction {
+    edtWriteAction {
       f.root.writePyprojectToml("lib")
     }
 
@@ -248,7 +248,7 @@ internal class PyProjectTomlNamingTest {
     f.addNonPyprojectModule("lib", "javalib", JAVA)
 
     // Initial sync: root + two pyproject entries named "lib"
-    writeAction {
+    edtWriteAction {
       f.root.writePyprojectToml("root")
       f.root.createDirectory("a").writePyprojectToml("lib")
       f.root.createDirectory("b").writePyprojectToml("lib")
@@ -263,7 +263,7 @@ internal class PyProjectTomlNamingTest {
     )
 
     // Remove one pyproject.toml
-    writeAction {
+    edtWriteAction {
       f.root.findChild("b")!!.findChild(PY_PROJECT_TOML)!!.delete(this)
     }
 

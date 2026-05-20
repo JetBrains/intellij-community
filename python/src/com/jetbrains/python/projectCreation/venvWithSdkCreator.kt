@@ -2,7 +2,6 @@
 package com.jetbrains.python.projectCreation
 
 import com.intellij.openapi.application.edtWriteAction
-import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -104,7 +103,7 @@ suspend fun createVenvAndSdk(
   logger.info("using venv python $venvPython")
   val sdk = getSdk(venvPython).getOr { return it }
   if (moduleOrProject.moduleIfExists == null && project.modules.isEmpty()) {
-    writeAction {
+    edtWriteAction {
       val projectPath = vfsPath.toNioPath()
       val file = projectPath.resolve("${projectPath.fileName}.iml")
       ModuleManager.getInstance(project).newModule(file, PythonModuleTypeBase.getInstance().id)
