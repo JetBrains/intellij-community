@@ -237,7 +237,6 @@
   - name: intellij.kotlin.navigation
   - name: kotlin.refactorings.common
   - name: intellij.kotlin.refactorings
-  - name: intellij.kotlin.refactorings.move
   - name: intellij.kotlin.refactorings.rename
   - name: intellij.kotlin.performanceExtendedPlugin
   - name: intellij.kotlin.compilerPlugins.support.bundled

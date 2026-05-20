@@ -164,7 +164,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "intellij.kotlin.navigation",
       "kotlin.refactorings.common",
       "intellij.kotlin.refactorings",
-      "intellij.kotlin.refactorings.move",
       "intellij.kotlin.refactorings.rename",
       "intellij.kotlin.performanceExtendedPlugin",
       "intellij.kotlin.compilerPlugins.support.bundled",

@@ -251,7 +251,6 @@
 
     <module name="intellij.kotlin.searching"/>
     <module name="intellij.kotlin.refactorings"/>
-    <module name="intellij.kotlin.refactorings.move"/>
     <module name="intellij.kotlin.refactorings.rename"/>
 
     <module name="intellij.kotlin.navigation"/>

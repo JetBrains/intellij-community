@@ -15,11 +15,11 @@ import org.junit.runner.RunWith;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("refactorings/kotlin.refactorings.move.k2")
+@TestRoot("refactorings/kotlin.refactorings.tests.k2")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../../idea/tests/testData/refactoring/movePackage")
-public class K2MovePackageTestGenerated extends AbstractK2MovePackageTest {
+@TestMetadata("../../idea/tests/testData/refactoring/moveDirectory")
+public class K2MoveDirectoryTestGenerated extends AbstractK2MoveDirectoryTest {
     @java.lang.Override
     @org.jetbrains.annotations.NotNull
     public final KotlinPluginMode getPluginMode() {
@@ -30,8 +30,23 @@ public class K2MovePackageTestGenerated extends AbstractK2MovePackageTest {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("forLoop/forLoop.test")
+    public void testForLoop_ForLoop() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveDirectory/forLoop/forLoop.test");
+    }
+
+    @TestMetadata("mixedJavaKotlinWithQuotation/mixedJavaKotlinWithQuotation.test")
+    public void testMixedJavaKotlinWithQuotation_MixedJavaKotlinWithQuotation() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveDirectory/mixedJavaKotlinWithQuotation/mixedJavaKotlinWithQuotation.test");
+    }
+
     @TestMetadata("mixedJavaKotlin/mixedJavaKotlin.test")
     public void testMixedJavaKotlin_MixedJavaKotlin() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/movePackage/mixedJavaKotlin/mixedJavaKotlin.test");
+        runTest("../../idea/tests/testData/refactoring/moveDirectory/mixedJavaKotlin/mixedJavaKotlin.test");
+    }
+
+    @TestMetadata("withTypeAliases/withTypeAliases.test")
+    public void testWithTypeAliases_WithTypeAliases() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveDirectory/withTypeAliases/withTypeAliases.test");
     }
 }

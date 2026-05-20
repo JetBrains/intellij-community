@@ -66,7 +66,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.structuralSearch" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.line-markers.shared" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.lineMarkers" exported="" />
-    <orderEntry type="module" module-name="intellij.kotlin.refactorings.move" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.refactorings.rename" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.common.k1" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.allopen.maven" exported="" />

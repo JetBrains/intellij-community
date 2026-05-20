@@ -103,7 +103,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.coroutines" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.navigation" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.kotlin.refactorings.move" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.refactorings.rename" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.refactorings" scope="RUNTIME" />
