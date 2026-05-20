@@ -22,4 +22,9 @@ object CommandLineArgs {
       else -> false
     }
   }
+
+  fun isSplashForced(): Boolean {
+    // we use `nosplash` here because, as the comment above states, it's the one that the user can override
+    return System.getProperty(NO_SPLASH) == "false"
+  }
 }

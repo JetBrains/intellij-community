@@ -132,7 +132,7 @@ private fun showSplashIfNeeded(scope: CoroutineScope, initUiScale: Job, appInfoD
     in java.awt.SplashScreen that works around the issue using some tricks and the native API).
     We check only here as isWaylandToolkit calls `Toolkit.getDefaultToolkit()` - it should be done only when initUiDeferred is completed
     */
-    if (SystemInfoRt.isLinux && StartupUiUtil.isWaylandToolkit()) {
+    if (SystemInfoRt.isLinux && StartupUiUtil.isWaylandToolkit() && !CommandLineArgs.isSplashForced()) {
       return@launch
     }
 
