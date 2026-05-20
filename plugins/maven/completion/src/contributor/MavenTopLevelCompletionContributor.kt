@@ -6,16 +6,16 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.maven.completion.contributor.insert.MavenTopLevelDependencyInsertionHandler
+import com.intellij.maven.completion.getCompletionContext
 import com.intellij.openapi.progress.runBlockingCancellable
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.components.service
 import com.intellij.psi.xml.XmlTag
 import com.intellij.psi.xml.XmlText
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
 import org.jetbrains.idea.maven.dom.model.completion.MavenCoordinateCompletionContributor.Companion.trimDummy
 import org.jetbrains.idea.maven.model.MavenRepoArtifactInfo
-import org.jetbrains.idea.maven.utils.MavenUtil
-import org.jetbrains.idea.maven.completion.MavenDependencySearchService
-import java.util.concurrent.ConcurrentLinkedDeque
+import com.intellij.repository.search.completion.api.DependencyCompletionRequest
+import com.intellij.repository.search.completion.api.DependencyCompletionService
 
 abstract class MavenTopLevelCompletionContributor(val myName: String) : CompletionContributor() {
 
@@ -33,27 +33,16 @@ abstract class MavenTopLevelCompletionContributor(val myName: String) : Completi
 
     result.restartCompletionWhenNothingMatches()
 
-    val cld = ConcurrentLinkedDeque<MavenRepoArtifactInfo>()
-    runBlockingCancellable { find(xmlText.project, trimDummy(xmlText.value), parameters, cld) }
-    for (item in cld) {
-      result.addElement(MavenDependencyCompletionUtil.lookupElement(item).withInsertHandler(MavenTopLevelDependencyInsertionHandler.INSTANCE))
-    }
-
-  }
-
-  protected suspend fun find(project: Project,
-                             text: String,
-                             parameters: CompletionParameters,
-                             cld: ConcurrentLinkedDeque<MavenRepoArtifactInfo>) {
-    val searchString: String = trimDummy(text)
-    val service = MavenDependencySearchService.getInstance(project)
-    val splitted = searchString.split(':')
-    val useCache = parameters.invocationCount < 2
-    val useLocalOnly = MavenUtil.isMavenUnitTestModeEnabled()
-    if (splitted.size < 2) {
-      service.fulltextSearch(searchString, useCache, useLocalOnly) { cld.add(it) }
-    } else {
-      service.suggestPrefix(splitted[0], splitted[1], useCache, useLocalOnly) { cld.add(it) }
+    val request = DependencyCompletionRequest(trimDummy(xmlText.value), parameters.getCompletionContext())
+    runBlockingCancellable {
+      service<DependencyCompletionService>()
+        .suggestCompletions(request)
+        .collect { item ->
+          result.addElement(
+            MavenDependencyCompletionUtil.lookupElement(MavenRepoArtifactInfo(item.groupId, item.artifactId, listOf(item.version)))
+              .withInsertHandler(MavenTopLevelDependencyInsertionHandler.INSTANCE)
+          )
+        }
     }
   }
 }
