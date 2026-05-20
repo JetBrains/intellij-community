@@ -11,7 +11,7 @@ import com.intellij.lang.properties.psi.Property
 import com.intellij.lang.properties.psi.PropertyKeyValueFormat
 import com.intellij.lang.properties.psi.impl.PropertyImpl.unescape
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.CodeStyleManager
@@ -100,7 +100,7 @@ class PropertiesMergeConflictResolver : LangSpecificMergeConflictResolver {
 
   private suspend fun convertPropertiesToString(project: Project, contextList: List<List<PropertyInfo>?>): List<CharSequence?> {
     return contextList.map { propertyList ->
-      writeAction {
+      edtWriteAction {
         propertyList?.map { info ->
           val key = info.key
           val value = info.value
@@ -109,7 +109,7 @@ class PropertiesMergeConflictResolver : LangSpecificMergeConflictResolver {
           if (value.isEmpty()) return@map comment + key
 
           val property = PropertiesElementFactory.createProperty(project, key, value, null, PropertyKeyValueFormat.FILE) as? Property
-                         ?: return@writeAction null
+                         ?: return@edtWriteAction null
 
           CodeStyleManager.getInstance(project).reformat(property)
           val propertyText = property.text
