@@ -55,10 +55,10 @@ class BundledRuntimeImpl(
       val bundledRuntimePrefix = options.bundledRuntimePrefix
       return when {
         // no JCEF distribution for musl, see https://github.com/JetBrains/JetBrainsRuntime/releases
-        LibcImpl.current(OsFamily.currentOs) == LinuxLibcImpl.MUSL -> JetBrainsRuntimeDistribution.LIGHTWEIGHT.artifactPrefix
+        LibcImpl.current(OsFamily.currentOs) == LinuxLibcImpl.MUSL -> JetBrainsRuntimeDistribution.VANILLA.artifactPrefix
         bundledRuntimePrefix != null -> bundledRuntimePrefix
         productProperties != null -> productProperties.runtimeDistribution.artifactPrefix
-        else -> JetBrainsRuntimeDistribution.STANDARD.artifactPrefix
+        else -> JetBrainsRuntimeDistribution.VANILLA.artifactPrefix
       }
     }
 
@@ -90,7 +90,7 @@ class BundledRuntimeImpl(
 
   override suspend fun extract(os: OsFamily, arch: JvmArchitecture, libc: LibcImpl, prefix: String): Path {
     val isMusl = os == OsFamily.LINUX && libc == LinuxLibcImpl.MUSL
-    val effectivePrefix = if (libc == LinuxLibcImpl.MUSL) JetBrainsRuntimeDistribution.LIGHTWEIGHT.artifactPrefix else prefix
+    val effectivePrefix = if (libc == LinuxLibcImpl.MUSL) JetBrainsRuntimeDistribution.VANILLA.artifactPrefix else prefix
     val targetDir = paths.communityHomeDir.resolve("build/download/${effectivePrefix}${build}-${os.jbrArchiveSuffix}-${if (isMusl) "musl-" else ""}$arch")
     val jbrDir = targetDir.resolve("jbr")
 

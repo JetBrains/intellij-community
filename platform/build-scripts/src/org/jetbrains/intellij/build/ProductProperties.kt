@@ -372,7 +372,7 @@ abstract class ProductProperties {
    */
   var modulesToCompileTests: PersistentList<String> = persistentListOf()
 
-  var runtimeDistribution: JetBrainsRuntimeDistribution = JetBrainsRuntimeDistribution.STANDARD
+  var runtimeDistribution: JetBrainsRuntimeDistribution = JetBrainsRuntimeDistribution.VANILLA
 
   /**
    * A prefix for names of environment variables used by product distributions

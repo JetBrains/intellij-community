@@ -5,6 +5,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+/**
+ * <a href="https://github.com/JetBrains/JetBrainsRuntime/blob/main/.github/README.md#release-flavours">JBR Release Flavours</a>
+ */
 public enum JetBrainsRuntimeDistribution {
   /**
    * JBR with JCEF and DCEVM
@@ -12,14 +15,9 @@ public enum JetBrainsRuntimeDistribution {
   JCEF("jcef"),
 
   /**
-   * JBR with DCEVM, for IDEs distribution
+   * JBR with DCEVM, without JCEF
    */
-  STANDARD(""), // todo change to the real prefix
-
-  /**
-   * JBR without JCEF and DCEVM
-   */
-  LIGHTWEIGHT("");
+  VANILLA("");
 
   public static final List<JetBrainsRuntimeDistribution> ALL = List.of(values());
 

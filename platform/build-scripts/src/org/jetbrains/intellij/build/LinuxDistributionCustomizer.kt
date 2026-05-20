@@ -191,7 +191,7 @@ open class LinuxDistributionCustomizer {
 
     val rtPatterns = if (includeRuntime) {
       val distribution =
-        if (targetLibcImpl == LinuxLibcImpl.MUSL) JetBrainsRuntimeDistribution.LIGHTWEIGHT
+        if (targetLibcImpl == LinuxLibcImpl.MUSL) JetBrainsRuntimeDistribution.VANILLA
         else context.productProperties.runtimeDistribution
       context.bundledRuntime.executableFilesPatterns(OsFamily.LINUX, distribution)
     }
