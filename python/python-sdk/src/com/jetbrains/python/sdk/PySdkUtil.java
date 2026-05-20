@@ -52,6 +52,7 @@ import java.util.Optional;
  * @deprecated please use Kotlin coroutines to run processes in background
  */
 @Deprecated(forRemoval = true)
+@ApiStatus.Internal
 public final class PySdkUtil {
   private static final Logger LOG = Logger.getInstance(PySdkUtil.class);
 

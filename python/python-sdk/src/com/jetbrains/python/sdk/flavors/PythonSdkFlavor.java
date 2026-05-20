@@ -31,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -138,12 +137,12 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   }
 
   /**
-   * Used for distinguishing platform flavors from platform-independent ones in {@link #getPlatformIndependentFlavors()}.
+   * Used for distinguishing platform flavors from platform-independent ones in {@link #getApplicableFlavors(boolean)}.
    *
    * @return whether the flavor is platform independent
    */
   @ApiStatus.Internal
-  public boolean isPlatformIndependent() {
+  protected boolean isPlatformIndependent() {
     return false;
   }
 
@@ -230,6 +229,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
    * List of flavors starting from platform-independent, so venv flavor goes before unix or windows flavor.
    * That could be used to find the first flavor that is {@link PythonSdkFlavor#isValidSdkPath(Path)} for example
    */
+  @ApiStatus.Internal
   public static @NotNull List<PythonSdkFlavor<?>> getApplicableFlavors(boolean addPlatformIndependent) {
     List<PythonSdkFlavor<?>> result = new ArrayList<>();
     for (PythonSdkFlavor<?> flavor : EP_NAME.getExtensionList()) {
@@ -253,18 +253,6 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
       PythonSdkFlavor<?> flavor = provider.getFlavor();
       result.add(flavor);
     }
-    return result;
-  }
-
-  @ApiStatus.Internal
-  public static @NotNull List<PythonSdkFlavor<?>> getPlatformIndependentFlavors() {
-    List<PythonSdkFlavor<?>> result = new ArrayList<>();
-    for (PythonSdkFlavor<?> flavor : EP_NAME.getExtensionList()) {
-      if (flavor.isPlatformIndependent()) {
-        result.add(flavor);
-      }
-    }
-
     return result;
   }
 
@@ -334,7 +322,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
     if (sdkHome == null) {
       return null;
     }
-    final String runDirectory = new File(sdkHome).getParent();
+    final String runDirectory = Path.of(sdkHome).getParent().toString();
     final ProcessOutput processOutput = PySdkUtil.getProcessOutput(runDirectory, new String[]{sdkHome, PYTHON_VERSION_ARG}, 10000);
     return getVersionStringFromOutput(processOutput);
   }
