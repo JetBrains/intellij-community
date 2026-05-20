@@ -77,8 +77,7 @@ internal class ConvertToCollectionLiteralsInspection :
         if (calleeExpression.getReferencedNameAsName() !in TARGET_FUNCTION_SHORT_NAMES) return false
         if (element.valueArguments.any { it.getArgumentName() != null || it.getSpreadElement() != null }) return false
         val parent = element.parent
-        if (parent is KtDotQualifiedExpression && parent.receiverExpression == element) return false
-        return true
+        return !(parent is KtDotQualifiedExpression && parent.receiverExpression == element)
     }
 
     override fun KaSession.prepareContext(element: KtCallExpression): Context? {

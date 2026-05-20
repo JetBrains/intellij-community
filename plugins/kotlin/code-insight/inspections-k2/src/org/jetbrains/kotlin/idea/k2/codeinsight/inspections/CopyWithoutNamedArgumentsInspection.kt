@@ -46,7 +46,7 @@ internal class CopyWithoutNamedArgumentsInspection :
 
     override fun KaSession.prepareContext(element: KtCallExpression): Context? {
         val call = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
-        val receiver = call.partiallyAppliedSymbol.dispatchReceiver?.type?.expandedSymbol as? KaNamedClassSymbol
+        val receiver = call.dispatchReceiver?.type?.expandedSymbol as? KaNamedClassSymbol
         if (receiver?.isData != true) return null
 
         val argumentNames = NamedArgumentUtils.associateArgumentNamesStartingAt(element, startArgument = null)

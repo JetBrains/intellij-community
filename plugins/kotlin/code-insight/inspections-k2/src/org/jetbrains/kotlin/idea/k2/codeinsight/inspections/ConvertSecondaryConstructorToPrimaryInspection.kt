@@ -98,28 +98,28 @@ internal class ConvertSecondaryConstructorToPrimaryInspection :
         if (constructor == this) return true
         if (constructor in visited) return false
         val delegatedConstructor = constructor.getDelegationCall().resolveToCall()
-            ?.singleConstructorCallOrNull()?.partiallyAppliedSymbol?.symbol?.psi as? KtSecondaryConstructor ?: return false
+            ?.singleConstructorCallOrNull()?.symbol?.psi as? KtSecondaryConstructor ?: return false
         return isReachableByDelegationFrom(delegatedConstructor, visited + constructor)
     }
 
-    override fun KaSession.prepareContext(secondaryConstructor: KtSecondaryConstructor): SecondaryConstructorContext? {
-        val klass = secondaryConstructor.containingClassOrObject ?: return null
+    override fun KaSession.prepareContext(element: KtSecondaryConstructor): SecondaryConstructorContext? {
+        val klass = element.containingClassOrObject ?: return null
 
         for (constructorDescriptor in klass.secondaryConstructors) {
-            if (constructorDescriptor == secondaryConstructor) continue
-            if (!secondaryConstructor.isReachableByDelegationFrom(constructorDescriptor)) return null
+            if (constructorDescriptor == element) continue
+            if (!element.isReachableByDelegationFrom(constructorDescriptor)) return null
         }
 
-        val psiFactory = KtPsiFactory.contextual(secondaryConstructor)
+        val psiFactory = KtPsiFactory.contextual(element)
 
         val parameterToPropertyMap = mutableMapOf<String, KtProperty>()
         val parametersAsProperties = mutableSetOf<String>()
 
         val initializer = psiFactory.createAnonymousInitializer()
         var hasPropertyAfterInitializer = false
-        val endOffsetOfConstructor = secondaryConstructor.textRange.endOffset
-        secondaryConstructor.bodyExpression?.statements?.forEach { statement ->
-            val parameterToProperty = statement.tryConvertToPropertyByParameterInitialization(secondaryConstructor)
+        val endOffsetOfConstructor = element.textRange.endOffset
+        element.bodyExpression?.statements?.forEach { statement ->
+            val parameterToProperty = statement.tryConvertToPropertyByParameterInitialization(element)
             if (parameterToProperty != null) {
                 val (rightTarget, leftTarget) = parameterToProperty
 
@@ -128,7 +128,7 @@ internal class ConvertSecondaryConstructorToPrimaryInspection :
 
                 val isSafeToUseAsProperty = parameterName == leftTarget.name &&
                         rightTarget.returnType.semanticallyEquals(leftTarget.returnType) &&
-                        leftTarget.accessors.all { it.symbol.isDefault }
+                        leftTarget.accessors.all { !it.symbol.isNotDefault }
                 if (isSafeToUseAsProperty) {
                     parametersAsProperties.add(parameterName)
                 }
@@ -199,34 +199,34 @@ internal class ConvertSecondaryConstructorToPrimaryInspection :
 
     override fun createQuickFix(
         element: KtSecondaryConstructor,
-        elementContext: SecondaryConstructorContext
+        context: SecondaryConstructorContext
     ): KotlinModCommandQuickFix<KtSecondaryConstructor> = object : KotlinModCommandQuickFix<KtSecondaryConstructor>() {
         override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("convert.to.primary.constructor")
         override fun applyFix(
             project: Project,
-            secondaryConstructor: KtSecondaryConstructor,
+            element: KtSecondaryConstructor,
             updater: ModPsiUpdater
         ) {
-            val writableSecondaryConstructor = updater.getWritable(secondaryConstructor)
+            val writableSecondaryConstructor = updater.getWritable(element)
             val klass = writableSecondaryConstructor.containingClassOrObject as? KtClass ?: return
             val parameterToPropertyMap =
-                elementContext.parameterToPropertyMap.map { (parameterName, property) -> parameterName to updater.getWritable(property) }
+                context.parameterToPropertyMap.map { (parameterName, property) -> parameterName to updater.getWritable(property) }
                     .toMap()
             val psiFactory = KtPsiFactory(klass.project)
-            val constructorCommentSaver = CommentSaver(secondaryConstructor)
+            val constructorCommentSaver = CommentSaver(element)
 
-            val constructor = psiFactory.createPrimaryConstructorWithModifiers(secondaryConstructor.modifierList?.text?.replace("\n", " "))
+            val constructor = psiFactory.createPrimaryConstructorWithModifiers(element.modifierList?.text?.replace("\n", " "))
 
             writableSecondaryConstructor.moveParametersToPrimaryConstructorAndInitializers(
                 constructor,
                 parameterToPropertyMap,
-                elementContext.parametersAsProperties,
+                context.parametersAsProperties,
                 psiFactory
             )
 
-            if (elementContext.classRefToUpdate >= 0) {
-                val argumentList = secondaryConstructor.getDelegationCall().valueArgumentList?.text ?: "()"
-                klass.superTypeListEntries.getOrNull(elementContext.classRefToUpdate)?.let { entry ->
+            if (context.classRefToUpdate >= 0) {
+                val argumentList = element.getDelegationCall().valueArgumentList?.text ?: "()"
+                klass.superTypeListEntries.getOrNull(context.classRefToUpdate)?.let { entry ->
                     val typeText = entry.typeReference?.text ?: return@let
                     val superTypeCallEntry = psiFactory.createSuperTypeCallEntry(
                         "$typeText$argumentList"
@@ -238,9 +238,9 @@ internal class ConvertSecondaryConstructorToPrimaryInspection :
             val replacedConstructor = klass.createPrimaryConstructorIfAbsent().replace(constructor)
             constructorCommentSaver.restore(replacedConstructor)
 
-            val initializer = elementContext.initializer
+            val initializer = context.initializer
             if ((initializer.body as? KtBlockExpression)?.statements?.isNotEmpty() == true) {
-                if (elementContext.hasPropertyAfterInitializer) {
+                if (context.hasPropertyAfterInitializer) {
                     // In this case we must move init {} down, because it uses a property declared below
                     klass.addDeclaration(initializer)
                     writableSecondaryConstructor.delete()

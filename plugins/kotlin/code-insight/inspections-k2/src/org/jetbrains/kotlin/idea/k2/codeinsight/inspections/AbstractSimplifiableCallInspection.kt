@@ -73,7 +73,7 @@ internal abstract class AbstractSimplifiableCallInspection :
             if (!lambdaExpression.isIdentityLambda()) return null
 
             val resolvedCallSymbol =
-                callExpression.resolveToCall()?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol ?: return null
+                callExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
             val receiver = resolvedCallSymbol.dispatchReceiver ?: resolvedCallSymbol.extensionReceiver ?: return null
             val receiverType = receiver.type
             if (receiverType.isPrimitiveArray) return null
@@ -154,7 +154,7 @@ internal abstract class AbstractSimplifiableCallInspection :
             val resolvedCall = callExpression.resolveToCall()?.successfulFunctionCallOrNull()
 
             if (resolvedCall != null) {
-                val resultingElementType = (resolvedCall.partiallyAppliedSymbol.signature.returnType as? KaClassType)
+                val resultingElementType = (resolvedCall.signature.returnType as? KaClassType)
                     ?.typeArguments?.singleOrNull()?.takeIf { it !is KaStarTypeProjection }?.type
                 if (resultingElementType != null && !rightType.isSubtypeOf(resultingElementType)) {
                     return null

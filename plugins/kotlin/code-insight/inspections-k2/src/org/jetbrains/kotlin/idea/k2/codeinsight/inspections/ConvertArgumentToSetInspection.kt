@@ -12,7 +12,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.evaluate
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
@@ -196,10 +195,9 @@ private fun KaSession.isLikeConstantExpressionListOf(element: KtExpression): Boo
     return when (element) {
         is KtNameReferenceExpression -> { // Try to resolve the name and check if it is declared with a constant `listOf`-like function
             val candidate = element.mainReference.resolve()
-            if (candidate is KtVariableDeclaration && !candidate.isVar) candidate.children.mapNotNull { getCallExpressionIfAny(it) }.run {
+            candidate is KtVariableDeclaration && !candidate.isVar && candidate.children.mapNotNull { getCallExpressionIfAny(it) }.run {
                 isNotEmpty() && all { it.isLikeConstantExpressionListOf() }
             }
-            else false
         }
 
         else -> getCallExpressionIfAny(element)?.isLikeConstantExpressionListOf() ?: false

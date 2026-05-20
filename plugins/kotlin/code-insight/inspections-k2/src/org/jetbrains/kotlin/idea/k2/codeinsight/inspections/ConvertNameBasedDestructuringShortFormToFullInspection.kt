@@ -18,17 +18,15 @@ import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtVisitor
-import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.psi.destructuringDeclarationVisitor
 
 internal class ConvertNameBasedDestructuringShortFormToFullInspection : KotlinApplicableInspectionBase.Simple<KtDestructuringDeclaration, String>() {
 
     override fun buildVisitor(
         holder: ProblemsHolder,
         isOnTheFly: Boolean
-    ): KtVisitor<*, *> = object : KtVisitorVoid() {
-        override fun visitDestructuringDeclaration(declaration: KtDestructuringDeclaration) {
-            visitTargetElement(declaration, holder, isOnTheFly)
-        }
+    ): KtVisitor<*, *> = destructuringDeclarationVisitor {
+        visitTargetElement(it, holder, isOnTheFly)
     }
 
     override fun isApplicableByPsi(element: KtDestructuringDeclaration): Boolean {

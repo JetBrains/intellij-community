@@ -27,10 +27,9 @@ import org.jetbrains.kotlin.psi.KtVisitorVoid
 class CanConvertToMultiDollarStringInspection :
     KotlinApplicableInspectionBase.Simple<KtStringTemplateExpression, MultiDollarConversionInfo>() {
 
-    override fun isApplicableByPsi(element: KtStringTemplateExpression): Boolean {
-        if (!element.languageVersionSettings.supportsFeature(LanguageFeature.MultiDollarInterpolation)) return false
-        return element.interpolationPrefix == null
-    }
+    override fun isApplicableByPsi(element: KtStringTemplateExpression): Boolean =
+        element.languageVersionSettings.supportsFeature(LanguageFeature.MultiDollarInterpolation) &&
+                element.interpolationPrefix == null
 
     override fun buildVisitor(
         holder: ProblemsHolder,

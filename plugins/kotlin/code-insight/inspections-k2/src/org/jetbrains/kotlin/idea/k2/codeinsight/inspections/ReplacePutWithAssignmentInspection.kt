@@ -65,10 +65,10 @@ internal class ReplacePutWithAssignmentInspection : KotlinApplicableInspectionBa
         if (element.isUsedAsExpression) return null
 
         val resolvedCall = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
-        val receiverType = resolvedCall.partiallyAppliedSymbol.dispatchReceiver?.type ?: return null
+        val receiverType = resolvedCall.dispatchReceiver?.type ?: return null
         if (!receiverType.isSubtypeOf(StandardClassIds.MutableMap)) return null
 
-        val functionSymbol = resolvedCall.partiallyAppliedSymbol.symbol
+        val functionSymbol = resolvedCall.symbol
         if (functionSymbol.allOverriddenSymbolsWithSelf.none { it.isMutableMapPutFunction() }) return null
 
         val receiverTypeText = element.receiverExpression.expressionType?.render(position = Variance.IN_VARIANCE) ?: return null

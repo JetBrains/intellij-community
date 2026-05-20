@@ -46,7 +46,7 @@ internal class UnusedLambdaExpressionBodyInspection : KotlinApplicableInspection
         }
 
         val resolvedCall = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
-        val symbol = resolvedCall.partiallyAppliedSymbol.symbol
+        val symbol = resolvedCall.symbol
         if (symbol.returnType !is KaFunctionType) {
             return null
         }

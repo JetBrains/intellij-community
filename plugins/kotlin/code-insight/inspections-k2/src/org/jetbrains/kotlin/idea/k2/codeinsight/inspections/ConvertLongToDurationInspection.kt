@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.psi.callExpressionVisitor
 
 internal class ConvertLongToDurationInspection :
     KotlinApplicableInspectionBase.Simple<KtCallExpression, Unit>() {
@@ -27,10 +27,8 @@ internal class ConvertLongToDurationInspection :
     override fun buildVisitor(
         holder: ProblemsHolder,
         isOnTheFly: Boolean,
-    ) = object : KtVisitorVoid() {
-        override fun visitCallExpression(expression: KtCallExpression) {
-            visitTargetElement(expression, holder, isOnTheFly)
-        }
+    ) = callExpressionVisitor {
+        visitTargetElement(it, holder, isOnTheFly)
     }
 
     override fun createQuickFix(
@@ -79,9 +77,7 @@ internal class ConvertLongToDurationInspection :
         
         // Skip calls with named arguments for now
         val firstArgument = element.valueArguments.firstOrNull() ?: return false
-        if (firstArgument.getArgumentName() != null) return false
-        
-        return true
+        return firstArgument.getArgumentName() == null
     }
 
     override fun getProblemDescription(element: KtCallExpression, context: Unit): String = 

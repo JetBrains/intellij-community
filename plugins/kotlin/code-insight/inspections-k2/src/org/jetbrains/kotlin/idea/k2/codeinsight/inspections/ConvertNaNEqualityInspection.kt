@@ -7,7 +7,6 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol

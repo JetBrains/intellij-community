@@ -81,10 +81,9 @@ internal class ConvertImplicitContextArgumentToExplicitInspection :
         visitTargetElement(it, holder, isOnTheFly)
     }
 
-    override fun isApplicableByPsi(element: KtCallExpression): Boolean {
-        if (!element.languageVersionSettings.supportsFeature(LanguageFeature.ExplicitContextArguments)) return false
-        return element.calleeExpression != null
-    }
+    override fun isApplicableByPsi(element: KtCallExpression): Boolean =
+        element.languageVersionSettings.supportsFeature(LanguageFeature.ExplicitContextArguments) &&
+                element.calleeExpression != null
 
     @OptIn(KaExperimentalApi::class)
     override fun KaSession.prepareContext(element: KtCallExpression): Context? {

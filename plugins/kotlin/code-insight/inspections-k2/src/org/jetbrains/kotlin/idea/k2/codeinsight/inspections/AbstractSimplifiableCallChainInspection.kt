@@ -168,7 +168,7 @@ internal abstract class AbstractSimplifiableCallChainInspection :
     context(_: KaSession)
     private fun isMapNotNullOnPrimitiveArrayConversion(conversion: CallChainConversion, firstCall: KaCallInfo): Boolean {
         if (conversion.replacementName != CallChainConversions.MAP_NOT_NULL) return false
-        val extensionReceiverType = firstCall.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.extensionReceiver?.type
+        val extensionReceiverType = firstCall.successfulFunctionCallOrNull()?.extensionReceiver?.type
             ?: return false
         return extensionReceiverType.isArrayOrPrimitiveArray && extensionReceiverType.symbol?.typeParameters.orEmpty().isEmpty()
     }
@@ -209,14 +209,14 @@ internal abstract class AbstractSimplifiableCallChainInspection :
     context(_: KaSession)
     private fun isAssociateConversionWithWrongArgumentCount(conversion: CallChainConversion, secondCall: KaCallInfo): Boolean {
         if (conversion.firstName != CallChainConversions.MAP || conversion.secondName != CallChainConversions.TO_MAP) return false
-        val argCount = secondCall.successfulFunctionCallOrNull()?.argumentMapping?.size ?: return false
+        val argCount = secondCall.successfulFunctionCallOrNull()?.valueArgumentMapping?.size ?: return false
         return conversion.replacementName == CallChainConversions.ASSOCIATE && argCount != 0 || conversion.replacementName == CallChainConversions.ASSOCIATE_TO && argCount != 1
     }
 
     context(_: KaSession)
     private fun isSuspendForbiddenButFound(conversion: CallChainConversion, firstCall: KaCallInfo): Boolean {
         if (conversion.enableSuspendFunctionCall) return false
-        val callArguments = firstCall.successfulFunctionCallOrNull()?.argumentMapping ?: return false
+        val callArguments = firstCall.successfulFunctionCallOrNull()?.valueArgumentMapping ?: return false
         return callArguments.keys.any { argumentExpression ->
             argumentExpression.anyDescendantOfType<KtCallExpression> { subCallExpr -> subCallExpr.isSuspendCall() }
         }
@@ -239,7 +239,7 @@ internal abstract class AbstractSimplifiableCallChainInspection :
     // region AA utilities
     context(_: KaSession)
     private fun KaCallInfo.isCalling(fqName: FqName): Boolean =
-        successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol?.getFqNameIfPackageOrNonLocal() == fqName
+        successfulFunctionCallOrNull()?.symbol?.getFqNameIfPackageOrNonLocal() == fqName
 
     @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
@@ -249,14 +249,14 @@ internal abstract class AbstractSimplifiableCallChainInspection :
     context(_: KaSession)
     private fun KaCallInfo.containsFunctionalArgumentsOfAnyKind(): Boolean {
         val functionCall = successfulFunctionCallOrNull() ?: return false
-        return functionCall.argumentMapping.any { (_, argSignature) ->
+        return functionCall.valueArgumentMapping.any { (_, argSignature) ->
             argSignature.isFunctionalTypeOfAnyKind()
         }
     }
 
     context(_: KaSession)
     private fun KaCallInfo.lastFunctionalArgumentWithSignatureOrNull(): Pair<KtExpression, KaVariableSignature<KaValueParameterSymbol>>? {
-        val (argument, signature) = successfulFunctionCallOrNull()?.argumentMapping?.entries?.lastOrNull() ?: return null
+        val (argument, signature) = successfulFunctionCallOrNull()?.valueArgumentMapping?.entries?.lastOrNull() ?: return null
         if (!signature.isFunctionalTypeOfAnyKind()) return null
         return argument to signature
     }
@@ -280,7 +280,7 @@ internal abstract class AbstractSimplifiableCallChainInspection :
     context(_: KaSession)
     private fun KtCallExpression.isSuspendCall(): Boolean {
         val resolvedCall = resolveToCall() ?: return false
-        val symbol = resolvedCall.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol ?: return false
+        val symbol = resolvedCall.successfulFunctionCallOrNull()?.symbol ?: return false
         return symbol is KaNamedFunctionSymbol && symbol.isSuspend
     }
     // endregion

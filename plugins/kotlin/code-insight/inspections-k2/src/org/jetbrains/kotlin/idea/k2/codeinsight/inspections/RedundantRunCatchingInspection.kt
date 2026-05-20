@@ -63,10 +63,10 @@ internal class RedundantRunCatchingInspection : KotlinApplicableInspectionBase.S
         val callChainExpressions = CallChainExpressions.from(element) ?: return null
         val firstCalleeCall = callChainExpressions.firstCalleeExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
         val secondCalleeCall = callChainExpressions.secondCalleeExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
-        if (firstCalleeCall.partiallyAppliedSymbol.signature.callableId?.asSingleFqName() != conversion.firstFqName) {
+        if (firstCalleeCall.signature.callableId?.asSingleFqName() != conversion.firstFqName) {
             return null
         }
-        if (secondCalleeCall.partiallyAppliedSymbol.signature.callableId?.asSingleFqName() != conversion.secondFqName) {
+        if (secondCalleeCall.signature.callableId?.asSingleFqName() != conversion.secondFqName) {
             return null
         }
 

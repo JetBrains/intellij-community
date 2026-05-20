@@ -3,8 +3,8 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.lang.Language
 import com.intellij.openapi.application.runWriteAction
@@ -16,6 +16,7 @@ import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.impl.source.tree.JavaElementType
 import com.intellij.psi.search.searches.ReferencesSearch
+import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
@@ -28,28 +29,27 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgressIfEdt
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
-import org.jetbrains.kotlin.KtNodeTypes
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.platform.jvm.isJvm
-import org.jetbrains.kotlin.psi.KtClassInitializer
-import org.jetbrains.kotlin.psi.KtClass
-import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassInitializer
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtSecondaryConstructor
 import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
 import org.jetbrains.kotlin.psi.KtSuperTypeListEntry
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.createDeclarationByPattern
-import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 internal class CanSealedSubClassBeObjectInspection : AbstractKotlinInspection() {
@@ -121,8 +121,7 @@ private fun KtClass.isFinal(): Boolean = analyze(this) {
 
 private tailrec fun KtClass.baseClassHasNoStateOrEquals(): Boolean {
     val superClass = directSuperClass() ?: return true
-    if (!superClass.hasNoStateOrEquals()) return false
-    return superClass.baseClassHasNoStateOrEquals()
+    return superClass.hasNoStateOrEquals() && superClass.baseClassHasNoStateOrEquals()
 }
 
 private fun KtClass.hasNoStateOrEquals(): Boolean {

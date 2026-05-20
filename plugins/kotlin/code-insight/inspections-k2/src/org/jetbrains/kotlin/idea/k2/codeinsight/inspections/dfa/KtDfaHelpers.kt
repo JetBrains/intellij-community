@@ -15,7 +15,7 @@ import com.intellij.psi.PsiTypes
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
-import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
+import org.jetbrains.kotlin.analysis.api.components.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.components.arrayElementType
 import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.components.defaultType
@@ -90,18 +90,18 @@ private fun KaType.toDfTypeNotNullable(): DfType {
         is KaClassType -> {
             // TODO: anonymous objects
             when (classId) {
-                DefaultTypeClassIds.BOOLEAN -> DfTypes.BOOLEAN
-                DefaultTypeClassIds.BYTE -> DfTypes.intRange(LongRangeSet.range(Byte.MIN_VALUE.toLong(), Byte.MAX_VALUE.toLong()))
-                DefaultTypeClassIds.CHAR -> DfTypes.intRange(
+                KaStandardTypeClassIds.BOOLEAN -> DfTypes.BOOLEAN
+                KaStandardTypeClassIds.BYTE -> DfTypes.intRange(LongRangeSet.range(Byte.MIN_VALUE.toLong(), Byte.MAX_VALUE.toLong()))
+                KaStandardTypeClassIds.CHAR -> DfTypes.intRange(
                     LongRangeSet.range(Character.MIN_VALUE.code.toLong(), Character.MAX_VALUE.code.toLong())
                 )
 
-                DefaultTypeClassIds.SHORT -> DfTypes.intRange(LongRangeSet.range(Short.MIN_VALUE.toLong(), Short.MAX_VALUE.toLong()))
-                DefaultTypeClassIds.INT -> DfTypes.INT
-                DefaultTypeClassIds.LONG -> DfTypes.LONG
-                DefaultTypeClassIds.FLOAT -> DfTypes.FLOAT
-                DefaultTypeClassIds.DOUBLE -> DfTypes.DOUBLE
-                DefaultTypeClassIds.ANY -> DfTypes.NOT_NULL_OBJECT
+                KaStandardTypeClassIds.SHORT -> DfTypes.intRange(LongRangeSet.range(Short.MIN_VALUE.toLong(), Short.MAX_VALUE.toLong()))
+                KaStandardTypeClassIds.INT -> DfTypes.INT
+                KaStandardTypeClassIds.LONG -> DfTypes.LONG
+                KaStandardTypeClassIds.FLOAT -> DfTypes.FLOAT
+                KaStandardTypeClassIds.DOUBLE -> DfTypes.DOUBLE
+                KaStandardTypeClassIds.ANY -> DfTypes.NOT_NULL_OBJECT
                 StandardClassIds.Array -> {
                     val elementDfType = getJvmAwareArrayElementType()?.toDfType() as? DfReferenceType
                     val elementConstraint = elementDfType?.constraint ?: TypeConstraints.TOP
@@ -111,14 +111,14 @@ private fun KaType.toDfTypeNotNullable(): DfType {
                 else -> {
                     val primitiveArrayElementType = StandardClassIds.elementTypeByPrimitiveArrayType[classId]
                     when (primitiveArrayElementType) {
-                        DefaultTypeClassIds.BYTE -> TypeConstraints.exact(PsiTypes.byteType().createArrayType()).asDfType()
-                        DefaultTypeClassIds.SHORT -> TypeConstraints.exact(PsiTypes.shortType().createArrayType()).asDfType()
-                        DefaultTypeClassIds.INT -> TypeConstraints.exact(PsiTypes.intType().createArrayType()).asDfType()
-                        DefaultTypeClassIds.LONG -> TypeConstraints.exact(PsiTypes.longType().createArrayType()).asDfType()
-                        DefaultTypeClassIds.FLOAT -> TypeConstraints.exact(PsiTypes.floatType().createArrayType()).asDfType()
-                        DefaultTypeClassIds.DOUBLE -> TypeConstraints.exact(PsiTypes.doubleType().createArrayType()).asDfType()
-                        DefaultTypeClassIds.CHAR -> TypeConstraints.exact(PsiTypes.charType().createArrayType()).asDfType()
-                        DefaultTypeClassIds.BOOLEAN -> TypeConstraints.exact(PsiTypes.booleanType().createArrayType()).asDfType()
+                        KaStandardTypeClassIds.BYTE -> TypeConstraints.exact(PsiTypes.byteType().createArrayType()).asDfType()
+                        KaStandardTypeClassIds.SHORT -> TypeConstraints.exact(PsiTypes.shortType().createArrayType()).asDfType()
+                        KaStandardTypeClassIds.INT -> TypeConstraints.exact(PsiTypes.intType().createArrayType()).asDfType()
+                        KaStandardTypeClassIds.LONG -> TypeConstraints.exact(PsiTypes.longType().createArrayType()).asDfType()
+                        KaStandardTypeClassIds.FLOAT -> TypeConstraints.exact(PsiTypes.floatType().createArrayType()).asDfType()
+                        KaStandardTypeClassIds.DOUBLE -> TypeConstraints.exact(PsiTypes.doubleType().createArrayType()).asDfType()
+                        KaStandardTypeClassIds.CHAR -> TypeConstraints.exact(PsiTypes.charType().createArrayType()).asDfType()
+                        KaStandardTypeClassIds.BOOLEAN -> TypeConstraints.exact(PsiTypes.booleanType().createArrayType()).asDfType()
                         else -> {
                             val symbol = expandedSymbol ?: return DfType.TOP
                             val classDef = symbol.classDef()
@@ -169,7 +169,7 @@ internal fun KtExpression.getKotlinType(): KaType? {
     if (parent is KtBinaryExpressionWithTypeRHS && parent.operationReference.text == "as?") {
         val call = resolveToCall()?.singleFunctionCallOrNull()
         if (call != null) {
-            val functionReturnType = (call.partiallyAppliedSymbol.symbol as? KaNamedFunctionSymbol)?.returnType
+            val functionReturnType = (call.symbol as? KaNamedFunctionSymbol)?.returnType
             if (functionReturnType is KaTypeParameterType) {
                 val upperBound = functionReturnType.symbol.upperBounds.singleOrNull()
                 if (upperBound != null) {
@@ -256,9 +256,9 @@ internal fun getInlineableLambda(expr: KtCallExpression): LambdaAndParameter? {
     val index = expr.valueArguments.indexOf(lambdaArgument)
     assert(index >= 0)
     val resolvedCall = expr.resolveToCall()?.singleFunctionCallOrNull() ?: return null
-    val symbol = resolvedCall.partiallyAppliedSymbol.symbol as? KaNamedFunctionSymbol
+    val symbol = resolvedCall.symbol as? KaNamedFunctionSymbol
     if (symbol == null || !symbol.isInline) return null
-    val parameterSymbol = resolvedCall.argumentMapping[lambdaExpression]?.symbol ?: return null
+    val parameterSymbol = resolvedCall.valueArgumentMapping[lambdaExpression]?.symbol ?: return null
     if (parameterSymbol.isNoinline) return null
     return LambdaAndParameter(lambdaExpression, parameterSymbol)
 }

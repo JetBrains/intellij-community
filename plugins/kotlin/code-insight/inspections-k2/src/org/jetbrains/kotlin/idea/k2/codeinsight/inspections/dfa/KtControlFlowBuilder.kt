@@ -110,6 +110,7 @@ import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
 import org.jetbrains.kotlin.analysis.api.components.isNothingType
 import org.jetbrains.kotlin.analysis.api.components.isStringType
 import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.components.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.components.returnType
@@ -930,12 +931,13 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun processReturnExpression(expr: KtReturnExpression) {
         val returnedExpression = expr.returnedExpression
         processExpression(returnedExpression)
         val targetFunction = when {
-          expr.labeledExpression != null -> expr.targetSymbol?.psi as? KtFunctionLiteral
+          expr.labeledExpression != null -> expr.resolveSymbol()?.psi as? KtFunctionLiteral
           else -> findEffectiveTargetSymbol(expr)
         }
         if (targetFunction != null && PsiTreeUtil.isAncestor(context, targetFunction, true)) {
@@ -973,7 +975,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         val lambdaArg = lambda.parent as? KtValueArgument ?: return null
         val call = lambdaArg.parent as? KtCallExpression ?: return null
         val functionCall: KaFunctionCall<*> = call.resolveToCall()?.singleFunctionCallOrNull() ?: return null
-        val target: KaNamedFunctionSymbol = functionCall.partiallyAppliedSymbol.symbol as? KaNamedFunctionSymbol ?: return null
+        val target: KaNamedFunctionSymbol = functionCall.symbol as? KaNamedFunctionSymbol ?: return null
         val functionName = target.name.asString()
         if (functionName != LET && functionName != RUN) return null
         if (StandardNames.BUILT_INS_PACKAGE_FQ_NAME != target.callableId?.packageName) return null
@@ -1606,7 +1608,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     context(_: KaSession)
     private fun getLambdaOccurrenceRange(expr: KtCallExpression, parameter: KaValueParameterSymbol): EventOccurrencesRange {
         val functionCall = expr.resolveToCall()?.singleFunctionCallOrNull() ?: return EventOccurrencesRange.UNKNOWN
-        val functionSymbol = functionCall.partiallyAppliedSymbol.symbol as? KaNamedFunctionSymbol ?: return EventOccurrencesRange.UNKNOWN
+        val functionSymbol = functionCall.symbol as? KaNamedFunctionSymbol ?: return EventOccurrencesRange.UNKNOWN
         val callEffect = functionSymbol.contractEffects
             .singleOrNull { e -> e is KaContractCallsInPlaceContractEffectDeclaration && e.valueParameterReference.symbol == parameter }
                 as? KaContractCallsInPlaceContractEffectDeclaration
@@ -1673,11 +1675,11 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         // TODO: non-qualified methods (run, repeat)
         // TODO: collection methods (forEach, map, etc.)
         val resolvedCall = expr.resolveToCall()?.singleFunctionCallOrNull() ?: return false
-        val symbol = resolvedCall.partiallyAppliedSymbol.symbol as? KaNamedFunctionSymbol ?: return false
+        val symbol = resolvedCall.symbol as? KaNamedFunctionSymbol ?: return false
         val packageName = symbol.callableId?.packageName ?: return false
         val bodyExpression = lambda.bodyExpression
         val receiver = (expr.parent as? KtQualifiedExpression)?.receiverExpression
-        if (packageName == StandardNames.BUILT_INS_PACKAGE_FQ_NAME && resolvedCall.argumentMapping.size == 1) {
+        if (packageName == StandardNames.BUILT_INS_PACKAGE_FQ_NAME && resolvedCall.valueArgumentMapping.size == 1) {
             val name = symbol.name.asString()
             if (name == LET || name == ALSO || name == TAKE_IF || name == TAKE_UNLESS || name == APPLY || name == RUN) {
                 val parameter = (if (name == APPLY || name == RUN)
@@ -1747,7 +1749,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     private fun inlineKnownMethod(expr: KtCallExpression, argCount: Int, qualifierOnStack: Boolean): Boolean {
         if (argCount == 0 && qualifierOnStack) {
             val functionCall: KaFunctionCall<*> = expr.resolveToCall()?.singleFunctionCallOrNull() ?: return false
-            val target: KaNamedFunctionSymbol = functionCall.partiallyAppliedSymbol.symbol as? KaNamedFunctionSymbol ?: return false
+            val target: KaNamedFunctionSymbol = functionCall.symbol as? KaNamedFunctionSymbol ?: return false
             val name = target.name.asString()
             if (name == "isEmpty" || name == "isNotEmpty") {
                 val callableId = target.callableId
@@ -1795,7 +1797,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         var varArgCount = 0
         var varArgType: DfType = DfType.BOTTOM
 
-        for ((argExpr, signature) in functionCall.argumentMapping) {
+        for ((argExpr, signature) in functionCall.valueArgumentMapping) {
             val parameterSymbol = signature.symbol
             val parent = argExpr.parent
             if (parameterSymbol.isVararg && (parent as? KtValueArgument)?.isSpread != true) {
@@ -1823,7 +1825,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     context(_: KaSession)
     private fun tryPushImplicitQualifier(callInfo: KaSuccessCallInfo): Boolean {
         val call = callInfo.call as? KaFunctionCall<*>
-        val receiver = (call?.partiallyAppliedSymbol?.dispatchReceiver as? KaImplicitReceiverValue)?.symbol
+        val receiver = (call?.dispatchReceiver as? KaImplicitReceiverValue)?.symbol
         if (receiver is KaReceiverParameterSymbol) {
             val psi = receiver.psi
             if (psi is KtFunctionLiteral) {

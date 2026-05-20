@@ -65,7 +65,7 @@ internal class BooleanLiteralArgumentInspection(
         val call = element.getStrictParentOfType<KtCallExpression>() ?: return null
         val valueArguments = call.valueArguments
 
-        val diagnostics = argumentExpression.diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+        val diagnostics = argumentExpression.directDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
         if (diagnostics.any { it.severity == KaSeverity.ERROR }) return null
         val name = getStableNameFor(element) ?: return null
 
@@ -82,14 +82,18 @@ internal class BooleanLiteralArgumentInspection(
             if (hasNeighbourUnnamedBoolean) GENERIC_ERROR_OR_WARNING else INFORMATION
         }
 
-        val (familyName, argumentNames) = if (element == valueArguments.lastOrNull { !it.isNamed() }) {
-            KotlinBundle.message("add.0.to.argument", name) to mapOf(element.createSmartPointer() to name)
-        } else if (element == valueArguments.firstOrNull()) {
-            val associateArgumentNamesStartingAt = associateArgumentNamesStartingAt(call, null) ?: return null
-            KotlinBundle.message("add.names.to.call.arguments") to associateArgumentNamesStartingAt
-        } else {
-            val associateArgumentNamesStartingAt = associateArgumentNamesStartingAt(call, element) ?: return null
-            KotlinBundle.message("add.names.to.this.argument.and.following.arguments") to associateArgumentNamesStartingAt
+        val (familyName, argumentNames) = when (element) {
+            valueArguments.lastOrNull { !it.isNamed() } -> {
+                KotlinBundle.message("add.0.to.argument", name) to mapOf(element.createSmartPointer() to name)
+            }
+            valueArguments.firstOrNull() -> {
+                val associateArgumentNamesStartingAt = associateArgumentNamesStartingAt(call, null) ?: return null
+                KotlinBundle.message("add.names.to.call.arguments") to associateArgumentNamesStartingAt
+            }
+            else -> {
+                val associateArgumentNamesStartingAt = associateArgumentNamesStartingAt(call, element) ?: return null
+                KotlinBundle.message("add.names.to.this.argument.and.following.arguments") to associateArgumentNamesStartingAt
+            }
         }
 
         return Context(highlightType, familyName, argumentNames)

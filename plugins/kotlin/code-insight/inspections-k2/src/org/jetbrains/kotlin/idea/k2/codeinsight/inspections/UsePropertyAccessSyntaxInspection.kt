@@ -62,6 +62,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.propertyNamesByAccessorName
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.render
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
@@ -83,7 +84,6 @@ import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
-import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.synthetic.canBePropertyAccessor
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
@@ -148,7 +148,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
 
             val receiverType =
                 callableReferenceExpression.resolveToCall()
-                    ?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.dispatchReceiver?.type?.lowerBoundIfFlexible()
+                    ?.successfulFunctionCallOrNull()?.dispatchReceiver?.type?.lowerBoundIfFlexible()
                     ?: callableReferenceExpression.receiverType?.lowerBoundIfFlexible() ?: return
 
             val syntheticProperty = getSyntheticProperty(propertyNames, receiverType) ?: return
@@ -227,7 +227,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
             val returnType = successfulFunctionCallSymbol.returnType.lowerBoundIfFlexible()
 
             // For extension functions, receiver type taken such way is null
-            val receiverType = resolvedFunctionCall.partiallyAppliedSymbol.dispatchReceiver?.type?.lowerBoundIfFlexible() ?: return
+            val receiverType = resolvedFunctionCall.dispatchReceiver?.type?.lowerBoundIfFlexible() ?: return
 
             val syntheticProperty = getSyntheticProperty(propertyNames, receiverType) ?: return
             val syntheticPropertyName = syntheticProperty.name.asString()
@@ -458,8 +458,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
     context(_: KaSession)
     private fun receiverOrItsAncestorsContainVisibleFieldWithSameName(receiverType: KaType, propertyName: String): Boolean {
         val fieldWithSameName = receiverType.scope?.declarationScope?.callables(Name.identifier(propertyName))
-            ?.filter { it is KaJavaFieldSymbol && it.visibility != KaSymbolVisibility.PRIVATE }
-            ?.singleOrNull()
+            ?.singleOrNull { it is KaJavaFieldSymbol && it.visibility != KaSymbolVisibility.PRIVATE }
 
         return fieldWithSameName != null
     }
@@ -564,7 +563,6 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
             // by some variable or argument in the same scope
             if (qualifiedExpressionForSelector == null) {
                 val replacementReceiverType = resolvedCall.successfulVariableAccessCall()
-                    ?.partiallyAppliedSymbol
                     ?.dispatchReceiver
                     ?.type
                     ?.lowerBoundIfFlexible()

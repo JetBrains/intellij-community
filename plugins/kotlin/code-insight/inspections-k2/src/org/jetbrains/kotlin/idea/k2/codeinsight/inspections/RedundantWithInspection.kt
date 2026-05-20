@@ -98,7 +98,7 @@ class RedundantWithInspection : KotlinApplicableInspectionBase<KtCallExpression,
         val lambdaBody = lambda.bodyExpression ?: return null
 
         val call = callee.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
-        if (call.partiallyAppliedSymbol.signature.callableId?.asSingleFqName() != FqName("kotlin.with")) return null
+        if (call.signature.callableId?.asSingleFqName() != FqName("kotlin.with")) return null
 
         val functionLiteral = lambda.functionLiteral
         val used = functionLiteral.anyDescendantOfType<KtElement> {

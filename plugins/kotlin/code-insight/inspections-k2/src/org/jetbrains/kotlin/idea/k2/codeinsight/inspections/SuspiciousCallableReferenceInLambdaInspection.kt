@@ -107,13 +107,13 @@ class SuspiciousCallableReferenceInLambdaInspection : KotlinApplicableInspection
             ?.resolveToCall()?.successfulFunctionCallOrNull() ?: return true
 
         val argumentExpression = (element.parent as? ValueArgument)?.getArgumentExpression()
-        val parameter = functionCall.argumentMapping.entries.firstOrNull { it.key == argumentExpression }?.value
+        val parameter = functionCall.valueArgumentMapping.entries.firstOrNull { it.key == argumentExpression }?.value
         val returnType = (parameter?.returnType as? KaFunctionType)?.returnType
 
         if (returnType?.isFunctionType == true || returnType?.isSuspendFunctionType == true) return false
 
         val originalReturnType =
-            (functionCall.partiallyAppliedSymbol.symbol.valueParameters[0].returnType as? KaFunctionType)?.returnType ?: return true
+            (functionCall.symbol.valueParameters[0].returnType as? KaFunctionType)?.returnType ?: return true
         return !originalReturnType.isFunctionInterfaceOrPropertyType() &&
                 (originalReturnType !is KaTypeParameterType || originalReturnType.allSupertypes.none { it.isFunctionInterfaceOrPropertyType() })
     }
@@ -210,7 +210,7 @@ private fun KaSession.buildReferenceText(element: KtLambdaExpression, callableRe
     return if ((receiverSymbol == null || receiverSymbol is KaValueParameterSymbol) && receiverSymbol?.containingSymbol == lambdaSymbol) {
         val callableReferenceCall = callableRefExpr.resolveToCall()?.successfulFunctionCallOrNull()
         val receiverType =
-            callableReferenceCall?.partiallyAppliedSymbol?.let { it.extensionReceiver?.type ?: it.dispatchReceiver?.type }
+            callableReferenceCall?.let { it.extensionReceiver?.type ?: it.dispatchReceiver?.type }
         val typeText = receiverType?.render(position = Variance.INVARIANT)?.substringAfterLast('.') ?: ""
         "$typeText::${callableReference.text.trim()}"
     } else {

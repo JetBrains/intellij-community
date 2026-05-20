@@ -93,7 +93,7 @@ internal class AddExplicitTargetToParameterAnnotationInspection :
     }
 
     private fun KaSession.isInAllowlist(element: KtAnnotationEntry): Boolean {
-        val annotationClassId = element.resolveToCall()?.singleConstructorCallOrNull()?.partiallyAppliedSymbol?.symbol?.containingClassId
+        val annotationClassId = element.resolveToCall()?.singleConstructorCallOrNull()?.symbol?.containingClassId
         return annotationClassId in STANDARD_ANNOTATION_IDS_WITHOUT_NECESSARY_MIGRATION
     }
 

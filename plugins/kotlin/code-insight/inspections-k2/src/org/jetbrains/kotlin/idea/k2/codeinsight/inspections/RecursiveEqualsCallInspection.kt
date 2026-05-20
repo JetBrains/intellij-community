@@ -89,7 +89,7 @@ internal class RecursiveEqualsCallInspection : KotlinApplicableInspectionBase.Si
 
         val call = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
         val calledSymbol = call.symbol as? KaNamedFunctionSymbol ?: return null
-        val dispatchReceiver = call.partiallyAppliedSymbol.dispatchReceiver ?: return null
+        val dispatchReceiver = call.dispatchReceiver ?: return null
 
         if (!calledSymbol.isEqualsMethodSymbol()) return null
 

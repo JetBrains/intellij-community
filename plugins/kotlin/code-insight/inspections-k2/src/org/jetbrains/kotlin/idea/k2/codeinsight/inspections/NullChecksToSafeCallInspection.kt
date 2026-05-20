@@ -85,7 +85,7 @@ private fun isNullChecksToSafeCallFixAvailable(expression: KtBinaryExpression): 
     if (!hasStableSmartCast(rte.receiverExpression)) return false
 
     val resolvedCall = rte.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>() ?: return false
-    val hasNullableExtensionReceiver = resolvedCall.partiallyAppliedSymbol.symbol.receiverType?.isMarkedNullable == true
+    val hasNullableExtensionReceiver = resolvedCall.symbol.receiverType?.isMarkedNullable == true
 
     return !hasNullableExtensionReceiver && rte.receiverExpression.text.afterIgnoreCalls() == lte.text.afterIgnoreCalls()
 }

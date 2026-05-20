@@ -117,7 +117,7 @@ class KotlinFunctionCallInstruction(
     ): DfaValue {
         val factory = resultValue.factory
         val functionCall = call.resolveToCall()?.singleFunctionCallOrNull() ?: return resultValue
-        val functionSymbol = functionCall.partiallyAppliedSymbol.symbol as? KaNamedFunctionSymbol ?: return resultValue
+        val functionSymbol = functionCall.symbol as? KaNamedFunctionSymbol ?: return resultValue
         val callEffects = functionSymbol.contractEffects
         for (effect in callEffects) {
             if (effect !is KaContractConditionalContractEffectDeclaration) continue
@@ -179,7 +179,7 @@ class KotlinFunctionCallInstruction(
             // TODO: KTIJ-33109 support context parameters
             is KaContextParameterSymbol -> null
             is KaValueParameterSymbol -> {
-                val parameterIndex = callDescriptor.argumentMapping.values.map { it.symbol }.indexOf(symbol)
+                val parameterIndex = callDescriptor.valueArgumentMapping.values.map { it.symbol }.indexOf(symbol)
                 if (parameterIndex >= 0 && parameterIndex < arguments.arguments.size) {
                     arguments.arguments[parameterIndex]
                 } else {
@@ -247,7 +247,7 @@ class KotlinFunctionCallInstruction(
     }
 
     private fun fromKnownDescriptor(call: KaFunctionCall<*>, arguments: DfaCallArguments, state: DfaMemoryState): DfType? {
-        val functionSymbol = call.partiallyAppliedSymbol.symbol as? KaNamedFunctionSymbol ?: return null
+        val functionSymbol = call.symbol as? KaNamedFunctionSymbol ?: return null
         val name = functionSymbol.name.asString()
         val containingPackage = functionSymbol.callableId?.packageName?.asString() ?: return null
         if (containingPackage == "kotlin.collections") {
@@ -306,9 +306,8 @@ class KotlinFunctionCallInstruction(
     }
 
     context(_: KaSession)
-    private fun getPsiMethod(): PsiMethod? {
-        return call.resolveToCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol?.psi?.toLightMethods()?.singleOrNull()
-    }
+    private fun getPsiMethod(): PsiMethod? =
+        call.resolveToCall()?.singleFunctionCallOrNull()?.symbol?.psi?.toLightMethods()?.singleOrNull()
 
     context(_: KaSession)
     private fun getExpressionDfType(expr: KtExpression): DfType {
