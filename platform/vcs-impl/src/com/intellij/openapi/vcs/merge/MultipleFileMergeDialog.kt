@@ -16,7 +16,7 @@ import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.Side
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.application.UiWithModelAccess
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.command.WriteCommandAction.writeCommandAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrHandleException
@@ -254,7 +254,7 @@ open class MultipleFileMergeDialog(
           val request = createMergeRequest(file, DiffRequestFactory.getInstance(), callback = null)
           val model = iterativeDataHolder.prepareModelIfSupported(file, request) ?: continue
 
-          writeAction {
+          edtWriteAction {
             model.resolveAllChangesAutomatically()
 
             saveDocument(file)

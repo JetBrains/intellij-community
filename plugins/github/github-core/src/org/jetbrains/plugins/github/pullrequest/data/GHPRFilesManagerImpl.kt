@@ -5,7 +5,6 @@ import com.intellij.collaboration.util.CodeReviewFilesUtil
 import com.intellij.diff.editor.DiffEditorTabFilesManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
-import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
@@ -69,7 +68,7 @@ internal class GHPRFilesManagerImpl(
     withContext(Dispatchers.EDT) {
       if (project.isDisposed) return@withContext
       val fileManager = project.serviceAsync<FileEditorManager>()
-      writeAction {
+      edtWriteAction {
         val files = fileManager.openFiles.filter { file ->
           file is GHPRVirtualFile && id == file.fileManagerId
         }
