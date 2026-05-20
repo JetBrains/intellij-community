@@ -14,12 +14,15 @@ import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.startup.StartupManager
+import com.intellij.openapi.project.waitForSmartMode
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Headless starter for running MCP server without IDE UI.
@@ -48,6 +51,9 @@ private val DEFAULT_ALLOWED_TOOLS: Set<String> = setOf(
   "skill_search",
 )
 
+private const val PROJECT_INIT_TIMEOUT_SECONDS_PROPERTY = "idea.mcp.server.project.init.timeout.seconds"
+private const val SMART_MODE_TIMEOUT_SECONDS_PROPERTY = "idea.mcp.server.smart.mode.timeout.seconds"
+
 internal class McpServerHeadlessStarter : ModernApplicationStarter() {
   override val isHeadless: Boolean = true
 
@@ -57,17 +63,23 @@ internal class McpServerHeadlessStarter : ModernApplicationStarter() {
       kotlin.system.exitProcess(1)
     }
     val actualArgs = args.drop(1)
+    val startedAt = System.currentTimeMillis()
 
     val port = parsePort(actualArgs)
     if (port != null) {
       McpServerSettings.getInstance().state.mcpServerPort = port
     }
 
+    val projectInitTimeout = timeoutFromProperty(PROJECT_INIT_TIMEOUT_SECONDS_PROPERTY, 10.minutes)
+    val smartModeTimeout = timeoutFromProperty(SMART_MODE_TIMEOUT_SECONDS_PROPERTY, 30.minutes)
+    System.err.println("MCP headless startup timeouts: projectInitialization=$projectInitTimeout, smartMode=$smartModeTimeout")
+
     val invocationMode = parseInvocationMode(actualArgs) ?: McpSessionInvocationMode.VIA_ROUTER
     McpToolFilterSettings.getInstance().invocationMode = invocationMode
     System.err.println("MCP session invocation mode: $invocationMode")
 
-    when (val allowedTools = parseAllowedTools(actualArgs)) {
+    val allowedTools = parseAllowedTools(actualArgs)
+    when (allowedTools) {
       WildcardAllowedTools -> {
         McpToolFilterSettings.getInstance().toolsFilter = ""
         System.err.println("MCP tools whitelist: disabled (all tools exposed)")
@@ -85,48 +97,18 @@ internal class McpServerHeadlessStarter : ModernApplicationStarter() {
     }
 
     val projectPaths = parseProjectPaths(actualArgs)
-    val projects = mutableListOf<Project>()
 
-    System.err.println("Waiting for project initialization...")
-    try {
-      for (projectPathStr in projectPaths) {
-        val projectPath = parsePathForProjectLookup(projectPathStr)
-                          ?: run {
-                            System.err.println("Warning: Invalid project path '$projectPathStr', skipping...")
-                            continue
-                          }
-        TrustedProjects.setProjectTrusted(projectPath, true)
-        System.err.println("calling open or import async...")
-        val project = try {
-          ProjectUtil.openOrImportAsync(
-            file = projectPath,
-            options = OpenProjectTask()
-        ) } catch (e: Exception) {
-          System.err.println("Error opening project at $projectPathStr: ${e.message}, skipping...")
-          continue
-        }
-
-        if (project == null) {
-          System.err.println("Warning: Unable to open project at $projectPathStr, skipping...")
-          continue
-        }
-        TrustedProjects.setProjectTrusted(project, true)
-        projects.add(project)
-      }
+    System.err.println("Waiting for project initialization for ${projectPaths.joinToString(", ")}")
+    val projects = projectPaths.mapNotNull { path ->
+      loadProject(path)
     }
-    finally {
-      // This timeout was chosen at random.
-      withTimeout(1.minutes) {
-        projects.forEach { project ->
-          StartupManager.getInstance(project).allActivitiesPassedFuture.join()
-        }
-      }
+    if (projects.isEmpty()) {
+      System.err.println("Error: no projects were opened; MCP server cannot start")
+      kotlin.system.exitProcess(1)
     }
-    System.err.println("Project initialization completed")
 
-    DumbService.getInstance(projects.first()).waitForSmartMode()
-
-    System.err.println("Project is smart, starting MCP server...")
+    waitForSmartMode(projects, smartModeTimeout)
+    System.err.println("Projects are smart, starting MCP server after ${formatElapsed(startedAt)}...")
 
     try {
       McpServerService.getInstance().start()
@@ -166,6 +148,40 @@ internal class McpServerHeadlessStarter : ModernApplicationStarter() {
       }
       System.err.println("Projects closed")
     }
+  }
+
+  private suspend fun loadProject(projectPathStr: String): Project? {
+    val projectPath = parsePathForProjectLookup(projectPathStr)
+    if (projectPath == null) {
+      System.err.println("Warning: Invalid project path '$projectPathStr', skipping...")
+      return null
+    }
+
+    TrustedProjects.setProjectTrusted(projectPath, true)
+
+    val openStartedAt = System.currentTimeMillis()
+    System.err.println("Opening/importing project '$projectPathStr' resolved to '$projectPath'...")
+    val project = try {
+      ProjectUtil.openOrImportAsync(
+        file = projectPath,
+        options = OpenProjectTask()
+      )
+    }
+    catch (e: Exception) {
+      System.err.println("Error opening project at $projectPathStr after ${formatElapsed(openStartedAt)}: ${e.stackTraceToString()}")
+      return null
+    }
+
+    if (project == null) {
+      System.err.println(
+        "Warning: Unable to open project at $projectPathStr after ${formatElapsed(openStartedAt)}, skipping..."
+      )
+      return null
+    }
+    TrustedProjects.setProjectTrusted(project, true)
+
+    System.err.println("Project opened/imported in ${formatElapsed(openStartedAt)}: ${describeProjectState(project)}")
+    return project
   }
 
   private fun parsePort(args: List<String>): Int? {
@@ -213,5 +229,45 @@ internal class McpServerHeadlessStarter : ModernApplicationStarter() {
       return listOf(System.getProperty("user.dir"))
     }
     return projectPaths
+  }
+
+  private suspend fun waitForSmartMode(projects: List<Project>, timeout: Duration) {
+    val waitStartedAt = System.currentTimeMillis()
+    try {
+      withTimeout(timeout) {
+        projects.forEach { project ->
+          System.err.println("Waiting for smart mode: ${describeProjectState(project)}")
+          project.waitForSmartMode()
+          System.err.println("Smart mode reached for ${project.name} in ${formatElapsed(waitStartedAt)}: ${describeProjectState(project)}"
+          )
+        }
+      }
+    }
+    catch (e: TimeoutCancellationException) {
+      System.err.println("Error: timed out after $timeout waiting for smart mode.")
+      projects.forEach { project ->
+        System.err.println("Project smart mode state after timeout: ${describeProjectState(project)}")
+      }
+      throw e
+    }
+  }
+
+  private fun timeoutFromProperty(propertyName: String, defaultValue: Duration): Duration {
+    val rawValue = System.getProperty(propertyName) ?: return defaultValue
+    val seconds = rawValue.toLongOrNull()
+    if (seconds == null || seconds <= 0) {
+      System.err.println("Warning: ignoring invalid $propertyName='$rawValue'; using $defaultValue")
+      return defaultValue
+    }
+    return seconds.seconds
+  }
+
+  private fun describeProjectState(project: Project): String {
+    val isDumb = runCatching { DumbService.getInstance(project).isDumb }.getOrElse { "error:${it::class.simpleName}:${it.message}" }
+    return "name='${project.name}', basePath='${project.basePath}', disposed=${project.isDisposed}, dumb=$isDumb"
+  }
+
+  private fun formatElapsed(startedAt: Long): String {
+    return "${System.currentTimeMillis() - startedAt} ms."
   }
 }
