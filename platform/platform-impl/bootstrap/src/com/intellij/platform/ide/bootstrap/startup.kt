@@ -72,6 +72,7 @@ import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import java.util.Random
@@ -596,11 +597,13 @@ private fun setupLogger(scope: CoroutineScope, consoleLoggerJob: Job, checkSyste
 
 fun logEssentialInfoAboutIde(log: Logger, appInfo: ApplicationInfo, args: List<String>) {
   val buildTimeString = DateTimeFormatter.RFC_1123_DATE_TIME.format(appInfo.buildTime)
+  val launchDateTime = ZonedDateTime.now()
   log.info("IDE: ${ApplicationNamesInfo.getInstance().fullProductName} (build #${appInfo.build.asString()}, $buildTimeString)")
   log.info("OS: ${OS.CURRENT.name} (${OS.CURRENT.version()})")
   log.info("JRE: ${System.getProperty("java.runtime.version", "-")}, ${System.getProperty("os.arch")} (${System.getProperty("java.vendor", "-")})")
   log.info("JVM: ${System.getProperty("java.vm.version", "-")} (${System.getProperty("java.vm.name", "-")})")
   log.info("PID: ${ProcessHandle.current().pid()}")
+  log.info("Timezone: ${launchDateTime.zone.id} (${launchDateTime.offset})")
   if (OS.isGenericUnix()) {
     log.info("desktop: ${System.getenv("XDG_CURRENT_DESKTOP")}")
     log.info("toolkit: ${Toolkit.getDefaultToolkit().javaClass.name}")
