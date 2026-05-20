@@ -85,8 +85,7 @@ class MavenExtensionCompletionAndResolutionTest : MavenDomWithIndicesTestCase() 
                                     "maven-compiler-plugin",
                                     "maven-site-plugin",
                                     "maven-surefire-plugin",
-                                    "build-helper-maven-plugin",
-                                    "project")
+                                    "build-helper-maven-plugin")
   }
 
   @Test

@@ -140,7 +140,6 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        """.trimIndent())
 
     assertCompletionVariantsInclude(projectPom, RENDERING_TEXT,
-                                    "project",
                                     "maven-clean-plugin",
                                     "maven-jar-plugin",
                                     "maven-war-plugin",
