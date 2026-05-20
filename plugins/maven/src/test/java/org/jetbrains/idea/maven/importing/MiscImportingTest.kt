@@ -321,39 +321,6 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testUserPropertiesCanBeCustomizedByMavenImporters() = runBlocking {
-    val disposable: Disposable = Disposer.newDisposable()
-    try {
-      maskExtensions(MavenImporter.EXTENSION_POINT_NAME,
-                     listOf<MavenImporter>(MyTestNameSettingMavenImporter("name-from-properties")),
-                     disposable)
-      importProjectAsync("""
-                      <groupId>test</groupId>
-                      <artifactId>project</artifactId>
-                      <version>1</version>
-                      <name>${'$'}{myName}</name>
-                      """.trimIndent())
-    }
-    finally {
-      Disposer.dispose(disposable)
-    }
-
-    val project = projectsManager.findProject(MavenId("test", "project", "1"))
-    assertNotNull(project)
-    assertEquals("name-from-properties", project!!.name)
-  }
-
-  private class MyTestNameSettingMavenImporter(private val myName: String) : MavenImporter("gid", "id") {
-    override fun customizeUserProperties(project: Project, mavenProject: MavenProject, properties: Properties) {
-      properties.setProperty("myName", myName)
-    }
-
-    override fun isApplicable(mavenProject: MavenProject): Boolean {
-      return true
-    }
-  }
-
-  @Test
   fun testMultiModuleWithInferredModelVersionFromNamespace() = runBlocking {
     assumeMaven4()
     // with no explicit modelVersion tag

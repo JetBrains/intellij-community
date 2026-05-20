@@ -252,8 +252,4 @@ private class MyTestAlwaysFailLegacyImporter : MavenImporter("", "") {
   override fun findGoalConfigValue(p: MavenProject?, goal: String?, path: String?): String? {
     throw IllegalStateException("Should never be called in static import")
   }
-
-  override fun customizeUserProperties(project: Project, mavenProject: MavenProject, properties: Properties) {
-    throw IllegalStateException("Should never be called in static import")
-  }
 }
