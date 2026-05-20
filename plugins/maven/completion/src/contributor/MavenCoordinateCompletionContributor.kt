@@ -1,25 +1,25 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.completion.contributor
 
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.maven.completion.getCompletionContext
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.xml.XmlTag
 import com.intellij.psi.xml.XmlText
+import com.intellij.repository.search.completion.api.DependencyCompletionContext
+import com.intellij.repository.search.completion.api.DependencyCompletionService
 import com.intellij.util.xml.DomManager
 import com.intellij.util.xml.GenericDomValue
-import org.jetbrains.idea.maven.completion.MavenDependencySearchService
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates
 import org.jetbrains.idea.maven.dom.model.completion.insert.MavenDependencyInsertionHandler
 import org.jetbrains.idea.maven.model.MavenRepoArtifactInfo
-import org.jetbrains.idea.maven.utils.MavenUtil
 import java.util.concurrent.ConcurrentHashMap
-import java.util.function.Consumer
-import java.util.function.Predicate
 
 abstract class MavenCoordinateCompletionContributor protected constructor(private val myTagId: String) : CompletionContributor() {
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
@@ -30,10 +30,11 @@ abstract class MavenCoordinateCompletionContributor protected constructor(privat
       val coordinates = placeChecker.coordinates!!
       val completionPrefix = CompletionUtil.findReferenceOrAlphanumericPrefix(parameters)
       val amendedResult = amendResultSet(result)
+      val context = parameters.getCompletionContext()
 
       runBlockingCancellable {
         val resultFilter = resultFilter()
-        find(MavenDependencySearchService.getInstance(placeChecker.project!!), coordinates, parameters) {
+        find(service<DependencyCompletionService>(), coordinates, context) {
           if (resultFilter.accept(it)) {
             fillResults(amendedResult, coordinates, it, completionPrefix)
           }
@@ -52,13 +53,9 @@ abstract class MavenCoordinateCompletionContributor protected constructor(privat
     fillResult(coordinates, result, item, completionPrefix)
   }
 
-  protected fun createSearchParameters(parameters: CompletionParameters): Pair<Boolean, Boolean> {
-    return Pair(parameters.invocationCount < 2, MavenUtil.isMavenUnitTestModeEnabled())
-  }
-
-  protected abstract suspend fun find(service: MavenDependencySearchService,
+  protected abstract suspend fun find(service: DependencyCompletionService,
                                       coordinates: MavenDomShortArtifactCoordinates,
-                                      parameters: CompletionParameters,
+                                      context: DependencyCompletionContext,
                                       consumer: (MavenRepoArtifactInfo) -> Unit)
 
   protected open fun fillAfter(result: CompletionResultSet) {
@@ -77,15 +74,6 @@ abstract class MavenCoordinateCompletionContributor protected constructor(privat
   protected open fun amendResultSet(result: CompletionResultSet): CompletionResultSet {
     result.restartCompletionWhenNothingMatches()
     return result
-  }
-
-  protected fun <T> withPredicate(consumer: Consumer<in T>,
-                                  predicate: Predicate<in T>): Consumer<T> {
-    return Consumer { it: T ->
-      if (predicate.test(it)) {
-        consumer.accept(it)
-      }
-    }
   }
 
   protected fun isCorrectPlace(parameters: CompletionParameters): Boolean =

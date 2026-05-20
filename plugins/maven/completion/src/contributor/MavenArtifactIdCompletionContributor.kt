@@ -1,31 +1,30 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.completion.contributor
 
-import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
-import com.intellij.openapi.util.text.StringUtil
-import org.jetbrains.idea.maven.completion.MavenDependencySearchService
+import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
+import com.intellij.repository.search.completion.api.DependencyCompletionContext
+import com.intellij.repository.search.completion.api.DependencyCompletionService
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates
 import org.jetbrains.idea.maven.dom.model.completion.insert.MavenArtifactIdInsertionHandler
 import org.jetbrains.idea.maven.model.MavenRepoArtifactInfo
-import java.util.function.Predicate
 
 class MavenArtifactIdCompletionContributor : MavenCoordinateCompletionContributor("artifactId") {
 
-  override suspend fun find(service: MavenDependencySearchService,
+  override suspend fun find(service: DependencyCompletionService,
                             coordinates: MavenDomShortArtifactCoordinates,
-                            parameters: CompletionParameters,
+                            context: DependencyCompletionContext,
                             consumer: (MavenRepoArtifactInfo) -> Unit) {
-    val (useCache, useLocalOnly) = createSearchParameters(parameters)
     val groupId = trimDummy(coordinates.groupId.stringValue)
     val artifactId = trimDummy(coordinates.artifactId.stringValue)
-    if (MavenAbstractPluginExtensionCompletionContributor.isPluginOrExtension(coordinates) && StringUtil.isEmpty(groupId)) {
-      return MavenAbstractPluginExtensionCompletionContributor.findPluginByArtifactId(service, artifactId, useCache, useLocalOnly, consumer)
+    if (MavenAbstractPluginExtensionCompletionContributor.isPluginOrExtension(coordinates) && groupId.isEmpty()) {
+      MavenAbstractPluginExtensionCompletionContributor.findArtifactsInPluginGroups(service, artifactId, context, consumer)
+      return
     }
-    return service.suggestPrefix(
-      groupId, artifactId, useCache, useLocalOnly,
-      withPredicate(consumer, Predicate { groupId.isEmpty() || groupId == it.groupId }))
+    service.suggestArtifactCompletions(DependencyArtifactCompletionRequest(groupId, artifactId, context)).collect { result ->
+      consumer(MavenRepoArtifactInfo(groupId, result.result, emptyList()))
+    }
   }
 
   override fun fillResults(result: CompletionResultSet,
@@ -39,5 +38,6 @@ class MavenArtifactIdCompletionContributor : MavenCoordinateCompletionContributo
     )
   }
 
-  override fun resultFilter(): MavenCoordinateCompletionResultFilter = MavenCoordinateCompletionResultFilter.uniqueProperty { it.artifactId }
+  override fun resultFilter(): MavenCoordinateCompletionResultFilter =
+    MavenCoordinateCompletionResultFilter.uniqueProperty { it.artifactId }
 }
