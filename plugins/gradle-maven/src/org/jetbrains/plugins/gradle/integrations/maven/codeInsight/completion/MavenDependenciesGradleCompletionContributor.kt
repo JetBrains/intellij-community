@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.integrations.maven.codeInsight.completion
 
 import com.intellij.codeInsight.completion.CompletionParameters
@@ -12,17 +12,22 @@ import com.intellij.codeInsight.completion.CompletionUtil.DUMMY_IDENTIFIER
 import com.intellij.codeInsight.completion.CompletionUtil.DUMMY_IDENTIFIER_TRIMMED
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.gradle.java.groovy.codeInsight.AbstractGradleGroovyCompletionContributor
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.maven.completion.getCompletionContext
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
+import com.intellij.repository.search.completion.api.DependencyCompletionRequest
+import com.intellij.repository.search.completion.api.DependencyCompletionService
+import com.intellij.repository.search.completion.api.DependencyVersionCompletionRequest
 import com.intellij.util.ProcessingContext
-import org.jetbrains.idea.maven.completion.MavenDependencySearchService
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
 import org.jetbrains.idea.maven.dom.model.completion.MavenVersionNegatingWeigher
+import org.jetbrains.idea.maven.model.MavenDependencyCompletionItem
 import org.jetbrains.idea.maven.model.MavenRepoArtifactInfo
 import org.jetbrains.plugins.groovy.lang.completion.GrDummyIdentifierProvider.DUMMY_IDENTIFIER_DECAPITALIZED
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
@@ -30,7 +35,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrNamedArgumentsOwner
-import java.util.concurrent.ConcurrentLinkedDeque
 
 /**
  * @author Vladislav.Soroka
@@ -53,37 +57,64 @@ class MavenDependenciesGradleCompletionContributor : AbstractGradleGroovyComplet
           return
         }
         result.stopHere()
-
-        val searchParameters = createSearchParameters(params)
-        val cld = ConcurrentLinkedDeque<MavenRepoArtifactInfo>()
-        val dependencySearch = MavenDependencySearchService.getInstance(parent.project)
         result.restartCompletionOnAnyPrefixChange()
+
+        val completionContext = params.getCompletionContext()
         if (GROUP_LABEL == parent.labelName) {
           val groupId = trimDummy(findNamedArgumentValue(parent.parent as GrNamedArgumentsOwner, GROUP_LABEL))
           runBlockingCancellable {
-            dependencySearch.fulltextSearch(groupId, searchParameters.useCache(), searchParameters.isLocalOnly) { cld.add(it) }
+            val seen = mutableSetOf<String>()
+            service<DependencyCompletionService>()
+              .suggestCompletions(DependencyCompletionRequest(groupId, completionContext))
+              .collect { depResult ->
+                if (seen.add(depResult.groupId)) {
+                  result.addElement(
+                    MavenDependencyCompletionUtil.lookupElement(
+                      MavenRepoArtifactInfo(depResult.groupId, depResult.artifactId, emptyList())
+                    ).withInsertHandler(GradleMapStyleInsertGroupHandler.INSTANCE)
+                  )
+                }
+              }
           }
-          cld.forEach { result.addElement(MavenDependencyCompletionUtil.lookupElement(it).withInsertHandler(GradleMapStyleInsertGroupHandler.INSTANCE)) }
         }
         else if (NAME_LABEL == parent.labelName) {
           val groupId = trimDummy(findNamedArgumentValue(parent.parent as GrNamedArgumentsOwner, GROUP_LABEL))
           val artifactId = trimDummy(findNamedArgumentValue(parent.parent as GrNamedArgumentsOwner, NAME_LABEL))
-          runBlockingCancellable { searchArtifactId(groupId, artifactId, dependencySearch, searchParameters) { cld.add(it) } }
-          cld.forEach {
-            result.addElement(MavenDependencyCompletionUtil.lookupElement(it).withInsertHandler(GradleMapStyleInsertArtifactIdHandler.INSTANCE))
+          runBlockingCancellable {
+            if (groupId.isBlank()) {
+              service<DependencyCompletionService>()
+                .suggestCompletions(DependencyCompletionRequest(artifactId, completionContext))
+                .collect { depResult ->
+                  result.addElement(
+                    MavenDependencyCompletionUtil.lookupElement(
+                      MavenRepoArtifactInfo(depResult.groupId, depResult.artifactId, emptyList())
+                    ).withInsertHandler(GradleMapStyleInsertArtifactIdHandler.INSTANCE)
+                  )
+                }
+            }
+            else {
+              service<DependencyCompletionService>()
+                .suggestArtifactCompletions(DependencyArtifactCompletionRequest(groupId, artifactId, completionContext))
+                .collect { depResult ->
+                  result.addElement(
+                    MavenDependencyCompletionUtil.lookupElement(
+                      MavenRepoArtifactInfo(groupId, depResult.result, emptyList())
+                    ).withInsertHandler(GradleMapStyleInsertArtifactIdHandler.INSTANCE)
+                  )
+                }
+            }
           }
         }
         else if (VERSION_LABEL == parent.labelName) {
           val groupId = trimDummy(findNamedArgumentValue(parent.parent as GrNamedArgumentsOwner, GROUP_LABEL))
           val artifactId = trimDummy(findNamedArgumentValue(parent.parent as GrNamedArgumentsOwner, NAME_LABEL))
-          runBlockingCancellable { searchArtifactId(groupId, artifactId, dependencySearch, searchParameters) { cld.add(it) } }
-          val newResult = result.withRelevanceSorter(CompletionService.getCompletionService().emptySorter().weigh(
-            MavenVersionNegatingWeigher()))
-          cld.forEach { repo ->
-            repo.items.forEach {
-              val version = it.version ?: return@forEach
-              newResult.addElement(MavenDependencyCompletionUtil.lookupElement(it, version))
-            }
+          val newResult = result.withRelevanceSorter(CompletionService.getCompletionService().emptySorter().weigh(MavenVersionNegatingWeigher()))
+          runBlockingCancellable {
+            service<DependencyCompletionService>()
+              .suggestVersionCompletions(DependencyVersionCompletionRequest(groupId, artifactId, "", completionContext))
+              .collect { depResult ->
+                newResult.addElement(LookupElementBuilder.create(depResult.result))
+              }
           }
         }
       }
@@ -112,69 +143,45 @@ class MavenDependenciesGradleCompletionContributor : AbstractGradleGroovyComplet
         val quote = params.position.text.firstOrNull() ?: '\''
         val suffix = params.originalPosition?.text?.let { StringUtil.unquoteString(it).substring(completionPrefix.length) }
 
-        val cld = ConcurrentLinkedDeque<MavenRepoArtifactInfo>()
         val splitted = completionPrefix.split(":")
         val groupId = splitted[0]
         val artifactId = splitted.getOrNull(1)
         val version = splitted.getOrNull(2)
-        val dependencySearch = MavenDependencySearchService.getInstance(element.project)
+        val completionContext = params.getCompletionContext()
         result.restartCompletionOnAnyPrefixChange()
-        runBlockingCancellable { searchStringDependency(groupId, artifactId, dependencySearch, createSearchParameters(params)) { cld.add(it) } }
         val additionalData = CompletionData(completionPrefix, suffix, quote)
         if (version != null) {
           val newResult = result.withRelevanceSorter(CompletionSorter.emptySorter().weigh(MavenVersionNegatingWeigher()))
-          cld.forEach(completeVersions(newResult, additionalData))
+          runBlockingCancellable {
+            service<DependencyCompletionService>()
+              .suggestVersionCompletions(DependencyVersionCompletionRequest(groupId, artifactId ?: "", version, completionContext))
+              .collect { depResult ->
+                val item = MavenDependencyCompletionItem(groupId, artifactId, depResult.result)
+                newResult.addElement(
+                  MavenDependencyCompletionUtil.lookupElement(item, MavenDependencyCompletionUtil.getLookupString(item))
+                    .withPresentableText(depResult.result)
+                    .withInsertHandler(GradleStringStyleVersionHandler)
+                    .also { it.putUserData(COMPLETION_DATA_KEY, additionalData) }
+                )
+              }
+          }
         }
         else {
-          cld.forEach(completeGroupAndArtifact(result, additionalData))
+          runBlockingCancellable {
+            service<DependencyCompletionService>()
+              .suggestCompletions(DependencyCompletionRequest(completionPrefix, completionContext))
+              .collect { depResult ->
+                val info = MavenRepoArtifactInfo(depResult.groupId, depResult.artifactId, emptyList())
+                result.addElement(
+                  MavenDependencyCompletionUtil.lookupElement(info)
+                    .withInsertHandler(GradleStringStyleGroupAndArtifactHandler)
+                    .also { it.putUserData(COMPLETION_DATA_KEY, additionalData) }
+                )
+              }
+          }
         }
       }
     })
-  }
-
-  private fun completeVersions(result: CompletionResultSet, data: CompletionData): (MavenRepoArtifactInfo) -> Unit = { info ->
-    result.addAllElements(info.items.filter { it.version != null }.map { item ->
-      LookupElementBuilder.create(item, MavenDependencyCompletionUtil.getLookupString(item))
-        .withPresentableText(item.version!!)
-        .withInsertHandler(GradleStringStyleVersionHandler)
-        .also { it.putUserData(COMPLETION_DATA_KEY, data) }
-    })
-  }
-
-  private fun completeGroupAndArtifact(result: CompletionResultSet, data: CompletionData): (MavenRepoArtifactInfo) -> Unit = { info ->
-    result.addElement(MavenDependencyCompletionUtil.lookupElement(info)
-                        .withInsertHandler(GradleStringStyleGroupAndArtifactHandler)
-                        .also { it.putUserData(COMPLETION_DATA_KEY, data) })
-  }
-
-  private suspend fun searchStringDependency(
-    groupId: String,
-    artifactId: String?,
-    service: MavenDependencySearchService,
-    searchParameters: SearchParameters,
-    consumer: (MavenRepoArtifactInfo) -> Unit,
-  ) {
-    if (artifactId == null) {
-      service.fulltextSearch(groupId, searchParameters.useCache(), searchParameters.isLocalOnly, consumer)
-    }
-    else {
-      service.suggestPrefix(groupId, artifactId, searchParameters.useCache(), searchParameters.isLocalOnly, consumer)
-    }
-
-  }
-
-  private suspend fun searchArtifactId(
-    groupId: String,
-    artifactId: String,
-    service: MavenDependencySearchService,
-    searchParameters: SearchParameters,
-    consumer: (MavenRepoArtifactInfo) -> Unit,
-  ) {
-    if (groupId.isBlank()) {
-      service.fulltextSearch(artifactId, searchParameters.useCache(), searchParameters.isLocalOnly, consumer)
-      return
-    }
-    service.suggestPrefix(groupId, artifactId, searchParameters.useCache(), searchParameters.isLocalOnly, consumer)
   }
 
   companion object {
@@ -212,10 +219,6 @@ class MavenDependenciesGradleCompletionContributor : AbstractGradleGroovyComplet
       .and(GRADLE_FILE_PATTERN)
       .and(DEPENDENCIES_CALL_PATTERN)
 
-    private fun createSearchParameters(params: CompletionParameters): SearchParameters {
-      return SearchParameters(params.invocationCount < 2, ApplicationManager.getApplication().isUnitTestMode)
-    }
-
     private fun trimDummy(value: String?): String {
       return if (value == null) {
         ""
@@ -227,8 +230,3 @@ class MavenDependenciesGradleCompletionContributor : AbstractGradleGroovyComplet
   }
 }
 
-private class SearchParameters(private val myCache: Boolean, val isLocalOnly: Boolean) {
-  fun useCache(): Boolean {
-    return myCache
-  }
-}

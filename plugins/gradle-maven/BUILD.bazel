@@ -11,6 +11,8 @@ jvm_library(
   deps = [
     "//plugins/gradle/java",
     "//plugins/maven",
+    "//plugins/maven/completion",
+    "//plugins/repository-search/completion",
     "//plugins/groovy",
     "//platform/core-impl",
     "//platform/analysis-api:analysis",
@@ -38,6 +40,8 @@ jvm_library(
     ":gradle-java-maven",
     "//plugins/gradle/java:java_test_lib",
     "//plugins/maven:maven_test_lib",
+    "//plugins/maven/completion:completion_test_lib",
+    "//plugins/repository-search/completion:completion_test_lib",
     "//plugins/groovy:groovy_test_lib",
     "//platform/core-impl:core-impl_test_lib",
     "//platform/analysis-api:analysis_test_lib",
