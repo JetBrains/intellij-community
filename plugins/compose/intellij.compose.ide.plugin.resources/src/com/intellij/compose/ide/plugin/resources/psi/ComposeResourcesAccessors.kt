@@ -3,7 +3,7 @@ package com.intellij.compose.ide.plugin.resources.psi
 
 import com.intellij.compose.ide.plugin.resources.ResourceType
 import com.intellij.openapi.application.runUndoTransparentWriteAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import java.nio.file.Path
@@ -111,11 +111,11 @@ private suspend fun getChunkFileSpec(
  * @param content the content to be written into the specified file
  */
 @RequiresWriteLock
-private suspend fun writeAccessors(moduleDir: String, fileName: String, content: String): Unit = writeAction {
+private suspend fun writeAccessors(moduleDir: String, fileName: String, content: String): Unit = edtWriteAction {
   val path = Path.of(moduleDir, fileName)
   if (!path.exists()) path.createFile()
   val documentManager = FileDocumentManager.getInstance()
-  val document = path.toVirtualFile()?.let { virtualFile -> documentManager.getDocument(virtualFile) } ?: return@writeAction
+  val document = path.toVirtualFile()?.let { virtualFile -> documentManager.getDocument(virtualFile) } ?: return@edtWriteAction
   runUndoTransparentWriteAction { document.setText(content) }
   documentManager.saveDocument(document)
 }
