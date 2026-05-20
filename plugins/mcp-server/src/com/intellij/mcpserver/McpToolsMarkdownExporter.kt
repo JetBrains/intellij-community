@@ -22,53 +22,121 @@ object McpToolsMarkdownExporter {
         appendLine("## ${category.shortName}")
         appendLine()
         for (tool in categoryTools) {
-          appendLine("### ${tool.descriptor.name}")
-          appendLine(tool.descriptor.description.trimIndent().escapeLineBreaks().escapeMarkdown())
-          appendLine()
-          appendLine("#### Parameters")
-          val inputRows = tool.descriptor.inputSchema.toSchemaTableRows()
-          if (inputRows.isEmpty()) {
-            appendLine("No parameters.")
-          }
-          else {
-            appendLine("| Name | Type | Description |")
-            appendLine("| --- | --- | --- |")
-            for (row in inputRows) {
-              appendLine("| ${row.name} | ${row.type.escapeMarkdown()} | ${row.description?.trimIndent()?.escapeLineBreaks()?.escapeMarkdown() ?: ""} |")
-            }
-          }
-          appendLine()
-          val outputSchema = tool.descriptor.outputSchema
-          if (outputSchema != null) {
-            appendLine("#### Output")
-            val outputRows = outputSchema.toSchemaTableRows()
-            if (outputRows.isEmpty()) {
-              appendLine("No output fields.")
-            }
-            else {
-              appendLine("| Name | Type | Description |")
-              appendLine("| --- | --- | --- |")
-              for (row in outputRows) {
-                appendLine("| ${row.name} | ${row.type.escapeMarkdown()} | ${row.description?.trimIndent()?.escapeLineBreaks()?.escapeMarkdown() ?: ""} |")
-              }
-            }
-            appendLine()
-          }
+          appendToolSection(tool, headingLevel = 3)
         }
       }
     }
   }
 
   /**
-   * Generates markdown documentation for all currently available MCP tools.
+   * Generates a single-page markdown document for one MCP tool: top-level heading, full description,
+   * input parameters table, and output schema table (when present).
+   *
+   * Use together with [generateMarkdownTree] when emitting per-tool reference files.
    */
-  fun generateMarkdownForAllTools(): String {
-    val tools = McpServerService.getInstance().getMcpTools()
+  fun generateMarkdownForTool(tool: McpTool): String = buildString {
+    appendToolSection(tool, headingLevel = 1)
+  }
+
+  /**
+   * Generates a tree of markdown files for the provided tools:
+   * - `tools.md` — index grouped by category, links to per-tool files;
+   * - `tools/<tool_name>.md` — full reference per tool (description + tables).
+   *
+   * Keys are forward-slash relative paths. The caller writes each entry to disk.
+   */
+  fun generateMarkdownTree(tools: List<McpTool>): Map<String, String> {
+    val byCategory = tools
+      .groupBy { it.descriptor.category }
+      .toSortedMap(compareBy(String.CASE_INSENSITIVE_ORDER) { it.shortName })
+      .mapValues { (_, categoryTools) -> categoryTools.sortedBy { it.descriptor.name.lowercase() } }
+
+    val result = LinkedHashMap<String, String>()
+    result[TREE_INDEX_FILE] = buildString {
+      appendLine("# MCP Tools")
+      appendLine()
+      for ((category, categoryTools) in byCategory) {
+        appendLine("## ${category.shortName}")
+        appendLine()
+        for (tool in categoryTools) {
+          val firstLine = tool.descriptor.description.trim().lineSequence()
+            .firstOrNull { it.isNotBlank() }.orEmpty().escapeMarkdown()
+          val name = tool.descriptor.name
+          appendLine("- [$name]($TREE_TOOLS_SUBDIR/$name.md) — $firstLine")
+        }
+        appendLine()
+      }
+    }
+    for ((_, categoryTools) in byCategory) {
+      for (tool in categoryTools) {
+        result["$TREE_TOOLS_SUBDIR/${tool.descriptor.name}.md"] = generateMarkdownForTool(tool)
+      }
+    }
+    return result
+  }
+
+  /**
+   * Index file name in [generateMarkdownTree] output.
+   */
+  const val TREE_INDEX_FILE: String = "tools.md"
+
+  /**
+   * Subdirectory holding per-tool markdown files in [generateMarkdownTree] output.
+   */
+  const val TREE_TOOLS_SUBDIR: String = "tools"
+
+  private fun StringBuilder.appendToolSection(tool: McpTool, headingLevel: Int) {
+    val heading = "#".repeat(headingLevel)
+    appendLine("$heading ${tool.descriptor.name}")
+    appendLine(tool.descriptor.description.trimIndent().escapeLineBreaks().escapeMarkdown())
+    appendLine()
+    appendLine("$heading# Parameters")
+    val inputRows = tool.descriptor.inputSchema.toSchemaTableRows()
+    if (inputRows.isEmpty()) {
+      appendLine("No parameters.")
+    }
+    else {
+      appendLine("| Name | Type | Description |")
+      appendLine("| --- | --- | --- |")
+      for (row in inputRows) {
+        appendLine("| ${row.name} | ${row.type.escapeMarkdown()} | ${row.description?.trimIndent()?.escapeLineBreaks()?.escapeMarkdown() ?: ""} |")
+      }
+    }
+    appendLine()
+    val outputSchema = tool.descriptor.outputSchema
+    if (outputSchema != null) {
+      appendLine("$heading# Output")
+      val outputRows = outputSchema.toSchemaTableRows()
+      if (outputRows.isEmpty()) {
+        appendLine("No output fields.")
+      }
+      else {
+        appendLine("| Name | Type | Description |")
+        appendLine("| --- | --- | --- |")
+        for (row in outputRows) {
+          appendLine("| ${row.name} | ${row.type.escapeMarkdown()} | ${row.description?.trimIndent()?.escapeLineBreaks()?.escapeMarkdown() ?: ""} |")
+        }
+      }
+      appendLine()
+    }
+  }
+
+  /**
+   * Generates markdown documentation for the provided tools, grouping by category internally.
+   */
+  fun generateMarkdown(tools: List<McpTool>): String {
     val toolsByCategory = tools
       .groupBy { it.descriptor.category }
       .toSortedMap(compareBy(String.CASE_INSENSITIVE_ORDER) { it.shortName })
       .mapValues { (_, categoryTools) -> categoryTools.sortedBy { it.descriptor.name.lowercase() } }
     return generateMarkdown(toolsByCategory)
+  }
+
+  /**
+   * Generates markdown documentation for all currently available MCP tools.
+   */
+  fun generateMarkdownForAllTools(): String {
+    return generateMarkdown(McpServerService.getInstance().getMcpTools())
   }
 
   private data class SchemaTableRow(
