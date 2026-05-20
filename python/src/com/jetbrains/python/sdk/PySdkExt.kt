@@ -240,7 +240,7 @@ val Sdk.isReadOnly: Boolean
 val Sdk.readOnlyErrorMessage: String
   get() = PythonSdkReadOnlyProvider.getReadOnlyMessage(this) ?: PyBundle.message("python.sdk.read.only", name)
 
-val Sdk.sdkFlavor: PythonSdkFlavor<*> get() = getOrCreateAdditionalData().flavor
+val Sdk.sdkFlavor: PythonSdkFlavor<*> get() = pySdkAdditionalData.flavor
 
 private fun Sdk.isLocatedInsideModule(module: Module): Boolean {
   val moduleDir = module.baseDir
@@ -274,7 +274,7 @@ private fun Sdk.containsModuleName(module: Module?): Boolean {
 
 
 @JvmName("getOrCreateAdditionalData")
-fun getOrCreateAdditionalDataOld(sdk: Sdk): PythonSdkAdditionalData = sdk.getOrCreateAdditionalData()
+fun getOrCreateAdditionalDataOld(sdk: Sdk): PythonSdkAdditionalData = sdk.pySdkAdditionalData
 
 private fun filterSuggestedPaths(
   flavor: PythonSdkFlavor<*>,
@@ -323,11 +323,3 @@ internal val Sdk.remoteSourcesLocalPath: Path
               else -> error("Only legacy and remote SDK and target-based SDKs are supported")
             }.hashCode().toString())
 
-
-/**
- * Configures [targetCommandLineBuilder] (sets a binary path and other stuff) so it could run python on this target
- */
-@Internal
-fun Sdk.configureBuilderToRunPythonOnTarget(targetCommandLineBuilder: TargetedCommandLineBuilder) {
-  getOrCreateAdditionalData().flavorAndData.data.prepareTargetCommandLine(this, targetCommandLineBuilder)
-}

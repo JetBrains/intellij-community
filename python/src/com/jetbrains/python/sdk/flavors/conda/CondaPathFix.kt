@@ -8,7 +8,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.ShellEnvironmentReader
 import com.jetbrains.python.sdk.PySdkUtil
-import com.jetbrains.python.sdk.getOrCreateAdditionalData
+import com.jetbrains.python.sdk.pySdkAdditionalData
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.Path
@@ -28,7 +28,7 @@ private val LOG = Logger.getInstance("CondaLogger")
 @ApiStatus.Internal
 fun TargetedCommandLineBuilder.fixCondaPathEnvIfNeeded(sdk: Sdk) {
   if (!localOnWindows) return
-  val condaData = (sdk.getOrCreateAdditionalData().flavorAndData.data as? PyCondaFlavorData) ?: return
+  val condaData = (sdk.pySdkAdditionalData.flavorAndData.data as? PyCondaFlavorData) ?: return
   val pythonHomePath = sdk.homePath
   if (pythonHomePath == null) {
     LOG.warn("No home path for $this, will skip 'venv activation'")

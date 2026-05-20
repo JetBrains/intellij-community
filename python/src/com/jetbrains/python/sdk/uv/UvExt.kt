@@ -24,7 +24,7 @@ import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.TargetFileSystem
-import com.jetbrains.python.sdk.getOrCreateAdditionalData
+import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.uv.impl.createUvCli
 import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
@@ -45,7 +45,7 @@ internal val Sdk.isUv: Boolean
 
 internal val Sdk.uvFlavorData: UvSdkFlavorData?
   get() {
-    return when (val data = getOrCreateAdditionalData()) {
+    return when (val data = pySdkAdditionalData) {
       is UvSdkAdditionalData -> data.flavorData
       is PyTargetAwareAdditionalData -> data.flavorAndData.data as? UvSdkFlavorData
       else -> null
@@ -221,6 +221,6 @@ suspend fun <P : PathHolder> setupExistingEnvAndSdk(
   usePip: Boolean,
 ): PyResult<Sdk> = withProgressText(PyBundle.message("python.sdk.progress.uv.configuring")) {
   val sdkAdditionalData = UvSdkAdditionalData(workingDir, usePip, fileSystem.resolvePythonHome(pythonBinary).toString(), uvPath.toString())
-  val sdk = fileSystem.setupSdk(null, pythonBinary, sdkAdditionalData, null)
+  val sdk = fileSystem.setupSdk(null, pythonBinary, sdkAdditionalData, null, null)
   sdk
 }

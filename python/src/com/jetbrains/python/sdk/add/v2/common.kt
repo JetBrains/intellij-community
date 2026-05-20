@@ -45,7 +45,6 @@ import com.jetbrains.python.sdk.excludeInnerVirtualEnv
 import com.jetbrains.python.sdk.installSdkIfNeeded
 import com.jetbrains.python.sdk.moduleIfExists
 import com.jetbrains.python.sdk.pythonSdk
-import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
 import com.jetbrains.python.sdk.setAssociationToModule
 import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.PythonInterpreterInstallationIdsHolder.Companion.PYTHON_INSTALLATION_INTERRUPTED
@@ -81,7 +80,6 @@ abstract class PythonAddEnvironment<P : PathHolder>(open val model: PythonAddInt
     savePathToExecutableToProperties(null)
     val sdk = getOrCreateSdk(moduleOrProject).getOr { return it }
 
-    moduleOrProject.project.pySdkService.persistSdk(sdk)
     moduleOrProject.project.excludeInnerVirtualEnv(sdk)
     moduleOrProject.moduleIfExists?.let {
       it.pythonSdk = sdk
@@ -210,7 +208,7 @@ internal suspend fun <P : PathHolder> PythonSelectableInterpreter<P>.setupSdk(
     is DetectedSelectableInterpreter, is InstallableSelectableInterpreter, is ManuallyAddedSelectableInterpreter -> Unit
   }
 
-  val homePath = this@setupSdk.homePath!!
+   val homePath = this@setupSdk.homePath!!
 
   // Do our best to guess the flavor
   return createSdkGuessingTypeByPath(homePath, fileSystem, moduleOrProject, targetPanelExtension, isAssociateWithModule)

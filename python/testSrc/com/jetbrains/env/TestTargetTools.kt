@@ -19,7 +19,7 @@ import com.jetbrains.python.PYTHON_VERSION_ARG
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.configureBuilderToRunPythonOnTarget
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
-import com.jetbrains.python.sdk.getOrCreateAdditionalData
+import com.jetbrains.python.sdk.pySdkAdditionalData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.junit.Assert
@@ -28,7 +28,7 @@ import org.junit.Assert
 internal suspend fun getPythonVersion(sdk: Sdk, request: TargetEnvironmentRequest): String? {
   val commandLineBuilder = TargetedCommandLineBuilder(request)
   sdk.configureBuilderToRunPythonOnTarget(commandLineBuilder)
-  val flavor = sdk.getOrCreateAdditionalData().flavor
+  val flavor = sdk.pySdkAdditionalData.flavor
   return getPythonVersion(commandLineBuilder, flavor, request)
 }
 

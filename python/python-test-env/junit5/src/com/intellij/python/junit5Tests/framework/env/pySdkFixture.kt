@@ -2,6 +2,7 @@
 package com.intellij.python.junit5Tests.framework.env
 
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.test.env.common.PredefinedPyEnvironments
@@ -13,7 +14,6 @@ import com.intellij.python.test.env.junit5.getOrCreatePyEnvironmentFactory
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.TestFixtureInitializer
 import com.intellij.testFramework.junit5.fixture.testFixture
-import com.jetbrains.python.sdk.persist
 
 /**
  * Create sdk fixture using tags from [@PyEnvTestCase][com.intellij.python.junit5Tests.framework.env.PyEnvTestCase] annotation.
@@ -48,7 +48,11 @@ private suspend fun TestFixtureInitializer.R<SdkFixture<PyEnvironment>>.initiali
   env: PyEnvironment,
 ): TestFixtureInitializer.InitializedTestFixture<SdkFixture<PyEnvironment>> {
   val sdk = env.prepareSdk()
-  sdk.persist()
+  writeAction {
+    if (ProjectJdkTable.getInstance().findJdk(sdk.name) == null) {
+      ProjectJdkTable.getInstance().addJdk(sdk)
+    }
+  }
   return initialized(SdkFixture(sdk, env)) {
     edtWriteAction {
       ProjectJdkTable.getInstance().removeJdk(sdk)

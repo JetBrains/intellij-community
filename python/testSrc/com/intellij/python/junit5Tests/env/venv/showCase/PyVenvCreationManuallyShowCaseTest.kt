@@ -11,7 +11,7 @@ import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
-import com.jetbrains.python.sdk.getOrCreateAdditionalData
+import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.jetbrains.python.venvReader.Directory
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -26,7 +26,7 @@ class PyVenvCreationManuallyShowCaseTest {
   fun createVenvTest(@PythonBinaryPath python: PythonBinary, @TempDir venvDir: Directory): Unit = timeoutRunBlocking(5.minutes) {
     val venvPython = createVenv(python, venvDir).getOrThrow()
     val sdk = createSdk(PathHolder.Eel(venvPython), createVenvAdditionalData()).getOrThrow()
-    val flavorAndData = sdk.getOrCreateAdditionalData().flavorAndData
+    val flavorAndData = sdk.pySdkAdditionalData.flavorAndData
     assertTrue(flavorAndData.sdkSeemsValid(sdk, null),
                "Sdk not valid after creation")
     venvPython.deleteExisting()

@@ -13,7 +13,7 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.createSdk
-import com.jetbrains.python.sdk.getOrCreateAdditionalData
+import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.jetbrains.python.sdk.impl.resolvePythonBinary
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -58,7 +58,7 @@ internal val Sdk.isPoetry: Boolean
       return false
     }
 
-    return getOrCreateAdditionalData() is PyPoetrySdkAdditionalData
+    return pySdkAdditionalData is PyPoetrySdkAdditionalData
   }
 
 private suspend fun setUpPoetry(moduleBasePath: Path, basePythonBinaryPath: PythonBinary, installPackages: Boolean, errorSink: ErrorSink, inProjectEnv: Boolean = false): PyResult<PythonBinary> {

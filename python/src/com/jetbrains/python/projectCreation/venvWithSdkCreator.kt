@@ -37,7 +37,6 @@ import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.moduleIfExists
-import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
 import com.jetbrains.python.sdk.setAssociationToModule
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
@@ -119,7 +118,6 @@ suspend fun createVenvAndSdk(
   }
   configurePythonSdk(project, module, sdk)
   sdk.setAssociationToModule(module)
-  project.pySdkService.persistSdk(sdk)
   return Result.success(sdk)
 }
 

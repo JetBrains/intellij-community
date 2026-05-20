@@ -18,7 +18,7 @@ import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.flavors.PyFlavorData
-import com.jetbrains.python.sdk.getOrCreateAdditionalData
+import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil.isPythonSdk
 import java.nio.file.InvalidPathException
@@ -30,7 +30,7 @@ internal object InterpreterServiceImpl : InterpreterService {
   override suspend fun getInterpreters(projectDir: Path): List<Interpreter> {
 
     val interpreters = PythonSdkUtil.getAllSdks().mapNotNull { pythonSdk ->
-      val data = pythonSdk.getOrCreateAdditionalData()
+      val data = pythonSdk.pySdkAdditionalData
       if (!sdkApplicableToThePath(data, projectDir)) return@mapNotNull null
 
       findInterpreter(data, pythonSdk)
@@ -41,7 +41,7 @@ internal object InterpreterServiceImpl : InterpreterService {
 
   override suspend fun getForModule(module: Module): Interpreter? {
     val pythonSdk = PythonSdkUtil.findPythonSdk(module)?.takeIf { isPythonSdk(it) } ?: return null
-    val data = pythonSdk.getOrCreateAdditionalData()
+    val data = pythonSdk.pySdkAdditionalData
 
     return findInterpreter(data, pythonSdk)
   }

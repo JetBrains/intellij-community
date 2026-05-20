@@ -24,8 +24,6 @@ import com.jetbrains.python.sdk.configuration.findEnvOrNull
 import com.jetbrains.python.sdk.configuration.prepareSdkCreator
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.impl.resolvePythonHome
-import com.jetbrains.python.sdk.persist
-import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
 import com.jetbrains.python.sdk.setAssociationToModule
 import com.jetbrains.python.uv.sdk.configuration.isUvEnv
 import kotlinx.coroutines.Dispatchers
@@ -76,9 +74,7 @@ internal class PyVenvSdkConfiguration : PyProjectSdkConfigurationExtension {
       )
     }.getOr { return it }
 
-    sdk.persist()
     sdk.setAssociationToModule(module)
-    module.project.pySdkService.persistSdk(sdk)
 
     return PyResult.success(sdk)
   }

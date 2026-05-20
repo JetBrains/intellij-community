@@ -12,7 +12,6 @@ import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.sdk.baseDir
-import com.jetbrains.python.sdk.persist
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.runExecutableWithProgress
 import com.jetbrains.python.sdk.setAssociationToModule
@@ -61,7 +60,6 @@ fun TestFixture<SdkFixture<PyEnvironment>>.pyUvVenvFixture(
     setupExistingEnvAndSdk(pythonBinary = venvPython, uvPath = uvExecutable, envWorkingDir = baseDirPath, usePip = true).getOrThrow()
 
   if (addToSdkTable) {
-    venvSdk.persist()
     module.pythonSdk = venvSdk
     venvSdk.setAssociationToModule(module)
   }

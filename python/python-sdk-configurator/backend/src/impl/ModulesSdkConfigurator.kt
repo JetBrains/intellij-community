@@ -14,8 +14,6 @@ import com.intellij.python.pyproject.model.api.SuggestedSdk
 import com.intellij.python.pyproject.model.api.autoConfigureSdkIfNeeded
 import com.intellij.python.pyproject.model.api.getModuleInfo
 import com.intellij.python.pyproject.model.api.suggestSdk
-import com.intellij.python.sdkConfigurator.backend.impl.ModulesSdkConfigurator.Companion.create
-import com.intellij.python.sdkConfigurator.backend.impl.ModulesSdkConfigurator.Companion.popModulesSDKConfigurator
 import com.intellij.python.sdkConfigurator.common.impl.ModuleDTO
 import com.intellij.python.sdkConfigurator.common.impl.ModuleName
 import com.jetbrains.python.PathShortener
@@ -26,7 +24,7 @@ import com.jetbrains.python.sdk.configuration.CreateSdkInfo
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.configuration.createSdk
 import com.jetbrains.python.sdk.findPythonSdk
-import com.jetbrains.python.sdk.getOrCreateAdditionalData
+import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.setAssociationToPath
@@ -169,7 +167,7 @@ internal class ModulesSdkConfigurator private constructor(
           if (parentSdk != null) {
             module.pythonSdk = parentSdk // This SDK is shared, no need to associate it
             // TODO: Support association with multiple modules
-            if (parentSdk.getOrCreateAdditionalData().associatedModulePath != null) {
+            if (parentSdk.pySdkAdditionalData.associatedModulePath != null) {
               parentSdk.setAssociationToPath(null)
             }
           }

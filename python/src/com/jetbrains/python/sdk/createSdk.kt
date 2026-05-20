@@ -2,15 +2,21 @@
 package com.jetbrains.python.sdk
 
 import com.intellij.execution.target.FullPathOnTarget
+import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkAdditionalData
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.toEelApi
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.PyProjectCreateHelpers
@@ -94,6 +100,20 @@ suspend fun SdkCreationRequest<*, *>.createSdk(
   advancedOpts: SdkCreationAdvancedOpts = SdkCreationAdvancedOpts.DEFAULT,
 ): Result<Sdk, MessageError> = createSdkImpl(this, suggestedSdkName, advancedOpts)
 
+
+/**
+ * Use this API only if you do not know SDK type in advance (in most cases you do, please prefer [createSdk]).
+ * This function creates and persists SDL
+ */
+@ApiStatus.Internal
+suspend fun createLocalSdkGuessingTypeByPath(
+  homePath: PythonBinary,
+  moduleOrProject: ModuleOrProject,
+  suggestedSdkName: String? = null
+): PyResult<Sdk> =
+  createSdkGuessingTypeByPath(PathHolder.Eel(homePath), EelFileSystem(homePath.getEelDescriptor().toEelApi()), moduleOrProject, null, true, suggestedSdkName)
+
+
 /**
  * Use this API only if you do not know SDK type in advance (in most cases you do, please prefer [createSdk])
  */
@@ -103,6 +123,7 @@ internal suspend fun <P : PathHolder> createSdkGuessingTypeByPath(
   moduleOrProject: ModuleOrProject,
   targetPanelExtension: TargetPanelExtension?,
   isAssociateWithModule: Boolean,
+  suggestedSdkName: String? = null
 ): PyResult<Sdk> {
   val flavorAndData = when (homePath) {
     is PathHolder.Eel -> withContext(Dispatchers.IO) {
@@ -126,14 +147,14 @@ internal suspend fun <P : PathHolder> createSdkGuessingTypeByPath(
     project = moduleOrProject.project,
     pythonBinaryPath = homePath,
     sdkAdditionalData = PythonSdkAdditionalData(flavorAndData),
-    targetPanelExtension = targetPanelExtension
+    targetPanelExtension = targetPanelExtension,
+    suggestedSdkName = suggestedSdkName
   ).getOr { return it }
 
   val module = PyProjectCreateHelpers.getModule(moduleOrProject, newSdk.homeDirectory)
   if (isAssociateWithModule && module != null) {
     newSdk.setAssociationToModule(module)
   }
-  newSdk.persist()
 
   moduleOrProject.project.excludeInnerVirtualEnv(newSdk)
 
@@ -191,10 +212,25 @@ private suspend fun createSdkImpl(
 
 
   if (advancedOpts.persist) {
-    sdk.persist()
+    edtWriteAction {
+      makeSureNameIsUnique(sdk)
+      ProjectJdkTable.getInstance().addJdk(sdk)
+    }
   }
   if (advancedOpts.setupPaths) {
     sdkType.setupSdkPaths(sdk)
   }
   return Result.success(sdk)
+}
+
+@RequiresWriteLock
+private fun makeSureNameIsUnique(sdk: Sdk) {
+  val name = sdk.name
+  var i = 1
+  while (ProjectJdkTable.getInstance().findJdk(sdk.name) != null) {
+    val m = sdk.sdkModificator
+    m.name = "$name@$i"
+    i += 1
+    m.commitChanges()
+  }
 }

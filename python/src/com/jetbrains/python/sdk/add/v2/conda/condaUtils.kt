@@ -22,7 +22,6 @@ import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnvironment
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
 import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
-import com.jetbrains.python.sdk.persist
 import com.jetbrains.python.sdk.setAssociationToModule
 import kotlinx.coroutines.flow.takeWhile
 
@@ -40,15 +39,13 @@ internal suspend fun PythonAddInterpreterModel<*>.createCondaEnvironment(moduleO
 
   val result = createCondaCommand().getOr { return it }.createCondaSdkAlongWithNewEnv(
     newCondaEnvInfo = request,
-      existingSdks = existingSdks,
-    project = moduleOrProject.project
+      existingSdks = existingSdks
   )
     .onSuccess { sdk ->
       val module = PyProjectCreateHelpers.getModule(moduleOrProject, null)
       if (module != null) {
         sdk.setAssociationToModule(module)
       }
-      sdk.persist()
     }
 
   return result
@@ -86,7 +83,6 @@ suspend fun PythonAddInterpreterModel<*>.selectCondaEnvironment(moduleOrProject:
   ).getOr { return it }
 
   PyProjectCreateHelpers.getModule(moduleOrProject, null)?.let { sdk.setAssociationToModule(it) }
-  sdk.persist()
   return PyResult.success(sdk)
 }
 

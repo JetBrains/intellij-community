@@ -6,7 +6,7 @@ import com.intellij.ui.LayeredIcon
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.sdk.PythonInterpreterPresentation
-import com.jetbrains.python.sdk.getOrCreateAdditionalData
+import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.jetbrains.python.sdk.isRunAsRootViaSudo
 import com.jetbrains.python.sdk.isSdkSeemsValid
 import javax.swing.Icon
@@ -62,7 +62,7 @@ internal fun shortenPath(path: String, maxLength: Int, keepPrefix: Boolean): Str
  * @see LanguageLevel.SUPPORTED_LEVELS
  */
 private fun icon(sdk: Sdk): Icon {
-  val flavor = sdk.getOrCreateAdditionalData().flavor
+  val flavor = sdk.pySdkAdditionalData.flavor
   val icon = flavor.icon
 
   return when {

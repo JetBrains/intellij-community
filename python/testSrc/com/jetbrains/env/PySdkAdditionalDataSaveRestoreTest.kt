@@ -6,7 +6,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.testFramework.ProjectRule
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkType
-import com.jetbrains.python.sdk.getOrCreateAdditionalData
+import com.jetbrains.python.sdk.pySdkAdditionalData
 import org.jdom.Element
 import org.junit.Assert
 import org.junit.Rule
@@ -21,7 +21,7 @@ class PySdkAdditionalDataSaveRestoreTest {
   @Test
   fun test() = invokeAndWaitIfNeeded {
     val sdk = ProjectJdkTable.getInstance().createSdk("mySdk", PythonSdkType.getInstance())
-    val data = sdk.getOrCreateAdditionalData()
+    val data = sdk.pySdkAdditionalData
     val uuid = data.uuid
     val elem = Element("root")
     data.save(elem)

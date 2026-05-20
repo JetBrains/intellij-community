@@ -13,7 +13,8 @@ import org.jetbrains.annotations.ApiStatus
 import kotlin.reflect.KClass
 
 
-internal val osSpecificSdkFlavorAndData: PyFlavorAndData<*, out CPythonSdkFlavor<*>>
+@get:ApiStatus.Internal
+val osSpecificSdkFlavorAndData: PyFlavorAndData<*, out CPythonSdkFlavor<*>>
   get() = when {
     isMac -> PyFlavorAndData(PyFlavorData.Empty, MacPythonSdkFlavor.getInstance())
     isWindows -> PyFlavorAndData(PyFlavorData.Empty, WinPythonSdkFlavor.getInstance())

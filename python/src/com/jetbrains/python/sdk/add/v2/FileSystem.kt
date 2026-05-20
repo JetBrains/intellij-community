@@ -135,8 +135,9 @@ data class EelFileSystem(
     pythonBinaryPath: PathHolder.Eel,
     sdkAdditionalData: PythonSdkAdditionalData,
     targetPanelExtension: TargetPanelExtension?,
+    suggestedSdkName: String?,
   ): PyResult<Sdk> {
-    return createSdk(pythonBinaryPath, sdkAdditionalData)
+    return createSdk(pythonBinaryPath, sdkAdditionalData, suggestedSdkName)
   }
 
   override fun parsePath(raw: String): PyResult<PathHolder.Eel> = try {
@@ -406,11 +407,12 @@ data class TargetFileSystem(
     }
   }
 
-    override suspend fun setupSdk(
+  override suspend fun setupSdk(
     project: Project?,
     pythonBinaryPath: PathHolder.Target,
     sdkAdditionalData: PythonSdkAdditionalData,
     targetPanelExtension: TargetPanelExtension?,
+    suggestedSdkName: String?,
   ): PyResult<Sdk> {
     val languageLevel = getBinaryToExec(pythonBinaryPath).validatePythonAndGetInfo().getOr { return it }.languageLevel
 
@@ -431,7 +433,7 @@ data class TargetFileSystem(
     return createSdk(
       pythonBinaryPath,
       additionalData,
-      customSdkSuggestedName
+      suggestedSdkName ?: customSdkSuggestedName
     )
   }
 

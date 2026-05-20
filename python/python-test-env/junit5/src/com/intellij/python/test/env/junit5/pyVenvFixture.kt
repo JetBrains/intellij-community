@@ -16,7 +16,6 @@ import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.sdk.SdkCreationAdvancedOpts
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.createSdk
-import com.jetbrains.python.sdk.persist
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.setAssociationToModule
 import kotlinx.coroutines.Dispatchers
@@ -38,7 +37,6 @@ fun TestFixture<SdkFixture<PyEnvironment>>.pyVenvFixture(
         val venvPython = createVenv(env.pythonPath, venvDir).getOrThrow()
         val venvSdk = createSdk(PathHolder.Eel(venvPython), createVenvAdditionalData(), advancedOpts = SdkCreationAdvancedOpts(persist = addToSdkTable)).orThrow()
         if (addToSdkTable) {
-            venvSdk.persist()
             if (module != null) {
                 module.pythonSdk = venvSdk
                 venvSdk.setAssociationToModule(module)

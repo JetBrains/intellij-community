@@ -79,7 +79,7 @@ fun getPathsToTransfer(sdk: Sdk): Set<VirtualFile> {
 fun setPathsToTransfer(sdk: Sdk, roots: Set<VirtualFile>) {
   runInEdt {
     if (roots.isNotEmpty() || getPathsToTransfer(sdk).isNotEmpty()) { // do not create additional data with no reason
-      sdk.getOrCreateAdditionalData()
+      sdk.pySdkAdditionalData
       sdk.sdkModificator.apply {
         (sdkAdditionalData as PythonSdkAdditionalData).setPathsToTransferFromVirtualFiles(roots)
         runWriteAction { commitChanges() }

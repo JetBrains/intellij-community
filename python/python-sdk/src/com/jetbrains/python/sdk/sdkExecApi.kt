@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
+import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.community.execService.Args
@@ -24,6 +25,7 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.CheckReturnValue
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
@@ -105,7 +107,7 @@ suspend fun ExecService.executeGetProcess(
  */
 @ApiStatus.Internal
 fun Sdk.asBinToExecute(): Result<BinaryToExec, MessageError> {
-  val binaryToExec = when (val additionalData = getOrCreateAdditionalData()) {
+  val binaryToExec = when (val additionalData = pySdkAdditionalData) {
     is PyTargetAwareAdditionalData -> {
       additionalData.targetEnvironmentConfiguration?.let { target ->
         BinOnTarget(
@@ -127,4 +129,12 @@ fun Sdk.asBinToExecute(): Result<BinaryToExec, MessageError> {
 
   return binaryToExec?.let { PyResult.success(it) }
          ?: PyResult.localizedError(message("python.sdk.broken.configuration", name))
+}
+
+/**
+ * Configures [targetCommandLineBuilder] (sets a binary path and other stuff) so it could run python on this target
+ */
+@Internal
+fun Sdk.configureBuilderToRunPythonOnTarget(targetCommandLineBuilder: TargetedCommandLineBuilder) {
+  pySdkAdditionalData.flavorAndData.data.prepareTargetCommandLine(this, targetCommandLineBuilder)
 }

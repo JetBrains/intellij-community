@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.hatch.sdk
 
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.hatch.BasePythonExecutableNotFoundHatchError
 import com.intellij.python.hatch.HatchVirtualEnvironment
@@ -11,7 +10,6 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.impl.resolvePythonBinary
-import com.jetbrains.python.sdk.persist
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -33,9 +31,6 @@ suspend fun HatchVirtualEnvironment.createSdk(workingDirectoryPath: Path): PyRes
     sdkAdditionalData = hatchSdkAdditionalData
   ).getOr { return it }
 
-  withContext(Dispatchers.EDT) {
-    sdk.persist()
-  }
 
   return Result.success(sdk)
 }

@@ -41,11 +41,7 @@ object PySdkFromEnvironmentVariable {
     catch (e: InvalidPathException) {
       return PyResult.failure(MessageError(PyBundle.message("sdk.bad.python", path, e)))
     }
-    return findByPath(path)?.let { PyResult.success(it) } ?: createSdkGuessingTypeByPath(PathHolder.Eel(path),
-                                                                                         EelFileSystem(localEel),
-                                                                                         moduleOrProject,
-                                                                                         null,
-                                                                                         true)
+    return findByPath(path)?.let { PyResult.success(it) } ?: createLocalSdkGuessingTypeByPath(path, moduleOrProject)
   }
 
   suspend fun setModuleSdk(module: Module, projectSdk: Sdk?, sdk: Sdk, pythonPath: String) {
