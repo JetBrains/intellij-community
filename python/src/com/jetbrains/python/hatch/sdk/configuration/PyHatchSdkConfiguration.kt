@@ -35,33 +35,34 @@ internal class PyHatchSdkConfiguration : PyProjectTomlConfigurationExtension {
   override val toolId: ToolId = HATCH_TOOL_ID
 
   override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? =
-      prepareSdkCreator(
-          { checkManageableEnv(module, true) },
-      ) { envExists -> { createSdk(module, envExists) } }
+    prepareSdkCreator(
+      { checkManageableEnv(module, true) },
+    ) { envExists -> { createSdk(module, envExists) } }
 
   override suspend fun createSdkWithoutPyProjectTomlChecks(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? =
-      prepareSdkCreator(
-          { checkManageableEnv(module, false) },
-      ) { envExists -> { createSdk(module, envExists) } }
+    prepareSdkCreator(
+      { checkManageableEnv(module, false) },
+    ) { envExists -> { createSdk(module, envExists) } }
 
   override fun asPyProjectTomlSdkConfigurationExtension(): PyProjectTomlConfigurationExtension = this
 
   private suspend fun checkManageableEnv(
-      module: Module, checkToml: CheckToml,
+    module: Module, checkToml: CheckToml,
   ): EnvCheckerResult = reportRawProgress {
-      it.text(PyBundle.message("sdk.set.up.hatch.project.analysis"))
-      val hatchService = module.getHatchService().getOr { return EnvCheckerResult.CannotConfigure }
-      val canManage = if (checkToml) hatchService.isHatchManagedProject() else true
-      val intentionName = PyBundle.message("sdk.set.up.hatch.environment")
-      val envNotFound = EnvCheckerResult.EnvNotFound(intentionName)
+    it.text(PyBundle.message("sdk.set.up.hatch.project.analysis"))
+    val hatchService = module.getHatchService().getOr { return EnvCheckerResult.CannotConfigure }
+    val canManage = if (checkToml) hatchService.isHatchManagedProject() else true
+    val intentionName = PyBundle.message("sdk.set.up.hatch.environment")
+    val envNotFound = EnvCheckerResult.EnvNotFound(intentionName)
 
-      if (canManage) {
-          val defaultEnv = hatchService.findDefaultVirtualEnvironmentOrNull().orLogException(LOGGER)?.pythonVirtualEnvironment
-          when (defaultEnv) {
-              is PythonVirtualEnvironment.Existing -> EnvCheckerResult.EnvFound(defaultEnv.pythonInfo, intentionName)
-              is PythonVirtualEnvironment.NotExisting, null -> envNotFound
-          }
-      } else EnvCheckerResult.CannotConfigure
+    if (canManage) {
+      val defaultEnv = hatchService.findDefaultVirtualEnvironmentOrNull().orLogException(LOGGER)?.pythonVirtualEnvironment
+      when (defaultEnv) {
+        is PythonVirtualEnvironment.Existing -> EnvCheckerResult.EnvFound(defaultEnv.pythonInfo, intentionName)
+        is PythonVirtualEnvironment.NotExisting, null -> envNotFound
+      }
+    }
+    else EnvCheckerResult.CannotConfigure
   }
 
   /**
@@ -71,31 +72,32 @@ internal class PyHatchSdkConfiguration : PyProjectTomlConfigurationExtension {
    * @param envExists shows whether the environment already exists or a new one should be created
    */
   private fun createSdk(module: Module, envExists: EnvExists): PyResult<Sdk> = runWithModalBlockingOrInBackground(
-      project = module.project,
-      msg = PyBundle.message("sdk.set.up.hatch.environment")
+    project = module.project,
+    msg = PyBundle.message("sdk.set.up.hatch.environment")
   ) {
-      val hatchService = module.getHatchService().getOr { return@runWithModalBlockingOrInBackground it }
+    val hatchService = module.getHatchService().getOr { return@runWithModalBlockingOrInBackground it }
 
-      val environment = if (envExists) {
-          val defaultEnv = hatchService.findDefaultVirtualEnvironmentOrNull()
-              .mapSuccess { it?.pythonVirtualEnvironment }
-              .getOr { return@runWithModalBlockingOrInBackground it }
-          when (defaultEnv) {
-              is PythonVirtualEnvironment.Existing -> defaultEnv
-              is PythonVirtualEnvironment.NotExisting, null -> return@runWithModalBlockingOrInBackground PyResult.localizedError(
-                  PyBundle.message("sdk.could.not.find.valid.hatch.environment")
-              )
-          }
-      } else {
-          hatchService.createVirtualEnvironment().getOr { return@runWithModalBlockingOrInBackground it }
+    val environment = if (envExists) {
+      val defaultEnv = hatchService.findDefaultVirtualEnvironmentOrNull()
+        .mapSuccess { it?.pythonVirtualEnvironment }
+        .getOr { return@runWithModalBlockingOrInBackground it }
+      when (defaultEnv) {
+        is PythonVirtualEnvironment.Existing -> defaultEnv
+        is PythonVirtualEnvironment.NotExisting, null -> return@runWithModalBlockingOrInBackground PyResult.localizedError(
+          PyBundle.message("sdk.could.not.find.valid.hatch.environment")
+        )
       }
+    }
+    else {
+      hatchService.createVirtualEnvironment().getOr { return@runWithModalBlockingOrInBackground it }
+    }
 
-      val hatchVenv = HatchVirtualEnvironment(HatchEnvironment.DEFAULT, environment)
-      val sdk = hatchVenv.createSdk(hatchService.getWorkingDirectoryPath()).onSuccess { sdk ->
-          sdk.setAssociationToModule(module)
-          module.project.pySdkService.persistSdk(sdk)
-      }
-      sdk
+    val hatchVenv = HatchVirtualEnvironment(HatchEnvironment.DEFAULT, environment)
+    val sdk = hatchVenv.createSdk(hatchService.getWorkingDirectoryPath()).onSuccess { sdk ->
+      sdk.setAssociationToModule(module)
+      module.project.pySdkService.persistSdk(sdk)
+    }
+    sdk
   }
 
 }
