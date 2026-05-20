@@ -6,6 +6,8 @@
     <module name="intellij.gradle.java"/>
     <module name="intellij.gradle.java.groovy"/>
     <module name="intellij.java.psi"/>
+    <module name="intellij.maven.completion"/>
+    <module name="intellij.repository.search.completion"/>
   </dependencies>
   <!-- endregion -->
 
