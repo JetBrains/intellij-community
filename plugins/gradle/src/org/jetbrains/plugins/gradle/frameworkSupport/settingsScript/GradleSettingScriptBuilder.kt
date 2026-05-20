@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gradle.frameworkSupport.settingsScript
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
-import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl.Companion.settingsScriptName
 import java.nio.file.Path
 
 @ApiStatus.NonExtendable
@@ -35,11 +35,12 @@ interface GradleSettingScriptBuilder<Self : GradleSettingScriptBuilder<Self>>
     }
 
     @JvmStatic
+    @Deprecated("Use GradleDsl.settingsScriptName instead", ReplaceWith(
+        "gradleDsl.settingsScriptName",
+        "org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl.Companion.settingsScriptName"
+    ))
     fun getSettingsScriptName(gradleDsl: GradleDsl): String {
-      return when (gradleDsl) {
-        GradleDsl.GROOVY -> GradleConstants.SETTINGS_FILE_NAME
-        GradleDsl.KOTLIN -> GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME
-      }
+      return gradleDsl.settingsScriptName
     }
   }
 }

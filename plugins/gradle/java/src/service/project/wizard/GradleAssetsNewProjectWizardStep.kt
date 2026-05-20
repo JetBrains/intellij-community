@@ -7,11 +7,11 @@ import com.intellij.ide.wizard.NewProjectWizardBaseData
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl.Companion.buildScriptName
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl.Companion.settingsScriptName
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder.Companion.buildScript
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder.Companion.getBuildScriptName
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder
-import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder.Companion.getSettingsScriptName
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder.Companion.settingsScript
 import java.nio.file.Path
 import kotlin.io.path.readText
@@ -31,13 +31,13 @@ abstract class GradleAssetsNewProjectWizardStep<ParentStep>(
   }
 
   fun addBuildScript(configure: GradleBuildScriptBuilder<*>.() -> Unit) {
-    val name = getBuildScriptName(parent.gradleDsl)
+    val name = parent.gradleDsl.buildScriptName
     val content = buildScript(parent.gradleVersionToUse, parent.gradleDsl, configure)
     addAssets(GeneratorFile(name, content))
   }
 
   fun addSettingsScript(configure: GradleSettingScriptBuilder<*>.() -> Unit) {
-    val name = getSettingsScriptName(parent.gradleDsl)
+    val name = parent.gradleDsl.settingsScriptName
     val content = settingsScript(parent.gradleVersionToUse, parent.gradleDsl, configure)
     addAssets(GeneratorFile(name, content))
   }
@@ -63,7 +63,7 @@ abstract class GradleAssetsNewProjectWizardStep<ParentStep>(
     if (configureSettingsScript(projectPath, GradleDsl.KOTLIN, configure)) return
     if (configureSettingsScript(projectPath, GradleDsl.GROOVY, configure)) return
 
-    val name = getSettingsScriptName(parent.gradleDsl)
+    val name = parent.gradleDsl.settingsScriptName
     val path = projectPath.resolve(name)
     val content = settingsScript(parent.gradleVersionToUse, parent.gradleDsl) {
       setProjectName(parent.artifactId)
@@ -78,7 +78,7 @@ abstract class GradleAssetsNewProjectWizardStep<ParentStep>(
     gradleDsl: GradleDsl,
     configure: GradleSettingScriptBuilder<*>.() -> Unit,
   ): Boolean {
-    val name = getSettingsScriptName(gradleDsl)
+    val name = gradleDsl.settingsScriptName
     val path = projectPath.resolve(name)
     val oldContent = runCatching { path.readText() }.getOrNull() ?: return false
     val content = settingsScript(parent.gradleVersionToUse, gradleDsl) {

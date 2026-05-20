@@ -10,11 +10,11 @@ import com.intellij.openapi.vfs.writeText
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl.Companion.buildScriptName
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl.Companion.settingsScriptName
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder.Companion.buildScript
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder.Companion.getBuildScriptName
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder
-import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder.Companion.getSettingsScriptName
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder.Companion.settingsScript
 import org.jetbrains.plugins.gradle.service.project.wizard.util.generateGradleWrapper
 import org.jetbrains.plugins.gradle.testFramework.configuration.TestFilesConfiguration
@@ -27,7 +27,7 @@ fun VirtualFile.createSettingsFile(
   gradleDsl: GradleDsl = GradleDsl.GROOVY,
   configure: GradleSettingScriptBuilder<*>.() -> Unit = {},
 ): VirtualFile {
-  return findOrCreateFile(getSettingsScriptName(gradleDsl)).apply {
+  return findOrCreateFile(gradleDsl.settingsScriptName).apply {
     writeText(settingsScript(gradleVersion, gradleDsl, configure))
   }
 }
@@ -38,7 +38,7 @@ fun VirtualFile.createBuildFile(
   gradleDsl: GradleDsl = GradleDsl.GROOVY,
   configure: GradleBuildScriptBuilder<*>.() -> Unit = {},
 ): VirtualFile {
-  return findOrCreateFile(getBuildScriptName(gradleDsl)).apply {
+  return findOrCreateFile(gradleDsl.buildScriptName).apply {
     writeText(buildScript(gradleVersion, gradleDsl, configure))
   }
 }
@@ -55,7 +55,7 @@ fun TestFilesConfiguration.withSettingsFile(
   configure: GradleSettingScriptBuilder<*>.() -> Unit = {},
 ) {
   withFile(
-    relativePath = relativeModulePath + "/" + getSettingsScriptName(gradleDsl),
+    relativePath = relativeModulePath + "/" + gradleDsl.settingsScriptName,
     content = settingsScript(gradleVersion, gradleDsl, configure)
   )
 }
@@ -67,7 +67,7 @@ fun TestFilesConfiguration.withBuildFile(
   configure: GradleBuildScriptBuilder<*>.() -> Unit = {},
 ) {
   withFile(
-    relativePath = relativeModulePath + "/" + getBuildScriptName(gradleDsl),
+    relativePath = relativeModulePath + "/" + gradleDsl.buildScriptName,
     content = buildScript(gradleVersion, gradleDsl, configure)
   )
 }
@@ -78,7 +78,7 @@ fun TestFilesConfiguration.withBuildFile(
   gradleDsl: GradleDsl = GradleDsl.GROOVY,
   content: String,
 ) {
-  withFile(relativeModulePath + "/" + getBuildScriptName(gradleDsl), content)
+  withFile(relativeModulePath + "/" + gradleDsl.buildScriptName, content)
 }
 
 fun TestFilesConfiguration.withGradleWrapper(
@@ -96,7 +96,7 @@ fun Path.createSettingsFile(
   gradleDsl: GradleDsl = GradleDsl.KOTLIN,
   configure: GradleSettingScriptBuilder<*>.() -> Unit = {},
 ): Path {
-  return findOrCreateFile(getSettingsScriptName(gradleDsl)).apply {
+  return findOrCreateFile(gradleDsl.settingsScriptName).apply {
     writeText(settingsScript(gradleVersion, gradleDsl, configure))
   }
 }
@@ -106,7 +106,7 @@ fun Path.createBuildFile(
   gradleDsl: GradleDsl = GradleDsl.KOTLIN,
   configure: GradleBuildScriptBuilder<*>.() -> Unit = {},
 ): Path {
-  return findOrCreateFile(getBuildScriptName(gradleDsl)).apply {
+  return findOrCreateFile(gradleDsl.buildScriptName).apply {
     writeText(buildScript(gradleVersion, gradleDsl, configure))
   }
 }

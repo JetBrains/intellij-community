@@ -10,6 +10,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl.Companion.buildScriptName
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl.Companion.settingsScriptName
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
@@ -130,3 +132,9 @@ private fun GradleModuleInfoBuilder.configureSimpleJavaModuleInfo() {
     withJUnit()
   }
 }
+
+val GradleModuleInfo.settingsScriptName: String
+  get() = gradleDsl.settingsScriptName
+
+val GradleModuleInfo.buildScriptName: String
+  get() = gradleDsl.buildScriptName

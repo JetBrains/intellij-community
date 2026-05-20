@@ -15,9 +15,9 @@ import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestObse
 import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualDirectory
 import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualFile
 import org.jetbrains.plugins.gradle.action.ImportProjectFromScriptAction
-import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder.Companion.getSettingsScriptName
 import org.jetbrains.plugins.gradle.testFramework.GradleTestCase
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.GradleProjectInfo
+import org.jetbrains.plugins.gradle.testFramework.projectInfo.settingsScriptName
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.idea.maven.utils.MavenUtil as IntellijMavenUtil
 
@@ -30,7 +30,7 @@ abstract class GradleOpenProjectTestCase : GradleTestCase() {
           action = ImportProjectAction(),
           systemId = GradleConstants.SYSTEM_ID,
           selectedFile = testPath.resolve(projectInfo.rootModule.relativePath)
-            .resolve(getSettingsScriptName(projectInfo.rootModule.gradleDsl))
+            .resolve(projectInfo.rootModule.settingsScriptName)
             .refreshAndGetVirtualFile()
         )
       }
