@@ -1,7 +1,7 @@
 package com.intellij.platform.lsp
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.platform.lsp.api.LspServerManager
 import com.intellij.platform.lsp.common.FakeLspServerDescriptor
@@ -61,7 +61,7 @@ class LspDidSaveTest {
       }
 
       withContext(Dispatchers.EDT) {
-        writeAction {
+        edtWriteAction {
           codeInsightFixture.editor.document.setText("modified content")
         }
         FileDocumentManager.getInstance().saveAllDocuments()
@@ -96,7 +96,7 @@ class LspDidSaveTest {
       }
 
       withContext(Dispatchers.EDT) {
-        writeAction {
+        edtWriteAction {
           codeInsightFixture.editor.document.setText(modifiedText)
         }
         FileDocumentManager.getInstance().saveAllDocuments()
@@ -165,7 +165,7 @@ class LspDidSaveTest {
 
       // Modify and save file in project1
       withContext(Dispatchers.EDT) {
-        writeAction {
+        edtWriteAction {
           codeInsightFixture.editor.document.setText("modified content1")
         }
         FileDocumentManager.getInstance().saveAllDocuments()
