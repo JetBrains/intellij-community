@@ -15,8 +15,9 @@
     </ul>
     <em>Experimental — features are under active development and may change without notice.</em>
   ]]></description>
-  <vendor>JetBrains</vendor>
-  <content namespace="jetbrains">
+  <!--suppress PluginXmlValidity -->
+  <vendor>Vladimir Krivosheev</vendor>
+  <content namespace="agent-workbench">
     <module name="intellij.agent.workbench.common"/>
     <module name="intellij.agent.workbench.json"/>
     <module name="intellij.agent.workbench.claude.common"/>

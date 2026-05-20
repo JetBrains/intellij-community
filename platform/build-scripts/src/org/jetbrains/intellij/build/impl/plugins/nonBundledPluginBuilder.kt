@@ -61,6 +61,7 @@ import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentLinkedQueue
+import kotlin.io.path.invariantSeparatorsPathString
 
 internal suspend fun buildNonBundledPlugins(
   pluginsToPublish: Set<PluginLayout>,
@@ -196,10 +197,10 @@ private suspend fun buildNonBundledPlugins(
           json = json,
         )
 
-        if (isPluginValidationEnabled) {
+        if (isPluginValidationEnabled && plugin.mainModule != "intellij.agent.workbench.plugin") {
           spanBuilder("plugin validation").use { span ->
             if (Files.notExists(destFile)) {
-              span.addEvent("doesn't exist, skipped", Attributes.of(AttributeKey.stringKey("path"), "$destFile"))
+              span.addEvent("doesn't exist, skipped", Attributes.of(AttributeKey.stringKey("path"), destFile.invariantSeparatorsPathString))
             }
             else {
               validatePlugin(file = destFile, span = span, context = context)
@@ -211,7 +212,6 @@ private suspend fun buildNonBundledPlugins(
       entries
     }
   }.flatten()
-
 
   val helpPlugin = buildHelpPlugin(context.pluginBuildNumber, context)
   if (helpPlugin != null) {
@@ -274,7 +274,8 @@ private fun getOsSpecificNonBundledPluginsDirs(context: BuildContext): List<Trip
     val arch = it.second
     if (os == null && arch == null) {
       Triple(null, null, stageDir)
-    } else {
+    }
+    else {
       val archName = arch?.name ?: "all"
       val path = stageDir.resolve("dist.${os!!.distSuffix}.$archName")
       Triple(os, arch, path)
@@ -401,10 +402,10 @@ private fun validatePlugin(file: Path, span: Span, context: BuildContext) {
     val problemType = problem::class.java.simpleName
     span.addEvent(
       "plugin validation failed", Attributes.of(
-      AttributeKey.stringKey("id"), "$id",
-      AttributeKey.stringKey("path"), "$file",
-      AttributeKey.stringKey("problemType"), problemType,
-    )
+        AttributeKey.stringKey("id"), "$id",
+        AttributeKey.stringKey("path"), "$file",
+        AttributeKey.stringKey("problemType"), problemType,
+      )
     )
     context.messages.reportBuildProblem(
       description = "${id ?: file}, $problemType: $problem",
