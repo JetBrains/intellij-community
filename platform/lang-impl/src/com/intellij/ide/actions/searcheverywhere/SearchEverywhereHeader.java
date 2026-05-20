@@ -221,8 +221,17 @@ public final class SearchEverywhereHeader {
       result.add(createAllTab(contributors, onChanged));
     }
 
-    SearchEverywhereContributor<?> originalMainFileContributor = ContainerUtil.find(contributors, FilesTabSEContributor::isMainFilesContributor);
-    if (originalMainFileContributor != null) originalMainFileContributor = FilesTabSEContributor.asMainFilesContributorOrNull(originalMainFileContributor);
+    FileSearchEverywhereContributor originalMainFileContributor = null;
+
+    SearchEverywhereContributor<?> originalMainFileContributorWrapped = ContainerUtil.find(contributors, FilesTabSEContributor::isMainFilesContributor);
+    if (originalMainFileContributorWrapped != null) {
+      originalMainFileContributor = FilesTabSEContributor.asMainFilesContributorOrNull(originalMainFileContributorWrapped);
+    }
+
+    if (originalMainFileContributor != null) {
+      var otherFilesContributors = contributors.stream().filter(FilesTabSEContributor::isFilesTabContributor).toList();
+      originalMainFileContributor.linkFilesTabContributorsFrom(otherFilesContributors);
+    }
 
     List<SearchEverywhereContributor<?>> separateTabContributors;
     try {
@@ -447,6 +456,16 @@ public final class SearchEverywhereHeader {
 
     public void setSelected(boolean selected) {
       isSelected = selected;
+
+      if (isSelected) {
+        for (SearchEverywhereContributor<?> c : contributors) {
+          FileSearchEverywhereContributor mainFileContributor = FilesTabSEContributor.asMainFilesContributorOrNull(c);
+          if (mainFileContributor != null) {
+            mainFileContributor.applyCurrentScopeToLinkedContributors();
+            break;
+          }
+        }
+      }
     }
 
     public @NotNull @NonNls String getID() {

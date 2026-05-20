@@ -73,6 +73,11 @@ open class FileSearchEverywhereContributor(event: AnActionEvent, contributorModu
     linkedFilesTabContributors.forEach { it.setScope(myScopeDescriptor) }
   }
 
+  @Internal
+  fun applyCurrentScopeToLinkedContributors() {
+    linkedFilesTabContributors.forEach { it.setScope(myScopeDescriptor) }
+  }
+
   companion object {
     @JvmStatic
     fun createFileTypeFilter(project: Project): PersistentSearchEverywhereContributorFilter<FileTypeRef> {
