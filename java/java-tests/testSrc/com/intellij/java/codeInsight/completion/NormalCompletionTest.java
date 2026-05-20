@@ -3201,6 +3201,8 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
       """);
   }
 
+  public void testDecoratedModCommand() { doTest("\n"); } // IJPL-245403
+
   public void testOuterVariableNotShadowedByPrivateField2() {
     // IDEA-340271
     myFixture.configureByText("Test.java", """
