@@ -98,6 +98,9 @@
   <extensions defaultExtensionNs="com.intellij">
     <ApplicationLoadListener implementation="com.intellij.util.imageio.ImageReaderWriterSpiRegistrar"/>
     <applicationActivity implementation="com.intellij.ide.debug.ImageDebugUtilLoader"/>
+    <applicationService serviceImplementation="com.intellij.ui.WaylandAppIconPatcher"
+                        preload="notHeadless"
+                        os="linux"/>
     <registryKey
       key="universal.file.chooser.is.enabled"
       defaultValue="true"
