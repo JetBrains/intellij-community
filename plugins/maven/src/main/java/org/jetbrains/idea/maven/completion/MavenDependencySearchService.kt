@@ -8,15 +8,11 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.model.MavenRepoArtifactInfo
 import java.util.function.Consumer
 
-/**
- * Encapsulates [org.jetbrains.idea.reposearch.DependencySearchService] for Maven plugin.
- * Other classes in the Maven plugin should depend on this service instead of DependencySearchService.
- */
 @ApiStatus.Experimental
 @Service(Service.Level.PROJECT)
 @ApiStatus.Obsolete
 // Prefer using DependencyCompletionService
-class MavenDependencySearchService(private val project: Project) {
+internal class MavenDependencySearchService(private val project: Project) {
 
   private val providers: List<MavenDependencySearchContributor>
     get() = MavenDependencySearchContributor.EP_NAME.extensionList
