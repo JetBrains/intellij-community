@@ -52,6 +52,8 @@ open class TestCleanupListener : TestExecutionListener {
 }
 
 private fun cancelSupervisorScopeChildren(scope: CoroutineScope, message: String) {
+  if (scope.coroutineContext.job.children.none()) return
+
   val timeout = ConfigurationStorage.coroutineScopesCancellationTimeout
 
   @Suppress("SSBasedInspection")
