@@ -12,7 +12,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.maven">
-    <dependencySearchContributor implementation="com.intellij.maven.completion.MavenLegacyDependencySearchContributor"/>
+    <dependencySearchContributor implementation="com.intellij.maven.completion.MavenDependencySearchContributorImpl"/>
   </extensions>
 
 </idea-plugin>

@@ -17,8 +17,7 @@ import java.nio.file.Path
 import java.util.function.Consumer
 import kotlinx.coroutines.flow.toList
 
-// TODO: rename
-internal class MavenLegacyDependencySearchContributor : MavenDependencySearchContributor {
+internal class MavenDependencySearchContributorImpl : MavenDependencySearchContributor {
 
   private fun createContext(project: Project) = DependencyCompletionContextImpl(
     Path.of(project.basePath ?: "").getEelDescriptor(),
