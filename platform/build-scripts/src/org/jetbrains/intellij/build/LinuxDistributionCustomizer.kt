@@ -53,12 +53,14 @@ class LinuxCustomizerBuilder @PublishedApi internal constructor(private val proj
    * Specify as a relative string path (e.g., "build/images/linux/icon.png").
    * If omitted, only an SVG icon will be included.
    */
+  @Deprecated("Use ProductProperties.imagesDirectoryPath instead")
   var iconPngPath: String? = null
 
   /**
    * Path to PNG product icon for EAP builds, relative to [projectHome].
    * If `null`, [iconPngPath] will be used.
    */
+  @Deprecated("Use ProductProperties.imagesDirectoryPath instead")
   var iconPngPathForEAP: String? = null
 
   /**
@@ -132,7 +134,9 @@ class LinuxCustomizerBuilder @PublishedApi internal constructor(private val proj
     private val projectHome: Path,
   ) : LinuxDistributionCustomizer() {
     init {
+      @Suppress("DEPRECATION")
       builder.iconPngPath?.let { iconPngPath = projectHome.resolve(it) }
+      @Suppress("DEPRECATION")
       builder.iconPngPathForEAP?.let { iconPngPathForEAP = projectHome.resolve(it) }
       extraExecutables = builder.extraExecutables
       buildArtifactWithoutRuntime = builder.buildArtifactWithoutRuntime
@@ -167,11 +171,13 @@ open class LinuxDistributionCustomizer {
    * Path to a 128x128 .png product icon for the Linux distribution.
    * If omitted, only an SVG icon will be included.
    */
+  @Deprecated("Use ProductProperties.imagesDirectoryPath instead")
   var iconPngPath: Path? = null
 
   /**
    * Path to a PNG product icon for EAP builds (if `null`, [iconPngPath] will be used).
    */
+  @Deprecated("Use ProductProperties.imagesDirectoryPath instead")
   var iconPngPathForEAP: Path? = null
 
   /**
