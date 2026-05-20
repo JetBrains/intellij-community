@@ -4,15 +4,16 @@ package com.intellij.build;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Objects;
 
 /**
- * 0-based position in file.
+ * 0-based position in a file.
  *
  * @author Vladislav.Soroka
  */
 public final class FilePosition {
-  private final File myFile;
+  private final Path myFile;
   private final int myStartLine;
   private final int myStartColumn;
   private final int myEndLine;
@@ -23,8 +24,35 @@ public final class FilePosition {
    * @param line 0-based line number
    * @param column 0-based column number
    */
-  public FilePosition(File file, int line, int column) {
+  public FilePosition(Path file, int line, int column) {
     this(file, line, column, line, column);
+  }
+
+  /**
+   * @param file file
+   * @param line 0-based line number
+   * @param column 0-based column number
+   * @deprecated Use a constructor which accepts a {@link Path} instance.
+   */
+  @Deprecated(since = "2026.2", forRemoval = true)
+  public FilePosition(File file, int line, int column) {
+    this(file.toPath(), line, column);
+  }
+
+  /**
+   *
+   * @param file file
+   * @param startLine 0-based start line number
+   * @param startColumn 0-based start column number
+   * @param endLine 0-based end line number
+   * @param endColumn 0-based end column number
+   */
+  public FilePosition(Path file, int startLine, int startColumn, int endLine, int endColumn) {
+    myFile = file;
+    myStartLine = startLine;
+    myStartColumn = startColumn;
+    myEndLine = endLine;
+    myEndColumn = endColumn;
   }
 
   /**
@@ -34,17 +62,23 @@ public final class FilePosition {
    * @param startColumn 0-based start column number
    * @param endLine 0-based end number
    * @param endColumn 0-based end column number
+   * @deprecated Use a constructor which accepts a {@link Path} instance.
    */
+  @Deprecated(since = "2026.2", forRemoval = true)
   public FilePosition(File file, int startLine, int startColumn, int endLine, int endColumn) {
-    myFile = file;
-    myStartLine = startLine;
-    myStartColumn = startColumn;
-    myEndLine = endLine;
-    myEndColumn = endColumn;
+    this(file.toPath(), startLine, startColumn, endLine, endColumn);
   }
 
-  public @Nullable File getFile() {
+  public @Nullable Path getFilePath() {
     return myFile;
+  }
+
+  /**
+   * @deprecated Use {@link getFilePath}.
+   */
+  @Deprecated(since = "2026.2", forRemoval = true)
+  public @Nullable File getFile() {
+    return getFilePath().toFile();
   }
 
   public int getStartLine() {

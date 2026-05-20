@@ -11,6 +11,10 @@ com.intellij.build.BuildDescriptor
 - a:getWorkingDir():java.lang.String
 com.intellij.build.BuildProgressListener
 - a:onEvent(java.lang.Object,com.intellij.build.events.BuildEvent):V
+f:com.intellij.build.FilePosition
+- <init>(java.nio.file.Path,I,I):V
+- <init>(java.nio.file.Path,I,I,I,I):V
+- getFilePath():java.nio.file.Path
 com.intellij.build.ViewManager
 - a:isBuildContentView():Z
 - a:isConsoleEnabledByDefault():Z
