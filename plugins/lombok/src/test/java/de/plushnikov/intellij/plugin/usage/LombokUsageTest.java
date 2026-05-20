@@ -26,6 +26,15 @@ public class LombokUsageTest extends AbstractLombokLightCodeInsightTestCase {
     assertUsages(usages, "findUsageGetterSetter.setBar", "findUsageGetterSetter.getBar");
   }
 
+  public void testFindUsageGetterSetterWithInterface() {
+    final Collection<UsageInfo> usages = loadTestClass();
+    assertUsages(usages,
+                 "service.setBar",
+                 "service.getBar",
+                 "impl.setBar",
+                 "impl.getBar");
+  }
+
   public void testFindUsageAccessors() {
     final Collection<UsageInfo> usages = loadTestClass();
     assertUsages(usages, "findUsageAccessors.setBar", "findUsageAccessors.getBar");
