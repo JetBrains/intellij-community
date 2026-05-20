@@ -87,18 +87,28 @@ class FileStructureTestFixture(private val myFixture: CodeInsightTestFixture) : 
         myFile = null
     }
 
-    companion object {
-        fun update(popup: StructurePopupTestExt?, project: Project, doRebuild: Boolean = true) {
-            if (doRebuild && popup is com.intellij.ide.util.FileStructurePopup) {
-                PlatformTestUtil.waitForPromise(popup.rebuildAndUpdate())
-            } else if (popup is com.intellij.platform.structureView.frontend.FileStructurePopup) {
-              val cs = StructureViewScopeHolder.getInstance(project).cs.childScope("test scope")
-              cs.launch {
-                popup.waitUpdateFinished()
-                if (doRebuild) popup.rebuildAndUpdate()
-              }
-              waitCoroutinesBlocking(cs)
-            }
+  companion object {
+    fun waitUpdateFinished(popup: StructurePopupTestExt?, project: Project) {
+      if (popup is com.intellij.platform.structureView.frontend.FileStructurePopup) {
+        val cs = StructureViewScopeHolder.getInstance(project).cs.childScope("test scope")
+        cs.launch {
+          popup.waitUpdateFinished()
         }
+        waitCoroutinesBlocking(cs)
+      }
     }
+
+    fun update(popup: StructurePopupTestExt?, project: Project) {
+      if (popup is com.intellij.ide.util.FileStructurePopup) {
+        PlatformTestUtil.waitForPromise(popup.rebuildAndUpdate())
+      }
+      else if (popup is com.intellij.platform.structureView.frontend.FileStructurePopup) {
+        val cs = StructureViewScopeHolder.getInstance(project).cs.childScope("test scope")
+        cs.launch {
+          popup.rebuildAndUpdate()
+        }
+        waitCoroutinesBlocking(cs)
+      }
+    }
+  }
 }

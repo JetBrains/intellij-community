@@ -9,13 +9,9 @@ import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.AbstractCommand
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.platform.structureView.frontend.FileStructurePopup
-import com.intellij.platform.structureView.impl.StructureViewScopeHolder
-import com.intellij.platform.util.coroutines.childScope
 import com.jetbrains.performancePlugin.PerformanceTestSpan
 import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper
 import io.opentelemetry.context.Context
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.toPromise
 
@@ -38,17 +34,17 @@ class ShowFileStructurePopupCommand(text: String, line: Int) : AbstractCommand(t
         val span = PerformanceTestSpan.TRACER.spanBuilder(SPAN_NAME).startSpan()
         span.makeCurrent().use {
           val popup = ViewStructureAction.createPopupForTest(project, fileEditor) as FileStructurePopup
-          val cs = StructureViewScopeHolder.getInstance(project).cs.childScope("$this scope")
           val spanShow = PerformanceTestSpan.TRACER.spanBuilder("$SPAN_NAME#Show").startSpan()
           val spanFill = PerformanceTestSpan.TRACER.spanBuilder("$SPAN_NAME#Fill").startSpan()
+          popup.addTestListener(object : FileStructurePopup.StructurePopupListener {
+            override fun rebuildAfterTreeChangeFinished() {
+              spanFill.end()
+              span.end()
+              actionCallback.setDone()
+            }
+          })
           popup.show()
           spanShow.end()
-          cs.launch(Dispatchers.Default) {
-            popup.waitUpdateFinished()
-            spanFill.end()
-            span.end()
-            actionCallback.setDone()
-          }
         }
       }
       else {
