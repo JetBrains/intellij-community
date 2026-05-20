@@ -97,17 +97,11 @@ public final class PageCacheUtils {
     return new ResilientFileChannel(path, readOnly ? new OpenOption[]{READ} : new OpenOption[]{READ, WRITE, CREATE});
   };
 
-
-  /** Shared channels cache */
-  static final OpenChannelsCache CHANNELS_CACHE = new OpenChannelsCache(
-    CHANNELS_CACHE_CAPACITY,
-    RESILIENT_CHANNEL_OPENER
-  );
-
   /** Channels cache-bypassing accessor */
   static final ChannelsAccessor CHANNELS_NO_CACHE = new ChannelsAccessor() {
 
     private final AtomicInteger operationsExecuted = new AtomicInteger(0);
+
     @Override
     public <T> T executeOp(@NotNull Path path,
                            @NotNull FileChannelOperation<T> operation,
@@ -133,6 +127,12 @@ public final class PageCacheUtils {
       return new CachedChannelsStatistics(0, 0, 0, /*bypassedCache: */ operationsExecuted.get(), 0);
     }
   };
+
+  /** Shared channels cache */
+  public static final OpenChannelsCache CHANNELS_CACHE = new OpenChannelsCache(
+    CHANNELS_CACHE_CAPACITY,
+    RESILIENT_CHANNEL_OPENER
+  );
 
   static {
     LOG.info(
