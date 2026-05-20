@@ -7,6 +7,9 @@
   <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
+    <completion.contributor language="XML"
+                            implementationClass="com.intellij.maven.completion.contributor.MavenDependencyTopLevelCompletionContributor"/>
+
     <registryKey key="maven.dependency.completion.contributor.local.index" defaultValue="true"
                  description="Maven local index-based dependency completion contributor enabled"/>
     <registryKey key="maven.dependency.completion.contributor.local.modules" defaultValue="true"

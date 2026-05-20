@@ -24,6 +24,8 @@ jvm_library(
     "//platform/eel",
     "//platform/eel-provider",
     "//plugins/repository-search/completion",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/lang-api:lang",
   ]
 )
 
@@ -49,6 +51,8 @@ jvm_library(
     "//platform/eel:eel_test_lib",
     "//platform/eel-provider:eel-provider_test_lib",
     "//plugins/repository-search/completion:completion_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/lang-api:lang_test_lib",
   ]
 )
 ### auto-generated section `build intellij.maven.completion` end

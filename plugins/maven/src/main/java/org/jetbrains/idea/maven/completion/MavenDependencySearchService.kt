@@ -14,6 +14,8 @@ import java.util.function.Consumer
  */
 @ApiStatus.Experimental
 @Service(Service.Level.PROJECT)
+@ApiStatus.Obsolete
+// Prefer using DependencyCompletionService
 class MavenDependencySearchService(private val project: Project) {
 
   private val providers: List<MavenDependencySearchContributor>

@@ -14,6 +14,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.xml.XmlFile
 import com.intellij.util.xml.DomUtil
 import com.intellij.util.xml.ui.actions.generate.GenerateDomElementAction
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.dom.DependencyConflictId
 import org.jetbrains.idea.maven.dom.MavenDomBundle
 import org.jetbrains.idea.maven.dom.MavenDomUtil.createDomDependency
@@ -36,7 +37,8 @@ internal class GenerateDependencyAction : GenerateDomElementAction(GenerateDepen
   }
 }
 
-internal class GenerateDependencyProvider : MavenGenerateProvider<MavenDomDependency>(MavenDomBundle.message("generate.dependency.title"), MavenDomDependency::class.java) {
+@ApiStatus.Internal
+class GenerateDependencyProvider : MavenGenerateProvider<MavenDomDependency>(MavenDomBundle.message("generate.dependency.title"), MavenDomDependency::class.java) {
   override fun doGenerate(mavenModel: MavenDomProjectModel, editor: Editor): MavenDomDependency? {
     val project = mavenModel.getManager().getProject()
 
