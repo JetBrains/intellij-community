@@ -10,6 +10,7 @@ import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
 import com.intellij.maven.completion.contributor.insert.MavenTopLevelDependencyInsertionHandler
 import com.intellij.maven.completion.getCompletionContext
 import com.intellij.maven.completion.icon
+import com.intellij.repository.search.completion.lookup.DependencyCompletionFuzzyMatcher
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.components.service
 import com.intellij.psi.xml.XmlTag
@@ -38,8 +39,10 @@ abstract class MavenTopLevelCompletionContributor(val myName: String) : Completi
 
     result.restartCompletionWhenNothingMatches()
 
-    val request = DependencyCompletionRequest(trimDummy(xmlText.value), parameters.getCompletionContext())
-    val resultSet = result.withRelevanceSorter(CompletionSorter.emptySorter().weigh(StrictOrderWeigher()))
+    val searchString = trimDummy(xmlText.value)
+    val request = DependencyCompletionRequest(searchString, parameters.getCompletionContext())
+    val resultSet = result.withPrefixMatcher(DependencyCompletionFuzzyMatcher(searchString))
+      .withRelevanceSorter(CompletionSorter.emptySorter().weigh(StrictOrderWeigher()))
     var index = 0
     runBlockingCancellable {
       service<DependencyCompletionService>()

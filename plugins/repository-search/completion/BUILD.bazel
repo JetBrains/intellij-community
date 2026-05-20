@@ -19,6 +19,7 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/statistics",
     "//platform/lang-impl",
+    "//platform/util/text-matching",
   ]
 )
 
@@ -39,6 +40,7 @@ jvm_library(
     "//platform/analysis-api:analysis_test_lib",
     "//platform/statistics:statistics_test_lib",
     "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/util/text-matching:text-matching_test_lib",
   ]
 )
 ### auto-generated section `build intellij.repository.search.completion` end

@@ -163,6 +163,8 @@ jvm_library(
     "//platform/backend/observation:observation_test_lib",
     "//platform/util/text-matching",
     "//platform/util/text-matching:text-matching_test_lib",
+    "//plugins/repository-search/completion",
+    "//plugins/repository-search/completion:completion_test_lib",
   ],
   runtime_deps = [
     ":completion-tests",

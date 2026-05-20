@@ -1,23 +1,18 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.gradle.completion
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.repository.search.completion.lookup
 
 import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.text.matching.MatchedFragment
-import com.intellij.repository.search.completion.lookup.DependencyCompletionFuzzyMatcher
 import org.jetbrains.annotations.ApiStatus
 
-private val log = logger<GradleDependencyCompletionMatcher>()
+private val log = logger<DependencyCompletionFuzzyMatcher>()
 
-@ApiStatus.Internal
-open class GradleDependencyCompletionMatcher(prefix: String) : PrefixMatcher(prefix) {
-  override fun prefixMatches(name: String): Boolean {
-    return prefix.split(":").all { name.contains(it) }
-  }
+@ApiStatus.Experimental
+open class DependencyCompletionFuzzyMatcher(prefix: String) : PrefixMatcher(prefix) {
+  override fun prefixMatches(name: String): Boolean = true
 
-  override fun cloneWithPrefix(prefix: String): PrefixMatcher {
-    return GradleDependencyCompletionMatcher(prefix)
-  }
+  override fun cloneWithPrefix(prefix: String): PrefixMatcher = DependencyCompletionFuzzyMatcher(prefix)
 
   override fun getMatchingFragments(prefix: String, name: String): List<MatchedFragment> {
     try {
@@ -30,9 +25,7 @@ open class GradleDependencyCompletionMatcher(prefix: String) : PrefixMatcher(pre
   }
 
   private fun tryGetMatchingFragments(input: String, searchResult: String): List<MatchedFragment> {
-    // handle top level completion case:
-    // implementation("org.example:lib-implementation:1.0") - "implementation" in the artifact name should be matched
-    val start = searchResult.indexOf("(").coerceAtLeast(0)
+    val start = startOffset(searchResult)
     val prefixParts = input.split(":")
     val nameParts = searchResult.substring(start).split(":")
     val result = mutableListOf<MatchedFragment>()
@@ -53,21 +46,27 @@ open class GradleDependencyCompletionMatcher(prefix: String) : PrefixMatcher(pre
     return result
   }
 
-  protected open fun tryFallbackMatching(input: String, searchResult: String, start: Int): List<MatchedFragment> {
+  /** Returns the index in [searchResult] from which matching should begin. */
+  protected open fun startOffset(searchResult: String): Int = 0
+
+  private fun tryFallbackMatching(input: String, searchResult: String, start: Int): List<MatchedFragment> {
+    val searchable = searchResult.substring(start)
+    for (len in input.length downTo 1) {
+      for (subStart in 0..input.length - len) {
+        val sub = input.substring(subStart, subStart + len)
+        val idx = searchable.indexOf(sub, ignoreCase = true)
+        if (idx != -1) {
+          val absoluteStart = start + idx
+          return listOf(MatchedFragment(absoluteStart, absoluteStart + sub.length))
+        }
+      }
+    }
     return emptyList()
   }
 
   private fun getMatchingFragment(offset: Int, prefixPart: String, name: String): MatchedFragment? {
     val from = name.indexOf(prefixPart)
-    if (from == -1) {
-      return null
-    }
+    if (from == -1) return null
     return MatchedFragment(from + offset, from + offset + prefixPart.length)
   }
-}
-
-@ApiStatus.Internal
-class GradleDependencyCompletionFuzzyMatcher(prefix: String) : DependencyCompletionFuzzyMatcher(prefix) {
-  override fun cloneWithPrefix(prefix: String): PrefixMatcher = GradleDependencyCompletionFuzzyMatcher(prefix)
-  override fun startOffset(searchResult: String): Int = searchResult.indexOf("(").coerceAtLeast(0)
 }
