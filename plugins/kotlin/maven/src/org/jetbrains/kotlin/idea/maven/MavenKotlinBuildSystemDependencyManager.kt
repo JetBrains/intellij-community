@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.maven
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModCommand
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware
 import com.intellij.openapi.module.Module
@@ -44,9 +44,9 @@ class MavenKotlinBuildSystemDependencyManager(
     )
     override fun addDependency(module: Module, libraryDescriptor: ExternalLibraryDescriptor): Job {
         return coroutineScope.launchTracked {
-            writeAction {
-                val pomFile = findPomFile(module) ?: return@writeAction
-                val pom = PomFile.forFileOrNull(pomFile) ?: return@writeAction
+            edtWriteAction {
+                val pomFile = findPomFile(module) ?: return@edtWriteAction
+                val pom = PomFile.forFileOrNull(pomFile) ?: return@edtWriteAction
                 val version = libraryDescriptor.preferredVersion ?: libraryDescriptor.maxVersion ?: libraryDescriptor.minVersion
                 val mavenId = MavenId(libraryDescriptor.libraryGroupId, libraryDescriptor.libraryArtifactId, version)
 

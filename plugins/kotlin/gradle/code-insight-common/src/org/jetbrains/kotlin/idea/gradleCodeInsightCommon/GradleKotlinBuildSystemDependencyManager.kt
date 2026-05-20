@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.gradleCodeInsightCommon
 
 import com.intellij.modcommand.ModCommand
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware
 import com.intellij.openapi.module.Module
@@ -38,7 +38,7 @@ class GradleKotlinBuildSystemDependencyManager(private val project: Project, pri
             val manipulator = readAction {
                 module.getBuildScriptPsiFile()?.let(GradleBuildScriptSupport::findManipulator)
             } ?: return@launchTracked
-            writeAction {
+            edtWriteAction {
                 executeCommand(project = project) {
                     manipulator.addKotlinLibraryToModuleBuildScript(module, scope, libraryDescriptor)
                 }

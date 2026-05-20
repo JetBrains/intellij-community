@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.j2k.k2
 // import removed: forbidAnalysis no longer used during application phase
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
@@ -85,7 +85,7 @@ internal class K2J2KPostProcessor : PostProcessor {
             // Step 2: apply them
             for (applier in appliers) {
                 checkCanceled()
-                writeAction {
+                edtWriteAction {
                     try {
                         applier.apply()
                     } catch (e: ProcessCanceledException) {

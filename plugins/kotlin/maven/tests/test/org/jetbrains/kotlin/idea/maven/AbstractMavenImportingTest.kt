@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.maven
 
 import com.intellij.maven.testFramework.assertWithinTimeout
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.roots.ModuleRootManager
@@ -110,7 +110,7 @@ abstract class AbstractMavenImportingTest : KotlinMavenImportingTestCase() {
         pomFiles.forEach(::addPom)
         importProjectsAsync(pomFiles)
 
-        writeAction {
+        edtWriteAction {
             project.modules.forEach {
                 setupJdkForModule(it.name)
             }
