@@ -9,8 +9,6 @@ import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -335,7 +333,7 @@ class KotlinEventLimitOutOfBlockModificationTest : AbstractKotlinModificationEve
 
         CodeInsightContextManager.getInstance(project).registerTestOnlyCodeInsightContextProvider(object : CodeInsightContextProvider {
             override fun getContexts(file: VirtualFile, project: Project): List<CodeInsightContext> = listOf(mockContext)
-            override fun invalidationRequestFlow(project: Project): Flow<Unit> = emptyFlow()
+            override fun subscribeToChanges(project: Project, invalidator: CodeInsightContextProvider.Invalidator) {}
         }, testRootDisposable)
 
         val defaultFileA = moduleA.findSourceKtFile("a.kt", mockContext)

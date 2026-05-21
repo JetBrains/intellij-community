@@ -4,7 +4,7 @@ package com.intellij.codeInsight.multiverse
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EditorLockFreeTyping
-import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -16,22 +16,18 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.util.AtomicMapCache
 import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.ThreadingAssertions.assertWriteAccess
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.containers.CollectionFactory
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -43,7 +39,6 @@ class CodeInsightContextManagerImpl(
   private val project: Project,
   private val cs: CoroutineScope,
 ) : CodeInsightContextManager, Disposable.Default {
-  private val invalidationCs: CoroutineScope = cs.childScope("active-invalidations")
 
   companion object {
     @JvmStatic
@@ -59,34 +54,13 @@ class CodeInsightContextManagerImpl(
 
   private val _changeFlow = MutableSharedFlow<Unit>()
 
-  /** invalidation job needs to be canceled and recreated on extension point update */
-  @Volatile
-  private var invalidationProcessorJob: Job? = null
-
-  @TestOnly
-  fun isContextInvalidationComplete(): Boolean {
-    return invalidationCs.coroutineContext[Job]!!.children.toList().isEmpty()
-  }
-
-  private fun invalidateAllContexts() {
-    // it's unnecessary here to serialize invalidation requests because they are all equal, and it's unimportant, which is called first.
-    // once more granular invalidation requests are added, it's necessary to add serialization (e.g., via a flow)
-    invalidationCs.launch {
-      edtWriteAction {
-        dropContextCaches()
-
-        project.messageBus.syncPublisher(CodeInsightContextManager.topic).contextsChanged()
-        log.trace { "all contexts are invalidated" }
-      }
-      _changeFlow.emit(Unit)
-    }
-  }
-
   init {
     EP_NAME.addChangeListener(cs) {
-      invalidationCs.launch {
+      cs.launch {
         subscribeToChanges()
-        invalidateAllContexts()
+        backgroundWriteAction {
+          invalidateAllContexts()
+        }
       }
     }
     subscribeToChanges()
@@ -94,19 +68,19 @@ class CodeInsightContextManagerImpl(
   }
 
   private fun subscribeToChanges() {
-    invalidationProcessorJob?.cancel()
-    invalidationProcessorJob = cs.launch {
-      EP_NAME.extensionList.map { it.invalidationRequestFlow(project) }.merge().collectLatest {
-        invalidateAllContexts()
-      }
+    val invalidator = { invalidateAllContexts() }
+    EP_NAME.forEachExtensionSafe { provider ->
+      provider.subscribeToChanges(project, invalidator)
     }
   }
 
-  @RequiresWriteLock
-  private fun dropContextCaches() {
-    ThreadingAssertions.assertWriteAccess()
+  private fun invalidateAllContexts() {
+    assertWriteAccess()
     preferredContext.invalidate()
     allContexts.invalidate()
+    project.messageBus.syncPublisher(CodeInsightContextManager.topic).contextsChanged()
+    _changeFlow.tryEmit(Unit)
+    log.trace { "all contexts are invalidated" }
   }
 
   @RequiresReadLock
@@ -251,7 +225,7 @@ class CodeInsightContextManagerImpl(
 
       for (project in projects) {
         val manager = CodeInsightContextManager.getInstance(project) as CodeInsightContextManagerImpl
-        manager.dropContextCaches()
+        manager.invalidateAllContexts()
       }
     }
 
