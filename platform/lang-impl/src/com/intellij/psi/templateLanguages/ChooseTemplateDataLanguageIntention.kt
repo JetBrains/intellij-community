@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.templateLanguages
 
 import com.intellij.codeInsight.intention.IntentionAction
@@ -21,7 +21,7 @@ internal class ChooseTemplateDataLanguageIntention : IntentionAction {
   }
 
   override fun getText(): String {
-    return LangBundle.message("template.data.language.chooser.intention.title")
+    return familyName
   }
 
   override fun isAvailable(project: Project, editor: Editor?, psiFile: PsiFile?): Boolean {
