@@ -918,7 +918,6 @@ f:com.intellij.openapi.application.ex.ApplicationManagerEx
 - s:getApplicationEx():com.intellij.openapi.application.ex.ApplicationEx
 - s:isInIntegrationTest():Z
 - s:isInStressTest():Z
-- s:setInStressTest(Z):V
 f:com.intellij.openapi.application.ex.ApplicationUtil
 - sf:INSTANCE:com.intellij.openapi.application.ex.ApplicationUtil
 - sf:runWithCheckCanceled(java.util.concurrent.Callable,com.intellij.openapi.progress.ProgressIndicator):java.lang.Object
