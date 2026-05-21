@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="studio-test-platform" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps:studio-test-platform:2025.3.1-367">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps:studio-test-platform:2025.3.2-368">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/studio-test-platform/2025.3.1-367/studio-test-platform-2025.3.1-367.jar">
-          <sha256sum>f94543e9831157d9f81d8f4c6f8fcb1ea26f940e732e4ecf371afd340c9ab452</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/studio-test-platform/2025.3.2-368/studio-test-platform-2025.3.2-368.jar">
+          <sha256sum>c2e9565423ba607c24a41716caa9942ce4040967877e737540de6d20c08e800e</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/studio-test-platform/2025.3.1-367/studio-test-platform-2025.3.1-367.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/studio-test-platform/2025.3.2-368/studio-test-platform-2025.3.2-368.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/studio-test-platform/2025.3.1-367/studio-test-platform-2025.3.1-367-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/studio-test-platform/2025.3.2-368/studio-test-platform-2025.3.2-368-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
