@@ -444,8 +444,6 @@
     <module name="intellij.libraries.grpc.netty.shaded"/>
     <module name="intellij.libraries.jspecify"/>
     <module name="intellij.libraries.batik" loading="embedded"/>
-    <module name="intellij.platform.ijent.impl"/>
-    <module name="intellij.platform.ijent.wsl"/>
     <!-- endregion -->
   </content>
 </idea-plugin>
