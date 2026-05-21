@@ -255,6 +255,7 @@ internal class MutableEntityStorageImpl(
       val entityToAdd = entity as ModifiableWorkspaceEntityBase<*, *>
 
       entityToAdd.applyToBuilder(this)
+      entityToAdd.afterModification()
       entityToAdd.changedProperty.clear()
 
       @Suppress("UNCHECKED_CAST")
