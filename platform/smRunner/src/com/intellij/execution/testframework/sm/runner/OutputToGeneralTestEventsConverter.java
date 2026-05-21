@@ -21,6 +21,7 @@ import com.intellij.execution.testframework.sm.runner.events.TreeNodeEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import jetbrains.buildServer.messages.serviceMessages.BuildNumber;
 import jetbrains.buildServer.messages.serviceMessages.BuildStatisticValue;
@@ -128,7 +129,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
 
   protected void processConsistentText(@NotNull String text, final @NotNull Key<?> outputType) {
     try {
-      if (!processServiceMessages(text, outputType, myServiceMessageVisitor)) {
+      if (!processServiceMessages(text, outputType, myServiceMessageVisitor) || Registry.is("test.console.verbose", false)) {
         //fire current output
         fireOnUncapturedOutput(text, outputType);
       }
