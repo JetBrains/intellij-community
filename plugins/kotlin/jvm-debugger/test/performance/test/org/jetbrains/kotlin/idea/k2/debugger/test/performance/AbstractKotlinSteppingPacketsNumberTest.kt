@@ -2,9 +2,11 @@
 package org.jetbrains.kotlin.idea.k2.debugger.test.performance
 
 import com.intellij.debugger.engine.SuspendContextImpl
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.tools.ide.metrics.collector.MetricsCollector
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
+import com.intellij.util.ThrowableRunnable
 import com.jetbrains.jdi.VirtualMachineImpl
 import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.idea.debugger.test.AbstractIrKotlinSteppingTest
@@ -26,6 +28,10 @@ abstract class AbstractKotlinSteppingPacketsNumberTest : AbstractIrKotlinSteppin
     override fun setUp() {
         super.setUp()
         setUpPacketsMeasureTest()
+    }
+
+    override fun runTestRunnable(testRunnable: ThrowableRunnable<Throwable>) {
+      ApplicationManagerEx.runInStressTest<Exception>(true) { super.runTestRunnable(testRunnable) }
     }
 
     override fun lambdasGenerationScheme(): JvmClosureGenerationScheme {

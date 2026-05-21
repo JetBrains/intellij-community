@@ -47,7 +47,6 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -663,7 +662,6 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   }
 
   protected void setUpPacketsMeasureTest() {
-    ApplicationManagerEx.setInStressTest(true);
     setRegistryPropertyForTest("debugger.track.instrumentation", "false");
     setRegistryPropertyForTest("debugger.evaluate.single.threaded.timeout", "-1");
     setRegistryPropertyForTest("debugger.preload.types.async", "false");
