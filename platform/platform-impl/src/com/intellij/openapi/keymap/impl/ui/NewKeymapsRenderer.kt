@@ -24,7 +24,7 @@ internal class NewKeymapsRenderer(private val actionsTree: ActionsTree) : Action
 
     @JvmStatic
     val isFeatureEnabled: Boolean
-      get() = ExperimentalUI.isNewUI() && Registry.`is`("ide.ui.keymap.ijpl187594", false)
+      get() = ExperimentalUI.isNewUI() && Registry.`is`("ide.ui.keymap.ijpl187594", true)
   }
 
   private var data: ShortcutsData? = null
