@@ -24,7 +24,6 @@ import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.params.ParameterizedTest
 
 @UseK2PluginMode
@@ -168,13 +167,12 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
         }
     }
 
-    @Disabled("server-side completion only")
     @ParameterizedTest
     @BaseGradleVersionSource(DEPENDENCY_CONFIGURATIONS_AND_NOTATIONS)
     fun `test coordinates completion configuration names`(gradleVersion: GradleVersion, dependencyConfigurationEscaped: String) {
         val dependencyConfiguration = dependencyConfigurationEscaped.unescape()
-        val substitutionResult = if (dependencyConfiguration.contains(":")) {
-            val items = dependencyConfiguration.split(":")
+        val substitutionResult = if (dependencyConfiguration.contains(",")) {
+            val items = dependencyConfiguration.split(",")
             "${items[0]}(${items[1]}(\"g:a:v\"))"
         } else "$dependencyConfiguration(\"g:a:v\")"
 
@@ -211,7 +209,6 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
         }
     }
 
-    @Disabled("server-side completion only")
     @ParameterizedTest
     @BaseGradleVersionSource("""
             org.example.p<colon>my-long-artifact-id<colon>2.7.<caret>,
@@ -337,7 +334,6 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
         }
     }
 
-    @Disabled("server-side completion only")
     @ParameterizedTest
     @BaseGradleVersionSource
     @TestMetadata("artifactCompletionOnTopLevel.test")
