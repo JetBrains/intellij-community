@@ -156,6 +156,22 @@ class K2GradleQuickFixTest : AbstractGradleMultiFileQuickFixTest() {
 
     @Test
     @PluginTargetVersions(pluginVersion = "2.1+")
+    fun testEnableMultiDollarInterpolationComma() {
+        doMultiFileQuickFixTest(
+            ignoreChangesInBuildScriptFiles = false
+        )
+    }
+
+    @Test
+    @PluginTargetVersions(pluginVersion = "2.1+")
+    fun testEnableMultiDollarInterpolationComments() {
+        doMultiFileQuickFixTest(
+            ignoreChangesInBuildScriptFiles = false
+        )
+    }
+
+    @Test
+    @PluginTargetVersions(pluginVersion = "2.1+")
     fun testEnableUpdatedAnnotationDefaultingRule() {
         doMultiFileQuickFixTest(
             ignoreChangesInBuildScriptFiles = false,

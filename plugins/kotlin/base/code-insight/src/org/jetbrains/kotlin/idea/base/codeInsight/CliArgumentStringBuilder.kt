@@ -31,7 +31,7 @@ object CliArgumentStringBuilder {
             LanguageFeature.State.DISABLED -> "-"
         }
 
-    private fun LanguageFeature.getFeatureMentionInCompilerArgsRegex(): Regex {
+    fun LanguageFeature.getFeatureMentionInCompilerArgsRegex(): Regex {
         val basePattern = "$LANGUAGE_FEATURE_FLAG_PREFIX(?:-|\\+)$name"
         val fullPattern = dedicatedFlagInfo?.let { (dedicatedFlag, _) -> "(?:$basePattern)|$dedicatedFlag" } ?: basePattern
 

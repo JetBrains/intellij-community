@@ -18,7 +18,7 @@ import com.intellij.psi.util.childrenOfType
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.codeInsight.CliArgumentStringBuilder.buildArgumentString
-import org.jetbrains.kotlin.idea.base.codeInsight.CliArgumentStringBuilder.replaceLanguageFeature
+import org.jetbrains.kotlin.idea.base.codeInsight.CliArgumentStringBuilder.getFeatureMentionInCompilerArgsRegex
 import org.jetbrains.kotlin.idea.base.facet.isMultiPlatformModule
 import org.jetbrains.kotlin.idea.base.plugin.KotlinCompilerVersionProvider
 import org.jetbrains.kotlin.idea.base.util.module
@@ -71,6 +71,8 @@ import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.KtScriptInitializer
+import org.jetbrains.kotlin.psi.KtStringTemplateExpression
+import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
@@ -695,35 +697,68 @@ class KotlinBuildScriptManipulator(
             parameterName,
             parameterNameAndValueExpression,
             forTests
-        ) { _, preserveAssignmentWhenReplacing ->
-            val prefix: String // prefix is used only when adding a new value
-            val postfix: String
-            if (preserveAssignmentWhenReplacing) {
-                prefix = "$parameterName = listOf("
-                postfix = ")"
-            } else {
-                prefix = "$parameterName.addAll("
-                // We check `text` instead of PSI (or with regex) here because `replaceLanguageFeature()` operates with `text` too
-                postfix = if (text.endsWith("))")) { // It may be in the case `addAll(listOf(<...>))`
-                    "))"
-                } else {
-                    val regex = Regex("\\)\\s*\\)")
-                    regex.find(text)?.value ?: ")"
-                }
-            }
-            val newText = text.replaceLanguageFeature(
-                feature,
-                state,
-                kotlinVersion,
-                prefix,
-                postfix
-            )
-            val replacedExpression = replace(psiFactory.createExpression(newText))
-
+        ) { _, _ ->
+            replaceLanguageFeature(feature, state, kotlinVersion)
             // If we had a `.add(...)` call with a single argument, replace it with `.addAll(...)` for multiple arguments
-            (replacedExpression as? KtExpression)?.replaceCallee(from = "add", to = "addAll")
-            replacedExpression
+            replaceCallee(from = "add", to = "addAll")
+            this
         }
+    }
+
+    /**
+     * PSI-based replacement for [org.jetbrains.kotlin.idea.base.codeInsight.CliArgumentStringBuilder.replaceLanguageFeature].
+     *
+     * Updates [this] in place so that the [feature] flag corresponding to [state] is present (and unique)
+     * among string-literal arguments of the relevant argument list. If the feature is already mentioned,
+     * the matching portion of the string literal is replaced with the new argument string. Otherwise,
+     * a new string-literal argument is appended to the argument list.
+     *
+     * Supported shapes of [this]:
+     *  - `freeCompilerArgs = listOf("...", ...)` ([KtBinaryExpression])
+     *  - `freeCompilerArgs.add("...")` / `freeCompilerArgs.addAll("...", ...)` ([KtDotQualifiedExpression])
+     *  - `freeCompilerArgs.addAll(listOf("...", ...))` / `freeCompilerArgs.set(listOf(...))`
+     */
+    private fun KtExpression.replaceLanguageFeature(
+        feature: LanguageFeature,
+        state: LanguageFeature.State,
+        kotlinVersion: IdeKotlinVersion?,
+    ) {
+        val argumentList = findArgumentListForLanguageFeatures() ?: return
+        val featureArgumentString = feature.buildArgumentString(state, kotlinVersion)
+        val regex = feature.getFeatureMentionInCompilerArgsRegex()
+
+        for (argument in argumentList.arguments) {
+            val stringTemplate = argument.getArgumentExpression() as? KtStringTemplateExpression ?: continue
+            // We only handle plain string literals (no interpolation) like "-XXLanguage:+Foo".
+            val literalText = stringTemplate.entries.singleOrNull()?.text ?: continue
+            val match = regex.find(literalText) ?: continue
+            if (match.value != featureArgumentString) {
+                val newLiteralText = literalText.replace(match.value, featureArgumentString)
+                stringTemplate.replace(psiFactory.createStringTemplate(newLiteralText))
+            }
+            return
+        }
+
+        // The feature is not mentioned yet — append a new string-literal argument.
+        argumentList.addArgument(psiFactory.createArgument("\"$featureArgumentString\""))
+    }
+
+    /**
+     * Locates the [KtValueArgumentList] that holds the string-literal arguments containing the language
+     * feature flags for the supported shapes documented on [replaceLanguageFeature].
+     */
+    private fun KtExpression.findArgumentListForLanguageFeatures(): KtValueArgumentList? {
+        val call: KtCallExpression = when (this) {
+            // e.g. `freeCompilerArgs = listOf(...)`
+            is KtBinaryExpression -> right as? KtCallExpression ?: return null
+            // e.g. `freeCompilerArgs.add(...)` / `.addAll(...)` / `.set(listOf(...))`
+            is KtDotQualifiedExpression -> selectorExpression as? KtCallExpression ?: return null
+            else -> return null
+        }
+
+        // Unwrap `.addAll(listOf(...))` / `.set(listOf(...))` to the inner `listOf`'s argument list.
+        val singleArgCall = call.valueArguments.singleOrNull()?.getArgumentExpression() as? KtCallExpression
+        return singleArgCall?.valueArgumentList ?: call.valueArgumentList
     }
 
     private fun KtExpression.replaceCallee(from: String, to: String) {
