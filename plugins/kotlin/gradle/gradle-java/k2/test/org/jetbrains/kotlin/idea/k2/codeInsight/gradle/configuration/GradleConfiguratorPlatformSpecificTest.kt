@@ -2,10 +2,10 @@
 
 package org.jetbrains.kotlin.idea.k2.codeInsight.gradle.configuration
 
+import com.intellij.openapi.project.modules
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ExternalLibraryDescriptor
 import com.intellij.testFramework.runInEdtAndWait
-import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
@@ -104,11 +104,10 @@ class GradleConfiguratorPlatformSpecificTest3 : KotlinGradleImportingTestCase() 
 
         runInEdtAndWait {
             myTestFixture.project.executeWriteCommand("") {
-                val moduleBridge = myTestFixture.module as ModuleBridge
+                val module = myTestFixture.project.modules.find { it.name == "project.jvmMain" }
+                requireNotNull(module) { "Module 'project.jvmMain' not found" }
                 KotlinWithGradleConfigurator.addKotlinLibraryToModule(
-                    object : ModuleBridge  by moduleBridge {
-                        override fun getName(): String = "jvmMain"
-                    },
+                    module,
                     DependencyScope.COMPILE,
                     object : ExternalLibraryDescriptor("org.jetbrains.kotlin", "kotlin-reflect", "1.3.50", "1.3.50") {
                         override fun getLibraryClassesRoots() = emptyList<String>()

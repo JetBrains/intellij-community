@@ -13,14 +13,13 @@ kotlin {
     sourceSets {
         jvm()
         val commonMain by getting {
-            dependencies { 
-                implementation(kotlin("reflect"))
-            }
-        }
-        val jvmMain by getting {
             dependencies {
                 implementation(kotlin("reflect"))
             }
         }
+        val jvmMain by getting
+    }
+    sourceSets.jvmMain.dependencies {
+        implementation(kotlin("reflect"))
     }
 }
