@@ -7,6 +7,7 @@ import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.DefaultGra
 import com.intellij.gradle.toolingExtension.impl.model.taskModel.DefaultGradleTaskModel;
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAction;
 import com.intellij.gradle.toolingExtension.impl.util.GradleTreeTraverserUtil;
+import com.intellij.gradle.toolingExtension.util.GradleVersionSpecificsUtil;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy;
@@ -317,7 +318,7 @@ public final class GradleProjectResolver implements ExternalSystemProjectResolve
       .spanBuilder("GradleCall")
       .startSpan();
     try (Scope ignore = gradleCallSpan.makeCurrent()) {
-      if (GradleVersionUtil.isGradleAtLeast(resolverContext.getGradleVersion(), "9.2")) {
+      if (GradleVersionSpecificsUtil.isBaseScriptModelSupported(resolverContext.getGradleVersion())) {
         var scriptModel = GradleExecutionHelper.getModel(connection, resolverContext, GradleDslBaseScriptModel.class);
         models.addRootModel(GradleDslBaseScriptModel.class, scriptModel);
         GradleSyncProjectConfigurator.runScriptBasePhase(resolverContext);

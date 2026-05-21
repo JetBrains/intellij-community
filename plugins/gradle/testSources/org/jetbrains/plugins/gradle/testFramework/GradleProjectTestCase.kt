@@ -19,6 +19,7 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
+import java.nio.file.Path
 
 abstract class GradleProjectTestCase : GradleProjectBaseTestCase() {
 
@@ -28,6 +29,7 @@ abstract class GradleProjectTestCase : GradleProjectBaseTestCase() {
   val mainModule: Module get() = gradleFixture.mainModule
   val projectRoot: VirtualFile get() = gradleFixture.fileFixture.projectRoot
   val projectPath: String get() = projectRoot.path
+  val projectNioPath: Path get() = projectRoot.toNioPath()
 
   fun isGradleAtLeast(version: String): Boolean = GradleVersionUtil.isGradleAtLeast(gradleVersion, version)
   fun isGradleOlderThan(version: String): Boolean = GradleVersionUtil.isGradleOlderThan(gradleVersion, version)
