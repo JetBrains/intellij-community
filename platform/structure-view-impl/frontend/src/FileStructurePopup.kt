@@ -42,7 +42,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.TextEditor
@@ -125,7 +125,9 @@ import java.awt.event.HierarchyEvent
 import java.awt.event.HierarchyListener
 import java.awt.event.MouseEvent
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -135,7 +137,6 @@ import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
-import kotlin.time.Duration.Companion.nanoseconds
 
 /**
  * @author Konstantin Bulenkov
@@ -170,6 +171,7 @@ class FileStructurePopup(
 
   private val constructorCallTime = System.nanoTime()
   private var showTime: Long = 0
+  private val rebuildCounter = AtomicLong()
 
   private var myCanClose = true
 
@@ -298,10 +300,7 @@ class FileStructurePopup(
     IdeFocusManager.getInstance(myProject).requestFocus(tree, true)
 
     showTime = System.nanoTime()
-    LOG.debug {
-      val time = (showTime - constructorCallTime).nanoseconds
-      "show time for the popup: $time ns, ${time.inWholeMilliseconds} ms"
-    }
+    LOG.trace { "show time for the popup: ${(showTime - constructorCallTime).asTraceDuration()}" }
   }
 
   private fun installUpdater(delayMillis: Int) {
@@ -664,18 +663,20 @@ class FileStructurePopup(
   }
 
   private suspend fun rebuild(refilterOnly: Boolean) {
+    val rebuildId = rebuildCounter.incrementAndGet()
+    LOG.trace { "FileStructurePopup#rebuild[$rebuildId]: requested; refilterOnly=$refilterOnly" }
     withContext(Dispatchers.UI) {
       val selection = tree.getSelectionPaths()?.firstNotNullOf { unwrapTreeElement(it.lastPathComponent) } ?: myModel.editorSelection.value
       withContext(Dispatchers.Default) {
         mutex.withLock {
-          rebuildAndSelect(refilterOnly, selection, null)
+          rebuildAndSelect(refilterOnly, selection, null, rebuildId)
         }
       }
     }
   }
 
   @RequiresBackgroundThread
-  private suspend fun rebuildAndSelect(refilterOnly: Boolean, selection: Any?, rebuildStartTime: Long?): TreePath? {
+  private suspend fun rebuildAndSelect(refilterOnly: Boolean, selection: Any?, rebuildStartTime: Long?, rebuildId: Long): TreePath? {
     check(mutex.isLocked)
 
     var rebuildStartTime = rebuildStartTime
@@ -685,15 +686,31 @@ class FileStructurePopup(
 
     val finalLastRebuildStartTime = rebuildStartTime
 
+    LOG.trace {
+      val rebuildKind = if (!refilterOnly) "full" else "refilter"
+      "FileStructurePopup#rebuild[$rebuildId]: rebuildAndSelect started; phaseRefilterOnly=$refilterOnly, " +
+      "kind=$rebuildKind, selectionType=${selection?.javaClass?.name}"
+    }
+
     val treePath = coroutineScope {
       suspendCancellableCoroutine { continuation ->
         myStructureTreeModel.invoker.invoke {
           if (refilterOnly) {
+            val filteringRebuildStartTime = System.nanoTime()
             myFilteringStructure.rebuild()
             myFilteringStructure.refilter()
+            LOG.trace {
+              "FileStructurePopup#rebuild[$rebuildId]: refiltered in ${(System.nanoTime() - filteringRebuildStartTime).asTraceDuration()}"
+            }
+            val invalidateStartTime = System.nanoTime()
             myStructureTreeModel.invalidateAsync().thenRun {
+              LOG.trace {
+                "FileStructurePopup#rebuild[$rebuildId]: structure tree invalidation completed in " +
+                (System.nanoTime() - invalidateStartTime).asTraceDuration()
+              }
               launch {
                 try {
+                  val selectionApplyStartTime = System.nanoTime()
                   val result = when (selection) {
                     is StructureViewTreeElement -> select(selection)
                     is StructureUiTreeElement -> select(selection)
@@ -702,15 +719,21 @@ class FileStructurePopup(
                       null
                     }
                   }
+                  LOG.trace {
+                    "FileStructurePopup#rebuild[$rebuildId]: selection applied in " +
+                    "${(System.nanoTime() - selectionApplyStartTime).asTraceDuration()}; result=${result != null}"
+                  }
+                  val uiFinalizeStartTime = System.nanoTime()
                   withContext(Dispatchers.UI) {
                     TreeUtil.expand(this@FileStructurePopup.tree, myModel.minimumAutoExpandDepth)
                     TreeUtil.ensureSelection(this@FileStructurePopup.tree)
                     mySpeedSearch.refreshSelection()
-                    LOG.debug {
-                      val time = (System.nanoTime() - showTime).nanoseconds
-                      "rebuild time: $time ns, ${time.inWholeMilliseconds} ms"
+                    val totalRebuildTime = System.nanoTime() - finalLastRebuildStartTime
+                    LOG.trace {
+                      "FileStructurePopup#rebuild[$rebuildId]: UI finalization completed in " +
+                      "${(System.nanoTime() - uiFinalizeStartTime).asTraceDuration()}; total=${totalRebuildTime.asTraceDuration()}"
                     }
-                    FileStructurePopupTimeTracker.logRebuildTime(System.nanoTime() - finalLastRebuildStartTime)
+                    FileStructurePopupTimeTracker.logRebuildTime(totalRebuildTime)
                   }
                   continuation.resume(result)
                 }
@@ -722,11 +745,21 @@ class FileStructurePopup(
             }
           }
           else {
+            val treeRebuildStartTime = System.nanoTime()
             myTreeStructure.rebuildTree()
+            LOG.trace {
+              "FileStructurePopup#rebuild[$rebuildId]: tree structure rebuild completed in " +
+              (System.nanoTime() - treeRebuildStartTime).asTraceDuration()
+            }
+            val invalidateStartTime = System.nanoTime()
             myStructureTreeModel.invalidateAsync().thenRun {
+              LOG.trace {
+                "FileStructurePopup#rebuild[$rebuildId]: full tree invalidation completed in " +
+                (System.nanoTime() - invalidateStartTime).asTraceDuration()
+              }
               launch {
                 try {
-                  val result = rebuildAndSelect(true, selection ?: myModel.editorSelection.value, finalLastRebuildStartTime)
+                  val result = rebuildAndSelect(true, selection ?: myModel.editorSelection.value, finalLastRebuildStartTime, rebuildId)
                   continuation.resume(result)
                 }
                 catch (e: Exception) {
@@ -1065,4 +1098,8 @@ class FileStructurePopup(
       return false
     }
   }
+}
+
+private fun Long.asTraceDuration(): String {
+  return "${TimeUnit.NANOSECONDS.toMillis(this)} ms"
 }
