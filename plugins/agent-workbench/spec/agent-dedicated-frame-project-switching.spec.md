@@ -8,6 +8,7 @@ targets:
   - ../../platform/ide-core-impl/src/com/intellij/ide/impl/OpenProjectTask.kt
   - ../../platform/platform-impl/src/com/intellij/ide/RecentProjectMetaInfo.kt
   - ../../platform/platform-impl/src/com/intellij/ide/RecentProjectsManagerBase.kt
+  - ../../platform/platform-impl/src/com/intellij/ide/ProjectWindowCustomizerService.kt
   - ../../platform/platform-impl/src/com/intellij/ide/ActiveWindowsWatcher.java
   - ../../platform/platform-impl/src/com/intellij/openapi/project/impl/IdeProjectFrameAllocator.kt
   - ../../platform/platform-impl/src/com/intellij/openapi/wm/impl/ProjectFrameHelper.kt
@@ -24,6 +25,9 @@ targets:
   - ../sessions/src/AgentSessionsGoToSourceProjectFromEditorTabAction.kt
   - ../sessions/resources/intellij.agent.workbench.sessions.xml
   - ../sessions/testSrc/*.kt
+  - ../chat/src/AgentChatEditorTabColorProvider.kt
+  - ../chat/resources/intellij.agent.workbench.chat.xml
+  - ../chat/testSrc/AgentChatEditorTabColorProviderTest.kt
 ---
 
 # Dedicated Frame Project Switching
@@ -88,6 +92,14 @@ Terminal hyperlink click routing in dedicated frame is owned by `spec/agent-dedi
   [@test] ../sessions-actions/testSrc/AgentSessionsEditorTabActionsTest.kt
   [@test] ../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
 
+- In dedicated frame, Agent chat editor tabs must reuse the source project's stored project color when `UISettings.differentiateProjects` is enabled:
+  - use the platform recent-project soft background palette keyed by the stored source-project color index,
+  - derive a muted tab color from stored custom project colors,
+  - do not generate or persist project color metadata during tab color resolution,
+  - expose the source project path in the tab tooltip so color is not the only project-identification cue.
+  [@test] ../chat/testSrc/AgentChatEditorTabColorProviderTest.kt
+  [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
+
 - Agent chat editor tabs can be dragged from the dedicated frame to the matching already-open source project frame:
   - the matching source project frame accepts the drop,
   - other project frames reject the drop,
@@ -122,6 +134,9 @@ Terminal hyperlink click routing in dedicated frame is owned by `spec/agent-dedi
 - `AgentSessionLaunchService` sets `OpenProjectTask.projectFrameTypeId` when opening dedicated frame project.
 - `AgentWorkbenchDedicatedFrameProjectManager.configureProject` persists `projectFrameTypeId` into recent metadata.
 - Source project open/focus behavior uses `AgentSessionLaunchService.openOrFocusProject(path)`.
+- Agent chat tab colors read only stored recent-project color metadata for the source project. They must not call
+  path-based platform project color helpers because those helpers can generate and persist a missing color index for
+  a project path; dedicated-frame tabs can refer to many closed source projects.
 - Toolbar source-project action resolves active chat-tab source path via `AgentChatTabSelectionService.selectedChatTab`.
 - Dedicated frame open/focus behavior uses `AgentSessionLaunchService.openOrFocusDedicatedFrame(currentProject)`.
 

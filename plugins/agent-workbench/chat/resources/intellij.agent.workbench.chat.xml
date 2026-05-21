@@ -20,7 +20,19 @@
     <fileIconProvider implementation="com.intellij.agent.workbench.chat.AgentChatFileIconProvider"/>
     <fileEditorProvider id="agent.workbench-chat-editor" implementation="com.intellij.agent.workbench.chat.AgentChatFileEditorProvider"/>
     <editorTabTitleProvider implementation="com.intellij.agent.workbench.chat.AgentChatEditorTabTitleProvider"/>
+    <editorTabColorProvider implementation="com.intellij.agent.workbench.chat.AgentChatEditorTabColorProvider"/>
     <applicationSettings service="com.intellij.agent.workbench.chat.AgentChatTabsStateService"/>
+  </extensions>
+
+  <applicationListeners>
+    <listener class="com.intellij.agent.workbench.chat.AgentChatProjectColorChangeListener"
+              topic="com.intellij.ide.ProjectColorChangeListener"/>
+    <listener class="com.intellij.agent.workbench.chat.AgentChatSettingsChangeListener"
+              topic="com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettingsListener"/>
+  </applicationListeners>
+
+  <extensions defaultExtensionNs="com.intellij.agent.workbench">
+    <settingsContributor implementation="com.intellij.agent.workbench.chat.AgentChatSettingsContributor"/>
   </extensions>
 
   <actions resource-bundle="messages.AgentChatBundle">
