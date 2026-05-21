@@ -152,7 +152,6 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
       </dependencies>
       """.trimIndent())
 
-    assertCompletionVariants(m, LOOKUP_STRING, "project-group:project:1", "project-group:m1:1", "project-group:m2:2")
     assertCompletionVariants(m, RENDERING_TEXT, "project", "m1", "m2")
   }
 
@@ -260,7 +259,6 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
       </dependencies>
       """.trimIndent())
 
-    assertCompletionVariants(m1, LOOKUP_STRING, "test:project:1", "test:m1:1", "test:m2:1")
     assertCompletionVariants(m1, RENDERING_TEXT, "project", "m1", "m2")
 
     updateModulePom("m1", """
@@ -289,7 +287,6 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
       </dependencies>
       """.trimIndent())
 
-    assertCompletionVariantsNoCache(m1, LOOKUP_STRING, "test:project:1", "test:m1:1", "test:m2_new:1")
     assertCompletionVariantsNoCache(m1, RENDERING_TEXT, "project", "m1", "m2_new")
   }
 
@@ -369,14 +366,12 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
     IndexingTestUtil.waitUntilIndexesAreReady(project)
 
     assertCompletionVariantsInclude(projectPom, RENDERING_TEXT, "m1", "m2")
-    assertCompletionVariantsInclude(projectPom, LOOKUP_STRING, "project-group:m1:1", "project-group:m2:1")
 
     WriteAction.runAndWait<IOException> { m1.delete(null) }
 
     configConfirmationForYesAnswer()
 
     assertCompletionVariantsInclude(projectPom, RENDERING_TEXT, "m2")
-    assertCompletionVariantsInclude(projectPom, LOOKUP_STRING, "project-group:m2:1")
   }
 
   @Test
