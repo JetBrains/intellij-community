@@ -4,6 +4,7 @@ package com.intellij.gradle.completion.kotlin
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource
@@ -20,6 +21,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.base.codeInsight.contributorClass
+import org.jetbrains.kotlin.idea.base.test.JUnit4Assertions.assertTrue
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.test.AssertKotlinPluginMode
 import org.jetbrains.kotlin.idea.test.UseK2PluginMode
@@ -648,6 +650,46 @@ internal class KotlinGradleDependenciesCompletionTest : AbstractKotlinGradleComp
           && it.lookupString == "exclude"
         }
         assertNotNull(expectedElement, "Expected to find an element produced by K2 Completion Contributor, but it wasn't found")
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun `test command completion is not shown in the dependencies block`(gradleVersion: GradleVersion) {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, testRootDisposable)
+    test(gradleVersion, KOTLIN_GRADLE_COMPLETION_FIXTURE) {
+      val file = writeTextAndCommit(
+        "build.gradle.kts", """
+          dependencies { 
+              implementation("org.junit.jupiter:junit-jupiter:6.0.0").<caret>
+          }
+        """.trimIndent())
+      runInEdtAndWait {
+        codeInsightFixture.configureFromExistingVirtualFile(file)
+        val commandCompletionExamples = listOf("Surround with 'try / finally'", "Extract function", "Go to members", "Reformat code")
+        val unexpectedLookup = codeInsightFixture.completeBasic()
+          ?.map { it.lookupString }
+          ?.filter { it in commandCompletionExamples }
+        assertTrue(unexpectedLookup.isNullOrEmpty()) {
+          "The command completion was not expected, but these commands were suggested: \n${unexpectedLookup}"
+        }
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun `test command completion is not disabled outside the dependencies block`(gradleVersion: GradleVersion) {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, testRootDisposable)
+    test(gradleVersion, KOTLIN_GRADLE_COMPLETION_FIXTURE) {
+      val file = writeTextAndCommit("build.gradle.kts", "{}.refor<caret>")
+      runInEdtAndWait {
+        codeInsightFixture.configureFromExistingVirtualFile(file)
+        val lookup = codeInsightFixture.completeBasic()?.map { it.lookupString }
+        assertTrue(lookup?.any { it == "Reformat code" } == true) {
+          "The command completion was expected outside the dependencies block, but it wasn't suggested. Actual lookup: $lookup"
+        }
       }
     }
   }

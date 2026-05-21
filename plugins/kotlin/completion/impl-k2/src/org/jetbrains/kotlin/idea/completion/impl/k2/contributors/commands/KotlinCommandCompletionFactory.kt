@@ -11,21 +11,26 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.parentsOfType
 import com.intellij.testFramework.LightVirtualFile
+import com.intellij.util.asSafely
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.projectStructure.contextModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.copyOrigin
 import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.range
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.psi.copied
+import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtContainerNode
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtForExpression
+import org.jetbrains.kotlin.psi.KtLambdaArgument
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtStringTemplateEntryWithExpression
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
+import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
 
 private val ktCommandCompletionCopy: Key<Boolean> = Key.create("ktCommandCompletionCopy")
 
@@ -37,6 +42,7 @@ internal class KotlinCommandCompletionFactory : CommandCompletionFactory, DumbAw
         if (psiFile !is KtFile) return false
         if (isInsideFor(psiFile, offset)) return false
         if (isInsideStringLiteral(psiFile, offset)) return false
+        if (isDisabledForGradle(psiFile, offset)) return false
         return true
     }
 
@@ -115,5 +121,17 @@ internal class KotlinCommandCompletionFactory : CommandCompletionFactory, DumbAw
             return copied
 
         }
+    }
+
+    private fun isDisabledForGradle(psiFile: KtFile, offset: Int): Boolean {
+        if (psiFile.name != "build.gradle.kts") return false
+        val element = psiFile.findElementAt(offset) ?: return false
+        val isInsideDependenciesBlock = element.parentsOfType(KtLambdaArgument::class.java)
+            .any {
+                it.parent.asSafely<KtCallExpression>()
+                    ?.referenceExpression()
+                    ?.text == "dependencies"
+            }
+        return isInsideDependenciesBlock
     }
 }
