@@ -418,6 +418,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   override fun <T> comboBox(model: ComboBoxModel<T>, renderer: ListCellRenderer<in T?>?): Cell<ComboBox<T>> {
     val component = ComboBox(model)
+    component.isUsePreferredSizeAsMinimum = false
 
     if (renderer == null) {
       if (!ExperimentalUI.isNewUI()) {
