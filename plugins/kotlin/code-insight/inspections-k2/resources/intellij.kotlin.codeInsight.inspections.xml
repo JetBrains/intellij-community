@@ -51,7 +51,7 @@
             groupPath="Kotlin"
             groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
             enabledByDefault="true"
-            level="WARNING"
+            level="INFORMATION"
             language="kotlin"
             key="inspection.convert.explicit.context.argument.to.implicit.display.name" bundle="messages.KotlinBundle"/>
 
