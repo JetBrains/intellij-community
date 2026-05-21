@@ -1,10 +1,11 @@
 from collections.abc import Iterable
 
 from google.protobuf.descriptor import Descriptor, EnumDescriptor, FileDescriptor, ServiceDescriptor
+from google.protobuf.descriptor_pool import DescriptorPool
 from google.protobuf.message import Message
-from google.protobuf.message_factory import MessageFactory
 
-class SymbolDatabase(MessageFactory):
+class SymbolDatabase:
+    def __init__(self, pool: DescriptorPool | None = None) -> None: ...
     def RegisterMessage(self, message: type[Message] | Message) -> type[Message] | Message: ...
     def RegisterMessageDescriptor(self, message_descriptor: Descriptor) -> None: ...
     def RegisterEnumDescriptor(self, enum_descriptor: EnumDescriptor) -> EnumDescriptor: ...

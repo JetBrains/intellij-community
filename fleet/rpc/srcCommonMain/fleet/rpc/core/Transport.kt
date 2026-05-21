@@ -16,10 +16,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.selects.select
+import org.jetbrains.annotations.ApiStatus
 import kotlin.time.TimeSource
 
 private val logger = logger<Transport>()
 
+@ApiStatus.Internal
 class Transport(
   val outgoing: SendChannel<TransportMessage>,
   val incoming: ReceiveChannel<TransportMessage>,
@@ -27,6 +29,7 @@ class Transport(
 
 typealias FleetTransportFactory = TransportFactory
 
+@ApiStatus.Internal
 interface TransportFactory {
   /*
    * [body] should be called with fully operational transport, feel free to suspend.
@@ -39,6 +42,7 @@ interface TransportFactory {
   ): T
 }
 
+@ApiStatus.Internal
 fun TransportFactory(
   factory: (MutableStateFlow<TransportStats>?) -> Resource<Transport>,
 ): TransportFactory =
@@ -50,6 +54,7 @@ fun TransportFactory(
 /**
  * Use this function when you want to re-create your factory on each connection attempt.
  */
+@ApiStatus.Internal
 fun dynamicTransportFactory(f: suspend () -> TransportFactory): TransportFactory =
   object : TransportFactory {
     override suspend fun <T> connect(transportStats: MutableStateFlow<TransportStats>?, body: suspend CoroutineScope.(Transport) -> T): T {
@@ -57,11 +62,13 @@ fun dynamicTransportFactory(f: suspend () -> TransportFactory): TransportFactory
     }
   }
 
+@ApiStatus.Internal
 enum class DebugConnectionState {
   Connect,
   Disconnect
 }
 
+@ApiStatus.Internal
 fun DebugConnectionState.toggle(): DebugConnectionState {
   return when (this) {
     DebugConnectionState.Connect -> DebugConnectionState.Disconnect
@@ -69,6 +76,7 @@ fun DebugConnectionState.toggle(): DebugConnectionState {
   }
 }
 
+@ApiStatus.Internal
 fun FleetTransportFactory.debugDisconnect(control: StateFlow<DebugConnectionState>, debugToken: String? = null): FleetTransportFactory {
   val underlying = this
   return object : FleetTransportFactory {
@@ -99,6 +107,7 @@ fun FleetTransportFactory.debugDisconnect(control: StateFlow<DebugConnectionStat
   }
 }
 
+@ApiStatus.Internal
 @OptIn(ExperimentalCoroutinesApi::class)
 class TransportDisconnectedException(reason: String?, cause: Throwable?)
   : RuntimeException(reason, cause), CopyableThrowable<TransportDisconnectedException> {

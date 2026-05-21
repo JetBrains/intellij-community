@@ -1,2 +1,2 @@
-version = "0.9.*"
-upstream_repository = "https://github.com/astanin/python-tabulate"
+version = "0.10.*"
+upstream-repository = "https://github.com/astanin/python-tabulate"

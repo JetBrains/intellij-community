@@ -15,11 +15,11 @@ class ReadOnlyWorksheet:
     # Same as Worksheet.values
     # https://github.com/python/mypy/issues/6700
     @property
-    def values(self) -> Generator[tuple[_CellGetValue, ...], None, None]: ...
+    def values(self) -> Generator[tuple[_CellGetValue, ...]]: ...
     # Same as Worksheet.rows
     # https://github.com/python/mypy/issues/6700
     @property
-    def rows(self) -> Generator[tuple[_CellOrMergedCell, ...], None, None]: ...
+    def rows(self) -> Generator[tuple[_CellOrMergedCell, ...]]: ...
     __getitem__ = Worksheet.__getitem__
     __iter__ = Worksheet.__iter__
     parent: Workbook

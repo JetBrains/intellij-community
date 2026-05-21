@@ -12,10 +12,19 @@ interface ProjectPathManager {
 
 export function createProjectPathManager({
   projectPath,
-  defaultProjectPathKey = 'project_path'
+  defaultProjectPathKey = 'projectPath',
+  forceInject = false
 }: {
   projectPath: string
   defaultProjectPathKey?: ProjectPathKey
+  /**
+   * When `true`, `project_path` / `projectPath` is injected into every upstream tool call
+   * regardless of whether the tool declared it in its schema. Used when a container
+   * session is active: the host IDE uses the configured project path to disambiguate
+   * between multiple open projects, and tools that don't declare the parameter would
+   * otherwise fall back to "which project?" errors.
+   */
+  forceInject?: boolean
 }): ProjectPathManager {
   let projectPathKey: ProjectPathKey | null = null
   let hasSeenToolsList = false
@@ -29,38 +38,19 @@ export function createProjectPathManager({
     const hasCamel = Object.prototype.hasOwnProperty.call(args, 'projectPath')
 
     if (desiredKey === 'projectPath') {
-      if (hasCamel) {
-        if (hasSnake) delete args.project_path
-        if (args.projectPath == null) args.projectPath = projectPath
-        return
-      }
-      if (hasSnake) {
-        args.projectPath = args.project_path
-        delete args.project_path
-        if (args.projectPath == null) args.projectPath = projectPath
-        return
-      }
+      if (hasSnake) delete args.project_path
       args.projectPath = projectPath
       return
     }
 
     if (desiredKey === 'project_path') {
-      if (hasSnake) {
-        if (hasCamel) delete args.projectPath
-        if (args.project_path == null) args.project_path = projectPath
-        return
-      }
-      if (hasCamel) {
-        args.project_path = args.projectPath
-        delete args.projectPath
-        if (args.project_path == null) args.project_path = projectPath
-        return
-      }
+      if (hasCamel) delete args.projectPath
       args.project_path = projectPath
     }
   }
 
   function shouldInjectProjectPath(toolName: string | undefined): boolean {
+    if (forceInject) return true
     if (!hasSeenToolsList) return true
     if (!hasProjectPathTools) return false
     if (!toolName) return true

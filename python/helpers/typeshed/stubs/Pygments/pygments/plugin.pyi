@@ -1,16 +1,17 @@
 import sys
 from _typeshed import Incomplete
 from collections.abc import Generator
+from typing import Final
 
 from pygments.filter import Filter
 from pygments.formatter import Formatter
 from pygments.lexer import Lexer
 from pygments.style import Style
 
-LEXER_ENTRY_POINT: str
-FORMATTER_ENTRY_POINT: str
-STYLE_ENTRY_POINT: str
-FILTER_ENTRY_POINT: str
+LEXER_ENTRY_POINT: Final = "pygments.lexers"
+FORMATTER_ENTRY_POINT: Final = "pygments.formatters"
+STYLE_ENTRY_POINT: Final = "pygments.styles"
+FILTER_ENTRY_POINT: Final = "pygments.filters"
 
 if sys.version_info >= (3, 10):
     from importlib.metadata import EntryPoints

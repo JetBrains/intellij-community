@@ -137,6 +137,7 @@ class BlobProperty(Property):
     def __get__(self, entity: Model, unused_cls: type[Model] | None = ...) -> bytes | list[bytes] | None: ...
 
 class CompressedTextProperty(BlobProperty):
+    __slots__ = ()
     def __init__(self, *args, **kwargs) -> None: ...
 
 class TextProperty(Property):

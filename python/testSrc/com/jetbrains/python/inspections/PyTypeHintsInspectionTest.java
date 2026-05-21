@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections;
 
+import com.intellij.idea.TestFor;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
@@ -1391,7 +1392,20 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
 
                    d: Annotated[A, '']
                    e: Annotated[<warning descr="'Annotated' must be called with at least two arguments">Annotated[A, True]</warning>]
-                   f: Annotated[Annotated[<warning descr="'Annotated' must be called with at least two arguments">A</warning>], '']""");
+                   f: Annotated[Annotated[<warning descr="'Annotated' must be called with at least two arguments">A</warning>], '']
+                   g: Annotated[<error>[]</error>, 1]
+                   """);
+  }
+
+  @TestFor(issues = "PY-89188")
+  public void testAnnotatedMetadata() {
+    doTestByText(
+      """
+       from typing import Annotated
+
+       a: Annotated[int, [], print("asdf")]
+       """
+    );
   }
 
   // PY-41847
@@ -2998,6 +3012,31 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                class C[T: str]: ...
                c = C[<warning descr="Expected type 'T ≤: str', got 'int' instead">int</warning>]()
                """);
+  }
+
+  @TestFor(issues="PY-88277")
+  public void testClassTypeVarTupleBoundMismatch() {
+    doTestByText("""
+                   from typing import Unpack
+                   
+                   class C[*Ts: <error descr="Type variable tuples cannot have constraints or upper bounds">str</error>]: ...
+                   c = C[str, str]()
+                   c = C[<warning descr="Expected type '*Ts ≤: str', got '*tuple[str, int]' instead">str, int</warning>]()
+                   c = C[<warning descr="Expected type '*Ts ≤: str', got '*tuple[int, str]' instead">int, str</warning>]()
+                   
+                   class D[*Ts: <error descr="Type variable tuples cannot have constraints or upper bounds">Unpack[tuple[str]]</error>]: ...
+                   d = D[str]()
+                   d = D[<warning descr="Expected type '*Ts ≤: *tuple[str]', got '*tuple[str, str]' instead">str, str</warning>]()
+                   d = D[<warning descr="Expected type '*Ts ≤: *tuple[str]', got '*tuple[int, str]' instead">int, str</warning>]()
+                   """);
+  }
+
+  @TestFor(issues="PY-88277")
+  public void testClassParamSpecBoundMismatch() {
+    doTestByText("""
+                   class C[**P: <error descr="Parameter specifications cannot have constraints or upper bounds">[str]</error>]: ...
+                   c = C[<warning descr="Expected type '**P ≤: [str]', got '[int]' instead">int</warning>]()
+                   """);
   }
 
   // PY-76851

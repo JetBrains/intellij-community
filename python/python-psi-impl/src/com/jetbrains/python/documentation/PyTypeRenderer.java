@@ -37,7 +37,6 @@ import com.jetbrains.python.psi.types.PySelfType;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeParameterType;
-import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.PyTypeVarType;
 import com.jetbrains.python.psi.types.PyTypeVisitorExt;
 import com.jetbrains.python.psi.types.PyUnionType;
@@ -560,22 +559,20 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
   }
 
   @Override
-  public @NotNull HtmlChunk visitPyTypeVarType(@NotNull PyTypeVarType typeVarType) {
+  public @NotNull HtmlChunk visitPyTypeParameterType(@NotNull PyTypeParameterType typeParameterType) {
     HtmlBuilder result = new HtmlBuilder();
-    result.append(escaped(getTypeName(typeVarType)));
+    result.append(escaped(getTypeName(typeParameterType)));
     if (isRenderingTypeVarBounds()) {
-      PyType effectiveBound = PyTypeUtil.getEffectiveBound(typeVarType);
+      var effectiveBound = typeParameterType.getEffectiveBound();
       if (effectiveBound != null) {
         result.append(escaped(" ≤: "));
         result.append(render(effectiveBound));
       }
     }
-    return typeVarType.isDefinition() ? wrapInTypingType(result.toFragment()) : result.toFragment();
-  }
-
-  @Override
-  public HtmlChunk visitPyTypeParameterType(@NotNull PyTypeParameterType typeParameterType) {
-    return escaped(typeParameterType.getName());
+    if (typeParameterType instanceof PyTypeVarType typeVarType && typeVarType.isDefinition()) {
+      return wrapInTypingType(result.toFragment());
+    }
+    return result.toFragment();
   }
 
   @Override

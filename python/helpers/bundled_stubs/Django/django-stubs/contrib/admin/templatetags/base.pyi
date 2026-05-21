@@ -5,6 +5,7 @@ from django.template.base import Parser, Token
 from django.template.context import Context
 from django.template.library import InclusionNode
 from django.utils.safestring import SafeString
+from typing_extensions import override
 
 class InclusionAdminNode(InclusionNode):
     args: list[Any]
@@ -15,4 +16,5 @@ class InclusionAdminNode(InclusionNode):
     def __init__(
         self, parser: Parser, token: Token, func: Callable, template_name: str, takes_context: bool = ...
     ) -> None: ...
+    @override
     def render(self, context: Context) -> SafeString: ...

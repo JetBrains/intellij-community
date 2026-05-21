@@ -475,6 +475,7 @@ platform/jewel/markdown/extensions/gfm-tables
 platform/jewel/markdown/extensions/images
 platform/jewel/markdown/ide-laf-bridge-styling
 platform/jewel/markdown/int-ui-standalone-styling
+platform/jewel/markdown/testing
 platform/jewel/samples/showcase
 platform/jewel/samples/standalone
 platform/jewel/ui
@@ -709,6 +710,7 @@ plugins/ByteCodeViewer
 plugins/IntelliLang
 plugins/IntelliLang/backend
 plugins/IntelliLang/tests
+plugins/agent-workbench/ai-review
 plugins/agent-workbench/chat
 plugins/agent-workbench/claude/common
 plugins/agent-workbench/claude/sessions
@@ -751,6 +753,7 @@ plugins/compose/intellij.compose.ide.plugin.k1
 plugins/compose/intellij.compose.ide.plugin.k2
 plugins/compose/intellij.compose.ide.plugin.projectStructureTests
 plugins/compose/intellij.compose.ide.plugin.resources
+plugins/compose/intellij.compose.ide.plugin.resources.android
 plugins/compose/intellij.compose.ide.plugin.shared
 plugins/configuration-script
 plugins/copyright

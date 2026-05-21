@@ -1,5 +1,5 @@
 from collections.abc import Mapping
-from typing import Any
+from typing import Any, Final
 from typing_extensions import Self
 
 class _TokenType(tuple[str, ...]):
@@ -27,8 +27,8 @@ Operator: _TokenType
 Comment: _TokenType
 Generic: _TokenType
 
-def is_token_subtype(ttype, other): ...
-def string_to_tokentype(s): ...
+def is_token_subtype(ttype: _TokenType, other: _TokenType) -> bool: ...
+def string_to_tokentype(s: str | _TokenType) -> _TokenType: ...
 
 # dict, but shouldn't be mutated
-STANDARD_TYPES: Mapping[_TokenType, str]
+STANDARD_TYPES: Final[Mapping[_TokenType, str]]

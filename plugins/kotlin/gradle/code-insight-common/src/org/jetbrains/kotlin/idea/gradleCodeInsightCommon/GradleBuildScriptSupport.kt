@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.gradleCodeInsightCommon
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.module.Module
 import com.intellij.psi.PsiFile
 
 interface GradleBuildScriptSupport {
@@ -20,6 +21,11 @@ interface GradleBuildScriptSupport {
         fun getManipulator(file: PsiFile, preferNewSyntax: Boolean = true): GradleBuildScriptManipulator<*> {
             return findManipulator(file, preferNewSyntax) ?: error("Unknown build script file type (${file::class.qualifiedName})!")
         }
+
+        fun findKotlinPluginManagementVersion(module: Module): DefinedKotlinPluginManagementVersion? =
+            module.getBuildScriptSettingsPsiFile()?.let {
+                getManipulator(it).findKotlinPluginManagementVersion()
+            }
     }
 
     fun createManipulator(file: PsiFile, preferNewSyntax: Boolean): GradleBuildScriptManipulator<*>?

@@ -1,7 +1,35 @@
 c:com.intellij.internal.statistic.eventLog.EventLogGroup
+- <init>(java.lang.String,I):V
+- <init>(java.lang.String,I,java.lang.String):V
+- b:<init>(java.lang.String,I,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(java.lang.String,I,java.lang.String,java.lang.String):V
 - b:<init>(java.lang.String,I,java.lang.String,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(java.lang.String,I,java.lang.String,java.lang.String,java.util.List):V
+- b:<init>(java.lang.String,I,java.lang.String,java.lang.String,java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(java.lang.String,I,java.lang.String,java.util.List):V
+- b:<init>(java.lang.String,I,java.lang.String,java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:getEvents():java.util.List
 - f:getGroupData():java.util.List
+- f:getId():java.lang.String
+- f:getRecorder():java.lang.String
+- f:getVersion():I
+- f:registerEvent(java.lang.String):com.intellij.internal.statistic.eventLog.events.EventId
+- f:registerEvent(java.lang.String,com.intellij.internal.statistic.eventLog.events.EventField):com.intellij.internal.statistic.eventLog.events.EventId1
+- f:registerEvent(java.lang.String,com.intellij.internal.statistic.eventLog.events.EventField,com.intellij.internal.statistic.eventLog.events.EventField):com.intellij.internal.statistic.eventLog.events.EventId2
+- f:registerEvent(java.lang.String,com.intellij.internal.statistic.eventLog.events.EventField,com.intellij.internal.statistic.eventLog.events.EventField,com.intellij.internal.statistic.eventLog.events.EventField):com.intellij.internal.statistic.eventLog.events.EventId3
+- f:registerEvent(java.lang.String,com.intellij.internal.statistic.eventLog.events.EventField,com.intellij.internal.statistic.eventLog.events.EventField,com.intellij.internal.statistic.eventLog.events.EventField,java.lang.String):com.intellij.internal.statistic.eventLog.events.EventId3
+- f:registerEvent(java.lang.String,com.intellij.internal.statistic.eventLog.events.EventField,com.intellij.internal.statistic.eventLog.events.EventField,java.lang.String):com.intellij.internal.statistic.eventLog.events.EventId2
+- f:registerEvent(java.lang.String,com.intellij.internal.statistic.eventLog.events.EventField,java.lang.String):com.intellij.internal.statistic.eventLog.events.EventId1
 - f:registerEvent(java.lang.String,com.intellij.internal.statistic.eventLog.events.EventField,java.lang.String,I,java.lang.Object):com.intellij.internal.statistic.eventLog.events.EventId1
+- f:registerEvent(java.lang.String,java.lang.String):com.intellij.internal.statistic.eventLog.events.EventId
+- f:registerIdeActivity(java.lang.String):com.intellij.internal.statistic.IdeActivityDefinition
+- f:registerIdeActivity(java.lang.String,com.intellij.internal.statistic.eventLog.events.EventField[]):com.intellij.internal.statistic.IdeActivityDefinition
+- f:registerIdeActivity(java.lang.String,com.intellij.internal.statistic.eventLog.events.EventField[],com.intellij.internal.statistic.eventLog.events.EventField[]):com.intellij.internal.statistic.IdeActivityDefinition
+- f:registerIdeActivity(java.lang.String,com.intellij.internal.statistic.eventLog.events.EventField[],com.intellij.internal.statistic.eventLog.events.EventField[],com.intellij.internal.statistic.IdeActivityDefinition):com.intellij.internal.statistic.IdeActivityDefinition
+- f:registerIdeActivity(java.lang.String,com.intellij.internal.statistic.eventLog.events.EventField[],com.intellij.internal.statistic.eventLog.events.EventField[],com.intellij.internal.statistic.IdeActivityDefinition,Z):com.intellij.internal.statistic.IdeActivityDefinition
+- bs:registerIdeActivity$default(com.intellij.internal.statistic.eventLog.EventLogGroup,java.lang.String,com.intellij.internal.statistic.eventLog.events.EventField[],com.intellij.internal.statistic.eventLog.events.EventField[],com.intellij.internal.statistic.IdeActivityDefinition,Z,I,java.lang.Object):com.intellij.internal.statistic.IdeActivityDefinition
+- f:registerVarargEvent(java.lang.String,java.lang.String,com.intellij.internal.statistic.eventLog.events.EventField[]):com.intellij.internal.statistic.eventLog.events.VarargEventId
+- f:registerVarargEvent(java.lang.String,com.intellij.internal.statistic.eventLog.events.EventField[]):com.intellij.internal.statistic.eventLog.events.VarargEventId
 f:com.intellij.internal.statistic.eventLog.EventLogGroupKt
 - sf:FUS_RECORDER:java.lang.String
 com.intellij.internal.statistic.eventLog.StatisticsEventLogListener

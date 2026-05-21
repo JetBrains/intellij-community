@@ -291,13 +291,16 @@ class MarketplacePluginsTab extends PluginsTab {
           myMarketplacePanel.initialSelection();
 
           myPluginUpdatesService.calculateUpdates(updates -> {
-            if (ContainerUtil.isEmpty(updates)) {
+            List<PluginUiModel> updateModels = updates == null ? List.of() : updates.stream()
+              .filter(plugin -> myPluginModelFacade.isEnabled(plugin))
+              .toList();
+            if (ContainerUtil.isEmpty(updateModels)) {
               clearUpdates(myMarketplacePanel);
               clearUpdates(myMarketplaceSearchPanel.getPanel());
             }
             else {
-              applyUpdates(myMarketplacePanel, updates);
-              applyUpdates(myMarketplaceSearchPanel.getPanel(), updates);
+              applyUpdates(myMarketplacePanel, updateModels);
+              applyUpdates(myMarketplaceSearchPanel.getPanel(), updateModels);
             }
             selectionListener.accept(myMarketplacePanel);
             selectionListener.accept(myMarketplaceSearchPanel.getPanel());

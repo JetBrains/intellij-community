@@ -21,7 +21,7 @@ class override(ContextDecorator):
         self,
         exc_type: type[BaseException] | None,
         exc_value: BaseException | None,
-        exc_tb: TracebackType | None,
+        traceback: TracebackType | None,
     ) -> None: ...
 
 def localtime(value: datetime | None = None, timezone: tzinfo | None = None) -> datetime: ...

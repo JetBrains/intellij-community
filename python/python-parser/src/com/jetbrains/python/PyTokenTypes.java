@@ -203,4 +203,6 @@ public final class PyTokenTypes {
                                                                 FSTRING_FRAGMENT_TYPE_CONVERSION);
 
   public static final TokenSet FSTRING_TEXT_TOKENS = TokenSet.create(FSTRING_TEXT, FSTRING_RAW_TEXT);
+
+  public static final TokenSet FSTRING_LITERAL_TOKENS = TokenSet.orSet(FSTRING_TEXT_TOKENS, TokenSet.create(FSTRING_START, FSTRING_END));
 }

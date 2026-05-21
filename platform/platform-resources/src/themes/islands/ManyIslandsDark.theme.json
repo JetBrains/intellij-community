@@ -439,7 +439,21 @@
 
     "Badge": {
       "greenOutlineForeground": "text-success",
-      "greenOutlineBorderColor": "control-success-border"
+      "greenOutlineBorderColor": "control-success-border",
+      "blueSecondaryBackground": "#2E4D89CC",
+      "blueSecondaryForeground": "blue-140",
+      "blueBackground": "blue-90",
+      "blueForeground": "gray-20",
+      "greenSecondaryBackground": "#29583CCC",
+      "greenSecondaryForeground": "green-140",
+      "greenBackground": "green-90",
+      "greenForeground": "gray-20",
+      "purpleSecondaryBackground": "#574092CC",
+      "purpleSecondaryForeground": "purple-140",
+      "graySecondaryBackground": "#B5B7BD33",
+      "graySecondaryForeground": "gray-110",
+      "disabledBackground": "#B5B7BD33",
+      "disabledForeground": "gray-90"
     },
 
     "Banner": {
@@ -574,6 +588,23 @@
         "typeForeground": "#6F737A"
       },
       "EvaluateExpression.background": "container-tool-window-bg"
+    },
+
+    "LineProfiler": {
+      "Line": {
+        "labelBackground": "#FFFFFF17",
+        "foreground": "#9FA2A8",
+        "hoverBackground": "#FFFFFF29"
+      },
+      "HotLine": {
+        "labelBackground": "#371B1C",
+        "foreground": "#DB5C5C",
+        "hoverBackground": "#56272B"
+      },
+      "IgnoredLine": {
+        "labelBackground": "#FFFFFF29",
+        "foreground": "#73767C"
+      }
     },
 
     "FileColor": {

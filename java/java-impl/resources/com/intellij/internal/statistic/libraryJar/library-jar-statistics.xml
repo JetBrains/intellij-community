@@ -140,6 +140,7 @@
   <technology name="junit5" class="org.junit.jupiter.api.Test"/>
   <technology name="kafka" class="org.apache.kafka.clients.consumer.Consumer"/>
   <technology name="karate" class="com.intuit.karate.Runner"/>
+  <technology name="kmp-protobuf" class="kotlinx.rpc.protobuf.internal.GeneratedProtoMessage"/>
   <technology name="kodein" class="org.kodein.di.Kodein"/>
   <technology name="koin" class="org.koin.core.Koin"/>
   <technology name="koog" class="ai.koog.agents.core.agent.AIAgent"/>
@@ -151,6 +152,9 @@
   <technology name="kotlinx-coroutines" class="kotlinx.coroutines.CoroutineDispatcher"/>
   <technology name="kotlinx-datetime" class="kotlinx.datetime.Instant"/>
   <technology name="kotlinx-io" class="kotlinx.io.Buffer"/>
+  <technology name="kotlinx-rpc-core" class="kotlinx.rpc.RpcClient"/>
+  <technology name="kotlinx-rpc-krpc-core" class="kotlinx.rpc.krpc.KrpcConfig"/>
+  <technology name="kotlinx-rpc-grpc-core" class="kotlinx.rpc.grpc.annotations.Grpc"/>
   <technology name="kotlinx-serialization" class="kotlinx.serialization.KSerializer"/>
   <technology name="ktor-client" class="io.ktor.client.HttpClient"/>
   <technology name="ktor-server" class="io.ktor.application.Application"/>

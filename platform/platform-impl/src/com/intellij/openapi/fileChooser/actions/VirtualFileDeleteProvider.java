@@ -13,7 +13,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -52,7 +54,7 @@ public final class VirtualFileDeleteProvider implements DeleteProvider {
     var project = CommonDataKeys.PROJECT.getData(dataContext);
     var toBin = TrashBin.isSupported() && GeneralSettings.getInstance().isDeletingToBin();
 
-    if (!(toBin && ContainerUtil.all(files, TrashBin::canMoveToTrash))) {
+    if (!(toBin && canTrashAll(files, project))) {
       var message = createConfirmationMessage(files);
       var returnValue = Messages.showOkCancelDialog(
         message, UIBundle.message("delete.dialog.title"), ApplicationBundle.message("button.delete"), CommonBundle.getCancelButtonText(), Messages.getQuestionIcon()
@@ -125,6 +127,20 @@ public final class VirtualFileDeleteProvider implements DeleteProvider {
         }
       }
     }.queue(), IdeBundle.message("command.deleting.files"), null);
+  }
+
+  @SuppressWarnings({"UsagesOfObsoleteApi", "DuplicatedCode"})
+  private static boolean canTrashAll(VirtualFile[] files, Project project) {
+    return ProgressManager.getInstance().run(new Task.WithResult<>(project, IdeBundle.message("progress.preparing.delete"), true) {
+      @Override
+      protected Boolean compute(@NotNull ProgressIndicator indicator) {
+        indicator.setIndeterminate(true);
+        return ContainerUtil.all(files, file -> {
+          indicator.checkCanceled();
+          return TrashBin.canMoveToTrash(file);
+        });
+      }
+    });
   }
 
   private static void reportDeletionProblem(List<String> problems) {

@@ -8,6 +8,7 @@ class Tags:
     admin: str
     async_support: str
     caches: str
+    commands: str
     compatibility: str
     database: str
     files: str

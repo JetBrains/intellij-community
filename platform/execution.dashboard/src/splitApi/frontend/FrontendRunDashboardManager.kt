@@ -48,7 +48,7 @@ internal class FrontendRunDashboardManager(private val project: Project) : RunDa
   private val frontendDtos = MutableStateFlow<List<RunDashboardServiceDto>>(emptyList())
   private val frontendStatuses = MutableStateFlow(emptyMap<RunDashboardServiceId, ServiceStatusDto>())
   private val frontendCustomizations = MutableStateFlow(emptyMap<RunDashboardServiceId, ServiceCustomizationDto>())
-  private val frontendAvailableConfigurations = MutableStateFlow(emptySet<RunDashboardConfigurationDto>())
+  private val frontendAvailableConfigurations = MutableStateFlow(emptyList<RunDashboardConfigurationDto>())
   private val frontendExcludedConfigurationTypeIds = MutableStateFlow(emptySet<String>())
   private val statusFilter = RunDashboardStatusFilter()
   private val configurationTypes = MutableStateFlow(emptySet<String>())
@@ -118,7 +118,7 @@ internal class FrontendRunDashboardManager(private val project: Project) : RunDa
     }
   }
 
-  fun getAvailableConfigurations(): Set<RunDashboardConfigurationDto> {
+  fun getAvailableConfigurations(): List<RunDashboardConfigurationDto> {
     return frontendAvailableConfigurations.value
   }
 

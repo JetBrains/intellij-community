@@ -16,7 +16,7 @@ public class RuleExampleTest extends BaseTestCase {
 
   @Test
   public void testNewlineInExample() {
-    HighlightingTest.enableLanguages(Set.of(Lang.GERMANY_GERMAN), getProject(), getTestRootDisposable());
+    HighlightingTest.enableLanguages(Set.of(Lang.GERMANY_GERMAN), getTestRootDisposable());
     Rule farewell = ContainerUtil.find(TreeRuleChecker.getRules(Language.GERMAN), r -> r.getGlobalId().contains("FAREWELL"));
     assertNotNull(farewell);
     String desc = farewell.getDescription();

@@ -1,6 +1,6 @@
 from _typeshed import Unused
 from datetime import datetime as _datetime
-from typing import Final, NoReturn, Protocol, TypedDict, overload, type_check_only
+from typing import Final, NoReturn, TypedDict, overload, type_check_only
 from typing_extensions import Self, TypeAlias, deprecated, disjoint_base
 
 _DateInitType: TypeAlias = (
@@ -95,7 +95,7 @@ class Observer:
     def radec_of(self, az: float | str, alt: float | str) -> tuple[Angle, Angle]: ...
 
 @disjoint_base
-class Body(Protocol):
+class Body:
     @property
     def name(self) -> str | None: ...
     @property
@@ -152,7 +152,7 @@ class Body(Protocol):
     def writedb(self) -> str: ...
     def parallactic_angle(self) -> Angle: ...
 
-class Planet(Body, Protocol):
+class Planet(Body):
     @property
     def hlon(self) -> Angle: ...
     @property
@@ -200,7 +200,7 @@ class Saturn(Planet):
     def sun_tilt(self) -> Angle: ...
 
 @disjoint_base
-class PlanetMoon(Protocol):
+class PlanetMoon:
     @property
     def name(self) -> str: ...
     @property

@@ -1,7 +1,11 @@
 from _typeshed import Incomplete
 from abc import ABC, abstractmethod
+from typing import Any, Final
 
-S_OK: int
+import _win32typing
+
+__author__: Final[str]
+S_OK: Final = 0
 IDispatchType: Incomplete
 IUnknownType: Incomplete
 regSpec: str
@@ -9,7 +13,7 @@ regPolicy: str
 regDispatcher: str
 regAddnPath: str
 
-def CreateInstance(clsid, reqIID): ...
+def CreateInstance(clsid, reqIID: _win32typing.PyIID) -> _win32typing.PyIUnknown: ...
 
 class BasicWrapPolicy(ABC):
     def __init__(self, object) -> None: ...
@@ -29,8 +33,11 @@ class DynamicPolicy(BasicWrapPolicy):
 
 DefaultPolicy = DesignatedWrapPolicy
 
-def resolve_func(spec): ...
-def call_func(spec, *args): ...
+# Imports an arbitrary object by it's fully-qualified name.
+def resolve_func(spec: str) -> Any: ...
+
+# Imports and calls an arbitrary callable by it's fully-qualified name.
+def call_func(spec: str, *args: Any) -> Any: ...
 
 DISPATCH_METHOD: int
 DISPATCH_PROPERTYGET: int

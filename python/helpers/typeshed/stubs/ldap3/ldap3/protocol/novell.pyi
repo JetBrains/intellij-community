@@ -41,7 +41,7 @@ class NmasSetUniversalPasswordResponseValue(Sequence):
     componentType: NamedTypes
 
 class ReplicaList(SequenceOf):
-    componentType: OctetString  # type: ignore[assignment]
+    componentType: OctetString
 
 class ReplicaInfoRequestValue(Sequence):
     tagSet: TagSet

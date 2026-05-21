@@ -30,6 +30,7 @@ typing_extensions.TypeAliasType.__value__
 # >= 3.11
 # =======
 
+# Only exists for an error message.
 typing.NewType.__mro_entries__
 
 
@@ -78,6 +79,14 @@ tkinter.tix.Shell
 tkinter.tix.TclVersion
 tkinter.tix.TkVersion
 
+# Details of runtime definition don't need to be in stubs
+typing_extensions\.ParamSpec.*
+typing_extensions\.TypeVar.*
+
+# These are typing._SpecialGenericAlias at runtime, which is not a real type, but it
+# behaves like one in most cases
+typing(_extensions)?\.(Async)?ContextManager
+
 
 # =======
 # <= 3.13
@@ -86,8 +95,6 @@ tkinter.tix.TkVersion
 ast.Ellipsis.__new__  # Implementation has *args, but shouldn't allow any
 
 _?hashlib.scrypt  # Raises TypeError if salt, n, r or p are None
-
-importlib.abc.Traversable.open  # Problematic protocol signature at runtime, see source code comments.
 
 # Will always raise. Not included to avoid type checkers inferring that
 # TypeAliasType instances are callable.
@@ -108,7 +115,6 @@ importlib.metadata.DeprecatedNonAbstract.__new__
 
 # Deprecated argument is supported at runtime by renaming it through a decorator.
 importlib.resources._common.files
-importlib.resources.files
 
 sys._monitoring  # Doesn't really exist. See comments in the stub.
 sys.last_exc  # not always defined
@@ -123,8 +129,6 @@ typing.TypeVarTuple.__mro_entries__
 # These exist at runtime because the protocol uses PEP-695 syntax in CPython
 typing.SupportsAbs.__type_params__
 typing.SupportsRound.__type_params__
-typing_extensions.SupportsAbs.__type_params__
-typing_extensions.SupportsRound.__type_params__
 
 
 # =============================================================
@@ -180,7 +184,6 @@ cgi.FieldStorage.skip_lines
 ctypes._endian.DEFAULT_MODE  # Incorrectly star import.
 ctypes._endian.RTLD_GLOBAL  # Incorrectly star import.
 ctypes._endian.RTLD_LOCAL  # Incorrectly star import.
-multiprocessing.dummy.Lock  # Factory function at runtime, but that wouldn't let us use it in type hints
 
 # These multiprocessing proxy methods have *args, **kwargs signatures at runtime,
 # But have more precise (accurate) signatures in the stub
@@ -210,5 +213,3 @@ typing\.Annotated  # Super-special typing primitive
 # These methods have no default implementation for Python < 3.13.
 _pickle.Pickler.persistent_id
 _pickle.Unpickler.persistent_load
-pickle.Pickler.persistent_id
-pickle.Unpickler.persistent_load

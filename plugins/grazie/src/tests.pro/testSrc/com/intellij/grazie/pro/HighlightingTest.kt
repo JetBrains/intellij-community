@@ -11,8 +11,6 @@ import com.intellij.grazie.utils.TextStyleDomain
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileTypes.PlainTextLanguage
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
@@ -39,7 +37,7 @@ class HighlightingTest : BaseTestCase() {
   @NeedsCloud
   @Test
   fun `test MLEC and rules md all languages`() {
-    enableLanguages(setOf(Lang.AMERICAN_ENGLISH, Lang.RUSSIAN), project, testRootDisposable)
+    enableLanguages(setOf(Lang.AMERICAN_ENGLISH, Lang.RUSSIAN), testRootDisposable)
 
     configureByText("a.md", """
      Hello. I'm <GRAMMAR_ERROR descr="Grazie.RuleEngine.En.Grammar.ARTICLE_ISSUES">a </GRAMMAR_ERROR>very humble <GRAMMAR_ERROR descr="Grazie.RuleEngine.En.Grammar.ARTICLE_ISSUES">persons</GRAMMAR_ERROR>.
@@ -67,7 +65,7 @@ class HighlightingTest : BaseTestCase() {
   @NeedsCloud
   @Test
   fun `test MLEC and rules md english only`() {
-    enableLanguages(setOf(Lang.AMERICAN_ENGLISH), project, testRootDisposable)
+    enableLanguages(setOf(Lang.AMERICAN_ENGLISH), testRootDisposable)
 
     configureByText("a.md", """
       Hello. I'm <GRAMMAR_ERROR descr="Grazie.RuleEngine.En.Grammar.ARTICLE_ISSUES">a </GRAMMAR_ERROR>very humble <GRAMMAR_ERROR descr="Grazie.RuleEngine.En.Grammar.ARTICLE_ISSUES">persons</GRAMMAR_ERROR>.
@@ -88,7 +86,7 @@ class HighlightingTest : BaseTestCase() {
   @NeedsCloud
   @Test
   fun `test German`() {
-    enableLanguages(setOf(Lang.GERMANY_GERMAN), project, testRootDisposable)
+    enableLanguages(setOf(Lang.GERMANY_GERMAN), testRootDisposable)
     GrazieConfig.update { it.withParameter(TextStyleDomain.Other, Language.GERMAN, GermanParameters.GENDERN_STYLE, "star") }
     configureByText("a.md", """
       Mein Vater arbeitet <GRAMMAR_ERROR descr="Grazie.RuleEngine.De.Punctuation.IN_CLAUSE_COMMA">viel</GRAMMAR_ERROR> aber mag mit uns Zeit verbringen.
@@ -105,7 +103,7 @@ class HighlightingTest : BaseTestCase() {
   @NeedsCloud
   @Test
   fun `test Ukrainian`() {
-    enableLanguages(setOf(Lang.UKRAINIAN), project, testRootDisposable)
+    enableLanguages(setOf(Lang.UKRAINIAN), testRootDisposable)
     configureByText("a.md", """
       До наступної <STYLE_SUGGESTION descr="Українською правильно писати «зупинка»">останівки</STYLE_SUGGESTION> ми їхали мовчки.
       Я й не <GRAMMAR_ERROR descr="Граматична помилка">думав що комп'ютерна лінгвістика</GRAMMAR_ERROR> це легко.
@@ -118,7 +116,7 @@ class HighlightingTest : BaseTestCase() {
 
   @Test
   fun `test only LT results for language with no TREE or MLEC support`() {
-    enableLanguages(setOf(Lang.AMERICAN_ENGLISH, Lang.GREEK), project, testRootDisposable)
+    enableLanguages(setOf(Lang.AMERICAN_ENGLISH, Lang.GREEK), testRootDisposable)
     configureByText("a.txt", """
      <GRAMMAR_ERROR descr="GREEK_REDUNDANT_2">Άρα λοιπόν</GRAMMAR_ERROR> πρακτικά το πεδίο αυτό περιέχει τον μέγιστο αριθμό κόμβων από τους οποίους πρέπει να περάσει το πακέτο έως ότου τελικά παραδοθεί στον παραλήπτη.
      """.trimIndent())
@@ -473,7 +471,7 @@ class HighlightingTest : BaseTestCase() {
   @NeedsCloud
   @Test
   fun `test LT Oxford spelling rules are synchronized with our setting`() {
-    enableLanguages(setOf(Lang.BRITISH_ENGLISH), project, testRootDisposable)
+    enableLanguages(setOf(Lang.BRITISH_ENGLISH), testRootDisposable)
     assertFalse(GrazieConfig.get().useOxfordSpelling)
     assertNotEmpty(GrazieConfig.get().userDisabledRules.filter { it.contains("OXFORD_SPELLING") })
 
@@ -572,13 +570,12 @@ class HighlightingTest : BaseTestCase() {
 
   companion object {
     @JvmStatic
-    fun enableLanguages(langs: Set<Lang>, project: Project, disposable: Disposable) {
+    fun enableLanguages(langs: Set<Lang>, disposable: Disposable) {
       EdtInvocationManager.invokeAndWaitIfNeeded {
         GrazieConfig.update { it.copy(enabledLanguages = langs) }
         UIUtil.dispatchAllInvocationEvents()
       }
-      GrazieTestBase.loadLangs(langs, project)
-      Disposer.register(disposable) { GrazieTestBase.unloadLangs(project) }
+      GrazieTestBase.loadLangs(langs, disposable)
     }
 
     @JvmStatic
@@ -586,5 +583,4 @@ class HighlightingTest : BaseTestCase() {
       GrazieConfig.update { it.copy(userEnabledRules = it.userEnabledRules + setOf(*ids)) }
     }
   }
-
 }

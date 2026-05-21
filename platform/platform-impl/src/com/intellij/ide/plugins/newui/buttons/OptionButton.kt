@@ -27,7 +27,7 @@ open class OptionButton @JvmOverloads constructor(
       val insets = insets
       val oldWidth = size.width
       val newWidth = width - insets.left - insets.right
-      if (oldWidth <= newWidth || newWidth / oldWidth.toDouble() > 0.85) {
+      if (oldWidth <= newWidth) {
         size.width = newWidth
       }
       it.size = size

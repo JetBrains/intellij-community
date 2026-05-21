@@ -31,11 +31,11 @@ public class TypesMutationsStorageImpl<T> implements TypesMutationsStorage<T>, M
                    databaseValue;
     if (type == null) {
       if (mutationData == null) return;
-      myDelegate.set(row, column, new CellMutation(row, column, value));
+      myDelegate.set(row, column, new CellMutation(row, column, value).withMetadata(mutationData.getMetadata()));
     }
     else if (value instanceof ReservedCellValue || value == null) {
       ReservedCellValue notNullValue = (ReservedCellValue)ObjectUtils.notNull(value, ReservedCellValue.NULL);
-      myDelegate.set(row, column, new CellMutation(row, column, new TypedValue<>(notNullValue, type)));
+      myDelegate.set(row, column, new CellMutation(row, column, new TypedValue<>(notNullValue, type)).withMetadata(mutationData == null ? null : mutationData.getMetadata()));
     }
   }
 
@@ -51,7 +51,8 @@ public class TypesMutationsStorageImpl<T> implements TypesMutationsStorage<T>, M
 
   @Override
   public void set(@NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column, @Nullable CellMutation value) {
-    myDelegate.set(row, column, value == null ? null : new CellMutation(row, column, fixNewValue(value.getValue(), row, column)));
+    myDelegate.set(row, column, value == null ? null :
+                   new CellMutation(row, column, fixNewValue(value.getValue(), row, column)).withMetadata(value.getMetadata()));
   }
 
   @Override
@@ -59,7 +60,7 @@ public class TypesMutationsStorageImpl<T> implements TypesMutationsStorage<T>, M
     if (!myDelegate.isValid(row, column)) return null;
     MutationData data = myDelegate.get(row, column);
     if (data == null || !(data.getValue() instanceof TypedValue<?> value)) return data;
-    return getFromDatabase(row, column) == value.getValue() ? null : new MutationData(value.getValue());
+    return getFromDatabase(row, column) == value.getValue() ? null : new MutationData(value.getValue(), data.getMetadata());
   }
 
   private @Nullable Object getFromDatabase(ModelIndex<GridRow> row, ModelIndex<GridColumn> column) {

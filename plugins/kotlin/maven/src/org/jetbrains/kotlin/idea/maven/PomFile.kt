@@ -194,7 +194,9 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
         }
     }
 
-    fun findPlugin(groupArtifact: MavenId): MavenDomPlugin? = domModel.build.plugins.plugins.firstOrNull { it.matches(groupArtifact) }
+    fun findPlugin(groupArtifact: MavenId): MavenDomPlugin? =
+        domModel.build.plugins.plugins.firstOrNull { it.matches(groupArtifact) }
+            ?: domModel.build.pluginManagement.plugins.plugins.firstOrNull { it.matches(groupArtifact) }
 
     fun isPluginAfter(plugin: MavenDomPlugin, referencePlugin: MavenDomPlugin): Boolean {
         require(plugin.parent === referencePlugin.parent) { "Plugins should be siblings" }
@@ -685,7 +687,7 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
 
 @ApiStatus.Internal
 fun PomFile.changeLanguageVersion(languageVersion: String?, apiVersion: String?): PsiElement? {
-    val kotlinPlugin = findPlugin(kotlinPluginId(null)) ?: return null
+    val kotlinPlugin = findPlugin(kotlinPluginId) ?: return null
     val languageElement = languageVersion?.let {
         changeConfigurationOrProperty(kotlinPlugin, "languageVersion", "kotlin.compiler.languageVersion", it)
     }
@@ -697,7 +699,7 @@ fun PomFile.changeLanguageVersion(languageVersion: String?, apiVersion: String?)
 
 @ApiStatus.Internal
 fun PomFile.addKotlinCompilerPlugin(name: String): MavenDomPlugin? {
-    val kotlinPlugin = findPlugin(kotlinPluginId(null)) ?: return null
+    val kotlinPlugin = findPlugin(kotlinPluginId) ?: return null
     val configurationTag = kotlinPlugin.configuration.ensureTagExists()
     val compilerPluginsTag = configurationTag.findSubTagOrCreate("compilerPlugins")
     compilerPluginsTag.findSubTags("plugin").firstOrNull { it.value.trimmedText == name } ?: run {
@@ -754,7 +756,7 @@ private fun PomFile.changeConfigurationOrProperty(
 }
 
 fun PomFile.changeCoroutineConfiguration(value: String): PsiElement? {
-    val kotlinPlugin = findPlugin(kotlinPluginId(null)) ?: return null
+    val kotlinPlugin = findPlugin(kotlinPluginId) ?: return null
     return changeConfigurationOrProperty(kotlinPlugin, "experimentalCoroutines", "kotlin.compiler.experimental.coroutines", value)
 }
 
@@ -762,7 +764,7 @@ fun PomFile.changeFeatureConfiguration(
     feature: LanguageFeature,
     state: LanguageFeature.State
 ): PsiElement? {
-    val kotlinPlugin = findPlugin(kotlinPluginId(null)) ?: return null
+    val kotlinPlugin = findPlugin(kotlinPluginId) ?: return null
     val configurationTag = kotlinPlugin.configuration.ensureTagExists()
     val argsSubTag = configurationTag.findSubTagOrCreate("args")
     argsSubTag.findSubTags("arg").filter { feature.name in it.value.text }.forEach { it.deleteCascade() }
@@ -775,10 +777,12 @@ fun PomFile.changeFeatureConfiguration(
 private fun MavenDomElement.createChildTag(name: String, value: String? = null): XmlTag? =
     xmlTag?.createChildTag(name, value)
 
-private fun XmlTag.createChildTag(name: String, value: String? = null): XmlTag =
+@ApiStatus.Internal
+internal fun XmlTag.createChildTag(name: String, value: String? = null): XmlTag =
     createChildTag(name, namespace, value, false)!!
 
-private fun XmlTag.findSubTagOrCreate(name: String): XmlTag =
+@ApiStatus.Internal
+internal fun XmlTag.findSubTagOrCreate(name: String): XmlTag =
     findSubTags(name).firstOrNull() ?: run {
         val childTag = createChildTag(name)
         add(childTag) as XmlTag

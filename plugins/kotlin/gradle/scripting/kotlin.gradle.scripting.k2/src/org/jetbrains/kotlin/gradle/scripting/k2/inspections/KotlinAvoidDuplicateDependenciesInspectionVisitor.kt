@@ -100,10 +100,10 @@ class KotlinAvoidDuplicateDependenciesInspectionVisitor(
         // version catalog argument
         if (argumentExpression is KtDotQualifiedExpression) {
             val resolved = argumentExpression.selectorExpression?.mainReference?.resolve() as? PsiMethod ?: return null
-            return getResolvedDependency(resolved, argumentExpression).toString()
+            getResolvedDependency(resolved, argumentExpression)?.toString()?.let { return it }
         }
 
-        return null
+        return argumentExpression.text
     }
 
     private fun extractNamedArgumentsKey(dependency: KtCallExpression): String? {

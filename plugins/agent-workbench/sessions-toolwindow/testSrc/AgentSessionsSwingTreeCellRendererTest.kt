@@ -739,6 +739,27 @@ class AgentSessionsSwingTreeCellRendererTest {
   }
 
   @Test
+  fun threadTooltipPreservesFullLongTitle() {
+    val now = 28L * 24L * 60L * 60L * 1000L
+    val longTitle = "Project setup: " + "a".repeat(180) + " tail"
+    val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
+    val thread = AgentSessionThread(
+      provider = AgentSessionProvider.CODEX,
+      id = "thread-1",
+      title = longTitle,
+      updatedAt = 14L * 24L * 60L * 60L * 1000L,
+      archived = false,
+    )
+    val tooltip = buildSessionTreeThreadTooltipHtml(
+      treeNode = SessionTreeNode.Thread(project, thread),
+      now = now,
+      maxWidthPx = 260,
+    )
+
+    assertThat(tooltip).contains(longTitle)
+  }
+
+  @Test
   fun threadTooltipContainsFriendlyStatusForEachActivity() {
     val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
     val statusByActivity = mapOf(

@@ -1,2 +1,2 @@
-version = "0.21.*"
-upstream_repository = "https://github.com/google/jsonnet"
+version = "0.22.*"
+upstream-repository = "https://github.com/google/jsonnet"

@@ -2,7 +2,7 @@ import sys
 from _typeshed import FileDescriptor, StrOrBytesPath
 from collections.abc import Callable
 from types import TracebackType
-from typing import Any, Literal, Protocol, overload
+from typing import Any, Literal, Protocol, overload, type_check_only
 from typing_extensions import TypeAlias, TypeVarTuple, Unpack
 
 _Ts = TypeVarTuple("_Ts")
@@ -19,6 +19,7 @@ _Ts = TypeVarTuple("_Ts")
 # properties and methods that are available on all event loops, so these have
 # been added as well, instead of completely mirroring the internal interface
 
+@type_check_only
 class _Loop(Protocol):  # noqa: Y046
     @property
     def approx_timer_resolution(self) -> float: ...
@@ -66,6 +67,7 @@ class _Loop(Protocol):  # noqa: Y046
     def run_callback_threadsafe(self, func: Callable[[Unpack[_Ts]], Any], *args: Unpack[_Ts]) -> _Callback: ...
     def fileno(self) -> FileDescriptor | None: ...
 
+@type_check_only
 class _Watcher(Protocol):
     # while IWatcher allows for kwargs the actual implementation does not...
     def start(self, callback: Callable[[Unpack[_Ts]], Any], *args: Unpack[_Ts]) -> None: ...
@@ -73,6 +75,7 @@ class _Watcher(Protocol):
     def close(self) -> None: ...
 
 # this matches Intersection[_Watcher, TimerMixin]
+@type_check_only
 class _TimerWatcher(_Watcher, Protocol):
     # this has one specific allowed keyword argument, if it is given we don't try to check
     # the passed in arguments, but if it isn't passed in, then we do.
@@ -86,6 +89,7 @@ class _TimerWatcher(_Watcher, Protocol):
     def again(self, callback: Callable[[Unpack[_Ts]], Any], *args: Unpack[_Ts]) -> None: ...
 
 # this matches Intersection[_Watcher, IoMixin]
+@type_check_only
 class _IoWatcher(_Watcher, Protocol):
     EVENT_MASK: int
     # pass_events means the first argument of the callback needs to be an integer, but we can't
@@ -96,6 +100,7 @@ class _IoWatcher(_Watcher, Protocol):
     def start(self, callback: Callable[[Unpack[_Ts]], Any], *args: Unpack[_Ts]) -> None: ...
 
 # this matches Intersection[_Watcher, ChildMixin]
+@type_check_only
 class _ChildWatcher(_Watcher, Protocol):
     @property
     def pid(self) -> int: ...
@@ -105,6 +110,7 @@ class _ChildWatcher(_Watcher, Protocol):
     def rstatus(self) -> int: ...
 
 # this matches Intersection[_Watcher, AsyncMixin]
+@type_check_only
 class _AsyncWatcher(_Watcher, Protocol):
     def send(self) -> None: ...
     def send_ignoring_arg(self, ignored: object, /) -> None: ...
@@ -112,11 +118,13 @@ class _AsyncWatcher(_Watcher, Protocol):
     def pending(self) -> bool: ...
 
 # all implementations return something of this shape
+@type_check_only
 class _StatResult(Protocol):
     @property
     def st_nlink(self) -> int: ...
 
 # this matches Intersection[_Watcher, StatMixin]
+@type_check_only
 class _StatWatcher(_Watcher, Protocol):
     @property
     def path(self) -> StrOrBytesPath: ...
@@ -127,6 +135,7 @@ class _StatWatcher(_Watcher, Protocol):
     @property
     def interval(self) -> float: ...
 
+@type_check_only
 class _Callback(Protocol):
     pending: bool
     def stop(self) -> None: ...
@@ -137,6 +146,7 @@ _SockAddr: TypeAlias = _FullSockAddr | tuple[str, int]
 _AddrinfoResult: TypeAlias = list[tuple[int, int, int, str, _SockAddr]]  # family, type, protocol, cname, sockaddr
 _NameinfoResult: TypeAlias = tuple[str, str]
 
+@type_check_only
 class _Resolver(Protocol):  # noqa: Y046
     def close(self) -> None: ...
     def gethostbyname(self, hostname: str, family: int = 2) -> str: ...

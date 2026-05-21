@@ -23,10 +23,10 @@ import java.nio.file.Path
 import java.time.Instant
 import java.time.format.DateTimeParseException
 
-private const val MAX_TITLE_LENGTH = 120
 private const val USER_MESSAGE_BEGIN = "## My request for Codex:"
 private const val ENVIRONMENT_CONTEXT_OPEN_TAG = "<environment_context>"
 private const val TURN_ABORTED_OPEN_TAG = "<turn_aborted>"
+private val THREAD_TITLE_WHITESPACE = Regex("\\s+")
 
 private val LOG = logger<CodexRolloutParser>()
 
@@ -326,15 +326,11 @@ private fun extractTitle(message: String?): String? {
     .firstOrNull { it.isNotEmpty() }
     ?: return null
   if (isSessionPrefix(candidate)) return null
-  return trimTitle(candidate.replace(Regex("\\s+"), " "))
+  return normalizeThreadTitle(candidate)
 }
 
 private fun extractThreadName(threadName: String?): String? {
-  val candidate = threadName
-    ?.trim()
-    ?.takeIf { it.isNotEmpty() }
-    ?: return null
-  return trimTitle(candidate.replace(Regex("\\s+"), " "))
+  return normalizeThreadTitle(threadName)
 }
 
 private fun stripUserMessagePrefix(text: String): String {
@@ -352,9 +348,13 @@ private fun isSessionPrefix(text: String): Boolean {
   return normalized.startsWith(ENVIRONMENT_CONTEXT_OPEN_TAG) || normalized.startsWith(TURN_ABORTED_OPEN_TAG)
 }
 
-private fun trimTitle(value: String): String {
-  if (value.length <= MAX_TITLE_LENGTH) return value
-  return value.take(MAX_TITLE_LENGTH - 3).trimEnd() + "..."
+private fun normalizeThreadTitle(value: String?): String? {
+  return value
+    ?.replace('\n', ' ')
+    ?.replace('\r', ' ')
+    ?.replace(THREAD_TITLE_WHITESPACE, " ")
+    ?.trim()
+    ?.takeIf { it.isNotEmpty() }
 }
 
 private fun parseBranchField(parser: JsonParser): String? {

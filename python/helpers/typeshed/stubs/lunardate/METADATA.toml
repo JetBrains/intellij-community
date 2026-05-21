@@ -1,2 +1,2 @@
 version = "0.2.*"
-upstream_repository = "https://github.com/lidaobing/python-lunardate"
+upstream-repository = "https://github.com/lidaobing/python-lunardate"

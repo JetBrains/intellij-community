@@ -4,7 +4,6 @@ package com.jetbrains.python.configuration
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.SdkModificator
-import com.intellij.util.concurrency.ThreadingAssertions
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
@@ -29,7 +28,6 @@ internal fun SdkModificator.resetAssociatedModulePath() {
 }
 
 private fun SdkModificator.getOrCreateSdkAdditionalData(): PythonSdkAdditionalData {
-  ThreadingAssertions.assertEventDispatchThread()
   var additionalData = sdkAdditionalData as? PythonSdkAdditionalData
   if (additionalData == null) {
     additionalData = PythonSdkAdditionalData(PythonSdkFlavor.getFlavor(homePath))

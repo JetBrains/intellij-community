@@ -1,9 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-import java.io.File
-import java.util.Properties
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
+import java.io.File
+import java.util.Properties
 
 plugins {
   id("java")
@@ -28,11 +28,19 @@ val localProperties = Properties().also { props ->
 fun localProperty(name: String): String? = localProperties.getProperty(name)
 
 val platformLocalPath: String? = localProperty("platformLocalPath")
-val platformVersion = localProperty("platformVersion") ?: "LATEST-EAP-SNAPSHOT"
+val platformVersion = localProperty("platformVersion") ?: "261-SNAPSHOT"
 
 // Export for subprojects
 extra["platformLocalPath"] = platformLocalPath
 extra["platformVersion"] = platformVersion
+
+// Space plugin is required by ai-review-space at runtime. It's not in the Gradle-transformed IDE,
+// so resolve it manually and add via localPlugin() to include it in the sandbox.
+val spacePluginDir: File? = localProperty("spacePluginPath")?.let { file(it) }
+  ?: platformLocalPath?.let { file(it).resolve("plugins/space") }?.takeIf { it.isDirectory }
+  ?: file("../../../out/deploy/dist/plugins/space").takeIf { it.isDirectory }
+
+extra["spacePluginDir"] = spacePluginDir
 
 repositories {
   mavenCentral()
@@ -40,6 +48,7 @@ repositories {
   intellijPlatform {
     defaultRepositories()
     snapshots()
+    nightly()
   }
 }
 
@@ -82,6 +91,10 @@ dependencies {
     }
     jetbrainsRuntime()
 
+    if (spacePluginDir != null) {
+      localPlugin(spacePluginDir)
+    }
+
     pluginModule(implementation(project(":common")))
     pluginModule(implementation(project(":json")))
     pluginModule(implementation(project(":filewatch")))
@@ -99,6 +112,9 @@ dependencies {
     pluginModule(implementation(project(":claude-sessions")))
     pluginModule(implementation(project(":codex-common")))
     pluginModule(implementation(project(":codex-sessions")))
+    pluginModule(implementation(project(":ai-review")))
+    pluginModule(implementation(project(":ai-review-agents")))
+    pluginModule(implementation(project(":ai-review-space")))
   }
 
   // When using local IDE, add bundled plugin JARs directly (bundledPlugins() has a bug with local builds)

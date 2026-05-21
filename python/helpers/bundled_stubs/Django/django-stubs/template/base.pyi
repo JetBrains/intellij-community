@@ -9,6 +9,7 @@ from django.template.engine import Engine
 from django.template.library import Library
 from django.template.loaders.base import Loader
 from django.utils.safestring import SafeString
+from typing_extensions import override
 
 FILTER_SEPARATOR: str
 FILTER_ARGUMENT_SEPARATOR: str
@@ -33,8 +34,8 @@ class TokenType(Enum):
 
 class VariableDoesNotExist(Exception):
     msg: str
-    params: tuple[dict[str, str] | str]
-    def __init__(self, msg: str, params: tuple[dict[str, str] | str] = ...) -> None: ...
+    params: tuple[Any, ...]
+    def __init__(self, msg: str, params: tuple[Any, ...] = ...) -> None: ...
 
 class Origin:
     name: str
@@ -50,6 +51,7 @@ class Template:
     engine: Engine
     source: str
     nodelist: NodeList
+    extra_data: dict[str, Any]
     def __init__(
         self,
         template_string: Template | str,
@@ -60,6 +62,24 @@ class Template:
     def render(self, context: Context) -> SafeString: ...
     def compile_nodelist(self) -> NodeList: ...
     def get_exception_info(self, exception: Exception, token: Token) -> dict[str, Any]: ...
+
+class PartialTemplate:
+    nodelist: NodeList
+    origin: Origin
+    name: str
+    def __init__(
+        self,
+        nodelist: NodeList,
+        origin: Origin,
+        name: str,
+        source_start: int | None = None,
+        source_end: int | None = None,
+    ) -> None: ...
+    def get_exception_info(self, exception: Exception, token: Token) -> dict[str, Any]: ...
+    def find_partial_source(self, full_source: str) -> str: ...
+    @property
+    def source(self) -> str: ...
+    def render(self, context: Context) -> SafeString: ...
 
 def linebreak_iter(template_source: str) -> Iterator[int]: ...
 
@@ -87,15 +107,17 @@ class Lexer:
 class DebugLexer(Lexer):
     template_string: str
     verbatim: bool | str
+    @override
     def tokenize(self) -> list[Token]: ...
 
 class Parser:
     tokens: list[Token] | str
-    tags: dict[str, Callable]
-    filters: dict[str, Callable]
+    tags: dict[str, Callable[..., Any]]
+    filters: dict[str, Callable[..., Any]]
     command_stack: list[tuple[str, Token]]
     libraries: dict[str, Library]
     origin: Origin | None
+    extra_data: dict[str, Any]
     def __init__(
         self,
         tokens: list[Token] | str,
@@ -114,7 +136,7 @@ class Parser:
     def delete_first_token(self) -> None: ...
     def add_library(self, lib: Library) -> None: ...
     def compile_filter(self, token: str) -> FilterExpression: ...
-    def find_filter(self, filter_name: str) -> Callable: ...
+    def find_filter(self, filter_name: str) -> Callable[..., Any]: ...
 
 constant_string: str
 filter_raw_string: str
@@ -124,10 +146,11 @@ class FilterExpression:
     token: str
     filters: list[Any]
     var: Any
+    is_var: bool
     def __init__(self, token: str, parser: Parser) -> None: ...
     def resolve(self, context: Context, ignore_failures: bool = False) -> Any: ...
     @staticmethod
-    def args_check(name: str, func: Callable, provided: list[tuple[bool, Any]]) -> bool: ...
+    def args_check(name: str, func: Callable[..., Any], provided: list[tuple[bool, Any]]) -> bool: ...
 
 class Variable:
     var: dict[Any, Any] | str

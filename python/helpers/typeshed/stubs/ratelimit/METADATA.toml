@@ -1,2 +1,2 @@
 version = "2.2.*"
-upstream_repository = "https://github.com/tomasbasham/ratelimit"
+upstream-repository = "https://github.com/tomasbasham/ratelimit"

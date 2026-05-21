@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.CodeStyle;
@@ -4164,6 +4164,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         myMarkupModelListener.attributesChanged((RangeHighlighterEx)highlighter, true,
                                                 EditorUtil.attributesImpactFontStyle(attributes),
                                                 EditorUtil.attributesImpactForegroundColor(attributes));
+        errorStripeMarkerChanged((RangeHighlighterEx)highlighter);
         HighlightInfo fileLevelInfo = HighlightInfo.fromRangeHighlighter(highlighter);
         if (fileLevelInfo != null && fileLevelInfo.isFileLevelAnnotation()) {
           if (textEditor == null) {

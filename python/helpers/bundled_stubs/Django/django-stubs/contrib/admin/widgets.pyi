@@ -6,9 +6,10 @@ from django.contrib.admin.sites import AdminSite
 from django.core.files.base import File
 from django.db.models.fields.reverse_related import ManyToManyRel, ManyToOneRel
 from django.forms.models import ModelChoiceIterator
-from django.forms.widgets import ChoiceWidget, _OptAttrs
+from django.forms.widgets import ChoiceWidget, Media, _OptAttrs
 from django.utils.choices import _Choices
 from django.utils.functional import _StrOrPromise
+from typing_extensions import override
 
 class FilteredSelectMultiple(forms.SelectMultiple):
     verbose_name: _StrOrPromise
@@ -21,14 +22,26 @@ class FilteredSelectMultiple(forms.SelectMultiple):
         choices: _Choices = ...,
     ) -> None: ...
 
-class BaseAdminDateWidget(forms.DateInput):
+    class Media:
+        js: list[str]
+
+class DateTimeWidgetContextMixin:
+    def get_context(self, name: str, value: Any, attrs: _OptAttrs | None) -> dict[str, Any]: ...
+
+class BaseAdminDateWidget(DateTimeWidgetContextMixin, forms.DateInput):
     def __init__(self, attrs: _OptAttrs | None = ..., format: str | None = ...) -> None: ...
+
+    class Media:
+        js: list[str]
 
 class AdminDateWidget(BaseAdminDateWidget):
     template_name: str
 
-class BaseAdminTimeWidget(forms.TimeInput):
+class BaseAdminTimeWidget(DateTimeWidgetContextMixin, forms.TimeInput):
     def __init__(self, attrs: _OptAttrs | None = ..., format: str | None = ...) -> None: ...
+
+    class Media:
+        js: list[str]
 
 class AdminTimeWidget(BaseAdminTimeWidget):
     template_name: str
@@ -36,6 +49,7 @@ class AdminTimeWidget(BaseAdminTimeWidget):
 class AdminSplitDateTime(forms.SplitDateTimeWidget):
     template_name: str
     def __init__(self, attrs: _OptAttrs | None = ...) -> None: ...
+    @override
     def get_context(self, name: str, value: Any, attrs: _OptAttrs | None) -> dict[str, Any]: ...
 
 class AdminRadioSelect(forms.RadioSelect): ...
@@ -55,6 +69,7 @@ class ForeignKeyRawIdWidget(forms.TextInput):
         using: str | None = ...,
     ) -> None: ...
     def base_url_parameters(self) -> dict[str, str]: ...
+    @override
     def get_context(self, name: str, value: Any, attrs: _OptAttrs | None) -> dict[str, Any]: ...
     def url_parameters(self) -> dict[str, str]: ...
     def label_and_url_for_value(self, value: Any) -> tuple[str, str]: ...
@@ -68,10 +83,15 @@ class ManyToManyRawIdWidget(ForeignKeyRawIdWidget):
         attrs: _OptAttrs | None = ...,
         using: str | None = ...,
     ) -> None: ...
+    @override
     def get_context(self, name: str, value: Any, attrs: _OptAttrs | None) -> dict[str, Any]: ...
+    @override
     def url_parameters(self) -> dict[str, str]: ...
+    @override
     def label_and_url_for_value(self, value: Any) -> tuple[str, str]: ...
+    @override
     def format_value(self, value: Any) -> str | None: ...
+    @override
     def value_from_datadict(self, data: Mapping[str, Any], files: Mapping[str, Iterable[File]], name: str) -> Any: ...
 
 class RelatedFieldWidgetWrapper(forms.Widget):
@@ -94,17 +114,22 @@ class RelatedFieldWidgetWrapper(forms.Widget):
         can_view_related: bool = ...,
     ) -> None: ...
     @property
+    @override
     def is_hidden(self) -> bool: ...
     @property
     def choices(self) -> ModelChoiceIterator: ...
     @choices.setter
     def choices(self, value: ModelChoiceIterator) -> None: ...
     def get_related_url(self, info: tuple[str, str], action: str, *args: Any) -> str: ...
+    @override
     def get_context(self, name: str, value: Any, attrs: _OptAttrs | None) -> dict[str, Any]: ...
+    @override
     def value_from_datadict(self, data: Mapping[str, Any], files: Mapping[str, Iterable[File]], name: str) -> Any: ...
+    @override
     def value_omitted_from_data(
         self, data: Mapping[str, Any], files: Mapping[str, Iterable[File]], name: str
     ) -> bool: ...
+    @override
     def id_for_label(self, id_: str) -> str: ...
 
 class AdminTextareaWidget(forms.Textarea):
@@ -119,6 +144,7 @@ class AdminEmailInputWidget(forms.EmailInput):
 class AdminURLFieldWidget(forms.URLInput):
     template_name: str
     def __init__(self, attrs: _OptAttrs | None = ..., validator_class: Any = ...) -> None: ...
+    @override
     def get_context(self, name: str, value: Any, attrs: _OptAttrs | None) -> dict[str, Any]: ...
 
 class AdminIntegerFieldWidget(forms.NumberInput):
@@ -150,6 +176,8 @@ class AutocompleteMixin:
         choices: Any = ...,
         using: str | None = ...,
     ) -> None: ...
+    @property
+    def media(self) -> Media: ...
     def get_url(self) -> str: ...
     def build_attrs(self, base_attrs: _OptAttrs, extra_attrs: _OptAttrs | None = ...) -> dict[str, Any]: ...
     # typo in source: `attr` instead of `attrs`

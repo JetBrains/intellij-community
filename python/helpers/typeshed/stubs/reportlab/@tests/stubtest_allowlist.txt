@@ -41,7 +41,6 @@ reportlab.platypus.flowables._ContainerSpace.getSpaceBefore
 
 # this has an internal __boundary__ argument which confuses stubtest
 # we've decided to just get rid of the argument in the stub entirely
-reportlab.platypus.Frame.drawBoundary
 reportlab.platypus.frames.Frame.drawBoundary
 
 # this is just a case-insenstive version of dict and changes in parameter

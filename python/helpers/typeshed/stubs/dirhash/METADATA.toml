@@ -1,2 +1,2 @@
 version = "0.5.*"
-upstream_repository = "https://github.com/andhus/dirhash-python"
+upstream-repository = "https://github.com/andhus/dirhash-python"

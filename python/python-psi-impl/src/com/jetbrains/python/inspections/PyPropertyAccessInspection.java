@@ -47,7 +47,7 @@ public final class PyPropertyAccessInspection extends PyInspection {
                                                  @NotNull LocalInspectionToolSession session) {
     TypeEvalContext context = PyInspectionVisitor.getContext(session);
     Visitor visitor = new Visitor(holder, context);
-    visitor.downgradeHighlightForTypeEngine = context.getTypeEngine() != null;
+    visitor.downgradeHighlightForTypeEngine = context.getUsesExternalTypeEngine();
     return visitor;
   }
 

@@ -2,8 +2,8 @@
 
 import {extractItems, requireString} from '../shared'
 import {searchInFiles} from '../search-in-files'
-import {shouldApplyWorkaround, WorkaroundKey} from '../../workarounds'
-import type {SearchCapabilities, ToolArgs, UpstreamToolCaller} from '../types'
+import {WorkaroundKey} from '../../workarounds'
+import type {SearchCapabilities, ToolArgs, UpstreamToolCaller, WorkaroundChecker} from '../types'
 import {normalizeItems, normalizeItemsFromEntries, normalizeLimit, resolveMoreFlag, serializeSearchResult} from './search-shared'
 import {
   buildPathScope,
@@ -46,7 +46,8 @@ export async function handleSearchRegexTool(
   args: ToolArgs,
   projectPath: string,
   callUpstreamTool: UpstreamToolCaller,
-  capabilities: SearchCapabilities
+  capabilities: SearchCapabilities,
+  shouldApplyWorkaround: WorkaroundChecker = () => true
 ): Promise<string> {
   const query = requireString(args.q, 'q').trim()
   const limit = normalizeLimit(args.limit)
@@ -67,7 +68,7 @@ export async function handleSearchRegexTool(
     throw new Error('regex search is not supported by this IDE version')
   }
 
-  return await searchRegexLegacy(query, scope, limit, projectPath, callUpstreamTool)
+  return await searchRegexLegacy(query, scope, limit, projectPath, callUpstreamTool, shouldApplyWorkaround)
 }
 
 async function searchTextLegacy(
@@ -97,7 +98,8 @@ async function searchRegexLegacy(
   scope: PathScope | null,
   limit: number,
   projectPath: string,
-  callUpstreamTool: UpstreamToolCaller
+  callUpstreamTool: UpstreamToolCaller,
+  shouldApplyWorkaround: WorkaroundChecker
 ): Promise<string> {
   const requestLimit = expandLimit(limit, scope)
   const directoryToSearch = resolveSearchRoot(projectPath, scope, null)

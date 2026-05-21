@@ -3,8 +3,9 @@ from typing import Any, ClassVar
 from django.db import models
 from django.db.backends.base.base import BaseDatabaseWrapper
 from django.db.models import Func, Transform
-from django.db.models.expressions import Combinable, Expression, Value
+from django.db.models.expressions import Combinable, Expression, Value, _OutputField
 from django.db.models.sql.compiler import SQLCompiler, _AsSqlType
+from typing_extensions import override
 
 class MySQLSHA2Mixin:
     def as_mysql(self, compiler: SQLCompiler, connection: BaseDatabaseWrapper, **extra_context: Any) -> _AsSqlType: ...
@@ -20,25 +21,33 @@ class PostgreSQLSHAMixin:
 class Chr(Transform):
     def as_mysql(self, compiler: SQLCompiler, connection: BaseDatabaseWrapper, **extra_context: Any) -> _AsSqlType: ...
     def as_oracle(self, compiler: SQLCompiler, connection: BaseDatabaseWrapper, **extra_context: Any) -> _AsSqlType: ...
-    def as_sqlite(self, compiler: SQLCompiler, connection: BaseDatabaseWrapper, **extra_context: Any) -> _AsSqlType: ...
 
 class ConcatPair(Func):
-    def coalesce(self) -> ConcatPair: ...
     def pipes_concat_sql(
         self, compiler: SQLCompiler, connection: BaseDatabaseWrapper, **extra_context: Any
     ) -> _AsSqlType: ...
     as_sqlite = pipes_concat_sql
+    def as_postgresql(
+        self, compiler: SQLCompiler, connection: BaseDatabaseWrapper, **extra_context: Any
+    ) -> _AsSqlType: ...
     def as_mysql(self, compiler: SQLCompiler, connection: BaseDatabaseWrapper, **extra_context: Any) -> _AsSqlType: ...
+    def coalesce(self) -> ConcatPair: ...
 
 class Concat(Func):
     def __init__(self, *expressions: Any, **extra: Any) -> None: ...
 
-class Left(Func):
+class Left(Func[_OutputField]):
     output_field: ClassVar[models.CharField]
-    def __init__(self, expression: Combinable | str, length: Expression | int, **extra: Any) -> None: ...
+    def __init__(
+        self,
+        expression: Combinable | str,
+        length: Expression | int,
+        *,
+        output_field: _OutputField | None = None,
+        **extra: Any,
+    ) -> None: ...
     def get_substr(self) -> Substr: ...
     def as_oracle(self, compiler: SQLCompiler, connection: BaseDatabaseWrapper, **extra_context: Any) -> _AsSqlType: ...
-    def as_sqlite(self, compiler: SQLCompiler, connection: BaseDatabaseWrapper, **extra_context: Any) -> _AsSqlType: ...
 
 class Length(Transform):
     output_field: ClassVar[models.IntegerField]
@@ -57,7 +66,6 @@ class MD5(OracleHashMixin, Transform): ...
 
 class Ord(Transform):
     output_field: ClassVar[models.IntegerField]
-    def as_sqlite(self, compiler: SQLCompiler, connection: BaseDatabaseWrapper, **extra_context: Any) -> _AsSqlType: ...
     def as_mysql(self, compiler: SQLCompiler, connection: BaseDatabaseWrapper, **extra_context: Any) -> _AsSqlType: ...
 
 class Repeat(Func):
@@ -71,7 +79,8 @@ class Replace(Func):
 class Reverse(Transform):
     def as_oracle(self, compiler: SQLCompiler, connection: BaseDatabaseWrapper, **extra_context: Any) -> _AsSqlType: ...
 
-class Right(Left):
+class Right(Left[_OutputField]):
+    @override
     def get_substr(self) -> Substr: ...
 
 class RPad(LPad): ...
@@ -91,12 +100,17 @@ class StrIndex(Func):
         self, compiler: SQLCompiler, connection: BaseDatabaseWrapper, **extra_context: Any
     ) -> _AsSqlType: ...
 
-class Substr(Func):
+class Substr(Func[_OutputField]):
     output_field: ClassVar[models.CharField]
     def __init__(
-        self, expression: Combinable | str, pos: Expression | int, length: Expression | int | None = None, **extra: Any
+        self,
+        expression: Combinable | str,
+        pos: Expression | int,
+        length: Expression | int | None = None,
+        *,
+        output_field: _OutputField | None = None,
+        **extra: Any,
     ) -> None: ...
-    def as_sqlite(self, compiler: SQLCompiler, connection: BaseDatabaseWrapper, **extra_context: Any) -> _AsSqlType: ...
     def as_oracle(self, compiler: SQLCompiler, connection: BaseDatabaseWrapper, **extra_context: Any) -> _AsSqlType: ...
 
 class Trim(Transform): ...

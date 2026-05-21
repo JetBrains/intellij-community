@@ -2,7 +2,7 @@
 
 import {ok} from 'node:assert/strict'
 import {describe, it} from 'bun:test'
-import {BLOCKED_TOOL_NAMES, getProxyToolNames, getReplacedToolNames, TOOL_MODES} from '../proxy-tools/registry'
+import {BLOCKED_TOOL_NAMES, getProxyToolNames, getReplacedToolNames} from '../proxy-tools/registry'
 import {buildUpstreamTool, debug, defaultUpstreamTools, SUITE_TIMEOUT_MS, withProxy} from '../test-utils'
 
 function assertContainsAll(names, expected) {
@@ -15,13 +15,6 @@ function assertExcludesAll(names, excluded) {
   for (const name of excluded) {
     ok(!names.includes(name), `Unexpected ${name}`)
   }
-}
-
-function getOtherModeOnlyNames(mode) {
-  const otherMode = mode === TOOL_MODES.CC ? TOOL_MODES.CODEX : TOOL_MODES.CC
-  const current = getProxyToolNames(mode)
-  const other = getProxyToolNames(otherMode)
-  return new Set([...other].filter((name) => !current.has(name)))
 }
 
 describe('ij MCP proxy tool list', {timeout: SUITE_TIMEOUT_MS}, () => {
@@ -38,6 +31,9 @@ describe('ij MCP proxy tool list', {timeout: SUITE_TIMEOUT_MS}, () => {
   const upstreamToolsWithReadFile = [
     buildUpstreamTool('read_file', {path: {type: 'string'}}, ['path'])
   ]
+  const upstreamToolsWithApplyPatch = [
+    buildUpstreamTool('apply_patch', {patch: {type: 'string'}}, ['patch'])
+  ]
 
   it('exposes proxy tools and hides replaced/blocked upstream tools', async () => {
     await withProxy({}, async ({proxyClient}) => {
@@ -46,12 +42,11 @@ describe('ij MCP proxy tool list', {timeout: SUITE_TIMEOUT_MS}, () => {
       debug('test: tools/list response received')
       const names = listResponse.result.tools.map((tool) => tool.name)
 
-      const expected = new Set(getProxyToolNames(TOOL_MODES.CODEX))
+      const expected = new Set(getProxyToolNames())
       if (!defaultHasSearchSymbol) {
         expected.delete('search_symbol')
       }
       assertContainsAll(names, expected)
-      assertExcludesAll(names, getOtherModeOnlyNames(TOOL_MODES.CODEX))
       assertExcludesAll(names, BLOCKED_TOOL_NAMES)
       assertExcludesAll(names, getReplacedToolNames())
       ok(!names.includes('grep_files'))
@@ -100,34 +95,29 @@ describe('ij MCP proxy tool list', {timeout: SUITE_TIMEOUT_MS}, () => {
     })
   })
 
+  it('passes through upstream apply_patch schema when apply_patch is available', async () => {
+    await withProxy({tools: upstreamToolsWithApplyPatch}, async ({proxyClient}) => {
+      const listResponse = await proxyClient.send('tools/list')
+      const applyPatchTool = listResponse.result.tools.find((tool) => tool.name === 'apply_patch')
+      ok(applyPatchTool)
+      const properties = applyPatchTool.inputSchema?.properties ?? {}
+      ok('patch' in properties)
+      ok(!('input' in properties))
+    })
+  })
+
   it('accepts streamable HTTP SSE responses', async () => {
     await withProxy({responseMode: 'sse'}, async ({proxyClient}) => {
       const listResponse = await proxyClient.send('tools/list')
       const names = listResponse.result.tools.map((tool) => tool.name)
 
       ok(names.includes('read_file'))
+      ok(names.includes('list_dir'))
       ok(names.includes('apply_patch'))
     })
   })
 
-  it('uses cc tool list when tool mode is cc', async () => {
-    await withProxy({proxyEnv: {JETBRAINS_MCP_TOOL_MODE: 'cc'}}, async ({proxyClient}) => {
-      const listResponse = await proxyClient.send('tools/list')
-      const names = listResponse.result.tools.map((tool) => tool.name)
-
-      const expected = new Set(getProxyToolNames(TOOL_MODES.CC))
-      if (!defaultHasSearchSymbol) {
-        expected.delete('search_symbol')
-      }
-      assertContainsAll(names, expected)
-      assertExcludesAll(names, getOtherModeOnlyNames(TOOL_MODES.CC))
-      assertExcludesAll(names, BLOCKED_TOOL_NAMES)
-      assertExcludesAll(names, getReplacedToolNames())
-      ok(!names.includes('grep_files'))
-    })
-  })
-
-  it('rejects direct create_new_file calls in codex mode', async () => {
+  it('rejects direct create_new_file calls', async () => {
     await withProxy({}, async ({proxyClient}) => {
       const response = await proxyClient.send('tools/call', {
         name: 'create_new_file',
@@ -137,19 +127,6 @@ describe('ij MCP proxy tool list', {timeout: SUITE_TIMEOUT_MS}, () => {
       ok(response.result?.isError)
       const message = response.result?.content?.[0]?.text ?? ''
       ok(message.includes('apply_patch'))
-    })
-  })
-
-  it('rejects direct create_new_file calls in cc mode', async () => {
-    await withProxy({proxyEnv: {JETBRAINS_MCP_TOOL_MODE: 'cc'}}, async ({proxyClient}) => {
-      const response = await proxyClient.send('tools/call', {
-        name: 'create_new_file',
-        arguments: {pathInProject: 'example.txt', text: 'hello', overwrite: true}
-      })
-
-      ok(response.result?.isError)
-      const message = response.result?.content?.[0]?.text ?? ''
-      ok(message.includes('write'))
     })
   })
 })

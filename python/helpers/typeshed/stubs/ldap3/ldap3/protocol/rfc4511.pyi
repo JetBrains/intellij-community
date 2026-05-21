@@ -45,10 +45,10 @@ class AttributeValueAssertion(Sequence):
 class MatchingRuleId(LDAPString): ...
 
 class Vals(SetOf):
-    componentType: AttributeValue  # type: ignore[assignment]
+    componentType: AttributeValue
 
 class ValsAtLeast1(SetOf):
-    componentType: AttributeValue  # type: ignore[assignment]
+    componentType: AttributeValue
     subtypeSpec: ConstraintsIntersection
 
 class PartialAttribute(Sequence):
@@ -58,7 +58,7 @@ class Attribute(Sequence):
     componentType: NamedTypes
 
 class AttributeList(SequenceOf):
-    componentType: Attribute  # type: ignore[assignment]
+    componentType: Attribute
 
 class Simple(OctetString):
     tagSet: TagSet
@@ -97,7 +97,7 @@ class URI(LDAPString): ...
 
 class Referral(SequenceOf):
     tagSet: TagSet
-    componentType: URI  # type: ignore[assignment]
+    componentType: URI
 
 class ServerSaslCreds(OctetString):
     tagSet: TagSet
@@ -117,7 +117,7 @@ class Control(Sequence):
 
 class Controls(SequenceOf):
     tagSet: TagSet
-    componentType: Control  # type: ignore[assignment]
+    componentType: Control
 
 class Scope(Enumerated):
     namedValues: NamedValues
@@ -129,7 +129,7 @@ class TypesOnly(Boolean): ...
 class Selector(LDAPString): ...
 
 class AttributeSelection(SequenceOf):
-    componentType: Selector  # type: ignore[assignment]
+    componentType: Selector
 
 class MatchingRule(MatchingRuleId):
     tagSet: TagSet
@@ -161,7 +161,7 @@ class Substring(Choice):
 
 class Substrings(SequenceOf):
     subtypeSpec: ConstraintsIntersection
-    componentType: Substring  # type: ignore[assignment]
+    componentType: Substring
 
 class SubstringFilter(Sequence):
     tagSet: TagSet
@@ -170,12 +170,12 @@ class SubstringFilter(Sequence):
 class And(SetOf):
     tagSet: TagSet
     subtypeSpec: ConstraintsIntersection
-    componentType: Filter  # type: ignore[assignment]
+    componentType: Filter
 
 class Or(SetOf):
     tagSet: TagSet
     subtypeSpec: ConstraintsIntersection
-    componentType: Filter  # type: ignore[assignment]
+    componentType: Filter
 
 class Not(Choice): ...
 
@@ -201,7 +201,7 @@ class Filter(Choice):
     componentType: NamedTypes
 
 class PartialAttributeList(SequenceOf):
-    componentType: PartialAttribute  # type: ignore[assignment]
+    componentType: PartialAttribute
 
 class Operation(Enumerated):
     namedValues: NamedValues
@@ -210,7 +210,7 @@ class Change(Sequence):
     componentType: NamedTypes
 
 class Changes(SequenceOf):
-    componentType: Change  # type: ignore[assignment]
+    componentType: Change
 
 class DeleteOldRDN(Boolean): ...
 
@@ -256,7 +256,7 @@ class SearchRequest(Sequence):
 class SearchResultReference(SequenceOf):
     tagSet: TagSet
     subtypeSpec: ConstraintsIntersection
-    componentType: URI  # type: ignore[assignment]
+    componentType: URI
 
 class SearchResultEntry(Sequence):
     tagSet: TagSet

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradleJava
 
+import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
 import com.intellij.openapi.module.Module
 import org.jetbrains.kotlin.idea.base.plugin.KotlinCompilerVersionProvider
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
@@ -55,6 +56,8 @@ private class GradleKotlinCompilerVersionProvider : KotlinCompilerVersionProvide
     }
 
     override fun isAvailable(module: Module): Boolean {
-        return module.kotlinGradlePluginVersion != null
+        val modulePropertyManager = ExternalSystemModulePropertyManager.getInstance(module)
+        val externalSystemId = modulePropertyManager.getExternalSystemId()
+        return externalSystemId == "GRADLE"
     }
 }

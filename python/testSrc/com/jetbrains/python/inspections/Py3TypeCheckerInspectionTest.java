@@ -4600,5 +4600,13 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                        print(a)
                    """);
   }
+
+  @TestFor(issues = "PY-88610")
+  public void testInvalidDefaultNone() {
+    doTestByText("""
+                   def f(a: str = <warning>None</warning>):
+                       print(a)
+                   """);
+  }
 }
 

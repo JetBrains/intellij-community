@@ -1,8 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -13,7 +15,7 @@ public interface EditMemorySettingsService {
     return ApplicationManager.getApplication().getService(EditMemorySettingsService.class);
   }
 
-  Path getUserOptionsFile();
+  @Nullable Path getUserOptionsFile();
 
-  void save(VMOptions.MemoryKind option, int value) throws IOException;
+  void save(VMOptions.@NotNull MemoryKind option, int value) throws IOException;
 }

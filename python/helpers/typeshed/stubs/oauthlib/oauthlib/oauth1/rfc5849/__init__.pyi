@@ -1,7 +1,7 @@
 from _typeshed import Incomplete
 from collections.abc import Callable, Mapping
 from logging import Logger
-from typing import Any, Final
+from typing import Final
 
 from oauthlib.common import _HTTPMethod
 
@@ -25,20 +25,20 @@ class Client:
     SIGNATURE_METHODS: dict[str, Callable[[str, Incomplete], str]]
     @classmethod
     def register_signature_method(cls, method_name, method_callback) -> None: ...
-    client_key: Any
-    client_secret: Any
-    resource_owner_key: Any
-    resource_owner_secret: Any
-    signature_method: Any
-    signature_type: Any
-    callback_uri: Any
-    rsa_key: Any
-    verifier: Any
-    realm: Any
-    encoding: Any
-    decoding: Any
-    nonce: Any
-    timestamp: Any
+    client_key: Incomplete
+    client_secret: Incomplete
+    resource_owner_key: Incomplete
+    resource_owner_secret: Incomplete
+    signature_method: Incomplete
+    signature_type: Incomplete
+    callback_uri: Incomplete
+    rsa_key: Incomplete
+    verifier: Incomplete
+    realm: Incomplete
+    encoding: Incomplete
+    decoding: Incomplete
+    nonce: Incomplete
+    timestamp: Incomplete
     def __init__(
         self,
         client_key: str,

@@ -4,6 +4,8 @@ package com.intellij.compose.ide.plugin.shared
 import com.intellij.facet.FacetManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 
 private const val ANDROID_FACET_CLASS_NAME: String = "org.jetbrains.android.facet.AndroidFacet"
@@ -15,4 +17,8 @@ internal fun isAndroidModule(module: Module): Boolean {
 
 internal fun isAndroidFile(psiFile: PsiFile): Boolean {
   return ModuleUtilCore.findModuleForFile(psiFile)?.let { isAndroidModule(it) } == true
+}
+
+fun isFileInAndroidModule(project: Project, file: VirtualFile): Boolean {
+  return ModuleUtilCore.findModuleForFile(file, project)?.let { isAndroidModule(it) } == true
 }

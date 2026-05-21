@@ -39,7 +39,7 @@ public final class PyMissingTypeHintsInspection extends PyInspection {
     TypeEvalContext context = PyInspectionVisitor.getContext(session);
     return new PyInspectionVisitor(holder, context) {
       {
-        downgradeHighlightForTypeEngine = context.getTypeEngine() != null;
+        downgradeHighlightForTypeEngine = context.getUsesExternalTypeEngine();
       }
       @Override
       public void visitPyFunction(@NotNull PyFunction function) {

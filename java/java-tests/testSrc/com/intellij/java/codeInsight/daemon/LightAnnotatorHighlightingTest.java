@@ -142,7 +142,7 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
   }
 
   public void testAnnotatorMustNotSpecifyCrazyRangeForCreatedAnnotation() {
-    DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{new MyCrazyAnnotator()}, this::runMyAnnotators);
+    DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{new MyCrazyAnnotator()}, () -> runMyAnnotators());
   }
   private void runMyAnnotators() {
     @org.intellij.lang.annotations.Language("JAVA")
@@ -308,7 +308,7 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
       }
 
       @Override
-      public @NotNull QuickFix @Nullable [] getFixes() {
+      public @NotNull QuickFix<?> @Nullable [] getFixes() {
         return QuickFix.EMPTY_ARRAY;
       }
     };

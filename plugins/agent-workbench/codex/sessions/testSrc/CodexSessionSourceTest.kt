@@ -8,6 +8,9 @@ import com.intellij.agent.workbench.codex.sessions.backend.CodexRefreshHints
 import com.intellij.agent.workbench.codex.sessions.backend.CodexRefreshHintsProvider
 import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionBackend
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
+import com.intellij.agent.workbench.sessions.core.providers.toAgentSessionRefreshThreadSeeds
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.emptyFlow
@@ -31,7 +34,7 @@ class CodexSessionSourceTest {
 
       val hints = source.prefetchRefreshHints(
         paths = listOf(PROJECT_PATH),
-        knownThreadIdsByPath = mapOf(PROJECT_PATH to setOf("thread-1")),
+        refreshThreadSeedsByPath = mapOf(PROJECT_PATH to setOf("thread-1").toAgentSessionRefreshThreadSeeds()),
       )
 
       assertThat(hints).isEmpty()
@@ -57,7 +60,7 @@ class CodexSessionSourceTest {
 
       val hints = source.prefetchRefreshHints(
         paths = listOf(PROJECT_PATH),
-        knownThreadIdsByPath = mapOf(PROJECT_PATH to setOf("thread-1")),
+        refreshThreadSeedsByPath = mapOf(PROJECT_PATH to setOf("thread-1").toAgentSessionRefreshThreadSeeds()),
       )
 
       assertThat(hints.getValue(PROJECT_PATH).activityByThreadId)
@@ -80,7 +83,7 @@ class CodexSessionSourceTest {
 
       val whileActive = source.prefetchRefreshHints(
         paths = listOf(PROJECT_PATH),
-        knownThreadIdsByPath = mapOf(PROJECT_PATH to setOf("thread-1")),
+        refreshThreadSeedsByPath = mapOf(PROJECT_PATH to setOf("thread-1").toAgentSessionRefreshThreadSeeds()),
       )
       assertThat(whileActive).isEmpty()
 
@@ -88,7 +91,7 @@ class CodexSessionSourceTest {
 
       val afterDeactivation = source.prefetchRefreshHints(
         paths = listOf(PROJECT_PATH),
-        knownThreadIdsByPath = mapOf(PROJECT_PATH to setOf("thread-1")),
+        refreshThreadSeedsByPath = mapOf(PROJECT_PATH to setOf("thread-1").toAgentSessionRefreshThreadSeeds()),
       )
       assertThat(afterDeactivation).isEmpty()
     }
@@ -120,7 +123,7 @@ class CodexSessionSourceTest {
 
       val hints = source.prefetchRefreshHints(
         paths = listOf(PROJECT_PATH),
-        knownThreadIdsByPath = mapOf(PROJECT_PATH to setOf("thread-1")),
+        refreshThreadSeedsByPath = mapOf(PROJECT_PATH to setOf("thread-1").toAgentSessionRefreshThreadSeeds()),
       )
 
       assertThat(hints).isEmpty()
@@ -151,7 +154,7 @@ class CodexSessionSourceTest {
     runBlocking(Dispatchers.Default) {
       val hints = source.prefetchRefreshHints(
         paths = listOf(PROJECT_PATH),
-        knownThreadIdsByPath = mapOf(PROJECT_PATH to setOf("thread-1")),
+        refreshThreadSeedsByPath = mapOf(PROJECT_PATH to setOf("thread-1").toAgentSessionRefreshThreadSeeds()),
       )
 
       assertThat(hints.getValue(PROJECT_PATH).activityByThreadId)
@@ -178,11 +181,11 @@ private fun createSource(
 
 private fun staticHintsProvider(hintsByPath: Map<String, CodexRefreshHints>): CodexRefreshHintsProvider {
   return object : CodexRefreshHintsProvider {
-    override val updates = emptyFlow<Unit>()
+    override val updateEvents = emptyFlow<AgentSessionSourceUpdateEvent>()
 
     override suspend fun prefetchRefreshHints(
       paths: List<String>,
-      knownThreadIdsByPath: Map<String, Set<String>>,
+      refreshThreadSeedsByPath: Map<String, Set<AgentSessionRefreshThreadSeed>>,
     ): Map<String, CodexRefreshHints> {
       return hintsByPath.filterKeys(paths::contains)
     }

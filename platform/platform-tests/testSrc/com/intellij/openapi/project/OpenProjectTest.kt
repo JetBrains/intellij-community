@@ -52,6 +52,24 @@ import kotlin.io.path.writeText
 enum class TestProjectSource { SourceOpenFileAction, SourceCLI }
 enum class TestOpenMode { ModeFileOrFolderDefault, ModeFolderAsProject, ModeFolderAsFolder }
 
+internal enum class IdeaProjectMaker {
+  IprFile {
+    override fun makeProject(projectDir: Path): Path {
+      projectDir.createDirectories()
+      val projectPath = projectDir.resolve("project.ipr")
+      projectPath.writeText("""
+        <?xml version="1.0" encoding="UTF-8"?>
+        <project version="4">
+        </project>
+      """.trimIndent())
+      return projectPath
+    }
+  },
+  ;
+
+  abstract fun makeProject(projectDir: Path): Path
+}
+
 @RunWith(Parameterized::class)
 internal class OpenProjectTest(private val opener: Opener) {
   companion object {
@@ -104,6 +122,14 @@ internal class OpenProjectTest(private val opener: Opener) {
   }
 
   @Test
+  fun `open ipr file with ability to attach`() = runBlocking(Dispatchers.Default) {
+    ExtensionTestUtil.maskExtensions(ProjectAttachProcessor.EP_NAME, listOf(ModuleAttachProcessor()), disposableRule.disposable)
+    val projectDir = tempDir.newPath("project")
+    val projectFileToOpen = IdeaProjectMaker.IprFile.makeProject(projectDir)
+    openWithOpenerAndAssertProjectState(projectDir, projectFileToOpen, opener.defaultProjectTemplateShouldBeAppliedOverride ?: false)
+  }
+
+  @Test
   fun `open clean existing project dir with ability to attach`() = runBlocking(Dispatchers.Default) {
     ExtensionTestUtil.maskExtensions(ProjectAttachProcessor.EP_NAME, listOf(ModuleAttachProcessor()), disposableRule.disposable)
     val projectDir = tempDir.newPath("project")
@@ -130,6 +156,14 @@ internal class OpenProjectTest(private val opener: Opener) {
     val projectDir = tempDir.newPath("project")
     projectDir.resolve(".idea").createDirectories()
     openWithOpenerAndAssertProjectState(projectDir, opener.defaultProjectTemplateShouldBeAppliedOverride ?: false)
+  }
+
+  @Test
+  fun `open ipr file with inability to attach`() = runBlocking(Dispatchers.Default) {
+    ExtensionTestUtil.maskExtensions(ProjectAttachProcessor.EP_NAME, listOf(), disposableRule.disposable)
+    val projectDir = tempDir.newPath("project")
+    val projectFileToOpen = IdeaProjectMaker.IprFile.makeProject(projectDir)
+    openWithOpenerAndAssertProjectState(projectDir, projectFileToOpen, opener.defaultProjectTemplateShouldBeAppliedOverride ?: false)
   }
 
   @Test
@@ -237,8 +271,17 @@ internal class OpenProjectTest(private val opener: Opener) {
     defaultProjectTemplateShouldBeApplied: Boolean,
     beforeOtherChecks: ((Project) -> Unit)? = null,
   ) {
+    return openWithOpenerAndAssertProjectState(projectDir, projectDir, defaultProjectTemplateShouldBeApplied, beforeOtherChecks)
+  }
+
+  private suspend fun openWithOpenerAndAssertProjectState(
+    projectDir: Path,
+    projectFileToOpen: Path,
+    defaultProjectTemplateShouldBeApplied: Boolean,
+    beforeOtherChecks: ((Project) -> Unit)? = null,
+  ) {
     checkDefaultProjectAsTemplate { checkDefaultProjectAsTemplateTask ->
-      val project = opener.opener(projectDir)!!
+      val project = opener.opener(projectFileToOpen)!!
       project.useProject {
         beforeOtherChecks?.invoke(project)
         assertThatProjectContainsModules(project, opener.getExpectedModules(projectDir))

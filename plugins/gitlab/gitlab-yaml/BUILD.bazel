@@ -17,9 +17,13 @@ jvm_library(
     "//plugins/gitlab/gitlab-core:vcs-gitlab",
     "//plugins/yaml/backend",
     "@lib//:kotlin-stdlib",
+    "//platform/util",
     "//platform/util/base",
     "//plugins/yaml",
     "//platform/analysis-impl",
+    "//platform/statistics",
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
   ]
 )
 
@@ -30,18 +34,24 @@ jvm_library(
   associates = [":vcs-gitlab-yaml"],
   deps = [
     "//platform/analysis-api:analysis",
-    "//platform/core-api:core",
     "//plugins/gitlab/gitlab-core:vcs-gitlab",
     "//plugins/gitlab/gitlab-core:vcs-gitlab_test_lib",
     "//plugins/yaml/backend",
     "//plugins/yaml/backend:backend_test_lib",
     "@lib//:kotlin-stdlib",
+    "//platform/util",
     "//platform/util/base",
     "//plugins/yaml",
     "//plugins/yaml:yaml_test_lib",
     "//platform/analysis-impl",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
     "//json/backend/tests:tests_test_lib",
   ]
 )

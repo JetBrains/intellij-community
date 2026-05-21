@@ -106,6 +106,13 @@ class PyTypeRepresentationParser : PyParser() {
       annotationMarker.done(PyTypeRepresentationElementTypes.PLACEHOLDER)
     }
 
+    override fun parsePrimaryExpression(isTargetExpression: Boolean): Boolean {
+      // Try to parse as a callable type when we see '(' — handles cases like ((int) -> int) | (str) -> str
+      // where the inner callable must be recognized within a parenthesized expression context.
+      if (!isTargetExpression && atToken(PyTokenTypes.LPAR) && parseFunctionType()) return true
+      return super.parsePrimaryExpression(isTargetExpression)
+    }
+
     fun parseFunctionType(): Boolean {
       val mark = myBuilder.mark()
 
@@ -322,6 +329,40 @@ class PyTypeRepresentationParser : PyParser() {
       }
       checkMatches(PyTokenTypes.RPAR, PyParsingBundle.message("PARSE.expected.rpar"))
       listMark.done(PyTypeRepresentationElementTypes.PARAMETER_TYPE_LIST)
+    }
+
+    override fun parseSubscriptionIndexArgumentList() {
+      // In type representation mode, subscript content may contain callable types like (int) -> int.
+      // Override the standard parsing to try callable types first for each element.
+      if (myBuilder.eof() || atToken(PyTokenTypes.RBRACKET)) {
+        myBuilder.error(PyParsingBundle.message("PARSE.expected.expression"))
+      }
+      else {
+        val tupleMarker = myBuilder.mark()
+        parseSubscriptionTypeArgument()
+        var multipleElements = false
+        while (atToken(PyTokenTypes.COMMA)) {
+          multipleElements = true
+          myBuilder.advanceLexer()
+          if (atToken(PyTokenTypes.RBRACKET)) break
+          parseSubscriptionTypeArgument()
+        }
+        if (multipleElements) {
+          tupleMarker.done(PyElementTypes.TUPLE_EXPRESSION)
+        }
+        else {
+          tupleMarker.drop()
+        }
+      }
+      checkMatches(PyTokenTypes.RBRACKET, PyParsingBundle.message("PARSE.expected.rbracket"))
+    }
+
+    private fun parseSubscriptionTypeArgument() {
+      if (!parseFunctionType()) {
+        if (!parseNamedTestExpression(false, false)) {
+          myBuilder.error(PyParsingBundle.message("PARSE.expected.expression"))
+        }
+      }
     }
 
     fun recoverUntilMatches(errorMessage: @NlsContexts.ParsingError String, vararg types: IElementType) {

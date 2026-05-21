@@ -247,7 +247,7 @@ public final class TreeRuleChecker {
       List<MatchingResult> mrs = new ArrayList<>(rules.size());
       for (var rule : rules) {
         ProgressManager.checkCanceled();
-        mrs.add(rule.match(List.of(tree)));
+        mrs.add(rule.match(tree));
       }
       return MatchingResult.concat(mrs);
     });

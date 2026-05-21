@@ -2,14 +2,16 @@ from collections.abc import Callable, Iterable, Sequence
 from typing import Any, Generic, Literal, TypeVar, overload
 from uuid import UUID
 
+from django import forms
 from django.core import validators  # due to weird mypy.stubtest error
+from django.db.backends.base.base import BaseDatabaseWrapper
 from django.db.models.base import Model
 from django.db.models.expressions import Combinable, Expression
 from django.db.models.fields import NOT_PROVIDED, Field, _AllLimitChoicesTo, _ErrorMessagesMapping, _LimitChoicesTo
 from django.db.models.fields.mixins import FieldCacheMixin
+from django.db.models.fields.related_descriptors import ForeignKeyDeferredAttribute, ManyRelatedManager
 from django.db.models.fields.related_descriptors import ForwardManyToOneDescriptor as ForwardManyToOneDescriptor
 from django.db.models.fields.related_descriptors import ForwardOneToOneDescriptor as ForwardOneToOneDescriptor
-from django.db.models.fields.related_descriptors import ManyRelatedManager
 from django.db.models.fields.related_descriptors import ManyToManyDescriptor as ManyToManyDescriptor
 from django.db.models.fields.related_descriptors import ReverseManyToOneDescriptor as ReverseManyToOneDescriptor
 from django.db.models.fields.related_descriptors import ReverseOneToOneDescriptor as ReverseOneToOneDescriptor
@@ -18,13 +20,17 @@ from django.db.models.fields.reverse_related import ManyToManyRel as ManyToManyR
 from django.db.models.fields.reverse_related import ManyToOneRel as ManyToOneRel
 from django.db.models.fields.reverse_related import OneToOneRel as OneToOneRel
 from django.db.models.query_utils import FilteredRelation, PathInfo, Q
+from django.db.models.sql.where import WhereNode
 from django.utils.choices import _Choices
 from django.utils.functional import _StrOrPromise, cached_property
-from typing_extensions import Self
+from typing_extensions import Self, override
 
 RECURSIVE_RELATIONSHIP_CONSTANT: Literal["self"]
 
 def resolve_relation(scope_model: type[Model], relation: str | type[Model]) -> str | type[Model]: ...
+def lazy_related_operation(
+    function: Callable[..., Any], model: type[Model], *related_models: type[Model] | str, **kwargs: Any
+) -> None: ...
 
 # __set__ value type
 _ST = TypeVar("_ST", contravariant=True)
@@ -40,7 +46,6 @@ class RelatedField(FieldCacheMixin, Field[_ST, _GT]):
 
     remote_field: ForeignObjectRel
     rel_class: type[ForeignObjectRel]
-    swappable: bool
     def __init__(
         self,
         related_name: str | None = None,
@@ -73,8 +78,10 @@ class RelatedField(FieldCacheMixin, Field[_ST, _GT]):
         db_comment: str | None = ...,
     ) -> None: ...
     @cached_property
+    @override
     def related_model(self) -> type[Model] | Literal["self"]: ...  # type: ignore[override]
-    def contribute_to_class(self, cls: type[Model], name: str, private_only: bool = ..., **kwargs: Any) -> None: ...
+    @override
+    def contribute_to_class(self, cls: type[Model], name: str, private_only: bool = False, **kwargs: Any) -> None: ...
     def get_forward_related_filter(self, obj: Model) -> dict[str, int | UUID]: ...
     def get_reverse_related_filter(self, obj: Model) -> Q: ...
     @property
@@ -82,6 +89,8 @@ class RelatedField(FieldCacheMixin, Field[_ST, _GT]):
     def set_attributes_from_rel(self) -> None: ...
     def do_related_class(self, other: type[Model], cls: type[Model]) -> None: ...
     def get_limit_choices_to(self) -> _LimitChoicesTo: ...
+    @override
+    def formfield(self, **kwargs: Any) -> forms.Field | None: ...  # type: ignore[override]
     def related_query_name(self) -> str: ...
     @property
     def target_field(self) -> Field: ...
@@ -89,9 +98,9 @@ class RelatedField(FieldCacheMixin, Field[_ST, _GT]):
 class ForeignObject(RelatedField[_ST, _GT]):
     remote_field: ForeignObjectRel
     rel_class: type[ForeignObjectRel]
+    column: None
     from_fields: Sequence[str]
     to_fields: Sequence[str | None]  # None occurs in ForeignKey, where to_field defaults to None
-    swappable: bool
     def __init__(
         self,
         to: type[Model] | str,
@@ -127,12 +136,15 @@ class ForeignObject(RelatedField[_ST, _GT]):
     ) -> None: ...
     # class access
     @overload
+    @override
     def __get__(self, instance: None, owner: Any) -> ForwardManyToOneDescriptor[Self]: ...
     # Model instance access
     @overload
+    @override
     def __get__(self, instance: Model, owner: Any) -> _GT: ...
     # non-Model instances
     @overload
+    @override
     def __get__(self, instance: Any, owner: Any) -> Self: ...
     def resolve_related_fields(self) -> list[tuple[Field, Field]]: ...
     @cached_property
@@ -143,15 +155,35 @@ class ForeignObject(RelatedField[_ST, _GT]):
     def local_related_fields(self) -> tuple[Field, ...]: ...
     @cached_property
     def foreign_related_fields(self) -> tuple[Field, ...]: ...
+    def get_local_related_value(self, instance: Model) -> tuple[Any, ...]: ...
+    def get_foreign_related_value(self, instance: Model) -> tuple[Any, ...]: ...
+    @staticmethod
+    def get_instance_value_for_fields(instance: Model, fields: Sequence[Field]) -> tuple[Any, ...]: ...
     def get_joining_fields(self, reverse_join: bool = False) -> tuple[tuple[Field, Field], ...]: ...
     def get_reverse_joining_fields(self) -> tuple[tuple[Field, Field], ...]: ...
+    def get_extra_descriptor_filter(self, instance: Model) -> dict[str, Any] | Q: ...
+    def get_extra_restriction(self, alias: str, related_alias: str) -> WhereNode | None: ...
+    def get_path_info(self, filtered_relation: FilteredRelation | None = None) -> list[PathInfo]: ...
+    @cached_property
+    def path_infos(self) -> list[PathInfo]: ...
+    def get_reverse_path_info(self, filtered_relation: FilteredRelation | None = None) -> list[PathInfo]: ...
+    @cached_property
+    def reverse_path_infos(self) -> list[PathInfo]: ...
+    def contribute_to_related_class(self, cls: type[Model], related: RelatedField) -> None: ...
+    @override
+    def get_attname_column(self) -> tuple[str, None]: ...
+    forward_related_accessor_class: type[ForwardManyToOneDescriptor]
+    related_accessor_class: type[ReverseManyToOneDescriptor]
+    requires_unique_target: bool
 
 class ForeignKey(ForeignObject[_ST, _GT]):
     _pyi_private_set_type: Any | Combinable
     _pyi_private_get_type: Any
 
+    descriptor_class: type[ForeignKeyDeferredAttribute]
     remote_field: ManyToOneRel
     rel_class: type[ManyToOneRel]
+    column: str  # type: ignore[assignment]
     def __init__(
         self,
         to: type[Model] | str,
@@ -163,6 +195,7 @@ class ForeignKey(ForeignObject[_ST, _GT]):
         to_field: str | None = None,
         db_constraint: bool = True,
         *,
+        swappable: bool = ...,
         verbose_name: _StrOrPromise | None = ...,
         name: str | None = ...,
         primary_key: bool = ...,
@@ -187,6 +220,17 @@ class ForeignKey(ForeignObject[_ST, _GT]):
         error_messages: _ErrorMessagesMapping | None = ...,
         db_comment: str | None = ...,
     ) -> None: ...
+    @classmethod
+    def __class_getitem__(cls, *args: Any, **kwargs: Any) -> type[Self]: ...
+    @override
+    def contribute_to_related_class(self, cls: type[Model], related: RelatedField) -> None: ...
+    @override
+    def formfield(self, *, using: str | None = None, **kwargs: Any) -> forms.Field | None: ...  # type: ignore[override]
+    @override
+    def cast_db_type(self, connection: BaseDatabaseWrapper) -> str | None: ...
+    def convert_empty_strings(self, value: Any, expression: Expression, connection: BaseDatabaseWrapper) -> Any: ...
+    @override
+    def get_attname_column(self) -> tuple[str, str]: ...  # type: ignore[override]
 
 class OneToOneField(ForeignKey[_ST, _GT]):
     _pyi_private_set_type: Any | Combinable
@@ -197,9 +241,10 @@ class OneToOneField(ForeignKey[_ST, _GT]):
     def __init__(
         self,
         to: type[Model] | str,
-        on_delete: Any,
+        on_delete: Callable[..., None],
         to_field: str | None = None,
         *,
+        swappable: bool = ...,
         related_name: str | None = ...,
         related_query_name: str | None = ...,
         limit_choices_to: _AllLimitChoicesTo | None = ...,
@@ -231,19 +276,25 @@ class OneToOneField(ForeignKey[_ST, _GT]):
     ) -> None: ...
     # class access
     @overload
+    @override
     def __get__(self, instance: None, owner: Any) -> ForwardOneToOneDescriptor[Self]: ...
     # Model instance access
     @overload
+    @override
     def __get__(self, instance: Model, owner: Any) -> _GT: ...
     # non-Model instances
     @overload
+    @override
     def __get__(self, instance: Any, owner: Any) -> Self: ...
+    @override
+    def formfield(self, **kwargs: Any) -> forms.Field | None: ...  # type: ignore[override]
+    forward_related_accessor_class: type[ForwardOneToOneDescriptor]
+    related_accessor_class: type[ReverseOneToOneDescriptor]  # type: ignore[assignment]
 
 _Through = TypeVar("_Through", bound=Model)
 _To = TypeVar("_To", bound=Model)
 
 class ManyToManyField(RelatedField[Any, Any], Generic[_To, _Through]):
-    description: _StrOrPromise
     has_null_arg: bool
     swappable: bool
 
@@ -254,6 +305,7 @@ class ManyToManyField(RelatedField[Any, Any], Generic[_To, _Through]):
 
     remote_field: ManyToManyRel
     rel_class: type[ManyToManyRel]
+    column: None
     def __init__(
         self,
         to: type[_To] | str,
@@ -291,17 +343,23 @@ class ManyToManyField(RelatedField[Any, Any], Generic[_To, _Through]):
     ) -> None: ...
     # class access
     @overload
+    @override
     def __get__(self, instance: None, owner: Any) -> ManyToManyDescriptor[_To, _Through]: ...
     # Model instance access
     @overload
+    @override
     def __get__(self, instance: Model, owner: Any) -> ManyRelatedManager[_To, _Through]: ...
     # non-Model instances
     @overload
+    @override
     def __get__(self, instance: Any, owner: Any) -> Self: ...
     def get_path_info(self, filtered_relation: FilteredRelation | None = None) -> list[PathInfo]: ...
     def get_reverse_path_info(self, filtered_relation: FilteredRelation | None = None) -> list[PathInfo]: ...
+    @override
     def contribute_to_class(self, cls: type[Model], name: str, **kwargs: Any) -> None: ...  # type: ignore[override]
     def contribute_to_related_class(self, cls: type[Model], related: RelatedField) -> None: ...
+    @override
+    def get_attname_column(self) -> tuple[str, None]: ...
     def m2m_db_table(self) -> str: ...
     def m2m_column_name(self) -> str: ...
     def m2m_reverse_name(self) -> str: ...
@@ -309,5 +367,11 @@ class ManyToManyField(RelatedField[Any, Any], Generic[_To, _Through]):
     def m2m_reverse_field_name(self) -> str: ...
     def m2m_target_field_name(self) -> str: ...
     def m2m_reverse_target_field_name(self) -> str: ...
+    @override
+    def formfield(self, *, using: str | None = None, **kwargs: Any) -> forms.Field | None: ...  # type: ignore[override]
+    @cached_property
+    def path_infos(self) -> list[PathInfo]: ...
+    @cached_property
+    def reverse_path_infos(self) -> list[PathInfo]: ...
 
 def create_many_to_many_intermediary_model(field: ManyToManyField, klass: type[Model]) -> type[Model]: ...

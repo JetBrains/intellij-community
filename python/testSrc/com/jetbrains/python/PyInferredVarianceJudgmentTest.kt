@@ -7,14 +7,12 @@ import com.jetbrains.python.psi.PyElement
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PyTypeParameter
 import com.jetbrains.python.psi.types.PyInferredVarianceJudgment.getInferredVariance
-import com.jetbrains.python.psi.types.PyTypeVarType.Variance
+import com.jetbrains.python.psi.types.PyTypeParameterType.Variance
 import com.jetbrains.python.psi.types.TypeEvalContext
 import junit.framework.AssertionFailedError
 import org.intellij.lang.annotations.Language
 
 internal class PyInferredVarianceJudgmentTest : PyTestCase() {
-
-
   private fun doTest(expression: String, expectedVariance: Variance?, @Language("Python") text: String) {
     return doTest(expression, expectedVariance, PyTypeParameter::class.java, text)
   }
@@ -776,4 +774,68 @@ internal class PyInferredVarianceJudgmentTest : PyTestCase() {
           def method(self) -> A[U]: pass
       """)
   }
+
+  fun `test Parameter specification contravariant`() {
+    doTest("P", Variance.CONTRAVARIANT, """
+      from typing import Callable
+      
+      class A[**P]:
+          def f(self, *args: P.args, **kwargs: P.kwargs): ...
+      """)
+  }
+
+  fun `test Parameter specification flipped contravariant`() {
+    doTest("P", Variance.CONTRAVARIANT, """
+      from typing import Callable
+      
+      class A[**P]:
+          def f(self) -> Callable[P, None]: ...
+      """)
+  }
+
+  fun `test Parameter specification flipped covariant`() {
+    doTest("P", Variance.COVARIANT, """
+      from typing import Callable
+      
+      class A[**P]:
+          def f(self, f: Callable[P, None]): ...
+      """)
+  }
+
+  fun `test Parameter specification invariant`() {
+    doTest("P", Variance.INVARIANT, """
+      from typing import Callable
+      
+      class A[**P]:
+          def f(self, f: Callable[P, None]) -> Callable[P, None]: ...
+      """)
+  }
+
+  fun `test Type variable tuple covariant`() {
+    doTest("Ts", Variance.COVARIANT, """
+      from typing import Callable
+      
+      class A[*Ts]:
+          def f(self) -> tuple[*Ts]: ...
+      """)
+  }
+
+  fun `test Type variable tuple contravariant`() {
+    doTest("Ts", Variance.CONTRAVARIANT, """
+      from typing import Callable
+      
+      class A[*Ts]:
+          def f(self, t: tuple[*Ts]): ...
+      """)
+  }
+
+  fun `test Type variable tuple invariant`() {
+    doTest("Ts", Variance.INVARIANT, """
+      from typing import Callable
+      
+      class A[*Ts]:
+          def f(self, t: tuple[*Ts]) -> tuple[*Ts]: ...
+      """)
+  }
+
 }

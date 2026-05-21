@@ -22,7 +22,7 @@ private data class ThreadEntry(
   @JvmField val id: String,
   @JvmField val title: String?,
   @JvmField val preview: String?,
-  @JvmField val name: String?,
+  @JvmField var name: String?,
   @JvmField val summary: String?,
   @JvmField val cwd: String?,
   @JvmField val sourceKind: String,
@@ -58,6 +58,7 @@ private data class Request(
 private data class RequestParams(
   @JvmField val id: String? = null,
   @JvmField val turnId: String? = null,
+  @JvmField val name: String? = null,
   @JvmField val archived: Boolean? = null,
   @JvmField val cursor: String? = null,
   @JvmField val limit: Int? = null,
@@ -185,6 +186,10 @@ internal object CodexTestAppServer {
         })
         "thread/archive" -> {
           updateArchive(request.params.id, threads, archive = true)
+          writeResponse(writer, request.id, ::writeEmptyObject)
+        }
+        "thread/name/set" -> {
+          updateThreadName(request.params.id, request.params.name, threads)
           writeResponse(writer, request.id, ::writeEmptyObject)
         }
         "thread/unarchive" -> {
@@ -570,6 +575,7 @@ internal object CodexTestAppServer {
       var method: String? = null
       var paramsId: String? = null
       var paramsTurnId: String? = null
+      var paramsName: String? = null
       var paramsArchived: Boolean? = null
       var paramsCursor: String? = null
       var paramsLimit: Int? = null
@@ -594,6 +600,7 @@ internal object CodexTestAppServer {
                   "id" -> paramsId = readStringOrNull(parser)
                   "threadId" -> paramsId = readStringOrNull(parser)
                   "turnId" -> paramsTurnId = readStringOrNull(parser)
+                  "name" -> paramsName = readStringOrNull(parser)
                   "archived" -> paramsArchived = readBooleanOrNull(parser)
                   "cursor" -> paramsCursor = readStringOrNull(parser)
                   "limit" -> paramsLimit = readLongOrNull(parser)?.toInt()
@@ -645,21 +652,22 @@ internal object CodexTestAppServer {
         requestMethod,
         RequestParams(
           id = paramsId,
-            turnId = paramsTurnId,
-            archived = paramsArchived,
-            cursor = paramsCursor,
-            limit = paramsLimit,
-            includeTurns = paramsIncludeTurns,
-            cwd = paramsCwd,
-            sourceKinds = paramsSourceKinds,
-            model = paramsModel,
-            effort = paramsEffort,
-            approvalPolicy = paramsApprovalPolicy,
-            sandbox = paramsSandbox,
-            ephemeral = paramsEphemeral,
-            inputText = paramsInputText,
-            outputSchemaPresent = paramsOutputSchemaPresent,
-          )
+          turnId = paramsTurnId,
+          name = paramsName,
+          archived = paramsArchived,
+          cursor = paramsCursor,
+          limit = paramsLimit,
+          includeTurns = paramsIncludeTurns,
+          cwd = paramsCwd,
+          sourceKinds = paramsSourceKinds,
+          model = paramsModel,
+          effort = paramsEffort,
+          approvalPolicy = paramsApprovalPolicy,
+          sandbox = paramsSandbox,
+          ephemeral = paramsEphemeral,
+          inputText = paramsInputText,
+          outputSchemaPresent = paramsOutputSchemaPresent,
+        )
       )
     }
   }
@@ -1167,6 +1175,16 @@ private fun updateArchive(id: String?, threads: MutableList<ThreadEntry>, archiv
   if (id == null) return
   val thread = threads.firstOrNull { it.id == id } ?: return
   thread.archived = archive
+  thread.updatedAt = System.currentTimeMillis()
+  if (thread.updatedAtField.isNullOrBlank()) {
+    thread.updatedAtField = "updated_at"
+  }
+}
+
+private fun updateThreadName(id: String?, name: String?, threads: MutableList<ThreadEntry>) {
+  if (id == null || name == null) return
+  val thread = threads.firstOrNull { it.id == id } ?: return
+  thread.name = name
   thread.updatedAt = System.currentTimeMillis()
   if (thread.updatedAtField.isNullOrBlank()) {
     thread.updatedAtField = "updated_at"

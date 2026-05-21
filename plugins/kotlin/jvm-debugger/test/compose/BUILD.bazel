@@ -52,6 +52,7 @@ jvm_library(
     "@lib//:kotlinc-compose-compiler-plugin",
     "//plugins/kotlin/tests-compose:tests-compose_test_lib",
     "//plugins/kotlin/jvm-debugger/test/compose/testFramework:testFramework_test_lib",
+    "//android/logcat/gradle",
   ],
   runtime_deps = [":compose"]
 )

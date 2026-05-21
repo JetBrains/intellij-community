@@ -1,0 +1,30 @@
+TypeRepresentation:a.pythonTypeRepresentation
+  PyBinaryExpression
+    PyParenthesizedExpression
+      PsiElement(Py:LPAR)('(')
+      PyFunctionTypeRepresentation
+        PyParameterListRepresentation
+          PsiElement(Py:LPAR)('(')
+          PyReferenceExpression: int
+            PsiElement(Py:IDENTIFIER)('int')
+          PsiElement(Py:RPAR)(')')
+        PsiWhiteSpace(' ')
+        PsiElement(Py:RARROW)('->')
+        PsiWhiteSpace(' ')
+        PyReferenceExpression: int
+          PsiElement(Py:IDENTIFIER)('int')
+      PsiElement(Py:RPAR)(')')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:OR)('|')
+    PsiWhiteSpace(' ')
+    PyFunctionTypeRepresentation
+      PyParameterListRepresentation
+        PsiElement(Py:LPAR)('(')
+        PyReferenceExpression: str
+          PsiElement(Py:IDENTIFIER)('str')
+        PsiElement(Py:RPAR)(')')
+      PsiWhiteSpace(' ')
+      PsiElement(Py:RARROW)('->')
+      PsiWhiteSpace(' ')
+      PyReferenceExpression: str
+        PsiElement(Py:IDENTIFIER)('str')

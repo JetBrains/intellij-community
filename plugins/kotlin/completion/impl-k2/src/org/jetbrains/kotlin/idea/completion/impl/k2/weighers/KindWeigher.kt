@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.idea.completion.KeywordLookupObject
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.keywords.ReturnKeywordHandler.isReturnAtHighlyLikelyPosition
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.KotlinCallableLookupObject
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.AnonymousObjectLookupObject
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.FunctionCallLookupObject
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.NamedArgumentLookupObject
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.OperatorNameLookupObject
@@ -28,6 +29,7 @@ internal object KindWeigher {
         KEYWORD,
         NAMED_ARGUMENT,
         DEFAULT,
+        ANONYMOUS_OBJECT,
         PACKAGES,
         SYMBOL_TO_SKIP,
     }
@@ -67,6 +69,7 @@ internal object KindWeigher {
                 is KotlinCallableLookupObject -> Weight.CALLABLE
                 is NamedArgumentLookupObject -> Weight.NAMED_ARGUMENT
                 is OperatorNameLookupObject -> Weight.OPERATOR_NAME
+                is AnonymousObjectLookupObject -> Weight.ANONYMOUS_OBJECT
                 else -> Weight.DEFAULT
             }
         }

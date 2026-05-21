@@ -44,6 +44,19 @@ class AgentSessionThreadPresentationTest {
   }
 
   @Test
+  fun titleNormalizationPreservesFullLength() {
+    val longTitle = "Project setup: " + "a".repeat(180) + " tail"
+
+    val result = formatAgentSessionThreadTitle(
+      threadId = "thread-1234",
+      title = longTitle,
+      fallbackTitle = { "Thread $it" },
+    )
+
+    assertThat(result).isEqualTo(longTitle)
+  }
+
+  @Test
   fun compactTitleUsesMiddleTruncationForLongTitles() {
     val longTitle = "Project setup: " + "a".repeat(180) + " tail"
 

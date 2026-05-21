@@ -1141,4 +1141,39 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
         }"""
     );
   }
+
+  public void testChainedMethodCallsInTernaryExpression_AlignMethodChain() {
+    getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
+    getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    doMethodTest(
+      """
+        boolean unknown = true;
+        final var someVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryLongVariableName = unknown ? "string".chars().map(integer -> integer + 1).map(integer -> integer - 1).sorted().peek(System.out::println).count() : 0;""",
+      """
+        boolean unknown = true;
+        final var someVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryLongVariableName = unknown ? "string".chars()
+                                                                                                               .map(integer -> integer + 1)
+                                                                                                               .map(integer -> integer - 1)
+                                                                                                               .sorted()
+                                                                                                               .peek(System.out::println)
+                                                                                                               .count() : 0;"""
+    );
+  }
+
+  public void testChainedMethodCallsInTernaryExpression_NoAlignment() {
+    getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    doMethodTest(
+      """
+        boolean unknown = true;
+        final var someVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryLongVariableName = unknown ? "string".chars().map(integer -> integer + 1).map(integer -> integer - 1).sorted().peek(System.out::println).count() : 0;""",
+      """
+        boolean unknown = true;
+        final var someVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryLongVariableName = unknown ? "string".chars()
+                .map(integer -> integer + 1)
+                .map(integer -> integer - 1)
+                .sorted()
+                .peek(System.out::println)
+                .count() : 0;"""
+    );
+  }
 }

@@ -105,6 +105,8 @@ jvm_library(
     "//libraries/kotlinx/coroutines/test",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/kotlin/tests-common:common-tests_test_lib",
+    "//plugins/compose/intellij.compose.ide.plugin.resources.android:ide-plugin-resources-android",
+    "@lib//:studio-test-platform",
   ]
 )
 ### auto-generated section `build intellij.compose.ide.plugin.resources` end

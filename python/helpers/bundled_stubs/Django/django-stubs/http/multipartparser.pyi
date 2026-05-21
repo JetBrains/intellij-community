@@ -1,8 +1,8 @@
 import re
 from collections.abc import Iterator, Mapping
-from typing import IO, Any, ClassVar, Literal
+from typing import Any, ClassVar, Literal
 
-from django.http.request import QueryDict
+from django.http.request import QueryDict, _PostDataProtocol
 from django.utils.datastructures import ImmutableList, MultiValueDict
 
 class MultiPartParserError(Exception): ...
@@ -18,7 +18,7 @@ class MultiPartParser:
     def __init__(
         self,
         META: Mapping[str, Any],
-        input_data: IO[bytes],
+        input_data: _PostDataProtocol,
         upload_handlers: list[Any] | ImmutableList[Any],
         encoding: str | None = ...,
     ) -> None: ...
@@ -39,9 +39,9 @@ class LazyStream:
     def unget(self, bytes: bytes) -> None: ...
 
 class ChunkIter:
-    flo: IO[bytes]
+    flo: _PostDataProtocol
     chunk_size: int
-    def __init__(self, flo: IO[bytes], chunk_size: int = ...) -> None: ...
+    def __init__(self, flo: _PostDataProtocol, chunk_size: int = ...) -> None: ...
     def __next__(self) -> bytes: ...
     def __iter__(self) -> ChunkIter: ...
 

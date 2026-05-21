@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.emptyFlow
 data class ClaudeBackendThread(
   @JvmField val id: String,
   @JvmField val title: String,
+  @JvmField val archived: Boolean = false,
   @JvmField val updatedAt: Long,
   @JvmField val gitBranch: String? = null,
   @JvmField val activity: ClaudeSessionActivity = ClaudeSessionActivity.READY,

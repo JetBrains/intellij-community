@@ -1,7 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.formatter.java
 
+import com.intellij.lang.java.JavaLanguage
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings
+
 class ConditionalExpressionFormatterTest : JavaFormatterTestCase() {
+  private val commonSettings: CommonCodeStyleSettings
+    get() = getSettings(JavaLanguage.INSTANCE)
+
   override fun getBasePath(): String = "psi/formatter/conditionalExpression"
 
   fun testLiteralOperatorOnPreviousLine() {
@@ -35,46 +41,56 @@ class ConditionalExpressionFormatterTest : JavaFormatterTestCase() {
   }
 
   fun testCallChainOperatorOnPreviousLine() {
+    commonSettings.ALIGN_MULTILINE_CHAINED_METHODS = true
     doTest()
   }
 
   fun testCallChainOperatorOnNewLine() {
+    commonSettings.ALIGN_MULTILINE_CHAINED_METHODS = true
     doTest()
   }
 
   fun testCallChainInParensOperatorOnPreviousLine() {
+    commonSettings.ALIGN_MULTILINE_CHAINED_METHODS = true
     doTest()
   }
 
   fun testCallChainInParensOperatorOnNewLine() {
+    commonSettings.ALIGN_MULTILINE_CHAINED_METHODS = true
     doTest()
   }
 
   fun testCallChainPartialInParensOperatorOnPreviousLine() {
+    commonSettings.ALIGN_MULTILINE_CHAINED_METHODS = true
     doTest()
   }
 
   fun testCallChainPartialInParensOperatorOnNewLine() {
+    commonSettings.ALIGN_MULTILINE_CHAINED_METHODS = true
     doTest()
   }
 
   fun testMixedOperatorOnPreviousLine() {
     settings.ALIGN_MULTILINE_TERNARY_OPERATION = true
+    commonSettings.ALIGN_MULTILINE_CHAINED_METHODS = true
     doTest()
   }
 
   fun testMixedOperatorOnNewLine() {
     settings.ALIGN_MULTILINE_TERNARY_OPERATION = true
+    commonSettings.ALIGN_MULTILINE_CHAINED_METHODS = true
     doTest()
   }
 
   fun testMixedInParensOperatorOnPreviousLine() {
     settings.ALIGN_MULTILINE_TERNARY_OPERATION = true
+    commonSettings.ALIGN_MULTILINE_CHAINED_METHODS = true
     doTest()
   }
 
   fun testMixedInParensOperatorOnNewLine() {
     settings.ALIGN_MULTILINE_TERNARY_OPERATION = true
+    commonSettings.ALIGN_MULTILINE_CHAINED_METHODS = true
     doTest()
   }
 

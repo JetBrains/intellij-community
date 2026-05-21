@@ -18,7 +18,7 @@ def edge_disjoint_paths(
     cutoff: int | None = None,
     auxiliary: DiGraph[_Node] | None = None,
     residual: DiGraph[_Node] | None = None,
-) -> Generator[Incomplete, None, None]: ...
+) -> Generator[Incomplete]: ...
 @_dispatchable
 def node_disjoint_paths(
     G: Graph[_Node],
@@ -28,4 +28,4 @@ def node_disjoint_paths(
     cutoff: int | None = None,
     auxiliary: DiGraph[_Node] | None = None,
     residual: DiGraph[_Node] | None = None,
-) -> Generator[Incomplete, None, None]: ...
+) -> Generator[Incomplete]: ...

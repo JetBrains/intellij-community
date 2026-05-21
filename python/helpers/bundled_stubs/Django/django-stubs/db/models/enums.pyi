@@ -4,7 +4,7 @@ from typing import Any, Literal, TypeVar, overload, type_check_only
 
 from _typeshed import ConvertibleToInt
 from django.utils.functional import _StrOrPromise
-from typing_extensions import deprecated
+from typing_extensions import override
 
 if sys.version_info >= (3, 11):
     from enum import EnumType, IntEnum, StrEnum
@@ -33,10 +33,8 @@ class ChoicesType(EnumType):
     @property
     def values(self) -> list[Any]: ...
     if sys.version_info < (3, 12):
+        @override
         def __contains__(self, member: Any) -> bool: ...
-
-@deprecated("ChoicesMeta is deprecated in favor of ChoicesType and will be removed in Django 6.0.")
-class ChoicesMeta(ChoicesType): ...
 
 class Choices(enum.Enum, metaclass=ChoicesType):  # type: ignore[misc]
     _label_: _StrOrPromise
@@ -45,14 +43,17 @@ class Choices(enum.Enum, metaclass=ChoicesType):  # type: ignore[misc]
     @enum_property
     def label(self) -> _StrOrPromise: ...
     @enum_property
+    @override
     def value(self) -> Any: ...
 
 # fake, to keep simulate class properties
 @type_check_only
 class _IntegerChoicesType(ChoicesType):
     @property
+    @override
     def choices(self) -> list[tuple[int, _StrOrPromise]]: ...
     @property
+    @override
     def values(self) -> list[int]: ...
 
 # In reality, the `__init__` overloads provided below should also support
@@ -64,14 +65,17 @@ class IntegerChoices(Choices, IntEnum, metaclass=_IntegerChoicesType):  # type: 
     @overload
     def __init__(self, x: ConvertibleToInt, label: _StrOrPromise) -> None: ...
     @enum_property
+    @override
     def value(self) -> int: ...
 
 # fake, to keep simulate class properties
 @type_check_only
 class _TextChoicesType(ChoicesType):
     @property
+    @override
     def choices(self) -> list[tuple[str, _StrOrPromise]]: ...
     @property
+    @override
     def values(self) -> list[str]: ...
 
 class TextChoices(Choices, StrEnum, metaclass=_TextChoicesType):  # type: ignore[misc]
@@ -80,6 +84,7 @@ class TextChoices(Choices, StrEnum, metaclass=_TextChoicesType):  # type: ignore
     @overload
     def __init__(self, object: str, label: _StrOrPromise) -> None: ...
     @enum_property
+    @override
     def value(self) -> str: ...
 
 __all__ = ["Choices", "IntegerChoices", "TextChoices"]

@@ -44,11 +44,12 @@ import com.jetbrains.python.packaging.management.findPackageSpecification
 import com.jetbrains.python.packaging.management.packagesByRepository
 import com.jetbrains.python.packaging.management.toInstallRequest
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
+import com.jetbrains.python.packaging.packageRequirements.FlatPackageStructureNode
 import com.jetbrains.python.packaging.packageRequirements.PackageCollectionPackageStructureNode
-import com.jetbrains.python.packaging.packageRequirements.PackageNode
+import com.jetbrains.python.packaging.packageRequirements.PackageTreeNode
 import com.jetbrains.python.packaging.packageRequirements.PackageStructureNode
-import com.jetbrains.python.packaging.packageRequirements.PythonPackageRequirementsTreeExtractor
 import com.jetbrains.python.packaging.packageRequirements.WorkspaceMemberPackageStructureNode
+import com.jetbrains.python.packaging.packageRequirements.collectAllNames
 import com.jetbrains.python.packaging.pyRequirement
 import com.jetbrains.python.packaging.repository.PyPIPackageRepository
 import com.jetbrains.python.packaging.repository.PyPackageRepositories
@@ -471,33 +472,13 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
   }
 
   private suspend fun refreshInstalledPackagesImpl(context: SdkContext) {
-    val dependencyPackageNames = if (context.manager.installedMightBeTransitive) {
-      context.manager.extractDependenciesCached()?.getOrNull() ?: emptyList()
-    }
-    else {
-      context.manager.listInstalledPackages()
-    }.mapTo(mutableSetOf()) { it.name }
-
-    val declaredPackageNames = if (context.manager.installedMightBeTransitive) {
-      context.manager.allDeclaredPackages()?.map { it.name }?.toSet() ?: emptySet()
-    }
-    else {
-      context.manager.listInstalledPackages().map { it.name }.toSet()
-    }
-
     val packageIndex = PackageIndex(context.manager)
-    val treeExtractor = PythonPackageRequirementsTreeExtractor.forSdk(context.sdk, project)
+    val packageTree = context.manager.getPackageTree()
 
-    val treeNode = treeExtractor?.extract(dependencyPackageNames)
+    val declaredPackageNames = collectDeclaredNames(packageTree, packageIndex)
 
     withContext(Dispatchers.Default) {
-      val allPackages = if (treeNode != null) {
-        buildPackagesFromTree(context, treeNode, packageIndex, declaredPackageNames)
-      }
-      else {
-        buildPackagesFromManager(packageIndex, declaredPackageNames)
-      }
-
+      val allPackages = buildPackages(context, packageTree, packageIndex, declaredPackageNames)
       installedPackages = allPackages.sortedWith(compareBy({ !getIsDeclared(it) }, { it.name.lowercase() }))
     }
 
@@ -520,7 +501,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     }
   }
 
-  private suspend fun buildPackagesFromTree(
+  private suspend fun buildPackages(
     context: SdkContext,
     node: PackageStructureNode,
     packageIndex: PackageIndex,
@@ -537,8 +518,8 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
         val undeclared = buildInstalledPackages(context, node.undeclaredPackages, packageIndex, declaredPackageNames)
         declared + undeclared
       }
-      is PackageNode -> {
-        buildInstalledPackages(context, listOf(node), packageIndex, declaredPackageNames)
+      is FlatPackageStructureNode -> {
+        buildPackagesFromManager(packageIndex, declaredPackageNames)
       }
     }
   }
@@ -551,6 +532,23 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
       val nextVersion = packageIndex.outdated[pkg.name]?.latestVersion?.let { PyPackageVersionNormalizer.normalize(it) }
       InstalledPackage(pkg, PyPIPackageRepository, nextVersion, emptyList(), isDeclared = pkg.name in declaredPackageNames)
     }
+  }
+
+  private fun collectDeclaredNames(node: PackageStructureNode, packageIndex: PackageIndex): Set<String> {
+    val names = mutableSetOf<String>()
+    when (node) {
+      is PackageCollectionPackageStructureNode -> {
+        node.declaredPackages.forEach { names.addAll(it.collectAllNames()) }
+      }
+      is WorkspaceMemberPackageStructureNode -> {
+        node.packageTree?.let { names.addAll(it.collectAllNames()) }
+        node.subMembers.forEach { member ->
+          member.packageTree?.let { names.addAll(it.collectAllNames()) }
+        }
+      }
+      is FlatPackageStructureNode -> return packageIndex.installedByName.keys
+    }
+    return names
   }
 
   private fun getIsDeclared(pkg: DisplayablePackage): Boolean {
@@ -585,7 +583,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
   private suspend fun buildWorkspaceMember(
     context: SdkContext,
     memberName: String,
-    tree: PackageNode,
+    tree: PackageTreeNode,
     packageIndex: PackageIndex,
     declaredPackageNames: Set<String>,
   ): WorkspaceMember {
@@ -602,7 +600,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
 
   private suspend fun buildInstalledPackages(
     context: SdkContext,
-    nodes: List<PackageNode>,
+    nodes: List<PackageTreeNode>,
     packageIndex: PackageIndex,
     declaredPackageNames: Set<String>,
     workspaceMember: PyWorkspaceMember? = null,
@@ -622,7 +620,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
   }
 
   private fun buildRequirements(
-    nodes: List<PackageNode>,
+    nodes: List<PackageTreeNode>,
     packageIndex: PackageIndex,
     repository: PyPackageRepository,
     isDeclared: Boolean,

@@ -5,6 +5,20 @@
     <module name="intellij.compose.ide.plugin.gradleTooling.rt"/>
     <module name="intellij.kotlin.gradle.tooling"/>
   </dependencies>
+
+  <extensionPoints>
+    <extensionPoint
+      dynamic="true"
+      qualifiedName="com.intellij.compose.ide.plugin.resources.drawablePreviewRenderer"
+      interface="com.intellij.compose.ide.plugin.resources.vectorDrawable.preview.BaseVectorDrawablePreviewRenderer"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij.compose.ide.plugin.resources">
+    <drawablePreviewRenderer
+      implementation="com.intellij.compose.ide.plugin.resources.vectorDrawable.preview.ComposeResourcesDrawablePreviewRenderer"
+      order="last"/>
+  </extensions>
+
   <extensions defaultExtensionNs="com.intellij">
     <gotoDeclarationHandler implementation="com.intellij.compose.ide.plugin.resources.ComposeResourcesGotoDeclarationHandler"/>
     <renamePsiElementProcessor id="ComposeResources"
@@ -28,6 +42,7 @@
       implementation="com.intellij.compose.ide.plugin.resources.findUsages.ComposeResourcesXmlFindUsagesHandlerFactory"/>
     <usageTargetProvider implementation="com.intellij.compose.ide.plugin.resources.findUsages.ComposeResourcesUsagesTargetProvider"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.compose.ide.plugin.resources.ComposeResourcesUsageCollector"/>
+    <fileEditorProvider implementation="com.intellij.compose.ide.plugin.resources.vectorDrawable.preview.ComposeResourceEditorProvider"/>
   </extensions>
 
   <projectListeners>

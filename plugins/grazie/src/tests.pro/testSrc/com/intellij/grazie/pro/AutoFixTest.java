@@ -21,7 +21,7 @@ public class AutoFixTest extends BaseTestCase {
   public void setUp() {
     ((CodeInsightTestFixtureImpl) myFixture).canChangeDocumentDuringHighlighting(true);
     GrazieConfig.Companion.update(s -> s.withAutoFix(true));
-    HighlightingTest.enableLanguages(Set.of(Lang.AMERICAN_ENGLISH, Lang.RUSSIAN, Lang.GERMANY_GERMAN), getProject(), getTestRootDisposable());
+    HighlightingTest.enableLanguages(Set.of(Lang.AMERICAN_ENGLISH, Lang.RUSSIAN, Lang.GERMANY_GERMAN), getTestRootDisposable());
     //noinspection unchecked
     myFixture.enableInspections(GrazieInspection.class, GrazieInspection.Grammar.class, GrazieInspection.Style.class);
   }

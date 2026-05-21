@@ -1,4 +1,4 @@
-from typing import Any
+from _typeshed import Incomplete
 
 signals_available: bool
 
@@ -7,14 +7,14 @@ class Namespace:
 
 class _FakeSignal:
     name: str
-    __doc__: Any
+    __doc__: str | None
     def __init__(self, name: str, doc: str | None = None) -> None: ...
-    send: Any
-    connect: Any
-    disconnect: Any
-    has_receivers_for: Any
-    receivers_for: Any
-    temporarily_connected_to: Any
-    connected_to: Any
+    send: Incomplete
+    connect: Incomplete
+    disconnect: Incomplete
+    has_receivers_for: Incomplete
+    receivers_for: Incomplete
+    temporarily_connected_to: Incomplete
+    connected_to: Incomplete
 
 scope_changed: _FakeSignal

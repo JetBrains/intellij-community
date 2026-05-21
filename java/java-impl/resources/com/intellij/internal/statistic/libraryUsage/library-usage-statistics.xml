@@ -210,6 +210,7 @@
   <technology name="karate" root="com.intuit.karate"/>
   <technology name="klaxon" root="com.beust.klaxon"/>
   <technology name="klock" root="com.soywiz.klock"/>
+  <technology name="kmp-protobuf" root="kotlinx.rpc.protobuf"/>
   <technology name="kodein" root="org.kodein"/>
   <technology name="kodein-db" root="org.kodein.db"/>
   <technology name="kodein-di" root="org.kodein.di"/>
@@ -239,6 +240,9 @@
   <technology name="kotlinx-jupyter-serialization" root="org.jetbrains.kotlinx.jupyter.serialization"/>
   <technology name="kotlinx-jupyter-widgets" root="org.jetbrains.kotlinx.jupyter.widget"/>
   <technology name="kotlin-logging" root="io.github.oshai.kotlinlogging"/>
+  <technology name="kotlinx-rpc-core" root="kotlinx.rpc.annotations"/>
+  <technology name="kotlinx-rpc-krpc-core" root="kotlinx.rpc.krpc"/>
+  <technology name="kotlinx-rpc-grpc-core" root="kotlinx.rpc.grpc"/>
   <technology name="kotlinx-serialization" root="kotlinx.serialization"/>
   <technology name="ktlint" root="com.pinterest.ktlint"/>
   <technology name="ktor-client" root="io.ktor.client"/>

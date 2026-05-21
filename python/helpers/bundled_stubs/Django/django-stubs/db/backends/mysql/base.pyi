@@ -2,6 +2,7 @@ from collections.abc import Container, Iterator
 from typing import Any, Literal
 
 from django.db.backends.base.base import BaseDatabaseWrapper
+from typing_extensions import override
 
 from .client import DatabaseClient
 from .creation import DatabaseCreation
@@ -47,18 +48,28 @@ class DatabaseWrapper(BaseDatabaseWrapper):
     Database: Any
     SchemaEditorClass: Any
     isolation_level: Any
+    @override
     def get_connection_params(self) -> dict[str, Any]: ...
+    @override
     def get_new_connection(self, conn_params: Any) -> Any: ...
+    @override
     def init_connection_state(self) -> None: ...
+    @override
     def create_cursor(self, name: Any | None = ...) -> CursorWrapper: ...
+    @override
     def disable_constraint_checking(self) -> Literal[True]: ...
     needs_rollback: Any
+    @override
     def enable_constraint_checking(self) -> None: ...
+    @override
     def check_constraints(self, table_names: Any | None = ...) -> None: ...
+    @override
     def is_usable(self) -> bool: ...
     @property
+    @override
     def display_name(self) -> str: ...  # type: ignore[override]
     @property
+    @override
     def data_type_check_constraints(self) -> dict[str, str]: ...  # type: ignore[override]
     @property
     def mysql_server_data(self) -> dict[str, Any]: ...

@@ -1,6 +1,6 @@
 version = "1.11.*"
-upstream_repository = "https://github.com/asweigart/pyperclip"
+upstream-repository = "https://github.com/asweigart/pyperclip"
 
 [tool.stubtest]
-ci_platforms = ["win32", "linux", "darwin"]
-apt_dependencies = ["xclip"]
+ci-platforms = ["win32", "linux", "darwin"]
+apt-dependencies = ["xclip"]

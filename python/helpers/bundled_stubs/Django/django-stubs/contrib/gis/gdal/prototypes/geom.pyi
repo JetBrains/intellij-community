@@ -27,6 +27,9 @@ is_3d: Any
 set_3d: Any
 is_measured: Any
 set_measured: Any
+has_curve_geom: Any
+get_linear_geom: Any
+get_curve_geom: Any
 add_geom: Any
 import_wkt: Any
 destroy_geom: Any

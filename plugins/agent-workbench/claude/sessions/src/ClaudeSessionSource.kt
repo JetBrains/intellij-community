@@ -7,10 +7,14 @@ import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRebindCandidate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.agent.workbench.sessions.core.providers.BaseAgentSessionSource
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import java.util.concurrent.ConcurrentHashMap
 
@@ -28,7 +32,11 @@ class ClaudeSessionSource(
 
   override val supportsUpdates: Boolean get() = true
 
-  override val updates: Flow<Unit> get() = merge(backend.updates, readStateUpdates)
+  override val updateEvents: Flow<AgentSessionSourceUpdateEvent>
+    get() = merge(
+      backend.updates.map { AgentSessionSourceUpdateEvent(type = AgentSessionSourceUpdate.THREADS_CHANGED) },
+      readStateUpdates.map { AgentSessionSourceUpdateEvent(type = AgentSessionSourceUpdate.HINTS_CHANGED) },
+    )
 
   override fun setActiveThreadId(threadId: String?) {
     activeThreadId = threadId
@@ -36,21 +44,22 @@ class ClaudeSessionSource(
 
   override suspend fun listThreads(path: String, openProject: Project?): List<AgentSessionThread> {
     val threads = backend.listThreads(path = path, openProject = openProject)
+    val visibleThreads = threads.filterNot(ClaudeBackendThread::archived)
     val currentActiveId = activeThreadId
     if (currentActiveId != null) {
-      for (thread in threads) {
+      for (thread in visibleThreads) {
         if (thread.id == currentActiveId) {
           readTracker.merge(thread.id, thread.updatedAt, ::maxOf)
           break
         }
       }
     }
-    return threads.map { it.toAgentSessionThread(readTracker) }
+    return visibleThreads.map { it.toAgentSessionThread(readTracker) }
   }
 
   override suspend fun prefetchRefreshHints(
     paths: List<String>,
-    knownThreadIdsByPath: Map<String, Set<String>>,
+    refreshThreadSeedsByPath: Map<String, Set<AgentSessionRefreshThreadSeed>>,
   ): Map<String, AgentSessionRefreshHints> {
     if (paths.isEmpty()) return emptyMap()
 
@@ -62,8 +71,9 @@ class ClaudeSessionSource(
       catch (_: Throwable) {
         continue
       }
-      val knownIds = knownThreadIdsByPath[path].orEmpty()
-      val rebindCandidates = threads
+      val visibleThreads = threads.filterNot(ClaudeBackendThread::archived)
+      val knownIds = refreshThreadSeedsByPath[path].orEmpty().asSequence().map { it.threadId }.toCollection(LinkedHashSet())
+      val rebindCandidates = visibleThreads
         .filter { it.id !in knownIds }
         .map { thread ->
           AgentSessionRebindCandidate(
@@ -92,7 +102,7 @@ private fun ClaudeBackendThread.toAgentSessionThread(readTracker: Map<String, Lo
     id = id,
     title = title,
     updatedAt = updatedAt,
-    archived = false,
+    archived = archived,
     provider = AgentSessionProvider.CLAUDE,
     originBranch = gitBranch,
     activity = effectiveActivity(readTracker),

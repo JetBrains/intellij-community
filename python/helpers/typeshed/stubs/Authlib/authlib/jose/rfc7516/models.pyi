@@ -8,6 +8,7 @@ class JWEAlgorithmBase(metaclass=ABCMeta):
     EXTRA_HEADERS: ClassVar[Iterable[str] | None]
     name: str | None
     description: str | None
+    deprecated: bool
     algorithm_type: str
     algorithm_location: str
     def prepare_key(self, raw_data): ...

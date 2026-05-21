@@ -15,6 +15,7 @@ def render(
     status: int | None = ...,
     using: str | None = ...,
 ) -> HttpResponse: ...
+
 @type_check_only
 class SupportsGetAbsoluteUrl(Protocol):
     def get_absolute_url(self) -> str: ...

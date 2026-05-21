@@ -11,8 +11,8 @@ import org.jetbrains.kotlin.allopen.AllOpenPluginNames.SUPPORTED_PRESETS
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup.PluginOption
 import org.jetbrains.kotlin.idea.maven.compilerPlugin.AbstractMavenImportHandler
-import java.nio.file.Path
 import org.jetbrains.kotlin.idea.maven.getKotlinPlugin
+import java.nio.file.Path
 
 class AllOpenMavenProjectImportHandler(project: Project) : AbstractMavenImportHandler(project) {
     override val compilerPluginId: String = PLUGIN_ID
@@ -35,6 +35,7 @@ class AllOpenMavenProjectImportHandler(project: Project) : AbstractMavenImportHa
         val annotations = mutableListOf<String>()
 
         for ((presetName, presetAnnotations) in SUPPORTED_PRESETS) {
+            if (presetName == "jpa" && !mavenProject.isKotlinPluginIncludesExtendedListOfJpaOptions()) continue
             if (presetName in enabledCompilerPlugins) {
                 annotations.addAll(presetAnnotations)
             }
@@ -50,11 +51,12 @@ class AllOpenMavenProjectImportHandler(project: Project) : AbstractMavenImportHa
 
     private fun MavenProject.isJpaWithAllOpenEnabled(
         enabledCompilerPlugins: List<String>
-    ): Boolean {
-        val kotlinPluginVersion = getKotlinPlugin().version
+    ): Boolean =
+        "jpa" in enabledCompilerPlugins && isKotlinPluginIncludesExtendedListOfJpaOptions()
 
-        return "jpa" in enabledCompilerPlugins &&
-                VersionComparatorUtil.compare(kotlinPluginVersion, "2.3.20-Beta2") >= 0
+    private fun MavenProject.isKotlinPluginIncludesExtendedListOfJpaOptions(): Boolean {
+        val kotlinPluginVersion = getKotlinPlugin().version
+        return VersionComparatorUtil.compare(kotlinPluginVersion, "2.3.20-Beta2") >= 0
     }
 }
 

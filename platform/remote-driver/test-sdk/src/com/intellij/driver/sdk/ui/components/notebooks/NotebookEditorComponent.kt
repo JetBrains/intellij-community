@@ -22,8 +22,8 @@ import com.intellij.driver.sdk.ui.components.common.toolwindows.projectView
 import com.intellij.driver.sdk.ui.components.elements.ActionButtonUi
 import com.intellij.driver.sdk.ui.components.elements.JButtonUiComponent
 import com.intellij.driver.sdk.ui.components.elements.JLabelUiComponent
-import com.intellij.driver.sdk.ui.components.elements.JTextFieldUI
 import com.intellij.driver.sdk.ui.components.elements.JcefOffScreenViewComponent
+import com.intellij.driver.sdk.ui.components.elements.textField
 import com.intellij.driver.sdk.ui.components.elements.LetsPlotComponent
 import com.intellij.driver.sdk.ui.components.elements.NotebookTableOutputUi
 import com.intellij.driver.sdk.ui.components.elements.popup
@@ -305,15 +305,16 @@ fun Driver.createNewNotebook(name: String = "New Notebook", type: NotebookType) 
 
     invokeAction(type.newNotebookActionId, false)
 
-    popup().run {
-      x("//div[@accessiblename='Name']", JTextFieldUI::class.java).strictClick()
+    popup().apply {
+      textField { byAccessibleName("Name") }.apply {
+        strictClick()
+        text = name
+      }
 
-      keyboard {
-        waitFor("expect $name in the popup") {
-          driver.ui.pasteText(name)
-          getAllTexts().any { it.text == name }
-        }
-        enter() // submit the popup
+      keyboard { enter() } // submit the popup
+
+      waitFor("new notebook popup should close", 15.seconds) {
+        notPresent()
       }
     }
 

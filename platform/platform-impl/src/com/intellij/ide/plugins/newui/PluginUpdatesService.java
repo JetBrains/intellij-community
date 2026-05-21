@@ -219,6 +219,11 @@ public class PluginUpdatesService {
     }
   }
 
+  @ApiStatus.Internal
+  public void refreshCallbacks() {
+    reapplyFilter();
+  }
+
   public void dispose() {
     synchronized (ourLock) {
       dispose(this);

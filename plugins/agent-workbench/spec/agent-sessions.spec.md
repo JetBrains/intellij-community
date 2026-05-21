@@ -7,6 +7,7 @@ targets:
   - ../sessions/resources/messages/AgentSessionsBundle.properties
   - ../sessions/intellij.agent.workbench.sessions.iml
   - ../sessions/BUILD.bazel
+  - ../claude/sessions/src/*.kt
   - ../sessions/testSrc/*.kt
   - ../chat/src/*.kt
 ---
@@ -14,7 +15,7 @@ targets:
 # Agent Threads Tool Window
 
 Status: Draft
-Date: 2026-03-07
+Date: 2026-04-20
 
 ## Summary
 Define Agent Threads as a provider-agnostic, project-scoped browser implemented with native IntelliJ Swing tree APIs (`StructureTreeModel` + `AsyncTreeModel` + `Tree`).
@@ -186,6 +187,24 @@ Shared contracts remain in `spec/agent-core-contracts.spec.md`.
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
   [@test] ../chat/testSrc/AgentChatTabSelectionServiceTest.kt
 
+- Provider rename actions may target only concrete top-level threads. Successful provider-backed rename must trigger scoped refresh for the thread path, without optimistic in-memory title mutation.
+  [@test] ../sessions/testSrc/AgentSessionRenameServiceTest.kt
+  [@test] ../sessions-actions/testSrc/AgentSessionsEditorTabActionsTest.kt
+  [@test] ../sessions-toolwindow/testSrc/AgentSessionsTreePopupActionsTest.kt
+
+- Claude archive, unarchive, and thread rename must preserve the exact stored-title prefix semantics `[archived] ` over the normalized title, hide prefixed threads from active Claude discovery until unarchive restores them on refresh, and preserve the full normalized title content apart from the archive prefix transformation.
+- Transport choice for Claude rename/archive/unarchive is owned by `spec/agent-core-contracts.spec.md`; this spec owns the resulting refresh and visibility behavior only.
+  [@test] ../claude/sessions/testSrc/ClaudeThreadRenameEngineTest.kt
+  [@test] ../claude/sessions/testSrc/ClaudeSessionsStoreTest.kt
+  [@test] ../claude/sessions/testSrc/ClaudeSessionSourceTest.kt
+  [@test] ../sessions/testSrc/AgentSessionArchiveServiceIntegrationTest.kt
+
+- Codex explicit thread names must take precedence over fallback title fields (`title`, `summary`, `preview`) when deriving visible thread titles from app-server payloads.
+  [@test] ../sessions/testSrc/CodexAppServerClientTest.kt
+
+- Codex `thread/name/updated` notifications must invalidate refresh state like other direct thread-status updates, but must not synthesize new-thread rebind candidates.
+  [@test] ../codex/sessions/testSrc/backend/appserver/CodexAppServerRefreshHintsProviderTest.kt
+
 - Codex thread discovery and backend selection must always use app-server source; override values (including `rollout` and unknown values) must be ignored.
   [@test] ../codex/sessions/testSrc/CodexSessionBackendSelectorTest.kt
 
@@ -196,6 +215,9 @@ Shared contracts remain in `spec/agent-core-contracts.spec.md`.
   [@test] ../sessions/testSrc/AgentSessionArchiveServiceIntegrationTest.kt
 
 - Unarchive flow for previously archived Codex targets must restore thread visibility on refresh without requiring tool-window recreation.
+  [@test] ../sessions/testSrc/AgentSessionArchiveServiceIntegrationTest.kt
+
+- Unarchive flow for previously archived Claude targets must restore thread visibility on refresh without requiring tool-window recreation.
   [@test] ../sessions/testSrc/AgentSessionArchiveServiceIntegrationTest.kt
 
 - Tool window factory must create Swing panel content and register tool-window title and gear actions.
@@ -226,6 +248,7 @@ Shared contracts remain in `spec/agent-core-contracts.spec.md`.
   [@test] ../sessions/testSrc/AgentSessionsSwingTreeCellRendererTest.kt
   [@test] ../sessions/testSrc/AgentSessionsCodexActivityRenderingIntegrationTest.kt
 - Thread-row archive context menu applies to current multi-selection when invoked from a selected thread and shows `Archive Selected (N)` when `N > 1`.
+- Thread-row rename context menu is available only for a single selected top-level thread whose provider supports rename.
 - Single-click on normal rows selects only; open happens on Enter or double-click.
 - On rows that are both openable and parents, double-click opens/focuses instead of expanding/collapsing.
 - Expand/collapse remains available through disclosure controls and keyboard tree actions.

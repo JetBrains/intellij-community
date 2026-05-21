@@ -10,6 +10,7 @@ from django.db.models.indexes import Index
 from django.db.models.manager import Manager
 from django.db.models.options import _OptionTogetherT
 from django.utils.functional import cached_property
+from typing_extensions import override
 
 class ModelOperation(Operation):
     name: str
@@ -52,15 +53,20 @@ class AlterModelTable(ModelOptionOperation):
 class AlterModelTableComment(ModelOptionOperation):
     table_comment: str
     def __init__(self, name: str, table_comment: str) -> None: ...
+    @override
     def state_forwards(self, app_label: str, state: Any) -> None: ...
+    @override
     def database_forwards(
         self, app_label: str, schema_editor: BaseDatabaseSchemaEditor, from_state: Any, to_state: Any
     ) -> None: ...
+    @override
     def database_backwards(
         self, app_label: str, schema_editor: BaseDatabaseSchemaEditor, from_state: Any, to_state: Any
     ) -> None: ...
+    @override
     def describe(self) -> str: ...
     @property
+    @override
     def migration_name_fragment(self) -> str: ...
 
 class AlterTogetherOptionOperation(ModelOptionOperation):
@@ -72,16 +78,22 @@ class AlterTogetherOptionOperation(ModelOptionOperation):
     ) -> None: ...
     @cached_property
     def option_value(self) -> set[tuple[str, ...]] | None: ...
+    @override
     def state_forwards(self, app_label: str, state: Any) -> None: ...
+    @override
     def database_forwards(
         self, app_label: str, schema_editor: BaseDatabaseSchemaEditor, from_state: Any, to_state: Any
     ) -> None: ...
+    @override
     def database_backwards(
         self, app_label: str, schema_editor: BaseDatabaseSchemaEditor, from_state: Any, to_state: Any
     ) -> None: ...
+    @override
     def references_field(self, model_name: str, name: str, app_label: str) -> bool: ...
+    @override
     def describe(self) -> str: ...
     @property
+    @override
     def migration_name_fragment(self) -> str: ...
 
 class AlterUniqueTogether(AlterTogetherOptionOperation):
@@ -141,10 +153,17 @@ class RenameIndex(IndexOperation):
     def new_name_lower(self) -> str: ...
 
 class AddConstraint(IndexOperation):
+    model_name: str
+    constraint: BaseConstraint
     def __init__(self, model_name: str, constraint: BaseConstraint) -> None: ...
 
 class RemoveConstraint(IndexOperation):
+    model_name: str
+    name: str
     def __init__(self, model_name: str, name: str) -> None: ...
 
 class AlterConstraint(IndexOperation):
+    model_name: str
+    name: str
+    constraint: BaseConstraint
     def __init__(self, model_name: str, name: str, constraint: BaseConstraint) -> None: ...

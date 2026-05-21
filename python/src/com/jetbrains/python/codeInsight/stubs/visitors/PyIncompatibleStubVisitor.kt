@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.stubs.visitors
 
 import com.intellij.codeInspection.LocalInspectionToolSession
@@ -16,7 +16,7 @@ internal class PyIncompatibleStubVisitor(
   val session: LocalInspectionToolSession,
 ) : PyStubVisitor(holder, session) {
   init {
-    downgradeHighlightForTypeEngine = getContext(session).typeEngine != null
+    downgradeHighlightForTypeEngine = getContext(session).usesExternalTypeEngine
   }
 
   override fun checkImports(file: PyFile, importedPackages: Set<String>, packageManager: PythonPackageManager) {

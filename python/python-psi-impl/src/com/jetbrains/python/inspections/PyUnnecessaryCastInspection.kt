@@ -25,7 +25,7 @@ class PyUnnecessaryCastInspection : PyInspection() {
     val context = PyInspectionVisitor.getContext(session)
     return object : PyInspectionVisitor(holder, context) {
       init {
-        downgradeHighlightForTypeEngine = context.typeEngine != null
+        downgradeHighlightForTypeEngine = context.usesExternalTypeEngine
       }
       override fun visitPyCallExpression(callExpression: PyCallExpression) {
         val callees = callExpression.multiResolveCalleeFunction(resolveContext)

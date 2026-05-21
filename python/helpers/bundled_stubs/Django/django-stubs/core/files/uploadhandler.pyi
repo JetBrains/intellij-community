@@ -3,6 +3,7 @@ from typing import IO, Any
 from django.core.files.uploadedfile import TemporaryUploadedFile, UploadedFile
 from django.http.request import HttpRequest, QueryDict
 from django.utils.datastructures import MultiValueDict
+from typing_extensions import override
 
 class UploadFileException(Exception): ...
 
@@ -47,6 +48,7 @@ class FileUploadHandler:
 
 class TemporaryFileUploadHandler(FileUploadHandler):
     file: TemporaryUploadedFile
+    @override
     def new_file(
         self,
         field_name: str,
@@ -56,13 +58,17 @@ class TemporaryFileUploadHandler(FileUploadHandler):
         charset: str | None = ...,
         content_type_extra: dict[str, bytes] | None = ...,
     ) -> None: ...
+    @override
     def receive_data_chunk(self, raw_data: bytes, start: int) -> bytes | None: ...
+    @override
     def file_complete(self, file_size: int) -> UploadedFile | None: ...
+    @override
     def upload_interrupted(self) -> None: ...
 
 class MemoryFileUploadHandler(FileUploadHandler):
     activated: bool
     file: IO[bytes]
+    @override
     def handle_raw_input(
         self,
         input_data: IO[bytes],
@@ -71,6 +77,7 @@ class MemoryFileUploadHandler(FileUploadHandler):
         boundary: str,
         encoding: str | None = None,
     ) -> tuple[QueryDict, MultiValueDict[str, UploadedFile]] | None: ...
+    @override
     def new_file(
         self,
         field_name: str,
@@ -80,7 +87,9 @@ class MemoryFileUploadHandler(FileUploadHandler):
         charset: str | None = ...,
         content_type_extra: dict[str, bytes] | None = ...,
     ) -> None: ...
+    @override
     def receive_data_chunk(self, raw_data: bytes, start: int) -> bytes | None: ...
+    @override
     def file_complete(self, file_size: int) -> UploadedFile | None: ...
 
 def load_handler(path: str, *args: Any, **kwargs: Any) -> FileUploadHandler: ...

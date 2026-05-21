@@ -11,6 +11,8 @@
   <resource-bundle>messages.AgentChatBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.agent.workbench.sessions.core.providers.AgentOpenTopLevelThreadDispatchService"
+                        serviceImplementation="com.intellij.agent.workbench.chat.AgentChatOpenTopLevelThreadDispatchService"/>
     <virtualFileSystem key="agent-chat" implementationClass="com.intellij.agent.workbench.chat.AgentChatVirtualFileSystem"/>
     <notificationGroup id="Agent Workbench Chat" displayType="BALLOON" bundle="messages.AgentChatBundle"
                        key="notification.group.agent.workbench.chat"/>

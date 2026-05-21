@@ -10,8 +10,12 @@ class GenericInlineModelAdminChecks(InlineModelAdminChecks):
     def _check_relation(self, obj: GenericInlineModelAdmin, parent_model: type[Model]) -> list[Any]: ...
 
 class GenericInlineModelAdmin(InlineModelAdmin):
-    template: str
+    ct_field: str
+    ct_fk_field: str
     formset: type[BaseGenericInlineFormSet]  # type: ignore[assignment]
 
-class GenericStackedInline(GenericInlineModelAdmin): ...
-class GenericTabularInline(GenericInlineModelAdmin): ...
+class GenericStackedInline(GenericInlineModelAdmin):
+    template: str
+
+class GenericTabularInline(GenericInlineModelAdmin):
+    template: str

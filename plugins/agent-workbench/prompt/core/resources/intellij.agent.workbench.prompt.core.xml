@@ -32,6 +32,10 @@
       qualifiedName="com.intellij.agent.workbench.promptSuggestionAiBackend"
       interface="com.intellij.agent.workbench.prompt.core.AgentPromptSuggestionAiBackend"
       dynamic="true"/>
+    <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.containerLauncher"
+      interface="com.intellij.agent.workbench.prompt.core.AgentPromptContainerLauncher"
+      dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

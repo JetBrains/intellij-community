@@ -7,7 +7,6 @@ import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.map
 
 data class AgentSessionRebindCandidate(
   @JvmField val threadId: String,
@@ -21,9 +20,44 @@ data class AgentSessionRefreshHints(
   @JvmField val activityByThreadId: Map<String, AgentThreadActivity> = emptyMap(),
 )
 
+const val UNKNOWN_AGENT_SESSION_REFRESH_THREAD_UPDATED_AT = -1L
+
+data class AgentSessionRefreshThreadSeed(
+  @JvmField val threadId: String,
+  @JvmField val updatedAt: Long = UNKNOWN_AGENT_SESSION_REFRESH_THREAD_UPDATED_AT,
+  @JvmField val forceRefresh: Boolean = false,
+)
+
+fun Collection<String>.toAgentSessionRefreshThreadSeeds(): Set<AgentSessionRefreshThreadSeed> {
+  return asSequence()
+    .map { threadId -> AgentSessionRefreshThreadSeed(threadId = threadId) }
+    .toCollection(LinkedHashSet())
+}
+
 enum class AgentSessionSourceUpdate {
   THREADS_CHANGED,
   HINTS_CHANGED,
+}
+
+data class AgentSessionSourceUpdateEvent(
+  @JvmField val type: AgentSessionSourceUpdate,
+  @JvmField val scopedPaths: Set<String>? = null,
+  @JvmField val threadIds: Set<String>? = null,
+)
+
+fun AgentSessionSourceUpdateEvent.isUnscoped(): Boolean {
+  return scopedPaths == null && threadIds == null
+}
+
+fun AgentSessionSourceUpdateEvent.describeScope(): String {
+  val scopedPaths = scopedPaths
+  val threadIds = threadIds
+  return when {
+    scopedPaths == null && threadIds == null -> "scope=all"
+    scopedPaths != null && threadIds != null -> "scope=paths:${scopedPaths.size},threadIds:${threadIds.size}"
+    scopedPaths != null -> "scope=paths:${scopedPaths.size}"
+    else -> "scope=threadIds:${threadIds?.size ?: 0}"
+  }
 }
 
 interface AgentSessionSource {
@@ -34,15 +68,12 @@ interface AgentSessionSource {
   val supportsUpdates: Boolean
     get() = false
 
-  val updates: Flow<Unit>
-    get() = emptyFlow()
-
   /**
    * Typed source updates used by the loading coordinator to distinguish
    * backend listing updates from auxiliary hint updates.
    */
-  val updateEvents: Flow<AgentSessionSourceUpdate>
-    get() = updates.map { AgentSessionSourceUpdate.THREADS_CHANGED }
+  val updateEvents: Flow<AgentSessionSourceUpdateEvent>
+    get() = emptyFlow()
 
   suspend fun listThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread>
 
@@ -62,7 +93,7 @@ interface AgentSessionSource {
    */
   suspend fun prefetchRefreshHints(
     paths: List<String>,
-    knownThreadIdsByPath: Map<String, Set<String>>,
+    refreshThreadSeedsByPath: Map<String, Set<AgentSessionRefreshThreadSeed>>,
   ): Map<String, AgentSessionRefreshHints> = emptyMap()
 
   fun markThreadAsRead(threadId: String, updatedAt: Long) {}

@@ -23,7 +23,7 @@ import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.PyRequirementParser
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.packaging.management.extractDependenciesAsync
+import com.jetbrains.python.packaging.management.listDeclaredPackagesAsync
 import com.jetbrains.python.requirements.RequirementsFile
 import com.jetbrains.python.requirements.RequirementsInspectionVisitor
 import com.jetbrains.python.requirements.getPythonSdk
@@ -87,7 +87,7 @@ class NotInstalledRequirementInspection : LocalInspectionTool() {
 
   @RequiresBackgroundThread
   private fun getMainDeclaredPackageNames(manager: PythonPackageManager): Set<PyPackageName>? {
-    val packages = manager.extractDependenciesAsync() ?: return null
+    val packages = manager.listDeclaredPackagesAsync() ?: return null
     return packages.filter { it.dependencyGroup == null }.mapTo(mutableSetOf()) { PyPackageName.from(it.name) }
   }
 

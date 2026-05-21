@@ -4,6 +4,7 @@
   "suppressNotifications": ["prEditedNotification"],
   "extends": ["config:recommended"],
   "labels": ["bot: dependencies"],
+  "rebaseLabel": ["bot: rebase"],
   "semanticCommits": "disabled",
   "separateMajorMinor": false,
   "prHourlyLimit": 10,

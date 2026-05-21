@@ -5352,6 +5352,253 @@ public class Py3TypeTest extends PyTestCase {
              """);
   }
 
+  @TestFor(issues = "PY-51321")
+  public void testClassDecoratedFunction() {
+    doTest("A",
+           """
+             class A:
+                 def __init__(self, fn): ...
+             
+             @A
+             def bar(): ...
+             
+             expr = bar
+             """);
+  }
+
+  @TestFor(issues="PY-79204")
+  public void testInferParameterFromDecorator() {
+    RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
+    doTest("int", """
+      from collections.abc import Callable
+
+      def d(fn: Callable[[int], object]) -> None: ...
+
+      @d
+      def f(i):
+          expr = i
+      """);
+  }
+
+  @TestFor(issues="PY-79204")
+  public void testInferParameterFromDecoratorCalled() {
+    RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
+    doTest("int", """
+      from collections.abc import Callable
+
+      def d() -> Callable[[Callable[[int], object]], None]: ...
+
+      @d()
+      def f(i):
+          expr = i
+      """);
+  }
+
+  @TestFor(issues="PY-79204")
+  public void testInferParameterFromDecoratorMethod() {
+    RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
+    doTest("int", """
+      from collections.abc import Callable
+      
+      def d(fn: Callable[[int], object]) -> None: ...
+      
+      class A:
+        @d
+        def m(self) -> None:
+          expr = self
+      """);
+  }
+
+  @TestFor(issues = "PY-79204")
+  public void testInferParameterFromDecoratorVariadicUnpacked() {
+    RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
+    doTest("int", """
+      from typing import Protocol
+      
+      class P(Protocol):
+        def __call__(self, *args: int): ...
+      
+      def d(fn: P) -> None: ...
+      
+      @d
+      def f(a, b, c):
+          // not a true match
+          expr = c
+      """);
+  }
+
+  @TestFor(issues = "PY-89342")
+  public void testInferParameterFromDecoratorVariadic() {
+    RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
+    fixme("testInferParameterFromDecoratorVariadic", AssertionError.class, "expected:<[int]>", () ->
+      doTest("int", """
+        from typing import Protocol
+        
+        class P(Protocol):
+          def __call__(self, *args: int): ...
+        
+        def d(fn: P) -> None: ...
+        
+        @d
+        def f(*args):
+            expr = args[100]
+        """)
+    );
+  }
+
+  @TestFor(issues = "PY-89342")
+  public void testInferParameterFromDecoratorVariadicKwargs() {
+    RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
+    fixme("testInferParameterFromDecoratorVariadicKwargs", AssertionError.class, "expected:<[int]>", () ->
+      doTest("int", """
+        from typing import Protocol
+        
+        class P(Protocol):
+          def __call__(self, **kwargs: int): ...
+        
+        def d(fn: P) -> None: ...
+        
+        @d
+        def f(**kwargs):
+            expr = kwargs["100"]
+        """)
+    );
+  }
+
+  @TestFor(issues="PY-79204")
+  public void testInferParameterFromDecoratorPositionalOnly() {
+    RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
+    doTest("str", """
+      from typing import Protocol
+
+      class P(Protocol):
+        def __call__(self, x: int, /, y: str): ...
+
+      def d(fn: P) -> None: ...
+
+      @d
+      def f(a, b):
+          # despite not fully matching, we can still match `b` with `y`
+          expr = b
+      """);
+  }
+
+  @TestFor(issues="PY-89342")
+  public void testInferParameterFromDecoratorKeywordOnly() {
+    RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
+    fixme("testInferParameterFromDecoratorKeywordOnly", AssertionError.class, "expected:<[int]>", () ->
+      doTest("int", """
+        from typing import Protocol
+
+        class P(Protocol):
+          def __call__(self, *, x: int, y: str): ...
+
+        def d(fn: P) -> None: ...
+
+        @d
+        def f(*, y, x):
+            expr = x
+        """)
+    );
+  }
+
+  @TestFor(issues = "PY-79204")
+  public void testInferParameterFromDecoratorIndexOnly() {
+    RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
+    doTest("int", """
+      from typing import Protocol
+      
+      class P(Protocol):
+        def __call__(self, x: int, y: str, /): ...
+      
+      def d(fn: P) -> None: ...
+      
+      @d
+      def f(a, b, /):
+          expr = a
+      """
+    );
+  }
+
+  @TestFor(issues="PY-89342")
+  public void testInferParameterFromDecoratorUnpackedTuple() {
+    RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
+    fixme("testInferParameterFromDecoratorUnpackedTuple", AssertionError.class, "expected:<[int]>", () ->
+      doTest("int", """
+        from typing import Protocol
+
+        class P(Protocol):
+          def __call__(self, *i: *tuple[int, str]): ...
+
+        def d(fn: P) -> None: ...
+
+        @d
+        def f(a, b):
+            expr = b
+        """)
+    );
+  }
+
+  @TestFor(issues="PY-79204")
+  public void testInferParameterFromDecoratorInnermostUsed() {
+    RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
+    doTest("int", """
+      from typing import Protocol
+      from collections.abc import Callable
+
+      class P(Protocol):
+        def __call__(self, i: int): ...
+
+      def d(fn: Callable[[int], None]) -> None: ...
+      def outer(fn: Callable[[str], None]) -> None: ...
+
+      @outer
+      @d
+      def f(i):
+          expr = i
+      """);
+  }
+
+  @TestFor(issues="PY-85768")
+  public void testInferParameterFromDecoratorGenericChain() {
+    RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
+    fixme("testInferParameterFromDecoratorGenericChain", AssertionError.class, "expected:<[int]> but was:<[T]>", () ->
+      doTest("int", """
+        from typing import Callable
+  
+        def d1[T](fn: Callable[[T], object]) -> T: ...
+        def d2(i: int) -> None: ...
+  
+        @d2
+        @d1
+        def f(i):
+            expr = i
+        """)
+    );
+  }
+
+  @TestFor(issues = "PY-89265")
+  public void testExplicitNoneAttribute() {
+    doTest("None", """
+      class A:
+          x: None
+      
+      def f(a: A):
+          expr = a.x
+      """);
+  }
+
+  @TestFor(issues = "PY-89265")
+  public void testExplicitNoneGeneric() {
+    doTest("None", """
+      class A[T]:
+          x: T
+      
+      def f(a: A[None]):
+          expr = a.x
+      """);
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);

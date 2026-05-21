@@ -9,7 +9,10 @@ import com.intellij.agent.workbench.chat.AgentChatPendingTabSnapshot
 import com.intellij.agent.workbench.chat.AgentChatTabRebindTarget
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
+import com.intellij.agent.workbench.sessions.core.providers.UNKNOWN_AGENT_SESSION_REFRESH_THREAD_UPDATED_AT
 import com.intellij.agent.workbench.sessions.state.AgentSessionWarmPathSnapshot
 import com.intellij.agent.workbench.sessions.state.DEFAULT_VISIBLE_THREAD_COUNT
 import com.intellij.agent.workbench.sessions.state.InMemorySessionWarmState
@@ -470,7 +473,7 @@ class AgentSessionRefreshServiceIntegrationTest {
 
   @Test
   fun providerUpdateRefreshesOnlyMatchingProviderThreads() = runBlocking(Dispatchers.Default) {
-    val codexUpdates = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val codexUpdates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(extraBufferCapacity = 1)
     var codexUpdatedAt = 100L
 
     withService(
@@ -480,7 +483,7 @@ class AgentSessionRefreshServiceIntegrationTest {
             provider = AgentSessionProvider.CODEX,
             canReportExactThreadCount = false,
             supportsUpdates = true,
-            updates = codexUpdates,
+            updateEvents = codexUpdates,
             listFromOpenProject = { path, _ ->
               if (path == PROJECT_PATH) {
                 listOf(thread(id = "codex-1", updatedAt = codexUpdatedAt, provider = AgentSessionProvider.CODEX))
@@ -521,7 +524,7 @@ class AgentSessionRefreshServiceIntegrationTest {
       }
 
       codexUpdatedAt = 300L
-      codexUpdates.emit(Unit)
+      codexUpdates.emit(threadsChangedEvent())
 
       waitForCondition {
         val project = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
@@ -538,7 +541,7 @@ class AgentSessionRefreshServiceIntegrationTest {
 
   @Test
   fun providerUpdateObservedAfterSourceAppearsAfterRefresh() = runBlocking(Dispatchers.Default) {
-    val codexUpdates = MutableSharedFlow<Unit>(replay = 1, extraBufferCapacity = 1)
+    val codexUpdates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
     var codexUpdatedAt = 100L
     var sessionSources: List<AgentSessionSource> = emptyList()
 
@@ -546,7 +549,7 @@ class AgentSessionRefreshServiceIntegrationTest {
       provider = AgentSessionProvider.CODEX,
       canReportExactThreadCount = false,
       supportsUpdates = true,
-      updates = codexUpdates,
+      updateEvents = codexUpdates,
       listFromOpenProject = { path, _ ->
         if (path == PROJECT_PATH) {
           listOf(thread(id = "codex-1", updatedAt = codexUpdatedAt, provider = AgentSessionProvider.CODEX))
@@ -585,7 +588,7 @@ class AgentSessionRefreshServiceIntegrationTest {
       }
 
       codexUpdatedAt = 300L
-      codexUpdates.emit(Unit)
+      codexUpdates.emit(threadsChangedEvent())
 
       waitForCondition {
         val project = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
@@ -600,7 +603,7 @@ class AgentSessionRefreshServiceIntegrationTest {
 
   @Test
   fun providerUpdateBuildsPendingTabRebindTargetsForCodex() = runBlocking(Dispatchers.Default) {
-    val codexUpdates = MutableSharedFlow<Unit>(replay = 1, extraBufferCapacity = 1)
+    val codexUpdates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
     var codexThreads = listOf(
       thread(id = "codex-1", updatedAt = 100L, title = "Existing Codex thread", provider = AgentSessionProvider.CODEX)
     )
@@ -612,7 +615,7 @@ class AgentSessionRefreshServiceIntegrationTest {
           ScriptedSessionSource(
             provider = AgentSessionProvider.CODEX,
             supportsUpdates = true,
-            updates = codexUpdates,
+            updateEvents = codexUpdates,
             listFromOpenProject = { path, _ ->
               if (path == PROJECT_PATH) codexThreads else emptyList()
             },
@@ -666,7 +669,7 @@ class AgentSessionRefreshServiceIntegrationTest {
       codexThreads = listOf(
         thread(id = "codex-2", updatedAt = 300L, title = "New Codex thread", provider = AgentSessionProvider.CODEX)
       )
-      codexUpdates.emit(Unit)
+      codexUpdates.emit(threadsChangedEvent())
 
       waitForCondition {
         rebindInvocations.isNotEmpty()
@@ -699,8 +702,8 @@ class AgentSessionRefreshServiceIntegrationTest {
 
   @Test
   fun providerUpdateDoesNotPassPendingNewThreadIdsToRefreshHints() = runBlocking(Dispatchers.Default) {
-    val codexUpdates = MutableSharedFlow<Unit>(replay = 1, extraBufferCapacity = 1)
-    val capturedKnownThreadIdsByPath = mutableListOf<Map<String, Set<String>>>()
+    val codexUpdates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
+    val capturedRefreshThreadSeedsByPath = mutableListOf<Map<String, Set<AgentSessionRefreshThreadSeed>>>()
 
     val listedThread = thread(
       id = "codex-listed",
@@ -715,19 +718,19 @@ class AgentSessionRefreshServiceIntegrationTest {
           ScriptedSessionSource(
             provider = AgentSessionProvider.CODEX,
             supportsUpdates = true,
-            updates = codexUpdates,
+            updateEvents = codexUpdates,
             listFromOpenProject = { path, _ ->
               if (path == PROJECT_PATH) listOf(listedThread) else emptyList()
             },
             listFromClosedProject = { path ->
               if (path == PROJECT_PATH) listOf(listedThread) else emptyList()
             },
-            prefetchRefreshHintsProvider = { paths, knownThreadIdsByPath ->
+            prefetchRefreshThreadSeedsProvider = { paths, refreshThreadSeedsByPath ->
               if (PROJECT_PATH !in paths) {
                 emptyMap()
               }
               else {
-                capturedKnownThreadIdsByPath += knownThreadIdsByPath.mapValues { (_, ids) -> ids.toSet() }
+                capturedRefreshThreadSeedsByPath += refreshThreadSeedsByPath.mapValues { (_, refreshThreadSeeds) -> refreshThreadSeeds.toSet() }
                 emptyMap()
               }
             },
@@ -767,9 +770,9 @@ class AgentSessionRefreshServiceIntegrationTest {
         project.threads.map { it.id } == listOf("codex-listed")
       }
 
-      capturedKnownThreadIdsByPath.clear()
+      capturedRefreshThreadSeedsByPath.clear()
 
-      codexUpdates.emit(Unit)
+      codexUpdates.emit(threadsChangedEvent())
 
       waitForCondition {
         val project = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
@@ -782,17 +785,20 @@ class AgentSessionRefreshServiceIntegrationTest {
       }
 
       waitForCondition {
-        capturedKnownThreadIdsByPath.isNotEmpty()
+        capturedRefreshThreadSeedsByPath.isNotEmpty()
       }
 
-      codexUpdates.emit(Unit)
+      codexUpdates.emit(threadsChangedEvent())
 
       waitForCondition {
-        capturedKnownThreadIdsByPath.size >= 2
+        capturedRefreshThreadSeedsByPath.size >= 2
       }
 
-      assertThat(capturedKnownThreadIdsByPath.last()[PROJECT_PATH])
-        .containsExactlyInAnyOrder("codex-listed", "codex-open")
+      assertThat(capturedRefreshThreadSeedsByPath.last()[PROJECT_PATH])
+        .containsExactlyInAnyOrder(
+          AgentSessionRefreshThreadSeed(threadId = "codex-listed", updatedAt = 320L, forceRefresh = false),
+          AgentSessionRefreshThreadSeed(threadId = "codex-open", updatedAt = UNKNOWN_AGENT_SESSION_REFRESH_THREAD_UPDATED_AT, forceRefresh = false),
+        )
     }
   }
 

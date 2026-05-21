@@ -11,6 +11,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSp
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
+import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameHandler
 import com.intellij.openapi.project.Project
 import javax.swing.Icon
 
@@ -26,6 +27,7 @@ class TestAgentSessionProviderDescriptor(
   override val editorTabActionIds: List<String> = emptyList(),
   override val supportsPendingEditorTabRebind: Boolean = false,
   override val supportsNewThreadRebind: Boolean = false,
+  private val threadRenameHandlerOverride: AgentThreadRenameHandler? = null,
   override val emitsScopedRefreshSignals: Boolean = false,
   override val refreshPathAfterCreateNewSession: Boolean = false,
 ) : AgentSessionProviderDescriptor {
@@ -36,7 +38,8 @@ class TestAgentSessionProviderDescriptor(
     get() = if (provider == AgentSessionProvider.CLAUDE) "toolwindow.action.new.session.claude" else "toolwindow.action.new.session.codex"
 
   override val icon: Icon
-    get() = iconOverride ?: if (provider == AgentSessionProvider.CLAUDE) AgentWorkbenchCommonIcons.Claude_14x14 else AgentWorkbenchCommonIcons.Codex_14x14
+    get() = iconOverride
+            ?: if (provider == AgentSessionProvider.CLAUDE) AgentWorkbenchCommonIcons.Claude_14x14 else AgentWorkbenchCommonIcons.Codex_14x14
 
   override val supportedLaunchModes: Set<AgentSessionLaunchMode>
     get() = supportedModes
@@ -82,4 +85,7 @@ class TestAgentSessionProviderDescriptor(
       launchSpec = AgentSessionTerminalLaunchSpec(command = listOf("test", "create", path, mode.name)),
     )
   }
+
+  override val threadRenameHandler: AgentThreadRenameHandler?
+    get() = threadRenameHandlerOverride
 }

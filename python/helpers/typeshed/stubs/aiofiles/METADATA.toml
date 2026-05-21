@@ -1,6 +1,6 @@
 version = "25.1.*"
-upstream_repository = "https://github.com/Tinche/aiofiles"
+upstream-repository = "https://github.com/Tinche/aiofiles"
 
 [tool.stubtest]
 # linux and darwin are equivalent
-ci_platforms = ["linux", "win32"]
+ci-platforms = ["linux", "win32"]

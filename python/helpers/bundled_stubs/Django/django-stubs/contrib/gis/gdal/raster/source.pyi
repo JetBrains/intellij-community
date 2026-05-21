@@ -8,6 +8,7 @@ from django.contrib.gis.gdal.raster.band import BandList
 from django.contrib.gis.gdal.raster.base import GDALRasterBase
 from django.contrib.gis.gdal.srs import SpatialReference
 from django.utils.functional import cached_property
+from typing_extensions import override
 
 class TransformPoint(list[Sequence[float]]):
     indices: dict[str, tuple[int, int]]
@@ -24,6 +25,7 @@ class TransformPoint(list[Sequence[float]]):
 class GDALRaster(GDALRasterBase):
     destructor: Any
     def __init__(self, ds_input: str | Path | bytes | dict | c_void_p, write: bool = ...) -> None: ...
+    @override
     def __del__(self) -> None: ...
     @property
     def vsi_buffer(self) -> bytes | None: ...

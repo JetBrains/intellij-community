@@ -1,27 +1,22 @@
-from _typeshed import Incomplete
+from _typeshed import Incomplete, SupportsWrite
+from collections.abc import Iterable
 from typing import TypeVar
 
 from pygments.formatter import Formatter
+from pygments.token import _TokenType
 
 _T = TypeVar("_T", str, bytes)
 
+__all__ = ["NullFormatter", "RawTokenFormatter", "TestcaseFormatter"]
+
 class NullFormatter(Formatter[_T]):
-    name: str
-    aliases: Incomplete
-    filenames: Incomplete
-    def format(self, tokensource, outfile) -> None: ...
+    def format(self, tokensource: Iterable[tuple[_TokenType, str]], outfile: SupportsWrite[_T]) -> None: ...
 
 class RawTokenFormatter(Formatter[bytes]):
-    name: str
-    aliases: Incomplete
-    filenames: Incomplete
-    unicodeoutput: bool
     encoding: str
     compress: Incomplete
     error_color: Incomplete
-    def format(self, tokensource, outfile) -> None: ...
+    def format(self, tokensource: Iterable[tuple[_TokenType, str]], outfile: SupportsWrite[bytes]) -> None: ...
 
 class TestcaseFormatter(Formatter[_T]):
-    name: str
-    aliases: Incomplete
-    def format(self, tokensource, outfile) -> None: ...
+    def format(self, tokensource: Iterable[tuple[_TokenType, str]], outfile: SupportsWrite[_T]) -> None: ...

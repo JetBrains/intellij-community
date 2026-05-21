@@ -15,6 +15,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static com.intellij.concurrency.ConcurrentCollectionFactory.createConcurrentIntObjectMap;
 
@@ -29,6 +30,9 @@ public class FilesToUpdateCollector {
   private final IntObjectMap<FileIndexingRequest> myFilesToUpdate = createConcurrentIntObjectMap();
 
   private final DirtyFiles myDirtyFiles = new DirtyFiles();
+
+  /** Increments on each change in myFilesToUpdate content -- i.e., it is 'version' of myFilesToUpdate content */
+  private final AtomicLong modificationCount = new AtomicLong(0);
 
   /**
    * @param containingProjects projects request.file is belong to. Used mostly for diagnostics
@@ -53,6 +57,8 @@ public class FilesToUpdateCollector {
     int fileId = request.getFileId();
     myDirtyFiles.addFile(dirtyQueueProjects, fileId);
     myFilesToUpdate.put(fileId, request);
+
+    modificationCount.incrementAndGet();
   }
 
   public @NotNull DirtyFiles getDirtyFiles() {
@@ -66,17 +72,24 @@ public class FilesToUpdateCollector {
       IndexingEventsLogger.tryLog("PULL_OUT_FROM_UPDATE", fileId);
       myFilesToUpdate.remove(fileId);
       myDirtyFiles.removeFile(fileId);
+      modificationCount.incrementAndGet();
     }
   }
 
   public void removeFileIdFromFilesScheduledForUpdate(int fileId) {
     myFilesToUpdate.remove(fileId);
     myDirtyFiles.removeFile(fileId);
+    modificationCount.incrementAndGet();
   }
 
   public void clear() {
     myDirtyFiles.clear();
     myFilesToUpdate.clear();
+    modificationCount.incrementAndGet();
+  }
+
+  public long modificationCount(){
+    return modificationCount.get();
   }
 
   public Iterator<@NotNull FileIndexingRequest> getFilesToUpdateAsIterator() {

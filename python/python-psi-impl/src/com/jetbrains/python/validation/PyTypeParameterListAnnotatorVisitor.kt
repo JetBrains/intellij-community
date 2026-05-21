@@ -2,6 +2,7 @@ package com.jetbrains.python.validation
 
 import com.intellij.lang.annotation.HighlightSeverity
 import com.jetbrains.python.PyPsiBundle
+import com.jetbrains.python.ast.PyAstTypeParameter
 import com.jetbrains.python.ast.PyAstTypeParameter.Kind.TypeVar
 import com.jetbrains.python.psi.PyElementVisitor
 import com.jetbrains.python.psi.PyTupleExpression
@@ -40,8 +41,9 @@ class PyTypeParameterListAnnotatorVisitor(private val holder: PyAnnotationHolder
       }
     }
     else if (boundExpression != null) {
+      val name = if (node.kind == PyAstTypeParameter.Kind.ParamSpec) "Parameter specifications" else "Type variable tuples"
       holder.newAnnotation(HighlightSeverity.ERROR,
-                           PyPsiBundle.message("type.param.list.annotator.type.var.tuple.and.param.spec.can.not.have.bounds"))
+                           PyPsiBundle.message("type.param.list.annotator.type.var.tuple.and.param.spec.can.not.have.bounds", name))
         .range(boundExpression.textRange).create()
     }
   }

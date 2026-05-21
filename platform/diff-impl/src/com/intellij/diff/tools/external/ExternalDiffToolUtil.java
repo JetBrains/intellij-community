@@ -24,6 +24,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.DiffUsageTriggerCollector;
@@ -98,7 +99,7 @@ public final class ExternalDiffToolUtil {
 
       Document document = FileDocumentManager.getInstance().getCachedDocument(file);
       if (document != null) {
-        FileDocumentManager.getInstance().saveDocument(document);
+        WriteAction.run(() -> FileDocumentManager.getInstance().saveDocument(document));
       }
 
       if (file.isInLocalFileSystem()) {
@@ -125,7 +126,7 @@ public final class ExternalDiffToolUtil {
   private static @NotNull File createTempFile(@Nullable Project project,
                                               @NotNull DocumentContent content,
                                               @NotNull FileNameInfo fileName) throws IOException {
-    FileDocumentManager.getInstance().saveDocument(content.getDocument());
+    WriteAction.run(() -> FileDocumentManager.getInstance().saveDocument(content.getDocument()));
 
     LineSeparator separator = content.getLineSeparator();
     if (separator == null) separator = LineSeparator.getSystemLineSeparator();
@@ -170,7 +171,7 @@ public final class ExternalDiffToolUtil {
 
       Document document = FileDocumentManager.getInstance().getCachedDocument(file);
       if (document != null) {
-        FileDocumentManager.getInstance().saveDocument(document);
+        WriteAction.run(() -> FileDocumentManager.getInstance().saveDocument(document));
       }
 
       if (file.isInLocalFileSystem()) {

@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.buildData.productInfo.CustomPropertyNames
 import com.intellij.platform.ide.productInfo.IdeProductInfo
 import com.intellij.platform.util.coroutines.childScope
@@ -59,7 +60,10 @@ internal class ITNProxyCoroutineScopeHolder(coroutineScope: CoroutineScope) {
 @ApiStatus.Internal
 object ITNProxy {
   private const val DEFAULT_ENDPOINT = "https://ea-report.jetbrains.com/trackerRpc/idea/createScr"
+  private const val REPORT_ENDPOINT_KEY = "ea.diagnostic.endpoint"
+  private const val JETBRAINS_HOST_SUFFIX = ".jetbrains.com"
   private const val DIOGEN_VIEW_URL = "https://diogen.labs.jb.gg/report/"
+  private val LOG = logger<ITNProxy>()
 
   internal val DEVICE_ID: String by lazy {
     DeviceIdManager.getOrGenerateId(object : DeviceIdManager.DeviceIdToken {}, "EA")
@@ -184,7 +188,7 @@ object ITNProxy {
   internal suspend fun sendError(error: ErrorBean, newThreadPostUrl: String?): Long {
     val context = currentCoroutineContext()
     val request = createRequest(error.event, error)
-    val response = post(newThreadPostUrl ?: DEFAULT_ENDPOINT, request)
+    val response = post(newThreadPostUrl ?: getReportEndpoint(), request)
     context.ensureActive()
     val reportId = handleResponse(response)
     logger<ITNProxy>().info("report ID: ${reportId}")
@@ -195,8 +199,36 @@ object ITNProxy {
   @Throws(Exception::class)
   fun sendError(event: IdeaLoggingEvent): Long {
     val request = createRequest(event, errorBean = null)
-    val response = post(DEFAULT_ENDPOINT, request)
+    val response = post(getReportEndpoint(), request)
     return handleResponse(response)
+  }
+
+  private fun getReportEndpoint(): String {
+    val endpoint = getConfiguredReportEndpoint() ?: return DEFAULT_ENDPOINT
+
+    if (!isEndpointValid(endpoint)) {
+      LOG.debug("Ignoring $REPORT_ENDPOINT_KEY=$endpoint: expected an HTTPS endpoint whose host ends with $JETBRAINS_HOST_SUFFIX")
+      return DEFAULT_ENDPOINT
+    }
+
+    return endpoint
+  }
+
+  private fun getConfiguredReportEndpoint(): String? {
+    if (LoadingState.COMPONENTS_LOADED.isOccurred) {
+      Registry.stringValue(REPORT_ENDPOINT_KEY, "").trim().takeIf { it.isNotEmpty() }?.let {
+        return it
+      }
+    }
+    return System.getProperty(REPORT_ENDPOINT_KEY)?.trim()?.takeIf { it.isNotEmpty() }
+  }
+
+  private fun isEndpointValid(endpoint: String): Boolean {
+    val uri = runCatching { URI(endpoint) }.getOrNull() ?: return false
+    val host = uri.host ?: return false
+    if (!uri.scheme.equals("https", ignoreCase = true)) return false
+    if (!host.endsWith(JETBRAINS_HOST_SUFFIX, ignoreCase = true)) return false
+    return true
   }
 
   private fun handleResponse(response: HttpResponse<String>): Long {

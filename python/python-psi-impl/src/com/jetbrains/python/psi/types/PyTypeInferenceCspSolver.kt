@@ -24,9 +24,8 @@ import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.RatedResolveResult
 import com.jetbrains.python.psi.types.ConstraintReducer.reduce
 import com.jetbrains.python.psi.types.PyRecursiveTypeVisitor.PyTypeTraverser
+import com.jetbrains.python.psi.types.PyTypeParameterType.Variance
 import com.jetbrains.python.psi.types.PyTypeUtil.derefOrUnknown
-import com.jetbrains.python.psi.types.PyTypeUtil.getEffectiveBound
-import com.jetbrains.python.psi.types.PyTypeVarType.Variance
 import com.jetbrains.python.psi.types.SubtypeJudgement.isRawSubtype
 import com.jetbrains.python.psi.types.SubtypeJudgement.isSubtype
 import com.jetbrains.python.psi.types.SubtypeJudgement.sameTypes

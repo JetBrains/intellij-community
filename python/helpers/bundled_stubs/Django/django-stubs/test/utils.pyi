@@ -5,17 +5,18 @@ from decimal import Decimal
 from io import StringIO
 from logging import Logger
 from types import TracebackType
-from typing import Any, Protocol, SupportsIndex, TypeAlias, TypeVar, type_check_only
+from typing import Any, Protocol, SupportsIndex, TypeAlias, type_check_only
 
 from django.apps.registry import Apps
 from django.conf import LazySettings, Settings
 from django.core.checks.registry import CheckRegistry
 from django.db.backends.base.base import BaseDatabaseWrapper
 from django.db.models.lookups import Lookup, Transform
+from django.db.models.query import _SupportsContains
 from django.db.models.query_utils import RegisterLookupMixin
 from django.test.runner import DiscoverRunner
 from django.test.testcases import SimpleTestCase
-from typing_extensions import Self
+from typing_extensions import Self, TypeVar, override
 
 _TestClass: TypeAlias = type[SimpleTestCase]
 
@@ -31,8 +32,10 @@ class Approximate:
     def __init__(self, val: Decimal | float, places: int = ...) -> None: ...
 
 class ContextList(list[dict[str, Any]]):
+    @override
     def __getitem__(self, key: str | SupportsIndex | slice) -> Any: ...
     def get(self, key: str, default: Any | None = ...) -> Any: ...
+    @override
     def __contains__(self, key: object) -> bool: ...
     def keys(self) -> set[str]: ...
 
@@ -65,12 +68,14 @@ class override_settings(TestContextDecorator):
     def __init__(self, **kwargs: Any) -> None: ...
     wrapped: Settings
     def save_options(self, test_func: _DecoratedTest) -> None: ...
+    @override
     def decorate_class(self, cls: type) -> type: ...
 
 class modify_settings(override_settings):
     wrapped: Settings
     operations: list[tuple[str, dict[str, list[str] | str]]]
     def __init__(self, *args: Any, **kwargs: Any) -> None: ...
+    @override
     def save_options(self, test_func: _DecoratedTest) -> None: ...
     options: dict[str, list[tuple[str, str] | str]]
 
@@ -82,7 +87,7 @@ class override_system_checks(TestContextDecorator):
     old_checks: set[Callable]
     old_deployment_checks: set[Callable]
 
-class CaptureQueriesContext:
+class CaptureQueriesContext(_SupportsContains[dict[str, str]]):
     connection: BaseDatabaseWrapper
     force_debug_cursor: bool
     initial_queries: int

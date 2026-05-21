@@ -32,6 +32,7 @@ open class SystemPropertiesAdjuster {
     properties["jna.nosys"] = null
     properties["java.nio.file.spi.DefaultFileSystemProvider"] = null
     properties["java.util.concurrent.ForkJoinPool.common.threadFactory"] = null
+    properties["library.jansi.path"] = null
     return properties
   }
 
@@ -55,6 +56,9 @@ open class SystemPropertiesAdjuster {
         oldValues.forEach { (k: String, v: String?) ->
           if (v != null) {
             System.setProperty(k, v)
+          }
+          else {
+            System.clearProperty(k)
           }
         }
       }

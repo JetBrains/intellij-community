@@ -1,5 +1,5 @@
 class MessageListener:
     def Modified(self) -> None: ...
 
-class NullMessageListener(MessageListener):
+class NullMessageListener:
     def Modified(self) -> None: ...

@@ -1,2 +1,2 @@
-version = "2025.*"
-upstream_repository = "https://github.com/python/tzdata"
+version = "2026.*"
+upstream-repository = "https://github.com/python/tzdata"

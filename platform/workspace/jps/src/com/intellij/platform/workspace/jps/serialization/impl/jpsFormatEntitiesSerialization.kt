@@ -185,9 +185,11 @@ interface ErrorReporter {
   fun reportError(message: @Nls String, file: VirtualFileUrl)
 }
 
-data class JpsConfigurationFilesChange(val addedFileUrls: Collection<String>,
-                                       val removedFileUrls: Collection<String>,
-                                       val changedFileUrls: Collection<String>) {
+typealias UrlAndChangeRequestor = Pair<String, Any> // VFileEvent.getRequestor()
+
+data class JpsConfigurationFilesChange(val addedFileUrls: Collection<UrlAndChangeRequestor>,
+                                       val removedFileUrls: Collection<UrlAndChangeRequestor>,
+                                       val changedFileUrls: Collection<UrlAndChangeRequestor>) {
   override fun toString(): String {
     val description = StringBuilder()
     description.append("JpsConfigurationFilesChange:\n")

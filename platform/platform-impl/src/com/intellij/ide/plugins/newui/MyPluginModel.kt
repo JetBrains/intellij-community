@@ -295,7 +295,9 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     modalityState: ModalityState,
     actionDescriptor: PluginUiModel,
   ): InstallPluginResult {
-    prepareToInstall(installPluginInfo, installationScope)
+    withContext(Dispatchers.EDT + modalityState.asContextElement()) {
+      prepareToInstall(installPluginInfo, installationScope)
+    }
     val customPlugins = customRepoPlugins?.toList()
     val result = controller.installOrUpdatePlugin(sessionId, parentComponent, descriptor, updateDescriptor, myInstallSource, modalityState, null, customPlugins)
     if (result.disabledPlugins.isEmpty() && result.disabledDependants.isEmpty()) {
@@ -824,7 +826,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
       group.titleWithEnabled(PluginModelFacade(this))
     }
     runInvalidFixCallback()
-    PluginUpdatesService.reapplyFilter()
+    myPluginUpdatesService?.refreshCallbacks()
   }
 
   override fun isDisabled(pluginId: PluginId): Boolean {
@@ -962,21 +964,22 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     }
     try {
       val needRestartForUninstall = controller.performUninstall(sessionId, descriptor.pluginId)
-      descriptor.isDeleted = true
-      PluginManagerCustomizer.getInstance()?.onPluginDeleted(descriptor, controller.getTarget())
+      myPluginManagerCustomizer?.onPluginDeleted(descriptor, controller.getTarget())
+      val completelyUninstalled = myPluginManagerCustomizer?.isPluginCompletelyUninstalled(descriptor) ?: true
+      descriptor.isDeleted = completelyUninstalled
       val errorCheckResult = UiPluginManager.getInstance().loadErrors(sessionId)
       needRestart = needRestart or (descriptor.isEnabled && needRestartForUninstall)
       val errors = getErrors(errorCheckResult)
       if (myPluginManagerCustomizer != null) {
         myPluginManagerCustomizer.updateAfterModificationAsync {
           hideProgresses(descriptor.pluginId)
-          updateUiAfterUninstall(descriptor, needRestartForUninstall, errors)
+          updateUiAfterUninstall(descriptor, needRestartForUninstall, errors, completelyUninstalled)
           callback?.run()
         }
       }
       else {
         hideProgresses(descriptor.pluginId)
-        updateUiAfterUninstall(descriptor, needRestartForUninstall, errors)
+        updateUiAfterUninstall(descriptor, needRestartForUninstall, errors, completelyUninstalled)
         callback?.run()
       }
     }
@@ -988,6 +991,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
   private suspend fun updateUiAfterUninstall(
     descriptor: PluginUiModel, needRestartForUninstall: Boolean,
     errors: Map<PluginId, List<HtmlChunk>>,
+    completelyUninstalled: Boolean,
   ) {
     val pluginId = descriptor.pluginId
     myTopController!!.showProgress(false)
@@ -995,7 +999,12 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     val listComponents = myInstalledPluginComponentMap[pluginId]
     if (listComponents != null) {
       for (listComponent in listComponents) {
-        listComponent.updateAfterUninstall(needRestartForUninstall, installationState)
+        if (completelyUninstalled) {
+          listComponent.updateAfterUninstall(needRestartForUninstall, installationState)
+        }
+        else {
+          listComponent.updateButtons(descriptor, installationState)
+        }
       }
     }
 
@@ -1003,7 +1012,12 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     if (marketplaceComponents != null) {
       for (component in marketplaceComponents) {
         if (component.myInstalledDescriptorForMarketplace != null) {
-          component.updateAfterUninstall(needRestartForUninstall, installationState)
+          if (completelyUninstalled) {
+            component.updateAfterUninstall(needRestartForUninstall, installationState)
+          }
+          else {
+            component.updateButtons(component.myInstalledDescriptorForMarketplace, installationState)
+          }
         }
       }
     }

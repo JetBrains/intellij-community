@@ -220,6 +220,16 @@ class KotlinBuildScriptManipulator(
         }
     }
 
+    override fun configurePluginOptions(kotlinPluginName: String, changedFiles: ChangedConfiguratorFiles, vararg options: String) {
+        scriptFile.apply {
+            findOrCreateScriptInitializer(kotlinPluginName, false)?.let { block ->
+                for (option in options) {
+                    block.addExpressionIfMissing(option)
+                }
+            }
+        }
+    }
+
     override fun changeLanguageFeatureConfiguration(
         feature: LanguageFeature,
         state: LanguageFeature.State,

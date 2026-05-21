@@ -1,2 +1,2 @@
 version = "4.2.*"
-upstream_repository = "https://github.com/brandon-rhodes/pyephem"
+upstream-repository = "https://github.com/brandon-rhodes/pyephem"

@@ -8,12 +8,14 @@ import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.LightColors;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
@@ -22,6 +24,7 @@ import javax.swing.JPanel;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.nio.file.Path;
 
 public final class JBCefNotifications {
   public static @Nullable EditorNotificationPanel createEditorNotificationPanel(Editor editor, JBCefHealthMonitor.Status status) {
@@ -86,6 +89,16 @@ public final class JBCefNotifications {
     );
 
     Notifications.Bus.notify(notification);
+  }
+
+  static void showClearCache(Path cachePath) {
+    // NOTE: called from pooled bg thread.
+    Notification notification = JBCefApp.getNotificationGroup().createNotification(
+      IdeBundle.message("notification.content.jcef.clearcache.title"),
+      IdeBundle.message("notification.content.jcef.clearcache.message", cachePath.toString()),
+      NotificationType.WARNING);
+
+    notification.notify(null);
   }
 
   private static JComponent createUnprivilegedUserNSStubPanel() {

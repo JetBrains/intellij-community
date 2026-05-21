@@ -3,7 +3,6 @@ package com.intellij.internal.statistic.collectors.fus.otherIde
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.intellij.internal.statistic.beans.MetricEvent
-import com.intellij.internal.statistic.collectors.fus.otherIde.LaunchJsonUsagesCollector.Companion.jsConfigurationEvent
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.util.io.isLocalHost
 import java.net.URL

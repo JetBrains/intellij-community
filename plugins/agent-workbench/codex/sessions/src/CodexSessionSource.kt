@@ -23,7 +23,9 @@ import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.common.session.AgentSubAgent
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRebindCandidate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.agent.workbench.sessions.core.providers.BaseAgentSessionSource
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -57,20 +59,12 @@ internal class CodexSessionSource internal constructor(
   override val supportsUpdates: Boolean
     get() = true
 
-  override val updates: Flow<Unit>
+  override val updateEvents: Flow<AgentSessionSourceUpdateEvent>
     get() = merge(
-      backend.updates,
-      appServerRefreshHintsProvider.updates,
-      rolloutRefreshHintsProvider.updates,
-      readStateUpdates,
-    )
-
-  override val updateEvents: Flow<AgentSessionSourceUpdate>
-    get() = merge(
-      backend.updates.map { AgentSessionSourceUpdate.THREADS_CHANGED },
-      appServerRefreshHintsProvider.updates.map { AgentSessionSourceUpdate.HINTS_CHANGED },
-      rolloutRefreshHintsProvider.updates.map { AgentSessionSourceUpdate.HINTS_CHANGED },
-      readStateUpdates.map { AgentSessionSourceUpdate.HINTS_CHANGED },
+      backend.updates.map { AgentSessionSourceUpdateEvent(type = AgentSessionSourceUpdate.THREADS_CHANGED) },
+      appServerRefreshHintsProvider.updateEvents,
+      rolloutRefreshHintsProvider.updateEvents,
+      readStateUpdates.map { AgentSessionSourceUpdateEvent(type = AgentSessionSourceUpdate.HINTS_CHANGED) },
     )
 
   override fun setActiveThreadId(threadId: String?) {
@@ -100,15 +94,15 @@ internal class CodexSessionSource internal constructor(
 
   override suspend fun prefetchRefreshHints(
     paths: List<String>,
-    knownThreadIdsByPath: Map<String, Set<String>>,
+    refreshThreadSeedsByPath: Map<String, Set<AgentSessionRefreshThreadSeed>>,
   ): Map<String, AgentSessionRefreshHints> {
     val appServerHints = appServerRefreshHintsProvider.prefetchRefreshHints(
       paths = paths,
-      knownThreadIdsByPath = knownThreadIdsByPath,
+      refreshThreadSeedsByPath = refreshThreadSeedsByPath,
     )
     val rolloutHints = rolloutRefreshHintsProvider.prefetchRefreshHints(
       paths = paths,
-      knownThreadIdsByPath = knownThreadIdsByPath,
+      refreshThreadSeedsByPath = refreshThreadSeedsByPath,
     )
     return filterCodexRefreshHints(
       mergeCodexRefreshHints(

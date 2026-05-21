@@ -7,6 +7,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.getOrNull
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PyDependencyGroupName
@@ -14,12 +15,16 @@ import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.management.PyWorkspaceMember
-import com.jetbrains.python.getOrNull
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
-import com.jetbrains.python.packaging.packageRequirements.PythonPackageRequirementsTreeExtractor
 import com.jetbrains.python.packaging.management.resolvePyProjectToml
+import com.jetbrains.python.packaging.packageRequirements.CachedDependencyTreeProvider
+import com.jetbrains.python.packaging.packageRequirements.PackageCollectionPackageStructureNode
+import com.jetbrains.python.packaging.packageRequirements.PackageTreeNode
+import com.jetbrains.python.packaging.packageRequirements.PackageStructureNode
+import com.jetbrains.python.packaging.packageRequirements.TreeParser
+import com.jetbrains.python.packaging.packageRequirements.collectAllNames
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
 import com.jetbrains.python.packaging.pyRequirement
 import com.jetbrains.python.sdk.associatedModulePath
@@ -28,8 +33,11 @@ import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 
 @ApiStatus.Internal
-class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk, installedMightBeTransitive = true) {
+class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk, installedPackagesIncludeTransitive = true) {
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager.getInstance(project)
+  override val treeProvider = CachedDependencyTreeProvider {
+    runPoetryWithSdk(sdk, "show", "--tree").getOrNull()
+  }
 
   override suspend fun syncCommand(): PyResult<Unit> {
     return runPoetryWithSdk(sdk, "install").mapSuccess { }
@@ -80,15 +88,23 @@ class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pr
     return PyResult.success(Unit)
   }
 
-  override suspend fun extractDependencies(): PyResult<List<PythonPackage>> {
-    val allOutput = runPoetryWithSdk(sdk, "show", "--top-level")
-      .getOr { return it }
+  /**
+   * Returns declared dependencies parsed from `poetry show --tree`.
+   * This intentionally excludes standalone pip-installed packages — those are
+   * handled separately in [getPackageTree] as undeclared/standalone packages.
+   */
+  override suspend fun listDeclaredPackages(): PyResult<List<PythonPackage>> {
+    return declaredPackagesFromTrees(treeProvider.getDependencyTrees())
+  }
 
-    val allPackages = if (allOutput.isBlank()) emptyList() else parsePoetryShow(allOutput)
+  private suspend fun declaredPackagesFromTrees(trees: List<PackageTreeNode>): PyResult<List<PythonPackage>> {
+    if (trees.isEmpty()) return PyResult.success(emptyList())
+
+    val allPackages = trees.map { PythonPackage(it.name.name, it.version ?: "", false) }
 
     val mainOutput = runPoetryWithSdk(sdk, "show", "--only", "main", "--tree")
-      .getOr { return PyResult.success(allPackages) }
-    val mainNames = parsePoetryShowTree(mainOutput).mapTo(mutableSetOf()) { it.name }
+      .getOrNull() ?: return PyResult.success(allPackages)
+    val mainNames = TreeParser.parseTrees(mainOutput.lines()).mapTo(mutableSetOf()) { it.name.name }
 
     val annotated = allPackages.map { pkg ->
       if (pkg.name in mainNames) pkg
@@ -97,11 +113,12 @@ class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pr
 
     return PyResult.success(annotated)
   }
+
   /**
    * Categorizes packages into standalone packages and pyproject.toml declared packages.
    */
   private suspend fun categorizePackages(packages: Array<out String>): PyResult<Pair<List<PyPackageName>, List<PyPackageName>>> {
-    val dependencyNames = extractDependencies().getOr {
+    val dependencyNames = listDeclaredPackages().getOr {
       return it
     }.map { it.name }
 
@@ -182,10 +199,21 @@ class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pr
     return versionSpec?.let { "$name@${it.presentableText}" } ?: name
   }
 
-  @ApiStatus.Internal
-  override suspend fun allDeclaredPackages(): List<PythonPackage> {
-    val output = runPoetryWithSdk(sdk, "show", "--tree").getOrNull() ?: return emptyList()
-    return PythonPackageRequirementsTreeExtractor.collectAllPackages(output)
+  override suspend fun getPackageTree(): PackageStructureNode {
+    val allTrees = treeProvider.getDependencyTrees()
+    if (allTrees.isEmpty()) return PackageCollectionPackageStructureNode(emptyList(), emptyList())
+    val declaredPackageNames = declaredPackagesFromTrees(allTrees).getOrNull()
+      ?.mapTo(mutableSetOf()) { it.name } ?: emptySet()
+    val declared = allTrees.filter { it.name.name in declaredPackageNames }
+    val undeclared = allTrees.filter { it.name.name !in declaredPackageNames }
+
+    val treePackageNames = allTrees.flatMapTo(mutableSetOf()) { it.collectAllNames() }
+
+    val standalonePackages = listInstalledPackages()
+      .filter { it.name !in treePackageNames }
+      .map { PackageTreeNode(PyPackageName.from(it.name)) }
+
+    return PackageCollectionPackageStructureNode(declared, undeclared + standalonePackages)
   }
 
   override fun getDependencyFile(): VirtualFile? {

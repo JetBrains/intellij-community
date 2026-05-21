@@ -34,6 +34,7 @@ from .forms import Form as Form
 from .formsets import BaseFormSet as BaseFormSet
 from .formsets import all_valid as all_valid
 from .formsets import formset_factory as formset_factory
+from .models import ALL_FIELDS as ALL_FIELDS
 from .models import BaseInlineFormSet as BaseInlineFormSet
 from .models import BaseModelForm as BaseModelForm
 from .models import BaseModelFormSet as BaseModelFormSet

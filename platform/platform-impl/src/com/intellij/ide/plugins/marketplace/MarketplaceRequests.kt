@@ -317,9 +317,51 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       indicator: ProgressIndicator? = null,
     ): PluginUiModel {
       val updateMetadataFile = Paths.get(PathManager.getPluginTempPath(), "meta")
-      return readOrUpdateFile(updateMetadataFile.resolve(ideCompatibleUpdate.externalUpdateId + ".json"), MarketplaceUrls.getUpdateMetaUrl(ideCompatibleUpdate.externalPluginId, ideCompatibleUpdate.externalUpdateId), indicator, IdeBundle.message("progress.downloading.plugins.meta", xmlId)) {
-        objectMapper.readValue(it, IntellijUpdateMetadata::class.java)
-      }.toUiModel()
+      val metadata = readOrUpdateFile(
+        updateMetadataFile.resolve(ideCompatibleUpdate.externalUpdateId + ".json"),
+        MarketplaceUrls.getUpdateMetaUrl(ideCompatibleUpdate.externalPluginId, ideCompatibleUpdate.externalUpdateId),
+        indicator,
+        IdeBundle.message("progress.downloading.plugins.meta", xmlId),
+      ) {
+        parseUpdateMetadata(it)
+      }
+      return metadata.toUiModel()
+    }
+
+    private fun parseUpdateMetadata(input: InputStream): IntellijUpdateMetadata {
+      val metadata = objectMapper.readValue(input, object : TypeReference<Map<String, Any?>>() {})
+
+      fun text(name: String): String = metadata[name] as? String ?: ""
+      fun textOrNull(name: String): String? = metadata[name] as? String
+      fun textList(name: String): List<String> = (metadata[name] as? List<*>)?.filterIsInstance<String>() ?: emptyList()
+      fun textSet(name: String): Set<String> = (metadata[name] as? List<*>)?.filterIsInstance<String>()?.toCollection(LinkedHashSet())
+                                               ?: emptySet()
+      fun <T> typedValue(name: String, typeReference: TypeReference<T>, defaultValue: T): T {
+        val value = metadata[name] ?: return defaultValue
+        return runCatching { objectMapper.convertValue(value, typeReference) }.getOrDefault(defaultValue)
+      }
+
+      return IntellijUpdateMetadata(
+        id = text("xmlId"),
+        name = text("name"),
+        description = text("description"),
+        tags = textList("tags"),
+        vendor = text("vendor"),
+        organization = text("organization"),
+        version = text("version"),
+        notes = text("notes"),
+        dependencies = textSet("dependencies"),
+        optionalDependencies = textSet("optionalDependencies"),
+        since = textOrNull("since"),
+        until = textOrNull("until"),
+        productCode = textOrNull("productCode"),
+        url = textOrNull("url") ?: textOrNull("sourceCodeUrl"),
+        size = (metadata["size"] as? Number)?.toInt() ?: 0,
+        content = typedValue("content", object : TypeReference<List<PluginContentModule>>() {}, emptyList()),
+        modules = typedValue("modules", object : TypeReference<List<PluginModule>>() {}, emptyList()),
+        mainModuleDependencies = typedValue("mainModuleDependencies", object : TypeReference<List<ModuleDependency>>() {}, emptyList()),
+        pluginAliases = textList("pluginAliases"),
+      )
     }
 
     /**

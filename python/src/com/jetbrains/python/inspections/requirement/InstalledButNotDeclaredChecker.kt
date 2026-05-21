@@ -8,7 +8,7 @@ import com.jetbrains.python.packaging.PyPIPackageUtil.INSTANCE
 import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.common.toRequirements
 import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.packaging.management.extractDependenciesAsync
+import com.jetbrains.python.packaging.management.listDeclaredPackagesAsync
 
 class InstalledButNotDeclaredChecker(val ignoredPackages: Collection<String>, val pythonPackageManager: PythonPackageManager) {
   @RequiresBackgroundThread
@@ -20,7 +20,7 @@ class InstalledButNotDeclaredChecker(val ignoredPackages: Collection<String>, va
     if (!INSTANCE.isInPyPI(packageName))
       return null
 
-    val requirements = pythonPackageManager.extractDependenciesAsync()?.toRequirements() ?: return null
+    val requirements = pythonPackageManager.listDeclaredPackagesAsync()?.toRequirements() ?: return null
     if (requirements.any { it.name == packageName }) {
       return null
     }

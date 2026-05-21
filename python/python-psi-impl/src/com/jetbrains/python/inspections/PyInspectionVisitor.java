@@ -100,7 +100,7 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
    */
   @ApiStatus.Internal
   protected @NotNull ProblemHighlightType effectiveHighlightType(@NotNull ProblemHighlightType type) {
-    return myTypeEvalContext.getTypeEngine() != null ? ProblemHighlightType.INFORMATION : type;
+    return myTypeEvalContext.getUsesExternalTypeEngine() ? ProblemHighlightType.INFORMATION : type;
   }
 
   protected final void registerProblem(@Nullable PsiElement element,

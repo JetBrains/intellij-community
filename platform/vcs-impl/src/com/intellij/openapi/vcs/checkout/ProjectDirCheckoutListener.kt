@@ -25,6 +25,7 @@ internal class ProjectDirCheckoutListener : CheckoutListener {
     runBlockingCancellable {
       ProjectManagerEx.getInstanceEx().openProjectAsync(directory, OpenProjectTask {
         projectToClose = project
+        runConfigurators = true
         projectRootDir = directory
       })
     }

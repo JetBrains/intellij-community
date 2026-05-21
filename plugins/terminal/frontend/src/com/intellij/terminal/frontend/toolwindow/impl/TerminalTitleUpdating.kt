@@ -10,16 +10,15 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.projectId
+import com.intellij.platform.util.coroutines.flow.throttleLatest
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.ui.content.Content
 import fleet.rpc.client.durable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
@@ -49,7 +48,6 @@ private fun isCommandRunning(view: TerminalView): Boolean {
   return isNonShellProcess || isExecutingShellCommand
 }
 
-@OptIn(FlowPreview::class)
 internal fun updateTabNameOnTitleChange(
   terminalView: TerminalView,
   content: Content,
@@ -57,7 +55,7 @@ internal fun updateTabNameOnTitleChange(
 ) {
   coroutineScope.launch(Dispatchers.UI + ModalityState.any().asContextElement()) {
     terminalView.titleStateFlow()
-      .debounce(TITLE_UPDATE_DELAY)
+      .throttleLatest(TITLE_UPDATE_DELAY)
       .collect {
         content.displayName = it.croppedText
         content.description = StringUtil.escapeXmlEntities(it.fullText)
@@ -65,7 +63,6 @@ internal fun updateTabNameOnTitleChange(
   }
 }
 
-@OptIn(FlowPreview::class)
 internal fun updateFileNameOnTitleChange(
   terminalView: TerminalView,
   file: VirtualFile,
@@ -74,7 +71,7 @@ internal fun updateFileNameOnTitleChange(
 ) {
   coroutineScope.launch(Dispatchers.UI + ModalityState.any().asContextElement()) {
     terminalView.titleStateFlow()
-      .debounce(TITLE_UPDATE_DELAY)
+      .throttleLatest(TITLE_UPDATE_DELAY)
       .collect {
         file.rename(null, it.croppedText)
         FileEditorManager.getInstance(project).updateFilePresentation(file)
@@ -82,7 +79,6 @@ internal fun updateFileNameOnTitleChange(
   }
 }
 
-@OptIn(FlowPreview::class)
 internal fun updateBackendTabNameOnTitleChange(
   terminalView: TerminalView,
   backendTabId: Int,
@@ -91,7 +87,7 @@ internal fun updateBackendTabNameOnTitleChange(
 ) {
   scope.launch {
     terminalView.titleStateFlow()
-      .debounce(TITLE_UPDATE_DELAY)
+      .throttleLatest(TITLE_UPDATE_DELAY)
       .collect {
         // Save either user-defined or default tab name, ignore the application title.
         // Because when the tab is restored, the saved application title won't relate to the new terminal session context.

@@ -3,8 +3,10 @@ from typing import Any, Generic, Protocol, TypeVar, overload, type_check_only
 
 from django.core.paginator import Page, Paginator, _SupportsPagination
 from django.db.models import Model, QuerySet
+from django.db.models.query import _OrderByFieldName
 from django.http import HttpRequest, HttpResponse
 from django.views.generic.base import ContextMixin, TemplateResponseMixin, View
+from typing_extensions import override
 
 _M = TypeVar("_M", bound=Model)
 
@@ -22,9 +24,9 @@ class MultipleObjectMixin(ContextMixin, Generic[_M]):
     context_object_name: str | None
     paginator_class: type[Paginator]
     page_kwarg: str
-    ordering: str | Sequence[str] | None
+    ordering: str | Sequence[_OrderByFieldName] | None
     def get_queryset(self) -> QuerySet[_M]: ...
-    def get_ordering(self) -> str | Sequence[str] | None: ...
+    def get_ordering(self) -> str | Sequence[_OrderByFieldName] | None: ...
     def paginate_queryset(
         self, queryset: _SupportsPagination[_M], page_size: int
     ) -> tuple[Paginator, Page, _SupportsPagination[_M], bool]: ...
@@ -43,6 +45,7 @@ class MultipleObjectMixin(ContextMixin, Generic[_M]):
     def get_context_object_name(self, object_list: _HasModel) -> str: ...
     @overload
     def get_context_object_name(self, object_list: Any) -> str | None: ...
+    @override
     def get_context_data(
         self, *, object_list: _SupportsPagination[_M] | None = ..., **kwargs: Any
     ) -> dict[str, Any]: ...

@@ -293,15 +293,18 @@ class InstalledPluginsTab extends PluginsTab {
         }
 
         myPluginUpdatesService.calculateUpdates(updates -> {
-          if (ContainerUtil.isEmpty(updates)) {
+          List<PluginUiModel> updateModels = updates == null ? List.of() : updates.stream()
+            .filter(plugin -> myPluginModelFacade.isEnabled(plugin))
+            .toList();
+          if (ContainerUtil.isEmpty(updateModels)) {
             clearUpdates(myInstalledPanel);
             clearUpdates(myInstalledSearchPanel.getPanel());
           }
           else {
-            applyUpdates(myInstalledPanel, updates);
-            applyUpdates(myInstalledSearchPanel.getPanel(), updates);
+            applyUpdates(myInstalledPanel, updateModels);
+            applyUpdates(myInstalledSearchPanel.getPanel(), updateModels);
           }
-          applyBundledUpdates(updates);
+          applyBundledUpdates(updateModels);
           selectionListener.accept(myInstalledPanel);
           selectionListener.accept(myInstalledSearchPanel.getPanel());
         });

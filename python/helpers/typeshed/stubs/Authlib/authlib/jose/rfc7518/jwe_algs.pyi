@@ -19,6 +19,7 @@ class DirectAlgorithm(JWEAlgorithm):
 class RSAAlgorithm(JWEAlgorithm):
     key_size: int
     name: str
+    deprecated: bool
     description: str
     padding: Incomplete
     def __init__(self, name: str, description: str, pad_fn) -> None: ...

@@ -18,12 +18,15 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSp
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
+import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameContext
+import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameHandler
 import com.intellij.agent.workbench.sessions.core.providers.buildPlanModeInitialMessagePlan
 import com.intellij.openapi.components.serviceAsync
 import javax.swing.Icon
 
 internal class CodexAgentSessionProviderDescriptor(
   override val sessionSource: AgentSessionSource = CodexSessionSource(),
+  private val threadMutationBackend: CodexThreadMutationBackend = SharedServiceCodexThreadMutationBackend,
 ) : AgentSessionProviderDescriptor {
   override val provider: AgentSessionProvider
     get() = AgentSessionProvider.CODEX
@@ -87,6 +90,16 @@ internal class CodexAgentSessionProviderDescriptor(
 
   override val supportsPlanMode: Boolean
     get() = true
+
+  override val threadRenameHandler: AgentThreadRenameHandler = object : AgentThreadRenameHandler.Backend {
+    override val supportedContexts: Set<AgentThreadRenameContext>
+      get() = setOf(AgentThreadRenameContext.TREE_POPUP, AgentThreadRenameContext.EDITOR_TAB)
+
+    override suspend fun execute(path: String, threadId: String, normalizedName: String): Boolean {
+      threadMutationBackend.setThreadName(path, threadId, normalizedName)
+      return true
+    }
+  }
 
   override fun isCliAvailable(): Boolean = CodexCliUtils.findExecutable() != null
 
@@ -155,17 +168,39 @@ internal class CodexAgentSessionProviderDescriptor(
   }
 
   override suspend fun archiveThread(path: String, threadId: String): Boolean {
-    serviceAsync<SharedCodexAppServerService>().archiveThread(threadId)
+    threadMutationBackend.archiveThread(path, threadId)
     return true
   }
 
   override suspend fun unarchiveThread(path: String, threadId: String): Boolean {
-    serviceAsync<SharedCodexAppServerService>().unarchiveThread(threadId)
+    threadMutationBackend.unarchiveThread(path, threadId)
     return true
   }
 
   override fun isCliMissingError(throwable: Throwable): Boolean {
     return throwable is CodexCliNotFoundException
+  }
+}
+
+internal interface CodexThreadMutationBackend {
+  suspend fun archiveThread(path: String, threadId: String)
+
+  suspend fun unarchiveThread(path: String, threadId: String)
+
+  suspend fun setThreadName(path: String, threadId: String, name: String)
+}
+
+private object SharedServiceCodexThreadMutationBackend : CodexThreadMutationBackend {
+  override suspend fun archiveThread(path: String, threadId: String) {
+    serviceAsync<SharedCodexAppServerService>().archiveThread(threadId)
+  }
+
+  override suspend fun unarchiveThread(path: String, threadId: String) {
+    serviceAsync<SharedCodexAppServerService>().unarchiveThread(threadId)
+  }
+
+  override suspend fun setThreadName(path: String, threadId: String, name: String) {
+    serviceAsync<SharedCodexAppServerService>().setThreadName(threadId, name)
   }
 }
 

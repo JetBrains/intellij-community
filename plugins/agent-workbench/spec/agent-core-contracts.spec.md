@@ -11,6 +11,7 @@ targets:
   - ../sessions/src/AgentSessionsToolWindow.kt
   - ../sessions/src/SessionTree.kt
   - ../chat/src/*.kt
+  - ../claude/sessions/src/ClaudeThreadRenameEngine.kt
   - ../sessions/resources/intellij.agent.workbench.sessions.xml
   - ../sessions/resources/messages/AgentSessionsBundle.properties
   - ../chat/resources/messages/AgentChatBundle.properties
@@ -22,7 +23,7 @@ targets:
 # Agent Workbench Core Contracts
 
 Status: Draft
-Date: 2026-02-24
+Date: 2026-04-20
 
 ## Summary
 Define the single source of truth for cross-feature behavior that must stay consistent across Agent Threads, Agent Chat editor tabs, dedicated-frame routing, and provider-specific session actions.
@@ -95,10 +96,14 @@ Define the single source of truth for cross-feature behavior that must stay cons
 
 - Editor-tab popup contract for a selected Agent chat tab must expose exactly these actions with this placement:
   - `Archive Thread` appears before built-in close actions.
-  - `Select in Agent Threads` appears after `CopyPaths`.
-  - `Copy Thread ID` appears after `Select in Agent Threads`.
-  [@test] ../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt
-  [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
+  - `Rename Thread` appears after built-in close actions and before `Copy Thread ID` when the selected tab targets a concrete top-level thread for a provider that supports rename.
+  - `Copy Thread ID` appears after `Rename Thread` and before `Select in Agent Threads`.
+  - `Select in Agent Threads` appears before `CopyPaths`.
+  [@test] ../sessions-actions/testSrc/AgentSessionsEditorTabActionsTest.kt
+  [@test] ../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
+
+- Sessions-tree popup contract for thread rows must keep the single divider between `Open`/`New Thread` actions and thread actions, place `Archive Thread` immediately before `Rename Thread`, and keep `Rename Thread` before `CopyReferencePopupGroup` without another divider.
+  [@test] ../sessions-toolwindow/testSrc/AgentSessionsToolWindowFactorySwingTest.kt
 
 - `Archive Thread` default shortcuts must be:
   - Windows (`$default`) keymap: `Ctrl+Alt+Delete`
@@ -107,12 +112,25 @@ Define the single source of truth for cross-feature behavior that must stay cons
   [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
 
 - `Archive Thread` visibility/enablement must be gated by provider archive capability consistently for both tree-row and editor-tab entry points.
-  [@test] ../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt
+  [@test] ../sessions-actions/testSrc/AgentSessionsEditorTabActionsTest.kt
   [@test] ../sessions/testSrc/AgentSessionArchiveServiceIntegrationTest.kt
+
+- `Rename Thread` visibility/enablement must be gated by provider rename capability consistently for both tree-row and editor-tab entry points, and it must remain hidden for pending tabs and sub-agent targets.
+  [@test] ../sessions-actions/testSrc/AgentSessionsEditorTabActionsTest.kt
+  [@test] ../sessions-toolwindow/testSrc/AgentSessionsTreePopupActionsTest.kt
 
 - Provider bridge unarchive capability is optional; unsupported providers must keep archive flow functional and must not block supported-provider unarchive restores.
   [@test] ../sessions/testSrc/AgentSessionArchiveServiceIntegrationTest.kt
   [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
+
+- Claude provider archive, unarchive, and thread rename must stay provider-backed and must not depend on IDE-local archive persistence.
+- If a matching top-level Claude chat tab is already open for the same normalized path + canonical thread identity, Claude rename/archive/unarchive must reuse that live tab through the shared open-top-level-thread dispatch path and must not open a second editor tab.
+- If no matching top-level Claude chat tab is open, Claude rename/archive/unarchive must fall back to the non-interactive headless transport `--resume <id> --permission-mode default --print --name <title> -- <ack prompt>`.
+- Observed Claude title prefix state remains the source used for active/archived visibility semantics.
+  [@test] ../chat/testSrc/AgentChatOpenTopLevelDispatchTest.kt
+  [@test] ../claude/sessions/testSrc/ClaudeThreadRenameEngineTest.kt
+  [@test] ../claude/sessions/testSrc/ClaudeSessionsStoreTest.kt
+  [@test] ../claude/sessions/testSrc/ClaudeStoreSessionBackendTest.kt
 
 - `Select in Agent Threads` must call `ensureThreadVisible(path, provider, threadId)` before activating the Agent Threads tool window.
   [@test] ../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt

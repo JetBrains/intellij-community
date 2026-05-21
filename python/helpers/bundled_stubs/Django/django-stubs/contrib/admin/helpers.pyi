@@ -5,14 +5,16 @@ from django import forms
 from django.contrib.admin.options import ModelAdmin
 from django.db.models import Model
 from django.db.models.fields import AutoField
+from django.db.models.fields.reverse_related import ForeignObjectRel
 from django.forms import BaseForm
 from django.forms.boundfield import BoundField
+from django.forms.fields import Field
 from django.forms.models import ModelForm
 from django.forms.utils import ErrorDict, ErrorList
 from django.forms.widgets import Media, Widget
 from django.utils.functional import cached_property
 from django.utils.safestring import SafeString
-from typing_extensions import TypedDict
+from typing_extensions import TypedDict, override
 
 ACTION_CHECKBOX_NAME: str
 
@@ -44,6 +46,10 @@ class AdminForm:
     def errors(self) -> ErrorDict: ...
     @property
     def non_field_errors(self) -> Callable[[], ErrorList]: ...
+    @property
+    def fields(self) -> dict[str, Field]: ...
+    @property
+    def is_bound(self) -> bool: ...
     @property
     def media(self) -> Media: ...
 
@@ -100,6 +106,7 @@ class _FieldDictT(TypedDict):
     label: str
     help_text: str
     field: Callable[[Model], Any] | str
+    is_hidden: bool
 
 class AdminReadonlyField:
     field: _FieldDictT
@@ -117,6 +124,7 @@ class AdminReadonlyField:
         model_admin: ModelAdmin | None = ...,
     ) -> None: ...
     def label_tag(self) -> SafeString: ...
+    def get_admin_url(self, remote_field: ForeignObjectRel, remote_obj: Model) -> str: ...
     def contents(self) -> SafeString: ...
 
 class InlineAdminFormSet:
@@ -153,6 +161,10 @@ class InlineAdminFormSet:
     def is_collapsible(self) -> bool: ...
     def non_form_errors(self) -> ErrorList: ...
     @property
+    def is_bound(self) -> bool: ...
+    @property
+    def total_form_count(self) -> Callable[[], int]: ...
+    @property
     def media(self) -> Media: ...
 
 class InlineAdminForm(AdminForm):
@@ -171,6 +183,7 @@ class InlineAdminForm(AdminForm):
         model_admin: ModelAdmin | None = ...,
         view_on_site_url: str | None = ...,
     ) -> None: ...
+    @override
     def __iter__(self) -> Iterator[InlineFieldset]: ...
     def needs_explicit_pk_field(self) -> bool | AutoField: ...
     def pk_field(self) -> AdminField: ...
@@ -180,6 +193,7 @@ class InlineAdminForm(AdminForm):
 class InlineFieldset(Fieldset):
     formset: Any
     def __init__(self, formset: Any, *args: Any, **kwargs: Any) -> None: ...
+    @override
     def __iter__(self) -> Iterator[Fieldline]: ...
 
 class AdminErrorList(forms.utils.ErrorList):

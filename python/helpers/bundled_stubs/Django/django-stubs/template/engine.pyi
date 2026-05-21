@@ -1,7 +1,9 @@
 from collections.abc import Callable, Sequence
-from typing import Any, TypeAlias
+from typing import Any, ClassVar, TypeAlias
 
+from django.http.request import HttpRequest
 from django.template.base import Origin
+from django.template.context import Context
 from django.template.library import Library
 from django.template.loaders.base import Loader
 from django.utils.functional import cached_property
@@ -12,7 +14,7 @@ from .base import Template
 _Loader: TypeAlias = Any
 
 class Engine:
-    default_builtins: Any
+    default_builtins: ClassVar[list[str]]
     dirs: list[str]
     app_dirs: bool
     autoescape: bool
@@ -41,7 +43,7 @@ class Engine:
     @staticmethod
     def get_default() -> Engine: ...
     @cached_property
-    def template_context_processors(self) -> Sequence[Callable]: ...
+    def template_context_processors(self) -> Sequence[Callable[[HttpRequest], dict[str, Any]]]: ...
     def get_template_builtins(self, builtins: list[str]) -> list[Library]: ...
     def get_template_libraries(self, libraries: dict[str, str]) -> dict[str, Library]: ...
     @cached_property
@@ -53,5 +55,7 @@ class Engine:
     ) -> tuple[Template, Origin]: ...
     def from_string(self, template_code: str) -> Template: ...
     def get_template(self, template_name: str) -> Template: ...
-    def render_to_string(self, template_name: str, context: dict[str, Any] | None = None) -> SafeString: ...
+    def render_to_string(
+        self, template_name: str | list[str] | tuple[str, ...], context: dict[str, Any] | Context | None = None
+    ) -> SafeString: ...
     def select_template(self, template_name_list: list[str]) -> Template: ...

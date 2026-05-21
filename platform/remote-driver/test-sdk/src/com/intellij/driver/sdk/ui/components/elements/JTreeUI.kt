@@ -70,6 +70,13 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
     } ?: throw PathNotFoundException("row not found")
   }
 
+  fun selectRows(rowFilter: (List<String>) -> List<String>) {
+    val treePaths = collectExpandedPaths()
+    val filteredPaths = rowFilter(treePaths.map { it.path.last() }).toSet()
+    val rows = treePaths.filter { it.path.last() in filteredPaths }.map { it.row }.toIntArray()
+    driver.withContext(OnDispatcher.EDT) { treeComponent.setSelectionRows(rows) }
+  }
+
   fun rightClickRow(row: Int, point: Point? = null) {
     if (point != null) {
       rightClick(translateRowPoint(row, point))
@@ -288,6 +295,7 @@ interface JTreeFixtureRef : Component {
 @BeControlClass(JTreeComponentClassBuilder::class)
 interface JTreeComponent {
   fun expandRow(row: Int)
+  fun setSelectionRows(rows: IntArray)
 }
 
 class JTreeComponentClassBuilder : BeControlBuilder {
@@ -307,5 +315,9 @@ class JTreeComponentBeControl(
 
   override fun expandRow(row: Int) {
     return frontendJTreeComponent.expandRow(row)
+  }
+
+  override fun setSelectionRows(rows: IntArray) {
+    return frontendJTreeComponent.setSelectionRows(rows)
   }
 }

@@ -1,8 +1,8 @@
-from json import JSONDecodeError as CompatJSONDecodeError
 from typing import Any
 
 from urllib3.exceptions import HTTPError as BaseHTTPError
 
+from .compat import JSONDecodeError as CompatJSONDecodeError
 from .models import Request, Response
 from .sessions import PreparedRequest
 

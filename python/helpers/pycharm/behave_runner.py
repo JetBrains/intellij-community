@@ -25,6 +25,14 @@ from _jb_utils import VersionAgnosticUtils
 
 _MAX_STEPS_SEARCH_FEATURES = 5000  # Do not look for features in folder that has more that this number of children
 _FEATURES_FOLDER = 'features'  # "features" folder name.
+try:
+    # Python 3.3+
+    from importlib.machinery import EXTENSION_SUFFIXES as _EXTENSION_SUFFIXES
+    _EXT_SUFFIXES = tuple(_EXTENSION_SUFFIXES)  # .pyd, .so, ABI-tagged variants
+except ImportError:
+    # Python 2.7 fallback: imp.get_suffixes() yields (suffix, mode, type) tuples
+    import imp
+    _EXT_SUFFIXES = tuple(s for s, _, t in imp.get_suffixes() if t == imp.C_EXTENSION)
 
 __author__ = 'Ilya.Kazakevich'
 
@@ -244,10 +252,19 @@ class _BehaveRunner(_bdd_utils.BddRunner):
         # directories. And since we then clear step registry, there's no way to
         # get those steps back without reimport. So we clear up the modules that
         # were imported during the dry run to support such scenario.
+        # C-extension modules (.pyd / .so) must be skipped: their initializers
+        # register types in process-global registries (e.g. pybind11), so
+        # reimporting them raises "type X is already registered". Step decorators
+        # only live in pure-Python modules, so skipping extensions is safe.
         new_modules = sys.modules.copy()
         for module in new_modules.keys():
-            if module not in old_modules:
-                del sys.modules[module]
+            if module in old_modules:
+                continue
+            mod = sys.modules.get(module)
+            path = getattr(mod, '__file__', None)
+            if path and path.endswith(_EXT_SUFFIXES):
+                continue
+            del sys.modules[module]
         features_to_run = self.__real_runner.features
         self.__real_runner.clean()  # To make sure nothing left after dry run
 

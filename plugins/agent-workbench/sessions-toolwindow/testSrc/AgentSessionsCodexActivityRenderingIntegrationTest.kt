@@ -8,6 +8,7 @@ import com.intellij.agent.workbench.codex.common.CodexThreadStatusKind
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.openTestProjectEntry
 import com.intellij.agent.workbench.sessions.state.InMemorySessionTreeUiState
@@ -76,7 +77,9 @@ class AgentSessionsCodexActivityRenderingIntegrationTest {
     assertThat(
       source.prefetchRefreshHints(
         paths = listOf(PROJECT_PATH),
-        knownThreadIdsByPath = mapOf(PROJECT_PATH to setOf("thread-1")),
+        refreshThreadSeedsByPath = mapOf(
+          PROJECT_PATH to setOf(AgentSessionRefreshThreadSeed(threadId = "thread-1", updatedAt = 1_000L))
+        ),
       ).getValue(PROJECT_PATH).activityByThreadId
     ).containsExactlyEntriesOf(mapOf("thread-1" to AgentThreadActivity.PROCESSING))
 

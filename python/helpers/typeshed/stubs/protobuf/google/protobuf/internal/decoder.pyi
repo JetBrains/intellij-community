@@ -8,7 +8,17 @@ from google.protobuf.message import Message
 _Decoder: TypeAlias = Callable[[str, int, int, Message, dict[FieldDescriptor, Any]], int]
 _NewDefault: TypeAlias = Callable[[Message], Message]
 
-def ReadTag(buffer, pos): ...
+def IsDefaultScalarValue(value: Any) -> bool: ...
+def ReadTag(buffer: bytes, pos: int) -> tuple[bytes, int]: ...
+def DecodeTag(tag_bytes: bytes) -> tuple[int, int]: ...
+def EnumDecoder(
+    field_number: int,
+    is_repeated: bool,
+    is_packed: bool,
+    key: FieldDescriptor,
+    new_default: _NewDefault,
+    clear_if_default: bool = False,
+) -> _Decoder: ...
 
 Int32Decoder: _Decoder
 Int64Decoder: _Decoder
@@ -24,14 +34,6 @@ FloatDecoder: _Decoder
 DoubleDecoder: _Decoder
 BoolDecoder: _Decoder
 
-def EnumDecoder(
-    field_number: int,
-    is_repeated: bool,
-    is_packed: bool,
-    key: FieldDescriptor,
-    new_default: _NewDefault,
-    clear_if_default: bool = False,
-) -> _Decoder: ...
 def StringDecoder(
     field_number: int,
     is_repeated: bool,
@@ -58,4 +60,9 @@ def MessageDecoder(
 MESSAGE_SET_ITEM_TAG: bytes
 
 def MessageSetItemDecoder(descriptor: Descriptor) -> _Decoder: ...
-def MapDecoder(field_descriptor, new_default, is_message_map) -> _Decoder: ...
+def UnknownMessageSetItemDecoder() -> _Decoder: ...
+def MapDecoder(field_descriptor: FieldDescriptor, new_default: _NewDefault, is_message_map: bool) -> _Decoder: ...
+
+DEFAULT_RECURSION_LIMIT: int
+
+def SetRecursionLimit(new_limit: int) -> None: ...

@@ -84,12 +84,18 @@ private abstract class BaseMetalavaCommand(name: String) : CliktCommand(name = n
                 commands.joinToString(" "),
                 jewelDir,
                 timeoutAmount = 60.minutes,
+                exitOnError = false,
                 outputRedirect = Redirect.PRINT,
             )
         }
 
         if (result.isSuccess) {
             println("\n✅ Done!")
+        } else {
+            exitWithError(
+                "Metalava API compatibility check failed while running '$taskPath$task'. " +
+                    "See the Gradle output above for details."
+            )
         }
     }
 

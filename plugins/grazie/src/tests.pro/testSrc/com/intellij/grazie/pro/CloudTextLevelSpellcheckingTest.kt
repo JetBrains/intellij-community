@@ -32,7 +32,7 @@ class CloudTextLevelSpellcheckingTest: BaseTestCase() {
   @NeedsCloud
   @Test
   fun `test cloud germany german variant`() {
-    enableLanguages(setOf(Lang.GERMANY_GERMAN), project, testRootDisposable)
+    enableLanguages(setOf(Lang.GERMANY_GERMAN), testRootDisposable)
     myFixture.configureByText("a.md", """
       Ich hätte gerne einen großen Kaffee mit Hafermilch, bitte. Liebe Grüße, Liebe <TYPO descr="Typo: In word 'Grüsse'">Grüsse</TYPO>.
     """.trimIndent())
@@ -43,7 +43,7 @@ class CloudTextLevelSpellcheckingTest: BaseTestCase() {
   @NeedsCloud
   @Test
   fun `test cloud swiss german variant`() {
-    enableLanguages(setOf(Lang.SWISS_GERMAN), project, testRootDisposable)
+    enableLanguages(setOf(Lang.SWISS_GERMAN), testRootDisposable)
     myFixture.configureByText("a.md", """
       Ich hätte gerne einen grossen Kaffee mit Hafermilch, bitte. Liebe <TYPO descr="Typo: In word 'Grüße'">Grüße</TYPO>, Liebe Grüsse.
     """.trimIndent())

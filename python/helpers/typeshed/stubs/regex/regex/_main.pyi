@@ -21,6 +21,7 @@ __all__ = [
     "finditer",
     "fullmatch",
     "match",
+    "prefixmatch",
     "purge",
     "search",
     "split",
@@ -133,6 +134,9 @@ def match(
     ignore_unused: bool = False,
     **kwargs: Any,
 ) -> Match[bytes] | None: ...
+
+prefixmatch = match
+
 @overload
 def fullmatch(
     pattern: str | Pattern[str],
@@ -434,6 +438,7 @@ class Pattern(Generic[AnyStr]):
         partial: bool = False,
         timeout: float | None = None,
     ) -> Match[bytes] | None: ...
+    prefixmatch = match
     @overload
     def fullmatch(
         self: Pattern[str],

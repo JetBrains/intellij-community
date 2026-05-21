@@ -1,8 +1,7 @@
 import re
 from collections.abc import Generator
 from datetime import datetime, timedelta, tzinfo
-from pathlib import Path
-from typing import Final, TypeVar
+from typing import TypeVar
 
 _DateTimeT = TypeVar("_DateTimeT", bound=datetime)
 
@@ -21,6 +20,3 @@ def build_tz_offsets(search_regex_parts: list[str]) -> Generator[tuple[str, dict
 def get_local_tz_offset() -> timedelta: ...
 
 local_tz_offset: timedelta
-
-CACHE_PATH: Final[Path]
-current_hash: int | None

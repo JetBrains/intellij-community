@@ -57,8 +57,6 @@ import kotlin.io.path.name
 
 private val logger = fileLogger()
 
-// Workspace adapter functions
-
 /** Collect all excluded folder paths from the workspace model. */
 internal fun collectExcludedPaths(project: Project): Set<Path> {
   return project.workspaceModel.currentSnapshot.entities<ContentRootEntity>()

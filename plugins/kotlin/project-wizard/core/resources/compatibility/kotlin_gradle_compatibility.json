@@ -2,6 +2,7 @@
     {
         "ideVersion": "2023.1 EAP-INF",
         "kotlinVersions": [
+            "2.3.21",
             "2.3.20",
             "2.3.10",
             "2.3.0",
@@ -48,7 +49,7 @@
         "compatibility": [
             {
                 "kotlin": "2.3.0-2.3.30",
-                "gradle": "7.6.3-9.3.0",
+                "gradle": "7.6.3-10.0.0",
                 "maxJvmTarget": 25
             },
             {

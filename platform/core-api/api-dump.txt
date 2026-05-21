@@ -536,6 +536,10 @@ com.intellij.openapi.command.undo.UndoConstants
 - sf:DONT_RECORD_UNDO:com.intellij.openapi.util.Key
 com.intellij.openapi.components.ApplicationComponent
 - com.intellij.openapi.components.BaseComponent
+com.intellij.openapi.components.ComponentManagerEx
+- com.intellij.openapi.Disposable
+- com.intellij.openapi.components.ComponentManager
+- getServiceAsync(java.lang.Class,kotlin.coroutines.Continuation):java.lang.Object
 com.intellij.openapi.components.ExportableApplicationComponent
 - com.intellij.openapi.components.ApplicationComponent
 - com.intellij.openapi.components.ExportableComponent
@@ -775,6 +779,7 @@ f:com.intellij.openapi.progress.CoroutinesKt
 - sf:coroutineToIndicator(kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
 - sf:currentThreadCoroutineScope():kotlinx.coroutines.CoroutineScope
 - sf:runBlockingCancellable(kotlin.jvm.functions.Function2):java.lang.Object
+- sf:runBlockingMaybeCancellable(kotlin.jvm.functions.Function2):java.lang.Object
 com.intellij.openapi.progress.PerformInBackgroundOption
 - sf:ALWAYS_BACKGROUND:com.intellij.openapi.progress.PerformInBackgroundOption
 - sf:DEAF:com.intellij.openapi.progress.PerformInBackgroundOption

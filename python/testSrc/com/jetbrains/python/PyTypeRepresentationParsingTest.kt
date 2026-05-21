@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python
 
 import com.intellij.lang.LanguageASTFactory
@@ -6,11 +6,16 @@ import com.intellij.testFramework.ParsingTestCase
 import com.jetbrains.python.ast.PyAstTypeParameter
 import com.jetbrains.python.codeInsight.typeRepresentation.PyTypeRepresentationDialect
 import com.jetbrains.python.codeInsight.typeRepresentation.PyTypeRepresentationParserDefinition
+import com.jetbrains.python.codeInsight.typeRepresentation.PyTypeRepresentationTokenSetContributor
 import com.jetbrains.python.codeInsight.typeRepresentation.psi.PyFunctionTypeRepresentation
 import com.jetbrains.python.codeInsight.typeRepresentation.psi.PyTypeRepresentationFile
 import com.jetbrains.python.documentation.doctest.PyDocstringTokenSetContributor
+import com.jetbrains.python.psi.PyBinaryExpression
 import com.jetbrains.python.psi.PyEllipsisLiteralExpression
 import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyParenthesizedExpression
+import com.jetbrains.python.psi.PySubscriptionExpression
+import com.jetbrains.python.psi.PyTupleExpression
 import com.jetbrains.python.psi.PythonVisitorFilter
 import com.jetbrains.python.psi.impl.PythonASTFactory
 import junit.framework.TestCase
@@ -27,6 +32,7 @@ class PyTypeRepresentationParsingTest : ParsingTestCase("typeRepresentation/pars
                            PythonDialectsTokenSetContributor::class.java)
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, PythonTokenSetContributor())
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, PyDocstringTokenSetContributor())
+    registerExtension(PythonDialectsTokenSetContributor.EP_NAME, PyTypeRepresentationTokenSetContributor())
     addExplicitExtension(LanguageASTFactory.INSTANCE, PythonLanguage.getInstance(), PythonASTFactory())
   }
 
@@ -355,11 +361,49 @@ class PyTypeRepresentationParsingTest : ParsingTestCase("typeRepresentation/pars
     assertNotNull(typeParamList)
     val typeParams = typeParamList!!.typeParameters
     assertSize(1, typeParams)
-    assertEquals("T", typeParams[0].name)
-    assertNotNull(typeParams[0].boundExpression)
-    assertEquals("str", typeParams[0].boundExpression!!.text)
-    assertNotNull(typeParams[0].defaultExpression)
-    assertEquals("int", typeParams[0].defaultExpression!!.text)
+    val t = typeParams.single()
+    assertEquals("T", t.name)
+    assertNotNull(t.boundExpression)
+    assertEquals("str", t.boundExpression!!.text)
+    assertNotNull(t.defaultExpression)
+    assertEquals("int", t.defaultExpression!!.text)
+  }
+
+  fun `test callable in subscription`() {
+    doCodeTest("x[(int) -> str]")
+    val expr = assertInstanceOfJunit5<PySubscriptionExpression>(parsedType)
+    val callable = assertInstanceOfJunit5<PyFunctionTypeRepresentation>(expr.indexExpression)
+    assertSize(1, callable.parameterList.parameters)
+    assertEquals("int", callable.parameterList.parameters.single().text)
+    assertEquals("str", callable.returnType!!.text)
+  }
+
+  fun `test callable in subscription as tuple`() {
+    doCodeTest("x[(int) -> int, (str) -> str]")
+    val expr = assertInstanceOfJunit5<PySubscriptionExpression>(parsedType)
+    val tuple = assertInstanceOfJunit5<PyTupleExpression>(expr.indexExpression)
+    assertSize(2, tuple.elements)
+    val first = assertInstanceOfJunit5<PyFunctionTypeRepresentation>(tuple.elements[0])
+    assertSize(1, first.parameterList.parameters)
+    assertEquals("int", first.parameterList.parameters.single().text)
+    assertEquals("int", first.returnType!!.text)
+    val second = assertInstanceOfJunit5<PyFunctionTypeRepresentation>(tuple.elements[1])
+    assertSize(1, second.parameterList.parameters)
+    assertEquals("str", second.parameterList.parameters.single().text)
+    assertEquals("str", second.returnType!!.text)
+  }
+
+  fun `test callable in union`() {
+    doCodeTest("((int) -> int) | (str) -> str")
+    val expr = assertInstanceOfJunit5<PyBinaryExpression>(parsedType)
+    val left = assertInstanceOfJunit5<PyFunctionTypeRepresentation>((expr.leftExpression as PyParenthesizedExpression).containedExpression)
+    assertSize(1, left.parameterList.parameters)
+    assertEquals("int", left.parameterList.parameters.single().text)
+    assertEquals("int", left.returnType!!.text)
+    val right = assertInstanceOfJunit5<PyFunctionTypeRepresentation>(expr.rightExpression)
+    assertSize(1, right.parameterList.parameters)
+    assertEquals("str", right.parameterList.parameters.single().text)
+    assertEquals("str", right.returnType!!.text)
   }
 
   override fun getTestDataPath(): String {

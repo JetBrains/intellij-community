@@ -5,7 +5,9 @@ import fleet.util.UID
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 @Serializable
 sealed class TransportMessage {
 
@@ -38,4 +40,5 @@ sealed class TransportMessage {
 
 private val rpcMessageSerializer = RpcMessage.serializer()
 
+@ApiStatus.Internal
 fun TransportMessage.Envelope.parseMessage(): RpcMessage = Json.decodeFromString(rpcMessageSerializer, payload)

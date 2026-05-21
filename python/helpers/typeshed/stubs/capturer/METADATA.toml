@@ -1,2 +1,2 @@
 version = "3.0.*"
-upstream_repository = "https://github.com/xolox/python-capturer"
+upstream-repository = "https://github.com/xolox/python-capturer"

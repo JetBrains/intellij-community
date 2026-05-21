@@ -16,11 +16,11 @@ CBF_SKIP_CONNECT_CONFIRMS: int
 CBF_SKIP_DISCONNECTS: int
 CBF_SKIP_REGISTRATIONS: int
 
-def CreateConversation(*args): ...  # incomplete
-def CreateServer(*args): ...  # incomplete
-def CreateServerSystemTopic(*args): ...  # incomplete
-def CreateStringItem(*args): ...  # incomplete
-def CreateTopic(*args): ...  # incomplete
+def CreateConversation(Server, /): ...
+def CreateServer(): ...
+def CreateServerSystemTopic(): ...
+def CreateStringItem(name, /): ...
+def CreateTopic(name, /): ...
 
 MF_CALLBACKS: int
 MF_CONV: int

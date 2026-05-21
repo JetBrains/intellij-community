@@ -13,6 +13,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
 import java.util.stream.Stream
+import kotlin.io.path.invariantSeparatorsPathString
 
 class ClaudeSessionsStoreTest {
   @TempDir
@@ -155,6 +156,146 @@ class ClaudeSessionsStoreTest {
     assertThat(thread.updatedAt).isEqualTo(Instant.parse("2026-02-08T01:00:02.000Z").toEpochMilli())
   }
 
+  @Test
+  fun prefersLatestCustomTitleOverFirstPrompt() {
+    val projectDir = tempDir.resolve(".claude").resolve("projects").resolve("-work-project-custom-title")
+    Files.createDirectories(projectDir)
+    val transcript = projectDir.resolve("custom-title-1111-2222-3333-444444444444.jsonl")
+    Files.writeString(
+      transcript,
+      """
+      {"type":"user","sessionId":"custom-title-1111-2222-3333-444444444444","cwd":"/work/project-custom-title","isSidechain":false,"timestamp":"2026-02-08T01:00:00.000Z","message":{"role":"user","content":"Investigate flaky test in module"}}
+      {"type":"assistant","sessionId":"custom-title-1111-2222-3333-444444444444","cwd":"/work/project-custom-title","isSidechain":false,"timestamp":"2026-02-08T01:00:02.000Z","message":{"role":"assistant","content":[{"type":"text","text":"working"}]}}
+      {"type":"custom-title","sessionId":"custom-title-1111-2222-3333-444444444444","cwd":"/work/project-custom-title","isSidechain":false,"timestamp":"2026-02-08T01:00:03.000Z","customTitle":"First custom title"}
+      {"type":"custom-title","sessionId":"custom-title-1111-2222-3333-444444444444","cwd":"/work/project-custom-title","isSidechain":false,"timestamp":"2026-02-08T01:00:04.000Z","customTitle":"Final custom title"}
+      """.trimIndent()
+    )
+
+    val store = ClaudeSessionsStore(claudeHomeProvider = { tempDir.resolve(".claude") })
+
+    val thread = store.parseJsonlFile(transcript)
+
+    assertThat(thread).isNotNull
+    assertThat(thread!!.title).isEqualTo("Final custom title")
+    assertThat(thread.updatedAt).isEqualTo(Instant.parse("2026-02-08T01:00:04.000Z").toEpochMilli())
+  }
+
+  @Test
+  fun prefersAgentNameOverCustomTitleAndFirstPrompt() {
+    val projectDir = tempDir.resolve(".claude").resolve("projects").resolve("-work-project-agent-name")
+    Files.createDirectories(projectDir)
+    val transcript = projectDir.resolve("agent-name-1111-2222-3333-444444444444.jsonl")
+    Files.writeString(
+      transcript,
+      """
+      {"type":"user","sessionId":"agent-name-1111-2222-3333-444444444444","cwd":"/work/project-agent-name","isSidechain":false,"timestamp":"2026-02-08T01:00:00.000Z","message":{"role":"user","content":"Original prompt"}}
+      {"type":"custom-title","sessionId":"agent-name-1111-2222-3333-444444444444","cwd":"/work/project-agent-name","isSidechain":false,"timestamp":"2026-02-08T01:00:01.000Z","customTitle":"Custom title"}
+      {"type":"system","sessionId":"agent-name-1111-2222-3333-444444444444","cwd":"/work/project-agent-name","isSidechain":false,"timestamp":"2026-02-08T01:00:02.000Z","agentName":"Agent name title"}
+      """.trimIndent()
+    )
+
+    val store = ClaudeSessionsStore(claudeHomeProvider = { tempDir.resolve(".claude") })
+
+    val thread = store.parseJsonlFile(transcript)
+
+    assertThat(thread).isNotNull
+    assertThat(thread!!.title).isEqualTo("Agent name title")
+    assertThat(thread.hasCustomTitle).isTrue()
+  }
+
+  @Test
+  fun keepsArchivedPrefixFromAgentName() {
+    val projectDir = tempDir.resolve(".claude").resolve("projects").resolve("-work-project-agent-name-archived")
+    Files.createDirectories(projectDir)
+    val transcript = projectDir.resolve("agent-name-archived-1111-2222-3333-444444444444.jsonl")
+    Files.writeString(
+      transcript,
+      """
+      {"type":"user","sessionId":"agent-name-archived-1111-2222-3333-444444444444","cwd":"/work/project-agent-name-archived","isSidechain":false,"timestamp":"2026-02-08T01:00:00.000Z","message":{"role":"user","content":"Archive this thread"}}
+      {"type":"system","sessionId":"agent-name-archived-1111-2222-3333-444444444444","cwd":"/work/project-agent-name-archived","isSidechain":false,"timestamp":"2026-02-08T01:00:01.000Z","agentName":"[archived] Visible title"}
+      """.trimIndent()
+    )
+
+    val store = ClaudeSessionsStore(claudeHomeProvider = { tempDir.resolve(".claude") })
+
+    val thread = store.parseJsonlFile(transcript)
+
+    assertThat(thread).isNotNull
+    assertThat(thread!!.title).isEqualTo("[archived] Visible title")
+    assertThat(thread.hasCustomTitle).isTrue()
+  }
+
+  @Test
+  fun keepsArchivedPrefixFromTranscriptCustomTitle() {
+    val projectDir = tempDir.resolve(".claude").resolve("projects").resolve("-work-project-custom-archived")
+    Files.createDirectories(projectDir)
+    val transcript = projectDir.resolve("custom-archived-1111-2222-3333-444444444444.jsonl")
+    Files.writeString(
+      transcript,
+      """
+      {"type":"user","sessionId":"custom-archived-1111-2222-3333-444444444444","cwd":"/work/project-custom-archived","isSidechain":false,"timestamp":"2026-02-08T01:00:00.000Z","message":{"role":"user","content":"Archive this thread"}}
+      {"type":"custom-title","sessionId":"custom-archived-1111-2222-3333-444444444444","cwd":"/work/project-custom-archived","isSidechain":false,"timestamp":"2026-02-08T01:00:01.000Z","customTitle":"[archived] Visible title"}
+      """.trimIndent()
+    )
+
+    val store = ClaudeSessionsStore(claudeHomeProvider = { tempDir.resolve(".claude") })
+
+    val thread = store.parseJsonlFile(transcript)
+
+    assertThat(thread).isNotNull
+    assertThat(thread!!.title).isEqualTo("[archived] Visible title")
+  }
+
+  @Test
+  fun picksUpCustomTitleViaTailScanForLargeTranscript() {
+    val projectDir = tempDir.resolve(".claude").resolve("projects").resolve("-work-project-tail-custom-title")
+    Files.createDirectories(projectDir)
+    val transcript = projectDir.resolve("tail-custom-1111-2222-3333-444444444444.jsonl")
+    val sessionId = "tail-custom-1111-2222-3333-444444444444"
+    val cwd = "/work/project-tail-custom-title"
+    val lines = buildList {
+      add("""{"type":"user","sessionId":"$sessionId","cwd":"$cwd","isSidechain":false,"timestamp":"2026-02-08T01:00:00.000Z","message":{"role":"user","content":"Original prompt"}}""")
+      add("""{"type":"assistant","sessionId":"$sessionId","cwd":"$cwd","isSidechain":false,"timestamp":"2026-02-08T01:00:01.000Z","message":{"role":"assistant","content":[{"type":"text","text":"ok"}]}}""")
+      repeat(200) { i ->
+        add("""{"type":"assistant","sessionId":"$sessionId","cwd":"$cwd","isSidechain":false,"timestamp":"2026-02-08T01:00:${"%02d".format((i % 55) + 2)}.000Z","message":{"role":"assistant","content":[{"type":"text","text":"filler $i"}]}}""")
+      }
+      add("""{"type":"custom-title","sessionId":"$sessionId","cwd":"$cwd","isSidechain":false,"timestamp":"2026-02-08T02:00:00.000Z","customTitle":"Tail custom title"}""")
+    }
+    Files.write(transcript, lines)
+
+    val store = ClaudeSessionsStore(claudeHomeProvider = { tempDir.resolve(".claude") })
+
+    val thread = store.parseJsonlFile(transcript)
+
+    assertThat(thread).isNotNull
+    assertThat(thread!!.title).isEqualTo("Tail custom title")
+  }
+
+  @Test
+  fun fallsBackToFirstPromptWhenCustomTitleOutsideTailWindow() {
+    val projectDir = tempDir.resolve(".claude").resolve("projects").resolve("-work-project-tail-miss")
+    Files.createDirectories(projectDir)
+    val transcript = projectDir.resolve("tail-miss-1111-2222-3333-444444444444.jsonl")
+    val sessionId = "tail-miss-1111-2222-3333-444444444444"
+    val cwd = "/work/project-tail-miss"
+    val filler = "y".repeat(500)
+    val lines = buildList {
+      add("""{"type":"user","sessionId":"$sessionId","cwd":"$cwd","isSidechain":false,"timestamp":"2026-02-08T01:00:00.000Z","message":{"role":"user","content":"Original prompt"}}""")
+      add("""{"type":"custom-title","sessionId":"$sessionId","cwd":"$cwd","isSidechain":false,"timestamp":"2026-02-08T01:00:01.000Z","customTitle":"Buried custom title"}""")
+      repeat(200) { i ->
+        add("""{"type":"assistant","sessionId":"$sessionId","cwd":"$cwd","isSidechain":false,"timestamp":"2026-02-08T01:00:${"%02d".format((i % 55) + 2)}.000Z","message":{"role":"assistant","content":[{"type":"text","text":"$filler $i"}]}}""")
+      }
+    }
+    Files.write(transcript, lines)
+
+    val store = ClaudeSessionsStore(claudeHomeProvider = { tempDir.resolve(".claude") })
+
+    val thread = store.parseJsonlFile(transcript)
+
+    assertThat(thread).isNotNull
+    assertThat(thread!!.title).isEqualTo("Original prompt")
+  }
+
   @ParameterizedTest(name = "{0}")
   @MethodSource("activityStateMachineCases")
   fun activityStateMachine(name: String, events: List<String>, expected: ClaudeSessionActivity) {
@@ -211,6 +352,25 @@ class ClaudeSessionsStoreTest {
   }
 
   @Test
+  fun findMatchingDirectoriesAlsoChecksCanonicalProjectPath() {
+    val realProjectRoot = tempDir.resolve("real-projects")
+    val linkProjectRoot = tempDir.resolve("linked-projects")
+    Files.createDirectories(realProjectRoot)
+    Files.createSymbolicLink(linkProjectRoot, realProjectRoot)
+    val projectPath = linkProjectRoot.resolve("worktree")
+    Files.createDirectories(projectPath)
+    val canonicalProjectPath = projectPath.toRealPath().invariantSeparatorsPathString
+    val projectDir = tempDir.resolve(".claude").resolve("projects").resolve(canonicalProjectPath.toClaudeProjectDirectoryName())
+    Files.createDirectories(projectDir)
+
+    val store = ClaudeSessionsStore(claudeHomeProvider = { tempDir.resolve(".claude") })
+
+    val directories = store.findMatchingDirectories(projectPath.toString())
+
+    assertThat(directories).containsExactly(projectDir)
+  }
+
+  @Test
   fun parseJsonlFileTailScansForActivity() {
     val projectDir = tempDir.resolve(".claude").resolve("projects").resolve("-any-path")
     Files.createDirectories(projectDir)
@@ -262,6 +422,28 @@ class ClaudeSessionsStoreTest {
   }
 
   @Test
+  fun parseJsonlFilePreservesLongPromptTitle() {
+    val projectDir = tempDir.resolve(".claude").resolve("projects").resolve("-work-project-long-title")
+    Files.createDirectories(projectDir)
+    val transcript = projectDir.resolve("long-title-session.jsonl")
+    val longTitle = "Investigate Claude long-title preservation " + "x".repeat(160)
+    Files.writeString(
+      transcript,
+      """
+      {"type":"user","sessionId":"long-title-session","cwd":"/work/project-long-title","isSidechain":false,"timestamp":"2026-02-08T01:00:00.000Z","message":{"role":"user","content":"$longTitle"}}
+      {"type":"assistant","sessionId":"long-title-session","cwd":"/work/project-long-title","isSidechain":false,"timestamp":"2026-02-08T01:00:01.000Z","message":{"role":"assistant","content":[{"type":"text","text":"done"}]}}
+      """.trimIndent()
+    )
+
+    val store = ClaudeSessionsStore(claudeHomeProvider = { tempDir.resolve(".claude") })
+
+    val thread = store.parseJsonlFile(transcript)
+
+    assertThat(thread).isNotNull
+    assertThat(thread!!.title).isEqualTo(longTitle)
+  }
+
+  @Test
   fun parseJsonlFileReturnsNullForSidechainSession() {
     val projectDir = tempDir.resolve(".claude").resolve("projects").resolve("-any-path")
     Files.createDirectories(projectDir)
@@ -281,6 +463,84 @@ class ClaudeSessionsStoreTest {
     assertThat(thread).isNull()
   }
 
+  @Test
+  fun explicitPartialAssistantChunkStaysProcessingUntilTerminalAssistantArrives() {
+    val projectDir = tempDir.resolve(".claude").resolve("projects").resolve("-work-project-partial")
+    Files.createDirectories(projectDir)
+    val transcript = projectDir.resolve("partial-processing.jsonl")
+    Files.write(
+      transcript,
+      listOf(
+        user("2026-02-08T01:00:00.000Z"),
+        assistantPartial("2026-02-08T01:00:01.000Z", "I am thinking"),
+      ),
+    )
+
+    val store = ClaudeSessionsStore(claudeHomeProvider = { tempDir.resolve(".claude") })
+
+    val thread = store.parseJsonlFile(transcript)
+
+    assertThat(thread).isNotNull
+    assertThat(thread!!.activity).isEqualTo(ClaudeSessionActivity.PROCESSING)
+
+    Files.write(
+      transcript,
+      listOf(
+        user("2026-02-08T01:00:00.000Z"),
+        assistantPartial("2026-02-08T01:00:01.000Z", "I am thinking"),
+        assistant("2026-02-08T01:00:02.000Z", "Done"),
+      ),
+    )
+
+    val completedThread = store.parseJsonlFile(transcript)
+
+    assertThat(completedThread).isNotNull
+    assertThat(completedThread!!.activity).isEqualTo(ClaudeSessionActivity.READY)
+  }
+
+  @Test
+  fun backgroundTaskNotificationKeepsThreadProcessingUntilFinalAssistantReply() {
+    val projectDir = tempDir.resolve(".claude").resolve("projects").resolve("-work-project-background")
+    Files.createDirectories(projectDir)
+    val transcript = projectDir.resolve("background-processing.jsonl")
+    Files.write(
+      transcript,
+      listOf(
+        user("2026-02-08T01:00:00.000Z"),
+        assistantToolUse("2026-02-08T01:00:01.000Z"),
+        claudeBackgroundToolResultLine("2026-02-08T01:00:02.000Z", S, C, "task-123"),
+        claudeQueueOperationLine("2026-02-08T01:00:03.000Z", S, C, "task-123"),
+        claudeTaskNotificationLine("2026-02-08T01:00:04.000Z", S, C, "task-123"),
+      ),
+    )
+
+    val store = ClaudeSessionsStore(claudeHomeProvider = { tempDir.resolve(".claude") })
+
+    val thread = store.parseJsonlFile(transcript)
+
+    assertThat(thread).isNotNull
+    assertThat(thread!!.activity).isEqualTo(ClaudeSessionActivity.PROCESSING)
+
+    Files.write(
+      transcript,
+      listOf(
+        user("2026-02-08T01:00:00.000Z"),
+        assistantToolUse("2026-02-08T01:00:01.000Z"),
+        claudeBackgroundToolResultLine("2026-02-08T01:00:02.000Z", S, C, "task-123"),
+        claudeQueueOperationLine("2026-02-08T01:00:03.000Z", S, C, "task-123"),
+        claudeTaskNotificationLine("2026-02-08T01:00:04.000Z", S, C, "task-123"),
+        assistant("2026-02-08T01:00:05.000Z", "All done"),
+      ),
+    )
+
+    val completedThread = store.parseJsonlFile(transcript)
+
+    assertThat(completedThread).isNotNull
+    assertThat(completedThread!!.activity).isEqualTo(ClaudeSessionActivity.READY)
+  }
+
+  private fun String.toClaudeProjectDirectoryName(): String = map { char -> if (char.isLetterOrDigit()) char else '-' }.joinToString("")
+
   companion object {
     private const val S = "test-session"
     private const val C = "/work/project"
@@ -291,6 +551,9 @@ class ClaudeSessionsStoreTest {
     private fun assistant(ts: String, content: String = "Hi"): String =
       claudeAssistantLine(ts, S, C, content)
 
+    private fun assistantPartial(ts: String, content: String = "thinking"): String =
+      claudeAssistantPartialLine(ts, S, C, content)
+
     private fun assistantToolUse(ts: String, content: String = "editing"): String =
       claudeAssistantToolUseLine(ts, S, C, content)
 
@@ -299,9 +562,6 @@ class ClaudeSessionsStoreTest {
 
     private fun systemEvent(ts: String): String =
       """{"type":"system","sessionId":"$S","cwd":"$C","isSidechain":false,"timestamp":"$ts"}"""
-
-    private fun queueOp(ts: String): String =
-      """{"type":"queue-operation","sessionId":"$S","cwd":"$C","isSidechain":false,"timestamp":"$ts"}"""
 
     private fun toolResult(ts: String): String =
       """{"type":"user","sessionId":"$S","cwd":"$C","isSidechain":false,"timestamp":"$ts","message":{"role":"user","content":[{"tool_use_id":"tu_1","type":"tool_result","content":"ok"}]}}"""
@@ -318,7 +578,11 @@ class ClaudeSessionsStoreTest {
       Arguments.of("full tool cycle + trailing system → READY", listOf(user("2026-02-08T01:00:00.000Z"), assistantToolUse("2026-02-08T01:00:01.000Z"), progress("2026-02-08T01:00:02.000Z"), toolResult("2026-02-08T01:00:03.000Z"), assistant("2026-02-08T01:00:04.000Z"), progress("2026-02-08T01:00:05.000Z"), systemEvent("2026-02-08T01:00:06.000Z")), ClaudeSessionActivity.READY),
       Arguments.of("multi-turn re-ask → PROCESSING", listOf(user("2026-02-08T01:00:00.000Z"), assistantToolUse("2026-02-08T01:00:01.000Z"), toolResult("2026-02-08T01:00:02.000Z"), assistant("2026-02-08T01:00:03.000Z"), user("2026-02-08T01:00:04.000Z", "follow up"), progress("2026-02-08T01:00:05.000Z")), ClaudeSessionActivity.PROCESSING),
       Arguments.of("trailing system → READY", listOf(user("2026-02-08T01:00:00.000Z"), systemEvent("2026-02-08T01:00:01.000Z")), ClaudeSessionActivity.READY),
-      Arguments.of("trailing queue-operation → READY", listOf(user("2026-02-08T01:00:00.000Z"), queueOp("2026-02-08T01:00:01.000Z")), ClaudeSessionActivity.READY),
+      Arguments.of(
+        "trailing queue-operation while awaiting assistant → PROCESSING",
+        listOf(user("2026-02-08T01:00:00.000Z"), claudeQueueOperationLine("2026-02-08T01:00:01.000Z", S, C, "task-123")),
+        ClaudeSessionActivity.PROCESSING,
+      ),
     )
   }
 }

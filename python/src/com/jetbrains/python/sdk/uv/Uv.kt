@@ -38,9 +38,7 @@ interface UvLowLevel<P : PathHolder> {
 
   suspend fun listPackages(): PyResult<List<PythonPackage>>
   suspend fun listOutdatedPackages(): PyResult<List<PythonOutdatedPackage>>
-  suspend fun listTopLevelPackages(packageName: PyWorkspaceMember): PyResult<List<PythonPackage>>
   suspend fun listPackageRequirements(name: PythonPackage): PyResult<List<PyPackageName>>
-  suspend fun listPackageRequirementsTree(name: PythonPackage): PyResult<String>
   suspend fun listProjectStructureTree(): PyResult<String>
   suspend fun listAllPackagesTree(): PyResult<String>
 

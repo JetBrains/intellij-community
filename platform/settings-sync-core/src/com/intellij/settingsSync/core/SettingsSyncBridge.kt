@@ -14,11 +14,13 @@ import com.intellij.settingsSync.core.statistics.SettingsSyncEventsStatistics
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -47,6 +49,16 @@ class SettingsSyncBridge(
 
   private val remoteCommunicator: SettingsSyncRemoteCommunicator
     get() = RemoteCommunicatorHolder.getRemoteCommunicator() ?: DummyCommunicator
+
+  /**
+   * Executes a [SettingsSyncRemoteCommunicator] call on [Dispatchers.IO].
+   *
+   * Communicator methods are blocking (network I/O, `CompletableFuture.get()`).
+   * Running them on [Dispatchers.Default] risks starving its small thread pool on low-CPU machines,
+   * deadlocking startup. [Dispatchers.IO] has a much larger thread cap and is designed for blocking calls.
+   */
+  private suspend fun <T> withRemoteCommunicator(block: SettingsSyncRemoteCommunicator.() -> T): T =
+    withContext(Dispatchers.IO) { remoteCommunicator.block() }
 
   @Volatile
   private var queueJob: Job? = null
@@ -179,14 +191,14 @@ class SettingsSyncBridge(
       // We need to create this remote file before the first sync, otherwise the settings value (even if persisted) will be overwritten by
       // the sync-server-side value when `com.intellij.settingsSync.AbstractServerCommunicator#currentSnapshotFilePath` applies
       // the remote config received in the first sync.
-      val fileExists = remoteCommunicator.isFileExists(CROSS_IDE_SYNC_MARKER_FILE)
+      val fileExists = withRemoteCommunicator { isFileExists(CROSS_IDE_SYNC_MARKER_FILE) }
       if (SettingsSyncLocalSettings.getInstance().isCrossIdeSyncEnabled) {
         if (!fileExists)
-          remoteCommunicator.createFile(CROSS_IDE_SYNC_MARKER_FILE, "")
+          withRemoteCommunicator { createFile(CROSS_IDE_SYNC_MARKER_FILE, "") }
       }
       else {
         if (fileExists)
-          remoteCommunicator.deleteFile(CROSS_IDE_SYNC_MARKER_FILE)
+          withRemoteCommunicator { deleteFile(CROSS_IDE_SYNC_MARKER_FILE) }
       }
       // we call updateOnSuccess, because the suspend methods below will be suspended on modality (if settings dialog is opened)
       // but we need to show the status in the configurable. By that time, we already know that communication was successful
@@ -229,7 +241,7 @@ class SettingsSyncBridge(
       /** LOG.info **/ LOG.warn("Migration from old storage applied.")
       var masterPosition = settingsLog.advanceMaster() // merge (preserve) 'ide' changes made by logging existing settings & by migration
 
-      when (val updateResult = remoteCommunicator.receiveUpdates()) {
+      when (val updateResult = withRemoteCommunicator { receiveUpdates() }) {
         is UpdateResult.Success -> {
           /** LOG.info **/ LOG.warn("There is a snapshot on the server => prefer server version over local migration data")
           val snapshot = updateResult.settingsSnapshot
@@ -267,7 +279,7 @@ class SettingsSyncBridge(
     }
   }
 
-  private fun forcePushToCloud(masterPosition: SettingsLog.Position) {
+  private suspend fun forcePushToCloud(masterPosition: SettingsLog.Position) {
     pushAndHandleResult(true, masterPosition, onRejectedPush = {
       LOG.error("Reject shouldn't happen when force push is used")
       SettingsSyncStatusTracker.getInstance().updateOnError(SettingsSyncBundle.message("notification.title.push.error"))
@@ -293,10 +305,10 @@ class SettingsSyncBridge(
       is SyncSettingsEvent.CrossIdeSyncStateChanged -> {
         /** LOG.info **/ LOG.warn("Cross-ide sync state changed to: " + event.isCrossIdeSyncEnabled)
         if (event.isCrossIdeSyncEnabled) {
-          remoteCommunicator.createFile(CROSS_IDE_SYNC_MARKER_FILE, "")
+          withRemoteCommunicator { createFile(CROSS_IDE_SYNC_MARKER_FILE, "") }
         }
         else {
-          remoteCommunicator.deleteFile(CROSS_IDE_SYNC_MARKER_FILE)
+          withRemoteCommunicator { deleteFile(CROSS_IDE_SYNC_MARKER_FILE) }
         }
         forcePushToCloud(settingsLog.getMasterPosition())
       }
@@ -395,8 +407,8 @@ class SettingsSyncBridge(
     afterDeleting(removeRemoteData(userData))
   }
 
-  private fun checkServer() {
-    when (val result = remoteCommunicator.checkServerState()) {
+  private suspend fun checkServer() {
+    when (val result = withRemoteCommunicator { checkServerState() }) {
       is ServerState.UpdateNeeded -> {
         /** LOG.info **/ LOG.warn("Updating from server")
         updateChecker.scheduleUpdateFromServer()
@@ -515,7 +527,7 @@ class SettingsSyncBridge(
     }
   }
 
-  private fun pushAndHandleResult(force: Boolean, positionToSetCloudBranch: SettingsLog.Position, onRejectedPush: () -> Unit) {
+  private suspend fun pushAndHandleResult(force: Boolean, positionToSetCloudBranch: SettingsLog.Position, onRejectedPush: () -> Unit) {
     val pushResult: SettingsSyncPushResult = pushToCloud(settingsLog.collectCurrentSnapshot(), force)
     /** LOG.info **/ LOG.warn("Result of pushing settings to the cloud: $pushResult")
     when (pushResult) {
@@ -540,21 +552,21 @@ class SettingsSyncBridge(
     FORCE_PUSH
   }
 
-  private fun pushToCloud(settingsSnapshot: SettingsSnapshot, force: Boolean): SettingsSyncPushResult {
+  private suspend fun pushToCloud(settingsSnapshot: SettingsSnapshot, force: Boolean): SettingsSyncPushResult {
     val versionId = SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId
     if (force) {
-      return remoteCommunicator.push(settingsSnapshot, force = true, versionId)
+      return withRemoteCommunicator { push(settingsSnapshot, force = true, versionId) }
     }
     else {
-      when (remoteCommunicator.checkServerState()) {
+      return when (withRemoteCommunicator { checkServerState() }) {
         is ServerState.UpdateNeeded -> {
-          return SettingsSyncPushResult.Rejected
+          SettingsSyncPushResult.Rejected
         }
         is ServerState.FileNotExists -> {
-          return remoteCommunicator.push(settingsSnapshot, force = true, versionId)
+          withRemoteCommunicator { push(settingsSnapshot, force = true, versionId) }
         }
         else -> {
-          return remoteCommunicator.push(settingsSnapshot, force = false, versionId)
+          withRemoteCommunicator { push(settingsSnapshot, force = false, versionId) }
         }
       }
     }

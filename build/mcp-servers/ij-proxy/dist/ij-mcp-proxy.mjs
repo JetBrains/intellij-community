@@ -5638,8 +5638,8 @@ var require_utils2 = __commonJS((exports) => {
       output = `(?:^(?!${output}).*$)`;
     return output;
   };
-  exports.basename = (path7, { windows } = {}) => {
-    let segs = path7.split(windows ? /[\\/]/ : "/"), last = segs[segs.length - 1];
+  exports.basename = (path6, { windows } = {}) => {
+    let segs = path6.split(windows ? /[\\/]/ : "/"), last = segs[segs.length - 1];
     if (last === "")
       return segs[segs.length - 2];
     return last;
@@ -6531,8 +6531,9 @@ var require_picomatch2 = __commonJS((exports, module) => {
 });
 
 // ij-mcp-proxy.ts
-import path9 from "path";
-import { cwd, env } from "process";
+import path10 from "path";
+import { cwd as cwd2, env as env2 } from "process";
+import { fileURLToPath as fileURLToPath2 } from "url";
 
 // node_modules/zod/v4/core/index.js
 var exports_core2 = {};
@@ -19078,6 +19079,8 @@ class Protocol {
       clearTimeout(info.timeoutId), this._timeoutInfo.delete(messageId);
   }
   async connect(transport) {
+    if (this._transport)
+      throw Error("Already connected to a transport. Call close() before connecting to a new transport, or use a separate Protocol instance per connection.");
     this._transport = transport;
     let _onclose = this.transport?.onclose;
     this._transport.onclose = () => {
@@ -19102,6 +19105,9 @@ class Protocol {
   _onclose() {
     let responseHandlers = this._responseHandlers;
     this._responseHandlers = /* @__PURE__ */ new Map, this._progressHandlers.clear(), this._taskProgressTokens.clear(), this._pendingDebouncedNotifications.clear();
+    for (let controller of this._requestHandlerAbortControllers.values())
+      controller.abort();
+    this._requestHandlerAbortControllers.clear();
     let error48 = McpError.fromError(ErrorCode.ConnectionClosed, "Connection closed");
     this._transport = void 0, this.onclose?.();
     for (let handler of responseHandlers.values())
@@ -19144,12 +19150,16 @@ class Protocol {
       sessionId: capturedTransport?.sessionId,
       _meta: request.params?._meta,
       sendNotification: async (notification) => {
+        if (abortController.signal.aborted)
+          return;
         let notificationOptions = { relatedRequestId: request.id };
         if (relatedTaskId)
           notificationOptions.relatedTask = { taskId: relatedTaskId };
         await this.notification(notification, notificationOptions);
       },
       sendRequest: async (r, resultSchema, options) => {
+        if (abortController.signal.aborted)
+          throw new McpError(ErrorCode.ConnectionClosed, "Request was cancelled");
         let requestOptions = { ...options, relatedRequestId: request.id };
         if (relatedTaskId && !requestOptions.relatedTask)
           requestOptions.relatedTask = { taskId: relatedTaskId };
@@ -19670,65 +19680,68 @@ class AjvJsonSchemaValidator {
   }
 }
 
-// node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/client.js
-class ExperimentalClientTasks {
-  constructor(_client) {
-    this._client = _client;
-  }
-  async* callToolStream(params, resultSchema = CallToolResultSchema, options) {
-    let clientInternal = this._client, optionsWithTask = {
-      ...options,
-      task: options?.task ?? (clientInternal.isToolTask(params.name) ? {} : void 0)
-    }, stream = clientInternal.requestStream({ method: "tools/call", params }, resultSchema, optionsWithTask), validator = clientInternal.getToolOutputValidator(params.name);
-    for await (let message of stream) {
-      if (message.type === "result" && validator) {
-        let result = message.result;
-        if (!result.structuredContent && !result.isError) {
-          yield {
-            type: "error",
-            error: new McpError(ErrorCode.InvalidRequest, `Tool ${params.name} has an output schema but did not return structured content`)
-          };
-          return;
-        }
-        if (result.structuredContent)
-          try {
-            let validationResult = validator(result.structuredContent);
-            if (!validationResult.valid) {
-              yield {
-                type: "error",
-                error: new McpError(ErrorCode.InvalidParams, `Structured content does not match the tool's output schema: ${validationResult.errorMessage}`)
-              };
-              return;
-            }
-          } catch (error48) {
-            if (error48 instanceof McpError) {
-              yield { type: "error", error: error48 };
-              return;
-            }
-            yield {
-              type: "error",
-              error: new McpError(ErrorCode.InvalidParams, `Failed to validate structured content: ${error48 instanceof Error ? error48.message : String(error48)}`)
-            };
-            return;
-          }
-      }
-      yield message;
-    }
-  }
-  async getTask(taskId, options) {
-    return this._client.getTask({ taskId }, options);
-  }
-  async getTaskResult(taskId, resultSchema, options) {
-    return this._client.getTaskResult({ taskId }, resultSchema, options);
-  }
-  async listTasks(cursor, options) {
-    return this._client.listTasks(cursor ? { cursor } : void 0, options);
-  }
-  async cancelTask(taskId, options) {
-    return this._client.cancelTask({ taskId }, options);
+// node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/server.js
+class ExperimentalServerTasks {
+  constructor(_server) {
+    this._server = _server;
   }
   requestStream(request, resultSchema, options) {
-    return this._client.requestStream(request, resultSchema, options);
+    return this._server.requestStream(request, resultSchema, options);
+  }
+  createMessageStream(params, options) {
+    let clientCapabilities = this._server.getClientCapabilities();
+    if ((params.tools || params.toolChoice) && !clientCapabilities?.sampling?.tools)
+      throw Error("Client does not support sampling tools capability.");
+    if (params.messages.length > 0) {
+      let lastMessage = params.messages[params.messages.length - 1], lastContent = Array.isArray(lastMessage.content) ? lastMessage.content : [lastMessage.content], hasToolResults = lastContent.some((c) => c.type === "tool_result"), previousMessage = params.messages.length > 1 ? params.messages[params.messages.length - 2] : void 0, previousContent = previousMessage ? Array.isArray(previousMessage.content) ? previousMessage.content : [previousMessage.content] : [], hasPreviousToolUse = previousContent.some((c) => c.type === "tool_use");
+      if (hasToolResults) {
+        if (lastContent.some((c) => c.type !== "tool_result"))
+          throw Error("The last message must contain only tool_result content if any is present");
+        if (!hasPreviousToolUse)
+          throw Error("tool_result blocks are not matching any tool_use from the previous message");
+      }
+      if (hasPreviousToolUse) {
+        let toolUseIds = new Set(previousContent.filter((c) => c.type === "tool_use").map((c) => c.id)), toolResultIds = new Set(lastContent.filter((c) => c.type === "tool_result").map((c) => c.toolUseId));
+        if (toolUseIds.size !== toolResultIds.size || ![...toolUseIds].every((id) => toolResultIds.has(id)))
+          throw Error("ids of tool_result blocks and tool_use blocks from previous message do not match");
+      }
+    }
+    return this.requestStream({
+      method: "sampling/createMessage",
+      params
+    }, CreateMessageResultSchema, options);
+  }
+  elicitInputStream(params, options) {
+    let clientCapabilities = this._server.getClientCapabilities(), mode = params.mode ?? "form";
+    switch (mode) {
+      case "url": {
+        if (!clientCapabilities?.elicitation?.url)
+          throw Error("Client does not support url elicitation.");
+        break;
+      }
+      case "form": {
+        if (!clientCapabilities?.elicitation?.form)
+          throw Error("Client does not support form elicitation.");
+        break;
+      }
+    }
+    let normalizedParams = mode === "form" && params.mode === void 0 ? { ...params, mode: "form" } : params;
+    return this.requestStream({
+      method: "elicitation/create",
+      params: normalizedParams
+    }, ElicitResultSchema, options);
+  }
+  async getTask(taskId, options) {
+    return this._server.getTask({ taskId }, options);
+  }
+  async getTaskResult(taskId, resultSchema, options) {
+    return this._server.getTaskResult({ taskId }, resultSchema, options);
+  }
+  async listTasks(cursor, options) {
+    return this._server.listTasks(cursor ? { cursor } : void 0, options);
+  }
+  async cancelTask(taskId, options) {
+    return this._server.cancelTask({ taskId }, options);
   }
 }
 
@@ -19759,411 +19772,6 @@ function assertClientRequestTaskCapability(requests, method, entityName) {
       break;
     default:
       break;
-  }
-}
-
-// node_modules/@modelcontextprotocol/sdk/dist/esm/client/index.js
-function applyElicitationDefaults(schema, data) {
-  if (!schema || data === null || typeof data !== "object")
-    return;
-  if (schema.type === "object" && schema.properties && typeof schema.properties === "object") {
-    let obj = data, props = schema.properties;
-    for (let key of Object.keys(props)) {
-      let propSchema = props[key];
-      if (obj[key] === void 0 && Object.prototype.hasOwnProperty.call(propSchema, "default"))
-        obj[key] = propSchema.default;
-      if (obj[key] !== void 0)
-        applyElicitationDefaults(propSchema, obj[key]);
-    }
-  }
-  if (Array.isArray(schema.anyOf)) {
-    for (let sub of schema.anyOf)
-      if (typeof sub !== "boolean")
-        applyElicitationDefaults(sub, data);
-  }
-  if (Array.isArray(schema.oneOf)) {
-    for (let sub of schema.oneOf)
-      if (typeof sub !== "boolean")
-        applyElicitationDefaults(sub, data);
-  }
-}
-function getSupportedElicitationModes(capabilities) {
-  if (!capabilities)
-    return { supportsFormMode: !1, supportsUrlMode: !1 };
-  let hasFormCapability = capabilities.form !== void 0, hasUrlCapability = capabilities.url !== void 0;
-  return { supportsFormMode: hasFormCapability || !hasFormCapability && !hasUrlCapability, supportsUrlMode: hasUrlCapability };
-}
-
-class Client extends Protocol {
-  constructor(_clientInfo, options) {
-    super(options);
-    if (this._clientInfo = _clientInfo, this._cachedToolOutputValidators = /* @__PURE__ */ new Map, this._cachedKnownTaskTools = /* @__PURE__ */ new Set, this._cachedRequiredTaskTools = /* @__PURE__ */ new Set, this._listChangedDebounceTimers = /* @__PURE__ */ new Map, this._capabilities = options?.capabilities ?? {}, this._jsonSchemaValidator = options?.jsonSchemaValidator ?? new AjvJsonSchemaValidator, options?.listChanged)
-      this._pendingListChangedConfig = options.listChanged;
-  }
-  _setupListChangedHandlers(config2) {
-    if (config2.tools && this._serverCapabilities?.tools?.listChanged)
-      this._setupListChangedHandler("tools", ToolListChangedNotificationSchema, config2.tools, async () => {
-        return (await this.listTools()).tools;
-      });
-    if (config2.prompts && this._serverCapabilities?.prompts?.listChanged)
-      this._setupListChangedHandler("prompts", PromptListChangedNotificationSchema, config2.prompts, async () => {
-        return (await this.listPrompts()).prompts;
-      });
-    if (config2.resources && this._serverCapabilities?.resources?.listChanged)
-      this._setupListChangedHandler("resources", ResourceListChangedNotificationSchema, config2.resources, async () => {
-        return (await this.listResources()).resources;
-      });
-  }
-  get experimental() {
-    if (!this._experimental)
-      this._experimental = {
-        tasks: new ExperimentalClientTasks(this)
-      };
-    return this._experimental;
-  }
-  registerCapabilities(capabilities) {
-    if (this.transport)
-      throw Error("Cannot register capabilities after connecting to transport");
-    this._capabilities = mergeCapabilities(this._capabilities, capabilities);
-  }
-  setRequestHandler(requestSchema, handler) {
-    let methodSchema = getObjectShape(requestSchema)?.method;
-    if (!methodSchema)
-      throw Error("Schema is missing a method literal");
-    let methodValue;
-    if (isZ4Schema(methodSchema)) {
-      let v4Schema = methodSchema;
-      methodValue = v4Schema._zod?.def?.value ?? v4Schema.value;
-    } else {
-      let v3Schema = methodSchema;
-      methodValue = v3Schema._def?.value ?? v3Schema.value;
-    }
-    if (typeof methodValue !== "string")
-      throw Error("Schema method literal must be a string");
-    let method = methodValue;
-    if (method === "elicitation/create") {
-      let wrappedHandler = async (request, extra) => {
-        let validatedRequest = safeParse2(ElicitRequestSchema, request);
-        if (!validatedRequest.success) {
-          let errorMessage = validatedRequest.error instanceof Error ? validatedRequest.error.message : String(validatedRequest.error);
-          throw new McpError(ErrorCode.InvalidParams, `Invalid elicitation request: ${errorMessage}`);
-        }
-        let { params } = validatedRequest.data;
-        params.mode = params.mode ?? "form";
-        let { supportsFormMode, supportsUrlMode } = getSupportedElicitationModes(this._capabilities.elicitation);
-        if (params.mode === "form" && !supportsFormMode)
-          throw new McpError(ErrorCode.InvalidParams, "Client does not support form-mode elicitation requests");
-        if (params.mode === "url" && !supportsUrlMode)
-          throw new McpError(ErrorCode.InvalidParams, "Client does not support URL-mode elicitation requests");
-        let result = await Promise.resolve(handler(request, extra));
-        if (params.task) {
-          let taskValidationResult = safeParse2(CreateTaskResultSchema, result);
-          if (!taskValidationResult.success) {
-            let errorMessage = taskValidationResult.error instanceof Error ? taskValidationResult.error.message : String(taskValidationResult.error);
-            throw new McpError(ErrorCode.InvalidParams, `Invalid task creation result: ${errorMessage}`);
-          }
-          return taskValidationResult.data;
-        }
-        let validationResult = safeParse2(ElicitResultSchema, result);
-        if (!validationResult.success) {
-          let errorMessage = validationResult.error instanceof Error ? validationResult.error.message : String(validationResult.error);
-          throw new McpError(ErrorCode.InvalidParams, `Invalid elicitation result: ${errorMessage}`);
-        }
-        let validatedResult = validationResult.data, requestedSchema = params.mode === "form" ? params.requestedSchema : void 0;
-        if (params.mode === "form" && validatedResult.action === "accept" && validatedResult.content && requestedSchema) {
-          if (this._capabilities.elicitation?.form?.applyDefaults)
-            try {
-              applyElicitationDefaults(requestedSchema, validatedResult.content);
-            } catch {}
-        }
-        return validatedResult;
-      };
-      return super.setRequestHandler(requestSchema, wrappedHandler);
-    }
-    if (method === "sampling/createMessage") {
-      let wrappedHandler = async (request, extra) => {
-        let validatedRequest = safeParse2(CreateMessageRequestSchema, request);
-        if (!validatedRequest.success) {
-          let errorMessage = validatedRequest.error instanceof Error ? validatedRequest.error.message : String(validatedRequest.error);
-          throw new McpError(ErrorCode.InvalidParams, `Invalid sampling request: ${errorMessage}`);
-        }
-        let { params } = validatedRequest.data, result = await Promise.resolve(handler(request, extra));
-        if (params.task) {
-          let taskValidationResult = safeParse2(CreateTaskResultSchema, result);
-          if (!taskValidationResult.success) {
-            let errorMessage = taskValidationResult.error instanceof Error ? taskValidationResult.error.message : String(taskValidationResult.error);
-            throw new McpError(ErrorCode.InvalidParams, `Invalid task creation result: ${errorMessage}`);
-          }
-          return taskValidationResult.data;
-        }
-        let resultSchema = params.tools || params.toolChoice ? CreateMessageResultWithToolsSchema : CreateMessageResultSchema, validationResult = safeParse2(resultSchema, result);
-        if (!validationResult.success) {
-          let errorMessage = validationResult.error instanceof Error ? validationResult.error.message : String(validationResult.error);
-          throw new McpError(ErrorCode.InvalidParams, `Invalid sampling result: ${errorMessage}`);
-        }
-        return validationResult.data;
-      };
-      return super.setRequestHandler(requestSchema, wrappedHandler);
-    }
-    return super.setRequestHandler(requestSchema, handler);
-  }
-  assertCapability(capability, method) {
-    if (!this._serverCapabilities?.[capability])
-      throw Error(`Server does not support ${capability} (required for ${method})`);
-  }
-  async connect(transport, options) {
-    if (await super.connect(transport), transport.sessionId !== void 0)
-      return;
-    try {
-      let result = await this.request({
-        method: "initialize",
-        params: {
-          protocolVersion: LATEST_PROTOCOL_VERSION,
-          capabilities: this._capabilities,
-          clientInfo: this._clientInfo
-        }
-      }, InitializeResultSchema, options);
-      if (result === void 0)
-        throw Error(`Server sent invalid initialize result: ${result}`);
-      if (!SUPPORTED_PROTOCOL_VERSIONS.includes(result.protocolVersion))
-        throw Error(`Server's protocol version is not supported: ${result.protocolVersion}`);
-      if (this._serverCapabilities = result.capabilities, this._serverVersion = result.serverInfo, transport.setProtocolVersion)
-        transport.setProtocolVersion(result.protocolVersion);
-      if (this._instructions = result.instructions, await this.notification({
-        method: "notifications/initialized"
-      }), this._pendingListChangedConfig)
-        this._setupListChangedHandlers(this._pendingListChangedConfig), this._pendingListChangedConfig = void 0;
-    } catch (error48) {
-      throw this.close(), error48;
-    }
-  }
-  getServerCapabilities() {
-    return this._serverCapabilities;
-  }
-  getServerVersion() {
-    return this._serverVersion;
-  }
-  getInstructions() {
-    return this._instructions;
-  }
-  assertCapabilityForMethod(method) {
-    switch (method) {
-      case "logging/setLevel":
-        if (!this._serverCapabilities?.logging)
-          throw Error(`Server does not support logging (required for ${method})`);
-        break;
-      case "prompts/get":
-      case "prompts/list":
-        if (!this._serverCapabilities?.prompts)
-          throw Error(`Server does not support prompts (required for ${method})`);
-        break;
-      case "resources/list":
-      case "resources/templates/list":
-      case "resources/read":
-      case "resources/subscribe":
-      case "resources/unsubscribe":
-        if (!this._serverCapabilities?.resources)
-          throw Error(`Server does not support resources (required for ${method})`);
-        if (method === "resources/subscribe" && !this._serverCapabilities.resources.subscribe)
-          throw Error(`Server does not support resource subscriptions (required for ${method})`);
-        break;
-      case "tools/call":
-      case "tools/list":
-        if (!this._serverCapabilities?.tools)
-          throw Error(`Server does not support tools (required for ${method})`);
-        break;
-      case "completion/complete":
-        if (!this._serverCapabilities?.completions)
-          throw Error(`Server does not support completions (required for ${method})`);
-        break;
-      case "initialize":
-        break;
-      case "ping":
-        break;
-    }
-  }
-  assertNotificationCapability(method) {
-    switch (method) {
-      case "notifications/roots/list_changed":
-        if (!this._capabilities.roots?.listChanged)
-          throw Error(`Client does not support roots list changed notifications (required for ${method})`);
-        break;
-      case "notifications/initialized":
-        break;
-      case "notifications/cancelled":
-        break;
-      case "notifications/progress":
-        break;
-    }
-  }
-  assertRequestHandlerCapability(method) {
-    if (!this._capabilities)
-      return;
-    switch (method) {
-      case "sampling/createMessage":
-        if (!this._capabilities.sampling)
-          throw Error(`Client does not support sampling capability (required for ${method})`);
-        break;
-      case "elicitation/create":
-        if (!this._capabilities.elicitation)
-          throw Error(`Client does not support elicitation capability (required for ${method})`);
-        break;
-      case "roots/list":
-        if (!this._capabilities.roots)
-          throw Error(`Client does not support roots capability (required for ${method})`);
-        break;
-      case "tasks/get":
-      case "tasks/list":
-      case "tasks/result":
-      case "tasks/cancel":
-        if (!this._capabilities.tasks)
-          throw Error(`Client does not support tasks capability (required for ${method})`);
-        break;
-      case "ping":
-        break;
-    }
-  }
-  assertTaskCapability(method) {
-    assertToolsCallTaskCapability(this._serverCapabilities?.tasks?.requests, method, "Server");
-  }
-  assertTaskHandlerCapability(method) {
-    if (!this._capabilities)
-      return;
-    assertClientRequestTaskCapability(this._capabilities.tasks?.requests, method, "Client");
-  }
-  async ping(options) {
-    return this.request({ method: "ping" }, EmptyResultSchema, options);
-  }
-  async complete(params, options) {
-    return this.request({ method: "completion/complete", params }, CompleteResultSchema, options);
-  }
-  async setLoggingLevel(level, options) {
-    return this.request({ method: "logging/setLevel", params: { level } }, EmptyResultSchema, options);
-  }
-  async getPrompt(params, options) {
-    return this.request({ method: "prompts/get", params }, GetPromptResultSchema, options);
-  }
-  async listPrompts(params, options) {
-    return this.request({ method: "prompts/list", params }, ListPromptsResultSchema, options);
-  }
-  async listResources(params, options) {
-    return this.request({ method: "resources/list", params }, ListResourcesResultSchema, options);
-  }
-  async listResourceTemplates(params, options) {
-    return this.request({ method: "resources/templates/list", params }, ListResourceTemplatesResultSchema, options);
-  }
-  async readResource(params, options) {
-    return this.request({ method: "resources/read", params }, ReadResourceResultSchema, options);
-  }
-  async subscribeResource(params, options) {
-    return this.request({ method: "resources/subscribe", params }, EmptyResultSchema, options);
-  }
-  async unsubscribeResource(params, options) {
-    return this.request({ method: "resources/unsubscribe", params }, EmptyResultSchema, options);
-  }
-  async callTool(params, resultSchema = CallToolResultSchema, options) {
-    if (this.isToolTaskRequired(params.name))
-      throw new McpError(ErrorCode.InvalidRequest, `Tool "${params.name}" requires task-based execution. Use client.experimental.tasks.callToolStream() instead.`);
-    let result = await this.request({ method: "tools/call", params }, resultSchema, options), validator = this.getToolOutputValidator(params.name);
-    if (validator) {
-      if (!result.structuredContent && !result.isError)
-        throw new McpError(ErrorCode.InvalidRequest, `Tool ${params.name} has an output schema but did not return structured content`);
-      if (result.structuredContent)
-        try {
-          let validationResult = validator(result.structuredContent);
-          if (!validationResult.valid)
-            throw new McpError(ErrorCode.InvalidParams, `Structured content does not match the tool's output schema: ${validationResult.errorMessage}`);
-        } catch (error48) {
-          if (error48 instanceof McpError)
-            throw error48;
-          throw new McpError(ErrorCode.InvalidParams, `Failed to validate structured content: ${error48 instanceof Error ? error48.message : String(error48)}`);
-        }
-    }
-    return result;
-  }
-  isToolTask(toolName) {
-    if (!this._serverCapabilities?.tasks?.requests?.tools?.call)
-      return !1;
-    return this._cachedKnownTaskTools.has(toolName);
-  }
-  isToolTaskRequired(toolName) {
-    return this._cachedRequiredTaskTools.has(toolName);
-  }
-  cacheToolMetadata(tools) {
-    this._cachedToolOutputValidators.clear(), this._cachedKnownTaskTools.clear(), this._cachedRequiredTaskTools.clear();
-    for (let tool of tools) {
-      if (tool.outputSchema) {
-        let toolValidator = this._jsonSchemaValidator.getValidator(tool.outputSchema);
-        this._cachedToolOutputValidators.set(tool.name, toolValidator);
-      }
-      let taskSupport = tool.execution?.taskSupport;
-      if (taskSupport === "required" || taskSupport === "optional")
-        this._cachedKnownTaskTools.add(tool.name);
-      if (taskSupport === "required")
-        this._cachedRequiredTaskTools.add(tool.name);
-    }
-  }
-  getToolOutputValidator(toolName) {
-    return this._cachedToolOutputValidators.get(toolName);
-  }
-  async listTools(params, options) {
-    let result = await this.request({ method: "tools/list", params }, ListToolsResultSchema, options);
-    return this.cacheToolMetadata(result.tools), result;
-  }
-  _setupListChangedHandler(listType, notificationSchema, options, fetcher) {
-    let parseResult = ListChangedOptionsBaseSchema.safeParse(options);
-    if (!parseResult.success)
-      throw Error(`Invalid ${listType} listChanged options: ${parseResult.error.message}`);
-    if (typeof options.onChanged !== "function")
-      throw Error(`Invalid ${listType} listChanged options: onChanged must be a function`);
-    let { autoRefresh, debounceMs } = parseResult.data, { onChanged } = options, refresh = async () => {
-      if (!autoRefresh) {
-        onChanged(null, null);
-        return;
-      }
-      try {
-        let items = await fetcher();
-        onChanged(null, items);
-      } catch (e) {
-        let error48 = e instanceof Error ? e : Error(String(e));
-        onChanged(error48, null);
-      }
-    }, handler = () => {
-      if (debounceMs) {
-        let existingTimer = this._listChangedDebounceTimers.get(listType);
-        if (existingTimer)
-          clearTimeout(existingTimer);
-        let timer = setTimeout(refresh, debounceMs);
-        this._listChangedDebounceTimers.set(listType, timer);
-      } else
-        refresh();
-    };
-    this.setNotificationHandler(notificationSchema, handler);
-  }
-  async sendRootsListChanged() {
-    return this.notification({ method: "notifications/roots/list_changed" });
-  }
-}
-
-// node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/server.js
-class ExperimentalServerTasks {
-  constructor(_server) {
-    this._server = _server;
-  }
-  requestStream(request, resultSchema, options) {
-    return this._server.requestStream(request, resultSchema, options);
-  }
-  async getTask(taskId, options) {
-    return this._server.getTask({ taskId }, options);
-  }
-  async getTaskResult(taskId, resultSchema, options) {
-    return this._server.getTaskResult({ taskId }, resultSchema, options);
-  }
-  async listTasks(cursor, options) {
-    return this._server.listTasks(cursor ? { cursor } : void 0, options);
-  }
-  async cancelTask(taskId, options) {
-    return this._server.cancelTask({ taskId }, options);
   }
 }
 
@@ -20561,123 +20169,6 @@ async function clearLogFile() {
   try {
     await writeFile(LOG_FILE, "");
   } catch {}
-}
-
-// project-path.ts
-function createProjectPathManager({
-  projectPath,
-  defaultProjectPathKey = "project_path"
-}) {
-  let projectPathKey = null, hasSeenToolsList = !1, hasProjectPathTools = !1, toolProjectPathKeyByName = /* @__PURE__ */ new Map;
-  function normalizeProjectPathArgs(args, desiredKey) {
-    if (!desiredKey)
-      return;
-    let hasSnake = Object.prototype.hasOwnProperty.call(args, "project_path"), hasCamel = Object.prototype.hasOwnProperty.call(args, "projectPath");
-    if (desiredKey === "projectPath") {
-      if (hasCamel) {
-        if (hasSnake)
-          delete args.project_path;
-        if (args.projectPath == null)
-          args.projectPath = projectPath;
-        return;
-      }
-      if (hasSnake) {
-        if (args.projectPath = args.project_path, delete args.project_path, args.projectPath == null)
-          args.projectPath = projectPath;
-        return;
-      }
-      args.projectPath = projectPath;
-      return;
-    }
-    if (desiredKey === "project_path") {
-      if (hasSnake) {
-        if (hasCamel)
-          delete args.projectPath;
-        if (args.project_path == null)
-          args.project_path = projectPath;
-        return;
-      }
-      if (hasCamel) {
-        if (args.project_path = args.projectPath, delete args.projectPath, args.project_path == null)
-          args.project_path = projectPath;
-        return;
-      }
-      args.project_path = projectPath;
-    }
-  }
-  function shouldInjectProjectPath(toolName) {
-    if (!hasSeenToolsList)
-      return !0;
-    if (!hasProjectPathTools)
-      return !1;
-    if (!toolName)
-      return !0;
-    return toolProjectPathKeyByName.has(toolName);
-  }
-  function chooseProjectPathKey(toolName) {
-    if (toolName) {
-      let key = toolProjectPathKeyByName.get(toolName);
-      if (key)
-        return key;
-    }
-    return projectPathKey || defaultProjectPathKey;
-  }
-  function injectProjectPathArgs(toolName, args) {
-    if (!args || typeof args !== "object")
-      return;
-    if (shouldInjectProjectPath(toolName))
-      normalizeProjectPathArgs(args, chooseProjectPathKey(toolName));
-  }
-  function updateProjectPathKeys(tools) {
-    if (!Array.isArray(tools))
-      return;
-    let hasSnake = !1, hasCamel = !1;
-    toolProjectPathKeyByName.clear();
-    for (let tool of tools) {
-      let props = tool?.inputSchema?.properties;
-      if (!props || typeof props !== "object")
-        continue;
-      if (Object.prototype.hasOwnProperty.call(props, "project_path")) {
-        if (hasSnake = !0, typeof tool.name === "string")
-          toolProjectPathKeyByName.set(tool.name, "project_path");
-        continue;
-      }
-      if (Object.prototype.hasOwnProperty.call(props, "projectPath")) {
-        if (hasCamel = !0, typeof tool.name === "string")
-          toolProjectPathKeyByName.set(tool.name, "projectPath");
-      }
-    }
-    if (hasSeenToolsList = !0, hasProjectPathTools = toolProjectPathKeyByName.size > 0, hasSnake)
-      projectPathKey = "project_path";
-    else if (hasCamel)
-      projectPathKey = "projectPath";
-    else
-      projectPathKey = null;
-  }
-  function stripProjectPathFromTools(tools) {
-    if (!Array.isArray(tools))
-      return;
-    for (let tool of tools) {
-      let schema = tool?.inputSchema;
-      if (!schema || schema.type !== "object")
-        continue;
-      let props = schema.properties;
-      if (!props || typeof props !== "object")
-        continue;
-      let removedKeys = [];
-      if (Object.prototype.hasOwnProperty.call(props, "project_path"))
-        delete props.project_path, removedKeys.push("project_path");
-      if (Object.prototype.hasOwnProperty.call(props, "projectPath"))
-        delete props.projectPath, removedKeys.push("projectPath");
-      if (removedKeys.length > 0 && Array.isArray(schema.required))
-        schema.required = schema.required.filter((name) => !removedKeys.includes(name));
-    }
-  }
-  return {
-    injectProjectPathArgs,
-    stripProjectPathFromTools,
-    updateProjectPathKeys
-  };
 }
 
 // node_modules/is-port-reachable/index.js
@@ -21214,16 +20705,31 @@ async function auth(provider, options) {
   }
 }
 async function authInternal(provider, { serverUrl, authorizationCode, scope, resourceMetadataUrl, fetchFn }) {
-  let resourceMetadata, authorizationServerUrl;
-  try {
-    if (resourceMetadata = await discoverOAuthProtectedResourceMetadata(serverUrl, { resourceMetadataUrl }, fetchFn), resourceMetadata.authorization_servers && resourceMetadata.authorization_servers.length > 0)
-      authorizationServerUrl = resourceMetadata.authorization_servers[0];
-  } catch {}
-  if (!authorizationServerUrl)
-    authorizationServerUrl = new URL("/", serverUrl);
-  let resource = await selectResourceURL(serverUrl, provider, resourceMetadata), metadata = await discoverAuthorizationServerMetadata(authorizationServerUrl, {
-    fetchFn
-  }), clientInformation = await Promise.resolve(provider.clientInformation());
+  let cachedState = await provider.discoveryState?.(), resourceMetadata, authorizationServerUrl, metadata, effectiveResourceMetadataUrl = resourceMetadataUrl;
+  if (!effectiveResourceMetadataUrl && cachedState?.resourceMetadataUrl)
+    effectiveResourceMetadataUrl = new URL(cachedState.resourceMetadataUrl);
+  if (cachedState?.authorizationServerUrl) {
+    if (authorizationServerUrl = cachedState.authorizationServerUrl, resourceMetadata = cachedState.resourceMetadata, metadata = cachedState.authorizationServerMetadata ?? await discoverAuthorizationServerMetadata(authorizationServerUrl, { fetchFn }), !resourceMetadata)
+      try {
+        resourceMetadata = await discoverOAuthProtectedResourceMetadata(serverUrl, { resourceMetadataUrl: effectiveResourceMetadataUrl }, fetchFn);
+      } catch {}
+    if (metadata !== cachedState.authorizationServerMetadata || resourceMetadata !== cachedState.resourceMetadata)
+      await provider.saveDiscoveryState?.({
+        authorizationServerUrl: String(authorizationServerUrl),
+        resourceMetadataUrl: effectiveResourceMetadataUrl?.toString(),
+        resourceMetadata,
+        authorizationServerMetadata: metadata
+      });
+  } else {
+    let serverInfo = await discoverOAuthServerInfo(serverUrl, { resourceMetadataUrl: effectiveResourceMetadataUrl, fetchFn });
+    authorizationServerUrl = serverInfo.authorizationServerUrl, metadata = serverInfo.authorizationServerMetadata, resourceMetadata = serverInfo.resourceMetadata, await provider.saveDiscoveryState?.({
+      authorizationServerUrl: String(authorizationServerUrl),
+      resourceMetadataUrl: effectiveResourceMetadataUrl?.toString(),
+      resourceMetadata,
+      authorizationServerMetadata: metadata
+    });
+  }
+  let resource = await selectResourceURL(serverUrl, provider, resourceMetadata), clientInformation = await Promise.resolve(provider.clientInformation());
   if (!clientInformation) {
     if (authorizationCode !== void 0)
       throw Error("Existing OAuth client information is required when exchanging an authorization code");
@@ -21426,6 +20932,21 @@ async function discoverAuthorizationServerMetadata(authorizationServerUrl, { fet
       return OpenIdProviderDiscoveryMetadataSchema.parse(await response.json());
   }
   return;
+}
+async function discoverOAuthServerInfo(serverUrl, opts) {
+  let resourceMetadata, authorizationServerUrl;
+  try {
+    if (resourceMetadata = await discoverOAuthProtectedResourceMetadata(serverUrl, { resourceMetadataUrl: opts?.resourceMetadataUrl }, opts?.fetchFn), resourceMetadata.authorization_servers && resourceMetadata.authorization_servers.length > 0)
+      authorizationServerUrl = resourceMetadata.authorization_servers[0];
+  } catch {}
+  if (!authorizationServerUrl)
+    authorizationServerUrl = String(new URL("/", serverUrl));
+  let authorizationServerMetadata = await discoverAuthorizationServerMetadata(authorizationServerUrl, { fetchFn: opts?.fetchFn });
+  return {
+    authorizationServerUrl,
+    authorizationServerMetadata,
+    resourceMetadata
+  };
 }
 async function startAuthorization(authorizationServerUrl, { metadata, clientInformation, redirectUrl, scope, state, resource }) {
   let authorizationUrl;
@@ -22179,115 +21700,549 @@ function createStreamTransport({
   });
 }
 
-// workarounds.ts
-var FULL_VERSION_RE = /\b\d{4}\.\d+(?:\.\d+){0,2}\b/, BUILD_VERSION_RE = /\b\d{3}\.\d+(?:\.\d+)?\b/, SNAPSHOT_BUILD_RE = /\b(\d{3})\.SNAPSHOT\b/i, SNAPSHOT_BUILD_PART = Number.MAX_SAFE_INTEGER, ANY_VERSION_RE = /\d+(?:\.\d+)+/;
-var WORKAROUND_FIXED_IN = {
-  ["search_in_files_by_regex_directory_scope_ignored" /* SearchInFilesByRegexDirectoryScopeIgnored */]: "261.20247"
-}, currentIdeVersion = null;
-function setIdeVersion(rawVersion) {
-  if (!rawVersion) {
-    currentIdeVersion = null;
-    return;
+// node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/client.js
+class ExperimentalClientTasks {
+  constructor(_client) {
+    this._client = _client;
   }
-  currentIdeVersion = parseIdeVersion(rawVersion);
+  async* callToolStream(params, resultSchema = CallToolResultSchema, options) {
+    let clientInternal = this._client, optionsWithTask = {
+      ...options,
+      task: options?.task ?? (clientInternal.isToolTask(params.name) ? {} : void 0)
+    }, stream = clientInternal.requestStream({ method: "tools/call", params }, resultSchema, optionsWithTask), validator = clientInternal.getToolOutputValidator(params.name);
+    for await (let message of stream) {
+      if (message.type === "result" && validator) {
+        let result = message.result;
+        if (!result.structuredContent && !result.isError) {
+          yield {
+            type: "error",
+            error: new McpError(ErrorCode.InvalidRequest, `Tool ${params.name} has an output schema but did not return structured content`)
+          };
+          return;
+        }
+        if (result.structuredContent)
+          try {
+            let validationResult = validator(result.structuredContent);
+            if (!validationResult.valid) {
+              yield {
+                type: "error",
+                error: new McpError(ErrorCode.InvalidParams, `Structured content does not match the tool's output schema: ${validationResult.errorMessage}`)
+              };
+              return;
+            }
+          } catch (error48) {
+            if (error48 instanceof McpError) {
+              yield { type: "error", error: error48 };
+              return;
+            }
+            yield {
+              type: "error",
+              error: new McpError(ErrorCode.InvalidParams, `Failed to validate structured content: ${error48 instanceof Error ? error48.message : String(error48)}`)
+            };
+            return;
+          }
+      }
+      yield message;
+    }
+  }
+  async getTask(taskId, options) {
+    return this._client.getTask({ taskId }, options);
+  }
+  async getTaskResult(taskId, resultSchema, options) {
+    return this._client.getTaskResult({ taskId }, resultSchema, options);
+  }
+  async listTasks(cursor, options) {
+    return this._client.listTasks(cursor ? { cursor } : void 0, options);
+  }
+  async cancelTask(taskId, options) {
+    return this._client.cancelTask({ taskId }, options);
+  }
+  requestStream(request, resultSchema, options) {
+    return this._client.requestStream(request, resultSchema, options);
+  }
 }
-function shouldApplyWorkaround(key) {
-  if (isWorkaroundDisabled(key))
-    return logDebug(`Workaround ${key} not used (disabled by env)`), !1;
-  let fixedInRaw = (WORKAROUND_FIXED_IN[key] ?? "").trim();
-  if (!fixedInRaw)
-    return !0;
-  let ideVersion = currentIdeVersion;
-  if (!ideVersion)
-    return !0;
-  let fixedSpec = parseVersionSpec(fixedInRaw);
-  if (!fixedSpec)
-    return !0;
-  let currentParts = fixedSpec.kind === "build" ? ideVersion.build ?? deriveBuildFromFull(ideVersion.full) : ideVersion.full;
-  if (!currentParts)
-    return !0;
-  if (compareVersionParts(currentParts, fixedSpec.parts) >= 0)
-    return logDebug(`Workaround ${key} not used; fixed in ${fixedInRaw}, ide ${ideVersion.raw}`), !1;
-  return !0;
-}
-function isWorkaroundDisabled(key) {
-  let disabledAll = process.env.JETBRAINS_MCP_PROXY_DISABLE_WORKAROUNDS;
-  if (disabledAll && disabledAll !== "false" && disabledAll !== "0")
-    return !0;
-  let disabledKeys = process.env.JETBRAINS_MCP_PROXY_DISABLE_WORKAROUND_KEYS;
-  if (!disabledKeys)
-    return !1;
-  return disabledKeys.split(",").map((entry) => entry.trim()).filter((entry) => entry.length > 0).includes(key);
-}
-function logDebug(message) {
-  let enabled = process.env.JETBRAINS_MCP_PROXY_WORKAROUND_DEBUG;
-  if (!enabled || enabled === "0" || enabled === "false")
+
+// node_modules/@modelcontextprotocol/sdk/dist/esm/client/index.js
+function applyElicitationDefaults(schema, data) {
+  if (!schema || data === null || typeof data !== "object")
     return;
-  process.stderr.write(`[ij-mcp-proxy] ${message}
-`);
+  if (schema.type === "object" && schema.properties && typeof schema.properties === "object") {
+    let obj = data, props = schema.properties;
+    for (let key of Object.keys(props)) {
+      let propSchema = props[key];
+      if (obj[key] === void 0 && Object.prototype.hasOwnProperty.call(propSchema, "default"))
+        obj[key] = propSchema.default;
+      if (obj[key] !== void 0)
+        applyElicitationDefaults(propSchema, obj[key]);
+    }
+  }
+  if (Array.isArray(schema.anyOf)) {
+    for (let sub of schema.anyOf)
+      if (typeof sub !== "boolean")
+        applyElicitationDefaults(sub, data);
+  }
+  if (Array.isArray(schema.oneOf)) {
+    for (let sub of schema.oneOf)
+      if (typeof sub !== "boolean")
+        applyElicitationDefaults(sub, data);
+  }
 }
-function parseIdeVersion(raw) {
-  let full = extractVersionParts(raw, FULL_VERSION_RE), build = extractVersionParts(raw, BUILD_VERSION_RE);
-  if (!build) {
-    let snapshotMatch = raw.match(SNAPSHOT_BUILD_RE);
-    if (snapshotMatch) {
-      let train = Number.parseInt(snapshotMatch[1], 10);
-      if (!Number.isNaN(train))
-        build = [train, SNAPSHOT_BUILD_PART];
+function getSupportedElicitationModes(capabilities) {
+  if (!capabilities)
+    return { supportsFormMode: !1, supportsUrlMode: !1 };
+  let hasFormCapability = capabilities.form !== void 0, hasUrlCapability = capabilities.url !== void 0;
+  return { supportsFormMode: hasFormCapability || !hasFormCapability && !hasUrlCapability, supportsUrlMode: hasUrlCapability };
+}
+
+class Client extends Protocol {
+  constructor(_clientInfo, options) {
+    super(options);
+    if (this._clientInfo = _clientInfo, this._cachedToolOutputValidators = /* @__PURE__ */ new Map, this._cachedKnownTaskTools = /* @__PURE__ */ new Set, this._cachedRequiredTaskTools = /* @__PURE__ */ new Set, this._listChangedDebounceTimers = /* @__PURE__ */ new Map, this._capabilities = options?.capabilities ?? {}, this._jsonSchemaValidator = options?.jsonSchemaValidator ?? new AjvJsonSchemaValidator, options?.listChanged)
+      this._pendingListChangedConfig = options.listChanged;
+  }
+  _setupListChangedHandlers(config2) {
+    if (config2.tools && this._serverCapabilities?.tools?.listChanged)
+      this._setupListChangedHandler("tools", ToolListChangedNotificationSchema, config2.tools, async () => {
+        return (await this.listTools()).tools;
+      });
+    if (config2.prompts && this._serverCapabilities?.prompts?.listChanged)
+      this._setupListChangedHandler("prompts", PromptListChangedNotificationSchema, config2.prompts, async () => {
+        return (await this.listPrompts()).prompts;
+      });
+    if (config2.resources && this._serverCapabilities?.resources?.listChanged)
+      this._setupListChangedHandler("resources", ResourceListChangedNotificationSchema, config2.resources, async () => {
+        return (await this.listResources()).resources;
+      });
+  }
+  get experimental() {
+    if (!this._experimental)
+      this._experimental = {
+        tasks: new ExperimentalClientTasks(this)
+      };
+    return this._experimental;
+  }
+  registerCapabilities(capabilities) {
+    if (this.transport)
+      throw Error("Cannot register capabilities after connecting to transport");
+    this._capabilities = mergeCapabilities(this._capabilities, capabilities);
+  }
+  setRequestHandler(requestSchema, handler) {
+    let methodSchema = getObjectShape(requestSchema)?.method;
+    if (!methodSchema)
+      throw Error("Schema is missing a method literal");
+    let methodValue;
+    if (isZ4Schema(methodSchema)) {
+      let v4Schema = methodSchema;
+      methodValue = v4Schema._zod?.def?.value ?? v4Schema.value;
+    } else {
+      let v3Schema = methodSchema;
+      methodValue = v3Schema._def?.value ?? v3Schema.value;
+    }
+    if (typeof methodValue !== "string")
+      throw Error("Schema method literal must be a string");
+    let method = methodValue;
+    if (method === "elicitation/create") {
+      let wrappedHandler = async (request, extra) => {
+        let validatedRequest = safeParse2(ElicitRequestSchema, request);
+        if (!validatedRequest.success) {
+          let errorMessage = validatedRequest.error instanceof Error ? validatedRequest.error.message : String(validatedRequest.error);
+          throw new McpError(ErrorCode.InvalidParams, `Invalid elicitation request: ${errorMessage}`);
+        }
+        let { params } = validatedRequest.data;
+        params.mode = params.mode ?? "form";
+        let { supportsFormMode, supportsUrlMode } = getSupportedElicitationModes(this._capabilities.elicitation);
+        if (params.mode === "form" && !supportsFormMode)
+          throw new McpError(ErrorCode.InvalidParams, "Client does not support form-mode elicitation requests");
+        if (params.mode === "url" && !supportsUrlMode)
+          throw new McpError(ErrorCode.InvalidParams, "Client does not support URL-mode elicitation requests");
+        let result = await Promise.resolve(handler(request, extra));
+        if (params.task) {
+          let taskValidationResult = safeParse2(CreateTaskResultSchema, result);
+          if (!taskValidationResult.success) {
+            let errorMessage = taskValidationResult.error instanceof Error ? taskValidationResult.error.message : String(taskValidationResult.error);
+            throw new McpError(ErrorCode.InvalidParams, `Invalid task creation result: ${errorMessage}`);
+          }
+          return taskValidationResult.data;
+        }
+        let validationResult = safeParse2(ElicitResultSchema, result);
+        if (!validationResult.success) {
+          let errorMessage = validationResult.error instanceof Error ? validationResult.error.message : String(validationResult.error);
+          throw new McpError(ErrorCode.InvalidParams, `Invalid elicitation result: ${errorMessage}`);
+        }
+        let validatedResult = validationResult.data, requestedSchema = params.mode === "form" ? params.requestedSchema : void 0;
+        if (params.mode === "form" && validatedResult.action === "accept" && validatedResult.content && requestedSchema) {
+          if (this._capabilities.elicitation?.form?.applyDefaults)
+            try {
+              applyElicitationDefaults(requestedSchema, validatedResult.content);
+            } catch {}
+        }
+        return validatedResult;
+      };
+      return super.setRequestHandler(requestSchema, wrappedHandler);
+    }
+    if (method === "sampling/createMessage") {
+      let wrappedHandler = async (request, extra) => {
+        let validatedRequest = safeParse2(CreateMessageRequestSchema, request);
+        if (!validatedRequest.success) {
+          let errorMessage = validatedRequest.error instanceof Error ? validatedRequest.error.message : String(validatedRequest.error);
+          throw new McpError(ErrorCode.InvalidParams, `Invalid sampling request: ${errorMessage}`);
+        }
+        let { params } = validatedRequest.data, result = await Promise.resolve(handler(request, extra));
+        if (params.task) {
+          let taskValidationResult = safeParse2(CreateTaskResultSchema, result);
+          if (!taskValidationResult.success) {
+            let errorMessage = taskValidationResult.error instanceof Error ? taskValidationResult.error.message : String(taskValidationResult.error);
+            throw new McpError(ErrorCode.InvalidParams, `Invalid task creation result: ${errorMessage}`);
+          }
+          return taskValidationResult.data;
+        }
+        let resultSchema = params.tools || params.toolChoice ? CreateMessageResultWithToolsSchema : CreateMessageResultSchema, validationResult = safeParse2(resultSchema, result);
+        if (!validationResult.success) {
+          let errorMessage = validationResult.error instanceof Error ? validationResult.error.message : String(validationResult.error);
+          throw new McpError(ErrorCode.InvalidParams, `Invalid sampling result: ${errorMessage}`);
+        }
+        return validationResult.data;
+      };
+      return super.setRequestHandler(requestSchema, wrappedHandler);
+    }
+    return super.setRequestHandler(requestSchema, handler);
+  }
+  assertCapability(capability, method) {
+    if (!this._serverCapabilities?.[capability])
+      throw Error(`Server does not support ${capability} (required for ${method})`);
+  }
+  async connect(transport, options) {
+    if (await super.connect(transport), transport.sessionId !== void 0)
+      return;
+    try {
+      let result = await this.request({
+        method: "initialize",
+        params: {
+          protocolVersion: LATEST_PROTOCOL_VERSION,
+          capabilities: this._capabilities,
+          clientInfo: this._clientInfo
+        }
+      }, InitializeResultSchema, options);
+      if (result === void 0)
+        throw Error(`Server sent invalid initialize result: ${result}`);
+      if (!SUPPORTED_PROTOCOL_VERSIONS.includes(result.protocolVersion))
+        throw Error(`Server's protocol version is not supported: ${result.protocolVersion}`);
+      if (this._serverCapabilities = result.capabilities, this._serverVersion = result.serverInfo, transport.setProtocolVersion)
+        transport.setProtocolVersion(result.protocolVersion);
+      if (this._instructions = result.instructions, await this.notification({
+        method: "notifications/initialized"
+      }), this._pendingListChangedConfig)
+        this._setupListChangedHandlers(this._pendingListChangedConfig), this._pendingListChangedConfig = void 0;
+    } catch (error48) {
+      throw this.close(), error48;
+    }
+  }
+  getServerCapabilities() {
+    return this._serverCapabilities;
+  }
+  getServerVersion() {
+    return this._serverVersion;
+  }
+  getInstructions() {
+    return this._instructions;
+  }
+  assertCapabilityForMethod(method) {
+    switch (method) {
+      case "logging/setLevel":
+        if (!this._serverCapabilities?.logging)
+          throw Error(`Server does not support logging (required for ${method})`);
+        break;
+      case "prompts/get":
+      case "prompts/list":
+        if (!this._serverCapabilities?.prompts)
+          throw Error(`Server does not support prompts (required for ${method})`);
+        break;
+      case "resources/list":
+      case "resources/templates/list":
+      case "resources/read":
+      case "resources/subscribe":
+      case "resources/unsubscribe":
+        if (!this._serverCapabilities?.resources)
+          throw Error(`Server does not support resources (required for ${method})`);
+        if (method === "resources/subscribe" && !this._serverCapabilities.resources.subscribe)
+          throw Error(`Server does not support resource subscriptions (required for ${method})`);
+        break;
+      case "tools/call":
+      case "tools/list":
+        if (!this._serverCapabilities?.tools)
+          throw Error(`Server does not support tools (required for ${method})`);
+        break;
+      case "completion/complete":
+        if (!this._serverCapabilities?.completions)
+          throw Error(`Server does not support completions (required for ${method})`);
+        break;
+      case "initialize":
+        break;
+      case "ping":
+        break;
+    }
+  }
+  assertNotificationCapability(method) {
+    switch (method) {
+      case "notifications/roots/list_changed":
+        if (!this._capabilities.roots?.listChanged)
+          throw Error(`Client does not support roots list changed notifications (required for ${method})`);
+        break;
+      case "notifications/initialized":
+        break;
+      case "notifications/cancelled":
+        break;
+      case "notifications/progress":
+        break;
+    }
+  }
+  assertRequestHandlerCapability(method) {
+    if (!this._capabilities)
+      return;
+    switch (method) {
+      case "sampling/createMessage":
+        if (!this._capabilities.sampling)
+          throw Error(`Client does not support sampling capability (required for ${method})`);
+        break;
+      case "elicitation/create":
+        if (!this._capabilities.elicitation)
+          throw Error(`Client does not support elicitation capability (required for ${method})`);
+        break;
+      case "roots/list":
+        if (!this._capabilities.roots)
+          throw Error(`Client does not support roots capability (required for ${method})`);
+        break;
+      case "tasks/get":
+      case "tasks/list":
+      case "tasks/result":
+      case "tasks/cancel":
+        if (!this._capabilities.tasks)
+          throw Error(`Client does not support tasks capability (required for ${method})`);
+        break;
+      case "ping":
+        break;
+    }
+  }
+  assertTaskCapability(method) {
+    assertToolsCallTaskCapability(this._serverCapabilities?.tasks?.requests, method, "Server");
+  }
+  assertTaskHandlerCapability(method) {
+    if (!this._capabilities)
+      return;
+    assertClientRequestTaskCapability(this._capabilities.tasks?.requests, method, "Client");
+  }
+  async ping(options) {
+    return this.request({ method: "ping" }, EmptyResultSchema, options);
+  }
+  async complete(params, options) {
+    return this.request({ method: "completion/complete", params }, CompleteResultSchema, options);
+  }
+  async setLoggingLevel(level, options) {
+    return this.request({ method: "logging/setLevel", params: { level } }, EmptyResultSchema, options);
+  }
+  async getPrompt(params, options) {
+    return this.request({ method: "prompts/get", params }, GetPromptResultSchema, options);
+  }
+  async listPrompts(params, options) {
+    return this.request({ method: "prompts/list", params }, ListPromptsResultSchema, options);
+  }
+  async listResources(params, options) {
+    return this.request({ method: "resources/list", params }, ListResourcesResultSchema, options);
+  }
+  async listResourceTemplates(params, options) {
+    return this.request({ method: "resources/templates/list", params }, ListResourceTemplatesResultSchema, options);
+  }
+  async readResource(params, options) {
+    return this.request({ method: "resources/read", params }, ReadResourceResultSchema, options);
+  }
+  async subscribeResource(params, options) {
+    return this.request({ method: "resources/subscribe", params }, EmptyResultSchema, options);
+  }
+  async unsubscribeResource(params, options) {
+    return this.request({ method: "resources/unsubscribe", params }, EmptyResultSchema, options);
+  }
+  async callTool(params, resultSchema = CallToolResultSchema, options) {
+    if (this.isToolTaskRequired(params.name))
+      throw new McpError(ErrorCode.InvalidRequest, `Tool "${params.name}" requires task-based execution. Use client.experimental.tasks.callToolStream() instead.`);
+    let result = await this.request({ method: "tools/call", params }, resultSchema, options), validator = this.getToolOutputValidator(params.name);
+    if (validator) {
+      if (!result.structuredContent && !result.isError)
+        throw new McpError(ErrorCode.InvalidRequest, `Tool ${params.name} has an output schema but did not return structured content`);
+      if (result.structuredContent)
+        try {
+          let validationResult = validator(result.structuredContent);
+          if (!validationResult.valid)
+            throw new McpError(ErrorCode.InvalidParams, `Structured content does not match the tool's output schema: ${validationResult.errorMessage}`);
+        } catch (error48) {
+          if (error48 instanceof McpError)
+            throw error48;
+          throw new McpError(ErrorCode.InvalidParams, `Failed to validate structured content: ${error48 instanceof Error ? error48.message : String(error48)}`);
+        }
+    }
+    return result;
+  }
+  isToolTask(toolName) {
+    if (!this._serverCapabilities?.tasks?.requests?.tools?.call)
+      return !1;
+    return this._cachedKnownTaskTools.has(toolName);
+  }
+  isToolTaskRequired(toolName) {
+    return this._cachedRequiredTaskTools.has(toolName);
+  }
+  cacheToolMetadata(tools) {
+    this._cachedToolOutputValidators.clear(), this._cachedKnownTaskTools.clear(), this._cachedRequiredTaskTools.clear();
+    for (let tool of tools) {
+      if (tool.outputSchema) {
+        let toolValidator = this._jsonSchemaValidator.getValidator(tool.outputSchema);
+        this._cachedToolOutputValidators.set(tool.name, toolValidator);
+      }
+      let taskSupport = tool.execution?.taskSupport;
+      if (taskSupport === "required" || taskSupport === "optional")
+        this._cachedKnownTaskTools.add(tool.name);
+      if (taskSupport === "required")
+        this._cachedRequiredTaskTools.add(tool.name);
+    }
+  }
+  getToolOutputValidator(toolName) {
+    return this._cachedToolOutputValidators.get(toolName);
+  }
+  async listTools(params, options) {
+    let result = await this.request({ method: "tools/list", params }, ListToolsResultSchema, options);
+    return this.cacheToolMetadata(result.tools), result;
+  }
+  _setupListChangedHandler(listType, notificationSchema, options, fetcher) {
+    let parseResult = ListChangedOptionsBaseSchema.safeParse(options);
+    if (!parseResult.success)
+      throw Error(`Invalid ${listType} listChanged options: ${parseResult.error.message}`);
+    if (typeof options.onChanged !== "function")
+      throw Error(`Invalid ${listType} listChanged options: onChanged must be a function`);
+    let { autoRefresh, debounceMs } = parseResult.data, { onChanged } = options, refresh = async () => {
+      if (!autoRefresh) {
+        onChanged(null, null);
+        return;
+      }
+      try {
+        let items = await fetcher();
+        onChanged(null, items);
+      } catch (e) {
+        let error48 = e instanceof Error ? e : Error(String(e));
+        onChanged(error48, null);
+      }
+    }, handler = () => {
+      if (debounceMs) {
+        let existingTimer = this._listChangedDebounceTimers.get(listType);
+        if (existingTimer)
+          clearTimeout(existingTimer);
+        let timer = setTimeout(refresh, debounceMs);
+        this._listChangedDebounceTimers.set(listType, timer);
+      } else
+        refresh();
+    };
+    this.setNotificationHandler(notificationSchema, handler);
+  }
+  async sendRootsListChanged() {
+    return this.notification({ method: "notifications/roots/list_changed" });
+  }
+}
+
+// project-path.ts
+function createProjectPathManager({
+  projectPath,
+  defaultProjectPathKey = "projectPath",
+  forceInject = !1
+}) {
+  let projectPathKey = null, hasSeenToolsList = !1, hasProjectPathTools = !1, toolProjectPathKeyByName = /* @__PURE__ */ new Map;
+  function normalizeProjectPathArgs(args, desiredKey) {
+    if (!desiredKey)
+      return;
+    let hasSnake = Object.prototype.hasOwnProperty.call(args, "project_path"), hasCamel = Object.prototype.hasOwnProperty.call(args, "projectPath");
+    if (desiredKey === "projectPath") {
+      if (hasSnake)
+        delete args.project_path;
+      args.projectPath = projectPath;
+      return;
+    }
+    if (desiredKey === "project_path") {
+      if (hasCamel)
+        delete args.projectPath;
+      args.project_path = projectPath;
+    }
+  }
+  function shouldInjectProjectPath(toolName) {
+    if (forceInject)
+      return !0;
+    if (!hasSeenToolsList)
+      return !0;
+    if (!hasProjectPathTools)
+      return !1;
+    if (!toolName)
+      return !0;
+    return toolProjectPathKeyByName.has(toolName);
+  }
+  function chooseProjectPathKey(toolName) {
+    if (toolName) {
+      let key = toolProjectPathKeyByName.get(toolName);
+      if (key)
+        return key;
+    }
+    return projectPathKey || defaultProjectPathKey;
+  }
+  function injectProjectPathArgs(toolName, args) {
+    if (!args || typeof args !== "object")
+      return;
+    if (shouldInjectProjectPath(toolName))
+      normalizeProjectPathArgs(args, chooseProjectPathKey(toolName));
+  }
+  function updateProjectPathKeys(tools) {
+    if (!Array.isArray(tools))
+      return;
+    let hasSnake = !1, hasCamel = !1;
+    toolProjectPathKeyByName.clear();
+    for (let tool of tools) {
+      let props = tool?.inputSchema?.properties;
+      if (!props || typeof props !== "object")
+        continue;
+      if (Object.prototype.hasOwnProperty.call(props, "project_path")) {
+        if (hasSnake = !0, typeof tool.name === "string")
+          toolProjectPathKeyByName.set(tool.name, "project_path");
+        continue;
+      }
+      if (Object.prototype.hasOwnProperty.call(props, "projectPath")) {
+        if (hasCamel = !0, typeof tool.name === "string")
+          toolProjectPathKeyByName.set(tool.name, "projectPath");
+      }
+    }
+    if (hasSeenToolsList = !0, hasProjectPathTools = toolProjectPathKeyByName.size > 0, hasSnake)
+      projectPathKey = "project_path";
+    else if (hasCamel)
+      projectPathKey = "projectPath";
+    else
+      projectPathKey = null;
+  }
+  function stripProjectPathFromTools(tools) {
+    if (!Array.isArray(tools))
+      return;
+    for (let tool of tools) {
+      let schema = tool?.inputSchema;
+      if (!schema || schema.type !== "object")
+        continue;
+      let props = schema.properties;
+      if (!props || typeof props !== "object")
+        continue;
+      let removedKeys = [];
+      if (Object.prototype.hasOwnProperty.call(props, "project_path"))
+        delete props.project_path, removedKeys.push("project_path");
+      if (Object.prototype.hasOwnProperty.call(props, "projectPath"))
+        delete props.projectPath, removedKeys.push("projectPath");
+      if (removedKeys.length > 0 && Array.isArray(schema.required))
+        schema.required = schema.required.filter((name) => !removedKeys.includes(name));
     }
   }
   return {
-    raw,
-    full: full ?? void 0,
-    build: build ?? void 0
+    injectProjectPathArgs,
+    stripProjectPathFromTools,
+    updateProjectPathKeys
   };
-}
-function parseVersionSpec(version2) {
-  let snapshotMatch = version2.match(SNAPSHOT_BUILD_RE);
-  if (snapshotMatch) {
-    let train = Number.parseInt(snapshotMatch[1], 10);
-    if (!Number.isNaN(train))
-      return { parts: [train], kind: "build" };
-  }
-  let match = version2.match(ANY_VERSION_RE);
-  if (!match)
-    return null;
-  let parts = parseVersionParts(match[0]);
-  if (!parts)
-    return null;
-  let kind = parts[0] >= 1000 ? "full" : "build";
-  return { parts, kind };
-}
-function extractVersionParts(raw, regex) {
-  let match = raw.match(regex);
-  if (!match)
-    return null;
-  return parseVersionParts(match[0]);
-}
-function parseVersionParts(value) {
-  let parts = value.split(".").map((part) => Number.parseInt(part, 10));
-  if (parts.some((part) => Number.isNaN(part)))
-    return null;
-  return parts;
-}
-function deriveBuildFromFull(full) {
-  if (!full || full.length < 2)
-    return null;
-  let year = full[0], minor = full[1];
-  if (!Number.isFinite(year) || !Number.isFinite(minor))
-    return null;
-  if (year < 2000 || year > 2100)
-    return null;
-  return [(year - 2000) * 10 + minor];
-}
-function compareVersionParts(left, right) {
-  let maxLength = Math.max(left.length, right.length);
-  for (let i = 0;i < maxLength; i += 1) {
-    let leftValue = left[i] ?? 0, rightValue = right[i] ?? 0;
-    if (leftValue !== rightValue)
-      return leftValue - rightValue;
-  }
-  return 0;
 }
 
 // proxy-tools/handlers/apply-patch.ts
@@ -23023,38 +22978,6 @@ function findSequence(haystack, needle, startIndex = 0, preferEnd = !1) {
   return searchWith((a, b) => normalizeForMatch(a) === normalizeForMatch(b));
 }
 
-// proxy-tools/handlers/edit.ts
-import path4 from "path";
-async function handleEditTool(args, projectPath, callUpstreamTool) {
-  let filePath = requireString(args.file_path, "file_path"), oldString = normalizeLineEndings(requireString(args.old_string, "old_string")), newString = typeof args.new_string === "string" ? normalizeLineEndings(args.new_string) : null;
-  if (newString === null)
-    throw Error("new_string must be a string");
-  if (oldString === newString)
-    throw Error("old_string and new_string must differ");
-  let replaceAllFlag = Boolean(args.replace_all ?? !1), { relative } = resolvePathInProject(projectPath, filePath, "file_path"), originalRaw = await readFileText(relative, { truncateMode: "NONE" }, callUpstreamTool);
-  if (isTruncatedText(originalRaw))
-    throw Error("file content truncated while reading");
-  let original = normalizeLineEndings(originalRaw), updated;
-  if (replaceAllFlag) {
-    let parts = original.split(oldString);
-    if (parts.length === 1)
-      throw Error("old_string not found");
-    updated = parts.join(newString);
-  } else {
-    let firstIndex = original.indexOf(oldString);
-    if (firstIndex === -1)
-      throw Error("old_string not found");
-    if (original.indexOf(oldString, firstIndex + oldString.length) !== -1)
-      throw Error("old_string must be unique or replace_all must be true");
-    updated = `${original.slice(0, firstIndex)}${newString}${original.slice(firstIndex + oldString.length)}`;
-  }
-  return await callUpstreamTool("create_new_file", {
-    pathInProject: relative,
-    text: updated,
-    overwrite: !0
-  }), `Updated ${path4.resolve(projectPath, relative)}`;
-}
-
 // proxy-tools/handlers/list-dir.ts
 var DEFAULT_OFFSET = 1, DEFAULT_LIMIT = 25, DEFAULT_DEPTH = 2, BRANCH_MARKER = "\u251C\u2500\u2500 ", LAST_MARKER = "\u2514\u2500\u2500 ", MARKER_LENGTH = BRANCH_MARKER.length;
 async function handleListDirTool(args, projectPath, callUpstreamTool) {
@@ -23489,7 +23412,7 @@ function isTruncationError(error48) {
 }
 
 // proxy-tools/handlers/rename.ts
-import path5 from "path";
+import path4 from "path";
 async function handleRenameTool(args, projectPath, callUpstreamTool) {
   let toolArgs = args ?? {}, filePath = requireString(toolArgs.pathInProject, "pathInProject"), symbolName = requireString(toolArgs.symbolName, "symbolName"), newName = requireString(toolArgs.newName, "newName"), { relative } = resolvePathInProject(projectPath, filePath, "pathInProject"), result = await callUpstreamTool("rename_refactoring", {
     pathInProject: relative,
@@ -23498,11 +23421,114 @@ async function handleRenameTool(args, projectPath, callUpstreamTool) {
   }), message = extractTextFromResult(result);
   if (message)
     return message;
-  return `Renamed ${symbolName} to ${newName} in ${path5.resolve(projectPath, relative)}`;
+  return `Renamed ${symbolName} to ${newName} in ${path4.resolve(projectPath, relative)}`;
+}
+
+// workarounds.ts
+var FULL_VERSION_RE = /\b\d{4}\.\d+(?:\.\d+){0,2}\b/, BUILD_VERSION_RE = /\b\d{3}\.\d+(?:\.\d+)?\b/, SNAPSHOT_BUILD_RE = /\b(\d{3})\.SNAPSHOT\b/i, SNAPSHOT_BUILD_PART = Number.MAX_SAFE_INTEGER, ANY_VERSION_RE = /\d+(?:\.\d+)+/;
+var WORKAROUND_FIXED_IN = {
+  ["search_in_files_by_regex_directory_scope_ignored" /* SearchInFilesByRegexDirectoryScopeIgnored */]: "261.20247"
+};
+function shouldApplyWorkaround(key, rawVersion) {
+  if (isWorkaroundDisabled(key))
+    return logDebug(`Workaround ${key} not used (disabled by env)`), !1;
+  let fixedInRaw = (WORKAROUND_FIXED_IN[key] ?? "").trim();
+  if (!fixedInRaw)
+    return !0;
+  if (!rawVersion)
+    return !0;
+  let ideVersion = parseIdeVersion(rawVersion), fixedSpec = parseVersionSpec(fixedInRaw);
+  if (!fixedSpec)
+    return !0;
+  let currentParts = fixedSpec.kind === "build" ? ideVersion.build ?? deriveBuildFromFull(ideVersion.full) : ideVersion.full;
+  if (!currentParts)
+    return !0;
+  if (compareVersionParts(currentParts, fixedSpec.parts) >= 0)
+    return logDebug(`Workaround ${key} not used; fixed in ${fixedInRaw}, ide ${ideVersion.raw}`), !1;
+  return !0;
+}
+function isWorkaroundDisabled(key) {
+  let disabledAll = process.env.JETBRAINS_MCP_PROXY_DISABLE_WORKAROUNDS;
+  if (disabledAll && disabledAll !== "false" && disabledAll !== "0")
+    return !0;
+  let disabledKeys = process.env.JETBRAINS_MCP_PROXY_DISABLE_WORKAROUND_KEYS;
+  if (!disabledKeys)
+    return !1;
+  return disabledKeys.split(",").map((entry) => entry.trim()).filter((entry) => entry.length > 0).includes(key);
+}
+function logDebug(message) {
+  let enabled = process.env.JETBRAINS_MCP_PROXY_WORKAROUND_DEBUG;
+  if (!enabled || enabled === "0" || enabled === "false")
+    return;
+  process.stderr.write(`[ij-mcp-proxy] ${message}
+`);
+}
+function parseIdeVersion(raw) {
+  let full = extractVersionParts(raw, FULL_VERSION_RE), build = extractVersionParts(raw, BUILD_VERSION_RE);
+  if (!build) {
+    let snapshotMatch = raw.match(SNAPSHOT_BUILD_RE);
+    if (snapshotMatch) {
+      let train = Number.parseInt(snapshotMatch[1], 10);
+      if (!Number.isNaN(train))
+        build = [train, SNAPSHOT_BUILD_PART];
+    }
+  }
+  return {
+    raw,
+    full: full ?? void 0,
+    build: build ?? void 0
+  };
+}
+function parseVersionSpec(version2) {
+  let snapshotMatch = version2.match(SNAPSHOT_BUILD_RE);
+  if (snapshotMatch) {
+    let train = Number.parseInt(snapshotMatch[1], 10);
+    if (!Number.isNaN(train))
+      return { parts: [train], kind: "build" };
+  }
+  let match = version2.match(ANY_VERSION_RE);
+  if (!match)
+    return null;
+  let parts = parseVersionParts(match[0]);
+  if (!parts)
+    return null;
+  let kind = parts[0] >= 1000 ? "full" : "build";
+  return { parts, kind };
+}
+function extractVersionParts(raw, regex) {
+  let match = raw.match(regex);
+  if (!match)
+    return null;
+  return parseVersionParts(match[0]);
+}
+function parseVersionParts(value) {
+  let parts = value.split(".").map((part) => Number.parseInt(part, 10));
+  if (parts.some((part) => Number.isNaN(part)))
+    return null;
+  return parts;
+}
+function deriveBuildFromFull(full) {
+  if (!full || full.length < 2)
+    return null;
+  let year = full[0], minor = full[1];
+  if (!Number.isFinite(year) || !Number.isFinite(minor))
+    return null;
+  if (year < 2000 || year > 2100)
+    return null;
+  return [(year - 2000) * 10 + minor];
+}
+function compareVersionParts(left, right) {
+  let maxLength = Math.max(left.length, right.length);
+  for (let i = 0;i < maxLength; i += 1) {
+    let leftValue = left[i] ?? 0, rightValue = right[i] ?? 0;
+    if (leftValue !== rightValue)
+      return leftValue - rightValue;
+  }
+  return 0;
 }
 
 // proxy-tools/handlers/search-shared.ts
-import path6 from "path";
+import path5 from "path";
 
 // proxy-tools/handlers/search-constants.ts
 var DEFAULT_MAX_RESULTS = 1000, MAX_RESULTS_UPPER_BOUND = 5000, SEARCH_SCOPE_MULTIPLIER = 5;
@@ -23589,13 +23615,13 @@ function resolveMoreFlag(result, itemCount, maxResults) {
 function normalizeProjectRelativePath(projectPath, filePath) {
   if (!filePath)
     return "";
-  if (path6.isAbsolute(filePath)) {
-    let relative = path6.relative(projectPath, filePath);
-    if (!relative.startsWith("..") && !path6.isAbsolute(relative))
+  if (path5.isAbsolute(filePath)) {
+    let relative = path5.relative(projectPath, filePath);
+    if (!relative.startsWith("..") && !path5.isAbsolute(relative))
       return toPosixPath(relative);
-    return path6.normalize(filePath);
+    return path5.normalize(filePath);
   }
-  return toPosixPath(path6.normalize(filePath));
+  return toPosixPath(path5.normalize(filePath));
 }
 function toPosixPath(value) {
   return value.replace(/\\/g, "/");
@@ -23603,7 +23629,7 @@ function toPosixPath(value) {
 
 // proxy-tools/handlers/search-scope.ts
 var import_picomatch = __toESM(require_picomatch2(), 1);
-import path7 from "path";
+import path6 from "path";
 import { statSync } from "fs";
 function buildPathScope(projectPath, rawPaths) {
   if (rawPaths === void 0 || rawPaths === null)
@@ -23660,7 +23686,7 @@ function resolveSearchRoot(projectPath, scope, globPattern) {
   for (let candidate of candidates) {
     if (!candidate)
       continue;
-    let absolute = path7.resolve(projectPath, candidate);
+    let absolute = path6.resolve(projectPath, candidate);
     if (isDirectory(absolute))
       return candidate;
   }
@@ -23675,7 +23701,7 @@ function filterEntriesByScope(entries, projectPath, scope) {
   });
 }
 function filterEntriesByDirectory(entries, projectPath, directoryToSearch) {
-  let absoluteDir = path7.resolve(projectPath, directoryToSearch);
+  let absoluteDir = path6.resolve(projectPath, directoryToSearch);
   return entries.filter((entry) => {
     let absolutePath = resolveAbsolutePath(projectPath, entry.filePath);
     return absolutePath ? isWithinDirectory(absolutePath, absoluteDir) : !1;
@@ -23712,10 +23738,10 @@ function normalizePathPattern(pattern, projectPath, originalPattern) {
       throw Error(`Specified path '${originalPattern}' points outside the project directory`);
     return pattern;
   }
-  let absolutePrefix = path7.isAbsolute(prefixTrimmed) ? path7.normalize(prefixTrimmed) : path7.resolve(projectPath, prefixTrimmed);
+  let absolutePrefix = path6.isAbsolute(prefixTrimmed) ? path6.normalize(prefixTrimmed) : path6.resolve(projectPath, prefixTrimmed);
   if (!isWithinProject(projectPath, absolutePrefix))
     throw Error(`Specified path '${originalPattern}' points outside the project directory`);
-  let relativePrefix = toPosixPath2(path7.relative(projectPath, absolutePrefix)), suffix = pattern.slice(prefix.length).replace(/^\/+/, "");
+  let relativePrefix = toPosixPath2(path6.relative(projectPath, absolutePrefix)), suffix = pattern.slice(prefix.length).replace(/^\/+/, "");
   if (relativePrefix === "")
     return suffix;
   if (suffix === "")
@@ -23750,7 +23776,7 @@ function computeCommonDirectory(patterns) {
   }
   if (common.length === 0)
     return null;
-  return path7.normalize(common.join("/"));
+  return path6.normalize(common.join("/"));
 }
 function extractDirectoryPrefix(pattern) {
   let globIndex = indexOfGlobChar(pattern), trimmed = (globIndex < 0 ? pattern : pattern.slice(0, globIndex)).replace(/\/+$/, "");
@@ -23766,7 +23792,7 @@ function extractDirectoryPrefix(pattern) {
   return trimmed;
 }
 function createMatcher(pattern) {
-  let nocase = path7.sep === "\\", matcher = import_picomatch.default(pattern, { dot: !0, nocase });
+  let nocase = path6.sep === "\\", matcher = import_picomatch.default(pattern, { dot: !0, nocase });
   return (candidate) => matcher(candidate);
 }
 function isDirectory(candidatePath) {
@@ -23780,8 +23806,8 @@ function resolveRelativePath(projectPath, filePath) {
   let absolute = resolveAbsolutePath(projectPath, filePath);
   if (!absolute)
     return null;
-  let relative = path7.relative(projectPath, absolute);
-  if (relative.startsWith("..") || path7.isAbsolute(relative))
+  let relative = path6.relative(projectPath, absolute);
+  if (relative.startsWith("..") || path6.isAbsolute(relative))
     return null;
   return toPosixPath2(relative);
 }
@@ -23789,7 +23815,7 @@ function resolveAbsolutePath(projectPath, filePath) {
   let resolved = normalizeEntryPath(projectPath, filePath);
   if (typeof resolved !== "string" || resolved === "")
     return null;
-  return path7.normalize(resolved);
+  return path6.normalize(resolved);
 }
 function matchesScope(scope, relativePosix) {
   if (!scope.includeMatchers.some((matcher) => matcher(relativePosix)))
@@ -23797,12 +23823,12 @@ function matchesScope(scope, relativePosix) {
   return scope.excludeMatchers.every((matcher) => !matcher(relativePosix));
 }
 function isWithinProject(projectPath, candidatePath) {
-  let relative = path7.relative(projectPath, candidatePath);
-  return relative === "" || !relative.startsWith("..") && !path7.isAbsolute(relative);
+  let relative = path6.relative(projectPath, candidatePath);
+  return relative === "" || !relative.startsWith("..") && !path6.isAbsolute(relative);
 }
 function isWithinDirectory(filePath, directoryPath) {
-  let relative = path7.relative(directoryPath, filePath);
-  return relative === "" || !relative.startsWith("..") && !path7.isAbsolute(relative);
+  let relative = path6.relative(directoryPath, filePath);
+  return relative === "" || !relative.startsWith("..") && !path6.isAbsolute(relative);
 }
 function toPosixPath2(value) {
   return value.replace(/\\/g, "/");
@@ -23823,7 +23849,7 @@ async function handleSearchTextTool(args, projectPath, callUpstreamTool, capabil
     throw Error("text search is not supported by this IDE version");
   return await searchTextLegacy(query, scope, limit, projectPath, callUpstreamTool);
 }
-async function handleSearchRegexTool(args, projectPath, callUpstreamTool, capabilities) {
+async function handleSearchRegexTool(args, projectPath, callUpstreamTool, capabilities, shouldApplyWorkaround2 = () => !0) {
   let query = requireString(args.q, "q").trim(), limit = normalizeLimit(args.limit), { scope, normalizedPaths } = buildPathScope(projectPath, args.paths);
   if (capabilities.hasSearchRegex) {
     let result = await callUpstreamTool("search_regex", {
@@ -23835,7 +23861,7 @@ async function handleSearchRegexTool(args, projectPath, callUpstreamTool, capabi
   }
   if (!capabilities.supportsRegex)
     throw Error("regex search is not supported by this IDE version");
-  return await searchRegexLegacy(query, scope, limit, projectPath, callUpstreamTool);
+  return await searchRegexLegacy(query, scope, limit, projectPath, callUpstreamTool, shouldApplyWorkaround2);
 }
 async function searchTextLegacy(query, scope, limit, projectPath, callUpstreamTool) {
   let requestLimit = expandLimit(limit, scope), directoryToSearch = resolveSearchRoot(projectPath, scope, null), { entries, probablyHasMoreMatchingEntries, timedOut } = await searchInFiles({
@@ -23846,14 +23872,14 @@ async function searchTextLegacy(query, scope, limit, projectPath, callUpstreamTo
   }, callUpstreamTool), filtered = scope ? filterEntriesByScope(entries, projectPath, scope) : entries, items = normalizeItemsFromEntries(filtered, projectPath, limit, !0), more = timedOut || probablyHasMoreMatchingEntries || filtered.length > limit;
   return serializeSearchResult({ items, more });
 }
-async function searchRegexLegacy(query, scope, limit, projectPath, callUpstreamTool) {
+async function searchRegexLegacy(query, scope, limit, projectPath, callUpstreamTool, shouldApplyWorkaround2) {
   let requestLimit = expandLimit(limit, scope), directoryToSearch = resolveSearchRoot(projectPath, scope, null), { entries, probablyHasMoreMatchingEntries, timedOut } = await searchInFiles({
     regexPattern: query,
     directoryToSearch: directoryToSearch ?? void 0,
     caseSensitive: !0,
     maxUsageCount: requestLimit
   }, callUpstreamTool), filtered = entries;
-  if (directoryToSearch && shouldApplyWorkaround("search_in_files_by_regex_directory_scope_ignored" /* SearchInFilesByRegexDirectoryScopeIgnored */))
+  if (directoryToSearch && shouldApplyWorkaround2("search_in_files_by_regex_directory_scope_ignored" /* SearchInFilesByRegexDirectoryScopeIgnored */))
     filtered = filterEntriesByDirectory(filtered, projectPath, directoryToSearch);
   if (scope)
     filtered = filterEntriesByScope(filtered, projectPath, scope);
@@ -23918,18 +23944,317 @@ async function handleSearchSymbolTool(args, projectPath, callUpstreamTool, capab
   }
   throw Error("symbol search is not supported by this IDE version");
 }
-// proxy-tools/handlers/write.ts
+// proxy-tools/container-handlers.ts
 import path8 from "path";
-async function handleWriteTool(args, projectPath, callUpstreamTool) {
-  let filePath = requireString(args.file_path, "file_path"), content = typeof args.content === "string" ? args.content : null;
-  if (content === null)
-    throw Error("content must be a string");
-  let { relative } = resolvePathInProject(projectPath, filePath, "file_path"), normalizedContent = normalizeLineEndings(content);
-  return await callUpstreamTool("create_new_file", {
-    pathInProject: relative,
-    text: normalizedContent,
-    overwrite: !0
-  }), `Wrote ${path8.resolve(projectPath, relative)}`;
+
+// container-session.ts
+import { readFileSync } from "fs";
+import path7 from "path";
+import { cwd, env } from "process";
+import { fileURLToPath } from "url";
+var CONTAINER_SESSION_FILE = ".container-sessions.jsonl";
+function scriptDir() {
+  try {
+    return path7.dirname(fileURLToPath(import.meta.url));
+  } catch {
+    return cwd();
+  }
+}
+function detectContainerSession(projectPath) {
+  let currentDir = cwd(), sessionId = env.AGENT_CONTAINER_SESSION_ID, ownDir = scriptDir(), config2 = readSessionFromFile(ownDir, sessionId);
+  if (config2)
+    return config2;
+  if (sessionId) {
+    let workspacePath = env.AGENT_CONTAINER_WORKSPACE_PATH || "/workspace";
+    return { sessionId, workspacePath };
+  }
+  return null;
+}
+function readSessionFromFile(dir, targetSessionId) {
+  let filePath = path7.join(dir, CONTAINER_SESSION_FILE);
+  try {
+    let lines = readFileSync(filePath, "utf-8").split(`
+`).filter((l) => l.trim()), lastConfig = null;
+    for (let line of lines)
+      try {
+        let data = JSON.parse(line);
+        if (typeof data.sessionId !== "string" || !data.sessionId)
+          continue;
+        let config2 = {
+          sessionId: data.sessionId,
+          workspacePath: typeof data.workspacePath === "string" ? data.workspacePath : "/workspace"
+        };
+        if (typeof data.mcpStreamUrl === "string")
+          config2.mcpStreamUrl = data.mcpStreamUrl;
+        if (typeof data.projectPath === "string")
+          config2.projectPath = data.projectPath.replace(/\\/g, "/");
+        if (typeof data.buildCommand === "string")
+          config2.buildCommand = data.buildCommand;
+        if (targetSessionId && data.sessionId === targetSessionId)
+          return config2;
+        lastConfig = config2;
+      } catch {}
+    if (!targetSessionId && lastConfig)
+      return lastConfig;
+  } catch {}
+  return null;
+}
+function toContainerPath(workspacePath, relativePath) {
+  if (relativePath.startsWith("/"))
+    return relativePath;
+  return `${workspacePath}/${relativePath}`;
+}
+
+// proxy-tools/container-handlers.ts
+function toPosix(p) {
+  return p.replace(/\\/g, "/");
+}
+function resolveContainerFilePath(filePath, session, projectPath) {
+  let posixFilePath = toPosix(filePath), posixProjectPath = toPosix(projectPath);
+  if (posixFilePath.startsWith(session.workspacePath))
+    return posixFilePath;
+  if (posixFilePath.startsWith(posixProjectPath + "/"))
+    return session.workspacePath + "/" + posixFilePath.substring(posixProjectPath.length + 1);
+  if (posixFilePath === posixProjectPath)
+    return session.workspacePath;
+  if (!path8.isAbsolute(filePath))
+    return toContainerPath(session.workspacePath, posixFilePath);
+  throw Error(`Refusing to resolve absolute path '${filePath}' \u2014 not under session workspace '${session.workspacePath}' or project path '${projectPath}'. In container mode all writes must land inside the overlayfs mount.`);
+}
+function tagContainer(session, text) {
+  return `[container:${session.sessionId}] ${text}`;
+}
+function parseExitCode(text) {
+  let match = text.match(/^exit_code:\s*(\d+)/m);
+  return match ? parseInt(match[1], 10) : null;
+}
+function extractText(result) {
+  if (typeof result === "string")
+    return result;
+  if (result && typeof result === "object") {
+    let r = result;
+    if (typeof r.text === "string")
+      return r.text;
+    if (Array.isArray(r.content)) {
+      for (let item of r.content)
+        if (item && typeof item.text === "string")
+          return item.text;
+    }
+  }
+  return "";
+}
+async function handleContainerReadFile(args, projectPath, callUpstreamTool, session) {
+  let filePath = requireString(args.file_path, "file_path"), containerPath = resolveContainerFilePath(filePath, session, projectPath), result = await callUpstreamTool("container_read_file", {
+    sessionId: session.sessionId,
+    path: containerPath
+  }), text = extractText(result);
+  if (!text)
+    throw Error(`[container:${session.sessionId}] File not found: ${containerPath}`);
+  let lines = text.split(`
+`), offset = typeof args.offset === "number" ? args.offset : 1, limit = typeof args.limit === "number" ? args.limit : lines.length, sliced = lines.slice(offset - 1, offset - 1 + limit), maxLineNo = offset + sliced.length - 1, numWidth = String(maxLineNo).length, numbered = sliced.map((line, i) => {
+    return `${String(offset + i).padStart(numWidth, " ")}	${line}`;
+  }).join(`
+`);
+  return tagContainer(session, numbered);
+}
+async function handleContainerApplyPatch(args, projectPath, callUpstreamTool, session) {
+  if (!projectPath)
+    throw Error(`[container:${session.sessionId}] apply_patch requires a project path. Ensure '.container-sessions.jsonl' includes 'projectPath'.`);
+  let patch = requireString(args.input ?? args.patch, "input");
+  patch = patch.replaceAll(projectPath, session.workspacePath);
+  let posixProjectPath = toPosix(projectPath);
+  if (posixProjectPath !== projectPath)
+    patch = patch.replaceAll(posixProjectPath, session.workspacePath);
+  await callUpstreamTool("container_write_file", {
+    sessionId: session.sessionId,
+    path: `${session.workspacePath}/.agent-patch.diff`,
+    content: patch
+  });
+  let gitResult = extractText(await callUpstreamTool("container_exec", {
+    sessionId: session.sessionId,
+    command: ["bash", "-c", `cd ${session.workspacePath} && git apply .agent-patch.diff 2>&1; EXIT=$?; rm -f .agent-patch.diff; exit $EXIT`]
+  }));
+  if (parseExitCode(gitResult) === 0)
+    return tagContainer(session, "Patch applied successfully.");
+  await callUpstreamTool("container_write_file", {
+    sessionId: session.sessionId,
+    path: `${session.workspacePath}/.agent-patch.diff`,
+    content: patch
+  });
+  let patchResult = extractText(await callUpstreamTool("container_exec", {
+    sessionId: session.sessionId,
+    command: ["bash", "-c", `cd ${session.workspacePath} && patch -p1 --no-backup-if-mismatch < .agent-patch.diff 2>&1; EXIT=$?; rm -f .agent-patch.diff; exit $EXIT`]
+  }));
+  if (parseExitCode(patchResult) === 0)
+    return tagContainer(session, "Patch applied successfully.");
+  if (await callUpstreamTool("container_exec", {
+    sessionId: session.sessionId,
+    command: ["rm", "-f", `${session.workspacePath}/.agent-patch.diff`]
+  }), patch.includes("*** Update File:") || patch.includes("*** Add File:"))
+    return tagContainer(session, await applyPatchByWritingFiles(patch, projectPath, callUpstreamTool, session));
+  if (patch.startsWith("---") || patch.startsWith("diff "))
+    return tagContainer(session, await applyUnifiedDiffDirectly(patch, projectPath, callUpstreamTool, session));
+  throw Error(`[container:${session.sessionId}] Failed to apply patch: ${gitResult}`);
+}
+async function readContainerFile(callUpstreamTool, session, containerPath) {
+  let result = await callUpstreamTool("container_read_file", {
+    sessionId: session.sessionId,
+    path: containerPath
+  });
+  return extractText(result);
+}
+async function writeContainerFile(callUpstreamTool, session, containerPath, content) {
+  await callUpstreamTool("container_write_file", {
+    sessionId: session.sessionId,
+    path: containerPath,
+    content
+  });
+}
+async function applyPatchByWritingFiles(patch, projectPath, callUpstreamTool, session) {
+  let fileBlocks = patch.split(/^\*\*\* (?:Update|Add) File: /m).slice(1);
+  if (fileBlocks.length === 0)
+    throw Error("Failed to apply patch in container (git apply failed and no file blocks found)");
+  let touchedFiles = 0;
+  for (let block of fileBlocks) {
+    let newlineIdx = block.indexOf(`
+`);
+    if (newlineIdx === -1)
+      continue;
+    let filePath = block.substring(0, newlineIdx).trim(), containerPath = resolveContainerFilePath(filePath, session, projectPath), currentContent = await readContainerFile(callUpstreamTool, session, containerPath), newContent = applyHunksToContent(currentContent, block.substring(newlineIdx + 1));
+    await writeContainerFile(callUpstreamTool, session, containerPath, newContent), touchedFiles++;
+  }
+  return `Applied patch to ${touchedFiles} file(s) in container.`;
+}
+async function applyUnifiedDiffDirectly(patch, projectPath, callUpstreamTool, session) {
+  let files = parseUnifiedDiff(patch);
+  if (files.length === 0)
+    throw Error("Failed to apply patch: could not parse unified diff");
+  let touchedFiles = 0;
+  for (let file2 of files) {
+    let containerPath = resolveContainerFilePath(file2.path, session, projectPath), currentContent = await readContainerFile(callUpstreamTool, session, containerPath), newContent = applyUnifiedHunks(currentContent, file2.hunks);
+    await writeContainerFile(callUpstreamTool, session, containerPath, newContent), touchedFiles++;
+  }
+  return `Applied patch to ${touchedFiles} file(s) in container.`;
+}
+function parseUnifiedDiff(patch) {
+  let files = [], lines = patch.split(`
+`), currentFile = null;
+  for (let line of lines)
+    if (line.startsWith("+++ b/") || line.startsWith("+++ "))
+      currentFile = { path: line.replace(/^\+\+\+ [ab]\//, "").replace(/^\+\+\+ /, "").trim(), hunks: [] }, files.push(currentFile);
+    else if (line.startsWith("--- "))
+      ;
+    else if (line.startsWith("diff "))
+      ;
+    else if (currentFile)
+      currentFile.hunks.push(line);
+  return files;
+}
+function applyUnifiedHunks(original, hunkLines) {
+  let origLines = original.split(`
+`), result = [], origIdx = 0, inHunk = !1;
+  for (let line of hunkLines) {
+    if (line.startsWith("@@")) {
+      let match = line.match(/@@ -(\d+)/);
+      if (match) {
+        let startLine = parseInt(match[1], 10) - 1;
+        while (origIdx < startLine && origIdx < origLines.length)
+          result.push(origLines[origIdx]), origIdx++;
+      }
+      inHunk = !0;
+      continue;
+    }
+    if (!inHunk)
+      continue;
+    if (line.startsWith("-"))
+      origIdx++;
+    else if (line.startsWith("+"))
+      result.push(line.substring(1));
+    else
+      result.push(origLines[origIdx] ?? line.substring(1)), origIdx++;
+  }
+  while (origIdx < origLines.length)
+    result.push(origLines[origIdx]), origIdx++;
+  return result.join(`
+`);
+}
+function applyHunksToContent(original, hunkBlock) {
+  let lines = original.split(`
+`), result = [], hunkLines = hunkBlock.split(`
+`), origIdx = 0, inHunk = !1;
+  for (let hLine of hunkLines) {
+    if (hLine.startsWith("@@") || hLine === "*** End Patch") {
+      inHunk = !0;
+      continue;
+    }
+    if (!inHunk)
+      continue;
+    if (hLine.startsWith("-"))
+      origIdx++;
+    else if (hLine.startsWith("+"))
+      result.push(hLine.substring(1));
+    else if (hLine.startsWith(" "))
+      result.push(lines[origIdx] ?? hLine.substring(1)), origIdx++;
+  }
+  while (origIdx < lines.length)
+    result.push(lines[origIdx]), origIdx++;
+  return result.join(`
+`);
+}
+function resolveSearchPath(args, session, projectPath) {
+  let rawPath = typeof args.searchPath === "string" ? args.searchPath : typeof args.path === "string" ? args.path : void 0;
+  if (!rawPath)
+    return session.workspacePath;
+  return resolveContainerFilePath(rawPath, session, projectPath);
+}
+async function handleContainerSearchText(args, projectPath, callUpstreamTool, session) {
+  let query = requireString(args.q ?? args.query, "q"), limit = typeof args.limit === "number" ? args.limit : 50, searchPath = resolveSearchPath(args, session, projectPath);
+  return tagContainer(session, extractText(await callUpstreamTool("container_search_text", {
+    sessionId: session.sessionId,
+    q: query,
+    searchPath,
+    limit
+  })));
+}
+async function handleContainerSearchRegex(args, projectPath, callUpstreamTool, session) {
+  let pattern = requireString(args.pattern ?? args.q, "pattern"), limit = typeof args.limit === "number" ? args.limit : 50, searchPath = resolveSearchPath(args, session, projectPath);
+  return tagContainer(session, extractText(await callUpstreamTool("container_search_regex", {
+    sessionId: session.sessionId,
+    pattern,
+    searchPath,
+    limit
+  })));
+}
+async function handleContainerSearchFile(args, projectPath, callUpstreamTool, session) {
+  let pattern = requireString(args.pattern ?? args.glob, "pattern"), limit = typeof args.limit === "number" ? args.limit : 100, searchPath = resolveSearchPath(args, session, projectPath);
+  return tagContainer(session, extractText(await callUpstreamTool("container_search_file", {
+    sessionId: session.sessionId,
+    pattern,
+    searchPath,
+    limit
+  })));
+}
+async function handleContainerListDir(args, projectPath, callUpstreamTool, session) {
+  let dirPath = typeof args.dir_path === "string" ? args.dir_path : typeof args.path === "string" ? args.path : ".", containerPath = resolveContainerFilePath(dirPath, session, projectPath);
+  return tagContainer(session, extractText(await callUpstreamTool("container_list_dir", {
+    sessionId: session.sessionId,
+    path: containerPath
+  })));
+}
+async function handleContainerBash(args, projectPath, callUpstreamTool, session) {
+  let command = requireString(args.command, "command");
+  if (projectPath) {
+    command = command.replaceAll(projectPath, session.workspacePath);
+    let posixProjectPath = toPosix(projectPath);
+    if (posixProjectPath !== projectPath)
+      command = command.replaceAll(posixProjectPath, session.workspacePath);
+  }
+  let timeoutMs = typeof args.timeout === "number" ? args.timeout * 1000 : 900000, result = extractText(await callUpstreamTool("container_exec", {
+    sessionId: session.sessionId,
+    command: ["bash", "-c", `cd '${session.workspacePath}' && ${command}`],
+    timeoutMs
+  }));
+  return tagContainer(session, result);
 }
 
 // proxy-tools/schemas.ts
@@ -23983,38 +24308,6 @@ function createReadSchema(includeIndentation) {
       }
     }, []);
   return objectSchema(properties, ["file_path"]);
-}
-function createWriteSchema() {
-  return objectSchema({
-    file_path: {
-      type: "string",
-      description: "Absolute or project-relative path to the file."
-    },
-    content: {
-      type: "string",
-      description: "The contents to write to the file."
-    }
-  }, ["file_path", "content"]);
-}
-function createEditSchema() {
-  return objectSchema({
-    file_path: {
-      type: "string",
-      description: "Absolute or project-relative path to the file."
-    },
-    old_string: {
-      type: "string",
-      description: "Text to replace."
-    },
-    new_string: {
-      type: "string",
-      description: "Replacement text."
-    },
-    replace_all: {
-      type: "boolean",
-      description: "When true, replace all occurrences. Otherwise replace only the first."
-    }
-  }, ["file_path", "old_string", "new_string"]);
 }
 function createListDirSchema() {
   return objectSchema({
@@ -24100,17 +24393,15 @@ function createRenameSchema() {
 }
 
 // proxy-tools/registry.ts
-var TOOL_MODES = {
-  CODEX: "codex",
-  CC: "cc"
-}, BLOCKED_TOOL_NAMES = /* @__PURE__ */ new Set(["create_new_file", "execute_terminal_command"]), EXTRA_REPLACED_TOOL_NAMES = [
+var BLOCKED_TOOL_NAMES = /* @__PURE__ */ new Set(["create_new_file", "execute_terminal_command"]), EXTRA_REPLACED_TOOL_NAMES = [
   "search_in_files_by_text",
   "search_in_files_by_regex",
   "find_files_by_glob",
   "find_files_by_name_keyword",
+  "replace_text_in_file",
   "search",
   "execute_terminal_command"
-], RENAME_TOOL_DESCRIPTION = "Rename a symbol (class/function/variable/etc.) using IDE refactoring. Updates all references across the project; do not use edit/apply_patch for renames.";
+], RENAME_TOOL_DESCRIPTION = "Rename a symbol (class/function/variable/etc.) using IDE refactoring. Updates all references across the project; do not use edit/apply_patch for renames.", READ_ONLY_TOOL_ANNOTATIONS = { readOnlyHint: !0, openWorldHint: !1 };
 function resolveToolDescription(description, context) {
   return typeof description === "function" ? description(context) : description;
 }
@@ -24121,137 +24412,101 @@ function resolveToolExpose(expose, context) {
     return expose(context);
   return expose !== !1;
 }
-function buildToolSpec(name, description, inputSchema, context) {
+function buildToolSpec(name, description, inputSchema, annotations, context) {
   return {
     name,
     description: resolveToolDescription(description, context),
-    inputSchema
+    inputSchema,
+    ...annotations ? { annotations } : {}
   };
 }
 var TOOL_VARIANTS = [
   {
-    mode: TOOL_MODES.CODEX,
     name: "read_file",
-    description: "Reads a local file with 1-indexed line numbers, supporting slice and indentation-aware block modes.",
+    description: "Reads a local file and returns numbered lines (1-indexed) as text. Supports slice, lines, line_columns, offsets, and indentation modes.",
     schemaFactory: () => createReadSchema(!0),
-    handlerFactory: ({ projectPath, callUpstreamTool, readCapabilities }) => (args) => handleReadTool(args, projectPath, callUpstreamTool, readCapabilities, { format: "numbered" }),
+    handlerFactory: ({ projectPath, callUpstreamTool, callUpstreamToolRaw, readCapabilities, containerSession }) => {
+      if (containerSession)
+        return (args) => handleContainerReadFile(args, projectPath, callUpstreamToolRaw, containerSession);
+      return (args) => handleReadTool(args, projectPath, callUpstreamTool, readCapabilities, { format: "numbered" });
+    },
+    annotations: READ_ONLY_TOOL_ANNOTATIONS,
     upstreamNames: ["get_file_text_by_path"],
-    expose: ({ readCapabilities }) => !readCapabilities.hasReadFile
+    expose: ({ readCapabilities, containerSession }) => containerSession != null || !readCapabilities.hasReadFile
   },
   {
-    mode: TOOL_MODES.CC,
-    name: "read",
-    description: "Read a local file using absolute or project-relative paths. Returns raw text.",
-    schemaFactory: () => createReadSchema(!1),
-    handlerFactory: ({ projectPath, callUpstreamTool, readCapabilities }) => (args) => handleReadTool(args, projectPath, callUpstreamTool, readCapabilities, { format: "raw" }),
-    upstreamNames: ["get_file_text_by_path"]
-  },
-  {
-    mode: TOOL_MODES.CODEX,
     name: "search_text",
     description: "Search for a text substring in project files.",
     schemaFactory: () => createSearchTextSchema(),
-    handlerFactory: ({ projectPath, callUpstreamTool, searchCapabilities }) => (args) => handleSearchTextTool(args, projectPath, callUpstreamTool, searchCapabilities),
+    handlerFactory: ({ projectPath, callUpstreamTool, callUpstreamToolRaw, searchCapabilities, containerSession }) => {
+      if (containerSession)
+        return (args) => handleContainerSearchText(args, projectPath, callUpstreamToolRaw, containerSession);
+      return (args) => handleSearchTextTool(args, projectPath, callUpstreamTool, searchCapabilities);
+    },
+    annotations: READ_ONLY_TOOL_ANNOTATIONS,
     upstreamNames: ["search_text"],
-    expose: ({ searchCapabilities }) => !searchCapabilities.hasSearchText && searchCapabilities.supportsText
+    expose: ({ searchCapabilities, containerSession }) => containerSession != null || !searchCapabilities.hasSearchText && searchCapabilities.supportsText
   },
   {
-    mode: TOOL_MODES.CC,
-    name: "search_text",
-    description: "Search for a text substring in project files.",
-    schemaFactory: () => createSearchTextSchema(),
-    handlerFactory: ({ projectPath, callUpstreamTool, searchCapabilities }) => (args) => handleSearchTextTool(args, projectPath, callUpstreamTool, searchCapabilities),
-    upstreamNames: ["search_text"],
-    expose: ({ searchCapabilities }) => !searchCapabilities.hasSearchText && searchCapabilities.supportsText
-  },
-  {
-    mode: TOOL_MODES.CODEX,
     name: "search_regex",
     description: "Search for a regular expression in project files.",
     schemaFactory: () => createSearchRegexSchema(),
-    handlerFactory: ({ projectPath, callUpstreamTool, searchCapabilities }) => (args) => handleSearchRegexTool(args, projectPath, callUpstreamTool, searchCapabilities),
+    handlerFactory: ({ projectPath, callUpstreamTool, callUpstreamToolRaw, searchCapabilities, shouldApplyWorkaround: shouldApplyWorkaround2, containerSession }) => {
+      if (containerSession)
+        return (args) => handleContainerSearchRegex(args, projectPath, callUpstreamToolRaw, containerSession);
+      return (args) => handleSearchRegexTool(args, projectPath, callUpstreamTool, searchCapabilities, shouldApplyWorkaround2);
+    },
+    annotations: READ_ONLY_TOOL_ANNOTATIONS,
     upstreamNames: ["search_regex"],
-    expose: ({ searchCapabilities }) => !searchCapabilities.hasSearchRegex && searchCapabilities.supportsRegex
+    expose: ({ searchCapabilities, containerSession }) => containerSession != null || !searchCapabilities.hasSearchRegex && searchCapabilities.supportsRegex
   },
   {
-    mode: TOOL_MODES.CC,
-    name: "search_regex",
-    description: "Search for a regular expression in project files.",
-    schemaFactory: () => createSearchRegexSchema(),
-    handlerFactory: ({ projectPath, callUpstreamTool, searchCapabilities }) => (args) => handleSearchRegexTool(args, projectPath, callUpstreamTool, searchCapabilities),
-    upstreamNames: ["search_regex"],
-    expose: ({ searchCapabilities }) => !searchCapabilities.hasSearchRegex && searchCapabilities.supportsRegex
-  },
-  {
-    mode: TOOL_MODES.CODEX,
     name: "search_file",
     description: "Search for files using a glob pattern.",
     schemaFactory: () => createSearchFileSchema(),
-    handlerFactory: ({ projectPath, callUpstreamTool, searchCapabilities }) => (args) => handleSearchFileTool(args, projectPath, callUpstreamTool, searchCapabilities),
+    handlerFactory: ({ projectPath, callUpstreamTool, callUpstreamToolRaw, searchCapabilities, containerSession }) => {
+      if (containerSession)
+        return (args) => handleContainerSearchFile(args, projectPath, callUpstreamToolRaw, containerSession);
+      return (args) => handleSearchFileTool(args, projectPath, callUpstreamTool, searchCapabilities);
+    },
+    annotations: READ_ONLY_TOOL_ANNOTATIONS,
     upstreamNames: ["search_file"],
-    expose: ({ searchCapabilities }) => !searchCapabilities.hasSearchFile && searchCapabilities.supportsFile
+    expose: ({ searchCapabilities, containerSession }) => containerSession != null || !searchCapabilities.hasSearchFile && searchCapabilities.supportsFile
   },
   {
-    mode: TOOL_MODES.CC,
-    name: "search_file",
-    description: "Search for files using a glob pattern.",
-    schemaFactory: () => createSearchFileSchema(),
-    handlerFactory: ({ projectPath, callUpstreamTool, searchCapabilities }) => (args) => handleSearchFileTool(args, projectPath, callUpstreamTool, searchCapabilities),
-    upstreamNames: ["search_file"],
-    expose: ({ searchCapabilities }) => !searchCapabilities.hasSearchFile && searchCapabilities.supportsFile
-  },
-  {
-    mode: TOOL_MODES.CODEX,
     name: "search_symbol",
     description: "Search for symbols (classes, methods, fields) by name.",
     schemaFactory: () => createSearchSymbolSchema(),
     handlerFactory: ({ projectPath, callUpstreamTool, searchCapabilities }) => (args) => handleSearchSymbolTool(args, projectPath, callUpstreamTool, searchCapabilities),
+    annotations: READ_ONLY_TOOL_ANNOTATIONS,
     upstreamNames: ["search_symbol"],
     expose: ({ searchCapabilities }) => !searchCapabilities.hasSearchSymbol && searchCapabilities.supportsSymbol
   },
   {
-    mode: TOOL_MODES.CC,
-    name: "search_symbol",
-    description: "Search for symbols (classes, methods, fields) by name.",
-    schemaFactory: () => createSearchSymbolSchema(),
-    handlerFactory: ({ projectPath, callUpstreamTool, searchCapabilities }) => (args) => handleSearchSymbolTool(args, projectPath, callUpstreamTool, searchCapabilities),
-    upstreamNames: ["search_symbol"],
-    expose: ({ searchCapabilities }) => !searchCapabilities.hasSearchSymbol && searchCapabilities.supportsSymbol
-  },
-  {
-    mode: TOOL_MODES.CODEX,
     name: "list_dir",
     description: "Lists entries in a local directory with 1-indexed entry numbers and simple type labels.",
     schemaFactory: () => createListDirSchema(),
-    handlerFactory: ({ projectPath, callUpstreamTool }) => (args) => handleListDirTool(args, projectPath, callUpstreamTool),
+    handlerFactory: ({ projectPath, callUpstreamTool, callUpstreamToolRaw, containerSession }) => {
+      if (containerSession)
+        return (args) => handleContainerListDir(args, projectPath, callUpstreamToolRaw, containerSession);
+      return (args) => handleListDirTool(args, projectPath, callUpstreamTool);
+    },
+    annotations: READ_ONLY_TOOL_ANNOTATIONS,
     upstreamNames: ["list_directory_tree"]
   },
   {
-    mode: TOOL_MODES.CODEX,
     name: "apply_patch",
-    description: "Apply a patch using the Codex apply_patch format.",
+    description: "Apply a patch using the Codex apply_patch format or unified git diff format.",
     schemaFactory: () => createApplyPatchSchema(),
-    handlerFactory: ({ projectPath, callUpstreamTool }) => (args) => handleApplyPatchTool(args, projectPath, callUpstreamTool),
-    upstreamNames: ["get_file_text_by_path"]
+    handlerFactory: ({ projectPath, callUpstreamTool, callUpstreamToolRaw, containerSession }) => {
+      if (containerSession)
+        return (args) => handleContainerApplyPatch(args, projectPath, callUpstreamToolRaw, containerSession);
+      return (args) => handleApplyPatchTool(args, projectPath, callUpstreamTool);
+    },
+    upstreamNames: ["get_file_text_by_path"],
+    expose: ({ readCapabilities, containerSession }) => containerSession != null || !readCapabilities.hasApplyPatch
   },
   {
-    mode: TOOL_MODES.CC,
-    name: "write",
-    description: "Write a local file using an absolute or project-relative path.",
-    schemaFactory: () => createWriteSchema(),
-    handlerFactory: ({ projectPath, callUpstreamTool }) => (args) => handleWriteTool(args, projectPath, callUpstreamTool),
-    upstreamNames: ["create_new_file"]
-  },
-  {
-    mode: TOOL_MODES.CC,
-    name: "edit",
-    description: "Replace text in a local file. Fails if the target string is missing.",
-    schemaFactory: () => createEditSchema(),
-    handlerFactory: ({ projectPath, callUpstreamTool }) => (args) => handleEditTool(args, projectPath, callUpstreamTool),
-    upstreamNames: ["replace_text_in_file"]
-  },
-  {
-    mode: TOOL_MODES.CODEX,
     name: "rename",
     description: RENAME_TOOL_DESCRIPTION,
     schemaFactory: () => createRenameSchema(),
@@ -24259,26 +24514,33 @@ var TOOL_VARIANTS = [
     upstreamNames: ["rename_refactoring"]
   },
   {
-    mode: TOOL_MODES.CC,
-    name: "rename",
-    description: RENAME_TOOL_DESCRIPTION,
-    schemaFactory: () => createRenameSchema(),
-    handlerFactory: ({ projectPath, callUpstreamTool }) => (args) => handleRenameTool(args, projectPath, callUpstreamTool),
-    upstreamNames: ["rename_refactoring"]
+    name: "bash",
+    description: "Execute a bash command in the project workspace (runs inside Docker container when container session is active).",
+    schemaFactory: () => ({
+      type: "object",
+      properties: {
+        command: { type: "string", description: "The bash command to execute" },
+        timeout: { type: "number", description: "Timeout in seconds (default: 900). Use 1200+ for build commands." }
+      },
+      required: ["command"]
+    }),
+    handlerFactory: ({ projectPath, callUpstreamToolRaw, containerSession }) => {
+      if (!containerSession)
+        throw Error("bash tool is only available in container mode");
+      return (args) => handleContainerBash(args, projectPath, callUpstreamToolRaw, containerSession);
+    },
+    expose: ({ containerSession }) => containerSession != null
   }
 ];
-function getProxyToolVariants(mode) {
-  return TOOL_VARIANTS.filter((tool) => tool.mode === mode);
-}
 function isExposedVariant(tool, context) {
   return resolveToolExpose(tool.expose, context);
 }
-function buildProxyToolingData(mode, context) {
-  let variants = getProxyToolVariants(mode).filter((tool) => isExposedVariant(tool, context)), handlers = /* @__PURE__ */ new Map;
+function buildProxyToolingData(context) {
+  let variants = TOOL_VARIANTS.filter((tool) => isExposedVariant(tool, context)), handlers = /* @__PURE__ */ new Map;
   for (let tool of variants)
     handlers.set(tool.name, tool.handlerFactory(context));
   return {
-    proxyToolSpecs: variants.map((tool) => buildToolSpec(tool.name, tool.description, tool.schemaFactory(context), context)),
+    proxyToolSpecs: variants.map((tool) => buildToolSpec(tool.name, tool.description, tool.schemaFactory(context), tool.annotations, context)),
     proxyToolNames: new Set(variants.map((tool) => tool.name)),
     handlers
   };
@@ -24298,19 +24560,6 @@ function getReplacedToolNames() {
 }
 
 // proxy-tools/tooling.ts
-function resolveToolMode(rawValue) {
-  if (rawValue === void 0 || rawValue === null || rawValue === "")
-    return { mode: TOOL_MODES.CODEX };
-  let normalized = String(rawValue).trim().toLowerCase();
-  if (normalized === "" || normalized === TOOL_MODES.CODEX)
-    return { mode: TOOL_MODES.CODEX };
-  if (normalized === TOOL_MODES.CC || normalized === "claude" || normalized === "claude-code" || normalized === "claude_code")
-    return { mode: TOOL_MODES.CC };
-  return {
-    mode: TOOL_MODES.CODEX,
-    warning: `Unknown JETBRAINS_MCP_TOOL_MODE '${rawValue}', defaulting to codex.`
-  };
-}
 var DISABLE_NEW_SEARCH_ENV = "JETBRAINS_MCP_PROXY_DISABLE_NEW_SEARCH";
 function isEnvFlagEnabled(name) {
   let raw = process.env[name];
@@ -24345,20 +24594,47 @@ function resolveReadCapabilities(upstreamTools) {
     if (name)
       names.add(name);
   }
-  return { capabilities: { hasReadFile: names.has("read_file") } };
+  return {
+    capabilities: {
+      hasReadFile: names.has("read_file"),
+      hasApplyPatch: names.has("apply_patch")
+    }
+  };
+}
+function resolveAnalysisCapabilities(upstreamTools) {
+  let names = /* @__PURE__ */ new Set;
+  for (let tool of upstreamTools ?? []) {
+    let name = typeof tool?.name === "string" ? tool.name : "";
+    if (name)
+      names.add(name);
+  }
+  let hasLintFiles = names.has("lint_files");
+  return {
+    capabilities: {
+      hasLintFiles,
+      supportsLintFiles: hasLintFiles || names.has("get_file_problems")
+    }
+  };
 }
 function createProxyTooling({
   projectPath,
   callUpstreamTool,
-  toolMode,
+  callUpstreamToolRaw,
   searchCapabilities,
-  readCapabilities
+  analysisCapabilities,
+  readCapabilities,
+  ideVersion,
+  containerSession
 }) {
-  let resolvedMode = toolMode === TOOL_MODES.CC ? TOOL_MODES.CC : TOOL_MODES.CODEX, { proxyToolSpecs, proxyToolNames, handlers } = buildProxyToolingData(resolvedMode, {
+  let boundVersion = ideVersion ?? null, { proxyToolSpecs, proxyToolNames, handlers } = buildProxyToolingData({
     projectPath,
     callUpstreamTool,
+    callUpstreamToolRaw: callUpstreamToolRaw ?? callUpstreamTool,
     searchCapabilities,
-    readCapabilities
+    analysisCapabilities,
+    readCapabilities,
+    shouldApplyWorkaround: (key) => shouldApplyWorkaround(key, boundVersion),
+    containerSession: containerSession ?? null
   });
   async function runProxyToolCall(toolName, args) {
     let handler = handlers.get(toolName);
@@ -24366,13 +24642,278 @@ function createProxyTooling({
       throw Error(`Unknown tool: ${toolName}`);
     return await handler(args);
   }
-  return { proxyToolSpecs, proxyToolNames, runProxyToolCall, toolMode: resolvedMode };
+  return { proxyToolSpecs, proxyToolNames, runProxyToolCall };
+}
+
+// upstream.ts
+var RECOVERABLE_UPSTREAM_ERROR_RE = /\b(not connected|connection closed|session not found|server not initialized|mcp-session-id header is required)\b/i;
+function getErrorMessage(error48) {
+  return error48 instanceof Error ? error48.message : String(error48);
+}
+function isRecoverableUpstreamError(error48) {
+  return RECOVERABLE_UPSTREAM_ERROR_RE.test(getErrorMessage(error48));
+}
+function normalizeToolResult(result) {
+  if (result && typeof result === "object" && "toolResult" in result)
+    return result.toolResult;
+  return result;
+}
+
+class UpstreamConnection {
+  client;
+  _transport;
+  _projectPathManager;
+  _defaultProjectPathKey;
+  _forceInjectProjectPath;
+  _toolCallTimeoutMs;
+  _buildTimeoutMs;
+  _warn;
+  _connectedPromise = null;
+  _tools = null;
+  searchCapabilities = resolveSearchCapabilities([]).capabilities;
+  analysisCapabilities = resolveAnalysisCapabilities([]).capabilities;
+  readCapabilities = resolveReadCapabilities([]).capabilities;
+  ideVersion = null;
+  onStateChange;
+  constructor(options) {
+    this._transport = options.transport, this._toolCallTimeoutMs = options.toolCallTimeoutMs, this._buildTimeoutMs = options.buildTimeoutMs, this._warn = options.warn, this._defaultProjectPathKey = options.defaultProjectPathKey, this._forceInjectProjectPath = options.forceInjectProjectPath ?? !1, this._projectPathManager = createProjectPathManager({
+      projectPath: options.projectPath,
+      defaultProjectPathKey: options.defaultProjectPathKey,
+      forceInject: this._forceInjectProjectPath
+    }), this.client = new Client({ name: "ij-mcp-proxy", version: "1.0.0" }), this.client.onerror = (error48) => {
+      this._warn(`Upstream client error: ${error48.message}`);
+    }, this.client.onclose = () => {
+      this.reset(), this._warn("Upstream client connection closed; will reconnect on next request");
+    };
+  }
+  updateProjectPath(newProjectPath) {
+    this._projectPathManager = createProjectPathManager({
+      projectPath: newProjectPath,
+      defaultProjectPathKey: this._defaultProjectPathKey,
+      forceInject: this._forceInjectProjectPath
+    }), this._reapplyToolScan();
+  }
+  setForceInjectProjectPath(projectPath, forceInject) {
+    this._forceInjectProjectPath = forceInject, this._projectPathManager = createProjectPathManager({
+      projectPath,
+      defaultProjectPathKey: this._defaultProjectPathKey,
+      forceInject
+    }), this._reapplyToolScan();
+  }
+  _reapplyToolScan() {
+    if (this._tools)
+      this._projectPathManager.updateProjectPathKeys(this._tools);
+  }
+  async connect() {
+    if (!this.client.transport)
+      this._connectedPromise = null, this._tools = null;
+    if (this._connectedPromise)
+      return this._connectedPromise;
+    return this._connectedPromise = this.client.connect(this._transport).catch((error48) => {
+      throw this._connectedPromise = null, error48;
+    }), this._connectedPromise = this._connectedPromise.then(() => {
+      this._updateIdeVersion();
+    }), this._connectedPromise;
+  }
+  reset() {
+    this._connectedPromise = null, this._tools = null, this.searchCapabilities = resolveSearchCapabilities([]).capabilities, this.analysisCapabilities = resolveAnalysisCapabilities([]).capabilities, this.readCapabilities = resolveReadCapabilities([]).capabilities, this.ideVersion = null, this.onStateChange?.();
+  }
+  async withReconnect(label, fn) {
+    try {
+      return await fn();
+    } catch (error48) {
+      if (!isRecoverableUpstreamError(error48))
+        throw error48;
+      this._warn(`Upstream ${label} failed (${getErrorMessage(error48)}); reconnecting and retrying once`), this.reset();
+      try {
+        await this._transport.resetTransport(error48);
+      } catch (resetError) {
+        this._warn(`Failed to reset MCP stream transport: ${getErrorMessage(resetError)}`);
+      }
+      return await this.connect(), fn();
+    }
+  }
+  async refreshTools() {
+    return await this.withReconnect("tools/list", async () => {
+      await this.connect();
+      let response = await this.client.listTools(), tools = Array.isArray(response?.tools) ? response.tools : [];
+      return this._projectPathManager.updateProjectPathKeys(tools), this._projectPathManager.stripProjectPathFromTools(tools), this._tools = tools, this.searchCapabilities = resolveSearchCapabilities(tools).capabilities, this.analysisCapabilities = resolveAnalysisCapabilities(tools).capabilities, this.readCapabilities = resolveReadCapabilities(tools).capabilities, this.onStateChange?.(), tools;
+    });
+  }
+  async getTools() {
+    if (!this._tools)
+      await this.refreshTools();
+    return this._tools ?? [];
+  }
+  async callToolRaw(toolName, args) {
+    return await this.withReconnect(`tools/call ${toolName}`, async () => {
+      await this.connect(), await this.getTools();
+      let callArgs = this._forceInjectProjectPath ? { ...args } : args;
+      if (this._forceInjectProjectPath)
+        this._projectPathManager.injectProjectPathArgs(toolName, callArgs);
+      let timeoutMs = this._resolveTimeoutMs(toolName), options = timeoutMs > 0 ? { timeout: timeoutMs } : void 0, result = normalizeToolResult(await this.client.callTool({ name: toolName, arguments: callArgs }, void 0, options));
+      if (result?.isError)
+        throw Error(extractTextFromResult(result) || "Upstream tool error");
+      return result;
+    });
+  }
+  async callTool(toolName, args) {
+    return await this.withReconnect(`tools/call ${toolName}`, async () => {
+      await this.connect(), await this.getTools();
+      let callArgs = { ...args };
+      this._projectPathManager.injectProjectPathArgs(toolName, callArgs);
+      let timeoutMs = this._resolveTimeoutMs(toolName), options = timeoutMs > 0 ? { timeout: timeoutMs } : void 0, startTime = Date.now(), result;
+      try {
+        result = normalizeToolResult(await this.client.callTool({ name: toolName, arguments: callArgs }, void 0, options));
+      } catch (error48) {
+        let elapsed = Date.now() - startTime;
+        throw this._warn(`Upstream ${toolName} failed after ${elapsed}ms (timeout: ${timeoutMs}ms): ${getErrorMessage(error48)}`), error48;
+      }
+      if (result?.isError)
+        throw Error(extractTextFromResult(result) || "Upstream tool error");
+      return result;
+    });
+  }
+  async callToolForClient(toolName, args) {
+    return await this.withReconnect(`tools/call ${toolName}`, async () => {
+      await this.connect(), await this.getTools(), this._projectPathManager.injectProjectPathArgs(toolName, args);
+      let timeoutMs = this._resolveTimeoutMs(toolName), options = timeoutMs > 0 ? { timeout: timeoutMs } : void 0, startTime = Date.now();
+      try {
+        let result = await this.client.callTool({ name: toolName, arguments: args }, void 0, options);
+        return normalizeToolResult(result);
+      } catch (error48) {
+        let elapsed = Date.now() - startTime;
+        throw this._warn(`Upstream ${toolName} failed after ${elapsed}ms (timeout: ${timeoutMs}ms): ${getErrorMessage(error48)}`), error48;
+      }
+    });
+  }
+  static _LONG_TIMEOUT_TOOLS = /* @__PURE__ */ new Set(["build_project", "lint_files", "open_file_in_editor", "container_exec"]);
+  _resolveTimeoutMs(toolName) {
+    return UpstreamConnection._LONG_TIMEOUT_TOOLS.has(toolName) ? this._buildTimeoutMs : this._toolCallTimeoutMs;
+  }
+  async forwardRequest(method, params) {
+    return await this.withReconnect(method, async () => {
+      return await this.connect(), await this.client.request({ method, params }, ResultSchema);
+    });
+  }
+  async forwardNotification(notification) {
+    await this.withReconnect(notification.method, async () => {
+      await this.connect(), await this.client.notification(notification);
+    });
+  }
+  _updateIdeVersion() {
+    let serverInfo = this.client.getServerVersion();
+    this.ideVersion = typeof serverInfo?.version === "string" ? serverInfo.version : null;
+  }
+}
+
+// discovery.ts
+function buildCandidateList(preferredPorts, portScanStart, portScanLimit) {
+  let seen = /* @__PURE__ */ new Set, candidates = [];
+  for (let port of preferredPorts) {
+    if (!Number.isFinite(port) || port <= 0 || seen.has(port))
+      continue;
+    seen.add(port), candidates.push(port);
+  }
+  let limit = Number.isFinite(portScanLimit) && portScanLimit > 0 ? portScanLimit : 0, start = Number.isFinite(portScanStart) && portScanStart > 0 ? portScanStart : 0;
+  for (let i = 0;i < limit; i++) {
+    let port = start + i;
+    if (port <= 0 || seen.has(port))
+      continue;
+    seen.add(port), candidates.push(port);
+  }
+  return candidates;
+}
+async function findReachablePorts(options) {
+  let { preferredPorts, portScanStart, portScanLimit, scanTimeoutMs, buildUrl, probeHost = "127.0.0.1", warn } = options, candidates = buildCandidateList(preferredPorts, portScanStart, portScanLimit);
+  if (candidates.length === 0)
+    return [];
+  let probeResults = await Promise.allSettled(candidates.map(async (port) => {
+    let reachable = await isPortReachable(port, {
+      host: probeHost,
+      timeout: scanTimeoutMs > 0 ? scanTimeoutMs : void 0
+    });
+    return { port, reachable };
+  })), result = [];
+  for (let probeResult of probeResults)
+    if (probeResult.status === "fulfilled" && probeResult.value.reachable) {
+      let port = probeResult.value.port;
+      result.push({ port, url: buildUrl(port) });
+    }
+  if (result.length === 0 && warn)
+    warn(`No reachable MCP stream ports found. Probed: ${candidates.join(", ")}`);
+  return result;
+}
+
+// routing.ts
+import path9 from "path";
+var RIDER_PROJECT_SUBPATH = "dotnet", MERGE_TOOL_NAMES = /* @__PURE__ */ new Set([
+  "search_text",
+  "search_regex",
+  "search_file",
+  "search_symbol"
+]);
+function resolveRoute(toolName, args, projectRoot) {
+  if (MERGE_TOOL_NAMES.has(toolName))
+    return "merge";
+  return resolveIdeForPath(args, projectRoot) === "rider" ? "target-rider" : "primary";
+}
+function rewriteArgsForTarget(route, args) {
+  if (route !== "target-rider")
+    return { ...args };
+  let rewritten = { ...args };
+  for (let key of PATH_ARG_KEYS) {
+    let value = rewritten[key];
+    if (typeof value === "string" && value.length > 0)
+      rewritten[key] = stripRiderPrefix(value);
+  }
+  return rewritten;
+}
+function stripRiderPrefix(filePath) {
+  if (filePath.startsWith(RIDER_PROJECT_SUBPATH + "/"))
+    return filePath.slice(RIDER_PROJECT_SUBPATH.length + 1);
+  if (filePath.startsWith(RIDER_PROJECT_SUBPATH + "\\"))
+    return filePath.slice(RIDER_PROJECT_SUBPATH.length + 1);
+  if (filePath === RIDER_PROJECT_SUBPATH)
+    return "";
+  return filePath;
+}
+function isMergeTool(toolName) {
+  return MERGE_TOOL_NAMES.has(toolName);
+}
+function createPathPrefixTransformer(prefix) {
+  return (items) => items.map((item) => ({
+    ...item,
+    filePath: prefix + "/" + item.filePath
+  }));
+}
+var riderItemTransformer = createPathPrefixTransformer(RIDER_PROJECT_SUBPATH);
+function resolveIdeForPath(args, projectRoot) {
+  let filePath = extractPathArg(args);
+  return filePath != null && isRiderPath(filePath, projectRoot) ? "rider" : "idea";
+}
+function isRiderPath(filePath, projectRoot) {
+  if (!filePath)
+    return !1;
+  let absolute = path9.isAbsolute(filePath) ? path9.normalize(filePath) : path9.resolve(projectRoot, filePath), relative = path9.relative(projectRoot, absolute);
+  if (relative.startsWith("..") || path9.isAbsolute(relative))
+    return !1;
+  return relative === RIDER_PROJECT_SUBPATH || relative.startsWith(RIDER_PROJECT_SUBPATH + path9.sep);
+}
+var PATH_ARG_KEYS = ["pathInProject", "file_path", "dir_path", "directoryPath", "filePath"];
+function extractPathArg(args) {
+  for (let key of PATH_ARG_KEYS) {
+    let value = args[key];
+    if (typeof value === "string" && value.length > 0)
+      return value;
+  }
+  return;
 }
 
 // ij-mcp-proxy.ts
-var explicitMcpUrl = env.JETBRAINS_MCP_STREAM_URL || env.MCP_STREAM_URL || env.JETBRAINS_MCP_URL || env.MCP_URL, defaultHost = "127.0.0.1", defaultPort = 64342, defaultPath = "/stream", defaultScanLimit = 10, portScanStartEnv = env.JETBRAINS_MCP_PORT_START, portScanStart = parseEnvInt("JETBRAINS_MCP_PORT_START", defaultPort), portScanLimit = parseEnvInt("JETBRAINS_MCP_PORT_SCAN_LIMIT", defaultScanLimit), preferredPorts = portScanStartEnv ? [portScanStart] : [defaultPort, 64344], connectTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_CONNECT_TIMEOUT_S", 10), scanTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_SCAN_TIMEOUT_S", 1), queueLimit = parseEnvNonNegativeInt("JETBRAINS_MCP_QUEUE_LIMIT", 100), toolCallTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_TOOL_CALL_TIMEOUT_S", 60), queueWaitTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_QUEUE_WAIT_TIMEOUT_S", toolCallTimeoutMs > 0 ? Math.round(toolCallTimeoutMs / 1000) : 0), STREAM_RETRY_ATTEMPTS = 3, STREAM_RETRY_BASE_DELAY_MS = 200;
+var explicitMcpUrl = env2.JETBRAINS_MCP_STREAM_URL || env2.MCP_STREAM_URL || env2.JETBRAINS_MCP_URL || env2.MCP_URL, defaultHost = "127.0.0.1", defaultPort = 64342, defaultPath = "/stream", defaultScanLimit = 10, portScanStartEnv = env2.JETBRAINS_MCP_PORT_START, portScanStart = parseEnvInt("JETBRAINS_MCP_PORT_START", defaultPort), portScanLimit = parseEnvInt("JETBRAINS_MCP_PORT_SCAN_LIMIT", defaultScanLimit), preferredPorts = portScanStartEnv ? [portScanStart] : [defaultPort, 64344], connectTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_CONNECT_TIMEOUT_S", 10), scanTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_SCAN_TIMEOUT_S", 1), queueLimit = parseEnvNonNegativeInt("JETBRAINS_MCP_QUEUE_LIMIT", 100), toolCallTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_TOOL_CALL_TIMEOUT_S", 60), buildTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_BUILD_TIMEOUT_S", 1200), queueWaitTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_QUEUE_WAIT_TIMEOUT_S", toolCallTimeoutMs > 0 ? Math.round(toolCallTimeoutMs / 1000) : 0), STREAM_RETRY_ATTEMPTS = 3, STREAM_RETRY_BASE_DELAY_MS = 200;
 function parseEnvInt(name, fallback) {
-  let raw = env[name];
+  let raw = env2[name];
   if (!raw)
     return fallback;
   let parsed = Number.parseInt(raw, 10);
@@ -24381,7 +24922,7 @@ function parseEnvInt(name, fallback) {
   return parsed;
 }
 function parseEnvNonNegativeInt(name, fallback) {
-  let raw = env[name];
+  let raw = env2[name];
   if (raw === void 0 || raw === null || raw === "")
     return fallback;
   let parsed = Number.parseInt(raw, 10);
@@ -24395,122 +24936,303 @@ function parseEnvSeconds(name, fallbackSeconds) {
 function buildStreamUrl(port) {
   return `http://${defaultHost}:${port}${defaultPath}`;
 }
-var explicitProjectPath = env.JETBRAINS_MCP_PROJECT_PATH, projectPath = explicitProjectPath && explicitProjectPath.length > 0 ? path9.resolve(explicitProjectPath) : path9.resolve(cwd()), defaultProjectPathKey = "project_path", projectPathManager = createProjectPathManager({ projectPath, defaultProjectPathKey }), toolModeInfo = resolveToolMode(env.JETBRAINS_MCP_TOOL_MODE), REPLACED_TOOL_NAMES = getReplacedToolNames(), BASE_BLOCKED_TOOL_NAMES = /* @__PURE__ */ new Set([...BLOCKED_TOOL_NAMES, ...REPLACED_TOOL_NAMES]), searchCapabilities = resolveSearchCapabilities([]).capabilities, readCapabilities = resolveReadCapabilities([]).capabilities;
+function resolveProjectPath(rawValue) {
+  if (!rawValue)
+    return { projectPath: path10.resolve(cwd2()) };
+  if (rawValue.startsWith("file://"))
+    try {
+      return { projectPath: path10.resolve(fileURLToPath2(new URL(rawValue))) };
+    } catch (error48) {
+      let message = error48 instanceof Error ? error48.message : String(error48);
+      return {
+        projectPath: path10.resolve(rawValue),
+        warning: `Failed to parse JETBRAINS_MCP_PROJECT_PATH as a file URI (${message}); falling back to path resolution.`
+      };
+    }
+  return { projectPath: path10.resolve(rawValue) };
+}
+var explicitProjectPath = env2.JETBRAINS_MCP_PROJECT_PATH, projectPathResolution = resolveProjectPath(explicitProjectPath), projectPath = projectPathResolution.projectPath, defaultProjectPathKey = "projectPath", containerSession = detectContainerSession(projectPath), explicitMcpUrlOverride;
+if (containerSession?.mcpStreamUrl)
+  explicitMcpUrlOverride = containerSession.mcpStreamUrl;
+if (containerSession?.projectPath)
+  projectPath = containerSession.projectPath;
+var REPLACED_TOOL_NAMES = getReplacedToolNames(), BASE_BLOCKED_TOOL_NAMES = /* @__PURE__ */ new Set([...BLOCKED_TOOL_NAMES, ...REPLACED_TOOL_NAMES]);
 function blockedToolMessage(toolName) {
-  if (toolName === "create_new_file") {
-    if (toolModeInfo.mode === TOOL_MODES.CC)
-      return `Tool '${toolName}' is not exposed by ij-proxy. Use 'write' instead.`;
+  if (toolName === "create_new_file")
     return `Tool '${toolName}' is not exposed by ij-proxy. Use 'apply_patch' instead.`;
-  }
   return `Tool '${toolName}' is not exposed by ij-proxy.`;
 }
-var proxyToolSpecs = [], proxyToolNames = /* @__PURE__ */ new Set, runProxyToolCall = async () => {
-  throw Error("Proxy tooling not initialized");
-};
-function updateProxyTooling() {
-  let tooling = createProxyTooling({
-    projectPath,
-    callUpstreamTool,
-    toolMode: toolModeInfo.mode,
-    searchCapabilities,
-    readCapabilities
-  });
-  proxyToolSpecs = tooling.proxyToolSpecs, proxyToolNames = tooling.proxyToolNames, runProxyToolCall = tooling.runProxyToolCall;
+var ideaUpstream = null, riderUpstream = null, discoveryPromise = null, proxyToolSpecs = [], proxyToolNames = /* @__PURE__ */ new Set, ideaProxyToolCall = null, riderProxyToolCall = null;
+function primaryUpstream() {
+  let upstream = ideaUpstream ?? riderUpstream;
+  if (!upstream)
+    throw Error("No upstream connection available");
+  return upstream;
 }
-updateProxyTooling();
+function updateProxyTooling() {
+  if (!containerSession) {
+    if (containerSession = detectContainerSession(projectPath), containerSession) {
+      if (note(`Container session detected (lazy): id=${containerSession.sessionId}, workspace=${containerSession.workspacePath}`), containerSession.projectPath)
+        projectPath = containerSession.projectPath;
+      if (containerSession.mcpStreamUrl && containerSession.mcpStreamUrl !== explicitMcpUrlOverride)
+        explicitMcpUrlOverride = containerSession.mcpStreamUrl, note(`MCP stream URL override: ${explicitMcpUrlOverride} \u2014 reconnecting upstream`), ideaUpstream = null, riderUpstream = null, discoveryPromise = null;
+      if (ideaUpstream?.setForceInjectProjectPath(projectPath, !0), riderUpstream)
+        riderUpstream.setForceInjectProjectPath(path10.join(projectPath, RIDER_PROJECT_SUBPATH), !0);
+    }
+  }
+  let ideaSpecs = [], ideaNames = /* @__PURE__ */ new Set;
+  if (ideaUpstream) {
+    let tooling = createProxyTooling({
+      projectPath,
+      callUpstreamTool: (name, args) => ideaUpstream.callTool(name, args),
+      callUpstreamToolRaw: (name, args) => ideaUpstream.callToolRaw(name, args),
+      searchCapabilities: ideaUpstream.searchCapabilities,
+      readCapabilities: ideaUpstream.readCapabilities,
+      ideVersion: ideaUpstream.ideVersion,
+      containerSession
+    });
+    ideaSpecs = tooling.proxyToolSpecs, ideaNames = tooling.proxyToolNames, ideaProxyToolCall = tooling.runProxyToolCall;
+  } else
+    ideaProxyToolCall = null;
+  let riderSpecs = [], riderNames = /* @__PURE__ */ new Set;
+  if (riderUpstream) {
+    let riderProjectPath = path10.join(projectPath, RIDER_PROJECT_SUBPATH), tooling = createProxyTooling({
+      projectPath: riderProjectPath,
+      callUpstreamTool: (name, args) => riderUpstream.callTool(name, args),
+      callUpstreamToolRaw: (name, args) => riderUpstream.callToolRaw(name, args),
+      searchCapabilities: riderUpstream.searchCapabilities,
+      readCapabilities: riderUpstream.readCapabilities,
+      ideVersion: riderUpstream.ideVersion,
+      containerSession
+    });
+    riderSpecs = tooling.proxyToolSpecs, riderNames = tooling.proxyToolNames, riderProxyToolCall = tooling.runProxyToolCall;
+  } else
+    riderProxyToolCall = null;
+  proxyToolSpecs = mergeToolLists(ideaSpecs, riderSpecs, /* @__PURE__ */ new Set), proxyToolNames = /* @__PURE__ */ new Set([...ideaNames, ...riderNames]);
+}
 function note(message) {
   logToFile(message), logProgress(message);
 }
 function warn(message) {
   logToFile(message), logProgress(message);
 }
-clearLogFile();
-if (toolModeInfo.warning)
-  warn(toolModeInfo.warning);
-var streamTransport = createStreamTransport({
-  explicitUrl: explicitMcpUrl,
-  preferredPorts,
-  portScanStart,
-  portScanLimit,
-  connectTimeoutMs,
-  scanTimeoutMs,
-  queueLimit,
-  queueWaitTimeoutMs,
-  retryAttempts: STREAM_RETRY_ATTEMPTS,
-  retryBaseDelayMs: STREAM_RETRY_BASE_DELAY_MS,
-  buildUrl: buildStreamUrl,
-  note,
-  warn
-}), upstreamClient = new Client({ name: "ij-mcp-proxy", version: "1.0.0" });
-upstreamClient.onerror = (error48) => {
-  warn(`Upstream client error: ${error48.message}`);
-};
-upstreamClient.onclose = () => {
-  resetUpstreamState(), warn("Upstream client connection closed; will reconnect on next request");
-};
-var proxyServer = new Server({ name: "ij-mcp-proxy", version: "1.0.0" }, {
-  capabilities: {
-    tools: { listChanged: !0 },
-    resources: { subscribe: !0, listChanged: !0 },
-    prompts: { listChanged: !0 },
-    logging: {}
+function buildInstructions() {
+  let ides = [];
+  if (ideaUpstream) {
+    let name = ideaUpstream.client.getServerVersion()?.name ?? "IntelliJ IDEA", version2 = ideaUpstream.ideVersion;
+    ides.push(version2 ? `${name} ${version2}` : name);
   }
+  if (riderUpstream) {
+    let name = riderUpstream.client.getServerVersion()?.name ?? "JetBrains Rider", version2 = riderUpstream.ideVersion;
+    ides.push(version2 ? `${name} ${version2}` : name);
+  }
+  if (ides.length === 0 && !containerSession)
+    return;
+  let parts = [];
+  if (ides.length > 0)
+    parts.push(`Connected IDEs: ${ides.join(", ")}.`);
+  if (containerSession)
+    parts.push(`CONTAINER MODE ACTIVE: This session operates on a Docker container (session ${containerSession.sessionId}).`, "All file and search operations (read_file, apply_patch, search_text, search_regex, search_file, list_dir) are routed to the container.", "Semantic tools (search_symbol, lint_files, get_file_problems, rename) use the host IDE index.", 'Use the "bash" tool for ALL shell commands \u2014 it executes inside the container. Do NOT use your built-in Bash tool or execute_terminal_command, as they run on the host, not in the container.', "The container has: git, curl, ripgrep (rg), patch, java (JBR 21), bazel (via Bazelisk). All tools are in PATH.", `IMPORTANT: Before completing your task, verify your changes compile by running the build command inside the container${containerSession.buildCommand ? `: \`${containerSession.buildCommand}\`` : ""}. Fix any compilation errors before finishing.`);
+  return parts.join(`
+`);
+}
+clearLogFile();
+if (projectPathResolution.warning)
+  warn(projectPathResolution.warning);
+if (containerSession)
+  note(`Container session detected: id=${containerSession.sessionId}, workspace=${containerSession.workspacePath}`);
+function createUpstreamForUrl(url2) {
+  let transport = createStreamTransport({
+    explicitUrl: url2,
+    preferredPorts: [],
+    portScanStart: 0,
+    portScanLimit: 0,
+    connectTimeoutMs,
+    scanTimeoutMs,
+    queueLimit,
+    queueWaitTimeoutMs,
+    retryAttempts: STREAM_RETRY_ATTEMPTS,
+    retryBaseDelayMs: STREAM_RETRY_BASE_DELAY_MS,
+    buildUrl: buildStreamUrl,
+    note,
+    warn
+  }), conn = new UpstreamConnection({
+    transport,
+    projectPath,
+    defaultProjectPathKey,
+    forceInjectProjectPath: containerSession != null,
+    toolCallTimeoutMs,
+    buildTimeoutMs,
+    warn
+  });
+  return conn.onStateChange = () => updateProxyTooling(), conn;
+}
+function setupUpstreamClientHandlers(conn) {
+  conn.client.setNotificationHandler(ToolListChangedNotificationSchema, async () => {
+    try {
+      await conn.refreshTools(), await proxyServer.sendToolListChanged();
+    } catch (error48) {
+      let message = error48 instanceof Error ? error48.message : String(error48);
+      warn(`Failed to refresh tool list after upstream change: ${message}`);
+    }
+  }), conn.client.fallbackRequestHandler = async (request) => {
+    return await proxyServer.request({ method: request.method, params: request.params }, ResultSchema);
+  }, conn.client.fallbackNotificationHandler = async (notification) => {
+    try {
+      await proxyServer.notification(notification);
+    } catch (error48) {
+      let message = error48 instanceof Error ? error48.message : String(error48);
+      warn(`Failed to forward upstream notification: ${message}`);
+    }
+  };
+}
+function isRiderServerName(name) {
+  return /rider/i.test(name);
+}
+async function ensureDiscovered() {
+  if (ideaUpstream || riderUpstream)
+    return;
+  if (discoveryPromise)
+    return discoveryPromise;
+  return discoveryPromise = performDiscovery(), discoveryPromise;
+}
+async function performDiscovery() {
+  try {
+    let effectiveMcpUrl = explicitMcpUrlOverride ?? explicitMcpUrl;
+    if (effectiveMcpUrl) {
+      let conn = createUpstreamForUrl(effectiveMcpUrl);
+      await conn.connect();
+      let name = conn.client.getServerVersion()?.name ?? "";
+      if (isRiderServerName(name))
+        conn.updateProjectPath(path10.join(projectPath, RIDER_PROJECT_SUBPATH)), riderUpstream = conn;
+      else
+        ideaUpstream = conn;
+      setupUpstreamClientHandlers(conn), updateProxyTooling();
+      return;
+    }
+    let reachable = await findReachablePorts({
+      preferredPorts,
+      portScanStart,
+      portScanLimit,
+      scanTimeoutMs,
+      buildUrl: buildStreamUrl,
+      warn
+    });
+    for (let { url: url2 } of reachable) {
+      let conn = createUpstreamForUrl(url2);
+      try {
+        await conn.connect();
+        let name = conn.client.getServerVersion()?.name ?? "";
+        if (isRiderServerName(name) && !riderUpstream)
+          conn.updateProjectPath(path10.join(projectPath, RIDER_PROJECT_SUBPATH)), riderUpstream = conn, setupUpstreamClientHandlers(conn), note(`Rider upstream: ${url2} (${name})`);
+        else if (!isRiderServerName(name) && !ideaUpstream)
+          ideaUpstream = conn, setupUpstreamClientHandlers(conn), note(`IDEA upstream: ${url2} (${name})`);
+        else
+          try {
+            await conn.client.close();
+          } catch {}
+      } catch (error48) {
+        let message = error48 instanceof Error ? error48.message : String(error48);
+        warn(`Failed to connect to ${url2}: ${message}`);
+      }
+    }
+    if (!ideaUpstream && !riderUpstream)
+      throw Error(`No IDE found. Install the "MCP Server" plugin and ensure it is enabled. Probed ports: ${preferredPorts.join(", ")} + scan ${portScanStart}..${portScanStart + portScanLimit - 1}`);
+    if (ideaUpstream && riderUpstream)
+      note("Multi-IDE mode: routing between IDEA and Rider");
+    updateProxyTooling();
+  } finally {
+    discoveryPromise = null;
+  }
+}
+var serverInfo = { name: "ij-mcp-proxy", version: "1.0.0" }, serverCapabilities = {
+  tools: { listChanged: !0 },
+  resources: { subscribe: !0, listChanged: !0 },
+  prompts: { listChanged: !0 },
+  logging: {}
+}, proxyServer = new Server(serverInfo, { capabilities: serverCapabilities });
+proxyServer.setRequestHandler(InitializeRequestSchema, async () => {
+  await performDiscovery();
+  let instructions = buildInstructions(), effectiveServerInfo = containerSession ? { name: `ij-mcp-proxy [container:${containerSession.sessionId}]`, version: "1.0.0" } : serverInfo;
+  return {
+    protocolVersion: LATEST_PROTOCOL_VERSION,
+    capabilities: serverCapabilities,
+    serverInfo: effectiveServerInfo,
+    ...instructions && { instructions }
+  };
 });
 proxyServer.setRequestHandler(ListToolsRequestSchema, async () => {
-  let upstreamTools = await getUpstreamTools();
+  await ensureDiscovered();
+  let ideaTools = ideaUpstream ? await ideaUpstream.getTools() : [], riderTools = riderUpstream ? await riderUpstream.getTools() : [], allUpstreamTools = mergeToolLists(ideaTools, riderTools, /* @__PURE__ */ new Set);
   return {
-    tools: mergeToolLists(proxyToolSpecs, upstreamTools, BASE_BLOCKED_TOOL_NAMES)
+    tools: mergeToolLists(proxyToolSpecs, allUpstreamTools, BASE_BLOCKED_TOOL_NAMES)
   };
 });
 proxyServer.setRequestHandler(CallToolRequestSchema, async (request) => {
+  if (!containerSession) {
+    let detected = detectContainerSession(projectPath);
+    if (detected)
+      containerSession = detected, note(`Container session detected on tool call: id=${detected.sessionId}`), updateProxyTooling(), await ensureDiscovered(), await proxyServer.sendToolListChanged();
+  }
   let toolName = typeof request.params?.name === "string" ? request.params.name : "", rawArgs = request.params?.arguments, args = rawArgs && typeof rawArgs === "object" ? { ...rawArgs } : {};
+  if (containerSession)
+    note(`Tool call: ${toolName} [container:${containerSession.sessionId}, proxy:${proxyToolNames.has(toolName)}, hasUpstream:${!!ideaUpstream}]`);
   if (!toolName)
     return makeToolError("Tool name is required");
   if (BASE_BLOCKED_TOOL_NAMES.has(toolName))
     return makeToolError(blockedToolMessage(toolName));
-  if (proxyToolNames.has(toolName))
-    try {
-      let output = await runProxyToolCall(toolName, args);
-      return makeToolOutput(output);
-    } catch (error48) {
-      let message = error48 instanceof Error ? error48.message : String(error48);
-      return makeToolError(message);
+  if (await ensureDiscovered(), proxyToolNames.has(toolName)) {
+    if (ideaProxyToolCall && riderProxyToolCall) {
+      if (isMergeTool(toolName))
+        return await callMergedProxyTool(toolName, args);
+      let ide = resolveIdeForPath(args, projectPath), proxyCall2 = ide === "rider" ? riderProxyToolCall : ideaProxyToolCall, rewrittenArgs = rewriteArgsForTarget(ide === "rider" ? "target-rider" : "target-idea", args);
+      try {
+        return makeToolOutput(await proxyCall2(toolName, rewrittenArgs));
+      } catch (error48) {
+        let message = error48 instanceof Error ? error48.message : String(error48);
+        return makeToolError(message);
+      }
     }
+    let proxyCall = ideaProxyToolCall ?? riderProxyToolCall;
+    if (proxyCall)
+      try {
+        return makeToolOutput(await proxyCall(toolName, args));
+      } catch (error48) {
+        let message = error48 instanceof Error ? error48.message : String(error48);
+        return makeToolError(message);
+      }
+  }
+  if (ideaUpstream && riderUpstream) {
+    let route = resolveRoute(toolName, args, projectPath);
+    switch (route) {
+      case "merge":
+        return await callMergedPassthroughTool(toolName, args);
+      case "target-idea":
+      case "target-rider": {
+        let target = route === "target-rider" ? riderUpstream : ideaUpstream;
+        try {
+          return await target.callToolForClient(toolName, rewriteArgsForTarget(route, args));
+        } catch (error48) {
+          let message = error48 instanceof Error ? error48.message : String(error48);
+          return makeToolError(message);
+        }
+      }
+      case "primary":
+        break;
+    }
+  }
   try {
-    return await callUpstreamToolForClient(toolName, args);
+    return await primaryUpstream().callToolForClient(toolName, args);
   } catch (error48) {
     let message = error48 instanceof Error ? error48.message : String(error48);
     return makeToolError(message);
   }
 });
 proxyServer.fallbackRequestHandler = async (request) => {
-  return await withUpstreamReconnect(request.method, async () => {
-    return await ensureUpstreamConnected(), await upstreamClient.request({ method: request.method, params: request.params }, ResultSchema);
-  });
+  return await ensureDiscovered(), await primaryUpstream().forwardRequest(request.method, request.params);
 };
 proxyServer.fallbackNotificationHandler = async (notification) => {
-  await withUpstreamReconnect(notification.method, async () => {
-    await ensureUpstreamConnected(), await upstreamClient.notification(notification);
-  });
-};
-upstreamClient.setNotificationHandler(ToolListChangedNotificationSchema, async () => {
-  try {
-    await refreshUpstreamTools(), await proxyServer.sendToolListChanged();
-  } catch (error48) {
-    let message = error48 instanceof Error ? error48.message : String(error48);
-    warn(`Failed to refresh tool list after upstream change: ${message}`);
-  }
-});
-upstreamClient.fallbackRequestHandler = async (request) => {
-  return await proxyServer.request({ method: request.method, params: request.params }, ResultSchema);
-};
-upstreamClient.fallbackNotificationHandler = async (notification) => {
-  try {
-    await proxyServer.notification(notification);
-  } catch (error48) {
-    let message = error48 instanceof Error ? error48.message : String(error48);
-    warn(`Failed to forward upstream notification: ${message}`);
-  }
+  await ensureDiscovered(), await primaryUpstream().forwardNotification(notification);
 };
 var stdioTransport = new StdioServerTransport;
 stdioTransport.onerror = (error48) => {
@@ -24520,63 +25242,57 @@ proxyServer.connect(stdioTransport).catch((error48) => {
   let message = error48 instanceof Error ? error48.message : String(error48);
   warn(`Failed to start stdio transport: ${message}`);
 });
-var upstreamConnectedPromise = null, upstreamTools = null, RECOVERABLE_UPSTREAM_ERROR_RE = /\b(not connected|connection closed|session not found|server not initialized|mcp-session-id header is required)\b/i;
-function getErrorMessage(error48) {
-  return error48 instanceof Error ? error48.message : String(error48);
+async function callMergedProxyTool(toolName, args) {
+  let results = await Promise.allSettled([
+    ideaProxyToolCall(toolName, { ...args }),
+    riderProxyToolCall(toolName, { ...args })
+  ]);
+  return mergeSettledResults(results, "proxy", [void 0, riderItemTransformer]);
 }
-function isRecoverableUpstreamError(error48) {
-  let message = getErrorMessage(error48);
-  return RECOVERABLE_UPSTREAM_ERROR_RE.test(message);
+async function callMergedPassthroughTool(toolName, args) {
+  let results = await Promise.allSettled([
+    ideaUpstream.callToolForClient(toolName, { ...args }),
+    riderUpstream.callToolForClient(toolName, { ...args })
+  ]);
+  return mergeSettledResults(results, "passthrough", [void 0, riderItemTransformer]);
 }
-function resetUpstreamState() {
-  upstreamConnectedPromise = null, upstreamTools = null, searchCapabilities = resolveSearchCapabilities([]).capabilities, readCapabilities = resolveReadCapabilities([]).capabilities, updateProxyTooling(), setIdeVersion(null);
+function logSettledErrors(results) {
+  for (let r of results)
+    if (r.status === "rejected")
+      warn(`Merge: one upstream failed: ${r.reason instanceof Error ? r.reason.message : String(r.reason)}`);
 }
-async function withUpstreamReconnect(label, fn) {
-  try {
-    return await fn();
-  } catch (error48) {
-    if (!isRecoverableUpstreamError(error48))
-      throw error48;
-    warn(`Upstream ${label} failed (${getErrorMessage(error48)}); reconnecting and retrying once`), resetUpstreamState();
-    try {
-      await streamTransport.resetTransport(error48);
-    } catch (resetError) {
-      warn(`Failed to reset MCP stream transport: ${getErrorMessage(resetError)}`);
+function settledErrorOutput(results) {
+  for (let r of results)
+    if (r.status === "rejected") {
+      let message = r.reason instanceof Error ? r.reason.message : String(r.reason);
+      return makeToolError(message);
     }
-    return await ensureUpstreamConnected(), fn();
+  return makeToolError("All upstreams failed");
+}
+function extractItemsFromResult(value, mode) {
+  if (mode === "proxy")
+    return extractItems(value);
+  let text = extractTextFromResult(value);
+  if (!text)
+    return [];
+  return extractItems({ content: [{ type: "text", text }] });
+}
+function mergeSettledResults(results, mode, transformers = []) {
+  logSettledErrors(results);
+  let allItems = [];
+  for (let i = 0;i < results.length; i++) {
+    let r = results[i];
+    if (r.status !== "fulfilled")
+      continue;
+    let value = r.value;
+    if (value == null)
+      continue;
+    let items = extractItemsFromResult(value, mode), transformer = transformers[i];
+    allItems.push(...transformer ? transformer(items) : items);
   }
-}
-async function ensureUpstreamConnected() {
-  if (!upstreamClient.transport)
-    upstreamConnectedPromise = null, upstreamTools = null;
-  if (upstreamConnectedPromise)
-    return upstreamConnectedPromise;
-  return upstreamConnectedPromise = upstreamClient.connect(streamTransport).catch((error48) => {
-    throw upstreamConnectedPromise = null, error48;
-  }), upstreamConnectedPromise = upstreamConnectedPromise.then(() => {
-    updateIdeVersionFromUpstream();
-  }), upstreamConnectedPromise;
-}
-function updateIdeVersionFromUpstream() {
-  let version2 = upstreamClient.getServerVersion()?.version;
-  setIdeVersion(typeof version2 === "string" ? version2 : null);
-}
-async function refreshUpstreamTools() {
-  return await withUpstreamReconnect("tools/list", async () => {
-    await ensureUpstreamConnected();
-    let response = await upstreamClient.listTools(), tools = Array.isArray(response?.tools) ? response.tools : [];
-    return projectPathManager.updateProjectPathKeys(tools), projectPathManager.stripProjectPathFromTools(tools), upstreamTools = tools, searchCapabilities = resolveSearchCapabilities(tools).capabilities, readCapabilities = resolveReadCapabilities(tools).capabilities, updateProxyTooling(), tools;
-  });
-}
-async function getUpstreamTools() {
-  if (!upstreamTools)
-    await refreshUpstreamTools();
-  return upstreamTools ?? [];
-}
-function normalizeToolResult(result) {
-  if (result && typeof result === "object" && "toolResult" in result)
-    return result.toolResult;
-  return result;
+  if (allItems.length > 0)
+    return makeToolOutput(JSON.stringify({ items: allItems }));
+  return settledErrorOutput(results);
 }
 function makeToolOutput(text) {
   return {
@@ -24599,27 +25315,9 @@ function makeToolError(text) {
     isError: !0
   };
 }
-async function callUpstreamToolForClient(toolName, args) {
-  return await withUpstreamReconnect(`tools/call ${toolName}`, async () => {
-    await ensureUpstreamConnected(), await getUpstreamTools(), projectPathManager.injectProjectPathArgs(toolName, args);
-    let options = toolCallTimeoutMs > 0 ? { timeout: toolCallTimeoutMs } : void 0, result = await upstreamClient.callTool({ name: toolName, arguments: args }, void 0, options);
-    return normalizeToolResult(result);
-  });
-}
-async function callUpstreamTool(toolName, args) {
-  return await withUpstreamReconnect(`tools/call ${toolName}`, async () => {
-    await ensureUpstreamConnected(), await getUpstreamTools();
-    let callArgs = { ...args };
-    projectPathManager.injectProjectPathArgs(toolName, callArgs);
-    let options = toolCallTimeoutMs > 0 ? { timeout: toolCallTimeoutMs } : void 0, result = normalizeToolResult(await upstreamClient.callTool({ name: toolName, arguments: callArgs }, void 0, options));
-    if (result?.isError)
-      throw Error(extractTextFromResult(result) || "Upstream tool error");
-    return result;
-  });
-}
-function mergeToolLists(proxyTools, upstreamTools2, blockedNames) {
+function mergeToolLists(listA, listB, blockedNames) {
   let blocked = blockedNames instanceof Set ? blockedNames : new Set(blockedNames || []), result = [], seen = /* @__PURE__ */ new Set;
-  for (let tool of proxyTools || []) {
+  for (let tool of listA || []) {
     if (!tool || typeof tool.name !== "string")
       continue;
     if (blocked.has(tool.name))
@@ -24628,8 +25326,8 @@ function mergeToolLists(proxyTools, upstreamTools2, blockedNames) {
       continue;
     seen.add(tool.name), result.push(tool);
   }
-  if (Array.isArray(upstreamTools2))
-    for (let tool of upstreamTools2) {
+  if (Array.isArray(listB))
+    for (let tool of listB) {
       let name = tool?.name;
       if (typeof name !== "string" || !name)
         continue;

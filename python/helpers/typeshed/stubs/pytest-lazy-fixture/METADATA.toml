@@ -1,2 +1,2 @@
 version = "0.6.*"
-upstream_repository = "https://github.com/tvorog/pytest-lazy-fixture"
+upstream-repository = "https://github.com/tvorog/pytest-lazy-fixture"

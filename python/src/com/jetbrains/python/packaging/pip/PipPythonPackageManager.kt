@@ -74,7 +74,7 @@ open class PipPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageMa
 
   override suspend fun loadPackagesCommand(): PyResult<List<PythonPackage>> = engine.loadPackagesCommand()
 
-  override suspend fun extractDependencies(): PyResult<List<PythonPackage>>? {
+  override suspend fun listDeclaredPackages(): PyResult<List<PythonPackage>>? {
     val requirementsFile = getDependencyFile() ?: return null
     val requirements = readAction {
       PyRequirementParser.fromFile(requirementsFile)

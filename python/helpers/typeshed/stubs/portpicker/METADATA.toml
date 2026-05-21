@@ -1,2 +1,2 @@
 version = "1.6.*"
-upstream_repository = "https://github.com/google/python_portpicker"
+upstream-repository = "https://github.com/google/python_portpicker"

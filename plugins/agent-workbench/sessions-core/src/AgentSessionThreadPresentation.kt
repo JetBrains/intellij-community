@@ -10,6 +10,15 @@ import kotlin.math.roundToLong
 private const val COMPACT_AGENT_SESSION_TITLE_LENGTH = 50
 private val THREAD_TITLE_WHITESPACE = Regex("\\s+")
 
+fun normalizeAgentSessionTitle(title: String?): @NlsSafe String? {
+  return title
+    ?.replace('\n', ' ')
+    ?.replace('\r', ' ')
+    ?.replace(THREAD_TITLE_WHITESPACE, " ")
+    ?.trim()
+    ?.takeIf { it.isNotEmpty() }
+}
+
 fun formatCompactAgentSessionTitle(
   title: String,
   maxLength: Int = COMPACT_AGENT_SESSION_TITLE_LENGTH,
@@ -34,12 +43,8 @@ fun formatAgentSessionThreadTitle(
   title: String,
   fallbackTitle: (idPrefix: String) -> String,
 ): @NlsSafe String {
-  val normalized = title
-    .replace('\n', ' ')
-    .replace('\r', ' ')
-    .replace(THREAD_TITLE_WHITESPACE, " ")
-    .trim()
-  if (normalized.isNotEmpty()) {
+  val normalized = normalizeAgentSessionTitle(title)
+  if (normalized != null) {
     return normalized
   }
   val idPrefix = threadId.trim().takeIf { it.isNotEmpty() }?.take(8) ?: "unknown"

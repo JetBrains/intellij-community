@@ -8,13 +8,12 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.util.coroutines.flow.throttleLatest
 import com.intellij.terminal.TerminalTitle
 import com.intellij.ui.content.Content
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.util.TerminalTitleUtils
 import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.TITLE_UPDATE_DELAY
@@ -22,7 +21,6 @@ import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.buildSettingsAware
 import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.buildSettingsAwareTitle
 import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.stateFlow
 
-@OptIn(FlowPreview::class)
 internal fun updateTabNameOnTitleChange(
   title: TerminalTitle,
   content: Content,
@@ -30,7 +28,7 @@ internal fun updateTabNameOnTitleChange(
 ) {
   scope.launch(Dispatchers.UI + ModalityState.any().asContextElement()) {
     classicTerminalTitleStateFlow(title)
-      .debounce(TITLE_UPDATE_DELAY)
+      .throttleLatest(TITLE_UPDATE_DELAY)
       .collect {
         content.displayName = it.croppedText
         content.description = StringUtil.escapeXmlEntities(it.fullText)
@@ -38,7 +36,6 @@ internal fun updateTabNameOnTitleChange(
   }
 }
 
-@OptIn(FlowPreview::class)
 internal fun updateFileNameOnTitleChange(
   title: TerminalTitle,
   file: VirtualFile,
@@ -47,7 +44,7 @@ internal fun updateFileNameOnTitleChange(
 ) {
   scope.launch(Dispatchers.UI + ModalityState.any().asContextElement()) {
     classicTerminalTitleStateFlow(title)
-      .debounce(TITLE_UPDATE_DELAY)
+      .throttleLatest(TITLE_UPDATE_DELAY)
       .collect {
         file.rename(null, it.croppedText)
         FileEditorManager.getInstance(project).updateFilePresentation(file)

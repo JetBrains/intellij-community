@@ -29,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.imageio.ImageIO;
 import javax.imageio.stream.MemoryCacheImageInputStream;
 import javax.swing.JComponent;
-import javax.swing.SwingUtilities;
 import java.awt.AlphaComposite;
 import java.awt.Component;
 import java.awt.Container;
@@ -132,7 +131,7 @@ final class PainterHelper implements Painter.Listener {
       // restore transform at the time of computeOffset()
       g.setTransform(offsets.transform);
       g.translate(offsets.offsets[i++], offsets.offsets[i++]);
-      painter.paint(cur, g);
+      painter.paint(cur, offsets.source, g);
     }
     g.setTransform(orig);
   }
@@ -143,6 +142,7 @@ final class PainterHelper implements Painter.Listener {
     }
 
     Offsets offsets = new Offsets();
+    offsets.source = component;
     offsets.offsets = new int[painters.size() * 2];
     // store current graphics transform
     Graphics2D g = (Graphics2D)gg;
@@ -162,7 +162,7 @@ final class PainterHelper implements Painter.Listener {
         if (curParent == null) {
           continue;
         }
-        r = SwingUtilities.convertRectangle(curParent, cur.getBounds(), component);
+        r = ComponentUtil.convertRectangle(curParent, cur.getBounds(), component);
         prev = cur;
       }
       // component offsets don't include graphics scale, so compensate
@@ -173,6 +173,7 @@ final class PainterHelper implements Painter.Listener {
   }
 
   public static final class Offsets {
+    Component source;
     AffineTransform transform;
     int[] offsets;
   }
@@ -180,7 +181,7 @@ final class PainterHelper implements Painter.Listener {
   @Override
   public void onNeedsRepaint(@NotNull Painter painter, JComponent dirtyComponent) {
     if (dirtyComponent != null && dirtyComponent.isShowing()) {
-      Rectangle rec = SwingUtilities.convertRectangle(dirtyComponent, dirtyComponent.getBounds(), rootComponent);
+      Rectangle rec = ComponentUtil.convertRectangle(dirtyComponent, dirtyComponent.getBounds(), rootComponent);
       rootComponent.repaint(rec);
     }
     else {

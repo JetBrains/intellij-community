@@ -86,6 +86,14 @@
                                           nameKey="INLAY.positional.args.patterns"
                                           providerId="python.pseudo.keyword.pattern.inlays"/>
 
+    <codeInsight.declarativeInlayProvider group="TYPES_GROUP"
+                                          bundle="messages.PyPsiBundle"
+                                          implementationClass="com.jetbrains.python.inlayHints.PyNumericPromotionInlayHintsProvider"
+                                          isEnabledByDefault="true"
+                                          language="Python"
+                                          nameKey="INLAY.numeric.promotion"
+                                          providerId="python.numeric.promotion.inlays"/>
+
     <codeInsight.declarativeInlayProvider group="PARAMETERS_GROUP"
                                           bundle="messages.PyPsiBundle"
                                           implementationClass="com.jetbrains.python.inlayHints.PyTestParametrizeInlayHintsProvider"
@@ -854,10 +862,6 @@
                     interface="com.jetbrains.python.packaging.packageRequirements.PythonPackageRequiresExtractorProvider"
                     dynamic="true"/>
 
-    <extensionPoint qualifiedName="Pythonid.PythonPackageRequirementsTreeExtractorProvider"
-                    interface="com.jetbrains.python.packaging.packageRequirements.PythonPackageRequirementsTreeExtractorProvider"
-                    dynamic="true"/>
-
     <extensionPoint qualifiedName="Pythonid.pyRunToolProvider"
                     interface="com.jetbrains.python.run.features.PyRunToolProvider"
                     dynamic="true"/>
@@ -970,12 +974,6 @@
 
     <PythonPackageRequiresExtractorProvider implementation="com.jetbrains.python.poetry.packaging.PoetryRequiresExtractorProvider"/>
     <PythonPackageRequiresExtractorProvider implementation="com.jetbrains.python.uv.packaging.UvPackageRequiresExtractorProvider"/>
-
-    <PythonPackageRequirementsTreeExtractorProvider
-      implementation="com.jetbrains.python.poetry.packaging.PoetryPackageRequirementsTreeExtractorProvider"/>
-    <PythonPackageRequirementsTreeExtractorProvider
-      implementation="com.jetbrains.python.uv.packaging.UvPackageRequirementsTreeExtractorProvider"/>
-
 
     <systemPythonProvider implementation="com.jetbrains.python.sdk.uv.UvSystemPythonProvider"/>
 

@@ -22,7 +22,6 @@ curses.COLORS  # Initialized after start_color
 curses.COLOR_PAIRS  # Initialized after start_color
 curses.COLS  # Initialized only after initscr call
 curses.LINES  # Initialized only after initscr call
-curses.has_key  # stubtest gets confused because this is both a module and a function in curses
 fcntl.I_[A-Z0-9_]+  # Platform differences that cannot be captured by the type system
 multiprocessing.popen_spawn_win32  # exists on Linux but fails to import
 select.poll  # Actually a function; we have a class so it can be used as a type

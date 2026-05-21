@@ -4,6 +4,8 @@ export type ToolArgs = Record<string, unknown>
 
 export type UpstreamToolCaller = (toolName: string, args: ToolArgs) => Promise<unknown>
 
+export type WorkaroundChecker = (key: import('../workarounds').WorkaroundKey) => boolean
+
 export interface ToolContentItem {
   text?: string
   [key: string]: unknown
@@ -28,6 +30,7 @@ export interface SearchItem {
   filePath: string
   lineNumber?: number
   lineText?: string
+  [key: string]: unknown
 }
 
 export interface SearchCapabilities {
@@ -41,8 +44,14 @@ export interface SearchCapabilities {
   supportsFile: boolean
 }
 
+export interface AnalysisCapabilities {
+  hasLintFiles: boolean
+  supportsLintFiles: boolean
+}
+
 export interface ReadCapabilities {
   hasReadFile: boolean
+  hasApplyPatch?: boolean
 }
 
 export interface ToolInputSchema {
@@ -52,9 +61,20 @@ export interface ToolInputSchema {
   additionalProperties?: boolean
 }
 
+export interface ToolAnnotationsLike {
+  title?: string
+  readOnlyHint?: boolean
+  destructiveHint?: boolean
+  idempotentHint?: boolean
+  openWorldHint?: boolean
+}
+
 export interface ToolSpecLike {
   name?: string
   description?: string
   inputSchema?: ToolInputSchema
+  annotations?: ToolAnnotationsLike
   [key: string]: unknown
 }
+
+export type {ContainerSessionConfig} from '../container-session'

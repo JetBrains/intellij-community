@@ -416,13 +416,14 @@ UNPROTECTED_SACL_SECURITY_INFORMATION: int
 CredHandleType = _win32typing.PyCredHandle
 CtxtHandleType = _win32typing.PyCtxtHandle
 
-def DsListDomainsInSite(*args): ...  # incomplete
-def DsListInfoForServer(*args): ...  # incomplete
-def DsListRoles(*args): ...  # incomplete
-def DsListServersForDomainInSite(*args): ...  # incomplete
-def DsListServersInSite(*args): ...  # incomplete
-def DsListSites(*args): ...  # incomplete
-def GetPolicyHandle(*args): ...  # incomplete
+def DsListDomainsInSite(hds, site: str, /): ...
+def DsListInfoForServer(hds, server: str, /): ...
+def DsListRoles(hds, /): ...
+def DsListServersForDomainInSite(hds, domain: str, site: str, /): ...
+def DsListServersInSite(hds, site: str, /): ...
+def DsListSites(hds, /): ...
+
+GetPolicyHandle = LsaOpenPolicy
 
 MICROSOFT_KERBEROS_NAME_A: bytes
 MSV1_0_PACKAGE_NAME: bytes

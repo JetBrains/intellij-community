@@ -3,6 +3,7 @@ package com.jetbrains.python.sdk.uv
 
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -21,6 +22,7 @@ import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.onFailure
+import com.jetbrains.python.onSuccess
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.add.v2.DetectedSelectableInterpreter
@@ -339,7 +341,9 @@ suspend fun <P : PathHolder> setupNewUvSdkAndEnv(
   ).getOr { return it }
 
   if (!shouldInitProject) {
-    uv.sync().onFailure { errorSink.emit(it) }
+    uv.sync()
+      .onFailure { errorSink.emit(it) }
+      .onSuccess { SaveAndSyncHandler.getInstance().scheduleRefresh() }
   }
 
   return PyResult.success(sdk)

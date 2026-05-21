@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl
 
 import com.intellij.ide.PsiCopyPasteManager
@@ -6,7 +6,6 @@ import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -906,10 +905,7 @@ internal class PsiVfsInitProjectActivity : InitProjectActivity {
   override suspend fun run(project: Project) {
     val connection = project.messageBus.simpleConnect()
 
-    @Suppress("UsagesOfObsoleteApi")
-    serviceAsync<LanguageSubstitutors>().point?.addChangeListener((project as ComponentManagerEx).getCoroutineScope()) {
-      processFileTypesChanged(project)
-    }
+    serviceAsync<LanguageSubstitutors>().point?.addChangeListener({ processFileTypesChanged(project) }, project)
 
     connection.subscribe(AdditionalLibraryRootsListener.TOPIC, PsiVfsAdditionalLibraryRootListener(project))
     connection.subscribe(FileTypeManager.TOPIC, object : FileTypeListener {

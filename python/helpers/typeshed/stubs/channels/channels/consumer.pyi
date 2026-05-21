@@ -3,7 +3,6 @@ from typing import Any, ClassVar, Protocol, TypedDict, type_check_only
 
 from asgiref.typing import ASGIReceiveCallable, ASGISendCallable, Scope, WebSocketScope
 from channels.auth import UserLazyObject
-from channels.db import database_sync_to_async
 from channels.layers import BaseChannelLayer
 from django.contrib.sessions.backends.base import SessionBase
 from django.utils.functional import LazyObject
@@ -70,6 +69,5 @@ class SyncConsumer(AsyncConsumer):
 
     # Since we're overriding asynchronous methods with synchronous ones,
     # we need to use `# type: ignore[override]` to suppress mypy errors.
-    @database_sync_to_async
-    def dispatch(self, message: dict[str, Any]) -> None: ...  # type: ignore[override]
+    async def dispatch(self, message: dict[str, Any]) -> None: ...  # type: ignore[override]
     def send(self, message: dict[str, Any]) -> None: ...  # type: ignore[override]

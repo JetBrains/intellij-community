@@ -1,3 +1,9 @@
-from django.core.mail.backends.base import BaseEmailBackend
+from collections.abc import Sequence
 
-class EmailBackend(BaseEmailBackend): ...
+from django.core.mail.backends.base import BaseEmailBackend
+from django.core.mail.message import EmailMessage
+from typing_extensions import override
+
+class EmailBackend(BaseEmailBackend):
+    @override
+    def send_messages(self, messages: Sequence[EmailMessage]) -> int: ...

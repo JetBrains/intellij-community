@@ -2,6 +2,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.codeInsight.controlflow.ConditionalInstruction;
+import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.ASTNode;
@@ -21,12 +22,14 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonRuntimeService;
 import com.jetbrains.python.ast.PyAstFunction;
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.PyTypeAssertionEvaluator;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.Property;
+import com.jetbrains.python.psi.PyAnnotationOwner;
 import com.jetbrains.python.psi.PyAugAssignmentStatement;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyCallable;
@@ -251,8 +254,26 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     // like `var: Any` earlier, so we know not to use __getattr__ later
     final Ref<PyType> typeFromTargetsRef = getTypeFromTargets(context);
     final PyType typeFromTargets = PyTypeUtil.derefOrUnknown(typeFromTargetsRef);
-    if (qualified && isNoneType(typeFromTargets)) {
-      return PyAnyType.getUnknown();
+    if (qualified && isNoneType(typeFromTargets) && !isTargetAnnotated(context)) {
+      /* we support a special case where we convert an unannotated attribute of `None` to `UnsafeUnion[None, Unknown]`
+        this is because there are frequently cases in real code where inferring `None` would lead to undesirable false positives:
+        ```py
+        class C:
+            def __init__(self):
+                self.a = None  # user intends `int | None` / `late int`
+            def set_a(self):
+                self.a = 1
+        def f(c: C):
+            c.a + 1  # FP here
+        ```
+
+        we use `UnsafeUnion` to avoid cases where the `None` doesn't typically surface to usages,
+        if the user is interested in typing they should always annotate an attribute that is initialised with `None`
+
+        there is also a consideration for the case where a base class sets an attribute with `None`, expecting it to be
+        overridden with a value
+      */
+      return PyUnsafeUnionType.unsafeUnion(typeFromTargets, PyAnyType.getUnknown());
     }
 
     final Ref<PyType> descriptorType = PyDescriptorTypeUtil.getDunderGetReturnType(this, typeFromTargets, context);
@@ -335,6 +356,16 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       }
     }
     return null;
+  }
+
+  private boolean isTargetAnnotated(@NotNull TypeEvalContext context) {
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
+    for (PsiElement target : PyUtil.multiResolveTopPriority(getReference(resolveContext))) {
+      if (target instanceof PyAnnotationOwner owner && owner.getAnnotation() != null) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private @Nullable Ref<PyType> getTypeFromTargets(@NotNull TypeEvalContext context) {
@@ -568,12 +599,19 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
                                              @NotNull ScopeOwner scopeOwner) {
     final PyAugAssignmentStatement augAssignment = PsiTreeUtil.getParentOfType(anchor, PyAugAssignmentStatement.class);
     final PyElement element = augAssignment != null ? augAssignment : anchor;
+    final Instruction[] flow = ControlFlowCache.getControlFlow(scopeOwner).getInstructions();
+    final int thisInstructionIdx = ControlFlowUtil.findInstructionNumberByElement(flow, element);
+    final int thisInstructionNum = thisInstructionIdx == -1 ? Integer.MAX_VALUE : flow[thisInstructionIdx].num();
     final List<Instruction> defs = PyDefUseUtil.getLatestDefs(scopeOwner, name, element, true, false, context);
     // null means empty set of possible types, Ref(null) means Any
     final @Nullable Ref<PyType> combinedType = StreamEx.of(defs)
       .map(instr -> {
         if (instr.getElement() == anchor) {
           // exclude recursive definition (example: type of 'i++' inside a loop)
+          return null;
+        }
+        if (instr.num() >= thisInstructionNum) {
+          // exclude back-edge definitions reached through a loop (PY-89245)
           return null;
         }
         if (instr instanceof ReadWriteInstruction readWriteInstruction) {

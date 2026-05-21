@@ -32,7 +32,6 @@ data class ProjectId @ApiStatus.Internal constructor(private val id: UID) {
     return "ProjectId#$id"
   }
 
-  @ApiStatus.Internal
   companion object {
     /**
      * Creates a new unique identifier for a [Project]

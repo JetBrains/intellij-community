@@ -1,2 +1,2 @@
 version = "3.3.*"
-upstream_repository = "https://github.com/TkinterEP/ttkthemes"
+upstream-repository = "https://github.com/TkinterEP/ttkthemes"

@@ -68,6 +68,18 @@ internal class AgentSessionContentRepository(
     return warmThreads.resolveArchiveNotificationLabel(normalizedTarget)
   }
 
+  fun findArchivedTargetThread(target: ArchiveThreadTarget): AgentSessionThread? {
+    val normalizedTarget = normalizeArchiveThreadTarget(target)
+    val runtimeThreads = stateStore.snapshot().findPathContent(normalizedTarget.path)?.threads
+    val runtimeThread = runtimeThreads?.resolveArchivedTargetThread(normalizedTarget)
+    if (runtimeThread != null) {
+      return runtimeThread
+    }
+
+    val warmThreads = warmState.getPathSnapshot(normalizedTarget.path)?.threads ?: return null
+    return warmThreads.resolveArchivedTargetThread(normalizedTarget)
+  }
+
   fun removeArchivedTarget(target: ArchiveThreadTarget): Boolean {
     val normalizedTarget = normalizeArchiveThreadTarget(target)
     var runtimeChanged = false
@@ -110,6 +122,58 @@ internal class AgentSessionContentRepository(
 
     val warmChanged = updateWarmSnapshot(normalizedTarget.path) { snapshot ->
       val nextThreads = removeArchivedTarget(snapshot.threads, normalizedTarget)
+      if (nextThreads == snapshot.threads) {
+        null
+      }
+      else {
+        snapshot.copy(threads = nextThreads, updatedAt = System.currentTimeMillis())
+      }
+    }
+    return runtimeChanged || warmChanged
+  }
+
+  fun restoreArchivedThread(path: String, thread: AgentSessionThread): Boolean {
+    val normalizedPath = normalizeAgentWorkbenchPath(path)
+    var runtimeChanged = false
+    stateStore.update { state ->
+      var stateChanged = false
+      val nextProjects = state.projects.map { project ->
+        if (project.path == normalizedPath) {
+          val nextThreads = restoreArchivedThread(project.threads, thread)
+          if (nextThreads != project.threads) {
+            stateChanged = true
+            runtimeChanged = true
+            project.copy(threads = nextThreads)
+          }
+          else {
+            project
+          }
+        }
+        else {
+          val nextWorktrees = project.worktrees.map { worktree ->
+            if (worktree.path == normalizedPath) {
+              val nextThreads = restoreArchivedThread(worktree.threads, thread)
+              if (nextThreads != worktree.threads) {
+                stateChanged = true
+                runtimeChanged = true
+                worktree.copy(threads = nextThreads)
+              }
+              else {
+                worktree
+              }
+            }
+            else {
+              worktree
+            }
+          }
+          if (nextWorktrees == project.worktrees) project else project.copy(worktrees = nextWorktrees)
+        }
+      }
+      if (!stateChanged) state else state.copy(projects = nextProjects, lastUpdatedAt = System.currentTimeMillis())
+    }
+
+    val warmChanged = updateWarmSnapshot(normalizedPath) { snapshot ->
+      val nextThreads = restoreArchivedThread(snapshot.threads, thread)
       if (nextThreads == snapshot.threads) {
         null
       }
@@ -233,6 +297,28 @@ private fun List<AgentSessionThread>.resolveArchiveNotificationLabel(target: Arc
       }
     }
   }
+}
+
+private fun List<AgentSessionThread>.resolveArchivedTargetThread(target: ArchiveThreadTarget): AgentSessionThread? {
+  return when (target) {
+    is ArchiveThreadTarget.Thread -> {
+      firstOrNull { thread -> thread.provider == target.provider && thread.id == target.threadId }
+    }
+
+    is ArchiveThreadTarget.SubAgent -> {
+      firstOrNull { thread -> thread.provider == target.provider && thread.id == target.parentThreadId }
+    }
+  }
+}
+
+private fun restoreArchivedThread(
+  threads: List<AgentSessionThread>,
+  thread: AgentSessionThread,
+): List<AgentSessionThread> {
+  if (threads.any { existing -> existing.provider == thread.provider && existing.id == thread.id }) {
+    return threads
+  }
+  return (threads + thread).sortedByDescending { it.updatedAt }
 }
 
 private fun removeArchivedTarget(

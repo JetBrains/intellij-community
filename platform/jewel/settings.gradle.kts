@@ -6,8 +6,7 @@ rootProject.name = "jewel"
 
 pluginManagement {
     repositories {
-        maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev/")
-        maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
+        maven("https://redirector.kotlinlang.org/maven/bootstrap")
         maven("https://oss.sonatype.org/content/repositories/snapshots/")
         gradlePluginPortal()
         mavenCentral()
@@ -18,7 +17,6 @@ pluginManagement {
 dependencyResolutionManagement {
     repositories {
         google()
-        maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
         maven("https://www.jetbrains.com/intellij-repository/releases")
         maven("https://www.jetbrains.com/intellij-repository/snapshots")
         maven("https://cache-redirector.jetbrains.com/intellij-dependencies")
@@ -47,6 +45,7 @@ include(
     ":markdown:extensions:images",
     ":markdown:int-ui-standalone-styling",
     ":markdown:ide-laf-bridge-styling",
+    ":markdown:testing",
     ":samples:showcase",
     ":samples:standalone",
     ":ui",

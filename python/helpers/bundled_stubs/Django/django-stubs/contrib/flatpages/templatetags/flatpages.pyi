@@ -3,6 +3,7 @@ from typing import Any
 from django import template
 from django.template.base import Parser, Token
 from django.template.context import Context
+from typing_extensions import override
 
 register: Any
 
@@ -11,6 +12,7 @@ class FlatpageNode(template.Node):
     starts_with: None
     user: None
     def __init__(self, context_name: str, starts_with: str | None = ..., user: str | None = ...) -> None: ...
+    @override
     def render(self, context: Context) -> str: ...
 
 def get_flatpages(parser: Parser, token: Token) -> FlatpageNode: ...

@@ -1,3 +1,13 @@
+# =============
+# 3.13 and 3.14
+# =============
+
+# Starting with Python 3.14.4, these methods accept None for the "scheduler"
+# and "setpgroup" parameters, but would raise a TypeError with Python 3.13.12
+# and earlier. For compatibility reasons, we don't allow None in the stubs.
+os.posix_spawn
+os.posix_spawnp
+
 # =========
 # 3.14 only
 # =========

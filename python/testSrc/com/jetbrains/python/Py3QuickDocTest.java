@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
+import com.intellij.idea.TestFor;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -905,6 +906,16 @@ public class Py3QuickDocTest extends LightMarkedTestCase {
 
   // PY-87075
   public void testTypeVar_variance_not_affected_2() {
+    checkHTMLOnly();
+  }
+
+  @TestFor(issues = "PY-88277")
+  public void testType_variable_tuple() {
+    checkHTMLOnly();
+  }
+
+  @TestFor(issues = "PY-88277")
+  public void testParameter_specification() {
     checkHTMLOnly();
   }
 

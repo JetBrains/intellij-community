@@ -46,12 +46,12 @@ if sys.platform == "win32":
 
     # These noqas workaround https://github.com/astral-sh/ruff/issues/10874
     class Priority(enum.IntEnum):
-        ABOVE_NORMAL_PRIORITY_CLASS = _psutil_windows.ABOVE_NORMAL_PRIORITY_CLASS  # noqa: F811
-        BELOW_NORMAL_PRIORITY_CLASS = _psutil_windows.BELOW_NORMAL_PRIORITY_CLASS  # noqa: F811
-        HIGH_PRIORITY_CLASS = _psutil_windows.HIGH_PRIORITY_CLASS  # noqa: F811
-        IDLE_PRIORITY_CLASS = _psutil_windows.IDLE_PRIORITY_CLASS  # noqa: F811
-        NORMAL_PRIORITY_CLASS = _psutil_windows.NORMAL_PRIORITY_CLASS  # noqa: F811
-        REALTIME_PRIORITY_CLASS = _psutil_windows.REALTIME_PRIORITY_CLASS  # noqa: F811
+        ABOVE_NORMAL_PRIORITY_CLASS = _psutil_windows.ABOVE_NORMAL_PRIORITY_CLASS
+        BELOW_NORMAL_PRIORITY_CLASS = _psutil_windows.BELOW_NORMAL_PRIORITY_CLASS
+        HIGH_PRIORITY_CLASS = _psutil_windows.HIGH_PRIORITY_CLASS
+        IDLE_PRIORITY_CLASS = _psutil_windows.IDLE_PRIORITY_CLASS
+        NORMAL_PRIORITY_CLASS = _psutil_windows.NORMAL_PRIORITY_CLASS
+        REALTIME_PRIORITY_CLASS = _psutil_windows.REALTIME_PRIORITY_CLASS
 
     class IOPriority(enum.IntEnum):
         IOPRIO_VERYLOW = 0

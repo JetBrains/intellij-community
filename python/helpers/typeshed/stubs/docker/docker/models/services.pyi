@@ -15,7 +15,7 @@ class Service(Model):
 
 class ServiceCollection(Collection[Service]):
     model: type[Service]
-    def create(self, image, command=None, **kwargs): ...  # type:ignore[override]
+    def create(self, image, command=None, **kwargs): ...  # type: ignore[override]
     def get(self, service_id, insert_defaults=None): ...
     def list(self, **kwargs): ...
 

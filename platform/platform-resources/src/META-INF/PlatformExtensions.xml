@@ -202,6 +202,8 @@ Android Studio: b/282808067 -->
 
     <applicationService serviceInterface="com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade"
                         serviceImplementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerFacadeImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.updateSettings.impl.PluginUpdateHandlerProvider"
+                        serviceImplementation="com.intellij.openapi.updateSettings.impl.DefaultPluginUpdateHandlerProvider" open="true"/>
 
     <applicationService serviceInterface="com.intellij.execution.wsl.WslDistributionManager"
                         serviceImplementation="com.intellij.execution.wsl.WslDistributionManagerImpl"/>
@@ -1003,7 +1005,7 @@ Android Studio b/395576525 -->
       implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.ProjectStructureUsageCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.FacetTypeUsageCollector"/>
     <statistics.projectUsagesCollector
-      implementation="com.intellij.internal.statistic.collectors.fus.otherIde.LaunchJsonUsagesCollector"/>
+      implementation="com.intellij.internal.statistic.collectors.fus.otherIde.DotVSCodeProjectCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.plugins.PluginsUsagesCollector"
                                            allowOnStartup="true"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.plugins.PluginSyncUsageCollector"/>
@@ -1814,6 +1816,21 @@ Android Studio: b/285867050 -->
 
     <applicationService serviceInterface="com.intellij.diagnostic.PerformanceWatcher"
                         serviceImplementation="com.intellij.diagnostic.PerformanceWatcherImpl"/>
+    <registryKey key="performance.watcher.maxDumpDuration.ms" defaultValue="40000"
+                 description="Maximum duration of performance watcher dumps in ms"/>
+    <registryKey key="performance.watcher.unresponsive.interval.ms" defaultValue="5000"
+                 description="Log UI freezes longer than the specified time interval in ms"/>
+    <registryKey key="performance.watcher.enable.smoke.and.mirrors.compensation" defaultValue="true"
+                 description="Enable UI freezes reporting for long-running background tasks that may impale UI interactions without a visible impact on UI rendering"/>
+
+    <registryKey key="performance.watcher.pooled.enabled" defaultValue="true"
+                 description="Write thread dumps if none pooled threads are available."/>
+    <registryKey key="performance.watcher.pooled.unresponsive.interval.ms" defaultValue="15000"
+                 description="Log if none pooled threads are available for longer than the specified time interval in ms"/>
+    <registryKey key="performance.watcher.pooled.progressive.interval" defaultValue="true"
+                 description="Increase unresponsive interval after each recorded dump"/>
+    <registryKey key="performance.watcher.pooled.maximum.dumps" defaultValue="10"
+                 description="Stop recording thread dumps after specified amount. Use '-1' to keep writing the thread dumps."/>
 
     <applicationService serviceInterface="com.intellij.diagnostic.WriteLockMeasurer"
                         serviceImplementation="com.intellij.diagnostic.WriteLockMeasurerImpl"/>
@@ -1871,6 +1888,14 @@ Android Studio: b/285867050 -->
     <backgroundPostStartupActivity implementation="com.intellij.openapi.vfs.newvfs.monitoring.VFSInitializationConditionsToFusReporter"/>
 
     <idePerformanceListener implementation="com.intellij.diagnostic.FusFreezeReporter"/>
+    <registryKey key="freeze.reporter.enabled" defaultValue="true"
+                 description="Report UI freezes to JetBrains"/>
+    <registryKey key="freeze.reporter.maxDumpDuration.ms" defaultValue="40000"
+                 description="Maximum duration of the 'report.txt' performance snapshot in ms"/>
+    <registryKey key="freeze.reporter.profiling" defaultValue="true"
+                 description="Start CPU profiling when the IDE is frozen"/>
+    <registryKey key="freeze.reporter.profiling.all.threads" defaultValue="true"
+                 description="Capture all threads including sleeping and blocked (wall-clock mode)"/>
 
     <applicationActivity implementation="com.intellij.internal.DumpPluginDescriptorsOnAppStartTrigger"/>
     <applicationActivity implementation="com.intellij.ide.plugins.PluginInitializationErrorReporterStartupTrigger"/>

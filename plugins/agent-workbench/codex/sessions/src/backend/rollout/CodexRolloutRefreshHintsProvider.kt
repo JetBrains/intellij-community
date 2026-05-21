@@ -8,17 +8,21 @@ import com.intellij.agent.workbench.codex.sessions.backend.CodexRefreshHints
 import com.intellij.agent.workbench.codex.sessions.backend.CodexRefreshHintsProvider
 import com.intellij.agent.workbench.codex.sessions.backend.toAgentThreadActivity
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRebindCandidate
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 internal class CodexRolloutRefreshHintsProvider(
   private val rolloutBackend: CodexRolloutSessionBackend = CodexRolloutSessionBackend(),
 ) : CodexRefreshHintsProvider {
-  override val updates: Flow<Unit>
-    get() = rolloutBackend.updates
+  override val updateEvents: Flow<AgentSessionSourceUpdateEvent>
+    get() = rolloutBackend.updates.map { AgentSessionSourceUpdateEvent(type = AgentSessionSourceUpdate.HINTS_CHANGED) }
 
   override suspend fun prefetchRefreshHints(
     paths: List<String>,
-    knownThreadIdsByPath: Map<String, Set<String>>,
+    refreshThreadSeedsByPath: Map<String, Set<AgentSessionRefreshThreadSeed>>,
   ): Map<String, CodexRefreshHints> {
     if (paths.isEmpty()) return emptyMap()
 
@@ -30,7 +34,7 @@ internal class CodexRolloutRefreshHintsProvider(
       val rebindCandidatesById = LinkedHashMap<String, AgentSessionRebindCandidate>()
       val activityHintsByThreadId = LinkedHashMap<String, CodexRefreshActivityHint>()
       val activityUpdatedAtByThreadId = HashMap<String, Long>()
-      val knownThreadIds = knownThreadIdsByPath[path]
+      val knownThreadIds = refreshThreadSeedsByPath[path].orEmpty().asSequence().map { it.threadId }.toCollection(LinkedHashSet())
 
       for (rolloutThread in rolloutThreads) {
         val threadId = rolloutThread.thread.id
@@ -38,7 +42,7 @@ internal class CodexRolloutRefreshHintsProvider(
 
         val threadActivity = rolloutThread.activity.toAgentThreadActivity()
 
-        if (knownThreadIds != null && threadId in knownThreadIds) {
+        if (threadId in knownThreadIds) {
           val rolloutUpdatedAt = rolloutThread.thread.updatedAt
           val previousUpdatedAt = activityUpdatedAtByThreadId[threadId]
           if (previousUpdatedAt == null || rolloutUpdatedAt >= previousUpdatedAt) {
@@ -52,7 +56,6 @@ internal class CodexRolloutRefreshHintsProvider(
         }
 
         if (
-          knownThreadIds == null ||
           threadId in knownThreadIds ||
           rolloutThread.thread.sourceKind != CodexThreadSourceKind.CLI
         ) {

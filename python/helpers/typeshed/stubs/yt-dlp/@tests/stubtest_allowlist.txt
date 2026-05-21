@@ -26,3 +26,6 @@ yt_dlp.utils.(_utils.)?prepend_extension
 yt_dlp.utils.(_utils.)?replace_extension
 # Unsure why this is here.
 yt_dlp.utils.jslib.devalue.TYPE_CHECKING
+
+# Stubtest weirdness
+yt_dlp.utils._utils.preferredencoding

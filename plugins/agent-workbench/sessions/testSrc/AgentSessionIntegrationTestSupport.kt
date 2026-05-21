@@ -15,11 +15,15 @@ import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.common.session.AgentSubAgent
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.agent.workbench.sessions.frame.OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.model.ProjectEntry
 import com.intellij.agent.workbench.sessions.model.WorktreeEntry
+import com.intellij.agent.workbench.sessions.service.AgentSessionArchiveBackgroundTaskRunner
 import com.intellij.agent.workbench.sessions.service.AgentSessionArchiveService
 import com.intellij.agent.workbench.sessions.service.AgentSessionChatOpenExecutor
 import com.intellij.agent.workbench.sessions.service.AgentSessionContentRepository
@@ -176,7 +180,7 @@ class ScriptedSessionSource(
   override val provider: AgentSessionProvider,
   override val canReportExactThreadCount: Boolean = true,
   override val supportsUpdates: Boolean = false,
-  override val updates: Flow<Unit> = emptyFlow(),
+  override val updateEvents: Flow<AgentSessionSourceUpdateEvent> = emptyFlow(),
   private val listFromOpenProject: suspend (path: String, project: Project) -> List<AgentSessionThread> = { _, _ -> emptyList() },
   private val listFromClosedProject: suspend (path: String) -> List<AgentSessionThread> = { _ -> emptyList() },
   private val prefetch: suspend (paths: List<String>) -> Map<String, List<AgentSessionThread>> = { emptyMap() },
@@ -184,6 +188,17 @@ class ScriptedSessionSource(
     paths: List<String>,
     knownThreadIdsByPath: Map<String, Set<String>>,
   ) -> Map<String, AgentSessionRefreshHints> = { _, _ -> emptyMap() },
+  private val prefetchRefreshThreadSeedsProvider: suspend (
+    paths: List<String>,
+    refreshThreadSeedsByPath: Map<String, Set<AgentSessionRefreshThreadSeed>>,
+  ) -> Map<String, AgentSessionRefreshHints> = { paths, refreshThreadSeedsByPath ->
+    prefetchRefreshHintsProvider(
+      paths,
+      refreshThreadSeedsByPath.mapValues { (_, refreshThreadSeeds) ->
+        refreshThreadSeeds.asSequence().map { refreshThreadSeed -> refreshThreadSeed.threadId }.toCollection(LinkedHashSet())
+      }
+    )
+  },
 ) : AgentSessionSource {
   override suspend fun listThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread> {
     return listFromOpenProject(path, project)
@@ -199,10 +214,32 @@ class ScriptedSessionSource(
 
   override suspend fun prefetchRefreshHints(
     paths: List<String>,
-    knownThreadIdsByPath: Map<String, Set<String>>,
+    refreshThreadSeedsByPath: Map<String, Set<AgentSessionRefreshThreadSeed>>,
   ): Map<String, AgentSessionRefreshHints> {
-    return prefetchRefreshHintsProvider(paths, knownThreadIdsByPath)
+    return prefetchRefreshThreadSeedsProvider(paths, refreshThreadSeedsByPath)
   }
+}
+
+fun threadsChangedEvent(
+  scopedPaths: Set<String>? = null,
+  threadIds: Set<String>? = null,
+): AgentSessionSourceUpdateEvent {
+  return AgentSessionSourceUpdateEvent(
+    type = AgentSessionSourceUpdate.THREADS_CHANGED,
+    scopedPaths = scopedPaths,
+    threadIds = threadIds,
+  )
+}
+
+fun hintsChangedEvent(
+  scopedPaths: Set<String>? = null,
+  threadIds: Set<String>? = null,
+): AgentSessionSourceUpdateEvent {
+  return AgentSessionSourceUpdateEvent(
+    type = AgentSessionSourceUpdate.HINTS_CHANGED,
+    scopedPaths = scopedPaths,
+    threadIds = threadIds,
+  )
 }
 
 fun thread(
@@ -329,6 +366,7 @@ internal suspend fun withServiceAndArchive(
   warmState: SessionWarmState = InMemorySessionWarmState(),
   uiPreferencesState: AgentSessionUiPreferencesStateService = AgentSessionUiPreferencesStateService(),
   archiveChatCleanup: suspend (projectPath: String, threadIdentity: String, subAgentId: String?) -> Unit = { _, _, _ -> },
+  archiveBackgroundTaskRunner: AgentSessionArchiveBackgroundTaskRunner = AgentSessionArchiveBackgroundTaskRunner { _, block -> block() },
   chatOpenExecutor: AgentSessionChatOpenExecutor? = null,
   openPendingCodexTabsProvider: suspend () -> Map<String, List<AgentChatPendingTabSnapshot>> =
     ::collectOpenPendingCodexTabsByPath,
@@ -345,6 +383,7 @@ internal suspend fun withServiceAndArchive(
     warmState = warmState,
     uiPreferencesState = uiPreferencesState,
     archiveChatCleanup = archiveChatCleanup,
+    archiveBackgroundTaskRunner = archiveBackgroundTaskRunner,
     chatOpenExecutor = chatOpenExecutor,
     openPendingCodexTabsProvider = openPendingCodexTabsProvider,
     openConcreteChatThreadIdentitiesByPathProvider = openConcreteChatThreadIdentitiesByPathProvider,
@@ -360,6 +399,7 @@ internal suspend fun withServiceAndArchiveAndLaunch(
   warmState: SessionWarmState = InMemorySessionWarmState(),
   uiPreferencesState: AgentSessionUiPreferencesStateService = AgentSessionUiPreferencesStateService(),
   archiveChatCleanup: suspend (projectPath: String, threadIdentity: String, subAgentId: String?) -> Unit = { _, _, _ -> },
+  archiveBackgroundTaskRunner: AgentSessionArchiveBackgroundTaskRunner = AgentSessionArchiveBackgroundTaskRunner { _, block -> block() },
   chatOpenExecutor: AgentSessionChatOpenExecutor? = null,
   openPendingCodexTabsProvider: suspend () -> Map<String, List<AgentChatPendingTabSnapshot>> =
     ::collectOpenPendingCodexTabsByPath,
@@ -425,6 +465,7 @@ internal suspend fun withServiceAndArchiveAndLaunch(
       syncService = syncService,
       contentRepository = contentRepository,
       archiveChatCleanup = archiveChatCleanup,
+      backgroundTaskRunner = archiveBackgroundTaskRunner,
     )
     action(service, archiveService, launchService)
   }

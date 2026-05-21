@@ -370,8 +370,7 @@ public final class ConsentOptions implements ModificationTracker {
       allDefaults.remove(lookupConsentID(EAP_FEEDBACK_OPTION_ID));
     }
 
-    if (!ExceptionAutoReportUtil.isAutoReportVisible()
-        || ExceptionAutoReportUtil.isAutoReportForced()) { // do not show consents UI if level is forced
+    if (!ExceptionAutoReportUtil.isConsentAllowedToBeVisible()) {
       allDefaults.remove(EA_AUTO_REPORT_OPTION_ID);
     }
 

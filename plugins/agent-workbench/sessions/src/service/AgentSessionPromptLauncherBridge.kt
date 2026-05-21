@@ -5,6 +5,7 @@ import com.intellij.agent.workbench.chat.AgentChatTabSelectionService
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AGENT_PROMPT_INVOCATION_DATA_CONTEXT_KEY
+import com.intellij.agent.workbench.prompt.core.AgentPromptContainerLauncher
 import com.intellij.agent.workbench.prompt.core.AgentPromptExistingThreadsSnapshot
 import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchRequest
@@ -88,6 +89,16 @@ internal class AgentSessionPromptLauncherBridge : AgentPromptLauncherBridge {
   }
 
   override fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
+    if (request.containerMode) {
+      val containerLauncher = AgentPromptContainerLauncher.findInstance()
+      if (containerLauncher != null && containerLauncher.isAvailable()) {
+        val project = sourceProjectResolver(request.projectPath)
+        if (project != null) {
+          containerLauncher.launch(project, request)
+          return AgentPromptLaunchResult.SUCCESS
+        }
+      }
+    }
     return launchPromptRequest(request)
   }
 

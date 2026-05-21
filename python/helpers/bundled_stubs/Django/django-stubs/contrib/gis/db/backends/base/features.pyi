@@ -16,7 +16,6 @@ class BaseSpatialFeatures:
     supports_perimeter_geodetic: bool
     supports_area_geodetic: bool
     supports_num_points_poly: bool
-    supports_left_right_lookups: bool
     supports_dwithin_distance_expr: bool
     supports_raster: bool
     supports_geometry_field_unique_index: bool

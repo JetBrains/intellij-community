@@ -79,7 +79,7 @@ class PipEnvPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pr
     return PyResult.success(emptyList())
   }
 
-  override suspend fun extractDependencies(): PyResult<List<PythonPackage>>? {
+  override suspend fun listDeclaredPackages(): PyResult<List<PythonPackage>>? {
     val pipFileLock =  getDependencyFile() ?: return null
     val requirements = SdkPipEnvParser.getPipFileLockRequirements(pipFileLock) ?: return null
     return PyResult.success(requirements.toPythonPackages())

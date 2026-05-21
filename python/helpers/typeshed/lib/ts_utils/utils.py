@@ -50,7 +50,7 @@ PYTHON_VERSION: Final = f"{sys.version_info.major}.{sys.version_info.minor}"
 
 
 def strip_comments(text: str) -> str:
-    return text.split("#")[0].strip()
+    return text.split("#", maxsplit=1)[0].strip()
 
 
 def jsonc_to_json(text: str) -> str:

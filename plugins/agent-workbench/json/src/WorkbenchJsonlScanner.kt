@@ -74,6 +74,41 @@ object WorkbenchJsonlScanner {
     return state
   }
 
+  /**
+   * Removes lines from a JSONL file where [shouldRemove] returns `true`.
+   * Deletes the file entirely if no lines remain after removal.
+   *
+   * @param shouldRemove receives a [JsonParser] positioned at `START_OBJECT`; return `true` to remove the line
+   */
+  fun removeLines(
+    path: Path,
+    jsonFactory: JsonFactory,
+    shouldRemove: (JsonParser) -> Boolean,
+  ) {
+    if (!Files.exists(path)) return
+    val lines = Files.readAllLines(path)
+    val remaining = lines.filter { line ->
+      val trimmed = line.trim()
+      if (trimmed.isEmpty()) return@filter false
+      val remove = try {
+        jsonFactory.createParser(trimmed).use { parser ->
+          if (parser.nextToken() != JsonToken.START_OBJECT) false
+          else shouldRemove(parser)
+        }
+      }
+      catch (_: Throwable) {
+        false
+      }
+      !remove
+    }
+    if (remaining.isEmpty()) {
+      Files.deleteIfExists(path)
+    }
+    else {
+      Files.writeString(path, remaining.joinToString("\n", postfix = "\n"))
+    }
+  }
+
   private fun <S> parseWithSingleParser(
     path: Path,
     jsonFactory: JsonFactory,

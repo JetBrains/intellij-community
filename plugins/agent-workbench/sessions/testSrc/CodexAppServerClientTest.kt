@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.codex.common.CodexAppServerClient
 import com.intellij.agent.workbench.codex.common.CodexAppServerException
+import com.intellij.agent.workbench.codex.common.CodexAppServerNotificationKind
 import com.intellij.agent.workbench.codex.common.CodexAppServerNotificationRouting
 import com.intellij.agent.workbench.codex.common.CodexAppServerValue
 import com.intellij.agent.workbench.codex.common.CodexCliNotFoundException
@@ -643,6 +644,52 @@ class CodexAppServerClientTest {
   }
 
   @Test
+  fun appServerNotificationsParseThreadNameUpdatedKind(): Unit = runBlocking(Dispatchers.Default) {
+    val project = tempDir.resolve("project-notifications-name-updated")
+    Files.createDirectories(project)
+    val configPath = tempDir.resolve("codex-notifications-name-updated.json")
+    writeConfig(
+      path = configPath,
+      threads = listOf(
+        ThreadSpec(
+          id = "thread-notify-name",
+          title = "Thread notify name",
+          cwd = project.toString(),
+          statusType = "idle",
+          updatedAt = 1_700_000_052_500L,
+          archived = false,
+        )
+      )
+    )
+    val backendDir = tempDir.resolve("backend-notifications-name-updated")
+    Files.createDirectories(backendDir)
+    val client = createMockClient(
+      scope = this,
+      tempDir = backendDir,
+      configPath = configPath,
+      environmentOverrides = mapOf(
+        "CODEX_TEST_NOTIFY_METHOD" to "thread/name/updated",
+        "CODEX_TEST_NOTIFY_ON_METHOD" to "thread/read",
+        "CODEX_TEST_NOTIFY_THREAD_ID" to "thread-notify-name",
+      ),
+    )
+    try {
+      val notification = awaitNextNotification(client)
+
+      val snapshot = client.readThreadActivitySnapshot("thread-notify-name")
+      assertThat(snapshot).isNotNull
+
+      val event = notification.await()
+      assertThat(event.method).isEqualTo("thread/name/updated")
+      assertThat(event.kind).isEqualTo(CodexAppServerNotificationKind.THREAD_NAME_UPDATED)
+      assertThat(event.threadId).isEqualTo("thread-notify-name")
+    }
+    finally {
+      client.shutdown()
+    }
+  }
+
+  @Test
   fun appServerStartedNotificationsExposeParsedThreadPayload(): Unit = runBlocking(Dispatchers.Default) {
     val project = tempDir.resolve("project-notifications-started-thread")
     Files.createDirectories(project)
@@ -875,7 +922,10 @@ class CodexAppServerClientTest {
         ),
         ThreadSpec(
           id = "thread-name",
-          name = "Named thread",
+          title = "Title fallback",
+          preview = "Preview fallback",
+          name = "  Named\n   thread  ",
+          summary = "Summary fallback",
           cwd = workingDir.toString(),
           createdAt = 1_700_000_500_000L,
           createdAtField = "createdAt",
@@ -896,11 +946,63 @@ class CodexAppServerClientTest {
       val threadsById = threads.associateBy { it.id }
       val previewThread = threadsById.getValue("thread-preview")
       assertThat(previewThread.updatedAt).isEqualTo(1_700_000_000_000L)
-      assertThat(previewThread.title).endsWith("...")
-      assertThat(previewThread.title.length).isLessThan(longPreview.length)
+      assertThat(previewThread.title).isEqualTo(longPreview)
       val namedThread = threadsById.getValue("thread-name")
       assertThat(namedThread.title).isEqualTo("Named thread")
       assertThat(namedThread.updatedAt).isEqualTo(1_700_000_500_000L)
+    }
+    finally {
+      client.shutdown()
+    }
+  }
+
+  @Test
+  fun listThreadsFallsBackWhenExplicitNameIsBlank(): Unit = runBlocking(Dispatchers.Default) {
+    val workingDir = tempDir.resolve("project-blank-name")
+    Files.createDirectories(workingDir)
+    val normalizedCwd = workingDir.toString().replace('\\', '/').trimEnd('/')
+    val configPath = workingDir.resolve("codex-config.json")
+    writeConfig(
+      path = configPath,
+      threads = listOf(
+        ThreadSpec(
+          id = "thread-title",
+          title = "Title fallback",
+          name = "",
+          cwd = normalizedCwd,
+          updatedAt = 1_700_000_600_000L,
+          archived = false,
+        ),
+        ThreadSpec(
+          id = "thread-summary",
+          summary = "Summary fallback",
+          name = "",
+          cwd = normalizedCwd,
+          updatedAt = 1_700_000_500_000L,
+          archived = false,
+        ),
+        ThreadSpec(
+          id = "thread-preview",
+          preview = "Preview fallback",
+          name = "",
+          cwd = normalizedCwd,
+          updatedAt = 1_700_000_400_000L,
+          archived = false,
+        ),
+      ),
+    )
+    val backendDir = tempDir.resolve("backend-blank-name")
+    Files.createDirectories(backendDir)
+    val client = createMockClient(
+      scope = this,
+      tempDir = backendDir,
+      configPath = configPath,
+    )
+    try {
+      val threadsById = client.listThreads(archived = false, cwdFilter = normalizedCwd).associateBy { it.id }
+      assertThat(threadsById.getValue("thread-title").title).isEqualTo("Title fallback")
+      assertThat(threadsById.getValue("thread-summary").title).isEqualTo("Summary fallback")
+      assertThat(threadsById.getValue("thread-preview").title).isEqualTo("Preview fallback")
     }
     finally {
       client.shutdown()
@@ -1066,6 +1168,51 @@ class CodexAppServerClientTest {
       val archived = client.listThreads(archived = true)
       assertThat(active.map { it.id }).doesNotContain("thread-1")
       assertThat(archived.map { it.id }).contains("thread-1")
+    }
+    finally {
+      client.shutdown()
+    }
+  }
+
+  @Test
+  fun setThreadNameSendsRequestAndUpdatesListResult(): Unit = runBlocking(Dispatchers.Default) {
+    val workingDir = tempDir.resolve("project-rename")
+    Files.createDirectories(workingDir)
+    val configPath = workingDir.resolve("codex-config.json")
+    writeConfig(
+      path = configPath,
+      threads = listOf(
+        ThreadSpec(
+          id = "thread-rename",
+          title = "Original title",
+          cwd = workingDir.toString(),
+          updatedAt = 1_700_000_005_000L,
+          archived = false,
+        ),
+      ),
+    )
+    val backendDir = tempDir.resolve("backend-rename")
+    Files.createDirectories(backendDir)
+    val requestPayloadLogPath = backendDir.resolve("thread-rename-requests.log")
+    val client = createMockClient(
+      scope = this,
+      tempDir = backendDir,
+      configPath = configPath,
+      environmentOverrides = mapOf(
+        "CODEX_TEST_REQUEST_PAYLOAD_LOG" to requestPayloadLogPath.toString(),
+      ),
+    )
+    try {
+      client.setThreadName("thread-rename", "Renamed thread")
+
+      val cwdFilter = workingDir.toString().replace('\\', '/').trimEnd('/')
+      val renamedThread = client.listThreads(archived = false, cwdFilter = cwdFilter).single()
+      assertThat(renamedThread.title).isEqualTo("Renamed thread")
+
+      val payloadLog = Files.readString(requestPayloadLogPath)
+      assertThat(payloadLog).contains("\"method\":\"thread/name/set\"")
+      assertThat(payloadLog).contains("\"threadId\":\"thread-rename\"")
+      assertThat(payloadLog).contains("\"name\":\"Renamed thread\"")
     }
     finally {
       client.shutdown()

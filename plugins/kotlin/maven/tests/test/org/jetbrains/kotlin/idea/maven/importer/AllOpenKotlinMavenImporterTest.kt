@@ -13,14 +13,33 @@ class AllOpenKotlinMavenImporterTest : AbstractKotlinMavenImporterTest() {
     fun testAllOpenIsNotEnabledViaJpaPluginInOldKotlinVersions() = runBlocking {
         createProjectSubDirs("src/main/kotlin", "src/test/kotlin")
 
-        importProjectAsync(projectWithJpaPlugin(TestVersions.Kotlin.KOTLIN_2_3_10))
+        importProjectAsync(projectWithCompilerPlugins(TestVersions.Kotlin.KOTLIN_2_3_10, "jpa"))
 
         assertModules("project")
 
         with(facetSettings) {
-            assertNotNull(compilerArguments?.pluginClasspaths)
-            assertFalse(compilerArguments!!.pluginClasspaths!!.any { it.endsWith(KotlinArtifacts.allopenCompilerPluginPath.fileName.toString()) })
-            assertTrue(compilerArguments!!.pluginClasspaths!!.any { it.endsWith(KotlinArtifacts.noargCompilerPluginPath.fileName.toString()) })
+            val pluginClasspaths = compilerArguments?.pluginClasspaths ?: error("'compilerArguments?.pluginClasspaths' must not be null")
+            assertFalse(pluginClasspaths.any { it.endsWith(KotlinArtifacts.allopenCompilerPluginPath.fileName.toString()) })
+            assertTrue(pluginClasspaths.any { it.endsWith(KotlinArtifacts.noargCompilerPluginPath.fileName.toString()) })
+        }
+    }
+
+    @Test
+    fun testAllOpenIsNotEnabledViaJpaAndSpringPluginInOldKotlinVersions() = runBlocking {
+        createProjectSubDirs("src/main/kotlin", "src/test/kotlin")
+
+        importProjectAsync(projectWithCompilerPlugins(TestVersions.Kotlin.KOTLIN_2_3_10, "jpa", "spring"))
+
+        assertModules("project")
+
+        with(facetSettings) {
+            val pluginClasspaths = compilerArguments?.pluginClasspaths ?: error("'compilerArguments?.pluginClasspaths' must not be null")
+            assertTrue(
+                pluginClasspaths.joinToString { it },
+                pluginClasspaths.any { it.endsWith(KotlinArtifacts.allopenCompilerPluginPath.fileName.toString()) })
+            assertTrue(
+                pluginClasspaths.joinToString { it },
+                pluginClasspaths.any { it.endsWith(KotlinArtifacts.noargCompilerPluginPath.fileName.toString()) })
         }
     }
 
@@ -28,16 +47,17 @@ class AllOpenKotlinMavenImporterTest : AbstractKotlinMavenImporterTest() {
     fun testAllOpenIsEnabledViaJpaPlugin() = runBlocking {
         createProjectSubDirs("src/main/kotlin", "src/test/kotlin")
 
-        importProjectAsync(projectWithJpaPlugin(TestVersions.Kotlin.KOTLIN_2_3_20))
+        importProjectAsync(projectWithCompilerPlugins(TestVersions.Kotlin.KOTLIN_2_3_20, "jpa"))
 
         assertModules("project")
 
         with(facetSettings) {
-            assertNotNull(compilerArguments?.pluginClasspaths)
-            assertTrue(compilerArguments!!.pluginClasspaths!!.any { it.endsWith(KotlinArtifacts.allopenCompilerPluginPath.fileName.toString()) })
-            assertTrue(compilerArguments!!.pluginClasspaths!!.any { it.endsWith(KotlinArtifacts.noargCompilerPluginPath.fileName.toString()) })
+            val pluginClasspaths = compilerArguments?.pluginClasspaths ?: error("'compilerArguments?.pluginClasspaths' must not be null")
+            assertTrue(pluginClasspaths.any { it.endsWith(KotlinArtifacts.allopenCompilerPluginPath.fileName.toString()) })
+            assertTrue(pluginClasspaths.any { it.endsWith(KotlinArtifacts.noargCompilerPluginPath.fileName.toString()) })
+            val pluginOptions = compilerArguments?.pluginOptions ?: error("'compilerArguments?.pluginOptions' must not be null")
             assertArrayEquals(
-                compilerArguments!!.pluginOptions!!,
+                pluginOptions,
                 arrayOf(
                     "plugin:org.jetbrains.kotlin.noarg:annotation=javax.persistence.Entity",
                     "plugin:org.jetbrains.kotlin.noarg:annotation=javax.persistence.Embeddable",
@@ -56,7 +76,46 @@ class AllOpenKotlinMavenImporterTest : AbstractKotlinMavenImporterTest() {
         }
     }
 
-    private fun projectWithJpaPlugin(kotlinVersion: String) =
+    @Test
+    fun testAllOpenIsEnabledViaJpaAndSpringPlugin() = runBlocking {
+        createProjectSubDirs("src/main/kotlin", "src/test/kotlin")
+
+        importProjectAsync(projectWithCompilerPlugins(TestVersions.Kotlin.KOTLIN_2_3_20, "jpa", "spring"))
+
+        assertModules("project")
+
+        with(facetSettings) {
+            val pluginClasspaths = compilerArguments?.pluginClasspaths ?: error("'compilerArguments?.pluginClasspaths' must not be null")
+            assertTrue(pluginClasspaths.any { it.endsWith(KotlinArtifacts.allopenCompilerPluginPath.fileName.toString()) })
+            assertTrue(pluginClasspaths.any { it.endsWith(KotlinArtifacts.noargCompilerPluginPath.fileName.toString()) })
+            val pluginOptions = compilerArguments?.pluginOptions ?: error("'compilerArguments?.pluginOptions' must not be null")
+            assertArrayEquals(
+                pluginOptions,
+                arrayOf(
+                    "plugin:org.jetbrains.kotlin.noarg:annotation=javax.persistence.Entity",
+                    "plugin:org.jetbrains.kotlin.noarg:annotation=javax.persistence.Embeddable",
+                    "plugin:org.jetbrains.kotlin.noarg:annotation=javax.persistence.MappedSuperclass",
+                    "plugin:org.jetbrains.kotlin.noarg:annotation=jakarta.persistence.Entity",
+                    "plugin:org.jetbrains.kotlin.noarg:annotation=jakarta.persistence.Embeddable",
+                    "plugin:org.jetbrains.kotlin.noarg:annotation=jakarta.persistence.MappedSuperclass",
+                    "plugin:org.jetbrains.kotlin.allopen:annotation=org.springframework.stereotype.Component",
+                    "plugin:org.jetbrains.kotlin.allopen:annotation=org.springframework.transaction.annotation.Transactional",
+                    "plugin:org.jetbrains.kotlin.allopen:annotation=org.springframework.scheduling.annotation.Async",
+                    "plugin:org.jetbrains.kotlin.allopen:annotation=org.springframework.cache.annotation.Cacheable",
+                    "plugin:org.jetbrains.kotlin.allopen:annotation=org.springframework.boot.test.context.SpringBootTest",
+                    "plugin:org.jetbrains.kotlin.allopen:annotation=org.springframework.validation.annotation.Validated",
+                    "plugin:org.jetbrains.kotlin.allopen:annotation=javax.persistence.Entity",
+                    "plugin:org.jetbrains.kotlin.allopen:annotation=javax.persistence.Embeddable",
+                    "plugin:org.jetbrains.kotlin.allopen:annotation=javax.persistence.MappedSuperclass",
+                    "plugin:org.jetbrains.kotlin.allopen:annotation=jakarta.persistence.Entity",
+                    "plugin:org.jetbrains.kotlin.allopen:annotation=jakarta.persistence.Embeddable",
+                    "plugin:org.jetbrains.kotlin.allopen:annotation=jakarta.persistence.MappedSuperclass"
+                )
+            )
+        }
+    }
+
+    private fun projectWithCompilerPlugins(kotlinVersion: String, vararg plugins: String) =
         //language=xml
         """
             |<groupId>test</groupId>
@@ -77,7 +136,7 @@ class AllOpenKotlinMavenImporterTest : AbstractKotlinMavenImporterTest() {
             |            <version>${'$'}{kotlin.version}</version>
             |            <configuration>
             |                <compilerPlugins>
-            |                    <plugin>jpa</plugin>
+            |                    ${plugins.joinToString("\n") { "<plugin>${it}</plugin>" }}
             |                </compilerPlugins>
             |            </configuration>
             |            <executions>

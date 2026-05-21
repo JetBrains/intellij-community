@@ -12,6 +12,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.impl.IdeGlassPaneEx
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
+import com.intellij.toolWindow.ToolWindowLeftToolbar
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.Gray
 import com.intellij.ui.IslandsState
@@ -74,12 +75,15 @@ internal class IslandsGradientPainter(private val frame: IdeFrame, private val m
   override fun needsRepaint(): Boolean = enabled()
 
   override fun executePaint(component: Component, g: Graphics2D) {
+  }
+
+  override fun executePaint(component: Component, source: Component, g: Graphics2D) {
     if (doPaint) {
       try {
         doPaint = false
 
         if (isIslandsGradientColor(g.paint)) {
-          islandsGradientPaint(frame, mainColor, projectWindowCustomizer, component, g)
+          islandsGradientPaint(frame, mainColor, projectWindowCustomizer, component, source, g)
         }
       }
       finally {
@@ -89,7 +93,8 @@ internal class IslandsGradientPainter(private val frame: IdeFrame, private val m
   }
 }
 
-internal fun islandsGradientPaint(frame: IdeFrame, mainColor: Color, projectWindowCustomizer: ProjectWindowCustomizerService, component: Component, g: Graphics2D) {
+internal fun islandsGradientPaint(frame: IdeFrame, mainColor: Color, projectWindowCustomizer: ProjectWindowCustomizerService,
+                                  component: Component, source: Component, g: Graphics2D) {
   if (CustomWindowHeaderUtil.isCompactHeader()) {
     return
   }
@@ -103,7 +108,7 @@ internal fun islandsGradientPaint(frame: IdeFrame, mainColor: Color, projectWind
     doColorGradientPaint(project, projectWindowCustomizer, component, g)
   }
   else {
-    doGradientPaint(frame, mainColor, project, projectWindowCustomizer, component, g)
+    doGradientPaint(frame, mainColor, project, projectWindowCustomizer, component, source, g)
   }
 }
 
@@ -112,7 +117,7 @@ internal fun isColorIslandGradient(): Boolean = Registry.`is`("idea.islands.colo
 internal fun isColorIslandGradientAvailable(): Boolean = IslandsState.isEnabled() && isColorIslandGradient()
 
 private fun doGradientPaint(frame: IdeFrame, mainColor: Color, project: Project, projectWindowCustomizer: ProjectWindowCustomizerService,
-                            component: Component, g: Graphics2D) {
+                            component: Component, source: Component, g: Graphics2D) {
   val centerX = project.service<ProjectWidgetGradientLocationService>().gradientOffsetRelativeToRootPane
 
   val ctx = ScaleContext.create(g)
@@ -125,7 +130,7 @@ private fun doGradientPaint(frame: IdeFrame, mainColor: Color, project: Project,
   val totalWidth = alignIntToInt(leftWidth + rightWidth, ctx, PaintUtil.RoundingMode.CEIL, null)
 
   val fullBounds = Rectangle(totalWidth, height)
-  val bounds = if (SystemInfo.isLinux) fullBounds else g.clipBounds?.intersection(fullBounds) ?: fullBounds
+  val bounds = if (SystemInfo.isLinux && source is ToolWindowLeftToolbar) fullBounds else g.clipBounds?.intersection(fullBounds) ?: fullBounds
   if (bounds.isEmpty) {
     return
   }

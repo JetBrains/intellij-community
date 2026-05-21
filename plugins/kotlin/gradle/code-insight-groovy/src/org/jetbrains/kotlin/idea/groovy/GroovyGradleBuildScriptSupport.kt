@@ -195,6 +195,15 @@ class GroovyBuildScriptManipulator(
 
     }
 
+    override fun configurePluginOptions(kotlinPluginName: String, changedFiles: ChangedConfiguratorFiles, vararg options: String) {
+        scriptFile.apply {
+            val block = getBlockOrCreate(kotlinPluginName)
+            for (option in options) {
+                block.addLastExpressionInBlockIfNeeded(option)
+            }
+        }
+    }
+
     override fun configureProjectBuildScript(kotlinPluginName: String, version: IdeKotlinVersion): Boolean {
         if (useNewSyntax(kotlinPluginName, gradleVersion)) return false
 

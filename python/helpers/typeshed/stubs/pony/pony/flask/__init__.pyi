@@ -1,8 +1,9 @@
 from _typeshed import Incomplete
 from types import ModuleType
-from typing import Protocol
+from typing import Protocol, type_check_only
 
 # Protocol for flask.Flask class
+@type_check_only
 class _Flask(Protocol):
     def before_request(self, f): ...
     def after_request(self, f): ...

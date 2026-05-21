@@ -33,17 +33,7 @@ const WORKAROUND_FIXED_IN: Record<WorkaroundKey, string> = {
   [WorkaroundKey.SearchInFilesByRegexDirectoryScopeIgnored]: '261.20247'
 }
 
-let currentIdeVersion: ParsedIdeVersion | null = null
-
-export function setIdeVersion(rawVersion: string | null | undefined): void {
-  if (!rawVersion) {
-    currentIdeVersion = null
-    return
-  }
-  currentIdeVersion = parseIdeVersion(rawVersion)
-}
-
-export function shouldApplyWorkaround(key: WorkaroundKey): boolean {
+export function shouldApplyWorkaround(key: WorkaroundKey, rawVersion: string | null | undefined): boolean {
   if (isWorkaroundDisabled(key)) {
     logDebug(`Workaround ${key} not used (disabled by env)`)
     return false
@@ -51,8 +41,8 @@ export function shouldApplyWorkaround(key: WorkaroundKey): boolean {
   const fixedInRaw = (WORKAROUND_FIXED_IN[key] ?? '').trim()
   if (!fixedInRaw) return true
 
-  const ideVersion = currentIdeVersion
-  if (!ideVersion) return true
+  if (!rawVersion) return true
+  const ideVersion = parseIdeVersion(rawVersion)
 
   const fixedSpec = parseVersionSpec(fixedInRaw)
   if (!fixedSpec) return true

@@ -1,6 +1,6 @@
 version = "2.0.*"
-upstream_repository = "https://github.com/unbit/uwsgi"
-extra_description = """\
+upstream-repository = "https://github.com/unbit/uwsgi"
+extra-description = """\
   Type hints for uWSGI's \
   [Python API](https://uwsgi-docs.readthedocs.io/en/latest/PythonModule.html). \
   Note that this API is available only when running Python code inside a uWSGI process \
@@ -12,4 +12,4 @@ extra_description = """\
 # Run stubtest on MacOS as well, to check that the
 # uWSGI-specific parts of stubtest_third_party.py
 # also work there
-ci_platforms = ["linux", "darwin"]
+ci-platforms = ["linux", "darwin"]

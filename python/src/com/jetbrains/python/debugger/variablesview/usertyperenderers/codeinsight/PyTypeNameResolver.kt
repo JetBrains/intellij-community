@@ -69,22 +69,27 @@ fun getClassesNumberInModuleRootWithName(cls: PyClass, clsCanonicalImportPath: Q
 }
 
 fun getElementsFromModule(moduleComponents: List<String>, project: Project): List<PsiElement> {
-  val module = ModuleManager.getInstance(project).modules.firstOrNull { it.name == project.name } ?: return listOf()
-  val context = fromModule(module)
-  val psiElements = resolveQualifiedName(QualifiedName.fromComponents(moduleComponents), context)
-
+  val qualifiedName = QualifiedName.fromComponents(moduleComponents)
   val elements = mutableListOf<PsiElement>()
-  for (element in psiElements) {
-    when (element) {
-      is PsiDirectory -> {
-        val initPy = element.findFile(PyNames.INIT_DOT_PY)
-        if (initPy is PyFile) elements.add(initPy)
-        val initPyi = element.findFile(PyNames.INIT_DOT_PYI)
-        if (initPyi is PyFile) elements.add(initPyi)
-        elements.add(element)
+
+  for (module in ModuleManager.getInstance(project).modules) {
+    val context = fromModule(module)
+    val psiElements = resolveQualifiedName(qualifiedName, context)
+
+    for (element in psiElements) {
+      when (element) {
+        is PsiDirectory -> {
+          val initPy = element.findFile(PyNames.INIT_DOT_PY)
+          if (initPy is PyFile) elements.add(initPy)
+          val initPyi = element.findFile(PyNames.INIT_DOT_PYI)
+          if (initPyi is PyFile) elements.add(initPyi)
+          elements.add(element)
+        }
+        is PyFile -> elements.add(element)
       }
-      is PyFile -> elements.add(element)
     }
+
+    if (elements.isNotEmpty()) return elements
   }
 
   return elements

@@ -232,8 +232,9 @@ class JpsProjectReloadingTest {
           FileUtil.delete(it)
         }
 
-        JpsConfigurationFilesChange(addedFileUrls = newUrls - oldUrls, removedFileUrls = urlsToDelete,
-                                    changedFileUrls = newUrls.intersect(oldUrls).toList())
+        JpsConfigurationFilesChange(addedFileUrls = (newUrls - oldUrls).map { Pair(it, JpsProjectReloadingTest::class.java) },
+                                    removedFileUrls = urlsToDelete.map { Pair(it, JpsProjectReloadingTest::class.java) },
+                                    changedFileUrls = newUrls.intersect(oldUrls).map { Pair(it, JpsProjectReloadingTest::class.java) })
       }
     }
 

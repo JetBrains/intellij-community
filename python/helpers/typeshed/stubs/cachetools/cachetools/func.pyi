@@ -1,17 +1,14 @@
 from collections.abc import Callable, Sequence
-from typing import Any, Final, Generic, NamedTuple, TypeVar, overload
+from typing import Any, Final, Generic, TypeVar, overload, type_check_only
+
+from . import _CacheInfo
 
 __all__: Final = ("fifo_cache", "lfu_cache", "lru_cache", "rr_cache", "ttl_cache")
 
 _T = TypeVar("_T")
 _R = TypeVar("_R")
 
-class _CacheInfo(NamedTuple):
-    hits: int
-    misses: int
-    maxsize: int | None
-    currsize: int
-
+@type_check_only
 class _cachetools_cache_wrapper(Generic[_R]):
     __wrapped__: Callable[..., _R]
     def __call__(self, /, *args: Any, **kwargs: Any) -> _R: ...

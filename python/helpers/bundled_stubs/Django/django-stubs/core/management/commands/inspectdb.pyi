@@ -3,10 +3,12 @@ from typing import Any
 
 from django.core.management.base import BaseCommand
 from django.db.backends.base.base import BaseDatabaseWrapper
+from typing_extensions import override
 
 class Command(BaseCommand):
     db_module: str
 
+    @override
     def handle(self, **options: Any) -> None: ...
     def handle_inspection(self, options: dict[str, Any]) -> Iterable[str]: ...
     def normalize_col_name(

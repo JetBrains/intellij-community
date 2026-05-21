@@ -58,6 +58,7 @@ jvm_library(
     "//platform/lang-api:lang",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//platform/core-ui",
+    "//platform/backend/observation",
   ]
 )
 ### auto-generated section `build kotlin.j2k.shared` end

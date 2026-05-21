@@ -1,4 +1,6 @@
-[![JetBrains incubator](https://img.shields.io/badge/JetBrains-incubator-yellow?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMzIuMDAwMDEiIHZpZXdCb3g9IjAgMCAzMiAzMi4wMDAwMSIgd2lkdGg9IjMyIj48c2NyaXB0IHhtbG5zPSIiLz48cGF0aCBkPSJtMCAwaDMydjMyLjAwMDAxaC0zMnoiLz48cGF0aCBkPSJtNCAyNi4wMDAwMWgxMnYyaC0xMnoiIGZpbGw9IiNmZmYiLz48L3N2Zz4=)](https://github.com/JetBrains#jetbrains-on-github) [![CI checks](https://img.shields.io/github/actions/workflow/status/JetBrains/jewel/build.yml?logo=github)](https://github.com/JetBrains/jewel/actions/workflows/build.yml) [![Licensed under Apache 2.0](https://img.shields.io/github/license/JetBrains/jewel?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0ZGRiIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS13aWR0aD0iMiIgZD0ibTMgNiAzIDFtMCAwLTMgOWE1LjAwMiA1LjAwMiAwIDAgMCA2LjAwMSAwTTYgN2wzIDlNNiA3bDYtMm02IDIgMy0xbS0zIDEtMyA5YTUuMDAyIDUuMDAyIDAgMCAwIDYuMDAxIDBNMTggN2wzIDltLTMtOS02LTJtMC0ydjJtMCAxNlY1bTAgMTZIOW0zIDBoMyIvPjwvc3ZnPg==)](https://github.com/JetBrains/jewel/blob/main/LICENSE) [![Latest release](https://img.shields.io/github/v/release/JetBrains/jewel?include_prereleases&label=Latest%20Release&logo=github)](https://github.com/JetBrains/jewel/releases/latest) ![Compose for Desktop version](https://img.shields.io/badge/Compose%20for%20Desktop-1.6.0-dev1369?logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB2aWV3Qm94PSIwIDAgNjcgNzQiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI%2BPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0zNS45OTkgMi42NjNhNS4wMSA1LjAxIDAgMCAwLTQuOTk4IDBsLTI2LjUgMTUuMjUzYTQuOTk0IDQuOTk0IDAgMCAwLTEuMTk4Ljk2MmwxMS4xMDggNi4zNjZjLjI2OC0uMjkuNTgtLjU0LjkzMS0uNzQ0bDE2LjE1Ni05LjM0MmE0IDQgMCAwIDEgNC4wMDQgMEw1MS42NTcgMjQuNWMuMzUxLjIwMy42NjQuNDU1LjkzMi43NDRsMTEuMTA4LTYuMzY2YTQuOTkxIDQuOTkxIDAgMCAwLTEuMTk4LS45NjJsLTI2LjUtMTUuMjUzWm0yOC43MjMgMTcuOTMzLTExLjE4MyA2LjQwOGMuMDc2LjMxLjExNi42MzIuMTE2Ljk1OXYxNy43OTRhNCA0IDAgMCAxLTEuOTU4IDMuNDRsLTE2LjIzNSA5LjYzOGEzLjk5OCAzLjk5OCAwIDAgMS0uOTYyLjQxMnYxMi42M2E1LjAwNSA1LjAwNSAwIDAgMCAxLjQyOC0uNTY5bDI2LjYyLTE1LjczQTQuOTg2IDQuOTg2IDAgMCAwIDY1IDUxLjI4NFYyMi4yMzdjMC0uNTY3LS4wOTctMS4xMi0uMjc4LTEuNjRaTTIgMjIuMjM3YzAtLjU2Ny4wOTctMS4xMi4yNzgtMS42NGwxMS4xODMgNi40MDdjLS4wNzYuMzEtLjExNi42MzItLjExNi45NTl2MTguNjMzYTQgNCAwIDAgMCAyLjA4IDMuNTA5bDE2LjA3NCA4LjhjLjMyLjE3NC42NTYuMzAyIDEuMDAxLjM4NHYxMi42MzhhNS4wMDUgNS4wMDUgMCAwIDEtMS41MTctLjUzM0w0LjYwMyA1Ny4wMkE0Ljk4NyA0Ljk4NyAwIDAgMSAyIDUyLjY0MlYyMi4yMzdaTTMwLjAwMi45MzVhNy4wMTQgNy4wMTQgMCAwIDEgNi45OTYgMGwyNi41IDE1LjI1M0E2Ljk4IDYuOTggMCAwIDEgNjcgMjIuMjM4djI5LjA0N2E2Ljk4IDYuOTggMCAwIDEtMy40MzMgNi4wMDlsLTI2LjYyIDE1LjczMWE3LjAxNCA3LjAxNCAwIDAgMS02LjkyMy4xMkwzLjY0NCA1OC43NzFBNi45ODEgNi45ODEgMCAwIDEgMCA1Mi42NDFWMjIuMjM4YTYuOTggNi45OCAwIDAgMSAzLjUwMi02LjA1TDMwLjAwMi45MzZabS04LjYwNCAyNy41NTIgMTAuNTgyLTYuMTFjLjk0LS41NDIgMi4xLS41NDIgMy4wNCAwbDEwLjU4MiA2LjExYTIuOTk2IDIuOTk2IDAgMCAxIDEuNTAzIDIuNTkzdjExLjY1M2MwIDEuMDU2LS41NiAyLjAzNC0xLjQ3MyAyLjU3NmwtMTAuNjQzIDYuMzA4YTMuMDQ0IDMuMDQ0IDAgMCAxLTMuMDA5LjA1MmwtMTAuNTItNS43NWEyLjk5NiAyLjk5NiAwIDAgMS0xLjU2NS0yLjYyN1YzMS4wOGMwLTEuMDY4LjU3My0yLjA1NiAxLjUwMy0yLjU5M1oiIGZpbGw9IiNmZmYiLz48L3N2Zz4%3D)
+[![JetBrains incubator](https://img.shields.io/badge/JetBrains-incubator-yellow?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMzIuMDAwMDEiIHZpZXdCb3g9IjAgMCAzMiAzMi4wMDAwMSIgd2lkdGg9IjMyIj48c2NyaXB0IHhtbG5zPSIiLz48cGF0aCBkPSJtMCAwaDMydjMyLjAwMDAxaC0zMnoiLz48cGF0aCBkPSJtNCAyNi4wMDAwMWgxMnYyaC0xMnoiIGZpbGw9IiNmZmYiLz48L3N2Zz4=)](https://github.com/JetBrains#jetbrains-on-github)
+[![Licensed under Apache 2.0](https://img.shields.io/github/license/JetBrains/jewel?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0ZGRiIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS13aWR0aD0iMiIgZD0ibTMgNiAzIDFtMCAwLTMgOWE1LjAwMiA1LjAwMiAwIDAgMCA2LjAwMSAwTTYgN2wzIDlNNiA3bDYtMm02IDIgMy0xbS0zIDEtMyA5YTUuMDAyIDUuMDAyIDAgMCAwIDYuMDAxIDBNMTggN2wzIDltLTMtOS02LTJtMC0ydjJtMCAxNlY1bTAgMTZIOW0zIDBoMyIvPjwvc3ZnPg==)](https://github.com/JetBrains/intellij-community/blob/master/LICENSE.txt)
+[![Latest release](https://img.shields.io/badge/Latest%20Release-0.34.0-orange?logo=github)](RELEASE%20NOTES.md)
 
 # Jewel: a Compose for Desktop theme
 
@@ -11,9 +13,9 @@ desktop-optimized theme and set of components.
 
 > [!WARNING]
 >
-> This project is in active development, and caution is advised when considering it for production uses. You _can_ use
-> it, but you should expect APIs to change often, things to move around and/or break, and all that jazz. Binary
-> compatibility is not guaranteed across releases, and APIs are still in flux and subject to change.
+> This project experimental and in active development, and caution is advised when considering it for production
+> uses. You _can_ use it, but you should expect APIs to change often, things to move around and/or break, and all
+> that jazz. Binary compatibility is not guaranteed across releases, and APIs are still in flux and subject to change.
 >
 > Writing 3rd party IntelliJ Plugins in Compose for Desktop is currently **not officially supported** by the IntelliJ
 > Platform. It should work, but your mileage may vary, and if things break you're on your own.
@@ -25,13 +27,13 @@ application. Additionally, it has a Swing LaF Bridge that only works in the Inte
 plugins), but automatically mirrors the current Swing LaF into Compose for a native-looking, consistent UI.
 
 > [!TIP]
-> <a href="https://www.droidcon.com/2023/11/15/meet-jewelcreate-ide-plugins-in-compose/">
-> <img src="https://i.vimeocdn.com/video/1749849437-f275e0337faca5cedab742ea157abbafe5a0207d3a59db891a72b6180ce13a6c-d?mh=120" align="left" />
+> <a href="https://www.youtube.com/watch?v=2H1jMn_SGcA">
+> <img src="https://i3.ytimg.com/vi/2H1jMn_SGcA/hqdefault.jpg?" align="left" width="150" />
 > </a>
 >
 > If you want to learn more about Jewel and Compose for Desktop and why they're a great, modern solution for your
 > desktop
-> UI needs, check out [this talk](https://www.droidcon.com/2023/11/15/meet-jewelcreate-ide-plugins-in-compose/) by Jewel
+> UI needs, check out [this talk](https://www.youtube.com/watch?v=2H1jMn_SGcA) by Jewel
 > contributors Sebastiano and Chris.
 >
 > It covers why Compose is a viable choice, and an overview of the Jewel project, plus
@@ -41,32 +43,34 @@ plugins), but automatically mirrors the current Swing LaF into Compose for a nat
 
 ## Getting started
 
-The first thing to add is the necessary Gradle plugins, including the Compose Multiplatform plugin. You need to add a
-custom repository for it in `settings.gradle.kts`:
+Jewel can be used in two scenarios:
+
+1. A **standalone** Compose for Desktop app
+2. An **IntelliJ Platform** plugin
+
+The setup differs significantly between the two.
+
+### Standalone app
+
+Add the Compose Multiplatform repository to your `settings.gradle.kts`:
 
 ```kotlin
 pluginManagement {
     repositories {
         google()
         gradlePluginPortal()
-        maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
         mavenCentral()
     }
 }
 ```
 
-Then, in your app's `build.gradle.kts`:
+Then add the necessary plugins in your `build.gradle.kts`:
 
 ```kotlin
 plugins {
     // MUST align with the Kotlin and Compose dependencies in Jewel
     kotlin("jvm") version "..."
     id("org.jetbrains.compose") version "..."
-}
-
-repositories {
-    maven("https://packages.jetbrains.team/maven/p/kpm/public/")
-    // Any other repositories you need (e.g., mavenCentral())
 }
 ```
 
@@ -76,18 +80,16 @@ repositories {
 > plugins are only initialized once — for example, by declaring them in the root `build.gradle.kts`
 > with `apply false`, and then applying them in all the submodules that need them.
 
-To use Jewel in your app, you only need to add the relevant dependency. There are two scenarios: standalone Compose for
-Desktop app, and IntelliJ Platform plugin.
-
-If you're writing a **standalone app**, then you should depend on the latest `int-ui-standalone` artifact:
+And the dependency:
 
 ```kotlin
 dependencies {
-    // See https://github.com/JetBrains/Jewel/releases for the release notes
-    implementation("org.jetbrains.jewel:jewel-int-ui-standalone:[jewel version]")
+    // Standalone versions follow the format [jewel-version]-[ijp-build] — see VERSIONS.md for the version mapping
+    // See https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/RELEASE%20NOTES.md for the release notes
+    implementation("org.jetbrains.jewel:jewel-int-ui-standalone:[jewel-version]-[ijp-build]")
 
     // Optional, for custom decorated windows:
-    implementation("org.jetbrains.jewel:jewel-int-ui-decorated-window:[jewel version]")
+    implementation("org.jetbrains.jewel:jewel-int-ui-decorated-window:[jewel-version]-[ijp-build]")
 
     // Do not bring in Material (we use Jewel)
     implementation(compose.desktop.currentOs) {
@@ -96,7 +98,10 @@ dependencies {
 }
 ```
 
-For an **IntelliJ Platform plugin**, then you should depend on the bundled modules in IntelliJ Platform:
+### IntelliJ Platform Plugin
+
+No additional repository or plugin setup is needed. Jewel ships bundled with the IntelliJ Platform since 251.2+.
+Just declare the bundled modules:
 
 ```kotlin
 dependencies {
@@ -136,6 +141,14 @@ the platform itself. You can shadow/jarjar everything and ship your own copy of 
 your plugin, but that is not a supported scenario.
 
 The minimum supported Kotlin version is dictated by the minimum supported IntelliJ IDEA platform.
+
+### Version scheme
+
+Standalone Jewel versions follow the format `[jewel-version]-[ijp-build]`, where `[ijp-build]` is the IntelliJ Platform
+build number the artifact was compiled against. For example, `0.34.0-253.31033.149` is Jewel 0.34 targeting IJP
+build `253.31033.149`.
+
+See [VERSIONS.md](VERSIONS.md) for the full mapping between Jewel and IJP versions.
 
 ## Project structure
 
@@ -398,8 +411,6 @@ val myFamily = FontFamily("My Family")
 If you want to use a font embedded in the JetBrains Runtime, you can use the `EmbeddedFontFamily` API instead:
 
 ```kotlin
-import javax.swing.text.StyledEditorKit.FontFamilyAction
-
 // Will return null if no matching font family exists in the JBR
 val myEmbeddedFamily = EmbeddedFontFamily("Embedded family")
 

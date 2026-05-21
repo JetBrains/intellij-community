@@ -44,6 +44,16 @@ open class EventLogGroup {
     groupData: List<Pair<EventField<*>, FeatureUsageData.() -> Unit>> = emptyList(),
   ) : this(id, version, recorder, groupData)
 
+  @Deprecated("Binary compatibility shim", level = DeprecationLevel.HIDDEN)
+  @Suppress("EventLogDescription", "unused")
+  constructor(
+    @EventIdName id: String,
+    version: Int,
+    recorder: String?,
+    p1: Int,
+    p2: kotlin.jvm.internal.DefaultConstructorMarker?
+  ) : this(id, version, recorder ?: FUS_RECORDER, emptyList())
+
   /**
    * Constructs an EventLogGroup.
    *

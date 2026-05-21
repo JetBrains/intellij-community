@@ -160,6 +160,8 @@ f:org.jetbrains.jewel.window.styling.TitleBarStyle
 f:org.jetbrains.jewel.window.styling.TitleBarStyle$Companion
 f:org.jetbrains.jewel.window.styling.TitleBarStylingKt
 - sf:getLocalTitleBarStyle():androidx.compose.runtime.ProvidableCompositionLocal
+f:org.jetbrains.jewel.window.utils.ClientRegionHelperKt
+- sf:clientRegion(androidx.compose.ui.Modifier,java.lang.String):androidx.compose.ui.Modifier
 e:org.jetbrains.jewel.window.utils.DesktopPlatform
 - java.lang.Enum
 - sf:Companion:org.jetbrains.jewel.window.utils.DesktopPlatform$Companion

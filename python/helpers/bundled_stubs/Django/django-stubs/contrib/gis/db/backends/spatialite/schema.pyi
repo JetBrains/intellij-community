@@ -3,6 +3,7 @@ from typing import Any
 from django.db.backends.sqlite3.schema import DatabaseSchemaEditor
 from django.db.models.base import Model
 from django.db.models.fields import Field
+from typing_extensions import override
 
 class SpatialiteSchemaEditor(DatabaseSchemaEditor):
     sql_add_geometry_column: str
@@ -16,14 +17,20 @@ class SpatialiteSchemaEditor(DatabaseSchemaEditor):
     geometry_sql: Any
     def __init__(self, *args: Any, **kwargs: Any) -> None: ...
     def geo_quote_name(self, name: Any) -> Any: ...
+    @override
     def column_sql(
         self, model: type[Model], field: Field, include_default: bool = False
     ) -> tuple[None, None] | tuple[str, list[Any]]: ...
     def remove_geometry_metadata(self, model: type[Model], field: Field) -> None: ...
+    @override
     def create_model(self, model: type[Model]) -> None: ...
-    def delete_model(self, model: type[Model], **kwargs: Any) -> None: ...
+    @override
+    def delete_model(self, model: type[Model], **kwargs: Any) -> None: ...  # type: ignore[override]
+    @override
     def add_field(self, model: type[Model], field: Field) -> None: ...
+    @override
     def remove_field(self, model: type[Model], field: Field) -> None: ...
+    @override
     def alter_db_table(
         self,
         model: type[Model],

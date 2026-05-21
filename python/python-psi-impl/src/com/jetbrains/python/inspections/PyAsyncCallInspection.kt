@@ -33,7 +33,7 @@ class PyAsyncCallInspection : PyInspection() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
       val context = PyInspectionVisitor.getContext(session)
       return Visitor(holder, context).also {
-          it.downgradeHighlightForTypeEngine = context.typeEngine != null
+          it.downgradeHighlightForTypeEngine = context.usesExternalTypeEngine
       }
   }
 

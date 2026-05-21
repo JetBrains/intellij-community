@@ -17,6 +17,11 @@ class AbstractBaseSession(models.Model):
     expire_date = models.DateTimeField()
     objects: ClassVar[BaseSessionManager[Self]]
 
+    class Meta:
+        abstract: ClassVar[bool]
+        verbose_name: ClassVar[str]
+        verbose_name_plural: ClassVar[str]
+
     @classmethod
     def get_session_store_class(cls) -> type[SessionBase] | None: ...
     def get_decoded(self) -> dict[str, Any]: ...

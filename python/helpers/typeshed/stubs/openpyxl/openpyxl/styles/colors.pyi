@@ -13,7 +13,7 @@ _S = TypeVar("_S", bound=Serialisable)
 COLOR_INDEX: Final[tuple[str, ...]]
 BLACK: Final = "00000000"
 WHITE: Final = "00FFFFFF"
-BLUE: Final = "00FFFFFF"
+BLUE: Final = "000000FF"
 aRGB_REGEX: Final[Pattern[str]]
 
 class RGB(Typed[str, _N]):

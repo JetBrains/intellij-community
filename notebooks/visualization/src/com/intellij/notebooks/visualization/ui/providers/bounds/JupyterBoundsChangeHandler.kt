@@ -12,8 +12,8 @@ import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.InlayModel
 import com.intellij.openapi.editor.ex.FoldingListener
 import com.intellij.openapi.editor.ex.SoftWrapChangeListener
+import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.util.EventDispatcher
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -161,7 +161,7 @@ class JupyterBoundsChangeHandler(val editor: EditorImpl) : Disposable {
 
     fun install(editor: EditorImpl) {
       val updater = JupyterBoundsChangeHandler(editor)
-      Disposer.register(editor.disposable, updater)
+      EditorUtil.disposeWithEditor(editor, updater)
       editor.putUserData(INSTANCE_KEY, updater)
     }
 

@@ -1,5 +1,6 @@
 from collections.abc import Callable
 from hmac import HMAC
+from typing import Any
 
 RANDOM_STRING_CHARS: str
 
@@ -15,5 +16,5 @@ def pbkdf2(
     salt: bytes | str,
     iterations: int,
     dklen: int = 0,
-    digest: Callable | None = None,
+    digest: Callable[[], Any] | None = None,
 ) -> bytes: ...

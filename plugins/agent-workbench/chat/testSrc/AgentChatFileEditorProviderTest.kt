@@ -91,13 +91,68 @@ class AgentChatFileEditorProviderTest {
   }
 
   @Test
-  fun registersAgentChatFileIconProvider() {
+  fun startupLaunchSpecOverrideFallsBackToRemoteResumeCommandAndPersistsIt() {
+    val remoteCommand = listOf(
+      "codex",
+      "-c",
+      "check_for_update_on_startup=false",
+      "--remote",
+      "ws://127.0.0.1:31337",
+      "resume",
+      "thread-1",
+    )
+    val file = AgentChatVirtualFile(
+      projectPath = "/work/project-a",
+      threadIdentity = "CODEX:thread-1",
+      shellCommand = remoteCommand,
+      shellEnvVariables = mapOf("PATH" to "/usr/local/bin", "TERM" to "xterm-256color"),
+      threadId = "thread-1",
+      threadTitle = "Thread One",
+      subAgentId = null,
+    )
+    file.setStartupLaunchSpecOverride(
+      AgentSessionTerminalLaunchSpec(
+        command = listOf("codex", "--", "-run this"),
+        envVariables = mapOf("PATH" to "/custom/bin", "DISABLE_AUTOUPDATER" to "1"),
+      )
+    )
+
+    val startupLaunchSpec = file.consumeStartupLaunchSpec()
+    assertThat(startupLaunchSpec.command).containsExactly("codex", "--", "-run this")
+
+    val fallbackLaunchSpec = file.consumeStartupLaunchSpec()
+    assertThat(fallbackLaunchSpec.command).containsExactlyElementsOf(remoteCommand)
+    assertThat(fallbackLaunchSpec.envVariables)
+      .containsExactlyEntriesOf(mapOf("PATH" to "/usr/local/bin", "TERM" to "xterm-256color"))
+
+    val snapshot = file.toSnapshot()
+    assertThat(snapshot.runtime.shellCommand).containsExactlyElementsOf(remoteCommand)
+
+    val store = AgentChatTabsStateService(null)
+    store.upsert(snapshot)
+    try {
+      val loaded = store.load(snapshot.tabKey)
+      assertThat(loaded?.runtime?.shellCommand).containsExactlyElementsOf(remoteCommand)
+    }
+    finally {
+      store.delete(snapshot.tabKey)
+    }
+  }
+
+  @Test
+  fun registersAgentChatDescriptorExtensions() {
     val descriptor = checkNotNull(javaClass.classLoader.getResource("intellij.agent.workbench.chat.xml")) {
       "Module descriptor intellij.agent.workbench.chat.xml is missing"
     }.readText()
 
     assertThat(descriptor)
       .contains("<fileIconProvider implementation=\"com.intellij.agent.workbench.chat.AgentChatFileIconProvider\"/>")
+      .contains(
+        "<applicationService serviceInterface=\"com.intellij.agent.workbench.sessions.core.providers.AgentOpenTopLevelThreadDispatchService\"",
+      )
+      .contains(
+        "serviceImplementation=\"com.intellij.agent.workbench.chat.AgentChatOpenTopLevelThreadDispatchService\"/>",
+      )
   }
 
   @Test
