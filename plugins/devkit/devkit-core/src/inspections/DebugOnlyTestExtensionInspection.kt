@@ -29,8 +29,8 @@ import org.jetbrains.uast.visitor.AbstractUastVisitor
 private const val EXTEND_WITH_FQN = "org.junit.jupiter.api.extension.ExtendWith"
 
 private val DEBUG_ONLY_EXTENSIONS = mapOf(
-  "com.intellij.ide.starter.junit5.RemoteDevRun" to "RemoteDevRun",
-  "com.intellij.ide.starter.extended.engine.junit5.UseInstaller" to "UseInstaller",
+  "com.intellij.ide.starter.junit5.RemoteDevRun" to "env.REMOTE_DEV_RUN",
+  "com.intellij.ide.starter.extended.engine.junit5.UseInstaller" to "env.JUNIT_RUNNER_USE_INSTALLER",
 )
 
 @VisibleForTesting
@@ -56,12 +56,13 @@ class DebugOnlyTestExtensionInspection : DevKitUastInspectionBase(UClass::class.
       val valueExpression = annotation.findDeclaredAttributeValue("value") ?: continue
       for (classLiteral in collectClassLiterals(valueExpression)) {
         val typeFqn = classLiteral.type?.canonicalText ?: continue
-        val simpleName = DEBUG_ONLY_EXTENSIONS[typeFqn] ?: continue
+        if (typeFqn !in DEBUG_ONLY_EXTENSIONS.keys) continue
+        val simpleName = typeFqn.substringAfterLast('.')
         val targetPsi = classLiteral.sourcePsi ?: continue
         val problemsHolder = holder ?: ProblemsHolder(manager, targetPsi.containingFile, isOnTheFly).also { holder = it }
         problemsHolder.registerProblem(
           targetPsi,
-          DevKitBundle.message("inspections.debug.only.test.extension.message", simpleName),
+          DevKitBundle.message("inspections.debug.only.test.extension.message", simpleName, DEBUG_ONLY_EXTENSIONS[typeFqn]),
           ProblemHighlightType.ERROR,
           RemoveDebugOnlyExtensionFix(targetPsi, simpleName),
         )
