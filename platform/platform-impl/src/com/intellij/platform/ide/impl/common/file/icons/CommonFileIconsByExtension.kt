@@ -87,6 +87,7 @@ internal object CommonFileIconsByExtension {
     "tsv" to AllIcons.FileTypes.Csv,
     "sbt" to AllIcons.Language.Scala,
     "xhtml" to AllIcons.FileTypes.Xhtml,
+    "bazel" to AllIcons.FileTypes.Bazel,
   )
 
   fun find(extension: String?): Icon? {

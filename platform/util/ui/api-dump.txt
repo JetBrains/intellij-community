@@ -424,6 +424,7 @@ f:com.intellij.icons.AllIcons$FileTypes
 - sf:Any_type:javax.swing.Icon
 - sf:Archive:javax.swing.Icon
 - sf:Aspectj:javax.swing.Icon
+- sf:Bazel:javax.swing.Icon
 - sf:BinaryData:javax.swing.Icon
 - sf:C:javax.swing.Icon
 - sf:Config:javax.swing.Icon
@@ -461,7 +462,6 @@ f:com.intellij.icons.AllIcons$FileTypes
 - sf:Jupyter:javax.swing.Icon
 - sf:Manifest:javax.swing.Icon
 - sf:Markdown:javax.swing.Icon
-- sf:MarkdownPlugin:javax.swing.Icon
 - sf:MicrosoftWindows:javax.swing.Icon
 - sf:Perl:javax.swing.Icon
 - sf:Properties:javax.swing.Icon
@@ -474,7 +474,6 @@ f:com.intellij.icons.AllIcons$FileTypes
 - sf:Terraform:javax.swing.Icon
 - sf:Text:javax.swing.Icon
 - sf:Toml:javax.swing.Icon
-- sf:TomlFile:javax.swing.Icon
 - sf:UiForm:javax.swing.Icon
 - sf:Unknown:javax.swing.Icon
 - sf:Vue:javax.swing.Icon
