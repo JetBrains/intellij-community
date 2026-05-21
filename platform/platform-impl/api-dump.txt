@@ -1458,6 +1458,52 @@ com.intellij.ui.colorpicker.ColorPickerComponentProvider
 - a:createComponent(com.intellij.ui.colorpicker.ColorPickerModel):javax.swing.JComponent
 com.intellij.ui.colorpicker.ColorPipetteProvider
 - a:createPipette(javax.swing.JComponent):com.intellij.ui.colorpicker.ColorPipette
+f:com.intellij.ui.components.Badge
+- javax.swing.Icon
+- sf:Companion:com.intellij.ui.components.Badge$Companion
+- <init>(java.lang.String,com.intellij.ui.components.Badge$ColorType):V
+- b:<init>(java.lang.String,com.intellij.ui.components.Badge$ColorType,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- sf:getAlpha():javax.swing.Icon
+- sf:getAlphaDisabled():javax.swing.Icon
+- sf:getBeta():javax.swing.Icon
+- sf:getBetaDisabled():javax.swing.Icon
+- f:getColorType():com.intellij.ui.components.Badge$ColorType
+- f:getEnabled():Z
+- sf:getFree():javax.swing.Icon
+- sf:getFreeDisabled():javax.swing.Icon
+- getIconHeight():I
+- getIconWidth():I
+- sf:getNew():javax.swing.Icon
+- sf:getNewDisabled():javax.swing.Icon
+- f:getText():java.lang.String
+- sf:getTrial():javax.swing.Icon
+- sf:getTrialDisabled():javax.swing.Icon
+- paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
+- f:setColorType(com.intellij.ui.components.Badge$ColorType):V
+- f:setEnabled(Z):V
+- f:setText(java.lang.String):V
+e:com.intellij.ui.components.Badge$ColorType
+- java.lang.Enum
+- sf:BLUE:com.intellij.ui.components.Badge$ColorType
+- sf:BLUE_SECONDARY:com.intellij.ui.components.Badge$ColorType
+- sf:GRAY_SECONDARY:com.intellij.ui.components.Badge$ColorType
+- sf:GREEN:com.intellij.ui.components.Badge$ColorType
+- sf:GREEN_SECONDARY:com.intellij.ui.components.Badge$ColorType
+- sf:PURPLE_SECONDARY:com.intellij.ui.components.Badge$ColorType
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.ui.components.Badge$ColorType
+- s:values():com.intellij.ui.components.Badge$ColorType[]
+f:com.intellij.ui.components.Badge$Companion
+- f:getAlpha():javax.swing.Icon
+- f:getAlphaDisabled():javax.swing.Icon
+- f:getBeta():javax.swing.Icon
+- f:getBetaDisabled():javax.swing.Icon
+- f:getFree():javax.swing.Icon
+- f:getFreeDisabled():javax.swing.Icon
+- f:getNew():javax.swing.Icon
+- f:getNewDisabled():javax.swing.Icon
+- f:getTrial():javax.swing.Icon
+- f:getTrialDisabled():javax.swing.Icon
 com.intellij.ui.components.DialogManager
 - a:performAction(kotlin.jvm.functions.Function0):V
 - bs:performAction$default(com.intellij.ui.components.DialogManager,kotlin.jvm.functions.Function0,I,java.lang.Object):V
