@@ -309,6 +309,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @TestOnly
   @ApiStatus.Internal
   public void listenAsyncVfsEvents() {
+    // do not use MyAsyncVfsListener because it calls wrong FileTypeManagerImpl instance
     VirtualFileManager.getInstance().addAsyncFileListenerBackgroundable(detectionService::prepareChange, this);
   }
 

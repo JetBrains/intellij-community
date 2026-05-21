@@ -5,8 +5,10 @@ import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -126,7 +128,7 @@ public final class FileTypeDetectionService {
     myFileTypeManager = fileTypeManager;
     scope = coroutineScope;
 
-    JobKt.getJob(coroutineScope.getCoroutineContext()).invokeOnCompletion(throwable -> {
+    JobKt.getJob(coroutineScope.getCoroutineContext()).invokeOnCompletion(_ -> {
       LOG.info(String.format("%s auto-detected files. Detection took %s ms", counterAutoDetect, elapsedAutoDetect));
       return null;
     });
@@ -146,7 +148,9 @@ public final class FileTypeDetectionService {
     reDetectExecutor = AppJavaExecutorUtil.createBoundedTaskExecutor("FileTypeManager Redetect", coroutineScope);
   }
 
-  @Nullable AsyncFileListener.ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public @Nullable AsyncFileListener.ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
     Collection<VirtualFile> files = ContainerUtil.map2SetNotNull(events, event -> {
       if (event instanceof VFileContentChangeEvent changeEvent) {
         VirtualFile file = changeEvent.getFile();
@@ -483,8 +487,8 @@ public final class FileTypeDetectionService {
       if (toLog()) {
         log("F: reDetect(" + file.getName() + ") " + file.getName());
       }
-      int id = ((VirtualFileWithId)file).getId();
-      long flags = packedFlags.get(id);
+      int id = file instanceof VirtualFileWithId ? ((VirtualFileWithId)file).getId() : -1;
+      long flags = id == -1 ? 0 : packedFlags.get(id);
 
       FileType before = ObjectUtils.notNull(textOrBinaryFromCachedFlags(flags),
                                             ObjectUtils.notNull(getFileTypeDetectedFromContent(file), PlainTextFileType.INSTANCE));
@@ -514,7 +518,9 @@ public final class FileTypeDetectionService {
         // detected by conventional methods, no need to run detect-from-content
         file.putUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY, null);
         flags = 0;
-        packedFlags.set(id, flags);
+        if (id != -1) {
+          packedFlags.set(id, flags);
+        }
       }
       if (toLog()) {
         log("F: reDetect(" + file.getName() + ") before: " + before.getName() + "; after: " + after.getName() +
@@ -550,6 +556,13 @@ public final class FileTypeDetectionService {
 
   private @NotNull FileType detectFromContentAndCache(@NotNull VirtualFile file, byte @Nullable [] content, @Nullable FileType fileTypeByName) throws IOException {
     long start = System.currentTimeMillis();
+    if (content == null) {
+      Document document = FileDocumentManager.getInstance().getCachedDocument(file);
+      if (document != null) {
+        content = document.getText().getBytes(file.getCharset());
+      }
+    }
+
     ByteArraySequence bytes = getFirstBytes(file, content);
     FileType fileType = detectFromContent(file, bytes, fileTypeByName);
     cacheAutoDetectedFileType(file, fileType);
