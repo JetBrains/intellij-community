@@ -5,11 +5,6 @@ package org.jetbrains.jewel.bridge {
     method public static org.jetbrains.jewel.foundation.theme.ThemeIconData readFromLaF(org.jetbrains.jewel.foundation.theme.ThemeIconData.Companion);
   }
 
-  public final class BridgeResourceResolverKt {
-    method @Deprecated public static org.jetbrains.jewel.ui.painter.ResourcePainterProvider bridgePainterProvider(String path);
-    method @Deprecated public static org.jetbrains.jewel.ui.painter.ResourcePainterProvider bridgePainterProvider(org.jetbrains.jewel.ui.icon.IconKey iconKey);
-  }
-
   public final class BridgeTypography implements org.jetbrains.jewel.ui.Typography {
     method @androidx.compose.runtime.Composable public androidx.compose.ui.text.TextStyle getConsoleTextStyle();
     method @androidx.compose.runtime.Composable public androidx.compose.ui.text.TextStyle getEditorTextStyle();
@@ -89,25 +84,16 @@ package org.jetbrains.jewel.bridge {
 
   public final class JewelComposePanelWrapperKt {
     method public static javax.swing.JComponent JewelComposePanel(optional boolean focusOnClickInside, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.awt.ComposePanel,kotlin.Unit> config, kotlin.jvm.functions.Function0<kotlin.Unit> content);
-    method @Deprecated public static javax.swing.JComponent JewelComposePanel(optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.awt.ComposePanel,kotlin.Unit> config, kotlin.jvm.functions.Function0<kotlin.Unit> content);
     method public static javax.swing.JComponent compose(optional boolean focusOnClickInside, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.awt.ComposePanel,kotlin.Unit> config, kotlin.jvm.functions.Function0<kotlin.Unit> content);
-    method @Deprecated public static javax.swing.JComponent compose(optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.awt.ComposePanel,kotlin.Unit> config, kotlin.jvm.functions.Function0<kotlin.Unit> content);
   }
 
   public final class ToolWindowExtensionsKt {
     method public static void addComposeTab(com.intellij.openapi.wm.ToolWindow, optional @com.intellij.openapi.util.NlsContexts.TabTitle String? tabDisplayName, optional boolean isLockable, optional boolean isCloseable, optional boolean focusOnClickInside, kotlin.jvm.functions.Function1<? super org.jetbrains.jewel.bridge.ToolWindowScope,kotlin.Unit> content);
-    method @Deprecated public static void addComposeTab(com.intellij.openapi.wm.ToolWindow, optional @com.intellij.openapi.util.NlsContexts.TabTitle String? tabDisplayName, optional boolean isLockable, optional boolean isCloseable, kotlin.jvm.functions.Function1<? super org.jetbrains.jewel.bridge.ToolWindowScope,kotlin.Unit> content);
   }
 
   public interface ToolWindowScope {
     method public com.intellij.openapi.wm.ToolWindow getToolWindow();
     property public abstract com.intellij.openapi.wm.ToolWindow toolWindow;
-  }
-
-  public final class TypographyKt {
-    method @Deprecated @androidx.compose.runtime.Composable public static androidx.compose.ui.text.TextStyle medium(org.jetbrains.jewel.ui.component.Typography);
-    method @Deprecated @androidx.compose.runtime.Composable public static androidx.compose.ui.text.TextStyle regular(org.jetbrains.jewel.ui.component.Typography);
-    method @Deprecated @androidx.compose.runtime.Composable public static androidx.compose.ui.text.TextStyle small(org.jetbrains.jewel.ui.component.Typography);
   }
 
 }

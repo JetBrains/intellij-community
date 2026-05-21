@@ -62,8 +62,6 @@ f:org.jetbrains.jewel.ui.DefaultComponentStyling
 - styles(androidx.compose.runtime.Composer,I):androidx.compose.runtime.ProvidedValue[]
 f:org.jetbrains.jewel.ui.DisabledAppearanceKt
 - sf:disabledAppearance(androidx.compose.ui.Modifier,I,I,I,androidx.compose.runtime.Composer,I,I):androidx.compose.ui.Modifier
-f:org.jetbrains.jewel.ui.DisabledColorFilterKt
-- sf:disabled(androidx.compose.ui.graphics.ColorFilter$Companion):androidx.compose.ui.graphics.ColorFilter
 org.jetbrains.jewel.ui.MenuItemShortcutHintProvider
 - a:getShortcutHint(org.jetbrains.jewel.ui.component.ContextMenuItemOptionAction):java.lang.String
 f:org.jetbrains.jewel.ui.MenuItemShortcutHintProviderKt
@@ -114,14 +112,6 @@ f:org.jetbrains.jewel.ui.TypographyKt
 f:org.jetbrains.jewel.ui.component.ActionButtonKt
 - sf:ActionButton(kotlin.jvm.functions.Function0,androidx.compose.ui.Modifier,Z,Z,org.jetbrains.jewel.ui.component.styling.IconButtonStyle,androidx.compose.foundation.layout.PaddingValues,androidx.compose.foundation.interaction.MutableInteractionSource,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
 - sf:ActionButton(kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function2,androidx.compose.ui.Modifier,Z,Z,org.jetbrains.jewel.ui.component.styling.IconButtonStyle,androidx.compose.foundation.layout.PaddingValues,org.jetbrains.jewel.ui.component.styling.TooltipStyle,androidx.compose.foundation.TooltipPlacement,androidx.compose.foundation.interaction.MutableInteractionSource,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I,I):V
-e:org.jetbrains.jewel.ui.component.AutoHideBehavior
-- java.lang.Enum
-- sf:Long:org.jetbrains.jewel.ui.component.AutoHideBehavior
-- sf:Never:org.jetbrains.jewel.ui.component.AutoHideBehavior
-- sf:Normal:org.jetbrains.jewel.ui.component.AutoHideBehavior
-- s:getEntries():kotlin.enums.EnumEntries
-- s:valueOf(java.lang.String):org.jetbrains.jewel.ui.component.AutoHideBehavior
-- s:values():org.jetbrains.jewel.ui.component.AutoHideBehavior[]
 f:org.jetbrains.jewel.ui.component.BadgeKt
 - sf:Badge(androidx.compose.ui.Modifier,kotlin.jvm.functions.Function0,Z,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.BadgeStyle,androidx.compose.ui.text.TextStyle,kotlin.jvm.functions.Function3,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.ui.component.BadgeState
@@ -161,10 +151,6 @@ f:org.jetbrains.jewel.ui.component.BannerKt
 - sf:DefaultSuccessBanner(java.lang.String,androidx.compose.ui.Modifier,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,org.jetbrains.jewel.ui.component.styling.DefaultBannerStyle,androidx.compose.ui.text.TextStyle,androidx.compose.runtime.Composer,I,I):V
 - sf:DefaultWarningBanner(androidx.compose.ui.Modifier,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,org.jetbrains.jewel.ui.component.styling.DefaultBannerStyle,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
 - sf:DefaultWarningBanner(java.lang.String,androidx.compose.ui.Modifier,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,org.jetbrains.jewel.ui.component.styling.DefaultBannerStyle,androidx.compose.ui.text.TextStyle,androidx.compose.runtime.Composer,I,I):V
-- sf:ErrorDefaultBanner(java.lang.String,androidx.compose.ui.Modifier,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3,org.jetbrains.jewel.ui.component.styling.DefaultBannerStyle,androidx.compose.ui.text.TextStyle,androidx.compose.runtime.Composer,I,I):V
-- sf:InformationDefaultBanner(java.lang.String,androidx.compose.ui.Modifier,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3,org.jetbrains.jewel.ui.component.styling.DefaultBannerStyle,androidx.compose.ui.text.TextStyle,androidx.compose.runtime.Composer,I,I):V
-- sf:SuccessDefaultBanner(java.lang.String,androidx.compose.ui.Modifier,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3,org.jetbrains.jewel.ui.component.styling.DefaultBannerStyle,androidx.compose.ui.text.TextStyle,androidx.compose.runtime.Composer,I,I):V
-- sf:WarningDefaultBanner(java.lang.String,androidx.compose.ui.Modifier,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3,org.jetbrains.jewel.ui.component.styling.DefaultBannerStyle,androidx.compose.ui.text.TextStyle,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.ui.component.ButtonKt
 - sf:DefaultButton(kotlin.jvm.functions.Function0,androidx.compose.ui.Modifier,Z,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.ButtonStyle,androidx.compose.ui.text.TextStyle,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
 - sf:DefaultSlimButton(kotlin.jvm.functions.Function0,androidx.compose.ui.Modifier,Z,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.ButtonStyle,androidx.compose.ui.text.TextStyle,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
@@ -424,7 +410,6 @@ f:org.jetbrains.jewel.ui.component.IconKt
 - sf:Icon-ww6aTOc(androidx.compose.ui.graphics.ImageBitmap,java.lang.String,androidx.compose.ui.Modifier,J,androidx.compose.runtime.Composer,I,I):V
 - sf:Icon-ww6aTOc(androidx.compose.ui.graphics.painter.Painter,java.lang.String,androidx.compose.ui.Modifier,J,androidx.compose.runtime.Composer,I,I):V
 - sf:Icon-ww6aTOc(androidx.compose.ui.graphics.vector.ImageVector,java.lang.String,androidx.compose.ui.Modifier,J,androidx.compose.runtime.Composer,I,I):V
-- sf:painterResource(java.lang.String,androidx.compose.runtime.Composer,I):androidx.compose.ui.graphics.painter.Painter
 f:org.jetbrains.jewel.ui.component.ImageKt
 - sf:Image(org.jetbrains.jewel.ui.icon.IconKey,java.lang.String,androidx.compose.ui.Modifier,java.lang.Class,androidx.compose.ui.Alignment,androidx.compose.ui.layout.ContentScale,F,androidx.compose.ui.graphics.ColorFilter,androidx.compose.runtime.Composer,I,I):V
 - sf:Image(org.jetbrains.jewel.ui.icon.IconKey,java.lang.String,org.jetbrains.jewel.ui.painter.PainterHint[],androidx.compose.ui.Modifier,java.lang.Class,androidx.compose.ui.Alignment,androidx.compose.ui.layout.ContentScale,F,androidx.compose.ui.graphics.ColorFilter,androidx.compose.runtime.Composer,I,I):V
@@ -432,10 +417,6 @@ f:org.jetbrains.jewel.ui.component.InfoTextKt
 - sf:InfoText-F-Jr8PA(androidx.compose.ui.text.AnnotatedString,androidx.compose.ui.Modifier,J,J,androidx.compose.ui.text.font.FontStyle,androidx.compose.ui.text.font.FontWeight,androidx.compose.ui.text.font.FontFamily,J,androidx.compose.ui.text.style.TextDecoration,I,J,I,Z,I,java.util.Map,kotlin.jvm.functions.Function1,androidx.compose.ui.text.TextStyle,androidx.compose.runtime.Composer,I,I,I):V
 - sf:InfoText-bAzTDeA(java.lang.String,androidx.compose.ui.Modifier,J,J,androidx.compose.ui.text.font.FontStyle,androidx.compose.ui.text.font.FontWeight,androidx.compose.ui.text.font.FontFamily,J,androidx.compose.ui.text.style.TextDecoration,I,J,I,Z,I,kotlin.jvm.functions.Function1,androidx.compose.ui.text.TextStyle,androidx.compose.runtime.Composer,I,I,I):V
 f:org.jetbrains.jewel.ui.component.InlineBannerKt
-- sf:ErrorInlineBanner(androidx.compose.ui.Modifier,java.lang.String,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3,kotlin.jvm.functions.Function3,org.jetbrains.jewel.ui.component.styling.InlineBannerStyle,androidx.compose.ui.text.TextStyle,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
-- sf:ErrorInlineBanner(java.lang.String,androidx.compose.ui.Modifier,java.lang.String,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3,kotlin.jvm.functions.Function3,org.jetbrains.jewel.ui.component.styling.InlineBannerStyle,androidx.compose.ui.text.TextStyle,androidx.compose.runtime.Composer,I,I):V
-- sf:InformationInlineBanner(androidx.compose.ui.Modifier,java.lang.String,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3,kotlin.jvm.functions.Function3,org.jetbrains.jewel.ui.component.styling.InlineBannerStyle,androidx.compose.ui.text.TextStyle,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
-- sf:InformationInlineBanner(java.lang.String,androidx.compose.ui.Modifier,java.lang.String,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3,kotlin.jvm.functions.Function3,org.jetbrains.jewel.ui.component.styling.InlineBannerStyle,androidx.compose.ui.text.TextStyle,androidx.compose.runtime.Composer,I,I):V
 - sf:InlineErrorBanner(androidx.compose.ui.Modifier,java.lang.String,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,org.jetbrains.jewel.ui.component.styling.InlineBannerStyle,androidx.compose.ui.text.TextStyle,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
 - sf:InlineErrorBanner(java.lang.String,androidx.compose.ui.Modifier,java.lang.String,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,org.jetbrains.jewel.ui.component.styling.InlineBannerStyle,androidx.compose.ui.text.TextStyle,androidx.compose.runtime.Composer,I,I):V
 - sf:InlineInformationBanner(androidx.compose.ui.Modifier,java.lang.String,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,org.jetbrains.jewel.ui.component.styling.InlineBannerStyle,androidx.compose.ui.text.TextStyle,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
@@ -444,10 +425,6 @@ f:org.jetbrains.jewel.ui.component.InlineBannerKt
 - sf:InlineSuccessBanner(java.lang.String,androidx.compose.ui.Modifier,java.lang.String,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,org.jetbrains.jewel.ui.component.styling.InlineBannerStyle,androidx.compose.ui.text.TextStyle,androidx.compose.runtime.Composer,I,I):V
 - sf:InlineWarningBanner(androidx.compose.ui.Modifier,java.lang.String,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,org.jetbrains.jewel.ui.component.styling.InlineBannerStyle,androidx.compose.ui.text.TextStyle,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
 - sf:InlineWarningBanner(java.lang.String,androidx.compose.ui.Modifier,java.lang.String,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,org.jetbrains.jewel.ui.component.styling.InlineBannerStyle,androidx.compose.ui.text.TextStyle,androidx.compose.runtime.Composer,I,I):V
-- sf:SuccessInlineBanner(androidx.compose.ui.Modifier,java.lang.String,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3,kotlin.jvm.functions.Function3,org.jetbrains.jewel.ui.component.styling.InlineBannerStyle,androidx.compose.ui.text.TextStyle,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
-- sf:SuccessInlineBanner(java.lang.String,androidx.compose.ui.Modifier,java.lang.String,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3,kotlin.jvm.functions.Function3,org.jetbrains.jewel.ui.component.styling.InlineBannerStyle,androidx.compose.ui.text.TextStyle,androidx.compose.runtime.Composer,I,I):V
-- sf:WarningInlineBanner(androidx.compose.ui.Modifier,java.lang.String,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3,kotlin.jvm.functions.Function3,org.jetbrains.jewel.ui.component.styling.InlineBannerStyle,androidx.compose.ui.text.TextStyle,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
-- sf:WarningInlineBanner(java.lang.String,androidx.compose.ui.Modifier,java.lang.String,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3,kotlin.jvm.functions.Function3,org.jetbrains.jewel.ui.component.styling.InlineBannerStyle,androidx.compose.ui.text.TextStyle,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.ui.component.InputFieldState
 - org.jetbrains.jewel.foundation.state.FocusableComponentState
 - sf:Companion:org.jetbrains.jewel.ui.component.InputFieldState$Companion
@@ -542,40 +519,7 @@ org.jetbrains.jewel.ui.component.MenuController
 - a:submenuController(kotlin.jvm.functions.Function1):org.jetbrains.jewel.ui.component.MenuController
 f:org.jetbrains.jewel.ui.component.MenuControllerKt
 - sf:getLocalMenuController():androidx.compose.runtime.ProvidableCompositionLocal
-f:org.jetbrains.jewel.ui.component.MenuItemState
-- org.jetbrains.jewel.foundation.state.FocusableComponentState
-- org.jetbrains.jewel.foundation.state.SelectableComponentState
-- sf:Companion:org.jetbrains.jewel.ui.component.MenuItemState$Companion
-- bsf:box-impl(J):org.jetbrains.jewel.ui.component.MenuItemState
-- s:constructor-impl(J):J
-- sf:copy-moUeATs(J,Z,Z,Z,Z,Z,Z):J
-- bs:copy-moUeATs$default(J,Z,Z,Z,Z,Z,Z,I,java.lang.Object):J
-- equals(java.lang.Object):Z
-- s:equals-impl(J,java.lang.Object):Z
-- sf:equals-impl0(J,J):Z
-- f:getState-s-VKNKU():J
-- hashCode():I
-- s:hashCode-impl(J):I
-- isActive():Z
-- s:isActive-impl(J):Z
-- isEnabled():Z
-- s:isEnabled-impl(J):Z
-- isFocused():Z
-- s:isFocused-impl(J):Z
-- isHovered():Z
-- s:isHovered-impl(J):Z
-- isPressed():Z
-- s:isPressed-impl(J):Z
-- isSelected():Z
-- s:isSelected-impl(J):Z
-- s:toString-impl(J):java.lang.String
-- bf:unbox-impl():J
-f:org.jetbrains.jewel.ui.component.MenuItemState$Companion
-- f:of-moUeATs(Z,Z,Z,Z,Z,Z):J
-- bs:of-moUeATs$default(org.jetbrains.jewel.ui.component.MenuItemState$Companion,Z,Z,Z,Z,Z,Z,I,java.lang.Object):J
 f:org.jetbrains.jewel.ui.component.MenuKt
-- sf:MenuSeparator(androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.MenuItemMetrics,org.jetbrains.jewel.ui.component.styling.MenuItemColors,androidx.compose.runtime.Composer,I,I):V
-- sf:MenuSubmenuItem(androidx.compose.ui.Modifier,Z,Z,org.jetbrains.jewel.ui.icon.IconKey,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.MenuStyle,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
 - bsf:PopupMenu(kotlin.jvm.functions.Function1,androidx.compose.ui.Alignment$Horizontal,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.MenuStyle,androidx.compose.ui.window.PopupProperties,kotlin.jvm.functions.Function1,androidx.compose.runtime.Composer,I,I):V
 - sf:PopupMenu(kotlin.jvm.functions.Function1,androidx.compose.ui.Alignment$Horizontal,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.MenuStyle,androidx.compose.ui.window.PopupProperties,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function1,androidx.compose.runtime.Composer,I,I):V
 - bsf:PopupMenu(kotlin.jvm.functions.Function1,androidx.compose.ui.window.PopupPositionProvider,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.MenuStyle,androidx.compose.ui.window.PopupProperties,kotlin.jvm.functions.Function1,androidx.compose.runtime.Composer,I,I):V
@@ -583,18 +527,6 @@ f:org.jetbrains.jewel.ui.component.MenuKt
 - sf:items(org.jetbrains.jewel.ui.component.MenuScope,I,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function3):V
 - sf:items(org.jetbrains.jewel.ui.component.MenuScope,java.util.List,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function3):V
 - sf:separator(org.jetbrains.jewel.ui.component.MenuScope):V
-f:org.jetbrains.jewel.ui.component.MenuManager
-- sf:$stable:I
-- <init>(kotlin.jvm.functions.Function1,org.jetbrains.jewel.ui.component.MenuManager):V
-- b:<init>(kotlin.jvm.functions.Function1,org.jetbrains.jewel.ui.component.MenuManager,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- f:close-iuPiT84(I):Z
-- f:closeAll-HMVJIwE(I,Z):V
-- f:getOnDismissRequest():kotlin.jvm.functions.Function1
-- f:isRootMenu():Z
-- f:isSubmenu():Z
-- f:submenuManager(kotlin.jvm.functions.Function1):org.jetbrains.jewel.ui.component.MenuManager
-f:org.jetbrains.jewel.ui.component.MenuManagerKt
-- sf:getLocalMenuManager():androidx.compose.runtime.ProvidableCompositionLocal
 org.jetbrains.jewel.ui.component.MenuScope
 - a:passiveItem(kotlin.jvm.functions.Function2):V
 - a:selectableItem(Z,org.jetbrains.jewel.ui.icon.IconKey,java.util.Set,kotlin.jvm.functions.Function0,Z,kotlin.jvm.functions.Function2):V
@@ -795,14 +727,10 @@ f:org.jetbrains.jewel.ui.component.SelectableIconButtonState$Companion
 - f:of-z9lnavA(Z,Z,Z,Z,Z,Z):J
 - bs:of-z9lnavA$default(org.jetbrains.jewel.ui.component.SelectableIconButtonState$Companion,Z,Z,Z,Z,Z,Z,I,java.lang.Object):J
 f:org.jetbrains.jewel.ui.component.SimpleListItemKt
-- sf:SimpleListItem-0vH8DBg(org.jetbrains.jewel.ui.component.ListItemState,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.icon.IconKey,java.lang.String,org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle,F,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
 - sf:SimpleListItem-J1qPv4o(Z,Z,androidx.compose.ui.graphics.ColorFilter,java.util.List,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.icon.IconKey,java.lang.String,org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle,F,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I,I):V
 - sf:SimpleListItem-ULtc_mU(androidx.compose.ui.text.AnnotatedString,Z,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.icon.IconKey,java.lang.String,org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle,F,androidx.compose.ui.graphics.ColorFilter,kotlin.jvm.functions.Function1,org.jetbrains.jewel.ui.painter.PainterHint[],androidx.compose.runtime.Composer,I,I,I):V
 - sf:SimpleListItem-Wu8B24Y(java.lang.String,org.jetbrains.jewel.ui.component.ListItemState,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.icon.IconKey,java.lang.String,org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle,F,androidx.compose.ui.graphics.ColorFilter,org.jetbrains.jewel.ui.painter.PainterHint[],androidx.compose.runtime.Composer,I,I,I):V
 - sf:SimpleListItem-XFD2ZOI(java.lang.String,Z,Z,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.icon.IconKey,java.lang.String,org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle,F,androidx.compose.ui.graphics.ColorFilter,org.jetbrains.jewel.ui.painter.PainterHint[],androidx.compose.runtime.Composer,I,I,I):V
-- sf:SimpleListItem-aqv2aB4(java.lang.String,Z,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.icon.IconKey,java.lang.String,org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle,F,androidx.compose.runtime.Composer,I,I):V
-- sf:SimpleListItem-eKw1uXw(java.lang.String,org.jetbrains.jewel.ui.component.ListItemState,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.icon.IconKey,java.lang.String,org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle,F,androidx.compose.runtime.Composer,I,I):V
-- sf:SimpleListItem-gMrHQkA(Z,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.icon.IconKey,java.lang.String,org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle,F,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
 - sf:SimpleListItem-tJlDC5Y(org.jetbrains.jewel.ui.component.ListItemState,androidx.compose.ui.graphics.ColorFilter,java.util.List,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.icon.IconKey,java.lang.String,org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle,F,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
 - sf:SimpleListItem-wn8IZOc(androidx.compose.ui.text.AnnotatedString,org.jetbrains.jewel.ui.component.ListItemState,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.icon.IconKey,java.lang.String,org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle,F,androidx.compose.ui.graphics.ColorFilter,kotlin.jvm.functions.Function1,org.jetbrains.jewel.ui.painter.PainterHint[],androidx.compose.runtime.Composer,I,I,I):V
 f:org.jetbrains.jewel.ui.component.SliderKt
@@ -992,26 +920,7 @@ f:org.jetbrains.jewel.ui.component.ToggleableIconButtonState$Companion
 - bs:of-CAf7mdk$default(org.jetbrains.jewel.ui.component.ToggleableIconButtonState$Companion,Z,androidx.compose.ui.state.ToggleableState,Z,Z,Z,Z,I,java.lang.Object):J
 f:org.jetbrains.jewel.ui.component.TooltipKt
 - sf:Tooltip(kotlin.jvm.functions.Function2,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.component.styling.TooltipStyle,androidx.compose.foundation.TooltipPlacement,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
-- sf:Tooltip(kotlin.jvm.functions.Function2,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.component.styling.TooltipStyle,androidx.compose.foundation.TooltipPlacement,org.jetbrains.jewel.ui.component.AutoHideBehavior,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
-f:org.jetbrains.jewel.ui.component.Typography
-- sf:$stable:I
-- sf:DefaultLineHeightMultiplier:F
-- sf:EditorLineHeightMultiplier:F
-- sf:INSTANCE:org.jetbrains.jewel.ui.component.Typography
-- f:consoleTextStyle(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
-- f:editorTextStyle(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
-- f:h0TextStyle(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
-- f:h1TextStyle(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
-- f:h2TextStyle(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
-- f:h3TextStyle(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
-- f:h4TextStyle(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
-- f:labelTextSize-5XXgJZs(androidx.compose.runtime.Composer,I):J
-- f:labelTextStyle(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
 f:org.jetbrains.jewel.ui.component.TypographyKt
-- sf:copyWithSize-Ce1Lr_4(androidx.compose.ui.text.TextStyle,J,J,androidx.compose.ui.text.font.FontWeight,androidx.compose.ui.text.font.FontStyle,androidx.compose.ui.text.font.FontSynthesis,androidx.compose.ui.text.font.FontFamily,java.lang.String,J,androidx.compose.ui.text.style.BaselineShift,androidx.compose.ui.text.style.TextGeometricTransform,androidx.compose.ui.text.intl.LocaleList,J,androidx.compose.ui.text.style.TextDecoration,androidx.compose.ui.graphics.Shadow,androidx.compose.ui.graphics.drawscope.DrawStyle,I,I,androidx.compose.ui.text.style.TextIndent,androidx.compose.ui.text.PlatformTextStyle,androidx.compose.ui.text.style.LineHeightStyle,I,I,androidx.compose.ui.text.style.TextMotion):androidx.compose.ui.text.TextStyle
-- bs:copyWithSize-Ce1Lr_4$default(androidx.compose.ui.text.TextStyle,J,J,androidx.compose.ui.text.font.FontWeight,androidx.compose.ui.text.font.FontStyle,androidx.compose.ui.text.font.FontSynthesis,androidx.compose.ui.text.font.FontFamily,java.lang.String,J,androidx.compose.ui.text.style.BaselineShift,androidx.compose.ui.text.style.TextGeometricTransform,androidx.compose.ui.text.intl.LocaleList,J,androidx.compose.ui.text.style.TextDecoration,androidx.compose.ui.graphics.Shadow,androidx.compose.ui.graphics.drawscope.DrawStyle,I,I,androidx.compose.ui.text.style.TextIndent,androidx.compose.ui.text.PlatformTextStyle,androidx.compose.ui.text.style.LineHeightStyle,I,I,androidx.compose.ui.text.style.TextMotion,I,java.lang.Object):androidx.compose.ui.text.TextStyle
-- sf:copyWithSize-nfnV_I0(androidx.compose.ui.text.TextStyle,J,androidx.compose.ui.graphics.Brush,F,androidx.compose.ui.text.font.FontWeight,androidx.compose.ui.text.font.FontStyle,androidx.compose.ui.text.font.FontSynthesis,androidx.compose.ui.text.font.FontFamily,java.lang.String,J,androidx.compose.ui.text.style.BaselineShift,androidx.compose.ui.text.style.TextGeometricTransform,androidx.compose.ui.text.intl.LocaleList,J,androidx.compose.ui.text.style.TextDecoration,androidx.compose.ui.graphics.Shadow,androidx.compose.ui.graphics.drawscope.DrawStyle,I,I,androidx.compose.ui.text.style.TextIndent,androidx.compose.ui.text.PlatformTextStyle,androidx.compose.ui.text.style.LineHeightStyle,I,I,androidx.compose.ui.text.style.TextMotion):androidx.compose.ui.text.TextStyle
-- bs:copyWithSize-nfnV_I0$default(androidx.compose.ui.text.TextStyle,J,androidx.compose.ui.graphics.Brush,F,androidx.compose.ui.text.font.FontWeight,androidx.compose.ui.text.font.FontStyle,androidx.compose.ui.text.font.FontSynthesis,androidx.compose.ui.text.font.FontFamily,java.lang.String,J,androidx.compose.ui.text.style.BaselineShift,androidx.compose.ui.text.style.TextGeometricTransform,androidx.compose.ui.text.intl.LocaleList,J,androidx.compose.ui.text.style.TextDecoration,androidx.compose.ui.graphics.Shadow,androidx.compose.ui.graphics.drawscope.DrawStyle,I,I,androidx.compose.ui.text.style.TextIndent,androidx.compose.ui.text.PlatformTextStyle,androidx.compose.ui.text.style.LineHeightStyle,I,I,androidx.compose.ui.text.style.TextMotion,I,java.lang.Object):androidx.compose.ui.text.TextStyle
 - sf:minus-NB67dxo(J,J):J
 - sf:plus-NB67dxo(J,J):J
 org.jetbrains.jewel.ui.component.banner.BannerIconActionScope
@@ -1691,8 +1600,6 @@ f:org.jetbrains.jewel.ui.component.styling.MenuIcons$Companion
 f:org.jetbrains.jewel.ui.component.styling.MenuItemColors
 - sf:$stable:I
 - sf:Companion:org.jetbrains.jewel.ui.component.styling.MenuItemColors$Companion
-- f:backgroundFor-VIR8D2g(J,androidx.compose.runtime.Composer,I):androidx.compose.runtime.State
-- f:contentFor-VIR8D2g(J,androidx.compose.runtime.Composer,I):androidx.compose.runtime.State
 - equals(java.lang.Object):Z
 - f:getBackground-0d7_KjU():J
 - f:getBackgroundDisabled-0d7_KjU():J
@@ -1716,8 +1623,6 @@ f:org.jetbrains.jewel.ui.component.styling.MenuItemColors
 - f:getKeybindingTintPressed-0d7_KjU():J
 - f:getSeparator-0d7_KjU():J
 - hashCode():I
-- f:iconTintFor-VIR8D2g(J,androidx.compose.runtime.Composer,I):androidx.compose.runtime.State
-- f:keybindingTintFor-VIR8D2g(J,androidx.compose.runtime.Composer,I):androidx.compose.runtime.State
 f:org.jetbrains.jewel.ui.component.styling.MenuItemColors$Companion
 f:org.jetbrains.jewel.ui.component.styling.MenuItemMetrics
 - sf:$stable:I
@@ -2433,8 +2338,6 @@ f:org.jetbrains.jewel.ui.component.styling.TooltipMetrics
 - f:getShowDelay-UwyO8pc():J
 - hashCode():I
 f:org.jetbrains.jewel.ui.component.styling.TooltipMetrics$Companion
-- f:defaults-8qf-r9M(androidx.compose.foundation.layout.PaddingValues,J,androidx.compose.foundation.shape.CornerSize,F,F,androidx.compose.foundation.TooltipPlacement):org.jetbrains.jewel.ui.component.styling.TooltipMetrics
-- bs:defaults-8qf-r9M$default(org.jetbrains.jewel.ui.component.styling.TooltipMetrics$Companion,androidx.compose.foundation.layout.PaddingValues,J,androidx.compose.foundation.shape.CornerSize,F,F,androidx.compose.foundation.TooltipPlacement,I,java.lang.Object):org.jetbrains.jewel.ui.component.styling.TooltipMetrics
 - f:defaults-L5TaK9c(androidx.compose.foundation.layout.PaddingValues,J,J,J,androidx.compose.foundation.shape.CornerSize,F,F,androidx.compose.foundation.TooltipPlacement):org.jetbrains.jewel.ui.component.styling.TooltipMetrics
 - bs:defaults-L5TaK9c$default(org.jetbrains.jewel.ui.component.styling.TooltipMetrics$Companion,androidx.compose.foundation.layout.PaddingValues,J,J,J,androidx.compose.foundation.shape.CornerSize,F,F,androidx.compose.foundation.TooltipPlacement,I,java.lang.Object):org.jetbrains.jewel.ui.component.styling.TooltipMetrics
 f:org.jetbrains.jewel.ui.component.styling.TooltipStyle
@@ -4227,16 +4130,13 @@ f:org.jetbrains.jewel.ui.theme.JewelThemeKt
 - sf:getTreeStyle(org.jetbrains.jewel.foundation.theme.JewelTheme$Companion,androidx.compose.runtime.Composer,I):org.jetbrains.jewel.ui.component.styling.LazyTreeStyle
 f:org.jetbrains.jewel.ui.util.ColorExtensionsKt
 - sf:fromArgbHexStringOrNull(androidx.compose.ui.graphics.Color$Companion,java.lang.String):androidx.compose.ui.graphics.Color
-- sf:fromRGBAHexStringOrNull(androidx.compose.ui.graphics.Color$Companion,java.lang.String):androidx.compose.ui.graphics.Color
 - sf:fromRgbaHexStringOrNull(androidx.compose.ui.graphics.Color$Companion,java.lang.String):androidx.compose.ui.graphics.Color
 - sf:isDark-8_81llA(J):Z
 - sf:toArgbHexString(java.awt.Color,Z,Z):java.lang.String
 - bs:toArgbHexString$default(java.awt.Color,Z,Z,I,java.lang.Object):java.lang.String
 - sf:toArgbHexString-ek8zF_U(J,Z,Z):java.lang.String
 - bs:toArgbHexString-ek8zF_U$default(J,Z,Z,I,java.lang.Object):java.lang.String
-- sf:toRgbaHexString(java.awt.Color):java.lang.String
 - sf:toRgbaHexString(java.awt.Color,Z,Z):java.lang.String
 - bs:toRgbaHexString$default(java.awt.Color,Z,Z,I,java.lang.Object):java.lang.String
-- sf:toRgbaHexString-8_81llA(J):java.lang.String
 - sf:toRgbaHexString-ek8zF_U(J,Z,Z):java.lang.String
 - bs:toRgbaHexString-ek8zF_U$default(J,Z,Z,I,java.lang.Object):java.lang.String

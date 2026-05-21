@@ -1095,34 +1095,6 @@ public class InlinesStyling(
     public val strongEmphasis: SpanStyle,
     public val inlineHtml: SpanStyle,
 ) {
-    @Deprecated("Use variant without renderInlineHtml instead.", level = DeprecationLevel.HIDDEN)
-    public constructor(
-        textStyle: TextStyle,
-        inlineCode: SpanStyle,
-        link: SpanStyle,
-        linkDisabled: SpanStyle,
-        linkFocused: SpanStyle,
-        linkHovered: SpanStyle,
-        linkPressed: SpanStyle,
-        linkVisited: SpanStyle,
-        emphasis: SpanStyle,
-        strongEmphasis: SpanStyle,
-        inlineHtml: SpanStyle,
-        @Suppress("UnusedPrivateProperty") renderInlineHtml: Boolean,
-    ) : this(
-        textStyle,
-        inlineCode,
-        link,
-        linkDisabled,
-        linkFocused,
-        linkHovered,
-        linkPressed,
-        linkVisited,
-        emphasis,
-        strongEmphasis,
-        inlineHtml,
-    )
-
     public val textLinkStyles: TextLinkStyles =
         TextLinkStyles(style = link, focusedStyle = linkFocused, hoveredStyle = linkHovered, pressedStyle = linkPressed)
 

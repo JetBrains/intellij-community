@@ -721,16 +721,6 @@ private data class SubmenuItem(
     override val content: @Composable () -> Unit,
 ) : MenuItem
 
-@Deprecated("This is being made private")
-@Composable
-public fun MenuSeparator(
-    modifier: Modifier = Modifier,
-    metrics: MenuItemMetrics = JewelTheme.menuStyle.metrics.itemMetrics,
-    colors: MenuItemColors = JewelTheme.menuStyle.colors.itemColors,
-) {
-    MenuSeparator(colors, metrics, modifier)
-}
-
 @Composable
 private fun MenuSeparator(colors: MenuItemColors, metrics: MenuItemMetrics, modifier: Modifier = Modifier) {
     Box(modifier.height(metrics.separatorHeight)) {
@@ -755,7 +745,7 @@ private fun MenuItem(
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: MenuStyle = JewelTheme.menuStyle,
-    @Suppress("DEPRECATION") content: @Composable (itemState: MenuItemState) -> Unit,
+    content: @Composable (itemState: MenuItemState) -> Unit,
 ) {
     val shortcutHintProvider = LocalMenuItemShortcutHintProvider.current
 
@@ -786,7 +776,7 @@ private fun MenuItem(
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: MenuStyle = JewelTheme.menuStyle,
-    @Suppress("DEPRECATION") content: @Composable (itemState: MenuItemState) -> Unit,
+    content: @Composable (itemState: MenuItemState) -> Unit,
 ) {
     MenuItemBase(
         selected = selected,
@@ -820,7 +810,7 @@ internal fun MenuItemBase(
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: MenuStyle = JewelTheme.menuStyle,
-    @Suppress("DEPRECATION") content: @Composable (itemState: MenuItemState) -> Unit,
+    content: @Composable (itemState: MenuItemState) -> Unit,
 ) {
     val itemState by rememberMenuItemState(selected, enabled, interactionSource)
 
@@ -864,7 +854,6 @@ internal fun MenuItemBase(
             trailingContent =
                 if (canShowKeybinding) {
                     {
-                        @Suppress("DEPRECATION") // Not really deprecated, MenuItemColors will be made internal
                         Text(
                             modifier = Modifier.padding(style.metrics.itemMetrics.keybindingsPadding),
                             text = keybindingHint,
@@ -874,24 +863,6 @@ internal fun MenuItemBase(
                 } else null,
             content = { content(itemState) },
         )
-    }
-}
-
-@Suppress("ComposableParamOrder")
-@Deprecated("This is being made private")
-@Composable
-public fun MenuSubmenuItem(
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    canShowIcon: Boolean,
-    iconKey: IconKey?,
-    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    style: MenuStyle = JewelTheme.menuStyle,
-    submenu: MenuScope.() -> Unit,
-    content: @Composable () -> Unit,
-) {
-    MenuSubmenuItem(canShowIcon, selected = false, submenu, modifier, enabled, iconKey, interactionSource, style) {
-        content()
     }
 }
 
@@ -908,7 +879,7 @@ public fun MenuSubmenuItem(
     iconKey: IconKey? = null,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: MenuStyle = JewelTheme.menuStyle,
-    @Suppress("DEPRECATION") content: @Composable (itemState: MenuItemState) -> Unit,
+    content: @Composable (itemState: MenuItemState) -> Unit,
 ) {
     var itemState by rememberMenuItemState(selected, enabled, interactionSource)
     // When the item becomes disabled, close any open submenu
@@ -943,7 +914,6 @@ public fun MenuSubmenuItem(
             iconKey = iconKey,
             canShowIcon = showIcon,
             trailingContent = {
-                @Suppress("DEPRECATION") // Not really deprecated, MenuItemColors will be made internal
                 Icon(
                     key = style.icons.submenuChevron,
                     contentDescription = null,
@@ -972,7 +942,6 @@ public fun MenuSubmenuItem(
     }
 }
 
-@Suppress("DEPRECATION") // Not really deprecated, MenuItemColors be made internal
 @Composable
 internal fun MenuItemLayout(
     itemState: MenuItemState,
@@ -1113,7 +1082,8 @@ internal fun Submenu(
  * @see SelectableComponentState
  * @see FocusableComponentState
  */
-@Deprecated("This is being made private")
+@ApiStatus.Internal
+@InternalJewelApi
 @Immutable
 @JvmInline
 public value class MenuItemState(public val state: ULong) : SelectableComponentState, FocusableComponentState {
@@ -1135,7 +1105,6 @@ public value class MenuItemState(public val state: ULong) : SelectableComponentS
     override val isPressed: Boolean
         get() = state and Pressed != 0UL
 
-    @Suppress("DEPRECATION")
     public fun copy(
         selected: Boolean = isSelected,
         enabled: Boolean = isEnabled,
@@ -1157,10 +1126,8 @@ public value class MenuItemState(public val state: ULong) : SelectableComponentS
         "MenuItemState(state=$state, isSelected=$isSelected, isEnabled=$isEnabled, isFocused=$isFocused, " +
             "isHovered=$isHovered, isPressed=$isPressed, isActive=$isActive)"
 
-    public companion object {
-        @Suppress("DEPRECATION")
-        @Deprecated("This is being made private")
-        public fun of(
+    internal companion object {
+        internal fun of(
             selected: Boolean,
             enabled: Boolean,
             focused: Boolean = false,
@@ -1180,7 +1147,6 @@ public value class MenuItemState(public val state: ULong) : SelectableComponentS
     }
 }
 
-@Suppress("DEPRECATION") // Not really deprecated, MenuItemState will be made internal
 @Composable
 internal fun rememberMenuItemState(
     selected: Boolean,
