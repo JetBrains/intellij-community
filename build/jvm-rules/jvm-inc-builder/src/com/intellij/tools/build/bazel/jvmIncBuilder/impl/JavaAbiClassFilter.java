@@ -67,7 +67,9 @@ public class JavaAbiClassFilter extends ClassVisitor {
   }
 
   private static boolean isAbiVisible(int access) {
-    return (access & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED)) != 0;
+    // include to ABI surface public, protected and package-local members
+    // package-local members are included only to match the behavior of the 'ijar' tool from standard rules_java
+    return (access & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED)) != 0 || isPackageLocal(access);
   }
 
   private static boolean isEnum(int access) {
