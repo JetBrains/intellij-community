@@ -123,6 +123,11 @@
       description="Custom ITN error reporting endpoint. Only HTTPS URLs whose host ends with .jetbrains.com are accepted"
     />
     <registryKey
+      key="ea.diagnostic.endpoint.public.key"
+      defaultValue=""
+      description="Pinned public key for the ITN error reporting endpoint. Required when ea.diagnostic.endpoint is set. Accepts Base64-encoded SubjectPublicKeyInfo bytes or PEM text"
+    />
+    <registryKey
       key="ide.linux.ijpl43505"
       defaultValue="true"
       description="Enable the fix for IJPL-43505 Window header disappears after opening more than one project"
