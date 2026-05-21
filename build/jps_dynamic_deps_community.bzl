@@ -135,6 +135,8 @@ def _targets_repo_impl(ctx):
     ctx.file("targets.bzl", content)
     ctx.file("BUILD", 'exports_files(["targets.bzl"])')
 
+    return ctx.repo_metadata(reproducible = True)
+
 targets_repo = repository_rule(
     implementation = _targets_repo_impl,
 )
