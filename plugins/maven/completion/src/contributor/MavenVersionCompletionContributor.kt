@@ -3,6 +3,8 @@ package com.intellij.maven.completion.contributor
 
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.CompletionService
+import com.intellij.codeInsight.completion.LookupActionKeys.SUPPRESS_QUICK_DEFINITION
+import com.intellij.codeInsight.completion.LookupActionKeys.SUPPRESS_QUICK_DOCUMENTATION
 import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.maven.completion.icon
@@ -49,6 +51,8 @@ open class MavenVersionCompletionContributor : MavenCoordinateCompletionContribu
       .withIcon(source.icon)
       .also {
         it.putUserData(MAVEN_COORDINATE_COMPLETION_PREFIX_KEY, completionPrefix)
+        it.putUserData(SUPPRESS_QUICK_DEFINITION, true)
+        it.putUserData(SUPPRESS_QUICK_DOCUMENTATION, true)
       })
 
   override fun amendResultSet(result: CompletionResultSet, completionPrefix: String): CompletionResultSet {

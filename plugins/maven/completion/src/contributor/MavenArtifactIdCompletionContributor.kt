@@ -3,6 +3,8 @@ package com.intellij.maven.completion.contributor
 
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
+import com.intellij.codeInsight.completion.LookupActionKeys.SUPPRESS_QUICK_DEFINITION
+import com.intellij.codeInsight.completion.LookupActionKeys.SUPPRESS_QUICK_DOCUMENTATION
 import com.intellij.maven.completion.icon
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionContext
@@ -47,5 +49,7 @@ class MavenArtifactIdCompletionContributor : MavenCoordinateCompletionContributo
       .also {
         it.putUserData(MAVEN_COORDINATE_COMPLETION_PREFIX_KEY, completionPrefix)
         it.putUserData(StrictOrderWeigher.ORDER_KEY, StrictOrderWeigherData(source, index))
+        it.putUserData(SUPPRESS_QUICK_DEFINITION, true)
+        it.putUserData(SUPPRESS_QUICK_DOCUMENTATION, true)
       })
 }

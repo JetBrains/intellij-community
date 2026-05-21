@@ -3,6 +3,8 @@ package com.intellij.maven.completion.contributor
 
 import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.LookupActionKeys.SUPPRESS_QUICK_DEFINITION
+import com.intellij.codeInsight.completion.LookupActionKeys.SUPPRESS_QUICK_DOCUMENTATION
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.CompletionSorter
 import com.intellij.codeInsight.completion.CompletionType
@@ -52,6 +54,8 @@ abstract class MavenTopLevelCompletionContributor(val myName: String) : Completi
               .withIcon(item.icon)
               .withInsertHandler(MavenTopLevelDependencyInsertionHandler.INSTANCE)
           lookupElement.putUserData(StrictOrderWeigher.ORDER_KEY, StrictOrderWeigherData(item.source, index++))
+          lookupElement.putUserData(SUPPRESS_QUICK_DEFINITION, true)
+          lookupElement.putUserData(SUPPRESS_QUICK_DOCUMENTATION, true)
           resultSet.addElement(MLRankingIgnorable.wrap(lookupElement))
         }
     }
