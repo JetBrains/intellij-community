@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup;
 
+import com.intellij.codeInsight.completion.CompletionItemLookupElement;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.LookupElementWithEffectiveInsertHandler;
@@ -26,6 +27,9 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
   private final @NotNull T myDelegate;
 
   protected LookupElementDecorator(@NotNull T delegate) {
+    if (delegate instanceof CompletionItemLookupElement) {
+      throw new IllegalArgumentException("CompletionItemLookupElement cannot be decorated");
+    }
     myDelegate = delegate;
     myDelegate.copyUserDataTo(this);
   }
