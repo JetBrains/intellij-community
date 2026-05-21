@@ -23,6 +23,7 @@ import com.intellij.repository.search.completion.lookup.StrictOrderWeigher
 import com.intellij.util.xml.DomManager
 import com.intellij.util.xml.GenericDomValue
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 
 abstract class MavenCoordinateCompletionContributor protected constructor(private val myTagId: String) : CompletionContributor() {
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
@@ -126,7 +127,7 @@ internal class MavenCoordinateCompletionPlaceChecker(private val myTagId: String
     }
 
     val parent = domElement.getParent()
-    if (parent is MavenDomShortArtifactCoordinates) {
+    if (parent is MavenDomShortArtifactCoordinates && parent !is MavenDomProjectModel) {
       coordinates = parent
     }
     else {
