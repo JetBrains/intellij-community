@@ -38,7 +38,7 @@ private val DEBUG_ONLY_EXTENSIONS = mapOf(
 class DebugOnlyTestExtensionInspection : DevKitUastInspectionBase(UClass::class.java, UMethod::class.java) {
 
   override fun isAllowed(holder: ProblemsHolder): Boolean {
-    return DevKitInspectionUtil.isAllowedIncludingTestSources(holder.file)
+    return DevKitInspectionUtil.isClassAvailable(holder, EXTEND_WITH_FQN)
   }
 
   override fun checkClass(aClass: UClass, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
