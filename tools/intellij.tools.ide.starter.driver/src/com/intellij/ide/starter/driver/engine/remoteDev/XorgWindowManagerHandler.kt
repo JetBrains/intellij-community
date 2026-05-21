@@ -8,6 +8,7 @@ import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.utils.getRunningDisplays
 import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
+import com.intellij.tools.ide.util.common.withRetry
 import kotlin.io.path.div
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.seconds
@@ -49,14 +50,16 @@ object XorgWindowManagerHandler {
 
     if (!isFluxBoxIsRunning(displayWithColumn)) {
       val fluxboxRunLog = ideRunContext.logsDir / "$fluxboxName.log"
-      ProcessExecutor(
-        presentableName = "Start $fluxboxName",
-        timeout = 2.hours,
-        args = listOf("/usr/bin/${fluxboxName}", "-display", displayWithColumn),
-        workDir = null,
-        stdoutRedirect = ExecOutputRedirect.ToFile(fluxboxRunLog),
-        stderrRedirect = ExecOutputRedirect.ToFile(fluxboxRunLog)
-      ).startCancellable()
+      withRetry("$fluxboxName failed to start", retries = 5, delay = 3.seconds) {
+        ProcessExecutor(
+          presentableName = "Start $fluxboxName",
+          timeout = 2.hours,
+          args = listOf("/usr/bin/${fluxboxName}", "-display", displayWithColumn),
+          workDir = null,
+          stdoutRedirect = ExecOutputRedirect.ToFile(fluxboxRunLog),
+          stderrRedirect = ExecOutputRedirect.ToFile(fluxboxRunLog)
+        ).startCancellable()
+      }
     }
     else {
       logOutput("$fluxboxName is already running on display $displayWithColumn")
