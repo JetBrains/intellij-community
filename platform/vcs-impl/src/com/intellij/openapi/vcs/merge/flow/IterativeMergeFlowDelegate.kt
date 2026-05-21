@@ -94,6 +94,7 @@ internal class IterativeMergeFlowDelegate(
   private val rootPane: JRootPane,
   private val files: List<VirtualFile>,
   private val onClose: () -> Unit,
+  private val onAcceptAndFinish: () -> Unit,
   private val acceptForResolution: (MergeSession.Resolution) -> Unit,
   private val showMergeDialog: () -> Unit,
   private val toggleGroupByDirectory: (Boolean) -> Unit,
@@ -204,7 +205,7 @@ internal class IterativeMergeFlowDelegate(
 
       val acceptAndFinishAction = object : AbstractAction(VcsBundle.message("multiple.file.iterative.merge.accept.finish")) {
         override fun actionPerformed(e: ActionEvent) {
-          onClose()
+          onAcceptAndFinish()
         }
       }
       acceptAndFinishButton = DialogWrapper.createJButtonForAction(acceptAndFinishAction, rootPane)

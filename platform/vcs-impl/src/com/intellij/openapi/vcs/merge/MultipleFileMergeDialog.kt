@@ -140,6 +140,7 @@ open class MultipleFileMergeDialog(
     rootPane = rootPane,
     files = files,
     onClose = ::doCancelAction,
+    onAcceptAndFinish = ::acceptAndFinish,
     acceptForResolution = ::acceptForResolution,
     showMergeDialog = ::showMergeDialog,
     toggleGroupByDirectory = ::toggleGroupByDirectory,
@@ -449,11 +450,17 @@ open class MultipleFileMergeDialog(
     super.doCancelAction()
   }
 
-  @RequiresEdt
-  fun handoffToAgent() {
+  var shouldFinishMergeAfterClosing: Boolean = false
+    private set
+
+  fun acceptAndFinish() {
+    shouldFinishMergeAfterClosing = true
     finishResolution()
     super.doCancelAction()
   }
+
+  @RequiresEdt
+  fun handoffToAgent(): Unit = acceptAndFinish()
 
   private fun finishResolution() {
     val iterativelyResolved =

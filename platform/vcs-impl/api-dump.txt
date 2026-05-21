@@ -2912,7 +2912,7 @@ c:com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl
 - showFileHistory(com.intellij.openapi.vcs.history.VcsHistoryProvider,com.intellij.openapi.vcs.FilePath,com.intellij.openapi.vcs.AbstractVcs):V
 - showFileHistory(com.intellij.openapi.vcs.history.VcsHistoryProvider,com.intellij.openapi.vcs.annotate.AnnotationProvider,com.intellij.openapi.vcs.FilePath,com.intellij.openapi.vcs.AbstractVcs):V
 - showFileHistory(com.intellij.vcs.history.VcsHistoryProviderEx,com.intellij.openapi.vcs.FilePath,com.intellij.openapi.vcs.AbstractVcs,com.intellij.openapi.vcs.history.VcsRevisionNumber):V
-- showMergeDialog(java.util.List,com.intellij.openapi.vcs.merge.MergeProvider,com.intellij.openapi.vcs.merge.MergeDialogCustomizer):java.util.List
+- showMergeDialogWithResult(java.util.List,com.intellij.openapi.vcs.merge.MergeProvider,com.intellij.openapi.vcs.merge.MergeDialogCustomizer):com.intellij.openapi.vcs.AbstractVcsHelper$MergeDialogResult
 - showWhatDiffersBrowser(java.util.Collection,java.lang.String):V
 com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl$CommittedChangeListProvider
 - a:loadChangelist():com.intellij.openapi.util.Pair
@@ -3220,6 +3220,7 @@ f:com.intellij.openapi.vcs.merge.MergeUtils
 c:com.intellij.openapi.vcs.merge.MultipleFileMergeDialog
 - com.intellij.openapi.ui.DialogWrapper
 - <init>(com.intellij.openapi.project.Project,java.util.List,com.intellij.openapi.vcs.merge.MergeProvider,com.intellij.openapi.vcs.merge.MergeDialogCustomizer):V
+- f:acceptAndFinish():V
 - p:beforeResolve(java.util.Collection):Z
 - p:createActions():javax.swing.Action[]
 - p:createCenterPanel():javax.swing.JComponent
@@ -3229,6 +3230,7 @@ c:com.intellij.openapi.vcs.merge.MultipleFileMergeDialog
 - p:getDimensionServiceKey():java.lang.String
 - getPreferredFocusedComponent():javax.swing.JComponent
 - f:getProcessedFiles():java.util.List
+- f:getShouldFinishMergeAfterClosing():Z
 - f:handoffToAgent():V
 a:com.intellij.openapi.vcs.roots.VcsIntegrationEnabler
 - pf:myProject:com.intellij.openapi.project.Project

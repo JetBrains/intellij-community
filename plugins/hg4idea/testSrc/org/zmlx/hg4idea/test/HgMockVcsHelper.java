@@ -94,10 +94,16 @@ public final class HgMockVcsHelper extends AbstractVcsHelper {
 
   @NotNull
   @Override
-  public List<VirtualFile> showMergeDialog(List<? extends VirtualFile> files,
-                                           MergeProvider provider,
-                                           @NotNull MergeDialogCustomizer mergeDialogCustomizer) {
-    return ContainerUtil.emptyList();
+  public MergeDialogResult showMergeDialogWithResult(@NotNull List<? extends VirtualFile> files,
+                                                     @NotNull MergeProvider provider,
+                                                     @NotNull MergeDialogCustomizer mergeDialogCustomizer) {
+    return new MergeDialogResult() {
+      @Override
+      public @NotNull List<VirtualFile> getProcessedFiles() { return ContainerUtil.emptyList(); }
+
+      @Override
+      public boolean shouldFinishMerge() { return true; }
+    };
   }
 
   @Override

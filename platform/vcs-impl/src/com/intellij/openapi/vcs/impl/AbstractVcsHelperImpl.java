@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.CommonBundle;
@@ -423,15 +423,21 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   @Override
-  public @NotNull List<VirtualFile> showMergeDialog(@NotNull List<? extends VirtualFile> files,
-                                                    @NotNull MergeProvider provider,
-                                                    @NotNull MergeDialogCustomizer mergeDialogCustomizer) {
-    if (files.isEmpty()) return Collections.emptyList();
+  public @NotNull MergeDialogResult showMergeDialogWithResult(@NotNull List<? extends VirtualFile> files,
+                                                              @NotNull MergeProvider provider,
+                                                              @NotNull MergeDialogCustomizer mergeDialogCustomizer) {
+    return showMergeDialogImpl(files, provider, mergeDialogCustomizer);
+  }
+
+  private @NotNull MergeDialogResult showMergeDialogImpl(@NotNull List<? extends VirtualFile> files,
+                                                         @NotNull MergeProvider provider,
+                                                         @NotNull MergeDialogCustomizer mergeDialogCustomizer) {
+    if (files.isEmpty()) return new MergeDialogResultImpl(Collections.emptyList(), true);
     ApplicationManager.getApplication().runWriteAction(() -> RefreshVFsSynchronously.refreshVirtualFiles(files));
     final MultipleFileMergeDialog fileMergeDialog = new MultipleFileMergeDialog(myProject, files, provider, mergeDialogCustomizer);
     AppIcon.getInstance().requestAttention(myProject, true);
     fileMergeDialog.show();
-    return fileMergeDialog.getProcessedFiles();
+    return new MergeDialogResultImpl(fileMergeDialog.getProcessedFiles(), fileMergeDialog.getShouldFinishMergeAfterClosing());
   }
 
   @Override
