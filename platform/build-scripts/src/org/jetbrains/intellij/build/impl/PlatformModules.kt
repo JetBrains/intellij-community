@@ -36,8 +36,6 @@ import java.util.SortedSet
  */
 @Suppress("RemoveRedundantQualifierName")
 internal val PLATFORM_CORE_MODULES = java.util.List.of(
-  "intellij.platform.buildScripts.downloader",
-
   "intellij.platform.runtime.product",
 
   "intellij.platform.bookmarks",

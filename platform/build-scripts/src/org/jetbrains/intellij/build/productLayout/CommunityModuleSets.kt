@@ -79,6 +79,7 @@ object CommunityModuleSets {
 
     // Additional library sets not in corePlatform but needed by essentialMinimal+
     moduleSet(librariesKtor())  // For RPC/Remote Dev
+    embeddedModule("intellij.platform.buildScripts.downloader")
     moduleSet(librariesMisc())  // For specialized uses (XML-RPC, CSV, document store)
 
     embeddedModule("intellij.platform.credentialStore.ui")

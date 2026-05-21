@@ -1,3 +1,6 @@
 - name: dist.all/lib/intellij.platform.smRunner.jar
   modules:
   - name: intellij.platform.smRunner
+  library: tcServiceMessages
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/teamcity/serviceMessages/2024/serviceMessages-2024.jar

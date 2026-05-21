@@ -1,0 +1,10 @@
+- name: dist.all/lib/intellij.platform.buildScripts.downloader.jar
+  projectLibraries:
+  - name: tcServiceMessages
+    files:
+    - name: $MAVEN_REPOSITORY$/org/jetbrains/teamcity/serviceMessages/2024/serviceMessages-2024.jar
+  - name: zstd-jni
+    files:
+    - name: $MAVEN_REPOSITORY$/com/github/luben/zstd-jni/1/zstd-jni-1.jar
+  modules:
+  - name: intellij.platform.buildScripts.downloader
