@@ -2,9 +2,7 @@
 package com.intellij.openapi.updateSettings
 
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
 sealed interface PluginUpdateInfo {
   class UpdateAvailable internal constructor(val update: PluginDownloader) : PluginUpdateInfo
 

@@ -1006,6 +1006,23 @@ com.intellij.openapi.ui.playback.PlaybackCommand
 - a:canGoFurther():Z
 - a:execute(com.intellij.openapi.ui.playback.PlaybackContext):java.util.concurrent.CompletableFuture
 - getScriptDir():java.io.File
+f:com.intellij.openapi.updateSettings.PluginUpdateCheckService
+- sf:Companion:com.intellij.openapi.updateSettings.PluginUpdateCheckService$Companion
+- <init>():V
+- sf:getInstance():com.intellij.openapi.updateSettings.PluginUpdateCheckService
+- f:getPluginUpdate(com.intellij.openapi.extensions.PluginId,com.intellij.openapi.progress.ProgressIndicator):com.intellij.openapi.updateSettings.PluginUpdateInfo
+- bs:getPluginUpdate$default(com.intellij.openapi.updateSettings.PluginUpdateCheckService,com.intellij.openapi.extensions.PluginId,com.intellij.openapi.progress.ProgressIndicator,I,java.lang.Object):com.intellij.openapi.updateSettings.PluginUpdateInfo
+f:com.intellij.openapi.updateSettings.PluginUpdateCheckService$Companion
+- f:getInstance():com.intellij.openapi.updateSettings.PluginUpdateCheckService
+com.intellij.openapi.updateSettings.PluginUpdateInfo
+f:com.intellij.openapi.updateSettings.PluginUpdateInfo$CheckFailed
+- com.intellij.openapi.updateSettings.PluginUpdateInfo
+- f:getErrors():java.util.Map
+f:com.intellij.openapi.updateSettings.PluginUpdateInfo$NoUpdate
+- com.intellij.openapi.updateSettings.PluginUpdateInfo
+f:com.intellij.openapi.updateSettings.PluginUpdateInfo$UpdateAvailable
+- com.intellij.openapi.updateSettings.PluginUpdateInfo
+- f:getUpdate():com.intellij.openapi.updateSettings.impl.PluginDownloader
 e:com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
 - java.lang.Enum
 - sf:ACTUAL:com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
