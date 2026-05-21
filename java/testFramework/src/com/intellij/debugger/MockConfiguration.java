@@ -2,9 +2,10 @@
 package com.intellij.debugger;
 
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ModuleRunConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunConfigurationBase;
+import com.intellij.execution.configurations.RunConfigurationOptions;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.UnknownConfigurationType;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -13,14 +14,11 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.Icon;
-
-public class MockConfiguration implements ModuleRunConfiguration {
-  private final Project project;
+public class MockConfiguration extends RunConfigurationBase<RunConfigurationOptions> implements ModuleRunConfiguration {
   private final Module myModule;
 
   public MockConfiguration(Project project, Module module) {
-    this.project = project;
+    super(project, UnknownConfigurationType.getInstance(), "");
     this.myModule = module;
   }
 
@@ -30,40 +28,12 @@ public class MockConfiguration implements ModuleRunConfiguration {
   }
 
   @Override
-  public Icon getIcon() {
-    return null;
-  }
-
-  @Override
-  public ConfigurationFactory getFactory() {
-    return UnknownConfigurationType.getInstance();
-  }
-
-  @Override
-  public void setName(@NotNull String name) { }
-
-  @Override
   public @NotNull SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public Project getProject() {
-    return project;
-  }
-
-  @Override
-  public RunConfiguration clone() {
-    return null;
-  }
-
-  @Override
   public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) {
     return null;
-  }
-
-  @Override
-  public @NotNull String getName() {
-    return "";
   }
 }
