@@ -207,9 +207,6 @@ object CommunityRepositoryModules {
       // explicitly pack JaCoCo as a separate JAR
       spec.withModuleLibrary(libraryName = "JaCoCo", moduleName = "intellij.java.coverage", relativeOutputPath = "jacoco.jar")
     },
-    pluginAuto("intellij.featuresTrainer") { spec ->
-      spec.withModuleLibrary(libraryName = "assertJ", moduleName = "intellij.libraries.assertj.core", relativeOutputPath = "assertj.jar")
-    },
     plugin("intellij.java.decompiler") { spec ->
       spec.directoryName = "java-decompiler"
       spec.mainJarName = "java-decompiler.jar"

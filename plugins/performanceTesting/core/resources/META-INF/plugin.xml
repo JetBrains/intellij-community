@@ -30,8 +30,10 @@
     <module name="intellij.driver.impl" loading="embedded"/>
     <module name="intellij.driver.client" loading="embedded"/>
     <module name="intellij.driver.frontend.split"/>
-    <module name="intellij.libraries.assertj.core" loading="embedded"/>
     <module name="intellij.performanceTesting.async.core"/>
+  </content>
+  <content>
+    <module name="intellij.libraries.assertj.core" loading="embedded"/>
   </content>
 
   <actions>
