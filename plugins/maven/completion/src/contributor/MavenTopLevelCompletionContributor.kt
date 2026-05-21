@@ -36,6 +36,7 @@ abstract class MavenTopLevelCompletionContributor(val myName: String) : Completi
       return
     }
 
+    result.stopHere()
     result.restartCompletionWhenNothingMatches()
 
     val searchString = MavenCoordinateCompletionContributor.trimDummy(xmlText.value)

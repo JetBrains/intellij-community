@@ -1,7 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.completion.contributor
 
-import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.CompletionContributor
+import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.completion.CompletionUtil
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.maven.completion.getCompletionContext
 import com.intellij.openapi.components.service
@@ -27,6 +31,7 @@ abstract class MavenCoordinateCompletionContributor protected constructor(privat
     val placeChecker = MavenCoordinateCompletionPlaceChecker(myTagId, parameters).checkPlace()
 
     if (placeChecker.isCorrectPlace) {
+      result.stopHere()
       val coordinates = placeChecker.coordinates!!
       val completionPrefix = CompletionUtil.findReferenceOrAlphanumericPrefix(parameters)
       val amendedResult = amendResultSet(result)
