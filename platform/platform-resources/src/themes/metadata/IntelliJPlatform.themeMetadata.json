@@ -1717,6 +1717,14 @@
       "key": "NotificationsToolwindow.Notification.hoverBackground"
     },
     {
+      "key": "NuGet.section.background",
+      "description": "Background color of a section of the NuGet package listing"
+    },
+    {
+      "key": "NuGet.section.hoverBackground",
+      "description": "Hover background color of a section of the NuGet package listing"
+    },
+    {
       "key": "OnePixelDivider.background",
       "description": "One pixel divider color"
     },

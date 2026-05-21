@@ -1655,6 +1655,13 @@
       "lineSeparatorColor": "#EBECF0"
     },
 
+    "NuGet": {
+      "section": {
+        "background": "#F7F8F9",
+        "hoverBackground": "#F7F7F7"
+      }
+    },
+
     "DataSummary.Chart.barColor": "#3574F0",
 
     "ManagedIdeBadgeBorder": "#DFE1E5",
