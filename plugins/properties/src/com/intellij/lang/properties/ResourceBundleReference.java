@@ -65,12 +65,16 @@ public class ResourceBundleReference extends PsiReferenceBase<PsiElement>
   @Override
   public ResolveResult @NotNull [] multiResolve(final boolean incompleteCode) {
     PropertiesReferenceManager referenceManager = PropertiesReferenceManager.getInstance(myElement.getProject());
+    List<PropertiesFile> propertiesFiles = referenceManager.findPropertiesFiles(getKeyResolveScope(), myBundleName, this);
+    return PsiElementResolveResult.createResults(ContainerUtil.map(propertiesFiles, PROPERTIES_FILE_PSI_ELEMENT_FUNCTION));
+  }
+
+  protected @NotNull GlobalSearchScope getKeyResolveScope() {
     Module module = ModuleUtilCore.findModuleForPsiElement(myElement);
     GlobalSearchScope scope = module != null
       ? GlobalSearchScope.moduleRuntimeScope(module, true)
       : myElement.getResolveScope();
-    List<PropertiesFile> propertiesFiles = referenceManager.findPropertiesFiles(scope, myBundleName, this);
-    return PsiElementResolveResult.createResults(ContainerUtil.map(propertiesFiles, PROPERTIES_FILE_PSI_ELEMENT_FUNCTION));
+    return scope;
   }
 
   @Override

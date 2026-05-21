@@ -7,6 +7,8 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.ResourceBundleReference;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Iconable;
@@ -14,6 +16,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +25,9 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.psi.search.GlobalSearchScope.moduleWithDependenciesScope;
+import static com.intellij.psi.search.GlobalSearchScope.moduleWithDependentsScope;
 
 class ResourceBundlePsiReferenceProvider extends PsiReferenceProvider {
 
@@ -40,6 +46,16 @@ class ResourceBundlePsiReferenceProvider extends PsiReferenceProvider {
 
     private MyResourceBundleReference(PsiElement element) {
       super(element, false);
+    }
+
+    @Override
+    protected @NotNull GlobalSearchScope getKeyResolveScope() {
+      Module module = ModuleUtilCore.findModuleForPsiElement(myElement);
+      // bundle name can be used in dependency module
+      GlobalSearchScope scope = module != null
+                                ? moduleWithDependenciesScope(module).union(moduleWithDependentsScope(module))
+                                : myElement.getResolveScope();
+      return scope;
     }
 
     @Override
