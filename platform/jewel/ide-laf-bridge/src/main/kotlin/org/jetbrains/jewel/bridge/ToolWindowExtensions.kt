@@ -43,24 +43,6 @@ public fun ToolWindow.addComposeTab(
     contentManager.addContent(tabContent)
 }
 
-/**
- * Adds a new tab to the tool window with Compose content.
- *
- * @param tabDisplayName The title of the tab.
- * @param isLockable Whether the tab can be locked.
- * @param isCloseable Whether the tab can be closed.
- * @param content The Composable content of the tab.
- */
-@Deprecated("Use the version with 'focusOnClickInside' parameter", level = DeprecationLevel.HIDDEN)
-public fun ToolWindow.addComposeTab(
-    @TabTitle tabDisplayName: String? = null,
-    isLockable: Boolean = true,
-    isCloseable: Boolean = false,
-    content: @Composable ToolWindowScope.() -> Unit,
-) {
-    addComposeTab(tabDisplayName, isLockable, isCloseable, focusOnClickInside = true, content)
-}
-
 /** A scope for the content of a tool window tab. */
 public interface ToolWindowScope {
     /** The tool window in which the tab is displayed. */

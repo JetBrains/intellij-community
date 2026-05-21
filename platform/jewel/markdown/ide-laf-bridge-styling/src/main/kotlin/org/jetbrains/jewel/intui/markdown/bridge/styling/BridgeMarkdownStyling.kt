@@ -492,54 +492,6 @@ public fun InlinesStyling.Companion.create(
         inlineHtml = inlineHtml,
     )
 
-@Deprecated("Use the variant without renderInlineHtml instead", level = DeprecationLevel.HIDDEN)
-@ApiStatus.Experimental
-@ExperimentalJewelApi
-public fun InlinesStyling.Companion.create(
-    textStyle: TextStyle = defaultTextStyle,
-    inlineCode: SpanStyle =
-        defaultEditorTextStyle
-            .copy(fontSize = textStyle.fontSize * .85, background = inlineCodeBackgroundColor)
-            .toSpanStyle(),
-    link: SpanStyle = textStyle.copy(color = JBUI.CurrentTheme.Link.Foreground.ENABLED.toComposeColor()).toSpanStyle(),
-    linkDisabled: SpanStyle = link.copy(color = JBUI.CurrentTheme.Link.Foreground.DISABLED.toComposeColor()),
-    linkHovered: SpanStyle =
-        link.copy(
-            color = JBUI.CurrentTheme.Link.Foreground.HOVERED.toComposeColor(),
-            textDecoration = TextDecoration.Underline,
-        ),
-    linkFocused: SpanStyle =
-        link.copy(
-            color = JBUI.CurrentTheme.Link.Foreground.ENABLED.toComposeColor(),
-            background = JBUI.CurrentTheme.ActionButton.hoverBackground().toComposeColor(),
-            textDecoration = TextDecoration.Underline,
-        ),
-    linkPressed: SpanStyle =
-        link.copy(
-            color = JBUI.CurrentTheme.Link.Foreground.PRESSED.toComposeColor(),
-            background = JBUI.CurrentTheme.ActionButton.pressedBackground().toComposeColor(),
-            textDecoration = TextDecoration.Underline,
-        ),
-    linkVisited: SpanStyle = link.copy(color = JBUI.CurrentTheme.Link.Foreground.VISITED.toComposeColor()),
-    emphasis: SpanStyle = textStyle.copy(fontStyle = FontStyle.Italic).toSpanStyle(),
-    strongEmphasis: SpanStyle = textStyle.copy(fontWeight = FontWeight.Bold).toSpanStyle(),
-    inlineHtml: SpanStyle = textStyle.toSpanStyle(),
-    @Suppress("UnusedParameter") renderInlineHtml: Boolean = true,
-): InlinesStyling =
-    InlinesStyling(
-        textStyle = textStyle,
-        inlineCode = inlineCode,
-        link = link,
-        linkDisabled = linkDisabled,
-        linkHovered = linkHovered,
-        linkFocused = linkFocused,
-        linkPressed = linkPressed,
-        linkVisited = linkVisited,
-        emphasis = emphasis,
-        strongEmphasis = strongEmphasis,
-        inlineHtml = inlineHtml,
-    )
-
 private val defaultTextStyle
     get() = retrieveDefaultTextStyle().copy(color = Color.Unspecified)
 

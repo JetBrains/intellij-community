@@ -11,20 +11,6 @@ import org.junit.Test
 
 class ColorExtensionsTest {
     // region ================ AwtColor.toRgbaHexString() ================
-    @Suppress("DEPRECATION") // Testing deprecated APIs
-    @Test
-    fun `old AwtColor_toRgbaHexString should format opaque color with hash sign and no alpha component`() {
-        val color = AwtColor.RED
-        assertEquals("#ff0000", color.toRgbaHexString())
-    }
-
-    @Suppress("DEPRECATION") // Testing deprecated APIs
-    @Test
-    fun `old AwtColor_toRgbaHexString should format transparent color with hash sign and alpha component`() {
-        val color = AwtColor(255, 0, 0, 128)
-        assertEquals("#ff000080", color.toRgbaHexString())
-    }
-
     @Test
     fun `AwtColor_toRgbaHexString should format opaque color without hash when includeHashSymbol is false`() {
         val color = AwtColor.BLUE
@@ -76,20 +62,6 @@ class ColorExtensionsTest {
     // endregion
 
     // region ================ Color.toRgbaHexString() ================
-    @Suppress("DEPRECATION") // Testing deprecated APIs
-    @Test
-    fun `old Color_toRgbaHexString should format opaque color with hash sign and no alpha component`() {
-        val color = Color.Red
-        assertEquals("#ff0000", color.toRgbaHexString())
-    }
-
-    @Suppress("DEPRECATION") // Testing deprecated APIs
-    @Test
-    fun `old Color_toRgbaHexString should format transparent color with hash sign and alpha component`() {
-        val color = Color(255, 0, 0, 128)
-        assertEquals("#ff000080", color.toRgbaHexString())
-    }
-
     @Test
     fun `Color_toRgbaHexString should format opaque color without hash when includeHashSymbol is false`() {
         val color = Color.Blue
@@ -298,16 +270,6 @@ class ColorExtensionsTest {
         assertNull(Color.fromRgbaHexStringOrNull("gggj"))
         assertNull(Color.fromRgbaHexStringOrNull(""))
         assertNull(Color.fromRgbaHexStringOrNull(" "))
-    }
-
-    @Suppress("DEPRECATION") // Testing deprecated APIs
-    @Test
-    fun `fromRGBAHexStringOrNull should work same as fromRgbaHexStringOrNull`() {
-        assertEquals(Color.fromRgbaHexStringOrNull("ff0"), Color.fromRGBAHexStringOrNull("ff0"))
-        assertEquals(Color.fromRgbaHexStringOrNull("ff0000"), Color.fromRGBAHexStringOrNull("ff0000"))
-        assertEquals(Color.fromRgbaHexStringOrNull("ffff0000"), Color.fromRGBAHexStringOrNull("ffff0000"))
-        assertEquals(Color.fromRgbaHexStringOrNull("banana"), Color.fromRGBAHexStringOrNull("banana"))
-        assertEquals(Color.fromRgbaHexStringOrNull(""), Color.fromRGBAHexStringOrNull(""))
     }
 
     // endregion

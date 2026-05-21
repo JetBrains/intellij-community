@@ -720,16 +720,6 @@ private data class SubmenuItem(
     override val content: @Composable () -> Unit,
 ) : MenuItem
 
-@Deprecated("This is being made private")
-@Composable
-public fun MenuSeparator(
-    modifier: Modifier = Modifier,
-    metrics: MenuItemMetrics = JewelTheme.menuStyle.metrics.itemMetrics,
-    colors: MenuItemColors = JewelTheme.menuStyle.colors.itemColors,
-) {
-    MenuSeparator(colors, metrics, modifier)
-}
-
 @Composable
 private fun MenuSeparator(colors: MenuItemColors, metrics: MenuItemMetrics, modifier: Modifier = Modifier) {
     Box(modifier.height(metrics.separatorHeight)) {
@@ -819,7 +809,7 @@ internal fun MenuItemBase(
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: MenuStyle = JewelTheme.menuStyle,
-    @Suppress("DEPRECATION") content: @Composable (itemState: MenuItemState) -> Unit,
+    content: @Composable (itemState: MenuItemState) -> Unit,
 ) {
     var itemState by
         remember(interactionSource) {
@@ -874,11 +864,8 @@ internal fun MenuItemBase(
 
         val itemColors = style.colors.itemColors
         val itemMetrics = style.metrics.itemMetrics
-
-        @Suppress("DEPRECATION") // Not really deprecated, will be made internal
         val updatedTextStyle = LocalTextStyle.current.copy(color = itemColors.contentFor(itemState).value)
 
-        @Suppress("DEPRECATION") // Not really deprecated, will be made internal
         CompositionLocalProvider(
             LocalContentColor provides itemColors.contentFor(itemState).value,
             LocalTextStyle provides updatedTextStyle,
@@ -921,24 +908,6 @@ internal fun MenuItemBase(
     }
 }
 
-@Suppress("ComposableParamOrder")
-@Deprecated("This is being made private")
-@Composable
-public fun MenuSubmenuItem(
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    canShowIcon: Boolean,
-    iconKey: IconKey?,
-    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    style: MenuStyle = JewelTheme.menuStyle,
-    submenu: MenuScope.() -> Unit,
-    content: @Composable () -> Unit,
-) {
-    MenuSubmenuItem(canShowIcon, selected = false, submenu, modifier, enabled, iconKey, interactionSource, style) {
-        content()
-    }
-}
-
 @Composable
 internal fun MenuSubmenuItem(
     showIcon: Boolean,
@@ -949,12 +918,10 @@ internal fun MenuSubmenuItem(
     iconKey: IconKey? = null,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: MenuStyle = JewelTheme.menuStyle,
-    @Suppress("DEPRECATION") content: @Composable (itemState: MenuItemState) -> Unit,
+    content: @Composable (itemState: MenuItemState) -> Unit,
 ) {
     var itemState by
-        remember(interactionSource) {
-            @Suppress("DEPRECATION") mutableStateOf(MenuItemState.of(selected = selected, enabled = enabled))
-        }
+        remember(interactionSource) { mutableStateOf(MenuItemState.of(selected = selected, enabled = enabled)) }
 
     remember(enabled) { itemState = itemState.copy(selected = false, enabled = enabled) }
 
@@ -981,7 +948,6 @@ internal fun MenuSubmenuItem(
     val itemColors = style.colors.itemColors
     val menuMetrics = style.metrics
 
-    @Suppress("DEPRECATION") // Not really deprecated, will be made internal
     val backgroundColor by itemColors.backgroundFor(itemState)
     Box(
         modifier =
@@ -1004,7 +970,6 @@ internal fun MenuSubmenuItem(
                     }
                 }
     ) {
-        @Suppress("DEPRECATION") // Not really deprecated, will be made internal
         CompositionLocalProvider(LocalContentColor provides itemColors.contentFor(itemState).value) {
             Row(
                 Modifier.fillMaxWidth().padding(menuMetrics.itemMetrics.contentPadding),
@@ -1135,10 +1100,9 @@ internal fun Submenu(
  * @see SelectableComponentState
  * @see FocusableComponentState
  */
-@Deprecated("This is being made private")
 @Immutable
 @JvmInline
-public value class MenuItemState(public val state: ULong) : SelectableComponentState, FocusableComponentState {
+internal value class MenuItemState(val state: ULong) : SelectableComponentState, FocusableComponentState {
     override val isActive: Boolean
         get() = state and Selected != 0UL
 
@@ -1157,8 +1121,7 @@ public value class MenuItemState(public val state: ULong) : SelectableComponentS
     override val isPressed: Boolean
         get() = state and Pressed != 0UL
 
-    @Suppress("DEPRECATION")
-    public fun copy(
+    fun copy(
         selected: Boolean = isSelected,
         enabled: Boolean = isEnabled,
         focused: Boolean = isFocused,
@@ -1179,10 +1142,8 @@ public value class MenuItemState(public val state: ULong) : SelectableComponentS
         "MenuItemState(state=$state, isSelected=$isSelected, isEnabled=$isEnabled, isFocused=$isFocused, " +
             "isHovered=$isHovered, isPressed=$isPressed, isActive=$isActive)"
 
-    public companion object {
-        @Suppress("DEPRECATION")
-        @Deprecated("This is being made private")
-        public fun of(
+    companion object {
+        fun of(
             selected: Boolean,
             enabled: Boolean,
             focused: Boolean = false,

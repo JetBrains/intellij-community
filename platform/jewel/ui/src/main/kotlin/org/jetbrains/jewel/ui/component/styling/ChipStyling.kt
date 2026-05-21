@@ -264,14 +264,6 @@ public class ChipMetrics(
     public val borderWidthSelected: Dp,
     public val minSize: DpSize,
 ) {
-    @Deprecated("Use the version with 'minSize' instead")
-    public constructor(
-        cornerSize: CornerSize,
-        padding: PaddingValues,
-        borderWidth: Dp,
-        borderWidthSelected: Dp,
-    ) : this(cornerSize, padding, borderWidth, borderWidthSelected, DpSize.Zero)
-
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
