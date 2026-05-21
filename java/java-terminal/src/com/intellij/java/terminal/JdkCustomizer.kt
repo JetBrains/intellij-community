@@ -19,7 +19,7 @@ internal class JdkCustomizer : ShellExecOptionsCustomizer {
     if (!JavaTerminalSettings.instance.overrideJavaHome) return
 
     ProjectRootManager.getInstance(project).getProjectSdk()?.getSdkBinPath()?.let {
-      shellExecOptions.setEnvironmentVariableToPath(FORCE_PREFIX + "JAVA_HOME", it)
+      shellExecOptions.setEnvironmentVariableToPath(FORCE_PREFIX + "JAVA_HOME", it.parent)
       shellExecOptions.prependEntryToPATH(it)
     }
   }
