@@ -30,6 +30,13 @@ class MarkdownListEnterHandlerDelegateTest: LightPlatformCodeInsightTestCase() {
   @Test
   fun testEnterBeforeItem() = doTest()
 
+  @Test
+  fun testSplitLineInsideItem() {
+    configureByFile("splitLineInsideItem.md")
+    executeAction(IdeActions.ACTION_EDITOR_SPLIT)
+    checkResultByFile("splitLineInsideItem-after.md")
+  }
+
   private fun doTest() {
     val testName = getTestName(true)
     configureByFile("$testName.md")

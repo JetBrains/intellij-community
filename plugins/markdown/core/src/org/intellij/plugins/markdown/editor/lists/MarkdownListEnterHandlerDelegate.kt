@@ -9,6 +9,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
+import com.intellij.openapi.editor.actions.SplitLineAction
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
@@ -69,6 +70,10 @@ internal class MarkdownListEnterHandlerDelegate: EnterHandlerDelegate {
       return EnterHandlerDelegate.Result.Continue
     }
     if (file !is MarkdownFile || isInCodeFence(caretOffset.get(), file)) {
+      return EnterHandlerDelegate.Result.Continue
+    }
+
+    if (DataManager.getInstance().loadFromDataContext(dataContext, SplitLineAction.SPLIT_LINE_KEY) == true) {
       return EnterHandlerDelegate.Result.Continue
     }
 
