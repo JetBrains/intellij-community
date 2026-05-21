@@ -513,7 +513,7 @@ jvm_import(
 java_library(
   name = "bouncy-castle-provider",
   exports = [
-    ":org_bouncycastle-bcpkix-jdk18on-1_81_http_import",
+    ":org_bouncycastle-bcpkix-jdk18on-1_81_1_http_import",
     ":org_bouncycastle-bcutil-jdk18on-1_81_1_http_import",
     ":org_bouncycastle-bcprov-jdk18on-1_81_1_http_import",
   ],
@@ -521,9 +521,9 @@ java_library(
 )
 
 jvm_import(
-  name = "org_bouncycastle-bcpkix-jdk18on-1_81_http_import",
-  jar = "@org_bouncycastle-bcpkix-jdk18on-1_81_http//file",
-  source_jar = "@org_bouncycastle-bcpkix-jdk18on-1_81_http//file"
+  name = "org_bouncycastle-bcpkix-jdk18on-1_81_1_http_import",
+  jar = "@org_bouncycastle-bcpkix-jdk18on-1_81_1_http//file",
+  source_jar = "@org_bouncycastle-bcpkix-jdk18on-1_81_1_http//file"
 )
 
 jvm_import(
