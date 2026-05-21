@@ -610,6 +610,13 @@
 
     <localInspection language="XML" applyToDialects="false"
                      projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.AllContentModulesOptionalLoadingRuleInspection"
+                     key="inspection.all.content.modules.default.loading.rule.name"/>
+
+    <localInspection language="XML" applyToDialects="false"
+                     projectType="INTELLIJ_PLUGIN"
                      isInternal="true"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
                      enabledByDefault="false" level="WARNING"
