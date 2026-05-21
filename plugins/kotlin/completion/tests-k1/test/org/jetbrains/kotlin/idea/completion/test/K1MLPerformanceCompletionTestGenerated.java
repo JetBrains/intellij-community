@@ -1043,6 +1043,16 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("AnnotationLiteralArrayFirst.kt")
+            public void testAnnotationLiteralArrayFirst() throws Exception {
+                runTest("../testData/basic/common/enums/AnnotationLiteralArrayFirst.kt");
+            }
+
+            @TestMetadata("AnnotationLiteralArraySecond.kt")
+            public void testAnnotationLiteralArraySecond() throws Exception {
+                runTest("../testData/basic/common/enums/AnnotationLiteralArraySecond.kt");
+            }
+
             @TestMetadata("AnnotationLiteralFirst.kt")
             public void testAnnotationLiteralFirst() throws Exception {
                 runTest("../testData/basic/common/enums/AnnotationLiteralFirst.kt");

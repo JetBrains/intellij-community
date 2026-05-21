@@ -125,6 +125,16 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
         runTest("../../completion/testData/basic/multifile/EnumEntryExpectedPreferredJava/");
     }
 
+    @TestMetadata("EnumInCollectionLiteralJavaAnnotation")
+    public void testEnumInCollectionLiteralJavaAnnotation() throws Exception {
+        runTest("../../completion/testData/basic/multifile/EnumInCollectionLiteralJavaAnnotation/");
+    }
+
+    @TestMetadata("EnumInCollectionLiteralJavaAnnotationVarargs")
+    public void testEnumInCollectionLiteralJavaAnnotationVarargs() throws Exception {
+        runTest("../../completion/testData/basic/multifile/EnumInCollectionLiteralJavaAnnotationVarargs/");
+    }
+
     @TestMetadata("EnumValuesMethodJavaUsualPriorityWhenFeatureDisabled")
     public void testEnumValuesMethodJavaUsualPriorityWhenFeatureDisabled() throws Exception {
         runTest("../../completion/testData/basic/multifile/EnumValuesMethodJavaUsualPriorityWhenFeatureDisabled/");
