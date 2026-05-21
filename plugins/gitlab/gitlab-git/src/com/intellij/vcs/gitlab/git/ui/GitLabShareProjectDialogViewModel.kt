@@ -30,7 +30,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.toList
@@ -90,10 +89,17 @@ internal class GitLabShareProjectDialogViewModel(
     }
 
     coroutineScope {
-      emitAll(serviceAsync<GitLabAccountManager>().getCredentialsState(this, account).map { credentials ->
-        if (credentials == null) null
-        else serviceAsync<GitLabApiManager>().getClient(account.server, credentials.accessToken)
-      })
+      with(serviceAsync<GitLabAccountManager>()) {
+        getCredentialsFlow(account)
+          .map { Unit }
+          .withInitial(Unit)
+          .map { findCredentials(account) }
+          .collect { credentials ->
+            emit(
+              if (credentials == null) null
+              else serviceAsync<GitLabApiManager>().getClient(account.server, credentials.accessToken))
+          }
+      }
     }
   }.stateIn(cs, SharingStarted.Eagerly, null)
 

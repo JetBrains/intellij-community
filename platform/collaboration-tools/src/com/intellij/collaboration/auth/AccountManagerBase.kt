@@ -2,17 +2,14 @@
 package com.intellij.collaboration.auth
 
 import com.intellij.openapi.diagnostic.Logger
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -124,13 +121,6 @@ abstract class AccountManagerBase<A : Account, Cred : Any>(
   }
 
   override suspend fun findCredentials(account: A): Cred? = persistentCredentials.retrieveCredentials(account)
-
-  override suspend fun getCredentialsState(scope: CoroutineScope, account: A): StateFlow<Cred?> =
-    withContext(scope.coroutineContext + Dispatchers.Default) {
-      mutex.withLock {
-        getCredentialsFlow(account).stateIn(scope, SharingStarted.Eagerly, findCredentials(account))
-      }
-    }
 
   override fun getCredentialsFlow(account: A): Flow<Cred?> =
     accountsEventsFlow.transform {

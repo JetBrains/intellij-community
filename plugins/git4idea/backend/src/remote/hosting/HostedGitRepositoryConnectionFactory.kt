@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.remote.hosting
 
+import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.auth.AccountManager
 import com.intellij.collaboration.auth.ServerAccount
 import com.intellij.openapi.diagnostic.logger
@@ -8,6 +9,7 @@ import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.launch
@@ -38,17 +40,21 @@ class ValidatingHostedGitRepositoryConnectionFactory<
 
     // not a supervisor so that if any of the listeners or loaders fail the scope is cancelled
     val connectionScope = parentScope.childScope(loggingExceptionHandler, supervisor = false)
-
-    val credentialsState = accountManager().getCredentialsState(connectionScope, account)
-    val requiredCredentialsState = credentialsState
+    val requiredCredentialsState = accountManager().getCredentialsFlow(account)
+      .map { }
+      .withInitial(Unit)
+      .map {
+        accountManager().findCredentials(account)
+      }
       .transform {
         if (it == null) {
           throw IllegalStateException("Token for account $account is missing")
         }
         else {
-          this.emit(it)
+          emit(it)
         }
-      }.stateIn(connectionScope)
+      }
+      .stateIn(connectionScope)
 
     connectionScope.launch {
       repositoriesManager().knownRepositoriesState.collect {

@@ -48,7 +48,8 @@ internal class GitLabRepositoryAndAccountSelectorViewModelTest {
 
     val account = GitLabAccount(name = "test", server = GitLabServerPath.DEFAULT_SERVER)
     every { accountManager.accountsState } returns MutableStateFlow(setOf(account))
-    coEvery { accountManager.getCredentialsState(any(), any()) } returns MutableStateFlow(GitLabCredentials.Token(""))
+    every { accountManager.getCredentialsFlow(any()) } returns MutableStateFlow(GitLabCredentials.Token(""))
+    coEvery { accountManager.findCredentials(any()) } returns GitLabCredentials.Token("")
     every { accountManager.canPersistCredentials } returns MutableStateFlow(true)
 
     val scope = childScope(this::class, Dispatchers.Main)
@@ -78,7 +79,8 @@ internal class GitLabRepositoryAndAccountSelectorViewModelTest {
     val account = GitLabAccount(name = "test", server = GitLabServerPath.DEFAULT_SERVER)
     val secondAccount = GitLabAccount(name = "secondAccount", server = GitLabServerPath.DEFAULT_SERVER)
     every { accountManager.accountsState } returns MutableStateFlow(setOf(account, secondAccount))
-    coEvery { accountManager.getCredentialsState(any(), any()) } returns MutableStateFlow(GitLabCredentials.Token(""))
+    every { accountManager.getCredentialsFlow(any()) } returns MutableStateFlow(GitLabCredentials.Token(""))
+    coEvery { accountManager.findCredentials(any()) } returns GitLabCredentials.Token("")
     every { accountManager.canPersistCredentials } returns MutableStateFlow(true)
 
     val scope = childScope(this::class, Dispatchers.Main)

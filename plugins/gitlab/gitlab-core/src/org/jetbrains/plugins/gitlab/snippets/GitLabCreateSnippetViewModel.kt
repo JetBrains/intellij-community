@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.snippets
 
 import com.intellij.collaboration.async.modelFlow
+import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.snippets.PathHandlingMode
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -86,8 +87,10 @@ internal class GitLabCreateSnippetViewModel(
   private val glAccountAndCredentials: SharedFlow<Pair<GitLabAccount, GitLabCredentials?>?> = glAccount
     .flatMapLatest { accountOrNull ->
       val account = accountOrNull ?: return@flatMapLatest flowOf(null)
-      glAccountManager.getCredentialsState(cs, account)
-        .map { Pair(account, it) }
+      glAccountManager.getCredentialsFlow(account)
+        .map { Unit }
+        .withInitial(Unit)
+        .map { Pair(account, glAccountManager.findCredentials(account)) }
     }
     .modelFlow(cs, LOG)
 
