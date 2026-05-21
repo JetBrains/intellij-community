@@ -186,7 +186,7 @@ class ContentModuleNamespaceInspectionTest : JavaCodeInsightFixtureTestCase() {
     testHighlighting(testedFile)
   }
 
-  fun `test report mismatched namespaces between content elements`() {
+  fun `test allow different namespaces`() {
     addModule("com.example.module1")
     addModule("com.example.module2")
     myFixture.addXmlFile("com.example.module1/com.example.module1.xml", """
@@ -203,7 +203,7 @@ class ContentModuleNamespaceInspectionTest : JavaCodeInsightFixtureTestCase() {
         <content namespace="first-namespace">
           <module name="com.example.module1"/>
         </content>
-        <content namespace="<error descr="All content elements must define the same namespace (first namespace: 'first-namespace')">second-namespace</error>">
+        <content namespace="second-namespace">
           <module name="com.example.module2"/>
         </content>
       </idea-plugin>
@@ -211,7 +211,7 @@ class ContentModuleNamespaceInspectionTest : JavaCodeInsightFixtureTestCase() {
     testHighlighting(testedFile)
   }
 
-  fun `test report mismatched namespace when first is empty`() {
+  fun `test allow modules with namespace and without namespace`() {
     addModule("com.example.module1")
     addModule("com.example.module2")
     myFixture.addXmlFile("com.example.module1/com.example.module1.xml", """
@@ -228,7 +228,7 @@ class ContentModuleNamespaceInspectionTest : JavaCodeInsightFixtureTestCase() {
         <content>
           <module name="com.example.module1"/>
         </content>
-        <content namespace="<error descr="All content elements must define the same namespace (first namespace: 'null')">second-namespace</error>">
+        <content namespace="second-namespace">
           <module name="com.example.module2"/>
         </content>
       </idea-plugin>
