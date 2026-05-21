@@ -9500,16 +9500,16 @@ jvm_import(
 )
 
 copy_file(
-    name = "com.android.tools.layoutlib/layoutlib-16.2.1.jar_copy",
-    src = "@com_android_tools_layoutlib-layoutlib-16_2_1_http//file",
-    out = "com.android.tools.layoutlib/layoutlib-16.2.1.jar",
+    name = "com.android.tools.layoutlib/layoutlib-16.2.2.jar_copy",
+    src = "@com_android_tools_layoutlib-layoutlib-16_2_2_http//file",
+    out = "com.android.tools.layoutlib/layoutlib-16.2.2.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "layoutlib",
-    jar = "@com_android_tools_layoutlib-layoutlib-16_2_1_http//file",
+    jar = "@com_android_tools_layoutlib-layoutlib-16_2_2_http//file",
     visibility = ["//visibility:public"],
 )
 
