@@ -946,8 +946,6 @@ f:com.intellij.openapi.vfs.DiskQueryRelay
 - <init>(java.util.function.Function):V
 - <init>(java.util.function.Function,java.util.concurrent.ExecutorService):V
 - f:accessDiskWithCheckCanceled(java.lang.Object):java.lang.Object
-- sf:compute(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
-- sf:compute(com.intellij.openapi.util.ThrowableComputable,java.util.concurrent.ExecutorService):java.lang.Object
 com.intellij.openapi.vfs.NonPhysicalFileSystem
 com.intellij.openapi.vfs.SavingRequestor
 com.intellij.openapi.vfs.VersionManagingFileSystem

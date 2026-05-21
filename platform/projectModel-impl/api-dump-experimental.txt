@@ -58,7 +58,7 @@ c:com.intellij.openapi.roots.impl.ProjectFileIndexFacade
 - *a:findFileSets(com.intellij.openapi.vfs.VirtualFile,Z,Z,Z,Z,Z,Z,Z):java.util.List
 - *a:findFileSetsWithCustomData(com.intellij.openapi.vfs.VirtualFile,Z,Z,Z,Z,Z,Z,Z,java.lang.Class):java.util.List
 - a:getContentFileSetRoot(com.intellij.openapi.vfs.VirtualFile,Z):com.intellij.openapi.vfs.VirtualFile
-- s:getInstance(com.intellij.openapi.project.Project):com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
+- *s:getInstance(com.intellij.openapi.project.Project):com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 - a:isInContent(com.intellij.openapi.vfs.VirtualFile):Z
 - a:isInWorkspace(com.intellij.openapi.vfs.VirtualFile):Z
 - a:isIndexable(com.intellij.openapi.vfs.VirtualFile):Z

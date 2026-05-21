@@ -69,8 +69,8 @@ c:com.intellij.build.SyncViewManager
 - <init>(java.nio.file.Path,java.lang.String):V
 - getId():java.lang.String
 - runQuickFix(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.DataContext):java.util.concurrent.CompletableFuture
-- sf:showFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.lang.String):V
-- sf:showFile(com.intellij.openapi.project.Project,java.nio.file.Path,java.lang.String):V
+- *sf:showFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.lang.String):V
+- *sf:showFile(com.intellij.openapi.project.Project,java.nio.file.Path,java.lang.String):V
 *f:com.intellij.build.issue.quickfix.OpenFileQuickFix$Companion
 - f:showFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.lang.String):V
 - f:showFile(com.intellij.openapi.project.Project,java.nio.file.Path,java.lang.String):V
@@ -117,7 +117,7 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - *:getLinesWithRemovedRangesAfter(com.intellij.psi.PsiFile):java.util.List
 *:com.intellij.codeInsight.codeVision.CodeVisionProvider
 - *sf:Companion:com.intellij.codeInsight.codeVision.CodeVisionProvider$Companion
-- sf:EP_NAME:java.lang.String
+- *sf:EP_NAME:java.lang.String
 - computeCodeVision(com.intellij.openapi.editor.Editor,java.lang.Object):com.intellij.codeInsight.codeVision.CodeVisionState
 - computeForEditor(com.intellij.openapi.editor.Editor,java.lang.Object):java.util.List
 - a:getDefaultAnchor():com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
@@ -688,10 +688,10 @@ f:com.intellij.find.findUsages.FindUsagesManager
 - a:createPointer():com.intellij.model.Pointer
 - a:getFile():com.intellij.psi.PsiFile
 - a:getRange():com.intellij.openapi.util.TextRange
-- s:textUsage(com.intellij.model.psi.PsiSymbolDeclaration):com.intellij.find.usages.api.PsiUsage
-- s:textUsage(com.intellij.model.psi.PsiSymbolReference):com.intellij.find.usages.api.PsiUsage
-- s:textUsage(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange):com.intellij.find.usages.api.PsiUsage
-- s:textUsage(com.intellij.psi.PsiFile,com.intellij.openapi.util.TextRange):com.intellij.find.usages.api.PsiUsage
+- *s:textUsage(com.intellij.model.psi.PsiSymbolDeclaration):com.intellij.find.usages.api.PsiUsage
+- *s:textUsage(com.intellij.model.psi.PsiSymbolReference):com.intellij.find.usages.api.PsiUsage
+- *s:textUsage(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange):com.intellij.find.usages.api.PsiUsage
+- *s:textUsage(com.intellij.psi.PsiFile,com.intellij.openapi.util.TextRange):com.intellij.find.usages.api.PsiUsage
 *f:com.intellij.find.usages.api.PsiUsage$Companion
 - f:textUsage(com.intellij.model.psi.PsiSymbolDeclaration):com.intellij.find.usages.api.PsiUsage
 - f:textUsage(com.intellij.model.psi.PsiSymbolReference):com.intellij.find.usages.api.PsiUsage
@@ -882,7 +882,7 @@ f:com.intellij.mock.MockPsiManager
 - a:handleText(I,I,java.lang.StringBuilder,java.lang.Runnable):V
 *:com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
 - *sf:Companion:com.intellij.openapi.roots.ui.configuration.SdkLookupProvider$Companion
-- s:getInstance(com.intellij.openapi.project.Project,com.intellij.openapi.roots.ui.configuration.SdkLookupProvider$Id):com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
+- *s:getInstance(com.intellij.openapi.project.Project,com.intellij.openapi.roots.ui.configuration.SdkLookupProvider$Id):com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
 - a:getProgressIndicator():com.intellij.openapi.progress.ProgressIndicator
 - a:getSdk():com.intellij.openapi.projectRoots.Sdk
 - a:getSdkInfo():com.intellij.openapi.roots.ui.configuration.SdkLookupProvider$SdkInfo
@@ -972,12 +972,12 @@ c:com.intellij.refactoring.memberPushDown.PushDownProcessor
 - *:<init>(com.intellij.psi.PsiElement,java.util.List,com.intellij.refactoring.util.DocCommentPolicy,Z):V
 *a:com.intellij.refactoring.rename.api.FileOperation
 - *sf:Companion:com.intellij.refactoring.rename.api.FileOperation$Companion
-- sf:addFile(java.nio.file.Path,java.lang.CharSequence):com.intellij.refactoring.rename.api.FileOperation
-- sf:modifyFile(com.intellij.psi.PsiFile,com.intellij.util.text.StringOperation,com.intellij.util.text.StringOperation[]):com.intellij.refactoring.rename.api.FileOperation
-- sf:modifyFile(com.intellij.psi.PsiFile,java.util.Collection):com.intellij.refactoring.rename.api.FileOperation
-- sf:moveFile(com.intellij.openapi.vfs.VirtualFile,java.nio.file.Path):com.intellij.refactoring.rename.api.FileOperation
-- sf:removeFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.refactoring.rename.api.FileOperation
-- sf:renameFile(com.intellij.openapi.vfs.VirtualFile,java.lang.String):com.intellij.refactoring.rename.api.FileOperation
+- *sf:addFile(java.nio.file.Path,java.lang.CharSequence):com.intellij.refactoring.rename.api.FileOperation
+- *sf:modifyFile(com.intellij.psi.PsiFile,com.intellij.util.text.StringOperation,com.intellij.util.text.StringOperation[]):com.intellij.refactoring.rename.api.FileOperation
+- *sf:modifyFile(com.intellij.psi.PsiFile,java.util.Collection):com.intellij.refactoring.rename.api.FileOperation
+- *sf:moveFile(com.intellij.openapi.vfs.VirtualFile,java.nio.file.Path):com.intellij.refactoring.rename.api.FileOperation
+- *sf:removeFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.refactoring.rename.api.FileOperation
+- *sf:renameFile(com.intellij.openapi.vfs.VirtualFile,java.lang.String):com.intellij.refactoring.rename.api.FileOperation
 *f:com.intellij.refactoring.rename.api.FileOperation$Companion
 - f:addFile(java.nio.file.Path,java.lang.CharSequence):com.intellij.refactoring.rename.api.FileOperation
 - f:modifyFile(com.intellij.psi.PsiFile,com.intellij.util.text.StringOperation,com.intellij.util.text.StringOperation[]):com.intellij.refactoring.rename.api.FileOperation
@@ -1003,7 +1003,7 @@ c:com.intellij.refactoring.memberPushDown.PushDownProcessor
 - com.intellij.refactoring.rename.api.PsiRenameUsage
 - *sf:Companion:com.intellij.refactoring.rename.api.PsiModifiableRenameUsage$Companion
 - a:createPointer():com.intellij.model.Pointer
-- s:defaultPsiModifiableRenameUsage(com.intellij.find.usages.api.PsiUsage):com.intellij.refactoring.rename.api.PsiModifiableRenameUsage
+- *s:defaultPsiModifiableRenameUsage(com.intellij.find.usages.api.PsiUsage):com.intellij.refactoring.rename.api.PsiModifiableRenameUsage
 - getFileUpdater():com.intellij.refactoring.rename.api.ModifiableRenameUsage$FileUpdater
 *f:com.intellij.refactoring.rename.api.PsiModifiableRenameUsage$Companion
 - f:defaultPsiModifiableRenameUsage(com.intellij.find.usages.api.PsiUsage):com.intellij.refactoring.rename.api.PsiModifiableRenameUsage
@@ -1011,7 +1011,7 @@ c:com.intellij.refactoring.memberPushDown.PushDownProcessor
 - com.intellij.refactoring.rename.api.RenameUsage
 - *sf:Companion:com.intellij.refactoring.rename.api.PsiRenameUsage$Companion
 - a:createPointer():com.intellij.model.Pointer
-- s:defaultPsiRenameUsage(com.intellij.find.usages.api.PsiUsage):com.intellij.refactoring.rename.api.PsiRenameUsage
+- *s:defaultPsiRenameUsage(com.intellij.find.usages.api.PsiUsage):com.intellij.refactoring.rename.api.PsiRenameUsage
 - a:getFile():com.intellij.psi.PsiFile
 - a:getRange():com.intellij.openapi.util.TextRange
 *f:com.intellij.refactoring.rename.api.PsiRenameUsage$Companion
@@ -1019,7 +1019,7 @@ c:com.intellij.refactoring.memberPushDown.PushDownProcessor
 *:com.intellij.refactoring.rename.api.RenameConflict
 - *sf:Companion:com.intellij.refactoring.rename.api.RenameConflict$Companion
 - a:description():java.lang.String
-- s:fromText(java.lang.String):com.intellij.refactoring.rename.api.RenameConflict
+- *s:fromText(java.lang.String):com.intellij.refactoring.rename.api.RenameConflict
 *f:com.intellij.refactoring.rename.api.RenameConflict$Companion
 - f:fromText(java.lang.String):com.intellij.refactoring.rename.api.RenameConflict
 *:com.intellij.refactoring.rename.api.RenameTarget
@@ -1048,10 +1048,10 @@ c:com.intellij.refactoring.memberPushDown.PushDownProcessor
 - com.intellij.model.search.Searcher
 *:com.intellij.refactoring.rename.api.RenameValidationResult
 - *sf:Companion:com.intellij.refactoring.rename.api.RenameValidationResult$Companion
-- s:invalid():com.intellij.refactoring.rename.api.RenameValidationResult
-- s:invalid(java.lang.String):com.intellij.refactoring.rename.api.RenameValidationResult
-- s:ok():com.intellij.refactoring.rename.api.RenameValidationResult
-- s:warn(java.lang.String):com.intellij.refactoring.rename.api.RenameValidationResult
+- *s:invalid():com.intellij.refactoring.rename.api.RenameValidationResult
+- *s:invalid(java.lang.String):com.intellij.refactoring.rename.api.RenameValidationResult
+- *s:ok():com.intellij.refactoring.rename.api.RenameValidationResult
+- *s:warn(java.lang.String):com.intellij.refactoring.rename.api.RenameValidationResult
 *f:com.intellij.refactoring.rename.api.RenameValidationResult$Companion
 - f:invalid():com.intellij.refactoring.rename.api.RenameValidationResult
 - f:invalid(java.lang.String):com.intellij.refactoring.rename.api.RenameValidationResult
@@ -1059,7 +1059,7 @@ c:com.intellij.refactoring.memberPushDown.PushDownProcessor
 - f:warn(java.lang.String):com.intellij.refactoring.rename.api.RenameValidationResult
 *:com.intellij.refactoring.rename.api.RenameValidator
 - *sf:Companion:com.intellij.refactoring.rename.api.RenameValidator$Companion
-- s:empty():com.intellij.refactoring.rename.api.RenameValidator
+- *s:empty():com.intellij.refactoring.rename.api.RenameValidator
 - a:validate(java.lang.String):com.intellij.refactoring.rename.api.RenameValidationResult
 *f:com.intellij.refactoring.rename.api.RenameValidator$Companion
 - f:empty():com.intellij.refactoring.rename.api.RenameValidator
@@ -1105,8 +1105,8 @@ c:com.intellij.refactoring.memberPushDown.PushDownProcessor
 - onSelect(com.intellij.codeInsight.template.impl.TemplateState):V
 *:com.intellij.refactoring.rename.inplace.VirtualTemplateElement
 - *sf:Companion:com.intellij.refactoring.rename.inplace.VirtualTemplateElement$Companion
-- s:findInTemplate(com.intellij.codeInsight.template.impl.TemplateState):com.intellij.refactoring.rename.inplace.VirtualTemplateElement
-- s:installOnTemplate(com.intellij.codeInsight.template.impl.TemplateState,com.intellij.refactoring.rename.inplace.VirtualTemplateElement):V
+- *s:findInTemplate(com.intellij.codeInsight.template.impl.TemplateState):com.intellij.refactoring.rename.inplace.VirtualTemplateElement
+- *s:installOnTemplate(com.intellij.codeInsight.template.impl.TemplateState,com.intellij.refactoring.rename.inplace.VirtualTemplateElement):V
 - a:onSelect(com.intellij.codeInsight.template.impl.TemplateState):V
 *f:com.intellij.refactoring.rename.inplace.VirtualTemplateElement$Companion
 - f:findInTemplate(com.intellij.codeInsight.template.impl.TemplateState):com.intellij.refactoring.rename.inplace.VirtualTemplateElement
@@ -1127,8 +1127,8 @@ c:com.intellij.refactoring.memberPushDown.PushDownProcessor
 - com.intellij.refactoring.safeDelete.api.SafeDeleteUsage
 - *sf:Companion:com.intellij.refactoring.safeDelete.api.PsiSafeDeleteUsage$Companion
 - a:createPointer():com.intellij.model.Pointer
-- s:defaultPsiSafeDeleteUsage(com.intellij.find.usages.api.PsiUsage,Z):com.intellij.refactoring.safeDelete.api.PsiSafeDeleteUsage
-- s:defaultPsiSafeDeleteUsage(com.intellij.psi.PsiElement,Z):com.intellij.refactoring.safeDelete.api.PsiSafeDeleteUsage
+- *s:defaultPsiSafeDeleteUsage(com.intellij.find.usages.api.PsiUsage,Z):com.intellij.refactoring.safeDelete.api.PsiSafeDeleteUsage
+- *s:defaultPsiSafeDeleteUsage(com.intellij.psi.PsiElement,Z):com.intellij.refactoring.safeDelete.api.PsiSafeDeleteUsage
 - a:getFile():com.intellij.psi.PsiFile
 - a:getRange():com.intellij.openapi.util.TextRange
 *f:com.intellij.refactoring.safeDelete.api.PsiSafeDeleteUsage$Companion
@@ -1210,7 +1210,7 @@ f:com.intellij.testIntegration.TestFinderHelper
 - <init>(com.intellij.util.indexing.IndexableSetContributor,com.intellij.openapi.project.Project):V
 - <init>(com.intellij.util.indexing.IndexableSetContributor,java.util.Collection,Z):V
 - <init>(java.lang.String,java.lang.String,Z,java.util.Set,com.intellij.util.indexing.IndexableSetContributor):V
-- sf:createProjectUnAwareIndexableSetContributors():java.util.List
+- *sf:createProjectUnAwareIndexableSetContributors():java.util.List
 - getDebugName():java.lang.String
 - getIndexingProgressText():java.lang.String
 - getOrigin():com.intellij.util.indexing.roots.kind.IndexableSetOrigin

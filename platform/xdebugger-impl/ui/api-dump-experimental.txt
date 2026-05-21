@@ -1,6 +1,6 @@
 *:com.intellij.xdebugger.impl.collection.visualizer.XDebuggerNodeLinkActionProvider
 - *sf:Companion:com.intellij.xdebugger.impl.collection.visualizer.XDebuggerNodeLinkActionProvider$Companion
-- s:computeHyperlink(com.intellij.openapi.project.Project,com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl):V
+- *s:computeHyperlink(com.intellij.openapi.project.Project,com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl):V
 - a:provideHyperlink(kotlinx.coroutines.CoroutineScope,com.intellij.openapi.project.Project,com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl,kotlin.coroutines.Continuation):java.lang.Object
 *f:com.intellij.xdebugger.impl.collection.visualizer.XDebuggerNodeLinkActionProvider$Companion
 - f:computeHyperlink(com.intellij.openapi.project.Project,com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl):V
@@ -66,9 +66,9 @@ f:com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 - *sf:Companion:com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeSplitActionBase$Companion
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- sf:getSelectedNode(com.intellij.openapi.actionSystem.DataContext):com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
-- sf:getSelectedNodes(com.intellij.openapi.actionSystem.DataContext):java.util.List
-- sf:getSelectedValue(com.intellij.openapi.actionSystem.DataContext):com.intellij.xdebugger.frame.XValue
+- *sf:getSelectedNode(com.intellij.openapi.actionSystem.DataContext):com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
+- *sf:getSelectedNodes(com.intellij.openapi.actionSystem.DataContext):java.util.List
+- *sf:getSelectedValue(com.intellij.openapi.actionSystem.DataContext):com.intellij.xdebugger.frame.XValue
 - p:isEnabled(com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl,com.intellij.openapi.actionSystem.AnActionEvent):Z
 - pa:perform(com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl,java.lang.String,com.intellij.openapi.actionSystem.AnActionEvent):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V

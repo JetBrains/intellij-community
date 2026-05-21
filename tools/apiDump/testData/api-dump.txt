@@ -1,5 +1,6 @@
 f:com.intellij.tools.apiDump.testData.ClassWithApiExperimentalCompanion
 f:com.intellij.tools.apiDump.testData.ClassWithApiInternalCompanion
+com.intellij.tools.apiDump.testData.InterfaceWithApiInternalCompanionJvmStatic
 e:com.intellij.tools.apiDump.testData.JAbstractEnum
 - java.lang.Enum
 - sf:A:com.intellij.tools.apiDump.testData.JAbstractEnum

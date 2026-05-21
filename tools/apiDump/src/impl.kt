@@ -10,7 +10,6 @@ import kotlinx.validation.api.ClassBinarySignature
 import kotlinx.validation.api.MEMBER_SORT_ORDER
 import kotlinx.validation.api.MemberBinarySignature
 import kotlinx.validation.api.MethodBinarySignature
-import kotlinx.validation.api.isEffectivelyPublic
 import kotlinx.validation.api.loadApiFromJvmClasses
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
@@ -175,28 +174,57 @@ private fun ClassBinarySignature.handleAnnotationsAndVisibility(index: ApiIndex)
   return signature
 }
 
+private data class CompanionSignature(
+  val signature: ClassBinarySignature,
+  val annotations: ApiAnnotations,
+)
+
 private fun companionAnnotations(
   index: ApiIndex,
   containingClassSignature: ClassBinarySignature,
   memberSignature: MemberBinarySignature,
 ): ApiAnnotations? {
-  val access = memberSignature.access
-  if (!access.isStatic || !access.isFinal || memberSignature.name != "Companion") {
+  if (!memberSignature.access.isStatic) {
     return null
   }
-  if (memberSignature.jvmMember !is JvmFieldSignature) {
+  val companionSignature = index.resolveClass("${containingClassSignature.name}${'$'}Companion")?.takeIf { it.outerName == containingClassSignature.name }?: return null
+  // if memberSignature is a field, let's check that it references companion
+  if (memberSignature.referencesCompanionInstanceAsField(companionSignature)) {
+    return companionSignature.annotations.apiAnnotations()
+  }
+  // if memberSignature is a method, let's check that it references companion
+  val companionMember = companionSignature.memberSignatures.firstOrNull {
+    it.matchesJvmStaticCompanionMember(memberSignature, companionSignature.name)
+  } ?: return null
+  return companionSignature.annotations.apiAnnotations() + companionMember.annotations.apiAnnotations()
+}
+
+private fun MemberBinarySignature.referencesCompanionInstanceAsField(companionSignature: ClassBinarySignature): Boolean {
+  if (!access.isFinal || jvmMember !is JvmFieldSignature) {
+    return false
+  }
+  val type = Type.getType(desc)
+  return type.sort == Type.OBJECT && type.internalName == companionSignature.name
+}
+
+private fun MemberBinarySignature.matchesJvmStaticCompanionMember(
+  containingClassMember: MemberBinarySignature,
+  companionClassName: String,
+): Boolean {
+  return jvmMember == containingClassMember.jvmMember ||
+         jvmMember == containingClassMember.companionDefaultMethodSignature(companionClassName)
+}
+
+private fun MemberBinarySignature.companionDefaultMethodSignature(companionClassName: String): JvmMethodSignature? {
+  if (jvmMember !is JvmMethodSignature || !name.endsWith("${'$'}default")) {
     return null
   }
-  val type = Type.getType(memberSignature.desc)
-  if (type.sort != Type.OBJECT) {
+  val type = Type.getType(desc)
+  if (type.sort != Type.METHOD) {
     return null
   }
-  val companionSignature = index.resolveClass(type.internalName)
-  if (companionSignature?.outerName != containingClassSignature.name) {
-    return null
-  }
-  // this is a `static final ContainingClassType Companion` field
-  return companionSignature.annotations.apiAnnotations()
+  val companionDescriptor = Type.getMethodDescriptor(type.returnType, Type.getObjectType(companionClassName), *type.argumentTypes)
+  return JvmMethodSignature(name, companionDescriptor)
 }
 
 /**

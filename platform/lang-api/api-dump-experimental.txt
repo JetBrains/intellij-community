@@ -224,7 +224,7 @@ com.intellij.build.events.StartBuildEvent
 *:com.intellij.codeInsight.hints.InlayHintsProviderFactory
 - com.intellij.openapi.project.PossiblyDumbAware
 - *sf:Companion:com.intellij.codeInsight.hints.InlayHintsProviderFactory$Companion
-- s:getEP():com.intellij.openapi.extensions.ExtensionPointName
+- *s:getEP():com.intellij.openapi.extensions.ExtensionPointName
 - getLanguages():java.lang.Iterable
 - getProvidersInfo():java.util.List
 - getProvidersInfo(com.intellij.openapi.project.Project):java.util.List
@@ -245,7 +245,7 @@ com.intellij.build.events.StartBuildEvent
 - f:hintsEnabledGlobally():Z
 - f:hintsShouldBeShown(com.intellij.codeInsight.hints.SettingsKey,com.intellij.lang.Language):Z
 - f:hintsShouldBeShown(com.intellij.lang.Language):Z
-- sf:instance():com.intellij.codeInsight.hints.InlayHintsSettings
+- *sf:instance():com.intellij.codeInsight.hints.InlayHintsSettings
 - loadState(com.intellij.codeInsight.hints.InlayHintsSettings$State):V
 - f:saveLastViewedProviderId(java.lang.String):V
 - f:setEnabledGlobally(Z):V
@@ -638,7 +638,7 @@ a:com.intellij.task.ProjectTaskRunner
 *:com.intellij.task.RunConfigurationTaskState
 - *sf:Companion:com.intellij.task.RunConfigurationTaskState$Companion
 - createCustomActions(com.intellij.execution.process.ProcessHandler,com.intellij.execution.ui.ExecutionConsole,com.intellij.execution.Executor):java.util.List
-- s:getKEY():com.intellij.openapi.util.Key
+- *s:getKEY():com.intellij.openapi.util.Key
 - a:handleCreatedTargetEnvironment(com.intellij.execution.target.TargetEnvironment,com.intellij.execution.target.TargetProgressIndicator):java.lang.String
 - a:prepareTargetEnvironmentRequest(com.intellij.execution.target.TargetEnvironmentRequest,com.intellij.execution.target.TargetProgressIndicator):V
 - a:processExecutionResult(com.intellij.execution.process.ProcessHandler,com.intellij.execution.ui.ExecutionConsole):V

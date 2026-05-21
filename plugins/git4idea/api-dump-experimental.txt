@@ -52,7 +52,7 @@ f:git4idea.changes.GitBranchComparisonResultKt
 - com.intellij.openapi.vcs.CheckoutProvider$Listener
 - *sf:Companion:git4idea.checkout.GitCheckoutListener$Companion
 - a:checkoutFailed(git4idea.commands.GitCommandResult):V
-- s:wrap(com.intellij.openapi.vcs.CheckoutProvider$Listener):git4idea.checkout.GitCheckoutListener
+- *s:wrap(com.intellij.openapi.vcs.CheckoutProvider$Listener):git4idea.checkout.GitCheckoutListener
 *f:git4idea.checkout.GitCheckoutListener$Companion
 - f:wrap(com.intellij.openapi.vcs.CheckoutProvider$Listener):git4idea.checkout.GitCheckoutListener
 *f:git4idea.commit.GitRecentCommitsProvider
@@ -140,7 +140,7 @@ f:git4idea.push.GitPushNotificationCustomizerKt
 - git4idea.repo.GitConfigurationCacheBase
 - *sf:Companion:git4idea.repo.GitConfigurationCache$Companion
 - <init>():V
-- sf:getInstance():git4idea.repo.GitConfigurationCache
+- *sf:getInstance():git4idea.repo.GitConfigurationCache
 *f:git4idea.repo.GitConfigurationCache$Companion
 - f:getInstance():git4idea.repo.GitConfigurationCache
 *f:git4idea.repo.GitProjectConfigurationCache
@@ -148,7 +148,7 @@ f:git4idea.push.GitPushNotificationCustomizerKt
 - *sf:Companion:git4idea.repo.GitProjectConfigurationCache$Companion
 - <init>(com.intellij.openapi.project.Project):V
 - f:clearForRepo(git4idea.repo.GitRepository):V
-- sf:getInstance(com.intellij.openapi.project.Project):git4idea.repo.GitProjectConfigurationCache
+- *sf:getInstance(com.intellij.openapi.project.Project):git4idea.repo.GitProjectConfigurationCache
 - f:getProject():com.intellij.openapi.project.Project
 - f:readRepositoryConfig(com.intellij.openapi.vfs.VirtualFile,java.lang.String):java.lang.String
 *f:git4idea.repo.GitProjectConfigurationCache$Companion

@@ -13,7 +13,7 @@
 - <init>():V
 - f:findDetails(com.intellij.openapi.extensions.PluginId):com.intellij.ide.plugins.PluginDetailsService$PluginDetails
 - f:getActivePlugins():kotlin.sequences.Sequence
-- sf:getInstance():com.intellij.ide.plugins.PluginDetailsService
+- *sf:getInstance():com.intellij.ide.plugins.PluginDetailsService
 - f:isBuiltIn(com.intellij.openapi.extensions.PluginId):Z
 - f:isDisabled(com.intellij.openapi.extensions.PluginId):Z
 - f:isLoaded(com.intellij.openapi.extensions.PluginId):Z

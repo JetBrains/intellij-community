@@ -104,8 +104,8 @@
 - *sf:Companion:com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeBackendOnlyActionBase$Companion
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- sf:getSelectedValue(com.intellij.openapi.actionSystem.DataContext):com.intellij.xdebugger.frame.XValue
-- sf:getSelectedValues(com.intellij.openapi.actionSystem.DataContext):java.util.List
+- *sf:getSelectedValue(com.intellij.openapi.actionSystem.DataContext):com.intellij.xdebugger.frame.XValue
+- *sf:getSelectedValues(com.intellij.openapi.actionSystem.DataContext):java.util.List
 - p:isEnabled(com.intellij.xdebugger.frame.XValue,java.lang.String,com.intellij.openapi.actionSystem.AnActionEvent):Z
 - pa:perform(com.intellij.xdebugger.frame.XValue,java.lang.String,com.intellij.openapi.actionSystem.AnActionEvent):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V

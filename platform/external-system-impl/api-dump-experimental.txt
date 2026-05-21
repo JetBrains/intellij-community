@@ -41,11 +41,11 @@
 - setStdOut(Z):V
 *:com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware
 - *sf:Companion:com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware$Companion
-- s:getEnvironmentConfigurationProvider(com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings):com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider
+- *s:getEnvironmentConfigurationProvider(com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings):com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider
 - getEnvironmentConfigurationProvider(com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration,com.intellij.openapi.project.Project):com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider
 - getEnvironmentConfigurationProvider(java.lang.String,Z,com.intellij.openapi.project.Project):com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider
-- s:getExtensions(com.intellij.openapi.externalSystem.model.ProjectSystemId):java.util.List
-- s:hasTargetEnvironmentConfiguration(com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings):Z
+- *s:getExtensions(com.intellij.openapi.externalSystem.model.ProjectSystemId):java.util.List
+- *s:hasTargetEnvironmentConfiguration(com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings):Z
 - isRemoteRun(com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration,com.intellij.openapi.project.Project):Z
 - a:prepareExecution(com.intellij.openapi.externalSystem.model.task.ExternalSystemTask,java.lang.String,Z,com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener,com.intellij.openapi.project.Project):V
 *f:com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware$Companion
