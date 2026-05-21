@@ -91,13 +91,20 @@ internal class MavenIndexBasedCompletionContributor : DependencyCompletionContri
     val prefix = request.groupPrefix
     return index.groupIds
       .filter { prefix.isEmpty() || it.contains(prefix, ignoreCase = true) }
+      .filter { request.artifact.isEmpty() || index.getArtifactIds(it).contains(request.artifact) }
       .map { DependencyPartCompletionResult(it, source) }
   }
 
   override suspend fun getArtifacts(request: DependencyArtifactCompletionRequest): List<DependencyPartCompletionResult> {
     val index = gavIndex(request.context.eelDescriptor) ?: return emptyList()
     val prefix = request.artifactPrefix
-    return index.getArtifactIds(request.group)
+    val artifactIds = if (request.group.isEmpty()) {
+      index.groupIds.flatMapTo(mutableSetOf()) { index.getArtifactIds(it) }
+    }
+    else {
+      index.getArtifactIds(request.group)
+    }
+    return artifactIds
       .filter { prefix.isEmpty() || it.contains(prefix, ignoreCase = true) }
       .map { DependencyPartCompletionResult(it, source) }
   }

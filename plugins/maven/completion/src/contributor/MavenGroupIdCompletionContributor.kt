@@ -6,8 +6,8 @@ import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.repository.search.completion.api.DependencyCompletionContext
-import com.intellij.repository.search.completion.api.DependencyCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionService
+import com.intellij.repository.search.completion.api.DependencyCompletionRequest
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates
 import org.jetbrains.idea.maven.dom.model.completion.insert.MavenDependencyInsertionHandler
@@ -28,8 +28,15 @@ class MavenGroupIdCompletionContributor : MavenCoordinateCompletionContributor("
                             context: DependencyCompletionContext,
                             consumer: (MavenRepoArtifactInfo) -> Unit) {
     val groupId = trimDummy(coordinates.groupId.stringValue)
+    val artifactId = trimDummy(coordinates.artifactId.stringValue)
+    val grouped = mutableMapOf<String, MutableList<String>>()
     service.suggestCompletions(DependencyCompletionRequest(groupId, context)).collect { result ->
-      consumer(MavenRepoArtifactInfo(result.groupId, result.artifactId, emptyList()))
+      if (artifactId.isEmpty() || result.artifactId == artifactId) {
+        grouped.getOrPut(result.groupId) { mutableListOf() }.add(result.version)
+      }
+    }
+    for ((grp, versions) in grouped) {
+      consumer(MavenRepoArtifactInfo(grp, artifactId, versions))
     }
   }
 

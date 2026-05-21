@@ -53,10 +53,13 @@ internal class MavenProjectModulesCompletionContributor : DependencyCompletionCo
     val project = findProject(request.context.eelDescriptor) ?: return emptyList()
     val prefix = request.groupPrefix
     return MavenProjectsManager.getInstance(project).projects
+      .asSequence()
+      .filter { request.artifact.isEmpty() || it.mavenId.artifactId == request.artifact }
       .mapNotNull { it.mavenId.groupId }
       .distinct()
       .filter { prefix.isEmpty() || it.contains(prefix, ignoreCase = true) }
       .map { DependencyPartCompletionResult(it, source) }
+      .toList()
   }
 
   override suspend fun getArtifacts(request: DependencyArtifactCompletionRequest): List<DependencyPartCompletionResult> {

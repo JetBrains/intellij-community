@@ -15,8 +15,12 @@ class MavenDependenciesCompletionContributor : MavenCoordinateCompletionContribu
                             context: DependencyCompletionContext,
                             consumer: (MavenRepoArtifactInfo) -> Unit) {
     val text = trimDummy(coordinates.xmlTag?.value?.text)
+    val grouped = mutableMapOf<Pair<String, String>, MutableList<String>>()
     service.suggestCompletions(DependencyCompletionRequest(text, context)).collect { result ->
-      consumer(MavenRepoArtifactInfo(result.groupId, result.artifactId, listOf(result.version)))
+      grouped.getOrPut(result.groupId to result.artifactId) { mutableListOf() }.add(result.version)
+    }
+    for ((coords, versions) in grouped) {
+      consumer(MavenRepoArtifactInfo(coords.first, coords.second, versions))
     }
   }
 }
