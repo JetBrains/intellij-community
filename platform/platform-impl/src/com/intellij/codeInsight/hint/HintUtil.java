@@ -337,6 +337,14 @@ public final class HintUtil {
     }
 
     @Override
+    public void setFocusable(boolean focusable) {
+      if (myPane != null){
+        myPane.setFocusable(focusable);
+      }
+      super.setFocusable(focusable);
+    }
+
+    @Override
     public boolean requestFocusInWindow() {
       // Forward the focus to the tooltip contents so that screen readers announce
       // the tooltip contents right away.
