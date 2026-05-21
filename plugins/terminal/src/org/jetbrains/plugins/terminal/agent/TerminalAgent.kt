@@ -187,7 +187,7 @@ private object QoderTerminalAgent : BundledTerminalAgent(
   displayName = TerminalBundle.message("terminal.aiAgents.qoder.displayName"),
   binaryName = "qodercli",
   posixKnownLocationCandidates = listOf($$"$HOME/.local/bin"),
-  windowsKnownLocationCandidates = listOf($$"$HOME\\.qoder\\qoder\\bin\\qodercli"),
+  windowsKnownLocationCandidates = listOf($$"$HOME\\.qoder\\bin\\qodercli"),
   windowsExecutableExtensions = listOf("exe"),
   icon = TerminalIcons.Agents.Qoder,
 ) {
