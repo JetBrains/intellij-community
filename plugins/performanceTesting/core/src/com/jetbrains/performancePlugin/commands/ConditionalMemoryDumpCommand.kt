@@ -27,7 +27,7 @@ class ConditionalMemoryDumpCommand(text: String, line: Int) : PerformanceCommand
         if (currentMessageCount == targetMessageCount) {
           val memoryDumpPath = MemoryDumpCommand.getMemoryDumpPath()
           LOG.info("Dumping memory snapshot to: $memoryDumpPath")
-          MemoryDumpHelper.captureMemoryDump(memoryDumpPath)
+          MemoryDumpHelper.captureMemoryDump(memoryDumpPath.toString())
           if (withErrorMessages) {
             LOG.error("Got low memory signal, memory dump attached")
           }

@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
-import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
@@ -21,7 +20,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * An utility class to capture heap dumps of the current process
+ * A utility class to capture heap dumps of the current process
  *
  * @author Pavel.Sher
  */
@@ -88,10 +87,10 @@ public final class MemoryDumpHelper {
   }
 
   public static synchronized void captureMemoryDumpZipped(@NotNull Path zipFile) throws Exception {
-    File tempFile = new File(FileUtilRt.getTempDirectory(), "heapDump." + UUID.randomUUID()+ ".hprof");
+    Path tempFile = Paths.get(FileUtilRt.getTempDirectory(), "heapDump." + UUID.randomUUID() + ".hprof");
     try {
-      captureMemoryDump(tempFile.getPath());
-      ZipUtil.compressFile(tempFile, zipFile.toFile());
+      captureMemoryDump(tempFile.toString());
+      ZipUtil.compressFile(tempFile, zipFile);
     }
     finally {
       FileUtil.delete(tempFile);

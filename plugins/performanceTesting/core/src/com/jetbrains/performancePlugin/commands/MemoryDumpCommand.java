@@ -10,7 +10,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
-import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -27,8 +28,8 @@ public final class MemoryDumpCommand extends AbstractCommand {
   @Override
   protected @NotNull Promise<Object> _execute(@NotNull PlaybackContext context) {
     try {
-      String path = getMemoryDumpPath();
-      captureZippedMemoryDump(path);
+      Path path = getMemoryDumpPath();
+      captureZippedMemoryDump(path.toString());
       context.message("Memory snapshot is saved at " + path, getLine());
       return Promises.resolvedPromise();
     }
@@ -37,10 +38,10 @@ public final class MemoryDumpCommand extends AbstractCommand {
     }
   }
 
-  public static @NotNull String getMemoryDumpPath() {
+  public static @NotNull Path getMemoryDumpPath() {
     String memoryDumpPath = System.getProperties().getProperty("memory.snapshots.path", PathManager.getLogPath());
     String currentTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
-    return memoryDumpPath + File.separator + (Timer.instance.getActivityName() + '-' + currentTime + ".zip");
+    return Paths.get(memoryDumpPath, Timer.instance.getActivityName() + '-' + currentTime + ".zip");
   }
 
   public static void captureZippedMemoryDump(String dumpPath) throws Exception {
