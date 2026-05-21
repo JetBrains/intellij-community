@@ -58,7 +58,7 @@
     <orderEntry type="library" scope="TEST" name="jetbrains-annotations" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.base" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.hash4j" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="tcServiceMessages" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.teamcity.service.messages" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.opentelemetry.extension.kotlin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.idea.community.build.zip" scope="TEST" />
     <orderEntry type="module" module-name="intellij.idea.community.build.tasks" scope="TEST" />

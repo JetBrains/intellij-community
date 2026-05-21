@@ -10,6 +10,7 @@
     <module name="intellij.libraries.opentelemetry"/>
     <module name="intellij.libraries.opentelemetry.extension.kotlin"/>
     <module name="intellij.libraries.opentelemetry.semconv"/>
+    <module name="intellij.libraries.teamcity.service.messages"/>
   </dependencies>
   <!-- endregion -->
 </idea-plugin>

@@ -13733,6 +13733,21 @@ jvm_import(
 )
 
 copy_file(
+  name = "org.jetbrains.teamcity/serviceMessages-2024.07.jar_copy",
+  src = "@org_jetbrains_teamcity-serviceMessages-2024_07_http//file",
+  out = "org.jetbrains.teamcity/serviceMessages-2024.07.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-teamcity-service-messages-tc_service_messages",
+  jar = "@org_jetbrains_teamcity-serviceMessages-2024_07_http//file",
+  source_jar = "@org_jetbrains_teamcity-serviceMessages-2024_07-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
   name = "org.apache.velocity/velocity-engine-core-2.3.jar_copy",
   src = "@org_apache_velocity-velocity-engine-core-2_3_http//file",
   out = "org.apache.velocity/velocity-engine-core-2.3.jar",
@@ -20420,21 +20435,6 @@ jvm_import(
   name = "tasks-core-commons-discovery",
   jar = "@commons-discovery-commons-discovery-0_4_http//file",
   source_jar = "@commons-discovery-commons-discovery-0_4-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.jetbrains.teamcity/serviceMessages-2024.07.jar_copy",
-  src = "@org_jetbrains_teamcity-serviceMessages-2024_07_http//file",
-  out = "org.jetbrains.teamcity/serviceMessages-2024.07.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "tc_service_messages",
-  jar = "@org_jetbrains_teamcity-serviceMessages-2024_07_http//file",
-  source_jar = "@org_jetbrains_teamcity-serviceMessages-2024_07-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

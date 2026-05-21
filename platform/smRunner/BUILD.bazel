@@ -20,7 +20,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/testRunner",
     "//platform/platform-impl:ide-impl",
-    "@lib//:tc_service_messages",
+    "//libraries/teamcity/service-messages:libraries-teamcity-service-messages",
     "//platform/platform-impl/concurrency",
     "//platform/lang-api:lang",
     "//libraries/fastutil",
@@ -33,7 +33,7 @@ jvm_library(
     "//platform/execution",
     "//platform/code-style-api:codeStyle",
   ],
-  exports = ["@lib//:tc_service_messages"]
+  exports = ["//libraries/teamcity/service-messages:libraries-teamcity-service-messages"]
 )
 
 jvm_library(
@@ -42,7 +42,10 @@ jvm_library(
   module_name = "intellij.platform.smRunner",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  exports = ["@lib//:tc_service_messages"],
+  exports = [
+    "//libraries/teamcity/service-messages:libraries-teamcity-service-messages",
+    "//libraries/teamcity/service-messages:libraries-teamcity-service-messages_test_lib",
+  ],
   runtime_deps = [
     ":smRunner",
     "//platform/analysis-api:analysis_test_lib",
@@ -59,6 +62,7 @@ jvm_library(
     "//platform/xdebugger-api:debugger",
     "//platform/xdebugger-api:debugger_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//libraries/teamcity/service-messages:libraries-teamcity-service-messages_test_lib",
     "@lib//:objenesis",
     "//platform/platform-impl/concurrency:concurrency_test_lib",
     "@lib//:easymock",
@@ -94,7 +98,7 @@ jvm_library(
   module_name = "intellij.platform.smRunner.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  exports = ["@lib//:tc_service_messages"]
+  exports = ["//libraries/teamcity/service-messages:libraries-teamcity-service-messages"]
 )
 
 jvm_library(
@@ -131,7 +135,8 @@ jvm_library(
     "//platform/xdebugger-api:debugger",
     "//platform/xdebugger-api:debugger_test_lib",
     "//platform/platform-impl:ide-impl",
-    "@lib//:tc_service_messages",
+    "//libraries/teamcity/service-messages:libraries-teamcity-service-messages",
+    "//libraries/teamcity/service-messages:libraries-teamcity-service-messages_test_lib",
     "@lib//:objenesis",
     "//platform/platform-impl/concurrency",
     "@lib//:easymock",
@@ -159,7 +164,10 @@ jvm_library(
     "//platform/code-style-api:codeStyle",
     "//platform/code-style-api:codeStyle_test_lib",
   ],
-  exports = ["@lib//:tc_service_messages"],
+  exports = [
+    "//libraries/teamcity/service-messages:libraries-teamcity-service-messages",
+    "//libraries/teamcity/service-messages:libraries-teamcity-service-messages_test_lib",
+  ],
   runtime_deps = [
     ":smRunner-tests",
     "//platform/platform-impl:ide-impl_test_lib",

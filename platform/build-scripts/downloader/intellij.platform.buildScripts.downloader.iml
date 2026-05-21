@@ -27,7 +27,7 @@
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.commons.compress" />
     <orderEntry type="module" module-name="intellij.libraries.commons.lang3" scope="RUNTIME" />
-    <orderEntry type="library" name="tcServiceMessages" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.teamcity.service.messages" />
     <orderEntry type="library" name="zstd-jni" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.commons.io" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
