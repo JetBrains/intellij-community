@@ -658,45 +658,45 @@ http_file(
 )
 
 http_file(
-  name = "bcpkix-jdk18on-1_81_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcpkix-jdk18on/1.81/bcpkix-jdk18on-1.81.jar",
-  sha256 = "b38c604871f3690109a3c00982d9145634125de3365a817ba16eb90d88e242c9",
-  downloaded_file_path = "bcpkix-jdk18on-1.81.jar"
+  name = "bcpkix-jdk18on-1_81_1_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcpkix-jdk18on/1.81.1/bcpkix-jdk18on-1.81.1.jar",
+  sha256 = "c437686255f7e202aba1bd1a07c76a2e620877da3dc407f71aa4869790ef9782",
+  downloaded_file_path = "bcpkix-jdk18on-1.81.1.jar"
 )
 
 http_file(
-  name = "bcutil-jdk18on-1_81_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcutil-jdk18on/1.81/bcutil-jdk18on-1.81.jar",
-  sha256 = "31a5fe3a7ba42e3457b83930f0ff8d679fb5b76eaadf2b51f5740c92a394bf52",
-  downloaded_file_path = "bcutil-jdk18on-1.81.jar"
+  name = "bcutil-jdk18on-1_81_1_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcutil-jdk18on/1.81.1/bcutil-jdk18on-1.81.1.jar",
+  sha256 = "c7c5bea9de6625d66b5bce347c59ada8454a613f1979fd6a12abcde286790d46",
+  downloaded_file_path = "bcutil-jdk18on-1.81.1.jar"
 )
 
 http_file(
-  name = "bcprov-jdk18on-1_81_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcprov-jdk18on/1.81/bcprov-jdk18on-1.81.jar",
-  sha256 = "249f396412b0c0ce67f25c8197da757b241b8be3ec4199386c00704a2457459b",
-  downloaded_file_path = "bcprov-jdk18on-1.81.jar"
+  name = "bcprov-jdk18on-1_81_1_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcprov-jdk18on/1.81.1/bcprov-jdk18on-1.81.1.jar",
+  sha256 = "e1cd291bf385a7c791a6f93192bed56d012a6bf6bdb972c2dfedaa95de2ed298",
+  downloaded_file_path = "bcprov-jdk18on-1.81.1.jar"
 )
 
 http_file(
-  name = "bcpkix-jdk18on-1_81-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcpkix-jdk18on/1.81/bcpkix-jdk18on-1.81-sources.jar",
-  sha256 = "5c202e64971912e363d241b3c4f8ab7d56519d30553e4e0ab0ee6ceaead5eeb0",
-  downloaded_file_path = "bcpkix-jdk18on-1.81-sources.jar"
+  name = "bcpkix-jdk18on-1_81_1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcpkix-jdk18on/1.81.1/bcpkix-jdk18on-1.81.1-sources.jar",
+  sha256 = "de61a1df54fa533f2ce24c0fac63184ecb59abdf996af4f117501e3cdc215ab6",
+  downloaded_file_path = "bcpkix-jdk18on-1.81.1-sources.jar"
 )
 
 http_file(
-  name = "bcutil-jdk18on-1_81-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcutil-jdk18on/1.81/bcutil-jdk18on-1.81-sources.jar",
-  sha256 = "a964bb2b5c8a1ecae31832b82e748f139178747c1dbfbadc3e0aef6f92eb58d4",
-  downloaded_file_path = "bcutil-jdk18on-1.81-sources.jar"
+  name = "bcutil-jdk18on-1_81_1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcutil-jdk18on/1.81.1/bcutil-jdk18on-1.81.1-sources.jar",
+  sha256 = "582ca39b2b4c55144413c2af84760906224876ae46bc6de3190ba207d1fd1f96",
+  downloaded_file_path = "bcutil-jdk18on-1.81.1-sources.jar"
 )
 
 http_file(
-  name = "bcprov-jdk18on-1_81-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcprov-jdk18on/1.81/bcprov-jdk18on-1.81-sources.jar",
-  sha256 = "3dcbf0b33ec135e1217d31eb182614e5c03b73f15dc4327573e1b7b1826ac720",
-  downloaded_file_path = "bcprov-jdk18on-1.81-sources.jar"
+  name = "bcprov-jdk18on-1_81_1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcprov-jdk18on/1.81.1/bcprov-jdk18on-1.81.1-sources.jar",
+  sha256 = "2edc5c84cadce610d3c72bdf9738544752097ec17ed43f81e07e5e88317e4628",
+  downloaded_file_path = "bcprov-jdk18on-1.81.1-sources.jar"
 )
 
 http_file(

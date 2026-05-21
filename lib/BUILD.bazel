@@ -792,29 +792,29 @@ jvm_import(
 java_library(
   name = "bouncy-castle-provider",
   exports = [
-    ":bcpkix-jdk18on-1_81_http_import",
-    ":bcutil-jdk18on-1_81_http_import",
-    ":bcprov-jdk18on-1_81_http_import",
+    ":bcpkix-jdk18on-1_81_1_http_import",
+    ":bcutil-jdk18on-1_81_1_http_import",
+    ":bcprov-jdk18on-1_81_1_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "bcpkix-jdk18on-1_81_http_import",
-  jar = "@bcpkix-jdk18on-1_81_http//file",
-  source_jar = "@bcpkix-jdk18on-1_81-sources_http//file"
+  name = "bcpkix-jdk18on-1_81_1_http_import",
+  jar = "@bcpkix-jdk18on-1_81_1_http//file",
+  source_jar = "@bcpkix-jdk18on-1_81_1-sources_http//file"
 )
 
 jvm_import(
-  name = "bcutil-jdk18on-1_81_http_import",
-  jar = "@bcutil-jdk18on-1_81_http//file",
-  source_jar = "@bcutil-jdk18on-1_81-sources_http//file"
+  name = "bcutil-jdk18on-1_81_1_http_import",
+  jar = "@bcutil-jdk18on-1_81_1_http//file",
+  source_jar = "@bcutil-jdk18on-1_81_1-sources_http//file"
 )
 
 jvm_import(
-  name = "bcprov-jdk18on-1_81_http_import",
-  jar = "@bcprov-jdk18on-1_81_http//file",
-  source_jar = "@bcprov-jdk18on-1_81-sources_http//file"
+  name = "bcprov-jdk18on-1_81_1_http_import",
+  jar = "@bcprov-jdk18on-1_81_1_http//file",
+  source_jar = "@bcprov-jdk18on-1_81_1-sources_http//file"
 )
 
 jvm_import(
@@ -8128,9 +8128,9 @@ java_library(
     ":netty-resolver-4_2_0_RC2_http_import",
     ":netty-transport-4_2_0_RC2_http_import",
     ":netty-pkitesting-4_2_0_RC2_http_import",
-    ":bcpkix-jdk18on-1_79_http_import",
-    ":bcutil-jdk18on-1_79_http_import",
-    ":bcprov-jdk18on-1_79_http_import",
+    ":bcpkix-jdk18on-1_81_1_http_import",
+    ":bcutil-jdk18on-1_81_1_http_import",
+    ":bcprov-jdk18on-1_81_1_http_import",
     ":netty-transport-classes-epoll-4_2_0_RC2_http_import",
     ":netty-transport-classes-kqueue-4_2_0_RC2_http_import",
     ":netty-transport-native-epoll-4_2_0_RC2-linux-x86_64_http_import",
@@ -8160,21 +8160,21 @@ jvm_import(
 )
 
 jvm_import(
-  name = "bcpkix-jdk18on-1_79_http_import",
-  jar = "@bcpkix-jdk18on-1_79_http//file",
-  source_jar = "@bcpkix-jdk18on-1_79-sources_http//file"
+  name = "bcpkix-jdk18on-1_81_1_http_import",
+  jar = "@bcpkix-jdk18on-1_81_1_http//file",
+  source_jar = "@bcpkix-jdk18on-1_81_1-sources_http//file"
 )
 
 jvm_import(
-  name = "bcutil-jdk18on-1_79_http_import",
-  jar = "@bcutil-jdk18on-1_79_http//file",
-  source_jar = "@bcutil-jdk18on-1_79-sources_http//file"
+  name = "bcutil-jdk18on-1_81_1_http_import",
+  jar = "@bcutil-jdk18on-1_81_1_http//file",
+  source_jar = "@bcutil-jdk18on-1_81_1-sources_http//file"
 )
 
 jvm_import(
-  name = "bcprov-jdk18on-1_79_http_import",
-  jar = "@bcprov-jdk18on-1_79_http//file",
-  source_jar = "@bcprov-jdk18on-1_79-sources_http//file"
+  name = "bcprov-jdk18on-1_81_1_http_import",
+  jar = "@bcprov-jdk18on-1_81_1_http//file",
+  source_jar = "@bcprov-jdk18on-1_81_1-sources_http//file"
 )
 
 jvm_import(
