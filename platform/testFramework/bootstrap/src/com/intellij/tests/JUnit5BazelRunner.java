@@ -195,6 +195,8 @@ public final class JUnit5BazelRunner {
       Path ideaHome;
       Path tempDir = getBazelTempDir();
 
+      ShardFilter.writeShardStatus();
+
       String jbEnvSandboxValue = System.getenv(jbEnvSandbox);
       if (jbEnvSandboxValue == null) {
         throw new RuntimeException("Missing " + jbEnvSandbox + " env variable in bazel test environment");
@@ -268,7 +270,6 @@ public final class JUnit5BazelRunner {
         Stream<InterceptingTestExecutionListener> listeners =
           testExecutionListeners.stream().map(it -> new InterceptingTestExecutionListener(it, interceptor));
 
-        ShardFilter.writeShardStatus();
         launcher.registerTestExecutionListeners(listeners.toArray(TestExecutionListener[]::new));
         launcher.execute(testPlan);
       }
