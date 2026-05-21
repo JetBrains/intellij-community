@@ -65,10 +65,6 @@
     <projectService serviceInterface="com.intellij.openapi.roots.impl.DirectoryIndex"
                     serviceImplementation="com.intellij.openapi.roots.impl.DirectoryIndexImpl" preload="true"/>
 
-    <moduleService serviceInterface="com.intellij.openapi.roots.ModuleFileIndex"
-                   serviceImplementation="com.intellij.openapi.roots.impl.ModuleFileIndexImpl"
-                   open="true"/>
-
     <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.core.fileIndex.impl.ContentRootFileIndexContributor"/>
     <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.core.fileIndex.impl.SourceRootFileIndexContributor"/>
     <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.core.fileIndex.impl.LibraryRootFileIndexContributor"/>
