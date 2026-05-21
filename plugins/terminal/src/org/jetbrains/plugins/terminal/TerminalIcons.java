@@ -22,6 +22,7 @@ public final class TerminalIcons {
     /** 16x16 */ public static final @NotNull Icon ClaudeCode = load("icons/agents/claude-code.svg", 1122203032, 2);
     /** 16x16 */ public static final @NotNull Icon Codex = load("icons/agents/codex.svg", 588760173, 2);
     /** 16x16 */ public static final @NotNull Icon Junie = load("icons/agents/junie.svg", -904787049, 2);
+    /** 16x16 */ public static final @NotNull Icon Qoder = load("icons/agents/qoder.svg", -904787049, 2);
   }
 
   /** 16x16 */ public static final @NotNull Icon Command = load("icons/command.svg", 957086477, 2);

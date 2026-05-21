@@ -105,7 +105,7 @@ interface TerminalAgentProvider {
 @ApiStatus.Internal
 class DefaultTerminalAgentProvider : TerminalAgentProvider {
   override fun getTerminalAgents(): List<TerminalAgent> {
-    return listOf(JunieTerminalAgent, ClaudeCodeTerminalAgent, CodexTerminalAgent)
+    return listOf(JunieTerminalAgent, ClaudeCodeTerminalAgent, CodexTerminalAgent, QoderTerminalAgent)
   }
 }
 
@@ -179,5 +179,37 @@ private object JunieTerminalAgent : BundledTerminalAgent(
     "-ExecutionPolicy", "Bypass",
     "-Command",
     $$"iex (irm 'https://junie.jetbrains.com/install.ps1'); & \"$HOME\\.local\\bin\\junie.bat\"",
+  )
+}
+
+private object QoderTerminalAgent : BundledTerminalAgent(
+  agentKey = TerminalAgent.AgentKey("qoder"),
+  displayName = TerminalBundle.message("terminal.aiAgents.qoder.displayName"),
+  binaryName = "qodercli",
+  posixKnownLocationCandidates = listOf($$"$HOME/.local/bin"),
+  windowsKnownLocationCandidates = listOf($$"$HOME\\.qoder\\qoder\\bin\\qodercli"),
+  windowsExecutableExtensions = listOf("exe"),
+  icon = TerminalIcons.Agents.Qoder,
+) {
+  override val installActionText: String
+    get() = TerminalBundle.message("terminal.aiAgents.qoder.installActionText")
+
+  override val secondaryText: String
+    get() = TerminalBundle.message("terminal.aiAgents.qoder.secondaryText")
+
+  override val showsNewBadge: Boolean
+    get() = true
+
+  override val installCommandUnix: List<String> = listOf(
+    "/bin/bash", "-c",
+    $$"curl -fsSL https://download.qoder.com/qodercli/install.sh | /bin/bash && exec \"$HOME/.local/bin/qodercli\"",
+  )
+
+  override val installCommandWindows: List<String> = listOf(
+    "powershell.exe",
+    "-NoProfile",
+    "-ExecutionPolicy", "Bypass",
+    "-Command",
+    $$"iex (irm 'https://download.qoder.com/qodercli/install.ps1'); & \"$HOME\\.qoder\\bin\\qodercli\\qodercli.exe\"",
   )
 }
