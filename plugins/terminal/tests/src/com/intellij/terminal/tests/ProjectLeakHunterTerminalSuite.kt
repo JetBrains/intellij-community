@@ -4,7 +4,6 @@ package com.intellij.terminal.tests
 import _LastInSuiteTest
 import com.intellij.terminal.tests.block.BlockTerminalCommandExecutionTest
 import com.intellij.terminal.tests.block.BlockTerminalTest
-import com.intellij.terminal.tests.block.PowerShellCompletionTest
 import com.intellij.terminal.tests.block.RightPromptAndCommandLayoutTest
 import com.intellij.terminal.tests.block.ShellBaseGeneratorsTest
 import com.intellij.terminal.tests.block.ShellCommandSpecManagerTest
@@ -39,7 +38,6 @@ import org.junit.runners.Suite
   ShellMakefileCompletionTest::class,
   ShMLModelMetadataTest::class,
   RightPromptAndCommandLayoutTest::class,
-  PowerShellCompletionTest::class,
   ShellCommandSpecManagerTest::class,
   BlockTerminalCommandExecutionTest::class,
   TerminalDeletePreviousWordTest::class,
