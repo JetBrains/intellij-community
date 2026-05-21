@@ -1308,6 +1308,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
         if (prefixLength < 0) return;
         ActionContext actionContext = ActionContext.from(editor, file);
         int start = actionContext.offset() - prefixLength;
+        // it can happen when an external change
+        // (split-mode RD-sync or direct caretModel/selectionModel API) bypasses
+        // LookupOffsets state updates; skip for this transient state.
+        if (start < 0) return;
         ActionContext finalActionContext = actionContext
           .withOffset(start)
           .withSelection(TextRange.create(start, actionContext.offset()));
