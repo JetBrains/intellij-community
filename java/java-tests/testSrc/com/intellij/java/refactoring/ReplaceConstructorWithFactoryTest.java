@@ -140,6 +140,10 @@ public class ReplaceConstructorWithFactoryTest extends LightJavaCodeInsightTestC
     runTest("ArrayCreation", null);
   }
 
+  public void testPrecariousAnchor() {
+    runTest("PrecariousAnchor", null); // See IDEA-389677
+  }
+
   private void assertNotAvailable(String name) {
     configureByFile("/refactoring/replaceConstructorWithFactory/before" + name + ".java");
     ReplaceConstructorWithFactoryAction action = new ReplaceConstructorWithFactoryAction();
