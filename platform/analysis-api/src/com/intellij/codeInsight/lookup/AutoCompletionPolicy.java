@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup;
 
+import com.intellij.codeInsight.completion.CompletionItemLookupElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -36,6 +37,9 @@ public enum AutoCompletionPolicy {
   ALWAYS_AUTOCOMPLETE;
 
   public @NotNull LookupElement applyPolicy(@NotNull LookupElement element) {
+    if (element instanceof CompletionItemLookupElement itemLookupElement) {
+      return itemLookupElement.withAutoCompletionPolicy(this);
+    }
     return new PolicyDecorator(element, this);
   }
 
