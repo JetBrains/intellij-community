@@ -5,6 +5,7 @@ package com.intellij.openapi.keymap.impl
 
 import com.intellij.diagnostic.EventWatcher
 import com.intellij.diagnostic.LoadingState
+import com.intellij.diagnostic.LocksActionsDumper
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
@@ -59,6 +60,7 @@ import com.intellij.ui.ComponentWithMnemonics
 import com.intellij.ui.KeyStrokeAdapter
 import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.util.ReflectionUtil
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.text.matching.KeyboardLayoutUtil
 import com.intellij.util.ui.MacUIUtil
@@ -82,6 +84,7 @@ import java.awt.event.ActionEvent
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.util.Collections
+import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Supplier
 import javax.swing.JComponent
 import javax.swing.JDialog
@@ -156,6 +159,15 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
             set(text = null, project = context.project)
           }
         }
+    }
+    LocksActionsDumper.setLocksAndActionsDumper {
+      val currentOffenders = actionLockOffenders.get()
+      if (currentOffenders.isNullOrEmpty()) {
+        return@setLocksAndActionsDumper null
+      }
+      """UI is currently processing actions. The following actions require locks:
+        |${currentOffenders.mapNotNull { it::class.qualifiedName }.joinToString("\n")}
+      """.trimMargin()
     }
   }
 
@@ -568,11 +580,13 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
 
     fireBeforeShortcutTriggered(shortcut, actions, context)
 
-    val chosen = runInReadActionConditionally(actions) {
-      Utils.runUpdateSessionForInputEvent(
-        actions, e, wrappedContext, place, processor, presentationFactory
-      ) { rearranged, updater, events ->
-        doUpdateActionsInner(rearranged, updater, events, dumb, wouldBeEnabledIfNotDumb)
+    val chosen = recordActionOffenders(actions).use {
+      runInReadActionConditionally(actions) {
+        Utils.runUpdateSessionForInputEvent(
+          actions, e, wrappedContext, place, processor, presentationFactory
+        ) { rearranged, updater, events ->
+          doUpdateActionsInner(rearranged, updater, events, dumb, wouldBeEnabledIfNotDumb)
+        }
       }
     }
     val doPerform = chosen != null && !this@IdeKeyEventDispatcher.context.secondStrokeActions.contains(chosen.action)
@@ -956,6 +970,18 @@ private fun getMenuActionsHolder(component: Component): JRootPane? {
   }
   else {
     return SwingUtilities.getRootPane(component)
+  }
+}
+
+private val actionLockOffenders: AtomicReference<List<AnAction>?> = AtomicReference<List<AnAction>?>()
+
+private fun recordActionOffenders(actions: List<AnAction>) : AutoCloseable {
+  val offendingActions = actions.filter(Utils::isLockRequired)
+  ThreadingAssertions.assertEventDispatchThread()
+  val oldOffenders = actionLockOffenders.getAndSet(offendingActions)
+  return AutoCloseable {
+    val existingOffenders = actionLockOffenders.getAndSet(oldOffenders)
+    require(existingOffenders == offendingActions) { "Offenders should not change during action execution" }
   }
 }
 

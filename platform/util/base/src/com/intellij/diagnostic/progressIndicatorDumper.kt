@@ -9,12 +9,22 @@ import kotlin.concurrent.Volatile
 
 @ApiStatus.Internal
 object ProgressIndicatorDumper {
-  const val PROGRESS_INDICATOR_DUMP_HEADER: @NonNls String = "---------- ProgressIndicator dump ----------"
+  private const val PROGRESS_INDICATOR_DUMP_HEADER: @NonNls String = "---------- ProgressIndicator dump ----------"
 
   @Volatile
   private var PROGRESS_INDICATOR_DUMPER: Supplier<String?>? = null
 
-  fun dumpProgressIndicatorState(): String? = PROGRESS_INDICATOR_DUMPER?.get()
+  fun dumpProgressIndicatorState(): String {
+    return (PROGRESS_INDICATOR_DUMPER?.get() ?: "No progress indicator dump")
+  }
+
+  fun dumpProgressIndicatorStateOrNull(): String? {
+    return PROGRESS_INDICATOR_DUMPER?.get()?.decorate()
+  }
+
+  private fun String.decorate(): String {
+    return PROGRESS_INDICATOR_DUMP_HEADER + "\n" + this
+  }
 
   fun setProgressIndicatorDumper(dumpProvider: Supplier<String?>?) {
     PROGRESS_INDICATOR_DUMPER = dumpProvider
