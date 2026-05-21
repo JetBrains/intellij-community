@@ -591,7 +591,7 @@ class PluginDependencyGeneratorTest {
       )
 
       // Verify: dependency module with descriptor is auto-added to contentModules
-      val contentModuleNames = result.contentModules.map { it.name }
+      val contentModuleNames = result.contentModules.map { ContentModuleName(it.moduleId.name) }
       assertThat(contentModuleNames)
         .describedAs("computePluginContentFromDslSpec should auto-add JPS deps with module descriptors")
         .contains(ContentModuleName("intellij.python.processOutput.impl"))  // explicitly declared
@@ -651,7 +651,7 @@ class PluginDependencyGeneratorTest {
         descriptorCache = descriptorCache,
       )
 
-      val contentModuleNames = result.contentModules.map { it.name }
+      val contentModuleNames = result.contentModules.map { ContentModuleName(it.moduleId.name) }
       assertThat(contentModuleNames)
         .describedAs("JPS deps should resolve to *_test module when only *_test descriptor exists")
         .contains(ContentModuleName("intellij.consumer.module"))
@@ -716,7 +716,7 @@ class PluginDependencyGeneratorTest {
         descriptorCache = descriptorCache,
       )
 
-      val contentModuleNames = result.contentModules.map { it.name }
+      val contentModuleNames = result.contentModules.map { ContentModuleName(it.moduleId.name) }
       assertThat(contentModuleNames)
         .describedAs("Base descriptor should be preferred when both base and *_test descriptors exist")
         .contains(ContentModuleName("intellij.consumer.module"))
@@ -783,7 +783,7 @@ class PluginDependencyGeneratorTest {
           descriptorCache = descriptorCache,
         )
 
-        val contentModuleNames = result.contentModules.map { it.name }
+        val contentModuleNames = result.contentModules.map { ContentModuleName(it.moduleId.name) }
         assertThat(contentModuleNames)
           .describedAs("computePluginContentFromDslSpec should auto-add test descriptor deps")
           .contains(ContentModuleName("intellij.foo._test"))
@@ -854,7 +854,7 @@ class PluginDependencyGeneratorTest {
         ),
       )
 
-      val contentModuleNames = result.contentModules.map { it.name }
+      val contentModuleNames = result.contentModules.map { ContentModuleName(it.moduleId.name) }
       assertThat(contentModuleNames)
         .describedAs("Suppressed JPS module deps with a content source should not be auto-added")
         .contains(ContentModuleName("intellij.test.module"))
@@ -921,7 +921,7 @@ class PluginDependencyGeneratorTest {
         ),
       )
 
-      val contentModuleNames = result.contentModules.map { it.name }
+      val contentModuleNames = result.contentModules.map { ContentModuleName(it.moduleId.name) }
       assertThat(contentModuleNames)
         .describedAs("Suppressed JPS module deps without content source should be auto-added")
         .contains(ContentModuleName("intellij.test.module"))
@@ -1108,7 +1108,7 @@ class PluginDependencyGeneratorTest {
         descriptorCache = descriptorCache,
       )
 
-      val contentModuleNames = result.contentModules.map { it.name }
+      val contentModuleNames = result.contentModules.map { ContentModuleName(it.moduleId.name) }
       assertThat(contentModuleNames)
         .describedAs("Library deps should resolve to library modules and be auto-added")
         .contains(ContentModuleName("intellij.test.module"))
@@ -1169,7 +1169,7 @@ class PluginDependencyGeneratorTest {
         descriptorCache = descriptorCache,
       )
 
-      val contentModuleNames = result.contentModules.map { it.name }
+      val contentModuleNames = result.contentModules.map { ContentModuleName(it.moduleId.name) }
       assertThat(contentModuleNames)
         .describedAs("Library modules should be auto-added even when owned by a plugin")
         .contains(ContentModuleName("intellij.test.module"))
@@ -1229,7 +1229,7 @@ class PluginDependencyGeneratorTest {
         descriptorCache = descriptorCache,
       )
 
-      val contentModuleNames = result.contentModules.map { it.name }
+      val contentModuleNames = result.contentModules.map { ContentModuleName(it.moduleId.name) }
       assertThat(contentModuleNames)
         .describedAs("Resolvable deps should not be auto-added")
         .contains(ContentModuleName("intellij.content.module"))
@@ -1289,7 +1289,7 @@ class PluginDependencyGeneratorTest {
         descriptorCache = descriptorCache,
       )
 
-      val contentModuleNames = result.contentModules.map { it.name }
+      val contentModuleNames = result.contentModules.map { ContentModuleName(it.moduleId.name) }
       assertThat(contentModuleNames)
         .describedAs("Bundled production plugin-owned modules should not be auto-added as test plugin content")
         .contains(ContentModuleName("intellij.test.content"))
@@ -1350,7 +1350,7 @@ class PluginDependencyGeneratorTest {
         descriptorCache = descriptorCache,
       )
 
-      val contentModuleNames = result.contentModules.map { it.name }
+      val contentModuleNames = result.contentModules.map { ContentModuleName(it.moduleId.name) }
       assertThat(contentModuleNames)
         .describedAs("Additional bundled plugin-owned modules should not be auto-added")
         .contains(ContentModuleName("intellij.test.content"))
@@ -1411,7 +1411,7 @@ class PluginDependencyGeneratorTest {
         descriptorCache = descriptorCache,
       )
 
-      val contentModuleNames = result.contentModules.map { it.name }
+      val contentModuleNames = result.contentModules.map { ContentModuleName(it.moduleId.name) }
       assertThat(contentModuleNames)
         .describedAs("Modules owned by bundled test plugins should be auto-added")
         .contains(ContentModuleName("intellij.test.content"), ContentModuleName("intellij.owner.module"))
@@ -1476,7 +1476,7 @@ class PluginDependencyGeneratorTest {
         descriptorCache = descriptorCache,
       )
 
-      val contentModuleNames = result.contentModules.map { it.name }
+      val contentModuleNames = result.contentModules.map { ContentModuleName(it.moduleId.name) }
       assertThat(contentModuleNames)
         .describedAs("Unbundled test-plugin ownership should be ignored for auto-add")
         .contains(ContentModuleName("intellij.test.content"), ContentModuleName("intellij.owner.module"))
@@ -1553,7 +1553,7 @@ class PluginDependencyGeneratorTest {
         descriptorCache = descriptorCache,
       )
 
-      val contentModuleNames = result.contentModules.map { it.name }
+      val contentModuleNames = result.contentModules.map { ContentModuleName(it.moduleId.name) }
       assertThat(contentModuleNames)
         .describedAs("Only deps WITH module descriptors should be auto-added")
         .contains(ContentModuleName("intellij.content.module"))  // explicitly declared

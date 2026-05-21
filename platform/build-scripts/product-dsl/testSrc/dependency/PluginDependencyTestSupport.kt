@@ -8,6 +8,7 @@ import com.intellij.platform.pluginGraph.DependencyClassification
 import com.intellij.platform.pluginGraph.PluginGraph
 import com.intellij.platform.pluginGraph.PluginId
 import com.intellij.platform.pluginGraph.TargetName
+import com.intellij.platform.pluginGraph.contentName
 import com.intellij.platform.pluginGraph.isSlashNotation
 import com.intellij.platform.pluginSystem.parser.impl.parseContentAndXIncludes
 import kotlinx.coroutines.CoroutineScope
@@ -290,14 +291,15 @@ private suspend fun generatePluginDependency(
   val contentModuleResults = mutableListOf<DependencyFileResult>()
   val contentModulePlans = mutableListOf<ContentModuleDependencyPlan>()
   for (module in info.contentModules) {
-    val contentModuleName = module.name.value
+    val contentModule = module.moduleId.contentName()
+    val contentModuleName = contentModule.value
     val isTestModule = contentModuleName.endsWith("._test")
 
     // Use production function for content module dependency generation
     // Tests pass through their SuppressionConfig (same as production)
     val planned = contentModuleCache.getOrPut(contentModuleName) {
       val generation = planContentModuleDependenciesWithBothSets(
-        contentModuleName = module.name,
+        contentModuleName = contentModule,
         descriptorCache = descriptorCache,
         pluginGraph = graph,
         allRealProductNames = allRealProductNames,
@@ -329,9 +331,9 @@ private suspend fun generatePluginDependency(
           }
         }
 
-        val testSuppressedModules = planned?.plan?.suppressedModules ?: effectiveConfig.getSuppressedModules(module.name)
+        val testSuppressedModules = planned?.plan?.suppressedModules ?: effectiveConfig.getSuppressedModules(contentModule)
         generateTestDescriptorDependencies(
-          contentModuleName = module.name,
+          contentModuleName = contentModule,
           outputProvider = outputProvider,
           graphModuleDeps = graphModuleDeps,
           dependencyFilter = { depName -> !testSuppressedModules.contains(ContentModuleName(depName)) },

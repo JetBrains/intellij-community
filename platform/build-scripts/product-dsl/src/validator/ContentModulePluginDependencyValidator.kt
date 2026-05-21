@@ -11,6 +11,7 @@ import org.jetbrains.intellij.build.productLayout.TestPluginSpec
 import org.jetbrains.intellij.build.productLayout.buildContentBlocksAndChainMapping
 import org.jetbrains.intellij.build.productLayout.config.ContentModuleSuppression
 import org.jetbrains.intellij.build.productLayout.config.SuppressionConfig
+import org.jetbrains.intellij.build.productLayout.contentName
 import org.jetbrains.intellij.build.productLayout.deps.ContentModuleDependencyPlan
 import org.jetbrains.intellij.build.productLayout.deps.buildAllowedMissingByModule
 import org.jetbrains.intellij.build.productLayout.discovery.findProductPropertiesSourceFile
@@ -55,7 +56,7 @@ internal object ContentModulePluginDependencyValidator : PipelineNode {
         val contentData = buildContentBlocksAndChainMapping(spec.spec, collectModuleSetAliases = false)
         for (contentBlock in contentData.contentBlocks) {
           for (module in contentBlock.modules) {
-            dslDeclaredModules.add(module.name)
+            dslDeclaredModules.add(module.contentName())
           }
         }
         val allowedByModule = buildAllowedMissingByModule(contentData)
@@ -446,7 +447,7 @@ private fun specContainsModule(
 ): Boolean {
   val contentData = buildContentBlocksAndChainMapping(spec.spec, collectModuleSetAliases = false)
   for (block in contentData.contentBlocks) {
-    if (block.modules.any { it.name == contentModuleName }) {
+    if (block.modules.any { it.contentName() == contentModuleName }) {
       return true
     }
   }

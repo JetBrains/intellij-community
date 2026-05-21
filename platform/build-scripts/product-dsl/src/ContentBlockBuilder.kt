@@ -79,13 +79,14 @@ internal fun buildContentBlocksAndChainMapping(
             // Reuse the filtered module list from existing block (already filtered by first pass)
             val updatedModules = mutableListOf<ContentModule>()
             for (existingModule in existingBlock.modules) {
-              val effectiveLoading = overrides.get(existingModule.name) ?: existingModule.loading
+              val existingModuleName = existingModule.contentName()
+              val effectiveLoading = overrides.get(existingModuleName) ?: existingModule.loading
               updatedModules.add(
                 ContentModule(
-                  existingModule.name,
-                  effectiveLoading,
-                  existingModule.includeDependencies,
-                  existingModule.allowedMissingPluginIds,
+                  moduleId = existingModule.moduleId,
+                  loading = effectiveLoading,
+                  includeDependencies = existingModule.includeDependencies,
+                  allowedMissingPluginIds = existingModule.allowedMissingPluginIds,
                 )
               )
             }
@@ -118,22 +119,23 @@ internal fun buildContentBlocksAndChainMapping(
     // Build content block and track chains/duplicates in single pass
     val modulesWithLoading = mutableListOf<ContentModule>()
     for (module in moduleSet.modules) {
+      val moduleName = module.contentName()
       // Track for duplicate detection (String keys for validateNoDuplicateModules)
-      moduleToSets.computeIfAbsent(module.name.value) { mutableListOf() }.add(moduleSet.name)
+      moduleToSets.computeIfAbsent(moduleName.value) { mutableListOf() }.add(moduleSet.name)
       // Track chain
-      moduleToChain.put(module.name, currentChain)
+      moduleToChain.put(moduleName, currentChain)
       // Track includeDependencies flag
       if (module.includeDependencies) {
-        moduleToIncludeDeps.put(module.name, true)
+        moduleToIncludeDeps.put(moduleName, true)
       }
       // Build loading info - apply overrides from module set
-      val effectiveLoading = overrides.get(module.name) ?: module.loading
+      val effectiveLoading = overrides.get(moduleName) ?: module.loading
       modulesWithLoading.add(
         ContentModule(
-          module.name,
-          effectiveLoading,
-          module.includeDependencies,
-          module.allowedMissingPluginIds,
+          moduleId = module.moduleId,
+          loading = effectiveLoading,
+          includeDependencies = module.includeDependencies,
+          allowedMissingPluginIds = module.allowedMissingPluginIds,
         )
       )
     }
@@ -163,20 +165,21 @@ internal fun buildContentBlocksAndChainMapping(
   // Add additional modules if any
   val additionalModulesWithLoading = mutableListOf<ContentModule>()
   for (module in spec.additionalModules) {
+    val moduleName = module.contentName()
     additionalModulesWithLoading.add(
       ContentModule(
-        module.name,
-        module.loading,
-        module.includeDependencies,
-        module.allowedMissingPluginIds,
+        moduleId = module.moduleId,
+        loading = module.loading,
+        includeDependencies = module.includeDependencies,
+        allowedMissingPluginIds = module.allowedMissingPluginIds,
       )
     )
     // Track includeDependencies flag
     if (module.includeDependencies) {
-      moduleToIncludeDeps.put(module.name, true)
+      moduleToIncludeDeps.put(moduleName, true)
     }
     // Track for duplicate detection - mark as from "additionalModules" block (String keys for validateNoDuplicateModules)
-    moduleToSets.computeIfAbsent(module.name.value) { mutableListOf() }.add(ADDITIONAL_MODULES_BLOCK)
+    moduleToSets.computeIfAbsent(moduleName.value) { mutableListOf() }.add(ADDITIONAL_MODULES_BLOCK)
   }
 
   if (additionalModulesWithLoading.isNotEmpty()) {

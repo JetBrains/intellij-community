@@ -84,7 +84,7 @@ class PluginContentCacheTest {
       )
 
       assertThat(overrideContent).isNotNull
-      assertThat(overrideContent!!.contentModules.map { it.name.value }).containsExactly("intellij.from.override")
+      assertThat(overrideContent!!.contentModules.map { it.moduleId.name }).containsExactly("intellij.from.override")
       assertThat(overrideErrorSink.getErrors()).isEmpty()
     }
   }

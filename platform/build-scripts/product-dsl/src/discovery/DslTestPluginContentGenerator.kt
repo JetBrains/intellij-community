@@ -8,6 +8,7 @@ import com.intellij.platform.pluginGraph.EDGE_BUNDLES
 import com.intellij.platform.pluginGraph.NODE_PLUGIN
 import com.intellij.platform.pluginGraph.PluginGraph
 import com.intellij.platform.pluginGraph.PluginId
+import com.intellij.platform.pluginGraph.PluginModuleId
 import com.intellij.platform.pluginGraph.TEST_DESCRIPTOR_SUFFIX
 import com.intellij.platform.pluginGraph.TargetDependencyScope
 import com.intellij.platform.pluginGraph.baseModuleName
@@ -19,6 +20,7 @@ import org.jetbrains.intellij.build.productLayout.LIB_MODULE_PREFIX
 import org.jetbrains.intellij.build.productLayout.TestPluginSpec
 import org.jetbrains.intellij.build.productLayout.buildContentBlocksAndChainMapping
 import org.jetbrains.intellij.build.productLayout.config.SuppressionConfig
+import org.jetbrains.intellij.build.productLayout.contentName
 import org.jetbrains.intellij.build.productLayout.debug
 import org.jetbrains.intellij.build.productLayout.dependency.ModuleDescriptorCache
 import org.jetbrains.intellij.build.productLayout.deps.DependencyResolutionContext
@@ -74,10 +76,10 @@ internal suspend fun computePluginContentFromDslSpec(
     .filter { module ->
       module.loading == ModuleLoadingRuleValue.REQUIRED || module.loading == ModuleLoadingRuleValue.EMBEDDED
     }
-    .mapTo(HashSet()) { it.name }
+    .mapTo(HashSet()) { it.contentName() }
 
   // Build set of explicitly declared module names for quick lookup
-  val declaredContentModuleNames = allModules.mapTo(HashSet()) { it.name }
+  val declaredContentModuleNames = allModules.mapTo(HashSet()) { it.contentName() }
   require(pluginGraph.descriptorFlagsComplete) {
     "PluginGraph descriptor flags are not complete. Ensure markDescriptorModules() runs after the last graph mutation " +
     "before computePluginContentFromDslSpec."
@@ -112,11 +114,11 @@ internal suspend fun computePluginContentFromDslSpec(
   val explicitAllowedMissingPluginIdsByModule: HashMap<ContentModuleName, Set<String>> = testPluginSpec.spec.additionalModules
     .asSequence()
     .filter { it.allowedMissingPluginIds.isNotEmpty() }
-    .associateTo(HashMap()) { it.name to pluginIdValues(it.allowedMissingPluginIds) }
+    .associateTo(HashMap()) { it.contentName() to pluginIdValues(it.allowedMissingPluginIds) }
   val explicitAllowedMissingPluginIdsByName: HashMap<String, Set<String>> = testPluginSpec.spec.additionalModules
     .asSequence()
     .filter { it.allowedMissingPluginIds.isNotEmpty() }
-    .associateTo(HashMap()) { it.name.value to pluginIdValues(it.allowedMissingPluginIds) }
+    .associateTo(HashMap()) { it.moduleId.name to pluginIdValues(it.allowedMissingPluginIds) }
   fun isBundledPluginContent(moduleName: ContentModuleName): Boolean {
     return pluginGraph.query {
       val moduleNode = contentModule(moduleName) ?: return@query false
@@ -205,10 +207,11 @@ internal suspend fun computePluginContentFromDslSpec(
 
   // Start with declared modules
   for (module in allModules) {
-    queue.add(module.name)
-    parentByModule.put(module.name, null)
-    rootDeclaredModuleByModule.put(module.name, module.name)
-    allowedMissingPluginIdsByModule.put(module.name, pluginIdValues(module.allowedMissingPluginIds))
+    val moduleName = module.contentName()
+    queue.add(moduleName)
+    parentByModule.put(moduleName, null)
+    rootDeclaredModuleByModule.put(moduleName, moduleName)
+    allowedMissingPluginIdsByModule.put(moduleName, pluginIdValues(module.allowedMissingPluginIds))
   }
 
   debug("dslTestDeps") {
@@ -346,7 +349,12 @@ internal suspend fun computePluginContentFromDslSpec(
         debug("dslTestDeps") { "skip no descriptor dep=$effectiveDepName from=$moduleName" }
         return
       }
-      autoAddedModules.add(ContentModuleInfo(name = effectiveDepName, loadingMode = autoAddedModulesLoadingMode))
+      autoAddedModules.add(
+        ContentModuleInfo(
+          moduleId = PluginModuleId(effectiveDepName.value, PluginModuleId.DEFAULT_NAMESPACE),
+          loadingMode = autoAddedModulesLoadingMode,
+        )
+      )
       strictModules.add(effectiveDepName)
       if (dependencyChainsSink != null) {
         val chain = ArrayList<ContentModuleName>()
@@ -374,7 +382,9 @@ internal suspend fun computePluginContentFromDslSpec(
   }
 
   // Combine declared modules with auto-added ones
-  val contentModules = allModules.map { ContentModuleInfo(name = it.name, loadingMode = it.loading) } + autoAddedModules
+  val contentModules = allModules.map {
+    ContentModuleInfo(moduleId = it.moduleId, loadingMode = it.loading)
+  } + autoAddedModules
 
   return PluginContentInfo(
     pluginXmlPath = projectRoot.resolve(testPluginSpec.pluginXmlPath),

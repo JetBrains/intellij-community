@@ -207,7 +207,7 @@ private fun sortTestPluginContentSpec(spec: ProductModulesContentSpec): ProductM
       moduleSetWithOverrides.copy(moduleSet = sortModuleSet(moduleSetWithOverrides.moduleSet))
     }
     .sortedBy { it.moduleSet.name }
-  val sortedAdditionalModules = spec.additionalModules.sortedBy { it.name.value }
+  val sortedAdditionalModules = spec.additionalModules.sortedBy { it.moduleId.name }
 
   return ProductModulesContentSpec(
     productModuleAliases = spec.productModuleAliases,
@@ -224,7 +224,7 @@ private fun sortTestPluginContentSpec(spec: ProductModulesContentSpec): ProductM
 }
 
 private fun sortModuleSet(moduleSet: ModuleSet): ModuleSet {
-  val sortedModules = moduleSet.modules.sortedBy { it.name.value }
+  val sortedModules = moduleSet.modules.sortedBy { it.moduleId.name }
   val sortedNestedSets = moduleSet.nestedSets
     .map { sortModuleSet(it) }
     .sortedBy { it.name }
@@ -296,7 +296,8 @@ fun buildProductContentXml(
           if (block.source == ADDITIONAL_MODULES_BLOCK) continue // Skip additional modules, handle separately
           withEditorFold(this, "    ", block.source) {
             for (module in block.modules) {
-              val comment = moduleCommentProvider?.invoke(module.name, moduleToSetChainMapping[module.name])
+              val moduleName = module.contentName()
+              val comment = moduleCommentProvider?.invoke(moduleName, moduleToSetChainMapping[moduleName])
               appendModuleLine(module, "    ", comment)
             }
           }
@@ -338,7 +339,8 @@ fun buildProductContentXml(
         blockSource = additionalBlock.source,
         modules = additionalBlock.modules,
         commentProvider = if (moduleCommentProvider == null) null else { module ->
-          moduleCommentProvider(module.name, moduleToSetChainMapping[module.name])
+          val moduleName = module.contentName()
+          moduleCommentProvider(moduleName, moduleToSetChainMapping[moduleName])
         },
       )
     }

@@ -55,6 +55,21 @@ value class ContentModuleName(val value: String) : Comparable<ContentModuleName>
 }
 
 /**
+ * Describes an ID of a plugin content module how it's represented in XML: if `namespace` attribute isn't specified, it's set to `null`.
+ */
+@Serializable
+data class PluginModuleId(val name: String, val namespace: String?) {
+  override fun toString(): String {
+    return name + (if (namespace != DEFAULT_NAMESPACE) " (namespace=$namespace)" else "")
+  }
+
+  companion object {
+    const val DEFAULT_NAMESPACE: String = "jetbrains"
+  }
+}
+
+
+/**
  * Type-safe wrapper for build target name.
  *
  * A TargetName identifies a buildable unit - currently a JPS module that represents
@@ -88,6 +103,8 @@ const val TEST_DESCRIPTOR_SUFFIX: String = "._test"
 
 /** Returns true if this is a test descriptor synthetic name (ends with `._test`) */
 fun ContentModuleName.isTestDescriptor(): Boolean = value.endsWith(TEST_DESCRIPTOR_SUFFIX)
+
+fun PluginModuleId.contentName(): ContentModuleName = ContentModuleName(name)
 
 /**
  * Returns the base JPS module name.

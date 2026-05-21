@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.productLayout.traversal
 
 import com.intellij.platform.pluginGraph.ContentModuleName
+import org.jetbrains.intellij.build.productLayout.contentName
 import org.jetbrains.intellij.build.productLayout.tooling.ModulePath
 import org.jetbrains.intellij.build.productLayout.tooling.ModulePathsResult
 import org.jetbrains.intellij.build.productLayout.tooling.ModuleSetMetadata
@@ -29,7 +30,7 @@ internal fun findModulePaths(
   
   // Find which module sets directly contain this module
   val moduleInSets = allModuleSets.filter { msEntry ->
-    msEntry.moduleSet.modules.any { it.name == moduleName }
+    msEntry.moduleSet.modules.any { it.contentName() == moduleName }
   }
   
   // For each product, find how this module is included
@@ -37,7 +38,7 @@ internal fun findModulePaths(
     val contentSpec = prod.contentSpec ?: continue
     
     // Check if module is directly included in the product
-    if (contentSpec.additionalModules.any { it.name == moduleName }) {
+    if (contentSpec.additionalModules.any { it.contentName() == moduleName }) {
       paths.add(ModulePath(
         type = "direct",
         path = "${moduleName.value} → ${prod.name}",

@@ -10,6 +10,7 @@ import com.intellij.platform.pluginGraph.PluginGraph
 import com.intellij.platform.pluginGraph.PluginId
 import com.intellij.platform.pluginGraph.TargetName
 import com.intellij.platform.pluginGraph.baseModuleName
+import com.intellij.platform.pluginGraph.contentName
 import com.intellij.platform.pluginGraph.isSlashNotation
 import com.intellij.platform.pluginGraph.isTestDescriptor
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
@@ -36,6 +37,7 @@ import org.jetbrains.intellij.build.productLayout.buildProductContentXml
 import org.jetbrains.intellij.build.productLayout.collectAndValidateAliases
 import org.jetbrains.intellij.build.productLayout.collectPluginizedModuleSets
 import org.jetbrains.intellij.build.productLayout.config.SuppressionConfig
+import org.jetbrains.intellij.build.productLayout.contentName
 import org.jetbrains.intellij.build.productLayout.debug
 import org.jetbrains.intellij.build.productLayout.dependency.ModuleDescriptorCache
 import org.jetbrains.intellij.build.productLayout.dependency.PluginContentCache
@@ -623,8 +625,8 @@ internal object ModelBuildingStage {
       }
 
       // Additional modules (product content)
-      for ((moduleName, loadingMode) in spec.additionalModules) {
-        builder.linkProductContainsContent(product.name, moduleName, loadingMode)
+      for (module in spec.additionalModules) {
+        builder.linkProductContainsContent(product.name, module.contentName(), module.loading)
       }
 
       // allowed missing dependencies (for validation)
@@ -736,7 +738,7 @@ internal object ModelBuildingStage {
                 aliasIds.addAll(info.pluginAliases)
               }
               if (info.contentModules.isNotEmpty()) {
-                val pluginModuleNames = info.contentModules.mapTo(LinkedHashSet()) { it.name }
+                val pluginModuleNames = info.contentModules.mapTo(LinkedHashSet()) { it.moduleId.contentName() }
                 aliasIds.addAll(collectAliasesFromModuleDescriptors(pluginModuleNames, descriptorCache, moduleDescriptorAliasCache))
               }
             }
@@ -1034,7 +1036,7 @@ internal object ModelBuildingStage {
     val contentData = buildContentBlocksAndChainMapping(spec, collectModuleSetAliases = false)
     return contentData.contentBlocks
       .flatMap { it.modules }
-      .mapTo(LinkedHashSet()) { it.name }
+      .mapTo(LinkedHashSet()) { it.contentName() }
   }
 
   private fun expandTestPluginSpec(
@@ -1044,8 +1046,7 @@ internal object ModelBuildingStage {
     autoAddedModulesLoadingMode: ModuleLoadingRuleValue,
   ): TestPluginSpec {
     val autoAddedModules = content.contentModules
-      .map { it.name }
-      .filter { it !in declaredModules }
+      .filter { it.moduleId.contentName() !in declaredModules }
 
     if (autoAddedModules.isEmpty()) {
       return spec
@@ -1056,7 +1057,9 @@ internal object ModelBuildingStage {
       vendor = spec.spec.vendor,
       deprecatedXmlIncludes = spec.spec.deprecatedXmlIncludes,
       moduleSets = spec.spec.moduleSets,
-      additionalModules = spec.spec.additionalModules + autoAddedModules.map { ContentModule(it, autoAddedModulesLoadingMode) },
+      additionalModules = spec.spec.additionalModules + autoAddedModules.map {
+        ContentModule(moduleId = it.moduleId, loading = autoAddedModulesLoadingMode)
+      },
       bundledPlugins = spec.spec.bundledPlugins,
       allowedMissingDependencies = spec.spec.allowedMissingDependencies,
       compositionGraph = spec.spec.compositionGraph,

@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout
 
-import com.intellij.platform.pluginGraph.ContentModuleName
+import com.intellij.platform.pluginGraph.PluginModuleId
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.intellij.build.productLayout.util.DeferredFileUpdater
@@ -33,7 +33,7 @@ class ProductDslGeneratorTest {
   private fun createSimpleModuleSet(name: String, vararg moduleNames: String): ModuleSet {
     return ModuleSet(
       name = name,
-      modules = moduleNames.map { ContentModule(ContentModuleName(it)) }
+      modules = moduleNames.map { ContentModule(PluginModuleId(it, namespace = "jetbrains")) }
     )
   }
 
@@ -44,7 +44,7 @@ class ProductDslGeneratorTest {
   ): ModuleSet {
     return ModuleSet(
       name = name,
-      modules = moduleNames.map { ContentModule(ContentModuleName(it)) },
+      modules = moduleNames.map { ContentModule(PluginModuleId(it, namespace = "jetbrains")) },
       nestedSets = nestedSets
     )
   }

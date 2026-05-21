@@ -10,6 +10,7 @@ import com.intellij.platform.pluginGraph.TargetName
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import org.jetbrains.intellij.build.productLayout.MODULE_SET_PREFIX
 import org.jetbrains.intellij.build.productLayout.buildContentBlocksAndChainMapping
+import org.jetbrains.intellij.build.productLayout.contentName
 import org.jetbrains.intellij.build.productLayout.discovery.PluginContentInfo
 import org.jetbrains.intellij.build.productLayout.discovery.findProductPropertiesSourceFile
 import org.jetbrains.intellij.build.productLayout.model.ModuleSourceInfo
@@ -288,11 +289,11 @@ private fun buildDslStructuralViolationPatches(
   val currentLoading = HashMap<ContentModuleName, ModuleLoadingRuleValue>()
   for (block in contentData.contentBlocks) {
     for (module in block.modules) {
-      currentLoading.put(module.name, module.loading)
+      currentLoading.put(module.contentName(), module.loading)
     }
   }
 
-  val additionalModulesByName = testPluginSpec.spec.additionalModules.associateBy { it.name }
+  val additionalModulesByName = testPluginSpec.spec.additionalModules.associateBy { it.contentName() }
   val directModulesToFix = LinkedHashSet<String>()
   val moduleSetsToFix = LinkedHashMap<String, MutableSet<String>>()
 

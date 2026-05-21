@@ -11,6 +11,7 @@ import com.intellij.platform.pluginGraph.TargetDependencyScope
 import org.jetbrains.intellij.build.productLayout.ContentModule
 import org.jetbrains.intellij.build.productLayout.ModuleSet
 import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
+import org.jetbrains.intellij.build.productLayout.contentName
 import org.jetbrains.intellij.build.productLayout.discovery.DiscoveredProduct
 import org.jetbrains.intellij.build.productLayout.model.error.ImplicitEmbeddedContentModuleError
 import org.jetbrains.intellij.build.productLayout.pipeline.ComputeContext
@@ -183,7 +184,7 @@ private fun collectModulesWithIncludeDependencies(spec: ProductModulesContentSpe
     collectFromModuleSet(moduleSetWithOverrides.moduleSet, result)
   }
   for (m in spec.additionalModules) {
-    if (m.includeDependencies) result.add(m.name)
+    if (m.includeDependencies) result.add(m.contentName())
   }
   return result
 }
@@ -192,7 +193,7 @@ private fun collectFromModuleSet(moduleSet: ModuleSet, result: LinkedHashSet<Con
   // pluginized module sets are materialized as standalone bundled plugins, not inlined into the product
   if (moduleSet.pluginSpec != null) return
   for (m: ContentModule in moduleSet.modules) {
-    if (m.includeDependencies) result.add(m.name)
+    if (m.includeDependencies) result.add(m.contentName())
   }
   for (nested in moduleSet.nestedSets) {
     collectFromModuleSet(nested, result)

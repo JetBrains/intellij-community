@@ -6,6 +6,7 @@ import com.intellij.platform.pluginGraph.PluginGraph
 import com.intellij.platform.pluginGraph.PluginId
 import com.intellij.platform.pluginGraph.TargetName
 import org.jetbrains.intellij.build.productLayout.ContentBuildData
+import org.jetbrains.intellij.build.productLayout.contentName
 import org.jetbrains.intellij.build.productLayout.traversal.OwningPlugin
 import org.jetbrains.intellij.build.productLayout.traversal.collectBundledPluginNames
 import org.jetbrains.intellij.build.productLayout.traversal.collectOwningPlugins
@@ -67,7 +68,7 @@ internal fun buildAllowedMissingByModule(
     for (module in block.modules) {
       val allowed = module.allowedMissingPluginIds
       if (allowed.isNotEmpty()) {
-        result[module.name] = allowed.toSet()
+        result[module.contentName()] = allowed.toSet()
       }
     }
   }

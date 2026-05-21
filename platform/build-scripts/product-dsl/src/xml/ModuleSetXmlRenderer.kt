@@ -13,6 +13,7 @@ import org.jetbrains.intellij.build.productLayout.MODULE_SET_PREFIX
 import org.jetbrains.intellij.build.productLayout.ModuleSet
 import org.jetbrains.intellij.build.productLayout.ModuleSetName
 import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
+import org.jetbrains.intellij.build.productLayout.contentName
 
 /**
  * Determines if a module set needs to be inlined (cannot use xi:include).
@@ -64,13 +65,14 @@ internal fun StringBuilder.appendInlinedModuleSet(
 
       // Append modules with effective overrides
       for (module in directBlock.modules) {
-        val effectiveLoading = overrides.get(module.name) ?: module.loading
+        val moduleName = module.contentName()
+        val effectiveLoading = overrides.get(moduleName) ?: module.loading
         appendModuleLine(
           ContentModule(
-            module.name,
-            effectiveLoading,
-            module.includeDependencies,
-            module.allowedMissingPluginIds,
+            moduleId = module.moduleId,
+            loading = effectiveLoading,
+            includeDependencies = module.includeDependencies,
+            allowedMissingPluginIds = module.allowedMissingPluginIds,
           ),
           "    ",
         )
@@ -156,7 +158,7 @@ internal fun StringBuilder.appendModuleLine(
   if (comment != null) {
     append("$indent<!-- $comment -->\n")
   }
-  append("$indent<module name=\"${module.name.value}\"")
+  append("$indent<module name=\"${module.moduleId.name}\"")
   // Only output loading attribute for non-default values (OPTIONAL is the default, omit it)
   if (module.loading != ModuleLoadingRuleValue.OPTIONAL) {
     append(" loading=\"${module.loading.xmlValue}\"")
@@ -174,12 +176,20 @@ internal fun StringBuilder.appendContentBlock(
   commentProvider: ((ContentModule) -> String?)? = null,
 ) {
   withEditorFold(sb = this, indent = indent, description = blockSource) {
-    append("$indent<content namespace=\"$JETBRAINS_NAMESPACE\">\n")
-    for (module in modules) {
-      val comment = commentProvider?.invoke(module)
-      appendModuleLine(module, "$indent  ", comment)
+    modules.groupBy { it.moduleId.namespace }.forEach { modulesByNamespaceEntry ->
+      val namespace = modulesByNamespaceEntry.key
+      val modules = modulesByNamespaceEntry.value
+      append("$indent<content")
+      if (namespace != null) {
+        append(" namespace=\"$namespace\"")
+      }
+      append(">\n")
+      for (module in modules) {
+        val comment = commentProvider?.invoke(module)
+        appendModuleLine(module, "$indent  ", comment)
+      }
+      append("$indent</content>\n")
     }
-    append("$indent</content>\n")
   }
 }
 

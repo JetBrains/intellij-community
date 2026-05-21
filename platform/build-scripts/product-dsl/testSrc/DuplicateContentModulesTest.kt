@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout
 
-import com.intellij.platform.pluginGraph.ContentModuleName
+import com.intellij.platform.pluginGraph.PluginModuleId
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -77,10 +77,10 @@ class DuplicateContentModulesTest {
         moduleSets = listOf(ModuleSetWithOverrides(moduleSet, emptyMap())),
         additionalModules = listOf(
           // These duplicate what's in the module set
-          ContentModule(ContentModuleName("intellij.platform.testFramework"), ModuleLoadingRuleValue.REQUIRED),
-          ContentModule(ContentModuleName("intellij.platform.testFramework.common"), ModuleLoadingRuleValue.REQUIRED),
+          ContentModule(PluginModuleId("intellij.platform.testFramework", namespace = "jetbrains"), loading = ModuleLoadingRuleValue.REQUIRED),
+          ContentModule(PluginModuleId("intellij.platform.testFramework.common", namespace = "jetbrains"), loading = ModuleLoadingRuleValue.REQUIRED),
           // This is unique
-          ContentModule(ContentModuleName("intellij.unique.module"), ModuleLoadingRuleValue.REQUIRED),
+          ContentModule(PluginModuleId("intellij.unique.module", namespace = "jetbrains"), loading = ModuleLoadingRuleValue.REQUIRED),
         ),
       )
       
@@ -101,7 +101,7 @@ class DuplicateContentModulesTest {
         deprecatedXmlIncludes = emptyList(),
         moduleSets = listOf(ModuleSetWithOverrides(moduleSet, emptyMap())),
         additionalModules = listOf(
-          ContentModule(ContentModuleName("intellij.unique.module"), ModuleLoadingRuleValue.REQUIRED),
+          ContentModule(PluginModuleId("intellij.unique.module", namespace = "jetbrains"), loading = ModuleLoadingRuleValue.REQUIRED),
         ),
       )
       
@@ -133,13 +133,13 @@ class DuplicateContentModulesTest {
         moduleSets = listOf(ModuleSetWithOverrides(platformTestFrameworksCore, emptyMap())),
         additionalModules = listOf(
           // These are duplicates - already in platformTestFrameworksCore
-          ContentModule(ContentModuleName("intellij.platform.testFramework"), ModuleLoadingRuleValue.REQUIRED),
-          ContentModule(ContentModuleName("intellij.platform.testFramework.common"), ModuleLoadingRuleValue.REQUIRED),
-          ContentModule(ContentModuleName("intellij.platform.testFramework.core"), ModuleLoadingRuleValue.REQUIRED),
-          ContentModule(ContentModuleName("intellij.platform.testFramework.impl"), ModuleLoadingRuleValue.REQUIRED),
-          ContentModule(ContentModuleName("intellij.platform.testFramework.teamCity"), ModuleLoadingRuleValue.REQUIRED),
+          ContentModule(PluginModuleId("intellij.platform.testFramework", namespace = "jetbrains"), loading = ModuleLoadingRuleValue.REQUIRED),
+          ContentModule(PluginModuleId("intellij.platform.testFramework.common", namespace = "jetbrains"), loading = ModuleLoadingRuleValue.REQUIRED),
+          ContentModule(PluginModuleId("intellij.platform.testFramework.core", namespace = "jetbrains"), loading = ModuleLoadingRuleValue.REQUIRED),
+          ContentModule(PluginModuleId("intellij.platform.testFramework.impl", namespace = "jetbrains"), loading = ModuleLoadingRuleValue.REQUIRED),
+          ContentModule(PluginModuleId("intellij.platform.testFramework.teamCity", namespace = "jetbrains"), loading = ModuleLoadingRuleValue.REQUIRED),
           // These are unique
-          ContentModule(ContentModuleName("intellij.rider.test.cases"), ModuleLoadingRuleValue.REQUIRED),
+          ContentModule(PluginModuleId("intellij.rider.test.cases", namespace = "jetbrains"), loading = ModuleLoadingRuleValue.REQUIRED),
         ),
       )
       
@@ -153,7 +153,7 @@ class DuplicateContentModulesTest {
   private fun createModuleSet(name: String, moduleNames: List<String>): ModuleSet {
     return ModuleSet(
       name = name,
-      modules = moduleNames.map { ContentModule(ContentModuleName(it)) },
+      modules = moduleNames.map { ContentModule(PluginModuleId(it, namespace = "jetbrains")) },
       nestedSets = emptyList(),
       alias = null,
       selfContained = false,

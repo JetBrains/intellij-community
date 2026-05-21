@@ -43,6 +43,7 @@ import com.intellij.platform.pluginGraph.TargetDependencyScope
 import com.intellij.platform.pluginGraph.TargetName
 import com.intellij.platform.pluginGraph.aliasNodeName
 import com.intellij.platform.pluginGraph.baseModuleName
+import com.intellij.platform.pluginGraph.contentName
 import com.intellij.platform.pluginGraph.packEdgeEntry
 import com.intellij.platform.pluginGraph.packPluginDepEntry
 import com.intellij.platform.pluginGraph.packTargetDependencyEntry
@@ -58,6 +59,7 @@ import kotlinx.coroutines.coroutineScope
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.productLayout.LIB_MODULE_PREFIX
 import org.jetbrains.intellij.build.productLayout.ModuleSet
+import org.jetbrains.intellij.build.productLayout.contentName
 import org.jetbrains.intellij.build.productLayout.dependency.ModuleDescriptorCache
 import org.jetbrains.intellij.build.productLayout.dependency.PluginContentProvider
 import org.jetbrains.intellij.build.productLayout.discovery.PluginContentInfo
@@ -378,15 +380,16 @@ internal class PluginGraphBuilder(
     content: PluginContentInfo,
     testFrameworkContentModules: Set<ContentModuleName>,
   ) {
-    val contentModuleNames = content.contentModules.mapTo(HashSet()) { it.name }
+    val contentModuleNames = content.contentModules.mapTo(HashSet()) { it.moduleId.contentName() }
     val isTest = content.isTestPlugin || isTestPlugin(pluginModule, contentModuleNames, testFrameworkContentModules)
 
     addPlugin(pluginModule, isTest = isTest, isDslDefined = content.isDslDefined, pluginId = content.pluginId, pluginAliases = content.pluginAliases)
     linkPluginMainTarget(pluginModule)
 
     for (module in content.contentModules) {
+      val contentModuleName = module.moduleId.contentName()
       val loadingMode = module.loadingMode ?: ModuleLoadingRuleValue.OPTIONAL
-      linkPluginContent(pluginName = pluginModule, contentModuleName = module.name, loadingMode = loadingMode, isTest = isTest)
+      linkPluginContent(pluginName = pluginModule, contentModuleName = contentModuleName, loadingMode = loadingMode, isTest = isTest)
     }
   }
 
@@ -672,11 +675,12 @@ internal class PluginGraphBuilder(
     val moduleSetId = addModuleSet(moduleSet.name, selfContained = moduleSet.selfContained)
 
     for (module in moduleSet.modules) {
-      val moduleId = addModule(module.name)
+      val moduleName = module.contentName()
+      val moduleId = addModule(moduleName)
       addContentEdge(moduleSetId, moduleId, EDGE_CONTAINS_MODULE, module.loading)
 
       // Create target vertex and backedBy edge
-      val targetName = TargetName(module.name.baseModuleName().value)
+      val targetName = TargetName(moduleName.baseModuleName().value)
       val targetId = addTarget(targetName)
       addEdge(moduleId, targetId, EDGE_BACKED_BY)
     }
@@ -812,7 +816,7 @@ internal class PluginGraphBuilder(
       for (module in pluginInfo.contentModules) {
         linkPluginContent(
           pluginName = pluginModule,
-          contentModuleName = module.name,
+          contentModuleName = module.moduleId.contentName(),
           loadingMode = module.loadingMode ?: ModuleLoadingRuleValue.OPTIONAL,
           isTest = false,
         )

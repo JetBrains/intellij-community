@@ -64,7 +64,7 @@ internal suspend fun processAndGetProductPluginContentModules(
       addAll(includedPlatformModulesPartialList)
       for ((_, modules) in buildResult.contentBlocks) {
         for ((name) in modules) {
-          add(name.value)
+          add(name.name)
         }
       }
     }
