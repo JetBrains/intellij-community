@@ -156,7 +156,7 @@ Choose the appropriate mechanism based on your needs:
 
 ### Choosing the Right Module Set
 
-See [migration-guide.md](migration-guide.md) for guidance on choosing module sets and migrating from `PLATFORM_CORE_MODULES`.
+See [migration-guide.md](migration-guide.md) for guidance on choosing module sets and migrating from legacy platform core module declarations.
 
 ## How It Works
 

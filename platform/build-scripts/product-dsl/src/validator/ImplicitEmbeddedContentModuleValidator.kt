@@ -44,9 +44,8 @@ import org.jetbrains.intellij.build.productLayout.pipeline.PipelineNode
  *
  * Non-embedded (regular) DSL modules are NOT roots here: they have their own plugin
  * classloader and can depend on content modules of other plugins via the runtime
- * plugin model. The complementary "platform-core implicit pull" path, which originates
- * from the hardcoded `PLATFORM_CORE_MODULES` list in build-scripts, is still covered
- * by the runtime `validateImplicitPlatformModule` check at packaging time.
+ * plugin model. Legacy platform-layout implicit pulls are still covered by the
+ * runtime `validateImplicitPlatformModule` check at packaging time.
  *
  * Inputs: plugin graph (targets + JPS deps + descriptor flags), discovered products.
  * Output: [ImplicitEmbeddedContentModuleError].

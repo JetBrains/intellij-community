@@ -22,6 +22,7 @@
     <module name="intellij.platform.ide.core.plugins"/>
     <module name="intellij.platform.projectFrame"/>
     <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.runtime.product"/>
     <module name="intellij.platform.util.ex"/>
   </dependencies>
   <!-- endregion -->
