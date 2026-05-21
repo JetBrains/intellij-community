@@ -4,7 +4,6 @@ package com.intellij.openapi.vfs;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -295,10 +294,10 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
   }
 
   @Test(timeout = 30_000)
-  public void testRenameDuringFullRefresh() throws IOException { doRenameAndRefreshTest(true); }
+  public void testRenameDuringFullRefreshPerformance() throws IOException { doRenameAndRefreshTest(true); }
 
   @Test(timeout = 120_000)
-  public void testRenameDuringPartialRefresh() throws IOException { doRenameAndRefreshTest(false); }
+  public void testRenameDuringPartialRefreshPerformance() throws IOException { doRenameAndRefreshTest(false); }
 
   private void doRenameAndRefreshTest(boolean full) throws IOException {
     ThreadingAssertions.assertBackgroundThread();
@@ -312,28 +311,22 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     var child = parent.findChild(testFile.getFileName().toString());
     assertNotNull(child);
 
-    ApplicationManagerEx.setInStressTest(true);
-    try {
-      var files = List.of(parent);
-      var semaphore = new Semaphore();
-      for (var i = 0; i < 1000; i++) {
-        semaphore.down();
-        VfsUtil.markDirty(true, false, parent);
-        LocalFileSystem.getInstance().refreshFiles(files, true, true, semaphore::up);
+    var files = List.of(parent);
+    var semaphore = new Semaphore();
+    for (var i = 0; i < 1000; i++) {
+      semaphore.down();
+      VfsUtil.markDirty(true, false, parent);
+      LocalFileSystem.getInstance().refreshFiles(files, true, true, semaphore::up);
 
-        assertTrue(child.isValid());
-        var newName = "name" + i + ".txt";
-        WriteAction.runAndWait(() -> child.rename(this, newName));
-        assertTrue(child.isValid());
+      assertTrue(child.isValid());
+      var newName = "name" + i + ".txt";
+      WriteAction.runAndWait(() -> child.rename(this, newName));
+      assertTrue(child.isValid());
 
-        TimeoutUtil.sleep(1);  // needed to prevent frequent event detector from triggering
-      }
-
-      semaphore.waitFor();
+      TimeoutUtil.sleep(1);  // needed to prevent frequent event detector from triggering
     }
-    finally {
-      ApplicationManagerEx.setInStressTest(false);
-    }
+
+    semaphore.waitFor();
   }
 
   @Test(timeout = 20_000)

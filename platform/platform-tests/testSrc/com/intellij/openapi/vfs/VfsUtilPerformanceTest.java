@@ -3,7 +3,6 @@ package com.intellij.openapi.vfs;
 
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.JobSchedulerImpl;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.FrequentEventDetector;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,8 +30,6 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.ints.IntSets;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -59,16 +56,6 @@ import static org.junit.Assert.assertTrue;
 @PerformanceUnitTest
 public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
   @Rule public TempDirectory tempDir = new TempDirectory();
-
-  @BeforeClass
-  public static void setupInStressTestsFlag() {
-    ApplicationManagerEx.setInStressTest(true);
-  }
-
-  @AfterClass
-  public static void clearInStressTestsFlag() {
-    ApplicationManagerEx.setInStressTest(false);
-  }
 
   @Test
   public void testFindChildByNamePerformance() throws IOException {

@@ -15,8 +15,14 @@ class TestFixtureRule : ExternalResource() {
     private set
 
   override fun apply(base: Statement, description: Description): Statement {
-    ApplicationManagerEx.setInStressTest(TestFrameworkUtil.isStressTest(description.methodName, description.testClass))
-    return super.apply(base, description)
+    val superStatement = super.apply(base, description)
+    return object : Statement() {
+      override fun evaluate() {
+        ApplicationManagerEx.runInStressTest<Exception>(TestFrameworkUtil.isStressTest(description.methodName, description.testClass)) {
+          superStatement.evaluate()
+        }
+      }
+    }
   }
 
   override fun before() {
@@ -30,11 +36,6 @@ class TestFixtureRule : ExternalResource() {
   }
 
   override fun after() {
-    try {
-      fixture.tearDown()
-    }
-    finally {
-      ApplicationManagerEx.setInStressTest(false)
-    }
+    fixture.tearDown()
   }
 }
