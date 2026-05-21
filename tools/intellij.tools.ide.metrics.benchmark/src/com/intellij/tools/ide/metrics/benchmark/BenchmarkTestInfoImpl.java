@@ -285,14 +285,7 @@ public class BenchmarkTestInfoImpl implements BenchmarkTestInfo {
   @Override
   public void start() {
     if (setInStressTest) {
-      boolean wasInStressTestBefore = ApplicationManagerEx.isInStressTest();
-      ApplicationManagerEx.setInStressTest(true);
-      try {
-        start(getCallingTestMethod(), launchName);
-      }
-      finally {
-        ApplicationManagerEx.setInStressTest(wasInStressTestBefore);
-      }
+      ApplicationManagerEx.runInStressTest(true, ()-> start(getCallingTestMethod(), launchName));
     }
     else {
       Application app = ApplicationManager.getApplication();
@@ -300,7 +293,7 @@ public class BenchmarkTestInfoImpl implements BenchmarkTestInfo {
         if (!ApplicationManagerEx.isInStressTest()) {
           Logger log = Logger.getInstance(BenchmarkTestInfoImpl.class);
           log.error("ApplicationManagerEx.isInStressTest=false -- not good for reliable benchmarks!\n" +
-                    "Either use .runInStressTest() on the benchmark, or @StressTestApplication on the test itself");
+                    "Either use `BenchmarkTestInfoImpl.runAsStressTest()`, or @StressTestApplication on the test itself");
         }
       }
       start(getCallingTestMethod(), launchName);
