@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.dom
 
 import com.intellij.ide.highlighter.XmlFileType
 import com.intellij.maven.testFramework.fixtures.mavenFixture
+import com.intellij.openapi.externalSystem.util.runReadAction
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
 import com.intellij.testFramework.junit5.TestApplication
@@ -213,6 +214,8 @@ class MavenDomUtilTest {
   }
 
   fun createXmlFile(text: String): PsiFile {
-    return PsiFileFactory.getInstance(maven.project).createFileFromText("pom.xml", XmlFileType.INSTANCE, text);
+    return runReadAction {
+      PsiFileFactory.getInstance (maven.project).createFileFromText("pom.xml", XmlFileType.INSTANCE, text)
+    }
   }
 }

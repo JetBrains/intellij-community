@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
@@ -63,6 +64,11 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
     DocumentEx document = (DocumentEx)getCachedDocument(file);
     if (document != null) {
       return document;
+    }
+
+    if (InternalPsiVersioning.isInsideVersioningButNotLocks()) {
+      // todo: we need to rely on cached document here. At the moment of usage of versioned environment, the document should already be initialized.
+      return null;
     }
 
     if (!file.isValid() || file.isDirectory() || isBinaryWithoutDecompiler(file)) {

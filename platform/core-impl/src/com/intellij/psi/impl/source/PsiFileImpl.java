@@ -209,6 +209,11 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       // but there's temporary disposed project in tests, which doesn't actually dispose its components :(
       return false;
     }
+    if (InternalPsiVersioning.isInsideVersioningButNotLocks()) {
+      // in versioning environment, files are kept valid.
+      // it is not possible to access virtual files anyway
+      return true;
+    }
     if (!myViewProvider.getVirtualFile().isValid()) {
       // PSI listeners receive VFS deletion events and do markInvalidated
       // but some VFS listeners receive the same events before that and ask PsiFile.isValid
@@ -240,7 +245,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   protected void assertReadAccessAllowed() {
     VirtualFile virtualFile = myViewProvider.getVirtualFile();
     if (virtualFile instanceof ReadOnlyLightVirtualFile) return;
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+    InternalPsiVersioning.assertReadAccessOrVersionedEnvironment();
   }
 
   private @NotNull FileElement loadTreeElement() {
@@ -835,7 +840,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
     VirtualFile vFile = getVirtualFile();
 
-    ObjectStubTree<?> tree = StubTreeLoader.getInstance().readOrBuild(getProject(), vFile, this);
+    ObjectStubTree<?> tree = InternalPsiVersioning.isInsideVersioningButNotLocks() ? null : StubTreeLoader.getInstance().readOrBuild(getProject(), vFile, this);
     if (!(tree instanceof StubTree)) return Pair.empty();
     FileViewProvider viewProvider = getViewProvider();
     List<Pair<LanguageStubDescriptor, PsiFile>> roots = StubTreeBuilder.getStubbedRootDescriptors(viewProvider);

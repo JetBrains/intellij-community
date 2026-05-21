@@ -67,6 +67,7 @@ import com.intellij.psi.impl.file.impl.FileManagerEx;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
+import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
@@ -187,6 +188,9 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
   }
 
   private static @NotNull PsiFile ensureValidFile(@NotNull PsiFile psiFile, @NotNull @NonNls String debugInfo) {
+    if (InternalPsiVersioning.isInsideVersioningButNotLocks()) {
+      return psiFile;
+    }
     if (!psiFile.isValid()) throw new PsiInvalidElementAccessException(psiFile, debugInfo);
     return psiFile;
   }

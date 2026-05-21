@@ -188,7 +188,16 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
     Document document = com.intellij.reference.SoftReference.dereference(myDocument);
     if (document == null) {
       VirtualFile file = getVirtualFile();
-      document = FileDocumentManager.getInstance().getDocument(file, myManager.getProject());
+      if (InternalPsiVersioning.isInsideVersioningButNotLocks()) {
+        document = FileDocumentManager.getInstance().getCachedDocument(file);
+        if (document == null) {
+          LOG.error("Attempt to interact with uninitialized document " + file + " in versioned environment.\n" +
+                    "It is assumed that versioned environment is used after the initialization process of the editor, and there are enough hard references to document at this point.\n" +
+                    "To fix this error, ensure that you are not interacting with a document before it is fully loaded.");
+        }
+      } else {
+        document = FileDocumentManager.getInstance().getDocument(file, myManager.getProject());
+      }
       myDocument = document == null ? null : new SoftReference<>(document);
     }
     return document;

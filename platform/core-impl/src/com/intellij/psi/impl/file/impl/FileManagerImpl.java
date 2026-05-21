@@ -46,6 +46,7 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.impl.file.impl.FileViewProviderCache.Entry;
+import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -261,6 +262,10 @@ public final class FileManagerImpl implements FileManagerEx {
   @Override
   public FileViewProvider findCachedViewProvider(@NotNull VirtualFile vFile, @NotNull CodeInsightContext context) {
     FileViewProvider viewProvider = myVFileToViewProviderMap.getAndReanimateIfNecessary(vFile, context);
+    if (InternalPsiVersioning.isInsideVersioningButNotLocks()) {
+      return viewProvider;
+    }
+
     if (viewProvider == null) {
       return myLightViewProviderCache.getAndReanimateIfNecessary(vFile, context);
     }
@@ -472,8 +477,8 @@ public final class FileManagerImpl implements FileManagerEx {
   }
 
   @Override
-  @RequiresReadLock
   public @Nullable PsiFile findFile(@NotNull VirtualFile vFile, @NotNull CodeInsightContext context) {
+    InternalPsiVersioning.assertReadAccessOrVersionedEnvironment();
     if (vFile.isDirectory()) return null;
 
     if (!vFile.isValid()) {
