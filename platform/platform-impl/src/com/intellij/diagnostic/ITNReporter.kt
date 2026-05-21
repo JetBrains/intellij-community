@@ -68,7 +68,8 @@ open class ITNReporter internal constructor(private val postUrl: String?) : Erro
       val reportId = ITNProxy.sendError(errorBean, postUrl)
       SubmittedReportInfo(ITNProxy.getBrowseUrl(reportId), reportId.toString(), SubmittedReportInfo.SubmissionStatus.NEW_ISSUE)
     }
-    catch (_: Exception) {
+    catch (e: Exception) {
+      LOG.warn("Failed to submit exception automatically", e)
       SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED)
     }
   }
@@ -130,9 +131,8 @@ open class ITNReporter internal constructor(private val postUrl: String?) : Erro
     parentComponent: Component,
     callback: (SubmittedReportInfo) -> Unit
   ) {
-    val logger = Logger.getInstance(ITNReporter::class.java)
-    logger.info("reporting failed: ${e}")
-    logger.debug(e)
+    LOG.info("reporting failed: ${e}")
+    LOG.debug(e)
     withContext(Dispatchers.EDT) {
       if (e is UpdateAvailableException) {
         val message = DiagnosticBundle.message("error.report.new.build.message", e.message)
@@ -154,5 +154,10 @@ open class ITNReporter internal constructor(private val postUrl: String?) : Erro
         }
       }
     }
+  }
+  
+  @ApiStatus.Internal
+  companion object {
+    private val LOG = Logger.getInstance(ITNReporter::class.java)
   }
 }
