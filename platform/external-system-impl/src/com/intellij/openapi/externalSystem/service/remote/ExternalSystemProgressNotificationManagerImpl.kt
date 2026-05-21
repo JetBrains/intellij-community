@@ -4,6 +4,7 @@ package com.intellij.openapi.externalSystem.service.remote
 import com.intellij.execution.process.ProcessOutputType
 import com.intellij.execution.rmi.RemoteObject
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
@@ -188,7 +189,9 @@ class ExternalSystemProgressNotificationManagerImpl : RemoteObject(), ExternalSy
     @TestOnly
     @ApiStatus.Internal
     fun assertListenersReleased() {
-      assertListenersReleased(null, emptyMap())
+      if (ApplicationManager.getApplication() != null) {
+        assertListenersReleased(null, emptyMap())
+      }
     }
 
     @JvmStatic
@@ -209,7 +212,9 @@ class ExternalSystemProgressNotificationManagerImpl : RemoteObject(), ExternalSy
     @TestOnly
     @ApiStatus.Internal
     fun cleanupListeners() {
-      getInstanceImpl().dispatcher.listeners.clear()
+      if (ApplicationManager.getApplication() != null) {
+        getInstanceImpl().dispatcher.listeners.clear()
+      }
     }
   }
 }

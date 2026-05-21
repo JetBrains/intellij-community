@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl
-import com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl.Companion.cleanupListeners
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager.Companion.getInstance
 import com.intellij.openapi.module.ModuleType
@@ -17,7 +16,6 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.ByteArraySequence
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -30,6 +28,7 @@ import com.intellij.testFramework.RunAll.Companion.runAll
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
+import com.intellij.testFramework.utils.io.deleteRecursively
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.PathUtil
 import com.intellij.util.ThrowableRunnable
@@ -63,14 +62,15 @@ abstract class NioExternalSystemTestCase : UsefulTestCase() {
     get() = projectConfig!!
 
   private var projectRoot: VirtualFile? = null
-  val projectPath: String
-    get() = projectRoot!!.getPath()
-
   var myProjectRoot: VirtualFile
     get() = projectRoot!!
     set(value) {
       projectRoot = value
     }
+  val projectPath: String
+    get() = myProjectRoot.getPath()
+  val projectNioPath: Path
+    get() = myProjectRoot.toNioPath()
 
   private var allConfigs: MutableList<VirtualFile?> = ArrayList()
 
@@ -150,13 +150,10 @@ abstract class NioExternalSystemTestCase : UsefulTestCase() {
       },
       { EdtTestUtil.runInEdtAndWait<RuntimeException?> { tearDownFixtures() } },
       { project = null },
-      {
-        if (testDir != null) {
-          NioFiles.deleteRecursively(testDir!!)
-        }
-      },
+      { testDir?.deleteRecursively() },
+      { testDir = null },
       { ExternalSystemProgressNotificationManagerImpl.assertListenersReleased() },
-      { cleanupListeners() },
+      { ExternalSystemProgressNotificationManagerImpl.cleanupListeners() },
       { super.tearDown() },
       { resetClassFields(javaClass) }
     ).run()
@@ -164,7 +161,7 @@ abstract class NioExternalSystemTestCase : UsefulTestCase() {
 
   protected open fun tearDownFixtures() {
     runAll(
-      { myTestFixture.tearDown() },
+      { testFixture?.tearDown() },
       { testFixture = null }
     )
   }
