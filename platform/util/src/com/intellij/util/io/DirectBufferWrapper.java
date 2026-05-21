@@ -18,8 +18,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  * <br>
  * <br>
  * This class direct provides access to underlying {@linkplain ByteBuffer}, as long as convenient methods getInt, getLong/putInt,
- * putLong, etc, which also responsible to marking buffer as 'dirty' (hence need to be stored), and extend file, if needed
- * (see {@linkplain #fileSizeMayChanged}).
+ * putLong, etc, which also responsible to marking buffer as 'dirty' (hence need to be stored), and extend file, if needed.
  * <br>
  * <br>
  * Buffer lifecycle is managed with reference counting: buffer initializes with refCount=0, and refCount incremented/decremented by calls
@@ -35,6 +34,8 @@ public final class DirectBufferWrapper {
    */
   private static final int RELEASED_CODE = -1;
 
+  private static final long EMPTY_MODIFIED_REGION = 0;
+
   private static final AtomicIntegerFieldUpdater<DirectBufferWrapper> REF_UPDATER =
     AtomicIntegerFieldUpdater.newUpdater(DirectBufferWrapper.class, "myReferences");
 
@@ -46,11 +47,11 @@ public final class DirectBufferWrapper {
   private final long myPosition;
 
   /**
-   * Offset of the first _not_ changed byte within buffer -- i.e. it is the same as buffer.limit(), but kept separated from buffer.
+   * Modified region [modifiedFrom, modifiedTo) of {@linkplain #myBuffer}, packed into a single long for atomic reads.
+   * <p>
+   * {@code myModifiedRegionPacked = (modifiedTo << 32) | modifiedFrom}.
    */
-  private volatile int myBufferDataEndPos;
-
-  private volatile boolean myDirty;
+  private volatile long myModifiedRegionPacked = EMPTY_MODIFIED_REGION;
   /**
    * How many clients have locked (i.e. have in use) this buffer right now, or {@linkplain #RELEASED_CODE}, if buffer was already
    * released (i.e. taken out of use -- terminal state). See {@linkplain #tryLock()}/{@linkplain #unlock()}/{@linkplain #tryRelease(boolean)}.
@@ -71,28 +72,56 @@ public final class DirectBufferWrapper {
     return myBuffer;
   }
 
-  public void markDirty() throws IOException {
-    if (!myDirty) {
-      if (myFile.isReadOnly()) {
-        throw new IOException("Read-only byte buffer can't be modified. File: " + myFile);
-      }
-      myDirty = true;
+  private void checkWritable() throws IOException {
+    if (myFile.isReadOnly()) {
+      throw new IOException("Read-only byte buffer can't be modified. File: " + myFile);
+    }
+  }
+
+  private void regionModified(int modifiedFrom, int modifiedTo) {
+    if (modifiedFrom == modifiedTo) {
+      return;
+    }
+
+    long modifiedRegionOld = myModifiedRegionPacked;
+    int modifiedFromOld = unpackModifiedFrom(modifiedRegionOld);
+    int modifiedToOld = unpackModifiedTo(modifiedRegionOld);
+
+    int modifiedFromNew = modifiedRegionOld == EMPTY_MODIFIED_REGION ? modifiedFrom : Math.min(modifiedFromOld, modifiedFrom);
+    int modifiedToNew = Math.max(modifiedToOld, modifiedTo);
+
+    if (modifiedFromOld == modifiedFromNew && modifiedToOld == modifiedToNew) {
+      return;
+    }
+
+    long modifiedRegionNew = packModifiedRegion(modifiedFromNew, modifiedToNew);
+    myModifiedRegionPacked = modifiedRegionNew;
+
+    //RC: i'd say it is not 'cachedSizeAtLeast' but 'ensureCachedPositionAtLeast',
+    //    because (myPosition + modifiedTo) => position of last occupied byte in buffer,
+    //    not 'size', which is position of last occupied byte +1
+    if (modifiedTo > modifiedToOld) {
+      myFile.ensureCachedSizeAtLeast(myPosition + modifiedTo);
+    }
+    if (modifiedRegionOld == EMPTY_MODIFIED_REGION && modifiedRegionNew != EMPTY_MODIFIED_REGION) {
       myFile.markDirty();
     }
   }
 
-  public void fileSizeMayChanged(int bufferDataEndPos) {
-    if (bufferDataEndPos > myBufferDataEndPos) {
-      myBufferDataEndPos = bufferDataEndPos;
-      //RC: i'd say it is not 'cachedSizeAtLeast' but 'ensureCachedPositionAtLeast',
-      //    because (myPosition + myBufferDataEndPos) => position of last occupied
-      //    byte in buffer, not 'size', which is position of last occupied byte +1
-      myFile.ensureCachedSizeAtLeast(myPosition + myBufferDataEndPos);
-    }
+  private static long packModifiedRegion(int modifiedFrom, int modifiedTo) {
+    return ((long)modifiedFrom) | (((long)modifiedTo) << Integer.SIZE);
+  }
+
+  private static int unpackModifiedFrom(long modifiedRegionPacked) {
+    return (int)modifiedRegionPacked;
+  }
+
+  private static int unpackModifiedTo(long modifiedRegionPacked) {
+    return (int)(modifiedRegionPacked >> Integer.SIZE);
   }
 
   public boolean isDirty() {
-    return myDirty;
+    return myModifiedRegionPacked != EMPTY_MODIFIED_REGION;
   }
 
   public ByteBuffer copy() {
@@ -121,9 +150,9 @@ public final class DirectBufferWrapper {
     StorageLockContext context = myFile.getStorageLockContext();
     context.checkWriteAccess();
 
-    markDirty();
+    checkWritable();
     myBuffer.putLong(index, value);
-    fileSizeMayChanged(index + 8);
+    regionModified(index, index + Long.BYTES);
   }
 
   public int getInt(int index) {
@@ -137,9 +166,9 @@ public final class DirectBufferWrapper {
     StorageLockContext context = myFile.getStorageLockContext();
     context.checkWriteAccess();
 
-    markDirty();
+    checkWritable();
     myBuffer.putInt(index, value);
-    fileSizeMayChanged(index + 4);
+    regionModified(index, index + Integer.BYTES);
   }
 
   public void position(int newPosition) {
@@ -160,18 +189,19 @@ public final class DirectBufferWrapper {
     StorageLockContext context = myFile.getStorageLockContext();
     context.checkWriteAccess();
 
-    markDirty();
+    checkWritable();
+    int modifiedFrom = myBuffer.position();
     myBuffer.put(src);
-    fileSizeMayChanged(myBuffer.position());
+    regionModified(modifiedFrom, myBuffer.position());
   }
 
   public void put(int index, byte b) throws IOException {
     StorageLockContext context = myFile.getStorageLockContext();
     context.checkWriteAccess();
 
-    markDirty();
+    checkWritable();
     myBuffer.put(index, b);
-    fileSizeMayChanged(index + 1);
+    regionModified(index, index + 1);
   }
 
   public void readToArray(byte[] dst, int o, int page_offset, int page_len, boolean checkAccess) throws IllegalArgumentException {
@@ -187,23 +217,23 @@ public final class DirectBufferWrapper {
     StorageLockContext context = myFile.getStorageLockContext();
     context.checkWriteAccess();
 
-    markDirty();
+    checkWritable();
     ByteBuffer buf = myBuffer.duplicate();
     buf.position(page_offset);
     buf.put(src, o, page_len);
-    fileSizeMayChanged(buf.position());
+    regionModified(page_offset, buf.position());
   }
 
   public void putFromBuffer(@NotNull ByteBuffer data, int page_offset) throws IOException, IllegalArgumentException {
     StorageLockContext context = myFile.getStorageLockContext();
     context.checkWriteAccess();
 
-    markDirty();
+    checkWritable();
     ByteBuffer buf = myBuffer.duplicate();
 
     buf.position(page_offset);
     buf.put(data);
-    fileSizeMayChanged(buf.position());
+    regionModified(page_offset, buf.position());
   }
 
   public boolean tryLock() {
@@ -277,20 +307,23 @@ public final class DirectBufferWrapper {
       throw new IllegalStateException("Can't flush .readOnly page: " + this);
     }
     if (isDirty()) {
+      long modifiedRegion = myModifiedRegionPacked;
+      int modifiedFrom = unpackModifiedFrom(modifiedRegion);
+      int modifiedTo = unpackModifiedTo(modifiedRegion);
       ByteBuffer buffer = myBuffer.duplicate();
-      buffer.rewind();
-      buffer.limit(myBufferDataEndPos);
+      buffer.position(modifiedFrom);
+      buffer.limit(modifiedTo);
 
       long startedAtNs = System.nanoTime();
       myFile.executeIdempotentOp(ch -> {
-        ch.write(buffer, myPosition);
+        ch.write(buffer, myPosition + modifiedFrom);
         return null;
       }, /*readOnly: */ false);
 
-      myDirty = false;
+      myModifiedRegionPacked = EMPTY_MODIFIED_REGION;
 
       long durationNs = System.nanoTime() - startedAtNs;
-      int bytesStored = myBufferDataEndPos;
+      int bytesStored = modifiedTo - modifiedFrom;
       storageLockContext.getBufferCache().reportStoreStats(bytesStored, NANOSECONDS.toMicros(durationNs) );
     }
   }
