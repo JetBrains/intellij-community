@@ -1,10 +1,19 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
+import com.intellij.codeInsight.FileModificationService
+import com.intellij.codeInsight.actions.OptimizeImportsProcessor
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.InspectionManager
+import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
+import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.idea.devkit.DevKitBundle
@@ -13,6 +22,8 @@ import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UClassLiteralExpression
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.getParentOfType
+import org.jetbrains.uast.toUElementOfType
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
 private const val EXTEND_WITH_FQN = "org.junit.jupiter.api.extension.ExtendWith"
@@ -52,20 +63,79 @@ class DebugOnlyTestExtensionInspection : DevKitUastInspectionBase(UClass::class.
           targetPsi,
           DevKitBundle.message("inspections.debug.only.test.extension.message", simpleName),
           ProblemHighlightType.ERROR,
+          RemoveDebugOnlyExtensionFix(targetPsi, simpleName),
         )
       }
     }
     return holder?.resultsArray
   }
+}
 
-  private fun collectClassLiterals(expression: UExpression): List<UClassLiteralExpression> {
-    val result = mutableListOf<UClassLiteralExpression>()
-    expression.accept(object : AbstractUastVisitor() {
-      override fun visitClassLiteralExpression(node: UClassLiteralExpression): Boolean {
-        result += node
-        return false
+private fun collectClassLiterals(expression: UExpression): List<UClassLiteralExpression> {
+  val result = mutableListOf<UClassLiteralExpression>()
+  expression.accept(object : AbstractUastVisitor() {
+    override fun visitClassLiteralExpression(node: UClassLiteralExpression): Boolean {
+      result += node
+      return false
+    }
+  })
+  return result
+}
+
+private class RemoveDebugOnlyExtensionFix(
+  classLiteralPsi: PsiElement,
+  private val simpleName: String,
+) : LocalQuickFix {
+
+  private val pointer: SmartPsiElementPointer<PsiElement> = SmartPointerManager.createPointer(classLiteralPsi)
+
+  override fun getFamilyName(): String =
+    DevKitBundle.message("inspections.debug.only.test.extension.fix.family.name")
+
+  override fun getName(): String =
+    DevKitBundle.message("inspections.debug.only.test.extension.fix.name", simpleName)
+
+  override fun startInWriteAction(): Boolean = false
+
+  override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
+    val classLiteralPsi = previewDescriptor.psiElement ?: return IntentionPreviewInfo.EMPTY
+    removeFromAnnotation(classLiteralPsi)
+    return IntentionPreviewInfo.DIFF
+  }
+
+  override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+    val classLiteralPsi = pointer.element ?: return
+    val containingFile = classLiteralPsi.containingFile ?: return
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(classLiteralPsi)) return
+
+    WriteCommandAction.runWriteCommandAction(project, getName(), null, Runnable {
+      removeFromAnnotation(classLiteralPsi)
+    }, containingFile)
+
+    OptimizeImportsProcessor(project, containingFile).run()
+  }
+
+  private fun removeFromAnnotation(classLiteralPsi: PsiElement) {
+    val uClassLiteral = classLiteralPsi.toUElementOfType<UClassLiteralExpression>() ?: return
+    val uAnnotation = uClassLiteral.getParentOfType<UAnnotation>(strict = true) ?: return
+    val annotationPsi = uAnnotation.sourcePsi ?: return
+
+    val valueExpression = uAnnotation.findDeclaredAttributeValue("value")
+                          ?: uAnnotation.findAttributeValue("value")
+    val literalCount = if (valueExpression != null) collectClassLiterals(valueExpression).size else 1
+
+    if (literalCount <= 1) {
+      annotationPsi.delete()
+      return
+    }
+
+    val toDelete: PsiElement =
+      if (classLiteralPsi.language.id == "kotlin") {
+        classLiteralPsi.parent ?: classLiteralPsi
       }
-    })
-    return result
+      else {
+        classLiteralPsi
+      }
+    toDelete.delete()
   }
 }
