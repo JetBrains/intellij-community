@@ -26,30 +26,6 @@ import org.jetbrains.jewel.markdown.rendering.LocalMarkdownImageSourceResolver
 import org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
 
-@Deprecated("Please use the MarkdownStyling without a themeName")
-@ExperimentalJewelApi
-@ApiStatus.Experimental
-@Composable
-public fun ProvideMarkdownStyling(
-    themeName: String = JewelTheme.name,
-    markdownStyling: MarkdownStyling = remember(themeName) { MarkdownStyling.create() },
-    markdownMode: MarkdownMode = MarkdownMode.Standalone,
-    markdownProcessor: MarkdownProcessor = remember { MarkdownProcessor(markdownMode = markdownMode) },
-    markdownBlockRenderer: MarkdownBlockRenderer =
-        remember(markdownStyling) { MarkdownBlockRenderer.create(markdownStyling) },
-    codeHighlighter: CodeHighlighter = remember { NoOpCodeHighlighter },
-    content: @Composable () -> Unit,
-) {
-    ProvideMarkdownStyling(
-        markdownStyling,
-        markdownMode,
-        markdownProcessor,
-        markdownBlockRenderer,
-        codeHighlighter,
-        content,
-    )
-}
-
 /**
  * Provide Markdown styling, for scenarios where you have access to a [Project].
  *

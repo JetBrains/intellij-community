@@ -37,36 +37,6 @@ public interface MarkdownBlockRendererExtension {
     public fun canRender(block: CustomBlock): Boolean
 
     /**
-     * Render a [MarkdownBlock.CustomBlock] as a native Composable. Note that if [canRender] returns `false` for
-     * [block], the implementation might throw.
-     *
-     * @param block The [MarkdownBlock.CustomBlock] to render.
-     * @param blockRenderer The [MarkdownBlockRenderer] to use to render other blocks if necessary.
-     * @param inlineRenderer The [InlineMarkdownRenderer] to use to render inline elements if necessary.
-     * @param enabled Whether The rendered content should be enabled.
-     * @param modifier The modifier to be applied to the composable.
-     * @param onUrlClick The callback to invoke when a URL is clicked.
-     * @param onTextClick The callback to invoke when a text part is clicked. **Ignored.**
-     */
-    @Deprecated(
-        "Use RenderCustomBlock instead; the onTextClick parameter is no longer supported.",
-        ReplaceWith("RenderCustomBlock(block, blockRenderer, inlineRenderer, enabled, modifier, onUrlClick)"),
-    )
-    @Suppress("ComposableNaming")
-    @Composable
-    public fun render(
-        block: CustomBlock,
-        blockRenderer: MarkdownBlockRenderer,
-        inlineRenderer: InlineMarkdownRenderer,
-        enabled: Boolean,
-        modifier: Modifier,
-        onUrlClick: (String) -> Unit,
-        onTextClick: () -> Unit,
-    ) {
-        RenderCustomBlock(block, blockRenderer, inlineRenderer, enabled, modifier, onUrlClick)
-    }
-
-    /**
      * Renders a [MarkdownBlock.CustomBlock] as a native Composable.
      *
      * Note that if [canRender] returns `false` for a given [block], the implementation of this method may throw an

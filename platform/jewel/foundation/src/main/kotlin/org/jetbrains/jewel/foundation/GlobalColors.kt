@@ -94,18 +94,6 @@ public class TextColors(
     public val error: Color,
     public val warning: Color,
 ) {
-    @Deprecated(
-        "Use the primary constructors with disabledSelected and warning, instead.",
-        ReplaceWith("TextColors(normal, selected, disabled, disabled, info, error, normal)"),
-    )
-    public constructor(
-        normal: Color,
-        selected: Color,
-        disabled: Color,
-        info: Color,
-        error: Color,
-    ) : this(normal, selected, disabled, disabled, info, error, normal)
-
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false

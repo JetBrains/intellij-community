@@ -486,8 +486,8 @@ class WelcomeScreenRightTab(
       ) { item, isSelected, isActive ->
         SimpleListItem(
           text = item,
-          isSelected = isSelected,
-          isActive = isActive,
+          selected = isSelected,
+          active = isActive,
           iconContentDescription = item,
         )
       }
