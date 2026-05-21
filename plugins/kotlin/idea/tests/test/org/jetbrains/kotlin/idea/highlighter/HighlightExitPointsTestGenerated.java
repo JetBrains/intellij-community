@@ -230,6 +230,11 @@ public class HighlightExitPointsTestGenerated extends AbstractCustomHighlightUsa
         runTest("testData/exitPoints/inLambdaAndUsages.kt");
     }
 
+    @TestMetadata("inLambdaLBrace.kt")
+    public void testInLambdaLBrace() throws Exception {
+        runTest("testData/exitPoints/inLambdaLBrace.kt");
+    }
+
     @TestMetadata("inLambdaLastStatement1.kt")
     public void testInLambdaLastStatement1() throws Exception {
         runTest("testData/exitPoints/inLambdaLastStatement1.kt");
