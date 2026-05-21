@@ -102,7 +102,12 @@ Available via ijproxy or JetBrains MCP. Use these for semantic operations; avoid
 - Never shell for file ops (`cat`, `sed`, `find`, `grep`) on repo paths, except the client fallback (`./tools/fd.cmd`, `./tools/rg.cmd`) when no MCP is available.
 <!-- /IF_EDITION:COMMUNITY -->
 - Shell OK for: git (prefer `git_status` if the tool is available), build/test.
-- Outside repo: native shell permitted.
+<!-- IF_EDITION:ULTIMATE -->
+- Outside repo: native shell permitted, except for text/file search — use `./community/tools/rg.cmd` and `./community/tools/fd.cmd` (absolute paths OK) instead of native `grep`/`find`.
+<!-- /IF_EDITION:ULTIMATE -->
+<!-- IF_EDITION:COMMUNITY -->
+- Outside repo: native shell permitted, except for text/file search — use `./tools/rg.cmd` and `./tools/fd.cmd` (absolute paths OK) instead of native `grep`/`find`.
+<!-- /IF_EDITION:COMMUNITY -->
 
 {{PARTIAL:knowledge-mcps}}
 
