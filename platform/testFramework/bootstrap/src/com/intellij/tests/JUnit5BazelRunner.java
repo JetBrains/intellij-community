@@ -3,6 +3,7 @@ package com.intellij.tests;
 
 import com.intellij.tests.bazel.BazelJUnitOutputListener;
 import com.intellij.tests.bazel.IjSmTestExecutionListener;
+import com.intellij.tests.bazel.TestExecutionOutputDecorator;
 import com.intellij.tests.bazel.bucketing.BucketsPostDiscoveryFilter;
 import com.intellij.platform.bazel.runfiles.BazelRunfilesManifest;
 import org.junit.platform.engine.DiscoverySelector;
@@ -27,9 +28,6 @@ import org.junit.vintage.engine.descriptor.VintageTestDescriptor;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -51,7 +49,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -321,6 +318,8 @@ public final class JUnit5BazelRunner {
       } else {
         myListeners.add(new ConsoleTestLogger());
       }
+    } else {
+      myListeners.add(new TestExecutionOutputDecorator(System.out));
     }
     return myListeners;
   }
