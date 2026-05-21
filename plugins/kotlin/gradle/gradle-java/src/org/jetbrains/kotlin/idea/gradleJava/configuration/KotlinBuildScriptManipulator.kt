@@ -690,9 +690,10 @@ class KotlinBuildScriptManipulator(
         val kotlinVersion = getKotlinVersion()
         val featureArgumentString = feature.buildArgumentString(state, kotlinVersion)
         val parameterName = "freeCompilerArgs"
+        val parameterNameAndValueExpression = psiFactory.createExpression("$parameterName = listOf(\"$featureArgumentString\")")
         return addOrReplaceKotlinTaskParameter(
             parameterName,
-            "listOf(\"$featureArgumentString\")",
+            parameterNameAndValueExpression,
             forTests
         ) { _, preserveAssignmentWhenReplacing ->
             val prefix: String // prefix is used only when adding a new value
@@ -757,10 +758,14 @@ class KotlinBuildScriptManipulator(
      * languageVersion
      * apiVersion
      * jvmTarget
+     *
+     * @param parameterNameAndValueExpression the full PSI expression to insert when the parameter is missing
+     * (e.g. `freeCompilerArgs = listOf(...)` or `freeCompilerArgs.addAll(...)`). The function does not
+     * build the assignment itself because a task parameter may be added some other way.
      */
     private fun KtFile.addOrReplaceKotlinTaskParameter(
         parameterName: String,
-        parameterValue: String,
+        parameterNameAndValueExpression: KtExpression,
         forTests: Boolean,
         kotlinVersion: IdeKotlinVersion? = null,
         replaceIt: KtExpression.(/* precomputedReplacement */ String?, /* preserveAssignmentWhenReplacing = */ Boolean) -> PsiElement
@@ -770,29 +775,39 @@ class KotlinBuildScriptManipulator(
         // We leave deprecated `kotlinOptions` untouched, it can be updated with `kotlinOptions` to `compilerOptions` inspection
         return if (kotlinOptionsBlock != null) {
             val assignment = kotlinOptionsBlock.statements.find {
-                (it as? KtBinaryExpression)?.left?.text == parameterName
+                (it as? KtBinaryExpression)?.left?.matchesNameReference(parameterName) == true
             }
             assignment?.replaceIt(/* precomputedReplacement = */ null, /* preserveAssignmentWhenReplacing = */ true)
-                ?: kotlinOptionsBlock.addExpressionIfMissing("$parameterName = $parameterValue")
+                ?: kotlinOptionsBlock.addExpressionIfMissing(parameterNameAndValueExpression.text)
         } else {
             if (projectSupportsCompilerOptions(this, kotlinVersion)) {
-                addOptionToCompilerOptions(taskName, parameterName, parameterValue, replaceIt)
+                addOptionToCompilerOptions(taskName, parameterName, parameterNameAndValueExpression, replaceIt)
             } else {
                 // Add kotlinOptions
                 addImportIfMissing("org.jetbrains.kotlin.gradle.tasks.KotlinCompile")
                 script?.blockExpression?.addDeclarationIfMissing("val $taskName: KotlinCompile by tasks")
-                addTopLevelBlock("$taskName.kotlinOptions")?.addExpressionIfMissing("$parameterName = $parameterValue")
+                addTopLevelBlock("$taskName.kotlinOptions")?.addExpressionIfMissing(parameterNameAndValueExpression.text)
             }
         }
     }
 
+    /**
+     * Returns `true` if [this] is a [KtNameReferenceExpression] referring to [name], `false` otherwise.
+     */
+    private fun KtExpression.matchesNameReference(name: String): Boolean =
+        (this as? KtNameReferenceExpression)?.getReferencedName() == name
+
     private fun KtFile.addOptionToCompilerOptions(
         taskName: String,
         parameterName: String,
-        parameterValue: String,
+        parameterNameAndValueExpression: KtExpression,
         replaceIt: KtExpression.(/* precomputedReplacement */ String?, /* preserveAssignmentWhenReplacing = */ Boolean) -> PsiElement
     ): PsiElement? {
-        val compilerOption = getCompilerOption(parameterName, parameterValue)
+        // Derive the right-hand side text from PSI: for an assignment like `param = value`, take the value side;
+        // otherwise fall back to the whole expression's text.
+        val parameterValueText = (parameterNameAndValueExpression as? KtBinaryExpression)?.right?.text
+            ?: parameterNameAndValueExpression.text
+        val compilerOption = getCompilerOption(parameterName, parameterValueText)
         compilerOption.classToImport?.let {
             addImportIfMissing(it.toString())
         }
@@ -829,11 +844,11 @@ class KotlinBuildScriptManipulator(
             when (stmt) {
                 is KtDotQualifiedExpression -> {
                     preserveAssignmentWhenReplacing = false
-                    stmt.receiverExpression.text == parameterName
+                    stmt.receiverExpression.matchesNameReference(parameterName)
                 }
 
                 is KtBinaryExpression -> {
-                    if (stmt.left?.text == parameterName) {
+                    if (stmt.left?.matchesNameReference(parameterName) == true) {
                         compilerOption.compilerOptionValue?.let {
                             precomputedReplacement = "$parameterName = $it"
                         }
@@ -861,7 +876,8 @@ class KotlinBuildScriptManipulator(
         forTests: Boolean,
         kotlinVersion: IdeKotlinVersion? = null
     ): PsiElement? {
-        return addOrReplaceKotlinTaskParameter(parameterName, "\"$parameterValue\"", forTests, kotlinVersion) { replacement, _ ->
+        val parameterNameAndValueExpression = psiFactory.createExpression("$parameterName = \"$parameterValue\"")
+        return addOrReplaceKotlinTaskParameter(parameterName, parameterNameAndValueExpression, forTests, kotlinVersion) { replacement, _ ->
             if (replacement != null) {
                 replace(psiFactory.createExpression(replacement))
             } else {
