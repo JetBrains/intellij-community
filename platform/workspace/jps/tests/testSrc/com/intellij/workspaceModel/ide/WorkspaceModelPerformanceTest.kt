@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
-import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.roots.ModuleRootManager
@@ -31,6 +30,7 @@ import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.junit5.RunInEdt
+import com.intellij.testFramework.junit5.StressTestApplication
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ClassLevelProjectModelExtension
 import com.intellij.testFramework.workspaceModel.updateProjectModel
@@ -62,6 +62,7 @@ class SuspendIndexingExtension : BeforeAllCallback, AfterAllCallback {
 
 @PerformanceUnitTest
 @ExtendWith(SuspendIndexingExtension::class)
+@StressTestApplication
 @TestApplication
 @RunInEdt(writeIntent = true)
 class WorkspaceModelPerformanceTest {
@@ -117,7 +118,6 @@ class WorkspaceModelPerformanceTest {
         }
       }
 
-      ApplicationManagerEx.setInStressTest(true)
       disposerDebugMode = Disposer.isDebugMode()
       Disposer.setDebugMode(false)
     }
@@ -125,7 +125,6 @@ class WorkspaceModelPerformanceTest {
     @AfterAll
     @JvmStatic
     fun disposeProject() {
-      ApplicationManagerEx.setInStressTest(false)
       Disposer.setDebugMode(disposerDebugMode)
     }
   }
