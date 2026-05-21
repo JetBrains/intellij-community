@@ -56,16 +56,16 @@ The `safePush.cmd` script in the repository root provides command-line access to
 
 ### Monitoring Progress
 
-After starting a Safe Push, you'll receive a Patronus URL like:
+After starting a Safe Push you'll receive a Patronus URL like:
 ```
 https://patronus.labs.jb.gg/robot/<uuid>
 ```
 
-Visit this URL to:
-- Monitor test progress
-- View failure details
-- Cancel the Safe Push if needed
-- Restore branch for debugging failed tests
+Always print this URL back to the user — it is their primary handle for the run (link to share, cancel button, restore-branch button). The `<uuid>` segment is the **robot id**.
+
+You can also track the Safe Push directly: check current status, enumerate failing checks, drill into a specific attempt, or babysit a long-running robot until it finishes. All of that is in the [[patronus]] skill — pick it up when the user asks for status or when offering to follow up. It's reasonable to proactively suggest tracking or babysitting once the Safe Push is in flight; the user can say no. The [[patronus]] skill also documents the hand-off to [[teamcity-cli]] when an individual TC build needs deeper inspection.
+
+Cancel and restore-branch actions stay in the browser.
 
 ## Emergency Push
 
