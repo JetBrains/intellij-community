@@ -143,7 +143,7 @@ public final class FilePageCache {
   private long myPageDisposalUs;
 
 
-  FilePageCache(final long cacheCapacityBytes) {
+  FilePageCache(long cacheCapacityBytes) {
     if (cacheCapacityBytes <= 0) {
       throw new IllegalArgumentException("Capacity(=" + cacheCapacityBytes + ") must be >0");
     }
@@ -232,17 +232,17 @@ public final class FilePageCache {
 
       //Slow path: allocate new buffer and load its content from fileStorage:
 
-      final long startedAtNs = COLLECT_PAGE_LOADING_TIMES ? System.nanoTime() : 0;
+      long startedAtNs = COLLECT_PAGE_LOADING_TIMES ? System.nanoTime() : 0;
 
-      final PagedFileStorage fileStorage = getRegisteredPagedFileStorageByIndex(pageId);
+      PagedFileStorage fileStorage = getRegisteredPagedFileStorageByIndex(pageId);
       disposeRemovedSegments(null);
 
-      final long disposeFinishedAtNs = COLLECT_PAGE_LOADING_TIMES ? System.nanoTime() : 0;
+      long disposeFinishedAtNs = COLLECT_PAGE_LOADING_TIMES ? System.nanoTime() : 0;
 
       wrapper = allocateAndLoadPage(pageId, read, fileStorage, checkAccess);
 
       if (COLLECT_PAGE_LOADING_TIMES) {
-        final long finishedAtNs = System.nanoTime();
+        long finishedAtNs = System.nanoTime();
         myLoadedPages++;
         myPageLoadUs += NANOSECONDS.toMicros(finishedAtNs - disposeFinishedAtNs);
         myPageDisposalUs += NANOSECONDS.toMicros(disposeFinishedAtNs - startedAtNs);
@@ -349,7 +349,7 @@ public final class FilePageCache {
     }
   }
 
-  void removeStorage(final long storageId) {
+  void removeStorage(long storageId) {
     synchronized (storageById) {
       PagedFileStorage removedStorage = storageById.remove((int)(storageId >> 32));
       if (removedStorage != null) {
@@ -546,7 +546,7 @@ public final class FilePageCache {
         context.checkWriteAccess();
       }
     }
-    final long offsetInFile = (pageId & MAX_PAGES_COUNT) * owner.getPageSize();
+    long offsetInFile = (pageId & MAX_PAGES_COUNT) * owner.getPageSize();
 
     return new DirectBufferWrapper(owner, offsetInFile);
   }
