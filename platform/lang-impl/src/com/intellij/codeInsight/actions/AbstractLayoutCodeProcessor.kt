@@ -9,6 +9,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.Logger
@@ -39,7 +40,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.IncorrectOperationException
-import com.intellij.util.SequentialTask
 import com.intellij.util.diff.FilesTooBigForDiffException
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ExecutionException
@@ -368,7 +368,7 @@ abstract class AbstractLayoutCodeProcessor private constructor(
     return task.process()
   }
 
-  private inner class ProcessingTask(val progressIndicator: ProgressIndicator) : SequentialTask {
+  private inner class ProcessingTask(val progressIndicator: ProgressIndicator) {
     private val processors: List<AbstractLayoutCodeProcessor>
 
     private val fileTreeIterator: FileRecursiveIterator
@@ -376,8 +376,6 @@ abstract class AbstractLayoutCodeProcessor private constructor(
 
     private var totalFiles = 0
     private var filesProcessed = 0
-    private var isStopFormatting = false
-    private var next: PsiFile? = null
 
     init {
       val iteratorPair = runReadActionBlocking { Pair(build(), build()) }
@@ -387,26 +385,16 @@ abstract class AbstractLayoutCodeProcessor private constructor(
       processors = getAllProcessors()
     }
 
-    override fun isDone(): Boolean = isStopFormatting
-
-    override fun iteration(): Boolean {
-      if (isStopFormatting) {
-        return true
-      }
-
+    fun iteration(psiFile: PsiFile): Boolean {
       updateIndicatorFraction(filesProcessed)
 
-      val psiFile = next
-      if (psiFile != null) {
-        filesProcessed++
+      filesProcessed++
 
-        val status = shouldProcessFile(psiFile)
-        if (status != null) {
-          DumbService.getInstance(myProject).withAlternativeResolveEnabled(Runnable { performFileProcessing(status.file) })
-        }
+      val status = shouldProcessFile(psiFile) ?: return true
+
+      return DumbService.getInstance(myProject).withAlternativeResolveEnabled {
+        performFileProcessing(status.file)
       }
-
-      return true
     }
 
     private inner class FileAndStatus(val file: VirtualFile, val statusText: @NlsSafe String)
@@ -423,7 +411,7 @@ abstract class AbstractLayoutCodeProcessor private constructor(
       }
     }
 
-    fun performFileProcessing(file: VirtualFile) {
+    fun performFileProcessing(file: VirtualFile): Boolean {
       // Using the same groupId for several file-processing actions allows undoing [format + optimize imports + rearrange code + cleanup code] in one shot.
       // Using the same groupId for *all* processed files makes this a single undoable action for all processed files.
       // See docs for #setProcessAllFilesAsSingleUndoRedoCommand(boolean)
@@ -454,14 +442,17 @@ abstract class AbstractLayoutCodeProcessor private constructor(
           AbstractLayoutCodeProcessorWriteInterceptor.getInstance().runFileWrite(writeTask, myProject, commandName);
         }
 
-        checkStop(writeTask, file)
+        if (!shouldContinue(writeTask, file)) {
+          return false
+        }
       }
+      return true
     }
 
-    fun checkStop(task: FutureTask<Boolean>, file: VirtualFile) {
+    fun shouldContinue(task: FutureTask<Boolean>, file: VirtualFile): Boolean {
       try {
         if (!task.get() || task.isCancelled) {
-          isStopFormatting = true
+          return false
         }
       }
       catch (e: Exception) {
@@ -470,13 +461,14 @@ abstract class AbstractLayoutCodeProcessor private constructor(
             val cause = e.cause
             if (cause is IndexNotReadyException) {
               LOG.warn(cause)
-              return
+              return true
             }
             LOG.error("Got unexpected exception during formatting $file", e)
           }
           else -> throw e
         }
       }
+      return true
     }
 
     fun updateIndicatorText(
@@ -491,36 +483,29 @@ abstract class AbstractLayoutCodeProcessor private constructor(
       progressIndicator.setFraction(processed.toDouble() / totalFiles)
     }
 
-    override fun stop() {
-      isStopFormatting = true
-    }
-
     fun process(): Boolean {
       progressIndicator.setIndeterminate(true)
       val files = ArrayList<VirtualFile>()
       updateIndicatorText(ApplicationBundle.message("bulk.reformat.prepare.progress.text"), "")
       val success = countingIterator.processAll { file: PsiFile ->
         files.add(file.getVirtualFile())
-        !isDone()
+        ProgressManager.checkCanceled()
+        true
       }
       if (!success) return false
       totalFiles = files.size
       progressIndicator.setIndeterminate(false)
       val application = ApplicationManager.getApplication()
       if (!application.isUnitTestMode()) {
-        application.invokeAndWait {
+        val shouldContinue = invokeAndWaitIfNeeded {
           val status = ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(files)
-          if (status.hasReadonlyFiles()) {
-            stop()
-          }
+          !status.hasReadonlyFiles()
         }
-        if (isDone()) return false
+        if (!shouldContinue) return false
       }
 
       return fileTreeIterator.processAll { file: PsiFile ->
-        next = file
-        iteration()
-        !isDone()
+        iteration(file)
       }
     }
   }
