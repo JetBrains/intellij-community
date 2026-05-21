@@ -33,7 +33,7 @@ class AllGradleVersionArgumentsProcessor : ArgumentsProcessor<AllGradleVersionsS
       gradleVersionsToRunProp == "FIRST_LAST" -> listOfNotNull(
         allGradleVersions.firstOrNull(),
         allGradleVersions.lastOrNull()
-      )
+      ).distinct()
       gradleVersionsToRunProp.startsWith("LAST:") -> {
         val last = gradleVersionsToRunProp.removePrefix("LAST:").toInt()
         allGradleVersions.takeLast(last)
