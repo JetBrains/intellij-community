@@ -55,6 +55,7 @@ import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.GradleEntitySource
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase.Dynamic.Companion.asSyncPhase
+import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.entity.GradleTestBridgeEntitySource
 import org.jetbrains.plugins.gradle.util.entity.GradleTestEntity
@@ -62,7 +63,6 @@ import org.jetbrains.plugins.gradle.util.entity.GradleTestEntityId
 import org.jetbrains.plugins.gradle.util.entity.GradleTestEntitySource
 import org.jetbrains.plugins.gradle.util.whenExternalSystemTaskFinished
 import org.jetbrains.plugins.gradle.util.whenExternalSystemTaskStarted
-import org.junit.Assume
 import org.junit.Test
 import org.junit.jupiter.api.Assertions
 import java.util.concurrent.CopyOnWriteArrayList
@@ -80,14 +80,16 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
 
   @Test
   fun `test module naming`() {
+    val projectInfo = multiModuleProjectInfo()
+    initProject(projectInfo)
+
     var moduleNamesAtTheEndOfSyncContributors: Set<String>? = null
     whenModelFetchCompleted(testRootDisposable) {
       moduleNamesAtTheEndOfSyncContributors = myProject.modules.map { it.name }.toSet()
     }
 
-    initMultiModuleProject()
     importProject()
-    assertMultiModuleProjectStructure()
+    assertProjectStructure(projectInfo)
 
     assertNotNull("Module names at the end of sync contributors not initialized!", moduleNamesAtTheEndOfSyncContributors)
 
@@ -96,16 +98,18 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
 
 
   @Test
+  @TargetVersions("6.1+")
   fun `test module naming consistency with duplicated included project names`() {
-    Assume.assumeTrue(isGradleAtLeast("6.1")) // Gradle < 6.0 fails in such a case
+    val projectInfo = multiModuleProjectInfo(includeProjectsWithDuplicatedNames = true)
+    initProject(projectInfo)
+
     var moduleNamesAtTheEndOfSyncContributors: Set<String>? = null
     whenModelFetchCompleted(testRootDisposable) {
       moduleNamesAtTheEndOfSyncContributors = myProject.modules.map { it.name }.toSet()
     }
 
-    initMultiModuleProject(includeProjectsWithDuplicatedNames = true)
     importProject()
-    assertMultiModuleProjectStructure(includeProjectsWithDuplicatedNames = true)
+    assertProjectStructure(projectInfo)
 
     assertNotNull("Module names at the end of sync contributors not initialized!", moduleNamesAtTheEndOfSyncContributors)
 
@@ -114,6 +118,9 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
 
   @Test
   fun `test Gradle model fetch phase completion`() {
+    val projectInfo = multiModuleProjectInfo()
+    initProject(projectInfo)
+
     Disposer.newDisposable().use { disposable ->
       val projectLoadingAssertion = ListenerAssertion()
       val modelFetchCompletionAssertion = ListenerAssertion()
@@ -170,9 +177,8 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
         }
       }
 
-      initMultiModuleProject()
       importProject()
-      assertMultiModuleProjectStructure()
+      assertProjectStructure(projectInfo)
 
       projectLoadingAssertion.assertListenerFailures()
       projectLoadingAssertion.assertListenerState(1) {
@@ -198,6 +204,9 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
 
   @Test
   fun `test Gradle sync phase completion`() {
+    val projectInfo = multiModuleProjectInfo()
+    initProject(projectInfo)
+
     Disposer.newDisposable().use { disposable ->
       val syncContributorAssertions = ListenerAssertion()
 
@@ -227,9 +236,8 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
         }
       }
 
-      initMultiModuleProject()
       importProject()
-      assertMultiModuleProjectStructure()
+      assertProjectStructure(projectInfo)
 
       syncContributorAssertions.assertListenerFailures()
       syncContributorAssertions.assertListenerState(allPhases.size) {
@@ -247,6 +255,9 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
 
   @Test
   fun `test entity contribution on Gradle sync phase`() {
+    val projectInfo = multiModuleProjectInfo()
+    initProject(projectInfo)
+
     repeat(2) { index ->
       Disposer.newDisposable().use { disposable ->
 
@@ -301,9 +312,8 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
           }
         }
 
-        initMultiModuleProject()
         importProject()
-        assertMultiModuleProjectStructure()
+        assertProjectStructure(projectInfo)
 
         syncContributorAssertions.assertListenerFailures()
         syncContributorAssertions.assertListenerState(allPhases.size) {
@@ -325,6 +335,9 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
 
   @Test
   fun `test bridge entity contribution on Gradle sync phase`() {
+    val projectInfo = multiModuleProjectInfo()
+    initProject(projectInfo)
+
     Disposer.newDisposable().use { disposable ->
 
       val syncContributorAssertions = ListenerAssertion()
@@ -364,9 +377,8 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
         }
       }
 
-      initMultiModuleProject()
       importProject()
-      assertMultiModuleProjectStructure()
+      assertProjectStructure(projectInfo)
 
       syncContributorAssertions.assertListenerFailures()
       syncContributorAssertions.assertListenerState(allPhases.size) {
@@ -382,7 +394,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
         "Requested phases = $allPhases"
         "Completed phases = $completedPhases"
       }
-      val dataServicesEntities =  myProject.workspaceModel.currentSnapshot.entitiesBySource {
+      val dataServicesEntities = myProject.workspaceModel.currentSnapshot.entitiesBySource {
         it is GradleEntitySource && it.phase == GradleSyncPhase.DATA_SERVICES_PHASE
       }
       Assertions.assertTrue(dataServicesEntities.toList().isEmpty()) {
@@ -393,6 +405,9 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
 
   @Test
   fun `test bridge entity contribution on Gradle sync phase with bridge disabled`() {
+    val projectInfo = multiModuleProjectInfo()
+    initProject(projectInfo)
+
     repeat(2) { index ->
       Disposer.newDisposable().use { disposable ->
         Registry.get("gradle.phased.sync.bridge.disabled").setValue(true, disposable)
@@ -447,9 +462,8 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
           }
         }
 
-        initMultiModuleProject()
         importProject()
-        assertMultiModuleProjectStructure()
+        assertProjectStructure(projectInfo)
 
         syncContributorAssertions.assertListenerFailures()
         syncContributorAssertions.assertListenerState(allPhases.size) {
@@ -466,7 +480,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
           "Completed phases = $completedPhases"
         }
 
-        val dataServicesEntities =  myProject.workspaceModel.currentSnapshot.entitiesBySource {
+        val dataServicesEntities = myProject.workspaceModel.currentSnapshot.entitiesBySource {
           it is GradleEntitySource && it.phase == GradleSyncPhase.DATA_SERVICES_PHASE
         }
         Assertions.assertTrue(dataServicesEntities.toList().isNotEmpty()) {
@@ -499,6 +513,9 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
   }
 
   fun `test phased Gradle sync for custom phase without model provider`(customPhase: GradleSyncPhase) {
+    val projectInfo = multiModuleProjectInfo()
+    initProject(projectInfo)
+
     Disposer.newDisposable().use { disposable ->
       val projectLoadingAssertion = ListenerAssertion()
       val modelFetchCompletionAssertion = ListenerAssertion()
@@ -533,9 +550,8 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
         }
       }
 
-      initMultiModuleProject()
       importProject()
-      assertMultiModuleProjectStructure()
+      assertProjectStructure(projectInfo)
 
       projectLoadingAssertion.assertListenerFailures()
       projectLoadingAssertion.assertListenerState(1) {
@@ -597,14 +613,16 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
 
   @Test
   fun `test dependencies from previous sync are kept`() {
+    val projectInfo = multiModuleProjectInfo(
+      useBuildSrc = false, // buildSrc modules are triggering issue IDEA-383593, and are not essential to this test
+    )
+    initProject(projectInfo)
+
     Disposer.newDisposable().use { disposable ->
       Registry.get("gradle.phased.sync.bridge.disabled").setValue(true, disposable)
-      initMultiModuleProject(
-        useBuildSrc = false, // buildSrc modules are triggering issue IDEA-383593, and are not essential to this test
-      )
 
       importProject()
-      assertMultiModuleProjectStructure(useBuildSrc = false)
+      assertProjectStructure(projectInfo)
 
       val moduleNames = myProject.modules.map { it.name }
 
@@ -623,7 +641,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
         }
 
         importProject()
-        assertMultiModuleProjectStructure(useBuildSrc = false)
+        assertProjectStructure(projectInfo)
       }
 
       val expectedPhases = DEFAULT_SYNC_PHASES.filterNot {
@@ -651,11 +669,13 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
 
   @Test
   fun `test dependencies from previous sync are kept - sync contributors can add dependencies and override the sdk explicitly`() {
+    val projectInfo = multiModuleProjectInfo(
+      useBuildSrc = false, // buildSrc modules are triggering issue IDEA-383593, and are not essential to this test
+    )
+    initProject(projectInfo)
+
     Disposer.newDisposable().use { disposable ->
       Registry.get("gradle.phased.sync.bridge.disabled").setValue(true, disposable)
-      initMultiModuleProject(
-        useBuildSrc = false, // buildSrc modules are triggering issue IDEA-383593, and are not essential to this test
-      )
 
       val includedProjectName = if (isGradleAtLeast("6.0")) "includedProject" else "includedProjectName"
 
@@ -678,8 +698,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       addDependencySyncContributor(dependencyToAddByModuleName)
 
       importProject()
-
-      assertMultiModuleProjectStructure(useBuildSrc = false)
+      assertProjectStructure(projectInfo)
 
       val dependencyListByModuleNameAtEndOfFirstSync = assertDependencyAddedForModules(dependencyToAddByModuleName)
       val dependencyListByModuleNamePerPhase = HashBasedTable.create<GradleSyncPhase, String, List<ModuleDependencyItem>>()
@@ -693,7 +712,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       }
 
       importProject()
-      assertMultiModuleProjectStructure(useBuildSrc = false)
+      assertProjectStructure(projectInfo)
 
       val expectedPhases = DEFAULT_SYNC_PHASES.filterNot {
         setOf(
@@ -741,6 +760,9 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
     cancellationPhase: GradleSyncPhase,
     cancellation: suspend (ProjectResolverContext) -> Unit,
   ) {
+    val projectInfo = multiModuleProjectInfo()
+    initProject(projectInfo)
+
     Disposer.newDisposable().use { disposable ->
       val projectLoadingAssertion = ListenerAssertion()
       val modelFetchCompletionAssertion = ListenerAssertion()
@@ -798,7 +820,6 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
         }
       }
 
-      initMultiModuleProject()
       importProject(errorHandler = { _, _ ->
         syncCancellationAssertion.touch()
       })
@@ -969,7 +990,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
     val sdkData: ModuleSdkData,
     // Whether to use sdk or library data is determined by the type of the ModuleDependencyItem
     val dependencyToAddByModuleName: Map<String, ModuleDependencyItem>,
-  ): AbstractTestProjectResolverService()
+  ) : AbstractTestProjectResolverService()
 
   /**
    * A test resolver extension to populate fake library and sdk dependencies for modules according

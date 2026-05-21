@@ -15,6 +15,9 @@ class GradlePartialSyncTest : GradlePartialSyncTestCase() {
 
   @Test
   fun `test partial Gradle sync consistency`() {
+    val projectInfo = multiModuleProjectInfo()
+    initProject(projectInfo)
+
     Disposer.newDisposable().use { disposable ->
 
       lateinit var resultResolverContext: ProjectResolverContext
@@ -34,9 +37,8 @@ class GradlePartialSyncTest : GradlePartialSyncTestCase() {
         }
       }
 
-      initMultiModuleProject()
       importProject()
-      assertMultiModuleProjectStructure()
+      assertProjectStructure(projectInfo)
 
       modelFetchCompletionAssertion.assertListenerFailures()
       modelFetchCompletionAssertion.assertListenerState(1) {
@@ -91,7 +93,7 @@ class GradlePartialSyncTest : GradlePartialSyncTestCase() {
         }
       }
 
-      assertMultiModuleProjectStructure()
+      assertProjectStructure(projectInfo)
       Assertions.assertEquals(projectDataStructure, getProjectDataStructure()) {
         "The project data structure shouldn't be changed after the partial Gradle sync"
       }

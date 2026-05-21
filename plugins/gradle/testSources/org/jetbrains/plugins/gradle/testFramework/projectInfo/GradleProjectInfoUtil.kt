@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework.projectInfo
 
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.vfs.refreshAndFindVirtualFileOrDirectory
@@ -54,12 +55,19 @@ fun gradleProjectInfo(
   relativePath: String = "project",
   gradleDsl: GradleDsl = GradleDsl.KOTLIN,
   configure: GradleProjectInfoBuilder.() -> Unit = {},
-): GradleProjectInfo {
-  val projectName = Path.of(relativePath).name
-  return GradleProjectInfoBuilderImpl(projectName, relativePath, gradleVersion, gradleDsl)
+): GradleProjectInfo =
+  gradleProjectInfo(gradleVersion, Path.of(relativePath).name, relativePath, gradleDsl, configure)
+
+fun gradleProjectInfo(
+  gradleVersion: GradleVersion,
+  projectName: String,
+  relativePath: String,
+  gradleDsl: GradleDsl = GradleDsl.KOTLIN,
+  configure: GradleProjectInfoBuilder.() -> Unit = {},
+): GradleProjectInfo =
+  GradleProjectInfoBuilderImpl(projectName, relativePath, gradleVersion, gradleDsl)
     .apply(configure)
     .build()
-}
 
 fun simpleJavaProjectInfo(
   gradleVersion: GradleVersion,
@@ -95,6 +103,60 @@ fun complexJavaProjectInfo(
   }
 }
 
+fun multiModuleProjectInfo(
+  gradleVersion: GradleVersion,
+  relativePath: String = "project",
+  gradleDsl: GradleDsl = GradleDsl.KOTLIN,
+  useBuildSrc: Boolean = GradleVersionUtil.isGradleAtLeast(gradleVersion, "8.0"),
+  includeProjectsWithDuplicatedNames: Boolean = false,
+): GradleProjectInfo =
+  gradleProjectInfo(gradleVersion, "rootProjectName", relativePath, gradleDsl) {
+    settingsFile {
+      setProjectName("rootProjectName")
+      include("module")
+      includeBuild("../includedProject")
+      if (includeProjectsWithDuplicatedNames) {
+        includeBuild("../includedProject2")
+      }
+    }
+    simpleJavaRootModuleInfo()
+    simpleJavaModuleInfo("rootProjectName.module", "module", groupId = "moduleGroup", version = "1.0")
+    if (useBuildSrc) {
+      moduleInfo("rootProjectName.buildSrc", "buildSrc") {
+        sourceSetInfo("main")
+        sourceSetInfo("test")
+        buildFile {
+          withPlugin("groovy")
+          addImplementationDependency(code("gradleApi()"))
+          addImplementationDependency(code("localGroovy()"))
+        }
+      }
+    }
+
+    val includedProjectIdeName = when (GradleVersionUtil.isGradleAtLeast(gradleVersion, "6.0")) {
+      true -> "includedProject"
+      else -> "includedProjectName"
+    }
+    compositeInfo(includedProjectIdeName, "../includedProject") {
+      settingsFile {
+        setProjectName("includedProjectName")
+        include("module")
+      }
+      simpleJavaRootModuleInfo(groupId = "includedProjectGroup", version = "1.0")
+      simpleJavaModuleInfo("$includedProjectIdeName.module", "module", groupId = "includedProjectModuleGroup", version = "1.0")
+    }
+    if (includeProjectsWithDuplicatedNames) {
+      compositeInfo("includedProject2", "../includedProject2") {
+        settingsFile {
+          setProjectName("includedProjectName")
+          include("module2")
+        }
+        simpleJavaRootModuleInfo(groupId = "includedProject2Group", version = "1.0")
+        simpleJavaModuleInfo("includedProject2.module2", "module2", groupId = "includedProject2ModuleGroup", version = "1.0")
+      }
+    }
+  }
+
 fun GradleModuleInfoBuilder.file(relativePath: String, content: String): Unit =
   files.withFile(relativePath, content)
 
@@ -116,18 +178,37 @@ fun GradleModuleInfoBuilder.simpleSettingsFile(configure: GradleSettingScriptBui
     configure()
   }
 
-fun GradleProjectInfoBuilder.simpleJavaRootModuleInfo(): Unit =
-  rootModuleInfo(GradleModuleInfoBuilder::configureSimpleJavaModuleInfo)
+fun GradleProjectInfoBuilder.simpleJavaRootModuleInfo(
+  groupId: String? = null,
+  version: String? = null,
+): Unit =
+  rootModuleInfo {
+    configureSimpleJavaModuleInfo(groupId, version)
+  }
 
-fun GradleProjectInfoBuilder.simpleJavaModuleInfo(ideName: String, relativePath: String, gradleDsl: GradleDsl? = null): Unit =
-  moduleInfo(ideName, relativePath, gradleDsl, GradleModuleInfoBuilder::configureSimpleJavaModuleInfo)
+fun GradleProjectInfoBuilder.simpleJavaModuleInfo(
+  ideName: String,
+  relativePath: String,
+  gradleDsl: GradleDsl? = null,
+  groupId: String? = null,
+  version: String? = null,
+): Unit =
+  moduleInfo(ideName, relativePath, gradleDsl) {
+    configureSimpleJavaModuleInfo(groupId, version)
+  }
 
-private fun GradleModuleInfoBuilder.configureSimpleJavaModuleInfo() {
+private fun GradleModuleInfoBuilder.configureSimpleJavaModuleInfo(groupId: String?, version: String?) {
+  if (groupId != null) {
+    this.groupId = groupId
+  }
+  if (version != null) {
+    this.version = version
+  }
   sourceSetInfo("main")
   sourceSetInfo("test")
   buildFile {
-    addGroup(groupId)
-    addVersion(version)
+    addGroup(this@configureSimpleJavaModuleInfo.groupId)
+    addVersion(this@configureSimpleJavaModuleInfo.version)
     withJavaPlugin()
     withJUnit()
   }

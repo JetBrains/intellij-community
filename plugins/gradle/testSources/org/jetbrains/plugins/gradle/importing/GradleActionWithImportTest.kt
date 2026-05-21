@@ -3,11 +3,9 @@ package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
-import com.intellij.util.io.systemIndependentPath
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
-import java.io.File
 import java.nio.file.Path
 import java.util.Random
 import kotlin.io.path.absolute

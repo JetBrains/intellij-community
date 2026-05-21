@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.k2.projectStructure
 
+import com.intellij.openapi.Disposable
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions.assertEmpty
 import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions.assertEqualsUnordered
@@ -10,7 +11,6 @@ import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.useProjectAsync
-import com.intellij.util.application
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
@@ -18,8 +18,7 @@ import org.jetbrains.kotlin.gradle.scripting.k2.workspaceModel.GradleKotlinScrip
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.test.AssertKotlinPluginMode
 import org.jetbrains.kotlin.idea.test.UseK2PluginMode
-import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
-import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncListener
+import org.jetbrains.plugins.gradle.importing.syncAction.whenSyncPhaseCompleted
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase.Companion.BASE_SCRIPT_MODEL_PHASE
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase.Companion.SCRIPT_MODEL_PHASE
@@ -75,18 +74,7 @@ class KotlinGradleScriptImportingTest(private val gradleVersion: GradleVersion) 
             createBuildFile(gradleVersion)
         }
 
-        val entitiesAtPhases = ConcurrentHashMap<GradleSyncPhase, Set<GradleSyncPhase>>()
-        application.messageBus.connect(asDisposable())
-            .subscribe(GradleSyncListener.TOPIC, object : GradleSyncListener {
-                override fun onSyncPhaseCompleted(context: ProjectResolverContext, phase: GradleSyncPhase) {
-                    entitiesAtPhases[phase] = context.project.workspaceModel.currentSnapshot
-                        .entitiesBySource { it is GradleKotlinScriptEntitySource }
-                        .map { it.entitySource }
-                        .filterIsInstance<GradleKotlinScriptEntitySource>()
-                        .map { it.phase }
-                        .toSet()
-                }
-            })
+        val entitiesAtPhases = collectScriptEntityPhasesAtSyncPhases(asDisposable())
 
         gradle.openProject(projectRoot).useProjectAsync {
             val entitiesAtPhase = entitiesAtPhases[BASE_SCRIPT_MODEL_PHASE]
@@ -106,20 +94,9 @@ class KotlinGradleScriptImportingTest(private val gradleVersion: GradleVersion) 
             createBuildFile(gradleVersion)
         }
 
-        val entitiesAtPhases = ConcurrentHashMap<GradleSyncPhase, Set<GradleSyncPhase>>()
-        application.messageBus.connect(asDisposable())
-            .subscribe(GradleSyncListener.TOPIC, object : GradleSyncListener {
-                override fun onSyncPhaseCompleted(context: ProjectResolverContext, phase: GradleSyncPhase) {
-                    entitiesAtPhases[phase] = context.project.workspaceModel.currentSnapshot
-                        .entitiesBySource { it is GradleKotlinScriptEntitySource }
-                        .map { it.entitySource }
-                        .filterIsInstance<GradleKotlinScriptEntitySource>()
-                        .map { it.phase }
-                        .toSet()
-                }
-            })
+        val entitiesAtPhases = collectScriptEntityPhasesAtSyncPhases(asDisposable())
 
-        fun assertEntitiesAtPhase(expectedEntityAtPhase: GradleSyncPhase?, filter: Predicate<GradleSyncPhase>) {
+        fun assertEntities(expectedEntityAtPhase: GradleSyncPhase?, filter: Predicate<GradleSyncPhase>) {
             for ((phase, actualEntitiesAtPhase) in entitiesAtPhases.entries) {
                 if (filter.test(phase)) {
                     assertNotNull(actualEntitiesAtPhase) {
@@ -139,15 +116,15 @@ class KotlinGradleScriptImportingTest(private val gradleVersion: GradleVersion) 
 
         gradle.openProject(projectRoot).useProjectAsync { project ->
 
-            assertEntitiesAtPhase(null, object : Predicate<GradleSyncPhase> {
+            assertEntities(null, object : Predicate<GradleSyncPhase> {
                 override fun toString(): String = "during initial sync before $BASE_SCRIPT_MODEL_PHASE"
                 override fun test(phase: GradleSyncPhase): Boolean = phase < BASE_SCRIPT_MODEL_PHASE
             })
-            assertEntitiesAtPhase(BASE_SCRIPT_MODEL_PHASE, object : Predicate<GradleSyncPhase> {
+            assertEntities(BASE_SCRIPT_MODEL_PHASE, object : Predicate<GradleSyncPhase> {
                 override fun toString(): String = "during initial sync between $BASE_SCRIPT_MODEL_PHASE and $SCRIPT_MODEL_PHASE"
                 override fun test(phase: GradleSyncPhase): Boolean = phase in BASE_SCRIPT_MODEL_PHASE..<SCRIPT_MODEL_PHASE
             })
-            assertEntitiesAtPhase(SCRIPT_MODEL_PHASE, object : Predicate<GradleSyncPhase> {
+            assertEntities(SCRIPT_MODEL_PHASE, object : Predicate<GradleSyncPhase> {
                 override fun toString(): String = "during initial sync after $SCRIPT_MODEL_PHASE"
                 override fun test(phase: GradleSyncPhase): Boolean = phase >= SCRIPT_MODEL_PHASE
             })
@@ -155,18 +132,31 @@ class KotlinGradleScriptImportingTest(private val gradleVersion: GradleVersion) 
             entitiesAtPhases.clear()
             gradle.syncProject(project, projectRoot)
 
-            assertEntitiesAtPhase(SCRIPT_MODEL_PHASE, object : Predicate<GradleSyncPhase> {
+            assertEntities(SCRIPT_MODEL_PHASE, object : Predicate<GradleSyncPhase> {
                 override fun toString(): String = "during re-sync before $BASE_SCRIPT_MODEL_PHASE"
                 override fun test(phase: GradleSyncPhase): Boolean = phase < BASE_SCRIPT_MODEL_PHASE
             })
-            assertEntitiesAtPhase(BASE_SCRIPT_MODEL_PHASE, object : Predicate<GradleSyncPhase> {
+            assertEntities(BASE_SCRIPT_MODEL_PHASE, object : Predicate<GradleSyncPhase> {
                 override fun toString(): String = "during re-sync between $BASE_SCRIPT_MODEL_PHASE and $SCRIPT_MODEL_PHASE"
                 override fun test(phase: GradleSyncPhase): Boolean = phase in BASE_SCRIPT_MODEL_PHASE..<SCRIPT_MODEL_PHASE
             })
-            assertEntitiesAtPhase(SCRIPT_MODEL_PHASE, object : Predicate<GradleSyncPhase> {
+            assertEntities(SCRIPT_MODEL_PHASE, object : Predicate<GradleSyncPhase> {
                 override fun toString(): String = "during re-sync after $SCRIPT_MODEL_PHASE"
                 override fun test(phase: GradleSyncPhase): Boolean = phase >= SCRIPT_MODEL_PHASE
             })
         }
+    }
+
+    private fun collectScriptEntityPhasesAtSyncPhases(parentDisposable: Disposable): MutableMap<GradleSyncPhase, Set<GradleSyncPhase>> {
+        val entitiesAtPhases = ConcurrentHashMap<GradleSyncPhase, Set<GradleSyncPhase>>()
+        whenSyncPhaseCompleted(parentDisposable) { context, phase ->
+            entitiesAtPhases[phase] = context.project.workspaceModel.currentSnapshot
+                .entitiesBySource { it is GradleKotlinScriptEntitySource }
+                .map { it.entitySource }
+                .filterIsInstance<GradleKotlinScriptEntitySource>()
+                .map { it.phase }
+                .toSet()
+        }
+        return entitiesAtPhases
     }
 }

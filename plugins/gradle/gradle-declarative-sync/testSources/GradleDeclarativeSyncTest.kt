@@ -11,6 +11,7 @@ import com.intellij.platform.testFramework.assertion.moduleAssertion.ContentRoot
 import com.intellij.platform.testFramework.assertion.moduleAssertion.DependencyAssertions
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions
 import org.jetbrains.plugins.gradle.importing.syncAction.GradlePhasedSyncTestCase
+import org.jetbrains.plugins.gradle.importing.syncAction.whenSyncPhaseCompleted
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
