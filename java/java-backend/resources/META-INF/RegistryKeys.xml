@@ -124,5 +124,7 @@
     <!--used together with DeprecationInspection-->
     <registryKey key="kotlin.deprecation.inspection.enabled" defaultValue="false"/>
     <registryKey key="java.import.with.write.action" defaultValue="false" description="Whether to use WriteAction for import optimization"/>
+    <registryKey key="java.functional.expression.search.fail.fast.in.dumb.mode" defaultValue="true"
+                 description="When true (default), JavaFunctionalExpressionSearcher throws IndexNotReadyException immediately in dumb mode instead of waiting for smart mode. When false, falls back to the legacy behavior of waiting for smart mode."/>
   </extensions>
 </idea-plugin>
