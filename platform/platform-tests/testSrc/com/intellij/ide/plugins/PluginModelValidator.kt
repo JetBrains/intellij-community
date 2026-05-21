@@ -587,7 +587,7 @@ internal class PluginModelValidator(
                   val differentContainingPlugin = containingPlugins.first()
                   registerError("""
                   |Module '$moduleName' has 'private' (default) visibility in '${differentContainingPlugin.pluginId}' but it is used as a dependency in 
-                  |a plugin '${referencingPluginInfo.pluginId}'.
+                  |${referencingModuleInfo.name?.let { "a module '$it' in " } ?: ""}a plugin '${referencingPluginInfo.pluginId}'.
                   |Use 'internal' or 'public' visibility instead by adding 'visibility' attribute to the root tag of $moduleName.xml.
                   |""".trimMargin())
                 }
