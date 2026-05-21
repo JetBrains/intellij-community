@@ -16,6 +16,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.concurrency.ThreadingAssertions
 import kotlinx.coroutines.ThreadContextElement
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
@@ -66,6 +67,34 @@ object InternalPsiVersioning {
       return writeVersion.version
     }
     return currentThreadContext()[PsiVersionFreezeMarker.Key]?.version
+  }
+
+  /**
+   * Helper function to check invariants of versioned PSI. Should not be used for business logic.
+   */
+  @JvmStatic
+  fun isInsideVersioningButNotLocks(): Boolean {
+    return getCurrentPsiVersionInsideFrozenPsi() != null
+  }
+
+  /**
+   * An analogue of [ThreadingAssertions.assertReadAccess] but permits running in a versioned environment.
+   *
+   * ```kotlin
+   * runReadAction {
+   *   assertReadAccessOrVersionedEnvironment() // does not throw
+   * }
+   * freezePsiVersion {
+   *   assertReadAccessOrVersionedEnvironment() // does not throw
+   * }
+   * ```
+   */
+  @JvmStatic
+  fun assertReadAccessOrVersionedEnvironment() {
+    if (isInsideVersioningButNotLocks()) {
+      return
+    }
+    ThreadingAssertions.assertReadAccess()
   }
 
   @JvmStatic
@@ -409,6 +438,17 @@ object InternalPsiVersioning {
       stackTraceElement.className == NESTED_LOCKS_THREADING_SUPPORT_CLASS_NAME &&
       stackTraceElement.methodName == SUSPENDING_WRITE_ACTION_METHOD_NAME
     }
+  }
+
+  override fun toString(): String {
+    val explanation = if (getCurrentPsiVersion() % 2 == 1L) {
+      " (Odd version -- changes are running in exclusive modification scope and they are invisible to anyone but this thread)"
+    } else if (getCurrentPsiVersion() % 2 == 0L && getCurrentPsiVersion() > PsiVersionRegistry.instance.latestPublishedVersion) {
+      " (Thread-local version is ahead of the published version -- the changes happening in a write action and they will be published)"
+    } else {
+      ""
+    }
+    return "Psi Versioning Ecosystem State: latestVersion=${PsiVersionRegistry.instance.latestPublishedVersion}, in frozen PSI=${isInsideVersioningButNotLocks()}, version for this thread=${getCurrentPsiVersion()}${explanation}"
   }
 
   fun cleanupVersioningSection() {
