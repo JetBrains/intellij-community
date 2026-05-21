@@ -12,6 +12,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.childrenOfType
@@ -67,10 +68,12 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtParenthesizedExpression
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.KtScriptInitializer
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
@@ -164,8 +167,8 @@ class KotlinBuildScriptManipulator(
 
     override fun PsiElement.findParentBlock(name: String): PsiElement? {
         val parent = PsiTreeUtil.findFirstParent(this) { elem ->
-            (elem is KtCallExpression && elem.calleeExpression?.text?.contains(name) == true) ||
-                    (elem is KtDotQualifiedExpression && elem.text?.contains(name) == true)
+            (elem is KtCallExpression && elem.calleeExpression?.referencedNameOrNull()?.contains(name) == true) ||
+                    (elem is KtDotQualifiedExpression && elem.containsNameReference(name))
         }
         when (parent) {
             is KtCallExpression -> {
@@ -184,17 +187,18 @@ class KotlinBuildScriptManipulator(
 
     override fun PsiElement.getAllVariableStatements(variableName: String): List<PsiElement> {
         val assignments = PsiTreeUtil.findChildrenOfType(this, KtBinaryExpression::class.java)
-            .filter { it.left?.text?.contains(variableName) == true && it.operationReference.text == "=" }
+            .filter { it.left?.containsNameReference(variableName) == true && it.operationReference.getReferencedName() == "=" }
 
         val setterName = "set${variableName.capitalize()}"
         val setterCalls = PsiTreeUtil.findChildrenOfType(this, KtCallExpression::class.java)
-            .filter { it.calleeExpression?.text == setterName && it.valueArguments.size == 1 }
+            .filter { it.calleeExpression?.referencedNameOrNull() == setterName && it.valueArguments.size == 1 }
 
         val propertyCalls = PsiTreeUtil.findChildrenOfType(this, KtDotQualifiedExpression::class.java)
             .mapNotNull { stmt ->
-                if (!stmt.receiverExpression.text.contains(variableName)) return@mapNotNull null
+                if (!stmt.receiverExpression.containsNameReference(variableName)) return@mapNotNull null
                 val callExpression = stmt.selectorExpression as? KtCallExpression ?: return@mapNotNull null
-                if (callExpression.calleeExpression?.text?.contains("set") == true && callExpression.valueArguments.size == 1) {
+                val calleeName = callExpression.calleeExpression?.referencedNameOrNull()
+                if (calleeName?.contains("set") == true && callExpression.valueArguments.size == 1) {
                     stmt
                 } else {
                     null
@@ -481,22 +485,31 @@ class KotlinBuildScriptManipulator(
     private fun KtBlockExpression.findPlugin(pluginName: String): KtCallExpression? {
         if (pluginName.isBlank()) return null
         return PsiTreeUtil.getChildrenOfType(this, KtCallExpression::class.java)?.find {
-            (it.calleeExpression?.text == "plugin" ||
-                    it.calleeExpression?.text == "id") &&
-                    it.valueArguments.firstOrNull()?.text == "\"$pluginName\""
+            val calleeName = it.calleeExpression?.referencedNameOrNull()
+            (calleeName == "plugin" || calleeName == "id") &&
+                    it.valueArguments.firstOrNull()?.getArgumentExpression()?.extractStringValue() == pluginName
         }
     }
 
-    private fun String.extractStringValue(): String {
-        // Two steps because we want to keep parenthesis inside the string
-        return trim('(', ')', ' ', '\t').trim('"')
+    /**
+     * Extracts the value of a string literal expression via PSI.
+     *
+     * Unwraps surrounding parentheses, then for a [KtStringTemplateExpression] returns the text of its
+     * single entry (only plain string literals without interpolation are supported). Returns `null` for
+     * any other expression shape.
+     */
+    private fun KtExpression.extractStringValue(): String? {
+        val unwrapped = generateSequence(this) { (it as? KtParenthesizedExpression)?.expression }.last()
+        val stringTemplate = unwrapped as? KtStringTemplateExpression ?: return null
+        return stringTemplate.entries.singleOrNull()?.text
     }
 
     private fun KtBlockExpression.findPluginInPluginsGroup(pluginName: String): PluginExpression? {
         if (pluginName.isBlank()) return null
         return findPluginExpressions { methodName, arguments ->
             val firstArgument = arguments.singleOrNull() ?: return@findPluginExpressions false
-            "${methodName}(${firstArgument.text})" == pluginName
+            val firstArgumentValue = firstArgument.extractStringValue() ?: return@findPluginExpressions false
+            "${methodName}(\"${firstArgumentValue}\")" == pluginName
         }
     }
 
@@ -519,7 +532,7 @@ class KotlinBuildScriptManipulator(
     internal fun KtExpression.parsePluginCallChain(): List<ChainedMethodCallPart>? {
         return when (this) {
             is KtBinaryExpression -> {
-                val methodName = operationReference.text.trim()
+                val methodName = operationReference.getReferencedName()
                 val leftCallChain = left?.parsePluginCallChain() ?: return null
                 leftCallChain + ChainedMethodCallPart(methodName, listOf(right ?: return null)) {
                     left?.let {
@@ -530,7 +543,7 @@ class KotlinBuildScriptManipulator(
 
             is KtDotQualifiedExpression -> {
                 val selectorExpression = selectorExpression as? KtCallExpression ?: return null
-                val methodName = selectorExpression.calleeExpression?.text?.trim() ?: return null
+                val methodName = selectorExpression.calleeExpression?.referencedNameOrNull() ?: return null
                 val arguments = selectorExpression.valueArguments.mapNotNull { it.getArgumentExpression() }
                 val leftCallChain = receiverExpression.parsePluginCallChain() ?: return null
                 leftCallChain + ChainedMethodCallPart(methodName, arguments) {
@@ -539,7 +552,7 @@ class KotlinBuildScriptManipulator(
             }
 
             is KtCallExpression -> {
-                val methodName = (calleeExpression as? KtNameReferenceExpression)?.text?.trim() ?: return null
+                val methodName = (calleeExpression as? KtNameReferenceExpression)?.getReferencedName() ?: return null
                 val arguments = valueArguments.mapNotNull { it.getArgumentExpression() }
                 listOf(ChainedMethodCallPart(methodName, arguments) {
                     this.delete() // delete entire expression
@@ -563,7 +576,7 @@ class KotlinBuildScriptManipulator(
     }
 
     private fun isKotlinPluginIdentifier(methodName: String, arguments: List<KtExpression>): Boolean {
-        val firstArgumentText = arguments.singleOrNull()?.text?.extractStringValue() ?: return false
+        val firstArgumentText = arguments.singleOrNull()?.extractStringValue() ?: return false
         if (methodName == "id") {
             return firstArgumentText == "org.jetbrains.kotlin.jvm"
         } else if (methodName == "kotlin") {
@@ -577,7 +590,7 @@ class KotlinBuildScriptManipulator(
             ?.findBlock("plugins")
             ?.findPluginExpressions(::isKotlinPluginIdentifier)?.versionExpression?.arguments?.singleOrNull() ?: return null
         return DefinedKotlinPluginManagementVersion(
-            parsedVersion = IdeKotlinVersion.opt(versionExpression.text.extractStringValue())
+            parsedVersion = versionExpression.extractStringValue()?.let { IdeKotlinVersion.opt(it) }
         )
     }
 
@@ -586,7 +599,7 @@ class KotlinBuildScriptManipulator(
 
     private fun KtBlockExpression.findBlock(name: String): KtBlockExpression? {
         return getChildrenOfType<KtCallExpression>().find {
-            it.calleeExpression?.text == name &&
+            it.calleeExpression?.referencedNameOrNull() == name &&
                     it.valueArguments.singleOrNull()?.getArgumentExpression() is KtLambdaExpression
         }?.getBlock()
     }
@@ -763,7 +776,7 @@ class KotlinBuildScriptManipulator(
 
     private fun KtExpression.replaceCallee(from: String, to: String) {
         val calleeExpression = this.getPossiblyQualifiedCallExpression()?.calleeExpression
-        if (calleeExpression?.text == from) {
+        if (calleeExpression?.referencedNameOrNull() == from) {
             calleeExpression.replace(psiFactory.createExpression(to))
         }
     }
@@ -774,7 +787,7 @@ class KotlinBuildScriptManipulator(
         replaceIt: KtExpression.() -> PsiElement
     ): PsiElement {
         return statements.filterIsInstance<KtBinaryExpression>().firstOrNull { stmt ->
-            stmt.left?.text == parameterName
+            stmt.left?.matchesNameReference(parameterName) == true
         }?.replaceIt() ?: addExpressionIfMissing("$parameterName = \"$parameterValue\"")
     }
 
@@ -813,7 +826,7 @@ class KotlinBuildScriptManipulator(
                 (it as? KtBinaryExpression)?.left?.matchesNameReference(parameterName) == true
             }
             assignment?.replaceIt(/* precomputedReplacement = */ null, /* preserveAssignmentWhenReplacing = */ true)
-                ?: kotlinOptionsBlock.addExpressionIfMissing(parameterNameAndValueExpression.text)
+                ?: kotlinOptionsBlock.addExpressionIfMissing(parameterNameAndValueExpression)
         } else {
             if (projectSupportsCompilerOptions(this, kotlinVersion)) {
                 addOptionToCompilerOptions(taskName, parameterName, parameterNameAndValueExpression, replaceIt)
@@ -821,7 +834,7 @@ class KotlinBuildScriptManipulator(
                 // Add kotlinOptions
                 addImportIfMissing("org.jetbrains.kotlin.gradle.tasks.KotlinCompile")
                 script?.blockExpression?.addDeclarationIfMissing("val $taskName: KotlinCompile by tasks")
-                addTopLevelBlock("$taskName.kotlinOptions")?.addExpressionIfMissing(parameterNameAndValueExpression.text)
+                addTopLevelBlock("$taskName.kotlinOptions")?.addExpressionIfMissing(parameterNameAndValueExpression)
             }
         }
     }
@@ -832,16 +845,35 @@ class KotlinBuildScriptManipulator(
     private fun KtExpression.matchesNameReference(name: String): Boolean =
         (this as? KtNameReferenceExpression)?.getReferencedName() == name
 
+    /**
+     * If [this] is a [KtSimpleNameExpression] (a name reference or an operation reference),
+     * returns its referenced name; otherwise returns `null`.
+     */
+    private fun KtExpression.referencedNameOrNull(): String? =
+        (this as? KtSimpleNameExpression)?.getReferencedName()
+
+    /**
+     * Returns `true` if [this] mentions a [KtSimpleNameExpression] with the given [name] anywhere in its
+     * PSI subtree (including [this] itself). Useful for matching the receiver/left-hand side of qualified
+     * expressions where a variable name may appear as part of a `foo.bar` chain.
+     */
+    private fun KtExpression.containsNameReference(name: String): Boolean {
+        return this.referencedNameOrNull() == name ||
+                PsiTreeUtil.findChildrenOfType(this, KtSimpleNameExpression::class.java)
+                    .any { it.getReferencedName() == name }
+    }
+
     private fun KtFile.addOptionToCompilerOptions(
         taskName: String,
         parameterName: String,
         parameterNameAndValueExpression: KtExpression,
         replaceIt: KtExpression.(/* precomputedReplacement */ String?, /* preserveAssignmentWhenReplacing = */ Boolean) -> PsiElement
     ): PsiElement? {
-        // Derive the right-hand side text from PSI: for an assignment like `param = value`, take the value side;
-        // otherwise fall back to the whole expression's text.
-        val parameterValueText = (parameterNameAndValueExpression as? KtBinaryExpression)?.right?.text
-            ?: parameterNameAndValueExpression.text
+        // Derive the right-hand side from PSI: for an assignment like `param = value`, take the value side;
+        // otherwise fall back to the whole expression.
+        val parameterValueExpression = (parameterNameAndValueExpression as? KtBinaryExpression)?.right
+            ?: parameterNameAndValueExpression
+        val parameterValueText = parameterValueExpression.text
         val compilerOption = getCompilerOption(parameterName, parameterValueText)
         compilerOption.classToImport?.let {
             addImportIfMissing(it.toString())
@@ -978,11 +1010,11 @@ class KotlinBuildScriptManipulator(
     }
 
     private fun PsiElement.addNewLinesIfNeeded(lineBreaks: Int = 1) {
-        if (prevSibling != null && prevSibling.text.isNotBlank()) {
+        if (prevSibling != null && prevSibling !is PsiWhiteSpace) {
             addNewLineBefore(lineBreaks)
         }
 
-        if (nextSibling != null && nextSibling.text.isNotBlank()) {
+        if (nextSibling != null && nextSibling !is PsiWhiteSpace) {
             addNewLineAfter(lineBreaks)
         }
     }
@@ -1009,6 +1041,13 @@ class KotlinBuildScriptManipulator(
                 if (first) addAfter(created, null) else add(created)
             }
         }
+
+    /**
+     * PSI-based overload of [addExpressionIfMissing]. Looks for an existing statement that is structurally
+     * equal (ignoring whitespace) to [expression] and returns it; otherwise inserts a copy of [expression].
+     */
+    private fun KtBlockExpression.addExpressionIfMissing(expression: KtExpression, first: Boolean = false): KtExpression =
+        addExpressionIfMissing(expression.text, first)
 
     private fun KtBlockExpression.addDeclarationIfMissing(text: String, first: Boolean = false): KtDeclaration =
         addStatementIfMissing(text) {
