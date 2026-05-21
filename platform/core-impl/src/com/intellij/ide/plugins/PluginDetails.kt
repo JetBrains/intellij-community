@@ -51,7 +51,7 @@ class PluginDetailsService {
    * Returns `true` if the plugin with the given [pluginId] is part of the IDE installation,
    * either as a bundled plugin or as an update of a bundled plugin.
    */
-  fun isPartOfInstallation(pluginId: PluginId): Boolean {
+  fun isBuiltIn(pluginId: PluginId): Boolean {
     val plugin = PluginManagerCore.getPlugin(pluginId) ?: return false
     return isBundledOrBundledUpdatedPlugin(plugin)
   }
@@ -134,13 +134,13 @@ class PluginDetailsService {
     val version: String?,
     val changeNotes: String?,
     val vendor: PluginVendorInfo,
-    val modules: Set<PluginModuleInfo>,
-    val dependencies: Set<ModuleDependencyInfo>,
+    val modules: Collection<PluginModuleInfo>,
+    val dependencies: Collection<ModuleDependencyInfo>,
     /**
      * `true` if the plugin is part of the IDE installation, either as a bundled plugin
      * or as an update of a bundled plugin.
      */
-    val isPartOfInstallation: Boolean,
+    val isBuiltIn: Boolean,
   ) {
     override fun toString(): String {
       return "PluginDetails(id=$id, name='$name')"
@@ -152,14 +152,14 @@ class PluginDetailsService {
   }
 
   private fun IdeaPluginDescriptor.toPluginDetails(): PluginDetails {
-    val modules: Set<PluginModuleInfo> = if (this is PluginMainDescriptor) {
-      contentModules.mapTo(LinkedHashSet()) { PluginModuleInfo(it.moduleId.name) }
+    val modules: List<PluginModuleInfo> = if (this is PluginMainDescriptor) {
+      contentModules.map { PluginModuleInfo(it.moduleId.name) }
     }
     else {
-      emptySet()
+      emptyList()
     }
 
-    val dependencies = LinkedHashSet<ModuleDependencyInfo>()
+    val dependencies = mutableListOf<ModuleDependencyInfo>()
     for (dep in getDependencies()) {
       dependencies.add(ModuleDependencyInfo.OnPlugin(dep.pluginId, dep.isOptional))
     }
@@ -187,7 +187,7 @@ class PluginDetailsService {
       ),
       modules = modules,
       dependencies = dependencies,
-      isPartOfInstallation = isBundledOrBundledUpdatedPlugin(this)
+      isBuiltIn = isBundledOrBundledUpdatedPlugin(this)
     )
   }
 }
