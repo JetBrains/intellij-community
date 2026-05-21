@@ -243,7 +243,7 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
                                          <dependencies>
                                            <dependency>
                                                <groupId>org.intellijgroup</groupId>
-                                               <artifactId>intellijartifact</artifactId>
+                                               <artifactId>intellijartifactanother</artifactId>
                                                <version>1.0</version>
                                            </dependency>
                                          </dependencies>

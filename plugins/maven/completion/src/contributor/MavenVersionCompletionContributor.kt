@@ -3,33 +3,36 @@ package com.intellij.maven.completion.contributor
 
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.CompletionService
+import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.maven.completion.icon
+import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource
 import com.intellij.repository.search.completion.api.DependencyCompletionContext
 import com.intellij.repository.search.completion.api.DependencyCompletionService
 import com.intellij.repository.search.completion.api.DependencyVersionCompletionRequest
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates
 import org.jetbrains.idea.maven.dom.model.completion.MavenVersionNegatingWeigher
-import org.jetbrains.idea.maven.model.MavenRepoArtifactInfo
 import org.jetbrains.idea.maven.server.MavenServerManager
 
 open class MavenVersionCompletionContributor : MavenCoordinateCompletionContributor("version") {
 
-  override suspend fun find(service: DependencyCompletionService,
+  override suspend fun fill(service: DependencyCompletionService,
                             coordinates: MavenDomShortArtifactCoordinates,
                             context: DependencyCompletionContext,
-                            consumer: (MavenRepoArtifactInfo) -> Unit) {
+                            result: CompletionResultSet,
+                            completionPrefix: String) {
     val groupId = trimDummy(coordinates.groupId.stringValue)
     val artifactId = trimDummy(coordinates.artifactId.stringValue)
     if (MavenAbstractPluginExtensionCompletionContributor.isPluginOrExtension(coordinates) && groupId.isEmpty()) {
       for (pluginGroupId in MavenAbstractPluginExtensionCompletionContributor.PLUGIN_GROUPS) {
-        service.suggestVersionCompletions(DependencyVersionCompletionRequest(pluginGroupId, artifactId, "", context)).collect { result ->
-          consumer(MavenRepoArtifactInfo(pluginGroupId, artifactId, listOf(result.result)))
+        service.suggestVersionCompletions(DependencyVersionCompletionRequest(pluginGroupId, artifactId, "", context)).collect { item ->
+          result.addElement(buildLookup(item.result, item.source, completionPrefix))
         }
       }
       return
     }
-    service.suggestVersionCompletions(DependencyVersionCompletionRequest(groupId, artifactId, "", context)).collect { result ->
-      consumer(MavenRepoArtifactInfo(groupId, artifactId, listOf(result.result)))
+    service.suggestVersionCompletions(DependencyVersionCompletionRequest(groupId, artifactId, "", context)).collect { item ->
+      result.addElement(buildLookup(item.result, item.source, completionPrefix))
     }
   }
 
@@ -40,17 +43,16 @@ open class MavenVersionCompletionContributor : MavenCoordinateCompletionContribu
     }
   }
 
-  override fun fillResult(coordinates: MavenDomShortArtifactCoordinates,
-                          result: CompletionResultSet,
-                          item: MavenRepoArtifactInfo,
-                          completionPrefix: String) {
-    val version = item.version ?: return
-    val lookup = LookupElementBuilder.create(version)
-    lookup.putUserData(MAVEN_COORDINATE_COMPLETION_PREFIX_KEY, completionPrefix)
-    result.addElement(lookup)
-  }
+  private fun buildLookup(version: String, source: DependencyCompletionContributionSource,
+                          completionPrefix: String) =
+    MLRankingIgnorable.wrap(LookupElementBuilder.create(version)
+      .withIcon(source.icon)
+      .also {
+        it.putUserData(MAVEN_COORDINATE_COMPLETION_PREFIX_KEY, completionPrefix)
+      })
 
-  override fun amendResultSet(result: CompletionResultSet): CompletionResultSet {
+  override fun amendResultSet(result: CompletionResultSet, completionPrefix: String): CompletionResultSet {
+    result.restartCompletionWhenNothingMatches()
     return result.withRelevanceSorter(CompletionService.getCompletionService().emptySorter().weigh(MavenVersionNegatingWeigher()))
   }
 }

@@ -2,9 +2,14 @@
 package com.intellij.maven.completion.contributor
 
 import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
+import com.intellij.maven.completion.icon
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionContext
+import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource
 import com.intellij.repository.search.completion.api.DependencyCompletionService
+import com.intellij.repository.search.completion.lookup.StrictOrderWeigher
+import com.intellij.repository.search.completion.lookup.StrictOrderWeigherData
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates
 import org.jetbrains.idea.maven.dom.model.completion.insert.MavenArtifactIdInsertionHandler
@@ -12,32 +17,35 @@ import org.jetbrains.idea.maven.model.MavenRepoArtifactInfo
 
 class MavenArtifactIdCompletionContributor : MavenCoordinateCompletionContributor("artifactId") {
 
-  override suspend fun find(service: DependencyCompletionService,
+  override suspend fun fill(service: DependencyCompletionService,
                             coordinates: MavenDomShortArtifactCoordinates,
                             context: DependencyCompletionContext,
-                            consumer: (MavenRepoArtifactInfo) -> Unit) {
+                            result: CompletionResultSet,
+                            completionPrefix: String) {
     val groupId = trimDummy(coordinates.groupId.stringValue)
     val artifactId = trimDummy(coordinates.artifactId.stringValue)
     if (MavenAbstractPluginExtensionCompletionContributor.isPluginOrExtension(coordinates) && groupId.isEmpty()) {
-      MavenAbstractPluginExtensionCompletionContributor.findArtifactsInPluginGroups(service, artifactId, context, consumer)
+      MavenAbstractPluginExtensionCompletionContributor.findArtifactsInPluginGroups(service, artifactId, context) { grp, item, index ->
+        val info = MavenRepoArtifactInfo(grp, item.result, emptyList())
+        result.addElement(buildLookup(info, completionPrefix, item.source, index))
+      }
       return
     }
-    service.suggestArtifactCompletions(DependencyArtifactCompletionRequest(groupId, artifactId, context)).collect { result ->
-      consumer(MavenRepoArtifactInfo(groupId, result.result, emptyList()))
+    var index = 0
+    service.suggestArtifactCompletions(DependencyArtifactCompletionRequest(groupId, artifactId, context)).collect { item ->
+      val info = MavenRepoArtifactInfo(groupId, item.result, emptyList())
+      result.addElement(buildLookup(info, completionPrefix, item.source, index++))
     }
   }
 
-  override fun fillResults(result: CompletionResultSet,
-                           coordinates: MavenDomShortArtifactCoordinates,
-                           item: MavenRepoArtifactInfo,
-                           completionPrefix: String) {
-    result.addElement(
-      MavenDependencyCompletionUtil.lookupElement(item, item.artifactId)
-        .withInsertHandler(MavenArtifactIdInsertionHandler.INSTANCE)
-        .also { it.putUserData(MAVEN_COORDINATE_COMPLETION_PREFIX_KEY, completionPrefix) }
-    )
-  }
-
-  override fun resultFilter(): MavenCoordinateCompletionResultFilter =
-    MavenCoordinateCompletionResultFilter.uniqueProperty { it.artifactId }
+  private fun buildLookup(info: MavenRepoArtifactInfo, completionPrefix: String,
+                          source: DependencyCompletionContributionSource,
+                          index: Int) =
+    MLRankingIgnorable.wrap(MavenDependencyCompletionUtil.lookupElement(info, info.artifactId)
+      .withIcon(source.icon)
+      .withInsertHandler(MavenArtifactIdInsertionHandler.INSTANCE)
+      .also {
+        it.putUserData(MAVEN_COORDINATE_COMPLETION_PREFIX_KEY, completionPrefix)
+        it.putUserData(StrictOrderWeigher.ORDER_KEY, StrictOrderWeigherData(source, index))
+      })
 }

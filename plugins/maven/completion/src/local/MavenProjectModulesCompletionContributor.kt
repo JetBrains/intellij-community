@@ -40,10 +40,12 @@ internal class MavenProjectModulesCompletionContributor : DependencyCompletionCo
 
   override suspend fun search(request: DependencyCompletionRequest): List<DependencyCompletionResult> {
     val project = findProject(request.context.eelDescriptor) ?: return emptyList()
+    val searchString = request.searchString
     MavenLog.LOG.debug("Project: get local maven artifacts started")
     val result = MavenProjectsManager.getInstance(project).projects
       .map { MavenDependencyCompletionItem(it.mavenId.key) }
       .filter { it.groupId != null && it.artifactId != null }
+      .filter { searchString.isEmpty() || "${it.groupId}:${it.artifactId}".contains(searchString, ignoreCase = true) }
       .map { DependencyCompletionResult(it.groupId!!, it.artifactId!!, it.version ?: "", source = source) }
     MavenLog.LOG.debug("Project: get local maven artifacts finished: ${result.size}")
     return result

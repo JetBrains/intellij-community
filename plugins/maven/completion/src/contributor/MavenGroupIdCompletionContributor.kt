@@ -3,11 +3,16 @@ package com.intellij.maven.completion.contributor
 
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
+import com.intellij.maven.completion.icon
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource
 import com.intellij.repository.search.completion.api.DependencyCompletionContext
-import com.intellij.repository.search.completion.api.DependencyCompletionService
 import com.intellij.repository.search.completion.api.DependencyCompletionRequest
+import com.intellij.repository.search.completion.api.DependencyCompletionService
+import com.intellij.repository.search.completion.lookup.StrictOrderWeigher
+import com.intellij.repository.search.completion.lookup.StrictOrderWeigherData
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates
 import org.jetbrains.idea.maven.dom.model.completion.insert.MavenDependencyInsertionHandler
@@ -23,34 +28,42 @@ class MavenGroupIdCompletionContributor : MavenCoordinateCompletionContributor("
     else null
   }
 
-  override suspend fun find(service: DependencyCompletionService,
+  override suspend fun fill(service: DependencyCompletionService,
                             coordinates: MavenDomShortArtifactCoordinates,
                             context: DependencyCompletionContext,
-                            consumer: (MavenRepoArtifactInfo) -> Unit) {
+                            result: CompletionResultSet,
+                            completionPrefix: String) {
     val groupId = trimDummy(coordinates.groupId.stringValue)
     val artifactId = trimDummy(coordinates.artifactId.stringValue)
+    if (MavenAbstractPluginExtensionCompletionContributor.isPluginOrExtension(coordinates) && groupId.isEmpty()) {
+      MavenAbstractPluginExtensionCompletionContributor.findArtifactsInPluginGroups(service, artifactId, context) { grp, item, index ->
+        result.addElement(buildLookup(MavenRepoArtifactInfo(grp, artifactId, emptyList()), grp, item.source, index, completionPrefix))
+      }
+      return
+    }
     val grouped = mutableMapOf<String, MutableList<String>>()
-    service.suggestCompletions(DependencyCompletionRequest(groupId, context)).collect { result ->
-      if (artifactId.isEmpty() || result.artifactId == artifactId) {
-        grouped.getOrPut(result.groupId) { mutableListOf() }.add(result.version)
+    val sources = mutableMapOf<String, DependencyCompletionContributionSource>()
+    service.suggestCompletions(DependencyCompletionRequest(groupId, context)).collect { item ->
+      if (artifactId.isEmpty() || item.artifactId == artifactId) {
+        grouped.getOrPut(item.groupId) { mutableListOf() }.add(item.version)
+        sources.putIfAbsent(item.groupId, item.source)
       }
     }
+    var index = 0
     for ((grp, versions) in grouped) {
-      consumer(MavenRepoArtifactInfo(grp, artifactId, versions))
+      val source = sources[grp]!!
+      result.addElement(buildLookup(MavenRepoArtifactInfo(grp, artifactId, versions), grp, source, index++, completionPrefix))
     }
   }
 
-  override fun fillResults(result: CompletionResultSet,
-                           coordinates: MavenDomShortArtifactCoordinates,
-                           item: MavenRepoArtifactInfo,
-                           completionPrefix: String) {
-    result.addElement(
-      MavenDependencyCompletionUtil.lookupElement(item, item.groupId)
-        .withInsertHandler(MavenDependencyInsertionHandler.INSTANCE)
-        .also { it.putUserData(MAVEN_COORDINATE_COMPLETION_PREFIX_KEY, completionPrefix) }
-    )
-  }
-
-  override fun resultFilter(): MavenCoordinateCompletionResultFilter =
-    MavenCoordinateCompletionResultFilter.uniqueProperty { it.groupId }
+  private fun buildLookup(info: MavenRepoArtifactInfo, displayText: String,
+                          source: DependencyCompletionContributionSource, index: Int,
+                          completionPrefix: String) =
+    MLRankingIgnorable.wrap(MavenDependencyCompletionUtil.lookupElement(info, displayText)
+      .withIcon(source.icon)
+      .withInsertHandler(MavenDependencyInsertionHandler.INSTANCE)
+      .also {
+        it.putUserData(MAVEN_COORDINATE_COMPLETION_PREFIX_KEY, completionPrefix)
+        it.putUserData(StrictOrderWeigher.ORDER_KEY, StrictOrderWeigherData(source, index))
+      })
 }

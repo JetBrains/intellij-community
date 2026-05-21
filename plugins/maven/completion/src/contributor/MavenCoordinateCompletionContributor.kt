@@ -1,12 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.completion.contributor
 
+
 import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.CompletionSorter
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.CompletionUtil
-import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.maven.completion.getCompletionContext
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingCancellable
@@ -17,68 +18,42 @@ import com.intellij.psi.xml.XmlTag
 import com.intellij.psi.xml.XmlText
 import com.intellij.repository.search.completion.api.DependencyCompletionContext
 import com.intellij.repository.search.completion.api.DependencyCompletionService
+import com.intellij.repository.search.completion.lookup.DependencyCompletionFuzzyMatcher
+import com.intellij.repository.search.completion.lookup.StrictOrderWeigher
 import com.intellij.util.xml.DomManager
 import com.intellij.util.xml.GenericDomValue
-import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates
-import org.jetbrains.idea.maven.dom.model.completion.insert.MavenDependencyInsertionHandler
-import org.jetbrains.idea.maven.model.MavenRepoArtifactInfo
-import java.util.concurrent.ConcurrentHashMap
 
 abstract class MavenCoordinateCompletionContributor protected constructor(private val myTagId: String) : CompletionContributor() {
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     if (parameters.completionType != CompletionType.BASIC) return
     val placeChecker = MavenCoordinateCompletionPlaceChecker(myTagId, parameters).checkPlace()
-
-    if (placeChecker.isCorrectPlace) {
-      result.stopHere()
-      val coordinates = placeChecker.coordinates!!
-      val completionPrefix = CompletionUtil.findReferenceOrAlphanumericPrefix(parameters)
-      val amendedResult = amendResultSet(result)
-      val context = parameters.getCompletionContext()
-
-      runBlockingCancellable {
-        val resultFilter = resultFilter()
-        find(service<DependencyCompletionService>(), coordinates, context) {
-          if (resultFilter.accept(it)) {
-            fillResults(amendedResult, coordinates, it, completionPrefix)
-          }
-        }
-        fillAfter(amendedResult)
-      }
+    if (!placeChecker.isCorrectPlace) return
+    result.stopHere()
+    val coordinates = placeChecker.coordinates!!
+    val completionPrefix = CompletionUtil.findReferenceOrAlphanumericPrefix(parameters)
+    val amendedResult = amendResultSet(result, completionPrefix)
+    val context = parameters.getCompletionContext()
+    runBlockingCancellable {
+      fill(service<DependencyCompletionService>(), coordinates, context, amendedResult, completionPrefix)
+      fillAfter(amendedResult)
     }
   }
 
-  protected open fun resultFilter(): MavenCoordinateCompletionResultFilter = MavenCoordinateCompletionResultFilter.ACCEPT_ALL
-
-  protected open fun fillResults(result: CompletionResultSet,
-                                 coordinates: MavenDomShortArtifactCoordinates,
-                                 item: MavenRepoArtifactInfo,
-                                 completionPrefix: String) {
-    fillResult(coordinates, result, item, completionPrefix)
-  }
-
-  protected abstract suspend fun find(service: DependencyCompletionService,
+  protected abstract suspend fun fill(service: DependencyCompletionService,
                                       coordinates: MavenDomShortArtifactCoordinates,
                                       context: DependencyCompletionContext,
-                                      consumer: (MavenRepoArtifactInfo) -> Unit)
+                                      result: CompletionResultSet,
+                                      completionPrefix: String)
 
   protected open fun fillAfter(result: CompletionResultSet) {
   }
 
-  protected open fun fillResult(coordinates: MavenDomShortArtifactCoordinates,
-                                result: CompletionResultSet,
-                                item: MavenRepoArtifactInfo,
-                                completionPrefix: String) {
-    val lookup: LookupElement = MavenDependencyCompletionUtil.lookupElement(item)
-      .withInsertHandler(MavenDependencyInsertionHandler.INSTANCE)
-    lookup.putUserData(MAVEN_COORDINATE_COMPLETION_PREFIX_KEY, completionPrefix)
-    result.addElement(lookup)
-  }
-
-  protected open fun amendResultSet(result: CompletionResultSet): CompletionResultSet {
+  protected open fun amendResultSet(result: CompletionResultSet, completionPrefix: String): CompletionResultSet {
     result.restartCompletionWhenNothingMatches()
     return result
+      .withPrefixMatcher(DependencyCompletionFuzzyMatcher(completionPrefix))
+      .withRelevanceSorter(CompletionSorter.emptySorter().weigh(StrictOrderWeigher()))
   }
 
   protected fun isCorrectPlace(parameters: CompletionParameters): Boolean =
@@ -92,26 +67,6 @@ abstract class MavenCoordinateCompletionContributor protected constructor(privat
         return ""
       }
       return StringUtil.trim(value.replace(CompletionUtil.DUMMY_IDENTIFIER, "").replace(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED, ""))
-    }
-  }
-}
-
-interface MavenCoordinateCompletionResultFilter {
-  fun accept(item: MavenRepoArtifactInfo): Boolean
-
-  companion object {
-    val ACCEPT_ALL: MavenCoordinateCompletionResultFilter = object : MavenCoordinateCompletionResultFilter {
-      override fun accept(item: MavenRepoArtifactInfo) = true
-    }
-
-    fun uniqueProperty(property: (MavenRepoArtifactInfo) -> String): MavenCoordinateCompletionResultFilter {
-      return object : MavenCoordinateCompletionResultFilter {
-        val existing = ConcurrentHashMap<String, Boolean>()
-
-        override fun accept(item: MavenRepoArtifactInfo): Boolean {
-          return null == existing.putIfAbsent(property(item), true)
-        }
-      }
     }
   }
 }

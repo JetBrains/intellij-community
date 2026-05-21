@@ -7,8 +7,7 @@ import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.repository.search.completion.api.DependencyCompletionContext
 import com.intellij.repository.search.completion.api.DependencyCompletionContextImpl
 import com.intellij.repository.search.completion.api.BaseDependencyCompletionResult
-import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource.LOCAL
-import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource.SERVER
+import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.utils.MavenUtil
 import javax.swing.Icon
@@ -20,6 +19,13 @@ fun CompletionParameters.getCompletionContext(): DependencyCompletionContext =
 @get:ApiStatus.Internal
 val BaseDependencyCompletionResult.icon: Icon
   get() = when (source) {
-    LOCAL -> AllIcons.Build.CompletionLocalCache
-    SERVER -> AllIcons.Build.CompletionCloud
+    DependencyCompletionContributionSource.LOCAL -> AllIcons.Build.CompletionLocalCache
+    DependencyCompletionContributionSource.SERVER -> AllIcons.Build.CompletionCloud
+  }
+
+@get:ApiStatus.Internal
+val DependencyCompletionContributionSource.icon: Icon
+  get() = when (this) {
+    DependencyCompletionContributionSource.LOCAL -> AllIcons.Build.CompletionLocalCache
+    DependencyCompletionContributionSource.SERVER -> AllIcons.Build.CompletionCloud
   }
