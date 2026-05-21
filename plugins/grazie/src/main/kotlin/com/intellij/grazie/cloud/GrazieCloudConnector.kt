@@ -38,6 +38,11 @@ interface GrazieCloudConnector {
    */
   fun subscribeToAuthorizationStateEvents(disposable: Disposable, listener: () -> Unit)
 
+  /**
+   * Returns true if there is a quota available for the current user.
+   */
+  fun hasQuota(): Boolean
+
   companion object {
     private val EP_NAME: ExtensionPointName<GrazieCloudConnector> = ExtensionPointName("com.intellij.grazie.cloudConnector")
 
@@ -61,6 +66,8 @@ interface GrazieCloudConnector {
     fun askUserConsentForCloud(): Boolean = EP_NAME.extensionList.first().askUserConsentForCloud()
 
     fun isAfterRecentGecError(): Boolean = GrazieCloudConnectionState.isAfterRecentGecError()
+
+    fun hasQuota(): Boolean = EP_NAME.extensionList.first().hasQuota()
 
     fun api(): SuspendableAPIGatewayClient? = EP_NAME.extensionList.first().api()
 

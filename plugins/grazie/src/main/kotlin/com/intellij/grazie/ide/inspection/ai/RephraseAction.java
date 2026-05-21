@@ -66,7 +66,7 @@ public class RephraseAction extends IntentionAndQuickFixAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     if (editor == null || CommitMessage.isCommitMessage(psiFile)) return false;
-    if (!GrazieCloudConnector.Companion.seemsCloudConnected()) {
+    if (!GrazieCloudConnector.Companion.seemsCloudConnected() || !GrazieCloudConnector.Companion.hasQuota()) {
       return false;
     }
 

@@ -45,4 +45,6 @@ class DefaultGrazieCloudConnector : GrazieCloudConnector {
 
   override fun subscribeToAuthorizationStateEvents(disposable: Disposable, listener: () -> Unit): Unit =
     GrazieLoginManager.subscribe(disposable, listener)
+
+  override fun hasQuota(): Boolean = false
 }

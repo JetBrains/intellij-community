@@ -75,9 +75,10 @@ public class TranslateAction implements IntentionAction, CustomizableIntentionAc
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     SelectionModel model = editor.getSelectionModel();
-    return !CommitMessage.isCommitMessage(psiFile) &&
-           GrazieCloudConnector.Companion.seemsCloudConnected() &&
-           !getAffectedTexts(psiFile, model.getSelectionStart(), model.getSelectionEnd()).isEmpty();
+    return !CommitMessage.isCommitMessage(psiFile)
+           && GrazieCloudConnector.Companion.seemsCloudConnected()
+           && GrazieCloudConnector.Companion.hasQuota()
+           && !getAffectedTexts(psiFile, model.getSelectionStart(), model.getSelectionEnd()).isEmpty();
   }
 
   static class TranslationTarget {
