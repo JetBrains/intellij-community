@@ -1,20 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compose.ide.plugin.k2.inspections
 
-import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.compose.ide.plugin.k2.checkRequiresComposePlugin
-import com.intellij.compose.ide.plugin.k2.intentions.K2AddComposePluginQuickFix
-import com.intellij.compose.ide.plugin.k2.isComposeCompilerPluginApplied
 import com.intellij.compose.ide.plugin.shared.inspections.ComposeMissingPluginInspection
-import com.intellij.openapi.module.Module
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 
 internal class K2ComposeMissingPluginInspection : ComposeMissingPluginInspection() {
-
-  override fun isComposePluginApplied(module: Module): Boolean = module.isComposeCompilerPluginApplied
-
-  override fun createQuickFix(): LocalQuickFix = K2AddComposePluginQuickFix()
 
   override fun requiresComposePlugin(expression: KtCallExpression): Boolean = checkRequiresComposePlugin(expression)
 

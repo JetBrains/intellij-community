@@ -3,14 +3,17 @@ package com.intellij.compose.ide.plugin.k2.inspections
 
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.compose.ide.plugin.shared.inspections.ComposeMissingPluginInspectionTest
+import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.plugins.gradle.util.GradleConstants
 
-internal class K2ComposeMissingPluginInspectionTest : ComposeMissingPluginInspectionTest() {
+internal class K2GradleComposeMissingPluginInspectionTest : ComposeMissingPluginInspectionTest() {
   override val pluginMode: KotlinPluginMode
     get() = KotlinPluginMode.K2
 
   override fun setUp() {
     super.setUp()
+    ExternalSystemModulePropertyManager.getInstance(myFixture.module).setExternalId(GradleConstants.SYSTEM_ID)
     myFixture.enableInspections(K2ComposeMissingPluginInspection() as InspectionProfileEntry)
   }
 }

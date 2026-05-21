@@ -4,8 +4,8 @@ package com.intellij.compose.ide.plugin.k2.inspections
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoFilter
 import com.intellij.compose.ide.plugin.k2.checkRequiresComposePlugin
-import com.intellij.compose.ide.plugin.k2.isComposeCompilerPluginApplied
 import com.intellij.compose.ide.plugin.shared.inspections.ComposeMissingPluginInspection
+import com.intellij.compose.ide.plugin.shared.inspections.ComposeModuleConfigurationExtension
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parentOfType
@@ -38,7 +38,8 @@ internal class K2ComposeMissingDependencyHighlightFilter : HighlightInfoFilter {
     if (!isComposeCall && !isComposeProperty) return true
 
     val module = ModuleUtilCore.findModuleForFile(psiFile) ?: return true
-    return module.isComposeCompilerPluginApplied
+    val composeConfiguration = ComposeModuleConfigurationExtension.findFor(module) ?: return true
+    return composeConfiguration.hasComposeEnabled(module)
   }
 }
 

@@ -18,6 +18,10 @@
                                        order="last"/>
   </extensions>
 
+  <extensions defaultExtensionNs="com.intellij.compose.ide.plugin.shared">
+    <composeModuleConfiguration implementation="com.intellij.compose.ide.plugin.k2.inspections.K2GradleComposeModuleConfigurationExtension"/>
+  </extensions>
+
   <extensions defaultExtensionNs="com.intellij">
     <completion.contributor language="kotlin"
                             implementationClass="com.intellij.compose.ide.plugin.k2.completion.K2ComposeModifierCompletionContributor"

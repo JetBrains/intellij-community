@@ -37,7 +37,7 @@ import kotlin.test.fail
 /**
  * Enables Compose in the tests by adding Composable and RememberInComposition annotations to the test classpath.
  */
-internal fun JavaCodeInsightTestFixture.enableComposeInTest() {
+fun JavaCodeInsightTestFixture.enableComposeInTest() {
   if (!this.isComposeEnabled()) {
     createComposableAnnotationInFile("Composable.kt")
     createRememberInCompositionAnnotationInFile("RememberInComposition.kt")

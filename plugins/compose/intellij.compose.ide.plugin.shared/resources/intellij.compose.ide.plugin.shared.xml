@@ -4,6 +4,14 @@
     <module name="intellij.java.psi"/>
   </dependencies>
   <!-- endregion -->
+
+  <extensionPoints>
+    <extensionPoint
+      dynamic="true"
+      qualifiedName="com.intellij.compose.ide.plugin.shared.composeModuleConfiguration"
+      interface="com.intellij.compose.ide.plugin.shared.inspections.ComposeModuleConfigurationExtension"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <additionalTextAttributes scheme="Default" file="colorSchemes/IntelliJComposeColorSchemeDefault.xml"/>
     <additionalTextAttributes scheme="Darcula" file="colorSchemes/IntelliJComposeColorSchemeDarcula.xml"/>

@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtScript
 import org.jetbrains.kotlin.psi.KtScriptInitializer
 
-internal class K2AddComposePluginQuickFix : LocalQuickFix {
+internal class K2GradleAddComposePluginQuickFix : LocalQuickFix {
 
   override fun getFamilyName(): String = ComposeIdeBundle.message("compose.inspection.missing.plugin.fix.family.name")
 
