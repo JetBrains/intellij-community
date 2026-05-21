@@ -37,21 +37,23 @@ class MavenGroupIdCompletionContributor : MavenCoordinateCompletionContributor("
                             completionPrefix: String) {
     val groupId = trimDummy(coordinates.groupId.stringValue)
     val artifactId = trimDummy(coordinates.artifactId.stringValue)
+    var index = 0
+    val addedGroupIds = mutableSetOf<String>()
     if (MavenAbstractPluginExtensionCompletionContributor.isPluginOrExtension(coordinates) && groupId.isEmpty()) {
-      MavenAbstractPluginExtensionCompletionContributor.findArtifactsInPluginGroups(service, artifactId, context) { grp, item, index ->
-        result.addElement(buildLookup(MavenRepoArtifactInfo(grp, artifactId, emptyList()), grp, item.source, index, completionPrefix))
+      MavenAbstractPluginExtensionCompletionContributor.findArtifactsInPluginGroups(service, artifactId, context) { grp, item, _ ->
+        if (addedGroupIds.add(grp)) {
+          result.addElement(buildLookup(MavenRepoArtifactInfo(grp, artifactId, emptyList()), grp, item.source, index++, completionPrefix))
+        }
       }
-      return
     }
     val grouped = mutableMapOf<String, MutableList<String>>()
     val sources = mutableMapOf<String, DependencyCompletionContributionSource>()
     service.suggestCompletions(DependencyCompletionRequest(groupId, context)).collect { item ->
-      if (artifactId.isEmpty() || item.artifactId == artifactId) {
+      if ((artifactId.isEmpty() || item.artifactId == artifactId) && item.groupId !in addedGroupIds) {
         grouped.getOrPut(item.groupId) { mutableListOf() }.add(item.version)
         sources.putIfAbsent(item.groupId, item.source)
       }
     }
-    var index = 0
     for ((grp, versions) in grouped) {
       val source = sources[grp]!!
       result.addElement(buildLookup(MavenRepoArtifactInfo(grp, artifactId, versions), grp, source, index++, completionPrefix))
