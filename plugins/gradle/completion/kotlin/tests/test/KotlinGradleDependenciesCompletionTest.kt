@@ -427,19 +427,19 @@ internal class KotlinGradleDependenciesCompletionTest : AbstractKotlinGradleComp
 
   @ParameterizedTest
   @BaseGradleVersionSource("""
-    impl("<caret>myGroup1<colon>myArtifact1<colon>myVersion1"),
-    impl("myGr<caret>something"),
-    impl("myGroup1<colon>myArti<caret><colon><colon>"),
-    impl("myGroup1<colon>myArtifact1<colon>myVer<caret>si")
+    implementation("<caret>myGroup1<colon>myArtifact1<colon>myVersion1"),
+    implementation("myGr<caret>something"),
+    implementation("myGroup1<colon>myArti<caret><colon><colon>"),
+    implementation("myGroup1<colon>myArtifact1<colon>myVer<caret>si")
   """)
   fun `test coordinates completion when caret is in the middle of the dependency string`(
     gradleVersion: GradleVersion,
     dependencyEntryEscaped: String,
   ) {
     val dependencyEntry = dependencyEntryEscaped.unescape()
-    val dependencyCompletionResult = "impl(\"myGroup1:myArtifact1:myVersion1\")"
+    val dependencyCompletionResult = "implementation(\"myGroup1:myArtifact1:myVersion1\")"
 
-    test(gradleVersion, KotlinGradleProjectTestCase.KOTLIN_PROJECT) {
+    test(gradleVersion, KOTLIN_GRADLE_COMPLETION_FIXTURE) {
       val file = writeTextAndCommit("build.gradle.kts", "dependencies { $dependencyEntry }")
       runInEdtAndWait {
         codeInsightFixture.configureFromExistingVirtualFile(file)
