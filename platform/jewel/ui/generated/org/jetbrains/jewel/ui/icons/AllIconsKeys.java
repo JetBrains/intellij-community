@@ -1312,6 +1312,9 @@ public final class AllIconsKeys {
     public static final @NotNull IntelliJIconKey Diagram = new IntelliJIconKey("fileTypes/diagram.svg", "expui/fileTypes/diagram.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Docker = new IntelliJIconKey("expui/fileTypes/docker.svg", "expui/fileTypes/docker.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey Dtd = new IntelliJIconKey("fileTypes/dtd.svg", "expui/fileTypes/xml.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
@@ -1364,6 +1367,9 @@ public final class AllIconsKeys {
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey JavaScript = new IntelliJIconKey("fileTypes/javaScript.svg", "expui/fileTypes/javaScript.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Jenkins = new IntelliJIconKey("expui/fileTypes/jenkins.svg", "expui/fileTypes/jenkins.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey Jfr = new IntelliJIconKey("fileTypes/jfr.svg", "expui/fileTypes/jfr.svg", AllIconsKeys.class);

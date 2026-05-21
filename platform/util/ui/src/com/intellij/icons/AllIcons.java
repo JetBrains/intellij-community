@@ -477,6 +477,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Csv = load("expui/fileTypes/csv.svg", -1498141192, 2);
     /** 16x16 */ public static final @NotNull Icon Custom = load("expui/fileTypes/text.svg", "fileTypes/custom.svg", 1692794144, 0);
     /** 16x16 */ public static final @NotNull Icon Diagram = load("expui/fileTypes/diagram.svg", "fileTypes/diagram.svg", 692669001, 0);
+    /** 16x16 */ public static final @NotNull Icon Docker = load("expui/fileTypes/docker.svg", 700977658, 2);
     /** 16x16 */ public static final @NotNull Icon Dtd = load("expui/fileTypes/xml.svg", "fileTypes/dtd.svg", -1804958231, 0);
     /** 16x16 */ public static final @NotNull Icon Font = load("expui/fileTypes/font.svg", -1762443308, 2);
     /** 16x16 */ public static final @NotNull Icon Gitignore = load("expui/fileTypes/gitignore.svg", -264194071, 0);
@@ -495,6 +496,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon JavaClass = load("expui/fileTypes/javaClass.svg", "fileTypes/javaClass.svg", -776048542, 0);
     /** 16x16 */ public static final @NotNull Icon JavaOutsideSource = load("expui/fileTypes/java.svg", "fileTypes/javaOutsideSource.svg", 192400757, 0);
     /** 16x16 */ public static final @NotNull Icon JavaScript = load("expui/fileTypes/javaScript.svg", "fileTypes/javaScript.svg", -605773144, 0);
+    /** 16x16 */ public static final @NotNull Icon Jenkins = load("expui/fileTypes/jenkins.svg", -1502763703, 0);
     /** 16x16 */ public static final @NotNull Icon Jfr = load("expui/fileTypes/jfr.svg", "fileTypes/jfr.svg", 243156876, 0);
     /** 16x16 */ public static final @NotNull Icon Json = load("expui/fileTypes/json.svg", "fileTypes/json.svg", -1463584567, 2);
     /** 16x16 */ public static final @NotNull Icon JsonSchema = load("expui/fileTypes/jsonSchema.svg", "fileTypes/jsonSchema.svg", -2026062432, 2);
