@@ -128,7 +128,7 @@ public final class ShowUIDefaultsAction extends AnAction implements DumbAware {
                       changed.set(true);
                     }
                   }
-                });
+                }, null, true);
               }
               else if (value instanceof Boolean) {
                 updateValue(pair, !((Boolean)value), row, column);
@@ -229,7 +229,7 @@ public final class ShowUIDefaultsAction extends AnAction implements DumbAware {
             final JPanel panel = simplePanel(label);
             if (value instanceof Color c) {
               label.setText(
-                String.format("  [%d,%d,%d] #%s", c.getRed(), c.getGreen(), c.getBlue(), StringUtil.toUpperCase(ColorUtil.toHex(c))));
+                String.format("  [%d,%d,%d,%d] #%s", c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha(), StringUtil.toUpperCase(ColorUtil.toHex(c, true))));
               Color fg = ColorUtil.isDark(c) ? Gray.xFF : Gray.x00;
               label.setForeground(fg);
               panel.setBackground(c);
@@ -283,7 +283,7 @@ public final class ShowUIDefaultsAction extends AnAction implements DumbAware {
                     for (int row : rows) {
                       var pair = (Pair<?, ?>)content.table.getModel().getValueAt(row, 0);
                       if (pair.second instanceof Color) {
-                        result.add("\"" + pair.first.toString() + "\": \"" + ColorUtil.toHtmlColor((Color)pair.second) + "\"" + tail);
+                        result.add("\"" + pair.first.toString() + "\": \"#" + ColorUtil.toHex((Color)pair.second, true) + "\"" + tail);
                       }
                       else {
                         result.add("\"" + pair.first.toString() + "\": \"" + pair.second + "\"" + tail);
