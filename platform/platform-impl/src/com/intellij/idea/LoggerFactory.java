@@ -40,11 +40,7 @@ public final class LoggerFactory implements Logger.Factory {
         }
         catch (IllegalArgumentException _) { }
       }
-      // legacy properties
-      else if (Boolean.getBoolean("intellij.console.use.severe.log.level")) {
-        consoleLogLevel = LogLevel.ERROR;
-      }
-      else if (Boolean.getBoolean("idea.log.console") || AppMode.isRunningFromDevBuild()) {
+      else if (AppMode.isRunningFromDevBuild() || Boolean.getBoolean("idea.log.console")) {
         consoleLogLevel = LogLevel.WARNING;
       }
     }
