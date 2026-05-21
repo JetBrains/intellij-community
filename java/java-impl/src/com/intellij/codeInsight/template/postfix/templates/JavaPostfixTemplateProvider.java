@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.completion.CompletionInitializationContext;
@@ -53,6 +53,7 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
     new ForDescendingPostfixTemplate(this),
     new WhileStatementPostfixTemplate(this),
     new SoutPostfixTemplate(this),
+    new IopPostfixTemplate(this),
     new SerrPostfixTemplate(this),
     new SoufPostfixTemplate(this),
     new SoutvPostfixTemplate(this),
