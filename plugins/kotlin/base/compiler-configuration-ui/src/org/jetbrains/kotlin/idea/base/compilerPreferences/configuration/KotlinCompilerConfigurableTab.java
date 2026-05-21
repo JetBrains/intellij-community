@@ -33,6 +33,7 @@ import kotlin.collections.CollectionsKt;
 import kotlin.enums.EnumEntries;
 import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
@@ -198,14 +199,14 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
     updateOutputDirEnabled();
   }
 
-  private static @NotNull @NlsSafe String getModuleKindOrDefault(@Nullable String moduleKindId) {
+  private static @NotNull @NonNls String getModuleKindOrDefault(@Nullable @NonNls String moduleKindId) {
     if (moduleKindId == null) {
       moduleKindId = K2JsArgumentConstants.MODULE_PLAIN;
     }
     return moduleKindId;
   }
 
-  private static @NotNull @NlsSafe String getSourceMapSourceEmbeddingOrDefault(@Nullable String sourceMapSourceEmbeddingId) {
+  private static @NotNull @NonNls String getSourceMapSourceEmbeddingOrDefault(@Nullable @NonNls String sourceMapSourceEmbeddingId) {
     if (sourceMapSourceEmbeddingId == null) {
       sourceMapSourceEmbeddingId = K2JsArgumentConstants.SOURCE_MAP_SOURCE_CONTENT_INLINING;
     }
@@ -507,11 +508,11 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
            !getSelectedJvmVersion().equals(getJvmVersionOrDefault(k2jvmCompilerArguments.getJvmTarget()));
   }
 
-  private @NotNull String getSelectedModuleKind() {
+  private @NotNull @NonNls String getSelectedModuleKind() {
     return getModuleKindOrDefault((String)ui.moduleKindComboBox.getSelectedItem());
   }
 
-  private String getSelectedSourceMapSourceEmbedding() {
+  private @NotNull @NonNls String getSelectedSourceMapSourceEmbedding() {
     return getSourceMapSourceEmbeddingOrDefault((String)ui.sourceMapEmbedSources.getSelectedItem());
   }
 

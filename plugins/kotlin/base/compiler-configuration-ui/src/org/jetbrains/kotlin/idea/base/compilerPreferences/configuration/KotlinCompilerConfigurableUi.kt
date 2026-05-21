@@ -15,6 +15,7 @@ import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.selected
 import com.intellij.util.ui.ThreeStateCheckBox
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.cli.common.arguments.K2JsArgumentConstants
 import org.jetbrains.kotlin.config.VersionView
 import org.jetbrains.kotlin.idea.base.compilerPreferences.KotlinBaseCompilerConfigurationUiBundle.message
@@ -62,10 +63,10 @@ internal class KotlinCompilerConfigurableUi(private val onCopyRuntimeFilesCheckB
     lateinit var keepAliveCheckBox: ThreeStateCheckBox
     lateinit var enableIncrementalCompilationForJvmCheckBox: JCheckBox
     lateinit var enableIncrementalCompilationForJsCheckBox: JCheckBox
-    lateinit var moduleKindComboBox: ComboBox<String>
+    lateinit var moduleKindComboBox: ComboBox<@NonNls String>
     lateinit var jvmVersionComboBox: ComboBox<String>
     lateinit var sourceMapPrefix: JTextField
-    lateinit var sourceMapEmbedSources: ComboBox<String>
+    lateinit var sourceMapEmbedSources: ComboBox<@NonNls String>
 
     lateinit var k2jvmGroup: Row
     lateinit var k2jsGroup: Row
@@ -232,7 +233,7 @@ internal class ComboBoxModelWithPossiblyDisabledItems : MutableCollectionComboBo
     override fun setSelectedItem(item: Any?) {
         if (item == null) return
 
-        check(item is JpsVersionItem) { item.toString() + " is supposed to be JpsVersionItem" }
+        check(item is JpsVersionItem) { "$item is supposed to be JpsVersionItem" }
 
         if (!item.myEnabled) {
             return
