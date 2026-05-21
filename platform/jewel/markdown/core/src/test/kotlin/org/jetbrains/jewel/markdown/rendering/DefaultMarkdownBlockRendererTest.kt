@@ -34,13 +34,7 @@ public class DefaultMarkdownBlockRendererTest {
             setContent {
                 MarkdownTestTheme {
                     val renderer = DefaultMarkdownBlockRenderer(createMarkdownTestStyling(), emptyList())
-                    renderer.render(
-                        blocks,
-                        enabled = true,
-                        onUrlClick = onUrlClick,
-                        onTextClick = {},
-                        modifier = Modifier,
-                    )
+                    renderer.RenderBlocks(blocks, enabled = true, onUrlClick = onUrlClick, modifier = Modifier)
                 }
             }
 
@@ -72,11 +66,10 @@ public class DefaultMarkdownBlockRendererTest {
             setContent {
                 MarkdownTestTheme {
                     val renderer = DefaultMarkdownBlockRenderer(createMarkdownTestStyling(), emptyList())
-                    renderer.render(
+                    renderer.RenderBlocks(
                         blocks,
                         enabled = enabled,
                         onUrlClick = { url -> clickedUrl = url },
-                        onTextClick = {},
                         modifier = Modifier,
                     )
                 }
@@ -113,13 +106,7 @@ public class DefaultMarkdownBlockRendererTest {
             setContent {
                 MarkdownTestTheme {
                     val renderer = DefaultMarkdownBlockRenderer(createMarkdownTestStyling(), emptyList())
-                    renderer.render(
-                        blocks,
-                        enabled = enabled,
-                        onUrlClick = onUrlClick,
-                        onTextClick = {},
-                        modifier = Modifier,
-                    )
+                    renderer.RenderBlocks(blocks, enabled = enabled, onUrlClick = onUrlClick, modifier = Modifier)
                 }
             }
 

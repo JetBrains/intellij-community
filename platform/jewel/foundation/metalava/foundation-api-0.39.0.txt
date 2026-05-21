@@ -151,7 +151,6 @@ package org.jetbrains.jewel.foundation {
   }
 
   @androidx.compose.runtime.Immutable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class TextColors {
-    ctor @KotlinOnly @Deprecated public TextColors(androidx.compose.ui.graphics.Color normal, androidx.compose.ui.graphics.Color selected, androidx.compose.ui.graphics.Color disabled, androidx.compose.ui.graphics.Color info, androidx.compose.ui.graphics.Color error);
     ctor @KotlinOnly public TextColors(androidx.compose.ui.graphics.Color normal, androidx.compose.ui.graphics.Color selected, androidx.compose.ui.graphics.Color disabled, androidx.compose.ui.graphics.Color disabledSelected, androidx.compose.ui.graphics.Color info, androidx.compose.ui.graphics.Color error, androidx.compose.ui.graphics.Color warning);
     property public androidx.compose.ui.graphics.Color disabled;
     property public androidx.compose.ui.graphics.Color disabledSelected;
@@ -1017,7 +1016,6 @@ package org.jetbrains.jewel.foundation.theme {
   }
 
   @androidx.compose.runtime.Immutable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class ThemeDefinition {
-    ctor @KotlinOnly @Deprecated public ThemeDefinition(String name, boolean isDark, org.jetbrains.jewel.foundation.GlobalColors globalColors, org.jetbrains.jewel.foundation.GlobalMetrics globalMetrics, androidx.compose.ui.text.TextStyle defaultTextStyle, androidx.compose.ui.text.TextStyle editorTextStyle, androidx.compose.ui.text.TextStyle consoleTextStyle, androidx.compose.ui.graphics.Color contentColor, org.jetbrains.jewel.foundation.theme.ThemeColorPalette colorPalette, org.jetbrains.jewel.foundation.theme.ThemeIconData iconData);
     ctor @KotlinOnly public ThemeDefinition(String name, boolean isDark, org.jetbrains.jewel.foundation.GlobalColors globalColors, org.jetbrains.jewel.foundation.GlobalMetrics globalMetrics, androidx.compose.ui.text.TextStyle defaultTextStyle, androidx.compose.ui.text.TextStyle editorTextStyle, androidx.compose.ui.text.TextStyle consoleTextStyle, androidx.compose.ui.graphics.Color contentColor, org.jetbrains.jewel.foundation.theme.ThemeColorPalette colorPalette, org.jetbrains.jewel.foundation.theme.ThemeIconData iconData, org.jetbrains.jewel.foundation.DisabledAppearanceValues disabledAppearanceValues);
     method public org.jetbrains.jewel.foundation.theme.ThemeColorPalette getColorPalette();
     method public androidx.compose.ui.text.TextStyle getConsoleTextStyle();

@@ -66,10 +66,6 @@ package org.jetbrains.jewel.intui.standalone {
     property public static androidx.compose.ui.text.font.FontFamily androidx.compose.ui.text.font.FontFamily.Companion.JetBrainsMono;
   }
 
-  public final class PainterProviderKt {
-    method @Deprecated public static org.jetbrains.jewel.ui.painter.ResourcePainterProvider standalonePainterProvider(String path);
-  }
-
   public final class StandalonePainterHintsProvider extends org.jetbrains.jewel.ui.painter.PalettePainterHintsProvider {
     ctor public StandalonePainterHintsProvider(org.jetbrains.jewel.foundation.theme.ThemeDefinition theme);
     method protected org.jetbrains.jewel.ui.painter.PainterHint getCheckBoxByColorPaletteHint();
@@ -548,7 +544,6 @@ package org.jetbrains.jewel.intui.standalone.styling {
     method public static org.jetbrains.jewel.ui.component.styling.ScrollbarStyle dark(org.jetbrains.jewel.ui.component.styling.ScrollbarStyle.Companion);
     method public static org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility.AlwaysVisible default(org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility.AlwaysVisible.Companion);
     method public static org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility.WhenScrolling default(org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility.WhenScrolling.Companion);
-    method @Deprecated public static org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility.WhenScrolling default(org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility.WhenScrolling.Companion, optional float trackThickness, optional float trackThicknessExpanded, optional androidx.compose.foundation.layout.PaddingValues trackPadding, optional androidx.compose.foundation.layout.PaddingValues trackPaddingWithBorder, optional long trackColorAnimationDuration, optional long expandAnimationDuration, optional long thumbColorAnimationDuration, optional long lingerDuration);
     method public static org.jetbrains.jewel.ui.component.styling.ScrollbarStyle light(org.jetbrains.jewel.ui.component.styling.ScrollbarStyle.Companion);
     method public static org.jetbrains.jewel.ui.component.styling.ScrollbarMetrics macOs(org.jetbrains.jewel.ui.component.styling.ScrollbarMetrics.Companion, optional androidx.compose.foundation.shape.CornerSize thumbCornerSize, optional float minThumbLength);
     method public static org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility.AlwaysVisible macOs(org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility.AlwaysVisible.Companion, optional float trackThickness, optional androidx.compose.foundation.layout.PaddingValues trackPadding, optional long thumbColorAnimationDuration, optional long scrollbarBackgroundColorLight, optional long scrollbarBackgroundColorDark);

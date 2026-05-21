@@ -45,58 +45,6 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
  * @param modifier The modifier to apply to this layout node.
  * @param selectable Whether the text can be selected.
  * @param enabled Whether the rendered content is enabled.
- * @param renderingDispatcher The dispatcher to use for processing the Markdown.
- * @param onUrlClick The callback to be invoked when a URL is clicked.
- * @param onTextClick This parameter is ignored and is only here for binary/source compat reasons.
- * @param markdownStyling The styling to use for the rendered Markdown.
- * @param processor The processor to use for parsing the Markdown.
- * @param blockRenderer The renderer to use for rendering the Markdown blocks.
- */
-@Deprecated(
-    "Use the Markdown overload without onTextClick instead.",
-    ReplaceWith(
-        "Markdown(markdown, modifier, selectable, enabled, renderingDispatcher, onUrlClick, " +
-            "markdownStyling, processor, blockRenderer)"
-    ),
-)
-@ApiStatus.Experimental
-@ExperimentalJewelApi
-@Composable
-public fun Markdown(
-    @Language("Markdown") markdown: String,
-    modifier: Modifier = Modifier,
-    selectable: Boolean = false,
-    enabled: Boolean = true,
-    renderingDispatcher: CoroutineDispatcher = Dispatchers.Default,
-    onUrlClick: (String) -> Unit = {},
-    @Suppress("UnusedParameter", "RedundantSuppression") onTextClick: () -> Unit = {},
-    markdownStyling: MarkdownStyling = JewelTheme.markdownStyling,
-    processor: MarkdownProcessor = JewelTheme.markdownProcessor,
-    blockRenderer: MarkdownBlockRenderer = DefaultMarkdownBlockRenderer(markdownStyling),
-) {
-    Markdown(
-        markdown,
-        modifier,
-        selectable,
-        enabled,
-        renderingDispatcher,
-        onUrlClick,
-        markdownStyling,
-        processor,
-        blockRenderer,
-    )
-}
-
-/**
- * A Composable that renders a Markdown string.
- *
- * For large amounts of Markdown, such as documents, you can consider using [LazyMarkdown] instead to get better
- * performance.
- *
- * @param markdown The Markdown string to render.
- * @param modifier The modifier to apply to this layout node.
- * @param selectable Whether the text can be selected.
- * @param enabled Whether the rendered content is enabled.
  * @param processingDispatcher The dispatcher to use for processing the Markdown.
  * @param onUrlClick The callback to be invoked when a URL is clicked.
  * @param markdownStyling The styling to use for the rendered Markdown.
@@ -141,48 +89,6 @@ public fun Markdown(
  * For large amounts of Markdown, such as documents, you can consider using [LazyMarkdown] instead to get better
  * performance.
  *
- * Note: the [onTextClick] parameter is ignored in this overload.
- *
- * @param markdownBlocks The list of Markdown blocks to render.
- * @param markdown The original Markdown string.
- * @param modifier The modifier to apply to this layout node.
- * @param enabled Whether the rendered content is enabled.
- * @param selectable Whether the text can be selected.
- * @param onUrlClick The callback to be invoked when a URL is clicked.
- * @param onTextClick This parameter is ignored and is only here for binary/source compat reasons.
- * @param markdownStyling The styling to use for the rendered Markdown.
- * @param blockRenderer The renderer to use for rendering the Markdown blocks.
- * @see Markdown
- */
-@Deprecated(
-    "Use the Markdown overload without onTextClick instead.",
-    ReplaceWith(
-        "Markdown(markdownBlocks, markdown, modifier, enabled, selectable, onUrlClick, markdownStyling, blockRenderer)"
-    ),
-)
-@ApiStatus.Experimental
-@ExperimentalJewelApi
-@Composable
-public fun Markdown(
-    markdownBlocks: List<MarkdownBlock>,
-    markdown: String,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    selectable: Boolean = false,
-    onUrlClick: (String) -> Unit = {},
-    @Suppress("UnusedParameter", "RedundantSuppression") onTextClick: () -> Unit = {},
-    markdownStyling: MarkdownStyling = JewelTheme.markdownStyling,
-    blockRenderer: MarkdownBlockRenderer = DefaultMarkdownBlockRenderer(markdownStyling),
-) {
-    Markdown(markdownBlocks, markdown, modifier, enabled, selectable, onUrlClick, markdownStyling, blockRenderer)
-}
-
-/**
- * A Composable that renders a list of [MarkdownBlock]s in a column.
- *
- * For large amounts of Markdown, such as documents, you can consider using [LazyMarkdown] instead to get better
- * performance.
- *
  * @param markdownBlocks The list of Markdown blocks to render.
  * @param markdown The original Markdown string.
  * @param modifier The modifier to apply to this layout node.
@@ -218,58 +124,6 @@ public fun Markdown(
             }
         }
     }
-}
-
-/**
- * A Composable that renders a list of [MarkdownBlock]s in a lazy-loading column.
- *
- * For small amounts of Markdown, such as UI text, you should consider using [Markdown] instead to get better
- * performance.
- *
- * @param markdownBlocks The list of Markdown blocks to render.
- * @param modifier The modifier to apply to this layout node.
- * @param contentPadding The padding to apply to the content.
- * @param state The state of the lazy list.
- * @param enabled Whether the rendered content is enabled.
- * @param selectable Whether the text can be selected.
- * @param onUrlClick The callback to be invoked when a URL is clicked.
- * @param onTextClick This parameter is ignored and is only here for binary/source compat reasons.
- * @param markdownStyling The styling to use for the rendered Markdown.
- * @param blockRenderer The renderer to use for rendering the Markdown blocks.
- */
-@Deprecated(
-    "Use the LazyMarkdown overload without onTextClick instead.",
-    ReplaceWith(
-        "LazyMarkdown(markdownBlocks, modifier, contentPadding, state, enabled, selectable, onUrlClick, " +
-            "markdownStyling, blockRenderer)"
-    ),
-)
-@ApiStatus.Experimental
-@ExperimentalJewelApi
-@Composable
-public fun LazyMarkdown(
-    markdownBlocks: List<MarkdownBlock>,
-    modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(0.dp),
-    state: LazyListState = rememberLazyListState(),
-    enabled: Boolean = true,
-    selectable: Boolean = false,
-    onUrlClick: (String) -> Unit = {},
-    @Suppress("UnusedParameter", "RedundantSuppression", "RedundantSuppression") onTextClick: () -> Unit = {},
-    markdownStyling: MarkdownStyling = JewelTheme.markdownStyling,
-    blockRenderer: MarkdownBlockRenderer = JewelTheme.markdownBlockRenderer,
-) {
-    LazyMarkdown(
-        markdownBlocks,
-        modifier,
-        contentPadding,
-        state,
-        enabled,
-        selectable,
-        onUrlClick,
-        markdownStyling,
-        blockRenderer,
-    )
 }
 
 /**

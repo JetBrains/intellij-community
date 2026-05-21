@@ -788,7 +788,7 @@ public class ScrollingSynchronizerTest {
             ) {
                 JewelTheme(createMarkdownTestThemeDefinition()) {
                     val blocks = processor.yieldBlocks()
-                    renderer.render(blocks, true, {}, {}, Modifier)
+                    renderer.RenderBlocks(blocks, true, {}, Modifier)
                 }
             }
         }
