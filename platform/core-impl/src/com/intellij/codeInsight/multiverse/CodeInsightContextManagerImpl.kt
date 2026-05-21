@@ -23,6 +23,7 @@ import com.intellij.util.AtomicMapCache
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.containers.CollectionFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -72,8 +73,7 @@ class CodeInsightContextManagerImpl(
     // once more granular invalidation requests are added, it's necessary to add serialization (e.g., via a flow)
     invalidationCs.launch {
       edtWriteAction {
-        preferredContext.invalidate()
-        allContexts.invalidate()
+        dropContextCaches()
 
         project.messageBus.syncPublisher(CodeInsightContextManager.topic).contextsChanged()
         log.trace { "all contexts are invalidated" }
@@ -100,6 +100,13 @@ class CodeInsightContextManagerImpl(
         invalidateAllContexts()
       }
     }
+  }
+
+  @RequiresWriteLock
+  private fun dropContextCaches() {
+    ThreadingAssertions.assertWriteAccess()
+    preferredContext.invalidate()
+    allContexts.invalidate()
   }
 
   @RequiresReadLock
@@ -141,7 +148,11 @@ class CodeInsightContextManagerImpl(
     log.trace { "requested preferred context of file ${file.path}" }
 
     return preferredContext.getOrPut(file) {
-      findFirstContext(file).also { log.assertTrue(it !== anyContext()) { "preferredContext must not be anyContext" } }
+      val contexts = getCodeInsightContexts(file)
+      // TODO IJPL-339 implement a better way to select the preferred context
+      val preferred = contexts.first()
+      log.assertTrue(preferred !== anyContext()) { "preferredContext must not be anyContext" }
+      preferred
     }
   }
 
@@ -162,15 +173,6 @@ class CodeInsightContextManagerImpl(
 
     return context
   }
-
-  private fun findFirstContext(file: VirtualFile?): CodeInsightContext {
-    if (file == null) return defaultContext()
-
-    // todo IJPL-339 implement a better way to select the current context
-    val firstContext = getContextSequence(file).first()
-    return firstContext
-  }
-
 
   private fun CodeInsightContextProvider.getContextSafely(file: VirtualFile): List<CodeInsightContext> {
     return runSafely { this.getContexts(file, project) } ?: emptyList()
@@ -249,8 +251,7 @@ class CodeInsightContextManagerImpl(
 
       for (project in projects) {
         val manager = CodeInsightContextManager.getInstance(project) as CodeInsightContextManagerImpl
-        manager.preferredContext.invalidate()
-        manager.allContexts.invalidate()
+        manager.dropContextCaches()
       }
     }
 
