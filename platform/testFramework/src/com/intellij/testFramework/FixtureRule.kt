@@ -9,6 +9,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.impl.UndoManagerImpl
@@ -76,6 +77,42 @@ open class ApplicationRule : TestRule {
   }
 
   protected open fun after() { }
+}
+
+/**
+ * A JUnit4 rule which runs tests inside this class with the corresponding [ApplicationManagerEx.isInStressTest] flag,
+ * using [ApplicationManagerEx.runInStressTest] method.
+ * Stress tests have special words in their name, see [TestFrameworkUtil.isStressTest] for details.
+ *        E.g. tests `foo()`,`fooStress()` are run with `isStressTest=false`,`isStressTest=true` correspondingly.
+ * Usage example:
+ * ```
+ * class MyTest {
+ *   // run stress tests, e.g. `testStress` or 'myPerforemanceTest` with `inStressTest=true`, all other tests with `inStressTest=false`
+ *   @Rule stressTestRule = new StressTestRule();
+ * }
+ * ```
+ * For JUnit5, use [com.intellij.testFramework.junit5.impl.StressTestApplicationExtension] extension instead.
+ *
+ * @param forceIsStressTest if specified, all tests are run with this flag regardless of their name.
+ *        E.g.:
+ *
+ *        class MyTest {
+ *          // run all tests with `inStressTest=true`
+ *          @Rule stressTestRule = new StressTestRule(true);
+ *        }
+ */
+class StressTestRule(val forceIsStressTest:Boolean?=null) : TestRule {
+  override fun apply(
+    base: Statement,
+    description: Description,
+  ): Statement {
+    return object : Statement() {
+      override fun evaluate() {
+        val stressTest = forceIsStressTest ?: TestFrameworkUtil.isStressTest(description.methodName, description.testClass)
+        ApplicationManagerEx.runInStressTest<RuntimeException>(stressTest) { base.evaluate() }
+      }
+    }
+  }
 }
 
 /**
