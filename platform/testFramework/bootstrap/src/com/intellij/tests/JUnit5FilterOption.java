@@ -34,15 +34,16 @@ enum JUnit5FilterOption {
   }
 
   Filter<?> toJunitFilter(String filterString) {
+    String[] parts = filterString.split(",");
     return switch(this) {
-      case includePackage -> PackageNameFilter.includePackageNames(filterString);
-      case excludePackage -> PackageNameFilter.excludePackageNames(filterString);
-      case includeClassName -> ClassNameFilter.includeClassNamePatterns(filterString);
-      case excludeClassName -> ClassNameFilter.excludeClassNamePatterns(filterString);
-      case includeMethodName -> MethodFilter.includeMethodNamePatterns(filterString);
-      case excludeMethodName -> MethodFilter.excludeMethodNamePatterns(filterString);
-      case includeTag -> TagFilter.includeTags(filterString);
-      case excludeTag -> TagFilter.excludeTags(filterString);
+      case includePackage -> PackageNameFilter.includePackageNames(parts);
+      case excludePackage -> PackageNameFilter.excludePackageNames(parts);
+      case includeClassName -> ClassNameFilter.includeClassNamePatterns(parts);
+      case excludeClassName -> ClassNameFilter.excludeClassNamePatterns(parts);
+      case includeMethodName -> MethodFilter.includeMethodNamePatterns(parts);
+      case excludeMethodName -> MethodFilter.excludeMethodNamePatterns(parts);
+      case includeTag -> TagFilter.includeTags(parts);
+      case excludeTag -> TagFilter.excludeTags(parts);
     };
   }
 
