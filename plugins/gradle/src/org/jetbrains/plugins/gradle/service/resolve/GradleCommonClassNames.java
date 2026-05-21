@@ -49,6 +49,7 @@ public final class GradleCommonClassNames {
   public static final @NonNls String GRADLE_API_FILE_FILE_COLLECTION = "org.gradle.api.file.FileCollection";
   public static final @NonNls String GRADLE_API_FILE_CONFIGURABLE_FILE_TREE = "org.gradle.api.file.ConfigurableFileTree";
   public static final @NonNls String GRADLE_API_FILE_CONFIGURABLE_FILE_COLLECTION = "org.gradle.api.file.ConfigurableFileCollection";
+  public static final @NonNls String GRADLE_API_FILE_SYSTEM_LOCATION_PROPERTY = "org.gradle.api.file.FileSystemLocationProperty";
   public static final @NonNls String GRADLE_API_SCRIPT_HANDLER = "org.gradle.api.initialization.dsl.ScriptHandler";
   public static final @NonNls String GRADLE_API_VERSION_CATALOG_BUILDER = "org.gradle.api.initialization.dsl.VersionCatalogBuilder";
   public static final @NonNls String GRADLE_API_TASK = "org.gradle.api.Task";
@@ -89,8 +90,6 @@ public final class GradleCommonClassNames {
   public static final @NonNls String GRADLE_API_EXTRA_PROPERTIES_EXTENSION = "org.gradle.api.plugins.ExtraPropertiesExtension";
   public static final @NonNls String GRADLE_PROCESS_EXEC_SPEC = "org.gradle.process.ExecSpec";
   public static final @NonNls String GRADLE_API_PROVIDER_PROPERTY = "org.gradle.api.provider.Property";
-  public static final @NonNls String GRADLE_API_PROVIDER_LIST_PROPERTY = "org.gradle.api.provider.ListProperty";
-  public static final @NonNls String GRADLE_API_PROVIDER_SET_PROPERTY = "org.gradle.api.provider.SetProperty";
   public static final @NonNls String GRADLE_API_PROVIDER_MAP_PROPERTY = "org.gradle.api.provider.MapProperty";
   public static final @NonNls String GRADLE_API_PROVIDER_HAS_MULTIPLE_VALUES = "org.gradle.api.provider.HasMultipleValues";
   public static final @NonNls String GRADLE_API_PROVIDER_PROVIDER = "org.gradle.api.provider.Provider";
