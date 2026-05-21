@@ -5,6 +5,7 @@ import com.intellij.ui.TreeExpandCollapse;
 import com.intellij.ui.tree.TreeTestUtil;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.containers.TreeTraversal;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,6 +19,7 @@ import java.awt.EventQueue;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -140,9 +142,9 @@ public class TreeUtilTest extends TestCase {
     node.add(new DefaultMutableTreeNode("000"));
     node.add(new DefaultMutableTreeNode("001"));
     root.add(new DefaultMutableTreeNode("01"));
-    final ArrayList order = new ArrayList();
-    TreeUtil.traverseDepth(root, node1 -> {
-      order.add(node1.toString());
+    List<String> order = new ArrayList<>();
+    TreeUtil.treeNodeTraverser(root).traverse(TreeTraversal.PRE_ORDER_DFS).processEach(node3 -> {
+      order.add(node3.toString());
       return true;
     });
     assertThat(order).containsExactly("0", "00", "000", "001","01");
