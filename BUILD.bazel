@@ -1045,8 +1045,6 @@ jvm_library(
     "//plugins/remote-control:remoteControl-tests_test_lib",
     "//platform/remoteDev-util:remoteDev-util-tests",
     "//platform/remoteDev-util:remoteDev-util-tests_test_lib",
-    "//plugins/repository-search/common:repository-search-common-tests",
-    "//plugins/repository-search/common:repository-search-common-tests_test_lib",
     "//platform/searchEverywhere/backend:backend-tests",
     "//platform/searchEverywhere/backend:backend-tests_test_lib",
     "//plugins/search-everywhere-lucene/backend:searchEverywhereLucene-backend-tests",
