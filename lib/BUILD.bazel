@@ -20279,17 +20279,17 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.jetbrains.intellij.deps/studio-platform-2025.3.1-387.jar_copy",
-    src = "@org_jetbrains_intellij_deps-studio-platform-2025_3_1-387_http//file",
-    out = "org.jetbrains.intellij.deps/studio-platform-2025.3.1-387.jar",
+    name = "org.jetbrains.intellij.deps/studio-platform-2025.3.2-389.jar_copy",
+    src = "@org_jetbrains_intellij_deps-studio-platform-2025_3_2-389_http//file",
+    out = "org.jetbrains.intellij.deps/studio-platform-2025.3.2-389.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "studio-platform",
-    jar = "@org_jetbrains_intellij_deps-studio-platform-2025_3_1-387_http//file",
-    source_jar = "@org_jetbrains_intellij_deps-studio-platform-2025_3_1-387-sources_http//file",
+    jar = "@org_jetbrains_intellij_deps-studio-platform-2025_3_2-389_http//file",
+    source_jar = "@org_jetbrains_intellij_deps-studio-platform-2025_3_2-389-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -20301,17 +20301,17 @@ java_library(
 )
 
 copy_file(
-    name = "org.jetbrains.intellij.deps/studio-test-platform-2025.3.1-387.jar_copy",
-    src = "@org_jetbrains_intellij_deps-studio-test-platform-2025_3_1-387_http//file",
-    out = "org.jetbrains.intellij.deps/studio-test-platform-2025.3.1-387.jar",
+    name = "org.jetbrains.intellij.deps/studio-test-platform-2025.3.2-389.jar_copy",
+    src = "@org_jetbrains_intellij_deps-studio-test-platform-2025_3_2-389_http//file",
+    out = "org.jetbrains.intellij.deps/studio-test-platform-2025.3.2-389.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "studio-test-platform",
-    jar = "@org_jetbrains_intellij_deps-studio-test-platform-2025_3_1-387_http//file",
-    source_jar = "@org_jetbrains_intellij_deps-studio-test-platform-2025_3_1-387-sources_http//file",
+    jar = "@org_jetbrains_intellij_deps-studio-test-platform-2025_3_2-389_http//file",
+    source_jar = "@org_jetbrains_intellij_deps-studio-test-platform-2025_3_2-389-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
