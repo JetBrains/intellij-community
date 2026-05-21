@@ -105,6 +105,13 @@ abstract class WelcomeScreenProjectProvider {
    */
   abstract fun canOpenFilesFromSystemFileManager(filePath: Path): Boolean
 
+  /**
+   * When [canOpenFilesFromSystemFileManager] returns true for a file that is already inside a known
+   * IntelliJ project (some ancestor contains a `.idea/` directory), this hook decides whether to
+   * open it in the welcome project or in the existing project right away.
+   */
+  open fun shouldOpenInWelcomeScreenIfFileBelongsToProject(filePath: Path): Boolean = true
+
   protected open fun getWelcomeScreenProjectPath(): Path {
     return Path.of(getProjectsBasePath(), getWelcomeScreenProjectName()).absolute()
   }
