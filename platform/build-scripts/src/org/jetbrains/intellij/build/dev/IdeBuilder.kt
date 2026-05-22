@@ -222,7 +222,10 @@ internal suspend fun buildProduct(request: BuildRequest, createBuildContext: sus
     coroutineScope {
       val context = createBuildContext(buildDir)
       contextToClose = context
-      launch(Dispatchers.IO + CoroutineName("cleanup jar cache")) {
+      // Must precede layout: dev mode uses cache payload paths directly on the classpath,
+      // so a concurrent cleanup can delete a payload after layout captures its path,
+      // crashing the JVM at the first class lookup into that jar.
+      withContext(Dispatchers.IO + CoroutineName("cleanup jar cache")) {
         context.cleanupJarCache()
       }
       if (request.os != OsFamily.currentOs) {
