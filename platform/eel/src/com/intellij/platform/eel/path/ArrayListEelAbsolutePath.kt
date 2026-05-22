@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.path
 
 import com.intellij.platform.eel.EelDescriptor
@@ -58,7 +58,7 @@ internal class ArrayListEelAbsolutePath private constructor(
     for (name in otherParts) {
       if (name.isNotEmpty()) {
         val error = checkFileName(name)
-        if (error != null) throw EelPathException(other.toString(), error)
+        if (error != null) throw EelPathException(other, error)
       }
     }
     val newList = parts + otherParts
@@ -86,6 +86,12 @@ internal class ArrayListEelAbsolutePath private constructor(
         }
       )
     }
+
+  override val invariantSeparatorsPathString: String
+    get() = parts.joinToString(separator = "/", prefix = when (_root) {
+      Root.Unix -> "/"
+      is Root.Windows -> (if (_root.name.endsWith("\\")) _root.name else _root.name + "/").replace('\\', '/')
+    })
 
   override fun toDebugString(): String =
     "${javaClass.simpleName}(_root=$root, parts=$parts)"

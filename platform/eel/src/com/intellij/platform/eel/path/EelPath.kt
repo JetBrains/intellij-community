@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.path
 
 import com.intellij.platform.eel.EelDescriptor
@@ -36,10 +36,9 @@ sealed interface EelPath {
   }
 
   /**
-   * The identificator of an environment where this path belongs to.
+   * The identifier of an environment where this path belongs to.
    */
   val descriptor: EelDescriptor
-
 
   /**
    * Returns last part of a path.
@@ -51,7 +50,6 @@ sealed interface EelPath {
    */
   val fileName: String
 
-
   /**
    * Returns a path that corresponds to the root.
    *
@@ -61,7 +59,6 @@ sealed interface EelPath {
    * ```
    */
   val root: EelPath
-
 
   /**
    * Returns parts of a path composed as a list.
@@ -73,7 +70,6 @@ sealed interface EelPath {
    */
   val parts: List<String>
 
-
   /**
    * Returns the number of elements in the path.
    *
@@ -84,7 +80,6 @@ sealed interface EelPath {
    */
   val nameCount: Int
 
-
   /**
    * Returns a part of the path.
    *
@@ -93,7 +88,6 @@ sealed interface EelPath {
    * ```
    */
   fun getName(index: Int): String
-
 
   /**
    * Return the parent path if it exists.
@@ -105,7 +99,6 @@ sealed interface EelPath {
    */
   val parent: EelPath?
 
-
   /**
    * Concatenates two paths.
    *
@@ -115,7 +108,6 @@ sealed interface EelPath {
    */
   @Throws(EelPathException::class)
   fun resolve(other: String): EelPath
-
 
   /**
    * Resolves special path elements like `.` and `..` whenever it is possible.
@@ -127,7 +119,6 @@ sealed interface EelPath {
    * ```
    */
   fun normalize(): EelPath
-
 
   /** See [java.nio.file.Path.startsWith] */
   fun startsWith(other: EelPath): Boolean
@@ -153,6 +144,9 @@ sealed interface EelPath {
    * @return path in the particular eel, i.e.: `/foo` or `c:\bar`
    */
   override fun toString(): String
+
+  /** @see [kotlin.io.path.invariantSeparatorsPathString] */
+  val invariantSeparatorsPathString: String
 
   @Deprecated("Use EelPlatform instead, will be removed soon")
   enum class OS {
