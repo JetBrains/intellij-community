@@ -52,6 +52,9 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
@@ -78,6 +81,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.SwingUtilities;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.MissingResourceException;
@@ -112,6 +116,18 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
         FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles();
       });
     });
+  }
+
+  @Override
+  protected void setupModuleRoots() {
+    // Without a recursive refresh, newly added test-source files (e.g. companion .java classes for new debugger tests)
+    // are invisible to PSI, and JavaPsiFacade.findClass returns null inside createBreakpoints(String).
+    String srcPath = getSrcPath(getTestAppPath()).replace(File.separatorChar, '/');
+    VirtualFile srcDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(srcPath);
+    if (srcDir != null) {
+      VfsUtil.markDirtyAndRefresh(false, true, true, srcDir);
+    }
+    super.setupModuleRoots();
   }
 
   @Override
