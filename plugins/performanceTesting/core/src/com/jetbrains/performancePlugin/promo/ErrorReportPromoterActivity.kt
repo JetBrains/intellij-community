@@ -29,7 +29,7 @@ internal class ErrorReportPromoterActivity : ProjectActivity {
   }
 
   override suspend fun execute(project: Project) {
-    if (!isEligible()) {
+    if (!isEligibleAsync()) {
       thisLogger().debug("User is not eligible for promo, do not wait for idle")
       return
     }
@@ -43,9 +43,18 @@ internal class ErrorReportPromoterActivity : ProjectActivity {
     }
   }
 
+  private suspend fun isEligibleAsync(): Boolean {
+    return ExceptionAutoReportUtil.isAutoReportVisibleAsync()
+           && isEligibleAfterVisibilityCheck()
+  }
+
   private fun isEligible(): Boolean {
     return ExceptionAutoReportUtil.isAutoReportVisible
-           && !ExceptionAutoReportUtil.isAutoReportAllowedByUser()
+           && isEligibleAfterVisibilityCheck()
+  }
+
+  private fun isEligibleAfterVisibilityCheck(): Boolean {
+    return !ExceptionAutoReportUtil.isAutoReportAllowedByUser()
            && !isAlreadyShown()
   }
 
