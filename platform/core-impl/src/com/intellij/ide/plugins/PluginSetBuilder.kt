@@ -336,9 +336,8 @@ class PluginSetBuilder(
       PluginManagerCore.logger.info(detailedMessage.toString())
       return PluginLoadingError(
         reason = null,
-        htmlMessageSupplier = Supplier {
-          val message = CoreBundle.message("plugin.loading.error.plugins.cannot.be.loaded.because.they.form.a.dependency.cycle", pluginString)
-          HtmlChunk.text(message)
+        messageSupplier = Supplier {
+          CoreBundle.message("plugin.loading.error.plugins.cannot.be.loaded.because.they.form.a.dependency.cycle", pluginString)
         },
         error = null,
       )

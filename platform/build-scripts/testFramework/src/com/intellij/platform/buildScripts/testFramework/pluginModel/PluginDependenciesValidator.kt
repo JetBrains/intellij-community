@@ -358,7 +358,7 @@ class PluginDependenciesValidator private constructor(
           errors.add(PluginModuleConfigurationError(
             pluginModelModuleName = it.mainJpsModule,
             errorMessage = e.message ?: e.toString(),
-            pluginLoadingError = PluginLoadingError(reason = null, htmlMessageSupplier = { HtmlChunk.text(e.message ?: e.toString()) }, error = e),
+            pluginLoadingError = PluginLoadingError(reason = null, messageSupplier = { e.message ?: e.toString() }, error = e),
           ))
           null
         }
