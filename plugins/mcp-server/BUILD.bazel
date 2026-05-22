@@ -22,6 +22,8 @@ jvm_library(
     "//platform/util",
     "@lib//:io-github-oshai-kotlin-logging-jvm",
     "@lib//:ktor-server-sse-jvm",
+    "@lib//:ktor-server-content-negotiation",
+    "@lib//:ktor-serialization-kotlinx-json",
     "@lib//:io-github-smiley4-schema-kenerator-jsonschema",
     "@lib//:io-github-smiley4-schema-kenerator-serialization",
     "//platform/ide-core",

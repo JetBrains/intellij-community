@@ -7679,6 +7679,20 @@ http_file(
 )
 
 http_file(
+  name = "io_ktor-ktor-server-content-negotiation-jvm-3_4_1_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-server-content-negotiation-jvm/3.4.1/ktor-server-content-negotiation-jvm-3.4.1.jar",
+  sha256 = "c58392aa2b481f08c79cb6fda2cc14990ac4a205bb98fca871abf3bcdcd86f77",
+  downloaded_file_path = "ktor-server-content-negotiation-jvm-3.4.1.jar"
+)
+
+http_file(
+  name = "io_ktor-ktor-server-content-negotiation-jvm-3_4_1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-server-content-negotiation-jvm/3.4.1/ktor-server-content-negotiation-jvm-3.4.1-sources.jar",
+  sha256 = "e75d842a9ec5a7152a88b22e5d10d707afd4e0e1b61a5fcdb08e8e69085be8e7",
+  downloaded_file_path = "ktor-server-content-negotiation-jvm-3.4.1-sources.jar"
+)
+
+http_file(
   name = "io_ktor-ktor-server-sse-jvm-3_4_1_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-server-sse-jvm/3.4.1/ktor-server-sse-jvm-3.4.1.jar",
   sha256 = "7d61ea646b7726a997e6c31b327c1ceb47afef50b9e2e55b3ad6a438cc271ff4",

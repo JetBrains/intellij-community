@@ -67,6 +67,8 @@
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="library" name="io.github.oshai.kotlin.logging.jvm" level="project" />
     <orderEntry type="library" name="ktor-server-sse-jvm" level="project" />
+    <orderEntry type="library" name="ktor-server-content-negotiation" level="project" />
+    <orderEntry type="library" name="ktor-serialization-kotlinx-json" level="project" />
     <orderEntry type="library" name="io.github.smiley4.schema.kenerator.jsonschema" level="project" />
     <orderEntry type="library" name="io.github.smiley4.schema.kenerator.serialization" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
