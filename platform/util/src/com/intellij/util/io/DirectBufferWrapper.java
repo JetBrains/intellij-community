@@ -9,6 +9,8 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
+
 /**
  * File-backed buffer: region of file [position, position + length) loaded into memory as {@linkplain java.nio.DirectByteBuffer}.
  * This class works in close collaboration with {@linkplain FilePageCache} and {@linkplain PagedFileStorage} to emulate mmapp-ed
@@ -268,7 +270,8 @@ public final class DirectBufferWrapper {
   }
 
   void force() throws IOException {
-    myFile.getStorageLockContext().assertUnderSegmentAllocationLock();
+    StorageLockContext storageLockContext = myFile.getStorageLockContext();
+    storageLockContext.assertUnderSegmentAllocationLock();
 
     if (myFile.isReadOnly()) {
       throw new IllegalStateException("Can't flush .readOnly page: " + this);
@@ -278,12 +281,17 @@ public final class DirectBufferWrapper {
       buffer.rewind();
       buffer.limit(myBufferDataEndPos);
 
+      long startedAtNs = System.nanoTime();
       myFile.executeIdempotentOp(ch -> {
         ch.write(buffer, myPosition);
         return null;
       }, /*readOnly: */ false);
 
       myDirty = false;
+
+      long durationNs = System.nanoTime() - startedAtNs;
+      int bytesStored = myBufferDataEndPos;
+      storageLockContext.getBufferCache().reportStoreStats(bytesStored, NANOSECONDS.toMicros(durationNs) );
     }
   }
 

@@ -132,9 +132,13 @@ public final class FilePageCache {
   private long myLoadedPages;
   /** Total time (us) of all page loads (including page buffer allocation time) */
   private long myPageLoadUs;
+  /** Total time (us) of all page stores (along the lifetime) */
+  private long myPageStoreDurationUs;
+  /** Total bytes stored by all the pages (along the lifetime) */
+  private long myTotalBytesStored;
   /**
    * Total time (us) of all page disposals _before reuse_.
-   * I.e. it is part of the full waiting time for a new page to be loaded.
+   * I.e., it is part of the full waiting time for a new page to be loaded.
    */
   private long myPageDisposalUs;
 
@@ -265,10 +269,6 @@ public final class FilePageCache {
     finally {
       pagesAllocationLock.unlock();
     }
-  }
-
-  public void incrementFastCacheHitsCount() {
-    myFastCacheHits++;
   }
 
   public long getMaxSize() {
@@ -443,7 +443,8 @@ public final class FilePageCache {
     try {
       pagesAccessLock.lock();
       try {
-        CachedChannelsStatistics channelCachingStats = PageCacheUtils.CHANNELS_CACHE.getStatistics().plus(PageCacheUtils.CHANNELS_NO_CACHE.getStatistics());
+        CachedChannelsStatistics channelCachingStats =
+          PageCacheUtils.CHANNELS_CACHE.getStatistics().plus(PageCacheUtils.CHANNELS_NO_CACHE.getStatistics());
         return new FilePageCacheStatistics(channelCachingStats,
                                            myMaxRegisteredFiles,
                                            myMaxLoadedSize,
@@ -455,6 +456,8 @@ public final class FilePageCache {
                                            myMappingChangeCount,
                                            myPageDisposalUs,
                                            myPageLoadUs,
+                                           myPageStoreDurationUs,
+                                           myTotalBytesStored,
                                            myLoadedPages,
                                            cachedSizeLimit
         );
@@ -466,6 +469,17 @@ public final class FilePageCache {
     finally {
       pagesAllocationLock.unlock();
     }
+  }
+
+
+  void incrementFastCacheHitsCount() {
+    myFastCacheHits++;
+  }
+
+  void reportStoreStats(long bytesStored,
+                        long storeDurationUs) {
+    myTotalBytesStored += bytesStored;
+    myPageStoreDurationUs += storeDurationUs;
   }
 
   /* ======================= implementation ==================================================================================== */

@@ -469,6 +469,10 @@ object StorageDiagnosticData {
     val totalPageDisposalsUs = otelMeter.counterBuilder("FilePageCache.totalPageDisposalsUs")
       .setUnit("us").buildObserver()
 
+    val totalPageStoresUs = otelMeter.counterBuilder("FilePageCache.totalPageStoreUs")
+      .setUnit("us").buildObserver()
+    val totalBytesStoredUs = otelMeter.counterBuilder("FilePageCache.totalBytesStored").buildObserver()
+
     val disposedBuffers = otelMeter.counterBuilder("FilePageCache.disposedBuffers").buildObserver()
 
     val totalCachedSizeInBytes = otelMeter.gaugeBuilder("FilePageCache.totalCachedSizeInBytes")
@@ -517,6 +521,9 @@ object StorageDiagnosticData {
           totalPageLoadsUs.record(pageCacheStats.totalPageLoadUs)
           totalPageDisposalsUs.record(pageCacheStats.totalPageDisposalUs)
 
+          totalPageStoresUs.record(pageCacheStats.totalPageStoreUs)
+          totalBytesStoredUs.record(pageCacheStats.totalBytesStored)
+
           disposedBuffers.record(pageCacheStats.disposedBuffers.toLong())
 
           val bufferAllocatorStats = DirectByteBufferAllocator.ALLOCATOR.statistics
@@ -528,13 +535,14 @@ object StorageDiagnosticData {
           directBufferAllocatorTotalSizeCached.record(bufferAllocatorStats.totalSizeOfBuffersCachedInBytes)
           directBufferAllocatorTotalSizeAllocated.record(bufferAllocatorStats.totalSizeOfBuffersAllocatedInBytes)
         }
-        catch (_: AlreadyDisposedException) {
+        catch (@Suppress("IncorrectCancellationExceptionHandling") _: AlreadyDisposedException) {
 
         }
       },
       uncachedFileAccess, maxRegisteredFiles, maxCacheSizeInBytes,
       pageHits, pageFastCacheHit, pageLoadsAboveSizeThreshold, pageLoads,
       totalPageLoadsUs, totalPageDisposalsUs,
+      totalPageStoresUs, totalBytesStoredUs,
       disposedBuffers, capacityInBytes,
 
       directBufferAllocatorHits, directBufferAllocatorMisses,

@@ -85,15 +85,22 @@ data class FilePageCacheStatistics(val cachedChannelsStatistics: CachedChannelsS
                                    val disposedBuffers: Int,
                                    val totalPageDisposalUs: Long,
                                    val totalPageLoadUs: Long,
+                                   val totalPageStoreUs: Long,
+                                   val totalBytesStored: Long,
                                    val totalPagesLoaded: Long,
                                    val capacityInBytes: Long) {
   fun dumpInfoImportantForBuildProcess() : String {
     return "pageHits=$pageHits, " +
            "pageFastCacheHits=$pageFastCacheHits, " +
+
            "regularPageLoads=$regularPageLoads, " +
            "pageLoadsAboveSizeThreshold=$pageLoadsAboveSizeThreshold, " +
            "pageLoadUs=$totalPageLoadUs, " +
+
            "pageDisposalUs=$totalPageDisposalUs, " +
+           "pageStoreUs=${totalPageStoreUs}, " +
+           "bytesStored=${totalBytesStored}, " +
+
            "capacityInBytes=$capacityInBytes, " +
            "disposedBuffers=$disposedBuffers " +
            "maxRegisteredFiles=$maxRegisteredFiles " +
