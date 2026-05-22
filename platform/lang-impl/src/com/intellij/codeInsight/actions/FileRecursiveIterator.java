@@ -59,19 +59,19 @@ final class FileRecursiveIterator {
     return directories;
   }
 
-  boolean processAll(@NotNull Processor<? super PsiFile> processor) {
+  @NotNull VirtualFileSet collectAll() {
     VirtualFileSet visited = VfsUtilCore.createCompactVirtualFileSet();
     for (VirtualFile root : myRoots) {
-      if (!ProjectRootManager.getInstance(myProject).getFileIndex().iterateContentUnderDirectory(root, fileOrDir -> {
-        if (fileOrDir.isDirectory() || !visited.add(fileOrDir)) {
-          return true;
+      ProjectRootManager.getInstance(myProject).getFileIndex().iterateContentUnderDirectory(root, fileOrDir -> {
+        if (!fileOrDir.isDirectory()) {
+          visited.add(fileOrDir);
         }
-        PsiFile psiFile = ReadAction.computeBlocking(() -> myProject.isDisposed() ? null : PsiManager.getInstance(myProject).findFile(fileOrDir));
-        return psiFile == null || processor.process(psiFile);
-      })) return false;
+        return true;
+      });
     }
-    return true;
+    return visited;
   }
+
 
   static @NotNull List<PsiDirectory> collectModuleDirectories(Module module) {
     VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();

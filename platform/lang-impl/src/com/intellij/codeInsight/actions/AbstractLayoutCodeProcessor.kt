@@ -282,7 +282,7 @@ abstract class AbstractLayoutCodeProcessor private constructor(
     }.queue()
   }
 
-  private fun build(): FileRecursiveIterator {
+  private fun buildFilesIterator(): FileRecursiveIterator {
     if (target is Target.Files) {
       return FileRecursiveIterator(myProject, target.files.filter { canBeFormatted(it) })
     }
@@ -369,22 +369,13 @@ abstract class AbstractLayoutCodeProcessor private constructor(
   }
 
   private inner class ProcessingTask(val progressIndicator: ProgressIndicator) {
-    private val processors: List<AbstractLayoutCodeProcessor>
-
-    private val fileTreeIterator: FileRecursiveIterator
-    private val countingIterator: FileRecursiveIterator
+    private val processors = getAllProcessors()
 
     private var totalFiles = 0
     private var filesProcessed = 0
 
-    init {
-      val iteratorPair = runReadActionBlocking { Pair(build(), build()) }
-      fileTreeIterator = iteratorPair.first
-      countingIterator = iteratorPair.second
-
-      processors = getAllProcessors()
-    }
-
+    /** @return `true` if file processing succeeded and processing should continue;
+     *          `false` is processing should stop. */
     fun iteration(psiFile: PsiFile): Boolean {
       updateIndicatorFraction(filesProcessed)
 
@@ -411,6 +402,8 @@ abstract class AbstractLayoutCodeProcessor private constructor(
       }
     }
 
+    /** @return `true` if file processing succeeded and processing should continue;
+     *          `false` is processing should stop. */
     fun performFileProcessing(file: VirtualFile): Boolean {
       // Using the same groupId for several file-processing actions allows undoing [format + optimize imports + rearrange code + cleanup code] in one shot.
       // Using the same groupId for *all* processed files makes this a single undoable action for all processed files.
@@ -483,16 +476,13 @@ abstract class AbstractLayoutCodeProcessor private constructor(
       progressIndicator.setFraction(processed.toDouble() / totalFiles)
     }
 
+    /** @return `true` if file processing succeeded;
+     *          `false` if processing failed and was stopped early. */
     fun process(): Boolean {
       progressIndicator.setIndeterminate(true)
-      val files = ArrayList<VirtualFile>()
       updateIndicatorText(ApplicationBundle.message("bulk.reformat.prepare.progress.text"), "")
-      val success = countingIterator.processAll { file: PsiFile ->
-        files.add(file.getVirtualFile())
-        ProgressManager.checkCanceled()
-        true
-      }
-      if (!success) return false
+      val files = runReadActionBlocking { buildFilesIterator() }.collectAll()
+      if (files.isEmpty()) return true
       totalFiles = files.size
       progressIndicator.setIndeterminate(false)
       val application = ApplicationManager.getApplication()
@@ -504,8 +494,11 @@ abstract class AbstractLayoutCodeProcessor private constructor(
         if (!shouldContinue) return false
       }
 
-      return fileTreeIterator.processAll { file: PsiFile ->
-        iteration(file)
+      return files.all { file ->
+        val psiFile = runReadActionBlocking {
+          file.takeIf { !myProject.isDisposed && it.isValid }?.let { PsiManager.getInstance(myProject).findFile(it) }
+        }
+        psiFile == null || iteration(psiFile)
       }
     }
   }
