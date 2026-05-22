@@ -3,6 +3,7 @@ package com.intellij.codeInsight.actions
 
 import com.intellij.formatting.service.CoreFormattingService
 import com.intellij.formatting.service.FormattingServiceUtil
+import com.intellij.formatting.service.structuredAsyncDocumentFormattingScope
 import com.intellij.lang.LanguageFormatting
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
@@ -21,6 +22,8 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
@@ -32,6 +35,8 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
@@ -422,8 +427,10 @@ abstract class AbstractLayoutCodeProcessor private constructor(
 
         ProgressIndicatorProvider.checkCanceled()
 
-        processor.runTask(file, commandName, groupId, processAllFilesAsSingleUndoStep) {
-          AbstractLayoutCodeProcessorWriteInterceptor.getInstance().runFileWrite(writeTask, myProject, commandName);
+        withStructuredAsyncDocumentFormattingIfNotEdt {
+          processor.runTask(file, commandName, groupId, processAllFilesAsSingleUndoStep) {
+            AbstractLayoutCodeProcessorWriteInterceptor.getInstance().runFileWrite(writeTask, myProject, commandName);
+          }
         }
 
         if (!shouldContinue(writeTask, file)) {
@@ -531,6 +538,19 @@ abstract class AbstractLayoutCodeProcessor private constructor(
       return !(formattingService is CoreFormattingService && LanguageFormatting.INSTANCE.forContext(psiFile) == null)
     }
 
+    private fun withStructuredAsyncDocumentFormattingIfNotEdt(block: () -> Unit) {
+      if (!application.isDispatchThread && isWaitForAsyncDocumentFormattingTasks()) {
+        runBlockingMaybeCancellable {
+          structuredAsyncDocumentFormattingScope {
+            coroutineToIndicator { block () }
+          }
+        }
+      }
+      else {
+        block()
+      }
+    }
+
     @JvmStatic
     fun getPresentablePath(project: Project, psiFile: PsiFile): @NlsSafe String {
       val file = psiFile.getVirtualFile()
@@ -566,5 +586,8 @@ abstract class AbstractLayoutCodeProcessor private constructor(
         .shouldRecordActionForActiveDocument(processAllFilesAsSingleUndoStep)
         .run<Throwable> { writeTask.run() }
     }
+
+    private fun isWaitForAsyncDocumentFormattingTasks(): Boolean =
+      RegistryManager.getInstance().get("code.processor.wait.for.async.formatting.tasks").asBoolean()
   }
 }
