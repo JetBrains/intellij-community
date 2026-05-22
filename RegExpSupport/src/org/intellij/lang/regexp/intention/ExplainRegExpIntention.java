@@ -33,6 +33,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.intellij.lang.regexp.RegExpBundle;
 import org.intellij.lang.regexp.RegExpFile;
 import org.intellij.lang.regexp.RegExpLanguage;
 import org.intellij.lang.regexp.RegExpLanguageHosts;
@@ -247,7 +248,7 @@ public final class ExplainRegExpIntention implements IntentionAction, Iconable, 
 
   @Override
   public @NotNull String getFamilyName() {
-    return "Explain regular expression";
+    return RegExpBundle.message("intention.family.name.explain.regular.expression");
   }
 
   @Override
