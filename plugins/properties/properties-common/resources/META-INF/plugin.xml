@@ -9,9 +9,9 @@
   <resource-bundle>messages.PropertiesBundle</resource-bundle>
 
   <content namespace="jetbrains">
-    <module name="intellij.properties.copyright"/><!-- should be marked as 'required in backend mode' when IJPL-177060 is fixed -->
-    <module name="intellij.properties.backend.psi"/><!-- should be marked as 'required in backend mode' when IJPL-177060 is fixed -->
-    <module name="intellij.properties.backend"/><!-- should be marked as 'required in backend mode' when IJPL-177060 is fixed -->
+    <module name="intellij.properties.copyright"/>
+    <module name="intellij.properties.backend.psi" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.properties.backend" required-if-available="intellij.platform.backend"/>
     <module name="intellij.properties" loading="embedded"/>
     <module name="intellij.properties.psi" loading="embedded"/>
   </content>
