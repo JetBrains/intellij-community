@@ -176,7 +176,8 @@ private fun resetWatcherOnCursorLineChange(
     var curCursorLine = outputModel.getLineByOffset(outputModel.cursorOffset)
     outputModel.cursorOffsetFlow
       .sample(300.milliseconds)
-      .collect { cursorOffset ->
+      .collect {
+        val cursorOffset = outputModel.cursorOffset
         val newLine = outputModel.getLineByOffset(cursorOffset)
         if (newLine != curCursorLine) {
           curCursorLine = newLine
