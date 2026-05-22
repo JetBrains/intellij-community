@@ -116,6 +116,7 @@ dependencies {
     pluginModule(implementation(project(":codex-ide")))
     pluginModule(implementation(project(":codex-sessions")))
     pluginModule(implementation(project(":junie-sessions")))
+    pluginModule(implementation(project(":terminal-sessions")))
     pluginModule(implementation(project(":ai-review")))
     pluginModule(implementation(project(":ai-review-agents")))
     pluginModule(implementation(project(":ai-review-space")))

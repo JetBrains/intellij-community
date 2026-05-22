@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.common.session
 
+// @spec community/plugins/agent-workbench/spec/agent-terminal-sessions.spec.md
+
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.openapi.util.NlsSafe
 
@@ -14,6 +16,8 @@ value class AgentSessionProvider private constructor(val value: String) {
     val CLAUDE: AgentSessionProvider = from("claude")
 
     val JUNIE: AgentSessionProvider = from("junie")
+
+    val TERMINAL: AgentSessionProvider = from("terminal")
 
     fun from(value: String): AgentSessionProvider {
       require(AGENT_SESSION_PROVIDER_ID_REGEX.matches(value)) {

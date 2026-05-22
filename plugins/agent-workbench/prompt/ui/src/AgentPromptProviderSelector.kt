@@ -66,7 +66,7 @@ internal class AgentPromptProviderSelector(
     get() = providerEntries.map { entry -> entry.bridge.provider }
 
   fun refresh() {
-    val bridges = providerSettingsService.enabledProviders(providersProvider())
+    val bridges = providerSettingsService.enabledProviders(providersProvider().filter { provider -> provider.supportsPromptLaunch })
     val (resolvedMenuModel, resolvedEntries) = resolveProviderState(bridges, providerAvailabilityService.availabilitySnapshot(bridges))
     applyResolvedState(resolvedMenuModel, resolvedEntries)
     asyncRefreshScope?.launch { refreshProviderAvailability(bridges) }

@@ -132,6 +132,36 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
   }
 
   @Test
+  fun updateUsesProviderSpecificQuickStartTextAndTargetDescription() {
+    val context = newThreadContext(path = "/tmp/toolbar-project")
+    val terminalBridge = TestAgentSessionProviderDescriptor(
+      provider = AgentSessionProvider.TERMINAL,
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = true,
+      newSessionLabelKeyOverride = "toolwindow.action.new.session.terminal",
+      quickStartActionTextKey = "action.AgentWorkbenchSessions.NewTerminalSessionQuick.text",
+      quickStartActionDescriptionKey = "action.AgentWorkbenchSessions.NewTerminalSessionQuick.description",
+      quickStartActionTargetDescriptionKey = "action.AgentWorkbenchSessions.NewTerminalSessionQuick.target.description",
+    )
+    val action = AgentSessionsMainToolbarNewThreadAction(
+      resolveContext = { context },
+      allBridges = { listOf(terminalBridge) },
+      createNewSession = { _, _, _, _, _ -> },
+      lastUsedProvider = { AgentSessionProvider.TERMINAL },
+      lastUsedLaunchMode = { AgentSessionLaunchMode.STANDARD },
+    )
+    val event = TestActionEvent.createTestEvent(action)
+
+    action.update(event)
+
+    assertThat(event.presentation.isEnabledAndVisible).isTrue()
+    assertThat(event.presentation.text)
+      .isEqualTo(AgentSessionsBundle.message("action.AgentWorkbenchSessions.NewTerminalSessionQuick.text"))
+    assertThat(event.presentation.description)
+      .isEqualTo(AgentSessionsBundle.message("action.AgentWorkbenchSessions.NewTerminalSessionQuick.target.description", "Terminal Session", "toolbar-project"))
+  }
+
+  @Test
   fun updateSessionUsesStableQuickStartAction() {
     val context = newThreadContext(path = "/tmp/toolbar-project")
     val codexBridge = TestAgentSessionProviderDescriptor(

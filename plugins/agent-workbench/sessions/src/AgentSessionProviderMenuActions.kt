@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
+// @spec community/plugins/agent-workbench/spec/agent-terminal-sessions.spec.md
+
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderMenuItem
@@ -56,7 +58,7 @@ private class AgentSessionProviderMenuItemAction(
 ) : DumbAwareAction(AgentSessionsBundle.message(item.labelKey), null, providerItemIconWithMode(item)) {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = item.isEnabled
-    e.presentation.description = if (item.isEnabled) null else disabledProviderReason(item)
+    e.presentation.description = if (item.isEnabled) enabledProviderDescription(item) else disabledProviderReason(item)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -65,6 +67,11 @@ private class AgentSessionProviderMenuItemAction(
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+}
+
+private fun enabledProviderDescription(item: AgentSessionProviderMenuItem): @Nls String? {
+  val descriptionKey = item.bridge.newSessionDescriptionKey ?: return null
+  return AgentSessionsBundle.message(descriptionKey)
 }
 
 private fun disabledProviderReason(item: AgentSessionProviderMenuItem): @Nls String {

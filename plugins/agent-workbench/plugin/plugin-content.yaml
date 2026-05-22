@@ -98,6 +98,9 @@
 - name: lib/modules/intellij.agent.workbench.sessions.toolwindow.jar
   contentModules:
   - name: intellij.agent.workbench.sessions.toolwindow
+- name: lib/modules/intellij.agent.workbench.terminal.sessions.jar
+  contentModules:
+  - name: intellij.agent.workbench.terminal.sessions
 - name: lib/modules/intellij.agent.workbench.vcs.merge.jar
   contentModules:
   - name: intellij.agent.workbench.vcs.merge

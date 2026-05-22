@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.core.providers
 
+// @spec community/plugins/agent-workbench/spec/agent-terminal-sessions.spec.md
+
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.parseAgentThreadIdentity
@@ -103,11 +105,26 @@ interface AgentSessionProviderDescriptor {
   val displayPriority: Int
     get() = Int.MAX_VALUE
   val newSessionLabelKey: String
+  val newSessionTitleKey: String
+    get() = "toolwindow.action.new.thread"
+  val quickStartLabelKey: String
+    get() = newSessionLabelKey
+  val quickStartActionTextKey: String
+    get() = "action.AgentWorkbenchSessions.NewThreadQuick.text"
+  val quickStartActionDescriptionKey: String
+    get() = "action.AgentWorkbenchSessions.NewThreadQuick.description"
+  val quickStartActionTargetDescriptionKey: String?
+    get() = null
+  val newSessionDescriptionKey: String?
+    get() = null
   val yoloSessionLabelKey: String?
     get() = null
   val icon: Icon
   val promptOptions: List<AgentPromptProviderOption>
     get() = emptyList()
+
+  val supportsPromptLaunch: Boolean
+    get() = true
 
   val supportedLaunchModes: Set<AgentSessionLaunchMode>
     get() = setOf(AgentSessionLaunchMode.STANDARD)
@@ -224,6 +241,17 @@ interface AgentSessionProviderDescriptor {
   fun onConversationOpened() {
   }
 
+  fun recordNewSession(path: String, threadId: String, title: String, createdAtMs: Long) {
+  }
+
+  val supportsTerminalRestoreContext: Boolean
+    get() = false
+
+  fun readTerminalRestoreContext(path: String, threadId: String): AgentSessionTerminalRestoreContext? = null
+
+  fun recordTerminalWorkingDirectory(path: String, threadId: String, workingDirectory: String) {
+  }
+
   /**
    * CLI-arg marker that distinguishes a YOLO-mode launch from a standard one for this provider.
    * The default [resolvePendingSessionMetadata] implementation looks for this token in
@@ -254,6 +282,12 @@ interface AgentSessionProviderDescriptor {
 data class AgentSessionTerminalLaunchSpec(
   @JvmField val command: List<String>,
   @JvmField val envVariables: Map<String, String> = emptyMap(),
+  @JvmField val workingDirectory: String? = null,
+  /**
+   * Uses the IDE Terminal default shell instead of an explicit non-shell command.
+   * The embedded Agent Chat terminal passes no `shellCommand` to the Terminal tab builder in this mode.
+   */
+  @JvmField val useTerminalDefaultShell: Boolean = false,
   /**
    * When set, this session targets a Docker container managed by [ContainerSessionManager].
    * The ij-proxy MCP server routes file I/O and bash tool calls through the container
@@ -268,4 +302,8 @@ data class AgentSessionTerminalLaunchSpec(
    * When set, Agent Chat opens the tab with the concrete identity immediately instead of a synthetic `new-*` id.
    */
   @JvmField val preallocatedSessionId: String? = null,
+)
+
+data class AgentSessionTerminalRestoreContext(
+  @JvmField val workingDirectory: String? = null,
 )

@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.chat
 
+// @spec community/plugins/agent-workbench/spec/agent-terminal-sessions.spec.md
+
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
@@ -116,7 +118,11 @@ internal interface AgentChatTerminalTabs {
 }
 
 internal object ToolWindowAgentChatTerminalTabs : AgentChatTerminalTabs {
-  override fun createTab(project: Project, file: AgentChatVirtualFile, startupLaunchSpec: AgentSessionTerminalLaunchSpec): AgentChatTerminalTab {
+  override fun createTab(
+    project: Project,
+    file: AgentChatVirtualFile,
+    startupLaunchSpec: AgentSessionTerminalLaunchSpec,
+  ): AgentChatTerminalTab {
     val terminalToolWindowTabsManager = TerminalToolWindowTabsManager.getInstance(project)
     val terminalTab = configureAgentChatTerminalTabBuilder(
       builder = terminalToolWindowTabsManager.createTabBuilder(),
@@ -143,15 +149,20 @@ internal fun configureAgentChatTerminalTabBuilder(
   startupLaunchSpec: AgentSessionTerminalLaunchSpec,
 ): TerminalToolWindowTabBuilder {
   val projectPath = file.projectPath.takeIf { it.isNotBlank() }
-  return builder
+  val workingDirectory = startupLaunchSpec.workingDirectory?.takeIf { it.isNotBlank() } ?: projectPath
+  val configuredBuilder = builder
     .shouldAddToToolWindow(false)
     .deferSessionStartUntilUiShown(true)
-    .workingDirectory(projectPath)
+    .workingDirectory(workingDirectory)
     .sourceNavigationProjectPath(projectPath)
-    .processType(TerminalProcessType.NON_SHELL)
     .tabName(file.threadTitle)
-    .shellCommand(startupLaunchSpec.command)
     .envVariables(startupLaunchSpec.envVariables)
+  if (startupLaunchSpec.useTerminalDefaultShell) {
+    return configuredBuilder
+  }
+  return configuredBuilder
+    .processType(TerminalProcessType.NON_SHELL)
+    .shellCommand(startupLaunchSpec.command)
 }
 
 private class ToolWindowAgentChatTerminalTab(

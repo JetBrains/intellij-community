@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.actions
 
+// @spec community/plugins/agent-workbench/spec/agent-terminal-sessions.spec.md
+
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
@@ -70,15 +72,16 @@ fun providerAvailabilitySnapshot(
 }
 
 internal fun quickStartActionText(item: AgentSessionProviderMenuItem): @Nls String {
-  return AgentSessionsBundle.message("action.AgentWorkbenchSessions.NewThreadQuick.text", quickStartLabel(item))
+  return AgentSessionsBundle.message(item.bridge.quickStartActionTextKey, quickStartLabel(item))
 }
 
 internal fun quickStartActionDescription(item: AgentSessionProviderMenuItem): @Nls String {
-  return AgentSessionsBundle.message("action.AgentWorkbenchSessions.NewThreadQuick.description", quickStartLabel(item))
+  return AgentSessionsBundle.message(item.bridge.quickStartActionDescriptionKey, quickStartLabel(item))
 }
 
-private fun quickStartLabel(item: AgentSessionProviderMenuItem): @Nls String {
-  return AgentSessionsBundle.message(item.labelKey)
+internal fun quickStartLabel(item: AgentSessionProviderMenuItem): @Nls String {
+  val labelKey = if (item.mode == AgentSessionLaunchMode.STANDARD) item.bridge.quickStartLabelKey else item.labelKey
+  return AgentSessionsBundle.message(labelKey)
 }
 
 fun launchQuickStartThread(

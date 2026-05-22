@@ -98,6 +98,7 @@ internal class AgentChatFileEditor(
   private var concreteThreadRebindController: AgentChatConcreteThreadRebindController? = null
   private var initialMessageDispatcher: AgentChatInitialMessageDispatcher? = null
   private var scopedTerminalRefreshController: AgentChatDisposableController? = null
+  private var terminalRestoreContextController: AgentChatDisposableController? = null
   private var patchFoldController: AgentChatDisposableController? = null
   private var semanticRegionController: AgentChatSemanticRegionController? = null
   private var crossProjectDockTargetRegistration: Disposable? = null
@@ -173,6 +174,8 @@ internal class AgentChatFileEditor(
     concreteThreadRebindController = null
     scopedTerminalRefreshController?.dispose()
     scopedTerminalRefreshController = null
+    terminalRestoreContextController?.dispose()
+    terminalRestoreContextController = null
     patchFoldController?.dispose()
     patchFoldController = null
     semanticRegionController?.dispose()
@@ -327,6 +330,13 @@ internal class AgentChatFileEditor(
         messageDispatcher.schedule(createdTab)
       }
       scopedTerminalRefreshController = createAgentChatScopedTerminalRefreshController(file, createdTab, providerDescriptor)
+      val restoreContextController = AgentChatTerminalRestoreContextController(
+        file = file,
+        descriptor = providerDescriptor,
+        parentDisposable = this,
+      )
+      terminalRestoreContextController = restoreContextController
+      restoreContextController.attach(createdTab)
       codexTerminalTitleThreadRebindController = createCodexTerminalTitleThreadRebindController(
         file = file,
         tab = createdTab,

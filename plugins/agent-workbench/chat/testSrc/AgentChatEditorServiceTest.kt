@@ -190,6 +190,32 @@ class AgentChatEditorServiceTest {
   }
 
   @Test
+  fun testNewTabPreservesTerminalDefaultShellStartupLaunchSpec(): Unit = timeoutRunBlocking {
+    val preallocatedSessionId = "terminal-session-1"
+    val terminalLaunchSpec = AgentSessionTerminalLaunchSpec(
+      command = emptyList(),
+      envVariables = mapOf("A" to "B"),
+      useTerminalDefaultShell = true,
+      preallocatedSessionId = preallocatedSessionId,
+    )
+    openChatInModal(
+      threadIdentity = "terminal:$preallocatedSessionId",
+      shellCommand = emptyList(),
+      shellEnvVariables = mapOf("IGNORED" to "1"),
+      threadId = preallocatedSessionId,
+      threadTitle = "Terminal",
+      subAgentId = null,
+      newSessionProvider = AgentSessionProvider.TERMINAL,
+      newSessionLaunchMode = AgentSessionLaunchMode.STANDARD,
+      startupLaunchSpec = terminalLaunchSpec,
+    )
+
+    val file = openedChatFiles().single()
+    val startupLaunchSpec = checkNotNull(file.consumeStartupLaunchSpecOverride())
+    assertThat(startupLaunchSpec).isEqualTo(terminalLaunchSpec)
+  }
+
+  @Test
   fun testExistingTabIgnoresStartupCommandOverrideAndKeepsInitialMessageMetadata(): Unit = timeoutRunBlocking {
     val terminalTabs = EditorServiceFakeAgentChatTerminalTabs()
     customFileEditorFactory = { editorProject, file ->
@@ -1896,6 +1922,7 @@ class AgentChatEditorServiceTest {
     persistSnapshot: Boolean = true,
     deferredStartState: AgentChatDeferredStartState? = null,
     targetProject: Project = project,
+    startupLaunchSpec: AgentSessionTerminalLaunchSpec? = null,
   ) {
     val effectivePostStartDispatchSteps = postStartDispatchSteps.ifEmpty {
       initialComposedMessage
@@ -1928,6 +1955,7 @@ class AgentChatEditorServiceTest {
       initialMessageDispatchPlan = initialMessageDispatchPlan,
       persistSnapshot = persistSnapshot,
       deferredStartState = deferredStartState,
+      startupLaunchSpec = startupLaunchSpec,
     )
     waitForCondition(timeoutMs = 10_000) {
       openedChatFiles(targetProject).any { file ->

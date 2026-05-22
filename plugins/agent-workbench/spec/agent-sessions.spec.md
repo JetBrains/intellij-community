@@ -5,6 +5,7 @@ targets:
   - ../claude/sessions/src/**/*.kt
   - ../codex/sessions/src/**/*.kt
   - ../junie/sessions/src/**/*.kt
+  - ../terminal/sessions/src/**/*.kt
   - ../sessions/src/**/*.kt
   - ../sessions-toolwindow/src/**/*.kt
   - ../sessions-actions/src/**/*.kt
@@ -12,6 +13,7 @@ targets:
   - ../sessions-toolwindow/testSrc/*.kt
   - ../sessions/testSrc/*.kt
   - ../sessions-actions/testSrc/*.kt
+  - ../terminal/sessions/testSrc/*.kt
 ---
 
 # Agent Threads Tool Window
@@ -34,7 +36,7 @@ Agent Threads is a project-scoped Swing tree for browsing agent threads across p
   [@test] ../sessions-toolwindow/testSrc/AgentSessionsSwingTreeCellRendererTest.kt
   [@test] ../sessions-toolwindow/testSrc/AgentSessionsTreeModelDiffTest.kt
 
-- Default providers registered for session loading are Codex, Claude, and Junie.
+- Default providers registered for session loading are Codex, Claude, Junie, and Terminal.
   [@test] ../sessions/testSrc/AgentSessionProvidersTest.kt
 
 - Tree rows must expose provider-aware thread icons, normalized activity badges, relative activity time, provider warnings, blocking errors, empty rows, and `More` rows according to `spec/agent-sessions-tree.spec.md`.
