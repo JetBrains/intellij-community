@@ -539,7 +539,7 @@ class AgentSessionRefreshCoordinatorTest {
   }
 
   @Test
-  fun unmappedScopedUpdateFallsBackToFullLoadedRefresh() = runBlocking(Dispatchers.Default) {
+  fun unmappedScopedUpdateDoesNotFallBackToFullLoadedRefresh() = runBlocking(Dispatchers.Default) {
     val projectB = "/work/project-b"
     val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
     val closedRefreshInvocations = LinkedHashMap<String, AtomicInteger>()
@@ -585,20 +585,19 @@ class AgentSessionRefreshCoordinatorTest {
       coordinator.observeSessionSourceUpdates()
       updates.tryEmit(threadsChangedEvent(scopedPaths = setOf("/missing/project")))
 
-      waitForCondition {
-        val projects = stateStore.snapshot().projects.associateBy { it.path }
-        projects[PROJECT_PATH]?.threads?.firstOrNull { it.provider == AgentSessionProvider.CODEX }?.updatedAt == 300L &&
-        projects[projectB]?.threads?.firstOrNull { it.provider == AgentSessionProvider.CODEX }?.updatedAt == 400L
-      }
+      delay(700.milliseconds)
 
-      assertThat(closedRefreshInvocations[PROJECT_PATH]?.get() ?: 0).isEqualTo(1)
-      assertThat(closedRefreshInvocations[projectB]?.get() ?: 0).isEqualTo(1)
+      val projects = stateStore.snapshot().projects.associateBy { it.path }
+      assertThat(projects[PROJECT_PATH]?.threads?.firstOrNull { it.provider == AgentSessionProvider.CODEX }?.updatedAt).isEqualTo(100L)
+      assertThat(projects[projectB]?.threads?.firstOrNull { it.provider == AgentSessionProvider.CODEX }?.updatedAt).isEqualTo(100L)
+      assertThat(closedRefreshInvocations[PROJECT_PATH]?.get() ?: 0).isEqualTo(0)
+      assertThat(closedRefreshInvocations[projectB]?.get() ?: 0).isEqualTo(0)
       assertThat(closedRefreshInvocations["/missing/project"]?.get() ?: 0).isEqualTo(0)
     }
   }
 
   @Test
-  fun scopedHintUpdateRefreshesOnlyScopedPath() = runBlocking(Dispatchers.Default) {
+  fun scopedHintUpdateWithoutHintsDoesNotReloadProviderPath() = runBlocking(Dispatchers.Default) {
     val projectB = "/work/project-b"
     val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
     val closedRefreshInvocations = LinkedHashMap<String, AtomicInteger>()
@@ -644,13 +643,12 @@ class AgentSessionRefreshCoordinatorTest {
       coordinator.observeSessionSourceUpdates()
       updates.tryEmit(hintsChangedEvent(scopedPaths = setOf(PROJECT_PATH), threadIds = setOf("codex-a")))
 
-      waitForCondition {
-        val projects = stateStore.snapshot().projects.associateBy { it.path }
-        projects[PROJECT_PATH]?.threads?.firstOrNull { it.provider == AgentSessionProvider.CODEX }?.updatedAt == 300L &&
-        projects[projectB]?.threads?.firstOrNull { it.provider == AgentSessionProvider.CODEX }?.updatedAt == 100L
-      }
+      delay(700.milliseconds)
 
-      assertThat(closedRefreshInvocations[PROJECT_PATH]?.get() ?: 0).isEqualTo(1)
+      val projects = stateStore.snapshot().projects.associateBy { it.path }
+      assertThat(projects[PROJECT_PATH]?.threads?.firstOrNull { it.provider == AgentSessionProvider.CODEX }?.updatedAt).isEqualTo(100L)
+      assertThat(projects[projectB]?.threads?.firstOrNull { it.provider == AgentSessionProvider.CODEX }?.updatedAt).isEqualTo(100L)
+      assertThat(closedRefreshInvocations[PROJECT_PATH]?.get() ?: 0).isEqualTo(0)
       assertThat(closedRefreshInvocations[projectB]?.get() ?: 0).isEqualTo(0)
     }
   }
@@ -955,9 +953,9 @@ class AgentSessionRefreshCoordinatorTest {
       val refreshThreadSeedsById = capturedRefreshThreadSeedsByPath.last().getValue(PROJECT_PATH).associateBy { it.threadId }
       assertThat(refreshThreadSeedsById.keys).containsExactlyInAnyOrder("codex-a", "codex-b")
       assertThat(refreshThreadSeedsById["codex-a"])
-        .isEqualTo(AgentSessionRefreshThreadSeed(threadId = "codex-a", updatedAt = 300L, forceRefresh = true))
+        .isEqualTo(AgentSessionRefreshThreadSeed(threadId = "codex-a", updatedAt = 100L, forceRefresh = true))
       assertThat(refreshThreadSeedsById["codex-b"])
-        .isEqualTo(AgentSessionRefreshThreadSeed(threadId = "codex-b", updatedAt = 250L, forceRefresh = false))
+        .isEqualTo(AgentSessionRefreshThreadSeed(threadId = "codex-b", updatedAt = 90L, forceRefresh = false))
     }
   }
 

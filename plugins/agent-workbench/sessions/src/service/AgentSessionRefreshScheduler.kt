@@ -35,6 +35,7 @@ internal class AgentSessionRefreshScheduler(
   private val isRefreshGateActive: suspend () -> Boolean,
   private val executeFullRefresh: suspend (RefreshLoadScope) -> Unit,
   private val executeProviderRefresh: suspend (AgentSessionProvider, Long, AgentSessionSourceUpdateEvent) -> Unit,
+  private val executeProviderHintRefresh: suspend (AgentSessionProvider, Long, AgentSessionSourceUpdateEvent) -> Unit,
   private val applySourceUpdateActivityHints: (AgentSessionProvider, AgentSessionSourceUpdateEvent) -> Unit = { _, _ -> },
   private val scheduleVfsRefreshForSourceUpdate: (AgentSessionProvider, AgentSessionSourceUpdateEvent) -> Unit = { _, _ -> },
   private val onFullRefreshFailure: (Throwable) -> Unit,
@@ -252,6 +253,13 @@ internal class AgentSessionRefreshScheduler(
   private fun scheduleSourceRefresh(provider: AgentSessionProvider, updateEvent: AgentSessionSourceUpdateEvent) {
     val normalizedIncoming = normalizeUpdateEvent(updateEvent)
     applySourceUpdateActivityHints(provider, normalizedIncoming)
+    if (!requiresQueuedProviderRefresh(normalizedIncoming)) {
+      LOG.debug {
+        "Applied source update for ${provider.value} without provider refresh " +
+        "(${normalizedIncoming.describeScope()}, sourceUpdate=${normalizedIncoming.type.name.lowercase()})"
+      }
+      return
+    }
     synchronized(sourceRefreshJobsLock) {
       val existingJob = sourceRefreshJobs.remove(provider)
       existingJob?.job?.cancel()
@@ -262,7 +270,9 @@ internal class AgentSessionRefreshScheduler(
       }
       val job = serviceScope.launch(Dispatchers.IO) {
         delay(SOURCE_UPDATE_DEBOUNCE_MS.milliseconds)
-        scheduleVfsRefreshFromSourceUpdate(provider, mergedUpdate)
+        if (mergedUpdate.type == AgentSessionSourceUpdate.THREADS_CHANGED) {
+          scheduleVfsRefreshFromSourceUpdate(provider, mergedUpdate)
+        }
         enqueueSourceRefresh(provider = provider, updateEvent = mergedUpdate, applyActivityHints = false)
       }
       sourceRefreshJobs[provider] = PendingSourceRefreshJob(job = job, updateEvent = mergedUpdate)
@@ -556,11 +566,18 @@ internal class AgentSessionRefreshScheduler(
       }
 
       try {
-        executeProviderRefresh(
-          provider,
-          refreshId,
-          updateEvent,
-        )
+        when (updateEvent.type) {
+          AgentSessionSourceUpdate.THREADS_CHANGED -> executeProviderRefresh(
+            provider,
+            refreshId,
+            updateEvent,
+          )
+          AgentSessionSourceUpdate.HINTS_CHANGED -> executeProviderHintRefresh(
+            provider,
+            refreshId,
+            updateEvent,
+          )
+        }
       }
       catch (e: Throwable) {
         if (e is CancellationException) throw e
@@ -573,6 +590,16 @@ internal class AgentSessionRefreshScheduler(
     CATALOG_SYNC,
     FULL_REFRESH,
   }
+}
+
+private fun requiresQueuedProviderRefresh(updateEvent: AgentSessionSourceUpdateEvent): Boolean {
+  if (updateEvent.type == AgentSessionSourceUpdate.THREADS_CHANGED) {
+    return true
+  }
+  if (updateEvent.isUnscoped()) {
+    return false
+  }
+  return updateEvent.activityHintsByThreadId.isEmpty() && updateEvent.summaryActivityHintsByThreadId.isEmpty()
 }
 
 private data class PendingSourceRefreshJob(

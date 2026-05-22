@@ -534,7 +534,7 @@ class AgentSessionRefreshServiceIntegrationTest {
       }
 
       val project = service.state.value.projects.single { it.path == PROJECT_PATH }
-      assertThat(project.threads.map { it.id }).containsExactly("codex-1", "claude-1")
+      assertThat(project.threads.map { it.id }).containsExactly("claude-1", "codex-1")
       assertThat(project.threads.first { it.provider == AgentSessionProvider.CLAUDE }.updatedAt).isEqualTo(200L)
       assertThat(project.threads.first { it.provider == AgentSessionProvider.CODEX }.updatedAt).isEqualTo(300L)
     }
@@ -798,7 +798,11 @@ class AgentSessionRefreshServiceIntegrationTest {
       assertThat(capturedRefreshThreadSeedsByPath.last()[PROJECT_PATH])
         .containsExactlyInAnyOrder(
           AgentSessionRefreshThreadSeed(threadId = "codex-listed", updatedAt = 320L, forceRefresh = false),
-          AgentSessionRefreshThreadSeed(threadId = "codex-open", updatedAt = UNKNOWN_AGENT_SESSION_REFRESH_THREAD_UPDATED_AT, forceRefresh = false),
+          AgentSessionRefreshThreadSeed(
+            threadId = "codex-open",
+            updatedAt = UNKNOWN_AGENT_SESSION_REFRESH_THREAD_UPDATED_AT,
+            forceRefresh = false,
+          ),
         )
     }
   }
