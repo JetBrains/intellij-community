@@ -50,6 +50,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.util.progress.reportSequentialProgress
+import com.intellij.platform.util.progress.withProgressText
 import com.intellij.ui.DoubleClickListener
 import com.intellij.ui.TableSpeedSearch
 import com.intellij.ui.TableUtil
@@ -110,7 +112,7 @@ open class MultipleFileMergeDialog(
       override fun onDoubleClick(event: MouseEvent): Boolean {
         if (EditSourceOnDoubleClickHandler.isToggleEvent(tree, event)) return false
         showMergeDialog()
-        return true
+        return false
       }
     }.installOn(this)
     TableSpeedSearch.installOn(this, Convertor { (it as? VirtualFile)?.name })
@@ -244,28 +246,35 @@ open class MultipleFileMergeDialog(
     project: Project,
     iterativeDataHolder: MergeConflictIterativeDataHolder,
   ) {
-    val files = getUnresolvedFiles()
+    // Resolve in the order shown in the table, makes the UX a bit better
+    val files = getUnresolvedFiles().sortedWith(fileComparator)
     if (files.isEmpty()) return
     if (!beforeResolve(files)) return
 
     runWithErrorHandling {
       runWithModalProgressBlocking(getModalTaskOwner(),
-                                   VcsBundle.message("multiple.file.merge.dialog.progress.title.resolving.conflicts")) {
-        for (file in files) {
-          val request = mergeRequestBuilder(file).build()
-          val model = iterativeDataHolder.prepareModelIfSupported(file, request) ?: continue
+                                   "") {
+        withProgressText(VcsBundle.message("multiple.file.merge.modal.progress.title.resolving.conflicts")) {
+          reportSequentialProgress(files.size) { reporter ->
+            for ((index, file) in files.withIndex()) {
+              reporter.itemStep(VcsBundle.message("multiple.file.merge.modal.progress.resolving.file", index + 1, files.size)) {
+                val request = mergeRequestBuilder(file).build()
+                val model = iterativeDataHolder.prepareModelIfSupported(file, request) ?: return@itemStep
 
-          edtWriteAction {
-            model.resolveAllChangesAutomatically()
+                edtWriteAction {
+                  model.resolveAllChangesAutomatically()
 
-            saveDocument(file)
-            checkMarkModifiedProject(project, file)
+                  saveDocument(file)
+                  checkMarkModifiedProject(project, file)
+                  updateModelFromFiles()
+                }
+              }
+            }
           }
         }
       }
     }
     updateTree(SetDefaultTreeStateStrategy())
-    updateModelFromFiles()
   }
 
   @RequiresEdt
@@ -354,7 +363,7 @@ open class MultipleFileMergeDialog(
     theirsLabel: @Nls String,
   ) {
     if (filesWithModel.isEmpty()) return
-    if (filesWithModel.any { (_,model) ->
+    if (filesWithModel.any { (_, model) ->
         model.getResolvedChanges().isNotEmpty()
       }) {
       val confirmed = MessageDialogBuilder
@@ -537,7 +546,7 @@ open class MultipleFileMergeDialog(
   private fun getFilesToOpen(): List<VirtualFile> {
     if (!MergeConflictFileSuggestion.isEnabled()) return table.selectedFiles
 
-    val comparator = ChangesComparator.getVirtualFileComparator(!groupByDirectory)
+    val comparator = fileComparator
     // 1. Selected files (sorted)
     val selected = table.selectedFiles.sortedWith(comparator)
 
@@ -599,7 +608,7 @@ open class MultipleFileMergeDialog(
     }
   }
 
-  private suspend fun mergeRequestBuilder(file: VirtualFile): MergeRequestBuilder {
+  private suspend fun mergeRequestBuilder(file: VirtualFile): MultipleFileMergeDialog.MergeRequestBuilder {
     val mergeData = withContext(Dispatchers.IO) { mergeProvider.loadRevisions(file) }
     return MergeRequestBuilder(file, mergeData)
   }
@@ -639,6 +648,8 @@ open class MultipleFileMergeDialog(
       }
     }
   }
+
+  private val fileComparator get() = ChangesComparator.getVirtualFileComparator(!groupByDirectory)
 }
 
 private fun <T> tryCompute(task: () -> T): T? {
