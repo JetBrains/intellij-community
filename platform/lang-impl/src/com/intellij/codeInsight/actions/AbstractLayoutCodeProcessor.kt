@@ -450,27 +450,17 @@ abstract class AbstractLayoutCodeProcessor private constructor(
       return true
     }
 
-    private fun updateIndicatorText(
-      upperLabel: @NlsContexts.ProgressText String,
-      downLabel: @NlsContexts.ProgressDetails String,
-    ) {
-      progressIndicator.setText(upperLabel)
-      progressIndicator.setText2(downLabel)
-    }
-
-    private fun updateIndicatorFraction(processed: Int) {
-      progressIndicator.setFraction(processed.toDouble() / totalFiles)
-    }
-
     /** @return `true` if file processing succeeded;
      *          `false` if processing failed and was stopped early. */
     fun process(): Boolean {
-      progressIndicator.setIndeterminate(true)
-      updateIndicatorText(ApplicationBundle.message("bulk.reformat.prepare.progress.text"), "")
+      progressIndicator.apply {
+        isIndeterminate = true
+        text = ApplicationBundle.message("bulk.reformat.prepare.progress.text")
+        text2 = ""
+      }
       val files = runReadActionBlocking { buildFilesIterator() }.collectAll()
       if (files.isEmpty()) return true
       totalFiles = files.size
-      progressIndicator.setIndeterminate(false)
       if (!application.isUnitTestMode()) {
         val shouldContinue = invokeAndWaitIfNeeded {
           val status = ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(files)
@@ -479,13 +469,18 @@ abstract class AbstractLayoutCodeProcessor private constructor(
         if (!shouldContinue) return false
       }
 
+      progressIndicator.apply {
+        isIndeterminate = false
+        fraction = 0.0
+        text = ApplicationBundle.message("bulk.reformat.process.progress.text")
+      }
       for (file in files) {
-        updateIndicatorFraction(filesProcessed)
+        progressIndicator.fraction = filesProcessed.toDouble() / totalFiles
 
         filesProcessed++
 
         val presentableFilePath = shouldProcessFile(file) ?: continue
-        updateIndicatorText(ApplicationBundle.message("bulk.reformat.process.progress.text"), presentableFilePath)
+        progressIndicator.text2 = presentableFilePath
 
         val shouldContinue = DumbService.getInstance(myProject).withAlternativeResolveEnabled {
           performFileProcessing(file)
