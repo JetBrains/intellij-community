@@ -374,11 +374,19 @@ abstract class AbstractLayoutCodeProcessor private constructor(
   private inner class ProcessingTask(val progressIndicator: ProgressIndicator) {
     private val processors = getAllProcessors()
 
-    /** @return Presentable file path or `null` if processing this file should be skipped */
+    /** @return Presentable file path or `null` if the processing of this file should be skipped */
     @RequiresReadLock
     private fun shouldProcessFile(file: VirtualFile): @NlsSafe String? {
       val psiFile = file.findPsiFileSafely()
-      return if (psiFile != null && psiFile.isWritable() && canBeFormatted(psiFile) && acceptedByFilters(file)) {
+
+      val shouldProcess = psiFile != null &&
+                          psiFile.isWritable() &&
+                          isFormattable(psiFile) &&
+                          !isProjectOrWorkspaceFile(file) &&
+                          !isGeneratedSourceByAnyFilter(file, myProject) &&
+                          isAcceptedByFileFilters(file)
+
+      return if (shouldProcess) {
         calcRelativeToProjectPath(file, myProject)
       } else {
         null
@@ -474,7 +482,7 @@ abstract class AbstractLayoutCodeProcessor private constructor(
       for ((index, file) in files.withIndex()) {
         progressIndicator.fraction = index.toDouble() / totalFiles
 
-        val presentableFilePath = shouldProcessFile(file) ?: continue
+        val presentableFilePath = runReadActionBlocking { shouldProcessFile(file) } ?: continue
         progressIndicator.text2 = presentableFilePath
 
         val shouldContinue = DumbService.getInstance(myProject).withAlternativeResolveEnabled {
@@ -495,7 +503,7 @@ abstract class AbstractLayoutCodeProcessor private constructor(
       null
     }
 
-  private fun acceptedByFilters(file: VirtualFile): Boolean = fileFilters.all { it.accept(file) }
+  private fun isAcceptedByFileFilters(file: VirtualFile): Boolean = fileFilters.all { it.accept(file) }
 
   protected fun handleFileTooBigException(logger: Logger, e: FilesTooBigForDiffException, psiFile: PsiFile) {
     logger.info("Error while calculating changed ranges for: " + psiFile.getVirtualFile(), e)
@@ -518,15 +526,9 @@ abstract class AbstractLayoutCodeProcessor private constructor(
       return FutureTask<Boolean>(EmptyRunnable.INSTANCE, true)
     }
 
-    private fun canBeFormatted(psiFile: PsiFile): Boolean {
-      if (!psiFile.isValid()) return false
+    private fun isFormattable(psiFile: PsiFile): Boolean {
       val formattingService = FormattingServiceUtil.findService(psiFile, true, true)
-      if (formattingService is CoreFormattingService && LanguageFormatting.INSTANCE.forContext(psiFile) == null) {
-        return false
-      }
-      val virtualFile = psiFile.getVirtualFile() ?: return true
-
-      return !isProjectOrWorkspaceFile(virtualFile) && !isGeneratedSourceByAnyFilter(virtualFile, psiFile.getProject())
+      return !(formattingService is CoreFormattingService && LanguageFormatting.INSTANCE.forContext(psiFile) == null)
     }
 
     @JvmStatic
