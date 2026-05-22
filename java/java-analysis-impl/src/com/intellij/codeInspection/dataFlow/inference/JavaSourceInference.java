@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.inference;
 
 import com.intellij.codeInsight.Nullability;
@@ -11,6 +11,7 @@ import com.intellij.codeInspection.dataFlow.MutationSignature;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.FileIndexFacade;
+import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiAnnotation;
@@ -59,6 +60,15 @@ public final class JavaSourceInference {
   enum InferenceMode {
     DISABLED, ENABLED, PARAMETERS
   }
+
+  /**
+   * Tracks methods whose source-based inference (nullability, mutability, mutation signature, contracts)
+   * is currently in progress on this thread. Inspected via {@link RecursionGuard#currentStack()} from
+   * {@code DelegationContract.toContracts} and {@code PurityInferenceResult.fromCalls} to break
+   * multi-key cycles (e.g. mutual delegation across overloads) before they exhaust the stack.
+   */
+  static final RecursionGuard<PsiMethod> INFERENCE_RECURSION_GUARD =
+    RecursionManager.createGuard("JavaSourceInference.INFERENCE_RECURSION_GUARD");
 
   private record MethodInferenceData(@NotNull Mutability mutability, @NotNull Nullability nullability,
                                      @NotNull List<StandardMethodContract> contracts, @NotNull MutationSignature signature,
@@ -110,8 +120,8 @@ public final class JavaSourceInference {
     MethodReturnInferenceResult result = data.getMethodReturn();
     if (result == null) return Nullability.UNKNOWN;
     try {
-      Nullability nullability = RecursionManager.doPreventingRecursion(
-        method, true, () -> result.getNullability(method, data.methodBody(method)));
+      Nullability nullability = INFERENCE_RECURSION_GUARD.doPreventingRecursion(
+        method, false, () -> result.getNullability(method, data.methodBody(method)));
       return nullability == null ? Nullability.UNKNOWN : nullability;
     }
     catch (CannotRestoreExpressionException e) {
@@ -125,8 +135,8 @@ public final class JavaSourceInference {
     MethodReturnInferenceResult result = data.getMethodReturn();
     if (result == null) return Mutability.UNKNOWN;
     try {
-      Mutability mutability = RecursionManager.doPreventingRecursion(
-        method, true, () -> result.getMutability(method, data.methodBody(method)));
+      Mutability mutability = INFERENCE_RECURSION_GUARD.doPreventingRecursion(
+        method, false, () -> result.getMutability(method, data.methodBody(method)));
       return mutability == null ? Mutability.UNKNOWN : mutability;
     }
     catch (CannotRestoreExpressionException e) {
@@ -139,7 +149,7 @@ public final class JavaSourceInference {
     if (result == null) return MutationSignature.unknown();
     try {
       MutationSignature signature =
-        RecursionManager.doPreventingRecursion(method, true, () -> result.getMutationSignature(method, data.methodBody(method)));
+        INFERENCE_RECURSION_GUARD.doPreventingRecursion(method, false, () -> result.getMutationSignature(method, data.methodBody(method)));
       return signature == null ? MutationSignature.unknown() : signature;
     }
     catch (CannotRestoreExpressionException e) {
@@ -159,8 +169,8 @@ public final class JavaSourceInference {
     List<PreContract> preContracts = data.getContracts();
     List<StandardMethodContract> contracts;
     try {
-      contracts = RecursionManager.doPreventingRecursion(
-        method, true, () -> ContainerUtil.concat(preContracts, c -> c.toContracts(method, data.methodBody(method))));
+      contracts = INFERENCE_RECURSION_GUARD.doPreventingRecursion(
+        method, false, () -> ContainerUtil.concat(preContracts, c -> c.toContracts(method, data.methodBody(method))));
     }
     catch (CannotRestoreExpressionException e) {
       throw ContractInferenceIndexKt.handleInconsistency(method, data, e);
