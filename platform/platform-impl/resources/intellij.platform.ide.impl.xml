@@ -139,6 +139,12 @@
       defaultValue="true"
       description="Enable the fix for IJPL-187594 Keymaps: shortcuts overlap long action names. The Classic UI is not affected"
     />
+    <registryKey
+      key="trusted.project.dialog.has.cancel.button"
+      defaultValue="true"
+      description="Show &quot;Don't open&quot; option in the trusted project dialog"
+      restartRequired="false"
+    />
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ide.menu.MainMenuCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.minimap.MinimapUsageCollector"/>
