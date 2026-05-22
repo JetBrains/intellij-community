@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.comments;
 
 import com.intellij.modcommand.ActionContext;
@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.base.GrPsiUpdateIntention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -19,6 +20,15 @@ import java.util.List;
 
 public final class ChangeToCStyleCommentIntention extends GrPsiUpdateIntention {
 
+  @Override
+  public @NotNull String getText(@NotNull PsiElement element) {
+    return getFamilyName();
+  }
+
+  @Override
+  public @NotNull String getFamilyName() {
+    return GroovyIntentionsBundle.message("change.to.c.style.comment.intention.family.name");
+  }
 
   @Override
   protected @NotNull PsiElementPredicate getElementPredicate() {
