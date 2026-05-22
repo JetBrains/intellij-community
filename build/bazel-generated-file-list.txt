@@ -242,6 +242,7 @@ fleet/lsp.protocol/test
 fleet/modules/api
 fleet/multiplatform.shims
 fleet/openmap
+fleet/openmap/test
 fleet/radixTrie
 fleet/radixTrie/test
 fleet/reporting/api
