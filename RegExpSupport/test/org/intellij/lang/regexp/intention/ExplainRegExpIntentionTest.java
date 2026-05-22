@@ -82,6 +82,18 @@ public final class ExplainRegExpIntentionTest extends BasePlatformTestCase {
                    \\) – matches the RIGHT PARENTHESIS character
              """);
   }
+  
+  public void testExactlyNTimes() {
+    doTest("[0-9]{3}-[0-9]{4}",
+           """
+             [0-9]{3}-[0-9]{4} – matches elements in order
+               [0-9]{3} Quantifier (https://www.regular-expressions.info/repeat.html) – matches exactly 3 times
+                 [0-9] Character Class (https://www.regular-expressions.info/charclass.html) – matches 1 character from DIGIT ZERO to DIGIT NINE (10 characters)
+               - – matches the HYPHEN-MINUS character
+               [0-9]{4} Quantifier (https://www.regular-expressions.info/repeat.html) – matches exactly 4 times
+                 [0-9] Character Class (https://www.regular-expressions.info/charclass.html) – matches 1 character from DIGIT ZERO to DIGIT NINE (10 characters)
+             """);
+  }
 
   public void testComment() {
     doTest("(?x)  implausible# inconceivable",
