@@ -7,7 +7,6 @@ import com.intellij.psi.PsiDocCommentBase
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import training.onboarding.filePathWithOnboardingTips
 
-/** GO-20448: `findDocComment` must agree with `collectDocComments` for //TIP blocks. */
 class JavaOnboardingTipsDocumentationProviderTest : LightJavaCodeInsightFixtureTestCase() {
   override fun setUp() {
     super.setUp()
