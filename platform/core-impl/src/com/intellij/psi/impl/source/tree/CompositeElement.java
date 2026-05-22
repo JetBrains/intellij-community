@@ -158,11 +158,12 @@ public class CompositeElement extends TreeElement {
     }
   }
 
-  private void doSetMyCachedLength(long version, Integer cachedLength) {
+  private void doSetMyCachedLength(long version, int cachedLength) {
+    Integer cacheable = cachedLength == -1 ? null : Integer.valueOf(cachedLength);
     if (version == -1) {
-      this.myCachedLength = cachedLength;
+      this.myCachedLength = cacheable;
     } else {
-      setVersionedField(myCachedLengthAccessor, version, cachedLength);
+      setVersionedField(myCachedLengthAccessor, version, cacheable);
     }
   }
 
@@ -198,7 +199,7 @@ public class CompositeElement extends TreeElement {
   @Override
   public void clearCaches() {
     long version = getVersionForReading();
-    doSetMyCachedLength(version, null);
+    doSetMyCachedLength(version, -1);
     this.putUserData(OUR_HC_KEY, null);
 
     clearRelativeOffsets(getVersionForReading(), rawFirstChild());
@@ -621,7 +622,7 @@ public class CompositeElement extends TreeElement {
       return walkCachingLength(version);
     }
     catch (AssertionError e) {
-      doSetMyCachedLength(version, null);
+      doSetMyCachedLength(version, -1);
       String assertion = StringUtil.getThrowableText(e);
       throw new AssertionError("Walking failure: ===\n"+assertion+"\n=== Thread dump:\n"+ ThreadDumper.dumpThreadsToString()+"\n===\n");
     }

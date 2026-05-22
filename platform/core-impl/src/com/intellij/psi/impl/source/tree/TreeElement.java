@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.AbstractFileViewProvider;
 import com.intellij.psi.FileViewProvider;
@@ -244,21 +243,23 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
     }
   }
 
-  private void doSetMyStartOffsetInParent(long version, Integer startOffsetInParent) {
+  private void doSetMyStartOffsetInParent(long version, int startOffsetInParent) {
+    Integer cacheable = startOffsetInParent == -1 ? null : Integer.valueOf(startOffsetInParent);
     if (version == -1) {
-      this.myStartOffsetInParent = startOffsetInParent;
+      this.myStartOffsetInParent = cacheable;
     } else {
-      setVersionedField(myStartOffsetInParentAccessor, version, startOffsetInParent);
+      setVersionedField(myStartOffsetInParentAccessor, version, cacheable);
     }
   }
 
-  private Integer doGetMyStartOffsetInParent(long version) {
+  private int doGetMyStartOffsetInParent(long version) {
+    Integer startOffset;
     if (version == -1) {
-      return (Integer)this.myStartOffsetInParent;
+      startOffset = (Integer)this.myStartOffsetInParent;
     } else {
-      Object result = getVersionedField(this.myStartOffsetInParent, version);
-      return (Integer)result;
+      startOffset = (Integer)getVersionedField(this.myStartOffsetInParent, version);
     }
+    return startOffset == null ? -1 : startOffset.intValue();
   }
 
   @Override
@@ -352,7 +353,8 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
     return getStartOffsetVersioned(version);
   }
 
-  private int getStartOffsetVersioned(long version) {
+  @ApiStatus.Internal
+  int getStartOffsetVersioned(long version) {
     int result = 0;
     TreeElement current = this;
     CompositeElement parent = current.doGetMyParent(version);
@@ -373,8 +375,8 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
 
   private int getStartOffsetInParentVersioned(long version) {
     if (doGetMyParent(version) == null) return -1;
-    Integer offsetInParent = doGetMyStartOffsetInParent(version);
-    if (offsetInParent != null) return offsetInParent;
+    int offsetInParent = doGetMyStartOffsetInParent(version);
+    if (offsetInParent != -1) return offsetInParent;
 
     if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED) {
       assertReadAccessAllowed();
@@ -386,10 +388,10 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
       if (prev == null) break;
       cur = prev;
       offsetInParent = cur.doGetMyStartOffsetInParent(version);
-      if (offsetInParent != null) break;
+      if (offsetInParent != -1) break;
     }
 
-    if (offsetInParent == null) {
+    if (offsetInParent == -1) {
       offsetInParent = 0;
       cur.doSetMyStartOffsetInParent(version, offsetInParent);
     }
@@ -625,7 +627,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
           break;
         }
       }
-      cur.doSetMyStartOffsetInParent(version, null);
+      cur.doSetMyStartOffsetInParent(version, -1);
       cur = cur.getTreeNextVersioned(version);
     }
   }
