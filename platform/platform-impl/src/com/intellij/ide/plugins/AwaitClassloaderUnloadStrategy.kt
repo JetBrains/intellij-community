@@ -85,7 +85,7 @@ internal class AwaitClassloaderUnloadAsyncPostTransition : AwaitClassloaderUnloa
     if (classloaders.firstOrNull() == null) {
       return true
     }
-    service<DynamicPluginsSupportService>().coroutineScope.launch(Dispatchers.EDT) {
+    service<DynamicPluginsSupportService>().coroutineScope.launch(Dispatchers.Default) {
       delay(3.seconds) // give time for theme plugins to unload without showing a progress bar
       val project = ProjectUtil.getActiveProject() ?: ProjectUtil.getOpenProjects().firstOrNull() // TODO this is kinda clumsy
       if (project != null) {
