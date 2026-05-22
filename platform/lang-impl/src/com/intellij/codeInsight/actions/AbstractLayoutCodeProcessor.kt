@@ -41,6 +41,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.application
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.diff.FilesTooBigForDiffException
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ExecutionException
@@ -376,30 +377,13 @@ abstract class AbstractLayoutCodeProcessor private constructor(
     private var totalFiles = 0
     private var filesProcessed = 0
 
-    /** @return `true` if file processing succeeded and processing should continue;
-     *          `false` is processing should stop. */
-    private fun iteration(psiFile: PsiFile): Boolean {
-      updateIndicatorFraction(filesProcessed)
-
-      filesProcessed++
-
-      val status = shouldProcessFile(psiFile) ?: return true
-
-      return DumbService.getInstance(myProject).withAlternativeResolveEnabled {
-        performFileProcessing(status.file)
-      }
-    }
-
-    private inner class FileAndStatus(val file: VirtualFile, val statusText: @NlsSafe String)
-
-    private fun shouldProcessFile(psiFile: PsiFile): FileAndStatus? {
-      return runReadActionBlocking {
-        val virtualFile = PsiUtilCore.getVirtualFile(psiFile)
-        if (virtualFile == null) return@runReadActionBlocking null
-
-        if (psiFile.isWritable() && canBeFormatted(psiFile) && acceptedByFilters(psiFile)) {
-          return@runReadActionBlocking FileAndStatus(virtualFile, getPresentablePath(myProject, psiFile))
-        }
+    /** @return Presentable file path or `null` if processing this file should be skipped */
+    @RequiresReadLock
+    private fun shouldProcessFile(file: VirtualFile): @NlsSafe String? {
+      val psiFile = file.findPsiFileSafely()
+      return if (psiFile != null && psiFile.isWritable() && canBeFormatted(psiFile) && acceptedByFilters(file)) {
+        calcRelativeToProjectPath(file, myProject)
+      } else {
         null
       }
     }
@@ -495,19 +479,32 @@ abstract class AbstractLayoutCodeProcessor private constructor(
         if (!shouldContinue) return false
       }
 
-      return files.all { file ->
-        val psiFile = runReadActionBlocking {
-          file.takeIf { !myProject.isDisposed && it.isValid }?.let { PsiManager.getInstance(myProject).findFile(it) }
+      for (file in files) {
+        updateIndicatorFraction(filesProcessed)
+
+        filesProcessed++
+
+        val presentableFilePath = shouldProcessFile(file) ?: continue
+
+        val shouldContinue = DumbService.getInstance(myProject).withAlternativeResolveEnabled {
+          performFileProcessing(file)
         }
-        psiFile == null || iteration(psiFile)
+        if (!shouldContinue) return false
       }
+      return true
     }
   }
 
-  private fun acceptedByFilters(psiFile: PsiFile): Boolean {
-    val file = psiFile.getVirtualFile() ?: return false
-    return fileFilters.all { it.accept(file) }
-  }
+  @RequiresReadLock
+  private fun VirtualFile.findPsiFileSafely(): PsiFile? =
+    if (!myProject.isDisposed && isValid) {
+      PsiManager.getInstance(myProject).findFile(this)
+    }
+    else {
+      null
+    }
+
+  private fun acceptedByFilters(file: VirtualFile): Boolean = fileFilters.all { it.accept(file) }
 
   protected fun handleFileTooBigException(logger: Logger, e: FilesTooBigForDiffException, psiFile: PsiFile) {
     logger.info("Error while calculating changed ranges for: " + psiFile.getVirtualFile(), e)
