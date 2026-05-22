@@ -28,7 +28,6 @@ import org.jetbrains.plugins.terminal.session.impl.TerminalCloseEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalStateChangedEvent
 import org.jetbrains.plugins.terminal.settings.impl.TerminalSessionPersistedTab
 import org.jetbrains.plugins.terminal.settings.impl.TerminalTabsStorage
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.io.path.pathString
 
@@ -38,7 +37,7 @@ internal class TerminalTabsManager(private val project: Project, private val cor
   private val tabsMap: MutableMap<Int, TerminalSessionTab> = LinkedHashMap()
   private val tabsLock = Mutex()
   private val tabIdCounter = AtomicInteger(0)
-  private val detachedTabs: MutableSet<Int> = ConcurrentHashMap.newKeySet()
+  private val detachedTabs: MutableSet<Int> = HashSet()
 
   init {
     val storedTabs = TerminalTabsStorage.getInstance(project).getStoredTabs()
@@ -50,8 +49,13 @@ internal class TerminalTabsManager(private val project: Project, private val cor
 
   suspend fun getTerminalTabs(): List<TerminalSessionTab> {
     return tabsLock.withLock {
-      tabsMap.values.toList()
+      getTerminalTabsNoLock()
     }
+  }
+
+  /** Caller must hold [tabsLock] */
+  private fun getTerminalTabsNoLock(): List<TerminalSessionTab> {
+    return tabsMap.values.filter { it.id !in detachedTabs }
   }
 
   suspend fun createNewTerminalTab(): TerminalSessionTab {
@@ -104,6 +108,7 @@ internal class TerminalTabsManager(private val project: Project, private val cor
       scope.awaitCancellationAndInvoke {
         updateTabsAndStore { tabs ->
           tabs.remove(tabId)
+          detachedTabs -= tabId
         }
       }
 
@@ -135,6 +140,7 @@ internal class TerminalTabsManager(private val project: Project, private val cor
       else {
         // The session was not started - just remove the tab.
         tabs.remove(tabId)
+        detachedTabs -= tabId
       }
     }
   }
@@ -205,9 +211,7 @@ internal class TerminalTabsManager(private val project: Project, private val cor
         action(tabsMap)
       }
       finally {
-        val persistedTabs = tabsMap.entries.mapNotNull {
-          if (it.key !in detachedTabs) it.value.toPersistedTab() else null
-        }
+        val persistedTabs = getTerminalTabsNoLock().map { it.toPersistedTab() }
         TerminalTabsStorage.getInstance(project).updateStoredTabs(persistedTabs)
       }
     }
