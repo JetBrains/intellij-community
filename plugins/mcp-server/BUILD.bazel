@@ -9,7 +9,7 @@ jvm_library(
   resources = glob(["resources/**/*"]),
   resource_strip_prefix = "resources",
   deps = [
-    "@lib//:mcpserver-toml4j",
+    "@lib//:mcpserver-night-config-toml",
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/coroutines/core",

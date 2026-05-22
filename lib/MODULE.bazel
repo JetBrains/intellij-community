@@ -14147,17 +14147,31 @@ http_file(
 )
 
 http_file(
-  name = "com_moandjiezana_toml-toml4j-0_7_2_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/moandjiezana/toml/toml4j/0.7.2/toml4j-0.7.2.jar",
-  sha256 = "f5475e63e7e89e5db62223489aec7a56bd303543772077a17c2cb54c19ca3a20",
-  downloaded_file_path = "toml4j-0.7.2.jar"
+  name = "com_electronwill_night-config-toml-3_8_4_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/electronwill/night-config/toml/3.8.4/toml-3.8.4.jar",
+  sha256 = "127bf8b025c341139145c55bc897f3188057eec19940f99d3eae624399e88f2a",
+  downloaded_file_path = "toml-3.8.4.jar"
 )
 
 http_file(
-  name = "com_moandjiezana_toml-toml4j-0_7_2-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/moandjiezana/toml/toml4j/0.7.2/toml4j-0.7.2-sources.jar",
-  sha256 = "fc9c72fb6a7abda2a65c037af622471da897f84e0a95643210b1c41328c83c5d",
-  downloaded_file_path = "toml4j-0.7.2-sources.jar"
+  name = "com_electronwill_night-config-core-3_8_4_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/electronwill/night-config/core/3.8.4/core-3.8.4.jar",
+  sha256 = "2d9532aa851742a6e2f3cb472a6a5b3c0e7e8b9da287c7d20a2963466f4aebb4",
+  downloaded_file_path = "core-3.8.4.jar"
+)
+
+http_file(
+  name = "com_electronwill_night-config-toml-3_8_4-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/electronwill/night-config/toml/3.8.4/toml-3.8.4-sources.jar",
+  sha256 = "ceeb3a90bde39a54a3ccb599b1cea25aaa6468bd036a98e50ddb6579d7d999b2",
+  downloaded_file_path = "toml-3.8.4-sources.jar"
+)
+
+http_file(
+  name = "com_electronwill_night-config-core-3_8_4-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/electronwill/night-config/core/3.8.4/core-3.8.4-sources.jar",
+  sha256 = "f189eb4a6195c3a4719ace91c586d703702cbbf21b646bf5207c9699231eeac3",
+  downloaded_file_path = "core-3.8.4-sources.jar"
 )
 
 http_file(

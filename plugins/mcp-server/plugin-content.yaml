@@ -36,8 +36,9 @@
 - name: lib/mcpserver.jar
   modules:
   - name: intellij.mcpserver
-- name: lib/toml4j.jar
-  library: toml4j
+- name: lib/night-config-toml.jar
+  library: night-config-toml
   module: intellij.mcpserver
   files:
-  - name: $MAVEN_REPOSITORY$/com/moandjiezana/toml/toml4j/0/toml4j-0.jar
+  - name: $MAVEN_REPOSITORY$/com/electronwill/night-config/toml/3/toml-3.jar
+  - name: $MAVEN_REPOSITORY$/com/electronwill/night-config/core/3/core-3.jar

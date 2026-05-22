@@ -18012,18 +18012,40 @@ jvm_import(
 )
 
 copy_file(
-  name = "com.moandjiezana.toml/toml4j-0.7.2.jar_copy",
-  src = "@com_moandjiezana_toml-toml4j-0_7_2_http//file",
-  out = "com.moandjiezana.toml/toml4j-0.7.2.jar",
+  name = "com.electronwill.night-config/toml-3.8.4.jar_copy",
+  src = "@com_electronwill_night-config-toml-3_8_4_http//file",
+  out = "com.electronwill.night-config/toml-3.8.4.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
-jvm_import(
-  name = "mcpserver-toml4j",
-  jar = "@com_moandjiezana_toml-toml4j-0_7_2_http//file",
-  source_jar = "@com_moandjiezana_toml-toml4j-0_7_2-sources_http//file",
+copy_file(
+  name = "com.electronwill.night-config/core-3.8.4.jar_copy",
+  src = "@com_electronwill_night-config-core-3_8_4_http//file",
+  out = "com.electronwill.night-config/core-3.8.4.jar",
+  allow_symlink = True,
   visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "mcpserver-night-config-toml",
+  exports = [
+    ":com_electronwill_night-config-toml-3_8_4_http_import",
+    ":com_electronwill_night-config-core-3_8_4_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "com_electronwill_night-config-toml-3_8_4_http_import",
+  jar = "@com_electronwill_night-config-toml-3_8_4_http//file",
+  source_jar = "@com_electronwill_night-config-toml-3_8_4-sources_http//file"
+)
+
+jvm_import(
+  name = "com_electronwill_night-config-core-3_8_4_http_import",
+  jar = "@com_electronwill_night-config-core-3_8_4_http//file",
+  source_jar = "@com_electronwill_night-config-core-3_8_4-sources_http//file"
 )
 
 copy_file(
