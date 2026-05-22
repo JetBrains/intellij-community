@@ -3,6 +3,7 @@ package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor
+import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.LocalQuickFix
@@ -11,6 +12,7 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.SmartPointerManager
@@ -24,6 +26,7 @@ import org.jetbrains.uast.UClassLiteralExpression
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UMethod
 import org.jetbrains.uast.getParentOfType
+import org.jetbrains.uast.toUElement
 import org.jetbrains.uast.toUElementOfType
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
@@ -67,6 +70,7 @@ class DebugOnlyTestExtensionInspection : DevKitUastInspectionBase(UClass::class.
           DevKitBundle.message("inspections.debug.only.test.extension.message", simpleName, DEBUG_ONLY_EXTENSIONS[typeFqn]),
           ProblemHighlightType.ERROR,
           RemoveDebugOnlyExtensionFix(targetPsi, simpleName),
+          IgnoreDebugOnlyExtensionFix(targetPsi),
         )
       }
     }
@@ -166,5 +170,70 @@ private class RemoveDebugOnlyExtensionFix(
       beyond = step(beyond)
     }
     return edge
+  }
+}
+
+private class IgnoreDebugOnlyExtensionFix(targetElement: PsiElement) : LocalQuickFix, PriorityAction {
+
+  private val pointer: SmartPsiElementPointer<PsiElement> = SmartPointerManager.createPointer(targetElement)
+
+  override fun getPriority(): PriorityAction.Priority = PriorityAction.Priority.LOW
+
+  override fun getFamilyName(): String =
+    DevKitBundle.message(
+      "inspections.debug.only.test.extension.ignore.fix.family.name",
+      DevKitBundle.message("inspections.debug.only.test.extension.display.name"),
+    )
+
+  override fun startInWriteAction(): Boolean = false
+
+  override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
+    val element = previewDescriptor.psiElement ?: return IntentionPreviewInfo.EMPTY
+    val classPsi = findEnclosingClassPsi(element) ?: return IntentionPreviewInfo.EMPTY
+    val containingFile = classPsi.containingFile ?: return IntentionPreviewInfo.EMPTY
+
+    val originalText = containingFile.text
+    val classOffset = classPsi.textRange.startOffset
+    val newText = originalText.substring(0, classOffset) +
+                  annotationText(classPsi) +
+                  originalText.substring(classOffset)
+    return IntentionPreviewInfo.CustomDiff(containingFile.fileType, originalText, newText)
+  }
+
+  override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+    val element = pointer.element ?: return
+    val containingFile = element.containingFile ?: return
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return
+
+    WriteCommandAction.runWriteCommandAction(project, getFamilyName(), null, Runnable {
+      addSuppressAnnotation(project, element)
+    }, containingFile)
+  }
+
+  private fun addSuppressAnnotation(project: Project, element: PsiElement) {
+    val classPsi = findEnclosingClassPsi(element) ?: return
+    val containingFile = classPsi.containingFile ?: return
+
+    val docManager = PsiDocumentManager.getInstance(project)
+    val document = docManager.getDocument(containingFile) ?: return
+    document.insertString(classPsi.textRange.startOffset, annotationText(classPsi))
+    docManager.commitDocument(document)
+  }
+
+  private fun annotationText(classPsi: PsiElement): String =
+    if (classPsi.language.id == "kotlin") "@Suppress(\"$INSPECTION_ID\")\n"
+    else "@SuppressWarnings(\"$INSPECTION_ID\")\n"
+
+  private fun findEnclosingClassPsi(element: PsiElement): PsiElement? {
+    var current: PsiElement? = element
+    while (current != null) {
+      if (current.toUElement() is UClass) return current
+      current = current.parent
+    }
+    return null
+  }
+
+  companion object {
+    private const val INSPECTION_ID = "DebugOnlyTestExtension"
   }
 }
