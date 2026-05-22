@@ -8,8 +8,8 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
 import kotlin.reflect.KMutableProperty0
 
-fun <T : Any> KMutableProperty0<T?>.toSafeProperty(default: T? = null): MutableProperty<T> =
-  MutableProperty({ get() ?: default!! }, { set(it) })
+fun KMutableProperty0<Boolean?>.toSafeProperty(default: Boolean = false): MutableProperty<Boolean> =
+  MutableProperty({ get() ?: default }, { set(it) })
 
 /**
  * Helper for building the per-tool feature row block (inspections / completions / inlay hints / documentation)

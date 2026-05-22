@@ -32,7 +32,6 @@ data class BlackFormatterConfiguration(
   enum class ExecutionMode {
     BINARY,
     PACKAGE,
-    UVX,
   }
 
   companion object {

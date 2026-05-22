@@ -37,7 +37,6 @@ class BlackPyTool : PyTool {
     when (BlackFormatterConfiguration.getBlackConfiguration(project).executionMode) {
       BlackFormatterConfiguration.ExecutionMode.BINARY -> ExecutableDiscoveryMode.PATH
       BlackFormatterConfiguration.ExecutionMode.PACKAGE -> ExecutableDiscoveryMode.INTERPRETER
-      BlackFormatterConfiguration.ExecutionMode.UVX -> ExecutableDiscoveryMode.UVX
     }
 
   override fun legacyCustomPath(project: Project): Path? =

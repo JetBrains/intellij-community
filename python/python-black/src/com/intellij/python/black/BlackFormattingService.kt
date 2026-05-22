@@ -148,14 +148,6 @@ class BlackFormattingService : AsyncDocumentFormattingService() {
     }
   }
 
-  private fun buildNotificationMessage(document: Document, textBefore: CharSequence): @Nls String {
-    val diff = VcsFacade.getInstance().calculateChangedLinesNumber(document, textBefore)
-    return if (diff == 0)
-      message("black.no.lines.changed")
-    else
-      message("black.formatted.n.lines", diff, if (diff == 1) 1 else 0)
-  }
-
   private fun Editor?.showFormattedLinesInfo(text: @Nls String, isError: Boolean) {
     if (this == null) return
 

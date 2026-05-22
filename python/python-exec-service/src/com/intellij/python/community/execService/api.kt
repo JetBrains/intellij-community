@@ -335,6 +335,7 @@ class Args(vararg initialArgs: String) {
 }
 
 
-fun BinOnEel.asGeneralCommandLine(): GeneralCommandLine {
-  return GeneralCommandLine(path.toString()).withWorkingDirectory(workDir)
+fun BinaryToExec.asGeneralCommandLine(): PyResult<GeneralCommandLine> = when (this) {
+  is BinOnEel -> PyResult.success(GeneralCommandLine(path.toString()).withWorkingDirectory(workDir))
+  is BinOnTarget -> PyResult.localizedError(message("py.exec.target.binaries.are.not.supported"))
 }
