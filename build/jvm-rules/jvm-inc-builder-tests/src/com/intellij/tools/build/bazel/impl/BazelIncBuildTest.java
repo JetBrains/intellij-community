@@ -133,6 +133,11 @@ public abstract class BazelIncBuildTest {
       copyTestDataFile(file.toPath(), ourTestDataWorkRoot);
     }
 
+    // Extract patch files from the rules_jvm zip into the test workspace root.
+    // MODULE.bazel references these patches via single_version_override (root-module-only directive),
+    // which is needed because overrides declared in the rules_jvm dependency MODULE.bazel are ignored.
+    extractPatchFiles(Path.of(rulesJvmPath), ourTestDataWorkRoot);
+
     String moduleBazelContent = Files.readString(ourTestDataWorkRoot.resolve("MODULE.bazel"));
 
     String marker = "ABSOLUTE_RULES_JVM_ARTIFACT_PATH";
@@ -199,11 +204,12 @@ public abstract class BazelIncBuildTest {
 
     String bazelTarget = "//" + testDataRelativePath + "/...";
 
-    runBazelBuild(bazelTarget).assertSuccessful(); // the initial build
+    ExecutionResult result = runBazelBuild(bazelTarget); // the initial build
+
+    result.assertSuccessful();
     assertTrue("Tests output root directory " + testOutputDir + " should exist. Probably test expectations differ from Bazel's current output dir naming policy", Files.exists(testOutputDir));
     validateBuildOutput(testDataRelativePath, testOutputDir);
 
-    ExecutionResult result = null;
     StringBuilder buildLog = new StringBuilder();
     for (int idx = 0; idx < makesCount; idx++) {
       modify(testDataDir, testWorkDir, idx);
@@ -227,7 +233,7 @@ public abstract class BazelIncBuildTest {
       // only collect diagnostics on failures
       throw new ComparisonFailure(collectDiagnostics(testOutputDir), expectedBuildLog, actualBuildLog);
     }
-    if (result != null && result.isSuccessful()) {
+    if (result.isSuccessful()) {
       // todo: rebuild from scratch and compare graphs
     }
 
@@ -414,17 +420,26 @@ public abstract class BazelIncBuildTest {
         }
 
       }
+      finally {
+        validateOutputArtifacts(output);
+      }
     }
   }
 
-  private record BuildOutput(DependencyGraph graph, ConfigurationState configState, Path outputJar) {
+  protected void validateOutputArtifacts(BuildOutput output) throws IOException {
+    // override to add additional checks
+  }
+
+  protected record BuildOutput(DependencyGraph graph, ConfigurationState configState, Path outputJar) {
 
     static Iterable<BuildOutput> scanOutputs(Path testOutputDir) throws IOException {
-      List<Path> targetOutputs = Files.list(testOutputDir).filter(path -> matches(path, ".jar") && !matches(path, DataPaths.ABI_JAR_SUFFIX)).toList();
+      Predicate<Path> outputFilter = path -> matches(path, ".jar") && !matches(path, DataPaths.ABI_JAR_SUFFIX);
 
       // resourcegroup produces the supplementary resource jar with the actual providers to support Bazel plugin
       // JvmIncBuilderTest#testRebuildOnUntrackedInputChange test previously ignored them because they were located under a platform-specific output directory (e.g. .../bazel-out/darwin_arm64-fastbuild), now they are under .../bazel-out/jvm-fastbuild
-      targetOutputs = targetOutputs.stream().filter(path -> !matches(path, "_resources_lib-class.jar") && !matches(path, "_resources_lib-native-header.jar") && !matches(path, "_resources_lib.jar")).toList();  // TODO: remove this
+      outputFilter = outputFilter.and(path -> !matches(path, "_resources_lib-class.jar") && !matches(path, "_resources_lib-native-header.jar") && !matches(path, "_resources_lib.jar")); // TODO: remove this
+
+      List<Path> targetOutputs = Files.list(testOutputDir).filter(outputFilter).toList();
 
       return map(targetOutputs, output -> {
         try {
@@ -584,7 +599,19 @@ public abstract class BazelIncBuildTest {
     return getFileName(path).endsWith(suffix);
   }
 
-  private static @NotNull String getFileName(Path p) {
+  protected static @NotNull String getFileName(Path p) {
     return p.getFileName().toString();
   }
+
+  private static void extractPatchFiles(Path zipPath, Path targetDir) throws IOException {
+    try (var zip = new ZipFile(zipPath.toFile())) {
+      for (ZipEntry entry : zip.stream().filter(e -> !e.isDirectory() && e.getName().endsWith(".patch")).toList()) {
+        Path fileName = Path.of(entry.getName()).getFileName();
+        try (var in = zip.getInputStream(entry)) {
+          Files.copy(in, targetDir.resolve(fileName), StandardCopyOption.REPLACE_EXISTING);
+        }
+      }
+    }
+  }
+
 }
