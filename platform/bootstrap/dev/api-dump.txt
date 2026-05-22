@@ -1,2 +1,0 @@
-f:org.jetbrains.intellij.build.devServer.DevMainKt
-- s:main(java.lang.String[]):V

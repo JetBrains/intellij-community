@@ -509,19 +509,15 @@ class LinuxDistributionBuilder(
   }
 
   private fun writeLinuxVmOptions(distBinDir: Path, context: BuildContext): Path {
-    val vmOptionsPath = distBinDir.resolve("${context.add64IfNeeded(context.productProperties.baseFileName)}.vmoptions")
-    val vmOptions = generateVmOptions(
-      context, listOfNotNull(
-        "-Dsun.tools.attach.tmp.only=true",
-        "-Dawt.lock.fair=true",
-        when (context.productProperties.platformPrefix) {
-          "Gateway" -> null // disabled for Gateway until system tray will be supported in Wayland toolkit in JBR (IJPL-231661/JBR-9966)
-          else -> "-Dawt.toolkit.name=auto"
-        }
-      )
-    )
-    writeVmOptions(vmOptionsPath, vmOptions, separator = "\n")
-    return vmOptionsPath
+    val vmOptionsFile = distBinDir.resolve("${context.add64IfNeeded(context.productProperties.baseFileName)}.vmoptions")
+    val vmOptions = generateVmOptions(context, extra = listOfNotNull(
+      "-Dsun.tools.attach.tmp.only=true",
+      "-Dawt.lock.fair=true",
+      // disabled for Gateway until JBR supports system tray in the Wayland toolkit (IJPL-231661/JBR-9966)
+      "-Dawt.toolkit.name=auto".takeIf { context.productProperties.platformPrefix != "Gateway" },
+    ))
+    writeVmOptions(vmOptionsFile, vmOptions, separator = "\n")
+    return vmOptionsFile
   }
 
   private fun suffix(arch: JvmArchitecture, targetLibcImpl: LinuxLibcImpl): String = suffix(arch) + if (targetLibcImpl == LinuxLibcImpl.MUSL) "-musl" else ""

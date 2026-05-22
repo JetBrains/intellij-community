@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "BlockingMethodInNonBlockingContext")
 
 package org.jetbrains.intellij.build.impl
@@ -738,9 +738,10 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       index = 0,
       elements = generateVmOptions(
         isEAP = true,
-        customVmMemoryOptions = if (customMemoryOptions == null) mapOf("-Xms" to "750m", "-Xmx" to "1024m") else emptyMap(),
+        customMemoryVmOptions = if (customMemoryOptions == null) mapOf("-Xms" to "750m", "-Xmx" to "1024m") else emptyMap(),
         additionalVmOptions = customMemoryOptions ?: emptyList(),
         platformPrefix = options.platformPrefix,
+        isHeadless = false,
       ),
     )
 
