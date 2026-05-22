@@ -5,6 +5,9 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -447,20 +450,23 @@ public class UnscrambleDialog extends DialogWrapper {
       myConfigurable.apply();
     }
     DumbService.getInstance(myProject).withAlternativeResolveEnabled(() -> {
-      if (performUnscramble()) {
-        myLogFile.addCurrentTextToHistory();
-        close(DialogWrapper.OK_EXIT_CODE);
-      }
+      scheduleUnscramble();
+      close(OK_EXIT_CODE);
     });
   }
 
-  private boolean performUnscramble() {
+  private void scheduleUnscramble() {
     UnscrambleSupport selectedUnscrambler = getSelectedUnscrambler();
     JComponent settings = mySettingsPanel.getComponentCount() == 0 ? null : (JComponent)mySettingsPanel.getComponent(0);
-    return showUnscrambledText(selectedUnscrambler, myLogFile.getText(), settings, myProject, myStacktraceEditorPanel.getText()) != null;
+    scheduleShowUnscrambleText(selectedUnscrambler, myLogFile.getText(), settings, myProject, myStacktraceEditorPanel.getText());
   }
 
+  /**
+   *
+   * @deprecated Use {@link #scheduleShowUnscrambleText} instead
+   */
   @VisibleForTesting
+  @Deprecated(forRemoval = true)
   public static @Nullable <T extends JComponent> RunContentDescriptor showUnscrambledText(@Nullable UnscrambleSupport<T> unscrambleSupport,
                                                                                           String logName,
                                                                                           @Nullable T settings,
@@ -474,6 +480,29 @@ public class UnscrambleDialog extends DialogWrapper {
       threadDumpState = IntelliJThreadDumpParserKt.parseIntelliJThreadDump(unscrambledTrace);
     }
     return UnscrambleUtils.addConsole(project, threadDumpState, unscrambledTrace);
+  }
+
+  <T extends JComponent> void scheduleShowUnscrambleText(@Nullable UnscrambleSupport<T> unscrambleSupport,
+                                                         String logName,
+                                                         @Nullable T settings,
+                                                         Project project,
+                                                         String textToUnscramble) {
+    Application application = ApplicationManager.getApplication();
+    application.executeOnPooledThread(
+      () -> {
+        String unscrambledTrace =
+          unscrambleSupport == null ? textToUnscramble : unscrambleSupport.unscramble(project, textToUnscramble, logName, settings);
+        if (unscrambledTrace == null) return;
+        ThreadDumpState threadDumpState = JcmdJsonThreadDumpParserKt.parseJcmdJsonThreadDump(unscrambledTrace);
+        if (threadDumpState == null) {
+          threadDumpState = IntelliJThreadDumpParserKt.parseIntelliJThreadDump(unscrambledTrace);
+        }
+        final ThreadDumpState finalThreadDumpState = threadDumpState;
+        application.invokeLater(() -> {
+          UnscrambleUtils.addConsole(project, finalThreadDumpState, unscrambledTrace);
+          myLogFile.addCurrentTextToHistory();
+        }, ModalityState.any());
+      });
   }
 
   @Override
