@@ -13,6 +13,7 @@ enum class CoordinatesPlatform {
   LinuxAarch64,
   MacOsX64,
   MacOsAarch64,
+  Ios,
   Wasm
 }
 
@@ -29,6 +30,7 @@ private val currentPlatform by lazy {
     Os.Type.Windows -> if (Os.INSTANCE.isAarch64) CoordinatesPlatform.WindowsAarch64 else CoordinatesPlatform.WindowsX64
     Os.Type.Linux -> if (Os.INSTANCE.isAarch64) CoordinatesPlatform.LinuxAarch64 else CoordinatesPlatform.LinuxX64
     Os.Type.MacOS -> if (Os.INSTANCE.isAarch64) CoordinatesPlatform.MacOsAarch64 else CoordinatesPlatform.MacOsX64
+    Os.Type.Ios -> CoordinatesPlatform.Ios
     Os.Type.Unknown -> null
   }
 }

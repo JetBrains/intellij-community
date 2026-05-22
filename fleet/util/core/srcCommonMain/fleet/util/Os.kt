@@ -5,7 +5,7 @@ import fleet.util.multiplatform.linkToActual
 
 class Os private constructor() {
   enum class Type {
-    Windows, Linux, MacOS, Unknown
+    Windows, Linux, MacOS, Ios, Unknown
   }
 
   val name: String
@@ -24,7 +24,7 @@ class Os private constructor() {
         normalizedName.startsWith("mac") -> Type.MacOS
         normalizedName.startsWith("win") -> Type.Windows
         normalizedName.contains("nix") || normalizedName.contains("nux") -> Type.Linux
-        normalizedName.startsWith("ios") -> Type.MacOS // TODO!!!!
+        normalizedName.startsWith("ios") -> Type.Ios
         else -> Type.Unknown
       }
     }
@@ -43,10 +43,7 @@ class Os private constructor() {
 
   // also includes ipadOS
   val isIos: Boolean
-    get() {
-      val os = this.name.lowercase()
-      return os == "ios"
-    }
+    get() = this.type == Type.Ios
 
   val isMac: Boolean
     get() = this.type == Type.MacOS
@@ -60,7 +57,7 @@ class Os private constructor() {
   val isUnix: Boolean
     get() {
       val type = this.type
-      return type == Type.Linux || type == Type.MacOS
+      return type == Type.Linux || type == Type.MacOS || type == Type.Ios
     }
 
   companion object {
