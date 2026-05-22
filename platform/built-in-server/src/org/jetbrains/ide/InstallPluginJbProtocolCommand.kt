@@ -2,10 +2,13 @@
 package org.jetbrains.ide
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.newui.UiPluginManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.JBProtocolCommand
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
@@ -13,6 +16,7 @@ import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.AppIcon
 import com.intellij.xml.util.XmlStringUtil
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -44,12 +48,31 @@ class InstallPluginJbProtocolCommand : JBProtocolCommand("plugin") {
     }
 
     warmUpPluginStates(toInstall)
+    reopenRecentProjectsIfNeeded()
     withContext(Dispatchers.EDT) {
       val project = RestService.getLastFocusedOrOpenedProject() ?: ProjectManager.getInstance().defaultProject
       AppIcon.getInstance().requestAttention(project, true)
       installAndEnable(project, toInstall, showDialog = true, selectAlInDialog = true) { }
     }
     return null
+  }
+
+  // When the IDE is launched via jetbrains://tool/plugin/install with no instance running,
+  // IdeStarter short-circuits the normal "reopen projects on startup" flow because a URI was
+  // provided. Trigger the same reopen explicitly so the user's previous session is preserved.
+  private suspend fun reopenRecentProjectsIfNeeded() {
+    if (serviceAsync<ProjectManager>().openProjects.isNotEmpty()) return
+    val recentProjectManager = serviceAsync<RecentProjectsManager>()
+    if (!recentProjectManager.willReopenProjectOnStart()) return
+    try {
+      recentProjectManager.reopenLastProjectsOnStart()
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      logger<InstallPluginJbProtocolCommand>().error("Cannot reopen recent projects before install dialog", e)
+    }
   }
 
   // Loads plugin installation states off-EDT before opening the install dialog. On the JetBrains
