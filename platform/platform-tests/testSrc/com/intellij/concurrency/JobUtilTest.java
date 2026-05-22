@@ -629,7 +629,11 @@ public class JobUtilTest extends LightPlatformTestCase {
       indicator.cancel();
       cancelCalled.countDown();
     }, 10, TimeUnit.MILLISECONDS);
-    UsefulTestCase.assertThrows(ProcessCanceledException.class, ()-> job.waitForCompletion(10_000));
+    long start = System.currentTimeMillis();
+    UsefulTestCase.assertThrows(ProcessCanceledException.class, ()-> {
+      boolean result = job.waitForCompletion(10_000);
+      LOG.debug("wtf? counter: "+counter+"; indicator:"+indicator+"; result:"+result+"; elapsed="+(System.currentTimeMillis()-start)+"ms");
+    });
     assertTrue(job.isDone());
     assertTrue(counter.toString(), counter.get() < N);
     future.get();
