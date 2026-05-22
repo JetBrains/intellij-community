@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.execution.dashboard.actions
 
-import com.intellij.execution.dashboard.actions.RunDashboardActionUtils
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -19,7 +18,7 @@ internal class ClearConsoleAction : DumbAwareAction(), ActionRemoteBehaviorSpeci
       return
     }
 
-    val targetNodes = RunDashboardActionUtils.getLeafTargets(e)
+    val targetNodes = RunDashboardActionSelection.getLeafTargets(e)
     val enabled = targetNodes.filter {
       val size = (it.descriptor?.executionConsole as? ConsoleView)?.getContentSize() ?: return@filter false
       size > 0
@@ -32,7 +31,7 @@ internal class ClearConsoleAction : DumbAwareAction(), ActionRemoteBehaviorSpeci
     val project = e.project
     if (project == null) return
 
-    for (node in RunDashboardActionUtils.getLeafTargets(e)) {
+    for (node in RunDashboardActionSelection.getLeafTargets(e)) {
       (node.descriptor?.executionConsole as? ConsoleView)?.clear()
     }
   }

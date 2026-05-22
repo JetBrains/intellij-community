@@ -3,12 +3,9 @@ package com.intellij.execution.dashboard.actions;
 
 import com.intellij.execution.dashboard.LegacyRunDashboardServiceSubstitutor;
 import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
-import com.intellij.execution.dashboard.RunDashboardService;
-import com.intellij.execution.ui.RunContentManagerExtension;
 import com.intellij.execution.services.ServiceViewActionUtils;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.platform.ide.productMode.IdeProductMode;
@@ -24,6 +21,9 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * @deprecated kept for compatibility with legacy run dashboard actions.
+ */
 @Internal
 @Deprecated(forRemoval = true)
 public final class RunDashboardActionUtils {
@@ -57,27 +57,7 @@ public final class RunDashboardActionUtils {
         return JBIterable.from(result);
       }
     }
-    return getFallbackSelectionForEmbeddedBackendRunToolwindowActions(e, project, result);
-  }
-
-  private static @NotNull JBIterable<RunDashboardRunConfigurationNode> getFallbackSelectionForEmbeddedBackendRunToolwindowActions(@NotNull AnActionEvent e,
-                                                                                Project project,
-                                                                                Set<RunDashboardRunConfigurationNode> result) {
-    var currentContentDescriptor = e.getData(LangDataKeys.RUN_CONTENT_DESCRIPTOR);
-    var currentContentDescriptorId = currentContentDescriptor == null ? null : currentContentDescriptor.getId();
-    RunDashboardService selectedService = null;
-    if (currentContentDescriptorId != null) {
-      // backend case with run toolwindow that is not split in any way and does not properly receive a serialized data context from frontend
-      // because of obscure content manager-related wrapping mechanism
-      var extension = RunContentManagerExtension.getInstance(project);
-      var maybeService = extension == null ? null : extension.findService(project, currentContentDescriptorId);
-      selectedService = maybeService instanceof RunDashboardService ? (RunDashboardService)maybeService : null;
-    }
-
-    JBIterable<Object> roots = JBIterable.of(selectedService);
-    if (!getLeaves(project, e, roots.toList(), Collections.emptyList(), result)) return JBIterable.empty();
-
-    return JBIterable.from(result).filter(RunDashboardRunConfigurationNode.class);
+    return JBIterable.empty();
   }
 
   private static boolean getLeaves(Project project, AnActionEvent e, List<Object> items, List<Object> valueSubPath,

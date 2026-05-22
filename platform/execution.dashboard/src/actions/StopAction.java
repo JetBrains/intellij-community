@@ -13,7 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.execution.dashboard.actions.RunDashboardActionUtils.getLeafTargets;
+import static com.intellij.platform.execution.dashboard.actions.RunDashboardActionSelection.getLeafTargets;
 
 /**
  * @author konstantin.aleev

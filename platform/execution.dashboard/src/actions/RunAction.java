@@ -3,7 +3,6 @@ package com.intellij.platform.execution.dashboard.actions;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Executor;
-import com.intellij.execution.dashboard.actions.ExecutorAction;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -14,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author konstantin.aleev
  */
-public final class RunAction extends ExecutorAction {
+public final class RunAction extends DashboardExecutorAction {
   @Override
   protected Executor getExecutor() {
     return DefaultRunExecutor.getRunExecutorInstance();

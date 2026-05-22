@@ -4,7 +4,6 @@ package com.intellij.platform.execution.dashboard.actions;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorRegistry;
-import com.intellij.execution.dashboard.actions.ExecutorAction;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -14,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author konstantin.aleev
  */
-public final class DebugAction extends ExecutorAction {
+public final class DebugAction extends DashboardExecutorAction {
   @Override
   protected Executor getExecutor() {
     return ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);
