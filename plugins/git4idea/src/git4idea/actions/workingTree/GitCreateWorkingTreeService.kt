@@ -4,6 +4,7 @@ package git4idea.actions.workingTree
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.trustedProjects.TrustedProjects
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.readAction
@@ -36,6 +37,15 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
   companion object {
     @JvmStatic
     fun getInstance(): GitCreateWorkingTreeService = service()
+
+    private const val LAST_PARENT_PATH_KEY = "Git.CreateWorkingTree.LastParentPath"
+  }
+
+  private fun loadLastParentPath(project: Project): String? =
+    PropertiesComponent.getInstance(project).getValue(LAST_PARENT_PATH_KEY)
+
+  private fun saveLastParentPath(project: Project, path: String) {
+    PropertiesComponent.getInstance(project).setValue(LAST_PARENT_PATH_KEY, path)
   }
 
   private val rootsUnderCreation = ContainerUtil.newConcurrentSet<FilePath>()
@@ -53,14 +63,17 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
     val ideActivity = GitOperationsCollector.logCreateWorktreeActionInvoked(project, place, localBranchFromContext)
     coroutineScope.launch(Dispatchers.Default) {
       val preDialogData = readAction {
-        val initialParentPath = computeInitialParentPath(project, repository)
-        GitWorkingTreePreDialogData(project, repository, ideActivity, localBranchFromContext, initialParentPath)
+        val lastParentPath = loadLastParentPath(project)
+        val initialParentPath = computeInitialParentPath(project, repository)?.path
+        GitWorkingTreePreDialogData(project, repository, ideActivity, localBranchFromContext,
+                                    lastParentPath ?: initialParentPath)
       }
 
       withContext(Dispatchers.UiWithModelAccess) {
         val dialog = GitWorkingTreeDialog(preDialogData)
         if (dialog.showAndGet()) {
           val workingTreeData = dialog.getWorkTreeData()
+          workingTreeData.workingTreePath.parentPath?.path?.let { saveLastParentPath(project, it) }
           withContext(Dispatchers.Default) {
             doCreateWorkingTree(preDialogData.project, preDialogData.repository, preDialogData.ideActivity, workingTreeData)
           }

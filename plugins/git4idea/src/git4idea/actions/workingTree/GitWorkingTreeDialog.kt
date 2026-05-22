@@ -82,7 +82,7 @@ internal class GitWorkingTreeDialog(
     createNewBranch = propertyGraph.property(false)
     newBranchName = propertyGraph.property("")
     projectName = propertyGraph.property(suggestProjectName())
-    parentPath = propertyGraph.property(data.initialParentPath?.path ?: "")
+    parentPath = propertyGraph.property(data.initialParentPath ?: "")
     listOf(existingBranchWithWorkingTree, createNewBranch, newBranchName).forEach {
       propertyGraph.dependsOn(projectName, it, true, ::suggestProjectName)
     }
