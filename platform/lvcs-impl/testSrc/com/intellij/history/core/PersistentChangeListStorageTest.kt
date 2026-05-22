@@ -234,25 +234,17 @@ internal class PersistentChangeListStorageTest(
   @Test
   fun `lastId is preserved across multiple reopen cycles`() {
     val id1 = storage.nextId()
-    val cs1 = createChangeSet(id1, 1000L)
-    storage.writeNextSet(cs1)
-    storage.flush()
-
     storage.close(false)
-    storage = createStorage()
 
+    storage = createStorage()
     assertThat(storage.lastId).isEqualTo(id1)
-    assertThat(storage.lastWrittenId).isEqualTo(id1)
+    storage.nextId()
+    storage.nextId()
     val id2 = storage.nextId()
-    val cs2 = createChangeSet(id2, 2000L)
-    storage.writeNextSet(cs2)
-    storage.flush()
-
     storage.close(false)
-    storage = createStorage()
 
+    storage = createStorage()
     assertThat(storage.lastId).isEqualTo(id2)
-    assertThat(storage.lastWrittenId).isEqualTo(id2)
   }
 
   private fun createChangeSet(id: Long, timestamp: Long, path: String = "file.txt"): ChangeSet {

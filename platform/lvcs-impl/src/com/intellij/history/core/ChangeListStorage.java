@@ -13,6 +13,10 @@ public interface ChangeListStorage {
 
   void flush();
 
+  /**
+   * Generate a unique ID
+   * Can be used for a new changeset or a change (!)
+   */
   long nextId();
 
   /**
