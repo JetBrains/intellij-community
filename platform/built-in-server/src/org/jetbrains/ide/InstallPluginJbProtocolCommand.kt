@@ -3,6 +3,7 @@ package org.jetbrains.ide
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.newui.UiPluginManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.JBProtocolCommand
 import com.intellij.openapi.extensions.PluginId
@@ -42,12 +43,24 @@ class InstallPluginJbProtocolCommand : JBProtocolCommand("plugin") {
       return XmlStringUtil.wrapInHtml(IdeBundle.message("jb.protocol.plugin.install.already.installed", names))
     }
 
+    warmUpPluginStates(toInstall)
     withContext(Dispatchers.EDT) {
       val project = RestService.getLastFocusedOrOpenedProject() ?: ProjectManager.getInstance().defaultProject
       AppIcon.getInstance().requestAttention(project, true)
       installAndEnable(project, toInstall, showDialog = true, selectAlInDialog = true) { }
     }
     return null
+  }
+
+  // Loads plugin installation states off-EDT before opening the install dialog. On the JetBrains
+  // Client the dialog's button refresh would otherwise hit a background-thread assertion while on EDT.
+  private suspend fun warmUpPluginStates(ids: Set<PluginId>) {
+    withContext(Dispatchers.IO) {
+      val manager = UiPluginManager.getInstance()
+      for (id in ids) {
+        runCatching { manager.getPluginInstallationState(id) }
+      }
+    }
   }
 
   private fun collectPluginIds(parameters: Map<String, String>): List<PluginId> {
