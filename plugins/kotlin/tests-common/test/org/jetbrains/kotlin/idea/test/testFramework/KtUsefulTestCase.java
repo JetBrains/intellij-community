@@ -181,14 +181,12 @@ public abstract class KtUsefulTestCase extends TestCase {
 
         super.setUp();
 
-        boolean isStressTest = isStressTest();
-        ApplicationManagerEx.setInStressTest(isStressTest);
         if (isPerformanceTest()) {
             Timings.getStatistics();
         }
 
         // turn off Disposer debugging for performance tests
-        Disposer.setDebugMode(!isStressTest);
+        Disposer.setDebugMode(!isStressTest());
 
         if (isIconRequired()) {
             // ensure that IconLoader will use fake empty icon
@@ -323,7 +321,7 @@ public abstract class KtUsefulTestCase extends TestCase {
         Runnable runnable = () -> {
             try {
                 TestLoggerFactory.onTestStarted();
-                super.runTest();
+                ApplicationManagerEx.runInStressTest(isStressTest(), ()->super.runTest());
                 TestLoggerFactory.onTestFinished(true, testDescription);
             } catch (InvocationTargetException e) {
                 TestLoggerFactory.logTestFailure(e);
