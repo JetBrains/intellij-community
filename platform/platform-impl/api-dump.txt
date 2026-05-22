@@ -94,9 +94,10 @@ com.intellij.codeInsight.hint.EditorHintListener
 - sf:TOPIC:com.intellij.util.messages.Topic
 - hintShown(com.intellij.openapi.editor.Editor,com.intellij.ui.LightweightHint,I,com.intellij.ui.HintHint):V
 c:com.intellij.codeInsight.hint.HintManagerImpl
-- showQuestionHint(com.intellij.openapi.editor.Editor,I,I,com.intellij.ui.LightweightHint,com.intellij.codeInsight.hint.QuestionAction,I,S):V
+- showQuestionHint(com.intellij.openapi.editor.Editor,I,I,com.intellij.openapi.editor.markup.TextAttributes,com.intellij.ui.LightweightHint,com.intellij.codeInsight.hint.QuestionAction,I,S):V
 com.intellij.codeInsight.hint.HintManagerImpl$ActionToIgnore
 f:com.intellij.codeInsight.hint.HintUtil
+- sf:SHORTCUT_FOREGROUND_COLOR:java.awt.Color
 - s:getWarningHint():com.intellij.ui.HintHint
 com.intellij.codeInsight.hint.LineTooltipRenderer$TooltipReloader
 - a:reload(Z):V
