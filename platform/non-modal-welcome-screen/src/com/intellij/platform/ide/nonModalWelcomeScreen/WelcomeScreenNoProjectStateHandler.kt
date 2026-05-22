@@ -24,4 +24,16 @@ internal class WelcomeScreenNoProjectStateHandler : NoProjectStateHandler {
       WelcomeScreenProjectProvider.createOrOpenWelcomeScreenProject(provider)
     }
   }
+
+  override fun createCloseHandler(projectToClose: Project): (suspend () -> Project?)? {
+    if (PlatformUtils.isJetBrainsClient()) return null
+    if (!isNonModalWelcomeScreenEnabled) return null
+    // Closing the welcome project itself must NOT recursively open another welcome project — fall back to the default flow.
+    if (WelcomeScreenProjectProvider.isWelcomeScreenProject(projectToClose)) return null
+    val provider = getWelcomeScreenProjectProvider() ?: return null
+
+    return {
+      WelcomeScreenProjectProvider.createOrOpenWelcomeScreenProject(provider, projectToClose)
+    }
+  }
 }

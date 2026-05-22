@@ -13,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus
  * @author Konstantin Bulenkov
  */
 @ApiStatus.Internal
-class CloseAllProjectsAction : CloseProjectsActionBase(), ActionRemoteBehaviorSpecification.Frontend {
+open class CloseAllProjectsAction : CloseProjectsActionBase(), ActionRemoteBehaviorSpecification.Frontend {
   init {
     val uiCustomization = IdeUICustomization.getInstance()
     templatePresentation.setText(uiCustomization.projectMessagePointer("action.close.all.projects.text"))

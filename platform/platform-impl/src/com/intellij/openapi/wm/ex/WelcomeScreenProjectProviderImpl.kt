@@ -18,7 +18,7 @@ import kotlin.io.path.exists
 private val LOG = logger<WelcomeScreenProjectSupportImpl>()
 
 internal class WelcomeScreenProjectSupportImpl : WelcomeScreenProjectSupport {
-  override suspend fun createOrOpenWelcomeScreenProject(extension: WelcomeScreenProjectProvider): Project {
+  override suspend fun createOrOpenWelcomeScreenProject(extension: WelcomeScreenProjectProvider, projectToClose: Project?): Project {
     val projectPath = extension.getWelcomeScreenProjectPathForInternalUsage()
 
     if (!projectPath.exists(LinkOption.NOFOLLOW_LINKS)) {
@@ -27,7 +27,7 @@ internal class WelcomeScreenProjectSupportImpl : WelcomeScreenProjectSupport {
     TrustedProjects.setProjectTrusted(projectPath, true)
     serviceAsync<WindowsDefenderChecker>().markProjectPath(projectPath, /*skip =*/ true)
 
-    val project = extension.doCreateOrOpenWelcomeScreenProjectForInternalUsage(projectPath)
+    val project = extension.doCreateOrOpenWelcomeScreenProjectForInternalUsage(projectPath, projectToClose)
     LOG.info("Opened the welcome screen project at $projectPath")
     LOG.debug("Project: ", project)
 

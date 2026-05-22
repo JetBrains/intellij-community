@@ -39,7 +39,7 @@ fun getWelcomeScreenProjectProvider(): WelcomeScreenProjectProvider? {
 
 @Internal
 interface WelcomeScreenProjectSupport {
-  suspend fun createOrOpenWelcomeScreenProject(extension: WelcomeScreenProjectProvider): Project
+  suspend fun createOrOpenWelcomeScreenProject(extension: WelcomeScreenProjectProvider, projectToClose: Project? = null): Project
 
   suspend fun openProject(path: Path): Project
 }
@@ -99,8 +99,8 @@ abstract class WelcomeScreenProjectProvider {
       return getWelcomeScreenProjectProvider()?.doGetStartupToolWindowIdToActivate()
     }
 
-    suspend fun createOrOpenWelcomeScreenProject(extension: WelcomeScreenProjectProvider): Project {
-      return serviceAsync<WelcomeScreenProjectSupport>().createOrOpenWelcomeScreenProject(extension)
+    suspend fun createOrOpenWelcomeScreenProject(extension: WelcomeScreenProjectProvider, projectToClose: Project? = null): Project {
+      return serviceAsync<WelcomeScreenProjectSupport>().createOrOpenWelcomeScreenProject(extension, projectToClose)
     }
   }
 
@@ -149,12 +149,21 @@ abstract class WelcomeScreenProjectProvider {
   protected abstract fun doGetCreateNewFileProjectPrefix(): String
 
   protected open suspend fun doCreateOrOpenWelcomeScreenProject(path: Path): Project {
+    return doCreateOrOpenWelcomeScreenProject(path, projectToClose = null)
+  }
+
+  protected open suspend fun doCreateOrOpenWelcomeScreenProject(path: Path, projectToClose: Project?): Project {
     return serviceAsync<WelcomeScreenProjectSupport>().openProject(path)
   }
 
   @Internal
   suspend fun doCreateOrOpenWelcomeScreenProjectForInternalUsage(path: Path): Project {
-    return doCreateOrOpenWelcomeScreenProject(path)
+    return doCreateOrOpenWelcomeScreenProject(path, projectToClose = null)
+  }
+
+  @Internal
+  suspend fun doCreateOrOpenWelcomeScreenProjectForInternalUsage(path: Path, projectToClose: Project?): Project {
+    return doCreateOrOpenWelcomeScreenProject(path, projectToClose)
   }
 
   protected open fun doIsHiddenInRecentProjects(): Boolean = true
