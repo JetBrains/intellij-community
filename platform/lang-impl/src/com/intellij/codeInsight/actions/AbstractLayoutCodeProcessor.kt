@@ -40,6 +40,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.IncorrectOperationException
+import com.intellij.util.application
 import com.intellij.util.diff.FilesTooBigForDiffException
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ExecutionException
@@ -69,6 +70,7 @@ abstract class AbstractLayoutCodeProcessor private constructor(
   private sealed interface Target {
     object Project : Target
     class Module(val module: com.intellij.openapi.module.Module) : Target
+    // todo: BUG! includeSubdirs is unused
     class Directory(val directory: PsiDirectory, val includeSubdirs: Boolean) : Target
     class Files(val files: List<PsiFile>) : Target
     class SingleFile(val psiFile: PsiFile) : Target
@@ -376,7 +378,7 @@ abstract class AbstractLayoutCodeProcessor private constructor(
 
     /** @return `true` if file processing succeeded and processing should continue;
      *          `false` is processing should stop. */
-    fun iteration(psiFile: PsiFile): Boolean {
+    private fun iteration(psiFile: PsiFile): Boolean {
       updateIndicatorFraction(filesProcessed)
 
       filesProcessed++
@@ -390,7 +392,7 @@ abstract class AbstractLayoutCodeProcessor private constructor(
 
     private inner class FileAndStatus(val file: VirtualFile, val statusText: @NlsSafe String)
 
-    fun shouldProcessFile(psiFile: PsiFile): FileAndStatus? {
+    private fun shouldProcessFile(psiFile: PsiFile): FileAndStatus? {
       return runReadActionBlocking {
         val virtualFile = PsiUtilCore.getVirtualFile(psiFile)
         if (virtualFile == null) return@runReadActionBlocking null
@@ -442,7 +444,7 @@ abstract class AbstractLayoutCodeProcessor private constructor(
       return true
     }
 
-    fun shouldContinue(task: FutureTask<Boolean>, file: VirtualFile): Boolean {
+    private fun shouldContinue(task: FutureTask<Boolean>, file: VirtualFile): Boolean {
       try {
         if (!task.get() || task.isCancelled) {
           return false
@@ -464,15 +466,15 @@ abstract class AbstractLayoutCodeProcessor private constructor(
       return true
     }
 
-    fun updateIndicatorText(
-      @NlsContexts.ProgressText upperLabel: @NlsContexts.ProgressText String,
-      @NlsContexts.ProgressDetails downLabel: @NlsContexts.ProgressDetails String,
+    private fun updateIndicatorText(
+      upperLabel: @NlsContexts.ProgressText String,
+      downLabel: @NlsContexts.ProgressDetails String,
     ) {
       progressIndicator.setText(upperLabel)
       progressIndicator.setText2(downLabel)
     }
 
-    fun updateIndicatorFraction(processed: Int) {
+    private fun updateIndicatorFraction(processed: Int) {
       progressIndicator.setFraction(processed.toDouble() / totalFiles)
     }
 
@@ -485,7 +487,6 @@ abstract class AbstractLayoutCodeProcessor private constructor(
       if (files.isEmpty()) return true
       totalFiles = files.size
       progressIndicator.setIndeterminate(false)
-      val application = ApplicationManager.getApplication()
       if (!application.isUnitTestMode()) {
         val shouldContinue = invokeAndWaitIfNeeded {
           val status = ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(files)
@@ -541,7 +542,6 @@ abstract class AbstractLayoutCodeProcessor private constructor(
     }
 
     @JvmStatic
-    @NlsSafe
     fun getPresentablePath(project: Project, psiFile: PsiFile): @NlsSafe String {
       val file = psiFile.getVirtualFile()
       return if (file != null) calcRelativeToProjectPath(file, project) else psiFile.getName()
