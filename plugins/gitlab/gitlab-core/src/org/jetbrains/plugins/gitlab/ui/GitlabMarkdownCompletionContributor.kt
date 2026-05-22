@@ -151,7 +151,7 @@ internal class GitlabMarkdownCompletionContributor : CompletionContributor(), Du
             context.editor.caretModel.moveToOffset(offset + 1)
           }
         }
-    val element = fullName.let { elementBuilder.withLookupString("@$it") }
+    val element = fullName.takeIf { it.isNotBlank() }.let { elementBuilder.withLookupString("@$it") }
     return PrioritizedLookupElement.withPriority(element, priority)
   }
 }

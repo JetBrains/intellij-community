@@ -315,6 +315,51 @@ class GitlabMarkdownCompletionContributorTest {
     assertEquals("@participant1 test", text)
   }
 
+  @Test
+  fun `test mention completion with empty username for project users returns correctly ordered list of users`() {
+    val vm = createMockViewModel(
+      author = createUser("author", "Author User"),
+      participants = listOf(createUser("author", "Author User"),
+                            createUser("participant1", "Participant One")
+      ),
+      projectUsers = listOf(createUser("myProjectUser1", "My Project User One"),
+                            createUser("myProjectUser2", ""),
+                            createUser("myProjectUser3", " ")
+      ),
+      groups = emptyList()
+    )
+
+    configure("@<caret>", vm)
+    val lookupElements = codeInsightFixture.completeBasic()
+
+    assertNotNull(lookupElements)
+    assertSameElements(lookupElements.map { it.lookupString },
+                       listOf("@author", "@participant1", "@myProjectUser1", "@myProjectUser2", "@myProjectUser3"))
+  }
+
+  @Test
+  fun `test mention completion with empty username for groups correctly ordered list of users`() {
+    val vm = createMockViewModel(
+      author = createUser("author", "Author User"),
+      participants = listOf(createUser("author", "Author User"),
+                            createUser("participant1", "Participant One")
+      ),
+      projectUsers = emptyList(),
+      groups = listOf(
+        createGroup("group1", "Project Group"),
+        createGroup("group2", " "),
+        createGroup("group3", ""),
+      )
+    )
+
+    configure("@<caret>", vm)
+    val lookupElements = codeInsightFixture.completeBasic()
+
+    assertNotNull(lookupElements)
+    assertSameElements(lookupElements.map { it.lookupString },
+                       listOf("@author", "@participant1", "@group1", "@group2", "@group3"))
+  }
+
   private fun configure(text: String, vm: GitLabViewModelWithTextCompletion) {
     codeInsightFixture.configureByText("test.md", text)
     codeInsightFixture.editor.putUserData(GitLabViewModelWithTextCompletion.MENTIONS_COMPLETION_KEY, vm)
