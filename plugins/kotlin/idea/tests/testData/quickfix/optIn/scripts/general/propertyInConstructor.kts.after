@@ -1,5 +1,6 @@
 // "Propagate 'PropertyTypeMarker' opt-in requirement to constructor" "true"
 // RUNTIME_WITH_SCRIPT_RUNTIME
+// ACTION: Add parameter name to all callsites
 // ACTION: Convert to secondary constructor
 // ACTION: Create test
 // ACTION: Enable a trailing comma by default in the formatter

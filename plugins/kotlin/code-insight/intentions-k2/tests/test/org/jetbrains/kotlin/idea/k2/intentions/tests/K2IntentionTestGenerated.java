@@ -15624,4 +15624,32 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/replaceForEachWithRepeat/zeroIterations.kt");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/addParameterNameAtAllCallsites")
+    public static class AddParameterNameAtAllCallsites extends AbstractK2IntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("javaUsage.kt")
+        public void testJavaUsage() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addParameterNameAtAllCallsites/javaUsage.kt");
+        }
+
+        @TestMetadata("lambdaArgument.kt")
+        public void testLambdaArgument() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addParameterNameAtAllCallsites/lambdaArgument.kt");
+        }
+
+        @TestMetadata("nested.kt")
+        public void testNested() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addParameterNameAtAllCallsites/nested.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addParameterNameAtAllCallsites/simple.kt");
+        }
+    }
 }
