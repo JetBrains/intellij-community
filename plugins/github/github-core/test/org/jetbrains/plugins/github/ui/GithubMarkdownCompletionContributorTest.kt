@@ -150,6 +150,25 @@ class GithubMarkdownCompletionContributorTest {
   }
 
   @Test
+  fun `test mention completion works correctly with completion with empty or null names`() {
+    val vm = createMockViewModel(
+      participants = listOf(createUser("participant1", "Participant One")),
+      mentionableUsers = listOf(createUser("mentionable1", "Mentionable One"),
+                                createUser("mentionable2", ""),
+                                createUser("mentionable3", " "),
+                                createUser("mentionable4", null)
+      )
+    )
+
+    configure("@<caret>", vm)
+    val lookupElements = codeInsightFixture.completeBasic()
+
+    assertNotNull(lookupElements!!)
+    assertSameElements(lookupElements.map { it.lookupString },
+                       listOf("@participant1", "@mentionable1", "@mentionable2", "@mentionable3", "@mentionable4"))
+  }
+
+  @Test
   fun `test mention insertion adds space after username at end of text`() {
     val vm = createMockViewModel(
       participants = listOf(createUser("testuser", "Test User")),
