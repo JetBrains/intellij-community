@@ -11,9 +11,6 @@ import com.intellij.workspaceModel.codegen.impl.writer.getAllProperties
 internal val ObjClass<*>.refsFields: List<OwnProperty<*, *>>
   get() = fields.filter { !it.isOverride && it.valueType.isReferenceType() }
 
-internal val ObjClass<*>.vfuFields: List<OwnProperty<*, *>>
-  get() = fields.filter { !it.isOverride && it.valueType.isVfuType() }
-
 internal fun GeneratorContext.getAllExtensions(objClass: ObjClass<*>): List<ExtProperty<*, *>> {
   return getExtensionRefs(objClass) + objClass.ownExtensions
 }
@@ -47,9 +44,4 @@ internal fun unwrapReferenceType(valueType: ValueType<*>): ValueType.ObjRef<*>? 
 internal fun ValueType<*>.isReferenceType(): Boolean {
   val unwrapped = unwrapReferenceType(this)
   return unwrapped != null
-}
-
-internal fun ValueType<*>.isVfuType(): Boolean {
-  val unwrapped = unwrapValueType(this)
-  return unwrapped is ValueType.Blob && unwrapped.kotlinClassName == VirtualFileUrl.decoded
 }

@@ -13,8 +13,8 @@ import com.intellij.workspaceModel.codegen.impl.writer.EntityLink
 import com.intellij.workspaceModel.codegen.impl.writer.LibraryRoot
 import com.intellij.workspaceModel.codegen.impl.writer.MutableWorkspaceList
 import com.intellij.workspaceModel.codegen.impl.writer.MutableWorkspaceSet
-import com.intellij.workspaceModel.codegen.impl.writer.SdkRoot
-import com.intellij.workspaceModel.codegen.impl.writer.VirtualFileUrl
+import com.intellij.workspaceModel.codegen.impl.writer.VfuProperties
+import com.intellij.workspaceModel.codegen.impl.writer.VfuProperty
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.isReferenceType
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaName
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.kotlinClassName
@@ -24,16 +24,17 @@ import com.intellij.workspaceModel.codegen.impl.writer.getJavaBuilderTypeWithGen
 import com.intellij.workspaceModel.codegen.impl.writer.getJavaMutableType
 import com.intellij.workspaceModel.codegen.impl.writer.getJavaType
 
-fun CodeContext.getImplWsBuilderFieldCode(
+internal fun CodeContext.generateBuilderPropertyCode(
   receiver: ObjClass<*>,
   property: ObjProperty<*, *>,
-  referencesInSymbolicId: Set<OwnProperty<*, *>>?
+  referencesInSymbolicId: Set<OwnProperty<*, *>>?,
+  vfuProperties: VfuProperties,
 ) {
   if (property.valueType.isReferenceType()) {
-    entityReferencePropertyBuilderCode(receiver, property, referencesInSymbolicId)
+    builderReferenceProperty(receiver, property, referencesInSymbolicId)
   }
   else {
-    implWsBuilderBlockingCode(receiver, property.valueType, property)
+    builderProperty(receiver, property.valueType, property, vfuProperties)
   }
 }
 
@@ -41,10 +42,11 @@ private fun CodeContext.unexpectedReference(objProperty: ObjProperty<*, *>) {
   reportPropertyError("Unexpected reference while building regular property code", objProperty)
 }
 
-private fun CodeContext.implWsBuilderBlockingCode(
+private fun CodeContext.builderProperty(
   receiver: ObjClass<*>,
   valueType: ValueType<*>,
   objProperty: ObjProperty<*, *>,
+  vfuProperties: VfuProperties,
   optionalSuffix: String = "",
 ) {
   when (valueType) {
@@ -81,7 +83,8 @@ private fun CodeContext.implWsBuilderBlockingCode(
         return
       }
       +"private val ${objProperty.javaName}Updater: (value: List<${getJavaType(objProperty, elementType)}>) -> Unit = { value ->"
-      +elementType.addVirtualFileIndex(objProperty)
+      val vfuList = vfuProperties[objProperty.name]
+      if (vfuList != null) virtualFileIndexUpdater(objProperty, vfuList)
       +"changedProperty.add(\"${objProperty.javaName}\")"
       +"}"
       +"override var ${objProperty.javaName}: MutableList<${getJavaType(objProperty, elementType)}>"
@@ -112,7 +115,8 @@ private fun CodeContext.implWsBuilderBlockingCode(
       }
       else {
         +"private val ${objProperty.javaName}Updater: (value: Set<${getJavaType(objProperty, elementType)}>) -> Unit = { value ->"
-        +elementType.addVirtualFileIndex(objProperty)
+        val vfuList = vfuProperties[objProperty.name]
+        if (vfuList != null) virtualFileIndexUpdater(objProperty, vfuList)
         +"changedProperty.add(\"${objProperty.javaName}\")"
         +"}"
         +"override var ${objProperty.javaName}: MutableSet<${getJavaType(objProperty, elementType)}>"
@@ -144,7 +148,7 @@ private fun CodeContext.implWsBuilderBlockingCode(
       }
     }
 
-    is ValueType.Optional<*> -> implWsBuilderBlockingCode(receiver, valueType.type, objProperty, "?")
+    is ValueType.Optional<*> -> builderProperty(receiver, valueType.type, objProperty, vfuProperties, "?")
     is ValueType.Structure<*> -> +"//TODO: ${objProperty.javaName}"
     is ValueType.JvmClass -> {
       +"override var ${objProperty.javaName}: ${getJavaType(objProperty, valueType).appendSuffix(optionalSuffix)}"
@@ -153,9 +157,14 @@ private fun CodeContext.implWsBuilderBlockingCode(
         +"checkModificationAllowed()"
         +"getEntityData(true).${objProperty.javaName} = value"
         +"changedProperty.add(\"${objProperty.javaName}\")"
-        if (getJavaType(objProperty, valueType).decoded == VirtualFileUrl.decoded) {
+        val vfuList = vfuProperties[objProperty.name]
+        if (vfuList != null) {
           +"val _diff = diff"
-          +"if (_diff != null) index(this, \"${objProperty.javaName}\", value)"
+          +"if (_diff != null) {"
+          for (vfu in vfuList) {
+            +"index(this, ${vfu.quotedName}, ${vfu.setterAccess})"
+          }
+          +"}"
         }
       }
     }
@@ -211,30 +220,19 @@ private fun CodeContext.isInitializedBaseCode(field: ObjProperty<*, *>, expressi
   }
 }
 
-private fun ValueType<*>.addVirtualFileIndex(field: ObjProperty<*, *>): String {
-  return when {
-    this is ValueType.Blob && kotlinClassName == VirtualFileUrl.decoded ->
-      """
-        val _diff = diff
-        if (_diff != null) index(this, "${field.javaName}", value)
-        """.trimIndent()
-
-    this is ValueType.JvmClass && kotlinClassName == LibraryRoot.decoded -> """
-      val _diff = diff
-      if (_diff != null) {
-      indexLibraryRoots(value)
-      }
-      """.trimIndent()
-
-    this is ValueType.JvmClass && javaClassName == SdkRoot.decoded -> """
-      val _diff = diff
-      if (_diff != null) {
-      indexSdkRoots(value)
-      }
-      """.trimIndent()
-
-    else -> ""
+private fun CodeContext.virtualFileIndexUpdater(property: ObjProperty<*, *>, vfuList: List<VfuProperty>) {
+  val propertyValueType = property.valueType
+  val isLibraryRootList = propertyValueType is ValueType.List<*> && (propertyValueType.elementType as? ValueType.JvmClass)?.kotlinClassName == LibraryRoot.decoded
+  
+  +"if (diff != null) {"
+  for (vfu in vfuList) {
+    +"index(this, ${vfu.quotedName}, ${vfu.setterAccess})"
   }
+  if (isLibraryRootList) {
+    +"val jarDirectories = value.filter { it.inclusionOptions != LibraryRoot.InclusionOptions.ROOT_ITSELF }.map { it.url }.toHashSet()"
+    +"indexJarDirectories(this, jarDirectories)"
+  }
+  +"}"
 }
 
 fun CodeContext.suppressUncheckedCast() {
@@ -249,10 +247,10 @@ private enum class ReferenceType {
 }
 
 // TODO: assumption that `checkReference` was called previously
-private fun CodeContext.entityReferencePropertyBuilderCode(
+private fun CodeContext.builderReferenceProperty(
   receiver: ObjClass<*>,
   property: ObjProperty<*, *>,
-  referencesInSymbolicId: Set<OwnProperty<*, *>>?
+  referencesInSymbolicId: Set<OwnProperty<*, *>>?,
 ) {
   val usedInSymbolicId = referencesInSymbolicId?.contains(property) ?: false
   val connectionName = connectionIdForReference(property)
@@ -282,7 +280,7 @@ private fun CodeContext.entityReferencePropertyBuilderCode(
       return
     }
   }
-  
+
   val receiverName = property.receiver.name
 
 
