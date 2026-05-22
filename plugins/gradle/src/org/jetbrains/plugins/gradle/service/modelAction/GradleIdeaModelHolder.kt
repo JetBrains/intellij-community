@@ -118,12 +118,6 @@ class GradleIdeaModelHolder(
     return deserializedModel
   }
 
-  @ApiStatus.Internal
-  fun <T : Any> addRootModel(modelClass: Class<T>, model: T) {
-    val modelId = getRootModelId(modelClass)
-    models[modelId] = model
-  }
-
   fun addState(state: GradleModelHolderState) {
     val rootBuild = state.rootBuild
     val nestedBuilds = state.nestedBuilds

@@ -7,9 +7,11 @@ import java.io.Serializable
 /**
  * Represents a possible Gradle model fetch phase.
  *
- * A phase is executed only when at least one [org.jetbrains.plugins.gradle.model.ProjectImportModelProvider]
- * is registered for it. The Gradle model fetch action is the only component that owns this guarantee;
- * declaring a phase constant does not schedule it by itself.
+ * Provider-backed phases are executed only when at least one [org.jetbrains.plugins.gradle.model.ProjectImportModelProvider]
+ * is registered for them. The Gradle model fetch action is the only component that owns this guarantee;
+ * declaring a provider-backed phase constant does not schedule it by itself.
+ *
+ * [BASE_SCRIPT_MODEL_PHASE] is an internal action-owned phase emitted directly by the Gradle model fetch action.
  */
 @ApiStatus.Experimental
 sealed interface GradleModelFetchPhase : Comparable<GradleModelFetchPhase>, Serializable {
@@ -18,6 +20,13 @@ sealed interface GradleModelFetchPhase : Comparable<GradleModelFetchPhase>, Seri
    * This name is used for the Gradle model fetch identification.
    */
   val name: String
+
+  /**
+   * In this phase, Gradle fetches models available before Gradle has loaded projects.
+   *
+   * @see org.gradle.tooling.BuildActionExecuter.setStreamedValueListener
+   */
+  sealed interface BaseScript : GradleModelFetchPhase
 
   /**
    * In these phases, Gradle model providers are executed when the Gradle has loaded projects.
@@ -58,6 +67,13 @@ sealed interface GradleModelFetchPhase : Comparable<GradleModelFetchPhase>, Seri
   }
 
   companion object {
+
+    /**
+     * In this phase, Gradle fetches a base classpath model for Gradle script files.
+     * This enables early IDE support for Gradle scripts even if the full Gradle sync fails.
+     */
+    @JvmField
+    val BASE_SCRIPT_MODEL_PHASE: GradleModelFetchPhase = GradleBaseScriptModelFetchPhase
 
     /**
      * In this phase, Gradle model providers fetch Gradle tooling models after gradle projects are loaded and before "sync" tasks are run.
@@ -104,6 +120,21 @@ sealed interface GradleModelFetchPhase : Comparable<GradleModelFetchPhase>, Seri
 
 // Implementation
 
+private data object GradleBaseScriptModelFetchPhase : GradleModelFetchPhase.BaseScript {
+
+  override val name: String = "BASE_SCRIPT_MODEL_PHASE"
+
+  override fun toString(): String = name
+
+  override fun compareTo(other: GradleModelFetchPhase): Int {
+    return when (other) {
+      is GradleBaseScriptModelFetchPhase -> 0
+      is GradleProjectLoadedModelFetchPhase,
+      is GradleBuildFinishedModelFetchPhase -> -1
+    }
+  }
+}
+
 private class GradleProjectLoadedModelFetchPhase(
   override val order: Int,
   override val name: String,
@@ -113,6 +144,7 @@ private class GradleProjectLoadedModelFetchPhase(
 
   override fun compareTo(other: GradleModelFetchPhase): Int {
     return when (other) {
+      is GradleBaseScriptModelFetchPhase -> 1
       is GradleProjectLoadedModelFetchPhase -> order.compareTo(other.order)
       is GradleBuildFinishedModelFetchPhase -> -1
     }
@@ -141,6 +173,7 @@ private class GradleBuildFinishedModelFetchPhase(
 
   override fun compareTo(other: GradleModelFetchPhase): Int {
     return when (other) {
+      is GradleBaseScriptModelFetchPhase -> 1
       is GradleProjectLoadedModelFetchPhase -> 1
       is GradleBuildFinishedModelFetchPhase -> order.compareTo(other.order)
     }

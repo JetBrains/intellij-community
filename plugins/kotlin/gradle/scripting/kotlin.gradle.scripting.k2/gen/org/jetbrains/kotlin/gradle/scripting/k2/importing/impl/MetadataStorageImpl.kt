@@ -29,25 +29,6 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                     valueType = ValueTypeMetadata.SimpleType.CustomType(
                         isNullable = false, typeMetadata = ExtendableClassMetadata.AbstractClassMetadata(
                             fqName = "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase", subclasses = listOf(
-                                FinalClassMetadata.ObjectMetadata(
-                                    fqName = "org.jetbrains.plugins.gradle.service.syncAction.GradleBaseScriptSyncPhase",
-                                    properties = listOf(
-                                        OwnPropertyMetadata(
-                                            isComputable = false,
-                                            isKey = false,
-                                            isOpen = false,
-                                            name = "name",
-                                            valueType = primitiveTypeStringNotNullable,
-                                            withDefault = false
-                                        )
-                                    ),
-                                    supertypes = listOf(
-                                        "kotlin.Comparable",
-                                        "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase",
-                                        "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase\$BaseScript",
-                                        "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase.BaseScript"
-                                    )
-                                ),
                                 FinalClassMetadata.ClassMetadata(
                                     fqName = "org.jetbrains.plugins.gradle.service.syncAction.GradleDynamicSyncPhase",
                                     properties = listOf(
@@ -112,6 +93,26 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                 "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase",
                                                                 "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase\$ProjectLoaded",
                                                                 "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase.ProjectLoaded",
+                                                                "java.io.Serializable",
+                                                                "kotlin.Comparable"
+                                                            )
+                                                        ),
+                                                        FinalClassMetadata.ObjectMetadata(
+                                                            fqName = "com.intellij.gradle.toolingExtension.modelAction.GradleBaseScriptModelFetchPhase",
+                                                            properties = listOf(
+                                                                OwnPropertyMetadata(
+                                                                    isComputable = false,
+                                                                    isKey = false,
+                                                                    isOpen = false,
+                                                                    name = "name",
+                                                                    valueType = primitiveTypeStringNotNullable,
+                                                                    withDefault = false
+                                                                )
+                                                            ),
+                                                            supertypes = listOf(
+                                                                "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase",
+                                                                "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase\$BaseScript",
+                                                                "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase.BaseScript",
                                                                 "java.io.Serializable",
                                                                 "kotlin.Comparable"
                                                             )
@@ -229,25 +230,6 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                     valueType = ValueTypeMetadata.SimpleType.CustomType(
                         isNullable = false, typeMetadata = ExtendableClassMetadata.AbstractClassMetadata(
                             fqName = "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase", subclasses = listOf(
-                                FinalClassMetadata.ObjectMetadata(
-                                    fqName = "org.jetbrains.plugins.gradle.service.syncAction.GradleBaseScriptSyncPhase",
-                                    properties = listOf(
-                                        OwnPropertyMetadata(
-                                            isComputable = false,
-                                            isKey = false,
-                                            isOpen = false,
-                                            name = "name",
-                                            valueType = primitiveTypeStringNotNullable,
-                                            withDefault = false
-                                        )
-                                    ),
-                                    supertypes = listOf(
-                                        "kotlin.Comparable",
-                                        "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase",
-                                        "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase\$BaseScript",
-                                        "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase.BaseScript"
-                                    )
-                                ),
                                 FinalClassMetadata.ClassMetadata(
                                     fqName = "org.jetbrains.plugins.gradle.service.syncAction.GradleDynamicSyncPhase",
                                     properties = listOf(
@@ -312,6 +294,26 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                 "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase",
                                                                 "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase\$ProjectLoaded",
                                                                 "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase.ProjectLoaded",
+                                                                "java.io.Serializable",
+                                                                "kotlin.Comparable"
+                                                            )
+                                                        ),
+                                                        FinalClassMetadata.ObjectMetadata(
+                                                            fqName = "com.intellij.gradle.toolingExtension.modelAction.GradleBaseScriptModelFetchPhase",
+                                                            properties = listOf(
+                                                                OwnPropertyMetadata(
+                                                                    isComputable = false,
+                                                                    isKey = false,
+                                                                    isOpen = false,
+                                                                    name = "name",
+                                                                    valueType = primitiveTypeStringNotNullable,
+                                                                    withDefault = false
+                                                                )
+                                                            ),
+                                                            supertypes = listOf(
+                                                                "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase",
+                                                                "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase\$BaseScript",
+                                                                "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase.BaseScript",
                                                                 "java.io.Serializable",
                                                                 "kotlin.Comparable"
                                                             )
@@ -615,19 +617,25 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = 1637225356)
         addMetadataHash(
             typeFqn = "org.jetbrains.kotlin.gradle.scripting.k2.importing.GradleKotlinDslBaseScriptEntitySource",
-            metadataHash = -386877032
+            metadataHash = -198136545
         )
-        addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase", metadataHash = -754421906)
-        addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase\$BaseScript", metadataHash = -142884038)
-        addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.GradleBaseScriptSyncPhase", metadataHash = -1450037938)
+        addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase", metadataHash = 1187401489)
         addMetadataHash(
             typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase\$DataServices",
             metadataHash = -1256475695
         )
         addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.GradleDataServicesSyncPhase", metadataHash = -1556399787)
-        addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase\$Dynamic", metadataHash = -784456624)
-        addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.GradleDynamicSyncPhase", metadataHash = -2088811711)
-        addMetadataHash(typeFqn = "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase", metadataHash = -407549003)
+        addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase\$Dynamic", metadataHash = -1614528557)
+        addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.GradleDynamicSyncPhase", metadataHash = -1010561852)
+        addMetadataHash(typeFqn = "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase", metadataHash = 1808583480)
+        addMetadataHash(
+            typeFqn = "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase\$BaseScript",
+            metadataHash = 308611264
+        )
+        addMetadataHash(
+            typeFqn = "com.intellij.gradle.toolingExtension.modelAction.GradleBaseScriptModelFetchPhase",
+            metadataHash = -1293524369
+        )
         addMetadataHash(
             typeFqn = "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase\$BuildFinished",
             metadataHash = 64803236
@@ -648,7 +656,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
         addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.GradleStaticSyncPhase", metadataHash = -181947250)
         addMetadataHash(
             typeFqn = "org.jetbrains.kotlin.gradle.scripting.k2.importing.GradleKotlinDslScriptEntitySource",
-            metadataHash = 745677095
+            metadataHash = 1563042096
         )
         addMetadataHash(
             typeFqn = "org.jetbrains.kotlin.gradle.scripting.k2.workspaceModel.GradleKotlinScriptEntitySource",

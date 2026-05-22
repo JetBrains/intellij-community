@@ -11,7 +11,7 @@ import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase.Dynamic.C
  * Represents a phase of Gradle sync during which [GradleSyncContributor][org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor]s
  * contribute entities to the workspace model.
  *
- * Phases are ordered and grouped into distinct classes ([Static], [BaseScript], [Dynamic], [DataServices]).
+ * Phases are ordered and grouped into distinct classes ([Static], [Dynamic], [DataServices]).
  * Each phase class produces a complete, self-contained project model. Models from different
  * phase classes conflict with each other, so later classes take priority over earlier ones:
  * a later class replaces the project model produced by all preceding classes entirely.
@@ -49,14 +49,6 @@ sealed interface GradleSyncPhase : Comparable<GradleSyncPhase> {
       }
     }
   }
-
-  /**
-   * In these phases, Gradle sync contributors are executed after all [Static] phases
-   * and before any [Dynamic] phases, without waiting for the Gradle daemon to produce models.
-   */
-  @Internal
-  @NonExtendable
-  sealed interface BaseScript : GradleSyncPhase
 
   /**
    * In these phases, Gradle sync contributors are executed when models for [modelFetchPhase] are collected on the Gradle daemon side.
@@ -105,7 +97,7 @@ sealed interface GradleSyncPhase : Comparable<GradleSyncPhase> {
      */
     @JvmField
     @Internal
-    val BASE_SCRIPT_MODEL_PHASE: GradleSyncPhase = GradleBaseScriptSyncPhase
+    val BASE_SCRIPT_MODEL_PHASE: GradleSyncPhase = GradleModelFetchPhase.BASE_SCRIPT_MODEL_PHASE.asSyncPhase()
 
     /**
      * In this phase, Gradle sync contributors,
@@ -163,7 +155,6 @@ private class GradleStaticSyncPhase(
   override fun compareTo(other: GradleSyncPhase): Int {
     return when (other) {
       is GradleStaticSyncPhase -> order.compareTo(other.order)
-      is GradleBaseScriptSyncPhase -> -1
       is GradleDynamicSyncPhase,
       is GradleDataServicesSyncPhase -> -1
     }
@@ -194,7 +185,6 @@ private class GradleDynamicSyncPhase(
   override fun compareTo(other: GradleSyncPhase): Int {
     return when (other) {
       is GradleStaticSyncPhase -> 1
-      is GradleBaseScriptSyncPhase -> 1
       is GradleDynamicSyncPhase -> modelFetchPhase.compareTo(other.modelFetchPhase)
       is GradleDataServicesSyncPhase -> -1
     }
@@ -211,20 +201,6 @@ private class GradleDynamicSyncPhase(
 
   override fun hashCode(): Int {
     return modelFetchPhase.hashCode()
-  }
-}
-
-private data object GradleBaseScriptSyncPhase : GradleSyncPhase.BaseScript {
-
-  override val name: String = "BASE_SCRIPT_MODEL"
-
-  override fun compareTo(other: GradleSyncPhase): Int {
-    return when (other) {
-      is GradleStaticSyncPhase -> 1
-      is GradleBaseScriptSyncPhase -> 0
-      is GradleDynamicSyncPhase,
-      is GradleDataServicesSyncPhase -> -1
-    }
   }
 }
 

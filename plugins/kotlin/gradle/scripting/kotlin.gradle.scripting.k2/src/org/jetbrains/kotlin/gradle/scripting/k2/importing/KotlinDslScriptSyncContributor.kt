@@ -61,6 +61,10 @@ internal class KotlinDslScriptSyncContributor : GradleSyncContributor {
 
         val builder = storage.toBuilder()
 
+        // See `org.jetbrains.kotlin.gradle.scripting.k2.importing.KotlinDslBaseScriptSyncContributor`
+        // See `org.jetbrains.kotlin.gradle.scripting.k2.importing.KotlinDslScriptSyncExtension`
+        builder.replaceBySource(gradleKotlinScriptEntitySource(context), ImmutableEntityStorage.empty())
+
         val gradleScripts = models.mapNotNullTo(mutableSetOf()) {
             val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(Path.of(it.file)) ?: return@mapNotNullTo null
             GradleScriptModel(
@@ -96,7 +100,7 @@ class GradleScriptModel(
     val classpathModel: GradleBuildScriptClasspathModel? = null,
 )
 
-internal data class GradleKotlinDslScriptEntitySource(
+private data class GradleKotlinDslScriptEntitySource(
     override val projectPath: String,
     override val phase: GradleSyncPhase,
 ) : GradleKotlinScriptEntitySource

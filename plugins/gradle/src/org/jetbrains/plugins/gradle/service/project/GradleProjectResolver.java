@@ -7,7 +7,6 @@ import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.DefaultGra
 import com.intellij.gradle.toolingExtension.impl.model.taskModel.DefaultGradleTaskModel;
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAction;
 import com.intellij.gradle.toolingExtension.impl.util.GradleTreeTraverserUtil;
-import com.intellij.gradle.toolingExtension.util.GradleVersionSpecificsUtil;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy;
@@ -50,7 +49,6 @@ import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.ProjectModel;
 import org.gradle.tooling.model.build.BuildEnvironment;
-import org.gradle.tooling.model.dsl.GradleDslBaseScriptModel;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.jetbrains.annotations.ApiStatus;
@@ -318,12 +316,6 @@ public final class GradleProjectResolver implements ExternalSystemProjectResolve
       .spanBuilder("GradleCall")
       .startSpan();
     try (Scope ignore = gradleCallSpan.makeCurrent()) {
-      if (GradleVersionSpecificsUtil.isBaseScriptModelSupported(resolverContext.getGradleVersion())) {
-        var scriptModel = GradleExecutionHelper.getModel(connection, resolverContext, GradleDslBaseScriptModel.class);
-        models.addRootModel(GradleDslBaseScriptModel.class, scriptModel);
-        GradleSyncProjectConfigurator.runScriptBasePhase(resolverContext);
-      }
-
       var modelFetchActionResultHandler = GradleSyncProjectConfigurator.createModelFetchResultHandler(resolverContext);
       GradleModelFetchActionRunner.runAndTraceBuildAction(connection, resolverContext, buildAction, modelFetchActionResultHandler);
     }

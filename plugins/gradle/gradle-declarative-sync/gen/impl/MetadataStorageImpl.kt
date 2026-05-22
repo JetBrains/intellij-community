@@ -1,5 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.service.syncContributor.impl
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.gradle.declarativeSync.impl
 
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.metadata.impl.MetadataStorageBase
@@ -18,7 +18,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
     var typeMetadata: StorageTypeMetadata
 
     typeMetadata =
-      FinalClassMetadata.ClassMetadata(fqName = "org.jetbrains.plugins.gradle.service.syncContributor.GradleSourceRootSyncContributor\$GradleSourceRootEntitySource",
+      FinalClassMetadata.ClassMetadata(fqName = "com.intellij.gradle.declarativeSync.GradleDeclarativeSyncContributor\$GradleDeclarativeEntitySource",
                                        properties = listOf(OwnPropertyMetadata(isComputable = false,
                                                                                isKey = false,
                                                                                isOpen = false,
@@ -172,9 +172,9 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
   }
 
   override fun initializeMetadataHash() {
-    addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = 658069424)
-    addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncContributor.GradleSourceRootSyncContributor\$GradleSourceRootEntitySource",
-                    metadataHash = -2072751332)
+    addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = 721434140)
+    addMetadataHash(typeFqn = "com.intellij.gradle.declarativeSync.GradleDeclarativeSyncContributor\$GradleDeclarativeEntitySource",
+                    metadataHash = -384753394)
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase", metadataHash = 1187401489)
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase\$DataServices", metadataHash = -1256475695)
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.GradleDataServicesSyncPhase", metadataHash = -1556399787)
