@@ -31,7 +31,7 @@ import fleet.util.async.use
 import fleet.util.channels.channels
 import fleet.util.logging.KLogger
 import fleet.util.logging.logger
-import fleet.util.openmap.merge
+import fleet.openmap.merge
 import fleet.util.singleOrNullOrThrow
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf

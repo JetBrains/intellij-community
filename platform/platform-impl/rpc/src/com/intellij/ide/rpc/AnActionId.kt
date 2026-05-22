@@ -4,7 +4,7 @@ package com.intellij.ide.rpc
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.extensions.ExtensionPointName
-import fleet.util.openmap.SerializedValue
+import fleet.openmap.SerializedValue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient

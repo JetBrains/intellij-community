@@ -10,7 +10,7 @@ import fleet.rpc.core.RpcFlow
 import fleet.rpc.core.toRpc
 import fleet.util.UID
 import fleet.util.async.chunked
-import fleet.util.openmap.SerializedValue
+import fleet.openmap.SerializedValue
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

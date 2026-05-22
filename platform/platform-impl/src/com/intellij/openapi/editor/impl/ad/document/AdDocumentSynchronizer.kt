@@ -29,7 +29,7 @@ import fleet.kernel.rebase.TransactionResult
 import fleet.kernel.rebase.TransactionResultKey
 import fleet.kernel.rebase.awaitCommitted
 import fleet.kernel.transactor
-import fleet.util.openmap.OpenMap
+import fleet.openmap.OpenMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel

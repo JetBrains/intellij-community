@@ -24,9 +24,9 @@ import com.jetbrains.rhizomedb.ChangeScope
 import com.jetbrains.rhizomedb.entities
 import com.jetbrains.rhizomedb.entity
 import fleet.util.UID
-import fleet.util.openmap.BoundedOpenMap
-import fleet.util.openmap.MutableBoundedOpenMap
-import fleet.util.openmap.MutableOpenMap
+import fleet.openmap.BoundedOpenMap
+import fleet.openmap.MutableBoundedOpenMap
+import fleet.openmap.MutableOpenMap
 
 
 object DocToEntityUpdate : DocumentMetaKey<Boolean>

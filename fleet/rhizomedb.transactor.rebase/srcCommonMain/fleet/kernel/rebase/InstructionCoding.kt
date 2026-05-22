@@ -9,7 +9,7 @@ import com.jetbrains.rhizomedb.MapAttribute
 import com.jetbrains.rhizomedb.Q
 import com.jetbrains.rhizomedb.ReifyEntities
 import fleet.util.UID
-import fleet.util.openmap.SerializedValue
+import fleet.openmap.SerializedValue
 import kotlinx.serialization.KSerializer
 import kotlin.reflect.KClass
 

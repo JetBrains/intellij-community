@@ -7,7 +7,7 @@ import com.intellij.ide.rpc.serializeToRpc
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.editor.HighlighterColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
-import fleet.util.openmap.SerializedValue
+import fleet.openmap.SerializedValue
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
