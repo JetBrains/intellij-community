@@ -78,9 +78,13 @@ class GitRepositoryImpl private constructor(
 
     workingTreeHolder = GitWorkingTreeHolderImpl(this)
     repoInfo = readRepoInfo()
-    runBlockingMaybeCancellable {
-      workingTreeHolder.updateState()
-    }
+    // IJPL-244177: do not block on workingTreeHolder.updateState() here.
+    // VcsRepositoryManager.checkAndUpdateRepositoryCollection constructs
+    // this class while holding MODIFY_LOCK; a synchronous wait turns
+    // O(N) repo construction into N x blocking-IO under the lock and
+    // deadlocks Dispatchers.IO once the pool is queued on that lock.
+    // Initial state is populated asynchronously via GitRepository.update()
+    // and the existing alarm-driven refresh, which run outside the lock.
   }
 
   @Deprecated("Deprecated in Java")
