@@ -374,9 +374,6 @@ abstract class AbstractLayoutCodeProcessor private constructor(
   private inner class ProcessingTask(val progressIndicator: ProgressIndicator) {
     private val processors = getAllProcessors()
 
-    private var totalFiles = 0
-    private var filesProcessed = 0
-
     /** @return Presentable file path or `null` if processing this file should be skipped */
     @RequiresReadLock
     private fun shouldProcessFile(file: VirtualFile): @NlsSafe String? {
@@ -460,7 +457,7 @@ abstract class AbstractLayoutCodeProcessor private constructor(
       }
       val files = runReadActionBlocking { buildFilesIterator() }.collectAll()
       if (files.isEmpty()) return true
-      totalFiles = files.size
+      val totalFiles = files.size
       if (!application.isUnitTestMode()) {
         val shouldContinue = invokeAndWaitIfNeeded {
           val status = ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(files)
@@ -474,10 +471,8 @@ abstract class AbstractLayoutCodeProcessor private constructor(
         fraction = 0.0
         text = ApplicationBundle.message("bulk.reformat.process.progress.text")
       }
-      for (file in files) {
-        progressIndicator.fraction = filesProcessed.toDouble() / totalFiles
-
-        filesProcessed++
+      for ((index, file) in files.withIndex()) {
+        progressIndicator.fraction = index.toDouble() / totalFiles
 
         val presentableFilePath = shouldProcessFile(file) ?: continue
         progressIndicator.text2 = presentableFilePath
