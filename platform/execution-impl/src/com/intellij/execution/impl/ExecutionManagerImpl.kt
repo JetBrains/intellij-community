@@ -25,7 +25,6 @@ import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.configurations.RunConfiguration.RestartSingletonResult
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.configurations.RunProfileState
-import com.intellij.execution.dashboard.RunDashboardManager
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.filters.TextConsoleBuilderFactory
 import com.intellij.execution.impl.ExecutionManagerImpl.Companion.DELEGATED_RUN_PROFILE_KEY
@@ -49,6 +48,7 @@ import com.intellij.execution.target.getEffectiveTargetName
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.ui.RunContentManager
+import com.intellij.execution.ui.RunContentManagerExtension
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.StructuredIdeActivity
@@ -1040,7 +1040,7 @@ private fun triggerUsage(environment: ExecutionEnvironment): StructuredIdeActivi
   val runConfiguration = environment.runnerAndConfigurationSettings?.configuration
   val configurationFactory = runConfiguration?.factory ?: return null
   val isRerun = environment.getUserData(ExecutionManagerImpl.REPORT_NEXT_START_AS_RERUN) == true
-  val isServiceView = RunDashboardManager.getInstance(environment.project).isShowInDashboard(runConfiguration)
+  val isServiceView = RunContentManagerExtension.isShownInServicesIfAvailable(environment.project, runConfiguration)
 
   // The 'Rerun' button in the Run tool window will reuse the same ExecutionEnvironment object again.
   // If there are no processes to stop, the REPORT_NEXT_START_AS_RERUN won't be set in restartRunProfile(), so need to set it here.

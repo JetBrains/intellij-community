@@ -5,7 +5,6 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.dashboard.RunDashboardUiManager;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.project.Project;
@@ -87,8 +86,6 @@ public interface RunContentManager {
     if (runnerToolWindowId != null) {
       return runnerToolWindowId;
     }
-
-    if (!RunDashboardUiManager.getInstance(environment.getProject()).isSupported(environment.getExecutor())) return null;
 
     RunProfile runProfile = environment.getRunProfile();
     if (runProfile instanceof RunConfiguration) {

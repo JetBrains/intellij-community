@@ -2,9 +2,9 @@
 package com.intellij.execution.dashboard.actions;
 
 import com.intellij.execution.dashboard.LegacyRunDashboardServiceSubstitutor;
-import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.execution.dashboard.RunDashboardService;
+import com.intellij.execution.ui.RunContentManagerExtension;
 import com.intellij.execution.services.ServiceViewActionUtils;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -69,7 +69,8 @@ public final class RunDashboardActionUtils {
     if (currentContentDescriptorId != null) {
       // backend case with run toolwindow that is not split in any way and does not properly receive a serialized data context from frontend
       // because of obscure content manager-related wrapping mechanism
-      var maybeService = RunDashboardManager.getInstance(project).findService(currentContentDescriptorId);
+      var extension = RunContentManagerExtension.getInstance(project);
+      var maybeService = extension == null ? null : extension.findService(project, currentContentDescriptorId);
       selectedService = maybeService instanceof RunDashboardService ? (RunDashboardService)maybeService : null;
     }
 

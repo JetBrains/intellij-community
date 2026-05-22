@@ -38,6 +38,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <runContentManagerExtension implementation="com.intellij.platform.execution.dashboard.RunDashboardRunContentManagerExtension"/>
     <legacyRunDashboardServiceSubstitutor implementation="com.intellij.platform.execution.dashboard.splitApi.LegacyRunDashboardServiceSubstitutorImpl"/>
     <platform.rpc.projectRemoteTopicListener implementation="com.intellij.platform.execution.dashboard.splitApi.frontend.RunContentSyncListener"/>
 

@@ -5,8 +5,6 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.Location;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.dashboard.RunDashboardManagerProxy;
-import com.intellij.execution.dashboard.RunDashboardUiManager;
 import com.intellij.execution.filters.CompositeFilter;
 import com.intellij.execution.filters.FileHyperlinkInfo;
 import com.intellij.execution.filters.Filter;
@@ -19,6 +17,7 @@ import com.intellij.execution.testframework.sm.runner.history.actions.AbstractIm
 import com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsFromFileAction;
 import com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsGroup;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.execution.ui.RunContentManagerExtension;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -218,8 +217,14 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
   @Override
   public @NotNull String getWindowId() {
     if (myConfiguration instanceof RunConfiguration configuration) {
-      if (RunDashboardManagerProxy.getInstance(getProject()).isShowInDashboard(configuration)) {
-        return RunDashboardUiManager.getInstance(getProject()).getToolWindowId();
+      if (RunContentManagerExtension.isShownInServicesIfAvailable(getProject(), configuration)) {
+        RunContentManagerExtension extension = RunContentManagerExtension.getInstance(getProject());
+        if (extension != null) {
+          String toolWindowId = extension.getToolWindowId(getProject());
+          if (toolWindowId != null) {
+            return toolWindowId;
+          }
+        }
       }
     }
     return super.getWindowId();
