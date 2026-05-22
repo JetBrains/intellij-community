@@ -44,6 +44,5 @@
     <orderEntry type="module" module-name="fleet.multiplatform.shims" exported="" />
     <orderEntry type="module" module-name="fleet.util.multiplatform" scope="PROVIDED" />
     <orderEntry type="module" module-name="fleet.util.serialization" exported="" />
-    <orderEntry type="module" module-name="fleet.openmap" exported="" />
   </component>
 </module>

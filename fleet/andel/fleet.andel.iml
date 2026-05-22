@@ -39,5 +39,6 @@
     <orderEntry type="module" module-name="fleet.util.codepoints" />
     <orderEntry type="module" module-name="fleet.bifurcan" exported="" />
     <orderEntry type="module" module-name="fleet.fastutil" />
+    <orderEntry type="module" module-name="fleet.openmap" exported="" />
   </component>
 </module>

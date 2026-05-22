@@ -83,7 +83,6 @@ kotlin {
     api(project(":fleet.multiplatform.shims"))
     compileOnly(project(":fleet.util.multiplatform"))
     api(project(":fleet.util.serialization"))
-    api(project(":fleet.openmap"))
   }
   sourceSets.iosMain.dependencies {
     api(project(":fleet.util.multiplatform"))

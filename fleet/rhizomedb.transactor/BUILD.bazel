@@ -32,6 +32,7 @@ fleet_plugin_services_resources(
     "//fleet/multiplatform.shims",
     "//fleet/bifurcan",
     "//fleet/fastutil",
+    "//fleet/openmap",
   ]
 )
 
@@ -57,6 +58,7 @@ jvm_library(
     "//fleet/multiplatform.shims",
     "//fleet/bifurcan",
     "//fleet/fastutil",
+    "//fleet/openmap",
   ],
   exports = [
     "//fleet/util/core",
@@ -87,6 +89,7 @@ jvm_library(
     "//fleet/multiplatform.shims:multiplatform.shims_test_lib",
     "//fleet/bifurcan:bifurcan_test_lib",
     "//fleet/fastutil:fastutil_test_lib",
+    "//fleet/openmap:openmap_test_lib",
   ]
 )
 ### auto-generated section `build fleet.rhizomedb.transactor` end

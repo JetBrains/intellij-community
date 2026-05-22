@@ -28,8 +28,12 @@ jvm_library(
     "//fleet/util/codepoints",
     "//fleet/bifurcan",
     "//fleet/fastutil",
+    "//fleet/openmap",
   ],
-  exports = ["//fleet/bifurcan"]
+  exports = [
+    "//fleet/bifurcan",
+    "//fleet/openmap",
+  ]
 )
 
 jvm_library(
@@ -42,6 +46,8 @@ jvm_library(
   exports = [
     "//fleet/bifurcan",
     "//fleet/bifurcan:bifurcan_test_lib",
+    "//fleet/openmap",
+    "//fleet/openmap:openmap_test_lib",
   ],
   runtime_deps = [
     ":andel",
@@ -49,6 +55,7 @@ jvm_library(
     "//fleet/util/codepoints:codepoints_test_lib",
     "//fleet/bifurcan:bifurcan_test_lib",
     "//fleet/fastutil:fastutil_test_lib",
+    "//fleet/openmap:openmap_test_lib",
   ]
 )
 ### auto-generated section `build fleet.andel` end

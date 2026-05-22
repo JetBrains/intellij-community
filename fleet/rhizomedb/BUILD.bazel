@@ -33,6 +33,7 @@ jvm_library(
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
     "//fleet/fastutil",
+    "//fleet/openmap",
   ]
 )
 
@@ -49,6 +50,7 @@ jvm_library(
     "//fleet/multiplatform.shims:multiplatform.shims_test_lib",
     "//fleet/radixTrie:radixTrie_test_lib",
     "//fleet/fastutil:fastutil_test_lib",
+    "//fleet/openmap:openmap_test_lib",
   ]
 )
 ### auto-generated section `build fleet.rhizomedb` end

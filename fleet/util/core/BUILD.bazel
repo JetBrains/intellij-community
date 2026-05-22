@@ -34,7 +34,6 @@ jvm_library(
     "//fleet/reporting/shared",
     "//fleet/multiplatform.shims",
     "//fleet/util/serialization",
-    "//fleet/openmap",
     ":fleet_util_multiplatform_provided",
   ],
   exports = [
@@ -42,7 +41,6 @@ jvm_library(
     "@lib//:kotlinx-collections-immutable",
     "//fleet/multiplatform.shims",
     "//fleet/util/serialization",
-    "//fleet/openmap",
   ]
 )
 
@@ -61,8 +59,6 @@ jvm_library(
     "//fleet/multiplatform.shims:multiplatform.shims_test_lib",
     "//fleet/util/serialization",
     "//fleet/util/serialization:serialization_test_lib",
-    "//fleet/openmap",
-    "//fleet/openmap:openmap_test_lib",
   ],
   runtime_deps = [
     ":core",
@@ -73,7 +69,6 @@ jvm_library(
     "//fleet/util/multiplatform",
     "//fleet/util/multiplatform:multiplatform_test_lib",
     "//fleet/util/serialization:serialization_test_lib",
-    "//fleet/openmap:openmap_test_lib",
   ]
 )
 ### auto-generated section `build fleet.util.core` end
