@@ -9,6 +9,7 @@ jvm_library(
   resources = glob(["resources/**/*"]),
   resource_strip_prefix = "resources",
   deps = [
+    "//libraries/kotlinx/coroutines/core",
     "//platform/remote-driver/model",
     "@lib//:jetbrains-annotations",
     "//platform/core-api:core",
@@ -30,6 +31,7 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   runtime_deps = [
     ":driver-impl",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
     "//platform/remote-driver/model:model_test_lib",
     "//platform/core-api:core_test_lib",
     "//platform/core-impl:core-impl_test_lib",
