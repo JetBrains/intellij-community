@@ -131,8 +131,8 @@ internal class SuspiciousCallOnCollectionToAddOrRemovePathInspection : KotlinApp
                     classId == StandardClassIds.Collection || classId == StandardClassIds.Sequence
                 }
 
-            return iteratedClassId == rightClassId ||
-                    (iteratedClassId == leftElementClassId && !isRightAKnownContainer)
+            return !isRightAKnownContainer && (iteratedClassId == rightClassId ||
+                    (iteratedClassId == leftElementClassId))
         }
 
         val isPlus = when (element) {

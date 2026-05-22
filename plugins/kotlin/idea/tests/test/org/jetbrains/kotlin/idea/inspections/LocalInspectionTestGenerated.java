@@ -16440,6 +16440,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractK1LocalInspec
             runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusListOfIterableOfString.kt");
         }
 
+        @TestMetadata("plusListOfListWithListOfLis.kt")
+        public void testPlusListOfListWithListOfLis() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusListOfListWithListOfLis.kt");
+        }
+
         @TestMetadata("plusListOfPath.kt")
         public void testPlusListOfPath() throws Exception {
             runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusListOfPath.kt");
