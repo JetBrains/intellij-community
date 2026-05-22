@@ -485,6 +485,7 @@ abstract class AbstractLayoutCodeProcessor private constructor(
         filesProcessed++
 
         val presentableFilePath = shouldProcessFile(file) ?: continue
+        updateIndicatorText(ApplicationBundle.message("bulk.reformat.process.progress.text"), presentableFilePath)
 
         val shouldContinue = DumbService.getInstance(myProject).withAlternativeResolveEnabled {
           performFileProcessing(file)
