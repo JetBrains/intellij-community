@@ -1518,6 +1518,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/navbar/backend/intellij.platform.navbar.backend.iml" filepath="$PROJECT_DIR$/platform/navbar/backend/intellij.platform.navbar.backend.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/navbar/frontend/intellij.platform.navbar.frontend.iml" filepath="$PROJECT_DIR$/platform/navbar/frontend/intellij.platform.navbar.frontend.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/navbar/monolith/intellij.platform.navbar.monolith.iml" filepath="$PROJECT_DIR$/platform/navbar/monolith/intellij.platform.navbar.monolith.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/navbar/plugin/intellij.platform.navbar.plugin.iml" filepath="$PROJECT_DIR$/platform/navbar/plugin/intellij.platform.navbar.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/navbar/testFramework/intellij.platform.navbar.testFramework.iml" filepath="$PROJECT_DIR$/platform/navbar/testFramework/intellij.platform.navbar.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/object-serializer/intellij.platform.objectSerializer.iml" filepath="$PROJECT_DIR$/platform/object-serializer/intellij.platform.objectSerializer.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/object-serializer/intellij.platform.objectSerializer.annotations.iml" filepath="$PROJECT_DIR$/platform/object-serializer/intellij.platform.objectSerializer.annotations.iml" />

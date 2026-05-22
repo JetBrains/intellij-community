@@ -1,0 +1,15 @@
+- name: lib/modules/intellij.platform.navbar.backend.jar
+  contentModules:
+  - name: intellij.platform.navbar.backend
+- name: lib/modules/intellij.platform.navbar.frontend.jar
+  contentModules:
+  - name: intellij.platform.navbar.frontend
+- name: lib/modules/intellij.platform.navbar.jar
+  contentModules:
+  - name: intellij.platform.navbar
+- name: lib/modules/intellij.platform.navbar.monolith.jar
+  contentModules:
+  - name: intellij.platform.navbar.monolith
+- name: lib/platform-navbar-plugin.jar
+  modules:
+  - name: intellij.platform.navbar.plugin

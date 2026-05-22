@@ -2,7 +2,6 @@
   <dependencies>
     <plugin id="com.intellij.platform.images"/>
     <module name="intellij.grid.core.impl"/>
-    <module name="intellij.platform.navbar.frontend"/>
     <module name="intellij.grid.impl"/>
   </dependencies>
 

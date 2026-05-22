@@ -29,7 +29,6 @@
   {"moduleName": "intellij.cwm.plugin.common", "moduleKind": "shared"},
 
   {"pluginId": "com.intellij.modules.lang", "moduleKind": "shared"},
-  {"moduleName": "intellij.platform.navbar.frontend", "descriptorRelativePath": "resources/intellij.platform.navbar.frontend.xml", "moduleKind": "shared"},
   {"moduleName": "intellij.platform.resources", "descriptorRelativePath": "src/META-INF/PlatformLangPlugin.xml", "moduleKind": "shared"},
   {"moduleName": "intellij.platform.resources", "descriptorRelativePath": "src/META-INF/PlatformLangComponents.xml", "moduleKind": "shared"},
   {"moduleName": "intellij.platform.resources", "descriptorRelativePath": "src/idea/PriorityEditorLangActions.xml", "moduleKind": "shared"},

@@ -19,7 +19,8 @@ jvm_library(
     "//platform/navbar/backend",
     "//platform/navbar/frontend",
     "//platform/platform-impl:ide-impl",
-  ]
+  ],
+  runtime_deps = ["//platform/navbar/plugin"]
 )
 
 jvm_library(
@@ -39,6 +40,7 @@ jvm_library(
     "//platform/navbar/backend:backend_test_lib",
     "//platform/navbar/frontend:frontend_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/navbar/plugin:plugin_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.navbar.testFramework` end

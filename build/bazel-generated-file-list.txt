@@ -731,6 +731,7 @@ platform/multiplatformSupport
 platform/navbar/backend
 platform/navbar/frontend
 platform/navbar/monolith
+platform/navbar/plugin
 platform/navbar/shared
 platform/navbar/testFramework
 platform/new-ui-onboarding
