@@ -12,6 +12,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.annotations.ApiStatus
@@ -56,7 +57,7 @@ class DebugOnlyTestExtensionInspection : DevKitUastInspectionBase(UClass::class.
       val valueExpression = annotation.findDeclaredAttributeValue("value") ?: continue
       for (classLiteral in collectClassLiterals(valueExpression)) {
         val typeFqn = classLiteral.type?.canonicalText ?: continue
-        if (typeFqn !in DEBUG_ONLY_EXTENSIONS.keys) continue
+        if (typeFqn !in DEBUG_ONLY_EXTENSIONS) continue
         val simpleName = typeFqn.substringAfterLast('.')
         val targetPsi = classLiteral.sourcePsi ?: continue
         val problemsHolder = holder ?: ProblemsHolder(manager, targetPsi.containingFile, isOnTheFly).also { holder = it }
@@ -130,13 +131,39 @@ private class RemoveDebugOnlyExtensionFix(
       return
     }
 
-    val toDelete: PsiElement =
-      if (classLiteralPsi.language.id == "kotlin") {
-        classLiteralPsi.parent ?: classLiteralPsi
-      }
-      else {
-        classLiteralPsi
-      }
-    toDelete.delete()
+    val toDelete =
+      if (classLiteralPsi.language.id == "kotlin") classLiteralPsi.parent ?: classLiteralPsi
+      else classLiteralPsi
+    deleteWithCommaSeparator(toDelete)
+  }
+
+  private fun deleteWithCommaSeparator(element: PsiElement) {
+    val parent = element.parent ?: return element.delete()
+
+    findCommaSeparatorEdge(element, forward = true)?.let { trailingEnd ->
+      parent.deleteChildRange(element, trailingEnd)
+      return
+    }
+    findCommaSeparatorEdge(element, forward = false)?.let { leadingStart ->
+      parent.deleteChildRange(leadingStart, element)
+      return
+    }
+    element.delete()
+  }
+
+  private fun findCommaSeparatorEdge(element: PsiElement, forward: Boolean): PsiElement? {
+    val step: (PsiElement) -> PsiElement? = if (forward) PsiElement::getNextSibling else PsiElement::getPrevSibling
+
+    var sep: PsiElement? = step(element)
+    while (sep != null && (sep is PsiWhiteSpace || sep.text.isBlank())) sep = step(sep)
+    if (sep?.text != ",") return null
+
+    var edge: PsiElement = sep
+    var beyond: PsiElement? = step(sep)
+    while (beyond is PsiWhiteSpace) {
+      edge = beyond
+      beyond = step(beyond)
+    }
+    return edge
   }
 }
