@@ -42,7 +42,7 @@
     <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.notifications.ScriptingSupportChecker"/>
 
     <projectService serviceInterface="org.jetbrains.kotlin.idea.core.script.v1.settings.KotlinScriptingSettings"
-                    serviceImplementation="org.jetbrains.kotlin.idea.core.script.k2.settings.ScriptDefinitionSettingsPersistentStateComponent"/>
+                    serviceImplementation="org.jetbrains.kotlin.idea.core.script.k2.settings.ScriptDefinitionSettingsStateComponent"/>
 
     <projectService serviceInterface="org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider"
                     serviceImplementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionProviderImpl"/>
@@ -64,8 +64,7 @@
     <editorFloatingToolbarProvider
             implementation="org.jetbrains.kotlin.idea.core.script.k2.ScriptConfigurationFloatingToolbarProvider"
             id="ScriptConfigurationFloatingToolbarProvider"/>
-    <projectSettings service="org.jetbrains.kotlin.idea.core.script.k2.settings.ScriptDefinitionSettingsPersistentStateComponent"/>
-    <projectSettings service="org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptTemplatesDefinitionsFromDependenciesStorage"/>
+    <projectSettings service="org.jetbrains.kotlin.idea.core.script.k2.settings.ScriptDefinitionSettingsStateComponent"/>
   </extensions>
 
   <extensionPoints>
@@ -89,11 +88,13 @@
 
     <scriptDefinitionsSource implementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.MainKtsScriptDefinitionSource"/>
     <scriptDefinitionsSource
-            implementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptTemplatesFromDependenciesDefinitionSource"/>
+            implementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.DefinitionFromDependenciesSource"/>
   </extensions>
 
   <projectListeners>
     <listener class="org.jetbrains.kotlin.idea.core.script.k2.configurations.KotlinScriptService$KotlinScriptWorkspaceModelListener"
+              topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
+    <listener class="org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionTemplateListener"
               topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
   </projectListeners>
 

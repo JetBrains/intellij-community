@@ -16,14 +16,15 @@ import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 @State(
     name = "ScriptDefinitionSettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)]
 )
-internal class ScriptDefinitionSettingsPersistentStateComponent(val project: Project) :
-    SerializablePersistentStateComponent<ScriptDefinitionSettingsPersistentStateComponent.State>(State()), KotlinScriptingSettings {
+internal class ScriptDefinitionSettingsStateComponent(val project: Project) :
+    SerializablePersistentStateComponent<ScriptDefinitionSettingsStateComponent.State>(State()), KotlinScriptingSettings {
 
-    fun updateSettings(updateFunction: (ScriptDefinitionSettingsPersistentStateComponent.State) -> ScriptDefinitionSettingsPersistentStateComponent.State) {
-        updateState {
-            updateFunction(it)
+    fun updateSettings(updateFunction: (ScriptDefinitionSettingsStateComponent.State) -> ScriptDefinitionSettingsStateComponent.State) {
+        val before = state
+        val after = updateState(updateFunction)
+        if (before != after) {
+            ScriptDefinitionsModificationTracker.getInstance(project).incModificationCount()
         }
-        ScriptDefinitionsModificationTracker.getInstance(project).incModificationCount()
     }
 
     override fun isScriptDefinitionEnabled(scriptDefinition: ScriptDefinition): Boolean = state.isScriptDefinitionEnabled(scriptDefinition)
@@ -31,50 +32,43 @@ internal class ScriptDefinitionSettingsPersistentStateComponent(val project: Pro
     override fun getScriptDefinitionOrder(scriptDefinition: ScriptDefinition): Int = state.getScriptDefinitionOrder(scriptDefinition)
 
     companion object {
-        fun getInstance(project: Project): ScriptDefinitionSettingsPersistentStateComponent =
-            KotlinScriptingSettings.getInstance(project) as ScriptDefinitionSettingsPersistentStateComponent
+        fun getInstance(project: Project): ScriptDefinitionSettingsStateComponent =
+            KotlinScriptingSettings.getInstance(project) as ScriptDefinitionSettingsStateComponent
     }
 
     internal data class State(
         @JvmField @XCollection(
             propertyElementName = "settings", elementName = "definition"
         ) val settings: List<DefinitionSetting> = listOf(),
-        @JvmField val explicitTemplateClassNames: String = "",
-        @JvmField val explicitTemplateClasspath: String = "",
+        @JvmField @Attribute val explicitTemplateClassNames: String = "",
+        @JvmField @Attribute val explicitTemplateClasspath: String = "",
     )
 
     @Tag("definition")
-    internal class DefinitionSetting(
+    internal data class DefinitionSetting(
         @JvmField @Attribute val name: String? = null,
         @JvmField @Attribute val definitionId: String? = null,
         @JvmField @Attribute val enabled: Boolean = true
     ) {
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-            if (javaClass != other?.javaClass) return false
-
-            other as DefinitionSetting
-
-            if (name != other.name) return false
-            if (definitionId != other.definitionId) return false
-
-            return true
-        }
-
-        override fun hashCode(): Int {
-            var result = name?.hashCode() ?: 0
-            result = 31 * result + (definitionId?.hashCode() ?: 0)
-            return result
-        }
-
         fun matches(definition: ScriptDefinition): Boolean = name == definition.name && definitionId == definition.definitionId
     }
 }
 
-internal fun ScriptDefinitionSettingsPersistentStateComponent.State.getScriptDefinitionOrder(scriptDefinition: ScriptDefinition): Int {
+internal fun ScriptDefinitionSettingsStateComponent.State.getScriptDefinitionOrder(scriptDefinition: ScriptDefinition): Int {
     val index = settings.indexOfFirst { it.matches(scriptDefinition) }
     return if (index == -1) scriptDefinition.order else index
 }
 
-internal fun ScriptDefinitionSettingsPersistentStateComponent.State.isScriptDefinitionEnabled(scriptDefinition: ScriptDefinition): Boolean =
+internal fun ScriptDefinitionSettingsStateComponent.State.isScriptDefinitionEnabled(scriptDefinition: ScriptDefinition): Boolean =
     settings.firstOrNull { it.matches(scriptDefinition) }?.enabled ?: true
+
+internal val explicitTemplateDelimiters: Array<String> = arrayOf(":", ",", ";", "\n", "\t", " ")
+
+internal fun parseExplicitTemplateInput(text: String): List<String> =
+    text.split(*explicitTemplateDelimiters).map { it.trim() }.filter { it.isNotEmpty() }
+
+internal fun ScriptDefinitionSettingsStateComponent.State.parsedExplicitTemplateClassNames(): List<String> =
+    parseExplicitTemplateInput(explicitTemplateClassNames)
+
+internal fun ScriptDefinitionSettingsStateComponent.State.parsedExplicitTemplateClasspath(): List<String> =
+    parseExplicitTemplateInput(explicitTemplateClasspath)
