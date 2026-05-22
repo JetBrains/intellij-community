@@ -42,7 +42,7 @@ class GradleHighlightingPerformanceTest : GradleCodeInsightTestCase() {
             fixture.doHighlighting()
             fixture.completeBasic()
           }
-        }.start(GradleHighlightingPerformanceTest::testPerformance)
+        }.runAsStressTest().start(GradleHighlightingPerformanceTest::testPerformance)
       }
     }
   }
@@ -72,7 +72,7 @@ class GradleHighlightingPerformanceTest : GradleCodeInsightTestCase() {
           val rangeMarkers = ArrayList<RangeMarker>()
           document.asSafely<DocumentEx>()?.processRangeMarkers { rangeMarkers.add(it) }
           rangeMarkers.forEach { marker -> document.asSafely<DocumentEx>()?.removeRangeMarker(marker as RangeMarkerEx) }
-        }.start(GradleHighlightingPerformanceTest::testCompletionPerformance)
+        }.runAsStressTest().start(GradleHighlightingPerformanceTest::testCompletionPerformance)
       }
     }
   }
