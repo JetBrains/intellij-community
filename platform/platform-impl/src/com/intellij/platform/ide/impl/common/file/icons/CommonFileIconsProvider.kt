@@ -66,7 +66,6 @@ private val iconsByExtension: Map<String, Icon> = mapOf(
   "py" to AllIcons.Language.Python,
   "pyi" to AllIcons.Language.Python,
   "rb" to AllIcons.Language.Ruby,
-  "rs" to AllIcons.FileTypes.Rust,
   "rst" to AllIcons.FileTypes.Rst,
   "sbt" to AllIcons.Language.Scala,
   "scala" to AllIcons.Language.Scala,

@@ -2951,7 +2951,6 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$FileTypes
 - sf:Properties:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Regexp:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Rst:org.jetbrains.jewel.ui.icon.IntelliJIconKey
-- sf:Rust:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:SourceMap:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Sql:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:SwiftLang:org.jetbrains.jewel.ui.icon.IntelliJIconKey

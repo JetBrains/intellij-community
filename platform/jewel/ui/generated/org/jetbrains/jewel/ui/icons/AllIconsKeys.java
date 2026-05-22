@@ -1411,9 +1411,6 @@ public final class AllIconsKeys {
     public static final @NotNull IntelliJIconKey Rst = new IntelliJIconKey("expui/fileTypes/rst.svg", "expui/fileTypes/rst.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
-    public static final @NotNull IntelliJIconKey Rust = new IntelliJIconKey("fileTypes/rust.svg", "expui/fileTypes/rust.svg", AllIconsKeys.class);
-    /** 16x16 */ 
-    @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey SourceMap = new IntelliJIconKey("expui/fileTypes/sourceMap.svg", "expui/fileTypes/sourceMap.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources

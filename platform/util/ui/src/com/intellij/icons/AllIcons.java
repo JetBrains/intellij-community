@@ -510,7 +510,6 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Properties = load("expui/fileTypes/properties.svg", "fileTypes/properties.svg", -1983560201, 0);
     /** 16x16 */ public static final @NotNull Icon Regexp = load("expui/fileTypes/regexp.svg", "fileTypes/regexp.svg", -1788323989, 0);
     /** 16x16 */ public static final @NotNull Icon Rst = load("expui/fileTypes/rst.svg", 1703404962, 2);
-    /** 16x16 */ public static final @NotNull Icon Rust = load("expui/fileTypes/rust.svg", "fileTypes/rust.svg", 2099645267, 0);
     /** 16x16 */ public static final @NotNull Icon SourceMap = load("expui/fileTypes/sourceMap.svg", -252663656, 2);
     /** 16x16 */ public static final @NotNull Icon Sql = load("expui/fileTypes/sql.svg", 649447332, 2);
     /** 16x16 */ public static final @NotNull Icon SwiftLang = load("expui/fileTypes/swiftLang.svg", 286491144, 2);

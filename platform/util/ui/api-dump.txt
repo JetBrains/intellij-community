@@ -469,7 +469,6 @@ f:com.intellij.icons.AllIcons$FileTypes
 - sf:Properties:javax.swing.Icon
 - sf:Regexp:javax.swing.Icon
 - sf:Rst:javax.swing.Icon
-- sf:Rust:javax.swing.Icon
 - sf:SourceMap:javax.swing.Icon
 - sf:Sql:javax.swing.Icon
 - sf:SwiftLang:javax.swing.Icon
