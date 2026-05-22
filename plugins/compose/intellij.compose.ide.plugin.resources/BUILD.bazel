@@ -243,11 +243,13 @@ jvm_library(
     "//plugins/compose/intellij.compose.ide.plugin.resources.android:ide-plugin-resources-android",
     "//plugins/compose/intellij.compose.ide.plugin.resources.android:ide-plugin-resources-android_test_lib",
     "@lib//:studio-test-platform",
+    "//platform/ide-core",
   ],
   runtime_deps = [
     ":ide-plugin-resources-tests",
     "//platform/platform-util-io:ide-util-io_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.compose.ide.plugin.resources.tests` end

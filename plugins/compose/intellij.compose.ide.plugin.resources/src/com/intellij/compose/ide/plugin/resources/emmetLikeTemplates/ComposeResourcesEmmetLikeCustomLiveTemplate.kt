@@ -4,10 +4,12 @@ package com.intellij.compose.ide.plugin.resources.emmetLikeTemplates
 import com.intellij.codeInsight.template.CustomLiveTemplateBase
 import com.intellij.codeInsight.template.CustomTemplateCallback
 import com.intellij.compose.ide.plugin.resources.ALL_STRING_TAGS
+import com.intellij.compose.ide.plugin.resources.ResourceType
 import com.intellij.compose.ide.plugin.resources.isComposeResourcesFile
 import com.intellij.compose.ide.plugin.shared.ComposeIdeBundle
 
 private val closingTagRegex = Regex(".*</(${ALL_STRING_TAGS.joinToString("|")})>\\s*")
+private val valuesDirectoryRegex = Regex("""values(?:-.+)?""")
 
 /**
  * A custom live template that provides Emmet-like abbreviations for Compose Multiplatform resource XML files.
@@ -58,8 +60,10 @@ internal class ComposeResourcesEmmetLikeCustomLiveTemplate : CustomLiveTemplateB
 
   override fun isApplicable(callback: CustomTemplateCallback, offset: Int, wrapping: Boolean): Boolean {
     val file = callback.file
+    val parentDirectoryName = file.parent?.name ?: return false
     return file.name.endsWith(".xml") &&
-           file.isComposeResourcesFile() &&
+           parentDirectoryName.matches(valuesDirectoryRegex) &&
+           file.isComposeResourcesFile(setOf(ResourceType.STRING.dirName)) &&
            !wrapping
   }
 
