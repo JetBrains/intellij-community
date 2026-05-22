@@ -625,18 +625,16 @@ public class JobUtilTest extends LightPlatformTestCase {
           }
           return true;
     })), indicator), null);
-    Future<?> future = AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
-      indicator.cancel();
-      cancelCalled.countDown();
-    }, 10, TimeUnit.MILLISECONDS);
-    long start = System.currentTimeMillis();
+    TimeoutUtil.sleep(10);
+    indicator.cancel();
+    cancelCalled.countDown();
     UsefulTestCase.assertThrows(ProcessCanceledException.class, ()-> {
+      long start = System.currentTimeMillis();
       boolean result = job.waitForCompletion(10_000);
       LOG.debug("wtf? counter: "+counter+"; indicator:"+indicator+"; result:"+result+"; elapsed="+(System.currentTimeMillis()-start)+"ms");
     });
     assertTrue(job.isDone());
     assertTrue(counter.toString(), counter.get() < N);
-    future.get();
   }
 
   public void testExecuteAllMustBeResponsiveToTheIndicatorCancelWhenWaitsEvenForExtraCoarseGranularTasksStress() throws Throwable {
