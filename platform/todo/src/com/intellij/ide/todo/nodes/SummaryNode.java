@@ -17,6 +17,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import static com.intellij.ide.todo.TodoImplementationChooserKt.shouldUseSplitTodo;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -30,6 +31,28 @@ public class SummaryNode extends BaseToDoNode<ToDoSummary> {
   @Override
   public @NotNull Collection<? extends AbstractTreeNode<?>> getChildren() {
     ArrayList<AbstractTreeNode<?>> children = new ArrayList<>();
+
+    if (shouldUseSplitTodo()) {
+      for (Iterator<? extends PsiFile> i = myBuilder.getAllFiles(); i.hasNext(); ) {
+        PsiFile psiFile = i.next();
+        if (psiFile == null) {
+          continue;
+        }
+
+        VirtualFile virtualFile = psiFile.getVirtualFile();
+        if (virtualFile == null || myBuilder.getCachedRemoteTodos(virtualFile).isEmpty()) {
+          continue;
+        }
+
+        TodoFileNode fileNode = new TodoFileNode(getProject(), psiFile, myBuilder, false);
+        if (!children.contains(fileNode)) {
+          children.add(fileNode);
+        }
+      }
+
+      children.sort(TodoFileDirAndModuleComparator.INSTANCE);
+      return children;
+    }
 
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
     if (myToDoSettings.isModulesShown()) {
