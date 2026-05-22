@@ -4,10 +4,13 @@ package com.intellij.ui.components
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.JBColor
+import com.intellij.ui.popup.PopupOwner
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
+import java.awt.Point
 import java.awt.event.InputEvent
 import java.awt.event.MouseEvent
 import javax.swing.Icon
@@ -17,7 +20,7 @@ private const val disclosureButtonID = "DisclosureButtonUI"
 
 
 @ApiStatus.Internal
-class DisclosureButton(@NlsContexts.Button text: String? = null) : JButton(text) {
+open class DisclosureButton(@NlsContexts.Button text: String? = null) : JButton(text), PopupOwner {
   companion object {
     fun createSmallButton(@NlsContexts.Button text: String? = null): DisclosureButton {
       return DisclosureButton(text).apply {
@@ -151,6 +154,10 @@ class DisclosureButton(@NlsContexts.Button text: String? = null) : JButton(text)
 
   override fun getUIClassID(): String {
     return disclosureButtonID
+  }
+
+  override fun getBestPopupPosition(): Point {
+    return Point(width + JBUI.scale(4), insets.top)
   }
 
   internal fun invokeAdditionalAction(e: MouseEvent) {

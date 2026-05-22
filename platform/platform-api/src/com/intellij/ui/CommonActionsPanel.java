@@ -23,6 +23,7 @@ import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.popup.PopupOwner;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
@@ -335,9 +336,37 @@ public final class CommonActionsPanel extends JPanel {
                                  comp instanceof JComponent o ? ClientProperty.get(o, CustomComponentAction.ACTION_KEY) : null;
       if (componentAction == action ||
           (componentAction instanceof ActionWithDelegate<?> && ((ActionWithDelegate<?>)componentAction).getDelegate() == action)) {
-        return new RelativePoint(comp.getParent(), new Point(comp.getX(), comp.getY() + comp.getHeight()));
+        return getPopupPoint(comp);
       }
     }
+    return null;
+  }
+
+  private static RelativePoint getPopupPoint(Component component) {
+    if (component instanceof PopupOwner) {
+      RelativePoint relativePoint = getPointForPopupOwner(component);
+      if (relativePoint != null) {
+        // if we can find one based on PopupOwner use it. If not, fall back out to the original behavior
+        return relativePoint;
+      }
+    }
+
+    Point point = new Point(component.getX(), component.getY() + component.getHeight());
+    return new RelativePoint(component.getParent(), point);
+  }
+
+  private static @Nullable RelativePoint getPointForPopupOwner(Component component) {
+    if (component instanceof PopupOwner popupOwner) {
+      Component popupDelegate = popupOwner.getPopupComponent();
+      Point bestPopupPosition = popupOwner.getBestPopupPosition();
+      if (popupDelegate == null || popupDelegate == component) {
+        return bestPopupPosition == null ? null : new RelativePoint(component, bestPopupPosition);
+      }
+      else {
+        return getPointForPopupOwner(popupDelegate);
+      }
+    }
+
     return null;
   }
 
