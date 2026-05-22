@@ -13,7 +13,6 @@ import com.intellij.history.core.ChangeListImpl
 import com.intellij.history.core.InMemoryChangeListStorage
 import com.intellij.history.core.LocalHistoryFacade
 import com.intellij.history.core.PersistentChangeListStorage
-import com.intellij.history.core.changes.Change
 import com.intellij.history.core.changes.ChangeSet
 import com.intellij.history.core.changes.PutLabelChange
 import com.intellij.history.core.collectChanges
@@ -224,12 +223,13 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
     val path = gateway.getPathOrUrl(file)
 
     var targetChangeSet: ChangeSet? = null
-    var targetChange: Change? = null
+    var targetChange: PutLabelChange? = null
     val targetPaths = mutableSetOf(path)
 
+    // TODO: stop collecting when the label change is found
     facade.collectChanges(path, ChangeAndPathProcessor(project.locationHash, null, targetPaths::add) { changeSet: ChangeSet ->
       val change = changeSet.changes.firstOrNull { it.id == labelId }
-      if (change != null) {
+      if (change != null && change is PutLabelChange) {
         targetChangeSet = changeSet
         targetChange = change
       }
@@ -241,13 +241,13 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
 
     val rootEntry = runReadActionBlocking { gateway.createTransientRootEntryForPaths(targetPaths, true) }
     val leftEntry = facade.findEntry(rootEntry, RevisionId.ChangeSet(targetChangeSet.id), path,
-                                       /*do not revert the change itself*/false)
+                                     /*do not revert the change itself*/false)
     val rightEntry = rootEntry.findEntry(path)
     val diff = Entry.getDifferencesBetween(leftEntry, rightEntry, true)
     if (diff.isEmpty()) return // nothing to revert
 
     val reverter = DifferenceReverter(project, facade, gateway, diff) {
-      getRevertCommandName((targetChange as? PutLabelChange)?.name, targetChangeSet.timestamp, false)
+      getRevertCommandName(targetChange.name, targetChangeSet.timestamp, false)
     }
     try {
       reverter.revert()
