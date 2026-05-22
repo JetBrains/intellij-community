@@ -38,6 +38,18 @@ interface PyDebugBackendRunner : ProgramRunner<RunnerSettings> {
 @ApiStatus.Internal
 val DEFAULT_PY_DEBUGGER_BACKEND: PyDebuggerBackend = PyDebuggerBackend.DEBUGPY
 
+/**
+ * Returns the backend that will actually be used given the user's stored preference and the
+ * current debugpy availability. [PyDebuggerBackend.DEBUGPY] collapses to [PyDebuggerBackend.PYDEVD]
+ * when debugpy cannot run in the project's current state; [PyDebuggerBackend.PYDEVD] always passes
+ * through. The availability flag is supplied by the caller because the predicate lives in the DAP
+ * plugin and cannot be referenced from this module.
+ */
+@ApiStatus.Internal
+fun resolveEffectiveBackend(storedBackend: PyDebuggerBackend, isDebugpyAvailable: Boolean): PyDebuggerBackend =
+  if (storedBackend == PyDebuggerBackend.DEBUGPY && !isDebugpyAvailable) PyDebuggerBackend.PYDEVD
+  else storedBackend
+
 internal fun findPyDebugBackendRunner(executorId: String, profile: RunProfile): PyDebugBackendRunner? {
   val runners = PyDebugBackendRunner.EP_NAME.extensionList
   return runners.findBackendRunner(PyDebuggerBackend.DEBUGPY, executorId, profile)
