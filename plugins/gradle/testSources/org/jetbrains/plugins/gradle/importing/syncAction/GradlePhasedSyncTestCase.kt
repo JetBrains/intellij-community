@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gradle.importing.syncAction
 
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
-import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase.Dynamic.Companion.asSyncPhase
 import java.util.concurrent.atomic.AtomicReference
 
 abstract class GradlePhasedSyncTestCase : GradleProjectResolverTestCase() {
@@ -36,7 +35,6 @@ abstract class GradlePhasedSyncTestCase : GradleProjectResolverTestCase() {
   companion object {
 
     val DEFAULT_MODEL_FETCH_PHASES: List<GradleModelFetchPhase> = listOf(
-      GradleModelFetchPhase.PROJECT_LOADED_PHASE,
       GradleModelFetchPhase.PROJECT_MODEL_PHASE,
       GradleModelFetchPhase.PROJECT_SOURCE_SET_PHASE,
       GradleModelFetchPhase.PROJECT_SOURCE_SET_DEPENDENCY_PHASE,
@@ -44,14 +42,23 @@ abstract class GradlePhasedSyncTestCase : GradleProjectResolverTestCase() {
       GradleModelFetchPhase.ADDITIONAL_MODEL_PHASE,
     )
 
+    val DEFAULT_PROJECT_LOADED_MODEL_FETCH_PHASES: List<GradleModelFetchPhase> =
+      DEFAULT_MODEL_FETCH_PHASES.filterIsInstance<GradleModelFetchPhase.ProjectLoaded>()
+
+    val DEFAULT_BUILD_FINISHED_MODEL_FETCH_PHASES: List<GradleModelFetchPhase> =
+      DEFAULT_MODEL_FETCH_PHASES.filterIsInstance<GradleModelFetchPhase.BuildFinished>()
+
     val DEFAULT_SYNC_PHASES: List<GradleSyncPhase> = listOf(
       GradleSyncPhase.INITIAL_PHASE,
-      GradleSyncPhase.DECLARATIVE_PHASE,
-      GradleModelFetchPhase.PROJECT_LOADED_PHASE.asSyncPhase(),
       GradleSyncPhase.PROJECT_MODEL_PHASE,
       GradleSyncPhase.SOURCE_SET_MODEL_PHASE,
-      GradleSyncPhase.DEPENDENCY_MODEL_PHASE,
       GradleSyncPhase.ADDITIONAL_MODEL_PHASE
     )
+
+    val DEFAULT_STATIC_SYNC_PHASES: List<GradleSyncPhase> =
+      DEFAULT_SYNC_PHASES.filterIsInstance<GradleSyncPhase.Static>()
+
+    val DEFAULT_DYNAMIC_SYNC_PHASES: List<GradleSyncPhase> =
+      DEFAULT_SYNC_PHASES.filterIsInstance<GradleSyncPhase.Dynamic>()
   }
 }

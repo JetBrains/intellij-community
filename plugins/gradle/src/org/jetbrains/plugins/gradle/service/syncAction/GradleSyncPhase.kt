@@ -19,13 +19,17 @@ import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase.Dynamic.C
  *
  * To simplify this "replace entirely" semantics, the sync storage accumulates contributed
  * entities within one phase class and is reset when transitioning to the next class.
+ *
+ * A phase is executed only when at least one [GradleSyncContributor] is registered for it.
+ * [org.jetbrains.plugins.gradle.service.syncAction.impl.GradleSyncProjectConfigurator] is the only
+ * component that owns this guarantee; declaring a phase constant does not schedule it by itself.
  */
 @Experimental
 @NonExtendable
 sealed interface GradleSyncPhase : Comparable<GradleSyncPhase> {
 
   /**
-   * This name is used for the Gradle model fetch identification.
+   * This name is used for the Gradle sync phase identification.
    * For example, in open telemetry and IntelliJ logs.
    */
   val name: String
@@ -52,7 +56,7 @@ sealed interface GradleSyncPhase : Comparable<GradleSyncPhase> {
    */
   @Internal
   @NonExtendable
-  sealed interface BaseScript: GradleSyncPhase
+  sealed interface BaseScript : GradleSyncPhase
 
   /**
    * In these phases, Gradle sync contributors are executed when models for [modelFetchPhase] are collected on the Gradle daemon side.
@@ -76,7 +80,7 @@ sealed interface GradleSyncPhase : Comparable<GradleSyncPhase> {
    */
   @Internal
   @NonExtendable
-  sealed interface DataServices: GradleSyncPhase
+  sealed interface DataServices : GradleSyncPhase
 
   companion object {
 
@@ -210,7 +214,7 @@ private class GradleDynamicSyncPhase(
   }
 }
 
-private data object GradleBaseScriptSyncPhase: GradleSyncPhase.BaseScript {
+private data object GradleBaseScriptSyncPhase : GradleSyncPhase.BaseScript {
 
   override val name: String = "BASE_SCRIPT_MODEL"
 
@@ -224,7 +228,7 @@ private data object GradleBaseScriptSyncPhase: GradleSyncPhase.BaseScript {
   }
 }
 
-private class GradleDataServicesSyncPhase: GradleSyncPhase.DataServices {
+private class GradleDataServicesSyncPhase : GradleSyncPhase.DataServices {
 
   override val name: String = "DATA_SERVICES"
 

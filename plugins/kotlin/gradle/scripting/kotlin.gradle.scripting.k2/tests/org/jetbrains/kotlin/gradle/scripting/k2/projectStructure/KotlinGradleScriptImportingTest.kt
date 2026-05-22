@@ -27,22 +27,24 @@ import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsS
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleFixture
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.buildScriptName
+import org.jetbrains.plugins.gradle.testFramework.projectInfo.gradleProjectInfo
+import org.jetbrains.plugins.gradle.testFramework.projectInfo.gradleWrapper
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.initProject
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.settingsScriptName
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.simpleJavaProjectInfo
+import org.jetbrains.plugins.gradle.testFramework.projectInfo.simpleJavaRootModuleInfo
+import org.jetbrains.plugins.gradle.testFramework.projectInfo.simpleSettingsFile
 import org.jetbrains.plugins.gradle.testFramework.util.KOTLIN_DSL_BASE_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS
 import org.jetbrains.plugins.gradle.testFramework.util.KOTLIN_DSL_BASE_SCRIPTS_MODEL_IMPORT_UNSUPPORTED_VERSIONS
 import org.jetbrains.plugins.gradle.testFramework.util.KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.gradleProjectInfo
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.gradleWrapper
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.simpleJavaRootModuleInfo
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.simpleSettingsFile
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.params.ParameterizedClass
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.function.Predicate
 
 @UseK2PluginMode
@@ -75,6 +77,10 @@ class KotlinGradleScriptImportingTest {
         @Test
         fun `test base script model is loaded when settings script has compilation errors`() =
             `test base script model is loaded when settings script has compilation errors`(gradle)
+
+        @Test
+        fun `test Kotlin DSL sync phases order`() =
+            `test Kotlin DSL sync phases order`(gradle)
     }
 
     @Nested
@@ -92,6 +98,10 @@ class KotlinGradleScriptImportingTest {
         @Test
         fun `test script entities visibility at sync phases`(): Unit =
             `test script entities visibility at sync phases`(gradle)
+
+        @Test
+        fun `test Kotlin DSL sync phases order`() =
+            `test Kotlin DSL sync phases order`(gradle)
     }
 
     fun `test base script model is applied to files not opened in editor`(gradle: GradleTestFixture) = runBlocking {
@@ -130,6 +140,34 @@ class KotlinGradleScriptImportingTest {
             }
             assertSingle(BASE_SCRIPT_MODEL_PHASE, entitiesAtPhase) {
                 "Expected script entities at $BASE_SCRIPT_MODEL_PHASE"
+            }
+        }
+    }
+
+    fun `test Kotlin DSL sync phases order`(gradle: GradleTestFixture) = runBlocking {
+        val projectInfo = simpleJavaProjectInfo(gradle.gradleVersion)
+        val projectRoot = initProject(testRoot, projectInfo)
+        val expectedPhases = buildList {
+            add(GradleSyncPhase.INITIAL_PHASE)
+            if (GradleVersionSpecificsUtil.isBaseScriptModelSupported(gradle.gradleVersion)) {
+                add(BASE_SCRIPT_MODEL_PHASE)
+            }
+            add(GradleSyncPhase.PROJECT_MODEL_PHASE)
+            add(GradleSyncPhase.SOURCE_SET_MODEL_PHASE)
+            add(SCRIPT_MODEL_PHASE)
+            add(GradleSyncPhase.ADDITIONAL_MODEL_PHASE)
+        }
+        val completedPhases = CopyOnWriteArrayList<GradleSyncPhase>()
+
+        whenSyncPhaseCompleted(asDisposable()) { _, phase ->
+            if (phase in expectedPhases) {
+                completedPhases.add(phase)
+            }
+        }
+
+        gradle.openProject(projectRoot).useProjectAsync {
+            assertEquals(expectedPhases, completedPhases) {
+                "Kotlin DSL sync phases should be completed together with default Gradle sync phases"
             }
         }
     }

@@ -4,6 +4,13 @@ package com.intellij.gradle.toolingExtension.modelAction
 import org.jetbrains.annotations.ApiStatus
 import java.io.Serializable
 
+/**
+ * Represents a possible Gradle model fetch phase.
+ *
+ * A phase is executed only when at least one [org.jetbrains.plugins.gradle.model.ProjectImportModelProvider]
+ * is registered for it. The Gradle model fetch action is the only component that owns this guarantee;
+ * declaring a phase constant does not schedule it by itself.
+ */
 @ApiStatus.Experimental
 sealed interface GradleModelFetchPhase : Comparable<GradleModelFetchPhase>, Serializable {
 
@@ -80,7 +87,7 @@ sealed interface GradleModelFetchPhase : Comparable<GradleModelFetchPhase>, Seri
     val PROJECT_SOURCE_SET_DEPENDENCY_PHASE: GradleModelFetchPhase = BuildFinished(2000, "DEPENDENCY_MODEL_PHASE")
 
     /**
-     *
+     * In this phase, Gradle model providers fetch a full classpath model for Gradle script files.
      */
     @JvmField
     val SCRIPT_MODEL_PHASE: GradleModelFetchPhase = BuildFinished(3000, "SCRIPT_MODEL_PHASE")
