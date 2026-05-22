@@ -183,7 +183,6 @@ internal class DynamicPluginsSupportImpl(
               application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginUnload(plugin, isUpdate)
             }
           }
-          IdeEventQueue.getInstance().flushQueue() // TODO get rid of this ?
         }
 
         classloadersToUnload.addAll(groupsToUnload.mapNotNull { getAssociatedClassloader(it) as? PluginClassLoader })
