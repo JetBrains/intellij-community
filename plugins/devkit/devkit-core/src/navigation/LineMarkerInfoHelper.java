@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
@@ -54,6 +54,7 @@ final class LineMarkerInfoHelper {
                                                                                       @NotNull PsiElement element) {
     return createPluginLineMarkerInfo(targets, element,
                                       DevKitBundle.message("gutter.related.navigation.choose.extension"),
+                                      DevkitCoreIcons.Gutter.Plugin,
                                       (NullableFunction<Extension, String>)extension ->
                                         getExtensionPointName(extension.getExtensionPoint()));
   }
@@ -62,6 +63,7 @@ final class LineMarkerInfoHelper {
                                                                                            @NotNull PsiElement element) {
     return createPluginLineMarkerInfo(targets, element,
                                       DevKitBundle.message("gutter.related.navigation.choose.extension.point"),
+                                      DevkitCoreIcons.Gutter.ExtensionPoint,
                                       (NullableFunction<ExtensionPoint, String>)extensionPoint -> getExtensionPointName(extensionPoint));
   }
 
@@ -69,6 +71,7 @@ final class LineMarkerInfoHelper {
                                                                             @NotNull PsiElement element) {
     return createPluginLineMarkerInfo(targets, element,
                                       DevKitBundle.message("gutter.related.navigation.choose.listener"),
+                                      DevkitCoreIcons.Gutter.Plugin,
                                       (NullableFunction<Listeners.Listener, String>)listener ->
                                         listener.getTopicClassName().getStringValue());
   }
@@ -77,6 +80,7 @@ final class LineMarkerInfoHelper {
                                                                                  @NotNull PsiElement element) {
     return createPluginLineMarkerInfo(targets, element,
                                       DevKitBundle.message("gutter.related.navigation.choose.listener"),
+                                      DevkitCoreIcons.Gutter.Plugin,
                                       (NullableFunction<Listeners.Listener, String>)listener ->
                                         listener.getListenerClassName().getStringValue());
   }
@@ -84,30 +88,35 @@ final class LineMarkerInfoHelper {
   static RelatedItemLineMarkerInfo<?> createActionLineMarkerInfo(List<? extends ActionCandidate> targets, PsiElement element) {
     return createPluginLineMarkerInfo(targets, element,
                                       DevKitBundle.message("gutter.related.navigation.choose.action"),
+                                      DevkitCoreIcons.Gutter.Plugin,
                                       (NullableFunction<Action, String>)action -> action.getEffectiveId());
   }
 
   static RelatedItemLineMarkerInfo<?> createActionGroupLineMarkerInfo(List<? extends ActionCandidate> targets, PsiElement element) {
     return createPluginLineMarkerInfo(targets, element,
                                       DevKitBundle.message("gutter.related.navigation.choose.action.group"),
+                                      DevkitCoreIcons.Gutter.Plugin,
                                       (NullableFunction<Group, String>)group -> group.getEffectiveId());
   }
 
   static RelatedItemLineMarkerInfo<?> createComponentLineMarkerInfo(List<? extends ComponentCandidate> targets, PsiElement element) {
     return createPluginLineMarkerInfo(targets, element,
                                       DevKitBundle.message("gutter.related.navigation.choose.component"),
+                                      DevkitCoreIcons.Gutter.Plugin,
                                       (NullableFunction<Component, String>)component ->
                                         component.getImplementationClass().getStringValue());
   }
 
 
-  private static <T extends DomElement> @NotNull RelatedItemLineMarkerInfo<PsiElement>
-  createPluginLineMarkerInfo(@NotNull List<? extends PointableCandidate> targets,
-                             @NotNull PsiElement element,
-                             @Nls(capitalization = Nls.Capitalization.Title) String popup,
-                             NullableFunction<T, @NlsSafe String> namer) {
+  private static <T extends DomElement> @NotNull RelatedItemLineMarkerInfo<PsiElement> createPluginLineMarkerInfo(
+    @NotNull List<? extends PointableCandidate> targets,
+    @NotNull PsiElement element,
+    @Nls(capitalization = Nls.Capitalization.Title) String popup,
+    Icon icon,
+    NullableFunction<T, @NlsSafe String> namer
+  ) {
     return NavigationGutterIconBuilder
-      .create(DevkitCoreIcons.Gutter.Plugin, CONVERTER, target -> {
+      .create(icon, CONVERTER, target -> {
         DomElement domElement = DomUtil.getDomElement(target.pointer.getElement());
         return Collections.singletonList(new DomGotoRelatedItem(domElement, "DevKit") {
           @Override
