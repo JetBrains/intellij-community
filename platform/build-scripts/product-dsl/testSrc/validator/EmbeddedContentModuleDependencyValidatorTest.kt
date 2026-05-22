@@ -28,7 +28,7 @@ class EmbeddedContentModuleDependencyValidatorTest {
         module("core.embedded", EMBEDDED)
       }
       plugin("structure.plugin") {
-        content("structure.impl", OPTIONAL)
+        content("structure.impl", loading = OPTIONAL)
       }
       linkContentModuleDeps("core.embedded", "structure.impl")
     }
@@ -91,7 +91,7 @@ class EmbeddedContentModuleDependencyValidatorTest {
         module("core.required", REQUIRED)
       }
       plugin("structure.plugin") {
-        content("structure.impl", OPTIONAL)
+        content("structure.impl", loading = OPTIONAL)
       }
       linkContentModuleDeps("core.required", "structure.impl")
     }
@@ -111,7 +111,7 @@ class EmbeddedContentModuleDependencyValidatorTest {
         module("core.embedded", EMBEDDED)
       }
       plugin("not.bundled") {
-        content("external.impl", OPTIONAL)
+        content("external.impl", loading = OPTIONAL)
       }
       linkContentModuleDeps("core.embedded", "external.impl")
     }

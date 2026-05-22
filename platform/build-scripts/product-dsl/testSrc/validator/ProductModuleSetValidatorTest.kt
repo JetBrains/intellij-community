@@ -132,7 +132,7 @@ class ProductModuleSetValidatorTest {
               includesModuleSet("core")
           }
           plugin("my.plugin") {
-              content("plugin.module", ModuleLoadingRuleValue.OPTIONAL)
+              content("plugin.module", loading = ModuleLoadingRuleValue.OPTIONAL)
           }
           moduleSet("core") {
               moduleWithDeps("module.a", ModuleLoadingRuleValue.REQUIRED, "plugin.module")
@@ -161,7 +161,7 @@ class ProductModuleSetValidatorTest {
           // global.module exists as content in another plugin (not bundled by IDEA)
           // This makes it "globally available" - it has a content source somewhere
           plugin("other.plugin") {
-              content("global.module", ModuleLoadingRuleValue.OPTIONAL)
+              content("global.module", loading = ModuleLoadingRuleValue.OPTIONAL)
           }
           // Set up content module dependencies
           linkContentModuleDeps("module.a", "global.module")
@@ -218,7 +218,7 @@ class ProductModuleSetValidatorTest {
           // missing.dep exists globally (has content source) but not in this product
           // Critical modules can't rely on global availability
           plugin("other.plugin") {
-              content("missing.dep", ModuleLoadingRuleValue.OPTIONAL)
+              content("missing.dep", loading = ModuleLoadingRuleValue.OPTIONAL)
           }
           linkContentModuleDeps("critical.module", "missing.dep")
       }

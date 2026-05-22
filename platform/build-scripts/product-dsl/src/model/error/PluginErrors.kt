@@ -5,6 +5,7 @@ package org.jetbrains.intellij.build.productLayout.model.error
 
 import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginGraph.PluginId
+import com.intellij.platform.pluginGraph.PluginModuleId
 import com.intellij.platform.pluginGraph.TargetName
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import org.jetbrains.intellij.build.productLayout.model.ModuleSourceInfo
@@ -97,7 +98,7 @@ data class MissingContentModulePluginDependencyError(
  */
 data class DuplicatePluginContentModulesError(
   override val context: String,
-  @JvmField val duplicates: Map<ContentModuleName, List<PluginOwner>>,
+  @JvmField val duplicates: LinkedHashMap<PluginModuleId, List<PluginOwner>>,
   override val ruleName: String = "PluginContentDuplicatesValidation",
 ) : ValidationError {
   override val category: ErrorCategory get() = ErrorCategory.PLUGIN_CONTENT_DUPLICATE
@@ -107,8 +108,8 @@ data class DuplicatePluginContentModulesError(
   override fun format(s: AnsiStyle): String = buildString {
     appendLine("${s.red}${s.bold}Product '${context}' has content modules declared by multiple bundled plugins${s.reset}")
     appendLine()
-    for ((moduleName, owners) in duplicates.entries.sortedBy { it.key.value }) {
-      appendLine("  ${s.red}*${s.reset} ${s.bold}${moduleName.value}${s.reset}")
+    for ((moduleId, owners) in duplicates.entries.sortedBy { it.key }) {
+      appendLine("  ${s.red}*${s.reset} ${s.bold}${moduleId}${s.reset}")
       for (owner in owners) {
         val typeSuffix = if (owner.isTestPlugin) " (test)" else ""
         appendLine("      - ${owner.pluginName.value}$typeSuffix")

@@ -626,7 +626,7 @@ internal object ModelBuildingStage {
 
       // Additional modules (product content)
       for (module in spec.additionalModules) {
-        builder.linkProductContainsContent(product.name, module.contentName(), module.loading)
+        builder.linkProductContainsContent(product.name, module.moduleId, module.loading)
       }
 
       // allowed missing dependencies (for validation)

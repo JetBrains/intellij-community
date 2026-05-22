@@ -32,7 +32,7 @@ class ContentModuleDependencyValidatorTest {
               bundlesPlugin("my.plugin")
           }
           plugin("my.plugin") {
-              content("plugin.module", ModuleLoadingRuleValue.EMBEDDED)
+              content("plugin.module", loading = ModuleLoadingRuleValue.EMBEDDED)
           }
           // Set up content module dependencies (Module -> Module edges)
           linkContentModuleDeps("plugin.module", "dep.module")
@@ -58,7 +58,7 @@ class ContentModuleDependencyValidatorTest {
               includesModuleSet("core")
           }
           plugin("my.plugin") {
-              content("plugin.module", ModuleLoadingRuleValue.REQUIRED)
+              content("plugin.module", loading = ModuleLoadingRuleValue.REQUIRED)
           }
           moduleSet("core") {
               module("available.module")
@@ -81,8 +81,8 @@ class ContentModuleDependencyValidatorTest {
               bundlesPlugin("my.plugin")
           }
           plugin("my.plugin") {
-              content("plugin.module.a", ModuleLoadingRuleValue.REQUIRED)
-              content("plugin.module.b", ModuleLoadingRuleValue.REQUIRED)
+              content("plugin.module.a", loading = ModuleLoadingRuleValue.REQUIRED)
+              content("plugin.module.b", loading = ModuleLoadingRuleValue.REQUIRED)
           }
           // Set up content module dependencies
           linkContentModuleDeps("plugin.module.a", "plugin.module.b")
@@ -103,12 +103,12 @@ class ContentModuleDependencyValidatorTest {
               // Note: other.plugin is NOT bundled by IDEA
           }
           plugin("my.plugin") {
-              content("plugin.module", ModuleLoadingRuleValue.OPTIONAL)
+              content("plugin.module", loading = ModuleLoadingRuleValue.OPTIONAL)
           }
           // global.module exists as content in another plugin (not bundled by IDEA)
           // This makes it "globally available" - it has a content source somewhere
           plugin("other.plugin") {
-              content("global.module", ModuleLoadingRuleValue.OPTIONAL)
+              content("global.module", loading = ModuleLoadingRuleValue.OPTIONAL)
           }
           // Set up content module dependencies - global.module exists but not in IDEA
           linkContentModuleDeps("plugin.module", "global.module")
@@ -129,7 +129,7 @@ class ContentModuleDependencyValidatorTest {
               bundlesPlugin("my.plugin")
           }
           plugin("my.plugin") {
-              content("platform.lang", ModuleLoadingRuleValue.EMBEDDED)
+              content("platform.lang", loading = ModuleLoadingRuleValue.EMBEDDED)
           }
           // Production deps - available.module is satisfied
           linkContentModuleDeps("platform.lang", "available.module")
@@ -140,7 +140,7 @@ class ContentModuleDependencyValidatorTest {
 
           // Make available.module actually available in the product
           plugin("my.plugin") {
-              content("available.module", ModuleLoadingRuleValue.OPTIONAL)
+              content("available.module", loading = ModuleLoadingRuleValue.OPTIONAL)
           }
       }
 
@@ -159,7 +159,7 @@ class ContentModuleDependencyValidatorTest {
               allowsMissing("allowed.missing")
           }
           plugin("my.plugin") {
-              content("plugin.module", ModuleLoadingRuleValue.EMBEDDED)
+              content("plugin.module", loading = ModuleLoadingRuleValue.EMBEDDED)
           }
           linkContentModuleDeps("plugin.module", "allowed.missing")
       }
@@ -192,13 +192,13 @@ class ContentModuleDependencyValidatorTest {
               bundlesPlugin("plugin.b")
           }
           plugin("plugin.a") {
-              content("shared.module", ModuleLoadingRuleValue.REQUIRED)  // Critical
-              content("available.dep", ModuleLoadingRuleValue.OPTIONAL)
+              content("shared.module", loading = ModuleLoadingRuleValue.REQUIRED)  // Critical
+              content("available.dep", loading = ModuleLoadingRuleValue.OPTIONAL)
           }
           plugin("plugin.b") {
               content(
                   "shared.module",
-                  ModuleLoadingRuleValue.OPTIONAL
+                  loading = ModuleLoadingRuleValue.OPTIONAL
               )  // Not critical, but shared.module is still critical due to plugin.a
           }
           linkContentModuleDeps("shared.module", "available.dep")
@@ -221,10 +221,10 @@ class ContentModuleDependencyValidatorTest {
               bundlesPlugin("plugin.b")
           }
           plugin("plugin.a") {
-              content("shared.module", ModuleLoadingRuleValue.OPTIONAL)
+              content("shared.module", loading = ModuleLoadingRuleValue.OPTIONAL)
           }
           plugin("plugin.b") {
-              content("shared.module", ModuleLoadingRuleValue.EMBEDDED)  // Makes it critical
+              content("shared.module", loading = ModuleLoadingRuleValue.EMBEDDED)  // Makes it critical
           }
           // missing.dep exists globally but not in this product - critical modules can't rely on global availability
           linkContentModuleDeps("shared.module", "missing.dep")
@@ -253,15 +253,15 @@ class ContentModuleDependencyValidatorTest {
               // Note: plugin.other is NOT bundled by IDEA
           }
           plugin("plugin.a") {
-              content("shared.module", ModuleLoadingRuleValue.OPTIONAL)
+              content("shared.module", loading = ModuleLoadingRuleValue.OPTIONAL)
           }
           plugin("plugin.b") {
-              content("shared.module", ModuleLoadingRuleValue.OPTIONAL)
+              content("shared.module", loading = ModuleLoadingRuleValue.OPTIONAL)
           }
           // global.dep is declared as content in another plugin (not bundled by IDEA)
           // This makes it "globally available" - it has a content source somewhere
           plugin("plugin.other") {
-              content("global.dep", ModuleLoadingRuleValue.OPTIONAL)
+              content("global.dep", loading = ModuleLoadingRuleValue.OPTIONAL)
           }
           linkContentModuleDeps("shared.module", "global.dep")
       }
@@ -280,15 +280,15 @@ class ContentModuleDependencyValidatorTest {
               // Note: plugin.other is NOT bundled by IDEA
           }
           plugin("plugin.a") {
-              content("shared.module", ModuleLoadingRuleValue.ON_DEMAND)
+              content("shared.module", loading = ModuleLoadingRuleValue.ON_DEMAND)
           }
           plugin("plugin.b") {
-              content("shared.module", ModuleLoadingRuleValue.ON_DEMAND)
+              content("shared.module", loading = ModuleLoadingRuleValue.ON_DEMAND)
           }
           // global.dep is declared as content in another plugin (not bundled by IDEA)
           // This makes it "globally available" - it has a content source somewhere
           plugin("plugin.other") {
-              content("global.dep", ModuleLoadingRuleValue.OPTIONAL)
+              content("global.dep", loading = ModuleLoadingRuleValue.OPTIONAL)
           }
           linkContentModuleDeps("shared.module", "global.dep")
       }
@@ -306,10 +306,10 @@ class ContentModuleDependencyValidatorTest {
               bundlesPlugin("plugin.b")
           }
           plugin("plugin.a") {
-              content("shared.module", ModuleLoadingRuleValue.ON_DEMAND)
+              content("shared.module", loading = ModuleLoadingRuleValue.ON_DEMAND)
           }
           plugin("plugin.b") {
-              content("shared.module", ModuleLoadingRuleValue.REQUIRED)  // Makes it critical
+              content("shared.module", loading = ModuleLoadingRuleValue.REQUIRED)  // Makes it critical
           }
           linkContentModuleDeps("shared.module", "missing.dep")
       }
@@ -331,13 +331,13 @@ class ContentModuleDependencyValidatorTest {
               bundlesPlugin("plugin.c")
           }
           plugin("plugin.a") {
-              content("shared.module", ModuleLoadingRuleValue.OPTIONAL)
+              content("shared.module", loading = ModuleLoadingRuleValue.OPTIONAL)
           }
           plugin("plugin.b") {
-              content("shared.module", ModuleLoadingRuleValue.ON_DEMAND)
+              content("shared.module", loading = ModuleLoadingRuleValue.ON_DEMAND)
           }
           plugin("plugin.c") {
-              content("shared.module", ModuleLoadingRuleValue.EMBEDDED)  // Makes it critical
+              content("shared.module", loading = ModuleLoadingRuleValue.EMBEDDED)  // Makes it critical
           }
           linkContentModuleDeps("shared.module", "missing.dep")
       }
@@ -359,11 +359,11 @@ class ContentModuleDependencyValidatorTest {
               bundlesPlugin("plugin.b")
           }
           plugin("plugin.a") {
-              content("shared.module", ModuleLoadingRuleValue.EMBEDDED)
+              content("shared.module", loading = ModuleLoadingRuleValue.EMBEDDED)
           }
           plugin("plugin.b") {
-              content("shared.module", ModuleLoadingRuleValue.OPTIONAL)
-              content("dep.module", ModuleLoadingRuleValue.REQUIRED)
+              content("shared.module", loading = ModuleLoadingRuleValue.OPTIONAL)
+              content("dep.module", loading = ModuleLoadingRuleValue.REQUIRED)
           }
           linkContentModuleDeps("shared.module", "dep.module")
       }
@@ -385,16 +385,16 @@ class ContentModuleDependencyValidatorTest {
               includesModuleSet("core")
           }
           plugin("plugin.a") {
-              content("module.x", ModuleLoadingRuleValue.OPTIONAL)
-              content("module.y", ModuleLoadingRuleValue.EMBEDDED)
+              content("module.x", loading = ModuleLoadingRuleValue.OPTIONAL)
+              content("module.y", loading = ModuleLoadingRuleValue.EMBEDDED)
           }
           plugin("plugin.b") {
-              content("module.x", ModuleLoadingRuleValue.REQUIRED)  // Makes module.x critical
-              content("module.z", ModuleLoadingRuleValue.ON_DEMAND)
+              content("module.x", loading = ModuleLoadingRuleValue.REQUIRED)  // Makes module.x critical
+              content("module.z", loading = ModuleLoadingRuleValue.ON_DEMAND)
           }
           plugin("plugin.c") {
-              content("module.y", ModuleLoadingRuleValue.ON_DEMAND)
-              content("module.z", ModuleLoadingRuleValue.OPTIONAL)
+              content("module.y", loading = ModuleLoadingRuleValue.ON_DEMAND)
+              content("module.z", loading = ModuleLoadingRuleValue.OPTIONAL)
           }
           moduleSet("core") {
               module("core.dep")
@@ -421,12 +421,12 @@ class ContentModuleDependencyValidatorTest {
               bundlesPlugin("plugin.b")
           }
           plugin("plugin.a") {
-              content("shared.module", ModuleLoadingRuleValue.REQUIRED)
-              content("dep.a", ModuleLoadingRuleValue.OPTIONAL)
-              content("dep.b", ModuleLoadingRuleValue.OPTIONAL)
+              content("shared.module", loading = ModuleLoadingRuleValue.REQUIRED)
+              content("dep.a", loading = ModuleLoadingRuleValue.OPTIONAL)
+              content("dep.b", loading = ModuleLoadingRuleValue.OPTIONAL)
           }
           plugin("plugin.b") {
-              content("shared.module", ModuleLoadingRuleValue.OPTIONAL)
+              content("shared.module", loading = ModuleLoadingRuleValue.OPTIONAL)
           }
           linkContentModuleDeps("shared.module", "dep.a")
           linkContentModuleDeps("dep.a", "dep.b")
@@ -457,7 +457,7 @@ class ContentModuleDependencyValidatorTest {
               bundlesPlugin("intellij.restClient")
           }
           plugin("intellij.restClient") {
-              content("intellij.restClient/intelliLang", ModuleLoadingRuleValue.OPTIONAL)
+              content("intellij.restClient/intelliLang", loading = ModuleLoadingRuleValue.OPTIONAL)
           }
       }
 
@@ -476,10 +476,10 @@ class ContentModuleDependencyValidatorTest {
               bundlesPlugin("intellij.restClient")
           }
           plugin("my.plugin") {
-              content("regular.module", ModuleLoadingRuleValue.REQUIRED)
+              content("regular.module", loading = ModuleLoadingRuleValue.REQUIRED)
           }
           plugin("intellij.restClient") {
-              content("intellij.restClient/intelliLang", ModuleLoadingRuleValue.OPTIONAL)
+              content("intellij.restClient/intelliLang", loading = ModuleLoadingRuleValue.OPTIONAL)
           }
           linkContentModuleDeps("regular.module", "intellij.restClient/intelliLang")
       }
@@ -500,7 +500,7 @@ class ContentModuleDependencyValidatorTest {
               includesModuleSet("core")
           }
           plugin("intellij.restClient") {
-              content("intellij.restClient/intelliLang", ModuleLoadingRuleValue.REQUIRED)
+              content("intellij.restClient/intelliLang", loading = ModuleLoadingRuleValue.REQUIRED)
           }
           moduleSet("core") {
               module("some.dep")
@@ -522,7 +522,7 @@ class ContentModuleDependencyValidatorTest {
               bundlesPlugin("intellij.restClient")
           }
           plugin("intellij.restClient") {
-              content("intellij.restClient/intelliLang", ModuleLoadingRuleValue.EMBEDDED)
+              content("intellij.restClient/intelliLang", loading = ModuleLoadingRuleValue.EMBEDDED)
           }
           linkContentModuleDeps("intellij.restClient/intelliLang", "missing.module")
       }
@@ -543,8 +543,8 @@ class ContentModuleDependencyValidatorTest {
               bundlesPlugin("intellij.restClient")
           }
           plugin("intellij.restClient") {
-              content("intellij.restClient/intelliLang", ModuleLoadingRuleValue.OPTIONAL)
-              content("intellij.restClient/jsonPath", ModuleLoadingRuleValue.OPTIONAL)
+              content("intellij.restClient/intelliLang", loading = ModuleLoadingRuleValue.OPTIONAL)
+              content("intellij.restClient/jsonPath", loading = ModuleLoadingRuleValue.OPTIONAL)
           }
           // One depends on the other
           linkContentModuleDeps("intellij.restClient/intelliLang", "intellij.restClient/jsonPath")
@@ -566,10 +566,10 @@ class ContentModuleDependencyValidatorTest {
               // Note: intellij.restClient is NOT bundled
           }
           plugin("my.plugin") {
-              content("regular.module", ModuleLoadingRuleValue.REQUIRED)
+              content("regular.module", loading = ModuleLoadingRuleValue.REQUIRED)
           }
           plugin("intellij.restClient") {
-              content("intellij.restClient/intelliLang", ModuleLoadingRuleValue.OPTIONAL)
+              content("intellij.restClient/intelliLang", loading = ModuleLoadingRuleValue.OPTIONAL)
           }
           linkContentModuleDeps("regular.module", "intellij.restClient/intelliLang")
       }
@@ -592,11 +592,11 @@ class ContentModuleDependencyValidatorTest {
               // Note: intellij.restClient is NOT bundled by IDEA
           }
           plugin("my.plugin") {
-              content("regular.module", ModuleLoadingRuleValue.OPTIONAL)  // Non-critical
+              content("regular.module", loading = ModuleLoadingRuleValue.OPTIONAL)  // Non-critical
           }
           // Slash-notation module exists globally (has content source in another plugin)
           plugin("intellij.restClient") {
-              content("intellij.restClient/intelliLang", ModuleLoadingRuleValue.OPTIONAL)
+              content("intellij.restClient/intelliLang", loading = ModuleLoadingRuleValue.OPTIONAL)
           }
           linkContentModuleDeps("regular.module", "intellij.restClient/intelliLang")
       }

@@ -37,6 +37,8 @@ value class PluginId(val value: String) : Comparable<PluginId> {
  * - Module set definitions and content module references
  * - IML orderEntry references for inter-module dependencies
  *
+ * For content modules, the plugin system uses not only a name, but also a namespace, so usages of this class should migrate to use [PluginModuleId] instead.
+ *
  * **NOT the same as [PluginId]** - modules are JPS build units, while plugins are runtime units.
  * A plugin content module's descriptor file is named `<module.name>.xml` (e.g., `intellij.css.plugin.xml`).
  *
@@ -58,9 +60,14 @@ value class ContentModuleName(val value: String) : Comparable<ContentModuleName>
  * Describes an ID of a plugin content module how it's represented in XML: if `namespace` attribute isn't specified, it's set to `null`.
  */
 @Serializable
-data class PluginModuleId(val name: String, val namespace: String?) {
+data class PluginModuleId(val name: String, val namespace: String?) : Comparable<PluginModuleId> {
   override fun toString(): String {
     return name + (if (namespace != DEFAULT_NAMESPACE) " (namespace=$namespace)" else "")
+  }
+
+  override fun compareTo(other: PluginModuleId): Int {
+    val names = name.compareTo(other.name)
+    return if (names != 0) names else compareValues(namespace, other.namespace)
   }
 
   companion object {
@@ -159,6 +166,13 @@ fun ContentModuleName.toDescriptorFileName(): String {
   else {
     "$value.xml"
   }
+}
+
+/**
+ * Converts the module ID specified in sources to actual ID used at runtime, with an implicit namespace set if needed
+ */
+fun PluginModuleId.toActualId(pluginId: PluginId): PluginModuleId {
+  return PluginModuleId(name = name, namespace = namespace ?: $$"$${pluginId.value}_$implicit")
 }
 
 // endregion

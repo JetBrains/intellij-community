@@ -626,7 +626,7 @@ internal fun buildPluginGraphFromTestSetup(
           for (module in pluginContent.contentModules) {
             val loading = module.loadingMode
                           ?: com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.OPTIONAL
-            content(module.moduleId.name, loading)
+            content(module.moduleId.name, module.moduleId.namespace, loading)
           }
           for (moduleDep in pluginContent.moduleDependencies) {
             dependsOnContentModule(moduleDep.value)
@@ -641,7 +641,7 @@ internal fun buildPluginGraphFromTestSetup(
           for (module in pluginContent.contentModules) {
             val loading = module.loadingMode
                           ?: com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.OPTIONAL
-            content(module.moduleId.name, loading)
+            content(module.moduleId.name, module.moduleId.namespace, loading)
           }
           for (moduleDep in pluginContent.moduleDependencies) {
             dependsOnContentModule(moduleDep.value)
