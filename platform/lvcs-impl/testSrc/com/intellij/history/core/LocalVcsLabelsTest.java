@@ -2,6 +2,7 @@
 package com.intellij.history.core;
 
 import com.intellij.history.core.changes.ChangeSet;
+import com.intellij.history.core.changes.PutSystemLabelChange;
 import com.intellij.history.core.tree.RootEntry;
 import com.intellij.platform.lvcs.impl.RevisionId;
 import org.junit.Test;
@@ -130,51 +131,51 @@ public class LocalVcsLabelsTest extends LocalHistoryTestCase {
 
   @Test
   public void testGettingByteContent() {
-    LabelImpl l1 = myVcs.putSystemLabel("label", "project", -1);
+    PutSystemLabelChange l1 = myVcs.putSystemLabel("label", "project", -1);
     add(myVcs, createFile(myRoot, "f", "one"));
 
-    LabelImpl l2 = myVcs.putSystemLabel("label", "project", -1);
+    PutSystemLabelChange l2 = myVcs.putSystemLabel("label", "project", -1);
     add(myVcs, changeContent(myRoot, "f", "two"));
 
-    LabelImpl l3 = myVcs.putSystemLabel("label", "project", -1);
+    PutSystemLabelChange l3 = myVcs.putSystemLabel("label", "project", -1);
 
-    assertNull(l1.getByteContent(myRoot, "f").getBytes());
-    assertEquals("one", new String(l2.getByteContent(myRoot, "f").getBytes(), StandardCharsets.UTF_8));
-    assertEquals("two", new String(l3.getByteContent(myRoot, "f").getBytes(), StandardCharsets.UTF_8));
+    assertNull(myVcs.getByteContentBefore(myRoot, "f", l1.getId()).getBytes());
+    assertEquals("one", new String(myVcs.getByteContentBefore(myRoot, "f", l2.getId()).getBytes(), StandardCharsets.UTF_8));
+    assertEquals("two", new String(myVcs.getByteContentBefore(myRoot, "f", l3.getId()).getBytes(), StandardCharsets.UTF_8));
 
     add(myVcs, createDirectory(myRoot, "dir"));
-    LabelImpl l4 = myVcs.putSystemLabel("label", "project", -1);
+    PutSystemLabelChange l4 = myVcs.putSystemLabel("label", "project", -1);
 
-    assertTrue(l4.getByteContent(myRoot, "dir").isDirectory());
-    assertNull(l4.getByteContent(myRoot, "dir").getBytes());
+    assertTrue(myVcs.getByteContentBefore(myRoot, "dir", l4.getId()).isDirectory());
+    assertNull(myVcs.getByteContentBefore(myRoot, "dir", l4.getId()).getBytes());
   }
 
   @Test
   public void testGettingByteContentInsideChangeSet() {
     myVcs.beginChangeSet();
     add(myVcs, createFile(myRoot, "f", "one"));
-    LabelImpl l1 = myVcs.putSystemLabel("label", "project", -1);
+    PutSystemLabelChange l1 = myVcs.putSystemLabel("label", "project", -1);
     add(myVcs, changeContent(myRoot, "f", "two"));
-    LabelImpl l2 = myVcs.putSystemLabel("label", "project", -1);
+    PutSystemLabelChange l2 = myVcs.putSystemLabel("label", "project", -1);
     myVcs.endChangeSet(null);
 
-    assertEquals("one", new String(l1.getByteContent(myRoot, "f").getBytes(), StandardCharsets.UTF_8));
-    assertEquals("two", new String(l2.getByteContent(myRoot, "f").getBytes(), StandardCharsets.UTF_8));
+    assertEquals("one", new String(myVcs.getByteContentBefore(myRoot, "f", l1.getId()).getBytes(), StandardCharsets.UTF_8));
+    assertEquals("two", new String(myVcs.getByteContentBefore(myRoot, "f", l2.getId()).getBytes(), StandardCharsets.UTF_8));
   }
 
   @Test
   public void testGettingByteContentAfterRename() {
     add(myVcs, createFile(myRoot, "f", "one"));
-    LabelImpl l1 = myVcs.putSystemLabel("label", "project", -1);
+    PutSystemLabelChange l1 = myVcs.putSystemLabel("label", "project", -1);
 
     add(myVcs, changeContent(myRoot, "f", "two"));
-    LabelImpl l2 = myVcs.putSystemLabel("label", "project", -1);
+    PutSystemLabelChange l2 = myVcs.putSystemLabel("label", "project", -1);
     add(myVcs, rename(myRoot, "f", "f_r"));
 
-    LabelImpl l3 = myVcs.putSystemLabel("label", "project", -1);
+    PutSystemLabelChange l3 = myVcs.putSystemLabel("label", "project", -1);
 
-    assertEquals("one", new String(l1.getByteContent(myRoot, "f_r").getBytes(), StandardCharsets.UTF_8));
-    assertEquals("two", new String(l2.getByteContent(myRoot, "f_r").getBytes(), StandardCharsets.UTF_8));
-    assertEquals("two", new String(l3.getByteContent(myRoot, "f_r").getBytes(), StandardCharsets.UTF_8));
+    assertEquals("one", new String(myVcs.getByteContentBefore(myRoot, "f_r", l1.getId()).getBytes(), StandardCharsets.UTF_8));
+    assertEquals("two", new String(myVcs.getByteContentBefore(myRoot, "f_r", l2.getId()).getBytes(), StandardCharsets.UTF_8));
+    assertEquals("two", new String(myVcs.getByteContentBefore(myRoot, "f_r", l3.getId()).getBytes(), StandardCharsets.UTF_8));
   }
 }

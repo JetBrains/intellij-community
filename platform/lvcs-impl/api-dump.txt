@@ -9,20 +9,8 @@ a:com.intellij.history.core.Content
 - write(java.io.DataOutput):V
 f:com.intellij.history.core.LocalHistoryFacade
 - f:accept(com.intellij.history.core.changes.ChangeVisitor):V
-- f:addChangeInTests(com.intellij.history.core.changes.StructuralChange):V
 - f:addListener(com.intellij.history.core.LocalHistoryFacade$Listener,com.intellij.openapi.Disposable):V
-- f:beginChangeSet():V
-- f:created(java.lang.String,Z):V
-- f:deleted(java.lang.String,com.intellij.history.core.tree.Entry):V
-- f:endChangeSet(java.lang.String):V
-- f:endChangeSet(java.lang.String,com.intellij.history.ActivityId):V
-- bs:endChangeSet$default(com.intellij.history.core.LocalHistoryFacade,java.lang.String,com.intellij.history.ActivityId,I,java.lang.Object):V
-- f:forceBeginChangeSet():V
-- f:moved(java.lang.String,java.lang.String):V
-- f:putLabelInTests(com.intellij.history.core.changes.PutLabelChange):V
-- f:readOnlyStatusChanged(java.lang.String,Z):V
 - f:removeListener(com.intellij.history.core.LocalHistoryFacade$Listener):V
-- f:renamed(java.lang.String,java.lang.String):V
 a:com.intellij.history.core.LocalHistoryFacade$Listener
 - <init>():V
 - changeAdded(com.intellij.history.core.changes.Change):V

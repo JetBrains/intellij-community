@@ -48,10 +48,14 @@ class LocalHistoryFacade internal constructor(private val changeList: ChangeList
   val changeListInTests: ChangeList get() = changeList
   internal val changes: Iterable<ChangeSet> get() = changeList.iterChanges()
 
+  fun accept(v: ChangeVisitor): Unit = changeList.accept(v)
+
+  @ApiStatus.Internal
   fun beginChangeSet() {
     changeList.beginChangeSet()
   }
 
+  @ApiStatus.Internal
   fun forceBeginChangeSet() {
     val lastChangeSet = changeList.forceBeginChangeSet()
     if (lastChangeSet != null) {
@@ -59,6 +63,7 @@ class LocalHistoryFacade internal constructor(private val changeList: ChangeList
     }
   }
 
+  @ApiStatus.Internal
   @JvmOverloads
   fun endChangeSet(name: @NlsContexts.Label String?, activityId: ActivityId? = null) {
     val lastChangeSet = changeList.endChangeSet(name, activityId)
@@ -67,6 +72,7 @@ class LocalHistoryFacade internal constructor(private val changeList: ChangeList
     }
   }
 
+  @ApiStatus.Internal
   fun created(path: String, isDirectory: Boolean) {
     addChange(if (isDirectory) CreateDirectoryChange(changeList.nextId(), path)
               else CreateFileChange(changeList.nextId(), path))
@@ -77,30 +83,38 @@ class LocalHistoryFacade internal constructor(private val changeList: ChangeList
     addChange(ContentChange(changeList.nextId(), path, oldContent, oldTimestamp))
   }
 
+  @ApiStatus.Internal
   fun renamed(path: String, oldName: String) {
     addChange(RenameChange(changeList.nextId(), path, oldName))
   }
 
+  @ApiStatus.Internal
   fun readOnlyStatusChanged(path: String, oldStatus: Boolean) {
     addChange(ROStatusChange(changeList.nextId(), path, oldStatus))
   }
 
+  @ApiStatus.Internal
   fun moved(path: String, oldParent: String) {
     addChange(MoveChange(changeList.nextId(), path, oldParent))
   }
 
+  @ApiStatus.Internal
   fun deleted(path: String, deletedEntry: Entry) {
     addChange(DeleteChange(changeList.nextId(), path, deletedEntry))
   }
 
   @ApiStatus.Internal
-  fun putSystemLabel(name: @NlsContexts.Label String, projectId: String, color: Int): LabelImpl {
-    return putLabel(PutSystemLabelChange(changeList.nextId(), name, projectId, color))
+  fun putSystemLabel(name: @NlsContexts.Label String, projectId: String, color: Int): PutSystemLabelChange {
+    return PutSystemLabelChange(changeList.nextId(), name, projectId, color).also {
+      addChange(it)
+    }
   }
 
   @ApiStatus.Internal
-  fun putUserLabel(name: @NlsContexts.Label String, projectId: String): LabelImpl {
-    return putLabel(PutLabelChange(changeList.nextId(), name, projectId))
+  fun putUserLabel(name: @NlsContexts.Label String, projectId: String): PutLabelChange {
+    return PutLabelChange(changeList.nextId(), name, projectId).also {
+      addChange(it)
+    }
   }
 
   private fun addChange(c: Change) {
@@ -110,35 +124,28 @@ class LocalHistoryFacade internal constructor(private val changeList: ChangeList
     endChangeSet(null)
   }
 
+  @ApiStatus.Internal
   @TestOnly
   fun addChangeInTests(c: StructuralChange) {
     addChange(c)
   }
 
-  private fun putLabel(c: PutLabelChange): LabelImpl {
-    addChange(c)
-    return object : LabelImpl {
-      override fun getLabelChangeId() = c.id
-      override fun getByteContent(root: RootEntry, path: String) = getByteContentBefore(root, path, c)
-    }
-  }
-
+  @ApiStatus.Internal
   @TestOnly
   fun putLabelInTests(c: PutLabelChange) {
-    putLabel(c)
+    addChange(c)
   }
 
-  private fun getByteContentBefore(root: RootEntry, path: String, change: Change): ByteContent {
+  @ApiStatus.Internal
+  fun getByteContentBefore(root: RootEntry, path: String, changeId: Long): ByteContent {
     val rootCopy = root.copy()
-    val newPath = revertUpToChange(rootCopy, change.id, path, false, false)
+    val newPath = revertUpToChange(rootCopy, changeId, path, false, false)
     val entry = rootCopy.findEntry(newPath)
     if (entry == null) return ByteContent(false, null)
     if (entry.isDirectory) return ByteContent(true, null)
 
     return ByteContent(false, entry.content.bytesIfAvailable)
   }
-
-  fun accept(v: ChangeVisitor): Unit = changeList.accept(v)
 
   @ApiStatus.Internal
   fun revertUpToChangeSet(root: RootEntry, changeSetId: Long, path: String, revertTarget: Boolean, warnOnFileNotFound: Boolean): String {
