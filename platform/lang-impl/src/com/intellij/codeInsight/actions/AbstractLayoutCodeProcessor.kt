@@ -287,7 +287,7 @@ abstract class AbstractLayoutCodeProcessor private constructor(
 
   private fun buildFilesIterator(): FileRecursiveIterator {
     if (target is Target.Files) {
-      return FileRecursiveIterator(myProject, target.files.filter { canBeFormatted(it) })
+      return FileRecursiveIterator(myProject, target.files)
     }
     if (processChangedTextOnly) {
       return buildChangedFilesIterator()
