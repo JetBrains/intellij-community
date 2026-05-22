@@ -415,7 +415,7 @@ data class BuildOptions(
   var bundleLocalizationPluginResources: Boolean = getBooleanProperty("intellij.build.localization.plugin.resources", false)
 
   /**
-   * If `true`, and the incremental compilation fails, fallback to downloading Portable Compilation Cache and full rebuild.
+   * If `true`, and the incremental compilation fails, fallback to full rebuild.
    */
   var incrementalCompilationFallbackRebuild: Boolean = getBooleanProperty(INCREMENTAL_COMPILATION_FALLBACK_REBUILD_PROPERTY, true)
 
