@@ -10,6 +10,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminal
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.testFramework.LightVirtualFile
@@ -36,7 +37,7 @@ data class AgentChatDeferredStartState(
 internal class AgentChatVirtualFile internal constructor(
   private val fileSystem: AgentChatVirtualFileSystem,
   resolution: AgentChatTabResolution,
-) : LightVirtualFile(resolveFileName(resolution.tabKey.value)) {
+) : LightVirtualFile(resolveFileName(resolution.tabKey.value)), EditorHistoryManager.IncludeInEditorHistoryFile {
   private val key: AgentChatTabKey = resolution.tabKey
 
   val tabKey: String
@@ -166,6 +167,8 @@ internal class AgentChatVirtualFile internal constructor(
   override fun getFileSystem(): VirtualFileSystem = fileSystem
 
   override fun getPath(): String = key.toPath()
+
+  override fun isPersistedInEditorHistory(): Boolean = false
 
   fun matches(threadIdentity: String, subAgentId: String?): Boolean {
     return this.threadIdentity == threadIdentity && this.subAgentId == subAgentId

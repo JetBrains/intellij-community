@@ -5,19 +5,17 @@ package com.intellij.agent.workbench.sessions.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.agent.workbench.sessions.frame.AgentChatOpenModeSettings
 import com.intellij.openapi.project.DumbAwareToggleAction
 
 internal class AgentSessionsDedicatedFrameToggleAction : DumbAwareToggleAction() {
   override fun isSelected(e: AnActionEvent): Boolean {
-    return AdvancedSettings.getBoolean(OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID)
+    return AgentChatOpenModeSettings.openInDedicatedFrame()
   }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    AdvancedSettings.setBoolean(OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID, state)
+    AgentChatOpenModeSettings.setOpenInDedicatedFrame(state)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }
-
-private const val OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID = "agent.workbench.chat.open.in.dedicated.frame"

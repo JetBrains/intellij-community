@@ -27,20 +27,69 @@ interface AgentWorkbenchSettingsListener {
 @State(name = "AgentWorkbenchSettings", storages = [Storage("agentWorkbenchSettings.xml")])
 class AgentWorkbenchSettings : SerializablePersistentStateComponent<AgentWorkbenchSettings.SettingsState>(SettingsState()) {
   val colorTabsBySourceProject: Boolean
+    get() = state.colorTabsBySourceProject ?: COLOR_TABS_BY_SOURCE_PROJECT_DEFAULT
+
+  val colorTabsBySourceProjectOverride: Boolean?
     get() = state.colorTabsBySourceProject
 
+  val openInDedicatedFrame: Boolean
+    get() = state.openInDedicatedFrame ?: OPEN_IN_DEDICATED_FRAME_DEFAULT
+
+  val openInDedicatedFrameOverride: Boolean?
+    get() = state.openInDedicatedFrame
+
   fun setColorTabsBySourceProject(enabled: Boolean) {
-    if (state.colorTabsBySourceProject == enabled) return
-    updateState { current -> current.copy(colorTabsBySourceProject = enabled) }
-    ApplicationManager.getApplication().messageBus.syncPublisher(AgentWorkbenchSettingsListener.TOPIC).colorTabsBySourceProjectChanged()
+    val previousValue = colorTabsBySourceProject
+    val storedValue = nonDefaultBooleanValue(enabled, COLOR_TABS_BY_SOURCE_PROJECT_DEFAULT)
+    if (state.colorTabsBySourceProject == storedValue) return
+    val updatedState = updateState { current -> current.copy(colorTabsBySourceProject = storedValue) }
+    val updatedValue = updatedState.colorTabsBySourceProject ?: COLOR_TABS_BY_SOURCE_PROJECT_DEFAULT
+    if (previousValue != updatedValue) {
+      ApplicationManager.getApplication().messageBus.syncPublisher(AgentWorkbenchSettingsListener.TOPIC).colorTabsBySourceProjectChanged()
+    }
+  }
+
+  fun migrateOpenInDedicatedFrame(enabled: Boolean): Boolean {
+    state.openInDedicatedFrame?.let { return it }
+    val storedValue = nonDefaultBooleanValue(enabled, OPEN_IN_DEDICATED_FRAME_DEFAULT)
+    if (storedValue == null) return openInDedicatedFrame
+    val updatedState = updateState { current ->
+      if (current.openInDedicatedFrame != null) current else current.copy(openInDedicatedFrame = storedValue)
+    }
+    return updatedState.openInDedicatedFrame ?: OPEN_IN_DEDICATED_FRAME_DEFAULT
+  }
+
+  fun setOpenInDedicatedFrame(enabled: Boolean) {
+    val storedValue = nonDefaultBooleanValue(enabled, OPEN_IN_DEDICATED_FRAME_DEFAULT)
+    if (state.openInDedicatedFrame == storedValue) return
+    updateState { current -> current.copy(openInDedicatedFrame = storedValue) }
+  }
+
+  override fun loadState(state: SettingsState) {
+    super.loadState(state.normalized())
   }
 
   @Serializable
   data class SettingsState(
-    @JvmField val colorTabsBySourceProject: Boolean = true,
-  )
+    @JvmField val colorTabsBySourceProject: Boolean? = null,
+    @JvmField val openInDedicatedFrame: Boolean? = null,
+  ) {
+    fun normalized(): SettingsState {
+      return copy(
+        colorTabsBySourceProject = nonDefaultBooleanValue(colorTabsBySourceProject, COLOR_TABS_BY_SOURCE_PROJECT_DEFAULT),
+        openInDedicatedFrame = nonDefaultBooleanValue(openInDedicatedFrame, OPEN_IN_DEDICATED_FRAME_DEFAULT),
+      )
+    }
+  }
 
   companion object {
     fun getInstance(): AgentWorkbenchSettings = service()
   }
+}
+
+private const val COLOR_TABS_BY_SOURCE_PROJECT_DEFAULT: Boolean = true
+private const val OPEN_IN_DEDICATED_FRAME_DEFAULT: Boolean = true
+
+private fun nonDefaultBooleanValue(value: Boolean?, defaultValue: Boolean): Boolean? {
+  return value?.takeIf { it != defaultValue }
 }

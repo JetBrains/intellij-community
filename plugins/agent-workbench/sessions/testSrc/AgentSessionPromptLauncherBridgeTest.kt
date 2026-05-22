@@ -44,7 +44,6 @@ import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchTelem
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchTelemetryProvider
 import com.intellij.agent.workbench.sessions.frame.AgentChatOpenModeSettings
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
-import com.intellij.agent.workbench.sessions.frame.OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.agent.workbench.sessions.service.AgentSessionPromptLauncherBridge
 import com.intellij.agent.workbench.sessions.service.OpenThreadLaunchOrigin
@@ -55,8 +54,6 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
-import com.intellij.openapi.options.advanced.AdvancedSettings
-import com.intellij.openapi.options.advanced.AdvancedSettingsImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.junit5.TestApplication
@@ -2048,11 +2045,15 @@ private fun addContextToTargetRequest(): AgentPromptAddContextToTargetRequest {
 }
 
 private fun <T> withOpenInNonDedicatedFrameSettingForTest(parentDisposable: Disposable, action: () -> T): T {
-  val advancedSettings = AdvancedSettings.getInstance() as AdvancedSettingsImpl
   registerDedicatedFrameSettingForTest(parentDisposable)
-  advancedSettings.setSetting(OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID, false, parentDisposable)
+  val previousValue = AgentChatOpenModeSettings.openInDedicatedFrame()
   AgentChatOpenModeSettings.setOpenInDedicatedFrame(false)
-  return action()
+  try {
+    return action()
+  }
+  finally {
+    AgentChatOpenModeSettings.setOpenInDedicatedFrame(previousValue)
+  }
 }
 
 private fun assertPromptLaunchResolvedTelemetry(

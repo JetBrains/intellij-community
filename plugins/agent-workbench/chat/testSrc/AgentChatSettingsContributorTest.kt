@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.chat
 
+import com.intellij.agent.workbench.sessions.core.settings.AGENT_WORKBENCH_CHAT_SETTINGS_COMPONENT_ID
 import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettings
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
@@ -25,7 +26,11 @@ class AgentChatSettingsContributorTest {
 
   @Test
   fun contributesColorTabsBySourceProjectCheckbox() {
-    val setting = AgentChatSettingsContributor().checkboxSettings().single()
+    val component = AgentChatSettingsContributor().components().single()
+    assertThat(component.id).isEqualTo(AGENT_WORKBENCH_CHAT_SETTINGS_COMPONENT_ID)
+    assertThat(component.displayName).isEqualTo(AgentChatBundle.message("settings.agent.workbench.chat.group"))
+
+    val setting = component.checkboxSettings.single()
 
     assertThat(setting.text).isEqualTo(AgentChatBundle.message("settings.agent.workbench.chat.color.tabs.by.source.project"))
     assertThat(setting.description).isEqualTo(AgentChatBundle.message("settings.agent.workbench.chat.color.tabs.by.source.project.description"))
@@ -34,5 +39,11 @@ class AgentChatSettingsContributorTest {
     setting.setSelected(false)
 
     assertThat(settings.colorTabsBySourceProject).isFalse()
+    assertThat(settings.colorTabsBySourceProjectOverride).isFalse()
+
+    setting.setSelected(true)
+
+    assertThat(settings.colorTabsBySourceProject).isTrue()
+    assertThat(settings.colorTabsBySourceProjectOverride).isNull()
   }
 }

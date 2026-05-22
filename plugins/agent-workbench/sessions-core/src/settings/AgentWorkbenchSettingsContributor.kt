@@ -4,6 +4,8 @@ package com.intellij.agent.workbench.sessions.core.settings
 import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.annotations.Nls
 
+const val AGENT_WORKBENCH_CHAT_SETTINGS_COMPONENT_ID: String = "agent.workbench.chat"
+
 data class AgentWorkbenchCheckboxSetting(
   @JvmField val text: @Nls String,
   @JvmField val description: @Nls String?,
@@ -11,8 +13,16 @@ data class AgentWorkbenchCheckboxSetting(
   @JvmField val setSelected: (Boolean) -> Unit,
 )
 
+data class AgentWorkbenchSettingsComponent(
+  @JvmField val id: String,
+  @JvmField val displayName: @Nls String,
+  @JvmField val checkboxSettings: List<AgentWorkbenchCheckboxSetting>,
+)
+
 interface AgentWorkbenchSettingsContributor {
-  fun checkboxSettings(): List<AgentWorkbenchCheckboxSetting>
+  fun checkboxSettings(): List<AgentWorkbenchCheckboxSetting> = emptyList()
+
+  fun components(): List<AgentWorkbenchSettingsComponent> = emptyList()
 }
 
 object AgentWorkbenchSettingsContributors {
@@ -22,4 +32,6 @@ object AgentWorkbenchSettingsContributors {
   fun all(): List<AgentWorkbenchSettingsContributor> = EP_NAME.extensionList
 
   fun checkboxSettings(): List<AgentWorkbenchCheckboxSetting> = all().flatMap { it.checkboxSettings() }
+
+  fun components(): List<AgentWorkbenchSettingsComponent> = all().flatMap { it.components() }
 }

@@ -29,10 +29,11 @@ Define dedicated-frame mode behavior for Agent chat routing. This spec owns fram
 - Defining shared command mapping or popup action contracts.
 
 ## Requirements
-- Advanced setting key `agent.workbench.chat.open.in.dedicated.frame` must exist, default to `true`, and be exposed in Advanced Settings.
+- Dedicated-frame mode must be stored in Agent Workbench settings and exposed in the Agent Workbench Chat settings group.
+  The legacy Advanced Settings key `agent.workbench.chat.open.in.dedicated.frame` must stay registered with default `true` and `visible="false"` as a migration source.
   [@test] ../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
 
-- Sessions gear menu must expose `AgentWorkbenchSessions.ToggleDedicatedFrame` and update the same advanced setting.
+- Sessions gear menu must expose `AgentWorkbenchSessions.ToggleDedicatedFrame` and update the Agent Workbench settings value.
   [@test] ../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
 
 - Sessions plugin must expose `AgentWorkbenchSessions.OpenDedicatedFrame` so users can explicitly reopen/focus dedicated frame.
@@ -91,7 +92,7 @@ Define dedicated-frame mode behavior for Agent chat routing. This spec owns fram
 - In Rider with per-app toolwindows enabled, dedicated-frame toolwindow layout customization remains independent from normal Rider project frames.
 
 ## Data & Backend
-- Mode state is stored via Advanced Settings.
+- Mode state is stored via `AgentWorkbenchSettings` only when it differs from the default; the hidden legacy Advanced Settings key is read only to migrate previous user choices.
 - Dedicated-frame project path/lifecycle is managed by `AgentWorkbenchDedicatedFrameProjectManager`.
 - Frame mode does not alter canonical identity or command contracts.
 

@@ -7,30 +7,43 @@ import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.TestAgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
+import com.intellij.agent.workbench.sessions.core.settings.AGENT_WORKBENCH_CHAT_SETTINGS_COMPONENT_ID
 import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchCheckboxSetting
+import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettings
+import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettingsComponent
 import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettingsContributor
 import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettingsContributors
-import com.intellij.agent.workbench.sessions.frame.OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID
 import com.intellij.agent.workbench.sessions.sleep.PREVENT_SYSTEM_SLEEP_WHILE_WORKING_SETTING_ID
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.service
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.advanced.AdvancedSettingsImpl
-import com.intellij.openapi.components.service
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.components.JBCheckBox
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.awt.Container
 import javax.swing.JComponent
 
 @TestApplication
 class AgentWorkbenchSettingsConfigurableTest {
+  @BeforeEach
+  fun setUp() {
+    resetSettings()
+  }
+
   @AfterEach
-  fun resetProviderSettings() {
+  fun tearDown() {
+    resetSettings()
+  }
+
+  private fun resetSettings() {
     service<AgentSessionProviderSettingsService>().setProviderEnabled(AgentSessionProvider.CODEX, true)
+    AgentWorkbenchSettings.getInstance().loadState(AgentWorkbenchSettings.SettingsState())
   }
 
   @Test
@@ -45,9 +58,9 @@ class AgentWorkbenchSettingsConfigurableTest {
   }
 
   @Test
-  fun configurableAppliesAdvancedSettings(@TestDisposable disposable: Disposable) {
+  fun configurableAppliesSettings(@TestDisposable disposable: Disposable) {
     val advancedSettings = AdvancedSettings.getInstance() as AdvancedSettingsImpl
-    advancedSettings.setSetting(OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID, false, disposable)
+    AgentWorkbenchSettings.getInstance().setOpenInDedicatedFrame(false)
     advancedSettings.setSetting(PREVENT_SYSTEM_SLEEP_WHILE_WORKING_SETTING_ID, true, disposable)
 
     runInEdtAndWait {
@@ -76,7 +89,8 @@ class AgentWorkbenchSettingsConfigurableTest {
       }
     }
 
-    assertThat(AdvancedSettings.getBoolean(OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID)).isTrue()
+    assertThat(AgentWorkbenchSettings.getInstance().openInDedicatedFrame).isTrue()
+    assertThat(AgentWorkbenchSettings.getInstance().openInDedicatedFrameOverride).isNull()
     assertThat(AdvancedSettings.getBoolean(PREVENT_SYSTEM_SLEEP_WHILE_WORKING_SETTING_ID)).isFalse()
   }
 
@@ -91,6 +105,29 @@ class AgentWorkbenchSettingsConfigurableTest {
         configurable.reset()
 
         assertThat(component.checkBox(TEST_CONTRIBUTOR_CHECKBOX_TEXT)).isNotNull
+      }
+      finally {
+        configurable.disposeUIResources()
+      }
+    }
+  }
+
+  @Test
+  fun configurableGroupsRegisteredChatSettingsComponentWithDedicatedFrameSetting(@TestDisposable disposable: Disposable) {
+    AgentWorkbenchSettingsContributors.EP_NAME.point.registerExtension(TestChatSettingsComponentContributor(), disposable)
+
+    runInEdtAndWait {
+      val configurable = AgentWorkbenchSettingsConfigurable()
+      try {
+        val component = configurable.createComponent()
+        configurable.reset()
+
+        assertThat(component.componentsOfType(JBCheckBox::class.java).map { it.text })
+          .containsSubsequence(
+            AgentSessionsBundle.message("advanced.setting.agent.workbench.chat.open.in.dedicated.frame"),
+            TEST_CHAT_COMPONENT_CHECKBOX_TEXT,
+            AgentSessionsBundle.message("advanced.setting.agent.workbench.prevent.system.sleep.while.working"),
+          )
       }
       finally {
         configurable.disposeUIResources()
@@ -176,7 +213,27 @@ class AgentWorkbenchSettingsConfigurableTest {
     }
   }
 
+  private class TestChatSettingsComponentContributor : AgentWorkbenchSettingsContributor {
+    override fun components(): List<AgentWorkbenchSettingsComponent> {
+      return listOf(
+        AgentWorkbenchSettingsComponent(
+          id = AGENT_WORKBENCH_CHAT_SETTINGS_COMPONENT_ID,
+          displayName = "Chat",
+          checkboxSettings = listOf(
+            AgentWorkbenchCheckboxSetting(
+              text = TEST_CHAT_COMPONENT_CHECKBOX_TEXT,
+              description = null,
+              isSelected = { false },
+              setSelected = {},
+            )
+          ),
+        )
+      )
+    }
+  }
+
   companion object {
     private const val TEST_CONTRIBUTOR_CHECKBOX_TEXT = "Test provider setting"
+    private const val TEST_CHAT_COMPONENT_CHECKBOX_TEXT = "Test chat setting"
   }
 }

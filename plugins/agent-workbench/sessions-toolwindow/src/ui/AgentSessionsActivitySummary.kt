@@ -9,9 +9,12 @@ import com.intellij.agent.workbench.common.statusColor
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.model.AgentWorktree
+import com.intellij.agent.workbench.sessions.toolwindow.icons.AgentWorkbenchSessionsToolwindowIcons
 import com.intellij.agent.workbench.sessions.util.isAgentSessionNewSessionId
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.ui.IconManager
 import java.awt.Color
+import javax.swing.Icon
 
 internal data class AgentSessionsActivityThreadRow(
   @JvmField val path: String,
@@ -66,6 +69,19 @@ internal data class AgentSessionsActivitySummary(
       runningRows = emptyList(),
       doneRows = emptyList(),
     )
+  }
+}
+
+internal fun agentSessionsActivityIcon(summary: AgentSessionsActivitySummary): Icon {
+  return agentSessionsActivityIcon(summary.stripeBadge())
+}
+
+internal fun agentSessionsActivityIcon(badge: AgentSessionsStripeBadge?): Icon {
+  val emptyIcon = AgentWorkbenchSessionsToolwindowIcons.Alien
+  return when (badge) {
+    AgentSessionsStripeBadge.ATTENTION -> IconManager.getInstance().withIconBadge(emptyIcon, AgentSessionsStripeBadge.ATTENTION.color())
+    AgentSessionsStripeBadge.DONE -> IconManager.getInstance().withIconBadge(emptyIcon, AgentSessionsStripeBadge.DONE.color())
+    null -> emptyIcon
   }
 }
 

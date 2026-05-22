@@ -29,6 +29,7 @@ internal class AgentSessionsActivityCounterComponent(
   private val action: AnAction,
   private val accentColor: Color,
   private val tone: AgentSessionsActivityCounterTone,
+  private val actionPlace: String = ActionPlaces.TOOLWINDOW_TITLE,
 ) : JComponent() {
   private var countText: String = "0"
 
@@ -51,6 +52,7 @@ internal class AgentSessionsActivityCounterComponent(
     cursor = if (isEnabled) Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) else Cursor.getDefaultCursor()
     @Suppress("UseHtmlChunkToolTip") // plain Nls description from a properties bundle
     run { toolTipText = presentation.description }
+    getAccessibleContext()?.accessibleName = presentation.description ?: presentation.text
     if (changed) revalidate()
     repaint()
   }
@@ -110,7 +112,7 @@ internal class AgentSessionsActivityCounterComponent(
       action,
       dataContext,
       action.templatePresentation.clone(),
-      ActionPlaces.TOOLWINDOW_TITLE,
+      actionPlace,
       ActionUiKind.NONE,
       inputEvent,
     )

@@ -24,6 +24,11 @@
       class="com.intellij.agent.workbench.sessions.actions.AgentSessionsOpenDedicatedFrameAction">
       <add-to-group group-id="OpenProjectWindows" anchor="after" relative-to-action="PreviousProjectWindow"/>
     </action>
+    <action
+      id="AgentWorkbenchSessions.SwitchSourceAndChat"
+      class="com.intellij.agent.workbench.sessions.actions.AgentSessionsSwitchSourceAndChatAction">
+      <add-to-group group-id="OpenProjectWindows" anchor="after" relative-to-action="AgentWorkbenchSessions.OpenDedicatedFrame"/>
+    </action>
     <group id="AgentWorkbenchSessions.ToolWindow.GearActions"
            class="com.intellij.agent.workbench.sessions.actions.DumbAwareDefaultActionGroup">
       <reference ref="OpenFile"/>

@@ -77,6 +77,7 @@ Detailed requirements and testing contracts are documented in `spec/`.
 - [Agent Threads Visibility and More Row](spec/agent-sessions-thread-visibility.spec.md) - Deterministic visibility rendering and More-row precedence rules.
 - [Agent Chat Editor](spec/agent-chat-editor.spec.md) - Chat tab lifecycle, persistence/restore, lazy terminal initialization, titles/icons.
 - [Agent Chat Dedicated Frame](spec/agent-dedicated-frame.spec.md) - Dedicated-frame mode routing, lifecycle, shortcut semantics, and filtering.
+- [Agent Main Toolbar Activity](spec/agent-main-toolbar-activity.spec.md) - Global Agent activity counters shown in source-project main toolbars.
 - [Codex Sessions Rollout Source](spec/agent-sessions-codex-rollout-source.spec.md) - Rollout-default Codex discovery, watcher semantics, backend selector, and app-server write interoperability.
 - [Agent Sessions New-Session Actions](spec/actions/new-thread.spec.md) - New-thread UX, provider/YOLO selection, creation dedup, pending-thread rebinding.
 - [Global Prompt Entry](spec/actions/global-prompt-entry.spec.md) - Global shortcut entrypoint, centered popup UX, context capture, and launch bridge flow.
