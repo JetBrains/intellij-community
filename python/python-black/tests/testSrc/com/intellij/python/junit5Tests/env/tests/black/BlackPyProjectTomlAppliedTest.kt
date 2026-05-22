@@ -6,7 +6,6 @@ import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.pySdkFixture
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pytools.getState
-import com.intellij.python.test.env.junit5.pyVenvFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -15,6 +14,7 @@ import com.intellij.python.black.BlackFormattingRequest
 import com.intellij.python.black.BlackFormattingResponse
 import com.intellij.python.black.BlackPyTool
 import com.intellij.python.black.execute
+import com.intellij.python.pytools.configuration.ExecutableDiscoveryMode
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.BeforeAll
@@ -33,16 +33,15 @@ internal class BlackPyProjectTomlAppliedTest {
     val tempPathFixture = tempPathFixture()
     val projectFixture = projectFixture(tempPathFixture, openAfterCreation = true)
     val moduleFixture = projectFixture.moduleFixture(tempPathFixture, addPathToSourceRoot = true)
-    val venvFixture = pySdkFixture().pyVenvFixture(
-      where = tempPathFixture,
-      addToSdkTable = true,
-      moduleFixture = moduleFixture,
-    )
+    val sdkFixture = pySdkFixture().pyEnvSdkFixture(moduleFixture)
 
     @JvmStatic
     @BeforeAll
-    fun enableBlack(): Unit {
-      BlackPyTool.getInstance().getState(projectFixture.get()).enabled = true
+    fun enableBlack() {
+      with (BlackPyTool.getInstance().getState(projectFixture.get())) {
+        enabled = true
+        discoveryMode = ExecutableDiscoveryMode.INTERPRETER
+      }
     }
   }
 

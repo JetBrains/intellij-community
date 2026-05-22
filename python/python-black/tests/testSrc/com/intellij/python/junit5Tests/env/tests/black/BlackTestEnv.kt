@@ -5,14 +5,22 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.python.junit5Tests.framework.env.SdkFixture
+import com.intellij.python.test.env.core.PyEnvironment
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.fixture.TestFixture
+import com.intellij.testFramework.junit5.fixture.testFixture
+import com.jetbrains.python.sdk.pythonSdk
+import com.jetbrains.python.sdk.setAssociationToModule
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
@@ -60,3 +68,20 @@ internal fun reformatPsiFileRange(project: Project, psiFile: PsiFile, startOffse
   }
 }
 
+/**
+ * Reuse the predefined env's SDK (which has `black>=23.11.0` pre-installed) and associate it with
+ * the given module. Unlike [com.intellij.python.test.env.junit5.pyVenvFixture] this does NOT create
+ * a fresh empty venv, so black is reachable in INTERPRETER discovery mode without an extra install
+ * step. The SDK is persisted/removed by [com.intellij.python.junit5Tests.framework.env.pySdkFixture].
+ */
+internal fun TestFixture<SdkFixture<PyEnvironment>>.pyEnvSdkFixture(
+  moduleFixture: TestFixture<Module>,
+): TestFixture<Sdk> = testFixture {
+  val sdk: Sdk = this@pyEnvSdkFixture.init()
+  withContext(Dispatchers.EDT) {
+    val module = moduleFixture.init()
+    module.pythonSdk = sdk
+    sdk.setAssociationToModule(module)
+  }
+  initialized(sdk) {}
+}

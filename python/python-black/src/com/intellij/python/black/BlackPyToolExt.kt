@@ -91,7 +91,7 @@ suspend fun BlackPyTool.execute(
           )
         )
       }
-      else -> Result.success(BlackFormattingResponse.Success(output.stderrString))
+      else -> Result.success(BlackFormattingResponse.Success(output.stdoutString))
     }
   }
 
