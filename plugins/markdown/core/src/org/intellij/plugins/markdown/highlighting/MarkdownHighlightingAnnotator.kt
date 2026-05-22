@@ -62,6 +62,7 @@ internal class MarkdownHighlightingAnnotator : Annotator, DumbAware {
 
   private fun annotateWithHighlighter(element: PsiElement, holder: AnnotationHolder) {
     val elementType = element.elementType
+    if (elementType == MarkdownTokenTypes.HTML_BLOCK_CONTENT || elementType == MarkdownElementTypes.HTML_BLOCK) return
     if (elementType == MarkdownTokenTypes.CODE_LINE) {
       val codeBlock = element.parent
       if (codeBlock != null && isFootnoteContinuationBlock(codeBlock)) {
@@ -95,7 +96,7 @@ internal class MarkdownHighlightingAnnotator : Annotator, DumbAware {
     if (element.hasType(MarkdownTokenTypes.CODE_FENCE_CONTENT) && (element.parent as? MarkdownCodeFence)?.fenceLanguage != null) {
       return
     }
-    val highlights = syntaxHighlighter.getTokenHighlights(elementType)
+    val highlights = syntaxHighlighter.getMarkdownTokenHighlights(elementType)
     val parentAttributesKey = highlights.firstOrNull() ?: return
     if (parentAttributesKey != MarkdownHighlighterColors.TEXT) {
       element.traverseAndCreateAnnotationsForContent(holder, parentAttributesKey)
