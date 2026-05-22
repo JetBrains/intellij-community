@@ -33,12 +33,6 @@
     </intentionAction>
     <intentionAction>
       <language>JAVA</language>
-      <className>com.intellij.codeInsight.daemon.impl.quickfix.ConvertToStringLiteralAction</className>
-      <bundleName>messages.JavaBundle</bundleName>
-      <categoryKey>intention.category.strings</categoryKey>
-    </intentionAction>
-    <intentionAction>
-      <language>JAVA</language>
       <className>com.intellij.codeInsight.intention.impl.BreakStringOnLineBreaksIntentionAction</className>
       <bundleName>messages.JavaBundle</bundleName>
       <categoryKey>intention.category.strings</categoryKey>
