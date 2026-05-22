@@ -8,8 +8,15 @@ import com.intellij.model.search.LeafOccurrence
 import com.intellij.model.search.LeafOccurrenceMapper
 import com.intellij.model.search.SearchContext
 import com.intellij.model.search.SearchService
+import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.Query
 import ru.adelf.idea.dotenv.psi.DotEnvKey
+import ru.adelf.idea.dotenv.util.EnvironmentVariablesProviderUtil
 
 class DotEnvKeyReferenceUsageSearcher : UsageSearcher {
 
@@ -32,13 +39,43 @@ private fun validateUsageSearchReferences(symbol: DotEnvKeySymbol, leafOccurrenc
 }
 
 internal fun validateReferences(symbol: DotEnvKeySymbol, leafOccurrence: LeafOccurrence, allowDeclarations: Boolean): Collection<DotEnvKeyReference> {
-    val dismissDeclaration = !allowDeclarations && leafOccurrence.start.parent is DotEnvKey
-    val symbolRefersToLeafOccurrence = symbol.file == leafOccurrence.start.containingFile
-                                       && symbol.rangeInFile == leafOccurrence.start.textRange
+    val leaf = leafOccurrence.start
+    val isDeclarationLeaf = leaf.parent is DotEnvKey
+    val dismissDeclaration = !allowDeclarations && isDeclarationLeaf
+    val symbolRefersToLeafOccurrence = symbol.file == leaf.containingFile
+                                       && symbol.rangeInFile == leaf.textRange
     if (dismissDeclaration || symbolRefersToLeafOccurrence) {
         return emptyList()
     }
-    val referenceCandidate = DotEnvKeyReference(leafOccurrence.start)
+    if (!(allowDeclarations && isDeclarationLeaf) && !isAcceptedByLanguageProvider(symbol, leaf)) {
+        return emptyList()
+    }
+    val referenceCandidate = DotEnvKeyReference(leaf, symbol.name)
     return if (referenceCandidate.resolvesTo(symbol)) listOf(referenceCandidate) else emptyList()
 }
 
+private fun isAcceptedByLanguageProvider(symbol: DotEnvKeySymbol, leaf: PsiElement): Boolean {
+    val containingFile = leaf.containingFile ?: return false
+    val acceptedRanges = acceptedUsageRanges(containingFile)[symbol.name] ?: return false
+    val leafRange = leaf.textRange
+    return acceptedRanges.any { it.contains(leafRange) }
+}
+
+private fun acceptedUsageRanges(file: PsiFile): Map<String, List<TextRange>> {
+    return CachedValuesManager.getCachedValue(file) {
+        val ranges = HashMap<String, MutableList<TextRange>>()
+        file.virtualFile?.let { virtualFile ->
+            for (provider in EnvironmentVariablesProviderUtil.getEnvVariablesUsagesProviders()) {
+                if (!provider.acceptFile(virtualFile)) continue
+                for (usage in provider.getUsages(file)) {
+                    ranges.getOrPut(usage.key) { ArrayList() }.add(usage.element.textRange)
+                }
+            }
+        }
+        CachedValueProvider.Result.create<Map<String, List<TextRange>>>(
+            ranges,
+            PsiModificationTracker.MODIFICATION_COUNT,
+            EnvironmentVariablesProviderUtil.getEnvVariablesUsagesProvidersModificationTracker(),
+        )
+    }
+}
