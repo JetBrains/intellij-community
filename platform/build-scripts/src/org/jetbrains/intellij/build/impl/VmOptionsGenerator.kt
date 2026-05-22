@@ -22,6 +22,7 @@ private val COMMON_VM_OPTIONS: List<String> = listOf(
   "-XX:+IgnoreUnrecognizedVMOptions",  // allowing the JVM to start even with outdated options stuck in user configs
   "-XX:+UnlockDiagnosticVMOptions",
   "-XX:TieredOldPercentage=100000",
+  "-XX:+UseCompactObjectHeaders",  // expected to become the default in JBR 29
   "--sun-misc-unsafe-memory-access=allow",  // temporary option, to be removed before adopting JBR 29
   "-ea",
   "-Dsun.io.useCanonCaches=false",
