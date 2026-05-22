@@ -4858,17 +4858,24 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_intellij_plugins-structure-intellij-3_320_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/plugins/structure-intellij/3.320/structure-intellij-3.320.jar",
-  sha256 = "401465c79cd8b62239212220416458959d23ccea4935ff6d3894f627ae244036",
-  downloaded_file_path = "structure-intellij-3.320.jar"
+  name = "org_jetbrains_intellij_plugins-structure-intellij-3_329_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/plugins/structure-intellij/3.329/structure-intellij-3.329.jar",
+  sha256 = "1e250d452c4779006c0d8350d97e2c4601a7dcd365374df2f2d18ff6ab47b950",
+  downloaded_file_path = "structure-intellij-3.329.jar"
 )
 
 http_file(
-  name = "org_jetbrains_intellij_plugins-structure-base-3_320_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/plugins/structure-base/3.320/structure-base-3.320.jar",
-  sha256 = "a127ab3996ddde0dde735c22f46762afc57da23c0cb24bb9ddbb125e8b2c7aa0",
-  downloaded_file_path = "structure-base-3.320.jar"
+  name = "org_jetbrains_intellij_plugins-structure-base-3_329_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/plugins/structure-base/3.329/structure-base-3.329.jar",
+  sha256 = "b2034a294db6bde4c8b904aaa7eb23f5388fa521ad28a21180f081bcfbd617e9",
+  downloaded_file_path = "structure-base-3.329.jar"
+)
+
+http_file(
+  name = "org_jetbrains_intellij_deps-trove4j-1_0_20200330_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/trove4j/1.0.20200330/trove4j-1.0.20200330.jar",
+  sha256 = "c5fd725bffab51846bf3c77db1383c60aaaebfe1b7fe2f00d23fe1b7df0a439d",
+  downloaded_file_path = "trove4j-1.0.20200330.jar"
 )
 
 http_file(
@@ -4886,17 +4893,45 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_intellij_plugins-structure-intellij-3_320-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/plugins/structure-intellij/3.320/structure-intellij-3.320-sources.jar",
-  sha256 = "ec2ac6332fae7901325a2403d28d36395e50bcce544dcada66255ea2beda085f",
-  downloaded_file_path = "structure-intellij-3.320-sources.jar"
+  name = "jakarta_xml_bind-jakarta_xml_bind-api-4_0_2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/jakarta/xml/bind/jakarta.xml.bind-api/4.0.2/jakarta.xml.bind-api-4.0.2.jar",
+  sha256 = "0d6bcfe47763e85047acf7c398336dc84ff85ebcad0a7cb6f3b9d3e981245406",
+  downloaded_file_path = "jakarta.xml.bind-api-4.0.2.jar"
 )
 
 http_file(
-  name = "org_jetbrains_intellij_plugins-structure-base-3_320-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/plugins/structure-base/3.320/structure-base-3.320-sources.jar",
-  sha256 = "d0c977a4cd84cc6a888a99370307d5fbe0e341b31eb356de90a38f3254fe8eba",
-  downloaded_file_path = "structure-base-3.320-sources.jar"
+  name = "org_glassfish_jaxb-jaxb-runtime-4_0_2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/glassfish/jaxb/jaxb-runtime/4.0.2/jaxb-runtime-4.0.2.jar",
+  sha256 = "1bc271e61b71ca4bd89eb053f3d2c91d478211b02a8982cb520f216fe0e9a939",
+  downloaded_file_path = "jaxb-runtime-4.0.2.jar"
+)
+
+http_file(
+  name = "org_glassfish_jaxb-jaxb-core-4_0_2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/glassfish/jaxb/jaxb-core/4.0.2/jaxb-core-4.0.2.jar",
+  sha256 = "d7ff2954ad78480bbab9391cccff3a22f42a82b6e09aeca1c7d502411c470ccd",
+  downloaded_file_path = "jaxb-core-4.0.2.jar"
+)
+
+http_file(
+  name = "org_jetbrains_intellij_plugins-structure-intellij-3_329-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/plugins/structure-intellij/3.329/structure-intellij-3.329-sources.jar",
+  sha256 = "b252e81b34158e5eef0b93f1fc4851fe077d9cf6e76ea989c459378e47dd1aa8",
+  downloaded_file_path = "structure-intellij-3.329-sources.jar"
+)
+
+http_file(
+  name = "org_jetbrains_intellij_plugins-structure-base-3_329-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/plugins/structure-base/3.329/structure-base-3.329-sources.jar",
+  sha256 = "c0d8aadae8c4f81661e3cc1a907280b8b2c213da53d67abd55323cb5c2518384",
+  downloaded_file_path = "structure-base-3.329-sources.jar"
+)
+
+http_file(
+  name = "org_jetbrains_intellij_deps-trove4j-1_0_20200330-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/trove4j/1.0.20200330/trove4j-1.0.20200330-sources.jar",
+  sha256 = "2e0174e80b989eb5deafcfb77407c908a0abe1f67a80306f98aeca63246e5481",
+  downloaded_file_path = "trove4j-1.0.20200330-sources.jar"
 )
 
 http_file(
@@ -4911,6 +4946,27 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jdom/jdom2/2.0.6.1/jdom2-2.0.6.1-sources.jar",
   sha256 = "45deefd1f842e35f0c1089eeecd057df632230ec6096ccc6fccfc639b95548d4",
   downloaded_file_path = "jdom2-2.0.6.1-sources.jar"
+)
+
+http_file(
+  name = "jakarta_xml_bind-jakarta_xml_bind-api-4_0_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/jakarta/xml/bind/jakarta.xml.bind-api/4.0.2/jakarta.xml.bind-api-4.0.2-sources.jar",
+  sha256 = "184305ed5a6591daca02bfd326fc3cd76262f67348147dcaf1b4bd61135a981a",
+  downloaded_file_path = "jakarta.xml.bind-api-4.0.2-sources.jar"
+)
+
+http_file(
+  name = "org_glassfish_jaxb-jaxb-runtime-4_0_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/glassfish/jaxb/jaxb-runtime/4.0.2/jaxb-runtime-4.0.2-sources.jar",
+  sha256 = "8e24c401237505e181fb58b7c60e96e89fdd3c8cc8baf3f2b4d29d9cf73fa9bb",
+  downloaded_file_path = "jaxb-runtime-4.0.2-sources.jar"
+)
+
+http_file(
+  name = "org_glassfish_jaxb-jaxb-core-4_0_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/glassfish/jaxb/jaxb-core/4.0.2/jaxb-core-4.0.2-sources.jar",
+  sha256 = "8b1737e19f5ddd1d2ea311468ee7f94a68d8b9926dc9735d7009e0547bfcda77",
+  downloaded_file_path = "jaxb-core-4.0.2-sources.jar"
 )
 
 http_file(
@@ -15113,13 +15169,6 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps-trove4j-1_0_20200330_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/trove4j/1.0.20200330/trove4j-1.0.20200330.jar",
-  sha256 = "c5fd725bffab51846bf3c77db1383c60aaaebfe1b7fe2f00d23fe1b7df0a439d",
-  downloaded_file_path = "trove4j-1.0.20200330.jar"
-)
-
-http_file(
   name = "io_gitlab_arturbosch_detekt-detekt-test-utils-1_23_8_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/gitlab/arturbosch/detekt/detekt-test-utils/1.23.8/detekt-test-utils-1.23.8.jar",
   sha256 = "c27c0673cad7cc1f2e932c89a060b7ae85749a03d69f221b4c1281f64136c702",
@@ -15201,13 +15250,6 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-daemon-embeddable/2.0.21/kotlin-daemon-embeddable-2.0.21-sources.jar",
   sha256 = "cc24adc550686d710be6c0853351af136710b24c6b2791c3cc6bf5b3f2d19a67",
   downloaded_file_path = "kotlin-daemon-embeddable-2.0.21-sources.jar"
-)
-
-http_file(
-  name = "org_jetbrains_intellij_deps-trove4j-1_0_20200330-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/trove4j/1.0.20200330/trove4j-1.0.20200330-sources.jar",
-  sha256 = "2e0174e80b989eb5deafcfb77407c908a0abe1f67a80306f98aeca63246e5481",
-  downloaded_file_path = "trove4j-1.0.20200330-sources.jar"
 )
 
 http_file(

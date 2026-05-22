@@ -1,18 +1,33 @@
 <component name="libraryTable">
   <library name="intellij-plugin-structure" type="repository">
-    <properties maven-id="org.jetbrains.intellij.plugins:structure-intellij:3.320">
+    <properties maven-id="org.jetbrains.intellij.plugins:structure-intellij:3.329">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-intellij/3.320/structure-intellij-3.320.jar">
-          <sha256sum>401465c79cd8b62239212220416458959d23ccea4935ff6d3894f627ae244036</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-intellij/3.329/structure-intellij-3.329.jar">
+          <sha256sum>1e250d452c4779006c0d8350d97e2c4601a7dcd365374df2f2d18ff6ab47b950</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-base/3.320/structure-base-3.320.jar">
-          <sha256sum>a127ab3996ddde0dde735c22f46762afc57da23c0cb24bb9ddbb125e8b2c7aa0</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-base/3.329/structure-base-3.329.jar">
+          <sha256sum>b2034a294db6bde4c8b904aaa7eb23f5388fa521ad28a21180f081bcfbd617e9</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/trove4j/1.0.20200330/trove4j-1.0.20200330.jar">
+          <sha256sum>c5fd725bffab51846bf3c77db1383c60aaaebfe1b7fe2f00d23fe1b7df0a439d</sha256sum>
         </artifact>
         <artifact url="file://$MAVEN_REPOSITORY$/org/atteo/evo-inflector/1.3/evo-inflector-1.3.jar">
           <sha256sum>ac0192fd110a0363732b17ea94fd1ce8cfd85790c8e1551e14f866908b5d80e1</sha256sum>
         </artifact>
         <artifact url="file://$MAVEN_REPOSITORY$/org/jdom/jdom2/2.0.6.1/jdom2-2.0.6.1.jar">
           <sha256sum>0b20f45e3a0fd8f0d12cdc5316b06776e902b1365db00118876f9175c60f302c</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/jakarta/xml/bind/jakarta.xml.bind-api/4.0.2/jakarta.xml.bind-api-4.0.2.jar">
+          <sha256sum>0d6bcfe47763e85047acf7c398336dc84ff85ebcad0a7cb6f3b9d3e981245406</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/jakarta/activation/jakarta.activation-api/2.1.3/jakarta.activation-api-2.1.3.jar">
+          <sha256sum>01b176d718a169263e78290691fc479977186bcc6b333487325084d6586f4627</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/glassfish/jaxb/jaxb-runtime/4.0.2/jaxb-runtime-4.0.2.jar">
+          <sha256sum>1bc271e61b71ca4bd89eb053f3d2c91d478211b02a8982cb520f216fe0e9a939</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/glassfish/jaxb/jaxb-core/4.0.2/jaxb-core-4.0.2.jar">
+          <sha256sum>d7ff2954ad78480bbab9391cccff3a22f42a82b6e09aeca1c7d502411c470ccd</sha256sum>
         </artifact>
       </verification>
       <exclude>
@@ -26,22 +41,33 @@
         <dependency maven-id="org.apache.commons:commons-compress" />
         <dependency maven-id="org.tukaani:xz" />
         <dependency maven-id="org.jsoup:jsoup" />
-        <dependency maven-id="javax.xml.bind:jaxb-api" />
-        <dependency maven-id="org.glassfish.jaxb:jaxb-runtime" />
+        <dependency maven-id="org.eclipse.angus:angus-activation" />
+        <dependency maven-id="org.glassfish.jaxb:txw2" />
+        <dependency maven-id="com.sun.istack:istack-commons-runtime" />
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-intellij/3.320/structure-intellij-3.320.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-base/3.320/structure-base-3.320.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-intellij/3.329/structure-intellij-3.329.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-base/3.329/structure-base-3.329.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/trove4j/1.0.20200330/trove4j-1.0.20200330.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/atteo/evo-inflector/1.3/evo-inflector-1.3.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/jdom/jdom2/2.0.6.1/jdom2-2.0.6.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/jakarta/xml/bind/jakarta.xml.bind-api/4.0.2/jakarta.xml.bind-api-4.0.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/jakarta/activation/jakarta.activation-api/2.1.3/jakarta.activation-api-2.1.3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jaxb/jaxb-runtime/4.0.2/jaxb-runtime-4.0.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jaxb/jaxb-core/4.0.2/jaxb-core-4.0.2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-intellij/3.320/structure-intellij-3.320-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-base/3.320/structure-base-3.320-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-intellij/3.329/structure-intellij-3.329-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-base/3.329/structure-base-3.329-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/trove4j/1.0.20200330/trove4j-1.0.20200330-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/atteo/evo-inflector/1.3/evo-inflector-1.3-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/jdom/jdom2/2.0.6.1/jdom2-2.0.6.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/jakarta/xml/bind/jakarta.xml.bind-api/4.0.2/jakarta.xml.bind-api-4.0.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/jakarta/activation/jakarta.activation-api/2.1.3/jakarta.activation-api-2.1.3-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jaxb/jaxb-runtime/4.0.2/jaxb-runtime-4.0.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jaxb/jaxb-core/4.0.2/jaxb-core-4.0.2-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
