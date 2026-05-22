@@ -5,6 +5,12 @@
   <action id="CodeFloatingToolbar.GotoPrevMenu">
     <keyboard-shortcut first-keystroke="shift TAB"/>
   </action>
+  <action id="RunAnything">
+    <keyboard-gesture-shortcut keystroke="ctrl control" modifier="dblClick"/>
+  </action>
+  <action id="SearchEverywhere">
+    <keyboard-gesture-shortcut keystroke="shift SHIFT" modifier="dblClick"/>
+  </action>
   <action id="ShowNavBar">
     <keyboard-shortcut first-keystroke="alt HOME"/>
   </action>

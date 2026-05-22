@@ -6,12 +6,15 @@ package com.intellij.openapi.actionSystem.impl
 import com.intellij.diagnostic.PluginException
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.KeyboardGestureAction
+import com.intellij.openapi.actionSystem.KeyboardModifierGestureShortcut
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.Shortcut
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.keymap.KeymapUtil.getKeyStroke
+import com.intellij.ui.KeyStrokeAdapter
 import com.intellij.util.xml.dom.XmlElement
 import javax.swing.KeyStroke
 
@@ -25,10 +28,12 @@ internal data class RemoveAllShortcutsOperation(@JvmField val actionId: String) 
 
 internal data class RemoveShortcutOperation(@JvmField val actionId: String, @JvmField val shortcut: Shortcut) : KeymapShortcutOperation
 
-internal fun processMouseShortcutNode(element: XmlElement,
-                                      actionId: String,
-                                      module: IdeaPluginDescriptor,
-                                      keymapToOperations: MutableMap<String, MutableList<KeymapShortcutOperation>>) {
+internal fun processMouseShortcutNode(
+  element: XmlElement,
+  actionId: String,
+  module: IdeaPluginDescriptor,
+  keymapToOperations: MutableMap<String, MutableList<KeymapShortcutOperation>>,
+) {
   val keystrokeString = element.attributes.get("keystroke")
   if (keystrokeString.isNullOrBlank()) {
     reportActionError(module, "\"keystroke\" attribute must be specified for action with id=$actionId")
@@ -56,10 +61,12 @@ internal fun processMouseShortcutNode(element: XmlElement,
                           keymapToOperations = keymapToOperations)
 }
 
-internal fun processKeyboardShortcutNode(element: XmlElement,
-                                         actionId: String,
-                                         module: PluginDescriptor,
-                                         keymapToOperations: MutableMap<String, MutableList<KeymapShortcutOperation>>) {
+internal fun processKeyboardShortcutNode(
+  element: XmlElement,
+  actionId: String,
+  module: PluginDescriptor,
+  keymapToOperations: MutableMap<String, MutableList<KeymapShortcutOperation>>,
+) {
   val firstStrokeString = element.attributes.get("first-keystroke")
   if (firstStrokeString == null) {
     reportActionError(module, "\"first-keystroke\" attribute must be specified for action with id=$actionId")
@@ -95,11 +102,56 @@ internal fun processKeyboardShortcutNode(element: XmlElement,
                           keymapToOperations = keymapToOperations)
 }
 
-private fun processRemoveAndReplace(element: XmlElement,
-                                    actionId: String,
-                                    keymap: String,
-                                    shortcut: Shortcut,
-                                    keymapToOperations: MutableMap<String, MutableList<KeymapShortcutOperation>>) {
+internal fun processKeyboardGestureShortcutNode(
+  element: XmlElement,
+  actionId: String,
+  module: PluginDescriptor,
+  keymapToOperations: MutableMap<String, MutableList<KeymapShortcutOperation>>,
+) {
+  val strokeString = element.attributes.get("keystroke")
+  if (strokeString == null) {
+    reportActionError(module, "\"keystroke\" attribute must be specified for action with id=$actionId")
+    return
+  }
+
+  // Modifier-key gestures use keymap XML spelling like "ctrl control", which KeymapUtil.getKeyStroke() cannot parse.
+  val keyStroke = KeyStrokeAdapter.getKeyStroke(strokeString)
+  if (keyStroke == null) {
+    reportActionError(module = module, message = "\"keystroke\" attribute has invalid value for action with id=$actionId")
+    return
+  }
+
+  val modifierString = element.attributes.get("modifier")
+  val modifier = when {
+    KeyboardGestureAction.ModifierType.dblClick.toString()
+      .equals(modifierString, ignoreCase = true) -> KeyboardGestureAction.ModifierType.dblClick
+    KeyboardGestureAction.ModifierType.hold.toString().equals(modifierString, ignoreCase = true) -> KeyboardGestureAction.ModifierType.hold
+    else -> {
+      reportActionError(module = module, message = "\"modifier\" attribute has invalid value for action with id=$actionId")
+      return
+    }
+  }
+
+  val keymapName = element.attributes.get(KEYMAP_ATTR_NAME)
+  if (keymapName.isNullOrBlank()) {
+    reportActionError(module = module, message = "attribute \"keymap\" should be defined")
+    return
+  }
+
+  processRemoveAndReplace(element = element,
+                          actionId = actionId,
+                          keymap = keymapName,
+                          shortcut = KeyboardModifierGestureShortcut.newInstance(modifier, keyStroke),
+                          keymapToOperations = keymapToOperations)
+}
+
+private fun processRemoveAndReplace(
+  element: XmlElement,
+  actionId: String,
+  keymap: String,
+  shortcut: Shortcut,
+  keymapToOperations: MutableMap<String, MutableList<KeymapShortcutOperation>>,
+) {
   val operations = keymapToOperations.computeIfAbsent(keymap) { ArrayList() }
   val remove = element.attributes.get("remove").toBoolean()
   if (remove) {

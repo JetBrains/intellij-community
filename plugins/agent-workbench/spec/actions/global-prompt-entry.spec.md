@@ -3,7 +3,6 @@ name: Global Prompt Entry
 description: Requirements for opening, focusing, submitting, and routing the Agent Workbench global prompt.
 targets:
   - ../../prompt/ui/src/actions/AgentWorkbenchGlobalPromptAction.kt
-  - ../../prompt/ui/src/actions/AgentWorkbenchGlobalPromptShortcutCustomizer.kt
   - ../../prompt/ui/src/AgentPromptPalettePopup.kt
   - ../../prompt/ui/src/AgentPromptPaletteView.kt
   - ../../prompt/ui/src/AgentPromptPaletteSubmitController.kt

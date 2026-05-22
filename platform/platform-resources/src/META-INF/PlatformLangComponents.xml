@@ -145,6 +145,7 @@
                     serviceImplementation="com.intellij.openapi.wm.impl.ToolWindowManagerStateImpl"/>
 
     <nonLockedIdeEventQueueDispatcher implementation="com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler$MyEventDispatcher"/>
+    <actionConfigurationCustomizer implementation="com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler$ShortcutTracker"/>
 
     <applicationService serviceInterface="com.intellij.openapi.project.configuration.HeadlessLogging$HeadlessLoggingService"
                         serviceImplementation="com.intellij.openapi.project.configuration.EmptyLoggingService"

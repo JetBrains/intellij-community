@@ -16,6 +16,7 @@ import com.intellij.util.ui.JdkConstants;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.KeyStroke;
 import java.awt.event.InputEvent;
@@ -58,6 +59,9 @@ public class KeymapTextContext {
       s = getMouseShortcutText((MouseShortcut)shortcut);
     }
     else if (shortcut instanceof KeyboardModifierGestureShortcut gestureShortcut) {
+      String modifierDoubleClickText = getModifierDoubleClickText(gestureShortcut);
+      if (modifierDoubleClickText != null) return modifierDoubleClickText;
+
       s = gestureShortcut.getType() == KeyboardGestureAction.ModifierType.dblClick ? KeyMapBundle.message("press.release.and.hold")
                                                                                    : KeyMapBundle.message("hold");
       s += " " + getKeystrokeText(gestureShortcut.getStroke());
@@ -68,15 +72,43 @@ public class KeymapTextContext {
     return s;
   }
 
+  @SuppressWarnings("MagicConstant")
+  private @Nullable @NlsSafe String getModifierDoubleClickText(@NotNull KeyboardModifierGestureShortcut shortcut) {
+    if (shortcut.getType() != KeyboardGestureAction.ModifierType.dblClick) return null;
+
+    KeyStroke stroke = shortcut.getStroke();
+    int keyCode = stroke.getKeyCode();
+    int modifierMask = getModifierMask(keyCode);
+    if (modifierMask == 0) return null;
+
+    int modifiers = mapNewModifiers(stroke.getModifiers());
+    if ((modifiers & modifierMask) == 0) return null;
+
+    int requiredModifiers = modifiers & ~modifierMask;
+    String keyText = isSimplifiedMacShortcuts() ? getSimplifiedMacKeyText(keyCode) : getKeyText(keyCode);
+    return getModifiersText(requiredModifiers, true) + keyText + " " + keyText;
+  }
+
+  @SuppressWarnings("deprecation")
+  private static int getModifierMask(int keyCode) {
+    return switch (keyCode) {
+      case KeyEvent.VK_ALT -> InputEvent.ALT_MASK;
+      case KeyEvent.VK_CONTROL -> InputEvent.CTRL_MASK;
+      case KeyEvent.VK_META -> InputEvent.META_MASK;
+      case KeyEvent.VK_SHIFT -> InputEvent.SHIFT_MASK;
+      default -> 0;
+    };
+  }
+
   public @Nls @NotNull String getMouseShortcutText(@NotNull MouseShortcut shortcut) {
     if (shortcut instanceof PressureShortcut) return shortcut.toString();  //NON-NLS
     return getMouseShortcutText(shortcut.getButton(), shortcut.getModifiers(), shortcut.getClickCount());
   }
 
   /**
-   * @param button        target mouse button
-   * @param modifiers     modifiers used within the target click
-   * @param clickCount    target clicks count
+   * @param button     target mouse button
+   * @param modifiers  modifiers used within the target click
+   * @param clickCount target clicks count
    * @return string representation of passed mouse shortcut.
    */
   private @Nls @NotNull String getMouseShortcutText(int button, @JdkConstants.InputEventMask int modifiers, int clickCount) {
@@ -138,16 +170,16 @@ public class KeymapTextContext {
 
   public @NotNull String getKeyText(int code) {
     return switch (code) {
-      case KeyEvent.VK_BACK_QUOTE    -> "`";
-      case KeyEvent.VK_SEPARATOR     -> ",";
-      case KeyEvent.VK_DECIMAL       -> ".";
-      case KeyEvent.VK_SLASH         -> "/";
-      case KeyEvent.VK_BACK_SLASH    -> "\\";
-      case KeyEvent.VK_PERIOD        -> ".";
-      case KeyEvent.VK_SEMICOLON     -> ";";
+      case KeyEvent.VK_BACK_QUOTE -> "`";
+      case KeyEvent.VK_SEPARATOR -> ",";
+      case KeyEvent.VK_DECIMAL -> ".";
+      case KeyEvent.VK_SLASH -> "/";
+      case KeyEvent.VK_BACK_SLASH -> "\\";
+      case KeyEvent.VK_PERIOD -> ".";
+      case KeyEvent.VK_SEMICOLON -> ";";
       case KeyEvent.VK_CLOSE_BRACKET -> "]";
-      case KeyEvent.VK_OPEN_BRACKET  -> "[";
-      case KeyEvent.VK_EQUALS        -> "=";
+      case KeyEvent.VK_OPEN_BRACKET -> "[";
+      case KeyEvent.VK_EQUALS -> "=";
       default -> {
         String result = isNativeMacShortcuts() ? MacKeymapUtil.getKeyText(code) : KeyEvent.getKeyText(code);
         // [vova] this is dirty fix for bug #35092
@@ -161,7 +193,9 @@ public class KeymapTextContext {
   }
 
   public boolean isSimplifiedMacShortcuts() {
-    return ClientSystemInfo.isMac() && AdvancedSettings.getInstanceIfCreated() != null && AdvancedSettings.getBoolean("ide.macos.disable.native.shortcut.symbols");
+    return ClientSystemInfo.isMac() &&
+           AdvancedSettings.getInstanceIfCreated() != null &&
+           AdvancedSettings.getBoolean("ide.macos.disable.native.shortcut.symbols");
   }
 
   @NotNull String getModifiersText(@JdkConstants.InputEventMask int modifiers, boolean addPlus) {
@@ -184,18 +218,18 @@ public class KeymapTextContext {
     final String keyModifiersText = isSimplifiedMacShortcuts() ? getSimplifiedMacKeyModifiersText(modifiers)
                                                                : KeyEvent.getKeyModifiersText(modifiers);
 
-    return !keyModifiersText.isEmpty()  && addPlus ? keyModifiersText + "+" : keyModifiersText;
+    return !keyModifiersText.isEmpty() && addPlus ? keyModifiersText + "+" : keyModifiersText;
   }
 
   private static String getSimplifiedMacKeyModifiersText(int modifiers) {
     StringBuilder buf = new StringBuilder();
 
-    if ((modifiers & InputEvent.META_MASK) != 0)      buf.append("Cmd+");
-    if ((modifiers & InputEvent.CTRL_MASK) != 0)      buf.append("Ctrl+");
-    if ((modifiers & InputEvent.ALT_MASK) != 0)       buf.append("Alt+");
-    if ((modifiers & InputEvent.SHIFT_MASK) != 0)     buf.append("Shift+");
+    if ((modifiers & InputEvent.META_MASK) != 0) buf.append("Cmd+");
+    if ((modifiers & InputEvent.CTRL_MASK) != 0) buf.append("Ctrl+");
+    if ((modifiers & InputEvent.ALT_MASK) != 0) buf.append("Alt+");
+    if ((modifiers & InputEvent.SHIFT_MASK) != 0) buf.append("Shift+");
     if ((modifiers & InputEvent.ALT_GRAPH_MASK) != 0) buf.append("Alt Graph+");
-    if ((modifiers & InputEvent.BUTTON1_MASK) != 0)   buf.append("Button1+");
+    if ((modifiers & InputEvent.BUTTON1_MASK) != 0) buf.append("Button1+");
 
     if (!buf.isEmpty()) buf.setLength(buf.length() - 1);
 
@@ -281,8 +315,8 @@ public class KeymapTextContext {
   /**
    * Factory method. It parses passed string and creates {@code MouseShortcut}.
    *
-   * @param keystrokeString       target keystroke
-   * @return                      shortcut for the given keystroke
+   * @param keystrokeString target keystroke
+   * @return shortcut for the given keystroke
    * @throws InvalidDataException if {@code keystrokeString} doesn't represent valid {@code MouseShortcut}.
    */
   public @NotNull MouseShortcut parseMouseShortcut(@NotNull String keystrokeString) throws InvalidDataException {
@@ -293,7 +327,7 @@ public class KeymapTextContext {
     int button = -1;
     int modifiers = 0;
     int clickCount = 1;
-    for (StringTokenizer tokenizer = new StringTokenizer(keystrokeString); tokenizer.hasMoreTokens();) {
+    for (StringTokenizer tokenizer = new StringTokenizer(keystrokeString); tokenizer.hasMoreTokens(); ) {
       String token = tokenizer.nextToken();
       if (SHIFT.equals(token)) {
         modifiers |= InputEvent.SHIFT_DOWN_MASK;
@@ -330,7 +364,7 @@ public class KeymapTextContext {
 
   /**
    * @return string representation of passed mouse shortcut. This method should
-   *         be used only for serializing of the {@code MouseShortcut}
+   * be used only for serializing of the {@code MouseShortcut}
    */
   public @NotNull String getMouseShortcutString(@NotNull MouseShortcut shortcut) {
     if (shortcut instanceof PressureShortcut) {

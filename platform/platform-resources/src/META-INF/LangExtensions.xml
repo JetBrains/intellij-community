@@ -1404,9 +1404,6 @@
     <applicationService serviceInterface="com.intellij.ide.actions.searcheverywhere.remote.SearchEverywhereRemoteSupportService"
                         serviceImplementation="com.intellij.ide.actions.searcheverywhere.SearchEverywhereRemoteSupportServiceImpl"/>
 
-    <actionConfigurationCustomizer implementation="com.intellij.ide.actions.runAnything.RunAnythingAction$ShortcutTracker"/>
-    <actionConfigurationCustomizer implementation="com.intellij.ide.actions.SearchEverywhereAction$ShortcutTracker"/>
-
     <runAnything.executionProvider implementation="com.intellij.ide.actions.runAnything.activity.RunAnythingRecentProjectProvider"/>
     <runAnything.executionProvider id="recentCommandProvider"
                                    implementation="com.intellij.ide.actions.runAnything.activity.RunAnythingRecentCommandProvider"

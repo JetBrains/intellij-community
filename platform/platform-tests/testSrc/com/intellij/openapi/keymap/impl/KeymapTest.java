@@ -1,6 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl;
 
+import com.intellij.configurationStore.SchemeDataHolder;
+import com.intellij.openapi.actionSystem.KeyboardGestureAction;
+import com.intellij.openapi.actionSystem.KeyboardModifierGestureShortcut;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.MouseShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
@@ -8,6 +11,8 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.testFramework.LightPlatformTestCase;
 import one.util.streamex.StreamEx;
+import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.KeyStroke;
 import java.awt.event.InputEvent;
@@ -75,6 +80,73 @@ public class KeymapTest extends LightPlatformTestCase {
     assertSameElements(child.getActionIdList(shortcut2), ACTION_2);
     assertSameElements(child.getActionIdList(shortcutA), ACTION_1);
     assertSameElements(child.getActionIdList(shortcutB));
+  }
+
+  public void testKeyboardGestureShortcutSerialization() {
+    String actionId = "GESTURE_ACTION";
+    Shortcut shortcut = KeyboardModifierGestureShortcut.newInstance(KeyboardGestureAction.ModifierType.dblClick,
+                                                                    KeyStroke.getKeyStroke("control CONTROL"));
+    parent.addShortcut(actionId, shortcut);
+
+    Element keymapElement = parent.writeScheme();
+    Element actionElement = keymapElement.getChildren("action").stream()
+      .filter(element -> actionId.equals(element.getAttributeValue("id")))
+      .findFirst()
+      .orElseThrow();
+    Element shortcutElement = actionElement.getChild("keyboard-gesture-shortcut");
+
+    assertThat(shortcutElement).isNotNull();
+    assertThat(shortcutElement.getAttributeValue("keystroke")).isEqualTo("ctrl control");
+    assertThat(shortcutElement.getAttributeValue("modifier")).isEqualTo("dblClick");
+    assertThat(shortcutElement.getAttributeValue("keyboard-gesture-shortcut")).isNull();
+  }
+
+  public void testKeyboardGestureShortcutWriteReadRoundTrip() {
+    String actionId = "GESTURE_ACTION";
+    Shortcut bareCtrl = KeyboardModifierGestureShortcut.newInstance(KeyboardGestureAction.ModifierType.dblClick,
+                                                                    KeyStroke.getKeyStroke("control CONTROL"));
+    Shortcut altCtrl = KeyboardModifierGestureShortcut.newInstance(KeyboardGestureAction.ModifierType.dblClick,
+                                                                   KeyStroke.getKeyStroke("alt control CONTROL"));
+    parent.addShortcut(actionId, bareCtrl);
+    parent.addShortcut(actionId, altCtrl);
+
+    Element written = parent.writeScheme();
+    KeymapImpl restored = new KeymapImpl(new SchemeDataHolder<>() {
+      @Override
+      public @NotNull Element read() { return written; }
+    });
+
+    assertThat(restored.getShortcuts(actionId)).containsExactlyInAnyOrder(bareCtrl, altCtrl);
+  }
+
+  public void testMultipleKeyboardGestureShortcutsForOneAction() {
+    String actionId = "GESTURE_ACTION";
+    Shortcut doubleCtrl = KeyboardModifierGestureShortcut.newInstance(KeyboardGestureAction.ModifierType.dblClick,
+                                                                      KeyStroke.getKeyStroke("control CONTROL"));
+    Shortcut altDoubleCtrl = KeyboardModifierGestureShortcut.newInstance(KeyboardGestureAction.ModifierType.dblClick,
+                                                                         KeyStroke.getKeyStroke("alt control CONTROL"));
+
+    parent.addShortcut(actionId, doubleCtrl);
+    parent.addShortcut(actionId, altDoubleCtrl);
+
+    assertThat(parent.getShortcuts(actionId)).contains(doubleCtrl, altDoubleCtrl);
+    assertThat(parent.getActionIdList(doubleCtrl)).containsExactly(actionId);
+    assertThat(parent.getActionIdList(altDoubleCtrl)).containsExactly(actionId);
+  }
+
+  public void testKeyboardGestureShortcutLookupRequiresSameDoubledModifierKey() {
+    String doubleCtrlActionId = "DOUBLE_CTRL_ACTION";
+    String doubleAltActionId = "DOUBLE_ALT_ACTION";
+    Shortcut altDoubleCtrl = KeyboardModifierGestureShortcut.newInstance(KeyboardGestureAction.ModifierType.dblClick,
+                                                                         KeyStroke.getKeyStroke("alt control CONTROL"));
+    Shortcut ctrlDoubleAlt = KeyboardModifierGestureShortcut.newInstance(KeyboardGestureAction.ModifierType.dblClick,
+                                                                         KeyStroke.getKeyStroke("ctrl alt ALT"));
+
+    parent.addShortcut(doubleCtrlActionId, altDoubleCtrl);
+    parent.addShortcut(doubleAltActionId, ctrlDoubleAlt);
+
+    assertThat(parent.getActionIdList(altDoubleCtrl)).containsExactly(doubleCtrlActionId);
+    assertThat(parent.getActionIdList(ctrlDoubleAlt)).containsExactly(doubleAltActionId);
   }
 
   public void testRemovingShortcutsFromParentAndChild() {
@@ -157,7 +229,7 @@ public class KeymapTest extends LightPlatformTestCase {
     child.removeShortcut(ACTION_2, mouseShortcut);
     assertThat(child.getActionIdList(mouseShortcut)).isEmpty();
   }
-  
+
   // decided to not change order and keep old behavior
   //public void testChangeMouseShortcut() throws Exception {
   //  myParent.clearOwnActionsIds();
@@ -308,7 +380,7 @@ public class KeymapTest extends LightPlatformTestCase {
       assertFalse(standalone.hasOwnActionId(BASE2));
       assertFalse(standalone.hasOwnActionId(DEPENDENT2));
     }
-    finally{
+    finally {
       ActionManagerEx.getInstanceEx().unbindShortcuts(DEPENDENT1);
       ActionManagerEx.getInstanceEx().unbindShortcuts(DEPENDENT2);
     }
@@ -858,7 +930,7 @@ public class KeymapTest extends LightPlatformTestCase {
       ActionManagerEx.getInstanceEx().unbindShortcuts(DEPENDENT);
     }
   }
-  
+
   public void testParallelGetShortcuts() {
     Keymap grandChild = child.deriveKeymap("GrandChild");
     Runnable task = () -> {

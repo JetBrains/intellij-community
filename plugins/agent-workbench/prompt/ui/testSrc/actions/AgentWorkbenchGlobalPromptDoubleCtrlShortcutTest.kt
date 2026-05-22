@@ -7,13 +7,15 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.KeyboardShortcut
+import com.intellij.openapi.actionSystem.KeyboardGestureAction
+import com.intellij.openapi.actionSystem.KeyboardModifierGestureShortcut
 import com.intellij.openapi.actionSystem.Shortcut
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler
+import com.intellij.ide.actions.runAnything.RunAnythingAction
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
@@ -25,8 +27,22 @@ import java.awt.event.KeyEvent
 import javax.swing.JPanel
 import javax.swing.KeyStroke
 
-@Suppress("DEPRECATION")
-private val RUN_ANYTHING_EXPLICIT_SHORTCUT = KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.CTRL_MASK), null)
+private val AGENT_PROMPT_DOUBLE_CTRL_SHORTCUT = KeyboardModifierGestureShortcut.newInstance(
+  KeyboardGestureAction.ModifierType.dblClick,
+  KeyStroke.getKeyStroke(KeyEvent.VK_CONTROL, InputEvent.CTRL_MASK),
+)
+private val AGENT_PROMPT_ALT_DOUBLE_CTRL_SHORTCUT = KeyboardModifierGestureShortcut.newInstance(
+  KeyboardGestureAction.ModifierType.dblClick,
+  KeyStroke.getKeyStroke(KeyEvent.VK_CONTROL, InputEvent.CTRL_MASK or InputEvent.ALT_MASK),
+)
+private val AGENT_PROMPT_ALT_SHIFT_DOUBLE_CTRL_SHORTCUT = KeyboardModifierGestureShortcut.newInstance(
+  KeyboardGestureAction.ModifierType.dblClick,
+  KeyStroke.getKeyStroke(KeyEvent.VK_CONTROL, InputEvent.CTRL_MASK or InputEvent.ALT_MASK or InputEvent.SHIFT_MASK),
+)
+private val RUN_ANYTHING_SHIFT_DOUBLE_CTRL_SHORTCUT = KeyboardModifierGestureShortcut.newInstance(
+  KeyboardGestureAction.ModifierType.dblClick,
+  KeyStroke.getKeyStroke(KeyEvent.VK_CONTROL, InputEvent.CTRL_MASK or InputEvent.SHIFT_MASK),
+)
 
 @TestApplication
 @RunInEdt(writeIntent = true)
@@ -38,10 +54,13 @@ internal class AgentWorkbenchGlobalPromptDoubleCtrlShortcutTest {
   private var autoSelectInvocationCount = 0
   private var runAnythingInvocationCount = 0
 
-  private lateinit var originalPromptAction: AnAction
-  private lateinit var originalAutoSelectAction: AnAction
-  private lateinit var originalRunAnythingAction: AnAction
-  private lateinit var originalRunAnythingShortcuts: List<Shortcut>
+  private var originalPromptAction: AnAction? = null
+  private var originalAutoSelectAction: AnAction? = null
+  private var originalRunAnythingAction: AnAction? = null
+  private var originalPromptShortcuts: List<Shortcut> = emptyList()
+  private var originalAutoSelectShortcuts: List<Shortcut> = emptyList()
+  private var originalRunAnythingShortcuts: List<Shortcut> = emptyList()
+  private val actionsRegisteredByTest = mutableSetOf<String>()
 
   @BeforeEach
   fun setUp() {
@@ -51,9 +70,13 @@ internal class AgentWorkbenchGlobalPromptDoubleCtrlShortcutTest {
     runAnythingInvocationCount = 0
 
     val actionManager = ActionManagerEx.getInstanceEx()
+    ensureActionRegistered(actionManager, RunAnythingAction.RUN_ANYTHING_ACTION_ID)
+    ensureActionRegistered(actionManager, AGENT_WORKBENCH_GLOBAL_PROMPT_ACTION_ID)
+    ensureActionRegistered(actionManager, AGENT_WORKBENCH_GLOBAL_PROMPT_AUTO_SELECT_ACTION_ID)
+
     originalPromptAction = checkNotNull(actionManager.getAction(AGENT_WORKBENCH_GLOBAL_PROMPT_ACTION_ID))
     originalAutoSelectAction = checkNotNull(actionManager.getAction(AGENT_WORKBENCH_GLOBAL_PROMPT_AUTO_SELECT_ACTION_ID))
-    originalRunAnythingAction = checkNotNull(actionManager.getAction(RUN_ANYTHING_ACTION_ID))
+    originalRunAnythingAction = checkNotNull(actionManager.getAction(RunAnythingAction.RUN_ANYTHING_ACTION_ID))
 
     actionManager.asActionRuntimeRegistrar().replaceAction(
       AGENT_WORKBENCH_GLOBAL_PROMPT_ACTION_ID,
@@ -64,35 +87,44 @@ internal class AgentWorkbenchGlobalPromptDoubleCtrlShortcutTest {
       createCountingAction { autoSelectInvocationCount++ },
     )
     actionManager.asActionRuntimeRegistrar().replaceAction(
-      RUN_ANYTHING_ACTION_ID,
+      RunAnythingAction.RUN_ANYTHING_ACTION_ID,
       createCountingAction { runAnythingInvocationCount++ },
     )
 
-    originalRunAnythingShortcuts = activeKeymap().getShortcuts(RUN_ANYTHING_ACTION_ID).toList()
-    resetRunAnythingShortcuts(emptyList())
+    originalPromptShortcuts = activeKeymap().getShortcuts(AGENT_WORKBENCH_GLOBAL_PROMPT_ACTION_ID).toList()
+    originalAutoSelectShortcuts = activeKeymap().getShortcuts(AGENT_WORKBENCH_GLOBAL_PROMPT_AUTO_SELECT_ACTION_ID).toList()
+    originalRunAnythingShortcuts = activeKeymap().getShortcuts(RunAnythingAction.RUN_ANYTHING_ACTION_ID).toList()
+    resetActionShortcuts(AGENT_WORKBENCH_GLOBAL_PROMPT_ACTION_ID, listOf(AGENT_PROMPT_DOUBLE_CTRL_SHORTCUT))
+    resetActionShortcuts(AGENT_WORKBENCH_GLOBAL_PROMPT_AUTO_SELECT_ACTION_ID, listOf(AGENT_PROMPT_ALT_DOUBLE_CTRL_SHORTCUT))
+    resetActionShortcuts(RunAnythingAction.RUN_ANYTHING_ACTION_ID, listOf(AGENT_PROMPT_DOUBLE_CTRL_SHORTCUT))
 
-    ModifierKeyDoubleClickHandler.getInstance().unsuppressAction(RUN_ANYTHING_ACTION_ID)
+    ModifierKeyDoubleClickHandler.getInstance().unsuppressAction(RunAnythingAction.RUN_ANYTHING_ACTION_ID)
     ModifierKeyDoubleClickHandler.getInstance().unregisterAction(AGENT_WORKBENCH_GLOBAL_PROMPT_ACTION_ID)
     ModifierKeyDoubleClickHandler.getInstance().unregisterAction(AGENT_WORKBENCH_GLOBAL_PROMPT_AUTO_SELECT_ACTION_ID)
-    ModifierKeyDoubleClickHandler.getInstance().unregisterAction(RUN_ANYTHING_ACTION_ID)
+    ModifierKeyDoubleClickHandler.getInstance().unregisterAction(RunAnythingAction.RUN_ANYTHING_ACTION_ID)
   }
 
   @AfterEach
   fun tearDown() {
-    resetRunAnythingShortcuts(originalRunAnythingShortcuts)
-    AgentWorkbenchGlobalPromptShortcutInstaller.uninstall()
+    resetActionShortcuts(AGENT_WORKBENCH_GLOBAL_PROMPT_ACTION_ID, originalPromptShortcuts)
+    resetActionShortcuts(AGENT_WORKBENCH_GLOBAL_PROMPT_AUTO_SELECT_ACTION_ID, originalAutoSelectShortcuts)
+    resetActionShortcuts(RunAnythingAction.RUN_ANYTHING_ACTION_ID, originalRunAnythingShortcuts)
     ModifierKeyDoubleClickHandler.getInstance().unregisterAction(AGENT_WORKBENCH_GLOBAL_PROMPT_ACTION_ID)
     ModifierKeyDoubleClickHandler.getInstance().unregisterAction(AGENT_WORKBENCH_GLOBAL_PROMPT_AUTO_SELECT_ACTION_ID)
+    ModifierKeyDoubleClickHandler.getInstance().unregisterAction(RunAnythingAction.RUN_ANYTHING_ACTION_ID)
 
     val registrar = ActionManagerEx.getInstanceEx().asActionRuntimeRegistrar()
-    registrar.replaceAction(AGENT_WORKBENCH_GLOBAL_PROMPT_ACTION_ID, originalPromptAction)
-    registrar.replaceAction(AGENT_WORKBENCH_GLOBAL_PROMPT_AUTO_SELECT_ACTION_ID, originalAutoSelectAction)
-    registrar.replaceAction(RUN_ANYTHING_ACTION_ID, originalRunAnythingAction)
+    originalPromptAction?.let { registrar.replaceAction(AGENT_WORKBENCH_GLOBAL_PROMPT_ACTION_ID, it) }
+    originalAutoSelectAction?.let { registrar.replaceAction(AGENT_WORKBENCH_GLOBAL_PROMPT_AUTO_SELECT_ACTION_ID, it) }
+    originalRunAnythingAction?.let { registrar.replaceAction(RunAnythingAction.RUN_ANYTHING_ACTION_ID, it) }
+    actionsRegisteredByTest.forEach(ActionManagerEx.getInstanceEx()::unregisterAction)
+    actionsRegisteredByTest.clear()
+    syncKeymapShortcuts()
   }
 
   @Test
   fun doubleCtrlInvokesAgentPrompt() {
-    AgentWorkbenchGlobalPromptShortcutInstaller.install()
+    syncKeymapShortcuts()
 
     dispatchDoubleCtrl()
 
@@ -103,7 +135,7 @@ internal class AgentWorkbenchGlobalPromptDoubleCtrlShortcutTest {
 
   @Test
   fun altDoubleCtrlInvokesAutoSelectPrompt() {
-    AgentWorkbenchGlobalPromptShortcutInstaller.install()
+    syncKeymapShortcuts()
 
     dispatchAltDoubleCtrl()
 
@@ -113,11 +145,30 @@ internal class AgentWorkbenchGlobalPromptDoubleCtrlShortcutTest {
   }
 
   @Test
-  fun doubleCtrlDoesNotInvokeRunAnythingWhenRunAnythingWasRegisteredFirst() {
-    ModifierKeyDoubleClickHandler.getInstance().registerAction(RUN_ANYTHING_ACTION_ID, KeyEvent.VK_CONTROL, -1, false)
+  fun multiplePromptDoubleClickShortcutsInvokeAgentPrompt() {
+    resetActionShortcuts(
+      AGENT_WORKBENCH_GLOBAL_PROMPT_ACTION_ID,
+      listOf(AGENT_PROMPT_DOUBLE_CTRL_SHORTCUT, AGENT_PROMPT_ALT_DOUBLE_CTRL_SHORTCUT),
+    )
+    resetActionShortcuts(AGENT_WORKBENCH_GLOBAL_PROMPT_AUTO_SELECT_ACTION_ID, emptyList())
+    syncKeymapShortcuts()
 
-    AgentWorkbenchGlobalPromptShortcutInstaller.install()
     dispatchDoubleCtrl()
+    dispatchAltDoubleCtrl()
+
+    assertThat(promptInvocationCount).isEqualTo(2)
+    assertThat(autoSelectInvocationCount).isZero()
+    assertThat(runAnythingInvocationCount).isZero()
+  }
+
+  @Test
+  fun multiModifierDoubleCtrlInvokesAgentPrompt() {
+    resetActionShortcuts(AGENT_WORKBENCH_GLOBAL_PROMPT_ACTION_ID, listOf(AGENT_PROMPT_ALT_SHIFT_DOUBLE_CTRL_SHORTCUT))
+    resetActionShortcuts(AGENT_WORKBENCH_GLOBAL_PROMPT_AUTO_SELECT_ACTION_ID, emptyList())
+    resetActionShortcuts(RunAnythingAction.RUN_ANYTHING_ACTION_ID, emptyList())
+    syncKeymapShortcuts()
+
+    dispatchAltShiftDoubleCtrl()
 
     assertThat(promptInvocationCount).isEqualTo(1)
     assertThat(autoSelectInvocationCount).isZero()
@@ -125,22 +176,26 @@ internal class AgentWorkbenchGlobalPromptDoubleCtrlShortcutTest {
   }
 
   @Test
-  fun doubleCtrlDoesNotInvokeRunAnythingWhenRunAnythingIsRegisteredAfterAgentPrompt() {
-    AgentWorkbenchGlobalPromptShortcutInstaller.install()
-    ModifierKeyDoubleClickHandler.getInstance().registerAction(RUN_ANYTHING_ACTION_ID, KeyEvent.VK_CONTROL, -1, false)
+  fun runAnythingNonBareDoubleClickSurvivesAgentBareDoubleCtrlDisplacement() {
+    resetActionShortcuts(
+      RunAnythingAction.RUN_ANYTHING_ACTION_ID,
+      listOf(AGENT_PROMPT_DOUBLE_CTRL_SHORTCUT, RUN_ANYTHING_SHIFT_DOUBLE_CTRL_SHORTCUT),
+    )
+    syncKeymapShortcuts()
 
+    dispatchShiftDoubleCtrl()
     dispatchDoubleCtrl()
 
     assertThat(promptInvocationCount).isEqualTo(1)
     assertThat(autoSelectInvocationCount).isZero()
-    assertThat(runAnythingInvocationCount).isZero()
+    assertThat(runAnythingInvocationCount).isEqualTo(1)
   }
 
   @Test
-  fun uninstallRestoresRunAnythingDoubleCtrlWhenRunAnythingHasNoExplicitShortcut() {
-    AgentWorkbenchGlobalPromptShortcutInstaller.install()
-
-    AgentWorkbenchGlobalPromptShortcutInstaller.uninstall()
+  fun doubleCtrlShortcutRemovalDisablesAgentPromptAndRestoresRunAnything() {
+    syncKeymapShortcuts()
+    resetActionShortcuts(AGENT_WORKBENCH_GLOBAL_PROMPT_ACTION_ID, emptyList())
+    syncKeymapShortcuts()
     dispatchDoubleCtrl()
 
     assertThat(promptInvocationCount).isZero()
@@ -149,11 +204,23 @@ internal class AgentWorkbenchGlobalPromptDoubleCtrlShortcutTest {
   }
 
   @Test
-  fun uninstallDoesNotRestoreRunAnythingDoubleCtrlWhenRunAnythingHasExplicitShortcut() {
-    resetRunAnythingShortcuts(listOf(RUN_ANYTHING_EXPLICIT_SHORTCUT))
-    AgentWorkbenchGlobalPromptShortcutInstaller.install()
+  fun altDoubleCtrlShortcutRemovalDisablesAutoSelectPrompt() {
+    syncKeymapShortcuts()
+    resetActionShortcuts(AGENT_WORKBENCH_GLOBAL_PROMPT_AUTO_SELECT_ACTION_ID, emptyList())
+    syncKeymapShortcuts()
+    dispatchAltDoubleCtrl()
 
-    AgentWorkbenchGlobalPromptShortcutInstaller.uninstall()
+    assertThat(promptInvocationCount).isZero()
+    assertThat(autoSelectInvocationCount).isZero()
+    assertThat(runAnythingInvocationCount).isZero()
+  }
+
+  @Test
+  fun removingAgentPromptAndRunAnythingShortcutsDoesNotLeaveHiddenDoubleCtrl() {
+    syncKeymapShortcuts()
+    resetActionShortcuts(AGENT_WORKBENCH_GLOBAL_PROMPT_ACTION_ID, emptyList())
+    resetActionShortcuts(RunAnythingAction.RUN_ANYTHING_ACTION_ID, emptyList())
+    syncKeymapShortcuts()
     dispatchDoubleCtrl()
 
     assertThat(promptInvocationCount).isZero()
@@ -161,14 +228,14 @@ internal class AgentWorkbenchGlobalPromptDoubleCtrlShortcutTest {
     assertThat(runAnythingInvocationCount).isZero()
   }
 
-  private fun resetRunAnythingShortcuts(shortcuts: List<Shortcut>) {
+  private fun resetActionShortcuts(actionId: String, shortcuts: List<Shortcut>) {
     val keymap = activeKeymap()
     runWriteAction {
-      keymap.getShortcuts(RUN_ANYTHING_ACTION_ID).forEach { shortcut ->
-        keymap.removeShortcut(RUN_ANYTHING_ACTION_ID, shortcut)
+      keymap.getShortcuts(actionId).forEach { shortcut ->
+        keymap.removeShortcut(actionId, shortcut)
       }
       shortcuts.forEach { shortcut ->
-        keymap.addShortcut(RUN_ANYTHING_ACTION_ID, shortcut)
+        keymap.addShortcut(actionId, shortcut)
       }
     }
   }
@@ -187,6 +254,20 @@ internal class AgentWorkbenchGlobalPromptDoubleCtrlShortcutTest {
     dispatchCtrl(KeyEvent.KEY_RELEASED, InputEvent.ALT_MASK)
   }
 
+  private fun dispatchShiftDoubleCtrl() {
+    dispatchCtrl(KeyEvent.KEY_PRESSED, InputEvent.CTRL_MASK or InputEvent.SHIFT_MASK)
+    dispatchCtrl(KeyEvent.KEY_RELEASED, InputEvent.SHIFT_MASK)
+    dispatchCtrl(KeyEvent.KEY_PRESSED, InputEvent.CTRL_MASK or InputEvent.SHIFT_MASK)
+    dispatchCtrl(KeyEvent.KEY_RELEASED, InputEvent.SHIFT_MASK)
+  }
+
+  private fun dispatchAltShiftDoubleCtrl() {
+    dispatchCtrl(KeyEvent.KEY_PRESSED, InputEvent.CTRL_MASK or InputEvent.ALT_MASK or InputEvent.SHIFT_MASK)
+    dispatchCtrl(KeyEvent.KEY_RELEASED, InputEvent.ALT_MASK or InputEvent.SHIFT_MASK)
+    dispatchCtrl(KeyEvent.KEY_PRESSED, InputEvent.CTRL_MASK or InputEvent.ALT_MASK or InputEvent.SHIFT_MASK)
+    dispatchCtrl(KeyEvent.KEY_RELEASED, InputEvent.ALT_MASK or InputEvent.SHIFT_MASK)
+  }
+
   private fun dispatchCtrl(id: Int, modifiers: Int) {
     currentTime += 50
     IdeEventQueue.getInstance().dispatchEvent(
@@ -195,6 +276,21 @@ internal class AgentWorkbenchGlobalPromptDoubleCtrlShortcutTest {
   }
 
   private fun activeKeymap(): Keymap = checkNotNull(KeymapManager.getInstance()).activeKeymap
+
+  private fun ensureActionRegistered(actionManager: ActionManagerEx, actionId: String) {
+    if (actionManager.getAction(actionId) != null) {
+      return
+    }
+
+    actionManager.registerAction(actionId, createCountingAction {})
+    actionsRegisteredByTest.add(actionId)
+  }
+
+  private fun syncKeymapShortcuts() {
+    val method = ModifierKeyDoubleClickHandler::class.java.getDeclaredMethod("syncKeymapShortcuts")
+    method.isAccessible = true
+    method.invoke(ModifierKeyDoubleClickHandler.getInstance())
+  }
 
   private fun createCountingAction(onPerformed: () -> Unit): AnAction {
     return object : AnAction() {

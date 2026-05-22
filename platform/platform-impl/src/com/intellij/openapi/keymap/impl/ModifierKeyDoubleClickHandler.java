@@ -10,21 +10,34 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.AnActionResult;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.KeyboardGestureAction;
+import com.intellij.openapi.actionSystem.KeyboardModifierGestureShortcut;
+import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.actionSystem.ex.ActionRuntimeRegistrar;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
+import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.keymap.KeymapManagerListener;
+import com.intellij.openapi.keymap.impl.ui.ShortcutTextField;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.util.JavaCoroutines;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import org.jetbrains.annotations.ApiStatus;
+import kotlin.Unit;
+import kotlin.coroutines.Continuation;
 import org.jetbrains.annotations.ApiStatus.Internal;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.AWTEvent;
 import java.awt.Component;
@@ -32,7 +45,10 @@ import java.awt.KeyboardFocusManager;
 import java.awt.Window;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -55,6 +71,12 @@ import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 public final class ModifierKeyDoubleClickHandler {
   private static final Logger LOG = Logger.getInstance(ModifierKeyDoubleClickHandler.class);
   private static final Int2IntMap KEY_CODE_TO_MODIFIER_MAP = new Int2IntOpenHashMap();
+  @SuppressWarnings("deprecation")
+  private static final int SUPPORTED_MODIFIER_MASKS =
+    InputEvent.SHIFT_MASK | InputEvent.ALT_MASK | InputEvent.CTRL_MASK | InputEvent.META_MASK;
+  private static final int SUPPORTED_MODIFIER_DOWN_MASKS =
+    InputEvent.SHIFT_DOWN_MASK | InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK | InputEvent.META_DOWN_MASK;
+  private static final int SUPPORTED_MODIFIER_INPUT_MASKS = SUPPORTED_MODIFIER_MASKS | SUPPORTED_MODIFIER_DOWN_MASKS;
 
   static {
     KEY_CODE_TO_MODIFIER_MAP.put(KeyEvent.VK_ALT, InputEvent.ALT_MASK);
@@ -63,8 +85,12 @@ public final class ModifierKeyDoubleClickHandler {
     KEY_CODE_TO_MODIFIER_MAP.put(KeyEvent.VK_SHIFT, InputEvent.SHIFT_MASK);
   }
 
-  private final ConcurrentMap<String, MyDispatcher> myDispatchers = new ConcurrentHashMap<>();
+  private final ConcurrentMap<DispatcherKey, MyDispatcher> myDispatchers = new ConcurrentHashMap<>();
+  private final Set<DispatcherKey> myKeymapDispatcherKeys = ConcurrentHashMap.newKeySet();
   private final Set<String> mySuppressedActionIds = ConcurrentHashMap.newKeySet();
+  private final Set<DispatcherKey> mySuppressedShortcuts = ConcurrentHashMap.newKeySet();
+  private final AtomicBoolean myKeymapShortcutTrackerInstalled = new AtomicBoolean();
+  private final AtomicBoolean myKeymapShortcutSyncScheduled = new AtomicBoolean();
   private boolean myIsRunningAction;
 
   public ModifierKeyDoubleClickHandler() {
@@ -106,6 +132,9 @@ public final class ModifierKeyDoubleClickHandler {
           KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() == null) {
         return false; // on macOS, we can receive modifier key events even if app isn't in focus (e.g. when Spotlight popup is shown)
       }
+      if (isShortcutTextFieldEvent(keyEvent)) {
+        return false;
+      }
 
       ModifierKeyDoubleClickHandler doubleClickHandler = getInstance();
 
@@ -122,10 +151,103 @@ public final class ModifierKeyDoubleClickHandler {
       }
       return innerResult;
     }
+
+    private static boolean isShortcutTextFieldEvent(@NotNull KeyEvent event) {
+      if (event.getSource() instanceof ShortcutTextField) {
+        return true;
+      }
+      return KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner() instanceof ShortcutTextField;
+    }
   }
 
   public static ModifierKeyDoubleClickHandler getInstance() {
     return ApplicationManager.getApplication().getService(ModifierKeyDoubleClickHandler.class);
+  }
+
+  @Internal
+  public static void scheduleKeymapShortcutSyncIfCreated() {
+    Application application = ApplicationManager.getApplication();
+    if (application == null) {
+      return;
+    }
+
+    ModifierKeyDoubleClickHandler handler = application.getServiceIfCreated(ModifierKeyDoubleClickHandler.class);
+    if (handler != null) {
+      handler.scheduleKeymapShortcutSync();
+    }
+  }
+
+  static final class ShortcutTracker implements ActionConfigurationCustomizer,
+                                                       ActionConfigurationCustomizer.AsyncLightCustomizeStrategy {
+    @Override
+    public @Nullable Object customize(@NotNull ActionRuntimeRegistrar actionRegistrar,
+                                      @NotNull Continuation<? super Unit> $completion) {
+      return JavaCoroutines.suspendJava(jc -> {
+        getInstance().installKeymapShortcutTracker();
+        jc.resume(Unit.INSTANCE);
+      }, $completion);
+    }
+  }
+
+  private void installKeymapShortcutTracker() {
+    if (!myKeymapShortcutTrackerInstalled.compareAndSet(false, true)) {
+      return;
+    }
+
+    scheduleKeymapShortcutSync();
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(KeymapManagerListener.TOPIC, new KeymapManagerListener() {
+      @Override
+      public void activeKeymapChanged(@Nullable Keymap keymap) {
+        scheduleKeymapShortcutSync();
+      }
+
+      @Override
+      public void shortcutsChanged(@NotNull Keymap keymap, @NonNls @NotNull Collection<String> actionIds, boolean fromSettings) {
+        scheduleKeymapShortcutSync();
+      }
+    });
+  }
+
+  private void scheduleKeymapShortcutSync() {
+    if (!myKeymapShortcutSyncScheduled.compareAndSet(false, true)) {
+      return;
+    }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      myKeymapShortcutSyncScheduled.set(false);
+      syncKeymapShortcuts();
+    });
+  }
+
+  private void syncKeymapShortcuts() {
+    clearKeymapShortcuts();
+
+    KeymapManager keymapManager = ApplicationManager.getApplication().getServiceIfCreated(KeymapManager.class);
+    Keymap activeKeymap = keymapManager == null ? null : keymapManager.getActiveKeymap();
+    if (activeKeymap == null) {
+      return;
+    }
+
+    ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
+    ActionRuntimeRegistrar actionRegistrar = actionManager.asActionRuntimeRegistrar();
+    List<String> actionIds = new ArrayList<>(activeKeymap.getActionIdList());
+    actionIds.sort(actionManager.getRegistrationOrderComparator());
+    for (String actionId : actionIds) {
+      if (actionRegistrar.getActionOrStub(actionId) == null) {
+        continue;
+      }
+      for (Shortcut shortcut : activeKeymap.getShortcuts(actionId)) {
+        if (shortcut instanceof KeyboardModifierGestureShortcut gestureShortcut) {
+          registerKeymapShortcut(actionId, gestureShortcut);
+        }
+      }
+    }
+  }
+
+  private synchronized void clearKeymapShortcuts() {
+    for (DispatcherKey key : myKeymapDispatcherKeys) {
+      myDispatchers.remove(key);
+    }
+    myKeymapDispatcherKeys.clear();
   }
 
   public static int getMultiCaretActionModifier() {
@@ -158,11 +280,66 @@ public final class ModifierKeyDoubleClickHandler {
                                           int actionKeyCode,
                                           int requiredModifierKeyCode,
                                           boolean skipIfActionHasShortcut) {
-    if (mySuppressedActionIds.contains(actionId)) {
+    int requiredModifierMask = getRequiredModifierMask(requiredModifierKeyCode);
+    DispatcherKey key = new DispatcherKey(actionId, modifierKeyCode, actionKeyCode, requiredModifierMask);
+    if (mySuppressedActionIds.contains(actionId) || mySuppressedShortcuts.contains(key)) {
       return;
     }
-    myDispatchers.put(actionId, new MyDispatcher(actionId, modifierKeyCode, actionKeyCode, requiredModifierKeyCode,
-                                                  skipIfActionHasShortcut));
+    myDispatchers.put(key, new MyDispatcher(actionId, modifierKeyCode, actionKeyCode, requiredModifierMask, skipIfActionHasShortcut));
+  }
+
+  @Internal
+  public synchronized boolean registerShortcut(@NotNull String actionId,
+                                               @NotNull KeyboardModifierGestureShortcut shortcut,
+                                               boolean skipIfActionHasShortcut) {
+    DoubleClickShortcut doubleClickShortcut = DoubleClickShortcut.from(shortcut);
+    if (doubleClickShortcut == null) {
+      LOG.warn("Cannot register modifier double-click shortcut for action '" + actionId +
+               "': unsupported shortcut " + shortcut);
+      return false;
+    }
+    return registerShortcut(actionId, doubleClickShortcut, skipIfActionHasShortcut, false);
+  }
+
+  private synchronized void registerKeymapShortcut(@NotNull String actionId,
+                                                   @NotNull KeyboardModifierGestureShortcut shortcut) {
+    DoubleClickShortcut doubleClickShortcut = DoubleClickShortcut.from(shortcut);
+    if (doubleClickShortcut != null) {
+      registerShortcut(actionId, doubleClickShortcut, false, true);
+    }
+  }
+
+  private synchronized boolean registerShortcut(@NotNull String actionId,
+                                                @NotNull DoubleClickShortcut doubleClickShortcut,
+                                                boolean skipIfActionHasShortcut,
+                                                boolean keymapShortcut) {
+    DispatcherKey key = doubleClickShortcut.toDispatcherKey(actionId);
+    if (mySuppressedActionIds.contains(actionId) || mySuppressedShortcuts.contains(key)) {
+      LOG.debug("Skipped modifier double-click registration for '", actionId, "': shortcut is suppressed");
+      return false;
+    }
+    if (keymapShortcut) {
+      unregisterConflictingKeymapShortcut(doubleClickShortcut);
+    }
+    myDispatchers.put(key, new MyDispatcher(actionId,
+                                            doubleClickShortcut.modifierKeyCode,
+                                            -1,
+                                            doubleClickShortcut.requiredModifierMask,
+                                            skipIfActionHasShortcut));
+    if (keymapShortcut) {
+      myKeymapDispatcherKeys.add(key);
+    }
+    return true;
+  }
+
+  private void unregisterConflictingKeymapShortcut(@NotNull DoubleClickShortcut shortcut) {
+    myKeymapDispatcherKeys.removeIf(key -> {
+      if (!shortcut.matches(key)) {
+        return false;
+      }
+      myDispatchers.remove(key);
+      return true;
+    });
   }
 
   /**
@@ -175,34 +352,165 @@ public final class ModifierKeyDoubleClickHandler {
   }
 
   public synchronized void unregisterAction(@NotNull String actionId) {
-    myDispatchers.remove(actionId);
+    myDispatchers.keySet().removeIf(key -> key.myActionId.equals(actionId));
+    myKeymapDispatcherKeys.removeIf(key -> key.myActionId.equals(actionId));
+  }
+
+  @Internal
+  public synchronized void suppressShortcut(@NotNull String actionId, @NotNull KeyboardModifierGestureShortcut shortcut) {
+    DoubleClickShortcut doubleClickShortcut = DoubleClickShortcut.from(shortcut);
+    if (doubleClickShortcut == null) {
+      return;
+    }
+    DispatcherKey key = doubleClickShortcut.toDispatcherKey(actionId);
+    mySuppressedShortcuts.add(key);
+    myDispatchers.remove(key);
+    myKeymapDispatcherKeys.remove(key);
   }
 
   @Internal
   public synchronized void suppressAction(@NotNull String actionId) {
     mySuppressedActionIds.add(actionId);
-    myDispatchers.remove(actionId);
+    unregisterAction(actionId);
   }
 
   @Internal
   public synchronized void unsuppressAction(@NotNull String actionId) {
     mySuppressedActionIds.remove(actionId);
+    mySuppressedShortcuts.removeIf(key -> key.myActionId.equals(actionId));
   }
 
   @Internal
   public synchronized boolean isActionRegistered(@NotNull String actionId) {
-    return myDispatchers.containsKey(actionId);
+    for (DispatcherKey key : myDispatchers.keySet()) {
+      if (key.myActionId.equals(actionId)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Internal
+  public synchronized boolean isShortcutRegistered(@NotNull String actionId, @NotNull KeyboardModifierGestureShortcut shortcut) {
+    DoubleClickShortcut doubleClickShortcut = DoubleClickShortcut.from(shortcut);
+    return doubleClickShortcut != null && myDispatchers.containsKey(doubleClickShortcut.toDispatcherKey(actionId));
   }
 
   public boolean isRunningAction() {
     return myIsRunningAction;
   }
 
+  private static final class DispatcherKey {
+    private final String myActionId;
+    private final int myModifierKeyCode;
+    private final int myActionKeyCode;
+    private final int myRequiredModifierMask;
+
+    private DispatcherKey(@NotNull String actionId, int modifierKeyCode, int actionKeyCode, int requiredModifierMask) {
+      myActionId = actionId;
+      myModifierKeyCode = modifierKeyCode;
+      myActionKeyCode = actionKeyCode;
+      myRequiredModifierMask = requiredModifierMask;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+      if (this == object) return true;
+      if (!(object instanceof DispatcherKey key)) return false;
+      return myModifierKeyCode == key.myModifierKeyCode &&
+             myActionKeyCode == key.myActionKeyCode &&
+             myRequiredModifierMask == key.myRequiredModifierMask &&
+             myActionId.equals(key.myActionId);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(myActionId, myModifierKeyCode, myActionKeyCode, myRequiredModifierMask);
+    }
+  }
+
+  private static final class DoubleClickShortcut {
+    private final int modifierKeyCode;
+    private final int requiredModifierMask;
+
+    private DoubleClickShortcut(int modifierKeyCode, int requiredModifierMask) {
+      this.modifierKeyCode = modifierKeyCode;
+      this.requiredModifierMask = requiredModifierMask;
+    }
+
+    private static DoubleClickShortcut from(@NotNull KeyboardModifierGestureShortcut shortcut) {
+      if (shortcut.getType() != KeyboardGestureAction.ModifierType.dblClick) {
+        return null;
+      }
+
+      int modifierKeyCode = shortcut.getStroke().getKeyCode();
+      int modifierMask = KEY_CODE_TO_MODIFIER_MAP.get(modifierKeyCode);
+      if (modifierMask == 0) {
+        return null;
+      }
+
+      int strokeModifiers = shortcut.getStroke().getModifiers();
+      if (hasUnsupportedModifiers(strokeModifiers)) {
+        return null;
+      }
+
+      int shortcutModifiers = normalizeModifiers(strokeModifiers) & SUPPORTED_MODIFIER_MASKS;
+      if ((shortcutModifiers & modifierMask) == 0) {
+        return null;
+      }
+
+      int requiredModifiers = shortcutModifiers & ~modifierMask;
+      return new DoubleClickShortcut(modifierKeyCode, requiredModifiers);
+    }
+
+    private @NotNull DispatcherKey toDispatcherKey(@NotNull String actionId) {
+      return new DispatcherKey(actionId, modifierKeyCode, -1, requiredModifierMask);
+    }
+
+    private boolean matches(@NotNull DispatcherKey key) {
+      return key.myModifierKeyCode == modifierKeyCode &&
+             key.myActionKeyCode == -1 &&
+             key.myRequiredModifierMask == requiredModifierMask;
+    }
+  }
+
+  @SuppressWarnings("deprecation")
+  private static int normalizeModifiers(int modifiers) {
+    if ((modifiers & InputEvent.SHIFT_DOWN_MASK) != 0) modifiers |= InputEvent.SHIFT_MASK;
+    if ((modifiers & InputEvent.ALT_DOWN_MASK) != 0) modifiers |= InputEvent.ALT_MASK;
+    if ((modifiers & InputEvent.CTRL_DOWN_MASK) != 0) modifiers |= InputEvent.CTRL_MASK;
+    if ((modifiers & InputEvent.META_DOWN_MASK) != 0) modifiers |= InputEvent.META_MASK;
+    return modifiers;
+  }
+
+  private static boolean hasUnsupportedModifiers(int modifiers) {
+    return (modifiers & ~SUPPORTED_MODIFIER_INPUT_MASKS) != 0;
+  }
+
+  @SuppressWarnings("deprecation")
+  private static int getEventModifiers(@NotNull KeyEvent event) {
+    return event.getModifiers() | event.getModifiersEx();
+  }
+
+  private static int getRequiredModifierMask(int requiredModifierKeyCode) {
+    if (requiredModifierKeyCode == -1) {
+      return 0;
+    }
+    int modifierMask = getModifierMask(requiredModifierKeyCode);
+    if (modifierMask == 0) {
+      throw new IllegalArgumentException("Unsupported required modifier keyCode: " + requiredModifierKeyCode);
+    }
+    return modifierMask;
+  }
+
+  private static int getModifierMask(int keyCode) {
+    return KEY_CODE_TO_MODIFIER_MAP.get(keyCode);
+  }
+
   private final class MyDispatcher {
     private final String myActionId;
     private final int myModifierKeyCode;
     private final int myActionKeyCode;
-    private final int myRequiredModifierKeyCode;
     private final int myRequiredModifierMask;
     private final boolean mySkipIfActionHasShortcut;
 
@@ -214,13 +522,12 @@ public final class ModifierKeyDoubleClickHandler {
     MyDispatcher(@NotNull String actionId,
                  int modifierKeyCode,
                  int actionKeyCode,
-                 int requiredModifierKeyCode,
+                 int requiredModifierMask,
                  boolean skipIfActionHasShortcut) {
       myActionId = actionId;
       myModifierKeyCode = modifierKeyCode;
       myActionKeyCode = actionKeyCode;
-      myRequiredModifierKeyCode = requiredModifierKeyCode;
-      myRequiredModifierMask = requiredModifierKeyCode == -1 ? 0 : getModifierMask(requiredModifierKeyCode);
+      myRequiredModifierMask = requiredModifierMask;
       mySkipIfActionHasShortcut = skipIfActionHasShortcut;
     }
 
@@ -247,7 +554,7 @@ public final class ModifierKeyDoubleClickHandler {
 
         return handleModifier(event);
       }
-      else if (keyCode == myRequiredModifierKeyCode) {
+      else if (isRequiredModifierKey(keyCode)) {
         if (hasOtherModifiers(event)) {
           resetState();
         }
@@ -274,27 +581,28 @@ public final class ModifierKeyDoubleClickHandler {
     }
 
     private boolean hasOtherModifiers(KeyEvent keyEvent) {
-      int modifiers = keyEvent.getModifiers();
+      int eventModifiers = getEventModifiers(keyEvent);
+      if (hasUnsupportedModifiers(eventModifiers)) {
+        return true;
+      }
+
+      int modifiers = normalizeModifiers(eventModifiers);
+      int allowedModifiers = getModifierMask(myModifierKeyCode) | myRequiredModifierMask;
       for (Int2IntMap.Entry entry : KEY_CODE_TO_MODIFIER_MAP.int2IntEntrySet()) {
-        if (!(entry.getIntKey() == myModifierKeyCode || entry.getIntKey() == myRequiredModifierKeyCode ||
-              (modifiers & entry.getIntValue()) == 0)) {
+        if ((modifiers & entry.getIntValue()) != 0 && (allowedModifiers & entry.getIntValue()) == 0) {
           return true;
         }
       }
       return false;
     }
 
-    @SuppressWarnings("deprecation")
-    private boolean hasRequiredModifier(KeyEvent event) {
-      return myRequiredModifierMask == 0 || (event.getModifiers() & myRequiredModifierMask) != 0;
+    private boolean isRequiredModifierKey(int keyCode) {
+      int modifierMask = getModifierMask(keyCode);
+      return modifierMask != 0 && (myRequiredModifierMask & modifierMask) != 0;
     }
 
-    private static int getModifierMask(int keyCode) {
-      int modifierMask = KEY_CODE_TO_MODIFIER_MAP.get(keyCode);
-      if (modifierMask == 0) {
-        throw new IllegalArgumentException("Unsupported required modifier keyCode: " + keyCode);
-      }
-      return modifierMask;
+    private boolean hasRequiredModifier(KeyEvent event) {
+      return myRequiredModifierMask == 0 || (normalizeModifiers(getEventModifiers(event)) & myRequiredModifierMask) == myRequiredModifierMask;
     }
 
     private boolean handleModifier(KeyEvent event) {
@@ -348,6 +656,7 @@ public final class ModifierKeyDoubleClickHandler {
       ourReleased.second.set(false);
     }
 
+    @SuppressWarnings("removal")
     private boolean run(KeyEvent event) {
       myIsRunningAction = true;
       try {
@@ -390,7 +699,7 @@ public final class ModifierKeyDoubleClickHandler {
     public String toString() {
       return "modifier double-click dispatcher [modifierKeyCode=" + myModifierKeyCode +
              ",actionKeyCode=" + myActionKeyCode +
-             ",requiredModifierKeyCode=" + myRequiredModifierKeyCode +
+             ",requiredModifierMask=" + myRequiredModifierMask +
              ",actionId=" + myActionId + "]";
     }
   }

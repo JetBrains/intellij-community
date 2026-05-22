@@ -732,7 +732,7 @@ open class KeymapImpl @JvmOverloads constructor(@field:Volatile private var data
           }
           is KeyboardModifierGestureShortcut -> {
             val element = Element(KEYBOARD_GESTURE_SHORTCUT)
-            element.setAttribute(KEYBOARD_GESTURE_SHORTCUT, KeyStrokeAdapter.toString(shortcut.stroke))
+            element.setAttribute(KEYBOARD_GESTURE_KEY, KeyStrokeAdapter.toString(shortcut.stroke))
             element.setAttribute(KEYBOARD_GESTURE_MODIFIER, shortcut.type.name)
             actionElement.addContent(element)
           }
