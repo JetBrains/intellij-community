@@ -21,5 +21,9 @@ interface NotebookOutputDataKeyExtractor {
     @JvmField
     val EP_NAME: ExtensionPointName<NotebookOutputDataKeyExtractor> =
       ExtensionPointName.create("org.jetbrains.plugins.notebooks.editor.outputs.notebookOutputDataKeyExtractor")
+
+    fun extractOutput(project: Project, file: VirtualFile, interval: NotebookCellLines.Interval): List<NotebookOutputDataKey> {
+      return EP_NAME.extensionsIfPointIsRegistered.firstNotNullOfOrNull { it.extract(project, file, interval) } ?: emptyList()
+    }
   }
 }
