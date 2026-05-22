@@ -2518,7 +2518,7 @@ class AgentSessionRefreshCoordinatorTest {
   }
 
   @Test
-  fun threadScopedProviderUpdateAllowsThreadLeavingWorkingStateToMoveByUpdatedTime() = runBlocking(Dispatchers.Default) {
+  fun threadScopedProviderUpdatePreservesRelativeOrderWhenThreadLeavesWorkingState() = runBlocking(Dispatchers.Default) {
     val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
 
     val source = ScriptedSessionSource(
@@ -2566,10 +2566,10 @@ class AgentSessionRefreshCoordinatorTest {
 
       waitForCondition {
         val threads = stateStore.snapshot().projects.first().threads
-        threads.first().id == "codex-2" && threads.first().updatedAt == 900L
+        threads.first { it.id == "codex-2" }.updatedAt == 900L
       }
 
-      assertThat(stateStore.snapshot().projects.first().threads.map { it.id }).containsExactly("codex-2", "codex-1")
+      assertThat(stateStore.snapshot().projects.first().threads.map { it.id }).containsExactly("codex-1", "codex-2")
     }
   }
 
