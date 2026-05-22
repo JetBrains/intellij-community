@@ -45,7 +45,7 @@ class InstallPluginJbProtocolCommand : JBProtocolCommand("plugin") {
     withContext(Dispatchers.EDT) {
       val project = RestService.getLastFocusedOrOpenedProject() ?: ProjectManager.getInstance().defaultProject
       AppIcon.getInstance().requestAttention(project, true)
-      installAndEnable(project, toInstall, true) { }
+      installAndEnable(project, toInstall, showDialog = true, selectAlInDialog = true) { }
     }
     return null
   }
