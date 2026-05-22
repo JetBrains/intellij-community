@@ -214,8 +214,25 @@ object McpClientDetector {
     return null
   }
 
+  internal fun preferredCodexConfigPath(): Path? {
+    return resolveCodexConfigPath() ?: codexConfigCandidates().firstOrNull()
+  }
+
   private fun resolveCodexConfigPath(): Path? {
-    val candidates = buildList<Path> {
+    val candidates = codexConfigCandidates()
+
+    if (candidates.isEmpty()) return null
+
+    candidates.firstOrNull { it.exists() && it.isRegularFile() }?.let { return it }
+    candidates.firstOrNull { path ->
+      val parent = path.parent
+      parent != null && parent.exists() && parent.toFile().isDirectory()
+    }?.let { return it }
+    return null
+  }
+
+  private fun codexConfigCandidates(): List<Path> {
+    return buildList {
       add(Paths.get(OSAgnosticPathUtil.expandUserHome("~/.codex/config.toml")))
       if (SystemInfo.isMac) {
         add(Paths.get(OSAgnosticPathUtil.expandUserHome("~/Library/Application Support/Codex/config.toml")))
@@ -227,14 +244,5 @@ object McpClientDetector {
         System.getenv("APPDATA")?.let { add(Paths.get(it, "Codex", "config.toml")) }
       }
     }
-
-    if (candidates.isEmpty()) return null
-
-    candidates.firstOrNull { it.exists() && it.isRegularFile() }?.let { return it }
-    candidates.firstOrNull { path ->
-      val parent = path.parent
-      parent != null && parent.exists() && parent.toFile().isDirectory()
-    }?.let { return it }
-    return null
   }
 }

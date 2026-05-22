@@ -46,7 +46,7 @@ open class CodexClient(scope: McpClientInfo.Scope, configPath: Path) : McpClient
       config = config
     )
 
-    configPath.parent?.createParentDirectories()
+    configPath.createParentDirectories()
     configPath.writeText(updatedContent)
   }
 
