@@ -2,23 +2,21 @@
 import fleet.buildtool.conventions.configureAtMostOneJvmTargetOrThrow
 import fleet.buildtool.conventions.withJavaSourceSet
 // IMPORT__MARKER_END
+
 plugins {
   alias(libs.plugins.kotlin.multiplatform)
   id("fleet.project-module-conventions")
   id("fleet.toolchain-conventions")
-  id("fleet.module-publishing-conventions")
-  id("fleet.open-source-module-conventions")
   alias(libs.plugins.dokka)
   // GRADLE_PLUGINS__MARKER_START
   id("fleet-module")
   alias(jps.plugins.kotlin.serialization)
-  id("fleet-multiplatform-expects-module")
   // GRADLE_PLUGINS__MARKER_END
 }
 
 fleetModule {
   module {
-    name = "fleet.util.core"
+    name = "fleet.openmap"
     importedFromJps {}
   }
 }
@@ -40,8 +38,6 @@ kotlin {
   wasmJs {
     browser {}
   }
-  iosArm64 {}
-  iosSimulatorArm64 {}
   sourceSets.jvmMain.configure { resources.srcDir(layout.projectDirectory.dir("../resources")) }
   sourceSets.commonMain.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcCommonMain")) }
   sourceSets.commonMain.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesCommonMain")) }
@@ -57,16 +53,9 @@ kotlin {
   sourceSets.wasmJsMain.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesWasmJsMain")) }
   sourceSets.wasmJsTest.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcWasmJsTest")) }
   sourceSets.wasmJsTest.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesWasmJsTest")) }
-  sourceSets.iosMain.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcIosMain")) }
-  sourceSets.iosMain.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesIosMain")) }
-  sourceSets.iosTest.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcIosTest")) }
-  sourceSets.iosTest.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesIosTest")) }
   sourceSets.commonMain.dependencies {
     implementation(jps.org.jetbrains.kotlin.kotlin.stdlib1993400674.get().let { "${it.group}:${it.name}:${it.version}" }) {
       exclude(group = "org.jetbrains", module = "annotations")
-    }
-    implementation(jps.org.jetbrains.intellij.deps.kotlinx.kotlinx.coroutines.core.jvm930800474.get().let { "${it.group}:kotlinx-coroutines-core:${it.version}" }) {
-      isTransitive = false
     }
     implementation(jps.org.jetbrains.kotlinx.kotlinx.serialization.core.jvm1739247612.get().let { "${it.group}:kotlinx-serialization-core:${it.version}" }) {
       isTransitive = false
@@ -74,36 +63,10 @@ kotlin {
     implementation(jps.org.jetbrains.kotlinx.kotlinx.serialization.json.jvm231489733.get().let { "${it.group}:kotlinx-serialization-json:${it.version}" }) {
       isTransitive = false
     }
-    api(jps.org.jetbrains.kotlinx.kotlinx.collections.immutable.jvm717536558.get().let { "${it.group}:kotlinx-collections-immutable:${it.version}" }) {
+    implementation(jps.org.jetbrains.kotlinx.kotlinx.collections.immutable.jvm717536558.get().let { "${it.group}:kotlinx-collections-immutable:${it.version}" }) {
       isTransitive = false
     }
-    api(project(":fleet.util.logging.api"))
-    implementation(project(":fleet.reporting.api"))
-    implementation(project(":fleet.reporting.shared"))
-    api(project(":fleet.multiplatform.shims"))
-    compileOnly(project(":fleet.util.multiplatform"))
-    api(project(":fleet.util.serialization"))
-    api(project(":fleet.openmap"))
-  }
-  sourceSets.iosMain.dependencies {
-    api(project(":fleet.util.multiplatform"))
-  }
-  sourceSets.jvmMain.dependencies {
-    compileOnly(project(":fleet.util.multiplatform"))
-  }
-  sourceSets.wasmJsMain.dependencies {
-    api(project(":fleet.util.multiplatform"))
+    implementation(project(":fleet.util.serialization"))
   }
   // KOTLIN__MARKER_END
-}
-
-@OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
-kotlin {
-  sourceSets {
-    wasmJsMain {
-      dependencies {
-        implementation(libs.kotlin.wrappers.browser)
-      }
-    }
-  }
 }

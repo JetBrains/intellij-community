@@ -1,0 +1,3 @@
+- name: dist.all/lib/fleet.openmap.jar
+  modules:
+  - name: fleet.openmap
