@@ -61,17 +61,8 @@ internal open class IconsClassGenerator(
     private val NAME_COMPARATOR: Comparator<String> = compareBy { it.lowercase(Locale.ENGLISH) + '.' }
 
     private val deprecatedIconFieldNameMap = CollectionFactory.createCharSequenceMap<String>(true).apply {
-      this["RwAccess"] = "Rw_access"
-      this["MenuOpen"] = "Menu_open"
-      this["MenuCut"] = "Menu_cut"
-      this["MenuPaste"] = "Menu_paste"
-      @Suppress("SpellCheckingInspection")
-      this["MenuSaveall"] = "Menu_saveall"
       this["PhpIcon"] = "Php_icon"
       this["Emulator02"] = "Emulator2"
-      this["Language"] = "LocalizationSettings"
-      this["PipetteRollover"] = "Pipette_rollover"
-      this["RunAnything"] = "Run_anything"
     }
 
     private val commentRegExp = Regex("(?s)<!--.*?-->")

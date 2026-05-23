@@ -109,13 +109,9 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon MatchCaseHovered = load("expui/inline/matchCase.svg", "actions/matchCaseHovered.svg", -484151390, 0);
     /** 16x16 */ public static final @NotNull Icon MatchCaseSelected = load("expui/inline/matchCase.svg", "actions/matchCaseSelected.svg", -1865066843, 0);
     /** 16x16 */ public static final @NotNull Icon MenuCut = load("expui/general/cut.svg", "actions/menu-cut.svg", 246355046, 2);
-    /** 16x16 */ public static final @Deprecated @NotNull Icon Menu_cut = MenuCut;
     /** 16x16 */ public static final @NotNull Icon MenuOpen = load("expui/general/open.svg", "actions/menu-open.svg", 736641834, 2);
-    /** 16x16 */ public static final @Deprecated @NotNull Icon Menu_open = MenuOpen;
     /** 16x16 */ public static final @NotNull Icon MenuPaste = load("expui/general/paste.svg", "actions/menu-paste.svg", -1575072734, 2);
-    /** 16x16 */ public static final @Deprecated @NotNull Icon Menu_paste = MenuPaste;
     /** 16x16 */ public static final @NotNull Icon MenuSaveall = load("expui/general/save.svg", "actions/menu-saveall.svg", 63691479, 2);
-    /** 16x16 */ public static final @Deprecated @NotNull Icon Menu_saveall = MenuSaveall;
     /** 16x16 */ public static final @NotNull Icon Minimap = load("expui/actions/minimap.svg", "actions/minimap.svg", -319068080, 2);
     /** 16x16 */ public static final @NotNull Icon ModuleDirectory = load("expui/nodes/module.svg", "actions/moduleDirectory.svg", -1320924233, 2);
     /** 16x16 */ public static final @NotNull Icon More = load("expui/general/moreVertical.svg", "actions/more.svg", 2111376411, 10);
@@ -188,7 +184,6 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Rollback = load("expui/vcs/revert.svg", "actions/rollback.svg", 2087548212, 2);
     /** 16x16 */ public static final @NotNull Icon RunAll = load("expui/actions/runAll.svg", "actions/runAll.svg", -398248691, 2);
     /** 16x16 */ public static final @NotNull Icon RunAnything = load("expui/general/runAnything.svg", "actions/runAnything.svg", -1866617388, 2);
-    /** 16x16 */ public static final @Deprecated @NotNull Icon Run_anything = RunAnything;
     /** 16x16 */ public static final @NotNull Icon RunToCursor = load("expui/run/runToCursor.svg", "actions/runToCursor.svg", -378582672, 2);
     /** 16x16 */ public static final @NotNull Icon Scratch = load("expui/fileTypes/scratch.svg", "actions/scratch.svg", -459337085, 2);
     /** 16x16 */ public static final @NotNull Icon Search = load("expui/general/search.svg", "actions/search.svg", -2085119439, 0);
@@ -239,12 +234,6 @@ public class AllIcons {
     @Deprecated
     @ScheduledForRemoval
     public static final @NotNull Icon EnableNewUi = load("actions/enableNewUi.svg", 0, 0);
-
-    /** @deprecated to be removed (use expandable text field instead, see https://plugins.jetbrains.com/docs/intellij/built-in-button.html) */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval
-    public static final @NotNull Icon ShowViewer = load("actions/showViewer.png", 0, 0);
   }
 
   public static final class Breakpoints {
@@ -619,7 +608,6 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon InspectionsWarningEmpty = load("expui/general/inspections/inspectionsWarningEmpty.svg", "general/inspectionsWarningEmpty.svg", -845558838, 0);
     /** 16x16 */ public static final @NotNull Icon Keyboard = load("expui/general/keyboard.svg", 1621148328, 2);
     /** 16x16 */ public static final @NotNull Icon Language = load("expui/general/language.svg", "general/language.svg", -447457469, 0);
-    /** 16x16 */ public static final @Deprecated @NotNull Icon LocalizationSettings = Language;
     /** 16x16 */ public static final @NotNull Icon Layout = load("expui/general/related.svg", "general/layout.svg", -1749612722, 2);
     /** 16x16 */ public static final @NotNull Icon LayoutEditorOnly = load("expui/general/editorOnly.svg", "general/layoutEditorOnly.svg", -570440550, 2);
     /** 16x16 */ public static final @NotNull Icon LayoutEditorPreview = load("expui/general/editorPreview.svg", "general/layoutEditorPreview.svg", 1995065496, 2);
@@ -805,7 +793,6 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon OutgoingChangesOn = load("expui/vcs/unshelve.svg", "ide/outgoingChangesOn.svg", 1711755766, 2);
     /** 16x16 */ public static final @NotNull Icon Pipette = load("expui/image/colorPicker.svg", "ide/pipette.svg", 721447979, 2);
     /** 16x16 */ public static final @NotNull Icon PipetteRollover = load("expui/image/colorPickerRollover.svg", "ide/pipetteRollover.svg", -1988890684, 2);
-    /** 16x16 */ public static final @Deprecated @NotNull Icon Pipette_rollover = PipetteRollover;
     /** 16x16 */ public static final @NotNull Icon PowerSaveMode = load("expui/general/inspections/inspectionsPowerSaveMode.svg", "ide/powerSaveMode.svg", 2079928345, 2);
     /** 11x11 */ public static final @NotNull Icon Rating = load("ide/rating.svg", -1336366891, 2);
     /** 11x11 */ public static final @NotNull Icon Rating1 = load("ide/rating1.svg", 482124723, 2);
@@ -1062,7 +1049,6 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon ResourceBundle = load("expui/nodes/resourceBundle.svg", "nodes/resourceBundle.svg", -157836139, 0);
     /** 16x16 */ public static final @NotNull Icon RunnableMark = load("expui/nodes/runnableMark.svg", "nodes/runnableMark.svg", 8747712, 0);
     /** 16x16 */ public static final @NotNull Icon RwAccess = load("nodes/rw-access.svg", -2056540925, 0);
-    /** 16x16 */ public static final @Deprecated @NotNull Icon Rw_access = RwAccess;
     /** 16x16 */ public static final @NotNull Icon SecurityRole = load("expui/nodes/securityRole.svg", "nodes/securityRole.svg", -963350414, 0);
     /** 16x16 */ public static final @NotNull Icon Services = load("expui/nodes/services.svg", "nodes/services.svg", -74459343, 0);
     /** 16x16 */ public static final @NotNull Icon Servlet = load("expui/nodes/servlet.svg", "nodes/servlet.svg", -1451210760, 0);
@@ -1098,18 +1084,6 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Word = load("nodes/word.svg", -820267638, 0);
     /** 16x16 */ public static final @NotNull Icon Workspace = load("expui/nodes/workspace.svg", -251479768, 2);
     /** 16x16 */ public static final @NotNull Icon WriteAccess = load("expui/actions/showWriteAccess.svg", "nodes/write-access.svg", 735088822, 0);
-
-    /** @deprecated to be removed without replacement */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval
-    public static final @NotNull Icon InspectionResults = load("nodes/inspectionResults.svg", 0, 0);
-
-    /** @deprecated to be removed without replacement */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval
-    public static final @NotNull Icon Weblistener = load("nodes/weblistener.svg", 0, 0);
   }
 
   public static final class ObjectBrowser {
@@ -1273,12 +1247,6 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Turso = load("providers/turso.svg", -988781978, 2);
     /** 16x16 */ public static final @NotNull Icon Vertica = load("providers/vertica.svg", 237190308, 2);
     /** 16x16 */ public static final @NotNull Icon Yugabyte = load("providers/yugabyte.svg", -644567085, 2);
-
-    /** @deprecated to be removed (Use AllIcons.Providers.AmazonWebServices instead) */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval
-    public static final @NotNull Icon Aws = load("providers/aws.svg", 0, 0);
   }
 
   public static final class RemoteServers {
@@ -1461,12 +1429,6 @@ public class AllIcons {
     @Deprecated
     @ScheduledForRemoval
     public static final @NotNull Icon MeetNewUi = load("expui/toolwindows/meetNewUi.svg", 0, 0);
-
-    /** @deprecated to be removed without replacement */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval
-    public static final @NotNull Icon ToolWindowFavorites = load("toolwindows/toolWindowFavorites.svg", 0, 0);
   }
 
   public static final class TransferSettings {

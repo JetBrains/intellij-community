@@ -97,10 +97,6 @@ f:com.intellij.icons.AllIcons$Actions
 - sf:MenuOpen:javax.swing.Icon
 - sf:MenuPaste:javax.swing.Icon
 - sf:MenuSaveall:javax.swing.Icon
-- sf:Menu_cut:javax.swing.Icon
-- sf:Menu_open:javax.swing.Icon
-- sf:Menu_paste:javax.swing.Icon
-- sf:Menu_saveall:javax.swing.Icon
 - sf:Minimap:javax.swing.Icon
 - sf:ModuleDirectory:javax.swing.Icon
 - sf:More:javax.swing.Icon
@@ -174,7 +170,6 @@ f:com.intellij.icons.AllIcons$Actions
 - sf:RunAll:javax.swing.Icon
 - sf:RunAnything:javax.swing.Icon
 - sf:RunToCursor:javax.swing.Icon
-- sf:Run_anything:javax.swing.Icon
 - sf:Scratch:javax.swing.Icon
 - sf:Search:javax.swing.Icon
 - sf:SearchNewLine:javax.swing.Icon
@@ -189,7 +184,6 @@ f:com.intellij.icons.AllIcons$Actions
 - sf:ShowCode:javax.swing.Icon
 - sf:ShowImportStatements:javax.swing.Icon
 - sf:ShowReadAccess:javax.swing.Icon
-- sf:ShowViewer:javax.swing.Icon
 - sf:ShowWriteAccess:javax.swing.Icon
 - sf:SplitHorizontally:javax.swing.Icon
 - sf:SplitVertically:javax.swing.Icon
@@ -583,7 +577,6 @@ f:com.intellij.icons.AllIcons$General
 - sf:LayoutPreviewOnly:javax.swing.Icon
 - sf:Learn:javax.swing.Icon
 - sf:LinkDropTriangle:javax.swing.Icon
-- sf:LocalizationSettings:javax.swing.Icon
 - sf:Locate:javax.swing.Icon
 - sf:LockedUltimate:javax.swing.Icon
 - sf:Menu:javax.swing.Icon
@@ -731,7 +724,6 @@ f:com.intellij.icons.AllIcons$Ide
 - sf:OutgoingChangesOn:javax.swing.Icon
 - sf:Pipette:javax.swing.Icon
 - sf:PipetteRollover:javax.swing.Icon
-- sf:Pipette_rollover:javax.swing.Icon
 - sf:PowerSaveMode:javax.swing.Icon
 - sf:Rating:javax.swing.Icon
 - sf:Rating1:javax.swing.Icon
@@ -932,7 +924,6 @@ f:com.intellij.icons.AllIcons$Nodes
 - sf:IdeaModule:javax.swing.Icon
 - sf:IdeaProject:javax.swing.Icon
 - sf:Include:javax.swing.Icon
-- sf:InspectionResults:javax.swing.Icon
 - sf:Interface:javax.swing.Icon
 - sf:JarDirectory:javax.swing.Icon
 - sf:JavaDocFolder:javax.swing.Icon
@@ -996,7 +987,6 @@ f:com.intellij.icons.AllIcons$Nodes
 - sf:ResourceBundle:javax.swing.Icon
 - sf:RunnableMark:javax.swing.Icon
 - sf:RwAccess:javax.swing.Icon
-- sf:Rw_access:javax.swing.Icon
 - sf:SecurityRole:javax.swing.Icon
 - sf:Services:javax.swing.Icon
 - sf:Servlet:javax.swing.Icon
@@ -1029,7 +1019,6 @@ f:com.intellij.icons.AllIcons$Nodes
 - sf:WarningIntroduction:javax.swing.Icon
 - sf:WarningMark:javax.swing.Icon
 - sf:WebFolder:javax.swing.Icon
-- sf:Weblistener:javax.swing.Icon
 - sf:Word:javax.swing.Icon
 - sf:Workspace:javax.swing.Icon
 - sf:WriteAccess:javax.swing.Icon
@@ -1126,7 +1115,6 @@ f:com.intellij.icons.AllIcons$Providers
 - sf:ApacheIgnite:javax.swing.Icon
 - sf:ApachePhoenix:javax.swing.Icon
 - sf:Athena:javax.swing.Icon
-- sf:Aws:javax.swing.Icon
 - sf:Azure:javax.swing.Icon
 - sf:BigQuery:javax.swing.Icon
 - sf:Cassandra:javax.swing.Icon
@@ -1329,7 +1317,6 @@ f:com.intellij.icons.AllIcons$Toolwindows
 - sf:ToolWindowDebugger:javax.swing.Icon
 - sf:ToolWindowDevMode:javax.swing.Icon
 - sf:ToolWindowDuplicates:javax.swing.Icon
-- sf:ToolWindowFavorites:javax.swing.Icon
 - sf:ToolWindowFind:javax.swing.Icon
 - sf:ToolWindowHierarchy:javax.swing.Icon
 - sf:ToolWindowInspection:javax.swing.Icon

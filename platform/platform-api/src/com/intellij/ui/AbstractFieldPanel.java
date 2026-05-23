@@ -146,7 +146,7 @@ public abstract class AbstractFieldPanel extends JPanel {
         myDoClickAction = new TextFieldWithBrowseButton.MyDoClickAction(showViewerButton);
       }
       showViewerButton.setFocusable(false);
-      showViewerButton.setIcon(AllIcons.Actions.ShowViewer);
+      showViewerButton.setIcon(AllIcons.Actions.Preview);
       showViewerButton.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {

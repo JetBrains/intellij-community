@@ -19,7 +19,7 @@ public class BigStringComponent extends TextFieldWithBrowseButton {
   public BigStringComponent(boolean hasBorder, @NlsContexts.DialogTitle String windowTitle) {
     super();
     myWindowTitle = windowTitle;
-    setButtonIcon(AllIcons.Actions.ShowViewer);
+    setButtonIcon(AllIcons.Actions.Preview);
     addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
