@@ -5,7 +5,6 @@ import com.amazon.ion.IonReader;
 import com.amazon.ion.IonType;
 import com.amazon.ion.IonWriter;
 import com.amazon.ion.system.IonReaderBuilder;
-import gnu.trove.TObjectHashingStrategy;
 import org.gradle.api.JavaVersion;
 import org.gradle.tooling.internal.adapter.ProtocolToModelAdapter;
 import org.gradle.tooling.internal.consumer.converters.BackwardsCompatibleIdeaModuleDependency;
@@ -876,7 +875,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
     }
 
     private final ObjectCollector<IdeaProject, IOException> ideaProjectsCollector = new ObjectCollector<>(
-      new TObjectHashingStrategy<IdeaProject>() {
+      new ObjectCollector.Hasher<IdeaProject>() {
         @Override
         public int computeHashCode(IdeaProject object) {
           return object == null ? 0 : object.getName().hashCode();
@@ -899,7 +898,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
       });
 
     private final ObjectCollector<GradleProject, IOException> gradleProjectsCollector = new ObjectCollector<>(
-      new TObjectHashingStrategy<GradleProject>() {
+      new ObjectCollector.Hasher<GradleProject>() {
         @Override
         public int computeHashCode(GradleProject object) {
           return object == null ? 0 : object.getPath().hashCode();
@@ -914,7 +913,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
 
     private final ObjectCollector<IdeaCompilerOutput, IOException> ideaCompilerOutputCollector =
       new ObjectCollector<>(
-        new TObjectHashingStrategy<IdeaCompilerOutput>() {
+        new ObjectCollector.Hasher<IdeaCompilerOutput>() {
           @Override
           public int computeHashCode(IdeaCompilerOutput object) {
             return argsHashCode(object.getInheritOutputDirs(), object.getOutputDir(), object.getTestOutputDir());
@@ -930,7 +929,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
         });
 
     private final ObjectCollector<GradleTask, IOException> gradleTasksCollector = new ObjectCollector<>(
-      new TObjectHashingStrategy<GradleTask>() {
+      new ObjectCollector.Hasher<GradleTask>() {
         @Override
         public int computeHashCode(GradleTask object) {
           return object == null ? 0 : object.getPath().hashCode();
@@ -952,7 +951,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
 
     private final ObjectCollector<IdeaDependency, IOException> ideaDependenciesCollector =
       new ObjectCollector<>(
-        new TObjectHashingStrategy<IdeaDependency>() {
+        new ObjectCollector.Hasher<IdeaDependency>() {
           @Override
           public int computeHashCode(IdeaDependency object) {
             if (object == null) return 0;
@@ -1011,7 +1010,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
 
     private final ObjectCollector<IdeaJavaLanguageSettings, IOException> ideaJavaLanguageSettingsCollector =
       new ObjectCollector<>(
-        new TObjectHashingStrategy<IdeaJavaLanguageSettings>() {
+        new ObjectCollector.Hasher<IdeaJavaLanguageSettings>() {
           @Override
           public int computeHashCode(final IdeaJavaLanguageSettings object) {
             return object == null ? 0 : argsHashCode(getLanguageLevel(object),
@@ -1032,7 +1031,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
 
     private final ObjectCollector<ProjectIdentifier, IOException> projectIdentifiersCollector =
       new ObjectCollector<>(
-        new TObjectHashingStrategy<ProjectIdentifier>() {
+        new ObjectCollector.Hasher<ProjectIdentifier>() {
           @Override
           public int computeHashCode(ProjectIdentifier object) {
             return object == null ? 0 : object.getProjectPath().hashCode();
@@ -1052,7 +1051,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
 
     private final ObjectCollector<BuildIdentifier, IOException> buildIdentifiersCollector =
       new ObjectCollector<>(
-        new TObjectHashingStrategy<BuildIdentifier>() {
+        new ObjectCollector.Hasher<BuildIdentifier>() {
           @Override
           public int computeHashCode(BuildIdentifier object) {
             return object == null ? 0 : object.getRootDir().getPath().hashCode();
