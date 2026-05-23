@@ -6,6 +6,7 @@ import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLogFactory
 import com.intellij.platform.util.io.storages.circular.CircularBytesBuffer
 import com.intellij.platform.util.io.storages.circular.CircularBytesBufferOverMMappedFile
 import com.intellij.platform.util.io.storages.circular.WriteAheadLogOverCircularBuffer
+import com.intellij.platform.util.io.storages.circular.WriteAheadLogOverCircularBuffer.WriteAheadLogStatistics
 import com.intellij.platform.util.io.storages.enumerator.DurableEnumerator
 import com.intellij.platform.util.io.storages.enumerator.DurableEnumeratorFactory
 import com.intellij.util.io.ChannelsAccessor
@@ -61,6 +62,25 @@ class WriteAheadLogFileChannelOverCircularBufferTest {
 
     assertThrows(IllegalArgumentException::class.java) {
       fileWriter.write(0, byteArrayOf(1), 0, 1)
+    }
+  }
+
+  @Test
+  fun `statistics counts queued bytes and queue-full flushes`(@TempDir tempDir: Path) {
+    WriteAheadLogOverCircularBuffer(
+      QueueFullOnceCircularBytesBuffer(), singlePathEnumerator(),
+    ) { _, _, _ -> }.use { writeAheadLog ->
+      val fileWriter = writeAheadLog.openFor(tempDir.resolve("storage.bin"))
+
+      fileWriter.write(0, byteArrayOf(1, 2, 3), 0, 3)
+
+      val expectedStatistics = WriteAheadLogStatistics(bytesQueued = 3, flushesForcedByOverflow = 1, entriesFlushed = 0)
+      assertEquals(expectedStatistics, writeAheadLog.statistics)
+
+      val allStatistics = WriteAheadLogOverCircularBuffer.getAggregatedStatistics()
+      assertTrue(allStatistics.bytesQueued >= expectedStatistics.bytesQueued)
+      assertTrue(allStatistics.flushesForcedByOverflow >= expectedStatistics.flushesForcedByOverflow)
+      assertTrue(allStatistics.entriesFlushed >= expectedStatistics.entriesFlushed)
     }
   }
 
@@ -559,6 +579,28 @@ private class CapacityOnlyCircularBytesBuffer(
 
   override fun append(writer: ByteBufferWriter, entrySize: Int) {
     throw AssertionError("Too large WAL record must be rejected before appending to circular buffer")
+  }
+
+  override fun read(reader: CircularBytesBuffer.DataReader): Int = 0
+
+  override fun close() = Unit
+
+  override fun flush() = Unit
+}
+
+private class QueueFullOnceCircularBytesBuffer : CircularBytesBuffer {
+  private var queueFullReported = false
+
+  override fun hasUnprocessedRecords(): Boolean = false
+
+  override fun maxEntrySize(): Int = 1024
+
+  override fun append(writer: ByteBufferWriter, entrySize: Int) {
+    if (!queueFullReported) {
+      queueFullReported = true
+      throw CircularBytesBuffer.QueueFullException()
+    }
+    writer.write(ByteBuffer.allocate(entrySize))
   }
 
   override fun read(reader: CircularBytesBuffer.DataReader): Int = 0

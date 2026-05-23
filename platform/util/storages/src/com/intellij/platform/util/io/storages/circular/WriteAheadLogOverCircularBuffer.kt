@@ -28,7 +28,10 @@ import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.Collections.newSetFromMap
+import java.util.WeakHashMap
 import java.util.concurrent.ThreadFactory
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.io.path.absolute
 
 
@@ -52,7 +55,7 @@ class WriteAheadLogOverCircularBuffer(
   private val defaultFlushPeriodMs: Long = DEFAULT_FLUSH_PERIOD_MS,
 ) : WriteAheadLog, Unmappable, CleanableStorage {
 
-  /** pathId -> #{pending (not yet consumed) records for this path}*/
+  /** pathId -> #{pending (not yet consumed) records for this path} */
   //@GuardedBy(pendingRecordsLock)
   private val pendingRecordsByPathId = Int2IntOpenHashMap()
   @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
@@ -61,6 +64,26 @@ class WriteAheadLogOverCircularBuffer(
   private var flusherThread: Thread? = null
   @Volatile
   private var flusherThreadClosed: Boolean = false
+
+  //<editor-fold name="statistics counters"> =====================================
+
+  /** total bytes queued in the buffer */
+  private val bytesQueued = AtomicLong()
+
+  /** total # of [flush] forced because queue is full during [append] */
+  private val flushesForcedByOverflow = AtomicLong()
+
+  /** total # of entries flushed, i.e., written into a [channelWriter] */
+  private val totalEntriesFlushed = AtomicLong()
+
+  val statistics: WriteAheadLogStatistics
+    get() = WriteAheadLogStatistics(
+      bytesQueued = bytesQueued.get(),
+      flushesForcedByOverflow = flushesForcedByOverflow.get(),
+      entriesFlushed = totalEntriesFlushed.get(),
+    )
+
+  //</editor-fold>  ============================================================
 
   init {
     pendingRecordsByPathId.defaultReturnValue(0)
@@ -84,6 +107,10 @@ class WriteAheadLogOverCircularBuffer(
       LOG.info("Unfinished entries left from previous session (=$flushedEntries) -> applied")
     }
 
+    synchronized(walInstancesForStatistics) {
+      walInstancesForStatistics.add(this)
+    }
+
     flusherThread = flusherThreadFactory?.newThread { flushInBackground() }?.also { it.start() }
   }
 
@@ -95,7 +122,7 @@ class WriteAheadLogOverCircularBuffer(
   override fun hasUnfinished(): Boolean = circularBytesBuffer.hasUnprocessedRecords()
 
   override fun flush(): Int {
-    return circularBytesBuffer.read { entryDataBuffer ->
+    val flushedEntries = circularBytesBuffer.read { entryDataBuffer ->
       val record = readRecord(entryDataBuffer)
       val path = pathById(record.pathId)
       //RC: we don't need synchronization here as long, as circularBytesBuffer guarantees an entry could be 'consumed'
@@ -105,19 +132,28 @@ class WriteAheadLogOverCircularBuffer(
       forget(record.pathId)
       true //consume
     }
+    totalEntriesFlushed.addAndGet(flushedEntries.toLong())
+    return flushedEntries
   }
 
   override fun close() {
     stopFlusherThread()
-    flush()
-    ExceptionUtil.runAllAndCollectExceptions(
-      { pathEnumerator.close() },
-      { circularBytesBuffer.close() }
-    ).also { errors ->
-      if (errors.isNotEmpty()) {
-        val ioe = IOException("Error during closing")
-        errors.forEach { ioe.addSuppressed(it) }
-        throw ioe
+    try {
+      flush()
+      ExceptionUtil.runAllAndCollectExceptions(
+        { pathEnumerator.close() },
+        { circularBytesBuffer.close() }
+      ).also { errors ->
+        if (errors.isNotEmpty()) {
+          val ioe = IOException("Error during closing")
+          errors.forEach { ioe.addSuppressed(it) }
+          throw ioe
+        }
+      }
+    }
+    finally {
+      synchronized(walInstancesForStatistics) {
+        walInstancesForStatistics.remove(this)
       }
     }
   }
@@ -206,7 +242,7 @@ class WriteAheadLogOverCircularBuffer(
   /** drain only records for a given pathId */
   private fun flush(pathId: Int): Int {
     val path = pathById(pathId)
-    return circularBytesBuffer.read { entryDataBuffer ->
+    val flushedEntries = circularBytesBuffer.read { entryDataBuffer ->
       val record = readRecord(entryDataBuffer)
       if (pathId == record.pathId) {
         channelWriter.write(path, record.offsetInFile, record.data)
@@ -217,6 +253,8 @@ class WriteAheadLogOverCircularBuffer(
         false // consume only writes for given pathId
       }
     }
+    totalEntriesFlushed.addAndGet(flushedEntries.toLong())
+    return flushedEntries
   }
 
   private fun append(pathId: Int, fileOffset: Long, writer: ByteBufferWriter, recordSize: Int) {
@@ -236,10 +274,14 @@ class WriteAheadLogOverCircularBuffer(
           },
           entrySize
         )
+        if (recordSize > 0) {
+          bytesQueued.addAndGet(recordSize.toLong())
+        }
         remember(pathId)
         return
       }
       catch (_: QueueFullException) {
+        flushesForcedByOverflow.incrementAndGet()
         flush()
       }
     }
@@ -309,6 +351,9 @@ class WriteAheadLogOverCircularBuffer(
   private data class Record(val pathId: Int, val offsetInFile: Long, val data: ByteBuffer)
 
   companion object {
+    /** @GuardedBy(walInstancesForStatistics) */
+    private val walInstancesForStatistics = newSetFromMap(WeakHashMap<WriteAheadLogOverCircularBuffer, Boolean>())
+
     private fun readRecord(entryData: ByteBuffer): Record {
       val pathId = entryData.getInt()
       val fileOffset = entryData.getLong()
@@ -400,6 +445,41 @@ class WriteAheadLogOverCircularBuffer(
               WriteAheadLogOverCircularBuffer(circularBuffer, pathsEnumerator, toFileWriter, flusherThreadFactory, flushPeriodMs)
             }.open(enumeratorPath)
         }.open(bufferPath)
+    }
+
+    @JvmStatic
+    fun getAggregatedStatistics(): WriteAheadLogStatistics {
+      synchronized(walInstancesForStatistics) {
+        var cumulativeStats = WriteAheadLogStatistics.EMPTY
+        for (instance in walInstancesForStatistics) {
+          cumulativeStats += instance.statistics
+        }
+        return cumulativeStats
+      }
+    }
+  }
+
+  @ApiStatus.Internal
+  data class WriteAheadLogStatistics(
+    /** total bytes submitted in WAL */
+    val bytesQueued: Long,
+    /** total # of flushes forced because buffer is full during append */
+    val flushesForcedByOverflow: Long,
+    val entriesFlushed: Long,
+  ) {
+
+    operator fun plus(other: WriteAheadLogStatistics): WriteAheadLogStatistics = WriteAheadLogStatistics(
+      bytesQueued + other.bytesQueued,
+      flushesForcedByOverflow + other.flushesForcedByOverflow,
+      entriesFlushed + other.entriesFlushed
+    )
+
+    companion object {
+      val EMPTY: WriteAheadLogStatistics = WriteAheadLogStatistics(
+        bytesQueued = 0,
+        flushesForcedByOverflow = 0,
+        entriesFlushed = 0
+      )
     }
   }
 }
