@@ -79,16 +79,16 @@ public final class AppMode {
   }
 
   public static void setFlags(@NotNull List<String> args) {
-    WellKnownCommand knownCommand = WellKnownCommands.getCommandFor(args);
+    WellKnownCommand knownCommand = WellKnownCommand.getCommandFor(args);
 
-    isHeadless = Boolean.getBoolean(AWT_HEADLESS) || knownCommand != null && knownCommand.isHeadless();
-    isCommandLine = isHeadless || knownCommand != null && knownCommand.isCommandLine();
+    isHeadless = Boolean.getBoolean(AWT_HEADLESS) || knownCommand != null && knownCommand.isHeadless;
+    isCommandLine = isHeadless || knownCommand != null && knownCommand.isCommandLine;
 
     if (isHeadless) {
       System.setProperty(AWT_HEADLESS, Boolean.TRUE.toString());
     }
 
-    isRemoteDevHost = knownCommand != null && knownCommand.isRemoteDevHost();
+    isRemoteDevHost = knownCommand != null && knownCommand.isRemoteDevHost;
 
     isLightEdit = (
       Boolean.parseBoolean(System.getProperty("idea.force.light.edit.mode")) ||

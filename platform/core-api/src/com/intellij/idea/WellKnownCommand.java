@@ -1,125 +1,102 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.idea
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.idea;
 
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @ApiStatus.Internal
-object WellKnownCommands {
-  const val SERVER_MODE: String = "serverMode"
-  const val SPLIT_MODE: String = "splitMode"
+public final class WellKnownCommand {
+  public static final @NotNull String SERVER_MODE = "serverMode";
+  public static final @NotNull String SPLIT_MODE = "splitMode";
 
-  private val allCommands: Map<String, WellKnownCommand> = listOf(
-    WellKnownCommand("exit", CommandType.HEADLESS),
+  public final boolean isHeadless;
+  public final boolean isCommandLine;
+  public final boolean isRemoteDevHost;
 
-    WellKnownCommand("diff", CommandType.GUI_COMMAND),
-    WellKnownCommand("merge", CommandType.GUI_COMMAND),
-
-    WellKnownCommand("update", CommandType.HEADLESS),
-    WellKnownCommand("installPlugins", CommandType.HEADLESS),
-    WellKnownCommand("installFrontendPlugins", CommandType.HEADLESS),
-    WellKnownCommand("listBundledPlugins", CommandType.HEADLESS),
-    WellKnownCommand("invalidateCaches", CommandType.HEADLESS),
-    WellKnownCommand("warmup", CommandType.HEADLESS),
-
-    WellKnownCommand("duplocate", CommandType.HEADLESS),
-    WellKnownCommand("format", CommandType.HEADLESS),
-    WellKnownCommand("inspect", CommandType.HEADLESS),
-    WellKnownCommand("inspections", CommandType.HEADLESS),
-    WellKnownCommand("inspectopedia-generator", CommandType.HEADLESS),
-    WellKnownCommand("intentions", CommandType.HEADLESS),
-
-    WellKnownCommand("traverseUI", CommandType.HEADLESS),
-    WellKnownCommand("keymap", CommandType.HEADLESS),
-    WellKnownCommand("dumpActions", CommandType.HEADLESS),
-    WellKnownCommand("dump-launch-parameters", CommandType.HEADLESS),
-    WellKnownCommand("dump-shared-index", CommandType.HEADLESS),
-    WellKnownCommand("buildEventsScheme", CommandType.HEADLESS),
-    WellKnownCommand("cherryPickAnalyzer", CommandType.HEADLESS),
-    WellKnownCommand("full-line", CommandType.HEADLESS),
-
-    WellKnownCommand("ant", CommandType.HEADLESS),
-    WellKnownCommand("appcodeClangModulesDiff", CommandType.HEADLESS),
-    WellKnownCommand("appcodeClangModulesPrinter", CommandType.HEADLESS),
-    WellKnownCommand("buildAppcodeCache", CommandType.HEADLESS),
-    WellKnownCommand("dataSources", CommandType.HEADLESS),
-    WellKnownCommand("ml-evaluate", CommandType.HEADLESS),
-    WellKnownCommand("ml-process", CommandType.HEADLESS),
-    WellKnownCommand("project-with-shared-caches", CommandType.HEADLESS),
-    WellKnownCommand("qodanaExcludedPlugins", CommandType.HEADLESS),
-    WellKnownCommand("matterhorn", CommandType.HEADLESS),
-    WellKnownCommand("installCoursePlugins", CommandType.HEADLESS),
-    WellKnownCommand("createCourse", CommandType.HEADLESS),
-    WellKnownCommand("mcpServer", CommandType.HEADLESS),
-
-    WellKnownCommand("thinClient", CommandType.GUI),
-    WellKnownCommand("thinClient-headless", CommandType.HEADLESS),
-    WellKnownCommand("serverMode", CommandType.REMOTE_DEV_HOST),
-    WellKnownCommand("splitMode", CommandType.REMOTE_DEV_HOST),
-    WellKnownCommand("cwmHost", CommandType.REMOTE_DEV_HOST),
-    WellKnownCommand("cwmHostNoLobby", CommandType.REMOTE_DEV_HOST),
-    WellKnownCommand("remoteDevHost", CommandType.REMOTE_DEV_HOST),
-    WellKnownCommand("rdserver-headless", CommandType.HEADLESS),
-
-    WellKnownCommand("openUrlOnClient", CommandType.HEADLESS),
-    WellKnownCommand("cwmHostStatus", CommandType.HEADLESS),
-    WellKnownCommand("remoteDevShowHelp", CommandType.HEADLESS),
-    WellKnownCommand("remoteDevStatus", CommandType.HEADLESS),
-    WellKnownCommand("registerBackendLocationForGateway", CommandType.HEADLESS),
-    WellKnownCommand("installGatewayProtocolHandler", CommandType.HEADLESS),
-    WellKnownCommand("uninstallGatewayProtocolHandler", CommandType.HEADLESS),
-  ).associateBy { it.command }
-
-  @JvmStatic
-  fun getCommandFor(args: List<String>): WellKnownCommand? {
-    val commandName = args.firstOrNull() ?: return null
-
-    val wellKnownCommand = allCommands[commandName]
-    if (wellKnownCommand != null) return wellKnownCommand
-
-    if (commandName.length < 20 && commandName.endsWith("inspect")) {
-      return WellKnownCommand(commandName, commandType = CommandType.HEADLESS)
-    }
-
-    return wellKnownCommand
+  private WellKnownCommand(boolean isHeadless, boolean isCommandLine, boolean isRemoteDevHost) {
+    this.isHeadless = isHeadless;
+    this.isCommandLine = isCommandLine;
+    this.isRemoteDevHost = isRemoteDevHost;
   }
-}
 
-/**
- * An unknown command is treated by IDE as `WellKnownCommand(name, CommandType.GUI)`
- */
-@ApiStatus.Internal
-class WellKnownCommand internal constructor(
-  val command: String,
-  val commandType: CommandType,
-) {
-  /**
-   * Whether a command may show Swing UI.
-   *
-   * [AppMode.isHeadless] and [com.intellij.openapi.application.Application.isHeadlessEnvironment] and [java.awt.GraphicsEnvironment.isHeadless]
-   */
-  val isHeadless: Boolean = commandType == CommandType.HEADLESS
+  public static @Nullable WellKnownCommand getCommandFor(@NotNull List<@NotNull String> args) {
+    if (!args.isEmpty()) {
+      String commandName = args.get(0);
+      WellKnownCommand command = allCommands.get(commandName);
+      if (command != null) return command;
+      if (commandName.length() < 20 && commandName.endsWith("inspect")) return HEADLESS;
+    }
+    return null;
+  }
 
-  /**
-   * [AppMode.isCommandLine] and [com.intellij.openapi.application.Application.isCommandLine]
-   */
-  val isCommandLine: Boolean = isHeadless || commandType == CommandType.GUI_COMMAND
+  private static final WellKnownCommand GUI = new WellKnownCommand(/*isHeadless=*/false, /*isCommandLine=*/false, /*isRemoteDevHost=*/false);
+  private static final WellKnownCommand GUI_COMMAND = new WellKnownCommand(/*isHeadless=*/false, /*isCommandLine=*/true, /*isRemoteDevHost=*/false);
+  private static final WellKnownCommand HEADLESS = new WellKnownCommand(/*isHeadless=*/true, /*isCommandLine=*/true, /*isRemoteDevHost=*/false);
+  // RemDev host that employs `com.intellij.platform.impl.toolkit.IdeToolkit`
+  private static final WellKnownCommand REMOTE_DEV_HOST = new WellKnownCommand(/*isHeadless=*/false, /*isCommandLine=*/false, /*isRemoteDevHost=*/true);
 
-  /**
-   * Whether the command will start IDE in Remote Development host mode.
-   *
-   * [AppMode.isRemoteDevHost]
-   */
-  val isRemoteDevHost: Boolean = commandType == CommandType.REMOTE_DEV_HOST
-}
+  private static final Map<String, WellKnownCommand> allCommands = new HashMap<String, WellKnownCommand>() {{
+    put("exit", HEADLESS);
 
-@ApiStatus.Internal
-enum class CommandType {
-  GUI,
-  GUI_COMMAND,
-  HEADLESS,
+    put("diff", GUI_COMMAND);
+    put("merge", GUI_COMMAND);
 
-  /**
-   * RemDev host that employs [com.intellij.platform.impl.toolkit.IdeToolkit]
-   */
-  REMOTE_DEV_HOST
+    put("update", HEADLESS);
+    put("installPlugins", HEADLESS);
+    put("installFrontendPlugins", HEADLESS);
+    put("listBundledPlugins", HEADLESS);
+    put("invalidateCaches", HEADLESS);
+    put("warmup", HEADLESS);
+
+    put("duplocate", HEADLESS);
+    put("format", HEADLESS);
+    put("inspect", HEADLESS);
+    put("inspections", HEADLESS);
+    put("inspectopedia-generator", HEADLESS);
+    put("intentions", HEADLESS);
+
+    put("traverseUI", HEADLESS);
+    put("keymap", HEADLESS);
+    put("dumpActions", HEADLESS);
+    put("dump-launch-parameters", HEADLESS);
+    put("dump-shared-index", HEADLESS);
+    put("buildEventsScheme", HEADLESS);
+    put("cherryPickAnalyzer", HEADLESS);
+    put("full-line", HEADLESS);
+
+    put("ant", HEADLESS);
+    put("appcodeClangModulesDiff", HEADLESS);
+    put("appcodeClangModulesPrinter", HEADLESS);
+    put("buildAppcodeCache", HEADLESS);
+    put("dataSources", HEADLESS);
+    put("ml-evaluate", HEADLESS);
+    put("ml-process", HEADLESS);
+    put("project-with-shared-caches", HEADLESS);
+    put("qodanaExcludedPlugins", HEADLESS);
+    put("matterhorn", HEADLESS);
+    put("installCoursePlugins", HEADLESS);
+    put("createCourse", HEADLESS);
+    put("mcpServer", HEADLESS);
+
+    put("thinClient", GUI);
+    put("thinClient-headless", HEADLESS);
+    put("serverMode", REMOTE_DEV_HOST);
+    put("splitMode", REMOTE_DEV_HOST);
+    put("cwmHost", REMOTE_DEV_HOST);
+    put("cwmHostNoLobby", REMOTE_DEV_HOST);
+    put("remoteDevHost", REMOTE_DEV_HOST);
+    put("rdserver-headless", HEADLESS);
+    put("openUrlOnClient", HEADLESS);
+    put("cwmHostStatus", HEADLESS);
+    put("remoteDevShowHelp", HEADLESS);
+    put("remoteDevStatus", HEADLESS);
+    put("registerBackendLocationForGateway", HEADLESS);
+    put("installGatewayProtocolHandler", HEADLESS);
+    put("uninstallGatewayProtocolHandler", HEADLESS);
+  }};
 }
