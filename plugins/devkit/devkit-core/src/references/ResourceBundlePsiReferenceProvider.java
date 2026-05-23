@@ -17,7 +17,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -26,8 +25,7 @@ import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.psi.search.GlobalSearchScope.moduleWithDependenciesScope;
-import static com.intellij.psi.search.GlobalSearchScope.moduleWithDependentsScope;
+import static com.intellij.psi.search.GlobalSearchScopesCore.projectProductionScope;
 
 class ResourceBundlePsiReferenceProvider extends PsiReferenceProvider {
 
@@ -53,7 +51,7 @@ class ResourceBundlePsiReferenceProvider extends PsiReferenceProvider {
       Module module = ModuleUtilCore.findModuleForPsiElement(myElement);
       // bundle name can be used in dependency module
       GlobalSearchScope scope = module != null
-                                ? moduleWithDependenciesScope(module).union(moduleWithDependentsScope(module))
+                                ? projectProductionScope(module.getProject())
                                 : myElement.getResolveScope();
       return scope;
     }
@@ -63,7 +61,7 @@ class ResourceBundlePsiReferenceProvider extends PsiReferenceProvider {
       final Project project = myElement.getProject();
       PropertiesReferenceManager referenceManager = PropertiesReferenceManager.getInstance(project);
       final List<LookupElement> variants = new ArrayList<>();
-      referenceManager.processPropertiesFiles(GlobalSearchScopesCore.projectProductionScope(project), (baseName, propertiesFile) -> {
+      referenceManager.processPropertiesFiles(projectProductionScope(project), (baseName, propertiesFile) -> {
         final Icon icon = propertiesFile.getContainingFile().getIcon(Iconable.ICON_FLAG_READ_STATUS);
         final String relativePath = ProjectUtil.calcRelativeToProjectPath(propertiesFile.getVirtualFile(), project);
         variants.add(LookupElementBuilder.create(propertiesFile, baseName)
