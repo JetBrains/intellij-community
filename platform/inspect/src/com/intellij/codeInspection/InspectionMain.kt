@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection
 
 import com.intellij.openapi.application.ModernApplicationStarter
 import java.util.concurrent.CompletableFuture
 import kotlin.system.exitProcess
 
+@Suppress("KotlinPrintToLogpoint")
 internal class InspectionMain : ModernApplicationStarter() {
   private lateinit var application: InspectionApplicationBase
 
@@ -14,20 +15,24 @@ internal class InspectionMain : ModernApplicationStarter() {
   }
 
   private fun buildInspectionApplication(args: List<String>): InspectionApplicationBase {
-    val app = InspectionApplicationBase()
+    if (args.size == 1 || args[1] == "-h" || args[1] == "-help" || args[1] == "--help") {
+      printHelpAndExit(0)
+    }
     if (args.size < 4) {
-      System.err.println("invalid args:$args")
-      printHelpAndExit()
+      System.err.println("invalid args: $args")
+      printHelpAndExit(1)
     }
 
-    app.myHelpProvider = InspectionToolCmdlineOptionHelpProvider { printHelpAndExit() }
-    app.myProjectPath = args[1]
-    app.myStubProfile = args[2]
-    app.myOutPath = args[3]
+    val app = InspectionApplicationBase().apply {
+      myHelpProvider = InspectionToolCmdlineOptionHelpProvider { printHelpAndExit(1) }
+      myProjectPath = args[1]
+      myStubProfile = args[2]
+      myOutPath = args[3]
+    }
 
     if (app.myProjectPath == null || app.myOutPath == null || app.myStubProfile == null) {
       System.err.println(app.myProjectPath + app.myOutPath + app.myStubProfile)
-      printHelpAndExit()
+      printHelpAndExit(1)
     }
 
     try {
@@ -77,7 +82,7 @@ internal class InspectionMain : ModernApplicationStarter() {
           }
           else -> {
             System.err.println("unexpected argument: $arg")
-            printHelpAndExit()
+            printHelpAndExit(1)
           }
         }
         i++
@@ -85,7 +90,7 @@ internal class InspectionMain : ModernApplicationStarter() {
     }
     catch (e: IndexOutOfBoundsException) {
       e.printStackTrace()
-      printHelpAndExit()
+      printHelpAndExit(1)
     }
 
     app.myRunGlobalToolsOnly = System.getProperty("idea.no.local.inspections") != null
@@ -100,9 +105,8 @@ internal class InspectionMain : ModernApplicationStarter() {
     CompletableFuture.runAsync(application::startup)
   }
 
-
-  private fun printHelpAndExit() {
+  private fun printHelpAndExit(exitCode: Int) {
     println(InspectionsBundle.message("inspection.command.line.explanation"))
-    exitProcess(1)
+    exitProcess(exitCode)
   }
 }
