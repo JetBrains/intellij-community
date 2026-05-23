@@ -323,7 +323,11 @@ abstract class AbstractAllIntellijEntitiesGenerationTest {
 
     //transition from VFS to Path API: need to force VFS to flush pending updates
     PlatformTestUtil.flushAllPendingVFSUpdates()
-    val filePathFilter: (String) -> Boolean = { it.endsWith(".kt") && !it.endsWith("GradleJvmSupportDefaultData.kt") }
+    val filePathFilter: (String) -> Boolean = {
+      it.endsWith(".kt") &&
+      !it.endsWith("GradleJvmSupportDefaultData.kt") &&
+      "lang/typescript/tsc/gen" !in it
+    }
     if (genIsInsideSrc) {
       Path.of(newSrcRoot.presentableUrl)
         .assertMatches(directoryContentOf(dir = ultimateSrcPath), filePathFilter = filePathFilter, ignoreEmptyDirectories = true)
