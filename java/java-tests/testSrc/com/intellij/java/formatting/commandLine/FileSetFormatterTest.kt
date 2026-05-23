@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.formatting.commandLine
 
 import com.intellij.formatting.commandLine.FileSetFormatter
@@ -7,11 +7,10 @@ import com.intellij.psi.codeStyle.CodeStyleSettings
 import junit.framework.ComparisonFailure
 import java.io.File
 import java.nio.charset.Charset
+import java.nio.file.Path
 import kotlin.text.Charsets.UTF_8
 
-
 class FileSetFormatterTest : FileSetCodeStyleProcessorTestBase() {
-
   private fun simpleTest(settings: CodeStyleSettings? = null) {
     FileSetFormatter(messageOutput!!, true, primaryCodeStyle = settings, defaultCodeStyle = codeStyleSettings, project = project).let {
       it.addFileMask(Regex(".*\\.java"))
@@ -30,7 +29,7 @@ class FileSetFormatterTest : FileSetCodeStyleProcessorTestBase() {
   fun testMixture() = simpleTest()
 
   fun testEnforceFour() {
-    val settingsFile = File(BASE_PATH).resolve(getTestName(true)).resolve("code-style.xml")
+    val settingsFile = Path.of(BASE_PATH).resolve(getTestName(true)).resolve("code-style.xml")
     simpleTest(readSettings(settingsFile))
   }
 
@@ -49,9 +48,9 @@ class FileSetFormatterTest : FileSetCodeStyleProcessorTestBase() {
   fun testCustomEncodingFail() {
     try {
       testCustomEncoding(UTF_8)
-      fail("Missing expected exception")
+      fail("Missing the expected exception")
     }
-    catch (e: ComparisonFailure) {
+    catch (_: ComparisonFailure) {
       // OK, expected exception
     }
   }
@@ -59,5 +58,4 @@ class FileSetFormatterTest : FileSetCodeStyleProcessorTestBase() {
   fun testCustomEncodingOk() {
     testCustomEncoding(Charset.forName("ISO-8859-15"))
   }
-
 }
