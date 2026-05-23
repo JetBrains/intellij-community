@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.commandLine
 
 import com.intellij.application.options.CodeStyle
@@ -96,7 +96,7 @@ fun createBuilder(args: List<String>, messageOutput: MessageOutput = StdIoMessag
           skipFlag.check { return@forEach }
 
           when (arg) {
-            "-h", "-help" -> throw ShowUsageException()
+            "-h", "-help", "--help" -> throw ShowUsageException()
             "-r", "-R" -> recursive()
             "-d", "-dry" -> dryRun()
             "-s", "-settings" -> {
