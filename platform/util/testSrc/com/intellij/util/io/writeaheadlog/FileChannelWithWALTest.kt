@@ -78,6 +78,25 @@ class FileChannelWithWALTest {
   }
 
   @Test
+  fun `foreground flush statistics count flushed records by reason`(@TempDir tempDir: Path) {
+    val file = tempDir.storageFile()
+    val before = FileChannelWithWAL.getFlushStatistics()
+    val writeAheadLog = CountingFlushWriteAheadLog(2, 3, 5, 7)
+
+    openWritableChannel(file, writeAheadLog).use { channel ->
+      channel.force(true)
+      channel.read(ByteBuffer.allocate(1), 0)
+      channel.truncate(0)
+    }
+
+    val after = FileChannelWithWAL.getFlushStatistics()
+    assertEquals(2, after.entriesFlushedOnForce - before.entriesFlushedOnForce)
+    assertEquals(3, after.entriesFlushedOnRead - before.entriesFlushedOnRead)
+    assertEquals(5, after.entriesFlushedOnTruncate - before.entriesFlushedOnTruncate)
+    assertEquals(7, after.entriesFlushedOnClose - before.entriesFlushedOnClose)
+  }
+
+  @Test
   fun `writable channel creates missing file on opening`(@TempDir tempDir: Path) {
     val file = tempDir.resolve("missing-storage.bin")
     val writeAheadLog = RecordingWriteAheadLog()
@@ -91,7 +110,7 @@ class FileChannelWithWALTest {
       assertEquals(0, channel.size())
     }
   }
-  
+
   @Test
   fun `read returns data with pending write applied even if the write is really pending`(@TempDir tempDir: Path) {
     val file = tempDir.storageFile()
@@ -303,6 +322,7 @@ class FileChannelWithWALTest {
           flushed = true
           return 0
         }
+        //override fun flush(): Int = this@RecordingWriteAheadLog.flush()
       }
     }
 
@@ -326,7 +346,7 @@ class FileChannelWithWALTest {
         override fun applyUnfinished(offsetInFile: Long, length: Int, targetBuffer: ByteBuffer, offsetInBuffer: Int) =
           throw UnsupportedOperationException("Intentionally not implemented")
 
-        override fun flush(): Int = 0
+        override fun flush(): Int = this@FailingWriteAheadLog.flush()
       }
     }
 
@@ -335,5 +355,27 @@ class FileChannelWithWALTest {
     override fun close() = Unit
 
     override fun hasUnfinished(): Boolean = false
+  }
+
+  private class CountingFlushWriteAheadLog(vararg flushedRecords: Int) : WriteAheadLog {
+    private val flushedRecords = java.util.ArrayDeque(flushedRecords.toList())
+
+    override fun openFor(file: Path): WriteAheadLog.PerFileWriter {
+      return object : WriteAheadLog.PerFileWriter {
+        override fun write(fileOffset: Long, writer: ByteBufferWriter, recordSize: Int) = Unit
+
+        override fun hasUnfinished(): Boolean = this@CountingFlushWriteAheadLog.hasUnfinished()
+
+        override fun applyUnfinished(fileOffset: Long, length: Int, buffer: ByteBuffer, offsetInBuffer: Int) = Unit
+
+        override fun flush(): Int = this@CountingFlushWriteAheadLog.flush()
+      }
+    }
+
+    override fun flush(): Int = if (flushedRecords.isEmpty()) 0 else flushedRecords.removeFirst()
+
+    override fun close() = Unit
+
+    override fun hasUnfinished(): Boolean = flushedRecords.isNotEmpty()
   }
 }

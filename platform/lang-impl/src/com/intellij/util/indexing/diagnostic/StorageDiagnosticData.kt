@@ -33,6 +33,7 @@ import com.intellij.util.io.stats.FilePageCacheStatistics
 import com.intellij.util.io.stats.PersistentEnumeratorStatistics
 import com.intellij.util.io.stats.PersistentHashMapStatistics
 import com.intellij.util.io.stats.StorageStatsRegistrar
+import com.intellij.util.io.writeaheadlog.FileChannelWithWAL
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -464,16 +465,29 @@ object StorageDiagnosticData {
       .setUnit("bytes")
       .buildObserver()
     val flushesForcedByOverflow = otelMeter.counterBuilder("FilePageCache.WAL.flushesForcedByOverflow").buildObserver()
-    val entriesFlushed = otelMeter.counterBuilder("FilePageCache.WAL.entriesFlushed").buildObserver()
+    val totalEntriesFlushed = otelMeter.counterBuilder("FilePageCache.WAL.entriesFlushed").buildObserver()
+
+    val entriesFlushedOnRead = otelMeter.counterBuilder("FilePageCache.WAL.entriesFlushedOnRead").buildObserver()
+    val entriesFlushedOnForce = otelMeter.counterBuilder("FilePageCache.WAL.entriesFlushedOnForce").buildObserver()
+    val entriesFlushedOnTruncate = otelMeter.counterBuilder("FilePageCache.WAL.entriesFlushedOnTruncate").buildObserver()
+    val entriesFlushedOnClose = otelMeter.counterBuilder("FilePageCache.WAL.entriesFlushedOnClose").buildObserver()
 
     otelMeter.batchCallback(
       {
         val statistics = WriteAheadLogOverCircularBuffer.getAggregatedStatistics()
         bytesQueued.record(statistics.bytesQueued)
         flushesForcedByOverflow.record(statistics.flushesForcedByOverflow)
-        entriesFlushed.record(statistics.entriesFlushed)
+        totalEntriesFlushed.record(statistics.entriesFlushed)
+
+        val flushStatistics = FileChannelWithWAL.getFlushStatistics()
+        entriesFlushedOnRead.record(flushStatistics.entriesFlushedOnRead)
+        entriesFlushedOnForce.record(flushStatistics.entriesFlushedOnForce)
+        entriesFlushedOnTruncate.record(flushStatistics.entriesFlushedOnTruncate)
+        entriesFlushedOnClose.record(flushStatistics.entriesFlushedOnClose)
+
       },
-      bytesQueued, flushesForcedByOverflow, entriesFlushed
+      bytesQueued, flushesForcedByOverflow, totalEntriesFlushed,
+      entriesFlushedOnRead, entriesFlushedOnTruncate, entriesFlushedOnForce, entriesFlushedOnClose
     )
   }
 

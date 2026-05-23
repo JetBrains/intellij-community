@@ -17,6 +17,7 @@ import java.nio.channels.FileLock
 import java.nio.channels.ReadableByteChannel
 import java.nio.channels.WritableByteChannel
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * A [FileChannel] which queues writes in a [WriteAheadLog], to be applied later.
@@ -68,8 +69,10 @@ class FileChannelWithWAL @Throws(IOException::class) constructor(
   @Throws(IOException::class)
   override fun force(metaData: Boolean) {
     ensureOpen()
-    perFileWriter.flush()
+    val entriesFlushed = perFileWriter.flush()
     channelOpExecutor { it.force(metaData) }
+
+    entriesFlushedOnForce.add(entriesFlushed)
   }
 
   /**
@@ -112,11 +115,13 @@ class FileChannelWithWAL @Throws(IOException::class) constructor(
       return bytesToRead
     }
     else {// simpler approach: flush() and read the result
-      perFileWriter.flush()
-      return channelOpExecutor(object : FileChannelOperation<Int> {
+      val entriesFlushed = perFileWriter.flush()
+      val bytesRead = channelOpExecutor(object : FileChannelOperation<Int> {
         override fun execute(channel: FileChannel) = channel.read(target, offset)
         override fun toString() = "read($target, $offset)"
       })
+      entriesFlushedOnRead.add(entriesFlushed)
+      return bytesRead
     }
   }
 
@@ -188,12 +193,13 @@ class FileChannelWithWAL @Throws(IOException::class) constructor(
       return this//do nothing, as per spec
     }
 
-    perFileWriter.flush()
-
+    val entriesFlushed = perFileWriter.flush()
     channelOpExecutor { it.truncate(size) }
 
     fileSize = size
     position = position.coerceAtMost(size)
+
+    entriesFlushedOnTruncate.add(entriesFlushed)
     return this
   }
 
@@ -203,7 +209,8 @@ class FileChannelWithWAL @Throws(IOException::class) constructor(
   @Synchronized
   @Throws(IOException::class)
   protected override fun implCloseChannel() {
-    perFileWriter.flush()
+    val entriesFlushed = perFileWriter.flush()
+    entriesFlushedOnClose.add(entriesFlushed)
     if (closeUnderlyingChannelOnClose) {
       channelOpExecutor.close()
     }
@@ -228,6 +235,14 @@ class FileChannelWithWAL @Throws(IOException::class) constructor(
       throw ClosedChannelException()
     }
   }
+
+
+  data class FlushStatistics(
+    val entriesFlushedOnRead: Long,
+    val entriesFlushedOnForce: Long,
+    val entriesFlushedOnTruncate: Long,
+    val entriesFlushedOnClose: Long,
+  )
 
   private fun readAvailableBytes(offsetInFile: Long, target: ByteBuffer, offsetInBuffer: Int, bytesToRead: Int): Int {
     return channelOpExecutor(object : FileChannelOperation<Int> {
@@ -269,7 +284,27 @@ class FileChannelWithWAL @Throws(IOException::class) constructor(
 
   companion object {
     private val APPLY_UNFINISHED_ON_READ = getBooleanProperty("indexes.write-ahead-log.apply-unfinished-on-read", false)
+    /** Accumulated statistics of flush()-ed entries, split by different 'causes' */
+    private val entriesFlushedOnRead = AtomicLong()
+    private val entriesFlushedOnForce = AtomicLong()
+    private val entriesFlushedOnTruncate = AtomicLong()
+    private val entriesFlushedOnClose = AtomicLong()
+
+    @JvmStatic
+    fun getFlushStatistics(): FlushStatistics = FlushStatistics(
+      entriesFlushedOnRead = entriesFlushedOnRead.get(),
+      entriesFlushedOnForce = entriesFlushedOnForce.get(),
+      entriesFlushedOnTruncate = entriesFlushedOnTruncate.get(),
+      entriesFlushedOnClose = entriesFlushedOnClose.get(),
+    )
+
+    private fun AtomicLong.add(add: Int) {
+      if (add != 0) {
+        addAndGet(add.toLong())
+      }
+    }
   }
+
 
   // ==================== not implemented: ============================================================ //
   // Some methods are hard to implement with WAL, while they are not used in current use-case (inside FilePageCache)
