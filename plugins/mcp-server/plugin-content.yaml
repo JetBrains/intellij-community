@@ -13,6 +13,11 @@
   files:
   - name: $MAVEN_REPOSITORY$/io/github/smiley4/schema-kenerator-serialization/2/schema-kenerator-serialization-2.jar
   reason: <- intellij.mcpserver
+- name: lib/ktor-server-content-negotiation.jar
+  library: ktor-server-content-negotiation
+  files:
+  - name: $MAVEN_REPOSITORY$/io/ktor/ktor-server-content-negotiation-jvm/3/ktor-server-content-negotiation-jvm-3.jar
+  reason: <- intellij.mcpserver
 - name: lib/mcpserver-frontend.jar
   projectLibraries:
   - name: io.github.oshai.kotlin.logging.jvm

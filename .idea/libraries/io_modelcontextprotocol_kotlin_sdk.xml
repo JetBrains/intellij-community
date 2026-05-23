@@ -17,13 +17,19 @@
       </verification>
       <exclude>
         <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-json-jvm" />
+        <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-json-io-jvm" />
         <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-core-jvm" />
         <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
         <dependency maven-id="org.jetbrains.kotlinx:kotlinx-io-core-jvm" />
         <dependency maven-id="org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm" />
         <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
         <dependency maven-id="io.ktor:ktor-server-websockets-jvm" />
+        <dependency maven-id="io.ktor:ktor-server-content-negotiation-jvm" />
+        <dependency maven-id="io.ktor:ktor-serialization-kotlinx-json-jvm" />
+        <dependency maven-id="io.ktor:ktor-serialization-kotlinx-jvm" />
+        <dependency maven-id="io.ktor:ktor-serialization-jvm" />
         <dependency maven-id="io.github.oshai:kotlin-logging-jvm" />
+        <dependency maven-id="org.slf4j:slf4j-api" />
         <dependency maven-id="io.ktor:ktor-client-core-jvm" />
         <dependency maven-id="io.ktor:ktor-server-core-jvm" />
         <dependency maven-id="io.ktor:ktor-server-sse-jvm" />
