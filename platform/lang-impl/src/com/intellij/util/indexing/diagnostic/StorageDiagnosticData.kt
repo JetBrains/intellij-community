@@ -470,7 +470,7 @@ object StorageDiagnosticData {
     val totalPageDisposalsUs = otelMeter.counterBuilder("FilePageCache.totalPageDisposalsUs")
       .setUnit("us").buildObserver()
 
-    val totalPageStoresUs = otelMeter.counterBuilder("FilePageCache.totalPageStoreUs")
+    val totalPageStoresUs = otelMeter.counterBuilder("FilePageCache.totalPageStoresUs")
       .setUnit("us").buildObserver()
     val totalBytesStoredUs = otelMeter.counterBuilder("FilePageCache.totalBytesStored").buildObserver()
 

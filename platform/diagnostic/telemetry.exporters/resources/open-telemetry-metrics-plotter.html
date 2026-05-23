@@ -973,6 +973,8 @@ as an example
 
       const pageLoadsTimeUs = extractTimeSeries("FilePageCache.totalPageLoadsUs")
       const pageDisposalTimeUs = extractTimeSeries("FilePageCache.totalPageDisposalsUs")
+      const pageStoresTimeUs = extractTimeSeries("FilePageCache.totalPageStoresUs")
+      const totalBytesStored = extractTimeSeries("FilePageCache.totalBytesStored")
 
       const bufferCacheHits = extractTimeSeries("DirectByteBufferAllocator.hits")
       const bufferCacheMisses = extractTimeSeries("DirectByteBufferAllocator.misses")
@@ -1005,14 +1007,27 @@ as an example
       )
 
       plotTimeSeries(
-        'FilePageCache: loads/dispose times',
+        'FilePageCache: load/dispose/store times',
         $("#filePageCache_Times_Chart"),
         [
           {name: 'Page load times, ms', color: 'green', series: pageLoadsTimeUs.mulScalar(1e-3 /*us->ms*/)},
+          {name: 'Page store times, ms', color: 'orange', series: pageStoresTimeUs.mulScalar(1e-3 /*us->ms*/)},
           {name: 'Page dispose times, ms', color: 'blue', series: pageDisposalTimeUs.mulScalar(1e-3 /*us->ms*/)}
         ],
         /*yaxis: */ {
           title: 'ms',
+          autorange: true
+        }
+      )
+
+      plotTimeSeries(
+        'FilePageCache: bytes stored',
+        $("#filePageCache_BytesStored_Chart"),
+        [
+          {name: 'Bytes stored, MiB', color: 'orange', series: totalBytesStored.mulScalar(1 / 1024 / 1024)}
+        ],
+        /*yaxis: */ {
+          title: 'MiB',
           autorange: true
         }
       )
@@ -1413,6 +1428,7 @@ as an example
 
     <div id="filePageCache_HitsMisses_Chart" class="plot hideable"></div>
     <div id="filePageCache_Times_Chart" class="plot hideable"></div>
+    <div id="filePageCache_BytesStored_Chart" class="plot hideable"></div>
 
     <div id="directBufferAllocator_Counts_Chart" class="plot hideable"></div>
     <div id="directBufferAllocator_Bytes_Chart" class="plot hideable"></div>
