@@ -1912,6 +1912,27 @@
         <constraint name="runnable" nameOfExprType="java.lang.Runnable" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
       </searchConfiguration>
+      <searchConfiguration name="ApiStatus.Internal is redundant on internal declarations" uuid="60116a3f-d0e5-3ea6-bf7a-7856244d8ffc" description="Prefer internal modifier in Kotlin to @ApiStatus.Internal annotation. &#10;&#10;There is no need for annotation if the internal modifier is already used." suppressId="ApiStatusInternalRedundantOnInternalDeclaration" text="@$Annotation$ internal class $Name$" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Annotation" regexp="Internal" target="true" within="" contains="" />
+        <constraint name="Name" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="ApiStatus.Internal is redundant on internal declarations" uuid="60116a3f-d0e5-3ea6-bf7a-7856244d8ffc" text="@$Annotation$ internal object $Name$" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Annotation" regexp="Internal" target="true" within="" contains="" />
+        <constraint name="Name" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="ApiStatus.Internal is redundant on internal declarations" uuid="60116a3f-d0e5-3ea6-bf7a-7856244d8ffc" text="@$Annotation$ internal interface $Name$" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Annotation" regexp="Internal" target="true" within="" contains="" />
+        <constraint name="Name" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="ApiStatus.Internal is redundant on internal declarations" uuid="60116a3f-d0e5-3ea6-bf7a-7856244d8ffc" text="@$Annotation$ internal fun $Name$($Params$)" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Annotation" regexp="Internal" target="true" within="" contains="" />
+        <constraint name="Name" within="" contains="" />
+        <constraint name="Params" minCount="0" maxCount="2147483647" within="" contains="" />
+      </searchConfiguration>
       <replaceConfiguration name="Arrays.asList() is not immutable" text="val $Field$ = java.util.Arrays.asList($elements$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="val $Field$ = listOf($elements$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="Field" within="" contains="" />
