@@ -303,7 +303,13 @@ private fun preprocessArgs(args: Array<String>): List<String> {
     System.setProperty(option, value)
   }
 
-  when (ApplicationStartArguments.stripKnownArguments(args).firstOrNull()) {
+  val filteredArgs = ApplicationStartArguments.stripKnownArguments(args)
+  @Suppress("ReplaceSizeCheckWithIsNotEmpty") val firstArg = when {
+      filteredArgs.size > 1 && (filteredArgs[0] == "-e" || filteredArgs[0] == "--edit") -> filteredArgs[1]
+      filteredArgs.size > 0 -> filteredArgs[0]
+      else -> null
+  }
+  when (firstArg) {
     "--help", "-h", "-?" -> {
       println("""
         Basic commands and options:
