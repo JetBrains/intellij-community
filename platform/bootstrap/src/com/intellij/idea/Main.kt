@@ -2,6 +2,7 @@
 @file:ApiStatus.Internal
 @file:JvmName("Main")
 @file:OptIn(LowLevelLocalMachineAccess::class)
+@file:Suppress("KotlinPrintToLogpoint")
 package com.intellij.idea
 
 import com.intellij.DynamicBundle
@@ -148,7 +149,7 @@ private suspend fun startApp(args: List<String>, mainScope: CoroutineScope, busy
     // must be after runMarketplaceCommandsInActionScript
     span("marketplace init") {
       // 'marketplace' plugin breaks JetBrains Client, so for now this condition is used to disable it
-      if (changeClassPath == null) {  
+      if (changeClassPath == null) {
         initMarketplace()
       }
     }
@@ -303,7 +304,7 @@ private fun preprocessArgs(args: Array<String>): List<String> {
   }
 
   when (ApplicationStartArguments.stripKnownArguments(args).firstOrNull()) {
-    "--help" -> {
+    "--help", "-h", "-?" -> {
       println("""
         Basic commands and options:
         --help           prints the short list of basic commands and options
