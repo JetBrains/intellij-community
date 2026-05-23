@@ -155,14 +155,26 @@ private fun collectPluginContentCategoryFailures(
   testName: (key: String) -> String,
 ): List<PackagingCheckFailure> {
   val failures = ArrayList<PackagingCheckFailure>()
-  for (item in fileEntries) {
-    val module = project.findModuleByName(item.mainModule) ?: continue
+  val groupedAllOs = fileEntries.groupBy { it.mainModule }
+
+  for ((mainModule, items) in groupedAllOs) {
+    val module = project.findModuleByName(mainModule) ?: continue
     val contentRoot = Path.of(JpsPathUtil.urlToPath(module.contentRootsList.urls.first()))
     val expectedFile = contentRoot.resolve(contentFileName)
-    val key = getPluginContentKey(item)
+    val key = getPluginContentKey(items.first())
     try {
+      val itemFileEntries = if (items.size == 1) {
+        items.first().content
+      }
+      else { // superset for report, android plugin excludes module libraries depending on OS/arch
+        items
+          .flatMap { item -> normalizeContentReport(item.content, short = false) }
+          .distinct()
+          .toList()
+      }
+
       checkThatContentIsNotChanged(
-        actualFileEntries = item.content,
+        actualFileEntries = itemFileEntries,
         expectedFile = expectedFile,
         projectHome = projectHome,
         isBundled = nonBundled != null,
@@ -174,7 +186,7 @@ private fun collectPluginContentCategoryFailures(
       }
 
       val nonBundledVersion = nonBundled[key] ?: continue
-      val bundledContent = normalizeContentReport(fileEntries = item.content, short = true)
+      val bundledContent = normalizeContentReport(fileEntries = itemFileEntries, short = true)
       val nonBundledContent = normalizeContentReport(fileEntries = nonBundledVersion.content, short = true)
       if (bundledContent != nonBundledContent) {
         throw AssertionError(

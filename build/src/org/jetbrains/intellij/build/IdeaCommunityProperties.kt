@@ -66,8 +66,8 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : JetBrai
     productLayout.buildAllCompatiblePlugins = true
     productLayout.pluginLayouts = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + persistentListOf(
       JavaPluginLayout.javaPlugin(),
-      CommunityRepositoryModules.androidPlugin(allPlatforms = true),
       CommunityRepositoryModules.groovyPlugin(),
+      *CommunityRepositoryModules.androidPlugin(),
     )
 
     productLayout.skipUnresolvedContentModules = true

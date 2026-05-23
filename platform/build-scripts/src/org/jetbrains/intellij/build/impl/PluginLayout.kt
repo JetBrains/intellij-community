@@ -24,6 +24,7 @@ import org.jetbrains.intellij.build.LinuxLibcImpl
 import org.jetbrains.intellij.build.MacLibcImpl
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
+import org.jetbrains.intellij.build.impl.BuildUtils.checkedReplace
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFileToDir
 import java.nio.file.FileSystemException
@@ -370,8 +371,8 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
         SupportedDistribution(OsFamily.MACOS, JvmArchitecture.x64, MacLibcImpl.DEFAULT),
         SupportedDistribution(OsFamily.MACOS, JvmArchitecture.aarch64, MacLibcImpl.DEFAULT),
       )
-      for (platform in allPlatforms) {
-        withPlatformExecutable(platform.os, platform.arch, platform.libcImpl, pattern)
+      for ((os, arch, libcImpl) in allPlatforms) {
+        withPlatformExecutable(os, arch, libcImpl, pattern)
       }
     }
 
@@ -611,7 +612,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
     /**
      * Specifies a dependent plugin name to be added to the scrambled classpath
      * Scrambling is performed by the [org.jetbrains.intellij.build.ProprietaryBuildTools.scrambleTool]
-     * If scramble tool is not defined, scrambling will not be performed
+     * If scramble tool is not defined, scrambling will not be performed.
      * Multiple invocations of this method will add corresponding plugin names to a list of name to be added to scramble classpath
      *
      * @param pluginMainModuleName - a name of the dependent plugin's directory, whose jars should be added to scramble classpath
@@ -697,6 +698,25 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
 }
 
 private val PLUGIN_VERSION_AS_IDE = PluginVersionEvaluator { _, ideBuildVersion, _ -> PluginVersionEvaluatorResult(pluginVersion = ideBuildVersion) }
+
+private const val OS_SPECIFIC_DEPENDENCIES_PLUGIN_XML_PLACEHOLDER: String = "<!-- OS/ARCH-DEPENDENCY-PLACEHOLDER -->"
+
+fun patchOsSpecificPluginXml(
+  spec: PluginLayout.PluginLayoutSpec,
+  os: OsFamily,
+  arch: JvmArchitecture,
+) {
+  spec.withRawPluginXmlPatcher { text, _ ->
+    checkedReplace(
+      oldText = text,
+      regex = OS_SPECIFIC_DEPENDENCIES_PLUGIN_XML_PLACEHOLDER,
+      newText = """
+            |<plugin id="com.intellij.modules.os.${os.osId}"/>
+            |<plugin id="com.intellij.modules.arch.${arch.marketplaceName}"/>
+          """.trimMargin(),
+    )
+  }
+}
 
 data class PluginVersionEvaluatorResult(@JvmField val pluginVersion: String, @JvmField val sinceUntil: Pair<String, String>? = null)
 
