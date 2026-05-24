@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.toolwindow
 
+import com.intellij.agent.workbench.sessions.AgentSessionCostHintBanner
+import com.intellij.agent.workbench.sessions.jbcentral.JbCentralQuotaHintBanner
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
@@ -12,10 +14,12 @@ import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsActivity
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsArchivedContextHeaderAction
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsArchivedRangeHeaderAction
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsShowActiveThreadsHeaderAction
+import com.intellij.agent.workbench.sessions.toolwindow.ui.createAgentSessionsNorthComponents
 import com.intellij.agent.workbench.sessions.toolwindow.ui.createAgentSessionsTitleActions
 import com.intellij.agent.workbench.sessions.toolwindow.ui.createArchivedRangeHeaderPopupGroup
 import com.intellij.agent.workbench.sessions.toolwindow.ui.dispatchTreeRowOverlayQuickCreate
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
@@ -25,6 +29,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.runInEdtAndWait
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -60,12 +65,26 @@ class AgentSessionsToolWindowFactorySwingTest {
       "AgentWorkbenchSessions.ShowArchivedThreads",
       "AgentWorkbenchSessions.Refresh",
       SEPARATOR_MARKER,
+      "AgentWorkbenchSessions.ToggleSessionCost",
+      "AgentWorkbenchSessions.ToggleJbCentralQuotaWidget",
       "AgentWorkbenchSessions.ToggleClaudeQuotaWidget",
       "AgentWorkbenchSessions.ToggleDedicatedFrame",
     )
     assertThat(entries)
       .contains("AgentWorkbenchSessions.TogglePreventSleepWhileWorking")
       .doesNotContain("AgentWorkbenchSessions.OpenDedicatedFrame")
+  }
+
+  @Test
+  fun northComponentsIncludeGlobalHintBanners(@TestDisposable disposable: Disposable) {
+    val components = createAgentSessionsNorthComponents(
+      project = ProjectManager.getInstance().defaultProject,
+      parentDisposable = disposable,
+      refreshSessions = {},
+    )
+
+    assertThat(components.any { it is AgentSessionCostHintBanner }).isTrue()
+    assertThat(components.any { it is JbCentralQuotaHintBanner }).isTrue()
   }
 
   @Test

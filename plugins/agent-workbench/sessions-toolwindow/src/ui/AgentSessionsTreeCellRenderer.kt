@@ -136,6 +136,7 @@ internal class SessionTreeCellRenderer(
           tree = tree,
           actionRightPadding = actionRightPadding,
           timeLabel = threadRowPresentation.timeLabel,
+          statusLabel = threadRowPresentation.costLabel,
           fontMetrics = baseFontMetrics,
           sharedTimeColumnWidth = sharedTimeColumnWidth,
         )
@@ -230,8 +231,14 @@ internal class SessionTreeCellRenderer(
       selectionRightInset = trailing.selectionRightInset,
       timeTextWidth = trailing.timeTextWidth,
       timeColumnWidth = trailing.timeColumnWidth,
+      statusTextWidth = trailing.statusTextWidth,
+      statusColumnWidth = trailing.statusColumnWidth,
     )
 
+    trailing.statusLabel?.let { statusLabel ->
+      g.color = trailingTextColor()
+      g.drawString(statusLabel, horizontalLayout.statusX, baseline)
+    }
     g.color = trailingTextColor()
     g.drawString(trailing.timeLabel, horizontalLayout.timeX, baseline)
   }

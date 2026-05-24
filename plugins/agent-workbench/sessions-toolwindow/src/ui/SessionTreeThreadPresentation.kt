@@ -2,8 +2,11 @@
 package com.intellij.agent.workbench.sessions.toolwindow.ui
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.session.AgentSessionCost
+import com.intellij.agent.workbench.common.session.AgentSessionCostKind
 import com.intellij.agent.workbench.common.statusColor
 import com.intellij.agent.workbench.common.statusMessageKey
+import com.intellij.agent.workbench.sessions.AgentSessionCostPresentationSettings
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeNode
 import com.intellij.agent.workbench.sessions.toolwindow.tree.formatRelativeTimeShort
@@ -12,6 +15,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import java.awt.Color
 import java.awt.FontMetrics
+import java.math.RoundingMode
 
 internal const val SESSION_TREE_THREAD_PROVIDER_ICON_SIZE = 12
 private val SESSION_TREE_TIME_LABEL_SAMPLES = listOf("59m", "23h", "7d", "4w", "11mo", "9y")
@@ -23,6 +27,7 @@ internal data class SessionTreeThreadRowPresentation(
   @JvmField val title: @NlsSafe String,
   @JvmField val timeLabel: @NlsSafe String,
   @JvmField val statusLabel: @NlsSafe String,
+  @JvmField val costLabel: @NlsSafe String?,
   @JvmField val branchMismatchMessage: @NlsSafe String?,
   @JvmField val accessibleStatusText: @NlsSafe String?,
 )
@@ -36,6 +41,7 @@ internal fun buildSessionTreeThreadRowPresentation(
     formatRelativeTimeShort(timestamp, now)
   } ?: AgentSessionsBundle.message("toolwindow.time.unknown")
   val statusLabel = threadActivityDisplayName(treeNode.thread.activity)
+  val costLabel = treeNode.thread.cost.takeIf { AgentSessionCostPresentationSettings.isEnabled() }?.toDisplayLabel()
   val originBranch = treeNode.thread.originBranch
   val parentBranch = treeNode.parentWorktreeBranch
   val branchMismatchMessage = if (originBranch != null && parentBranch != null && originBranch != parentBranch) {
@@ -49,12 +55,14 @@ internal fun buildSessionTreeThreadRowPresentation(
     add(providerName)
     add(statusLabel)
     add(timeLabel)
+    costLabel?.let(::add)
   }.joinToString(separator = ", ")
   return SessionTreeThreadRowPresentation(
     statusColor = activityColor,
     title = threadDisplayTitle(threadId = treeNode.thread.id, title = treeNode.thread.title),
     timeLabel = timeLabel,
     statusLabel = statusLabel,
+    costLabel = costLabel,
     branchMismatchMessage = branchMismatchMessage,
     accessibleStatusText = accessibleStatusText,
   )
@@ -80,6 +88,15 @@ internal fun buildSessionTreeThreadTooltipHtml(
 
 private fun threadActivityDisplayName(activity: AgentThreadActivity): @NlsSafe String {
   return AgentSessionsBundle.message(activity.statusMessageKey())
+}
+
+private fun AgentSessionCost.toDisplayLabel(): @NlsSafe String? {
+  val amount = amountUsd?.setScale(2, RoundingMode.HALF_UP)?.toPlainString() ?: return null
+  return when (kind) {
+    AgentSessionCostKind.EXACT -> "$$amount"
+    AgentSessionCostKind.ESTIMATED -> "~$$amount"
+    AgentSessionCostKind.UNAVAILABLE -> null
+  }
 }
 
 internal fun computeSessionTreeSharedTimeColumnWidth(fontMetrics: FontMetrics): Int {
