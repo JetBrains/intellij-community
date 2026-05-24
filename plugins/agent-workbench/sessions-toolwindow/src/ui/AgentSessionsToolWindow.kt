@@ -88,9 +88,7 @@ internal fun createAgentSessionsNorthComponents(
 ): List<JComponent> {
   val providerContributions = AgentSessionProviders.allProvidersById()
     .mapNotNull { provider -> provider.createToolWindowNorthComponent(project) }
-  if (JbCentralQuotaCliSupport.isAvailable()) {
-    service<JbCentralQuotaHintStateService>().markEligible()
-  }
+  service<JbCentralQuotaHintStateService>().setEligible(JbCentralQuotaCliSupport.isAvailable())
   return buildList {
     add(AgentProviderCliStatusBanner(project, parentDisposable, refreshSessions = refreshSessions))
     add(AgentSessionCostHintBanner())

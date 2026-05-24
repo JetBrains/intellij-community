@@ -86,6 +86,7 @@ class JbCentralQuotaHintBanner(
     }
     scope.launch(Dispatchers.Default) {
       while (isActive) {
+        hintStateService.setEligible(JbCentralQuotaCliSupport.isAvailable())
         JbCentralQuotaStatusBarWidgetSettings.syncEnabledState()
         delay(1.seconds)
       }

@@ -21,9 +21,13 @@ class JbCentralQuotaHintStateService : SerializablePersistentStateComponent<JbCe
   val acknowledgedFlow: StateFlow<Boolean> = _acknowledgedFlow.asStateFlow()
 
   fun markEligible() {
-    if (state.eligible) return
-    updateState { current -> current.copy(eligible = true) }
-    _eligibleFlow.value = true
+    setEligible(true)
+  }
+
+  fun setEligible(eligible: Boolean) {
+    if (state.eligible == eligible) return
+    updateState { current -> current.copy(eligible = eligible) }
+    _eligibleFlow.value = eligible
   }
 
   fun acknowledge() {

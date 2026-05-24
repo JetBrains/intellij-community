@@ -10,18 +10,19 @@ internal const val AGENT_WORKBENCH_JBCENTRAL_PATH_PROPERTY: String = "agent.work
 
 object JbCentralQuotaCliSupport {
   private const val JBCENTRAL_COMMAND: String = "jbcentral"
+  private const val LEGACY_COMMAND: String = "wire"
 
   fun findExecutable(): String? {
     val configuredPath = System.getProperty(AGENT_WORKBENCH_JBCENTRAL_PATH_PROPERTY)?.trim().orEmpty()
     if (configuredPath.isNotEmpty()) {
-      return Path.of(configuredPath).toAbsolutePath().toString()
+      return resolveConfiguredExecutable(configuredPath)
     }
 
-    PathEnvironmentVariableUtil.findExecutableInPathOnAnyOS(JBCENTRAL_COMMAND)?.absolutePath?.let { return it }
+    findExecutableOnPath()?.let { return it }
 
     val homeDir = System.getProperty("user.home") ?: return null
     for (candidate in fallbackCandidates(homeDir)) {
-      if (Files.exists(candidate)) {
+      if (Files.isRegularFile(candidate)) {
         return candidate.toAbsolutePath().toString()
       }
     }
@@ -30,11 +31,33 @@ object JbCentralQuotaCliSupport {
 
   fun isAvailable(): Boolean = findExecutable() != null
 
+  private fun resolveConfiguredExecutable(configuredPath: String): String? {
+    val path = Path.of(configuredPath).toAbsolutePath()
+    return path.takeIf(Files::isRegularFile)?.toString()
+  }
+
+  private fun findExecutableOnPath(): String? {
+    for (command in commandCandidates()) {
+      PathEnvironmentVariableUtil.findExecutableInPathOnAnyOS(command)?.absolutePath?.let { return it }
+    }
+    return null
+  }
+
   private fun fallbackCandidates(homeDir: String): List<Path> {
-    val executableName = if (SystemInfoRt.isWindows) "$JBCENTRAL_COMMAND.exe" else JBCENTRAL_COMMAND
-    return listOf(
-      Path.of(homeDir, ".local", "bin", executableName),
-      Path.of(homeDir, "JetBrains", "central-cli", executableName),
-    )
+    val installDir = Path.of(homeDir, ".local", "bin")
+    return fallbackExecutableNames().map { executableName ->
+      installDir.resolve(executableName)
+    }
+  }
+
+  private fun commandCandidates(): List<String> = listOf(JBCENTRAL_COMMAND, LEGACY_COMMAND)
+
+  private fun fallbackExecutableNames(): List<String> {
+    return if (SystemInfoRt.isWindows) {
+      listOf("$JBCENTRAL_COMMAND.exe", "$LEGACY_COMMAND.cmd", "$LEGACY_COMMAND.exe")
+    }
+    else {
+      listOf(JBCENTRAL_COMMAND, LEGACY_COMMAND)
+    }
   }
 }

@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.sessions.toolwindow
 
 import com.intellij.agent.workbench.sessions.AgentSessionCostHintBanner
 import com.intellij.agent.workbench.sessions.jbcentral.JbCentralQuotaHintBanner
+import com.intellij.agent.workbench.sessions.jbcentral.JbCentralQuotaHintStateService
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
@@ -26,6 +27,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.junit5.TestApplication
@@ -35,6 +37,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import java.util.concurrent.TimeUnit
+import java.nio.file.Files
 
 @TestApplication
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
@@ -85,6 +88,40 @@ class AgentSessionsToolWindowFactorySwingTest {
 
     assertThat(components.any { it is AgentSessionCostHintBanner }).isTrue()
     assertThat(components.any { it is JbCentralQuotaHintBanner }).isTrue()
+  }
+
+  @Test
+  fun northComponentsClearJbCentralEligibilityWhenCliIsUnavailable(@TestDisposable disposable: Disposable) {
+    val hintStateService = service<JbCentralQuotaHintStateService>()
+    hintStateService.loadState(JbCentralQuotaHintStateService.State(eligible = true, acknowledged = false))
+
+    withJbCentralPath(Files.createTempDirectory("missing-jbcentral").resolve(jbCentralExecutableName())) {
+      createAgentSessionsNorthComponents(
+        project = ProjectManager.getInstance().defaultProject,
+        parentDisposable = disposable,
+        refreshSessions = {},
+      )
+    }
+
+    assertThat(hintStateService.eligibleFlow.value).isFalse()
+  }
+
+  @Test
+  fun northComponentsMarkJbCentralEligibleWhenCliIsAvailable(@TestDisposable disposable: Disposable) {
+    val hintStateService = service<JbCentralQuotaHintStateService>()
+    hintStateService.loadState(JbCentralQuotaHintStateService.State())
+    val executable = Files.createTempDirectory("jbcentral-cli").resolve(jbCentralExecutableName())
+    Files.writeString(executable, "stub")
+
+    withJbCentralPath(executable) {
+      createAgentSessionsNorthComponents(
+        project = ProjectManager.getInstance().defaultProject,
+        parentDisposable = disposable,
+        refreshSessions = {},
+      )
+    }
+
+    assertThat(hintStateService.eligibleFlow.value).isTrue()
   }
 
   @Test
@@ -295,6 +332,27 @@ class AgentSessionsToolWindowFactorySwingTest {
     finally {
       service.setArchivedRangePreset(previousState.archivedRangePreset)
       service.setMode(previousState.mode)
+    }
+  }
+}
+
+private fun jbCentralExecutableName(): String {
+  return if (SystemInfoRt.isWindows) "jbcentral.exe" else "jbcentral"
+}
+
+private fun withJbCentralPath(path: java.nio.file.Path, action: () -> Unit) {
+  val propertyName = "agent.workbench.sessions.jbcentral.path"
+  val previous = System.getProperty(propertyName)
+  System.setProperty(propertyName, path.toAbsolutePath().toString())
+  try {
+    action()
+  }
+  finally {
+    if (previous == null) {
+      System.clearProperty(propertyName)
+    }
+    else {
+      System.setProperty(propertyName, previous)
     }
   }
 }
