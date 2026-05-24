@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.navigation;
 
@@ -54,6 +54,11 @@ public abstract class KotlinNavigationToLibrarySourceTestGenerated extends Abstr
             @TestMetadata("class.kt")
             public void testClass() throws Exception {
                 runTest("testData/navigationToLibrarySourcePolicy/resolveToStdlib/classfiers/class.kt");
+            }
+
+            @TestMetadata("deprecatedFunction.kt")
+            public void testDeprecatedFunction() throws Exception {
+                runTest("testData/navigationToLibrarySourcePolicy/resolveToStdlib/classfiers/deprecatedFunction.kt");
             }
 
             @TestMetadata("enumEntry.kt")
