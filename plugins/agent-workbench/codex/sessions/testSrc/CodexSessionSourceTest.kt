@@ -9,6 +9,9 @@ import com.intellij.agent.workbench.codex.sessions.backend.CodexRefreshHintsProv
 import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionBackend
 import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionActivity
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.session.AgentSessionCost
+import com.intellij.agent.workbench.common.session.AgentSessionCostKind
+import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
 import com.intellij.agent.workbench.sessions.core.providers.toAgentSessionRefreshThreadSeeds
@@ -20,6 +23,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import java.util.concurrent.TimeUnit
+import java.math.BigDecimal
 
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
 class CodexSessionSourceTest {
@@ -162,6 +166,74 @@ class CodexSessionSourceTest {
       assertThat(archivedThreads.single().id).isEqualTo("archived-1")
       assertThat(archivedThreads.single().archived).isTrue()
       assertThat(archivedThreads.single().activity).isEqualTo(AgentThreadActivity.READY)
+    }
+  }
+
+  @Test
+  fun archivedThreadsUseRolloutUsageSnapshotsForCostWhenBackendDoesNotProvideThem() {
+    val archivedThreadId = "archived-1"
+    val source = CodexSessionSource(
+      backend = object : CodexSessionBackend {
+        override suspend fun listThreads(path: String, openProject: Project?): List<CodexBackendThread> = emptyList()
+
+        override suspend fun listArchivedThreads(path: String, openProject: Project?): List<CodexBackendThread> {
+          return listOf(
+            CodexBackendThread(
+              thread = CodexThread(
+                id = archivedThreadId,
+                title = "Archived 1",
+                updatedAt = 200L,
+                archived = true,
+              ),
+              activity = CodexSessionActivity.READY,
+            )
+          )
+        }
+      },
+      appServerRefreshHintsProvider = staticHintsProvider(emptyMap()),
+      rolloutRefreshHintsProvider = staticHintsProvider(emptyMap()),
+      rolloutBackend = object : CodexSessionBackend {
+        override suspend fun listThreads(path: String, openProject: Project?): List<CodexBackendThread> {
+          return listOf(
+            CodexBackendThread(
+              thread = CodexThread(
+                id = archivedThreadId,
+                title = "Archived 1",
+                updatedAt = 200L,
+                archived = true,
+              ),
+              usageSnapshots = listOf(
+                AgentSessionUsageSnapshot(
+                  modelId = "gpt-5",
+                  inputTokens = 10,
+                  outputTokens = 5,
+                )
+              ),
+            )
+          )
+        }
+      },
+      calculateCost = { usage ->
+        AgentSessionCost(
+          amountUsd = BigDecimal.valueOf(usage.inputTokens + usage.outputTokens),
+          kind = AgentSessionCostKind.ESTIMATED,
+          matchedModelId = usage.modelId,
+        )
+      },
+    )
+
+    runBlocking(Dispatchers.Default) {
+      val archivedThreads = source.listArchivedThreadsFromClosedProject(PROJECT_PATH)
+
+      assertThat(archivedThreads).hasSize(1)
+      assertThat(archivedThreads.single().activity).isEqualTo(AgentThreadActivity.READY)
+      assertThat(archivedThreads.single().cost).isEqualTo(
+        AgentSessionCost(
+          amountUsd = BigDecimal.valueOf(15),
+          kind = AgentSessionCostKind.ESTIMATED,
+          matchedModelId = "gpt-5",
+        )
+      )
     }
   }
 

@@ -94,8 +94,12 @@ internal class CodexSessionSource internal constructor(
   }
 
   override suspend fun listArchivedThreads(path: String, openProject: Project?): List<AgentSessionThread> {
-    return backend.listArchivedThreads(path = path, openProject = openProject).map { thread ->
-      toAgentSessionThread(thread = thread, cost = thread.usageSnapshots.toAgentSessionCost(calculateCost))
+    val archivedThreads = backend.listArchivedThreads(path = path, openProject = openProject)
+    val rolloutThreadsById = loadArchivedRolloutThreads(path = path, archivedThreads = archivedThreads)
+    return archivedThreads.map { thread ->
+      val usageSnapshots = thread.usageSnapshots.takeIf(List<AgentSessionUsageSnapshot>::isNotEmpty)
+                         ?: rolloutThreadsById[thread.thread.id]?.usageSnapshots?.takeIf(List<AgentSessionUsageSnapshot>::isNotEmpty)
+      toAgentSessionThread(thread = thread, cost = usageSnapshots?.toAgentSessionCost(calculateCost))
     }
   }
 
@@ -316,6 +320,20 @@ internal class CodexSessionSource internal constructor(
       LOG.warn("Failed to load Codex app-server cost snapshot", e)
       emptyMap()
     }
+  }
+
+  private suspend fun loadArchivedRolloutThreads(
+    path: String,
+    archivedThreads: List<CodexBackendThread>,
+  ): Map<String, CodexBackendThread> {
+    val missingUsageThreadIds = archivedThreads.asSequence()
+      .filter { thread -> thread.usageSnapshots.isEmpty() }
+      .map { thread -> thread.thread.id }
+      .toCollection(LinkedHashSet())
+    if (missingUsageThreadIds.isEmpty()) {
+      return emptyMap()
+    }
+    return loadRolloutThreads(path = path, threadIds = missingUsageThreadIds)
   }
 
   private suspend fun loadRolloutThreads(path: String, threadIds: Set<String>): Map<String, CodexBackendThread> {
