@@ -5349,6 +5349,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             public void testUnresolvedSupertype() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/member/unresolvedSupertype.kt");
             }
+
+            @TestMetadata("withBackticks.kt")
+            public void testWithBackticks() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/member/withBackticks.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)

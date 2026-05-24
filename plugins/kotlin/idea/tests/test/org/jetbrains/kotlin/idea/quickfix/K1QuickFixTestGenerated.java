@@ -6104,6 +6104,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                     public void testUnresolvedSupertype() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/member/unresolvedSupertype.kt");
                     }
+
+                    @TestMetadata("withBackticks.kt")
+                    public void testWithBackticks() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/withBackticks.kt");
+                    }
                 }
 
                 @RunWith(JUnit3RunnerWithInners.class)

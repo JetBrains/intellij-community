@@ -1,0 +1,11 @@
+// "Create function 'some fun'" "true"
+// K2_ACTION: "Create member function 'A.some fun'" "true"
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateCallableFromUsageFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableAction
+// WITH_STDLIB
+// K2_ERROR: Unresolved reference 'some fun'.
+class A {
+    fun String.bar() {
+        `some fu<caret>n`()
+    }
+}
