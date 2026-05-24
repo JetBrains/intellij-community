@@ -11,11 +11,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.TestOnly
 
 @Service(Service.Level.APP)
 internal class JbCentralQuotaService(
   private val serviceScope: CoroutineScope,
-  private val client: JbCentralQuotaCliClient = JbCentralQuotaCliClient(),
 ) {
   private val refreshMutex = Mutex()
   private val mutableState = MutableStateFlow(JbCentralQuotaState())
@@ -32,7 +32,7 @@ internal class JbCentralQuotaService(
     val previousState = mutableState.value
     try {
       mutableState.value = previousState.copy(isLoading = true, error = null)
-      val result = withContext(Dispatchers.IO) { client.fetchQuota() }
+      val result = withContext(Dispatchers.IO) { JbCentralQuotaServiceTestHook.fetchQuota() }
       mutableState.value = when {
         result.quotaInfo != null -> JbCentralQuotaState(quotaInfo = result.quotaInfo)
         else -> previousState.copy(error = result.error, isLoading = false)
@@ -45,5 +45,21 @@ internal class JbCentralQuotaService(
     finally {
       refreshMutex.unlock()
     }
+  }
+}
+
+internal object JbCentralQuotaServiceTestHook {
+  @Volatile
+  private var fetchQuotaOverride: (() -> JbCentralQuotaFetchResult)? = null
+
+  fun fetchQuota(): JbCentralQuotaFetchResult {
+    return fetchQuotaOverride?.invoke() ?: JbCentralQuotaCliClient().fetchQuota()
+  }
+
+  @TestOnly
+  fun replaceFetchQuotaForTest(fetchQuota: (() -> JbCentralQuotaFetchResult)?): (() -> JbCentralQuotaFetchResult)? {
+    val previous = fetchQuotaOverride
+    fetchQuotaOverride = fetchQuota
+    return previous
   }
 }
