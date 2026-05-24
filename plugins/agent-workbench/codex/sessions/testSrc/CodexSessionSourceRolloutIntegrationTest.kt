@@ -3,9 +3,12 @@ package com.intellij.agent.workbench.codex.sessions
 
 import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionActivity
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.session.AgentSessionCost
+import com.intellij.agent.workbench.common.session.AgentSessionCostKind
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceRefreshRequest
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
+import com.intellij.openapi.application.PathManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
@@ -13,9 +16,11 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import java.util.concurrent.TimeUnit
 import org.junit.jupiter.api.io.TempDir
+import java.math.BigDecimal
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
+import kotlin.io.path.readText
 
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
 class CodexSessionSourceRolloutIntegrationTest {
@@ -71,6 +76,38 @@ class CodexSessionSourceRolloutIntegrationTest {
 
       assertThat(listedThreads).hasSize(1)
       assertThat(listedThreads.single().activity).isEqualTo(AgentThreadActivity.PROCESSING)
+    }
+  }
+
+  @Test
+  fun rolloutUsageAddsEstimatedCostToListedAppServerThread() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = createProjectDir("project-rollout-cost")
+      writeRolloutFixture(projectDir)
+
+      val source = testCreateSource(
+        projectDir = projectDir,
+        codexHome = tempDir,
+        threadIds = listOf("019e50fc-cf2c-77a1-8055-5fdc85fdd56e"),
+        calculateCost = { usage ->
+          AgentSessionCost(
+            amountUsd = BigDecimal(usage.inputTokens + usage.outputTokens + usage.cacheReadTokens),
+            kind = AgentSessionCostKind.ESTIMATED,
+            matchedModelId = usage.modelId,
+          )
+        },
+      )
+
+      val listedThreads = source.listThreadsFromClosedProject(projectDir.toString())
+
+      assertThat(listedThreads).hasSize(1)
+      assertThat(listedThreads.single().cost).isEqualTo(
+        AgentSessionCost(
+          amountUsd = BigDecimal("142569340"),
+          kind = AgentSessionCostKind.ESTIMATED,
+          matchedModelId = "gpt-5.4",
+        )
+      )
     }
   }
 
@@ -336,6 +373,7 @@ class CodexSessionSourceRolloutIntegrationTest {
 }
 
 private const val THREAD_ID = "thread-1"
+private const val COST_ROLLOUT_FIXTURE_PATH = "rollout/cost/repeated-total-token-usage.jsonl"
 
 private fun CodexSessionSourceRolloutIntegrationTest.createProjectDir(name: String): Path {
   return testCreateProjectDir(tempDir, name)
@@ -349,6 +387,32 @@ private fun CodexSessionSourceRolloutIntegrationTest.writeRollout(projectDir: Pa
     rolloutFile,
     listOf(sessionMetaLine(cwd = projectDir)) + lines,
   )
+}
+
+private fun CodexSessionSourceRolloutIntegrationTest.writeRolloutFixture(projectDir: Path) {
+  val rolloutDir = tempDir.resolve("sessions").resolve("2026").resolve("03").resolve("08")
+  val rolloutFile = rolloutDir.resolve("rollout-${projectDir.fileName}.jsonl")
+  Files.createDirectories(rolloutDir)
+  Files.write(rolloutFile, loadRolloutFixture(projectDir))
+}
+
+private fun loadRolloutFixture(projectDir: Path): List<String> {
+  val fixturePath = Path.of(
+    PathManager.getHomePath(),
+    "community",
+    "plugins",
+    "agent-workbench",
+    "codex",
+    "sessions",
+    "testData",
+    COST_ROLLOUT_FIXTURE_PATH,
+  )
+  check(Files.exists(fixturePath)) { "Missing fixture: $fixturePath" }
+  return fixturePath.readText()
+    .replace("__PROJECT_DIR__", projectDir.toString().replace("\\", "\\\\"))
+    .lineSequence()
+    .filter(String::isNotBlank)
+    .toList()
 }
 
 private fun sessionMetaLine(cwd: Path): String {

@@ -54,4 +54,5 @@ data class AgentSessionThread(
   @JvmField val subAgents: List<AgentSubAgent> = emptyList(),
   @JvmField val originBranch: String? = null,
   @JvmField val summaryActivity: AgentThreadActivity? = activity,
+  @JvmField val cost: AgentSessionCost? = null,
 )

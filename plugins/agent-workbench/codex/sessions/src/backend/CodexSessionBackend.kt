@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.codex.sessions.backend
 
 import com.intellij.agent.workbench.codex.common.CodexThread
+import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
@@ -11,6 +12,7 @@ data class CodexBackendThread(
   @JvmField val activity: CodexSessionActivity = CodexSessionActivity.READY,
   @JvmField val requiresResponse: Boolean = false,
   @JvmField val summaryActivity: CodexSessionActivity? = activity,
+  @JvmField val usageSnapshot: AgentSessionUsageSnapshot? = null,
 )
 
 data class CodexBackendThreadRefreshResult(

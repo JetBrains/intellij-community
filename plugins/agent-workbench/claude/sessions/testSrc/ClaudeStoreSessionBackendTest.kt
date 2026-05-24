@@ -5,9 +5,11 @@ import com.intellij.agent.workbench.claude.common.ClaudeSessionActivity
 import com.intellij.agent.workbench.claude.sessions.backend.store.ClaudeStoreSessionBackend
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.json.filebacked.FileBackedSessionChangeSet
+import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionActivityHintPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
+import com.intellij.openapi.application.PathManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
@@ -32,6 +34,45 @@ import kotlin.time.Duration.Companion.seconds
 class ClaudeStoreSessionBackendTest {
   @TempDir
   lateinit var tempDir: Path
+
+  @Test
+  fun aggregatesUsageAcrossMainAndSubagentTranscriptsWithoutDoubleCountingDuplicateAssistantEvents() {
+    runBlocking(Dispatchers.Default) {
+      val projectPath = "/work/project-usage"
+      val sessionId = "671b2ad4-f275-47c3-b705-fe4d1867af1b"
+      val encodedPath = "-work-project-usage"
+      val projectDir = tempDir.resolve(".claude").resolve("projects").resolve(encodedPath)
+      Files.createDirectories(projectDir)
+
+      Files.write(projectDir.resolve("$sessionId.jsonl"), loadUsageFixture("usage/main-session.jsonl", projectPath))
+      writeJsonl(
+        projectDir.resolve(sessionId).resolve("subagents").resolve("agent-afd2e7156495f43ad.jsonl"),
+        loadUsageFixture("usage/subagent-session.jsonl", projectPath),
+      )
+
+      val backend = ClaudeStoreSessionBackend(claudeHomeProvider = { tempDir.resolve(".claude") })
+      val thread = backend.listThreads(path = projectPath, openProject = null).single()
+
+      assertThat(thread.usageSnapshots).containsExactlyInAnyOrder(
+        AgentSessionUsageSnapshot(
+          modelId = "claude-opus-4-7",
+          inputTokens = 1,
+          outputTokens = 1972,
+          cacheReadTokens = 39560,
+          cacheWriteTokens = 3721,
+          requestCount = 1,
+        ),
+        AgentSessionUsageSnapshot(
+          modelId = "claude-haiku-4-5-20251001",
+          inputTokens = 1463,
+          outputTokens = 266,
+          cacheReadTokens = 19948,
+          cacheWriteTokens = 19081,
+          requestCount = 2,
+        ),
+      )
+    }
+  }
 
   @Test
   fun mapsActivityFromJsonlFallback() {
@@ -936,4 +977,23 @@ class ClaudeStoreSessionBackendTest {
     }
   }
 
+}
+
+private fun loadUsageFixture(relativePath: String, projectPath: String): List<String> {
+  val fixturePath = Path.of(
+    PathManager.getHomePath(),
+    "community",
+    "plugins",
+    "agent-workbench",
+    "claude",
+    "sessions",
+    "testData",
+    relativePath,
+  )
+  check(Files.exists(fixturePath)) { "Missing fixture: $fixturePath" }
+  return fixturePath.toFile().readText()
+    .replace("__PROJECT_DIR__", projectPath)
+    .lineSequence()
+    .filter(String::isNotBlank)
+    .toList()
 }

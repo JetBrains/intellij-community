@@ -3,6 +3,9 @@ package com.intellij.agent.workbench.claude.sessions
 
 import com.intellij.agent.workbench.claude.common.ClaudeSessionActivity
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.session.AgentSessionCost
+import com.intellij.agent.workbench.common.session.AgentSessionCostKind
+import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceRefreshRequest
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
@@ -22,6 +25,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import java.util.concurrent.TimeUnit
+import java.math.BigDecimal
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -41,6 +45,40 @@ class ClaudeSessionSourceTest {
 
     assertThat(result).hasSize(2)
     assertThat(result).allMatch { it.activity == AgentThreadActivity.READY }
+  }
+
+  @Test
+  fun sumsCostsAcrossClaudeUsageSnapshots() {
+    val source = ClaudeSessionSource(
+      backend = staticBackend(
+        listOf(
+          ClaudeBackendThread(
+            id = "s1",
+            title = "Session 1",
+            updatedAt = 1000L,
+            usageSnapshots = listOf(
+              AgentSessionUsageSnapshot(modelId = "claude-opus-4-7"),
+              AgentSessionUsageSnapshot(modelId = "claude-haiku-4-5-20251001"),
+            ),
+          ),
+        )
+      ),
+      calculateCost = { usage ->
+        when (usage.modelId) {
+          "claude-opus-4-7" -> AgentSessionCost(amountUsd = BigDecimal("1.25"), kind = AgentSessionCostKind.ESTIMATED)
+          "claude-haiku-4-5-20251001" -> AgentSessionCost(amountUsd = BigDecimal("0.50"), kind = AgentSessionCostKind.ESTIMATED)
+          else -> AgentSessionCost(amountUsd = null, kind = AgentSessionCostKind.UNAVAILABLE)
+        }
+      },
+    )
+
+    val thread = runBlocking(Dispatchers.Default) {
+      source.listThreadsFromClosedProject(path = "/any").single()
+    }
+
+    assertThat(thread.cost?.kind).isEqualTo(AgentSessionCostKind.ESTIMATED)
+    assertThat(thread.cost?.amountUsd).isEqualByComparingTo(BigDecimal("1.75"))
+    assertThat(thread.cost?.matchedModelId).isNull()
   }
 
   @Test

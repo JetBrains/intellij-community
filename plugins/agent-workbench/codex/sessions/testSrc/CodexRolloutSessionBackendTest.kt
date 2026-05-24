@@ -5,8 +5,10 @@ import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionActivity
 import com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexRolloutSessionBackend
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.json.filebacked.FileBackedSessionChangeSet
+import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionActivityHintPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
+import com.intellij.openapi.application.PathManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
@@ -23,6 +25,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.time.Instant
+import kotlin.io.path.readText
 import kotlin.time.Duration.Companion.seconds
 
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
@@ -81,6 +84,32 @@ class CodexRolloutSessionBackendTest {
       val threads = backend.listThreads(path = projectDir.toString(), openProject = null)
 
       assertThat(threads).isEmpty()
+    }
+  }
+
+  @Test
+  fun keepsLatestCumulativeTokenUsageWithoutDoubleCountingRepeatedSnapshots() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-cost-usage")
+      Files.createDirectories(projectDir)
+      writeRollout(
+        file = tempDir.resolve("sessions").resolve("2026").resolve("05").resolve("07")
+          .resolve("rollout-cost-usage.jsonl"),
+        lines = loadRolloutFixture(projectDir),
+      )
+
+      val backend = CodexRolloutSessionBackend(codexHomeProvider = { tempDir })
+      val threads = backend.listThreads(path = projectDir.toString(), openProject = null)
+
+      assertThat(threads).hasSize(1)
+      assertThat(threads.single().usageSnapshot).isEqualTo(
+        AgentSessionUsageSnapshot(
+          modelId = "gpt-5.4",
+          inputTokens = 10_230_044,
+          outputTokens = 408_288,
+          cacheReadTokens = 131_931_008,
+        )
+      )
     }
   }
 
@@ -1310,6 +1339,7 @@ class CodexRolloutSessionBackendTest {
 }
 
 private val WATCHER_UPDATE_WAIT_TIMEOUT = 5.seconds
+private const val COST_ROLLOUT_FIXTURE_PATH = "rollout/cost/repeated-total-token-usage.jsonl"
 
 private suspend fun awaitWatcherUpdate(
   updates: Channel<Unit>,
@@ -1385,6 +1415,25 @@ private fun subAgentSessionMetaLine(timestamp: String, id: String, cwd: Path, pa
 private fun writeRollout(file: Path, lines: List<String>) {
   Files.createDirectories(file.parent)
   Files.write(file, lines)
+}
+
+private fun loadRolloutFixture(projectDir: Path): List<String> {
+  val fixturePath = Path.of(
+    PathManager.getHomePath(),
+    "community",
+    "plugins",
+    "agent-workbench",
+    "codex",
+    "sessions",
+    "testData",
+    COST_ROLLOUT_FIXTURE_PATH,
+  )
+  check(Files.exists(fixturePath)) { "Missing fixture: $fixturePath" }
+  return fixturePath.readText()
+    .replace("__PROJECT_DIR__", projectDir.toString().replace("\\", "\\\\"))
+    .lineSequence()
+    .filter(String::isNotBlank)
+    .toList()
 }
 
 private data class ActivityCase(

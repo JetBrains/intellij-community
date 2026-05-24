@@ -15,13 +15,18 @@ import com.intellij.agent.workbench.codex.sessions.backend.appserver.CodexAppSer
 import com.intellij.agent.workbench.codex.sessions.backend.appserver.SharedCodexAppServerService
 import com.intellij.agent.workbench.codex.sessions.backend.createDefaultCodexSessionBackend
 import com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexRolloutRefreshHintsProvider
+import com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexRolloutSessionBackend
 import com.intellij.agent.workbench.codex.sessions.backend.toAgentSessionRefreshHints
 import com.intellij.agent.workbench.codex.sessions.backend.toAgentThreadActivity
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.isWorking
+import com.intellij.agent.workbench.common.session.AgentSessionCost
+import com.intellij.agent.workbench.common.session.AgentSessionCostKind
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.common.session.AgentSubAgent
+import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
+import com.intellij.agent.workbench.sessions.core.cost.OpenRouterPriceCatalogService
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRebindCandidate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
@@ -45,17 +50,22 @@ internal class CodexSessionSource internal constructor(
   private val backend: CodexSessionBackend,
   private val appServerRefreshHintsProvider: CodexRefreshHintsProvider,
   private val rolloutRefreshHintsProvider: CodexRefreshHintsProvider,
+  private val rolloutBackend: CodexSessionBackend? = null,
+  private val calculateCost: (AgentSessionUsageSnapshot) -> AgentSessionCost = { AgentSessionCost(amountUsd = null, kind = AgentSessionCostKind.UNAVAILABLE) },
 ) : BaseAgentSessionSource(provider = AgentSessionProvider.CODEX, canReportExactThreadCount = false) {
   constructor(
     backend: CodexSessionBackend = createDefaultCodexSessionBackend(),
     sharedAppServerService: SharedCodexAppServerService = service(),
+    rolloutBackend: CodexRolloutSessionBackend = CodexRolloutSessionBackend(),
   ) : this(
     backend = backend,
     appServerRefreshHintsProvider = CodexAppServerRefreshHintsProvider(
       readThreadActivitySnapshot = sharedAppServerService::readThreadActivitySnapshot,
       notifications = sharedAppServerService.notifications,
     ),
-    rolloutRefreshHintsProvider = CodexRolloutRefreshHintsProvider(),
+    rolloutRefreshHintsProvider = CodexRolloutRefreshHintsProvider(rolloutBackend = rolloutBackend),
+    rolloutBackend = rolloutBackend,
+    calculateCost = service<OpenRouterPriceCatalogService>()::calculateCost,
   )
 
   override val supportsUpdates: Boolean
@@ -83,7 +93,9 @@ internal class CodexSessionSource internal constructor(
   }
 
   override suspend fun listArchivedThreads(path: String, openProject: Project?): List<AgentSessionThread> {
-    return backend.listArchivedThreads(path = path, openProject = openProject).map(::toAgentSessionThread)
+    return backend.listArchivedThreads(path = path, openProject = openProject).map { thread ->
+      toAgentSessionThread(thread = thread, cost = thread.usageSnapshot?.let(calculateCost))
+    }
   }
 
   override suspend fun prefetchThreads(paths: List<String>): Map<String, List<AgentSessionThread>> {
@@ -168,10 +180,21 @@ internal class CodexSessionSource internal constructor(
       return emptyMap()
     }
 
+    val rolloutThreadsByPath = prefetchRolloutThreads(backendThreadsByPath.keys.toList())
+
     val agentThreadsByPath = LinkedHashMap<String, List<AgentSessionThread>>(backendThreadsByPath.size)
     val refreshThreadSeedsByPath = LinkedHashMap<String, Set<AgentSessionRefreshThreadSeed>>()
     for ((path, backendThreads) in backendThreadsByPath) {
-      val agentThreads = backendThreads.map(::toAgentSessionThread)
+      val rolloutThreadsById = rolloutThreadsByPath[path].orEmpty().associateBy { rolloutThread -> rolloutThread.thread.id }
+      val agentThreads = backendThreads.map { backendThread ->
+        toAgentSessionThread(
+          thread = backendThread,
+          cost = resolveThreadCost(
+            backendThread = backendThread,
+            rolloutThread = rolloutThreadsById[backendThread.thread.id],
+          ),
+        )
+      }
       agentThreadsByPath[path] = agentThreads
       if (agentThreads.isNotEmpty()) {
         refreshThreadSeedsByPath[path] = agentThreads.asSequence()
@@ -217,15 +240,21 @@ internal class CodexSessionSource internal constructor(
       val backendThreadsById = backendThreadsByPath[path]
         .orEmpty()
         .associateBy { backendThread -> backendThread.thread.id }
+      val rolloutThreadsById = rolloutThreadsByPath[path]
+        .orEmpty()
+        .associateBy { rolloutThread -> rolloutThread.thread.id }
       var appliedActivityUpdates = 0
       val threads = agentThreads.map { thread ->
+        val backendThread = backendThreadsById[thread.id]
+        val rolloutThread = rolloutThreadsById[thread.id]
         val activityHint = activityHintsByThreadId[thread.id] ?: return@map thread
         if (!shouldKeepRefreshHint(threadId = thread.id, hint = activityHint)) {
           return@map thread
         }
         val hintedSummaryActivity = resolveHintedSummaryActivity(thread = thread, hint = activityHint)
+        val resolvedCost = resolveThreadCost(backendThread = backendThread, rolloutThread = rolloutThread)
         if (activityHint.verifiedFresh) {
-          if (thread.activity == activityHint.activity && thread.summaryActivity == hintedSummaryActivity) {
+          if (thread.activity == activityHint.activity && thread.summaryActivity == hintedSummaryActivity && thread.cost == resolvedCost) {
             return@map thread
           }
 
@@ -235,10 +264,9 @@ internal class CodexSessionSource internal constructor(
             "path=$path threadId=${thread.id} appServerActivity=${thread.activity} verifiedActivity=${activityHint.activity} " +
             "verifiedUpdatedAt=${activityHint.updatedAt} verifiedResponseRequired=${activityHint.responseRequired}"
           }
-          return@map thread.copy(activity = activityHint.activity, summaryActivity = hintedSummaryActivity)
+          return@map thread.copy(activity = activityHint.activity, summaryActivity = hintedSummaryActivity, cost = resolvedCost)
         }
 
-        val backendThread = backendThreadsById[thread.id]
         val currentHint = CodexRefreshActivityHint(
           activity = thread.activity,
           updatedAt = backendThread?.thread?.updatedAt ?: thread.updatedAt,
@@ -246,7 +274,7 @@ internal class CodexSessionSource internal constructor(
           summaryActivity = thread.summaryActivity,
         )
         if (!shouldApplyRolloutActivityFallback(currentHint = currentHint, rolloutHint = activityHint)) {
-          return@map thread
+          return@map if (thread.cost == resolvedCost) thread else thread.copy(cost = resolvedCost)
         }
 
         appliedActivityUpdates += 1
@@ -256,7 +284,7 @@ internal class CodexSessionSource internal constructor(
           "appServerUpdatedAt=${currentHint.updatedAt} rolloutUpdatedAt=${activityHint.updatedAt} " +
           "appServerResponseRequired=${currentHint.responseRequired} rolloutResponseRequired=${activityHint.responseRequired}"
         }
-        thread.copy(activity = activityHint.activity, summaryActivity = hintedSummaryActivity)
+        thread.copy(activity = activityHint.activity, summaryActivity = hintedSummaryActivity, cost = resolvedCost)
       }
       if (appliedActivityUpdates > 0) {
         LOG.debug {
@@ -266,6 +294,23 @@ internal class CodexSessionSource internal constructor(
       result[path] = threads
     }
     return result
+  }
+
+  private suspend fun prefetchRolloutThreads(paths: List<String>): Map<String, List<CodexBackendThread>> {
+    val rolloutBackend = rolloutBackend ?: return emptyMap()
+    return try {
+      rolloutBackend.prefetchThreads(paths)
+    }
+    catch (e: Throwable) {
+      if (e is CancellationException) throw e
+      LOG.warn("Failed to fetch Codex rollout usage overlay", e)
+      emptyMap()
+    }
+  }
+
+  private fun resolveThreadCost(backendThread: CodexBackendThread?, rolloutThread: CodexBackendThread?): AgentSessionCost? {
+    val usageSnapshot = backendThread?.usageSnapshot ?: rolloutThread?.usageSnapshot ?: return null
+    return calculateCost(usageSnapshot)
   }
 
   private suspend fun prefetchAppServerHintsWithRolloutVerification(
@@ -516,11 +561,12 @@ private fun mergeRebindCandidates(
   return mergedByThreadId.values.toList()
 }
 
-private fun toAgentSessionThread(thread: CodexBackendThread): AgentSessionThread {
+private fun toAgentSessionThread(thread: CodexBackendThread, cost: AgentSessionCost? = null): AgentSessionThread {
   return toAgentSessionThread(
     thread = thread.thread,
     activity = thread.activity,
     summaryActivity = thread.summaryActivity,
+    cost = cost,
   )
 }
 
@@ -528,6 +574,7 @@ private fun toAgentSessionThread(
   thread: CodexThread,
   activity: CodexSessionActivity,
   summaryActivity: CodexSessionActivity?,
+  cost: AgentSessionCost? = null,
 ): AgentSessionThread {
   return AgentSessionThread(
     id = thread.id,
@@ -539,5 +586,6 @@ private fun toAgentSessionThread(
     originBranch = thread.gitBranch,
     activity = activity.toAgentThreadActivity(),
     summaryActivity = summaryActivity?.toAgentThreadActivity(),
+    cost = cost,
   )
 }

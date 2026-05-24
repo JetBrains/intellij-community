@@ -3,8 +3,12 @@ package com.intellij.agent.workbench.claude.sessions
 
 import com.intellij.agent.workbench.claude.common.ClaudeSessionActivity
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.session.AgentSessionCost
+import com.intellij.agent.workbench.common.session.AgentSessionCostKind
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
+import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
+import com.intellij.agent.workbench.sessions.core.cost.OpenRouterPriceCatalogService
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRebindCandidate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
@@ -13,15 +17,25 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceRe
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.agent.workbench.sessions.core.providers.BaseAgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.resolveReadTrackedActivity
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.merge
+import java.math.BigDecimal
 import java.util.concurrent.ConcurrentHashMap
 
-class ClaudeSessionSource(
-  private val backend: ClaudeSessionBackend = createDefaultClaudeSessionBackend(),
+class ClaudeSessionSource internal constructor(
+  private val backend: ClaudeSessionBackend,
+  private val calculateCost: (AgentSessionUsageSnapshot) -> AgentSessionCost,
 ) : BaseAgentSessionSource(provider = AgentSessionProvider.CLAUDE) {
+  constructor(
+    backend: ClaudeSessionBackend = createDefaultClaudeSessionBackend(),
+  ) : this(
+    backend = backend,
+    calculateCost = { usage -> service<OpenRouterPriceCatalogService>().calculateCost(usage) },
+  )
+
   private val observedUpdatedAtByThreadId: ConcurrentHashMap<String, Long> = ConcurrentHashMap()
   private val completedUnreadUpdatedAtByThreadId: ConcurrentHashMap<String, Long> = ConcurrentHashMap()
 
@@ -43,7 +57,9 @@ class ClaudeSessionSource(
     val threads = backend.listThreads(path = path, openProject = openProject)
     val visibleThreads = threads.filterNot(ClaudeBackendThread::archived)
     rememberActiveNonReadyThreadRead(visibleThreads)
-    val agentThreads = visibleThreads.map { it.toAgentSessionThread(readTracker, completedUnreadUpdatedAtByThreadId) }
+    val agentThreads = visibleThreads.map {
+      it.toAgentSessionThread(readTracker, completedUnreadUpdatedAtByThreadId, calculateCost = calculateCost)
+    }
     rememberObservedThreadUpdates(visibleThreads)
     return agentThreads
   }
@@ -51,7 +67,9 @@ class ClaudeSessionSource(
   override suspend fun listArchivedThreads(path: String, openProject: Project?): List<AgentSessionThread> {
     val archivedThreads = backend.listThreads(path = path, openProject = openProject)
       .filter(ClaudeBackendThread::archived)
-    return archivedThreads.map { it.toAgentSessionThread(readTracker, completedUnreadUpdatedAtByThreadId) }
+    return archivedThreads.map {
+      it.toAgentSessionThread(readTracker, completedUnreadUpdatedAtByThreadId, calculateCost = calculateCost)
+    }
   }
 
   override suspend fun refreshThreads(request: AgentSessionSourceRefreshRequest): AgentSessionSourceRefreshResult {
@@ -87,6 +105,7 @@ class ClaudeSessionSource(
             readTracker = readTracker,
             completedUnreadUpdatedAtByThreadId = completedUnreadUpdatedAtByThreadId,
             observedUpdatedAtByThreadId = observedUpdatedAtByThreadId,
+            calculateCost = calculateCost,
           )
         }
         rememberObservedThreadUpdates(visibleThreads)
@@ -185,6 +204,7 @@ private fun ClaudeBackendThread.toAgentSessionThread(
   readTracker: Map<String, Long>,
   completedUnreadUpdatedAtByThreadId: MutableMap<String, Long>,
   observedUpdatedAtByThreadId: Map<String, Long> = emptyMap(),
+  calculateCost: (AgentSessionUsageSnapshot) -> AgentSessionCost,
 ): AgentSessionThread {
   return AgentSessionThread(
     id = id,
@@ -198,7 +218,31 @@ private fun ClaudeBackendThread.toAgentSessionThread(
       completedUnreadUpdatedAtByThreadId = completedUnreadUpdatedAtByThreadId,
       observedUpdatedAtByThreadId = observedUpdatedAtByThreadId,
     ),
+    cost = usageSnapshots.toAgentSessionCost(calculateCost),
   )
+}
+
+private fun List<AgentSessionUsageSnapshot>.toAgentSessionCost(
+  calculateCost: (AgentSessionUsageSnapshot) -> AgentSessionCost,
+): AgentSessionCost? {
+  if (isEmpty()) return null
+
+  val componentCosts = map(calculateCost)
+  if (componentCosts.any { it.amountUsd == null }) {
+    return AgentSessionCost(amountUsd = null, kind = AgentSessionCostKind.UNAVAILABLE)
+  }
+
+  val totalAmount = componentCosts.fold(BigDecimal.ZERO) { acc, cost ->
+    acc + checkNotNull(cost.amountUsd)
+  }
+  val kind = if (componentCosts.all { it.kind == AgentSessionCostKind.EXACT }) {
+    AgentSessionCostKind.EXACT
+  }
+  else {
+    AgentSessionCostKind.ESTIMATED
+  }
+  val matchedModelId = componentCosts.mapNotNull(AgentSessionCost::matchedModelId).distinct().singleOrNull()
+  return AgentSessionCost(amountUsd = totalAmount, kind = kind, matchedModelId = matchedModelId)
 }
 
 private fun ClaudeBackendThread.effectiveActivity(

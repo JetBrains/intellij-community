@@ -15,6 +15,7 @@ import com.intellij.agent.workbench.codex.common.readStringOrNull
 import com.intellij.agent.workbench.codex.sessions.backend.CodexBackendThread
 import com.intellij.agent.workbench.codex.sessions.backend.resolveCodexSessionActivity
 import com.intellij.agent.workbench.json.WorkbenchJsonlScanner
+import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import java.nio.file.Files
@@ -105,6 +106,7 @@ internal class CodexRolloutParser(
         activity = activity,
         requiresResponse = hasPendingUserInput || hasPendingApproval || hasPendingPlan,
         summaryActivity = summaryActivity,
+        usageSnapshot = state.usageSnapshot,
       ),
     )
   }
@@ -139,6 +141,7 @@ private fun reduceEvent(parseState: RolloutParseState, event: RolloutEvent) {
   }
   parseState.parentThreadId = parseState.parentThreadId ?: event.parentThreadId
   parseState.gitBranch = parseState.gitBranch ?: event.gitBranch
+  parseState.modelId = event.payloadModel ?: parseState.modelId
 
   val eventTimestamp = event.timestampMs
   when (event.topLevelType) {
@@ -169,6 +172,17 @@ private fun reduceEvent(parseState: RolloutParseState, event: RolloutEvent) {
 
         "threadnameupdated" -> {
           parseState.title = extractThreadName(event.payloadThreadName) ?: parseState.title
+        }
+
+        "tokencount" -> {
+          event.payloadTokenUsage?.let { usageSnapshot ->
+            parseState.usageSnapshot = if (usageSnapshot.modelId != null || parseState.modelId == null) {
+              usageSnapshot
+            }
+            else {
+              usageSnapshot.copy(modelId = parseState.modelId)
+            }
+          }
         }
 
         "agentmessage" -> {
@@ -269,6 +283,8 @@ private fun parseEvent(parser: JsonParser): RolloutEvent? {
     var payloadItemType: String? = null
     var payloadThreadName: String? = null
     var payloadTurnId: String? = null
+    var payloadModel: String? = null
+    var payloadTokenUsage: AgentSessionUsageSnapshot? = null
     var sessionId: String? = null
     var sessionCwd: String? = null
     var sessionTimestampMs: Long? = null
@@ -293,6 +309,8 @@ private fun parseEvent(parser: JsonParser): RolloutEvent? {
                 "item" -> payloadItemType = parseRolloutItemType(parser)
                 "thread_name", "threadName" -> payloadThreadName = readStringOrNull(parser)
                 "turn_id", "turnId" -> payloadTurnId = readStringOrNull(parser)
+                "model" -> payloadModel = readStringOrNull(parser)
+                "info" -> payloadTokenUsage = parseTokenUsageSnapshot(parser, payloadModel)
                 "id" -> sessionId = readStringOrNull(parser)
                 "cwd" -> sessionCwd = readStringOrNull(parser)
                 "timestamp" -> sessionTimestampMs = parseIsoTimestamp(readStringOrNull(parser))
@@ -335,6 +353,8 @@ private fun parseEvent(parser: JsonParser): RolloutEvent? {
       payloadItemType = payloadItemType,
       payloadThreadName = payloadThreadName,
       payloadTurnId = payloadTurnId,
+      payloadModel = payloadModel,
+      payloadTokenUsage = payloadTokenUsage,
       sessionId = sessionId,
       sessionCwd = sessionCwd,
       sessionTimestampMs = sessionTimestampMs,
@@ -367,6 +387,8 @@ private data class RolloutEvent(
   @JvmField val payloadItemType: String?,
   @JvmField val payloadThreadName: String?,
   @JvmField val payloadTurnId: String?,
+  @JvmField val payloadModel: String?,
+  @JvmField val payloadTokenUsage: AgentSessionUsageSnapshot?,
   @JvmField val sessionId: String?,
   @JvmField val sessionCwd: String?,
   @JvmField val sessionTimestampMs: Long?,
@@ -382,6 +404,7 @@ private data class RolloutParseState(
   @JvmField var parentThreadId: String? = null,
   @JvmField var gitBranch: String? = null,
   @JvmField var title: String? = null,
+  @JvmField var modelId: String? = null,
   @JvmField var updatedAt: Long = 0L,
   @JvmField var processing: Boolean = false,
   @JvmField var processingTurnId: String? = null,
@@ -389,6 +412,7 @@ private data class RolloutParseState(
   @JvmField var latestUserMessageAt: Long = Long.MIN_VALUE,
   @JvmField var latestAgentMessageAt: Long = Long.MIN_VALUE,
   @JvmField var latestPlanAt: Long = Long.MIN_VALUE,
+  @JvmField var usageSnapshot: AgentSessionUsageSnapshot? = null,
   @JvmField val pendingUserInputByCallId: LinkedHashMap<String, Long> = LinkedHashMap(),
   @JvmField val pendingApprovalByCallId: LinkedHashMap<String, PendingApproval> = LinkedHashMap(),
   @JvmField val pendingFunctionCallByCallId: LinkedHashMap<String, PendingFunctionCall> = LinkedHashMap(),
@@ -517,6 +541,64 @@ private fun argumentsRequireEscalatedSandbox(arguments: String?): Boolean {
   }
   catch (_: Throwable) {
     false
+  }
+}
+
+private fun parseTokenUsageSnapshot(parser: JsonParser, modelId: String?): AgentSessionUsageSnapshot? {
+  if (parser.currentToken != JsonToken.START_OBJECT) {
+    parser.skipChildren()
+    return null
+  }
+
+  var totalInputTokens: Long? = null
+  var cachedInputTokens = 0L
+  var outputTokens = 0L
+  var reasoningOutputTokens = 0L
+  forEachObjectField(parser) { fieldName ->
+    when (fieldName) {
+      "total_token_usage" -> {
+        if (parser.currentToken == JsonToken.START_OBJECT) {
+          forEachObjectField(parser) { usageField ->
+            when (usageField) {
+              "input_tokens" -> totalInputTokens = readLongOrNull(parser)
+              "cached_input_tokens" -> cachedInputTokens = readLongOrNull(parser) ?: 0L
+              "output_tokens" -> outputTokens = readLongOrNull(parser) ?: 0L
+              "reasoning_output_tokens" -> reasoningOutputTokens = readLongOrNull(parser) ?: 0L
+              else -> parser.skipChildren()
+            }
+            true
+          }
+        }
+        else {
+          parser.skipChildren()
+        }
+      }
+
+      else -> parser.skipChildren()
+    }
+    true
+  }
+
+  val resolvedTotalInputTokens = totalInputTokens ?: return null
+  val resolvedInputTokens = maxOf(resolvedTotalInputTokens - cachedInputTokens, 0L)
+  return AgentSessionUsageSnapshot(
+    modelId = modelId,
+    inputTokens = resolvedInputTokens,
+    outputTokens = outputTokens + reasoningOutputTokens,
+    cacheReadTokens = cachedInputTokens,
+  )
+}
+
+private fun readLongOrNull(parser: JsonParser): Long? {
+  return when (parser.currentToken) {
+    JsonToken.VALUE_NUMBER_INT -> parser.longValue
+    JsonToken.VALUE_NUMBER_FLOAT -> parser.valueAsLong
+    JsonToken.VALUE_STRING -> parser.text.toLongOrNull()
+    JsonToken.VALUE_NULL -> null
+    else -> {
+      parser.skipChildren()
+      null
+    }
   }
 }
 

@@ -1,0 +1,35 @@
+{
+  "data": [
+    {
+      "id": "anthropic/claude-opus-4.7-fast",
+      "canonical_slug": "anthropic/claude-4.7-opus-fast-20260512",
+      "name": "Anthropic: Claude Opus 4.7 (Fast)",
+      "pricing": {
+        "prompt": "0.00003",
+        "completion": "0.00015",
+        "input_cache_read": "0.000003",
+        "input_cache_write": "0.0000375"
+      }
+    },
+    {
+      "id": "openai/gpt-chat-latest",
+      "canonical_slug": "openai/gpt-chat-latest-20260505",
+      "name": "OpenAI: GPT Chat Latest",
+      "pricing": {
+        "prompt": "0.000005",
+        "completion": "0.00003",
+        "input_cache_read": "0.0000005"
+      }
+    },
+    {
+      "id": "x-ai/grok-4.3",
+      "canonical_slug": "x-ai/grok-4.3-20260430",
+      "name": "xAI: Grok 4.3",
+      "pricing": {
+        "prompt": "0.00000125",
+        "completion": "0.0000025",
+        "input_cache_read": "0.0000002"
+      }
+    }
+  ]
+}

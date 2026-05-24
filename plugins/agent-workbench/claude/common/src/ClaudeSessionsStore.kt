@@ -50,6 +50,12 @@ data class ClaudeSessionThread(
   @JvmField val projectPath: String? = null,
 )
 
+data class ClaudeSessionUsageFile(
+  @JvmField val sessionId: String,
+  @JvmField val projectPath: String? = null,
+  @JvmField val usageSnapshots: List<ClaudeUsageSnapshot> = emptyList(),
+)
+
 class ClaudeSessionsStore(
   private val claudeHomeProvider: () -> Path = { Path.of(System.getProperty("user.home"), ".claude") },
 ) {
@@ -110,6 +116,34 @@ class ClaudeSessionsStore(
       hasCustomTitle = tailState.agentName != null || tailState.customTitle != null,
       titleSource = resolvedTitle.source,
       projectPath = projectPath,
+    )
+  }
+
+  fun parseUsageJsonlFile(path: Path): ClaudeSessionUsageFile? {
+    val usageState = WorkbenchJsonlScanner.scanJsonObjects(
+      path = path,
+      jsonFactory = jsonFactory,
+      newState = ::JsonlUsageScanState,
+    ) { parser, state ->
+      val lineData = parseJsonlLine(parser) ?: return@scanJsonObjects true
+      if (state.sessionId == null && !lineData.sessionId.isNullOrBlank()) {
+        state.sessionId = lineData.sessionId
+      }
+      if (state.projectPath == null && !lineData.projectPath.isNullOrBlank()) {
+        state.projectPath = lineData.projectPath
+      }
+      lineData.assistantUsage?.let(state::recordUsage)
+      true
+    }
+
+    val normalizedSessionId = usageState.sessionId?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+    val usageSnapshots = usageState.buildUsageSnapshots()
+    if (usageSnapshots.isEmpty()) return null
+
+    return ClaudeSessionUsageFile(
+      sessionId = normalizedSessionId,
+      projectPath = usageState.projectPath,
+      usageSnapshots = usageSnapshots,
     )
   }
 
@@ -277,6 +311,7 @@ private fun parseJsonlLine(parser: JsonParser): ParsedJsonlLine? {
   return try {
     if (parser.currentToken != JsonToken.START_OBJECT) return null
     var sessionId: String? = null
+    var requestId: String? = null
     var isSidechain = false
     var timestampMillis: Long? = null
     var firstPrompt: String? = null
@@ -294,11 +329,15 @@ private fun parseJsonlLine(parser: JsonParser): ParsedJsonlLine? {
     var messageHasToolResult = false
     var messageStopReason: String? = null
     var messageHasStopReason = false
+    var messageModelId: String? = null
+    var messageId: String? = null
+    var messageUsage: ParsedClaudeUsage? = null
     var hasBackgroundTaskId = false
 
     forEachJsonObjectField(parser) { fieldName ->
       when (fieldName) {
         "sessionId" -> sessionId = readJsonStringOrNull(parser)
+        "requestId" -> requestId = readJsonStringOrNull(parser)
         "isSidechain" -> isSidechain = readBooleanOrFalse(parser)
         "timestamp" -> timestampMillis = parseIsoTimestamp(readJsonStringOrNull(parser))
         "type" -> type = readJsonStringOrNull(parser)
@@ -318,6 +357,9 @@ private fun parseJsonlLine(parser: JsonParser): ParsedJsonlLine? {
             messageHasToolResult = parsedMessage.hasToolResult
             messageStopReason = parsedMessage.stopReason
             messageHasStopReason = parsedMessage.hasStopReason
+            messageModelId = parsedMessage.modelId
+            messageId = parsedMessage.messageId
+            messageUsage = parsedMessage.usage
           }
           else {
             parser.skipChildren()
@@ -349,6 +391,21 @@ private fun parseJsonlLine(parser: JsonParser): ParsedJsonlLine? {
     if (activityEvent == ClaudeActivityEvent.USER_PROMPT) {
       firstPrompt = normalizeClaudeTitleCandidate(messageContent)
     }
+    val assistantUsage = if (type == "assistant" && messageRole == "assistant") {
+      messageUsage?.let { usage ->
+        ClaudeAssistantUsage(
+          dedupeKey = normalizeNonBlank(requestId) ?: normalizeNonBlank(messageId),
+          modelId = normalizeNonBlank(messageModelId),
+          inputTokens = usage.inputTokens,
+          outputTokens = usage.outputTokens,
+          cacheReadTokens = usage.cacheReadTokens,
+          cacheWriteTokens = usage.cacheWriteTokens,
+        )
+      }
+    }
+    else {
+      null
+    }
     val hasConversationSignal = type == "user" || type == "assistant"
     return ParsedJsonlLine(
       sessionId = sessionId,
@@ -363,6 +420,7 @@ private fun parseJsonlLine(parser: JsonParser): ParsedJsonlLine? {
       projectPath = projectPath,
       gitBranch = normalizeNonBlank(gitBranch),
       activityEvent = activityEvent,
+      assistantUsage = assistantUsage,
     )
   }
   catch (_: Throwable) {
@@ -378,8 +436,13 @@ private fun readMessageObject(parser: JsonParser): ParsedMessageObject {
   var hasToolResult = false
   var stopReason: String? = null
   var hasStopReason = false
+  var modelId: String? = null
+  var messageId: String? = null
+  var usage: ParsedClaudeUsage? = null
   forEachJsonObjectField(parser) { fieldName ->
     when (fieldName) {
+      "model" -> modelId = readJsonStringOrNull(parser)
+      "id" -> messageId = readJsonStringOrNull(parser)
       "role" -> role = readJsonStringOrNull(parser)
       "content" -> {
         val result = readContentWithToolUseCheck(parser)
@@ -392,11 +455,14 @@ private fun readMessageObject(parser: JsonParser): ParsedMessageObject {
         hasStopReason = true
         stopReason = readJsonStringOrNull(parser)
       }
+      "usage" -> usage = readUsageObject(parser)
       else -> parser.skipChildren()
     }
     true
   }
   return ParsedMessageObject(
+    modelId = modelId,
+    messageId = messageId,
     role = role,
     contentPreview = contentPreview,
     hasToolUse = hasToolUse,
@@ -404,7 +470,55 @@ private fun readMessageObject(parser: JsonParser): ParsedMessageObject {
     hasToolResult = hasToolResult,
     stopReason = stopReason,
     hasStopReason = hasStopReason,
+    usage = usage,
   )
+}
+
+private fun readUsageObject(parser: JsonParser): ParsedClaudeUsage? {
+  if (parser.currentToken != JsonToken.START_OBJECT) {
+    parser.skipChildren()
+    return null
+  }
+
+  var sawUsageField = false
+  var inputTokens = 0L
+  var cacheWriteTokens = 0L
+  var cacheReadTokens = 0L
+  var outputTokens = 0L
+  forEachJsonObjectField(parser) { fieldName ->
+    when (fieldName) {
+      "input_tokens" -> {
+        inputTokens = readLongOrZero(parser)
+        sawUsageField = true
+      }
+      "cache_creation_input_tokens" -> {
+        cacheWriteTokens = readLongOrZero(parser)
+        sawUsageField = true
+      }
+      "cache_read_input_tokens" -> {
+        cacheReadTokens = readLongOrZero(parser)
+        sawUsageField = true
+      }
+      "output_tokens" -> {
+        outputTokens = readLongOrZero(parser)
+        sawUsageField = true
+      }
+      else -> parser.skipChildren()
+    }
+    true
+  }
+
+  return if (sawUsageField) {
+    ParsedClaudeUsage(
+      inputTokens = inputTokens,
+      outputTokens = outputTokens,
+      cacheReadTokens = cacheReadTokens,
+      cacheWriteTokens = cacheWriteTokens,
+    )
+  }
+  else {
+    null
+  }
 }
 
 private fun readContentWithToolUseCheck(parser: JsonParser): ParsedMessageContent {
@@ -566,6 +680,18 @@ private fun readBooleanOrFalse(parser: JsonParser): Boolean {
   }
 }
 
+private fun readLongOrZero(parser: JsonParser): Long {
+  return when (parser.currentToken) {
+    JsonToken.VALUE_NUMBER_INT,
+    JsonToken.VALUE_NUMBER_FLOAT -> parser.longValue
+    JsonToken.VALUE_STRING -> parser.text.toLongOrNull() ?: 0L
+    else -> {
+      parser.skipChildren()
+      0L
+    }
+  }
+}
+
 private data class ParsedJsonlLine(
   @JvmField val sessionId: String?,
   @JvmField val isSidechain: Boolean,
@@ -579,9 +705,12 @@ private data class ParsedJsonlLine(
   @JvmField val projectPath: String?,
   @JvmField val gitBranch: String?,
   @JvmField val activityEvent: ClaudeActivityEvent,
+  @JvmField val assistantUsage: ClaudeAssistantUsage? = null,
 )
 
 private data class ParsedMessageObject(
+  @JvmField val modelId: String?,
+  @JvmField val messageId: String?,
   @JvmField val role: String?,
   @JvmField val contentPreview: String?,
   @JvmField val hasToolUse: Boolean = false,
@@ -589,6 +718,23 @@ private data class ParsedMessageObject(
   @JvmField val hasToolResult: Boolean = false,
   @JvmField val stopReason: String? = null,
   @JvmField val hasStopReason: Boolean = false,
+  @JvmField val usage: ParsedClaudeUsage? = null,
+)
+
+private data class ParsedClaudeUsage(
+  @JvmField val inputTokens: Long,
+  @JvmField val outputTokens: Long,
+  @JvmField val cacheReadTokens: Long,
+  @JvmField val cacheWriteTokens: Long,
+)
+
+private data class ClaudeAssistantUsage(
+  @JvmField val dedupeKey: String?,
+  @JvmField val modelId: String?,
+  @JvmField val inputTokens: Long,
+  @JvmField val outputTokens: Long,
+  @JvmField val cacheReadTokens: Long,
+  @JvmField val cacheWriteTokens: Long,
 )
 
 private data class ParsedMessageContent(
@@ -689,3 +835,89 @@ private data class JsonlMetadataScanState(
   override var needsInput: Boolean = false,
   override var isProcessing: Boolean = false,
 ) : ActivityTrackingState
+
+private data class JsonlUsageScanState(
+  @JvmField var sessionId: String? = null,
+  @JvmField var projectPath: String? = null,
+) {
+  private val dedupedUsageByKey = LinkedHashMap<String, ClaudeAssistantUsage>()
+  private val anonymousUsage = ArrayList<ClaudeAssistantUsage>()
+
+  fun recordUsage(usage: ClaudeAssistantUsage) {
+    val dedupeKey = usage.dedupeKey
+    if (dedupeKey == null) {
+      anonymousUsage += usage
+      return
+    }
+
+    dedupedUsageByKey.merge(dedupeKey, usage, ::mergeAssistantUsage)
+  }
+
+  fun buildUsageSnapshots(): List<ClaudeUsageSnapshot> {
+    if (dedupedUsageByKey.isEmpty() && anonymousUsage.isEmpty()) return emptyList()
+
+    val usageByModelId = LinkedHashMap<String?, UsageByModelAccumulator>()
+    for (usage in dedupedUsageByKey.values) {
+      usageByModelId.accumulate(usage)
+    }
+    for (usage in anonymousUsage) {
+      usageByModelId.accumulate(usage)
+    }
+    return usageByModelId.values.map(UsageByModelAccumulator::toSnapshot)
+  }
+}
+
+private data class UsageByModelAccumulator(
+  @JvmField var modelId: String?,
+  @JvmField var inputTokens: Long = 0,
+  @JvmField var outputTokens: Long = 0,
+  @JvmField var cacheReadTokens: Long = 0,
+  @JvmField var cacheWriteTokens: Long = 0,
+  @JvmField var requestCount: Long = 0,
+) {
+  fun add(usage: ClaudeAssistantUsage) {
+    if (modelId == null) {
+      modelId = usage.modelId
+    }
+    inputTokens += usage.inputTokens
+    outputTokens += usage.outputTokens
+    cacheReadTokens += usage.cacheReadTokens
+    cacheWriteTokens += usage.cacheWriteTokens
+    requestCount += 1
+  }
+
+  fun toSnapshot(): ClaudeUsageSnapshot {
+    return ClaudeUsageSnapshot(
+      modelId = modelId,
+      inputTokens = inputTokens,
+      outputTokens = outputTokens,
+      cacheReadTokens = cacheReadTokens,
+      cacheWriteTokens = cacheWriteTokens,
+      requestCount = requestCount,
+    )
+  }
+}
+
+data class ClaudeUsageSnapshot(
+  @JvmField val modelId: String?,
+  @JvmField val inputTokens: Long = 0,
+  @JvmField val outputTokens: Long = 0,
+  @JvmField val cacheReadTokens: Long = 0,
+  @JvmField val cacheWriteTokens: Long = 0,
+  @JvmField val requestCount: Long = 0,
+)
+
+private fun mergeAssistantUsage(left: ClaudeAssistantUsage, right: ClaudeAssistantUsage): ClaudeAssistantUsage {
+  return ClaudeAssistantUsage(
+    dedupeKey = left.dedupeKey ?: right.dedupeKey,
+    modelId = left.modelId ?: right.modelId,
+    inputTokens = maxOf(left.inputTokens, right.inputTokens),
+    outputTokens = maxOf(left.outputTokens, right.outputTokens),
+    cacheReadTokens = maxOf(left.cacheReadTokens, right.cacheReadTokens),
+    cacheWriteTokens = maxOf(left.cacheWriteTokens, right.cacheWriteTokens),
+  )
+}
+
+private fun MutableMap<String?, UsageByModelAccumulator>.accumulate(usage: ClaudeAssistantUsage) {
+  getOrPut(usage.modelId) { UsageByModelAccumulator(modelId = usage.modelId) }.add(usage)
+}
