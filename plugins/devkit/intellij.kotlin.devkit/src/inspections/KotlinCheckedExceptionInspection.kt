@@ -238,12 +238,31 @@ class KotlinCheckedExceptionInspection : AbstractKotlinInspection() {
         CachedValuesManager.getManager(element.project).getCachedValue(element, UncheckedExceptionsCachedValueProvider(element))
 
       for (uncheckedException in uncheckedExceptions) {
+        val annotationText = "${uncheckedException}::class"
         whereAddAnnotationTo.addAnnotation(
           annotationClassId = ClassId.fromString(ThrowsChecked::class.qualifiedName!!),
           annotationInnerText = "${uncheckedException}::class",
           searchForExistingEntry = true,
+          addToExistingAnnotation = { addArgumentToAnnotation(it, annotationText) }
         )
       }
+    }
+
+    private fun addArgumentToAnnotation(entry: KtAnnotationEntry, argument: String): Boolean {
+      // add new arguments to an existing entry
+      val args = entry.valueArgumentList
+      val psiFactory = KtPsiFactory(entry.project)
+      val newArgList = psiFactory.createCallArguments("($argument)")
+      when {
+        args == null -> // new argument list
+          entry.addAfter(newArgList, entry.lastChild)
+        args.arguments.isEmpty() -> // replace '()' with a new argument list
+          args.replace(newArgList)
+        args.arguments.none { it.textMatches(argument) } ->
+          args.addArgument(newArgList.arguments[0])
+      }
+
+      return true
     }
   }
 

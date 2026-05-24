@@ -464,6 +464,74 @@ class KotlinCheckedExceptionsInspectionTest {
   }
 
   @Test
+  fun `add exception to existing annotation quick-fix for named function`(): Unit = timeoutRunBlocking {
+    @Language("kotlin")
+    val lib = """
+      import com.intellij.platform.eel.ThrowsChecked
+
+      class MyException : Exception()
+      class AnotherException : Exception()
+
+      object MyObject {
+        @ThrowsChecked(MyException::class, AnotherException::class)
+        fun someAction(): Int {
+          error()
+        }
+      }
+
+      fun placeholder() {}
+    """.trimIndent()
+
+    @Language("kotlin")
+    val initialSource = """
+      import com.intellij.platform.eel.ThrowsChecked
+
+      @ThrowsChecked(MyException::class)
+      fun someActionUsage() {
+        run {
+          listOf(1, 2, 3).forEach { 
+            MyObject.someA<caret>ction()
+          }
+        }
+
+        val someFn: () -> Unit = {
+          MyObject.someAction()
+        }
+      }
+    """.trimIndent()
+
+    myFixture.configureByText("Lib.kt", lib)
+    val sourceFile = myFixture.configureByText("Source.kt", initialSource)
+
+    withContext(Dispatchers.EDT) {
+      myFixture.openFileInEditor(sourceFile.virtualFile)
+    }
+
+    val intention = myFixture.findSingleIntention("Add annotations for re-throwing checked exceptions")
+    myFixture.launchAction(intention)
+
+    @Language("kotlin")
+    val expectedSource = """
+      import com.intellij.platform.eel.ThrowsChecked
+
+      @ThrowsChecked(MyException::class, AnotherException::class)
+      fun someActionUsage() {
+        run {
+          listOf(1, 2, 3).forEach { 
+            MyObject.someA<caret>ction()
+          }
+        }
+
+        val someFn: () -> Unit = {
+          MyObject.someAction()
+        }
+      }
+    """.trimIndent()
+
+    myFixture.checkResult(expectedSource)
+  }
+
+  @Test
   fun `add annotation quick-fix for lambda variable with explicit type`(): Unit = timeoutRunBlocking {
     @Language("kotlin")
     val lib = """
