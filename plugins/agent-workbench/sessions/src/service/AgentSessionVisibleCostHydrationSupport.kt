@@ -17,7 +17,6 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 
 private val LOG = logger<AgentSessionVisibleCostHydrationSupport>()
-private const val THREAD_COST_CACHE_TTL_MS = 60_000L
 
 internal class AgentSessionVisibleCostHydrationSupport(
   private val serviceScope: CoroutineScope,
@@ -59,9 +58,7 @@ internal class AgentSessionVisibleCostHydrationSupport(
       }
 
       val effectiveCacheEntry = costCache[cacheKey]
-      if (effectiveCacheEntry != null &&
-          effectiveCacheEntry.updatedAt == visibleThread.updatedAt &&
-          now - effectiveCacheEntry.refreshedAtMs < THREAD_COST_CACHE_TTL_MS) {
+      if (effectiveCacheEntry != null && effectiveCacheEntry.updatedAt == visibleThread.updatedAt) {
         if (visibleThread.cost != effectiveCacheEntry.cost) {
           cachedUpdatesByPath
             .getOrPut(visibleThread.path) { LinkedHashMap() }
@@ -135,6 +132,7 @@ internal class AgentSessionVisibleCostHydrationSupport(
     }
   }
 
+  @Suppress("DuplicatedCode")
   private fun collectVisibleThreads(state: AgentSessionsState): List<VisibleThreadSnapshot> {
     val visibleThreads = ArrayList<VisibleThreadSnapshot>()
     state.projects.forEach { project ->

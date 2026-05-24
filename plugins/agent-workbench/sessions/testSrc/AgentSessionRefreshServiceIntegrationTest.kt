@@ -94,7 +94,7 @@ class AgentSessionRefreshServiceIntegrationTest {
   }
 
   @Test
-  fun visibleThreadCostCacheSkipsReloadUntilTtlExpiresOrThreadUpdatedAtChanges() = runBlocking(Dispatchers.Default) {
+  fun visibleThreadCostCacheSkipsReloadUntilThreadUpdatedAtChanges() = runBlocking(Dispatchers.Default) {
     var nowMs = 1_000L
     var updatedAt = 100L
     val costLoadCount = AtomicInteger(0)
@@ -144,16 +144,10 @@ class AgentSessionRefreshServiceIntegrationTest {
       delay(300.milliseconds)
       assertThat(costLoadCount.get()).isEqualTo(1)
 
-      nowMs += 2_000L
+      nowMs += 3600_000L
       service.refresh()
-      waitForCondition {
-        service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }
-          ?.threads
-          ?.singleOrNull()
-          ?.cost
-          ?.amountUsd == BigDecimal.valueOf(2)
-      }
-      assertThat(costLoadCount.get()).isEqualTo(2)
+      delay(300.milliseconds)
+      assertThat(costLoadCount.get()).isEqualTo(1)
 
       updatedAt = 200L
       nowMs += 1_000L
@@ -162,9 +156,9 @@ class AgentSessionRefreshServiceIntegrationTest {
         val thread = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }
           ?.threads
           ?.singleOrNull() ?: return@waitForCondition false
-        thread.updatedAt == 200L && thread.cost?.amountUsd == BigDecimal.valueOf(3)
+        thread.updatedAt == 200L && thread.cost?.amountUsd == BigDecimal.valueOf(2)
       }
-      assertThat(costLoadCount.get()).isEqualTo(3)
+      assertThat(costLoadCount.get()).isEqualTo(2)
     }
   }
 
