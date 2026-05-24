@@ -20,6 +20,7 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.testFramework.fixtures.JavaIndexingModeCodeInsightTestFixture
 import com.intellij.testFramework.fixtures.JavaTestFixtureFactory
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
+import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.indexing.FileBasedIndex
 import kotlinx.coroutines.Dispatchers
@@ -114,6 +115,36 @@ class KotlinCheckedExceptionsInspectionTest {
       class MyException : Exception()
 
       @ThrowsChecked(MyException::class)
+      fun someAction() {
+        error()
+      }
+
+      fun placeholder() {}
+    """.trimIndent()
+
+    @Language("kotlin")
+    val source = """
+      fun someActionUsage() {
+        placeholder()
+        <warning descr="Unchecked exceptions: MyException">someAction()</warning>
+        placeholder()
+      }
+    """.trimIndent()
+
+    myFixture.configureByText("Lib.kt", lib)
+    myFixture.configureByText("Source.kt", source)
+
+    myFixture.testHighlighting("Source.kt")
+  }
+
+  @Test
+  @RegistryKey("devkit.inspections.checked.exception.for.kotlin.throws", "true")
+  fun `positive report for kotlin @Throws under registry flag`() {
+    @Language("kotlin")
+    val lib = """
+      class MyException : Exception()
+
+      @Throws(MyException::class)
       fun someAction() {
         error()
       }
@@ -515,6 +546,76 @@ class KotlinCheckedExceptionsInspectionTest {
       import com.intellij.platform.eel.ThrowsChecked
 
       @ThrowsChecked(MyException::class, AnotherException::class)
+      fun someActionUsage() {
+        run {
+          listOf(1, 2, 3).forEach { 
+            MyObject.someA<caret>ction()
+          }
+        }
+
+        val someFn: () -> Unit = {
+          MyObject.someAction()
+        }
+      }
+    """.trimIndent()
+
+    myFixture.checkResult(expectedSource)
+  }
+
+  @Test
+  @RegistryKey("devkit.inspections.checked.exception.for.kotlin.throws", "true")
+  fun `add exception to existing annotation picks correct annotation`(): Unit = timeoutRunBlocking {
+    @Language("kotlin")
+    val lib = """
+      import com.intellij.platform.eel.ThrowsChecked
+
+      class MyException : Exception()
+      class AnotherException : Exception()
+
+      object MyObject {
+        @ThrowsChecked(MyException::class)
+        fun someAction(): Int {
+          error()
+        }
+      }
+
+      fun placeholder() {}
+    """.trimIndent()
+
+    @Language("kotlin")
+    val initialSource = """
+      import com.intellij.platform.eel.ThrowsChecked
+
+      @Throws(AnotherException::class)
+      fun someActionUsage() {
+        run {
+          listOf(1, 2, 3).forEach { 
+            MyObject.someA<caret>ction()
+          }
+        }
+
+        val someFn: () -> Unit = {
+          MyObject.someAction()
+        }
+      }
+    """.trimIndent()
+
+    myFixture.configureByText("Lib.kt", lib)
+    val sourceFile = myFixture.configureByText("Source.kt", initialSource)
+
+    withContext(Dispatchers.EDT) {
+      myFixture.openFileInEditor(sourceFile.virtualFile)
+    }
+
+    val intention = myFixture.findSingleIntention("Add annotations for re-throwing checked exceptions")
+    myFixture.launchAction(intention)
+
+    @Language("kotlin")
+    val expectedSource = """
+      import com.intellij.platform.eel.ThrowsChecked
+
+      @ThrowsChecked(MyException::class)
+      @Throws(AnotherException::class)
       fun someActionUsage() {
         run {
           listOf(1, 2, 3).forEach { 

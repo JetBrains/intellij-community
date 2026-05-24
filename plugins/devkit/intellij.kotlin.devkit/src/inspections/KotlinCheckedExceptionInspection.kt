@@ -9,6 +9,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.ThrowsChecked
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
@@ -61,16 +62,16 @@ import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.utils.addIfNotNull
 
 class KotlinCheckedExceptionInspection : AbstractKotlinInspection() {
-  private class UncheckedExceptionsCachedValueProvider(private val element: KtCallExpression) : CachedValueProvider<Collection<FqName>> {
-    override fun compute(): CachedValueProvider.Result<Collection<FqName>>? {
-      // Resolves the function designated by `element` and collects contents of `@ThrowsChecked` annotations.
-      val exceptionsToCheck: MutableCollection<FqName> = analyze(element) {
+  private class UncheckedExceptionsCachedValueProvider(private val element: KtCallExpression) : CachedValueProvider<Collection<AnnotationAndException>> {
+    override fun compute(): CachedValueProvider.Result<Collection<AnnotationAndException>>? {
+      // Resolves the function designated by `element` and collects contents of `@ThrowsChecked` and `@Throws` annotations.
+      val exceptionsToCheck: MutableCollection<AnnotationAndException> = analyze(element) {
         val call = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return@analyze hashSetOf()
         val annotatedSymbol = call.symbol as? KaAnnotatedSymbol ?: return@analyze hashSetOf()
         exceptionsToCheck(annotatedSymbol.annotations.mapNotNull { it.psi as? KtAnnotationEntry }).toHashSet()
       }
 
-      // If the callable is a variable with a function type, collects `@ThrowsChecked` from the variable type.
+      // If the callable is a variable with a function type, collects `@ThrowsChecked` and `@Throws` from the variable type.
       run {
         val calleeExpression = element.calleeExpression as? KtNameReferenceExpression ?: return@run
         analyze(calleeExpression) {
@@ -88,8 +89,8 @@ class KotlinCheckedExceptionInspection : AbstractKotlinInspection() {
       }
 
       // Simplifies checking of cases like `catch (BaseException)`, when the checked exception is an instance of `BaseException`.
-      val exceptionsToCheckWithSuperclasses: MutableMap<FqName, Set<FqName>> =
-        exceptionsToCheck.associateWithTo(mutableMapOf()) { fqName -> allSuperClasses(element, fqName) }
+      val exceptionsToCheckWithSuperclasses: MutableMap<AnnotationAndException, Set<FqName>> =
+        exceptionsToCheck.associateWithTo(mutableMapOf()) { (_, exceptionFqName) -> allSuperClasses(element, exceptionFqName) }
 
       val cacheDependencies = mutableListOf<PsiElement>()
       var currentNode: PsiElement? = element
@@ -106,7 +107,7 @@ class KotlinCheckedExceptionInspection : AbstractKotlinInspection() {
 
               is LambdaCheckResult.HandlesExceptions ->
                 exceptionsToCheckWithSuperclasses.values.removeAll { superClasses ->
-                  checkResult.exceptions.any { it in superClasses }
+                  checkResult.exceptions.any { it.exceptionName in superClasses }
                 }
 
               LambdaCheckResult.Unknown ->
@@ -117,7 +118,7 @@ class KotlinCheckedExceptionInspection : AbstractKotlinInspection() {
           is KtDeclarationWithBody -> {
             if (currentNode.parent !is KtLambdaExpression) {
               // It's likely a function or a class constructor.
-              val throws = exceptionsToCheck(currentNode.annotationEntries)
+              val throws = exceptionsToCheck(currentNode.annotationEntries).map { it.exceptionName }
               if (throws.isNotEmpty()) {
                 exceptionsToCheckWithSuperclasses.values.removeAll { superClasses ->
                   superClasses.any { superClass -> superClass in throws }
@@ -168,6 +169,7 @@ class KotlinCheckedExceptionInspection : AbstractKotlinInspection() {
 
       val uncheckedExceptions =
         CachedValuesManager.getManager(element.project).getCachedValue(element, UncheckedExceptionsCachedValueProvider(element))
+          ?.filter { isAnnotationSupported(it.annotationName) }
 
       if (!uncheckedExceptions.isNullOrEmpty()) {
         val quickFixes = mutableListOf<LocalQuickFix>()
@@ -182,7 +184,7 @@ class KotlinCheckedExceptionInspection : AbstractKotlinInspection() {
 
         holder.registerProblem(
           element,
-          DevKitKotlinBundle.message("inspection.checked.exceptions.message", uncheckedExceptions.map { it.toString() }.sorted().joinToString()),
+          DevKitKotlinBundle.message("inspection.checked.exceptions.message", uncheckedExceptions.map { it.exceptionName.toString() }.sorted().joinToString()),
           ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
           *quickFixes.toTypedArray(),
         )
@@ -236,12 +238,13 @@ class KotlinCheckedExceptionInspection : AbstractKotlinInspection() {
       }
       val uncheckedExceptions =
         CachedValuesManager.getManager(element.project).getCachedValue(element, UncheckedExceptionsCachedValueProvider(element))
+          .filter { isAnnotationSupported(it.annotationName) }
 
-      for (uncheckedException in uncheckedExceptions) {
-        val annotationText = "${uncheckedException}::class"
+      for ((annotationFqName, exceptionFqName) in uncheckedExceptions) {
+        val annotationText = "${exceptionFqName}::class"
         whereAddAnnotationTo.addAnnotation(
-          annotationClassId = ClassId.fromString(ThrowsChecked::class.qualifiedName!!),
-          annotationInnerText = "${uncheckedException}::class",
+          annotationClassId = ClassId.fromString(annotationFqName.asString()),
+          annotationInnerText = annotationText,
           searchForExistingEntry = true,
           addToExistingAnnotation = { addArgumentToAnnotation(it, annotationText) }
         )
@@ -274,6 +277,7 @@ class KotlinCheckedExceptionInspection : AbstractKotlinInspection() {
       if (element !is KtCallExpression) return
       val uncheckedExceptions =
         CachedValuesManager.getManager(element.project).getCachedValue(element, UncheckedExceptionsCachedValueProvider(element))
+          ?.filter { isAnnotationSupported(it.annotationName) }
       if (uncheckedExceptions.isNullOrEmpty()) return
 
       val expressionToSurround: KtElement = run {
@@ -296,8 +300,8 @@ class KotlinCheckedExceptionInspection : AbstractKotlinInspection() {
 
       var tryCatchElement: KtTryExpression = KtPsiFactory.contextual(element).createExpression(buildString {
         append("try {\n}")
-        for (uncheckedException in uncheckedExceptions) {
-          append("catch (err: ${uncheckedException.asString()}) {\nTODO(\"Unhandled exception \$err\")\n}")
+        for ((_, exceptionFqName) in uncheckedExceptions) {
+          append("catch (err: ${exceptionFqName.asString()}) {\nTODO(\"Unhandled exception \$err\")\n}")
         }
       }) as KtTryExpression
       val codeStyleManager = CodeStyleManager.getInstance(project)
@@ -355,15 +359,18 @@ private fun FqName.maybeToKotlinFqName(): FqName =
   JavaToKotlinClassMap.mapJavaToKotlin(this)?.asSingleFqName()
   ?: this
 
+private data class AnnotationAndException(val annotationName: FqName, val exceptionName: FqName)
+
 /** Parses a list of annotations, extracts all classes from all `@ThrowChecked`, return fully qualified names of the extracted classes. */
-private fun exceptionsToCheck(annotations: Collection<KtAnnotationEntry>): Collection<FqName> {
-  val result = mutableListOf<FqName>()
+private fun exceptionsToCheck(annotations: Collection<KtAnnotationEntry>): Collection<AnnotationAndException> {
+  val result = mutableListOf<AnnotationAndException>()
   for (annotation in annotations) {
     analyze(annotation) annotationAnalyze@{
       val constructorCall =
         annotation.resolveToCall()?.successfulConstructorCallOrNull()
         ?: return@annotationAnalyze
-      if (constructorCall.symbol.containingClassId?.asSingleFqName() == FqName(ThrowsChecked::class.qualifiedName!!)) {
+      val annotationFqName = constructorCall.symbol.containingClassId?.asSingleFqName()
+      if (annotationFqName?.isEelThrowsChecked() == true || annotationFqName?.isKotlinThrows() == true) {
         for (valueArgument in annotation.valueArguments) {
           val cle =
             valueArgument.getArgumentExpression() as? KtClassLiteralExpression
@@ -372,7 +379,7 @@ private fun exceptionsToCheck(annotations: Collection<KtAnnotationEntry>): Colle
             (cle.receiverType as? KaClassType)?.classId?.asSingleFqName()
           }
           if (fqName != null) {
-            result.add(fqName)
+            result.add(AnnotationAndException(annotationFqName, fqName))
           }
         }
       }
@@ -396,7 +403,7 @@ private fun allSuperClasses(elementForScope: PsiElement, exceptionFqName: FqName
 
 private sealed interface LambdaCheckResult {
   object RethrowsInPlace : LambdaCheckResult
-  class HandlesExceptions(val exceptions: Collection<FqName>) : LambdaCheckResult
+  class HandlesExceptions(val exceptions: Collection<AnnotationAndException>) : LambdaCheckResult
   object Unknown : LambdaCheckResult
 }
 
@@ -484,4 +491,12 @@ private fun KtLambdaExpression.executedInPlaceByCallable(): LambdaCheckResult {
   }
 
   return LambdaCheckResult.Unknown
+}
+
+private fun FqName.isEelThrowsChecked(): Boolean = this == FqName(ThrowsChecked::class.qualifiedName!!)
+private fun FqName.isKotlinThrows(): Boolean = this == FqName(Throws::class.qualifiedName!!)
+
+private fun isAnnotationSupported(annotationFqName: FqName): Boolean {
+  if (annotationFqName.isEelThrowsChecked()) return true
+  return Registry.`is`("devkit.inspections.checked.exception.for.kotlin.throws") && annotationFqName.isKotlinThrows()
 }
