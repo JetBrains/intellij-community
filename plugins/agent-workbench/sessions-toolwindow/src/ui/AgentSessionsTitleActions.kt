@@ -203,7 +203,9 @@ internal class AgentSessionsActivityCounterAction(
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     val counter = AgentSessionsActivityCounterComponent(
       action = this,
-      accentColor = bucket.accentActivity().statusColor(),
+      accentColor = requireNotNull(bucket.accentActivity().statusColor()) {
+        "Activity counter bucket $bucket must define an accent color"
+      },
       tone = bucket.counterTone(),
       actionPlace = place,
     )

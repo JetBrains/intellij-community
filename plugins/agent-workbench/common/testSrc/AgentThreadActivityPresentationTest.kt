@@ -8,12 +8,12 @@ import javax.swing.UIManager
 
 class AgentThreadActivityPresentationTest {
   @Test
-  fun usesNamedThreadColorsAndMessageKeys() {
+  fun usesThreadPresentationsAndMessageKeys() {
     val expected = linkedMapOf(
       AgentThreadActivity.READY to AgentThreadActivityPresentation(
-        namedColorKey = "AgentWorkbench.ThreadStatus.ready",
-        lightFallbackRgb = Color(0x55A76A).rgb,
-        darkFallbackRgb = Color(0x5FAD65).rgb,
+        namedColorKey = null,
+        lightFallbackRgb = null,
+        darkFallbackRgb = null,
         statusMessageKey = "toolwindow.thread.status.ready",
         showBadge = false,
       ),
@@ -31,8 +31,8 @@ class AgentThreadActivityPresentationTest {
       ),
       AgentThreadActivity.UNREAD to AgentThreadActivityPresentation(
         namedColorKey = "AgentWorkbench.ThreadStatus.unread",
-        lightFallbackRgb = Color(0x588CF3).rgb,
-        darkFallbackRgb = Color(0x548AF7).rgb,
+        lightFallbackRgb = Color(0x55A76A).rgb,
+        darkFallbackRgb = Color(0x5FAD65).rgb,
         statusMessageKey = "toolwindow.thread.status.done",
       ),
       AgentThreadActivity.NEEDS_INPUT to AgentThreadActivityPresentation(
@@ -45,11 +45,17 @@ class AgentThreadActivityPresentationTest {
 
     expected.forEach { (activity, presentation) ->
       assertThat(activity.presentation()).isEqualTo(presentation)
-      assertThat(activity.statusColor().rgb).isIn(
-        Color(presentation.lightFallbackRgb).rgb,
-        Color(presentation.darkFallbackRgb).rgb,
-      )
-      assertThat(activity.statusBadgeColor()?.rgb).isEqualTo(if (presentation.showBadge) activity.statusColor().rgb else null)
+      val statusColor = activity.statusColor()
+      if (presentation.namedColorKey == null) {
+        assertThat(statusColor).isNull()
+      }
+      else {
+        assertThat(statusColor?.rgb).isIn(
+          Color(requireNotNull(presentation.lightFallbackRgb)).rgb,
+          Color(requireNotNull(presentation.darkFallbackRgb)).rgb,
+        )
+      }
+      assertThat(activity.statusBadgeColor()?.rgb).isEqualTo(if (presentation.showBadge) statusColor?.rgb else null)
       assertThat(activity.statusMessageKey()).isEqualTo(presentation.statusMessageKey)
     }
   }
@@ -59,7 +65,7 @@ class AgentThreadActivityPresentationTest {
     val overrideColor = Color(0x112233)
 
     withTemporaryNeedsInputUiColor(overrideColor) {
-      assertThat(AgentThreadActivity.NEEDS_INPUT.statusColor().rgb).isEqualTo(overrideColor.rgb)
+      assertThat(AgentThreadActivity.NEEDS_INPUT.statusColor()?.rgb).isEqualTo(overrideColor.rgb)
       assertThat(AgentThreadActivity.NEEDS_INPUT.statusBadgeColor()?.rgb).isEqualTo(overrideColor.rgb)
     }
   }

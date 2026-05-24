@@ -3,10 +3,6 @@
   "fixed": false,
   "ui": [
     {
-      "key": "AgentWorkbench.ThreadStatus.ready",
-      "description": "Color of the idle thread status"
-    },
-    {
       "key": "AgentWorkbench.ThreadStatus.processing",
       "description": "Color of the processing thread status badge"
     },
@@ -16,7 +12,7 @@
     },
     {
       "key": "AgentWorkbench.ThreadStatus.unread",
-      "description": "Color of the done thread status badge"
+      "description": "Color of the done/unread thread status badge"
     },
     {
       "key": "AgentWorkbench.ThreadStatus.needsInput",

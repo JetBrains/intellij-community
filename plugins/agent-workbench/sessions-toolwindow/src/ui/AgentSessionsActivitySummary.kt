@@ -39,7 +39,9 @@ internal enum class AgentSessionsStripeBadge(
   DONE(AgentThreadActivity.UNREAD),
   ;
 
-  fun color(): Color = activity.statusColor()
+  fun color(): Color = requireNotNull(activity.statusColor()) {
+    "Stripe badge activity $activity must define a status color"
+  }
 }
 
 internal data class AgentSessionsActivitySummary(

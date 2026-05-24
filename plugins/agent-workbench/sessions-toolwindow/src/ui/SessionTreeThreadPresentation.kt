@@ -19,7 +19,7 @@ private val SESSION_TREE_TIME_LABEL_SAMPLES = listOf("59m", "23h", "7d", "4w", "
 internal const val SESSION_TREE_MORE_ROW_FRAGMENT_TAG = "agent.sessions.tree.more.row"
 
 internal data class SessionTreeThreadRowPresentation(
-  @JvmField val statusColor: Color,
+  @JvmField val statusColor: Color?,
   @JvmField val title: @NlsSafe String,
   @JvmField val timeLabel: @NlsSafe String,
   @JvmField val statusLabel: @NlsSafe String,
