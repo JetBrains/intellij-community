@@ -7,7 +7,6 @@ import com.intellij.driver.sdk.invokeAction
 import com.intellij.driver.sdk.ui.QueryBuilder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
-import com.intellij.driver.sdk.ui.components.common.IdeaFrameUI
 
 open class ToolWindowToolbarUi(data: ComponentData) : UiComponent(data) {
   fun stripeButton(locator: QueryBuilder.() -> String): StripeButtonUi = x(StripeButtonUi::class.java, locator)
@@ -101,60 +100,3 @@ class StripeButtonUi(data: ComponentData) : UiComponent(data) {
     fun getActionIdForToolWindow(id: String): String
   }
 }
-
-enum class ToolWindowToolbarSide(val className: String) {
-  LEFT("ToolWindowLeftToolbar"),
-  RIGHT("ToolWindowRightToolbar"),
-}
-
-private enum class ToolWindowInteraction(
-  val isAvailable: StripeButtonUi.() -> Boolean,
-  val applyTo: StripeButtonUi.() -> Unit,
-) {
-  OPEN({ present() }, { open() }),
-  CLOSE({ present() }, { close() }),
-}
-
-
-class ToolWindowButton(
-  private val frame: IdeaFrameUI,
-  val side: ToolWindowToolbarSide,
-  val accessibleName: String,
-) {
-  private val stripeButton: StripeButtonUi
-    get() = frame.toolWindowToolbar(side).stripeButton(accessibleName)
-
-  fun open(): Unit = interact(ToolWindowInteraction.OPEN)
-
-  fun close(): Unit = interact(ToolWindowInteraction.CLOSE)
-
-  private fun interact(interaction: ToolWindowInteraction) {
-    val button = stripeButton
-    if (interaction.isAvailable(button)) {
-      interaction.applyTo(button)
-    }
-  }
-}
-
-fun IdeaFrameUI.toolWindow(side: ToolWindowToolbarSide, accessibleName: String): ToolWindowButton =
-  ToolWindowButton(this, side, accessibleName)
-
-fun IdeaFrameUI.openRightToolWindow(stripeButtonName: String): Unit = toolWindow(
-  ToolWindowToolbarSide.RIGHT,
-  stripeButtonName
-).open()
-
-fun IdeaFrameUI.closeRightToolWindow(stripeButtonName: String): Unit = toolWindow(
-  ToolWindowToolbarSide.RIGHT,
-  stripeButtonName
-).close()
-
-fun IdeaFrameUI.openLeftToolWindow(stripeButtonName: String): Unit = toolWindow(
-  ToolWindowToolbarSide.LEFT,
-  stripeButtonName
-).open()
-
-fun IdeaFrameUI.closeLeftToolWindow(stripeButtonName: String): Unit = toolWindow(
-  ToolWindowToolbarSide.LEFT,
-  stripeButtonName
-).close()

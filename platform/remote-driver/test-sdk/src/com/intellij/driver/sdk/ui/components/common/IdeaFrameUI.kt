@@ -11,8 +11,6 @@ import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.common.editor.EditorTabsManager
 import com.intellij.driver.sdk.ui.components.common.toolwindows.ToolWindowLeftToolbarUi
 import com.intellij.driver.sdk.ui.components.common.toolwindows.ToolWindowRightToolbarUi
-import com.intellij.driver.sdk.ui.components.common.toolwindows.ToolWindowToolbarSide
-import com.intellij.driver.sdk.ui.components.common.toolwindows.ToolWindowToolbarUi
 import com.intellij.driver.sdk.ui.components.elements.WindowUiComponent
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.remote.Window
@@ -59,15 +57,10 @@ open class IdeaFrameUI(data: ComponentData) : WindowUiComponent(data) {
     get() = ideaFrameComponent.getExtendedState().and(JFrame.MAXIMIZED_BOTH) != 0
 
   val leftToolWindowToolbar: ToolWindowLeftToolbarUi =
-    x(ToolWindowLeftToolbarUi::class.java) { byClass(ToolWindowToolbarSide.LEFT.className) }
+    x(ToolWindowLeftToolbarUi::class.java) { byClass("ToolWindowLeftToolbar") }
 
   val rightToolWindowToolbar: ToolWindowRightToolbarUi =
-    x(ToolWindowRightToolbarUi::class.java) { byClass(ToolWindowToolbarSide.RIGHT.className) }
-
-  fun toolWindowToolbar(side: ToolWindowToolbarSide): ToolWindowToolbarUi = when (side) {
-    ToolWindowToolbarSide.LEFT -> leftToolWindowToolbar
-    ToolWindowToolbarSide.RIGHT -> rightToolWindowToolbar
-  }
+    x(ToolWindowRightToolbarUi::class.java) { byClass("ToolWindowRightToolbar") }
 
   fun waitForIndicators(timeout: Duration = 5.minutes) {
     driver.waitForIndicators(::project, timeout)

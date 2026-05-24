@@ -13,12 +13,9 @@ import com.intellij.driver.sdk.ui.UiText.Companion.asString
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.EditorComponentImpl
-import com.intellij.driver.sdk.ui.components.common.IdeaFrameUI
 import com.intellij.driver.sdk.ui.components.common.JEditorUiComponent
 import com.intellij.driver.sdk.ui.components.common.editor
 import com.intellij.driver.sdk.ui.components.common.ideFrame
-import com.intellij.driver.sdk.ui.components.common.toolwindows.openLeftToolWindow
-import com.intellij.driver.sdk.ui.components.common.toolwindows.projectView
 import com.intellij.driver.sdk.ui.components.elements.ActionButtonUi
 import com.intellij.driver.sdk.ui.components.elements.JButtonUiComponent
 import com.intellij.driver.sdk.ui.components.elements.JLabelUiComponent
@@ -238,7 +235,7 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
    * in the current notebook editor.
    */
   fun areAllExecutionsFinished(
-    expectedFinalExecutionCount: Int
+    expectedFinalExecutionCount: Int,
   ): Boolean {
     val infos = notebookCellExecutionInfos
     return infos.isNotEmpty() &&
@@ -278,7 +275,7 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     driver.setCurrentCellText(text)
   }
 
-  class CellEditor(data: ComponentData): UiComponent(data)
+  class CellEditor(data: ComponentData) : UiComponent(data)
 
   /**
    * Use to access text editing area
@@ -318,7 +315,6 @@ private fun JLabelUiComponent.hasExecutionIcon(icon: String): Boolean {
 }
 
 
-
 /**
  * Executes a test block within the context of the notebook editor UI component.
  * Note: only the NotebookEditorUiComponent and its successors are directly available in the context of this block.
@@ -329,16 +325,4 @@ private fun JLabelUiComponent.hasExecutionIcon(icon: String): Boolean {
  */
 fun <T> Driver.withNotebookEditor(testBody: NotebookEditorUiComponent.() -> T): T {
   return ui.ideFrame().notebookEditor().testBody()
-}
-
-fun Driver.openNotebookWithProjectPanel(fileName: String): IdeaFrameUI = ideFrame {
-  openLeftToolWindow("Project")
-  projectView {
-    projectViewTree.run {
-      waitOneText(fileName).doubleClick()
-    }
-  }
-  waitFor("the editor is present", timeout = 30.seconds) {
-    notebookEditor().present()
-  }
 }
