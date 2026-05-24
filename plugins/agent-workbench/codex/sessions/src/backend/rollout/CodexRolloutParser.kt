@@ -106,7 +106,7 @@ internal class CodexRolloutParser(
         activity = activity,
         requiresResponse = hasPendingUserInput || hasPendingApproval || hasPendingPlan,
         summaryActivity = summaryActivity,
-        usageSnapshot = state.usageSnapshot,
+        usageSnapshots = listOfNotNull(state.usageSnapshot),
       ),
     )
   }

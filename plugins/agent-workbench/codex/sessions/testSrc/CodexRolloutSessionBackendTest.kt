@@ -26,6 +26,7 @@ import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.time.Instant
 import kotlin.io.path.readText
+import kotlin.system.measureTimeMillis
 import kotlin.time.Duration.Companion.seconds
 
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
@@ -102,7 +103,7 @@ class CodexRolloutSessionBackendTest {
       val threads = backend.listThreads(path = projectDir.toString(), openProject = null)
 
       assertThat(threads).hasSize(1)
-      assertThat(threads.single().usageSnapshot).isEqualTo(
+      assertThat(threads.single().usageSnapshots).containsExactly(
         AgentSessionUsageSnapshot(
           modelId = "gpt-5.4",
           inputTokens = 10_230_044,
@@ -110,6 +111,135 @@ class CodexRolloutSessionBackendTest {
           cacheReadTokens = 131_931_008,
         )
       )
+    }
+  }
+
+  @Test
+  fun foldsSubAgentUsageIntoParentRolloutThread() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-subagent-usage")
+      Files.createDirectories(projectDir)
+      writeRollout(
+        file = tempDir.resolve("sessions").resolve("2026").resolve("05").resolve("08").resolve("rollout-parent-usage.jsonl"),
+        lines = listOf(
+          sessionMetaLine(
+            timestamp = "2026-05-08T10:00:00.000Z",
+            id = "parent-usage",
+            cwd = projectDir,
+          ),
+          tokenUsageLine(
+            timestamp = "2026-05-08T10:00:01.000Z",
+            model = "gpt-5",
+            totalInputTokens = 100,
+            cachedInputTokens = 40,
+            outputTokens = 5,
+          ),
+        ),
+      )
+      writeRollout(
+        file = tempDir.resolve("sessions").resolve("2026").resolve("05").resolve("08").resolve("rollout-child-usage.jsonl"),
+        lines = listOf(
+          subAgentSessionMetaLine(
+            timestamp = "2026-05-08T10:00:02.000Z",
+            id = "child-usage",
+            cwd = projectDir,
+            parentThreadId = "parent-usage",
+          ),
+          tokenUsageLine(
+            timestamp = "2026-05-08T10:00:03.000Z",
+            model = "gpt-5-mini",
+            totalInputTokens = 60,
+            cachedInputTokens = 10,
+            outputTokens = 7,
+          ),
+        ),
+      )
+
+      val backend = CodexRolloutSessionBackend(codexHomeProvider = { tempDir })
+      val threads = backend.listThreads(path = projectDir.toString(), openProject = null)
+
+      assertThat(threads).hasSize(1)
+      val parent = threads.single()
+      assertThat(parent.thread.id).isEqualTo("parent-usage")
+      assertThat(parent.thread.subAgents.map { it.id }).containsExactly("child-usage")
+      assertThat(parent.usageSnapshots).containsExactlyInAnyOrder(
+        AgentSessionUsageSnapshot(
+          modelId = "gpt-5",
+          inputTokens = 60,
+          outputTokens = 5,
+          cacheReadTokens = 40,
+        ),
+        AgentSessionUsageSnapshot(
+          modelId = "gpt-5-mini",
+          inputTokens = 50,
+          outputTokens = 7,
+          cacheReadTokens = 10,
+        ),
+      )
+    }
+  }
+
+  @Test
+  fun aggregatesLargeNestedRolloutSetsQuickly() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-rollout-stress")
+      Files.createDirectories(projectDir)
+      val parentCount = 120
+      val subAgentsPerParent = 5
+
+      for (parentIndex in 0 until parentCount) {
+        val parentId = "parent-$parentIndex"
+        writeRollout(
+          file = tempDir.resolve("sessions").resolve("2026").resolve("05").resolve("09").resolve("rollout-$parentId.jsonl"),
+          lines = listOf(
+            sessionMetaLine(
+              timestamp = "2026-05-09T10:00:00.000Z",
+              id = parentId,
+              cwd = projectDir,
+            ),
+            tokenUsageLine(
+              timestamp = "2026-05-09T10:00:01.000Z",
+              model = "gpt-5",
+              totalInputTokens = 100 + parentIndex.toLong(),
+              cachedInputTokens = 20,
+              outputTokens = 10,
+            ),
+          ),
+        )
+        for (childIndex in 0 until subAgentsPerParent) {
+          val childId = "child-$parentIndex-$childIndex"
+          writeRollout(
+            file = tempDir.resolve("sessions").resolve("2026").resolve("05").resolve("09").resolve("rollout-$childId.jsonl"),
+            lines = listOf(
+              subAgentSessionMetaLine(
+                timestamp = "2026-05-09T10:00:02.000Z",
+                id = childId,
+                cwd = projectDir,
+                parentThreadId = parentId,
+              ),
+              tokenUsageLine(
+                timestamp = "2026-05-09T10:00:03.000Z",
+                model = "gpt-5-mini",
+                totalInputTokens = 50,
+                cachedInputTokens = 5,
+                outputTokens = 3,
+              ),
+            ),
+          )
+        }
+      }
+
+      val backend = CodexRolloutSessionBackend(codexHomeProvider = { tempDir })
+      var threads = emptyList<com.intellij.agent.workbench.codex.sessions.backend.CodexBackendThread>()
+      val elapsedMs = measureTimeMillis {
+        threads = backend.listThreads(path = projectDir.toString(), openProject = null)
+      }
+
+      println("Codex rollout stress aggregation: ${threads.size} parents in ${elapsedMs}ms")
+      assertThat(elapsedMs).isLessThan(5_000)
+      assertThat(threads).hasSize(parentCount)
+      assertThat(threads.all { it.thread.subAgents.size == subAgentsPerParent }).isTrue()
+      assertThat(threads.all { it.usageSnapshots.size == subAgentsPerParent + 1 }).isTrue()
     }
   }
 
@@ -1410,6 +1540,17 @@ private fun subAgentSessionMetaLine(timestamp: String, id: String, cwd: Path, pa
   return """{"timestamp":"$timestamp","type":"session_meta","payload":{"id":"$id","timestamp":"$timestamp","cwd":"${
     cwd.toString().replace("\\", "\\\\")
   }","source":{"subagent":{"thread_spawn":{"parent_thread_id":"$parentThreadId","depth":1}}}}}"""
+}
+
+private fun tokenUsageLine(
+  timestamp: String,
+  model: String,
+  totalInputTokens: Long,
+  cachedInputTokens: Long,
+  outputTokens: Long,
+  reasoningOutputTokens: Long = 0,
+): String {
+  return """{"timestamp":"$timestamp","type":"event_msg","payload":{"type":"token_count","model":"$model","info":{"total_token_usage":{"input_tokens":$totalInputTokens,"cached_input_tokens":$cachedInputTokens,"output_tokens":$outputTokens,"reasoning_output_tokens":$reasoningOutputTokens}}}}"""
 }
 
 private fun writeRollout(file: Path, lines: List<String>) {

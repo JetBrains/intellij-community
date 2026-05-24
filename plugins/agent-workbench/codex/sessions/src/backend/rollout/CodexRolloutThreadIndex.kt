@@ -12,6 +12,7 @@ import com.intellij.agent.workbench.json.filebacked.FileBackedSessionChangeSet
 import com.intellij.agent.workbench.json.filebacked.FileBackedSessionFileStat
 import com.intellij.agent.workbench.json.filebacked.FileBackedSessionInvalidationState
 import com.intellij.agent.workbench.json.filebacked.buildFileBackedSessionFileStat
+import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
@@ -130,7 +131,7 @@ internal class CodexRolloutThreadIndex(
 
       for ((cwd, parsedThreads) in parsedThreadsByCwd) {
         val topLevelThreads = ArrayList<CodexBackendThread>(parsedThreads.size)
-        val subAgentsByParent = LinkedHashMap<String, LinkedHashMap<String, CodexSubAgent>>()
+        val subAgentThreadsByParent = LinkedHashMap<String, MutableList<ParsedRolloutThread>>()
         val subAgentThreads = ArrayList<ParsedRolloutThread>()
 
         for (parsedThread in parsedThreads) {
@@ -140,29 +141,39 @@ internal class CodexRolloutThreadIndex(
             continue
           }
 
-          val subAgents = subAgentsByParent.getOrPut(parentThreadId) { LinkedHashMap() }
-          val subAgent = CodexSubAgent(id = parsedThread.thread.thread.id, name = parsedThread.thread.thread.title)
-          subAgents.putIfAbsent(subAgent.id, subAgent)
+          subAgentThreadsByParent.getOrPut(parentThreadId) { ArrayList() }.add(parsedThread)
           subAgentThreads.add(parsedThread)
         }
 
         val resolvedParentIds = HashSet<String>()
         for (index in topLevelThreads.indices) {
           val parentThread = topLevelThreads[index]
-          val childSubAgents = subAgentsByParent[parentThread.thread.id] ?: continue
-          if (childSubAgents.isEmpty()) continue
+          val childThreads = subAgentThreadsByParent[parentThread.thread.id].orEmpty()
+          if (childThreads.isEmpty()) continue
 
           val mergedSubAgents = LinkedHashMap<String, CodexSubAgent>(
-            parentThread.thread.subAgents.size + childSubAgents.size
+            parentThread.thread.subAgents.size + childThreads.size
           )
           parentThread.thread.subAgents.forEach { subAgent ->
             mergedSubAgents.putIfAbsent(subAgent.id, subAgent)
           }
-          childSubAgents.forEach { (_, subAgent) ->
+          childThreads.forEach { childThread ->
+            val subAgent = CodexSubAgent(id = childThread.thread.thread.id, name = childThread.thread.thread.title)
             mergedSubAgents.putIfAbsent(subAgent.id, subAgent)
           }
 
-          topLevelThreads[index] = parentThread.copy(thread = parentThread.thread.copy(subAgents = ArrayList(mergedSubAgents.values)))
+          val mergedUsageSnapshots = ArrayList<AgentSessionUsageSnapshot>(
+            parentThread.usageSnapshots.size + childThreads.sumOf { childThread -> childThread.thread.usageSnapshots.size }
+          )
+          mergedUsageSnapshots.addAll(parentThread.usageSnapshots)
+          childThreads.forEach { childThread ->
+            mergedUsageSnapshots.addAll(childThread.thread.usageSnapshots)
+          }
+
+          topLevelThreads[index] = parentThread.copy(
+            thread = parentThread.thread.copy(subAgents = ArrayList(mergedSubAgents.values)),
+            usageSnapshots = mergedUsageSnapshots,
+          )
           resolvedParentIds.add(parentThread.thread.id)
         }
 

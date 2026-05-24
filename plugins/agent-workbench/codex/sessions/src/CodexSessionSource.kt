@@ -43,6 +43,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
+import java.math.BigDecimal
 
 private val LOG = logger<CodexSessionSource>()
 
@@ -94,7 +95,7 @@ internal class CodexSessionSource internal constructor(
 
   override suspend fun listArchivedThreads(path: String, openProject: Project?): List<AgentSessionThread> {
     return backend.listArchivedThreads(path = path, openProject = openProject).map { thread ->
-      toAgentSessionThread(thread = thread, cost = thread.usageSnapshot?.let(calculateCost))
+      toAgentSessionThread(thread = thread, cost = thread.usageSnapshots.toAgentSessionCost(calculateCost))
     }
   }
 
@@ -309,8 +310,10 @@ internal class CodexSessionSource internal constructor(
   }
 
   private fun resolveThreadCost(backendThread: CodexBackendThread?, rolloutThread: CodexBackendThread?): AgentSessionCost? {
-    val usageSnapshot = backendThread?.usageSnapshot ?: rolloutThread?.usageSnapshot ?: return null
-    return calculateCost(usageSnapshot)
+    val usageSnapshots = backendThread?.usageSnapshots?.takeIf { it.isNotEmpty() }
+                         ?: rolloutThread?.usageSnapshots?.takeIf { it.isNotEmpty() }
+                         ?: return null
+    return usageSnapshots.toAgentSessionCost(calculateCost)
   }
 
   private suspend fun prefetchAppServerHintsWithRolloutVerification(
@@ -568,6 +571,29 @@ private fun toAgentSessionThread(thread: CodexBackendThread, cost: AgentSessionC
     summaryActivity = thread.summaryActivity,
     cost = cost,
   )
+}
+
+private fun List<AgentSessionUsageSnapshot>.toAgentSessionCost(
+  calculateCost: (AgentSessionUsageSnapshot) -> AgentSessionCost,
+): AgentSessionCost? {
+  if (isEmpty()) return null
+
+  val componentCosts = map(calculateCost)
+  if (componentCosts.any { it.amountUsd == null }) {
+    return AgentSessionCost(amountUsd = null, kind = AgentSessionCostKind.UNAVAILABLE)
+  }
+
+  val totalAmount = componentCosts.fold(BigDecimal.ZERO) { acc, cost ->
+    acc + checkNotNull(cost.amountUsd)
+  }
+  val kind = if (componentCosts.all { it.kind == AgentSessionCostKind.EXACT }) {
+    AgentSessionCostKind.EXACT
+  }
+  else {
+    AgentSessionCostKind.ESTIMATED
+  }
+  val matchedModelId = componentCosts.mapNotNull(AgentSessionCost::matchedModelId).distinct().singleOrNull()
+  return AgentSessionCost(amountUsd = totalAmount, kind = kind, matchedModelId = matchedModelId)
 }
 
 private fun toAgentSessionThread(

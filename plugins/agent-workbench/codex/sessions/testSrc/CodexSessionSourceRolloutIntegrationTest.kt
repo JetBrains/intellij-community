@@ -112,6 +112,63 @@ class CodexSessionSourceRolloutIntegrationTest {
   }
 
   @Test
+  fun rolloutSubAgentUsageContributesToParentSessionCost() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = createProjectDir("project-rollout-subagent-cost")
+      writeRolloutFile(
+        fileName = "rollout-parent-thread.jsonl",
+        lines = listOf(
+          sessionMetaLine(threadId = THREAD_ID, cwd = projectDir),
+          tokenUsageLine(
+            timestamp = "2026-03-08T10:05:01.000Z",
+            model = "gpt-5",
+            totalInputTokens = 100,
+            cachedInputTokens = 40,
+            outputTokens = 5,
+          ),
+        ),
+      )
+      writeRolloutFile(
+        fileName = "rollout-child-thread.jsonl",
+        lines = listOf(
+          subAgentSessionMetaLine(threadId = "subagent-1", cwd = projectDir, parentThreadId = THREAD_ID),
+          tokenUsageLine(
+            timestamp = "2026-03-08T10:05:02.000Z",
+            model = "gpt-5-mini",
+            totalInputTokens = 60,
+            cachedInputTokens = 10,
+            outputTokens = 7,
+          ),
+        ),
+      )
+
+      val source = testCreateSource(
+        projectDir = projectDir,
+        codexHome = tempDir,
+        threadIds = listOf(THREAD_ID),
+        calculateCost = { usage ->
+          AgentSessionCost(
+            amountUsd = BigDecimal.valueOf(usage.inputTokens + usage.outputTokens + usage.cacheReadTokens),
+            kind = AgentSessionCostKind.EXACT,
+            matchedModelId = usage.modelId,
+          )
+        },
+      )
+
+      val listedThreads = source.listThreadsFromClosedProject(projectDir.toString())
+
+      assertThat(listedThreads).hasSize(1)
+      assertThat(listedThreads.single().cost).isEqualTo(
+        AgentSessionCost(
+          amountUsd = BigDecimal.valueOf(172),
+          kind = AgentSessionCostKind.EXACT,
+          matchedModelId = null,
+        )
+      )
+    }
+  }
+
+  @Test
   fun rolloutTaskCompleteClearsStaleAppServerProcessingListActivityToReady() {
     runBlocking(Dispatchers.Default) {
       val projectDir = createProjectDir("project-list-complete-ready")
@@ -380,13 +437,17 @@ private fun CodexSessionSourceRolloutIntegrationTest.createProjectDir(name: Stri
 }
 
 private fun CodexSessionSourceRolloutIntegrationTest.writeRollout(projectDir: Path, lines: List<String>) {
-  val rolloutDir = tempDir.resolve("sessions").resolve("2026").resolve("03").resolve("08")
-  val rolloutFile = rolloutDir.resolve("rollout-${projectDir.fileName}.jsonl")
-  Files.createDirectories(rolloutDir)
-  Files.write(
-    rolloutFile,
-    listOf(sessionMetaLine(cwd = projectDir)) + lines,
+  writeRolloutFile(
+    fileName = "rollout-${projectDir.fileName}.jsonl",
+    lines = listOf(sessionMetaLine(cwd = projectDir)) + lines,
   )
+}
+
+private fun CodexSessionSourceRolloutIntegrationTest.writeRolloutFile(fileName: String, lines: List<String>) {
+  val rolloutDir = tempDir.resolve("sessions").resolve("2026").resolve("03").resolve("08")
+  val rolloutFile = rolloutDir.resolve(fileName)
+  Files.createDirectories(rolloutDir)
+  Files.write(rolloutFile, lines)
 }
 
 private fun CodexSessionSourceRolloutIntegrationTest.writeRolloutFixture(projectDir: Path) {
@@ -416,11 +477,31 @@ private fun loadRolloutFixture(projectDir: Path): List<String> {
 }
 
 private fun sessionMetaLine(cwd: Path): String {
+  return sessionMetaLine(threadId = THREAD_ID, cwd = cwd)
+}
+
+private fun sessionMetaLine(threadId: String, cwd: Path): String {
   val timestamp = "2026-03-08T10:00:00.000Z"
-  return """{"timestamp":"$timestamp","type":"session_meta","payload":{"id":"$THREAD_ID","timestamp":"$timestamp","cwd":"${cwd.toString().replace("\\", "\\\\")}"}}"""
+  return """{"timestamp":"$timestamp","type":"session_meta","payload":{"id":"$threadId","timestamp":"$timestamp","cwd":"${cwd.toString().replace("\\", "\\\\")}"}}"""
+}
+
+private fun subAgentSessionMetaLine(threadId: String, cwd: Path, parentThreadId: String): String {
+  val timestamp = "2026-03-08T10:00:00.000Z"
+  return """{"timestamp":"$timestamp","type":"session_meta","payload":{"id":"$threadId","timestamp":"$timestamp","cwd":"${cwd.toString().replace("\\", "\\\\")}","source":{"subagent":{"thread_spawn":{"parent_thread_id":"$parentThreadId","depth":1}}}}}"""
 }
 
 private fun eventMsg(timestamp: String, type: String, message: String? = null): String {
   val messageField = if (message == null) "" else ",\"message\":\"$message\""
   return """{"timestamp":"$timestamp","type":"event_msg","payload":{"type":"$type"$messageField}}"""
+}
+
+private fun tokenUsageLine(
+  timestamp: String,
+  model: String,
+  totalInputTokens: Long,
+  cachedInputTokens: Long,
+  outputTokens: Long,
+  reasoningOutputTokens: Long = 0,
+): String {
+  return """{"timestamp":"$timestamp","type":"event_msg","payload":{"type":"token_count","model":"$model","info":{"total_token_usage":{"input_tokens":$totalInputTokens,"cached_input_tokens":$cachedInputTokens,"output_tokens":$outputTokens,"reasoning_output_tokens":$reasoningOutputTokens}}}}"""
 }
