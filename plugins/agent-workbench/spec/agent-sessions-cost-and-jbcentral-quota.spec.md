@@ -28,12 +28,14 @@ The Agent Threads tree must optionally show per-session cost when the provider a
 - Prefer exact provider-native cost over any estimate.
 - Fetch OpenRouter model pricing once at IDE startup and reuse the last successful snapshot as the only fallback price catalog.
 - Add a JBCentral quota widget that reports remaining quota and refill timing without reimplementing JBCentral token storage or refresh flows in the IDE.
+- Keep the session cost UI and JBCentral quota UI configurable, including startup affordances that mirror the current Claude quota enablement flow.
 
 ## Non-goals
 - Continuous background price refresh after IDE startup.
 - Hard-coded OpenAI, Anthropic, or provider-local tariff tables inside Agent Workbench.
 - Best-effort guessed pricing for unmatched or ambiguous model names.
 - A separate subagent row model for Claude cost presentation in this change.
+- Non-configurable always-on cost or quota surfaces.
 
 ## Requirements
 - Agent Workbench must maintain a single application-level price catalog service that fetches OpenRouter `/api/v1/models` once during IDE startup, normalizes each model's `id`, `canonical_slug`, `name`, and pricing fields, and persists the last successful snapshot for reuse across restarts.
@@ -75,6 +77,10 @@ The Agent Threads tree must optionally show per-session cost when the provider a
 - Agent Threads cost presentation must remain opt-in behind a dedicated registry key or equivalent feature flag.
   [@test] ../sessions-toolwindow/testSrc/AgentSessionsSwingTreeCellRendererTest.kt
 
+- The session cost feature and the JBCentral quota widget must each expose persisted enablement state so users can turn them on and off independently.
+  [@test] ../sessions-toolwindow/testSrc/AgentSessionsSwingTreeCellRendererTest.kt
+  [@test] ../claude/sessions/testSrc/ClaudeQuotaHintStateServiceTest.kt
+
 - When enabled, thread rows must render exact cost as `$N.NN`, estimated cost as `~$N.NN`, and unavailable cost as no cost label.
   [@test] ../sessions-toolwindow/testSrc/AgentSessionsSwingTreeCellRendererTest.kt
 
@@ -83,6 +89,10 @@ The Agent Threads tree must optionally show per-session cost when the provider a
   [@test] ../claude/sessions/testSrc/ClaudeSessionSourceTest.kt
 
 - JBCentral quota must be surfaced through a dedicated status bar widget that follows the Claude quota widget interaction model: lazy activation, explicit refresh on click, and tooltip-based detail display.
+  [@test] ../claude/sessions/testSrc/ClaudeQuotaStatusBarWidgetTest.kt
+
+- JBCentral quota enablement must be offered through a startup hint flow equivalent in behavior to the current Claude quota hint flow: opening the relevant Agent Workbench surface may mark the hint as eligible, the hint must be dismissible, and enabling the widget from the hint must acknowledge the prompt and persist enablement.
+  [@test] ../claude/sessions/testSrc/ClaudeQuotaHintStateServiceTest.kt
   [@test] ../claude/sessions/testSrc/ClaudeQuotaStatusBarWidgetTest.kt
 
 - The JBCentral quota implementation must shell out to the installed `jbcentral quota` workflow instead of duplicating Central CLI token loading, encrypted storage, or refresh logic inside Agent Workbench.
@@ -99,6 +109,7 @@ The Agent Threads tree must optionally show per-session cost when the provider a
 - The Agent Threads tree should reserve cost space in the existing right-side metadata lane, alongside time metadata, so titles continue to clip predictably.
 - Exact and estimated costs must be visually distinguishable without adding extra icons.
 - The JBCentral widget should use a single remaining-quota bar and a tooltip that includes license name, used amount, remaining amount, maximum quota, and refill date when available.
+- Startup prompts for cost/quota affordances should follow the same tone and dismissal model as existing Claude quota prompting instead of introducing a separate UX pattern.
 
 ## Data & Backend
 - The persisted OpenRouter snapshot should store only the normalized pricing data needed for offline matching and calculation, not the entire raw response body.
