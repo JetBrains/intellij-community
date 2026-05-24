@@ -190,8 +190,6 @@ private fun collectModulesWithIncludeDependencies(spec: ProductModulesContentSpe
 }
 
 private fun collectFromModuleSet(moduleSet: ModuleSet, result: LinkedHashSet<ContentModuleName>) {
-  // pluginized module sets are materialized as standalone bundled plugins, not inlined into the product
-  if (moduleSet.pluginSpec != null) return
   for (m: ContentModule in moduleSet.modules) {
     if (m.includeDependencies) result.add(m.contentName())
   }

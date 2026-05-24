@@ -43,6 +43,20 @@ internal fun GraphScope.hasPluginSource(moduleId: Int): Boolean {
 }
 
 /**
+ * Check if a module has a module-set wrapper plugin as a content source.
+ */
+internal fun GraphScope.hasModuleSetWrapperSource(moduleId: Int): Boolean {
+  val module = ContentModuleNode(moduleId)
+  var hasWrapper = false
+  module.contentProductionSources { source ->
+    if (source.kind == ContentSourceKind.PLUGIN && source.plugin().isModuleSetWrapper) {
+      hasWrapper = true
+    }
+  }
+  return hasWrapper
+}
+
+/**
  * Check whether module is embedded in a specific product scope.
  *
  * Returns true only if the module has at least one non-plugin source reachable from this product

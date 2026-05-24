@@ -620,6 +620,46 @@ class ContentModuleDependencyGeneratorTest {
     }
 
     @Test
+    fun `content module in module set wrapper keeps globally embedded dependency`(@TempDir tempDir: Path) {
+      runBlocking(Dispatchers.Default) {
+        val wrapperPluginName = moduleSetPluginModuleName("my.feature").value
+        val setup = pluginTestSetup(tempDir) {
+          contentModule("intellij.platform.core") {
+            descriptor = """<idea-plugin package="com.intellij.core"/>"""
+          }
+
+          contentModule("intellij.my.feature") {
+            descriptor = """<idea-plugin package="com.intellij.feature"/>"""
+            jpsDependency("intellij.platform.core")
+          }
+
+          plugin(wrapperPluginName) {
+            content("intellij.my.feature")
+          }
+
+          product("TestProduct") {
+            bundlesPlugin(wrapperPluginName)
+            moduleSet("essential") {
+              module(
+                "intellij.platform.core",
+                ModuleLoadingRuleValue.EMBEDDED
+              )
+            }
+          }
+        }
+
+        val result = setup.generateDependencies(listOf(wrapperPluginName))
+        val contentResult = result.files
+          .flatMap { it.contentModuleResults }
+          .single { it.contentModuleName == ContentModuleName("intellij.my.feature") }
+
+        assertThat(contentResult.writtenDependencies)
+          .describedAs("Module-set wrapper content should keep embedded deps like legacy module-set content")
+          .contains(ContentModuleName("intellij.platform.core"))
+      }
+    }
+
+    @Test
     fun `content module in plugin keeps same-plugin dependency to embedded sibling`(@TempDir tempDir: Path) {
       runBlocking(Dispatchers.Default) {
         val setup = pluginTestSetup(tempDir) {

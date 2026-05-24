@@ -326,7 +326,7 @@ Bundled plugin content is ignored when deciding whether a target is globally emb
 
 Embedded-check scope depends on dependency origin:
 - Plugin XML dependency: products where the plugin is bundled; fallback to all discovered real products for non-bundled plugins.
-- Content module dependency (plugin-only source module): products where owner plugins are bundled; fallback to all discovered real products for non-bundled owners.
+- Content module dependency (plugin-only source module): products where owner plugins are bundled; fallback to all discovered real products for non-bundled owners. Content owned by module-set wrapper plugins is treated as module-set content and does not use this filter.
 - DSL test plugin dependency: only the owning DSL test plugin product.
 
 "Discovered real products" means `GenerationModel.discovery.products` (synthetic test product specs are excluded).
@@ -356,7 +356,7 @@ This filtering applies to:
 - **Content module dependencies** (only for content modules **in plugins**, not directly in products)
 - **DSL test plugin dependency planning**
 
-Content modules directly in products (via module sets) do NOT skip embedded deps because they're not "inside a plugin" - they're at the product level where the embedding relationship is defined.
+Content modules directly in products (via module sets) and content modules owned by module-set wrapper plugins do NOT skip embedded deps because they're module-set/product-layout content, not regular plugin content.
 Plugin-only embedded sources also stay explicit because plugin content alone does not make a target globally embedded.
 
 ### Implementation

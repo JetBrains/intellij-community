@@ -3,10 +3,9 @@ package org.jetbrains.intellij.build.productLayout.discovery
 
 object ModuleSetSourceLabels {
   const val COMMUNITY: String = "community"
-  const val COMMUNITY_PLATFORM_PLUGINS: String = "community.platform.plugins"
   const val CORE: String = "core"
   const val ULTIMATE: String = "ultimate"
 
   @JvmField
-  val COMMUNITY_LABELS: Set<String> = setOf(COMMUNITY, COMMUNITY_PLATFORM_PLUGINS)
+  val COMMUNITY_LABELS: Set<String> = setOf(COMMUNITY)
 }

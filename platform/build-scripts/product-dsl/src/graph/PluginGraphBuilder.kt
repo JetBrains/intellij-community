@@ -67,6 +67,7 @@ import org.jetbrains.intellij.build.productLayout.contentName
 import org.jetbrains.intellij.build.productLayout.dependency.ModuleDescriptorCache
 import org.jetbrains.intellij.build.productLayout.dependency.PluginContentProvider
 import org.jetbrains.intellij.build.productLayout.discovery.PluginContentInfo
+import org.jetbrains.intellij.build.productLayout.isModuleSetPluginModuleName
 import org.jetbrains.intellij.build.productLayout.model.ErrorSink
 import org.jetbrains.intellij.build.productLayout.model.error.MissingPluginInGraphError
 import org.jetbrains.intellij.build.productLayout.validator.rule.isTestPlugin
@@ -142,11 +143,12 @@ internal class PluginGraphBuilder(
     isModuleSetWrapper: Boolean = false,
     isAlias: Boolean = false,
   ): Int {
+    val moduleSetWrapper = isModuleSetWrapper || isModuleSetPluginModuleName(name.value)
     val existing = store.nameIndex[NODE_PLUGIN].getOrDefault(name.value, -1)
     if (existing >= 0) {
       val flags = (if (isTest) NODE_FLAG_IS_TEST else 0) or
                   (if (isDslDefined) NODE_FLAG_IS_DSL_DEFINED else 0) or
-                  (if (isModuleSetWrapper) NODE_FLAG_IS_MODULE_SET_WRAPPER else 0) or
+                  (if (moduleSetWrapper) NODE_FLAG_IS_MODULE_SET_WRAPPER else 0) or
                   (if (isAlias) NODE_FLAG_IS_ALIAS else 0)
       if (flags != 0) {
         store.kinds[existing] = store.kinds[existing] or flags
@@ -180,7 +182,7 @@ internal class PluginGraphBuilder(
     store.kinds.add(NODE_PLUGIN
               or (if (isTest) NODE_FLAG_IS_TEST else 0)
               or (if (isDslDefined) NODE_FLAG_IS_DSL_DEFINED else 0)
-              or (if (isModuleSetWrapper) NODE_FLAG_IS_MODULE_SET_WRAPPER else 0)
+              or (if (moduleSetWrapper) NODE_FLAG_IS_MODULE_SET_WRAPPER else 0)
               or (if (isAlias) NODE_FLAG_IS_ALIAS else 0))
     store.mutableNameIndex(NODE_PLUGIN).set(name.value, id)
 
