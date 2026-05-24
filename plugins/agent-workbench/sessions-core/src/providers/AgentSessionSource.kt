@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.sessions.core.providers
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.session.AgentSessionCost
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.openapi.project.Project
@@ -177,6 +178,11 @@ interface AgentSessionSource {
     paths: List<String>,
     refreshThreadSeedsByPath: Map<String, Set<AgentSessionRefreshThreadSeed>>,
   ): Map<String, AgentSessionRefreshHints> = emptyMap()
+
+  suspend fun loadThreadCosts(
+    path: String,
+    threads: List<AgentSessionThread>,
+  ): Map<String, AgentSessionCost?> = emptyMap()
 
   fun markThreadAsRead(threadId: String, updatedAt: Long) {}
 

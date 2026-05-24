@@ -76,9 +76,15 @@ class ClaudeSessionSourceTest {
       source.listThreadsFromClosedProject(path = "/any").single()
     }
 
-    assertThat(thread.cost?.kind).isEqualTo(AgentSessionCostKind.ESTIMATED)
-    assertThat(thread.cost?.amountUsd).isEqualByComparingTo(BigDecimal("1.75"))
-    assertThat(thread.cost?.matchedModelId).isNull()
+    assertThat(thread.cost).isNull()
+
+    val loadedCost = runBlocking(Dispatchers.Default) {
+      source.loadThreadCosts(path = "/any", threads = listOf(thread)).getValue(thread.id)
+    }
+
+    assertThat(loadedCost?.kind).isEqualTo(AgentSessionCostKind.ESTIMATED)
+    assertThat(loadedCost?.amountUsd).isEqualByComparingTo(BigDecimal("1.75"))
+    assertThat(loadedCost?.matchedModelId).isNull()
   }
 
   @Test

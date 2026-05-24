@@ -8,6 +8,7 @@ package com.intellij.agent.workbench.codex.sessions.backend.rollout
 
 import com.intellij.agent.workbench.codex.common.normalizeRootPath
 import com.intellij.agent.workbench.codex.sessions.backend.CodexBackendThread
+import com.intellij.agent.workbench.codex.sessions.backend.CodexBackendThreadRefreshResult
 import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionBackend
 import com.intellij.agent.workbench.codex.sessions.backend.toAgentThreadActivity
 import com.intellij.agent.workbench.common.AgentThreadActivity
@@ -45,7 +46,7 @@ internal class CodexRolloutSessionBackend(
   private val trailingRefreshDelayMs: Long = CODEX_ROLLOUT_TRAILING_REFRESH_DELAY_MS,
 ) : CodexSessionBackend {
   private val parser = CodexRolloutParser()
-  private val threadIndex = CodexRolloutThreadIndex(codexHomeProvider = codexHomeProvider, parser = parser)
+  private val threadIndex = CodexRolloutThreadIndex(codexHomeProvider = codexHomeProvider, parseRollout = parser::parse)
   private val rolloutUpdates: Flow<AgentSessionSourceUpdateEvent> = createUpdatesFlow(
     rolloutChangeSource?.invoke() ?: createWatcherUpdates()
   ).conflate()
@@ -178,6 +179,21 @@ internal class CodexRolloutSessionBackend(
       pathFilters.associate { (path, cwdFilter) ->
         path to threadsByCwd.get(cwdFilter).orEmpty()
       }
+    }
+  }
+
+  override suspend fun refreshThreads(path: String, threadIds: Set<String>, openProject: Project?): CodexBackendThreadRefreshResult? {
+    if (threadIds.isEmpty()) {
+      return null
+    }
+    return withContext(Dispatchers.IO) {
+      val workingDirectory = resolveProjectDirectoryFromPath(path)
+                             ?: return@withContext CodexBackendThreadRefreshResult()
+      val cwdFilter = normalizeRootPath(workingDirectory.invariantSeparatorsPathString)
+      CodexBackendThreadRefreshResult(
+        threads = threadIndex.collectByCwdAndThreadIds(cwdFilter = cwdFilter, threadIds = threadIds),
+        isComplete = false,
+      )
     }
   }
 }

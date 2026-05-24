@@ -11,6 +11,7 @@ import com.intellij.agent.workbench.chat.collectOpenPendingAgentChatTabsByPath
 import com.intellij.agent.workbench.chat.collectOpenPendingCodexTabsByPath
 import com.intellij.agent.workbench.chat.rebindOpenPendingCodexTabs
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.session.AgentSessionCost
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
@@ -202,6 +203,7 @@ class ScriptedSessionSource(
   private val listArchivedFromClosedProject: suspend (path: String) -> List<AgentSessionThread> = { _ -> emptyList() },
   private val prefetch: suspend (paths: List<String>) -> Map<String, List<AgentSessionThread>> = { emptyMap() },
   private val refreshThreadsProvider: (suspend (AgentSessionSourceRefreshRequest) -> AgentSessionSourceRefreshResult)? = null,
+  private val loadThreadCostsProvider: suspend (path: String, threads: List<AgentSessionThread>) -> Map<String, AgentSessionCost?> = { _, _ -> emptyMap() },
   private val prefetchRefreshHintsProvider: suspend (
     paths: List<String>,
     knownThreadIdsByPath: Map<String, Set<String>>,
@@ -240,6 +242,10 @@ class ScriptedSessionSource(
 
   override suspend fun refreshThreads(request: AgentSessionSourceRefreshRequest): AgentSessionSourceRefreshResult {
     return refreshThreadsProvider?.invoke(request) ?: super.refreshThreads(request)
+  }
+
+  override suspend fun loadThreadCosts(path: String, threads: List<AgentSessionThread>): Map<String, AgentSessionCost?> {
+    return loadThreadCostsProvider(path, threads)
   }
 
   override suspend fun prefetchRefreshHints(
@@ -292,6 +298,7 @@ fun thread(
   activity: AgentThreadActivity = AgentThreadActivity.READY,
   summaryActivity: AgentThreadActivity? = activity,
   subAgents: List<AgentSubAgent> = emptyList(),
+  cost: AgentSessionCost? = null,
 ): AgentSessionThread {
   return AgentSessionThread(
     id = id,
@@ -302,6 +309,7 @@ fun thread(
     activity = activity,
     summaryActivity = summaryActivity,
     subAgents = subAgents,
+    cost = cost,
   )
 }
 
@@ -338,6 +346,7 @@ internal suspend fun withTestServiceAndLaunch(
     Map<String, List<AgentChatPendingTabRebindRequest>>,
   ) -> AgentChatPendingTabRebindReport = { _, requestsByPath -> openAgentChatPendingTabsBinder(requestsByPath) },
   archivedSessionsRefreshIfLoaded: () -> Unit = {},
+  currentTimeMillis: () -> Long = System::currentTimeMillis,
   action: suspend (AgentSessionStateSyncTestFacade, AgentSessionLaunchService) -> Unit,
 ) {
   withServiceAndLaunch(
@@ -352,6 +361,7 @@ internal suspend fun withTestServiceAndLaunch(
     openPendingAgentChatTabsProvider = openPendingAgentChatTabsProvider,
     openAgentChatPendingTabsBinderWithProvider = openAgentChatPendingTabsBinderWithProvider,
     archivedSessionsRefreshIfLoaded = archivedSessionsRefreshIfLoaded,
+    currentTimeMillis = currentTimeMillis,
     action = action,
   )
 }
@@ -377,6 +387,7 @@ internal suspend fun withService(
     Map<String, List<AgentChatPendingTabRebindRequest>>,
   ) -> AgentChatPendingTabRebindReport = { _, requestsByPath -> openAgentChatPendingTabsBinder(requestsByPath) },
   archivedSessionsRefreshIfLoaded: () -> Unit = {},
+  currentTimeMillis: () -> Long = System::currentTimeMillis,
   action: suspend (AgentSessionStateSyncTestFacade) -> Unit,
 ) {
   withServiceAndLaunch(
@@ -391,6 +402,7 @@ internal suspend fun withService(
     openPendingAgentChatTabsProvider = openPendingAgentChatTabsProvider,
     openAgentChatPendingTabsBinderWithProvider = openAgentChatPendingTabsBinderWithProvider,
     archivedSessionsRefreshIfLoaded = archivedSessionsRefreshIfLoaded,
+    currentTimeMillis = currentTimeMillis,
   ) { service, _ ->
     action(service)
   }
@@ -417,6 +429,7 @@ internal suspend fun withServiceAndLaunch(
     Map<String, List<AgentChatPendingTabRebindRequest>>,
   ) -> AgentChatPendingTabRebindReport = { _, requestsByPath -> openAgentChatPendingTabsBinder(requestsByPath) },
   archivedSessionsRefreshIfLoaded: () -> Unit = {},
+  currentTimeMillis: () -> Long = System::currentTimeMillis,
   action: suspend (AgentSessionStateSyncTestFacade, AgentSessionLaunchService) -> Unit,
 ) {
   withServiceAndArchiveAndLaunch(
@@ -432,6 +445,7 @@ internal suspend fun withServiceAndLaunch(
     openPendingAgentChatTabsProvider = openPendingAgentChatTabsProvider,
     openAgentChatPendingTabsBinderWithProvider = openAgentChatPendingTabsBinderWithProvider,
     archivedSessionsRefreshIfLoaded = archivedSessionsRefreshIfLoaded,
+    currentTimeMillis = currentTimeMillis,
   ) { service, _, launchService ->
     action(service, launchService)
   }
@@ -460,6 +474,7 @@ internal suspend fun withServiceAndArchive(
     Map<String, List<AgentChatPendingTabRebindRequest>>,
   ) -> AgentChatPendingTabRebindReport = { _, requestsByPath -> openAgentChatPendingTabsBinder(requestsByPath) },
   archivedSessionsRefreshIfLoaded: () -> Unit = {},
+  currentTimeMillis: () -> Long = System::currentTimeMillis,
   action: suspend (AgentSessionStateSyncTestFacade, AgentSessionArchiveService) -> Unit,
 ) {
   withServiceAndArchiveAndLaunch(
@@ -476,6 +491,7 @@ internal suspend fun withServiceAndArchive(
     openPendingAgentChatTabsProvider = openPendingAgentChatTabsProvider,
     openAgentChatPendingTabsBinderWithProvider = openAgentChatPendingTabsBinderWithProvider,
     archivedSessionsRefreshIfLoaded = archivedSessionsRefreshIfLoaded,
+    currentTimeMillis = currentTimeMillis,
   ) { service, archiveService, _ ->
     action(service, archiveService)
   }
@@ -504,6 +520,7 @@ internal suspend fun withServiceAndArchiveAndLaunch(
     Map<String, List<AgentChatPendingTabRebindRequest>>,
   ) -> AgentChatPendingTabRebindReport = { _, requestsByPath -> openAgentChatPendingTabsBinder(requestsByPath) },
   archivedSessionsRefreshIfLoaded: () -> Unit = {},
+  currentTimeMillis: () -> Long = System::currentTimeMillis,
   action: suspend (AgentSessionStateSyncTestFacade, AgentSessionArchiveService, AgentSessionLaunchService) -> Unit,
 ) {
   val job = SupervisorJob()
@@ -539,6 +556,7 @@ internal suspend fun withServiceAndArchiveAndLaunch(
       },
       openAgentChatPendingTabsBinder = openAgentChatPendingTabsBinderWithProvider,
       providerDescriptorProvider = { provider -> testIntegrationProviderDescriptor(provider) },
+      currentTimeMillis = currentTimeMillis,
       subscribeToProjectLifecycle = false,
     )
     val service = AgentSessionStateSyncTestFacade(

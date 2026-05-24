@@ -80,7 +80,7 @@ class CodexSessionSourceRolloutIntegrationTest {
   }
 
   @Test
-  fun rolloutUsageAddsEstimatedCostToListedAppServerThread() {
+  fun rolloutUsageAddsEstimatedCostToVisibleAppServerThread() {
     runBlocking(Dispatchers.Default) {
       val projectDir = createProjectDir("project-rollout-cost")
       writeRolloutFixture(projectDir)
@@ -99,9 +99,11 @@ class CodexSessionSourceRolloutIntegrationTest {
       )
 
       val listedThreads = source.listThreadsFromClosedProject(projectDir.toString())
+      val loadedCosts = source.loadThreadCosts(projectDir.toString(), listedThreads)
 
       assertThat(listedThreads).hasSize(1)
-      assertThat(listedThreads.single().cost).isEqualTo(
+      assertThat(listedThreads.single().cost).isNull()
+      assertThat(loadedCosts.getValue(listedThreads.single().id)).isEqualTo(
         AgentSessionCost(
           amountUsd = BigDecimal("142569340"),
           kind = AgentSessionCostKind.ESTIMATED,
@@ -112,7 +114,7 @@ class CodexSessionSourceRolloutIntegrationTest {
   }
 
   @Test
-  fun rolloutSubAgentUsageContributesToParentSessionCost() {
+  fun rolloutSubAgentUsageContributesToParentVisibleSessionCost() {
     runBlocking(Dispatchers.Default) {
       val projectDir = createProjectDir("project-rollout-subagent-cost")
       writeRolloutFile(
@@ -156,9 +158,11 @@ class CodexSessionSourceRolloutIntegrationTest {
       )
 
       val listedThreads = source.listThreadsFromClosedProject(projectDir.toString())
+      val loadedCosts = source.loadThreadCosts(projectDir.toString(), listedThreads)
 
       assertThat(listedThreads).hasSize(1)
-      assertThat(listedThreads.single().cost).isEqualTo(
+      assertThat(listedThreads.single().cost).isNull()
+      assertThat(loadedCosts.getValue(listedThreads.single().id)).isEqualTo(
         AgentSessionCost(
           amountUsd = BigDecimal.valueOf(172),
           kind = AgentSessionCostKind.EXACT,

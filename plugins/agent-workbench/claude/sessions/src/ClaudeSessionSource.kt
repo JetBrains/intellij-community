@@ -58,7 +58,7 @@ class ClaudeSessionSource internal constructor(
     val visibleThreads = threads.filterNot(ClaudeBackendThread::archived)
     rememberActiveNonReadyThreadRead(visibleThreads)
     val agentThreads = visibleThreads.map {
-      it.toAgentSessionThread(readTracker, completedUnreadUpdatedAtByThreadId, calculateCost = calculateCost)
+      it.toAgentSessionThread(readTracker, completedUnreadUpdatedAtByThreadId, calculateCost = calculateCost, includeCost = false)
     }
     rememberObservedThreadUpdates(visibleThreads)
     return agentThreads
@@ -106,6 +106,7 @@ class ClaudeSessionSource internal constructor(
             completedUnreadUpdatedAtByThreadId = completedUnreadUpdatedAtByThreadId,
             observedUpdatedAtByThreadId = observedUpdatedAtByThreadId,
             calculateCost = calculateCost,
+            includeCost = false,
           )
         }
         rememberObservedThreadUpdates(visibleThreads)
@@ -184,6 +185,27 @@ class ClaudeSessionSource internal constructor(
     return result
   }
 
+  override suspend fun loadThreadCosts(
+    path: String,
+    threads: List<AgentSessionThread>,
+  ): Map<String, AgentSessionCost?> {
+    if (threads.isEmpty()) {
+      return emptyMap()
+    }
+
+    val requestedThreadIds = threads.asSequence()
+      .map(AgentSessionThread::id)
+      .toCollection(LinkedHashSet())
+    val refreshedThreads = backend.refreshThreads(path = path, threadIds = requestedThreadIds, openProject = null)?.threads
+                           ?: backend.listThreads(path = path, openProject = null)
+    return refreshedThreads.asSequence()
+      .filterNot(ClaudeBackendThread::archived)
+      .filter { thread -> thread.id in requestedThreadIds }
+      .associate { thread ->
+        thread.id to thread.usageSnapshots.toAgentSessionCost(calculateCost)
+      }
+  }
+
   private fun rememberActiveNonReadyThreadRead(threads: Iterable<ClaudeBackendThread>) {
     rememberActiveThreadRead(
       threads = threads,
@@ -205,6 +227,7 @@ private fun ClaudeBackendThread.toAgentSessionThread(
   completedUnreadUpdatedAtByThreadId: MutableMap<String, Long>,
   observedUpdatedAtByThreadId: Map<String, Long> = emptyMap(),
   calculateCost: (AgentSessionUsageSnapshot) -> AgentSessionCost,
+  includeCost: Boolean = true,
 ): AgentSessionThread {
   return AgentSessionThread(
     id = id,
@@ -218,7 +241,7 @@ private fun ClaudeBackendThread.toAgentSessionThread(
       completedUnreadUpdatedAtByThreadId = completedUnreadUpdatedAtByThreadId,
       observedUpdatedAtByThreadId = observedUpdatedAtByThreadId,
     ),
-    cost = usageSnapshots.toAgentSessionCost(calculateCost),
+    cost = if (includeCost) usageSnapshots.toAgentSessionCost(calculateCost) else null,
   )
 }
 

@@ -77,6 +77,7 @@ class AgentSessionRefreshService internal constructor(
     agentChatScopedRefreshSignals(provider)
   },
   private val providerDescriptorProvider: (AgentSessionProvider) -> AgentSessionProviderDescriptor? = AgentSessionProviders::find,
+  private val currentTimeMillis: () -> Long = System::currentTimeMillis,
   subscribeToProjectLifecycle: Boolean,
 ) {
   @Suppress("unused")
@@ -113,8 +114,17 @@ class AgentSessionRefreshService internal constructor(
     providerDescriptorProvider = providerDescriptorProvider,
   )
 
+  private val visibleCostHydrationSupport = AgentSessionVisibleCostHydrationSupport(
+    serviceScope = serviceScope,
+    stateStore = stateStore,
+    contentRepository = contentRepository,
+    sessionSourcesProvider = sessionSourcesProvider,
+    currentTimeMillis = currentTimeMillis,
+  )
+
   init {
     loadingCoordinator.observeSessionSourceUpdates()
+    visibleCostHydrationSupport.start()
 
     if (subscribeToProjectLifecycle) {
       val connection = ApplicationManager.getApplication().messageBus.connect(serviceScope)
