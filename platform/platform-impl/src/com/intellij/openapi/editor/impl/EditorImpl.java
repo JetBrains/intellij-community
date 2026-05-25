@@ -910,7 +910,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   void updateFocus() {
     Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     if (focusOwner == null) {
-      myIsCurrentlyInFocus = false;
       return;
     }
 
