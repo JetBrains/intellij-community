@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.gradle
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.k2.codeInsight.gradle.navigation
 
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.TestDataPath
 import org.gradle.util.GradleVersion
+import org.jetbrains.kotlin.gradle.AbstractKotlinGradleNavigationTest
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
@@ -14,7 +15,7 @@ import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.junit.jupiter.params.ParameterizedTest
 
 @TestRoot("idea/tests/testData/")
-@TestDataPath($$"$CONTENT_ROOT")
+@TestDataPath($$"/")
 @TestMetadata("../../../idea/tests/testData/gradle/navigation/")
 abstract class KotlinGradleGotoDependenciesSourcesTest : AbstractKotlinGradleNavigationTest() {
     override fun setUp() {
