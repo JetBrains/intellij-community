@@ -163,6 +163,8 @@ jvm_library(
     "//plugins/kotlin/gradle/code-insight-groovy:kotlin-gradle-codeInsight-groovy_test_lib",
     "//plugins/kotlin/inspections",
     "//plugins/kotlin/inspections:inspections_test_lib",
+    "//plugins/kotlin/gradle/gradle",
+    "//plugins/kotlin/gradle/gradle:gradle_test_lib",
   ],
   runtime_deps = [
     ":kotlin-gradle-java-tests",

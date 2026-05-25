@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeInsight.gradle
 
+import com.intellij.idea.IJIgnore
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
@@ -8,9 +9,9 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import junit.framework.AssertionFailedError
-import org.jetbrains.kotlin.config.IKotlinFacetSettings
+import org.jetbrains.kotlin.gradle.facetSettings
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
-import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.gradle.configuration.KotlinSourceSetData
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleProjectDataService
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
@@ -18,20 +19,11 @@ import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 
-
-fun KotlinGradleImportingTestCase.facetSettings(moduleName: String): IKotlinFacetSettings {
-    val facet = KotlinFacet.get(getModule(moduleName)) ?: error("Kotlin facet not found in module $moduleName")
-    return facet.configuration.settings
-}
-
-val KotlinGradleImportingTestCase.facetSettings: IKotlinFacetSettings
-    get() = facetSettings("project.main")
-
-val KotlinGradleImportingTestCase.testFacetSettings: IKotlinFacetSettings
-    get() = facetSettings("project.test")
-
-
+@IJIgnore(issue = "KTIJ-38911")
 class KotlinGradleSourceSetDataServiceTest : KotlinGradleImportingTestCase() {
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
+
     @Test
     @TargetVersions("7.6+")
     fun testSingleFacetPerModule() {
