@@ -135,7 +135,7 @@ class ShouldBeInvariant5[T]:
         self.x = x
 
 
-vinv5_1: ShouldBeInvariant5[float] = ShouldBeInvariant5[int](1)  # E # see PY-89651
+vinv5_1: ShouldBeInvariant5[float] = ShouldBeInvariant5[int](1)  # E
 
 
 class ShouldBeContravariant1[T]:
