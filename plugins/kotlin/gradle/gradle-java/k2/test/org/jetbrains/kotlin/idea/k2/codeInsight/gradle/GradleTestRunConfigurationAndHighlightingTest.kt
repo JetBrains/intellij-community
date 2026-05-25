@@ -19,8 +19,6 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBList
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.util.application
-import org.jetbrains.kotlin.gradle.GradleDaemonAnalyzerTestCase
-import org.jetbrains.kotlin.gradle.checkFiles
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
 import org.jetbrains.kotlin.idea.run.KotlinRunConfiguration
