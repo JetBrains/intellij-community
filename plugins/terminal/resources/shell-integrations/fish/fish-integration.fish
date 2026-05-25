@@ -15,9 +15,9 @@ function override_jb_variables
       set new_name (string sub -s 21 -- $name)
       if test -n "$new_name"
         if contains $new_name PATH CDPATH MANPATH
-            set -x $new_name (string split ":" -- $value)
+            set -gx $new_name (string split ":" -- $value)
         else
-            set -x $new_name $value
+            set -gx $new_name $value
         end
       end
     end
@@ -26,9 +26,9 @@ function override_jb_variables
       set new_name (string sub -s 25 -- $name)
       if test -n "$new_name"
         if contains $new_name PATH CDPATH MANPATH
-            set -x $new_name (string split ":" -- "$value$$new_name")
+            set -gx $new_name (string split ":" -- "$value$$new_name")
         else
-            set -x $new_name "$value$$new_name"
+            set -gx $new_name "$value$$new_name"
         end
       end
     end
