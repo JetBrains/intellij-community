@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
+import com.intellij.configurationStore.SerializableScheme;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.impl.RunConfigurationStorageUi;
@@ -12,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,10 +28,12 @@ public final class RunnerAndConfigurationSettingsEditor extends SettingsEditor<R
   private final RunConfigurationFragmentedEditor<RunConfigurationBase<?>> myConfigurationEditor;
   private final @Nullable RunConfigurationStorageUi myRCStorageUi;
   private final RunOnTargetPanel myRunOnTargetPanel;
+  private final RunnerAndConfigurationSettings myOriginalSettings;
 
   public RunnerAndConfigurationSettingsEditor(RunnerAndConfigurationSettings settings,
                                               RunConfigurationFragmentedEditor<RunConfigurationBase<?>> configurationEditor) {
     super(settings.createFactory());
+    myOriginalSettings = settings;
     myConfigurationEditor = configurationEditor;
     myConfigurationEditor.addSettingsEditorListener(editor -> fireEditorStateChanged());
     Disposer.register(this, myConfigurationEditor);
@@ -86,6 +90,23 @@ public final class RunnerAndConfigurationSettingsEditor extends SettingsEditor<R
       myRCStorageUi.apply(s);
       myRunOnTargetPanel.apply();
     }
+  }
+
+  @Override
+  public @NotNull RunnerAndConfigurationSettings getSnapshot() throws ConfigurationException {
+    RunnerAndConfigurationSettingsImpl snapshot = (RunnerAndConfigurationSettingsImpl) getFactory().create();
+    Element originalXml = ((SerializableScheme) myOriginalSettings).writeScheme();
+    boolean inDotIdea = myOriginalSettings.isStoredInDotIdeaFolder();
+    String arbitraryPath = myOriginalSettings.getPathIfStoredInArbitraryFileInProject();
+    snapshot.readExternal(originalXml, inDotIdea, arbitraryPath);
+
+    myConfigurationEditor.applyEditorTo(snapshot);
+    myConfigurationEditor.applyTo((RunConfigurationBase<?>) snapshot.getConfiguration());
+    if (myRCStorageUi != null) {
+      myRCStorageUi.apply(snapshot);
+      myRunOnTargetPanel.apply();
+    }
+    return snapshot;
   }
 
   @Override

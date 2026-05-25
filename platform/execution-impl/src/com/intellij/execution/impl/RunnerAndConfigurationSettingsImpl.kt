@@ -443,7 +443,11 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
   override fun getType() = factory.type
 
   public override fun clone(): RunnerAndConfigurationSettingsImpl {
-    val copy = RunnerAndConfigurationSettingsImpl(manager, _configuration!!.clone())
+    val clonedConfiguration = _configuration!!.clone()
+    clonedConfiguration.isAllowRunningInParallel = _configuration!!.isAllowRunningInParallel
+    clonedConfiguration.beforeRunTasks = _configuration!!.beforeRunTasks
+
+    val copy = RunnerAndConfigurationSettingsImpl(manager, clonedConfiguration)
     copy.importRunnerAndConfigurationSettings(this)
 
     copy.level = this.level
@@ -459,6 +463,11 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
     isEditBeforeRun = template.isEditBeforeRun
     isActivateToolWindowBeforeRun = template.isActivateToolWindowBeforeRun
     isFocusToolWindowBeforeRun = template.isFocusToolWindowBeforeRun
+    folderName = template.folderName
+    wasSingletonSpecifiedExplicitly = template.wasSingletonSpecifiedExplicitly
+
+    runnerSettings.copyMetaFrom(template.runnerSettings)
+    configurationPerRunnerSettings.copyMetaFrom(template.configurationPerRunnerSettings)
   }
 
   private fun <T> importFromTemplate(templateItem: RunnerItem<T>, item: RunnerItem<T>) {
@@ -524,6 +533,19 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
     private var unloadedSettings: MutableList<Element>? = null
     // to avoid changed files
     private val loadedIds = HashSet<String>()
+
+    fun copyMetaFrom(other: RunnerItem<*>) {
+      loadedIds.addAll(other.loadedIds)
+      val otherUnloaded = other.unloadedSettings
+      if (otherUnloaded != null) {
+        if (unloadedSettings == null) {
+          unloadedSettings = SmartList()
+        }
+        for (element in otherUnloaded) {
+          unloadedSettings!!.add(element.clone())
+        }
+      }
+    }
 
     fun loadState(element: Element) {
       settings.clear()
