@@ -4,19 +4,33 @@ package org.jetbrains.plugins.terminal
 import com.google.common.base.Ascii
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.ExecuteProcessException
+import com.intellij.platform.eel.isPosix
+import com.intellij.platform.eel.provider.utils.EelProcessExecutionResult
+import com.intellij.platform.eel.provider.utils.awaitProcessResult
+import com.intellij.platform.eel.provider.utils.stderrString
+import com.intellij.platform.eel.provider.utils.stdoutString
+import com.intellij.platform.eel.spawnProcess
 import com.intellij.platform.ijent.IjentChildPtyProcessAdapter
 import com.intellij.terminal.pty.PtyProcessTtyConnector
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.io.awaitExit
 import com.jediterm.core.util.TermSize
 import com.pty4j.PtyProcess
 import com.pty4j.unix.UnixPtyProcess
 import com.pty4j.windows.conpty.WinConPtyProcess
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.util.ShellEelProcess
 import java.io.IOException
 import java.nio.charset.Charset
 import java.util.concurrent.TimeUnit
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 @ApiStatus.Internal
 class LocalTerminalTtyConnector internal constructor(
@@ -32,7 +46,7 @@ class LocalTerminalTtyConnector internal constructor(
     get() = ShellEelProcess(
       eelProcess = shellProcessHolder.eelProcess,
       eelApi = shellProcessHolder.eelApi,
-      process = ptyProcess
+      ptyProcess = ptyProcess
     )
 
   override fun close() {
@@ -46,13 +60,56 @@ class LocalTerminalTtyConnector internal constructor(
       }, 1000, TimeUnit.MILLISECONDS)
     }
     else if (ptyProcess is IjentChildPtyProcessAdapter && shellProcessHolder.isPosix) {
-      shellProcessHolder.terminatePosixShellBlocking()
+      runBlockingMaybeCancellable {
+        terminatePosixShell(shellEelProcess)
+      }
     }
     else {
       if (ptyProcess is WinConPtyProcess && !ptyProcess.isBundledConPtyLibrary) {
         sendInterruptToWinConPtyProcess()
       }
       ptyProcess.destroy()
+    }
+  }
+
+  private suspend fun terminatePosixShell(process: ShellEelProcess) {
+    withContext(Dispatchers.IO) {
+      check(process.eelApi.platform.isPosix) { "Thin function is expected to be called only for posix process, but was: $process" }
+      val ptyProcess = process.ptyProcess
+
+      if (!ptyProcess.isAlive) {
+        LOG.debug { "Shell process ${processInfo(process)} is already terminated" }
+        return@withContext
+      }
+
+      val shellPid = process.eelProcess.pid.value
+      LOG.debug { "Sending SIGHUP to shell process ${processInfo(process)}" }
+      val killProcess = try {
+        process.eelApi.exec.spawnProcess("kill").args("-HUP", shellPid.toString()).eelIt()
+      }
+      catch (e: ExecuteProcessException) {
+        LOG.warn("Unable to send SIGHUP to ${processInfo(process)}", e)
+        return@withContext
+      }
+
+      if (ptyProcess.awaitExit(5.seconds) == null) {
+        val killProcessResult = withTimeoutOrNull(1.seconds) {
+          killProcess.awaitProcessResult()
+        }
+        if (ptyProcess.isAlive) {
+          LOG.info("Shell process ${processInfo(process)} hasn't been terminated by SIGHUP, performing forceful termination. " +
+                   "\"kill -HUP $shellPid\" => ${killProcessResult?.stringify()}")
+          ptyProcess.destroyForcibly()
+        }
+      }
+
+      val exitCode = ptyProcess.awaitExit(2.seconds)
+      if (exitCode != null) {
+        LOG.debug { "Shell process ${processInfo(process)} has been terminated with exit code $exitCode" }
+      }
+      else {
+        LOG.warn("Shell process ${processInfo(process)} has not been terminated!")
+      }
     }
   }
 
@@ -77,6 +134,23 @@ class LocalTerminalTtyConnector internal constructor(
         LOG.info("Failed to send Ctrl+C to ${ptyProcess.javaClass.getSimpleName()}, alive:${ptyProcess.isAlive}", e)
       }
     }
+  }
+
+  /**
+   * @return The exit value of the process if it exits within the timeout or null otherwise.
+   */
+  private suspend fun Process.awaitExit(timeout: Duration): Int? {
+    return withTimeoutOrNull(timeout) {
+      this@awaitExit.awaitExit()
+    }
+  }
+
+  private fun processInfo(process: ShellEelProcess): String {
+    return "${process.ptyProcess::class.java.name}(${process.eelProcess.pid.value})"
+  }
+
+  private fun EelProcessExecutionResult.stringify(): String {
+    return "(exitCode=$exitCode, stdout=$stdoutString, stderr=$stderrString)"
   }
 
   override fun resize(termSize: TermSize) {
