@@ -24,12 +24,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.TestOnly
@@ -37,7 +34,6 @@ import org.jetbrains.plugins.terminal.block.hyperlinks.CompositeFilterWrapper
 import org.jetbrains.plugins.terminal.block.hyperlinks.TerminalHyperlinkFilterContext
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkId
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinksChangedEvent
-import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinksHeartbeatEvent
 import org.jetbrains.plugins.terminal.session.impl.dto.TerminalFilterResultInfoDto
 import org.jetbrains.plugins.terminal.session.impl.dto.TerminalHighlightingInfoDto
 import org.jetbrains.plugins.terminal.session.impl.dto.TerminalHyperlinkInfoDto
@@ -51,7 +47,6 @@ import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import javax.swing.JLabel
-import kotlin.time.Duration.Companion.milliseconds
 
 internal class BackendTerminalHyperlinkHighlighter(
   project: Project,
@@ -87,16 +82,6 @@ internal class BackendTerminalHyperlinkHighlighter(
    */
   private var currentTrimStartOffset: TerminalOffset = TerminalOffset.of(0)
 
-  val heartbeatFlow: Flow<TerminalHyperlinksHeartbeatEvent>
-    get() = flow {
-      while (true) {
-        if (mayHaveWorkToDo()) {
-          emit(TerminalHyperlinksHeartbeatEvent(isInAlternateBuffer))
-        }
-        delay(20.milliseconds)
-      }
-    }
-
   private val fakeMouseEventJob = coroutineScope.async(Dispatchers.UI + ModalityState.any().asContextElement()) {
     MouseEvent(JLabel(), MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, 0, 0, 0, 0, 1, true, MouseEvent.BUTTON2)
   }
@@ -117,7 +102,7 @@ internal class BackendTerminalHyperlinkHighlighter(
   // If we have nothing to do, then both of these will be null.
   // If either is not null, it's possible that there will be no results,
   // but we may have to do some cleanup nevertheless or start a new task.
-  private fun mayHaveWorkToDo(): Boolean = currentTaskState.value.mayHaveWorkToDo()
+  fun mayHaveWorkToDo(): Boolean = currentTaskState.value.mayHaveWorkToDo()
 
   init {
     filterWrapper.getFilter() // kickstart computation

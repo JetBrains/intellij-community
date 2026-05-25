@@ -4,9 +4,11 @@ import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.project.Project
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.update
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -25,6 +27,7 @@ import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.TerminalOutputModelListener
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.time.Duration.Companion.milliseconds
 
 @ApiStatus.Internal
 class BackendTerminalHyperlinkFacade private constructor(
@@ -40,7 +43,15 @@ class BackendTerminalHyperlinkFacade private constructor(
     trimOffset = { trimOffset.get() }
   )
 
-  val heartbeatFlow: Flow<TerminalHyperlinksHeartbeatEvent> get() = highlighter.heartbeatFlow
+  val heartbeatFlow: Flow<TerminalHyperlinksHeartbeatEvent> = flow {
+    while (true) {
+      if (highlighter.mayHaveWorkToDo()) {
+        emit(TerminalHyperlinksHeartbeatEvent(isInAlternateBuffer))
+      }
+      delay(20.milliseconds)
+    }
+  }
+
   private val pendingUpdateEvents = MutableStateFlow(0)
 
   fun applyContentUpdate(update: TerminalOutputUpdate) {
