@@ -400,6 +400,8 @@ object CoreModuleSets {
 
     embeddedModule("intellij.platform.statistics")
     embeddedModule("intellij.platform.statistics.config")
+    embeddedModule("intellij.platform.statistics.uploader")
+    embeddedModule("intellij.platform.experiment")
     embeddedModule("intellij.platform.ide.impl")
 
     embeddedModule("intellij.platform.rd.community")

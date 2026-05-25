@@ -137,10 +137,6 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
   addModule("externalProcess-rt.jar", sequenceOf(
     "intellij.platform.externalProcessAuthHelper.rt"
   ), productLayout = productLayout, layout = layout)
-  addModule("stats.jar", sequenceOf(
-    "intellij.platform.experiment",
-    "intellij.platform.statistics.uploader",
-  ), productLayout = productLayout, layout = layout)
   if (!productLayout.excludedModuleNames.contains("intellij.java.guiForms.rt")) {
     layout.withModule("intellij.java.guiForms.rt", "forms_rt.jar")
   }

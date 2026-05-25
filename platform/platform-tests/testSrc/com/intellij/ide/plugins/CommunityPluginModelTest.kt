@@ -44,7 +44,6 @@ val communityPluginValidationOptions: PluginValidationOptions = PluginValidation
   filesNamedLikeContentModuleDescriptorsButIncludedViaXiInclude = setOf(
     "intellij.platform.project.xml",
     "intellij.platform.ide.progress.xml",
-    "intellij.platform.experiment.xml",
     "intellij.platform.syntax.psi.xml",
     "intellij.vcs.git.xml",
     "kotlin.plugin.k2.xml",
