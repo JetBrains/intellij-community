@@ -22,7 +22,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import java.io.File
 
 @TestRoot("idea/tests/testData/")
-@TestDataPath($$"/")
+@TestDataPath("/")
 @TestMetadata("../../../idea/tests/testData/gradle/highlighting/")
 abstract class AbstractKotlinGradleResilientHighlightingTest : AbstractGradleCodeInsightTest() {
 
