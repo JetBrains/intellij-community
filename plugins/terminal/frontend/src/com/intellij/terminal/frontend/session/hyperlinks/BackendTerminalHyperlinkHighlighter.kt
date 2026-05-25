@@ -53,30 +53,6 @@ import java.util.concurrent.atomic.AtomicLong
 import javax.swing.JLabel
 import kotlin.time.Duration.Companion.milliseconds
 
-internal sealed interface TerminalOutputUpdate
-
-internal data class TerminalOutputContentUpdate(
-  /** The text for lines [startLine]..[endLine] */
-  val charsSequence: CharSequence,
-  /** The absolute line index of the first character of [charsSequence] in the terminal output */
-  val startLine: TerminalLineIndex,
-  /** The absolute line index (inclusive) of the last character of [charsSequence] in the terminal output */
-  val endLine: TerminalLineIndex,
-  /** The absolute offset of the first character of [charsSequence] in the terminal output */
-  val startOffset: TerminalOffset,
-  val modificationStamp: Long,
-) : TerminalOutputUpdate
-
-/**
- * A trim signal: everything below [firstLine] / [startOffset] has been removed from the start of the document.
- */
-internal data class TerminalOutputTrimmingUpdate(
-  val firstLine: TerminalLineIndex,
-  val startOffset: TerminalOffset,
-  val endOffset: TerminalOffset,
-  val modificationStamp: Long,
-) : TerminalOutputUpdate
-
 internal class BackendTerminalHyperlinkHighlighter(
   project: Project,
   coroutineScope: CoroutineScope,

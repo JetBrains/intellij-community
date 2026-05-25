@@ -21,51 +21,33 @@ import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinksHeartbeatEv
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinksModelState
 import org.jetbrains.plugins.terminal.session.impl.dto.toFilterResultInfo
 import org.jetbrains.plugins.terminal.view.TerminalContentChangeEvent
+import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.TerminalOutputModelListener
+import java.util.concurrent.atomic.AtomicReference
 
 @ApiStatus.Internal
-class BackendTerminalHyperlinkFacade(
+class BackendTerminalHyperlinkFacade private constructor(
   private val project: Project,
   coroutineScope: CoroutineScope,
-  outputModel: TerminalOutputModel,
   isInAlternateBuffer: Boolean,
   filterContext: TerminalHyperlinkFilterContext?,
 ) {
-
   private val highlighter = BackendTerminalHyperlinkHighlighter(project, coroutineScope, isInAlternateBuffer, filterContext)
-  private val model = TerminalHyperlinksModel(if (isInAlternateBuffer) "Backend AltBuf" else "Backend Output", outputModel)
+  private val trimOffset = AtomicReference(TerminalOffset.of(0))
+  private val model = TerminalHyperlinksModel(
+    debugName = if (isInAlternateBuffer) "Backend AltBuf" else "Backend Output",
+    trimOffset = { trimOffset.get() }
+  )
 
   val heartbeatFlow: Flow<TerminalHyperlinksHeartbeatEvent> get() = highlighter.heartbeatFlow
   private val pendingUpdateEvents = MutableStateFlow(0)
 
-  init {
-    outputModel.addListener(coroutineScope.asDisposable(), object : TerminalOutputModelListener {
-      override fun afterContentChanged(event: TerminalContentChangeEvent) {
-        val model = event.model
-        val update: TerminalOutputUpdate = if (event.isTrimming) {
-          TerminalOutputTrimmingUpdate(
-            firstLine = model.firstLineIndex,
-            startOffset = model.startOffset,
-            endOffset = model.endOffset,
-            modificationStamp = model.modificationStamp,
-          )
-        }
-        else {
-          val startLine = model.getLineByOffset(event.offset)
-          val startOffset = model.getStartOfLine(startLine)
-          val endOffset = model.endOffset
-          TerminalOutputContentUpdate(
-            charsSequence = model.getText(startOffset, endOffset),
-            startLine = startLine,
-            endLine = model.lastLineIndex,
-            startOffset = startOffset,
-            modificationStamp = model.modificationStamp,
-          )
-        }
-        highlighter.applyUpdate(update)
-      }
-    })
+  fun applyContentUpdate(update: TerminalOutputUpdate) {
+    if (update is TerminalOutputTrimmingUpdate) {
+      trimOffset.set(update.startOffset)
+    }
+    highlighter.applyUpdate(update)
   }
 
   fun collectResultsAndMaybeStartNewTask(): TerminalHyperlinksChangedEvent? {
@@ -110,4 +92,44 @@ class BackendTerminalHyperlinkFacade(
     pendingUpdateEvents.first { it == 0 } // Wait until the last event is applied.
   }
 
+  companion object {
+    fun install(
+      project: Project,
+      coroutineScope: CoroutineScope,
+      outputModel: TerminalOutputModel,
+      isInAlternateBuffer: Boolean,
+      filterContext: TerminalHyperlinkFilterContext?,
+    ): BackendTerminalHyperlinkFacade {
+      val facade = BackendTerminalHyperlinkFacade(project, coroutineScope, isInAlternateBuffer, filterContext)
+
+      outputModel.addListener(coroutineScope.asDisposable(), object : TerminalOutputModelListener {
+        override fun afterContentChanged(event: TerminalContentChangeEvent) {
+          val model = event.model
+          val update: TerminalOutputUpdate = if (event.isTrimming) {
+            TerminalOutputTrimmingUpdate(
+              firstLine = model.firstLineIndex,
+              startOffset = model.startOffset,
+              endOffset = model.endOffset,
+              modificationStamp = model.modificationStamp,
+            )
+          }
+          else {
+            val startLine = model.getLineByOffset(event.offset)
+            val startOffset = model.getStartOfLine(startLine)
+            val endOffset = model.endOffset
+            TerminalOutputContentUpdate(
+              charsSequence = model.getText(startOffset, endOffset),
+              startLine = startLine,
+              endLine = model.lastLineIndex,
+              startOffset = startOffset,
+              modificationStamp = model.modificationStamp,
+            )
+          }
+          facade.applyContentUpdate(update)
+        }
+      })
+
+      return facade
+    }
+  }
 }

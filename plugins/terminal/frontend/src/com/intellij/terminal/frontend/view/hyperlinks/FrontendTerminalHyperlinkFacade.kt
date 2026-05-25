@@ -31,7 +31,10 @@ internal class FrontendTerminalHyperlinkFacade(
   private val terminalInput: TerminalInput,
   coroutineScope: CoroutineScope,
 ) {
-  private val model = TerminalHyperlinksModel(if (isInAlternateBuffer) "Frontend AltBuf" else "Frontend Output", outputModel)
+  private val model = TerminalHyperlinksModel(
+    debugName = if (isInAlternateBuffer) "Frontend AltBuf" else "Frontend Output",
+    trimOffset = { outputModel.startOffset },
+  )
   private val applier = createEditorTextDecorationApplier(editor, coroutineScope.asDisposable())
 
   fun updateHyperlinks(event: TerminalHyperlinksChangedEvent) {

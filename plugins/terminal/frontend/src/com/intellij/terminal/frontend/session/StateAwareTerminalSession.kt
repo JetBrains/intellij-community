@@ -109,21 +109,34 @@ internal class StateAwareTerminalSession(
   }
 
   init {
-    val hyperlinkScope = coroutineScope.childScope("StateAwareTerminalSession hyperlink facades")
     // Create a Non-AWT thread document to be able to update it without switching to EDT and Write Action.
     // It is OK here to handle synchronization manually, because this document will be used only in our services.
     val outputDocument = DocumentImpl("", true)
     outputModel = MutableTerminalOutputModelImpl(outputDocument, TerminalUiUtils.getDefaultMaxOutputLength())
-    val filterContext = eelDescriptor?.let {
-      TerminalHyperlinkFilterContextImpl(sessionModel, eelDescriptor, coroutineScope)
-    }
-    outputHyperlinkFacade = BackendTerminalHyperlinkFacade(project, hyperlinkScope, outputModel, isInAlternateBuffer = false, filterContext)
 
     val alternateBufferDocument = DocumentImpl("", true)
     alternateBufferModel = MutableTerminalOutputModelImpl(alternateBufferDocument, maxOutputLength = 0)
-    alternateBufferHyperlinkFacade = BackendTerminalHyperlinkFacade(project, hyperlinkScope, alternateBufferModel, isInAlternateBuffer = true, filterContext)
 
     blocksModel = TerminalBlocksModelImpl(outputModel, sessionModel, coroutineScope.asDisposable())
+
+    val hyperlinkScope = coroutineScope.childScope("StateAwareTerminalSession hyperlink facades")
+    val filterContext = eelDescriptor?.let {
+      TerminalHyperlinkFilterContextImpl(sessionModel, eelDescriptor, coroutineScope)
+    }
+    outputHyperlinkFacade = BackendTerminalHyperlinkFacade.install(
+      project = project,
+      coroutineScope = hyperlinkScope,
+      outputModel = outputModel,
+      isInAlternateBuffer = false,
+      filterContext = filterContext
+    )
+    alternateBufferHyperlinkFacade = BackendTerminalHyperlinkFacade.install(
+      project = project,
+      coroutineScope = hyperlinkScope,
+      outputModel = outputModel,
+      isInAlternateBuffer = true,
+      filterContext = filterContext
+    )
 
     coroutineScope.launch(CoroutineName("StateAwareTerminalSession: models updating")) {
       merge(
