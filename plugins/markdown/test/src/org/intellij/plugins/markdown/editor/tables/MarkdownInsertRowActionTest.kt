@@ -42,7 +42,7 @@ class MarkdownInsertRowActionTest: LightPlatformCodeInsightTestCase() {
       | 名字 | 年龄 |
       |------|------|
       | 张三 | 25   |
-      |    |      |
+      |      |      |
       """.trimIndent()
     )
   }

@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.intellij.plugins.markdown.editor.tables.TableCharacterWidthUtils
 import org.intellij.plugins.markdown.editor.tables.TableUtils.isHeaderRow
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElementFactory
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
@@ -30,7 +31,7 @@ internal abstract class InsertRowAction(private val insertAbove: Boolean): RowBa
 
   private fun obtainCellWidths(element: PsiElement): Collection<Int> {
     return when (element) {
-      is MarkdownTableRow -> element.cells.map { it.textLength }
+      is MarkdownTableRow -> element.cells.map { TableCharacterWidthUtils.calculateDisplayWidth(it.text) }
       is MarkdownTableSeparatorRow -> element.cellsRanges.map { it.length }
       else -> error("element should be either MarkdownTableRow or MarkdownTableSeparatorRow")
     }
