@@ -10,6 +10,7 @@ import com.intellij.ui.ChooserInterceptor;
 import com.intellij.ui.UiInterceptors;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.Pair;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -50,6 +51,11 @@ public class RephraseTest extends BaseTestCase {
         .filter(p -> p.getSecond() != null)
         .toList();
     }, getTestRootDisposable());
+  }
+
+  @BeforeEach
+  protected void setUp() {
+    GrazieTestUtil.registerGrazieCloudConnectorWithQuota(getTestRootDisposable());
   }
 
   @Test

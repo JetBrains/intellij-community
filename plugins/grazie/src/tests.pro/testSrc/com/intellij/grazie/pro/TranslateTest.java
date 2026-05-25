@@ -13,6 +13,7 @@ import com.intellij.ui.ChooserInterceptor;
 import com.intellij.ui.UiInterceptors;
 import one.util.streamex.StreamEx;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -58,6 +59,11 @@ public class TranslateTest extends BaseTestCase {
           .toList(),
         "Deutsch"
       ));
+  }
+
+  @BeforeEach
+  protected void setUp() {
+    GrazieTestUtil.registerGrazieCloudConnectorWithQuota(getTestRootDisposable());
   }
 
   @AfterEach

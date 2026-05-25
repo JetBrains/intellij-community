@@ -55,7 +55,7 @@ open class BaseTestCase {
 
   fun initCloudProcessing() {
     runBlocking {
-      GrazieLoginManager.getInstance().setState(GrazieLoginState.Cloud(GrazieTokenUtil.getTestToken()))
+      GrazieLoginManager.getInstance().setState(GrazieLoginState.Cloud(GrazieTestUtil.getTestToken()))
     }
     GrazieConfig.update { it.copy(explicitlyChosenProcessing = Processing.Cloud) }
   }
