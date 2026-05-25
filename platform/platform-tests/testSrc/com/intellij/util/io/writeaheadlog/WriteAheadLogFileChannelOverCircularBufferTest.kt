@@ -68,19 +68,25 @@ class WriteAheadLogFileChannelOverCircularBufferTest {
   @Test
   fun `statistics counts queued bytes and queue-full flushes`(@TempDir tempDir: Path) {
     WriteAheadLogOverCircularBuffer(
-      QueueFullOnceCircularBytesBuffer(), singlePathEnumerator(),
-    ) { _, _, _ -> }.use { writeAheadLog ->
+      QueueFullOnceCircularBytesBuffer(), singlePathEnumerator(), { _, _, _ -> },
+    ).use { writeAheadLog ->
       val fileWriter = writeAheadLog.openFor(tempDir.resolve("storage.bin"))
 
       fileWriter.write(0, byteArrayOf(1, 2, 3), 0, 3)
 
-      val expectedStatistics = WriteAheadLogStatistics(bytesQueued = 3, flushesForcedByOverflow = 1, entriesFlushed = 0)
+      val expectedStatistics = WriteAheadLogStatistics(
+        bytesQueued = 3,
+        flushesForcedByOverflow = 1,
+        entriesFlushed = 0,
+        bytesCopiedByApplyUnfinished = 0,
+      )
       assertEquals(expectedStatistics, writeAheadLog.statistics)
 
       val allStatistics = WriteAheadLogOverCircularBuffer.getAggregatedStatistics()
       assertTrue(allStatistics.bytesQueued >= expectedStatistics.bytesQueued)
       assertTrue(allStatistics.flushesForcedByOverflow >= expectedStatistics.flushesForcedByOverflow)
       assertTrue(allStatistics.entriesFlushed >= expectedStatistics.entriesFlushed)
+      assertTrue(allStatistics.bytesCopiedByApplyUnfinished >= expectedStatistics.bytesCopiedByApplyUnfinished)
     }
   }
 
@@ -207,12 +213,15 @@ class WriteAheadLogFileChannelOverCircularBufferTest {
         buffer.position(1)
         buffer.limit(6)
 
+        assertEquals(0, writeAheadLog.statistics.bytesCopiedByApplyUnfinished)
+
         fileWriter.applyUnfinished(1, 5, buffer, 1)
 
         assertArrayEquals(byteArrayOf(0, 1, 9, 9, 7, 7, 6), buffer.array())
         assertEquals(1, buffer.position())
         assertEquals(6, buffer.limit())
         assertTrue(fileWriter.hasUnfinished())
+        assertEquals(5, writeAheadLog.statistics.bytesCopiedByApplyUnfinished)
         assertArrayEquals(initialContent, readDirectChannelContent(channel))
       }
     }
@@ -442,7 +451,7 @@ class WriteAheadLogFileChannelOverCircularBufferTest {
   private fun openPersistentWriteAheadLog(
     tempDir: Path,
     channelsAccessor: ChannelsAccessor,
-  ): WriteAheadLog {
+  ): WriteAheadLogOverCircularBuffer {
     return WriteAheadLogOverCircularBuffer.openDefaultWAL(
       walBufferPath(tempDir),
       walEnumeratorPath(tempDir),

@@ -466,6 +466,9 @@ object StorageDiagnosticData {
       .buildObserver()
     val flushesForcedByOverflow = otelMeter.counterBuilder("FilePageCache.WAL.flushesForcedByOverflow").buildObserver()
     val totalEntriesFlushed = otelMeter.counterBuilder("FilePageCache.WAL.entriesFlushed").buildObserver()
+    val bytesCopiedByApplyUnfinished = otelMeter.counterBuilder("FilePageCache.WAL.bytesCopiedByApplyUnfinished")
+      .setUnit("bytes")
+      .buildObserver()
 
     val entriesFlushedOnRead = otelMeter.counterBuilder("FilePageCache.WAL.entriesFlushedOnRead").buildObserver()
     val entriesFlushedOnForce = otelMeter.counterBuilder("FilePageCache.WAL.entriesFlushedOnForce").buildObserver()
@@ -478,6 +481,7 @@ object StorageDiagnosticData {
         bytesQueued.record(statistics.bytesQueued)
         flushesForcedByOverflow.record(statistics.flushesForcedByOverflow)
         totalEntriesFlushed.record(statistics.entriesFlushed)
+        bytesCopiedByApplyUnfinished.record(statistics.bytesCopiedByApplyUnfinished)
 
         val flushStatistics = FileChannelWithWAL.getFlushStatistics()
         entriesFlushedOnRead.record(flushStatistics.entriesFlushedOnRead)
@@ -486,7 +490,7 @@ object StorageDiagnosticData {
         entriesFlushedOnClose.record(flushStatistics.entriesFlushedOnClose)
 
       },
-      bytesQueued, flushesForcedByOverflow, totalEntriesFlushed,
+      bytesQueued, flushesForcedByOverflow, totalEntriesFlushed, bytesCopiedByApplyUnfinished,
       entriesFlushedOnRead, entriesFlushedOnTruncate, entriesFlushedOnForce, entriesFlushedOnClose
     )
   }

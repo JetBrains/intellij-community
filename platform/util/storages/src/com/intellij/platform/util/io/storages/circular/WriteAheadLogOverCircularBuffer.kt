@@ -76,11 +76,15 @@ class WriteAheadLogOverCircularBuffer(
   /** total # of entries flushed, i.e., written into a [channelWriter] */
   private val totalEntriesFlushed = AtomicLong()
 
+  /** total # of bytes copied by [WriteAheadLog.PerFileWriter.applyUnfinished] */
+  private val bytesCopiedByApplyUnfinished = AtomicLong()
+
   val statistics: WriteAheadLogStatistics
     get() = WriteAheadLogStatistics(
       bytesQueued = bytesQueued.get(),
       flushesForcedByOverflow = flushesForcedByOverflow.get(),
       entriesFlushed = totalEntriesFlushed.get(),
+      bytesCopiedByApplyUnfinished = bytesCopiedByApplyUnfinished.get(),
     )
 
   //</editor-fold>  ============================================================
@@ -337,7 +341,8 @@ class WriteAheadLogOverCircularBuffer(
       circularBytesBuffer.read { entryData ->
         val record = readRecord(entryData)
         if (record.pathId == pathId) {
-          applyToBuffer(record, offsetInFile, length, targetBuffer, offsetInBuffer)
+          val bytesCopied = applyToBuffer(record, offsetInFile, length, targetBuffer, offsetInBuffer)
+          bytesCopiedByApplyUnfinished.addAndGet(bytesCopied.toLong())
         }
         false //do not consume
       }
@@ -466,19 +471,23 @@ class WriteAheadLogOverCircularBuffer(
     /** total # of flushes forced because buffer is full during append */
     val flushesForcedByOverflow: Long,
     val entriesFlushed: Long,
+    /** total # of bytes copied by [WriteAheadLog.PerFileWriter.applyUnfinished] */
+    val bytesCopiedByApplyUnfinished: Long,
   ) {
 
     operator fun plus(other: WriteAheadLogStatistics): WriteAheadLogStatistics = WriteAheadLogStatistics(
       bytesQueued + other.bytesQueued,
       flushesForcedByOverflow + other.flushesForcedByOverflow,
-      entriesFlushed + other.entriesFlushed
+      entriesFlushed + other.entriesFlushed,
+      bytesCopiedByApplyUnfinished + other.bytesCopiedByApplyUnfinished,
     )
 
     companion object {
       val EMPTY: WriteAheadLogStatistics = WriteAheadLogStatistics(
         bytesQueued = 0,
         flushesForcedByOverflow = 0,
-        entriesFlushed = 0
+        entriesFlushed = 0,
+        bytesCopiedByApplyUnfinished = 0,
       )
     }
   }
