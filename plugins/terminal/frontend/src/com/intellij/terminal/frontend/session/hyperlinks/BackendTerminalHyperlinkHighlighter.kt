@@ -15,7 +15,8 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager.checkCanceled
 import com.intellij.openapi.project.Project
-import com.intellij.util.containers.ComparatorUtil.min
+import com.intellij.util.text.CharArrayUtil
+import com.intellij.util.text.ImmutableCharSequence
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -44,7 +45,6 @@ import org.jetbrains.plugins.terminal.session.impl.dto.TerminalInlayInfoDto
 import org.jetbrains.plugins.terminal.session.impl.dto.toDto
 import org.jetbrains.plugins.terminal.view.TerminalLineIndex
 import org.jetbrains.plugins.terminal.view.TerminalOffset
-import org.jetbrains.plugins.terminal.view.TerminalOutputModelSnapshot
 import java.awt.event.MouseEvent
 import java.util.Deque
 import java.util.concurrent.LinkedBlockingDeque
@@ -53,13 +53,29 @@ import java.util.concurrent.atomic.AtomicLong
 import javax.swing.JLabel
 import kotlin.time.Duration.Companion.milliseconds
 
+internal sealed interface TerminalOutputUpdate
+
 internal data class TerminalOutputContentUpdate(
-  val snapshot: TerminalOutputModelSnapshot,
-  /**
-   * The first line of the dirty region, or `null` if the change was trimming from the start of the output.
-   */
-  val startLine: TerminalLineIndex?,
-)
+  /** The text for lines [startLine]..[endLine] */
+  val charsSequence: CharSequence,
+  /** The absolute line index of the first character of [charsSequence] in the terminal output */
+  val startLine: TerminalLineIndex,
+  /** The absolute line index (inclusive) of the last character of [charsSequence] in the terminal output */
+  val endLine: TerminalLineIndex,
+  /** The absolute offset of the first character of [charsSequence] in the terminal output */
+  val startOffset: TerminalOffset,
+  val modificationStamp: Long,
+) : TerminalOutputUpdate
+
+/**
+ * A trim signal: everything below [firstLine] / [startOffset] has been removed from the start of the document.
+ */
+internal data class TerminalOutputTrimmingUpdate(
+  val firstLine: TerminalLineIndex,
+  val startOffset: TerminalOffset,
+  val endOffset: TerminalOffset,
+  val modificationStamp: Long,
+) : TerminalOutputUpdate
 
 internal class BackendTerminalHyperlinkHighlighter(
   project: Project,
@@ -88,8 +104,12 @@ internal class BackendTerminalHyperlinkHighlighter(
       currentTaskState.value = currentTaskState.value.copy(pendingTask = value)
     }
 
-  // Only ever accessed from the model coroutine.
-  private var lastUsedFilter: CompositeFilter? = null
+  /**
+   * The latest known trim threshold.
+   * Used by [isValid] to drop results whose offsets fall in a region trimmed after the running task started.
+   * Updated only by [handleTrimmingUpdate].
+   */
+  private var currentTrimStartOffset: TerminalOffset = TerminalOffset.of(0)
 
   val heartbeatFlow: Flow<TerminalHyperlinksHeartbeatEvent>
     get() = flow {
@@ -133,49 +153,111 @@ internal class BackendTerminalHyperlinkHighlighter(
     }
   }
 
-  fun updatePendingTask(update: TerminalOutputContentUpdate) {
-    val snapshot = update.snapshot
-    val startLine = update.startLine
-    val existingPendingTask = pendingTask
-    val dirtyRegionStart = when {
-      startLine != null && existingPendingTask !is HighlightTask -> { // a new not-just-trimming task
-        startLine
-      }
-      startLine == null && existingPendingTask is HighlightTask -> { // trim the existing task
-        TerminalLineIndex.of(existingPendingTask.startAbsoluteLine).coerceAtLeast(snapshot.firstLineIndex)
-      }
-      startLine != null && existingPendingTask is HighlightTask -> { // possibly update the existing task
-        min(TerminalLineIndex.of(existingPendingTask.startAbsoluteLine), startLine).coerceAtLeast(snapshot.firstLineIndex)
-      }
-      else -> { // startLine == null && existingPendingTask == null or is TrimTask => update the trimming task or start a new one
-        null
-      }
+  fun applyUpdate(update: TerminalOutputUpdate) {
+    when (update) {
+      is TerminalOutputContentUpdate -> handleContentUpdate(update)
+      is TerminalOutputTrimmingUpdate -> handleTrimmingUpdate(update)
     }
-    val newPendingTask = newTask(snapshot, dirtyRegionStart)
-    LOG.debug {
-      "The model " +
-      if (startLine == null) {
-        "trimmed (firstLine=${snapshot.firstLineIndex}), "
-      }
-      else {
-        "updated from line $startLine, "
-      } +
-      "the new task is $newPendingTask"
+  }
+
+  private fun handleContentUpdate(update: TerminalOutputContentUpdate) {
+    val newPendingTask: Task = when (val existing = pendingTask) {
+      null, is TrimTask -> HighlightTask(
+        charsSequence = CharArrayUtil.createImmutableCharSequence(update.charsSequence),
+        startLine = update.startLine,
+        endLine = update.endLine,
+        startOffset = update.startOffset,
+        modificationStamp = update.modificationStamp,
+      )
+      is HighlightTask -> mergeContentUpdate(existing, update)
     }
+    LOG.debug { "Content update for lines ${update.startLine}-${update.endLine}, the new task is $newPendingTask" }
     pendingTask = newPendingTask
   }
 
-  fun collectResultsAndMaybeStartNewTask(snapshot: TerminalOutputModelSnapshot): TerminalHyperlinksChangedEvent? {
-    val result = currentTaskRunner?.getNextOutputEvent { isValid(it, snapshot) }
-    maybeStartNewTask(snapshot)
+  private fun mergeContentUpdate(task: HighlightTask, update: TerminalOutputContentUpdate): HighlightTask {
+    val taskStartLine = task.startLine.toAbsolute()
+    val taskEndLine = task.endLine.toAbsolute()
+    val updateStartLine = update.startLine.toAbsolute()
+
+    // If the update starts at or before the task, it fully replaces the task.
+    if (updateStartLine <= taskStartLine) {
+      return HighlightTask(
+        charsSequence = CharArrayUtil.createImmutableCharSequence(update.charsSequence),
+        startLine = update.startLine,
+        endLine = update.endLine,
+        startOffset = update.startOffset,
+        modificationStamp = update.modificationStamp,
+      )
+    }
+
+    // The update always extends to the current end of the document,
+    // so the update may start at most one line past the task's end. A larger gap means we lost an event.
+    require(updateStartLine <= taskEndLine + 1) {
+      "Disjoint content update: task=[$taskStartLine..$taskEndLine], update=[$updateStartLine..${update.endLine.toAbsolute()}]"
+    }
+
+    // Build merged chars:
+    // - Overlap (updateStart <= taskEnd): replace [updateOffsetInTask..taskEnd) of task chars with update chars.
+    // - Contiguous append (updateStart == taskEnd + 1): task chars + '\n' + update chars.
+    val merged: ImmutableCharSequence = if (updateStartLine > taskEndLine) {
+      task.charsSequence.concat("\n").concat(update.charsSequence)
+    }
+    else {
+      val updateOffsetInTask = (update.startOffset - task.startOffset).toInt()
+      task.charsSequence.replace(updateOffsetInTask, task.charsSequence.length, update.charsSequence)
+    }
+
+    return HighlightTask(
+      charsSequence = merged,
+      startLine = task.startLine,
+      endLine = update.endLine,
+      startOffset = task.startOffset,
+      modificationStamp = update.modificationStamp,
+    )
+  }
+
+  private fun handleTrimmingUpdate(update: TerminalOutputTrimmingUpdate) {
+    currentTrimStartOffset = update.startOffset
+    val newPendingTask: Task = when (val existing = pendingTask) {
+      null, is TrimTask -> TrimTask(endOffset = update.endOffset, modificationStamp = update.modificationStamp)
+      is HighlightTask -> clampHighlightTask(existing, update)
+    }
+    LOG.debug { "Trimming update to line ${update.firstLine} (offset ${update.startOffset}), the new task is $newPendingTask" }
+    pendingTask = newPendingTask
+  }
+
+  private fun clampHighlightTask(task: HighlightTask, update: TerminalOutputTrimmingUpdate): Task {
+    val taskStart = task.startOffset
+    val taskEnd = taskStart + task.charsSequence.length.toLong()
+    val newStartOffset = update.startOffset
+    if (newStartOffset <= taskStart) {
+      return task.copy(modificationStamp = update.modificationStamp)
+    }
+    if (newStartOffset >= taskEnd) {
+      return TrimTask(endOffset = update.endOffset, modificationStamp = update.modificationStamp)
+    }
+    // Partial overlap: drop the trimmed prefix from the task's chars and shift the task's startLine/startOffset.
+    val charsToSkip = (newStartOffset - taskStart).toInt()
+    return task.copy(
+      charsSequence = task.charsSequence.subtext(charsToSkip, task.charsSequence.length),
+      startLine = update.firstLine,
+      startOffset = update.startOffset,
+      modificationStamp = update.modificationStamp,
+    )
+  }
+
+  fun collectResultsAndMaybeStartNewTask(): TerminalHyperlinksChangedEvent? {
+    val result = currentTaskRunner?.getNextOutputEvent { isValid(it) }
+    maybeStartNewTask()
     return result
   }
 
-  private fun isValid(taskResult: TaskResult, snapshot: TerminalOutputModelSnapshot): Boolean {
+  private fun isValid(taskResult: TaskResult): Boolean {
     val currentFilter = filterWrapper.getFilter()
     val currentTaskRunner = checkNotNull(currentTaskRunner) { "The task runner must be present since we have results" }
     if (currentTaskRunner.filter !== currentFilter) return false
-    if (TerminalOffset.of(taskResult.absoluteStartOffset) < snapshot.startOffset) return false // trimmed
+    if (TerminalOffset.of(taskResult.absoluteStartOffset) < currentTrimStartOffset) return false // trimmed
     val pendingTask = pendingTask
     return if (pendingTask !is HighlightTask) {
       true // No updates since the current task started, therefore, all results are valid
@@ -185,9 +267,8 @@ internal class BackendTerminalHyperlinkHighlighter(
     }
   }
 
-  private fun maybeStartNewTask(snapshot: TerminalOutputModelSnapshot) {
+  private fun maybeStartNewTask() {
     val currentTaskRunner = currentTaskRunner
-    var pendingTask = pendingTask
     val currentFilter = filterWrapper.getFilter()
     if (currentTaskRunner?.isRunning() == true) {
       LOG.debug { "Can't start a new task because ${currentTaskRunner.task} is still running" }
@@ -198,42 +279,36 @@ internal class BackendTerminalHyperlinkHighlighter(
       LOG.debug { "Can't start a new task because ${currentTaskRunner.task} has $unprocessedResults unprocessed results" }
       return
     }
-    if (pendingTask?.hasWorkToDo() != true || currentFilter == null) {
+    val pending = pendingTask
+    if (pending?.hasWorkToDo() != true || currentFilter == null) {
       if (currentTaskRunner != null) {
         LOG.debug {
           "Finished ${currentTaskRunner.task}, " +
-          "but can't start a new one because pendingTask = $pendingTask, currentFilter = $currentFilter"
+          "but can't start a new one because pendingTask = $pending, currentFilter = $currentFilter"
         }
         this.currentTaskRunner = null
       }
       return
     }
-    if (lastUsedFilter !== currentFilter) {
-      LOG.debug { "The new task will process everything because of a filter change: $lastUsedFilter -> $currentFilter" }
-      pendingTask = newTask(snapshot, snapshot.firstLineIndex)
-    }
-    val newTaskRunner = when (pendingTask) {
-      is TrimTask -> {
-        TrimTaskRunner(
-          isInAlternateBuffer = isInAlternateBuffer,
-          task = pendingTask,
-          filter = currentFilter,
-          outputModel = snapshot,
-        )
-      }
-      is HighlightTask -> {
-        HighlightTaskRunner(
-          hyperlinkId = hyperlinkId,
-          isInAlternateBuffer = isInAlternateBuffer,
-          task = pendingTask,
-          filter = currentFilter,
-          outputModel = snapshot,
-          continueCondition = { makesSenseToContinue(it) },
-        )
-      }
+    // TODO: When the filter changes, previously highlighted ranges become stale. The OLD code reseeded
+    //  pendingTask to cover the entire model on filter change; with no snapshot access we can't do that
+    //  here. If reprocessing is needed, the consumer should re-emit a content update covering the
+    //  affected range. Tracked for follow-up.
+    val newTaskRunner = when (pending) {
+      is TrimTask -> TrimTaskRunner(
+        isInAlternateBuffer = isInAlternateBuffer,
+        task = pending,
+        filter = currentFilter,
+      )
+      is HighlightTask -> HighlightTaskRunner(
+        hyperlinkId = hyperlinkId,
+        isInAlternateBuffer = isInAlternateBuffer,
+        task = pending,
+        filter = currentFilter,
+        continueCondition = { makesSenseToContinue(it) },
+      )
     }
     currentTaskState.value = TaskState(currentTaskRunner = newTaskRunner, pendingTask = null)
-    lastUsedFilter = currentFilter
   }
 
   private fun makesSenseToContinue(runner: HighlightTaskRunner): Boolean {
@@ -250,7 +325,7 @@ internal class BackendTerminalHyperlinkHighlighter(
       return true
     }
     val ourLine = runner.currentAbsoluteLine
-    val nextUpdateLine = pendingTask.startAbsoluteLine
+    val nextUpdateLine = pendingTask.startLine.toAbsolute()
     return if (ourLine < nextUpdateLine) {
       true
     }
@@ -277,55 +352,35 @@ private data class TaskState(
   fun mayHaveWorkToDo(): Boolean = currentTaskRunner != null || pendingTask != null
 }
 
-private fun newTask(
-  outputModel: TerminalOutputModelSnapshot,
-  startLine: TerminalLineIndex?,
-): Task {
-  // Trimming is almost always followed by an actual change, so this trimming task is almost never actually executed.
-  if (startLine == null) return TrimTask(outputModel.startOffset)
-  val endLineInclusive: TerminalLineIndex = outputModel.lastLineIndex
-  val startOffset: TerminalOffset = outputModel.getStartOfLine(startLine)
-  return HighlightTask(
-    startLine.toAbsolute(),
-    startOffset.toAbsolute(),
-    endLineInclusive.toAbsolute(),
-  )
-}
-
 private sealed class Task {
   abstract fun hasWorkToDo(): Boolean
 }
 
-private data class TrimTask(val trimToOffset: TerminalOffset) : Task() {
+private data class TrimTask(
+  val endOffset: TerminalOffset,
+  val modificationStamp: Long,
+) : Task() {
   override fun hasWorkToDo(): Boolean = true // trimming always makes sense
 }
 
 private data class HighlightTask(
-  val startAbsoluteLine: Long,
-  val startAbsoluteOffset: Long,
-  val endAbsoluteLineInclusive: Long,
+  /**
+   * The text covered by this task: lines [startLine]..[endLine] (inclusive),
+   * joined by `'\n'` with no trailing newline.
+   * Stored as [ImmutableCharSequence] for fast `concat` / `subtext` (O(log n)) during merges.
+   */
+  val charsSequence: ImmutableCharSequence,
+  val startLine: TerminalLineIndex,
+  val endLine: TerminalLineIndex,  // Inclusive
+  val startOffset: TerminalOffset,
+  val modificationStamp: Long,
 ) : Task() {
-  override fun hasWorkToDo(): Boolean = endAbsoluteLineInclusive >= startAbsoluteLine
+  val startAbsoluteOffset: Long get() = startOffset.toAbsolute()
+
+  override fun hasWorkToDo(): Boolean = endLine.toAbsolute() >= startLine.toAbsolute()
 
   override fun toString(): String =
-    "HighlightTask(" +
-    "startLine=${TerminalLineIndex.of(startAbsoluteLine)}," +
-    "startOffset=${TerminalOffset.of(startAbsoluteOffset)}, " +
-    "endLineInclusive=${TerminalLineIndex.of(endAbsoluteLineInclusive)})"
-}
-
-private fun describe(outputModel: TerminalOutputModelSnapshot) = buildString {
-  append("OutputModel(trimmedChars=")
-  append(outputModel.startOffset)
-  append(",trimmedLines=")
-  append(outputModel.firstLineIndex.toAbsolute())
-  append(",lengthChars=")
-  append(outputModel.textLength)
-  append(",lengthLines=")
-  append(outputModel.lineCount)
-  append(",modificationStamp=")
-  append(outputModel.modificationStamp)
-  append(")")
+    "HighlightTask(startLine=$startLine, startOffset=$startOffset, endLineInclusive=$endLine, chars=${charsSequence.length})"
 }
 
 private typealias TaskResult = TerminalFilterResultInfoDto
@@ -342,7 +397,6 @@ private sealed class TaskRunner {
 private class TrimTaskRunner(
   private val isInAlternateBuffer: Boolean,
   override val task: TrimTask,
-  private val outputModel: TerminalOutputModelSnapshot,
   override val filter: CompositeFilter,
 ) : TaskRunner() {
 
@@ -357,8 +411,8 @@ private class TrimTaskRunner(
     // so we specify the end-of-document offset to indicate that only the trimming should be done.
     return TerminalHyperlinksChangedEvent(
       isInAlternateBuffer = isInAlternateBuffer,
-      documentModificationStamp = outputModel.modificationStamp,
-      removeFromOffset = outputModel.endOffset.toAbsolute(),
+      documentModificationStamp = task.modificationStamp,
+      removeFromOffset = task.endOffset.toAbsolute(),
       emptyList(),
     )
   }
@@ -368,7 +422,6 @@ private class HighlightTaskRunner(
   hyperlinkId: AtomicLong,
   private val isInAlternateBuffer: Boolean,
   override val task: HighlightTask,
-  private val outputModel: TerminalOutputModelSnapshot,
   override val filter: CompositeFilter,
   private val continueCondition: (HighlightTaskRunner) -> Boolean,
 ) : TaskRunner() {
@@ -376,16 +429,16 @@ private class HighlightTaskRunner(
   private var isFirstEvent = true
 
   private val processor = HyperlinkProcessor(hyperlinkId)
+  private val hypertext: HypertextInput = HypertextFromCharSequenceAdapter(task.charsSequence)
 
   val topResults = LinkedBlockingDeque<TaskResult>()
   val bottomResults = LinkedBlockingDeque<TaskResult>()
 
-  private val topStartLine: TerminalLineIndex = TerminalLineIndex.of(task.startAbsoluteLine)
-  private val bottomStartLine: TerminalLineIndex = (lastLine() + 1 - BATCH_SIZE)
-    .coerceAtLeast(firstLine())
-    .coerceAtLeast(topStartLine)
+  private val topStartLine: TerminalLineIndex = task.startLine
+  private val taskEnd: TerminalLineIndex = task.endLine
+  private val bottomStartLine: TerminalLineIndex = (taskEnd + 1 - BATCH_SIZE).coerceAtLeast(topStartLine)
   private val topStopLineInclusive: TerminalLineIndex = bottomStartLine - 1
-  private val bottomStopLineInclusive: TerminalLineIndex = lastLine()
+  private val bottomStopLineInclusive: TerminalLineIndex = taskEnd
 
   var currentAbsoluteLine: Long = topStartLine.toAbsolute()
 
@@ -393,18 +446,13 @@ private class HighlightTaskRunner(
 
   override fun resultsCount(): Int = topResults.size + bottomResults.size
 
-  private fun firstLine() = outputModel.firstLineIndex
-  private fun lastLine() = outputModel.lastLineIndex
-
   private operator fun TerminalLineIndex.plus(count: Int) = TerminalLineIndex.of(toAbsolute() + count)
   private operator fun TerminalLineIndex.minus(count: Int) = TerminalLineIndex.of(toAbsolute() - count)
 
   override suspend fun run() {
     try {
       LOG.debug {
-        "Started the task ${task} " +
-        "on the output model ${describe(outputModel)}, " +
-        "will process lines $topStartLine-$topStopLineInclusive at the top " +
+        "Started the task $task, will process lines $topStartLine-$topStopLineInclusive at the top " +
         "and $bottomStartLine-$bottomStopLineInclusive at the bottom"
       }
       computeBottomResults()
@@ -421,7 +469,7 @@ private class HighlightTaskRunner(
   }
 
   private suspend fun computeBottomResults() {
-    val results = processor.processBatch(outputModel, filter, bottomStartLine, bottomStopLineInclusive)
+    val results = processor.processBatch(hypertext, task, filter, bottomStartLine, bottomStopLineInclusive)
     LOG.debug { "Produced at the bottom: ${describe(results)} in lines $bottomStartLine-$bottomStopLineInclusive" }
     bottomResults += results
   }
@@ -430,7 +478,7 @@ private class HighlightTaskRunner(
     var firstBatchLine = topStartLine
     while (firstBatchLine <= topStopLineInclusive && continueCondition(this)) {
       val lastBatchLine = (firstBatchLine + BATCH_SIZE - 1).coerceAtMost(topStopLineInclusive)
-      val results = processor.processBatch(outputModel, filter, firstBatchLine, lastBatchLine)
+      val results = processor.processBatch(hypertext, task, filter, firstBatchLine, lastBatchLine)
       topResults += results
       LOG.debug { "Produced at the top: ${describe(results)} in lines $firstBatchLine-$lastBatchLine" }
       firstBatchLine = lastBatchLine + 1
@@ -507,13 +555,12 @@ private class HighlightTaskRunner(
     }
     if (!send) return null
     isFirstEvent = false
-    val result = TerminalHyperlinksChangedEvent(
+    return TerminalHyperlinksChangedEvent(
       isInAlternateBuffer = isInAlternateBuffer,
-      documentModificationStamp = outputModel.modificationStamp,
+      documentModificationStamp = task.modificationStamp,
       removeFromOffset = if (remove) task.startAbsoluteOffset else null,
       hyperlinks = hyperlinks,
     )
-    return result
   }
 
   private fun describe(results: List<TaskResult>) = buildString {
@@ -525,9 +572,6 @@ private class HighlightTaskRunner(
     val minOffset = TerminalOffset.of(results.minOf { it.absoluteStartOffset })
     val maxOffset = TerminalOffset.of(results.maxOf { it.absoluteEndOffset })
     append(minOffset).append("-").append(maxOffset)
-    val minLine = outputModel.getLineByOffset(minOffset)
-    val maxLine = outputModel.getLineByOffset(maxOffset)
-    append(", lines ").append(minLine).append("-").append(maxLine)
     append(" and IDs ")
     val minId = results.minOf { it.id.value }
     val maxId = results.maxOf { it.id.value }
@@ -540,25 +584,26 @@ private class HyperlinkProcessor(
 ) {
 
   suspend fun processBatch(
-    outputModel: TerminalOutputModelSnapshot,
+    hypertext: HypertextInput,
+    task: HighlightTask,
     filter: CompositeFilter,
     startLine: TerminalLineIndex,
     endLine: TerminalLineIndex,
   ): List<TerminalFilterResultInfoDto> =
     readAction {
       mutableListOf<TerminalFilterResultInfoDto>().also { results ->
-        filter.applyToLineRange(outputModel.asHypertext(),
-                                startLine.toRelative(outputModel),
-                                endLine.toRelative(outputModel)) { applyResult ->
+        val relativeStart = (startLine.toAbsolute() - task.startLine.toAbsolute()).toInt()
+        val relativeEnd = (endLine.toAbsolute() - task.startLine.toAbsolute()).toInt()
+        filter.applyToLineRange(hypertext, relativeStart, relativeEnd) { applyResult ->
           checkCanceled()
-          val hyperlinks = applyResult.filterResult?.resultItems?.flatMap { createHyperlinkOrHighlighting(outputModel, it) } ?: emptyList()
+          val hyperlinks = applyResult.filterResult?.resultItems?.flatMap { createHyperlinkOrHighlighting(task, it) } ?: emptyList()
           results.addAll(hyperlinks)
         }
       }
     }
 
   private fun createHyperlinkOrHighlighting(
-    outputModel: TerminalOutputModelSnapshot,
+    task: HighlightTask,
     resultItem: Filter.ResultItem,
   ): List<TerminalFilterResultInfoDto> {
     val hyperlinkInfo = resultItem.hyperlinkInfo
@@ -567,8 +612,8 @@ private class HyperlinkProcessor(
       hyperlinkInfo != null -> TerminalHyperlinkInfoDto(
         id = TerminalHyperlinkId(hyperlinkId.incrementAndGet()),
         hyperlinkInfo = hyperlinkInfo,
-        absoluteStartOffset = outputModel.relativeOffset(resultItem.highlightStartOffset).toAbsolute(),
-        absoluteEndOffset = outputModel.relativeOffset(resultItem.highlightEndOffset).toAbsolute(),
+        absoluteStartOffset = task.absoluteOffsetOf(resultItem.highlightStartOffset),
+        absoluteEndOffset = task.absoluteOffsetOf(resultItem.highlightEndOffset),
         style = highlightAttributes?.toDto(),
         followedStyle = resultItem.followedHyperlinkAttributes?.toDto(),
         hoveredStyle = resultItem.hoveredHyperlinkAttributes?.toDto(),
@@ -577,8 +622,8 @@ private class HyperlinkProcessor(
       )
       highlightAttributes != null -> TerminalHighlightingInfoDto(
         id = TerminalHyperlinkId(hyperlinkId.incrementAndGet()),
-        absoluteStartOffset = outputModel.relativeOffset(resultItem.highlightStartOffset).toAbsolute(),
-        absoluteEndOffset = outputModel.relativeOffset(resultItem.highlightEndOffset).toAbsolute(),
+        absoluteStartOffset = task.absoluteOffsetOf(resultItem.highlightStartOffset),
+        absoluteEndOffset = task.absoluteOffsetOf(resultItem.highlightEndOffset),
         style = highlightAttributes.toDto(),
         layer = resultItem.highlighterLayer,
       )
@@ -587,31 +632,47 @@ private class HyperlinkProcessor(
     val inlayResult = (resultItem as? InlayProvider)?.let { inlayProvider ->
       TerminalInlayInfoDto(
         id = TerminalHyperlinkId(hyperlinkId.incrementAndGet()),
-        absoluteStartOffset = outputModel.relativeOffset(resultItem.highlightStartOffset).toAbsolute(),
-        absoluteEndOffset = outputModel.relativeOffset(resultItem.highlightEndOffset).toAbsolute(),
+        absoluteStartOffset = task.absoluteOffsetOf(resultItem.highlightStartOffset),
+        absoluteEndOffset = task.absoluteOffsetOf(resultItem.highlightEndOffset),
         inlayProvider = inlayProvider,
       )
     }
     return listOfNotNull(notInlayResult, inlayResult)
   }
 
+  private fun HighlightTask.absoluteOffsetOf(charsRelativeOffset: Int): Long =
+    (startOffset + charsRelativeOffset.toLong()).toAbsolute()
 }
 
-private fun TerminalOutputModelSnapshot.relativeOffset(offset: Int): TerminalOffset = startOffset + offset.toLong()
+private class HypertextFromCharSequenceAdapter(private val chars: CharSequence) : HypertextInput {
+  private val lineStartOffsets: IntArray = run {
+    val lineCount = chars.count { it == '\n' } + 1
+    val starts = IntArray(lineCount)
+    var idx = 1
+    chars.forEachIndexed { i, c ->
+      if (c == '\n') {
+        starts[idx++] = i + 1
+      }
+    }
+    starts
+  }
 
-private fun TerminalOutputModelSnapshot.asHypertext(): HypertextInput = HypertextFromFrozenTerminalOutputModelAdapter(this)
-
-private class HypertextFromFrozenTerminalOutputModelAdapter(private val model: TerminalOutputModelSnapshot) : HypertextInput {
   override val lineCount: Int
-    get() = model.lineCount
+    get() = lineStartOffsets.size
 
-  override fun getLineStartOffset(lineIndex: Int): Int = model.getStartOfLine(model.relativeLine(lineIndex)).toRelative(model)
+  override fun getLineStartOffset(lineIndex: Int): Int = lineStartOffsets[lineIndex]
 
-  override fun getLineText(lineIndex: Int): String = model.getLineText(model.relativeLine(lineIndex))
+  override fun getLineText(lineIndex: Int): String {
+    val start = lineStartOffsets[lineIndex]
+    return if (lineIndex + 1 < lineStartOffsets.size) {
+      val end = lineStartOffsets[lineIndex + 1]
+      chars.subSequence(start, end).toString()  // with line break at the end
+    }
+    else {
+      chars.subSequence(start, chars.length).toString() + "\n"
+    }
+  }
 }
-
-private fun TerminalOutputModelSnapshot.getLineText(line: TerminalLineIndex): String =
-  getText(getStartOfLine(line), getEndOfLine(line, includeEOL = true)).toString()
 
 /**
  * Indicates the number of lines processed in one batch.
@@ -623,7 +684,3 @@ private fun TerminalOutputModelSnapshot.getLineText(line: TerminalLineIndex): St
  */
 private const val BATCH_SIZE = 200
 private val LOG = logger<BackendTerminalHyperlinkHighlighter>()
-
-private fun TerminalOutputModelSnapshot.relativeLine(lineIndex: Int): TerminalLineIndex = firstLineIndex + lineIndex.toLong()
-private fun TerminalLineIndex.toRelative(model: TerminalOutputModelSnapshot): Int = (this - model.firstLineIndex).toInt()
-private fun TerminalOffset.toRelative(model: TerminalOutputModelSnapshot): Int = (this - model.startOffset).toInt()

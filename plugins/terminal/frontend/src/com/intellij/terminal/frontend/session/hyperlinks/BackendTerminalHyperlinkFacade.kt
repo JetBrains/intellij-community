@@ -28,7 +28,7 @@ import org.jetbrains.plugins.terminal.view.TerminalOutputModelListener
 class BackendTerminalHyperlinkFacade(
   private val project: Project,
   coroutineScope: CoroutineScope,
-  private val outputModel: TerminalOutputModel,
+  outputModel: TerminalOutputModel,
   isInAlternateBuffer: Boolean,
   filterContext: TerminalHyperlinkFilterContext?,
 ) {
@@ -42,10 +42,28 @@ class BackendTerminalHyperlinkFacade(
   init {
     outputModel.addListener(coroutineScope.asDisposable(), object : TerminalOutputModelListener {
       override fun afterContentChanged(event: TerminalContentChangeEvent) {
-        val snapshot = event.model.takeSnapshot()
-        val startLine = if (event.isTrimming) null else snapshot.getLineByOffset(event.offset)
-        val contentUpdate = TerminalOutputContentUpdate(snapshot, startLine)
-        highlighter.updatePendingTask(contentUpdate)
+        val model = event.model
+        val update: TerminalOutputUpdate = if (event.isTrimming) {
+          TerminalOutputTrimmingUpdate(
+            firstLine = model.firstLineIndex,
+            startOffset = model.startOffset,
+            endOffset = model.endOffset,
+            modificationStamp = model.modificationStamp,
+          )
+        }
+        else {
+          val startLine = model.getLineByOffset(event.offset)
+          val startOffset = model.getStartOfLine(startLine)
+          val endOffset = model.endOffset
+          TerminalOutputContentUpdate(
+            charsSequence = model.getText(startOffset, endOffset),
+            startLine = startLine,
+            endLine = model.lastLineIndex,
+            startOffset = startOffset,
+            modificationStamp = model.modificationStamp,
+          )
+        }
+        highlighter.applyUpdate(update)
       }
     })
   }
@@ -56,8 +74,7 @@ class BackendTerminalHyperlinkFacade(
     // This flow works as a latch: it's locked before we even retrieve the event,
     // and unlocked only after it's applied (or if it's null).
     pendingUpdateEvents.update { it + 1 }
-    val snapshot = outputModel.takeSnapshot()
-    val modelUpdateEvent = highlighter.collectResultsAndMaybeStartNewTask(snapshot)
+    val modelUpdateEvent = highlighter.collectResultsAndMaybeStartNewTask()
     if (modelUpdateEvent == null) {
       pendingUpdateEvents.update { it - 1 }
     }
