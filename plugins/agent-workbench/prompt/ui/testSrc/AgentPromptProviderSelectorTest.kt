@@ -140,6 +140,30 @@ class AgentPromptProviderSelectorTest {
   }
 
   @Test
+  fun promptSelectorExcludesProvidersThatDoNotSupportPromptLaunch() {
+    runInEdtAndWait {
+      val codexProvider = testProviderBridge(
+        provider = AgentSessionProvider.CODEX,
+        promptOptions = emptyList(),
+      )
+      val terminalProvider = testProviderBridge(
+        provider = AgentSessionProvider.TERMINAL,
+        promptOptions = emptyList(),
+        supportsPromptLaunch = false,
+      )
+      val fixture = createSelectorFixture(listOf(terminalProvider, codexProvider))
+
+      fixture.selector.refresh()
+
+      assertThat(fixture.selector.availableProviders).containsExactly(AgentSessionProvider.CODEX)
+      assertThat(fixture.selector.selectedProvider?.bridge?.provider?.value).isEqualTo(AgentSessionProvider.CODEX.value)
+      val actions = checkNotNull(fixture.selector.buildChooserActionGroup { error("should not select provider during filtering test") })
+        .getChildren(TestActionEvent.createTestEvent())
+      assertThat(actions.map { action -> action.templatePresentation.text }).containsExactly("Codex")
+    }
+  }
+
+  @Test
   @Suppress("RAW_SCOPE_CREATION")
   fun asyncRefreshAppliesResolvedProviderAvailabilityFromUiScope() = timeoutRunBlocking {
     val provider = testProviderBridge(
@@ -211,12 +235,14 @@ class AgentPromptProviderSelectorTest {
     provider: AgentSessionProvider,
     promptOptions: List<AgentPromptProviderOption>,
     cliAvailable: Boolean = true,
+    supportsPromptLaunch: Boolean = true,
   ): AgentSessionProviderDescriptor {
     return object : AgentSessionProviderDescriptor {
       override val provider: AgentSessionProvider = provider
       override val displayNameKey: String = "provider.${provider.value}"
       override val newSessionLabelKey: String = displayNameKey
       override val promptOptions: List<AgentPromptProviderOption> = promptOptions
+      override val supportsPromptLaunch: Boolean = supportsPromptLaunch
       override val sessionSource: AgentSessionSource
         get() = error("Not required for this test")
       override val cliMissingMessageKey: String = displayNameKey

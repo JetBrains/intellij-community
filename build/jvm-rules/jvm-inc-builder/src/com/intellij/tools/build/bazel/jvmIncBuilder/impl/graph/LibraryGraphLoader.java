@@ -50,7 +50,7 @@ public final class LibraryGraphLoader {
   }
 
   private static Pair<NodeSourceSnapshot, Graph> loadReadonlyLibraryGraph(NodeSource lib, Delta delta, Iterator<ClassDataZipEntry> entries) {
-    // for this presentation, we use packages within the given library as 'node sources', and class files in the corresponding package as 'nodes'
+    // for this presentation, we use node path within the given library as 'node source', and the corresponding class file entry as 'node'
     Map<NodeSource, String> snapshotMap = new HashMap<>(); // map of [nodePath -> digest] where digest reflects the content state of the class Node
     String prefix = getLibraryPathPrefix(lib);
     while (entries.hasNext()) {

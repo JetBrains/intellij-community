@@ -188,7 +188,7 @@ suspend fun SeWrappedLegacyContributorItemsProviderFactory.getItemsProviderCatch
 
 @ApiStatus.Internal
 suspend fun SeItemsProviderFactory.computeCatchingOrNull(block: suspend () -> SeItemsProvider?): SeItemsProvider? =
-  computeCatchingOrNull({ e -> "SearchEverywhere items provider wasn't created: ${id}. Exception:\n${e.message}" }, block)
+  computeCatchingOrNull({ e -> "SearchEverywhere items provider wasn't created: ${id}. Exception:\n${e.stackTraceToString()}" }, block)
 
 @ApiStatus.Internal
 @Serializable

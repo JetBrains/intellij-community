@@ -154,9 +154,11 @@ public final class PyDebuggerOptionsProvider implements PersistentStateComponent
   public static final String DEFAULT_BACKEND_MARKER = "DEFAULT";
 
   /**
-   * Returns the backend that should actually be used: an explicit user choice if any, otherwise the
+   * Returns the backend that is selected: an explicit user choice if any, otherwise the
    * current global default {@link PyDebugBackendRunnerKt#DEFAULT_PY_DEBUGGER_BACKEND}. Never returns
    * a value outside the {@link PyDebuggerBackend} enum.
+   * NOTE: This only stores the selected backend and does not check for its applicability. To resolve the effective backend
+   * please use {@link PyDebugBackendRunnerKt#resolveEffectiveBackend(PyDebuggerBackend, boolean)}.
    */
   public @NotNull PyDebuggerBackend getSelectedBackend() {
     if (myState.myDebuggerBackend.equals(DEFAULT_BACKEND_MARKER)) {

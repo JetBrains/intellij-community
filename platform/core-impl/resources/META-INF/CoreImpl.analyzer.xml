@@ -52,6 +52,8 @@
                     serviceImplementation="com.intellij.codeInsight.multiverse.CodeInsightContextManagerImpl"/>
     <projectService serviceInterface="com.intellij.psi.util.PsiModificationTracker"
                     serviceImplementation="com.intellij.psi.impl.PsiModificationTrackerImpl"/>
+    <projectService serviceInterface="com.intellij.psi.impl.file.PsiDirectoryFactory" open="true"
+                    serviceImplementation="com.intellij.psi.impl.file.PsiDirectoryFactoryImpl"/>
     <projectService serviceInterface="com.intellij.psi.PsiFileFactory"
                     serviceImplementation="com.intellij.psi.impl.PsiFileFactoryImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.vfs.VirtualFileSetFactory"

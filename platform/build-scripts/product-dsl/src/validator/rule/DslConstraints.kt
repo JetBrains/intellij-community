@@ -27,6 +27,7 @@ import com.intellij.platform.pluginGraph.PluginId
 import org.jetbrains.intellij.build.productLayout.ModuleSet
 import org.jetbrains.intellij.build.productLayout.ModuleSetWithOverrides
 import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
+import org.jetbrains.intellij.build.productLayout.contentName
 
 /**
  * Formats a validation error message with consistent structure.
@@ -61,7 +62,7 @@ internal fun validateModuleSetOverrides(
 ) {
   if (moduleSetWithOverrides.loadingOverrides.isEmpty()) return
 
-  val directModules = moduleSetWithOverrides.moduleSet.modules.mapTo(LinkedHashSet()) { it.name }
+  val directModules = moduleSetWithOverrides.moduleSet.modules.mapTo(LinkedHashSet()) { it.contentName() }
   val invalidOverrides = moduleSetWithOverrides.loadingOverrides.keys.filter { it !in directModules }
 
   if (invalidOverrides.isNotEmpty()) {

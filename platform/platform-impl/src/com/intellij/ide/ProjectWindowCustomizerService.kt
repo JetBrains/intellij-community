@@ -47,8 +47,10 @@ import com.intellij.ui.paint.PaintUtil.alignTxToInt
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.IconUtil
 import com.intellij.util.PlatformUtils
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.messages.Topic
 import com.intellij.util.ui.AvatarIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.launchOnShow
@@ -64,6 +66,7 @@ import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.SystemIndependent
 import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.RenderingHints
@@ -115,6 +118,59 @@ private data class ProjectColors(val gradient: Color,
                                  val iconColorEnd: Color,
                                  val index: Int? = null)
 
+/**
+ * Shared visual palette for UI surfaces that identify projects by already stored recent-project color metadata.
+ * This intentionally does not expose path-based lookup: those helpers may generate and persist a missing color index.
+ */
+@Internal
+object RecentProjectColorPalette {
+  const val COLOR_COUNT: Int = 9
+
+  private const val CUSTOM_COLOR_BALANCE = 0.18
+
+  @Suppress("UnregisteredNamedColor")
+  private val mainToolbarGradientStartColors: Array<Color>
+    get() = arrayOf(
+      JBColor.namedColor("RecentProject.Color1.MainToolbarGradientStart", JBColor(0xDB3D3C, 0xCE443C)),
+      JBColor.namedColor("RecentProject.Color2.MainToolbarGradientStart", JBColor(0xF57236, 0xE27237)),
+      JBColor.namedColor("RecentProject.Color3.MainToolbarGradientStart", JBColor(0x2BC8BB, 0x2DBCAD)),
+      JBColor.namedColor("RecentProject.Color4.MainToolbarGradientStart", JBColor(0x359AF2, 0x3895E1)),
+      JBColor.namedColor("RecentProject.Color5.MainToolbarGradientStart", JBColor(0x8379FB, 0x7B75E8)),
+      JBColor.namedColor("RecentProject.Color6.MainToolbarGradientStart", JBColor(0x7E54B5, 0x7854AD)),
+      JBColor.namedColor("RecentProject.Color7.MainToolbarGradientStart", JBColor(0xD63CC8, 0x8F4593)),
+      JBColor.namedColor("RecentProject.Color8.MainToolbarGradientStart", JBColor(0x954294, 0xC840B9)),
+      JBColor.namedColor("RecentProject.Color9.MainToolbarGradientStart", JBColor(0xE75371, 0xD75370))
+    )
+
+  fun mainToolbarGradientStart(index: Int): Color? {
+    return mainToolbarGradientStartColors.getOrNull(index)
+  }
+
+  fun softBackground(index: Int): Color? {
+    return mainToolbarGradientStart(index)
+  }
+
+  fun softBackground(customColor: Color): Color {
+    return ColorUtil.mix(JBColor.PanelBackground, customColor, CUSTOM_COLOR_BALANCE)
+  }
+
+  fun softBackground(colorInfo: RecentProjectColorInfo): Color? {
+    colorInfo.customColor
+      ?.takeIf { it.isNotBlank() }
+      ?.let { customColor ->
+        return softBackground(ColorHexUtil.fromHex(customColor, null) ?: return null)
+      }
+
+    return softBackground(colorInfo.associatedIndex)
+  }
+}
+
+@Internal
+interface ProjectColorChangeListener {
+  @RequiresEdt
+  fun projectColorChanged(projectPath: @SystemIndependent String)
+}
+
 internal class ProjectGradients(val index: Int) {
   val diagonalColor1 = JBColor.namedColor("ProjectGradients.Group${index}.DiagonalGradient.Color1")
   val diagonalColor2 = JBColor.namedColor("ProjectGradients.Group${index}.DiagonalGradient.Color2")
@@ -152,6 +208,10 @@ class ProjectWindowCustomizerService internal constructor(private val coroutineS
     private var rightGradientCache: GradientTextureCache = GradientTextureCache()
     private val LOG = logger<ProjectWindowCustomizerService>()
 
+    @Topic.AppLevel
+    val PROJECT_COLOR_CHANGE_TOPIC: Topic<ProjectColorChangeListener> =
+      Topic(ProjectColorChangeListener::class.java, Topic.BroadcastDirection.NONE)
+
     init {
       ApplicationManager.registerCleaner { instance = null }
     }
@@ -174,24 +234,10 @@ class ProjectWindowCustomizerService internal constructor(private val coroutineS
   private var ourSettingsValue = UISettings.getInstance().differentiateProjects
   private val colorCache = HashMap<Path, ProjectColors>()
   private val listeners = mutableListOf<(Boolean) -> Unit>()
-  private val defaultColors = ProjectColors(gradient = gradientColors[0],
+  private val defaultColors = ProjectColors(gradient = RecentProjectColorPalette.mainToolbarGradientStart(0) ?: JBColor.PanelBackground,
                                             iconColorStart = ProjectIconPalette.gradients[0].first,
                                             iconColorEnd = ProjectIconPalette.gradients[0].second,
                                             index = 0)
-
-  @Suppress("UnregisteredNamedColor")
-  private val gradientColors: Array<Color>
-    get() = arrayOf(
-      JBColor.namedColor("RecentProject.Color1.MainToolbarGradientStart", JBColor(0xDB3D3C, 0xCE443C)),
-      JBColor.namedColor("RecentProject.Color2.MainToolbarGradientStart", JBColor(0xF57236, 0xE27237)),
-      JBColor.namedColor("RecentProject.Color3.MainToolbarGradientStart", JBColor(0x2BC8BB, 0x2DBCAD)),
-      JBColor.namedColor("RecentProject.Color4.MainToolbarGradientStart", JBColor(0x359AF2, 0x3895E1)),
-      JBColor.namedColor("RecentProject.Color5.MainToolbarGradientStart", JBColor(0x8379FB, 0x7B75E8)),
-      JBColor.namedColor("RecentProject.Color6.MainToolbarGradientStart", JBColor(0x7E54B5, 0x7854AD)),
-      JBColor.namedColor("RecentProject.Color7.MainToolbarGradientStart", JBColor(0xD63CC8, 0x8F4593)),
-      JBColor.namedColor("RecentProject.Color8.MainToolbarGradientStart", JBColor(0x954294, 0xC840B9)),
-      JBColor.namedColor("RecentProject.Color9.MainToolbarGradientStart", JBColor(0xE75371, 0xD75370))
-    )
 
   private val gradientRepaintRoots = HashSet<JComponent>()
 
@@ -269,7 +315,7 @@ class ProjectWindowCustomizerService internal constructor(private val coroutineS
       }
       else {
         val associatedIndex = getOrGenerateAssociatedColorIndex(colorStorage)
-        ProjectColors(gradient = gradientColors[associatedIndex],
+        ProjectColors(gradient = RecentProjectColorPalette.mainToolbarGradientStart(associatedIndex) ?: defaultColors.gradient,
                       iconColorStart = ProjectIconPalette.gradients[associatedIndex].first,
                       iconColorEnd = ProjectIconPalette.gradients[associatedIndex].second,
                       index = associatedIndex)
@@ -281,7 +327,7 @@ class ProjectWindowCustomizerService internal constructor(private val coroutineS
     getAssociatedColorIndex(colorStorage)?.let { return it }
 
     // Calculate next colors by incrementing (and saving the new value) color index
-    val index = PropertiesComponent.getInstance().nextColorIndex(gradientColors.size)
+    val index = PropertiesComponent.getInstance().nextColorIndex(RecentProjectColorPalette.COLOR_COUNT)
 
     // Save calculated colors and clear customized colors for the project
     setAssociatedColorsIndex(colorStorage, index, false)
@@ -291,7 +337,7 @@ class ProjectWindowCustomizerService internal constructor(private val coroutineS
 
   private fun getAssociatedColorIndex(colorStorage: ProjectColorStorage): Int? {
     val index = colorStorage.associatedIndex ?: return null
-    if (index >= 0 && index < gradientColors.size) return index
+    if (index >= 0 && index < RecentProjectColorPalette.COLOR_COUNT) return index
     return null
   }
 

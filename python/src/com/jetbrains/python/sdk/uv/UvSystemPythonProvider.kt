@@ -3,7 +3,7 @@ package com.jetbrains.python.sdk.uv
 
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.localEel
-import com.intellij.python.community.impl.uv.common.UV_UI_INFO
+import com.intellij.python.uv.common.UV_UI_INFO
 import com.intellij.python.community.services.systemPython.SystemPythonProvider
 import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.PythonBinary

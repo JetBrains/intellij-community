@@ -4,9 +4,7 @@ package com.jetbrains.python.sdk.conda
 import com.intellij.execution.Platform
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.TargetEnvironmentConfiguration
-import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.platform.eel.provider.localEel
@@ -19,12 +17,14 @@ import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.SdkCreationRequest
 import com.jetbrains.python.sdk.ToolCommandExecutor
 import com.jetbrains.python.sdk.ToolSearchPath
 import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.conda.execution.CondaExecutor
+import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
@@ -91,29 +91,26 @@ suspend fun PyCondaCommand.createCondaSdkFromExistingEnvironment(
   val flavorAndData = PyFlavorAndData(PyCondaFlavorData(condaEnv), CondaEnvSdkFlavor)
   val interpreterPath = getCondaPythonBinaryPath(condaEnv, targetConfig).getOr { return it }
 
-  val additionalData = when (targetConfig) {
-    null -> PythonSdkAdditionalData(flavorAndData)
-    else -> PyTargetAwareAdditionalData(flavorAndData, targetConfig).also {
+  val targetConfig = targetConfig
+  val creationRequest = if (targetConfig == null) {
+    SdkCreationRequest.EelSdk(Path(interpreterPath), PythonSdkAdditionalData(flavorAndData))
+  }
+  else {
+    val addData = PyTargetAwareAdditionalData(flavorAndData, targetConfig).also {
       it.interpreterPath = interpreterPath
     }
+    SdkCreationRequest.TargetSdk(interpreterPath, addData)
   }
 
   val sdkType = PythonSdkType.getInstance()
-  val sdk = ProjectJdkTable.getInstance().createSdk(
-    SdkConfigurationUtil.createUniqueSdkName(sdkType.suggestSdkName(null, interpreterPath), existingSdks),
-    sdkType
-  )
-  val sdkModificator = sdk.sdkModificator
-  sdkModificator.sdkAdditionalData = additionalData
-  sdkModificator.homePath = interpreterPath
-  edtWriteAction {
-    sdkModificator.commitChanges()
-  }
+  val name = SdkConfigurationUtil.createUniqueSdkName(sdkType.suggestSdkName(null, interpreterPath), existingSdks)
+  val sdk = creationRequest.createSdk( name).getOr { return it }
+
   sdk.pyRichSdk()
   if (targetConfig == null) {
     saveLocalPythonCondaPath(Path.of(fullCondaPathOnTarget))
   }
-  (sdk.sdkType as PythonSdkType).setupSdkPaths(sdk)
+  sdkType.setupSdkPaths(sdk)
   return PyResult.success(sdk)
 }
 
@@ -141,7 +138,6 @@ private suspend fun getCondaPythonBinaryPath(
 suspend fun PyCondaCommand.createCondaSdkAlongWithNewEnv(
   newCondaEnvInfo: NewCondaEnvRequest,
   existingSdks: List<Sdk>,
-  project: Project,
 ): PyResult<Sdk> {
   PyCondaEnv.createEnv(this, newCondaEnvInfo).getOr { return it }
   val sdk = createCondaSdkFromExistingEnvironment(

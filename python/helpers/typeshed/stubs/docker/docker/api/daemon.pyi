@@ -5,6 +5,7 @@ from docker.types.daemon import CancellableStream
 
 class DaemonApiMixin:
     def df(self) -> dict[str, Any]: ...
+
     @overload
     def events(
         self,
@@ -21,6 +22,7 @@ class DaemonApiMixin:
         filters: dict[str, Any] | None = None,
         decode: Literal[True] = ...,
     ) -> CancellableStream[dict[str, Any]]: ...
+
     def info(self) -> dict[str, Any]: ...
     def login(
         self,

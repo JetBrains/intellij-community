@@ -28,6 +28,7 @@ _T = TypeVar("_T")
 
 class tqdm_discord(tqdm_auto[_T]):
     dio: Incomplete
+
     @overload
     def __init__(
         self,
@@ -90,6 +91,7 @@ class tqdm_discord(tqdm_auto[_T]):
         gui: bool = ...,
         **kwargs,
     ) -> None: ...
+
     def display(  # type: ignore[override]
         self, *, msg: str | None = ..., pos: int | None = ..., close: bool = ..., bar_style=..., check_delay: bool = ...
     ) -> None: ...

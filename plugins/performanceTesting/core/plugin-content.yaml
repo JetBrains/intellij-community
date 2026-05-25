@@ -12,6 +12,9 @@
 - name: lib/modules/intellij.driver.frontend.split.jar
   contentModules:
   - name: intellij.driver.frontend.split
+- name: lib/modules/intellij.performanceTesting.async.core.jar
+  contentModules:
+  - name: intellij.performanceTesting.async.core
 - name: lib/modules/intellij.performanceTesting.backend.jar
   contentModules:
   - name: intellij.performanceTesting.backend

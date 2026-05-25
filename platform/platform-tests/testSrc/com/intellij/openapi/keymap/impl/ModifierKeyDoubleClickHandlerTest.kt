@@ -6,7 +6,12 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.KeyboardGestureAction
+import com.intellij.openapi.actionSystem.KeyboardModifierGestureShortcut
 import com.intellij.openapi.actionSystem.KeyboardShortcut
+import com.intellij.openapi.actionSystem.Shortcut
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.util.Clock
 import com.intellij.testFramework.junit5.RunInEdt
@@ -30,11 +35,35 @@ private const val MY_SHIFT_SHIFT_KEY_ACTION = "ModifierKeyDoubleClickHandlerTest
 private const val MY_SHIFT_OTHER_KEY_ACTION = "ModifierKeyDoubleClickHandlerTest.action4"
 private const val MY_CTRL_CTRL_WITH_ALT_ACTION = "ModifierKeyDoubleClickHandlerTest.action5"
 private const val MY_SUPPRESSED_META_META_ACTION = "ModifierKeyDoubleClickHandlerTest.action6"
+private const val MY_KEYMAP_CTRL_CTRL_ACTION = "ModifierKeyDoubleClickHandlerTest.action7"
+private const val MY_KEYMAP_CTRL_CTRL_OVERRIDE_ACTION = "ModifierKeyDoubleClickHandlerTest.action8"
+private const val MY_KEYMAP_HOLD_CTRL_ACTION = "ModifierKeyDoubleClickHandlerTest.action9"
+private const val MY_COMPARATOR_SNAPSHOT_FIRST_ACTION = "ModifierKeyDoubleClickHandlerTest.snapshot.z"
+private const val MY_COMPARATOR_SNAPSHOT_SECOND_ACTION = "ModifierKeyDoubleClickHandlerTest.snapshot.a"
 
 @Suppress("DEPRECATION")
 private val SHIFT_KEY_SHORTCUT = KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, InputEvent.SHIFT_MASK), null)
+
 @Suppress("DEPRECATION")
 private val SHIFT_OTHER_KEY_SHORTCUT = KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_MASK), null)
+
+@Suppress("DEPRECATION")
+private val CTRL_CTRL_SHORTCUT = KeyboardModifierGestureShortcut.newInstance(
+  KeyboardGestureAction.ModifierType.dblClick,
+  KeyStroke.getKeyStroke(KeyEvent.VK_CONTROL, InputEvent.CTRL_MASK),
+) as KeyboardModifierGestureShortcut
+
+@Suppress("DEPRECATION")
+private val ALT_GRAPH_CTRL_CTRL_SHORTCUT = KeyboardModifierGestureShortcut.newInstance(
+  KeyboardGestureAction.ModifierType.dblClick,
+  KeyStroke.getKeyStroke(KeyEvent.VK_CONTROL, InputEvent.CTRL_MASK or InputEvent.ALT_GRAPH_MASK),
+) as KeyboardModifierGestureShortcut
+
+@Suppress("DEPRECATION")
+private val HOLD_CTRL_SHORTCUT = KeyboardModifierGestureShortcut.newInstance(
+  KeyboardGestureAction.ModifierType.hold,
+  KeyStroke.getKeyStroke(KeyEvent.VK_CONTROL, InputEvent.CTRL_MASK),
+) as KeyboardModifierGestureShortcut
 
 private fun createAction(onPerformed: () -> Unit): AnAction {
   return object : AnAction() {
@@ -63,9 +92,14 @@ class ModifierKeyDoubleClickHandlerTest {
   private var shiftOtherKeyActionInvocationCount = 0
   private var ctrlCtrlWithAltActionInvocationCount = 0
   private var suppressedMetaMetaActionInvocationCount = 0
+  private var keymapCtrlCtrlActionInvocationCount = 0
+  private var keymapCtrlCtrlOverrideActionInvocationCount = 0
+  private var keymapHoldCtrlActionInvocationCount = 0
 
   @BeforeEach
   fun setUp() {
+    UIUtil.dispatchAllInvocationEvents()
+    clearKeymapShortcuts()
     Clock.setTime(0)
 
     val actionManager = ActionManager.getInstance()
@@ -75,10 +109,15 @@ class ModifierKeyDoubleClickHandlerTest {
     actionManager.registerAction(MY_SHIFT_OTHER_KEY_ACTION, createAction { shiftOtherKeyActionInvocationCount++ })
     actionManager.registerAction(MY_CTRL_CTRL_WITH_ALT_ACTION, createAction { ctrlCtrlWithAltActionInvocationCount++ })
     actionManager.registerAction(MY_SUPPRESSED_META_META_ACTION, createAction { suppressedMetaMetaActionInvocationCount++ })
+    actionManager.registerAction(MY_KEYMAP_CTRL_CTRL_ACTION, createAction { keymapCtrlCtrlActionInvocationCount++ })
+    actionManager.registerAction(MY_KEYMAP_CTRL_CTRL_OVERRIDE_ACTION, createAction { keymapCtrlCtrlOverrideActionInvocationCount++ })
+    actionManager.registerAction(MY_KEYMAP_HOLD_CTRL_ACTION, createAction { keymapHoldCtrlActionInvocationCount++ })
 
     val activeKeymap = KeymapManager.getInstance().activeKeymap
     activeKeymap.addShortcut(MY_SHIFT_KEY_ACTION, SHIFT_KEY_SHORTCUT)
     activeKeymap.addShortcut(MY_SHIFT_OTHER_KEY_ACTION, SHIFT_OTHER_KEY_SHORTCUT)
+    UIUtil.dispatchAllInvocationEvents()
+    clearKeymapShortcuts()
 
     val doubleClickHandler = ModifierKeyDoubleClickHandler.getInstance()
     doubleClickHandler.registerAction(MY_SHIFT_SHIFT_ACTION, KeyEvent.VK_SHIFT, -1)
@@ -96,10 +135,20 @@ class ModifierKeyDoubleClickHandlerTest {
     doubleClickHandler.unregisterAction(MY_SHIFT_SHIFT_ACTION)
 
     val activeKeymap = KeymapManager.getInstance().activeKeymap
+    resetActionShortcuts(MY_KEYMAP_HOLD_CTRL_ACTION, emptyList())
+    resetActionShortcuts(MY_KEYMAP_CTRL_CTRL_OVERRIDE_ACTION, emptyList())
+    resetActionShortcuts(MY_KEYMAP_CTRL_CTRL_ACTION, emptyList())
     activeKeymap.removeShortcut(MY_SHIFT_OTHER_KEY_ACTION, SHIFT_OTHER_KEY_SHORTCUT)
     activeKeymap.removeShortcut(MY_SHIFT_KEY_ACTION, SHIFT_KEY_SHORTCUT)
+    UIUtil.dispatchAllInvocationEvents()
+    clearKeymapShortcuts()
 
     val actionManager = ActionManager.getInstance()
+    actionManager.unregisterAction(MY_KEYMAP_HOLD_CTRL_ACTION)
+    actionManager.unregisterAction(MY_KEYMAP_CTRL_CTRL_OVERRIDE_ACTION)
+    actionManager.unregisterAction(MY_KEYMAP_CTRL_CTRL_ACTION)
+    actionManager.unregisterAction(MY_COMPARATOR_SNAPSHOT_SECOND_ACTION)
+    actionManager.unregisterAction(MY_COMPARATOR_SNAPSHOT_FIRST_ACTION)
     actionManager.unregisterAction(MY_SUPPRESSED_META_META_ACTION)
     actionManager.unregisterAction(MY_CTRL_CTRL_WITH_ALT_ACTION)
     actionManager.unregisterAction(MY_SHIFT_OTHER_KEY_ACTION)
@@ -226,6 +275,128 @@ class ModifierKeyDoubleClickHandlerTest {
   }
 
   @Test
+  fun keymapGestureShortcutRegistersRuntimeDoubleClick() {
+    resetActionShortcuts(MY_KEYMAP_CTRL_CTRL_ACTION, listOf(CTRL_CTRL_SHORTCUT))
+
+    syncKeymapShortcuts()
+
+    assertTrue(ModifierKeyDoubleClickHandler.getInstance().isShortcutRegistered(MY_KEYMAP_CTRL_CTRL_ACTION, CTRL_CTRL_SHORTCUT))
+    dispatchCtrlDoubleClick()
+    assertEquals(1, keymapCtrlCtrlActionInvocationCount)
+  }
+
+  @Test
+  fun removingKeymapGestureShortcutUnregistersRuntimeDoubleClick() {
+    resetActionShortcuts(MY_KEYMAP_CTRL_CTRL_ACTION, listOf(CTRL_CTRL_SHORTCUT))
+    syncKeymapShortcuts()
+    assertTrue(ModifierKeyDoubleClickHandler.getInstance().isShortcutRegistered(MY_KEYMAP_CTRL_CTRL_ACTION, CTRL_CTRL_SHORTCUT))
+
+    resetActionShortcuts(MY_KEYMAP_CTRL_CTRL_ACTION, emptyList())
+    syncKeymapShortcuts()
+
+    assertFalse(ModifierKeyDoubleClickHandler.getInstance().isShortcutRegistered(MY_KEYMAP_CTRL_CTRL_ACTION, CTRL_CTRL_SHORTCUT))
+    dispatchCtrlDoubleClick()
+    assertEquals(0, keymapCtrlCtrlActionInvocationCount)
+  }
+
+  @Test
+  fun duplicateKeymapGestureShortcutUsesLastRegisteredAction() {
+    resetActionShortcuts(MY_KEYMAP_CTRL_CTRL_ACTION, listOf(CTRL_CTRL_SHORTCUT))
+    resetActionShortcuts(MY_KEYMAP_CTRL_CTRL_OVERRIDE_ACTION, listOf(CTRL_CTRL_SHORTCUT))
+
+    syncKeymapShortcuts()
+
+    assertFalse(ModifierKeyDoubleClickHandler.getInstance().isShortcutRegistered(MY_KEYMAP_CTRL_CTRL_ACTION, CTRL_CTRL_SHORTCUT))
+    assertTrue(ModifierKeyDoubleClickHandler.getInstance().isShortcutRegistered(MY_KEYMAP_CTRL_CTRL_OVERRIDE_ACTION, CTRL_CTRL_SHORTCUT))
+    dispatchCtrlDoubleClick()
+    assertEquals(0, keymapCtrlCtrlActionInvocationCount)
+    assertEquals(1, keymapCtrlCtrlOverrideActionInvocationCount)
+  }
+
+  @Test
+  fun keymapHoldGestureShortcutIsIgnoredByDoubleClickHandler() {
+    resetActionShortcuts(MY_KEYMAP_HOLD_CTRL_ACTION, listOf(HOLD_CTRL_SHORTCUT))
+
+    syncKeymapShortcuts()
+
+    assertFalse(ModifierKeyDoubleClickHandler.getInstance().isShortcutRegistered(MY_KEYMAP_HOLD_CTRL_ACTION, HOLD_CTRL_SHORTCUT))
+    dispatchCtrlDoubleClick()
+    assertEquals(0, keymapHoldCtrlActionInvocationCount)
+  }
+
+  @Test
+  fun suppressedKeymapGestureShortcutIsNotRegistered() {
+    val doubleClickHandler = ModifierKeyDoubleClickHandler.getInstance()
+    resetActionShortcuts(MY_KEYMAP_CTRL_CTRL_ACTION, listOf(CTRL_CTRL_SHORTCUT))
+    doubleClickHandler.suppressShortcut(MY_KEYMAP_CTRL_CTRL_ACTION, CTRL_CTRL_SHORTCUT)
+
+    syncKeymapShortcuts()
+
+    assertFalse(doubleClickHandler.isShortcutRegistered(MY_KEYMAP_CTRL_CTRL_ACTION, CTRL_CTRL_SHORTCUT))
+    dispatchCtrlDoubleClick()
+    assertEquals(0, keymapCtrlCtrlActionInvocationCount)
+    doubleClickHandler.unsuppressAction(MY_KEYMAP_CTRL_CTRL_ACTION)
+  }
+
+  @Test
+  fun unregisteringActionResyncsKeymapGestureShortcuts() {
+    val actionManager = ActionManager.getInstance()
+    resetActionShortcuts(MY_KEYMAP_CTRL_CTRL_ACTION, listOf(CTRL_CTRL_SHORTCUT))
+    syncKeymapShortcuts()
+    assertTrue(ModifierKeyDoubleClickHandler.getInstance().isShortcutRegistered(MY_KEYMAP_CTRL_CTRL_ACTION, CTRL_CTRL_SHORTCUT))
+
+    actionManager.unregisterAction(MY_KEYMAP_CTRL_CTRL_ACTION)
+    UIUtil.dispatchAllInvocationEvents()
+
+    assertFalse(ModifierKeyDoubleClickHandler.getInstance().isShortcutRegistered(MY_KEYMAP_CTRL_CTRL_ACTION, CTRL_CTRL_SHORTCUT))
+    dispatchCtrlDoubleClick()
+    assertEquals(0, keymapCtrlCtrlActionInvocationCount)
+
+    actionManager.registerAction(MY_KEYMAP_CTRL_CTRL_ACTION, createAction { keymapCtrlCtrlActionInvocationCount++ })
+    UIUtil.dispatchAllInvocationEvents()
+
+    assertTrue(ModifierKeyDoubleClickHandler.getInstance().isShortcutRegistered(MY_KEYMAP_CTRL_CTRL_ACTION, CTRL_CTRL_SHORTCUT))
+    dispatchCtrlDoubleClick()
+    assertEquals(1, keymapCtrlCtrlActionInvocationCount)
+  }
+
+  @Test
+  fun keymapGestureShortcutWithUnsupportedModifierIsIgnored() {
+    resetActionShortcuts(MY_KEYMAP_CTRL_CTRL_ACTION, listOf(ALT_GRAPH_CTRL_CTRL_SHORTCUT))
+
+    syncKeymapShortcuts()
+
+    assertFalse(ModifierKeyDoubleClickHandler.getInstance().isShortcutRegistered(MY_KEYMAP_CTRL_CTRL_ACTION, ALT_GRAPH_CTRL_CTRL_SHORTCUT))
+    dispatchCtrlDoubleClick()
+    assertEquals(0, keymapCtrlCtrlActionInvocationCount)
+  }
+
+  @Test
+  fun registrationOrderComparatorUsesStableSnapshot() {
+    val actionManager = ActionManagerEx.getInstanceEx()
+    val comparator = actionManager.registrationOrderComparator
+    val comparisonBeforeRegistration = comparator.compare(MY_COMPARATOR_SNAPSHOT_FIRST_ACTION, MY_COMPARATOR_SNAPSHOT_SECOND_ACTION)
+
+    actionManager.registerAction(MY_COMPARATOR_SNAPSHOT_FIRST_ACTION, createAction {})
+    actionManager.registerAction(MY_COMPARATOR_SNAPSHOT_SECOND_ACTION, createAction {})
+
+    assertEquals(
+      comparisonBeforeRegistration,
+      comparator.compare(MY_COMPARATOR_SNAPSHOT_FIRST_ACTION, MY_COMPARATOR_SNAPSHOT_SECOND_ACTION),
+    )
+  }
+
+  @Test
+  fun unsupportedModifierDoesNotTriggerRegisteredDoubleClick() {
+    resetActionShortcuts(MY_KEYMAP_CTRL_CTRL_ACTION, listOf(CTRL_CTRL_SHORTCUT))
+    syncKeymapShortcuts()
+
+    dispatchCtrlDoubleClickWithUnsupportedButtonModifier()
+
+    assertEquals(0, keymapCtrlCtrlActionInvocationCount)
+  }
+
+  @Test
   fun suppressActionUnregistersAction() {
     val doubleClickHandler = ModifierKeyDoubleClickHandler.getInstance()
     doubleClickHandler.registerAction(MY_SUPPRESSED_META_META_ACTION, KeyEvent.VK_META, -1, false)
@@ -305,12 +476,34 @@ class ModifierKeyDoubleClickHandlerTest {
     dispatchEvent(KeyEvent.KEY_RELEASED, 0, KeyEvent.VK_CONTROL, KeyEvent.CHAR_UNDEFINED)
   }
 
+  private fun dispatchCtrlDoubleClick() {
+    ctrlPress()
+    ctrlRelease()
+    ctrlPress()
+    ctrlRelease()
+  }
+
+  private fun dispatchCtrlDoubleClickWithUnsupportedButtonModifier() {
+    ctrlPressWithUnsupportedButtonModifier()
+    ctrlReleaseWithUnsupportedButtonModifier()
+    ctrlPressWithUnsupportedButtonModifier()
+    ctrlReleaseWithUnsupportedButtonModifier()
+  }
+
   private fun ctrlPressWithAlt() {
     dispatchEvent(KeyEvent.KEY_PRESSED, InputEvent.CTRL_MASK or InputEvent.ALT_MASK, KeyEvent.VK_CONTROL, KeyEvent.CHAR_UNDEFINED)
   }
 
   private fun ctrlReleaseWithAlt() {
     dispatchEvent(KeyEvent.KEY_RELEASED, InputEvent.ALT_MASK, KeyEvent.VK_CONTROL, KeyEvent.CHAR_UNDEFINED)
+  }
+
+  private fun ctrlPressWithUnsupportedButtonModifier() {
+    dispatchEvent(KeyEvent.KEY_PRESSED, InputEvent.CTRL_MASK or InputEvent.BUTTON1_DOWN_MASK, KeyEvent.VK_CONTROL, KeyEvent.CHAR_UNDEFINED)
+  }
+
+  private fun ctrlReleaseWithUnsupportedButtonModifier() {
+    dispatchEvent(KeyEvent.KEY_RELEASED, InputEvent.BUTTON1_DOWN_MASK, KeyEvent.VK_CONTROL, KeyEvent.CHAR_UNDEFINED)
   }
 
   private fun dispatchEvent(id: Int, modifiers: Int, keyCode: Int, keyChar: Char) {
@@ -333,5 +526,29 @@ class ModifierKeyDoubleClickHandlerTest {
     }
 
     dispatchEvent(KeyEvent.KEY_RELEASED, InputEvent.SHIFT_MASK, keyCode, keyChar)
+  }
+
+  private fun resetActionShortcuts(actionId: String, shortcuts: List<Shortcut>) {
+    val activeKeymap = KeymapManager.getInstance().activeKeymap
+    runWriteAction {
+      activeKeymap.getShortcuts(actionId).forEach { shortcut ->
+        activeKeymap.removeShortcut(actionId, shortcut)
+      }
+      shortcuts.forEach { shortcut ->
+        activeKeymap.addShortcut(actionId, shortcut)
+      }
+    }
+  }
+
+  private fun syncKeymapShortcuts() {
+    val method = ModifierKeyDoubleClickHandler::class.java.getDeclaredMethod("syncKeymapShortcuts")
+    method.isAccessible = true
+    method.invoke(ModifierKeyDoubleClickHandler.getInstance())
+  }
+
+  private fun clearKeymapShortcuts() {
+    val method = ModifierKeyDoubleClickHandler::class.java.getDeclaredMethod("clearKeymapShortcuts")
+    method.isAccessible = true
+    method.invoke(ModifierKeyDoubleClickHandler.getInstance())
   }
 }

@@ -51,7 +51,7 @@ object EelExecWindowsApiHelpers {
 
     private var interactionOptions: EelExecApi.InteractionOptions? = null
 
-    private var ptyOrStdErrSettings: EelExecApi.PtyOrStdErrSettings? = interactionOptions
+    private var ptyOrStdErrSettings: EelExecApi.InteractionOptions? = interactionOptions
 
     private var scope: CoroutineScope? = null
 
@@ -100,7 +100,7 @@ object EelExecWindowsApiHelpers {
 
     @Deprecated("Switch to interactionOptions", replaceWith = ReplaceWith("interactionOptions"))
     @ApiStatus.Internal
-    fun ptyOrStdErrSettings(arg: EelExecApi.PtyOrStdErrSettings?): SpawnProcess = apply {
+    fun ptyOrStdErrSettings(arg: EelExecApi.InteractionOptions?): SpawnProcess = apply {
       this.ptyOrStdErrSettings = arg
     }
 

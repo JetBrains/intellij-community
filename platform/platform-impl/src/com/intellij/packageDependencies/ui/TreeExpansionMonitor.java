@@ -16,6 +16,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeSelectionModel;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.util.ArrayList;
@@ -121,8 +122,10 @@ public abstract class TreeExpansionMonitor<T> {
     for (TreePath myExpandedPath : myExpandedPaths) {
       myTree.expandPath(findPathByNode(getLastNode(myExpandedPath)));
     }
+    TreeSelectionModel model = myTree.getSelectionModel();
+    model.clearSelection();
     for (T mySelectionNode : mySelectionNodes) {
-      myTree.getSelectionModel().addSelectionPath(findPathByNode(mySelectionNode));
+      model.addSelectionPath(findPathByNode(mySelectionNode));
     }
     int selected = myTree.getLeadSelectionRow();
     if (selected != -1) {

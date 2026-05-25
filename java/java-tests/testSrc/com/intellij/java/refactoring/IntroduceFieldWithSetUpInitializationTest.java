@@ -27,6 +27,7 @@ import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler;
+import com.intellij.refactoring.introduceField.JavaIntroduceFieldService;
 import com.intellij.refactoring.introduceField.LocalToFieldHandler;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -93,7 +94,7 @@ public class IntroduceFieldWithSetUpInitializationTest extends LightJavaCodeInsi
                                                                             final PsiExpression[] occurences,
                                                                             final boolean isStatic) {
         return new BaseExpressionToFieldHandler.Settings("i", null, occurences, true, false, false,
-                                                         BaseExpressionToFieldHandler.InitializationPlace.IN_SETUP_METHOD,
+                                                         JavaIntroduceFieldService.InitializationPlace.IN_SETUP_METHOD,
                                                          PsiModifier.PRIVATE, local, local.getType(), true, (BaseExpressionToFieldHandler.TargetDestination)null, false,
                                                          false);
       }

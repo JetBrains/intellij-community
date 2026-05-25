@@ -15,6 +15,11 @@ startup --host_jvm_args=-Xmx10g
 # see https://blog.bazel.build/2026/01/20/bazel-9.html
 common --incompatible_autoload_externally=
 
+# Cache repository rules like JPS project model reading, http_file downloading, toolbox POMs analysis etc
+# Also see MRI-3683
+# https://github.com/bazelbuild/bazel/discussions/27509
+startup --experimental_remote_repo_contents_cache
+
 # IJI-2767 Bazel: move bazel output root to a standard location
 startup:macos --output_user_root=~/Library/Caches/JetBrains/MonorepoBazel
 startup:linux --output_user_root=~/.cache/JetBrains/MonorepoBazel

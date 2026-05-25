@@ -38,6 +38,7 @@ def load(
     _dict: type[dict[str, Any]] = ...,
     decoder: TomlDecoder[dict[str, Any]] | None = None,
 ) -> dict[str, Any]: ...
+
 @overload
 def loads(s: str, _dict: type[_MutableMappingT], decoder: TomlDecoder[_MutableMappingT] | None = None) -> _MutableMappingT: ...
 @overload
@@ -47,10 +48,12 @@ class InlineTableDict: ...
 
 class TomlDecoder(Generic[_MutableMappingT]):
     _dict: type[_MutableMappingT]
+
     @overload
     def __init__(self, _dict: type[_MutableMappingT]) -> None: ...
     @overload
     def __init__(self: TomlDecoder[dict[str, Any]], _dict: type[dict[str, Any]] = ...) -> None: ...
+
     def get_empty_table(self) -> _MutableMappingT: ...
     def get_empty_inline_table(self) -> InlineTableDict: ...  # incomplete python/typing#213
     def load_inline_object(

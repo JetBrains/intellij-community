@@ -63,7 +63,7 @@
     <orderEntry type="module" module-name="intellij.platform.pluginSystem.testFramework" />
     <orderEntry type="module" module-name="intellij.platform.pluginSystem.parser.impl" />
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
-    <orderEntry type="library" name="tcServiceMessages" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.teamcity.service.messages" />
     <orderEntry type="module" module-name="intellij.platform.buildData" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" />
     <orderEntry type="module" module-name="intellij.platform.distributionContent.testFramework" />

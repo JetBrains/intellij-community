@@ -1,13 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mcpserver.settings
 
+import com.intellij.mcpserver.impl.McpServerTerminalPromotionDismissalState
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.findOrCreateFile
-import com.intellij.openapi.application.EDT
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import kotlinx.coroutines.Dispatchers
@@ -28,6 +29,7 @@ class McpServerSettingsConfigurableTest {
 
   @AfterEach
   fun tearDown(): Unit = runBlocking(Dispatchers.EDT) {
+    McpServerTerminalPromotionDismissalState.showAgain()
     FileEditorManagerEx.getInstanceEx(project).closeAllFiles()
   }
 
@@ -54,5 +56,21 @@ class McpServerSettingsConfigurableTest {
     assertThat(missingPath.exists()).isTrue()
     assertThat(createdFile).isNotNull()
     assertThat(FileEditorManager.getInstance(project).isFileOpen(createdFile!!)).isTrue()
+  }
+
+  @Test
+  fun `terminal promotion property mirrors dismissal state`() {
+    val property = showMcpServerTerminalPromotionProperty()
+
+    McpServerTerminalPromotionDismissalState.showAgain()
+    assertThat(property.get()).isTrue()
+
+    property.set(false)
+    assertThat(McpServerTerminalPromotionDismissalState.isDismissed()).isTrue()
+    assertThat(property.get()).isFalse()
+
+    property.set(true)
+    assertThat(McpServerTerminalPromotionDismissalState.isDismissed()).isFalse()
+    assertThat(property.get()).isTrue()
   }
 }

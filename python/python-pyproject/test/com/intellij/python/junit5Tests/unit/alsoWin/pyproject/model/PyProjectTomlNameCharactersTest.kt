@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model
 
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -25,7 +25,7 @@ internal class PyProjectTomlNameCharactersTest {
 
   @Test
   fun `plain ascii name flows through unchanged`(): Unit = timeoutRunBlocking(30.seconds) {
-    writeAction {
+    edtWriteAction {
       f.root.writePyprojectToml("root")
       f.root.createDirectory("sub").writePyprojectToml("simple_pkg")
     }
@@ -40,7 +40,7 @@ internal class PyProjectTomlNameCharactersTest {
 
   @Test
   fun `dotted name becomes module name with dotted iml`(): Unit = timeoutRunBlocking(30.seconds) {
-    writeAction {
+    edtWriteAction {
       f.root.writePyprojectToml("root")
       f.root.createDirectory("sub").writePyprojectToml("my.namespace.pkg")
     }
@@ -55,7 +55,7 @@ internal class PyProjectTomlNameCharactersTest {
 
   @Test
   fun `dash and underscore variants are distinct sibling modules`(): Unit = timeoutRunBlocking(30.seconds) {
-    writeAction {
+    edtWriteAction {
       f.root.writePyprojectToml("root")
       f.root.createDirectory("dash").writePyprojectToml("my-pkg")
       f.root.createDirectory("under").writePyprojectToml("my_pkg")
@@ -72,7 +72,7 @@ internal class PyProjectTomlNameCharactersTest {
 
   @Test
   fun `case-different names are distinct sibling modules`(): Unit = timeoutRunBlocking(30.seconds) {
-    writeAction {
+    edtWriteAction {
       f.root.writePyprojectToml("root")
       f.root.createDirectory("a").writePyprojectToml("Friendly-Bard")
       f.root.createDirectory("b").writePyprojectToml("friendly-bard")
@@ -89,7 +89,7 @@ internal class PyProjectTomlNameCharactersTest {
 
   @Test
   fun `unicode name is preserved on disk`(): Unit = timeoutRunBlocking(30.seconds) {
-    writeAction {
+    edtWriteAction {
       f.root.writePyprojectToml("root")
       f.root.createDirectory("sub").writePyprojectToml("пакет")
     }

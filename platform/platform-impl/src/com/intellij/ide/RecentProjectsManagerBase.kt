@@ -1032,9 +1032,17 @@ int32 "extendedState"
 
   @Internal
   fun updateProjectColor(projectBasePath: String, info: RecentProjectColorInfo) {
+    var updated = false
     synchronized(stateLock) {
-      getProjectMetaInfo(projectBasePath)?.colorInfo = info
-      modCounter.increment()
+      val metaInfo = state.additionalInfo.get(projectBasePath)
+      if (metaInfo != null) {
+        metaInfo.colorInfo = info
+        modCounter.increment()
+        updated = true
+      }
+    }
+    if (updated) {
+      fireProjectColorChangeEvent(projectBasePath)
     }
   }
 
@@ -1083,6 +1091,15 @@ int32 "extendedState"
 private fun fireChangeEvent() {
   ApplicationManager.getApplication().invokeLater {
     ApplicationManager.getApplication().messageBus.syncPublisher(RecentProjectsManager.RECENT_PROJECTS_CHANGE_TOPIC).change()
+  }
+}
+
+private fun fireProjectColorChangeEvent(projectBasePath: String) {
+  ApplicationManager.getApplication().invokeLater {
+    ApplicationManager.getApplication()
+      .messageBus
+      .syncPublisher(ProjectWindowCustomizerService.PROJECT_COLOR_CHANGE_TOPIC)
+      .projectColorChanged(projectBasePath)
   }
 }
 

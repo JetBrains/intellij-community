@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout
 
-import com.intellij.platform.pluginGraph.ContentModuleName
+import com.intellij.platform.pluginGraph.PluginModuleId
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.jetbrains.intellij.build.ModuleOutputProvider
@@ -23,9 +23,9 @@ class ProductModulesContentSpecTest {
     val moduleSet = ModuleSet(
       name = "testSet",
       modules = listOf(
-        ContentModule(ContentModuleName("module.a")),
-        ContentModule(ContentModuleName("module.b")),
-        ContentModule(ContentModuleName("module.c"))
+        ContentModule(PluginModuleId("module.a", namespace = "jetbrains")),
+        ContentModule(PluginModuleId("module.b", namespace = "jetbrains")),
+        ContentModule(PluginModuleId("module.c", namespace = "jetbrains"))
       )
     )
 
@@ -54,8 +54,8 @@ class ProductModulesContentSpecTest {
     val moduleSet = ModuleSet(
       name = "testSet",
       modules = listOf(
-        ContentModule(ContentModuleName("module.a")),
-        ContentModule(ContentModuleName("module.b"))
+        ContentModule(PluginModuleId("module.a", namespace = "jetbrains")),
+        ContentModule(PluginModuleId("module.b", namespace = "jetbrains"))
       )
     )
 
@@ -86,15 +86,15 @@ class ProductModulesContentSpecTest {
     val nestedSet = ModuleSet(
       name = "nested",
       modules = listOf(
-        ContentModule(ContentModuleName("nested.module.a")),
-        ContentModule(ContentModuleName("nested.module.b"))
+        ContentModule(PluginModuleId("nested.module.a", namespace = "jetbrains")),
+        ContentModule(PluginModuleId("nested.module.b", namespace = "jetbrains"))
       )
     )
 
     val parentSet = ModuleSet(
       name = "parent",
       modules = listOf(
-        ContentModule(ContentModuleName("parent.module.a"))
+        ContentModule(PluginModuleId("parent.module.a", namespace = "jetbrains"))
       ),
       nestedSets = listOf(nestedSet)
     )
@@ -128,7 +128,7 @@ class ProductModulesContentSpecTest {
     val moduleSet = ModuleSet(
       name = "testSet",
       modules = listOf(
-        ContentModule(ContentModuleName("module.a"))
+        ContentModule(PluginModuleId("module.a", namespace = "jetbrains"))
       )
     )
 
@@ -153,7 +153,7 @@ class ProductModulesContentSpecTest {
     val moduleSet = ModuleSet(
       name = "testSet",
       modules = listOf(
-        ContentModule(ContentModuleName("module.a"))
+        ContentModule(PluginModuleId("module.a", namespace = "jetbrains"))
       )
     )
 
@@ -185,16 +185,16 @@ class ProductModulesContentSpecTest {
     val nestedSet = ModuleSet(
       name = "nested",
       modules = listOf(
-        ContentModule(ContentModuleName("nested.module.a")),
-        ContentModule(ContentModuleName("nested.module.b"))
+        ContentModule(PluginModuleId("nested.module.a", namespace = "jetbrains")),
+        ContentModule(PluginModuleId("nested.module.b", namespace = "jetbrains"))
       )
     )
 
     val parentSet = ModuleSet(
       name = "parent",
       modules = listOf(
-        ContentModule(ContentModuleName("parent.module.a")),
-        ContentModule(ContentModuleName("parent.module.b"))
+        ContentModule(PluginModuleId("parent.module.a", namespace = "jetbrains")),
+        ContentModule(PluginModuleId("parent.module.b", namespace = "jetbrains"))
       ),
       nestedSets = listOf(nestedSet)
     )
@@ -228,9 +228,9 @@ class ProductModulesContentSpecTest {
     val moduleSet = ModuleSet(
       name = "testSet",
       modules = listOf(
-        ContentModule(ContentModuleName("module.a")),
-        ContentModule(ContentModuleName("module.b")),
-        ContentModule(ContentModuleName("module.c"))
+        ContentModule(PluginModuleId("module.a", namespace = "jetbrains")),
+        ContentModule(PluginModuleId("module.b", namespace = "jetbrains")),
+        ContentModule(PluginModuleId("module.c", namespace = "jetbrains"))
       )
     )
 
@@ -269,16 +269,16 @@ class ProductModulesContentSpecTest {
     val deeplyNestedSet = ModuleSet(
       name = "rdCommon",
       modules = listOf(
-        ContentModule(ContentModuleName("rd.module.a")),
-        ContentModule(ContentModuleName("rd.module.b")),
-        ContentModule(ContentModuleName("rd.module.c"))
+        ContentModule(PluginModuleId("rd.module.a", namespace = "jetbrains")),
+        ContentModule(PluginModuleId("rd.module.b", namespace = "jetbrains")),
+        ContentModule(PluginModuleId("rd.module.c", namespace = "jetbrains"))
       )
     )
 
     val middleSet = ModuleSet(
       name = "ideUltimate",
       modules = listOf(
-        ContentModule(ContentModuleName("ide.module.a"))
+        ContentModule(PluginModuleId("ide.module.a", namespace = "jetbrains"))
       ),
       nestedSets = listOf(deeplyNestedSet)
     )
@@ -286,7 +286,7 @@ class ProductModulesContentSpecTest {
     val parentSet = ModuleSet(
       name = "commercialIdeBase",
       modules = listOf(
-        ContentModule(ContentModuleName("commercial.module.a"))
+        ContentModule(PluginModuleId("commercial.module.a", namespace = "jetbrains"))
       ),
       nestedSets = listOf(middleSet)
     )
@@ -341,15 +341,15 @@ class ProductModulesContentSpecTest {
     val rdCommon = ModuleSet(
       name = "rdCommon",
       modules = listOf(
-        ContentModule(ContentModuleName("intellij.rd.platform")),
-        ContentModule(ContentModuleName("intellij.rd.ui"))
+        ContentModule(PluginModuleId("intellij.rd.platform", namespace = "jetbrains")),
+        ContentModule(PluginModuleId("intellij.rd.ui", namespace = "jetbrains"))
       )
     )
 
     val commercialIdeBase = ModuleSet(
       name = "commercialIdeBase",
       modules = listOf(
-        ContentModule(ContentModuleName("commercial.module"))
+        ContentModule(PluginModuleId("commercial.module", namespace = "jetbrains"))
       ),
       nestedSets = listOf(rdCommon)
     )
@@ -392,8 +392,8 @@ class ProductModulesContentSpecTest {
     val testFrameworkSet = ModuleSet(
       name = "testFrameworks",
       modules = listOf(
-        ContentModule(ContentModuleName("intellij.libraries.junit5")),
-        ContentModule(ContentModuleName("intellij.libraries.testcontainers"))
+        ContentModule(PluginModuleId("intellij.libraries.junit5", namespace = "jetbrains")),
+        ContentModule(PluginModuleId("intellij.libraries.testcontainers", namespace = "jetbrains"))
       )
     )
 
@@ -427,12 +427,12 @@ class ProductModulesContentSpecTest {
     // Verifies that nested module sets are recursively inlined
     val nestedSet = ModuleSet(
       name = "nested",
-      modules = listOf(ContentModule(ContentModuleName("nested.module")))
+      modules = listOf(ContentModule(PluginModuleId("nested.module", namespace = "jetbrains")))
     )
     
     val parentSet = ModuleSet(
       name = "parent",
-      modules = listOf(ContentModule(ContentModuleName("parent.module"))),
+      modules = listOf(ContentModule(PluginModuleId("parent.module", namespace = "jetbrains"))),
       nestedSets = listOf(nestedSet)
     )
 

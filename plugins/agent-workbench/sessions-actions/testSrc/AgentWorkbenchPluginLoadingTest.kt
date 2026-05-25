@@ -2,7 +2,9 @@
 package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.common.AgentWorkbenchActionIds
+import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettingsContributors
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.fileEditor.impl.EditorTabColorProvider
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
@@ -18,6 +20,10 @@ class AgentWorkbenchPluginLoadingTest {
       .isNotNull
     assertThat(checkNotNull(fileSystem).javaClass.name)
       .isEqualTo("com.intellij.agent.workbench.chat.AgentChatVirtualFileSystem")
+    assertThat(EditorTabColorProvider.EP_NAME.extensionList.map { it.javaClass.name })
+      .contains("com.intellij.agent.workbench.chat.AgentChatEditorTabColorProvider")
+    assertThat(AgentWorkbenchSettingsContributors.all().map { it.javaClass.name })
+      .contains("com.intellij.agent.workbench.chat.AgentChatSettingsContributor")
 
     assertThat(ActionManager.getInstance().getAction(AgentWorkbenchActionIds.Sessions.OPEN_DEDICATED_FRAME))
       .isNotNull

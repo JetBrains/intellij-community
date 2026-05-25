@@ -64,6 +64,7 @@ class KW_ONLY: ...
 def asdict(obj: DataclassInstance) -> dict[str, Any]: ...
 @overload
 def asdict(obj: DataclassInstance, *, dict_factory: Callable[[list[tuple[str, Any]]], _T]) -> _T: ...
+
 @overload
 def astuple(obj: DataclassInstance) -> tuple[Any, ...]: ...
 @overload
@@ -102,7 +103,6 @@ if sys.version_info >= (3, 11):
         slots: bool = False,
         weakref_slot: bool = False,
     ) -> Callable[[type[_T]], type[_T]]: ...
-
 else:
     @overload
     def dataclass(
@@ -256,7 +256,6 @@ if sys.version_info >= (3, 14):
         kw_only: bool | Literal[_MISSING_TYPE.MISSING] = ...,
         doc: str | None = None,
     ) -> Any: ...
-
 else:
     @overload  # `default` and `default_factory` are optional and mutually exclusive.
     def field(
@@ -311,6 +310,7 @@ class InitVar(Generic[_T]):
     __slots__ = ("type",)
     type: Type[_T]
     def __init__(self, type: Type[_T]) -> None: ...
+
     @overload
     def __class_getitem__(cls, type: Type[_T]) -> InitVar[_T]: ...  # pyright: ignore[reportInvalidTypeForm]
     @overload

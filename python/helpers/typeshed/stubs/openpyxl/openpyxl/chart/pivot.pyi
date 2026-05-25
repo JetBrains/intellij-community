@@ -18,6 +18,7 @@ class PivotSource(Serialisable):
     fmtId: NestedInteger[Literal[False]]
     extLst: Typed[ExtensionList, Literal[True]]
     __elements__: ClassVar[tuple[str, ...]]
+
     @overload
     def __init__(
         self, name: object, fmtId: _HasTagAndGet[ConvertibleToInt] | ConvertibleToInt, extLst: Unused = None

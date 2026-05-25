@@ -7,6 +7,8 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.ResourceBundleReference;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Iconable;
@@ -14,7 +16,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
-import com.intellij.psi.search.GlobalSearchScopesCore;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -22,6 +24,8 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.psi.search.GlobalSearchScopesCore.projectProductionScope;
 
 class ResourceBundlePsiReferenceProvider extends PsiReferenceProvider {
 
@@ -43,11 +47,21 @@ class ResourceBundlePsiReferenceProvider extends PsiReferenceProvider {
     }
 
     @Override
+    protected @NotNull GlobalSearchScope getKeyResolveScope() {
+      Module module = ModuleUtilCore.findModuleForPsiElement(myElement);
+      // bundle name can be used in dependency module
+      GlobalSearchScope scope = module != null
+                                ? projectProductionScope(module.getProject())
+                                : myElement.getResolveScope();
+      return scope;
+    }
+
+    @Override
     public Object @NotNull [] getVariants() {
       final Project project = myElement.getProject();
       PropertiesReferenceManager referenceManager = PropertiesReferenceManager.getInstance(project);
       final List<LookupElement> variants = new ArrayList<>();
-      referenceManager.processPropertiesFiles(GlobalSearchScopesCore.projectProductionScope(project), (baseName, propertiesFile) -> {
+      referenceManager.processPropertiesFiles(projectProductionScope(project), (baseName, propertiesFile) -> {
         final Icon icon = propertiesFile.getContainingFile().getIcon(Iconable.ICON_FLAG_READ_STATUS);
         final String relativePath = ProjectUtil.calcRelativeToProjectPath(propertiesFile.getVirtualFile(), project);
         variants.add(LookupElementBuilder.create(propertiesFile, baseName)

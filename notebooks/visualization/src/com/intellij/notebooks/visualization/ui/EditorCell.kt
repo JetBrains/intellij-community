@@ -1,3 +1,4 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notebooks.visualization.ui
 
 import com.intellij.notebooks.jupyter.core.jupyter.CellType
@@ -37,6 +38,12 @@ class EditorCell(
   init {
     executionStatus.afterDistinctChange(this) {
       thisLogger().debug("Execution status changed: $it for interval ${intervalPointer.get()?.ordinal}")
+    }
+
+    isUnfolded.afterDistinctChange(this) {
+      if (isUnfolded.get()) {
+        updateIfInVisibleRect()
+      }
     }
   }
 

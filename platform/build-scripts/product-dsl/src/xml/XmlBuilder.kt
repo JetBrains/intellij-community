@@ -49,7 +49,7 @@ internal class ContentBuilder(@PublishedApi internal val sb: StringBuilder, @Pub
  * Extension function to append module with ContentModule data class.
  */
 internal fun ContentBuilder.module(contentModule: ContentModule) {
-  module(contentModule.name.value, contentModule.loading)
+  module(contentModule.moduleId.name, contentModule.loading)
 }
 
 /**

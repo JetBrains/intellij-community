@@ -17,7 +17,7 @@ import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
-import com.jetbrains.python.sdk.getOrCreateAdditionalData
+import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.setAssociationToPath
 import kotlinx.coroutines.runBlocking
@@ -68,7 +68,7 @@ class InterpreterServiceShowCaseTest {
       Assertions.assertEquals(sdk, i.sdk, "Wrong sdk")
 
       module.pythonSdk = sdk!!
-      Assertions.assertEquals(sdk.getOrCreateAdditionalData().uuid, interpreterService.getForModule(module)!!.id, "No module set")
+      Assertions.assertEquals(sdk.pySdkAdditionalData.uuid, interpreterService.getForModule(module)!!.id, "No module set")
 
       when (i) {
         is InvalidInterpreter -> {
@@ -97,4 +97,4 @@ class InterpreterServiceShowCaseTest {
   }
 }
 
-private fun TestFixture<Sdk>.id(): UUID = get().getOrCreateAdditionalData().uuid
+private fun TestFixture<Sdk>.id(): UUID = get().pySdkAdditionalData.uuid

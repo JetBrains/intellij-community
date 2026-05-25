@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayoutProviderKt;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -16,6 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Locale;
 
@@ -73,6 +73,28 @@ public class PagedFileStorageTest {
       for (int i = 0; i < 1000; i++) {
         assertEquals(0, pagedFileStorage.get(i, true));
       }
+    });
+  }
+
+  @Test
+  public void testForceWritesOnlyActuallyModifiedRegion() throws IOException {
+    withLock(storageLockContext, () -> {
+      byte[] initialBytes = new byte[128];
+      Arrays.fill(initialBytes, (byte)1);
+      pagedFileStorage.put(0, initialBytes, 0, initialBytes.length);
+      pagedFileStorage.force();
+
+      byte[] externallyChangedBytes = initialBytes.clone();
+      externallyChangedBytes[0] = 42;
+      Files.write(file, externallyChangedBytes);
+
+      int modifiedOffset = 64;
+      pagedFileStorage.put(modifiedOffset, (byte)7);
+      pagedFileStorage.force();
+
+      byte[] actualBytes = Files.readAllBytes(file);
+      assertEquals(42, actualBytes[0]);
+      assertEquals(7, actualBytes[modifiedOffset]);
     });
   }
 

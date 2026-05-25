@@ -52,5 +52,9 @@
       serviceInterface="com.intellij.refactoring.introduceVariable.JavaIntroduceVariableService"
       serviceImplementation="com.intellij.refactoring.introduceVariable.JavaIntroduceVariableServiceImpl"
       overrides="true"/>
+    <applicationService
+      serviceInterface="com.intellij.refactoring.introduceField.JavaIntroduceFieldService"
+      serviceImplementation="com.intellij.refactoring.introduceField.JavaIntroduceFieldServiceImpl"
+      overrides="true"/>
   </extensions>
 </idea-plugin>

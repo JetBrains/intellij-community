@@ -7,9 +7,12 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.openapi.util.text.HtmlChunk.br
 import com.intellij.openapi.vfs.VirtualFile
 
-internal class AgentChatEditorTabTitleProvider : EditorTabTitleProvider, DumbAware {
+internal class AgentChatEditorTabTitleProvider @JvmOverloads constructor(
+  private val isDedicatedProject: (Project) -> Boolean = ::isAgentWorkbenchDedicatedFrameProject,
+) : EditorTabTitleProvider, DumbAware {
   override suspend fun getEditorTabTitleAsync(project: Project, file: VirtualFile): @NlsContexts.TabTitle String? {
     return getEditorTabTitle(project, file)
   }
@@ -21,6 +24,14 @@ internal class AgentChatEditorTabTitleProvider : EditorTabTitleProvider, DumbAwa
 
   override fun getEditorTabTooltipHtml(project: Project, virtualFile: VirtualFile): HtmlChunk? {
     val chatFile = virtualFile as? AgentChatVirtualFile ?: return null
-    return HtmlChunk.text(chatFile.threadTitle)
+    val sourceProjectPath = chatFile.projectPath.takeIf { it.isNotBlank() && isDedicatedProject(project) }
+    if (sourceProjectPath == null) {
+      return HtmlChunk.text(chatFile.threadTitle)
+    }
+    return HtmlChunk.html().children(
+      HtmlChunk.text(chatFile.threadTitle),
+      br(),
+      HtmlChunk.text(AgentChatBundle.message("chat.tab.tooltip.source.project", sourceProjectPath)),
+    )
   }
 }

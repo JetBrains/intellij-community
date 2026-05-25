@@ -206,6 +206,7 @@ class Top10(Serialisable):
     percent: Bool[Literal[True]]
     val: Float[Literal[False]]
     filterVal: Float[Literal[True]]
+
     @overload
     def __init__(
         self,
@@ -233,6 +234,7 @@ class DateGroupItem(Serialisable):
     minute: MinMax[float, Literal[True]]
     second: Integer[Literal[True]]
     dateTimeGrouping: Set[_DateGroupItemDateTimeGrouping]
+
     @overload
     def __init__(
         self,

@@ -65,6 +65,8 @@ public final class HintUtil {
   public static final ColorKey RECENT_LOCATIONS_SELECTION_KEY = ColorKey.createColorKey("RECENT_LOCATIONS_SELECTION", new JBColor(0xE9EEF5, 0x383838));
   public static final ColorKey PROMOTION_PANE_KEY = ColorKey.createColorKey("PROMOTION_PANE", new JBColor(0xE6EDF7, 0x233953));
 
+  public static final Color SHORTCUT_FOREGROUND_COLOR = JBColor.namedColor("shortcutForeground", 0x818594, 0x6F737A);
+
   private HintUtil() { }
 
   public static @NotNull Color getInformationColor() {
@@ -334,6 +336,14 @@ public final class HintUtil {
     @ApiStatus.Internal
     public @Nullable JEditorPane getPane() {
       return myPane;
+    }
+
+    @Override
+    public void setFocusable(boolean focusable) {
+      if (myPane != null){
+        myPane.setFocusable(focusable);
+      }
+      super.setFocusable(focusable);
     }
 
     @Override

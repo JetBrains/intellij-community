@@ -1,15 +1,18 @@
 package com.intellij.mcpserver.clients.impl
 
+import com.electronwill.nightconfig.core.CommentedConfig
+import com.electronwill.nightconfig.core.UnmodifiableConfig
+import com.electronwill.nightconfig.core.io.ParsingMode
+import com.electronwill.nightconfig.toml.TomlFormat
+import com.electronwill.nightconfig.toml.TomlWriter
 import com.intellij.mcpserver.clients.McpClient
 import com.intellij.mcpserver.clients.McpClientInfo
 import com.intellij.mcpserver.clients.configs.CodexStreamableHttpConfig
 import com.intellij.mcpserver.clients.configs.ExistingConfig
 import com.intellij.mcpserver.clients.configs.STDIOServerConfig
 import com.intellij.mcpserver.clients.configs.ServerConfig
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.createParentDirectories
-import com.moandjiezana.toml.Toml
-import com.moandjiezana.toml.TomlWriter
+import java.io.StringWriter
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.readText
@@ -43,7 +46,7 @@ open class CodexClient(scope: McpClientInfo.Scope, configPath: Path) : McpClient
       config = config
     )
 
-    configPath.parent?.createParentDirectories()
+    configPath.createParentDirectories()
     configPath.writeText(updatedContent)
   }
 
@@ -51,34 +54,22 @@ open class CodexClient(scope: McpClientInfo.Scope, configPath: Path) : McpClient
     private const val MCP_SERVERS = "mcp_servers"
 
     private fun parseCodexServers(content: String): Map<String, ExistingConfig> {
-      val root = Toml().read(content).toMap()
-      val serversAny = root[MCP_SERVERS] as? Map<*, *> ?: return emptyMap()
+      val servers = parseTomlConfig(content).readConfig(MCP_SERVERS) ?: return emptyMap()
 
-      val result = LinkedHashMap<String, ExistingConfig>(serversAny.size)
-      for ((k, v) in serversAny) {
-        val serverName = (k as? String)?.trim().orEmpty()
+      val result = LinkedHashMap<String, ExistingConfig>(servers.size())
+      for (entry in servers.entrySet()) {
+        val serverName = entry.key.trim()
         if (serverName.isEmpty()) continue
 
-        val table = v as? Map<*, *> ?: continue
+        val table = entry.getRawValue<Any>() as? UnmodifiableConfig ?: continue
 
-        val command = table["command"] as? String
-        val url = (table["url"] as? String) ?: (table["serverUrl"] as? String)
-
-        val args = (table["args"] as? List<*>)?.filterIsInstance<String>()?.ifEmpty { null }
-
-        val env = (table["env"] as? Map<*, *>)?.entries
-          ?.mapNotNull { (ek, ev) ->
-            val key = ek as? String ?: return@mapNotNull null
-            val value = ev as? String ?: return@mapNotNull null
-            key to value
-          }
-          ?.toMap()
-          ?.ifEmpty { null }
+        val command = table.readString("command")
+        val url = table.readString("url") ?: table.readString("serverUrl")
 
         result[serverName] = ExistingConfig(
           command = command,
-          args = args,
-          env = env,
+          args = table.readStringList("args"),
+          env = table.readStringMap("env"),
           url = url,
           type = if (command != null) "stdio" else "http",
         )
@@ -92,62 +83,83 @@ open class CodexClient(scope: McpClientInfo.Scope, configPath: Path) : McpClient
       legacyKeys: Set<String>,
       config: ServerConfig,
     ): String {
-      val root = normalizeTomlMap(Toml().read(existing).toMap())
-
-      val existingServers = (root[MCP_SERVERS] as? Map<*, *>) ?: emptyMap<Any, Any>()
-
-      val serversWithoutLegacy = existingServers.filterKeys { key ->
-        key !in legacyKeys || key == productServerKey
+      val root = parseTomlConfig(existing)
+      val servers = root.readMutableConfig(MCP_SERVERS) ?: newTomlConfig().also {
+        root.set<Any?>(listOf(MCP_SERVERS), it)
       }
 
-      val updatedProductTable = when (config) {
-        is CodexStreamableHttpConfig -> mapOf("url" to config.url)
-        is STDIOServerConfig -> mapOf(
-          "command" to config.command,
-          "args" to config.args,
-          "env" to config.env)
-        else -> throw IllegalArgumentException("Unexpected config type: ${config::class.java}")
+      for (legacyKey in legacyKeys) {
+        if (legacyKey != productServerKey) {
+          servers.remove<Any?>(listOf(legacyKey))
+          servers.removeComment(listOf(legacyKey))
+        }
       }
 
-      val updatedServers = serversWithoutLegacy + (productServerKey to updatedProductTable)
+      servers.set<Any?>(listOf(productServerKey), config.toTomlConfig())
 
-      val updatedRoot = root + (MCP_SERVERS to updatedServers)
-
-      val writer = TomlWriter()
-      val rendered = writer.write(updatedRoot)
+      val rendered = renderTomlConfig(root)
 
       return if (rendered.endsWith("\n")) rendered else "$rendered\n"
     }
 
-    private fun normalizeTomlMap(map: Map<*, *>): Map<String, Any> {
-      val normalized = LinkedHashMap<String, Any>(map.size)
-      for ((key, value) in map) {
-        val keyString = key as? String ?: continue
-        val normalizedKey = unquoteKeyIfWrapped(keyString)
-        val normalizedValue = normalizeTomlValue(value) ?: continue
-        normalized[normalizedKey] = normalizedValue
-      }
-      return normalized
+    private fun parseTomlConfig(content: String): CommentedConfig {
+      val config = newTomlConfig()
+      TomlFormat.instance().createParser().parse(content, config, ParsingMode.REPLACE)
+      return config
     }
 
-    private fun normalizeTomlValue(value: Any?): Any? {
-      return when (value) {
-        is Map<*, *> -> normalizeTomlMap(value)
-        is List<*> -> value.mapNotNull { normalizeTomlValue(it) }
-        else -> value
+    private fun newTomlConfig(): CommentedConfig = TomlFormat.newConfig { LinkedHashMap<String, Any>() }
+
+    private fun renderTomlConfig(config: UnmodifiableConfig): String {
+      val writer = TomlWriter().apply {
+        setIndent("  ")
+        setNewline("\n")
       }
+      val output = StringWriter()
+      writer.write(config, output)
+      return output.toString()
     }
 
-    private fun unquoteKeyIfWrapped(key: String): String {
-      // TomlWriter auto-quotes keys that need it. If the parsed map already contains quoted keys
-      // (e.g. from a previously written/merged config), writing again would double-quote them.
-      // Strip paired quotes repeatedly to normalize and heal already-corrupted keys.
-      var result = key
-      while (true) {
-        val unquoted = StringUtil.unquoteString(result)
-        if (unquoted == result) return result
-        result = unquoted
+    private fun ServerConfig.toTomlConfig(): CommentedConfig {
+      val table = newTomlConfig()
+      when (this) {
+        is CodexStreamableHttpConfig -> table.set<Any?>(listOf("url"), url)
+        is STDIOServerConfig -> {
+          command?.let { table.set<Any?>(listOf("command"), it) }
+          args?.let { table.set<Any?>(listOf("args"), it) }
+          env?.takeIf { it.isNotEmpty() }?.let { table.set(listOf("env"), it.toTomlConfig()) }
+        }
+        else -> throw IllegalArgumentException("Unexpected config type: ${this::class.java}")
       }
+      return table
+    }
+
+    private fun Map<String, String>.toTomlConfig(): CommentedConfig {
+      val table = newTomlConfig()
+      forEach { (key, value) -> table.set<Any?>(listOf(key), value) }
+      return table
+    }
+
+    private fun UnmodifiableConfig.readConfig(key: String): UnmodifiableConfig? =
+      getRaw<Any>(listOf(key)) as? UnmodifiableConfig
+
+    private fun CommentedConfig.readMutableConfig(key: String): CommentedConfig? =
+      getRaw<Any>(listOf(key)) as? CommentedConfig
+
+    private fun UnmodifiableConfig.readString(key: String): String? =
+      getRaw<Any>(listOf(key)) as? String
+
+    private fun UnmodifiableConfig.readStringList(key: String): List<String>? =
+      (getRaw<Any>(listOf(key)) as? List<*>)?.filterIsInstance<String>()?.ifEmpty { null }
+
+    private fun UnmodifiableConfig.readStringMap(key: String): Map<String, String>? {
+      val config = readConfig(key) ?: return null
+      val result = LinkedHashMap<String, String>(config.size())
+      for (entry in config.entrySet()) {
+        val value = entry.getRawValue<Any>() as? String ?: continue
+        result[entry.key] = value
+      }
+      return result.ifEmpty { null }
     }
   }
 }

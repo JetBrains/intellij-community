@@ -164,10 +164,11 @@ private fun collectModulesToProcess(moduleSets: List<ModuleSet>): Set<String> {
   val result = LinkedHashSet<String>()
   for (set in moduleSets) {
     visitAllModules(set) { module ->
+      val moduleName = module.moduleId.name
       if (module.includeDependencies ||
-          module.name.value.startsWith(LIB_MODULE_PREFIX) ||
-          module.name.value.startsWith("intellij.platform.settings.")) {
-        result.add(module.name.value)
+          moduleName.startsWith(LIB_MODULE_PREFIX) ||
+          moduleName.startsWith("intellij.platform.settings.")) {
+        result.add(moduleName)
       }
     }
   }

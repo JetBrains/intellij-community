@@ -58,6 +58,9 @@ interface KeymapXmlAction : DomElement {
   @get:SubTagList("keyboard-shortcut")
   val keyboardShortcuts: List<KeymapXmlKeyboardShortcut>
 
+  @get:SubTagList("keyboard-gesture-shortcut")
+  val keyboardGestureShortcuts: List<KeymapXmlKeyboardGestureShortcut>
+
   @get:SubTagList("mouse-shortcut")
   val mouseShortcuts: List<KeymapXmlMouseShortcut>
 }
@@ -65,6 +68,11 @@ interface KeymapXmlAction : DomElement {
 interface KeymapXmlKeyboardShortcut : DomElement {
   val firstKeystroke: GenericAttributeValue<String>
   val secondKeystroke: GenericAttributeValue<String>
+}
+
+interface KeymapXmlKeyboardGestureShortcut : DomElement {
+  val keystroke: GenericAttributeValue<String>
+  val modifier: GenericAttributeValue<String>
 }
 
 interface KeymapXmlMouseShortcut : DomElement {

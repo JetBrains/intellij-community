@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui
 
 import com.intellij.ide.HelpTooltip
+import com.intellij.ide.ui.laf.darcula.DarculaNewUIUtil
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.openapi.actionSystem.ShortcutSet
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
@@ -90,8 +91,13 @@ class InlineIconButton @JvmOverloads constructor(icon: Icon,
           look.paintBackground(g2, c, buttonState)
         }
         if (behaviour.isFocused) {
-          val rect = Rectangle(c.getSize())
-          DarculaUIUtil.paintFocusBorder(g2, rect.width, rect.height, 0f, true)
+          val rect = Rectangle(c.size)
+          JBInsets.removeFrom(rect, DarculaUIUtil.paddings())
+
+          DarculaNewUIUtil.fillInsideComponentBorder(g2, rect, c.background)
+          val enabled = c.isEnabled
+          val hasFocus = UIUtil.isFocusAncestor(c)
+          DarculaNewUIUtil.paintComponentBorder(g2, rect, DarculaUIUtil.getOutline(c), hasFocus, enabled)
         }
         else {
           look.paintBorder(g2, c, buttonState)

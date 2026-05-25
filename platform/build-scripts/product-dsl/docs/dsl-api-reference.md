@@ -468,8 +468,8 @@ Represents a module with optional loading attribute.
 
 ```kotlin
 data class ContentModule(
-  val name: String,
-  val loading: ModuleLoadingRuleValue? = null,
+  val moduleId: PluginModuleId,
+  val loading: ModuleLoadingRuleValue = ModuleLoadingRuleValue.OPTIONAL,
   val includeDependencies: Boolean = false
 )
 ```

@@ -32,7 +32,6 @@ import com.jetbrains.python.sdk.add.v2.PythonLocalAddInterpreterModel
 import com.jetbrains.python.sdk.add.v2.TargetFileSystem
 import com.jetbrains.python.sdk.configurePythonSdk
 import com.jetbrains.python.sdk.runWithSdkConfigurationLock
-import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
 import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.supervisorScope
@@ -120,7 +119,6 @@ class PythonLanguageRuntimeUI(
           errorSink.emit(it)
         }.successOrNull?.also {
           configurePythonSdk(project, module, it)
-          project.pySdkService.persistSdk(it)
           PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(it, false)
         }
       }

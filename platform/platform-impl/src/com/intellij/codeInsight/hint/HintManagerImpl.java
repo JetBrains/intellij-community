@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
@@ -132,8 +133,11 @@ public class HintManagerImpl extends HintManager {
   private static final Key<Integer> LAST_HINT_ON_EDITOR_Y_POSITION = Key.create("hint.previous.editor.y.position");
 
   static void updateScrollableHintPosition(VisibleAreaEvent e, @NotNull LightweightHint hint, boolean hideIfOutOfEditor) {
-    if (hint.getComponent() instanceof ScrollAwareHint) {
-      ((ScrollAwareHint)hint.getComponent()).editorScrolled();
+    if (hint.getComponent() instanceof ScrollAwareHint sah) {
+      sah.editorScrolled();
+    }
+    else if (hint instanceof ScrollAwareHint sah) {
+      sah.editorScrolled();
     }
 
     if (!hint.isVisible()) return;
@@ -676,7 +680,7 @@ public class HintManagerImpl extends HintManager {
                                final @NotNull LightweightHint hint,
                                final @NotNull QuestionAction action,
                                @PositionFlags short constraint) {
-    showQuestionHint(editor, offset1, offset2, hint, action, DEFAULT_QUESTION_HINT_HIDE_FLAGS, constraint);
+    showQuestionHint(editor, offset1, offset2, null, hint, action, DEFAULT_QUESTION_HINT_HIDE_FLAGS, constraint);
   }
 
   public void showQuestionHint(final @NotNull Editor editor,
@@ -686,24 +690,27 @@ public class HintManagerImpl extends HintManager {
                                final @NotNull LightweightHint hint,
                                final @NotNull QuestionAction action,
                                @PositionFlags short constraint) {
-    showQuestionHint(editor, p, offset1, offset2, hint, DEFAULT_QUESTION_HINT_HIDE_FLAGS, action, constraint);
+    showQuestionHint(editor, p, offset1, offset2, null, hint, DEFAULT_QUESTION_HINT_HIDE_FLAGS, action, constraint);
   }
 
   /**
    * Displays a question hint at a specified position within the editor.
    * Highlights a segment of code between offset1 and offset2 if they are not equivalent.
    *
-   * @param editor       The editor instance where the hint should be displayed.
-   * @param offset1      The start offset in the editor where the hint is anchored.
-   * @param offset2      The end offset in the editor where the hint is anchored.
-   * @param hint         The hint to be displayed.
-   * @param action       The action to be executed when a user interacts with the hint.
-   * @param hideFlags    Flags specifying the conditions under which the hint should be hidden.
-   * @param constraint   A positional constraint that defines where the hint should be displayed relative to the anchored offsets.
+   * @param editor               The editor instance where the hint should be displayed.
+   * @param offset1              The start offset in the editor where the hint is anchored.
+   * @param offset2              The end offset in the editor where the hint is anchored.
+   * @param attributesOverride   The text attributes override to be applied to a segment of code between offset1 and offset2.
+   *                             Null if default underlining attributes should be used.
+   * @param hint                 The hint to be displayed.
+   * @param action               The action to be executed when a user interacts with the hint.
+   * @param hideFlags            Flags specifying the conditions under which the hint should be hidden.
+   * @param constraint           A positional constraint that defines where the hint should be displayed relative to the anchored offsets.
    */
   public void showQuestionHint(final @NotNull Editor editor,
                                final int offset1,
                                final int offset2,
+                               final @Nullable TextAttributes attributesOverride,
                                final @NotNull LightweightHint hint,
                                final @NotNull QuestionAction action,
                                @HideFlags int hideFlags,
@@ -711,13 +718,14 @@ public class HintManagerImpl extends HintManager {
     final VisualPosition pos1 = editor.offsetToVisualPosition(offset1);
     final VisualPosition pos2 = editor.offsetToVisualPosition(offset2);
     final Point p = getHintPosition(hint, editor, pos1, pos2, constraint);
-    showQuestionHint(editor, p, offset1, offset2, hint, hideFlags, action, constraint);
+    showQuestionHint(editor, p, offset1, offset2, attributesOverride, hint, hideFlags, action, constraint);
   }
 
   private static void showQuestionHint(final @NotNull Editor editor,
                                        final @NotNull Point p,
                                        final int offset1,
                                        final int offset2,
+                                       final @Nullable TextAttributes attributesOverride,
                                        final @NotNull LightweightHint hint,
                                        int flags,
                                        final @NotNull QuestionAction action,
@@ -740,7 +748,7 @@ public class HintManagerImpl extends HintManager {
         });
       }
     }
-    getClientManager(editor).showQuestionHint(editor, p, offset1, offset2, hint, flags, action, constraint);
+    getClientManager(editor).showQuestionHint(editor, p, offset1, offset2, attributesOverride, hint, flags, action, constraint);
   }
 
   public static HintHint createHintHint(Editor editor, Point p, LightweightHint hint, @PositionFlags short constraint) {

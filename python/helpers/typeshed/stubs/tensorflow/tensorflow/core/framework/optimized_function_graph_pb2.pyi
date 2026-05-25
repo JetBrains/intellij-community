@@ -156,6 +156,7 @@ class OptimizedFunctionGraph(google.protobuf.message.Message):
             b"source",
         ],
     ) -> None: ...
+
     @typing.overload
     def WhichOneof(
         self, oneof_group: typing.Literal["_optimization_time_usecs", b"_optimization_time_usecs"]

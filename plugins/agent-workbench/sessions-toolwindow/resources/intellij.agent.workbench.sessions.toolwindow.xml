@@ -23,6 +23,11 @@
   </extensions>
 
   <actions resource-bundle="messages.AgentSessionsBundle">
+    <group
+      id="AgentWorkbenchSessions.MainToolbar.Activity"
+      class="com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsMainToolbarActivityGroup">
+      <add-to-group group-id="MainToolbarLeft" anchor="after" relative-to-action="MainToolbarVCSGroup"/>
+    </group>
     <action
       id="AgentWorkbenchSessions.TreePopup.Open"
       class="com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupOpenAction"/>

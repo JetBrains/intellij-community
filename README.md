@@ -71,6 +71,13 @@ Run the following script from project root `<IDEA_HOME>` to get the required mod
 These instructions will help you build IntelliJ IDEA from source code, which is the basis for IntelliJ Platform development.
 IntelliJ IDEA '**2023.2**' or newer is required.
 
+> [!IMPORTANT]
+>
+> IntelliJ IDEA project is currently being migrated to the [Bazel](https://bazel.build/) build system. 
+> The migration is still in progress, so you may encounter some rough edges or temporary issues along the way, mostly related to IDE integration.
+> * Building the project using only IDE built-in capabilities is not supported anymore, so make sure the [Bazel plugin](https://plugins.jetbrains.com/plugin/22977-bazel) is installed and enabled.
+> * Known issue: some tests are not yet possible to be run with Bazel. In case of any issues, please depend on the `tests.cmd` script mentioned in the [Running IntelliJ IDEA in CI/CD environment](#running-intellij-idea-in-cicd-environment) section.
+
 ### Opening the IntelliJ IDEA Source Code in the IDE
 Using the latest IntelliJ IDEA, click '**File | Open**', select the `<IDEA_HOME>` directory.
 If IntelliJ IDEA displays a message about a missing or out-of-date required plugin (e.g. Kotlin),

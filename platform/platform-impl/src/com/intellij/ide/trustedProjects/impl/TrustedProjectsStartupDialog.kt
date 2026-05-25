@@ -44,6 +44,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.Point
 import java.awt.event.ActionEvent
+import java.awt.event.ActionListener
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.nio.file.Path
@@ -95,7 +96,7 @@ class TrustedProjectStartupDialog private constructor(
 
     init()
 
-    if (myIsTitleComponent) {
+    if (myIsTitleComponent && rootPane != null) {
       setUndecorated(true)
       rootPane.windowDecorationStyle = JRootPane.NONE
       rootPane.border = PopupBorder.Factory.create(true, true)
@@ -248,9 +249,20 @@ class TrustedProjectStartupDialog private constructor(
 
   private fun getParentFolder(): Path? = projectPath.parent
 
+  // this is a workaround for ij-light which does not know what to do when user clicks the "cancel" button. (we don't know this either)
+  private fun hasCancelButton(): Boolean = Registry.`is`("trusted.project.dialog.has.cancel.button", true)
+
+  override fun createCancelAction(): ActionListener? = if (hasCancelButton()) super.createCancelAction() else null
+
+  override fun shouldCloseOnCross(): Boolean = hasCancelButton()
+
   override fun createActions(): Array<out Action?> {
     val actions: MutableList<Action> = mutableListOf()
-    val options: List<String> = listOf(trustButtonText, distrustButtonText, cancelButtonText)
+    val options: List<String> = if (hasCancelButton()) {
+      listOf(trustButtonText, distrustButtonText, cancelButtonText)
+    } else {
+      listOf(trustButtonText, distrustButtonText)
+    }
 
     for (i in options.indices) {
       val option = options[i]
@@ -309,6 +321,12 @@ class TrustedProjectStartupDialog private constructor(
 
   private fun getDefenderExcludePaths(): List<Path> = pathsToExclude
 
+  @TestOnly
+  fun getButtonTextsInTests(): Set<String> = buttonMap.values.mapTo(linkedSetOf()) { it.text }
+
+  @TestOnly
+  fun hasImplicitCancelActionInTests(): Boolean = createCancelAction() != null
+
   class DialogChoice(
     val openChoice: OpenUntrustedProjectChoice,
     val isTrustAll: Boolean,
@@ -324,6 +342,19 @@ class TrustedProjectStartupDialog private constructor(
     fun setDialogChoiceInTests(openChoice: OpenUntrustedProjectChoice, disposable: Disposable) {
       val choice = DialogChoice(openChoice, false, null, emptyList())
       setKotlinProperty(::ourDialogChoice, choice, disposable)
+    }
+
+    @TestOnly
+    fun createDialogInTests(
+      project: Project?,
+      projectPath: Path,
+      title: @NlsContexts.DialogTitle String,
+      message: @NlsContexts.DialogMessage String,
+      trustButtonText: @NlsContexts.Button String,
+      distrustButtonText: @NlsContexts.Button String,
+      cancelButtonText: @NlsContexts.Button String,
+    ): TrustedProjectStartupDialog {
+      return TrustedProjectStartupDialog(project, projectPath, emptyList(), title, message, trustButtonText, distrustButtonText, cancelButtonText)
     }
 
     suspend fun showAndGet(

@@ -28,6 +28,7 @@ def import_c_accel(globs: MutableMapping[str, Any], cname: str) -> None: ...
 class Lazy(Generic[_T]):
     data: _T
     def __init__(self, func: Callable[[Any], _T]) -> None: ...
+
     @overload
     def __get__(self, inst: None, class_: type[object]) -> Self: ...
     @overload
@@ -38,6 +39,7 @@ class readproperty(Generic[_T]):
     def __init__(
         self: readproperty[_T], func: Callable[[Any], _T]  # pyright: ignore[reportInvalidTypeVarUse]  #11780
     ) -> None: ...
+
     @overload
     def __get__(self, inst: None, class_: type[object]) -> Self: ...
     @overload
@@ -49,6 +51,7 @@ class LazyOnClass(Generic[_T]):
     name: str
     func: Callable[[Any], _T]
     def __init__(self, func: Callable[[Any], _T], name: str | None = None) -> None: ...
+
     @overload
     def __get__(self, inst: None, class_: type[object]) -> Self: ...
     @overload

@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.productLayout
 
 import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginGraph.PluginId
+import com.intellij.platform.pluginGraph.PluginModuleId
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -32,7 +33,7 @@ class ContentBlockBuilderTest {
     fun `single module set produces single content block`() {
       val moduleSet = ModuleSet(
         name = "test",
-        modules = listOf(ContentModule(ContentModuleName("module.a")), ContentModule(ContentModuleName("module.b")))
+        modules = listOf(ContentModule(PluginModuleId("module.a", namespace = "jetbrains")), ContentModule(PluginModuleId("module.b", namespace = "jetbrains")))
       )
       val spec = productModules { moduleSet(moduleSet) }
       
@@ -40,18 +41,18 @@ class ContentBlockBuilderTest {
       
       assertThat(result.contentBlocks).hasSize(1)
       assertThat(result.contentBlocks[0].source).isEqualTo("test")
-      assertThat(result.contentBlocks[0].modules.map { it.name.value }).containsExactly("module.a", "module.b")
+      assertThat(result.contentBlocks[0].modules.map { it.moduleId.name }).containsExactly("module.a", "module.b")
     }
 
     @Test
     fun `nested module sets produce separate content blocks`() {
       val nestedSet = ModuleSet(
         name = "nested",
-        modules = listOf(ContentModule(ContentModuleName("nested.module")))
+        modules = listOf(ContentModule(PluginModuleId("nested.module", namespace = "jetbrains")))
       )
       val parentSet = ModuleSet(
         name = "parent",
-        modules = listOf(ContentModule(ContentModuleName("parent.module"))),
+        modules = listOf(ContentModule(PluginModuleId("parent.module", namespace = "jetbrains"))),
         nestedSets = listOf(nestedSet)
       )
       val spec = productModules { moduleSet(parentSet) }
@@ -66,7 +67,7 @@ class ContentBlockBuilderTest {
     fun `additional modules produce separate content block`() {
       val moduleSet = ModuleSet(
         name = "test",
-        modules = listOf(ContentModule(ContentModuleName("set.module")))
+        modules = listOf(ContentModule(PluginModuleId("set.module", namespace = "jetbrains")))
       )
       val spec = productModules {
         moduleSet(moduleSet)
@@ -79,7 +80,7 @@ class ContentBlockBuilderTest {
       assertThat(result.contentBlocks.map { it.source }).contains("test", ADDITIONAL_MODULES_BLOCK)
       
       val additionalBlock = result.contentBlocks.find { it.source == ADDITIONAL_MODULES_BLOCK }
-      assertThat(additionalBlock?.modules?.map { it.name.value }).containsExactly("additional.module")
+      assertThat(additionalBlock?.modules?.map { it.moduleId.name }).containsExactly("additional.module")
     }
   }
 
@@ -89,7 +90,7 @@ class ContentBlockBuilderTest {
     fun `loading override is applied to module`() {
       val moduleSet = ModuleSet(
         name = "test",
-        modules = listOf(ContentModule(ContentModuleName("module.a")), ContentModule(ContentModuleName("module.b")))
+        modules = listOf(ContentModule(PluginModuleId("module.a", namespace = "jetbrains")), ContentModule(PluginModuleId("module.b", namespace = "jetbrains")))
       )
       val spec = productModules {
         moduleSet(moduleSet) {
@@ -100,8 +101,8 @@ class ContentBlockBuilderTest {
       val result = buildContentBlocksAndChainMapping(spec)
       
       val block = result.contentBlocks[0]
-      val moduleA = block.modules.find { it.name.value == "module.a" }
-      val moduleB = block.modules.find { it.name.value == "module.b" }
+      val moduleA = block.modules.find { it.moduleId.name == "module.a" }
+      val moduleB = block.modules.find { it.moduleId.name == "module.b" }
       
       assertThat(moduleA?.loading).isEqualTo(ModuleLoadingRuleValue.EMBEDDED)
       assertThat(moduleB?.loading).isEqualTo(ModuleLoadingRuleValue.OPTIONAL)
@@ -112,9 +113,9 @@ class ContentBlockBuilderTest {
       val moduleSet = ModuleSet(
         name = "test",
         modules = listOf(
-          ContentModule(ContentModuleName("module.a")),
-          ContentModule(ContentModuleName("module.b")),
-          ContentModule(ContentModuleName("module.c"))
+          ContentModule(PluginModuleId("module.a", namespace = "jetbrains")),
+          ContentModule(PluginModuleId("module.b", namespace = "jetbrains")),
+          ContentModule(PluginModuleId("module.c", namespace = "jetbrains"))
         )
       )
       val spec = productModules {
@@ -127,7 +128,7 @@ class ContentBlockBuilderTest {
       val result = buildContentBlocksAndChainMapping(spec)
       
       val block = result.contentBlocks[0]
-      assertThat(block.modules.filter { it.loading == ModuleLoadingRuleValue.EMBEDDED }.map { it.name.value })
+      assertThat(block.modules.filter { it.loading == ModuleLoadingRuleValue.EMBEDDED }.map { it.moduleId.name })
         .containsExactlyInAnyOrder("module.a", "module.b")
     }
 
@@ -137,11 +138,11 @@ class ContentBlockBuilderTest {
       // the overrides from the first reference should be used
       val sharedSet = ModuleSet(
         name = "shared",
-        modules = listOf(ContentModule(ContentModuleName("shared.module")))
+        modules = listOf(ContentModule(PluginModuleId("shared.module", namespace = "jetbrains")))
       )
       val parentSet = ModuleSet(
         name = "parent",
-        modules = listOf(ContentModule(ContentModuleName("parent.module"))),
+        modules = listOf(ContentModule(PluginModuleId("parent.module", namespace = "jetbrains"))),
         nestedSets = listOf(sharedSet)
       )
       val spec = productModules {
@@ -157,7 +158,7 @@ class ContentBlockBuilderTest {
       
       // shared.module should have embedded override from first reference
       val sharedBlock = result.contentBlocks.find { it.source == "shared" }
-      assertThat(sharedBlock?.modules?.find { it.name.value == "shared.module" }?.loading)
+      assertThat(sharedBlock?.modules?.find { it.moduleId.name == "shared.module" }?.loading)
         .isEqualTo(ModuleLoadingRuleValue.EMBEDDED)
     }
   }
@@ -168,7 +169,7 @@ class ContentBlockBuilderTest {
     fun `chain mapping tracks module to module set path`() {
       val moduleSet = ModuleSet(
         name = "test",
-        modules = listOf(ContentModule(ContentModuleName("module.a")))
+        modules = listOf(ContentModule(PluginModuleId("module.a", namespace = "jetbrains")))
       )
       val spec = productModules { moduleSet(moduleSet) }
       
@@ -182,11 +183,11 @@ class ContentBlockBuilderTest {
     fun `chain mapping tracks nested path`() {
       val nestedSet = ModuleSet(
         name = "nested",
-        modules = listOf(ContentModule(ContentModuleName("nested.module")))
+        modules = listOf(ContentModule(PluginModuleId("nested.module", namespace = "jetbrains")))
       )
       val parentSet = ModuleSet(
         name = "parent",
-        modules = listOf(ContentModule(ContentModuleName("parent.module"))),
+        modules = listOf(ContentModule(PluginModuleId("parent.module", namespace = "jetbrains"))),
         nestedSets = listOf(nestedSet)
       )
       val spec = productModules { moduleSet(parentSet) }
@@ -217,7 +218,7 @@ class ContentBlockBuilderTest {
     fun `alias is collected when collectModuleSetAliases is true`() {
       val moduleSet = ModuleSet(
         name = "test",
-        modules = listOf(ContentModule(ContentModuleName("module.a"))),
+        modules = listOf(ContentModule(PluginModuleId("module.a", namespace = "jetbrains"))),
         alias = PluginId("test.alias")
       )
       val spec = productModules { moduleSet(moduleSet) }
@@ -231,7 +232,7 @@ class ContentBlockBuilderTest {
     fun `alias is not collected when collectModuleSetAliases is false`() {
       val moduleSet = ModuleSet(
         name = "test",
-        modules = listOf(ContentModule(ContentModuleName("module.a"))),
+        modules = listOf(ContentModule(PluginModuleId("module.a", namespace = "jetbrains"))),
         alias = PluginId("test.alias")
       )
       val spec = productModules { moduleSet(moduleSet) }
@@ -245,12 +246,12 @@ class ContentBlockBuilderTest {
     fun `multiple aliases from nested sets are collected`() {
       val nestedSet = ModuleSet(
         name = "nested",
-        modules = listOf(ContentModule(ContentModuleName("nested.module"))),
+        modules = listOf(ContentModule(PluginModuleId("nested.module", namespace = "jetbrains"))),
         alias = PluginId("nested.alias")
       )
       val parentSet = ModuleSet(
         name = "parent",
-        modules = listOf(ContentModule(ContentModuleName("parent.module"))),
+        modules = listOf(ContentModule(PluginModuleId("parent.module", namespace = "jetbrains"))),
         nestedSets = listOf(nestedSet),
         alias = PluginId("parent.alias")
       )
@@ -271,8 +272,8 @@ class ContentBlockBuilderTest {
       val moduleSet = ModuleSet(
         name = "test",
         modules = listOf(
-          ContentModule(ContentModuleName("module.with.deps"), includeDependencies = true),
-          ContentModule(ContentModuleName("module.no.deps"), includeDependencies = false)
+          ContentModule(PluginModuleId("module.with.deps", namespace = "jetbrains"), includeDependencies = true),
+          ContentModule(PluginModuleId("module.no.deps", namespace = "jetbrains"), includeDependencies = false)
         )
       )
       val spec = productModules { moduleSet(moduleSet) }
@@ -291,8 +292,8 @@ class ContentBlockBuilderTest {
       val moduleSet = ModuleSet(
         name = "test",
         modules = listOf(
-          ContentModule(ContentModuleName("duplicate.module")),
-          ContentModule(ContentModuleName("duplicate.module"))
+          ContentModule(PluginModuleId("duplicate.module", namespace = "jetbrains")),
+          ContentModule(PluginModuleId("duplicate.module", namespace = "jetbrains"))
         )
       )
       val spec = productModules { moduleSet(moduleSet) }
@@ -306,11 +307,11 @@ class ContentBlockBuilderTest {
     fun `duplicate modules in different sets throws error`() {
       val set1 = ModuleSet(
         name = "set1",
-        modules = listOf(ContentModule(ContentModuleName("duplicate.module")))
+        modules = listOf(ContentModule(PluginModuleId("duplicate.module", namespace = "jetbrains")))
       )
       val set2 = ModuleSet(
         name = "set2",
-        modules = listOf(ContentModule(ContentModuleName("duplicate.module")))
+        modules = listOf(ContentModule(PluginModuleId("duplicate.module", namespace = "jetbrains")))
       )
       val spec = productModules {
         moduleSet(set1)
@@ -326,7 +327,7 @@ class ContentBlockBuilderTest {
     fun `duplicate in additional modules and module set throws error`() {
       val moduleSet = ModuleSet(
         name = "test",
-        modules = listOf(ContentModule(ContentModuleName("duplicate.module")))
+        modules = listOf(ContentModule(PluginModuleId("duplicate.module", namespace = "jetbrains")))
       )
       val spec = productModules {
         moduleSet(moduleSet)

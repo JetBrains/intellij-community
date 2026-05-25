@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 package com.intellij.platform.ide.bootstrap
 
@@ -7,7 +7,7 @@ import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.impl.ProjectUtil.getRootFrameForWindow
 import com.intellij.idea.AppMode
-import com.intellij.idea.WellKnownCommands
+import com.intellij.idea.WellKnownCommand
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
@@ -107,7 +107,7 @@ fun scheduleShowSplashIfNeeded(
   }
 }
 
-private fun isRealRemoteDevHost(args: List<String>): Boolean = AppMode.isRemoteDevHost() && args.firstOrNull() != WellKnownCommands.SPLIT_MODE
+private fun isRealRemoteDevHost(args: List<String>): Boolean = AppMode.isRemoteDevHost() && args.firstOrNull() != WellKnownCommand.SPLIT_MODE
 
 private fun showSplashIfNeeded(scope: CoroutineScope, initUiScale: Job, appInfoDeferred: Deferred<ApplicationInfo>) {
   val oldJob = splashJob.get()

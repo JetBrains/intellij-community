@@ -225,7 +225,7 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
 
   public static @NotNull @NlsContexts.HintText String getMessage(@NotNull String kind, @NotNull String name) {
     String action = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
-    String actionColor = ColorUtil.toHex(JBColor.namedColor("shortcutForeground", 0x818594, 0x6F737A));
+    String actionColor = ColorUtil.toHex(com.intellij.codeInsight.hint.HintUtil.SHORTCUT_FOREGROUND_COLOR);
     return DaemonBundle.message("import.popup.hint.text", kind, name, action, actionColor);
   }
 

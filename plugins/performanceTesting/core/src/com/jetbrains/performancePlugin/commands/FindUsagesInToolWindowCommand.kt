@@ -26,7 +26,7 @@ class FindUsagesInToolWindowCommand(text: String, line: Int) : PerformanceComman
   companion object {
     const val PREFIX: String = CMD_PREFIX + FindUsagesSpans.NAME_TW
 
-    const val SPAN_NAME: String = FindUsagesSpans.SPAN_NAME
+    const val SPAN_NAME: String = FindUsagesSpans.NAME_TW
     const val FIRST_USAGE_SPAN_NAME: String = "${FindUsagesSpans.NAME_TW}_firstUsage"
     const val TOOL_WINDOW_SPAN_NAME: String = "${FindUsagesSpans.NAME_TW}_toolWindow"
   }

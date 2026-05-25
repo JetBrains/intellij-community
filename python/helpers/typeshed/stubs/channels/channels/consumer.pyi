@@ -39,6 +39,7 @@ class _ChannelScope(WebSocketScope, total=False):
 # Accepts any ASGI message dict with a required "type" key (str),
 # but allows additional arbitrary keys for flexibility.
 def get_handler_name(message: dict[str, Any]) -> str: ...
+
 @type_check_only
 class _ASGIApplicationProtocol(Protocol):
     consumer_class: AsyncConsumer

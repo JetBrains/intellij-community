@@ -10,7 +10,6 @@ import com.intellij.ui.treeStructure.treetable.DefaultTreeTableExpander
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns
 import com.intellij.ui.treeStructure.treetable.TreeTable
 import com.intellij.util.ui.ColumnInfo
-import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.MouseEvent
 import kotlin.math.max
@@ -23,42 +22,27 @@ class MergeConflictsTreeTable(private val tableModel: ListTreeTableModelOnColumn
     if (tableModel.columnCount > 1) setShowColumns(true)
   }
 
-  var minimumColumnWidth: Int? = null
-  private var wasResized = false
-
   override fun doLayout() {
-    if (getTableHeader().resizingColumn == null && !wasResized) {
-      updateColumnSizes()
-    }
+    setInitialColumnPreferredWidthIfNeeded()
     super.doLayout()
   }
 
-  private fun updateColumnSizes() {
+  private var initialWidthSet = false
+  private fun setInitialColumnPreferredWidthIfNeeded() {
+    if (initialWidthSet) return
     for ((index, columnInfo) in tableModel.columns.withIndex()) {
-      val column = columnModel.getColumn(index)
-      columnInfo.maxStringValue?.let {
-        val width = calcColumnWidth(it, columnInfo)
-        column.preferredWidth = width
-      }
-      minimumColumnWidth?.let { column.minWidth = it }
+      columnModel.getColumn(index).preferredWidth = columnInfo.calcColumnWidth() ?: Int.MAX_VALUE
     }
 
-    var size = width
-    val fileColumn = 0
-    for (i in 0 until tableModel.columns.size) {
-      if (i == fileColumn) continue
-      size -= columnModel.getColumn(i).preferredWidth
-    }
-
-    columnModel.getColumn(fileColumn).preferredWidth = max(size, JBUI.scale(200))
-
-    wasResized = true
+    initialWidthSet = true
   }
 
-  private fun calcColumnWidth(maxStringValue: String, columnInfo: ColumnInfo<Any, Any>): Int {
-    val columnName = StringUtil.shortenTextWithEllipsis(columnInfo.name, 15, 7, true)
-    return max(getFontMetrics(font).stringWidth(maxStringValue),
-                    getFontMetrics(tableHeader.font).stringWidth(columnName)) + columnInfo.additionalWidth
+  private fun ColumnInfo<Any, Any>.calcColumnWidth(): Int? {
+    return maxStringValue?.let {
+      val columnName = StringUtil.shortenTextWithEllipsis(name, 15, 7, true)
+      max(getFontMetrics(font).stringWidth(it),
+          getFontMetrics(tableHeader.font).stringWidth(columnName)) + additionalWidth
+    }
   }
 
   var toolTipTextProvider: ((file: VirtualFile) -> String?)? = null
@@ -75,5 +59,9 @@ class MergeConflictsTreeTable(private val tableModel: ListTreeTableModelOnColumn
 
   override fun uiDataSnapshot(sink: DataSink) {
     sink[PlatformDataKeys.TREE_EXPANDER] = treeExpander
+  }
+
+  companion object {
+    private const val FILE_COLUMN_INDEX = 0
   }
 }

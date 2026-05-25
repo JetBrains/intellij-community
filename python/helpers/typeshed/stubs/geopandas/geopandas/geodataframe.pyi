@@ -57,6 +57,7 @@ class GeoDataFrame(GeoPandasBase, pd.DataFrame):  # type: ignore[misc]
         geometry: _GeomCol | None = None,
         crs: _ConvertibleToCRS | None = None,
     ) -> Self: ...
+
     def __init__(
         self,
         data: _ConvertibleToDataFrame | None = None,
@@ -69,10 +70,12 @@ class GeoDataFrame(GeoPandasBase, pd.DataFrame):  # type: ignore[misc]
         crs: _ConvertibleToCRS | None = None,
     ) -> None: ...
     def __setattr__(self, attr: str, val: Any) -> None: ...  # type: ignore[misc]  # Can set arbitrary objects
+
     @property
     def geometry(self) -> GeoSeries: ...
     @geometry.setter
     def geometry(self, col: _GeomSeq) -> None: ...
+
     @overload
     def set_geometry(
         self, col: _GeomCol, drop: bool | None = None, inplace: Literal[False] = False, crs: _ConvertibleToCRS | None = None
@@ -85,16 +88,20 @@ class GeoDataFrame(GeoPandasBase, pd.DataFrame):  # type: ignore[misc]
     def set_geometry(
         self, col: _GeomCol, drop: bool | None, inplace: Literal[True], crs: _ConvertibleToCRS | None = None
     ) -> None: ...
+
     @overload
     def rename_geometry(self, col: Hashable, inplace: Literal[False] = False) -> Self: ...
     @overload
     def rename_geometry(self, col: Hashable, inplace: Literal[True]) -> None: ...
+
     @property
     def active_geometry_name(self) -> str | None: ...
+
     @property
     def crs(self) -> CRS | None: ...
     @crs.setter
     def crs(self, value: _ConvertibleToCRS | None) -> None: ...
+
     @classmethod
     def from_dict(  # type: ignore[override]
         # Mapping[Any, Any] because of invariance keys and arbitrary values
@@ -130,6 +137,7 @@ class GeoDataFrame(GeoPandasBase, pd.DataFrame):  # type: ignore[misc]
         crs: _ConvertibleToCRS | None = None,
         columns: Axes | None = None,
     ) -> Self: ...
+
     @overload
     @classmethod
     def from_postgis(
@@ -159,6 +167,7 @@ class GeoDataFrame(GeoPandasBase, pd.DataFrame):  # type: ignore[misc]
         params: SupportsLenAndGetItem[Scalar] | Mapping[str, Scalar] | None = None,
         chunksize: None = None,
     ) -> GeoDataFrame: ...
+
     @classmethod
     def from_arrow(
         cls, table, geometry: str | None = None, to_pandas_kwargs: Mapping[str, Incomplete] | None = None
@@ -256,6 +265,7 @@ class GeoDataFrame(GeoPandasBase, pd.DataFrame):  # type: ignore[misc]
         overwrite: bool | None = ...,
         **kwargs,  # engine and driver dependent
     ) -> None: ...
+
     @overload
     def set_crs(
         self, crs: _ConvertibleToCRS, epsg: int | None = None, inplace: bool = False, allow_override: bool = False
@@ -266,6 +276,7 @@ class GeoDataFrame(GeoPandasBase, pd.DataFrame):  # type: ignore[misc]
     ) -> Self: ...
     @overload
     def set_crs(self, crs: _ConvertibleToCRS | None, epsg: int, inplace: bool = False, allow_override: bool = False) -> Self: ...
+
     @overload
     def to_crs(self, crs: _ConvertibleToCRS, epsg: int | None = None, inplace: Literal[False] = False) -> Self: ...
     @overload
@@ -280,6 +291,7 @@ class GeoDataFrame(GeoPandasBase, pd.DataFrame):  # type: ignore[misc]
     def to_crs(self, crs: _ConvertibleToCRS | None = None, *, epsg: int, inplace: Literal[True]) -> None: ...
     @overload
     def to_crs(self, crs: _ConvertibleToCRS | None, epsg: int, inplace: Literal[True]) -> None: ...
+
     def estimate_utm_crs(self, datum_name: str = "WGS 84") -> CRS: ...
     # def __getitem__(self, key): ...
     def __delitem__(self, key) -> None: ...  # type: ignore[misc]

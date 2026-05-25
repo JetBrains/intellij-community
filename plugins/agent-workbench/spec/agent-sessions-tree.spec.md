@@ -44,6 +44,8 @@ The Agent Threads tree follows IntelliJ tree conventions while adding provider-s
   stable path/provider/thread id. Initial loaded rows and `Running` transitions do not notify.
   [@test] ../sessions-toolwindow/testSrc/AgentSessionsActivitySummaryTest.kt
 
+- Source-frame main-toolbar Agent activity reuses these counter visuals and popup primitives, but its global scope and placement are owned by `spec/agent-main-toolbar-activity.spec.md`.
+
 - Selection and activation must match platform tree behavior: single-click selects, Enter/double-click opens openable rows, and double-click on openable parent rows prefers open/focus over expansion.
   [@test] ../sessions-toolwindow/testSrc/AgentSessionsSwingTreeInteractionTest.kt
 
@@ -80,3 +82,4 @@ The Agent Threads tree follows IntelliJ tree conventions while adding provider-s
 - `spec/agent-sessions.spec.md`
 - `spec/agent-core-contracts.spec.md`
 - `spec/actions/new-thread.spec.md`
+- `spec/agent-main-toolbar-activity.spec.md`

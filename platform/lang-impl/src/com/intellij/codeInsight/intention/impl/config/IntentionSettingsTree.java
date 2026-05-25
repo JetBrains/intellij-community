@@ -51,7 +51,7 @@ import java.util.Map;
 import java.util.Objects;
 
 @ApiStatus.Internal
-public abstract class IntentionSettingsTree {
+abstract class IntentionSettingsTree {
   private JComponent myComponent;
   private CheckboxTree myTree;
   private FilterComponent myFilter;
@@ -77,8 +77,8 @@ public abstract class IntentionSettingsTree {
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
-        TreePath path = e.getPath();
-        Object userObject = ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
+        TreePath path = e.getNewLeadSelectionPath();
+        Object userObject = path == null ? null : ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
         selectionChanged(userObject);
       }
     });
@@ -156,21 +156,15 @@ public abstract class IntentionSettingsTree {
   public void selectIntention(String familyName) {
     IntentionTreeNode child = findChildRecursively(getRoot(), familyName);
     if (child != null) {
-      TreePath path = new TreePath(child.getPath());
-      TreeUtil.selectPath(myTree, path);
+      TreeUtil.selectPath(myTree, new TreePath(child.getPath()));
     }
   }
 
   private static @NotNull List<IntentionActionMetaData> copyAndSort(@NotNull Collection<IntentionActionMetaData> intentionsToShow) {
     List<IntentionActionMetaData> copy = new ArrayList<>(intentionsToShow);
     copy.sort((data1, data2) -> {
-      String[] category1 = data1.myCategory;
-      String[] category2 = data2.myCategory;
-      int result = ArrayUtil.lexicographicCompare(category1, category2);
-      if (result != 0) {
-        return result;
-      }
-      return data1.getFamily().compareTo(data2.getFamily());
+      int result = ArrayUtil.lexicographicCompare(data1.myCategory, data2.myCategory);
+      return result != 0 ? result : data1.getFamily().compareTo(data2.getFamily());
     });
     return copy;
   }
@@ -182,8 +176,7 @@ public abstract class IntentionSettingsTree {
   private boolean resetCheckMark(IntentionTreeNode root) {
     Object userObject = root.getUserObject();
     if (userObject instanceof IntentionActionMetaData metaData) {
-      Boolean b = myIntentionToCheckStatus.get(metaData);
-      boolean enabled = b == Boolean.TRUE;
+      boolean enabled = myIntentionToCheckStatus.get(metaData) == Boolean.TRUE;
       root.setChecked(enabled);
       return enabled;
     }
@@ -206,8 +199,7 @@ public abstract class IntentionSettingsTree {
     visitChildren(node, new CheckedNodeVisitor() {
       @Override
       public void visit(IntentionTreeNode node) {
-        String text = getNodeText(node, true);
-        if (name.equals(text)) {
+        if (name.equals(getNodeText(node, true))) {
           found.set(node);
         }
       }
@@ -221,10 +213,8 @@ public abstract class IntentionSettingsTree {
       @Override
       public void visit(IntentionTreeNode node) {
         if (found.get() != null) return;
-        Object userObject = node.getUserObject();
-        if (userObject instanceof IntentionActionMetaData) {
-          String text = getNodeText(node, true);
-          if (name.equals(text)) {
+        if (node.getUserObject() instanceof IntentionActionMetaData) {
+          if (name.equals(getNodeText(node, true))) {
             found.set(node);
           }
         }
@@ -241,8 +231,8 @@ public abstract class IntentionSettingsTree {
 
   private static String getNodeText(IntentionTreeNode node, boolean full) {
     Object userObject = node.getUserObject();
-    if (userObject instanceof String) {
-      return (String)userObject;
+    if (userObject instanceof String text) {
+      return text;
     }
     else if (userObject instanceof IntentionActionMetaData metaData) {
       if (full && metaData.getAction() instanceof IntentionActionWrapper wrapper) {
@@ -260,8 +250,7 @@ public abstract class IntentionSettingsTree {
   }
 
   private void refreshCheckStatus(IntentionTreeNode  root) {
-    Object userObject = root.getUserObject();
-    if (userObject instanceof IntentionActionMetaData actionMetaData) {
+    if (root.getUserObject() instanceof IntentionActionMetaData actionMetaData) {
       myIntentionToCheckStatus.put(actionMetaData, root.isChecked());
     }
     else {
@@ -389,11 +378,10 @@ public abstract class IntentionSettingsTree {
       SimpleTextAttributes attributes = node.getUserObject() instanceof IntentionActionMetaData
                                         ? SimpleTextAttributes.REGULAR_ATTRIBUTES
                                         : SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
-      String text = getNodeText(node, false);
       Color background = UIUtil.getTreeBackground(selected, true);
       UIUtil.changeBackGround(this, background);
       SearchUtil.appendFragments(myFilter != null ? myFilter.getFilter() : null,
-                                 text,
+                                 getNodeText(node, false),
                                  attributes.getStyle(),
                                  attributes.getFgColor(),
                                  background,

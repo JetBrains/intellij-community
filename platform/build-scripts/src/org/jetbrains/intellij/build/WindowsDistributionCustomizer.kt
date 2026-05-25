@@ -45,17 +45,20 @@ class WindowsCustomizerBuilder @PublishedApi internal constructor(private val pr
   /**
    * Path to a 256x256 .ico file, relative to [projectHome].
    */
+  @Deprecated("Use ProductProperties.imagesDirectoryPath instead")
   var icoPath: String? = null
 
   /**
    * Path to a .ico file for EAP builds, relative to [projectHome]. If `null`, [icoPath] will be used.
    */
+  @Deprecated("Use ProductProperties.imagesDirectoryPath instead")
   var icoPathForEAP: String? = null
 
   /**
    * Path to the installer images directory, relative to [projectHome].
    * Should contain: logo.bmp, headerlogo.bmp, install.ico, uninstall.ico.
    */
+  @Deprecated("Use ProductProperties.imagesDirectoryPath instead")
   var installerImagesPath: String? = null
 
   /**
@@ -171,8 +174,11 @@ class WindowsCustomizerBuilder @PublishedApi internal constructor(private val pr
     private val projectHome: Path,
   ) : WindowsDistributionCustomizer() {
     init {
+      @Suppress("DEPRECATION")
       icoPath = builder.icoPath?.let { projectHome.resolve(it) }
+      @Suppress("DEPRECATION")
       icoPathForEAP = builder.icoPathForEAP?.let { projectHome.resolve(it) }
+      @Suppress("DEPRECATION")
       installerImagesPath = builder.installerImagesPath?.let { projectHome.resolve(it) }
       includeBatchLaunchers = builder.includeBatchLaunchers
       buildZipArchiveWithBundledJre = builder.buildZipArchiveWithBundledJre
@@ -222,11 +228,13 @@ abstract class WindowsDistributionCustomizer {
   /**
    * Path to a 256x256 .ico file for Windows distribution.
    */
+  @Deprecated("Use ProductProperties.imagesDirectoryPath instead")
   var icoPath: Path? = null
 
   /**
    * Path to a .ico file for EAP builds (if `null` [icoPath] will be used).
    */
+  @Deprecated("Use ProductProperties.imagesDirectoryPath instead")
   var icoPathForEAP: Path? = null
 
   /**
@@ -266,6 +274,7 @@ abstract class WindowsDistributionCustomizer {
   /**
    * Path to a directory containing images for installer: `logo.bmp`, `headerlogo.bmp`, `install.ico`, `uninstall.ico`.
    */
+  @Deprecated("Use ProductProperties.imagesDirectoryPath instead")
   var installerImagesPath: Path? = null
 
   /**

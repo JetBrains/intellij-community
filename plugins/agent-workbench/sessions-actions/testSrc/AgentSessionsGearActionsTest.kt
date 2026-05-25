@@ -17,7 +17,10 @@ import com.intellij.agent.workbench.sessions.actions.AgentSessionsPreventSleepWh
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsRefreshAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsSelectThreadInToolWindowAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsShowArchivedThreadsAction
+import com.intellij.agent.workbench.sessions.actions.AgentSessionsSwitchSourceAndChatAction
 import com.intellij.agent.workbench.sessions.actions.DumbAwareDefaultActionGroup
+import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettings
+import com.intellij.agent.workbench.sessions.frame.AgentChatOpenModeSettings
 import com.intellij.agent.workbench.sessions.model.AgentSessionThreadViewMode
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
@@ -31,10 +34,22 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.runInEdtAndWait
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 @TestApplication
 class AgentSessionsGearActionsTest {
+  @BeforeEach
+  fun setUp() {
+    AgentWorkbenchSettings.getInstance().loadState(AgentWorkbenchSettings.SettingsState())
+  }
+
+  @AfterEach
+  fun tearDown() {
+    AgentWorkbenchSettings.getInstance().loadState(AgentWorkbenchSettings.SettingsState())
+  }
+
   @Test
   fun gearActionsContainOpenFileToggleAndRefresh() {
     val actionManager = ActionManager.getInstance()
@@ -90,7 +105,7 @@ class AgentSessionsGearActionsTest {
   }
 
   @Test
-  fun toggleActionUpdatesAdvancedSetting(@TestDisposable disposable: Disposable) {
+  fun toggleActionUpdatesAgentWorkbenchSetting(@TestDisposable disposable: Disposable) {
     val actionManager = ActionManager.getInstance()
     val action = AgentSessionsDedicatedFrameToggleAction()
     val advancedSettings = AdvancedSettings.getInstance() as AdvancedSettingsImpl
@@ -98,25 +113,33 @@ class AgentSessionsGearActionsTest {
     assertThat(sessionsDescriptor())
       .contains("<advancedSetting")
       .contains("id=\"agent.workbench.chat.open.in.dedicated.frame\"")
+      .contains("visible=\"false\"")
     assertThat(actionManager.getAction("AgentWorkbenchSessions.ToggleDedicatedFrame"))
       .isNotNull
       .isInstanceOf(AgentSessionsDedicatedFrameToggleAction::class.java)
 
-    advancedSettings.setSetting(OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID, true, disposable)
+    advancedSettings.setSetting(OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID, false, disposable)
+    AgentChatOpenModeSettings.setOpenInDedicatedFrame(true)
     val event = TestActionEvent.createTestEvent(action)
     assertThat(action.isSelected(event)).isTrue()
+    assertThat(AdvancedSettings.getBoolean(OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID)).isTrue()
 
     runInEdtAndWait {
       action.setSelected(event, false)
     }
 
-    assertThat(AdvancedSettings.getBoolean(OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID)).isFalse()
+    assertThat(AgentChatOpenModeSettings.openInDedicatedFrame()).isFalse()
+    assertThat(AgentWorkbenchSettings.getInstance().openInDedicatedFrame).isFalse()
+    assertThat(AgentWorkbenchSettings.getInstance().openInDedicatedFrameOverride).isFalse()
+    assertThat(AdvancedSettings.getBoolean(OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID)).isTrue()
 
     runInEdtAndWait {
       action.setSelected(event, true)
     }
 
-    assertThat(AdvancedSettings.getBoolean(OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID)).isTrue()
+    assertThat(AgentChatOpenModeSettings.openInDedicatedFrame()).isTrue()
+    assertThat(AgentWorkbenchSettings.getInstance().openInDedicatedFrame).isTrue()
+    assertThat(AgentWorkbenchSettings.getInstance().openInDedicatedFrameOverride).isNull()
   }
 
   @Test
@@ -182,6 +205,7 @@ class AgentSessionsGearActionsTest {
       .contains("<projectFrameActionExclusion frameType=\"AGENT_DEDICATED\" place=\"MainToolbar\" id=\"MainToolbarVCSGroup\"/>")
       .contains("<projectFrameActionExclusion frameType=\"AGENT_DEDICATED\" place=\"MainToolbar\" id=\"ExecutionTargetsToolbarGroup\"/>")
       .contains("<projectFrameActionExclusion frameType=\"AGENT_DEDICATED\" place=\"MainToolbar\" id=\"NewUiRunWidget\"/>")
+      .contains("<projectFrameActionExclusion frameType=\"AGENT_DEDICATED\" place=\"MainToolbar\" id=\"AgentWorkbenchSessions.MainToolbar.Activity\"/>")
       .contains("<projectFrameActionExclusion frameType=\"AGENT_DEDICATED\" place=\"MainToolbar\" id=\"AIAssistantHubPopupAction\"/>")
       .contains("<projectFrameActionExclusion frameType=\"AGENT_DEDICATED\" place=\"MainToolbar\" id=\"BuildSolutionBar\"/>")
       .contains("<projectFrameActionExclusion frameType=\"AGENT_DEDICATED\" place=\"MainToolbar\" id=\"ActiveDeviceGroup\"/>")
@@ -218,6 +242,27 @@ class AgentSessionsGearActionsTest {
     val newThreadIndex = entries.requiredIndex(newThreadActionId)
     assertThat(newThreadIndex).isGreaterThan(runWidgetIndex)
     assertThat(entries.count { it == newThreadActionId }).isEqualTo(1)
+  }
+
+  @Test
+  fun switchSourceAndChatActionIsRegisteredWithoutDefaultShortcut() {
+    val actionManager = ActionManager.getInstance()
+    val actionId = AgentWorkbenchActionIds.Sessions.SWITCH_SOURCE_AND_CHAT
+
+    assertThat(actionManager.getAction(actionId))
+      .isNotNull
+      .isInstanceOf(AgentSessionsSwitchSourceAndChatAction::class.java)
+    assertThat(actionManager.getAction(actionId)?.actionUpdateThread)
+      .isEqualTo(ActionUpdateThread.BGT)
+
+    val entries = actionManager.childActionIds("OpenProjectWindows")
+    val openFrameIndex = entries.requiredIndex(AgentWorkbenchActionIds.Sessions.OPEN_DEDICATED_FRAME)
+    val switchIndex = entries.requiredIndex(actionId)
+    assertThat(switchIndex).isGreaterThan(openFrameIndex)
+    val actionDescriptor = actionsDescriptor()
+      .substringAfter("id=\"AgentWorkbenchSessions.SwitchSourceAndChat\"")
+      .substringBefore("</action>")
+    assertThat(actionDescriptor).doesNotContain("keyboard-shortcut")
   }
 
   @Test

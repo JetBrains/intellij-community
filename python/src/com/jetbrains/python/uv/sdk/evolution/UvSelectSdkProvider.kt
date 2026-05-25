@@ -1,7 +1,7 @@
 package com.jetbrains.python.uv.sdk.evolution
 
 import com.intellij.openapi.ui.popup.ListSeparator
-import com.intellij.python.community.impl.uv.common.icons.PythonCommunityImplUVCommonIcons
+import com.intellij.python.uv.common.icons.PythonUvCommonIcons
 import com.intellij.python.sdk.ui.evolution.AddNewEnvAction
 import com.intellij.python.sdk.ui.evolution.SelectEnvAction
 import com.intellij.python.sdk.ui.evolution.sdk.EvoModuleSdk
@@ -22,7 +22,7 @@ import java.nio.file.Path
 
 internal class UvSelectSdkProvider : EvoSelectSdkProvider {
   override fun getTreeElement(evoModuleSdk: EvoModuleSdk): EvoTreeLazyNodeElement {
-    val icon = PythonCommunityImplUVCommonIcons.UV
+    val icon = PythonUvCommonIcons.UV
     return EvoTreeLazyNodeElement("uv", icon) {
       getUvExecutableLocal() ?: return@EvoTreeLazyNodeElement PyResult.localizedError(PyBundle.message("evolution.uv.executable.is.not.found"))
 

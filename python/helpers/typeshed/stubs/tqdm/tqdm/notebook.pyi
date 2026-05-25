@@ -22,13 +22,16 @@ class tqdm_notebook(std_tqdm[_T]):
         bar_style: str | None = None,
         check_delay: bool = True,
     ) -> None: ...
+
     @property
     def colour(self): ...
     @colour.setter
     def colour(self, bar_color: str) -> None: ...
+
     disp: Incomplete
     ncols: Incomplete
     container: Incomplete
+
     @overload
     def __init__(
         self,
@@ -91,6 +94,7 @@ class tqdm_notebook(std_tqdm[_T]):
         display: bool = ...,
         **kwargs,
     ) -> None: ...
+
     def __iter__(self) -> Iterator[_T]: ...
     def update(self, n: int = 1): ...  # type: ignore[override]
     def close(self) -> None: ...

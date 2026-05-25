@@ -620,7 +620,7 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
                               listeners: List<ExtensionPointListener<T>>) {
     fun withEdtTimeQuotaCheck(listener: ExtensionPointListener<*>, body: () -> Unit) {
       val duration = measureTime { body() }
-      if (duration.inWholeMilliseconds > 100 && EDT.isCurrentThreadEdt()) {
+      if (duration.inWholeMilliseconds > 50 && EDT.isCurrentThreadEdt()) {
         val listenerSource = (listener as? ExtensionPointListenerOrigin)?.getOriginObject() ?: listener
         val pluginId = (listenerSource::class.java.classLoader as? PluginAwareClassLoader)?.pluginId?.toString()
         val msg = "(EDT) ExtensionPoint listener notification took too long: ${duration} for ${listenerSource::class.java.name}" +
@@ -770,6 +770,15 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
     // help GC
     listenerUpdater.updateAndGet(this) { it.clear() }
     extensionClass = null
+  }
+
+  @TestOnly
+  @Synchronized
+  fun dropInstances() {
+    clearCache()
+    for (adapter in adapters) {
+      adapter.dropInstance()
+    }
   }
 
   fun getExtensionClass(): Class<T> {

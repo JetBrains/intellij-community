@@ -2906,6 +2906,7 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$FileTypes
 - sf:Any_type:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Archive:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Aspectj:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Bazel:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:BinaryData:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:C:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Config:org.jetbrains.jewel.ui.icon.IntelliJIconKey
@@ -2917,6 +2918,7 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$FileTypes
 - sf:Csv:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Custom:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Diagram:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Docker:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Dtd:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Font:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Gitignore:org.jetbrains.jewel.ui.icon.IntelliJIconKey
@@ -2935,6 +2937,7 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$FileTypes
 - sf:JavaClass:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:JavaOutsideSource:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:JavaScript:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Jenkins:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Jfr:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Json:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:JsonSchema:org.jetbrains.jewel.ui.icon.IntelliJIconKey
@@ -2943,20 +2946,17 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$FileTypes
 - sf:Jupyter:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Manifest:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Markdown:org.jetbrains.jewel.ui.icon.IntelliJIconKey
-- sf:MarkdownPlugin:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:MicrosoftWindows:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Perl:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Properties:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Regexp:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Rst:org.jetbrains.jewel.ui.icon.IntelliJIconKey
-- sf:Rust:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:SourceMap:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Sql:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:SwiftLang:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Terraform:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Text:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Toml:org.jetbrains.jewel.ui.icon.IntelliJIconKey
-- sf:TomlFile:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:UiForm:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Unknown:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Vue:org.jetbrains.jewel.ui.icon.IntelliJIconKey

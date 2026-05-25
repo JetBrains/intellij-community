@@ -186,7 +186,9 @@ private class WelcomeScreenDisclosureButtonAction(
 ) : CustomComponentAction {
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     val button = DisclosureButton()
-    button.arrowIcon = null
+    if (!presentation.isPopupGroup && getInlineActions(presentation).isEmpty()) {
+      button.arrowIcon = null
+    }
     button.isOpaque = false
 
     if (type == WelcomeScreenToolbarType.FRAME) {
@@ -208,7 +210,7 @@ private class WelcomeScreenDisclosureButtonAction(
     component.text = presentation.text
     component.icon = presentation.icon ?: EmptyIcon.ICON_16
 
-    val inlineActions = presentation.getClientProperty(ActionUtil.INLINE_ACTIONS).orEmpty()
+    val inlineActions = getInlineActions(presentation)
     if (inlineActions.isNotEmpty()) {
       component.additionalAction = object : DisclosureButton.ActionListener {
         override fun actionTriggered(e: InputEvent?) {
@@ -221,6 +223,8 @@ private class WelcomeScreenDisclosureButtonAction(
     }
     UIUtil.setEnabled(component, presentation.isEnabled, true)
   }
+
+  private fun getInlineActions(presentation: Presentation): List<AnAction> = presentation.getClientProperty(ActionUtil.INLINE_ACTIONS).orEmpty()
 
   private fun performAction(component: JComponent, presentation: Presentation) {
     val dataContext = ActionToolbar.getDataContextFor(component)

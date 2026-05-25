@@ -51,7 +51,7 @@
             groupPath="Kotlin"
             groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
             enabledByDefault="true"
-            level="WARNING"
+            level="INFORMATION"
             language="kotlin"
             key="inspection.convert.explicit.context.argument.to.implicit.display.name" bundle="messages.KotlinBundle"/>
 
@@ -73,6 +73,16 @@
             level="WARNING" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
             language="kotlin"
             key="inspection.redundant.visibility.modifier.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.KotlinCleanupInspection"
+                     shortName="KotlinDeprecation"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.migration"
+                     enabledByDefault="true"
+                     cleanupTool="true"
+                     level="WARNING"
+                     language="kotlin"
+                     key="inspection.kotlin.deprecation.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.RedundantUnitExpressionInspection"
                      groupPath="Kotlin"
@@ -552,6 +562,13 @@
                      enabledByDefault="true"
                      level="WEAK WARNING"
                      language="kotlin" key="inspection.replace.isempty.with.ifempty.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.expressions.ReplaceIfExpressionWithFirstOrNullInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+                     enabledByDefault="true"
+                     level="WEAK WARNING"
+                     language="kotlin" key="inspection.replace.if.expression.with.first.or.null.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.FilterIsInstanceResultIsAlwaysEmptyInspection"
                      groupPath="Kotlin"

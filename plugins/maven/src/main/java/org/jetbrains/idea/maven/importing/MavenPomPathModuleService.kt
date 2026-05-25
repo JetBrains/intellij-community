@@ -1,28 +1,42 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.components.BaseState
-import com.intellij.openapi.components.SimplePersistentStateComponent
-import com.intellij.openapi.components.State
+import com.intellij.openapi.components.CustomImlComponentService
 import com.intellij.openapi.module.Module
-import org.jetbrains.idea.maven.importing.MavenPomPathModuleService.MavenPomPathState
+import com.intellij.platform.workspace.jps.serialization.CustomImlComponentNameContributor
 
-@State(name = "MavenCustomPomFilePath")
-class MavenPomPathModuleService : SimplePersistentStateComponent<MavenPomPathState>(MavenPomPathState()) {
+private const val COMPONENT_NAME = "MavenCustomPomFilePath"
+
+class MavenPomPathModuleService(private val module: Module) {
+
+  private val customImlComponentService = CustomImlComponentService.getInstance(module.project)
+
   companion object {
     @JvmStatic
     fun getInstance(module: Module): MavenPomPathModuleService {
-      return module.getService(MavenPomPathModuleService::class.java)
+      return MavenPomPathModuleService(module)
     }
   }
 
   var pomFileUrl: String?
-    get() = state.mavenPomFileUrl
+    get() {
+      return customImlComponentService.getComponentValue(module, COMPONENT_NAME, MavenPomPathState::class.java)?.mavenPomFileUrl
+    }
     set(value) {
-      state.mavenPomFileUrl = value
+      WriteAction.run<Throwable> {
+        val currentState = MavenPomPathState()
+        currentState.mavenPomFileUrl = value
+        customImlComponentService.setComponentValueBlocking(module, COMPONENT_NAME, currentState)
+      }
     }
 
   class MavenPomPathState : BaseState() {
     var mavenPomFileUrl by string()
   }
+}
+
+internal class MavenPomPathModuleServiceCustomImlComponentNameContributor: CustomImlComponentNameContributor {
+  override val componentName: String = COMPONENT_NAME
 }

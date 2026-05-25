@@ -2,11 +2,9 @@
 package com.jetbrains.python.pipenv.sdk.configuration
 
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.platform.ide.progress.withBackgroundProgress
@@ -16,7 +14,7 @@ import com.intellij.python.community.impl.pipenv.pipenvPath
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.configuration.CreateSdkInfo
 import com.jetbrains.python.sdk.configuration.EnvCheckerResult
@@ -27,18 +25,16 @@ import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector
 import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.PipEnvResult
 import com.jetbrains.python.sdk.configuration.findEnvOrNull
 import com.jetbrains.python.sdk.configuration.prepareSdkCreator
+import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.findAmongRoots
 import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.sdk.impl.resolvePythonBinary
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.pipenv.PIP_FILE
 import com.jetbrains.python.sdk.pipenv.PyPipEnvSdkAdditionalData
 import com.jetbrains.python.sdk.pipenv.getPipEnvExecutable
 import com.jetbrains.python.sdk.pipenv.runPipEnv
 import com.jetbrains.python.sdk.pipenv.setupPipEnv
 import com.jetbrains.python.sdk.pipenv.suggestedSdkName
-import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
-import com.jetbrains.python.sdk.setAssociationToModule
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -111,20 +107,11 @@ internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
       PySdkConfigurationCollector.logPipEnv(module.project, PipEnvResult.CREATED)
       LOGGER.debug("Setting up associated pipenv environment: $path, $basePath")
 
-      val sdk = SdkConfigurationUtil.setupSdk(
-        PythonSdkUtil.getAllSdks().toTypedArray(),
-        file,
-        PythonSdkType.getInstance(),
+      val sdk = createSdk(
+        PathHolder.Eel(file.toNioPath()),
         PyPipEnvSdkAdditionalData(),
         suggestedSdkName(basePath)
-      )
-
-      withContext(Dispatchers.EDT) {
-        LOGGER.debug("Adding associated pipenv environment: $path, $basePath")
-        sdk.setAssociationToModule(module)
-        SdkConfigurationUtil.addSdk(sdk)
-        module.project.pySdkService.persistSdk(sdk)
-      }
+      ).getOr { return@withBackgroundProgress it }
 
       PyResult.success(sdk)
     }

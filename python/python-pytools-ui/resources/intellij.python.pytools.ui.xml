@@ -1,0 +1,23 @@
+<idea-plugin visibility="public">
+  <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.python.community"/>
+    <module name="intellij.python.community.execService"/>
+    <module name="intellij.python.community.execService.python"/>
+    <module name="intellij.python.community.impl"/>
+    <module name="intellij.python.community.services.systemPython"/>
+    <module name="intellij.python.pytools"/>
+    <module name="intellij.python.sdk"/>
+    <module name="intellij.python.uv.backend"/>
+    <!-- endregion -->
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <projectConfigurable parentId="python.tools.group.settings"
+                         id="python.external.tools.group.settings"
+                         bundle="messages.PyToolsUiBundle"
+                         key="settings.external.tools.title"
+                         instance="com.intellij.python.pytools.ui.configuration.PyExternalToolsConfigurable"/>
+    <search.optionContributor
+        implementation="com.intellij.python.pytools.ui.PyExternalToolsSearchableOptionContributor"/>
+  </extensions>
+</idea-plugin>

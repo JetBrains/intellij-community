@@ -7,7 +7,7 @@ import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
 import com.intellij.java.workspace.entities.javaSourceRoots
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -61,13 +61,13 @@ abstract class AbstractEntityCodeGenTest {
   fun setUp(): Unit = runBlocking {
     enableKotlinOfficialCodeStyle(project.get())
     val jdk = IdeaTestUtil.getMockJdk21()
-    writeAction {
+    edtWriteAction {
       ProjectJdkTable.getInstance().addJdk(jdk, disposable.get())
     }
     val projectRoot = VfsUtil.findFile(tempPath.get(), true)!!
 
     val testPath = VfsUtil.findFile(testDataDirectory.resolve("before"), true)!!
-    writeAction {
+    edtWriteAction {
       VfsUtil.copyDirectory(this, testPath, actualSrcRoot, null)
     }
 
@@ -89,7 +89,7 @@ abstract class AbstractEntityCodeGenTest {
     LibrariesRequiredForWorkspace.workspaceStorage.add(model)
     LibrariesRequiredForWorkspace.workspaceJpsEntities.add(model)
 
-    writeAction {
+    edtWriteAction {
       model.sdk = jdk
       model.commit()
     }

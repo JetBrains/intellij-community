@@ -1,7 +1,7 @@
 from _typeshed import Incomplete
 from collections.abc import Callable, Collection, Iterable
 
-from networkx.classes.graph import Graph, _Data, _Node
+from networkx.classes.graph import Graph, _Data, _EdgeData, _Node, _NodeData
 from networkx.utils.backends import _dispatchable
 
 __all__ = [
@@ -15,8 +15,10 @@ __all__ = [
 ]
 
 def to_networkx_graph(
-    data: _Data[_Node], create_using: Graph[_Node] | Callable[[], Graph[_Node]] | None = None, multigraph_input: bool = False
-) -> Graph[_Node]: ...
+    data: _Data[_Node],
+    create_using: Graph[_Node, _NodeData, _EdgeData] | Callable[[], Graph[_Node, _NodeData, _EdgeData]] | None = None,
+    multigraph_input: bool = False,
+) -> Graph[_Node, _NodeData, _EdgeData]: ...
 @_dispatchable
 def to_dict_of_lists(G: Graph[_Node], nodelist: Collection[_Node] | None = None) -> dict[_Node, list[_Node]]: ...
 @_dispatchable

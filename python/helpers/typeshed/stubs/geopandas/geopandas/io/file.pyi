@@ -38,6 +38,7 @@ def _read_file(
     encoding: str | None = None,
     **kwargs,  # depend on engine
 ) -> pd.DataFrame: ...
+
 @type_check_only
 class _Schema(TypedDict):
     geometry: str | list[str]

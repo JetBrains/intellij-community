@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.application.ModalityState;
@@ -95,11 +95,11 @@ public abstract class FilterComponent extends JPanel {
     }
   }
 
-  public void setHistorySize(int historySize){
+  public void setHistorySize(int historySize) {
     myFilter.setHistorySize(historySize);
   }
 
-  public void reset(){
+  public void reset() {
     myFilter.reset();
   }
 
@@ -114,11 +114,11 @@ public abstract class FilterComponent extends JPanel {
     myFilter.setSelectedItem(filter);
   }
 
-  public void setFilter(final String filter){
+  public void setFilter(String filter) {
     myFilter.setText(filter);
   }
 
-  public void selectText(){
+  public void selectText() {
     myFilter.selectText();
   }
 
@@ -127,9 +127,15 @@ public abstract class FilterComponent extends JPanel {
     return myFilter.requestFocusInWindow();
   }
 
+  /**
+   * Called when the user presses enter.
+   */
   public abstract void filter();
 
-  protected void onlineFilter(){
+  /**
+   * Called during typing.
+   */
+  protected void onlineFilter() {
     filter();
   }
 

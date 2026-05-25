@@ -281,9 +281,9 @@ socket: 3.0-
 socketserver: 3.0-
 spwd: 3.0-3.12
 sqlite3: 3.0-
-sre_compile: 3.0-
-sre_constants: 3.0-
-sre_parse: 3.0-
+sre_compile: 3.0-3.14
+sre_constants: 3.0-3.14
+sre_parse: 3.0-3.14
 ssl: 3.0-
 stat: 3.0-
 statistics: 3.4-

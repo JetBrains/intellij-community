@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceField;
 
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.editor.Editor;
@@ -54,7 +53,7 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
                                     final PsiElement anchorElementIfAll,
                                     Project project) {
     super(project, editor, initializerExpression, localVariable, occurrences, typeSelectorManager,
-          IntroduceFieldHandler.getRefactoringNameText(), parentClass, anchorElement, anchorElementIfAll);
+          IntroduceFieldHelper.getRefactoringNameText(), parentClass, anchorElement, anchorElementIfAll);
     myStatic = aStatic;
     myIntroduceFieldPanel =
       new IntroduceFieldPopupPanel(parentClass, initializerExpression, localVariable, currentMethodConstructor, localVariable != null, aStatic,
@@ -181,7 +180,7 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
 
   private void updateInitializer(PsiElementFactory elementFactory, PsiField variable) {
     if (variable != null) {
-      if (myIntroduceFieldPanel.getInitializerPlace() == BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION) {
+      if (myIntroduceFieldPanel.getInitializerPlace() == JavaIntroduceFieldService.InitializationPlace.IN_FIELD_DECLARATION) {
         variable.setInitializer(elementFactory.createExpressionFromText(myExprText, variable));
       } else {
         variable.setInitializer(null);
@@ -194,7 +193,7 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
     return "IntroduceField";
   }
 
-  public BaseExpressionToFieldHandler.InitializationPlace getInitializerPlace() {
+  public JavaIntroduceFieldService.InitializationPlace getInitializerPlace() {
       return myIntroduceFieldPanel.getInitializerPlace();
     }
 

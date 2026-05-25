@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.commandLine
 
 import com.intellij.application.options.CodeStyle
@@ -10,19 +10,19 @@ import com.intellij.openapi.application.ApplicationStarter
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSettingsLoader
 import com.intellij.util.PlatformUtils
 import com.intellij.util.application
 import org.jetbrains.jps.model.serialization.PathMacroUtil
-import java.io.File
 import java.io.IOException
 import java.nio.charset.Charset
 import java.nio.file.Files
+import java.nio.file.Path
 import java.util.UUID
+import kotlin.io.path.createDirectories
 
 private val LOG = Logger.getInstance(FormatterStarter::class.java)
 
@@ -33,13 +33,14 @@ internal class FormatterStarter : ApplicationStarter {
   private val messageOutput = StdIoMessageOutput
 
   override fun main(args: List<String>) {
-    messageOutput.info("$appInfo Formatter\n")
+    val appInfo = ApplicationInfo.getInstance().let { "${it.fullApplicationName}, build ${it.build.asString()}" }
+    messageOutput.info("${appInfo} Formatter\n")
     LOG.info(args.joinToString(",", prefix = "Attributes: "))
 
     val builder = try {
       createBuilder(args, messageOutput)
     }
-    catch (e: ShowUsageException) {
+    catch (_: ShowUsageException) {
       messageOutput.info(usageInfo)
       exit(0)
       return
@@ -77,31 +78,29 @@ internal class FormatterStarter : ApplicationStarter {
   }
 }
 
-
-
 fun createBuilder(args: List<String>, messageOutput: MessageOutput = StdIoMessageOutput): CodeStyleProcessorBuilder =
   CodeStyleProcessorBuilder(messageOutput)
     .apply {
       if (args.size < 2) throw ShowUsageException()
       val skipFlag = Skipper()
 
-      args
-        .asSequence().drop(1)  // Skip first argument "format" -- routing from the top level
+      args.asSequence()
+        .drop(1)  // Skip first argument "format" -- routing from the top level
 
         // try to treat every two arguments as an argument and its param.
-        // If param is not needed we'll take it as an arg on the next iteration,
+        // If param is not needed, we'll take it as an arg on the next iteration,
         // otherwise we'll skip using a boolean flag `skipNext`
         .windowed(size = 2, step = 1, partialWindows = true) { Pair(it[0], it.getOrNull(1)) }
         .forEach { (arg, param) ->
           skipFlag.check { return@forEach }
 
           when (arg) {
-            "-h", "-help" -> throw ShowUsageException()
+            "-h", "-help", "--help" -> throw ShowUsageException()
             "-r", "-R" -> recursive()
             "-d", "-dry" -> dryRun()
             "-s", "-settings" -> {
               param ?: throw ArgumentsException("Missing settings file path.")
-              withCodeStyleSettings(readSettings(param) ?: throw ArgumentsException("Cannot find file $param"))
+              withCodeStyleSettings(readSettings(Path.of(param)) ?: throw ArgumentsException("Cannot find file $param"))
               skipFlag.skip()
             }
             "-m", "-mask" -> {
@@ -124,7 +123,7 @@ fun createBuilder(args: List<String>, messageOutput: MessageOutput = StdIoMessag
         }
     }
 
-
+@Suppress("GrazieInspection")
 private const val usageInfo = """
 Usage: format [-h] [-r|-R] [-d|-dry] [-s|-settings settingsPath] [-charset charsetName] [-allowDefaults] path1 path2...
   -h|-help         Show a help message and exit.
@@ -134,31 +133,26 @@ Usage: format [-h] [-r|-R] [-d|-dry] [-s|-settings settingsPath] [-charset chars
   -d|-dry          Perform a dry run: no file modifications, only exit status.
   -m|-mask         A comma-separated list of file masks.
   -charset         Force charset to use when reading and writing files.
-  -allowDefaults   Use factory defaults when style is not defined for a given file. I.e. when -s
+  -allowDefaults   Use factory defaults when style is not defined for a given file. I.e., when -s
                    is not not set and file doesn't belong to any IDEA project. Otherwise file will
                    be ignored.
   path<n>        A path to a file or a directory.  
 """
 
-fun readSettings(settingsFile: File): CodeStyleSettings? {
-  return VfsUtil.findFileByIoFile(settingsFile, true)
-    ?.let {
-      it.refresh(false, false)
-      CodeStyleSettingsLoader().loadSettings(it)
-    }
+fun readSettings(settingsFile: Path): CodeStyleSettings? {
+  return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(settingsFile)?.let {
+    it.refresh(false, false)
+    CodeStyleSettingsLoader().loadSettings(it)
+  }
 }
-
-private fun readSettings(settingsPath: String): CodeStyleSettings? = readSettings(File(settingsPath))
-
-private val appInfo: String
-  get() = ApplicationInfo.getInstance()
-    .let { "${it.fullApplicationName}, build ${it.build.asString()}" }
 
 sealed class CodeStyleProcessorBuildException : RuntimeException {
   constructor() : super()
   constructor(message: String) : super(message)
 
+  @Suppress("CanSealedSubClassBeObject")
   class ShowUsageException : CodeStyleProcessorBuildException()
+
   class ArgumentsException(message: String) : CodeStyleProcessorBuildException(message)
 }
 
@@ -179,14 +173,9 @@ private fun exit(code: Int) {
   application.exit(true, true, false, code)
 }
 
-private val PROJECT_DIR_PREFIX = PlatformUtils.getPlatformPrefix() + ".format."
-private const val PROJECT_DIR_SUFFIX = ".tmp"
-
-private fun createProjectDir(projectUID: String) = FileUtil
-  .createTempDirectory(PROJECT_DIR_PREFIX, projectUID + PROJECT_DIR_SUFFIX)
-  .toPath()
+private fun createProjectDir(projectUID: String) = Files.createTempDirectory("${PlatformUtils.getPlatformPrefix()}.format.${projectUID}.tmp.")
   .resolve(PathMacroUtil.DIRECTORY_STORE_NAME)
-  .also { Files.createDirectories(it) }
+  .createDirectories()
 
 private fun createProject(projectUID: String) =
   ProjectManagerEx.getInstanceEx()

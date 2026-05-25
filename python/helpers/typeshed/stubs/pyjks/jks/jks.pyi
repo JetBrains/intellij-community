@@ -44,6 +44,7 @@ class PrivateKeyEntry(AbstractKeystoreEntry):
     def pkey_pkcs8(self) -> bytes: ...
     @property
     def algorithm_oid(self) -> tuple[int, ...]: ...
+
     # NB! For most use cases, use PrivateKeyEntry.new() classmethod.
     # Overloaded: must provide `encrypted` OR `pkey`, `pkey_pkcs8`, `algorithm_oid`
     @overload
@@ -70,6 +71,7 @@ class PrivateKeyEntry(AbstractKeystoreEntry):
         timestamp: int,
         **kwargs: Unused,
     ) -> None: ...
+
     @classmethod
     def new(  # type: ignore[override]
         cls, alias: str, certs: Iterable[bytes], key: bytes, key_format: _KeyFormat = "pkcs8"
@@ -84,6 +86,7 @@ class SecretKeyEntry(AbstractKeystoreEntry):
     def key(self) -> bytes: ...
     @property
     def key_size(self) -> int: ...
+
     # Overloaded: must provide `sealed_obj` OR `algorithm`, `key`, `key_size`
     @overload
     def __init__(
@@ -101,6 +104,7 @@ class SecretKeyEntry(AbstractKeystoreEntry):
         timestamp: int,
         **kwargs: Unused,
     ) -> None: ...
+
     # Not implemented by pyjks
     @classmethod
     def new(  # type: ignore[override]

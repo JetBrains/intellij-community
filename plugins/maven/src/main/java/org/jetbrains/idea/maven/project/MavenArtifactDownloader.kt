@@ -9,6 +9,8 @@ import com.intellij.platform.util.progress.RawProgressReporter
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.buildtool.MavenEventHandler
 import org.jetbrains.idea.maven.importing.MavenExtraArtifactType
+import org.jetbrains.idea.maven.importing.getClassifierAndExtension
+import org.jetbrains.idea.maven.importing.getDependencyTypesFromImporters
 import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenArtifactInfo
 import org.jetbrains.idea.maven.model.MavenConstants

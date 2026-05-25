@@ -43,5 +43,9 @@ public class OverrideImplementNullabilityTest extends OverrideImplementBaseTest 
     doTest();
   }
 
+  public void testNestedTypeParameter() {
+    doTest();
+  }
+
   protected void doTest() { doTest(false, true); }
 }

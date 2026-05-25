@@ -1,0 +1,6 @@
+<!-- Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="1.5" y="1.5" width="11" height="11" rx="1.5" stroke="#CED0D6" color-stroke-key="icon-default-stroke"/>
+  <circle cx="7" cy="7" r="3.5" stroke="#CED0D6" color-stroke-key="icon-default-stroke"/>
+  <path d="M5.5 6.5V7.5M8.5 6.5V7.5" stroke="#CED0D6" color-stroke-key="icon-default-stroke" stroke-linecap="round"/>
+</svg>

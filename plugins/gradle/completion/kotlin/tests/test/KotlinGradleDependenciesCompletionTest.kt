@@ -2,7 +2,6 @@
 package com.intellij.gradle.completion.kotlin
 
 import com.intellij.codeInsight.lookup.Lookup
-import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource
 import com.intellij.repository.search.completion.api.DependencyCompletionRequest
@@ -10,7 +9,6 @@ import com.intellij.repository.search.completion.api.DependencyCompletionResult
 import com.intellij.repository.search.completion.api.DependencyCompletionService
 import com.intellij.repository.search.completion.api.DependencyGroupCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyPartCompletionResult
-import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.runInEdtAndWait
@@ -26,7 +24,6 @@ import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.params.ParameterizedTest
 
 @UseK2PluginMode
@@ -140,13 +137,42 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
         }
     }
 
-    @Disabled("server-side completion only")
+    @ParameterizedTest
+    @BaseGradleVersionSource("""
+            impl("<caret>myGroup1<colon>myArtifact1<colon>myVersion1"),
+            impl("myGr<caret>something"),
+            impl("myGroup1<colon>myArti<caret><colon><colon>"),
+            impl("myGroup1<colon>myArtifact1<colon>myVer<caret>si")
+        """)
+    fun `test coordinates completion when caret is in the middle of the dependency string`(
+        gradleVersion: GradleVersion,
+        dependencyEntryEscaped: String,
+    ) {
+        val dependencyEntry = dependencyEntryEscaped.unescape()
+        val dependencyCompletionResult = "impl(\"myGroup1:myArtifact1:myVersion1\")"
+
+        test(gradleVersion, KotlinGradleProjectTestCase.KOTLIN_PROJECT) {
+            val file = writeTextAndCommit("build.gradle.kts", "dependencies { $dependencyEntry }")
+            runInEdtAndWait {
+                codeInsightFixture.configureFromExistingVirtualFile(file)
+                codeInsightFixture.completeBasic()
+                codeInsightFixture.assertPreferredCompletionItems(
+                    0, "myGroup1:myArtifact1:myVersion1",
+                    "myGroup2:myArtifact2:myVersion2",
+                    "myGroup3:myArtifact3:myVersion3",
+                )
+                codeInsightFixture.finishLookup(Lookup.NORMAL_SELECT_CHAR)
+                codeInsightFixture.checkResult("dependencies { $dependencyCompletionResult }")
+            }
+        }
+    }
+
     @ParameterizedTest
     @BaseGradleVersionSource(DEPENDENCY_CONFIGURATIONS_AND_NOTATIONS)
     fun `test coordinates completion configuration names`(gradleVersion: GradleVersion, dependencyConfigurationEscaped: String) {
         val dependencyConfiguration = dependencyConfigurationEscaped.unescape()
-        val substitutionResult = if (dependencyConfiguration.contains(":")) {
-            val items = dependencyConfiguration.split(":")
+        val substitutionResult = if (dependencyConfiguration.contains(",")) {
+            val items = dependencyConfiguration.split(",")
             "${items[0]}(${items[1]}(\"g:a:v\"))"
         } else "$dependencyConfiguration(\"g:a:v\")"
 
@@ -183,7 +209,6 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
         }
     }
 
-    @Disabled("server-side completion only")
     @ParameterizedTest
     @BaseGradleVersionSource("""
             org.example.p<colon>my-long-artifact-id<colon>2.7.<caret>,
@@ -309,7 +334,6 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
         }
     }
 
-    @Disabled("server-side completion only")
     @ParameterizedTest
     @BaseGradleVersionSource
     @TestMetadata("artifactCompletionOnTopLevel.test")

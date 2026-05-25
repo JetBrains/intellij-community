@@ -59,7 +59,7 @@ Workbench shows normalized activity (`NEEDS_INPUT`, `UNREAD`, `REVIEWING`, `PROC
   [@test] ../codex/sessions/testSrc/CodexAppServerSessionBackendTest.kt
   [@test] ../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
 
-- Session-tree Codex badge colors are needs input `#4DA3FF`, done/unread `#3FE47E`, reviewing `#2FD1C4`, and processing `#FF9F43`; ready threads show the plain provider icon without a badge.
+- Session-tree Codex badge fallback colors are needs input `#588CF3` light/`#548AF7` dark, done/unread `#55A76A` light/`#5FAD65` dark, reviewing `#8F5AE5`, and processing `#FFAF0F` light/`#F2C55C` dark; ready threads show the plain provider icon without a badge.
   [@test] ../common/testSrc/AgentThreadActivityPresentationTest.kt
   [@test] ../sessions-toolwindow/testSrc/AgentSessionsCodexActivityRenderingIntegrationTest.kt
 

@@ -1,0 +1,16 @@
+<idea-plugin>
+  <id>com.intellij.platform.acp</id>
+  <name>Agent Client Protocol</name>
+  <vendor>JetBrains</vendor>
+  <category>IDE Settings</category>
+
+  <description><![CDATA[
+    Provides the Agent Client Protocol (ACP) API for launching ACP agent processes
+    and discovering available agents from any plugin. Used by AI Assistant, code review,
+    coding agents, and other plugins that need to integrate ACP agents.
+  ]]></description>
+
+  <content namespace="jetbrains">
+    <module name="intellij.platform.acp"/>
+  </content>
+</idea-plugin>

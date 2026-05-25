@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.hatch.cli.HatchEnvironment
 import com.intellij.python.hatch.service.CliBasedHatchService
+import com.intellij.python.pytools.runtime.WorkingDirectoryNotFoundError
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonHomePath
 import com.jetbrains.python.PythonInfo
@@ -27,12 +28,6 @@ class HatchExecutableNotFoundHatchError(path: Path?) : HatchError(
 
 class BasePythonExecutableNotFoundHatchError(pathString: String?) : HatchError(
   PyHatchBundle.message("python.hatch.error.base.python.executable.is.not.found", pathString.toString())
-) {
-  constructor(path: Path?) : this(path.toString())
-}
-
-class WorkingDirectoryNotFoundHatchError(pathString: String?) : HatchError(
-  PyHatchBundle.message("python.hatch.error.working.directory.is.not.found", pathString.toString())
 ) {
   constructor(path: Path?) : this(path.toString())
 }
@@ -143,7 +138,7 @@ fun resolveHatchWorkingDirectory(project: Project, module: Module?): PyResult<Pa
   val pathString = module?.baseDir?.path ?: project.basePath
 
   return when (val path = pathString?.let { Path.of(it) }) {
-    null -> Result.failure(WorkingDirectoryNotFoundHatchError(pathString))
+    null -> Result.failure(WorkingDirectoryNotFoundError(pathString))
     else -> Result.success(path)
   }
 }

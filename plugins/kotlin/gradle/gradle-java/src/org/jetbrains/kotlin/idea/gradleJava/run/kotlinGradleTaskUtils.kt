@@ -162,27 +162,32 @@ private fun KaSession.isStringParameterSignature(signature: KaVariableSignature<
 fun KtNamedFunction.getKMPGradleConfigurationName(runTask: KotlinJvmRunTaskData): String =
     "${getConfigurationName()} [${runTask.targetName}]"
 
-fun KtNamedFunction.getConfigurationName(): String? {
-    val gradleSubprojectName = ReadAction.compute<Module?, Throwable> { module }?.getSubprojectNameOfGradleRoot() ?: return name
-    val fileName =
-        ReadAction.compute<String?, Throwable> { containingKtFile.virtualFile?.nameWithoutExtension } ?: return gradleSubprojectName
+fun KtNamedFunction.getConfigurationName(): String {
+    val gradleSubprojectName = ReadAction
+        .computeBlocking<Module?, Throwable> { module }
+        ?.getSubprojectNameOfGradleRoot()
 
-    return when (fileName.equals("main", ignoreCase = true)) {
-        true -> gradleSubprojectName
-        false -> "$gradleSubprojectName.$fileName"
-    }
+    val fileName = ReadAction
+        .computeBlocking<String?, Throwable> { containingKtFile.virtualFile?.nameWithoutExtension }
+        ?.takeUnless { it.equals("main", ignoreCase = true) }
+
+    val functionName = name?.takeUnless { it.equals("main", ignoreCase = true) }
+
+    return listOfNotNull(gradleSubprojectName, fileName, functionName).joinToString(".")
 }
 
 @RequiresReadLock
 internal fun mainClassScriptParameter(function: KtFunction): String = "-DmainClass=${function.containingKtFile.javaFileFacadeFqName}"
 
 /**
- * Returns the name of the direct subproject of the Gradle root project in which this module is located in.
+ * Returns the qualified name of the direct subproject of the Gradle root project in which this module is located in.
  *
  * For example, for both modules "SomeKMPProject.composeApp.desktopMain" and "SomeKMPProject.composeApp.wasmJsMain"
- * the return value would be "composeApp".
+ * the return value would be "composeApp". Analogously, for "SomeKMPProject.app.desktopApp.desktopMain" the return
+ * value would be "app.desktopApp".
  */
-private fun Module.getSubprojectNameOfGradleRoot(): String? = name.split(".").getOrNull(1)
+private fun Module.getSubprojectNameOfGradleRoot(): String? =
+    name.split(".").takeIf { it.size >= 3 }?.run { subList(1, lastIndex) }?.joinToString(".")
 
 fun configureKmpJvmRunConfigurationFromMainFunction(
     configuration: GradleRunConfiguration,

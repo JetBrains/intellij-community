@@ -84,7 +84,7 @@ abstract class ProductProperties {
   var stdioRedirectArg: String? = null
 
   /**
-   * Path to a directory containing images which will be used in the product's distribution. This property can be used instead of providing paths to individual files in
+   * Path to a directory containing images which will be used in the product's distribution. This property should be used instead of providing paths to individual files in
    * [WindowsCustomizerBuilder], [MacCustomizerBuilder] and [LinuxCustomizerBuilder].
    *
    * The directory should contain the following files:

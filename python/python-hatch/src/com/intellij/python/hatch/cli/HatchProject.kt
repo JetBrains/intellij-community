@@ -2,7 +2,7 @@
 package com.intellij.python.hatch.cli
 
 import com.intellij.platform.eel.provider.utils.stdoutString
-import com.intellij.python.hatch.runtime.HatchRuntime
+import com.intellij.python.pytools.runtime.PyToolRuntime
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import kotlinx.serialization.SerialName
@@ -57,7 +57,7 @@ data class Metadata(
 /**
  * Manage environment dependencies
  */
-class HatchProject(runtime: HatchRuntime) : HatchCommand("project", runtime) {
+class HatchProject(runtime: PyToolRuntime) : HatchCommand("project", runtime) {
 
   /**
    * Display project metadata

@@ -93,16 +93,19 @@ class PatchSet(list[PatchedFile]):
     def __init__(self, f: Iterable[str] | str, encoding: None = None, metadata_only: bool = False) -> None: ...
     @overload
     def __init__(self, f: Iterable[bytes] | bytes, encoding: str | None = None, metadata_only: bool = False) -> None: ...
+
     @classmethod
     def from_filename(
         cls, filename: StrPath, encoding: str = "UTF-8", errors: str | None = None, newline: str | None = None
     ) -> Self: ...
+
     @classmethod
     @overload
     def from_string(cls, data: str, encoding: None = None, errors: str | None = "strict") -> Self: ...
     @classmethod
     @overload
     def from_string(cls, data: bytes, encoding: str | None = None, errors: str | None = "strict") -> Self: ...
+
     @property
     def added_files(self) -> list[PatchedFile]: ...
     @property

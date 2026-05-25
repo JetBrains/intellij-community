@@ -26,23 +26,6 @@ import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.jps.model.module.JpsModuleReference
 import java.util.SortedSet
 
-/**
- * List of modules that are included in lib/app.jar in all IntelliJ-based IDEs and loaded by the core classloader.
- * 
- * **Please don't add new modules here!**
- *
- * If you need to add a module to all IDEs, register it as a content module in intellij.moduleSets.essential.xml,
- * see [this article](https://youtrack.jetbrains.com/articles/IJPL-A-956) for details. You can use 'loading="embedded"' to make it still loaded by the core classloader if needed.
- */
-@Suppress("RemoveRedundantQualifierName")
-internal val PLATFORM_CORE_MODULES = java.util.List.of(
-  "intellij.platform.buildScripts.downloader",
-
-  "intellij.platform.runtime.product",
-
-  "intellij.platform.bookmarks",
-)
-
 @Suppress("RemoveRedundantQualifierName")
 private val PLATFORM_CUSTOM_PACK_MODE: Map<String, LibraryPackMode> = java.util.Map.of(
   "jetbrains-annotations", LibraryPackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME,
@@ -180,8 +163,6 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
     explicit.add(ModuleItem(moduleName = moduleName, relativeOutputFile = "$moduleName.jar", reason = "productImplementationModules"))
     markContentModuleToScrambleIfNeeded(moduleName = moduleName, context = context, isEmbedded = true)
   }
-  explicit.addAll(toModuleItemSequence(list = PLATFORM_CORE_MODULES, productLayout = productLayout))
-
   val explicitModuleNames = explicit.map { it.moduleName }
   val outputProvider = context.outputProvider
   val runtimeDependencyIndex = RuntimeDependencyIndex((context as BuildContextImpl).jarPackagerDependencyHelper)
@@ -420,12 +401,6 @@ fun getEnabledPluginModules(pluginsToPublish: Set<PluginLayout>, context: BuildC
   result.addAll(context.getBundledPluginModules())
   pluginsToPublish.mapTo(result) { it.mainModule }
   return result
-}
-
-private fun toModuleItemSequence(list: Collection<String>, productLayout: ProductModulesLayout): Sequence<ModuleItem> {
-  return list.asSequence()
-    .filter { !productLayout.excludedModuleNames.contains(it) }
-    .map { ModuleItem(moduleName = it, relativeOutputFile = "$it.jar", reason = "PLATFORM_CORE_MODULES") }
 }
 
 /**

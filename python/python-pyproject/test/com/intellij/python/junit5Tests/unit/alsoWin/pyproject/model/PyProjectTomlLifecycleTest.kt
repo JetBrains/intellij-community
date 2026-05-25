@@ -3,7 +3,7 @@ package com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model
 
 import com.intellij.facet.FacetType
 import com.intellij.facet.mock.MockFacetType
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.fileLogger
@@ -89,11 +89,11 @@ internal class PyProjectTomlLifecycleTest {
                    }
                  })
 
-    val workspace1Members = writeAction {
+    val workspace1Members = edtWriteAction {
       f.root.convertDirToUvWorkspace("workspace1")
     }
     f.reloadProject() // <-- Reload 1
-    val (workspace2, workspace2Members) = writeAction {
+    val (workspace2, workspace2Members) = edtWriteAction {
       val workspace2 =
         VirtualFileManager.getInstance().refreshAndFindFileByNioPath(workspace2Parent.resolve("workspace2").createDirectories())!!
       val workspace2Members = workspace2.convertDirToUvWorkspace()
@@ -148,7 +148,7 @@ internal class PyProjectTomlLifecycleTest {
    */
   @Test
   fun `excluded folder pyproject is ignored and restored on un-exclude`(): Unit = timeoutRunBlocking(30.seconds) {
-    writeAction {
+    edtWriteAction {
       f.root.writePyprojectToml("root")
       f.root.createDirectory("sub").writePyprojectToml("child")
     }
@@ -201,8 +201,8 @@ internal class PyProjectTomlLifecycleTest {
 
     // Add exclude and source roots to the pre-existing module before adoption
     val virtualFileUrlManager = f.project.workspaceModel.getVirtualFileUrlManager()
-    val nodeModulesDir = writeAction { libDir.createDirectory("node_modules") }
-    val srcDir = writeAction { libDir.createDirectory("src") }
+    val nodeModulesDir = edtWriteAction { libDir.createDirectory("node_modules") }
+    val srcDir = edtWriteAction { libDir.createDirectory("src") }
     f.project.workspaceModel.update("add exclude and source root") { storage ->
       val libModule = storage.resolve(ModuleId("lib"))!!
       val contentRoot = libModule.contentRoots.first()
@@ -214,7 +214,7 @@ internal class PyProjectTomlLifecycleTest {
       }
     }
 
-    writeAction {
+    edtWriteAction {
       f.root.writePyprojectToml("root")
       libDir.writePyprojectToml("lib")
     }
@@ -238,7 +238,7 @@ internal class PyProjectTomlLifecycleTest {
     }
 
     // Create pyproject.toml at same location (adopts "lib") + another module "app"
-    writeAction {
+    edtWriteAction {
       f.root.writePyprojectToml("root")
       libDir.writePyprojectToml("lib")
       f.root.createDirectory("app").writePyprojectToml("old-app")
@@ -266,7 +266,7 @@ internal class PyProjectTomlLifecycleTest {
     }
 
     // Rename "old-app" to "new-app" via pyproject.toml
-    writeAction {
+    edtWriteAction {
       f.root.findChild("app")!!.findChild(PY_PROJECT_TOML)!!.writeText("[project]\nname = \"new-app\"")
     }
 
@@ -296,13 +296,13 @@ internal class PyProjectTomlLifecycleTest {
    */
   @Test
   fun `dependencies updated when pyproject dependency direction reverses`(): Unit = timeoutRunBlocking(30.seconds) {
-    val aDir = writeAction { f.root.createDirectory("a") }
-    val bDir = writeAction { f.root.createDirectory("b") }
+    val aDir = edtWriteAction { f.root.createDirectory("a") }
+    val bDir = edtWriteAction { f.root.createDirectory("b") }
     val bUri = bDir.toNioPath().toUri()
     val aUri = aDir.toNioPath().toUri()
 
     // Initial sync: A depends on B
-    writeAction {
+    edtWriteAction {
       f.root.writePyprojectToml("root")
       aDir.createFile(PY_PROJECT_TOML).writeText("[project]\nname = \"A\"\ndependencies = [\"B @ $bUri\"]")
       bDir.writePyprojectToml("B")
@@ -325,7 +325,7 @@ internal class PyProjectTomlLifecycleTest {
     }
 
     // Reverse: B depends on A, A has no deps
-    writeAction {
+    edtWriteAction {
       aDir.findChild(PY_PROJECT_TOML)!!.writeText("[project]\nname = \"A\"")
       bDir.findChild(PY_PROJECT_TOML)!!.writeText("[project]\nname = \"B\"\ndependencies = [\"A @ $aUri\"]")
     }
@@ -349,7 +349,7 @@ internal class PyProjectTomlLifecycleTest {
    */
   @Test
   fun `source roots and excluded folders relocated to parent on module deletion`(): Unit = timeoutRunBlocking(30.seconds) {
-    writeAction {
+    edtWriteAction {
       f.root.writePyprojectToml("root")
       f.root.createDirectory("sub").writePyprojectToml("child")
     }
@@ -360,8 +360,8 @@ internal class PyProjectTomlLifecycleTest {
     // Create physical directories for a source root and an excluded folder inside the child module
     val virtualFileUrlManager = f.project.workspaceModel.getVirtualFileUrlManager()
     val subUrl = f.root.findChild("sub")!!.toNioPath().toVirtualFileUrl(virtualFileUrlManager)
-    val srcDir = writeAction { f.root.findChild("sub")!!.createDirectory("src") }
-    val cacheDir = writeAction { f.root.findChild("sub")!!.createDirectory("__pycache__") }
+    val srcDir = edtWriteAction { f.root.findChild("sub")!!.createDirectory("src") }
+    val cacheDir = edtWriteAction { f.root.findChild("sub")!!.createDirectory("__pycache__") }
 
     f.project.workspaceModel.update("add source root, exclude, and self-exclude on child module") { storage ->
       val childModule = storage.entities<ModuleEntity>().first { it.name == "child" }
@@ -395,7 +395,7 @@ internal class PyProjectTomlLifecycleTest {
    */
   @Test
   fun `non-existing source roots and excludes are not relocated on module deletion`(): Unit = timeoutRunBlocking(30.seconds) {
-    writeAction {
+    edtWriteAction {
       f.root.writePyprojectToml("root")
       f.root.createDirectory("sub").writePyprojectToml("child")
     }
@@ -406,11 +406,11 @@ internal class PyProjectTomlLifecycleTest {
     val virtualFileUrlManager = f.project.workspaceModel.getVirtualFileUrlManager()
     val subUrl = f.root.findChild("sub")!!.toNioPath().toVirtualFileUrl(virtualFileUrlManager)
     // Create directories, capture their URLs, then delete them
-    val vanishedSrc = writeAction { f.root.findChild("sub")!!.createDirectory("vanished_src") }
-    val vanishedCache = writeAction { f.root.findChild("sub")!!.createDirectory("vanished_cache") }
+    val vanishedSrc = edtWriteAction { f.root.findChild("sub")!!.createDirectory("vanished_src") }
+    val vanishedCache = edtWriteAction { f.root.findChild("sub")!!.createDirectory("vanished_cache") }
     val vanishedSrcUrl = vanishedSrc.toNioPath().toVirtualFileUrl(virtualFileUrlManager)
     val vanishedCacheUrl = vanishedCache.toNioPath().toVirtualFileUrl(virtualFileUrlManager)
-    writeAction {
+    edtWriteAction {
       vanishedSrc.delete(this)
       vanishedCache.delete(this)
     }

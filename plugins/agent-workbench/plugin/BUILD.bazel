@@ -29,6 +29,7 @@ jvm_library(
     "//plugins/agent-workbench/codex/sessions",
     "//plugins/agent-workbench/claude/sessions",
     "//plugins/agent-workbench/junie/sessions",
+    "//plugins/agent-workbench/terminal/sessions",
     "//plugins/agent-workbench/sessions-launch-config/backend",
   ]
 )
@@ -62,6 +63,7 @@ jvm_library(
     "//plugins/agent-workbench/codex/sessions:sessions_test_lib",
     "//plugins/agent-workbench/claude/sessions:sessions_test_lib",
     "//plugins/agent-workbench/junie/sessions:sessions_test_lib",
+    "//plugins/agent-workbench/terminal/sessions:sessions_test_lib",
     "//plugins/agent-workbench/sessions-launch-config/backend:backend_test_lib",
     "@lib//:junit5",
     "@lib//:junit5Suites",
@@ -99,6 +101,7 @@ jvm_library(
     "//plugins/agent-workbench/codex/sessions",
     "//plugins/agent-workbench/claude/sessions",
     "//plugins/agent-workbench/junie/sessions",
+    "//plugins/agent-workbench/terminal/sessions",
     "//plugins/agent-workbench/sessions-launch-config/backend",
   ]
 )
@@ -140,6 +143,8 @@ jvm_library(
     "//plugins/agent-workbench/codex/sessions:agent-workbench-codex-sessions-tests_test_lib",
     "//plugins/agent-workbench/junie/sessions:agent-workbench-junie-sessions-tests",
     "//plugins/agent-workbench/junie/sessions:agent-workbench-junie-sessions-tests_test_lib",
+    "//plugins/agent-workbench/terminal/sessions:agent-workbench-terminal-sessions-tests",
+    "//plugins/agent-workbench/terminal/sessions:agent-workbench-terminal-sessions-tests_test_lib",
     "//plugins/agent-workbench/prompt/core:agent-workbench-prompt-core-tests",
     "//plugins/agent-workbench/prompt/core:agent-workbench-prompt-core-tests_test_lib",
     "//plugins/agent-workbench/prompt/ui:agent-workbench-prompt-ui-tests",
@@ -180,6 +185,7 @@ jvm_library(
     "//plugins/agent-workbench/codex/sessions:sessions_test_lib",
     "//plugins/agent-workbench/claude/sessions:sessions_test_lib",
     "//plugins/agent-workbench/junie/sessions:sessions_test_lib",
+    "//plugins/agent-workbench/terminal/sessions:sessions_test_lib",
     "//plugins/agent-workbench/sessions-launch-config/backend:backend_test_lib",
   ]
 )

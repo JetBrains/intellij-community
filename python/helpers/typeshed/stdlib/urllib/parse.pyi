@@ -170,23 +170,27 @@ def parse_qsl(
     max_num_fields: int | None = None,
     separator: str = "&",
 ) -> list[tuple[AnyStr, AnyStr]]: ...
+
 @overload
 def quote(string: str, safe: str | Iterable[int] = "/", encoding: str | None = None, errors: str | None = None) -> str: ...
 @overload
 def quote(string: bytes | bytearray, safe: str | Iterable[int] = "/") -> str: ...
+
 def quote_from_bytes(bs: bytes | bytearray, safe: str | Iterable[int] = "/") -> str: ...
+
 @overload
 def quote_plus(string: str, safe: str | Iterable[int] = "", encoding: str | None = None, errors: str | None = None) -> str: ...
 @overload
 def quote_plus(string: bytes | bytearray, safe: str | Iterable[int] = "") -> str: ...
+
 def unquote(string: str | bytes, encoding: str = "utf-8", errors: str = "replace") -> str: ...
 def unquote_to_bytes(string: str | bytes | bytearray) -> bytes: ...
 def unquote_plus(string: str, encoding: str = "utf-8", errors: str = "replace") -> str: ...
+
 @overload
 def urldefrag(url: str) -> DefragResult: ...
 @overload
 def urldefrag(url: bytes | bytearray | None) -> DefragResultBytes: ...
-
 if sys.version_info >= (3, 15):
     @overload
     def urldefrag(url: str, *, missing_as_none: Literal[True]) -> DefragResult[str | None]: ...
@@ -229,13 +233,13 @@ def urlencode(
     quote_via: _QuoteVia = ...,
 ) -> str: ...
 def urljoin(base: AnyStr, url: AnyStr | None, allow_fragments: bool = True) -> AnyStr: ...
+
 @overload
 def urlparse(url: str, scheme: str = "", allow_fragments: bool = True) -> ParseResult: ...
 @overload
 def urlparse(
     url: bytes | bytearray | None, scheme: bytes | bytearray | None | Literal[""] = "", allow_fragments: bool = True
 ) -> ParseResultBytes: ...
-
 if sys.version_info >= (3, 15):
     @overload
     def urlparse(
@@ -282,13 +286,11 @@ if sys.version_info >= (3, 11):
     def urlsplit(
         url: bytes | None, scheme: bytes | None | Literal[""] = "", allow_fragments: bool = True
     ) -> SplitResultBytes: ...
-
 else:
     @overload
     def urlsplit(
         url: bytes | bytearray | None, scheme: bytes | bytearray | None | Literal[""] = "", allow_fragments: bool = True
     ) -> SplitResultBytes: ...
-
 if sys.version_info >= (3, 15):
     @overload
     def urlsplit(
@@ -329,7 +331,6 @@ if sys.version_info >= (3, 15):
     def urlunparse(components: Iterable[None], *, keep_empty: bool = ...) -> Literal[b""]: ...  # type: ignore[overload-overlap]
     @overload
     def urlunparse(components: Iterable[AnyStr | None], *, keep_empty: bool = ...) -> AnyStr: ...
-
 else:
     # Requires an iterable of length 6
     @overload
@@ -343,7 +344,6 @@ if sys.version_info >= (3, 15):
     def urlunsplit(components: Iterable[None], *, keep_empty: bool = ...) -> Literal[b""]: ...  # type: ignore[overload-overlap]
     @overload
     def urlunsplit(components: Iterable[AnyStr | None], *, keep_empty: bool = ...) -> AnyStr: ...
-
 else:
     # Requires an iterable of length 5
     @overload

@@ -1,0 +1,11 @@
+<html>
+<body>
+Checks that at least one content module in a plugin descriptor specifies a non-optional loading rule.
+<p>
+  If all content modules use the <code>optional</code> loading rule, every module may fail to load
+  due to missing dependencies – leaving the plugin loaded in UI but providing no functionality.
+  At least one module should use <code>loading="required"</code>, <code>loading="embedded"</code>,
+  or <code>required-if-available</code>.
+</p>
+</body>
+</html>

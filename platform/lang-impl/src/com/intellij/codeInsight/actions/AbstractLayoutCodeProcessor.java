@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.formatting.service.CoreFormattingService;
@@ -45,6 +45,7 @@ import com.intellij.util.SequentialTask;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -214,6 +215,45 @@ public abstract class AbstractLayoutCodeProcessor {
 
   protected boolean needsReadActionToPrepareTask() {
     return true;
+  }
+
+  /**
+   * Runs {@code writeTask} under a {@link WriteCommandAction} as part of file processing.
+   * <p>
+   * Subclasses can override this method to delegate write wrapping to a language plugin
+   * (see {@link OptimizeImportsProcessor#runTask}, which honours
+   * {@link com.intellij.lang.ImportOptimizer#getActionMode}).
+   *
+   * @param file                            virtual file
+   * @param commandName                     undo-able command name
+   * @param groupId                         undo group id
+   * @param processAllFilesAsSingleUndoStep see {@link #setProcessAllFilesAsSingleUndoStep(boolean)}
+   * @param modifyTask                      task to modify the file
+   */
+  @ApiStatus.Experimental
+  protected void runTask(@NotNull VirtualFile file,
+                         @NotNull @NlsContexts.Command String commandName,
+                         @NotNull String groupId,
+                         boolean processAllFilesAsSingleUndoStep,
+                         @NotNull Runnable modifyTask) {
+    runUnderDefaultWriteCommandAction(myProject, commandName, groupId, processAllFilesAsSingleUndoStep, modifyTask);
+  }
+
+  /**
+   * Default platform wrapping: a plain {@link WriteCommandAction}. Exposed so subclasses that want a different
+   * behaviour in some cases (e.g. {@link OptimizeImportsProcessor}) can still fall back to this exact wrapping.
+   */
+  @ApiStatus.Experimental
+  protected static void runUnderDefaultWriteCommandAction(@NotNull Project project,
+                                                          @NotNull @NlsContexts.Command String commandName,
+                                                          @NotNull String groupId,
+                                                          boolean processAllFilesAsSingleUndoStep,
+                                                          @NotNull Runnable writeTask) {
+    WriteCommandAction.writeCommandAction(project)
+      .withName(commandName)
+      .withGroupId(groupId)
+      .shouldRecordActionForActiveDocument(processAllFilesAsSingleUndoStep)
+      .run(writeTask::run);
   }
 
   public void run() {
@@ -478,13 +518,9 @@ public abstract class AbstractLayoutCodeProcessor {
 
         ProgressIndicatorProvider.checkCanceled();
 
-        WriteCommandAction.writeCommandAction(myProject)
-          .withName(myCommandName)
-          .withGroupId(groupId)
-          .shouldRecordActionForActiveDocument(myProcessAllFilesAsSingleUndoStep)
-          .run(() -> {
-            AbstractLayoutCodeProcessorWriteInterceptor.getInstance().runFileWrite(writeTask, myProject, myCommandName);
-          });
+        processor.runTask(file, myCommandName, groupId, myProcessAllFilesAsSingleUndoStep, () -> {
+          AbstractLayoutCodeProcessorWriteInterceptor.getInstance().runFileWrite(writeTask, myProject, myCommandName);
+        });
 
         checkStop(writeTask, file);
       }

@@ -21,6 +21,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/ide-core/plugins",
     "//platform/ide-core",
+    "//platform/ide-core-impl",
     "//libraries/guava",
     "//libraries/gson",
     "//libraries/commons/imaging",
@@ -45,6 +46,7 @@ jvm_library(
     "//libraries/kotlinx/coroutines/core",
     "//libraries/netty/codec-compression:libraries-netty-codec-compression",
     "//platform/execution",
+    "//platform/eel-nioFs",
   ]
 )
 
@@ -68,6 +70,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/ide-core/plugins:plugins_test_lib",
     "//platform/ide-core:ide-core_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
     "//libraries/guava:guava_test_lib",
     "//libraries/gson:gson_test_lib",
     "//libraries/commons/imaging:imaging_test_lib",
@@ -91,6 +94,7 @@ jvm_library(
     "//libraries/kotlinx/coroutines/core:core_test_lib",
     "//libraries/netty/codec-compression:libraries-netty-codec-compression_test_lib",
     "//platform/execution:execution_test_lib",
+    "//platform/eel-nioFs:eel-nioFs_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.builtInServer.impl` end

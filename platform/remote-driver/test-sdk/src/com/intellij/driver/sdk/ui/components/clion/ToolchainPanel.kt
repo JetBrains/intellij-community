@@ -18,7 +18,7 @@ import com.intellij.driver.sdk.wait
 import java.awt.event.KeyEvent
 import kotlin.time.Duration.Companion.seconds
 
-fun Finder.toolchainPanel(action: ToolchainPanel.() -> Unit = {}) = x(ToolchainPanel::class.java) { byClass("DialogRootPane") }.apply(action)
+fun Finder.toolchainPanel(action: ToolchainPanel.() -> Unit = {}) = x(ToolchainPanel::class.java) { byClass("CPPToolchainsPanel") }.apply(action)
 
 class ToolchainPanel(data: ComponentData) : SettingsDialogUiComponent(data) {
   fun ToolchainPanel.getToolchainField(name: String): JTextFieldUI =

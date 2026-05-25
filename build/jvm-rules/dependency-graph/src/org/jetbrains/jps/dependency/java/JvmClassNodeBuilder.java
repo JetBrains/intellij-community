@@ -559,10 +559,13 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
   }
 
   /**
+   * The condition here is relaxed: it filters out only private members, because only such members are for sure not included into ABI surface.
+   * The ABI is built according some external logic: if some member is not included, it will not be added to the graph either.
+   * On the other hand, if some non-private member is included into ABI surface, it will be kept in the graph as well, so there is no information loss.
    * @return true, if the given node should be included in the 'ABI' class snapshot
    */
   public static boolean isAbiNode(Proto proto) {
-    return proto.isPublic() || proto.isProtected() || proto instanceof JvmModule;
+    return !proto.isPrivate() || proto instanceof JvmModule;
   }
 
   @Override

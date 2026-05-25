@@ -2,7 +2,7 @@
 package com.jetbrains.python.hatch.sdk
 
 import com.intellij.openapi.projectRoots.Sdk
-import com.jetbrains.python.sdk.getOrCreateAdditionalData
+import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 
 internal val Sdk.isHatch: Boolean
@@ -11,6 +11,6 @@ internal val Sdk.isHatch: Boolean
       return false
     }
 
-    return getOrCreateAdditionalData() is HatchSdkAdditionalData
+    return pySdkAdditionalData is HatchSdkAdditionalData
   }
 

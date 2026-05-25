@@ -1,6 +1,5 @@
 from collections.abc import Generator
 from typing import Any
-from typing_extensions import override
 
 from .resource import Collection, Model
 
@@ -20,10 +19,7 @@ class Plugin(Model):
 
 class PluginCollection(Collection[Plugin]):
     model: type[Plugin]
-    @override
     def create(self, name, plugin_data_dir, gzip: bool = False): ...  # type: ignore[override]
-    @override
     def get(self, name): ...
     def install(self, remote_name, local_name=None): ...
-    @override
     def list(self): ...

@@ -7,6 +7,7 @@ import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.platform.ijent.IjentChildPtyProcessAdapter;
 import com.intellij.terminal.pty.PtyProcessTtyConnector;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.jediterm.core.util.TermSize;
 import com.pty4j.PtyProcess;
 import com.pty4j.unix.UnixPtyProcess;
@@ -48,6 +49,10 @@ public class LocalTerminalTtyConnector extends PtyProcessTtyConnector {
 
   @Override
   public void close() {
+    // Use soft assertions to not break external usages
+    ThreadingAssertions.softAssertBackgroundThread();
+    ThreadingAssertions.softAssertNoReadAccess();
+
     if (myProcess instanceof UnixPtyProcess) {
       ((UnixPtyProcess)myProcess).hangup();
       AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
@@ -58,7 +63,7 @@ public class LocalTerminalTtyConnector extends PtyProcessTtyConnector {
       }, 1000, TimeUnit.MILLISECONDS);
     }
     else if (myProcess instanceof IjentChildPtyProcessAdapter && myShellProcessHolder.isPosix()) {
-      myShellProcessHolder.terminatePosixShell();
+      myShellProcessHolder.terminatePosixShellBlocking();
     }
     else {
       if (myProcess instanceof WinConPtyProcess winConPtyProcess && !winConPtyProcess.isBundledConPtyLibrary()) {

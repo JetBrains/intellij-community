@@ -8,8 +8,10 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.getOrCreateUserDataUnsafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.ex.temp.TempFileSystem
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.impl.buildPresentationInfo
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil.isPythonSdk
@@ -18,10 +20,11 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import kotlin.io.path.Path
-import com.intellij.openapi.vfs.ex.temp.TempFileSystem
 
 @get:Internal
 val BASE_DIR: Key<Path> = Key.create("PYTHON_PROJECT_BASE_PATH")
+
+private val pySdkKey = Key.create<Boolean>("isPythonSdk")
 
 /**
  * Asserts that this SDK has [PythonSdkType].
@@ -30,7 +33,7 @@ val BASE_DIR: Key<Path> = Key.create("PYTHON_PROJECT_BASE_PATH")
  */
 @Internal
 fun Sdk.requirePythonSdk() {
-  require(isPythonSdk(this, true)) { "Can't be called only for PythonSdkType and not for $sdkType" }
+  require(getOrCreateUserDataUnsafe(pySdkKey) { isPythonSdk(this, true) }) { "Can't be called only for PythonSdkType and not for $sdkType" }
 }
 
 /**
@@ -56,7 +59,7 @@ suspend fun Sdk.setAssociationToModule(module: Module) {
 suspend fun Sdk.setAssociationToPath(path: String?) {
   requirePythonSdk()
 
-  val data = getOrCreateAdditionalData()
+  val data = pySdkAdditionalData
     .also {
       it.associatedModulePath = path
     }
@@ -94,7 +97,7 @@ val Sdk.isSdkSeemsValid: Boolean
       return false
     }
 
-    val pythonSdkAdditionalData = getOrCreateAdditionalData()
+    val pythonSdkAdditionalData = pySdkAdditionalData
     return pythonSdkAdditionalData.flavorAndData.sdkSeemsValid(this, targetEnvConfiguration)
   }
 
@@ -151,3 +154,20 @@ val Sdk.associatedModulePath: String?
 
 private val Sdk.associatedPathFromAdditionalData: String?
   get() = (sdkAdditionalData as? PythonSdkAdditionalData)?.associatedModulePath
+
+/**
+ * Every Python SDK has [PythonSdkAdditionalData].
+ * It should be created along with sdk (for that reason, you shouldn't create Python SDK directly, * but use `createSdk` functions)
+ * For most cases SDK is known to be Python, but if it is not, use [com.jetbrains.python.sdk.legacy.PythonSdkUtil.isPythonSdk].
+ */
+@get:Internal
+val Sdk.pySdkAdditionalData: PythonSdkAdditionalData
+  get() {
+    requirePythonSdk()
+    return sdkAdditionalData as? PythonSdkAdditionalData ?: error(
+      """
+      Sdk $this doesn't have an additional data: it was created by buggy code.
+      Please use ${com.jetbrains.python.sdk.add.v2.FileSystem<*>::setupSdk} or one of its implementors directly to create an SDK
+      """.trimIndent())
+  }
+

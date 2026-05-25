@@ -290,7 +290,7 @@
   "moduleExtensions": {
     "//build:jbr-toolchains.bzl%jbr_toolchains": {
       "general": {
-        "bzlTransitiveDigest": "gzGC0+TJGQK+LWDB3P+WF6ecoJPnF6eAoA+lz7OkQa4=",
+        "bzlTransitiveDigest": "kK09WcQSVYiGCjZPif5J0TiWWMfiRwXKCwz+pLqSex0=",
         "usagesDigest": "t3DMrqbThY2EiblJcntBvQ56ZYlJ8DZtkw69yIOFV2M=",
         "recordedInputs": [
           "REPO_MAPPING:,rules_java rules_java+",
@@ -404,7 +404,7 @@
     },
     "//build:jps_dynamic_deps_community.bzl%jps_dynamic_deps_community_extension": {
       "general": {
-        "bzlTransitiveDigest": "m0fc+ey0OVWH9h2/F7nf7DmqY8PdcWtuuyEKC/UV0xs=",
+        "bzlTransitiveDigest": "dcJGiALK1+1+Om4QEdKWeO980DtiteKcSAQs3xH0iLY=",
         "usagesDigest": "OSsQY2hkpxdAkgfVzTh+Q1KLtzAuQDVI0/8sRki7FfU=",
         "recordedInputs": [
           "REPO_MAPPING:,xml.bzl xml.bzl+"
@@ -571,7 +571,7 @@
     },
     "@@rules_jvm+//:test_bazel_tool.bzl%extension": {
       "general": {
-        "bzlTransitiveDigest": "qGkIs/3yNSU+RyxsUfa8+9i0jlmnXoYwohYDio9VQt8=",
+        "bzlTransitiveDigest": "est11jllaBqemO2wRWbP/MU5Yui83EQTsycXpbgCSMY=",
         "usagesDigest": "5QeAKrSEFoHzobtsR6LPmGmTpOq+A8CNi6zAcGwU9r8=",
         "recordedInputs": [],
         "generatedRepoSpecs": {

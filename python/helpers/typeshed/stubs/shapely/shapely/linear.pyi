@@ -27,6 +27,7 @@ def line_interpolate_point(
 def line_interpolate_point(
     line: OptGeoArrayLikeSeq, distance: ArrayLike[float], normalized: bool = False, **kwargs
 ) -> GeoArray: ...
+
 @overload
 def line_locate_point(
     line: LineString | MultiLineString | GeometryCollection | None, other: Point | None, normalized: bool = False, **kwargs
@@ -39,12 +40,14 @@ def line_locate_point(
 def line_locate_point(
     line: OptGeoArrayLikeSeq, other: OptGeoArrayLike, normalized: bool = False, **kwargs
 ) -> NDArray[np.float64]: ...
+
 @overload
 def line_merge(line: None, directed: bool = False, **kwargs) -> None: ...
 @overload
 def line_merge(line: Geometry, directed: bool = False, **kwargs) -> LineString | MultiLineString | GeometryCollection: ...
 @overload
 def line_merge(line: OptGeoArrayLikeSeq, directed: bool = False, **kwargs) -> GeoArray: ...
+
 @overload
 def shared_paths(a: LineString | MultiLineString | None, b: None, **kwargs) -> None: ...
 @overload
@@ -57,6 +60,7 @@ def shared_paths(
 def shared_paths(a: LineString | MultiLineString | None, b: OptGeoArrayLikeSeq, **kwargs) -> GeoArray: ...
 @overload
 def shared_paths(a: OptGeoArrayLikeSeq, b: OptGeoArrayLike, **kwargs) -> GeoArray: ...
+
 @overload
 def shortest_line(a: Geometry | None, b: None, **kwargs) -> None: ...
 @overload

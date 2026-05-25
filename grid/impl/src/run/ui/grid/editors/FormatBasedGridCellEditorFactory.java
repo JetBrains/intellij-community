@@ -15,7 +15,6 @@ import com.intellij.database.datagrid.GridRow;
 import com.intellij.database.datagrid.GridUtil;
 import com.intellij.database.datagrid.ModelIndex;
 import com.intellij.database.run.ReservedCellValue;
-import com.intellij.database.run.ui.DataAccessType;
 import com.intellij.database.run.ui.grid.editors.UnparsedValue.ParsingError;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -78,7 +77,7 @@ public abstract class FormatBasedGridCellEditorFactory implements GridCellEditor
     CoreGrid<GridRow, GridColumn> grid = request.getGrid();
     ModelIndex<GridRow> rowIdx = request.getRowIdx();
     ModelIndex<GridColumn> columnIdx = request.getColumnIdx();
-    Object databaseValue = grid.getDataModel(DataAccessType.DATABASE_DATA).getValueAt(rowIdx, columnIdx);
+    Object databaseValue = GridCellRequestKt.getDatabaseValue(request);
     String databaseValueText = getValueFormatter(GridCellRequestKt.overrideValue(request, databaseValue)).format().text;
     Formatter format = getFormat(request);
     ValueParser baseParser = getValueParser(format, grid, databaseValue, databaseValueText, columnIdx,

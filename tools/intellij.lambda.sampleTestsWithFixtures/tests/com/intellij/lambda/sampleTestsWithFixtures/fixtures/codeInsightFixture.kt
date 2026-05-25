@@ -4,7 +4,7 @@ package com.intellij.lambda.sampleTestsWithFixtures.fixtures
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.impl.OpenUntrustedProjectChoice
 import com.intellij.ide.trustedProjects.impl.TrustedProjectStartupDialog
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.remoteDev.tests.LambdaBackendContext
 import com.intellij.remoteDev.tests.LambdaIdeContext
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
@@ -28,7 +28,7 @@ suspend fun CodeInsightTestFixtureImpl.openNewProjectAndEditor(relativePath: Str
     GeneralSettings.getInstance().confirmOpenNewProject = savedConfirmation
   }
 
-  writeAction {
+  edtWriteAction {
     openFileInEditor(
       addFileToProject(relativePath, fileContent).virtualFile
     )

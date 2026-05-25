@@ -41,6 +41,8 @@ def test_deps_repository(repository_name):
         # Download all declared files in parallel
         downloads = []
         for f in files:
+            if not f.sha256:
+                fail("test_deps_repository requires a non-empty sha256 for " + f.name)
             downloads.append(repository_ctx.download(
                 url = f.url,
                 output = f.name,
@@ -60,11 +62,11 @@ exports_files([
 ])
 """.format(files = ",\n".join(["  \"%s\"" % f.name for f in files]))
         )
+        return repository_ctx.repo_metadata(reproducible = True)
 
     def make_repository_rule():
         return repository_rule(
             implementation = _impl,
-            local = True,
         )
 
     def all_targets():

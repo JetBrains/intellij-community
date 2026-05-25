@@ -7,6 +7,7 @@ import gdb
 def register_xmethod_matcher(
     locus: gdb.Objfile | gdb.Progspace | None, matcher: XMethodMatcher, replace: bool = False
 ) -> None: ...
+
 @type_check_only
 class _XMethod(Protocol):
     name: str

@@ -15,6 +15,9 @@ import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.DumbAware
 import java.awt.event.KeyEvent
 
+internal const val AGENT_WORKBENCH_GLOBAL_PROMPT_ACTION_ID: String = "AgentWorkbenchPrompt.OpenGlobalPalette"
+internal const val AGENT_WORKBENCH_GLOBAL_PROMPT_AUTO_SELECT_ACTION_ID: String = "AgentWorkbenchPrompt.OpenGlobalPaletteAutoSelect"
+
 /**
  * Standard global prompt entrypoint.
  *

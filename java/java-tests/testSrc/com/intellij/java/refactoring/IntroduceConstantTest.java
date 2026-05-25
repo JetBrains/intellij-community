@@ -14,6 +14,7 @@ import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.introduceField.JavaIntroduceFieldService;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.testFramework.IdeaTestUtil;
@@ -65,6 +66,7 @@ public class IntroduceConstantTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testNonStaticContainerForCompileTimeConstant2() { doTest(); }
+
   public void testStaticFieldInAnonymous() { doTest(); }
   public void testStaticFieldInAnonymousJava8() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, () -> doTest()); }
 
@@ -84,7 +86,7 @@ public class IntroduceConstantTest extends LightJavaCodeInsightTestCase {
     new MockIntroduceConstantHandler(((PsiJavaFile)getFile()).getClasses()[0]).invoke(getProject(), getEditor(), getFile(), null);
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
-  
+
   public void testFromEnumConstantInitializer1() {
     doTest();
   }
@@ -106,7 +108,7 @@ public class IntroduceConstantTest extends LightJavaCodeInsightTestCase {
   public void testAnnotationDescription() {
     doTest();
   }
-  
+
   public void testNoExternalTypeAnnotations() {
     doTest();
   }
@@ -225,7 +227,7 @@ public class IntroduceConstantTest extends LightJavaCodeInsightTestCase {
         final PsiType psiType = selectorManager.getDefaultType();
         assertEquals(psiType.getCanonicalText(), expectedType);
         return new Settings("xxx", expr, occurrences, true, true, true,
-                            InitializationPlace.IN_FIELD_DECLARATION, getVisibility(), null, psiType, false,
+                            JavaIntroduceFieldService.InitializationPlace.IN_FIELD_DECLARATION, getVisibility(), null, psiType, false,
                             parentClass, false, false);
       }
     }.invoke(getProject(), getEditor(), getFile(), null);

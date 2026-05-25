@@ -3,37 +3,21 @@ package git4idea.workingTrees.ui
 
 import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
-import com.intellij.ide.RecentProjectsManager
-import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.UiWithModelAccess
-import com.intellij.openapi.application.writeIntentReadAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.vcs.VcsNotifier
-import com.intellij.platform.ide.progress.withBackgroundProgress
-import git4idea.GitNotificationIdsHolder
 import git4idea.GitWorkingTree
 import git4idea.actions.workingTree.GitCreateWorkingTreeService
 import git4idea.actions.workingTree.GitWorkingTreeTabActionsDataKeys
 import git4idea.actions.workingTree.GitWorkingTreeTabActionsDataKeys.SELECTED_WORKING_TREES
-import git4idea.commands.Git
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.workingTrees.GitWorkingTreesNewBadgeUtil
 import git4idea.workingTrees.GitWorkingTreesService
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import kotlin.io.path.Path
 
 internal class RemoveWorkingTreeAction : DumbAwareAction() {
-
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
   }
@@ -74,66 +58,10 @@ internal class RemoveWorkingTreeAction : DumbAwareAction() {
                                AllIcons.General.QuestionDialog)
     }
 
-    if (result != Messages.YES) return
-    GitWorkingTreesService.getInstance(project).coroutineScope.launch(Dispatchers.IO) {
+    if (result == Messages.YES) {
       for (tree in data) {
-        delete(project, tree, repository!!)
+        GitWorkingTreesService.getInstance(project).deleteWorkingTree(project, tree, repository!!)
       }
     }
-  }
-
-  private suspend fun delete(project: Project, tree: GitWorkingTree, repository: GitRepository) {
-    val existingProject = ProjectUtil.findProject(Path(tree.path.path))
-    if (existingProject != null) {
-      if (shouldStopDeletion(project, tree, existingProject)) {
-        closeProject(existingProject)
-      }
-      else {
-        return
-      }
-    }
-    val commandResult = withBackgroundProgress(project, GitBundle.message("progress.title.deleting.worktree"), cancellable = true) {
-      service<Git>().deleteWorkingTree(repository, tree)
-    }
-    if (commandResult.success()) {
-      repository.workingTreeHolder.scheduleReload()
-      VcsNotifier.getInstance(project).notifySuccess(GitNotificationIdsHolder.WORKING_TREE_DELETED,
-                                                     "",
-                                                     GitBundle.message("Git.WorkingTrees.delete.worktree.success.message",
-                                                                       tree.path.presentableUrl))
-    }
-    else {
-      VcsNotifier.getInstance(project).notifyError(GitNotificationIdsHolder.WORKING_TREE_COULD_NOT_DELETE,
-                                                   GitBundle.message("Git.WorkingTrees.delete.worktrees.failure.notification.title"),
-                                                   commandResult.errorOutputAsHtmlString,
-                                                   true)
-    }
-  }
-
-  private suspend fun shouldStopDeletion(
-    project: Project,
-    tree: GitWorkingTree,
-    existingProject: Project,
-  ): Boolean {
-    return withContext(Dispatchers.UiWithModelAccess) {
-      MessageDialogBuilder.yesNo(
-        GitBundle.message("Git.WorkingTrees.dialog.delete.worktree.title"),
-        GitBundle.message("Git.WorkingTrees.delete.worktrees.worktree.opened.close.or.cancel",
-                          tree.path.presentableUrl, existingProject.name)
-      )
-        .yesText(GitBundle.message("Git.WorkingTrees.delete.worktrees.button.close.delete"))
-        .noText(GitBundle.message("Git.WorkingTrees.delete.worktrees.button.do.not.delete"))
-        .ask(project)
-    }
-  }
-
-  //see com.intellij.ide.actions.CloseProjectsActionBase.actionPerformed
-  private suspend fun closeProject(project: Project) {
-    withContext(Dispatchers.UiWithModelAccess) {
-      writeIntentReadAction {
-        ProjectManager.getInstance().closeAndDispose(project)
-      }
-    }
-    RecentProjectsManager.getInstance().updateLastProjectPath()
   }
 }

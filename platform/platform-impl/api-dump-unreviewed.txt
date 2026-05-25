@@ -13193,9 +13193,6 @@ f:com.intellij.ui.popup.PopupFactoryImpl$ActionItem
 - isPrependWithSeparator():Z
 - isSubstepSuppressed():Z
 - setSeparatorText(java.lang.String):V
-com.intellij.ui.popup.PopupOwner
-- a:getBestPopupPosition():java.awt.Point
-- getPopupComponent():javax.swing.JComponent
 c:com.intellij.ui.popup.StateActionGroupPopup
 - com.intellij.ui.popup.PopupFactoryImpl$ActionGroupPopup
 - <init>(java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.impl.PresentationFactory,com.intellij.ui.popup.ActionPopupOptions,java.lang.Runnable,kotlin.jvm.functions.Function1):V

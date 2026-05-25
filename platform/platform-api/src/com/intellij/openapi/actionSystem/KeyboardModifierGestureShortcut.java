@@ -44,7 +44,8 @@ public class KeyboardModifierGestureShortcut extends Shortcut {
       if (myStroke.getModifiers() != other.myStroke.getModifiers()) {
         return false;
       }
-      return other.myStroke.getKeyCode() != -1 || other.myStroke.getKeyCode() == myStroke.getKeyCode();
+      // keyCode == -1 is a wildcard used for prefix checks; concrete gestures must match the doubled modifier key.
+      return other.myStroke.getKeyCode() == -1 || other.myStroke.getKeyCode() == myStroke.getKeyCode();
     }
 
     return false;

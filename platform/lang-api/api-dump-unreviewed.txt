@@ -3625,11 +3625,6 @@ c:com.intellij.openapi.projectRoots.ui.PathEditor
 - p:setEnabled(Z):V
 - p:setModified(Z):V
 - p:setSelectedRoots(com.intellij.openapi.vfs.VirtualFile[]):V
-pc:com.intellij.openapi.projectRoots.ui.PathEditor$PathCellRenderer
-- com.intellij.ui.ColoredListCellRenderer
-- p:<init>():V
-- p:customizeCellRenderer(javax.swing.JList,com.intellij.openapi.vfs.VirtualFile,I,Z,Z):V
-- p:getItemIcon(com.intellij.openapi.vfs.VirtualFile):javax.swing.Icon
 c:com.intellij.openapi.projectRoots.ui.SdkPathEditor
 - com.intellij.openapi.projectRoots.ui.PathEditor
 - <init>(java.lang.String,com.intellij.openapi.roots.OrderRootType,com.intellij.openapi.fileChooser.FileChooserDescriptor):V

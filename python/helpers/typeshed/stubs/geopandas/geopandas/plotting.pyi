@@ -226,6 +226,7 @@ class GeoplotAccessor(PlotAccessor):
         label: str = "NaN",
         **style_kwds,
     ) -> Axes: ...
+
     def geo(
         self,
         column: Hashable | pd.Series | pd.Index | NDArray | None = None,

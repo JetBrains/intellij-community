@@ -193,7 +193,7 @@
     <orderEntry type="module" module-name="intellij.python.community.interpreters" />
     <orderEntry type="module" module-name="intellij.python.sdkConfigurator.common" />
     <orderEntry type="module" module-name="intellij.python.community.impl.poetry.common" />
-    <orderEntry type="module" module-name="intellij.python.community.impl.uv.common" />
+    <orderEntry type="module" module-name="intellij.python.uv.common" />
     <orderEntry type="module" module-name="intellij.python.common" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.shared" />
     <orderEntry type="module" module-name="intellij.python.processOutput.common" />
@@ -205,5 +205,7 @@
     <orderEntry type="module" module-name="intellij.python.community.impl.conda" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
     <orderEntry type="module" module-name="intellij.python.requirements" exported="" />
+    <orderEntry type="module" module-name="intellij.python.pytools" />
+    <orderEntry type="module" module-name="intellij.python.uv.backend" />
   </component>
 </module>

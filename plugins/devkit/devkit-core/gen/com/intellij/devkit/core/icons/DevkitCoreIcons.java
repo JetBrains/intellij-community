@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.core.icons;
 
 import com.intellij.ui.IconManager;
@@ -22,6 +22,7 @@ public final class DevkitCoreIcons {
   public static final class Gutter {
     /** 12x12 */ public static final @NotNull Icon DescriptionFile = load("icons/expui/gutter/descriptionFile@14x14.svg", "icons/gutter/descriptionFile.svg", 1318760137, 2);
     /** 12x12 */ public static final @NotNull Icon Diff = load("icons/expui/gutter/diff@14x14.svg", "icons/gutter/diff.svg", 124039984, 2);
+    /** 14x14 */ public static final @NotNull Icon ExtensionPoint = load("icons/gutter/extensionPoint.svg", 1396295071, 2);
     /** 12x12 */ public static final @NotNull Icon Plugin = load("icons/expui/gutter/plugin@14x14.svg", "icons/gutter/plugin.svg", 1850322899, 2);
     /** 12x12 */ public static final @NotNull Icon Properties = load("icons/expui/gutter/properties@14x14.svg", "icons/gutter/properties.svg", -818710709, 2);
   }

@@ -42,6 +42,7 @@ class XMLColumnProps(Serialisable):
     xmlDataType: String[Literal[False]]
     extLst: Typed[ExtensionList, Literal[True]]
     __elements__: ClassVar[tuple[str, ...]]
+
     @overload
     def __init__(
         self,
@@ -88,6 +89,7 @@ class TableColumn(Serialisable):
     xmlColumnPr: Typed[XMLColumnProps, Literal[True]]
     extLst: Typed[ExtensionList, Literal[True]]
     __elements__: ClassVar[tuple[str, ...]]
+
     @overload
     def __init__(
         self,
@@ -129,6 +131,7 @@ class TableColumn(Serialisable):
         xmlColumnPr: XMLColumnProps | None = None,
         extLst: ExtensionList | None = None,
     ) -> None: ...
+
     def __iter__(self) -> Iterator[tuple[str, str]]: ...
     @classmethod
     def from_tree(cls, node: _ChildSerialisableTreeElement) -> Self: ...

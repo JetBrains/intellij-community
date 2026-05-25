@@ -31,6 +31,7 @@
     <module name="intellij.driver.client" loading="embedded"/>
     <module name="intellij.driver.frontend.split"/>
     <module name="intellij.libraries.assertj.core" loading="embedded"/>
+    <module name="intellij.performanceTesting.async.core"/>
   </content>
 
   <actions>
@@ -55,7 +56,7 @@
   <extensionPoints>
     <extensionPoint interface="com.jetbrains.performancePlugin.CommandProvider" name="commandProvider" dynamic="true"/>
     <extensionPoint interface="com.jetbrains.performancePlugin.PerformancePlaybackRunner" name="playbackRunnerProvider" dynamic="true"/>
-    <extensionPoint interface="com.jetbrains.performancePlugin.RunCallbackHandler" name="runCallbackHandler"/>
+    <extensionPoint interface="com.jetbrains.performancePlugin.RunCallbackHandler" name="runCallbackHandler" dynamic="false"/>
     <extensionPoint interface="com.jetbrains.performancePlugin.profilers.SnapshotOpener" name="snapshotOpener" dynamic="true"/>
     <extensionPoint interface="com.jetbrains.performancePlugin.profilers.Profiler" name="profiler" dynamic="true"/>
   </extensionPoints>
@@ -82,7 +83,7 @@
     <ide.dynamicPluginVetoer implementation="com.jetbrains.performancePlugin.PlaybackRunnerExtended$PlaybackRunnerExtendedPluginUnloadVetoer"/>
     <ApplicationLoadListener implementation="com.jetbrains.performancePlugin.IntegrationTestApplicationLoadListener" id="testApplicationLoadListener"/>
 
-    <appStarter id="stopTelemetry" implementation="com.jetbrains.performancePlugin.StopTelemetryStarter"/>
+    <appStarter id="stopTelemetry" implementation="com.jetbrains.performancePlugin.StopTelemetryStarter" internal="true"/>
 
     <backgroundPostStartupActivity implementation="com.jetbrains.performancePlugin.promo.ErrorReportPromoterActivity"/>
     <diagnostic.freezeNotifier implementation="com.jetbrains.performancePlugin.promo.FreezeCounterListener"/>

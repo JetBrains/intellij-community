@@ -71,6 +71,8 @@
     <httpRequestHandler implementation="org.jetbrains.builtInWebServer.liveReload.WebServerPageConnectionService$WebServerPageRequestHandler"/>
 
     <jbProtocolCommand implementation="org.jetbrains.ide.OpenSettingsJbProtocolService"/>
+    <jbProtocolCommand implementation="org.jetbrains.ide.InstallPluginJbProtocolCommand"/>
+    <jbProtocolCommand implementation="org.jetbrains.ide.OpenProjectByGitUrlJbProtocolCommand"/>
 
     <httpRequestHandler implementation="org.jetbrains.builtInWebServer.BuiltInWebServer" order="last"/>
     <applicationSettings service="org.jetbrains.builtInWebServer.BuiltInServerOptions"/>
@@ -85,4 +87,11 @@
 
     <binaryRequestHandler implementation="org.jetbrains.io.jsonRpc.socket.RpcBinaryRequestHandler"/>
   </extensions>
+  <actions resource-bundle="messages.IdeBundle">
+    <action id="TestJbProtocolCommand"
+            internal="true"
+            class="org.jetbrains.ide.TestJbProtocolCommandAction">
+      <add-to-group group-id="Internal" anchor="last"/>
+    </action>
+  </actions>
 </idea-plugin>

@@ -5,6 +5,8 @@ import com.intellij.execution.ExecutorRegistry;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.KeyboardGestureAction;
+import com.intellij.openapi.actionSystem.KeyboardModifierGestureShortcut;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.MouseShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
@@ -350,12 +352,21 @@ public abstract class KeymapsTestCaseBase {
     return false;
   }
 
-  private static Shortcut parseShortcut(String s) {
+  protected static Shortcut parseShortcut(String s) {
     if (s.equals("Force touch")) {
       return KeymapUtil.parseMouseShortcut(s);
     }
     else if (s.contains("button")) {
       return KeymapUtil.parseMouseShortcut(s);
+    }
+    // Keep known-duplicates keys in the same format as keymap/plugin XML, for example "ctrl control dblClick".
+    else if (s.endsWith(" " + KeyboardGestureAction.ModifierType.dblClick.name()) ||
+             s.endsWith(" " + KeyboardGestureAction.ModifierType.hold.name())) {
+      int offset = s.lastIndexOf(' ');
+      KeyStroke stroke = KeyStrokeAdapter.getKeyStroke(s.substring(0, offset));
+      assert stroke != null : s;
+      KeyboardGestureAction.ModifierType modifierType = KeyboardGestureAction.ModifierType.valueOf(s.substring(offset + 1));
+      return KeyboardModifierGestureShortcut.newInstance(modifierType, stroke);
     }
     else {
       String[] sc = s.split(",");
@@ -370,7 +381,7 @@ public abstract class KeymapsTestCaseBase {
     }
   }
 
-  private static String getText(Shortcut shortcut) {
+  protected static String getText(Shortcut shortcut) {
     if (shortcut instanceof MouseShortcut) {
       return KeymapUtil.getMouseShortcutString((MouseShortcut)shortcut);
     }
@@ -382,6 +393,9 @@ public abstract class KeymapsTestCaseBase {
         s += ',' + getText(snd);
       }
       return s;
+    }
+    else if (shortcut instanceof KeyboardModifierGestureShortcut gestureShortcut) {
+      return KeyStrokeAdapter.toString(gestureShortcut.getStroke()) + " " + gestureShortcut.getType().name();
     }
     else {
       return KeymapUtil.getShortcutText(shortcut);

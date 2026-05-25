@@ -44,12 +44,19 @@ interface FileSystem<P : PathHolder> {
    */
   suspend fun getSystemPythonFromSelection(pathToPython: P, requireSystemPython: Boolean): PyResult<DetectedSelectableInterpreter<P>>
 
-  // TODO sdkAdditionalData should become non-nullable when we start passing proper additional data at the time of SDK creation everywhere
+  /**
+   * Creates Python SDK and persists it. Please, do not use any other tool to create Python SDKs unless you know what you are doing.
+   * [pythonBinaryPath] is either [Path] (for local and future eel-based SDKs) or target (for old, remote SDKs).
+   * [targetPanelExtension] is irrelevant, ignore it.
+   * [sdkAdditionalData] must have [com.jetbrains.python.sdk.flavors.PythonSdkFlavor].
+   * If you have no idea what flavor is, use `createLocalSdkGuessingTypeByPath`
+   */
   suspend fun setupSdk(
     project: Project?,
     pythonBinaryPath: P,
-    sdkAdditionalData: PythonSdkAdditionalData?,
+    sdkAdditionalData: PythonSdkAdditionalData,
     targetPanelExtension: TargetPanelExtension?,
+    suggestedSdkName: String?,
   ): PyResult<Sdk>
 
   fun createTargetRequest(): TargetEnvironmentRequest

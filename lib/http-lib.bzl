@@ -13,6 +13,8 @@ kt_jvm_import(
 
 def _http_jvm_lib(ctx):
   url = ctx.attr.url
+  if not ctx.attr.sha256:
+    fail("http_jvm_lib requires a non-empty sha256 for url " + url)
   urls = [url]
   downloaded_file_name = ctx.attr.downloaded_file_name
   if len(downloaded_file_name) == 0:
@@ -33,7 +35,7 @@ def _http_jvm_lib(ctx):
     jar = downloaded_file_name,
   ))
 
-  return None
+  return ctx.repo_metadata(reproducible = True)
 
 _http_jar_attrs = {
   "sha256": attr.string(mandatory = True),

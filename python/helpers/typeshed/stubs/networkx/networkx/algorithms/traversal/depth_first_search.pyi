@@ -2,7 +2,7 @@ from collections.abc import Callable, Generator, Iterable, Iterator
 from typing import Literal
 
 from networkx.classes.digraph import DiGraph
-from networkx.classes.graph import Graph, _Node
+from networkx.classes.graph import Graph, _EdgeData, _Node, _NodeData
 from networkx.utils.backends import _dispatchable
 
 __all__ = [
@@ -25,12 +25,12 @@ def dfs_edges(
 ) -> Generator[tuple[_Node, _Node]]: ...
 @_dispatchable
 def dfs_tree(
-    G: Graph[_Node],
+    G: Graph[_Node, _NodeData, _EdgeData],
     source: _Node | None = None,
     depth_limit: int | None = None,
     *,
     sort_neighbors: Callable[[Iterator[_Node]], Iterable[_Node]] | None = None,
-) -> DiGraph[_Node]: ...
+) -> DiGraph[_Node, _NodeData, _EdgeData]: ...
 @_dispatchable
 def dfs_predecessors(
     G: Graph[_Node],

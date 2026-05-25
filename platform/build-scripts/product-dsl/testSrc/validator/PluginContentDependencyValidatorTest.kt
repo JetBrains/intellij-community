@@ -43,7 +43,7 @@ class PluginContentDependencyValidatorTest {
           includesModuleSet("core")
         }
         plugin("my.plugin") {
-          content("content.module", ModuleLoadingRuleValue.REQUIRED)
+          content("content.module", loading = ModuleLoadingRuleValue.REQUIRED)
         }
         moduleSet("core") {
           module("available.dep")
@@ -68,7 +68,7 @@ class PluginContentDependencyValidatorTest {
           bundlesPlugin("my.plugin")
         }
         plugin("my.plugin") {
-          content("content.module", ModuleLoadingRuleValue.REQUIRED)
+          content("content.module", loading = ModuleLoadingRuleValue.REQUIRED)
         }
         // NO linkContentModuleDeps - graph has no deps for content.module
         // Even if JPS had deps, validation should not see them
@@ -91,7 +91,7 @@ class PluginContentDependencyValidatorTest {
           bundlesPlugin("my.plugin")
         }
         plugin("my.plugin") {
-          content("content.module", ModuleLoadingRuleValue.REQUIRED)
+          content("content.module", loading = ModuleLoadingRuleValue.REQUIRED)
         }
         // Dep exists in graph but is not available anywhere
         linkContentModuleDeps("content.module", "missing.dep")
@@ -114,10 +114,10 @@ class PluginContentDependencyValidatorTest {
           bundlesPlugin("other.plugin")
         }
         plugin("my.plugin") {
-          content("content.module", ModuleLoadingRuleValue.REQUIRED)
+          content("content.module", loading = ModuleLoadingRuleValue.REQUIRED)
         }
         plugin("other.plugin") {
-          content("dep.module", ModuleLoadingRuleValue.OPTIONAL)
+          content("dep.module", loading = ModuleLoadingRuleValue.OPTIONAL)
         }
         linkContentModuleDeps("content.module", "dep.module")
       }
@@ -139,7 +139,7 @@ class PluginContentDependencyValidatorTest {
           bundlesPlugin("my.plugin")
         }
         plugin("my.plugin") {
-          content("content.module", ModuleLoadingRuleValue.REQUIRED)
+          content("content.module", loading = ModuleLoadingRuleValue.REQUIRED)
         }
         moduleSet("core") {
           module("dep.module")
@@ -163,8 +163,8 @@ class PluginContentDependencyValidatorTest {
           bundlesPlugin("my.plugin")
         }
         plugin("my.plugin") {
-          content("content.module.a", ModuleLoadingRuleValue.REQUIRED)
-          content("content.module.b", ModuleLoadingRuleValue.OPTIONAL)
+          content("content.module.a", loading = ModuleLoadingRuleValue.REQUIRED)
+          content("content.module.b", loading = ModuleLoadingRuleValue.OPTIONAL)
         }
         linkContentModuleDeps("content.module.a", "content.module.b")
       }
@@ -185,7 +185,7 @@ class PluginContentDependencyValidatorTest {
           bundlesPlugin("my.plugin")
         }
         plugin("my.plugin") {
-          content("content.module", ModuleLoadingRuleValue.REQUIRED)
+          content("content.module", loading = ModuleLoadingRuleValue.REQUIRED)
         }
 
         // JPS dependency exists but no XML dep edge -> implicit (filtered) dependency.
@@ -216,7 +216,7 @@ class PluginContentDependencyValidatorTest {
           includesModuleSet("core")
         }
         testPlugin("test.plugin") {
-          content("test.content", ModuleLoadingRuleValue.REQUIRED)
+          content("test.content", loading = ModuleLoadingRuleValue.REQUIRED)
         }
         moduleSet("core") {
           module("test.dep")
@@ -239,7 +239,7 @@ class PluginContentDependencyValidatorTest {
           bundlesTestPlugin("test.plugin")
         }
         testPlugin("test.plugin") {
-          content("test.content", ModuleLoadingRuleValue.REQUIRED)
+          content("test.content", loading = ModuleLoadingRuleValue.REQUIRED)
         }
         // Production edge only, no content source for missing.prod.dep
         linkContentModuleDeps("test.content", "missing.prod.dep")
@@ -261,7 +261,7 @@ class PluginContentDependencyValidatorTest {
           bundlesPlugin("prod.plugin")
         }
         plugin("prod.plugin") {
-          content("prod.content", ModuleLoadingRuleValue.REQUIRED)
+          content("prod.content", loading = ModuleLoadingRuleValue.REQUIRED)
         }
         // Only TEST edge, no production edge
         linkContentModuleTestDeps("prod.content", "test.only.dep")
@@ -283,7 +283,7 @@ class PluginContentDependencyValidatorTest {
           bundlesTestPlugin("test.plugin")
         }
         testPlugin("test.plugin") {
-          content("test.content", ModuleLoadingRuleValue.REQUIRED)
+          content("test.content", loading = ModuleLoadingRuleValue.REQUIRED)
         }
         // Test dep not available anywhere
         linkContentModuleTestDeps("test.content", "missing.test.dep")

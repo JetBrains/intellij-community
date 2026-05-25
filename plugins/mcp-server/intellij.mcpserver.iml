@@ -32,20 +32,25 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="module-library">
-      <library name="toml4j" type="repository">
-        <properties include-transitive-deps="false" maven-id="com.moandjiezana.toml:toml4j:0.7.2">
+      <library name="night-config-toml" type="repository">
+        <properties maven-id="com.electronwill.night-config:toml:3.8.4">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/moandjiezana/toml/toml4j/0.7.2/toml4j-0.7.2.jar">
-              <sha256sum>f5475e63e7e89e5db62223489aec7a56bd303543772077a17c2cb54c19ca3a20</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/electronwill/night-config/toml/3.8.4/toml-3.8.4.jar">
+              <sha256sum>127bf8b025c341139145c55bc897f3188057eec19940f99d3eae624399e88f2a</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/electronwill/night-config/core/3.8.4/core-3.8.4.jar">
+              <sha256sum>2d9532aa851742a6e2f3cb472a6a5b3c0e7e8b9da287c7d20a2963466f4aebb4</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/moandjiezana/toml/toml4j/0.7.2/toml4j-0.7.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/electronwill/night-config/toml/3.8.4/toml-3.8.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/electronwill/night-config/core/3.8.4/core-3.8.4.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/moandjiezana/toml/toml4j/0.7.2/toml4j-0.7.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/electronwill/night-config/toml/3.8.4/toml-3.8.4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/electronwill/night-config/core/3.8.4/core-3.8.4-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -62,6 +67,7 @@
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="library" name="io.github.oshai.kotlin.logging.jvm" level="project" />
     <orderEntry type="library" name="ktor-server-sse-jvm" level="project" />
+    <orderEntry type="library" name="ktor-server-content-negotiation" level="project" />
     <orderEntry type="library" name="io.github.smiley4.schema.kenerator.jsonschema" level="project" />
     <orderEntry type="library" name="io.github.smiley4.schema.kenerator.serialization" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
@@ -120,5 +126,7 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
     <orderEntry type="module" module-name="intellij.platform.compose" />
+    <orderEntry type="module" module-name="intellij.platform.backend" />
+    <orderEntry type="module" module-name="intellij.terminal.frontend" />
   </component>
 </module>

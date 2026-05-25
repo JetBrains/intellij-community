@@ -49,8 +49,8 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <module name="intellij.python.sdkConfigurator.frontend"/>
     <module name="intellij.python.community.impl.poetry.common"/>
     <module name="intellij.python.community.impl.poetry.backend"/>
-    <module name="intellij.python.community.impl.uv.common"/>
-    <module name="intellij.python.community.impl.uv.backend"/>
+    <module name="intellij.python.uv.common"/>
+    <module name="intellij.python.uv.backend"/>
     <module name="intellij.python.community.impl.pipenv"/>
     <module name="intellij.python.community.impl.conda"/>
     <module name="intellij.python.community.core.impl"/>
@@ -65,6 +65,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <module name="intellij.python.hatch"/>
     <module name="intellij.python.packaging"/>
     <module name="intellij.python.requirements"/>
+    <module name="intellij.python.pytools"/>
     <module name="intellij.python.community.services.shared"/>
     <module name="intellij.python.community.services.internal.impl"/>
     <module name="intellij.python.community.services.systemPython"/>
@@ -86,5 +87,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <module name="intellij.python.markdown"/>
     <module name="intellij.python.ml.features"/>
     <module name="intellij.python.terminal"/>
+    <module name="intellij.python.pytools.ui"/>
+    <module name="intellij.python.black"/>
   </content>
 </idea-plugin>

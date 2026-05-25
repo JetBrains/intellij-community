@@ -2,6 +2,7 @@
 @file:ApiStatus.Internal
 @file:JvmName("Main")
 @file:OptIn(LowLevelLocalMachineAccess::class)
+@file:Suppress("KotlinPrintToLogpoint")
 package com.intellij.idea
 
 import com.intellij.DynamicBundle
@@ -148,7 +149,7 @@ private suspend fun startApp(args: List<String>, mainScope: CoroutineScope, busy
     // must be after runMarketplaceCommandsInActionScript
     span("marketplace init") {
       // 'marketplace' plugin breaks JetBrains Client, so for now this condition is used to disable it
-      if (changeClassPath == null) {  
+      if (changeClassPath == null) {
         initMarketplace()
       }
     }
@@ -207,7 +208,7 @@ private fun initRemoteDev(args: List<String>) {
     error("JBR version 17.0.6b796 or later is required to run a remote-dev server with lux")
   }
 
-  val isSplitMode = args.firstOrNull() == WellKnownCommands.SPLIT_MODE
+  val isSplitMode = args.firstOrNull() == WellKnownCommand.SPLIT_MODE
 
   // avoid an icon jumping in dock for the backend process
   if (OS.CURRENT == OS.macOS) {
@@ -302,8 +303,14 @@ private fun preprocessArgs(args: Array<String>): List<String> {
     System.setProperty(option, value)
   }
 
-  when (ApplicationStartArguments.stripKnownArguments(args).firstOrNull()) {
-    "--help" -> {
+  val filteredArgs = ApplicationStartArguments.stripKnownArguments(args)
+  @Suppress("ReplaceSizeCheckWithIsNotEmpty") val firstArg = when {
+      filteredArgs.size > 1 && (filteredArgs[0] == "-e" || filteredArgs[0] == "--edit") -> filteredArgs[1]
+      filteredArgs.size > 0 -> filteredArgs[0]
+      else -> null
+  }
+  when (firstArg) {
+    "--help", "-h", "-?" -> {
       println("""
         Basic commands and options:
         --help           prints the short list of basic commands and options

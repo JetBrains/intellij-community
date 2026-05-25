@@ -5,7 +5,7 @@ import org.jetbrains.annotations.ApiStatus
 
 /**
  * Marker for SDKs whose additional data could not be loaded (e.g., stale remote interpreters).
- * Extends [PythonSdkAdditionalData] so that [getOrCreateAdditionalData] recognizes it
+ * Extends [PythonSdkAdditionalData] so that [pySdkAdditionalData] recognizes it
  * and returns it early instead of crashing on flavor detection. See PY-88807.
  */
 @ApiStatus.Internal

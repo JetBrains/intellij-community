@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.jvm.k2.scratch
 import com.intellij.ide.scratch.ScratchFileCreationHelper
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -73,7 +73,7 @@ class KotlinK2ScratchFileCreationHelper : ScratchFileCreationHelper() {
 
         checkCanceled()
 
-        writeAction {
+        edtWriteAction {
             CommandProcessor.getInstance().executeCommand(project, {
                 for (ref in targetReferencesToRestore) {
                     KotlinReferenceRestoringHelper.restoreReference(scratchFile, ref)

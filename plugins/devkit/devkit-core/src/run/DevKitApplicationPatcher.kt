@@ -12,7 +12,6 @@ import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.scratch.JavaScratchConfiguration
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.IntelliJProjectUtil
-import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.util.PlatformUtils
 import com.intellij.util.lang.UrlClassLoader
@@ -113,14 +112,16 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
     }
 
     val workingDirectory = Path.of(configuration.workingDirectory!!)
-    if (!vmParameters.hasProperty("idea.config.path")) {
-      val configDirPath = workingDirectory.asEelPath().toString()
-      val dir = FileUtilRt.toSystemIndependentName("$configDirPath/out/dev-data/${productClassifier.lowercase()}")
-      vmParameters.addProperty("idea.config.path", "$dir/config")
-      vmParameters.addProperty("idea.system.path", "$dir/system")
+
+    if (!vmParameters.hasProperty(PathManager.PROPERTY_CONFIG_PATH)) {
+      val dir = "${workingDirectory.asEelPath().invariantSeparatorsPathString}/out/dev-data/${productClassifier.lowercase()}"
+      vmParameters.addProperty(PathManager.PROPERTY_CONFIG_PATH, "${dir}/config")
+      vmParameters.addProperty(PathManager.PROPERTY_PLUGINS_PATH, "${dir}/config/plugins")
+      vmParameters.addProperty(PathManager.PROPERTY_SYSTEM_PATH, "${dir}/system")
+      vmParameters.addProperty(PathManager.PROPERTY_LOG_PATH, "${dir}/system/log")
     }
 
-    val runDir = workingDirectory.resolve("out/dev-run/$productClassifier")
+    val runDir = workingDirectory.resolve("out/dev-run/${productClassifier}")
     if (vmParameters.getPropertyValue("idea.dev.skip.build").toBoolean()) {
       // todo broken for now, if this mode will be needed, proper binary maybe implemented
       vmParameters.addProperty(PathManager.PROPERTY_HOME_PATH, runDir.invariantSeparatorsPathString)

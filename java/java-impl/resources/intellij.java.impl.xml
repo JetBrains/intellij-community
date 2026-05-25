@@ -103,6 +103,10 @@
       open="true"
       serviceImplementation="com.intellij.refactoring.introduceVariable.JavaIntroduceVariableService"/>
 
+    <applicationService
+      open="true"
+      serviceImplementation="com.intellij.refactoring.introduceField.JavaIntroduceFieldService"/>
+
     <registryKey defaultValue="false" description="Enable postfix mod completion" key="postfix.template.mod.completion.enabled"/>
     <applicationSettings service="com.intellij.codeInsight.hints.AnnotationInlaySettings"/>
     <projectSettings service="com.intellij.javadoc.JavadocGenerationManager"/>

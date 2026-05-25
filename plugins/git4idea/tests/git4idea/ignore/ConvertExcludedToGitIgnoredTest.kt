@@ -3,7 +3,7 @@ package git4idea.ignore
 
 import com.intellij.configurationStore.saveSettings
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.roots.CompilerProjectExtension
@@ -84,7 +84,7 @@ class ConvertExcludedToGitIgnoredTest : GitSingleRepoTest() {
     val output = createChildDirectory(projectRoot, "projectOutput")
     createChildData(output, "out.class")
     CompilerProjectExtension.getInstance(project)!!.apply {
-      writeAction {
+      edtWriteAction {
         compilerOutputUrl = output.url
       }
     }
@@ -102,7 +102,7 @@ class ConvertExcludedToGitIgnoredTest : GitSingleRepoTest() {
     val output = createChildDirectory(projectRoot, "projectOutput")
     createChildData(output, "out.class")
     CompilerProjectExtension.getInstance(project)!!.apply {
-      writeAction {
+      edtWriteAction {
         compilerOutputUrl = output.url
       }
     }

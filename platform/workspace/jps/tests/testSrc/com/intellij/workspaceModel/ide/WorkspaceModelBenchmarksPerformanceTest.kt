@@ -1,11 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.components.service
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.backend.workspace.WorkspaceModel
@@ -83,16 +82,16 @@ import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
-import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.extension
 import kotlin.system.measureTimeMillis
 import kotlin.time.Duration
 import kotlin.time.measureTime
 
-
 @StressTestApplication
 @PerformanceUnitTest
+@Suppress("KotlinPrintToLogpoint")
 class WorkspaceModelBenchmarksPerformanceTest {
   @JvmField
   @RegisterExtension
@@ -119,32 +118,25 @@ class WorkspaceModelBenchmarksPerformanceTest {
 
   @Test
   fun addingStorageRecreating(testInfo: TestInfo) {
-
     var storage = MutableEntityStorage.create().toSnapshot()
     val times = 20_000
 
     Benchmark.newBenchmark(testInfo.displayName) {
       repeat(times) {
         val builder = storage.toBuilder()
-
-
-        builder addEntity NamedChildEntity("Child", MySource) {
+        builder.addEntity(NamedChildEntity("Child", MySource) {
           this.parentEntity = NamedEntity("$it", MySource)
-        }
-        builder addEntity ComposedIdSoftRefEntity("-$it", NameId("$it"), MySource)
-
+        })
+        builder.addEntity(ComposedIdSoftRefEntity("-$it", NameId("$it"), MySource))
         storage = builder.toSnapshot()
       }
-    }
-      .warmupIterations(0)
-      .attempts(1).start()
+    }.warmupIterations(0).attempts(1).start()
   }
 
   @Test
   fun requestingSameEntity(testInfo: TestInfo) {
-    val storage = MutableEntityStorage.create().also { builder -> builder addEntity NamedEntity("data", MySource) }.toSnapshot()
+    val storage = MutableEntityStorage.create().also { builder -> builder.addEntity(NamedEntity("data", MySource)) }.toSnapshot()
     val blackhole: (WorkspaceEntity) -> Unit = { }
-
     val times = 2_000_000
 
     Benchmark.newBenchmark(testInfo.displayName) {
@@ -155,33 +147,26 @@ class WorkspaceModelBenchmarksPerformanceTest {
           System.gc()
         }
       }
-    }
-      .warmupIterations(0)
-      .attempts(1).start()
+    }.warmupIterations(0).attempts(1).start()
   }
 
   @Test
-  fun addingSoftLinkedEntities(testInfo: TestInfo) {
-
+  fun addingSoftLinkedEntities(@Suppress("unused") testInfo: TestInfo) {
     val builder = MutableEntityStorage.create()
     val times = 2_000_000
     val parents = ArrayList<NamedEntity>(times)
 
     Benchmark.newBenchmark("Named entities adding") {
       repeat(times) {
-        parents += builder addEntity NamedEntity("$it", MySource)
+        parents += builder.addEntity(NamedEntity("$it", MySource))
       }
-    }
-      .warmupIterations(0)
-      .attempts(1).startAsSubtest()
+    }.warmupIterations(0).attempts(1).startAsSubtest()
 
     Benchmark.newBenchmark("Soft linked entities adding") {
       for (parent in parents) {
-        builder addEntity ComposedIdSoftRefEntity("-${parent.myName}", parent.symbolicId, MySource)
+        builder.addEntity(ComposedIdSoftRefEntity("-${parent.myName}", parent.symbolicId, MySource))
       }
-    }
-      .warmupIterations(0)
-      .attempts(1).startAsSubtest()
+    }.warmupIterations(0).attempts(1).startAsSubtest()
   }
 
   @Test
@@ -190,8 +175,8 @@ class WorkspaceModelBenchmarksPerformanceTest {
     val size = 2_000_000
 
     repeat(size) {
-      val namedEntity = builder addEntity NamedEntity("$it", MySource)
-      builder addEntity ComposedIdSoftRefEntity("-$it", namedEntity.symbolicId, MySource)
+      val namedEntity = builder.addEntity(NamedEntity("$it", MySource))
+      builder.addEntity(ComposedIdSoftRefEntity("-$it", namedEntity.symbolicId, MySource))
     }
     val storage = builder.toSnapshot()
     val newBuilder = storage.toBuilder()
@@ -203,9 +188,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
           myName = "--- $it ---"
         }
       }
-    }
-      .warmupIterations(0)
-      .attempts(1).start()
+    }.warmupIterations(0).attempts(1).start()
   }
 
   @Test
@@ -214,8 +197,8 @@ class WorkspaceModelBenchmarksPerformanceTest {
     val size = 3_000_000
 
     repeat(size) {
-      val namedEntity = builder addEntity NamedEntity("$it", MySource)
-      builder addEntity ComposedIdSoftRefEntity("-$it", namedEntity.symbolicId, MySource)
+      val namedEntity = builder.addEntity(NamedEntity("$it", MySource))
+      builder.addEntity(ComposedIdSoftRefEntity("-$it", namedEntity.symbolicId, MySource))
     }
 
     val storage = builder.toSnapshot()
@@ -225,9 +208,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
       repeat(size) {
         list.addAll(storage.referrers(NameId("$it"), ComposedIdSoftRefEntity::class.java).toList())
       }
-    }
-      .warmupIterations(0)
-      .attempts(1).start()
+    }.warmupIterations(0).attempts(1).start()
   }
 
   @Test
@@ -237,24 +218,22 @@ class WorkspaceModelBenchmarksPerformanceTest {
     val size = 30_000
 
     repeat(size) {
-      source addEntity WithSoftLinkEntity(NameId("$it"), MySource) // could be any entity without symbolic id
-      target addEntity WithSoftLinkEntity(NameId("$it"), MySource)
+      source.addEntity(WithSoftLinkEntity(NameId("$it"), MySource)) // could be any entity without symbolic id
+      target.addEntity(WithSoftLinkEntity(NameId("$it"), MySource))
     }
 
     Benchmark.newBenchmark(testInfo.displayName) {
       target.replaceBySource({ true }, source.toSnapshot())
-    }
-      .warmupIterations(0)
-      .attempts(1).start()
+    }.warmupIterations(0).attempts(1).start()
   }
 
   @Test
   fun serializeCommunityProject(testInfo: TestInfo) {
     val storageBuilder = MutableEntityStorage.create()
-    val projectDir = File(PathManagerEx.getCommunityHomePath())
+    val projectDir = Path.of(PathManagerEx.getCommunityHomePath())
     val manager = IdeVirtualFileUrlManagerImpl()
     runBlocking {
-      loadProject(projectDir.asConfigLocation(manager), storageBuilder, manager)
+      loadProject(toConfigLocation(projectDir, manager), storageBuilder, manager)
     }
 
     val storage = storageBuilder.toSnapshot()
@@ -268,34 +247,26 @@ class WorkspaceModelBenchmarksPerformanceTest {
         repeat(200) {
           serializer.serializeCache(file, storage)
         }
-      }
-        .warmupIterations(0)
-        .attempts(1).startAsSubtest()
+      }.warmupIterations(0).attempts(1).startAsSubtest()
 
       Benchmark.newBenchmark("${testInfo.displayName} - Deserialization") {
         repeat(200) {
           sizes += Files.size(file).toInt()
           serializer.deserializeCache(file).getOrThrow()
         }
-      }
-        .warmupIterations(0)
-        .attempts(1).startAsSubtest()
+      }.warmupIterations(0).attempts(1).startAsSubtest()
 
       Benchmark.newBenchmark("${testInfo.displayName} - SerializationFromFile") {
         repeat(200) {
           serializer.serializeCache(file, storage)
         }
-      }
-        .warmupIterations(0)
-        .attempts(1).startAsSubtest()
+      }.warmupIterations(0).attempts(1).startAsSubtest()
 
       Benchmark.newBenchmark("${testInfo.displayName} - DeserializationFromFile") {
         repeat(200) {
           serializer.deserializeCache(file).getOrThrow()
         }
-      }
-        .warmupIterations(0)
-        .attempts(1).startAsSubtest()
+      }.warmupIterations(0).attempts(1).startAsSubtest()
     }
     finally {
       Files.deleteIfExists(file)
@@ -327,9 +298,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
 
     Benchmark.newBenchmark(testInfo.displayName) {
       storageBuilder.replaceBySource({ true }, replaceStorage)
-    }
-      .warmupIterations(0)
-      .attempts(1).start()
+    }.warmupIterations(0).attempts(1).start()
   }
 
   @Test
@@ -339,14 +308,12 @@ class WorkspaceModelBenchmarksPerformanceTest {
         measureTimeMillis {
           repeat(10_000) {
             WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
-              it addEntity LeftEntity(MySource)
+              it.addEntity(LeftEntity(MySource))
             }
           }
         }
       }
-    }
-      .warmupIterations(0)
-      .attempts(1).start()
+    }.warmupIterations(0).attempts(1).start()
   }
 
   @Test
@@ -359,22 +326,20 @@ class WorkspaceModelBenchmarksPerformanceTest {
         measureTimeMillis {
           projectModel.project.service<EntitiesOrphanage>().update {
             repeat(10_000) { counter ->
-              it addEntity ModuleEntity("Module$counter", emptyList(), OrphanageWorkerEntitySource) {
+              it.addEntity(ModuleEntity("Module$counter", emptyList(), OrphanageWorkerEntitySource) {
                 contentRoots = listOf(ContentRootEntity(manager.getOrCreateFromUrl(VfsUtilCore.pathToUrl("$newFolder/data$counter")), emptyList(), MySource))
-              }
+              })
             }
           }
 
           WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
             repeat(10_000) { counter ->
-              it addEntity ModuleEntity("Module$counter", emptyList(), MySource)
+              it.addEntity(ModuleEntity("Module$counter", emptyList(), MySource))
             }
           }
         }
       }
-    }
-      .warmupIterations(0)
-      .attempts(1).start()
+    }.warmupIterations(0).attempts(1).start()
 
     ApplicationManager.getApplication().invokeAndWait {
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
@@ -395,7 +360,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
         measureTimeMillis {
           projectModel.project.service<EntitiesOrphanage>().update {
             repeat(10_000) { counter ->
-              it addEntity ModuleEntity("Module$counter", emptyList(), OrphanageWorkerEntitySource) {
+              it.addEntity(ModuleEntity("Module$counter", emptyList(), OrphanageWorkerEntitySource) {
                 contentRoots = listOf(
                   ContentRootEntity(manager.getOrCreateFromUrl("$newFolder/data$counter"), emptyList(), OrphanageWorkerEntitySource) {
                     this.sourceRoots = listOf(
@@ -406,29 +371,27 @@ class WorkspaceModelBenchmarksPerformanceTest {
                       SourceRootEntity(manager.getOrCreateFromUrl("$newFolder/five$counter"), DEFAULT_SOURCE_ROOT_TYPE_ID, MySource),
                     )
                   })
-              }
+              })
             }
           }
 
           WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
             repeat(10_000) { counter ->
-              it addEntity ModuleEntity("Module$counter", emptyList(), MySource) {
+              it.addEntity(ModuleEntity("Module$counter", emptyList(), MySource) {
                 contentRoots = listOf(ContentRootEntity(manager.getOrCreateFromUrl("$newFolder/data$counter"), emptyList(), MySource))
-              }
+              })
             }
           }
         }
       }
-    }
-      .warmupIterations(0)
-      .attempts(1).start()
+    }.warmupIterations(0).attempts(1).start()
 
     ApplicationManager.getApplication().invokeAndWait {
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
     }
 
-    projectModel.project.workspaceModel.currentSnapshot.entities(ModuleEntity::class.java).forEach {
-      Assertions.assertTrue(it.contentRoots.isNotEmpty() && it.contentRoots.all { it.sourceRoots.size == 5 })
+    projectModel.project.workspaceModel.currentSnapshot.entities(ModuleEntity::class.java).forEach { entity ->
+      Assertions.assertTrue(entity.contentRoots.isNotEmpty() && entity.contentRoots.all { it.sourceRoots.size == 5 })
     }
   }
 
@@ -442,7 +405,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
         measureTimeMillis {
           projectModel.project.service<EntitiesOrphanage>().update {
             repeat(10_000) { counter ->
-              it addEntity ModuleEntity("Module$counter", emptyList(), OrphanageWorkerEntitySource) {
+              it.addEntity(ModuleEntity("Module$counter", emptyList(), OrphanageWorkerEntitySource) {
                 contentRoots = List(10) { contentCounter ->
                   ContentRootEntity(manager.getOrCreateFromUrl(VfsUtilCore.pathToUrl("$newFolder/data$contentCounter$counter")), emptyList(), OrphanageWorkerEntitySource) {
                     sourceRoots = List(10) { sourceCounter ->
@@ -450,31 +413,29 @@ class WorkspaceModelBenchmarksPerformanceTest {
                     }
                   }
                 }
-              }
+              })
             }
           }
 
           WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
             repeat(10_000) { counter ->
-              it addEntity ModuleEntity("Module$counter", emptyList(), MySource) {
+              it.addEntity(ModuleEntity("Module$counter", emptyList(), MySource) {
                 contentRoots = List(10) { contentCounter ->
                   ContentRootEntity(manager.getOrCreateFromUrl(VfsUtilCore.pathToUrl("$newFolder/data$contentCounter$counter")), emptyList(), OrphanageWorkerEntitySource)
                 }
-              }
+              })
             }
           }
         }
       }
-    }
-      .warmupIterations(0)
-      .attempts(1).start()
+    }.warmupIterations(0).attempts(1).start()
 
     ApplicationManager.getApplication().invokeAndWait {
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
     }
 
-    projectModel.project.workspaceModel.currentSnapshot.entities(ModuleEntity::class.java).forEach {
-      Assertions.assertTrue(it.contentRoots.isNotEmpty() && it.contentRoots.all { it.sourceRoots.size == 10 })
+    projectModel.project.workspaceModel.currentSnapshot.entities(ModuleEntity::class.java).forEach { entity ->
+      Assertions.assertTrue(entity.contentRoots.isNotEmpty() && entity.contentRoots.all { it.sourceRoots.size == 10 })
     }
   }
 
@@ -484,13 +445,11 @@ class WorkspaceModelBenchmarksPerformanceTest {
       runWriteActionAndWait {
         repeat(1000) {
           val builderSnapshot = (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelInternal).getBuilderSnapshot()
-          builderSnapshot.builder addEntity ModuleEntity("Module$it", emptyList(), MySource)
+          builderSnapshot.builder.addEntity(ModuleEntity("Module$it", emptyList(), MySource))
           (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelInternal).replaceWorkspaceModel("update storage via replaceProjectModel", builderSnapshot.getStorageReplacement())
         }
       }
-    }
-      .warmupIterations(0)
-      .attempts(1).start()
+    }.warmupIterations(0).attempts(1).start()
 
     // TODO: second part of the tests need to be implemented later "applyStorageTime" - variable
     //  (or unit perf metrics publishing should be able to read meters from CSV (where we may store counters)
@@ -518,12 +477,12 @@ class WorkspaceModelBenchmarksPerformanceTest {
 
       // Set initial state
       repeat(1000) {
-        builder addEntity NamedEntity("MyName$it", MySource)
+        builder.addEntity(NamedEntity("MyName$it", MySource))
       }
       repeat(1000) {
-        builder addEntity ParentEntity("data$it", MySource) {
+        builder.addEntity(ParentEntity("data$it", MySource) {
           this.child = ChildEntity("info$it", MySource)
-        }
+        })
       }
       repeat(1000) {
         OoParentEntity("prop$it", MySource) {
@@ -540,7 +499,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
           }
         }
         repeat(1000) {
-          mutable addEntity NamedEntity("Hey$it", MySource)
+          mutable.addEntity(NamedEntity("Hey$it", MySource))
         }
         mutable.entities(ChildEntity::class.java).forEach { mutable.removeEntity(it) }
         mutable.entities(OoChildWithNullableParentEntity::class.java).forEach {
@@ -553,9 +512,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
 
     Benchmark.newBenchmark(testInfo.displayName) {
       builders.forEach { it.collectChanges() }
-    }
-      .warmupIterations(0)
-      .attempts(1).start()
+    }.warmupIterations(0).attempts(1).start()
   }
 
   @Test
@@ -565,12 +522,12 @@ class WorkspaceModelBenchmarksPerformanceTest {
 
       // Set initial state
       repeat(1000) {
-        builder addEntity NamedEntity("MyName$it", MySource)
+        builder.addEntity(NamedEntity("MyName$it", MySource))
       }
       repeat(1000) {
-        builder addEntity ParentEntity("data$it", MySource) {
+        builder.addEntity(ParentEntity("data$it", MySource) {
           this.child = ChildEntity("info$it", MySource)
-        }
+        })
       }
       repeat(1000) {
         OoParentEntity("prop$it", MySource) {
@@ -590,7 +547,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
           }
         }
         repeat(1000) {
-          mutable addEntity NamedEntity("Hey$it", MySource)
+          mutable.addEntity(NamedEntity("Hey$it", MySource))
         }
         mutable.entities(ChildEntity::class.java).forEach { mutable.removeEntity(it) }
         mutable.entities(OoChildWithNullableParentEntity::class.java).forEach {
@@ -605,9 +562,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
       builders.zip(newBuilders).forEach { (initial, update) ->
         initial.applyChangesFrom(update)
       }
-    }
-      .warmupIterations(0)
-      .attempts(1).start()
+    }.warmupIterations(0).attempts(1).start()
   }
 
   @Test
@@ -617,12 +572,12 @@ class WorkspaceModelBenchmarksPerformanceTest {
 
       // Set initial state
       repeat(1000) {
-        builder addEntity NamedEntity("MyName$it", MySource)
+        builder.addEntity(NamedEntity("MyName$it", MySource))
       }
       repeat(1000) {
-        builder addEntity ParentEntity("data$it", MySource) {
+        builder.addEntity(ParentEntity("data$it", MySource) {
           this.child = ChildEntity("info$it", MySource)
-        }
+        })
       }
       repeat(1000) {
         OoParentEntity("prop$it", MySource) {
@@ -648,9 +603,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
           }
         }
       }
-    }
-      .warmupIterations(0)
-      .attempts(1).start()
+    }.warmupIterations(0).attempts(1).start()
   }
 
   @Test
@@ -665,20 +618,20 @@ class WorkspaceModelBenchmarksPerformanceTest {
 
       // Set initial state
       repeat(baseSize) {
-        builder addEntity NamedEntity("MyName$it", MySource)
+        builder.addEntity(NamedEntity("MyName$it", MySource))
       }
       repeat(baseSize) {
-        val parent = builder addEntity ParentEntity("data$it", MySource)
+        val parent = builder.addEntity(ParentEntity("data$it", MySource))
 
         val data = if (it % 2 == 0) "ExternalInfo" else "InternalInfo"
         builder.getMutableExternalMapping(externalMappingKey).addMapping(parent, data)
       }
-      repeat(baseSize) {
-        builder addEntity ParentMultipleEntity("data$it", MySource) {
+      repeat(baseSize) { i ->
+        builder.addEntity(ParentMultipleEntity("data$i", MySource) {
           this.children = List(smallBaseSize) {
             ChildMultipleEntity("data$it", MySource)
           }
-        }
+        })
       }
       builder.toSnapshot()
     }
@@ -694,9 +647,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
         snapshot.cached(sourcesByName)
         snapshot.cached(childData)
       }
-    }
-      .warmupIterations(0)
-      .attempts(1).startAsSubtest()
+    }.warmupIterations(0).attempts(1).startAsSubtest()
 
     // Do second request without any modifications
     Benchmark.newBenchmark("${testInfo.displayName} - Second Access - No Changes") {
@@ -705,16 +656,14 @@ class WorkspaceModelBenchmarksPerformanceTest {
         snapshot.cached(sourcesByName)
         snapshot.cached(childData)
       }
-    }
-      .warmupIterations(0)
-      .attempts(1).startAsSubtest()
+    }.warmupIterations(0).attempts(1).startAsSubtest()
 
     println("Modify after second read")
     // Modify snapshots
     val newSnapshots = snapshots.map { snapshot ->
       val builder = snapshot.toBuilder()
       repeat(baseSize / 10) {
-        builder addEntity NamedEntity("MyNameXYZ$it", MySource)
+        builder.addEntity(NamedEntity("MyNameXYZ$it", MySource))
       }
       repeat(baseSize / 2) { // Half of all entities
         val namedEntity = builder.resolve(NameId("MyName$it"))!!
@@ -744,9 +693,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
         snapshot.cached(sourcesByName)
         snapshot.cached(childData)
       }
-    }
-      .warmupIterations(0)
-      .attempts(1).startAsSubtest()
+    }.warmupIterations(0).attempts(1).startAsSubtest()
 
     println("Modify snapshots second time")
     val snapshotsWithLotOfUpdates = newSnapshots.map { snapshot ->
@@ -755,7 +702,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
         val builder = currentSnapshot.toBuilder()
 
         repeat(smallBaseSize) {
-          builder addEntity NamedEntity("MyName--$outerLoop-$it", MySource)
+          builder.addEntity(NamedEntity("MyName--$outerLoop-$it", MySource))
         }
         // Remove some random entities
         builder.entities(NamedEntity::class.java).withIndex().filter { it.index % (outerLoop + 1) == 0 }.forEach { (_, value) ->
@@ -784,9 +731,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
         snapshot.cached(sourcesByName)
         snapshot.cached(childData)
       }
-    }
-      .warmupIterations(0)
-      .attempts(1).startAsSubtest()
+    }.warmupIterations(0).attempts(1).startAsSubtest()
 
     println("Modify snapshots third time")
     val snapshotsWithTonsOfUpdates = snapshotsWithLotOfUpdates.map { snapshot ->
@@ -795,7 +740,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
         val builder = currentSnapshot.toBuilder()
 
         repeat(baseSize) {
-          builder addEntity NamedEntity("MyName-X$outerLoop-$it", MySource)
+          builder.addEntity(NamedEntity("MyName-X$outerLoop-$it", MySource))
         }
 
         currentSnapshot = builder.toSnapshot()
@@ -812,22 +757,20 @@ class WorkspaceModelBenchmarksPerformanceTest {
         snapshot.cached(sourcesByName)
         snapshot.cached(childData)
       }
-    }
-      .warmupIterations(0)
-      .attempts(1).startAsSubtest()
+    }.warmupIterations(0).attempts(1).startAsSubtest()
   }
 
   @Test
-  fun `operations on external mappings`(testInfo: TestInfo) {
+  fun `operations on external mappings`(@Suppress("unused") testInfo: TestInfo) {
     val size = 1_000_000
     val builders = List(size) {
       val mutableEntityStorage = MutableEntityStorage.create()
-      mutableEntityStorage addEntity NamedEntity("MyEntity", MySource)
+      mutableEntityStorage.addEntity(NamedEntity("MyEntity", MySource))
       mutableEntityStorage
     }
     val singleBuilder = MutableEntityStorage.create().also { builder ->
       repeat(size) {
-        builder addEntity NamedEntity("MyEntity$it", MySource)
+        builder.addEntity(NamedEntity("MyEntity$it", MySource))
       }
     }
 
@@ -859,7 +802,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
 
     val size = 100_000
     repeat(size) {
-      builder addEntity NamedEntity("Name$it", MySource)
+      builder.addEntity(NamedEntity("Name$it", MySource))
     }
 
     var mySnapshot = builder.toSnapshot()
@@ -871,9 +814,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
         myBuilder.getMutableExternalMapping(externalMappingKey).addMapping(entity, "data$it")
         mySnapshot = myBuilder.toSnapshot()
       }
-    }
-      .warmupIterations(0)
-      .attempts(1).start()
+    }.warmupIterations(0).attempts(1).start()
   }
 
   @ParameterizedTest
@@ -884,7 +825,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
 
     val builder = MutableEntityStorage.create()
     repeat(size) {
-      builder addEntity NamedEntity("Data$it", MySource)
+      builder.addEntity(NamedEntity("Data$it", MySource))
     }
     var snapshot = builder.toSnapshot()
 
@@ -894,9 +835,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
         snapshot.entities<NamedEntity>().map { it.myName }.toList()
       }
       println("Raw recalculate. size: $size, time: $time.")
-    }
-      .warmupIterations(0)
-      .attempts(1).start()
+    }.warmupIterations(0).attempts(1).start()
 
     println()
     println("Test two --- First calculate")
@@ -905,9 +844,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
         snapshot.cached(q)
       }
       println("First recalculate. size: $size, time: $time2.")
-    }
-      .warmupIterations(0)
-      .attempts(1).start()
+    }.warmupIterations(0).attempts(1).start()
 
     println()
     println("Test three --- Unmodified second access")
@@ -916,9 +853,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
         snapshot.cached(q)
       }
       println("Unmodified second access. size: $size, time: $time3.")
-    }
-      .warmupIterations(0)
-      .attempts(1).start()
+    }.warmupIterations(0).attempts(1).start()
 
     snapshot = snapshot.toBuilder().also { it.addEntity(NamedEntity("XX", MySource)) }.toSnapshot()
 
@@ -929,9 +864,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
         snapshot.cached(q)
       }
       println("Add one entity. size: $size, time: $time4.")
-    }
-      .warmupIterations(0)
-      .attempts(1).start()
+    }.warmupIterations(0).attempts(1).start()
 
     snapshot = snapshot.toBuilder().also { builder1 ->
       // Remove 10% of entities
@@ -957,9 +890,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
         snapshot.cached(q)
       }
       println("Update 10% of entities. size: $size, time: $time5.")
-    }
-      .warmupIterations(0)
-      .attempts(1).start()
+    }.warmupIterations(0).attempts(1).start()
   }
 
   @ParameterizedTest
@@ -972,12 +903,12 @@ class WorkspaceModelBenchmarksPerformanceTest {
       .map { it + "XXXX" }
 
     val builder = MutableEntityStorage.create()
-    repeat(size) {
-      builder addEntity NamedEntity("Data$it", MySource) {
+    repeat(size) { i ->
+      builder.addEntity(NamedEntity("Data$i", MySource) {
         this.children = List(10) {
           NamedChildEntity("Child$it", MySource)
         }
-      }
+      })
     }
     var snapshot = builder.toSnapshot()
 
@@ -991,9 +922,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
           .toList()
       }
       println("Raw recalculate. size: $size, time: $time.")
-    }
-      .warmupIterations(0)
-      .attempts(1).start()
+    }.warmupIterations(0).attempts(1).start()
 
     println()
     println("Test two --- First calculate")
@@ -1002,9 +931,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
         snapshot.cached(q)
       }
       println("First recalculate. size: $size, time: $time2.")
-    }
-      .warmupIterations(0)
-      .attempts(1).start()
+    }.warmupIterations(0).attempts(1).start()
 
     println()
     println("Test three --- Unmodified second access")
@@ -1013,14 +940,12 @@ class WorkspaceModelBenchmarksPerformanceTest {
         snapshot.cached(q)
       }
       println("Unmodified second access. size: $size, time: $time3.")
-    }
-      .warmupIterations(0)
-      .attempts(1).start()
+    }.warmupIterations(0).attempts(1).start()
 
     snapshot = snapshot.toBuilder().also {
-      it addEntity NamedEntity("XX", MySource) {
+      it.addEntity(NamedEntity("XX", MySource) {
         this.children = listOf(NamedChildEntity("Hey", MySource))
-      }
+      })
     }.toSnapshot()
 
     println()
@@ -1030,9 +955,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
         snapshot.cached(q)
       }
       println("Add one entity. size: $size, time: $time4.")
-    }
-      .warmupIterations(0)
-      .attempts(1).start()
+    }.warmupIterations(0).attempts(1).start()
 
     snapshot = snapshot.toBuilder().also { builder1 ->
       // Remove 10% of entities
@@ -1052,9 +975,9 @@ class WorkspaceModelBenchmarksPerformanceTest {
 
       // Add 10% of entities
       repeat(size / 10) {
-        builder1 addEntity NamedEntity("XXY$it", MySource) {
+        builder1.addEntity(NamedEntity("XXY$it", MySource) {
           this.children = List(10) { NamedChildEntity("Prop", MySource) }
-        }
+        })
       }
     }.toSnapshot()
 
@@ -1064,11 +987,8 @@ class WorkspaceModelBenchmarksPerformanceTest {
       val time51 = measureTime {
         snapshot.cached(q)
       }
-      val time5 = time51
-      println("Update 10% of entities. size: $size, time: $time5.")
-    }
-      .warmupIterations(0)
-      .attempts(1).start()
+      println("Update 10% of entities. size: $size, time: $time51.")
+    }.warmupIterations(0).attempts(1).start()
   }
 
   @ParameterizedTest
@@ -1079,7 +999,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
     listOf(1000, 10_000, 100_000, 500_000).forEach { size ->
       val builder = MutableEntityStorage.create()
       repeat(size) {
-        builder addEntity NamedEntity("Name$it", MySource)
+        builder.addEntity(NamedEntity("Name$it", MySource))
       }
       val baseSnapshot = builder.toSnapshot()
 
@@ -1087,13 +1007,13 @@ class WorkspaceModelBenchmarksPerformanceTest {
 
       baseSnapshot.cached(q)
 
-      val perentages = ArrayList<Int>()
+      val percentages = ArrayList<Int>()
       val timesCalc = ArrayList<Duration>()
       val timesCache = ArrayList<Duration>()
       (1..100).forEach { percent ->
         val intBuilder = baseSnapshot.toBuilder()
         repeat((size / 100) * percent) { entitiesBatch ->
-          intBuilder addEntity NamedEntity("MyEnt$entitiesBatch", MySource)
+          intBuilder.addEntity(NamedEntity("MyEnt$entitiesBatch", MySource))
         }
         val newSnapshot = intBuilder.toSnapshot()
 
@@ -1107,12 +1027,12 @@ class WorkspaceModelBenchmarksPerformanceTest {
         timesCalc += timeCalc
         timesCache += timeCached
         if (timeCached < timeCalc) {
-          perentages.add(percent)
+          percentages.add(percent)
         }
       }
       val averageCache = timesCache.map { it.inWholeMilliseconds }.average()
       val averageCalc = timesCalc.map { it.inWholeMilliseconds }.average()
-      val maxPerc = perentages.sortedDescending().take(5)
+      val maxPerc = percentages.sortedDescending().take(5)
       if (preInitializeEntities) {
         println("Pre initialize entities. Size: $size, average cache: $averageCache ms, average calc: $averageCalc ms, maxPerc: $maxPerc")
       }
@@ -1129,7 +1049,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
     listOf(1000, 10_000, 100_000, 500_000).forEach { size ->
       val builder = MutableEntityStorage.create()
       repeat(size) {
-        builder addEntity NamedEntity("Name$it", MySource)
+        builder.addEntity(NamedEntity("Name$it", MySource))
       }
       val baseSnapshot = builder.toSnapshot()
 
@@ -1137,7 +1057,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
 
       baseSnapshot.cached(q)
 
-      val perentages = ArrayList<Int>()
+      val percentages = ArrayList<Int>()
       val timesCalc = ArrayList<Duration>()
       val timesCache = ArrayList<Duration>()
       (1..100).forEach { percent ->
@@ -1157,12 +1077,12 @@ class WorkspaceModelBenchmarksPerformanceTest {
         timesCalc += timeCalc
         timesCache += timeCached
         if (timeCached < timeCalc) {
-          perentages.add(percent)
+          percentages.add(percent)
         }
       }
       val averageCache = timesCache.map { it.inWholeMilliseconds }.average()
       val averageCalc = timesCalc.map { it.inWholeMilliseconds }.average()
-      val maxPerc = perentages.sortedDescending().take(5)
+      val maxPerc = percentages.sortedDescending().take(5)
       println("Size: $size, average cache: $averageCache, average calc: $averageCalc, maxPerc: $maxPerc")
     }
   }
@@ -1174,9 +1094,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
 
     Benchmark.newBenchmark(size.toString()) {
       testPersistentMap(size, requestSize)
-    }
-      .warmupIterations(0)
-      .attempts(1).startAsSubtest()
+    }.warmupIterations(0).attempts(1).startAsSubtest()
   }
 
   @Suppress("SameParameterValue")
@@ -1204,7 +1122,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
 
     val builder = MutableEntityStorage.create()
     repeat(1000) {
-      builder addEntity NamedEntity("Data$it", MySource)
+      builder.addEntity(NamedEntity("Data$it", MySource))
     }
 
     var snapshot = builder.toSnapshot() as ImmutableEntityStorageInstrumentation
@@ -1214,7 +1132,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
 
     Benchmark.newBenchmark("Cache - adding 1000 modules") {
       repeat(1000) { count ->
-        val newBuilder = snapshot.toBuilder().also { it addEntity NamedEntity("AnotherData$count", MySource) }
+        val newBuilder = snapshot.toBuilder().also { it.addEntity(NamedEntity("AnotherData$count", MySource)) }
         val newCache = cache()
         val newSnapshot = newBuilder.toSnapshot() as ImmutableEntityStorageInstrumentation
         val changes = ChangeOnVersionedChange((newBuilder as MutableEntityStorageInstrumentation).collectChanges().values.asSequence().flatten())
@@ -1223,9 +1141,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
         snapshot = newSnapshot
         cache = newCache
       }
-    }
-      .warmupIterations(0)
-      .attempts(1).startAsSubtest()
+    }.warmupIterations(0).attempts(1).startAsSubtest()
   }
 
   @OptIn(EntityStorageInstrumentationApi::class)
@@ -1235,8 +1151,8 @@ class WorkspaceModelBenchmarksPerformanceTest {
 
     val builder = MutableEntityStorage.create()
     repeat(1000) {
-      builder addEntity NamedEntity("Data$it", MySource)
-      builder addEntity NamedEntity("Another$it", MySource)
+      builder.addEntity(NamedEntity("Data$it", MySource))
+      builder.addEntity(NamedEntity("Another$it", MySource))
     }
 
     var snapshot = builder.toSnapshot() as ImmutableEntityStorageInstrumentation
@@ -1258,9 +1174,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
         snapshot = newSnapshot
         cache = newCache
       }
-    }
-      .warmupIterations(0)
-      .attempts(1).startAsSubtest()
+    }.warmupIterations(0).attempts(1).startAsSubtest()
   }
 
   @OptIn(EntityStorageInstrumentationApi::class)
@@ -1270,8 +1184,8 @@ class WorkspaceModelBenchmarksPerformanceTest {
 
     val builder = MutableEntityStorage.create()
     repeat(1000) {
-      builder addEntity NamedEntity("Data$it", MySource)
-      builder addEntity NamedEntity("Another$it", MySource)
+      builder.addEntity(NamedEntity("Data$it", MySource))
+      builder.addEntity(NamedEntity("Another$it", MySource))
     }
 
     var snapshot = builder.toSnapshot() as ImmutableEntityStorageInstrumentation
@@ -1295,9 +1209,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
         snapshot = newSnapshot
         cache = newCache
       }
-    }
-      .warmupIterations(0)
-      .attempts(1).startAsSubtest()
+    }.warmupIterations(0).attempts(1).startAsSubtest()
   }
 
   @OptIn(EntityStorageInstrumentationApi::class)
@@ -1307,8 +1219,8 @@ class WorkspaceModelBenchmarksPerformanceTest {
 
     val builder = MutableEntityStorage.create()
     repeat(1000) {
-      builder addEntity NamedEntity("Data$it", MySource)
-      builder addEntity NamedEntity("Another$it", MySource)
+      builder.addEntity(NamedEntity("Data$it", MySource))
+      builder.addEntity(NamedEntity("Another$it", MySource))
     }
 
     var snapshot = builder.toSnapshot() as ImmutableEntityStorageInstrumentation
@@ -1320,7 +1232,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
       repeat(1000) { count ->
         val newBuilder = snapshot.toBuilder().also { builder ->
           if (count % 2 == 0) {
-            repeat(1000) { builder addEntity ParentEntity("", MySource) }
+            repeat(1000) { builder.addEntity(ParentEntity("", MySource)) }
           }
           else {
             builder.entities<ParentEntity>().toList().forEach { builder.removeEntity(it) }
@@ -1334,9 +1246,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
         snapshot = newSnapshot
         cache = newCache
       }
-    }
-      .warmupIterations(0)
-      .attempts(1).startAsSubtest()
+    }.warmupIterations(0).attempts(1).startAsSubtest()
   }
 
   @OptIn(EntityStorageInstrumentationApi::class)
@@ -1355,7 +1265,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
       repeat(1000) { count ->
         val newBuilder = snapshot.toBuilder().also { builder ->
           if (count % 2 == 0) {
-            repeat(1000) { builder addEntity NamedEntity("XXX$it", MySource) }
+            repeat(1000) { builder.addEntity(NamedEntity("XXX$it", MySource)) }
           }
           else {
             builder.entities<NamedEntity>().toList().forEach { builder.removeEntity(it) }
@@ -1369,9 +1279,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
         snapshot = newSnapshot
         cache = newCache
       }
-    }
-      .warmupIterations(0)
-      .attempts(1).startAsSubtest()
+    }.warmupIterations(0).attempts(1).startAsSubtest()
   }
 
   @OptIn(EntityStorageInstrumentationApi::class)
@@ -1390,7 +1298,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
       repeat(1000) { count ->
         val newBuilder = snapshot.toBuilder().also { builder ->
           if (count % 2 == 0) {
-            repeat(1000) { builder addEntity NamedEntity("XXX$it", MySource) }
+            repeat(1000) { builder.addEntity(NamedEntity("XXX$it", MySource)) }
           }
           else {
             builder.entities<NamedEntity>().toList().forEach { builder.removeEntity(it) }
@@ -1404,24 +1312,22 @@ class WorkspaceModelBenchmarksPerformanceTest {
         snapshot = newSnapshot
         cache = newCache
       }
-    }
-      .warmupIterations(0)
-      .attempts(1).startAsSubtest()
+    }.warmupIterations(0).attempts(1).startAsSubtest()
   }
 
   @Test
   fun `changelog performance - one to many children adding`(testInfo: TestInfo) {
     val times = 20_000
     val initialSnapshot = MutableEntityStorage.create().also { builder ->
-      repeat(times) {
-        builder addEntity ParentMultipleEntity("Parent_$it", MySource) {
+      repeat(times) { i ->
+        builder.addEntity(ParentMultipleEntity("Parent_$i", MySource) {
           this.children = List(5) { (ChildMultipleEntity("Child_$it", MySource)) }
-        }
+        })
       }
     }.toSnapshot()
     val builder = initialSnapshot.toBuilder()
 
-    // Fill builder with some changes. In this way we'll get more internal work for "merging" with the existing change.
+    // Fill the builder with some changes. In this way we'll get more internal work for "merging" with the existing change.
     builder.entities<ParentMultipleEntity>().forEach { parent ->
       builder.modifyParentMultipleEntity(parent) {
         this.children = emptyList()
@@ -1433,52 +1339,41 @@ class WorkspaceModelBenchmarksPerformanceTest {
           this.children += List(10) { ChildMultipleEntity("Child_2_$it", MySource) }
         }
       }
-    }
-      .warmupIterations(0)
-      .attempts(1).start()
+    }.warmupIterations(0).attempts(1).start()
 
     Benchmark.newBenchmark(testInfo.displayName + " - applyChangesFrom") {
       initialSnapshot.toBuilder().applyChangesFrom(builder)
-    }
-      .warmupIterations(0)
-      .attempts(1).start()
+    }.warmupIterations(0).attempts(1).start()
   }
 
-  private fun measureOperation(launchName: String, singleBuilderEntities: List<Pair<MutableEntityStorage, NamedEntity>>,
-                               perBuilderEntities: List<Pair<MutableEntityStorage, NamedEntity>>,
-                               operation: (Int, Pair<MutableEntityStorage, NamedEntity>) -> Unit): Unit {
+  private fun measureOperation(
+    launchName: String, singleBuilderEntities: List<Pair<MutableEntityStorage, NamedEntity>>,
+    perBuilderEntities: List<Pair<MutableEntityStorage, NamedEntity>>,
+    operation: (Int, Pair<MutableEntityStorage, NamedEntity>) -> Unit,
+  ) {
     Benchmark.newBenchmark("$launchName-singleBuilderEntities") {
       singleBuilderEntities.forEachIndexed(operation)
-    }
-      .warmupIterations(0)
-      .attempts(1).startAsSubtest()
+    }.warmupIterations(0).attempts(1).startAsSubtest()
 
     Benchmark.newBenchmark("$launchName-perBuilderEntities") {
       perBuilderEntities.forEachIndexed(operation)
-    }
-      .warmupIterations(0)
-      .attempts(1).startAsSubtest()
+    }.warmupIterations(0).attempts(1).startAsSubtest()
   }
 
-
-  private suspend fun loadProject(configLocation: JpsProjectConfigLocation,
-                                  originalBuilder: MutableEntityStorage,
-                                  virtualFileManager: VirtualFileUrlManager): JpsProjectSerializers {
+  private suspend fun loadProject(
+    configLocation: JpsProjectConfigLocation,
+    originalBuilder: MutableEntityStorage,
+    virtualFileManager: VirtualFileUrlManager,
+  ): JpsProjectSerializers {
     val cacheDirUrl = configLocation.baseDirectoryUrl.append("cache")
     val context = SerializationContextForTests(virtualFileManager, CachingJpsFileContentReader(configLocation))
-    return JpsProjectEntitiesLoader.loadProject(configLocation = configLocation,
-                                                builder = originalBuilder,
-                                                orphanage = originalBuilder,
-                                                externalStoragePath = File(VfsUtil.urlToPath(cacheDirUrl.url)).toPath(),
-                                                errorReporter = TestErrorReporter,
-                                                context = context)
+    return JpsProjectEntitiesLoader.loadProject(
+      configLocation, originalBuilder, originalBuilder, Path.of(VfsUtil.urlToPath(cacheDirUrl.url)), TestErrorReporter, context = context
+    )
   }
 
-  private fun File.asConfigLocation(virtualFileManager: VirtualFileUrlManager): JpsProjectConfigLocation = toConfigLocation(toPath(),
-                                                                                                                            virtualFileManager)
-
   private fun toConfigLocation(file: Path, virtualFileManager: VirtualFileUrlManager): JpsProjectConfigLocation {
-    if (FileUtil.extensionEquals(file.fileName.toString(), "ipr")) {
+    if (file.extension == "ipr") {
       val iprFile = file.toVirtualFileUrl(virtualFileManager)
       return JpsProjectConfigLocation.FileBased(iprFile, iprFile.parent!!)
     }
@@ -1487,7 +1382,6 @@ class WorkspaceModelBenchmarksPerformanceTest {
       return JpsProjectConfigLocation.DirectoryBased(projectDir, projectDir.append(PathMacroUtil.DIRECTORY_STORE_NAME))
     }
   }
-
 
   internal object TestErrorReporter : ErrorReporter {
     override fun reportError(message: String, file: VirtualFileUrl) {

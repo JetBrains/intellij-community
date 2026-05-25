@@ -971,19 +971,25 @@ public final class FileUtilRt {
 
 
   public interface RepeatableIOOperation<T, E extends Throwable> {
+    /**
+     * @return null if an operation is failed but could be retried
+     * @throws E if an operation failed and shouldn't be retried
+     */
     @Nullable T execute(boolean lastAttempt) throws E;
   }
 
-  @Nullable
-  public static <T, E extends Throwable> T doIOOperation(@NotNull RepeatableIOOperation<T, E> ioTask) throws E {
-    for (int i = MAX_FILE_IO_ATTEMPTS; i > 0; i--) {
-      T result = ioTask.execute(i == 1);
-      if (result != null) return result;
+  /** Does few attempts to execute the ioTask, until it 1) returns a non-null value or 2) throws an exception */
+  public static <T, E extends Throwable> @Nullable T doIOOperation(@NotNull RepeatableIOOperation<T, E> ioTask) throws E {
+    for (int i = 0; i < MAX_FILE_IO_ATTEMPTS; i++) {
+      boolean lastAttempt = (i == MAX_FILE_IO_ATTEMPTS - 1);
+      T result = ioTask.execute(lastAttempt);
+      if (result != null) {
+        return result;
+      }
 
       try {
-        Thread.sleep(10);
-      }
-      catch (InterruptedException ignored) { }
+        Thread.sleep(5 /*ms*/ * (1 + i));//linear backoff
+      } catch (InterruptedException ignored) { /*nothing*/ }
     }
     return null;
   }

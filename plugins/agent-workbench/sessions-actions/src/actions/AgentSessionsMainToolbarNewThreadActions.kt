@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.actions
 
+// @spec community/plugins/agent-workbench/spec/agent-terminal-sessions.spec.md
+
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
@@ -209,11 +211,15 @@ internal abstract class AgentSessionsNewThreadSplitButtonAction(
     if (!includeTargetInDescription) {
       return quickStartActionDescription(quickStartItem)
     }
-    val providerLabel = AgentSessionsBundle.message(quickStartItem.labelKey)
+    val providerLabel = quickStartLabel(quickStartItem)
     val projectLabel = when (target) {
       is AgentSessionsEditorTabNewThreadTarget.Direct -> projectLabelForPath(target.path)
       is AgentSessionsEditorTabNewThreadTarget.Candidates, null ->
         AgentSessionsBundle.message(targetChooseKey)
+    }
+    val targetDescriptionKey = quickStartItem.bridge.quickStartActionTargetDescriptionKey
+    if (targetDescriptionKey != null) {
+      return AgentSessionsBundle.message(targetDescriptionKey, providerLabel, projectLabel)
     }
     return AgentSessionsBundle.message(
       descriptionKey,

@@ -9,6 +9,7 @@ from gevent.ssl import SSLContext
 class BackdoorServer(StreamServer):
     locals: dict[str, Any]
     banner: str | None
+
     @overload
     def __init__(
         self,
@@ -42,6 +43,7 @@ class BackdoorServer(StreamServer):
         suppress_ragged_eofs: bool = True,
         ciphers: str = ...,
     ) -> None: ...
+
     def handle(self, conn: _GeventSocket, _address: _Address) -> None: ...
 
 __all__ = ["BackdoorServer"]

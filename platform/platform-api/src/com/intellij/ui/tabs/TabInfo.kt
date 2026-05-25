@@ -154,14 +154,13 @@ class TabInfo(var component: JComponent) : Queryable, PlaceProvider {
     }
 
   fun setText(text: @NlsContexts.TabTitle String): TabInfo {
-    val oldText = coloredText.toString()
     val textAttributes = coloredText.attributes.singleOrNull()
     val defaultAttributes = getDefaultAttributes()
-    if (oldText != text || textAttributes != defaultAttributes) {
+    if (coloredText.toString() != text || textAttributes != defaultAttributes) {
       coloredText.clear()
       coloredText.append(text, defaultAttributes)
       usesDefaultTextAttributes = true
-      changeSupport.firePropertyChange(TEXT, oldText, text)
+      changeSupport.firePropertyChange(TEXT, "", text)
     }
     return this
   }

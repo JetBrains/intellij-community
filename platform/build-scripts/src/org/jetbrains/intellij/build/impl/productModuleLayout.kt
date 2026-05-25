@@ -37,11 +37,13 @@ internal suspend fun processAndGetProductPluginContentModules(
   val element: Element
   val moduleToSetChainMapping: Map<String, List<String>>?
   val moduleToIncludeDependenciesMapping: Map<String, Boolean>?
+  val descriptorResolverModules: Collection<String>
   val programmaticModulesSpec = context.productProperties.getProductContentDescriptor()
   if (programmaticModulesSpec == null) {
     element = JDOMUtil.load(file)
     moduleToSetChainMapping = null
     moduleToIncludeDependenciesMapping = null
+    descriptorResolverModules = includedPlatformModulesPartialList
   }
   else {
     val buildResult = buildProductContentXml(
@@ -58,6 +60,14 @@ internal suspend fun processAndGetProductPluginContentModules(
     element = JDOMUtil.load(buildResult.xml)
     moduleToSetChainMapping = buildResult.moduleToSetChainMapping.mapKeys { it.key.value }
     moduleToIncludeDependenciesMapping = buildResult.moduleToIncludeDependenciesMapping.mapKeys { it.key.value }
+    descriptorResolverModules = LinkedHashSet<String>().apply {
+      addAll(includedPlatformModulesPartialList)
+      for ((_, modules) in buildResult.contentBlocks) {
+        for ((name) in modules) {
+          add(name.name)
+        }
+      }
+    }
   }
 
   // Scrambling isn’t an issue: the scrambler can modify XML.
@@ -66,7 +76,7 @@ internal suspend fun processAndGetProductPluginContentModules(
   // We must resolve includes to collect all content modules, since the <content> tag may
   // be specified in an included file. This is done not only for performance but for correctness.
   val xIncludeResolver = XIncludeElementResolverImpl(
-    searchPath = listOf(DescriptorSearchScope(includedPlatformModulesPartialList, descriptorCache)),
+    searchPath = listOf(DescriptorSearchScope(descriptorResolverModules, descriptorCache)),
     context = context,
   )
   resolveIncludes(element = element, elementResolver = xIncludeResolver)

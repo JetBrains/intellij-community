@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.platform.ide.impl.diagnostic.errorsDialog.ErrorMessageClustering
 import com.intellij.util.text.nullize
 import org.jetbrains.annotations.ApiStatus
@@ -37,6 +38,10 @@ object ExceptionAutoReportUtil {
   val isAutoReportVisible: Boolean
     get() = !autoReportIsForbiddenForProduct && Registry.`is`("ea.auto.report.feature.visible", false)
 
+  suspend fun isAutoReportVisibleAsync(): Boolean {
+    return !autoReportIsForbiddenForProduct && RegistryManager.getInstanceAsync().`is`("ea.auto.report.feature.visible")
+  }
+
   @JvmStatic
   val isAutoReportForced: Boolean
     get() = getForcedAutoReportLevel() != ForcedReportLevel.NONE
@@ -49,6 +54,13 @@ object ExceptionAutoReportUtil {
 
       return isAutoReportAllowedByUser()
     }
+
+  suspend fun isAutoReportEnabledAsync(): Boolean {
+    if (!isAutoReportVisibleAsync()) return false
+    if (isDevelopmentEnvironment) return ENABLED_FOR_DEVELOPMENT
+
+    return isAutoReportAllowedByUser()
+  }
 
   @JvmStatic
   val isConsentAllowedToBeVisible: Boolean
@@ -96,6 +108,19 @@ object ExceptionAutoReportUtil {
       val (consent, needsReconfirm) = getConsentAndNeedsReconfirm()
       return consent?.isAccepted == true || needsReconfirm
     }
+
+  suspend fun isAutoReportEnabledOrUndecidedAsync(): Boolean {
+    if (!isAutoReportVisibleAsync()) return false
+
+    if (isDevelopmentEnvironment) return ENABLED_FOR_DEVELOPMENT
+    if (isAutoReportForced) return true // set by provisioning
+    if (ConsentOptions.getInstance().isEAP) {
+      return ExceptionEAPAutoReportManager.getInstance().enabledInEAP
+    }
+
+    val (consent, needsReconfirm) = getConsentAndNeedsReconfirm()
+    return consent?.isAccepted == true || needsReconfirm
+  }
 
   private fun getConsentAndNeedsReconfirm(): Pair<Consent?, Boolean> {
     val (consents, needsReconfirm) = ConsentOptions.getInstance().getConsents(ConsentOptions.condEAAutoReportConsent())

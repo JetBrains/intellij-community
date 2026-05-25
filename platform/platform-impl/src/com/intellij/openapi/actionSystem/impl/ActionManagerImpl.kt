@@ -86,6 +86,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.impl.ActionProcessor
 import com.intellij.openapi.keymap.impl.KeymapImpl
+import com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
@@ -559,13 +560,17 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
                                                            secondary = isSecondary(child),
                                                            actionRegistrar = actionRegistrar)
         "keyboard-shortcut" -> processKeyboardShortcutNode(element = child,
-                                                           actionId = id,
-                                                           module = module,
-                                                           keymapToOperations = keymapToOperations)
+                                                            actionId = id,
+                                                            module = module,
+                                                            keymapToOperations = keymapToOperations)
+        "keyboard-gesture-shortcut" -> processKeyboardGestureShortcutNode(element = child,
+                                                                          actionId = id,
+                                                                          module = module,
+                                                                          keymapToOperations = keymapToOperations)
         "mouse-shortcut" -> processMouseShortcutNode(element = child,
-                                                     actionId = id,
-                                                     module = module,
-                                                     keymapToOperations = keymapToOperations)
+                                                      actionId = id,
+                                                      module = module,
+                                                      keymapToOperations = keymapToOperations)
         "abbreviation" -> processAbbreviationNode(e = child, id = id)
         OVERRIDE_TEXT_ELEMENT_NAME -> processOverrideTextNode(action = stub,
                                                               id = stub.id,
@@ -1068,8 +1073,18 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
 
   override val registrationOrderComparator: Comparator<String>
     get() {
-      val idToDescriptor = actionPostInitRegistrar.state.idToDescriptor
-      return Comparator.comparingInt { key -> idToDescriptor.get(key)?.index ?: -1 }
+      val state = actionPostInitRegistrar.state
+      val registrationOrder = synchronized(state.lock) {
+        val result = HashMap<String, Int>(state.idToDescriptor.size)
+        for ((id, descriptor) in state.idToDescriptor) {
+          result.put(id, descriptor.index)
+        }
+        result
+      }
+      return Comparator { id1, id2 ->
+        val result = (registrationOrder.get(id1) ?: -1).compareTo(registrationOrder.get(id2) ?: -1)
+        if (result == 0) id1.compareTo(id2) else result
+      }
     }
 
   override fun getPluginActions(pluginId: PluginId): Array<String> {
@@ -2298,6 +2313,7 @@ private fun registerAction(actionId: String,
   }
 
   actionRegistrar.actionRegistered(actionId, action)
+  ModifierKeyDoubleClickHandler.scheduleKeymapShortcutSyncIfCreated()
 }
 
 /**
@@ -2387,6 +2403,7 @@ private fun unregisterAction(actionId: String, actionRegistrar: ActionRegistrar,
     }
   }
   updateHandlers(actionToRemove)
+  ModifierKeyDoubleClickHandler.scheduleKeymapShortcutSyncIfCreated()
 }
 
 private fun replaceAction(actionId: String, newAction: AnAction, pluginId: PluginId?, actionRegistrar: ActionRegistrar): AnAction? {

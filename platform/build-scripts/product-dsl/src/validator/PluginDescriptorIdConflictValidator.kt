@@ -1,11 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.validator
 
-import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginGraph.PluginGraph
 import com.intellij.platform.pluginGraph.PluginId
+import com.intellij.platform.pluginGraph.PluginModuleId
 import com.intellij.platform.pluginGraph.PluginNode
 import com.intellij.platform.pluginGraph.ProductNode
+import com.intellij.platform.pluginGraph.contentName
 import org.jetbrains.intellij.build.productLayout.model.error.PluginDescriptorIdConflictError
 import org.jetbrains.intellij.build.productLayout.model.error.ValidationError
 import org.jetbrains.intellij.build.productLayout.pipeline.ComputeContext
@@ -50,13 +51,15 @@ private fun validateDescriptorIdConflictsForProduct(
     target.computeIfAbsent(pluginIdValue) { LinkedHashSet() }
       .add(PluginDescriptorIdConflictError.DescriptorOwner(pluginName, contentModule = null, isTestPlugin = isTest))
 
-    fun recordModule(moduleName: ContentModuleName) {
-      target.computeIfAbsent(PluginId(moduleName.value)) { LinkedHashSet() }
-        .add(PluginDescriptorIdConflictError.DescriptorOwner(pluginName, contentModule = moduleName, isTestPlugin = isTest))
+    fun recordModule(moduleId: PluginModuleId) {
+      if (moduleId.namespace == PluginModuleId.DEFAULT_NAMESPACE) {
+        target.computeIfAbsent(PluginId(moduleId.name)) { LinkedHashSet() }
+          .add(PluginDescriptorIdConflictError.DescriptorOwner(pluginName, contentModule = moduleId.contentName(), isTestPlugin = isTest))
+      }
     }
 
-    plugin.containsContent { module, _ -> recordModule(module.contentName()) }
-    plugin.containsContentTest { module, _ -> recordModule(module.contentName()) }
+    plugin.containsContentWithNamespace { module, _ -> recordModule(module.moduleId()) }
+    plugin.containsContentWithNamespaceTest { module, _ -> recordModule(module.moduleId()) }
   }
 
   productV.bundles { plugin -> recordPlugin(plugin, isTest = false, target = productionOwners) }

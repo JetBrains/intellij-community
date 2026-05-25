@@ -16,6 +16,7 @@ import com.intellij.openapi.util.io.PathPrefixTree
 import com.intellij.openapi.util.io.relativizeToClosestAncestor
 import com.intellij.openapi.vfs.VirtualFilePrefixTree.VirtualFileElement
 import com.intellij.openapi.vfs.limits.FileSizeLimit
+import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.LightVirtualFileBase
@@ -77,6 +78,11 @@ fun VirtualFile.findDocument(): Document? {
 @RequiresReadLock
 fun VirtualFile.findPsiFile(project: Project): PsiFile? {
   return PsiManager.getInstance(project).findFile(this)
+}
+
+@RequiresReadLock
+fun VirtualFile.findPsiDirectory(project: Project): PsiDirectory? {
+  return PsiManager.getInstance(project).findDirectory(this)
 }
 
 /**

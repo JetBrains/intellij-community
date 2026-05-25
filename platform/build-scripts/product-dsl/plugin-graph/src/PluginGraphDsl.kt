@@ -192,10 +192,21 @@ value class GraphScope @PublishedApi internal constructor(
   /** Returns true if the specified plugin ID resolves to a synthetic alias plugin node. */
   fun hasAliasPlugin(pluginId: PluginId): Boolean = store.hasAliasPlugin(pluginId)
 
-  /** Get module node by name */
+  /**
+   * Get module node by name.
+   * The plugin system takes into account not only name, but also namespace of a content module, so code that relies on this method should migrate to use
+   * [contentModuleWithNamespace] intead.
+   */
   fun contentModule(name: ContentModuleName): ContentModuleNode? {
     val id = store.nodeId(name.value, NODE_CONTENT_MODULE)
     return if (id >= 0) ContentModuleNode(id) else null
+  }
+
+  /** Get module node by ID */
+  fun contentModuleWithNamespace(moduleId: PluginModuleId): ContentModuleWithNamespaceNode? {
+    val stringId = if (moduleId.namespace != null) "${moduleId.namespace}:${moduleId.name}" else moduleId.name
+    val id = store.nodeId(stringId, NODE_CONTENT_MODULE)
+    return if (id >= 0) ContentModuleWithNamespaceNode(id) else null
   }
 
   /** Get module set node by name */
@@ -243,9 +254,17 @@ value class GraphScope @PublishedApi internal constructor(
   val PluginNode.containsContent: ContentEdgeInvoker
     get() = ContentEdgeInvoker.create(EDGE_CONTAINS_CONTENT, id)
 
+  /** Plugin → Module with namespace (production content, with loading mode) */
+  val PluginNode.containsContentWithNamespace: ContentWithNamespaceEdgeInvoker
+    get() = ContentWithNamespaceEdgeInvoker.create(EDGE_CONTAINS_CONTENT_WITH_NAMESPACE, id)
+
   /** Plugin → Module (test content, with loading mode) */
   val PluginNode.containsContentTest: ContentEdgeInvoker
     get() = ContentEdgeInvoker.create(EDGE_CONTAINS_CONTENT_TEST, id)
+
+  /** Plugin → Module with namespace (test content, with loading mode) */
+  val PluginNode.containsContentWithNamespaceTest: ContentWithNamespaceEdgeInvoker
+    get() = ContentWithNamespaceEdgeInvoker.create(EDGE_CONTAINS_CONTENT_TEST_WITH_NAMESPACE, id)
 
   /** Plugin → Target (main module) */
   val PluginNode.mainTarget: EdgeInvoker<TargetNode>
@@ -526,6 +545,15 @@ value class GraphScope @PublishedApi internal constructor(
   /** Module name as typed content module name */
   fun ContentModuleNode.contentName(): ContentModuleName = ContentModuleName(store.name(id))
 
+  /** Module ID as typed content module name */
+  fun ContentModuleWithNamespaceNode.moduleId(): PluginModuleId {
+    val idString = store.name(id)
+    if (idString.contains(":")) {
+      return PluginModuleId(name = idString.substringAfter(":"), namespace = idString.substringBefore(":"))
+    }
+    return PluginModuleId(name = idString, namespace = null)
+  }
+
   /** ModuleSet name */
   fun ModuleSetNode.name(): String = store.name(id)
 
@@ -547,6 +575,17 @@ value class GraphScope @PublishedApi internal constructor(
       val moduleId = unpackNodeId(packedEntry)
       val loadingMode = packedToLoadingRule(unpackLoadingMode(packedEntry))
       action(ContentModuleNode(moduleId), loadingMode)
+    }
+  }
+
+  /**
+   * Invoke operator for ContentWithNamespaceEdgeInvoker - passes target module + loading mode.
+   */
+  inline operator fun ContentWithNamespaceEdgeInvoker.invoke(action: (ContentModuleWithNamespaceNode, ModuleLoadingRuleValue) -> Unit) {
+    store.forEachSuccessor(edgeId, sourceId) { packedEntry ->
+      val moduleId = unpackNodeId(packedEntry)
+      val loadingMode = packedToLoadingRule(unpackLoadingMode(packedEntry))
+      action(ContentModuleWithNamespaceNode(moduleId), loadingMode)
     }
   }
 

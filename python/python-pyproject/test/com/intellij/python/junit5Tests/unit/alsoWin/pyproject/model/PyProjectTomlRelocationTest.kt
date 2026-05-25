@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model
 
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
@@ -41,14 +41,14 @@ internal class PyProjectTomlRelocationTest {
    */
   @Test
   fun `source and exclude roots reassigned from parent Python module to inner pyproject modules`(): Unit = timeoutRunBlocking(30.seconds) {
-    val libADir = writeAction {
+    val libADir = edtWriteAction {
       val a = f.root.createDirectory("lib-a")
       a.createDirectory("src")
       a.createDirectory(".venv")
       a.writePyprojectToml("lib-a")
       a
     }
-    val libBDir = writeAction {
+    val libBDir = edtWriteAction {
       val b = f.root.createDirectory("lib-b")
       b.createDirectory("tests")
       b.createDirectory(".cache")
@@ -96,7 +96,7 @@ internal class PyProjectTomlRelocationTest {
    */
   @Test
   fun `source roots in sub-project are relocated to child module`(): Unit = timeoutRunBlocking(30.seconds) {
-    writeAction {
+    edtWriteAction {
       f.root.writePyprojectToml("parent")
       val sub = f.root.createDirectory("sub")
       sub.writePyprojectToml("child")
@@ -116,7 +116,7 @@ internal class PyProjectTomlRelocationTest {
    */
   @Test
   fun `template and resource roots in sub-project are relocated to child module`(): Unit = timeoutRunBlocking(30.seconds) {
-    writeAction {
+    edtWriteAction {
       f.root.writePyprojectToml("parent")
       val sub = f.root.createDirectory("sub")
       sub.writePyprojectToml("child")
@@ -161,7 +161,7 @@ internal class PyProjectTomlRelocationTest {
    */
   @Test
   fun `excluded folders in sub-project are relocated to child module`(): Unit = timeoutRunBlocking(30.seconds) {
-    writeAction {
+    edtWriteAction {
       f.root.writePyprojectToml("parent")
       val sub = f.root.createDirectory("sub")
       sub.writePyprojectToml("child")

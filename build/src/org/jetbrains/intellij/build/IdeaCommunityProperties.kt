@@ -51,6 +51,8 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : JetBrai
     buildCrossPlatformDistribution = true
     buildSourcesArchive = true
 
+    imagesDirectoryPath = communityHomeDir.resolve("build/idea-community-images")
+
     productLayout.productImplementationModules = listOf(
       "intellij.platform.starter",
       "intellij.idea.community.customization",
@@ -136,11 +138,11 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : JetBrai
 
   protected open suspend fun bundleExternalPlugins(context: BuildContext, targetDirectory: Path) {}
 
-  override fun createWindowsCustomizer(projectHome: Path): WindowsDistributionCustomizer = communityWindowsCustomizer(communityHomeDir)
+  override fun createWindowsCustomizer(projectHome: Path): WindowsDistributionCustomizer = ideaCommunityWindowsCustomizer(communityHomeDir)
 
-  override fun createLinuxCustomizer(projectHome: Path): LinuxDistributionCustomizer = communityLinuxCustomizer(communityHomeDir)
+  override fun createLinuxCustomizer(projectHome: Path): LinuxDistributionCustomizer = ideaCommunityLinuxCustomizer(communityHomeDir)
 
-  override fun createMacCustomizer(projectHome: Path): MacDistributionCustomizer = communityMacCustomizer(communityHomeDir)
+  override fun createMacCustomizer(projectHome: Path): MacDistributionCustomizer = ideaCommunityMacCustomizer(communityHomeDir)
 
   override fun getSystemSelector(appInfo: ApplicationInfoProperties, buildNumber: String): String {
     return "IdeaIC${appInfo.majorVersion}.${appInfo.minorVersionMainPart}"
@@ -222,13 +224,10 @@ fun intellijCommunityBaseFragment(platformPrefix: String? = null): ProductModule
   deprecatedInclude("intellij.idea.community.customization", "META-INF/community-customization.xml")
 }
 
-inline fun communityWindowsCustomizer(
+inline fun ideaCommunityWindowsCustomizer(
   projectHome: Path,
   configure: WindowsCustomizerBuilder.() -> Unit = {}
 ): WindowsDistributionCustomizer = windowsCustomizer(projectHome) {
-  icoPath = "build/conf/ideaCE/win/images/idea_CE.ico"
-  icoPathForEAP = "build/conf/ideaCE/win/images/idea_CE_EAP.ico"
-  installerImagesPath = "build/conf/ideaCE/win/images"
   fileAssociations = listOf("java", "gradle", "groovy", "kt", "kts", "pom")
 
   fullName { "IntelliJ IDEA Open Source" }
@@ -241,17 +240,14 @@ inline fun communityWindowsCustomizer(
   configure()
 }
 
-inline fun communityMacCustomizer(
+inline fun ideaCommunityMacCustomizer(
   projectHome: Path,
   configure: MacCustomizerBuilder.() -> Unit = {}
 ): MacDistributionCustomizer = macCustomizer(projectHome) {
-  icnsPath = "build/conf/ideaCE/mac/images/idea.icns"
-  icnsPathForEAP = "build/conf/ideaCE/mac/images/communityEAP.icns"
   urlSchemes = listOf("idea")
   associateIpr = true
   fileAssociations = FileAssociation.from("java", "groovy", "kt", "kts")
   bundleIdentifier = "com.jetbrains.intellij.ce"
-  dmgImagePath = "build/conf/ideaCE/mac/images/dmg_background.tiff"
 
   rootDirectoryName { _, _ -> "IntelliJ IDEA OSS.app" }
 
@@ -263,12 +259,10 @@ inline fun communityMacCustomizer(
   configure()
 }
 
-inline fun communityLinuxCustomizer(
+inline fun ideaCommunityLinuxCustomizer(
   projectHome: Path,
   configure: LinuxCustomizerBuilder.() -> Unit = {}
 ): LinuxDistributionCustomizer = linuxCustomizer(projectHome) {
-  iconPngPath = "build/conf/ideaCE/linux/images/icon_CE_128.png"
-  iconPngPathForEAP = "build/conf/ideaCE/linux/images/icon_CE_EAP_128.png"
 
   rootDirectoryName { _, _ -> "idea-oss" }
 

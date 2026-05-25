@@ -4,9 +4,11 @@ description: Inventory of Agent Workbench persistent state components and storag
 targets:
   - ../chat/src/AgentChatFileEditorState.kt
   - ../chat/src/AgentChatTabsStateService.kt
+  - ../terminal/sessions/src/TerminalSessionStateService.kt
   - ../sessions/src/state/*.kt
   - ../prompt/ui/src/AgentPromptUiSessionStateService.kt
   - ../chat/testSrc/AgentChatFileEditorProviderTest.kt
+  - ../terminal/sessions/testSrc/TerminalSessionSourceTest.kt
   - ../sessions/testSrc/AgentSession*StateServiceTest.kt
   - ../prompt/ui/testSrc/AgentPromptUiSessionStateServiceTest.kt
 ---
@@ -26,6 +28,7 @@ Agent Workbench state is intentionally split by lifetime and scope. Editor-provi
   - `AgentSessionWarmState`, app-level cache file, for warm-start session rows for open paths.
   - `AgentSessionTreeUiState`, app-level cache file, for collapsed project paths.
   - `AgentSessionUiPreferencesState`, app-level non-roamable file, for shared provider/mode preferences and Claude quota hint state.
+  - `AgentWorkbenchTerminalSessions`, app-level non-roamable file, for user-created terminal session rows and bounded terminal restore context.
   - `AgentPromptUiState`, project-level workspace file, for prompt draft fields.
 
 - Warm session state must not persist blocking errors, provider warnings, loading flags, or pending `new-*` identities.
@@ -44,10 +47,12 @@ Agent Workbench state is intentionally split by lifetime and scope. Editor-provi
 
 ## Testing / Local Run
 - `./tests.cmd --module intellij.agent.workbench.sessions.tests --test "com.intellij.agent.workbench.sessions.AgentSession*StateServiceTest"`
+- `./tests.cmd --module intellij.agent.workbench.terminal.sessions.tests --test "com.intellij.agent.workbench.terminal.sessions.*Test"`
 - `./tests.cmd --module intellij.agent.workbench.prompt.ui.tests --test com.intellij.agent.workbench.prompt.ui.AgentPromptUiSessionStateServiceTest`
 - `./tests.cmd --module intellij.agent.workbench.chat.tests --test com.intellij.agent.workbench.chat.AgentChatFileEditorProviderTest`
 
 ## References
 - `spec/agent-chat-editor.spec.md`
 - `spec/agent-sessions.spec.md`
+- `spec/agent-terminal-sessions.spec.md`
 - `spec/actions/global-prompt-entry.spec.md`

@@ -2,12 +2,14 @@
 package org.jetbrains.intellij.build.bazel
 
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.io.FileUtil
 import org.jdom.Element
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 import java.nio.file.Files
 import java.nio.file.Path
 import java.text.Normalizer
 import java.util.stream.Collectors
+import kotlin.collections.mapValues
 import kotlin.io.path.name
 
 // Lightweight model of an IntelliJ Run Configuration as stored under .idea/runConfigurations/*.xml
@@ -207,7 +209,7 @@ internal class RunConfigurationsFile : BuildFile() {
       )
       runConfiguration.env.filterNot { (_, v) -> v.contains(projectDirVar)}.also { env ->
         if (env.isNotEmpty()) {
-          option("env", env)
+          option("env", env.mapValues { (_, v) -> FileUtil.toSystemIndependentName(v) })
         }
       }
     }

@@ -27,6 +27,8 @@ import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
+import com.intellij.execution.application.JavaConsoleDecorator;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaCommandLineState;
 import com.intellij.execution.configurations.JavaParameters;
@@ -41,15 +43,18 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.target.TargetEnvironmentRequest;
 import com.intellij.execution.target.TargetedCommandLineBuilder;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
@@ -76,6 +81,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.SwingUtilities;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.MissingResourceException;
@@ -110,6 +116,18 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
         FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles();
       });
     });
+  }
+
+  @Override
+  protected void setupModuleRoots() {
+    // Without a recursive refresh, newly added test-source files (e.g. companion .java classes for new debugger tests)
+    // are invisible to PSI, and JavaPsiFacade.findClass returns null inside createBreakpoints(String).
+    String srcPath = getSrcPath(getTestAppPath()).replace(File.separatorChar, '/');
+    VirtualFile srcDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(srcPath);
+    if (srcDir != null) {
+      VfsUtil.markDirtyAndRefresh(false, true, true, srcDir);
+    }
+    super.setupModuleRoots();
   }
 
   @Override
@@ -204,6 +222,29 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     UIUtil.invokeAndWaitIfNeeded(debuggerSession::dispose);
   }
 
+  private static JavaCommandLineState createMockJavaCommandLineState(@NotNull ExecutionEnvironment environment,
+                                                                     @NotNull JavaParameters javaParameters,
+                                                                     @NotNull MockConfiguration mockConfiguration) {
+    return new JavaCommandLineState(environment) {
+      @Override
+      protected JavaParameters createJavaParameters() {
+        return javaParameters;
+      }
+
+      @Override
+      protected @NotNull TargetedCommandLineBuilder createTargetedCommandLine(@NotNull TargetEnvironmentRequest request)
+        throws ExecutionException {
+        return getJavaParameters().toCommandLine(request);
+      }
+
+      @Override
+      protected @Nullable ConsoleView createConsole(@NotNull Executor executor) throws ExecutionException {
+        ConsoleView console = super.createConsole(executor);
+        return console == null ? null : JavaConsoleDecorator.decorate(console, mockConfiguration, executor);
+      }
+    };
+  }
+
   protected void createLocalProcess(String className) throws ExecutionException {
     createLocalProcess(createJavaParameters(className));
   }
@@ -227,25 +268,15 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       .asyncAgent(true)
       .create(javaParameters);
 
+    final MockConfiguration mockConfiguration = new MockConfiguration(myProject, myModule);
     ExecutionEnvironment environment = new ExecutionEnvironmentBuilder(myProject, DefaultDebugExecutor.getDebugExecutorInstance())
       .runnerSettings(debuggerRunnerSettings)
-      .runProfile(new MockConfiguration(myProject, myModule))
+      .runProfile(mockConfiguration)
       .build();
-    myRunnableState = new JavaCommandLineState(environment) {
-      @Override
-      protected JavaParameters createJavaParameters() {
-        return javaParameters;
-      }
-
-      @Override
-      protected @NotNull TargetedCommandLineBuilder createTargetedCommandLine(@NotNull TargetEnvironmentRequest request)
-        throws ExecutionException {
-        return getJavaParameters().toCommandLine(request);
-      }
-    };
+    myRunnableState = createMockJavaCommandLineState(environment, javaParameters, mockConfiguration);
 
     myExecutionEnvironment = new ExecutionEnvironmentBuilder(myProject, DefaultDebugExecutor.getDebugExecutorInstance())
-      .runProfile(new MockConfiguration(myProject, myModule))
+      .runProfile(mockConfiguration)
       .build();
     DefaultDebugEnvironment debugEnvironment =
       new DefaultDebugEnvironment(myExecutionEnvironment, myRunnableState, debugParameters, false);
@@ -297,22 +328,12 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     debuggerRunnerSettings.setTransport(transport);
     debuggerRunnerSettings.setDebugPort(transport == DebuggerSettings.SOCKET_TRANSPORT ? "0" : String.valueOf(DEFAULT_ADDRESS));
 
+    final MockConfiguration mockConfiguration = new MockConfiguration(myProject, myModule);
     myExecutionEnvironment = new ExecutionEnvironmentBuilder(myProject, DefaultDebugExecutor.getDebugExecutorInstance())
       .runnerSettings(debuggerRunnerSettings)
-      .runProfile(new MockConfiguration(myProject, myModule))
+      .runProfile(mockConfiguration)
       .build();
-    myRunnableState = new JavaCommandLineState(myExecutionEnvironment) {
-      @Override
-      protected JavaParameters createJavaParameters() {
-        return javaParameters;
-      }
-
-      @Override
-      protected @NotNull TargetedCommandLineBuilder createTargetedCommandLine(@NotNull TargetEnvironmentRequest request)
-        throws ExecutionException {
-        return getJavaParameters().toCommandLine(request);
-      }
-    };
+    myRunnableState = createMockJavaCommandLineState(myExecutionEnvironment, javaParameters, mockConfiguration);
 
     RemoteConnection debugParameters =
       new RemoteConnectionBuilder(debuggerRunnerSettings.LOCAL,
@@ -657,7 +678,6 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   }
 
   protected void setUpPacketsMeasureTest() {
-    ApplicationManagerEx.setInStressTest(true);
     setRegistryPropertyForTest("debugger.track.instrumentation", "false");
     setRegistryPropertyForTest("debugger.evaluate.single.threaded.timeout", "-1");
     setRegistryPropertyForTest("debugger.preload.types.async", "false");

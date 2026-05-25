@@ -638,6 +638,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                     "customComponentDestructuringMigration", // K2-only
                     "convertExplicitContextArgumentToImplicit", // K2-only
                     "convertImplicitContextArgumentToExplicit", // K2-only
+                    "replaceIfExpressionWithFirstOrNull", // K2-only
                 )
             )
         }

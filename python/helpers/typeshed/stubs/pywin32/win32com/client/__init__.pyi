@@ -66,6 +66,7 @@ class CoClassBaseClass:
 class VARIANT:
     varianttype: Incomplete
     def __init__(self, vt, value) -> None: ...
+
     @property
     def value(self): ...
     @value.setter

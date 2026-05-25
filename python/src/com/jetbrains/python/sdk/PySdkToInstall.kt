@@ -55,7 +55,7 @@ class PySdkToInstall(
   PythonSdkType.getInstance(),
   "",
   /**
-   * We use [com.jetbrains.python.sdk.flavors.PythonSdkFlavor.getLanguageLevelFromVersionStringStaticSafe] to parse versions of this type
+   * We use [LanguageLevel.getLanguageLevelFromVersionStringStaticSafe] to parse versions of this type
    * of SDK. That method relies on the version string being prepended with "Python ".
    */
   "${PythonSdkFlavor.PYTHON_VERSION_STRING_PREFIX}${installation.release.version}"

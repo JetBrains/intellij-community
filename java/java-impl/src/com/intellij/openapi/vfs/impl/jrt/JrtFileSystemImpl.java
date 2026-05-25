@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.jrt;
 
 import com.intellij.openapi.Disposable;
@@ -39,7 +39,7 @@ public class JrtFileSystemImpl extends JrtFileSystem implements Disposable {
 
   @Override
   public void dispose() {
-    myHandlers.forEach((k, handler) -> handler.clearCaches());
+    myHandlers.forEach((_, handler) -> handler.clearCaches());
     myHandlers.clear();
   }
 
@@ -114,7 +114,7 @@ public class JrtFileSystemImpl extends JrtFileSystem implements Disposable {
               }
             }
             else if (e instanceof VFileDeleteEvent de) {
-              homePath = de.getFile().getPath();
+              homePath = de.getPath();
             }
 
             if (homePath != null) {

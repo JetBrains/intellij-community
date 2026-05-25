@@ -133,7 +133,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
       throw new IncorrectOperationException(CoreBundle.message("cannot.rename.root.directory", myFile.getPath()));
     }
     VirtualFile child = parentFile.findChild(name);
-    if (child != null && !child.equals(myFile)) {
+    if (child != null && !child.getUrl().equals(myFile.getUrl())) {
       throw new IncorrectOperationException(CoreBundle.message("dir.already.exists.error", child.getPresentableUrl()));
     }
   }

@@ -1,0 +1,6 @@
+// FIX: Replace with 'firstOrNull()'
+// WITH_STDLIB
+
+fun test(list: List<String>): String? {
+    return list.firstOrNull()
+}

@@ -5,6 +5,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.python.pytools.Version
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -18,7 +19,6 @@ import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.installExecutableViaPythonScript
-import com.jetbrains.python.sdk.persist
 import com.jetbrains.python.sdk.setAssociationToModule
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
@@ -79,7 +79,6 @@ internal abstract class CustomNewEnvironmentCreator<P : PathHolder>(
 
     val newSdk = setupEnvSdk(moduleBasePath).getOr { return it }
 
-    newSdk.persist()
     if (module != null) {
       newSdk.setAssociationToModule(module)
       module.baseDir?.refresh(true, false)

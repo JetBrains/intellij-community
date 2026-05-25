@@ -44,12 +44,15 @@ class _dispatchable(Generic[_P, _R]):
         returns_graph: bool = False,
         implemented_by_nx: bool = True,
     ) -> Self: ...
+
     @property
     def __doc__(self): ...
     @__doc__.setter
     def __doc__(self, val) -> None: ...
+
     @property
     def __signature__(self): ...
+
     # Type system limitations doesn't allow us to define this as it truly should.
     # But specifying backend with backend_kwargs isn't a common usecase anyway
     # and specifying backend as explicitly None is possible but not intended.
@@ -58,6 +61,7 @@ class _dispatchable(Generic[_P, _R]):
     def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> _R: ...
     @overload
     def __call__(self, *args: Any, backend: str, **backend_kwargs: Any) -> _R: ...
+
     # @overload
     # def __call__(self, *args: _P.args, backend: None = None, **kwargs: _P.kwargs) -> _R: ...
     # @overload

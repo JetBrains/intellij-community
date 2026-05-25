@@ -23,6 +23,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntArrayList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -286,6 +287,7 @@ public class PathEditor {
     setModified(true);
   }
 
+  @ApiStatus.Internal
   protected static class PathCellRenderer extends ColoredListCellRenderer<VirtualFile> {
     @Override
     protected void customizeCellRenderer(@NotNull JList<? extends VirtualFile> list, VirtualFile file, int index, boolean selected, boolean focused) {

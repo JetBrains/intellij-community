@@ -16,7 +16,6 @@ import com.intellij.ui.components.DialogPanel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.DialogAction
 import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.sdk.add.PyAddSdkDialog.Companion.show
 import com.jetbrains.python.sdk.collectAddInterpreterActions
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls

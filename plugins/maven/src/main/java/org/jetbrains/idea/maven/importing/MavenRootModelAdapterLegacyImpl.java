@@ -425,7 +425,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
     String extension = null;
 
     if (artifactType != null) {
-      Pair<String, String> result = project.getClassifierAndExtension(artifact, artifactType);
+      Pair<String, String> result = MavenExtraArtifacts.getClassifierAndExtension(project, artifact, artifactType);
       classifier = result.first;
       extension = result.second;
     }

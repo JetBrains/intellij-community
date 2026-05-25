@@ -16,7 +16,6 @@ import com.jetbrains.python.sdk.add.v2.PythonExistingEnvironmentConfigurator
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterComboBox
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterCreationTargets
 import com.jetbrains.python.sdk.add.v2.ValidatedPath
-import com.jetbrains.python.sdk.add.v2.existingSdks
 import com.jetbrains.python.sdk.add.v2.mapDistinctSortedForExistingEnvironment
 import com.jetbrains.python.sdk.add.v2.pythonInterpreterComboBox
 import com.jetbrains.python.sdk.add.v2.setupSdk

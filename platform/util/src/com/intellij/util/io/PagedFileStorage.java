@@ -4,6 +4,7 @@ package com.intellij.util.io;
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThrowableNotNullFunction;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.io.ChannelsAccessor.FileChannelOperation;
@@ -19,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -27,7 +29,7 @@ import java.nio.file.Path;
 import static com.intellij.util.io.PageCacheUtils.CHANNELS_CACHE;
 
 @Internal
-public final class PagedFileStorage implements Forceable/*, PagedStorage*/, Closeable {
+public final class PagedFileStorage implements Forceable/*, PagedStorage*/, Closeable, CleanableStorage {
   static final Logger LOG = Logger.getInstance(PagedFileStorage.class);
 
   private static final int DEFAULT_PAGE_SIZE = PageCacheUtils.DEFAULT_PAGE_SIZE;
@@ -347,7 +349,7 @@ public final class PagedFileStorage implements Forceable/*, PagedStorage*/, Clos
     long oldSize;
 
     if (Files.exists(myFile)) {
-      oldSize = Files.size(myFile);
+      oldSize = myStorageLockContext.executeOp(myFile, FileChannel::size, /*readOnly: */ true);
     }
     else {
       Files.createDirectories(myFile.getParent());
@@ -407,7 +409,7 @@ public final class PagedFileStorage implements Forceable/*, PagedStorage*/, Clos
     if (size == -1) {
       if (Files.exists(myFile)) {
         try {
-          mySize = size = Files.size(myFile);
+          mySize = size = myStorageLockContext.executeOp(myFile, FileChannel::size, /*readOnly: */ true);
         }
         catch (IOException e) {
           LOG.error(e);
@@ -477,6 +479,12 @@ public final class PagedFileStorage implements Forceable/*, PagedStorage*/, Clos
 
   public boolean isReadOnly() {
     return myReadOnly;
+  }
+
+  @Override
+  public void closeAndClean() throws IOException {
+    close();
+    NioFiles.deleteRecursively(myFile);
   }
 
   private static byte[] getThreadLocalTypedIOBuffer() {

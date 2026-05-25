@@ -21,6 +21,7 @@ class Feature(Enum):
 def do_not_convert(func: Callable[_Param, _RetType]) -> Callable[_Param, _RetType]: ...
 @overload
 def do_not_convert(func: None = None) -> Callable[[Callable[_Param, _RetType]], Callable[_Param, _RetType]]: ...
+
 def set_loop_options(
     parallel_iterations: Integer = ...,
     swap_memory: bool = ...,

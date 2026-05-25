@@ -94,12 +94,6 @@ class MavenProjectResolver(private val myProject: Project) {
       val embedder = mavenEmbedderWrappers.getEmbedder(Path.of(baseDir))
       try {
         val userProperties = Properties()
-        for (mavenProject in mavenProjectsInBaseDir) {
-          @Suppress("DEPRECATION")
-          for (mavenImporter in org.jetbrains.idea.maven.importing.MavenImporter.getSuitableImporters(mavenProject)) {
-            mavenImporter.customizeUserProperties(myProject, mavenProject, userProperties)
-          }
-        }
         val pomToDependencyHash = mavenProjectsInBaseDir.associate { it.file to if (incrementally) it.dependencyHash else null }
         val projectsWithUnresolvedPluginsChunk = tracer.spanBuilder("doResolveMavenProject")
           .useWithScope {

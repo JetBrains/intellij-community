@@ -210,8 +210,8 @@ class AgentSessionsActivitySummaryTest {
 
   @Test
   fun stripeBadgeUsesAgentWorkbenchActivityColors() {
-    assertThat(AgentSessionsStripeBadge.ATTENTION.color().rgb).isEqualTo(AgentThreadActivity.NEEDS_INPUT.statusColor().rgb)
-    assertThat(AgentSessionsStripeBadge.DONE.color().rgb).isEqualTo(AgentThreadActivity.UNREAD.statusColor().rgb)
+    assertThat(AgentSessionsStripeBadge.ATTENTION.color().rgb).isEqualTo(AgentThreadActivity.NEEDS_INPUT.statusColor()?.rgb)
+    assertThat(AgentSessionsStripeBadge.DONE.color().rgb).isEqualTo(AgentThreadActivity.UNREAD.statusColor()?.rgb)
   }
 
   @Test

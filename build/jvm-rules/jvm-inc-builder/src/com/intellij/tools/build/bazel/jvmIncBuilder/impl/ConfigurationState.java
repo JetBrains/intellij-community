@@ -55,6 +55,7 @@ public class ConfigurationState {
     CLFlags.ADD_READS,
 
     CLFlags.SRCS,
+    CLFlags.SRC_JARS,
     CLFlags.RESOURCES
   );
   
@@ -137,7 +138,8 @@ public class ConfigurationState {
     return getFlagsDigest() != other.getFlagsDigest()
            || getClasspathStructureDigest() != other.getClasspathStructureDigest()
            || getRunnersDigest() != other.getRunnersDigest()
-           || getUntrackedInputsDigest() != other.getUntrackedInputsDigest();
+           || getUntrackedInputsDigest() != other.getUntrackedInputsDigest()
+      ;
   }
 
   public NodeSourceSnapshot getSources() {

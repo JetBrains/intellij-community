@@ -18,13 +18,6 @@ turtledemo\..+
 
 
 # ======================================================================
-# TODO: Module members that exist at runtime, but are missing from stubs
-# ======================================================================
-
-tkinter.Misc.config
-
-
-# ======================================================================
 # Modules that exist at runtime, but are deliberately missing from stubs
 # ======================================================================
 
@@ -463,6 +456,9 @@ unittest.runner._WritelnDecorator.flush  # Methods that come from __getattr__() 
 unittest.runner._WritelnDecorator.write  # Methods that come from __getattr__() at runtime
 urllib.response.addbase.write  # Methods that come from __getattr__() at runtime
 urllib.response.addbase.writelines  # Methods that come from __getattr__() at runtime
+
+(hashlib.__all__)?  # scrypt depends on how OpenSSL was built.
+(pydoc.Doc.getdocloc)?  # Runtime default is an installation-specific stdlib path.
 
 _?weakref\.CallableProxyType\.__getattr__  # Should have all attributes of proxy
 _?weakref\.(ref|ReferenceType)\.__init__  # C implementation has incorrect signature

@@ -1,9 +1,9 @@
-### auto-generated section `build intellij.python.community.impl.uv.common` start
+### auto-generated section `build intellij.python.uv.common` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "common",
-  module_name = "intellij.python.community.impl.uv.common",
+  module_name = "intellij.python.uv.common",
   visibility = ["//visibility:public"],
   srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = glob(["resources/**/*"]),
@@ -21,7 +21,7 @@ jvm_library(
 jvm_library(
   name = "common_test_lib",
   testonly = True,
-  module_name = "intellij.python.community.impl.uv.common",
+  module_name = "intellij.python.uv.common",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [
@@ -32,10 +32,10 @@ jvm_library(
     "//python/python-process-output/common:common_test_lib",
   ]
 )
-### auto-generated section `build intellij.python.community.impl.uv.common` end
+### auto-generated section `build intellij.python.uv.common` end
 
-### auto-generated section `iml intellij.python.community.impl.uv.common` start
+### auto-generated section `iml intellij.python.uv.common` start
 exports_files([
-  "intellij.python.community.impl.uv.common.iml",
+  "intellij.python.uv.common.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.python.community.impl.uv.common` end
+### auto-generated section `iml intellij.python.uv.common` end

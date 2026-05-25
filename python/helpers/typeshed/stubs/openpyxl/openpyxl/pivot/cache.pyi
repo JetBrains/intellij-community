@@ -34,6 +34,7 @@ class PivotDimension(Serialisable):
     name: String[Literal[False]]
     uniqueName: String[Literal[False]]
     caption: String[Literal[False]]
+
     @overload
     def __init__(self, measure: _ConvertibleToBool = None, *, name: str, uniqueName: str, caption: str) -> None: ...
     @overload
@@ -69,6 +70,7 @@ class CalculatedItem(Serialisable):
     pivotArea: Typed[PivotArea, Literal[False]]
     extLst: Typed[ExtensionList, Literal[True]]
     __elements__: ClassVar[tuple[str, ...]]
+
     @overload
     def __init__(self, field: ConvertibleToInt | None = None, *, formula: str, pivotArea: PivotArea, extLst=None) -> None: ...
     @overload
@@ -240,6 +242,7 @@ class CacheHierarchy(Serialisable):
     groupLevels: NestedSequence[list[GroupLevel]]
     extLst: Typed[ExtensionList, Literal[True]]
     __elements__: ClassVar[tuple[str, ...]]
+
     @overload
     def __init__(
         self,
@@ -416,6 +419,7 @@ class CacheField(Serialisable):
     mappingCount: Integer[Literal[True]]
     memberPropertyField: Bool[Literal[True]]
     __elements__: ClassVar[tuple[str, ...]]
+
     @overload
     def __init__(
         self,
@@ -469,6 +473,7 @@ class RangeSet(Serialisable):
     ref: String[Literal[False]]
     name: String[Literal[True]]
     sheet: String[Literal[True]]
+
     @overload
     def __init__(
         self,
@@ -570,6 +575,7 @@ class CacheDefinition(Serialisable):
     extLst: Typed[ExtensionList, Literal[True]]
     id: Incomplete
     __elements__: ClassVar[tuple[str, ...]]
+
     @overload
     def __init__(
         self,
@@ -637,6 +643,7 @@ class CacheDefinition(Serialisable):
         extLst: ExtensionList | None = None,
         id=None,
     ) -> None: ...
+
     def to_tree(self) -> Element: ...  # type: ignore[override]
     @property
     def path(self) -> str: ...

@@ -17,6 +17,7 @@ class CustomChartsheetView(Serialisable):
     pageSetup: Typed[PrintPageSetup, Literal[True]]
     headerFooter: Typed[HeaderFooter, Literal[True]]
     __elements__: ClassVar[tuple[str, ...]]
+
     @overload
     def __init__(
         self,

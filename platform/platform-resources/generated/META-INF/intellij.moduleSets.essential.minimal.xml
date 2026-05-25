@@ -135,6 +135,7 @@
     <!-- endregion -->
 
     <!-- region direct modules -->
+    <module name="intellij.platform.runtime.product" loading="embedded"/>
     <module name="intellij.platform.diagnostic.telemetry" loading="embedded"/>
     <module name="intellij.platform.util.ex" loading="embedded"/>
     <module name="intellij.platform.util.ui" loading="embedded"/>
@@ -259,6 +260,8 @@
     <!-- region direct modules -->
     <module name="intellij.libraries.download.pgp.verifier" loading="embedded"/>
     <module name="intellij.remoteDev.util" loading="embedded"/>
+    <module name="intellij.libraries.teamcity.service.messages" loading="embedded"/>
+    <module name="intellij.platform.buildScripts.downloader" loading="embedded"/>
     <module name="intellij.platform.credentialStore.ui" loading="embedded"/>
     <module name="intellij.platform.credentialStore.impl" loading="embedded"/>
     <module name="intellij.platform.settings.local"/>

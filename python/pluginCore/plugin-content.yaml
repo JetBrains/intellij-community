@@ -1,6 +1,9 @@
 - name: lib/modules/intellij.python.ast.jar
   contentModules:
   - name: intellij.python.ast
+- name: lib/modules/intellij.python.black.jar
+  contentModules:
+  - name: intellij.python.black
 - name: lib/modules/intellij.python.common.jar
   contentModules:
   - name: intellij.python.common
@@ -57,12 +60,6 @@
 - name: lib/modules/intellij.python.community.impl.poetry.common.jar
   contentModules:
   - name: intellij.python.community.impl.poetry.common
-- name: lib/modules/intellij.python.community.impl.uv.backend.jar
-  contentModules:
-  - name: intellij.python.community.impl.uv.backend
-- name: lib/modules/intellij.python.community.impl.uv.common.jar
-  contentModules:
-  - name: intellij.python.community.impl.uv.common
 - name: lib/modules/intellij.python.community.interpreters.jar
   contentModules:
   - name: intellij.python.community.interpreters
@@ -158,6 +155,12 @@
   - name: $MAVEN_REPOSITORY$/io/consensys/tuweni/tuweni-toml/2/tuweni-toml-2.jar
   - name: $MAVEN_REPOSITORY$/org/antlr/antlr4-runtime/4/antlr4-runtime-4.jar
   reason: <- intellij.python.pyproject
+- name: lib/modules/intellij.python.pytools.jar
+  contentModules:
+  - name: intellij.python.pytools
+- name: lib/modules/intellij.python.pytools.ui.jar
+  contentModules:
+  - name: intellij.python.pytools.ui
 - name: lib/modules/intellij.python.requirements.jar
   contentModules:
   - name: intellij.python.requirements
@@ -189,6 +192,12 @@
 - name: lib/modules/intellij.python.terminal.jar
   contentModules:
   - name: intellij.python.terminal
+- name: lib/modules/intellij.python.uv.backend.jar
+  contentModules:
+  - name: intellij.python.uv.backend
+- name: lib/modules/intellij.python.uv.common.jar
+  contentModules:
+  - name: intellij.python.uv.common
 - name: lib/modules/intellij.python.venv.jar
   contentModules:
   - name: intellij.python.venv

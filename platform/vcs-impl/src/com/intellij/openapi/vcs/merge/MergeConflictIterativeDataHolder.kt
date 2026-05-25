@@ -51,8 +51,8 @@ class MergeConflictIterativeDataHolder(
   }
 
   @RequiresEdt
-  fun getResolvedFiles(): Set<VirtualFile> {
-    return mergeConflictModels.filter { it.value.getUnresolvedChanges().isEmpty() }.keys
+  fun getResolvedFilesAndModels(): Map<VirtualFile, MergeConflictModel> {
+    return mergeConflictModels.filter { it.value.getUnresolvedChanges().isEmpty() }
   }
 
   @RequiresEdt

@@ -23,6 +23,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceRe
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceRefreshResult
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
+import com.intellij.agent.workbench.sessions.frame.AgentChatOpenModeSettings
 import com.intellij.agent.workbench.sessions.frame.OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.model.ProjectEntry
@@ -38,8 +39,6 @@ import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.agent.workbench.sessions.state.InMemorySessionWarmState
 import com.intellij.agent.workbench.sessions.state.SessionWarmState
 import com.intellij.openapi.options.advanced.AdvancedSettingBean
-import com.intellij.openapi.options.advanced.AdvancedSettings
-import com.intellij.openapi.options.advanced.AdvancedSettingsImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import kotlinx.coroutines.CoroutineScope
@@ -512,10 +511,11 @@ internal suspend fun withServiceAndArchiveAndLaunch(
   @Suppress("RAW_SCOPE_CREATION")
   val scope = CoroutineScope(job + Dispatchers.Default)
   val settingDisposable = Disposer.newDisposable()
+  var previousOpenInDedicatedFrame: Boolean? = null
   try {
-    val advancedSettings = AdvancedSettings.getInstance() as AdvancedSettingsImpl
     registerDedicatedFrameSettingForTest(settingDisposable)
-    advancedSettings.setSetting(OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID, true, settingDisposable)
+    previousOpenInDedicatedFrame = AgentChatOpenModeSettings.openInDedicatedFrame()
+    AgentChatOpenModeSettings.setOpenInDedicatedFrame(true)
     val stateStore = AgentSessionsStateStore()
     val contentRepository = AgentSessionContentRepository(
       stateStore = stateStore,
@@ -578,6 +578,7 @@ internal suspend fun withServiceAndArchiveAndLaunch(
     action(service, archiveService, launchService)
   }
   finally {
+    previousOpenInDedicatedFrame?.let { AgentChatOpenModeSettings.setOpenInDedicatedFrame(it) }
     Disposer.dispose(settingDisposable)
     job.cancelAndJoin()
   }

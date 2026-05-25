@@ -27,19 +27,23 @@ def as_string(
     fill: str = "",
     name: str | None = None,
 ) -> RaggedTensor: ...
+
 def bytes_split(input: TensorCompatible | RaggedTensor, name: str | None = None) -> RaggedTensor: ...
 def format(
     template: str, inputs: TensorCompatible, placeholder: str = "{}", summarize: int = 3, name: str | None = None
 ) -> Tensor: ...
 def join(inputs: Sequence[TensorCompatible | RaggedTensor], separator: str = "", name: str | None = None) -> Tensor: ...
+
 @overload
 def length(input: TensorCompatible, unit: Literal["BYTE", "UTF8_CHAR"] = "BYTE", name: str | None = None) -> Tensor: ...
 @overload
 def length(input: RaggedTensor, unit: Literal["BYTE", "UTF8_CHAR"] = "BYTE", name: str | None = None) -> RaggedTensor: ...
+
 @overload
 def lower(input: TensorCompatible, encoding: Literal["utf-8", ""] = "", name: str | None = None) -> Tensor: ...
 @overload
 def lower(input: RaggedTensor, encoding: Literal["utf-8", ""] = "", name: str | None = None) -> RaggedTensor: ...
+
 def ngrams(
     data: StringTensorCompatible | RaggedTensor,
     ngram_width: int | Sequence[int],
@@ -56,10 +60,12 @@ def reduce_join(
     separator: str = "",
     name: str | None = None,
 ) -> Tensor: ...
+
 @overload
 def regex_full_match(input: StringTensorCompatible, pattern: StringTensorCompatible, name: str | None = None) -> Tensor: ...
 @overload
 def regex_full_match(input: RaggedTensor, pattern: StringTensorCompatible, name: str | None = None) -> RaggedTensor: ...
+
 @overload
 def regex_replace(
     input: StringTensorCompatible,
@@ -76,16 +82,19 @@ def regex_replace(
     replace_global: bool = True,
     name: str | None = None,
 ) -> RaggedTensor: ...
+
 def split(
     input: StringTensorCompatible | RaggedTensor,
     sep: StringTensorCompatible | None = None,
     maxsplit: int = -1,
     name: str | None = None,
 ) -> RaggedTensor: ...
+
 @overload
 def strip(input: StringTensorCompatible, name: str | None = None) -> Tensor: ...
 @overload
 def strip(input: RaggedTensor, name: str | None = None) -> RaggedTensor: ...
+
 @overload
 def substr(
     input: StringTensorCompatible,
@@ -102,24 +111,29 @@ def substr(
     unit: Literal["BYTE", "UTF8_CHAR"] = "BYTE",
     name: str | None = None,
 ) -> RaggedTensor: ...
+
 @overload
 def to_hash_bucket(input: StringTensorCompatible, num_buckets: int, name: str | None = None) -> Tensor: ...
 @overload
 def to_hash_bucket(input: RaggedTensor, num_buckets: int, name: str | None = None) -> RaggedTensor: ...
+
 @overload
 def to_hash_bucket_fast(input: StringTensorCompatible, num_buckets: int, name: str | None = None) -> Tensor: ...
 @overload
 def to_hash_bucket_fast(input: RaggedTensor, num_buckets: int, name: str | None = None) -> RaggedTensor: ...
+
 @overload
 def to_hash_bucket_strong(
     input: StringTensorCompatible, num_buckets: int, key: Sequence[int], name: str | None = None
 ) -> Tensor: ...
 @overload
 def to_hash_bucket_strong(input: RaggedTensor, num_buckets: int, key: Sequence[int], name: str | None = None) -> RaggedTensor: ...
+
 @overload
 def to_number(input: StringTensorCompatible, out_type: DType = ..., name: str | None = None) -> Tensor: ...
 @overload
 def to_number(input: RaggedTensor, out_type: DType = ..., name: str | None = None) -> RaggedTensor: ...
+
 @overload
 def unicode_decode(
     input: StringTensorCompatible,
@@ -138,6 +152,7 @@ def unicode_decode(
     replace_control_characters: bool = False,
     name: str | None = None,
 ) -> RaggedTensor: ...
+
 @overload
 def unicode_decode_with_offsets(
     input: StringTensorCompatible,
@@ -156,6 +171,7 @@ def unicode_decode_with_offsets(
     replace_control_characters: bool = False,
     name: str | None = None,
 ) -> tuple[RaggedTensor, RaggedTensor]: ...
+
 @overload
 def unicode_encode(
     input: TensorCompatible,
@@ -172,10 +188,12 @@ def unicode_encode(
     replacement_char: int = 65533,
     name: str | None = None,
 ) -> RaggedTensor: ...
+
 @overload
 def unicode_script(input: TensorCompatible, name: str | None = None) -> Tensor: ...
 @overload
 def unicode_script(input: RaggedTensor, name: str | None = None) -> RaggedTensor: ...
+
 @overload
 def unicode_split(
     input: StringTensorCompatible,
@@ -192,6 +210,7 @@ def unicode_split(
     replacement_char: int = 65533,
     name: str | None = None,
 ) -> RaggedTensor: ...
+
 @overload
 def unicode_split_with_offsets(
     input: StringTensorCompatible,
@@ -208,6 +227,7 @@ def unicode_split_with_offsets(
     replacement_char: int = 65533,
     name: str | None = None,
 ) -> tuple[RaggedTensor, RaggedTensor]: ...
+
 @overload
 def unicode_transcode(
     input: StringTensorCompatible,
@@ -228,6 +248,7 @@ def unicode_transcode(
     replace_control_characters: bool = False,
     name: str | None = None,
 ) -> RaggedTensor: ...
+
 def unsorted_segment_join(
     inputs: StringTensorCompatible,
     segment_ids: UIntTensorCompatible,
@@ -235,6 +256,7 @@ def unsorted_segment_join(
     separator: str = "",
     name: str | None = None,
 ) -> Tensor: ...
+
 @overload
 def upper(input: TensorCompatible, encoding: Literal["utf-8", ""] = "", name: str | None = None) -> Tensor: ...
 @overload

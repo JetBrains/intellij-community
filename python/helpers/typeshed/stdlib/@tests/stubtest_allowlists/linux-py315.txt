@@ -1,70 +1,14 @@
-# ============================================
-# TODO: Allowlist entries that should be fixed
-# ============================================
-
-# GitHub Actions' Python 3.15 Linux build currently lacks _decimal, so
-# decimal falls back to _pydecimal with different runtime signatures.
-decimal\..*
-_decimal
-_pyrepl.fancy_termios
-_pyrepl.unix_console
-_pyrepl.unix_eventqueue
-ctypes.c_double_complex._type_
-ctypes.c_float_complex._type_
-ctypes.c_longdouble_complex._type_
-os.AT_NO_AUTOMOUNT
-os.AT_STATX_DONT_SYNC
-os.AT_STATX_FORCE_SYNC
-os.AT_STATX_SYNC_AS_STAT
-os.NODEV
-os.STATX_ATIME
-os.STATX_BASIC_STATS
-os.STATX_BLOCKS
-os.STATX_BTIME
-os.STATX_CTIME
-os.STATX_DIOALIGN
-os.STATX_GID
-os.STATX_INO
-os.STATX_MNT_ID
-os.STATX_MNT_ID_UNIQUE
-os.STATX_MODE
-os.STATX_MTIME
-os.STATX_NLINK
-os.STATX_SIZE
-os.STATX_TYPE
-os.STATX_UID
-os.__all__
-os._clearenv
-os.statx
-os.statx_result
-posix.AT_NO_AUTOMOUNT
-posix.AT_STATX_DONT_SYNC
-posix.AT_STATX_FORCE_SYNC
-posix.AT_STATX_SYNC_AS_STAT
-posix.NODEV
-posix.STATX_ATIME
-posix.STATX_BASIC_STATS
-posix.STATX_BLOCKS
-posix.STATX_BTIME
-posix.STATX_CTIME
-posix.STATX_DIOALIGN
-posix.STATX_GID
-posix.STATX_INO
-posix.STATX_MNT_ID
-posix.STATX_MNT_ID_UNIQUE
-posix.STATX_MODE
-posix.STATX_MTIME
-posix.STATX_NLINK
-posix.STATX_SIZE
-posix.STATX_TYPE
-posix.STATX_UID
-posix.statx
-readline.get_pre_input_hook
-
-
 # =============================================================
 # Allowlist entries that cannot or should not be fixed; >= 3.15
 # =============================================================
+
+# GitHub Actions' Python 3.15 Linux build currently lacks _decimal, so
+# decimal falls back to _pydecimal with different runtime signatures.
+_decimal
+decimal\..*
+
+# Depends on how readline was built.
+readline.get_pre_input_hook
 
 # Internal implementation details of the sampling profiler.
 profiling.sampling.live_collector

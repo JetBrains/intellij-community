@@ -156,6 +156,7 @@ class croniter(Generic[_R_co]):
         second_at_beginning: bool = False,
         expand_from_start_time: bool = False,
     ) -> croniter[datetime.datetime]: ...
+
     def __init__(
         self,
         expr_format: str,
@@ -169,6 +170,7 @@ class croniter(Generic[_R_co]):
         second_at_beginning: bool = False,
         expand_from_start_time: bool = False,
     ) -> None: ...
+
     @overload
     def get_next(
         self, ret_type: type[_R2_co], start_time: float | datetime.datetime | None = None, update_current: bool = True
@@ -177,6 +179,7 @@ class croniter(Generic[_R_co]):
     def get_next(
         self, ret_type: None = None, start_time: float | datetime.datetime | None = None, update_current: bool = True
     ) -> _R_co: ...
+
     @overload
     def get_prev(
         self, ret_type: type[_R2_co], start_time: float | datetime.datetime | None = None, update_current: bool = True
@@ -185,14 +188,17 @@ class croniter(Generic[_R_co]):
     def get_prev(
         self, ret_type: None = None, start_time: float | datetime.datetime | None = None, update_current: bool = True
     ) -> _R_co: ...
+
     @overload
     def get_current(self, ret_type: type[_R2_co]) -> _R2_co: ...
     @overload
     def get_current(self, ret_type: None = None) -> _R_co: ...
+
     def set_current(self, start_time: float | datetime.datetime | None, force: bool = True) -> float: ...
     @staticmethod
     def datetime_to_timestamp(d: datetime.datetime) -> float: ...
     def timestamp_to_datetime(self, timestamp: float, tzinfo: datetime.tzinfo | None = ...) -> datetime.datetime: ...
+
     @overload
     def all_next(
         self, ret_type: type[_R2_co], start_time: float | datetime.datetime | None = None, update_current: bool | None = None
@@ -201,6 +207,7 @@ class croniter(Generic[_R_co]):
     def all_next(
         self, ret_type: None = None, start_time: float | datetime.datetime | None = None, update_current: bool | None = None
     ) -> Generator[_R_co]: ...
+
     @overload
     def all_prev(
         self, ret_type: type[_R2_co], start_time: float | datetime.datetime | None = None, update_current: bool | None = None
@@ -209,8 +216,10 @@ class croniter(Generic[_R_co]):
     def all_prev(
         self, ret_type: None = None, start_time: float | datetime.datetime | None = None, update_current: bool | None = None
     ) -> Generator[_R_co]: ...
+
     def iter(self, *args: Unused, **kwargs: Unused) -> _AllIter[_R_co]: ...
     def __iter__(self) -> Self: ...
+
     @overload
     def next(
         self,
@@ -227,6 +236,7 @@ class croniter(Generic[_R_co]):
         is_prev: bool | None = None,
         update_current: bool | None = None,
     ) -> _R_co: ...
+
     __next__ = next
     @classmethod
     def value_alias(
@@ -316,6 +326,7 @@ def croniter_range(
 class HashExpander:
     cron: croniter
     def __init__(self, cronit: croniter) -> None: ...
+
     @overload
     def do(
         self,
@@ -333,6 +344,7 @@ class HashExpander:
     def do(
         self, idx: int, hash_type: str = "h", *, hash_id: bytes, range_end: int | None = None, range_begin: int | None = None
     ) -> int: ...
+
     def match(self, efl: Unused, idx: Unused, expr: str, hash_id: bytes | None = None, **kw: Unused) -> Match[str] | None: ...
     def expand(
         self,

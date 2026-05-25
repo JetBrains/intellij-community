@@ -5,17 +5,17 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.weighers
 import com.intellij.codeInsight.completion.CompletionSorter
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parentsOfType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaImplicitReceiver
 import org.jetbrains.kotlin.analysis.api.components.KaScopeContext
 import org.jetbrains.kotlin.analysis.api.components.allOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.components.arrayElementType
+import org.jetbrains.kotlin.analysis.api.components.expectedType
 import org.jetbrains.kotlin.analysis.api.components.expressionType
 import org.jetbrains.kotlin.analysis.api.components.fakeOverrideOriginal
 import org.jetbrains.kotlin.analysis.api.components.importingScopeContext
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.components.scopeContext
 import org.jetbrains.kotlin.analysis.api.components.typeCreator
@@ -23,8 +23,6 @@ import org.jetbrains.kotlin.analysis.api.components.withNullability
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
-import org.jetbrains.kotlin.analysis.api.resolution.KaAnnotationCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
@@ -56,7 +54,6 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtBinaryExpressionWithTypeRHS
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
@@ -68,7 +65,6 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtIsExpression
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
-import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.resolve.ImportPath
 
 internal class WeighingContext private constructor(
@@ -240,21 +236,17 @@ internal class WeighingContext private constructor(
         }
 
         /**
-         * Returns the expected type for elements within the collection literal
-         * if [nameExpression] is within a collection literal.
+         * Returns the expected type for elements within the [collectionLiteralExpression]
          *
-         * TODO: It seems like a bug in the analysis API that this is required: KT-76480
+         * TODO: It seems like a bug in the analysis API that this is required: KT-76480, KT-83737
          */
         context(_: KaSession)
         internal fun getAnnotationLiteralExpectedType(
-            nameExpression: KtElement,
+            collectionLiteralExpression: KtCollectionLiteralExpression,
         ): KaType? {
-            val collectionLiteralEntry = nameExpression.parent as? KtCollectionLiteralExpression ?: return null
-            val annotationArgument = collectionLiteralEntry.parent as? KtValueArgument ?: return null
-            val annotationEntry = annotationArgument.parentOfType<KtAnnotationEntry>() ?: return null
-            val annotationCall = annotationEntry.resolveToCall()?.successfulCallOrNull<KaAnnotationCall>() ?: return null
-            val callArgument = annotationCall.argumentMapping[collectionLiteralEntry] ?: return null
-            return callArgument.symbol.returnType
+            // If the literal has an expected type, then the expected type inside the literal is the
+            // array element type.
+            return collectionLiteralExpression.expectedType?.arrayElementType
         }
 
         context(_: KaSession)

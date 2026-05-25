@@ -15,7 +15,7 @@ interface TestConfigurationDslScope
 val TestConfigurationDslScope.writeAccess: TestConfiguration
     get() = this as TestConfiguration
 
-class TestConfiguration(private val featuresConfiguration: MutableMap<TestFeature<*>, Any> = mutableMapOf()) : TestConfigurationDslScope {
+open class TestConfiguration(private val featuresConfiguration: MutableMap<TestFeature<*>, Any> = mutableMapOf()) : TestConfigurationDslScope {
 
     fun <V : Any, K : TestFeature<V>> getConfiguration(feature: K): V = getOrPutConfiguration(feature) { feature.createDefaultConfiguration() }
 

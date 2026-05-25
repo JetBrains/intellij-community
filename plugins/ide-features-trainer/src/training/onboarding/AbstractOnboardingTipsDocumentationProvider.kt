@@ -49,11 +49,16 @@ abstract class AbstractOnboardingTipsDocumentationProvider(private val commentTo
   }
 
   override fun findDocComment(file: PsiFile, range: TextRange): PsiDocCommentBase? {
-    if (isEnabledForFile(file)) return null
+    if (!isEnabledForFile(file)) return null
+    val filePath = file.virtualFile?.path ?: return null
+    if (filePath != file.project.filePathWithOnboardingTips) return null
+
     var result: PsiDocCommentBase? = null
     file.accept(object: PsiRecursiveElementVisitor() {
       override fun visitComment(comment: PsiComment) {
         if (comment.textRange.startOffset != range.startOffset) return
+        if (comment.node.elementType != commentTokenType) return
+        if (!comment.text.startsWith(tipPrefix)) return
         result = OnboardingTipComment(comment.parent, range, commentTokenType)
       }
     })

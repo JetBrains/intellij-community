@@ -150,10 +150,8 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
     while (currentUrl.isNotEmpty()) {
       val file = fileManager.findFileByUrl(currentUrl)
       if (file != null) {
-        val filesets = findFileSets(file, true, true, false, false, false, false, false)
-        val isIndexable = filesets.any {
-          it.kind.isIndexable && (allowNonRecursive || (it as? WorkspaceFileSetWithCustomData<*>)?.recursive == true)
-        }
+        val filesets = findFileSets(file, true, true, false, true, true, false, true)
+        val isIndexable = filesets.any { allowNonRecursive || (it as? WorkspaceFileSetWithCustomData<*>)?.recursive == true }
         return ThreeState.fromBoolean(isIndexable)
       }
       val virtualFileUrl = urlManager.findByUrl(currentUrl)
@@ -163,6 +161,7 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
           NonExistingFileSetKind.EXCLUDED_FROM_CONTENT in kinds -> return ThreeState.NO
           NonExistingFileSetKind.EXCLUDED_OTHER in kinds -> return ThreeState.UNSURE
           NonExistingFileSetKind.INCLUDED_CONTENT in kinds -> return ThreeState.YES
+          NonExistingFileSetKind.INCLUDED_OTHER in kinds -> return ThreeState.YES
           NonExistingFileSetKind.INCLUDED_CONTENT_NON_INDEXABLE in kinds -> return ThreeState.NO
         }
       }

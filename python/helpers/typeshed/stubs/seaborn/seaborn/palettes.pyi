@@ -52,6 +52,7 @@ def color_palette(
     desat: float | None = None,
     as_cmap: Literal[False] = False,
 ) -> _RGBColorPalette: ...
+
 @overload
 def hls_palette(
     n_colors: int = 6, h: float = 0.01, l: float = 0.6, s: float = 0.65, *, as_cmap: Literal[True]
@@ -60,6 +61,7 @@ def hls_palette(
 def hls_palette(
     n_colors: int = 6, h: float = 0.01, l: float = 0.6, s: float = 0.65, as_cmap: Literal[False] = False
 ) -> _RGBColorPalette: ...
+
 @overload
 def husl_palette(
     n_colors: int = 6, h: float = 0.01, s: float = 0.9, l: float = 0.65, *, as_cmap: Literal[True]
@@ -68,10 +70,12 @@ def husl_palette(
 def husl_palette(
     n_colors: int = 6, h: float = 0.01, s: float = 0.9, l: float = 0.65, as_cmap: Literal[False] = False
 ) -> _RGBColorPalette: ...
+
 @overload
 def mpl_palette(name: str, n_colors: int = 6, *, as_cmap: Literal[True]) -> LinearSegmentedColormap: ...
 @overload
 def mpl_palette(name: str, n_colors: int = 6, as_cmap: Literal[False] = False) -> _RGBColorPalette: ...
+
 @overload
 def dark_palette(
     color: ColorType, n_colors: int = 6, reverse: bool = False, *, as_cmap: Literal[True], input: str = "rgb"
@@ -80,6 +84,7 @@ def dark_palette(
 def dark_palette(
     color: ColorType, n_colors: int = 6, reverse: bool = False, as_cmap: Literal[False] = False, input: str = "rgb"
 ) -> _RGBColorPalette: ...
+
 @overload
 def light_palette(
     color: ColorType, n_colors: int = 6, reverse: bool = False, *, as_cmap: Literal[True], input: str = "rgb"
@@ -88,6 +93,7 @@ def light_palette(
 def light_palette(
     color: ColorType, n_colors: int = 6, reverse: bool = False, as_cmap: Literal[False] = False, input: str = "rgb"
 ) -> _RGBColorPalette: ...
+
 @overload
 def diverging_palette(
     h_neg: float,
@@ -111,6 +117,7 @@ def diverging_palette(
     center: Literal["light", "dark"] = "light",
     as_cmap: Literal[False] = False,
 ) -> _RGBColorPalette: ...
+
 @overload
 def blend_palette(
     colors: Iterable[ColorType], n_colors: int = 6, *, as_cmap: Literal[True], input: str = "rgb"
@@ -119,8 +126,10 @@ def blend_palette(
 def blend_palette(
     colors: Iterable[ColorType], n_colors: int = 6, as_cmap: Literal[False] = False, input: str = "rgb"
 ) -> _RGBColorPalette: ...
+
 def xkcd_palette(colors: Iterable[str]) -> _RGBColorPalette: ...
 def crayon_palette(colors: Iterable[str]) -> _RGBColorPalette: ...
+
 @overload
 def cubehelix_palette(
     n_colors: int = 6,
@@ -146,4 +155,5 @@ def cubehelix_palette(
     reverse: bool = False,
     as_cmap: Literal[False] = False,
 ) -> _RGBColorPalette: ...
+
 def set_color_codes(palette: str = "deep") -> None: ...

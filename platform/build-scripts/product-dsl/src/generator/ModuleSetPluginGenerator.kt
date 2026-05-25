@@ -152,7 +152,9 @@ private fun appendModuleSetPluginContentInfos(
       pluginXmlPath = wrapper.pluginXmlPath,
       pluginXmlContent = renderPluginXml(wrapper.moduleSet, wrapper.contentModules),
       pluginId = resolveModuleSetPluginId(wrapper.moduleSet),
-      contentModules = wrapper.contentModules.map { module -> ContentModuleInfo(module.name, module.loading) },
+      contentModules = wrapper.contentModules.map { module ->
+        ContentModuleInfo(moduleId = module.moduleId, loadingMode = module.loading)
+      },
       source = PluginSource.BUNDLED,
       pluginAliases = collectAliases(wrapper.moduleSet),
     )
@@ -301,8 +303,8 @@ private fun generateMainModule(
   val runtimeDependencies = LinkedHashSet<String>()
   for (wrapper in wrappersToAdd.sortedBy { it.moduleName }) {
     runtimeDependencies.add(wrapper.moduleName)
-    for (contentModule in wrapper.contentModules.sortedBy { it.name.value }) {
-      runtimeDependencies.add(contentModule.name.value)
+    for (contentModule in wrapper.contentModules.sortedBy { it.moduleId.name }) {
+      runtimeDependencies.add(contentModule.moduleId.name)
     }
   }
 
@@ -318,7 +320,7 @@ private fun collectPluginContentModules(moduleSet: ModuleSet): List<ContentModul
       return
     }
     for (module in current.modules) {
-      result.putIfAbsent(module.name.value, module)
+      result.putIfAbsent(module.moduleId.name, module)
     }
     for (nested in current.nestedSets) {
       visit(nested)
@@ -366,7 +368,7 @@ private fun renderPluginXml(moduleSet: ModuleSet, contentModules: List<ContentMo
   val displayName = toDisplayName(moduleSet.name)
   val description = "Generated plugin wrapper for module set ${moduleSet.name}."
   val aliases = collectAliases(moduleSet)
-  val sortedModules = contentModules.sortedBy { it.name.value }
+  val sortedModules = contentModules.sortedBy { it.moduleId.name }
 
   return buildString {
     appendLine("<!-- DO NOT EDIT: This file is auto-generated from moduleSet(\"${moduleSet.name}\") -->")
@@ -383,7 +385,7 @@ private fun renderPluginXml(moduleSet: ModuleSet, contentModules: List<ContentMo
 
     appendLine("  <content namespace=\"jetbrains\">")
     for (module in sortedModules) {
-      append("    <module name=\"${module.name.value}\"")
+      append("    <module name=\"${module.moduleId.name}\"")
       when (module.loading) {
         ModuleLoadingRuleValue.EMBEDDED -> append(" loading=\"embedded\"")
         ModuleLoadingRuleValue.REQUIRED -> append(" loading=\"required\"")
@@ -399,8 +401,8 @@ private fun renderPluginXml(moduleSet: ModuleSet, contentModules: List<ContentMo
 private fun renderPluginContentYaml(wrapper: ModuleSetPluginWrapper): String {
   val contentEntries = wrapper.contentModules
     .map { contentModule ->
-      val jarPath = "lib/modules/${contentModule.name.value}.jar"
-      jarPath to contentModule.name.value
+      val jarPath = "lib/modules/${contentModule.moduleId.name}.jar"
+      jarPath to contentModule.moduleId.name
     }
     .sortedBy { (jarPath, _) -> jarPath }
 

@@ -4,7 +4,7 @@ package com.jetbrains.python.sdk.uv
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.python.community.impl.uv.common.icons.PythonCommunityImplUVCommonIcons
+import com.intellij.python.uv.common.icons.PythonUvCommonIcons
 import com.intellij.remote.RemoteSdkPropertiesPaths
 import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
@@ -114,7 +114,7 @@ data class UvSdkFlavorData(
 }
 
 object UvSdkFlavor : CPythonSdkFlavor<UvSdkFlavorData>() {
-  override fun getIcon(): Icon = PythonCommunityImplUVCommonIcons.UV
+  override fun getIcon(): Icon = PythonUvCommonIcons.UV
   override fun getFlavorDataClass(): Class<UvSdkFlavorData> = UvSdkFlavorData::class.java
 
   override fun isValidSdkPath(pythonBinaryPath: Path): Boolean {

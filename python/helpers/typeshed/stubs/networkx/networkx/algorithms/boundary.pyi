@@ -107,5 +107,6 @@ def edge_boundary(
     keys: bool = False,
     default: _U | None = None,
 ) -> Generator[tuple[_Node, _Node, int, dict[str, _U]]]: ...
+
 @_dispatchable
 def node_boundary(G: Graph[_Node], nbunch1: Iterable[Incomplete], nbunch2: Iterable[Incomplete] | None = None) -> set[_Node]: ...

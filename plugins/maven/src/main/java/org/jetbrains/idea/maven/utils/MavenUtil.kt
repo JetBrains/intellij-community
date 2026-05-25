@@ -381,12 +381,6 @@ object MavenUtil {
     return baseDir
   }
 
-  fun getProfilesXmlNioFile(pomFile: VirtualFile?): Path? {
-    if (pomFile == null) return null
-    val parent = pomFile.getParent()
-    if (parent == null) return null
-    return parent.toNioPath().resolve(MavenConstants.PROFILES_XML)
-  }
 
   @JvmStatic
   fun <T, U> collectFirsts(pairs: List<Pair<T, U>>): List<T> {

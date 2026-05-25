@@ -59,6 +59,7 @@ def dumps(
     int_as_string_bitcount: int | None = None,
     iterable_as_array: bool = False,
 ) -> str: ...
+
 @overload
 def dump(
     obj: Any,
@@ -109,6 +110,7 @@ def dump(
     int_as_string_bitcount: int | None = None,
     iterable_as_array: bool = False,
 ) -> None: ...
+
 @overload
 def loads(
     s: _LoadsString,
@@ -137,6 +139,7 @@ def loads(
     use_decimal: bool = False,
     allow_nan: bool = False,
 ) -> Any: ...
+
 @overload
 def load(
     fp: IO[str],
@@ -165,6 +168,7 @@ def load(
     use_decimal: bool = False,
     allow_nan: bool = False,
 ) -> Any: ...
+
 def simple_first(kv: tuple[_T, object]) -> tuple[bool, _T]: ...
 
 __all__ = [

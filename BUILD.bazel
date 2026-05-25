@@ -789,6 +789,8 @@ jvm_library(
     "//plugins/maven/groovy:groovy_test_lib",
     "//plugins/maven/proofreading",
     "//plugins/maven/proofreading:proofreading_test_lib",
+    "//platform/acp/tests",
+    "//platform/acp/tests:tests_test_lib",
     "//platform/core-nio-fs:core-nio-fs-tests",
     "//platform/core-nio-fs:core-nio-fs-tests_test_lib",
     "//platform/diagnostic/telemetry/agent-extension:diagnostic-telemetry-agent-extension",

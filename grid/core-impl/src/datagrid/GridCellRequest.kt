@@ -63,5 +63,9 @@ fun <Row, Column> GridCellRequest<Row, Column>.overrideValue(value: Any?): Fixed
 fun <Row, Column> GridCellRequest<Row, Column>.actual(): ActualGridCellRequest<Row, Column> =
   this as? ActualGridCellRequest<Row, Column> ?: GridCellRequest.request(grid, rowIdx, columnIdx)
 
+/** Pre-mutation DB value; [actual] only strips an [overrideValue] wrapper, this also bypasses the mutation overlay. */
+val <Row, Column> GridCellRequest<Row, Column>.databaseValue: Any?
+  get() = grid.getDataModel(DataAccessType.DATABASE_DATA).getValueAt(rowIdx, columnIdx)
+
 fun <Row, Column> GridCellRequest<Row, Column>.fixed(): FixedGridCellRequest<Row, Column> =
   this as? FixedGridCellRequest<Row, Column> ?: overrideValue(getValue())

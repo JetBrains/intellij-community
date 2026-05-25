@@ -16,8 +16,6 @@ import com.jetbrains.python.sdk.configuration.findEnvOrNull
 import com.jetbrains.python.sdk.configuration.getSdkAssociatedModule
 import com.jetbrains.python.sdk.PythonEnvironment
 import com.jetbrains.python.sdk.detectPythonEnvironment
-import com.jetbrains.python.sdk.persist
-import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
 import com.jetbrains.python.sdk.setAssociationToModule
 import com.jetbrains.python.sdk.uv.impl.getUvExecutableLocal
 import com.jetbrains.python.sdk.uv.setupExistingEnvAndSdk
@@ -62,9 +60,7 @@ internal suspend fun createUvSdk(module: Module, toolId: ToolId, venvsInModule: 
 
   sdkSetupResult.onSuccess {
     withContext(Dispatchers.EDT) {
-      it.persist()
       it.setAssociationToModule(sdkAssociatedModule)
-      sdkAssociatedModule.project.pySdkService.persistSdk(it)
     }
   }
   return sdkSetupResult

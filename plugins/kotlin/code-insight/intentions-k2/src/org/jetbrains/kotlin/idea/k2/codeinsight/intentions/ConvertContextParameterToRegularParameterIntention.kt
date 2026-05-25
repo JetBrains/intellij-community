@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.createSmartPointer
@@ -89,7 +89,7 @@ class ConvertContextParameterToRegularParameterIntention : SelfTargetingIntentio
 
             initialNameForAnonymousParameter?.let { initialName ->
                 withContext(Dispatchers.EDT) {
-                    writeAction {
+                    edtWriteAction {
                         (contextParametersInOverrides + contextParameter).forEach { contextParameter ->
                             if (contextParameter.isWritable) {
                                 contextParameter.setName(initialName)

@@ -391,19 +391,8 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
     if (version == null) {
       return LanguageLevel.getDefault();
     }
-    var result = getLanguageLevelFromVersionStringStaticSafe(version);
+    var result = LanguageLevel.getLanguageLevelFromVersionStringStaticSafe(version);
     return (result == null) ? LanguageLevel.getDefault() : result;
-  }
-
-  /**
-   * For <code>python --version</code> output (i.e <code>Python 3.12</code>) returns {@link LanguageLevel}.
-   * Typical usage: call `python --version`, trim, and provide here.
-   *
-   * @param versionString output to look language level for
-   * @return level or null if no parsable output was found
-   */
-  public static @Nullable LanguageLevel getLanguageLevelFromVersionStringStaticSafe(@NotNull String versionString) {
-    return VersionParserKt.getLanguageLevelFromVersionStringSafe(versionString);
   }
 
   public @NotNull Icon getIcon() {

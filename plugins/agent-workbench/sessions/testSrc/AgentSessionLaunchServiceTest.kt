@@ -11,6 +11,7 @@ import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.common.session.AgentSubAgent
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
+import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchError
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchRequest
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
@@ -193,6 +194,96 @@ class AgentSessionLaunchServiceTest {
           val openRequest = checkNotNull(chatOpenExecutor.lastOpenChatRequest.get())
           assertThat(openRequest.thread.id).isEqualTo(activeThread.id)
           assertThat(openRequest.launchMode).isEqualTo(AgentSessionLaunchMode.YOLO)
+        }
+      }
+    }
+  }
+
+  @Test
+  fun promptLaunchRejectsProvidersWithoutPromptLaunchSupport() {
+    val descriptor = testDescriptor(
+      supportsUnarchiveThread = false,
+      unarchiveThreadHandler = { _, _ -> false },
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      supportsPromptLaunch = false,
+    )
+    val activeThread = thread(id = "codex-active", updatedAt = 200, provider = AgentSessionProvider.CODEX)
+    val chatOpenExecutor = RecordingChatOpenExecutor()
+
+    AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(descriptor))) {
+      runBlocking(Dispatchers.Default) {
+        withTestServiceAndLaunch(
+          sessionSourcesProvider = { listOf(sourceForActiveThreads(listOf(activeThread))) },
+          projectEntriesProvider = { listOf(openTestProjectEntry(PROJECT_PATH, "Project A")) },
+          chatOpenExecutor = chatOpenExecutor,
+        ) { service, launchService ->
+          service.refresh()
+          waitForCondition { activeThreadIds(service.state.value).contains(activeThread.id) }
+
+          val existingThreadResult = launchService.launchPromptRequest(
+            AgentPromptLaunchRequest(
+              provider = AgentSessionProvider.CODEX,
+              projectPath = PROJECT_PATH,
+              launchMode = AgentSessionLaunchMode.STANDARD,
+              initialMessageRequest = AgentPromptInitialMessageRequest(prompt = "Continue this thread"),
+              targetThreadId = activeThread.id,
+            )
+          )
+          val newThreadResult = launchService.launchPromptRequest(
+            AgentPromptLaunchRequest(
+              provider = AgentSessionProvider.CODEX,
+              projectPath = PROJECT_PATH,
+              launchMode = AgentSessionLaunchMode.STANDARD,
+              initialMessageRequest = AgentPromptInitialMessageRequest(prompt = "Start a new thread"),
+            )
+          )
+
+          assertThat(existingThreadResult.launched).isFalse()
+          assertThat(existingThreadResult.error).isEqualTo(AgentPromptLaunchError.PROVIDER_UNAVAILABLE)
+          assertThat(newThreadResult.launched).isFalse()
+          assertThat(newThreadResult.error).isEqualTo(AgentPromptLaunchError.PROVIDER_UNAVAILABLE)
+          assertThat(chatOpenExecutor.openChatCalls.get()).isZero()
+          assertThat(chatOpenExecutor.openNewChatCalls.get()).isZero()
+        }
+      }
+    }
+  }
+
+  @Test
+  fun createNewSessionDoesNotUpdateLastUsedProviderForProviderWithoutPromptLaunchSupport() {
+    val descriptor = TestAgentSessionProviderDescriptor(
+      provider = AgentSessionProvider.TERMINAL,
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = true,
+      supportsPromptLaunch = false,
+    )
+    val chatOpenExecutor = RecordingChatOpenExecutor()
+    val uiPreferencesState = AgentSessionUiPreferencesStateService().also { preferences ->
+      preferences.updateProviderPreferencesOnLaunch(
+        provider = AgentSessionProvider.CODEX,
+        launchMode = AgentSessionLaunchMode.STANDARD,
+        initialMessageRequest = null,
+      )
+    }
+
+    AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(descriptor))) {
+      runBlocking(Dispatchers.Default) {
+        withTestServiceAndLaunch(
+          sessionSourcesProvider = { listOf(descriptor.sessionSource) },
+          projectEntriesProvider = { listOf(openTestProjectEntry(PROJECT_PATH, "Project A")) },
+          uiPreferencesState = uiPreferencesState,
+          chatOpenExecutor = chatOpenExecutor,
+        ) { _, launchService ->
+          launchService.createNewSession(
+            path = PROJECT_PATH,
+            provider = AgentSessionProvider.TERMINAL,
+            entryPoint = AgentWorkbenchEntryPoint.TREE_ROW,
+          )
+
+          waitForCondition { chatOpenExecutor.openNewChatCalls.get() == 1 }
+
+          assertThat(uiPreferencesState.getLastUsedProvider()).isEqualTo(AgentSessionProvider.CODEX)
+          assertThat(uiPreferencesState.getLastUsedLaunchMode()).isEqualTo(AgentSessionLaunchMode.STANDARD)
         }
       }
     }
@@ -518,6 +609,7 @@ class AgentSessionLaunchServiceTest {
     supportsUnarchiveThread: Boolean,
     unarchiveThreadHandler: suspend (String, String) -> Boolean,
     supportedModes: Set<AgentSessionLaunchMode> = emptySet(),
+    supportsPromptLaunch: Boolean = true,
     supportsArchiveThread: Boolean = false,
     suppressArchivedThreadsDuringRefresh: Boolean = false,
     archiveThreadHandler: suspend (String, String) -> Boolean = { _, _ -> false },
@@ -526,6 +618,7 @@ class AgentSessionLaunchServiceTest {
       provider = AgentSessionProvider.CODEX,
       supportedModes = supportedModes,
       cliAvailable = true,
+      supportsPromptLaunch = supportsPromptLaunch,
       supportsArchiveThread = supportsArchiveThread,
       supportsUnarchiveThread = supportsUnarchiveThread,
       suppressArchivedThreadsDuringRefresh = suppressArchivedThreadsDuringRefresh,

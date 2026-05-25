@@ -16,7 +16,7 @@ import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.Side
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.application.UiWithModelAccess
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.command.WriteCommandAction.writeCommandAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrHandleException
@@ -254,7 +254,7 @@ open class MultipleFileMergeDialog(
           val request = createMergeRequest(file, DiffRequestFactory.getInstance(), callback = null)
           val model = iterativeDataHolder.prepareModelIfSupported(file, request) ?: continue
 
-          writeAction {
+          edtWriteAction {
             model.resolveAllChangesAutomatically()
 
             saveDocument(file)
@@ -456,15 +456,16 @@ open class MultipleFileMergeDialog(
   }
 
   private fun finishResolution() {
-    val iterativelyResolved = iterativeDataHolder?.getResolvedFiles() ?: return
-    iterativelyResolved.forEach { file ->
+    val iterativelyResolved =
+      iterativeDataHolder?.getResolvedFilesAndModels() ?: return
+    iterativelyResolved.keys.forEach { file ->
       saveDocument(file)
       checkMarkModifiedProject(project, file)
     }
     runWithModalProgressBlocking(getModalTaskOwner(),
                                  VcsBundle.message("multiple.file.merge.dialog.progress.title.resolving.conflicts")) {
-      iterativelyResolved.forEach { file ->
-        markFileProcessed(file, getSessionResolution(MergeResult.RESOLVED))
+      iterativelyResolved.forEach { (file, model) ->
+        markFileProcessed(file, model.chosenSide.toMergeResolution())
       }
     }
   }
@@ -498,7 +499,15 @@ open class MultipleFileMergeDialog(
         mergeResult = result
         saveDocument(file)
         checkMarkModifiedProject(project, file)
-        iterativeDataHolder?.getMergeConflictModel(file)?.markReviewed()
+        iterativeDataHolder?.getMergeConflictModel(file)?.apply {
+          markReviewed()
+          chosenSide = when (result) {
+            MergeResult.LEFT -> Side.LEFT
+            MergeResult.RIGHT -> Side.RIGHT
+            MergeResult.CANCEL -> chosenSide // no-op, keep the last chosen
+            MergeResult.RESOLVED -> null
+          }
+        }
         if (result != MergeResult.CANCEL) {
           val iterativelyResolved = iterativeDataHolder?.isFileResolved(file) ?: false
 
@@ -538,7 +547,7 @@ open class MultipleFileMergeDialog(
   }
 
   private fun getUnresolvedFiles(): List<VirtualFile> = unresolvedFiles - getResolvedFiles()
-  private fun getResolvedFiles(): Set<VirtualFile> = (iterativeDataHolder?.getResolvedFiles() ?: emptySet())
+  private fun getResolvedFiles(): Set<VirtualFile> = (iterativeDataHolder?.getResolvedFilesAndModels()?.keys ?: emptySet())
 
   @RequiresEdt
   @Internal
@@ -668,6 +677,12 @@ private fun saveDocument(file: VirtualFile) {
 private fun MergeSession.Resolution.yoursOrTheirs(): Boolean = when (this) {
   MergeSession.Resolution.AcceptedYours, MergeSession.Resolution.AcceptedTheirs -> true
   MergeSession.Resolution.Merged -> false
+}
+
+private fun Side?.toMergeResolution() = when (this) {
+  Side.LEFT -> MergeSession.Resolution.AcceptedYours
+  Side.RIGHT -> MergeSession.Resolution.AcceptedTheirs
+  null -> MergeSession.Resolution.Merged
 }
 
 private fun getSessionResolution(result: MergeResult): MergeSession.Resolution = when (result) {

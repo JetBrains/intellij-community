@@ -1179,9 +1179,12 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
    * A utility method for diagnosing state of progress indicator in monitoring facilities, like JStack
    */
   @ApiStatus.Internal
-  public String getProgressStateRepresentation() {
+  public @Nullable String getProgressStateRepresentation() {
     synchronized (threadsUnderIndicator) {
       StringBuilder result = new StringBuilder();
+      if (threadsUnderIndicator.isEmpty()) {
+        return null;
+      }
       for (Map.Entry<ProgressIndicator, Set<Thread>> entry : threadsUnderIndicator.entrySet()) {
         ProgressIndicator indicator = entry.getKey();
         Set<Thread> threads = entry.getValue();

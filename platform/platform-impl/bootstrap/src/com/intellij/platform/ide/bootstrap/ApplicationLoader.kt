@@ -6,6 +6,7 @@ package com.intellij.platform.ide.bootstrap
 
 import com.intellij.diagnostic.COROUTINE_DUMP_HEADER
 import com.intellij.diagnostic.LoadingState
+import com.intellij.diagnostic.LocksActionsDumper
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.ProgressIndicatorDumper
 import com.intellij.diagnostic.WriteLockMeasurer
@@ -383,8 +384,11 @@ private suspend fun enableJstack() {
 $COROUTINE_DUMP_HEADER
 ${dumpCoroutines(stripDump = false)}
 
-${ProgressIndicatorDumper.PROGRESS_INDICATOR_DUMP_HEADER}
-${ProgressIndicatorDumper.dumpProgressIndicatorState() ?: "No progress indicator dump"}
+${ProgressIndicatorDumper.dumpProgressIndicatorState()}
+${LocksActionsDumper.dumpLocksAndActionsStateOrNull().let {
+  if (it == null) "" else "\n$it"
+}
+}
 """
     }
   }

@@ -27,11 +27,13 @@ import java.awt.KeyboardFocusManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.function.Consumer;
 
 @ApiStatus.Internal
 public final class ShortcutTextField extends ExtendableTextField {
   private KeyStroke myKeyStroke;
   private int myLastPressedKeyCode = KeyEvent.VK_UNDEFINED;
+  private @Nullable Consumer<? super KeyEvent> myKeyEventConsumer;
 
   ShortcutTextField(boolean isFocusTraversalKeysEnabled) {
     enableEvents(AWTEvent.KEY_EVENT_MASK);
@@ -47,7 +49,7 @@ public final class ShortcutTextField extends ExtendableTextField {
     });
   }
 
-  private static boolean absolutelyUnknownKey (KeyEvent e) {
+  private static boolean absolutelyUnknownKey(KeyEvent e) {
     return e.getKeyCode() == 0
            && e.getKeyChar() == KeyEvent.CHAR_UNDEFINED
            && e.getKeyLocation() == KeyEvent.KEY_LOCATION_UNKNOWN
@@ -64,12 +66,12 @@ public final class ShortcutTextField extends ExtendableTextField {
       }
     }
 
-    final boolean isNotModifierKey = keyCode != KeyEvent.VK_SHIFT &&
-                                     keyCode != KeyEvent.VK_ALT &&
-                                     keyCode != KeyEvent.VK_CONTROL &&
-                                     keyCode != KeyEvent.VK_ALT_GRAPH &&
-                                     keyCode != KeyEvent.VK_META &&
-                                     !absolutelyUnknownKey(e);
+    Consumer<? super KeyEvent> keyEventConsumer = myKeyEventConsumer;
+    if (keyEventConsumer != null) {
+      keyEventConsumer.accept(e);
+    }
+
+    final boolean isNotModifierKey = !isModifierKey(keyCode) && !absolutelyUnknownKey(e);
 
     if (isNotModifierKey) {
       // NOTE: when user presses 'Alt + Right' at Linux the IDE can receive next sequence KeyEvents: ALT_PRESSED -> RIGHT_RELEASED ->  ALT_RELEASED
@@ -82,8 +84,9 @@ public final class ShortcutTextField extends ExtendableTextField {
         setKeyStroke(KeyStrokeAdapter.getDefaultKeyStroke(e));
       }
 
-      if (e.getID() == KeyEvent.KEY_PRESSED)
+      if (e.getID() == KeyEvent.KEY_PRESSED) {
         myLastPressedKeyCode = keyCode;
+      }
     }
 
     // Ensure TAB/Shift-TAB work as focus traversal keys, otherwise
@@ -111,6 +114,18 @@ public final class ShortcutTextField extends ExtendableTextField {
 
   KeyStroke getKeyStroke() {
     return myKeyStroke;
+  }
+
+  void setKeyEventConsumer(@Nullable Consumer<? super KeyEvent> keyEventConsumer) {
+    myKeyEventConsumer = keyEventConsumer;
+  }
+
+  private static boolean isModifierKey(int keyCode) {
+    return keyCode == KeyEvent.VK_SHIFT ||
+           keyCode == KeyEvent.VK_ALT ||
+           keyCode == KeyEvent.VK_CONTROL ||
+           keyCode == KeyEvent.VK_ALT_GRAPH ||
+           keyCode == KeyEvent.VK_META;
   }
 
   @Override

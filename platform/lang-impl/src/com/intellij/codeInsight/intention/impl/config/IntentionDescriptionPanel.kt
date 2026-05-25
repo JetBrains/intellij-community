@@ -141,17 +141,22 @@ class IntentionDescriptionPanel {
     }
   }
 
-  fun reset(intentionCategory: String) {
-    try {
+  fun reset(intentionCategory: String?) {
+    if (intentionCategory == null) {
+      myDescriptionBrowser.text = ""
+      myBeforeWrapperRow.visible(false)
+      myAfterWrapperRow.visible(false)
+    }
+    else try {
       myDescriptionBrowser.readHTML(CodeInsightBundle.message("intention.settings.category.text", intentionCategory))
 
       val beforeTemplate =
         PlainTextDescriptor(CodeInsightBundle.message("templates.intention.settings.category.before"), "before.java.template")
-      showUsages(myBeforePanel, myBeforeUsagePanels, arrayOf(beforeTemplate))
       val afterTemplate =
         PlainTextDescriptor(CodeInsightBundle.message("templates.intention.settings.category.after"), "after.java.template")
       myBeforeWrapperRow.visible(true)
       myAfterWrapperRow.visible(true)
+      showUsages(myBeforePanel, myBeforeUsagePanels, arrayOf(beforeTemplate))
       showUsages(myAfterPanel, myAfterUsagePanels, arrayOf(afterTemplate))
     }
     catch (e: IOException) {

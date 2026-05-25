@@ -600,6 +600,7 @@ private fun CoroutineScope.createMavenArtifactJob(platformLayout: PlatformLayout
   }
 }
 
+@Suppress("DEPRECATION")
 private suspend fun checkProductProperties(context: BuildContext) {
   checkProductLayout(context)
 

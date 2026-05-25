@@ -21,6 +21,7 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -164,7 +165,16 @@ public final class HighlightingSettingsPerFile extends HighlightingLevelManager 
     for (Map.Entry<String, FileHighlightingSetting[]> entry : entries) {
       String url = entry.getKey();
       // remove invalid entries to make sure we save only the valid ones
-      if (ReadAction.computeBlocking(() -> VirtualFileManager.getInstance().findFileByUrl(url)) != null) {
+      VirtualFile file;
+      try {
+        file = ReadAction.computeBlocking(() -> VirtualFileManager.getInstance().findFileByUrl(url));
+      }
+      catch (Throwable _) {
+        // remote file systems e.g. ThinClientVirtualFileSystem throw TimeoutException when the client has trouble connecting to host
+        // write the file entry in this case anyway, hoping it will be resolved on the next save
+        file = NullVirtualFile.INSTANCE;
+      }
+      if (file != null) {
         Element child = new Element(SETTING_TAG);
         child.setAttribute(FILE_ATT, url);
         FileHighlightingSetting[] settings = entry.getValue();

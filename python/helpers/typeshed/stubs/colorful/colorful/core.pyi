@@ -64,10 +64,12 @@ class Colorful:
     no_struckthrough: Final[_str]
     colormode: _ColorModeType
     def __init__(self, colormode: _ColorModeType | None = None, colorpalette: _str | _PaletteType | None = None) -> None: ...
+
     @property
     def colorpalette(self) -> SupportsItems[str, str | tuple[int, int, int]] | None: ...
     @colorpalette.setter
     def colorpalette(self, colorpalette: _str | _PaletteType) -> None: ...
+
     def setup(
         self,
         colormode: _ColorModeType | None = None,

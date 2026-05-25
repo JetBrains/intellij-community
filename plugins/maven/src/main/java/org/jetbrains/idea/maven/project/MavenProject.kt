@@ -2,28 +2,19 @@
 package org.jetbrains.idea.maven.project
 
 import com.intellij.execution.configurations.ParametersList
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
-import com.intellij.util.containers.ContainerUtil
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.idea.maven.dom.MavenDomUtil
-import org.jetbrains.idea.maven.dom.MavenPropertyResolver
-import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
-import org.jetbrains.idea.maven.importing.MavenExtraArtifactType
-import org.jetbrains.idea.maven.importing.MavenImporter
 import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.plugins.api.MavenModelPropertiesPatcher
-import org.jetbrains.idea.maven.server.MavenGoalExecutionResult
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil.hasArtifactFile
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -189,10 +180,15 @@ class MavenProject(val file: VirtualFile) {
     return snapshot.getChanges(myState)
   }
 
+  /**
+   * Required only for the folders update after source generation (e.g., after running
+   * `generate-sources`/`generate-test-sources` goals), when newly produced source roots
+   * need to be reflected on the existing [MavenProject] without a full re-resolve.
+   */
   @Internal
-  fun setFolders(folders: MavenGoalExecutionResult.Folders): MavenProjectChanges {
+  fun setFolders(mavenSources: List<MavenSource>): MavenProjectChanges {
     val newState = myState.copy(
-      mavenSources = folders.mavenSources
+      mavenSources = mavenSources
     )
     return setState(newState)
   }
@@ -218,9 +214,6 @@ class MavenProject(val file: VirtualFile) {
 
   internal val profilesXmlFile: VirtualFile?
     get() = null
-
-  val profilesXmlNioFile: Path?
-    get() = MavenUtil.getProfilesXmlNioFile(file)
 
   fun hasReadingErrors(): Boolean {
     return myState.readingProblems.any { it.isError }
@@ -561,29 +554,6 @@ class MavenProject(val file: VirtualFile) {
     }
 
 
-  fun getDependencyTypesFromImporters(type: SupportedRequestType): Set<String> {
-    val res: MutableSet<String> = HashSet()
-
-    for (each: MavenImporter in MavenImporter.getSuitableImporters(this)) {
-      each.getSupportedDependencyTypes(res, type)
-    }
-
-    return res
-  }
-
-  val supportedDependencyScopes: Set<String>
-    get() {
-      val result: MutableSet<String> = ContainerUtil.newHashSet(MavenConstants.SCOPE_COMPILE,
-                                                                MavenConstants.SCOPE_PROVIDED,
-                                                                MavenConstants.SCOPE_RUNTIME,
-                                                                MavenConstants.SCOPE_TEST,
-                                                                MavenConstants.SCOPE_SYSTEM)
-      for (each: MavenImporter in MavenImporter.getSuitableImporters(this)) {
-        each.getSupportedDependencyScopes(result)
-      }
-      return result
-    }
-
   @Internal
   @Deprecated("Do not add dependencies to Maven project. Instead, add dependencies to [com.intellij.platform.workspace.jps.entities.ModuleEntity]")
   fun addDependency(dependency: MavenArtifact) {
@@ -681,31 +651,6 @@ class MavenProject(val file: VirtualFile) {
       return myState.properties!!.getProperty("project.build.sourceEncoding")
     }
 
-  fun getResourceEncoding(project: Project): String? {
-    val pluginConfiguration: Element? = getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin")
-    if (pluginConfiguration != null) {
-      val encoding: String? = pluginConfiguration.getChildTextTrim("encoding")
-      if (encoding == null) {
-        return null
-      }
-
-      if (encoding.startsWith("$")) {
-        val domModel: MavenDomProjectModel? = MavenDomUtil.getMavenDomProjectModel(project, this.file)
-        if (domModel == null) {
-          MavenLog.LOG.warn("cannot get MavenDomProjectModel to find encoding")
-          return sourceEncoding
-        }
-        else {
-          MavenPropertyResolver.resolve(encoding, domModel)
-        }
-      }
-      else {
-        return encoding
-      }
-    }
-    return sourceEncoding
-  }
-
   val properties: Properties
     get() {
       return myState.properties!!
@@ -751,14 +696,6 @@ class MavenProject(val file: VirtualFile) {
     get() {
       return myState.remotePluginRepositories
     }
-
-  fun getClassifierAndExtension(artifact: MavenArtifact, type: MavenExtraArtifactType): Pair<String, String> {
-    for (each: MavenImporter in MavenImporter.getSuitableImporters(this)) {
-      val result: Pair<String, String>? = each.getExtraArtifactClassifierAndExtension(artifact, type)
-      if (result != null) return result
-    }
-    return Pair.create(type.defaultClassifier, type.defaultExtension)
-  }
 
   val dependencyArtifactIndex: MavenArtifactIndex
     get() {

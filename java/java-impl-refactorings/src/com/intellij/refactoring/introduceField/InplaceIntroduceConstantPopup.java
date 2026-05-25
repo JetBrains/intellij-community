@@ -51,6 +51,7 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
   private JCheckBox myReplaceAllCb;
 
   private JCheckBox myMoveToAnotherClassCb;
+  @PsiModifier.ModifierConstant
   private String myVisibility;
 
   public InplaceIntroduceConstantPopup(Project project,
@@ -62,7 +63,7 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
                                        TypeSelectorManagerImpl typeSelectorManager,
                                        PsiElement anchorElement,
                                        PsiElement anchorElementIfAll) {
-    super(project, editor, expr, localVariable, occurrences, typeSelectorManager, IntroduceConstantHandler.getRefactoringNameText(),
+    super(project, editor, expr, localVariable, occurrences, typeSelectorManager, IntroduceConstantHelper.getRefactoringNameText(),
           parentClass, anchorElement, anchorElementIfAll);
 
     myInitializerText = getExprText(expr, localVariable);
@@ -115,7 +116,7 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
   }
 
 
-  private @NotNull String getSelectedVisibility() {
+  private @PsiModifier.ModifierConstant @NotNull String getSelectedVisibility() {
     if (getParentClass() != null && getParentClass().isInterface()) {
       return PsiModifier.PUBLIC;
     }
@@ -151,7 +152,7 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
       }
       PsiMember anchorMember = finalAnchorElement instanceof PsiMember ? (PsiMember)finalAnchorElement : null;
       field = BaseExpressionToFieldHandler.ConvertToFieldRunnable
-        .appendField(myExpr, BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, parentClass, parentClass, field,
+        .appendField(myExpr, JavaIntroduceFieldService.InitializationPlace.IN_FIELD_DECLARATION, parentClass, parentClass, field,
                      anchorMember);
       updateVariable(field);
       return field;
@@ -257,7 +258,7 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
                                                 getOccurrences(),
                                                 isReplaceAllOccurrences(), true,
                                                 true,
-                                                BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION,
+                                                JavaIntroduceFieldService.InitializationPlace.IN_FIELD_DECLARATION,
                                                 myVisibility, (PsiLocalVariable)getLocalVariable(),
                                                 getType(),
                                                 true,

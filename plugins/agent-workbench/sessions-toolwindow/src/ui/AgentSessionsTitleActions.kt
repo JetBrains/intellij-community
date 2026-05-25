@@ -178,18 +178,22 @@ private fun archivedRangePresetLabel(preset: AgentSessionArchivedRangePreset): @
 
 internal class AgentSessionsActivityCounterAction(
   private val bucket: AgentSessionsActivityBucket,
+  private val rowsProvider: (Project?, AgentSessionsActivityBucket) -> List<AgentSessionsActivityThreadRow> = ::defaultActivityRowsFor,
+  private val visibilityProvider: (Project?) -> Boolean = { isActiveThreadViewMode() },
+  private val projectProvider: (AnActionEvent) -> Project? = { event -> event.project },
+  private val entryPoint: AgentWorkbenchEntryPoint = AgentWorkbenchEntryPoint.TREE_POPUP,
 ) : DumbAwareAction(), CustomComponentAction {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
     val presentation = e.presentation
-    val viewMode = service<AgentSessionThreadViewStateService>().state.value.mode
-    if (viewMode != AgentSessionThreadViewMode.ACTIVE) {
+    val project = projectProvider(e)
+    if (!visibilityProvider(project)) {
       presentation.setEnabledAndVisible(false)
       return
     }
-    val rows = rowsFor(e.project)
+    val rows = rowsFor(project)
     presentation.text = rows.size.toString()
     presentation.description = AgentSessionsBundle.message(bucket.tooltipKey)
     presentation.setEnabledAndVisible(true)
@@ -199,8 +203,11 @@ internal class AgentSessionsActivityCounterAction(
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     val counter = AgentSessionsActivityCounterComponent(
       action = this,
-      accentColor = bucket.accentActivity().statusColor(),
+      accentColor = requireNotNull(bucket.accentActivity().statusColor()) {
+        "Activity counter bucket $bucket must define an accent color"
+      },
       tone = bucket.counterTone(),
+      actionPlace = place,
     )
     counter.update(presentation)
     return counter
@@ -211,13 +218,13 @@ internal class AgentSessionsActivityCounterAction(
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project ?: return
+    val project = projectProvider(e) ?: return
     val component = e.inputEvent?.component ?: return
     val rows = rowsFor(project)
     if (rows.isEmpty()) return
     val now = System.currentTimeMillis()
     val group = DefaultActionGroup().apply {
-      rows.forEach { row -> add(AgentSessionsActivityOpenThreadAction(project, row, now)) }
+      rows.forEach { row -> add(AgentSessionsActivityOpenThreadAction(project, row, now, entryPoint)) }
     }
     JBPopupFactory.getInstance()
       .createActionGroupPopup(
@@ -233,15 +240,24 @@ internal class AgentSessionsActivityCounterAction(
   }
 
   private fun rowsFor(project: Project?): List<AgentSessionsActivityThreadRow> {
-    val service = project?.service<AgentSessionsActivityService>() ?: return emptyList()
-    return service.latestSummary().rowsFor(bucket)
+    return rowsProvider(project, bucket)
   }
+}
+
+private fun defaultActivityRowsFor(project: Project?, bucket: AgentSessionsActivityBucket): List<AgentSessionsActivityThreadRow> {
+  val service = project?.service<AgentSessionsActivityService>() ?: return emptyList()
+  return service.latestSummary().rowsFor(bucket)
+}
+
+private fun isActiveThreadViewMode(): Boolean {
+  return service<AgentSessionThreadViewStateService>().state.value.mode == AgentSessionThreadViewMode.ACTIVE
 }
 
 private class AgentSessionsActivityOpenThreadAction(
   private val project: Project,
   private val row: AgentSessionsActivityThreadRow,
   now: Long,
+  private val entryPoint: AgentWorkbenchEntryPoint,
 ) : DumbAwareAction(
   agentSessionsActivityPopupRowText(row, now),
   null,
@@ -253,7 +269,7 @@ private class AgentSessionsActivityOpenThreadAction(
     service<AgentSessionLaunchService>().openChatThread(
       path = row.path,
       thread = row.thread,
-      entryPoint = AgentWorkbenchEntryPoint.TREE_POPUP,
+      entryPoint = entryPoint,
       currentProject = project,
     )
   }

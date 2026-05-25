@@ -81,6 +81,7 @@ class FrontendRecentFilesModel(private val project: Project) {
     
     val editorsByFile = (FileEditorManager.getInstance(project) as? FileEditorManagerImpl)
       ?.getSelectionHistoryList().orEmpty()
+      .filter { (_, editor) -> editor.isShowing }
       .groupBy(
         keySelector = { (file, _) -> file },
         valueTransform = { (_, editor) -> editor }

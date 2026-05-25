@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
@@ -116,7 +117,8 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
   private static @NotNull List<SamDescriptor> calcDescriptors(@NotNull Session session) {
     PsiClass aClass = session.elementToSearch;
     Project project = PsiUtilCore.getProjectInReadAction(aClass);
-    if (DumbService.isDumb(project)) {
+    boolean failFastInDumbMode = Registry.is("java.functional.expression.search.fail.fast.in.dumb.mode");
+    if (failFastInDumbMode && DumbService.isDumb(project)) {
       // Fail fast instead of blocking the calling thread in ReadAction.nonBlocking(...).inSmartMode(...).executeSynchronously()
       // which would freeze the search until indexes become ready.
       // ExecutorsQuery handles IndexNotReadyException by skipping this executor, so the overall search keeps working
@@ -154,8 +156,12 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
       }
       return descriptors;
     };
-    return ReadAction.nonBlocking(runnable)
-      .executeSynchronously();
+    if (!failFastInDumbMode) {
+      return ReadAction.nonBlocking(runnable).inSmartMode(project).executeSynchronously();
+    }
+    else {
+      return ReadAction.nonBlocking(runnable).executeSynchronously();
+    }
   }
 
   private static @NotNull Set<VirtualFile> getLikelyFiles(@NotNull List<? extends SamDescriptor> descriptors,

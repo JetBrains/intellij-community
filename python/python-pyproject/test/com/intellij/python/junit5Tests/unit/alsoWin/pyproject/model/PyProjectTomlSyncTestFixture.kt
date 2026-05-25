@@ -2,7 +2,7 @@
 package com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model
 
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.doNotEnableExternalStorageByDefaultInTestsSuspend
@@ -196,7 +196,7 @@ internal class PyProjectTomlSyncTestFixture(val project: Project, val root: Virt
     type: String = PYTHON,
     configure: (ModuleEntityBuilder.() -> Unit)? = null,
   ): VirtualFile {
-    val dir = writeAction { root.createDirectory(dirName) }
+    val dir = edtWriteAction { root.createDirectory(dirName) }
     val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
     val dirUrl = dir.toNioPath().toVirtualFileUrl(virtualFileUrlManager)
     val entitySource = LegacyBridgeJpsEntitySourceFactory.getInstance(project)

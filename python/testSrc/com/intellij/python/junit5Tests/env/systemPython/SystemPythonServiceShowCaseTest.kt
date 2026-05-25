@@ -27,6 +27,7 @@ import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import kotlinx.coroutines.async
 import org.hamcrest.MatcherAssert
@@ -50,7 +51,7 @@ class SystemPythonServiceShowCaseTest {
         (if (systemPython.pythonInfo.languageLevel.isPy3K) process.stdout else process.stderr).readWholeText()
       }
       Assertions.assertTrue(process.exitCode.await() == 0)
-      val versionString = PythonSdkFlavor.getLanguageLevelFromVersionStringStaticSafe(output.await())!!
+      val versionString = LanguageLevel.getLanguageLevelFromVersionStringStaticSafe(output.await())!!
       Assertions.assertEquals(systemPython.pythonInfo.languageLevel, versionString, "Wrong version")
     }
   }

@@ -17,7 +17,6 @@ import com.jetbrains.rhizomedb.VersionedEID
 import com.jetbrains.rhizomedb.partition
 import fleet.fastutil.ints.firstNotNullOfOrNull
 import fleet.fastutil.ints.forEach
-import fleet.util.letIf
 import kotlin.jvm.JvmInline
 
 private fun avet(attribute: Attribute<*>): Boolean =
@@ -45,14 +44,18 @@ value class Index private constructor(
           sink(Datom(eid, attribute, value, tx, false))
           Partition(
             aevt = aevt,
-            avet = partition.avet
-              .letIf(avet(attribute)) {
-                it.remove(editor, eid, attribute, value)
-              },
-            vaet = partition.vaet
-              .letIf(vaet(attribute)) {
-                it.remove(editor, eid, attribute, value as EID)
-              }
+            avet = if (avet(attribute)) {
+              partition.avet.remove(editor, eid, attribute, value)
+            }
+            else {
+              partition.avet
+            },
+            vaet = if (vaet(attribute)) {
+              partition.vaet.remove(editor, eid, attribute, value as EID)
+            }
+            else {
+              partition.vaet
+            }
           )
         }
       }
@@ -71,22 +74,32 @@ value class Index private constructor(
           val valueToRemove = removed?.x
           Partition(
             aevt = aevt,
-            avet = partition.avet
-              .letIf(avet(attribute)) { avet ->
-                avet
-                  .letIf(valueToRemove != null) {
-                    it.remove(editor, eid, attribute, valueToRemove!!)
-                  }
+            avet = if (avet(attribute)) {
+              if (valueToRemove != null) {
+                partition.avet
+                  .remove(editor, eid, attribute, valueToRemove)
                   .add(editor, eid, attribute, value, tx)
-              },
-            vaet = partition.vaet
-              .letIf(vaet(attribute)) { vaet ->
-                vaet
-                  .letIf(valueToRemove != null) {
-                    it.remove(editor, eid, attribute, valueToRemove as EID)
-                  }
+              }
+              else {
+                partition.avet.add(editor, eid, attribute, value, tx)
+              }
+            }
+            else {
+              partition.avet
+            },
+            vaet = if (vaet(attribute)) {
+              if (valueToRemove != null) {
+                partition.vaet
+                  .remove(editor, eid, attribute, valueToRemove as EID)
                   .add(editor, eid, attribute, value as EID, tx)
               }
+              else {
+                partition.vaet.add(editor, eid, attribute, value as EID, tx)
+              }
+            }
+            else {
+              partition.vaet
+            }
           )
         }
         else -> partition

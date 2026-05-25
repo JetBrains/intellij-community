@@ -1,16 +1,11 @@
-# ============================================
-# TODO: Allowlist entries that should be fixed
-# ============================================
+# =============================================================
+# Allowlist entries that cannot or should not be fixed; >= 3.15
+# =============================================================
 
-_winapi.DeregisterEventSource
-_winapi.EVENTLOG_AUDIT_FAILURE
-_winapi.EVENTLOG_AUDIT_SUCCESS
-_winapi.EVENTLOG_ERROR_TYPE
-_winapi.EVENTLOG_INFORMATION_TYPE
-_winapi.EVENTLOG_SUCCESS
-_winapi.EVENTLOG_WARNING_TYPE
-_winapi.GetOEMCP
-_winapi.RegisterEventSource
-_winapi.ReportEvent
+# Depends on whether the C _decimal extension or pure-Python fallback is used.
+(_decimal.SPEC_VERSION)?
+(decimal.SPEC_VERSION)?
+
+# Undocumented internal method, not really for public consumption.
+# Hard to add types for unless we add stubs for the undocumented _overlapped module.
 asyncio.windows_events.IocpProactor.finish_socket_func
-winreg.DeleteTree

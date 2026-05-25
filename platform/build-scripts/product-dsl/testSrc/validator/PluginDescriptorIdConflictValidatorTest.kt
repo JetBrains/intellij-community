@@ -1,9 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.validator
 
-import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginGraph.EDGE_BUNDLES
 import com.intellij.platform.pluginGraph.PluginId
+import com.intellij.platform.pluginGraph.PluginModuleId
 import com.intellij.platform.pluginGraph.TargetName
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import kotlinx.coroutines.Dispatchers
@@ -84,7 +84,7 @@ class PluginDescriptorIdConflictValidatorTest {
     builder.linkPluginMainTarget(prodPlugin)
     builder.linkPluginContent(
       pluginName = prodPlugin,
-      contentModuleName = ContentModuleName("intellij.prod.module"),
+      pluginModuleId = PluginModuleId("intellij.prod.module", namespace = "jetbrains"),
       loadingMode = ModuleLoadingRuleValue.OPTIONAL,
       isTest = false,
     )
@@ -93,7 +93,7 @@ class PluginDescriptorIdConflictValidatorTest {
     builder.linkPluginMainTarget(testPlugin)
     builder.linkPluginContent(
       pluginName = testPlugin,
-      contentModuleName = ContentModuleName("intellij.test.module"),
+      pluginModuleId = PluginModuleId("intellij.test.module", namespace = "jetbrains"),
       loadingMode = ModuleLoadingRuleValue.OPTIONAL,
       isTest = true,
     )

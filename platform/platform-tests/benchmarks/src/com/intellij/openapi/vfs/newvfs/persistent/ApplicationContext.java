@@ -32,6 +32,7 @@ public class ApplicationContext {
 
   @TearDown
   public void tearDown() throws Exception {
+    ApplicationManagerEx.setInStressTest(false);
     fixture.tearDown();
 
     IdeEventQueue.applicationClose();

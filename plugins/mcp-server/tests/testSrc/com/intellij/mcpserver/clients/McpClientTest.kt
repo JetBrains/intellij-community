@@ -1,5 +1,6 @@
 package com.intellij.mcpserver.clients
 
+import com.intellij.mcpserver.clients.configs.ExistingConfig
 import com.intellij.mcpserver.clients.configs.STDIOServerConfig
 import com.intellij.mcpserver.clients.configs.ServerConfig
 import com.intellij.mcpserver.clients.configs.VSCodeNetworkConfig
@@ -192,6 +193,77 @@ class McpClientTest {
     assertTrue("other" in servers)
     assertTrue(2 == servers.size)
   }
+
+  @Test
+  fun `promotion fallback accepts localhost with similar port`() {
+    val client = PromotionAwareMcpClient(
+      linkedMapOf("fallback" to ExistingConfig(url = "http://localhost:64347/stream", type = "http"))
+    )
+
+    assertTrue(client.hasPromotionCandidateConfig(expectedPort = 64342))
+    assertFalse(client.isPortCorrect(expectedPort = 64342))
+  }
+
+  @Test
+  fun `promotion detects product specific server by name even when port is far off`() {
+    McpClient.overrideProductSpecificServerKeyForTests("idea")
+    val client = PromotionAwareMcpClient(
+      linkedMapOf("idea" to ExistingConfig(url = "http://localhost:71342/stream", type = "http"))
+    )
+
+    assertTrue(client.hasPromotionCandidateConfig(expectedPort = 64342))
+    assertFalse(client.isPortCorrect(expectedPort = 64342))
+  }
+
+  @Test
+  fun `promotion fallback accepts localhost within five thousand port range`() {
+    val client = PromotionAwareMcpClient(
+      linkedMapOf("fallback" to ExistingConfig(url = "http://localhost:68342/stream", type = "http"))
+    )
+
+    assertTrue(client.hasPromotionCandidateConfig(expectedPort = 64342))
+    assertFalse(client.isPortCorrect(expectedPort = 64342))
+  }
+
+  @Test
+  fun `promotion fallback accepts 127 0 0 1 with similar port`() {
+    val client = PromotionAwareMcpClient(
+      linkedMapOf("fallback" to ExistingConfig(url = "http://127.0.0.1:64347/stream", type = "http"))
+    )
+
+    assertTrue(client.hasPromotionCandidateConfig(expectedPort = 64342))
+    assertFalse(client.isPortCorrect(expectedPort = 64342))
+  }
+
+  @Test
+  fun `promotion fallback ignores ipv6 loopback`() {
+    val client = PromotionAwareMcpClient(
+      linkedMapOf("fallback" to ExistingConfig(url = "http://[::1]:64347/stream", type = "http"))
+    )
+
+    assertFalse(client.hasPromotionCandidateConfig(expectedPort = 64342))
+    assertTrue(client.isPortCorrect(expectedPort = 64342))
+  }
+
+  @Test
+  fun `promotion fallback ignores non loopback host`() {
+    val client = PromotionAwareMcpClient(
+      linkedMapOf("fallback" to ExistingConfig(url = "http://192.168.1.20:64347/stream", type = "http"))
+    )
+
+    assertFalse(client.hasPromotionCandidateConfig(expectedPort = 64342))
+    assertTrue(client.isPortCorrect(expectedPort = 64342))
+  }
+
+  @Test
+  fun `promotion fallback ignores localhost outside five thousand port range`() {
+    val client = PromotionAwareMcpClient(
+      linkedMapOf("fallback" to ExistingConfig(url = "http://localhost:69343/stream", type = "http"))
+    )
+
+    assertFalse(client.hasPromotionCandidateConfig(expectedPort = 64342))
+    assertTrue(client.isPortCorrect(expectedPort = 64342))
+  }
 }
 
 private class TestableMcpClient : McpClient(
@@ -205,3 +277,11 @@ private class TestableVSCodeClient : VSCodeClient(McpClientInfo.Scope.GLOBAL, Pa
   fun buildUpdated(existing: JsonObject, entry: ServerConfig): JsonObject = buildUpdatedConfig(existing, entry)
 }
 
+private class PromotionAwareMcpClient(
+  private val servers: Map<String, ExistingConfig>?,
+) : McpClient(
+  mcpClientInfo = McpClientInfo(name = McpClientInfo.Name.CURSOR, scope = McpClientInfo.Scope.GLOBAL),
+  configPath = Paths.get("promotion.json")
+) {
+  override fun readMcpServers(): Map<String, ExistingConfig>? = servers
+}

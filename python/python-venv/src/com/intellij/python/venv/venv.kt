@@ -11,12 +11,16 @@ import com.intellij.python.community.execService.asBinToExec
 import com.intellij.python.community.execService.python.HelperName
 import com.intellij.python.community.execService.python.executeHelper
 import com.intellij.python.community.execService.python.validatePythonAndGetInfo
+import com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.getOr
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PySdkSettings
+import com.jetbrains.python.sdk.PythonSdkAdditionalData
+import com.jetbrains.python.sdk.flavors.PyFlavorAndData
+import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.venvReader.Directory
 import com.jetbrains.python.venvReader.VirtualEnvReader
@@ -85,3 +89,11 @@ const val VIRTUALENV_ZIPAPP_NAME: HelperName = "virtualenv-py3.pyz"
 // Ancient version, the last one compatible with Py 2.7, 3.6, 3.7
 @Internal
 const val LEGACY_VIRTUALENV_ZIPAPP_NAME: HelperName = "virtualenv-20.13.0.pyz"
+
+
+/**
+ * Creates [PythonSdkAdditionalData] for virtual env
+ */
+@Internal
+fun createVenvAdditionalData(): PythonSdkAdditionalData =
+  PythonSdkAdditionalData(PyFlavorAndData(PyFlavorData.Empty, VirtualEnvSdkFlavor.getInstance()))

@@ -9,6 +9,7 @@ _CustomTagsParser: TypeAlias = Callable[[str, int, dict[str, Any], dict[str, Any
 ATTRIBUTELISTPATTERN: Pattern[str]
 
 def cast_date_time(value: str) -> datetime: ...
+
 @overload
 def format_date_time(value: time, *, timespec: str = ...) -> str: ...
 @overload

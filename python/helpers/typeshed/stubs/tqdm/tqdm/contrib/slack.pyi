@@ -18,6 +18,7 @@ _T = TypeVar("_T")
 
 class tqdm_slack(tqdm_auto[_T]):
     sio: Incomplete
+
     @overload
     def __init__(
         self,
@@ -84,6 +85,7 @@ class tqdm_slack(tqdm_auto[_T]):
         channel: int = ...,
         **kwargs,
     ) -> None: ...
+
     def display(  # type: ignore[override]
         self, *, msg: str | None = ..., pos: int | None = ..., close: bool = ..., bar_style=..., check_delay: bool = ...
     ) -> None: ...

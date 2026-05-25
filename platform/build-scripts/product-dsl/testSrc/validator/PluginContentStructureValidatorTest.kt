@@ -27,8 +27,8 @@ class PluginContentStructureValidatorTest {
         includesModuleSet("core")
       }
       testPlugin("test.plugin") {
-        testContent("mod.required", ModuleLoadingRuleValue.REQUIRED)
-        testContent("mod.optional", ModuleLoadingRuleValue.OPTIONAL)
+        testContent("mod.required", loading = ModuleLoadingRuleValue.REQUIRED)
+        testContent("mod.optional", loading = ModuleLoadingRuleValue.OPTIONAL)
       }
       moduleSet("core") {
         module("mod.optional")
@@ -53,8 +53,8 @@ class PluginContentStructureValidatorTest {
         bundlesTestPlugin("test.plugin")
       }
       testPlugin("test.plugin") {
-        testContent("mod.required", ModuleLoadingRuleValue.REQUIRED)
-        testContent("mod.optional", ModuleLoadingRuleValue.OPTIONAL)
+        testContent("mod.required", loading = ModuleLoadingRuleValue.REQUIRED)
+        testContent("mod.optional", loading = ModuleLoadingRuleValue.OPTIONAL)
       }
       linkContentModuleDeps("mod.required", "mod.optional")
     }

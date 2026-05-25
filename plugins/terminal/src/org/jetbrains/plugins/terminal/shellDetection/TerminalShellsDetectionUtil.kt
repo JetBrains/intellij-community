@@ -107,7 +107,7 @@ object TerminalShellsDetectionUtil {
       buildList {
         add(async { detectWindowsPowerShell5(eelApi, envVariables) })
         add(async { detectWindowsCmd(eelApi, envVariables) })
-        add(async { detectWindowsPowerShell7(eelApi, envVariables) })
+        add(async { detectWindowsPowerShell7(eelApi) })
         add(async { detectWindowsGitBash(eelApi, envVariables) })
         add(async { detectWindowsCmder(eelApi, envVariables) })
       }
@@ -130,10 +130,8 @@ object TerminalShellsDetectionUtil {
     return createShellInfo(CMD_NAME, cmd.toString(), eelDescriptor = eelApi.descriptor)
   }
 
-  private suspend fun detectWindowsPowerShell7(eelApi: EelApi, envVariables: Map<String, String>): DetectedShellInfo? {
-    val programFiles = envVariables[ENV_PROGRAM_FILES] ?: return null
+  private suspend fun detectWindowsPowerShell7(eelApi: EelApi): DetectedShellInfo? {
     val pwsh = eelApi.exec.where("pwsh.exe") ?: return null
-    if (!pwsh.startsWithIgnoreCase("$programFiles\\PowerShell\\")) return null
     return createShellInfo(POWERSHELL_7_NAME, pwsh.toString(), eelDescriptor = eelApi.descriptor)
   }
 

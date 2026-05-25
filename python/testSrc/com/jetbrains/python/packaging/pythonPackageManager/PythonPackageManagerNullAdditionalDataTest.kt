@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.pythonPackageManager
 
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkModificator
@@ -62,7 +62,7 @@ class PythonPackageManagerNullAdditionalDataTask(private val pkg: PythonReposito
   private suspend fun createSdkWithNullAdditionalData(sdkTypeId: SdkTypeId, homePath: String, existingSdk: Sdk): Sdk {
     val sdkTable = ProjectJdkTable.getInstance()
 
-    return writeAction {
+    return edtWriteAction {
       val newSdk = sdkTable.createSdk(SDK_NAME, sdkTypeId)
       configureSdk(newSdk, homePath, existingSdk)
       newSdk

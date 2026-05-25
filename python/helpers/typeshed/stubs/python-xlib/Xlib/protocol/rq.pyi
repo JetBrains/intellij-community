@@ -107,10 +107,12 @@ class Resource(Card32):
     class_name: str
     codes: tuple[int, ...]
     def __init__(self, name: str, codes: tuple[int, ...] = (), default: int | None = None) -> None: ...
+
     @overload  # type: ignore[override]
     def check_value(self, value: Callable[[], _T]) -> _T: ...
     @overload
     def check_value(self, value: _T) -> _T: ...
+
     def parse_value(self, value: int, display: _BaseDisplay) -> int: ...  # type: ignore[override]  # display: None will error. See: https://github.com/python-xlib/python-xlib/pull/248
 
 class Window(Resource):
@@ -169,6 +171,7 @@ class Binary(ValueField):
     def pack_value(  # type: ignore[override]  # Override Callable
         self, val: bytes | bytearray
     ) -> tuple[bytes | bytearray, int, None]: ...
+
     @overload  # type: ignore[override]  # Overload for specific values
     def parse_binary_value(self, data: _T, display: Unused, length: None, format: Unused) -> tuple[_T, Literal[b""]]: ...
     @overload
@@ -181,6 +184,7 @@ class String8(ValueField):
     pad: int
     def __init__(self, name: str, pad: int = 1) -> None: ...
     def pack_value(self, val: bytes | str) -> tuple[bytes, int, None]: ...  # type: ignore[override]  # Override Callable
+
     @overload  # type: ignore[override]  # Overload for specific values
     def parse_binary_value(
         self, data: bytes | bytearray, display: Unused, length: None, format: Unused
@@ -330,12 +334,14 @@ class Struct:
     def __init__(self, *fields: Field) -> None: ...
     def to_binary(self, *varargs: object, **keys: object) -> bytes: ...
     def pack_value(self, value: tuple[object, ...] | dict[str, Any] | DictWrapper) -> bytes: ...
+
     @overload
     def parse_value(self, val: SliceableBuffer, display: display.Display | None, rawdict: Literal[True]) -> dict[str, Any]: ...
     @overload
     def parse_value(
         self, val: SliceableBuffer, display: display.Display | None, rawdict: Literal[False] = False
     ) -> DictWrapper: ...
+
     @overload
     def parse_binary(
         self, data: SliceableBuffer, display: display.Display | None, rawdict: Literal[True]
@@ -344,6 +350,7 @@ class Struct:
     def parse_binary(
         self, data: SliceableBuffer, display: display.Display | None, rawdict: Literal[False] = False
     ) -> tuple[DictWrapper, SliceableBuffer]: ...
+
     # Structs generate their attributes
     # TODO: Create a specific type-only class for all instances of `Struct`
     @type_check_only

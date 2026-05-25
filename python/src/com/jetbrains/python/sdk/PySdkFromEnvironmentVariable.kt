@@ -1,15 +1,26 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
+import com.intellij.platform.eel.provider.localEel
 import com.intellij.util.EnvironmentUtil
-import com.intellij.util.ui.EDT
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PythonBinary
+import com.jetbrains.python.errorProcessing.MessageError
+import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.sdk.add.v2.EelFileSystem
+import com.jetbrains.python.sdk.add.v2.PathHolder
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.InvalidPathException
+import java.nio.file.Path
+import kotlin.io.path.pathString
 
 private val LOG = logger<PySdkFromEnvironmentVariable>()
 
@@ -23,36 +34,35 @@ object PySdkFromEnvironmentVariable {
     return System.getProperty(PYCHARM_PYTHON_PATH_PROPERTY) ?: EnvironmentUtil.getValue(PYCHARM_PYTHON_PATH_ENV)
   }
 
-  fun findOrCreateSdkByPath(path: String): Sdk? {
-    EDT.assertIsEdt()
-    return findByPath(path) ?: createSdkByPath(path)
+  suspend fun findOrCreateSdkByPath(path: String, moduleOrProject: ModuleOrProject): PyResult<Sdk> {
+    val path = try {
+      Path.of(path)
+    }
+    catch (e: InvalidPathException) {
+      return PyResult.failure(MessageError(PyBundle.message("sdk.bad.python", path, e)))
+    }
+    return findByPath(path)?.let { PyResult.success(it) } ?: createLocalSdkGuessingTypeByPath(path, moduleOrProject)
   }
 
-  fun setModuleSdk(module: Module, projectSdk: Sdk?, sdk: Sdk, pythonPath: String) {
-    EDT.assertIsEdt()
+  suspend fun setModuleSdk(module: Module, projectSdk: Sdk?, sdk: Sdk, pythonPath: String) {
     val moduleSdk = PythonSdkUtil.findPythonSdk(module)
     if (pythonPath != projectSdk?.homePath || pythonPath != moduleSdk?.homePath) {
-      module.pythonSdk = sdk
+      writeAction {
+        module.pythonSdk = sdk
+      }
     }
   }
 }
 
-private fun findByPath(pycharmPythonPathEnvVariable: String): Sdk? {
+private suspend fun findByPath(pycharmPythonPathEnvVariable: PythonBinary): Sdk? {
   val sdkType = PythonSdkType.getInstance()
   val sdks = ProjectJdkTable.getInstance().getSdksOfType(sdkType)
-  val sdk = SdkConfigurationUtil.findByPath(sdkType, sdks.toTypedArray(), pycharmPythonPathEnvVariable)
+  val sdk =
+    withContext(Dispatchers.IO) { SdkConfigurationUtil.findByPath(sdkType, sdks.toTypedArray(), pycharmPythonPathEnvVariable.pathString) }
 
   if (sdk != null) {
     LOG.info("Found a previous sdk")
   }
 
-  return sdk
-}
-
-private fun createSdkByPath(pycharmPythonPathEnvVariable: String): Sdk? {
-  val sdk = SdkConfigurationUtil.createAndAddSDK(pycharmPythonPathEnvVariable, PythonSdkType.getInstance())
-  if (sdk != null) {
-    LOG.info("No suitable sdk found, created a new one")
-  }
   return sdk
 }

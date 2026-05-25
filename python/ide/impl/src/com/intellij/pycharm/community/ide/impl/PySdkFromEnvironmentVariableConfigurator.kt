@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.text.Strings
 import com.intellij.workspaceModel.ide.JpsProjectLoadedListener
+import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.PySdkFromEnvironmentVariable
 import com.jetbrains.python.sdk.runWithSdkConfigurationLock
 import kotlinx.coroutines.Dispatchers
@@ -34,7 +35,14 @@ internal class PySdkFromEnvironmentVariableConfigurator(private val project: Pro
 
   private fun checkAndSetSdk(project: Project, pycharmPythonPathEnvVariable: String) = runWithSdkConfigurationLock(project) {
     withContext(Dispatchers.EDT) {
-      val sdk = PySdkFromEnvironmentVariable.findOrCreateSdkByPath(pycharmPythonPathEnvVariable) ?: return@withContext
+
+      val moduleOrProject = ModuleManager.getInstance(project).modules.firstOrNull()?.let { ModuleOrProject.ModuleAndProject(it) }
+                            ?: ModuleOrProject.ProjectOnly(project)
+
+      val sdk = PySdkFromEnvironmentVariable.findOrCreateSdkByPath(pycharmPythonPathEnvVariable, moduleOrProject).getOr {
+        LOGGER.warn("Failed to configure SDK: ${it.error}")
+        return@withContext
+      }
 
       val projectSdk = ProjectRootManager.getInstance(project).projectSdk
 

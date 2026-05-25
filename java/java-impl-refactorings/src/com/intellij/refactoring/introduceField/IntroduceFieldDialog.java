@@ -36,7 +36,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 
 class IntroduceFieldDialog extends DialogWrapper {
-  public static BaseExpressionToFieldHandler.InitializationPlace ourLastInitializerPlace;
+  public static JavaIntroduceFieldService.InitializationPlace ourLastInitializerPlace;
 
   private final Project myProject;
   private final PsiClass myParentClass;
@@ -91,7 +91,7 @@ class IntroduceFieldDialog extends DialogWrapper {
     return myNameField.getEnteredName();
   }
 
-  public BaseExpressionToFieldHandler.InitializationPlace getInitializerPlace() {
+  public JavaIntroduceFieldService.InitializationPlace getInitializerPlace() {
     return myCentralPanel.getInitializerPlace();
   }
 
@@ -215,7 +215,7 @@ class IntroduceFieldDialog extends DialogWrapper {
     }
     if (errorString != null) {
       CommonRefactoringUtil.showErrorMessage(
-	IntroduceFieldHandler.getRefactoringNameText(),
+        IntroduceFieldHelper.getRefactoringNameText(),
 	errorString,
 	HelpID.INTRODUCE_FIELD,
 	myProject
@@ -229,7 +229,7 @@ class IntroduceFieldDialog extends DialogWrapper {
 	myProject,
 	RefactoringBundle.message("field.exists", fieldName,
                                    oldField.getContainingClass().getQualifiedName()),
-	IntroduceFieldHandler.getRefactoringNameText(),
+  IntroduceFieldHelper.getRefactoringNameText(),
 	Messages.getWarningIcon()
       );
       if (answer != Messages.YES) {

@@ -29,6 +29,9 @@ import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withFileToTextCo
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathConvertor
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.TextComponentAccessor
+import com.intellij.openapi.ui.TextComponentAccessors
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlChunk
@@ -52,7 +55,7 @@ import com.intellij.ui.TextFieldWithHistoryWithBrowseButton
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.components.textFieldWithHistoryWithBrowseButton
+import com.intellij.ui.components.installFileCompletionAndBrowseDialog
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Cell
@@ -78,10 +81,13 @@ import com.intellij.ui.layout.selected
 import com.intellij.ui.layout.selectedValueIs
 import com.intellij.ui.layout.selectedValueMatches
 import com.intellij.util.PathUtil
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.SwingHelper.addHistoryOnExpansion
 import com.intellij.util.ui.initOnShow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
@@ -456,42 +462,58 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
   }
 
   private fun createShellPathField(project: Project): TextFieldWithHistoryWithBrowseButton {
-    val eelDescriptor = project.getEelDescriptor()
-    val fileChooserDescriptor = FileChooserDescriptorFactory
-      .singleFile()
-      .withDescription(message("settings.terminal.shell.executable.path.browseFolder.description"))
-      .withEelRoot(eelDescriptor)
-      .withFileToTextConvertor { virtualFile ->
-        // We assume that shell path is relative to the EEL root (without `\\wsl.localhost\<name>\` prefix and so on)
-        @Suppress("HardCodedStringLiteral")
-        virtualFile.toNioPath().asEelPath().toString()
+    val component = TextFieldWithHistoryWithBrowseButton()
+    val textFieldWithHistory = component.childComponent
+    textFieldWithHistory.setHistorySize(-1)
+    textFieldWithHistory.setMinimumAndPreferredWidth(0)
+    addHistoryOnExpansion(textFieldWithHistory) {
+      runWithModalProgressBlocking(project, "") {
+        detectAvailableShellCommandLines(project)
       }
-      .withTextToPathConvertor { text ->
-        val eelPath = try {
-          EelPath.parse(text, eelDescriptor)
-        }
-        catch (_: EelPathException) {
-          null
-        }
-        @Suppress("HardCodedStringLiteral")
-        eelPath?.asNioPath()?.toString() ?: text
-      }
-
-    val shellPathField = textFieldWithHistoryWithBrowseButton(
-      project,
-      fileChooserDescriptor,
-      historyProvider = {
-        runWithModalProgressBlocking(project, "") {
-          detectAvailableShellCommandLines(project)
-        }
-      },
-    )
-    shellPathField.childComponent.setEditor(object : BasicComboBoxEditor() {
+    }
+    component.childComponent.setEditor(object : BasicComboBoxEditor() {
       override fun createEditorComponent(): JTextField = JBTextField().also {
         it.border = JBUI.Borders.empty()
       }
     })
-    return shellPathField
+
+    // Install browse dialog asynchronously because EEL root path calculation is an IO operation
+    // that shouldn't be executed on the UI thread
+    component.initOnShow("Terminal shell path field") {
+      val fileChooserDescriptor = withContext(Dispatchers.IO) {
+        val eelDescriptor = project.getEelDescriptor()
+        FileChooserDescriptorFactory
+          .singleFile()
+          .withDescription(message("settings.terminal.shell.executable.path.browseFolder.description"))
+          .withEelRoot(eelDescriptor)  // Requires BGT
+          .withFileToTextConvertor { virtualFile ->
+            // We assume that shell path is relative to the EEL root (without `\\wsl.localhost\<name>\` prefix and so on)
+            @Suppress("HardCodedStringLiteral")
+            virtualFile.toNioPath().asEelPath().toString()
+          }
+          .withTextToPathConvertor { text ->
+            val eelPath = try {
+              EelPath.parse(text, eelDescriptor)
+            }
+            catch (_: EelPathException) {
+              null
+            }
+            @Suppress("HardCodedStringLiteral")
+            eelPath?.asNioPath()?.toString() ?: text
+          }
+      }
+
+      installFileCompletionAndBrowseDialog(
+        project = project,
+        component = component,
+        textField = component.childComponent.textEditor,
+        fileChooserDescriptor = fileChooserDescriptor,
+        textComponentAccessor = TextComponentAccessors.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT,
+        fileChosen = null
+      )
+    }
+
+    return component
   }
 
   private suspend fun detectAvailableShellCommandLines(project: Project): List<String> {
@@ -514,18 +536,39 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
 private fun Panel.workingDirectoryField(project: Project) {
   row(message("settings.start.directory")) {
     val projectOptionsProvider = TerminalProjectOptionsProvider.getInstance(project)
-    val fileChooserDescriptor = FileChooserDescriptorFactory
-      .singleDir()
-      .withDescription(message("settings.start.directory.browseFolder.description"))
-      .withEelRoot(project.getEelDescriptor())
 
-    textFieldWithBrowseButton(fileChooserDescriptor, project)
+    val component = TextFieldWithBrowseButton().also {
+      it.isOpaque = false
+      it.textField.isOpaque = false
+    }
+
+    cell(component)
       .setupDefaultValue({ childComponent }, projectOptionsProvider.defaultStartingDirectory)
       .bindText(
         getter = { projectOptionsProvider.startingDirectory ?: projectOptionsProvider.defaultStartingDirectory ?: "" },
         setter = { projectOptionsProvider.startingDirectory = it },
       )
       .align(AlignX.FILL)
+
+    // Install browse dialog asynchronously because EEL root path calculation is an IO operation
+    // that shouldn't be executed on the UI thread
+    component.initOnShow("Terminal working directory field") {
+      val fileChooserDescriptor = withContext(Dispatchers.IO) {
+        FileChooserDescriptorFactory
+          .singleDir()
+          .withDescription(message("settings.start.directory.browseFolder.description"))
+          .withEelRoot(project.getEelDescriptor())  // requires BGT
+      }
+
+      installFileCompletionAndBrowseDialog(
+        project = project,
+        component = component,
+        textField = component.textField,
+        fileChooserDescriptor = fileChooserDescriptor,
+        textComponentAccessor = TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
+        fileChosen = null
+      )
+    }
   }
 }
 
@@ -533,6 +576,8 @@ private fun Panel.workingDirectoryField(project: Project) {
  * Applicable only to the remote EEL scenario - we need to limit the file lookup to the remote environment.
  * Do not add any filter in the local scenario.
  */
+@RequiresReadLockAbsence
+@RequiresBackgroundThread
 private fun FileChooserDescriptor.withEelRoot(eelDescriptor: EelDescriptor): FileChooserDescriptor {
   if (eelDescriptor == LocalEelDescriptor) {
     return this

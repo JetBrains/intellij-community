@@ -3,9 +3,8 @@ package com.intellij.ide.plugins
 
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.configurationStore.saveProjectsAndApp
+import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.IdeEventQueue
-import com.intellij.ide.cancelAndJoinBlocking
 import com.intellij.ide.plugins.DynamicPluginsLegacyImpl.clearCachedValues
 import com.intellij.ide.plugins.DynamicPluginsLegacyImpl.clearCachesAfterUnload
 import com.intellij.ide.plugins.DynamicPluginsLegacyImpl.registerDescriptors
@@ -29,7 +28,6 @@ import com.intellij.openapi.extensions.ExtensionPointDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionPointDeferredListenersNotification
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.platform.pluginSystem.parser.impl.elements.ActionElement.ActionElementName
@@ -41,8 +39,16 @@ import com.intellij.util.concurrency.TransferredWriteActionService
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.containers.WeakList
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.time.Duration.Companion.seconds
 
 private val LOG = Logger.getInstance(DynamicPluginsSupportImpl::class.java)
 
@@ -183,11 +189,9 @@ internal class DynamicPluginsSupportImpl(
               application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginUnload(plugin, isUpdate)
             }
           }
-          IdeEventQueue.getInstance().flushQueue() // TODO get rid of this ?
         }
 
         classloadersToUnload.addAll(groupsToUnload.mapNotNull { getAssociatedClassloader(it) as? PluginClassLoader })
-        classloadersToUnload.forEach { it.state = UNLOAD_IN_PROGRESS } // triggers plugin scope cancellation
         withProgressText(IdeBundle.message("progress.text.finishing.plugin.tasks")) {
           cancelAndJoinPluginScopes(classloadersToUnload)
         }
@@ -392,13 +396,41 @@ internal class DynamicPluginsSupportImpl(
       return false
     }
     if (currentGroup.sortedDescriptors != targetGroup.sortedDescriptors) {
-      LOG.debug { "Alignment failed for ${currentGroup}: target group has a different set of included descriptors" }
+      LOG.debug {
+        buildString {
+          append("Alignment failed for ${currentGroup}: target group has a different set of included descriptors: ")
+          val addedDescriptors = targetGroup.sortedDescriptors - currentGroup.sortedDescriptors.toSet()
+          val removedDescriptors = currentGroup.sortedDescriptors - targetGroup.sortedDescriptors.toSet()
+          if (addedDescriptors.isEmpty() && removedDescriptors.isEmpty()) {
+            append("same set, different order")
+          } else {
+            if (addedDescriptors.isNotEmpty()) append("added=${addedDescriptors.joinToString(prefix = "[", postfix = "]") { it.shortLogDescription }} ")
+            if (removedDescriptors.isNotEmpty()) append("removed=${removedDescriptors.joinToString(prefix = "[", postfix = "]") { it.shortLogDescription }}")
+          }
+        }
+      }
       return false
     }
-    val currentAlignedDependencies = currentGraph.getDirectDependencies(currentGroup).map { existingAlignment[it] }
+    // if there is no alignment, take the current module group, as it will certainly fail the comparison further and will simplify debug message calculation
+    val currentAlignedDependencies = currentGraph.getDirectDependencies(currentGroup).map { existingAlignment[it] ?: it }
     val targetDependencies = targetGraph.getDirectDependencies(targetGroup)
     if (currentAlignedDependencies != targetDependencies) {
-      LOG.debug { "Alignment failed for ${currentGroup}: target dependency groups don't align with current dependency groups" }
+      LOG.debug {
+        buildString {
+          append("Alignment failed for ${currentGroup}: target dependency groups don't align with current dependency groups: ")
+          @Suppress("UNCHECKED_CAST")
+          val addedDependencies = targetDependencies - currentAlignedDependencies.toSet()
+          val removedDependencies = currentAlignedDependencies - targetDependencies.toSet()
+          if (addedDependencies.isEmpty() && removedDependencies.isEmpty()) {
+            append("same set, different order")
+          } else {
+            if (addedDependencies.isNotEmpty()) append("added=${addedDependencies.joinToString(prefix = "[", postfix = "]") { it.representativeModule.toString() }} ")
+            if (removedDependencies.isNotEmpty()) {
+              append("removed=${removedDependencies.joinToString(prefix = "[", postfix = "]") { it.representativeModule.toString() }}")
+            }
+          }
+        }
+      }
       return false
     }
     return true
@@ -428,12 +460,28 @@ internal class DynamicPluginsSupportImpl(
     return classloaders[0] ?: error("Runtime module group is expected to have an assigned classloader: ${group.sortedDescriptors}")
   }
 
-  private fun cancelAndJoinPluginScopes(classLoaders: WeakList<PluginClassLoader>) {
+  private suspend fun cancelAndJoinPluginScopes(classLoaders: WeakList<PluginClassLoader>) {
     for (classLoader in classLoaders) {
-      cancelAndJoinBlocking(classLoader.pluginCoroutineScope, "Plugin ${classLoader.pluginId}") { job, _ ->
-        while (!job.isCompleted) {
-          ProgressManager.checkCanceled()
-          IdeEventQueue.getInstance().flushQueue()
+      classLoader.state = UNLOAD_IN_PROGRESS // triggers plugin scope cancellation, but just in case it changes in the future we do that here ourselves
+      classLoader.pluginCoroutineScope.cancel()
+    }
+    val delayDuration = 10.seconds
+    coroutineScope {
+      for (classLoader in classLoaders) {
+        val scopeDescription = "Cancellation of ${classLoader.pluginId} plugin's scope"
+        launch(CoroutineName(scopeDescription)) {
+          val scope = classLoader.pluginCoroutineScope
+          val dumpJob = launch {
+            delay(delayDuration)
+            LOG.warn("$scopeDescription: scope was not completed in $delayDuration.\n${dumpCoroutines(scope = scope, stripDump = false)}")
+          }
+          try {
+            scope.coroutineContext[Job]?.cancelAndJoin()
+          }
+          finally {
+            dumpJob.cancel()
+          }
+          LOG.trace { "$scopeDescription: scope was completed" }
         }
       }
     }

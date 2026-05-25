@@ -33,19 +33,16 @@ internal class BadgePanel : UISandboxPanel {
 
   override val title: String = "Badge"
 
-  override val isInternalApi: Boolean
-    get() = true
-
   override fun createContent(disposable: Disposable): JComponent {
     return panel {
       group("Predefined Badges") {
         row {
-          for (badge in listOf(Badge.new, Badge.alpha, Badge.beta, Badge.trial)) {
+          for (badge in listOf(Badge.new, Badge.alpha, Badge.beta, Badge.trial, Badge.free)) {
             cell(JLabel(badge))
           }
         }
         row {
-          for (badge in listOf(Badge.newDisabled, Badge.alphaDisabled, Badge.betaDisabled, Badge.trialDisabled)) {
+          for (badge in listOf(Badge.newDisabled, Badge.alphaDisabled, Badge.betaDisabled, Badge.trialDisabled, Badge.freeDisabled)) {
             cell(JLabel(badge))
           }
         }

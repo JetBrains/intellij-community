@@ -556,11 +556,14 @@
     </action>
     <action id="Git.WorkingTrees.Refresh" class="git4idea.workingTrees.ui.RefreshWorkingTreesAction"
             icon="AllIcons.General.Refresh" use-shortcut-of="Synchronize"/>
+    <action id="Git.WorkingTrees.Prune" class="git4idea.workingTrees.ui.PruneWorkingTreesAction"
+            icon="AllIcons.Actions.ClearCash"/>
 
     <group id="Git.WorkingTrees.ToolwindowGroup.Toolbar">
       <reference ref="Git.CreateNewWorkingTree"/>
       <reference ref="Git.WorkingTrees.Remove"/>
       <reference ref="Git.WorkingTrees.Refresh"/>
+      <reference ref="Git.WorkingTrees.Prune"/>
       <separator/>
       <reference ref="ContextHelp"/>
     </group>

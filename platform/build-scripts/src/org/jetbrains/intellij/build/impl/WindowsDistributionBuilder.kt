@@ -525,8 +525,8 @@ internal class WindowsDistributionBuilder(
 
   private fun writeWindowsVmOptions(distBinDir: Path, context: BuildContext): Path {
     val vmOptionsFile = distBinDir.resolve("${context.add64IfNeeded(context.productProperties.baseFileName)}.exe.vmoptions")
-    val vmOptions = generateVmOptions(context)
-    writeVmOptions(file = vmOptionsFile, vmOptions = vmOptions, separator = "\r\n")
+    val vmOptions = generateVmOptions(context, extra = emptyList())
+    writeVmOptions(vmOptionsFile, vmOptions, separator = "\r\n")
     return vmOptionsFile
   }
 

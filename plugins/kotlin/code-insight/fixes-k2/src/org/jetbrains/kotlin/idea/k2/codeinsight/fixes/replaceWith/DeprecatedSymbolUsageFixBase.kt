@@ -12,8 +12,6 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
-import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KaParameterDefaultValueRenderer
@@ -24,12 +22,13 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callabl
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.classifiers.KaNamedClassSymbolRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
-import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory.IntentionBased
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.CleanupFix
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinPsiOnlyQuickFixAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.AddQualifiersUtil
 import org.jetbrains.kotlin.idea.core.moveCaret
+import org.jetbrains.kotlin.idea.k2.codeinsight.fetchReplaceWithPattern
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner.CallableUsageReplacementStrategy
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner.ClassUsageReplacementStrategy
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner.CodeToInlineBuilder
@@ -137,7 +136,7 @@ internal object DeprecationFixFactory {
 class DeprecatedSymbolUsageFix(
     element: KtReferenceExpression,
     replaceWith: ReplaceWithData
-) : DeprecatedSymbolUsageFixBase(element, replaceWith), HighPriorityAction {
+) : DeprecatedSymbolUsageFixBase(element, replaceWith), HighPriorityAction, CleanupFix {
     override fun getFamilyName(): String = KotlinBundle.message("replace.deprecated.symbol.usage")
     override fun getText(): String = KotlinBundle.message("replace.with.0", replaceWith.pattern)
 
@@ -289,21 +288,4 @@ abstract class DeprecatedSymbolUsageFixBase(
             return context
         }
     }
-}
-
-fun fetchReplaceWithPattern(
-    symbol: KaDeclarationSymbol
-): ReplaceWithData? {
-    val annotation = symbol.annotations.find { it.classId?.asSingleFqName() == StandardNames.FqNames.deprecated } ?: return null
-    val replaceWithValue =
-      (annotation.arguments.find { it.name.asString() == "replaceWith" }?.expression as? KaAnnotationValue.NestedAnnotationValue)?.annotation
-            ?: return null
-    val pattern =
-        ((replaceWithValue.arguments.find { it.name.asString() == "expression" }?.expression as? KaAnnotationValue.ConstantValue)?.value as? KaConstantValue.StringValue)?.value
-            ?: return null
-    val imports =
-        (replaceWithValue.arguments.find { it.name.asString() == "imports" }?.expression as? KaAnnotationValue.ArrayValue)?.values?.mapNotNull { ((it as? KaAnnotationValue.ConstantValue)?.value as? KaConstantValue.StringValue)?.value }
-            ?: emptyList()
-
-    return ReplaceWithData(pattern, imports, true)
 }

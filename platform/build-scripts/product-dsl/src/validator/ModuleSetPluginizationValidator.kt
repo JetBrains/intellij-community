@@ -6,6 +6,7 @@ import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import org.jetbrains.intellij.build.productLayout.ModuleSet
 import org.jetbrains.intellij.build.productLayout.collectPluginizedModuleSets
+import org.jetbrains.intellij.build.productLayout.contentName
 import org.jetbrains.intellij.build.productLayout.model.error.ModuleSetPluginizationError
 import org.jetbrains.intellij.build.productLayout.model.error.DuplicateModuleSetPluginWrapperError
 import org.jetbrains.intellij.build.productLayout.model.error.UltimateModuleSetMainModuleError
@@ -73,7 +74,7 @@ private fun collectEmbeddedModules(root: ModuleSet): Set<ContentModuleName> {
     }
     for (module in moduleSet.modules) {
       if (module.loading == ModuleLoadingRuleValue.EMBEDDED) {
-        embeddedModules.add(module.name)
+        embeddedModules.add(module.contentName())
       }
     }
     for (nestedSet in moduleSet.nestedSets) {

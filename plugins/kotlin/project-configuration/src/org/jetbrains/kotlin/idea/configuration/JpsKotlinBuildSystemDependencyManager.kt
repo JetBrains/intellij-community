@@ -7,7 +7,7 @@ import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.jarRepository.RepositoryLibraryType
 import com.intellij.modcommand.ModCommand
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -52,7 +52,7 @@ class JpsKotlinBuildSystemDependencyManager(private val coroutineScope: Coroutin
         // Allow for reusing the library if it already exists
         return coroutineScope.launchTracked {
             readAction { project.findExistingLibrary(libraryDescriptor) } ?.let {
-                writeAction {
+                edtWriteAction {
                     module.addLibrary(it, scope)
                 }
                 return@launchTracked
@@ -105,7 +105,7 @@ class JpsDependencyProvider(val coroutineScope: CoroutineScope) : OptionControll
                     // Allow for reusing the library if it already exists
                     val job = coroutineScope.launchTracked {
                         readAction { project.findExistingLibrary(libraryDescriptor) } ?.let {
-                            writeAction {
+                            edtWriteAction {
                                 module.addLibrary(it, scope)
                             }
                             return@launchTracked
@@ -196,9 +196,9 @@ private suspend fun Project.createNewLibraryAndAddToModule(
 
     // Attempt to find a name that is not being used yet
 
-    return writeAction {
-        val nameToUse = libraryDescriptor.suggestNameForLibrary(projectLibraryTable) ?: return@writeAction null
-        val library = projectLibraryTable.createLibrary(nameToUse) as? LibraryEx ?: return@writeAction null
+    return edtWriteAction {
+        val nameToUse = libraryDescriptor.suggestNameForLibrary(projectLibraryTable) ?: return@edtWriteAction null
+        val library = projectLibraryTable.createLibrary(nameToUse) as? LibraryEx ?: return@edtWriteAction null
         library.modifiableModel.apply {
             kind = RepositoryLibraryType.REPOSITORY_LIBRARY_KIND
             properties = repositoryProperties

@@ -2,7 +2,6 @@
 package com.jetbrains.python.tools
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -30,7 +29,6 @@ internal val TestPath = System.getenv("PYCHARM_PERF_ENVS")
 fun createSdkForPerformance(module: Module,
                             sdkCreationType: SdkCreationType,
                             sdkHome: String = File(TestPath, "envs/py36_64").absolutePath): Sdk {
-  ApplicationManagerEx.setInStressTest(true)
   // To disable slow debugging
   val executable = VirtualEnvReader().findPythonInPythonRoot(Path(sdkHome))?.toFile() ?: throw AssertionError("No python on $sdkHome")
   println("Creating Python SDK $sdkHome")

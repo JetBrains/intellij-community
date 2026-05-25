@@ -20,6 +20,7 @@ class Formatter(Generic[_T]):
     title: str
     encoding: str | None
     options: dict[str, Any]  # arbitrary values used by subclasses
+
     @overload
     def __init__(
         self: Formatter[str],
@@ -53,6 +54,7 @@ class Formatter(Generic[_T]):
         outencoding: str,
         **options: Any,  # arbitrary values used by subclasses
     ) -> None: ...
+
     def __class_getitem__(cls, name: Any) -> types.GenericAlias: ...
     def get_style_defs(self, arg: str = "") -> str: ...
     def format(self, tokensource: Iterable[tuple[_TokenType, str]], outfile: SupportsWrite[_T]) -> None: ...

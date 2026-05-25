@@ -1,0 +1,16 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.commons.compress"/>
+    <module name="intellij.libraries.commons.io"/>
+    <module name="intellij.libraries.commons.lang3"/>
+    <module name="intellij.libraries.hash4j"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.ktor.client"/>
+    <module name="intellij.libraries.opentelemetry"/>
+    <module name="intellij.libraries.opentelemetry.extension.kotlin"/>
+    <module name="intellij.libraries.opentelemetry.semconv"/>
+    <module name="intellij.libraries.teamcity.service.messages"/>
+  </dependencies>
+  <!-- endregion -->
+</idea-plugin>

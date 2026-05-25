@@ -10,6 +10,7 @@ a:com.intellij.codeHighlighting.TextEditorHighlightingPass
 - handleInsert(com.intellij.codeInsight.completion.InsertionContext,com.intellij.codeInsight.lookup.LookupElement):V
 com.intellij.codeInsight.daemon.ReferenceImporter
 - *:computeAutoImportAtOffset(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,I,Z):java.util.function.BooleanSupplier
+- *:getActionMode():com.intellij.lang.ImportOptimizer$ActionMode
 *f:com.intellij.codeInsight.daemon.impl.BackgroundUpdateHighlightersUtil
 - <init>():V
 - s:setHighlightersToEditor(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Document,I,I,java.util.Collection,I):V

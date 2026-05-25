@@ -37,13 +37,12 @@ import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
 import com.pty4j.PtyProcess
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.plugins.terminal.startup.ShellExecCommand
 import org.jetbrains.plugins.terminal.startup.ShellExecCommandImpl
 import org.jetbrains.plugins.terminal.startup.WslShellExecCommand
 import org.jetbrains.plugins.terminal.util.ShellNameUtil
-import org.jetbrains.plugins.terminal.util.terminalApplicationScope
 import java.nio.file.Path
 import java.time.Duration
 import java.time.Instant
@@ -259,20 +258,28 @@ internal class ShellProcessHolder(
 
   val descriptor: EelDescriptor get() = eelApi.descriptor
 
-  fun terminatePosixShell() {
-    terminalApplicationScope().launch(Dispatchers.IO) {
+  fun terminatePosixShellBlocking() {
+    runBlockingMaybeCancellable {
+      terminatePosixShell()
+    }
+  }
+
+  suspend fun terminatePosixShell() {
+    withContext(Dispatchers.IO) {
       if (!ptyProcess.isAlive) {
         log.debug { "Shell process ${processInfo(ptyProcess)} is already terminated" }
-        return@launch
+        return@withContext
       }
+
       log.debug { "Sending SIGHUP to shell process ${processInfo(ptyProcess)}" }
       val killProcess = try {
         eelApi.exec.spawnProcess("kill").args("-HUP", shellPid.value.toString()).eelIt()
       }
       catch (e: ExecuteProcessException) {
         log.warn("Unable to send SIGHUP to ${processInfo(ptyProcess)}", e)
-        return@launch
+        return@withContext
       }
+
       if (ptyProcess.awaitExit(5.seconds) == null) {
         val killProcessResult = withTimeoutOrNull(1.seconds) {
           killProcess.awaitProcessResult()
@@ -283,6 +290,7 @@ internal class ShellProcessHolder(
           ptyProcess.destroyForcibly()
         }
       }
+
       val exitCode = ptyProcess.awaitExit(2.seconds)
       if (exitCode != null) {
         log.debug { "Shell process ${processInfo(ptyProcess)} has been terminated with exit code $exitCode" }

@@ -4,6 +4,8 @@ package com.jetbrains.python.sdk.add.v2
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
+import com.intellij.python.pytools.Version
+import com.intellij.python.pytools.getToolVersion
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.TraceContext
 import com.jetbrains.python.errorProcessing.PyResult

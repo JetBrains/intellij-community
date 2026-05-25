@@ -16,6 +16,7 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
@@ -174,6 +175,9 @@ public final class FileIncludeContextHectorPanel extends HectorComponentPanel {
         VirtualFile root = fileIndex.getSourceRootForFile(file);
         if (root == null) {
           root = fileIndex.getContentRootForFile(file);
+        }
+        if (root == null) {
+          root = WorkspaceFileIndex.getInstance(myPsiFile.getProject()).getContentFileSetRoot(file, true);
         }
         if (root != null) {
           return VfsUtilCore.getRelativePath(file, root, '/');

@@ -171,8 +171,6 @@ jvm_library(
     "//platform/util/jdom:jdom_test_lib",
     "//platform/util:util-ui_test_lib",
     "//platform/util-ex:util-ex_test_lib",
-    "//platform/build-scripts/downloader",
-    "//platform/build-scripts/downloader:downloader_test_lib",
     "//libraries/assertj-core",
     "//libraries/assertj-core:assertj-core_test_lib",
     "//platform/testFramework",

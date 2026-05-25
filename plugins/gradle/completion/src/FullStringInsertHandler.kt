@@ -16,7 +16,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 object FullStringInsertHandler : InsertHandler<LookupElement> {
   override fun handleInsert(context: InsertionContext, item: LookupElement) {
-    val result = item.getObject() as? String ?: return
+    val result = item.lookupString
     // IDEA was so kind to have replaced part of the initial string for us,
     // but we would like to replace the whole string
     context.commitDocument()

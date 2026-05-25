@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.command.commands
 
 import com.intellij.analysis.AnalysisBundle.message
@@ -94,7 +94,8 @@ class DirectInspectionFixCompletionCommand(
             val fixes = descriptor.fixes ?: continue
             for (i in 0..fixes.size - 1) {
               val intentionAction = wrap(descriptor, i)
-              if (intentionAction.text == presentableName && availableFor(psiFile, editor, targetOffset, intentionAction)) {
+              if (availableFor(psiFile, editor, targetOffset, intentionAction) &&
+                  intentionAction.text == presentableName) {
                 return@readAction intentionAction
               }
             }

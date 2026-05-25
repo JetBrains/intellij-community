@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
+import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
@@ -203,6 +204,22 @@ class CodexClientTest {
   }
 
   @Test
+  fun `configure creates missing codex directory for project config`() {
+    val configPath = tempDir.resolve("project").resolve(".codex").resolve("config.toml")
+
+    McpClient.overrideProductSpecificServerKeyForTests("codextest")
+
+    val client = TestCodexClient(McpClientInfo.Scope.PROJECT, configPath, "http://localhost:3333/stream")
+    runBlocking(Dispatchers.Default) {
+      client.configure(client.getStreamableHttpConfig())
+    }
+
+    assertTrue(configPath.parent.exists())
+    assertTrue(configPath.exists())
+    assertEquals("http://localhost:3333/stream", client.readMcpServersForTest()?.get("codextest")?.url)
+  }
+
+  @Test
   fun `configure keeps quoted project keys without doubling quotes`() {
     val configPath = tempDir.resolve("config.toml")
     configPath.writeText(
@@ -332,4 +349,6 @@ private class TestCodexClient(
 ) : CodexClient(scope, configPath) {
   override val streamableHttpUrl: String
     get() = fixedUrl
+
+  fun readMcpServersForTest() = readMcpServers()
 }

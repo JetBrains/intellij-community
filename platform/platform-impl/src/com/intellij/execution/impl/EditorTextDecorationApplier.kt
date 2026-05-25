@@ -470,7 +470,6 @@ private class EditorTextDecorationApplierImpl(private val editor: EditorEx, pare
     override fun mouseMoved(e: EditorMouseEvent) {
       val highlightedLink = findDecoration(e)
       if (highlightedLink?.link?.action == null) {
-        editor.setCustomCursor(EditorTextDecorationApplierImpl::class.java, null)
         hyperlinkInteraction.linkHovered(null, e)
         hoveredHyperlink = null
       }

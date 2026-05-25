@@ -10,9 +10,7 @@ import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
 @Service(Service.Level.APP)
 class PluginUpdateCheckService {
   companion object {

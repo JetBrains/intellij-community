@@ -105,6 +105,7 @@ class AxDataSource(Serialisable):
     strRef: Typed[StrRef, Literal[True]]
     strLit: Typed[StrData, Literal[True]]
     multiLvlStrRef: Typed[MultiLevelStrRef, Literal[True]]
+
     @overload
     def __init__(
         self, numRef: None = None, numLit: None = None, strRef: None = None, strLit: None = None, multiLvlStrRef: None = None

@@ -3,6 +3,7 @@
 package com.intellij.ide.impl.dataRules;
 
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
+import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
 import com.intellij.openapi.actionSystem.DataMap;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,7 +11,9 @@ import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.SyntheticLibrary;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -21,6 +24,7 @@ import com.intellij.usages.Usage;
 import com.intellij.usages.UsageDataUtil;
 import com.intellij.usages.UsageTarget;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -105,9 +109,19 @@ final class VirtualFileArrayRule {
       Object[] objects = dataProvider.get(SELECTED_ITEMS);
       if (objects != null && objects.length != 0) {
         Object[] unwrapped = ContainerUtil.map2Array(objects, o -> AbstractProjectViewPane.extractValueFromNode(o));
+        VirtualFile[] virtualFiles = null;
         if (ContainerUtil.all(unwrapped, o -> o instanceof VirtualFile)) {
-          return Arrays.copyOf(unwrapped, unwrapped.length, VirtualFile[].class);
+          virtualFiles = Arrays.copyOf(unwrapped, unwrapped.length, VirtualFile[].class);
         }
+        else if (ContainerUtil.all(unwrapped, o -> o instanceof SyntheticLibrary)) {
+          virtualFiles = StreamEx.of(unwrapped).flatCollection(f -> ((SyntheticLibrary)f).getSourceRoots())
+            .toArray(VirtualFile.EMPTY_ARRAY);
+        }
+        else if (ContainerUtil.all(unwrapped, o -> o instanceof NamedLibraryElement)) {
+          virtualFiles = StreamEx.of(unwrapped).flatArray(f -> ((NamedLibraryElement)f).getOrderEntry().getRootFiles(OrderRootType.SOURCES))
+            .toArray(VirtualFile.EMPTY_ARRAY);
+        }
+        return virtualFiles != null && virtualFiles.length != 0 ? virtualFiles : null;
       }
       return null;
     }

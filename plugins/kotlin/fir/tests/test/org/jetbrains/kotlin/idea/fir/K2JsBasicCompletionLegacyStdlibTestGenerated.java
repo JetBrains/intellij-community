@@ -1030,6 +1030,16 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("AnnotationLiteralArrayFirst.kt")
+            public void testAnnotationLiteralArrayFirst() throws Exception {
+                runTest("../../completion/testData/basic/common/enums/AnnotationLiteralArrayFirst.kt");
+            }
+
+            @TestMetadata("AnnotationLiteralArraySecond.kt")
+            public void testAnnotationLiteralArraySecond() throws Exception {
+                runTest("../../completion/testData/basic/common/enums/AnnotationLiteralArraySecond.kt");
+            }
+
             @TestMetadata("AnnotationLiteralFirst.kt")
             public void testAnnotationLiteralFirst() throws Exception {
                 runTest("../../completion/testData/basic/common/enums/AnnotationLiteralFirst.kt");

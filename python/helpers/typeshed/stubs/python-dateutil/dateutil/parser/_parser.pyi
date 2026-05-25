@@ -77,6 +77,7 @@ class _ymd(list[int]):
 class parser:
     info: parserinfo
     def __init__(self, info: parserinfo | None = None) -> None: ...
+
     @overload
     def parse(
         self,

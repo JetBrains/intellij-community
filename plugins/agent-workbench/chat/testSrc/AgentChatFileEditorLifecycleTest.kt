@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.buildAgentThreadIdentity
+import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy
@@ -265,6 +266,35 @@ class AgentChatFileEditorLifecycleTest {
     assertThat(file.initialMessageToken).isNull()
     assertThat(file.toSnapshot().runtime.initialMessageDispatchSteps).isEmpty()
     assertThat(file.toSnapshot().runtime.initialMessageToken).isNull()
+  }
+
+  @Test
+  fun startupLaunchSpecOverrideInitializesTerminalWithoutResolvingNewSessionIntent() {
+    val preallocatedSessionId = "terminal-session-1"
+    val startupLaunchSpec = AgentSessionTerminalLaunchSpec(
+      command = emptyList(),
+      useTerminalDefaultShell = true,
+      preallocatedSessionId = preallocatedSessionId,
+    )
+    val file = testFile(
+      threadIdentity = buildAgentThreadIdentity(AgentSessionProvider.TERMINAL.value, preallocatedSessionId),
+      shellCommand = emptyList(),
+    )
+    file.updateStartupIntent(
+      AgentChatStartupIntent.NewSession(
+        provider = AgentSessionProvider.TERMINAL,
+        launchMode = AgentSessionLaunchMode.STANDARD,
+      )
+    )
+    file.setStartupLaunchSpecOverride(startupLaunchSpec)
+    val terminalTabs = FakeAgentChatTerminalTabs()
+    val editor = testEditor(file = file, terminalTabs = terminalTabs)
+
+    editor.selectNotify()
+
+    assertThat(terminalTabs.createCalls).isEqualTo(1)
+    assertThat(terminalTabs.lastStartupLaunchSpec).isEqualTo(startupLaunchSpec)
+    assertThat(file.startupIntent()).isNull()
   }
 
   @Test
@@ -737,6 +767,16 @@ class AgentChatFileEditorLifecycleTest {
     assertThat(liveTerminalStore.isPendingClose(file.tabKey)).isFalse()
 
     liveTerminalStore.dispose(project)
+  }
+
+  @Test
+  fun lastEditorCloseArchivesConcreteTerminalSessionOnly() {
+    assertThat(shouldArchiveTerminalSessionOnLastEditorClose(terminalLifecycleTestFile()))
+      .isTrue()
+    assertThat(shouldArchiveTerminalSessionOnLastEditorClose(claudeLifecycleTestFile()))
+      .isFalse()
+    assertThat(shouldArchiveTerminalSessionOnLastEditorClose(pendingTestFile(provider = AgentSessionProvider.TERMINAL)))
+      .isFalse()
   }
 
   @Test
@@ -1718,6 +1758,7 @@ private class FakeAgentChatTerminalTabs : AgentChatTerminalTabs {
   var createCalls: Int = 0
   var closeCalls: Int = 0
   val tab = FakeAgentChatTerminalTab()
+  var lastStartupLaunchSpec: AgentSessionTerminalLaunchSpec? = null
 
   override fun createTab(
     project: Project,
@@ -1725,6 +1766,7 @@ private class FakeAgentChatTerminalTabs : AgentChatTerminalTabs {
     startupLaunchSpec: AgentSessionTerminalLaunchSpec,
   ): AgentChatTerminalTab {
     createCalls++
+    lastStartupLaunchSpec = startupLaunchSpec
     return tab
   }
 
@@ -2004,6 +2046,15 @@ private fun claudeLifecycleTestFile(): AgentChatVirtualFile {
     threadIdentity = "CLAUDE:session-1",
     shellCommand = listOf("claude", "--resume", "session-1"),
   )
+}
+
+private fun terminalLifecycleTestFile(): AgentChatVirtualFile {
+  return testFile(
+    threadIdentity = buildAgentThreadIdentity(AgentSessionProvider.TERMINAL.value, "terminal-1"),
+    shellCommand = emptyList(),
+  ).also { file ->
+    file.updateThreadId("terminal-1")
+  }
 }
 
 private fun testEditor(

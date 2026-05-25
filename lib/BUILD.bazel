@@ -6060,17 +6060,25 @@ jvm_import(
 )
 
 copy_file(
-  name = "org.jetbrains.intellij.plugins/structure-intellij-3.320.jar_copy",
-  src = "@org_jetbrains_intellij_plugins-structure-intellij-3_320_http//file",
-  out = "org.jetbrains.intellij.plugins/structure-intellij-3.320.jar",
+  name = "org.jetbrains.intellij.plugins/structure-intellij-3.329.jar_copy",
+  src = "@org_jetbrains_intellij_plugins-structure-intellij-3_329_http//file",
+  out = "org.jetbrains.intellij.plugins/structure-intellij-3.329.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "org.jetbrains.intellij.plugins/structure-base-3.320.jar_copy",
-  src = "@org_jetbrains_intellij_plugins-structure-base-3_320_http//file",
-  out = "org.jetbrains.intellij.plugins/structure-base-3.320.jar",
+  name = "org.jetbrains.intellij.plugins/structure-base-3.329.jar_copy",
+  src = "@org_jetbrains_intellij_plugins-structure-base-3_329_http//file",
+  out = "org.jetbrains.intellij.plugins/structure-base-3.329.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.jetbrains.intellij.deps/trove4j-1.0.20200330.jar_copy",
+  src = "@org_jetbrains_intellij_deps-trove4j-1_0_20200330_http//file",
+  out = "org.jetbrains.intellij.deps/trove4j-1.0.20200330.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
@@ -6091,27 +6099,62 @@ copy_file(
   visibility = ["//visibility:public"]
 )
 
+copy_file(
+  name = "jakarta.xml.bind/jakarta.xml.bind-api-4.0.2.jar_copy",
+  src = "@jakarta_xml_bind-jakarta_xml_bind-api-4_0_2_http//file",
+  out = "jakarta.xml.bind/jakarta.xml.bind-api-4.0.2.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.glassfish.jaxb/jaxb-runtime-4.0.2.jar_copy",
+  src = "@org_glassfish_jaxb-jaxb-runtime-4_0_2_http//file",
+  out = "org.glassfish.jaxb/jaxb-runtime-4.0.2.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.glassfish.jaxb/jaxb-core-4.0.2.jar_copy",
+  src = "@org_glassfish_jaxb-jaxb-core-4_0_2_http//file",
+  out = "org.glassfish.jaxb/jaxb-core-4.0.2.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
 java_library(
   name = "intellij-plugin-structure",
   exports = [
-    ":org_jetbrains_intellij_plugins-structure-intellij-3_320_http_import",
-    ":org_jetbrains_intellij_plugins-structure-base-3_320_http_import",
+    ":org_jetbrains_intellij_plugins-structure-intellij-3_329_http_import",
+    ":org_jetbrains_intellij_plugins-structure-base-3_329_http_import",
+    ":org_jetbrains_intellij_deps-trove4j-1_0_20200330_http_import",
     ":org_atteo-evo-inflector-1_3_http_import",
     ":org_jdom-jdom2-2_0_6_1_http_import",
+    ":jakarta_xml_bind-jakarta_xml_bind-api-4_0_2_http_import",
+    ":jakarta_activation-jakarta_activation-api-2_1_3_http_import",
+    ":org_glassfish_jaxb-jaxb-runtime-4_0_2_http_import",
+    ":org_glassfish_jaxb-jaxb-core-4_0_2_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "org_jetbrains_intellij_plugins-structure-intellij-3_320_http_import",
-  jar = "@org_jetbrains_intellij_plugins-structure-intellij-3_320_http//file",
-  source_jar = "@org_jetbrains_intellij_plugins-structure-intellij-3_320-sources_http//file"
+  name = "org_jetbrains_intellij_plugins-structure-intellij-3_329_http_import",
+  jar = "@org_jetbrains_intellij_plugins-structure-intellij-3_329_http//file",
+  source_jar = "@org_jetbrains_intellij_plugins-structure-intellij-3_329-sources_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_intellij_plugins-structure-base-3_320_http_import",
-  jar = "@org_jetbrains_intellij_plugins-structure-base-3_320_http//file",
-  source_jar = "@org_jetbrains_intellij_plugins-structure-base-3_320-sources_http//file"
+  name = "org_jetbrains_intellij_plugins-structure-base-3_329_http_import",
+  jar = "@org_jetbrains_intellij_plugins-structure-base-3_329_http//file",
+  source_jar = "@org_jetbrains_intellij_plugins-structure-base-3_329-sources_http//file"
+)
+
+jvm_import(
+  name = "org_jetbrains_intellij_deps-trove4j-1_0_20200330_http_import",
+  jar = "@org_jetbrains_intellij_deps-trove4j-1_0_20200330_http//file",
+  source_jar = "@org_jetbrains_intellij_deps-trove4j-1_0_20200330-sources_http//file"
 )
 
 jvm_import(
@@ -6124,6 +6167,24 @@ jvm_import(
   name = "org_jdom-jdom2-2_0_6_1_http_import",
   jar = "@org_jdom-jdom2-2_0_6_1_http//file",
   source_jar = "@org_jdom-jdom2-2_0_6_1-sources_http//file"
+)
+
+jvm_import(
+  name = "jakarta_xml_bind-jakarta_xml_bind-api-4_0_2_http_import",
+  jar = "@jakarta_xml_bind-jakarta_xml_bind-api-4_0_2_http//file",
+  source_jar = "@jakarta_xml_bind-jakarta_xml_bind-api-4_0_2-sources_http//file"
+)
+
+jvm_import(
+  name = "org_glassfish_jaxb-jaxb-runtime-4_0_2_http_import",
+  jar = "@org_glassfish_jaxb-jaxb-runtime-4_0_2_http//file",
+  source_jar = "@org_glassfish_jaxb-jaxb-runtime-4_0_2-sources_http//file"
+)
+
+jvm_import(
+  name = "org_glassfish_jaxb-jaxb-core-4_0_2_http_import",
+  jar = "@org_glassfish_jaxb-jaxb-core-4_0_2_http//file",
+  source_jar = "@org_glassfish_jaxb-jaxb-core-4_0_2-sources_http//file"
 )
 
 copy_file(
@@ -6388,33 +6449,33 @@ jvm_import(
 )
 
 copy_file(
-  name = "io.modelcontextprotocol/kotlin-sdk-jvm-0.8.1.jar_copy",
-  src = "@io_modelcontextprotocol-kotlin-sdk-jvm-0_8_1_http//file",
-  out = "io.modelcontextprotocol/kotlin-sdk-jvm-0.8.1.jar",
+  name = "io.modelcontextprotocol/kotlin-sdk-jvm-0.12.0.jar_copy",
+  src = "@io_modelcontextprotocol-kotlin-sdk-jvm-0_12_0_http//file",
+  out = "io.modelcontextprotocol/kotlin-sdk-jvm-0.12.0.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "io.modelcontextprotocol/kotlin-sdk-client-jvm-0.8.1.jar_copy",
-  src = "@io_modelcontextprotocol-kotlin-sdk-client-jvm-0_8_1_http//file",
-  out = "io.modelcontextprotocol/kotlin-sdk-client-jvm-0.8.1.jar",
+  name = "io.modelcontextprotocol/kotlin-sdk-client-jvm-0.12.0.jar_copy",
+  src = "@io_modelcontextprotocol-kotlin-sdk-client-jvm-0_12_0_http//file",
+  out = "io.modelcontextprotocol/kotlin-sdk-client-jvm-0.12.0.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "io.modelcontextprotocol/kotlin-sdk-server-jvm-0.8.1.jar_copy",
-  src = "@io_modelcontextprotocol-kotlin-sdk-server-jvm-0_8_1_http//file",
-  out = "io.modelcontextprotocol/kotlin-sdk-server-jvm-0.8.1.jar",
+  name = "io.modelcontextprotocol/kotlin-sdk-server-jvm-0.12.0.jar_copy",
+  src = "@io_modelcontextprotocol-kotlin-sdk-server-jvm-0_12_0_http//file",
+  out = "io.modelcontextprotocol/kotlin-sdk-server-jvm-0.12.0.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "io.modelcontextprotocol/kotlin-sdk-core-jvm-0.8.1.jar_copy",
-  src = "@io_modelcontextprotocol-kotlin-sdk-core-jvm-0_8_1_http//file",
-  out = "io.modelcontextprotocol/kotlin-sdk-core-jvm-0.8.1.jar",
+  name = "io.modelcontextprotocol/kotlin-sdk-core-jvm-0.12.0.jar_copy",
+  src = "@io_modelcontextprotocol-kotlin-sdk-core-jvm-0_12_0_http//file",
+  out = "io.modelcontextprotocol/kotlin-sdk-core-jvm-0.12.0.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
@@ -6422,36 +6483,36 @@ copy_file(
 java_library(
   name = "io-modelcontextprotocol-kotlin-sdk",
   exports = [
-    ":io_modelcontextprotocol-kotlin-sdk-jvm-0_8_1_http_import",
-    ":io_modelcontextprotocol-kotlin-sdk-client-jvm-0_8_1_http_import",
-    ":io_modelcontextprotocol-kotlin-sdk-server-jvm-0_8_1_http_import",
-    ":io_modelcontextprotocol-kotlin-sdk-core-jvm-0_8_1_http_import",
+    ":io_modelcontextprotocol-kotlin-sdk-jvm-0_12_0_http_import",
+    ":io_modelcontextprotocol-kotlin-sdk-client-jvm-0_12_0_http_import",
+    ":io_modelcontextprotocol-kotlin-sdk-server-jvm-0_12_0_http_import",
+    ":io_modelcontextprotocol-kotlin-sdk-core-jvm-0_12_0_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "io_modelcontextprotocol-kotlin-sdk-jvm-0_8_1_http_import",
-  jar = "@io_modelcontextprotocol-kotlin-sdk-jvm-0_8_1_http//file",
-  source_jar = "@io_modelcontextprotocol-kotlin-sdk-jvm-0_8_1-sources_http//file"
+  name = "io_modelcontextprotocol-kotlin-sdk-jvm-0_12_0_http_import",
+  jar = "@io_modelcontextprotocol-kotlin-sdk-jvm-0_12_0_http//file",
+  source_jar = "@io_modelcontextprotocol-kotlin-sdk-jvm-0_12_0-sources_http//file"
 )
 
 jvm_import(
-  name = "io_modelcontextprotocol-kotlin-sdk-client-jvm-0_8_1_http_import",
-  jar = "@io_modelcontextprotocol-kotlin-sdk-client-jvm-0_8_1_http//file",
-  source_jar = "@io_modelcontextprotocol-kotlin-sdk-client-jvm-0_8_1-sources_http//file"
+  name = "io_modelcontextprotocol-kotlin-sdk-client-jvm-0_12_0_http_import",
+  jar = "@io_modelcontextprotocol-kotlin-sdk-client-jvm-0_12_0_http//file",
+  source_jar = "@io_modelcontextprotocol-kotlin-sdk-client-jvm-0_12_0-sources_http//file"
 )
 
 jvm_import(
-  name = "io_modelcontextprotocol-kotlin-sdk-server-jvm-0_8_1_http_import",
-  jar = "@io_modelcontextprotocol-kotlin-sdk-server-jvm-0_8_1_http//file",
-  source_jar = "@io_modelcontextprotocol-kotlin-sdk-server-jvm-0_8_1-sources_http//file"
+  name = "io_modelcontextprotocol-kotlin-sdk-server-jvm-0_12_0_http_import",
+  jar = "@io_modelcontextprotocol-kotlin-sdk-server-jvm-0_12_0_http//file",
+  source_jar = "@io_modelcontextprotocol-kotlin-sdk-server-jvm-0_12_0-sources_http//file"
 )
 
 jvm_import(
-  name = "io_modelcontextprotocol-kotlin-sdk-core-jvm-0_8_1_http_import",
-  jar = "@io_modelcontextprotocol-kotlin-sdk-core-jvm-0_8_1_http//file",
-  source_jar = "@io_modelcontextprotocol-kotlin-sdk-core-jvm-0_8_1-sources_http//file"
+  name = "io_modelcontextprotocol-kotlin-sdk-core-jvm-0_12_0_http_import",
+  jar = "@io_modelcontextprotocol-kotlin-sdk-core-jvm-0_12_0_http//file",
+  source_jar = "@io_modelcontextprotocol-kotlin-sdk-core-jvm-0_12_0-sources_http//file"
 )
 
 copy_file(
@@ -7308,17 +7369,17 @@ jvm_import(
 )
 
 copy_file(
-  name = "org.jetbrains/markdown-jvm-0.7.2.jar_copy",
-  src = "@org_jetbrains-markdown-jvm-0_7_2_http//file",
-  out = "org.jetbrains/markdown-jvm-0.7.2.jar",
+  name = "org.jetbrains/markdown-jvm-0.7.3.jar_copy",
+  src = "@org_jetbrains-markdown-jvm-0_7_3_http//file",
+  out = "org.jetbrains/markdown-jvm-0.7.3.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "jetbrains-markdown",
-  jar = "@org_jetbrains-markdown-jvm-0_7_2_http//file",
-  source_jar = "@org_jetbrains-markdown-jvm-0_7_2-sources_http//file",
+  jar = "@org_jetbrains-markdown-jvm-0_7_3_http//file",
+  source_jar = "@org_jetbrains-markdown-jvm-0_7_3-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -9888,6 +9949,21 @@ jvm_import(
   name = "com_typesafe-config-1_4_5_http_import",
   jar = "@com_typesafe-config-1_4_5_http//file",
   source_jar = "@com_typesafe-config-1_4_5-sources_http//file"
+)
+
+copy_file(
+  name = "io.ktor/ktor-server-content-negotiation-jvm-3.4.1.jar_copy",
+  src = "@io_ktor-ktor-server-content-negotiation-jvm-3_4_1_http//file",
+  out = "io.ktor/ktor-server-content-negotiation-jvm-3.4.1.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "ktor-server-content-negotiation",
+  jar = "@io_ktor-ktor-server-content-negotiation-jvm-3_4_1_http//file",
+  source_jar = "@io_ktor-ktor-server-content-negotiation-jvm-3_4_1-sources_http//file",
+  visibility = ["//visibility:public"]
 )
 
 copy_file(
@@ -13730,6 +13806,21 @@ jvm_import(
   name = "net_bytebuddy-byte-buddy-agent-1_17_4_http_import",
   jar = "@net_bytebuddy-byte-buddy-agent-1_17_4_http//file",
   source_jar = "@net_bytebuddy-byte-buddy-agent-1_17_4-sources_http//file"
+)
+
+copy_file(
+  name = "org.jetbrains.teamcity/serviceMessages-2024.07.jar_copy",
+  src = "@org_jetbrains_teamcity-serviceMessages-2024_07_http//file",
+  out = "org.jetbrains.teamcity/serviceMessages-2024.07.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-teamcity-service-messages-tc_service_messages",
+  jar = "@org_jetbrains_teamcity-serviceMessages-2024_07_http//file",
+  source_jar = "@org_jetbrains_teamcity-serviceMessages-2024_07-sources_http//file",
+  visibility = ["//visibility:public"]
 )
 
 copy_file(
@@ -17997,18 +18088,40 @@ jvm_import(
 )
 
 copy_file(
-  name = "com.moandjiezana.toml/toml4j-0.7.2.jar_copy",
-  src = "@com_moandjiezana_toml-toml4j-0_7_2_http//file",
-  out = "com.moandjiezana.toml/toml4j-0.7.2.jar",
+  name = "com.electronwill.night-config/toml-3.8.4.jar_copy",
+  src = "@com_electronwill_night-config-toml-3_8_4_http//file",
+  out = "com.electronwill.night-config/toml-3.8.4.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
-jvm_import(
-  name = "mcpserver-toml4j",
-  jar = "@com_moandjiezana_toml-toml4j-0_7_2_http//file",
-  source_jar = "@com_moandjiezana_toml-toml4j-0_7_2-sources_http//file",
+copy_file(
+  name = "com.electronwill.night-config/core-3.8.4.jar_copy",
+  src = "@com_electronwill_night-config-core-3_8_4_http//file",
+  out = "com.electronwill.night-config/core-3.8.4.jar",
+  allow_symlink = True,
   visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "mcpserver-night-config-toml",
+  exports = [
+    ":com_electronwill_night-config-toml-3_8_4_http_import",
+    ":com_electronwill_night-config-core-3_8_4_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "com_electronwill_night-config-toml-3_8_4_http_import",
+  jar = "@com_electronwill_night-config-toml-3_8_4_http//file",
+  source_jar = "@com_electronwill_night-config-toml-3_8_4-sources_http//file"
+)
+
+jvm_import(
+  name = "com_electronwill_night-config-core-3_8_4_http_import",
+  jar = "@com_electronwill_night-config-core-3_8_4_http//file",
+  source_jar = "@com_electronwill_night-config-core-3_8_4-sources_http//file"
 )
 
 copy_file(
@@ -19239,14 +19352,6 @@ copy_file(
 )
 
 copy_file(
-  name = "org.jetbrains.intellij.deps/trove4j-1.0.20200330.jar_copy",
-  src = "@org_jetbrains_intellij_deps-trove4j-1_0_20200330_http//file",
-  out = "org.jetbrains.intellij.deps/trove4j-1.0.20200330.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
   name = "io.gitlab.arturbosch.detekt/detekt-test-utils-1.23.8.jar_copy",
   src = "@io_gitlab_arturbosch_detekt-detekt-test-utils-1_23_8_http//file",
   out = "io.gitlab.arturbosch.detekt/detekt-test-utils-1.23.8.jar",
@@ -19360,12 +19465,6 @@ jvm_import(
   name = "org_jetbrains_kotlin-kotlin-daemon-embeddable-2_0_21_http_import",
   jar = "@org_jetbrains_kotlin-kotlin-daemon-embeddable-2_0_21_http//file",
   source_jar = "@org_jetbrains_kotlin-kotlin-daemon-embeddable-2_0_21-sources_http//file"
-)
-
-jvm_import(
-  name = "org_jetbrains_intellij_deps-trove4j-1_0_20200330_http_import",
-  jar = "@org_jetbrains_intellij_deps-trove4j-1_0_20200330_http//file",
-  source_jar = "@org_jetbrains_intellij_deps-trove4j-1_0_20200330-sources_http//file"
 )
 
 jvm_import(
@@ -20420,21 +20519,6 @@ jvm_import(
   name = "tasks-core-commons-discovery",
   jar = "@commons-discovery-commons-discovery-0_4_http//file",
   source_jar = "@commons-discovery-commons-discovery-0_4-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.jetbrains.teamcity/serviceMessages-2024.07.jar_copy",
-  src = "@org_jetbrains_teamcity-serviceMessages-2024_07_http//file",
-  out = "org.jetbrains.teamcity/serviceMessages-2024.07.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "tc_service_messages",
-  jar = "@org_jetbrains_teamcity-serviceMessages-2024_07_http//file",
-  source_jar = "@org_jetbrains_teamcity-serviceMessages-2024_07-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

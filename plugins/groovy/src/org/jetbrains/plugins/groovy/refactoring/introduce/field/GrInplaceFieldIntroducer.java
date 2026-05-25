@@ -62,7 +62,7 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
   private final GrVariable myLocalVar;
 
   public GrInplaceFieldIntroducer(GrIntroduceContext context, OccurrencesChooser.ReplaceChoice choice) {
-    super(IntroduceFieldHandler.getRefactoringNameText(), choice, context);
+    super(new IntroduceFieldHandler().getRefactoringName(), choice, context);
 
     finalListener = new GrFinalListener(myEditor);
 
@@ -73,12 +73,15 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
 
       GrExpression initializer = myLocalVar.getInitializerGroovy();
       if (initializer != null) {
-        ContainerUtil.addAll(result, GroovyNameSuggestionUtil.suggestVariableNames(initializer, new GroovyInplaceFieldValidator(getContext()), false));
+        ContainerUtil.addAll(result,
+                             GroovyNameSuggestionUtil.suggestVariableNames(initializer, new GroovyInplaceFieldValidator(getContext()),
+                                                                           false));
       }
       mySuggestedNames = ArrayUtilRt.toStringArray(result);
     }
     else {
-      mySuggestedNames = GroovyNameSuggestionUtil.suggestVariableNames(context.getExpression(), new GroovyInplaceFieldValidator(getContext()), false);
+      mySuggestedNames =
+        GroovyNameSuggestionUtil.suggestVariableNames(context.getExpression(), new GroovyInplaceFieldValidator(getContext()), false);
     }
     myApplicablePlaces = getApplicableInitPlaces();
   }
@@ -226,7 +229,7 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
 
   @Override
   protected String getActionName() {
-    return IntroduceFieldHandler.getRefactoringNameText();
+    return new IntroduceFieldHandler().getRefactoringName();
   }
 
   @Override

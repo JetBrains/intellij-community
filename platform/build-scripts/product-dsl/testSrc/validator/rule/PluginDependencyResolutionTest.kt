@@ -152,8 +152,8 @@ class PluginDependencyResolutionTest {
     @Test
     fun `structural violations only consider same-plugin sources`() {
       val graph = pluginGraph {
-        plugin("test.plugin") { content("mod.required", ModuleLoadingRuleValue.REQUIRED) }
-        plugin("other.plugin") { content("mod.optional", ModuleLoadingRuleValue.OPTIONAL) }
+        plugin("test.plugin") { content("mod.required", loading = ModuleLoadingRuleValue.REQUIRED) }
+        plugin("other.plugin") { content("mod.optional", loading = ModuleLoadingRuleValue.OPTIONAL) }
       }
 
       val violations = graph.query {
@@ -172,8 +172,8 @@ class PluginDependencyResolutionTest {
     fun `structural violations detect same-plugin loading conflicts`() {
       val graph = pluginGraph {
         plugin("test.plugin") {
-          content("mod.required", ModuleLoadingRuleValue.REQUIRED)
-          content("mod.optional", ModuleLoadingRuleValue.OPTIONAL)
+          content("mod.required", loading = ModuleLoadingRuleValue.REQUIRED)
+          content("mod.optional", loading = ModuleLoadingRuleValue.OPTIONAL)
         }
       }
 

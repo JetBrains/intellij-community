@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootManager
 import com.jetbrains.python.sdk.associatedModulePath
-import com.jetbrains.python.sdk.getOrCreateAdditionalData
+import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.jetbrains.python.sdk.isAssociatedWithAnotherModule
 import com.jetbrains.python.sdk.isAssociatedWithModule
 import com.jetbrains.python.venvReader.VirtualEnvReader
@@ -96,7 +96,7 @@ suspend fun <P : PathHolder> sortForExistingEnvironment(
               return@groupBy Group.REDUNDANT // Foreign SDK
             }
           }
-          else if (it.sdkWrapper.sdk.getOrCreateAdditionalData().associatedModulePath != null) {
+          else if (it.sdkWrapper.sdk.pySdkAdditionalData.associatedModulePath != null) {
             // module == null, associated path != null: associated sdk can't be used without a module
             return@groupBy Group.REDUNDANT
           }

@@ -378,6 +378,7 @@ class SchemeColor(Serialisable):
     invGamma: EmptyTag[Literal[True]]
     val: Set[_SchemeColors]
     __elements__: ClassVar[tuple[str, ...]]
+
     @overload
     def __init__(
         self,

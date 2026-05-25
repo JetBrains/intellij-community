@@ -9,7 +9,7 @@ jvm_library(
   resources = glob(["resources/**/*"]),
   resource_strip_prefix = "resources",
   deps = [
-    "@lib//:mcpserver-toml4j",
+    "@lib//:mcpserver-night-config-toml",
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/coroutines/core",
@@ -22,6 +22,7 @@ jvm_library(
     "//platform/util",
     "@lib//:io-github-oshai-kotlin-logging-jvm",
     "@lib//:ktor-server-sse-jvm",
+    "@lib//:ktor-server-content-negotiation",
     "@lib//:io-github-smiley4-schema-kenerator-jsonschema",
     "@lib//:io-github-smiley4-schema-kenerator-serialization",
     "//platform/ide-core",
@@ -80,6 +81,8 @@ jvm_library(
     "//platform/vcs-impl",
     "//platform/eel-provider",
     "//platform/compose",
+    "//platform/backend",
+    "//plugins/terminal/frontend",
   ],
   plugins = ["@lib//:compose-plugin"]
 )
@@ -154,6 +157,8 @@ jvm_library(
     "//platform/vcs-impl:vcs-impl_test_lib",
     "//platform/eel-provider:eel-provider_test_lib",
     "//platform/compose:compose_test_lib",
+    "//platform/backend:backend_test_lib",
+    "//plugins/terminal/frontend:frontend_test_lib",
   ],
   plugins = ["@lib//:compose-plugin"]
 )

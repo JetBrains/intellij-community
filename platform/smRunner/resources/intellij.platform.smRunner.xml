@@ -2,6 +2,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.teamcity.service.messages"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.codeStyle"/>
     <module name="intellij.platform.core"/>
@@ -28,6 +29,9 @@
     <registryKey defaultValue="255" 
                  description="Expected/actual values max length to be printed in the console" 
                  key="test.console.expected.actual.max.length"/>
+    <registryKey defaultValue="false"
+                 description="Print raw TeamCity service messages to the console output (verbose mode)"
+                 key="test.console.verbose"/>
     <projectService serviceImplementation="com.intellij.execution.testframework.sm.TestHistoryConfiguration"/>
     <runDashboardCustomizer implementation="com.intellij.execution.testframework.sm.runner.SMTRunnerRunDashboardCustomizer"
                             order="first" id="smtRunnerCustomizer"/>

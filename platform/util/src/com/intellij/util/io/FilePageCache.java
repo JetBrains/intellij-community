@@ -132,14 +132,18 @@ public final class FilePageCache {
   private long myLoadedPages;
   /** Total time (us) of all page loads (including page buffer allocation time) */
   private long myPageLoadUs;
+  /** Total time (us) of all page stores (along the lifetime) */
+  private long myPageStoreDurationUs;
+  /** Total bytes stored by all the pages (along the lifetime) */
+  private long myTotalBytesStored;
   /**
    * Total time (us) of all page disposals _before reuse_.
-   * I.e. it is part of the full waiting time for a new page to be loaded.
+   * I.e., it is part of the full waiting time for a new page to be loaded.
    */
   private long myPageDisposalUs;
 
 
-  FilePageCache(final long cacheCapacityBytes) {
+  FilePageCache(long cacheCapacityBytes) {
     if (cacheCapacityBytes <= 0) {
       throw new IllegalArgumentException("Capacity(=" + cacheCapacityBytes + ") must be >0");
     }
@@ -228,17 +232,17 @@ public final class FilePageCache {
 
       //Slow path: allocate new buffer and load its content from fileStorage:
 
-      final long startedAtNs = COLLECT_PAGE_LOADING_TIMES ? System.nanoTime() : 0;
+      long startedAtNs = COLLECT_PAGE_LOADING_TIMES ? System.nanoTime() : 0;
 
-      final PagedFileStorage fileStorage = getRegisteredPagedFileStorageByIndex(pageId);
+      PagedFileStorage fileStorage = getRegisteredPagedFileStorageByIndex(pageId);
       disposeRemovedSegments(null);
 
-      final long disposeFinishedAtNs = COLLECT_PAGE_LOADING_TIMES ? System.nanoTime() : 0;
+      long disposeFinishedAtNs = COLLECT_PAGE_LOADING_TIMES ? System.nanoTime() : 0;
 
       wrapper = allocateAndLoadPage(pageId, read, fileStorage, checkAccess);
 
       if (COLLECT_PAGE_LOADING_TIMES) {
-        final long finishedAtNs = System.nanoTime();
+        long finishedAtNs = System.nanoTime();
         myLoadedPages++;
         myPageLoadUs += NANOSECONDS.toMicros(finishedAtNs - disposeFinishedAtNs);
         myPageDisposalUs += NANOSECONDS.toMicros(disposeFinishedAtNs - startedAtNs);
@@ -265,10 +269,6 @@ public final class FilePageCache {
     finally {
       pagesAllocationLock.unlock();
     }
-  }
-
-  public void incrementFastCacheHitsCount() {
-    myFastCacheHits++;
   }
 
   public long getMaxSize() {
@@ -349,7 +349,7 @@ public final class FilePageCache {
     }
   }
 
-  void removeStorage(final long storageId) {
+  void removeStorage(long storageId) {
     synchronized (storageById) {
       PagedFileStorage removedStorage = storageById.remove((int)(storageId >> 32));
       if (removedStorage != null) {
@@ -443,7 +443,8 @@ public final class FilePageCache {
     try {
       pagesAccessLock.lock();
       try {
-        CachedChannelsStatistics channelCachingStats = PageCacheUtils.CHANNELS_CACHE.getStatistics().plus(PageCacheUtils.CHANNELS_NO_CACHE.getStatistics());
+        CachedChannelsStatistics channelCachingStats =
+          PageCacheUtils.CHANNELS_CACHE.getStatistics().plus(PageCacheUtils.CHANNELS_NO_CACHE.getStatistics());
         return new FilePageCacheStatistics(channelCachingStats,
                                            myMaxRegisteredFiles,
                                            myMaxLoadedSize,
@@ -455,6 +456,8 @@ public final class FilePageCache {
                                            myMappingChangeCount,
                                            myPageDisposalUs,
                                            myPageLoadUs,
+                                           myPageStoreDurationUs,
+                                           myTotalBytesStored,
                                            myLoadedPages,
                                            cachedSizeLimit
         );
@@ -466,6 +469,17 @@ public final class FilePageCache {
     finally {
       pagesAllocationLock.unlock();
     }
+  }
+
+
+  void incrementFastCacheHitsCount() {
+    myFastCacheHits++;
+  }
+
+  void reportStoreStats(long bytesStored,
+                        long storeDurationUs) {
+    myTotalBytesStored += bytesStored;
+    myPageStoreDurationUs += storeDurationUs;
   }
 
   /* ======================= implementation ==================================================================================== */
@@ -532,7 +546,7 @@ public final class FilePageCache {
         context.checkWriteAccess();
       }
     }
-    final long offsetInFile = (pageId & MAX_PAGES_COUNT) * owner.getPageSize();
+    long offsetInFile = (pageId & MAX_PAGES_COUNT) * owner.getPageSize();
 
     return new DirectBufferWrapper(owner, offsetInFile);
   }

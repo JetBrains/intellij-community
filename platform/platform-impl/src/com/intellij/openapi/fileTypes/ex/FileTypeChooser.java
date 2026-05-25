@@ -127,7 +127,7 @@ public final class FileTypeChooser extends DialogWrapper {
     }
     myOpenInIdea.setText(FileTypesBundle.message("filetype.chooser.association", ApplicationNamesInfo.getInstance().getFullProductName()));
     myDetectFileType.setText(FileTypesBundle.message("filetype.chooser.autodetect"));
-    ActionListener actionListener = e -> {
+    ActionListener actionListener = _ -> {
       myList.setEnabled(myOpenInIdea.isSelected());
       updateContextHelp();
     };
@@ -154,7 +154,7 @@ public final class FileTypeChooser extends DialogWrapper {
       }
     }
     myList.setModel(model);
-    myList.addListSelectionListener(e -> updateContextHelp());
+    myList.addListSelectionListener(_ -> updateContextHelp());
     myPattern.setModel(new CollectionComboBoxModel<>(new ArrayList<>(patterns), patterns.get(0)));
     ListSpeedSearch.installOn(myList, o -> o.getDescription());
 

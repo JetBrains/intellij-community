@@ -8,7 +8,9 @@ import com.intellij.mcpserver.clients.configs.STDIOServerConfig
 import com.intellij.mcpserver.clients.configs.ServerConfig
 import com.intellij.mcpserver.createStdioMcpServerCommandLine
 import com.intellij.mcpserver.impl.McpServerService
+import com.intellij.mcpserver.impl.getForcedMcpServerPortOrNull
 import com.intellij.mcpserver.impl.util.network.McpServerConnectionAddressProvider
+import com.intellij.mcpserver.settings.McpServerSettings
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PORT
 import com.intellij.mcpserver.stdio.main
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -51,6 +53,7 @@ import kotlin.io.path.createParentDirectories
 import kotlin.io.path.exists
 import kotlin.io.path.inputStream
 import kotlin.io.path.outputStream
+import kotlin.math.abs
 import kotlin.reflect.jvm.javaMethod
 
 abstract class McpClient(
@@ -68,6 +71,8 @@ abstract class McpClient(
 
   open fun isConfigured(): Boolean? = true
 
+  open fun hasConfigArtifacts(): Boolean = configPath.exists()
+
   open fun mcpServersKey(): String = "mcpServers"
 
   /**
@@ -84,7 +89,7 @@ abstract class McpClient(
     writeConfigToFile(updatedConfig)
   }
 
-  class McpClientConfigurationException(override val message: String): Exception(message)
+  class McpClientConfigurationException(override val message: String) : Exception(message)
 
   suspend fun autoConfigure() {
     val streamableHttpConfig = getStreamableHttpConfig()
@@ -134,11 +139,13 @@ abstract class McpClient(
     }
   }
 
-  fun isPortCorrect(): Boolean {
-    if (!McpServerService.getInstance().isRunning) return true
-    val currentPort = McpServerService.getInstance().port
-    val servers = readMcpServers() ?: return true
-    return servers.any { (_, serverConfig) -> isPortMatching(serverConfig, currentPort) }
+  internal fun hasPromotionCandidateConfig(expectedPort: Int = expectedPromotionPort()): Boolean {
+    return promotionCandidateServers(expectedPort).isNotEmpty()
+  }
+
+  fun isPortCorrect(expectedPort: Int = expectedPromotionPort()): Boolean {
+    val candidates = promotionCandidateServers(expectedPort)
+    return candidates.isEmpty() || candidates.any { serverConfig -> isPortMatching(serverConfig, expectedPort) }
   }
 
   fun getConfiguredTransportTypes(): Set<TransportType> {
@@ -177,10 +184,7 @@ abstract class McpClient(
   private fun isPortMatching(serverConfig: ExistingConfig, targetPort: Int): Boolean {
     serverConfig.url?.let { url ->
       val parsed = parseServerUrl(url) ?: return false
-      if (parsed.path in STREAM_PATHS && hostMatchesCurrent(parsed.host)) {
-        return parsed.port == targetPort
-      }
-      return false
+      return parsed.path in STREAM_PATHS && hostMatchesCurrent(parsed.host) && parsed.port == targetPort
     }
 
     if (serverConfig.command?.contains("java") == true &&
@@ -192,8 +196,46 @@ abstract class McpClient(
     return true
   }
 
-  @Deprecated("Use product-specific terminology")
-  protected fun jetBrainsServerKey(): String = productSpecificServerKey()
+  private fun promotionCandidateServers(expectedPort: Int): List<ExistingConfig> {
+    val servers = readMcpServers() ?: return emptyList()
+
+    servers[productSpecificServerKey()]?.let { serverConfig ->
+      return listOf(serverConfig)
+    }
+
+    val legacyServers = LEGACY_SERVER_KEYS.mapNotNull { key -> servers[key] }
+    if (legacyServers.isNotEmpty()) {
+      return legacyServers
+    }
+
+    return servers.values.filter { serverConfig ->
+      isLoopbackPromotionFallback(serverConfig, expectedPort)
+    }
+  }
+
+  private fun isLoopbackPromotionFallback(serverConfig: ExistingConfig, expectedPort: Int): Boolean {
+    serverConfig.url?.let { url ->
+      val parsed = parseServerUrl(url) ?: return false
+      return parsed.path in STREAM_PATHS && isPromotionLoopbackHost(parsed.host) && hasSimilarPort(parsed.port, expectedPort)
+    }
+
+    if (serverConfig.command?.contains("java") == true &&
+        serverConfig.env?.containsKey(::IJ_MCP_SERVER_PORT.name) == true &&
+        serverConfig.args?.contains(::main.javaMethod!!.declaringClass.name) == true) {
+      val configuredPort = serverConfig.env[::IJ_MCP_SERVER_PORT.name]?.toIntOrNull() ?: return false
+      return hasSimilarPort(configuredPort, expectedPort)
+    }
+
+    return false
+  }
+
+  private fun expectedPromotionPort(): Int {
+    getForcedMcpServerPortOrNull()?.let { return it }
+    return runCatching { McpServerService.getInstance().port }
+      .getOrElse { McpServerSettings.getInstance().state.mcpServerPort }
+  }
+
+  private fun hasSimilarPort(port: Int, expectedPort: Int): Boolean = abs(port - expectedPort) <= PROMOTION_PORT_TOLERANCE
 
   private fun readExistingConfig(): JsonObject {
     return if (configPath.exists()) {
@@ -209,7 +251,7 @@ abstract class McpClient(
    */
   protected open fun buildUpdatedConfig(existingConfig: JsonObject, serverEntry: ServerConfig): JsonObject {
     val existingServers = existingConfig[mcpServersKey()]?.jsonObject ?: buildJsonObject {}
-    val targetKey = jetBrainsServerKey()
+    val targetKey = productSpecificServerKey()
 
     val updatedServers = buildJsonObject {
       existingServers.forEach { (key, value) ->
@@ -228,7 +270,7 @@ abstract class McpClient(
   }
 
   private fun writeConfigToFile(config: JsonObject) {
-    configPath.parent?.createParentDirectories()
+    configPath.createParentDirectories()
     val tmp = configPath.resolveSibling("${configPath.fileName}.tmp")
     tmp.outputStream().use { output -> json.encodeToStream(config, output) }
     try {
@@ -270,6 +312,13 @@ abstract class McpClient(
            normalized == "127.0.0.1"
   }
 
+  private fun isPromotionLoopbackHost(host: String): Boolean {
+    return when (host.normalizeHostForComparison()) {
+      "localhost", "127.0.0.1" -> true
+      else -> false
+    }
+  }
+
   private fun parseServerUrl(url: String): ParsedServerUrl? {
     val uri = runCatching { URI(url) }.getOrNull() ?: return null
     val host = uri.host ?: return null
@@ -291,6 +340,7 @@ abstract class McpClient(
     }
 
     private val STREAM_PATHS: Set<String> = setOf("/sse", "/stream")
+    private const val PROMOTION_PORT_TOLERANCE: Int = 5000
 
     @Volatile
     private var writeLegacyOverride: Boolean? = null
@@ -369,7 +419,8 @@ abstract class McpClient(
         val localEelApi = LocalEelDescriptor.toEelApi()
         val versionStdout = try {
           localEelApi.exec.spawnProcess(exe, "-v").eelIt().stdout.lines().first().trim()
-        } catch (_: ExecuteProcessException) {
+        }
+        catch (_: ExecuteProcessException) {
           return@async null
         }
         SemVer.parseFromText(versionStdout)

@@ -1,0 +1,164 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.python.pytools.ui.configuration
+
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.python.pytools.Version
+import com.intellij.python.pytools.ui.PyToolsUiBundle
+import com.intellij.python.pytools.ui.icons.PythonPytoolsUIIcons
+import com.intellij.util.ui.JBUI
+import java.awt.Rectangle
+import java.awt.event.MouseEvent
+import javax.swing.JTable
+
+/**
+ * Combined host surface used by the position-aware tooltip orchestrators: they need both the
+ * project (for `summaryFor(project)`) and the icon-kind resolver (for the Path column). The
+ * configurable implements both [ToolCellHost] and [PathCellHost], so it satisfies this without
+ * extra plumbing.
+ */
+internal interface TooltipHost : ToolCellHost, PathCellHost
+
+/**
+ * Top-level dispatcher invoked from the table's `getToolTipText(MouseEvent)` override. Picks
+ * the right column-specific orchestrator based on the pointer location, or falls back to
+ * [default] (JTable's own renderer-driven tooltip) when the event falls outside the
+ * recognized columns. The hit-test geometry uses the live cell rect rather than stale renderer
+ * state, which is the whole reason the configurable bypasses JTable's default forwarding.
+ */
+internal fun resolveCellTooltip(
+  event: MouseEvent,
+  table: JTable,
+  rows: List<ToolRow>,
+  host: TooltipHost,
+  default: () -> String?,
+): String? {
+  val viewRow = table.rowAtPoint(event.point)
+  val viewCol = table.columnAtPoint(event.point)
+  if (viewRow < 0 || viewCol < 0) return default()
+  val toolRow = rows.getOrNull(viewRow) ?: return default()
+  val cellRect = table.getCellRect(viewRow, viewCol, false)
+  return when (viewCol) {
+    COL_TOOL -> toolColumnTooltip(toolRow, host, event.x, cellRect)
+    COL_PATH -> pathColumnTooltip(toolRow, host, event.x, cellRect)
+    else -> default()
+  }
+}
+
+/**
+ * Tooltip for a Tool-column cell: the action hint when the pointer is over the gear icon
+ * (and the tool has something to configure), otherwise the full tool name + options summary.
+ */
+private fun toolColumnTooltip(toolRow: ToolRow, host: TooltipHost, eventX: Int, cellRect: Rectangle): String {
+  val onGear = isOverIcon(eventX, cellRect, PythonPytoolsUIIcons.Settings.iconWidth)
+  if (onGear && toolRow.staged.enabled && toolRow.tool.detailConfigurable != null) {
+    return PyToolsUiBundle.message("settings.external.tools.edit.tooltip", toolRow.tool.presentableName)
+  }
+  // Match the cell-rendering rule: a disabled tool's options aren't surfaced anywhere — its
+  // bracketed summary is hidden in the cell, so the tooltip should not leak it either.
+  val options = if (toolRow.staged.enabled) {
+    toolRow.tool.summaryFor(host.project).takeIf { it.isNotBlank() }
+  }
+  else null
+  return buildToolTooltip(toolRow, options)
+}
+
+/**
+ * Tooltip for a Path-column cell: the browse hint when the pointer is over the rightmost
+ * OpenDisk icon, an install / upgrade hint when over the action icon to its left, or the full
+ * path + version + error otherwise.
+ */
+private fun pathColumnTooltip(toolRow: ToolRow, host: TooltipHost, eventX: Int, cellRect: Rectangle): String {
+  val detected = toolRow.detectedPath
+  val rightEdge = cellRect.x + cellRect.width - JBUI.scale(5)
+  if (toolRow.staged.enabled) {
+    // Browse occupies the rightmost slot.
+    val browseLeft = rightEdge - AllIcons.General.OpenDisk.iconWidth
+    if (eventX in browseLeft..rightEdge) {
+      return PyToolsUiBundle.message("settings.external.tools.path.edit.tooltip")
+    }
+    // Action icon (install / upgrade / info) sits immediately to the left of browse.
+    val iconKind = host.iconKindFor(toolRow, detected)
+    val actionIcon = iconKind.icon
+    if (actionIcon != null) {
+      val actionRight = browseLeft - JBUI.scale(4)
+      val actionLeft = actionRight - actionIcon.iconWidth
+      if (eventX in actionLeft..actionRight) {
+        val hint = actionHintFor(iconKind)
+        if (hint != null) return hint
+      }
+    }
+  }
+  val rawPath = when (detected) {
+    is DetectedPath.Custom -> detected.path.toString()
+    is DetectedPath.AutoDetected -> detected.path.toString()
+    DetectedPath.NotFound, null -> ""
+  }
+  return buildPathTooltip(rawPath, toolRow.version, toolRow.pathError, toolRow.belowMinVersionMessage)
+}
+
+/**
+ * HTML tooltip shown when the pointer is over the Tool cell text (not the gear icon).
+ * Surfaces the full tool name and options summary so the user can read them when the
+ * cell text is truncated, plus the tool's one-line description.
+ */
+private fun buildToolTooltip(toolRow: ToolRow, options: String?): String = buildString {
+  append("<html>")
+  append(StringUtil.escapeXmlEntities(toolRow.tool.presentableName))
+  append("<br>")
+  append(StringUtil.escapeXmlEntities(toolRow.tool.description))
+  if (!options.isNullOrBlank()) {
+    append("<br><span style='color:gray'>[")
+    append(StringUtil.escapeXmlEntities(options))
+    append("]</span>")
+  }
+  append("</html>")
+}
+
+/**
+ * HTML tooltip shown when the pointer is over the Path cell text (not the hover icon).
+ * Always shows the full path so the user can read it when the cell is truncated, plus
+ * the version and any validation error.
+ */
+private fun buildPathTooltip(
+  rawPath: String,
+  version: Version?,
+  pathError: String?,
+  belowMinMessage: String? = null,
+): String = buildString {
+  append("<html>")
+  val pathDisplay = rawPath.ifEmpty { PyToolsUiBundle.message("settings.external.tools.path.not.found") }
+  append(StringUtil.escapeXmlEntities(pathDisplay))
+  if (version != null) {
+    append("<br>")
+    append(StringUtil.escapeXmlEntities(
+      PyToolsUiBundle.message("settings.external.tools.path.version.tooltip", version)
+    ))
+  }
+  if (belowMinMessage != null) {
+    append("<br><span style='color:#a06000'>")
+    append(StringUtil.escapeXmlEntities(belowMinMessage))
+    append("</span>")
+  }
+  if (pathError != null) {
+    append("<br><span style='color:red'>")
+    append(StringUtil.escapeXmlEntities(pathError))
+    append("</span>")
+  }
+  append("</html>")
+}
+
+/** Action hint shown when the pointer is over the Path column's hover icon. */
+private fun actionHintFor(kind: PathIconKind): String? = when (kind) {
+  PathIconKind.NONE -> null
+  PathIconKind.INSTALL -> PyToolsUiBundle.message("settings.external.tools.install.via.uv.tooltip")
+  PathIconKind.INFO -> null
+  PathIconKind.UPGRADE -> PyToolsUiBundle.message("settings.external.tools.path.upgrade.tooltip")
+}
+
+/** True if [eventX] (in table coordinates) lies within the right-edge icon hit-zone of [cellRect]. */
+internal fun isOverIcon(eventX: Int, cellRect: Rectangle, iconWidth: Int): Boolean {
+  val iconRight = cellRect.x + cellRect.width - JBUI.scale(5)
+  val iconLeft = iconRight - iconWidth
+  return eventX in iconLeft..iconRight
+}

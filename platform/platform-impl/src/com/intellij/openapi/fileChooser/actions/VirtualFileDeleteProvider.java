@@ -81,7 +81,7 @@ public final class VirtualFileDeleteProvider implements DeleteProvider {
             counter++;
           }
           else {
-            LocalFileSystem.DELETE_CALLBACK.set(file, p -> {
+            LocalFileSystem.DELETE_CALLBACK.set(file, _ -> {
               indicator.checkCanceled();
               indicator.setText(IdeBundle.message("progress.already.deleted", counter));
               counter++;

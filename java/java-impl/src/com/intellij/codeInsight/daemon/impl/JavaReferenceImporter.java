@@ -1,14 +1,16 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.ReferenceImporter;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFixBase;
+import com.intellij.lang.ImportOptimizer;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
@@ -56,5 +58,12 @@ public final class JavaReferenceImporter implements ReferenceImporter {
   @Override
   public boolean isAddUnambiguousImportsOnTheFlyEnabled(@NotNull PsiFile psiFile) {
     return psiFile.getViewProvider().getLanguages().contains(JavaLanguage.INSTANCE) && CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
+  }
+
+  @Override
+  public ImportOptimizer.ActionMode getActionMode() {
+    return Registry.is("java.import.with.write.action", true)
+           ? ImportOptimizer.ActionMode.WRITE_COMMAND_ACTION
+           : ImportOptimizer.ActionMode.EDT;
   }
 }

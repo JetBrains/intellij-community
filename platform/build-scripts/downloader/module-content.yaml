@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.platform.buildScripts.downloader.jar
+  modules:
+  - name: intellij.platform.buildScripts.downloader
+  library: zstd-jni
+  files:
+  - name: $MAVEN_REPOSITORY$/com/github/luben/zstd-jni/1/zstd-jni-1.jar

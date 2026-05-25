@@ -515,6 +515,7 @@ libraries/sshj
 libraries/stream
 libraries/swingx
 libraries/system-stubs-jupiter
+libraries/teamcity/service-messages
 libraries/testcontainers
 libraries/testng
 libraries/velocity
@@ -538,6 +539,9 @@ mps/build/intellij.mps.resources
 notebooks/notebook-ui
 notebooks/visualization
 notebooks/visualization/testFramework
+platform/acp
+platform/acp/plugin
+platform/acp/tests
 platform/analysis-api
 platform/analysis-impl
 platform/backend
@@ -957,6 +961,7 @@ plugins/agent-workbench/sessions-actions
 plugins/agent-workbench/sessions-core
 plugins/agent-workbench/sessions-launch-config/backend
 plugins/agent-workbench/sessions-toolwindow
+plugins/agent-workbench/terminal/sessions
 plugins/agent-workbench/vcs-merge
 plugins/ant
 plugins/ant/jps-plugin
@@ -1625,6 +1630,8 @@ python/pluginJava
 python/pluginMinor
 python/pluginMinorRider
 python/python-ast
+python/python-black
+python/python-black/tests
 python/python-copyright
 python/python-core-impl
 python/python-exec-service
@@ -1644,6 +1651,8 @@ python/python-process-output/frontend
 python/python-psi-api
 python/python-psi-impl
 python/python-pyproject
+python/python-pytools
+python/python-pytools-ui
 python/python-requirements
 python/python-restructuredtext
 python/python-sdk
@@ -1663,6 +1672,7 @@ python/python-test-env/plain
 python/python-test-env/uv
 python/python-uv/backend
 python/python-uv/common
+python/python-uv/tests
 python/python-venv
 python/services/internal-impl
 python/services/shared

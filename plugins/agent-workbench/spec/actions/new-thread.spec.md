@@ -65,8 +65,9 @@ New-thread actions let users start provider-backed threads from project/worktree
 - Main-toolbar target resolution prefers chat context path, selected chat source project path, then `project.basePath`; in dedicated Agent frames it uses the same lazy source-candidate path as editor-tab actions.
   [@test] ../../sessions-actions/testSrc/AgentSessionsMainToolbarNewThreadActionsTest.kt
 
-- Launching must go through `AgentSessionLaunchService.createNewSession(...)`, update shared provider preferences on accepted launches, and deduplicate semantically identical in-flight launches with single-flight drop semantics.
+- Launching must go through `AgentSessionLaunchService.createNewSession(...)`, update shared provider preferences on accepted launches for prompt-capable providers, and deduplicate semantically identical in-flight launches with single-flight drop semantics.
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
+  [@test] ../../sessions/testSrc/AgentSessionLaunchServiceTest.kt
   [@test] ../../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
 
 - Command construction for each provider and launch mode follows `spec/agent-core-contracts.spec.md`.

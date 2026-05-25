@@ -3,7 +3,9 @@ package org.jetbrains.intellij.build.productLayout.generator
 
 import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginGraph.PluginId
+import com.intellij.platform.pluginGraph.PluginModuleId
 import com.intellij.platform.pluginGraph.TargetName
+import com.intellij.platform.pluginGraph.contentName
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -457,7 +459,8 @@ class ContentModuleDependencyGeneratorTest {
     @Test
     fun `wrapper plugin source rewrites extension point names in descriptor`(@TempDir tempDir: Path) {
       runBlocking(Dispatchers.Default) {
-        val moduleName = ContentModuleName("intellij.platform.recentFiles.frontend")
+        val moduleId = PluginModuleId("intellij.platform.recentFiles.frontend", namespace = "jetbrains")
+        val moduleName = moduleId.contentName()
         val setup = pluginTestSetup(tempDir) {
           contentModule(moduleName.value) {
             descriptor = """
@@ -478,7 +481,7 @@ class ContentModuleDependencyGeneratorTest {
         })
         val wrapperPluginName = moduleSetPluginModuleName("recentFiles")
         builder.addPlugin(name = wrapperPluginName, isTest = false, isModuleSetWrapper = true)
-        builder.linkPluginContent(wrapperPluginName, moduleName, ModuleLoadingRuleValue.OPTIONAL, isTest = false)
+        builder.linkPluginContent(wrapperPluginName, moduleId, ModuleLoadingRuleValue.OPTIONAL, isTest = false)
         val model = testGenerationModel(
           pluginGraph = builder.build(),
           outputProvider = setup.jps.outputProvider,
@@ -514,7 +517,8 @@ class ContentModuleDependencyGeneratorTest {
     @Test
     fun `regular plugin source does not rewrite extension point names in shared descriptor`(@TempDir tempDir: Path) {
       runBlocking(Dispatchers.Default) {
-        val moduleName = ContentModuleName("intellij.platform.recentFiles.frontend")
+        val moduleId = PluginModuleId("intellij.platform.recentFiles.frontend", namespace = "jetbrains")
+        val moduleName = moduleId.contentName()
         val setup = pluginTestSetup(tempDir) {
           contentModule(moduleName.value) {
             descriptor = """
@@ -535,7 +539,7 @@ class ContentModuleDependencyGeneratorTest {
         })
         val regularPluginName = TargetName("intellij.regular.plugin")
         builder.addPlugin(name = regularPluginName, isTest = false)
-        builder.linkPluginContent(regularPluginName, moduleName, ModuleLoadingRuleValue.OPTIONAL, isTest = false)
+        builder.linkPluginContent(regularPluginName, moduleId, ModuleLoadingRuleValue.OPTIONAL, isTest = false)
         val model = testGenerationModel(
           pluginGraph = builder.build(),
           outputProvider = setup.jps.outputProvider,
@@ -1467,7 +1471,7 @@ class ContentModuleDependencyGeneratorTest {
 private fun buildContentModuleAliasGraph(aliasId: PluginId) = PluginGraphBuilder().apply {
   val ownerPlugin = TargetName("owner.plugin")
   addPlugin(ownerPlugin, isTest = false, pluginId = PluginId("owner.plugin"))
-  linkPluginContent(ownerPlugin, ContentModuleName("owner.content"), ModuleLoadingRuleValue.REQUIRED, isTest = false)
+  linkPluginContent(ownerPlugin, PluginModuleId("owner.content", namespace = "jetbrains"), ModuleLoadingRuleValue.REQUIRED, isTest = false)
   linkPluginMainTarget(ownerPlugin)
   addAliasPlugin(aliasId)
 }.build()

@@ -56,7 +56,7 @@ class PySdkPathsTest {
     sdk.putUserData(PythonSdkType.MOCK_SYS_PATH_KEY, listOf(sdk.homePath, excluded.path, included.path))
     mockPythonPluginDisposable()
     runWriteActionAndWait {
-      sdk.getOrCreateAdditionalData()
+      sdk.pySdkAdditionalData
 
       sdk.sdkModificator.apply {
         (sdkAdditionalData as PythonSdkAdditionalData).setExcludedPathsFromVirtualFiles(setOf(excluded))
@@ -84,7 +84,7 @@ class PySdkPathsTest {
       module.pythonSdk = it
     }
 
-    runWriteActionAndWait { sdk.getOrCreateAdditionalData() }.apply { setAddedPathsFromVirtualFiles(setOf(moduleRoot)) }
+    runWriteActionAndWait { sdk.pySdkAdditionalData }.apply { setAddedPathsFromVirtualFiles(setOf(moduleRoot)) }
 
     updateSdkPaths(sdk)
 
@@ -125,7 +125,7 @@ class PySdkPathsTest {
 
     mockPythonPluginDisposable()
     runWriteActionAndWait {
-      sdk.getOrCreateAdditionalData()
+      sdk.pySdkAdditionalData
 
       sdk.sdkModificator.apply {
         (sdkAdditionalData as PythonSdkAdditionalData).setAddedPathsFromVirtualFiles(setOf(userAddedPath))
@@ -196,7 +196,7 @@ class PySdkPathsTest {
     mockPythonPluginDisposable()
 
     runWriteActionAndWait {
-      sdk.getOrCreateAdditionalData()
+      sdk.pySdkAdditionalData
 
       sdk.sdkModificator.apply {
         (sdkAdditionalData as PythonSdkAdditionalData).setAddedPathsFromVirtualFiles(setOf(userAddedPath))
@@ -279,10 +279,10 @@ class PySdkPathsTest {
 
   /**
    * PY-88807: SDKs with remote home paths (Docker Compose, SFTP, etc.) that lost their
-   * additional data during upgrades must not crash [getOrCreateAdditionalData].
+   * additional data during upgrades must not crash [pySdkAdditionalData].
    * Simulates the real scenario: an SDK is serialized with a remote home path, then
    * deserialized — [PythonSdkType.loadAdditionalData] returns [PyInvalidSdk] for stale
-   * remote interpreters, and [getOrCreateAdditionalData] must recognize it.
+   * remote interpreters, and [pySdkAdditionalData] must recognize it.
    */
   @Test
   fun getOrCreateAdditionalDataForRemoteSdkDoesNotCrash() {
@@ -310,7 +310,7 @@ class PySdkPathsTest {
       sdk.readExternal(element)
 
       assertThat(sdk.sdkAdditionalData).isSameAs(PyInvalidSdk)
-      assertThat(sdk.getOrCreateAdditionalData()).isSameAs(PyInvalidSdk)
+      assertThat(sdk.pySdkAdditionalData).isSameAs(PyInvalidSdk)
     }
   }
 

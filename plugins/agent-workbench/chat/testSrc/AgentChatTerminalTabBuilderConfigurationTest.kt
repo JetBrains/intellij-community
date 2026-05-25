@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalRestoreContext
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTab
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabBuilder
 import org.assertj.core.api.Assertions.assertThat
@@ -58,6 +59,66 @@ class AgentChatTerminalTabBuilderConfigurationTest {
 
     assertThat(builder.workingDirectory).isNull()
     assertThat(builder.sourceNavigationProjectPath).isNull()
+  }
+
+  @Test
+  fun configureUsesTerminalDefaultShellWithoutExplicitCommand() {
+    val builder = RecordingTerminalToolWindowTabBuilder()
+    val file = AgentChatVirtualFile(
+      projectPath = "/tmp/source-project",
+      threadIdentity = "terminal:session-id",
+      shellCommand = emptyList(),
+      threadId = "session-id",
+      threadTitle = "Terminal",
+      subAgentId = null,
+    )
+    val launchSpec = AgentSessionTerminalLaunchSpec(
+      command = emptyList(),
+      envVariables = mapOf("A" to "B"),
+      useTerminalDefaultShell = true,
+    )
+
+    configureAgentChatTerminalTabBuilder(builder.proxy, file, launchSpec)
+
+    assertThat(builder.processType).isNull()
+    assertThat(builder.shellCommand).isNull()
+    assertThat(builder.envVariables).containsExactlyEntriesOf(mapOf("A" to "B"))
+    assertThat(builder.tabName).isEqualTo("Terminal")
+  }
+
+  @Test
+  fun configureUsesLaunchSpecWorkingDirectoryWhenPresent() {
+    val builder = RecordingTerminalToolWindowTabBuilder()
+    val file = AgentChatVirtualFile(
+      projectPath = "/tmp/source-project",
+      threadIdentity = "terminal:session-id",
+      shellCommand = emptyList(),
+      threadId = "session-id",
+      threadTitle = "Terminal",
+      subAgentId = null,
+    )
+    val launchSpec = AgentSessionTerminalLaunchSpec(
+      command = emptyList(),
+      workingDirectory = "/tmp/source-project/app",
+      useTerminalDefaultShell = true,
+    )
+
+    configureAgentChatTerminalTabBuilder(builder.proxy, file, launchSpec)
+
+    assertThat(builder.workingDirectory).isEqualTo("/tmp/source-project/app")
+    assertThat(builder.sourceNavigationProjectPath).isEqualTo("/tmp/source-project")
+    assertThat(builder.shellCommand).isNull()
+  }
+
+  @Test
+  fun terminalRestoreContextTextShowsWorkingDirectory() {
+    val text = buildTerminalRestoreContextText(
+      AgentSessionTerminalRestoreContext(
+        workingDirectory = "/tmp/source-project/app",
+      )
+    )
+
+    assertThat(text).contains("Working directory: /tmp/source-project/app")
   }
 }
 

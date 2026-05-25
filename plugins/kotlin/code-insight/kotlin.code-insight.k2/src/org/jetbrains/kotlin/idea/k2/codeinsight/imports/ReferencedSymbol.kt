@@ -9,13 +9,14 @@ import org.jetbrains.kotlin.analysis.api.components.isSuspendFunctionType
 import org.jetbrains.kotlin.analysis.api.components.isVisibleInClass
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
+import org.jetbrains.kotlin.analysis.api.components.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.components.usesContextSensitiveResolution
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitInvokeCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.calls
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
@@ -42,11 +43,11 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtForExpression
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
-import org.jetbrains.kotlin.psi.KtPropertyDelegate
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
+import org.jetbrains.kotlin.resolution.KtResolvableCall
 
 internal class ReferencedSymbol(val reference: KtReference, val symbol: KaSymbol) {
     context(_: KaSession)
@@ -89,7 +90,7 @@ internal class ReferencedSymbol(val reference: KtReference, val symbol: KaSymbol
     fun toSymbolInfo(): SymbolInfo {
         return when (symbol) {
             is KaCallableSymbol -> {
-                val dispatcherReceiver = resolveDispatchReceiver(reference.element) as? KaImplicitReceiverValue
+                val dispatcherReceiver = resolveDispatchReceiver(reference.element, targetSymbol = symbol) as? KaImplicitReceiverValue
                 val containingClassSymbol = dispatcherReceiver?.symbol as? KaClassLikeSymbol
 
                 SymbolInfo.create(symbol, containingClassSymbol)
@@ -131,12 +132,6 @@ private fun isAccessibleAsMemberCallable(
         return isAccessibleAsMemberCallableDeclaration(symbol, element)
     }
 
-    if (element is KtForExpression || element is KtPropertyDelegate) {
-        // approximation until KT-70521 is fixed,
-        // and dispatcher receiver can be analyzed for such cases
-        return true
-    }
-
     if (element is KDocName) {
         val ownerClassSymbol = element.ownerClassSymbol()
 
@@ -144,7 +139,7 @@ private fun isAccessibleAsMemberCallable(
         return ownerClassSymbol != null && symbol.isVisibleInClass(ownerClassSymbol)
     }
 
-    val dispatchReceiver = resolveDispatchReceiver(element) ?: return false
+    val dispatchReceiver = resolveDispatchReceiver(element, targetSymbol = symbol) ?: return false
 
     return isDispatchedCall(element, symbol, dispatchReceiver)
 }
@@ -172,12 +167,19 @@ private fun isStaticallyImportedReceiver(
     }
 }
 
+@OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
 context(_: KaSession)
-private fun resolveDispatchReceiver(element: KtElement): KaReceiverValue? {
+private fun resolveDispatchReceiver(element: KtElement, targetSymbol: KaCallableSymbol): KaReceiverValue? {
     val adjustedElement = element.callableReferenceExpressionForCallableReference() ?: element
-    val dispatchReceiver = adjustedElement.resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.dispatchReceiver
 
-    return dispatchReceiver
+    if (adjustedElement !is KtResolvableCall) return null
+
+    val resolutionAttempt = adjustedElement.tryResolveCall() ?: return null
+    val allCalls = resolutionAttempt.calls.flatMap { it.calls }
+
+    val matchedCall = allCalls.firstOrNull { it.signature.symbol == targetSymbol }
+
+    return matchedCall?.dispatchReceiver
 }
 
 context(_: KaSession)
@@ -214,7 +216,7 @@ private fun canBeResolvedViaImport(reference: KtReference, target: KaSymbol): Bo
             */
             return true
         }
-        
+
         val extensionReceiver = resolveExtensionReceiverForFunctionalTypeVariable(referenceExpression, target)
         return extensionReceiver?.expression == explicitReceiver
     }

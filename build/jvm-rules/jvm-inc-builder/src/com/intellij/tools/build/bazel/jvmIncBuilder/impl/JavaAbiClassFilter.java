@@ -16,6 +16,7 @@ public class JavaAbiClassFilter extends ClassVisitor {
   private boolean isEnum;
   private boolean allowPackageLocalMethods;
   private String myName;
+  private int myEffectiveAccess;
   private final List<FieldNode> myFields = new ArrayList<>();
   private final MethodContainer myMethods;
   private final Set<String> myReferencedClasses = new HashSet<>();
@@ -39,17 +40,25 @@ public class JavaAbiClassFilter extends ClassVisitor {
       }
     };
 
+    JavaAbiClassFilter visitor = new JavaAbiClassFilter(writer, MethodContainer.create(reader));
     // Stripping certain DEBUG-INFO from abi.jar might lead to bytecode differences between compilation results against some artifact and abi-version of this artifact.
     // This won't affect the behavior of the resulting bytecode. However, if such differences are not desired, parameter DEBUG-INFO should be kept.
     reader.accept(
-      new JavaAbiClassFilter(writer, MethodContainer.create(reader)), ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES /*| ClassReader.SKIP_DEBUG*/
+      visitor, ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES /*| ClassReader.SKIP_DEBUG*/
     );
+
+    // double-check ABI condition with complete set of flags
+    if (!isAbiClass(visitor.myEffectiveAccess, visitor.myName)) {
+      return null;
+    }
+
     return writer.toByteArray();
   }
 
   @Override
   public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
     myName = name;
+    myEffectiveAccess = access;
     isEnum = isEnum(access);
     allowPackageLocalMethods = name.contains("/android/");   // todo: temporary condition to enable android tests compilation
 
@@ -67,7 +76,9 @@ public class JavaAbiClassFilter extends ClassVisitor {
   }
 
   private static boolean isAbiVisible(int access) {
-    return (access & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED)) != 0;
+    // include to ABI surface public, protected and package-local members
+    // package-local members are included only to match the behavior of the 'ijar' tool from standard rules_java
+    return (access & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED)) != 0 || isPackageLocal(access);
   }
 
   private static boolean isEnum(int access) {
@@ -132,10 +143,19 @@ public class JavaAbiClassFilter extends ClassVisitor {
 
     // process postponed entries in the InnerClasses attribute
     for (InnerClassInfo cls : myInnerClasses) {
-      if (cls.outerName == null || cls.innerName == null || !isAbiVisible(cls.access)) {
-        continue; // name is a local or anonymous class or the class cannot be included in ABI
+      if (cls.name.equals(myName)) {
+        // this class is an inner class and the InnerClassInfo structure describes the class being processed => the structure must be kept
+        myEffectiveAccess |= cls.access;
+        cv.visitInnerClass(cls.name, cls.outerName, cls.innerName, cls.access);
+        continue;
       }
-      if (cls.outerName.equals(myName) /*this class encloses class <name>*/ || cls.name.equals(myName) /*this class is a member of <outerName>*/ || myReferencedClasses.contains(cls.name)) {
+
+      if (cls.outerName == null || cls.innerName == null || !isAbiVisible(cls.access)) {
+        // name is a local or anonymous class or the class cannot be included in ABI
+        continue;
+      }
+
+      if (cls.outerName.equals(myName) /*this class encloses class <name>*/ || myReferencedClasses.contains(cls.name)) {
         cv.visitInnerClass(cls.name, cls.outerName, cls.innerName, cls.access);
       }
     }

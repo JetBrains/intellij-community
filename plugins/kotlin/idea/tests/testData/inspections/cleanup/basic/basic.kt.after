@@ -6,7 +6,6 @@ import some.unresolved.declaration // should not be removed
 class A private constructor()
 
 fun foo() {
-    loop@
     for (i in 1..100) {
         val v = bar(i + 2)
         /* comment */

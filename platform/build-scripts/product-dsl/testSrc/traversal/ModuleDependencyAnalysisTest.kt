@@ -175,7 +175,7 @@ class ModuleDependencyAnalysisTest {
         module("core.embedded.mid", ModuleLoadingRuleValue.EMBEDDED)
       }
       plugin("plugin.ui") {
-        content("plugin.ui.impl", ModuleLoadingRuleValue.OPTIONAL)
+        content("plugin.ui.impl", loading = ModuleLoadingRuleValue.OPTIONAL)
       }
       linkContentModuleDeps("core.embedded", "core.embedded.mid")
       linkContentModuleDeps("core.embedded.mid", "plugin.ui.impl")
@@ -211,7 +211,7 @@ class ModuleDependencyAnalysisTest {
         module("other.embedded", ModuleLoadingRuleValue.EMBEDDED)
       }
       plugin("plugin.ui") {
-        content("plugin.ui.impl", ModuleLoadingRuleValue.OPTIONAL)
+        content("plugin.ui.impl", loading = ModuleLoadingRuleValue.OPTIONAL)
       }
       linkContentModuleDeps("core.embedded", "plugin.ui.impl")
       linkContentModuleDeps("other.embedded", "plugin.ui.impl")

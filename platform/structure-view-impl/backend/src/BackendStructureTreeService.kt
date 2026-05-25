@@ -23,9 +23,9 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.client.ClientAppSession
-import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.rethrowControlFlowException
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.TextEditor
@@ -48,7 +48,6 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.ui.PlaceHolder
 import com.intellij.ui.tree.StructureTreeModel
-import com.intellij.ui.tree.TreeVisitor
 import com.intellij.util.ui.tree.TreeUtil
 import fleet.rpc.core.toRpc
 import kotlinx.coroutines.CoroutineName
@@ -68,6 +67,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.concurrency.asDeferred
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
 import javax.swing.tree.TreeNode
 import javax.swing.tree.TreePath
 
@@ -105,9 +105,9 @@ internal class BackendStructureTreeService(private val session: ClientAppSession
       }
     }
 
-    val startTime = System.currentTimeMillis()
+    val startTime = System.nanoTime()
 
-    logger.debug { "Creating structure model for id: $id" }
+    logger.trace { "Creating structure model for id: $id" }
 
     val disposable = Disposer.newDisposable(session, "Disposable for structure model with id: $id")
 
@@ -115,6 +115,7 @@ internal class BackendStructureTreeService(private val session: ClientAppSession
 
     try {
       dto = run {
+        val createTreeModelStartTime = System.nanoTime()
         val treeModel: StructureViewModel? = withContext(Dispatchers.EDT) {
           writeIntentReadAction {
             PsiDocumentManager.getInstance(project).commitAllDocuments()
@@ -137,6 +138,7 @@ internal class BackendStructureTreeService(private val session: ClientAppSession
             }
           }
         }
+        logger.trace { "createStructureViewModel[$id]: tree model creation completed in ${(System.nanoTime() - createTreeModelStartTime).asTraceDuration()}" }
 
         if (treeModel == null) return@run null
 
@@ -191,14 +193,17 @@ internal class BackendStructureTreeService(private val session: ClientAppSession
             .collectLatest { event ->
               when (event) {
                 is StructureViewEvent.ComputeNodes -> {
-                  val computeStartTime = System.currentTimeMillis()
+                  val computeStartTime = System.nanoTime()
                   val nodes = entry.structureTreeModel.invoker.compute {
                     ProgressManager.getInstance().computePrioritized(ThrowableComputable<ComputeNodesResult?, Throwable?> { return@ThrowableComputable computeNodes(id.id) })
                   }.asDeferred().await()
 
-                  logger.debug {
-                    val computeTime = System.currentTimeMillis() - computeStartTime
-                    "Nodes for the structure model with id: $id were computed in $computeTime ms"
+                  logger.trace {
+                    val computeTime = System.nanoTime() - computeStartTime
+                    val nodesCount = nodes?.nodes?.size ?: 0
+                    val providerNodesCount = nodes?.nodeProviders?.sumOf { it.nodes.size } ?: 0
+                    "createStructureViewModel[$id]: compute nodes request completed in ${computeTime.asTraceDuration()}; " +
+                    "nodes=$nodesCount, providerNodes=$providerNodesCount, providers=${nodes?.nodeProviders?.size ?: 0}, selection=${nodes?.editorSelectionId}"
                   }
 
                   val nodesDto = nodes?.let {
@@ -236,10 +241,7 @@ internal class BackendStructureTreeService(private val session: ClientAppSession
 
         check(entry.requestFlow.tryEmit(StructureViewEvent.ComputeNodes))
 
-        logger.debug {
-          val time = System.currentTimeMillis() - startTime
-          "Structure model with id: $id was created in $time ms"
-        }
+        logger.trace { "createStructureViewModel[$id]: model DTO created in ${(System.nanoTime() - startTime).asTraceDuration()}" }
 
         return@run StructureViewModelDto(
           root,
@@ -264,7 +266,7 @@ internal class BackendStructureTreeService(private val session: ClientAppSession
     withContext(Dispatchers.EDT + NonCancellable) {
       val entry = structureViews[id.id] ?: return@withContext
       Disposer.dispose(entry.disposable)
-      logger.debug { "Structure model with id: $id was disposed" }
+      logger.trace { "Structure model with id: $id was disposed" }
     }
   }
 
@@ -279,9 +281,9 @@ internal class BackendStructureTreeService(private val session: ClientAppSession
     val entry = structureViews[entryId] ?: return null
     check(entry.structureTreeModel.invoker.isValidThread)
 
-    val computeNodesStartTime = System.currentTimeMillis()
+    val computeNodesStartTime = System.nanoTime()
 
-    logger.debug { "computeNodes: Starting computation for structure view entry with id: ${entry.idRef.get()}" }
+    logger.trace { "computeNodes: Starting computation for structure view entry with id: $entryId" }
 
     val mainNodes = mutableListOf<StructureViewTreeElementDto>()
     //todo for not a popup these don't have to implement FileStructureNodeProvider
@@ -292,19 +294,17 @@ internal class BackendStructureTreeService(private val session: ClientAppSession
     //todo for not a popup these don't have to implement FileStructureFilter
     val filters = entry.treeModel.filters.filterIsInstance<FileStructureFilter>()
 
-    logger.debug {
-      val nodeProvidersCount = nodeProvidersMap.size
-      val filtersCount = filters.size
-      "computeNodes: Setup - nodeProviders: $nodeProvidersCount, filters: $filtersCount, " +
-      "expandInfoProvider: ${expandInfoProvider != null}, elementInfoProvider: ${elementInfoProvider != null}"
+    logger.trace {
+      "computeNodes: nodeProviders=${nodeProvidersMap.size}, filters=${filters.size}, " +
+      "expandInfoProvider=${expandInfoProvider != null}, elementInfoProvider=${elementInfoProvider != null}"
     }
 
     val (currentEditorElement, editorOffset) = entry.treeModel.currentEditorElement to ((entry.fileEditor as? TextEditor)?.getEditor()
                                                                                           ?.getCaretModel()?.offset ?: -1)
     val state = StructureViewSelectVisitorState()
 
-    logger.debug { "computeNodes: Starting tree traversal" }
-    val visitorStartTime = System.currentTimeMillis()
+    logger.trace { "computeNodes: Starting tree traversal" }
+    val visitorStartTime = System.nanoTime()
 
     val root = entry.structureTreeModel.root ?: return null
     visit(root, entry.structureTreeModel, TreePath(root)) {
@@ -316,9 +316,14 @@ internal class BackendStructureTreeService(private val session: ClientAppSession
       false
     }
 
-    logger.debug { "computeNodes: Tree traversal completed" }
 
     val selectedValue = processStateToGetSelectedValue(state, entry, currentEditorElement)
+
+    logger.trace {
+      val selection = entry.nodeToId[selectedValue]
+      "computeNodes: tree traversal completed in ${(System.nanoTime() - visitorStartTime).asTraceDuration()};" +
+      "selectionId=$selection, selectedValuePresent=${selectedValue != null}"
+    }
 
     val nodeProviders = nodeProvidersMap.entries.mapNotNull { (provider, nodes) ->
       val nodesLoaded = entry.backendActionOwner.isActionActive(provider)
@@ -341,7 +346,7 @@ internal class BackendStructureTreeService(private val session: ClientAppSession
         val entry = structureViews[entryId] ?: return@invokeLater
         // Check if any providers don't have their nodes loaded yet
 
-        logger.debug { "Some providers don't have nodes loaded yet, rebuilding tree with all providers active" }
+        logger.trace { "Some providers don't have nodes loaded yet, rebuilding tree with all providers active" }
 
         // Enable all node providers
         entry.backendActionOwner.allNodeProvidersActive = true
@@ -349,21 +354,25 @@ internal class BackendStructureTreeService(private val session: ClientAppSession
         // Rebuild tree with all providers active
         entry.wrapper.rebuildTree()
 
+        val deferredInvalidateStartTime = System.nanoTime()
         entry.structureTreeModel.invalidateAsync().handle { _, throwable ->
+          logger.trace {
+            "computeNodes: deferred provider tree invalidation completed in " +
+            (System.nanoTime() - deferredInvalidateStartTime).asTraceDuration()
+          }
           if (throwable != null) {
             deferredNodeProviders.completeExceptionally(throwable)
           }
           // Compute nodes for ALL providers (not just inactive ones)
           // because previously active providers may have new nodes now
           if (entry.structureTreeModel.isDisposed) {
-            logger.debug { "computeNodes: Skipping tree traversal for deferred nodes because tree is disposed" }
+            logger.trace { "computeNodes: Skipping tree traversal for deferred nodes because tree is disposed" }
             return@handle
           }
           entry.structureTreeModel.invoker.invoke {
             if (entry.structureTreeModel.isDisposed) return@invoke
-            logger.debug { "computeNodes: Tree traversal for deferred nodes started" }
+            logger.trace { "computeNodes: Tree traversal for deferred nodes started" }
             val allProviderNodes = computeAllProviderNodes(entry)
-            logger.debug { "computeNodes: Tree traversal for deferred nodes completed" }
             deferredNodeProviders.complete(allProviderNodes)
           }.onError {
             deferredNodeProviders.completeExceptionally(it)
@@ -377,16 +386,7 @@ internal class BackendStructureTreeService(private val session: ClientAppSession
       deferredNodeProviders.complete(null)
     }
 
-    logger.debug {
-      val visitorTime = System.currentTimeMillis() - visitorStartTime
-      "computeNodes: Visitor completed in $visitorTime ms"
-    }
-
-    logger.debug {
-      val totalComputeTime = System.currentTimeMillis() - computeNodesStartTime
-
-      "computeNodes: total compute time: $totalComputeTime ms"
-    }
+    logger.trace { "computeNodes: total compute time ${(System.nanoTime() - computeNodesStartTime).asTraceDuration()}" }
 
     //todo for tw - proper selection logic, not just editor's element
     return ComputeNodesResult(
@@ -400,6 +400,7 @@ internal class BackendStructureTreeService(private val session: ClientAppSession
   private fun computeAllProviderNodes(entry: StructureViewEntry): DeferredNodesDto? {
     check(entry.structureTreeModel.invoker.isValidThread)
 
+    val computeStartTime = System.nanoTime()
     //all node providers are enabled anyway
     val providerNodesMap = getNodeProviders(entry.treeModel)?.filter { it !is DelegatingNodeProvider<*> }?.associateWith { mutableListOf<StructureViewTreeElementDto>() } ?: return null
     val expandInfoProvider = entry.treeModel as? ExpandInfoProvider
@@ -416,11 +417,16 @@ internal class BackendStructureTreeService(private val session: ClientAppSession
       false
     }
 
+    val nodeProviderDtos = providerNodesMap.map { (provider, nodes) ->
+      NodeProviderNodesDto(provider.name, nodes)
+    }
+    logger.trace {
+      "computeAllProviderNodes: completed in ${(System.nanoTime() - computeStartTime).asTraceDuration()}; " +
+      "providers=${nodeProviderDtos.size}"
+    }
+
     return DeferredNodesDto(
-      providerNodesMap.map { (provider, nodes) ->
-        logger.debug { "Computed ${nodes.size} nodes for provider: ${provider.name}" }
-        NodeProviderNodesDto(provider.name, nodes)
-      },
+      nodeProviderDtos,
       mainNodes
     )
   }
@@ -527,4 +533,8 @@ internal class BackendStructureTreeService(private val session: ClientAppSession
       return if (adjusted == null) null else value
     }
   }
+}
+
+private fun Long.asTraceDuration(): String {
+  return "${TimeUnit.NANOSECONDS.toMillis(this)} ms"
 }

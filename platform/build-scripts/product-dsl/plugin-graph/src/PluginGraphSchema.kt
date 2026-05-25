@@ -42,8 +42,11 @@ const val NODE_MODULE_SET: Int = 3
 /** Node type for JPS/Bazel target nodes (build units) */
 const val NODE_TARGET: Int = 4
 
+/** Node type for module nodes */
+const val NODE_CONTENT_MODULE_WITH_NAMESPACE: Int = 5
+
 /** Number of node types (for array sizing) */
-internal const val NODE_TYPE_COUNT: Int = 5
+internal const val NODE_TYPE_COUNT: Int = 6
 
 // endregion
 
@@ -126,8 +129,14 @@ const val EDGE_PLUGIN_XML_DEPENDS_ON_PLUGIN: Int = 13
 /** Edge type: Plugin depends on Content Module (from plugin.xml module deps) */
 const val EDGE_PLUGIN_XML_DEPENDS_ON_CONTENT_MODULE: Int = 14
 
+/** Edge type: Plugin/Product contains Content Module */
+const val EDGE_CONTAINS_CONTENT_WITH_NAMESPACE: Int = 15
+
+/** Edge type: Test Plugin contains Content Module */
+const val EDGE_CONTAINS_CONTENT_TEST_WITH_NAMESPACE: Int = 16
+
 /** Number of edge types (for array sizing) */
-internal const val EDGE_TYPE_COUNT: Int = 15
+internal const val EDGE_TYPE_COUNT: Int = 17
 
 // endregion
 
@@ -323,9 +332,17 @@ value class ProductNode(override val id: Int) : TypedNode
 @JvmInline
 value class PluginNode(override val id: Int) : TypedNode
 
-/** Module node - content modules */
+/**
+ * Module node - content modules.
+ * The plugin system takes into account not only name, but also namespace of a content module, so eventually code that uses this node should migrate to use
+ * [ContentModuleWithNamespaceNode] instead. Currently both nodes are created for each content module.
+ */
 @JvmInline
 value class ContentModuleNode(override val id: Int) : TypedNode
+
+/** Module node - content modules with namespace */
+@JvmInline
+value class ContentModuleWithNamespaceNode(override val id: Int) : TypedNode
 
 /** Module set node - groups of modules */
 @JvmInline
@@ -404,6 +421,41 @@ value class ContentEdgeInvoker @PublishedApi internal constructor(
       }
       require(sourceId >= 0) { "sourceId $sourceId must be non-negative" }
       return ContentEdgeInvoker((edgeId.toLong() shl 32) or (sourceId.toLong() and 0xFFFFFFFFL))
+    }
+  }
+}
+
+/**
+ * Value class for GC-free traversal of content edges with loading mode.
+ *
+ * Packs `[edgeId:16][sourceId:32]` into Long, like [EdgeInvoker], but the
+ * invoke operator exposes the per-edge loading mode packed in adjacency entries.
+ *
+ * Used for content edges:
+ * - [EDGE_CONTAINS_CONTENT_WITH_NAMESPACE]
+ * - [EDGE_CONTAINS_CONTENT_TEST_WITH_NAMESPACE]
+ */
+@JvmInline
+value class ContentWithNamespaceEdgeInvoker @PublishedApi internal constructor(
+  /** Packed value: `[edgeId:16][sourceId:32]` */
+  @PublishedApi internal val packed: Long,
+) {
+  /** Extract edge type ID from upper 16 bits */
+  @PublishedApi
+  internal val edgeId: Int get() = (packed ushr 32).toInt()
+
+  /** Extract source node ID from lower 32 bits */
+  @PublishedApi
+  internal val sourceId: Int get() = packed.toInt()
+
+  companion object {
+    /** Create ContentEdgeInvoker by packing edgeId and sourceId into Long */
+    fun create(edgeId: Int, sourceId: Int): ContentWithNamespaceEdgeInvoker {
+      require(edgeId == EDGE_CONTAINS_CONTENT_WITH_NAMESPACE || edgeId == EDGE_CONTAINS_CONTENT_TEST_WITH_NAMESPACE) {
+        "edgeId $edgeId must be a content edge"
+      }
+      require(sourceId >= 0) { "sourceId $sourceId must be non-negative" }
+      return ContentWithNamespaceEdgeInvoker((edgeId.toLong() shl 32) or (sourceId.toLong() and 0xFFFFFFFFL))
     }
   }
 }

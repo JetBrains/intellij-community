@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.commandLine
 
 import com.intellij.openapi.diagnostic.Logger
@@ -12,16 +12,13 @@ import java.nio.charset.Charset
 import javax.xml.xpath.XPathEvaluationResult
 import javax.xml.xpath.XPathFactory
 
-
 private var LOG = Logger.getInstance(FileSetProcessor::class.java)
-
 
 abstract class FileSetProcessor(
   val messageOutput: MessageOutput,
   val isRecursive: Boolean,
   val charset: Charset? = null
 ) {
-
   private val topEntries = arrayListOf<File>()
   private val fileMasks = arrayListOf<Regex>()
 
@@ -132,7 +129,6 @@ private fun findCodeStyleSettings(dotIdea: File?): CodeStyleSettings? {
     .resolve("Project.xml")
     .takeIf { it.isFile }
     ?.let {
-      readSettings(it)
+      readSettings(it.toPath())
     }
-
 }

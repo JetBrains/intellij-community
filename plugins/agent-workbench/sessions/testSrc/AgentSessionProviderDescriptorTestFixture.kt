@@ -26,6 +26,7 @@ class TestAgentSessionProviderDescriptor(
   override val editorTabActionIds: List<String> = emptyList(),
   override val supportsPendingEditorTabRebind: Boolean = false,
   override val supportsNewThreadRebind: Boolean = false,
+  override val supportsPromptLaunch: Boolean = true,
   private val threadRenameHandlerOverride: AgentThreadRenameHandler? = null,
   override val emitsScopedRefreshSignals: Boolean = false,
   override val refreshPathAfterCreateNewSession: Boolean = false,
@@ -33,6 +34,10 @@ class TestAgentSessionProviderDescriptor(
   override val suppressArchivedThreadsDuringRefresh: Boolean = false,
   override val supportsArchiveThread: Boolean = false,
   override val supportsUnarchiveThread: Boolean = false,
+  private val newSessionLabelKeyOverride: String? = null,
+  override val quickStartActionTextKey: String = "action.AgentWorkbenchSessions.NewThreadQuick.text",
+  override val quickStartActionDescriptionKey: String = "action.AgentWorkbenchSessions.NewThreadQuick.description",
+  override val quickStartActionTargetDescriptionKey: String? = null,
   private val onCliAvailable: () -> Unit = {},
   private val newSessionLaunchSpecProvider: suspend (AgentSessionLaunchMode) -> AgentSessionTerminalLaunchSpec = { mode ->
     AgentSessionTerminalLaunchSpec(command = listOf("test", "new", mode.name))
@@ -44,7 +49,8 @@ class TestAgentSessionProviderDescriptor(
     get() = if (provider == AgentSessionProvider.CLAUDE) "toolwindow.provider.claude" else "toolwindow.provider.codex"
 
   override val newSessionLabelKey: String
-    get() = if (provider == AgentSessionProvider.CLAUDE) "toolwindow.action.new.session.claude" else "toolwindow.action.new.session.codex"
+    get() = newSessionLabelKeyOverride
+            ?: if (provider == AgentSessionProvider.CLAUDE) "toolwindow.action.new.session.claude" else "toolwindow.action.new.session.codex"
 
   override val icon: Icon
     get() = iconOverride

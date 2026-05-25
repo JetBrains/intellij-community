@@ -203,7 +203,7 @@ private fun createWeighingContext(
                 positionContext is KotlinCallableReferencePositionContext -> null
                 nameExpression.expectedType != null -> nameExpression.expectedType
                 nameExpressionParent is KtBinaryExpression -> getEqualityExpectedType(nameExpression)
-                nameExpressionParent is KtCollectionLiteralExpression -> getAnnotationLiteralExpectedType(nameExpression)
+                nameExpressionParent is KtCollectionLiteralExpression -> getAnnotationLiteralExpectedType(nameExpressionParent)
                 nameExpressionParent is KtThrowExpression -> {
                     @OptIn(KaExperimentalApi::class)
                     typeCreator.classType(StandardClassIds.Throwable)

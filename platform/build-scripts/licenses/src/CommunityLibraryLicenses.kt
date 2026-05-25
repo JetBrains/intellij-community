@@ -1069,6 +1069,9 @@ object CommunityLibraryLicenses {
       .mit("https://github.com/SLP-team/SLP-Core/blob/master/LICENSE")
       .suppliedByOrganizations("SLP-team"),
 
+    LibraryLicense("Night Config", libraryName = "night-config-toml", url = "https://github.com/TheElectronWill/night-config")
+      .lgpl3("https://github.com/TheElectronWill/night-config/blob/master/LICENSE.txt"),
+
     LibraryLicense("Objenesis", libraryName = "Objenesis", url = "https://objenesis.org/")
       .apache("https://github.com/easymock/objenesis/blob/master/LICENSE.txt")
       .suppliedByPersons("Henri Tremblay", "Joe Walnes", "Leonardo Mesquita"),

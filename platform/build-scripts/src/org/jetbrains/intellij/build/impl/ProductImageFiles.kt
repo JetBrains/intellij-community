@@ -10,6 +10,7 @@ import org.jetbrains.intellij.build.WindowsDistributionCustomizer
 import java.nio.file.Path
 import kotlin.io.path.exists
 
+@Suppress("DEPRECATION")
 internal fun locateIcoFileForWindowsLauncher(customizer: WindowsDistributionCustomizer, context: BuildContext): Path {
   if (context.productProperties.productMode == ProductMode.FRONTEND) {
     val frontendIcoPath = locateFrontendImageFile(filePath = WINDOWS_ICO_FRONTEND_PATH, eapFilePath = WINDOWS_ICO_FRONTEND_EAP_PATH, context = context)
@@ -27,6 +28,7 @@ internal fun locateIcoFileForWindowsLauncher(customizer: WindowsDistributionCust
          ?: error("Path to ico file is not specified")
 }
 
+@Suppress("DEPRECATION")
 internal fun locateIcnsForMacApp(customizer: MacDistributionCustomizer, context: BuildContext): Path {
   if (context.productProperties.productMode == ProductMode.FRONTEND) {
     val frontendIcnsPath = locateIcnsForFrontendMacApp(context)
@@ -47,6 +49,7 @@ internal fun locateIcnsForFrontendMacApp(context: BuildContext): Path? {
   return locateFrontendImageFile(filePath = MAC_ICNS_FRONTEND_PATH, eapFilePath = MAC_ICNS_FRONTEND_EAP_PATH, context = context)
 }
 
+@Suppress("DEPRECATION")
 internal fun locateDmgImageForMacApp(customizer: MacDistributionCustomizer, context: BuildContext): Path {
   if (context.applicationInfo.isEAP) {
     val eapDmgImagePath = customizer.dmgImagePathForEAP ?: context.productProperties.imagesDirectoryPath?.resolve(MAC_DMG_BACKGROUND_EAP_PATH)?.takeIf { it.exists() }
@@ -58,6 +61,7 @@ internal fun locateDmgImageForMacApp(customizer: MacDistributionCustomizer, cont
          ?: error("Path to background image for DMG is not specified")
 }
 
+@Suppress("DEPRECATION")
 internal fun locateIconForLinuxLauncher(customizer: LinuxDistributionCustomizer, context: BuildContext): Path? {
   if (context.productProperties.productMode == ProductMode.FRONTEND) {
     val frontendIconPath = locateFrontendImageFile(filePath = LINUX_PRODUCT_FRONTEND_PNG_PATH, eapFilePath = LINUX_PRODUCT_FRONTEND_EAP_PNG_PATH, context = context)

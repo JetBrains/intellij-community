@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.teamcity.service.messages.jar
+  modules:
+  - name: intellij.libraries.teamcity.service.messages
+    libraries:
+      tcServiceMessages:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/teamcity/serviceMessages/2024/serviceMessages-2024.jar

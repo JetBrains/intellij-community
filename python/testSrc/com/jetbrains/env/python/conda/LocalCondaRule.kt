@@ -9,7 +9,7 @@ import com.intellij.python.test.env.common.createEnvironment
 import com.intellij.python.test.env.conda.CondaPyEnvironment
 import com.intellij.python.test.env.junit4.JUnit4FactoryHolder
 import com.jetbrains.python.getOrThrow
-import com.jetbrains.python.sdk.add.v2.Version
+import com.intellij.python.pytools.Version
 import com.jetbrains.python.sdk.add.v2.conda.getCondaVersion
 import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
 import kotlinx.coroutines.runBlocking

@@ -2,6 +2,7 @@
 package com.intellij.ide
 
 import com.intellij.configurationStore.deserializeInto
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.ApplicationRule
@@ -13,6 +14,7 @@ import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
 import org.junit.ClassRule
 import org.junit.Test
+import java.awt.Color
 import kotlin.test.assertTrue
 
 class RecentProjectManagerTest {
@@ -710,6 +712,58 @@ class RecentProjectManagerTest {
     manager.getRecentPaths()
 
     assertThat(manager.groups.single().projects).containsExactly("/home/boo/project-59")
+  }
+
+  @Test
+  fun `project color update fires project color change event`() = test { manager ->
+    val state = RecentProjectManagerState()
+    state.additionalInfo["/home/boo/project"] = RecentProjectMetaInfo()
+    manager.loadState(state)
+
+    val colorChangedPaths = ArrayList<String>()
+    var recentProjectsEvents = 0
+    val connection = ApplicationManager.getApplication().messageBus.simpleConnect()
+    try {
+      connection.subscribe(RecentProjectsManager.RECENT_PROJECTS_CHANGE_TOPIC, object : RecentProjectsManager.RecentProjectsChange {
+        override fun change() {
+          recentProjectsEvents++
+        }
+      })
+      connection.subscribe(ProjectWindowCustomizerService.PROJECT_COLOR_CHANGE_TOPIC, object : ProjectColorChangeListener {
+        override fun projectColorChanged(projectPath: String) {
+          colorChangedPaths.add(projectPath)
+        }
+      })
+
+      manager.updateProjectColor("/home/boo/unknown", RecentProjectColorInfo().also { it.associatedIndex = 1 })
+      ApplicationManager.getApplication().invokeAndWait { }
+      assertThat(colorChangedPaths).isEmpty()
+      assertThat(recentProjectsEvents).isZero()
+
+      manager.updateProjectColor("/home/boo/project", RecentProjectColorInfo().also { it.associatedIndex = 3 })
+      ApplicationManager.getApplication().invokeAndWait { }
+
+      assertThat(colorChangedPaths).containsExactly("/home/boo/project")
+      assertThat(recentProjectsEvents).isZero()
+      assertThat(manager.getProjectMetaInfo("/home/boo/project")!!.colorInfo.associatedIndex).isEqualTo(3)
+    }
+    finally {
+      connection.disconnect()
+    }
+  }
+
+  @Test
+  fun `recent project color palette resolves indexed and custom soft backgrounds`() {
+    val indexedInfo = RecentProjectColorInfo().also { it.associatedIndex = 3 }
+    assertThat(RecentProjectColorPalette.softBackground(indexedInfo)).isEqualTo(RecentProjectColorPalette.softBackground(3))
+    assertThat(RecentProjectColorPalette.softBackground(-1)).isNull()
+    assertThat(RecentProjectColorPalette.softBackground(RecentProjectColorInfo().also { it.associatedIndex = 99 })).isNull()
+
+    val customColor = Color(0x1E, 0x88, 0xE5)
+    val customInfo = RecentProjectColorInfo().also { it.customColor = "1e88e5" }
+    assertThat(RecentProjectColorPalette.softBackground(customInfo)).isEqualTo(RecentProjectColorPalette.softBackground(customColor))
+    assertThat(RecentProjectColorPalette.softBackground(customInfo)).isNotEqualTo(customColor)
+    assertThat(RecentProjectColorPalette.softBackground(RecentProjectColorInfo().also { it.customColor = "not-a-color" })).isNull()
   }
 }
 

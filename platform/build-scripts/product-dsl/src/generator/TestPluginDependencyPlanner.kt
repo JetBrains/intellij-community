@@ -11,6 +11,7 @@ import com.intellij.platform.pluginGraph.TargetName
 import org.jetbrains.intellij.build.productLayout.LIB_MODULE_PREFIX
 import org.jetbrains.intellij.build.productLayout.TestPluginSpec
 import org.jetbrains.intellij.build.productLayout.buildContentBlocksAndChainMapping
+import org.jetbrains.intellij.build.productLayout.contentName
 import org.jetbrains.intellij.build.productLayout.deps.ContentModuleDependencyPlan
 import org.jetbrains.intellij.build.productLayout.deps.DependencyResolutionContext
 import org.jetbrains.intellij.build.productLayout.deps.TestPluginDependencyPlan
@@ -100,7 +101,7 @@ private fun buildTestPluginDependencyPlan(
   val contentModules = contentData.contentBlocks
     .asSequence()
     .flatMap { it.modules }
-    .mapTo(LinkedHashSet()) { it.name }
+    .mapTo(LinkedHashSet()) { it.contentName() }
   val allowedMissingByModule = buildAllowedMissingByModule(contentData)
   val globalAllowedMissing = spec.allowedMissingPluginIds.toSet()
 

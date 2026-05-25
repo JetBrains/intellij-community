@@ -42,6 +42,7 @@
 
     <junitPatcher implementation="org.jetbrains.idea.devkit.run.JUnitDevKitPatcher"/>
     <runConfigurationExtension implementation="org.jetbrains.idea.devkit.run.DevKitApplicationPatcher"/>
+    <runConfigurationExtension implementation="org.jetbrains.idea.devkit.run.IdeStarterRunConfigurationExtension"/>
     <compiler.buildTargetScopeProvider implementation="org.jetbrains.idea.devkit.build.PluginModuleBuildScopeProvider"/>
 
     <registryKey key="devkit.generate.intellij.module.repository" defaultValue="true"
@@ -609,6 +610,13 @@
 
     <localInspection language="XML" applyToDialects="false"
                      projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.AllContentModulesOptionalLoadingRuleInspection"
+                     key="inspection.all.content.modules.default.loading.rule.name"/>
+
+    <localInspection language="XML" applyToDialects="false"
+                     projectType="INTELLIJ_PLUGIN"
                      isInternal="true"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
                      enabledByDefault="false" level="WARNING"
@@ -801,6 +809,8 @@
     <consoleFilterProvider implementation="org.jetbrains.idea.devkit.run.ModulePathFilterProvider"/>
     <registryKey key="devkit.module.hyperlink.show.chooser" defaultValue="false"
                  description="Show file chooser when clicking module names in console (iml + descriptor xml)"/>
+    <registryKey key="devkit.ide.starter.run.modes.enabled" defaultValue="true"
+                 description="Show 'Use Installer' / 'Split Mode' toggles in gutter popup and apply env variables for IDE Starter tests"/>
 
     <properties.extendedUseScopeProvider implementation="org.jetbrains.idea.devkit.references.BundleExtendedUseScopeProvider"/>
     <properties.spellcheckerMnemonicsTokenizer implementation="org.jetbrains.idea.devkit.spellchecker.DevKitMnemonicsTokenizer"/>
@@ -1012,5 +1022,15 @@
       <add-to-group group-id="BuildMenu" anchor="last"/>
     </action>
     <action id="UpdateIdeFromSourcesSettings" class="org.jetbrains.idea.devkit.actions.updateFromSources.UpdateIdeFromSourcesSettingsAction"/>
+
+    <group id="IdeStarterRunModeActions">
+      <separator/>
+      <action id="ToggleInstaller"
+              class="org.jetbrains.idea.devkit.run.ToggleInstallerAction"/>
+      <action id="ToggleSplitMode"
+              class="org.jetbrains.idea.devkit.run.ToggleSplitModeAction"/>
+      <separator/>
+      <add-to-group group-id="RunLineMarkerExtraActions" relative-to-action="CreateRunConfiguration" anchor="before"/>
+    </group>
   </actions>
 </idea-plugin>

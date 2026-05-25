@@ -6,13 +6,13 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.refreshAndFindVirtualFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.python.common.tools.ToolId
+import com.intellij.python.venv.createVenvAdditionalData
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.projectCreation.createVenvAndSdk
 import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.configuration.CreateSdkInfo
 import com.jetbrains.python.sdk.configuration.EnvCheckerResult
@@ -23,12 +23,7 @@ import com.jetbrains.python.sdk.configuration.VENV_TOOL_ID
 import com.jetbrains.python.sdk.configuration.findEnvOrNull
 import com.jetbrains.python.sdk.configuration.prepareSdkCreator
 import com.jetbrains.python.sdk.createSdk
-import com.jetbrains.python.sdk.flavors.PyFlavorAndData
-import com.jetbrains.python.sdk.flavors.PyFlavorData
-import com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
 import com.jetbrains.python.sdk.impl.resolvePythonHome
-import com.jetbrains.python.sdk.persist
-import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
 import com.jetbrains.python.sdk.setAssociationToModule
 import com.jetbrains.python.uv.sdk.configuration.isUvEnv
 import kotlinx.coroutines.Dispatchers
@@ -74,14 +69,12 @@ internal class PyVenvSdkConfiguration : PyProjectSdkConfigurationExtension {
     val sdk = withContext(Dispatchers.IO) {
       createSdk(
         PathHolder.Eel(pythonBinary.toNioPath()),
+        createVenvAdditionalData(),
         null,
-        PythonSdkAdditionalData(PyFlavorAndData(PyFlavorData.Empty, VirtualEnvSdkFlavor.getInstance())),
       )
     }.getOr { return it }
 
-    sdk.persist()
     sdk.setAssociationToModule(module)
-    module.project.pySdkService.persistSdk(sdk)
 
     return PyResult.success(sdk)
   }

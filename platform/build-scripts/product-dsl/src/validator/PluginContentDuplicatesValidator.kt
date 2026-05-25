@@ -3,10 +3,11 @@
 
 package org.jetbrains.intellij.build.productLayout.validator
 
-import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginGraph.PluginGraph
+import com.intellij.platform.pluginGraph.PluginModuleId
 import com.intellij.platform.pluginGraph.PluginNode
 import com.intellij.platform.pluginGraph.ProductNode
+import com.intellij.platform.pluginGraph.toActualId
 import org.jetbrains.intellij.build.productLayout.model.error.DuplicatePluginContentModulesError
 import org.jetbrains.intellij.build.productLayout.model.error.ValidationError
 import org.jetbrains.intellij.build.productLayout.pipeline.ComputeContext
@@ -42,32 +43,32 @@ private fun validateDuplicatePluginContentModulesForProduct(
   pluginGraph: PluginGraph,
 ): List<ValidationError> = pluginGraph.query {
   val productName = productV.name()
-  val productionOwners = LinkedHashMap<ContentModuleName, LinkedHashSet<DuplicatePluginContentModulesError.PluginOwner>>()
-  val testOwners = LinkedHashMap<ContentModuleName, LinkedHashSet<DuplicatePluginContentModulesError.PluginOwner>>()
+  val productionOwners = LinkedHashMap<PluginModuleId, LinkedHashSet<DuplicatePluginContentModulesError.PluginOwner>>()
+  val testOwners = LinkedHashMap<PluginModuleId, LinkedHashSet<DuplicatePluginContentModulesError.PluginOwner>>()
 
   fun recordPluginModules(
     plugin: PluginNode,
     isTest: Boolean,
-    target: MutableMap<ContentModuleName, LinkedHashSet<DuplicatePluginContentModulesError.PluginOwner>>,
+    target: MutableMap<PluginModuleId, LinkedHashSet<DuplicatePluginContentModulesError.PluginOwner>>,
   ) {
     val owner = DuplicatePluginContentModulesError.PluginOwner(plugin.name(), isTest)
-    plugin.containsContent { module, _ -> target.getOrPut(module.contentName()) { LinkedHashSet() }.add(owner) }
-    plugin.containsContentTest { module, _ -> target.getOrPut(module.contentName()) { LinkedHashSet() }.add(owner) }
+    plugin.containsContentWithNamespace { module, _ -> target.getOrPut(module.moduleId().toActualId(plugin.pluginId)) { LinkedHashSet() }.add(owner) }
+    plugin.containsContentWithNamespaceTest { module, _ -> target.getOrPut(module.moduleId().toActualId(plugin.pluginId)) { LinkedHashSet() }.add(owner) }
   }
 
   productV.bundles { plugin -> recordPluginModules(plugin, isTest = false, target = productionOwners) }
   productV.bundlesTest { plugin -> recordPluginModules(plugin, isTest = true, target = testOwners) }
 
-  val duplicates = LinkedHashMap<ContentModuleName, List<DuplicatePluginContentModulesError.PluginOwner>>()
-  for ((moduleName, prodOwners) in productionOwners) {
-    val testOwnersForModule = testOwners[moduleName] ?: continue
+  val duplicates = LinkedHashMap<PluginModuleId, List<DuplicatePluginContentModulesError.PluginOwner>>()
+  for ((moduleId, prodOwners) in productionOwners) {
+    val testOwnersForModule = testOwners[moduleId] ?: continue
 
     val combined = LinkedHashSet<DuplicatePluginContentModulesError.PluginOwner>(
       prodOwners.size + testOwnersForModule.size
     )
     combined.addAll(prodOwners)
     combined.addAll(testOwnersForModule)
-    duplicates[moduleName] = combined.sortedBy { it.pluginName.value }
+    duplicates[moduleId] = combined.sortedBy { it.pluginName.value }
   }
 
   if (duplicates.isEmpty()) {

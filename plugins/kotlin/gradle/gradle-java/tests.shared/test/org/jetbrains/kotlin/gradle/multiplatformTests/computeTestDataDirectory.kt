@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.tooling.core.withLinearClosure
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeAsciiOnly
 import org.junit.runner.Description
 import java.io.File
+import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 
@@ -36,7 +37,7 @@ import kotlin.io.path.exists
  * Such an elaborate algorithm is used mostly to comply with DevKit heuristics, which,
  * specifically, enables 'Navigate To Testdata' actions & gutters.
  */
-fun computeTestDataDirectory(testDescription: Description, strict: Boolean = true): File {
+fun computeTestDataDirectoryPath(testDescription: Description, strict: Boolean = true): Path {
     require(testDescription.methodName.startsWith("test")) {
         "Test method names are expected to start with 'test', actual name: ${testDescription.methodName}\n" +
                 "Please add 'test' prefix, as it helps DevKit to work (e.g. provide " +
@@ -77,8 +78,11 @@ fun computeTestDataDirectory(testDescription: Description, strict: Boolean = tru
         )
     }
 
-    return testFolderFullPath.toFile()
+    return testFolderFullPath
 }
+
+fun computeTestDataDirectory(testDescription: Description, strict: Boolean = true): File =
+    computeTestDataDirectoryPath(testDescription,strict).toFile()
 
 private fun getTestDataPathAnnotationValueWithOwner(description: Description): Pair<String, Class<*>> {
     val result = generateSequence(description.testClass) { it.superclass }

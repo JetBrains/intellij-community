@@ -4,7 +4,7 @@ package com.intellij.python.hatch.cli
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.provider.utils.stderrString
 import com.intellij.platform.eel.provider.utils.stdoutString
-import com.intellij.python.hatch.runtime.HatchRuntime
+import com.intellij.python.pytools.runtime.PyToolRuntime
 import com.jetbrains.python.PythonHomePath
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ExecError
@@ -114,7 +114,7 @@ const val ENV_TYPE_VIRTUAL: String = "virtual"
 /**
  * Manage project environments
  */
-class HatchEnv(runtime: HatchRuntime) : HatchCommand("env", runtime) {
+class HatchEnv(runtime: PyToolRuntime) : HatchCommand("env", runtime) {
   companion object {
     private val SHOW_RESPONSE_REGEX = """^\s*Standalone\s*\n((?:[+|].*[+|]\n)+)(?:\s+Matrices\s*\n((?:[+|].*[+|]\n)+))?$""".toRegex()
   }

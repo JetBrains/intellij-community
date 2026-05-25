@@ -124,9 +124,9 @@ final class NonProjectFileWritingAccessDialog extends DialogWrapper {
     setTextAndMnemonicAndListeners(myUnlockAllButton, IdeBundle.message("button.i.want.to.edit.any.non.project.file.in.current.session"),
                                    "any");
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      getRootPane().registerKeyboardAction(e -> doOKAction(), KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK),
+      getRootPane().registerKeyboardAction(_ -> doOKAction(), KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK),
                                            JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-      getRootPane().registerKeyboardAction(e -> doOKAction(), KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.META_DOWN_MASK),
+      getRootPane().registerKeyboardAction(_ -> doOKAction(), KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.META_DOWN_MASK),
                                            JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
     }
 
@@ -215,8 +215,8 @@ final class NonProjectFileWritingAccessDialog extends DialogWrapper {
       JRootPane rootPane = button.getRootPane();
       if (rootPane != null) rootPane.setDefaultButton(getButton(getOKAction()));
     };
-    button.addActionListener(e -> setDefaultButton.run());
-    button.addItemListener(e -> setDefaultButton.run());
+    button.addActionListener(_ -> setDefaultButton.run());
+    button.addItemListener(_ -> setDefaultButton.run());
   }
 
   @Override

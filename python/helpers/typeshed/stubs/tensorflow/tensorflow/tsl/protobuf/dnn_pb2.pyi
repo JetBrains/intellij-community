@@ -541,6 +541,7 @@ class AlgorithmConfigProto(google.protobuf.message.Message):
             b"scratch_size",
         ],
     ) -> None: ...
+
     @typing.overload
     def WhichOneof(
         self, oneof_group: typing.Literal["optional_algorithm", b"optional_algorithm"]

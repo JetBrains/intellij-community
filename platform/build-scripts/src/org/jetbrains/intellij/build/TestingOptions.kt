@@ -1,16 +1,15 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import com.intellij.TestCaseLoader
 import com.intellij.util.text.nullize
-import org.jetbrains.intellij.build.TestingOptions.Companion.ALL_EXCLUDE_DEFINED_GROUP
 import org.jetbrains.intellij.build.impl.JUnitRunConfigurationProperties
 
 private val OLD_PLATFORM_PREFIX = System.getProperty("idea.platform.prefix")
 
 /**
  * Options available for tests running on TeamCity.
- * If you want to run it locally, see [CommunityRunTestsBuildTarget] or [IdeaUltimateRunTestsBuildTarget].
+ * If you want to run it locally, see `CommunityRunTestsBuildTarget` or `IdeaUltimateRunTestsBuildTarget`.
  *
  * When running tests locally, specify the necessary options as VM arguments, e.g. `-Dintellij.build.test.groups=COMMUNITY_JAVA_TESTS`
  */
@@ -24,10 +23,10 @@ open class TestingOptions {
   }
 
   /**
-   * Semicolon-separated names of test groups tests from which should be executed, by default all tests will be executed.
+   * Semicolon-separated names of test groups tests from which should be executed, by default, all tests will be executed.
    *
-   * Test groups are defined in testGroups.properties files and there is an implicit [ALL_EXCLUDE_DEFINED_GROUP] group for tests which aren't
-   * included into any group and 'ALL' group for all tests.
+   * Test groups are defined in 'testGroups.properties' files, and there is an implicit [ALL_EXCLUDE_DEFINED_GROUP] group
+   * for tests which aren't included in any group, and 'ALL' group for all tests.
    */
   var testGroups: String? = System.getProperty("intellij.build.test.groups").nullize(nullizeSpaces = true)
 
@@ -59,13 +58,13 @@ open class TestingOptions {
   var testSimplePatterns: String? = System.getProperty("intellij.build.test.simple.patterns").nullize(nullizeSpaces = true)
 
   /**
-   * Semicolon-separated names of JUnit run configurations in the project which need to be executed. If this option is specified,
+   * Semicolon-separated names of JUnit run configurations in the project that need to be executed. If this option is specified,
    * [testGroups], [testPatterns] and [mainModule] will be ignored.
    */
   var testConfigurations: String? = System.getProperty("intellij.build.test.configurations").nullize(nullizeSpaces = true)
 
   /**
-   * Specifies components from which product will be used to run tests, by default IDEA Ultimate will be used.
+   * Specifies components from which product will be used to run tests, by default, IDEA Ultimate will be used.
    */
   var platformPrefix: String? = System.getProperty("intellij.build.test.platform.prefix", OLD_PLATFORM_PREFIX)
 
@@ -75,12 +74,12 @@ open class TestingOptions {
   var isDebugEnabled: Boolean = getBooleanProperty("intellij.build.test.debug.enabled")
 
   /**
-   * Specifies address on which the testing process will listen for connections, by default a localhost will be used.
+   * Specifies the address at which the testing process will listen for connections, by default, 'localhost' will be used.
    */
   var debugHost: String = System.getProperty("intellij.build.test.debug.host", "localhost")
 
   /**
-   * Specifies port on which the testing process will listen for connections, by default, a random port will be used.
+   * Specifies the port on which the testing process will listen for connections, by default, a random port will be used.
    */
   var debugPort: Int = System.getProperty("intellij.build.test.debug.port")?.toIntOrNull() ?: 0
 
@@ -107,9 +106,9 @@ open class TestingOptions {
   var validateMainModule: Boolean = System.getProperty("intellij.build.test.main.module.validate")?.toBooleanStrict() ?: false
 
   /**
-   * Specifies path to runtime which will be used to run tests.
+   * Specifies the path to a runtime which will be used to run tests.
    * By default `runtimeBuild` from [org.jetbrains.intellij.build.dependencies.DependenciesProperties] will be used.
-   * If it is missing then tests will run under the same runtime which is used to run the build scripts.
+   * If it is missing, then tests will run under the same runtime which is used to run the build scripts.
    */
   var customRuntimePath: String? = System.getProperty(TEST_JRE_PROPERTY)
 
@@ -119,13 +118,13 @@ open class TestingOptions {
   var enableCoverage: Boolean = getBooleanProperty("intellij.build.test.coverage.enabled", false)
 
   /**
-   * Specifies a list of semicolon separated include class patterns for [IntelliJ Coverage agent](https://github.com/jetbrains/intellij-coverage).
+   * Specifies a list of semicolon-separated include class patterns for [IntelliJ Coverage agent](https://github.com/jetbrains/intellij-coverage).
    * Required if [enableCoverage] is set to `true`.
    */
   var coveredClassesPatterns: String? = System.getProperty("intellij.build.test.coverage.include.class.patterns")
 
   /**
-   * Specifies a list of semicolon separated modules names which are used together with their transitive dependencies
+   * Specifies a list of semicolon-separated modules names which are used together with their transitive dependencies
    * to determine source and output paths for a Coverage report.
    *
    * If it isn't specified, then either [testConfigurations] or [mainModule] are used.
@@ -149,12 +148,12 @@ open class TestingOptions {
   var testDiscoveryTraceFilePath: String? = System.getProperty("intellij.build.test.discovery.trace.file")
 
   /**
-   * Specifies a list of semicolon separated include class patterns for IntelliJ test discovery agent.
+   * Specifies a list of semicolon-separated include class patterns for IntelliJ test discovery agent.
    */
   var testDiscoveryIncludePatterns: String? = System.getProperty("intellij.build.test.discovery.include.class.patterns")
 
   /**
-   * Specifies a list of semicolon separated exclude class patterns for IntelliJ test discovery agent.
+   * Specifies a list of semicolon-separated exclude class patterns for IntelliJ test discovery agent.
    */
   var testDiscoveryExcludePatterns: String? = System.getProperty("intellij.build.test.discovery.exclude.class.patterns")
 
@@ -175,14 +174,14 @@ open class TestingOptions {
   var isPerformanceTestsOnly: Boolean = getBooleanProperty(PERFORMANCE_TESTS_ONLY_FLAG, false)
 
   /**
-   * When running on TeamCity and this option is true, cancel the build (instead of failing it) in case
-   * the build problem occurred while preparing for the test run, for example, if we failed to download
-   * the compilation cache for some reason.
+   * When running on TeamCity and this option is `true`, cancel the build (instead of failing it) in case
+   * the build problem occurred while preparing for the test run (e.g., if we failed to download
+   * the compilation cache for some reason).
    */
   var isCancelBuildOnTestPreparationFailure: Boolean = getBooleanProperty("intellij.build.test.cancel.build.on.preparation.failure", false)
 
   /**
-   * Number of attempts to run tests. Starting from the 2nd attempt only failed tests are re-run.
+   * Number of attempts to run tests. Starting from the 2nd attempt, only failed tests are re-run.
    */
   var attemptCount: Int = System.getProperty("intellij.build.test.attempt.count")?.toInt() ?: 1
 
@@ -210,8 +209,8 @@ open class TestingOptions {
   /**
    * Test search scope.
    * Allowed values:
-   * - singleModule
-   * - moduleWithDependencies
+   * - `singleModule`
+   * - `moduleWithDependencies`
    * By default, tests are searched across module dependencies.
    */
   var searchScope: String = System.getProperty("intellij.build.test.search.scope", JUnitRunConfigurationProperties.TestSearchScope.MODULE_WITH_DEPENDENCIES.serialized)

@@ -6,6 +6,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.psi.PsiModifier;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,6 +58,7 @@ public class JavaRefactoringSettings implements PersistentStateComponent<JavaRef
   public boolean INLINE_LOCAL_THIS;
   public boolean INHERITANCE_TO_DELEGATION_DELEGATE_OTHER;
 
+  @PsiModifier.ModifierConstant
   public String INTRODUCE_CONSTANT_VISIBILITY;
 
   public Boolean INTRODUCE_LOCAL_CREATE_FINALS;

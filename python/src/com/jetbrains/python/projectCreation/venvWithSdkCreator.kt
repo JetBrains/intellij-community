@@ -2,7 +2,6 @@
 package com.jetbrains.python.projectCreation
 
 import com.intellij.openapi.application.edtWriteAction
-import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -19,7 +18,9 @@ import com.intellij.python.community.execService.python.validatePythonAndGetInfo
 import com.intellij.python.community.services.systemPython.SystemPython
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.community.services.systemPython.createVenvFromSystemPython
+import com.intellij.python.community.services.systemPython.findMatchingPython
 import com.intellij.python.venv.createVenv
+import com.intellij.python.venv.createVenvAdditionalData
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonModuleTypeBase
@@ -27,16 +28,14 @@ import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.getOr
-import com.intellij.python.community.services.systemPython.findMatchingPython
 import com.jetbrains.python.packaging.PyVersionSpecifiers
 import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.sdk.baseDir
+import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.configurePythonSdk
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.moduleIfExists
-import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
 import com.jetbrains.python.sdk.setAssociationToModule
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
@@ -102,10 +101,9 @@ suspend fun createVenvAndSdk(
   }
 
   logger.info("using venv python $venvPython")
-  val sdkBasePath = moduleOrProject.moduleIfExists?.baseDir?.path ?: project.basePath
-  val sdk = getSdk(venvPython, sdkBasePath?.let { Path.of(it) })
+  val sdk = getSdk(venvPython).getOr { return it }
   if (moduleOrProject.moduleIfExists == null && project.modules.isEmpty()) {
-    writeAction {
+    edtWriteAction {
       val projectPath = vfsPath.toNioPath()
       val file = projectPath.resolve("${projectPath.fileName}.iml")
       ModuleManager.getInstance(project).newModule(file, PythonModuleTypeBase.getInstance().id)
@@ -119,7 +117,6 @@ suspend fun createVenvAndSdk(
   }
   configurePythonSdk(project, module, sdk)
   sdk.setAssociationToModule(module)
-  project.pySdkService.persistSdk(sdk)
   return Result.success(sdk)
 }
 
@@ -195,12 +192,11 @@ private suspend fun ensureModuleHasRoot(module: Module, root: VirtualFile): Unit
   }
 }
 
-private suspend fun getSdk(pythonPath: PythonBinary, sdkBasePath: Path?): Sdk =
+private suspend fun getSdk(pythonPath: PythonBinary): PyResult<Sdk> =
   withProgressText(ProjectBundle.message("progress.text.configuring.sdk")) {
     val allJdks = PythonSdkUtil.getAllSdks().toTypedArray()
     val currentSdk = allJdks.firstOrNull { sdk -> sdk.homeDirectory?.toNioPath() == pythonPath }
-    if (currentSdk != null) return@withProgressText currentSdk
+    if (currentSdk != null) return@withProgressText PyResult.success(currentSdk)
 
-    val localPythonVfs = withContext(Dispatchers.IO) { VfsUtil.findFile(pythonPath, true)!! }
-    createSdk(localPythonVfs, allJdks)
+    return@withProgressText createSdk(PathHolder.Eel(pythonPath), createVenvAdditionalData())
   }

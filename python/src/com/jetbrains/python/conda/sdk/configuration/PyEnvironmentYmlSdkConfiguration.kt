@@ -6,13 +6,14 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.python.common.tools.ToolId
 import com.intellij.python.community.execService.BinOnEel
+import com.intellij.python.community.impl.conda.environmentYml.CondaEnvironmentYmlSdkUtils
+import com.intellij.python.community.impl.conda.environmentYml.format.CondaEnvironmentYmlParser
 import com.intellij.util.FileName
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyBundle
@@ -21,8 +22,6 @@ import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.onSuccess
-import com.intellij.python.community.impl.conda.environmentYml.CondaEnvironmentYmlSdkUtils
-import com.intellij.python.community.impl.conda.environmentYml.format.CondaEnvironmentYmlParser
 import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.pathValidation.ValidationRequest
 import com.jetbrains.python.pathValidation.validateExecutableFile
@@ -49,7 +48,6 @@ import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
 import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
-import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
 import com.jetbrains.python.sdk.setAssociationToModule
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -129,7 +127,7 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
       }
     }.getOr { return it }
 
-    val shared = PyCondaSdkCustomizer.Companion.instance.sharedEnvironmentsByDefault
+    val shared = PyCondaSdkCustomizer.instance.sharedEnvironmentsByDefault
     val basePath = module.baseDir?.path
 
     withContext(Dispatchers.EDT) {
@@ -138,9 +136,6 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
       if (!shared) {
         sdk.setAssociationToModule(module)
       }
-
-      SdkConfigurationUtil.addSdk(sdk)
-      module.project.pySdkService.persistSdk(sdk)
     }
 
     return PyResult.success(sdk)
@@ -181,7 +176,7 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
     val existingSdks = PyConfigurableInterpreterList.getInstance(project).model.sdks
     val newCondaEnvInfo = NewCondaEnvRequest.LocalEnvByLocalEnvironmentFile(environmentYml.toNioPath(), existingEnvs)
     val sdk = PyCondaCommand(condaExecutable.path.pathString, null)
-      .createCondaSdkAlongWithNewEnv(newCondaEnvInfo, existingSdks.toList(), project).getOr {
+      .createCondaSdkAlongWithNewEnv(newCondaEnvInfo, existingSdks.toList()).getOr {
         PySdkConfigurationCollector.logCondaEnv(project, CondaEnvResult.CREATION_FAILURE)
         thisLogger().warn("Exception during creating conda environment $it")
         return it

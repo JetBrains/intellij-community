@@ -18,10 +18,10 @@ package org.jetbrains.intellij.build.productLayout
 
 import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginGraph.PluginId
+import com.intellij.platform.pluginGraph.PluginModuleId
 import com.intellij.platform.pluginGraph.TargetName
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import kotlinx.serialization.Serializable
-import java.util.LinkedHashSet
 
 /**
  * Marker annotation for the product DSL to prevent implicit receiver scope leakage.
@@ -115,7 +115,7 @@ class ProductModulesContentSpec(
   /**
    * Product vendor name for the `<vendor>` tag in plugin.xml.
    * If null (default), no vendor tag will be generated.
-   * Example: "JetBrains"
+   * Example: PluginModuleId.DEFAULT_NAMESPACE
    */
   @JvmField val vendor: String? = null,
 
@@ -214,7 +214,7 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
 
   /**
    * Set the product vendor for the `<vendor>` tag in plugin.xml.
-   * Example: vendor("JetBrains")
+   * Example: vendor(PluginModuleId.DEFAULT_NAMESPACE)
    */
   fun vendor(value: String) {
     this.vendor = value
@@ -326,13 +326,14 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
    */
   fun module(
     name: String,
+    namespace: String? = PluginModuleId.DEFAULT_NAMESPACE,
     loading: ModuleLoadingRuleValue = ModuleLoadingRuleValue.OPTIONAL,
     allowedMissingPluginIds: List<String> = emptyList(),
   ) {
     additionalModules.add(
       ContentModule(
-        ContentModuleName(name),
-        loading,
+        moduleId = PluginModuleId(name, namespace),
+        loading = loading,
         allowedMissingPluginIds = allowedMissingPluginIds.map { PluginId(it) },
       )
     )
@@ -350,11 +351,11 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
    * @param allowedMissingPluginIds Plugin IDs that are allowed to be missing for auto-added dependencies
    *   discovered from this module (DSL test plugins only).
    */
-  fun embeddedModule(name: String, allowedMissingPluginIds: List<String> = emptyList()) {
+  fun embeddedModule(name: String, namespace: String? = PluginModuleId.DEFAULT_NAMESPACE, allowedMissingPluginIds: List<String> = emptyList()) {
     additionalModules.add(
       ContentModule(
-        ContentModuleName(name),
-        ModuleLoadingRuleValue.EMBEDDED,
+        moduleId = PluginModuleId(name, namespace),
+        loading = ModuleLoadingRuleValue.EMBEDDED,
         allowedMissingPluginIds = allowedMissingPluginIds.map { PluginId(it) },
       )
     )
@@ -372,11 +373,11 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
    * @param allowedMissingPluginIds Plugin IDs that are allowed to be missing for auto-added dependencies
    *   discovered from this module (DSL test plugins only).
    */
-  fun requiredModule(name: String, allowedMissingPluginIds: List<String> = emptyList()) {
+  fun requiredModule(name: String, namespace: String? = PluginModuleId.DEFAULT_NAMESPACE, allowedMissingPluginIds: List<String> = emptyList()) {
     additionalModules.add(
       ContentModule(
-        ContentModuleName(name),
-        ModuleLoadingRuleValue.REQUIRED,
+        moduleId = PluginModuleId(name, namespace),
+        loading = ModuleLoadingRuleValue.REQUIRED,
         allowedMissingPluginIds = allowedMissingPluginIds.map { PluginId(it) },
       )
     )

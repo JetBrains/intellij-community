@@ -27,12 +27,13 @@ import java.util.Objects;
  * <p>
  * Cache provides 2 ways to access a {@linkplain FileChannel}:
  * - {@link #executeOp(Path, FileChannelOperation, boolean)}: a lambda supplied with {@link ResilientFileChannel} channel wrapper
- *   (see {@link ResilientFileChannel} description for details about that 'reliable' means there)
+ * (see {@link ResilientFileChannel} description for details about that 'reliable' means there)
  * - {@link #executeIdempotentOp(Path, FileChannelIdempotentOperation, boolean)}: a lambda must be idempotent, but supplied with
- *   plain {@link FileChannel} without wrapping.
+ * plain {@link FileChannel} without wrapping.
  */
 @ApiStatus.Internal
-public final class OpenChannelsCache implements ChannelsAccessor { // TODO: Will it make sense to have a background thread, that flushes the cache by timeout?
+public final class OpenChannelsCache
+  implements ChannelsAccessor { // TODO: Will it make sense to have a background thread, that flushes the cache by timeout?
   /** Max channels to keep open in cache */
   private final int capacity;
 
@@ -59,7 +60,7 @@ public final class OpenChannelsCache implements ChannelsAccessor { // TODO: Will
   @Override
   public @NotNull CachedChannelsStatistics getStatistics() {
     synchronized (cacheLock) {
-      return new CachedChannelsStatistics(hitCount, missCount, loadCount, /*bypassedCache: */0,  capacity);
+      return new CachedChannelsStatistics(hitCount, missCount, loadCount, /*bypassedCache: */0, capacity);
     }
   }
 
@@ -191,19 +192,34 @@ public final class OpenChannelsCache implements ChannelsAccessor { // TODO: Will
                       boolean readOnly,
                       @NotNull FileChannelOpener channelOpener) throws IOException {
       this.readOnly = readOnly;
-      this.channel = Objects.requireNonNull(FileUtilRt.doIOOperation(lastAttempt -> {
+      if (!readOnly) {
+        Path parent = path.getParent();
+        boolean parentExists = Files.exists(parent);
+        if (!parentExists) {
+          Files.createDirectories(parent);
+        }
+      }
+
+      this.channel = Objects.requireNonNull(FileUtilRt.doIOOperation(isLastAttempt -> {
         try {
           return channelOpener.open(path, readOnly);
         }
         catch (NoSuchFileException ex) {
-          Path parent = path.getParent();
-          if (!readOnly) {
-            if (!Files.exists(parent)) {
-              Files.createDirectories(parent);
-            }
-            if (!lastAttempt) return null;
+          if (!isLastAttempt) {
+            return null;
           }
-          throw ex;
+
+          //provide more diagnostic info:
+          Path parent = path.getParent();
+          boolean parentExists = Files.exists(parent);
+
+          NoSuchFileException exception = new NoSuchFileException(
+            path.toString(), /*other: */ null,
+            "[" + path + "][readOnly: " + readOnly + "]: file doesn't exist, " +
+            "parent [" + parent + "] " + (parentExists ? "does exist" : "doesn't exist")
+          );
+          exception.addSuppressed(ex);
+          throw exception;
         }
       }));
 

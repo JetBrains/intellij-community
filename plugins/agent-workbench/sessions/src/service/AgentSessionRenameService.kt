@@ -264,6 +264,7 @@ private suspend fun dispatchRenameToOpenEditorTab(
     subAgentId = null,
     threadActivity = context.threadActivity,
     initialMessageDispatchPlan = dispatchPlan,
+    startupLaunchSpec = launchSpec,
   )
 }
 

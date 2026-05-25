@@ -55,6 +55,7 @@ import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NonNls;
@@ -1155,7 +1156,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
   }
 
   private void selectTemplate(final @Nullable String groupName, final @Nullable String templateKey) {
-    TreeUtil.traverseDepth(myTreeRoot, node -> {
+    TreeUtil.treeNodeTraverser(myTreeRoot).traverse(TreeTraversal.PRE_ORDER_DFS).processEach(node -> {
       Object o = ((DefaultMutableTreeNode)node).getUserObject();
       if (templateKey == null && o instanceof TemplateGroup && Objects.equals(groupName, ((TemplateGroup)o).getName()) ||
           o instanceof TemplateImpl &&

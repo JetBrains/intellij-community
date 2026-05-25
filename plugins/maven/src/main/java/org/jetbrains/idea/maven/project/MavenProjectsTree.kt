@@ -6,8 +6,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
@@ -25,12 +23,9 @@ import com.intellij.util.messages.Topic
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 import kotlinx.coroutines.*
-import org.jdom.output.Format
-import org.jdom.output.XMLOutputter
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.idea.maven.buildtool.MavenSyncSession
-import org.jetbrains.idea.maven.dom.references.MavenFilteredPropertyPsiReferenceProvider
 import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.project.MavenProjectsTreeUpdater.UpdateSpec
 import org.jetbrains.idea.maven.telemetry.tracer
@@ -46,7 +41,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import java.util.function.Consumer
 import java.util.function.Predicate
 import java.util.regex.Pattern
-import java.util.zip.CRC32
 
 class MavenProjectsTree(val project: Project) {
   private val myStructureLock = ReentrantReadWriteLock()
@@ -640,89 +634,6 @@ class MavenProjectsTree(val project: Project) {
       myRootProjects.toList()
     }
 
-  fun getFilterConfigCrc(fileIndex: ProjectFileIndex): Int {
-    ApplicationManager.getApplication().assertReadAccessAllowed()
-
-    return withReadLock {
-      val crc = CRC32()
-      val profiles = myExplicitProfiles
-      updateCrc(crc, profiles.hashCode())
-
-      val allProjects: Collection<MavenProject> = myVirtualFileToProjectMapping.values
-
-      crc.update(allProjects.size and 0xFF)
-      for (mavenProject in allProjects) {
-        val pomFile = mavenProject.file
-        val module = fileIndex.getModuleForFile(pomFile)
-        if (module == null) continue
-
-        if (!Comparing.equal(fileIndex.getContentRootForFile(pomFile), pomFile.parent)) continue
-
-        updateCrc(crc, module.name)
-
-        val mavenId = mavenProject.mavenId
-        updateCrc(crc, mavenId.groupId)
-        updateCrc(crc, mavenId.artifactId)
-        updateCrc(crc, mavenId.version)
-
-        val parentId = mavenProject.parentId
-        if (parentId != null) {
-          updateCrc(crc, parentId.groupId)
-          updateCrc(crc, parentId.artifactId)
-          updateCrc(crc, parentId.version)
-        }
-
-        updateCrc(crc, mavenProject.directory)
-        updateCrc(crc, MavenFilteredPropertyPsiReferenceProvider.getDelimitersPattern(mavenProject).pattern())
-        updateCrc(crc, mavenProject.modelMap.hashCode())
-        updateCrc(crc, mavenProject.resources.hashCode())
-        updateCrc(crc, mavenProject.testResources.hashCode())
-        updateCrc(crc, getFilterExclusions(mavenProject).hashCode())
-        updateCrc(crc, mavenProject.properties.hashCode())
-
-        for (each in mavenProject.filterPropertiesFiles) {
-          val file = File(each)
-          updateCrc(crc, file.lastModified())
-        }
-
-        val outputter = XMLOutputter(Format.getCompactFormat())
-
-        val crcWriter: Writer = object : Writer() {
-          override fun write(cbuf: CharArray, off: Int, len: Int) {
-            var i = off
-            val end = off + len
-            while (i < end) {
-              crc.update(cbuf[i].code)
-              i++
-            }
-          }
-
-          override fun flush() {
-          }
-
-          override fun close() {
-          }
-        }
-
-        try {
-          val resourcePluginCfg = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin")
-          if (resourcePluginCfg != null) {
-            outputter.output(resourcePluginCfg, crcWriter)
-          }
-
-          val warPluginCfg = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-war-plugin")
-          if (warPluginCfg != null) {
-            outputter.output(warPluginCfg, crcWriter)
-          }
-        }
-        catch (e: IOException) {
-          LOG.error(e)
-        }
-      }
-      crc.value.toInt()
-    }
-  }
-
   val rootProjectsFiles: List<VirtualFile>
     get() = MavenUtil.collectFiles(rootProjects)
 
@@ -1213,32 +1124,6 @@ class MavenProjectsTree(val project: Project) {
 
       explicitProfiles.removeAll(removedProfiles)
       explicitProfiles.addAll(restoredProfiles)
-    }
-
-    private fun updateCrc(crc: CRC32, xInt: Int) {
-      var x = xInt
-      crc.update(x and 0xFF)
-      x = x ushr 8
-      crc.update(x and 0xFF)
-      x = x ushr 8
-      crc.update(x and 0xFF)
-      x = x ushr 8
-      crc.update(x)
-    }
-
-    private fun updateCrc(crc: CRC32, l: Long) {
-      updateCrc(crc, l.toInt())
-      updateCrc(crc, (l ushr 32).toInt())
-    }
-
-    private fun updateCrc(crc: CRC32, s: String?) {
-      if (s == null) {
-        crc.update(111)
-      }
-      else {
-        updateCrc(crc, s.hashCode())
-        crc.update(s.length and 0xFF)
-      }
     }
 
     @JvmStatic

@@ -77,6 +77,7 @@
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
     <module name="intellij.platform.rd.community"/>
+    <module name="intellij.platform.runtime.product"/>
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.util.diff"/>
@@ -123,6 +124,11 @@
       description="Custom ITN error reporting endpoint. Only HTTPS URLs whose host ends with .jetbrains.com are accepted"
     />
     <registryKey
+      key="ea.diagnostic.endpoint.public.key"
+      defaultValue=""
+      description="Pinned public key for the ITN error reporting endpoint. Required when ea.diagnostic.endpoint is set. Accepts Base64-encoded SubjectPublicKeyInfo bytes or PEM text"
+    />
+    <registryKey
       key="ide.linux.ijpl43505"
       defaultValue="true"
       description="Enable the fix for IJPL-43505 Window header disappears after opening more than one project"
@@ -130,8 +136,14 @@
     />
     <registryKey
       key="ide.ui.keymap.ijpl187594"
-      defaultValue="false"
+      defaultValue="true"
       description="Enable the fix for IJPL-187594 Keymaps: shortcuts overlap long action names. The Classic UI is not affected"
+    />
+    <registryKey
+      key="trusted.project.dialog.has.cancel.button"
+      defaultValue="true"
+      description="Show &quot;Don't open&quot; option in the trusted project dialog"
+      restartRequired="false"
     />
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ide.menu.MainMenuCollector"/>

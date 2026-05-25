@@ -197,6 +197,7 @@ suspend fun openChat(
   initialMessageDispatchPlan: AgentInitialMessageDispatchPlan = AgentInitialMessageDispatchPlan.EMPTY,
   persistSnapshot: Boolean = true,
   deferredStartState: AgentChatDeferredStartState? = null,
+  startupLaunchSpec: AgentSessionTerminalLaunchSpec? = null,
 ): VirtualFile {
   val manager = FileEditorManagerEx.getInstanceExAsync(project)
 
@@ -210,10 +211,10 @@ suspend fun openChat(
   )
   val existing = findExistingChatByTabKey(manager.openFiles, tabKey.value)
                  ?: findExistingChat(manager.openFiles, threadIdentity, subAgentId)
-  val launchSpec = AgentSessionTerminalLaunchSpec(command = shellCommand, envVariables = shellEnvVariables)
+  val launchSpec = startupLaunchSpec ?: AgentSessionTerminalLaunchSpec(command = shellCommand, envVariables = shellEnvVariables)
   val isNewTab = existing == null
   val startupOverrideForTab = if (isNewTab) {
-    initialMessageDispatchPlan.startupLaunchSpecOverride ?: launchSpec.takeIf { it.command.isNotEmpty() }
+    initialMessageDispatchPlan.startupLaunchSpecOverride ?: launchSpec.takeIf(::shouldUseStartupLaunchSpecOverride)
   }
   else {
     null
@@ -334,6 +335,14 @@ suspend fun openChat(
   }
 
   return file
+}
+
+private fun shouldUseStartupLaunchSpecOverride(launchSpec: AgentSessionTerminalLaunchSpec): Boolean {
+  return launchSpec.command.isNotEmpty() ||
+         launchSpec.useTerminalDefaultShell ||
+         launchSpec.workingDirectory != null ||
+         launchSpec.preallocatedSessionId != null ||
+         launchSpec.containerSessionId != null
 }
 
 private fun buildNewSessionStartupIntent(

@@ -18,11 +18,13 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.KeyboardModifierGestureShortcut;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.MouseShortcut;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -511,26 +513,20 @@ public final class KeymapPanel extends JPanel implements SearchableConfigurable,
                                          QuickList @NotNull ... quickLists) {
     if (!restrictions.allowKeyboardShortcut) return;
     KeyboardShortcutDialog dialog = new KeyboardShortcutDialog(parent, restrictions.allowKeyboardSecondStroke, systemShortcuts == null ? null : systemShortcuts.createKeystroke2SysShortcutMap());
-    KeyboardShortcut keyboardShortcut = dialog.showAndGet(actionId, keymapSelected, selectedShortcut, quickLists);
-    if (keyboardShortcut == null) return;
+    Shortcut shortcut = dialog.showAndGet(actionId, keymapSelected, selectedShortcut, quickLists);
+    if (shortcut == null) return;
 
     SafeKeymapAccessor accessor = new SafeKeymapAccessor(parent, keymapSelected);
     if (dialog.hasConflicts()) {
       int result = showConfirmationDialog(parent);
       if (result == Messages.YES) {
-        Keymap keymap = accessor.keymap();
-        Map<String, List<KeyboardShortcut>> conflicts = keymap.getConflicts(actionId, keyboardShortcut);
-        for (String id : conflicts.keySet()) {
-          for (KeyboardShortcut s : conflicts.get(id)) {
-            keymap.removeShortcut(id, s);
-          }
-        }
+        removeConflictingShortcuts(accessor.keymap(), actionId, shortcut);
       }
       else if (result != Messages.NO) {
         return;
       }
     }
-    if (systemShortcuts != null) { // check conflicts with system shortcuts
+    if (systemShortcuts != null && shortcut instanceof KeyboardShortcut) { // check conflicts with system shortcuts
       final Keymap keymap = accessor.keymap();
       final Map<KeyboardShortcut, String> kscs = systemShortcuts.calculateConflicts(keymap, actionId);
       if (kscs != null && !kscs.isEmpty()) {
@@ -552,9 +548,42 @@ public final class KeymapPanel extends JPanel implements SearchableConfigurable,
         }
       }
     }
-    accessor.add(actionId, keyboardShortcut);
+    accessor.add(actionId, shortcut);
     if (systemShortcuts != null)
       systemShortcuts.updateKeymapConflicts(accessor.keymap());
+  }
+
+  static boolean isShortcutConflictAction(@NotNull String actionId, @NotNull String conflictActionId) {
+    if (conflictActionId.equals(actionId)) {
+      return false;
+    }
+    if (actionId.startsWith("Editor") && conflictActionId.equals("$" + actionId.substring(6))) {
+      return false;
+    }
+    String useShortcutOf = ActionManagerEx.getInstanceEx().getActionBinding(conflictActionId);
+    return !actionId.equals(useShortcutOf);
+  }
+
+  static void removeConflictingShortcuts(@NotNull Keymap keymap, @NotNull String actionId, @NotNull Shortcut shortcut) {
+    if (shortcut instanceof KeyboardShortcut keyboardShortcut) {
+      Map<String, List<KeyboardShortcut>> conflicts = keymap.getConflicts(actionId, keyboardShortcut);
+      for (String id : conflicts.keySet()) {
+        for (KeyboardShortcut s : conflicts.get(id)) {
+          keymap.removeShortcut(id, s);
+        }
+      }
+    }
+    else if (shortcut instanceof KeyboardModifierGestureShortcut gestureShortcut) {
+      for (String id : keymap.getActionIdList(gestureShortcut)) {
+        if (isShortcutConflictAction(actionId, id)) {
+          for (Shortcut existingShortcut : keymap.getShortcuts(id)) {
+            if (existingShortcut.equals(gestureShortcut)) {
+              keymap.removeShortcut(id, existingShortcut);
+            }
+          }
+        }
+      }
+    }
   }
 
   private static void addMouseShortcut(@NotNull String actionId,

@@ -108,6 +108,7 @@ if sys.platform != "linux" and sys.platform != "win32" and sys.platform != "darw
     def cpu_times() -> tuple[float, float, float, float, float]: ...
     def disk_io_counters() -> dict[str, tuple[int, ...]]: ...  # tuple's length depends on OS
     def disk_partitions() -> list[tuple[str, str, str, str]]: ...
+
     @overload  # for FreeBSD
     def net_connections(
         af_filter: Sequence[AddressFamily | int | None], type_filter: Sequence[SocketKind | int | None], /
@@ -122,6 +123,7 @@ if sys.platform != "linux" and sys.platform != "win32" and sys.platform != "darw
     ]: ...
     @overload  # for NetBSD
     def net_connections(pid: int, kind: str, /) -> list[tuple[int, int, int, str, str, int, int]]: ...
+
     def net_io_counters() -> dict[str, tuple[int, int, int, int, int, int, int, int]]: ...
     def per_cpu_times() -> list[tuple[float, float, float, float, float]]: ...
     def pids() -> list[int]: ...
@@ -130,10 +132,12 @@ if sys.platform != "linux" and sys.platform != "win32" and sys.platform != "darw
     def heap_trim() -> None: ...  # only FreeBSD and NetBSD
     def users() -> list[tuple[str, str, str, float, int | None]]: ...  # returns None only in OpenBSD
     def virtual_mem() -> tuple[int, ...]: ...  # tuple's length depends on OS
+
     @overload
     def cpu_freq() -> int: ...  # only OpenBSD
     @overload
     def cpu_freq(core: int, /) -> tuple[int, str]: ...  # only FreeBSD
+
     def cpu_topology() -> str | None: ...  # only FreeBSD
     def sensors_battery() -> tuple[int, int, int]: ...  # only FreeBSD
     def sensors_cpu_temperature(core: int, /) -> tuple[int, int]: ...  # only FreeBSD

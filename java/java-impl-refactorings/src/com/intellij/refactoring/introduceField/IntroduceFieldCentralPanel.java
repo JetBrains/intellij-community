@@ -27,6 +27,7 @@ import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.JCheckBox;
@@ -87,7 +88,15 @@ public abstract class IntroduceFieldCentralPanel {
     myTypeSelectorManager = typeSelectorManager;
   }
 
-  protected boolean setEnabledInitializationPlaces(final @NotNull PsiExpression initializer) {
+  protected void setEnabledInitializationPlaces(final @NotNull PsiExpression initializer, boolean hasSetup) {
+    InitializationParameters parameters = getInitializationPlaceParameters(initializer, hasSetup);
+    if (parameters == null) return;
+    updateInitializationPlaceModel(parameters.insetup(),
+                                   parameters.constructor(),
+                                   parameters.locals());
+  }
+
+  static @Nullable InitializationParameters getInitializationPlaceParameters(@NotNull PsiExpression initializer, boolean hasSetup) {
     final Set<PsiField> fields = new HashSet<>();
     final Ref<Boolean> refsLocal = new Ref<>(false);
     initializer.accept(new JavaRecursiveElementWalkingVisitor() {
@@ -112,14 +121,19 @@ public abstract class IntroduceFieldCentralPanel {
       }
     });
 
-    final boolean locals = refsLocal.get();
-    boolean superOrThis = IntroduceFieldHandler.isInSuperOrThis(initializer);
-    if (!locals && fields.isEmpty() && !superOrThis) {
-      return true;
+    final boolean hasLocalFromVisitor = refsLocal.get();
+    boolean superOrThis = FieldExtractor.isInSuperOrThis(initializer);
+    if (!hasLocalFromVisitor && fields.isEmpty() && !superOrThis) {
+      return null;
     }
-    return updateInitializationPlaceModel(!locals && initializedInSetUp(fields),
-                                          !locals && !superOrThis && initializedInConstructor(fields), 
-                                          locals || !fields.isEmpty());
+    boolean insetup = !hasLocalFromVisitor && hasSetup && initializedInSetUp(fields);
+    boolean constructor = !hasLocalFromVisitor && !superOrThis && initializedInConstructor(fields);
+    boolean locals = hasLocalFromVisitor || !fields.isEmpty();
+    InitializationParameters parameters = new InitializationParameters(insetup, constructor, locals);
+    return parameters;
+  }
+
+  record InitializationParameters(boolean insetup, boolean constructor, boolean locals) {
   }
 
   private static boolean initializedInConstructor(Set<PsiField> fields) {
@@ -131,37 +145,34 @@ public abstract class IntroduceFieldCentralPanel {
     return true;
   }
 
-  private boolean initializedInSetUp(Set<PsiField> fields) {
-    if (hasSetUpChoice()) {
-      nextField:
-      for (PsiField field : fields) {
-        if (field.hasModifierProperty(PsiModifier.FINAL)) continue;
-        final PsiMethod setUpMethod = TestFrameworks.getInstance().findSetUpMethod((field).getContainingClass());
-        if (setUpMethod != null) {
-          for (PsiReference reference: ReferencesSearch.search(field, new LocalSearchScope(setUpMethod)).asIterable()) {
-            PsiElement element = reference.getElement();
-            if (element instanceof PsiExpression && !PsiUtil.isAccessedForWriting((PsiExpression)element)) {
-              continue nextField;
-            }
+  private static boolean initializedInSetUp(Set<PsiField> fields) {
+    nextField:
+    for (PsiField field : fields) {
+      if (field.hasModifierProperty(PsiModifier.FINAL)) continue;
+      final PsiMethod setUpMethod = TestFrameworks.getInstance().findSetUpMethod((field).getContainingClass());
+      if (setUpMethod != null) {
+        for (PsiReference reference : ReferencesSearch.search(field, new LocalSearchScope(setUpMethod)).asIterable()) {
+          PsiElement element = reference.getElement();
+          if (element instanceof PsiExpression && !PsiUtil.isAccessedForWriting((PsiExpression)element)) {
+            continue nextField;
           }
-          return false;
         }
+        return false;
       }
-      return true;
     }
-    return false;
+    return true;
   }
 
-  public abstract BaseExpressionToFieldHandler.InitializationPlace getInitializerPlace();
+  public abstract JavaIntroduceFieldService.InitializationPlace getInitializerPlace();
   protected abstract void initializeInitializerPlace(PsiExpression initializerExpression,
-                                                     BaseExpressionToFieldHandler.InitializationPlace ourLastInitializerPlace);
+                                                     JavaIntroduceFieldService.InitializationPlace ourLastInitializerPlace);
   protected abstract JComponent createInitializerPlacePanel(ItemListener itemListener, ItemListener finalUpdater);
   public abstract void setInitializeInFieldDeclaration();
 
   public abstract String getFieldVisibility();
 
   protected void initializeControls(PsiExpression initializerExpression,
-                                    BaseExpressionToFieldHandler.InitializationPlace ourLastInitializerPlace) {
+                                    JavaIntroduceFieldService.InitializationPlace ourLastInitializerPlace) {
     myCbFinal.setSelected(myCbFinal.isEnabled() && ourLastCbFinalState);
   }
 

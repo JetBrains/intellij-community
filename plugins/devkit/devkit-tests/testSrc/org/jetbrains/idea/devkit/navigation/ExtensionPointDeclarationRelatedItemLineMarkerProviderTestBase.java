@@ -56,7 +56,7 @@ public abstract class ExtensionPointDeclarationRelatedItemLineMarkerProviderTest
     // Should list both EPs in tooltip
     DevKitGutterTargetsChecker.checkGutterTargets(gutter,
                                                   "<html><body>&nbsp;&nbsp;&nbsp;&nbsp;com.intellij.myMultipleEPs1<br>&nbsp;&nbsp;&nbsp;&nbsp;com.intellij.myMultipleEPs2<br></body></html>",
-                                                  DevkitCoreIcons.Gutter.Plugin, "extensionPoint", "extensionPoint");
+                                                  DevkitCoreIcons.Gutter.ExtensionPoint, "extensionPoint", "extensionPoint");
   }
 
   protected void assertSingleEPDeclaration(String filePath, String epFqn) {
@@ -69,6 +69,6 @@ public abstract class ExtensionPointDeclarationRelatedItemLineMarkerProviderTest
 
     final GutterMark gutter = myFixture.findGutter(filePath);
     DevKitGutterTargetsChecker.checkGutterTargets(gutter, "<html><body>&nbsp;&nbsp;&nbsp;&nbsp;" + epFqn + "<br></body></html>",
-                                                  DevkitCoreIcons.Gutter.Plugin, "extensionPoint");
+                                                  DevkitCoreIcons.Gutter.ExtensionPoint, "extensionPoint");
   }
 }

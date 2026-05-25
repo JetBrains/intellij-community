@@ -8,7 +8,7 @@ import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
 import com.intellij.java.workspace.entities.javaSourceRoots
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -74,7 +74,7 @@ internal class ExtractToJpsModuleService(private val project: Project, private v
     val resourcesDirectoryPath = withContext(Dispatchers.IO) {
       Path(data.newModuleDirectoryPath).resolve(RESOURCES_DIR_NAME).createDirectories()
     }
-    writeAction {
+    edtWriteAction {
       val resourcesDirectory = LocalFileSystem.getInstance().refreshAndFindFileByPath(resourcesDirectoryPath.toString())!!
       data.descriptor.move(this, resourcesDirectory)
       if (data.descriptor.nameWithoutExtension != data.newModuleName) {
@@ -93,7 +93,7 @@ internal class ExtractToJpsModuleService(private val project: Project, private v
         }
         srcRoot.createDirectories()
       }
-      val newPackageDirectory = writeAction {
+      val newPackageDirectory = edtWriteAction {
         LocalFileSystem.getInstance().refreshAndFindFileByNioFile(newPackagePath)
       }
       withContext(Dispatchers.EDT) {

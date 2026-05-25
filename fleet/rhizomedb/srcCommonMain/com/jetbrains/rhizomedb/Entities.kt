@@ -166,11 +166,3 @@ annotation class CascadeDeleteBy
 interface Presentable {
   val presentableText: String
 }
-
-fun Entity.entityTypeIdent(): String {
-  return with(DbContext.threadBound) {
-    entityType(eid)?.let { entityTypeEID ->
-      entityTypeIdent(entityTypeEID) ?: error("")
-    } ?: error("")
-  }
-}

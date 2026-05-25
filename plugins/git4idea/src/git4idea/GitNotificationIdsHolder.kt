@@ -136,6 +136,8 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
       WORKING_TREE_DELETED,
       WORKING_TREE_COULD_NOT_DELETE,
       WORKING_TREE_DIRECTORY_NOT_FOUND,
+      WORKING_TREES_PRUNED,
+      WORKING_TREES_PRUNING_FAILED,
       ADD_COMMIT_TO_REMOTE_BRANCH_CONFLICT,
       ADD_COMMIT_TO_REMOTE_BRANCH_FAILED,
       ADD_COMMIT_TO_REMOTE_BRANCH_NOTHING_TO_DO,
@@ -273,6 +275,8 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
     const val WORKING_TREE_DELETED: String = "git.working.tree.deleted"
     const val WORKING_TREE_COULD_NOT_DELETE: String = "git.working.tree.not.deleted"
     const val WORKING_TREE_DIRECTORY_NOT_FOUND: String = "git.working.tree.directory.not.found"
+    const val WORKING_TREES_PRUNED: String = "git.working.trees.pruned"
+    const val WORKING_TREES_PRUNING_FAILED: String = "git.working.trees.pruning.failed"
     const val ADD_COMMIT_TO_REMOTE_BRANCH_CONFLICT: String = "git.add.commit.to.remote.branch.conflict"
     const val ADD_COMMIT_TO_REMOTE_BRANCH_FAILED: String = "git.add.commit.to.remote.branch.failed"
     const val ADD_COMMIT_TO_REMOTE_BRANCH_NOTHING_TO_DO: String = "git.add.commit.to.remote.branch.nothing.to.do"

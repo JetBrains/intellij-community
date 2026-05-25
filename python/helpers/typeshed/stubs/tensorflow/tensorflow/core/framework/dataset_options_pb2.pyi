@@ -170,6 +170,7 @@ class AutotuneOptions(google.protobuf.message.Message):
             b"ram_budget",
         ],
     ) -> None: ...
+
     @typing.overload
     def WhichOneof(
         self, oneof_group: typing.Literal["optional_autotune_algorithm", b"optional_autotune_algorithm"]
@@ -426,6 +427,7 @@ class OptimizationOptions(google.protobuf.message.Message):
             b"shuffle_and_repeat_fusion",
         ],
     ) -> None: ...
+
     @typing.overload
     def WhichOneof(
         self, oneof_group: typing.Literal["optional_apply_default_optimizations", b"optional_apply_default_optimizations"]
@@ -535,6 +537,7 @@ class ThreadingOptions(google.protobuf.message.Message):
             b"private_threadpool_size",
         ],
     ) -> None: ...
+
     @typing.overload
     def WhichOneof(
         self, oneof_group: typing.Literal["optional_max_intra_op_parallelism", b"optional_max_intra_op_parallelism"]
@@ -694,6 +697,7 @@ class Options(google.protobuf.message.Message):
             b"warm_start",
         ],
     ) -> None: ...
+
     @typing.overload
     def WhichOneof(
         self, oneof_group: typing.Literal["optional_dataset_name", b"optional_dataset_name"]

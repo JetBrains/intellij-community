@@ -19428,6 +19428,170 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         }
     }
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/replaceIfExpressionWithFirstOrNull")
+    public static class ReplaceIfExpressionWithFirstOrNull extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("array.kt")
+        public void testArray() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceIfExpressionWithFirstOrNull/array.kt");
+        }
+
+        @TestMetadata("arrayIsEmpty.kt")
+        public void testArrayIsEmpty() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceIfExpressionWithFirstOrNull/arrayIsEmpty.kt");
+        }
+
+        @TestMetadata("arrayIsNotEmptyIndexAccess.kt")
+        public void testArrayIsNotEmptyIndexAccess() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceIfExpressionWithFirstOrNull/arrayIsNotEmptyIndexAccess.kt");
+        }
+
+        @TestMetadata("arraySizeEqualsZero.kt")
+        public void testArraySizeEqualsZero() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceIfExpressionWithFirstOrNull/arraySizeEqualsZero.kt");
+        }
+
+        @TestMetadata("arraySizeLessThanOne.kt")
+        public void testArraySizeLessThanOne() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceIfExpressionWithFirstOrNull/arraySizeLessThanOne.kt");
+        }
+
+        @TestMetadata("callReceiver.kt")
+        public void testCallReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceIfExpressionWithFirstOrNull/callReceiver.kt");
+        }
+
+        @TestMetadata("compoundCondition.kt")
+        public void testCompoundCondition() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceIfExpressionWithFirstOrNull/compoundCondition.kt");
+        }
+
+        @TestMetadata("countNoArgs.kt")
+        public void testCountNoArgs() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceIfExpressionWithFirstOrNull/countNoArgs.kt");
+        }
+
+        @TestMetadata("countWithLambda.kt")
+        public void testCountWithLambda() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceIfExpressionWithFirstOrNull/countWithLambda.kt");
+        }
+
+        @TestMetadata("deepReceiverMismatch.kt")
+        public void testDeepReceiverMismatch() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceIfExpressionWithFirstOrNull/deepReceiverMismatch.kt");
+        }
+
+        @TestMetadata("firstCall.kt")
+        public void testFirstCall() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceIfExpressionWithFirstOrNull/firstCall.kt");
+        }
+
+        @TestMetadata("invertedLessOrEqualZero.kt")
+        public void testInvertedLessOrEqualZero() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceIfExpressionWithFirstOrNull/invertedLessOrEqualZero.kt");
+        }
+
+        @TestMetadata("listIsNotEmpty.kt")
+        public void testListIsNotEmpty() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceIfExpressionWithFirstOrNull/listIsNotEmpty.kt");
+        }
+
+        @TestMetadata("listSizeCheck.kt")
+        public void testListSizeCheck() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceIfExpressionWithFirstOrNull/listSizeCheck.kt");
+        }
+
+        @TestMetadata("literalOnLeft.kt")
+        public void testLiteralOnLeft() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceIfExpressionWithFirstOrNull/literalOnLeft.kt");
+        }
+
+        @TestMetadata("map.kt")
+        public void testMap() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceIfExpressionWithFirstOrNull/map.kt");
+        }
+
+        @TestMetadata("multilineNoBraces.kt")
+        public void testMultilineNoBraces() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceIfExpressionWithFirstOrNull/multilineNoBraces.kt");
+        }
+
+        @TestMetadata("nonNullElseBranch.kt")
+        public void testNonNullElseBranch() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceIfExpressionWithFirstOrNull/nonNullElseBranch.kt");
+        }
+
+        @TestMetadata("notNullAssertionReceiver.kt")
+        public void testNotNullAssertionReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceIfExpressionWithFirstOrNull/notNullAssertionReceiver.kt");
+        }
+
+        @TestMetadata("notZeroIndex.kt")
+        public void testNotZeroIndex() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceIfExpressionWithFirstOrNull/notZeroIndex.kt");
+        }
+
+        @TestMetadata("receiverMismatch.kt")
+        public void testReceiverMismatch() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceIfExpressionWithFirstOrNull/receiverMismatch.kt");
+        }
+
+        @TestMetadata("sideEffectfulReceiverSizeCheck.kt")
+        public void testSideEffectfulReceiverSizeCheck() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceIfExpressionWithFirstOrNull/sideEffectfulReceiverSizeCheck.kt");
+        }
+
+        @TestMetadata("sizeGreaterThanOne.kt")
+        public void testSizeGreaterThanOne() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceIfExpressionWithFirstOrNull/sizeGreaterThanOne.kt");
+        }
+
+        @TestMetadata("sizeNotEqualsOne.kt")
+        public void testSizeNotEqualsOne() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceIfExpressionWithFirstOrNull/sizeNotEqualsOne.kt");
+        }
+
+        @TestMetadata("sizePositiveIndexOne.kt")
+        public void testSizePositiveIndexOne() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceIfExpressionWithFirstOrNull/sizePositiveIndexOne.kt");
+        }
+
+        @TestMetadata("string.kt")
+        public void testString() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceIfExpressionWithFirstOrNull/string.kt");
+        }
+
+        @TestMetadata("swappedBranchesWithoutInvertedCondition.kt")
+        public void testSwappedBranchesWithoutInvertedCondition() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceIfExpressionWithFirstOrNull/swappedBranchesWithoutInvertedCondition.kt");
+        }
+
+        @TestMetadata("thisReceiver.kt")
+        public void testThisReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceIfExpressionWithFirstOrNull/thisReceiver.kt");
+        }
+
+        @TestMetadata("whenArmNested.kt")
+        public void testWhenArmNested() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceIfExpressionWithFirstOrNull/whenArmNested.kt");
+        }
+
+        @TestMetadata("withImplicitReceiver.kt")
+        public void testWithImplicitReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceIfExpressionWithFirstOrNull/withImplicitReceiver.kt");
+        }
+    }
+
 
 
     @RunWith(JUnit3RunnerWithInners.class)

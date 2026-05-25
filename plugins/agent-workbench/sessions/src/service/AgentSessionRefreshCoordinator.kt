@@ -131,6 +131,7 @@ internal class AgentSessionRefreshCoordinator(
     isRefreshGateActive = isRefreshGateActive,
     executeFullRefresh = ::refreshNow,
     executeProviderRefresh = providerRefreshRunner::refreshLoadedProviderThreads,
+    executeProviderHintRefresh = providerRefreshRunner::refreshLoadedProviderHints,
     applySourceUpdateActivityHints = ::applySourceUpdateActivityHints,
     scheduleVfsRefreshForSourceUpdate = ::scheduleVfsRefreshForSourceUpdate,
     onFullRefreshFailure = {

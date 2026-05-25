@@ -150,4 +150,18 @@ class GitCreateWorkingTreeTest : GitSingleRepoTest() {
 
     assertSameElements(workingTrees, expected)
   }
+
+  fun `test prune removes stale worktree entries`() {
+    val branch = "tree"
+    val treeRoot = "treeRoot"
+
+    git("worktree add -B $branch ../$treeRoot")
+    testNioRoot.resolve(treeRoot).deleteRecursively()
+
+    Git.getInstance().pruneWorktrees(repo)
+
+    repo.ensureWorkingTreesUpToDateForTests()
+    assertFalse("Stale entry should be gone after prune",
+                repo.workingTreeHolder.getWorkingTrees().any { it.isPrunable })
+  }
 }

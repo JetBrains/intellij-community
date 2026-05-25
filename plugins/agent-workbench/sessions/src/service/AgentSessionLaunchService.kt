@@ -4,6 +4,7 @@ package com.intellij.agent.workbench.sessions.service
 // @spec community/plugins/agent-workbench/spec/agent-sessions.spec.md
 // @spec community/plugins/agent-workbench/spec/agent-dedicated-frame.spec.md
 // @spec community/plugins/agent-workbench/spec/actions/new-thread.spec.md
+// @spec community/plugins/agent-workbench/spec/agent-terminal-sessions.spec.md
 // @spec community/plugins/agent-workbench/spec/actions/global-prompt-entry.spec.md
 // @spec community/plugins/agent-workbench/spec/agent-workbench-telemetry.spec.md
 
@@ -624,7 +625,7 @@ class AgentSessionLaunchService internal constructor(
           return@launchDropAction
         }
         descriptor.onConversationOpened()
-        if (updateGeneralProviderPreferences) {
+        if (updateGeneralProviderPreferences && descriptor.supportsPromptLaunch) {
           uiPreferencesState.updateProviderPreferencesOnLaunch(provider, mode, initialMessageRequest)
         }
 
@@ -734,7 +735,7 @@ class AgentSessionLaunchService internal constructor(
       return AgentDeferredNewSessionLaunchResult(error = AgentPromptLaunchError.PROVIDER_UNAVAILABLE)
     }
     descriptor.onConversationOpened()
-    if (updateGeneralProviderPreferences) {
+    if (updateGeneralProviderPreferences && descriptor.supportsPromptLaunch) {
       uiPreferencesState.updateProviderPreferencesOnLaunch(provider, mode, initialMessageRequest = null)
     }
 
@@ -842,6 +843,9 @@ class AgentSessionLaunchService internal constructor(
     val result = run {
       val bridge = AgentSessionProviders.find(request.provider)
                    ?: return@run reportPromptLaunchResolved(AgentPromptLaunchResult.failure(AgentPromptLaunchError.PROVIDER_UNAVAILABLE))
+      if (!bridge.supportsPromptLaunch) {
+        return@run reportPromptLaunchResolved(AgentPromptLaunchResult.failure(AgentPromptLaunchError.PROVIDER_UNAVAILABLE))
+      }
       if (request.launchMode !in bridge.supportedLaunchModes) {
         return@run reportPromptLaunchResolved(AgentPromptLaunchResult.failure(AgentPromptLaunchError.UNSUPPORTED_LAUNCH_MODE))
       }
@@ -1193,7 +1197,7 @@ private suspend fun openAgentSessionNewChat(
   openedChatHandler: (suspend (Project, VirtualFile) -> Unit)? = null,
   threadTitle: String? = null,
 ) {
-  val title = threadTitle ?: AgentSessionsBundle.message("toolwindow.action.new.thread")
+  val title = resolveNewSessionTitle(identity = identity, threadTitle = threadTitle)
   val dedicatedFrame = preferredDedicatedFrame ?: AgentChatOpenModeSettings.openInDedicatedFrame()
   if (dedicatedFrame) {
     openNewChatInDedicatedFrame(
@@ -1235,7 +1239,7 @@ private suspend fun openAgentSessionDeferredNewChat(
   threadTitle: String? = null,
   waitingState: AgentChatDeferredStartState,
 ): DeferredAgentSessionChatOpenResult {
-  val title = threadTitle ?: AgentSessionsBundle.message("toolwindow.action.new.thread")
+  val title = resolveNewSessionTitle(identity = identity, threadTitle = threadTitle)
   val dedicatedFrame = preferredDedicatedFrame ?: AgentChatOpenModeSettings.openInDedicatedFrame()
   if (dedicatedFrame) {
     return openDeferredNewChatInDedicatedFrame(
@@ -1391,9 +1395,44 @@ private suspend fun openNewChatInProject(
     newSessionProvider = provider,
     newSessionLaunchMode = launchMode,
     initialMessageDispatchPlan = initialMessageDispatchPlan,
+    startupLaunchSpec = launchSpec,
+  )
+  recordOpenedNewSession(
+    projectPath = projectPath,
+    provider = provider,
+    threadId = threadId,
+    title = title,
+    createdAtMs = pendingMetadata?.createdAtMs,
   )
   focusProjectWindow(project)
   openedChatHandler?.invoke(project, file)
+}
+
+private fun resolveNewSessionTitle(identity: String, threadTitle: String?): String {
+  if (threadTitle != null) {
+    return threadTitle
+  }
+  val descriptor = parseAgentSessionIdentity(identity)?.provider?.let(AgentSessionProviders::find)
+  if (descriptor != null) {
+    return AgentSessionsBundle.message(descriptor.newSessionTitleKey)
+  }
+  return AgentSessionsBundle.message("toolwindow.action.new.thread")
+}
+
+private fun recordOpenedNewSession(
+  projectPath: String,
+  provider: AgentSessionProvider?,
+  threadId: String,
+  title: String,
+  createdAtMs: Long?,
+) {
+  val descriptor = provider?.let(AgentSessionProviders::find) ?: return
+  descriptor.recordNewSession(
+    path = projectPath,
+    threadId = threadId,
+    title = title,
+    createdAtMs = createdAtMs ?: System.currentTimeMillis(),
+  )
 }
 
 private suspend fun openDeferredNewChatInProject(
@@ -1427,6 +1466,7 @@ private suspend fun openDeferredNewChatInProject(
     initialMessageDispatchPlan = AgentInitialMessageDispatchPlan.EMPTY,
     persistSnapshot = false,
     deferredStartState = waitingState,
+    startupLaunchSpec = launchSpec,
   )
   focusProjectWindow(project)
   openedChatHandler?.invoke(project, file)
@@ -1512,6 +1552,7 @@ private suspend fun openChatInProject(
     threadActivity = thread.activity,
     launchMode = serializeAgentChatLaunchMode(launchMode),
     initialMessageDispatchPlan = effectiveInitialMessageDispatchPlan,
+    startupLaunchSpec = chatOpenPayload.launchSpec,
   )
 
   focusProjectWindow(project)

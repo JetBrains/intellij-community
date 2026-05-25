@@ -10,6 +10,7 @@ import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginDescriptorLoadUtilsKt;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.mock.MockLocalFileSystem;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -56,13 +57,16 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.AsyncFileListener;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.CharsetToolkit.GuessedEncoding;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl;
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.psi.PsiBinaryFile;
@@ -77,6 +81,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.TestLoggerKt;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
@@ -90,8 +95,11 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.Assume;
 
 import javax.swing.Icon;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
 import java.nio.charset.Charset;
@@ -107,6 +115,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
@@ -129,7 +138,8 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     myFileTypeManager.getRegisteredFileTypes();
     myFileTypeManager.reDetectAsync(true);
     Assume.assumeTrue(
-      "This test must be run under community classpath because otherwise everything would break thanks to weird HelmYamlLanguage" +
+      "This test must be run under the community classpath (e.g., `intellij.platform.tests`)," +
+      " because otherwise everything would break thanks to weird HelmYamlLanguage" +
       " which is created on each HelmYamlFileType registration which happens a lot in these tests",
       PlatformTestUtil.isUnderCommunityClassPath());
     myConflicts = new ArrayList<>();
@@ -428,12 +438,12 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     assertTrue(fileType.toString(), fileType instanceof ModuleFileType);
     fileType = myFileTypeManager.getFileTypeByFileName("x" + ProjectFileType.DOT_DEFAULT_EXTENSION);
     assertTrue(fileType.toString(), fileType instanceof ProjectFileType);
-    FileType module = myFileTypeManager.findFileTypeByName("IDEA_MODULE");
-    assertNotNull(module);
-    assertFalse(module.equals(PlainTextFileType.INSTANCE));
-    FileType project = myFileTypeManager.findFileTypeByName("IDEA_PROJECT");
-    assertNotNull(project);
-    assertFalse(project.equals(PlainTextFileType.INSTANCE));
+    FileType moduleType = myFileTypeManager.findFileTypeByName("IDEA_MODULE");
+    assertNotNull(moduleType);
+    assertFalse(moduleType.equals(PlainTextFileType.INSTANCE));
+    FileType projectType = myFileTypeManager.findFileTypeByName("IDEA_PROJECT");
+    assertNotNull(projectType);
+    assertFalse(projectType.equals(PlainTextFileType.INSTANCE));
 
     Set<VirtualFile> detectorCalled = ConcurrentCollectionFactory.createConcurrentSet();
     FileTypeDetector detector = new FileTypeDetector() {
@@ -1461,7 +1471,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
   public void testHashBangPatternsCanBeConfiguredDynamically() throws IOException {
     VirtualFile file0 = createTempVirtualFile("x.xxx", null, "#!/usr/bin/go-go-go\na=b", StandardCharsets.UTF_8);
     assertEquals(PlainTextFileType.INSTANCE, getFileType(file0));
-    FileType PROPERTIES = FileTypeManager.getInstance().getStdFileType("Properties");
+    FileType PROPERTIES = myFileTypeManager.getStdFileType("Properties");
     FileTypeWithDescriptor fileType = FileTypeManagerImpl.coreDescriptorFor(PROPERTIES);
     myFileTypeManager.getExtensionMap().addHashBangPattern("go-go-go", fileType);
     try {
@@ -1713,5 +1723,160 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     setFileText(vFile, "<c></c>");
     assertEquals("HTML", getFileType(vFile).getName());
     assertFalse(myFileTypeManager.detectionService.wasAutoDetectedBefore(vFile));
+  }
+
+  static class StringBufferOutputStream extends OutputStream {
+    private final StringBuffer buffer;
+    StringBufferOutputStream(StringBuffer buffer) {
+      this.buffer = buffer;
+    }
+    @Override
+    public void write(int b) throws IOException {
+      buffer.append((char) b);
+    }
+    @Override
+    public void write(byte[] b, int off, int len) throws IOException {
+      buffer.append(new String(b, off, len, StandardCharsets.UTF_8));
+    }
+  }
+  public void testTypingMustNotLeadToConstantRedetectBecauseItsVeryExpensiveInDistributedFS() throws Exception {
+    String initText = "ddd;";
+    StringBuffer vfsContent = new StringBuffer(initText);
+    AtomicBoolean allowVfsRead = new AtomicBoolean(true);
+    AtomicReference<Throwable> throwable = new AtomicReference<>();
+    MockLocalFileSystem fileSystem = new MockLocalFileSystem() {
+      @Override
+      public @NotNull InputStream getInputStream(@NotNull VirtualFile file) {
+        if (!allowVfsRead.get()) {
+          LOG.error("VFS load is not allowed");
+          throwable.set(new Throwable());
+        }
+        return new ByteArrayInputStream(contentsToByteArray(file));
+      }
+
+      @Override
+      public @NotNull OutputStream getOutputStream(@NotNull VirtualFile file, Object requestor, long modStamp, long timeStamp) {
+        return new StringBufferOutputStream(vfsContent);
+      }
+
+      @Override
+      public byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file) {
+        return vfsContent.toString().getBytes(StandardCharsets.UTF_8);
+      }
+
+      @Override
+      public long getLength(@NotNull VirtualFile file) {
+        return vfsContent.length();
+      }
+    };
+
+    // LightVirtualFile does not work because it's instanceof VirtualFileWithAssignedFileType for some reason, redetect does not run for it
+    class MyVF extends VirtualFile /*implements VirtualFileWithId */{
+      @Override
+      public @NotNull String getName() {
+        return "xxxxxxx";
+      }
+
+      @Override
+      public @NotNull VirtualFileSystem getFileSystem() {
+        return fileSystem;
+      }
+
+      @Override
+      public @NotNull String getPath() {
+        return getName();
+      }
+
+      @Override
+      public boolean isWritable() {
+        return true;
+      }
+
+      @Override
+      public boolean isDirectory() {
+        return false;
+      }
+
+      @Override
+      public boolean isValid() {
+        return true;
+      }
+
+      @Override
+      public VirtualFile getParent() {
+        return null;
+      }
+
+      @Override
+      public VirtualFile[] getChildren() {
+        return VirtualFile.EMPTY_ARRAY;
+      }
+
+      @Override
+      public @NotNull OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) {
+        return fileSystem.getOutputStream(this, requestor, newModificationStamp, newTimeStamp);
+      }
+
+      @Override
+      public byte @NotNull [] contentsToByteArray() {
+        return fileSystem.contentsToByteArray(this);
+      }
+
+      @Override
+      public long getTimeStamp() {
+        return 0;
+      }
+
+      @Override
+      public long getLength() {
+        return fileSystem.getLength(this);
+      }
+
+      @Override
+      public void refresh(boolean asynchronous, boolean recursive, @Nullable Runnable postRunnable) {
+
+      }
+
+      @Override
+      public @NotNull InputStream getInputStream() {
+        return fileSystem.getInputStream(this);
+      }
+
+      @Override
+      public long getModificationStamp() {
+        return 0;
+      }
+    }
+    VirtualFile virtualFile = new MyVF();
+    Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+    assertEquals(vfsContent.toString(), document.getText());
+    assertEquals(PlainTextFileType.INSTANCE, virtualFile.getFileType());
+
+    myFileTypeManager.reDetectAsync(true);
+    String insert = "#!myhash\n";
+    FileTypeWithDescriptor xmlType = myFileTypeManager.getFileTypeWithDescriptorByExtension("xml");
+    assertEquals("XML", xmlType.fileType().getName());
+    assertFalse(xmlType.fileType().equals(PlainTextFileType.INSTANCE)); // check xml is registered
+    myFileTypeManager.getExtensionMap().addHashBangPattern("myhash", xmlType);
+    try {
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+        allowVfsRead.set(false); // redetect must not read the virtual file from disk again, it must use the document instead
+        //content.insert(0, insert);
+        document.insertString(0, insert);
+        FileDocumentManager.getInstance().saveAllDocuments();
+        // make FileDetectionService react on VFS event by enqueuing the file to redetect
+        AsyncFileListener.ChangeApplier applier = myFileTypeManager.detectionService.prepareChange(
+          List.of(new VFileContentChangeEvent(FileDocumentManager.getInstance(), virtualFile, 0, 1)));
+        applier.beforeVfsChange();
+        applier.afterVfsChange();
+      });
+      myFileTypeManager.detectionService.drainReDetectQueue();
+      assertEquals(xmlType.fileType(), virtualFile.getFileType());
+      assertEquals(insert+initText, document.getText()); // also prevent document from gc
+      ExceptionUtil.rethrowAll(throwable.get());
+    }
+    finally {
+      myFileTypeManager.getExtensionMap().removeHashBangPattern("myhash", xmlType);
+    }
   }
 }

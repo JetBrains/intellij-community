@@ -1,0 +1,6 @@
+- name: lib/modules/intellij.platform.acp.jar
+  contentModules:
+  - name: intellij.platform.acp
+- name: lib/platform-acp-plugin.jar
+  modules:
+  - name: intellij.platform.acp.plugin

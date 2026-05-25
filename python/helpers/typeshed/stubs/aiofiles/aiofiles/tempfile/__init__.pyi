@@ -138,7 +138,6 @@ if sys.version_info >= (3, 12):
         loop: AbstractEventLoop | None = None,
         executor: Executor | None = None,
     ) -> AiofilesContextManager[AsyncBufferedIOBase]: ...
-
 else:
     # Text mode: always returns AsyncTextIOWrapper
     @overload
@@ -301,6 +300,7 @@ def SpooledTemporaryFile(
     loop: AbstractEventLoop | None = None,
     executor: Executor | None = None,
 ) -> AiofilesContextManager[AsyncBufferedIOBase]: ...
+
 @overload
 def TemporaryDirectory(
     suffix: str | None = None,

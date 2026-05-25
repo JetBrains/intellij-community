@@ -8,7 +8,6 @@ import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.PsiEditorUtil
 import com.intellij.psi.util.endOffset
-import com.intellij.psi.xml.XmlFile
 import com.intellij.util.xml.DomElement
 import com.intellij.util.xml.DomUtil
 import com.intellij.util.xml.GenericAttributeValue
@@ -17,7 +16,6 @@ import com.intellij.util.xml.highlighting.DomHighlightingHelper
 import org.jetbrains.idea.devkit.DevKitBundle.message
 import org.jetbrains.idea.devkit.dom.ContentDescriptor
 import org.jetbrains.idea.devkit.dom.ContentModuleVisibility
-import org.jetbrains.idea.devkit.util.DescriptorUtil
 
 internal class ContentModuleNamespaceInspection : DevKitPluginXmlInspectionBase() {
 
@@ -28,7 +26,6 @@ internal class ContentModuleNamespaceInspection : DevKitPluginXmlInspectionBase(
     val content = element as? ContentDescriptor ?: return
     val namespace = content.namespace
     checkNamespace(content, namespace, holder)
-    checkContentElementsHaveTheSameNamespace(content, namespace, holder)
   }
 
   private fun checkNamespace(
@@ -60,20 +57,6 @@ internal class ContentModuleNamespaceInspection : DevKitPluginXmlInspectionBase(
     return content.moduleEntry.any {
       val visibility = it.name.value?.contentModuleVisibility?.value ?: ContentModuleVisibility.PRIVATE
       visibility != ContentModuleVisibility.PRIVATE
-    }
-  }
-
-  private fun checkContentElementsHaveTheSameNamespace(
-    content: ContentDescriptor,
-    namespaceDomValue: GenericAttributeValue<String>,
-    holder: DomElementAnnotationHolder,
-  ) {
-    val xmlFile = content.xmlElement?.containingFile as? XmlFile ?: return
-    val ideaPlugin = DescriptorUtil.getIdeaPlugin(xmlFile) ?: return
-    val firstContent = ideaPlugin.content.first().takeIf { it != content } ?: return
-    val firstNamespaceValue = firstContent.namespace.value
-    if (namespaceDomValue.value != firstNamespaceValue) {
-      holder.createProblem(namespaceDomValue, message("inspection.content.module.namespace.mismatch", firstNamespaceValue))
     }
   }
 

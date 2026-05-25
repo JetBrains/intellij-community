@@ -190,6 +190,32 @@ class AgentChatEditorServiceTest {
   }
 
   @Test
+  fun testNewTabPreservesTerminalDefaultShellStartupLaunchSpec(): Unit = timeoutRunBlocking {
+    val preallocatedSessionId = "terminal-session-1"
+    val terminalLaunchSpec = AgentSessionTerminalLaunchSpec(
+      command = emptyList(),
+      envVariables = mapOf("A" to "B"),
+      useTerminalDefaultShell = true,
+      preallocatedSessionId = preallocatedSessionId,
+    )
+    openChatInModal(
+      threadIdentity = "terminal:$preallocatedSessionId",
+      shellCommand = emptyList(),
+      shellEnvVariables = mapOf("IGNORED" to "1"),
+      threadId = preallocatedSessionId,
+      threadTitle = "Terminal",
+      subAgentId = null,
+      newSessionProvider = AgentSessionProvider.TERMINAL,
+      newSessionLaunchMode = AgentSessionLaunchMode.STANDARD,
+      startupLaunchSpec = terminalLaunchSpec,
+    )
+
+    val file = openedChatFiles().single()
+    val startupLaunchSpec = checkNotNull(file.consumeStartupLaunchSpecOverride())
+    assertThat(startupLaunchSpec).isEqualTo(terminalLaunchSpec)
+  }
+
+  @Test
   fun testExistingTabIgnoresStartupCommandOverrideAndKeepsInitialMessageMetadata(): Unit = timeoutRunBlocking {
     val terminalTabs = EditorServiceFakeAgentChatTerminalTabs()
     customFileEditorFactory = { editorProject, file ->
@@ -666,6 +692,59 @@ class AgentChatEditorServiceTest {
       )
     }
     assertThat(unchangedTabs).isEqualTo(0)
+  }
+
+  @Test
+  fun testProjectColorChangeRefreshesMatchingChatTabPresentationOnlyInDedicatedFrames(): Unit = timeoutRunBlocking {
+    openChatInModal(
+      threadIdentity = "CODEX:thread-source-frame",
+      shellCommand = listOf("codex", "resume", "thread-source-frame"),
+      threadId = "thread-source-frame",
+      threadTitle = "Source frame thread",
+      subAgentId = null,
+      targetProject = project,
+    )
+    openChatInModal(
+      threadIdentity = "CODEX:thread-dedicated-frame",
+      shellCommand = listOf("codex", "resume", "thread-dedicated-frame"),
+      threadId = "thread-dedicated-frame",
+      threadTitle = "Dedicated frame thread",
+      subAgentId = null,
+      targetProject = dedicatedProject,
+    )
+    val otherProjectPath = "/work/project-b"
+    openChatInModal(
+      sourceProjectPath = otherProjectPath,
+      threadIdentity = "CODEX:thread-other-project",
+      shellCommand = listOf("codex", "resume", "thread-other-project"),
+      threadId = "thread-other-project",
+      threadTitle = "Other project thread",
+      subAgentId = null,
+      targetProject = dedicatedProject,
+    )
+
+    val sourceFrameFile = openedChatFiles(project).single()
+    val dedicatedFrameFile = openedChatFiles(dedicatedProject).single { it.projectPath == projectPath }
+    val otherProjectFile = openedChatFiles(dedicatedProject).single { it.projectPath == otherProjectPath }
+    val updatedProjects = ArrayList<Project>()
+    val updatedFiles = ArrayList<AgentChatVirtualFile>()
+    val updatedPresentations = runInUi {
+      refreshOpenAgentChatTabColors(
+        projects = arrayOf(project, dedicatedProject),
+        sourceProjectPaths = setOf(projectPath),
+        isDedicatedProject = { candidate -> candidate === dedicatedProject },
+        updateFilePresentation = { manager, file ->
+          updatedProjects.add(manager.project)
+          updatedFiles.add(file)
+        },
+      )
+    }
+
+    assertThat(updatedPresentations).isEqualTo(1)
+    assertThat(updatedProjects).containsExactly(dedicatedProject)
+    assertThat(updatedFiles).containsExactly(dedicatedFrameFile)
+    assertThat(updatedFiles).doesNotContain(sourceFrameFile)
+    assertThat(updatedFiles).doesNotContain(otherProjectFile)
   }
 
   @Test
@@ -1823,6 +1902,7 @@ class AgentChatEditorServiceTest {
   }
 
   private suspend fun openChatInModal(
+    sourceProjectPath: String = projectPath,
     threadIdentity: String,
     shellCommand: List<String>,
     shellEnvVariables: Map<String, String> = emptyMap(),
@@ -1842,6 +1922,7 @@ class AgentChatEditorServiceTest {
     persistSnapshot: Boolean = true,
     deferredStartState: AgentChatDeferredStartState? = null,
     targetProject: Project = project,
+    startupLaunchSpec: AgentSessionTerminalLaunchSpec? = null,
   ) {
     val effectivePostStartDispatchSteps = postStartDispatchSteps.ifEmpty {
       initialComposedMessage
@@ -1859,7 +1940,7 @@ class AgentChatEditorServiceTest {
     )
     openChat(
       project = targetProject,
-      projectPath = projectPath,
+      projectPath = sourceProjectPath,
       threadIdentity = threadIdentity,
       shellCommand = shellCommand,
       shellEnvVariables = shellEnvVariables,
@@ -1874,6 +1955,7 @@ class AgentChatEditorServiceTest {
       initialMessageDispatchPlan = initialMessageDispatchPlan,
       persistSnapshot = persistSnapshot,
       deferredStartState = deferredStartState,
+      startupLaunchSpec = startupLaunchSpec,
     )
     waitForCondition(timeoutMs = 10_000) {
       openedChatFiles(targetProject).any { file ->

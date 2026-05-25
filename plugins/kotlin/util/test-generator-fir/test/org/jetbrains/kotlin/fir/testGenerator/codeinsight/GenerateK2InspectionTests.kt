@@ -146,6 +146,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/removeRedundantLabel")
             model("${idea}/inspectionsLocal/logging/loggerInitializedWithForeignClass")
             model("${idea}/inspectionsLocal/mainFunctionReturnUnit")
+            model("${idea}/inspectionsLocal/replaceIfExpressionWithFirstOrNull")
 
             // removeRedundantCallsOfConversionMethods is implemented as compiler diagnostic, see quickfixes
             model("${idea}/inspectionsLocal/removeRedundantCallsOfConversionMethods", isIgnored = true)

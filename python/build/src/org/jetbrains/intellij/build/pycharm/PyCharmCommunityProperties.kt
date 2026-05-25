@@ -34,6 +34,8 @@ class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPrope
     scrambleMainJar = false
     buildSourcesArchive = true
 
+    imagesDirectoryPath = communityHome.resolve("python/build/images")
+
     productLayout.productImplementationModules = listOf(
       "intellij.platform.starter",
       "intellij.pycharm.community",
@@ -98,10 +100,6 @@ class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPrope
   override fun getBaseArtifactName(appInfo: ApplicationInfoProperties, buildNumber: String): String = "pycharmPC-$buildNumber"
 
   override fun createWindowsCustomizer(projectHome: Path): WindowsDistributionCustomizer = windowsCustomizer(communityHome) {
-    icoPath = "python/build/resources/PyCharmCore.ico"
-    icoPathForEAP = "python/build/resources/PyCharmCore_EAP.ico"
-    installerImagesPath = "python/build/resources"
-
     fileAssociations = SUPPORTED_FILE_EXTENSIONS
 
     fullName { "PyCharm Open Source" }
@@ -118,10 +116,7 @@ class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPrope
 
   override fun createMacCustomizer(projectHome: Path): MacDistributionCustomizer = object : MacDistributionCustomizer() {
     init {
-      icnsPath = communityHome.resolve("python/build/resources/PyCharmCore.icns")
-      icnsPathForEAP = communityHome.resolve("python/build/resources/PyCharmCore_EAP.icns")
       bundleIdentifier = "com.jetbrains.pycharm.ce"
-      dmgImagePath = communityHome.resolve("python/build/resources/dmg_background.tiff")
       fileAssociations = SUPPORTED_FILE_EXTENSIONS.map {
         FileAssociation(it)
       }
@@ -140,11 +135,6 @@ class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPrope
   }
 
   override fun createLinuxCustomizer(projectHome: Path): LinuxDistributionCustomizer = object : LinuxDistributionCustomizer() {
-    init {
-      iconPngPath = communityHome.resolve("python/build/resources/PyCharmCore128.png")
-      iconPngPathForEAP = communityHome.resolve("python/build/resources/PyCharmCore128_EAP.png")
-    }
-
     override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String = "pycharm-oss"
   }
 

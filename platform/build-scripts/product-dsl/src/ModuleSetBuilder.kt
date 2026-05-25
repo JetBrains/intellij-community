@@ -38,6 +38,8 @@ package org.jetbrains.intellij.build.productLayout
 
 import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginGraph.PluginId
+import com.intellij.platform.pluginGraph.PluginModuleId
+import com.intellij.platform.pluginGraph.contentName
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -60,16 +62,18 @@ import java.nio.file.Path
 /**
  * Represents a content module with optional loading attribute.
  *
- * @param name JPS module name (e.g., "intellij.platform.vcs.impl")
+ * @param moduleId Plugin module id (e.g., "intellij.platform.vcs.impl" in the "jetbrains" namespace)
  * @param loading Optional loading mode (e.g., ModuleLoadingRule.EMBEDDED)
  */
 @Serializable
 data class ContentModule(
-  val name: ContentModuleName,
+  @JvmField val moduleId: PluginModuleId,
   @JvmField val loading: ModuleLoadingRuleValue = ModuleLoadingRuleValue.OPTIONAL,
   @JvmField val includeDependencies: Boolean = false,
   @Transient @JvmField val allowedMissingPluginIds: List<PluginId> = emptyList(),
 )
+
+internal fun ContentModule.contentName(): ContentModuleName = moduleId.contentName()
 
 /**
  * Represents a named collection of content modules.
@@ -108,14 +112,15 @@ class ModuleSetBuilder(private val defaultIncludeDependencies: Boolean = false) 
    */
   fun module(
     name: String,
+    namespace: String? = PluginModuleId.DEFAULT_NAMESPACE,
     loading: ModuleLoadingRuleValue = ModuleLoadingRuleValue.OPTIONAL,
     allowedMissingPluginIds: List<String> = emptyList(),
   ) {
     modules.add(
       ContentModule(
-        ContentModuleName(name),
-        loading,
-        defaultIncludeDependencies,
+        moduleId = PluginModuleId(name, namespace),
+        loading = loading,
+        includeDependencies = defaultIncludeDependencies,
         allowedMissingPluginIds = allowedMissingPluginIds.map { PluginId(it) },
       )
     )
@@ -124,12 +129,12 @@ class ModuleSetBuilder(private val defaultIncludeDependencies: Boolean = false) 
   /**
    * Add a single module with EMBEDDED loading.
    */
-  fun embeddedModule(name: String, allowedMissingPluginIds: List<String> = emptyList()) {
+  fun embeddedModule(name: String, namespace: String? = PluginModuleId.DEFAULT_NAMESPACE, allowedMissingPluginIds: List<String> = emptyList()) {
     modules.add(
       ContentModule(
-        ContentModuleName(name),
-        ModuleLoadingRuleValue.EMBEDDED,
-        defaultIncludeDependencies,
+        moduleId = PluginModuleId(name, namespace),
+        loading = ModuleLoadingRuleValue.EMBEDDED,
+        includeDependencies = defaultIncludeDependencies,
         allowedMissingPluginIds = allowedMissingPluginIds.map { PluginId(it) },
       )
     )
@@ -138,12 +143,12 @@ class ModuleSetBuilder(private val defaultIncludeDependencies: Boolean = false) 
   /**
    * Add a single module with REQUIRED loading.
    */
-  fun requiredModule(name: String, allowedMissingPluginIds: List<String> = emptyList()) {
+  fun requiredModule(name: String, namespace: String? = PluginModuleId.DEFAULT_NAMESPACE, allowedMissingPluginIds: List<String> = emptyList()) {
     modules.add(
       ContentModule(
-        ContentModuleName(name),
-        ModuleLoadingRuleValue.REQUIRED,
-        defaultIncludeDependencies,
+        moduleId = PluginModuleId(name, namespace),
+        loading = ModuleLoadingRuleValue.REQUIRED,
+        includeDependencies = defaultIncludeDependencies,
         allowedMissingPluginIds = allowedMissingPluginIds.map { PluginId(it) },
       )
     )
@@ -260,7 +265,7 @@ fun plugin(
  * Appends a single module XML element to the StringBuilder.
  */
 private fun appendModuleXml(sb: StringBuilder, module: ContentModule) {
-  sb.append("    <module name=\"${module.name.value}\"")
+  sb.append("    <module name=\"${module.moduleId.name}\"")
   if (module.loading == ModuleLoadingRuleValue.EMBEDDED) {
     sb.append(" loading=\"embedded\"")
   }

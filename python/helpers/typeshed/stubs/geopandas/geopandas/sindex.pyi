@@ -14,6 +14,7 @@ class SpatialIndex:
     def __init__(self, geometry: NDArray[np.object_]) -> None: ...
     @property
     def valid_query_predicates(self) -> set[str | None]: ...
+
     @overload
     def query(
         self,
@@ -43,6 +44,7 @@ class SpatialIndex:
         *,
         output_format: Literal["sparse"],
     ) -> Any: ...  # returns scipy coo_array but we don't depend on scipy
+
     @overload
     def nearest(
         self,
@@ -71,6 +73,7 @@ class SpatialIndex:
         return_distance: bool = False,
         exclusive: bool = False,
     ) -> _Array2D[np.int64] | tuple[_Array2D[np.int64], _Array1D[np.float64]]: ...
+
     def intersection(self, coordinates: Iterable[float]) -> _Array1D[np.int64]: ...
     @property
     def size(self) -> int: ...

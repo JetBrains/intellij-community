@@ -7,10 +7,12 @@ class HTTPError(Exception):
     reason: str
     body: bytes
     headers: Message
+
     @overload
     def __init__(self, status_code: int, reason: str, body: bytes, headers: Message, /) -> None: ...
     @overload
     def __init__(self, http_error: _HTTPError, /) -> None: ...
+
     def __reduce__(self) -> tuple[type[HTTPError], tuple[int, str, bytes, Message]]: ...
     @property
     def to_dict(self) -> dict[str, Any]: ...  # dict of response error from the API

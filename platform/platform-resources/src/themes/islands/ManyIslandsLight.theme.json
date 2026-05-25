@@ -452,10 +452,10 @@
       "greenForeground": "white",
       "purpleSecondaryBackground": "#8060DB29",
       "purpleSecondaryForeground": "purple-70",
-      "graySecondaryBackground": "#73767C1F",
-      "graySecondaryForeground": "gray-80",
-      "disabledBackground": "#73767C1F",
-      "disabledForeground": "gray-110"
+      "graySecondaryBackground": "#191A1C1A",
+      "graySecondaryForeground": "gray-70",
+      "disabledBackground": "#191A1C1A",
+      "disabledForeground": "#191A1C66"
     },
 
     "Banner": {
@@ -1678,6 +1678,12 @@
       "errorBackground": "#FFFAEB",
       "errorBorder": "#FED277",
       "errorForeground": "#000000"
+    },
+
+    "AgentPicker": {
+      "Advertiser": {
+        "background": "gray-160"
+      }
     }
   },
 

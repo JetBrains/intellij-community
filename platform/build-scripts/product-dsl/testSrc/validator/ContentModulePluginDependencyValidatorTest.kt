@@ -31,7 +31,7 @@ class ContentModulePluginDependencyValidatorTest {
     val graph = pluginGraph {
       plugin("owner.plugin") {
         pluginId("owner.plugin")
-        content("owner.content", ModuleLoadingRuleValue.REQUIRED)
+        content("owner.content", loading = ModuleLoadingRuleValue.REQUIRED)
       }
       plugin("dep.plugin") {
         pluginId("dep.plugin")
@@ -64,7 +64,7 @@ class ContentModulePluginDependencyValidatorTest {
     val graph = pluginGraph {
       plugin("owner.plugin") {
         pluginId("owner.plugin")
-        content(contentModuleName, ModuleLoadingRuleValue.REQUIRED)
+        content(contentModuleName, loading = ModuleLoadingRuleValue.REQUIRED)
       }
     }
 
@@ -89,7 +89,7 @@ class ContentModulePluginDependencyValidatorTest {
     val graph = pluginGraph {
       plugin("owner.plugin") {
         pluginId("owner.plugin")
-        content("owner.content", ModuleLoadingRuleValue.REQUIRED)
+        content("owner.content", loading = ModuleLoadingRuleValue.REQUIRED)
       }
       plugin("dep.plugin") {
         pluginId("dep.plugin")
@@ -122,7 +122,7 @@ class ContentModulePluginDependencyValidatorTest {
     val graph = pluginGraph {
       testPlugin("test.plugin") {
         pluginId("test.plugin")
-        content("owner.content", ModuleLoadingRuleValue.REQUIRED)
+        content("owner.content", loading = ModuleLoadingRuleValue.REQUIRED)
       }
       plugin("dep.plugin") {
         pluginId("dep.plugin")
@@ -166,7 +166,7 @@ class ContentModulePluginDependencyValidatorTest {
     val graph = pluginGraph {
       testPlugin("test.plugin") {
         pluginId("test.plugin")
-        content("owner.content", ModuleLoadingRuleValue.REQUIRED)
+        content("owner.content", loading = ModuleLoadingRuleValue.REQUIRED)
       }
       plugin("dep.plugin") {
         pluginId("dep.plugin")
@@ -204,11 +204,11 @@ class ContentModulePluginDependencyValidatorTest {
     val graph = pluginGraph {
       testPlugin("test.plugin") {
         pluginId("test.plugin")
-        content("shared.content", ModuleLoadingRuleValue.REQUIRED)
+        content("shared.content", loading = ModuleLoadingRuleValue.REQUIRED)
       }
       plugin("owner.plugin") {
         pluginId("owner.plugin")
-        content("shared.content", ModuleLoadingRuleValue.REQUIRED)
+        content("shared.content", loading = ModuleLoadingRuleValue.REQUIRED)
       }
       plugin("dep.plugin") {
         pluginId("dep.plugin")
@@ -246,7 +246,7 @@ class ContentModulePluginDependencyValidatorTest {
     val graph = pluginGraph {
       testPlugin("test.plugin") {
         pluginId("test.plugin")
-        content("intellij.platform.testFramework", ModuleLoadingRuleValue.REQUIRED)
+        content("intellij.platform.testFramework", loading = ModuleLoadingRuleValue.REQUIRED)
       }
       plugin("dep.plugin") {
         pluginId("dep.plugin")
@@ -320,7 +320,7 @@ class ContentModulePluginDependencyValidatorTest {
     val graph = pluginGraph {
       plugin("owner.plugin") {
         pluginId("owner.plugin")
-        content("owner.content", ModuleLoadingRuleValue.REQUIRED)
+        content("owner.content", loading = ModuleLoadingRuleValue.REQUIRED)
       }
       plugin("dep.plugin") {
         pluginId("dep.plugin")

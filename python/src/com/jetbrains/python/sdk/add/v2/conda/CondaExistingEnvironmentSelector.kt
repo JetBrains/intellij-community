@@ -30,7 +30,7 @@ import com.jetbrains.python.sdk.add.v2.PythonExistingEnvironmentConfigurator
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterCreationTargets
 import com.jetbrains.python.sdk.add.v2.ValidatedPath
 import com.jetbrains.python.sdk.add.v2.ValidatedPathField
-import com.jetbrains.python.sdk.add.v2.Version
+import com.intellij.python.pytools.Version
 import com.jetbrains.python.sdk.add.v2.withAdjustedWidth
 import com.jetbrains.python.sdk.add.v2.createInstallCondaFix
 import com.jetbrains.python.sdk.add.v2.displayLoaderWhen

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.testFramework.classic
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -73,13 +74,15 @@ class ClassicTerminalTestShellSession(shellCommand: List<String>?, val widget: S
       terminalWidget.asNewWidget().connectToTty(connector, initialTermSize)
 
       Disposer.register(terminalWidget) {
-        try {
-          connector.close()
+        ApplicationManager.getApplication().executeOnPooledThread {
+          try {
+            connector.close()
+          }
+          catch (t: Throwable) {
+            logger<ClassicTerminalTestShellSession>().error("Error closing TtyConnector", t)
+          }
+          NioFiles.deleteRecursively(workingDirectory)
         }
-        catch (t: Throwable) {
-          logger<ClassicTerminalTestShellSession>().error("Error closing TtyConnector", t)
-        }
-        NioFiles.deleteRecursively(workingDirectory)
       }
 
       if (SystemInfo.isWindows) {

@@ -79,6 +79,8 @@ object CommunityModuleSets {
 
     // Additional library sets not in corePlatform but needed by essentialMinimal+
     moduleSet(librariesKtor())  // For RPC/Remote Dev
+    embeddedModule("intellij.libraries.teamcity.service.messages")
+    embeddedModule("intellij.platform.buildScripts.downloader")
     moduleSet(librariesMisc())  // For specialized uses (XML-RPC, CSV, document store)
 
     embeddedModule("intellij.platform.credentialStore.ui")
@@ -416,10 +418,6 @@ object CommunityModuleSets {
     moduleSet(xml())
     moduleSet(duplicates())
     embeddedModule("intellij.libraries.batik")
-
-    // IJent platform modules
-    module("intellij.platform.ijent.impl")
-    module("intellij.platform.ijent.wsl")
 
     // Note: rd.common is intentionally NOT included in ide.common
     // Reason: Rider uses custom module loading mode due to early backend startup requirements.

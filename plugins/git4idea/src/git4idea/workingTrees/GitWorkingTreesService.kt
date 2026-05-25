@@ -2,14 +2,19 @@
 package git4idea.workingTrees
 
 import com.intellij.dvcs.repo.repositoryId
+import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationActivationListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.UiWithModelAccess
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.VcsNotifier
@@ -43,6 +48,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import java.awt.Window
+import kotlinx.coroutines.withContext
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.time.Duration.Companion.minutes
@@ -212,6 +218,86 @@ internal class GitWorkingTreesService(private val project: Project, val coroutin
         return@launch
       }
       ProjectUtil.openOrImportAsync(Path(tree.path.path))
+    }
+  }
+
+  fun deleteWorkingTree(project: Project, tree: GitWorkingTree, repository: GitRepository) {
+    coroutineScope.launch {
+      val existingProject = ProjectUtil.findProject(Path(tree.path.path))
+      if (existingProject != null) {
+        if (shouldStopDeletion(project, tree, existingProject)) {
+          closeProject(existingProject)
+        }
+        else {
+          return@launch
+        }
+      }
+
+      val commandResult = withBackgroundProgress(project, GitBundle.message("progress.title.deleting.worktree"), cancellable = true) {
+        service<Git>().deleteWorkingTree(repository, tree)
+      }
+
+      if (commandResult.success()) {
+        repository.workingTreeHolder.scheduleReload()
+        VcsNotifier.getInstance(project).notifySuccess(GitNotificationIdsHolder.WORKING_TREE_DELETED,
+                                                       "",
+                                                       GitBundle.message("Git.WorkingTrees.delete.worktree.success.message",
+                                                                         tree.path.presentableUrl))
+      }
+      else {
+        VcsNotifier.getInstance(project).notifyError(GitNotificationIdsHolder.WORKING_TREE_COULD_NOT_DELETE,
+                                                     GitBundle.message("Git.WorkingTrees.delete.worktrees.failure.notification.title"),
+                                                     commandResult.errorOutputAsHtmlString,
+                                                     true)
+      }
+    }
+  }
+
+  private suspend fun shouldStopDeletion(project: Project, tree: GitWorkingTree, existingProject: Project): Boolean {
+    return withContext(Dispatchers.UiWithModelAccess) {
+      MessageDialogBuilder.yesNo(
+        GitBundle.message("Git.WorkingTrees.dialog.delete.worktree.title"),
+        GitBundle.message("Git.WorkingTrees.delete.worktrees.worktree.opened.close.or.cancel",
+                          tree.path.presentableUrl, existingProject.name)
+      )
+        .yesText(GitBundle.message("Git.WorkingTrees.delete.worktrees.button.close.delete"))
+        .noText(GitBundle.message("Git.WorkingTrees.delete.worktrees.button.do.not.delete"))
+        .ask(project)
+    }
+  }
+
+  //see com.intellij.ide.actions.CloseProjectsActionBase.actionPerformed
+  private suspend fun closeProject(project: Project) {
+    withContext(Dispatchers.UiWithModelAccess) {
+      writeIntentReadAction {
+        ProjectManager.getInstance().closeAndDispose(project)
+      }
+    }
+    RecentProjectsManager.getInstance().updateLastProjectPath()
+  }
+
+  fun pruneWorkingTrees(project: Project, repository: GitRepository) {
+    coroutineScope.launch {
+      val result = withBackgroundProgress(project, GitBundle.message("progress.title.pruning.worktrees"), cancellable = true) {
+        service<Git>().pruneWorktrees(repository)
+      }
+
+      if (!result.success()) {
+        VcsNotifier.getInstance(project).notifyError(
+          GitNotificationIdsHolder.WORKING_TREES_PRUNING_FAILED,
+          GitBundle.message("Git.WorkingTrees.prune.worktrees.failure.notification.title"),
+          result.errorOutputAsHtmlString,
+          true
+        )
+        return@launch
+      }
+
+      repository.workingTreeHolder.scheduleReload()
+      VcsNotifier.getInstance(project).notifySuccess(
+        GitNotificationIdsHolder.WORKING_TREES_PRUNED,
+        "",
+        GitBundle.message("Git.WorkingTrees.prune.worktree.success.message")
+      )
     }
   }
 }

@@ -12,12 +12,11 @@ import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.sdk.baseDir
-import com.jetbrains.python.sdk.persist
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.runExecutableWithProgress
 import com.jetbrains.python.sdk.setAssociationToModule
 import com.jetbrains.python.sdk.skeleton.PySkeletonUtil
-import com.jetbrains.python.tools.createUvPipVenvSdk
+import com.jetbrains.python.sdk.uv.setupExistingEnvAndSdk
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -38,8 +37,7 @@ fun TestFixture<SdkFixture<PyEnvironment>>.pyUvVenvFixture(
 ): TestFixture<Sdk> = testFixture {
   val env = this@pyUvVenvFixture.init().env
   val module = moduleFixture.init()
-  val baseDirPath = module.baseDir?.toNioPath()
-  requireNotNull(baseDirPath) { "Module $module has no base dir" }
+  val baseDirPath = module.baseDir?.toNioPath() ?: error("Module $module has no base dir")
   val venvDir = baseDirPath.resolve(".venv")
 
 
@@ -58,10 +56,10 @@ fun TestFixture<SdkFixture<PyEnvironment>>.pyUvVenvFixture(
     VirtualEnvReader().findPythonInPythonRoot(venvDir)
   } ?: error("Python executable not found in UV venv: $venvDir")
 
-  val venvSdk = withContext(Dispatchers.IO) { createUvPipVenvSdk(venvPython, baseDirPath) }
+  val venvSdk =
+    setupExistingEnvAndSdk(pythonBinary = venvPython, uvPath = uvExecutable, envWorkingDir = baseDirPath, usePip = true).getOrThrow()
 
   if (addToSdkTable) {
-    venvSdk.persist()
     module.pythonSdk = venvSdk
     venvSdk.setAssociationToModule(module)
   }

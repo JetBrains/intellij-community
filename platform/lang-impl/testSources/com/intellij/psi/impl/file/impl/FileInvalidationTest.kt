@@ -5,8 +5,8 @@ import com.intellij.codeInsight.multiverse.CodeInsightContextManagerImpl
 import com.intellij.codeInsight.multiverse.ModuleContext
 import com.intellij.codeInsight.multiverse.codeInsightContext
 import com.intellij.codeInsight.multiverse.defaultContext
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.platform.testFramework.junit5.projectStructure.fixture.multiverseProjectFixture
@@ -16,11 +16,9 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.EnableTracingFor
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.utils.vfs.createFile
-import kotlinx.coroutines.delay
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.RepeatedTest
 import kotlin.io.path.Path
-import kotlin.time.Duration.Companion.milliseconds
 
 @EnableTracingFor(
   categories = ["#com.intellij.psi.impl.file.impl.MultiverseFileViewProviderCache"],
@@ -91,9 +89,6 @@ internal class FileInvalidationTest {
 
     // Step 4: removing module1 roots
     PsiTestUtil.removeAllRoots(module1, null)
-    while (!CodeInsightContextManagerImpl.getInstanceImpl(project).isContextInvalidationComplete()) {
-      delay(10.milliseconds)
-    }
 
     val psiFileModuleContext3 = readAction { PsiManager.getInstance(project).findFile(virtualFile)!! }
     val moduleContext3 = readAction { psiFileModuleContext3.codeInsightContext }

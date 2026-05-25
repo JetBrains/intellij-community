@@ -13,7 +13,7 @@ import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementTxtSdkUti
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkUpdater
-import com.jetbrains.python.sdk.getOrCreateAdditionalData
+import com.jetbrains.python.sdk.pySdkAdditionalData
 import kotlinx.coroutines.CoroutineScope
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
@@ -29,14 +29,14 @@ internal class PythonPackageManagerServiceImpl(private val serviceScope: Corouti
    * On cache hit the call is effectively free (a [ConcurrentHashMap] lookup).
    * On cache miss (once per SDK per project lifetime) the method creates the manager,
    * registers Disposer listeners and sets up VFS watchers — this may involve lightweight I/O
-   * (e.g. flavor detection in [com.jetbrains.python.sdk.getOrCreateAdditionalData]).
+   * (e.g. flavor detection in [com.jetbrains.python.sdk.pySdkAdditionalData]).
    * In practice the first call happens during project/SDK setup on a background thread,
    * so subsequent EDT callers always get a cached instance.
    *
    * Requires [sdk] to be a Python SDK with [com.jetbrains.python.sdk.PythonSdkAdditionalData].
    */
   override fun forSdk(project: Project, sdk: Sdk): PythonPackageManager {
-    val cacheKey = (sdk.getOrCreateAdditionalData()).uuid
+    val cacheKey = (sdk.pySdkAdditionalData).uuid
 
     return cache.computeIfAbsent(cacheKey) {
       val vfsListenerDisposable = Disposer.newDisposable("VFS listener for ${sdk.name} in scope of ${project.name}")

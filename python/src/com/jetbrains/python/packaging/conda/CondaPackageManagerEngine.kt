@@ -15,7 +15,7 @@ import com.jetbrains.python.sdk.conda.execution.CondaExecutor
 import com.jetbrains.python.sdk.conda.execution.getCondaBinToExecute
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
-import com.jetbrains.python.sdk.getOrCreateAdditionalData
+import com.jetbrains.python.sdk.pySdkAdditionalData
 
 internal class CondaPackageManagerEngine(private val sdk: Sdk) : PythonPackageManagerEngine {
   suspend fun updateFromEnvironmentFile(envFile: VirtualFile): PyResult<Unit> {
@@ -59,7 +59,7 @@ internal class CondaPackageManagerEngine(private val sdk: Sdk) : PythonPackageMa
   }
 
 
-  private fun getEnvData(): PyCondaEnv = (sdk.getOrCreateAdditionalData().flavorAndData.data as PyCondaFlavorData).env
+  private fun getEnvData(): PyCondaEnv = (sdk.pySdkAdditionalData.flavorAndData.data as PyCondaFlavorData).env
 
   private fun PythonPackageInstallRequest.buildInstallationArguments(): PyResult<List<String>> = when (this) {
     is PythonPackageInstallRequest.ByLocation -> PyResult.localizedError(PyBundle.message("python.packaging.conda.does.not.support.location.uri"))

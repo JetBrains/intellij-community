@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.run;
 
 import com.intellij.execution.configurations.RunConfiguration;
@@ -15,7 +15,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 
-import java.util.Collection;
 
 public final class PluginConfigurationType extends SimpleConfigurationType {
   private static final String DEFAULT_PARAMETERS = "-Xmx512m -Xms256m -ea";
@@ -46,8 +45,11 @@ public final class PluginConfigurationType extends SimpleConfigurationType {
   public @NotNull RunConfiguration createConfiguration(@Nullable String name, @NotNull RunConfiguration template) {
     PluginRunConfiguration pluginRunConfiguration = (PluginRunConfiguration)template;
     if (pluginRunConfiguration.getModule() == null) {
-      Collection<Module> modules = ModuleUtil.getModulesOfType(pluginRunConfiguration.getProject(), PluginModuleType.getInstance());
-      pluginRunConfiguration.setModule(ContainerUtil.getFirstItem(modules));
+      Module firstModule = ContainerUtil.getFirstItem(
+          ModuleUtil.getModulesOfType(pluginRunConfiguration.getProject(), PluginModuleType.getInstance()));
+      if (firstModule != null) {
+        pluginRunConfiguration.setModule(firstModule);
+      }
     }
     return super.createConfiguration(name, pluginRunConfiguration);
   }

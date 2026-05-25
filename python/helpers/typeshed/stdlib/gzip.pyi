@@ -96,6 +96,7 @@ class GzipFile(BaseStream):
     name: str
     compress: zlib._Compress
     fileobj: _ReadableFileobj | _WritableFileobj
+
     @overload
     def __init__(
         self,
@@ -141,6 +142,7 @@ class GzipFile(BaseStream):
         fileobj: _ReadableFileobj | _WritableFileobj | None = None,
         mtime: float | None = None,
     ) -> None: ...
+
     if sys.version_info < (3, 12):
         @property
         @deprecated("Deprecated since Python 2.6; removed in Python 3.12. Use `name` attribute instead.")

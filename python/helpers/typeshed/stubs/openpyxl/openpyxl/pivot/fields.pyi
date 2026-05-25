@@ -20,6 +20,7 @@ class TupleList(Serialisable):
     c: Integer[Literal[True]]
     tpl: Typed[Tuple, Literal[False]]
     __elements__: ClassVar[tuple[str, ...]]
+
     @overload
     def __init__(self, c: ConvertibleToInt | None = None, *, tpl: Tuple) -> None: ...
     @overload
@@ -75,6 +76,7 @@ class Number(Serialisable):
     st: Bool[Literal[True]]
     b: Bool[Literal[True]]
     __elements__: ClassVar[tuple[str, ...]]
+
     @overload
     def __init__(
         self,
@@ -130,6 +132,7 @@ class Error(Serialisable):
     st: Bool[Literal[True]]
     b: Bool[Literal[True]]
     __elements__: ClassVar[tuple[str, ...]]
+
     @overload
     def __init__(
         self,

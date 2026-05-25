@@ -1,7 +1,6 @@
 package com.intellij.python.junit5Tests.unit.alsoWin.pyproject
 
 import com.intellij.openapi.application.edtWriteAction
-import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.roots.ModuleRootManager
@@ -36,7 +35,7 @@ internal class PyProjectTomlModuleTest {
     externalSystemAware.reloadProjectImpl()
     Assertions.assertFalse(module.isPyProjectTomlBased, "Module shouldn't be pyproject based")
     module = projectFixture.get().modules[0]
-    writeAction {
+    edtWriteAction {
       val m = ModuleRootManager.getInstance(module).modifiableModel
       m.addContentEntry(dir)
       m.commit()

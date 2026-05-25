@@ -108,7 +108,7 @@ public final class MavenResourceConfigurationGeneratorCompileTask implements Com
     ProjectFileIndex fileIndex = projectRootManager.getFileIndex();
 
     final int projectRootModificationCount = (int)projectRootManager.getModificationCount();
-    final int mavenConfigCrc = mavenProjectsManager.getFilterConfigCrc(fileIndex);
+    final int mavenConfigCrc = MavenFilterConfigCrc.getFilterConfigCrc(mavenProjectsManager.getProjectsTree(), fileIndex);
     final int crc = mavenConfigCrc + projectRootModificationCount;
 
     if (!force) {

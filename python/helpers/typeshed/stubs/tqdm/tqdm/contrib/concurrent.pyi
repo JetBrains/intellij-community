@@ -92,6 +92,7 @@ def thread_map(
     *iterables: Iterable[Any],
     **tqdm_kwargs: Unpack[_TqdmKwargs],
 ) -> list[_R]: ...
+
 @overload
 def process_map(fn: Callable[[_T1], _R], iter1: Iterable[_T1], **tqdm_kwargs: Unpack[_TqdmKwargs]) -> list[_R]: ...
 @overload

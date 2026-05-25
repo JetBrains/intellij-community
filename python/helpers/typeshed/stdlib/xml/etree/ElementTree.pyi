@@ -27,13 +27,14 @@ __all__ = [
     "tostring",
     "tostringlist",
     "TreeBuilder",
-    "VERSION",
     "XML",
     "XMLID",
     "XMLParser",
     "XMLPullParser",
     "register_namespace",
 ]
+if sys.version_info < (3, 15):
+    __all__ += ["VERSION"]
 
 _T = TypeVar("_T")
 _FileRead: TypeAlias = FileDescriptorOrPath | SupportsRead[bytes] | SupportsRead[str]
@@ -48,6 +49,7 @@ class ParseError(SyntaxError):
 
 # In reality it works based on `.tag` attribute duck typing.
 def iselement(element: object) -> TypeGuard[Element]: ...
+
 @overload
 def canonicalize(
     xml_data: str | ReadableBuffer | None = None,
@@ -96,21 +98,26 @@ class Element(Generic[_Tag]):
     def extend(self, elements: Iterable[Element[Any]], /) -> None: ...
     def find(self, path: str, namespaces: dict[str, str] | None = None) -> Element | None: ...
     def findall(self, path: str, namespaces: dict[str, str] | None = None) -> list[Element]: ...
+
     @overload
     def findtext(self, path: str, default: None = None, namespaces: dict[str, str] | None = None) -> str | None: ...
     @overload
     def findtext(self, path: str, default: _T, namespaces: dict[str, str] | None = None) -> _T | str: ...
+
     @overload
     def get(self, key: str, default: None = None) -> str | None: ...
     @overload
     def get(self, key: str, default: _T) -> str | _T: ...
+
     def insert(self, index: int, subelement: Element[Any], /) -> None: ...
     def items(self) -> ItemsView[str, str]: ...
     def iter(self, tag: str | None = None) -> Generator[Element]: ...
+
     @overload
     def iterfind(self, path: Literal[""], namespaces: dict[str, str] | None = None) -> None: ...  # type: ignore[overload-overlap]
     @overload
     def iterfind(self, path: str, namespaces: dict[str, str] | None = None) -> Generator[Element]: ...
+
     def itertext(self) -> Generator[str]: ...
     def keys(self) -> dict_keys[str, str]: ...
     # makeelement returns the type of self in Python impl, but not in C impl
@@ -120,13 +127,16 @@ class Element(Generic[_Tag]):
     def __copy__(self) -> Element[_Tag]: ...  # returns the type of self in Python impl, but not in C impl
     def __deepcopy__(self, memo: Any, /) -> Element: ...  # Only exists in C impl
     def __delitem__(self, key: SupportsIndex | slice, /) -> None: ...
+
     @overload
     def __getitem__(self, key: SupportsIndex, /) -> Element: ...
     @overload
     def __getitem__(self, key: slice[SupportsIndex | None], /) -> list[Element]: ...
+
     def __len__(self) -> int: ...
     # Doesn't actually exist at runtime, but instance of the class are indeed iterable due to __getitem__.
     def __iter__(self) -> Iterator[Element]: ...
+
     @overload
     def __setitem__(self, key: SupportsIndex, value: Element[Any], /) -> None: ...
     @overload
@@ -161,15 +171,19 @@ class ElementTree(Generic[_Root]):
     def parse(self, source: _FileRead, parser: XMLParser | None = None) -> Element: ...
     def iter(self, tag: str | None = None) -> Generator[Element]: ...
     def find(self, path: str, namespaces: dict[str, str] | None = None) -> Element | None: ...
+
     @overload
     def findtext(self, path: str, default: None = None, namespaces: dict[str, str] | None = None) -> str | None: ...
     @overload
     def findtext(self, path: str, default: _T, namespaces: dict[str, str] | None = None) -> _T | str: ...
+
     def findall(self, path: str, namespaces: dict[str, str] | None = None) -> list[Element]: ...
+
     @overload
     def iterfind(self, path: Literal[""], namespaces: dict[str, str] | None = None) -> None: ...  # type: ignore[overload-overlap]
     @overload
     def iterfind(self, path: str, namespaces: dict[str, str] | None = None) -> Generator[Element]: ...
+
     def write(
         self,
         file_or_filename: _FileWrite,
@@ -185,6 +199,7 @@ class ElementTree(Generic[_Root]):
 HTML_EMPTY: Final[set[str]]
 
 def register_namespace(prefix: str, uri: str) -> None: ...
+
 @overload
 def tostring(
     element: Element[Any],
@@ -215,6 +230,7 @@ def tostring(
     default_namespace: str | None = None,
     short_empty_elements: bool = True,
 ) -> Any: ...
+
 @overload
 def tostringlist(
     element: Element[Any],
@@ -245,6 +261,7 @@ def tostringlist(
     default_namespace: str | None = None,
     short_empty_elements: bool = True,
 ) -> list[Any]: ...
+
 def dump(elem: Element[Any] | ElementTree[Any]) -> None: ...
 def indent(tree: Element[Any] | ElementTree[Any], space: str = "  ", level: int = 0) -> None: ...
 def parse(source: _FileRead, parser: XMLParser[Any] | None = None) -> ElementTree[Element]: ...

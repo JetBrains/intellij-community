@@ -814,8 +814,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
               if (!isBinaryWithoutDecompiler(file)) {
                 setNewText(document, project, file, vFile -> {
                   boolean tooLarge = FileUtilRt.isTooLarge(vFile.getLength());
-                  CharSequence reloaded = tooLarge ? LoadTextUtil.loadText(vFile, getPreviewCharCount(vFile)) : LoadTextUtil.loadText(vFile);
-                  return reloaded;
+                  return tooLarge ? LoadTextUtil.loadText(vFile, getPreviewCharCount(vFile)) : LoadTextUtil.loadText(vFile);
                 });
               }
             })
@@ -843,7 +842,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   private static void setNewText(@NotNull Document document,
                                  @Nullable Project project,
                                  @NotNull VirtualFile file,
-                                 @NotNull Function<@NotNull VirtualFile, @NotNull CharSequence> loader) {
+                                 @NotNull Function<? super @NotNull VirtualFile, ? extends @NotNull CharSequence> loader) {
     LoadTextUtil.clearCharsetAutoDetectionReason(file);
     file.setBOM(null); // reset BOM in case we had one and the external change stripped it away
     file.setCharset(null, null, false);
@@ -866,7 +865,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
       UIBundle.message("progress.decompiling.file", file.getName()),
       project,
       null,
-      indicator -> {
+      _ -> {
         decompiledText[0] = BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation(() -> LoadTextUtil.loadText(file));
       }
     );
@@ -881,7 +880,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
     CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(
       ExternalChangeActionUtil.externalDocumentChangeAction(() -> {
-        setNewText(document, project, file, vFile -> decompiledText[0]);
+        setNewText(document, project, file, _ -> decompiledText[0]);
       })
     ), UIBundle.message("file.cache.conflict.action"), null, UndoConfirmationPolicy.REQUEST_CONFIRMATION);
   }
@@ -909,7 +908,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   @ApiStatus.Internal
   public boolean isConflictsSolverEnabled() {
     ConflictsSolverOverride override = ContainerUtil.getLastItem(myConflictsSolverOverrides);
-    return override == null || override.myEnabled;
+    return override == null || override.enabled;
   }
 
   // NB: virtualFile might be invalid by now
@@ -934,7 +933,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     return false;
   }
 
-  private boolean fireBeforeFileContentReload(@NotNull VirtualFile file, @NotNull Document document) {
+  private static boolean fireBeforeFileContentReload(@NotNull VirtualFile file, @NotNull Document document) {
     for (FileDocumentSynchronizationVetoer vetoer : FileDocumentSynchronizationVetoer.EP_NAME.getExtensionList()) {
       try {
         if (!vetoer.mayReloadFileContent(file, document)) {
@@ -1029,12 +1028,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     });
   }
 
-  private static final class ConflictsSolverOverride {
-    private final boolean myEnabled;
-
-    private ConflictsSolverOverride(boolean enabled) {
-      myEnabled = enabled;
-    }
+  private record ConflictsSolverOverride(boolean enabled) {
   }
 
   @Override

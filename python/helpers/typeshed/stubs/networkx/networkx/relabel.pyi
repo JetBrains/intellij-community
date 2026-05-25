@@ -20,6 +20,7 @@ def relabel_nodes(G: DiGraph[_X], mapping: Mapping[_X, _Y], copy: bool = True) -
 def relabel_nodes(G: MultiGraph[_X], mapping: Mapping[_X, _Y], copy: bool = True) -> MultiGraph[_X | _Y]: ...
 @overload
 def relabel_nodes(G: Graph[_X], mapping: Mapping[_X, _Y], copy: bool = True) -> Graph[_X | _Y]: ...
+
 @_dispatchable
 def convert_node_labels_to_integers(
     G: Graph[Hashable],

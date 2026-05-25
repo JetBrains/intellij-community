@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import kotlinx.coroutines.flow.Flow
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -19,10 +19,11 @@ interface CodeInsightContextProvider {
   @RequiresBackgroundThread
   fun getContexts(file: VirtualFile, project: Project): List<CodeInsightContext>
 
-  fun invalidationRequestFlow(project: Project): Flow<Unit>
+  fun subscribeToChanges(project: Project, invalidator: Invalidator)
 
   @ApiStatus.NonExtendable
   fun interface Invalidator {
-    suspend fun requestInvalidation()
+    @RequiresWriteLock
+    fun requestInvalidation()
   }
 }

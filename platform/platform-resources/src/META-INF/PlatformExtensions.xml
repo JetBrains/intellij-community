@@ -485,11 +485,11 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
                  restartRequired="true"
                  description="Enable plugin category promotion panels with priority sorting in the Installed plugins tab"/>
     <registryKey key="dynamic.plugins.support.new.impl"
-                 defaultValue="false"
+                 defaultValue="true"
                  restartRequired="true"
                  description="Enable new dynamic plugin support implementation"/>
     <registryKey key="dynamic.plugins.support.await.classloader.unload.strategy"
-                 defaultValue="[beforeLoad*|asyncPostTransition]"
+                 defaultValue="[beforeLoad|asyncPostTransition*]"
                  restartRequired="true"
                  description="Changes the way IDE waits for plugins to unload during dynamic plugin reconfiguration"/>
     <applicationService serviceInterface="com.intellij.codeInsight.hint.HintManager"
@@ -2183,7 +2183,8 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
     <applicationSettings service="com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl"/>
     <applicationSettings service="com.intellij.application.options.PathMacrosImpl"/>
 
-    <fileIconProvider implementation="com.intellij.platform.ide.impl.common.file.icons.CommonFileIconsProvider"/>
+    <!-- works as a fallback, after all providers -->
+    <fileIconProvider implementation="com.intellij.platform.ide.impl.common.file.icons.CommonFileIconsProvider" order="last"/>
   </extensions>
 
   <applicationListeners>

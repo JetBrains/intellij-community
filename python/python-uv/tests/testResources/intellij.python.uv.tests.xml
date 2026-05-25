@@ -1,0 +1,19 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.junit5"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.testFramework.common"/>
+    <module name="intellij.platform.testFramework.junit5"/>
+    <module name="intellij.python.common"/>
+    <module name="intellij.python.community"/>
+    <module name="intellij.python.community.execService"/>
+    <module name="intellij.python.pyproject"/>
+    <module name="intellij.python.pytools"/>
+    <module name="intellij.python.sdk"/>
+    <module name="intellij.python.test.env.junit5"/>
+    <module name="intellij.python.uv.backend"/>
+  </dependencies>
+  <!-- endregion -->
+</idea-plugin>

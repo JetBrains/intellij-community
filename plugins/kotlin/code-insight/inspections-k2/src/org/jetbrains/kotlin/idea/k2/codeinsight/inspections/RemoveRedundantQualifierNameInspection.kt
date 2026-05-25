@@ -102,7 +102,7 @@ internal class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection
             val elementWithQualifier = descriptor.psiElement ?: return
 
             when (elementWithQualifier) {
-                is KtUserType -> elementWithQualifier.deleteQualifier()
+                is KtUserType if (elementWithQualifier.qualifier != null) -> elementWithQualifier.deleteQualifier()
                 is KtDotQualifiedExpression -> elementWithQualifier.deleteQualifier()
             }
         }

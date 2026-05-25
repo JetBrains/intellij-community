@@ -73,10 +73,15 @@ public final class ThreadDumper {
       }
       writer.write(coroutineDump);
     }
-    String progressIndicatorDump = ProgressIndicatorDumper.INSTANCE.dumpProgressIndicatorState();
+    String progressIndicatorDump = ProgressIndicatorDumper.INSTANCE.dumpProgressIndicatorStateOrNull();
     if (progressIndicatorDump != null) {
-      writer.write("\n" + ProgressIndicatorDumper.PROGRESS_INDICATOR_DUMP_HEADER + "\n");
+      writer.write("\n");
       writer.write(progressIndicatorDump);
+    }
+    String actionsLocksDump = LocksActionsDumper.INSTANCE.dumpLocksAndActionsStateOrNull();
+    if (actionsLocksDump != null) {
+      writer.write("\n");
+      writer.write(actionsLocksDump);
     }
     return new ThreadDump(writer.toString(), edtStack, threadInfos);
   }

@@ -109,6 +109,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"control alt Z",            "Vcs.RollbackChangedLines", "ChangesView.Revert"},
       {"control alt button1",      "GotoImplementation", "UiInspector"},
       {"ctrl L",                   "FindNext", "Terminal.ClearBuffer"},
+      {"ctrl control dblClick",    "AgentWorkbenchPrompt.OpenGlobalPalette", "RunAnything"},
       {"ctrl alt C",               "IntroduceConstant", "org.jetbrains.r.rendering.chunk.RunChunkAction"},
       {"ctrl alt ENTER",           "EditorStartNewLineBefore", "QuickActionPopup", "org.jetbrains.r.actions.DebugSelection"},
       {"ctrl alt F",               "IntroduceField", "ShowFilterPopup"},

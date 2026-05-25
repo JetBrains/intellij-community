@@ -7,7 +7,7 @@ import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.SerializablePersistentStateComponent
 import com.intellij.openapi.components.Service
@@ -82,15 +82,15 @@ class PySourceRootDetectionService(
 
   fun markAsSourceRoot(sourceRoot: VirtualFile, showNotification: Boolean = true) {
     cs.launch {
-      writeAction {
-        val module = ModuleUtil.findModuleForFile(sourceRoot, project) ?: return@writeAction
+      edtWriteAction {
+        val module = ModuleUtil.findModuleForFile(sourceRoot, project) ?: return@edtWriteAction
         val model = ModuleRootManager.getInstance(module).modifiableModel
-        val entry = MarkRootsManager.findContentEntry(model, sourceRoot) ?: return@writeAction
+        val entry = MarkRootsManager.findContentEntry(model, sourceRoot) ?: return@edtWriteAction
         // In general, `markAsSourceRoot` is called only for folders that are not source roots yet.
         // Double-check in case this method was called twice before the folder was marked as a source root.
         val isAlreadyMarkedAsSourceRoot = entry.getSourceFolders().any { it.file == sourceRoot }
         if (isAlreadyMarkedAsSourceRoot) {
-          return@writeAction
+          return@edtWriteAction
         }
         entry.addSourceFolder(sourceRoot, JavaSourceRootType.SOURCE)
         model.commit()
@@ -107,10 +107,10 @@ class PySourceRootDetectionService(
       hideSourceRoot(sourceRoot)
     }
     cs.launch {
-      writeAction {
-        val module = ModuleUtil.findModuleForFile(sourceRoot, project) ?: return@writeAction
+      edtWriteAction {
+        val module = ModuleUtil.findModuleForFile(sourceRoot, project) ?: return@edtWriteAction
         val model = ModuleRootManager.getInstance(module).modifiableModel
-        val entry = MarkRootsManager.findContentEntry(model, sourceRoot) ?: return@writeAction
+        val entry = MarkRootsManager.findContentEntry(model, sourceRoot) ?: return@edtWriteAction
         val toRemove = entry.sourceFolders.firstOrNull { it.file == this || it.url == sourceRoot.url }
         if (toRemove != null) {
           entry.removeSourceFolder(toRemove)

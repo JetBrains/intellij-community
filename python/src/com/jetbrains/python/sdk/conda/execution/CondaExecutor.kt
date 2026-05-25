@@ -25,7 +25,7 @@ import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.sdk.conda.execution.models.CondaEnvInfo
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
-import com.jetbrains.python.sdk.getOrCreateAdditionalData
+import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.jetbrains.python.sdk.runExecutableWithProgress
 import com.jetbrains.python.sdk.targetEnvConfiguration
 import org.jetbrains.annotations.ApiStatus
@@ -234,7 +234,7 @@ object CondaExecutor {
 @ApiStatus.Internal
 fun Sdk.getCondaBinToExecute(): BinaryToExec {
   val targetConfig = targetEnvConfiguration
-  val pathOnTarget = (getOrCreateAdditionalData().flavorAndData.data as PyCondaFlavorData).env.fullCondaPathOnTarget
+  val pathOnTarget = (pySdkAdditionalData.flavorAndData.data as PyCondaFlavorData).env.fullCondaPathOnTarget
 
   val binToExec = when (targetConfig) {
     null -> BinOnEel(Path(pathOnTarget))

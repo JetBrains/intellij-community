@@ -29,31 +29,32 @@ if sys.version_info >= (3, 13):
     __all__ += ["UnsupportedOperation"]
 
 class PurePath(PathLike[str]):
-    if sys.version_info >= (3, 13):
-        __slots__ = (
-            "_raw_paths",
-            "_drv",
-            "_root",
-            "_tail_cached",
-            "_str",
-            "_str_normcase_cached",
-            "_parts_normcase_cached",
-            "_hash",
-        )
-    elif sys.version_info >= (3, 12):
-        __slots__ = (
-            "_raw_paths",
-            "_drv",
-            "_root",
-            "_tail_cached",
-            "_str",
-            "_str_normcase_cached",
-            "_parts_normcase_cached",
-            "_lines_cached",
-            "_hash",
-        )
-    else:
-        __slots__ = ("_drv", "_root", "_parts", "_str", "_hash", "_pparts", "_cached_cparts")
+    if sys.version_info < (3, 15):
+        if sys.version_info >= (3, 13):
+            __slots__ = (
+                "_raw_paths",
+                "_drv",
+                "_root",
+                "_tail_cached",
+                "_str",
+                "_str_normcase_cached",
+                "_parts_normcase_cached",
+                "_hash",
+            )
+        elif sys.version_info >= (3, 12):
+            __slots__ = (
+                "_raw_paths",
+                "_drv",
+                "_root",
+                "_tail_cached",
+                "_str",
+                "_str_normcase_cached",
+                "_parts_normcase_cached",
+                "_lines_cached",
+                "_hash",
+            )
+        else:
+            __slots__ = ("_drv", "_root", "_parts", "_str", "_hash", "_pparts", "_cached_cparts")
     if sys.version_info >= (3, 13):
         parser: ClassVar[types.ModuleType]
         def full_match(self, pattern: StrPath, *, case_sensitive: bool | None = None) -> bool: ...
@@ -82,6 +83,9 @@ class PurePath(PathLike[str]):
 
     def __hash__(self) -> int: ...
     def __fspath__(self) -> str: ...
+    if sys.version_info >= (3, 15):
+        def __vfspath__(self) -> str: ...
+
     def __lt__(self, other: PurePath) -> bool: ...
     def __le__(self, other: PurePath) -> bool: ...
     def __gt__(self, other: PurePath) -> bool: ...
@@ -93,14 +97,15 @@ class PurePath(PathLike[str]):
     @deprecated("Deprecated since Python 3.14; will be removed in Python 3.19. Use `Path.as_uri()` instead.")
     def as_uri(self) -> str: ...
     def is_absolute(self) -> bool: ...
-    if sys.version_info >= (3, 13):
-        @deprecated(
-            "Deprecated since Python 3.13; will be removed in Python 3.15. "
-            "Use `os.path.isreserved()` to detect reserved paths on Windows."
-        )
-        def is_reserved(self) -> bool: ...
-    else:
-        def is_reserved(self) -> bool: ...
+    if sys.version_info < (3, 15):
+        if sys.version_info >= (3, 13):
+            @deprecated(
+                "Deprecated since Python 3.13; will be removed in Python 3.15. "
+                "Use `os.path.isreserved()` to detect reserved paths on Windows."
+            )
+            def is_reserved(self) -> bool: ...
+        else:
+            def is_reserved(self) -> bool: ...
     if sys.version_info >= (3, 14):
         def is_relative_to(self, other: StrPath) -> bool: ...
     else:
@@ -208,18 +213,22 @@ class Path(PurePath):
     if sys.version_info >= (3, 14):
         @property
         def info(self) -> PathInfo: ...
+
         @overload
         def move_into(self, target_dir: _PathT) -> _PathT: ...  # type: ignore[overload-overlap]
         @overload
         def move_into(self, target_dir: StrPath) -> Self: ...  # type: ignore[overload-overlap]
+
         @overload
         def move(self, target: _PathT) -> _PathT: ...  # type: ignore[overload-overlap]
         @overload
         def move(self, target: StrPath) -> Self: ...  # type: ignore[overload-overlap]
+
         @overload
         def copy_into(self, target_dir: _PathT, *, follow_symlinks: bool = True, preserve_metadata: bool = False) -> _PathT: ...  # type: ignore[overload-overlap]
         @overload
         def copy_into(self, target_dir: StrPath, *, follow_symlinks: bool = True, preserve_metadata: bool = False) -> Self: ...  # type: ignore[overload-overlap]
+
         @overload
         def copy(self, target: _PathT, *, follow_symlinks: bool = True, preserve_metadata: bool = False) -> _PathT: ...  # type: ignore[overload-overlap]
         @overload

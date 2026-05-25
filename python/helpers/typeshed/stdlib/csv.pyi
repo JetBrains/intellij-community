@@ -76,6 +76,7 @@ class DictReader(Generic[_T]):
     reader: Reader
     dialect: _DialectLike
     line_num: int
+
     @overload
     def __init__(
         self,
@@ -112,6 +113,7 @@ class DictReader(Generic[_T]):
         quoting: _QuotingType = 0,
         strict: bool = False,
     ) -> None: ...
+
     def __iter__(self) -> Self: ...
     def __next__(self) -> dict[_T | Any, str | Any]: ...
     if sys.version_info >= (3, 12):

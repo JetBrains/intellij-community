@@ -4,7 +4,7 @@ package com.intellij.devkit.compose.preview
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -92,7 +92,7 @@ internal class ComposePreviewChangesTracker(val project: Project, val coroutineS
       merge(changesFlow, manualRefreshFlow)
         .conflate() // drop older refreshes, there is no need to process them
         .collect { (_, virtualFile) ->
-          writeAction {
+          edtWriteAction {
             PsiDocumentManager.getInstance(project).commitAllDocuments()
             FileDocumentManager.getInstance().saveAllDocuments()
           }

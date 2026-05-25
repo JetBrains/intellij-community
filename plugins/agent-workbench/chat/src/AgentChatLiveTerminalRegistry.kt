@@ -3,11 +3,14 @@
 
 package com.intellij.agent.workbench.chat
 
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -16,6 +19,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.VirtualFile
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -26,6 +30,8 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.milliseconds
+
+private val LOG = logger<AgentChatLiveTerminalRegistryService>()
 
 /**
  * Keeps the live terminal session bound to the logical chat tab identified by [AgentChatVirtualFile.tabKey].
@@ -66,8 +72,11 @@ internal class AgentChatLiveTerminalRegistryService(
             val chatFile = file as? AgentChatVirtualFile ?: return
             when (store.handleFileClosed(project = project, source = source, file = chatFile)) {
               AgentChatLiveTerminalCloseResult.DEFERRED -> schedulePendingCloseConfirmation(source = source, file = chatFile)
-              AgentChatLiveTerminalCloseResult.KEPT_OPEN, AgentChatLiveTerminalCloseResult.CLOSED ->
+              AgentChatLiveTerminalCloseResult.KEPT_OPEN -> cancelPendingCloseJob(chatFile.tabKey)
+              AgentChatLiveTerminalCloseResult.CLOSED -> {
                 cancelPendingCloseJob(chatFile.tabKey)
+                archiveClosedTerminalSession(chatFile)
+              }
             }
           }
         }
@@ -122,7 +131,9 @@ internal class AgentChatLiveTerminalRegistryService(
 
       withContext(Dispatchers.EDT) {
         if (!project.isDisposed) {
-          store.confirmPendingClose(project = project, source = source, file = file)
+          if (store.confirmPendingClose(project = project, source = source, file = file) == AgentChatLiveTerminalCloseResult.CLOSED) {
+            archiveClosedTerminalSession(file)
+          }
         }
       }
     }
@@ -140,6 +151,35 @@ internal class AgentChatLiveTerminalRegistryService(
   private fun cancelPendingCloseJob(tabKey: String) {
     pendingCloseJobs.remove(tabKey)?.cancel()
   }
+
+  private fun archiveClosedTerminalSession(file: AgentChatVirtualFile) {
+    if (!shouldArchiveTerminalSessionOnLastEditorClose(file)) {
+      return
+    }
+    serviceScope.launch {
+      val descriptor = AgentSessionProviders.find(AgentSessionProvider.TERMINAL)
+      if (descriptor == null || !descriptor.supportsArchiveThread) {
+        return@launch
+      }
+      try {
+        descriptor.archiveThread(path = file.projectPath, threadId = file.threadId)
+      }
+      catch (t: Throwable) {
+        if (t is CancellationException) {
+          throw t
+        }
+        LOG.warn("Failed to archive closed terminal session ${file.threadId}", t)
+      }
+    }
+  }
+}
+
+internal fun shouldArchiveTerminalSessionOnLastEditorClose(file: AgentChatVirtualFile): Boolean {
+  return file.provider == AgentSessionProvider.TERMINAL &&
+         !file.isPendingThread &&
+         file.subAgentId == null &&
+         file.projectPath.isNotBlank() &&
+         file.threadId.isNotBlank()
 }
 
 private object AgentChatLiveTerminalApplicationStore {

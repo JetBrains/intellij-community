@@ -1412,6 +1412,10 @@
         <synonym text="Exit Tremble Dumb Mode"/>
         <synonym text="Enter Tremble Dumb Mode"/>
       </action>
+      <action id="IoFlooding" class="com.intellij.internal.IoFloodingAction" internal="true">
+        <synonym text="Stop IO Flooding"/>
+        <synonym text="Start IO Flooding"/>
+      </action>
       <action id="ShowPoweredProgress" internal="true"
               class="com.intellij.internal.ShowPoweredProgressAction"
               text="Show Powered Progress"/>

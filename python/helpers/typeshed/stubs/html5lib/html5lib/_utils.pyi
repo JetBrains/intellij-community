@@ -19,10 +19,12 @@ _V = TypeVar("_V")
 
 class MethodDispatcher(dict[_K, _V]):
     default: _V | None
+
     @overload  # to solve `reportInvalidTypeVarUse`
     def __init__(self) -> None: ...
     @overload
     def __init__(self, items: Iterable[tuple[_K | Iterable[_K], _V]]) -> None: ...
+
     def __getitem__(self, key: _K) -> _V | None: ...  # type: ignore[override]
     def __get__(self, instance, owner: Unused = None) -> BoundMethodDispatcher: ...
 

@@ -9039,6 +9039,9 @@ a:com.intellij.ui.popup.HintUpdateSupply
 - registerHint(com.intellij.openapi.ui.popup.JBPopup):V
 - shouldUpdateHint():Z
 - updateHint(com.intellij.psi.PsiElement):V
+com.intellij.ui.popup.PopupOwner
+- a:getBestPopupPosition():java.awt.Point
+- getPopupComponent():javax.swing.JComponent
 a:com.intellij.ui.popup.PopupUpdateProcessorBase
 - com.intellij.openapi.ui.popup.JBPopupListener
 - <init>():V

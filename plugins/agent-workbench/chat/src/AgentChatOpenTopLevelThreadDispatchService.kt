@@ -33,6 +33,7 @@ internal class AgentChatOpenTopLevelThreadDispatchService : AgentOpenTopLevelThr
       subAgentId = null,
       threadActivity = openEntry.file.threadActivity,
       initialMessageDispatchPlan = initialMessageDispatchPlan,
+      startupLaunchSpec = launchSpec,
     )
     return true
   }

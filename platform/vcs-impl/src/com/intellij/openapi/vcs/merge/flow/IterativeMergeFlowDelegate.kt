@@ -176,7 +176,7 @@ internal class IterativeMergeFlowDelegate(
       // If the width is smaller than this, then buttons don't render properly
       minimumSize = JBUI.size(550, 240)
 
-      preferredSize = JBUI.size(preferredSize.width, if (files.size <= 6) 400 else 500)
+      preferredSize = JBUI.size(850, if (files.size <= 6) 400 else 500)
     }
   }
 
@@ -347,7 +347,7 @@ internal class IterativeMergeFlowDelegate(
     grouping: ChangesGroupingPolicyFactory,
     unresolvedFiles: List<VirtualFile>,
   ): DefaultTreeModel {
-    val resolvedFiles = iterativeDataHolder.getResolvedFiles()
+    val resolvedFiles = iterativeDataHolder.getResolvedFilesAndModels().keys
     val unresolvedFiles = unresolvedFiles - resolvedFiles
     val unresolvedNode = ConflictsGroupNode(ConflictsNodeType.UNRESOLVED)
     val resolvedNode = ConflictsGroupNode(ConflictsNodeType.RESOLVED)
@@ -536,6 +536,7 @@ private data class ColoredString(val value: @Nls String, val background: JBColor
 private data class ButtonRectKey(val row: Int, val column: Int)
 
 private const val ROW_HEIGHT = 28
+private const val MIN_COLUMN_WIDTH = 160
 
 private fun MergeConflictsTreeTable.installButtonRenderer(
   iterativeDataHolder: MergeConflictIterativeDataHolder,
@@ -544,8 +545,6 @@ private fun MergeConflictsTreeTable.installButtonRenderer(
 ) {
   // Default is 22, need to make it a tiny bit bigger so the button is nicely shown
   tree.rowHeight = JBUI.scale(ROW_HEIGHT)
-  // If smaller than this, the buttons are not rendered properly
-  minimumColumnWidth = JBUI.scale(188)
 
   val inlineButtonRects = mutableMapOf<ButtonRectKey, Rectangle>()
   val table = this
@@ -557,8 +556,15 @@ private fun MergeConflictsTreeTable.installButtonRenderer(
                                             inlineButtonRects,
                                             getHoveredRow = { TableHoverListener.getHoveredRow(table) })
   val colCount = table.columnModel.columnCount
-  if (colCount > 1) table.columnModel.getColumn(1).cellRenderer = inlineRenderer
-  if (colCount > 2) table.columnModel.getColumn(2).cellRenderer = inlineRenderer
+  val minColumnWidth = JBUI.scale(MIN_COLUMN_WIDTH)
+  if (colCount > 1) table.columnModel.getColumn(1).apply {
+    cellRenderer = inlineRenderer
+    minWidth = minColumnWidth
+  }
+  if (colCount > 2) table.columnModel.getColumn(2).apply {
+    cellRenderer = inlineRenderer
+    minWidth = minColumnWidth
+  }
 
   // Click handler: trigger only if the click is inside the cached button rect
   table.addMouseListener(object : MouseAdapter() {
@@ -628,6 +634,8 @@ private class InlineButtonRenderer(
         putClientProperty("ActionToolbar.smallVariant", true)
       }.component
     }
+  }.apply {
+    border = JBUI.Borders.emptyLeft(6)
   }
 
   override fun getTableCellRendererComponent(

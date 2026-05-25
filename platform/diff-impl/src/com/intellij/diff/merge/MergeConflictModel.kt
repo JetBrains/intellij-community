@@ -66,6 +66,13 @@ class MergeConflictModel(
   var wasReviewed: Boolean = false
     private set
 
+  /**
+   * Tracks how this file's conflicts were resolved (e.g. accepted left, accepted right, or merged manually = null).
+   * Used by the iterative merge dialog to determine the correct VCS resolution when finalizing
+   * (e.g. `git add` for merged files vs `git rm` for files where the deleted side was accepted).
+   */
+  var chosenSide: Side? = null
+
   @RequiresBlockingContext
   @Throws(DiffTooBigException::class, InvalidDiffRequestException::class)
   fun rediffBlocking(
@@ -255,7 +262,7 @@ class MergeConflictModel(
   }
 
   @RequiresWriteLock
-  fun replaceWithNewContent(index: Int, newContent: CharSequence): LineRange {
+  private fun replaceWithNewContent(index: Int, newContent: CharSequence): LineRange {
     val change = getByIndex(index)
     val newContentLines: Array<String> = LineTokenizer.tokenize(newContent, false)
     resultModel.replaceChange(change.index, listOf(*newContentLines))
@@ -316,8 +323,9 @@ class MergeConflictModel(
   }
 
   @RequiresWriteLock
-  fun replaceAllChanges(side: Side) {
+  private fun replaceAllChanges(side: Side) {
     getAllChanges().forEach { change: TextMergeChange -> replaceChange(change.index, side, true) }
+    chosenSide = side
   }
 
   @RequiresWriteLock

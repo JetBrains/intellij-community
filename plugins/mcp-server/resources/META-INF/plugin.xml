@@ -27,8 +27,10 @@
     <module name="intellij.libraries.ktor.server.cio"/>
     <module name="intellij.libraries.ktor.client.cio"/>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.backend"/>
     <module name="intellij.platform.compose"/>
     <module name="intellij.platform.vcs.impl"/>
+    <module name="intellij.terminal.frontend"/>
     <!-- endregion -->
   </dependencies>
   <!--suppress PluginXmlValidity -->

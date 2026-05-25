@@ -16,6 +16,7 @@ import com.intellij.platform.structureView.impl.uiModel.StructureUiTreeElement
 import com.intellij.platform.structureView.frontend.uiModel.StructureUiTreeElementImpl.Companion.toUiElement
 import com.intellij.platform.structureView.impl.dto.StructureViewTreeElementDto
 import com.intellij.openapi.diagnostic.rethrowControlFlowException
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.structureView.impl.dto.NodeProviderNodesDto
 import com.intellij.platform.structureView.impl.dto.StructureViewDtoId
 import com.intellij.platform.util.coroutines.childScope
@@ -31,6 +32,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 
@@ -121,23 +123,35 @@ internal class StructureUiModelImpl : StructureUiModel {
     myEnabledActionNames.addAll(myActions.filter {
       it.isReverted != it.isEnabledByDefault
     }.map { it.name })
+    logger.trace { "StructureUiModelImpl[$dtoId]: initialized actions; enabledActions=${myEnabledActionNames}" }
 
     model.nodes.toFlow().collect { nodesUpdate ->
       if (nodesUpdate == null) {
         return@collect
       }
 
+      val updateStartTime = System.nanoTime()
+      logger.trace { "StructureUiModelImpl[$dtoId]: nodes update received" }
+
       applyNodesModel(model.rootNode,
                       nodesUpdate.nodeProviders,
                       nodesUpdate.nodes,
                       nodesUpdate.editorSelectionId)
+      logger.trace {
+        "StructureUiModelImpl[$dtoId]: applied nodes update in ${(System.nanoTime() - updateStartTime).asTraceDuration()}"
+      }
 
+      val uiNotifyStartTime = System.nanoTime()
       withContext(Dispatchers.UI) {
         myModelListeners.forEach { it.onActionsChanged() }
         myModelListeners.forEach { it.onTreeChanged() }
         myUpdatePendingFlow.value = false
       }
+      logger.trace {
+        "StructureUiModelImpl[$dtoId]: notified listeners for nodes update in ${(System.nanoTime() - uiNotifyStartTime).asTraceDuration()}"
+      }
 
+      val deferredAwaitStartTime = System.nanoTime()
       val deferredNodes = try {
         nodesUpdate.deferredProviderNodes.await()
       }
@@ -148,12 +162,22 @@ internal class StructureUiModelImpl : StructureUiModel {
         logger.error("Error computing provider nodes", e)
         return@collect
       }
+      logger.trace {
+        "StructureUiModelImpl[$dtoId]: deferred provider await for nodes update completed in " +
+        "${(System.nanoTime() - deferredAwaitStartTime).asTraceDuration()}; " +
+        "deferredProviders=${deferredNodes?.nodeProviders?.size ?: 0}, "
+      }
 
       if (deferredNodes != null) {
+        val deferredApplyStartTime = System.nanoTime()
         applyNodesModel(model.rootNode,
                         deferredNodes.nodeProviders,
                         deferredNodes.nodes,
                         nodesUpdate.editorSelectionId)
+        logger.trace {
+          "StructureUiModelImpl[$dtoId]: applied deferred provider nodes for update in " +
+          (System.nanoTime() - deferredApplyStartTime).asTraceDuration()
+        }
       }
 
       // If an incomplete node provider was enabled while waiting for deferred nodes, rebuild tree now
@@ -166,6 +190,9 @@ internal class StructureUiModelImpl : StructureUiModel {
           myModelListeners.forEach { it.onTreeChanged() }
           myUpdatePendingFlow.value = false
         }
+      }
+      logger.trace {
+        "StructureUiModelImpl[$dtoId]: nodes update completed in ${(System.nanoTime() - updateStartTime).asTraceDuration()}"
       }
     }
   }
@@ -218,6 +245,7 @@ internal class StructureUiModelImpl : StructureUiModel {
     nodes: List<StructureViewTreeElementDto>,
     editorSelectionId: Int?,
   ) {
+    val applyStartTime = System.nanoTime()
     var selectionElement: StructureUiTreeElement? = null
 
     for (providerDto in nodeProviders) {
@@ -252,6 +280,10 @@ internal class StructureUiModelImpl : StructureUiModel {
 
     rootElement.setDelegate(rootNode)
     selection.value = selectionElement
+    logger.trace {
+      "StructureUiModelImpl[$dtoId]: applyNodesModel completed in ${(System.nanoTime() - applyStartTime).asTraceDuration()}; " +
+      "nodes=${nodes.size}, providers=${nodeProviders.size}, providerNodes=${nodeProviders.sumOf { it.nodes.size }}, selection=${selectionElement?.id}"
+    }
   }
 
   override fun getActions(): Collection<StructureTreeAction> = myActions
@@ -326,4 +358,8 @@ internal class StructureUiModelImpl : StructureUiModel {
     private var nextId = AtomicInteger(1)
     private val logger = logger<StructureUiModelImpl>()
   }
+}
+
+private fun Long.asTraceDuration(): String {
+  return "${TimeUnit.NANOSECONDS.toMillis(this)} ms"
 }

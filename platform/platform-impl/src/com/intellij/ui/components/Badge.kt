@@ -8,7 +8,6 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.components.Badge.ColorType
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBFont
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Component
 import java.awt.Font
@@ -22,7 +21,7 @@ import javax.swing.Icon
 /**
  * A pill-shaped badge [Icon] that renders [text] over a colored background.
  *
- * Use the predefined fields [new], [alpha], [beta], [trial]
+ * Use the predefined fields [new], [alpha], [beta], [trial], [free]
  * for common badge types, or construct directly with a custom [text] and [colorType].
  *
  * Colors are resolved from `Badge.*` theme keys (see `IntelliJPlatform.themeMetadata.json`).
@@ -32,7 +31,6 @@ import javax.swing.Icon
  * @param text the localized label displayed inside the badge
  * @param colorType the color variant to use (default: [ColorType.BLUE_SECONDARY])
  */
-@ApiStatus.Internal
 class Badge(
   var text: @NlsContexts.Label String,
   var colorType: ColorType = ColorType.BLUE_SECONDARY,
@@ -62,6 +60,12 @@ class Badge(
 
     @JvmStatic
     val trialDisabled: Icon = ImmutableBadge(IdeBundle.message("badge.text.trial"), ColorType.GREEN_SECONDARY, false)
+
+    @JvmStatic
+    val free: Icon = ImmutableBadge(IdeBundle.message("badge.text.free"), ColorType.GREEN)
+
+    @JvmStatic
+    val freeDisabled: Icon = ImmutableBadge(IdeBundle.message("badge.text.free"), ColorType.GREEN, false)
   }
 
   /**
@@ -70,7 +74,6 @@ class Badge(
    * Each type maps to a pair of background/foreground theme colors
    * resolved via `Badge.*` UI keys (e.g. `Badge.blueBackground`).
    */
-  @ApiStatus.Internal
   enum class ColorType {
     BLUE,
     BLUE_SECONDARY,

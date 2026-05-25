@@ -8,8 +8,8 @@ import com.intellij.AbstractBundle
 import com.intellij.DynamicBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IconLayerProvider
-import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginUtils
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.plugins.contentModules
 import com.intellij.openapi.application.ApplicationManager
@@ -277,9 +277,7 @@ class CoreIconManager : IconManager, CoreAwareIconManager {
   }
 
   override fun getClassLoaderByClassName(className: String): ClassLoader? {
-    val pluginId = PluginManager.getPluginByClassNameAsNoAccessToClass(className)
-    val plugin = PluginManagerCore.getPlugin(pluginId)
-    return plugin?.classLoader
+    return PluginUtils.getPluginDescriptorOrPlatformByClassName(className)?.pluginClassLoader
   }
 
   companion object {

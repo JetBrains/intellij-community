@@ -30,7 +30,6 @@ import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
-import com.jetbrains.python.sdk.persist
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
@@ -133,7 +132,6 @@ class PyVirtualEnvTerminalCustomizerTest {
         val envDir = venvPath.resolve("some_path_with_underscores")
         val sdk = createCondaEnv(condaEnv, envDir).createSdkFromThisEnv(null, emptyList()).getOrThrow()
         sdkToDelete = sdk
-        sdk.persist()
         moduleFixture.get().pythonSdk = sdk
         Pair(Path(sdk.homePath!!), envDir.toRealPath().pathString)
       }

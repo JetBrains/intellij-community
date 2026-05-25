@@ -10,7 +10,7 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
 import com.intellij.java.workspace.entities.javaSourceRoots
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.project.Project
@@ -113,7 +113,7 @@ abstract class AbstractAllIntellijEntitiesGenerationTest {
     CodeGeneratorVersions.checkImplInImpl = false
 
     val jdk = IdeaTestUtil.getMockJdk21()
-    writeAction {
+    edtWriteAction {
       ProjectJdkTable.getInstance().addJdk(jdk, disposable.get())
     }
 
@@ -139,7 +139,7 @@ abstract class AbstractAllIntellijEntitiesGenerationTest {
     LibrariesRequiredForWorkspace.workspaceJpsEntities.add(model)
     LibrariesRequiredForWorkspace.jetbrainsAnnotations.add(model)
 
-    writeAction {
+    edtWriteAction {
       model.sdk = jdk
       model.commit()
     }
@@ -222,7 +222,7 @@ abstract class AbstractAllIntellijEntitiesGenerationTest {
     val ultimateSourceRootPath =
       VirtualFileManager.getInstance().refreshAndFindFileByNioPath(Path.of(ultimateSourceRoot.url.presentableUrl))!!
 
-    writeAction {
+    edtWriteAction {
       VfsUtil.copyDirectory(this, ultimateSourceRootPath, actualSrcRoot, null)
     }
 
@@ -233,7 +233,7 @@ abstract class AbstractAllIntellijEntitiesGenerationTest {
 
     val testProjectModule = project.modules[0]
     if (libraries.isNotEmpty()) {
-      writeAction {
+      edtWriteAction {
         ModuleRootModificationUtil.updateModel(testProjectModule) { model ->
           for (library in libraries) {
             library.add(model)
@@ -268,7 +268,7 @@ abstract class AbstractAllIntellijEntitiesGenerationTest {
     EditorConfigCodeStyleSettingsModifier.Handler.setEnabledInTests(true)
     Utils.isEnabledInTests = true
 
-    writeAction {
+    edtWriteAction {
       // .idea/codeStyles contains default code style that is used for parameters not defined in editorconfig
       val ultimateRoot = VfsUtil.findFile(Path.of(IdeaTestExecutionPolicy.getHomePathWithPolicy()), true)!!
       VfsUtil.copyDirectory(this, ultimateRoot.findDirectory(".idea/codeStyles")!!, projectRoot.findOrCreateDirectory(".idea/codeStyles"), null)
@@ -286,7 +286,7 @@ abstract class AbstractAllIntellijEntitiesGenerationTest {
     newSrcRoot: VirtualFile,
     newGenRoot: VirtualFile,
   ): Boolean {
-    return writeAction {
+    return edtWriteAction {
       var storageChanged = false
 
       val ultimateGenSourceRoot = findGenSourceRoot(ultimateSourceRoot)
