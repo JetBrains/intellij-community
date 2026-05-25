@@ -770,6 +770,16 @@ class AgentChatFileEditorLifecycleTest {
   }
 
   @Test
+  fun lastEditorCloseArchivesConcreteTerminalSessionOnly() {
+    assertThat(shouldArchiveTerminalSessionOnLastEditorClose(terminalLifecycleTestFile()))
+      .isTrue()
+    assertThat(shouldArchiveTerminalSessionOnLastEditorClose(claudeLifecycleTestFile()))
+      .isFalse()
+    assertThat(shouldArchiveTerminalSessionOnLastEditorClose(pendingTestFile(provider = AgentSessionProvider.TERMINAL)))
+      .isFalse()
+  }
+
+  @Test
   fun acquireOrCreateClearsPendingCloseAndReusesInitializedTerminalTab() {
     val project = testProject()
     val terminalTabs = FakeAgentChatTerminalTabs()
@@ -2036,6 +2046,15 @@ private fun claudeLifecycleTestFile(): AgentChatVirtualFile {
     threadIdentity = "CLAUDE:session-1",
     shellCommand = listOf("claude", "--resume", "session-1"),
   )
+}
+
+private fun terminalLifecycleTestFile(): AgentChatVirtualFile {
+  return testFile(
+    threadIdentity = buildAgentThreadIdentity(AgentSessionProvider.TERMINAL.value, "terminal-1"),
+    shellCommand = emptyList(),
+  ).also { file ->
+    file.updateThreadId("terminal-1")
+  }
 }
 
 private fun testEditor(

@@ -625,7 +625,7 @@ class AgentSessionLaunchService internal constructor(
           return@launchDropAction
         }
         descriptor.onConversationOpened()
-        if (updateGeneralProviderPreferences) {
+        if (updateGeneralProviderPreferences && descriptor.supportsPromptLaunch) {
           uiPreferencesState.updateProviderPreferencesOnLaunch(provider, mode, initialMessageRequest)
         }
 
@@ -735,7 +735,7 @@ class AgentSessionLaunchService internal constructor(
       return AgentDeferredNewSessionLaunchResult(error = AgentPromptLaunchError.PROVIDER_UNAVAILABLE)
     }
     descriptor.onConversationOpened()
-    if (updateGeneralProviderPreferences) {
+    if (updateGeneralProviderPreferences && descriptor.supportsPromptLaunch) {
       uiPreferencesState.updateProviderPreferencesOnLaunch(provider, mode, initialMessageRequest = null)
     }
 

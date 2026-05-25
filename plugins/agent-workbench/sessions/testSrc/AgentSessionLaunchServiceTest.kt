@@ -250,6 +250,46 @@ class AgentSessionLaunchServiceTest {
   }
 
   @Test
+  fun createNewSessionDoesNotUpdateLastUsedProviderForProviderWithoutPromptLaunchSupport() {
+    val descriptor = TestAgentSessionProviderDescriptor(
+      provider = AgentSessionProvider.TERMINAL,
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = true,
+      supportsPromptLaunch = false,
+    )
+    val chatOpenExecutor = RecordingChatOpenExecutor()
+    val uiPreferencesState = AgentSessionUiPreferencesStateService().also { preferences ->
+      preferences.updateProviderPreferencesOnLaunch(
+        provider = AgentSessionProvider.CODEX,
+        launchMode = AgentSessionLaunchMode.STANDARD,
+        initialMessageRequest = null,
+      )
+    }
+
+    AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(descriptor))) {
+      runBlocking(Dispatchers.Default) {
+        withTestServiceAndLaunch(
+          sessionSourcesProvider = { listOf(descriptor.sessionSource) },
+          projectEntriesProvider = { listOf(openTestProjectEntry(PROJECT_PATH, "Project A")) },
+          uiPreferencesState = uiPreferencesState,
+          chatOpenExecutor = chatOpenExecutor,
+        ) { _, launchService ->
+          launchService.createNewSession(
+            path = PROJECT_PATH,
+            provider = AgentSessionProvider.TERMINAL,
+            entryPoint = AgentWorkbenchEntryPoint.TREE_ROW,
+          )
+
+          waitForCondition { chatOpenExecutor.openNewChatCalls.get() == 1 }
+
+          assertThat(uiPreferencesState.getLastUsedProvider()).isEqualTo(AgentSessionProvider.CODEX)
+          assertThat(uiPreferencesState.getLastUsedLaunchMode()).isEqualTo(AgentSessionLaunchMode.STANDARD)
+        }
+      }
+    }
+  }
+
+  @Test
   fun createNewSessionUsesPreallocatedLaunchSpecSessionIdAsConcreteIdentity() {
     val provider = AgentSessionProvider.CLAUDE
     val preallocatedSessionId = "a174b4df-e942-49fe-bb30-8b5f8e7f4857"

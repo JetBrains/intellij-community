@@ -51,6 +51,12 @@ Agent Workbench can start a regular IDE Terminal shell from the same new-thread 
 - Terminal must not be offered as a global prompt provider because prompt submissions are not dispatched to terminal sessions.
   [@test] ../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
 
+- New terminal-session launches must not update the shared last-used provider or launch-mode preferences used by prompt-capable agent quick-start actions.
+  [@test] ../sessions/testSrc/AgentSessionLaunchServiceTest.kt
+
+- Closing the last open editor copy of a concrete terminal session must archive that terminal session. Pending terminal tabs, non-terminal providers, and project disposal must not be treated as terminal archive requests.
+  [@test] ../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
+
 - New-thread UI and provider menus must remain provider-generic. Terminal-specific action text, tooltip text, menu description, and new-tab title must come from descriptor bundle keys.
   [@test] ../sessions-actions/testSrc/AgentSessionsMainToolbarNewThreadActionsTest.kt
 
