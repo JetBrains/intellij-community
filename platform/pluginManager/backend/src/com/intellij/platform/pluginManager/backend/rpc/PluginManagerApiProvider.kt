@@ -2,6 +2,7 @@
 package com.intellij.platform.pluginManager.backend.rpc
 
 import com.intellij.openapi.util.IntellijInternalApi
+import com.intellij.platform.pluginManager.shared.rpc.PluginErrorReporterApi
 import com.intellij.platform.pluginManager.shared.rpc.PluginInstallerApi
 import com.intellij.platform.pluginManager.shared.rpc.PluginManagerApi
 import com.intellij.platform.pluginManager.shared.rpc.PluginUpdaterApi
@@ -23,6 +24,10 @@ internal class PluginManagerApiProvider : RemoteApiProvider {
 
     remoteApi(remoteApiDescriptor<PluginUpdaterApi>()) {
       BackendPluginUpdaterApi()
+    }
+
+    remoteApi(remoteApiDescriptor<PluginErrorReporterApi>()) {
+      BackendPluginErrorReporterApi()
     }
   }
 }

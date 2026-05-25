@@ -331,6 +331,9 @@
     <extensionPoint name="search.additionalOptionsLocation" interface="com.intellij.ide.ui.search.SearchableOptionsRegistrar$AdditionalLocationProvider" dynamic="true"/>
 
     <extensionPoint name="pluginReplacement" interface="com.intellij.ide.plugins.PluginReplacement" dynamic="true"/>
+    <extensionPoint name="pluginInitializationErrorHandler"
+                    interface="com.intellij.ide.plugins.PluginInitializationErrorHandler"
+                    dynamic="true"/>
     <extensionPoint name="pluginSuggestionProvider" dynamic="true"
                     interface="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginSuggestionProvider"/>
 

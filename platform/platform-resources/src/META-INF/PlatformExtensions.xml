@@ -209,6 +209,8 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
     <applicationService serviceInterface="com.intellij.openapi.updateSettings.impl.PluginUpdateHandlerProvider"
                         serviceImplementation="com.intellij.openapi.updateSettings.impl.DefaultPluginUpdateHandlerProvider" open="true"/>
 
+    <pluginInitializationErrorHandler implementation="com.intellij.ide.plugins.DefaultPluginInitializationErrorHandler"/>
+
     <applicationService serviceInterface="com.intellij.execution.wsl.WslDistributionManager"
                         serviceImplementation="com.intellij.execution.wsl.WslDistributionManagerImpl"/>
     <applicationService serviceInterface="com.intellij.execution.wsl.WslIjentAvailabilityService" open="true"
@@ -1921,7 +1923,7 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
                  description="Capture all threads including sleeping and blocked (wall-clock mode)"/>
 
     <applicationActivity implementation="com.intellij.internal.DumpPluginDescriptorsOnAppStartTrigger"/>
-    <applicationActivity implementation="com.intellij.ide.plugins.PluginInitializationErrorReporterStartupTrigger"/>
+    <applicationActivity implementation="com.intellij.ide.plugins.PluginInitializationErrorReporterStartupActivity"/>
 
     <registryKey key="search.everywhere.footer.extended.info"
                  defaultValue="true"
