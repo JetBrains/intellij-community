@@ -47,8 +47,8 @@ class AdminSite:
     def check(self, app_configs: Sequence[AppConfig] | None) -> list[CheckMessage]: ...
     def register(
         self,
-        model_or_iterable: type[Model] | Iterable[type[Model]],
-        admin_class: type[ModelAdmin[Model]] | None = ...,
+        model_or_iterable: type[_ModelT] | Iterable[type[_ModelT]],
+        admin_class: type[ModelAdmin[_ModelT]] | None = ...,
         **options: Any,
     ) -> None: ...
     def unregister(self, model_or_iterable: type[Model] | Iterable[type[Model]]) -> None: ...

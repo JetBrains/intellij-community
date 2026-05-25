@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from typing import Any, TypeAlias, overload
 
+from django.utils.functional import _StrOrPromise
 from typing_extensions import Self, TypeVar, override
 
 _SD = TypeVar("_SD", bound=SafeData)
@@ -24,4 +25,4 @@ def mark_safe(s: _SD) -> _SD: ...
 @overload
 def mark_safe(s: _C) -> _C: ...
 @overload
-def mark_safe(s: str) -> SafeString: ...
+def mark_safe(s: _StrOrPromise) -> SafeString: ...
