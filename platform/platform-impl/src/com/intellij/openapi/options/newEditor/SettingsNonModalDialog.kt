@@ -5,6 +5,7 @@ import com.intellij.CommonBundle
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.SaveAndSyncHandler
+import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.newui.EventHandler
 import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.DataSink
@@ -13,10 +14,13 @@ import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableGroup
 import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil
+import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.ProjectManager
@@ -83,6 +87,8 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
 ) : NonModalWindowWrapper(project, FLOAT_MODE_KEY, DIMENSION_KEY) {
 
   companion object {
+    private val LOG = logger<SettingsNonModalDialog>()
+
     /** Stored preference key: `true` = Float mode, `false` = Window mode. Default: Float. */
     private const val FLOAT_MODE_KEY = "ide.settings.window.float"
 
@@ -238,10 +244,13 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
     pm.addProjectManagerListener(vetoer)
     Disposer.register(frameDisposable) { pm.removeProjectManagerListener(vetoer) }
 
-    // Veto IDE exit if there are unsaved settings changes.
+    // Veto IDE exit / restart if there are unsaved settings changes.
+    // canRestartApplication defaults to canExitApplication, and the plugin-only filter
+    // lives inside promptUnsavedChangesOrCancel, so both restart and exit are covered.
     ApplicationManagerEx.getApplicationEx().addApplicationListener(object : ApplicationListener {
-      override fun canExitApplication(): Boolean =
-        promptUnsavedChangesOrCancel(ApplicationBundle.message("settings.close.application.unsaved.message"))
+      override fun canExitApplication(): Boolean {
+        return promptUnsavedChangesOrCancel(ApplicationBundle.message("settings.close.application.unsaved.message"))
+      }
     }, frameDisposable)
   }
 
@@ -286,6 +295,18 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
    */
   private fun promptUnsavedChangesOrCancel(@NlsContexts.DialogMessage message: String): Boolean {
     if (!editor.isModified) return true
+    val modified = editor.modifiedConfigurables
+    // If only the Plugins page is "modified", skip the prompt — plugin installs are
+    // committed by MyPluginModel via its own apply path, and the editor's "modified"
+    // state is an artifact of MyPluginModel.needRestart. There's no meaningful
+    // Apply/Don't Save action for plugin-only state
+    val hasNonPluginChanges = modified.any {
+      ConfigurableWrapper.cast(PluginManagerConfigurable::class.java, it) == null
+    }
+    if (!hasNonPluginChanges) {
+      LOG.info("promptUnsavedChangesOrCancel: only PluginManagerConfigurable modified, skipping prompt")
+      return true
+    }
     return when (Messages.showYesNoCancelDialog(
       activeWindow,
       message,

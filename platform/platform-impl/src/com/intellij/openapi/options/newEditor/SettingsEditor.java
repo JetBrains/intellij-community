@@ -662,6 +662,10 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     return !filter.context.getModified().isEmpty();
   }
 
+  public @NotNull Set<Configurable> getModifiedConfigurables() {
+    return filter.context.getModified();
+  }
+
   /**
    * Calls {@link Configurable#isModified()} on {@code configurable} and returns the result,
    * or {@code null} if the call throws (with a warning logged).
