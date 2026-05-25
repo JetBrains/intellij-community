@@ -155,7 +155,7 @@ internal object TerminalSessionTestUtil {
       descriptor.osFamily.isWindows && descriptor != LocalEelDescriptor,
       "Remote Windows may not support shell integration (latest ConPTY is required)"
     )
-    val javaProcess = shellEelProcess.process
+    val javaProcess = shellEelProcess.ptyProcess
     if (javaProcess is WinPtyProcess || javaProcess is CygwinPtyProcess) {
       Assert.fail("Shell integration on Windows requires ConPTY, but ${javaProcess::class.java} was supplied")
     }

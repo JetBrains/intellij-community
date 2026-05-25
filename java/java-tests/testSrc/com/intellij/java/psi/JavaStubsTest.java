@@ -30,6 +30,7 @@ import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
 import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.java.stubs.index.JavaImplicitClassIndex;
 import com.intellij.psi.impl.source.PsiClassImpl;
@@ -187,6 +188,15 @@ public class JavaStubsTest extends LightJavaCodeInsightFixtureTestCase {
     assertTrue(cls.getFields()[2].isDeprecated());
 
     assertFalse(((PsiFileImpl)cls.getContainingFile()).isContentsLoaded());
+  }
+
+  public void test_malformed_generic_in_implements_list_does_not_cause_stub_AST_mismatch() {
+    PsiJavaFile file = (PsiJavaFile)myFixture.addFileToProject("A.java", """
+      private static class A implements BiConsumer<List<A>, List<A>n>> {}
+      """);
+    PsiReferenceList implementsList = file.getClasses()[0].getImplementsList();
+    // getReferenceElements() always reads from AST; getReferencedTypes() reads via the stub when available.
+    assertEquals(implementsList.getReferenceElements().length, implementsList.getReferencedTypes().length);
   }
 
   public void test_breaking_and_adding_import_does_not_cause_stub_AST_mismatch() {

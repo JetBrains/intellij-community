@@ -6,7 +6,6 @@ import com.intellij.codeInsight.highlighting.HighlightUsagesHandlerFactoryBase
 import com.intellij.find.FindManager
 import com.intellij.find.findUsages.FindUsagesHandler
 import com.intellij.find.impl.FindManagerBase
-import com.intellij.lang.ASTNode
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.util.registry.Registry
@@ -14,6 +13,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.PsiRecursiveVisitor
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
@@ -70,10 +70,10 @@ import org.jetbrains.kotlin.utils.addIfNotNull
 abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBase() {
     private fun getOnReturnOrThrowOrLambdaUsageHandler(editor: Editor, file: PsiFile, target: PsiElement): HighlightUsagesHandlerBase<*>? {
         val expression = when (val parent = target.parent) {
-            is KtNamedFunction -> parent.takeIf { (target as? ASTNode)?.elementType == KtTokens.FUN_KEYWORD }
+            is KtNamedFunction -> parent.takeIf { target.elementType == KtTokens.FUN_KEYWORD }
             is KtPropertyAccessor -> parent
             is KtReturnExpression, is KtThrowExpression -> parent
-            is KtFunctionLiteral -> parent.takeIf { with((target as? ASTNode)?.elementType) { this == KtTokens.LBRACE || this == KtTokens.RBRACE } }
+            is KtFunctionLiteral -> parent.takeIf { target is PsiWhiteSpace || target.elementType == KtTokens.LBRACE || target.elementType == KtTokens.RBRACE }
             is KtLabelReferenceExpression -> PsiTreeUtil.getParentOfType(
                 target, KtReturnExpression::class.java, KtThrowExpression::class.java, KtFunction::class.java
             )?.takeUnless {

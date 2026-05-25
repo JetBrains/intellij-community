@@ -258,101 +258,65 @@ def _get_library_name(lib_el, lib_xml_path):
         fail("<library> missing required 'name' attribute in %s" % lib_xml_path)
     return lib_name
 
+# Direct children of <library> we tolerate. Only <CLASSES> contributes URLs;
+# the rest are ignored content (IDE-only metadata, source/javadoc roots).
+# Anything outside this set — including <jarDirectory> — fails parsing.
+_ALLOWED_LIBRARY_CHILDREN = ("CLASSES", "JAVADOC", "SOURCES", "ANNOTATIONS", "properties")
+
 def _parse_library_element(lib_el, lib_xml_path):
     """Parse a .idea/libraries/*.xml file in a single pass.
 
-    Extracts the library name and all jar URL references from one XML parse.
+    Walks direct children of <library> and asserts each is in a known set;
+    unexpected children fail with a clear message rather than being silently
+    ignored. <CLASSES> roots are required to be <root url="..."/>.
 
     Returns struct with:
       - name: library name from <library name="..."> attribute
       - maven_urls: list of $MAVEN_REPOSITORY$ URLs (for Maven jar targets)
-      - local_urls: list of $PROJECT_DIR$ URLs (for local jar targets, non-directory)
-      - jar_directory_urls: list of $PROJECT_DIR$ directory URLs (need expansion via ctx)
-      - unsupported_urls: list of CLASSES root URLs that this derivation does not understand
+      - local_urls: list of $PROJECT_DIR$ URLs (for local jar targets)
     """
     lib_name = _get_library_name(lib_el, lib_xml_path)
 
-    classes_els = xml.find_elements_by_tag_name(lib_el, "CLASSES")
-    if not classes_els:
-        # No CLASSES is valid for source-only / javadoc-only libraries
-        return struct(name = lib_name, maven_urls = [], local_urls = [], jar_directory_urls = [])
-
-    # Collect jar directory URLs for expansion
-    jar_dir_url_set = {}
-    for jd in xml.find_elements_by_tag_name(lib_el, "jarDirectory"):
-        jd_url = xml.get_attribute(jd, "url")
-        if not jd_url:
-            fail("<jarDirectory> missing required 'url' attribute in library '%s' (%s)" % (lib_name, lib_xml_path))
-        jar_dir_url_set[jd_url] = True
-
     maven_urls = []
     local_urls = []
-    jar_directory_urls = []
-    unsupported_urls = []
 
-    for root_el in xml.find_elements_by_tag_name(classes_els[0], "root"):
-        url = xml.get_attribute(root_el, "url")
-        if not url:
-            fail("<root> missing required 'url' attribute in CLASSES in library '%s' (%s)" % (lib_name, lib_xml_path))
-
-        if "$MAVEN_REPOSITORY$" in url:
-            maven_urls.append(url)
-        elif "$PROJECT_DIR$" in url:
-            # Check if this root URL matches a jarDirectory URL
-            # jarDirectory URLs use file:// scheme, CLASSES roots may use jar:// or file://
-            if url in jar_dir_url_set:
-                jar_directory_urls.append(url)
-            else:
-                local_urls.append(url)
-        else:
-            unsupported_urls.append(url)
+    for child in xml.get_child_elements(lib_el):
+        tag = xml.get_tag_name(child)
+        if tag == "CLASSES":
+            for root_el in xml.get_child_elements(child):
+                root_tag = xml.get_tag_name(root_el)
+                if root_tag != "root":
+                    fail("Unexpected <%s> under <CLASSES> in library '%s' (%s); only <root> is allowed" %
+                         (root_tag, lib_name, lib_xml_path))
+                url = xml.get_attribute(root_el, "url")
+                if not url:
+                    fail("<root> missing required 'url' attribute in CLASSES in library '%s' (%s)" %
+                         (lib_name, lib_xml_path))
+                if "$MAVEN_REPOSITORY$" in url:
+                    maven_urls.append(url)
+                elif "$PROJECT_DIR$" in url:
+                    local_urls.append(url)
+                else:
+                    fail("Unsupported CLASSES root URL in library '%s' (%s): %s" %
+                         (lib_name, lib_xml_path, url))
+        elif tag not in _ALLOWED_LIBRARY_CHILDREN:
+            fail("Unsupported <%s> element in library '%s' (%s); allowed direct children of <library>: %s" %
+                 (tag, lib_name, lib_xml_path, ", ".join(_ALLOWED_LIBRARY_CHILDREN)))
 
     return struct(
         name = lib_name,
         maven_urls = maven_urls,
         local_urls = local_urls,
-        jar_directory_urls = jar_directory_urls,
-        unsupported_urls = unsupported_urls,
     )
 
-def _expand_jar_directory(ctx, project_root, url, context):
-    """Expand a jar directory URL to individual jar file paths.
-
-    Uses ctx.path().readdir() to list jar files, mirroring JPS's
-    JpsOrderRootType.COMPILED resolution of <jarDirectory> elements.
-
-    Args:
-        ctx: repository rule context (for filesystem access)
-        project_root: Path to the project root
-        url: file:// URL with $PROJECT_DIR$
-
-    Returns:
-        list of project-relative jar file paths
-    """
-    rel_path = _extract_project_relative_path(url)
-    if rel_path == None:
-        fail("Expected $PROJECT_DIR$ in %s: %s" % (context, url))
-    rel_path = _normalize_path(rel_path, context)
-
-    dir_path = project_root.get_child(rel_path)
-    jar_files = []
-    for entry in dir_path.readdir():
-        name = str(entry).split("/")[-1]
-        if name.endswith(".jar"):
-            jar_files.append(rel_path + "/" + name)
-
-    return sorted(jar_files)
-
-def derive_library_targets(ctx, project_root, library_xmls, iml_data_list,
+def derive_library_targets(ctx, library_xmls, iml_data_list,
                            is_community_only, community_root_rel):
     """Derive all library jar targets from project and module libraries.
 
     This is the main entry point called from repo rule implementations.
-    It needs ctx for jar directory expansion via filesystem access.
 
     Args:
-        ctx: repository rule context
-        project_root: Path to the project root
+        ctx: repository rule context (used for env var lookup)
         library_xmls: list of structs with (xml_content, xml_rel_path) from .idea/libraries/
         iml_data_list: list of structs with (module_name, iml_dir_rel, iml_rel_path, is_community, parsed_iml)
         is_community_only: whether in community-only mode
@@ -399,9 +363,6 @@ def derive_library_targets(ctx, project_root, library_xmls, iml_data_list,
 
         parsed = _parse_library_element(lib_el, lib_xml.xml_rel_path)
 
-        if parsed.unsupported_urls:
-            fail("Unsupported CLASSES root URL in library '%s' (%s): %s" % (parsed.name, lib_xml.xml_rel_path, parsed.unsupported_urls[0]))
-
         # Determine repo for Maven URLs
         if project_lib_repo != None:
             repo = project_lib_repo
@@ -426,13 +387,6 @@ def derive_library_targets(ctx, project_root, library_xmls, iml_data_list,
             rel_path = _normalize_path(rel_path, "local library URL in %s" % lib_xml.xml_rel_path)
             target = local_path_to_jar_target(rel_path, is_community_only, community_root_rel)
             targets[target] = True
-
-        # Expand jar directories
-        for url in parsed.jar_directory_urls:
-            jar_paths = _expand_jar_directory(ctx, project_root, url, "jarDirectory in %s" % lib_xml.xml_rel_path)
-            for jar_path in jar_paths:
-                target = local_path_to_jar_target(jar_path, is_community_only, community_root_rel)
-                targets[target] = True
 
     # Module-level libraries (from .iml files)
     # Container determined by module's is_community status.

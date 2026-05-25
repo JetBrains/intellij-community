@@ -9,6 +9,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessor
 import com.intellij.psi.util.siblings
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
+import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCustomCodeStyleSettings
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElementFactory
@@ -55,7 +56,7 @@ internal class BlockQuotePostFormatProcessor: PostFormatProcessor {
 
   private fun processParagraph(paragraph: MarkdownParagraph, level: Int) {
     val firstChild = paragraph.firstChild ?: return
-    val elements = firstChild.siblings(forward = true, withSelf = true).filter(this::shouldProcessTextElement)
+    val elements = firstChild.siblings(forward = true, withSelf = true).filter(this::shouldProcessElement)
     for (element in elements) {
       repeat(level) {
         val arrow = MarkdownPsiElementFactory.createBlockQuoteArrow(paragraph.project)
@@ -64,8 +65,9 @@ internal class BlockQuotePostFormatProcessor: PostFormatProcessor {
     }
   }
 
-  private fun shouldProcessTextElement(element: PsiElement): Boolean {
-    return element.hasType(MarkdownTokenTypes.TEXT) && element.prevSibling?.let(MarkdownPsiUtil.WhiteSpaces::isNewLine) == true
+  private fun shouldProcessElement(element: PsiElement): Boolean {
+    if (element.hasType(MarkdownTokenTypes.BLOCK_QUOTE) || element.hasType(MarkdownTokenTypeSets.WHITE_SPACES)) return false
+    return element.prevSibling?.let(MarkdownPsiUtil.WhiteSpaces::isNewLine) == true
   }
 
   private fun processBlockQuote(blockQuote: MarkdownBlockQuote, level: Int = 1) {

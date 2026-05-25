@@ -36,7 +36,6 @@ import com.intellij.ui.content.ContentManager
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.asDisposable
 import com.intellij.util.awaitCancellationAndInvoke
-import com.intellij.util.disposeOnCompletion
 import com.intellij.util.ui.initOnShow
 import com.jediterm.core.util.TermSize
 import kotlinx.coroutines.CompletableDeferred
@@ -78,6 +77,8 @@ internal class TerminalToolWindowTabsManagerImpl(
     get() = mutableTabs.toList()
 
   private var tabsRestoredDeferred: Deferred<Unit> = CompletableDeferred(Unit)
+
+  private val detachedTabs = DetachedTabs(project, coroutineScope)
 
   init {
     project.messageBus.connect(coroutineScope).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
@@ -277,7 +278,7 @@ internal class TerminalToolWindowTabsManagerImpl(
   ) = terminal.coroutineScope.launch {
     val backendTabId = builder.backendTabId ?: TerminalTabsManager.getInstance(project).createNewTerminalTab().id
 
-    excludeTabFromPersistenceOnDetach(terminal, backendTabId)
+    detachedTabs.onTabCreated(terminal, backendTabId)
 
     terminal.coroutineScope.awaitCancellationAndInvoke(Dispatchers.EDT) {
       // Backend terminal session tab lifecycle is not directly bound to the terminal frontend lifecycle.
@@ -302,21 +303,6 @@ internal class TerminalToolWindowTabsManagerImpl(
     )
 
     scheduleSessionStart(terminal, builder, backendTabId)
-  }
-
-  private fun excludeTabFromPersistenceOnDetach(terminal: TerminalView, tabId: Int) {
-    val disposable = Disposer.newDisposable()
-    disposable.disposeOnCompletion(terminal.coroutineScope)
-    project.messageBus.connect(disposable).subscribe(TerminalTabsManagerListener.TOPIC, object : TerminalTabsManagerListener {
-      override fun tabDetached(tab: TerminalToolWindowTab) {
-        if (tab.view == terminal) {
-          coroutineScope.launch {
-            TerminalTabsManager.getInstance(project).detachTerminalTab(tabId)
-          }
-          Disposer.dispose(disposable)
-        }
-      }
-    })
   }
 
   private suspend fun scheduleSessionStart(

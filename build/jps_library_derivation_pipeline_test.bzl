@@ -1,8 +1,7 @@
 """End-to-end pipeline tests for derive_library_targets().
 
 Tests call derive_library_targets() directly with real XML parsing through
-parse_iml() and _parse_library_element(), using minimal fakes for ctx and
-project_root.
+parse_iml() and _parse_library_element(), using a minimal fake ctx.
 """
 
 load("@bazel_skylib//lib:unittest.bzl", "asserts", "unittest")
@@ -14,36 +13,18 @@ load(":jps_target_derivation.bzl", "parse_iml")
 def _fake_ctx(env = {}):
     return struct(getenv = lambda name: env.get(name))
 
-def _fake_path(rel, entries_by_dir):
-    return struct(
-        get_child = lambda child: _fake_path(
-            (rel + "/" + child) if rel else child,
-            entries_by_dir,
-        ),
-        readdir = lambda: entries_by_dir.get(rel, []),
-    )
-
-def _fake_root(entries_by_dir = {}):
-    return _fake_path("", entries_by_dir)
-
 # --- XML builders ---
 
 def _maven_root(group_path, artifact, version, filename):
     return "jar://$MAVEN_REPOSITORY$/%s/%s/%s/%s!/" % (group_path, artifact, version, filename)
 
-def _project_library_xml(name, maven_roots = [], local_roots = [], jar_directories = []):
+def _project_library_xml(name, maven_roots = [], local_roots = []):
     """Build a .idea/libraries/*.xml string."""
     roots = ""
     for url in maven_roots:
         roots += '      <root url="%s" />\n' % url
     for url in local_roots:
         roots += '      <root url="%s" />\n' % url
-    for url in jar_directories:
-        roots += '      <root url="%s" />\n' % url
-
-    jar_dirs = ""
-    for url in jar_directories:
-        jar_dirs += '    <jarDirectory url="%s" recursive="false" />\n' % url
 
     return (
         '<component name="libraryTable">\n'
@@ -51,7 +32,6 @@ def _project_library_xml(name, maven_roots = [], local_roots = [], jar_directori
         + "    <CLASSES>\n"
         + roots
         + "    </CLASSES>\n"
-        + jar_dirs
         + "  </library>\n"
         + "</component>"
     )
@@ -100,11 +80,10 @@ def _iml_data(module_name, iml_rel_path, iml_xml_str, is_community = True):
         parsed_iml = parse_iml(iml_xml_str, iml_rel_path),
     )
 
-def _derive(library_xmls = [], iml_data_list = [], env = {}, entries_by_dir = {},
+def _derive(library_xmls = [], iml_data_list = [], env = {},
             is_community_only = True, community_root_rel = ""):
     return derive_library_targets(
         ctx = _fake_ctx(env),
-        project_root = _fake_root(entries_by_dir),
         library_xmls = library_xmls,
         iml_data_list = iml_data_list,
         is_community_only = is_community_only,
@@ -254,37 +233,6 @@ def _module_library_ignores_kotlin_dev_snapshot_env_test_impl(ctx):
 
 module_library_ignores_kotlin_dev_snapshot_env_test = unittest.make(_module_library_ignores_kotlin_dev_snapshot_env_test_impl)
 
-# --- Test 6: project_library_local_and_jar_directory_test ---
-
-def _project_library_local_and_jar_directory_test_impl(ctx):
-    env = unittest.begin(ctx)
-
-    lib_xml = _project_library_xml(
-        "local-jars",
-        local_roots = ["jar://$PROJECT_DIR$/lib/direct.jar!/"],
-        jar_directories = ["file://$PROJECT_DIR$/lib/jars"],
-    )
-
-    iml = _iml_xml(project_libraries = ["local-jars"])
-    iml_data = _iml_data("intellij.test", "plugins/test/intellij.test.iml", iml)
-
-    result = _derive(
-        library_xmls = [_library_xml_struct("local_jars", lib_xml)],
-        iml_data_list = [iml_data],
-        entries_by_dir = {
-            "lib/jars": ["lib/jars/a.jar", "lib/jars/readme.txt", "lib/jars/b.jar"],
-        },
-    )
-
-    asserts.equals(env, [
-        "@lib//:direct.jar",
-        "@lib//jars:a.jar",
-        "@lib//jars:b.jar",
-    ], result)
-    return unittest.end(env)
-
-project_library_local_and_jar_directory_test = unittest.make(_project_library_local_and_jar_directory_test_impl)
-
 # --- Test 7: module_library_project_and_module_dir_resolution_test ---
 
 def _module_library_project_and_module_dir_resolution_test_impl(ctx):
@@ -412,15 +360,13 @@ module_library_ultimate_repo_test = unittest.make(_module_library_ultimate_repo_
 def _ultimate_mode_local_path_routing_test_impl(ctx):
     env = unittest.begin(ctx)
 
-    # Project library with local roots hitting community/lib/ and lib/ branches,
-    # plus a jarDirectory under community/lib/jars
+    # Project library with local roots hitting community/lib/ and lib/ branches
     lib_xml = _project_library_xml(
         "multi-local",
         local_roots = [
             "jar://$PROJECT_DIR$/community/lib/comm.jar!/",
             "jar://$PROJECT_DIR$/lib/ult.jar!/",
         ],
-        jar_directories = ["file://$PROJECT_DIR$/community/lib/jars"],
     )
 
     # Ultimate module with module-library local roots hitting community/... and other/
@@ -445,16 +391,12 @@ def _ultimate_mode_local_path_routing_test_impl(ctx):
         iml_data_list = [ultimate_data],
         is_community_only = False,
         community_root_rel = "community",
-        entries_by_dir = {
-            "community/lib/jars": ["community/lib/jars/x.jar"],
-        },
     )
 
     asserts.equals(env, [
         "//other:stuff.jar",
         "@community//plugins/foo:bar.jar",
         "@lib//:comm.jar",
-        "@lib//jars:x.jar",
         "@ultimate_lib//:ult.jar",
     ], result)
     return unittest.end(env)
@@ -472,7 +414,6 @@ def jps_library_derivation_pipeline_test_suite(name):
         project_library_mixed_snapshot_test,
         project_library_kotlin_dev_snapshot_env_test,
         module_library_ignores_kotlin_dev_snapshot_env_test,
-        project_library_local_and_jar_directory_test,
         module_library_project_and_module_dir_resolution_test,
         module_library_mixed_snapshot_test,
         dedup_and_sorting_test,

@@ -32,12 +32,11 @@ def _generate_targets_bzl(production_targets, test_targets, library_targets, iml
     content.append("ALL_COMMUNITY_TARGETS = ALL_PRODUCTION_COMMUNITY_TARGETS + ALL_TEST_COMMUNITY_TARGETS + ALL_LIBRARY_COMMUNITY_TARGETS")
     return "\n".join(content)
 
-def _derive_targets_from_model(ctx, project_root, model):
+def _derive_targets_from_model(ctx, model):
     """Derive production, test, and library targets from project model using pure Starlark.
 
     Args:
-        ctx: repository rule context (needed for jar directory expansion)
-        project_root: Path to the project root
+        ctx: repository rule context (used for env var lookup in library derivation)
         model: struct from read_project_model with modules and library_xmls
 
     Returns:
@@ -103,7 +102,6 @@ def _derive_targets_from_model(ctx, project_root, model):
 
     library_targets = derive_library_targets(
         ctx = ctx,
-        project_root = project_root,
         library_xmls = model.library_xmls,
         iml_data_list = iml_data_list,
         is_community_only = True,
@@ -120,7 +118,7 @@ def _derive_targets_from_model(ctx, project_root, model):
 def _targets_repo_impl(ctx):
     root = ctx.path(Label("@community//:MODULE.bazel")).dirname
     model = read_project_model(ctx, root)
-    starlark = _derive_targets_from_model(ctx, root, model)
+    starlark = _derive_targets_from_model(ctx, model)
 
     content = _generate_targets_bzl(
         sorted(starlark.production),
