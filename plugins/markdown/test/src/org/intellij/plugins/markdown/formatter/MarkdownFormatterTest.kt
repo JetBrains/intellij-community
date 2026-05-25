@@ -69,6 +69,8 @@ class MarkdownFormatterTest: LightPlatformCodeInsightTestCase() {
 
   fun `test links without blank lines`() = doTest(rightMargin = 80)
 
+  fun `test blockquote with emphasis wrap`() = doTest(rightMargin = 80, insertQuoteArrows = true)
+
   override fun getTestDataPath(): String {
     return MarkdownTestingUtil.TEST_DATA_PATH + "/formatter/"
   }
@@ -78,7 +80,7 @@ class MarkdownFormatterTest: LightPlatformCodeInsightTestCase() {
     return name.trimStart().replace(' ', '_')
   }
 
-  private fun doTest(rightMargin: Int = 40, keepLineBreaks: Boolean = false) {
+  private fun doTest(rightMargin: Int = 40, keepLineBreaks: Boolean = false, insertQuoteArrows: Boolean = false) {
     val before = getTestName(true) + "_before.md"
     val after = getTestName(true) + "_after.md"
     runWithTemporaryStyleSettings(project) { settings ->
@@ -93,7 +95,7 @@ class MarkdownFormatterTest: LightPlatformCodeInsightTestCase() {
           // These tests are not aware of the fact that tables can be reformatted now by TablePostFormatProcessor
           // and wrapping block quotes can be fixed be BlockQuotePostFormatProcessor
           FORMAT_TABLES = false
-          INSERT_QUOTE_ARROWS_ON_WRAP = false
+          INSERT_QUOTE_ARROWS_ON_WRAP = insertQuoteArrows
         }
       }
       configureByFile(before)
