@@ -10,9 +10,13 @@ import warnings
 if sys.version_info[:2] >= (3, 10):
     from importlib.metadata import entry_points as iter_entry_points
 else:
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", category=DeprecationWarning)
-        from pkg_resources import iter_entry_points
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=DeprecationWarning)
+            from pkg_resources import iter_entry_points
+    except ImportError:
+        def iter_entry_points(group):
+            return ()
 
 from _jb_runner_tools import jb_patch_separator, jb_doc_args, JB_DISABLE_BUFFERING, \
     start_protocol, parse_arguments, set_parallel_mode, jb_finish_tests, \
