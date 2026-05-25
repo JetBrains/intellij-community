@@ -5,12 +5,10 @@ import com.intellij.openapi.diagnostic.trace
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.RequestOrigin
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.block.ui.withLock
 import org.jetbrains.plugins.terminal.session.impl.TerminalClearBufferEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalCloseEvent
@@ -78,11 +76,9 @@ private suspend fun handleInputEvent(event: TerminalInputEvent, services: JediTe
       terminalStarter.postResize(termSize, RequestOrigin.User)
     }
     is TerminalCloseEvent -> {
+      terminalStarter.ttyConnector.close()
       terminalStarter.ttyConnector.waitFor(STOP_EMULATOR_TIMEOUT) {
         terminalStarter.requestEmulatorStop()
-      }
-      withContext(Dispatchers.IO) {
-        terminalStarter.ttyConnector.close()
       }
     }
     is TerminalClearBufferEvent -> {
