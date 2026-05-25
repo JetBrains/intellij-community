@@ -4,7 +4,6 @@ package org.jetbrains.plugins.terminal
 import com.google.common.base.Ascii
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.ExecuteProcessException
 import com.intellij.platform.eel.isPosix
@@ -22,10 +21,13 @@ import com.pty4j.PtyProcess
 import com.pty4j.unix.UnixPtyProcess
 import com.pty4j.windows.conpty.WinConPtyProcess
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.util.ShellEelProcess
+import org.jetbrains.plugins.terminal.util.terminalApplicationScope
 import java.io.IOException
 import java.nio.charset.Charset
 import java.util.concurrent.TimeUnit
@@ -49,7 +51,23 @@ class LocalTerminalTtyConnector internal constructor(
       ptyProcess = ptyProcess
     )
 
+  /**
+   * Closes `TtyConnector` asynchronously in the application-level scope.
+   *
+   * Note: the underlying child process may not have exited yet by the time the call returns.
+   */
   override fun close() {
+    terminalApplicationScope().launch(Dispatchers.IO) {
+      // NonCancellable is important to avoid premature cancellation when IDE is closing.
+      // It is important to not be canceled in the middle of this operation,
+      // especially when terminating remote process.
+      withContext(NonCancellable) {
+        closeSafely()
+      }
+    }
+  }
+
+  private suspend fun closeSafely() {
     if (ptyProcess is UnixPtyProcess) {
       ptyProcess.hangup()
       AppExecutorUtil.getAppScheduledExecutorService().schedule(Runnable {
@@ -60,9 +78,7 @@ class LocalTerminalTtyConnector internal constructor(
       }, 1000, TimeUnit.MILLISECONDS)
     }
     else if (ptyProcess is IjentChildPtyProcessAdapter && shellProcessHolder.isPosix) {
-      runBlockingMaybeCancellable {
-        terminatePosixShell(shellEelProcess)
-      }
+      terminatePosixShell(shellEelProcess)
     }
     else {
       if (ptyProcess is WinConPtyProcess && !ptyProcess.isBundledConPtyLibrary) {
@@ -73,43 +89,41 @@ class LocalTerminalTtyConnector internal constructor(
   }
 
   private suspend fun terminatePosixShell(process: ShellEelProcess) {
-    withContext(Dispatchers.IO) {
-      check(process.eelApi.platform.isPosix) { "Thin function is expected to be called only for posix process, but was: $process" }
-      val ptyProcess = process.ptyProcess
+    check(process.eelApi.platform.isPosix) { "Thin function is expected to be called only for posix process, but was: $process" }
+    val ptyProcess = process.ptyProcess
 
-      if (!ptyProcess.isAlive) {
-        LOG.debug { "Shell process ${processInfo(process)} is already terminated" }
-        return@withContext
-      }
+    if (!ptyProcess.isAlive) {
+      LOG.debug { "Shell process ${processInfo(process)} is already terminated" }
+      return
+    }
 
-      val shellPid = process.eelProcess.pid.value
-      LOG.debug { "Sending SIGHUP to shell process ${processInfo(process)}" }
-      val killProcess = try {
-        process.eelApi.exec.spawnProcess("kill").args("-HUP", shellPid.toString()).eelIt()
-      }
-      catch (e: ExecuteProcessException) {
-        LOG.warn("Unable to send SIGHUP to ${processInfo(process)}", e)
-        return@withContext
-      }
+    val shellPid = process.eelProcess.pid.value
+    LOG.debug { "Sending SIGHUP to shell process ${processInfo(process)}" }
+    val killProcess = try {
+      process.eelApi.exec.spawnProcess("kill").args("-HUP", shellPid.toString()).eelIt()
+    }
+    catch (e: ExecuteProcessException) {
+      LOG.warn("Unable to send SIGHUP to ${processInfo(process)}", e)
+      return
+    }
 
-      if (ptyProcess.awaitExit(5.seconds) == null) {
-        val killProcessResult = withTimeoutOrNull(1.seconds) {
-          killProcess.awaitProcessResult()
-        }
-        if (ptyProcess.isAlive) {
-          LOG.info("Shell process ${processInfo(process)} hasn't been terminated by SIGHUP, performing forceful termination. " +
-                   "\"kill -HUP $shellPid\" => ${killProcessResult?.stringify()}")
-          ptyProcess.destroyForcibly()
-        }
+    if (ptyProcess.awaitExit(5.seconds) == null) {
+      val killProcessResult = withTimeoutOrNull(1.seconds) {
+        killProcess.awaitProcessResult()
       }
+      if (ptyProcess.isAlive) {
+        LOG.info("Shell process ${processInfo(process)} hasn't been terminated by SIGHUP, performing forceful termination. " +
+                 "\"kill -HUP $shellPid\" => ${killProcessResult?.stringify()}")
+        ptyProcess.destroyForcibly()
+      }
+    }
 
-      val exitCode = ptyProcess.awaitExit(2.seconds)
-      if (exitCode != null) {
-        LOG.debug { "Shell process ${processInfo(process)} has been terminated with exit code $exitCode" }
-      }
-      else {
-        LOG.warn("Shell process ${processInfo(process)} has not been terminated!")
-      }
+    val exitCode = ptyProcess.awaitExit(2.seconds)
+    if (exitCode != null) {
+      LOG.debug { "Shell process ${processInfo(process)} has been terminated with exit code $exitCode" }
+    }
+    else {
+      LOG.warn("Shell process ${processInfo(process)} has not been terminated!")
     }
   }
 
