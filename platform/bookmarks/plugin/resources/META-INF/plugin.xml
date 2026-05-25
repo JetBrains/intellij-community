@@ -1,0 +1,15 @@
+<!--suppress SplitModeMixedDependencies -->
+<!--suppress PluginXmlPluginLogo -->
+<idea-plugin>
+  <id>intellij.bookmarks.plugin</id>
+  <name>Bookmarks Manager</name>
+  <description>Provides platform modules for IDE bookmarks support.</description>
+  <vendor>JetBrains</vendor>
+  <content namespace="jetbrains">
+    <module name="intellij.platform.bookmarks" loading="required"/>
+    <module name="intellij.platform.bookmarks.backend"/>
+    <module name="intellij.platform.bookmarks.frontend"/>
+    <module name="intellij.platform.debugger.impl.bookmarks"/>
+    <module name="intellij.platform.frontend.split.bookmarks"/>
+  </content>
+</idea-plugin>

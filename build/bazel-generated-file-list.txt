@@ -553,6 +553,7 @@ platform/bazel-runfiles
 platform/bookmarks
 platform/bookmarks/backend
 platform/bookmarks/frontend
+platform/bookmarks/plugin
 platform/boot
 platform/bootstrap
 platform/bootstrap/coroutine
@@ -930,6 +931,7 @@ platform/wsl-impl
 platform/xdebugger-api
 platform/xdebugger-impl
 platform/xdebugger-impl/backend
+platform/xdebugger-impl/bookmarks
 platform/xdebugger-impl/frontend
 platform/xdebugger-impl/rpc
 platform/xdebugger-impl/shared

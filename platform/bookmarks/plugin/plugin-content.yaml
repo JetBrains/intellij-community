@@ -1,0 +1,11 @@
+- name: lib/modules/intellij.platform.bookmarks.jar
+  contentModules:
+  - name: intellij.platform.bookmarks
+- name: lib/platform-bookmarks-plugin.jar
+  modules:
+  - name: intellij.platform.bookmarks.plugin
+  contentModules:
+  - name: intellij.platform.bookmarks.backend
+  - name: intellij.platform.bookmarks.frontend
+  - name: intellij.platform.debugger.impl.bookmarks
+  - name: intellij.platform.frontend.split.bookmarks

@@ -39,6 +39,7 @@ jvm_library(
     "//platform/vcs-impl/frontend",
     "//platform/vcs-impl/lang/todo",
     "//platform/navbar/plugin",
+    "//platform/bookmarks/plugin",
   ]
 )
 
@@ -82,6 +83,7 @@ jvm_library(
     "//platform/vcs-impl/frontend:frontend_test_lib",
     "//platform/vcs-impl/lang/todo:todo_test_lib",
     "//platform/navbar/plugin:plugin_test_lib",
+    "//platform/bookmarks/plugin:plugin_test_lib",
   ]
 )
 ### auto-generated section `build intellij.moduleSet.plugin.main` end
