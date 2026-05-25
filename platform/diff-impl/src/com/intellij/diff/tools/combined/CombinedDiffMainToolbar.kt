@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.combined
 
 import com.intellij.diff.DiffContext
@@ -44,8 +44,8 @@ internal class CombinedDiffMainToolbar(
   private val uiState: CombinedDiffUIState,
   private val targetComponent: JComponent,
   private val diffToolChooser: DiffToolChooser,
-  private val goToChangeAction: AnAction?,
-  private val context: DiffContext
+  private val goToChangeAction: AnAction,
+  private val context: DiffContext,
 ) {
   private val searchPanel = Wrapper()
   private val diffInfoPanel = DiffInfoComponent()

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.combined
 
 import com.intellij.CommonBundle
@@ -63,7 +63,7 @@ import javax.swing.SwingUtilities
 import kotlin.math.max
 
 @ApiStatus.Internal
-class CombinedDiffMainUI(private val model: CombinedDiffModel, private val goToChangeAction: AnAction?) : Disposable {
+class CombinedDiffMainUI(private val model: CombinedDiffModel, private val goToChangeAction: AnAction) : Disposable {
   private val ourDisposable = Disposer.newCheckedDisposable().also { Disposer.register(this, it) }
 
   @OptIn(DelicateCoroutinesApi::class)
