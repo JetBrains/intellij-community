@@ -23,11 +23,11 @@ public final class CodeCleanupCodeProcessor extends AbstractLayoutCodeProcessor 
   private InspectionProfileImpl myProfile = null;
 
   public CodeCleanupCodeProcessor(@NotNull AbstractLayoutCodeProcessor previousProcessor) {
-    super(previousProcessor, CodeInsightBundle.message("command.cleanup.code"), getProgressText());
+    super(previousProcessor, getCommandName(), getProgressText());
   }
 
   public CodeCleanupCodeProcessor(@NotNull AbstractLayoutCodeProcessor previousProcessor, @NotNull SelectionModel selectionModel) {
-    super(previousProcessor, CodeInsightBundle.message("command.cleanup.code"), getProgressText());
+    super(previousProcessor, getCommandName(), getProgressText());
     mySelectionModel = selectionModel;
   }
 
@@ -35,9 +35,8 @@ public final class CodeCleanupCodeProcessor extends AbstractLayoutCodeProcessor 
                                   PsiFile @NotNull [] files,
                                   @Nullable Runnable postRunnable,
                                   boolean processChangedTextOnly) {
-    super(project, files, getProgressText(), CodeInsightBundle.message("command.cleanup.code"), postRunnable, processChangedTextOnly);
+    super(project, files, getProgressText(), getCommandName(), postRunnable, processChangedTextOnly);
   }
-
 
   @Override
   protected @NotNull FutureTask<Boolean> prepareTask(final @NotNull PsiFile psiFile, final boolean processChangedTextOnly) {
@@ -77,5 +76,9 @@ public final class CodeCleanupCodeProcessor extends AbstractLayoutCodeProcessor 
 
   public static @NlsContexts.ProgressText String getProgressText() {
     return CodeInsightBundle.message("process.cleanup.code");
+  }
+
+  private static @NlsContexts.Command String getCommandName() {
+    return CodeInsightBundle.message("command.cleanup.code");
   }
 }
