@@ -155,6 +155,24 @@ public class Py3QuickFixTest extends PyTestCase {
                      true);
   }
 
+  // PY-84718: Respect existing `import abc` when adding ABC to superclasses
+  public void testAddModuleImportedABCToSuperclasses() {
+    doInspectionTest("PyAbstractClassInspection/quickFix/AddModuleImportedABCToSuperclasses/main.py",
+                     PyAbstractClassInspection.class,
+                     "Add '" + PyNames.ABC + "' to superclasses",
+                     true,
+                     true);
+  }
+
+  // PY-84718: Respect existing alias `import abc as a` when adding ABC to superclasses
+  public void testAddAliasedModuleImportedABCToSuperclasses() {
+    doInspectionTest("PyAbstractClassInspection/quickFix/AddAliasedModuleImportedABCToSuperclasses/main.py",
+                     PyAbstractClassInspection.class,
+                     "Add '" + PyNames.ABC + "' to superclasses",
+                     true,
+                     true);
+  }
+
   // PY-30789
   public void testSetABCMetaAsMetaclassPy3() {
     final String[] testFiles = {
