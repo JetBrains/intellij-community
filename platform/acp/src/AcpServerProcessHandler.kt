@@ -12,10 +12,40 @@ import kotlinx.coroutines.Deferred
  */
 interface AcpServerProcessHandler {
   /**
-   * The underlying EEL process. Callers build the ACP transport (e.g. via
-   * [com.intellij.ml.llm.agents.acp.AcpTransportUtil.createEelStdioTransport]) and the
-   * [com.agentclientprotocol.protocol.Protocol] bound to its stdin/stdout themselves;
-   * the handler stays a generic process holder and does not depend on ACP-protocol types.
+   * The underlying EEL process. Callers are responsible for building an ACP
+   * [com.agentclientprotocol.transport.StdioTransport] over its `stdout` / `stdin`
+   * (its Flow + suspend-writer constructor is the non-blocking entry point) and
+   * wiring it into [com.agentclientprotocol.protocol.Protocol] themselves — the
+   * handler stays a generic process holder and does not depend on ACP-protocol types.
+   *
+   * A minimal reference adapter — illustrative, copy and adjust to the caller's
+   * logging/error-handling needs:
+   *
+   * ```
+   * fun eelStdioTransport(scope: CoroutineScope, eelProcess: EelProcess): Transport {
+   *   val input: Flow<String> = eelProcess.stdout.lines(Charsets.UTF_8)
+   *     .onCompletion {
+   *       // Close eel channels once the read path is done — covers transport close,
+   *       // natural EOF, and read error. Closing stdin signals EOF to the agent.
+   *       runCatching { eelProcess.stdout.closeForReceive() }
+   *       runCatching { eelProcess.stdin.close(null) }
+   *     }
+   *
+   *   val output: suspend (String) -> Unit = { line ->
+   *     val bytes = (line + "\n").toByteArray(Charsets.UTF_8)
+   *     try {
+   *       eelProcess.stdin.sendWholeBuffer(ByteBuffer.wrap(bytes))
+   *     }
+   *     catch (e: EelSendChannelException) {
+   *       // Surface channel-closed as plain IOException so the library's write loop
+   *       // treats it as a clean close instead of firing onError.
+   *       throw IOException("Eel send channel closed", e)
+   *     }
+   *   }
+   *
+   *   return StdioTransport(scope, Dispatchers.IO, input, output)
+   * }
+   * ```
    */
   val eelProcess: EelProcess
 
