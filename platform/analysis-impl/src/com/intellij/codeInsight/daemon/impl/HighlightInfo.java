@@ -617,7 +617,7 @@ public class HighlightInfo implements Segment {
   }
 
   @ApiStatus.Internal
-  public final @NonNls String toStringCompact(boolean showFullQualifiedClassNames) {
+  public final @NonNls String toStringCompact(boolean showFullQualifiedClassNames, boolean showIntentionDescriptors) {
     String s = "HighlightInfo(" + getStartOffset() + "," + getEndOffset() + ")";
     if (isFileLevelAnnotation()) {
       s+=" (file level)";
@@ -637,10 +637,14 @@ public class HighlightInfo implements Segment {
       s += ", description='" + getDescription() + "'";
     }
     s += "; severity=" + getSeverity();
-    List<IntentionActionDescriptor> descriptors = getIntentionActionDescriptors(store);
-    if (!descriptors.isEmpty()) {
-      s += "; quickFixes: " + StringUtil.join(descriptors, ", ");
+
+    if (showIntentionDescriptors) {
+      List<IntentionActionDescriptor> descriptors = getIntentionActionDescriptors(store);
+      if (!descriptors.isEmpty()) {
+        s += "; quickFixes: " + StringUtil.join(descriptors, ", ");
+      }
     }
+
     if (gutterIconRenderer != null) {
       s += "; gutter: " + gutterIconRenderer;
     }
@@ -662,7 +666,7 @@ public class HighlightInfo implements Segment {
 
   @Override
   public @NonNls String toString() {
-    return toStringCompact(true);
+    return toStringCompact(true, true);
   }
 
   public static @NotNull Builder newHighlightInfo(@NotNull HighlightInfoType type) {
