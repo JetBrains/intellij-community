@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildContext
 
 suspend fun createDistributionBuilderState(pluginsToPublish: Set<PluginLayout>, context: BuildContext): DistributionBuilderState {
@@ -13,6 +14,11 @@ suspend fun createDistributionBuilderState(pluginsToPublish: Set<PluginLayout>, 
 suspend fun createDistributionBuilderState(context: BuildContext): DistributionBuilderState {
   val platform = createPlatformLayout(context)
   return DistributionBuilderState(platformLayout = platform, pluginsToPublish = emptySet(), context = context)
+}
+
+@VisibleForTesting
+fun createTestDistributionBuilderState(context: BuildContext): DistributionBuilderState {
+  return DistributionBuilderState(platformLayout = PlatformLayout(), pluginsToPublish = emptySet(), context = context)
 }
 
 class DistributionBuilderState internal constructor(

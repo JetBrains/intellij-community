@@ -445,6 +445,7 @@ suspend fun testBuildBundledPluginsForAllPlatforms(
   buildPlatformJob: Deferred<List<DistributionFileEntry>>,
   descriptorCacheContainer: DescriptorCacheContainer,
   context: BuildContext,
+  includeAdditionalPlugins: Boolean = true,
 ): List<DistFile> {
   buildBundledPluginsForAllPlatforms(
     state = state,
@@ -454,6 +455,7 @@ suspend fun testBuildBundledPluginsForAllPlatforms(
     isUpdateFromSources = false,
     searchableOptionSetDescriptor = null,
     descriptorCacheContainer = descriptorCacheContainer,
+    includeAdditionalPlugins = includeAdditionalPlugins,
   )
   return context.getDistFiles(os = null, arch = null, libcImpl = null).filter { it.relativePath == PLUGIN_CLASSPATH }
 }
