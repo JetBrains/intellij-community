@@ -15,7 +15,7 @@ import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.junit.jupiter.params.ParameterizedTest
 
 @TestRoot("idea/tests/testData/")
-@TestDataPath($$"/")
+@TestDataPath("/")
 @TestMetadata("../../../idea/tests/testData/gradle/navigation/")
 abstract class KotlinGradleGotoDependenciesSourcesTest : AbstractKotlinGradleNavigationTest() {
     override fun setUp() {
