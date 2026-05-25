@@ -669,11 +669,19 @@ private abstract class BaseUpdateQueue<T>(
       // Wait for sync signal that indicates an item was queued
       notifyChannel.receive()
 
-      // Must be set before channel.receive() to avoid a window where channel.isEmpty=true and isCollecting=false.
+      // Must be set before reading the channel to avoid a window where channel.isEmpty=true and isCollecting=false.
       isCollecting = true
 
-      // Now receive the actual item from the main channel
-      onReceive(channel.receive())
+      // Phantom-signal recovery: with channelCapacity=1 + DROP_OLDEST on the data channel, an item that
+      // triggered a Unit can be silently overwritten by a concurrent queue() that *also* signals an empty
+      // notifyChannel — leaving an extra Unit with no corresponding item. tryReceive lets us detect that
+      // here and drop the claim cleanly instead of blocking on channel.receive() with isCollecting latched true.
+      val first = channel.tryReceive()
+      if (!first.isSuccess) {
+        isCollecting = false
+        continue
+      }
+      onReceive(first.getOrThrow())
 
       if (restartTimerOnAdd) {
         // Debounce mode: restart timer on each new item
@@ -697,9 +705,14 @@ private abstract class BaseUpdateQueue<T>(
         // Throttle/sample mode: fixed interval
         delay(delay)
 
-        // Collect all remaining items
+        // Collect all remaining items. Tolerate phantom Units (signals whose corresponding
+        // item was silently dropped by a concurrent DROP_OLDEST) — keep draining notifyChannel
+        // but skip when no item is available, instead of blocking on channel.receive().
         while (notifyChannel.tryReceive().isSuccess) {
-          onReceive(channel.receive())
+          val next = channel.tryReceive()
+          if (next.isSuccess) {
+            onReceive(next.getOrThrow())
+          }
         }
       }
 
