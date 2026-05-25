@@ -14,7 +14,6 @@ import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.platform.eel.spawnProcess
 import com.intellij.platform.ijent.IjentChildPtyProcessAdapter
 import com.intellij.terminal.pty.PtyProcessTtyConnector
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.awaitExit
 import com.jediterm.core.util.TermSize
 import com.pty4j.PtyProcess
@@ -30,7 +29,6 @@ import org.jetbrains.plugins.terminal.util.ShellEelProcess
 import org.jetbrains.plugins.terminal.util.terminalApplicationScope
 import java.io.IOException
 import java.nio.charset.Charset
-import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -68,27 +66,31 @@ class LocalTerminalTtyConnector internal constructor(
   }
 
   private suspend fun closeSafely() {
-    if (ptyProcess is UnixPtyProcess) {
-      ptyProcess.hangup()
-      AppExecutorUtil.getAppScheduledExecutorService().schedule(Runnable {
-        if (ptyProcess.isAlive) {
-          LOG.info("Terminal hasn't been terminated by SIGHUP, performing default termination")
-          ptyProcess.destroy()
-        }
-      }, 1000, TimeUnit.MILLISECONDS)
-    }
-    else if (ptyProcess is IjentChildPtyProcessAdapter && shellProcessHolder.isPosix) {
-      terminatePosixShell(shellEelProcess)
-    }
-    else {
-      if (ptyProcess is WinConPtyProcess && !ptyProcess.isBundledConPtyLibrary) {
-        sendInterruptToWinConPtyProcess()
+    when {
+      ptyProcess is UnixPtyProcess -> {
+        terminateLocalPosixProcess(ptyProcess)
       }
-      ptyProcess.destroy()
+      ptyProcess is IjentChildPtyProcessAdapter && shellProcessHolder.isPosix -> {
+        terminateRemotePosixProcess(shellEelProcess)
+      }
+      else -> {
+        if (ptyProcess is WinConPtyProcess && !ptyProcess.isBundledConPtyLibrary) {
+          sendInterruptToWinConPtyProcess()
+        }
+        ptyProcess.destroy()
+      }
     }
   }
 
-  private suspend fun terminatePosixShell(process: ShellEelProcess) {
+  private suspend fun terminateLocalPosixProcess(process: UnixPtyProcess) {
+    process.hangup()
+    if (process.awaitExit(1.seconds) == null) {
+      LOG.info("Terminal hasn't been terminated by SIGHUP, performing default termination")
+      process.destroy()
+    }
+  }
+
+  private suspend fun terminateRemotePosixProcess(process: ShellEelProcess) {
     check(process.eelApi.platform.isPosix) { "Thin function is expected to be called only for posix process, but was: $process" }
     val ptyProcess = process.ptyProcess
 
