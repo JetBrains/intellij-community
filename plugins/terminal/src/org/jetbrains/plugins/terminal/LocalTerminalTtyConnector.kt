@@ -66,6 +66,8 @@ class LocalTerminalTtyConnector internal constructor(
   }
 
   private suspend fun closeSafely() {
+    if (!ptyProcess.isAlive) return
+
     when {
       ptyProcess is UnixPtyProcess -> {
         terminateLocalPosixProcess(ptyProcess)
@@ -79,6 +81,14 @@ class LocalTerminalTtyConnector internal constructor(
         }
         ptyProcess.destroy()
       }
+    }
+
+    val exitCode = ptyProcess.awaitExit(2.seconds)
+    if (exitCode != null) {
+      LOG.info("${processInfo(shellEelProcess)} has been terminated with exit code $exitCode")
+    }
+    else {
+      LOG.warn("${processInfo(shellEelProcess)} has not been terminated!")
     }
   }
 
@@ -94,13 +104,8 @@ class LocalTerminalTtyConnector internal constructor(
     check(process.eelApi.platform.isPosix) { "Thin function is expected to be called only for posix process, but was: $process" }
     val ptyProcess = process.ptyProcess
 
-    if (!ptyProcess.isAlive) {
-      LOG.debug { "Shell process ${processInfo(process)} is already terminated" }
-      return
-    }
-
     val shellPid = process.eelProcess.pid.value
-    LOG.debug { "Sending SIGHUP to shell process ${processInfo(process)}" }
+    LOG.debug { "Sending SIGHUP to ${processInfo(process)}" }
     val killProcess = try {
       process.eelApi.exec.spawnProcess("kill").args("-HUP", shellPid.toString()).eelIt()
     }
@@ -114,18 +119,10 @@ class LocalTerminalTtyConnector internal constructor(
         killProcess.awaitProcessResult()
       }
       if (ptyProcess.isAlive) {
-        LOG.info("Shell process ${processInfo(process)} hasn't been terminated by SIGHUP, performing forceful termination. " +
+        LOG.info("${processInfo(process)} hasn't been terminated by SIGHUP, performing forceful termination. " +
                  "\"kill -HUP $shellPid\" => ${killProcessResult?.stringify()}")
         ptyProcess.destroyForcibly()
       }
-    }
-
-    val exitCode = ptyProcess.awaitExit(2.seconds)
-    if (exitCode != null) {
-      LOG.debug { "Shell process ${processInfo(process)} has been terminated with exit code $exitCode" }
-    }
-    else {
-      LOG.warn("Shell process ${processInfo(process)} has not been terminated!")
     }
   }
 
