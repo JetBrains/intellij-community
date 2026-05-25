@@ -1222,18 +1222,8 @@ a:com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor
 - p:<init>(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile,java.lang.String,java.lang.String,Z):V
 - p:<init>(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,Z):V
 - p:<init>(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile[],java.lang.String,java.lang.String,java.lang.Runnable,Z):V
-- addFileFilter(com.intellij.openapi.vfs.VirtualFileFilter):V
-- ps:emptyTask():java.util.concurrent.FutureTask
-- getInfoCollector():com.intellij.codeInsight.actions.LayoutCodeInfoCollector
-- s:getPresentablePath(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile):java.lang.String
 - p:needsReadActionToPrepareTask():Z
 - pa:prepareTask(com.intellij.psi.PsiFile,Z):java.util.concurrent.FutureTask
-- processFilesUnderProgress(com.intellij.openapi.progress.ProgressIndicator):Z
-- run():V
-- runWithoutProgress():V
-- setCollectInfo(Z):V
-- setPostRunnable(java.lang.Runnable):V
-- setProcessAllFilesAsSingleUndoStep(Z):V
 f:com.intellij.codeInsight.actions.CodeCleanupCodeProcessor
 - com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor
 - <init>(com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor):V

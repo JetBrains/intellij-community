@@ -90,7 +90,23 @@ com.intellij.application.options.editor.AutoImportOptionsProvider
 com.intellij.application.options.editor.CodeFoldingOptionsProvider
 - com.intellij.openapi.options.UnnamedConfigurable
 a:com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor
-- runBackground():V
+- sf:Companion:com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor$Companion
+- f:addFileFilter(com.intellij.openapi.vfs.VirtualFileFilter):V
+- psf:emptyTask():java.util.concurrent.FutureTask
+- f:getInfoCollector():com.intellij.codeInsight.actions.LayoutCodeInfoCollector
+- sf:getPresentablePath(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile):java.lang.String
+- psf:getSelectedRanges(com.intellij.openapi.editor.SelectionModel):java.util.List
+- pf:handleFileTooBigException(com.intellij.openapi.diagnostic.Logger,com.intellij.util.diff.FilesTooBigForDiffException,com.intellij.psi.PsiFile):V
+- f:processFilesUnderProgress(com.intellij.openapi.progress.ProgressIndicator):Z
+- run():V
+- f:runBackground():V
+- f:runWithoutProgress():V
+- f:setCollectInfo(Z):V
+- f:setPostRunnable(java.lang.Runnable):V
+- f:setProcessAllFilesAsSingleUndoStep(Z):V
+- f:setProcessChangedTextOnly(Z):V
+f:com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor$Companion
+- f:getPresentablePath(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile):java.lang.String
 com.intellij.codeInsight.actions.DirectoryFormattingOptions
 - com.intellij.codeInsight.actions.ReformatFilesOptions
 - a:isIncludeSubdirectories():Z
@@ -100,6 +116,8 @@ com.intellij.codeInsight.actions.LayoutCodeOptions
 com.intellij.codeInsight.actions.ReaderModeListener
 - java.util.EventListener
 - a:modeChanged(com.intellij.openapi.project.Project):V
+c:com.intellij.codeInsight.actions.RearrangeCodeProcessor
+- <init>(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile[],java.lang.Runnable,Z):V
 com.intellij.codeInsight.actions.ReformatFilesOptions
 - com.intellij.codeInsight.actions.LayoutCodeOptions
 - a:getFileTypeMask():java.lang.String

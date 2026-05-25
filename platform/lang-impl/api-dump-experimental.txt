@@ -108,7 +108,7 @@ c:com.intellij.build.output.BuildOutputInstantReaderImpl
 - a:getTitle():java.lang.String
 a:com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor
 - *p:runTask(com.intellij.openapi.vfs.VirtualFile,java.lang.String,java.lang.String,Z,java.lang.Runnable):V
-- *ps:runUnderDefaultWriteCommandAction(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,Z,java.lang.Runnable):V
+- *psf:runUnderDefaultWriteCommandAction(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,Z,java.lang.Runnable):V
 c:com.intellij.codeInsight.actions.OptimizeImportsProcessor
 - com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor
 - *p:runTask(com.intellij.openapi.vfs.VirtualFile,java.lang.String,java.lang.String,Z,java.lang.Runnable):V

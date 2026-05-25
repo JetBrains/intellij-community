@@ -236,26 +236,7 @@ abstract class AbstractLayoutCodeProcessor private constructor(
     runUnderDefaultWriteCommandAction(myProject, commandName, groupId, processAllFilesAsSingleUndoStep, modifyTask)
   }
 
-  /**
-   * Default platform wrapping: a plain [WriteCommandAction]. Exposed so subclasses that want a different
-   * behaviour in some cases (e.g. [OptimizeImportsProcessor]) can still fall back to this exact wrapping.
-   */
-  @ApiStatus.Experimental
-  protected fun runUnderDefaultWriteCommandAction(
-    project: Project,
-    @NlsContexts.Command commandName: String,
-    groupId: String,
-    processAllFilesAsSingleUndoStep: Boolean,
-    writeTask: Runnable,
-  ) {
-    WriteCommandAction.writeCommandAction(project)
-      .withName(commandName)
-      .withGroupId(groupId)
-      .shouldRecordActionForActiveDocument(processAllFilesAsSingleUndoStep)
-      .run<Throwable> { writeTask.run() }
-  }
-
-  fun run() {
+  open fun run() {
     if (target is Target.SingleFile) {
       PsiUtilCore.ensureValid(target.psiFile)
       val virtualFile = PsiUtilCore.getVirtualFile(target.psiFile)
@@ -549,7 +530,7 @@ abstract class AbstractLayoutCodeProcessor private constructor(
     return fileFilters.all { it.accept(file) }
   }
 
-  fun handleFileTooBigException(logger: Logger, e: FilesTooBigForDiffException, psiFile: PsiFile) {
+  protected fun handleFileTooBigException(logger: Logger, e: FilesTooBigForDiffException, psiFile: PsiFile) {
     logger.info("Error while calculating changed ranges for: " + psiFile.getVirtualFile(), e)
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       val group = NotificationGroupManager.getInstance().getNotificationGroup("Reformat changed text")
@@ -589,13 +570,33 @@ abstract class AbstractLayoutCodeProcessor private constructor(
     }
 
     @JvmStatic
-    fun getSelectedRanges(selectionModel: SelectionModel): List<TextRange> {
+    protected fun getSelectedRanges(selectionModel: SelectionModel): List<TextRange> {
       return if (selectionModel.hasSelection()) {
         listOf(TextRange.create(selectionModel.selectionStart, selectionModel.selectionEnd))
       }
       else {
         emptyList()
       }
+    }
+
+    /**
+     * Default platform wrapping: a plain [WriteCommandAction]. Exposed so subclasses that want a different
+     * behaviour in some cases (e.g. [OptimizeImportsProcessor]) can still fall back to this exact wrapping.
+     */
+    @JvmStatic
+    @ApiStatus.Experimental
+    protected fun runUnderDefaultWriteCommandAction(
+      project: Project,
+      commandName: @NlsContexts.Command String,
+      groupId: String,
+      processAllFilesAsSingleUndoStep: Boolean,
+      writeTask: Runnable,
+    ) {
+      WriteCommandAction.writeCommandAction(project)
+        .withName(commandName)
+        .withGroupId(groupId)
+        .shouldRecordActionForActiveDocument(processAllFilesAsSingleUndoStep)
+        .run<Throwable> { writeTask.run() }
     }
   }
 }
