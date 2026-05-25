@@ -22,15 +22,15 @@ internal class ClearConsoleAction : DumbAwareAction(), ActionRemoteBehaviorSpeci
     val enabled = targetNodes.filter {
       val size = (it.descriptor?.executionConsole as? ConsoleView)?.getContentSize() ?: return@filter false
       size > 0
-    }.isNotEmpty
+    }.isNotEmpty()
     presentation.isEnabled = enabled
     presentation.isVisible = enabled || !e.isFromContextMenu
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project
-    if (project == null) return
-
+    if (e.project == null) {
+      return
+    }
     for (node in RunDashboardActionSelection.getLeafTargets(e)) {
       (node.descriptor?.executionConsole as? ConsoleView)?.clear()
     }
