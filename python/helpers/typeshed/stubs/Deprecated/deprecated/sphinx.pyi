@@ -17,7 +17,7 @@ class SphinxAdapter(ClassicAdapter):
         reason: str = "",
         version: str = "",
         action: _Actions | None = None,
-        category: type[Warning] = ...,
+        category: type[Warning] = DeprecationWarning,  # noqa: Y011
         extra_stacklevel: int = 0,
         line_length: int = 70,
     ) -> None: ...

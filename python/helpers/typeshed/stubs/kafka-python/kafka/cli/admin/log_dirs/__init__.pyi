@@ -1,0 +1,3 @@
+class LogDirsSubCommand:
+    @classmethod
+    def add_subparser(cls, subparsers): ...

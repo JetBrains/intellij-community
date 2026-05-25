@@ -8,7 +8,9 @@ _R = TypeVar("_R")
 class DeprecatedParams:
     messages: dict[str, str]
     category: type[Warning]
-    def __init__(self, param: str | dict[str, str], reason: str = "", category: type[Warning] = ...) -> None: ...
+    def __init__(
+        self, param: str | dict[str, str], reason: str = "", category: type[Warning] = DeprecationWarning  # noqa: Y011
+    ) -> None: ...
     def populate_messages(self, param: str | dict[str, str], reason: str = "") -> None: ...
     def check_params(
         self, signature: Signature, *args: Any, **kwargs: Any  # args and kwargs passing to Signature.bind method

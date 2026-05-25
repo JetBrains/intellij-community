@@ -1,0 +1,3 @@
+class ListConsumerGroups:
+    @classmethod
+    def add_subparser(cls, subparsers): ...

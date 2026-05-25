@@ -20,7 +20,7 @@ class diffobj(NamedTuple):
 class Change(NamedTuple):
     old: int | None
     new: int | None
-    line: int | None
+    line: str | bytes | None
     hunk: int
 
 file_timestamp_str: str

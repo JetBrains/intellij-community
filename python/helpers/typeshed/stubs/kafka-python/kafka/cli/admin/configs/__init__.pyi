@@ -1,0 +1,3 @@
+class ConfigsSubCommand:
+    @classmethod
+    def add_subparser(cls, subparsers): ...
