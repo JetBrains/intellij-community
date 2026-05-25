@@ -1,9 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.gradle
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.k2.codeInsight.gradle.navigation
 
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.runInEdtAndWait
 import org.gradle.util.GradleVersion
+import org.jetbrains.kotlin.gradle.AbstractGradleCodeInsightTest
 import org.jetbrains.kotlin.idea.base.plugin.useK2Plugin
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.TestRoot
@@ -21,7 +22,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import java.io.File
 
 @TestRoot("idea/tests/testData/")
-@TestDataPath($$"$CONTENT_ROOT")
+@TestDataPath($$"/")
 @TestMetadata("../../../idea/tests/testData/gradle/highlighting/")
 abstract class AbstractKotlinGradleResilientHighlightingTest : AbstractGradleCodeInsightTest() {
 
