@@ -1,55 +1,37 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.execution.dashboard.actions;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.execution.dashboard.actions
 
-import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
-import com.intellij.execution.dashboard.actions.ExecutorAction;
-import com.intellij.execution.impl.ExecutionManagerImpl;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
-import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.JBIterable;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.execution.dashboard.actions.ExecutorAction
+import com.intellij.execution.impl.ExecutionManagerImpl
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.openapi.project.DumbAwareAction
 
-import static com.intellij.platform.execution.dashboard.actions.RunDashboardActionSelection.getLeafTargets;
+internal class StopAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
-/**
- * @author konstantin.aleev
- */
-final class StopAction extends DumbAwareAction
-  implements ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
-
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
-  }
-
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    Project project = e.getProject();
-    Presentation presentation = e.getPresentation();
-    if (project == null) {
-      presentation.setEnabledAndVisible(false);
-      return;
+  override fun update(e: AnActionEvent) {
+    val presentation = e.presentation
+    if (e.project == null) {
+      presentation.isEnabledAndVisible = false
+      return
     }
 
-    JBIterable<RunDashboardRunConfigurationNode> targetNodes = getLeafTargets(e);
-    boolean enabled = targetNodes.filter(node -> {
-      return ExecutorAction.isRunning(node);
-    }).isNotEmpty();
-    presentation.setEnabled(enabled);
-    presentation.setVisible(enabled || !e.isFromContextMenu());
+    val enabled = RunDashboardActionSelection.getLeafTargets(e)
+      .filter { ExecutorAction.isRunning(it) }
+      .isNotEmpty
+    presentation.isEnabled = enabled
+    presentation.isVisible = enabled || !e.isFromContextMenu
   }
 
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getProject();
-    if (project == null) return;
+  override fun actionPerformed(e: AnActionEvent) {
+    if (e.project == null) {
+      return
+    }
 
-    for (RunDashboardRunConfigurationNode node : getLeafTargets(e)) {
-      ExecutionManagerImpl.stopProcess(node.getDescriptor());
+    for (node in RunDashboardActionSelection.getLeafTargets(e)) {
+      ExecutionManagerImpl.stopProcess(node.descriptor)
     }
   }
 }
