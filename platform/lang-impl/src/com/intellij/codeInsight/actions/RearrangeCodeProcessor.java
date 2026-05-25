@@ -72,6 +72,13 @@ public class RearrangeCodeProcessor extends AbstractLayoutCodeProcessor {
     super(project, files, getProgressText(), commandName, postRunnable, processChangedTextOnly);
   }
 
+  public RearrangeCodeProcessor(@NotNull Project project,
+                                PsiFile @NotNull [] files,
+                                @Nullable Runnable postRunnable,
+                                boolean processChangedTextOnly) {
+    super(project, files, getProgressText(), getCommandName(), postRunnable, processChangedTextOnly);
+  }
+
   @Override
   protected @NotNull FutureTask<Boolean> prepareTask(final @NotNull PsiFile psiFile, final boolean processChangedTextOnly) {
     // Task prepared by prepareTask is executed on EDT, but calculation of VCS changes may include operations
