@@ -334,7 +334,7 @@ fun <T> Resource<T>.shareIn(coroutineScope: CoroutineScope, sharing: SharingMode
       else -> SharedResourceState.NotRunning()
     }
     resource { cc ->
-      while (coroutineContext.isActive) {
+      while (true) {
         val r: Pair<SharedResourceState.Running<T>?, Job?> = synchronized(lock) {
           when (val s = state) {
             is SharedResourceState.NotRunning<T> -> {
