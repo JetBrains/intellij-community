@@ -2,7 +2,7 @@
 package com.intellij.internal.statistic.actions.devkit.scheme
 
 import com.intellij.internal.statistic.StatisticsBundle
-import com.intellij.internal.statistic.devkit.actions.scheme.EventsTestSchemeGroupConfiguration
+import com.intellij.platform.statistics.devkit.actions.scheme.EventsTestSchemeGroupConfiguration
 import com.intellij.internal.statistic.eventLog.events.scheme.EventDescriptor
 import com.intellij.internal.statistic.eventLog.events.scheme.FieldDescriptor
 import com.intellij.internal.statistic.eventLog.events.scheme.GroupDescriptor

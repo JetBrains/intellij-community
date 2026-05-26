@@ -2,9 +2,9 @@
 package com.intellij.internal.statistic.actions.devkit
 
 import com.intellij.execution.process.ProcessOutputType
-import com.intellij.internal.statistic.devkit.toolwindow.StatisticsEventLogMessageBuilder
-import com.intellij.internal.statistic.devkit.toolwindow.StatisticsEventLogToolWindow
-import com.intellij.internal.statistic.devkit.toolwindow.StatisticsLogFilterModel
+import com.intellij.platform.statistics.devkit.toolwindow.StatisticsEventLogMessageBuilder
+import com.intellij.platform.statistics.devkit.toolwindow.StatisticsEventLogToolWindow
+import com.intellij.platform.statistics.devkit.toolwindow.StatisticsLogFilterModel
 import com.jetbrains.fus.reporting.api.ValidationResultType
 import com.jetbrains.fus.reporting.api.ValidationResultType.ACCEPTED
 import com.jetbrains.fus.reporting.api.ValidationResultType.INCORRECT_RULE
