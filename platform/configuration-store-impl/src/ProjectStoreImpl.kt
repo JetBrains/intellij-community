@@ -304,7 +304,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
 
   private fun getMachineWorkspacePath(storeDescriptor: ProjectStoreDescriptor): Path? {
     val projectPath = storeDescriptor.historicalProjectBasePath
-    if (projectPath.fileSystem != FileSystems.getDefault()) return null
+    if (projectPath.fileSystem != FileSystems.getDefault() || !projectPath.isAbsolute) return null
     val descriptor = projectPath.asEelPath().descriptor
     if (descriptor !is EelDescriptorWithIsolatedWorkspace) return null
     val pathHash = FileUtilRt.pathHashCode(projectBasePath.invariantSeparatorsPathString)
