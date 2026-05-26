@@ -898,6 +898,7 @@
       implementation="git4idea.index.actions.GitStageCreatePatchActionProvider$Clipboard"/>
 
     <actionPromoter implementation="git4idea.index.actions.GitIndexActionPromoter"/>
+    <actionPromoter implementation="git4idea.ui.branch.dashboard.GitBranchesTreeActionPromoter"/>
 
     <changesViewContent id="git.stash" tabName="Stash" className="git4idea.stash.ui.GitStashContentProvider"
                         predicateClassName="git4idea.stash.ui.GitStashContentVisibilityPredicate"
