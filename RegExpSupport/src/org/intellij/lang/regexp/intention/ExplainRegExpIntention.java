@@ -446,9 +446,27 @@ class ExplanationVisitor extends RegExpRecursiveElementVisitor {
   }
 
   @Override
+  public void visitRegExpQuantifier(RegExpQuantifier quantifier) {
+    super.visitRegExpQuantifier(quantifier);
+    if (Registry.is("explain.regexp.intention.nested.quantifiers")) return;
+    NameNode node = new NameNode("Quantifier", "https://www.regular-expressions.info/repeat.html");
+    leaf(quantifier, node, quantifierText(quantifier, "matches the previous element "));
+  }
+
+  @Override
   public void visitRegExpClosure(RegExpClosure closure) {
-    RegExpQuantifier quantifier = closure.getQuantifier();
-    String explanation = "matches ";
+    if (!Registry.is("explain.regexp.intention.nested.quantifiers")) {
+      super.visitRegExpClosure(closure);
+    }
+    else {
+      NameNode node = new NameNode("Quantifier", "https://www.regular-expressions.info/repeat.html");
+      branch(closure, node, quantifierText(closure.getQuantifier(), "matches "));
+      super.visitRegExpClosure(closure);
+      parent();
+    }
+  }
+
+  private static @NotNull String quantifierText(RegExpQuantifier quantifier, String explanation) {
     boolean addSuffix = true;
     if (quantifier.isCounted()) {
       String min = numText(quantifier.getMin(), "0");
@@ -494,9 +512,7 @@ class ExplanationVisitor extends RegExpRecursiveElementVisitor {
     if (quantifier.isPossessive()) {
       explanation += ", without backtracking";
     }
-    branch(closure, new NameNode("Quantifier", "https://www.regular-expressions.info/repeat.html"), explanation);
-    super.visitRegExpClosure(closure);
-    parent();
+    return explanation;
   }
 
   @Override
@@ -591,7 +607,7 @@ class ExplanationVisitor extends RegExpRecursiveElementVisitor {
       }
     }
     else {
-      String set = elements.length == 1 && elements[0] instanceof RegExpCharRange range ? buildRangeText(range) : "in the set";
+      String set = elements.length == 1 && elements[0] instanceof RegExpCharRange range ? rangeText(range) : "in the set";
       if (regExpClass.isNegated()) {
         branch(regExpClass, new NameNode("Negated Character Class", "https://www.regular-expressions.info/charclass.html#negated"),
                "matches 1 character not " + set);
@@ -617,10 +633,10 @@ class ExplanationVisitor extends RegExpRecursiveElementVisitor {
   public void visitRegExpCharRange(RegExpCharRange range) {
     if (range.getParent() instanceof RegExpClass aClass && aClass.getElements().length == 1) return;
     leaf(range, new NameNode("Range", "https://www.regular-expressions.info/charclass.html"),
-         "matches 1 character " + buildRangeText(range));
+         "matches 1 character " + rangeText(range));
   }
 
-  private static @Nls @NotNull String buildRangeText(RegExpCharRange range) {
+  private static @Nls @NotNull String rangeText(RegExpCharRange range) {
     RegExpChar from = range.getFrom();
     RegExpChar to = range.getTo();
     return "from " + charText(from) + " to " + charText(to) + " (" + (to.getValue() - from.getValue() + 1) + " characters)";

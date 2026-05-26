@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.intention;
 
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
@@ -82,8 +83,9 @@ public final class ExplainRegExpIntentionTest extends BasePlatformTestCase {
                    \\) – matches the RIGHT PARENTHESIS character
              """);
   }
-  
+
   public void testExactlyNTimes() {
+    Registry.get("explain.regexp.intention.nested.quantifiers").setValue(true, myFixture.getTestRootDisposable());
     doTest("[0-9]{3}-[0-9]{4}",
            """
              [0-9]{3}-[0-9]{4} – matches elements in order
@@ -92,6 +94,19 @@ public final class ExplainRegExpIntentionTest extends BasePlatformTestCase {
                - – matches the HYPHEN-MINUS character
                [0-9]{4} Quantifier (https://www.regular-expressions.info/repeat.html) – matches exactly 4 times
                  [0-9] Character Class (https://www.regular-expressions.info/charclass.html) – matches 1 character from DIGIT ZERO to DIGIT NINE (10 characters)
+             """);
+  }
+
+  public void testExactlyNTimesFlat() {
+    Registry.get("explain.regexp.intention.nested.quantifiers").setValue(false, myFixture.getTestRootDisposable());
+    doTest("[0-9]{3}-[0-9]{4}",
+           """
+             [0-9]{3}-[0-9]{4} – matches elements in order
+               [0-9] Character Class (https://www.regular-expressions.info/charclass.html) – matches 1 character from DIGIT ZERO to DIGIT NINE (10 characters)
+               {3} Quantifier (https://www.regular-expressions.info/repeat.html) – matches the previous element exactly 3 times
+               - – matches the HYPHEN-MINUS character
+               [0-9] Character Class (https://www.regular-expressions.info/charclass.html) – matches 1 character from DIGIT ZERO to DIGIT NINE (10 characters)
+               {4} Quantifier (https://www.regular-expressions.info/repeat.html) – matches the previous element exactly 4 times
              """);
   }
 
