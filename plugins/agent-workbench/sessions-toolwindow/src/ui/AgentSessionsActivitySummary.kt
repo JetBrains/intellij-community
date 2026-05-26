@@ -16,6 +16,8 @@ import com.intellij.ui.IconManager
 import java.awt.Color
 import javax.swing.Icon
 
+internal const val AGENT_SESSIONS_CHROME_ACTIVITY_FRESHNESS_MILLIS: Long = 3L * 24 * 60 * 60 * 1000
+
 internal data class AgentSessionsActivityThreadRow(
   @JvmField val path: String,
   @JvmField val projectName: @NlsSafe String,
@@ -96,6 +98,18 @@ internal fun buildAgentSessionsActivitySummary(state: AgentSessionsState): Agent
   )
 }
 
+internal fun freshAgentSessionsActivitySummary(
+  summary: AgentSessionsActivitySummary,
+  nowMillis: Long,
+  freshnessMillis: Long = AGENT_SESSIONS_CHROME_ACTIVITY_FRESHNESS_MILLIS,
+): AgentSessionsActivitySummary {
+  return AgentSessionsActivitySummary(
+    attentionRows = summary.attentionRows.filterFreshActivityRows(nowMillis, freshnessMillis),
+    runningRows = summary.runningRows.filterFreshActivityRows(nowMillis, freshnessMillis),
+    doneRows = summary.doneRows.filterFreshActivityRows(nowMillis, freshnessMillis),
+  )
+}
+
 private fun collectAgentSessionsActivityThreadRows(state: AgentSessionsState): List<AgentSessionsActivityThreadRow> {
   return buildList {
     state.projects.forEach { project ->
@@ -144,6 +158,13 @@ private fun List<AgentSessionsActivityThreadRow>.sortedByRecentActivity(): List<
       .thenBy { it.worktreeName ?: "" }
       .thenBy { it.thread.id }
   )
+}
+
+private fun List<AgentSessionsActivityThreadRow>.filterFreshActivityRows(
+  nowMillis: Long,
+  freshnessMillis: Long,
+): List<AgentSessionsActivityThreadRow> {
+  return filter { row -> row.thread.updatedAt >= nowMillis - freshnessMillis }
 }
 
 private fun AgentThreadActivity?.isAttentionActivity(): Boolean {

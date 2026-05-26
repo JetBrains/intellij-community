@@ -14,7 +14,7 @@ targets:
 # Agent Main Toolbar Activity
 
 Status: Draft
-Date: 2026-05-22
+Date: 2026-05-26
 
 ## Summary
 Source project frames show a compact Agent activity group in the main toolbar. The group is a lightweight global Agent activity switcher: it helps users notice and reopen actionable Agent chats from any loaded project while they stay in source-code flow.
@@ -42,7 +42,7 @@ The full cross-project task browser remains Agent Threads and the dedicated Agen
   [@test] ../sessions-toolwindow/testSrc/AgentSessionsMainToolbarActivityGroupTest.kt
   [@test] ../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
 
-- Counts and popup rows must include all active rows from the shared activity summary for the selected bucket, regardless of the current source project path. Popup rows must keep project/worktree identity visible through the existing row label.
+- Counts and popup rows must include fresh active rows from the shared chrome activity summary for the selected bucket, regardless of the current source project path. Rows whose thread `updatedAt` is older than 3 days must not contribute to the source-frame toolbar. Popup rows must keep project/worktree identity visible through the existing row label.
   [@test] ../sessions-toolwindow/testSrc/AgentSessionsMainToolbarActivityGroupTest.kt
 
 - Zero-count counters must remain visible and disabled with their bucket tooltip, so counter positions are stable for muscle memory.
@@ -60,7 +60,7 @@ The full cross-project task browser remains Agent Threads and the dedicated Agen
 ## Data & Backend
 - The group must use `normalizeOpenableSourceProjectPath` only to decide whether the current frame is a source project frame where the toolbar group can be shown.
 - Activity rows must not be filtered by the current source project path.
-- The counters consume active thread activity summaries. Archived threads and `READY` activity are not surfaced in this toolbar group.
+- The counters consume fresh active thread activity summaries. Archived threads, stale rows older than 3 days, and `READY` activity are not surfaced in this toolbar group.
 
 ## Testing / Local Run
 - `./tests.cmd --module intellij.agent.workbench.sessions.toolwindow.tests --test com.intellij.agent.workbench.sessions.toolwindow.AgentSessionsMainToolbarActivityGroupTest`

@@ -246,7 +246,7 @@ internal class AgentSessionsActivityCounterAction(
 
 private fun defaultActivityRowsFor(project: Project?, bucket: AgentSessionsActivityBucket): List<AgentSessionsActivityThreadRow> {
   val service = project?.service<AgentSessionsActivityService>() ?: return emptyList()
-  return service.latestSummary().rowsFor(bucket)
+  return service.latestChromeSummary().rowsFor(bucket)
 }
 
 private fun isActiveThreadViewMode(): Boolean {

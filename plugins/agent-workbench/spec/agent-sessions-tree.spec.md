@@ -11,7 +11,7 @@ targets:
 # Agent Threads Tree UI
 
 Status: Draft
-Date: 2026-05-09
+Date: 2026-05-26
 
 ## Summary
 The Agent Threads tree follows IntelliJ tree conventions while adding provider-specific thread presentation, loading indicators, provider-source warnings, and new-thread row actions.
@@ -28,7 +28,9 @@ The Agent Threads tree follows IntelliJ tree conventions while adding provider-s
   the title bar carries one counter action per active bucket (`Needs attention` covers `NEEDS_INPUT`/`REVIEWING`,
   `Running` covers `PROCESSING`, `Done` covers `UNREAD`). `READY` threads are not surfaced in title chrome.
   Thread rows render their actual activity badge, but title counters, stripe badges, and OS notifications use summary activity;
-  sub-agent-only activity does not contribute to those global signals.
+  sub-agent-only activity does not contribute to those global signals. Title counters and stripe badges ignore activity rows
+  whose thread `updatedAt` is older than 3 days; the tree and OS notification transition tracking still use the full active
+  thread state.
   All three counters are always visible so that bucket positions remain stable for muscle memory.
   Counters render as quiet inline title-bar signals: a small marker plus count, without chip fill or border.
   `Needs attention` uses the strongest treatment with a bold count; `Running` and `Done` use normal foreground counts;

@@ -21,7 +21,7 @@ internal class AgentSessionsMainToolbarActivityGroup @JvmOverloads constructor(
   private val isDedicatedProject: (Project) -> Boolean = AgentWorkbenchDedicatedFrameProjectManager::isDedicatedProject,
   private val sourceProjectPath: (Project) -> String? = { project -> normalizeOpenableSourceProjectPath(project.basePath) },
   private val activitySummary: (Project) -> AgentSessionsActivitySummary = { project ->
-    if (project.isInitialized) project.service<AgentSessionsActivityService>().latestSummary() else AgentSessionsActivitySummary.EMPTY
+    if (project.isInitialized) project.service<AgentSessionsActivityService>().latestChromeSummary() else AgentSessionsActivitySummary.EMPTY
   },
   private val projectProvider: (AnActionEvent) -> Project? = ::mainToolbarProject,
 ) : ActionGroup(), DumbAware {

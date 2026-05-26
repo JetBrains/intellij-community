@@ -8,11 +8,13 @@ import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
+import com.intellij.agent.workbench.sessions.toolwindow.ui.AGENT_SESSIONS_CHROME_ACTIVITY_FRESHNESS_MILLIS
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsMainToolbarActivityGroup
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsActivityCounterAction
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsActivityCounterComponent
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsActivitySummary
 import com.intellij.agent.workbench.sessions.toolwindow.ui.buildAgentSessionsActivitySummary
+import com.intellij.agent.workbench.sessions.toolwindow.ui.freshAgentSessionsActivitySummary
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
@@ -164,6 +166,26 @@ class AgentSessionsMainToolbarActivityGroupTest {
   }
 
   @Test
+  fun sourceFrameCountersIgnoreStaleChromeActivityRows() {
+    val now = AGENT_SESSIONS_CHROME_ACTIVITY_FRESHNESS_MILLIS + 10_000L
+    val group = AgentSessionsMainToolbarActivityGroup(
+      isDedicatedProject = { false },
+      sourceProjectPath = { "/work/project-a" },
+      activitySummary = { freshAgentSessionsActivitySummary(activitySummary(updatedAt = 9_999), now) },
+    )
+    val counters = group.getChildren(testEventWithProject(group)).filterIsInstance<AgentSessionsActivityCounterAction>()
+
+    val events = counters.map { counter -> testEventWithProject(counter) }
+    runInEdtAndWait {
+      counters.zip(events).forEach { (counter, event) -> counter.update(event) }
+    }
+
+    assertThat(events.map { event -> event.presentation.text }).containsExactly("0", "0", "0")
+    assertThat(events.map { event -> event.presentation.isVisible }).containsExactly(true, true, true)
+    assertThat(events.map { event -> event.presentation.isEnabled }).containsExactly(false, false, false)
+  }
+
+  @Test
   fun hiddenInDedicatedFrameWithoutProjectAndWithoutSourcePath() {
     val group = AgentSessionsMainToolbarActivityGroup(
       isDedicatedProject = { true },
@@ -188,7 +210,7 @@ class AgentSessionsMainToolbarActivityGroupTest {
     assertThat(noSourcePathEvent.presentation.isEnabledAndVisible).isFalse()
   }
 
-  private fun activitySummary(): AgentSessionsActivitySummary {
+  private fun activitySummary(updatedAt: Long = 1_000): AgentSessionsActivitySummary {
     return buildAgentSessionsActivitySummary(
       AgentSessionsState(
         projects = listOf(
@@ -198,8 +220,8 @@ class AgentSessionsMainToolbarActivityGroupTest {
             isOpen = true,
             hasLoaded = true,
             threads = listOf(
-              thread("attention", AgentThreadActivity.NEEDS_INPUT),
-              thread("done", AgentThreadActivity.UNREAD),
+              thread("attention", AgentThreadActivity.NEEDS_INPUT, updatedAt),
+              thread("done", AgentThreadActivity.UNREAD, updatedAt),
             ),
           ),
           AgentProjectSessions(
@@ -207,18 +229,18 @@ class AgentSessionsMainToolbarActivityGroupTest {
             name = "Project B",
             isOpen = true,
             hasLoaded = true,
-            threads = listOf(thread("running", AgentThreadActivity.PROCESSING)),
+            threads = listOf(thread("running", AgentThreadActivity.PROCESSING, updatedAt)),
           ),
         ),
       )
     )
   }
 
-  private fun thread(id: String, activity: AgentThreadActivity): AgentSessionThread {
+  private fun thread(id: String, activity: AgentThreadActivity, updatedAt: Long): AgentSessionThread {
     return AgentSessionThread(
       id = id,
       title = id,
-      updatedAt = 1_000,
+      updatedAt = updatedAt,
       archived = false,
       activity = activity,
       provider = AgentSessionProvider.CODEX,
