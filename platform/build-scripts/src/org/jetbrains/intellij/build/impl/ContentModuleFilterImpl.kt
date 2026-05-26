@@ -16,11 +16,11 @@ internal class ContentModuleByProductModeFilter(
   private val productMode: ProductMode
 ) : ContentModuleFilter {
   
-  private val productModeMatcher = JpsProductModeMatcher(productMode)
+  private val productModeMatcher by lazy { JpsProductModeMatcher(productMode) }
   private val bundledPluginMainModules = bundledPluginModules.toSet()
 
   override fun isOptionalModuleIncluded(moduleName: String, pluginMainModuleName: String?): Boolean {
-    if (pluginMainModuleName != null && pluginMainModuleName !in bundledPluginMainModules) {
+    if (pluginMainModuleName != null && !bundledPluginMainModules.contains(pluginMainModuleName)) {
       return true
     }
     val module = project.findModuleByName(moduleName) ?: return true

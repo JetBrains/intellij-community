@@ -15,6 +15,7 @@ import org.apache.maven.model.Organization
 import org.apache.maven.model.Scm
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.AggregatorPomSpec
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.DirSource
@@ -49,6 +50,34 @@ import kotlin.io.path.copyTo
 import kotlin.io.path.createDirectories
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.name
+
+private const val SQUASHED_SUFFIX = ".squashed"
+
+private val FLEET_MODULES_ALLOWED_FOR_PUBLICATION = setOf(
+  // region Fleet modules in Community
+  "fleet.andel",
+  "fleet.bifurcan",
+  "fleet.kernel",
+  "fleet.multiplatform.shims",
+  "fleet.reporting.api",
+  "fleet.reporting.shared",
+  "fleet.rhizomedb",
+  "fleet.rhizomedb.transactor",
+  "fleet.rhizomedb.transactor.rebase",
+  "fleet.rpc",
+  "fleet.rpc.server",
+  "fleet.util.core",
+  "fleet.util.codepoints",
+  "fleet.util.datetime",
+  "fleet.util.logging.api",
+  "fleet.util.logging.slf4j",
+  "fleet.util.multiplatform",
+  "fleet.util.serialization",
+  "fleet.fastutil",
+  "fleet.lsp.protocol", // Fleet Language Server Protocol modules allowed for publication - https://youtrack.jetbrains.com/issue/IJI-2644
+  "fleet.ktor.network.tls",
+  // endregion
+)
 
 /**
  * Generates Maven artifacts for IDE and plugin modules. Artifacts aren't generated for modules which depend on non-repository libraries.
@@ -87,8 +116,6 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
   }
 
   companion object {
-    private const val SQUASHED_SUFFIX = ".squashed"
-
     internal fun scopedDependencies(module: JpsModule): Map<JpsDependencyElement, DependencyScope> {
       val result = LinkedHashMap<JpsDependencyElement, DependencyScope>()
       val javaExtensionService = JpsJavaExtensionService.getInstance()
@@ -118,36 +145,9 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
       return library!!.name == "microba" || library.name == "jshell-frontend"
     }
 
-    @JvmStatic
     fun createDependencyTagByLibrary(descriptor: JpsMavenRepositoryLibraryDescriptor): Dependency {
       return createDependencyTag(createArtifactDependencyByLibrary(descriptor, DependencyScope.COMPILE))
     }
-
-    private val FLEET_MODULES_ALLOWED_FOR_PUBLICATION = setOf(
-      // region Fleet modules in Community
-      "fleet.andel",
-      "fleet.bifurcan",
-      "fleet.kernel",
-      "fleet.multiplatform.shims",
-      "fleet.reporting.api",
-      "fleet.reporting.shared",
-      "fleet.rhizomedb",
-      "fleet.rhizomedb.transactor",
-      "fleet.rhizomedb.transactor.rebase",
-      "fleet.rpc",
-      "fleet.rpc.server",
-      "fleet.util.core",
-      "fleet.util.codepoints",
-      "fleet.util.datetime",
-      "fleet.util.logging.api",
-      "fleet.util.logging.slf4j",
-      "fleet.util.multiplatform",
-      "fleet.util.serialization",
-      "fleet.fastutil",
-      "fleet.lsp.protocol", // Fleet Language Server Protocol modules allowed for publication - https://youtrack.jetbrains.com/issue/IJI-2644
-      "fleet.ktor.network.tls",
-      // endregion
-    )
   }
 
   /**
@@ -417,48 +417,48 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
     val artifacts = builtArtifacts.map { (data, files) ->
       GeneratedMavenArtifacts(data.module, data.coordinates, files)
     }
-    artifacts.forEach {
-      if (context.productProperties.mavenArtifacts.validateForMavenCentralPublication(it.module)) {
-        validateForMavenCentralPublication(it, context)
+    for (mavenArtifact in artifacts) {
+      if (context.productProperties.mavenArtifacts.validateForMavenCentralPublication(mavenArtifact.module)) {
+        validateForMavenCentralPublication(mavenArtifact, context)
       }
     }
     context.productProperties.mavenArtifacts.validate(context, artifacts)
   }
+}
 
-  /** See https://central.sonatype.org/publish/requirements */
-  @OptIn(ExperimentalPathApi::class)
-  private suspend fun validateForMavenCentralPublication(artifacts: GeneratedMavenArtifacts, context: BuildContext) {
-    if (artifacts.module.getSourceRoots(JavaSourceRootType.SOURCE).any()) {
-      val sources = artifacts.coordinates.getFileName("sources", "jar")
-      check(artifacts.files.any { it.name == sources }) {
-        "No $sources is generated for the module ${artifacts.module.name}"
-      }
-      val javadoc = artifacts.coordinates.getFileName("javadoc", "jar")
-      check(artifacts.files.any { it.name == javadoc }) {
-        "No $javadoc is generated for the module ${artifacts.module.name}"
-      }
+/** See https://central.sonatype.org/publish/requirements */
+@OptIn(ExperimentalPathApi::class)
+private suspend fun validateForMavenCentralPublication(artifacts: GeneratedMavenArtifacts, context: BuildContext) {
+  if (artifacts.module.getSourceRoots(JavaSourceRootType.SOURCE).any()) {
+    val sources = artifacts.coordinates.getFileName("sources", "jar")
+    check(artifacts.files.any { it.name == sources }) {
+      "No $sources is generated for the module ${artifacts.module.name}"
     }
-    val pom = artifacts.coordinates.getFileName(packaging = "pom")
-    val pomXml = artifacts.files.singleOrNull { it.name == pom }
-    check(pomXml != null) {
-      "No $pom is generated for the module ${artifacts.module.name}"
+    val javadoc = artifacts.coordinates.getFileName("javadoc", "jar")
+    check(artifacts.files.any { it.name == javadoc }) {
+      "No $javadoc is generated for the module ${artifacts.module.name}"
     }
-    val workDir = context.paths.tempDir.resolve("${artifacts.module.name}-maven-central-publication-test")
-    workDir.deleteRecursively()
-    workDir.createDirectories()
-    artifacts.files.forEach { it.copyTo(workDir.resolve(it.name)) }
-    val publication = MavenCentralPublication(
-      context = context,
-      workDir = workDir,
-      dryRun = true,
-    )
-    // making sure that a bundle.zip can be built without issues
-    publication.bundle()
-    val coordinatesToBePublished = publication.artifacts.map { it.coordinates }
-    check(coordinatesToBePublished.count() == 1 && coordinatesToBePublished.contains(artifacts.coordinates)) {
-      "Maven coordinates ${artifacts.coordinates} generated for the module ${artifacts.module.name} " +
-      "don't match the coordinates $coordinatesToBePublished from $pomXml"
-    }
+  }
+  val pom = artifacts.coordinates.getFileName(packaging = "pom")
+  val pomXml = artifacts.files.singleOrNull { it.name == pom }
+  check(pomXml != null) {
+    "No $pom is generated for the module ${artifacts.module.name}"
+  }
+  val workDir = context.paths.tempDir.resolve("${artifacts.module.name}-maven-central-publication-test")
+  workDir.deleteRecursively()
+  workDir.createDirectories()
+  artifacts.files.forEach { it.copyTo(workDir.resolve(it.name)) }
+  val publication = MavenCentralPublication(
+    context = context,
+    workDir = workDir,
+    dryRun = true,
+  )
+  // making sure that a bundle.zip can be built without issues
+  publication.bundle()
+  val coordinatesToBePublished = publication.artifacts.map { it.coordinates }
+  check(coordinatesToBePublished.count() == 1 && coordinatesToBePublished.contains(artifacts.coordinates)) {
+    "Maven coordinates ${artifacts.coordinates} generated for the module ${artifacts.module.name} " +
+    "don't match the coordinates $coordinatesToBePublished from $pomXml"
   }
 }
 
@@ -467,9 +467,9 @@ enum class DependencyScope {
 }
 
 data class MavenCoordinates(
-  val groupId: String,
-  val artifactId: String,
-  val version: String,
+  @JvmField val groupId: String,
+  @JvmField val artifactId: String,
+  @JvmField val version: String,
 ) {
   override fun toString(): String = "$groupId:$artifactId:$version"
 
@@ -485,16 +485,16 @@ data class MavenCoordinates(
 }
 
 internal data class MavenArtifactData(
-  val module: JpsModule,
-  val coordinates: MavenCoordinates,
-  val dependencies: List<MavenArtifactDependency>,
+  @JvmField val module: JpsModule,
+  @JvmField val coordinates: MavenCoordinates,
+  @JvmField val dependencies: List<MavenArtifactDependency>,
 )
 
 data class MavenArtifactDependency(
-  val coordinates: MavenCoordinates,
-  val includeTransitiveDeps: Boolean,
-  val excludedDependencies: List<String>,
-  val scope: DependencyScope?,
+  @JvmField val coordinates: MavenCoordinates,
+  @JvmField val includeTransitiveDeps: Boolean,
+  @JvmField val excludedDependencies: List<String>,
+  @JvmField val scope: DependencyScope?,
 )
 
 private fun Model.setOrFailIfAlreadySet(name: String, value: String, getter: Model.() -> String?, setter: Model.(String) -> Unit) {
@@ -684,7 +684,7 @@ private suspend fun layoutMavenArtifacts(
   }.associate { it }
 }
 
-@ApiStatus.Internal
+@Internal
 data class GeneratedMavenArtifacts(
   @JvmField val module: JpsModule,
   @JvmField val coordinates: MavenCoordinates,

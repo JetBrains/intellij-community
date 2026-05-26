@@ -3,7 +3,6 @@
 
 package org.jetbrains.intellij.build
 
-import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xml.dom.readXmlAsModel
 import org.jetbrains.intellij.build.impl.ModuleItem
 import org.jetbrains.intellij.build.impl.PluginLayout
@@ -52,6 +51,7 @@ internal class JarPackagerDependencyHelper(private val outputProvider: ModuleOut
     }
 
     if (moduleName.contains(".test.")) {
+      @Suppress("RedundantIf", "RedundantSuppression")
       if (module?.sourceRoots?.none { it.rootType.isForTests } == true) {
         return false
       }
@@ -74,17 +74,6 @@ internal class JarPackagerDependencyHelper(private val outputProvider: ModuleOut
     val root = readXmlAsModel(getUnprocessedPluginXmlContent(module = pluginModule, outputProvider = outputProvider))
     val element = root.getChild("id") ?: root.getChild("name") ?: throw IllegalStateException("Cannot find attribute id or name (module=$pluginModule)")
     return element.content!!
-  }
-
-  // The x-include is not resolved. If the plugin.xml includes any files, the content from these included files will not be considered.
-  fun readPluginIncompleteContentFromDescriptor(pluginModule: JpsModule, contentModuleFilter: ContentModuleFilter): Sequence<String> {
-    val pluginXml = findFileInModuleSources(pluginModule, "META-INF/plugin.xml") ?: return emptySequence()
-    return readPluginContentFromDescriptor(readXmlAsModel(pluginXml)).mapNotNull { (moduleName, loadingRule) ->
-      if (isOptionalLoadingRule(loadingRule) && !contentModuleFilter.isOptionalModuleIncluded(moduleName, pluginModule.name)) {
-        return@mapNotNull null
-      }
-      moduleName
-    }
   }
 
   fun getLibraryDependencies(module: JpsModule, withTests: Boolean): List<JpsLibraryDependency> {
@@ -130,17 +119,3 @@ internal class JarPackagerDependencyHelper(private val outputProvider: ModuleOut
     return false
   }
 }
-
-internal fun readPluginContentFromDescriptor(pluginDescriptor: XmlElement): Sequence<Pair<String, String?>> {
-  return sequence {
-    for (content in pluginDescriptor.children("content")) {
-      for (module in content.children("module")) {
-        val moduleName = module.attributes.get("name")?.takeIf { !it.contains('/') } ?: continue
-        val loadingRuleString = module.attributes.get("loading")
-        yield(moduleName to loadingRuleString)
-      }
-    }
-  }
-}
-
-internal fun isOptionalLoadingRule(loadingRule: String?): Boolean = loadingRule != "required" && loadingRule != "embedded"
