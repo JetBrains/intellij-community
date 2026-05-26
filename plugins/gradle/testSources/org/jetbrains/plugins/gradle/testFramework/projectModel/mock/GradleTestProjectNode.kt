@@ -7,7 +7,9 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.internal.InternalExternalProjectInfo
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.toCanonicalPath
+import com.intellij.openapi.util.io.toNioPathOrNull
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.nio.file.Path
@@ -39,21 +41,33 @@ class GradleTestProjectNode {
       return projectNode
     }
 
-    fun testProjectNode(configure: (GradleTestProjectNode) -> Unit): DataNode<ProjectData> {
+    fun projectNode(configure: (GradleTestProjectNode) -> Unit = {}): DataNode<ProjectData> {
       val configuration = GradleTestProjectNode()
       configure(configuration)
       return createProjectNode(configuration)
     }
+
+    fun projectNode(project: Project, configure: (GradleTestProjectNode) -> Unit = {}): DataNode<ProjectData> =
+      projectNode {
+        it.projectPath = project.basePath!!.toNioPathOrNull()!!
+        configure(it)
+      }
 
     private fun createExternalProjectInfo(configuration: GradleTestProjectNode): ExternalProjectInfo {
       val projectNode = createProjectNode(configuration)
       return InternalExternalProjectInfo(GradleConstants.SYSTEM_ID, configuration.projectPath.toCanonicalPath(), projectNode)
     }
 
-    fun testExternalProjectInfo(configure: (GradleTestProjectNode) -> Unit): ExternalProjectInfo {
+    fun externalProjectInfo(configure: (GradleTestProjectNode) -> Unit = {}): ExternalProjectInfo {
       val configuration = GradleTestProjectNode()
       configure(configuration)
       return createExternalProjectInfo(configuration)
     }
+
+    fun externalProjectInfo(project: Project, configure: (GradleTestProjectNode) -> Unit = {}): ExternalProjectInfo =
+      externalProjectInfo {
+        it.projectPath = project.basePath!!.toNioPathOrNull()!!
+        configure(it)
+      }
   }
 }

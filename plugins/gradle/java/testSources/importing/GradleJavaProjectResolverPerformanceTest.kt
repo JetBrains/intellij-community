@@ -9,7 +9,6 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderBase
-import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.common.mock.notImplemented
 import com.intellij.testFramework.junit5.TestApplication
@@ -26,9 +25,9 @@ import org.jetbrains.plugins.gradle.service.project.JavaGradleProjectResolver
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleJvmFixture
-import org.jetbrains.plugins.gradle.testFramework.projectModel.mock.GradleTestExternalProject.Companion.testExternalProjects
-import org.jetbrains.plugins.gradle.testFramework.projectModel.mock.GradleTestIdeaProject.Companion.testIdeaProject
-import org.jetbrains.plugins.gradle.testFramework.projectModel.mock.GradleTestProjectNode.Companion.testProjectNode
+import org.jetbrains.plugins.gradle.testFramework.projectModel.mock.GradleTestExternalProject.Companion.externalProjects
+import org.jetbrains.plugins.gradle.testFramework.projectModel.mock.GradleTestIdeaProject.Companion.ideaProject
+import org.jetbrains.plugins.gradle.testFramework.projectModel.mock.GradleTestProjectNode.Companion.projectNode
 import org.jetbrains.plugins.gradle.testFramework.projectModel.moduleNodes
 import org.jetbrains.plugins.gradle.testFramework.projectModel.moduleSdkNode
 import org.jetbrains.plugins.gradle.testFramework.projectModel.projectSdkNode
@@ -86,18 +85,14 @@ class GradleJavaProjectResolverPerformanceTest {
     ) {
       setGradleJvm(project, gradleJvm)
 
-      val ideaProject = testIdeaProject {
+      val ideaProject = ideaProject(project, gradleJvm) {
         it.numHolderModules = numHolderModules
-        it.projectName = project.name
-        it.projectSdkName = gradleJvm
-        it.moduleSdkName = gradleJvm
       }
-      val externalProjects = testExternalProjects {
+      val externalProjects = externalProjects {
         it.numHolderModules = numHolderModules
         it.numSourceSetModules = numSourceSetModules
       }
-      val projectNode = testProjectNode {
-        it.projectPath = project.basePath?.toNioPathOrNull()!!
+      val projectNode = projectNode(project) {
         it.numHolderModules = numHolderModules
         it.numSourceSetModules = numSourceSetModules
       }
