@@ -61,6 +61,7 @@ class AgentWorkbenchSettingsConfigurableTest {
   fun configurableAppliesSettings(@TestDisposable disposable: Disposable) {
     val advancedSettings = AdvancedSettings.getInstance() as AdvancedSettingsImpl
     AgentWorkbenchSettings.getInstance().setOpenInDedicatedFrame(false)
+    AgentWorkbenchSettings.getInstance().setShowAgentActivityInMainToolbar(false)
     advancedSettings.setSetting(PREVENT_SYSTEM_SLEEP_WHILE_WORKING_SETTING_ID, true, disposable)
 
     runInEdtAndWait {
@@ -71,14 +72,18 @@ class AgentWorkbenchSettingsConfigurableTest {
 
         val dedicatedFrameCheckBox =
           component.checkBox(AgentSessionsBundle.message("advanced.setting.agent.workbench.chat.open.in.dedicated.frame"))
+        val mainToolbarActivityCheckBox =
+          component.checkBox(AgentSessionsBundle.message("settings.agent.workbench.show.activity.in.main.toolbar"))
         val sleepPreventionCheckBox =
           component.checkBox(AgentSessionsBundle.message("advanced.setting.agent.workbench.prevent.system.sleep.while.working"))
 
         assertThat(dedicatedFrameCheckBox.isSelected).isFalse()
+        assertThat(mainToolbarActivityCheckBox.isSelected).isFalse()
         assertThat(sleepPreventionCheckBox.isSelected).isTrue()
         assertThat(configurable.isModified).isFalse()
 
         dedicatedFrameCheckBox.isSelected = true
+        mainToolbarActivityCheckBox.isSelected = true
         sleepPreventionCheckBox.isSelected = false
 
         assertThat(configurable.isModified).isTrue()
@@ -91,6 +96,8 @@ class AgentWorkbenchSettingsConfigurableTest {
 
     assertThat(AgentWorkbenchSettings.getInstance().openInDedicatedFrame).isTrue()
     assertThat(AgentWorkbenchSettings.getInstance().openInDedicatedFrameOverride).isNull()
+    assertThat(AgentWorkbenchSettings.getInstance().showAgentActivityInMainToolbar).isTrue()
+    assertThat(AgentWorkbenchSettings.getInstance().showAgentActivityInMainToolbarOverride).isTrue()
     assertThat(AdvancedSettings.getBoolean(PREVENT_SYSTEM_SLEEP_WHILE_WORKING_SETTING_ID)).isFalse()
   }
 
@@ -126,6 +133,7 @@ class AgentWorkbenchSettingsConfigurableTest {
           .containsSubsequence(
             AgentSessionsBundle.message("advanced.setting.agent.workbench.chat.open.in.dedicated.frame"),
             TEST_CHAT_COMPONENT_CHECKBOX_TEXT,
+            AgentSessionsBundle.message("settings.agent.workbench.show.activity.in.main.toolbar"),
             AgentSessionsBundle.message("advanced.setting.agent.workbench.prevent.system.sleep.while.working"),
           )
       }

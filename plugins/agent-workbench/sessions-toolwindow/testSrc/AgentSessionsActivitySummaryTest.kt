@@ -13,6 +13,7 @@ import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsActivity
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsActivityCounterComponent
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsActivityCounterTone
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsActivitySummary
+import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsMainToolbarActivityState
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsStripeBadge
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsSystemNotificationTarget
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsSystemNotificationTracker
@@ -150,6 +151,40 @@ class AgentSessionsActivitySummaryTest {
     assertThat(freshSummary.attentionRows).isEmpty()
     assertThat(freshSummary.doneRows).isEmpty()
     assertThat(freshSummary.stripeBadge()).isNull()
+  }
+
+  @Test
+  fun mainToolbarActivityStateIgnoresInitialLoadedAttentionBaseline() {
+    val state = AgentSessionsMainToolbarActivityState()
+
+    assertThat(state.update(summary(thread("needs-input", AgentThreadActivity.NEEDS_INPUT, 100)), isLoadedState = true))
+      .isEqualTo(AgentSessionsActivitySummary.EMPTY)
+    assertThat(state.update(summary(thread("needs-input", AgentThreadActivity.NEEDS_INPUT, 200)), isLoadedState = true))
+      .isEqualTo(AgentSessionsActivitySummary.EMPTY)
+  }
+
+  @Test
+  fun mainToolbarActivityStateLatchesAttentionEnteredAfterLoadedBaseline() {
+    val state = AgentSessionsMainToolbarActivityState()
+    assertThat(state.update(summary(thread("needs-input", AgentThreadActivity.PROCESSING, 100)), isLoadedState = true))
+      .isEqualTo(AgentSessionsActivitySummary.EMPTY)
+
+    val summary = summary(
+      thread("needs-input", AgentThreadActivity.NEEDS_INPUT, 200),
+      thread("running", AgentThreadActivity.PROCESSING, 150),
+    )
+
+    assertThat(state.update(summary, isLoadedState = true)).isEqualTo(summary)
+  }
+
+  @Test
+  fun mainToolbarActivityStateClearsWhenCurrentRunAttentionLeavesBucket() {
+    val state = AgentSessionsMainToolbarActivityState()
+    state.update(summary(thread("needs-input", AgentThreadActivity.PROCESSING, 100)), isLoadedState = true)
+    state.update(summary(thread("needs-input", AgentThreadActivity.NEEDS_INPUT, 200)), isLoadedState = true)
+
+    assertThat(state.update(summary(thread("needs-input", AgentThreadActivity.PROCESSING, 300)), isLoadedState = true))
+      .isEqualTo(AgentSessionsActivitySummary.EMPTY)
   }
 
   @Test

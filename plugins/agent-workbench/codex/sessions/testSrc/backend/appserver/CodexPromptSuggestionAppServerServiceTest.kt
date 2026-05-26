@@ -8,9 +8,13 @@ import com.intellij.agent.workbench.codex.common.CodexPromptSuggestionResult
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.job
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
@@ -22,55 +26,64 @@ import kotlin.time.Duration.Companion.seconds
 class CodexPromptSuggestionAppServerServiceTest {
   @Test
   fun canceledQueuedRequestDoesNotStartAfterMutexIsReleased(): Unit = runBlocking(Dispatchers.Default) {
-    val firstStarted = CompletableDeferred<Unit>()
-    val releaseFirst = CompletableDeferred<Unit>()
-    val observedTitles = mutableListOf<String>()
-    val expectedResult = CodexPromptSuggestionResult.GeneratedCandidates(emptyList())
-    val service = CodexPromptSuggestionAppServerService(
-      serviceScope = this,
-      suggestWithClient = { request ->
-        val title = request.contextItems.single().title ?: "missing"
-        synchronized(observedTitles) {
-          observedTitles += title
-        }
-        if (title == "first") {
-          firstStarted.complete(Unit)
-          releaseFirst.await()
-          null
-        }
-        else {
-          expectedResult
-        }
-      },
-    )
-
-    val first = async(start = CoroutineStart.UNDISPATCHED) {
-      service.suggestPrompt(request(title = "first"))
-    }
-    withTimeout(5.seconds) {
-      firstStarted.await()
-    }
-
-    val second = async(start = CoroutineStart.UNDISPATCHED) {
-      service.suggestPrompt(request(title = "second"))
-    }
-    second.cancel()
-
-    val third = async(start = CoroutineStart.UNDISPATCHED) {
-      service.suggestPrompt(request(title = "third"))
-    }
-
-    releaseFirst.complete(Unit)
-
-    assertThat(first.await()).isNull()
+    @Suppress("RAW_SCOPE_CREATION")
+    val serviceScope = CoroutineScope(coroutineContext + Job(coroutineContext.job))
     try {
-      second.await()
-      fail("Expected CancellationException")
+      withTimeout(10.seconds) {
+        val firstStarted = CompletableDeferred<Unit>()
+        val releaseFirst = CompletableDeferred<Unit>()
+        val observedTitles = mutableListOf<String>()
+        val expectedResult = CodexPromptSuggestionResult.GeneratedCandidates(emptyList())
+        val service = CodexPromptSuggestionAppServerService(
+          serviceScope = serviceScope,
+          suggestWithClient = { request ->
+            val title = request.contextItems.single().title ?: "missing"
+            synchronized(observedTitles) {
+              observedTitles += title
+            }
+            if (title == "first") {
+              firstStarted.complete(Unit)
+              releaseFirst.await()
+              null
+            }
+            else {
+              expectedResult
+            }
+          },
+        )
+
+        val first = async(start = CoroutineStart.UNDISPATCHED) {
+          service.suggestPrompt(request(title = "first"))
+        }
+        withTimeout(5.seconds) {
+          firstStarted.await()
+        }
+
+        val second = async(start = CoroutineStart.UNDISPATCHED) {
+          service.suggestPrompt(request(title = "second"))
+        }
+        second.cancel()
+
+        val third = async(start = CoroutineStart.UNDISPATCHED) {
+          service.suggestPrompt(request(title = "third"))
+        }
+
+        releaseFirst.complete(Unit)
+
+        assertThat(first.await()).isNull()
+        try {
+          second.await()
+          fail("Expected CancellationException")
+        }
+        catch (_: CancellationException) {
+        }
+        assertThat(third.await()).isEqualTo(expectedResult)
+        assertThat(observedTitles).containsExactly("first", "third")
+      }
     }
-    catch (_: CancellationException) {
+    finally {
+      serviceScope.cancel()
     }
-    assertThat(third.await()).isEqualTo(expectedResult)
-    assertThat(observedTitles).containsExactly("first", "third")
   }
 
   private fun request(title: String): CodexPromptSuggestionRequest {

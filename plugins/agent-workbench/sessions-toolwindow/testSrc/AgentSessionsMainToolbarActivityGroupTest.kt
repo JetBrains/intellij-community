@@ -83,6 +83,7 @@ class AgentSessionsMainToolbarActivityGroupTest {
     val group = AgentSessionsMainToolbarActivityGroup(
       isDedicatedProject = { false },
       sourceProjectPath = { "/work/project-a" },
+      isToolbarActivityEnabled = { true },
       activitySummary = { activitySummary() },
     )
     val event = testEventWithProject(group)
@@ -103,6 +104,7 @@ class AgentSessionsMainToolbarActivityGroupTest {
     val group = AgentSessionsMainToolbarActivityGroup(
       isDedicatedProject = { false },
       sourceProjectPath = { "/work/project-a" },
+      isToolbarActivityEnabled = { true },
       activitySummary = { activitySummary() },
     )
     val counters = group.getChildren(testEventWithProject(group)).filterIsInstance<AgentSessionsActivityCounterAction>()
@@ -122,6 +124,7 @@ class AgentSessionsMainToolbarActivityGroupTest {
     val group = AgentSessionsMainToolbarActivityGroup(
       isDedicatedProject = { false },
       sourceProjectPath = { "/work/project-a" },
+      isToolbarActivityEnabled = { true },
       activitySummary = { activitySummary() },
     )
     val dataContext = SimpleDataContext.builder()
@@ -142,11 +145,42 @@ class AgentSessionsMainToolbarActivityGroupTest {
   }
 
   @Test
-  fun emptyCountersStayVisibleAndDisabled() {
+  fun sourceFrameGroupHiddenWhenDisabledBySettings() {
     val group = AgentSessionsMainToolbarActivityGroup(
       isDedicatedProject = { false },
       sourceProjectPath = { "/work/project-a" },
+      isToolbarActivityEnabled = { false },
+      activitySummary = { activitySummary() },
+    )
+    val event = testEventWithProject(group)
+
+    group.update(event)
+
+    assertThat(event.presentation.isEnabledAndVisible).isFalse()
+  }
+
+  @Test
+  fun sourceFrameGroupHiddenWhenThereIsNoCurrentRunAttention() {
+    val group = AgentSessionsMainToolbarActivityGroup(
+      isDedicatedProject = { false },
+      sourceProjectPath = { "/work/project-a" },
+      isToolbarActivityEnabled = { true },
       activitySummary = { AgentSessionsActivitySummary.EMPTY },
+    )
+    val event = testEventWithProject(group)
+
+    group.update(event)
+
+    assertThat(event.presentation.isEnabledAndVisible).isFalse()
+  }
+
+  @Test
+  fun sourceFrameVisibleCountersKeepZeroBucketsStableWhenAttentionExists() {
+    val group = AgentSessionsMainToolbarActivityGroup(
+      isDedicatedProject = { false },
+      sourceProjectPath = { "/work/project-a" },
+      isToolbarActivityEnabled = { true },
+      activitySummary = { attentionOnlyActivitySummary() },
     )
     val counters = group.getChildren(testEventWithProject(group)).filterIsInstance<AgentSessionsActivityCounterAction>()
 
@@ -155,14 +189,9 @@ class AgentSessionsMainToolbarActivityGroupTest {
       counters.zip(events).forEach { (counter, event) -> counter.update(event) }
     }
 
-    assertThat(events.map { event -> event.presentation.text }).containsExactly("0", "0", "0")
+    assertThat(events.map { event -> event.presentation.text }).containsExactly("1", "0", "0")
     assertThat(events.map { event -> event.presentation.isVisible }).containsExactly(true, true, true)
-    assertThat(events.map { event -> event.presentation.isEnabled }).containsExactly(false, false, false)
-    assertThat(events.map { event -> event.presentation.description }).containsExactly(
-      AgentSessionsBundle.message("toolwindow.activity.action.attention.tooltip"),
-      AgentSessionsBundle.message("toolwindow.activity.action.running.tooltip"),
-      AgentSessionsBundle.message("toolwindow.activity.action.done.tooltip"),
-    )
+    assertThat(events.map { event -> event.presentation.isEnabled }).containsExactly(true, false, false)
   }
 
   @Test
@@ -171,18 +200,14 @@ class AgentSessionsMainToolbarActivityGroupTest {
     val group = AgentSessionsMainToolbarActivityGroup(
       isDedicatedProject = { false },
       sourceProjectPath = { "/work/project-a" },
+      isToolbarActivityEnabled = { true },
       activitySummary = { freshAgentSessionsActivitySummary(activitySummary(updatedAt = 9_999), now) },
     )
-    val counters = group.getChildren(testEventWithProject(group)).filterIsInstance<AgentSessionsActivityCounterAction>()
+    val event = testEventWithProject(group)
 
-    val events = counters.map { counter -> testEventWithProject(counter) }
-    runInEdtAndWait {
-      counters.zip(events).forEach { (counter, event) -> counter.update(event) }
-    }
+    group.update(event)
 
-    assertThat(events.map { event -> event.presentation.text }).containsExactly("0", "0", "0")
-    assertThat(events.map { event -> event.presentation.isVisible }).containsExactly(true, true, true)
-    assertThat(events.map { event -> event.presentation.isEnabled }).containsExactly(false, false, false)
+    assertThat(event.presentation.isEnabledAndVisible).isFalse()
   }
 
   @Test
@@ -190,6 +215,7 @@ class AgentSessionsMainToolbarActivityGroupTest {
     val group = AgentSessionsMainToolbarActivityGroup(
       isDedicatedProject = { true },
       sourceProjectPath = { "/work/project-a" },
+      isToolbarActivityEnabled = { true },
       activitySummary = { AgentSessionsActivitySummary.EMPTY },
     )
     val dedicatedEvent = testEventWithProject(group)
@@ -197,6 +223,7 @@ class AgentSessionsMainToolbarActivityGroupTest {
     val noSourcePathGroup = AgentSessionsMainToolbarActivityGroup(
       isDedicatedProject = { false },
       sourceProjectPath = { null },
+      isToolbarActivityEnabled = { true },
       activitySummary = { AgentSessionsActivitySummary.EMPTY },
     )
     val noSourcePathEvent = testEventWithProject(noSourcePathGroup)
@@ -231,6 +258,22 @@ class AgentSessionsMainToolbarActivityGroupTest {
             hasLoaded = true,
             threads = listOf(thread("running", AgentThreadActivity.PROCESSING, updatedAt)),
           ),
+        ),
+      )
+    )
+  }
+
+  private fun attentionOnlyActivitySummary(): AgentSessionsActivitySummary {
+    return buildAgentSessionsActivitySummary(
+      AgentSessionsState(
+        projects = listOf(
+          AgentProjectSessions(
+            path = "/work/project-a",
+            name = "Project A",
+            isOpen = true,
+            hasLoaded = true,
+            threads = listOf(thread("attention", AgentThreadActivity.NEEDS_INPUT, 1_000)),
+          )
         ),
       )
     )

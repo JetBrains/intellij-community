@@ -5,10 +5,12 @@ import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.settings.AGENT_WORKBENCH_CHAT_SETTINGS_COMPONENT_ID
 import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchCheckboxSetting
+import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettings
 import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettingsComponent
 import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettingsContributors
 import com.intellij.agent.workbench.sessions.frame.AgentChatOpenModeSettings
 import com.intellij.agent.workbench.sessions.sleep.AgentSleepPreventionSettings
+import com.intellij.ide.ActivityTracker
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.ui.DialogPanel
@@ -31,6 +33,7 @@ internal class AgentWorkbenchSettingsConfigurable : BoundSearchableConfigurable(
       }
 
       group(AgentSessionsBundle.message("settings.agent.workbench.general.group")) {
+        renderCheckboxSetting(mainToolbarActivitySetting())
         renderCheckboxSetting(sleepPreventionSetting())
         renderCheckboxSettings(AgentWorkbenchSettingsContributors.checkboxSettings())
       }
@@ -83,6 +86,18 @@ private fun chatSettingsComponent(): AgentWorkbenchSettingsComponent {
         setSelected = AgentChatOpenModeSettings::setOpenInDedicatedFrame,
       )
     ),
+  )
+}
+
+private fun mainToolbarActivitySetting(): AgentWorkbenchCheckboxSetting {
+  return AgentWorkbenchCheckboxSetting(
+    text = AgentSessionsBundle.message("settings.agent.workbench.show.activity.in.main.toolbar"),
+    description = AgentSessionsBundle.message("settings.agent.workbench.show.activity.in.main.toolbar.description"),
+    isSelected = { AgentWorkbenchSettings.getInstance().showAgentActivityInMainToolbar },
+    setSelected = { enabled ->
+      AgentWorkbenchSettings.getInstance().setShowAgentActivityInMainToolbar(enabled)
+      ActivityTracker.getInstance().inc()
+    },
   )
 }
 
