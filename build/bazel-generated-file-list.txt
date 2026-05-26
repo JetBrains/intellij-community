@@ -1575,6 +1575,7 @@ plugins/stream-debugger-core
 plugins/stream-debugger-core/intellij.debugger.streams.backend
 plugins/stream-debugger-core/intellij.debugger.streams.shared
 plugins/stream-debugger-core/testFramework
+plugins/stream-debugger/java
 plugins/svn4idea
 plugins/tasks/tasks-api
 plugins/tasks/tasks-compatibility

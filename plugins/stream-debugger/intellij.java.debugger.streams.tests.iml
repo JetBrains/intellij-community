@@ -38,7 +38,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.java.debugger.streams" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.debugger.streams.java" scope="TEST" />
   </component>
-  <component name="TestModuleProperties" production-module="intellij.java.debugger.streams" />
+  <component name="TestModuleProperties" production-module="intellij.debugger.streams.java" />
 </module>

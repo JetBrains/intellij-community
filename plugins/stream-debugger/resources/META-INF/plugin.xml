@@ -3,18 +3,9 @@
   <name>Java Stream Debugger</name>
   <vendor>JetBrains</vendor>
   <category>JVM Tools</category>
-  <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
-    <module name="intellij.debugger.streams.core"/>
-    <module name="intellij.java.backend"/>
-    <module name="intellij.java.frontback.psi"/>
-    <module name="intellij.java.psi"/>
-    <!-- endregion -->
-  </dependencies>
   <!--suppress PluginXmlValidity -->
   <content namespace="jetbrains">
-    <!-- The implicit main module of the plugin depends on internal modules (intellij.debugger.streams.core), so it's required to set the namespace for it
-         todo: extract elements and dependencies to an explicit content module (see IJPL-212351) -->
+    <module name="intellij.debugger.streams.java" loading="optional"/>
   </content>
 
   <description><![CDATA[
@@ -41,10 +32,4 @@
 
       <p>In the latter mode, you can switch between operations manually using the tabs on top.</p>
     ]]></description>
-
-  <extensions defaultExtensionNs="org.jetbrains.platform.debugger.streams">
-    <librarySupport implementation="com.intellij.debugger.streams.lib.impl.StandardLibrarySupportProvider"/>
-    <librarySupport implementation="com.intellij.debugger.streams.lib.impl.StreamExLibrarySupportProvider"/>
-    <librarySupport implementation="com.intellij.debugger.streams.lib.impl.JBIterableSupportProvider"/>
-  </extensions>
 </idea-plugin>

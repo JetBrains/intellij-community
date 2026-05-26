@@ -33,7 +33,7 @@
     <orderEntry type="module" module-name="kotlin.core" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.java.psi" />
-    <orderEntry type="module" module-name="intellij.java.debugger.streams" />
+    <orderEntry type="module" module-name="intellij.debugger.streams.java" />
     <orderEntry type="module" module-name="intellij.debugger.streams.core" />
   </component>
 </module>

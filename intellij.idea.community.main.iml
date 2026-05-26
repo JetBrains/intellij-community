@@ -115,7 +115,7 @@
     <orderEntry type="module" module-name="intellij.completionMlRankingModels" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.completionMlRanking" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.debugger.streams.core" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.java.debugger.streams" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.debugger.streams.java" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.jgoodies.common" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.editorconfig.plugin.main" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.sh.plugin.main" scope="RUNTIME" />
