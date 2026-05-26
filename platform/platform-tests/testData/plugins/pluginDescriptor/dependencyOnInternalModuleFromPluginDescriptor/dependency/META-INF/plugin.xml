@@ -1,0 +1,6 @@
+<idea-plugin>
+  <id>pluginWithInternalModule</id>
+  <content namespace="$custom">
+    <module name="internal.module"/>
+  </content>
+</idea-plugin>
