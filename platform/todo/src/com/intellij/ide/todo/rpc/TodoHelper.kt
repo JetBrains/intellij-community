@@ -16,6 +16,15 @@ import kotlinx.coroutines.flow.toList
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
+suspend fun listTodoFiles(
+  project: Project,
+  filter: TodoFilter?
+): Flow<TodoFileResult> = durable {
+  val projectId: ProjectId = project.projectId()
+  TodoRemoteApi.getInstance().listTodoFiles(projectId, filter?.let { toConfig(it) })
+}
+
+@ApiStatus.Internal
 fun findAllTodos(
   project: Project,
   file: VirtualFile,

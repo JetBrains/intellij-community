@@ -3,6 +3,7 @@ package com.intellij.platform.todo.backend.rpc
 
 import com.intellij.ide.todo.TodoConfiguration
 import com.intellij.ide.todo.TodoFilter
+import com.intellij.ide.todo.rpc.TodoFileResult
 import com.intellij.ide.todo.rpc.TodoFilterConfig
 import com.intellij.ide.todo.rpc.TodoPatternConfig
 import com.intellij.ide.todo.rpc.TodoQuerySettings
@@ -16,10 +17,15 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.PsiTodoSearchHelper
 import com.intellij.psi.search.TodoAttributesUtil
@@ -32,6 +38,50 @@ import kotlinx.coroutines.flow.channelFlow
 private val LOG: Logger = logger<TodoRemoteApiImpl>()
 
 internal class TodoRemoteApiImpl : TodoRemoteApi {
+  override suspend fun listTodoFiles(
+    projectId: ProjectId,
+    filter: TodoFilterConfig?,
+  ): Flow<TodoFileResult> = channelFlow {
+    val project = projectId.findProjectOrNull() ?: return@channelFlow
+    val resolvedFilter = resolveFilter(project, filter)
+
+    val results = readAction {
+      blockingContextToIndicator {
+        val helper = PsiTodoSearchHelper.getInstance(project)
+        val fileResults = mutableListOf<TodoFileResult>()
+
+        helper.processFilesWithTodoItems { psiFile ->
+          val virtualFile = psiFile.virtualFile ?: return@processFilesWithTodoItems true
+
+          val matchesFilter = if (resolvedFilter != null) {
+            resolvedFilter.accept(helper, psiFile)
+          }
+          else {
+            helper.getTodoItemsCount(psiFile) > 0
+          }
+
+          if (!matchesFilter) {
+            return@processFilesWithTodoItems true
+          }
+
+          val todos = collectTodoResults(project, psiFile, virtualFile, resolvedFilter)
+          if (todos.isEmpty()) {
+            return@processFilesWithTodoItems true
+          }
+
+          fileResults.add(
+            TodoFileResult(virtualFile.rpcId(), virtualFile.name, virtualFile.presentableUrl, getModuleName(project, virtualFile), getPackageName(project, virtualFile), todos)
+          )
+          true
+        }
+        fileResults
+      }
+    }
+    for (result in results) {
+      send(result)
+    }
+  }
+
   override suspend fun listTodos(
     projectId: ProjectId,
     settings: TodoQuerySettings
@@ -42,16 +92,30 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
 
     val results: List<TodoResult> = readAction {
       val psiFile = PsiManager.getInstance(project).findFile(virtualFile) ?: return@readAction emptyList()
-      val document = psiFile.viewProvider?.document
+      collectTodoResults(project, psiFile, virtualFile, filter)
+    }
 
-      val allTodoItems = PsiTodoSearchHelper.getInstance(project).findTodoItems(psiFile)
-      val filteredTodoItems = if (filter != null) {
-        allTodoItems.filter { it.pattern != null && filter.contains(it.pattern) }
-      } else allTodoItems.asList()
+    for (result in results) {
+      send(result)
+    }
+  }
 
-      filteredTodoItems
-        .sortedWith(compareBy({ it.textRange.startOffset }, {it.textRange.endOffset}))
-        .map { todoItem ->
+  private fun collectTodoResults(
+    project: Project,
+    psiFile: PsiFile,
+    virtualFile: VirtualFile,
+    filter: TodoFilter?,
+  ) : List<TodoResult> {
+    val document = psiFile.viewProvider?.document
+
+    val allTodoItems = PsiTodoSearchHelper.getInstance(project).findTodoItems(psiFile)
+    val filteredTodoItems = if (filter != null) {
+      allTodoItems.filter { it.pattern != null && filter.contains(it.pattern) }
+    } else allTodoItems.asList()
+
+    return filteredTodoItems
+      .sortedWith(compareBy({ it.textRange.startOffset }, {it.textRange.endOffset}))
+      .map { todoItem ->
         val (line, preview) = if (document != null) {
           val startOffset = todoItem.textRange.startOffset
           val line = document.getLineNumber(startOffset)
@@ -67,11 +131,7 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
           length = todoItem.textRange.endOffset - todoItem.textRange.startOffset
         )
       }
-    }
 
-    for (result in results) {
-      send(result)
-    }
   }
 
   override suspend fun getFilesWithTodos(
@@ -199,5 +259,18 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
         add(SerializableTextChunk(text.substring(endInLine)))
       }
     }
+  }
+
+  private fun getModuleName(project: Project, virtualFile: VirtualFile): String? {
+    return ModuleUtilCore.findModuleForFile(virtualFile, project)?.name
+  }
+
+  private fun getPackageName(project: Project, virtualFile: VirtualFile): String? {
+    val fileIndex = ProjectRootManager.getInstance(project).fileIndex
+    val sourceRoot = fileIndex.getSourceRootForFile(virtualFile) ?: return null
+    val parent = virtualFile.parent ?: return null
+
+    val relativePath = VfsUtilCore.getRelativePath(parent, sourceRoot, '/') ?: return null
+    return relativePath?.takeIf { it.isNotEmpty() }
   }
 }
