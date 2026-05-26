@@ -37,34 +37,34 @@ class Badge(
 ) : Icon {
 
   companion object {
-    @JvmStatic
+    @JvmField
     val new: Icon = ImmutableBadge(IdeBundle.message("badge.text.new"), ColorType.BLUE)
 
-    @JvmStatic
+    @JvmField
     val newDisabled: Icon = ImmutableBadge(IdeBundle.message("badge.text.new"), ColorType.BLUE, false)
 
-    @JvmStatic
+    @JvmField
     val alpha: Icon = ImmutableBadge(IdeBundle.message("badge.text.alpha"), ColorType.GREEN_SECONDARY)
 
-    @JvmStatic
+    @JvmField
     val alphaDisabled: Icon = ImmutableBadge(IdeBundle.message("badge.text.alpha"), ColorType.GREEN_SECONDARY, false)
 
-    @JvmStatic
+    @JvmField
     val beta: Icon = ImmutableBadge(IdeBundle.message("badge.text.beta"), ColorType.PURPLE_SECONDARY)
 
-    @JvmStatic
+    @JvmField
     val betaDisabled: Icon = ImmutableBadge(IdeBundle.message("badge.text.beta"), ColorType.PURPLE_SECONDARY, false)
 
-    @JvmStatic
+    @JvmField
     val trial: Icon = ImmutableBadge(IdeBundle.message("badge.text.trial"), ColorType.GREEN_SECONDARY)
 
-    @JvmStatic
+    @JvmField
     val trialDisabled: Icon = ImmutableBadge(IdeBundle.message("badge.text.trial"), ColorType.GREEN_SECONDARY, false)
 
-    @JvmStatic
+    @JvmField
     val free: Icon = ImmutableBadge(IdeBundle.message("badge.text.free"), ColorType.GREEN)
 
-    @JvmStatic
+    @JvmField
     val freeDisabled: Icon = ImmutableBadge(IdeBundle.message("badge.text.free"), ColorType.GREEN, false)
   }
 
