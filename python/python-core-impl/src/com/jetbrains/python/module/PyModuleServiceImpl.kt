@@ -11,7 +11,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.util.Consumer
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.PythonModuleTypeBase
 import com.jetbrains.python.facet.PythonFacetSettings
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -52,9 +51,7 @@ internal class PyModuleServiceImpl(val project: Project, coroutineScope: Corouti
 
   override fun isPythonModule(module: Module): Boolean {
     val type = ModuleType.get(module)
-    if (type is PythonModuleTypeBase || type.id == PyNames.PYTHON_MODULE_ID) {
-      return true
-    }
-    return FacetManager.getInstance(module).allFacets.any { it.configuration is PythonFacetSettings }
+    return type.id == PyNames.PYTHON_MODULE_ID ||
+           FacetManager.getInstance(module).allFacets.any { it.configuration is PythonFacetSettings }
   }
 }
