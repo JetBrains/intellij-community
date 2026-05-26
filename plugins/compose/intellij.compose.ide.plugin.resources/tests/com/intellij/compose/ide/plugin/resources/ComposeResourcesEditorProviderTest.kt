@@ -4,7 +4,7 @@ package com.intellij.compose.ide.plugin.resources
 import com.intellij.compose.ide.plugin.resources.vectorDrawable.preview.ComposeResourceEditorProvider
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
-class ComposeResourceEditorProviderTest : BasePlatformTestCase() {
+class ComposeResourcesEditorProviderTest : BasePlatformTestCase() {
   private val provider = ComposeResourceEditorProvider()
 
   fun `test accepts xml in drawable folder`() {
