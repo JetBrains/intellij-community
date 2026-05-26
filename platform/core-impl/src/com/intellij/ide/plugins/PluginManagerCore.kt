@@ -606,11 +606,6 @@ object PluginManagerCore {
         resolvedPluginSet = resolvedPluginSet,
         registerLoadingError = ::registerLoadingError,
       )
-
-      PluginInitializationDiagnosticUtils.runNewPluginSetDiagnosticsIfNeeded(
-        initContext, pluginsToLoad, incompletePlugins, idMap, fullIdMap, fullContentModuleIdMap, pluginNonLoadReasons, adaptedPluginSet
-      )
-
       adaptedPluginSet to cycleErrors
     }
 

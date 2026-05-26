@@ -3,7 +3,6 @@ package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.PluginDependencyAnalysis.DependencyRef
 import com.intellij.ide.plugins.PluginManagerCore.logger
-import com.intellij.ide.plugins.PluginManagerCore.oldPluginSetBuilder
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.asSafely
 import org.jetbrains.annotations.ApiStatus
@@ -158,66 +157,5 @@ object PluginInitializationDiagnosticUtils {
   internal fun DependencyRef.getIdString(): String = when (this) {
     is DependencyRef.ContentModule -> moduleId.name
     is DependencyRef.Plugin -> pluginId.idString
-  }
-
-  fun runNewPluginSetDiagnosticsIfNeeded(
-    initContext: PluginInitializationContext,
-    pluginsToLoad: UnambiguousPluginSet,
-    incompletePlugins: HashMap<PluginId, PluginMainDescriptor>,
-    idMap: Map<PluginId, PluginModuleDescriptor>,
-    fullIdMap: Map<PluginId, PluginModuleDescriptor>,
-    fullContentModuleIdMap: Map<PluginModuleId, ContentModuleDescriptor>,
-    pluginNonLoadReasons: MutableMap<PluginId, PluginNonLoadReason>,
-    adaptedPluginSet: PluginSet,
-  ) {
-    if (System.getProperty("psr.diff") != "true" && System.getProperty("psr.bisect") == null) {
-      return
-    }
-    val oldLoadingErrors = ArrayList<PluginNonLoadReason>()
-    val (oldSet, _) = oldPluginSetBuilder(
-      initContext,
-      PluginsDiscoveryResult.build(emptyList()),
-      pluginsToLoad,
-      incompletePlugins,
-      idMap,
-      fullIdMap,
-      fullContentModuleIdMap,
-      pluginNonLoadReasons,
-      oldLoadingErrors::add,
-    )
-
-    if (System.getProperty("psr.diff") == "true") {
-      logger.warn("========= Plugin Set Resolution Diff =========")
-      val (oldDescriptorRegistrationOrder, newDescriptorRegistrationOrder) = oldSet.sequenceResolvedSortedDescriptorsForRegistration()
-        .toList() to adaptedPluginSet.sequenceResolvedSortedDescriptorsForRegistration().toList()
-      val oldDescriptorsSet = oldDescriptorRegistrationOrder.toSet()
-      val newDescriptorsSet = newDescriptorRegistrationOrder.toSet()
-      if (oldDescriptorsSet != newDescriptorsSet) {
-        (oldDescriptorsSet - newDescriptorsSet).takeIf { it.isNotEmpty() }?.let {
-          logger.warn("!!! Old descriptors that are excluded by new resolver:\n" + it.joinToString("\n") + "\n")
-        }
-        (newDescriptorsSet - oldDescriptorsSet).takeIf { it.isNotEmpty() }?.let {
-          logger.warn("!!! New descriptors that are included by new resolver:\n" + it.joinToString("\n") + "\n")
-        }
-      }
-      if (oldDescriptorRegistrationOrder != newDescriptorRegistrationOrder) {
-        logger.warn("!!! Old descriptor registration order:\n" + oldDescriptorRegistrationOrder.joinToString("\n") + "\n")
-        logger.warn("!!! New descriptor registration order:\n" + newDescriptorRegistrationOrder.joinToString("\n") + "\n")
-      }
-      else {
-        logger.warn("Enabled modules are identical")
-      }
-
-      val newClassloaderConfOrder = adaptedPluginSet.getModulesOrderedForClassLoaderConfiguration().toList()
-      val oldClassloaderOrder = oldSet.getModulesOrderedForClassLoaderConfiguration().toList()
-      if (newClassloaderConfOrder != oldClassloaderOrder) {
-        logger.warn("!!! Old classloader configuration order:\n" + oldClassloaderOrder.joinToString("\n") + "\n")
-        logger.warn("!!! New classloader configuration order:\n" + newClassloaderConfOrder.joinToString("\n") + "\n")
-      }
-      else {
-        logger.warn("Classloader configuration order is identical")
-      }
-      logger.warn("==============================================")
-    }
   }
 }
