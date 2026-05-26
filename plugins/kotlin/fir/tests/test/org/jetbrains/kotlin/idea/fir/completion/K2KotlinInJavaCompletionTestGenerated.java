@@ -161,6 +161,16 @@ public abstract class K2KotlinInJavaCompletionTestGenerated extends AbstractK2Ko
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("CrossinlineParameter.java")
+        public void testCrossinlineParameter() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/CrossinlineParameter.java");
+        }
+
+        @TestMetadata("DefaultParameters.java")
+        public void testDefaultParameters() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/DefaultParameters.java");
+        }
+
         @TestMetadata("ExtensionOnArray.java")
         public void testExtensionOnArray() throws Exception {
             runTest("../../completion/testData/inJava/extensions/ExtensionOnArray.java");
@@ -211,9 +221,19 @@ public abstract class K2KotlinInJavaCompletionTestGenerated extends AbstractK2Ko
             runTest("../../completion/testData/inJava/extensions/HideSuspendFunction.java");
         }
 
+        @TestMetadata("InlineFunction.java")
+        public void testInlineFunction() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/InlineFunction.java");
+        }
+
         @TestMetadata("JvmName.java")
         public void testJvmName() throws Exception {
             runTest("../../completion/testData/inJava/extensions/JvmName.java");
+        }
+
+        @TestMetadata("LambdaParameter.java")
+        public void testLambdaParameter() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/LambdaParameter.java");
         }
 
         @TestMetadata("MemberExtensionHidden.java")
@@ -239,6 +259,11 @@ public abstract class K2KotlinInJavaCompletionTestGenerated extends AbstractK2Ko
         @TestMetadata("NoInstanceMethodDuplicate.java")
         public void testNoInstanceMethodDuplicate() throws Exception {
             runTest("../../completion/testData/inJava/extensions/NoInstanceMethodDuplicate.java");
+        }
+
+        @TestMetadata("NoinlineParameter.java")
+        public void testNoinlineParameter() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/NoinlineParameter.java");
         }
 
         @TestMetadata("OperatorExtension.java")
