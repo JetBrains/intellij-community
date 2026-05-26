@@ -599,11 +599,21 @@ public final class GradleProjectResolver implements ExternalSystemProjectResolve
       executionSettings.withArgument("-Didea.resolveSourceSetDependencies=true");
     }
     boolean parallelModelFetch = executionSettings.isParallelModelFetch();
-    if (!parallelModelFetch) {
-      executionSettings.withArgument("-Dorg.gradle.tooling.parallel.ignore-legacy-default=true");
-    }
-    if (parallelModelFetch || GradleVersionUtil.isGradleAtLeast(resolverContext.getGradleVersion(), "9.4")) {
+    // Gradle 9.4 introduced org.gradle.tooling.parallel, decoupling Tooling API
+    // parallelism from task parallelism. See:
+    // https://docs.gradle.org/9.4.0/release-notes.html#new-property-for-tooling-api-parallelism-control
+    boolean gradleSupportsParallelModelFetch =
+      GradleVersionUtil.isGradleAtLeast(resolverContext.getGradleVersion(), "9.4");
+    if (parallelModelFetch || gradleSupportsParallelModelFetch) {
+      // IDE checkbox opted in, or Gradle 9.4+ where batched fetch is the default.
+      // Parallelism within the batch is controlled by org.gradle.tooling.parallel
+      // (and its documented fallback to org.gradle.parallel on 9.4+).
       executionSettings.withArgument("-Didea.parallelModelFetch.enabled=true");
+    }
+    else {
+      // Pre-9.4 with IDE checkbox off: suppress the legacy --parallel-derived
+      // fallback so model fetch stays sequential as the user asked.
+      executionSettings.withArgument("-Dorg.gradle.tooling.parallel.ignore-legacy-default=true");
     }
     if (!resolverContext.isBuildSrcProject()) {
       for (GradleBuildParticipant buildParticipant : executionSettings.getExecutionWorkspace().getBuildParticipants()) {
