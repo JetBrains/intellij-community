@@ -46,12 +46,7 @@ class ProductPluginInitContext(
       add(CORE_ID)
       addAll(ApplicationInfoImpl.getShadowInstance().getEssentialPluginIds())
       if (AppMode.isRemoteDevHost()) {
-        if (PlatformUtils.isRider()) {
-          add(REMOTE_DEVELOPMENT_RIDER_PLUGIN_ID)
-        }
-        else {
-          add(REMOTE_DEVELOPMENT_PLUGIN_ID)
-        }
+        add(REMOTE_DEVELOPMENT_PLUGIN_ID)
       }
     }
   }
