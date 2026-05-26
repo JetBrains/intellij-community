@@ -274,48 +274,6 @@ class PluginSetBuilder(
     )
   }
 
-  // use only for init plugins
-  internal fun initEnableState(
-    descriptor: IdeaPluginDescriptorImpl,
-    idMap: Map<PluginId, IdeaPluginDescriptorImpl>,
-    fullIdMap: Map<PluginId, IdeaPluginDescriptorImpl>,
-    fullContentModuleIdMap: Map<PluginModuleId, ContentModuleDescriptor>,
-    isPluginDisabled: (PluginId) -> Boolean,
-    errors: MutableMap<PluginId, PluginNonLoadReason>,
-    disabledModuleToProblematicPlugin: Map<PluginModuleId, PluginId>,
-  ): PluginNonLoadReason? {
-    val isNotifyUser = !descriptor.isImplementationDetail && !pluginRequiresUltimatePluginButItsDisabled(descriptor.pluginId, fullIdMap, fullContentModuleIdMap)
-    for (incompatibleId in descriptor.incompatiblePlugins) {
-      if (!enabledPluginIds.containsKey(incompatibleId) || isPluginDisabled(incompatibleId)) {
-        continue
-      }
-      return PluginIsIncompatibleWithAnotherPlugin(plugin = descriptor, incompatiblePlugin = enabledPluginIds.get(incompatibleId)!!, shouldNotifyUser = isNotifyUser)
-    }
-
-    getAllPluginDependencies(descriptor)
-      .firstOrNull { it !in enabledPluginIds }
-      ?.let { dependencyPluginId ->
-        return idMap.get(dependencyPluginId)?.let {
-          // FIXME this is not precise reason type and may confuse user
-          PluginDependencyIsDisabled(plugin = descriptor, dependencyId = it.pluginId, shouldNotifyUser = isNotifyUser)
-        } ?: createCannotLoadError(descriptor, dependencyPluginId, errors, isNotifyUser)
-      }
-
-    val missingDependency = descriptor.moduleDependencies.modules.firstOrNull { !enabledModuleV2Ids.contains(it) } ?: return null
-
-    val problematicPlugin = disabledModuleToProblematicPlugin.get(missingDependency)
-    if (problematicPlugin != null && isPluginDisabled(problematicPlugin)) {
-      return PluginDependencyIsDisabled(plugin = descriptor, dependencyId = problematicPlugin, shouldNotifyUser = isNotifyUser)
-    }
-
-    return PluginModuleDependencyCannotBeLoadedOrMissing(
-      plugin = descriptor,
-      moduleDependency = missingDependency,
-      containingPlugin = problematicPlugin,
-      shouldNotifyUser = isNotifyUser,
-    )
-  }
-
   companion object {
     @VisibleForTesting
     fun checkVisibilityAndReturnErrorMessage(sourceModule: PluginModuleDescriptor, targetModule: ContentModuleDescriptor): String? {
@@ -406,29 +364,6 @@ private val pluginModuleVisibilityCheck by lazy {
     "disabled" -> PluginModuleVisibilityCheckOption.DISABLED
     else -> PluginModuleVisibilityCheckOption.REPORT_ERROR
   }
-}
-
-private fun createCannotLoadError(
-  descriptor: IdeaPluginDescriptorImpl,
-  dependencyPluginId: PluginId,
-  errors: Map<PluginId, PluginNonLoadReason>,
-  isNotifyUser: Boolean,
-): PluginNonLoadReason {
-  val dependencyIdString = dependencyPluginId.idString
-  val dependency = errors.get(dependencyPluginId)?.plugin
-  if (dependency != null) {
-    return PluginDependencyCannotBeLoaded(plugin = descriptor, dependency = dependency, shouldNotifyUser = isNotifyUser)
-  }
-  else {
-    return PluginDependencyIsNotInstalled(plugin = descriptor, dependencyNameOrId = dependencyIdString, shouldNotifyUser = isNotifyUser)
-  }
-}
-
-private fun getAllPluginDependencies(plugin: IdeaPluginDescriptorImpl): Sequence<PluginId> {
-  return plugin.dependencies.asSequence()
-           .filterNot { it.isOptional }
-           .map { it.pluginId } +
-         plugin.moduleDependencies.plugins.asSequence()
 }
 
 private val PluginModuleDescriptor.namespace: String?
