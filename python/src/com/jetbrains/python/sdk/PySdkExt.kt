@@ -5,7 +5,6 @@ import com.intellij.execution.ExecutionException
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.TargetConfigurationWithLocalFsAccess
 import com.intellij.execution.target.TargetEnvironmentConfiguration
-import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.ide.projectView.actions.MarkRootsManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
@@ -48,31 +47,6 @@ private data class TargetAndPath(
   val target: TargetEnvironmentConfiguration?,
   val path: FullPathOnTarget?,
 )
-
-@Internal
-fun findAllPythonSdks(baseDir: Path?): List<Sdk> {
-  val context: UserDataHolder = UserDataHolderBase()
-  if (baseDir != null) {
-    context.putUserData(BASE_DIR, baseDir)
-  }
-  val existing = PythonSdkUtil.getAllSdks()
-  return detectVirtualEnvs(null, existing, context) + findBaseSdks(existing, null, context)
-}
-
-@Internal
-fun findBaseSdks(existingSdks: List<Sdk>, module: Module?, context: UserDataHolder): List<Sdk> {
-  val existing = filterSystemWideSdks(existingSdks)
-  val detected = detectSystemWideSdks(module, existingSdks, context)
-  return (existing + detected)
-    .map { it.pyRichSdk() }
-    .sortedWith(PreferredSdkComparator.INSTANCE)
-    .filter { sdk ->
-      when (val env = sdk.pythonEnvironment) {
-        is PythonEnvironment.Conda -> env.isBase
-        is PythonEnvironment.Venv, is PythonEnvironment.SystemPython, null -> true
-      }
-    }
-}
 
 @Internal
 fun mostPreferred(sdks: List<Sdk>): Sdk? = sdks.minWithOrNull(PreferredSdkComparator.INSTANCE)
