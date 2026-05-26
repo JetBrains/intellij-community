@@ -17,6 +17,7 @@ import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.PsiWildcardType
 import com.intellij.psi.impl.source.PsiClassReferenceType
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -186,7 +187,7 @@ class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
                         createFromKaType(typeArgumentType)
                     }
                 }
-                val nullability = if (type.nullability.isNullable) Nullable else NotNull
+                val nullability = if (type.isMarkedNullable) Nullable else NotNull
                 JKClassType(classReference, typeParameters, nullability)
             }
 

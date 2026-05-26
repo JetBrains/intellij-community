@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.analysis.api.components.defaultType
 import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.components.expectedType
 import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.components.hasFlexibleNullability
 import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
 import org.jetbrains.kotlin.analysis.api.components.render
 import org.jetbrains.kotlin.analysis.api.components.returnType
@@ -58,7 +59,6 @@ import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeArgumentWithVariance
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.analysis.api.useSiteSession
@@ -491,11 +491,12 @@ object K2CreateFunctionFromUsageUtil {
         return theType.toKtType(useSitePosition)?.let { if (ktTypeNullability == null) it else it.withNullability(ktTypeNullability) }
     }
 
-    fun KaTypeNullability.toNullability() : Nullability {
-        return when (this) {
-            KaTypeNullability.NON_NULLABLE -> Nullability.NOT_NULL
-            KaTypeNullability.NULLABLE -> Nullability.NULLABLE
-            KaTypeNullability.UNKNOWN -> Nullability.UNKNOWN
+    context(_: KaSession)
+    fun KaType.getNullability() : Nullability {
+        return when {
+            this.hasFlexibleNullability -> Nullability.NOT_NULL
+            this.isMarkedNullable -> Nullability.NULLABLE
+            else -> Nullability.UNKNOWN
         }
     }
 

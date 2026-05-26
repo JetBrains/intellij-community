@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.components.createUseSiteVisibilityCheck
 import org.jetbrains.kotlin.analysis.api.components.defaultType
 import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
 import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToCallCandidates
@@ -35,7 +36,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -126,7 +126,7 @@ fun filterCandidateByReceiverTypeAndVisibility(
     val candidateReceiverType = signature.receiverType
     if (candidateReceiverType != null && receiverTypes.none {
             it.isSubtypeOf(candidateReceiverType, subtypingErrorTypePolicy) ||
-                    it.nullability != KaTypeNullability.NON_NULLABLE && it.withNullability(false)
+                    it.isMarkedNullable && it.withNullability(false)
                         .isSubtypeOf(candidateReceiverType, subtypingErrorTypePolicy)
         }
     ) return false

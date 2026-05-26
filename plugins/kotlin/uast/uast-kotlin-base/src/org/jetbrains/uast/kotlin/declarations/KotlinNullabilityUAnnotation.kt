@@ -9,7 +9,6 @@ import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.uast.UAnchorOwner
 import org.jetbrains.uast.UAnnotationEx
 import org.jetbrains.uast.UElement
@@ -17,6 +16,7 @@ import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UIdentifier
 import org.jetbrains.uast.UNamedExpression
 import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.analysis.UNullability
 import org.jetbrains.uast.getOrBuild
 import org.jetbrains.uast.kotlin.internal.DelegatedMultiResolve
 
@@ -28,7 +28,7 @@ class KotlinNullabilityUAnnotation(
 ) : UAnnotationEx, UAnchorOwner, DelegatedMultiResolve {
 
     private val resolvedPart = UastLazyPart<PsiClass?>()
-    private val nullabilityPart = UastLazyPart<KaTypeNullability?>()
+    private val nullabilityPart = UastLazyPart<UNullability?>()
 
     override val uastAnchor: UIdentifier? = null
 
@@ -41,17 +41,16 @@ class KotlinNullabilityUAnnotation(
     override val sourcePsi: PsiElement?
         get() = null
 
-    private val nullability: KaTypeNullability?
+    private val nullability: UNullability?
         get() = nullabilityPart.getOrBuild {
             baseKotlinUastResolveProviderService.nullability(annotatedElement)
         }
 
     override val qualifiedName: String?
         get() = when (nullability) {
-            KaTypeNullability.NON_NULLABLE -> NotNull::class.qualifiedName
-            KaTypeNullability.NULLABLE -> Nullable::class.qualifiedName
-            KaTypeNullability.UNKNOWN -> null
-            null -> null
+            UNullability.NOT_NULL -> NotNull::class.qualifiedName
+            UNullability.NULLABLE -> Nullable::class.qualifiedName
+            else -> null
         }
 
     override fun findAttributeValue(name: String?): UExpression? = null

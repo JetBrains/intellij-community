@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility.PRIVATE
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility.PUBLIC
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.builtins.StandardNames.EQUALS_NAME
 import org.jetbrains.kotlin.builtins.StandardNames.HASHCODE_NAME
 import org.jetbrains.kotlin.builtins.StandardNames.TO_STRING_NAME
@@ -182,11 +181,11 @@ internal class KotlinRedundantOverrideInspection : KotlinApplicableInspectionBas
         val singleValueParameter = valueParameters.singleOrNull()
         if (isSetter && singleValueParameter == null || !isSetter && valueParameters.isNotEmpty()) return false
         val propertyType = if (isSetter) singleValueParameter!!.returnType else functionType
-        val nonNullablePropertyType = propertyType.withNullability(KaTypeNullability.NON_NULLABLE)
+        val nonNullablePropertyType = propertyType.withNullability(isMarkedNullable = false)
         return propertyNamesByAccessorName(functionName).any {
             val propertyName = it.asString()
             function.containingClassOrObject?.declarations?.find { d ->
-                d is KtProperty && d.name == propertyName && d.returnType.withNullability(KaTypeNullability.NON_NULLABLE)
+                d is KtProperty && d.name == propertyName && d.returnType.withNullability(isMarkedNullable = false)
                     .semanticallyEquals(nonNullablePropertyType)
             } != null
         }

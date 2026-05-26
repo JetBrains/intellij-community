@@ -8,7 +8,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.PsiType
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.asJava.elements.KtLightAnnotationForSourceEntry
 import org.jetbrains.kotlin.asJava.toLightAnnotation
 import org.jetbrains.kotlin.asJava.toLightElements
@@ -87,6 +86,7 @@ import org.jetbrains.uast.UNamedExpression
 import org.jetbrains.uast.UastBinaryOperator
 import org.jetbrains.uast.UastCallKind
 import org.jetbrains.uast.UastLanguagePlugin
+import org.jetbrains.uast.analysis.UNullability
 import org.jetbrains.uast.convertWithParent
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameterBase
 import org.jetbrains.uast.toUElementOfType
@@ -607,12 +607,12 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
                 returnType.nullability() != TypeNullability.NOT_NULL
     }
 
-    override fun nullability(psiElement: PsiElement): KaTypeNullability? {
+    override fun nullability(psiElement: PsiElement): UNullability? {
         return getTargetType(psiElement)?.nullability()?.let {
             when (it) {
-                TypeNullability.NOT_NULL -> KaTypeNullability.NON_NULLABLE
-                TypeNullability.NULLABLE -> KaTypeNullability.NULLABLE
-                TypeNullability.FLEXIBLE -> KaTypeNullability.UNKNOWN
+                TypeNullability.NOT_NULL -> UNullability.NOT_NULL
+                TypeNullability.NULLABLE -> UNullability.NULLABLE
+                TypeNullability.FLEXIBLE -> UNullability.UNKNOWN
             }
         }
     }

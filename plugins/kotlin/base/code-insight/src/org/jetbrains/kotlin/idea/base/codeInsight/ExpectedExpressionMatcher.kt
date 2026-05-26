@@ -1,10 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.codeInsight
 
+import com.intellij.codeInsight.Nullability
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.components.hasFlexibleNullability
+import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
 import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.components.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.components.typeCreator
@@ -13,7 +16,6 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.calls
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtArrayAccessExpression
@@ -32,17 +34,26 @@ import org.jetbrains.kotlin.psi.ValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.isNull
 import org.jetbrains.kotlin.types.Variance
 
-class ExpectedExpressionMatcher(val types: List<KaType>? = null, val nullability: KaTypeNullability? = null) {
+class ExpectedExpressionMatcher(val types: List<KaType>? = null, val nullability: Nullability? = null) {
 
     context(_: KaSession)
     fun match(candidateType: KaType): Boolean {
         if (types != null && types.none { candidateType.isSubtypeOf(it) }) {
             return false
         }
-        if (nullability != null && nullability != candidateType.nullability) {
+        if (nullability != null && nullability != candidateType.computeNullability()) {
             return false
         }
         return true
+    }
+
+    context(_: KaSession)
+    private fun KaType.computeNullability(): Nullability {
+        return when {
+            hasFlexibleNullability -> Nullability.UNKNOWN
+            isMarkedNullable -> Nullability.NULLABLE
+            else -> Nullability.NOT_NULL
+        }
     }
 }
 
@@ -168,7 +179,7 @@ private fun getForElvis(target: KtElement): ExpectedExpressionMatcher? {
 
         if (otherOperand != null) {
             if (otherOperand.isNull()) {
-                return ExpectedExpressionMatcher(nullability = KaTypeNullability.NULLABLE)
+                return ExpectedExpressionMatcher(nullability = Nullability.NULLABLE)
             }
         }
 
@@ -184,7 +195,7 @@ private fun getForElvis(target: KtElement): ExpectedExpressionMatcher? {
             @OptIn(KaExperimentalApi::class)
             return ExpectedExpressionMatcher(
                 types = listOf(typeCreator.classType(KaStandardTypeClassIds.BOOLEAN)),
-                nullability = KaTypeNullability.NON_NULLABLE
+                nullability = Nullability.NOT_NULL
             )
         }
 

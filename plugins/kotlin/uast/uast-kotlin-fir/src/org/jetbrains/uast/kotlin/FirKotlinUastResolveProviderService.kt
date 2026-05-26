@@ -50,7 +50,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeMappingMode
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.asJava.toLightAnnotation
 import org.jetbrains.kotlin.descriptors.Modality
@@ -109,6 +108,7 @@ import org.jetbrains.uast.UastCallKind
 import org.jetbrains.uast.UastErrorType
 import org.jetbrains.uast.UastLanguagePlugin
 import org.jetbrains.uast.analysis.KotlinExtensionConstants.LAMBDA_THIS_PARAMETER_NAME
+import org.jetbrains.uast.analysis.UNullability
 import org.jetbrains.uast.convertWithParent
 import org.jetbrains.uast.kotlin.internal.FirKotlinUastConstantEvaluator
 import org.jetbrains.uast.kotlin.internal.analyzeForUast
@@ -936,7 +936,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
-    override fun nullability(psiElement: PsiElement): KaTypeNullability? {
+    override fun nullability(psiElement: PsiElement): UNullability? {
         return getTargetType(psiElement, null) { ktType ->
             nullability(ktType)
         }

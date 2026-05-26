@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaDynamicType
 import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils
@@ -89,7 +88,7 @@ internal class HasPlatformTypeInspection(
         )
 
         if (dangerousFlexibleType.isNullable) {
-            val nonNullableType = dangerousFlexibleType.withNullability(KaTypeNullability.NON_NULLABLE)
+            val nonNullableType = dangerousFlexibleType.withNullability(isMarkedNullable = false)
             val expression = (element as? KtDeclarationWithInitializer)?.initializer
 
             // Only add this fix if it can actually fully resolve the problem

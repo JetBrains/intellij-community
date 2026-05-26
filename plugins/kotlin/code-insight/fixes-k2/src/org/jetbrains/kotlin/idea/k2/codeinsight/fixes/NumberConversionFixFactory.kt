@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.analysis.api.components.isCharType
 import org.jetbrains.kotlin.analysis.api.components.isDoubleType
 import org.jetbrains.kotlin.analysis.api.components.isFloatType
 import org.jetbrains.kotlin.analysis.api.components.isIntType
+import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
 import org.jetbrains.kotlin.analysis.api.components.isShortType
 import org.jetbrains.kotlin.analysis.api.components.render
 import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
@@ -61,7 +62,7 @@ internal fun prepareNumberConversionElementContext(
         fromInt = fromType.isIntType,
         fromChar = fromType.isCharType,
         fromFloatOrDouble = fromType.isFloatType || fromType.isDoubleType,
-        fromNullable = fromType.nullability.isNullable,
+        fromNullable = fromType.isMarkedNullable,
         toChar = toType.isCharType,
         toInt = toType.isIntType,
         toByteOrShort = toType.isByteType || toType.isShortType,

@@ -8,7 +8,6 @@ import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeArgumentWithVariance
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.psi.isNullExpression
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.WrapWithCollectionLiteralCallFix
@@ -69,7 +68,7 @@ internal object WrapWithCollectionLiteralCallFixFactory {
     }
 
     val nullForNonNullType = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.NullForNonnullType ->
-        createIfAvailable(diagnostic.psi, diagnostic.expectedType, diagnostic.expectedType.withNullability(KaTypeNullability.NULLABLE))
+        createIfAvailable(diagnostic.psi, diagnostic.expectedType, diagnostic.expectedType.withNullability(isMarkedNullable = true))
     }
 
     val initializerTypeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.InitializerTypeMismatch ->

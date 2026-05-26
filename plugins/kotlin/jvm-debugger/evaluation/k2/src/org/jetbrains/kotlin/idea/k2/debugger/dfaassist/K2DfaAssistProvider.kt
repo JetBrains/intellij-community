@@ -38,7 +38,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants
@@ -397,8 +396,8 @@ private class K2DfaAssistProvider : DfaAssistProvider {
                     hint = DfaHint.NPE
                 } else if (parent is KtBinaryExpressionWithTypeRHS && parent.operationReference.textMatches("as")) {
                     val typeReference = parent.right
-                    val nullability = analyze(parent) { typeReference?.type?.nullability }
-                    if (nullability == KaTypeNullability.NON_NULLABLE) {
+                    val isMarkedNullable = analyze(parent) { typeReference?.type?.isMarkedNullable }
+                    if (isMarkedNullable == false) {
                         hint = DfaHint.NPE
                         psi = parent.operationReference
                     }

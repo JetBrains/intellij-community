@@ -27,7 +27,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeMappingMode
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.KaTypePointer
 import org.jetbrains.kotlin.psi.KtElement
@@ -35,6 +34,7 @@ import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.utils.SmartSet
 import org.jetbrains.uast.UastErrorType
 import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.analysis.UNullability
 import org.jetbrains.uast.getOrBuild
 import org.jetbrains.uast.kotlin.PsiTypeConversionConfiguration
 import org.jetbrains.uast.kotlin.TypeOwnerKind
@@ -134,7 +134,7 @@ constructor(
             }
         }
 
-    override fun computeNullability(): KaTypeNullability? {
+    override fun computeNullability(): UNullability? {
         return analyzeForUast(context) {
             val functionSymbol = original.restoreSymbol() ?: return@analyzeForUast null
             functionSymbol.psi?.let { psi ->
@@ -146,9 +146,15 @@ constructor(
             }
             if (functionSymbol.isSuspend) {
                 // suspend fun returns Any?, which is mapped to @Nullable java.lang.Object
-                return@analyzeForUast KaTypeNullability.NULLABLE
+                return@analyzeForUast UNullability.NULLABLE
             }
-            functionSymbol.returnType.nullability
+            val returnType = functionSymbol.returnType
+
+            return when {
+                returnType.hasFlexibleNullability -> UNullability.UNKNOWN
+                returnType.isMarkedNullable -> UNullability.NULLABLE
+                else -> UNullability.NOT_NULL
+            }
         }
     }
 

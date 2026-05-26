@@ -17,7 +17,6 @@ import com.intellij.psi.impl.light.LightParameterListBuilder
 import com.intellij.psi.impl.light.LightReferenceListBuilder
 import com.intellij.psi.impl.light.LightTypeParameterBuilder
 import org.jetbrains.kotlin.analysis.api.types.KaTypeMappingMode
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.asJava.classes.toLightAnnotation
 import org.jetbrains.kotlin.asJava.elements.KotlinLightTypeParameterListBuilder
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
@@ -29,6 +28,7 @@ import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.kotlin.types.typeUtil.nullability
 import org.jetbrains.kotlin.utils.SmartSet
 import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.analysis.UNullability
 import org.jetbrains.uast.getOrBuild
 import org.jetbrains.uast.kotlin.PsiTypeConversionConfiguration
 import org.jetbrains.uast.kotlin.TypeOwnerKind
@@ -165,16 +165,16 @@ internal abstract class UastFakeDescriptorLightMethodBase<T : CallableMemberDesc
         return original is FunctionDescriptor && _returnType == PsiTypes.voidType()
     }
 
-    override fun computeNullability(): KaTypeNullability? {
+    override fun computeNullability(): UNullability? {
         if (isSuspendFunction()) {
             // suspend fun returns Any?, which is mapped to @Nullable java.lang.Object
-            return KaTypeNullability.NULLABLE
+            return UNullability.NULLABLE
         }
         return when (original.returnType?.nullability()) {
             null -> null
-            TypeNullability.NOT_NULL -> KaTypeNullability.NON_NULLABLE
-            TypeNullability.NULLABLE -> KaTypeNullability.NULLABLE
-            else -> KaTypeNullability.UNKNOWN
+            TypeNullability.NOT_NULL -> UNullability.NOT_NULL
+            TypeNullability.NULLABLE -> UNullability.NULLABLE
+            else -> UNullability.UNKNOWN
         }
     }
 

@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.findClass
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getImplicitReceivers
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.RemoveRedundantCallsOfConversionMethodsFix
@@ -140,7 +139,7 @@ object ReplaceCallFixFactories {
         // This function is used to determine if we may need to add an elvis operator after the safe call. For example, to replace
         // `s.length` in `val x: Int = s.length` with a safe call, it should be replaced with `s.length ?: <caret>`.
         val expectedType = expression.expectedType ?: return false
-        return expectedType.nullability == KaTypeNullability.NON_NULLABLE && !expectedType.isUnitType
+        return !expectedType.isMarkedNullable && !expectedType.isUnitType
     }
 
     context(_: KaSession)

@@ -5,6 +5,7 @@ import com.intellij.psi.PsiNamedElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.allSupertypes
+import org.jetbrains.kotlin.analysis.api.components.hasFlexibleNullability
 import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.components.withNullability
@@ -81,7 +82,7 @@ internal class MutableParameter(
         } else linkedSetOf(originalType)
 
         val addNullableTypes = originalType is KaFlexibleType &&
-                originalType.lowerBound.nullability != originalType.upperBound.nullability &&
+                originalType.hasFlexibleNullability &&
                 typeSet.size > 1
         val superTypes = originalType.allSupertypes.filter {
             andPredicate.isApplicable(it)

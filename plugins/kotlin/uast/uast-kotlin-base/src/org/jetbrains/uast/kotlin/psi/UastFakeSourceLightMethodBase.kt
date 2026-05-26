@@ -9,7 +9,6 @@ import com.intellij.psi.PsiTypes
 import com.intellij.psi.impl.light.LightModifierList
 import com.intellij.psi.impl.light.LightParameterListBuilder
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtConstructor
@@ -18,6 +17,7 @@ import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.utils.SmartSet
 import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.analysis.UNullability
 import org.jetbrains.uast.getOrBuild
 
 @ApiStatus.Internal
@@ -89,14 +89,14 @@ abstract class UastFakeSourceLightMethodBase<T : KtDeclaration>(
         return original is KtFunction && _returnType == PsiTypes.voidType()
     }
 
-    override fun computeNullability(): KaTypeNullability? {
+    override fun computeNullability(): UNullability? {
         if (baseResolveProviderService.hasInheritedGenericType(original)) {
             // Inherited generic type: nullity will be determined at use-site
             return null
         }
         if (isSuspendFunction()) {
             // suspend fun returns Any?, which is mapped to @Nullable java.lang.Object
-            return KaTypeNullability.NULLABLE
+            return UNullability.NULLABLE
         }
         return baseResolveProviderService.nullability(original)
     }
