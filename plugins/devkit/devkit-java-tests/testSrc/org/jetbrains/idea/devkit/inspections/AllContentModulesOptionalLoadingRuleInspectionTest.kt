@@ -306,6 +306,42 @@ internal class AllContentModulesOptionalLoadingRuleInspectionTest : JavaCodeInsi
     myFixture.testHighlighting(true, true, true, pluginXml.virtualFile)
   }
 
+  fun `test no warning when extensions are registered in xiIncluded file`() {
+    addContentModules("module1")
+    myFixture.addFileToProject("included.xml", """
+      <extensions defaultExtensionNs="com.intellij">
+        <registeredExtension/>
+      </extensions>
+    """.trimIndent())
+    val pluginXml = addPluginXmlToProject("""
+      <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+        <id>com.example.plugin</id>
+        <content>
+          <module name="module1"/>
+        </content>
+        <xi:include href="included.xml"/>
+      </idea-plugin>
+    """.trimIndent())
+    myFixture.testHighlighting(true, false, true, pluginXml.virtualFile)
+  }
+
+  fun `test warning when xiIncluded file has only empty registration tags`() {
+    addContentModules("module1")
+    myFixture.addFileToProject("included.xml", """
+      <extensionPoints/>
+    """.trimIndent())
+    val pluginXml = addPluginXmlToProject("""
+      <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+        <id>com.example.plugin</id>
+        <<warning descr="All content modules use the 'optional' loading rule. At least one module should use 'required', 'embedded', or 'required-if-available'.">content</warning>>
+          <module name="module1"/>
+        </content>
+        <xi:include href="included.xml"/>
+      </idea-plugin>
+    """.trimIndent())
+    myFixture.testHighlighting(true, false, true, pluginXml.virtualFile)
+  }
+
   private fun addPluginXmlToProject(@Language("XML") code: String): PsiFile {
     return myFixture.addFileToProject("plugin.xml", code)
   }
