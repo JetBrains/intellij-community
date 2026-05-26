@@ -13,7 +13,6 @@
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.testFramework"/>
-    <module name="intellij.platform.testFramework.junit5"/>
     <module name="intellij.tools.ide.metrics.collector"/>
     <module name="intellij.tools.ide.util.common"/>
   </dependencies>
