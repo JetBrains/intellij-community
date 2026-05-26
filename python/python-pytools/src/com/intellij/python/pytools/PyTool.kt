@@ -6,6 +6,7 @@ import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.pytools.configuration.ExecutableDiscoveryMode
+import com.intellij.python.pytools.statistics.PyToolFusSnapshot
 import com.jetbrains.python.packaging.PyPackageName
 import org.jetbrains.annotations.Nls
 import com.intellij.openapi.util.Version as PlatformVersion
@@ -71,6 +72,23 @@ interface PyTool {
 
   /** Invoked on Apply when the table flips this tool's enabled state. Tools start/stop their LSP servers here. */
   fun onEnabledChanged(project: Project, enabled: Boolean) {}
+
+  /**
+   * Snapshot every configuration field this tool owns, for FUS logging. The default returns
+   * just `enabled` + `executableDiscoveryMode` (read from [PyToolsState]); tools with extra
+   * settings (e.g. LSP feature flags) override and `copy(...)` the result to add them.
+   *
+   * Called from a single emit point in `PyToolUsagesCollector.Helper.logConfigurationChanged`,
+   * which means a new tool that adds settings without overriding this method will still log a
+   * usable enabled/mode event — no silent FUS gap.
+   */
+  fun configurationFusSnapshot(project: Project): PyToolFusSnapshot {
+    val entry = PyToolsState.getInstance(project).getEntry(this)
+    return PyToolFusSnapshot(
+      enabled = entry.enabled,
+      executableDiscoveryMode = entry.discoveryMode,
+    )
+  }
 
   companion object {
     val EP_NAME: ExtensionPointName<PyTool> = ExtensionPointName.create("com.intellij.python.pytools.pyTool")

@@ -40,7 +40,7 @@ internal interface ToolCellHost {
 internal interface PathCellHost {
   /** View row currently under the mouse for the Path column; -1 means no hover. */
   val pathHoveredRow: Int
-  fun iconKindFor(toolRow: ToolRow?, detected: DetectedPath?): PathIconKind
+  fun iconKindFor(toolRow: ToolRow?, pathFieldValue: PathFieldValue?): PathIconKind
 }
 
 /** Renders the enabled state as an [OnOffButton] toggle switch. */
@@ -248,11 +248,11 @@ internal class PathCellRenderer(private val host: PathCellHost) : JPanel(null), 
     // Read from the row's cached `detectedPath` — the actual `findInPath` walk and
     // `--version` probe both run on background coroutines. This way the cell paints
     // synchronously without blocking the EDT.
-    val detected = toolRow?.detectedPath
+    val detected = toolRow?.pathFieldValue
     val (text, isAuto) = when (detected) {
-      is DetectedPath.Custom -> detected.path.toString() to false
-      is DetectedPath.AutoDetected -> detected.path.toString() to true
-      DetectedPath.NotFound, null -> "" to true
+      is PathFieldValue.Custom -> detected.path.toString() to false
+      is PathFieldValue.AutoDetected -> detected.path.toString() to true
+      PathFieldValue.NotFound, null -> "" to true
     }
     textLabel.text = text.ifEmpty { PyToolsUiBundle.message("settings.external.tools.path.not.found") }
     textLabel.font = if (isAuto) italicFont else baseFont

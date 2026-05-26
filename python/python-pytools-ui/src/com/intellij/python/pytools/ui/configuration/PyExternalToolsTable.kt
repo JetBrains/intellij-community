@@ -2,13 +2,16 @@
 package com.intellij.python.pytools.ui.configuration
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.setToolTipText
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.python.pytools.PyTool
 import com.intellij.python.pytools.PyToolsState
 import com.intellij.python.pytools.configuration.ExecutableDiscoveryMode
 import com.intellij.python.pytools.statistics.PyToolUsagesCollector
+import com.intellij.python.pytools.statistics.PyToolActionSource
 import com.intellij.python.pytools.ui.PyToolsUiBundle
 import com.intellij.python.pytools.ui.icons.PythonPytoolsUIIcons
 import com.intellij.ui.TableSpeedSearch
@@ -74,8 +77,8 @@ internal class PyExternalToolsTable(
   override var pathHoveredRow: Int = -1
     private set
 
-  override fun iconKindFor(toolRow: ToolRow?, detected: DetectedPath?): PathIconKind =
-    iconKindFor(toolRow, detected, uv.uvAvailable.get(), uv::isUvManaged)
+  override fun iconKindFor(toolRow: ToolRow?, pathFieldValue: PathFieldValue?): PathIconKind =
+    iconKindFor(toolRow, pathFieldValue, uv.uvAvailable.get(), uv::isUvManaged)
 
   // ---------- Renderers, columns, model, view ----------
 
@@ -177,7 +180,7 @@ internal class PyExternalToolsTable(
     putClientProperty("JTable.autoStartsEdit", true)
     // Register with ToolTipManager so it polls our `getToolTipText(MouseEvent)` override.
     // An empty placeholder is enough — actual text comes from the override.
-    toolTipText = ""
+    setToolTipText(HtmlChunk.text(""))
     val toggleWidth = JBUI.scale(60)
     columnModel.getColumn(COL_ENABLED).apply {
       minWidth = toggleWidth
@@ -185,8 +188,7 @@ internal class PyExternalToolsTable(
       preferredWidth = toggleWidth
     }
     columnModel.getColumn(COL_TOOL).apply {
-      minWidth = JBUI.scale(146)
-      preferredWidth = JBUI.scale(240)
+      preferredWidth = JBUI.scale(200)
     }
     columnModel.getColumn(COL_MODE).apply {
       val width = JBUI.scale(140)
@@ -195,8 +197,7 @@ internal class PyExternalToolsTable(
       preferredWidth = width
     }
     columnModel.getColumn(COL_PATH).apply {
-      minWidth = JBUI.scale(146)
-      preferredWidth = JBUI.scale(240)
+      preferredWidth = JBUI.scale(200)
     }
     addMouseListener(object : MouseAdapter() {
       override fun mousePressed(e: MouseEvent) {
@@ -229,8 +230,8 @@ internal class PyExternalToolsTable(
           }
           else if (isOverPathIcon(e, viewRow)) {
             when (pathIconAtHover(viewRow)) {
-              PathIconKind.INSTALL -> uv.installViaUv(rows[viewRow])
-              PathIconKind.UPGRADE -> uv.upgradeViaUv(rows[viewRow])
+              PathIconKind.INSTALL -> uv.installViaUv(rows[viewRow], PyToolActionSource.SETTINGS_TABLE)
+              PathIconKind.UPGRADE -> uv.upgradeViaUv(rows[viewRow], PyToolActionSource.SETTINGS_TABLE)
               else -> Unit
             }
           }
@@ -346,14 +347,13 @@ internal class PyExternalToolsTable(
         row.dirty = false
       }
       if (rowChanged) {
-        // LSP-feature flags (completions/inlay-hints/documentation/formatting/sortImports) are
-        // owned by per-tool detail configurables; surface what we know at the table level and
-        // leave the rest as `null` (UNSURE) for non-LSP tools.
+        // Logged after staged enabled/mode/customPath have been committed to `PyToolsState`
+        // (and after the optional detail-configurable apply), so the snapshot read by
+        // `row.tool.configurationFusSnapshot(project)` reflects the post-commit values.
         PyToolUsagesCollector.Helper.logConfigurationChanged(
           project = project,
           tool = row.tool,
-          enabled = row.staged.enabled,
-          executableDiscoveryMode = row.staged.mode,
+          source = PyToolActionSource.SETTINGS_TABLE,
         )
       }
     }
@@ -484,7 +484,7 @@ internal class PyExternalToolsTable(
     if (viewRow != pathHoveredRow) return PathIconKind.NONE
     val toolRow = rows.getOrNull(viewRow) ?: return PathIconKind.NONE
     if (!toolRow.staged.enabled) return PathIconKind.NONE
-    return iconKindFor(toolRow, toolRow.detectedPath)
+    return iconKindFor(toolRow, toolRow.pathFieldValue)
   }
 
   /** True if [e]'s x-coordinate falls within the gear-icon area on the Tool column for [viewRow]. */

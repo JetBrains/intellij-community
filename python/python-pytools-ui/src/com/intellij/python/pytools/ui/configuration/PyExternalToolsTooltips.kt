@@ -68,8 +68,8 @@ private fun toolColumnTooltip(toolRow: ToolRow, host: TooltipHost, eventX: Int, 
  * OpenDisk icon, an install / upgrade hint when over the action icon to its left, or the full
  * path + version + error otherwise.
  */
-private fun pathColumnTooltip(toolRow: ToolRow, host: TooltipHost, eventX: Int, cellRect: Rectangle): String {
-  val detected = toolRow.detectedPath
+private fun pathColumnTooltip(toolRow: ToolRow, host: TooltipHost, eventX: Int, cellRect: Rectangle): String? {
+  val pathFieldValue = toolRow.pathFieldValue
   val rightEdge = cellRect.x + cellRect.width - JBUI.scale(5)
   if (toolRow.staged.enabled) {
     // Browse occupies the rightmost slot.
@@ -78,7 +78,7 @@ private fun pathColumnTooltip(toolRow: ToolRow, host: TooltipHost, eventX: Int, 
       return PyToolsUiBundle.message("settings.external.tools.path.edit.tooltip")
     }
     // Action icon (install / upgrade / info) sits immediately to the left of browse.
-    val iconKind = host.iconKindFor(toolRow, detected)
+    val iconKind = host.iconKindFor(toolRow, pathFieldValue)
     val actionIcon = iconKind.icon
     if (actionIcon != null) {
       val actionRight = browseLeft - JBUI.scale(4)
@@ -89,12 +89,16 @@ private fun pathColumnTooltip(toolRow: ToolRow, host: TooltipHost, eventX: Int, 
       }
     }
   }
-  val rawPath = when (detected) {
-    is DetectedPath.Custom -> detected.path.toString()
-    is DetectedPath.AutoDetected -> detected.path.toString()
-    DetectedPath.NotFound, null -> ""
+
+  val rawPath = when (pathFieldValue) {
+    is PathFieldValue.Custom -> pathFieldValue.path.toString()
+    is PathFieldValue.AutoDetected -> pathFieldValue.path.toString()
+    PathFieldValue.NotFound, null -> null
   }
-  return buildPathTooltip(rawPath, toolRow.version, toolRow.pathError, toolRow.belowMinVersionMessage)
+
+  return rawPath?.let {
+    buildPathTooltip(it, toolRow.version, toolRow.pathError, toolRow.belowMinVersionMessage)
+  }
 }
 
 /**

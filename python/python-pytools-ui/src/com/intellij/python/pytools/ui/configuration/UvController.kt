@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.pytools.statistics.PyToolUsagesCollector
+import com.intellij.python.pytools.statistics.PyToolActionSource
 import com.intellij.python.pytools.ui.PyToolsUiBundle
 import com.intellij.python.uv.backend.cli.uv.UvTool
 import com.intellij.python.uv.backend.runtime.createUvToolRuntime
@@ -96,21 +97,21 @@ internal class UvController(
   }
 
   /** Run `uv tool install <packageName>` with modal progress; refresh the row when it succeeds. */
-  fun installViaUv(toolRow: ToolRow) = runUvToolAction(
+  fun installViaUv(toolRow: ToolRow, source: PyToolActionSource) = runUvToolAction(
     toolRow = toolRow,
     progressTitleKey = "settings.external.tools.install.via.uv.progress",
     errorTitleKey = "settings.external.tools.install.via.uv.error.title",
     action = { uvTool, name -> uvTool.install(name) },
-    onSuccess = { PyToolUsagesCollector.Helper.logToolInstalled(project, toolRow.tool) },
+    onSuccess = { PyToolUsagesCollector.Helper.logToolInstalled(project, toolRow.tool, source) },
   )
 
   /** Run `uv tool upgrade <packageName>` with modal progress; refresh the row when it succeeds. */
-  fun upgradeViaUv(toolRow: ToolRow) = runUvToolAction(
+  fun upgradeViaUv(toolRow: ToolRow, source: PyToolActionSource) = runUvToolAction(
     toolRow = toolRow,
     progressTitleKey = "settings.external.tools.upgrade.via.uv.progress",
     errorTitleKey = "settings.external.tools.upgrade.via.uv.error.title",
     action = { uvTool, name -> uvTool.upgrade(name) },
-    onSuccess = { PyToolUsagesCollector.Helper.logToolUpdated(project, toolRow.tool) },
+    onSuccess = { PyToolUsagesCollector.Helper.logToolUpdated(project, toolRow.tool, source) },
   )
 
   /**

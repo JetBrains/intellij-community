@@ -51,7 +51,7 @@ internal class ToolRow(
    * is still in flight (the cell renders empty until then) — the renderer must never call [detect]
    * itself, since `findInPath` does blocking disk I/O.
    */
-  var detectedPath: DetectedPath? = null,
+  var pathFieldValue: PathFieldValue? = null,
   /**
    * Non-null when the resolved binary's version is below [PyTool.minimumSupportedVersion]. The
    * string is a short human-readable hint suitable for the path tooltip; the renderer also uses
@@ -60,21 +60,21 @@ internal class ToolRow(
   var belowMinVersionMessage: String? = null,
 )
 
-internal sealed interface DetectedPath {
+internal sealed interface PathFieldValue {
   /** User-supplied [PyToolsState.ToolEntry.customPathToExecutable]. */
-  data class Custom(val path: Path) : DetectedPath
+  data class Custom(val path: Path) : PathFieldValue
 
   /** Path derived from system PATH. */
-  data class AutoDetected(val path: Path) : DetectedPath
+  data class AutoDetected(val path: Path) : PathFieldValue
 
   /** Neither configured nor discoverable. */
-  data object NotFound : DetectedPath
+  data object NotFound : PathFieldValue
 }
 
-internal fun detect(tool: PyTool, customPath: Path?): DetectedPath {
-  if (customPath != null) return DetectedPath.Custom(customPath)
+internal fun detect(tool: PyTool, customPath: Path?): PathFieldValue {
+  if (customPath != null) return PathFieldValue.Custom(customPath)
   val auto = tool.findExecutableInPath()
-  return if (auto != null) DetectedPath.AutoDetected(auto) else DetectedPath.NotFound
+  return if (auto != null) PathFieldValue.AutoDetected(auto) else PathFieldValue.NotFound
 }
 
 /** Right-edge hover icon kinds for the Path column. */
@@ -93,13 +93,13 @@ internal enum class PathIconKind(val icon: Icon?) {
  */
 internal fun iconKindFor(
   toolRow: ToolRow?,
-  detected: DetectedPath?,
+  detected: PathFieldValue?,
   uvAvailable: Boolean?,
   isUvManaged: (ToolRow) -> Boolean,
 ): PathIconKind = when {
   toolRow == null -> PathIconKind.NONE
-  detected is DetectedPath.NotFound && uvAvailable == true -> PathIconKind.INSTALL
-  detected is DetectedPath.NotFound -> PathIconKind.NONE
+  detected is PathFieldValue.NotFound && uvAvailable == true -> PathIconKind.INSTALL
+  detected is PathFieldValue.NotFound -> PathIconKind.NONE
   toolRow.version == null -> PathIconKind.NONE
   isUvManaged(toolRow) -> PathIconKind.UPGRADE
   else -> PathIconKind.INFO
@@ -129,15 +129,15 @@ internal fun ToolRow.probeVersion(
       detect(tool, customPath)
     }
     val path = when (detected) {
-      is DetectedPath.Custom -> detected.path
-      is DetectedPath.AutoDetected -> detected.path
-      DetectedPath.NotFound -> null
+      is PathFieldValue.Custom -> detected.path
+      is PathFieldValue.AutoDetected -> detected.path
+      PathFieldValue.NotFound -> null
     }
 
     // Step 2: publish the resolved path so the cell can render it before the version arrives.
     withContext(Dispatchers.Main) {
       if (staged.mode != mode || staged.customPath != customPath) return@withContext
-      detectedPath = detected
+      pathFieldValue = detected
       if (versionedFor != path) {
         version = null
         versionedFor = path
@@ -198,9 +198,9 @@ internal fun ToolRow.browseExecutablePath(
   parent: Component?,
   onPathChosen: (Path) -> Unit,
 ) {
-  val current = staged.customPath ?: when (val d = detectedPath) {
-    is DetectedPath.Custom -> d.path
-    is DetectedPath.AutoDetected -> d.path
+  val current = staged.customPath ?: when (val d = pathFieldValue) {
+    is PathFieldValue.Custom -> d.path
+    is PathFieldValue.AutoDetected -> d.path
     else -> null
   }
   val toSelect = current?.let { VirtualFileManager.getInstance().findFileByNioPath(it) }
