@@ -27,8 +27,7 @@ import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.original
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 import org.jetbrains.plugins.terminal.session.impl.TerminalSessionTerminatedEvent
-import org.jetbrains.plugins.terminal.util.STOP_EMULATOR_TIMEOUT
-import org.jetbrains.plugins.terminal.util.waitForAsync
+import org.jetbrains.plugins.terminal.util.closeConnectorAndStopEmulation
 
 @ApiStatus.Internal
 fun startTerminalProcess(
@@ -92,11 +91,7 @@ fun createTerminalSession(
 
   // For the case when coroutine scope is canceled externally
   coroutineScope.awaitCancellationAndInvoke {
-    val starter = services.terminalStarter
-    starter.ttyConnector.close()
-    starter.ttyConnector.waitForAsync(STOP_EMULATOR_TIMEOUT) {
-      starter.requestEmulatorStop()
-    }
+    services.terminalStarter.closeConnectorAndStopEmulation()
   }
 
   return TerminalSessionImpl(

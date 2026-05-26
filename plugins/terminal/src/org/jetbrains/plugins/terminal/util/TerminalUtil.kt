@@ -14,14 +14,19 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
+import com.intellij.util.io.awaitExit
 import com.jediterm.terminal.ProcessTtyConnector
+import com.jediterm.terminal.TerminalStarter
 import com.jediterm.terminal.TtyConnector
 import com.jediterm.terminal.model.TerminalModelListener
 import com.jediterm.terminal.model.TerminalTextBuffer
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.time.withTimeout
+import kotlinx.coroutines.time.withTimeoutOrNull
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.terminal.ShellTerminalWidget
@@ -34,6 +39,50 @@ internal fun TerminalTextBuffer.addModelListener(parentDisposable: Disposable, l
   addModelListener(listener)
   Disposer.register(parentDisposable) {
     removeModelListener(listener)
+  }
+}
+
+@ApiStatus.Internal
+@JvmField
+val CONNECTOR_CLOSING_TIMEOUT: Duration = Duration.ofSeconds(3)
+
+@ApiStatus.Internal
+suspend fun TerminalStarter.closeConnectorAndStopEmulation() {
+  // It is a cleanup activity - it shouldn't be canceled in the middle
+  withContext(NonCancellable) {
+    // Schedule connector closing activities
+    ttyConnector.close()
+    try {
+      // Synchronously wait for the connector to close for some time.
+      // Important in case of IDE closing and remote process termination.
+      // We delay this scope cancellation (project-based),
+      // so application-level logic can handle the connector closing before being canceled by the platform.
+      ttyConnector.waitFor(CONNECTOR_CLOSING_TIMEOUT)
+    }
+    finally {
+      // Stop reading from the connector
+      requestEmulatorStop()
+    }
+  }
+}
+
+/**
+ * Waits for the TtyConnector closing synchronously until [timeout] elapses.
+ * @return the exit code of the process if it was closed successfully, null otherwise.
+ */
+@ApiStatus.Internal
+suspend fun TtyConnector.waitFor(timeout: Duration): Int? {
+  if (!this.isConnected) {
+    return waitFor() // should return the exit code of the process immediately
+  }
+  return withTimeoutOrNull(timeout) {
+    val processTtyConnector = ShellTerminalWidget.getProcessTtyConnector(this@waitFor)
+    if (processTtyConnector != null) {
+      processTtyConnector.process.awaitExit()
+    }
+    else withContext(Dispatchers.IO) {
+      waitFor()
+    }
   }
 }
 
@@ -83,10 +132,6 @@ internal fun TtyConnector.getDebugName(): @NonNls String {
   }
   return name
 }
-
-@ApiStatus.Internal
-@JvmField
-val STOP_EMULATOR_TIMEOUT: Duration = Duration.ofMillis(1500)
 
 @ApiStatus.Internal
 fun <T : Any> fireListenersAndLogAllExceptions(
