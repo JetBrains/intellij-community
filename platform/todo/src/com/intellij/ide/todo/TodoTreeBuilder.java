@@ -6,6 +6,7 @@ import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.ide.todo.nodes.LeafTodoItemNode;
 import com.intellij.ide.todo.nodes.TodoFileNode;
 import com.intellij.ide.todo.nodes.TodoItemNode;
+import com.intellij.ide.todo.nodes.TodoRemoteFileNode;
 import com.intellij.ide.todo.nodes.TodoRemoteItemNode;
 import com.intellij.ide.todo.nodes.TodoTreeHelper;
 import com.intellij.ide.todo.rpc.TodoResult;
@@ -243,6 +244,11 @@ public abstract class TodoTreeBuilder implements Disposable {
         throw new IllegalArgumentException();
       }
     };
+  }
+
+  @ApiStatus.Internal
+  public Iterator<VirtualFile> getAllVirtualFiles() {
+    return myFileTree.getFileIterator();
   }
 
   /**
@@ -570,6 +576,10 @@ public abstract class TodoTreeBuilder implements Disposable {
     if (obj instanceof TodoRemoteItemNode remoteLeaf) {
       VirtualFile file = remoteLeaf.getVirtualFile();
       return new TodoNodeVisitor(() -> remoteLeaf, file);
+    }
+    if (obj instanceof TodoRemoteFileNode remoteFileNode) {
+      VirtualFile file = remoteFileNode.getVirtualFile();
+      return new TodoNodeVisitor(() -> remoteFileNode, file);
     }
     else {
       Object o = obj instanceof AbstractTreeNode ? ((AbstractTreeNode<?>)obj).getValue() : null;

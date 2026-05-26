@@ -33,24 +33,28 @@ public class SummaryNode extends BaseToDoNode<ToDoSummary> {
     ArrayList<AbstractTreeNode<?>> children = new ArrayList<>();
 
     if (shouldUseSplitTodo()) {
-      for (Iterator<? extends PsiFile> i = myBuilder.getAllFiles(); i.hasNext(); ) {
-        PsiFile psiFile = i.next();
-        if (psiFile == null) {
+      for (Iterator<VirtualFile> i = myBuilder.getAllVirtualFiles(); i.hasNext(); ) {
+        VirtualFile virtualFile = i.next();
+        if (virtualFile == null || !virtualFile.isValid() || myBuilder.getCachedRemoteTodos(virtualFile).isEmpty()) {
           continue;
         }
 
-        VirtualFile virtualFile = psiFile.getVirtualFile();
-        if (virtualFile == null || myBuilder.getCachedRemoteTodos(virtualFile).isEmpty()) {
-          continue;
-        }
-
-        TodoFileNode fileNode = new TodoFileNode(getProject(), psiFile, myBuilder, false);
+        TodoRemoteFileNode fileNode = new TodoRemoteFileNode(
+          getProject(),
+          new TodoRemoteFileNode.Value(virtualFile),
+          myBuilder,
+          false
+        );
         if (!children.contains(fileNode)) {
           children.add(fileNode);
         }
       }
 
-      children.sort(TodoFileDirAndModuleComparator.INSTANCE);
+      children.sort((node1, node2) -> {
+        VirtualFile file1 = ((TodoRemoteFileNode)node1).getVirtualFile();
+        VirtualFile file2 = ((TodoRemoteFileNode)node2).getVirtualFile();
+        return file1.getPresentableUrl().compareToIgnoreCase(file2.getPresentableUrl());
+      });
       return children;
     }
 
