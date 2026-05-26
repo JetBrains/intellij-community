@@ -10,9 +10,10 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.ExecutionDataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.xdebugger.impl.ui.SplitDebuggerUIUtil;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -28,7 +29,7 @@ public class ToggleAutoTestAction extends ToggleAction {
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    RunContentDescriptor descriptor = SplitDebuggerUIUtil.getRunContentDescriptor(e.getDataContext());
+    RunContentDescriptor descriptor = e.getData(LangDataKeys.RUN_CONTENT_DESCRIPTOR);
     return project != null && descriptor != null && getAutoTestManager(project).isAutoTestEnabled(descriptor);
   }
 
@@ -40,8 +41,8 @@ public class ToggleAutoTestAction extends ToggleAction {
   @Override
   public void setSelected(@NotNull AnActionEvent e, boolean state) {
     Project project = e.getData(CommonDataKeys.PROJECT);
-    RunContentDescriptor descriptor = SplitDebuggerUIUtil.getRunContentDescriptor(e.getDataContext());
-    ExecutionEnvironment environment = SplitDebuggerUIUtil.getExecutionEnvironment(e.getDataContext());
+    RunContentDescriptor descriptor = e.getData(LangDataKeys.RUN_CONTENT_DESCRIPTOR);
+    ExecutionEnvironment environment = e.getData(ExecutionDataKeys.EXECUTION_ENVIRONMENT);
     if (project != null && descriptor != null && environment != null) {
       getAutoTestManager(project).setAutoTestEnabled(descriptor, environment, state);
     }

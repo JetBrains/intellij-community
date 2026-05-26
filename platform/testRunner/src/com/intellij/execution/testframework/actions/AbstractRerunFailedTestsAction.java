@@ -3,6 +3,7 @@ package com.intellij.execution.testframework.actions;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
+import com.intellij.execution.ExecutorRegistry;
 import com.intellij.execution.configurations.ConfigurationInfoProvider;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.LogFileOptions;
@@ -12,7 +13,6 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.WrappingRunConfiguration;
-import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
@@ -26,6 +26,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.ExecutionDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SettingsEditor;
@@ -36,8 +37,8 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.xdebugger.impl.ui.SplitDebuggerUIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -141,7 +142,7 @@ public abstract class AbstractRerunFailedTestsAction extends AnAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    ExecutionEnvironment environment = SplitDebuggerUIUtil.getExecutionEnvironment(e.getDataContext());
+    ExecutionEnvironment environment = e.getData(ExecutionDataKeys.EXECUTION_ENVIRONMENT);
     if (environment == null) {
       return;
     }
@@ -164,7 +165,13 @@ public abstract class AbstractRerunFailedTestsAction extends AnAction {
     }
 
     final LinkedHashMap<Executor, ProgramRunner> availableRunners = new LinkedHashMap<>();
-    for (Executor ex : new Executor[] {DefaultRunExecutor.getRunExecutorInstance(), DefaultDebugExecutor.getDebugExecutorInstance()}) {
+    List<Executor> executors = new ArrayList<>();
+    executors.add(DefaultRunExecutor.getRunExecutorInstance());
+    Executor debugExecutor = ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);
+    if (debugExecutor != null) {
+      executors.add(debugExecutor);
+    }
+    for (Executor ex : executors) {
       final ProgramRunner runner = ProgramRunner.getRunner(ex.getId(), profile.getPeer());
       if (runner != null) {
         availableRunners.put(ex, runner);
@@ -222,13 +229,13 @@ public abstract class AbstractRerunFailedTestsAction extends AnAction {
   protected @Nullable MyRunProfile getRunProfile(@NotNull ExecutionEnvironment environment) {
     return null;
   }
-  
+
   @TestOnly
   @ApiStatus.Internal
   public @Nullable RunConfiguration getRunProfileTestAccessor(@NotNull ExecutionEnvironment environment) {
     return getRunProfile(environment);
   }
-  
+
   public @Nullable TestFrameworkRunningModel getModel() {
     if (myModel != null) {
       return myModel;
@@ -264,7 +271,7 @@ public abstract class AbstractRerunFailedTestsAction extends AnAction {
              ((ConsolePropertiesProvider)myConfiguration).createTestConsoleProperties(executor) : null;
     }
 
-    ///////////////////////////////////Delegates
+    /// ////////////////////////////////Delegates
     @Override
     public void readExternal(final @NotNull Element element) throws InvalidDataException {
       myConfiguration.readExternal(element);

@@ -8,8 +8,6 @@
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
-    <module name="intellij.platform.debugger"/>
-    <module name="intellij.platform.debugger.impl"/>
     <module name="intellij.platform.diff"/>
     <module name="intellij.platform.diff.impl"/>
     <module name="intellij.platform.editor.ui"/>
