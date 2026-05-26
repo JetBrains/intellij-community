@@ -1,8 +1,6 @@
 <!--suppress PluginXmlRegistrationCheck -->
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <extensions defaultExtensionNs="com.intellij">
-    <projectCustomDataSynchronizer
-        implementation="com.intellij.platform.eel.provider.RemoteProjectBasePathSynchronizer"/>
 
     <applicationService serviceInterface="com.intellij.execution.wsl.GatewayNativeWslProjectOpener"
                         serviceImplementation="com.intellij.execution.wsl.GatewayNativeWslProjectOpenerImpl"/>

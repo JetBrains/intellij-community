@@ -2,40 +2,37 @@
 @file:JvmName("RemoteProjectPathProviderKt")
 package com.intellij.platform.eel.provider
 
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectCustomDataSynchronizer
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.platform.eel.path.EelPath
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.flowOf
+import com.intellij.platform.eel.path.EelPathException
+import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
-import kotlin.reflect.KType
-import kotlin.reflect.typeOf
+
+private val LOG = fileLogger()
 
 private val REMOTE_PROJECT_BASE_PATH_KEY: Key<String> = Key.create("com.intellij.platform.remoteProjectBasePath")
 
 /**
+ * Empty string is the "checked-absent" sentinel; the absence of any call is "not yet set"
+ * and treated as an init-order error on a thin client.
+ */
+@ApiStatus.Internal
+fun Project.setRemoteProjectBaseNioPath(rawHostPath: String) {
+  putUserData(REMOTE_PROJECT_BASE_PATH_KEY, rawHostPath)
+}
+
+/**
  * Returns the project's base directory on the **host** (backend) machine as a [Path]
- * routed through `MultiRoutingFileSystem` (so it carries the right
- * [com.intellij.platform.eel.EelDescriptor]).
+ * routed through `MultiRoutingFileSystem`.
  *
- * Why this exists:
- * - In a monolith IDE, [Project.guessProjectDir] is the project root and is enough.
- * - In Remote Development on the thin client, [Project.guessProjectDir] resolves against
- *   the *client's* fake project, NOT the project root on the host. Code that needs the
- *   host path (UI presentation, relative-path computation, building a [Path] through
- *   `MultiRoutingFileSystem`) cannot rely on [Project.guessProjectDir] there.
- *
- * On a thin client the host path is delivered by the synchronizer in this file; on a
- * monolith it falls back to [Project.guessProjectDir].
- *
- * The returned [Path] is dispatched by `MultiRoutingFileSystem` to the appropriate
- * NIO `FileSystemProvider` for the target environment (default FS, WSL, Docker, SSH, …),
- * so `java.nio.file.Files.*` calls work for environments that have a registered provider.
+ * On a thin client [Project.guessProjectDir] resolves against the client's *fake* project,
+ * not the host root, so callers that need the host path can't use it directly — that's the
+ * whole reason for this provider. On a monolith it falls back to [Project.guessProjectDir].
  */
 @ApiStatus.Internal
 fun Project.getRemoteProjectBaseNioPath(): Path? {
@@ -43,41 +40,35 @@ fun Project.getRemoteProjectBaseNioPath(): Path? {
   // through EelPath to be routed via MultiRoutingFileSystem to the correct environment.
   // The local fallback uses VirtualFile.toNioPathOrNull, which goes through the VFS to get
   // the correct local NIO path (including FS-specific quirks like the Windows bare-drive fix).
-  getUserData(REMOTE_PROJECT_BASE_PATH_KEY)?.let {
-    return EelPath.parse(it, getEelDescriptor()).asNioPath()
+  val basePathFromBackend = getUserData(REMOTE_PROJECT_BASE_PATH_KEY)
+
+  if (basePathFromBackend == null) {
+    // Only treat the missing key as an init-order regression when a remote EelDescriptor is
+    // actually attached: ThinClientRdProjectViewSession.beforeInit always sets both. If the
+    // descriptor is still LocalEelDescriptor, there's no real RD session yet (traverseUI /
+    // searchable-options indexing run in the JetBrainsClient JVM without opening a Solution),
+    // so falling through to the local heuristic is correct.
+    if (PlatformUtils.isJetBrainsClient() && getEelDescriptor() !is LocalEelDescriptor) {
+      LOG.error("REMOTE_PROJECT_BASE_PATH_KEY not set on thin client; init order is broken")
+      return null
+    }
+  }
+  else {
+    if (basePathFromBackend.isEmpty()) {
+      // Checked-absent sentinel.
+      return null
+    }
+
+    val descriptor = getEelDescriptor()
+
+    return try {
+      EelPath.parse(basePathFromBackend, descriptor).asNioPath()
+    }
+    catch (e: EelPathException) {
+      LOG.error("Path '$basePathFromBackend' inconsistent with descriptor $descriptor", e)
+      null
+    }
   }
 
   return guessProjectDir()?.toNioPathOrNull()
 }
-
-/**
- * Streams the host project base directory to the thin client so that
- * [getRemoteProjectBaseNioPath] returns the host path on the frontend.
- *
- * Mirrors `com.intellij.platform.vcs.impl.shared.ProjectBasePathSynchronizer` (which is
- * `internal` to VCS). Kept platform-level so non-VCS callers can use it without depending
- * on `intellij.platform.vcs.impl.shared`. See TODO(unify-with-vcs) below.
- */
-internal class RemoteProjectBasePathSynchronizer : ProjectCustomDataSynchronizer<String> {
-  override val id: String = "platform.remoteProjectBasePath"
-  override val dataType: KType = typeOf<String>()
-
-  override fun getValues(project: Project): Flow<String> {
-    // Backend-side: guessProjectDir resolves to the actual host project root.
-    // (On the thin client it would resolve against client-local fake state, but
-    // [getValues] is only ever invoked on the backend per the EP contract.)
-    val dir = project.guessProjectDir() ?: return emptyFlow()
-    return flowOf(dir.path)
-  }
-
-  override suspend fun consumeValue(project: Project, value: String) {
-    project.putUserData(REMOTE_PROJECT_BASE_PATH_KEY, value)
-  }
-}
-
-// TODO(unify-with-vcs): Today there are two places that hold the host project base path
-//   on the thin client: this provider and `ProjectBasePathHolder` in
-//   `intellij.platform.vcs.impl.shared`. The VCS one was the original; this one was added
-//   for non-VCS callers. Pick a single owner: either drop `ProjectBasePathHolder` and
-//   make VCS read from here, or move the holder into platform and have this file delegate
-//   to it. Coordinate with VCS owners before unifying.
