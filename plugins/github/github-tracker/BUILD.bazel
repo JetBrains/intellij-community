@@ -70,8 +70,6 @@ jvm_library(
         "//platform/vcs-api/vcs-api-core:vcs-core_test_lib",
         "//platform/core-ui:core-ui_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
-        "//libraries/junit5",
-        "//libraries/junit5:junit5_test_lib",
         "//libraries/fastutil:fastutil_test_lib",
     ],
 )

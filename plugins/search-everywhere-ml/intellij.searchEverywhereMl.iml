@@ -14,7 +14,6 @@
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
-    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module-library" exported="">
       <library name="ai.grazie.emb" type="repository">
         <properties maven-id="ai.grazie.model:model-emb-jvm:0.8.256">
@@ -85,6 +84,5 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
-    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
   </component>
 </module>

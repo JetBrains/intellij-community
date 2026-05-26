@@ -26,11 +26,9 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.libraries.opentelemetry" />
     <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
-    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.opentelemetry.exporter.otlp.common" />
     <orderEntry type="module" module-name="intellij.libraries.jackson3" />
     <orderEntry type="module" module-name="intellij.libraries.opentelemetry.sdk.autoconfigure.spi" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.libraries.jackson3.databind" />
-    <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
   </component>
 </module>

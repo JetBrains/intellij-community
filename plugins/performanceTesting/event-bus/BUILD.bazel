@@ -59,8 +59,6 @@ jvm_library(
         # do not sort,
         ":tools-ide-starter-bus",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//libraries/junit5",
-        "//libraries/junit5:junit5_test_lib",
         "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
         "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin_test_lib",
         "//libraries/jackson3/databind:databind_test_lib",

@@ -62,16 +62,10 @@ jvm_library(
         "//platform/util/base/multiplatform:multiplatform_test_lib",
         "//platform/util/base:base_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
-        "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
-        "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
-        "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
         "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
         "//libraries/jackson3/databind:databind_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kotlinx/serialization/json:json_test_lib",
-        "//libraries/junit4",
-        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.threadDumpParser` end

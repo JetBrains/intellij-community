@@ -21,7 +21,6 @@
     <orderEntry type="module" module-name="intellij.platform.lang.core" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.refactoring" />
-    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
@@ -37,10 +36,8 @@
     <orderEntry type="module" module-name="intellij.javaFX.common" />
     <orderEntry type="module" module-name="intellij.java.manifest" />
     <orderEntry type="module" module-name="intellij.java.ui" />
-    <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.typeMigration" />
     <orderEntry type="module" module-name="intellij.platform.util.nanoxml" />
-    <orderEntry type="module" module-name="intellij.java.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />

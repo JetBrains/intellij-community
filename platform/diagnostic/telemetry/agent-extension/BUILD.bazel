@@ -64,14 +64,11 @@ jvm_library(
         ":diagnostic-telemetry-agent-extension",
         "//libraries/opentelemetry:opentelemetry_test_lib",
         "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//libraries/junit5",
-        "//libraries/junit5:junit5_test_lib",
         "//libraries/opentelemetry-exporter-otlp-common:opentelemetry-exporter-otlp-common_test_lib",
         "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
         "//libraries/opentelemetry-sdk-autoconfigure-spi",
         "//libraries/opentelemetry-sdk-autoconfigure-spi:opentelemetry-sdk-autoconfigure-spi_test_lib",
         "//libraries/jackson3/databind:databind_test_lib",
-        "@lib//:kotlin-stdlib",
     ],
 )
 ### auto-generated section `build intellij.platform.diagnostic.telemetry.agent.extension` end

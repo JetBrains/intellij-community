@@ -38,7 +38,6 @@
     <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
     <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop" exported="" />
     <orderEntry type="module" module-name="intellij.libraries.skiko" exported="" />
-    <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop.junit" scope="TEST" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>

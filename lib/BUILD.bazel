@@ -1418,7 +1418,7 @@ copy_file(
 )
 
 java_library(
-    name = "execution-process-mediator-common-com-willowtreeapps-assertk-assertk-jvm",
+    name = "execution-process-mediator-common-tests-com-willowtreeapps-assertk-assertk-jvm",
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
@@ -1444,17 +1444,6 @@ jvm_import(
     name = "org_opentest4j-opentest4j-1_2_0_http_import",
     jar = "@org_opentest4j-opentest4j-1_2_0_http//file",
     source_jar = "@org_opentest4j-opentest4j-1_2_0-sources_http//file",
-)
-
-java_library(
-    name = "execution-process-mediator-common-tests-com-willowtreeapps-assertk-assertk-jvm",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":com_willowtreeapps_assertk-assertk-jvm-0_23_http_import",
-        ":com_willowtreeapps_opentest4k-opentest4k-jvm-1_2_1_http_import",
-        ":org_opentest4j-opentest4j-1_2_0_http_import",
-    ],
 )
 
 copy_file(
@@ -5496,32 +5485,6 @@ jvm_import(
     name = "io_ktor-ktor-network-tls-jvm-3_4_1_http_import",
     jar = "@io_ktor-ktor-network-tls-jvm-3_4_1_http//file",
     source_jar = "@io_ktor-ktor-network-tls-jvm-3_4_1-sources_http//file",
-)
-
-java_library(
-    name = "ktor-client-mock",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":io_ktor-ktor-client-mock-jvm-3_4_1_http_import",
-        ":io_ktor-ktor-http-jvm-3_4_1_http_import",
-        ":io_ktor-ktor-utils-jvm-3_4_1_http_import",
-        ":io_ktor-ktor-io-jvm-3_4_1_http_import",
-        ":io_ktor-ktor-client-core-jvm-3_4_1_http_import",
-        ":io_ktor-ktor-http-cio-jvm-3_4_1_http_import",
-        ":io_ktor-ktor-network-jvm-3_4_1_http_import",
-        ":io_ktor-ktor-events-jvm-3_4_1_http_import",
-        ":io_ktor-ktor-websocket-serialization-jvm-3_4_1_http_import",
-        ":io_ktor-ktor-serialization-jvm-3_4_1_http_import",
-        ":io_ktor-ktor-websockets-jvm-3_4_1_http_import",
-        ":io_ktor-ktor-sse-jvm-3_4_1_http_import",
-    ],
-)
-
-jvm_import(
-    name = "io_ktor-ktor-client-mock-jvm-3_4_1_http_import",
-    jar = "@io_ktor-ktor-client-mock-jvm-3_4_1_http//file",
-    source_jar = "@io_ktor-ktor-client-mock-jvm-3_4_1-sources_http//file",
 )
 
 copy_file(
@@ -20304,7 +20267,7 @@ copy_file(
 )
 
 java_library(
-    name = "vcs-github-apollographql-apollo-ast-jvm",
+    name = "vcs-github-tests-apollographql-apollo-ast-jvm",
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
@@ -20330,16 +20293,5 @@ jvm_import(
     name = "com_apollographql_apollo-apollo-annotations-jvm-4_0_0_http_import",
     jar = "@com_apollographql_apollo-apollo-annotations-jvm-4_0_0_http//file",
     source_jar = "@com_apollographql_apollo-apollo-annotations-jvm-4_0_0-sources_http//file",
-)
-
-java_library(
-    name = "vcs-github-tests-apollographql-apollo-ast-jvm",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":com_apollographql_apollo-apollo-ast-jvm-4_0_0_http_import",
-        ":com_squareup_okio-okio-jvm-3_9_0_http_import",
-        ":com_apollographql_apollo-apollo-annotations-jvm-4_0_0_http_import",
-    ],
 )
 ### auto-generated section `maven libs` end

@@ -85,8 +85,6 @@ jvm_library(
         "//plugins/devkit/api-dump:api-dump_test_lib",
         "//java/java-impl:impl_test_lib",
         "//java/java-psi-api:psi_test_lib",
-        "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
     ],
 )
 ### auto-generated section `build intellij.devkit.apiDump.lang` end

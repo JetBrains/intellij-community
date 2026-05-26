@@ -14,8 +14,5 @@
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.ex" />
-    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.assertj.core" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" scope="TEST" />
   </component>
 </module>

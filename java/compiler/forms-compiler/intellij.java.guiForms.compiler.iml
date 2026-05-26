@@ -13,7 +13,6 @@
     <orderEntry type="module" module-name="intellij.libraries.asm" />
     <orderEntry type="module" module-name="intellij.libraries.jgoodies.forms" />
     <orderEntry type="module" module-name="intellij.java.compiler.instrumentationUtil" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
   </component>

@@ -12,7 +12,5 @@
     <orderEntry type="module" module-name="intellij.textmate.core" />
     <orderEntry type="module" module-name="intellij.libraries.joni" />
     <orderEntry type="library" name="slf4j-api" level="project" />
-    <orderEntry type="module" module-name="intellij.textmate.core.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
   </component>
 </module>

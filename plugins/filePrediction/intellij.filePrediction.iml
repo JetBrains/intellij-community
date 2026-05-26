@@ -15,13 +15,10 @@
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.core" />
-    <orderEntry type="module" module-name="intellij.platform.jps.model" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.platform.ide.internal" />
-    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module-library">
       <library name="file-prediction-model" type="repository">
@@ -42,10 +39,8 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
-    <orderEntry type="module" module-name="intellij.platform.statistics.uploader" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ml.impl" />
     <orderEntry type="library" name="ngram-slp" level="project" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
-    <orderEntry type="module" module-name="intellij.platform.statistics.testFramework" scope="TEST" />
   </component>
 </module>

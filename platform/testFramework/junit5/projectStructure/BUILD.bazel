@@ -68,13 +68,9 @@ jvm_library(
         "//platform/lang-impl:lang-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/util-ex:util-ex_test_lib",
-        "//libraries/junit5",
-        "//libraries/junit5:junit5_test_lib",
         "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
         "//platform/ide-core-impl:ide-core-impl_test_lib",
         "//platform/workspace/jps:jps_test_lib",
-        "//platform/lang-api:lang",
-        "//platform/lang-api:lang_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.testFramework.junit5.projectStructure` end

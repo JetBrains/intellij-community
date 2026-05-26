@@ -9,11 +9,5 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
-    <orderEntry type="module" module-name="intellij.java.rt" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.junit6" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.junit6.params" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.junit6.launcher" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="Eclipse" level="project" />
-    <orderEntry type="module" module-name="intellij.libraries.groovy" scope="TEST" />
   </component>
 </module>

@@ -154,8 +154,6 @@ jvm_library(
         "//libraries/cli-parser:cli-parser_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/platform-impl/concurrency:concurrency_test_lib",
-        "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
         "//platform/usageView:usageView_test_lib",
         "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
         "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin_test_lib",

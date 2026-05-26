@@ -101,8 +101,6 @@ jvm_library(
         "//libraries/skiko:skiko_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
-        "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
-        "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone_test_lib",
         "//platform/diagnostic/telemetry:telemetry_test_lib",
         "//platform/core-impl:core-impl_test_lib",
     ],

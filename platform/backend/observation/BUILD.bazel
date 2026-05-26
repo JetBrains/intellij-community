@@ -56,8 +56,6 @@ jvm_library(
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/util:util_test_lib",
-        "//libraries/junit5",
-        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.backend.observation` end

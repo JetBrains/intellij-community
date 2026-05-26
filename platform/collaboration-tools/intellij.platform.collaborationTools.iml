@@ -36,7 +36,6 @@
     <orderEntry type="module" module-name="intellij.platform.diff.impl" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.credentialStore.ui" />
-    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="module" module-name="intellij.platform.ide.progress" />
@@ -44,18 +43,11 @@
     <orderEntry type="module" module-name="intellij.libraries.caffeine" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="module" module-name="intellij.libraries.markdown" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinTest" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.test" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.dvcs.impl" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
-    <orderEntry type="module" module-name="intellij.libraries.mockk" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.mockk.jvm" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.credentialStore.impl" />
     <orderEntry type="module" module-name="intellij.platform.vcs.dvcs.impl.shared" />
-    <orderEntry type="module" module-name="intellij.libraries.mockito" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.http.client" />
-    <orderEntry type="library" scope="TEST" name="app.cash.turbine.jvm" level="project" />
-    <orderEntry type="module" module-name="intellij.libraries.assertj.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl.shared" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.platform.collaborationTools.shared" exported="" />

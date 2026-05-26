@@ -50,8 +50,6 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":jps",
-        "//platform/core-api:core",
-        "//platform/core-api:core_test_lib",
         "//platform/util:util_test_lib",
         "//jps/jps-builders:build_test_lib",
         "//jps/model-impl:model-impl_test_lib",
@@ -59,14 +57,10 @@ jvm_library(
         "//jps/model-serialization:model-serialization_test_lib",
         "//libraries/gradle:gradle_test_lib",
         "//libraries/gson:gson_test_lib",
-        "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
         "//libraries/fastutil:fastutil_test_lib",
         "//platform/util/jdom:jdom_test_lib",
         "//platform/util/base/multiplatform:multiplatform_test_lib",
         "//platform/util/base:base_test_lib",
-        "//jps/jps-builders:build-tests",
-        "//jps/jps-builders:build-tests_test_lib",
         "//libraries/hash4j:hash4j_test_lib",
     ],
 )

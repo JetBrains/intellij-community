@@ -117,18 +117,6 @@ jvm_library(
         "//platform/util:util-ui_test_lib",
         "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
         "//platform/editor-ui-ex:editor-ex_test_lib",
-        "//libraries/compose-foundation-desktop-junit",
-        "//libraries/compose-foundation-desktop-junit:compose-foundation-desktop-junit_test_lib",
-        "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
-        "//java/testFramework",
-        "//java/testFramework:testFramework_test_lib",
-        "//plugins/textmate",
-        "//plugins/textmate:textmate_test_lib",
-        "//plugins/textmate/plugin",
-        "//plugins/textmate/plugin:plugin_test_lib",
-        "//libraries/mockk/jvm",
-        "//libraries/mockk/jvm:jvm_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.jewel.ideLafBridge` end

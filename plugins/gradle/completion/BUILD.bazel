@@ -95,8 +95,6 @@ jvm_library(
         "//platform/core-impl:core-impl_test_lib",
         "//platform/lang-api:lang_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
         "//platform/util-ex:util-ex_test_lib",
         "//platform/util/concurrency:concurrency_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",

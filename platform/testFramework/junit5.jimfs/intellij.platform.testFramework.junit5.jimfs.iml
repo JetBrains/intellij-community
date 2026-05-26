@@ -13,6 +13,5 @@
     <orderEntry type="module" module-name="intellij.libraries.junit5" />
     <orderEntry type="library" name="jimfs" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" />
-    <orderEntry type="module" module-name="intellij.platform.util.ex" scope="TEST" />
   </component>
 </module>

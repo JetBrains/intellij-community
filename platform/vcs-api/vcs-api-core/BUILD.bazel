@@ -67,12 +67,6 @@ jvm_library(
         "//platform/util/diff:diff_test_lib",
         "//platform/util/multiplatform:multiplatform_test_lib",
         "//platform/util/base:base_test_lib",
-        "//libraries/junit5",
-        "//libraries/junit5:junit5_test_lib",
-        "//libraries/junit5-params",
-        "//libraries/junit5-params:junit5-params_test_lib",
-        "//libraries/assertj-core",
-        "//libraries/assertj-core:assertj-core_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
     ],
 )

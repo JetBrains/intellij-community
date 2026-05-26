@@ -34,17 +34,6 @@ jvm_library(
         # do not sort,
         ":engine",
         "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//java/java-runtime:rt",
-        "//java/java-runtime:rt_test_lib",
-        "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
-        "//libraries/junit6-params",
-        "//libraries/junit6-params:junit6-params_test_lib",
-        "//libraries/junit6-launcher",
-        "//libraries/junit6-launcher:junit6-launcher_test_lib",
-        "@lib//:eclipse",
-        "//libraries/groovy",
-        "//libraries/groovy:groovy_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.decompiler.engine` end

@@ -175,8 +175,6 @@ jvm_library(
         "//platform/editor-ui-ex:editor-ex_test_lib",
         "//platform/testFramework:testFramework_test_lib",
         "//platform/workspace/storage:storage_test_lib",
-        "//xml/relaxng",
-        "//xml/relaxng:relaxng_test_lib",
         "//java/idea-ui:ui_test_lib",
         "//java/debugger/impl:impl_test_lib",
         "//java/execution/openapi:java-execution_test_lib",

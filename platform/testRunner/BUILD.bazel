@@ -97,8 +97,6 @@ jvm_library(
         "//platform/util/jdom:jdom_test_lib",
         "//platform/util:util-ui_test_lib",
         "//platform/analysis-impl:analysis-impl_test_lib",
-        "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
         "//platform/core-impl:core-impl_test_lib",
         "//platform/execution:execution_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",

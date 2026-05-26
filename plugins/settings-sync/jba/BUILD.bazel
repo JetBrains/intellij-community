@@ -96,14 +96,8 @@ jvm_library(
         "//platform/util/jdom:jdom_test_lib",
         "//libraries/cloud-config-client:cloud-config-client_test_lib",
         "//platform/statistics:statistics_test_lib",
-        "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
-        "//libraries/mockito",
-        "//libraries/mockito:mockito_test_lib",
         "//platform/util/progress:progress_test_lib",
         "//platform/util:util-ui_test_lib",
-        "//libraries/kotlinx/coroutines/test",
-        "//libraries/kotlinx/coroutines/test:test_test_lib",
     ],
 )
 ### auto-generated section `build intellij.settingsSync` end

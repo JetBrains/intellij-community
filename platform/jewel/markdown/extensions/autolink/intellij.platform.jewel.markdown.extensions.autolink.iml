@@ -66,7 +66,5 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop" />
-    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop.junit" scope="TEST" />
   </component>
 </module>

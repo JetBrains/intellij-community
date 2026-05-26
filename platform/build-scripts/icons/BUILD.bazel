@@ -111,12 +111,6 @@ jvm_library(
         "//platform/util/base:base_test_lib",
         "//libraries/hash4j:hash4j_test_lib",
         "//libraries/jgit:jgit_test_lib",
-        "//images:images-tests",
-        "//images:images-tests_test_lib",
-        "//RegExpSupport:regexp-tests",
-        "//RegExpSupport:regexp-tests_test_lib",
-        "//platform/xdebugger-impl:debugger-impl-tests",
-        "//platform/xdebugger-impl:debugger-impl-tests_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.images.build` end

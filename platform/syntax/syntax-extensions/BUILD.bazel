@@ -74,8 +74,6 @@ jvm_library(
         "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/multiplatformSupport",
         "//platform/multiplatformSupport:multiplatformSupport_test_lib",
-        "//libraries/junit5",
-        "//libraries/junit5:junit5_test_lib",
         "//libraries/kotlin/test:libraries-kotlinTest",
         "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
         "//libraries/kotlin/test-junit:libraries-kotlin-test-junit",

@@ -305,8 +305,6 @@ jvm_library(
         "//libraries/jbr:jbr_test_lib",
         "//libraries/kotlinx/serialization/json:json_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
-        "//libraries/assertj-core",
-        "//libraries/assertj-core:assertj-core_test_lib",
         "//platform/util/jdom:jdom_test_lib",
         "//libraries/opentelemetry:opentelemetry_test_lib",
         "//libraries/opentelemetry-semconv:opentelemetry-semconv_test_lib",

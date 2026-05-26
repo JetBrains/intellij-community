@@ -91,8 +91,6 @@ jvm_library(
         "//platform/lang-impl:lang-impl_test_lib",
         "//platform/execution-impl:execution-impl_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",
-        "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
         "//libraries/guava:guava_test_lib",
         "//platform/statistics:statistics_test_lib",
         "//platform/util/progress:progress_test_lib",

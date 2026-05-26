@@ -60,10 +60,6 @@ jvm_library(
         "//platform/core-api:core_test_lib",
         "//plugins/maven:maven_test_lib",
         "//xml/xml-psi-api:psi_test_lib",
-        "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
-        "//plugins/grazie/src/test:grazie-tests",
-        "//plugins/grazie/src/test:grazie-tests_test_lib",
     ],
 )
 ### auto-generated section `build intellij.maven.proofreading` end

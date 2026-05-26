@@ -25,7 +25,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
-    <orderEntry type="module" module-name="intellij.libraries.commons.compress" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
@@ -51,15 +50,11 @@
     <orderEntry type="module" module-name="intellij.java.syntax" />
     <orderEntry type="module" module-name="intellij.java.ui" />
     <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver" />
-    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.util.trove" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.libraries.maven.resolver.provider" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util" />
-    <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lang.core" />
-    <orderEntry type="module" module-name="kotlin.util.project-model-updater" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.updateChecker" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
   </component>

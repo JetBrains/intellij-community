@@ -49,8 +49,5 @@
     </orderEntry>
     <orderEntry type="module" module-name="intellij.libraries.hash4j" />
     <orderEntry type="module" module-name="intellij.libraries.jgit" />
-    <orderEntry type="module" module-name="intellij.platform.images.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.regexp.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.debugger.impl.tests" scope="TEST" />
   </component>
 </module>

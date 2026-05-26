@@ -81,10 +81,6 @@ jvm_library(
         "//platform/jewel/ui:ui_test_lib",
         "//platform/jewel/foundation:foundation_test_lib",
         "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
-        "//libraries/junit4",
-        "//libraries/junit4:junit4_test_lib",
-        "//libraries/compose-foundation-desktop-junit",
-        "//libraries/compose-foundation-desktop-junit:compose-foundation-desktop-junit_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.jewel.markdown.extensions.autolink` end

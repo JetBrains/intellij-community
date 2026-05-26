@@ -89,8 +89,6 @@ jvm_library(
         "//plugins/git4idea/backend:backend_test_lib",
         "//plugins/git4idea/shared:shared_test_lib",
         "//platform/lang-impl:lang-impl_test_lib",
-        "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
         "//platform/dvcs-impl/shared:shared_test_lib",
         "//platform/vcs-impl/shared:shared_test_lib",
         "//platform/util:util-ui_test_lib",

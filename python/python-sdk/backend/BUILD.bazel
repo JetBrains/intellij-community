@@ -130,8 +130,6 @@ jvm_library(
         "//libraries/jackson3/databind:databind_test_lib",
         "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin_test_lib",
         "//platform/progress/shared:ide-progress_test_lib",
-        "//libraries/junit5",
-        "//libraries/junit5:junit5_test_lib",
         "//platform/eel-provider:eel-provider_test_lib",
         "//platform/backend:backend_test_lib",
         "//python/impl.helperLocator:community-helpersLocator_test_lib",

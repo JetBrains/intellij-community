@@ -109,8 +109,6 @@ jvm_library(
         "//platform/util:util-ui_test_lib",
         "//platform/refactoring:refactoring_test_lib",
         "//platform/core-ui:core-ui_test_lib",
-        "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//platform/util/jdom:jdom_test_lib",
         "//libraries/fastutil:fastutil_test_lib",

@@ -67,8 +67,6 @@ jvm_library(
         "//libraries/asm:asm_test_lib",
         "//libraries/jgoodies/forms:forms_test_lib",
         "//java/compiler/instrumentation-util:instrumentation-util_test_lib",
-        "//platform/util",
-        "//platform/util:util_test_lib",
         "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
