@@ -81,10 +81,10 @@ override fun getProductContentModules(): ProductModulesContentSpec {
 Register the product's plugin.xml file path in `build/dev-build.json`:
 
 ```json
-"DataSpell": {
+"GoLand": {
   "modules": [...],
-  "class": "com.intellij.dataspell.build.DataSpellProperties",
-  "pluginXmlPath": "dataspell/ide/resources/META-INF/DataSpellPlugin.xml"
+  "class": "org.jetbrains.intellij.build.goland.GoLandProperties",
+  "pluginXmlPath": "goland/resources/META-INF/GoLandPlugin.xml"
 }
 ```
 
@@ -106,15 +106,12 @@ This will generate a complete plugin.xml file like:
 ```xml
   <!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->
   <!-- To regenerate, run 'Generate Product Layouts' or directly UltimateModuleSets.main() -->
-  <!-- Source: com.intellij.dataspell.build.DataSpellProperties -->
+  <!-- Source: org.jetbrains.intellij.build.goland.GoLandProperties -->
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-  <module value="com.intellij.modules.dataspell"/>
-  <module value="com.intellij.modules.python-core-capable"/>
+  <module value="com.intellij.modules.goland"/>
   <module value="com.intellij.platform.ide.provisioner"/>
 
-  <xi:include href="/META-INF/pycharm-core.xml"/>
   <xi:include href="/META-INF/ultimate.xml"/>
-  <xi:include href="/META-INF/dataspell-customization.xml"/>
   <xi:include href="/META-INF/intellij.moduleSets.commercial.xml"/>
   <xi:include href="/META-INF/intellij.moduleSets.ide.common.xml"/>
   <!-- ... -->
