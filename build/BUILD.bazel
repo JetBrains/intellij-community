@@ -58,6 +58,12 @@ java_binary(
 )
 
 java_binary(
+  name = "report_junit_xml_test_metadata_build_target",
+  runtime_deps = ["//platform/testFramework/teamCity:teamCity"],
+  main_class = "com.intellij.platform.testFramework.teamCity.BazelJUnitXmlTestMetadataReporter",
+)
+
+java_binary(
   name = "jewel_standalone_maven_artifacts",
   runtime_deps = [":build"],
   main_class = "JewelMavenArtifactsBuildTarget",
