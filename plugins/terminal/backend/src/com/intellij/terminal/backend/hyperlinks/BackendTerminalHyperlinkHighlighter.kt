@@ -32,6 +32,9 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.block.hyperlinks.CompositeFilterWrapper
 import org.jetbrains.plugins.terminal.block.hyperlinks.TerminalHyperlinkFilterContext
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalOutputContentUpdate
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalOutputTrimmingUpdate
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalOutputUpdate
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkId
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinksChangedEvent
 import org.jetbrains.plugins.terminal.session.impl.dto.TerminalFilterResultInfoDto
