@@ -145,5 +145,7 @@
     <projectSettings service="com.intellij.ui.tabs.PerTeamFileColorModelStorageManager"/>
     <applicationSettings service="com.intellij.codeInsight.hints.chain.DeclarativeCallChainInlaySettings"/>
     <registryKey key="hyperlink.ide.decompiler.open.file" defaultValue="true" description="Load binary files in hyperlink on background thread"/>
+    <registryKey key="project.structure.source.roots.editable.limit" defaultValue="20"
+                 description="Maximum number of source roots under a content root to be editable"/>
   </extensions>
 </idea-plugin>

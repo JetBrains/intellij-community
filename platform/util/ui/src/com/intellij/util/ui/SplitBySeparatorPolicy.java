@@ -14,7 +14,7 @@ public final class SplitBySeparatorPolicy extends FilePathSplittingPolicy {
     String absolutePath = file.getPath();
     if (absolutePath.length() <= length) return absolutePath;
     String name = file.getName();
-    if (length < name.length()) return "...";
+    if (length < name.length()) return trimMiddle(name, length);
     if (length == name.length()) return name;
 
     List<String> components = getComponents(file);
@@ -77,5 +77,13 @@ public final class SplitBySeparatorPolicy extends FilePathSplittingPolicy {
     if (!result.isEmpty()) return result;
     String path = current.getPath();
     return path.substring(0, path.length() - 1);
+  }
+
+  private static String trimMiddle(String name, int length) {
+    if (length <= 3) return "...";
+    int available = length - 3;
+    int firstLen = available / 2;
+    int lastLen = available - firstLen;
+    return name.substring(0, firstLen) + "..." + name.substring(name.length() - lastLen);
   }
 }
