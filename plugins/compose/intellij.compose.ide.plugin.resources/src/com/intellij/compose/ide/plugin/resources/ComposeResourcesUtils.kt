@@ -95,7 +95,13 @@ internal val Module.composeResourcesDirsByName: Map<String, ComposeResourcesDir>
     project.service<ComposeResourcesManager>().composeResourcesByModulePath[moduleName]?.directoriesBySourceSetName.orEmpty()
   } ?: emptyMap()
 
-internal data class ComposeResourcesDir(val moduleName: String, val sourceSetName: String, val directoryPath: Path, val isCustom: Boolean = false)
+internal data class ComposeResourcesDir(
+  val moduleName: String,
+  val sourceSetName: String,
+  val directoryPath: Path,
+  val projectGroupName: String,
+  val isCustom: Boolean = false,
+)
 
 internal data class ComposeResources(
   val moduleName: String,

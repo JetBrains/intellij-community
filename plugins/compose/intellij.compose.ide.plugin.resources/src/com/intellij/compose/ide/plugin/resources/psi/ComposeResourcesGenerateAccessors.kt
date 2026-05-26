@@ -73,7 +73,7 @@ private fun Project.findResourcesDir(moduleName: String, name: String): VirtualF
 
 private fun ComposeResourcesDir.getResourcePackageName(project: Project, packageOfResClass: String): String =
   packageOfResClass.ifEmpty {
-    val groupName = project.name.lowercase().asUnderscoredIdentifier()
+    val groupName = projectGroupName.ifEmpty { project.name }.lowercase().asUnderscoredIdentifier()
     val moduleName = moduleName.lowercase().asUnderscoredIdentifier()
     val id = if (groupName.isNotEmpty()) "$groupName.$moduleName" else moduleName
     "$id.generated.resources"
