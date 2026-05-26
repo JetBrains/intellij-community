@@ -1,4 +1,4 @@
-package com.intellij.terminal.frontend.session.hyperlinks
+package com.intellij.terminal.backend.hyperlinks
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.view.TerminalLineIndex

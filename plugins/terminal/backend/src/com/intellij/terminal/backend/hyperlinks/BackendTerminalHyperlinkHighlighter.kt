@@ -1,6 +1,6 @@
 @file:OptIn(FlowPreview::class)
 
-package com.intellij.terminal.frontend.session.hyperlinks
+package com.intellij.terminal.backend.hyperlinks
 
 import com.intellij.execution.filters.CompositeFilter
 import com.intellij.execution.filters.Filter

@@ -1,4 +1,4 @@
-package com.intellij.terminal.frontend.session.hyperlinks
+package com.intellij.terminal.backend.hyperlinks
 
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionId
 import org.jetbrains.plugins.terminal.hyperlinks.BackendHyperlinkInfo

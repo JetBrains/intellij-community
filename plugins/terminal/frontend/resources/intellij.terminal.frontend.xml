@@ -45,9 +45,6 @@
       serviceInterface="org.jetbrains.plugins.terminal.fus.FrontendLatencyService"
       serviceImplementation="com.intellij.terminal.frontend.fus.FrontendLatencyServiceImpl"/>
     <applicationService
-      serviceInterface="org.jetbrains.plugins.terminal.hyperlinks.BackendHyperlinkInfoService"
-      serviceImplementation="com.intellij.terminal.frontend.session.hyperlinks.BackendHyperlinkInfoServiceImpl"/>
-    <applicationService
       serviceInterface="com.intellij.terminal.frontend.session.TerminalActivityTracker"
       serviceImplementation="com.intellij.terminal.frontend.session.TerminalNoOpActivityTracker"
       open="true"/>

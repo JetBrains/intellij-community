@@ -1,4 +1,4 @@
-package com.intellij.terminal.frontend.session.hyperlinks
+package com.intellij.terminal.backend.hyperlinks
 
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.project.Project
