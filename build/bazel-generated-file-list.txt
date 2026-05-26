@@ -1612,6 +1612,7 @@ python/intellij.python.community.communityOnly
 python/intellij.python.ml.features
 python/interpreters
 python/junit5Tests-framework
+python/mcp
 python/openapi
 python/pipenv
 python/pluginCore
