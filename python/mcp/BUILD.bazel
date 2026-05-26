@@ -1,0 +1,136 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.python.mcp` start
+
+jvm_library(
+    name = "mcp",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.mcp",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//plugins/mcp-server:mcpserver",
+        "//libraries/kotlinx/serialization/core",
+        "//platform/core-api:core",
+        "//platform/projectModel-api:projectModel",
+        "//platform/util",
+        "//python/python-sdk:sdk",
+        "//python:python-community-impl",
+        "//python/python-pyproject:pyproject",
+        "//python/common",
+        "//python/python-poetry/backend",
+        "//python/python-hatch:hatch",
+        "//python/python-uv/backend",
+    ],
+)
+
+jvm_library(
+    name = "mcp_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.mcp",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":mcp",
+        "//plugins/mcp-server:mcpserver_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/util:util_test_lib",
+        "//python/python-sdk:sdk_test_lib",
+        "//python:python-community-impl_test_lib",
+        "//python/python-pyproject:pyproject_test_lib",
+        "//python/common:common_test_lib",
+        "//python/python-poetry/backend:backend_test_lib",
+        "//python/python-hatch:hatch_test_lib",
+        "//python/python-uv/backend:backend_test_lib",
+    ],
+)
+### auto-generated section `build intellij.python.mcp` end
+
+### auto-generated section `iml intellij.python.mcp` start
+exports_files(
+    [
+        "intellij.python.mcp.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.python.mcp` end
+
+### auto-generated section `build intellij.python.mcp.tests` start
+
+jvm_library(
+    name = "mcp-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.mcp.tests",
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "mcp-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//python/mcp",
+        "//python/mcp:mcp_test_lib",
+    ],
+    visibility = ["//visibility:public"],
+    runtime_deps = [":mcp-tests"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/junit5-jupiter",
+        "//libraries/junit5-jupiter:junit5-jupiter_test_lib",
+        "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm",
+        "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm_test_lib",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5:junit5_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+    ],
+)
+### auto-generated section `build intellij.python.mcp.tests` end
+
+### auto-generated section `iml intellij.python.mcp.tests` start
+exports_files(
+    [
+        "intellij.python.mcp.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.python.mcp.tests` end
+
+### auto-generated section `test intellij.python.mcp.tests` start
+
+jps_test(
+    name = "mcp-tests_test",
+    runtime_deps = [":mcp-tests_test_lib"],
+)
+### auto-generated section `test intellij.python.mcp.tests` end
