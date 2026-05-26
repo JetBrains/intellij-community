@@ -634,48 +634,6 @@ object PluginManagerCore {
     )
   }
 
-  internal fun oldPluginSetBuilder(
-    initContext: PluginInitializationContext,
-    discoveredPlugins: PluginsDiscoveryResult,
-    pluginsToLoad: UnambiguousPluginSet,
-    incompletePlugins: HashMap<PluginId, PluginMainDescriptor>,
-    idMap: Map<PluginId, PluginModuleDescriptor>,
-    fullIdMap: Map<PluginId, PluginModuleDescriptor>,
-    fullContentModuleIdMap: Map<PluginModuleId, ContentModuleDescriptor>,
-    pluginNonLoadReasons: MutableMap<PluginId, PluginNonLoadReason>,
-    registerLoadingError: (PluginNonLoadReason) -> Unit,
-  ): Pair<PluginSet, List<PluginLoadingError>> {
-    val pluginSetBuilder = PluginSetBuilder(initContext, pluginsToLoad, discoveredPlugins)
-    val cycleErrors = pluginSetBuilder.checkPluginCycles()
-    val additionalErrors = pluginSetBuilder.computeEnabledModuleMap(
-      incompletePlugins = incompletePlugins.values.toList(),
-      initContext = initContext,
-      disabler = { descriptor, disabledModuleToProblematicPlugin ->
-        val loadingError = pluginSetBuilder.initEnableState(
-          descriptor = descriptor,
-          idMap = idMap,
-          fullIdMap = fullIdMap,
-          fullContentModuleIdMap = fullContentModuleIdMap,
-          isPluginDisabled = initContext::isPluginDisabled,
-          errors = pluginNonLoadReasons,
-          disabledModuleToProblematicPlugin = disabledModuleToProblematicPlugin,
-        )
-        if (loadingError != null) {
-          registerLoadingError(loadingError)
-        }
-        if (loadingError != null || initContext.isPluginExpired(descriptor.getPluginId())) {
-          descriptor.isMarkedForLoading = false
-        }
-        !descriptor.isMarkedForLoading
-      }
-    )
-    for (loadingError in additionalErrors) {
-      registerLoadingError(loadingError)
-    }
-    val pluginSet = pluginSetBuilder.createPluginSet(incompletePlugins.values.toList())
-    return pluginSet to cycleErrors
-  }
-
   @ApiStatus.Internal
   @IntellijInternalApi
   fun adaptResolvedPluginSetAsOldPluginSet(
