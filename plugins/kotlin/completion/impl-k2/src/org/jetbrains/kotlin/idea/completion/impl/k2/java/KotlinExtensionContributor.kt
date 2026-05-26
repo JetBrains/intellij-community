@@ -50,10 +50,12 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.isTopLevel
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.asJava.LightClassUtil
+import org.jetbrains.kotlin.idea.KotlinIconProvider
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
@@ -64,6 +66,7 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.TypeTextProvider.get
 import org.jetbrains.kotlin.idea.configuration.hasKotlinPluginEnabled
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtProperty
+import javax.swing.Icon
 
 /**
  * A contributor responsible for completing Kotlin extension members in **Java** files.
@@ -118,6 +121,7 @@ private class KotlinExtensionLookupItem(
     private val renderedTypeText: String,
     private val couldInsertSemicolon: Boolean,
     private val originalFile: PsiFile,
+    private val icon: Icon,
 ) : LookupElement(), TypedLookupItem {
 
     private val methodName: String = methodWrapper.name
@@ -203,7 +207,7 @@ private class KotlinExtensionLookupItem(
         presentation.appendTailText(KotlinCompletionImplK2Bundle.message("kotlin.extension.in.java"), true)
         presentation.appendTailText(renderedTail, true)
         presentation.typeText = renderedTypeText
-        presentation.icon = KotlinIcons.EXTENSION_FUNCTION_KOTLIN
+        presentation.icon = icon
     }
 
     override fun equals(other: Any?): Boolean {
@@ -302,6 +306,12 @@ private object KotlinExtensionCompletionProvider : CompletionProvider<Completion
         }
     }
 
+    private fun KaSymbol.getExtensionIcon(): Icon = when (this) {
+        is KaPropertySymbol if !isVal -> KotlinIcons.FIELD_VAR_KOTLIN
+        is KaPropertySymbol -> KotlinIcons.FIELD_VAL_KOTLIN
+        else -> KotlinIcons.FUNCTION_KOTLIN
+    }
+
     override fun addCompletions(
         parameters: CompletionParameters,
         context: ProcessingContext,
@@ -361,6 +371,7 @@ private object KotlinExtensionCompletionProvider : CompletionProvider<Completion
                     renderedTail = TailTextProvider.getTailText(extension),
                     couldInsertSemicolon = couldInsertSemicolon,
                     originalFile = parameters.originalFile,
+                    icon = extension.getExtensionIcon(),
                 )
 
                 result.addElement(element)
