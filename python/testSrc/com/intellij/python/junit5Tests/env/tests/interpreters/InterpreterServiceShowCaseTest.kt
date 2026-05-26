@@ -13,7 +13,6 @@ import com.intellij.python.community.interpreters.executeHelper
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.pySdkFixture
 import com.intellij.python.test.env.junit5.pyVenvFixture
-import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
@@ -34,11 +33,11 @@ import kotlin.io.path.writeText
 @PyEnvTestCase
 class InterpreterServiceShowCaseTest {
   private val sdkFixture = pySdkFixture()
-  private val validSdkFixture = sdkFixture.pyVenvFixture(tempPathFixture(prefix = "valid"), addToSdkTable = true, moduleFixture = null)
-  private val validSdkFixture2 = sdkFixture.pyVenvFixture(tempPathFixture(prefix = "valid2"), addToSdkTable = true, moduleFixture = null)
+  private val validSdkFixture by sdkFixture.pyVenvFixture(tempPathFixture(prefix = "valid"), addToSdkTable = true, moduleFixture = null)
+  private val validSdkFixture2 by sdkFixture.pyVenvFixture(tempPathFixture(prefix = "valid2"), addToSdkTable = true, moduleFixture = null)
 
-  private val invalidSdkFixture = sdkFixture.pyVenvFixture(tempPathFixture(prefix = "invalid"), addToSdkTable = true, moduleFixture = null)
-  private val sdkFixtureAnotherPath = sdkFixture.pyVenvFixture(tempPathFixture(prefix = "anotherpath"), addToSdkTable = true, moduleFixture = null)
+  private val invalidSdkFixture by sdkFixture.pyVenvFixture(tempPathFixture(prefix = "invalid"), addToSdkTable = true, moduleFixture = null)
+  private val sdkFixtureAnotherPath by sdkFixture.pyVenvFixture(tempPathFixture(prefix = "anotherpath"), addToSdkTable = true, moduleFixture = null)
 
   private val moduleFixture = projectFixture().moduleFixture()
 
@@ -48,22 +47,22 @@ class InterpreterServiceShowCaseTest {
     val interpreterService = InterpreterService()
 
     edtWriteAction {
-      val m = invalidSdkFixture.get().sdkModificator
+      val m = invalidSdkFixture.sdkModificator
       m.homePath += "junk"
       m.commitChanges()
     }
 
-    val validSdk = validSdkFixture.get()
+    val validSdk = validSdkFixture
     validSdk.setAssociationToPath(null)
-    validSdkFixture2.get().setAssociationToPath(dir.pathString)
-    sdkFixtureAnotherPath.get().setAssociationToPath(dir.resolveSibling("asdasd").pathString)
+    validSdkFixture2.setAssociationToPath(dir.pathString)
+    sdkFixtureAnotherPath.setAssociationToPath(dir.resolveSibling("asdasd").pathString)
 
     val module = moduleFixture.get()
-    val expectedInterpreters = setOf(sdkFixture, validSdkFixture, validSdkFixture2,
+    val expectedInterpreters = setOf(sdkFixture.get().sdk, validSdkFixture, validSdkFixture2,
                                      invalidSdkFixture).associateBy { it.id() }.toMutableMap()
     val interpreters = interpreterService.getInterpreters(dir)
     for (i in interpreters) {
-      val sdk = expectedInterpreters.remove(i.id)?.get()
+      val sdk = expectedInterpreters.remove(i.id)
       Assertions.assertTrue(sdk != null, "Unexpected interpreter: $i")
       Assertions.assertEquals(sdk, i.sdk, "Wrong sdk")
 
@@ -97,4 +96,4 @@ class InterpreterServiceShowCaseTest {
   }
 }
 
-private fun TestFixture<Sdk>.id(): UUID = get().pySdkAdditionalData.uuid
+private fun Sdk.id(): UUID = pySdkAdditionalData.uuid

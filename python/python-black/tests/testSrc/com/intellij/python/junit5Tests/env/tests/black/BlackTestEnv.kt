@@ -77,7 +77,7 @@ internal fun reformatPsiFileRange(project: Project, psiFile: PsiFile, startOffse
 internal fun TestFixture<SdkFixture<PyEnvironment>>.pyEnvSdkFixture(
   moduleFixture: TestFixture<Module>,
 ): TestFixture<Sdk> = testFixture {
-  val sdk: Sdk = this@pyEnvSdkFixture.init()
+  val sdk: Sdk = this@pyEnvSdkFixture.init().sdk
   withContext(Dispatchers.EDT) {
     val module = moduleFixture.init()
     module.pythonSdk = sdk
