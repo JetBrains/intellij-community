@@ -173,14 +173,15 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
 
   @OptIn(FlowPreview::class)
   override fun connectToPluginUpdateService(sessionId: String, callback: (List<PluginUiModel>) -> Unit): PluginUpdatesService {
-    service<BackendRpcCoroutineContext>().coroutineScope.launch {
+    val result = RemotePluginUpdatesService(sessionId)
+    result.coroutineScope.launch {
       durable {
         PluginManagerApi.getInstance().subscribeToPluginUpdates(sessionId).debounce(100).collectLatest {
           callback(it)
         }
       }
     }
-    return RemotePluginUpdatesService(sessionId)
+    return result
   }
 
   override fun filterPluginsRequiringUltimateButItsDisabled(pluginIds: List<PluginId>): List<PluginId> {

@@ -17,7 +17,7 @@ import java.util.function.Consumer
 @IntellijInternalApi
 open class RemotePluginUpdatesService(private val sessionId: String) : PluginUpdatesService() {
 
-  private val coroutineScope = service<BackendRpcCoroutineContext>().coroutineScope.childScope("RemotePluginUpdatesServiceScope")
+  internal val coroutineScope = service<BackendRpcCoroutineContext>().coroutineScope.childScope("RemotePluginUpdatesServiceScope")
 
   override fun calculateUpdates(callback: Consumer<in Collection<PluginUiModel>>) {
     coroutineScope.launch {
@@ -38,7 +38,7 @@ open class RemotePluginUpdatesService(private val sessionId: String) : PluginUpd
   override fun dispose() {
     coroutineScope.launch {
       PluginManagerApi.getInstance().disposeUpdaterService(sessionId)
-      cancel()
+      coroutineScope.cancel()
     }
   }
 
