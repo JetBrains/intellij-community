@@ -23,7 +23,6 @@ enum class IdeInfoType(
   RUBYMINE("RM", "rubymine", "RubyMine"),
   PYCHARM("PY", "pycharm", "PyCharm"),
   CLION("CL", "clion", "CLion"),
-  DATASPELL("DS", "dataspell", "DataSpell"),
   PYCHARM_COMMUNITY("PC", "pycharm", "PyCharm"),
   AQUA("QA", "aqua", "Aqua"),
   RUSTROVER("RR", "rustrover", "RustRover"),

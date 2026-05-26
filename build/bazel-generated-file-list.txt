@@ -1661,7 +1661,6 @@ tools/intellij.tools.ide.starter.product.android.studio
 tools/intellij.tools.ide.starter.product.aqua
 tools/intellij.tools.ide.starter.product.clion
 tools/intellij.tools.ide.starter.product.datagrip
-tools/intellij.tools.ide.starter.product.dataspell
 tools/intellij.tools.ide.starter.product.gateway
 tools/intellij.tools.ide.starter.product.goland
 tools/intellij.tools.ide.starter.product.idea.community
