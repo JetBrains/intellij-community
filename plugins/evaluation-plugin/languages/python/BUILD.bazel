@@ -25,6 +25,7 @@ jvm_library(
     "//python:python-community-impl",
     "//plugins/evaluation-plugin/languages",
     "//plugins/evaluation-plugin/core",
+    "//python/python-sdk:sdk",
   ]
 )
 
@@ -51,6 +52,7 @@ jvm_library(
     "//python:python-community-impl_test_lib",
     "//plugins/evaluation-plugin/languages:languages_test_lib",
     "//plugins/evaluation-plugin/core:core_test_lib",
+    "//python/python-sdk:sdk_test_lib",
   ]
 )
 ### auto-generated section `build intellij.evaluationPlugin.languages.python` end
