@@ -661,11 +661,6 @@ internal class PluginModelValidator(
 
       val moduleName = contentElement.name
 
-      if (moduleName == "intellij.platform.commercial.verifier") {
-        registerError("intellij.platform.commercial.verifier is not supposed to be used as content of plugin")
-        continue
-      }
-
       val moduleDescriptorFileInfo = contentModuleNameToFileInfo[moduleName]
       if (moduleDescriptorFileInfo == null) {
         if (contentElement.loadingRule == ModuleLoadingRuleValue.REQUIRED || contentElement.loadingRule == ModuleLoadingRuleValue.EMBEDDED || !validationOptions.skipUnresolvedOptionalContentModules) {
