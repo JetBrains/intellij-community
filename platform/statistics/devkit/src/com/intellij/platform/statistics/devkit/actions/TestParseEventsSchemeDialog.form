@@ -29,7 +29,7 @@
               <component id="29cce" class="javax.swing.JEditorPane" binding="myEventLogPanel">
                 <constraints/>
                 <properties>
-                  <text value="Add event log to filter here, one event per line"/>
+                  <text value="Add event log to filter here, one event per line" noi18n="true"/>
                 </properties>
               </component>
             </children>

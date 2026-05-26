@@ -50,6 +50,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.intellij.openapi.command.WriteCommandAction.writeCommandAction;
 
+@SuppressWarnings("HardCodedStringLiteral")
 final class SendEventLogAction extends AnAction {
 
   @Override

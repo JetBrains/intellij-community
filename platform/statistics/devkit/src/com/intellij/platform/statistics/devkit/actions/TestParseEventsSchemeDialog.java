@@ -68,6 +68,7 @@ import java.util.List;
 
 import static com.intellij.openapi.command.WriteCommandAction.writeCommandAction;
 
+@SuppressWarnings("HardCodedStringLiteral")
 public class TestParseEventsSchemeDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(TestParseEventsSchemeDialog.class);
   private static final int IN_DIVIDER_LOCATION = 650;
