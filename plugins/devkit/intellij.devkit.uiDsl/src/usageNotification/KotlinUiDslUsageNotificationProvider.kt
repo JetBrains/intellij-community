@@ -11,6 +11,7 @@ import com.intellij.openapi.util.getOrCreateUserData
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
+import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
@@ -70,9 +71,18 @@ private class UiDslEditorNotificationPanel(project: Project, file: VirtualFile, 
   init {
     text = DevkitUiDslBundle.message("kotlin.ui.dsl.usage.notification")
 
-    myTextLabel.editorPane?.addHyperlinkListener {
-      if (it.eventType == HyperlinkEvent.EventType.ACTIVATED) {
-        executeAction("UiDslShowcaseAction", it)
+    myTextLabel.editorPane?.let { editorPane ->
+      // Remove listeners that open the browser
+      for (listener in editorPane.hyperlinkListeners) {
+        if (listener is BrowserHyperlinkListener) {
+          editorPane.removeHyperlinkListener(listener)
+        }
+      }
+
+      editorPane.addHyperlinkListener {
+        if (it.eventType == HyperlinkEvent.EventType.ACTIVATED) {
+          executeAction("UiDslShowcaseAction", it)
+        }
       }
     }
 
