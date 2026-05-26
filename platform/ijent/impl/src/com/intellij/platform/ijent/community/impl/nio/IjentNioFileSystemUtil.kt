@@ -1,10 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("IjentNioFileSystemUtil")
+@file:ApiStatus.Internal
 
 package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.prepareThreadContext
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.ijent.IjentCalledContextElement
 import com.intellij.platform.ijent.IjentCallerContext
@@ -25,10 +27,11 @@ internal fun Path.toEelPath(): EelPath =
 /**
  * Bridges synchronous NIO into IJent coroutines using [runBlocking].
  *
- * Has the following features.
+ * Has the following features:
  * - The coroutine is processed in-place in a caller thread.
  * - Creates a fresh isolated event loop instead of reusing the caller's thread-local one
  *    (avoids stealing tasks from an outer event loop in case of nested runBlocking).
+ * - Shows a modal dialog if ijent is not responding long.
  * - Is ready for being called in all reasonable contexts:
  *   - blocking context or coroutine context,
  *   - read actions, write actions,
@@ -36,7 +39,9 @@ internal fun Path.toEelPath(): EelPath =
  *   - inside runBlocking or runBlockingCancellable
  * - But fsBlocking itself should never form nested calls (only ijent calls inside or ijent deployment, nothing else).
  *
- * Should be used only when adapting EEL operations into nio-style api.
+ * Should be used only for adapting EEL operations into nio-style api.
+ * Should be used instead of plain [runBlocking] or [com.intellij.openapi.progress.runBlockingMaybeCancellable] for all ijent operation
+ * `...Blocking()` wrappers because here timeouts and modal dialog are integrated.
  *
  * [runAndCompensateParallelism] is a last-resort safety net against [Dispatchers.Default] starvation:
  * if all pool threads block here simultaneously while body() dispatches work to [Dispatchers.Default]
@@ -46,9 +51,13 @@ internal fun Path.toEelPath(): EelPath =
  */
 @ApiStatus.Internal
 fun <T> fsBlocking(body: suspend () -> T): T {
-  return IntelliJCoroutinesFacade.runAndCompensateParallelism(500.milliseconds) {
+  // After this timeout the operation is considered as potentially hanging.
+  val timeout = Registry.get("ide.suvorov.progress.showing.delay.ms").asInteger().milliseconds
+  return IntelliJCoroutinesFacade.runAndCompensateParallelism(timeout) {
     fsBlockingWithoutParallelismCompensation {
-      body()
+      showModalDialogOnTimeout(timeout) {
+        body()
+      }
     }
   }
 }
@@ -64,6 +73,7 @@ fun IjentCallerContext.Companion.computeCallerContext(): IjentCallerContext {
 
 @Suppress("SSBasedInspection")
 @VisibleForTesting
+@ApiStatus.Internal
 fun <T> fsBlockingWithoutParallelismCompensation(body: suspend () -> T): T {
   val callerContext = IjentCallerContext.computeCallerContext()
   if (callerContext.allowCancellableNio()) {

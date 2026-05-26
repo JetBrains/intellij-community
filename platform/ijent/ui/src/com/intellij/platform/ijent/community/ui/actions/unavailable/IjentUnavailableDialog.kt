@@ -1,0 +1,139 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+package com.intellij.platform.ijent.community.ui.actions.unavailable
+
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.ui.DialogBuilder
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
+import com.intellij.platform.ijent.IjentCallerContext
+import com.intellij.platform.ijent.community.impl.nio.CloseDecision
+import com.intellij.platform.ijent.community.impl.nio.IjentUnavailableHandler
+import com.intellij.platform.ijent.community.ui.actions.IjentImplBundle
+import com.intellij.ui.dsl.builder.AlignY
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
+import java.util.concurrent.ConcurrentHashMap
+import javax.swing.JComponent
+import kotlin.coroutines.resume
+
+private class EdtOnceTask : OnceTask<CloseDecision>() {
+  override suspend fun <R> executeUnderLockIfNotAlreadyAcquired(f: suspend () -> R): R {
+    return if (IjentCallerContext.getSaved()?.isDispatchThread == true) {
+      check(ApplicationManager.getApplication().isDispatchThread)
+      f()
+    }
+    else {
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        f()
+      }
+    }
+  }
+}
+
+@Service
+internal class NotRespondingFilesystemDialogService {
+  typealias IjentId = Unit
+
+  private val pendingRequests = ConcurrentHashMap<IjentId, Pair<List<Project>, OnceTask<CloseDecision>>>()
+  suspend fun doOnceOrWait(ijentId: IjentId, projects: List<Project>, f: suspend () -> CloseDecision): CloseDecision {
+    val onceTask = pendingRequests.compute(ijentId) { _, v ->
+      when {
+        v == null -> projects to EdtOnceTask()
+        v.first.containsAll(projects) -> v
+        v.second.computedValue() != null -> projects to EdtOnceTask()
+        else -> (v.first + projects).distinct() to v.second
+      }
+    }!!.second
+    return onceTask.getOrCompute {
+      f()
+    }
+  }
+
+  companion object {
+    fun getInstance(): NotRespondingFilesystemDialogService = service()
+  }
+}
+
+internal class IjentUnavailableDialogHandler : IjentUnavailableHandler {
+  override suspend fun showModalDialog(): CloseDecision {
+    val projectsToClose = ProjectManager.getInstance().openProjects.toList()
+    return NotRespondingFilesystemDialogService.getInstance().doOnceOrWait(Unit, projectsToClose) {
+      showCloseProjectDialog(projectsToClose)
+    }
+  }
+
+  private suspend fun showCloseProjectDialog(projects: List<Project>): CloseDecision {
+    val closeDecision = suspendCancellableCoroutine { cont ->
+      val builder = DialogBuilder().apply {
+        setTitle(IjentImplBundle.message("dialog.title.ijent.unavailable"))
+        setCenterPanel(createCenterPanel(projects))
+        addCancelAction().setText(IjentImplBundle.message("action.close.projects.text", projects.size))
+      }
+
+      cont.invokeOnCancellation {
+        ApplicationManager.getApplication().invokeLater(
+          { builder.dialogWrapper.close(DialogWrapper.OK_EXIT_CODE) },
+          ModalityState.any(),
+        )
+      }
+
+      val exitCode = builder.show()
+      if (exitCode == DialogWrapper.CANCEL_EXIT_CODE) {
+        ApplicationManager.getApplication().invokeLater {
+          WriteIntentReadAction.run {
+            for (projectToClose in projects) {
+              ProjectManager.getInstance().closeAndDispose(projectToClose)
+            }
+          }
+          WelcomeFrame.showIfNoProjectOpened()
+        }
+        cont.resume(CloseDecision())
+      }
+      else {
+        cont.resume(null)
+      }
+    }
+    return checkNotNull(closeDecision)
+  }
+
+  private fun Panel.createDefaultPanel(projects: List<Project>) {
+    row {
+      icon(AllIcons.General.WarningDialog)
+        .align(AlignY.TOP)
+        .customize(UnscaledGaps(right = 12))
+      panel {
+        row {
+          text(IjentImplBundle.message("label.projects.below.should.be.closed"))
+            .customize(UnscaledGaps(bottom = 12))
+        }
+        for (project in projects) {
+          row {
+            icon(AllIcons.Nodes.Project)
+              .customize(UnscaledGaps(right = 4))
+            label(project.name).bold()
+          }
+        }
+      }.align(AlignY.TOP)
+    }
+  }
+
+  private fun createCenterPanel(projects: List<Project>): JComponent {
+    return panel {
+      createDefaultPanel(projects)
+    }
+  }
+}

@@ -8,6 +8,9 @@
     <module name="intellij.platform.eel.nioFs.impl"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
 
@@ -28,4 +31,7 @@
         internal="true"/>
     </group>
   </actions>
+  <extensions defaultExtensionNs="com.intellij">
+    <project.root.unavailable implementation="com.intellij.platform.ijent.community.ui.actions.unavailable.IjentUnavailableDialogHandler"/>
+  </extensions>
 </idea-plugin>
