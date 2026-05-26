@@ -226,6 +226,11 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
         iconDirectory = "icons"
       )
 
+      "intellij.postcss.paid" -> IntellijIconClassGeneratorModuleConfig(
+        className = "PostCssIcons",
+        packageName = "org.intellij.plugins.postcss",
+      )
+
       else -> super.getConfigForModule(moduleName)
     }
   }
