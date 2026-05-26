@@ -15,6 +15,8 @@ import org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCustomCodeS
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElementFactory
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownBlockQuote
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownList
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownParagraph
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 import org.intellij.plugins.markdown.util.MarkdownPsiUtil
@@ -77,8 +79,48 @@ internal class BlockQuotePostFormatProcessor: PostFormatProcessor {
       when (element) {
         is MarkdownParagraph -> processParagraph(element, level)
         is MarkdownBlockQuote -> processBlockQuote(element, level + 1)
+        is MarkdownList -> processList(element, level)
       }
     }
+  }
+
+  private fun processList(list: MarkdownList, level: Int) {
+    for (item in list.children) {
+      if (item !is MarkdownListItem) continue
+      for (child in item.children) {
+        when (child) {
+          is MarkdownParagraph -> {
+            fixMisplacedQuoteArrows(child, level)
+            processParagraph(child, level)
+          }
+          is MarkdownList -> processList(child, level)
+          is MarkdownBlockQuote -> processBlockQuote(child, level + 1)
+        }
+      }
+    }
+  }
+
+  /**
+   * Detects a "misplaced quote arrow" pattern produced by the formatter when wrapping a list-item
+   * paragraph inside a block quote: `\n` + indent_ws + `>` (parsed as a `GT` literal because it is
+   * no longer at column 0) + sep_ws + content. Rewrites the line to start with `>` at column 0,
+   * dropping the `level * 2` characters of indent the formatter counted for the absent block-quote
+   * prefix on the wrapped line.
+   */
+  private fun fixMisplacedQuoteArrows(paragraph: MarkdownParagraph, level: Int) {
+    val document = paragraph.containingFile?.viewProvider?.document ?: return
+    val firstChild = paragraph.firstChild ?: return
+    val edits = firstChild.siblings(forward = true, withSelf = true).mapNotNull { element ->
+      if (!element.hasType(MarkdownTokenTypes.GT)) return@mapNotNull null
+      val indent = element.prevSibling?.takeIf(MarkdownPsiUtil.WhiteSpaces::isWhiteSpace) ?: return@mapNotNull null
+      if (indent.prevSibling?.let(MarkdownPsiUtil.WhiteSpaces::isNewLine) != true) return@mapNotNull null
+      val sep = element.nextSibling?.takeIf(MarkdownPsiUtil.WhiteSpaces::isWhiteSpace)
+      val newSep = " ".repeat(maxOf(1, indent.textLength + (sep?.textLength ?: 0) - 2 * level))
+      Triple(indent.textOffset, (sep ?: element).textRange.endOffset, ">$newSep")
+    }.toList()
+    if (edits.isEmpty()) return
+    for ((start, end, text) in edits.asReversed()) document.replaceString(start, end, text)
+    commit(paragraph)
   }
 
   private fun commit(element: PsiElement) {
