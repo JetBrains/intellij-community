@@ -84,7 +84,6 @@
     <dependencySupport coordinate="writerside:writerside" kind="java" displayName="Writerside"/>
     <dependencySupport coordinate="aqua:aqua" kind="java" displayName="Aqua"/>
     <dependencySupport coordinate="datagrip:datagrip" kind="java" displayName="DataGrip"/>
-    <dependencySupport coordinate="python:dataspell" kind="java" displayName="DataSpell"/>
     <dependencySupport coordinate="mps:MPS" kind="java" displayName="MPS"/>
     <dependencySupport coordinate="ruby:RubyMine" kind="java" displayName="RubyMine"/>
 
