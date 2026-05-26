@@ -668,6 +668,7 @@ platform/ijent
 platform/ijent/buildConstants
 platform/ijent/impl
 platform/ijent/testFramework
+platform/ijent/ui
 platform/indexing-api
 platform/indexing-impl
 platform/indexing-tests

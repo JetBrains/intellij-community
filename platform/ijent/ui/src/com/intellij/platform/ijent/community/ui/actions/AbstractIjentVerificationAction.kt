@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("DialogTitleCapitalization", "HardCodedStringLiteral")
 
-package com.intellij.platform.ijent.community.impl.actions
+package com.intellij.platform.ijent.community.ui.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
