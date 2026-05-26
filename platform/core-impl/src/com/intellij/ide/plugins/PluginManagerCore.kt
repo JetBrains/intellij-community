@@ -559,7 +559,6 @@ object PluginManagerCore {
     val totalPluginSet = AmbiguousPluginSet.build(pluginsToLoad.plugins + incompletePlugins.values)
     val pluginNonLoadReasons = incompletePlugins.values.associateByTo(mutableMapOf(), { it.pluginId }, { excludedFromLoading[it]!! })
     val fullIdMap = totalPluginSet.buildFullPluginIdMapping().mapValues { it.value.first() }
-    val fullContentModuleIdMap = totalPluginSet.buildFullContentModuleIdMapping().mapValues { it.value.first() }
     val idMap = pluginsToLoad.buildFullPluginIdMapping()
 
     if (initContext.checkEssentialPlugins && pluginsToLoad.resolvePluginId(CORE_ID) == null) {
