@@ -8,8 +8,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.xml.XmlTag
 import com.intellij.testFramework.common.runAll
+import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.daemon.common.trimQuotes
 import org.jetbrains.kotlin.test.TestMetadata
@@ -30,7 +30,7 @@ class ComposeResourcesGotoDeclarationTest : ComposeResourcesTestCase() {
   @TargetVersions(TARGET_GRADLE_VERSION)
   @Test
   @TestMetadata("ComposeResources")
-  fun `test common composeResources are accessible`() = runBlocking(Dispatchers.EDT) {
+  fun `test common composeResources are accessible`() = timeoutRunBlocking(context = Dispatchers.EDT) {
     assumeTrue("temporarily disable for androidMain since it's not recognised as source root", sourceSetName != ANDROID_MAIN)
     val files = importProjectFromTestData()
     files.openInEditor(sourceSetName = sourceSetName)

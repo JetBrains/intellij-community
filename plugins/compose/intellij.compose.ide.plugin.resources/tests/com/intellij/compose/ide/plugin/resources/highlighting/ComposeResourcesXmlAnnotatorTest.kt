@@ -9,8 +9,8 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Assume.assumeTrue
@@ -22,7 +22,7 @@ class ComposeResourcesXmlAnnotatorTest : ComposeResourcesTestCase() {
   @TargetVersions(TARGET_GRADLE_VERSION)
   @Test
   @TestMetadata("ComposeResources")
-  fun `test highlighting in strings xml`() = runBlocking(Dispatchers.EDT) {
+  fun `test highlighting in strings xml`() = timeoutRunBlocking(context = Dispatchers.EDT) {
     assumeTrue("temporarily disable for androidMain since it's not recognised as source root", sourceSetName != ANDROID_MAIN)
     val files = importProjectFromTestData()
     val stringsFile = files.findStringsFile("commonMain")
@@ -54,7 +54,7 @@ class ComposeResourcesXmlAnnotatorTest : ComposeResourcesTestCase() {
   @TargetVersions(TARGET_GRADLE_VERSION)
   @Test
   @TestMetadata("ComposeResources")
-  fun `test no highlighting in other xml files`() = runBlocking(Dispatchers.EDT) {
+  fun `test no highlighting in other xml files`() = timeoutRunBlocking(context = Dispatchers.EDT) {
     assumeTrue("temporarily disable for androidMain since it's not recognised as source root", sourceSetName != ANDROID_MAIN)
     val files = importProjectFromTestData()
     val otherFile = files.findOtherXmlFile("commonMain")

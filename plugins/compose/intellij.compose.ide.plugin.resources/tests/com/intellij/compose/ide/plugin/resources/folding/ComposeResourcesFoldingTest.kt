@@ -8,8 +8,8 @@ import com.intellij.lang.folding.FoldingDescriptor
 import com.intellij.openapi.application.EDT
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.common.runAll
+import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Assume.assumeTrue
@@ -69,7 +69,7 @@ class ComposeResourcesFoldingTest : ComposeResourcesTestCase() {
     assertTrue("Quick mode should return no folding descriptors", descriptors.isEmpty())
   }
 
-  private fun doFoldingTest(quick: Boolean = false, assertions: (Array<out FoldingDescriptor?>) -> Unit) = runBlocking(Dispatchers.EDT) {
+  private fun doFoldingTest(quick: Boolean = false, assertions: (Array<out FoldingDescriptor?>) -> Unit) = timeoutRunBlocking(context = Dispatchers.EDT) {
     assumeTrue("temporarily disable for androidMain since it's not recognised as source root", sourceSetName != ANDROID_MAIN)
     val files = importProjectFromTestData()
     codeInsightTestFixture.openFileInEditor(files.first { it.path.endsWith("composeApp/src/$sourceSetName/kotlin/org/example/project/test.$sourceSetName.kt") })
