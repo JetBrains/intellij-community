@@ -33,7 +33,7 @@ enum JUnit5FilterOption {
     this.value = value;
   }
 
-  Filter<?> toJunitFilter(String filterString) {
+  Filter<?> toJunitFilter(String... filterString) {
     return switch(this) {
       case includePackage -> PackageNameFilter.includePackageNames(filterString);
       case excludePackage -> PackageNameFilter.excludePackageNames(filterString);

@@ -23,6 +23,7 @@ jvm_library(
     "//platform/core-nio-fs",
     "//libraries/asm-tools",
     "//platform/bazel-runfiles",
+    "//platform/util/base",
     ":libraries_junit5-vintage_provided",
   ],
   runtime_deps = [
@@ -50,6 +51,7 @@ jvm_library(
     "//platform/core-nio-fs:core-nio-fs_test_lib",
     "//libraries/asm-tools:asm-tools_test_lib",
     "//platform/bazel-runfiles:bazel-runfiles_test_lib",
+    "//platform/util/base:base_test_lib",
   ]
 )
 ### auto-generated section `build intellij.tools.testsBootstrap` end

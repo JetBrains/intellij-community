@@ -6,6 +6,7 @@ import com.intellij.tests.bazel.IjSmTestExecutionListener;
 import com.intellij.tests.bazel.TestExecutionOutputDecorator;
 import com.intellij.tests.bazel.bucketing.BucketsPostDiscoveryFilter;
 import com.intellij.platform.bazel.runfiles.BazelRunfilesManifest;
+import com.intellij.util.ArrayUtil;
 import org.junit.platform.engine.DiscoverySelector;
 import org.junit.platform.engine.Filter;
 import org.junit.platform.engine.FilterResult;
@@ -370,6 +371,7 @@ public final class JUnit5BazelRunner {
   private static List<Filter<?>> generateFiltersFromJbEnv() {
     List<Filter<?>> out = new ArrayList<>();
     String junitFilters = System.getenv(jbEnvJunit5TestFilter);
+    Map<JUnit5FilterOption, List<String>> junitFilterOptionToFilterStringsMap = new HashMap<>();
     if (junitFilters != null && !junitFilters.isBlank()) {
       for (String filter : junitFilters.split(";")) {
         String[] parts = filter.split("=");
@@ -378,9 +380,16 @@ public final class JUnit5BazelRunner {
         }
         JUnit5FilterOption filterOption = JUnit5FilterOption.fromString(parts[0]);
         String filterString = parts[1];
-        out.add(filterOption.toJunitFilter(filterString));
+
+        List<String> filterStrings = junitFilterOptionToFilterStringsMap.computeIfAbsent(filterOption, _ -> new ArrayList<>());
+        filterStrings.add(filterString);
       }
     }
+
+    junitFilterOptionToFilterStringsMap.forEach((filterOption, filterStrings) -> {
+      out.add(filterOption.toJunitFilter(ArrayUtil.toStringArray(filterStrings)));
+    });
+
     return out;
   }
 

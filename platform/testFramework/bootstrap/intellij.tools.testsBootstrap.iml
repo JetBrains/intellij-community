@@ -20,5 +20,6 @@
     <orderEntry type="module" module-name="intellij.platform.core.nio.fs" />
     <orderEntry type="module" module-name="intellij.libraries.asm.tools" />
     <orderEntry type="module" module-name="intellij.platform.bazel.runfiles" />
+    <orderEntry type="module" module-name="intellij.platform.util.base" />
   </component>
 </module>
