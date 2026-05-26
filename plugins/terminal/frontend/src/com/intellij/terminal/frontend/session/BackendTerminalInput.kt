@@ -17,7 +17,7 @@ import org.jetbrains.plugins.terminal.session.impl.TerminalInputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalResizeEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalWriteBytesEvent
 import org.jetbrains.plugins.terminal.util.STOP_EMULATOR_TIMEOUT
-import org.jetbrains.plugins.terminal.util.waitFor
+import org.jetbrains.plugins.terminal.util.waitForAsync
 import java.util.concurrent.CancellationException
 import kotlin.time.TimeSource
 
@@ -77,7 +77,7 @@ private suspend fun handleInputEvent(event: TerminalInputEvent, services: JediTe
     }
     is TerminalCloseEvent -> {
       terminalStarter.ttyConnector.close()
-      terminalStarter.ttyConnector.waitFor(STOP_EMULATOR_TIMEOUT) {
+      terminalStarter.ttyConnector.waitForAsync(STOP_EMULATOR_TIMEOUT) {
         terminalStarter.requestEmulatorStop()
       }
     }

@@ -37,8 +37,11 @@ internal fun TerminalTextBuffer.addModelListener(parentDisposable: Disposable, l
   }
 }
 
+/**
+ * Waits for the TtyConnector closing and executes the [callback] asynchronously.
+ */
 @ApiStatus.Internal
-fun TtyConnector.waitFor(timeout: Duration, callback: () -> Unit) {
+fun TtyConnector.waitForAsync(timeout: Duration, callback: () -> Unit) {
   if (!this.isConnected) {
     callback()
     return
