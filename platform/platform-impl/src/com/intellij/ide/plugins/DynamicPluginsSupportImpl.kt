@@ -67,7 +67,6 @@ internal class DynamicPluginsSupportImpl(
     }
   }
 
-  // assumes that the caller already holds all necessary locks
   override suspend fun performDynamicTransition(targetState: PluginSet): DynamicPluginsTransitionResult {
     return withContext(Dispatchers.Default) {
       reportSequentialProgress { reporter ->
