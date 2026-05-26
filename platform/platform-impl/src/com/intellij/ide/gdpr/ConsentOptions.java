@@ -12,6 +12,8 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence;
 import kotlin.Pair;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -353,10 +355,14 @@ public final class ConsentOptions implements ModificationTracker {
     }
   }
 
+  @RequiresReadLockAbsence(generateAssertion = false)
+  @RequiresBackgroundThread(generateAssertion = false)
   public @NotNull Pair<List<Consent>, Boolean> getConsents() {
     return getConsents(_ -> true);
   }
 
+  @RequiresReadLockAbsence(generateAssertion = false)
+  @RequiresBackgroundThread(generateAssertion = false)
   public @NotNull Pair<List<Consent>, Boolean> getConsents(@NotNull Predicate<? super Consent> filter) {
     var allDefaults = loadDefaultConsents();
     if (isEAP()) {

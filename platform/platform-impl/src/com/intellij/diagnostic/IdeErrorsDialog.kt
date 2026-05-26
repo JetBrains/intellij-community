@@ -120,8 +120,10 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
   private val hideClearButton: Boolean = false,
 ) : DialogWrapper(myProject, true), MessagePoolAdvisor, UiDataProvider {
   private val myAcceptedNotices: MutableSet<String>
+
   @Volatile
   private var myMessageClusters = emptyList<ErrorMessageCluster>() // exceptions with the same stacktrace
+
   @Volatile
   private var myIndex: Int = 0
   private var myLastIndex = -1
@@ -824,16 +826,17 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
         }
 
         updateControls()
-        val autoReportEnabled = suggestEnablingAutoReportIfApplicable()
-        if (!autoReportEnabled) {
-          if (closeDialog) {
-            super@IdeErrorsDialog.doOKAction()
-          }
-          return
-        }
 
         val parentComponent = getParentComponentForReport(true)
         service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch {
+          val autoReportEnabled = suggestEnablingAutoReportIfApplicable()
+          if (!autoReportEnabled) {
+            if (closeDialog) {
+              withContext(Dispatchers.EDT) { super@IdeErrorsDialog.doOKAction() }
+            }
+            return@launch
+          }
+
           val reportAllStarted = reportAll(myMessageClusters, parentComponent, true)
 
           withContext(Dispatchers.EDT) {
@@ -877,17 +880,18 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
   /**
    *  Returns true if a user enabled an automatic error report on this request
    */
-  private fun suggestEnablingAutoReportIfApplicable(): Boolean {
-    if (!ExceptionAutoReportUtil.shouldOfferEnablingAutoReport()) {
-      return false
+  private suspend fun suggestEnablingAutoReportIfApplicable(): Boolean {
+    if (!ExceptionAutoReportUtil.shouldOfferEnablingAutoReport()) return false
+
+    val dialogResult = withContext(Dispatchers.EDT) {
+      MessageDialogBuilder.yesNo(
+        DiagnosticBundle.message("auto.report.suggestion.dialog.title"),
+        DiagnosticBundle.message("auto.report.suggestion.dialog.message"),
+      )
+        .yesText(DiagnosticBundle.message("auto.report.suggestion.dialog.yes.option"))
+        .noText(DiagnosticBundle.message("auto.report.suggestion.dialog.no.option"))
+        .ask(rootPane)
     }
-    val dialogResult = MessageDialogBuilder.yesNo(
-      DiagnosticBundle.message("auto.report.suggestion.dialog.title"),
-      DiagnosticBundle.message("auto.report.suggestion.dialog.message"),
-    )
-      .yesText(DiagnosticBundle.message("auto.report.suggestion.dialog.yes.option"))
-      .noText(DiagnosticBundle.message("auto.report.suggestion.dialog.no.option"))
-      .ask(rootPane)
 
     ExceptionAutoReportUtil.enablingAutoReportOffered(dialogResult)
     return dialogResult

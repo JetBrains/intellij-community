@@ -20,6 +20,8 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.platform.ide.impl.diagnostic.errorsDialog.ErrorMessageClustering
 import com.intellij.util.text.nullize
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
@@ -34,37 +36,36 @@ object ExceptionAutoReportUtil {
             || AppMode.isRemoteDevHost() // we handle everything on client
             || AppMode.isHeadless()
 
-  @JvmStatic
-  val isAutoReportVisible: Boolean
-    get() = !autoReportIsForbiddenForProduct && Registry.`is`("ea.auto.report.feature.visible", false)
-
-  suspend fun isAutoReportVisibleAsync(): Boolean {
+  suspend fun isAutoReportVisible(): Boolean {
     return !autoReportIsForbiddenForProduct && RegistryManager.getInstanceAsync().`is`("ea.auto.report.feature.visible")
+  }
+
+  private fun isAutoReportVisibleBlocking(): Boolean {
+    // may be called extremely early before IDE started!
+    return !autoReportIsForbiddenForProduct && Registry.`is`("ea.auto.report.feature.visible", false)
   }
 
   @JvmStatic
   val isAutoReportForced: Boolean
     get() = getForcedAutoReportLevel() != ForcedReportLevel.NONE
 
-  @JvmStatic
-  val isAutoReportEnabled: Boolean
-    get() {
-      if (!isAutoReportVisible) return false
-      if (isDevelopmentEnvironment) return ENABLED_FOR_DEVELOPMENT
-
-      return isAutoReportAllowedByUser()
-    }
-
-  suspend fun isAutoReportEnabledAsync(): Boolean {
-    if (!isAutoReportVisibleAsync()) return false
+  suspend fun isAutoReportEnabled(): Boolean {
+    if (!isAutoReportVisible()) return false
     if (isDevelopmentEnvironment) return ENABLED_FOR_DEVELOPMENT
 
     return isAutoReportAllowedByUser()
   }
 
-  @JvmStatic
+  suspend fun isAutoReportEnabledAsync(): Boolean {
+    if (!isAutoReportVisible()) return false
+    if (isDevelopmentEnvironment) return ENABLED_FOR_DEVELOPMENT
+
+    return isAutoReportAllowedByUser()
+  }
+
+  @JvmStatic // may be called extremely early before IDE started!
   val isConsentAllowedToBeVisible: Boolean
-    get() = isAutoReportVisible && !isAutoReportForced // do not show consents UI if level is forced
+    get() = isAutoReportVisibleBlocking() && !isAutoReportForced // do not show consents UI if level is forced
 
   fun getAutoReportTag(): String? {
     return Registry.stringValue("ea.auto.report.forced.tag", "").nullize()
@@ -84,7 +85,7 @@ object ExceptionAutoReportUtil {
             || AppMode.isRunningFromDevBuild()
             || PluginManagerCore.isRunningFromSources()
 
-  fun isAutoReportAllowedByUser(): Boolean {
+  suspend fun isAutoReportAllowedByUser(): Boolean {
     if (isAutoReportForced) return true // set by provisioning
     if (ConsentOptions.getInstance().isEAP) {
       return ExceptionEAPAutoReportManager.getInstance().enabledInEAP
@@ -94,23 +95,8 @@ object ExceptionAutoReportUtil {
     return consent?.isAccepted == true && !needsReconfirm
   }
 
-  @JvmStatic
-  val isAutoReportEnabledOrUndecided: Boolean
-    get() {
-      if (!isAutoReportVisible) return false
-
-      if (isDevelopmentEnvironment) return ENABLED_FOR_DEVELOPMENT
-      if (isAutoReportForced) return true // set by provisioning
-      if (ConsentOptions.getInstance().isEAP) {
-        return ExceptionEAPAutoReportManager.getInstance().enabledInEAP
-      }
-
-      val (consent, needsReconfirm) = getConsentAndNeedsReconfirm()
-      return consent?.isAccepted == true || needsReconfirm
-    }
-
   suspend fun isAutoReportEnabledOrUndecidedAsync(): Boolean {
-    if (!isAutoReportVisibleAsync()) return false
+    if (!isAutoReportVisible()) return false
 
     if (isDevelopmentEnvironment) return ENABLED_FOR_DEVELOPMENT
     if (isAutoReportForced) return true // set by provisioning
@@ -122,16 +108,18 @@ object ExceptionAutoReportUtil {
     return consent?.isAccepted == true || needsReconfirm
   }
 
-  private fun getConsentAndNeedsReconfirm(): Pair<Consent?, Boolean> {
-    val (consents, needsReconfirm) = ConsentOptions.getInstance().getConsents(ConsentOptions.condEAAutoReportConsent())
-    thisLogger().assertTrue(consents.size <= 1) {
-      "Consent is expected to be bundled; multiple consents: ${consents.joinToString(",")}"
+  private suspend fun getConsentAndNeedsReconfirm(): Pair<Consent?, Boolean> {
+    return withContext(Dispatchers.IO) {
+      val (consents, needsReconfirm) = ConsentOptions.getInstance().getConsents(ConsentOptions.condEAAutoReportConsent())
+      thisLogger().assertTrue(consents.size <= 1) {
+        "Consent is expected to be bundled; multiple consents: ${consents.joinToString(",")}"
+      }
+      Pair(consents.firstOrNull(), needsReconfirm)
     }
-    return Pair(consents.firstOrNull(), needsReconfirm)
   }
 
-  fun shouldOfferEnablingAutoReport(): Boolean {
-    if (!isAutoReportVisible || ConsentOptions.getInstance().isEAP) return false
+  suspend fun shouldOfferEnablingAutoReport(): Boolean {
+    if (!isAutoReportVisible() || ConsentOptions.getInstance().isEAP) return false
     if (isDevelopmentEnvironment) return false
     if (isAutoReportForced) return false
 
@@ -145,8 +133,8 @@ object ExceptionAutoReportUtil {
     return !PropertiesComponent.getInstance().getBoolean("$EA_AUTO_REPORT_OFFERED_PROPERTY.${consent.version}", false)
   }
 
-  fun enablingAutoReportOffered(autoReportEnabled: Boolean) {
-    if (!isAutoReportVisible) return
+  suspend fun enablingAutoReportOffered(autoReportEnabled: Boolean) {
+    if (!isAutoReportVisible()) return
 
     ConsentOptions.getInstance().setEAAutoReportAllowed(autoReportEnabled)
     ExceptionEAPAutoReportManager.getInstance().enabledInEAP = autoReportEnabled
@@ -220,7 +208,8 @@ object ExceptionAutoReportUtil {
 
 internal class ReporterIdForEAAutoReporters : AboutPopupDescriptionProvider {
   override fun getDescription(): @NlsContexts.DetailedDescription String? = null
-  override fun getExtendedDescription(): @NlsContexts.DetailedDescription String = DiagnosticBundle.message("about.dialog.text.ea.reporting.id", ITNProxy.DEVICE_ID)
+  override fun getExtendedDescription(): @NlsContexts.DetailedDescription String =
+    DiagnosticBundle.message("about.dialog.text.ea.reporting.id", ITNProxy.DEVICE_ID)
 }
 
 internal class ReporterIdLoggerActivity : ProjectActivity {

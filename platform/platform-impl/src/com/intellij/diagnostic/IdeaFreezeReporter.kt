@@ -176,7 +176,7 @@ internal class IdeaFreezeReporter : PerformanceListener {
 
   private suspend fun processDumps(dumps: ArrayList<ThreadDump>, reportDir: Path?, loggingEvent: LogMessage?, durationMs: Long) {
     if (loggingEvent != null && (application.isEAP || application.isInternal)) {
-      if (ExceptionAutoReportUtil.isAutoReportEnabled && ExceptionAutoReportUtil.isAutoReportableException(loggingEvent)) {
+      if (ExceptionAutoReportUtil.isAutoReportEnabled() && ExceptionAutoReportUtil.isAutoReportableException(loggingEvent)) {
         MessagePool.getInstance().addErrorMessage(loggingEvent)
         return
       }
@@ -459,10 +459,10 @@ private suspend fun reportDeadlocks(files: List<Path>, duration: Int, dir: Path)
   }
 }
 
-private fun isUnfinishedFreezeReportEnabled(): Boolean {
+private suspend fun isUnfinishedFreezeReportEnabled(): Boolean {
   val app = ApplicationManager.getApplication()
   return app.isEAP || app.isInternal
-         || ExceptionAutoReportUtil.isAutoReportEnabled
+         || ExceptionAutoReportUtil.isAutoReportEnabled()
          || System.getProperty("idea.force.freeze.reports").toBoolean()
 }
 

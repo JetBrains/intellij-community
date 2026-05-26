@@ -18,6 +18,7 @@ package com.intellij.diagnostic.hprof.action
 import com.intellij.diagnostic.DiagnosticBundle
 import com.intellij.diagnostic.ExceptionAutoReportUtil
 import com.intellij.diagnostic.HeapDumpAnalysisSupport
+import com.intellij.diagnostic.ITNProxyCoroutineScopeHolder
 import com.intellij.diagnostic.hprof.analysis.HProfAnalysis
 import com.intellij.diagnostic.hprof.analysis.analyzeGraph
 import com.intellij.diagnostic.hprof.util.HeapDumpAnalysisNotificationGroup
@@ -32,6 +33,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
@@ -43,6 +45,7 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.SwingHelper
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.launch
 import java.awt.BorderLayout
 import java.nio.channels.FileChannel
 import java.nio.file.Files
@@ -116,12 +119,16 @@ internal class AnalysisRunnable(
       notification.addAction(ReviewReportAction(reportText, heapProperties))
       notification.notify(null)
 
-      if (ExceptionAutoReportUtil.isAutoReportEnabled) { // even if users forget to report explicitly, we still report it based on consent
-        val guessProject = IdeFocusManager.getGlobalInstance().lastFocusedFrame?.project
-                           ?: ProjectManager.getInstance().openProjects.firstOrNull()
-        val parentComponent = WindowManager.getInstance().getFrame(guessProject)
-        if (parentComponent != null) {
-          HeapDumpAnalysisSupport.getInstance().uploadReport(reportText, heapProperties, parentComponent)
+      val guessProject = IdeFocusManager.getGlobalInstance().lastFocusedFrame?.project
+                         ?: ProjectManager.getInstance().openProjects.firstOrNull()
+
+      val parentComponent = WindowManager.getInstance().getFrame(guessProject)
+      if (parentComponent != null) {
+        service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch {
+          // even if users forget to report explicitly, we still report it based on consent
+          if (ExceptionAutoReportUtil.isAutoReportEnabled()) {
+            HeapDumpAnalysisSupport.getInstance().uploadReport(reportText, heapProperties, parentComponent)
+          }
         }
       }
     }
