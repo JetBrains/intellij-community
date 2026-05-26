@@ -6,6 +6,11 @@ import com.intellij.openapi.util.Key;
 public interface ProcessOutputTypes {
   /**
    * Please use {@code ProcessOutputType.SYSTEM} instead.
+   * Represents IDE-generated system output that is not emitted by process standard output or standard error streams.<p>
+   * Please note that system derived output type doesn't equal to this instance: use
+   * <pre>{@code ProcessOutputType.isSystem(key)}</pre>
+   * instead of
+   * <pre>{@code ProcessOutputTypes.SYSTEM.equals(key)} or ProcessOutputTypes.SYSTEM == key</pre>
    */
   Key<?> SYSTEM = ProcessOutputType.SYSTEM;
 

@@ -19,6 +19,17 @@ import org.jetbrains.annotations.Nullable;
  * @see com.intellij.execution.ui.ConsoleViewContentType#registerNewConsoleViewType
  */
 public class ProcessOutputType extends Key<Object> {
+  /**
+   * Base type for IDE-generated system output that is not emitted by process standard output or standard error streams.<p>
+   * Derived system output types are represented by different instances of {@link ProcessOutputType} having
+   * {@code ProcessOutputType.SYSTEM} base type:
+   * <pre>{@code derivedSystemType.getBaseOutputType() == ProcessOutputType.SYSTEM}</pre>
+   * <p/>
+   * Thus, to check whether a process output type is from system output:
+   * <pre>{@code ProcessOutputType.isSystem(key)}</pre>
+   * instead of
+   * <pre>{@code ProcessOutputType.SYSTEM.equals(key)} or ProcessOutputType.SYSTEM == key</pre>
+   */
   public static final ProcessOutputType SYSTEM = new ProcessOutputType("system");
 
   /**
@@ -74,12 +85,20 @@ public class ProcessOutputType extends Key<Object> {
     return getBaseOutputType() == STDERR;
   }
 
+  public boolean isSystem() {
+    return getBaseOutputType() == SYSTEM;
+  }
+
   public static boolean isStderr(@NotNull Key<?> key) {
     return key instanceof ProcessOutputType && ((ProcessOutputType)key).isStderr();
   }
 
   public static boolean isStdout(@NotNull Key<?> key) {
     return key instanceof ProcessOutputType && ((ProcessOutputType)key).isStdout();
+  }
+
+  public static boolean isSystem(@NotNull Key<?> key) {
+    return key instanceof ProcessOutputType && ((ProcessOutputType)key).isSystem();
   }
 
   public @Nullable String getEscapeSequence() {
