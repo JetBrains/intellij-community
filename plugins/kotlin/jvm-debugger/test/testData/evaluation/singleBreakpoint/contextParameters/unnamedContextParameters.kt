@@ -1,6 +1,3 @@
-// See KT-80227
-// IGNORE_K2
-
 // ATTACH_LIBRARY: contexts
 // ENABLED_LANGUAGE_FEATURE: ContextParameters
 
