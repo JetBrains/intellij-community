@@ -680,7 +680,10 @@ public class HintManagerImpl extends HintManager {
                                final @NotNull LightweightHint hint,
                                final @NotNull QuestionAction action,
                                @PositionFlags short constraint) {
-    showQuestionHint(editor, offset1, offset2, null, hint, action, DEFAULT_QUESTION_HINT_HIDE_FLAGS, constraint);
+    final VisualPosition pos1 = editor.offsetToVisualPosition(offset1);
+    final VisualPosition pos2 = editor.offsetToVisualPosition(offset2);
+    final Point p = getHintPosition(hint, editor, pos1, pos2, constraint);
+    showQuestionHint(editor, offset1, offset2, p, null, hint, action, DEFAULT_QUESTION_HINT_HIDE_FLAGS, constraint);
   }
 
   public void showQuestionHint(final @NotNull Editor editor,
@@ -690,7 +693,7 @@ public class HintManagerImpl extends HintManager {
                                final @NotNull LightweightHint hint,
                                final @NotNull QuestionAction action,
                                @PositionFlags short constraint) {
-    showQuestionHint(editor, p, offset1, offset2, null, hint, DEFAULT_QUESTION_HINT_HIDE_FLAGS, action, constraint);
+    showQuestionHint(editor, offset1, offset2, p, null, hint, action, DEFAULT_QUESTION_HINT_HIDE_FLAGS, constraint);
   }
 
   /**
@@ -700,6 +703,7 @@ public class HintManagerImpl extends HintManager {
    * @param editor               The editor instance where the hint should be displayed.
    * @param offset1              The start offset in the editor where the hint is anchored.
    * @param offset2              The end offset in the editor where the hint is anchored.
+   * @param p                    The point where the hint should be displayed.
    * @param attributesOverride   The text attributes override to be applied to a segment of code between offset1 and offset2.
    *                             Null if default underlining attributes should be used.
    * @param hint                 The hint to be displayed.
@@ -710,26 +714,12 @@ public class HintManagerImpl extends HintManager {
   public void showQuestionHint(final @NotNull Editor editor,
                                final int offset1,
                                final int offset2,
+                               final @NotNull Point p,
                                final @Nullable TextAttributes attributesOverride,
                                final @NotNull LightweightHint hint,
                                final @NotNull QuestionAction action,
                                @HideFlags int hideFlags,
                                @PositionFlags short constraint) {
-    final VisualPosition pos1 = editor.offsetToVisualPosition(offset1);
-    final VisualPosition pos2 = editor.offsetToVisualPosition(offset2);
-    final Point p = getHintPosition(hint, editor, pos1, pos2, constraint);
-    showQuestionHint(editor, p, offset1, offset2, attributesOverride, hint, hideFlags, action, constraint);
-  }
-
-  private static void showQuestionHint(final @NotNull Editor editor,
-                                       final @NotNull Point p,
-                                       final int offset1,
-                                       final int offset2,
-                                       final @Nullable TextAttributes attributesOverride,
-                                       final @NotNull LightweightHint hint,
-                                       int flags,
-                                       final @NotNull QuestionAction action,
-                                       @PositionFlags short constraint) {
     if (ExperimentalUI.isNewUI() && hint.getComponent() instanceof HintUtil.HintLabel label) {
       JEditorPane pane = label.getPane();
       if (pane != null) {
@@ -748,7 +738,7 @@ public class HintManagerImpl extends HintManager {
         });
       }
     }
-    getClientManager(editor).showQuestionHint(editor, p, offset1, offset2, attributesOverride, hint, flags, action, constraint);
+    getClientManager(editor).showQuestionHint(editor, p, offset1, offset2, attributesOverride, hint, hideFlags, action, constraint);
   }
 
   public static HintHint createHintHint(Editor editor, Point p, LightweightHint hint, @PositionFlags short constraint) {
