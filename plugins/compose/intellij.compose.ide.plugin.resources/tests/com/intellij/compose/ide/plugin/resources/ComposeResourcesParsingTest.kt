@@ -4,6 +4,7 @@ package com.intellij.compose.ide.plugin.resources
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.nio.file.Path
 import kotlin.test.DefaultAsserter.assertEquals
 
 class ComposeResourcesParsingTest {
@@ -24,5 +25,24 @@ class ComposeResourcesParsingTest {
 
     val unknownResult = runCatching { ResourceType.fromString("unknown") }
     assertEquals("exception message", "Unknown resource type: 'unknown'.", unknownResult.exceptionOrNull()!!.message)
+  }
+
+  @Test
+  fun `test ResourceType parsing from qualified resource directories`() {
+    assertEquals(
+      "different types",
+      ResourceType.DRAWABLE,
+      ResourceType.fromPath(Path.of("/project/src/commonMain/composeResources/drawable-xxhdpi/icon.xml")),
+    )
+    assertEquals(
+      "different types",
+      ResourceType.STRING,
+      ResourceType.fromPath(Path.of("/project/src/commonMain/composeResources/values-nl/strings.xml")),
+    )
+    assertEquals(
+      "different types",
+      ResourceType.FONT,
+      ResourceType.fromPath(Path.of("/project/src/commonMain/composeResources/font-ro/font.ttf")),
+    )
   }
 }
