@@ -4,7 +4,10 @@ package org.jetbrains.kotlin.idea.search.refIndex.bta
 import com.intellij.testFramework.rules.TempDirectory
 import org.jetbrains.kotlin.buildtools.api.ExperimentalBuildToolsApi
 import org.jetbrains.kotlin.buildtools.api.cri.CriToolchain
+import org.jetbrains.kotlin.name.FqName
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -39,6 +42,52 @@ class BtaSubtypeInMemoryStorageTest {
         val criRoot = createCriRoot()
 
         assertNull(BtaSubtypeInMemoryStorage.create(criRoot))
+    }
+
+    @Test
+    fun `test create returns populated storage when subtypes data is valid`() {
+        val criRoot = createCriRoot()
+        BtaTestFixtureSupport.copyFixtureInto(criRoot)
+
+        assertNotNull(BtaSubtypeInMemoryStorage.create(criRoot))
+    }
+
+    @Test
+    fun `test get with deep=false returns only direct subtypes`() {
+        val criRoot = createCriRoot()
+        BtaTestFixtureSupport.copyFixtureInto(criRoot)
+        val storage = createStorage(criRoot)
+
+        val subtypes = storage[BtaTestFixtureSupport.animalFqName, false].toSet()
+
+        assertEquals(BtaTestFixtureSupport.animalSubtypes, subtypes)
+    }
+
+    @Test
+    fun `test get with deep=true returns fixture subtypes`() {
+        val criRoot = createCriRoot()
+        BtaTestFixtureSupport.copyFixtureInto(criRoot)
+        val storage = createStorage(criRoot)
+
+        val subtypes = storage[BtaTestFixtureSupport.animalFqName, true].toSet()
+
+        assertEquals(BtaTestFixtureSupport.animalSubtypes, subtypes)
+    }
+
+    @Test
+    fun `test get returns empty sequence for unknown FqName`() {
+        val criRoot = createCriRoot()
+        BtaTestFixtureSupport.copyFixtureInto(criRoot)
+        val storage = createStorage(criRoot)
+
+        assertEquals(emptyList<FqName>(), storage[FqName("does.not.Exist"), false].toList())
+        assertEquals(emptyList<FqName>(), storage[FqName("does.not.Exist"), true].toList())
+    }
+
+    private fun createStorage(criRoot: Path): BtaSubtypeInMemoryStorage {
+        val storage = BtaSubtypeInMemoryStorage.create(criRoot)
+        assertNotNull(storage)
+        return storage as BtaSubtypeInMemoryStorage
     }
 
     private fun createCriRoot(): Path = tempDir.newDirectoryPath(CriToolchain.DATA_PATH)

@@ -4,7 +4,10 @@ package org.jetbrains.kotlin.idea.search.refIndex.bta
 import com.intellij.testFramework.rules.TempDirectory
 import org.jetbrains.kotlin.buildtools.api.ExperimentalBuildToolsApi
 import org.jetbrains.kotlin.buildtools.api.cri.CriToolchain
+import org.jetbrains.kotlin.name.FqName
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -13,6 +16,7 @@ import java.nio.file.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.createFile
 import kotlin.io.path.div
+import kotlin.io.path.invariantSeparatorsPathString
 
 @OptIn(ExperimentalBuildToolsApi::class)
 class BtaLookupInMemoryStorageTest {
@@ -66,6 +70,67 @@ class BtaLookupInMemoryStorageTest {
         (criRoot / CriToolchain.FILE_IDS_TO_PATHS_FILENAME).createFile()
 
         assertNull(BtaLookupInMemoryStorage.create(criRoot, projectPath = criRoot.toString()))
+    }
+
+    @Test
+    fun `test create returns populated storage when CRI files contain valid data`() {
+        val criRoot = createCriRoot()
+        BtaTestFixtureSupport.copyFixtureInto(criRoot)
+
+        assertNotNull(BtaLookupInMemoryStorage.create(criRoot, projectPath = "/proj"))
+    }
+
+    @Test
+    fun `test get returns mapped paths for known FqName`() {
+        val criRoot = createCriRoot()
+        BtaTestFixtureSupport.copyFixtureInto(criRoot)
+        val storage = createStorage(criRoot, projectPath = "/proj")
+
+        val paths = storage[BtaTestFixtureSupport.animalFqName].map { it.invariantSeparatorsPathString }.toSet()
+
+        assertEquals(
+            setOf(
+                "/proj/src/main/kotlin/fixtures/Animal.kt",
+                "/proj/src/main/kotlin/fixtures/Dog.kt",
+                "/proj/src/main/kotlin/fixtures/Cat.kt",
+                "/proj/src/main/kotlin/fixtures/Main.kt",
+            ),
+            paths,
+        )
+    }
+
+    @Test
+    fun `test get returns empty list for unknown FqName`() {
+        val criRoot = createCriRoot()
+        BtaTestFixtureSupport.copyFixtureInto(criRoot)
+        val storage = createStorage(criRoot, projectPath = "/proj")
+
+        assertEquals(emptyList<Path>(), storage[FqName("does.not.Exist")])
+    }
+
+    @Test
+    fun `test get resolves paths against project base directory`() {
+        val criRoot = createCriRoot()
+        BtaTestFixtureSupport.copyFixtureInto(criRoot)
+        val storage = createStorage(criRoot, projectPath = "/abs/proj/base/../base")
+
+        val paths = storage[BtaTestFixtureSupport.animalFqName].map { it.invariantSeparatorsPathString }.toSet()
+
+        assertEquals(
+            setOf(
+                "/abs/proj/base/src/main/kotlin/fixtures/Animal.kt",
+                "/abs/proj/base/src/main/kotlin/fixtures/Dog.kt",
+                "/abs/proj/base/src/main/kotlin/fixtures/Cat.kt",
+                "/abs/proj/base/src/main/kotlin/fixtures/Main.kt",
+            ),
+            paths,
+        )
+    }
+
+    private fun createStorage(criRoot: Path, projectPath: String): BtaLookupInMemoryStorage {
+        val storage = BtaLookupInMemoryStorage.create(criRoot, projectPath)
+        assertNotNull(storage)
+        return storage as BtaLookupInMemoryStorage
     }
 
     private fun createCriRoot(): Path = tempDir.newDirectoryPath(CriToolchain.DATA_PATH)
