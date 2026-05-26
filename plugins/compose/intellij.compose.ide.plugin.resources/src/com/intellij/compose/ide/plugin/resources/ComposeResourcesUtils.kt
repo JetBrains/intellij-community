@@ -163,7 +163,13 @@ internal val KtDotQualifiedExpression.isComposeResClass: Boolean
     return resolvedFqn == expectedFqn
   }
 
-internal data class ComposeResourcesDir(val moduleName: String, val sourceSetName: String, val directoryPath: Path, val isCustom: Boolean = false)
+internal data class ComposeResourcesDir(
+  val moduleName: String,
+  val sourceSetName: String,
+  val directoryPath: Path,
+  val projectGroupName: String,
+  val isCustom: Boolean = false,
+)
 
 internal data class ComposeResources(
   val moduleName: String,
