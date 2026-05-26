@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.impl.ToolbarUtils
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runReadAction
@@ -28,7 +29,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.siblings
 import com.intellij.psi.util.startOffset
@@ -64,6 +64,7 @@ class HorizontalBarPresentation(private val editor: Editor, private val table: M
 
   private var lastSelectedIndex: Int? = null
   private var boundsState = emptyBoundsState
+  private var refreshScheduled = false
 
   init {
     val document = editor.document
@@ -72,11 +73,15 @@ class HorizontalBarPresentation(private val editor: Editor, private val table: M
     EditorUtil.disposeWithEditor(editor, listenerDisposable)
     document.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {
-        if (isInvalid) {
-          document.removeDocumentListener(this)
-          return
-        }
-        scheduleBoundsRefresh(document)
+        if (isInvalid || refreshScheduled) return
+        refreshScheduled = true
+        ApplicationManager.getApplication().invokeLater(
+          {
+            refreshScheduled = false
+            if (!isInvalid) scheduleBoundsRefresh(document)
+          },
+          ModalityState.stateForComponent(editor.contentComponent),
+        )
       }
     }, listenerDisposable)
   }
@@ -155,13 +160,6 @@ class HorizontalBarPresentation(private val editor: Editor, private val table: M
 
   private val gridActive: Boolean
     get() = (editor as? EditorImpl)?.characterGrid != null
-
-  @TestOnly
-  fun calculateColumnDividerPositionsForTesting(): List<Int> {
-    val header = table.headerRow ?: return emptyList()
-    val fontMetrics = obtainFontMetrics(editor)
-    return calculatePositions(header, editor.document, fontMetrics)
-  }
 
   private fun calculateRowWidth(fontMetrics: FontMetrics, document: Document): Int {
     if (isInvalid) {

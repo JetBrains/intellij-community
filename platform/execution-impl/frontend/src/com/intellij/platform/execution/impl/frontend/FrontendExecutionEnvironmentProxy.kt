@@ -7,13 +7,13 @@ import com.intellij.execution.configurations.ConfigurationTypeBase
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.configurations.RunProfileState
-import com.intellij.execution.dashboard.RunDashboardManagerProxy
 import com.intellij.execution.rpc.ExecutionEnvironmentProxyDto
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionEnvironmentProxy
 import com.intellij.execution.runners.RunnerAndConfigurationSettingsProxy
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.ui.RunContentManager
+import com.intellij.execution.ui.RunContentManagerExtension
 import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -50,7 +50,7 @@ private class FrontendExecutionEnvironmentProxy(
 
   override fun isShowInDashboard(): Boolean {
     val configuration = getFakeRunConfiguration()
-    return RunDashboardManagerProxy.getInstance(project).isShowInDashboard(configuration)
+    return RunContentManagerExtension.isShownInServicesIfAvailable(project, configuration)
   }
 
   override fun getContentDescriptorToolWindowId(): String? {

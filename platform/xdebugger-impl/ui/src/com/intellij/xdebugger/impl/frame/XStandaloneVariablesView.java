@@ -34,6 +34,15 @@ public class XStandaloneVariablesView extends XVariablesViewBase {
     buildTreeAndRestoreState(stackFrame);
   }
 
+  public XStandaloneVariablesView(@NotNull Project project,
+                                  @NotNull XDebuggerEditorsProvider editorsProvider,
+                                  @NotNull XStackFrame stackFrame,
+                                  @NotNull Boolean shouldClearInlays) {
+    super(project, editorsProvider, null);
+    myStackFrame = stackFrame;
+    buildTreeAndRestoreState(stackFrame, shouldClearInlays);
+  }
+
   public void rebuildView() {
     AppUIUtil.invokeLaterIfProjectAlive(getTree().getProject(), () -> buildTreeAndRestoreState(myStackFrame));
   }

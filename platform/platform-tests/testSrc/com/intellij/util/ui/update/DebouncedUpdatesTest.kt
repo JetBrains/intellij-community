@@ -324,6 +324,49 @@ class DebouncedUpdatesTest {
   }
 
   @Test
+  fun `test component queue stops processing after cancelOnDispose`() {
+    edtTest {
+      val component = JLabel()
+      val executedValues = CopyOnWriteArrayList<Int>()
+      val disposable = Disposer.newDisposable()
+
+      withShowingChanged { container.add(component) }
+      yield()
+
+      val queue = DebouncedUpdates.forComponent<Int>(component, "test-cancel-on-dispose", 50.milliseconds)
+        .runLatest { value ->
+          executedValues.add(value)
+        }
+        .cancelOnDispose(disposable)
+
+      // Queue item and let it execute normally
+      queue.queue(1)
+      assertEquals(listOf(1), awaitValue(listOf(1)) { executedValues.toList() })
+
+      // Dispose — cancels the queue including background jobs
+      Disposer.dispose(disposable)
+      delay(100.milliseconds)
+
+      // Queueing after disposal should log a warning and skip
+      val warnings = mutableListOf<String>()
+      LoggedErrorProcessor.executeWith<Exception>(object : LoggedErrorProcessor() {
+        override fun processWarn(category: String, message: String, t: Throwable?): Boolean {
+          warnings.add(message)
+          return true
+        }
+      }, {
+        queue.queue(2)
+      })
+
+      assertTrue(warnings.size == 1, "Expected exactly one warning when queueing after disposal, got ${warnings.size}")
+
+      // Verify action was not executed
+      delay(100.milliseconds)
+      assertEquals(listOf(1), executedValues.toList(), "No items should be processed after disposal")
+    }
+  }
+
+  @Test
   fun `test channel holds no values after scope cancellation`() {
     timeoutRunBlocking {
       class QueuedValue(val id: Int) {
@@ -653,41 +696,6 @@ class DebouncedUpdatesTest {
   }
 
   @Test
-  fun `test component batched queue collects items only when showing`() {
-    edtTest {
-      val component = JLabel()
-      val batches = CopyOnWriteArrayList<List<Int>>()
-
-      val queue = DebouncedUpdates.forComponent<Int>(component, "test-component-batched", 100.milliseconds)
-        .runBatched { batch ->
-          batches.add(batch)
-        }
-
-      // Queue items when not showing
-      queue.queue(1)
-      delay(40.milliseconds)
-      queue.queue(2)
-      delay(120.milliseconds)
-      assertEquals(emptyList<List<Int>>(), awaitValue(emptyList()) { batches.toList() })
-
-      // Show component - batched items should execute
-      withShowingChanged { container.add(component) }
-      yield()
-      delay(120.milliseconds)
-      assertEquals(1, awaitValue(1) { batches.size })
-      assertEquals(listOf(1, 2), awaitValue(listOf(1, 2)) { batches[0] })
-
-      // Queue more items while showing
-      queue.queue(3)
-      delay(40.milliseconds)
-      queue.queue(4)
-      delay(120.milliseconds)
-      assertEquals(2, awaitValue(2) { batches.size })
-      assertEquals(listOf(3, 4), awaitValue(listOf(3, 4)) { batches[1] })
-    }
-  }
-
-  @Test
   fun `test zero delay processes immediately`() {
     edtTest {
       val executedValues = CopyOnWriteArrayList<Int>()
@@ -885,6 +893,118 @@ class DebouncedUpdatesTest {
         assertTrue(caughtException != null, "Expected a timeout exception")
       } finally {
         scope.cancel()
+      }
+    }
+  }
+
+  @Test
+  fun `test component queue does not lose item when hidden during processing`() {
+    edtTest {
+      val component = JLabel()
+      val executedValues = CopyOnWriteArrayList<Int>()
+      val processingStarted = AtomicInteger(0)
+
+      withShowingChanged { container.add(component) }
+      yield()
+
+      val queue = DebouncedUpdates.forComponent<Int>(component, "test-hide-during-processing", 50.milliseconds)
+        .runLatest { value ->
+          processingStarted.incrementAndGet()
+          delay(100.milliseconds) // Simulate slow processing
+          executedValues.add(value)
+        }
+
+      // Queue item and let it start processing
+      queue.queue(1)
+      delay(80.milliseconds) // Wait for debounce + processing to start
+
+      assertEquals(1, processingStarted.get(), "Processing should have started")
+
+      // Hide component during processing — action should be cancelled before it completes
+      withShowingChanged { container.remove(component) }
+      yield()
+      delay(50.milliseconds) // Give time for cancellation
+      assertTrue(executedValues.isEmpty(), "Action should not have completed while component was hidden")
+
+      // Show component again - item should be retried
+      withShowingChanged { container.add(component) }
+      yield()
+
+      // Wait for item to be processed (action should have been started twice: once cancelled, once completed)
+      assertEquals(listOf(1), awaitValue(listOf(1)) { executedValues.toList() })
+      assertEquals(2, processingStarted.get(), "Action should have been started twice (cancelled + retried)")
+    }
+  }
+
+  @Test
+  fun `test component queue prioritizes new item over pending`() {
+    edtTest {
+      val component = JLabel()
+      val executedValues = CopyOnWriteArrayList<Int>()
+
+      withShowingChanged { container.add(component) }
+      yield()
+
+      val queue = DebouncedUpdates.forComponent<Int>(component, "test-prioritize-new", 50.milliseconds)
+        .runLatest { value ->
+          delay(100.milliseconds) // Simulate slow processing
+          executedValues.add(value)
+        }
+
+      // Queue item 1 and let it start processing
+      queue.queue(1)
+      delay(80.milliseconds) // Wait for debounce + processing to start
+
+      // Hide component during processing (item 1 becomes pending)
+      withShowingChanged { container.remove(component) }
+      yield()
+      delay(50.milliseconds)
+      assertTrue(executedValues.isEmpty(), "Item 1 should not have completed before hiding")
+
+      // Queue item 2 while component is hidden
+      queue.queue(2)
+      delay(80.milliseconds) // Wait for debounce
+
+      // Show component - should process item 2 (newer), not item 1 (pending)
+      withShowingChanged { container.add(component) }
+      yield()
+
+      // Wait for item to be processed
+      assertEquals(listOf(2), awaitValue(listOf(2)) { executedValues.toList() })
+    }
+  }
+
+  @Test
+  fun `test component queue can be created from a background thread`() {
+    // IJPL-245313: launchOnShow asserts EDT internally; forComponent(...).runLatest(...)
+    // must hop to EDT internally so the builder works from any thread.
+    timeoutRunBlocking(timeout = 30.seconds) {
+      withForcedRespectIsShowingClientProperty {
+        val component = JLabel()
+        val executedValues = CopyOnWriteArrayList<Int>()
+
+        val queue = withContext(Dispatchers.Default) {
+          assertTrue(!com.intellij.util.ui.EDT.isCurrentThreadEdt(),
+                     "precondition: builder must be invoked off EDT")
+          DebouncedUpdates.forComponent<Int>(component, "test-bg-create", 50.milliseconds)
+            .runLatest { value ->
+              executedValues.add(value)
+            }
+        }
+
+        // Queue an item from a background thread before the component is shown.
+        // It should be buffered in the processing channel until the EDT hop completes
+        // and the component becomes showing.
+        withContext(Dispatchers.Default) {
+          queue.queue(1)
+        }
+
+        withContext(Dispatchers.EDT) {
+          withShowingChanged { container.add(component) }
+          yield()
+        }
+
+        assertEquals(listOf(1), awaitValue(listOf(1)) { executedValues.toList() })
       }
     }
   }

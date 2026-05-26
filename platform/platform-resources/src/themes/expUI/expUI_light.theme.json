@@ -1249,6 +1249,13 @@
       "infoForeground": "Gray3",
       "lineSeparatorColor": "Gray12"
     },
+
+    "NuGet": {
+      "section": {
+        "background": "#F0F1F5",
+        "hoverBackground": "#E8E9ED"
+      }
+    },
     
     "DataSummary.Chart.barColor": "Blue4",
 

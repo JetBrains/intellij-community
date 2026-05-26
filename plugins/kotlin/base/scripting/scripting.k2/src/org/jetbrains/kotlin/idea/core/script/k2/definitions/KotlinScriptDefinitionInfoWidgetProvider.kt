@@ -7,11 +7,13 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.InspectionWidgetActionProvider
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.psi.PsiDocumentManager
+import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinIcons
-import org.jetbrains.kotlin.idea.core.script.shared.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.k2.settings.KotlinScriptingSettingsConfigurable
+import org.jetbrains.kotlin.idea.core.script.shared.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.v1.kotlinScriptTemplateInfo
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
@@ -20,8 +22,8 @@ import kotlin.script.experimental.api.ide
 class KotlinScriptDefinitionInfoWidgetProvider : InspectionWidgetActionProvider {
     override fun createAction(editor: Editor): AnAction? {
         val project = editor.project ?: return null
-        val initialPsiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return null
-        if (!initialPsiFile.name.endsWith(".kts")) return null
+        val virtualFile = FileDocumentManager.getInstance().getFile(editor.document)
+        if (virtualFile == null || !virtualFile.nameSequence.endsWith(KotlinFileType.DOT_SCRIPT_EXTENSION)) return null
 
         return object : AnAction() {
             override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT

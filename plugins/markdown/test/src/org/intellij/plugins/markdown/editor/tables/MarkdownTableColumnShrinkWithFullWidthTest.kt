@@ -26,10 +26,63 @@ class MarkdownTableColumnShrinkWithFullWidthTest: LightPlatformCodeInsightTestCa
     )
   }
 
-  private fun doTest(content: String, expected: String, count: Int = 1) {
+  @Test
+  fun `test backspace latin character`() {
+    // language=Markdown
+    doTest(
+      """
+      | f   | fef | fjeijjkj                 |
+      |-----|-----|--------------------------|
+      | dwd | dwd | dhwhhjhjhjhj<caret>hjhjhjhb bjb |
+      """.trimIndent(),
+      """
+      | f   | fef | fjeijjkj                |
+      |-----|-----|-------------------------|
+      | dwd | dwd | dhwhhjhjhjh<caret>hjhjhjhb bjb |
+      """.trimIndent()
+    )
+  }
+
+  @Test
+  fun `test forward delete cjk character`() {
+    // language=Markdown
+    doTest(
+      """
+      | 名字     | 年龄  |
+      |----------|-------|
+      | <caret>投放账号 | 3 . * |
+      """.trimIndent(),
+      """
+      | 名字   | 年龄  |
+      |--------|-------|
+      | <caret>放账号 | 3 . * |
+      """.trimIndent(),
+      action = { delete() }
+    )
+  }
+
+  @Test
+  fun `test forward delete latin character`() {
+    // language=Markdown
+    doTest(
+      """
+      | f   | fef | fjeijjkj                 |
+      |-----|-----|--------------------------|
+      | dwd | dwd | dhwhhjhjhjhj<caret>hjhjhjhb bjb |
+      """.trimIndent(),
+      """
+      | f   | fef | fjeijjkj                |
+      |-----|-----|-------------------------|
+      | dwd | dwd | dhwhhjhjhjhj<caret>jhjhjhb bjb |
+      """.trimIndent(),
+      action = { delete() }
+    )
+  }
+
+  private fun doTest(content: String, expected: String, count: Int = 1, action: () -> Unit = { backspace() }) {
     configureFromFileText("some.md", content)
     repeat(count) {
-      backspace()
+      action()
     }
     checkResultByText(expected)
   }

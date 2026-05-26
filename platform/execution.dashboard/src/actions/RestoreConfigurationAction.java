@@ -12,7 +12,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.execution.dashboard.actions.RunDashboardActionUtils.getTarget;
+import static com.intellij.platform.execution.dashboard.actions.RunDashboardActionSelection.getTarget;
 
 final class RestoreConfigurationAction
   extends DumbAwareAction
@@ -24,10 +24,13 @@ final class RestoreConfigurationAction
   }
 
   @Override
+  @SuppressWarnings("removal")
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     RunDashboardRunConfigurationNode node = project == null ? null : getTarget(e);
-    boolean enabled = node != null && node.getConfigurationSettings() != null && !RunManager.getInstance(project).hasSettings(node.getConfigurationSettings());
+    boolean enabled = node != null &&
+                      node.getConfigurationSettings() != null &&
+                      !RunManager.getInstance(project).hasSettings(node.getConfigurationSettings());
     Presentation presentation = e.getPresentation();
     presentation.setEnabled(enabled);
     boolean popupPlace = e.isFromContextMenu();
@@ -35,6 +38,7 @@ final class RestoreConfigurationAction
   }
 
   @Override
+  @SuppressWarnings("removal")
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     RunDashboardRunConfigurationNode node = project == null ? null : getTarget(e);

@@ -1,23 +1,22 @@
 package com.intellij.notebooks.visualization.ui
 
+import com.intellij.notebooks.ui.visualization.NotebookUtil.overlappingVerticalScrollbarLeftShift
+import com.intellij.notebooks.ui.visualization.NotebookUtil.visibleNotebookCellWidth
 import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeNotifier
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.CustomFoldRegion
+import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.ui.components.JBScrollPane
 import java.awt.Component
 import java.awt.Container
 import java.awt.Dimension
 import java.awt.LayoutManager2
 import java.awt.Rectangle
 import javax.swing.JComponent
-import javax.swing.JScrollPane
 import kotlin.math.min
 
 internal class EditorEmbeddedComponentLayoutManager(private val editor: EditorEx) : LayoutManager2, Disposable {
   private val constraints: MutableList<Pair<JComponent, Constraint>> = mutableListOf()
-  private val myEditorScrollPane: JScrollPane
-    get() = editor.scrollPane
 
   override fun dispose() {
     constraints.clear()
@@ -49,7 +48,7 @@ internal class EditorEmbeddedComponentLayoutManager(private val editor: EditorEx
   }
 
   override fun removeLayoutComponent(comp: Component?) {
-    this.constraints.indexOfFirst { it.second == comp }
+    this.constraints.indexOfFirst { it.first == comp }
       .takeIf { it >= 0 }
       ?.let { this.constraints.removeAt(it) }
   }
@@ -65,7 +64,7 @@ internal class EditorEmbeddedComponentLayoutManager(private val editor: EditorEx
   override fun layoutContainer(parent: Container) {
     synchronized(parent.treeLock) {
       editor.notebookEditorOrNull?.editorPositionKeeper?.keepScrollingPositionWhile {
-        val visibleWidth = maxOf(myEditorScrollPane.getViewport().getWidth() - myEditorScrollPane.getVerticalScrollBar().getWidth(), 0)
+        val visibleWidth = editor.visibleNotebookCellWidth()
         for (entry in constraints) {
           val component: JComponent = entry.first
           synchronizeBoundsWithInlay(entry.second, component, visibleWidth)
@@ -77,7 +76,7 @@ internal class EditorEmbeddedComponentLayoutManager(private val editor: EditorEx
   private fun synchronizeBoundsWithInlay(constraint: Constraint, component: JComponent, visibleWidth: Int) {
     val inlayBounds = constraint.getBounds()
     if (inlayBounds != null) {
-      inlayBounds.setLocation(inlayBounds.x + verticalScrollbarLeftShift(), inlayBounds.y)
+      inlayBounds.setLocation(inlayBounds.x + editor.overlappingVerticalScrollbarLeftShift(), inlayBounds.y)
       val size = component.getPreferredSize()
       val newBounds = Rectangle(
         inlayBounds.x,
@@ -90,14 +89,6 @@ internal class EditorEmbeddedComponentLayoutManager(private val editor: EditorEx
         constraint.update()
       }
     }
-  }
-
-  private fun verticalScrollbarLeftShift(): Int {
-    val flipProperty = myEditorScrollPane.getClientProperty(JBScrollPane.Flip::class.java)
-    if (flipProperty === JBScrollPane.Flip.HORIZONTAL || flipProperty === JBScrollPane.Flip.BOTH) {
-      return myEditorScrollPane.getVerticalScrollBar().getWidth()
-    }
-    return 0
   }
 
   sealed interface Constraint {
@@ -129,5 +120,21 @@ internal class EditorEmbeddedComponentLayoutManager(private val editor: EditorEx
 
     override val order: Int
       get() = customFoldRegion.startOffset
+  }
+
+  class BlockInlayConstraint internal constructor(
+    private val editor: EditorEx,
+    private val inlay: Inlay<*>,
+    override val isFullWidth: Boolean,
+  ) : Constraint {
+    override fun getBounds(): Rectangle? = inlay.bounds
+
+    override fun update() {
+      inlay.update()
+      JupyterBoundsChangeNotifier.get(editor).boundsChanged()
+    }
+
+    override val order: Int
+      get() = inlay.offset
   }
 }

@@ -23,7 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.execution.dashboard.actions.RunDashboardActionUtils.getLeafTargets;
+import static com.intellij.platform.execution.dashboard.actions.RunDashboardActionSelection.getLeafTargets;
 
 final class ClearContentAction extends DumbAwareAction
   implements ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
@@ -34,6 +34,7 @@ final class ClearContentAction extends DumbAwareAction
   }
 
   @Override
+  @SuppressWarnings("removal")
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     Presentation presentation = e.getPresentation();
@@ -58,6 +59,7 @@ final class ClearContentAction extends DumbAwareAction
   }
 
   @Override
+  @SuppressWarnings("removal")
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) return;
@@ -92,8 +94,8 @@ final class ClearContentAction extends DumbAwareAction
     if (descriptorId == null) return descriptor;
 
     RunContentDescriptor updatedDescriptor =
-    ContainerUtil.find(RunContentManager.getInstance(project).getRunContentDescriptors(),
-                       managedDescriptor -> descriptorId.equals(managedDescriptor.getId()));
+      ContainerUtil.find(RunContentManager.getInstance(project).getRunContentDescriptors(),
+                         managedDescriptor -> descriptorId.equals(managedDescriptor.getId()));
     return updatedDescriptor == null ? descriptor : updatedDescriptor;
   }
 }

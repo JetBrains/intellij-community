@@ -11,7 +11,6 @@ import org.jetbrains.kotlinx.lincheck.check
 import org.jetbrains.kotlinx.lincheck.strategy.stress.StressOptions
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -24,7 +23,6 @@ import kotlin.time.Duration.Companion.milliseconds
  * has no gaps — each internal phase's "active" state (channel non-empty → isCollecting → isProcessing)
  * overlaps with the next, so `isAllExecuted` never transiently returns `true`.
  */
-@Disabled("IJPL-242528")
 class DebouncedUpdatesActivityCoverageLincheck {
 
   val queue: UpdateQueue<Unit> = DebouncedUpdates

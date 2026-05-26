@@ -36,6 +36,10 @@
   - name: intellij.python.community.impl.installer
 - name: lib/modules/intellij.python.community.impl.jar
   projectLibraries:
+  - name: com.jetbrains.fus.reporting.ap.validation.all
+    files:
+    - name: $MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/ap-validation-all/1/ap-validation-all-1.jar
+    reason: <- intellij.python.community.impl
   - name: jsr305
     files:
     - name: $MAVEN_REPOSITORY$/com/google/code/findbugs/jsr305/3/jsr305-3.jar

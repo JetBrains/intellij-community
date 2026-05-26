@@ -2,7 +2,7 @@
 package com.intellij.platform.execution.serviceView.backend
 
 import com.intellij.execution.configurations.ConfigurationType
-import com.intellij.execution.dashboard.RunDashboardManagerProxy
+import com.intellij.execution.ui.RunContentManagerExtension
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.virtualFile
@@ -49,7 +49,8 @@ internal class ServiceViewRpcImpl : ServiceViewRpc {
   private fun collectTypes(project: Project): Pair<List<ConfigurationType>, List<ConfigurationType>> {
     val includedTypes = ArrayList<ConfigurationType>()
     val excludedTypes = ArrayList<ConfigurationType>()
-    val types = RunDashboardManagerProxy.getInstance(project).types
+    val extension = RunContentManagerExtension.getInstance(project) ?: return Pair(includedTypes, excludedTypes)
+    val types = extension.getConfiguredRunConfigurationTypes(project) ?: return Pair(includedTypes, excludedTypes)
     for (type in ConfigurationType.CONFIGURATION_TYPE_EP.extensionList) {
       if (types.contains(type.id)) {
         includedTypes.add(type)
@@ -63,7 +64,7 @@ internal class ServiceViewRpcImpl : ServiceViewRpc {
 
   override suspend fun saveConfigurationTypes(projectId: ProjectId, includedTypes: Set<String>) {
     val project = projectId.findProjectOrNull() ?: return
-    RunDashboardManagerProxy.getInstance(project).types = includedTypes
+    RunContentManagerExtension.setConfiguredRunConfigurationTypesIfAvailable(project, includedTypes)
   }
 
   override suspend fun changeServiceViewImplementationForNextIdeRunAndRestart(shouldEnableSplitImplementation: Boolean) {

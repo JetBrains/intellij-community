@@ -289,20 +289,24 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
    */
   val notebookCellEditors: List<CellEditor>
     get() = xx("""
-      //div[@class='FullEditorWidthRenderer']
-      /div[@class='JPanel' and not(
-          .//div[contains(@class, 'NotebookAboveCellDelimiterPanel')] 
-            or 
-          .//div[contains(@class, 'NotebookBelowLastCellPanel')]
-            or
-          .//div[contains(@class, 'OutputComponent')]
-            or
-          .//div[contains(@class, 'LetsPlotComponent')]
-        ) 
-      ]
+      //div[@class='FullEditorWidthRenderer']/div[$cellEditorPanelXPathPredicate]
+      |
+      //div[@class='EditorComponentImpl' and not(@accessiblename='Editor')]/div[$cellEditorPanelXPathPredicate]
     """.trimIndent(),
                CellEditor::class.java
     ).list()
+
+  private val cellEditorPanelXPathPredicate = """
+    @class='JPanel' and not(
+      .//div[contains(@class, 'NotebookAboveCellDelimiterPanel')]
+        or
+      .//div[contains(@class, 'NotebookBelowLastCellPanel')]
+        or
+      .//div[contains(@class, 'OutputComponent')]
+        or
+      .//div[contains(@class, 'LetsPlotComponent')]
+    )
+  """.trimIndent()
 }
 
 fun JLabelUiComponent.hasSuccessfulExecutionIcon(): Boolean = hasExecutionIcon(SUCCESSFUL_EXECUTION_ICON)

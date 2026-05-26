@@ -305,6 +305,13 @@
       "currentParameterForeground": "#FFFFFF"
     },
 
+    "NuGet": {
+      "section": {
+        "background": "#000000",
+        "hoverBackground": "#464A4D"
+      }
+    },
+
     "Plugins": {
       "Tab": {
         "selectedForeground": "#FFFFFF",

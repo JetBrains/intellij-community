@@ -5,7 +5,7 @@ import com.intellij.notebooks.ui.visualization.markerRenderers.NotebookLineMarke
 import com.intellij.notebooks.visualization.context.EditorCellDataContext
 import com.intellij.notebooks.visualization.controllers.selfUpdate.SelfManagedCellController
 import com.intellij.notebooks.visualization.ui.EditorCell
-import com.intellij.notebooks.visualization.ui.addComponentInlay
+import com.intellij.notebooks.visualization.ui.addNotebookCellComponentInlay
 import com.intellij.notebooks.visualization.ui.notebookViewUpdater
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
@@ -65,7 +65,7 @@ abstract class NotebookCellSelfInlayController(
 
   private fun createInlay(): Inlay<*> {
     val offset = inlayOffset
-    return editor.addComponentInlay(
+    return editor.addNotebookCellComponentInlay(
       EditorCellDataContext.createContextProvider(editorCell, component),
       isRelatedToPrecedingText = true,
       showAbove = showAbove,

@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelPropertyFqnNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.psi.KotlinDeclarationNavigationPolicy
@@ -107,6 +108,19 @@ open class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDeclara
         return bool
     }
 
+    private fun KtDeclaration.isDeprecated(): Boolean {
+        val declaration = this
+        // TODO: we need to check deprecation level
+        @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
+        return allowAnalysisOnEdt {
+            allowAnalysisFromWriteAction {
+                analyze(declaration) {
+                    declaration.symbol.annotations.firstOrNull { it.classId == StandardClassIds.Annotations.Deprecated } != null
+                }
+            }
+        }
+    }
+
     private fun getCorrespondingDeclarationInLibrarySourceOrBinaryCounterpart(
         declaration: KtDeclaration,
         scope: Scope,
@@ -145,8 +159,11 @@ open class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDeclara
         val targetPlatform = module.targetPlatform
 
         val targetDeclaration =
-            getClassesByClassId(classId, project, scope).firstOrNull { it.matchesWithPlatform(targetPlatform) } ?:
-            getTypeAliasesByClassId(classId, project, scope).firstOrNull { it.matchesWithPlatform(targetPlatform) }
+            getClassesByClassId(classId, project, scope).filter { it.matchesWithPlatform(targetPlatform) }.let { seq ->
+                seq.firstOrNull { !it.isDeprecated() } ?: seq.firstOrNull()
+            } ?: getTypeAliasesByClassId(classId, project, scope).filter { it.matchesWithPlatform(targetPlatform) }.let { seq ->
+                seq.firstOrNull { !it.isDeprecated() } ?: seq.firstOrNull()
+            }
         return targetDeclaration
     }
 
@@ -177,7 +194,9 @@ open class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDeclara
                         val project = module.project
                         val declarations = getTopLevelCallablesByName(declaration, callableId, project, scope)
                         val targetPlatform = module.targetPlatform
-                        declarations.filter { it.matchesWithPlatform(targetPlatform) }
+                        declarations.filter { it.matchesWithPlatform(targetPlatform) }.let { seq ->
+                            seq.filter { !it.isDeprecated() }.ifEmpty { seq }
+                        }
                     }
 
                     else -> {
@@ -284,14 +303,14 @@ open class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDeclara
 
     private fun compareCallableTypesByResolve(first: KtCallableDeclaration, second: KtCallableDeclaration): Boolean {
         // symbols should be rendered from corresponding sessions
-        val firstRendered = renderTypesForComparasion(first)
-        val secondRendered = renderTypesForComparasion(second)
+        val firstRendered = renderTypesForComparison(first)
+        val secondRendered = renderTypesForComparison(second)
         return firstRendered == secondRendered
     }
 
-    // Maybe called from EDT by IJ Platfrom :(
+    // Maybe called from EDT by IJ Platform :(
     @OptIn(KaAllowAnalysisOnEdt::class, KaExperimentalApi::class)
-    private fun renderTypesForComparasion(declaration: KtCallableDeclaration) = allowAnalysisOnEdt {
+    private fun renderTypesForComparison(declaration: KtCallableDeclaration) = allowAnalysisOnEdt {
         @OptIn(KaAllowAnalysisFromWriteAction::class)
         allowAnalysisFromWriteAction {
             analyze(declaration) {

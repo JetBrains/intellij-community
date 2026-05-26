@@ -94,7 +94,7 @@ class EditorNotificationsImpl(private val project: Project, coroutineScope: Coro
   private val updateAllRequestFlowJob: Job
 
   init {
-    val connection = project.messageBus.connect()
+    val connection = project.messageBus.connect(coroutineScope)
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
       override fun selectionChanged(event: FileEditorManagerEvent) {
         val file = event.newFile ?: return

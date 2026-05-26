@@ -62,6 +62,10 @@
     <orderEntry type="module" module-name="intellij.junit" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.tooling.impl" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlin-tooling-core" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.gradle.codeInsight.groovy" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.inspections" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.gradle.gradle" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.kotlin.gradle.java" />
 </module>

@@ -2,10 +2,10 @@
 package com.intellij.platform.execution.serviceView
 
 import com.intellij.execution.ExecutionBundle
-import com.intellij.execution.dashboard.RunDashboardManagerProxy
 import com.intellij.execution.services.ServiceViewContributor
 import com.intellij.execution.services.ServiceViewManager
 import com.intellij.execution.services.ServiceViewToolWindowDescriptor
+import com.intellij.execution.ui.RunContentManagerExtension
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.project.Project
@@ -171,7 +171,7 @@ internal class ConfigureServicesDialog(private val project: Project, settings: S
 
   override fun doOKAction() {
     (ServiceViewManager.getInstance(project) as ServiceViewManagerImpl).setExcludedContributors(excludedServicesTree.getServices())
-    RunDashboardManagerProxy.getInstance(project).types = includedServicesTree.getTypes()
+    RunContentManagerExtension.setConfiguredRunConfigurationTypesIfAvailable(project, includedServicesTree.getTypes())
     super.doOKAction()
   }
 }

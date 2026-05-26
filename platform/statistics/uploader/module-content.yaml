@@ -1,0 +1,10 @@
+- name: dist.all/lib/intellij.platform.statistics.uploader.jar
+  projectLibraries:
+  - name: com.jetbrains.fus.reporting.ap.validation.all
+    files:
+    - name: $MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/ap-validation-all/1/ap-validation-all-1.jar
+  - name: com.jetbrains.fus.reporting.fus-api
+    files:
+    - name: $MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/fus-api/1/fus-api-1.jar
+  modules:
+  - name: intellij.platform.statistics.uploader

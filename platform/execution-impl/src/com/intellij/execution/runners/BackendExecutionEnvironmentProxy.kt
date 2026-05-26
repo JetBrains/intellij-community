@@ -3,9 +3,9 @@ package com.intellij.execution.runners
 
 import com.intellij.execution.ExecutionManager
 import com.intellij.execution.configurations.RunConfiguration
-import com.intellij.execution.dashboard.RunDashboardManager
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.ui.RunContentManager
+import com.intellij.execution.ui.RunContentManagerExtension
 import com.intellij.openapi.util.NlsSafe
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
@@ -15,7 +15,7 @@ import javax.swing.Icon
 class BackendExecutionEnvironmentProxy(private val environment: ExecutionEnvironment) : ExecutionEnvironmentProxy {
   override fun isShowInDashboard(): Boolean {
     val configuration = environment.runProfile as? RunConfiguration ?: environment.runnerAndConfigurationSettings?.configuration ?: return false
-    return RunDashboardManager.getInstance(configuration.getProject()).isShowInDashboard(configuration)
+    return RunContentManagerExtension.isShownInServicesIfAvailable(configuration.project, configuration)
   }
 
   override fun getContentDescriptorToolWindowId(): String? {

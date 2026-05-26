@@ -33,6 +33,7 @@ import com.intellij.util.io.stats.PersistentEnumeratorStatistics
 import com.intellij.util.io.stats.PersistentHashMapStatistics
 import com.intellij.util.io.stats.StorageStatsRegistrar
 import io.opentelemetry.api.metrics.Meter
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -115,7 +116,7 @@ object StorageDiagnosticData {
       val file = getDumpFile(sessionLocalDateTime, onShutdown)
       IndexDiagnosticDumperUtils.writeValue(file, stats)
     }
-    catch (e: AlreadyDisposedException) {
+    catch (@Suppress("IncorrectCancellationExceptionHandling") e: AlreadyDisposedException) {
       //e.g. IDEA-313757
       thisLogger().info("Can't collect storage statistics: ${e.message} -- probably, already a shutdown?")
     }
@@ -322,6 +323,7 @@ object StorageDiagnosticData {
     var writesQueuedMin: Long = Long.MAX_VALUE
     var writesQueuedSum: Long = 0
     var writesQueuedMeasurements: Int = 0
+    @OptIn(DelicateCoroutinesApi::class)
     GlobalScope.launch {
       while (true) {
         val writesQueued = defaultParallelWriter.writesQueued().toLong()
@@ -433,8 +435,7 @@ object StorageDiagnosticData {
             housekeeperTimeSpentMs.record(it.housekeeperTimeSpent(MILLISECONDS))
           }
         }
-        catch (_: AlreadyDisposedException) {
-
+        catch (@Suppress("IncorrectCancellationExceptionHandling") _: AlreadyDisposedException) {
         }
       },
       totalNativeBytesAllocated, totalNativeBytesReclaimed,
@@ -469,7 +470,7 @@ object StorageDiagnosticData {
     val totalPageDisposalsUs = otelMeter.counterBuilder("FilePageCache.totalPageDisposalsUs")
       .setUnit("us").buildObserver()
 
-    val totalPageStoresUs = otelMeter.counterBuilder("FilePageCache.totalPageStoreUs")
+    val totalPageStoresUs = otelMeter.counterBuilder("FilePageCache.totalPageStoresUs")
       .setUnit("us").buildObserver()
     val totalBytesStoredUs = otelMeter.counterBuilder("FilePageCache.totalBytesStored").buildObserver()
 

@@ -9,8 +9,6 @@ import com.intellij.execution.KillableProcess
 import com.intellij.execution.RunContentDescriptorId
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.configurations.RunConfiguration
-import com.intellij.execution.dashboard.RunDashboardManagerProxy
-import com.intellij.execution.dashboard.RunDashboardUiManager
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessHandler
@@ -421,8 +419,11 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
       contentManager.addContent(content)
       content.putUserData(CLOSE_LISTENER_KEY, CloseListener(content, executor))
     }
-    else if (RunDashboardUiManager.getInstance(project).toolWindowId == toolWindowId) {
-      RunDashboardUiManager.getInstance(project).contentReused(content, oldDescriptor)
+    else {
+      val extension = RunContentManagerExtension.getInstance(project)
+      if (extension?.getToolWindowIdIfCreated(project) == toolWindowId) {
+        extension.contentReused(project, content, oldDescriptor)
+      }
     }
     if (descriptor.isSelectContentWhenAdded /* also update selection when reused content is already selected  */
         || oldDescriptor != null && content.manager!!.isSelected(content)) {
@@ -451,15 +452,15 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
         focus = true
       }
       getToolWindowManager().getToolWindow(toolWindowId)!!.activate(descriptor.activationCallback, focus, focus)
-      descriptor.id?.let { RunDashboardUiManager.getInstance(project).navigateToServiceOnRun(it, focus) } // Reveal running service in dashboard in split mode
+      descriptor.id?.let { RunContentManagerExtension.getInstance(project)?.navigateToRunContent(project, it, focus) }
     }, project.disposed)
   }
 
   private fun getContentManagerByToolWindowId(toolWindowId: String): ContentManager? {
-    val manager = RunDashboardUiManager.getInstanceIfCreated(project)
-    manager?.let {
-      if (it.toolWindowId == toolWindowId) {
-        return if (toolWindowIdToBaseIcon.contains(toolWindowId)) it.dashboardContentManager else null
+    val extension = RunContentManagerExtension.getInstance(project)
+    extension?.let {
+      if (it.getToolWindowIdIfCreated(project) == toolWindowId) {
+        return if (toolWindowIdToBaseIcon.contains(toolWindowId)) it.getContentManagerIfCreated(project) else null
       }
     }
     return getToolWindowManager().getToolWindow(toolWindowId)?.contentManagerIfCreated
@@ -491,8 +492,8 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
   }
 
   private fun getReuseCondition(toolWindowId: String): BiPredicate<in Content, RunConfiguration?>? {
-    val runDashboardManager = RunDashboardUiManager.getInstance(project)
-    return if (runDashboardManager.toolWindowId == toolWindowId) runDashboardManager.getReuseCondition() else null
+    val extension = RunContentManagerExtension.getInstance(project)
+    return if (extension?.getToolWindowIdIfCreated(project) == toolWindowId) extension.getReuseCondition(project) else null
   }
 
   override fun findContentDescriptor(requestor: Executor, handler: ProcessHandler): RunContentDescriptor? {
@@ -510,17 +511,20 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
   }
 
   private fun getOrCreateContentManagerForToolWindow(id: String, executor: Executor): ContentManager {
-    val dashboardManager = RunDashboardUiManager.getInstance(project) // initialize RunDashboardContentManager before getting content manager
+    val extension = RunContentManagerExtension.getInstance(project)
+    val extensionToolWindowId = extension?.getToolWindowId(project)
 
-    if (dashboardManager.toolWindowId == id) {
+    if (extension != null && extensionToolWindowId == id) {
       val contentManager = getContentManagerByToolWindowId(id)
       if (contentManager != null) {
         updateToolWindowDecoration(id, executor)
         return contentManager
       }
 
-      initToolWindow(null, dashboardManager.toolWindowId, dashboardManager.toolWindowIcon, dashboardManager.dashboardContentManager)
-      return dashboardManager.dashboardContentManager
+      val extensionContentManager = extension.getContentManager(project) ?: return registerToolWindow(executor)
+      val extensionIcon = extension.getToolWindowIcon(project) ?: executor.toolWindowIcon
+      initToolWindow(null, id, extensionIcon, extensionContentManager)
+      return extensionContentManager
     }
 
     if (id == executor.toolWindowId || toolWindowIdToBaseIcon.containsKey(id)) {
@@ -555,7 +559,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
   }
 
   private fun updateToolWindowDecoration(id: String, executor: Executor) {
-    if (RunDashboardUiManager.getInstanceIfCreated(project)?.toolWindowId == id) {
+    if (RunContentManagerExtension.getInstance(project)?.getToolWindowIdIfCreated(project) == id) {
       return
     }
 
@@ -583,11 +587,13 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
       }
     }
 
-    RunDashboardUiManager.getInstanceIfCreated(project)?.let {
-      val toolWindowId = it.toolWindowId
+    RunContentManagerExtension.getInstance(project)?.let {
+      val toolWindowId = it.getToolWindowIdIfCreated(project) ?: return@let
       processedToolWindowIds.add(toolWindowId)
       if (toolWindowIdToBaseIcon.contains(toolWindowId)) {
-        processor(toolWindowManager.getToolWindow(toolWindowId) ?: return, it.dashboardContentManager)
+        val toolWindow = toolWindowManager.getToolWindow(toolWindowId) ?: return@let
+        val contentManager = it.getContentManagerIfCreated(project) ?: return@let
+        processor(toolWindow, contentManager)
       }
     }
 
@@ -625,11 +631,28 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
 
   override fun getContentDescriptorToolWindowId(configuration: RunConfiguration?): String? {
     if (configuration != null) {
-      val runDashboardContentManager = RunDashboardManagerProxy.getInstance(project)
-      if (runDashboardContentManager.isShowInDashboard(configuration)) {
-        // see ServiceViewManagerImpl#eventHandled()
-        return RunDashboardUiManager.getInstance(project).toolWindowId
-      }
+      return RunContentManagerExtension.getInstance(project)?.getToolWindowId(project, configuration)
+    }
+    return null
+  }
+
+  override fun getContentDescriptorToolWindowId(executionEnvironment: ExecutionEnvironment): String? {
+    val runnerToolWindowId = executionEnvironment.runner.getContentToolWindowId(executionEnvironment)
+    if (runnerToolWindowId != null) {
+      return runnerToolWindowId
+    }
+
+    val extension = RunContentManagerExtension.getInstance(project) ?: return null
+    if (!extension.isSupported(project, executionEnvironment.executor)) return null
+
+    val runProfile = executionEnvironment.runProfile
+    if (runProfile is RunConfiguration) {
+      return extension.getToolWindowId(project, runProfile)
+    }
+
+    val settings = executionEnvironment.runnerAndConfigurationSettings
+    if (settings != null) {
+      return extension.getToolWindowId(project, settings.configuration)
     }
     return null
   }
@@ -659,8 +682,10 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
     find(getContentManagerForRunner(runnerInfo, null))?.let {
       return it
     }
-    find(getContentManagerByToolWindowId(RunDashboardUiManager.getInstanceIfCreated(project)?.toolWindowId ?: return null) ?: return null)?.let {
-      return it
+    RunContentManagerExtension.getInstance(project)?.getToolWindowIdIfCreated(project)?.let { toolWindowId ->
+      find(getContentManagerByToolWindowId(toolWindowId))?.let {
+        return it
+      }
     }
     // Search external toolwindows that received content via contentToolWindowId (e.g., Profiler).
     val toolWindowManager = getToolWindowManager()

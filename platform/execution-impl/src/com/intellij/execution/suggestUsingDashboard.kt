@@ -4,8 +4,7 @@ package com.intellij.execution
 
 import com.intellij.CommonBundle
 import com.intellij.execution.configurations.ConfigurationType
-import com.intellij.execution.dashboard.RunDashboardManager
-import com.intellij.execution.dashboard.RunDashboardUiManager
+import com.intellij.execution.ui.RunContentManagerExtension
 import com.intellij.icons.AllIcons
 import com.intellij.lang.LangBundle
 import com.intellij.notification.Notification
@@ -23,8 +22,9 @@ import com.intellij.openapi.project.Project
 **/
 internal fun promptUserToUseRunDashboard(project: Project, configurationTypes: Collection<ConfigurationType>) {
   ApplicationManager.getApplication().invokeLater {
-    val currentTypes = RunDashboardManager.getInstance(project).types
-    val toolWindowId = RunDashboardUiManager.getInstance(project).toolWindowId
+    val extension = RunContentManagerExtension.getInstance(project) ?: return@invokeLater
+    val currentTypes = extension.getConfiguredRunConfigurationTypes(project) ?: return@invokeLater
+    val toolWindowId = extension.getToolWindowId(project) ?: return@invokeLater
     val typesToAdd = configurationTypes.filter {
       it.id !in currentTypes
     }
@@ -52,14 +52,14 @@ private class SuggestDashboardNotification(
     icon = AllIcons.RunConfigurations.TestState.Run
     addAction(
       NotificationAction.create(CommonBundle.message("button.without.mnemonic.yes")) { _ ->
-      ApplicationManager.getApplication().invokeLater {
-        runWriteAction {
-          val runDashboardManager = RunDashboardManager.getInstance(project)
-          runDashboardManager.types = runDashboardManager.types + types.map { it.id }
+        ApplicationManager.getApplication().invokeLater {
+          runWriteAction {
+            val currentTypes = RunContentManagerExtension.getConfiguredRunConfigurationTypesIfAvailable(project)
+            RunContentManagerExtension.setConfiguredRunConfigurationTypesIfAvailable(project, currentTypes + types.map { it.id })
+          }
         }
-      }
-      expire()
-    })
+        expire()
+      })
     addAction(NotificationAction.create(LangBundle.message("button.not.this.time.text")) { _ ->
       expire()
     })

@@ -668,11 +668,18 @@ final class PsiUpdateImpl {
       if (myRenameSymbol != null) {
         throw new IllegalStateException("One element is already registered for rename");
       }
+      SmartPsiElementPointer<PsiElement> identifierPointer = null;
+      if (nameIdentifier != null) {
+        identifierPointer = SmartPointerManager.createPointer(nameIdentifier);
+      }
       TextRange range = getRange(element);
       if (range == null) {
         throw new IllegalArgumentException("Element disappeared after postponed operations: " + element);
       }
       range = mapRange(range);
+      if (nameIdentifier != null) {
+        nameIdentifier = identifierPointer.dereference();
+      }
       TextRange identifierRange = nameIdentifier != null ? getRange(nameIdentifier) : null;
       identifierRange = identifierRange == null ? null : mapRange(identifierRange);
       myRenameSymbol = new ModStartRename(navigationFile(), new ModStartRename.RenameSymbolRange(range, identifierRange), suggestedNames);

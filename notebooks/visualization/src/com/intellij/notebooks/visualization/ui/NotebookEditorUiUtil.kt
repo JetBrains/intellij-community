@@ -2,13 +2,16 @@ package com.intellij.notebooks.visualization.ui
 
 import com.intellij.notebooks.visualization.NotebookCellLines
 import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.editor.InlayProperties
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.editor.impl.EditorEmbeddedComponentManager
 import com.intellij.openapi.editor.impl.EditorEmbeddedComponentManager.Properties.RendererFactory
+import com.intellij.openapi.util.Disposer
 import java.awt.Point
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
@@ -54,6 +57,49 @@ fun EditorEx.addComponentInlay(
   component.revalidate()
   inlay.update()
   return inlay
+}
+
+fun EditorEx.addNotebookCellComponentInlay(
+  component: JComponent,
+  isRelatedToPrecedingText: Boolean,
+  showAbove: Boolean,
+  showWhenFolded: Boolean = true,
+  priority: Int,
+  offset: Int,
+): Inlay<*> {
+  val inlay = inlayModel.addBlockElement(
+    offset,
+    InlayProperties()
+      .relatesToPrecedingText(isRelatedToPrecedingText)
+      .showAbove(showAbove)
+      .showWhenFolded(showWhenFolded)
+      .priority(priority),
+    NotebookCellComponentInlayRenderer(component)
+  )
+  if (inlay == null) {
+    if (isDisposed) {
+      throw IllegalStateException("Editor is disposed")
+    }
+    throw IllegalStateException(
+      "Component is null for $component, $isRelatedToPrecedingText, $showAbove, $showWhenFolded, $priority, $offset")
+  }
+
+  componentContainer.add(component, EditorEmbeddedComponentLayoutManager.BlockInlayConstraint(this, inlay, editorKind != EditorKind.DIFF))
+  Disposer.register(inlay) {
+    componentContainer?.remove(component)
+  }
+
+  component.revalidate()
+  inlay.update()
+  return inlay
+}
+
+private class NotebookCellComponentInlayRenderer(
+  private val component: JComponent,
+) : EditorCustomElementRenderer {
+  override fun calcWidthInPixels(inlay: Inlay<*>): Int = 1
+
+  override fun calcHeightInPixels(inlay: Inlay<*>): Int = component.preferredSize.height.coerceAtLeast(0)
 }
 
 private fun updateUiOnParentResizeImpl(parent: JComponent, childRef: WeakReference<JComponent>) {

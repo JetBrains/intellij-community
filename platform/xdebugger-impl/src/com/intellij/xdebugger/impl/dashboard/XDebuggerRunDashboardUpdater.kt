@@ -3,12 +3,11 @@ package com.intellij.xdebugger.impl.dashboard
 
 import com.intellij.execution.ExecutionListener
 import com.intellij.execution.configurations.RunConfiguration
-import com.intellij.execution.dashboard.RunDashboardListener
-import com.intellij.execution.dashboard.RunDashboardManager
 import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.impl.ExecutionManagerImpl.Companion.getDelegatedRunProfile
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.ui.RunContentManagerExtension
 import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.XDebuggerManager
 
@@ -22,7 +21,7 @@ internal class XDebuggerRunDashboardUpdater : ExecutionListener {
     if (profile !is RunConfiguration) return
 
     val project = profile.project
-    if (!RunDashboardManager.getInstance(project).isShowInDashboard(profile)) return
+    if (!RunContentManagerExtension.isShownInServicesIfAvailable(project, profile)) return
 
     val session = XDebuggerManager.getInstance(project).debugSessions.find { it.debugProcess.processHandler === handler }
                   ?: return
@@ -41,7 +40,7 @@ internal class XDebuggerRunDashboardUpdater : ExecutionListener {
       }
 
       private fun updateDashboard() {
-        project.messageBus.syncPublisher<RunDashboardListener>(RunDashboardListener.DASHBOARD_TOPIC).configurationChanged(profile, false)
+        RunContentManagerExtension.updateRunContentIfAvailable(project, false)
       }
     })
   }

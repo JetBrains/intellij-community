@@ -16,6 +16,10 @@
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.runContentManagerExtension"
+                    interface="com.intellij.execution.ui.RunContentManagerExtension" dynamic="true"/>
+  </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <projectSettings service="com.intellij.diagnostic.logging.LogConsolePreferences"/>
     <projectSettings service="com.intellij.execution.target.TargetEnvironmentsManager"/>

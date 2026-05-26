@@ -100,7 +100,7 @@ internal suspend fun buildBundledPluginsForAllPlatforms(
     }
   }
   else {
-    CompletableDeferred(null)
+    CompletableDeferred(value = null)
   }
 
   val pluginDirs = getPluginDirs(context, isUpdateFromSources)

@@ -90,6 +90,7 @@
     <editorActionHandler action="EditorUnindentSelection" implementationClass="org.intellij.plugins.markdown.editor.tables.handlers.MarkdownTableTabHandler$ShiftTab"/>
     <editorActionHandler action="EditorStartNewLine" implementationClass="org.intellij.plugins.markdown.editor.tables.handlers.MarkdownTableShiftEnterHandler"/>
     <editorActionHandler action="EditorDeleteToWordStart" implementationClass="org.intellij.plugins.markdown.editor.tables.handlers.MarkdownTableReformatAfterActionHook"/>
+    <editorActionHandler action="EditorDelete" implementationClass="org.intellij.plugins.markdown.editor.tables.handlers.MarkdownTableDeleteHandler"/>
     <codeInsight.inlayProvider language="Markdown"
                                implementationClass="org.intellij.plugins.markdown.editor.tables.ui.MarkdownTableInlayProvider"
                                id="MarkdownTableInlayProvider"/>

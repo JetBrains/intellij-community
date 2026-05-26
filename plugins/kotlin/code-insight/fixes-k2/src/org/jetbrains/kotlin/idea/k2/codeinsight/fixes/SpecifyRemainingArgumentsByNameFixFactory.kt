@@ -32,4 +32,8 @@ internal object SpecifyRemainingArgumentsByNameFixFactory {
     val noneApplicable = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.NoneApplicable ->
         createFixes(diagnostic.psi.parent)
     }
+
+    val noContextArgument = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.NoContextArgument ->
+        createFixes(diagnostic.psi)
+    }
 }

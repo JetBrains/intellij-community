@@ -10,7 +10,6 @@ import com.intellij.execution.actions.StopProcessAction;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.console.ConsoleViewWrapperBase;
-import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.impl.ConsoleViewImpl;
@@ -23,6 +22,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.ObservableConsoleView;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunContentManagerExtension;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.openapi.Disposable;
@@ -503,7 +503,7 @@ public class BuildView extends CompositeView<ExecutionConsole>
     ExecutionEnvironment environment = myBuildDescriptor.getExecutionEnvironment();
     RunProfile runProfile = environment != null ? environment.getRunProfile() : null;
     return runProfile instanceof RunConfiguration configuration &&
-           RunDashboardManager.getInstance(myProject).isShowInDashboard(configuration) &&
+           RunContentManagerExtension.isShownInServicesIfAvailable(myProject, configuration) &&
            ExecutionManagerImpl.getDelegatedRunProfile(configuration) instanceof RunConfiguration;
   }
 

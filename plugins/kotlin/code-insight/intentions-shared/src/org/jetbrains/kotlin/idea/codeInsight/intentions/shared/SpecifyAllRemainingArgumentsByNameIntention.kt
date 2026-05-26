@@ -8,37 +8,66 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.SpecifyRemainingArgumentsByNameUtil
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.SpecifyRemainingArgumentsByNameUtil.RemainingArgumentsData
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.SpecifyRemainingArgumentsByNameUtil.findRemainingNamedArguments
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 
-internal class SpecifyAllRemainingArgumentsByNameIntention: KotlinApplicableModCommandAction<KtValueArgumentList, RemainingArgumentsData>(KtValueArgumentList::class) {
+internal class SpecifyAllRemainingArgumentsByNameIntention :
+    KotlinApplicableModCommandAction<KtElement, RemainingArgumentsData>(KtElement::class) {
+
     override fun getFamilyName(): String = KotlinBundle.message("specify.all.remaining.arguments.by.name")
 
-    override fun getApplicableRanges(element: KtValueArgumentList): List<TextRange> {
-        val firstArgument = element.arguments.firstOrNull() ?: return ApplicabilityRange.self(element)
-        val lastArgument = element.arguments.lastOrNull() ?: firstArgument
+    override fun isApplicableByPsi(element: KtElement): Boolean {
+        return element is KtCallExpression || element is KtValueArgumentList
+    }
 
-        // We only want the intention to show if the caret is near the start or end of the argument list
-        val startTextRange = TextRange(0, firstArgument.startOffsetInParent)
-        val endTextRange = TextRange(lastArgument.startOffsetInParent + lastArgument.textLength, element.textLength)
+    override fun getApplicableRanges(element: KtElement): List<TextRange> {
+        return when (element) {
+            is KtCallExpression -> {
+                if (element.valueArgumentList == null) return emptyList()
+                ApplicabilityRanges.calleeExpression(element)
+            }
+            is KtValueArgumentList -> {
+                val firstArgument = element.arguments.firstOrNull() ?: return ApplicabilityRange.self(element)
+                val lastArgument = element.arguments.lastOrNull() ?: firstArgument
+                val startTextRange = TextRange(0, firstArgument.startOffsetInParent)
+                val endTextRange = TextRange(lastArgument.startOffsetInParent + lastArgument.textLength, element.textLength)
 
-        return listOf(startTextRange, endTextRange)
+                listOf(startTextRange, endTextRange)
+            }
+            else -> emptyList()
+        }
     }
 
     override fun invoke(
         actionContext: ActionContext,
-        element: KtValueArgumentList,
+        element: KtElement,
         elementContext: RemainingArgumentsData,
         updater: ModPsiUpdater
     ) {
-        SpecifyRemainingArgumentsByNameUtil.applyFix(actionContext.project, element, elementContext.allRemainingArguments, updater)
+        val argumentList = element.getValueArgumentList() ?: return
+        SpecifyRemainingArgumentsByNameUtil.applyFix(
+            actionContext.project,
+            argumentList,
+            elementContext.allValueRemainingArguments,
+            elementContext.allContextRemainingArguments,
+            elementContext.allContextParameterNames,
+            updater
+        )
     }
 
-    override fun KaSession.prepareContext(element: KtValueArgumentList): RemainingArgumentsData? {
-        val remainingArguments = findRemainingNamedArguments(element) ?: return null
+    override fun KaSession.prepareContext(element: KtElement): RemainingArgumentsData? {
+        val argumentList = element.getValueArgumentList() ?: return null
+        return findRemainingNamedArguments(argumentList)
+    }
 
-        return remainingArguments
+    private fun KtElement.getValueArgumentList(): KtValueArgumentList? = when (this) {
+        is KtValueArgumentList -> this
+        is KtCallExpression -> this.valueArgumentList
+        else -> null
     }
 }

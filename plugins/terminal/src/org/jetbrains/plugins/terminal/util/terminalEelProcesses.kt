@@ -196,10 +196,10 @@ private suspend fun EelPath.isFile(eelApi: EelApi): Boolean {
 }
 
 @ApiStatus.Internal
-class ShellEelProcess(val eelProcess: EelProcess, val eelApi: EelApi, val process: PtyProcess) {
+class ShellEelProcess(val eelProcess: EelProcess, val eelApi: EelApi, val ptyProcess: PtyProcess) {
   override fun toString(): String {
     val root = eelApi.descriptor.asSafely<EelPathBoundDescriptor>()?.rootPath?.let { "(root=$it)" }.orEmpty()
-    return "descriptor=${eelApi.descriptor}$root, platform=${eelApi.platform}, process=${process::class.java.name})"
+    return "descriptor=${eelApi.descriptor}$root, platform=${eelApi.platform}, process=${ptyProcess::class.java.name})"
   }
 }
 

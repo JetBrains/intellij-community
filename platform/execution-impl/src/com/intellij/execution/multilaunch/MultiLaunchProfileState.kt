@@ -4,12 +4,12 @@ import com.intellij.execution.CantRunException
 import com.intellij.execution.ExecutionResult
 import com.intellij.execution.Executor
 import com.intellij.execution.configurations.RunProfileState
-import com.intellij.execution.dashboard.RunDashboardManager
 import com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector
 import com.intellij.execution.multilaunch.execution.ExecutionEngine
 import com.intellij.execution.multilaunch.execution.ExecutionMode
 import com.intellij.execution.multilaunch.execution.ExecutionSessionManager
 import com.intellij.execution.runners.ProgramRunner
+import com.intellij.execution.ui.RunContentManagerExtension
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.rd.util.launchBackground
@@ -25,7 +25,7 @@ class MultiLaunchProfileState(
 ) : RunProfileState {
   override fun execute(executor: Executor?, runner: ProgramRunner<*>): ExecutionResult? {
     val isDumb = DumbService.isDumb(project)
-    val isServiceView = RunDashboardManager.getInstance(project).isShowInDashboard(configuration)
+    val isServiceView = RunContentManagerExtension.isShownInServicesIfAvailable(project, configuration)
     val factory = configuration.factory ?: throw CantRunException("factory is null")
     executor ?: throw CantRunException("executor is null")
     project.lifetime.launchBackground {
