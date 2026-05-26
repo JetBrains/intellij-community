@@ -308,6 +308,34 @@ class KotlinCheckedExceptionsInspectionTest {
   }
 
   @Test
+  fun `full try-catch with stdlib type`() {
+    @Language("kotlin")
+    val lib = """
+      import com.intellij.platform.eel.ThrowsChecked
+
+      @ThrowsChecked(IndexOutOfBoundsException::class)
+      fun someAction() {}
+    """.trimIndent()
+
+    @Language("kotlin")
+    val source = """
+      fun someActionUsage() {
+        try {
+          someAction()
+        }
+        catch (_: IndexOutOfBoundsException) {
+          // Nothing.
+        }
+      }
+    """.trimIndent()
+
+    myFixture.configureByText("Lib.kt", lib)
+    myFixture.configureByText("Source.kt", source)
+
+    myFixture.testHighlighting("Source.kt")
+  }
+
+  @Test
   fun `partial try-catch`() {
     @Language("kotlin")
     val lib = """

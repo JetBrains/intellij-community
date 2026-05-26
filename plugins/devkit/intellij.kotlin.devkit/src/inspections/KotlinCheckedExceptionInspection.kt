@@ -7,7 +7,6 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix
-import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.ThrowsChecked
@@ -31,6 +30,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.successfulConstructorCallOrN
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
@@ -38,6 +38,7 @@ import org.jetbrains.kotlin.contracts.description.EventOccurrencesRange
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames
+import org.jetbrains.kotlin.idea.codeinsight.utils.getFqNameIfPackageOrNonLocal
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils
 import org.jetbrains.kotlin.idea.util.addAnnotation
 import org.jetbrains.kotlin.name.ClassId
@@ -46,7 +47,6 @@ import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCatchClause
-import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassLiteralExpression
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import org.jetbrains.kotlin.psi.KtElement
@@ -63,6 +63,7 @@ import org.jetbrains.kotlin.utils.addIfNotNull
 
 class KotlinCheckedExceptionInspection : AbstractKotlinInspection() {
   private class UncheckedExceptionsCachedValueProvider(private val element: KtCallExpression) : CachedValueProvider<Collection<AnnotationAndException>> {
+    @OptIn(KaExperimentalApi::class)
     override fun compute(): CachedValueProvider.Result<Collection<AnnotationAndException>>? {
       // Resolves the function designated by `element` and collects contents of `@ThrowsChecked` and `@Throws` annotations.
       val exceptionsToCheck: MutableCollection<AnnotationAndException> = analyze(element) {
@@ -90,7 +91,14 @@ class KotlinCheckedExceptionInspection : AbstractKotlinInspection() {
 
       // Simplifies checking of cases like `catch (BaseException)`, when the checked exception is an instance of `BaseException`.
       val exceptionsToCheckWithSuperclasses: MutableMap<AnnotationAndException, Set<FqName>> =
-        exceptionsToCheck.associateWithTo(mutableMapOf()) { (_, exceptionFqName) -> allSuperClasses(element, exceptionFqName) }
+        exceptionsToCheck.associateWithTo(mutableMapOf()) { (_, exceptionFqName, expandedFqName) ->
+          buildSet {
+            addAll(allSuperClasses(element, exceptionFqName))
+            if (expandedFqName != null) {
+              addAll(allSuperClasses(element, expandedFqName))
+            }
+          }
+        }
 
       val cacheDependencies = mutableListOf<PsiElement>()
       var currentNode: PsiElement? = element
@@ -134,23 +142,15 @@ class KotlinCheckedExceptionInspection : AbstractKotlinInspection() {
             // It's intentional.
             // The goal of the inspection is to remind about the necessity of handling exceptions
             // but not prevent any unexpected exception in compile time.
-            for (catchClause in currentNode.catchClauses) {
-              catchClause.accept(object : PsiElementVisitor() {
-                override fun visitElement(element: PsiElement) {
-                  if (element is KtNameReferenceExpression) {
-                    val clsFqName: FqName =
-                      (element.reference?.resolve() as? KtClass)?.fqName?.maybeToKotlinFqName()
-                      ?: return
-                    exceptionsToCheckWithSuperclasses.values.removeAll { superClasses ->
-                      clsFqName in superClasses
-                    }
-                  }
-                  else {
-                    ProgressIndicatorProvider.checkCanceled()
-                    element.acceptChildren(this)
-                  }
+            loop@ for (catchClause in currentNode.catchClauses) {
+              analyze(catchClause) {
+                val typeRef = catchClause.catchParameter?.typeReference?.resolveSymbol()
+                val typeSymbol = if (typeRef is KaTypeAliasSymbol) typeRef.expandedType.expandedSymbol else typeRef
+                val cls = typeSymbol?.getFqNameIfPackageOrNonLocal()?.maybeToKotlinFqName()
+                exceptionsToCheckWithSuperclasses.values.removeAll { superClasses ->
+                  cls in superClasses
                 }
-              })
+              }
             }
           }
         }
@@ -241,9 +241,11 @@ class KotlinCheckedExceptionInspection : AbstractKotlinInspection() {
           .filter { isAnnotationSupported(it.annotationName) }
 
       for ((annotationFqName, exceptionFqName) in uncheckedExceptions) {
+        val annotationClassId = ClassId.fromString(if (annotationFqName.isKotlinThrows()) annotationFqName.shortName().asString()
+                                                   else annotationFqName.asString())
         val annotationText = "${exceptionFqName}::class"
         whereAddAnnotationTo.addAnnotation(
-          annotationClassId = ClassId.fromString(annotationFqName.asString()),
+          annotationClassId = annotationClassId,
           annotationInnerText = annotationText,
           searchForExistingEntry = true,
           addToExistingAnnotation = { addArgumentToAnnotation(it, annotationText) }
@@ -359,7 +361,7 @@ private fun FqName.maybeToKotlinFqName(): FqName =
   JavaToKotlinClassMap.mapJavaToKotlin(this)?.asSingleFqName()
   ?: this
 
-private data class AnnotationAndException(val annotationName: FqName, val exceptionName: FqName)
+private data class AnnotationAndException(val annotationName: FqName, val exceptionName: FqName, val expandedExceptionName: FqName?)
 
 /** Parses a list of annotations, extracts all classes from all `@ThrowChecked`, return fully qualified names of the extracted classes. */
 private fun exceptionsToCheck(annotations: Collection<KtAnnotationEntry>): Collection<AnnotationAndException> {
@@ -375,11 +377,11 @@ private fun exceptionsToCheck(annotations: Collection<KtAnnotationEntry>): Colle
           val cle =
             valueArgument.getArgumentExpression() as? KtClassLiteralExpression
             ?: continue
-          val fqName = analyze(cle) {
-            (cle.receiverType as? KaClassType)?.classId?.asSingleFqName()
+          val (fqName, expandedFqName) = analyze(cle) {
+            (cle.receiverType as? KaClassType)?.classId?.asSingleFqName() to (cle.receiverType?.fullyExpandedType as? KaClassType)?.classId?.asSingleFqName()
           }
           if (fqName != null) {
-            result.add(AnnotationAndException(annotationFqName, fqName))
+            result.add(AnnotationAndException(annotationFqName, fqName, expandedFqName))
           }
         }
       }
