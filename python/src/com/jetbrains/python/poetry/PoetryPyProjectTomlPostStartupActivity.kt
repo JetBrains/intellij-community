@@ -10,7 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findDocument
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
-import com.jetbrains.python.sdk.PythonSdkUpdater
+import com.jetbrains.python.sdk.getModuleRoots
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -20,7 +20,7 @@ import kotlinx.coroutines.withContext
  */
 internal class PoetryPyProjectTomlPostStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
-    val modulesRoots = PythonSdkUpdater.getModuleRoots(project)
+    val modulesRoots = project.getModuleRoots()
     for (module in modulesRoots) {
       val tomlFile = withContext(Dispatchers.IO) {
         module.findChild(PY_PROJECT_TOML)?.let { getPyProjectTomlForPoetry(it) }

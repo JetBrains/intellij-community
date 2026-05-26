@@ -34,14 +34,15 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.backend.observation.TrackingUtil;
 import com.intellij.remote.RemoteSdkProperties;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathMappingSettings;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
@@ -495,13 +496,33 @@ public final class PythonSdkUpdater {
 
   private static void updateSdkPaths(@NotNull PyRichSdk richSdk, @NotNull List<String> paths, @Nullable Project project) {
     Sdk sdk = richSdk.getSdk();
-    final var moduleRoots = getModuleRoots(project);
+    final var moduleRoots = project != null ? PythonSdkModuleRoots.getModuleRootsBlocking(project) : Collections.<VirtualFile>emptySet();
+    if (project != null && moduleRoots.isEmpty() && PlatformUtils.isPyCharm()) {
+      // Safety net for PY-86494: the project without any modules and/or content/source roots —
+      // only possible when the workspace model is out of sync with the on-disk JPS model.
+      // isPyCharm condition was added just to avoid unknown side effects in other IDEs
+      return;
+    }
     final var excludedPaths = getExcludedPaths(sdk);
     final var sdkRoots = splitIntoLibraryAndSourceRoots(richSdk, paths, moduleRoots, excludedPaths, it -> sdkPathToRoot(richSdk, it));
     final var userAddedRoots = splitIntoLibraryAndSourceRoots(richSdk, getUserAddedPaths(sdk), moduleRoots, excludedPaths, Function.identity());
 
     final boolean forceCommit = ensureBinarySkeletonsDirectoryExists(sdk);
-    final List<VirtualFile> localSdkPaths = buildSdkPaths(sdk, sdkRoots.first, userAddedRoots.first);
+    final List<VirtualFile> suggestedSdkPaths = buildSdkPaths(sdk, sdkRoots.first, userAddedRoots.first);
+    // Final safety net for PY-86494: no SDK CLASSES root should land under a project module's
+    // content/source root *unless* it's also under the SDK's own venv home (e.g. the venv lives
+    // inside the module). If splitIntoLibraryAndSourceRoots ever leaks a project-local path into
+    // the lib bucket (the original bug — empty moduleRoots, mis-classified user-added paths, …),
+    // drop the offending entries here so they never reach ProjectJdkTable.
+    final List<VirtualFile> localSdkPaths = ContainerUtil.filter(suggestedSdkPaths, sdkPath -> {
+      if (isUnderModuleRootsButNotSdk(sdkPath, moduleRoots, richSdk)) {
+        LOG.error("Dropping SDK CLASSES root '%s' under module roots (outside the venv) of project '%s'."
+                    .formatted(sdkPath.getPath(), project != null ? project.getName() : "<no project>"));
+        return false;
+      }
+      return true;
+    });
+    
     commitSdkPathsIfChanged(sdk, localSdkPaths, forceCommit);
 
     if (Registry.is("python.detect.cross.module.dependencies")) {
@@ -610,19 +631,6 @@ public final class PythonSdkUpdater {
       LOG.info("Bogus sys.path entry " + path);
     }
     return Pair.createNonNull(lib, source);
-  }
-
-  @ApiStatus.Internal
-  public static @NotNull Set<VirtualFile> getModuleRoots(@Nullable Project project) {
-    if (project != null) {
-      final Set<VirtualFile> moduleRoots = new HashSet<>();
-      final Module[] modules = ModuleManager.getInstance(project).getModules();
-      for (Module module : modules) {
-        moduleRoots.addAll(PyUtil.getSourceRoots(module));
-      }
-      return moduleRoots;
-    }
-    return Collections.emptySet();
   }
 
   private static @NotNull Collection<VirtualFile> getExcludedPaths(@NotNull Sdk sdk) {

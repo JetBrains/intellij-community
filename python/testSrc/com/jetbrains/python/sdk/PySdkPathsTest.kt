@@ -48,6 +48,7 @@ class PySdkPathsTest {
 
   @Test
   fun sysPathEntryIsExcludedPath() {
+    createModule()
     val sdk = PythonMockSdk.create()
 
     val excluded = createInSdkRoot(sdk, "my_excluded")
