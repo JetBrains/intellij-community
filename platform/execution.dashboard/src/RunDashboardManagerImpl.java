@@ -95,8 +95,8 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   private final Project myProject;
   private State myState = new State();
   private final Set<String> myTypes = new HashSet<>();
-  private final Set<RunConfiguration> myHiddenConfigurations = new HashSet<>();
-  private final Set<RunConfiguration> myShownConfigurations = new HashSet<>();
+  private final Set<RunConfiguration> myHiddenConfigurations = ConcurrentHashMap.newKeySet();
+  private final Set<RunConfiguration> myShownConfigurations = ConcurrentHashMap.newKeySet();
   private final Map<RunConfiguration, RunDashboardRunConfigurationStatus> myConfigurationStatuses = new ConcurrentHashMap<>();
   private volatile List<List<RunDashboardService>> myServices = new SmartList<>();
   private final BackendRunDashboardManagerState mySharedState;
