@@ -6,7 +6,7 @@ import com.intellij.compose.ide.plugin.shared.associateNotNull
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
@@ -79,6 +79,6 @@ internal class ComposeResourcesManager(private val project: Project) {
   }
 
   companion object {
-    val log = Logger.getInstance(this::class.java)
+    private val log = logger<ComposeResourcesManager>()
   }
 }

@@ -5,7 +5,7 @@ import com.intellij.compose.ide.plugin.gradleTooling.rt.ComposeResourcesExtensio
 import com.intellij.compose.ide.plugin.gradleTooling.rt.ComposeResourcesModel
 import com.intellij.compose.ide.plugin.gradleTooling.rt.ComposeResourcesModelBuilder
 import com.intellij.compose.ide.plugin.gradleTooling.rt.ComposeResourcesModelImpl
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
@@ -75,7 +75,7 @@ internal class ComposeResourcesProjectResolver : AbstractProjectResolverExtensio
   }
 
   companion object {
-    val log = Logger.getInstance(this::class.java)
+    private val log = logger<ComposeResourcesProjectResolver>()
 
     private const val KOTLIN_ANDROID = "kotlin-android"
   }
