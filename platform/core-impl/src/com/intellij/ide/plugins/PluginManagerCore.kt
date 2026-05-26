@@ -596,17 +596,14 @@ object PluginManagerCore {
       }
     }
 
-    val (pluginSet, cycleErrors) = run {
-      initStagesActivity = initStagesActivity?.endAndStart("resolveConstraints")
-      val resolvedPluginSet = initContext.resolveConstraints(pluginsToLoad)
-      PluginInitializationDiagnosticUtils.logExclusionTree(resolvedPluginSet, incompletePlugins)
-      val (adaptedPluginSet, cycleErrors) = adaptResolvedPluginSetAsOldPluginSet(
-        input = PluginSubsystemInput(initContext, discoveredPlugins),
-        resolvedPluginSet = resolvedPluginSet,
-        registerLoadingError = ::registerLoadingError,
-      )
-      adaptedPluginSet to cycleErrors
-    }
+    initStagesActivity = initStagesActivity?.endAndStart("resolveConstraints")
+    val resolvedPluginSet = initContext.resolveConstraints(pluginsToLoad)
+    PluginInitializationDiagnosticUtils.logExclusionTree(resolvedPluginSet, incompletePlugins)
+    val (pluginSet, cycleErrors) = adaptResolvedPluginSetAsOldPluginSet(
+      input = PluginSubsystemInput(initContext, discoveredPlugins),
+      resolvedPluginSet = resolvedPluginSet,
+      registerLoadingError = ::registerLoadingError,
+    )
 
     initStagesActivity = initStagesActivity?.endAndStart("error reporting")
     pluginsState.addPluginNonLoadReasons(pluginNonLoadReasons.filter { it.value !is PluginIsMarkedDisabled })
