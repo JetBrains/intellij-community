@@ -14,7 +14,9 @@ import org.jetbrains.kotlin.psi.KtValueArgumentList
 
 sealed class SpecifyRemainingArgumentsByNameFix(
     element: KtValueArgumentList,
-    private val remainingArguments: List<Name>,
+    private val remainingValueArguments: List<Name>,
+    private val remainingContextArguments: List<Name> = emptyList(),
+    private val allContextParameterNames: Set<Name> = emptySet(),
 ) : PsiUpdateModCommandAction<KtValueArgumentList>(element) {
     companion object {
         fun createAvailableQuickFixes(
@@ -22,10 +24,21 @@ sealed class SpecifyRemainingArgumentsByNameFix(
             remainingArguments: RemainingArgumentsData
         ): List<SpecifyRemainingArgumentsByNameFix> {
             return buildList {
-                add(SpecifyAllRemainingArgumentsByNameFix(argumentList, remainingArguments.allRemainingArguments))
-                if (remainingArguments.remainingRequiredArguments.isNotEmpty() &&
-                    remainingArguments.remainingRequiredArguments != remainingArguments.allRemainingArguments) {
-                    add(SpecifyRemainingRequiredArgumentsByNameFix(argumentList, remainingArguments.remainingRequiredArguments))
+                val remainingValueArguments = remainingArguments.allValueRemainingArguments
+                val remainingRequiredArguments = remainingArguments.remainingRequiredArguments
+
+                add(
+                    SpecifyAllRemainingArgumentsByNameFix(
+                        argumentList,
+                        remainingValueArguments,
+                        remainingArguments.allContextRemainingArguments,
+                        remainingArguments.allContextParameterNames
+                    )
+                )
+                if (remainingRequiredArguments.isNotEmpty() &&
+                    remainingRequiredArguments != remainingValueArguments
+                ) {
+                    add(SpecifyRemainingRequiredArgumentsByNameFix(argumentList, remainingRequiredArguments))
                 }
             }
         }
@@ -36,14 +49,23 @@ sealed class SpecifyRemainingArgumentsByNameFix(
     }
 
     override fun invoke(actionContext: ActionContext, element: KtValueArgumentList, updater: ModPsiUpdater) {
-        SpecifyRemainingArgumentsByNameUtil.applyFix(actionContext.project, element, remainingArguments, updater)
+        SpecifyRemainingArgumentsByNameUtil.applyFix(
+            actionContext.project,
+            element,
+            remainingValueArguments,
+            remainingContextArguments,
+            allContextParameterNames,
+            updater
+        )
     }
 }
 
 class SpecifyAllRemainingArgumentsByNameFix(
     element: KtValueArgumentList,
-    remainingArguments: List<Name>,
-) : SpecifyRemainingArgumentsByNameFix(element, remainingArguments) {
+    remainingValueArguments: List<Name>,
+    remainingContextArguments: List<Name>,
+    allContextParameterNames: Set<Name>
+) : SpecifyRemainingArgumentsByNameFix(element, remainingValueArguments, remainingContextArguments, allContextParameterNames) {
     override fun getFamilyName(): String = KotlinBundle.message("specify.all.remaining.arguments.by.name")
 }
 

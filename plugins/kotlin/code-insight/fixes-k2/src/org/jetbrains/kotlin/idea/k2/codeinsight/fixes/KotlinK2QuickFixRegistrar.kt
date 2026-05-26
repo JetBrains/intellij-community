@@ -709,6 +709,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
 
     private val contextParameters = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerFactory(NoContextParameterFixFactory.noContextArgument)
+        registerFactory(SpecifyRemainingArgumentsByNameFixFactory.noContextArgument)
     }
 
     override val list: KotlinQuickFixesList = KotlinQuickFixesList.createCombined(
