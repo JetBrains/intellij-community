@@ -882,7 +882,6 @@ fun isProductWithTheOnlyDescriptor(platformPrefix: String): Boolean {
   return platformPrefix == PlatformUtils.IDEA_PREFIX ||
          platformPrefix == PlatformUtils.WEB_PREFIX ||
          platformPrefix == PlatformUtils.DBE_PREFIX ||
-         platformPrefix == PlatformUtils.DATASPELL_PREFIX ||
          platformPrefix == PlatformUtils.GATEWAY_PREFIX ||
          platformPrefix == "IntelliJServer" ||
          platformPrefix == "CodeServer"

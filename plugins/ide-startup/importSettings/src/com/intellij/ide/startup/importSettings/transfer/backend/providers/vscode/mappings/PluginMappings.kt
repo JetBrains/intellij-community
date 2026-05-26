@@ -52,7 +52,6 @@ internal class CommonPluginMapping : VSCodePluginMapping {
     PlatformUtils.isAqua() -> listOf("aq.json")
     PlatformUtils.isCLion() -> listOf("cl.json")
     PlatformUtils.isDataGrip() -> listOf("dg.json")
-    PlatformUtils.isDataSpell() -> listOf("ds.json")
     PlatformUtils.isGoIde() -> listOf("go.json")
     PlatformUtils.isPhpStorm() -> listOf("ps.json")
     PlatformUtils.isRider() -> listOf("rd.json")

@@ -190,7 +190,7 @@ private fun getProjectsBasePath(): String {
 }
 
 private val projectsDirDefault: String
-  get() = if (PlatformUtils.isDataGrip() || PlatformUtils.isDataSpell()) getUserHomeProjectDir() else Path.of(PathManager.getConfigPath(), PROJECTS_DIR).toString()
+  get() = if (PlatformUtils.isDataGrip()) getUserHomeProjectDir() else Path.of(PathManager.getConfigPath(), PROJECTS_DIR).toString()
 
 private fun getUserHomeProjectDir(): String {
   val appNamesInfo = ApplicationNamesInfo.getInstance()

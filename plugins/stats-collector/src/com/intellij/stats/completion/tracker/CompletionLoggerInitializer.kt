@@ -23,14 +23,12 @@ import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.Project
 import com.intellij.stats.completion.CompletionStatsPolicy
 import com.intellij.stats.completion.sender.isCompletionLogsSendAllowed
-import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.ThreadingAssertions
 import kotlin.random.Random
 
 class CompletionLoggerInitializer : LookupTracker() {
   companion object {
     private const val COMPLETION_EVALUATION_HEADLESS = "completion.evaluation.headless"
-    private const val PYTHON_IN_DATASPELL = "python dataspell"
 
     private fun shouldInitialize(): Boolean {
       val app = ApplicationManager.getApplication()
@@ -39,7 +37,6 @@ class CompletionLoggerInitializer : LookupTracker() {
 
     private val LOGGED_SESSIONS_RATIO_LANGUAGE: Map<String, Double> = mapOf(
       "python" to 0.5,
-      PYTHON_IN_DATASPELL to 1.0,
       "scala" to 0.3,
       "php" to 0.2,
       "kotlin" to 0.2,
@@ -123,10 +120,6 @@ class CompletionLoggerInitializer : LookupTracker() {
       if (language.isKindOf(sql)) {
         return sql.displayName
       }
-    }
-
-    if (PlatformUtils.isDataSpell() && language.displayName.contains("python", ignoreCase = true)) {
-      return PYTHON_IN_DATASPELL
     }
 
     return language.displayName

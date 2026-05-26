@@ -17,7 +17,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.util.PlatformUtils.APPCODE_PREFIX
 import com.intellij.util.PlatformUtils.CLION_PREFIX
-import com.intellij.util.PlatformUtils.DATASPELL_PREFIX
 import com.intellij.util.PlatformUtils.DBE_PREFIX
 import com.intellij.util.PlatformUtils.GOIDE_PREFIX
 import com.intellij.util.PlatformUtils.IDEA_CE_PREFIX
@@ -44,7 +43,6 @@ internal object CopyTBXReferenceAction {
     PYCHARM_PREFIX to "pycharm",
     PYCHARM_CE_PREFIX to "pycharm",
     PYCHARM_EDU_PREFIX to "pycharm",
-    DATASPELL_PREFIX to "pycharm",
     PHP_PREFIX to "php-storm",
     RUBY_PREFIX to "rubymine",
     WEB_PREFIX to "web-storm",

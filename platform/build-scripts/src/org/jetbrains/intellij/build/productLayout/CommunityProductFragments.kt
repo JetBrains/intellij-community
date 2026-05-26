@@ -42,7 +42,7 @@ object CommunityProductFragments {
    * - Optional remote servers support
    * - PyCharm-specific extensions and actions (via pycharm-core.xml)
    *
-   * Use this fragment for products that include PyCharm functionality (PyCharm Community, PyCharm Professional, DataSpell).
+   * Use this fragment for products that include PyCharm functionality (PyCharm Community, PyCharm Professional).
    * Note: The extensions and actions blocks remain in pycharm-core.xml as they cannot be represented in the product content DSL.
    */
   fun pycharmCoreFragment(): ProductModulesContentSpec = productModules {

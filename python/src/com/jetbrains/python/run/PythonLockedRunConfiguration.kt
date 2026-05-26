@@ -136,8 +136,7 @@ internal open class PythonLockedRunConfigurationTypeBase(val theId: String, @Nls
   init {
     // Do not enable "lock" configs for non PyCharm or Idea (as it's capable of running the Python plugin) IDEs or if the Python plugin is enabled.
     if ((!PlatformUtils.isPyCharm() && !PlatformUtils.isIntelliJ()) ||
-        PluginManager.getInstance().findEnabledPlugin(PluginId.getId(PYTHON_PROF_PLUGIN_ID)) != null ||
-        PlatformUtils.isDataSpell()) {
+        PluginManager.getInstance().findEnabledPlugin(PluginId.getId(PYTHON_PROF_PLUGIN_ID)) != null) {
       throw ExtensionNotApplicableException.create()
     }
   }

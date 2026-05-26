@@ -43,7 +43,7 @@ private val PLUGIN_GROUP_NAMES = setOf(
   "js", "javascript", "typescript", "nodejs", "eslint", "jest",
   "ruby", "rubymine",
   "groovy", "python", "php",
-  "kotlin", "spring", "jupyter", "dataspell", "javafx",
+  "kotlin", "spring", "jupyter", "javafx",
   "maven", "gradle", "android", "eclipse",
   "rider", "compiler"
 )

@@ -27,7 +27,6 @@ import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
-import com.intellij.util.PlatformUtils
 import com.intellij.util.io.TrashBin
 
 private val model: GeneralSettings
@@ -111,10 +110,6 @@ internal class GeneralSettingsConfigurable :
                           GeneralSettings.OPEN_PROJECT_SAME_WINDOW)
               radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.confirm.window.to.open.project.in"),
                           GeneralSettings.OPEN_PROJECT_ASK)
-              if (PlatformUtils.isDataSpell()) {
-                radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.attach"),
-                            GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH)
-              }
             }.layout(RowLayout.INDEPENDENT)
           }.bind(getter = {  model.confirmOpenNewProject2 ?: GeneralSettings.defaultConfirmNewProject()  }, setter = { model.confirmOpenNewProject2 = it })
         }

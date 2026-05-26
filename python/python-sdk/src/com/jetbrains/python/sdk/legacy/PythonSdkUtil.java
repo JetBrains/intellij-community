@@ -85,7 +85,6 @@ public final class PythonSdkUtil {
    */
   public static boolean isFreeTier() {
     return PlatformUtils.isPyCharm() &&
-           (!PlatformUtils.isDataSpell()) &&
            PluginManagerCore.isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID);
   }
 

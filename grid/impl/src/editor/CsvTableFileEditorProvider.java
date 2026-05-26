@@ -89,7 +89,7 @@ public final class CsvTableFileEditorProvider extends WeighedFileEditorProvider 
 
   @Override
   public @NotNull FileEditorPolicy getPolicy() {
-    if (PlatformUtils.isPyCharm() || PlatformUtils.isDataSpell()) {
+    if (PlatformUtils.isPyCharm()) {
       return FileEditorPolicy.PLACE_BEFORE_DEFAULT_EDITOR;
     }
     else {

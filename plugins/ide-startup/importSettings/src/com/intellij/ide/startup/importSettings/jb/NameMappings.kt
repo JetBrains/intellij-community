@@ -107,7 +107,6 @@ enum class IDEData(
     fun getSelf(): IDEData? = when {
       PlatformUtils.isCLion() -> CLION
       PlatformUtils.isDataGrip() -> DATAGRIP
-      PlatformUtils.isDataSpell() -> DATASPELL
       PlatformUtils.isGoIde() -> GOLAND
       PlatformUtils.isIdeaCommunity() -> IDEA_COMMUNITY
       PlatformUtils.isIdeaUltimate() -> IDEA_ULTIMATE

@@ -12,13 +12,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.ui.popup.ListPopup
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup
-import com.intellij.util.PlatformUtils
 import com.intellij.util.messages.MessageBusConnection
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonIdeLanguageCustomization
@@ -32,15 +30,13 @@ import kotlinx.coroutines.launch
 
 private const val ID: String = "pythonInterpreterWidget"
 
-fun isDataSpellInterpreterWidgetEnabled(): Boolean = PlatformUtils.isDataSpell() && Registry.`is`("dataspell.interpreter.widget")
-
 internal class PySdkStatusBarWidgetFactory : StatusBarWidgetFactory {
   override fun getId(): String = ID
 
   override fun getDisplayName(): String = PyBundle.message("configurable.PyActiveSdkModuleConfigurable.python.interpreter.display.name")
 
   override fun isAvailable(project: Project): Boolean {
-    return PythonIdeLanguageCustomization.isMainlyPythonIde() && !isDataSpellInterpreterWidgetEnabled()
+    return PythonIdeLanguageCustomization.isMainlyPythonIde()
   }
 
   override fun createWidget(project: Project, scope: CoroutineScope): StatusBarWidget = PySdkStatusBar(project, scope)

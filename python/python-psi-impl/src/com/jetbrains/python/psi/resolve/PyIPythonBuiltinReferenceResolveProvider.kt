@@ -5,8 +5,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.QualifiedName
 import com.intellij.psi.util.siblings
-import com.intellij.util.PlatformUtils
-import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyEmptyExpression
 import com.jetbrains.python.psi.PyExpressionStatement
@@ -45,18 +43,14 @@ class PyIPythonBuiltinReferenceResolveProvider : PyReferenceResolveProvider {
   }
 
   /**
-  We resolve IPython built-ins in two cases:
-  1) in PyCharm PRO in Jupyter files only
-  2) in DataSpell in Python files and Jupyter files
+  We resolve IPython built-ins in PyCharm PRO in Jupyter files only.
    */
   private fun needToResolve(context: TypeEvalContext): Boolean {
     val psiFile = context.origin ?: return false
-    return isJupyterFile(psiFile) || (PlatformUtils.isDataSpell() && isPythonFile(psiFile))
+    return isJupyterFile(psiFile)
   }
 
   private fun isJupyterFile(element: PsiFile): Boolean = element.virtualFile?.extension == "ipynb"
-
-  private fun isPythonFile(element: PsiFile): Boolean = element.virtualFile?.fileType is PythonFileType
 
   private fun resolveDisplay(element: PyQualifiedExpression): List<RatedResolveResult> {
     val resolveContext = fromFoothold(element)

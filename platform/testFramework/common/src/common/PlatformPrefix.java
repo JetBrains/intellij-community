@@ -20,7 +20,7 @@ public final class PlatformPrefix {
     "Rider", "GoLand", "CLion", "FleetBackend",
     null,
     "AppCode",
-    "Python", "DataSpell", "PyCharmCore",
+    "Python", "PyCharmCore",
     "DataGrip",
     "Ruby",
     "PhpStorm",

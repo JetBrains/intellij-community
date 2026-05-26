@@ -300,7 +300,6 @@ data class DialogImportItem(val item: SettingsContributor, val icon: Icon) {
     private fun getCurrentProductIcon() = when {
       PlatformUtils.isCLion() -> StartupImportIcons.IdeIcons.CL_48
       PlatformUtils.isDataGrip() -> StartupImportIcons.IdeIcons.DG_48
-      PlatformUtils.isDataSpell() -> StartupImportIcons.IdeIcons.DS_48
       PlatformUtils.isGoIde() -> StartupImportIcons.IdeIcons.GO_48
       PlatformUtils.isIdeaCommunity() -> StartupImportIcons.IdeIcons.IC_48
       PlatformUtils.isIdeaUltimate() -> StartupImportIcons.IdeIcons.IU_48

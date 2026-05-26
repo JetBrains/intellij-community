@@ -34,7 +34,6 @@ private val PRODUCT_CODES_TO_PREFIXES = mapOf(
   "RM" to "RubyMine",
   "PY" to "PyCharm",
   "PC" to "PyCharmCE",
-  "DS" to "DataSpell",
   "PE" to "PyCharmEdu",
   "PS" to "PhpStorm",
   "WS" to "WebStorm",

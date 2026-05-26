@@ -20,7 +20,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -75,22 +74,11 @@ internal class EditorCellActionsToolbarController(
     editor.notebookEditor.singleFileDiffMode.afterDistinctChange(this) {
       updateToolbarVisibility()
     }
-    editor.notebookEditor.cellAddToolbarShown.afterDistinctChange(this) {
-      updateToolbarVisibility()
-    }
 
     //Prevent StackOverflow
     coroutineScope.launch(Dispatchers.EDT) {
       updateToolbarVisibility()
     }
-  }
-
-  /**
-   * Functionality to hide "CellActions" toolbar when "AddNewCell" tollbar is shown initially was made for specifically long toolbar of DS.
-   * Currently, it is disabled for all platforms except DS.
-   */
-  fun shouldShowCellToolbarTogetherWithAddNewCellToolbar(): Boolean {
-    return !PlatformUtils.isDataSpell()
   }
 
   override fun checkAndRebuildInlays() {
@@ -103,7 +91,6 @@ internal class EditorCellActionsToolbarController(
 
   private fun updateToolbarVisibility() {
     val shouldBeVisible = editor.notebookEditor.singleFileDiffMode.get().not() &&
-                          (editor.notebookEditor.cellAddToolbarShown.get().not() || shouldShowCellToolbarTogetherWithAddNewCellToolbar()) &&
                           ((cell.isSelected.get() && NotebookSettings.getInstance().showToolbarForSelectedCell) || cell.isHovered.get())
     if (shouldBeVisible)
       showToolbar()

@@ -230,7 +230,6 @@ internal fun getProductTag(): String {
     PlatformUtils.isDataGrip() -> "ij_datagrip1"
     PlatformUtils.isGoIde() -> "ij_goland1"
     PlatformUtils.isJetBrainsClient() -> "ij_code_with_me1"
-    PlatformUtils.isDataSpell() -> "ij_dataspell1"
     PlatformUtils.isRider() -> "ij_rider1"
     PlatformUtils.isRustRover() -> "ij_rustrover1"
     PlatformUtils.isAqua() -> "ij_aqua1"

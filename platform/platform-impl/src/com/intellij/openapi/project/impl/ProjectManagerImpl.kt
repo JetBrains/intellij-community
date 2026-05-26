@@ -125,7 +125,6 @@ import com.intellij.ui.IdeUICustomization
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.ExceptionUtil
-import com.intellij.util.PlatformUtils.isDataSpell
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -1127,7 +1126,6 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     val isValidProject = ProjectUtil.isValidProjectPath(projectDir)
     val processor = ProjectAttachProcessor.getProcessor(projectToClose, projectDir, options.project)
     if (processor != null &&
-        !isDataSpell() &&
         (!isValidProject || serviceAsync<GeneralSettings>().confirmOpenNewProject == GeneralSettings.OPEN_PROJECT_ASK)) {
       while (true) {
         val result = tryToOpen(projectToClose, processor, options, projectDir)

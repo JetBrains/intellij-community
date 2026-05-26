@@ -39,7 +39,6 @@ public final class PlatformUtils {
   public static final String CLION_PREFIX = "CLion";
   public static final String PYCHARM_PREFIX = "Python";
   public static final String PYCHARM_CE_PREFIX = "PyCharmCore";
-  public static final String DATASPELL_PREFIX = "DataSpell";
   public static final String PYCHARM_EDU_PREFIX = "PyCharmEdu";
   public static final String RUBY_PREFIX = "Ruby";
   public static final String PHP_PREFIX = "PhpStorm";
@@ -54,7 +53,7 @@ public final class PlatformUtils {
   public static final String GATEWAY_PREFIX = "Gateway";
 
   @SuppressWarnings("SSBasedInspection") private static final Set<String> COMMERCIAL_EDITIONS = new HashSet<>(Arrays.asList(
-    IDEA_PREFIX, APPCODE_PREFIX, CLION_PREFIX, PYCHARM_PREFIX, DATASPELL_PREFIX, RUBY_PREFIX, PHP_PREFIX, WEB_PREFIX,
+    IDEA_PREFIX, APPCODE_PREFIX, CLION_PREFIX, PYCHARM_PREFIX, RUBY_PREFIX, PHP_PREFIX, WEB_PREFIX,
     DBE_PREFIX, RIDER_PREFIX, GOIDE_PREFIX, RUSTROVER_PREFIX, AQUA_PREFIX));
 
   public static @NotNull String getPlatformPrefix() {
@@ -138,7 +137,7 @@ public final class PlatformUtils {
   }
 
   public static boolean isPyCharm() {
-    return is(PYCHARM_PREFIX) || isPyCharmCommunity() || isPyCharmEducational() || isDataSpell();
+    return is(PYCHARM_PREFIX) || isPyCharmCommunity() || isPyCharmEducational();
   }
 
   /**
@@ -151,10 +150,6 @@ public final class PlatformUtils {
 
   public static boolean isPyCharmCommunity() {
     return is(PYCHARM_CE_PREFIX);
-  }
-
-  public static boolean isDataSpell() {
-    return is(DATASPELL_PREFIX);
   }
 
   public static boolean isPyCharmEducational() {

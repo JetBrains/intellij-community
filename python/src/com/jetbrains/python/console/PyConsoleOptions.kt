@@ -11,7 +11,6 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.PathMappingSettings
-import com.intellij.util.PlatformUtils
 import com.intellij.util.containers.ComparatorUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Tag
@@ -111,7 +110,7 @@ class PyConsoleOptions : PersistentStateComponent<PyConsoleOptions.State> {
     var myUseExistingConsole: Boolean = false
 
     @JvmField
-    var myCommandQueueEnabled: Boolean = PlatformUtils.isDataSpell()
+    var myCommandQueueEnabled: Boolean = false
 
     @JvmField
     var myCodeCompletionOption: PyConsoleOptionsConfigurable.CodeCompletionOption =

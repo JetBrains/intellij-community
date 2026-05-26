@@ -28,7 +28,6 @@ internal class McpServerSettings : SimplePersistentStateComponent<McpServerSetti
       return when (PlatformUtils.getPlatformPrefix()) {
         PlatformUtils.IDEA_PREFIX -> 0
         PlatformUtils.CLION_PREFIX -> PORT_STEP * 1
-        PlatformUtils.DATASPELL_PREFIX -> PORT_STEP * 2
         PlatformUtils.DBE_PREFIX -> PORT_STEP * 3
         PlatformUtils.GOIDE_PREFIX -> PORT_STEP * 4
         PlatformUtils.PHP_PREFIX -> PORT_STEP * 5

@@ -19,7 +19,7 @@ private val EDU_TOOLS_PLUGIN_ID = PluginId.getId("com.jetbrains.edu")
 internal class JBAcademyInteractiveCourse : InteractiveCourseFactory {
   override val isActive: Boolean
     get() = PlatformUtils.isIntelliJ() ||
-            PlatformUtils.isPyCharm() && !PlatformUtils.isDataSpell() ||
+            PlatformUtils.isPyCharm() ||
             PlatformUtils.isWebStorm() ||
             PlatformUtils.isCLion() ||
             PlatformUtils.isGoIde() ||

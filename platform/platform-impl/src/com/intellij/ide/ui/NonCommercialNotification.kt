@@ -142,7 +142,6 @@ private class NonCommercialPopup(private val widget: NonCommercialWidget) : Clic
       "QA" -> "Aqua"
       "CL" -> "CLion"
       "DB" -> "DataGrip"
-      "DS" -> "DataSpell"
       "GO" -> "GoLand"
       "II" -> "Idea"
       "PC" -> "PyCharm"

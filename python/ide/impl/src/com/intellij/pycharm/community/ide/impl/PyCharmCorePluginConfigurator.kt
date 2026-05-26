@@ -18,7 +18,6 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ex.ConfigurableGroupEP
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.pycharm.community.ide.impl.settings.PythonMainConfigurable
-import com.intellij.util.PlatformUtils
 import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings
 import com.jetbrains.python.console.PyConsoleOptions
@@ -90,7 +89,7 @@ internal class PyCharmCorePluginConfigurator : ApplicationInitializedListener {
 
     if (!propertyManager.getBoolean("PyCharm.InitialConfiguration.V8")) {
       propertyManager.setValue("PyCharm.InitialConfiguration.V8", true)
-      PyConsoleOptions.getInstance(serviceAsync<ProjectManager>().getDefaultProject()).isCommandQueueEnabled = PlatformUtils.isDataSpell()
+      PyConsoleOptions.getInstance(serviceAsync<ProjectManager>().getDefaultProject()).isCommandQueueEnabled = false
     }
 
     serviceAsync<Experiments>().setFeatureEnabled("terminal.shell.command.handling", false)
