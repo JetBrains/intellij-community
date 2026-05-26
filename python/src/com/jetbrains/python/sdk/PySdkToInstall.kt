@@ -8,7 +8,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
-import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.Version
 import com.intellij.python.community.impl.installer.BinaryInstallerUsagesCollector
 import com.intellij.python.community.impl.installer.PySdkToInstallManager
@@ -37,9 +36,9 @@ fun getSdksToInstall(): List<PySdkToInstall> {
 // TODO: PythonInterpreterService: get rid of this function
 @RequiresEdt
 @Internal
-fun installSdkIfNeeded(sdk: Sdk, module: Module?, existingSdks: List<Sdk>, context: UserDataHolder? = null): Result<Sdk> =
+fun installSdkIfNeeded(sdk: Sdk, module: Module?): Result<Sdk> =
   if (sdk is PySdkToInstall) sdk.install(module) {
-    context?.let { detectSystemWideSdks(module, existingSdks, context) } ?: detectSystemWideSdks(module, existingSdks)
+    PythonSdkUtil.getAllSdks()
   }
   else Result.success(sdk)
 

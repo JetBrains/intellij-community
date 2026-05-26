@@ -174,8 +174,8 @@ enum class PythonInterpreterSelectionMethod {
   CREATE_NEW, SELECT_EXISTING
 }
 
-internal fun installBaseSdk(sdk: Sdk, existingSdks: List<Sdk>): Sdk? {
-  val installed = installSdkIfNeeded(sdk, null, existingSdks).getOrLogException(LOGGER)
+internal fun installBaseSdk(sdk: Sdk): Sdk? {
+  val installed = installSdkIfNeeded(sdk, null).getOrLogException(LOGGER)
   if (installed == null) {
     val notification = NotificationGroupManager.getInstance()
       .getNotificationGroup("Python interpreter installation")
