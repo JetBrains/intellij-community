@@ -2,7 +2,6 @@ package com.intellij.database.datagrid;
 
 import com.intellij.database.csv.CsvRecordFormat;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.tree.IElementType;
 import dk.brics.automaton.Automaton;
 import dk.brics.automaton.RegExp;
 import dk.brics.automaton.RunAutomaton;
@@ -13,7 +12,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.List;
 
-public class CsvLexer {
+/** Streaming CSV tokenizer driven by {@link StreamCsvFormatParser}. */
+public class CsvTokenizer {
   public static final int MAX_CHARACTERS = 10 * 1024 * 1024 / 2;
   private CsvReader myReader;
 
@@ -36,7 +36,7 @@ public class CsvLexer {
   private RunAutomaton mySeparatorRewindAutomaton;
   private int myMaxSeparatorRewind;
 
-  public CsvLexer(@NotNull CsvReader reader) {
+  public CsvTokenizer(@NotNull CsvReader reader) {
     reset(reader);
   }
 
@@ -324,20 +324,12 @@ public class CsvLexer {
     return myReader.matchAhead(suffix, true) != -1;
   }
 
-  private static @NotNull String getElementText(@NotNull IElementType type) {
-    String s = StringUtil.toLowerCase(type.toString());
-    return StringUtil.join(s.split("_"), " ");
+  private static @NotNull String getElementText(@NotNull String rawName) {
+    return StringUtil.join(StringUtil.toLowerCase(rawName).split("_"), " ");
   }
 
   public static class TokenType {
-    private static final IElementType RECORD_SEPARATOR_TYPE = new IElementType("RECORD_SEPARATOR", null);
-    private static final IElementType VALUE_SEPARATOR_TYPE = new IElementType("VALUE_SEPARATOR", null);
-    private static final IElementType VALUE_TYPE = new IElementType("VALUE", null);
-    private static final IElementType QUOTED_VALUE_TYPE = new IElementType("QUOTED_VALUE", null);
-    private static final IElementType SUFFIX_TYPE = new IElementType("SUFFIX", null);
-    private static final IElementType PREFIX_TYPE = new IElementType("PREFIX", null);
-
-    public static final TokenType RECORD_SEPARATOR = new TokenType(RECORD_SEPARATOR_TYPE) {
+    public static final TokenType RECORD_SEPARATOR = new TokenType("RECORD_SEPARATOR") {
       @Override
       public @NotNull String getDebugName(@NotNull CsvRecordFormat format) {
         return super.getDebugName(format) + " (" + format.recordSeparator + ")";
@@ -348,7 +340,7 @@ public class CsvLexer {
         return myName + " " + super.getTokenRepresentation(text);
       }
     };
-    public static final TokenType VALUE_SEPARATOR = new TokenType(VALUE_SEPARATOR_TYPE) {
+    public static final TokenType VALUE_SEPARATOR = new TokenType("VALUE_SEPARATOR") {
       @Override
       public @NotNull String getDebugName(@NotNull CsvRecordFormat format) {
         return super.getDebugName(format) + " (" + format.valueSeparator + ")";
@@ -359,13 +351,13 @@ public class CsvLexer {
         return myName + " " + super.getTokenRepresentation(text);
       }
     };
-    public static final TokenType VALUE = new TokenType(VALUE_TYPE) {
+    public static final TokenType VALUE = new TokenType("VALUE") {
       @Override
       protected @NotNull String wrap(@NotNull String s) {
         return "\"" + s + "\"";
       }
     };
-    public static final TokenType QUOTED_VALUE = new TokenType(QUOTED_VALUE_TYPE) {
+    public static final TokenType QUOTED_VALUE = new TokenType("QUOTED_VALUE") {
       @Override
       public @NotNull String getDebugName(@NotNull CsvRecordFormat format) {
         return "value";
@@ -376,7 +368,7 @@ public class CsvLexer {
         return s;
       }
     };
-    public static final TokenType PREFIX = new TokenType(PREFIX_TYPE) {
+    public static final TokenType PREFIX = new TokenType("PREFIX") {
       @Override
       public @NotNull String getDebugName(@NotNull CsvRecordFormat format) {
         return super.getDebugName(format) + " (" + format.prefix + ")";
@@ -387,7 +379,7 @@ public class CsvLexer {
         return myName + " " + super.getTokenRepresentation(text);
       }
     };
-    public static final TokenType SUFFIX = new TokenType(SUFFIX_TYPE) {
+    public static final TokenType SUFFIX = new TokenType("SUFFIX") {
       @Override
       public @NotNull String getDebugName(@NotNull CsvRecordFormat format) {
         return super.getDebugName(format) + " (" + format.suffix + ")";
@@ -401,11 +393,11 @@ public class CsvLexer {
 
     protected final String myName;
 
-    private final IElementType myElementType;
+    private final String myRawName;
 
-    private TokenType(@NotNull IElementType type) {
-      myElementType = type;
-      myName = getElementText(type);
+    private TokenType(@NotNull String rawName) {
+      myRawName = rawName;
+      myName = getElementText(rawName);
     }
 
     public @NotNull String getDebugName(@NotNull CsvRecordFormat format) {
@@ -421,61 +413,57 @@ public class CsvLexer {
       return "(" + s + ")";
     }
 
-    public @NotNull IElementType getElementType() {
-      return myElementType;
-    }
-
     @Override
     public String toString() {
-      return myElementType.toString();
+      return myRawName;
     }
   }
 
   private enum State {
     RECORD_START {
       @Override
-      void nextToken(@NotNull CsvLexer lexer) throws IOException {
-        lexer.getSymbolToken(lexer.myCsvFormat.prefix, TokenType.PREFIX);
+      void nextToken(@NotNull CsvTokenizer tokenizer) throws IOException {
+        tokenizer.getSymbolToken(tokenizer.myCsvFormat.prefix, TokenType.PREFIX);
       }
 
       @Override
       @NotNull
-      CsvLexer.State nextState(@Nullable TokenType type) {
+      CsvTokenizer.State nextState(@Nullable TokenType type) {
         return VALUE_START;
       }
     },
     RECORD_END {
       @Override
-      void nextToken(@NotNull CsvLexer lexer) throws IOException {
-        lexer.getSymbolToken(lexer.myCsvFormat.suffix, TokenType.SUFFIX);
+      void nextToken(@NotNull CsvTokenizer tokenizer) throws IOException {
+        tokenizer.getSymbolToken(tokenizer.myCsvFormat.suffix, TokenType.SUFFIX);
       }
 
       @Override
       @NotNull
-      CsvLexer.State nextState(@Nullable TokenType type) {
+      CsvTokenizer.State nextState(@Nullable TokenType type) {
         return type == null || type == TokenType.RECORD_SEPARATOR ? VALUE_START : VALUE_END;
       }
     },
     VALUE_START {
       @Override
-      void nextToken(@NotNull CsvLexer lexer) throws IOException {
-        lexer.valueOrQuoted();
+      void nextToken(@NotNull CsvTokenizer tokenizer) throws IOException {
+        tokenizer.valueOrQuoted();
       }
 
       @Override
-      void end(@NotNull CsvLexer lexer) throws IOException {
-        lexer.valueOrQuoted();
+      void end(@NotNull CsvTokenizer tokenizer) throws IOException {
+        tokenizer.valueOrQuoted();
       }
 
       @Override
-      @NotNull CsvLexer.State nextState(@Nullable TokenType type) {
+      @NotNull CsvTokenizer.State nextState(@Nullable TokenType type) {
         return VALUE_END;
       }
     },
     VALUE_END {
       @Override
-      void nextToken(@NotNull CsvLexer lexer) throws IOException {
-        lexer.separator();
+      void nextToken(@NotNull CsvTokenizer tokenizer) throws IOException {
+        tokenizer.separator();
       }
 
       @Override
@@ -488,9 +476,9 @@ public class CsvLexer {
       }
     };
 
-    abstract void nextToken(@NotNull CsvLexer lexer) throws IOException;
-    void end(@NotNull CsvLexer lexer) throws IOException {
-      lexer.setNullToken();
+    abstract void nextToken(@NotNull CsvTokenizer tokenizer) throws IOException;
+    void end(@NotNull CsvTokenizer tokenizer) throws IOException {
+      tokenizer.setNullToken();
     }
 
     abstract @NotNull State nextState(@Nullable TokenType type) throws IOException;
