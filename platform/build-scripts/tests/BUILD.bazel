@@ -19,6 +19,8 @@ jvm_library(
   deps = [
     "//platform/build-scripts",
     "//platform/build-scripts:build-scripts_test_lib",
+    "//platform/runtime/product",
+    "//platform/runtime/product:product_test_lib",
     "@lib//:junit4",
     "@lib//:kotlin-stdlib",
     "//libraries/opentelemetry",
