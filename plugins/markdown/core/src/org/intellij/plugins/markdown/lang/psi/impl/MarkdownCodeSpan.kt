@@ -45,7 +45,6 @@ class MarkdownCodeSpan(node: ASTNode) : MarkdownCompositePsiElementBase(node), P
     override fun getRangeInElement(element: MarkdownCodeSpan): TextRange = element.getContentRange() ?: TextRange.EMPTY_RANGE
 
     private fun replaceContentLeaf(element: MarkdownCodeSpan, range: TextRange, newContent: String): MarkdownCodeSpan? {
-      if (newContent.contains('`')) return null
       val leaf = element.node.findLeafElementAt(range.startOffset)?.psi as? LeafPsiElement ?: return null
       val leafRange = leaf.textRangeInParent
       if (range.startOffset < leafRange.startOffset || range.endOffset > leafRange.endOffset) {
@@ -53,7 +52,7 @@ class MarkdownCodeSpan(node: ASTNode) : MarkdownCompositePsiElementBase(node), P
       }
 
       val leafChangeRange = range.shiftLeft(leafRange.startOffset)
-      leaf.replaceWithText(leafChangeRange.replace(leaf.text, newContent))
+      leaf.replaceWithText(leafChangeRange.replace(leaf.text, newContent.removeSurrounding("`")))
       return element
     }
   }
