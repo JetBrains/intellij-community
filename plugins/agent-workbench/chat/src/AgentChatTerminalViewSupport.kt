@@ -16,8 +16,6 @@ import com.intellij.openapi.editor.ex.ErrorStripeListener
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts.Tooltip
@@ -41,7 +39,6 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.view.TerminalContentChangeEvent
 import org.jetbrains.plugins.terminal.view.TerminalLineIndex
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
@@ -124,10 +121,6 @@ internal fun shouldInstallAgentChatSemanticRegionNavigation(provider: AgentSessi
   return resolveAgentChatProviderBehavior(provider).shouldInstallSemanticRegionNavigation()
 }
 
-internal fun resolveSelectedAgentChatFileEditor(project: Project): AgentChatFileEditor? {
-  return FileEditorManager.getInstance(project).selectedEditor as? AgentChatFileEditor
-}
-
 internal fun resolveAgentChatSemanticRegionDetector(provider: AgentSessionProvider?): AgentChatSemanticRegionDetector? {
   return resolveAgentChatProviderBehavior(provider).semanticRegionDetector
 }
@@ -173,6 +166,8 @@ internal class AgentChatSemanticRegionController(
   private val terminationJob: Job
   private var errorMarkerListenerEditor: Editor? = null
   private var errorMarkerListenerDisposable: com.intellij.openapi.Disposable? = null
+  @Volatile
+  private var hasNavigableRegions: Boolean = false
 
   private val errorMarkerListener = object : ErrorStripeListener {
     override fun errorMarkerClicked(e: ErrorStripeEvent) {
@@ -204,6 +199,7 @@ internal class AgentChatSemanticRegionController(
           withContext(Dispatchers.UI) {
             removeErrorMarkerListener()
             state.clear()
+            hasNavigableRegions = false
           }
         }
     }
@@ -213,8 +209,8 @@ internal class AgentChatSemanticRegionController(
 
   fun canNavigate(direction: AgentChatSemanticNavigationDirection): Boolean {
     return when (direction) {
-      AgentChatSemanticNavigationDirection.PREVIOUS -> navigator.hasPreviousOccurence()
-      AgentChatSemanticNavigationDirection.NEXT -> navigator.hasNextOccurence()
+      AgentChatSemanticNavigationDirection.PREVIOUS -> hasNavigableRegions
+      AgentChatSemanticNavigationDirection.NEXT -> hasNavigableRegions
     }
   }
 
@@ -231,12 +227,14 @@ internal class AgentChatSemanticRegionController(
     terminationJob.cancel()
     removeErrorMarkerListener()
     state.clear()
+    hasNavigableRegions = false
   }
 
   private suspend fun rebuildActiveEditorRegions() {
     val request = captureActiveTerminalSnapshot(terminalView, sessionState) {
       removeErrorMarkerListener()
       state.clear()
+      hasNavigableRegions = false
     } ?: return
 
     val regions = withContext(Dispatchers.Default) {
@@ -247,6 +245,7 @@ internal class AgentChatSemanticRegionController(
       if (sessionState.value == TerminalViewSessionState.Terminated) {
         removeErrorMarkerListener()
         state.clear()
+        hasNavigableRegions = false
         return@withContext
       }
 
@@ -259,11 +258,13 @@ internal class AgentChatSemanticRegionController(
       if (editor == null || editor.isDisposed) {
         removeErrorMarkerListener()
         state.clear()
+        hasNavigableRegions = false
         return@withContext
       }
 
       installErrorMarkerListenerIfNeeded(editor)
       state.apply(editor, regions)
+      hasNavigableRegions = state.hasRegions()
     }
   }
 
@@ -549,19 +550,3 @@ private fun buildRegionTooltip(region: AgentChatSemanticRegion): @Tooltip String
 }
 
 private fun agentChatSemanticRegionRebuildFlow(terminalView: TerminalView): Flow<Unit> = terminalOutputModelChangeFlow(terminalView)
-
-@ApiStatus.Internal
-internal fun canNavigateSelectedAgentChatProposedPlan(
-  project: Project,
-  direction: AgentChatSemanticNavigationDirection,
-): Boolean {
-  return resolveSelectedAgentChatFileEditor(project)?.canNavigateProposedPlan(direction) == true
-}
-
-@ApiStatus.Internal
-internal fun navigateSelectedAgentChatProposedPlan(
-  project: Project,
-  direction: AgentChatSemanticNavigationDirection,
-): Boolean {
-  return resolveSelectedAgentChatFileEditor(project)?.navigateProposedPlan(direction) == true
-}
