@@ -22,14 +22,15 @@ import com.intellij.python.community.impl.conda.icons.PythonCommunityImplCondaIc
 import com.intellij.python.community.impl.pipenv.PIPENV_ICON
 import com.intellij.python.community.impl.poetry.common.POETRY_TOOL_ID
 import com.intellij.python.community.impl.poetry.common.icons.PythonCommunityImplPoetryCommonIcons
-import com.intellij.python.uv.common.UV_TOOL_ID
-import com.intellij.python.uv.common.icons.PythonUvCommonIcons
 import com.intellij.python.hatch.icons.PythonHatchIcons
 import com.intellij.python.hatch.impl.HATCH_TOOL_ID
+import com.intellij.python.uv.common.UV_TOOL_ID
+import com.intellij.python.uv.common.icons.PythonUvCommonIcons
 import com.intellij.python.venv.icons.PythonVenvIcons
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.Row
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
@@ -37,12 +38,12 @@ import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.parser.icons.PythonParserIcons
 import com.jetbrains.python.sdk.LOGGER
 import com.jetbrains.python.sdk.ModuleOrProject
+import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.configuration.CONDA_TOOL_ID
 import com.jetbrains.python.sdk.configuration.PIPENV_TOOL_ID
 import com.jetbrains.python.sdk.configuration.VENV_TOOL_ID
 import com.jetbrains.python.sdk.createSdkGuessingTypeByPath
 import com.jetbrains.python.sdk.excludeInnerVirtualEnv
-import com.jetbrains.python.sdk.installSdkIfNeeded
 import com.jetbrains.python.sdk.moduleIfExists
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.setAssociationToModule
@@ -174,8 +175,12 @@ enum class PythonInterpreterSelectionMethod {
   CREATE_NEW, SELECT_EXISTING
 }
 
-internal fun installBaseSdk(sdk: Sdk): Sdk? {
-  val installed = installSdkIfNeeded(sdk, null).getOrLogException(LOGGER)
+@RequiresEdt
+internal fun installBaseSdk(installRequest: InstallablePythonSdk): Sdk? {
+  val installed = installRequest.install(null) {
+    PythonSdkUtil.getAllSdks()
+  }.getOrLogException(LOGGER)
+
   if (installed == null) {
     val notification = NotificationGroupManager.getInstance()
       .getNotificationGroup("Python interpreter installation")

@@ -54,7 +54,7 @@ class ManuallyAddedSelectableInterpreter<P : PathHolder>(
 
 class InstallableSelectableInterpreter<P : PathHolder>(
   override val pythonInfo: PythonInfo,
-  val sdk: InstallablePythonSdk,
+  val installableSdk: InstallablePythonSdk,
 ) : PythonSelectableInterpreter<P>() {
   override val homePath: P? = null
 }
