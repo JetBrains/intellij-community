@@ -214,7 +214,7 @@ public final class BlockSupportImpl extends BlockSupport {
     if (chameleon == null) {
       return null;
     }
-    InternalPsiVersioning.runWriteModification(() -> {
+    InternalPsiVersioning.runModificationOfVersionedPsi(() -> {
       DummyHolder holder = DummyHolderFactory.createHolder(manager, null, node.getPsi(), charTable);
       holder.getTreeElement().rawAddChildren((TreeElement)chameleon);
       return null;

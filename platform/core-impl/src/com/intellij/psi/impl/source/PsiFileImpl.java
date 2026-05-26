@@ -283,7 +283,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
         treeElement = InternalPsiVersioning.inVersionedEnvironment(canUseVersioned, () -> {
           if (canUseVersioned) {
-            FileElement fileElement = InternalPsiVersioning.runWriteModification(() -> createFileElement(viewProvider.getContents()));
+            FileElement fileElement = InternalPsiVersioning.runModificationOfVersionedPsi(() -> createFileElement(viewProvider.getContents()));
             return fileElement;
           } else {
             return createFileElement(viewProvider.getContents());

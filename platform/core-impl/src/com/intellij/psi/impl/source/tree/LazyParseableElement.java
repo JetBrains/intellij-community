@@ -301,7 +301,7 @@ public class LazyParseableElement extends CompositeElement {
       }
 
       DebugUtil.performPsiModification("lazy-parsing", () -> {
-        InternalPsiVersioning.runWriteModification(() -> {
+        InternalPsiVersioning.runModificationOfVersionedPsi(() -> {
           long innerVersion = getVersionForWriting();
           TreeElement parsedNode = InternalPsiVersioning.inVersionedEnvironment(this.isVersioned(), () ->
             (TreeElement)((ILazyParseableElementTypeBase)getElementType()).parseContents(this)

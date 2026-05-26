@@ -85,7 +85,7 @@ object InternalPsiVersioning {
 
   /**
    * We assert that it is allowed to modify versioned syntax trees only
-   * in [com.intellij.openapi.application.Application.runWriteAction] or [runWriteModification]
+   * in [com.intellij.openapi.application.Application.runWriteAction] or [runModificationOfVersionedPsi]
    */
   @JvmStatic
   fun assertWritePsiModificationAllowed() {
@@ -219,7 +219,7 @@ object InternalPsiVersioning {
   // For example, it can be used for lazy parsing.
   // A dangerous function, use it with care!
   @JvmStatic
-  fun <T> runWriteModification(action: Supplier<T>): T {
+  fun <T> runModificationOfVersionedPsi(action: Supplier<T>): T {
     val currentVersion = currentThreadContext()[PsiVersionWriteContextElement.Key]
     if (currentVersion != null) {
       return action.get()

@@ -621,7 +621,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
   private static void ensureCorrectReparse(@NotNull PsiFile file, boolean isCheckNoPsiEventsOnReparse) {
     final String psiToStringDefault = DebugUtil.psiToString(file, true, false);
 
-    TreeChangeEventImpl event = InternalPsiVersioning.runWriteModification(() -> {
+    TreeChangeEventImpl event = InternalPsiVersioning.runModificationOfVersionedPsi(() -> {
       return DebugUtil.performPsiModification("ensureCorrectReparse", () -> {
         String fileText = file.getText();
         DiffLog diffLog = new BlockSupportImpl().reparseRange(

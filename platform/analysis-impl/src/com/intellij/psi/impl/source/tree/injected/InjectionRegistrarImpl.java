@@ -581,7 +581,7 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
     if (!oldFile.textMatches(injectedPsi)) {
       InjectedFileViewProvider oldViewProvider = (InjectedFileViewProvider)oldFile.getViewProvider();
       oldViewProvider.performNonPhysically(() -> DebugUtil.performPsiModification("injected tree diff", () -> {
-        InternalPsiVersioning.runWriteModification(() -> {
+        InternalPsiVersioning.runModificationOfVersionedPsi(() -> {
           DiffLog diffLog = BlockSupportImpl.mergeTrees((PsiFileImpl)oldFile, oldFileNode, injectedNode, new DaemonProgressIndicator(),
                                                         oldFileNode.getText());
           diffLog.doActualPsiChange(oldFile);
@@ -766,7 +766,7 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
           psiFile.setContentElementType(elementType);
         }
       }
-      ASTNode parsedNode = InternalPsiVersioning.runWriteModification(() -> keepTreeFromChameleoningBack(psiFile));
+      ASTNode parsedNode = InternalPsiVersioning.runModificationOfVersionedPsi(() -> keepTreeFromChameleoningBack(psiFile));
 
       assert parsedNode instanceof FileElement : "Parsed to " + parsedNode + " instead of FileElement";
 
@@ -778,7 +778,7 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
       try {
         try {
           // todo: tricky to remove write modification
-          InternalPsiVersioning.runWriteModification(() -> {
+          InternalPsiVersioning.runModificationOfVersionedPsi(() -> {
             try {
               patchLeaves(placeInfos, viewProvider, parsedNode, documentText);
               return null;
