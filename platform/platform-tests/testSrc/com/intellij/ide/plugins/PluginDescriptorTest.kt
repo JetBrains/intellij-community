@@ -26,6 +26,7 @@ import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.RegisterExtension
 import java.io.File
 import java.net.URL
@@ -498,6 +499,23 @@ class PluginDescriptorTest {
     assertThat(plugin).hasExactlyEnabledContentModules("module1", "module2")
     assertThat(plugin.contentModules[0].moduleId).isEqualTo(PluginModuleId("module1", "my.namespace.1"))
     assertThat(plugin.contentModules[1].moduleId).isEqualTo(PluginModuleId("module2", "my.namespace.2"))
+  }
+
+  @Test
+  fun `multiple content modules with the same name in the same plugin are not allowed`() {
+    val pluginPath = plugin("foo") {
+      content(namespace = "my.namespace1") {
+        module("module") {
+          //to ensure that the module will be packed into the main JAR to avoid assertion about two files with the same name in modules/ dir
+          packagePrefix = "foo"
+        }
+      }
+      content(namespace = "my.namespace2") {
+        module("module") {}
+      }
+    }.installAt(pluginDirPath)
+    val error = assertThrows<Exception> { loadDescriptorInTest(pluginPath) }
+    assertThat(error.message).contains("Multiple content modules with the same name 'module'")
   }
 
   @Test

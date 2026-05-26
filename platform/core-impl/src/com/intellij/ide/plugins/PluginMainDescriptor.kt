@@ -213,10 +213,10 @@ class PluginMainDescriptor(
       )
     }
     if (modules.size > 1) {
-      val duplicates = HashSet<PluginModuleId>()
+      val moduleNames = HashSet<String>()
       for (item in modules) {
-        require(duplicates.add(item.moduleId)) {
-          "Duplicate content module declaration: '${item.moduleId.displayName}' in plugin '${id}' located at $pluginPath"
+        require(moduleNames.add(item.moduleId.name)) {
+          "Multiple content modules with the same name '${item.moduleId.name}' in plugin '${id}' located at $pluginPath"
         }
       }
     }

@@ -430,6 +430,7 @@ internal fun convertDependencies(dependencies: List<DependenciesElement>, parent
           dep.namespace
           ?: run {
             if (cachedContentModuleNameToNamespace == null) {
+              //PluginMainDescriptor.convertContentModules checks that there are no modules with the same name, so it's safe to use 'associateBy' instead of 'groupBy'
               cachedContentModuleNameToNamespace = parent?.content?.modules?.associateBy({ it.moduleId.name }, { it.moduleId.namespace }) ?: emptyMap()
             }
             cachedContentModuleNameToNamespace[dep.moduleName]
