@@ -78,8 +78,7 @@ class EelWslMrfsBackend(private val coroutineScope: CoroutineScope) : MultiRouti
       }
     }
 
-    val key = if (useNewFileSystem) wslRoot else distributionId
-    return providersCache.computeIfAbsent(key) {
+    return providersCache.computeIfAbsent(wslRoot) {
       val ijentUri = URI("ijent", "wsl", "/$distributionId", null, null)
 
       val ijentFsProvider = IjentNioFileSystemProvider.getInstance()
