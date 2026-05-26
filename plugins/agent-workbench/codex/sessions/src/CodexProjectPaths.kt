@@ -3,8 +3,11 @@ package com.intellij.agent.workbench.codex.sessions
 
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.util.AwaitCancellationAndInvoke
+import com.intellij.util.awaitCancellationAndInvoke
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Files
@@ -67,14 +70,14 @@ internal fun resolveProjectDirectory(
   return null
 }
 
-@OptIn(InternalCoroutinesApi::class)
-internal fun registerShutdownOnCancellation(scope: CoroutineScope, onShutdown: () -> Unit) {
+@OptIn(AwaitCancellationAndInvoke::class)
+internal fun registerShutdownOnCancellation(scope: CoroutineScope, onShutdown: suspend CoroutineScope.() -> Unit) {
   val job = scope.coroutineContext[Job]
   if (job == null) {
     LOG.warn("Codex project session scope has no Job; shutdown hook not installed")
     return
   }
-  job.invokeOnCompletion(onCancelling = true, invokeImmediately = true) { _ ->
+  scope.awaitCancellationAndInvoke(CoroutineName("Codex project session shutdown") + Dispatchers.IO) {
     LOG.debug { "Codex project session scope cancelling; shutting down client" }
     onShutdown()
   }

@@ -16,6 +16,7 @@ import com.intellij.agent.workbench.codex.common.CodexThreadActiveFlag
 import com.intellij.agent.workbench.codex.common.CodexThreadSourceKind
 import com.intellij.agent.workbench.codex.common.CodexThreadStatusKind
 import com.intellij.agent.workbench.codex.common.CodexTurnCollaborationMode
+import com.intellij.openapi.application.PathManager
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -81,6 +82,11 @@ class CodexAppServerClientTest {
         delay(10.milliseconds)
       }
     }
+  }
+
+  private fun assertWorkingDirectoryMarker(marker: Path, expectedWorkingDirectory: Path) {
+    assertThat(Path.of(Files.readString(marker)).toRealPath())
+      .isEqualTo(expectedWorkingDirectory.toRealPath())
   }
 
   @ParameterizedTest(name = "{0}")
@@ -1600,6 +1606,46 @@ class CodexAppServerClientTest {
   }
 
   @Test
+  fun listThreadsUsesNeutralWorkingDirectoryWhenWorkingDirectoryMissing(): Unit = runBlocking(Dispatchers.Default) {
+    val workingDir = tempDir.resolve("project-neutral-cwd")
+    Files.createDirectories(workingDir)
+    val configPath = workingDir.resolve("codex-config.json")
+    writeConfig(
+      path = configPath,
+      threads = listOf(
+        ThreadSpec(
+          id = "thread-neutral-cwd",
+          title = "Neutral CWD",
+          cwd = workingDir.toString(),
+          updatedAt = 1_700_000_000_000L,
+          archived = false,
+        ),
+      ),
+    )
+    val backendDir = tempDir.resolve("backend-neutral-cwd")
+    Files.createDirectories(backendDir)
+    val marker = backendDir.resolve("cwd-marker.txt")
+    val codexShim = createMockCodexShim(backendDir, configPath)
+    val client = CodexAppServerClient(
+      coroutineScope = this,
+      executablePathProvider = { codexShim.toString() },
+      environmentOverrides = mapOf("CODEX_TEST_CWD_MARKER" to marker.toString()),
+    )
+    try {
+      val threads = client.listThreads(archived = false)
+
+      assertThat(threads.map { it.id }).containsExactly("thread-neutral-cwd")
+      assertWorkingDirectoryMarker(
+        marker = marker,
+        expectedWorkingDirectory = PathManager.getSystemDir().resolve("agent-workbench/codex-app-server"),
+      )
+    }
+    finally {
+      client.shutdown()
+    }
+  }
+
+  @Test
   fun persistThreadSendsTurnStartWithoutInterrupt(): Unit = runBlocking(Dispatchers.Default) {
     val configPath = tempDir.resolve("codex-config.json")
     writeConfig(path = configPath, threads = emptyList())
@@ -2040,16 +2086,21 @@ class CodexAppServerClientTest {
 
     val backendDir = tempDir.resolve("backend-path-override")
     Files.createDirectories(backendDir)
+    val marker = backendDir.resolve("cwd-marker.txt")
     val codexShim = createMockCodexShim(backendDir, configPath)
     val client = CodexAppServerClient(
       coroutineScope = this,
       executablePathProvider = { null },
-      environmentOverrides = mapOf("PATH" to codexShim.parent.toString()),
+      environmentOverrides = mapOf(
+        "PATH" to codexShim.parent.toString(),
+        "CODEX_TEST_CWD_MARKER" to marker.toString(),
+      ),
       workingDirectory = workingDir,
     )
     try {
       val threads = client.listThreads(archived = false)
       assertThat(threads.map { it.id }).containsExactly("thread-path")
+      assertWorkingDirectoryMarker(marker, workingDir)
     }
     finally {
       client.shutdown()

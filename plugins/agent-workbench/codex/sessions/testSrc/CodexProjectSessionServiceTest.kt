@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.codex.sessions
 
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.util.ui.EDT
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -16,6 +19,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.time.Duration.Companion.seconds
 
+@TestApplication
 class CodexProjectSessionServiceTest {
   @TempDir
   lateinit var tempDir: Path
@@ -35,6 +39,29 @@ class CodexProjectSessionServiceTest {
 
     withTimeout(1.seconds) {
       shutdown.await()
+    }
+  }
+
+  @Test
+  fun shutdownHookDoesNotRunOnEdtWhenCancelledFromEdt() {
+    runBlocking(Dispatchers.Default) {
+      val parentJob = coroutineContext.job
+      @Suppress("RAW_SCOPE_CREATION")
+      val scope = CoroutineScope(coroutineContext + Job(parentJob))
+      val shutdownOnEdt = CompletableDeferred<Boolean>()
+
+      registerShutdownOnCancellation(scope) {
+        shutdownOnEdt.complete(EDT.isCurrentThreadEdt())
+      }
+
+      runInEdtAndWait {
+        scope.cancel()
+      }
+
+      val ranOnEdt = withTimeout(1.seconds) {
+        shutdownOnEdt.await()
+      }
+      assertThat(ranOnEdt).isFalse()
     }
   }
 

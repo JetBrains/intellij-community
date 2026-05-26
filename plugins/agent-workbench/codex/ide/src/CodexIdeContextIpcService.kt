@@ -8,11 +8,13 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.util.AwaitCancellationAndInvoke
+import com.intellij.util.awaitCancellationAndInvoke
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
@@ -36,7 +38,7 @@ internal class CodexIdeContextIpcService(serviceScope: CoroutineScope) {
   }
 
   init {
-    registerShutdownOnCancellation(serviceScope, ::shutdown)
+    registerShutdownOnCancellation(serviceScope) { shutdown() }
   }
 
   fun ensureStarted() {
@@ -86,14 +88,14 @@ internal class CodexIdeContextIpcStartupActivity : ProjectActivity {
   }
 }
 
-@OptIn(InternalCoroutinesApi::class)
-private fun registerShutdownOnCancellation(scope: CoroutineScope, onShutdown: () -> Unit) {
+@OptIn(AwaitCancellationAndInvoke::class)
+private fun registerShutdownOnCancellation(scope: CoroutineScope, onShutdown: suspend CoroutineScope.() -> Unit) {
   val job = scope.coroutineContext[Job]
   if (job == null) {
     LOG.warn("Codex IDE context IPC service scope has no Job; shutdown hook not installed")
     return
   }
-  job.invokeOnCompletion(onCancelling = true, invokeImmediately = true) { _ ->
+  scope.awaitCancellationAndInvoke(CoroutineName("Codex IDE context IPC shutdown") + Dispatchers.IO) {
     LOG.debug { "Codex IDE context IPC service scope cancelling; shutting down server" }
     onShutdown()
   }
