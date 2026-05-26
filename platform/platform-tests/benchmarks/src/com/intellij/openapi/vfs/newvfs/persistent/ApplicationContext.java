@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.testFramework.fixtures.BareTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
@@ -11,6 +12,12 @@ import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
+import org.openjdk.jmh.results.RunResult;
+import org.openjdk.jmh.runner.Runner;
+import org.openjdk.jmh.runner.RunnerException;
+import org.openjdk.jmh.runner.options.Options;
+
+import java.util.Collection;
 
 /**
  * State object for use in JMH-benchmarks: initializes BareTestFixture, which, in turn,
@@ -25,14 +32,12 @@ public class ApplicationContext {
 
   @Setup
   public void setup() throws Exception {
-    ApplicationManagerEx.setInStressTest(true);
     fixture = IdeaTestFixtureFactory.getFixtureFactory().createBareFixture();
     fixture.setUp();
   }
 
   @TearDown
   public void tearDown() throws Exception {
-    ApplicationManagerEx.setInStressTest(false);
     fixture.tearDown();
 
     IdeEventQueue.applicationClose();
@@ -54,5 +59,30 @@ public class ApplicationContext {
         thread.interrupt();
       }
     }
+  }
+
+  /**
+   * @return Runner which runs benchmarks with {@link ApplicationManagerEx#isInStressTest} flag
+   */
+  public static Runner createStressModeRunner(Options options) {
+    return new Runner(options){
+      @Override
+      public Collection<RunResult> run() throws RunnerException {
+        Ref<Collection<RunResult>> results = new Ref<>();
+        Ref<RunnerException> exception = new Ref<>();
+        ApplicationManagerEx.runInStressTest(true, ()-> {
+          try {
+            results.set(super.run());
+          }
+          catch (RunnerException e) {
+            exception.set(e);
+          }
+        });
+        if (exception.get() != null) {
+          throw exception.get();
+        }
+        return results.get();
+      }
+    };
   }
 }

@@ -21,7 +21,6 @@ import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.annotations.Warmup;
-import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
@@ -118,6 +117,6 @@ public class IndexStampAccessBenchmark {
       .threads(1)
       .build();
 
-    new Runner(opt).run();
+    ApplicationContext.createStressModeRunner(opt).run();
   }
 }
