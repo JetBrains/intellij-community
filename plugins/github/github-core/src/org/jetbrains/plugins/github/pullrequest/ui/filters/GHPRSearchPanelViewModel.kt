@@ -81,8 +81,8 @@ class GHPRSearchPanelViewModel internal constructor(
   suspend fun getAuthors(): List<GHUser> = if (securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.WRITE)) {
     repositoryDataService.loadCollaborators()
   }
-  else { // users without push access cannot query the collaborators API, so we fall back to fetching PR authors
-    repositoryDataService.loadPRsAuthors()
+  else { // users without push access cannot query the collaborators API, so we fall back to fetching contributors
+    repositoryDataService.loadContributors()
   }
   suspend fun getAssignees(): List<GHUser> = repositoryDataService.loadPotentialIssuesAssignees()
   suspend fun getLabels(): List<GHLabel> = repositoryDataService.loadLabels()

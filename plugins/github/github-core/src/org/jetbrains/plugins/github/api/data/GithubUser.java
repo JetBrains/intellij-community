@@ -25,7 +25,8 @@ import java.util.Objects;
   "events_url": "https://api.github.com/users/octocat/events{/privacy}",
   "received_events_url": "https://api.github.com/users/octocat/received_events",
   "type": "User",
-  "site_admin": false
+  "site_admin": false,
+  "contributions": 32
 */
 //endregion
 @SuppressWarnings("UnusedDeclaration")
@@ -41,6 +42,7 @@ public class GithubUser {
 
   private String type;
   private Boolean siteAdmin;
+  private Integer contributions;
 
   public @NotNull String getNodeId() {
     return nodeId;

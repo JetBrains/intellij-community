@@ -554,8 +554,6 @@ private object TestCases {
       GHGQLRequests.Repo.getProtectionRules(DUMMY_REPO_COORDINATES, DUMMY_PAGINATION),
       GHGQLRequests.Repo.getProtectionRules(DUMMY_REPO_COORDINATES, null),
       GHGQLRequests.Repo.getCommitStatus(DUMMY_REPO_COORDINATES, DUMMY_TEXT),
-      GHGQLRequests.Repo.getPullRequestsAuthors(DUMMY_REPO_COORDINATES, DUMMY_PAGINATION),
-      GHGQLRequests.Repo.getPullRequestsAuthors(DUMMY_REPO_COORDINATES, null),
       GHGQLRequests.Repo.getCommitStatusContext(DUMMY_REPO_COORDINATES, DUMMY_TEXT, DUMMY_PAGINATION),
       GHGQLRequests.Repo.findMentionableUsers(DUMMY_REPO_COORDINATES, DUMMY_SERVER_PATH, DUMMY_PAGINATION),
 

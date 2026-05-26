@@ -29,6 +29,7 @@ import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHRepositoryOwnerName
 import org.jetbrains.plugins.github.api.data.GHRepositoryPullRequestTemplate
 import org.jetbrains.plugins.github.api.data.GHUser
+import org.jetbrains.plugins.github.api.data.GithubUser
 import org.jetbrains.plugins.github.api.data.GithubUserWithPermissions
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.api.data.pullrequest.GHTeam
@@ -69,26 +70,31 @@ class GHPRRepositoryDataServiceImpl internal constructor(
   private val convertedCollaboratorsRequest: Flow<Deferred<List<GHUser>>> by lazy {
     collaboratorsRequest.mapScoped(true) {
       async {
-        it.await().map { GHUser(it.nodeId, it.login, it.htmlUrl, it.avatarUrl ?: "", null) }
+        it.await().map { it.toGHUser() }
       }
     }.shareIn(cs, SharingStarted.Eagerly, 1)
   }
 
   override suspend fun loadCollaborators(): List<GHUser> = convertedCollaboratorsRequest.awaitCompleted()
 
-  private val pullRequestAuthorsRequest: MutableStateFlow<Deferred<List<GHUser>>> by lazy {
-    MutableStateFlow(doLoadPRAuthorsAsync())
+  private val contributorsRequest: MutableStateFlow<Deferred<List<GHUser>>> by lazy {
+    MutableStateFlow(doLoadContributorsAsync())
   }
 
-  private fun doLoadPRAuthorsAsync(): Deferred<List<GHUser>> = cs.async {
-    ApiPageUtil.createGQLPagesFlow {
-      requestExecutor.executeSuspend(GHGQLRequests.Repo.getPullRequestsAuthors(repositoryCoordinates, it))
-    }.map { it.nodes.mapNotNull { it.author } }
-      .foldToList()
-      .distinctBy { it.id }
-      .filterIsInstance<GHUser>()
+  override suspend fun loadContributors(): List<GHUser> {
+    return contributorsRequest.awaitCompleted()
   }
-  override suspend fun loadPRsAuthors(): List<GHUser> = pullRequestAuthorsRequest.awaitCompleted()
+
+  private fun doLoadContributorsAsync(): Deferred<List<GHUser>> = cs.async {
+    val pagesRequest = GithubApiRequests.Repos.Contributors.pages(serverPath, repoPath.owner, repoPath.repository)
+    batchesFlow(requestExecutor, pagesRequest).fold(mutableListOf()) { acc, batch ->
+      acc.apply {
+        addAll(batch.map {
+          it.toGHUser()
+        })
+      }
+    }
+  }
 
   private val assigneesRequest: MutableStateFlow<Deferred<List<GHUser>>> by lazy {
     MutableStateFlow(doLoadIssuesAssigneesAsync())
@@ -97,10 +103,13 @@ class GHPRRepositoryDataServiceImpl internal constructor(
   private fun doLoadIssuesAssigneesAsync(): Deferred<List<GHUser>> = cs.async {
     batchesFlow(requestExecutor,
                 GithubApiRequests.Repos.Assignees.pages(serverPath, repoPath.owner, repoPath.repository)).foldToList()
-      .map { GHUser(it.nodeId, it.login, it.htmlUrl, it.avatarUrl ?: "", null) }
+      .map { it.toGHUser() }
   }
 
   override suspend fun loadPotentialIssuesAssignees(): List<GHUser> = assigneesRequest.awaitCompleted()
+
+  private fun GithubUser.toGHUser(): GHUser =
+    GHUser(nodeId, login, htmlUrl, avatarUrl ?: "", null)
 
   private val labelsRequest: MutableStateFlow<Deferred<List<GHLabel>>> by lazy {
     MutableStateFlow(doLoadLabelsAsync())
@@ -160,7 +169,7 @@ class GHPRRepositoryDataServiceImpl internal constructor(
 
   override fun resetData() {
     collaboratorsRequest.restart(doLoadCollaboratorsAsync())
-    pullRequestAuthorsRequest.restart(doLoadPRAuthorsAsync())
+    contributorsRequest.restart(doLoadContributorsAsync())
     teamsRequest.restart(doLoadTeamsAsync())
     assigneesRequest.restart(doLoadIssuesAssigneesAsync())
     labelsRequest.restart(doLoadLabelsAsync())
