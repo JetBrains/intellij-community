@@ -9,7 +9,10 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -31,6 +34,7 @@ import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.intellij.lang.regexp.RegExpBundle;
@@ -73,8 +77,10 @@ import javax.swing.event.TreeExpansionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
+import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.Graphics2D;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
@@ -82,6 +88,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+
+import static com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES;
+import static com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES;
+import static com.intellij.ui.SimpleTextAttributes.STYLE_BOLD;
+import static com.intellij.ui.SimpleTextAttributes.STYLE_OPAQUE;
+import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
 
 public final class ExplainRegExpIntention implements IntentionAction, Iconable, HighPriorityAction {
   @Override
@@ -158,6 +170,17 @@ public final class ExplainRegExpIntention implements IntentionAction, Iconable, 
     ColoredTreeCellRenderer renderer = new ColoredTreeCellRenderer() {
 
       @Override
+      protected void doPaintFragmentBackground(@NotNull Graphics2D g,
+                                               int index,
+                                               @NotNull Color bgColor,
+                                               int x,
+                                               int y,
+                                               int width,
+                                               int height) {
+        if (!mySelected) super.doPaintFragmentBackground(g, index, bgColor, x, y, width + 2, height);
+      }
+
+      @Override
       public void customizeCellRenderer(@NotNull JTree tree,
                                         Object value,
                                         boolean selected,
@@ -173,14 +196,13 @@ public final class ExplainRegExpIntention implements IntentionAction, Iconable, 
           NameNode nameNode = nodeValue.nameNode();
           String name = nameNode.name();
           String explanation = nodeValue.explanation();
-          if (!name.isEmpty() || !explanation.isEmpty()) append("  ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          if (!name.isEmpty() || !explanation.isEmpty()) append(" ");
           if (!name.isEmpty()) {
-            append(name, SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
-                   Registry.is("explain.regexp.intention.enable.info.links") ? nameNode.url() : null);
+            append(name, LINK_PLAIN_ATTRIBUTES, Registry.is("explain.regexp.intention.enable.info.links") ? nameNode.url() : null);
           }
           if (!explanation.isEmpty()) {
-            if (!name.isEmpty()) append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
-            appendHTML(explanation, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+            if (!name.isEmpty()) append(" ", REGULAR_ATTRIBUTES);
+            appendHTML(explanation, REGULAR_ATTRIBUTES);
           }
         }
       }
@@ -305,13 +327,20 @@ class RegExpTreeNode extends DefaultMutableTreeNode {
 }
 class ExplanationVisitor extends RegExpRecursiveElementVisitor {
 
-  private static final SimpleTextAttributes PATTERN_ATTRIBUTES =
-    new SimpleTextAttributes(SimpleTextAttributes.STYLE_SEARCH_MATCH | SimpleTextAttributes.STYLE_BOLD, null);
+  private final SimpleTextAttributes HIGHLIGHT_ATTRIBUTES;
+  private final SimpleTextAttributes CODE_ATTRIBUTES;
   private static final NameNode EMPTY_NAME_NODE = new NameNode("", "");
   private final RegExpTreeNode root = new RegExpTreeNode(null);
   private RegExpTreeNode current = root;
   private int currentGroup = 1;
   private boolean charGroup = false;
+
+  ExplanationVisitor() {
+    TextAttributes attributes = EditorColorsUtil.getGlobalOrDefaultColorScheme().getAttributes(EditorColors.IDENTIFIER_UNDER_CARET_ATTRIBUTES);
+    HIGHLIGHT_ATTRIBUTES = new SimpleTextAttributes(attributes.getBackgroundColor(), null, null, STYLE_BOLD | STYLE_OPAQUE);
+    CODE_ATTRIBUTES = new SimpleTextAttributes(attributes.getBackgroundColor(), NamedColorUtil.getInactiveTextColor(),
+                                               null, STYLE_PLAIN | STYLE_OPAQUE);
+  }
 
   public TreeNode getExplanationTree() {
     return root;
@@ -331,28 +360,28 @@ class ExplanationVisitor extends RegExpRecursiveElementVisitor {
     if (makeCurrent) current = node;
   }
 
-  private static ValueNode buildNodeValue(@NotNull PsiElement element,
-                                          @NotNull NameNode nameNode,
-                                          @NotNull @DetailedDescription String explanation) {
+  private ValueNode buildNodeValue(@NotNull PsiElement element,
+                                   @NotNull NameNode nameNode,
+                                   @NotNull @DetailedDescription String explanation) {
     return buildNodeValue(element, nameNode, explanation, true);
   }
 
-  private static ValueNode buildNodeValue(PsiElement element,
-                                          @NotNull NameNode nameNode,
-                                          @NotNull @DetailedDescription String explanation,
-                                          boolean expand) {
+  private ValueNode buildNodeValue(PsiElement element,
+                                   @NotNull NameNode nameNode,
+                                   @NotNull @DetailedDescription String explanation,
+                                   boolean expand) {
     return new ValueNode(buildPatternFragments(element, true, new SmartList<>()), nameNode, explanation, expand);
   }
 
-  private static List<Fragment> buildPatternFragments(PsiElement element, boolean emphasize, List<Fragment> list) {
+  private List<Fragment> buildPatternFragments(PsiElement element, boolean emphasize, List<Fragment> list) {
     PsiElement child = element.getFirstChild();
     if (child == null) {
-      list.add(new Fragment(element.getText(), emphasize ? PATTERN_ATTRIBUTES : SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES));
+      list.add(new Fragment(element.getText(), emphasize ? HIGHLIGHT_ATTRIBUTES : CODE_ATTRIBUTES));
     }
     while (child != null) {
       if (child.getFirstChild() == null) {
         list.add(new Fragment(child instanceof RegExpElement e ? e.getUnescapedText() : child.getText(),
-                              emphasize ? PATTERN_ATTRIBUTES : SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES));
+                              emphasize ? HIGHLIGHT_ATTRIBUTES : CODE_ATTRIBUTES));
       }
       else {
         boolean keepEmphasis = element instanceof RegExpCharRange
@@ -614,7 +643,7 @@ class ExplanationVisitor extends RegExpRecursiveElementVisitor {
     }
   }
 
-  private static List<Fragment> createSimpleCharSequence(RegExpChar c) {
+  private List<Fragment> createSimpleCharSequence(RegExpChar c) {
     if (!isSimpleChar(c) || c.getParent() instanceof RegExpClass || isSimpleChar(c.getPrevSibling())) {
       return null;
     }
@@ -623,9 +652,9 @@ class ExplanationVisitor extends RegExpRecursiveElementVisitor {
       return null;
     }
     List<Fragment> result = new SmartList<>();
-    result.add(new Fragment(c.getUnescapedText(), PATTERN_ATTRIBUTES));
+    result.add(new Fragment(c.getUnescapedText(), HIGHLIGHT_ATTRIBUTES));
     while (isSimpleChar(next)) {
-      result.add(new Fragment(((RegExpChar)next).getUnescapedText(), PATTERN_ATTRIBUTES));
+      result.add(new Fragment(((RegExpChar)next).getUnescapedText(), HIGHLIGHT_ATTRIBUTES));
       next = next.getNextSibling();
     }
     return result;
@@ -790,7 +819,7 @@ class ExplanationVisitor extends RegExpRecursiveElementVisitor {
         case 'x' -> "comments";
         default -> "<unknown>";
       };
-      @NotNull ValueNode value = new ValueNode(List.of(new Fragment("" + c, PATTERN_ATTRIBUTES)), EMPTY_NAME_NODE,
+      @NotNull ValueNode value = new ValueNode(List.of(new Fragment("" + c, HIGHLIGHT_ATTRIBUTES)), EMPTY_NAME_NODE,
                                                "turns " + (off ? "off " : "on ") + mode + " mode", false);
       current.insert(new RegExpTreeNode(value), 0);
     }
