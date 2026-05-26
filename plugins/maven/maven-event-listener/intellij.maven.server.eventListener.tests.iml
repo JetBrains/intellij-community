@@ -183,6 +183,7 @@
     </orderEntry>
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.maven.server.eventListener" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.maven.resolver.provider" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.maven.server.eventListener" />
 </module>

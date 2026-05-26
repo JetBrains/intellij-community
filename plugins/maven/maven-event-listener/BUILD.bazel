@@ -98,6 +98,8 @@ jvm_library(
         "@lib//:maven-server-event_listener-tests-com-google-inject-guice-no_aop-4-0-provided",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
+        "//libraries/maven-resolver-provider",
+        "//libraries/maven-resolver-provider:maven-resolver-provider_test_lib",
     ],
 )
 ### auto-generated section `build intellij.maven.server.eventListener.tests` end

@@ -180,6 +180,8 @@ jvm_library(
         "//libraries/ai-grazie-semantic-engine:ai-grazie-semantic-engine_test_lib",
         "//libraries/gson",
         "//libraries/gson:gson_test_lib",
+        "//xml/relaxng",
+        "//xml/relaxng:relaxng_test_lib",
     ],
 )
 ### auto-generated section `build intellij.grazie.tests` end
