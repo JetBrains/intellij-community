@@ -20,6 +20,8 @@ internal class AllContentModulesOptionalLoadingRuleInspection : DevKitPluginXmlI
     val allModules = element.content.flatMap { it.moduleEntry }
     if (allModules.isEmpty()) return
 
+    if (hasClassesRegisteredDirectly(element)) return
+
     val hasNonOptionalLoading = allModules.any { hasNonOptionalLoadingRule(it) }
     if (!hasNonOptionalLoading) {
       holder.createProblem(
@@ -27,6 +29,15 @@ internal class AllContentModulesOptionalLoadingRuleInspection : DevKitPluginXmlI
         DevKitBundle.message("inspection.all.content.modules.default.loading.rule.message")
       )
     }
+  }
+
+  private fun hasClassesRegisteredDirectly(plugin: IdeaPlugin): Boolean {
+    if (plugin.extensionPoints.any { it.extensionPoints.isNotEmpty() }) return true
+    if (plugin.extensions.any { it.xmlTag.subTags.isNotEmpty() }) return true
+    if (plugin.applicationListeners.any { it.listeners.isNotEmpty() }) return true
+    if (plugin.projectListeners.any { it.listeners.isNotEmpty() }) return true
+    if (plugin.actions.any { it.actions.isNotEmpty() || it.groups.isNotEmpty() || it.references.isNotEmpty() }) return true
+    return false
   }
 
   private fun hasNonOptionalLoadingRule(module: ModuleDescriptor): Boolean {
