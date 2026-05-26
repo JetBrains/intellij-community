@@ -520,10 +520,6 @@ object PluginManagerCore {
   }
 
   @ApiStatus.Internal
-  @VisibleForTesting
-  fun fallbackToOldPluginSetResolution(): Boolean = false
-
-  @ApiStatus.Internal
   fun initializePlugins(
     descriptorLoadingErrors: List<PluginDescriptorLoadingError>,
     initContext: PluginInitializationContext,
@@ -601,11 +597,7 @@ object PluginManagerCore {
       }
     }
 
-    val (pluginSet, cycleErrors) = if (fallbackToOldPluginSetResolution()) {
-      initStagesActivity = initStagesActivity?.endAndStart("pluginSetBuilder")
-      oldPluginSetBuilder(initContext, discoveredPlugins, pluginsToLoad, incompletePlugins, idMap, fullIdMap, fullContentModuleIdMap, pluginNonLoadReasons, ::registerLoadingError)
-    }
-    else {
+    val (pluginSet, cycleErrors) = run {
       initStagesActivity = initStagesActivity?.endAndStart("resolveConstraints")
       val resolvedPluginSet = initContext.resolveConstraints(pluginsToLoad)
       PluginInitializationDiagnosticUtils.logExclusionTree(resolvedPluginSet, incompletePlugins)

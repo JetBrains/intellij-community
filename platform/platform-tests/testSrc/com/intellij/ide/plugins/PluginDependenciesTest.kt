@@ -430,11 +430,7 @@ internal class PluginDependenciesTest {
     `foo module-dependency bar`()
     val pluginSet = buildPluginSet(expiredPluginIds = arrayOf("bar-plugin"))
     assertThat(pluginSet).doesNotHaveEnabledPlugins()
-    if (PluginManagerCore.fallbackToOldPluginSetResolution()) {
-      assertFirstErrorContains("foo", "requires plugin", "bar-plugin", "to be installed")
-    } else {
-      assertFirstErrorContains("foo", "depends", "bar-plugin", "failed to load")
-    }
+    assertFirstErrorContains("foo", "depends", "bar-plugin", "failed to load")
   }
   
   @Test

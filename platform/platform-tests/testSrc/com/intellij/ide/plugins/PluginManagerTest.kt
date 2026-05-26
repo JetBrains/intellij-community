@@ -224,11 +224,7 @@ class PluginManagerTest {
       for (html in loadPluginResult.loadingErrors) {
         text.append(html.htmlMessage.toString().replace("<br/>", "\n").replace("&#39;", "")).append('\n')
       }
-      val expectedResultFilename = if (PluginManagerCore.fallbackToOldPluginSetResolution()) {
-        "$testDataName.txt"
-      } else {
-        "$testDataName.txt.2"
-      }
+      val expectedResultFilename = "$testDataName.txt"
       UsefulTestCase.assertSameLinesWithFile(File(testDataPath, expectedResultFilename).path, text.toString())
     }
 

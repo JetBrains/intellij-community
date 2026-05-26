@@ -94,7 +94,7 @@ class ConditionalModuleLoadingRuleValueTest {
   }
 
   @Test
-  fun `content module with required-if-available and a dependency on an optional content module may break plugin loading`() {
+  fun `content module with required-if-available and a dependency on an optional content module loads`() {
     plugin("foo") {
       content {
         module("foo.optional", loadingRule = ModuleLoadingRuleValue.OPTIONAL) {}
@@ -108,16 +108,9 @@ class ConditionalModuleLoadingRuleValueTest {
     assertThat(pluginSetFrontend).hasExactlyEnabledPlugins("foo")
 
     val pluginSetMonolith = buildPluginSet { withProductMode(ProductMode.findById("monolith")!!) }
-    if (PluginManagerCore.fallbackToOldPluginSetResolution()) {
-      assertThat(pluginSetMonolith).doesNotHaveEnabledPlugins()
-      assertThat(loadingErrors).hasSizeGreaterThan(0)
-      assertThat(loadingErrors[0].htmlMessage.toString()).contains("foo", "cannot be loaded", "form a dependency cycle")
-    } else {
-      // now there is no artificial edge foo -> foo.maybe.req, so foo.maybe.req -> foo.optional -> foo is allowed
-      assertThat(pluginSetMonolith).hasExactlyEnabledPlugins("foo")
-      assertThat(pluginSetMonolith.getEnabledModules()).hasSize(3)
-      assertThat(loadingErrors).isEmpty()
-    }
+    assertThat(pluginSetMonolith).hasExactlyEnabledPlugins("foo")
+    assertThat(pluginSetMonolith.getEnabledModules()).hasSize(3)
+    assertThat(loadingErrors).isEmpty()
   }
 
   private fun buildPluginSet(builder: PluginSetTestBuilder.() -> Unit = {}): PluginSet {
