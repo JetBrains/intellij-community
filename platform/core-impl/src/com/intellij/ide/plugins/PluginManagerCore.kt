@@ -611,7 +611,7 @@ object PluginManagerCore {
 
     if (initContext.checkEssentialPlugins) {
       initStagesActivity = initStagesActivity?.endAndStart("check essential plugins")
-      checkEssentialPluginsAreAvailable(idMap, initContext.essentialPlugins, pluginNonLoadReasons)
+      checkEssentialPluginsAreAvailable(resolvedPluginSet, initContext.essentialPlugins, pluginNonLoadReasons)
     }
 
     if (configureClassLoaders) {
@@ -813,11 +813,11 @@ object PluginManagerCore {
   }
 
   private fun checkEssentialPluginsAreAvailable(
-    idMap: Map<PluginId, IdeaPluginDescriptorImpl>,
+    resolvedPluginSet: ResolvedPluginSet,
     essentialPlugins: Set<PluginId>,
     pluginNonLoadReasons: Map<PluginId, PluginNonLoadReason>,
   ) {
-    val corePlugin = idMap[CORE_ID]
+    val corePlugin = resolvedPluginSet.originalPluginSet.resolvePluginId(CORE_ID)
     if (corePlugin != null) {
       @Suppress("DEPRECATION")
       val disabledModulesOfCorePlugin = corePlugin.contentModules.filter { it.moduleLoadingRule.required && !it.isMarkedForLoading }
@@ -827,8 +827,8 @@ object PluginManagerCore {
     }
     var missing: MutableList<Pair<String, PluginNonLoadReason?>>? = null
     for (id in essentialPlugins) {
-      val descriptor = idMap[id]
-      if (descriptor == null || !descriptor.isMarkedForLoading) {
+      val descriptor = resolvedPluginSet.originalPluginSet.resolvePluginId(id)
+      if (descriptor == null || resolvedPluginSet.isExcluded(descriptor)) {
         if (missing == null) {
           missing = ArrayList()
         }
