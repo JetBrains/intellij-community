@@ -441,7 +441,6 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
     synchronized(lock) {
       initProjectStartupActivities.clear()
       postStartupActivities.clear()
-      freezePostStartupActivities = false
       runningProjectActivities.clear()
     }
   }
