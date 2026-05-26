@@ -356,8 +356,9 @@ internal fun generateLocalLibs(libs: Collection<LocalLibrary>, isLibraryProvided
   for ((dir, libs) in libs.sortedBy { it.target.targetName }.groupBy { it.bazelBuildFileDir }) {
     val bazelFileUpdater = fileToUpdater.computeIfAbsent(dir.resolve("BUILD.bazel")) { BazelFileUpdater(it) }
     bazelFileUpdater.removeSections("local-libraries")
+    val loadSymbols = mutableMapOf<String, Set<String>>()
     buildFile(bazelFileUpdater, "local-libs") {
-      load("@rules_java//java:defs.bzl", "java_import")
+      loadSymbols["@rules_java//java:defs.bzl"] = setOf("java_import")
       for (lib in libs) {
         val targetName = lib.target.targetName
         target("java_import") {
@@ -369,7 +370,7 @@ internal fun generateLocalLibs(libs: Collection<LocalLibrary>, isLibraryProvided
         }
 
         if (isLibraryProvided(lib)) {
-          load("@rules_java//java:defs.bzl", "java_library")
+          loadSymbols["@rules_java//java:defs.bzl"] = setOf("java_library")
           target("java_library") {
             option("name", targetName + PROVIDED_SUFFIX)
             option("exports", listOf(":$targetName"))
@@ -383,5 +384,6 @@ internal fun generateLocalLibs(libs: Collection<LocalLibrary>, isLibraryProvided
         }
       }
     }
+    bazelFileUpdater.appendLoadSymbols(loadSymbols)
   }
 }

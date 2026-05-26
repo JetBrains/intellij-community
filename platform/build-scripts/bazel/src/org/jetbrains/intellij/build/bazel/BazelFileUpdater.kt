@@ -63,9 +63,41 @@ internal class BazelFileUpdater(private val file: Path) {
   }
 
   fun save() {
-    val newContent = fileContent?.trim() ?: error("fileContent is not set for $file")
+    val newContent = fileContent?.trim()?.let { it + "\n" } ?: error("fileContent is not set for $file")
     if (originalContent != newContent) {
       file.createParentDirectories().writeText(newContent)
     }
   }
+
+  fun appendLoadSymbols(existingLoadSymbols: Map<String, Set<String>>) {
+    val manager = BazelLoadStatementManager()
+
+    manager.insert(existingLoadSymbols)
+
+    originalContent?.lines().orEmpty()
+      .filter { isLoadStatementToMove(it) }
+      .forEach { manager.insert(it) }
+
+    val stripedContent = fileContent?.lines().orEmpty()
+      .filterNot { isLoadStatementToMove(it) }
+      .joinToString(separator = "\n")
+      .trim()
+
+    val result = manager.getResult()
+
+    fileContent = if (result.isEmpty()) {
+      stripedContent
+    } else {
+      result + "\n\n" + stripedContent
+    }
+  }
+
+  private fun isLoadStatementToMove(line: String): Boolean {
+    return line.startsWith("load(") && !thoseLoadStatementsShouldBeNotMoved.contains(line)
+  }
+
+  private val thoseLoadStatementsShouldBeNotMoved = listOf(
+    // Referenced in build/BUILD.bazel
+    "load(\"//build:dev_server_run_configurations.bzl\", \"dev_server_run_configurations\")"
+  )
 }

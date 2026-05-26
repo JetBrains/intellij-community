@@ -176,7 +176,7 @@ internal class RunConfigurationsFile : BuildFile() {
   override fun render(existingLoads: Map<String, Set<String>>): String {
     return "def dev_server_run_configurations():\n" +
         super.render(existingLoads).lines().joinToString("\n") { line ->
-          if (line.isNotEmpty()) "  $line" else line
+          if (line.isNotEmpty()) "$INDENT$line" else line
         }.let { it + if (!it.endsWith("\n")) "\n" else "" }   // preserve trailing newline
   }
 
