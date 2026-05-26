@@ -8,7 +8,7 @@ import com.intellij.driver.sdk.ui.components.common.ideFrame
 import com.intellij.driver.sdk.ui.components.elements.JTreeUiComponent
 import com.intellij.driver.sdk.ui.components.elements.actionButton
 import com.intellij.driver.sdk.ui.components.elements.popup
-import com.intellij.driver.sdk.ui.components.elements.getPopups
+import com.intellij.driver.sdk.ui.components.elements.popups
 import com.intellij.driver.sdk.ui.components.elements.tree
 import com.intellij.driver.sdk.ui.should
 import com.intellij.driver.sdk.waitFor
@@ -65,9 +65,9 @@ fun Driver.structureViewDisableHeadingsNumbers() = ideFrame {
   step("Disable Structure View headings") {
     popup().waitFound().waitOneText("Show Heading Numbers").moveMouse()
     should("Popup with 'None' option should appear") {
-      getPopups().list().last().hasSubtext("None")
+      popups().list().last().hasSubtext("None")
     }
-    getPopups().list().last().waitOneText("None").click()
+    popups().list().last().waitOneText("None").click()
   }
 }
 

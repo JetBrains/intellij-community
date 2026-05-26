@@ -11,7 +11,7 @@ import com.intellij.driver.sdk.ui.components.notebooks.NotebookEditorUiComponent
 import com.intellij.driver.sdk.ui.pasteText
 import com.intellij.driver.sdk.ui.ui
 import com.intellij.driver.sdk.waitFor
-import com.intellij.driver.sdk.ui.components.elements.getPopups
+import com.intellij.driver.sdk.ui.components.elements.popups
 import com.intellij.jupyter.ui.test.util.utils.waitNotEmpty
 
 val NotebookEditorUiComponent.firstTable: NotebookTableOutputUi get() = waitForNonEmptyTables().first()
@@ -32,27 +32,28 @@ fun Driver.applyFilter(param: String? = null, comparator: String? = null, logica
     waitFor {
       getFilterViewPanel().present()
     }
+    var comboBoxes: List<JComboBoxUiComponent>
 
     getFilterViewPanel().run {
       if (!first) {
         x { byAccessibleName("Add filter") }.click()
       }
-      val comboBoxes = xx(JComboBoxUiComponent::class.java) { byClass("ComboBox") }.list()
+      comboBoxes = xx(JComboBoxUiComponent::class.java) { byClass("ComboBox") }.list()
 
       comboBoxes.last().click()
       comparator?.let { comboBoxes.last().selectItem(it) }
 
       comboBoxes[comboBoxes.lastIndex - 1].moveMouse()
       param?.let { comboBoxes[comboBoxes.lastIndex - 1].selectItem(it) }
+    }
 
-      if (!first && logicalOperator != null) {
-        waitFor {
-          comboBoxes[comboBoxes.lastIndex - 2].click()
-          getPopups().list().last().hasText(logicalOperator)
-        }
-        getPopups().list().last().waitOneText(logicalOperator).click()
-      }
+    if (!first && logicalOperator != null) {
+      comboBoxes[comboBoxes.lastIndex - 2].click()
+      waitFor { popups().list().last().hasText(logicalOperator) }
+      popups().list().last().waitOneText(logicalOperator).click()
+    }
 
+    getFilterViewPanel().run {
       xx { byAccessibleName("Editor") }.list().last().strictClick()
       value?.let {
         keyboard {
@@ -73,9 +74,11 @@ fun Driver.removeFilter(index: Int = 0) {
 
     getFilterViewPanel().run {
       xx { byAccessibleName("Additional Filter Actions") }.list()[index].click()
+    }
 
-      getPopups().list().last().waitOneText("Remove Filter").click()
+    popups().list().last().waitOneText("Remove Filter").click()
 
+    getFilterViewPanel().run {
       actionButton { byAccessibleName("Apply") }.click()
     }
   }
