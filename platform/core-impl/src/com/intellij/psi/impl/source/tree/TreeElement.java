@@ -531,12 +531,16 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
     boolean firstIsVersioned = primary.isVersioned();
     boolean secondIsVersioned = secondary.isVersioned();
     if (firstIsVersioned != secondIsVersioned) {
-      throw new VersionedPsiConsistencyException.TreeElement(
-        "Tree elements " + primary + " (versioned: " + firstIsVersioned + ") and " + secondary + " (versioned: "+ secondIsVersioned + ") are not compatible from versioning point of view.\n" +
+      throw getVersionInconsistencyException(primary, secondary);
+    }
+  }
+
+  private static @NotNull RuntimeException getVersionInconsistencyException(@NotNull TreeElement primary, @NotNull TreeElement secondary) {
+    return new VersionedPsiConsistencyException.TreeElement(
+        "Tree elements " + primary + " (versioned: " + primary.isVersioned() + ") and " + secondary + " (versioned: "+ secondary.isVersioned() + ") are not compatible from versioning point of view.\n" +
         "Most likely you created or copied some PSI element and then tried to attach it to a physical PSI tree.\n" +
         "The solution is to create or copy elements in the same environment (i.e., inside / outside of write actions),\n" +
         "or to use `com.intellij.psi.util.PsiVersioningService.inVersionedEnvironment` before creating or copying an element.");
-    }
   }
 
   @ApiStatus.Internal
@@ -706,8 +710,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
 
   final void rawInsertAfterMeWithoutNotifications(long version, @NotNull TreeElement firstNew) {
     if (!this.isVersioned() && firstNew.isVersioned()) {
-      throw new VersionedPsiConsistencyException.TreeElement("Attempt to insert a non-versioned element into a versioned hierarchy. Please ensure that " + firstNew +
-                                                             " is a versioned element by using `PsiVersioningService.inVersionedEnvironment`");
+      throw getVersionInconsistencyException(this, firstNew);
     }
     long versionForRemoval = firstNew.getVersionForWriting() == -1 ? -1 : version;
     firstNew.rawRemoveUpToWithoutNotifications(versionForRemoval, null, false);
