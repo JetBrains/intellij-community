@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCustomDataSynchronizer
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.platform.eel.path.EelPath
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
@@ -38,8 +39,15 @@ private val REMOTE_PROJECT_BASE_PATH_KEY: Key<String> = Key.create("com.intellij
  */
 @ApiStatus.Internal
 fun Project.getRemoteProjectBaseNioPath(): Path? {
-  val raw = getUserData(REMOTE_PROJECT_BASE_PATH_KEY) ?: guessProjectDir()?.path ?: return null
-  return EelPath.parse(raw, getEelDescriptor()).asNioPath()
+  // The backend-provided path is a string in the host's path syntax, so it must be parsed
+  // through EelPath to be routed via MultiRoutingFileSystem to the correct environment.
+  // The local fallback uses VirtualFile.toNioPathOrNull, which goes through the VFS to get
+  // the correct local NIO path (including FS-specific quirks like the Windows bare-drive fix).
+  getUserData(REMOTE_PROJECT_BASE_PATH_KEY)?.let {
+    return EelPath.parse(it, getEelDescriptor()).asNioPath()
+  }
+
+  return guessProjectDir()?.toNioPathOrNull()
 }
 
 /**
