@@ -1,6 +1,6 @@
 // COMPILER_ARGUMENTS: -Xcontext-parameters
-// K2_ERROR: Callable reference to 'context(_: Context) fun fn(): Int' is unsupported because it has context parameters.
 // K2_AFTER_ERROR: Unresolved reference 'fn'.
+// K2_ERROR: No context argument for '_: Context' found.
 
 interface Context
 
