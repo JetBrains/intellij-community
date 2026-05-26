@@ -210,7 +210,7 @@ class McpToolsMarkdownExporterTest {
   @Test
   fun generateMarkdownByCategoryUsesHeadingLevel3ForTools() {
     val expected = md(
-      "# MCP Tools",
+      "# Tools",
       "",
       "## GeneralToolset",
       "",
@@ -258,7 +258,7 @@ class McpToolsMarkdownExporterTest {
   @Test
   fun generateMarkdownEmptyMapRendersOnlyTopHeading() {
     val expected = md(
-      "# MCP Tools",
+      "# Tools",
       "",
     )
 
@@ -307,14 +307,32 @@ class McpToolsMarkdownExporterTest {
   }
 
   @Test
-  fun generateMarkdownTreeEmptyListReturnsOnlyIndexHeader() {
+  fun generateMarkdownTreeEmptyListReturnsOnlyIndexHeaderAndLegend() {
     val result = McpToolsMarkdownExporter.generateMarkdownTree(emptyList())
 
     assertEquals(setOf(TREE_INDEX_FILE), result.keys)
     assertEquals(
-      md("# MCP Tools", ""),
+      md("# Tools", "", McpToolsMarkdownExporter.TREE_INDEX_LEGEND, ""),
       result.getValue(TREE_INDEX_FILE),
     )
+  }
+
+  @Test
+  fun generateMarkdownTreeIndexIncludesLegendBlockOnceAndPerToolFilesDoNot() {
+    val result = McpToolsMarkdownExporter.generateMarkdownTree(
+      listOf(getStateTool(), setMarkerTool()),
+    )
+
+    val index = result.getValue(TREE_INDEX_FILE)
+    val legendCountInIndex = index.split(McpToolsMarkdownExporter.TREE_INDEX_LEGEND).size - 1
+    assertEquals(1, legendCountInIndex, "Legend should appear exactly once in the index: $index")
+
+    for ((path, content) in result) {
+      if (path == TREE_INDEX_FILE) continue
+      assert(!content.contains(McpToolsMarkdownExporter.TREE_INDEX_LEGEND)) {
+        "Per-tool file $path should not contain the legend: $content"
+      }
+    }
   }
 
   private val DEFAULT_CATEGORY = McpToolCategory(

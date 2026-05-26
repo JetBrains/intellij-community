@@ -16,7 +16,7 @@ object McpToolsMarkdownExporter {
    */
   fun generateMarkdown(toolsByCategory: Map<McpToolCategory, List<McpTool>>): String {
     return buildString {
-      appendLine("# MCP Tools")
+      appendLine("# Tools")
       appendLine()
       for ((category, categoryTools) in toolsByCategory) {
         appendLine("## ${category.shortName}")
@@ -53,7 +53,9 @@ object McpToolsMarkdownExporter {
 
     val result = LinkedHashMap<String, String>()
     result[TREE_INDEX_FILE] = buildString {
-      appendLine("# MCP Tools")
+      appendLine("# Tools")
+      appendLine()
+      appendLine(TREE_INDEX_LEGEND)
       appendLine()
       for ((category, categoryTools) in byCategory) {
         appendLine("## ${category.shortName}")
@@ -84,6 +86,18 @@ object McpToolsMarkdownExporter {
    * Subdirectory holding per-tool markdown files in [generateMarkdownTree] output.
    */
   const val TREE_TOOLS_SUBDIR: String = "tools"
+
+  /**
+   * Legend block emitted at the top of the [TREE_INDEX_FILE] index, explaining the `*` marker that
+   * [toSchemaTableRows] appends to schema-required property names in per-tool Parameters / Output
+   * tables. Index-only by design — per-tool files stay terse.
+   */
+  const val TREE_INDEX_LEGEND: String =
+    "> **Legend.** `*` after a field name marks a property that is required by the JSON schema. " +
+    "For input parameters this means the caller must pass the value. " +
+    "For output fields it means the value is always present within its enclosing object. " +
+    "Nested `*` is scoped to the parent object's presence — required nested fields are only guaranteed " +
+    "when the optional parent object is emitted."
 
   private fun StringBuilder.appendToolSection(tool: McpTool, headingLevel: Int) {
     val heading = "#".repeat(headingLevel)
