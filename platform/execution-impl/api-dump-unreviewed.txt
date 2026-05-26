@@ -1652,14 +1652,6 @@ f:com.intellij.execution.ui.RunContentManagerImpl$Companion
 f:com.intellij.execution.ui.RunToolbarPopupKt
 - sf:createStopPopup(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.project.Project):com.intellij.openapi.ui.popup.JBPopup
 - sf:runCounterToString(com.intellij.openapi.actionSystem.AnActionEvent,I):java.lang.String
-f:com.intellij.execution.ui.RunnerAndConfigurationSettingsEditor
-- com.intellij.openapi.options.SettingsEditor
-- com.intellij.execution.ui.TargetAwareRunConfigurationEditor
-- <init>(com.intellij.execution.RunnerAndConfigurationSettings,com.intellij.execution.ui.RunConfigurationFragmentedEditor):V
-- isInplaceValidationSupported():Z
-- isReadyForApply():Z
-- isSpecificallyModified():Z
-- targetChanged(java.lang.String):V
 f:com.intellij.execution.ui.TargetPathFragment
 - com.intellij.execution.ui.SettingsEditorFragment
 - sf:ID:java.lang.String
