@@ -267,9 +267,12 @@ open class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDeclara
         return true
     }
 
-    private fun valueParameterMatches(firstValueParamOwner: KtCallableDeclaration, secondValueParameOwner: KtCallableDeclaration): Boolean {
+    private fun valueParameterMatches(
+        firstValueParamOwner: KtCallableDeclaration,
+        secondValueParameterOwner: KtCallableDeclaration
+    ): Boolean {
         val firstValueParameters = firstValueParamOwner.valueParameters
-        val secondValueParameters = secondValueParameOwner.valueParameters
+        val secondValueParameters = secondValueParameterOwner.valueParameters
 
         if (firstValueParameters.size != secondValueParameters.size) return false
         for (i in firstValueParameters.indices) {
