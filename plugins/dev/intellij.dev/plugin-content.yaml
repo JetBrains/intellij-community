@@ -6,10 +6,12 @@
   - name: intellij.dev.codeInsight
   - name: intellij.java.dev
   - name: intellij.kotlin.dev
-  - name: intellij.platform.statistics.devkit
 - name: lib/modules/intellij.groovy.dev.jar
   contentModules:
   - name: intellij.groovy.dev
 - name: lib/modules/intellij.php.dev.jar
   contentModules:
   - name: intellij.php.dev
+- name: lib/modules/intellij.platform.statistics.devkit.jar
+  contentModules:
+  - name: intellij.platform.statistics.devkit

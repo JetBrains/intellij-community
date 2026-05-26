@@ -4,7 +4,6 @@ package com.intellij.internal.statistic.devkit.toolwindow
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.NonEmptyActionGroup
-import com.intellij.internal.statistic.devkit.PlatformStatisticsDevkitIcons
 import com.intellij.internal.statistic.devkit.StatisticsDevKitUtil.DEFAULT_RECORDER
 import com.intellij.internal.statistic.devkit.StatisticsDevKitUtil.getLogProvidersInTestMode
 import com.intellij.internal.statistic.devkit.actions.RecordStateStatisticsEventLogAction
@@ -18,6 +17,7 @@ import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
+import com.intellij.platform.statistics.devkit.icons.PlatformStatisticsDevkitIcons
 import com.intellij.ui.content.ContentFactory
 import javax.swing.Icon
 
@@ -53,7 +53,7 @@ internal class StatisticsEventLogToolWindowFactory : ToolWindowFactory, DumbAwar
   }
 
   override val icon: Icon
-    get() =  PlatformStatisticsDevkitIcons.StatisticsEventLog
+    get() = PlatformStatisticsDevkitIcons.StatisticsEventLog
 
   override suspend fun isApplicableAsync(project: Project) = StatisticsRecorderUtil.isAnyTestModeEnabled()
 }

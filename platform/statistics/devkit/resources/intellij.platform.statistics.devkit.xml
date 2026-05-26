@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.internal.statistic.devkit">
+<idea-plugin>
   <dependencies>
     <module name="intellij.json.backend"/>
   </dependencies>
