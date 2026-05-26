@@ -17,7 +17,6 @@ import org.jetbrains.plugins.terminal.ShellTerminalWidget
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionId
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 import org.jetbrains.plugins.terminal.session.impl.TerminalStartupOptionsImpl
-import org.jetbrains.plugins.terminal.util.eelDescriptor
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -63,7 +62,7 @@ class TerminalSessionsManager {
       processType = configuredOptions.processType,
       pid = getLocalPid(ttyConnector),
     )
-    val stateAwareSession = StateAwareTerminalSession(project, jediTermSession, ttyConnector.eelDescriptor, options, scope)
+    val stateAwareSession = StateAwareTerminalSession(jediTermSession, options, scope)
 
     val sessionId = storeSession(stateAwareSession, scope)
 
