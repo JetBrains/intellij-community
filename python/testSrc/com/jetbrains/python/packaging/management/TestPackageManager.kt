@@ -24,7 +24,7 @@ import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 
 @TestOnly
-class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
+internal class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
   private var packageNames: List<String> = emptyList()
   private var packageDetails: PythonPackageDetails? = null
   private var packageVersions: Map<String, List<String>> = emptyMap()

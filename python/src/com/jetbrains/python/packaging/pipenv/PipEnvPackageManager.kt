@@ -22,7 +22,7 @@ import java.nio.file.Path
 import com.jetbrains.python.sdk.pipenv.PipEnvParser as SdkPipEnvParser
 
 @ApiStatus.Internal
-class PipEnvPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
+internal class PipEnvPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
   private val modulePath: Path?
     get() = sdk.associatedModulePath?.let { Path.of(it) }
 

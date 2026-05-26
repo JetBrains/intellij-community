@@ -29,13 +29,12 @@ import com.jetbrains.python.packaging.packageRequirements.collectAllNames
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
 import com.jetbrains.python.packaging.pyRequirement
 import com.intellij.python.pyproject.PY_PROJECT_TOML
-import com.jetbrains.python.requirements.PyDependenciesFile
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 
 @ApiStatus.Internal
-class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
+internal class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
   override val installedPackagesIncludeTransitive: Boolean = true
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager.getInstance(project)
   override val treeProvider = CachedDependencyTreeProvider {
