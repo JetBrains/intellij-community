@@ -80,6 +80,11 @@ fun VirtualFile.findPsiFile(project: Project): PsiFile? {
   return PsiManager.getInstance(project).findFile(this)
 }
 
+/**
+ * Finds the [PsiDirectory] that encapsulates current [VirtualFile].
+ * If the [VirtualFile] is a directory itself, the method will return null.
+ *
+ */
 @RequiresReadLock
 fun VirtualFile.findPsiDirectory(project: Project): PsiDirectory? {
   return PsiManager.getInstance(project).findDirectory(this)
