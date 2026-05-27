@@ -58,6 +58,7 @@ These predate the master refactor and remain on 261:
 | ij-proxy `SearchItem` wire shape | `filePath`, `lineNumber?`, `lineText?` | `filePath`, `startLine?`, `startColumn?`, `endLine?`, `endColumn?` |
 | ij-proxy `shared.ts` | superset (keeps both 261 helpers + new master helpers) | only master helpers |
 | `lint_files`, `reformat_file` proxy handlers | not present | present |
+| `apply_patch` routing for ij-proxy clients | hits the JVM `PatchToolset` directly (proxy hides its TS handler when the IDE exposes `apply_patch`) | same — but the previous 261 route through ij-proxy's TS handler did `git rm` / `git mv` for delete and move; the JVM path uses VFS `file.delete` and VFS rename, so deletes show as *unstaged removed* in `git status` rather than `D` |
 | Test framework | `McpToolsetTestBase` with SSE transport + `enableBraveMode` | `GeneralMcpToolsetTestBase` with `StreamableHttpClientTransport` + `authorizedSession` |
 
 The ij-proxy keeps the 261 wire shape because the existing search handlers
@@ -72,6 +73,8 @@ changing the proxy's external schema mid-release.
 JVM (`./tests.cmd --module intellij.mcpserver.tests --test <FQN>`):
 
 - `PatchApplyEngineTest` — pure unit tests for the V4A / unified-diff parser.
+- `PatchToolsetTest` — end-to-end add / update / delete via the live JVM
+  `apply_patch`.
 - `ReadToolsetTest` — rewritten for the `(file_path, offset, limit)` API.
 - `SearchToolsetTest` — assertions on removed fields (`startOffset`,
   `endOffset`, `lineText`) dropped.
@@ -89,7 +92,8 @@ ij-proxy (`cd community/build/mcp-servers/ij-proxy && bun test`):
   break 261's existing toolset tests; not worth the risk for a release branch.
 - Master's `lint-files.ts` / `reformat-file.ts` ij-proxy handlers — 261 talks
   to those toolsets through the JVM side directly.
-- `PatchToolsetTest`, master's `ReadToolsetTest`, master's `SearchToolsetTest`
-  — they depend on `GeneralMcpToolsetTestBase`. Coverage on 261 comes from
-  `PatchApplyEngineTest` + the 261-adapted `ReadToolsetTest` /
+- Master's `ReadToolsetTest` / `SearchToolsetTest` and the bigger master
+  `PatchToolsetTest` — they depend on `GeneralMcpToolsetTestBase`.
+  Coverage on 261 comes from `PatchApplyEngineTest`, a 261-style
+  `PatchToolsetTest`, and the 261-adapted `ReadToolsetTest` /
   `SearchToolsetTest`.
