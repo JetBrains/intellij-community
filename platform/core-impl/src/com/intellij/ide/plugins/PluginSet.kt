@@ -65,7 +65,7 @@ class PluginSet internal constructor(
 
   fun isModuleEnabled(id: PluginModuleId): Boolean = enabledModuleMap.containsKey(id)
 
-  fun withPlugin(plugin: PluginMainDescriptor): PluginSetBuilder {
+  fun withPlugin(plugin: PluginMainDescriptor): PluginSetBuilder? {
     // in tests or on plugin installation it is not present in a plugin list, may exist on plugin update, though
     // linear search is ok here - not a hot method
     val oldPlugin = enabledPlugins.find { it.legacyEquals(plugin) } // todo may exist on update
@@ -87,7 +87,7 @@ class PluginSet internal constructor(
     // FIXME handle potential conflict
     // FIXME this method loses information (takes only currently loaded plugins)
     val newUnambiguousPluginSet = UnambiguousPluginSet.tryBuild(unsortedPlugins.toList())
-                                  ?: error("plugin substitution creates a conflict: $plugin")
+                                  ?: return null
     return PluginSetBuilder(ProductPluginInitContext(), newUnambiguousPluginSet, newDiscoveryResult)
   }
 
