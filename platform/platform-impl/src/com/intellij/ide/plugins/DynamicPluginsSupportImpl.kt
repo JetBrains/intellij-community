@@ -133,7 +133,7 @@ internal class DynamicPluginsSupportImpl(
       val elementsModel = MutableAppElementsModel()
       for (group in sequence.currentState.runtimeModuleGroupGraph.sortedGroups) {
         elementsModel.register(group)
-          ?.let { return@indeterminateStep DynamicTransitionIsNotPossibleReason.of(it) }
+          ?.let { return@indeterminateStep it }
       }
       for (step in sequence.transitionSequence) {
         validateGroupConformsCommonDynamicConstraints(step.runtimeModuleGroup)
@@ -150,7 +150,7 @@ internal class DynamicPluginsSupportImpl(
             )?.let { return@indeterminateStep it }
 
             elementsModel.unregister(step.runtimeModuleGroup)
-              ?.let { return@indeterminateStep DynamicTransitionIsNotPossibleReason.of(it) }
+              ?.let { return@indeterminateStep it }
           }
           RuntimeModuleGroupAction.LOAD -> {
             validateProductRulesPermitLoading(step.runtimeModuleGroup)
@@ -159,7 +159,7 @@ internal class DynamicPluginsSupportImpl(
               ?.let { return@indeterminateStep it }
 
             elementsModel.register(step.runtimeModuleGroup)
-              ?.let { return@indeterminateStep DynamicTransitionIsNotPossibleReason.of(it) }
+              ?.let { return@indeterminateStep it }
           }
         }
       }
@@ -562,16 +562,19 @@ private object DynamicPluginsValidators {
 
   fun validateProductRulesPermitDynamicLoadOrUnload(group: RuntimeModuleGroup): DynamicTransitionIsNotPossibleReason? {
     if (InstalledPluginsState.getInstance().isRestartRequired) { // TODO maybe drop this flag eventually, should not exist (or at least shouldn't be used by platform stuff)
-      return DynamicTransitionIsNotPossibleReason.of("There are pending changes that require restart")
+      return DynamicTransitionIsNotPossibleReason.of("There are pending changes that require restart", null)
     }
     if (!RegistryManager.getInstance().`is`("ide.plugins.allow.unload")) {
       // TODO in previous impl, there was a check for (!allowLoadUnloadSynchronously(module)) which basically checks that the plugin
       //  affected only UI, this is not the case anymore (bad public contract otherwise)
-      return DynamicTransitionIsNotPossibleReason.of("Dynamic loading/unloading of plugins is disabled by a registry option 'ide.plugins.allow.unload'")
+      return DynamicTransitionIsNotPossibleReason.of("Dynamic loading/unloading of plugins is disabled by a registry option 'ide.plugins.allow.unload'", null)
     }
     for (descriptor in group.sortedDescriptors) {
       if (descriptor.productCode != null && !descriptor.isBundled && !PluginManagerCore.isDevelopedByJetBrains(descriptor)) {
-        return DynamicTransitionIsNotPossibleReason.of("${descriptor.shortLogDescription} is a paid plugin, dynamic loading/unloading is not supported")
+        return DynamicTransitionIsNotPossibleReason.of(
+          "${descriptor.shortLogDescription} is a paid plugin, dynamic loading/unloading is not supported",
+          descriptor.getMainDescriptor()
+        )
       }
     }
     return null
@@ -583,7 +586,8 @@ private object DynamicPluginsValidators {
       try {
         if (vetoer.vetoPluginLoad(descriptor)) {
           reason = DynamicTransitionIsNotPossibleReason.of(
-            "Dynamic loading of ${descriptor.shortLogDescription} was vetoed by ${vetoer.javaClass.name} from ${(vetoerDescriptor as? IdeaPluginDescriptorImpl)?.shortLogDescription}"
+            "Dynamic loading of ${descriptor.shortLogDescription} was vetoed by ${vetoer.javaClass.name} from ${(vetoerDescriptor as? IdeaPluginDescriptorImpl)?.shortLogDescription}",
+            descriptor.getMainDescriptor(),
           )
         }
       }
@@ -599,12 +603,15 @@ private object DynamicPluginsValidators {
     val vetoMessage = VETOER_EP_NAME.computeSafeIfAny {
       it.vetoPluginUnload(descriptor)
     }
-    return vetoMessage?.let(DynamicTransitionIsNotPossibleReason::of)
+    return vetoMessage?.let { DynamicTransitionIsNotPossibleReason.of(it, descriptor) }
   }
 
   fun validateDescriptorDoesNotRequireRestart(descriptor: IdeaPluginDescriptorImpl): DynamicTransitionIsNotPossibleReason? {
     if (descriptor.isRequireRestart) {
-      return DynamicTransitionIsNotPossibleReason.of("${descriptor.shortLogDescription} explicitly requires restart to be loaded/unloaded")
+      return DynamicTransitionIsNotPossibleReason.of(
+        "${descriptor.shortLogDescription} explicitly requires restart to be loaded/unloaded",
+        descriptor.getMainDescriptor()
+      )
     }
     return null
   }
@@ -612,7 +619,8 @@ private object DynamicPluginsValidators {
   fun validateIsNotDependsSubDescriptor(descriptor: IdeaPluginDescriptorImpl): DynamicTransitionIsNotPossibleReason? {
     if (descriptor is DependsSubDescriptor) {
       return DynamicTransitionIsNotPossibleReason.of(
-        "${descriptor.getMainDescriptor().shortLogDescription} cannot be dynamically loaded/unloaded because it contains `<depends>` configs: ${descriptor.shortLogDescription}"
+        "${descriptor.getMainDescriptor().shortLogDescription} cannot be dynamically loaded/unloaded because it contains `<depends>` configs: ${descriptor.shortLogDescription}",
+        descriptor.getMainDescriptor(),
       )
     }
     return null
@@ -622,7 +630,8 @@ private object DynamicPluginsValidators {
     return validateInAllScopes(descriptor) { container ->
       when {
         container.components.isNotEmpty() -> DynamicTransitionIsNotPossibleReason.of(
-          "${descriptor.shortLogDescription} cannot be dynamically loaded/unloaded because it declares components: ${container.components.first()}"
+          "${descriptor.shortLogDescription} cannot be dynamically loaded/unloaded because it declares components: ${container.components.first()}",
+          descriptor.getMainDescriptor(),
         )
         else -> null
       }
@@ -637,7 +646,10 @@ private object DynamicPluginsValidators {
                       elementName == ActionElementName.reference ||
                       (elementName == ActionElementName.group && canUnloadActionGroup(element))
       if (!canUnload) {
-        return DynamicTransitionIsNotPossibleReason.of("${descriptor.shortLogDescription} cannot be dynamically unloaded because of the action element $action")
+        return DynamicTransitionIsNotPossibleReason.of(
+          "${descriptor.shortLogDescription} cannot be dynamically unloaded because of the action element $action",
+          descriptor.getMainDescriptor(),
+          )
       }
     }
     return null
@@ -648,7 +660,8 @@ private object DynamicPluginsValidators {
       val override = container.services.firstOrNull { it.overrides }
       when {
         override != null -> DynamicTransitionIsNotPossibleReason.of(
-          "${descriptor.shortLogDescription} cannot be dynamically loaded/unloaded because it declares service override: ${override}"
+          "${descriptor.shortLogDescription} cannot be dynamically loaded/unloaded because it declares service override: ${override}",
+          descriptor.getMainDescriptor()
         )
         else -> null
       }
@@ -660,7 +673,8 @@ private object DynamicPluginsValidators {
     if (classloader != null && classloader !is PluginClassLoader && !descriptor.useIdeaClassLoader && !application.isUnitTestMode) {
       return DynamicTransitionIsNotPossibleReason.of(
         "${descriptor.shortLogDescription} cannot be unloaded dynamically because it is configured to use $classloader, and not PluginClassLoader. " +
-        "This may happen if the IDE is started from sources."
+        "This may happen if the IDE is started from sources.",
+        descriptor.getMainDescriptor()
       )
     }
     return null
@@ -685,13 +699,15 @@ private object DynamicPluginsValidators {
         val epResult = elementsModel.getExtensionPoint(epFqn) ?: ownElementsModel.getExtensionPoint(epFqn)
         if (epResult == null) {
           return DynamicTransitionIsNotPossibleReason.of(
-            "${descriptor.shortLogDescription} cannot be loaded/unloaded dynamically because it uses extension point '$epFqn' which was not found."
+            "${descriptor.shortLogDescription} cannot be loaded/unloaded dynamically because it uses extension point '$epFqn' which was not found.",
+            descriptor.getMainDescriptor()
           )
         }
         val (source, ep) = epResult
         if (!ep.isDynamic) {
           return DynamicTransitionIsNotPossibleReason.of(
-            "${descriptor.shortLogDescription} cannot be loaded/unloaded dynamically because it uses non-dynamic extension point '$epFqn' from ${source.shortLogDescription}."
+            "${descriptor.shortLogDescription} cannot be loaded/unloaded dynamically because it uses non-dynamic extension point '$epFqn' from ${source.shortLogDescription}.",
+            descriptor.getMainDescriptor()
           )
         }
       }
@@ -726,44 +742,53 @@ private class MutableAppElementsModel {
   private val projectScope = ScopedContainer(hashMapOf())
   private val moduleScope = ScopedContainer(hashMapOf())
 
-  fun register(group: RuntimeModuleGroup): String? {
+  fun register(group: RuntimeModuleGroup): DynamicTransitionIsNotPossibleReason? {
     for (descriptor in group.sortedDescriptors) {
       register(descriptor)?.let { return it }
     }
     return null
   }
 
-  fun unregister(group: RuntimeModuleGroup): String? {
+  fun unregister(group: RuntimeModuleGroup): DynamicTransitionIsNotPossibleReason? {
     for (descriptor in group.sortedDescriptors.asReversed()) {
       unregister(descriptor)?.let { return it }
     }
     return null
   }
 
-  private fun register(descriptor: IdeaPluginDescriptorImpl): String? {
+  private fun register(descriptor: IdeaPluginDescriptorImpl): DynamicTransitionIsNotPossibleReason? {
     return runInEveryScope(descriptor) { container, scope ->
       for (ep in container.extensionPoints) {
         val existing = scope.extensionPoints.putIfAbsent(ep.getQualifiedName(descriptor), descriptor to ep)
         if (existing != null) {
-          return@runInEveryScope "Extension point ${ep.getQualifiedName(descriptor)} from ${descriptor.shortLogDescription}" +
-                                 " was previously registered by ${existing.first.shortLogDescription}"
+          return@runInEveryScope DynamicTransitionIsNotPossibleReason.of(
+            "Extension point ${ep.getQualifiedName(descriptor)} from ${descriptor.shortLogDescription}" +
+            " was previously registered by ${existing.first.shortLogDescription}",
+            descriptor.getMainDescriptor()
+          )
         }
       }
       return@runInEveryScope null
     }
   }
 
-  private fun unregister(descriptor: IdeaPluginDescriptorImpl): String? {
+  private fun unregister(descriptor: IdeaPluginDescriptorImpl): DynamicTransitionIsNotPossibleReason? {
     return runInEveryScope(descriptor) { container, scope ->
       for (ep in container.extensionPoints) {
         val existing = scope.extensionPoints.remove(ep.getQualifiedName(descriptor))
         if (existing == null) {
-          return@runInEveryScope "Extension point ${ep.getQualifiedName(descriptor)} from ${descriptor.shortLogDescription}" +
-                                 " was expected to be registered, but was not found"
+          return@runInEveryScope DynamicTransitionIsNotPossibleReason.of(
+            "Extension point ${ep.getQualifiedName(descriptor)} from ${descriptor.shortLogDescription}" +
+            " was expected to be registered, but was not found",
+            descriptor.getMainDescriptor()
+          )
         }
         if (existing.first != descriptor) {
-          return@runInEveryScope "Extension point ${ep.getQualifiedName(descriptor)} from ${descriptor.shortLogDescription}" +
-                                 " was expected to be registered, but was found associated with a different source: ${existing.first.shortLogDescription}"
+          return@runInEveryScope DynamicTransitionIsNotPossibleReason.of(
+            "Extension point ${ep.getQualifiedName(descriptor)} from ${descriptor.shortLogDescription}" +
+            " was expected to be registered, but was found associated with a different source: ${existing.first.shortLogDescription}",
+            descriptor.getMainDescriptor()
+          )
         }
       }
       return@runInEveryScope null
