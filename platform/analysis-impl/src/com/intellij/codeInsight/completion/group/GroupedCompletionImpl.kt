@@ -11,11 +11,25 @@ internal class GroupedCompletionImpl : GroupedCompletion {
    * @see com.intellij.codeInsight.completion.command.configuration.AppCommandCompletionSettings.calculateFromRegistry
    */
   override fun isEnabled(): Boolean {
-    return (AppMode.isRemoteDevHost() ||
-            !AppMode.isHeadless() ||
-            (ApplicationManager.getApplication().isUnitTestMode() && Registry.`is`("ide.completion.group.mode.enabled", false))
-           ) &&
-           PlatformUtils.isIntelliJ() &&
-           Registry.`is`("ide.completion.group.enabled", false)
+    if (!Registry.`is`("ide.completion.group.enabled", false)) {
+      return false
+    }
+
+    if (ApplicationManager.getApplication().isUnitTestMode() &&
+        Registry.`is`("ide.completion.group.mode.enabled", false) &&
+        PlatformUtils.isIntelliJ()
+    ) {
+      return true
+    }
+
+    if (AppMode.isRemoteDevHost() && PlatformUtils.isIntelliJ()) {
+      return true
+    }
+
+    if (!AppMode.isHeadless() && PlatformUtils.isIntelliJ()) {
+      return true
+    }
+
+    return false
   }
 }
