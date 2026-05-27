@@ -6,6 +6,7 @@ package com.intellij.ide.plugins.newui
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests.Companion.readOrUpdateFile
+import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.UI
@@ -22,6 +23,7 @@ import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.IOUtil
+import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil.drawImage
 import com.intellij.util.ui.launchOnShow
@@ -507,14 +509,23 @@ class PluginImagesComponent : JPanel {
 
   private fun paintImage(
     g: Graphics,
-    image: Image,
+    imageToPaint: Image,
     imageX: Int,
     imageY: Int,
     paintWidth: Int,
     paintHeight: Int,
   ) {
-    val imageWidth = image.getWidth(this)
-    val imageHeight = image.getHeight(this)
+    // Important to call these on the original image,
+    // as this ensures that the component will be notified when the image changes,
+    // in the case of an animated GIF.
+    val imageWidth = imageToPaint.getWidth(this)
+    val imageHeight = imageToPaint.getHeight(this)
+
+    if (imageWidth <= 0 || imageHeight <= 0) return  // Not loaded yet. Component.imageUpdate will handle repaint later.
+
+    // Lux can't paint toolkit images, so we paint it to a buffer first.
+    val image = if (AppMode.isRemoteDevHost()) ImageUtil.toBufferedImage(imageToPaint) else imageToPaint
+
     if (imageWidth <= paintWidth && imageHeight <= paintHeight) {
       drawImage(g, image, imageX + (paintWidth - imageWidth) / 2, imageY + (paintHeight - imageHeight) / 2, this)
     }
