@@ -35,6 +35,10 @@ class ClaudeSessionSource(
       readStateUpdateEvents,
     )
 
+  override fun activeThreadFileChangeEvents(path: String, threadId: String): Flow<Unit> {
+    return backend.activeThreadFileChangeEvents(path = path, threadId = threadId)
+  }
+
   override suspend fun listThreads(path: String, openProject: Project?): List<AgentSessionThread> {
     val threads = backend.listThreads(path = path, openProject = openProject)
     val visibleThreads = threads.filterNot(ClaudeBackendThread::archived)

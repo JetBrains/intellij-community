@@ -12,6 +12,7 @@ import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionBackend
 import com.intellij.agent.workbench.codex.sessions.backend.toAgentThreadActivity
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.codex.sessions.resolveProjectDirectoryFromPath
+import com.intellij.agent.workbench.filewatch.agentWorkbenchImmediateFileChangeFlow
 import com.intellij.agent.workbench.json.filebacked.FileBackedSessionChangeSet
 import com.intellij.agent.workbench.json.filebacked.createFileBackedSessionChangeFlow
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionActivityHintPolicy
@@ -26,6 +27,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -50,6 +53,19 @@ internal class CodexRolloutSessionBackend(
   internal val sessionUpdates: Flow<AgentSessionSourceUpdateEvent> = rolloutUpdates
 
   override val updates: Flow<Unit> = rolloutUpdates.map {}
+
+  fun activeThreadFileChangeEvents(path: String, threadId: String): Flow<Unit> {
+    return flow {
+      val files = withContext(Dispatchers.IO) {
+        resolveActiveThreadFilePaths(path = path, threadId = threadId)
+      }
+      emitAll(agentWorkbenchImmediateFileChangeFlow(files).map {})
+    }
+  }
+
+  internal fun resolveActiveThreadFilePaths(path: String, threadId: String): List<Path> {
+    return threadIndex.resolveThreadFilePaths(path = path, threadId = threadId)
+  }
 
   private fun createUpdatesFlow(sourceUpdates: Flow<FileBackedSessionChangeSet>): Flow<AgentSessionSourceUpdateEvent> {
     return channelFlow {

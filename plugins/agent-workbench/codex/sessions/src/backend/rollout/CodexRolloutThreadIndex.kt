@@ -4,6 +4,8 @@
 package com.intellij.agent.workbench.codex.sessions.backend.rollout
 
 import com.intellij.agent.workbench.codex.common.CodexSubAgent
+import com.intellij.agent.workbench.codex.common.normalizeRootPath
+import com.intellij.agent.workbench.codex.sessions.resolveProjectDirectoryFromPath
 import com.intellij.agent.workbench.codex.sessions.backend.CodexBackendThread
 import com.intellij.agent.workbench.json.filebacked.FileBackedSessionCachedFile
 import com.intellij.agent.workbench.json.filebacked.FileBackedSessionChangeSet
@@ -16,6 +18,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
 
 private val LOG = logger<CodexRolloutThreadIndex>()
 
@@ -89,6 +92,22 @@ internal class CodexRolloutThreadIndex(
       }
       return result
     }
+  }
+
+  fun resolveThreadFilePaths(path: String, threadId: String): List<Path> {
+    val normalizedThreadId = threadId.trim().takeIf { id -> id.isNotEmpty() && '/' !in id && '\\' !in id } ?: return emptyList()
+    val workingDirectory = resolveProjectDirectoryFromPath(path) ?: return emptyList()
+    val cwdFilter = normalizeRootPath(workingDirectory.invariantSeparatorsPathString)
+    collectByCwd(setOf(cwdFilter))
+
+    val result = LinkedHashSet<Path>()
+    for ((_, _, parsedThread) in invalidationState.snapshotCachedFiles().values) {
+      if (parsedThread == null) continue
+      if (parsedThread.normalizedCwd == cwdFilter && parsedThread.thread.thread.id == normalizedThreadId) {
+        result.add(parsedThread.path)
+      }
+    }
+    return ArrayList(result)
   }
 
   private fun clearState() {

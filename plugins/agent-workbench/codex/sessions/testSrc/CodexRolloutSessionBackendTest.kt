@@ -540,6 +540,37 @@ class CodexRolloutSessionBackendTest {
   }
 
   @Test
+  fun resolvesActiveThreadFilePathsForProjectAndThreadId() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-active-watch")
+      val otherDir = tempDir.resolve("project-active-watch-other")
+      Files.createDirectories(projectDir)
+      Files.createDirectories(otherDir)
+
+      val sessionsRoot = tempDir.resolve("sessions").resolve("2026").resolve("02").resolve("13")
+      val activeRollout = sessionsRoot.resolve("rollout-active.jsonl")
+      writeRollout(
+        file = activeRollout,
+        lines = listOf(sessionMetaLine(timestamp = "2026-02-13T12:00:00.000Z", id = "session-active", cwd = projectDir)),
+      )
+      writeRollout(
+        file = sessionsRoot.resolve("rollout-other-thread.jsonl"),
+        lines = listOf(sessionMetaLine(timestamp = "2026-02-13T12:01:00.000Z", id = "session-other", cwd = projectDir)),
+      )
+      writeRollout(
+        file = sessionsRoot.resolve("rollout-other-project.jsonl"),
+        lines = listOf(sessionMetaLine(timestamp = "2026-02-13T12:02:00.000Z", id = "session-active", cwd = otherDir)),
+      )
+
+      val backend = CodexRolloutSessionBackend(codexHomeProvider = { tempDir })
+
+      assertThat(backend.resolveActiveThreadFilePaths(projectDir.toString(), " session-active ")).containsExactly(activeRollout)
+      assertThat(backend.resolveActiveThreadFilePaths(projectDir.toString(), "session-other/malformed")).isEmpty()
+      assertThat(backend.resolveActiveThreadFilePaths(projectDir.toString(), "missing-session")).isEmpty()
+    }
+  }
+
+  @Test
   fun mapsBranchFromSessionMetaPayload() {
     runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-branch")

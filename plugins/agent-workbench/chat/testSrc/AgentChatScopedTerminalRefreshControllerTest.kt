@@ -8,19 +8,23 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
-// Long poll interval used in tests that do not exercise the poll. Keeps the controller's
-// rolloutPollJob effectively dormant so it does not race with the assertion paths.
-private const val DISABLED_POLL_INTERVAL_MS: Long = 60_000L
+private const val LONG_DEBOUNCE_MS: Long = 60_000L
+private const val TEST_POLL_INTERVAL_MS: Long = 40L
+private const val TEST_POLL_ACTIVE_WINDOW_MS: Long = 120L
 
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentChatScopedTerminalRefreshControllerTest {
@@ -48,7 +52,6 @@ class AgentChatScopedTerminalRefreshControllerTest {
       outputChanges = null,
       sessionState = MutableStateFlow(TerminalViewSessionState.NotStarted),
       parentScope = this,
-      rolloutPollIntervalMs = DISABLED_POLL_INTERVAL_MS,
       notifyRefresh = { provider, path, threadId, activityHint -> signals.add(RefreshSignal(provider, path, threadId, activityHint)) },
     ).use {
       val signal = withTimeout(5.seconds) { signals.take() }
@@ -69,7 +72,6 @@ class AgentChatScopedTerminalRefreshControllerTest {
       sessionState = MutableStateFlow(TerminalViewSessionState.NotStarted),
       parentScope = this,
       debounceMs = 25L,
-      rolloutPollIntervalMs = DISABLED_POLL_INTERVAL_MS,
       emitInitialRefresh = false,
       threadId = "codex-thread",
       notifyRefresh = { provider, path, threadId, activityHint -> signals.add(RefreshSignal(provider, path, threadId, activityHint)) },
@@ -96,7 +98,6 @@ class AgentChatScopedTerminalRefreshControllerTest {
       outputChanges = null,
       sessionState = sessionState,
       parentScope = this,
-      rolloutPollIntervalMs = DISABLED_POLL_INTERVAL_MS,
       emitInitialRefresh = false,
       notifyRefresh = { provider, path, threadId, activityHint -> signals.add(RefreshSignal(provider, path, threadId, activityHint)) },
     ).use {
@@ -109,7 +110,8 @@ class AgentChatScopedTerminalRefreshControllerTest {
   }
 
   @Test
-  fun rolloutPollEmitsScopedRefreshWhileSessionIsRunning() = runBlocking(Dispatchers.Default) {
+  fun rolloutPollIsDisabledByDefault() = runBlocking(Dispatchers.Default) {
+    val inputChanges = MutableSharedFlow<Unit>(extraBufferCapacity = 16)
     val sessionState = MutableStateFlow<TerminalViewSessionState>(TerminalViewSessionState.Running)
     val signals = LinkedBlockingQueue<RefreshSignal>()
 
@@ -117,56 +119,96 @@ class AgentChatScopedTerminalRefreshControllerTest {
       provider = AgentSessionProvider.CODEX,
       projectPath = "/work/project",
       outputChanges = null,
+      inputChanges = inputChanges,
       sessionState = sessionState,
       parentScope = this,
-      rolloutPollIntervalMs = 50L,
+      rolloutPollIntervalMs = TEST_POLL_INTERVAL_MS,
+      rolloutPollActiveWindowMs = TEST_POLL_ACTIVE_WINDOW_MS,
       emitInitialRefresh = false,
       threadId = "codex-thread",
       notifyRefresh = { provider, path, threadId, activityHint -> signals.add(RefreshSignal(provider, path, threadId, activityHint)) },
     ).use {
-      // Expect a handful of poll-driven refreshes within a generous window.
-      val collected = ArrayList<RefreshSignal>()
-      withTimeout(5.seconds) {
-        repeat(3) {
-          collected.add(signals.take())
-        }
-      }
-
-      assertThat(collected).hasSizeGreaterThanOrEqualTo(3)
-      assertThat(collected).allMatch { it == RefreshSignal(AgentSessionProvider.CODEX, "/work/project", "codex-thread", null) }
+      delay(50.milliseconds)
+      inputChanges.emit(Unit)
+      val signal = signals.poll(300, TimeUnit.MILLISECONDS)
+      assertThat(signal).isNull()
     }
   }
 
   @Test
-  fun rolloutPollStopsWhenSessionLeavesRunning() = runBlocking(Dispatchers.Default) {
-    val sessionState = MutableStateFlow<TerminalViewSessionState>(TerminalViewSessionState.Running)
+  fun activeThreadFileChangeEmitsScopedRefreshWhileRunning() = runBlocking(Dispatchers.Default) {
+    val fileChanges = MutableSharedFlow<Unit>(extraBufferCapacity = 16)
+    val watchRequests = LinkedBlockingQueue<String>()
     val signals = LinkedBlockingQueue<RefreshSignal>()
 
     AgentChatScopedTerminalRefreshController(
       provider = AgentSessionProvider.CODEX,
       projectPath = "/work/project",
       outputChanges = null,
-      sessionState = sessionState,
+      sessionState = MutableStateFlow(TerminalViewSessionState.Running),
       parentScope = this,
-      rolloutPollIntervalMs = 50L,
       emitInitialRefresh = false,
+      threadId = "thread-a",
+      activeThreadIdProvider = { "thread-a" },
+      activeThreadFileChangeEvents = { threadId ->
+        watchRequests.add(threadId)
+        fileChanges
+      },
       notifyRefresh = { provider, path, threadId, activityHint -> signals.add(RefreshSignal(provider, path, threadId, activityHint)) },
     ).use {
-      // Drain the first poll-driven signal so we know the loop is running.
-      withTimeout(5.seconds) { signals.take() }
-      // Transition away from Running; the termination signal also fires for Terminated.
-      sessionState.value = TerminalViewSessionState.Terminated
-      // Drain any pending signals (any extra polls in-flight plus the one-shot termination signal).
-      delay(200.milliseconds)
-      signals.clear()
-      // Now wait significantly longer than the poll interval and assert no further refreshes arrive.
-      val extra = signals.poll(500, TimeUnit.MILLISECONDS)
-      assertThat(extra).isNull()
+      assertThat(withTimeout(5.seconds) { watchRequests.take() }).isEqualTo("thread-a")
+
+      fileChanges.emit(Unit)
+
+      val signal = withTimeout(5.seconds) { signals.take() }
+      assertThat(signal).isEqualTo(RefreshSignal(AgentSessionProvider.CODEX, "/work/project", "thread-a", null))
     }
   }
 
   @Test
-  fun rolloutPollDoesNotFireInNotStartedState() = runBlocking(Dispatchers.Default) {
+  fun activeThreadFileWatchRetriesSameThreadAfterCompletedWatch() = runBlocking(Dispatchers.Default) {
+    val inputChanges = MutableSharedFlow<Unit>(extraBufferCapacity = 16)
+    val retryFileChanges = MutableSharedFlow<Unit>(extraBufferCapacity = 16)
+    val watchAttempts = AtomicInteger()
+    val watchRequests = LinkedBlockingQueue<String>()
+    val signals = LinkedBlockingQueue<RefreshSignal>()
+
+    AgentChatScopedTerminalRefreshController(
+      provider = AgentSessionProvider.CODEX,
+      projectPath = "/work/project",
+      outputChanges = null,
+      inputChanges = inputChanges,
+      sessionState = MutableStateFlow(TerminalViewSessionState.Running),
+      parentScope = this,
+      emitInitialRefresh = false,
+      threadId = "thread-a",
+      activeThreadIdProvider = { "thread-a" },
+      activeThreadFileChangeEvents = { threadId ->
+        watchRequests.add(threadId)
+        if (watchAttempts.incrementAndGet() == 1) emptyFlow() else retryFileChanges
+      },
+      notifyRefresh = { provider, path, threadId, activityHint -> signals.add(RefreshSignal(provider, path, threadId, activityHint)) },
+    ).use {
+      assertThat(withTimeout(5.seconds) { watchRequests.take() }).isEqualTo("thread-a")
+
+      delay(50.milliseconds)
+      inputChanges.emit(Unit)
+
+      assertThat(withTimeout(5.seconds) { watchRequests.take() }).isEqualTo("thread-a")
+      inputChanges.emit(Unit)
+      assertThat(watchRequests.poll(300, TimeUnit.MILLISECONDS)).isNull()
+
+      retryFileChanges.emit(Unit)
+
+      val signal = withTimeout(5.seconds) { signals.take() }
+      assertThat(signal).isEqualTo(RefreshSignal(AgentSessionProvider.CODEX, "/work/project", "thread-a", null))
+    }
+  }
+
+  @Test
+  fun activeThreadFileChangeStopsWhenSessionLeavesRunning() = runBlocking(Dispatchers.Default) {
+    val fileChanges = MutableSharedFlow<Unit>(extraBufferCapacity = 16)
+    val watchRequests = LinkedBlockingQueue<String>()
     val sessionState = MutableStateFlow<TerminalViewSessionState>(TerminalViewSessionState.NotStarted)
     val signals = LinkedBlockingQueue<RefreshSignal>()
 
@@ -176,22 +218,111 @@ class AgentChatScopedTerminalRefreshControllerTest {
       outputChanges = null,
       sessionState = sessionState,
       parentScope = this,
-      rolloutPollIntervalMs = 50L,
       emitInitialRefresh = false,
+      threadId = "thread-a",
+      activeThreadIdProvider = { "thread-a" },
+      activeThreadFileChangeEvents = { threadId ->
+        watchRequests.add(threadId)
+        fileChanges
+      },
       notifyRefresh = { provider, path, threadId, activityHint -> signals.add(RefreshSignal(provider, path, threadId, activityHint)) },
     ).use {
-      // Wait several poll intervals. The poll is gated on Running, so nothing should arrive.
-      val received = signals.poll(400, TimeUnit.MILLISECONDS)
-      assertThat(received).isNull()
+      assertThat(watchRequests.poll(200, TimeUnit.MILLISECONDS)).isNull()
 
-      // After flipping to Running the poll should arm and emit.
       sessionState.value = TerminalViewSessionState.Running
-      withTimeout(5.seconds) { signals.take() }
+      assertThat(withTimeout(5.seconds) { watchRequests.take() }).isEqualTo("thread-a")
+      fileChanges.emit(Unit)
+      assertThat(withTimeout(5.seconds) { signals.take() })
+        .isEqualTo(RefreshSignal(AgentSessionProvider.CODEX, "/work/project", "thread-a", null))
+
+      sessionState.value = TerminalViewSessionState.Terminated
+      assertThat(withTimeout(5.seconds) { signals.take() })
+        .isEqualTo(RefreshSignal(AgentSessionProvider.CODEX, "/work/project", "thread-a", null))
+      signals.clear()
+
+      delay(100.milliseconds)
+      fileChanges.emit(Unit)
+
+      assertThat(signals.poll(300, TimeUnit.MILLISECONDS)).isNull()
     }
   }
 
   @Test
-  fun rolloutPollReArmsOnRunningAfterTerminated() = runBlocking(Dispatchers.Default) {
+  fun activeThreadFileWatchRestartsAfterTerminalActivityChangesActiveThread() = runBlocking(Dispatchers.Default) {
+    val inputChanges = MutableSharedFlow<Unit>(extraBufferCapacity = 16)
+    val activeThreadId = AtomicReference("thread-a")
+    val fileChangesByThreadId = ConcurrentHashMap<String, MutableSharedFlow<Unit>>()
+    val watchRequests = LinkedBlockingQueue<String>()
+    val signals = LinkedBlockingQueue<RefreshSignal>()
+
+    AgentChatScopedTerminalRefreshController(
+      provider = AgentSessionProvider.CODEX,
+      projectPath = "/work/project",
+      outputChanges = null,
+      inputChanges = inputChanges,
+      sessionState = MutableStateFlow(TerminalViewSessionState.Running),
+      parentScope = this,
+      emitInitialRefresh = false,
+      threadId = "thread-a",
+      activeThreadIdProvider = { activeThreadId.get() },
+      activeThreadFileChangeEvents = { threadId ->
+        val fileChanges = fileChangesByThreadId.computeIfAbsent(threadId) { MutableSharedFlow(extraBufferCapacity = 16) }
+        watchRequests.add(threadId)
+        fileChanges
+      },
+      notifyRefresh = { provider, path, threadId, activityHint -> signals.add(RefreshSignal(provider, path, threadId, activityHint)) },
+    ).use {
+      assertThat(withTimeout(5.seconds) { watchRequests.take() }).isEqualTo("thread-a")
+      fileChangesByThreadId["thread-a"]!!.emit(Unit)
+      assertThat(withTimeout(5.seconds) { signals.take() })
+        .isEqualTo(RefreshSignal(AgentSessionProvider.CODEX, "/work/project", "thread-a", null))
+      signals.clear()
+
+      activeThreadId.set("thread-b")
+      inputChanges.emit(Unit)
+      assertThat(withTimeout(5.seconds) { watchRequests.take() }).isEqualTo("thread-b")
+
+      fileChangesByThreadId["thread-a"]!!.emit(Unit)
+      assertThat(signals.poll(300, TimeUnit.MILLISECONDS)).isNull()
+
+      fileChangesByThreadId["thread-b"]!!.emit(Unit)
+      assertThat(withTimeout(5.seconds) { signals.take() })
+        .isEqualTo(RefreshSignal(AgentSessionProvider.CODEX, "/work/project", "thread-a", null))
+    }
+  }
+
+  @Test
+  fun rolloutPollStartsAfterTerminalOutputWhileRunning() = runBlocking(Dispatchers.Default) {
+    val outputChanges = MutableSharedFlow<Unit>(extraBufferCapacity = 16)
+    val sessionState = MutableStateFlow<TerminalViewSessionState>(TerminalViewSessionState.Running)
+    val signals = LinkedBlockingQueue<RefreshSignal>()
+
+    AgentChatScopedTerminalRefreshController(
+      provider = AgentSessionProvider.CODEX,
+      projectPath = "/work/project",
+      outputChanges = outputChanges,
+      sessionState = sessionState,
+      parentScope = this,
+      debounceMs = LONG_DEBOUNCE_MS,
+      rolloutPollIntervalMs = TEST_POLL_INTERVAL_MS,
+      rolloutPollActiveWindowMs = TEST_POLL_ACTIVE_WINDOW_MS,
+      rolloutPollEnabled = true,
+      emitInitialRefresh = false,
+      threadId = "codex-thread",
+      notifyRefresh = { provider, path, threadId, activityHint -> signals.add(RefreshSignal(provider, path, threadId, activityHint)) },
+    ).use {
+      delay(50.milliseconds)
+      outputChanges.emit(Unit)
+
+      val signal = withTimeout(5.seconds) { signals.take() }
+
+      assertThat(signal).isEqualTo(RefreshSignal(AgentSessionProvider.CODEX, "/work/project", "codex-thread", null))
+    }
+  }
+
+  @Test
+  fun rolloutPollStartsAfterTerminalInputWhileRunning() = runBlocking(Dispatchers.Default) {
+    val inputChanges = MutableSharedFlow<Unit>(extraBufferCapacity = 16)
     val sessionState = MutableStateFlow<TerminalViewSessionState>(TerminalViewSessionState.Running)
     val signals = LinkedBlockingQueue<RefreshSignal>()
 
@@ -199,24 +330,148 @@ class AgentChatScopedTerminalRefreshControllerTest {
       provider = AgentSessionProvider.CODEX,
       projectPath = "/work/project",
       outputChanges = null,
+      inputChanges = inputChanges,
       sessionState = sessionState,
       parentScope = this,
-      rolloutPollIntervalMs = 50L,
+      rolloutPollIntervalMs = TEST_POLL_INTERVAL_MS,
+      rolloutPollActiveWindowMs = TEST_POLL_ACTIVE_WINDOW_MS,
+      rolloutPollEnabled = true,
+      emitInitialRefresh = false,
+      threadId = "codex-thread",
+      notifyRefresh = { provider, path, threadId, activityHint -> signals.add(RefreshSignal(provider, path, threadId, activityHint)) },
+    ).use {
+      delay(50.milliseconds)
+      inputChanges.emit(Unit)
+
+      val signal = withTimeout(5.seconds) { signals.take() }
+
+      assertThat(signal).isEqualTo(RefreshSignal(AgentSessionProvider.CODEX, "/work/project", "codex-thread", null))
+    }
+  }
+
+  @Test
+  fun rolloutPollStopsWhenSessionLeavesRunning() = runBlocking(Dispatchers.Default) {
+    val inputChanges = MutableSharedFlow<Unit>(extraBufferCapacity = 16)
+    val sessionState = MutableStateFlow<TerminalViewSessionState>(TerminalViewSessionState.Running)
+    val signals = LinkedBlockingQueue<RefreshSignal>()
+
+    AgentChatScopedTerminalRefreshController(
+      provider = AgentSessionProvider.CODEX,
+      projectPath = "/work/project",
+      outputChanges = null,
+      inputChanges = inputChanges,
+      sessionState = sessionState,
+      parentScope = this,
+      rolloutPollIntervalMs = TEST_POLL_INTERVAL_MS,
+      rolloutPollActiveWindowMs = TEST_POLL_ACTIVE_WINDOW_MS,
+      rolloutPollEnabled = true,
       emitInitialRefresh = false,
       notifyRefresh = { provider, path, threadId, activityHint -> signals.add(RefreshSignal(provider, path, threadId, activityHint)) },
     ).use {
+      delay(50.milliseconds)
+      inputChanges.emit(Unit)
       withTimeout(5.seconds) { signals.take() }
       sessionState.value = TerminalViewSessionState.Terminated
-      // Drain the one-shot terminated refresh.
-      withTimeout(5.seconds) { signals.take() }
-      // Re-enter Running and expect the poll to re-arm.
+      delay(200.milliseconds)
+      signals.clear()
+      val extra = signals.poll(500, TimeUnit.MILLISECONDS)
+      assertThat(extra).isNull()
+    }
+  }
+
+  @Test
+  fun rolloutPollDoesNotFireInNotStartedState() = runBlocking(Dispatchers.Default) {
+    val inputChanges = MutableSharedFlow<Unit>(extraBufferCapacity = 16)
+    val sessionState = MutableStateFlow<TerminalViewSessionState>(TerminalViewSessionState.NotStarted)
+    val signals = LinkedBlockingQueue<RefreshSignal>()
+
+    AgentChatScopedTerminalRefreshController(
+      provider = AgentSessionProvider.CODEX,
+      projectPath = "/work/project",
+      outputChanges = null,
+      inputChanges = inputChanges,
+      sessionState = sessionState,
+      parentScope = this,
+      rolloutPollIntervalMs = TEST_POLL_INTERVAL_MS,
+      rolloutPollActiveWindowMs = TEST_POLL_ACTIVE_WINDOW_MS,
+      rolloutPollEnabled = true,
+      emitInitialRefresh = false,
+      notifyRefresh = { provider, path, threadId, activityHint -> signals.add(RefreshSignal(provider, path, threadId, activityHint)) },
+    ).use {
+      delay(50.milliseconds)
+      inputChanges.emit(Unit)
+      val received = signals.poll(400, TimeUnit.MILLISECONDS)
+      assertThat(received).isNull()
+
       sessionState.value = TerminalViewSessionState.Running
+      inputChanges.emit(Unit)
       withTimeout(5.seconds) { signals.take() }
     }
   }
 
   @Test
+  fun rolloutPollReArmsOnRunningAfterTerminated() = runBlocking(Dispatchers.Default) {
+    val inputChanges = MutableSharedFlow<Unit>(extraBufferCapacity = 16)
+    val sessionState = MutableStateFlow<TerminalViewSessionState>(TerminalViewSessionState.Running)
+    val signals = LinkedBlockingQueue<RefreshSignal>()
+
+    AgentChatScopedTerminalRefreshController(
+      provider = AgentSessionProvider.CODEX,
+      projectPath = "/work/project",
+      outputChanges = null,
+      inputChanges = inputChanges,
+      sessionState = sessionState,
+      parentScope = this,
+      rolloutPollIntervalMs = TEST_POLL_INTERVAL_MS,
+      rolloutPollActiveWindowMs = TEST_POLL_ACTIVE_WINDOW_MS,
+      rolloutPollEnabled = true,
+      emitInitialRefresh = false,
+      notifyRefresh = { provider, path, threadId, activityHint -> signals.add(RefreshSignal(provider, path, threadId, activityHint)) },
+    ).use {
+      delay(50.milliseconds)
+      inputChanges.emit(Unit)
+      withTimeout(5.seconds) { signals.take() }
+      sessionState.value = TerminalViewSessionState.Terminated
+      withTimeout(5.seconds) { signals.take() }
+      sessionState.value = TerminalViewSessionState.Running
+      inputChanges.emit(Unit)
+      withTimeout(5.seconds) { signals.take() }
+    }
+  }
+
+  @Test
+  fun rolloutPollStopsAfterActivityWindowExpires() = runBlocking(Dispatchers.Default) {
+    val inputChanges = MutableSharedFlow<Unit>(extraBufferCapacity = 16)
+    val sessionState = MutableStateFlow<TerminalViewSessionState>(TerminalViewSessionState.Running)
+    val signals = LinkedBlockingQueue<RefreshSignal>()
+
+    AgentChatScopedTerminalRefreshController(
+      provider = AgentSessionProvider.CODEX,
+      projectPath = "/work/project",
+      outputChanges = null,
+      inputChanges = inputChanges,
+      sessionState = sessionState,
+      parentScope = this,
+      rolloutPollIntervalMs = TEST_POLL_INTERVAL_MS,
+      rolloutPollActiveWindowMs = TEST_POLL_ACTIVE_WINDOW_MS,
+      rolloutPollEnabled = true,
+      emitInitialRefresh = false,
+      notifyRefresh = { provider, path, threadId, activityHint -> signals.add(RefreshSignal(provider, path, threadId, activityHint)) },
+    ).use {
+      delay(50.milliseconds)
+      inputChanges.emit(Unit)
+      withTimeout(5.seconds) { signals.take() }
+
+      delay((TEST_POLL_ACTIVE_WINDOW_MS + TEST_POLL_INTERVAL_MS * 2).milliseconds)
+      signals.clear()
+      val extra = signals.poll(300, TimeUnit.MILLISECONDS)
+      assertThat(extra).isNull()
+    }
+  }
+
+  @Test
   fun rolloutPollCancelsOnDispose() = runBlocking(Dispatchers.Default) {
+    val inputChanges = MutableSharedFlow<Unit>(extraBufferCapacity = 16)
     val sessionState = MutableStateFlow<TerminalViewSessionState>(TerminalViewSessionState.Running)
     val signals = LinkedBlockingQueue<RefreshSignal>()
 
@@ -224,15 +479,19 @@ class AgentChatScopedTerminalRefreshControllerTest {
       provider = AgentSessionProvider.CODEX,
       projectPath = "/work/project",
       outputChanges = null,
+      inputChanges = inputChanges,
       sessionState = sessionState,
       parentScope = this,
-      rolloutPollIntervalMs = 50L,
+      rolloutPollIntervalMs = TEST_POLL_INTERVAL_MS,
+      rolloutPollActiveWindowMs = TEST_POLL_ACTIVE_WINDOW_MS,
+      rolloutPollEnabled = true,
       emitInitialRefresh = false,
       notifyRefresh = { provider, path, threadId, activityHint -> signals.add(RefreshSignal(provider, path, threadId, activityHint)) },
     )
+    delay(50.milliseconds)
+    inputChanges.emit(Unit)
     withTimeout(5.seconds) { signals.take() }
     controller.dispose()
-    // Allow any in-flight emissions to drain.
     delay(150.milliseconds)
     signals.clear()
     val extra = signals.poll(400, TimeUnit.MILLISECONDS)

@@ -33,7 +33,7 @@ internal class MacOSXListeningWatchService(config: Config) : AbstractWatchServic
       get() = DefaultFileTreeVisitor
   }
 
-  private val callbacks = ArrayList<MacFSEventsApi.FSEventStreamCallback>()
+  private val callbacks = ArrayList<MacOSXListeningCallback>()
   private val streams = ArrayList<FSEventStream>()
   private val pathsWatching = HashSet<Path>()
   private val latency = config.latency
@@ -87,7 +87,7 @@ internal class MacOSXListeningWatchService(config: Config) : AbstractWatchServic
   }
 
   @Synchronized
-  fun close(stream: FSEventStream, callback: MacFSEventsApi.FSEventStreamCallback, path: Path) {
+  private fun close(stream: FSEventStream, callback: MacOSXListeningCallback, path: Path) {
     streams.remove(stream)
     callbacks.remove(callback)
     pathsWatching.remove(path)

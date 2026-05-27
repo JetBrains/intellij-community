@@ -8,6 +8,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshH
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 
 internal data class CodexRefreshActivityHint(
   @JvmField val activity: AgentThreadActivity,
@@ -39,6 +40,8 @@ internal fun CodexRefreshHints.toAgentSessionRefreshHints(): AgentSessionRefresh
 
 internal interface CodexRefreshHintsProvider {
   val updateEvents: Flow<AgentSessionSourceUpdateEvent>
+
+  fun activeThreadFileChangeEvents(path: String, threadId: String): Flow<Unit> = emptyFlow()
 
   suspend fun prefetchRefreshHints(
     paths: List<String>,

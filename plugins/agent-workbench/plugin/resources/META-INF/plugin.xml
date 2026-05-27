@@ -57,7 +57,10 @@
                  defaultValue="false"
                  description="Collapse large Codex TUI patch transcripts in Agent Workbench chat tabs"/>
     <registryKey key="agent.workbench.semantic.proposed.plan.navigation"
+                  defaultValue="false"
+                  description="Highlight and navigate proposed plans in Agent Workbench chat tabs"/>
+    <registryKey key="agent.workbench.chat.rollout.poll.enabled"
                  defaultValue="false"
-                 description="Highlight and navigate proposed plans in Agent Workbench chat tabs"/>
+                 description="Enable fallback polling of agent rollout/session state after terminal input or output"/>
   </extensions>
 </idea-plugin>

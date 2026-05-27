@@ -104,6 +104,8 @@ interface AgentSessionSource {
   val updateEvents: Flow<AgentSessionSourceUpdateEvent>
     get() = emptyFlow()
 
+  fun activeThreadFileChangeEvents(path: String, threadId: String): Flow<Unit> = emptyFlow()
+
   suspend fun listThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread>
 
   suspend fun listThreadsFromClosedProject(path: String): List<AgentSessionThread>

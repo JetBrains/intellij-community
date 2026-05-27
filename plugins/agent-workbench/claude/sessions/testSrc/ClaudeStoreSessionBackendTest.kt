@@ -354,6 +354,38 @@ class ClaudeStoreSessionBackendTest {
   }
 
   @Test
+  fun resolvesActiveThreadFilePathsForProjectAndThreadId() {
+    runBlocking(Dispatchers.Default) {
+      val projectPath = "/work/project-active-watch"
+      val otherProjectPath = "/work/project-active-watch-other"
+      val projectDir = tempDir.resolve(".claude").resolve("projects").resolve("-work-project-active-watch")
+      val otherProjectDir = tempDir.resolve(".claude").resolve("projects").resolve("-work-project-active-watch-other")
+      Files.createDirectories(projectDir)
+      Files.createDirectories(otherProjectDir)
+
+      val activeJsonl = projectDir.resolve("session-active.jsonl")
+      writeJsonl(
+        activeJsonl,
+        listOf(claudeUserLine("2026-02-10T10:00:00.000Z", "session-active", projectPath, "Active")),
+      )
+      writeJsonl(
+        projectDir.resolve("session-other.jsonl"),
+        listOf(claudeUserLine("2026-02-10T10:01:00.000Z", "session-other", projectPath, "Other")),
+      )
+      writeJsonl(
+        otherProjectDir.resolve("session-active.jsonl"),
+        listOf(claudeUserLine("2026-02-10T10:02:00.000Z", "session-active", otherProjectPath, "Other project")),
+      )
+
+      val backend = ClaudeStoreSessionBackend(claudeHomeProvider = { tempDir.resolve(".claude") })
+
+      assertThat(backend.resolveActiveThreadFilePaths(projectPath, " session-active ")).containsExactly(activeJsonl)
+      assertThat(backend.resolveActiveThreadFilePaths(projectPath, "session-other/malformed")).isEmpty()
+      assertThat(backend.resolveActiveThreadFilePaths(projectPath, "missing-session")).isEmpty()
+    }
+  }
+
+  @Test
   fun sortsByUpdatedAtDescending() {
     runBlocking(Dispatchers.Default) {
       val projectPath = "/work/project-sort"

@@ -8,6 +8,7 @@ import com.intellij.agent.workbench.claude.sessions.ClaudeBackendThread
 import com.intellij.agent.workbench.claude.sessions.ClaudeBackendThreadRefreshResult
 import com.intellij.agent.workbench.claude.sessions.ClaudeSessionBackend
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.filewatch.agentWorkbenchImmediateFileChangeFlow
 import com.intellij.agent.workbench.json.filebacked.FileBackedSessionChangeSet
 import com.intellij.agent.workbench.json.filebacked.createFileBackedSessionChangeFlow
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionActivityHintPolicy
@@ -19,8 +20,11 @@ import com.intellij.openapi.project.Project
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import java.nio.file.Files
 import java.nio.file.Path
 
 private val LOG = logger<ClaudeStoreSessionBackend>()
@@ -44,6 +48,33 @@ internal class ClaudeStoreSessionBackend(
   override val sessionUpdates: Flow<AgentSessionSourceUpdateEvent> = sessionUpdateFlow
 
   override val updates: Flow<Unit> = sessionUpdateFlow.map {}
+
+  override fun activeThreadFileChangeEvents(path: String, threadId: String): Flow<Unit> {
+    return flow {
+      val files = withContext(Dispatchers.IO) {
+        resolveActiveThreadFilePaths(path = path, threadId = threadId)
+      }
+      emitAll(agentWorkbenchImmediateFileChangeFlow(files).map {})
+    }
+  }
+
+  internal fun resolveActiveThreadFilePaths(path: String, threadId: String): List<Path> {
+    val normalizedThreadId = threadId.trim().takeIf { id -> id.isNotEmpty() && '/' !in id && '\\' !in id } ?: return emptyList()
+    val result = ArrayList<Path>()
+    val directories = try {
+      store.findMatchingDirectories(path)
+    }
+    catch (_: Throwable) {
+      return emptyList()
+    }
+    for (directory in directories) {
+      val candidate = directory.resolve("$normalizedThreadId.jsonl")
+      if (Files.isRegularFile(candidate)) {
+        result.add(candidate)
+      }
+    }
+    return result
+  }
 
   private fun buildSessionUpdate(changeSet: FileBackedSessionChangeSet): AgentSessionSourceUpdateEvent {
     if (changeSet.requiresFullRescan || changeSet.changedPaths.isEmpty()) {

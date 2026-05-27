@@ -88,6 +88,7 @@ internal class CodexRolloutParser(
     }
 
     return ParsedRolloutThread(
+      path = path,
       normalizedCwd = normalizedCwd,
       parentThreadId = state.parentThreadId,
       thread = CodexBackendThread(
@@ -348,6 +349,7 @@ private fun parseEvent(parser: JsonParser): RolloutEvent? {
 }
 
 internal data class ParsedRolloutThread(
+  @JvmField val path: Path,
   @JvmField val normalizedCwd: String,
   @JvmField val parentThreadId: String?,
   @JvmField val thread: CodexBackendThread,

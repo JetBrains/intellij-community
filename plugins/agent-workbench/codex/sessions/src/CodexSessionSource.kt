@@ -72,6 +72,10 @@ internal class CodexSessionSource internal constructor(
       readStateUpdateEvents,
     )
 
+  override fun activeThreadFileChangeEvents(path: String, threadId: String): Flow<Unit> {
+    return rolloutRefreshHintsProvider.activeThreadFileChangeEvents(path = path, threadId = threadId)
+  }
+
   override suspend fun listThreads(path: String, openProject: Project?): List<AgentSessionThread> {
     val threads = backend.listThreads(path = path, openProject = openProject)
     trackActiveThreadRead(threads)
