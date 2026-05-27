@@ -25,13 +25,14 @@ internal class CodexMcpConfigLaunchContributor(
 ) : AgentSessionLaunchContributor {
   override suspend fun contribute(
     projectPath: String,
+    projectDirectory: String?,
     provider: AgentSessionProvider,
     sessionId: String?,
     launchSpec: AgentSessionTerminalLaunchSpec,
   ): AgentSessionTerminalLaunchSpec {
     if (provider != CODEX_AGENT_SESSION_PROVIDER || !isDirectHttpEnabled()) return launchSpec
     val mcpUrl = mcpUrlResolver() ?: return launchSpec
-    val normalizedProjectPath = normalizeAgentWorkbenchPathOrNull(projectPath) ?: return launchSpec
+    val normalizedProjectPath = normalizeAgentWorkbenchPathOrNull(projectDirectory ?: projectPath) ?: return launchSpec
     return launchSpec.copy(
       command = insertCodexMcpConfigArgs(
         command = launchSpec.command,

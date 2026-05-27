@@ -56,6 +56,7 @@ internal class AgentSessionRefreshBootstrapBuilder(
       )
       AgentProjectSessions(
         path = normalizedEntryPath,
+        projectDirectory = entry.projectDirectory ?: existing?.projectDirectory,
         name = entry.name,
         branch = entry.branch,
         buildSystemBadge = entry.buildSystemBadge,
@@ -97,6 +98,7 @@ internal class AgentSessionRefreshBootstrapBuilder(
           )
           AgentWorktree(
             path = normalizedWorktreePath,
+            projectDirectory = wt.projectDirectory ?: existingWt?.projectDirectory,
             name = wt.name,
             branch = wt.branch,
             isOpen = worktreeIsOpen,

@@ -40,6 +40,8 @@ import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchOpe
 import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchPlanner
 import com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionPlannedLaunch
 import com.intellij.platform.ai.agent.sessions.core.launch.resolveAgentSessionChatOpenPlan
+import com.intellij.platform.ai.agent.sessions.core.paths.resolveAgentWorkbenchOwningProjectBasePath
+import com.intellij.platform.ai.agent.sessions.core.paths.resolveAgentWorkbenchProjectDirectory
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryChannel
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryPlan
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialPromptDeliveryStatus
@@ -131,6 +133,7 @@ enum class OpenThreadLaunchOrigin(val keySuffix: String) {
 internal interface AgentSessionChatOpenExecutor {
   suspend fun openChat(
       normalizedPath: String,
+      projectDirectory: String?,
       thread: AgentSessionThread,
       subAgent: AgentSubAgent?,
       launchSpecOverride: AgentSessionTerminalLaunchSpec?,
@@ -143,6 +146,7 @@ internal interface AgentSessionChatOpenExecutor {
 
   suspend fun openNewChat(
       normalizedPath: String,
+      projectDirectory: String?,
       identity: String,
       launchSpec: AgentSessionTerminalLaunchSpec,
       initialMessageDispatchPlan: AgentInitialPromptDeliveryPlan,
@@ -156,6 +160,7 @@ internal interface AgentSessionChatOpenExecutor {
 
   suspend fun openPreparingNewChat(
       normalizedPath: String,
+      projectDirectory: String?,
       identity: String,
       launchSpec: AgentSessionTerminalLaunchSpec,
       launchMode: AgentSessionLaunchMode?,
@@ -239,6 +244,7 @@ private data class ArchivedThreadOpenResolution(
 private object DefaultAgentSessionChatOpenExecutor : AgentSessionChatOpenExecutor {
   override suspend fun openChat(
       normalizedPath: String,
+      projectDirectory: String?,
       thread: AgentSessionThread,
       subAgent: AgentSubAgent?,
       launchSpecOverride: AgentSessionTerminalLaunchSpec?,
@@ -250,6 +256,7 @@ private object DefaultAgentSessionChatOpenExecutor : AgentSessionChatOpenExecuto
   ) {
     openAgentSessionChat(
       normalizedPath = normalizedPath,
+      projectDirectory = projectDirectory,
       thread = thread,
       subAgent = subAgent,
       launchSpecOverride = launchSpecOverride,
@@ -263,6 +270,7 @@ private object DefaultAgentSessionChatOpenExecutor : AgentSessionChatOpenExecuto
 
   override suspend fun openNewChat(
       normalizedPath: String,
+      projectDirectory: String?,
       identity: String,
       launchSpec: AgentSessionTerminalLaunchSpec,
       initialMessageDispatchPlan: AgentInitialPromptDeliveryPlan,
@@ -275,6 +283,7 @@ private object DefaultAgentSessionChatOpenExecutor : AgentSessionChatOpenExecuto
   ) {
     openAgentSessionNewChat(
       normalizedPath = normalizedPath,
+      projectDirectory = projectDirectory,
       identity = identity,
       launchSpec = launchSpec,
       initialMessageDispatchPlan = initialMessageDispatchPlan,
@@ -289,6 +298,7 @@ private object DefaultAgentSessionChatOpenExecutor : AgentSessionChatOpenExecuto
 
   override suspend fun openPreparingNewChat(
       normalizedPath: String,
+      projectDirectory: String?,
       identity: String,
       launchSpec: AgentSessionTerminalLaunchSpec,
       launchMode: AgentSessionLaunchMode?,
@@ -302,6 +312,7 @@ private object DefaultAgentSessionChatOpenExecutor : AgentSessionChatOpenExecuto
   ): DeferredAgentSessionChatOpenResult {
     return openAgentSessionDeferredNewChat(
       normalizedPath = normalizedPath,
+      projectDirectory = projectDirectory,
       identity = identity,
       launchSpec = launchSpec,
       launchMode = launchMode,
@@ -545,9 +556,11 @@ class AgentSessionLaunchService internal constructor(
                   effectiveLaunchMode = effectiveResumeLaunchMode,
               )
               AgentWorkbenchTelemetry.logThreadOpenRequested(entryPoint, effectiveThread.provider, AgentWorkbenchTargetKind.THREAD)
+              val projectDirectory = resolveLaunchProjectDirectory(path = normalizedPath, currentProject = currentProject, stateStore = stateStore)
               val plannedResumeLaunch = AgentSessionLaunchPlanner.plan(
                   intent = AgentSessionLaunchIntent(
                       projectPath = normalizedPath,
+                      projectDirectory = projectDirectory,
                       provider = effectiveThread.provider,
                       operation = AgentSessionLaunchOperation.RESUME,
                       sessionId = effectiveThread.id,
@@ -574,6 +587,7 @@ class AgentSessionLaunchService internal constructor(
 
               chatOpenExecutor.openChat(
                   normalizedPath = normalizedPath,
+                  projectDirectory = projectDirectory,
                   thread = effectiveThread,
                   subAgent = null,
                   launchSpecOverride = plannedResumeLaunch.launchSpec,
@@ -621,6 +635,7 @@ class AgentSessionLaunchService internal constructor(
 
     val target = buildAgentSessionChatRebindTarget(
       path = normalizedPath,
+      projectDirectory = resolveLaunchProjectDirectory(path = normalizedPath, stateStore = stateStore),
       provider = thread.provider,
       threadId = thread.id,
       title = thread.title,
@@ -682,8 +697,10 @@ class AgentSessionLaunchService internal constructor(
             descriptor = descriptor,
         )
         AgentWorkbenchTelemetry.logThreadOpenRequested(entryPoint, thread.provider, AgentWorkbenchTargetKind.SUB_AGENT)
+        val projectDirectory = resolveLaunchProjectDirectory(path = normalizedPath, currentProject = currentProject, stateStore = stateStore)
         chatOpenExecutor.openChat(
             normalizedPath = normalizedPath,
+            projectDirectory = projectDirectory,
             thread = archiveResolution.thread,
             subAgent = subAgent,
             launchSpecOverride = null,
@@ -1149,8 +1166,10 @@ class AgentSessionLaunchService internal constructor(
     waitingMessage: @Nls String? = null,
     deferredStartContentProvider: ((Project) -> AgentChatDeferredStartContent)? = null,
   ): DeferredAgentSessionChatOpenResult {
+    val projectDirectory = resolveLaunchProjectDirectory(path = normalizedPath, stateStore = stateStore)
     return chatOpenExecutor.openPreparingNewChat(
       normalizedPath = normalizedPath,
+      projectDirectory = projectDirectory,
       identity = identity,
       launchSpec = AgentSessionTerminalLaunchSpec(command = emptyList()),
       launchMode = mode,
@@ -1208,9 +1227,11 @@ class AgentSessionLaunchService internal constructor(
       val initialMessagePlan = initialMessageRequest
                                  ?.let(descriptor::buildInitialMessagePlan)
                                ?: AgentInitialMessagePlan.EMPTY
+      val projectDirectory = resolveLaunchProjectDirectory(path = normalizedPath, currentProject = currentProject, stateStore = stateStore)
       val plannedLaunch = AgentSessionLaunchPlanner.plan(
         intent = AgentSessionLaunchIntent(
           projectPath = normalizedPath,
+          projectDirectory = projectDirectory,
           provider = provider,
           operation = AgentSessionLaunchOperation.NEW,
           launchMode = mode,
@@ -1444,6 +1465,7 @@ private suspend fun openOrFocusDedicatedFrameInternal() {
 
 private suspend fun openAgentSessionChat(
     normalizedPath: String,
+    projectDirectory: String? = null,
     thread: AgentSessionThread,
     subAgent: AgentSubAgent?,
     launchSpecOverride: AgentSessionTerminalLaunchSpec? = null,
@@ -1456,6 +1478,7 @@ private suspend fun openAgentSessionChat(
   if (AgentChatOpenModeSettings.openInDedicatedFrame()) {
     openChatInDedicatedFrame(
       normalizedPath = normalizedPath,
+      projectDirectory = projectDirectory,
       thread = thread,
       subAgent = subAgent,
       launchSpecOverride = launchSpecOverride,
@@ -1471,6 +1494,7 @@ private suspend fun openAgentSessionChat(
   openChatInProject(
     project = openProject,
     projectPath = normalizedPath,
+    projectDirectory = projectDirectory,
     thread = thread,
     subAgent = subAgent,
     launchSpecOverride = launchSpecOverride,
@@ -1615,6 +1639,23 @@ private fun buildInitialMessageToken(identity: String, steps: List<AgentInitialM
   return "$identity:${sequenceKey.hashCode()}:${System.nanoTime()}"
 }
 
+private fun resolveLaunchProjectDirectory(
+  path: String,
+  currentProject: Project? = null,
+  stateStore: AgentSessionsStateStore = service(),
+): String? {
+  val projectBasePath = currentProject
+    ?.takeIf { project -> !AgentWorkbenchDedicatedFrameProjectManager.isDedicatedProject(project) }
+    ?.basePath
+  resolveAgentWorkbenchOwningProjectBasePath(identityPath = path, projectBasePath = projectBasePath)?.let { projectDirectory ->
+    return projectDirectory
+  }
+  stateStore.findProjectDirectory(path)?.let { projectDirectory ->
+    return projectDirectory
+  }
+  return resolveAgentWorkbenchProjectDirectory(identityPath = path)
+}
+
 private suspend fun resolvePromptInitialMessageDispatchPlan(
   normalizedPath: String,
   thread: AgentSessionThread,
@@ -1634,6 +1675,7 @@ private suspend fun resolvePromptInitialMessageDispatchPlan(
   val plannedResumeLaunch = precomputedResumeLaunch ?: AgentSessionLaunchPlanner.plan(
     intent = AgentSessionLaunchIntent(
       projectPath = normalizedPath,
+      projectDirectory = resolveLaunchProjectDirectory(path = normalizedPath),
       provider = thread.provider,
       operation = AgentSessionLaunchOperation.RESUME,
       sessionId = thread.id,
@@ -1718,6 +1760,7 @@ private fun resolvePendingSessionMetadata(
 
 private suspend fun openAgentSessionNewChat(
     normalizedPath: String,
+    projectDirectory: String? = null,
     identity: String,
     launchSpec: AgentSessionTerminalLaunchSpec,
     initialMessageDispatchPlan: AgentInitialPromptDeliveryPlan,
@@ -1733,6 +1776,7 @@ private suspend fun openAgentSessionNewChat(
   if (dedicatedFrame) {
     openNewChatInDedicatedFrame(
       normalizedPath = normalizedPath,
+      projectDirectory = projectDirectory,
       identity = identity,
       launchSpec = launchSpec,
       title = title,
@@ -1748,6 +1792,7 @@ private suspend fun openAgentSessionNewChat(
   openNewChatInProject(
     project = openProject,
     projectPath = normalizedPath,
+    projectDirectory = projectDirectory,
     identity = identity,
     launchSpec = launchSpec,
     title = title,
@@ -1761,6 +1806,7 @@ private suspend fun openAgentSessionNewChat(
 
 private suspend fun openAgentSessionDeferredNewChat(
   normalizedPath: String,
+  projectDirectory: String? = null,
   identity: String,
   launchSpec: AgentSessionTerminalLaunchSpec,
   launchMode: AgentSessionLaunchMode?,
@@ -1777,6 +1823,7 @@ private suspend fun openAgentSessionDeferredNewChat(
   if (dedicatedFrame) {
     return openDeferredNewChatInDedicatedFrame(
       normalizedPath = normalizedPath,
+      projectDirectory = projectDirectory,
       identity = identity,
       launchSpec = launchSpec,
       launchMode = launchMode,
@@ -1792,6 +1839,7 @@ private suspend fun openAgentSessionDeferredNewChat(
   return openDeferredNewChatInProject(
     project = openProject,
     projectPath = normalizedPath,
+    projectDirectory = projectDirectory,
     identity = identity,
     launchSpec = launchSpec,
     launchMode = launchMode,
@@ -1806,6 +1854,7 @@ private suspend fun openAgentSessionDeferredNewChat(
 
 private suspend fun openNewChatInDedicatedFrame(
     normalizedPath: String,
+    projectDirectory: String? = null,
     identity: String,
     launchSpec: AgentSessionTerminalLaunchSpec,
     title: String,
@@ -1822,6 +1871,7 @@ private suspend fun openNewChatInDedicatedFrame(
     openNewChatInProject(
       project = openProject,
       projectPath = normalizedPath,
+      projectDirectory = projectDirectory,
       identity = identity,
       launchSpec = launchSpec,
       title = title,
@@ -1850,6 +1900,7 @@ private suspend fun openNewChatInDedicatedFrame(
   openNewChatInProject(
     project = dedicatedProject,
     projectPath = normalizedPath,
+    projectDirectory = projectDirectory,
     identity = identity,
     launchSpec = launchSpec,
     title = title,
@@ -1863,6 +1914,7 @@ private suspend fun openNewChatInDedicatedFrame(
 
 private suspend fun openDeferredNewChatInDedicatedFrame(
   normalizedPath: String,
+  projectDirectory: String? = null,
   identity: String,
   launchSpec: AgentSessionTerminalLaunchSpec,
   launchMode: AgentSessionLaunchMode?,
@@ -1880,6 +1932,7 @@ private suspend fun openDeferredNewChatInDedicatedFrame(
     return openDeferredNewChatInProject(
       project = openProject,
       projectPath = normalizedPath,
+      projectDirectory = projectDirectory,
       identity = identity,
       launchSpec = launchSpec,
       launchMode = launchMode,
@@ -1908,6 +1961,7 @@ private suspend fun openDeferredNewChatInDedicatedFrame(
   return openDeferredNewChatInProject(
     project = dedicatedProject,
     projectPath = normalizedPath,
+    projectDirectory = projectDirectory,
     identity = identity,
     launchSpec = launchSpec,
     launchMode = launchMode,
@@ -1923,6 +1977,7 @@ private suspend fun openDeferredNewChatInDedicatedFrame(
 private suspend fun openNewChatInProject(
     project: Project,
     projectPath: String,
+    projectDirectory: String? = null,
     identity: String,
     launchSpec: AgentSessionTerminalLaunchSpec,
     title: String,
@@ -1938,6 +1993,7 @@ private suspend fun openNewChatInProject(
   val file = openChat(
     project = project,
     projectPath = projectPath,
+    projectDirectory = projectDirectory,
     threadIdentity = identity,
     shellCommand = launchSpec.command,
     shellEnvVariables = launchSpec.envVariables,
@@ -1996,6 +2052,7 @@ private fun recordOpenedNewSession(
 private suspend fun openDeferredNewChatInProject(
   project: Project,
   projectPath: String,
+  projectDirectory: String? = null,
   identity: String,
   launchSpec: AgentSessionTerminalLaunchSpec,
   launchMode: AgentSessionLaunchMode?,
@@ -2017,6 +2074,7 @@ private suspend fun openDeferredNewChatInProject(
   val file = openChat(
     project = project,
     projectPath = projectPath,
+    projectDirectory = projectDirectory,
     threadIdentity = identity,
     shellCommand = launchSpec.command,
     shellEnvVariables = launchSpec.envVariables,
@@ -2044,6 +2102,7 @@ private suspend fun openDeferredNewChatInProject(
 
 private suspend fun openChatInDedicatedFrame(
     normalizedPath: String,
+    projectDirectory: String? = null,
     thread: AgentSessionThread,
     subAgent: AgentSubAgent?,
     launchSpecOverride: AgentSessionTerminalLaunchSpec?,
@@ -2060,6 +2119,7 @@ private suspend fun openChatInDedicatedFrame(
     openChatInProject(
       project = openProject,
       projectPath = normalizedPath,
+      projectDirectory = projectDirectory,
       thread = thread,
       subAgent = subAgent,
       launchSpecOverride = launchSpecOverride,
@@ -2085,6 +2145,7 @@ private suspend fun openChatInDedicatedFrame(
   openChatInProject(
     project = dedicatedProject,
     projectPath = normalizedPath,
+    projectDirectory = projectDirectory,
     thread = thread,
     subAgent = subAgent,
     launchSpecOverride = launchSpecOverride,
@@ -2099,6 +2160,7 @@ private suspend fun openChatInDedicatedFrame(
 private suspend fun openChatInProject(
     project: Project,
     projectPath: String,
+    projectDirectory: String? = null,
     thread: AgentSessionThread,
     subAgent: AgentSubAgent?,
     launchSpecOverride: AgentSessionTerminalLaunchSpec?,
@@ -2108,8 +2170,10 @@ private suspend fun openChatInProject(
     generationSettings: AgentPromptGenerationSettings = AgentPromptGenerationSettings.AUTO,
     openedChatHandler: (suspend (Project, VirtualFile) -> Unit)? = null,
 ) {
+  val resolvedProjectDirectory = projectDirectory ?: resolveLaunchProjectDirectory(path = projectPath, currentProject = project)
   val chatOpenPlan = resolveAgentSessionChatOpenPlan(
     projectPath = projectPath,
+    projectDirectory = resolvedProjectDirectory,
     thread = thread,
     subAgent = subAgent,
     launchSpecOverride = launchSpecOverride,
@@ -2126,6 +2190,7 @@ private suspend fun openChatInProject(
   val file = openChat(
     project = project,
     projectPath = projectPath,
+    projectDirectory = resolvedProjectDirectory,
     threadIdentity = chatOpenPlan.threadIdentity,
     shellCommand = chatOpenPlan.launchSpec.command,
     shellEnvVariables = chatOpenPlan.launchSpec.envVariables,

@@ -377,6 +377,48 @@ class AgentSessionRefreshOnDemandIntegrationTest {
   }
 
   @Test
+  fun loadProjectThreadsOnDemandUsesStoredProjectDirectoryForBazelIdentity() = runBlocking(Dispatchers.Default) {
+    val projectDirectory = "/work/ultimate"
+    val identityPath = "$projectDirectory/toolbox/toolbox.bazelproject"
+    val loadedPaths = mutableListOf<String>()
+
+    withService(
+      sessionSourcesProvider = {
+        listOf(
+          CwdBackedScriptedSessionSource(
+            provider = AgentSessionProvider.from("codex"),
+            canReportExactThreadCount = true,
+            list = { path, _ ->
+              loadedPaths += path
+              listOf(thread(id = "codex-bazel", updatedAt = 100, provider = AgentSessionProvider.from("codex")))
+            },
+          ),
+        )
+      },
+      projectEntriesProvider = {
+        listOf(closedProjectEntry(identityPath, "ultimate (toolbox)", projectDirectory = projectDirectory))
+      },
+    ) { service ->
+      service.refresh()
+      waitForCondition {
+        service.state.value.projects.any { it.path == identityPath }
+      }
+
+      service.loadProjectThreadsOnDemand(identityPath)
+      waitForCondition {
+        service.state.value.projects.firstOrNull { it.path == identityPath }
+          ?.providerLoadStates
+          ?.get(AgentSessionProvider.from("codex")) == AgentSessionProviderLoadState.LOADED
+      }
+
+      assertThat(loadedPaths).containsExactly(projectDirectory)
+      assertThat(
+        service.state.value.projects.firstOrNull { it.path == identityPath }?.threads?.map { it.id }
+      ).containsExactly("codex-bazel")
+    }
+  }
+
+  @Test
   fun loadWorktreeThreadsOnDemandDeduplicatesConcurrentRequestsWhileRefreshLoadsWorktree() = runBlocking(Dispatchers.Default) {
     val invocationCount = AtomicInteger(0)
     val started = CompletableDeferred<Unit>()

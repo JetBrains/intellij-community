@@ -335,6 +335,32 @@ class AgentWorkbenchProjectLaunchConfigTest {
   }
 
   @Test
+  fun augmentUsesProjectDirectoryWhenProjectPathIsBazelProjectIdentity() {
+    val projectDir = tempDir.resolve("ultimate")
+    val bazelProjectPath = projectDir.resolve("toolbox").resolve("toolbox.bazelproject")
+    Files.createDirectories(bazelProjectPath.parent)
+    writeAgentWorkbenchProjectConfig(
+      projectDir,
+      shared = testLaunchConfig(commandShimTarget = null),
+    )
+    val basePath = tempDir.resolve("base-path")
+    Files.createDirectories(basePath)
+
+    val launchSpec = augmenter(
+      osFamily = EelOsFamily.Posix,
+      environmentVariables = mapOf("PATH" to basePath.toString()),
+    ).augmentBlocking(
+      projectPath = bazelProjectPath.toString(),
+      projectDirectory = projectDir.toString(),
+      provider = AgentSessionProvider.from("codex"),
+      launchSpec = AgentSessionTerminalLaunchSpec(command = listOf("codex", "resume", "thread-1")),
+    )
+
+    assertThat(splitPathEntries(launchSpec.envVariables.getValue("PATH"), EelOsFamily.Posix))
+      .containsExactly(projectDir.resolve(AGENT_WORKBENCH_TEST_PATH_PREPEND).toString(), basePath.toString())
+  }
+
+  @Test
   fun runtimeConfigDefaultsToRefreshingVfsOnStatusUpdates() {
     val projectDir = tempDir.resolve("project")
     Files.createDirectories(projectDir)
@@ -431,10 +457,11 @@ class AgentWorkbenchProjectLaunchConfigTest {
 
 private fun AgentWorkbenchProjectLaunchConfigAugmenter.augmentBlocking(
   projectPath: String,
+  projectDirectory: String? = null,
   provider: AgentSessionProvider,
   launchSpec: AgentSessionTerminalLaunchSpec,
 ): AgentSessionTerminalLaunchSpec {
   return runBlocking(Dispatchers.Default) {
-    augment(projectPath = projectPath, provider = provider, launchSpec = launchSpec)
+    augment(projectPath = projectPath, projectDirectory = projectDirectory, provider = provider, launchSpec = launchSpec)
   }
 }

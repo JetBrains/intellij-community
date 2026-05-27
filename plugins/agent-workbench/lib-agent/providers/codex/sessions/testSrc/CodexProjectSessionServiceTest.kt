@@ -30,6 +30,7 @@ class CodexProjectSessionServiceTest {
   @Test
   fun shutdownHookRunsOnCancellation() = runBlocking(Dispatchers.Default) {
     val parentJob = coroutineContext.job
+
     @Suppress("RAW_SCOPE_CREATION")
     val scope = CoroutineScope(coroutineContext + Job(parentJob))
     val shutdown = CompletableDeferred<Unit>()
@@ -101,6 +102,23 @@ class CodexProjectSessionServiceTest {
     )
 
     assertThat(resolved).isEqualTo(projectRoot)
+  }
+
+  @Test
+  fun resolvesDirectoryFromBazelProjectPath() {
+    val projectRoot = tempDir.resolve("project-bazel")
+    Files.createDirectories(projectRoot.resolve("toolbox"))
+    val bazelProject = projectRoot.resolve("toolbox").resolve("toolbox.bazelproject")
+    Files.writeString(bazelProject, "directories:\n  .\n")
+
+    val resolved = resolveProjectDirectory(
+      recentProjectPath = bazelProject,
+      projectFilePath = null,
+      basePath = null,
+      guessedProjectDir = null,
+    )
+
+    assertThat(resolved).isEqualTo(projectRoot.resolve("toolbox"))
   }
 
   @Test

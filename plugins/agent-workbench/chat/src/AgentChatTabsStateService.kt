@@ -204,6 +204,7 @@ internal data class AgentChatDeleteByThreadResult(
 internal data class PersistedAgentChatTabState(
   @JvmField val projectHash: String,
   @JvmField val projectPath: String,
+  @JvmField val projectDirectory: String? = null,
   @JvmField val threadIdentity: String,
   @JvmField val subAgentId: String?,
   @JvmField val threadId: String,
@@ -255,6 +256,7 @@ private fun PersistedAgentChatTabState.toSnapshot(tabKey: AgentChatTabKey): Agen
     identity = AgentChatTabIdentity(
       projectHash = projectHash,
       projectPath = projectPath,
+      projectDirectory = projectDirectory?.let(::normalizeAgentWorkbenchPath)?.takeIf { it.isNotBlank() },
       threadIdentity = threadIdentity,
       subAgentId = subAgentId,
     ),
@@ -279,6 +281,7 @@ private fun AgentChatTabSnapshot.toPersisted(updatedAt: Long): PersistedAgentCha
   return PersistedAgentChatTabState(
     projectHash = identity.projectHash,
     projectPath = identity.projectPath,
+    projectDirectory = identity.projectDirectory,
     threadIdentity = identity.threadIdentity,
     subAgentId = identity.subAgentId,
     threadId = runtime.threadId,

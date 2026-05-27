@@ -22,15 +22,17 @@ import java.nio.file.Path
 internal class AwbMcpConfigContributor : AgentSessionLaunchContributor {
   override suspend fun contribute(
     projectPath: String,
+    projectDirectory: String?,
     provider: AgentSessionProvider,
     sessionId: String?,
     launchSpec: AgentSessionTerminalLaunchSpec,
   ): AgentSessionTerminalLaunchSpec {
+    val targetPath = projectDirectory ?: projectPath
     val target = try {
-      Path.of(normalizeAgentWorkbenchPath(projectPath))
+      Path.of(normalizeAgentWorkbenchPath(targetPath))
     }
     catch (e: Exception) {
-      LOG.debug("Cannot normalize projectPath for AwbMcpConfig launch: $projectPath", e)
+      LOG.debug("Cannot normalize projectPath for AwbMcpConfig launch: $targetPath", e)
       return launchSpec
     }
     val config = AwbMcpConfigBuilder.buildForLaunch(target, provider) ?: return launchSpec

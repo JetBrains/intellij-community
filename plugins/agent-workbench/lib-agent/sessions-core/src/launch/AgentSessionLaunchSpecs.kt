@@ -14,20 +14,28 @@ private val LOG = logger<AgentSessionLaunchSpecsLogCategory>()
 object AgentSessionLaunchSpecs {
   suspend fun augment(
     projectPath: String,
+    projectDirectory: String? = null,
     provider: AgentSessionProvider,
     launchSpec: AgentSessionTerminalLaunchSpec,
   ): AgentSessionTerminalLaunchSpec {
-    return AgentSessionLaunchSpecAugmenters.augment(projectPath = projectPath, provider = provider, launchSpec = launchSpec)
+    return AgentSessionLaunchSpecAugmenters.augment(
+      projectPath = projectPath,
+      projectDirectory = projectDirectory,
+      provider = provider,
+      launchSpec = launchSpec,
+    )
   }
 
   suspend fun resolveResume(
     projectPath: String,
+    projectDirectory: String? = null,
     provider: AgentSessionProvider,
     sessionId: String,
     launchMode: AgentSessionLaunchMode = AgentSessionLaunchMode.STANDARD,
   ): AgentSessionTerminalLaunchSpec {
     return resolveResume(
       projectPath = projectPath,
+      projectDirectory = projectDirectory,
       provider = provider,
       sessionId = sessionId,
       launchMode = launchMode,
@@ -37,6 +45,7 @@ object AgentSessionLaunchSpecs {
 
   suspend fun resolveResume(
     projectPath: String,
+    projectDirectory: String? = null,
     provider: AgentSessionProvider,
     sessionId: String,
     launchMode: AgentSessionLaunchMode = AgentSessionLaunchMode.STANDARD,
@@ -51,9 +60,21 @@ object AgentSessionLaunchSpecs {
       )
       fallbackResumeLaunchSpec(provider, sessionId)
     }
-    val augmented = augment(projectPath = projectPath, provider = provider, launchSpec = baseLaunchSpec)
+    val baseLaunchSpecWithWorkingDirectory = if (projectDirectory != null && baseLaunchSpec.workingDirectory == null) {
+      baseLaunchSpec.copy(workingDirectory = projectDirectory)
+    }
+    else {
+      baseLaunchSpec
+    }
+    val augmented = augment(
+      projectPath = projectPath,
+      projectDirectory = projectDirectory,
+      provider = provider,
+      launchSpec = baseLaunchSpecWithWorkingDirectory,
+    )
     return AgentSessionLaunchContributors.applyAll(
       projectPath = projectPath,
+      projectDirectory = projectDirectory,
       provider = provider,
       sessionId = sessionId,
       launchSpec = augmented,

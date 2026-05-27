@@ -29,14 +29,17 @@ internal class AgentWorkbenchProjectLaunchConfigAugmenter(
 ) : AgentSessionLaunchSpecAugmenter {
   override suspend fun augment(
     projectPath: String,
+    projectDirectory: String?,
     provider: AgentSessionProvider,
     launchSpec: AgentSessionTerminalLaunchSpec,
   ): AgentSessionTerminalLaunchSpec {
     return try {
-      val context = executionContextResolver.resolve(projectPath)
+      val executionProjectPath = projectDirectory ?: projectPath
+      val context = executionContextResolver.resolve(executionProjectPath)
       if (context == null) {
         AGENT_WORKBENCH_PROJECT_LAUNCH_CONFIG_LOG.debug {
-          "Skipped Agent Workbench launch augmentation for provider=${provider.value}: execution context unavailable for projectPath=$projectPath"
+          "Skipped Agent Workbench launch augmentation for provider=${provider.value}: " +
+          "execution context unavailable for projectPath=$projectPath, projectDirectory=$projectDirectory"
         }
         return launchSpec
       }
@@ -63,7 +66,10 @@ internal class AgentWorkbenchProjectLaunchConfigAugmenter(
       if (!envChanged) launchSpec else launchSpec.copy(envVariables = envVariables)
     }
     catch (t: Throwable) {
-      AGENT_WORKBENCH_PROJECT_LAUNCH_CONFIG_LOG.warn("Failed to resolve Agent Workbench launch config for $provider:$projectPath", t)
+      AGENT_WORKBENCH_PROJECT_LAUNCH_CONFIG_LOG.warn(
+        "Failed to resolve Agent Workbench launch config for $provider:$projectPath (projectDirectory=$projectDirectory)",
+        t,
+      )
       launchSpec
     }
   }

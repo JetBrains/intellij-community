@@ -20,6 +20,7 @@ internal fun readAgentChatFileEditorState(sourceElement: Element, file: VirtualF
   val identity = AgentChatTabIdentity(
     projectHash = sourceElement.getAttributeValue(ATTR_PROJECT_HASH).orEmpty(),
     projectPath = sourceElement.getAttributeValue(ATTR_PROJECT_PATH).orEmpty(),
+    projectDirectory = sourceElement.getAttributeValue(ATTR_PROJECT_DIRECTORY),
     threadIdentity = sourceElement.getAttributeValue(ATTR_THREAD_IDENTITY).orEmpty(),
     subAgentId = sourceElement.getAttributeValue(ATTR_SUB_AGENT_ID),
   )
@@ -69,6 +70,7 @@ internal fun writeAgentChatFileEditorState(state: AgentChatFileEditorState, targ
   targetElement.setAttribute(ATTR_VERSION, STATE_VERSION.toString())
   targetElement.setAttribute(ATTR_PROJECT_HASH, identity.projectHash)
   targetElement.setAttribute(ATTR_PROJECT_PATH, identity.projectPath)
+  targetElement.setNullableAttribute(ATTR_PROJECT_DIRECTORY, identity.projectDirectory)
   targetElement.setAttribute(ATTR_THREAD_IDENTITY, identity.threadIdentity)
   targetElement.setNullableAttribute(ATTR_SUB_AGENT_ID, identity.subAgentId)
   targetElement.setAttribute(ATTR_THREAD_ID, runtime.threadId)
@@ -132,6 +134,7 @@ private const val STATE_VERSION = 5
 private const val ATTR_VERSION = "version"
 private const val ATTR_PROJECT_HASH = "projectHash"
 private const val ATTR_PROJECT_PATH = "projectPath"
+private const val ATTR_PROJECT_DIRECTORY = "projectDirectory"
 private const val ATTR_THREAD_IDENTITY = "threadIdentity"
 private const val ATTR_SUB_AGENT_ID = "subAgentId"
 private const val ATTR_THREAD_ID = "threadId"

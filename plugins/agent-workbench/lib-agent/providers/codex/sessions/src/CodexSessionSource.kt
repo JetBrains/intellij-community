@@ -328,10 +328,11 @@ internal class CodexSessionSource internal constructor(
     val failuresByPath = LinkedHashMap<String, Throwable>()
 
     for (path in request.paths) {
+      val sourcePath = request.sourcePathFor(path)
       try {
-        val backendResult = backend.refreshThreads(path = path, threadIds = request.threadIds, openProject = null)
+        val backendResult = backend.refreshThreads(path = sourcePath, threadIds = request.threadIds, openProject = null)
         if (backendResult == null) {
-          completeThreadsByPath[path] = listThreads(path = path, openProject = null)
+          completeThreadsByPath[path] = listThreads(path = sourcePath, openProject = null)
           continue
         }
 

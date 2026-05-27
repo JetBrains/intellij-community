@@ -22,6 +22,7 @@ enum class AgentSessionLaunchOperation {
 
 data class AgentSessionLaunchIntent(
   @JvmField val projectPath: String,
+  @JvmField val projectDirectory: String? = null,
   val provider: AgentSessionProvider,
   @JvmField val operation: AgentSessionLaunchOperation,
   @JvmField val sessionId: String? = null,
@@ -48,14 +49,20 @@ object AgentSessionLaunchPlanner {
   ): AgentSessionPlannedLaunch {
     val descriptor = AgentSessionProviders.find(intent.provider)
     val baseLaunchSpec = buildBaseLaunchSpec(intent, descriptor, resumeLaunchSpecProvider)
+    val baseLaunchSpecWithWorkingDirectory = if (intent.projectDirectory != null && baseLaunchSpec.workingDirectory == null) {
+      baseLaunchSpec.copy(workingDirectory = intent.projectDirectory)
+    }
+    else {
+      baseLaunchSpec
+    }
     val sanitizedIntent = intent.copy(
       generationSettings = descriptor?.sanitizeGenerationSettings(intent.generationSettings) ?: AgentPromptGenerationSettings.AUTO,
     )
     val generationLaunchSpec = descriptor?.applyGenerationSettings(
-      baseLaunchSpec = baseLaunchSpec,
+      baseLaunchSpec = baseLaunchSpecWithWorkingDirectory,
       generationSettings = sanitizedIntent.generationSettings,
       initialMessagePlan = initialMessagePlan,
-    ) ?: baseLaunchSpec
+    ) ?: baseLaunchSpecWithWorkingDirectory
     val resolvedCatalog = resolveGenerationModelCatalog(
       descriptor = descriptor,
       project = project,
@@ -69,11 +76,13 @@ object AgentSessionLaunchPlanner {
     ) ?: generationLaunchSpec
     val augmentedLaunchSpec = AgentSessionLaunchSpecs.augment(
       projectPath = sanitizedIntent.projectPath,
+      projectDirectory = sanitizedIntent.projectDirectory,
       provider = sanitizedIntent.provider,
       launchSpec = catalogLaunchSpec,
     )
     val contributedLaunchSpec = AgentSessionLaunchContributors.applyAll(
       projectPath = sanitizedIntent.projectPath,
+      projectDirectory = sanitizedIntent.projectDirectory,
       provider = sanitizedIntent.provider,
       sessionId = sanitizedIntent.sessionId.takeIf { sanitizedIntent.operation == AgentSessionLaunchOperation.RESUME },
       launchSpec = augmentedLaunchSpec,

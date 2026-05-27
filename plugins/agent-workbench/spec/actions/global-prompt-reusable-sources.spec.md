@@ -70,7 +70,8 @@ The global prompt popup lets users reuse saved prompts, recent submitted prompts
 
 ## Data & Backend
 - `AgentPromptReusableSourceEntry` is the shared UI-facing model for reusable entries. It carries stable id, label, insert text, kind, provider, optional description, and optional source path.
-- Provider-specific entries are requested for the currently selected provider and resolved working project path when command completion needs them.
+- Provider-specific entries are requested for the currently selected provider and the resolved project directory for the selected working identity path when command completion needs them.
+  [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 - Generic prompt-file entries are provider-agnostic and may appear for any selected provider.
 
 ## Testing / Local Run

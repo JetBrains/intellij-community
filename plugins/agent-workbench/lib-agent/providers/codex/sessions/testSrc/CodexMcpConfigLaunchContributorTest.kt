@@ -28,6 +28,7 @@ class CodexMcpConfigLaunchContributorTest {
 
     val launchSpec = contributor.contribute(
       projectPath = PROJECT_PATH,
+      projectDirectory = null,
       provider = AgentSessionProvider.from("codex"),
       sessionId = null,
       launchSpec = AgentSessionTerminalLaunchSpec(command = listOf("codex")),
@@ -47,6 +48,7 @@ class CodexMcpConfigLaunchContributorTest {
 
     val launchSpec = contributor.contribute(
       projectPath = PROJECT_PATH,
+      projectDirectory = null,
       provider = AgentSessionProvider.from("codex"),
       sessionId = null,
       launchSpec = AgentSessionTerminalLaunchSpec(command = listOf("codex")),
@@ -63,6 +65,7 @@ class CodexMcpConfigLaunchContributorTest {
 
     val launchSpec = contributor.contribute(
       projectPath = PROJECT_PATH,
+      projectDirectory = null,
       provider = AgentSessionProvider.from("codex"),
       sessionId = null,
       launchSpec = AgentSessionTerminalLaunchSpec(command = listOf("codex")),
@@ -72,11 +75,38 @@ class CodexMcpConfigLaunchContributorTest {
   }
 
   @Test
+  fun usesProjectDirectoryForBazelProjectIdentity(): Unit = runBlocking {
+    var configLookupPath: Path? = null
+    val contributor = CodexMcpConfigLaunchContributor(
+      isDirectHttpEnabled = { true },
+      mcpUrlResolver = { MCP_URL },
+      existingMcpServersResolver = { path ->
+        configLookupPath = path
+        emptyList()
+      },
+    )
+
+    val launchSpec = contributor.contribute(
+      projectPath = BAZEL_PROJECT_IDENTITY_PATH,
+      projectDirectory = PROJECT_PATH,
+      provider = AgentSessionProvider.from("codex"),
+      sessionId = null,
+      launchSpec = AgentSessionTerminalLaunchSpec(command = listOf("codex")),
+    )
+
+    assertThat(configLookupPath).isEqualTo(Path.of(PROJECT_PATH))
+    assertThat(launchSpec.command).contains(
+      "mcp_servers.awb_idea.http_headers.IJ_MCP_SERVER_PROJECT_PATH=\"$PROJECT_PATH\""
+    )
+  }
+
+  @Test
   fun insertsMcpConfigOverridesBeforeResumeCommand(): Unit = runBlocking {
     val contributor = contributor(existingMcpServers = FILTERED_MCP_SERVERS)
 
     val launchSpec = contributor.contribute(
       projectPath = PROJECT_PATH,
+      projectDirectory = null,
       provider = AgentSessionProvider.from("codex"),
       sessionId = "thread-1",
       launchSpec = AgentSessionTerminalLaunchSpec(command = listOf("codex", "--yolo", "resume", "--remote", REMOTE_URL, "thread-1")),
@@ -93,6 +123,7 @@ class CodexMcpConfigLaunchContributorTest {
 
     val launchSpec = contributor.contribute(
       projectPath = PROJECT_PATH,
+      projectDirectory = null,
       provider = AgentSessionProvider.from("codex"),
       sessionId = null,
       launchSpec = AgentSessionTerminalLaunchSpec(command = listOf("codex", "--", "Refactor this")),
@@ -110,6 +141,7 @@ class CodexMcpConfigLaunchContributorTest {
 
     val launchSpec = contributor.contribute(
       projectPath = PROJECT_PATH,
+      projectDirectory = null,
       provider = AgentSessionProvider.from("claude"),
       sessionId = null,
       launchSpec = baseLaunchSpec,
@@ -125,6 +157,7 @@ class CodexMcpConfigLaunchContributorTest {
 
     val launchSpec = contributor.contribute(
       projectPath = PROJECT_PATH,
+      projectDirectory = null,
       provider = AgentSessionProvider.from("codex"),
       sessionId = null,
       launchSpec = baseLaunchSpec,
@@ -140,6 +173,7 @@ class CodexMcpConfigLaunchContributorTest {
 
     val launchSpec = contributor.contribute(
       projectPath = PROJECT_PATH,
+      projectDirectory = null,
       provider = AgentSessionProvider.from("codex"),
       sessionId = null,
       launchSpec = baseLaunchSpec,
@@ -233,6 +267,7 @@ class CodexMcpConfigLaunchContributorTest {
 }
 
 private const val PROJECT_PATH: String = "/work/project"
+private const val BAZEL_PROJECT_IDENTITY_PATH: String = "$PROJECT_PATH/toolbox/toolbox.bazelproject"
 private const val OTHER_PROJECT_PATH: String = "/other/project"
 private const val MCP_URL: String = "http://127.0.0.1:64342/stream"
 private const val OLD_MCP_URL: String = "http://127.0.0.1:65432/stream"

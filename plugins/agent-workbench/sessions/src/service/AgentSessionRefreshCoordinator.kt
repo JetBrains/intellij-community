@@ -19,6 +19,7 @@ import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentationPatchUpdate
 import com.intellij.platform.ai.agent.sessions.core.AgentSessionThreadPresentationModel
 import com.intellij.platform.ai.agent.sessions.core.config.AgentWorkbenchProjectRuntimeConfigs
+import com.intellij.platform.ai.agent.sessions.core.paths.resolveAgentWorkbenchProjectDirectory
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProviders
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionPrefetchSource
@@ -51,6 +52,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
 
 private val LOG = logger<AgentSessionRefreshCoordinator>()
 
@@ -222,7 +224,8 @@ internal class AgentSessionRefreshCoordinator(
       provider = provider,
       updateEvent = updateEvent,
     )
-    if (candidatePaths.isEmpty()) {
+    val ownerRootPaths = resolveVfsRefreshOwnerPaths(state = stateSnapshot, candidatePaths = candidatePaths)
+    if (ownerRootPaths.isEmpty()) {
       LOG.debug {
         "Skipped VFS refresh for ${provider.value} source update: no resolved project paths"
       }
@@ -230,7 +233,7 @@ internal class AgentSessionRefreshCoordinator(
     }
     updateEvent.changedProjectFilePaths?.let { changedProjectFilePaths ->
       val exactRefreshPaths = collectExactVfsRefreshPaths(
-        ownerRootPaths = candidatePaths,
+        ownerRootPaths = ownerRootPaths,
         changedProjectFilePaths = changedProjectFilePaths,
         isOwnerRootRefreshEnabled = isVfsRefreshOnStatusUpdatesEnabled,
       )
@@ -250,10 +253,10 @@ internal class AgentSessionRefreshCoordinator(
       scheduleVfsRefresh(exactRefreshPaths.paths)
       return
     }
-    val enabledCandidatePaths = candidatePaths.filter(isVfsRefreshOnStatusUpdatesEnabled).toSet()
+    val enabledCandidatePaths = ownerRootPaths.filter(isVfsRefreshOnStatusUpdatesEnabled).toSet()
     if (enabledCandidatePaths.isEmpty()) {
       LOG.debug {
-        "Skipped VFS refresh for ${provider.value} source update: disabled by project config paths=${candidatePaths.size}"
+        "Skipped VFS refresh for ${provider.value} source update: disabled by project config paths=${ownerRootPaths.size}"
       }
       return
     }
@@ -295,30 +298,51 @@ internal class AgentSessionRefreshCoordinator(
       ) {
         val cliAvailabilityByProvider = resolveCliAvailabilityByProvider(sessionSources)
         val availableSessionSources = sessionSources.filter { source -> cliAvailabilityByProvider[source.provider] != false }
+        val loadTargets = buildOpenLoadTargets(entries = bootstrap.entries, loadPaths = bootstrap.loadPaths)
+        val loadTargetsByPath = loadTargets.associateBy(AgentSessionOpenProjectLoadTarget::identityPath)
+        val loadTargetsByPrefetchPath = buildOpenLoadTargetsByPrefetchPath(loadTargets)
         loadingProviderLoadStates = buildLoadingProviderLoadStates(availableSessionSources.map { source -> source.provider })
 
-        val prefetchedByProvider = coroutineScope {
-          availableSessionSources.map { source ->
-            async {
-              source.provider to try {
-                (source as? AgentSessionPrefetchSource)?.prefetchThreads(bootstrap.loadPaths.toList()).orEmpty()
+        val prefetchedByProvider: Map<AgentSessionProvider, Map<String, AgentSessionPrefetchedThreads>> = if (loadTargetsByPrefetchPath.isEmpty()) {
+          emptyMap()
+        }
+        else {
+          coroutineScope {
+            availableSessionSources.map { source ->
+              async {
+                source.provider to try {
+                  (source as? AgentSessionPrefetchSource)?.prefetchThreads(loadTargetsByPrefetchPath.keys.toList())
+                    .orEmpty()
+                    .flatMap { (path, threads) ->
+                      val normalizedPath = normalizeAgentWorkbenchPath(path)
+                      loadTargetsByPrefetchPath[normalizedPath].orEmpty().map { target ->
+                        target.identityPath to AgentSessionPrefetchedThreads(
+                          projectDirectory = target.projectDirectory,
+                          threads = threads,
+                        )
+                      }
+                    }
+                    .toMap()
+                }
+                catch (_: Throwable) {
+                  emptyMap()
+                }
               }
-              catch (_: Throwable) {
-                emptyMap()
-              }
-            }
-          }.awaitAll().toMap()
+            }.awaitAll().toMap()
+          }
         }
 
         coroutineScope {
-          for ((entryPath, _, entryProject, _, _, worktreeEntries) in bootstrap.entries) {
+          for (entry in bootstrap.entries) {
+            val entryPath = entry.path
             val normalizedEntryPath = normalizeAgentWorkbenchPath(entryPath)
             launch {
               loadOpenPathThreads(
                 target = RefreshThreadLoadTarget(
                   normalizedPath = normalizedEntryPath,
+                  projectDirectory = loadTargetsByPath[normalizedEntryPath]?.projectDirectory,
                   originalPath = entryPath,
-                  project = entryProject,
+                  project = entry.project,
                   updateLoadingFailed = {
                     stateStore.updateProject(normalizedEntryPath) { project -> project.withLoadingProvidersFailed() }
                   },
@@ -339,14 +363,16 @@ internal class AgentSessionRefreshCoordinator(
                 cliAvailabilityByProvider = cliAvailabilityByProvider,
               )
             }
-            for ((worktreePath, _, _, worktreeProject) in worktreeEntries) {
+            for (worktree in entry.worktreeEntries) {
+              val worktreePath = worktree.path
               val normalizedWorktreePath = normalizeAgentWorkbenchPath(worktreePath)
               launch {
                 loadOpenPathThreads(
                   target = RefreshThreadLoadTarget(
                     normalizedPath = normalizedWorktreePath,
+                    projectDirectory = loadTargetsByPath[normalizedWorktreePath]?.projectDirectory,
                     originalPath = worktreePath,
-                    project = worktreeProject,
+                    project = worktree.project,
                     updateLoadingFailed = {
                       stateStore.updateWorktree(normalizedEntryPath, normalizedWorktreePath) { worktree ->
                         worktree.withLoadingProvidersFailed()
@@ -381,7 +407,7 @@ internal class AgentSessionRefreshCoordinator(
     target: RefreshThreadLoadTarget,
     loadPaths: Set<String>,
     availableSessionSources: List<AgentSessionSource>,
-    prefetchedByProvider: Map<AgentSessionProvider, Map<String, List<AgentSessionThread>>>,
+    prefetchedByProvider: Map<AgentSessionProvider, Map<String, AgentSessionPrefetchedThreads>>,
     cliAvailabilityByProvider: Map<AgentSessionProvider, Boolean>,
   ) {
     val project = target.project
@@ -391,10 +417,13 @@ internal class AgentSessionRefreshCoordinator(
     }
     val finalResult = threadLoadSupport.loadSourcesIncrementally(
       sessionSources = availableSessionSources,
-      normalizedPath = target.normalizedPath,
-      project = project,
+      loadTarget = AgentSessionOpenProjectLoadTarget(
+        identityPath = target.normalizedPath,
+        projectDirectory = target.projectDirectory,
+        project = project,
+        originalPath = target.originalPath,
+      ),
       prefetchedByProvider = prefetchedByProvider,
-      originalPath = target.originalPath,
       cliAvailabilityByProvider = cliAvailabilityByProvider,
     ) { partial, _ ->
       target.updateResult(partial, false)
@@ -515,11 +544,66 @@ internal class AgentSessionRefreshCoordinator(
 
 private data class RefreshThreadLoadTarget(
   @JvmField val normalizedPath: String,
+  @JvmField val projectDirectory: String?,
   @JvmField val originalPath: String,
   @JvmField val project: Project?,
   @JvmField val updateLoadingFailed: () -> Unit,
   @JvmField val updateResult: (AgentSessionLoadResult, includeErrorMessage: Boolean) -> Unit,
 )
+
+private fun buildOpenLoadTargets(
+  entries: List<ProjectEntry>,
+  loadPaths: Set<String>,
+): List<AgentSessionOpenProjectLoadTarget> {
+  val targets = ArrayList<AgentSessionOpenProjectLoadTarget>(loadPaths.size)
+  for (entry in entries) {
+    buildOpenLoadTarget(
+      path = entry.path,
+      projectDirectory = entry.projectDirectory,
+      project = entry.project,
+      loadPaths = loadPaths,
+    )?.let(targets::add)
+    for (worktree in entry.worktreeEntries) {
+      buildOpenLoadTarget(
+        path = worktree.path,
+        projectDirectory = worktree.projectDirectory,
+        project = worktree.project,
+        loadPaths = loadPaths,
+      )?.let(targets::add)
+    }
+  }
+  return targets
+}
+
+private fun buildOpenLoadTargetsByPrefetchPath(
+  loadTargets: List<AgentSessionOpenProjectLoadTarget>,
+): Map<String, List<AgentSessionOpenProjectLoadTarget>> {
+  val targetsByPrefetchPath = LinkedHashMap<String, MutableList<AgentSessionOpenProjectLoadTarget>>()
+  for (target in loadTargets) {
+    val prefetchPath = normalizeAgentWorkbenchPath(target.projectDirectory?.takeIf { it.isNotBlank() } ?: target.identityPath)
+    targetsByPrefetchPath.getOrPut(prefetchPath) { ArrayList() }.add(target)
+  }
+  return targetsByPrefetchPath
+}
+
+private fun buildOpenLoadTarget(
+  path: String,
+  projectDirectory: String?,
+  project: Project?,
+  loadPaths: Set<String>,
+): AgentSessionOpenProjectLoadTarget? {
+  val openProject = project ?: return null
+  val identityPath = normalizeAgentWorkbenchPath(path)
+  if (identityPath !in loadPaths) {
+    return null
+  }
+  return AgentSessionOpenProjectLoadTarget(
+    identityPath = identityPath,
+    projectDirectory = projectDirectory?.takeIf { it.isNotBlank() }?.let(::normalizeAgentWorkbenchPath),
+    project = openProject,
+    originalPath = path,
+  )
+}
 
 private fun AgentProjectSessions.withRefreshResult(
   normalizedPath: String,
@@ -849,6 +933,48 @@ private fun collectExactVfsRefreshPaths(
   return ExactVfsRefreshPaths(paths = paths, skippedOutsideRoot = skippedOutsideRoot, disabledRoots = disabledRoots)
 }
 
+private fun resolveVfsRefreshOwnerPaths(state: AgentSessionsState, candidatePaths: Set<String>): Set<String> {
+  if (candidatePaths.isEmpty()) {
+    return emptySet()
+  }
+  val projectDirectoriesByPathVariant = buildVfsRefreshProjectDirectoriesByPathVariant(state)
+  val ownerPaths = LinkedHashSet<String>()
+  for (path in candidatePaths) {
+    val resolvedProjectDirectory = collectPathVariants(path)
+      .asSequence()
+      .mapNotNull { variant -> projectDirectoriesByPathVariant[variant] }
+      .firstOrNull()
+    ownerPaths.add(resolvedProjectDirectory ?: projectDirectoryPathVariant(path) ?: normalizeAgentWorkbenchPath(path))
+  }
+  return ownerPaths
+}
+
+private fun buildVfsRefreshProjectDirectoriesByPathVariant(state: AgentSessionsState): Map<String, String> {
+  val result = LinkedHashMap<String, String>()
+  state.forEachPathContent { content ->
+    addVfsRefreshProjectDirectoryPathVariants(
+      result = result,
+      path = content.path,
+      projectDirectory = content.projectDirectory,
+    )
+  }
+  return result
+}
+
+private fun addVfsRefreshProjectDirectoryPathVariants(
+  result: LinkedHashMap<String, String>,
+  path: String,
+  projectDirectory: String?,
+) {
+  val normalizedProjectDirectory = projectDirectory?.takeIf { it.isNotBlank() }?.let(::normalizeAgentWorkbenchPath) ?: return
+  for (variant in collectPathVariants(path)) {
+    result[variant] = normalizedProjectDirectory
+  }
+  for (variant in collectPathVariants(normalizedProjectDirectory)) {
+    result[variant] = normalizedProjectDirectory
+  }
+}
+
 private fun toVfsRefreshOwnerRoot(path: String): VfsRefreshOwnerRoot? {
   val parsedPath = parseAgentWorkbenchPathOrNull(path)?.takeIf { it.isAbsolute }?.normalize() ?: return null
   return VfsRefreshOwnerRoot(originalPath = path, path = parsedPath)
@@ -890,11 +1016,89 @@ private fun resolveKnownPathsFromScopedPaths(state: AgentSessionsState, scopedPa
   if (scopedPaths.isEmpty()) {
     return emptySet()
   }
-  val normalizedScopedPaths = scopedPaths.mapTo(LinkedHashSet()) { path -> normalizeAgentWorkbenchPath(path) }
-  return collectOpenOrLoadedPaths(state)
-    .asSequence()
-    .filter { path -> normalizeAgentWorkbenchPath(path) in normalizedScopedPaths }
-    .toCollection(LinkedHashSet())
+  val knownPathsByVariant = buildVfsRefreshKnownPathsByVariant(state)
+  val resolvedPaths = LinkedHashSet<String>()
+  for (scopedPath in scopedPaths) {
+    collectPathVariants(scopedPath)
+      .asSequence()
+      .flatMap { variant -> knownPathsByVariant[variant].orEmpty().asSequence() }
+      .toCollection(resolvedPaths)
+  }
+  return resolvedPaths
+}
+
+private fun buildVfsRefreshKnownPathsByVariant(state: AgentSessionsState): Map<String, Set<String>> {
+  val knownPaths = collectOpenOrLoadedPaths(state)
+  val result = LinkedHashMap<String, LinkedHashSet<String>>()
+  state.forEachPathContent { content ->
+    addVfsRefreshPathAliases(
+      result = result,
+      knownPaths = knownPaths,
+      path = content.path,
+      projectDirectory = content.projectDirectory,
+    )
+  }
+  for (path in knownPaths) {
+    addVfsRefreshPathAlias(result, targetPath = path, aliasPath = path)
+  }
+  return result
+}
+
+private fun addVfsRefreshPathAliases(
+  result: LinkedHashMap<String, LinkedHashSet<String>>,
+  knownPaths: Set<String>,
+  path: String,
+  projectDirectory: String?,
+) {
+  val normalizedPath = normalizeAgentWorkbenchPath(path)
+  if (normalizedPath !in knownPaths) {
+    return
+  }
+  addVfsRefreshPathAlias(result, targetPath = normalizedPath, aliasPath = normalizedPath)
+  projectDirectory?.takeIf { it.isNotBlank() }?.let { aliasPath ->
+    addVfsRefreshPathAlias(result, targetPath = normalizedPath, aliasPath = aliasPath)
+  }
+}
+
+private fun addVfsRefreshPathAlias(
+  result: LinkedHashMap<String, LinkedHashSet<String>>,
+  targetPath: String,
+  aliasPath: String,
+) {
+  for (variant in collectPathVariants(aliasPath)) {
+    result.getOrPut(variant) { LinkedHashSet() }.add(targetPath)
+  }
+}
+
+private fun collectPathVariants(path: String): Set<String> {
+  val variants = LinkedHashSet<String>()
+  fun addPathVariant(value: String?) {
+    val normalized = value?.let(::normalizeAgentWorkbenchPath)?.takeIf { it.isNotBlank() } ?: return
+    variants.add(normalized)
+  }
+
+  fun addPathVariant(value: Path?) {
+    val normalizedPath = value?.normalize() ?: return
+    addPathVariant(normalizedPath.invariantSeparatorsPathString)
+    runCatching { normalizedPath.toRealPath().invariantSeparatorsPathString }.getOrNull()?.let(::addPathVariant)
+  }
+
+  addPathVariant(path)
+  val parsedPath = parseAgentWorkbenchPathOrNull(normalizeAgentWorkbenchPath(path)) ?: return variants
+  addPathVariant(parsedPath)
+  addPathVariant(projectDirectoryVariant(parsedPath))
+  return variants
+}
+
+private fun projectDirectoryPathVariant(path: String): String? {
+  val parsedPath = parseAgentWorkbenchPathOrNull(normalizeAgentWorkbenchPath(path)) ?: return null
+  return projectDirectoryVariant(parsedPath)?.invariantSeparatorsPathString?.let(::normalizeAgentWorkbenchPath)
+}
+
+private fun projectDirectoryVariant(path: Path): Path? {
+  val normalizedPath = path.normalize()
+  val resolvedProjectDirectory = resolveAgentWorkbenchProjectDirectory(normalizedPath)
+  return resolvedProjectDirectory.takeIf { it != normalizedPath }
 }
 
 private fun resolvePathsForVfsRefreshThreadIds(

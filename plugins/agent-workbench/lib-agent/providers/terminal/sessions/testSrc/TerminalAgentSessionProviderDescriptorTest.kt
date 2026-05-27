@@ -95,6 +95,7 @@ class TerminalAgentSessionProviderDescriptorTest {
 
       val launchSpec = contributor.contribute(
         projectPath = "/tmp/project",
+        projectDirectory = "/tmp/project",
         provider = AgentSessionProvider.from("terminal"),
         sessionId = "terminal-session-id",
         launchSpec = TerminalAgentSessionProviderDescriptor(stateService = stateService).buildResumeLaunchSpec("terminal-session-id"),

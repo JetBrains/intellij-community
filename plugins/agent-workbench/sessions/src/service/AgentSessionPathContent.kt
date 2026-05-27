@@ -11,6 +11,7 @@ import com.intellij.agent.workbench.sessions.model.isTerminal
 
 internal data class AgentSessionPathContent(
   @JvmField val path: String,
+  @JvmField val projectDirectory: String?,
   @JvmField val isOpen: Boolean,
   @JvmField val threads: List<AgentSessionThread>,
   @JvmField val providerLoadStates: Map<AgentSessionProvider, AgentSessionProviderLoadState>,
@@ -35,6 +36,7 @@ internal inline fun AgentSessionsState.forEachPathContent(action: (AgentSessionP
 private fun AgentProjectSessions.toPathContent(): AgentSessionPathContent {
   return AgentSessionPathContent(
     path = path,
+    projectDirectory = projectDirectory,
     isOpen = isOpen,
     threads = threads,
     providerLoadStates = providerLoadStates,
@@ -44,6 +46,7 @@ private fun AgentProjectSessions.toPathContent(): AgentSessionPathContent {
 private fun AgentWorktree.toPathContent(): AgentSessionPathContent {
   return AgentSessionPathContent(
     path = path,
+    projectDirectory = projectDirectory,
     isOpen = isOpen,
     threads = threads,
     providerLoadStates = providerLoadStates,

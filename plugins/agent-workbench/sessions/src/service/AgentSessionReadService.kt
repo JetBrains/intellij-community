@@ -55,7 +55,8 @@ class AgentSessionReadService private constructor(
     val pendingSessionId = context.threadCoordinates?.sessionId ?: return null
     val state = optionalSessionsStateProvider() ?: return null
     val normalizedPath = normalizeAgentWorkbenchPath(context.path)
-    val thread = resolveThreadsForPath(state, normalizedPath)
+    val pathState = resolveAgentSessionPathState(state, normalizedPath) ?: return null
+    val thread = pathState.threads
                    .asSequence()
                    .filter { thread -> thread.isConcreteRebindTarget(provider = provider, pendingSessionId = pendingSessionId) }
                    .maxByOrNull { thread -> thread.updatedAt }
@@ -63,6 +64,7 @@ class AgentSessionReadService private constructor(
 
     return AgentChatTabRebindTarget(
       projectPath = normalizedPath,
+      projectDirectory = pathState.projectDirectory,
       provider = thread.provider,
       threadIdentity = buildAgentSessionIdentity(provider = thread.provider, sessionId = thread.id),
       threadId = thread.id,
@@ -75,6 +77,7 @@ class AgentSessionReadService private constructor(
 }
 
 internal data class AgentSessionPathState(
+  @JvmField val projectDirectory: String?,
   @JvmField val threads: List<AgentSessionThread>,
   @JvmField val providerLoadStates: Map<AgentSessionProvider, AgentSessionProviderLoadState>,
   @JvmField val errorMessage: String?,
@@ -92,6 +95,7 @@ internal data class AgentSessionPathState(
 internal fun resolveAgentSessionPathState(state: AgentSessionsState, normalizedPath: String): AgentSessionPathState? {
   state.projects.firstOrNull { project -> project.path == normalizedPath }?.let { project ->
     return AgentSessionPathState(
+      projectDirectory = project.projectDirectory,
       threads = project.threads,
       providerLoadStates = project.providerLoadStates,
       errorMessage = project.errorMessage,
@@ -102,6 +106,7 @@ internal fun resolveAgentSessionPathState(state: AgentSessionsState, normalizedP
   state.projects.forEach { project ->
     val worktree = project.worktrees.firstOrNull { candidate -> candidate.path == normalizedPath } ?: return@forEach
     return AgentSessionPathState(
+      projectDirectory = worktree.projectDirectory,
       threads = worktree.threads,
       providerLoadStates = worktree.providerLoadStates,
       errorMessage = worktree.errorMessage,
@@ -125,8 +130,4 @@ private fun AgentSessionThread.isConcreteRebindTarget(provider: AgentSessionProv
   return this.provider == provider &&
          id != pendingSessionId &&
          !isAgentSessionNewSessionId(id)
-}
-
-private fun resolveThreadsForPath(state: AgentSessionsState, normalizedPath: String): List<AgentSessionThread> {
-  return resolveAgentSessionPathState(state, normalizedPath)?.threads.orEmpty()
 }

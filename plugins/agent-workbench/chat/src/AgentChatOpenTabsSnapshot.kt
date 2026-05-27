@@ -19,6 +19,7 @@ import java.util.Locale
 
 data class AgentChatOpenTabsRefreshSnapshot(
   @JvmField val openProjectPaths: Set<String>,
+  @JvmField val projectPathAliasesByPath: Map<String, Set<String>> = emptyMap(),
   val selectedChatThreadIdentity: Pair<AgentSessionProvider, String>?,
   private val pendingTabsByProvider: Map<AgentSessionProvider, Map<String, List<AgentChatPendingTabSnapshot>>>,
   private val concreteTabsAwaitingNewThreadRebindByProvider: Map<AgentSessionProvider, Map<String, List<AgentChatConcreteTabSnapshot>>>,
@@ -78,6 +79,7 @@ internal fun collectOpenAgentChatTabsSnapshot(
   val pinnedTabKeys = LinkedHashSet<String>()
   val concreteThreadIdentitiesByPathAndManager = ConcreteThreadIdentitiesByManager()
   val topLevelConcreteThreadIdentitiesByPathAndManager = ConcreteThreadIdentitiesByManager()
+  val projectPathAliasesByPath = LinkedHashMap<String, LinkedHashSet<String>>()
   val pendingFilesByProviderAndPathAndTabKey =
     LinkedHashMap<AgentSessionProvider, LinkedHashMap<String, LinkedHashMap<String, AgentChatVirtualFile>>>()
   val concreteFilesByProviderAndPathAndTabKey =
@@ -116,6 +118,11 @@ internal fun collectOpenAgentChatTabsSnapshot(
         continue
       }
       val normalizedProjectPath = normalizeAgentWorkbenchPath(chatFile.projectPath)
+      recordProjectPathAlias(
+        projectPathAliasesByPath = projectPathAliasesByPath,
+        normalizedProjectPath = normalizedProjectPath,
+        projectDirectory = chatFile.projectDirectory,
+      )
       val hasPendingThreadIdentity = chatFile.isPendingThread
       val participatesInPendingThreadLifecycle = chatFile.participatesInPendingThreadLifecycle()
       val pendingProvider =
@@ -191,6 +198,7 @@ internal fun collectOpenAgentChatTabsSnapshot(
     pinnedTabKeys = pinnedTabKeys,
     pendingFilesByProviderAndPathAndTabKey = pendingFilesByProviderAndPathAndTabKey,
     concreteFilesByProviderAndPathAndTabKey = concreteFilesByProviderAndPathAndTabKey,
+    projectPathAliasesByPath = projectPathAliasesByPath,
     openProjectPaths = openProjectPaths,
     pendingProjectPaths = pendingProjectPaths,
     selectedChatThreadIdentity = selectedChatThreadIdentity,
@@ -226,6 +234,7 @@ internal class AgentChatOpenTabsSnapshot(
   LinkedHashMap<AgentSessionProvider, LinkedHashMap<String, LinkedHashMap<String, AgentChatVirtualFile>>>,
   private val concreteFilesByProviderAndPathAndTabKey:
   LinkedHashMap<AgentSessionProvider, LinkedHashMap<String, LinkedHashMap<String, AgentChatVirtualFile>>>,
+  private val projectPathAliasesByPath: LinkedHashMap<String, LinkedHashSet<String>>,
   private val openProjectPaths: LinkedHashSet<String>,
   private val pendingProjectPaths: LinkedHashSet<String>,
   val selectedChatThreadIdentity: Pair<AgentSessionProvider, String>?,
@@ -513,12 +522,34 @@ internal class AgentChatOpenTabsSnapshot(
 
     return AgentChatOpenTabsRefreshSnapshot(
       openProjectPaths = LinkedHashSet(openProjectPaths),
+      projectPathAliasesByPath = projectPathAliasesSnapshot(),
       selectedChatThreadIdentity = selectedChatThreadIdentity,
       pendingTabsByProvider = pendingTabsByProvider,
       concreteTabsAwaitingNewThreadRebindByProvider = concreteTabsByProvider,
       concreteThreadIdentitiesByPath = concreteThreadIdentitiesByPath(),
     )
   }
+
+  private fun projectPathAliasesSnapshot(): Map<String, Set<String>> {
+    val result = LinkedHashMap<String, Set<String>>(projectPathAliasesByPath.size)
+    for ((normalizedPath, aliases) in projectPathAliasesByPath) {
+      result[normalizedPath] = LinkedHashSet(aliases)
+    }
+    return result
+  }
+}
+
+private fun recordProjectPathAlias(
+  projectPathAliasesByPath: LinkedHashMap<String, LinkedHashSet<String>>,
+  normalizedProjectPath: String,
+  projectDirectory: String?,
+) {
+  val aliases = projectPathAliasesByPath.computeIfAbsent(normalizedProjectPath) { LinkedHashSet() }
+  aliases.add(normalizedProjectPath)
+  projectDirectory
+    ?.let(::normalizeAgentWorkbenchPath)
+    ?.takeIf { it.isNotBlank() }
+    ?.let(aliases::add)
 }
 
 private fun recordConcreteThreadIdentity(

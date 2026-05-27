@@ -25,6 +25,15 @@ import kotlin.io.path.invariantSeparatorsPathString
 private val CLAUDE_AGENT_SESSION_PROVIDER: AgentSessionProvider = AgentSessionProvider.from("claude")
 
 private const val CLAUDE_PROJECTS_DIR = "projects"
+private val CLAUDE_BAZEL_PROJECT_FILE_SUFFIXES = listOf(
+  ".bazelproject",
+  ".blazeproject",
+)
+private val CLAUDE_PROJECT_FILE_SUFFIXES = listOf(
+  ".ipr",
+  ".iws",
+  *CLAUDE_BAZEL_PROJECT_FILE_SUFFIXES.toTypedArray(),
+)
 
 // Claude transcript parsing only reports provider work state.
 // Unread is derived later in ClaudeSessionSource from local read tracking.
@@ -981,9 +990,62 @@ private fun encodeProjectPath(projectPath: String): String {
 
 private fun projectPathCandidates(normalizedProjectPath: String): Set<String> {
   val paths = LinkedHashSet<String>()
-  paths.add(normalizedProjectPath)
-  canonicalPath(normalizedProjectPath)?.let(paths::add)
+
+  fun addCandidate(path: String?) {
+    val candidate = path?.takeIf { it.isNotBlank() } ?: return
+    paths.add(candidate)
+    canonicalPath(candidate)?.let(paths::add)
+  }
+
+  addCandidate(normalizedProjectPath)
+  addCandidate(resolveClaudeContainingGitProjectDirectory(normalizedProjectPath))
+  addCandidate(resolveClaudeProjectDirectory(normalizedProjectPath))
   return paths
+}
+
+private fun resolveClaudeProjectDirectory(path: String?): String? {
+  val parsedPath = parseNormalizedClaudePath(path) ?: return null
+  val fileName = parsedPath.fileName?.toString().orEmpty()
+  val parentName = parsedPath.parent?.fileName?.toString()
+  return when {
+    fileName == ".idea" -> parsedPath.parent
+    parentName == ".idea" -> parsedPath.parent?.parent
+    CLAUDE_PROJECT_FILE_SUFFIXES.any { suffix -> fileName.endsWith(suffix, ignoreCase = true) } -> parsedPath.parent
+    else -> parsedPath
+  }?.invariantSeparatorsPathString
+}
+
+private fun resolveClaudeContainingGitProjectDirectory(path: String?): String? {
+  val parsedPath = parseNormalizedClaudePath(path) ?: return null
+  val fileName = parsedPath.fileName?.toString().orEmpty()
+  if (CLAUDE_BAZEL_PROJECT_FILE_SUFFIXES.none { suffix -> fileName.endsWith(suffix, ignoreCase = true) }) {
+    return null
+  }
+  return parsedPath.parent?.let(::resolveContainingGitWorktreeRoot)?.invariantSeparatorsPathString
+}
+
+private fun resolveContainingGitWorktreeRoot(startDirectory: Path): Path? {
+  var directory: Path? = startDirectory.normalize()
+  while (directory != null) {
+    val gitPath = directory.resolve(".git")
+    if (Files.isDirectory(gitPath) || Files.isRegularFile(gitPath)) {
+      return directory
+    }
+    directory = directory.parent
+  }
+  return null
+}
+
+private fun parseNormalizedClaudePath(path: String?): Path? {
+  return normalizePath(path)
+    ?.let {
+      try {
+        Path.of(it).normalize()
+      }
+      catch (_: Throwable) {
+        null
+      }
+    }
 }
 
 private fun canonicalPath(path: String): String? {
