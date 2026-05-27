@@ -186,6 +186,7 @@ import java.util.EventListener
 import java.util.IdentityHashMap
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.atomic.LongAdder
 import javax.swing.JComponent
@@ -203,6 +204,7 @@ open class FileEditorManagerImpl(
   @JvmField protected val coroutineScope: CoroutineScope,
 ) : FileEditorManagerEx(), PersistentStateComponent<Element>, Disposable {
   private val dumbModeFinished = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_LATEST)
+  private val dumbModeFinishedEventCount = AtomicInteger()
 
   @Internal
   enum class OpenMode {
@@ -372,6 +374,7 @@ open class FileEditorManagerImpl(
       val providerManager = serviceAsync<FileEditorProviderManager>()
       dumbModeFinished.collectLatest {
         dumbModeFinished(project = project, fileEditorProviderManager = providerManager)
+        dumbModeFinishedEventCount.incrementAndGet()
       }
     }
 
@@ -2381,18 +2384,13 @@ open class FileEditorManagerImpl(
   @TestOnly
   fun waitForAsyncUpdateOnDumbModeFinished() {
     runBlockingMaybeCancellable {
+      val eventCountBeforeEmit = dumbModeFinishedEventCount.get()
       dumbModeFinished.emit(Unit)
-      while (true) {
-        UIUtil.dispatchAllInvocationEvents()
-        yield()
-
-        if (dumbModeFinished.replayCache.isEmpty()) {
-          break
-        }
-
+      while (dumbModeFinishedEventCount.get() == eventCountBeforeEmit) {
         UIUtil.dispatchAllInvocationEvents()
         yield()
       }
+      UIUtil.dispatchAllInvocationEvents()
     }
   }
 }
