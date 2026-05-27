@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.filters.Filter;
@@ -328,9 +328,11 @@ public final class EditorHyperlinkSupport {
     }
     var range1 = link1.getTextRange();
     var range2 = link2.getTextRange();
-    // Choose the smaller one. In case of equal sizes, prefer the left one. That's how IterationState works de facto.
+    // Choose the smaller one. In case of equal sizes, prefer the left one.
+    // In case the sizes and positions are identical, prefer the first one.
+    // That's how IterationState works de facto.
     if (range1.getLength() < range2.getLength() ||
-        range1.getLength() == range2.getLength() && range1.getStartOffset() < range2.getStartOffset()) {
+        range1.getLength() == range2.getLength() && range1.getStartOffset() <= range2.getStartOffset()) {
       return link1;
     }
     return link2;

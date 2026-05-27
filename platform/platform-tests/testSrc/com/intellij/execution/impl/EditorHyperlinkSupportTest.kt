@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl
 
 import com.intellij.execution.filters.CompositeFilter
@@ -503,6 +503,28 @@ class EditorHyperlinkSupportTest(private val trackDocumentChangesManually: Boole
   }
 
   @Test
+  fun `test first link wins among links with equal text ranges`() {
+    // IJPL-245850: when two hyperlinks have equal text ranges, the first one encountered
+    // must win (historical EditorHyperlinkSupport behavior, broken by IJPL-244733).
+    val linkText = "foo"
+    document.setText(linkText)
+    val filter = CompositeFilter(project).also {
+      it.addFilter(MyTaggedHyperlinkFilter(linkText, "first"))
+      it.addFilter(MyTaggedHyperlinkFilter(linkText, "second"))
+      it.setForceUseAllFilters(true)
+    }
+    hyperlinkSupport.highlightHyperlinksLater(filter, 0, 0, eternal())
+
+    val hyperlinks = collectAllHyperlinks()
+    assertEquals(2, hyperlinks.size)
+
+    val firstInfo = EditorHyperlinkSupport.getHyperlinkInfo(hyperlinks[0])
+    val pickedInfo = hyperlinkSupport.getHyperlinkAt(document.text.indexOf(linkText))
+    assertEquals(firstInfo, pickedInfo)
+    assertEquals("first", (pickedInfo as MyTaggedHyperlinkFilter.TaggedHyperlinkInfo).tag)
+  }
+
+  @Test
   fun `test overlapping visible link preferred when larger than invisible link`() {
     document.setText("foo bar baz")
     val filter = CompositeFilter(project).also {
@@ -598,6 +620,16 @@ private class MyInvisibleHyperlinkFilter(linkText: String) : MyHyperlinkFilter(l
   }
 
   data class InvisibleHyperlinkInfo(val linkText: String) : HyperlinkInfo {
+    override fun navigate(project: Project) {}
+  }
+}
+
+private class MyTaggedHyperlinkFilter(linkText: String, private val tag: String) : MyFilter(linkText, 0.milliseconds) {
+  override fun createResultItem(startOffset: Int, endOffset: Int): ResultItem {
+    return ResultItem(startOffset, endOffset, TaggedHyperlinkInfo(tag), null)
+  }
+
+  data class TaggedHyperlinkInfo(val tag: String) : HyperlinkInfo {
     override fun navigate(project: Project) {}
   }
 }
