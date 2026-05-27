@@ -17,6 +17,7 @@ import com.intellij.history.core.changes.ChangeSet
 import com.intellij.history.core.changes.PutLabelChange
 import com.intellij.history.core.collectChanges
 import com.intellij.history.core.tree.Entry
+import com.intellij.history.core.tree.RootEntry
 import com.intellij.history.integration.revertion.DifferenceReverter
 import com.intellij.history.utils.LocalHistoryLog
 import com.intellij.openapi.Disposable
@@ -41,6 +42,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.seconds
 
@@ -192,11 +194,11 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
       }
 
       override fun getByteContent(path: String): ByteContent {
-        return runReadActionBlocking {
-          val facade = facade ?: error("Local history storage unavailable")
-          val root = gateway.createTransientRootEntryForPath(path, false)
-          facade.getByteContentBefore(root, path, labelId)
+        val facade = facade ?: error("Local history storage unavailable")
+        val root = runReadActionBlocking {
+          gateway.createTransientRootEntryForPath(path, false)
         }
+        return facade.getByteContentBefore(root, path, labelId)
       }
     }
   }
@@ -256,6 +258,17 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
       throw LocalHistoryException("Couldn't revert ${file.getName()} to local history label.", e)
     }
   }
+}
+
+@VisibleForTesting
+internal fun LocalHistoryFacade.getByteContentBefore(root: RootEntry, path: String, changeId: Long): ByteContent {
+  return findEntry(root, changeId, path, false)?.getByteContent()
+         ?: ByteContent(false, null)
+}
+
+private fun Entry.getByteContent(): ByteContent {
+  if (isDirectory) return ByteContent(true, null)
+  return ByteContent(false, content.bytesIfAvailable)
 }
 
 private sealed interface State {

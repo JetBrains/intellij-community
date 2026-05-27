@@ -2,6 +2,7 @@
 package com.intellij.history.core
 
 import com.intellij.history.core.tree.RootEntry
+import com.intellij.history.integration.getByteContentBefore
 import com.intellij.platform.lvcs.impl.RevisionId
 import org.junit.Test
 import java.nio.charset.StandardCharsets

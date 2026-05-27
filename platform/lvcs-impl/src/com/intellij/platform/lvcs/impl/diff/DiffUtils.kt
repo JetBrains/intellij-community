@@ -25,6 +25,12 @@ internal fun LocalHistoryFacade.findEntry(rootEntry: RootEntry, revisionId: Revi
   }
 }
 
+internal fun LocalHistoryFacade.findEntry(rootEntry: RootEntry, changeId: Long, entryPath: String, before: Boolean): Entry? {
+  val rootCopy = rootEntry.copy()
+  val entryPathInChangeSet = revertUpToChange(rootCopy, changeId, entryPath, before, true)
+  return rootCopy.findEntry(entryPathInChangeSet)
+}
+
 internal fun LocalHistoryFacade.getSingleFileDiff(rootEntry: RootEntry,
                                                   selection: ChangeSetSelection,
                                                   entryPath: String,
