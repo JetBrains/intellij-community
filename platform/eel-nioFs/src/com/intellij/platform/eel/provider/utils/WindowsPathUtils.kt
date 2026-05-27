@@ -13,6 +13,42 @@ object WindowsPathUtils {
   val WINDOWS_DRIVE_PREFIX_REGEX: Regex = Regex("^\\w:")
 
   /**
+   * Returns synthetic per-drive roots `A..Z` under [mountRoot] for use in
+   * `MultiRoutingFileSystemBackend.getCustomRoots`. VFS root lookup does strict equality between
+   * `Path.of(p).getRoot().toString()` and `getRootDirectories()`; for Windows targets `getRoot()`
+   * is per-drive (`/<mount>/@/C`), so customRoots must list each drive.
+   *
+   * If [mountRoot] already ends with `/@`, drive letters are appended directly; otherwise the
+   * `/@` drive-encoding zone is inserted to match composition in [resolveEelPathOntoRoot].
+   *
+   * No I/O. Non-existent drives are filtered out lazily by VFS (`findRoot` returns null).
+   */
+  fun expandPerDriveRoots(mountRoot: String): List<String> {
+    val driveZone = if (mountRoot.endsWith("/$DRIVE_PATH_PREPEND")) "" else "/$DRIVE_PATH_PREPEND"
+    return ('A'..'Z').map { "$mountRoot$driveZone/$it" }
+  }
+
+  /**
+   * Parses the UNC `<server>/<share>` prefix of a Windows path under [mountRoot] (composed by
+   * [resolveEelPathOntoRoot]) and returns the path that VFS will see as `Path.of(p).getRoot()`.
+   * Returns `null` if [path] is not under [mountRoot], or its first segment under the mount looks
+   * like a drive letter, or no `<share>` segment is present.
+   *
+   * UNC composition does not insert the `/@` zone, so the resulting root is `<mountRoot>/<server>/<share>`.
+   * Use in `MultiRoutingFileSystemBackend.compute` to lazily collect seen UNC roots for `getCustomRoots`.
+   */
+  fun extractUncRoot(mountRoot: String, path: String): String? {
+    if (path != mountRoot && !path.startsWith("$mountRoot/")) return null
+    var rest = path.removePrefix(mountRoot).removePrefix("/")
+    if (!mountRoot.endsWith("/$DRIVE_PATH_PREPEND")) rest = rest.removePrefix("$DRIVE_PATH_PREPEND/")
+    // Drive letters are single-char (`C`, `D`, ...); UNC server names are >= 2 chars.
+    val server = rest.substringBefore('/', "").takeIf { it.length > 1 } ?: return null
+    val afterServer = rest.removePrefix(server).removePrefix("/")
+    val share = afterServer.substringBefore('/', afterServer).takeIf { it.isNotEmpty() } ?: return null
+    return "$mountRoot/$server/$share"
+  }
+
+  /**
    * Converts Windows [eelPath] into nio path under virtual mount [root].
    *
    * If [root] is posix path `/$some.ij/mount/`, then the result will be`:
