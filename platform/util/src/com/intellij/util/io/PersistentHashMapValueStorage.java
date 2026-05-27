@@ -58,7 +58,7 @@ public final class PersistentHashMapValueStorage {
    * inside some wrapping code. Also, it could be >1 instances of PHMap/ValueStorage to support single
    * top-level structure, and params like READONLY should be the same for all them. But it is quite
    * daunting to pass parameters like READONLY through all the ctors and intermediate methods down to
-   * the point of actual initialization (e.g. READONLY is used in {@linkplain com.intellij.util.io.PagedFileStorage}
+   * the point of actual initialization (e.g. READONLY is used in {@linkplain PagedFileStorage}
    * even). CreationTimeOptions allows to set those arguments in thread-local instance, and get them
    * there they are needed.
    * <br/>
@@ -85,9 +85,9 @@ public final class PersistentHashMapValueStorage {
     private final boolean myUseCompression;
 
     public CreationTimeOptions(boolean readOnly,
-                                boolean compactChunksWithValueDeserialization,
-                                boolean hasNoChunks,
-                                boolean doCompression) {
+                               boolean compactChunksWithValueDeserialization,
+                               boolean hasNoChunks,
+                               boolean doCompression) {
       myReadOnly = readOnly;
       myCompactChunksWithValueDeserialization = compactChunksWithValueDeserialization;
       myHasNoChunks = hasNoChunks;
@@ -124,13 +124,13 @@ public final class PersistentHashMapValueStorage {
       );
     }
 
-    public CreationTimeOptions setCompactChunksWithValueDeserialization(){
+    public CreationTimeOptions setCompactChunksWithValueDeserialization() {
       return new CreationTimeOptions(myReadOnly,
                                      true,
                                      myHasNoChunks, myUseCompression);
     }
 
-    public CreationTimeOptions setHasNoChunks(){
+    public CreationTimeOptions setHasNoChunks() {
       return new CreationTimeOptions(myReadOnly,
                                      myCompactChunksWithValueDeserialization,
                                      true,
@@ -155,7 +155,7 @@ public final class PersistentHashMapValueStorage {
         DO_COMPRESSION.get() == Boolean.TRUE);
     }
 
-    public static @NotNull CreationTimeOptions setThreadLocalOptions(final CreationTimeOptions options){
+    public static @NotNull CreationTimeOptions setThreadLocalOptions(final CreationTimeOptions options) {
       final CreationTimeOptions currentOptions = threadLocalOptions();
       READONLY.set(options.myReadOnly);
       COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.set(options.myCompactChunksWithValueDeserialization);
@@ -285,7 +285,8 @@ public final class PersistentHashMapValueStorage {
           write(r);
         }
       });
-    } else {
+    }
+    else {
       FileAccessorCache.@NotNull Handle<SyncAbleBufferedOutputStreamOverCachedFileChannel> appender = ourAppendersCache.get(myPath);
       dataOutputStream = toDataOutputStream(appender);
     }
@@ -572,7 +573,7 @@ public final class PersistentHashMapValueStorage {
   /**
    * Reads bytes pointed by tailChunkAddress into result passed, returns new address if linked list compactification have been performed
    */
-  public ReadResult readBytes(long tailChunkAddress) throws IOException {
+  ReadResult readBytes(long tailChunkAddress) throws IOException {
     forceAppender(myPath);
 
     checkCancellation();
@@ -681,7 +682,6 @@ public final class PersistentHashMapValueStorage {
 
       if (myChunks - myLastReportedChunksCount > 1000) {
         myLastReportedChunksCount = myChunks;
-
         System.out.println(myChunks + " chunks were read " + (myChunksReadingTime / 1000000) +
                            "ms, bytes: " + myChunksOriginalBytes +
                            (myChunksOriginalBytes != myChunksBytesAfterRemoval ? "->" + myChunksBytesAfterRemoval : "") +
@@ -791,7 +791,7 @@ public final class PersistentHashMapValueStorage {
     myCompactionMode = true;
   }
 
-  private static @NotNull DataInputStream toDataInputStream(byte @NotNull[] buffer, int offset, int length) {
+  private static @NotNull DataInputStream toDataInputStream(byte @NotNull [] buffer, int offset, int length) {
     return new DataInputStream(new UnsyncByteArrayInputStream(buffer, offset, length));
   }
 
@@ -891,7 +891,7 @@ public final class PersistentHashMapValueStorage {
     private static final class OutputStreamOverRandomAccessFileCache extends OutputStream {
       private final Path myPath;
 
-      public OutputStreamOverRandomAccessFileCache(Path path) { myPath = path; }
+      private OutputStreamOverRandomAccessFileCache(Path path) { myPath = path; }
 
       @Override
       public void write(byte @NotNull [] b, int off, int len) throws IOException {
@@ -911,7 +911,6 @@ public final class PersistentHashMapValueStorage {
         write(r);
       }
     }
-
   }
 
   private final class MyCompressedAppendableFile extends CompressedAppendableFile {
