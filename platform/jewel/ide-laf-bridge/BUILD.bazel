@@ -47,8 +47,7 @@ jvm_library(
     "//platform/jewel/foundation",
     "//platform/jewel/ui",
     "//libraries/compose-foundation-desktop",
-  ],
-  plugins = ["@lib//:compose-plugin"]
+  ]
 )
 
 jvm_library(
@@ -95,8 +94,7 @@ jvm_library(
     "//plugins/textmate/plugin",
     "//plugins/textmate/plugin:plugin_test_lib",
     "@lib//:io-mockk-jvm",
-  ],
-  plugins = ["@lib//:compose-plugin"]
+  ]
 )
 ### auto-generated section `build intellij.platform.jewel.ideLafBridge` end
 
@@ -128,8 +126,7 @@ jvm_library(
     "//platform/jewel/foundation",
     "//platform/jewel/ui",
     "//libraries/compose-foundation-desktop",
-  ],
-  plugins = ["@lib//:compose-plugin"]
+  ]
 )
 
 jvm_library(
@@ -198,8 +195,7 @@ jvm_library(
   runtime_deps = [
     ":ideLafBridge-tests",
     "//platform/platform-impl:ide-impl_test_lib",
-  ],
-  plugins = ["@lib//:compose-plugin"]
+  ]
 )
 ### auto-generated section `build intellij.platform.jewel.ideLafBridge.tests` end
 

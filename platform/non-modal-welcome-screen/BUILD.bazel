@@ -33,8 +33,7 @@ jvm_library(
     "//platform/progress/shared:ide-progress",
     "//platform/project/shared:project",
     "//fleet/rhizomedb",
-  ],
-  plugins = ["@lib//:compose-plugin"]
+  ]
 )
 
 jvm_library(
@@ -72,8 +71,7 @@ jvm_library(
     "//platform/progress/shared:ide-progress_test_lib",
     "//platform/project/shared:project_test_lib",
     "//fleet/rhizomedb:rhizomedb_test_lib",
-  ],
-  plugins = ["@lib//:compose-plugin"]
+  ]
 )
 ### auto-generated section `build intellij.platform.ide.nonModalWelcomeScreen` end
 
@@ -88,8 +86,7 @@ jvm_library(
   name = "ide-nonModalWelcomeScreen-tests",
   module_name = "intellij.platform.ide.nonModalWelcomeScreen.tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  plugins = ["@lib//:compose-plugin"]
+  srcs = glob([], allow_empty = True)
 )
 
 jvm_library(
@@ -148,8 +145,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/platform-impl/rpc:rpc_test_lib",
     "//platform/non-modal-welcome-screen:non-modal-welcome-screen_test_lib",
-  ],
-  plugins = ["@lib//:compose-plugin"]
+  ]
 )
 ### auto-generated section `build intellij.platform.ide.nonModalWelcomeScreen.tests` end
 

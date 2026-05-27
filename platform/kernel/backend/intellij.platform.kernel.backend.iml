@@ -12,12 +12,6 @@
             <stringArg name="apiVersion" arg="2.3" />
             <stringArg name="languageVersion" arg="2.3" />
           </stringArguments>
-          <arrayArguments>
-            <arrayArg name="pluginClasspaths">
-              <args>$MAVEN_REPOSITORY$/com/jetbrains/fleet/rpc-compiler-plugin/2.4.0-RC-0.1/rpc-compiler-plugin-2.4.0-RC-0.1.jar</args>
-            </arrayArg>
-            <arrayArg name="pluginOptions" />
-          </arrayArguments>
         </compilerArguments>
       </configuration>
     </facet>

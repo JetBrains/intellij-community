@@ -33,8 +33,7 @@ jvm_library(
     "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
     "//libraries/jbr",
     "@lib//:jna",
-  ],
-  plugins = ["@lib//:compose-plugin"]
+  ]
 )
 
 jvm_library(
@@ -53,8 +52,7 @@ jvm_library(
     "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
     "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone_test_lib",
     "//libraries/jbr:jbr_test_lib",
-  ],
-  plugins = ["@lib//:compose-plugin"]
+  ]
 )
 ### auto-generated section `build intellij.platform.jewel.decoratedWindow` end
 
@@ -81,8 +79,7 @@ jvm_library(
   name = "decoratedWindow-tests",
   module_name = "intellij.platform.jewel.decoratedWindow.tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  plugins = ["@lib//:compose-plugin"]
+  srcs = glob([], allow_empty = True)
 )
 
 jvm_library(
@@ -117,8 +114,7 @@ jvm_library(
     "//libraries/compose-runtime-desktop",
     "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
   ],
-  runtime_deps = [":decoratedWindow-tests"],
-  plugins = ["@lib//:compose-plugin"]
+  runtime_deps = [":decoratedWindow-tests"]
 )
 ### auto-generated section `build intellij.platform.jewel.decoratedWindow.tests` end
 

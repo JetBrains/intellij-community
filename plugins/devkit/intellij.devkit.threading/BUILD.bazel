@@ -32,8 +32,7 @@ jvm_library(
     "//platform/compose",
     "//plugins/devkit/devkit-core:core",
     "//platform/analysis-api:analysis",
-  ],
-  plugins = ["@lib//:compose-plugin"]
+  ]
 )
 
 jvm_library(
@@ -56,8 +55,7 @@ jvm_library(
     "//platform/compose:compose_test_lib",
     "//plugins/devkit/devkit-core:core_test_lib",
     "//platform/analysis-api:analysis_test_lib",
-  ],
-  plugins = ["@lib//:compose-plugin"]
+  ]
 )
 ### auto-generated section `build intellij.devkit.threading` end
 

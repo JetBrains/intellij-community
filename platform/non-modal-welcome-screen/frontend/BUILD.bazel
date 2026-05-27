@@ -21,8 +21,7 @@ jvm_library(
     "//fleet/rpc",
     "//platform/platform-impl:ide-impl",
     "//platform/ide-core",
-  ],
-  plugins = ["@lib//:compose-plugin"]
+  ]
 )
 
 jvm_library(
@@ -44,8 +43,7 @@ jvm_library(
     "//fleet/rpc:rpc_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/ide-core:ide-core_test_lib",
-  ],
-  plugins = ["@lib//:compose-plugin"]
+  ]
 )
 ### auto-generated section `build intellij.platform.ide.nonModalWelcomeScreen.frontend` end
 

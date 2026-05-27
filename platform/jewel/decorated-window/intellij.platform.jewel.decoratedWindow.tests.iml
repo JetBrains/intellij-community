@@ -12,11 +12,6 @@
             <stringArg name="apiVersion" arg="2.3" />
             <stringArg name="languageVersion" arg="2.3" />
           </stringArguments>
-          <arrayArguments>
-            <arrayArg name="pluginClasspaths">
-              <args>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.4.0-RC/kotlin-compose-compiler-plugin-2.4.0-RC.jar</args>
-            </arrayArg>
-          </arrayArguments>
         </compilerArguments>
       </configuration>
     </facet>

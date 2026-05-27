@@ -43,8 +43,7 @@ jvm_library(
     "//libraries/compose-foundation-desktop",
     "//platform/icons-api",
     "//platform/icons-api/rendering",
-  ],
-  plugins = ["@lib//:compose-plugin"]
+  ]
 )
 
 jvm_library(
@@ -80,8 +79,7 @@ jvm_library(
     "//platform/icons-impl:icons-impl_test_lib",
     "//libraries/compose-foundation-desktop-junit",
     "//libraries/compose-foundation-desktop-junit:compose-foundation-desktop-junit_test_lib",
-  ],
-  plugins = ["@lib//:compose-plugin"]
+  ]
 )
 ### auto-generated section `build intellij.platform.jewel.ui` end
 
@@ -114,8 +112,7 @@ jvm_library(
     "@lib//:platform-jewel-ui-tests-org-jetbrains-compose-components-components-resources",
     "@lib//:platform-jewel-ui-tests-org-jetbrains-compose-components-components-resources-desktop",
     "//libraries/compose-foundation-desktop",
-  ],
-  plugins = ["@lib//:compose-plugin"]
+  ]
 )
 
 jvm_library(
@@ -158,8 +155,7 @@ jvm_library(
     "//libraries/compose-foundation-desktop",
     "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
   ],
-  runtime_deps = [":ui-tests"],
-  plugins = ["@lib//:compose-plugin"]
+  runtime_deps = [":ui-tests"]
 )
 ### auto-generated section `build intellij.platform.jewel.ui.tests` end
 

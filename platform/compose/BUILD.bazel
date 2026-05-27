@@ -32,8 +32,7 @@ jvm_library(
     "//platform/jewel/foundation",
     "//platform/jewel/ide-laf-bridge",
     "@lib//:jetbrains-compose-components-ui-tooling-preview-desktop",
-  ],
-  plugins = ["@lib//:compose-plugin"]
+  ]
 )
 
 jvm_library(
@@ -70,8 +69,7 @@ jvm_library(
     "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone_test_lib",
     "//platform/diagnostic/telemetry:telemetry_test_lib",
     "//platform/core-impl:core-impl_test_lib",
-  ],
-  plugins = ["@lib//:compose-plugin"]
+  ]
 )
 ### auto-generated section `build intellij.platform.compose` end
 
@@ -92,8 +90,7 @@ jvm_library(
     "//platform/jewel/foundation",
     "//platform/jewel/ide-laf-bridge",
     "@lib//:jetbrains-compose-components-ui-tooling-preview-desktop",
-  ],
-  plugins = ["@lib//:compose-plugin"]
+  ]
 )
 
 jvm_library(
@@ -152,8 +149,7 @@ jvm_library(
     ":compose-tests",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/ide-core:ide-core_test_lib",
-  ],
-  plugins = ["@lib//:compose-plugin"]
+  ]
 )
 ### auto-generated section `build intellij.platform.compose.tests` end
 

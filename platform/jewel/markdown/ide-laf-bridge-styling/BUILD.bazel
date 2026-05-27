@@ -55,8 +55,7 @@ jvm_library(
     "//platform/jewel/markdown/core",
     "//platform/jewel/ui",
     "//platform/jewel/ide-laf-bridge",
-  ],
-  plugins = ["@lib//:compose-plugin"]
+  ]
 )
 
 jvm_library(
@@ -95,8 +94,7 @@ jvm_library(
     "//libraries/compose-foundation-desktop-junit:compose-foundation-desktop-junit_test_lib",
     "//platform/platform-api:ide_test_lib",
     "//platform/util:util-ui_test_lib",
-  ],
-  plugins = ["@lib//:compose-plugin"]
+  ]
 )
 ### auto-generated section `build intellij.platform.jewel.markdown.ideLafBridgeStyling` end
 

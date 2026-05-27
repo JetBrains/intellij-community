@@ -4,6 +4,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "compose-runtime-desktop",
   module_name = "intellij.libraries.compose.runtime.desktop",
+  exported_compiler_plugins = ["@lib//:compose-plugin"],
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = glob(["resources/**/*"]),
