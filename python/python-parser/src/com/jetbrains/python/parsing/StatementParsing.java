@@ -132,8 +132,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
         return;
       }
     }
-    if (atToken(PyTokenTypes.IDENTIFIER, TOK_LAZY) &&
-        myContext.getLanguageLevel().isAtLeast(LanguageLevel.PYTHON315)) {
+    if (atToken(PyTokenTypes.IDENTIFIER, TOK_LAZY)) {
       IElementType nextToken = myBuilder.lookAhead(1);
       if (nextToken == PyTokenTypes.IMPORT_KEYWORD || nextToken == PyTokenTypes.FROM_KEYWORD) {
         parseLazyImport();

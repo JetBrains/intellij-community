@@ -1446,6 +1446,13 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON315);
   }
 
+  // PY-88664, PEP 810: `lazy import …` is still parsed as a lazy import on Python < 3.15
+  // so that users get a single, accurate compatibility error rather than the misleading
+  // `Unresolved reference 'lazy'` suggestion to install the `lazy` package.
+  public void testLazyImportOnOlderPython() {
+    doTest(LanguageLevel.PYTHON314);
+  }
+
   public void doTest() {
     doTest(LanguageLevel.PYTHON26);
   }
