@@ -833,6 +833,10 @@
     <postStartupActivity implementation="org.jetbrains.idea.devkit.templates.UpdateFileTemplatesSchemeToProjectActivity"/>
     <projectSettings service="org.jetbrains.idea.devkit.inspections.missingApi.resolve.LibrariesWithIntellijClassesSetting"/>
     <applicationSettings service="org.jetbrains.idea.devkit.actions.updateFromSources.UpdateFromSourcesSettings"/>
+
+    <runConfigurationExtension implementation="org.jetbrains.idea.devkit.dcevm.DevkitDcevmCommandLinePatcher"/>
+    <executor implementation="org.jetbrains.idea.devkit.dcevm.DevkitDcevmExecutor"/>
+    <programRunner implementation="org.jetbrains.idea.devkit.dcevm.DevkitDcevmRunner"/>
   </extensions>
 
   <extensions defaultExtensionNs="DevKit.lang">

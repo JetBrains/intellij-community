@@ -27,6 +27,7 @@ public final class DevkitCoreIcons {
     /** 12x12 */ public static final @NotNull Icon Properties = load("icons/expui/gutter/properties@14x14.svg", "icons/gutter/properties.svg", -818710709, 2);
   }
 
+  /** 16x16 */ public static final @NotNull Icon HotReload = load("icons/expui/hotReload.svg", 1152847728, 2);
   /** 16x16 */ public static final @NotNull Icon Items = load("icons/expui/items.svg", -1922827174, 2);
   /** 16x16 */ public static final @NotNull Icon LegacyPluginModule = load("icons/expui/legacyPluginModule.svg", 1708808352, 2);
   /** 16x16 */ public static final @NotNull Icon PluginModule = load("icons/expui/pluginModule.svg", 1662209782, 2);
