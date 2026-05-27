@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.group.CompletionGroup;
@@ -31,7 +31,7 @@ public final class GroupCompletionLookupArrangerImpl extends CompletionLookupArr
   private boolean mySupportGroups = true;
   private final MultiMap<CompletionGroup, LookupElement> myGroupCache = new MultiMap<>();
 
-  public GroupCompletionLookupArrangerImpl(CompletionProcessEx process) {
+  public GroupCompletionLookupArrangerImpl(@NotNull CompletionProcessEx process) {
     super(process);
   }
 
@@ -78,7 +78,7 @@ public final class GroupCompletionLookupArrangerImpl extends CompletionLookupArr
         super.customizeListModel(model);
         return;
       }
-      else if(!stopCustom) {
+      else if (!stopCustom) {
         CompletionGroup group = element.getUserData(COMPLETION_GROUP_KEY);
         if (group == null) {
           super.customizeListModel(model);

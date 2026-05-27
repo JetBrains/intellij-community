@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.Lookup;
@@ -18,7 +18,7 @@ import java.util.List;
 
 @ApiStatus.Internal
 public class CompletionLookupArrangerImpl extends BaseCompletionLookupArranger {
-  public CompletionLookupArrangerImpl(CompletionProcessEx process) {
+  public CompletionLookupArrangerImpl(@NotNull CompletionProcessEx process) {
     super(process);
   }
 
