@@ -1,581 +1,562 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.plugins.newui;
+package com.intellij.ide.plugins.newui
 
-import com.intellij.execution.process.ProcessIOExecutorService;
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.plugins.PluginManagerConfigurable;
-import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.JBPopupListener;
-import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.IOUtil;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StartupUiUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.imageio.ImageIO;
-import javax.swing.Icon;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
-import java.awt.AlphaComposite;
-import java.awt.Color;
-import java.awt.Container;
-import java.awt.Cursor;
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.GraphicsDevice;
-import java.awt.Image;
-import java.awt.Insets;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.RenderingHints;
-import java.awt.Toolkit;
-import java.awt.Window;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.geom.RoundRectangle2D;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import com.intellij.execution.process.ProcessIOExecutorService
+import com.intellij.icons.AllIcons
+import com.intellij.ide.plugins.PluginManagerConfigurable
+import com.intellij.ide.plugins.marketplace.MarketplaceRequests.Companion.readOrUpdateFile
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.JBPopupListener
+import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.Gray
+import com.intellij.ui.JBColor
+import com.intellij.ui.components.panels.Wrapper
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.io.IOUtil
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StartupUiUtil.drawImage
+import org.jetbrains.annotations.ApiStatus
+import java.awt.AlphaComposite
+import java.awt.Color
+import java.awt.Cursor
+import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.GraphicsDevice
+import java.awt.Image
+import java.awt.Point
+import java.awt.Rectangle
+import java.awt.RenderingHints
+import java.awt.Toolkit
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
+import java.awt.geom.RoundRectangle2D
+import java.io.File
+import java.io.FileInputStream
+import java.io.IOException
+import java.io.InputStream
+import javax.imageio.ImageIO
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.SwingUtilities
 
 /**
  * @author Alexander Lobas
  */
 @ApiStatus.Internal
-public final class PluginImagesComponent extends JPanel {
-  private static final Color CURRENT_IMAGE_FILL_COLOR =
-    JBColor.namedColor("Plugins.ScreenshotPagination.CurrentImage.fillColor", new JBColor(0x6C707E, 0xCED0D6));
+class PluginImagesComponent : JPanel {
+  private val myHandCursor: Cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
 
-  private static final int None = -1;
-  private static final int NextImage = -2;
-  private static final int PrevImage = -3;
-  private static final int FullScreen = -4;
+  private val myLock = Any()
+  private var myParent: JComponent? = null
+  private val myShowFullContent: Boolean
+  private var myImages: List<Image>? = null
+  private var myCurrentImage = 0
+  private var myHovered = false
+  private var myLoadingState: Any? = null
+  private var myShowState: Any? = null
+  private var myFullScreenPopup: JBPopup? = null
 
-  private final Cursor myHandCursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
+  constructor() {
+    myShowFullContent = false
 
-  private final Object myLock = new Object();
-  private JComponent myParent;
-  private final boolean myShowFullContent;
-  private List<Image> myImages;
-  private int myCurrentImage;
-  private boolean myHovered;
-  private Object myLoadingState;
-  private Object myShowState;
-  private JBPopup myFullScreenPopup;
-
-  public PluginImagesComponent() {
-    myShowFullContent = false;
-
-    MouseAdapter listener = new MouseAdapter() {
-      @Override
-      public void mouseClicked(MouseEvent e) {
-        handleClick(e);
+    val listener: MouseAdapter = object : MouseAdapter() {
+      override fun mouseClicked(e: MouseEvent) {
+        handleClick(e)
       }
 
-      @Override
-      public void mouseMoved(MouseEvent e) {
-        handleMMove(e);
+      override fun mouseMoved(e: MouseEvent) {
+        handleMMove(e)
       }
 
-      @Override
-      public void mouseEntered(MouseEvent e) {
-        myHovered = true;
-        repaint();
+      override fun mouseEntered(e: MouseEvent?) {
+        myHovered = true
+        repaint()
       }
 
-      @Override
-      public void mouseExited(MouseEvent e) {
-        myHovered = false;
-        repaint();
+      override fun mouseExited(e: MouseEvent?) {
+        myHovered = false
+        repaint()
       }
-    };
-    addMouseListener(listener);
-    addMouseMotionListener(listener);
+    }
+    addMouseListener(listener)
+    addMouseMotionListener(listener)
   }
 
-  private PluginImagesComponent(@NotNull List<Image> images, int currentImage) {
-    myShowFullContent = true;
-    myHovered = true;
-    myImages = images;
-    myCurrentImage = currentImage;
-    setOpaque(false);
+  private constructor(images: List<Image>, currentImage: Int) {
+    myShowFullContent = true
+    myHovered = true
+    myImages = images
+    myCurrentImage = currentImage
+    setOpaque(false)
 
-    MouseAdapter listener = new MouseAdapter() {
-      @Override
-      public void mouseClicked(MouseEvent e) {
-        handleClick(e);
+    val listener: MouseAdapter = object : MouseAdapter() {
+      override fun mouseClicked(e: MouseEvent) {
+        handleClick(e)
       }
 
-      @Override
-      public void mouseMoved(MouseEvent e) {
-        handleMMove(e);
+      override fun mouseMoved(e: MouseEvent) {
+        handleMMove(e)
       }
-    };
-    addMouseListener(listener);
-    addMouseMotionListener(listener);
+    }
+    addMouseListener(listener)
+    addMouseMotionListener(listener)
   }
 
-  public void setParent(@NotNull JComponent parent) {
-    myParent = parent;
+  fun setParent(parent: JComponent) {
+    myParent = parent
   }
 
-  public void show(@NotNull PluginUiModel model) {
-    Object state;
+  fun show(model: PluginUiModel) {
+    val state: Any?
 
-    synchronized (myLock) {
-      myImages = null;
-      state = myLoadingState = new Object();
-      myShowState = null;
+    synchronized(myLock) {
+      myImages = null
+      myLoadingState = Any()
+      state = myLoadingState
+      myShowState = null
     }
 
-    loadImages(model, state);
-    fullRepaint();
+    loadImages(model, state!!)
+    fullRepaint()
   }
 
-  private void handleImages(@NotNull Object state, @Nullable List<Image> images) {
-    synchronized (myLock) {
-      if (myLoadingState != state) {
-        return;
+  private fun handleImages(state: Any, images: MutableList<Image>?) {
+    synchronized(myLock) {
+      if (myLoadingState !== state) {
+        return
       }
-
-      myShowState = state;
-      myLoadingState = null;
-      myImages = images;
-      myCurrentImage = 0;
+      myShowState = state
+      myLoadingState = null
+      myImages = images
+      myCurrentImage = 0
     }
 
     if (myFullScreenPopup != null) {
-      myFullScreenPopup.cancel();
-      myFullScreenPopup = null;
+      myFullScreenPopup!!.cancel()
+      myFullScreenPopup = null
     }
 
-    fullRepaint();
+    fullRepaint()
   }
 
-  private void fullRepaint() {
-    Container parent = getParent();
+  private fun fullRepaint() {
+    val parent = getParent()
     if (parent != null) {
-      parent.doLayout();
-      parent.revalidate();
-      parent.repaint();
+      parent.doLayout()
+      parent.revalidate()
+      parent.repaint()
     }
   }
 
-  private void loadImages(@NotNull PluginUiModel model, @NotNull Object state) {
-    if (!model.isFromMarketplace() ||
-        model.getExternalPluginIdForScreenShots() == null ||
-        ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      handleImages(state, null);
-      return;
+  private fun loadImages(model: PluginUiModel, state: Any) {
+    if (!model.isFromMarketplace || model.externalPluginIdForScreenShots == null ||
+        ApplicationManager.getApplication().isHeadlessEnvironment()
+    ) {
+      handleImages(state, null)
+      return
     }
 
-    List<String> screenShots = model.getScreenShots();
+    val screenShots: List<String>? = model.screenShots
     if (ContainerUtil.isEmpty(screenShots)) {
-      handleImages(state, null);
-      return;
+      handleImages(state, null)
+      return
     }
 
-    ProcessIOExecutorService.INSTANCE.execute(() -> {
-      List<Image> images = new ArrayList<>();
-      File parentDir = new File(PathManager.getPluginTempPath(), "imageCache/" + model.getExternalPluginIdForScreenShots());
+    ProcessIOExecutorService.INSTANCE.execute(Runnable execute@{
+      val images: MutableList<Image> = ArrayList()
+      val parentDir = File(PathManager.getPluginTempPath(), "imageCache/" + model.externalPluginIdForScreenShots)
 
-      for (String screenShot : screenShots) {
+      for (screenShot in screenShots!!) {
         try {
-          String name = Objects.requireNonNull(StringUtil.substringAfterLast(screenShot, "/"));
-          File imageFile = new File(parentDir, name);
+          val name = StringUtil.substringAfterLast(screenShot, "/")!!
+          val imageFile = File(parentDir, name)
           if (ApplicationManager.getApplication().isDisposed()) {
-            return;
+            return@execute
           }
-          MarketplaceRequests.Companion.readOrUpdateFile(imageFile.toPath(), screenShot, null, "", stream -> {
-            IOUtil.closeSafe(Logger.getInstance(PluginImagesComponent.class), stream);
-            return new Object();
-          });
-          Image image = Toolkit.getDefaultToolkit().getImage(imageFile.getAbsolutePath());
+          readOrUpdateFile<Any?>(imageFile.toPath(), screenShot, null, "") { stream: InputStream? ->
+            IOUtil.closeSafe(Logger.getInstance(PluginImagesComponent::class.java), stream)
+            Any()
+          }
+          var image = Toolkit.getDefaultToolkit().getImage(imageFile.absolutePath)
           if (image == null || image.getWidth(null) <= 0 || image.getHeight(null) <= 0) {
-            try (InputStream stream = new FileInputStream(imageFile)) {
-              image = ImageIO.read(stream);
+            FileInputStream(imageFile).use { stream ->
+              image = ImageIO.read(stream)
             }
           }
           if (image == null || image.getWidth(null) <= 0 || image.getHeight(null) <= 0) {
-            Logger.getInstance(PluginImagesComponent.class)
-              .info("=== Plugin: " + model.getPluginId() + " screenshot: " + name + " not loaded ===");
+            Logger.getInstance(PluginImagesComponent::class.java)
+              .info("=== Plugin: " + model.pluginId + " screenshot: " + name + " not loaded ===")
           }
           else {
-            images.add(image);
-            if (images.size() >= 10) break;
+            images.add(image)
+            if (images.size >= 10) break
           }
         }
-        catch (IOException e) {
+        catch (e: IOException) {
           // IO errors such as image decoding problems are expected and must not be treated as IDE errors
-          Logger.getInstance(PluginImagesComponent.class).warn(e);
+          Logger.getInstance(PluginImagesComponent::class.java).warn(e)
         }
       }
-
-      ApplicationManager.getApplication().invokeLater(() -> handleImages(state, images), ModalityState.stateForComponent(this));
-    });
+      ApplicationManager.getApplication().invokeLater(Runnable { handleImages(state, images) }, ModalityState.stateForComponent(this))
+    })
   }
 
-  @Override
-  public Dimension getPreferredSize() {
-    int width = 0;
-    int height = 0;
+  override fun getPreferredSize(): Dimension {
+    var width = 0
+    var height = 0
 
-    Container parent = getParent();
+    val parent = getParent()
     if (parent != null) {
-      boolean isImages;
-      synchronized (myLock) {
-        isImages = !ContainerUtil.isEmpty(myImages);
+      val isImages: Boolean
+      synchronized(myLock) {
+        isImages = !ContainerUtil.isEmpty(myImages)
       }
       if (isImages) {
-        width = getFullWidth();
-        height = (int)(width / 1.58) + JBUI.scale(28);
+        width = this.fullWidth
+        height = (width / 1.58).toInt() + JBUI.scale(28)
       }
     }
 
-    return new Dimension(width, height);
+    return Dimension(width, height)
   }
 
-  private int getFullWidth() {
-    Container parent = getParent();
-    if (parent != null && myParent != null) {
-      return myParent.getWidth() - parent.getInsets().left;
+  private val fullWidth: Int
+    get() {
+      val parent = getParent()
+      if (parent != null && myParent != null) {
+        return myParent!!.getWidth() - parent.insets.left
+      }
+      return getWidth()
     }
-    return getWidth();
-  }
 
-  private void handleMMove(@NotNull MouseEvent e) {
-    int state = handleEvent(e, true);
-    Cursor newCursor = state == None ? null : myHandCursor;
+  private fun handleMMove(e: MouseEvent) {
+    val state = handleEvent(e, true)
+    val newCursor = if (state == None) null else myHandCursor
 
-    if (getCursor() != newCursor) {
-      setCursor(newCursor);
+    if (getCursor() !== newCursor) {
+      setCursor(newCursor)
     }
   }
 
-  private void handleClick(@NotNull MouseEvent e) {
+  private fun handleClick(e: MouseEvent) {
     if (e.getButton() != MouseEvent.BUTTON1) {
-      return;
+      return
     }
 
-    int state = handleEvent(e, false);
+    val state = handleEvent(e, false)
     if (state == None) {
-      return;
+      return
     }
 
     if (state >= 0) {
-      synchronized (myLock) {
+      synchronized(myLock) {
         if (myCurrentImage != state) {
-          myCurrentImage = state;
-          repaint();
+          myCurrentImage = state
+          repaint()
         }
       }
     }
     else if (state == FullScreen) {
-      handleFullScreen();
+      handleFullScreen()
     }
     else {
-      showNextImage(state == PrevImage);
+      showNextImage(state == PrevImage)
     }
   }
 
-  private int handleEvent(@NotNull MouseEvent e, boolean cutFullScreen) {
-    Insets insets = getInsets();
-    int x = insets.left;
-    int y = insets.top;
-    int width = getFullWidth() - insets.left - insets.right;
-    int height = getHeight() - insets.top - insets.bottom;
-    int offset = JBUI.scale(28);
-    int offset2 = offset * 2;
-    int actionOffset = JBUI.scale(8);
-    int actionSize = getActionSize();
-    int leftActionX = x + actionOffset;
-    int rightActionX = x + width - actionOffset - actionSize;
-    int actionY = y + (height - offset - actionSize) / 2;
-    int mouseX = e.getX();
-    int mouseY = e.getY();
+  private fun handleEvent(e: MouseEvent, cutFullScreen: Boolean): Int {
+    val insets = getInsets()
+    val x = insets.left
+    val y = insets.top
+    val width = this.fullWidth - insets.left - insets.right
+    val height = getHeight() - insets.top - insets.bottom
+    val offset = JBUI.scale(28)
+    val offset2 = offset * 2
+    val actionOffset = JBUI.scale(8)
+    val actionSize = this.actionSize
+    val leftActionX = x + actionOffset
+    val rightActionX = x + width - actionOffset - actionSize
+    val actionY = y + (height - offset - actionSize) / 2
+    val mouseX = e.getX()
+    val mouseY = e.getY()
 
-    if (new Rectangle(leftActionX, actionY, actionSize, actionSize).contains(mouseX, mouseY)) {
-      return PrevImage;
+    if (Rectangle(leftActionX, actionY, actionSize, actionSize).contains(mouseX, mouseY)) {
+      return PrevImage
     }
-    if (new Rectangle(rightActionX, actionY, actionSize, actionSize).contains(mouseX, mouseY)) {
-      return NextImage;
+    if (Rectangle(rightActionX, actionY, actionSize, actionSize).contains(mouseX, mouseY)) {
+      return NextImage
     }
-    if (new Rectangle(x + offset, y, width - offset2, height - offset).contains(mouseX, mouseY)) {
-
-      if (cutFullScreen && !new Rectangle(x + offset2, y, width - 2 * offset2, height - offset).contains(mouseX, mouseY)) {
-        return None;
+    if (Rectangle(x + offset, y, width - offset2, height - offset).contains(mouseX, mouseY)) {
+      if (cutFullScreen && !Rectangle(x + offset2, y, width - 2 * offset2, height - offset).contains(mouseX, mouseY)) {
+        return None
       }
-      return FullScreen;
+      return FullScreen
     }
 
-    int count;
-    synchronized (myLock) {
+    val count: Int
+    synchronized(myLock) {
       if (ContainerUtil.isEmpty(myImages)) {
-        return None;
+        return None
       }
-      count = myImages.size();
+      count = myImages!!.size
     }
 
     if (count < 2) {
-      return None;
+      return None
     }
 
-    int ovalSize = JBUI.scale(myShowFullContent ? 8 : 6);
-    int ovalGap = JBUI.scale(14);
-    int ovalsWidth = count * ovalSize + (count - 1) * ovalGap;
-    int ovalX = x + (width - ovalsWidth) / 2;
-    int ovalY = insets.top + height - (offset + ovalSize) / 2;
-    Rectangle bounds = new Rectangle(ovalX, ovalY, ovalSize, ovalSize);
+    val ovalSize = JBUI.scale(if (myShowFullContent) 8 else 6)
+    val ovalGap = JBUI.scale(14)
+    val ovalsWidth = count * ovalSize + (count - 1) * ovalGap
+    val ovalX = x + (width - ovalsWidth) / 2
+    val ovalY = insets.top + height - (offset + ovalSize) / 2
+    val bounds = Rectangle(ovalX, ovalY, ovalSize, ovalSize)
 
-    for (int i = 0; i < count; i++) {
+    for (i in 0..<count) {
       if (bounds.contains(mouseX, mouseY)) {
-        return i;
+        return i
       }
-      bounds.x += ovalSize + ovalGap;
+      bounds.x += ovalSize + ovalGap
     }
 
-    return None;
+    return None
   }
 
-  private void handleFullScreen() {
+  private fun handleFullScreen() {
     if (myFullScreenPopup != null) {
-      myFullScreenPopup.cancel();
+      myFullScreenPopup!!.cancel()
     }
     if (myShowFullContent) {
-      return;
+      return
     }
 
-    List<Image> images;
-    int current;
-    Object showState;
-    synchronized (myLock) {
+    val images: List<Image>?
+    val current: Int
+    val showState: Any?
+    synchronized(myLock) {
       if (ContainerUtil.isEmpty(myImages)) {
-        return;
+        return
       }
-      images = myImages;
-      current = myCurrentImage;
-      showState = myShowState;
+      images = myImages
+      current = myCurrentImage
+      showState = myShowState
     }
 
-    PluginImagesComponent component = new PluginImagesComponent(images, current);
-    JPanel panel = new Wrapper(component);
-    panel.setPreferredSize(getGraphicsConfiguration().getBounds().getSize());
+    val component = PluginImagesComponent(images!!, current)
+    val panel: JPanel = Wrapper(component)
+    panel.preferredSize = graphicsConfiguration.bounds.size
 
-    myFullScreenPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, component).createPopup();
-    component.myFullScreenPopup = myFullScreenPopup;
-    component.myShowState = showState;
+    myFullScreenPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, component).createPopup()
+    component.myFullScreenPopup = myFullScreenPopup
+    component.myShowState = showState
 
-    myFullScreenPopup.addListener(new JBPopupListener() {
-      @Override
-      public void beforeShown(@NotNull LightweightWindowEvent event) {
-        Window window = SwingUtilities.getWindowAncestor(event.asPopup().getContent());
-        if (window.getGraphicsConfiguration().getDevice().isWindowTranslucencySupported(GraphicsDevice.WindowTranslucency.TRANSLUCENT)) {
-          window.setBackground(Gray.TRANSPARENT);
-          window.setOpacity(0.95f);
+    myFullScreenPopup!!.addListener(object : JBPopupListener {
+      override fun beforeShown(event: LightweightWindowEvent) {
+        val window = SwingUtilities.getWindowAncestor(event.asPopup().getContent())
+        if (window.graphicsConfiguration.device
+            .isWindowTranslucencySupported(GraphicsDevice.WindowTranslucency.TRANSLUCENT)
+        ) {
+          window.setBackground(Gray.TRANSPARENT)
+          window.opacity = 0.95f
         }
       }
 
-      @Override
-      public void onClosed(@NotNull LightweightWindowEvent event) {
-        myFullScreenPopup = null;
-        synchronized (myLock) {
-          if (myShowState == component.myShowState && component.myCurrentImage != myCurrentImage) {
-            myCurrentImage = component.myCurrentImage;
+      override fun onClosed(event: LightweightWindowEvent) {
+        myFullScreenPopup = null
+        synchronized(myLock) {
+          if (myShowState === component.myShowState && component.myCurrentImage != myCurrentImage) {
+            myCurrentImage = component.myCurrentImage
           }
         }
-        repaint();
+        repaint()
       }
-    });
+    })
 
-    myFullScreenPopup.showInScreenCoordinates(this, new Point());
+    myFullScreenPopup!!.showInScreenCoordinates(this, Point())
   }
 
-  private void showNextImage(boolean left) {
-    synchronized (myLock) {
+  private fun showNextImage(left: Boolean) {
+    synchronized(myLock) {
       if (myImages == null) {
-        return;
+        return
       }
-      int count = myImages.size();
+      val count = myImages!!.size
       if (count < 2) {
-        return;
+        return
       }
       if (left) {
         if (myCurrentImage > 0) {
-          myCurrentImage--;
+          myCurrentImage--
         }
         else {
-          myCurrentImage = count - 1;
+          myCurrentImage = count - 1
         }
       }
       else if (myCurrentImage < count - 1) {
-        myCurrentImage++;
+        myCurrentImage++
       }
       else {
-        myCurrentImage = 0;
+        myCurrentImage = 0
       }
     }
-    repaint();
+    repaint()
   }
 
-  @Override
-  public void paint(Graphics g) {
+  override fun paint(g: Graphics) {
     if (myShowFullContent) {
-      Graphics2D g2d = (Graphics2D)g.create();
+      val g2d = g.create() as Graphics2D
 
       try {
-        g2d.setBackground(Gray.get(158, 158));
-        g2d.clearRect(0, 0, getWidth(), getHeight());
-        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.95f));
+        g2d.background = Gray.get(158, 158)
+        g2d.clearRect(0, 0, getWidth(), getHeight())
+        g2d.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.95f)
 
-        paintComponent(g);
-        return;
+        paintComponent(g)
+        return
       }
       finally {
-        g2d.dispose();
+        g2d.dispose()
       }
     }
-    super.paint(g);
+    super.paint(g)
   }
 
-  @Override
-  protected void paintComponent(Graphics g) {
-    int count;
-    int current;
-    Image image;
+  override fun paintComponent(g: Graphics) {
+    val count: Int
+    val current: Int
+    val image: Image
 
-    synchronized (myLock) {
+    synchronized(myLock) {
       if (myImages == null) {
-        return;
+        return
       }
-      count = myImages.size();
+      count = myImages!!.size
       if (count == 0) {
-        return;
+        return
       }
-      current = myCurrentImage;
-      image = myImages.get(current);
+      current = myCurrentImage
+      image = myImages!![current]
     }
 
-    Insets insets = getInsets();
-    int x = insets.left;
-    int y = insets.top;
-    int width = getFullWidth() - insets.left - insets.right;
-    int height = getHeight() - insets.top - insets.bottom;
-    int offset = JBUI.scale(28);
+    val insets = getInsets()
+    val x = insets.left
+    val y = insets.top
+    val width = this.fullWidth - insets.left - insets.right
+    val height = getHeight() - insets.top - insets.bottom
+    val offset = JBUI.scale(28)
 
     if (!myShowFullContent) {
-      g.setColor(PluginManagerConfigurable.MAIN_BG_COLOR);
-      g.fillRect(x, y, width, height);
+      g.color = PluginManagerConfigurable.MAIN_BG_COLOR
+      g.fillRect(x, y, width, height)
     }
 
-    int imageX = insets.left + offset;
-    int imageY = insets.top;
-    int imageWidth = image.getWidth(this);
-    int imageHeight = image.getHeight(this);
-    int paintWidth = width - 2 * offset;
-    int paintHeight = height - offset;
+    val imageX = insets.left + offset
+    val imageY = insets.top
+    val imageWidth = image.getWidth(this)
+    val imageHeight = image.getHeight(this)
+    val paintWidth = width - 2 * offset
+    val paintHeight = height - offset
 
     if (imageWidth <= paintWidth && imageHeight <= paintHeight) {
-      StartupUiUtil.drawImage(g, image, imageX + (paintWidth - imageWidth) / 2, imageY + (paintHeight - imageHeight) / 2, this);
+      drawImage(g, image, imageX + (paintWidth - imageWidth) / 2, imageY + (paintHeight - imageHeight) / 2, this)
     }
     else {
-      int zoomedHeight = imageHeight * paintWidth / imageWidth;
-      int zoomedWidth = imageWidth * paintHeight / imageHeight;
+      val zoomedHeight = imageHeight * paintWidth / imageWidth
+      val zoomedWidth = imageWidth * paintHeight / imageHeight
 
       if (zoomedWidth <= paintWidth) {
-        StartupUiUtil.drawImage(g, image, new Rectangle(imageX + (paintWidth - zoomedWidth) / 2, imageY, zoomedWidth, paintHeight), this);
+        drawImage(g, image, Rectangle(imageX + (paintWidth - zoomedWidth) / 2, imageY, zoomedWidth, paintHeight), this)
       }
       else if (zoomedHeight <= paintHeight) {
-        StartupUiUtil.drawImage(g, image, new Rectangle(imageX, imageY + (paintHeight - zoomedHeight) / 2, paintWidth, zoomedHeight), this);
+        drawImage(g, image, Rectangle(imageX, imageY + (paintHeight - zoomedHeight) / 2, paintWidth, zoomedHeight), this)
       }
       else {
-        StartupUiUtil.drawImage(g, image, new Rectangle(imageX, imageY, paintWidth, paintHeight), this);
+        drawImage(g, image, Rectangle(imageX, imageY, paintWidth, paintHeight), this)
       }
     }
 
-    Graphics2D g2 = (Graphics2D)g.create();
+    val g2 = g.create() as Graphics2D
 
     try {
-      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE)
 
       if (!myShowFullContent) {
-        g2.setColor(PluginManagerConfigurable.SEARCH_FIELD_BORDER_COLOR);
-        g2.draw(new RoundRectangle2D.Float(x, y, width - 1, height - offset, 7, 7));
+        g2.color = PluginManagerConfigurable.SEARCH_FIELD_BORDER_COLOR
+        g2.draw(RoundRectangle2D.Float(x.toFloat(), y.toFloat(), (width - 1).toFloat(), (height - offset).toFloat(), 7f, 7f))
       }
 
       if (count < 2) {
-        return;
+        return
       }
 
-      int ovalSize = JBUI.scale(myShowFullContent ? 8 : 6);
-      int ovalGap = JBUI.scale(14);
-      int ovalsWidth = count * ovalSize + (count - 1) * ovalGap;
-      int ovalX = x + (width - ovalsWidth) / 2;
-      int ovalY = insets.top + height - (offset + ovalSize) / 2;
+      val ovalSize = JBUI.scale(if (myShowFullContent) 8 else 6)
+      val ovalGap = JBUI.scale(14)
+      val ovalsWidth = count * ovalSize + (count - 1) * ovalGap
+      var ovalX = x + (width - ovalsWidth) / 2
+      val ovalY = insets.top + height - (offset + ovalSize) / 2
 
-      for (int i = 0; i < count; i++) {
+      for (i in 0..<count) {
         if (i == current) {
-          g2.setColor(CURRENT_IMAGE_FILL_COLOR);
-          g2.fillOval(ovalX, ovalY, ovalSize, ovalSize);
+          g2.color = CURRENT_IMAGE_FILL_COLOR
+          g2.fillOval(ovalX, ovalY, ovalSize, ovalSize)
         }
         else {
-          g2.setColor(JBUI.CurrentTheme.Button.buttonOutlineColorStart(false));
-          g2.drawOval(ovalX, ovalY, ovalSize - 1, ovalSize - 1);
+          g2.color = JBUI.CurrentTheme.Button.buttonOutlineColorStart(false)
+          g2.drawOval(ovalX, ovalY, ovalSize - 1, ovalSize - 1)
         }
-        ovalX += ovalSize + ovalGap;
+        ovalX += ovalSize + ovalGap
       }
 
       if (myHovered) {
-        paintAction(g2, x, y, width, height, offset, true);
-        paintAction(g2, x, y, width, height, offset, false);
+        paintAction(g2, x, y, width, height, offset, true)
+        paintAction(g2, x, y, width, height, offset, false)
       }
     }
     finally {
-      g2.dispose();
+      g2.dispose()
     }
   }
 
-  private void paintAction(Graphics2D g2, int x, int y, int width, int height, int offset, boolean left) {
-    int actionOffset = JBUI.scale(8);
-    int actionSize = getActionSize();
+  private fun paintAction(g2: Graphics2D, x: Int, y: Int, width: Int, height: Int, offset: Int, left: Boolean) {
+    val actionOffset = JBUI.scale(8)
+    val actionSize = this.actionSize
 
-    int actionX = left ? (x + actionOffset) : (x + width - actionOffset - actionSize);
+    var actionX = if (left) (x + actionOffset) else (x + width - actionOffset - actionSize)
 
-    int actionY = y + (height - offset - actionSize) / 2;
+    var actionY = y + (height - offset - actionSize) / 2
 
-    g2.setColor(JBUI.CurrentTheme.Button.buttonColorStart());
-    g2.fillOval(actionX, actionY, actionSize, actionSize);
-    g2.setColor(JBUI.CurrentTheme.Button.buttonOutlineColorStart(false));
-    g2.drawOval(actionX, actionY, actionSize, actionSize);
+    g2.color = JBUI.CurrentTheme.Button.buttonColorStart()
+    g2.fillOval(actionX, actionY, actionSize, actionSize)
+    g2.color = JBUI.CurrentTheme.Button.buttonOutlineColorStart(false)
+    g2.drawOval(actionX, actionY, actionSize, actionSize)
 
-    Icon icon = left ? AllIcons.Actions.ArrowCollapse : AllIcons.Actions.ArrowExpand;
-    int iconWidth = icon.getIconWidth();
-    int iconHeight = icon.getIconHeight();
+    val icon = if (left) AllIcons.Actions.ArrowCollapse else AllIcons.Actions.ArrowExpand
+    val iconWidth = icon.iconWidth
+    val iconHeight = icon.iconHeight
 
-    actionX += (actionSize - iconWidth) / 2;
-    actionY += (actionSize - iconHeight) / 2;
-    icon.paintIcon(this, g2, actionX, actionY);
+    actionX += (actionSize - iconWidth) / 2
+    actionY += (actionSize - iconHeight) / 2
+    icon.paintIcon(this, g2, actionX, actionY)
   }
 
-  private int getActionSize() {
-    return JBUI.scale(myShowFullContent ? 48 : 28);
+  private val actionSize: Int
+    get() = JBUI.scale(if (myShowFullContent) 48 else 28)
+
+  companion object {
+    private val CURRENT_IMAGE_FILL_COLOR: Color =
+      JBColor.namedColor("Plugins.ScreenshotPagination.CurrentImage.fillColor", JBColor(0x6C707E, 0xCED0D6))
+
+    private const val None = -1
+    private const val NextImage = -2
+    private const val PrevImage = -3
+    private const val FullScreen = -4
   }
 }
