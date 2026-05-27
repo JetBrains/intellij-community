@@ -158,7 +158,10 @@ class SePopupHeaderPane(
   @OptIn(AwaitCancellationAndInvoke::class)
   private suspend fun bindSelectedTab(configuration: Configuration) = coroutineScope {
     val changeListener = javax.swing.event.ChangeListener {
-      configuration.selectedIndexFlow.value = tabbedPane.selectedIndex
+      val idx = tabbedPane.selectedIndex
+      // JTabbedPane reports -1 when it has no tabs.
+      // Don't propagate it into the model flow — keep the last valid selection.
+      if (idx >= 0) configuration.selectedIndexFlow.value = idx
     }
 
     withContext(Dispatchers.UI) {
