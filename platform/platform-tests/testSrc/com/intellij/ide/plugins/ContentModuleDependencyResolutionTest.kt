@@ -76,6 +76,7 @@ internal class ContentModuleDependencyResolutionTest {
       plugin("core") {
         content(namespace = "jetbrains") {
           module("platform") {}
+          module("util") {}
         }
       }
       plugin("foo") {
@@ -83,18 +84,25 @@ internal class ContentModuleDependencyResolutionTest {
           module("foo") {
             dependencies {
               module("platform")
+              module("util")
             }
           }
           module("platform") {}
         }
+        content(namespace = "custom") {
+          module("util") {}
+        }
       }
     }
     val foo = pluginSet.getEnabledModule("foo")
-    val dependency = foo.moduleDependencies.modules.single()
-    assertThat(dependency.name).isEqualTo("platform")
-    assertThat(dependency.namespace).isNotEqualTo(PluginModuleId.JETBRAINS_NAMESPACE)
+    assertThat(foo.moduleDependencies.modules).hasSize(2)
+    val (dependency1, dependency2) = foo.moduleDependencies.modules
+    assertThat(dependency1.name).isEqualTo("platform")
+    assertThat(dependency1.namespace).isNotEqualTo(PluginModuleId.JETBRAINS_NAMESPACE)
     val fooPlatform = pluginSet.getEnabledPlugin("foo").contentModules.first { it.moduleId.name == "platform" }
-    assertThat(dependency.namespace).isEqualTo(fooPlatform.moduleId.namespace)
+    assertThat(dependency1.namespace).isEqualTo(fooPlatform.moduleId.namespace)
+    assertThat(dependency2.name).isEqualTo("util")
+    assertThat(dependency2.namespace).isEqualTo("custom")
   }
 
   @Test
