@@ -34,7 +34,7 @@ class PatchToolsetTest : GeneralMcpToolsetTestBase() {
       buildJsonObject {
         put("input", JsonPrimitive(patch))
       },
-      "Applied patch to 1 file."
+      "1 out of 1 operations applied."
     )
 
     testMcpTool(
@@ -65,7 +65,7 @@ class PatchToolsetTest : GeneralMcpToolsetTestBase() {
       buildJsonObject {
         put("input", JsonPrimitive(patch))
       },
-      "Applied patch to 1 file."
+      "1 out of 1 operations applied."
     )
 
     testMcpTool(
@@ -98,7 +98,7 @@ class PatchToolsetTest : GeneralMcpToolsetTestBase() {
       buildJsonObject {
         put("input", JsonPrimitive(patch))
       },
-      "Applied patch to 1 file."
+      "1 out of 1 operations applied."
     )
 
     assertThat(Files.readString(projectFilePath(pathInProject))).isEqualTo("updated external\n")
@@ -132,7 +132,7 @@ class PatchToolsetTest : GeneralMcpToolsetTestBase() {
       buildJsonObject {
         put("input", JsonPrimitive(patch))
       },
-      "Applied patch to 1 file."
+      "1 out of 1 operations applied."
     )
 
     testMcpTool(
@@ -161,7 +161,7 @@ class PatchToolsetTest : GeneralMcpToolsetTestBase() {
       buildJsonObject {
         put("input", JsonPrimitive(patch))
       },
-      "Applied patch to 1 file."
+      "1 out of 1 operations applied."
     )
 
     testMcpTool(
@@ -198,7 +198,7 @@ class PatchToolsetTest : GeneralMcpToolsetTestBase() {
       buildJsonObject {
         put("input", JsonPrimitive(patch))
       },
-      "Applied patch to 1 file."
+      "1 out of 1 operations applied."
     )
 
     testMcpTool(
@@ -235,7 +235,7 @@ class PatchToolsetTest : GeneralMcpToolsetTestBase() {
       buildJsonObject {
         put("input", JsonPrimitive(patch))
       },
-      "Applied patch to 1 file."
+      "1 out of 1 operations applied."
     )
 
     assertReadFails(pathInProject)
@@ -270,7 +270,7 @@ class PatchToolsetTest : GeneralMcpToolsetTestBase() {
       buildJsonObject {
         put("input", JsonPrimitive(patch))
       },
-      "Applied patch to 1 file."
+      "1 out of 1 operations applied."
     )
 
     testMcpTool(
@@ -313,7 +313,7 @@ class PatchToolsetTest : GeneralMcpToolsetTestBase() {
       buildJsonObject {
         put("input", JsonPrimitive(patch))
       },
-      "Applied patch to 1 file."
+      "1 out of 1 operations applied."
     )
 
     testMcpTool(
@@ -345,7 +345,7 @@ class PatchToolsetTest : GeneralMcpToolsetTestBase() {
       buildJsonObject {
         put("input", JsonPrimitive(patch))
       },
-      "Applied patch to 1 file."
+      "1 out of 1 operations applied."
     )
 
     testMcpTool(
@@ -376,7 +376,7 @@ class PatchToolsetTest : GeneralMcpToolsetTestBase() {
       buildJsonObject {
         put("input", JsonPrimitive(patch))
       },
-      "Applied patch to 1 file."
+      "1 out of 1 operations applied."
     )
 
     testMcpTool(
@@ -414,7 +414,7 @@ class PatchToolsetTest : GeneralMcpToolsetTestBase() {
       buildJsonObject {
         put("input", JsonPrimitive(patch))
       },
-      "Applied patch to 1 file."
+      "1 out of 1 operations applied."
     )
 
     testMcpTool(
@@ -443,7 +443,7 @@ class PatchToolsetTest : GeneralMcpToolsetTestBase() {
       buildJsonObject {
         put("patch", JsonPrimitive(patch))
       },
-      "Applied patch to 1 file."
+      "1 out of 1 operations applied."
     )
 
     testMcpTool(
