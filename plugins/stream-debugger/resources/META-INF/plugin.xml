@@ -5,7 +5,7 @@
   <category>JVM Tools</category>
   <content namespace="jetbrains">
     <module name="intellij.debugger.streams.core" loading="required"/>
-    <module name="intellij.debugger.streams.shared" loading="required"/>
+    <module name="intellij.debugger.streams.shared"/>
     <module name="intellij.debugger.streams.backend"/>
     <module name="intellij.debugger.streams.java" loading="optional"/>
   </content>
