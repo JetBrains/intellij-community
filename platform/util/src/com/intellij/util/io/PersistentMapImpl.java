@@ -88,6 +88,7 @@ public final class PersistentMapImpl<Key, Value> implements PersistentMapBase<Ke
   private final @NotNull CreationTimeOptions myOptions;
 
   private final Path myStorageFile;
+  private final @NotNull StorageLockContext myStorageLockContext;
   private final boolean myIsReadOnly;
   private final KeyDescriptor<Key> myKeyDescriptor;
 
@@ -157,7 +158,7 @@ public final class PersistentMapImpl<Key, Value> implements PersistentMapBase<Ke
 
     int initialSize = myBuilder.getInitialSize(DEFAULT_INDEX_INITIAL_SIZE);
     int version = myBuilder.getVersion(/*default: */0);
-    @Nullable StorageLockContext lockContext = myBuilder.getLockContext();
+    StorageLockContext lockContext = PagedFileStorage.lookupStorageContext(myBuilder.getLockContext());
     myCompactOnClose = myBuilder.getCompactOnClose(/*default: */false);
 
     // it's important to initialize it as early as possible
@@ -171,6 +172,7 @@ public final class PersistentMapImpl<Key, Value> implements PersistentMapBase<Ke
     this.myOptions = options;
 
     myStorageFile = file;
+    myStorageLockContext = lockContext;
     myKeyDescriptor = keyDescriptor;
     myValueExternalizer = valueExternalizer;
 
@@ -203,7 +205,7 @@ public final class PersistentMapImpl<Key, Value> implements PersistentMapBase<Ke
       StorageStatsRegistrar.INSTANCE.registerMap(myStorageFile, this);
 
 
-      myValueStorage = myIntMapping ? null : new PersistentHashMapValueStorage(getDataFile(myStorageFile), options);
+      myValueStorage = myIntMapping ? null : new PersistentHashMapValueStorage(getDataFile(myStorageFile), options, myStorageLockContext);
       myAppendCache = myIntMapping ? null : createAppendCache(keyDescriptor);
       myAppendCacheFlusher = myIntMapping ? null : LowMemoryWatcher.register(() -> {
         try {
@@ -906,7 +908,7 @@ public final class PersistentMapImpl<Key, Value> implements PersistentMapBase<Ke
 
       final Path newPath = oldDataFile.resolveSibling(oldDataFile.getFileName() + ".new");
       CreationTimeOptions options = myValueStorage.getOptions();
-      final PersistentHashMapValueStorage newStorage = new PersistentHashMapValueStorage(newPath, options);
+      final PersistentHashMapValueStorage newStorage = new PersistentHashMapValueStorage(newPath, options, myStorageLockContext);
       myValueStorage.switchToCompactionMode();
       myEnumerator.markDirty(true);
       long sizeBefore = myValueStorage.getSize();
@@ -957,7 +959,7 @@ public final class PersistentMapImpl<Key, Value> implements PersistentMapBase<Ke
         FileUtil.rename(f, new File(parentFile, nameAfterRename));
       }
 
-      myValueStorage = new PersistentHashMapValueStorage(oldDataFile, options);
+      myValueStorage = new PersistentHashMapValueStorage(oldDataFile, options, myStorageLockContext);
       LOG.info("Compacted " + myEnumerator.myFile + ":" + sizeBefore + " bytes into " +
                newSize + " bytes in " + (System.currentTimeMillis() - now) + "ms.");
       myEnumerator.putMetaData(myLiveAndGarbageKeysCounter);

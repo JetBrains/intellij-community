@@ -38,6 +38,7 @@ public final class PersistentHashMapValueStorage {
   private @Nullable RAReader myCompactionModeReader;
   private volatile long mySize;
   private final Path myPath;
+  private final @NotNull StorageLockContext myStorageLockContext;
   private final CompressedAppendableFile myCompressedAppendableFile;
 
   private final CreationTimeOptions myOptions;
@@ -185,14 +186,16 @@ public final class PersistentHashMapValueStorage {
     };
 
   private static final FileAccessorCache<Path, SyncAbleBufferedOutputStreamOverCachedFileChannel> ourAppendersCache =
-    new FileAccessorCache<Path, SyncAbleBufferedOutputStreamOverCachedFileChannel>(CACHE_PROTECTED_QUEUE_SIZE, CACHE_PROBATIONAL_QUEUE_SIZE) {
+      new FileAccessorCache<Path, SyncAbleBufferedOutputStreamOverCachedFileChannel>(CACHE_PROTECTED_QUEUE_SIZE,
+                                                                                   CACHE_PROBATIONAL_QUEUE_SIZE) {
       @Override
       protected @NotNull PersistentHashMapValueStorage.SyncAbleBufferedOutputStreamOverCachedFileChannel createAccessor(Path path) {
         return new SyncAbleBufferedOutputStreamOverCachedFileChannel(path);
       }
 
       @Override
-      protected void disposeAccessor(@NotNull PersistentHashMapValueStorage.SyncAbleBufferedOutputStreamOverCachedFileChannel stream) throws IOException {
+      protected void disposeAccessor(@NotNull PersistentHashMapValueStorage.SyncAbleBufferedOutputStreamOverCachedFileChannel stream)
+        throws IOException {
         stream.close();
       }
     };
@@ -212,9 +215,12 @@ public final class PersistentHashMapValueStorage {
 
   public static final boolean COMPRESSION_ENABLED = SystemProperties.getBooleanProperty("idea.compression.enabled", true);
 
-  PersistentHashMapValueStorage(@NotNull Path path, @NotNull CreationTimeOptions options) throws IOException {
+  PersistentHashMapValueStorage(@NotNull Path path,
+                                @NotNull CreationTimeOptions options,
+                                @NotNull StorageLockContext storageLockContext) throws IOException {
     myPath = path;
     myOptions = options;
+    myStorageLockContext = storageLockContext;
 
     if (myOptions.useCompression()) {
       myCompressedAppendableFile = new MyCompressedAppendableFile();
@@ -805,8 +811,14 @@ public final class PersistentHashMapValueStorage {
     };
   }
 
+  public static PersistentHashMapValueStorage create(@NotNull Path path,
+                                                     @NotNull CreationTimeOptions options,
+                                                     @NotNull StorageLockContext storageLockContext) throws IOException {
+    return new PersistentHashMapValueStorage(path, options, storageLockContext);
+  }
+
   public static PersistentHashMapValueStorage create(@NotNull Path path, @NotNull CreationTimeOptions options) throws IOException {
-    return new PersistentHashMapValueStorage(path, options);
+    return create(path, options, PagedFileStorage.lookupStorageContext(null));
   }
 
   private interface RAReader {
@@ -966,5 +978,10 @@ public final class PersistentHashMapValueStorage {
   @TestOnly
   public boolean isReadOnly() {
     return myOptions.myReadOnly;
+  }
+
+  @TestOnly
+  public @NotNull StorageLockContext getStorageLockContext() {
+    return myStorageLockContext;
   }
 }

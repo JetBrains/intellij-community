@@ -4,6 +4,7 @@ package com.intellij.util.io
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -141,6 +142,37 @@ internal class PersistentHashMapValueStorageContractTest {
                              expectedBytes,
                              2,
                              "${config.name}: old value chain remains readable until map metadata is updated")
+      }
+    }
+  }
+
+  @Test
+  fun `value storage receives builder StorageLockContext`() {
+    val lockContext = StorageLockContext(false)
+
+    withPersistentMap(tempDir.resolve("builder-context-map"), lockContext) { map ->
+      val valueStorage = PersistentMapImpl.unwrap(map).valueStorage
+      assertSame(lockContext, valueStorage.storageLockContext, "Value storage must use the StorageLockContext from PersistentMapBuilder")
+    }
+  }
+
+  @Test
+  fun `value storage receives thread-local StorageLockContext`() {
+    val lockContext = StorageLockContext(false)
+    val previousContext = PagedFileStorage.THREAD_LOCAL_STORAGE_LOCK_CONTEXT.get()
+    PagedFileStorage.THREAD_LOCAL_STORAGE_LOCK_CONTEXT.set(lockContext)
+    try {
+      withPersistentMap(tempDir.resolve("thread-local-context-map"), lockContext = null) { map ->
+        val valueStorage = PersistentMapImpl.unwrap(map).valueStorage
+        assertSame(lockContext, valueStorage.storageLockContext, "Value storage must use the resolved thread-local StorageLockContext")
+      }
+    }
+    finally {
+      if (previousContext == null) {
+        PagedFileStorage.THREAD_LOCAL_STORAGE_LOCK_CONTEXT.remove()
+      }
+      else {
+        PagedFileStorage.THREAD_LOCAL_STORAGE_LOCK_CONTEXT.set(previousContext)
       }
     }
   }
@@ -385,6 +417,19 @@ internal class PersistentHashMapValueStorageContractTest {
       finally {
         storage.dispose()
       }
+    }
+
+    private inline fun <T> withPersistentMap(
+      storageFile: Path,
+      lockContext: StorageLockContext?,
+      action: (PersistentHashMap<String, String>) -> T,
+    ): T {
+      val map = PersistentMapBuilder.newBuilder(
+        storageFile,
+        EnumeratorStringDescriptor.INSTANCE,
+        EnumeratorStringDescriptor.INSTANCE,
+      ).withStorageLockContext(lockContext).build()
+      return map.use(action)
     }
 
     private fun PersistentHashMapValueStorage.appendPayload(payload: ByteArray, previousTailAddress: Long): Long {
