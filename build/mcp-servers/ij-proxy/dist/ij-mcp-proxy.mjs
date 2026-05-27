@@ -22246,7 +22246,8 @@ function createProjectPathManager({
 }
 
 // proxy-tools/handlers/apply-patch.ts
-import { copyFile, mkdir, rename, rm } from "fs/promises";
+import { Buffer as Buffer2 } from "buffer";
+import { chmod, copyFile, mkdir, readFile, rename, rm, stat, writeFile as writeFile2 } from "fs/promises";
 import path3 from "path";
 
 // proxy-tools/git-utils.ts
@@ -22296,7 +22297,7 @@ async function isTrackedPath(relativePath, projectPath) {
 
 // proxy-tools/shared.ts
 import path from "path";
-var TRUNCATION_MARKER = "<<<...content truncated...>>>", FULL_READ_MAX_LINES = 200000, nonEmptyStringSchema = exports_external.string().refine((value) => value.trim() !== "", {
+var TRUNCATION_MARKER = "<<<...content truncated...>>>", FULL_READ_MAX_LINES = 200000, READ_FILE_MAX_LINE_LENGTH = 500, NUMBERED_READ_OUTPUT_REGEX = /^L(\d+): ?(.*)$/, nonEmptyStringSchema = exports_external.string().refine((value) => value.trim() !== "", {
   message: "must be a non-empty string"
 }), positiveIntSchema = exports_external.coerce.number().int().refine((value) => Number.isFinite(value) && value > 0, {
   message: "must be a positive integer"
@@ -22316,11 +22317,6 @@ function toPositiveInt(value, fallback, label) {
   if (value === void 0 || value === null)
     return fallback;
   return parseWithMessage(positiveIntSchema, value, `${label} must be a positive integer`);
-}
-function toNonNegativeInt(value, fallback, label) {
-  if (value === void 0 || value === null)
-    return fallback;
-  return parseWithMessage(nonNegativeIntSchema, value, `${label} must be a non-negative integer`);
 }
 function resolvePathInProject(projectPath, inputPath, label) {
   let rawPath = requireString(inputPath, label), absolute = path.isAbsolute(rawPath) ? path.normalize(rawPath) : path.resolve(projectPath, rawPath), relative = path.relative(projectPath, absolute);
@@ -22557,6 +22553,56 @@ function splitLines2(text) {
     lines.pop();
   return lines;
 }
+var readFileTextLegacy = readFileText;
+function formatReadLine(line) {
+  if (line.length <= READ_FILE_MAX_LINE_LENGTH)
+    return line;
+  let boundaryIndex = READ_FILE_MAX_LINE_LENGTH - 1, boundaryChar = line.charCodeAt(boundaryIndex);
+  if (boundaryChar >= 55296 && boundaryChar <= 56319)
+    return Array.from(line).slice(0, READ_FILE_MAX_LINE_LENGTH).join("");
+  return line.slice(0, READ_FILE_MAX_LINE_LENGTH);
+}
+async function readFileTextExact(relativePath, callUpstreamTool) {
+  try {
+    let result = await callUpstreamTool("read_file", {
+      file_path: relativePath,
+      offset: 1,
+      limit: FULL_READ_MAX_LINES
+    }), text = extractTextFromResult(result);
+    if (typeof text === "string")
+      return renderRawTextFromReadOutput(text);
+  } catch {}
+  return readFileTextLegacy(relativePath, { truncateMode: "NONE" }, callUpstreamTool);
+}
+function renderRawTextFromReadOutput(text) {
+  let numberedLines = parseNumberedReadOutput(text);
+  if (numberedLines.length === 0)
+    throw Error("Failed to read file contents");
+  let rawLines = [];
+  for (let index = 0;index < numberedLines.length; index += 1) {
+    let { lineNumber, lineText } = numberedLines[index], expectedLineNumber = index + 1;
+    if (lineNumber !== expectedLineNumber)
+      throw Error("Failed to read file contents");
+    rawLines.push(lineText);
+  }
+  return rawLines.join(`
+`);
+}
+function parseNumberedReadOutput(text) {
+  let normalized = normalizeLineEndings(text);
+  if (normalized === "")
+    return [];
+  return normalized.split(`
+`).map((line) => {
+    let match = NUMBERED_READ_OUTPUT_REGEX.exec(line);
+    if (!match)
+      throw Error("Failed to read file contents");
+    return {
+      lineNumber: Number.parseInt(match[1], 10),
+      lineText: match[2] ?? ""
+    };
+  });
+}
 
 // proxy-tools/search-fallback.ts
 import path2 from "path";
@@ -22639,17 +22685,22 @@ function isLineBreakChar(code) {
 }
 
 // proxy-tools/handlers/apply-patch.ts
-var BEGIN_MARKER = "*** Begin Patch", END_MARKER = "*** End Patch", ADD_PREFIX = "*** Add File: ", UPDATE_PREFIX = "*** Update File: ", DELETE_PREFIX = "*** Delete File: ", MOVE_PREFIX = "*** Move to: ", END_OF_FILE = "*** End of File", HEREDOC_PREFIXES = /* @__PURE__ */ new Set(["<<EOF", "<<'EOF'", '<<"EOF"']), TRUNCATION_ERROR = "file content truncated while reading";
+var BEGIN_MARKER = "*** Begin Patch", END_MARKER = "*** End Patch", ADD_PREFIX = "*** Add File: ", UPDATE_PREFIX = "*** Update File: ", DELETE_PREFIX = "*** Delete File: ", MOVE_PREFIX = "*** Move to: ", END_OF_FILE = "*** End of File", DIFF_GIT_PREFIX = "diff --git ", NO_NEWLINE_MARKER = "\\ No newline at end of file", HEREDOC_PREFIXES = /* @__PURE__ */ new Set(["<<EOF", "<<'EOF'", '<<"EOF"']), TRUNCATION_ERROR = "file content truncated while reading", UNIFIED_DIFF_HEADER_REGEX = /^@@+\s*-\d+(?:,\d+)?\s+\+\d+(?:,\d+)?\s*@@+$/;
 async function handleApplyPatchTool(args, projectPath, callUpstreamTool) {
-  let patchText = extractPatchText(args), operations = parsePatch(patchText), touched = 0;
+  let patchText = extractPatchText(args), operations = parsePatch(patchText), writeToDisk = await pathExists(projectPath), writeReports = [], touched = 0;
   for (let op of operations) {
     if (op.type === "add") {
-      let { relative: relative2 } = resolvePathInProject(projectPath, op.path, "path");
-      await callUpstreamTool("create_new_file", {
-        pathInProject: relative2,
-        text: op.content,
-        overwrite: !1
-      }), touched += 1;
+      let { relative: relative2, absolute: absolute2 } = resolvePathInProject(projectPath, op.path, "path");
+      if (writeToDisk) {
+        let bytes = await writeTextFile(absolute2, op.content, !1);
+        writeReports.push({ relative: relative2, bytes });
+      } else
+        await callUpstreamTool("create_new_file", {
+          pathInProject: relative2,
+          text: op.content,
+          overwrite: !1
+        });
+      touched += 1;
       continue;
     }
     let { relative, absolute } = resolvePathInProject(projectPath, op.path, "path");
@@ -22658,43 +22709,163 @@ async function handleApplyPatchTool(args, projectPath, callUpstreamTool) {
       continue;
     }
     if (op.type === "update") {
-      let original = await readFileTextForPatch(relative, absolute, projectPath, callUpstreamTool), updated = applyHunks(original, op.hunks), resolvedTarget = op.moveTo ? resolvePathInProject(projectPath, op.moveTo, "path") : null, moveTarget = resolvedTarget && resolvedTarget.relative !== relative ? resolvedTarget : null;
+      let source = await readFileTextForPatch(relative, absolute, projectPath, writeToDisk, callUpstreamTool), updated = op.hunks.length === 0 ? source.text : applyHunks(source.text, op.hunks), resolvedTarget = op.moveTo ? resolvePathInProject(projectPath, op.moveTo, "path") : null, moveTarget = resolvedTarget && resolvedTarget.relative !== relative ? resolvedTarget : null;
       if (moveTarget)
-        await ensureParentDir(moveTarget.absolute), await runGitMv(relative, moveTarget.relative, projectPath), await callUpstreamTool("create_new_file", {
-          pathInProject: moveTarget.relative,
+        await ensureParentDir(moveTarget.absolute), await runGitMv(relative, moveTarget.relative, projectPath), await writePatchedText({
+          relative: moveTarget.relative,
+          absolute: moveTarget.absolute,
           text: updated,
-          overwrite: !0
+          overwrite: !0,
+          writeToDisk,
+          preferUpstreamWrite: source.preferUpstreamWrite,
+          callUpstreamTool,
+          writeReports
         });
       else
-        await callUpstreamTool("create_new_file", {
-          pathInProject: relative,
+        await writePatchedText({
+          relative,
+          absolute,
           text: updated,
-          overwrite: !0
+          overwrite: !0,
+          writeToDisk,
+          preferUpstreamWrite: source.preferUpstreamWrite,
+          callUpstreamTool,
+          writeReports
         });
       touched += 1;
     }
   }
-  return `Applied patch to ${touched} file${touched === 1 ? "" : "s"}.`;
+  return formatApplyPatchResult(touched, writeReports);
 }
-async function readFileTextForPatch(relativePath, absolutePath, projectPath, callUpstreamTool) {
-  let original = await readFileText(relativePath, { truncateMode: "NONE" }, callUpstreamTool);
+async function readFileTextForPatch(relativePath, absolutePath, projectPath, writeToDisk, callUpstreamTool) {
+  if (writeToDisk) {
+    let diskText = await readFile(absolutePath, "utf8"), upstreamText = await readUpstreamDocumentTextIfDifferent(relativePath, diskText, callUpstreamTool);
+    if (upstreamText !== null)
+      return { text: upstreamText, preferUpstreamWrite: !0 };
+    return { text: diskText, preferUpstreamWrite: !1 };
+  }
+  let original = await readFileTextExact(relativePath, callUpstreamTool);
   if (!isTruncatedText(original))
-    return original;
+    return { text: original, preferUpstreamWrite: !0 };
   try {
-    return await readFileTextViaSearch(projectPath, relativePath, absolutePath, callUpstreamTool);
+    return {
+      text: await readFileTextViaSearch(projectPath, relativePath, absolutePath, callUpstreamTool),
+      preferUpstreamWrite: !0
+    };
   } catch (error48) {
     if (error48 instanceof Error && error48.message === TRUNCATION_ERROR)
       throw error48;
     throw Error(TRUNCATION_ERROR);
   }
 }
+async function readUpstreamDocumentTextIfDifferent(relativePath, diskText, callUpstreamTool) {
+  try {
+    let upstreamText = await readFileTextExact(relativePath, callUpstreamTool);
+    if (isTruncatedText(upstreamText) || upstreamText === diskText)
+      return null;
+    return upstreamText;
+  } catch {
+    return null;
+  }
+}
+async function writePatchedText(options) {
+  let {
+    relative,
+    absolute,
+    text,
+    overwrite,
+    writeToDisk,
+    preferUpstreamWrite,
+    callUpstreamTool,
+    writeReports
+  } = options;
+  if (preferUpstreamWrite || !writeToDisk) {
+    if (await callUpstreamTool("create_new_file", {
+      pathInProject: relative,
+      text,
+      overwrite
+    }), !writeToDisk)
+      return;
+    let verifiedBytes = await tryVerifyTextFile(absolute, text);
+    if (verifiedBytes !== null) {
+      writeReports.push({ relative, bytes: verifiedBytes });
+      return;
+    }
+  }
+  let bytes = await writeTextFile(absolute, text, overwrite);
+  writeReports.push({ relative, bytes });
+}
+async function pathExists(filePath) {
+  try {
+    return await stat(filePath), !0;
+  } catch (error48) {
+    if (isErrorCode(error48, "ENOENT"))
+      return !1;
+    throw error48;
+  }
+}
+async function writeTextFile(absolutePath, text, overwrite) {
+  if (await ensureParentDir(absolutePath), overwrite)
+    await writeTextFileAtomically(absolutePath, text);
+  else
+    await writeFile2(absolutePath, text, { encoding: "utf8", flag: "wx" });
+  return await verifyTextFile(absolutePath, text);
+}
+async function writeTextFileAtomically(absolutePath, text) {
+  let existingMode = await getFileMode(absolutePath), tempPath = path3.join(path3.dirname(absolutePath), `.${path3.basename(absolutePath)}.ijproxy-${process.pid}-${Date.now()}-${Math.random().toString(16).slice(2)}.tmp`);
+  try {
+    if (await writeFile2(tempPath, text, { encoding: "utf8", flag: "wx" }), existingMode !== null)
+      await chmod(tempPath, existingMode);
+    await rename(tempPath, absolutePath);
+  } catch (error48) {
+    throw await rm(tempPath, { force: !0 }).catch(() => {}), error48;
+  }
+}
+async function getFileMode(absolutePath) {
+  try {
+    return (await stat(absolutePath)).mode;
+  } catch (error48) {
+    if (isErrorCode(error48, "ENOENT"))
+      return null;
+    throw error48;
+  }
+}
+async function tryVerifyTextFile(absolutePath, expectedText) {
+  try {
+    return await verifyTextFile(absolutePath, expectedText);
+  } catch {
+    return null;
+  }
+}
+async function verifyTextFile(absolutePath, expectedText) {
+  let actualText = await readFile(absolutePath, "utf8");
+  if (actualText !== expectedText)
+    throw Error(`Failed to save patched document to disk: ${absolutePath}`);
+  return Buffer2.byteLength(actualText, "utf8");
+}
+function formatApplyPatchResult(touched, writeReports) {
+  let summary = `Applied patch to ${touched} file${touched === 1 ? "" : "s"}.`;
+  if (writeReports.length === 0)
+    return summary;
+  let details = writeReports.map(({ relative, bytes }) => `Wrote ${bytes} bytes to ${relative}.`);
+  return `${summary}
+${details.join(`
+`)}`;
+}
+function isErrorCode(error48, code) {
+  return Boolean(error48 && typeof error48 === "object" && "code" in error48 && error48.code === code);
+}
 async function readFileTextViaSearch(projectPath, relativePath, absolutePath, callUpstreamTool) {
   let { lineMap, maxLineNumber, hasMore, hasTruncatedLine } = await readLinesViaSearch(projectPath, relativePath, absolutePath, SEARCH_FALLBACK_MAX_LINES, callUpstreamTool);
   if (hasMore || maxLineNumber === 0 || hasTruncatedLine)
     throw Error(TRUNCATION_ERROR);
   let lines = [];
-  for (let lineNumber = 1;lineNumber <= maxLineNumber; lineNumber += 1)
-    lines.push(lineMap.get(lineNumber) ?? "");
+  for (let lineNumber = 1;lineNumber <= maxLineNumber; lineNumber += 1) {
+    let line = lineMap.get(lineNumber);
+    if (line === void 0)
+      throw Error(TRUNCATION_ERROR);
+    lines.push(line);
+  }
   return lines.join(`
 `);
 }
@@ -22733,14 +22904,36 @@ function unwrapHeredocLines(lines) {
     return lines;
   return lines.slice(1, -1);
 }
+function stripUnifiedDiffHeader(trimmed) {
+  if (UNIFIED_DIFF_HEADER_REGEX.test(trimmed))
+    return "";
+  return trimmed.length > 2 ? trimmed.slice(2).trim() : "";
+}
 function parsePatch(text) {
-  let lines = unwrapHeredocLines(splitLines2(text.trim())), startIndex = lines.findIndex((line) => line.trim() === BEGIN_MARKER);
+  let lines = unwrapHeredocLines(splitLines2(text.trim())), markerRange = findPatchMarkerRange(lines);
+  if (markerRange) {
+    if (looksLikeGitDiff(lines, markerRange.bodyStart, markerRange.bodyEnd))
+      return parseGitDiffPatch(lines, markerRange.bodyStart, markerRange.bodyEnd);
+    return parseCodexPatch(lines, markerRange.bodyStart, markerRange.bodyEnd);
+  }
+  if (looksLikeGitDiff(lines, 0, lines.length))
+    return parseGitDiffPatch(lines, 0, lines.length);
+  throw Error("patch must include *** Begin Patch");
+}
+function findPatchMarkerRange(lines) {
+  let startIndex = lines.findIndex((line) => line.trim() === BEGIN_MARKER);
   if (startIndex === -1)
-    throw Error("patch must include *** Begin Patch");
+    return null;
   let endIndexRelative = lines.slice(startIndex + 1).findIndex((line) => line.trim() === END_MARKER);
   if (endIndexRelative === -1)
     throw Error("patch must include *** End Patch");
-  let endIndex = startIndex + 1 + endIndexRelative, operations = [], i = startIndex + 1;
+  return {
+    bodyStart: startIndex + 1,
+    bodyEnd: startIndex + 1 + endIndexRelative
+  };
+}
+function parseCodexPatch(lines, startIndex, endIndex) {
+  let operations = [], i = startIndex;
   while (i < endIndex) {
     let line = lines[i], headerLine = line.trimStart();
     if (headerLine.startsWith(ADD_PREFIX)) {
@@ -22787,39 +22980,8 @@ function parsePatch(text) {
           i += 1;
           continue;
         }
-        let header = null;
-        if (isHunkHeaderLine(lines[i])) {
-          let trimmed = lines[i].trim(), headerText = trimmed.length > 2 ? trimmed.slice(2).trim() : "";
-          header = headerText === "" ? null : headerText, i += 1;
-        } else if (hunks.length === 0) {
-          if (!isDiffLine(lines[i]))
-            throw Error("Expected @@ hunk header");
-        } else
-          throw Error("Expected @@ hunk header");
-        let hunkLines = [], isEndOfFile = !1;
-        while (i < endIndex && !isHunkHeaderLine(lines[i]) && !isPatchHeaderLine(lines[i])) {
-          let hunkLine = lines[i];
-          if (hunkLine === END_OF_FILE) {
-            isEndOfFile = !0, i += 1;
-            break;
-          }
-          if (hunkLine === "") {
-            hunkLines.push({ prefix: " ", text: "" }), i += 1;
-            continue;
-          }
-          if (![" ", "+", "-"].includes(hunkLine[0])) {
-            if (hunkLines.length === 0)
-              throw Error("Hunk lines must start with space, +, or -");
-            break;
-          }
-          hunkLines.push({
-            prefix: hunkLine[0],
-            text: hunkLine.slice(1)
-          }), i += 1;
-        }
-        if (hunkLines.length === 0)
-          throw Error("Empty hunk in Update File");
-        hunks.push({ header, lines: hunkLines, isEndOfFile });
+        let parsed = parseCodexHunk(lines, i, endIndex, hunks.length === 0);
+        hunks.push(parsed.hunk), i = parsed.nextIndex;
       }
       if (hunks.length === 0)
         throw Error("Update File requires at least one hunk");
@@ -22835,6 +22997,269 @@ function parsePatch(text) {
   if (operations.length === 0)
     throw Error("patch did not contain any operations");
   return operations;
+}
+function parseCodexHunk(lines, startIndex, endIndex, isFirstHunk) {
+  let i = startIndex, header = null, allowsStrictPair = !1;
+  if (isHunkHeaderLine(lines[i])) {
+    let trimmed = lines[i].trim(), headerText = stripUnifiedDiffHeader(trimmed);
+    header = headerText === "" ? null : headerText, allowsStrictPair = trimmed === "@@", i += 1;
+  } else if (isFirstHunk) {
+    if (!isDiffLine(lines[i]))
+      throw Error("Expected @@ hunk header");
+  } else
+    throw Error("Expected @@ hunk header");
+  if (allowsStrictPair && i < endIndex && isStrictPairBlockStart(lines[i]))
+    return parseStrictPairHunk(lines, i, endIndex);
+  let hunkLines = [], isEndOfFile = !1;
+  while (i < endIndex && !isHunkHeaderLine(lines[i]) && !isPatchHeaderLine(lines[i])) {
+    let hunkLine = lines[i];
+    if (hunkLine === END_OF_FILE) {
+      isEndOfFile = !0, i += 1;
+      break;
+    }
+    if (hunkLine === "") {
+      hunkLines.push({ prefix: " ", text: "" }), i += 1;
+      continue;
+    }
+    if (![" ", "+", "-"].includes(hunkLine[0])) {
+      if (hunkLines.length === 0)
+        throw Error("Hunk lines must start with space, +, or -");
+      break;
+    }
+    hunkLines.push({
+      prefix: hunkLine[0],
+      text: hunkLine.slice(1)
+    }), i += 1;
+  }
+  if (hunkLines.length === 0)
+    throw Error("Empty hunk in Update File");
+  return {
+    hunk: { header, lines: hunkLines, isEndOfFile },
+    nextIndex: i
+  };
+}
+function parseStrictPairHunk(lines, startIndex, endIndex) {
+  let i = startIndex, oldLines = [], hasSecondDelimiter = !1;
+  while (i < endIndex && !isPatchHeaderLine(lines[i])) {
+    let line = lines[i];
+    if (line.trim() === "@@") {
+      hasSecondDelimiter = !0, i += 1;
+      break;
+    }
+    oldLines.push(line), i += 1;
+  }
+  if (!hasSecondDelimiter)
+    throw Error("Strict @@ pair hunk requires second @@ delimiter");
+  let newLines = [];
+  while (i < endIndex && !isPatchHeaderLine(lines[i]) && !isHunkHeaderLine(lines[i])) {
+    let line = lines[i];
+    newLines.push(line), i += 1;
+  }
+  if (oldLines.length === 0 && newLines.length === 0)
+    throw Error("Empty hunk in Update File");
+  return {
+    hunk: {
+      header: null,
+      lines: [
+        ...oldLines.map((text) => ({ prefix: "-", text })),
+        ...newLines.map((text) => ({ prefix: "+", text }))
+      ],
+      isEndOfFile: !1
+    },
+    nextIndex: i
+  };
+}
+function parseGitDiffPatch(lines, startIndex, endIndex) {
+  let operations = [], i = startIndex;
+  while (i < endIndex) {
+    while (i < endIndex && lines[i].trim() === "")
+      i += 1;
+    if (i >= endIndex)
+      break;
+    let parsed = parseGitOperation(lines, i, endIndex);
+    operations.push(parsed.operation), i = parsed.nextIndex;
+  }
+  if (operations.length === 0)
+    throw Error("patch did not contain any operations");
+  return operations;
+}
+function parseGitOperation(lines, startIndex, endIndex) {
+  let i = startIndex, oldPath = null, newPath = null, renameFrom = null, renameTo = null, hunks = [], sawGitSignal = !1;
+  while (i < endIndex) {
+    let line = lines[i], trimmed = line.trimStart();
+    if (trimmed === "") {
+      i += 1;
+      continue;
+    }
+    if (trimmed.startsWith(DIFF_GIT_PREFIX)) {
+      if (sawGitSignal)
+        break;
+      sawGitSignal = !0;
+      let parsedPaths = parseDiffGitHeaderPaths(trimmed);
+      if (parsedPaths)
+        oldPath = parsedPaths.oldPath, newPath = parsedPaths.newPath;
+      i += 1;
+      continue;
+    }
+    if (line.startsWith("--- ")) {
+      oldPath = parseGitMarkerPath(line.slice(4)), sawGitSignal = !0, i += 1;
+      continue;
+    }
+    if (line.startsWith("+++ ")) {
+      newPath = parseGitMarkerPath(line.slice(4)), sawGitSignal = !0, i += 1;
+      continue;
+    }
+    if (trimmed.startsWith("rename from ")) {
+      renameFrom = parseGitRenamePath(trimmed.slice(12)), sawGitSignal = !0, i += 1;
+      continue;
+    }
+    if (trimmed.startsWith("rename to ")) {
+      renameTo = parseGitRenamePath(trimmed.slice(10)), sawGitSignal = !0, i += 1;
+      continue;
+    }
+    if (trimmed === NO_NEWLINE_MARKER) {
+      i += 1;
+      continue;
+    }
+    if (trimmed.startsWith("Binary files ") || trimmed === "GIT binary patch")
+      throw Error("Binary git patch is not supported");
+    if (isGitMetadataLine(trimmed)) {
+      sawGitSignal = !0, i += 1;
+      continue;
+    }
+    if (isHunkHeaderLine(line)) {
+      sawGitSignal = !0;
+      let parsedHunk = parseUnifiedHunk(lines, i, endIndex);
+      hunks.push(parsedHunk.hunk), i = parsedHunk.nextIndex;
+      continue;
+    }
+    if (!sawGitSignal)
+      throw Error(`Unexpected patch line: ${line}`);
+    break;
+  }
+  if (!sawGitSignal)
+    throw Error("patch did not contain any operations");
+  return {
+    operation: buildGitOperation(renameFrom ?? oldPath, renameTo ?? newPath, hunks),
+    nextIndex: i
+  };
+}
+function parseUnifiedHunk(lines, startIndex, endIndex) {
+  let i = startIndex, headerText = stripUnifiedDiffHeader(lines[i].trim()), header = headerText === "" ? null : headerText;
+  i += 1;
+  let hunkLines = [], isEndOfFile = !1;
+  while (i < endIndex) {
+    let line = lines[i], trimmed = line.trimStart();
+    if (trimmed.startsWith(DIFF_GIT_PREFIX) || line.startsWith("--- ") || line.startsWith("+++ ") || isHunkHeaderLine(line))
+      break;
+    if (trimmed === NO_NEWLINE_MARKER) {
+      i += 1;
+      continue;
+    }
+    if (line === END_OF_FILE) {
+      isEndOfFile = !0, i += 1;
+      break;
+    }
+    if (line === "") {
+      hunkLines.push({ prefix: " ", text: "" }), i += 1;
+      continue;
+    }
+    if (![" ", "+", "-"].includes(line[0])) {
+      if (hunkLines.length === 0)
+        throw Error("Hunk lines must start with space, +, or -");
+      break;
+    }
+    hunkLines.push({
+      prefix: line[0],
+      text: line.slice(1)
+    }), i += 1;
+  }
+  if (hunkLines.length === 0)
+    throw Error("Empty hunk in Update File");
+  return {
+    hunk: { header, lines: hunkLines, isEndOfFile },
+    nextIndex: i
+  };
+}
+function buildGitOperation(sourcePath, targetPath, hunks) {
+  if (!sourcePath && !targetPath)
+    throw Error("Could not determine file path from git diff");
+  if (!sourcePath) {
+    if (!targetPath)
+      throw Error("Could not determine file path from git diff");
+    ensureSafePatchPath(targetPath, "Add File");
+    let content = hunks.length === 0 ? "" : applyHunks("", hunks);
+    return { type: "add", path: targetPath, content };
+  }
+  if (!targetPath)
+    return ensureSafePatchPath(sourcePath, "Delete File"), { type: "delete", path: sourcePath };
+  return ensureSafePatchPath(sourcePath, "Update File"), ensureSafePatchPath(targetPath, "Move to"), {
+    type: "update",
+    path: sourcePath,
+    moveTo: sourcePath === targetPath ? null : targetPath,
+    hunks
+  };
+}
+function looksLikeGitDiff(lines, startIndex, endIndex) {
+  let hasFileMarkers = !1;
+  for (let i = startIndex;i < endIndex; i += 1) {
+    let line = lines[i], trimmed = line.trimStart();
+    if (trimmed.startsWith(DIFF_GIT_PREFIX))
+      return !0;
+    if (line.startsWith("--- ") || line.startsWith("+++ ")) {
+      hasFileMarkers = !0;
+      continue;
+    }
+    if (trimmed.startsWith("rename from ") || trimmed.startsWith("rename to "))
+      return !0;
+  }
+  return hasFileMarkers;
+}
+function parseDiffGitHeaderPaths(trimmed) {
+  let payload = trimmed.slice(DIFF_GIT_PREFIX.length).trim();
+  if (!payload)
+    return null;
+  let tokens = payload.split(/\s+/, 3);
+  if (tokens.length < 2)
+    return null;
+  return {
+    oldPath: normalizeGitMarkerPath(tokens[0]),
+    newPath: normalizeGitMarkerPath(tokens[1])
+  };
+}
+function parseGitMarkerPath(rawValue) {
+  let marker = rawValue.split("\t", 1)[0].trim();
+  return normalizeGitMarkerPath(marker);
+}
+function parseGitRenamePath(rawValue) {
+  let value = unquoteGitPath(rawValue.trim());
+  if (!value)
+    throw Error("Could not determine file path from git diff");
+  return value;
+}
+function normalizeGitMarkerPath(rawValue) {
+  let value = unquoteGitPath(rawValue.trim());
+  if (value === "/dev/null")
+    return null;
+  if (value.startsWith("a/") || value.startsWith("b/"))
+    return value.slice(2);
+  return value;
+}
+function unquoteGitPath(rawValue) {
+  if (rawValue.length < 2 || rawValue[0] !== '"' || rawValue[rawValue.length - 1] !== '"')
+    return rawValue;
+  return rawValue.slice(1, -1).replace(/\\\\/g, "\\").replace(/\\"/g, '"');
+}
+function isGitMetadataLine(trimmed) {
+  return trimmed.startsWith("index ") || trimmed.startsWith("old mode ") || trimmed.startsWith("new mode ") || trimmed.startsWith("new file mode ") || trimmed.startsWith("deleted file mode ") || trimmed.startsWith("similarity index ") || trimmed.startsWith("dissimilarity index ");
+}
+function isPrefixedDiffLine(line) {
+  return line !== "" && [" ", "+", "-"].includes(line[0]);
+}
+function isStrictPairBlockStart(line) {
+  if (isPatchHeaderLine(line) || isHunkHeaderLine(line))
+    return !1;
+  return !isPrefixedDiffLine(line);
 }
 function ensureSafePatchPath(rawPath, label) {
   if (/[\u0000-\u001F\u007F]/.test(rawPath))
@@ -22873,7 +23298,9 @@ async function moveFile(fromAbsolute, toAbsolute) {
   }
 }
 function applyHunks(originalText, hunks) {
-  let content = splitLines2(originalText), searchStart = 0;
+  let hadTrailingNewline = originalText.endsWith(`
+`) || originalText.endsWith(`\r
+`), content = splitLines2(originalText), searchStart = 0;
   for (let hunk of hunks) {
     if (hunk.header) {
       let headerIndex = findSequence(content, [hunk.header], searchStart, !1);
@@ -22894,7 +23321,7 @@ function applyHunks(originalText, hunks) {
       throw Error("Hunk context not found");
     content.splice(index, oldLines.length, ...newLines), searchStart = index + newLines.length;
   }
-  if (content.length > 0 && content[content.length - 1] !== "")
+  if (hadTrailingNewline && content.length > 0 && content[content.length - 1] !== "")
     content = [...content, ""];
   return content.join(`
 `);
@@ -23060,80 +23487,62 @@ function formatEntry(entry) {
 }
 
 // proxy-tools/handlers/read.ts
-var DEFAULT_READ_LIMIT = 2000, MAX_LINE_LENGTH = 500, TAB_WIDTH = 4, COMMENT_PREFIXES = ["#", "//", "--"], BLOCK_COMMENT_START = "/*", BLOCK_COMMENT_END = "*/", ANNOTATION_PREFIX = "@", TRUNCATION_ERROR2 = "file content truncated while reading";
+var DEFAULT_READ_LIMIT = 2000, TRUNCATION_ERROR2 = "file content truncated while reading";
 async function handleReadTool(args, projectPath, callUpstreamTool, readCapabilities, { format = "numbered" } = {}) {
-  let filePath = requireString(args.file_path, "file_path"), offset = toPositiveInt(args.offset, 1, "offset"), limit = toPositiveInt(args.limit, DEFAULT_READ_LIMIT, "limit"), mode = (args.mode ? String(args.mode).toLowerCase() : "slice") === "indentation" ? "indentation" : "slice", includeLineNumbers = format !== "raw", indentation = args.indentation ?? {}, anchorLine = indentation.anchor_line === void 0 || indentation.anchor_line === null ? null : toPositiveInt(indentation.anchor_line, void 0, "anchor_line"), maxLevels = toNonNegativeInt(indentation.max_levels, 0, "max_levels"), includeSiblings = Boolean(indentation.include_siblings ?? !1), includeHeader = indentation.include_header === void 0 ? !0 : Boolean(indentation.include_header), maxLines = indentation.max_lines === void 0 || indentation.max_lines === null ? null : toPositiveInt(indentation.max_lines, void 0, "max_lines"), { relative, absolute } = resolvePathInProject(projectPath, filePath, "file_path");
-  if (format !== "raw" && readCapabilities.hasReadFile) {
-    let upstreamArgs = {
-      file_path: relative,
-      offset,
-      limit
-    };
-    if (mode === "indentation") {
-      upstreamArgs.mode = "indentation";
-      let indentationPayload = {
-        include_siblings: includeSiblings,
-        include_header: includeHeader,
-        max_levels: maxLevels
-      };
-      if (anchorLine != null)
-        indentationPayload.anchor_line = anchorLine;
-      if (maxLines != null)
-        indentationPayload.max_lines = maxLines;
-      upstreamArgs.indentation = indentationPayload;
-    } else if (args.mode)
-      upstreamArgs.mode = "slice";
+  let normalizedArgs = normalizeReadArgs(args), includeLineNumbers = format !== "raw", { relative, absolute } = resolvePathInProject(projectPath, normalizedArgs.filePath, "file_path");
+  if (format !== "raw" && readCapabilities.hasReadFile)
+    return callNativeReadTool(normalizedArgs, relative, callUpstreamTool);
+  if (!readCapabilities.hasReadFile && format !== "raw")
     try {
-      let result = await callUpstreamTool("read_file", upstreamArgs), text = extractTextFromResult(result);
-      if (typeof text === "string")
-        return text;
-      if (typeof result === "string")
-        return result;
-    } catch {}
-  }
-  if (mode === "indentation")
-    try {
-      return await readIndentationMode(relative, offset, limit, {
-        anchorLine,
-        maxLevels,
-        includeSiblings,
-        includeHeader,
-        maxLines
-      }, includeLineNumbers, callUpstreamTool);
+      return await readSliceMode(relative, normalizedArgs.offset, normalizedArgs.limit, includeLineNumbers, callUpstreamTool);
     } catch (error48) {
       if (!isTruncationError(error48))
         throw error48;
       try {
-        return await readIndentationModeFromSearch(projectPath, relative, absolute, offset, limit, {
-          anchorLine,
-          maxLevels,
-          includeSiblings,
-          includeHeader,
-          maxLines
-        }, includeLineNumbers, callUpstreamTool);
+        return await readSliceModeFromSearch(projectPath, relative, absolute, normalizedArgs.offset, normalizedArgs.limit, includeLineNumbers, callUpstreamTool);
       } catch {
         throw error48;
       }
     }
-  try {
-    return await readSliceMode(relative, offset, limit, includeLineNumbers, callUpstreamTool);
-  } catch (error48) {
-    if (!isTruncationError(error48))
-      throw error48;
-    try {
-      return await readSliceModeFromSearch(projectPath, relative, absolute, offset, limit, includeLineNumbers, callUpstreamTool);
-    } catch {
-      throw error48;
-    }
-  }
+  let text = await readFileTextExact(relative, callUpstreamTool);
+  if (!readCapabilities.hasReadFile && (findTruncationMarkerLine(text) >= 0 || findTruncationMarkerSuffix(text) >= 0))
+    throw Error(TRUNCATION_ERROR2);
+  return renderReadFromText(normalizeLineEndings(text), normalizedArgs, includeLineNumbers);
 }
-function formatLine(line) {
-  if (line.length <= MAX_LINE_LENGTH)
-    return line;
-  let boundaryIndex = MAX_LINE_LENGTH - 1, boundaryChar = line.charCodeAt(boundaryIndex);
-  if (boundaryChar >= 55296 && boundaryChar <= 56319)
-    return Array.from(line).slice(0, MAX_LINE_LENGTH).join("");
-  return line.slice(0, MAX_LINE_LENGTH);
+function normalizeReadArgs(args) {
+  let filePath = requireString(args.file_path, "file_path"), offset = toPositiveInt(args.offset, 1, "offset") ?? 1, limit = toPositiveInt(args.limit, DEFAULT_READ_LIMIT, "limit") ?? DEFAULT_READ_LIMIT;
+  return {
+    filePath,
+    offset,
+    limit
+  };
+}
+async function callNativeReadTool(args, relativePath, callUpstreamTool) {
+  let upstreamArgs = {
+    file_path: relativePath,
+    offset: args.offset,
+    limit: args.limit
+  }, result = await callUpstreamTool("read_file", upstreamArgs), text = extractTextFromResult(result);
+  if (typeof text === "string")
+    return text;
+  if (typeof result === "string")
+    return result;
+  throw Error("Failed to read file contents");
+}
+function renderReadFromText(text, args, includeLineNumbers) {
+  let lines = splitLines2(text);
+  if (args.offset > lines.length)
+    throw Error("offset exceeds file length");
+  return sliceLines(lines, args.offset, args.limit, includeLineNumbers);
+}
+function sliceLines(lines, offset, limit, includeLineNumbers) {
+  let endLine = Math.min(offset - 1 + limit, lines.length), output = [];
+  for (let index = offset - 1;index < endLine; index += 1) {
+    let rawLine = lines[index], display = includeLineNumbers ? formatReadLine(rawLine) : rawLine;
+    output.push(formatOutputLine(index + 1, display, includeLineNumbers));
+  }
+  return output.join(`
+`);
 }
 function formatOutputLine(lineNumber, lineText, includeLineNumbers) {
   if (!includeLineNumbers)
@@ -23144,12 +23553,12 @@ async function readSliceMode(relativePath, offset, limit, includeLineNumbers, ca
   let requestedLines = offset + limit - 1;
   if (requestedLines <= 0)
     throw Error("limit must be greater than zero");
-  let maxLinesCount = Math.max(3, requestedLines), text = await readFileText(relativePath, {
+  let maxLinesCount = Math.max(3, requestedLines), text = await readFileTextLegacy(relativePath, {
     maxLinesCount,
     truncateMode: "START"
   }, callUpstreamTool), { text: trimmedText, wasTruncated } = trimTruncation(text), lines = splitLines2(trimmedText), truncated = wasTruncated;
   if (truncated && requestedLines > lines.length) {
-    let refreshed = await readFileText(relativePath, {
+    let refreshed = await readFileTextLegacy(relativePath, {
       maxLinesCount: Math.max(3, requestedLines),
       truncateMode: "NONE"
     }, callUpstreamTool), { text: refreshedText, wasTruncated: refreshedTruncated } = trimTruncation(refreshed);
@@ -23173,214 +23582,8 @@ async function readSliceModeFromSearch(projectPath, relativePath, absolutePath, 
   }
   let endLine = Math.min(offset + limit - 1, maxLineNumber), output = [];
   for (let lineNumber = offset;lineNumber <= endLine; lineNumber += 1) {
-    let rawLine = lineMap.get(lineNumber) ?? "", display = includeLineNumbers ? formatLine(rawLine) : rawLine;
+    let rawLine = lineMap.get(lineNumber) ?? "", display = includeLineNumbers ? formatReadLine(rawLine) : rawLine;
     output.push(formatOutputLine(lineNumber, display, includeLineNumbers));
-  }
-  return output.join(`
-`);
-}
-function measureIndent(line) {
-  let indent = 0;
-  for (let char of line)
-    if (char === " ")
-      indent += 1;
-    else if (char === "\t")
-      indent += TAB_WIDTH;
-    else
-      break;
-  return indent;
-}
-function trimEmptyRecords(records) {
-  while (records.length > 0 && records[0].raw.trim() === "")
-    records.shift();
-  while (records.length > 0 && records[records.length - 1].raw.trim() === "")
-    records.pop();
-}
-function iterateLines(text, onLine) {
-  let lineStart = 0, lineNumber = 1, length = text.length;
-  for (let i = 0;i <= length; i += 1) {
-    if (!(i === length || text.charCodeAt(i) === 10))
-      continue;
-    let lineEnd = i;
-    if (lineEnd > lineStart && text.charCodeAt(lineEnd - 1) === 13)
-      lineEnd -= 1;
-    let line = text.slice(lineStart, lineEnd);
-    if (onLine(line, lineNumber) === !1)
-      return lineNumber;
-    lineNumber += 1, lineStart = i + 1;
-  }
-  return lineNumber - 1;
-}
-async function readIndentationMode(relativePath, offset, limit, options, includeLineNumbers, callUpstreamTool) {
-  let anchorLine = options.anchorLine ?? offset;
-  if (anchorLine <= 0)
-    throw Error("anchor_line exceeds file length");
-  let guardLimit = options.maxLines ?? limit;
-  if (guardLimit <= 0)
-    throw Error("max_lines must be greater than zero");
-  let maxLinesCount = Math.max(3, anchorLine + guardLimit), text = await readFileText(relativePath, {
-    maxLinesCount,
-    truncateMode: "START"
-  }, callUpstreamTool), { text: trimmedText, wasTruncated } = trimTruncation(text);
-  try {
-    return readIndentationFromText(trimmedText, offset, limit, options, includeLineNumbers);
-  } catch (error48) {
-    if (wasTruncated && isAnchorLineError(error48)) {
-      let refreshed = await readFileText(relativePath, {
-        maxLinesCount: Math.max(3, anchorLine + guardLimit),
-        truncateMode: "NONE"
-      }, callUpstreamTool), { text: refreshedText, wasTruncated: refreshedTruncated } = trimTruncation(refreshed);
-      try {
-        return readIndentationFromText(refreshedText, offset, limit, options, includeLineNumbers);
-      } catch (refreshedError) {
-        if (refreshedTruncated && isAnchorLineError(refreshedError))
-          throw Error(TRUNCATION_ERROR2);
-        throw refreshedError;
-      }
-    }
-    throw error48;
-  }
-}
-async function readIndentationModeFromSearch(projectPath, relativePath, absolutePath, offset, limit, options, includeLineNumbers, callUpstreamTool) {
-  let anchorLine = options.anchorLine ?? offset;
-  if (anchorLine <= 0)
-    throw Error("anchor_line exceeds file length");
-  let guardLimit = options.maxLines ?? limit;
-  if (guardLimit <= 0)
-    throw Error("max_lines must be greater than zero");
-  let requestedLines = anchorLine + guardLimit, { lineMap, maxLineNumber, hasMore } = await readLinesViaSearch(projectPath, relativePath, absolutePath, requestedLines, callUpstreamTool);
-  if (maxLineNumber < anchorLine) {
-    if (hasMore)
-      throw Error(TRUNCATION_ERROR2);
-    throw Error("anchor_line exceeds file length");
-  }
-  let cappedMaxLine = Math.min(requestedLines, maxLineNumber), lines = [];
-  for (let lineNumber = 1;lineNumber <= cappedMaxLine; lineNumber += 1)
-    lines.push(lineMap.get(lineNumber) ?? "");
-  let text = lines.join(`
-`);
-  return readIndentationFromText(text, offset, limit, options, includeLineNumbers);
-}
-function readIndentationFromText(text, offset, limit, options, includeLineNumbers) {
-  let anchorLine = options.anchorLine ?? offset;
-  if (anchorLine <= 0)
-    throw Error("anchor_line exceeds file length");
-  let guardLimit = options.maxLines ?? limit;
-  if (guardLimit <= 0)
-    throw Error("max_lines must be greater than zero");
-  let targetLimit = Math.min(limit, guardLimit), maxBefore = Math.max(0, targetLimit - 1), maxAfter = maxBefore, beforeBuffer = [], beforeStart = 0, afterBuffer = [], anchorRecord = null, minIndent = 0, previousIndent = 0, inBlockComment = !1, belowDone = !1, seenMinIndent = !1;
-  if (iterateLines(text, (line, lineNumber) => {
-    if (line === TRUNCATION_MARKER)
-      return !1;
-    let trimmed = line.trim(), isBlank = trimmed === "", isHeader = !1;
-    if (!isBlank) {
-      if (inBlockComment) {
-        if (isHeader = !0, trimmed.includes(BLOCK_COMMENT_END))
-          inBlockComment = !1;
-      } else if (COMMENT_PREFIXES.some((prefix) => trimmed.startsWith(prefix)))
-        isHeader = !0;
-      else if (trimmed.startsWith(BLOCK_COMMENT_START)) {
-        if (isHeader = !0, !trimmed.includes(BLOCK_COMMENT_END))
-          inBlockComment = !0;
-      } else if (trimmed.startsWith("*"))
-        isHeader = !0;
-      else if (trimmed.startsWith(ANNOTATION_PREFIX))
-        isHeader = !0;
-    }
-    let indent = previousIndent;
-    if (!isBlank)
-      indent = measureIndent(line), previousIndent = indent;
-    let effectiveIndent = indent;
-    if (lineNumber < anchorLine) {
-      if (maxBefore > 0) {
-        if (beforeBuffer.push({ number: lineNumber, raw: line, effectiveIndent, isHeader }), beforeBuffer.length - beforeStart > maxBefore) {
-          if (beforeStart += 1, beforeStart > 2048)
-            beforeBuffer.splice(0, beforeStart), beforeStart = 0;
-        }
-      }
-      return !0;
-    }
-    if (lineNumber === anchorLine) {
-      if (anchorRecord = { number: lineNumber, raw: line, effectiveIndent, isHeader }, minIndent = options.maxLevels === 0 ? 0 : Math.max(0, effectiveIndent - options.maxLevels * TAB_WIDTH), maxAfter === 0)
-        return !1;
-      return !0;
-    }
-    if (!anchorRecord)
-      return !0;
-    if (belowDone || afterBuffer.length >= maxAfter)
-      return !1;
-    if (effectiveIndent < minIndent)
-      return belowDone = !0, !1;
-    if (!options.includeSiblings && effectiveIndent === minIndent) {
-      if (seenMinIndent)
-        return belowDone = !0, !1;
-      seenMinIndent = !0;
-    }
-    if (afterBuffer.push({ number: lineNumber, raw: line, effectiveIndent, isHeader }), afterBuffer.length >= maxAfter)
-      return !1;
-    return !0;
-  }), beforeStart > 0)
-    beforeBuffer.splice(0, beforeStart), beforeStart = 0;
-  if (!anchorRecord)
-    throw Error("anchor_line exceeds file length");
-  let headerRecords = [];
-  if (options.includeHeader && beforeBuffer.length > 0) {
-    let idx = beforeBuffer.length - 1;
-    while (idx >= 0 && beforeBuffer[idx].isHeader)
-      idx -= 1;
-    let start = idx + 1;
-    if (start < beforeBuffer.length) {
-      let contiguous = beforeBuffer.slice(start), maxHeader = Math.max(0, targetLimit - 1), takeCount = Math.min(contiguous.length, maxHeader);
-      if (takeCount > 0)
-        headerRecords = contiguous.slice(contiguous.length - takeCount), beforeBuffer.splice(beforeBuffer.length - takeCount, takeCount);
-    }
-  }
-  let available = 1 + beforeBuffer.length + afterBuffer.length + headerRecords.length, finalLimit = Math.min(targetLimit, available);
-  if (finalLimit === 1) {
-    let lineText = includeLineNumbers ? formatLine(anchorRecord.raw) : anchorRecord.raw;
-    return formatOutputLine(anchorRecord.number, lineText, includeLineNumbers);
-  }
-  let i = beforeBuffer.length - 1, j = 0, iCounterMinIndent = 0, jCounterMinIndent = 0, out = headerRecords.length > 0 ? [...headerRecords, anchorRecord] : [anchorRecord];
-  while (out.length < finalLimit) {
-    let progressed = 0;
-    if (i >= 0) {
-      let record3 = beforeBuffer[i];
-      if (record3.effectiveIndent >= minIndent) {
-        if (out.unshift(record3), progressed += 1, i -= 1, record3.effectiveIndent === minIndent && !options.includeSiblings)
-          if (options.includeHeader && record3.isHeader || iCounterMinIndent === 0)
-            iCounterMinIndent += 1;
-          else
-            out.shift(), progressed -= 1, i = -1;
-        if (out.length >= finalLimit)
-          break;
-      } else
-        i = -1;
-    }
-    if (j < afterBuffer.length) {
-      let record3 = afterBuffer[j];
-      if (record3.effectiveIndent >= minIndent) {
-        if (out.push(record3), progressed += 1, j += 1, record3.effectiveIndent === minIndent && !options.includeSiblings) {
-          if (jCounterMinIndent > 0)
-            out.pop(), progressed -= 1, j = afterBuffer.length;
-          jCounterMinIndent += 1;
-        }
-      } else
-        j = afterBuffer.length;
-    }
-    if (progressed === 0)
-      break;
-  }
-  return trimEmptyRecords(out), out.map((record3) => {
-    let lineText = includeLineNumbers ? formatLine(record3.raw) : record3.raw;
-    return formatOutputLine(record3.number, lineText, includeLineNumbers);
-  }).join(`
-`);
-}
-function sliceLines(lines, offset, limit, includeLineNumbers) {
-  let end = Math.min(offset - 1 + limit, lines.length), output = [];
-  for (let index = offset - 1;index < end; index += 1) {
-    let rawLine = lines[index], display = includeLineNumbers ? formatLine(rawLine) : rawLine;
-    output.push(formatOutputLine(index + 1, display, includeLineNumbers));
   }
   return output.join(`
 `);
@@ -23403,9 +23606,6 @@ function stripTrailingLineBreak(text) {
 `) || text.endsWith("\r"))
     return text.slice(0, -1);
   return text;
-}
-function isAnchorLineError(error48) {
-  return error48 instanceof Error && error48.message === "anchor_line exceeds file length";
 }
 function isTruncationError(error48) {
   return error48 instanceof Error && error48.message === TRUNCATION_ERROR2;
