@@ -81,6 +81,7 @@
                         serviceImplementation="org.jetbrains.plugins.gradle.GradleJavaIdeManager"/>
 
     <treeStructureProvider implementation="org.jetbrains.plugins.gradle.projectView.GradleTreeStructureProvider" order="last"/>
+    <projectViewNodeDecorator implementation="org.jetbrains.plugins.gradle.projectView.GradleModuleDirectoryDecorator" order="first"/>
     <attachSourcesProviderFilter implementation="org.jetbrains.plugins.gradle.editor.GradleAttachSourcesProviderFilter"/>
 
     <compileServer.plugin classpath="gradle-jps.jar"/>
