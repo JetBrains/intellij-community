@@ -106,41 +106,6 @@ internal class UvTool : Tool {
     TomlDependencySpecification.PathDependency("tool.uv.sources"),
     TomlDependencySpecification.Pep621Dependency("tool.uv.dev-dependencies"),
   )
-
-  @RequiresBackgroundThread
-  private fun getWorkspaceMembers(toml: TomlTable): WorkspaceInfo? {
-    val workspace = toml.getTable("tool.uv.workspace") ?: return null
-    val members = workspace.getArrayOrEmpty("members").asMatchers
-    val exclude = workspace.getArrayOrEmpty("exclude").asMatchers
-    if (members.isEmpty()) return null
-    return WorkspaceInfo(members = members, exclude = exclude)
-  }
-
-  @RequiresBackgroundThread
-  private fun getUvDependencies(pyProject: PyProjectTomlProject): DependencyInfo? {
-    val sources = pyProject.pyProjectToml.toml.getTable("tool.uv.sources") ?: return null
-    val deps = extractDependencyNamesWithoutExtras(pyProject.pyProjectToml) ?: return null
-    val workspaceDeps = mutableListOf<ProjectName>()
-    val pathDeps = hashSetOf<Path>()
-    for ((depName, depTable) in sources.toMap().entries) {
-      if (depName !in deps) continue
-      val table = depTable as? TomlTable ?: continue
-
-      if (table.getBoolean("workspace") == true) {
-        workspaceDeps.add(ProjectName(depName))
-      }
-      else {
-        val path = table.getString("path") ?: continue
-        try {
-          pathDeps.add(pyProject.root.resolve(path).normalize())
-        }
-        catch (e: InvalidPathException) {
-          logger.info("Can't resolve $path against ${pyProject.root}", e)
-        }
-      }
-    }
-    return DependencyInfo(workspaceDeps = workspaceDeps.toSet(), pathDeps = pathDeps)
-  }
 }
 
 // Slightly more permissive than PEP 508 IDENTIFIER (allows leading underscores & consecutive separators),
@@ -170,3 +135,38 @@ private val TomlArray.asMatchers: List<PathMatcher> get() = toList().filterIsIns
 private val logger = fileLogger()
 
 private data class DependencyInfo(val workspaceDeps: Set<ProjectName>, val pathDeps: Set<Directory>)
+
+@RequiresBackgroundThread
+private fun getWorkspaceMembers(toml: TomlTable): WorkspaceInfo? {
+  val workspace = toml.getTable("tool.uv.workspace") ?: return null
+  val members = workspace.getArrayOrEmpty("members").asMatchers
+  val exclude = workspace.getArrayOrEmpty("exclude").asMatchers
+  if (members.isEmpty()) return null
+  return WorkspaceInfo(members = members, exclude = exclude)
+}
+
+@RequiresBackgroundThread
+private fun getUvDependencies(pyProject: PyProjectTomlProject): DependencyInfo? {
+  val sources = pyProject.pyProjectToml.toml.getTable("tool.uv.sources") ?: return null
+  val deps = extractDependencyNamesWithoutExtras(pyProject.pyProjectToml) ?: return null
+  val workspaceDeps = mutableListOf<ProjectName>()
+  val pathDeps = hashSetOf<Path>()
+  for ((depName, depTable) in sources.toMap().entries) {
+    if (depName !in deps) continue
+    val table = depTable as? TomlTable ?: continue
+
+    if (table.getBoolean("workspace") == true) {
+      workspaceDeps.add(ProjectName(depName))
+    }
+    else {
+      val path = table.getString("path") ?: continue
+      try {
+        pathDeps.add(pyProject.root.resolve(path).normalize())
+      }
+      catch (e: InvalidPathException) {
+        logger.info("Can't resolve $path against ${pyProject.root}", e)
+      }
+    }
+  }
+  return DependencyInfo(workspaceDeps = workspaceDeps.toSet(), pathDeps = pathDeps)
+}
