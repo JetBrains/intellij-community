@@ -215,7 +215,7 @@ private suspend fun obtainOrCreateStreamableTransport(
 ): StreamableHttpServerTransport? {
   val incomingSessionId = call.request.headers[MCP_SESSION_ID_HEADER]
   if (incomingSessionId != null) {
-    val existing = activeTransports[incomingSessionId]
+    val existing = activeTransports[incomingSessionId] ?: pendingTransports[incomingSessionId]
     if (existing != null) return existing
     call.respond(HttpStatusCode.NotFound, "Streamable HTTP session not found")
     return null
