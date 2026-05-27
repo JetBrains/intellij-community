@@ -13,6 +13,7 @@ import com.intellij.execution.process.ColoredProcessHandler;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.process.PtyBasedProcess;
 import com.intellij.execution.ui.ConsoleView;
@@ -404,7 +405,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
       if (outputType != ProcessOutputTypes.STDOUT) {
         contentType = ConsoleViewContentType.getConsoleViewType(outputType);
       }
-      if (outputType == ProcessOutputTypes.SYSTEM) {
+      if (ProcessOutputType.isSystem(outputType)) {
         text = StringUtil.convertLineSeparators(text, LineSeparator.CRLF.getSeparatorString());
       }
       else if (!isProcessWithPty && myConvertLfToCrlfForNonPtyProcess) {

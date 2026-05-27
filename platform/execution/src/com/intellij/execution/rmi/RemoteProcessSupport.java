@@ -12,6 +12,7 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.DefaultProgramRunnerKt;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -423,7 +424,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
         if (outputType == ProcessOutputTypes.STDERR) {
           LOG.warn("Remote process stderr:" + event.getText());
         } else
-        if (outputType == ProcessOutputTypes.SYSTEM) {
+        if (ProcessOutputType.isSystem(outputType)) {
           LOG.info("Remote process system:" + event.getText());
         }
 

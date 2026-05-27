@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.groovy;
 
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
@@ -56,7 +57,7 @@ public class GroovycOutputParser {
       LOG.debug("Received from groovyc " + outputType + ": " + text);
     }
 
-    if (outputType == ProcessOutputTypes.SYSTEM) {
+    if (ProcessOutputType.isSystem(outputType)) {
       return;
     }
 

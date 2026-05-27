@@ -5,6 +5,7 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.ColoredProcessHandler
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessListener
+import com.intellij.execution.process.ProcessOutputType
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.mcpserver.clientInfo
 import com.intellij.mcpserver.mcpFail
@@ -68,7 +69,7 @@ internal suspend fun executeShellCommand(
   val exitCode = CompletableDeferred<Int>()
   processHandler.addProcessListener(object : ProcessListener {
     override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-      if (outputType == ProcessOutputTypes.SYSTEM) return
+      if (ProcessOutputType.isSystem(outputType)) return
       output.append(event.text)
     }
 

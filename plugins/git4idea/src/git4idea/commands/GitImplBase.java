@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.externalProcessAuthHelper.AuthenticationMode;
 import com.intellij.openapi.application.AccessToken;
@@ -395,7 +396,7 @@ public abstract class GitImplBase implements Git {
     public void onLineAvailable(String line, Key outputType) {
       try {
         if (StringUtil.isEmptyOrSpaces(line)) return;
-        if (outputType == ProcessOutputTypes.SYSTEM) return;
+        if (ProcessOutputType.isSystem(outputType)) return;
         if (outputType == ProcessOutputTypes.STDOUT && myHandler.isStdoutSuppressed()) return;
         if (outputType == ProcessOutputTypes.STDERR && myHandler.isStderrSuppressed()) return;
 

@@ -4,6 +4,7 @@ package org.jetbrains.idea.svn.commandLine;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -39,7 +40,7 @@ public class TerminalProcessHandler extends SvnProcessHandler {
 
   @Override
   public void notifyTextAvailable(@NotNull String text, @NotNull Key outputType) {
-    if (ProcessOutputTypes.SYSTEM.equals(outputType)) {
+    if (ProcessOutputType.isSystem(outputType)) {
       super.notifyTextAvailable(text, outputType);
     }
     else {
@@ -103,7 +104,7 @@ public class TerminalProcessHandler extends SvnProcessHandler {
   protected @NotNull Key resolveOutputType(@NotNull String line, @NotNull Key outputType) {
     Key result = outputType;
 
-    if (!ProcessOutputTypes.SYSTEM.equals(outputType)) {
+    if (!ProcessOutputType.isSystem(outputType)) {
       Matcher errorMatcher = SvnUtil.ERROR_PATTERN.matcher(line);
       Matcher warningMatcher = SvnUtil.WARNING_PATTERN.matcher(line);
 

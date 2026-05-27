@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.execution;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.application.ApplicationManager;
@@ -72,7 +73,7 @@ public final class MavenRunner implements PersistentStateComponent<MavenRunnerSe
           if (outputType == ProcessOutputTypes.STDERR || eventText.contains("[ERROR]")) {
             MavenLog.LOG.warn(eventText);
           }
-          else if (outputType == ProcessOutputTypes.SYSTEM) {
+          else if (ProcessOutputType.isSystem(outputType)) {
             MavenLog.LOG.info(eventText);
           }
           else if (outputType == ProcessOutputTypes.STDOUT) {

@@ -67,7 +67,7 @@ public class ProcessStreamsSynchronizer {
     long nowNano = getNanoTime();
     synchronized (myLock) {
       ProcessOutputType baseOutputType = outputType.getBaseOutputType();
-      if (ProcessOutputType.SYSTEM.equals(baseOutputType)) {
+      if (ProcessOutputType.isSystem(baseOutputType)) {
         handleSystemOutput(flushRunnable, nowNano);
         return;
       }

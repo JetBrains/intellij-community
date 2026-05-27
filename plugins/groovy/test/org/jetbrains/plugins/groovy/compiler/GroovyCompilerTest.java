@@ -10,6 +10,7 @@ import com.intellij.execution.impl.DefaultJavaProgramRunner;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.application.PathManager;
@@ -984,7 +985,7 @@ public void testMultilineStrings() {
                                           @Override
                                           public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
                                             DefaultGroovyMethods.println(this, "stdout: " + event.getText());
-                                            if (!ProcessOutputTypes.SYSTEM.equals(outputType)) {
+                                             if (!ProcessOutputType.isSystem(outputType)) {
                                               if (!exceptionFound.get()) {
                                                 exceptionFound.set(event.getText().contains(
                                                   "java.lang.IllegalArgumentException: Argument for @NotNull parameter 'param' of Bar.xxx must not be null"));
