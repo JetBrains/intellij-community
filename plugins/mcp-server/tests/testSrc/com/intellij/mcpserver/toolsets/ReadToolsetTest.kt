@@ -97,11 +97,54 @@ class ReadToolsetTest : GeneralMcpToolsetTestBase() {
             buildJsonObject {
                 put("file_path", JsonPrimitive(project.projectDirectory.relativizeIfPossible(readFile)))
                 put("offset", JsonPrimitive(3))
-                put("limit", JsonPrimitive(2))
+                put("limit", JsonPrimitive(4))
             }
         ) { actualResult ->
             val text = actualResult.textContent.text
-            assertThat(text).contains("L3: fun foo() {", "L4:   val x = 1")
+            // 11 lines total, offset=3, limit=4 => 9 available > 4 => head+tail truncation
+            // head: 2 lines (L3, L4), tail: 2 lines (L10, L11), middle truncated
+            assertThat(text).contains("L3: fun foo() {")
+            assertThat(text).contains("L4:   val x = 1")
+            assertThat(text).contains("lines truncated")
+            assertThat(text).contains("L11: }")
+        }
+    }
+
+    @Test
+    fun read_file_truncates_head_tail_when_limit_exceeded() = runBlocking(Dispatchers.Default) {
+        testMcpTool(
+            ReadToolset::read_file.name,
+            buildJsonObject {
+                put("file_path", JsonPrimitive(project.projectDirectory.relativizeIfPossible(readFile)))
+                put("offset", JsonPrimitive(1))
+                put("limit", JsonPrimitive(4))
+            }
+        ) { actualResult ->
+            val text = actualResult.textContent.text
+            // 11 lines, limit=4 => head: 2 lines (L1, L2), tail: 2 lines (L10, L11), 7 lines truncated (L3-L9)
+            assertThat(text).startsWith("L1: // Header A")
+            assertThat(text).contains("L2: // Header B")
+            assertThat(text).contains("\u20267 lines truncated\u2026")
+            assertThat(text).contains("L10:   println(\"bar\")")
+            assertThat(text).endsWith("L11: }")
+        }
+    }
+
+    @Test
+    fun read_file_returns_all_lines_when_limit_covers_file() = runBlocking(Dispatchers.Default) {
+        testMcpTool(
+            ReadToolset::read_file.name,
+            buildJsonObject {
+                put("file_path", JsonPrimitive(project.projectDirectory.relativizeIfPossible(readFile)))
+                put("offset", JsonPrimitive(1))
+                put("limit", JsonPrimitive(20))
+            }
+        ) { actualResult ->
+            val text = actualResult.textContent.text
+            // 11 lines, limit=20 => no truncation, all lines shown
+            assertThat(text).startsWith("L1: // Header A")
+            assertThat(text).endsWith("L11: }")
+            assertThat(text).doesNotContain("truncated")
         }
     }
 
