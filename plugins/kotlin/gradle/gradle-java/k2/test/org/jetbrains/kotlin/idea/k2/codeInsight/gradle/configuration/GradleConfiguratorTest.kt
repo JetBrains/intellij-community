@@ -991,6 +991,11 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
+    fun testAddToEmptyAddAllToFreeCompilerArgs() {
+        addLanguageFeature(LanguageFeature.AllowEmptyIntersectionsInResultTypeResolver)
+    }
+
+    @Test
     @TargetVersions("<9.0.0")
     fun testChangeLanguageVersionInCompilerOptionsGroovy() {
         changeLanguageVersion("1.6")
