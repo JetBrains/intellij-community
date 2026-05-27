@@ -34,6 +34,11 @@ class BacktickReference(element: MarkdownCodeSpan) :
     return false
   }
 
+  override fun bindToElement(element: PsiElement): PsiElement {
+    if (isReferenceTo(element)) return getElement()
+    return super.bindToElement(element)
+  }
+
   override fun multiResolve(incompleteCode: Boolean): Array<ResolveResult> {
     val file = element.containingFile
     return ResolveCache.getInstance(file.project).resolveWithCaching(this, Resolver, true, incompleteCode, file)
