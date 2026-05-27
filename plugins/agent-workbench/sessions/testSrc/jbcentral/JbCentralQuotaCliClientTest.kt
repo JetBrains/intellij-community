@@ -5,12 +5,16 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.SystemInfoRt
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import java.nio.file.Files
+import org.junit.jupiter.api.io.TempDir
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
 class JbCentralQuotaCliClientTest {
+  @TempDir
+  lateinit var tempDir: Path
+
   @Test
   fun parsesQuotaOutputFromConfiguredCommand() {
     val script = createStubCli(stdout = loadFixture("quota-output.txt"), exitCode = 0)
@@ -46,13 +50,17 @@ class JbCentralQuotaCliClientTest {
   }
 
   private fun loadFixture(name: String): String {
-    return fixturePath(name).readText()
+    val path = fixturePath(name)
+    return try {
+      path.readText()
+    }
+    catch (_: NoSuchFileException) {
+      error("Missing fixture: $path")
+    }
   }
 
   private fun fixturePath(name: String): Path {
-    val path = Path.of(PathManager.getHomePath(), "community", "plugins", "agent-workbench", "sessions", "testData", "jbcentral", name)
-    check(Files.exists(path)) { "Missing fixture: $path" }
-    return path
+    return Path.of(PathManager.getHomePath(), "community", "plugins", "agent-workbench", "sessions", "testData", "jbcentral", name)
   }
 
   private fun withJbCentralPath(path: Path, action: () -> Unit) {
@@ -76,7 +84,6 @@ class JbCentralQuotaCliClientTest {
     stderr: String = "",
     exitCode: Int,
   ): Path {
-    val tempDir = Files.createTempDirectory("jbcentral-quota-cli-test")
     return if (SystemInfoRt.isWindows) {
       tempDir.resolve("jbcentral.cmd").apply {
         writeText(

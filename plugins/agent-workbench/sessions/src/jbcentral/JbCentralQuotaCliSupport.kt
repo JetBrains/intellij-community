@@ -3,6 +3,8 @@ package com.intellij.agent.workbench.sessions.jbcentral
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.util.SystemProperties
+import org.jetbrains.annotations.TestOnly
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -20,7 +22,7 @@ object JbCentralQuotaCliSupport {
 
     findExecutableOnPath()?.let { return it }
 
-    val homeDir = System.getProperty("user.home") ?: return null
+    val homeDir = SystemProperties.getUserHome().takeIf(String::isNotBlank) ?: return null
     for (candidate in fallbackCandidates(homeDir)) {
       if (Files.isRegularFile(candidate)) {
         return candidate.toAbsolutePath().toString()
@@ -37,6 +39,9 @@ object JbCentralQuotaCliSupport {
   }
 
   private fun findExecutableOnPath(): String? {
+    JbCentralQuotaCliSupportTestHook.pathLookupOverride()?.let { override ->
+      return override()
+    }
     for (command in commandCandidates()) {
       PathEnvironmentVariableUtil.findExecutableInPathOnAnyOS(command)?.absolutePath?.let { return it }
     }
@@ -59,5 +64,19 @@ object JbCentralQuotaCliSupport {
     else {
       listOf(JBCENTRAL_COMMAND, LEGACY_COMMAND)
     }
+  }
+}
+
+internal object JbCentralQuotaCliSupportTestHook {
+  @Volatile
+  private var pathLookupOverride: (() -> String?)? = null
+
+  fun pathLookupOverride(): (() -> String?)? = pathLookupOverride
+
+  @TestOnly
+  fun replacePathLookupForTest(pathLookup: (() -> String?)?): (() -> String?)? {
+    val previous = pathLookupOverride
+    pathLookupOverride = pathLookup
+    return previous
   }
 }

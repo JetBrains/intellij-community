@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit
 import org.junit.jupiter.api.io.TempDir
 import java.math.BigDecimal
 import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.time.Instant
 import kotlin.io.path.readText
@@ -472,8 +473,13 @@ private fun loadRolloutFixture(projectDir: Path): List<String> {
     "testData",
     COST_ROLLOUT_FIXTURE_PATH,
   )
-  check(Files.exists(fixturePath)) { "Missing fixture: $fixturePath" }
-  return fixturePath.readText()
+  val fixtureText = try {
+    fixturePath.readText()
+  }
+  catch (_: NoSuchFileException) {
+    error("Missing fixture: $fixturePath")
+  }
+  return fixtureText
     .replace("__PROJECT_DIR__", projectDir.toString().replace("\\", "\\\\"))
     .lineSequence()
     .filter(String::isNotBlank)

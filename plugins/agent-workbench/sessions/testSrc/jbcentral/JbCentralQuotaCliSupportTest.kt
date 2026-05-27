@@ -2,37 +2,46 @@
 package com.intellij.agent.workbench.sessions.jbcentral
 
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.util.SystemProperties
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.writeText
 
 class JbCentralQuotaCliSupportTest {
+  @TempDir
+  lateinit var tempDir: Path
+
   @Test
   fun configuredPathMustPointToExistingFile() {
-    withJbCentralPath(Files.createTempDirectory("missing-jbcentral").resolve(executableName())) {
+    withJbCentralPath(tempDir.resolve("missing-jbcentral").resolve(executableName())) {
       assertThat(JbCentralQuotaCliSupport.findExecutable()).isNull()
     }
   }
 
   @Test
   fun fallsBackToOfficialInstallDirectory() {
-    val homeDir = Files.createTempDirectory("jbcentral-home")
+    val homeDir = tempDir.resolve("jbcentral-home-official")
     val executable = createStubExecutable(homeDir.resolve(".local").resolve("bin").resolve(executableName()))
 
-    withUserHome(homeDir) {
-      assertThat(JbCentralQuotaCliSupport.findExecutable()).isEqualTo(executable.toAbsolutePath().toString())
+    withPathLookupDisabled {
+      withUserHome(homeDir) {
+        assertThat(JbCentralQuotaCliSupport.findExecutable()).isEqualTo(executable.toAbsolutePath().toString())
+      }
     }
   }
 
   @Test
   fun ignoresRemovedLocalMachineFallbackDirectory() {
-    val homeDir = Files.createTempDirectory("jbcentral-home")
+    val homeDir = tempDir.resolve("jbcentral-home-legacy")
     createStubExecutable(homeDir.resolve("JetBrains").resolve("central-cli").resolve(executableName()))
 
-    withUserHome(homeDir) {
-      assertThat(JbCentralQuotaCliSupport.findExecutable()).isNull()
+    withPathLookupDisabled {
+      withUserHome(homeDir) {
+        assertThat(JbCentralQuotaCliSupport.findExecutable()).isNull()
+      }
     }
   }
 
@@ -47,18 +56,23 @@ class JbCentralQuotaCliSupportTest {
   }
 
   private fun withUserHome(path: Path, action: () -> Unit) {
-    val previous = System.getProperty("user.home")
+    val previous = SystemProperties.getUserHome()
     System.setProperty("user.home", path.toAbsolutePath().toString())
     try {
       action()
     }
     finally {
-      if (previous == null) {
-        System.clearProperty("user.home")
-      }
-      else {
-        System.setProperty("user.home", previous)
-      }
+      System.setProperty("user.home", previous)
+    }
+  }
+
+  private fun withPathLookupDisabled(action: () -> Unit) {
+    val previous = JbCentralQuotaCliSupportTestHook.replacePathLookupForTest { null }
+    try {
+      action()
+    }
+    finally {
+      JbCentralQuotaCliSupportTestHook.replacePathLookupForTest(previous)
     }
   }
 

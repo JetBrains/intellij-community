@@ -37,7 +37,9 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import java.util.concurrent.TimeUnit
+import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
+import java.nio.file.Path
 
 @TestApplication
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
@@ -45,6 +47,9 @@ class AgentSessionsToolWindowFactorySwingTest {
   companion object {
     private const val SEPARATOR_MARKER = "<separator>"
   }
+
+  @TempDir
+  lateinit var tempDir: Path
 
   @Test
   fun descriptorPointsToolWindowToSwingFactoryWithoutComposeEntries() {
@@ -95,7 +100,7 @@ class AgentSessionsToolWindowFactorySwingTest {
     val hintStateService = service<JbCentralQuotaHintStateService>()
     hintStateService.loadState(JbCentralQuotaHintStateService.State(eligible = true, acknowledged = false))
 
-    withJbCentralPath(Files.createTempDirectory("missing-jbcentral").resolve(jbCentralExecutableName())) {
+    withJbCentralPath(tempDir.resolve("missing-jbcentral").resolve(jbCentralExecutableName())) {
       createAgentSessionsNorthComponents(
         project = ProjectManager.getInstance().defaultProject,
         parentDisposable = disposable,
@@ -110,7 +115,8 @@ class AgentSessionsToolWindowFactorySwingTest {
   fun northComponentsMarkJbCentralEligibleWhenCliIsAvailable(@TestDisposable disposable: Disposable) {
     val hintStateService = service<JbCentralQuotaHintStateService>()
     hintStateService.loadState(JbCentralQuotaHintStateService.State())
-    val executable = Files.createTempDirectory("jbcentral-cli").resolve(jbCentralExecutableName())
+    val executable = tempDir.resolve("jbcentral-cli").resolve(jbCentralExecutableName())
+    Files.createDirectories(executable.parent)
     Files.writeString(executable, "stub")
 
     withJbCentralPath(executable) {
