@@ -27,8 +27,13 @@ class FleetKspProcessorProvider : SymbolProcessorProvider {
   }
 }
 
-private const val PLUGIN_SERVICE_FQN = "fleet.kernel.plugins.Plugin"
+private data class ServiceDescriptor(val interfaceFqn: String, val returnValue: String)
+
 private const val ENTITY_TYPE_FQN = "com.jetbrains.rhizomedb.EntityType"
+private val SERVICE_DESCRIPTORS = setOf(ServiceDescriptor("fleet.ship.TypedShipLauncher", "fleet.ship.TypedShipLauncher<*>"),
+                                        ServiceDescriptor("fleet.kernel.plugins.Plugin", "fleet.kernel.plugins.Plugin<*>"),
+                                        ServiceDescriptor("fleet.dock.api.ShipCliHandler", "fleet.dock.api.ShipCliHandler"),
+                                        ServiceDescriptor("fleet.dock.api.ShipLauncherProvider", "fleet.dock.api.ShipLauncherProvider")).associateBy { it.interfaceFqn }
 
 class FleetKspProcessor(
   private val codeGenerator: CodeGenerator,
@@ -36,7 +41,7 @@ class FleetKspProcessor(
   private val logger: KSPLogger,
 ) : SymbolProcessor {
   private val entityTypeFqns = mutableListOf<String>()
-  private val pluginFqns = mutableListOf<String>()
+  private val serviceFqns = mutableMapOf<ServiceDescriptor, MutableList<String>>()
   private var shortestPackageName: String? = null
   private var moduleName: String? = null
 
@@ -47,17 +52,24 @@ class FleetKspProcessor(
       override fun visitClassDeclaration(classDeclaration: KSClassDeclaration, data: Unit) {
         super.visitClassDeclaration(classDeclaration, data)
 
-        if (classDeclaration.classKind == ClassKind.OBJECT) {
-          if (classDeclaration.hasSuperType(ENTITY_TYPE_FQN)) {
-            classDeclaration.qualifiedName?.asString()?.let {
-              entityTypeFqns.add(it)
+        when {
+          classDeclaration.classKind == ClassKind.OBJECT -> {
+            if (classDeclaration.hasSuperType(ENTITY_TYPE_FQN)) {
+              classDeclaration.qualifiedName?.asString()?.let {
+                entityTypeFqns.add(it)
+              }
             }
           }
-        }
-        else if (!classDeclaration.isPrivate() && classDeclaration.hasSuperType(PLUGIN_SERVICE_FQN)) {
-          classDeclaration.qualifiedName?.asString()?.let {
-            updateTargetPackageIfNeeded(classDeclaration.containingFile)
-            pluginFqns.add(it)
+          !classDeclaration.isPrivate() -> {
+            classDeclaration.getAllSuperTypes().forEach { superType ->
+              superType.declaration.qualifiedName?.asString()?.let { superTypeFqn ->
+                if (superTypeFqn in SERVICE_DESCRIPTORS) {
+                  updateTargetPackageIfNeeded(classDeclaration.containingFile)
+                  serviceFqns.getOrPut(SERVICE_DESCRIPTORS.getValue(superTypeFqn)) { mutableListOf() }
+                    .add(classDeclaration.qualifiedName?.asString()!!)
+                }
+              }
+            }
           }
         }
       }
@@ -69,8 +81,8 @@ class FleetKspProcessor(
         declarationContainer.declarations.forEach { it.accept(this, data) }
       }
 
-      private fun KSClassDeclaration.hasSuperType(annotationFqn: String): Boolean {
-        return getAllSuperTypes().any { it.declaration.qualifiedName?.asString() == annotationFqn }
+      private fun KSClassDeclaration.hasSuperType(superTypeFqn: String): Boolean {
+        return getAllSuperTypes().any { it.declaration.qualifiedName?.asString() == superTypeFqn }
       }
 
       override fun defaultHandler(node: KSNode, data: Unit) {
@@ -81,7 +93,7 @@ class FleetKspProcessor(
         file.accept(visitor, Unit)
       }
     }
-    logger.info("Processed ${entityTypeFqns.size} entity types and ${pluginFqns.size} plugins in $measureTime")
+    logger.info("Processed ${entityTypeFqns.size} entity types and ${serviceFqns.size} plugins in $measureTime")
     return emptyList()
   }
 
@@ -93,10 +105,10 @@ class FleetKspProcessor(
   }
 
   override fun finish() {
-    if (entityTypeFqns.isEmpty() && pluginFqns.isEmpty()) return
+    if (entityTypeFqns.isEmpty() && serviceFqns.isEmpty()) return
 
     val moduleName = moduleName ?: run {
-      logger.error("Cannot infer module name. EntityTypes=$entityTypeFqns, Plugins=$pluginFqns")
+      logger.error("Cannot infer module name. EntityTypes=$entityTypeFqns, Services=$serviceFqns")
       return
     }
 
@@ -116,21 +128,15 @@ class FleetKspProcessor(
     }
 
     if (platforms.any { it is JvmPlatformInfo }) {
-      if (pluginFqns.isNotEmpty()) {
-        codeGenerator.createNewFileByPath(
-          dependencies = Dependencies.ALL_FILES,
-          path = "META-INF/services/$PLUGIN_SERVICE_FQN",
-          extensionName = ""
-        ).bufferedWriter().use { writer ->
-          pluginFqns.forEach { writer.appendLine(it) }
-        }
+      serviceFqns.forEach { (serviceDescriptor, implementationFqns) ->
+        generateJvmServicesResource(serviceDescriptor.interfaceFqn, implementationFqns)
       }
     }
 
     if (platforms.any { it.platformName.contains("wasm", ignoreCase = true) }) {
-      if (pluginFqns.isNotEmpty()) {
+      if (serviceFqns.isNotEmpty()) {
         val packageName = shortestPackageName ?: run {
-          logger.error("Cannot infer package name. EntityTypes=$entityTypeFqns, Plugins=$pluginFqns")
+          logger.error("Cannot infer package name. EntityTypes=$entityTypeFqns, Services=$serviceFqns")
           return
         }
 
@@ -140,9 +146,23 @@ class FleetKspProcessor(
           fileName = "ServiceProvider.wasm"
         ).bufferedWriter().use { writer ->
           writer.appendLine("package $packageName")
-          writer.appendLine()
-          writer.appendJsServiceAccessor(moduleName, PLUGIN_SERVICE_FQN, "$PLUGIN_SERVICE_FQN<*>", pluginFqns)
+          serviceFqns.forEach { (serviceDescriptor, implementationFqns) ->
+            writer.appendLine()
+            writer.appendJsServiceAccessor(moduleName, serviceDescriptor.interfaceFqn, serviceDescriptor.returnValue, implementationFqns)
+          }
         }
+      }
+    }
+  }
+
+  private fun generateJvmServicesResource(serviceFqn: String, implementationFqns: Collection<String>) {
+    if (implementationFqns.isNotEmpty()) {
+      codeGenerator.createNewFileByPath(
+        dependencies = Dependencies.ALL_FILES,
+        path = "META-INF/services/$serviceFqn",
+        extensionName = ""
+      ).bufferedWriter().use { writer ->
+        implementationFqns.forEach { writer.appendLine(it) }
       }
     }
   }
