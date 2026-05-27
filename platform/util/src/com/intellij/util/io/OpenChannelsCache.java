@@ -30,6 +30,12 @@ import java.util.Objects;
  * (see {@link ResilientFileChannel} description for details about that 'reliable' means there)
  * - {@link #executeIdempotentOp(Path, FileChannelIdempotentOperation, boolean)}: a lambda must be idempotent, but supplied with
  * plain {@link FileChannel} without wrapping.
+ * <p/>
+ * BEWARE: cache caches (potentially) 2 different {@linkplain FileChannel} instances: readOnly and !readOnly.
+ * It is generally not guaranteed those different FileChannels instances always share the same data -- they
+ * generally do, but because of caching there could be some temporary difference in the content visible via
+ * readOnly and !readOnly FileChannel. So, avoid accessing the same path via 2 different readOnly/!readOnly
+ * FileChannels: prefer using the single 'readOnly' param for all the accesses.
  */
 @ApiStatus.Internal
 public final class OpenChannelsCache
@@ -43,7 +49,7 @@ public final class OpenChannelsCache
   private int loadCount;
 
   //@GuardedBy("cacheLock")
-  private final @NotNull Map<Path, ChannelDescriptor> cachedChannels;
+  private final @NotNull Map<ChannelCacheKey, ChannelDescriptor> cachedChannels;
 
   private final transient Object cacheLock = new Object();
 
@@ -52,7 +58,7 @@ public final class OpenChannelsCache
   public OpenChannelsCache(int capacity,
                            @NotNull FileChannelOpener channelOpener) {
     this.capacity = capacity;
-    cachedChannels = new LinkedHashMap<>(capacity, 0.5f, true);
+    cachedChannels = new LinkedHashMap<>(capacity, 0.5f, /*orderByAccess: */true);
     this.channelOpener = channelOpener;
   }
 
@@ -76,7 +82,7 @@ public final class OpenChannelsCache
   public <T> T executeOp(@NotNull Path path,
                          @NotNull FileChannelOperation<T> operation,
                          boolean readOnly) throws IOException {
-    ChannelDescriptor descriptor = acquireDescriptor(path, /*readOnly: */readOnly);
+    ChannelDescriptor descriptor = acquireDescriptor(path, readOnly);
     //channel access is NOT guarded by the cacheLock
     try {
       return operation.execute(descriptor.channel());
@@ -108,29 +114,18 @@ public final class OpenChannelsCache
   private @NotNull ChannelDescriptor acquireDescriptor(@NotNull Path path,
                                                        boolean readOnly) throws IOException {
     synchronized (cacheLock) {
-      ChannelDescriptor descriptor = cachedChannels.get(path);
+      ChannelCacheKey key = new ChannelCacheKey(path, readOnly);
+      ChannelDescriptor descriptor = cachedChannels.get(key);
       if (descriptor == null) {
         boolean somethingDropped = releaseOverCachedChannels();
         descriptor = new ChannelDescriptor(path, readOnly, channelOpener);
-        cachedChannels.put(path, descriptor);
+        cachedChannels.put(key, descriptor);
         if (somethingDropped) {
           missCount++;
         }
         else {
           loadCount++;
         }
-      }
-      else if (!readOnly && descriptor.isReadOnly()) {
-        if (descriptor.isLocked()) {
-          descriptor = new ChannelDescriptor(path, /*readOnly: */ false, channelOpener);
-        }
-        else {
-          // re-open as write
-          closeChannel(path);
-          descriptor = new ChannelDescriptor(path, /*readOnly: */ false, channelOpener);
-          cachedChannels.put(path, descriptor);
-        }
-        missCount++;
       }
       else {
         hitCount++;
@@ -140,7 +135,7 @@ public final class OpenChannelsCache
     }
   }
 
-  private void releaseDescriptor(ChannelDescriptor descriptor) {
+  private void releaseDescriptor(@NotNull ChannelDescriptor descriptor) {
     synchronized (cacheLock) {
       descriptor.unlock();
     }
@@ -150,11 +145,14 @@ public final class OpenChannelsCache
   @VisibleForTesting
   public void closeChannel(@NotNull Path path) throws IOException {
     synchronized (cacheLock) {
-      ChannelDescriptor descriptor = cachedChannels.remove(path);
-
-      if (descriptor != null) {
-        assert !descriptor.isLocked() : "Channel is in use: " + descriptor;
-        descriptor.close();
+      List<ChannelCacheKey> keysToClose = new ArrayList<>();
+      for (ChannelCacheKey key : cachedChannels.keySet()) {
+        if (key.path.equals(path)) {
+          keysToClose.add(key);
+        }
+      }
+      for (ChannelCacheKey key : keysToClose) {
+        closeChannel(key);
       }
     }
   }
@@ -167,8 +165,8 @@ public final class OpenChannelsCache
       return false;
     }
 
-    List<Path> keysToDrop = new ArrayList<>();
-    for (Map.Entry<Path, ChannelDescriptor> entry : cachedChannels.entrySet()) {
+    List<ChannelCacheKey> keysToDrop = new ArrayList<>();
+    for (Map.Entry<ChannelCacheKey, ChannelDescriptor> entry : cachedChannels.entrySet()) {
       if (dropCount < 0) break;
       if (!entry.getValue().isLocked()) {
         dropCount--;
@@ -176,11 +174,21 @@ public final class OpenChannelsCache
       }
     }
 
-    for (Path file : keysToDrop) {
-      closeChannel(file);
+    for (ChannelCacheKey key : keysToDrop) {
+      closeChannel(key);
     }
 
     return true;
+  }
+
+  //@GuardedBy(cacheLock)
+  private void closeChannel(@NotNull ChannelCacheKey key) throws IOException {
+    ChannelDescriptor descriptor = cachedChannels.remove(key);
+
+    if (descriptor != null) {
+      assert !descriptor.isLocked() : "Channel is in use: " + descriptor;
+      descriptor.close();
+    }
   }
 
   static final class ChannelDescriptor implements Closeable {
@@ -228,10 +236,6 @@ public final class OpenChannelsCache
       }
     }
 
-    private boolean isReadOnly() {
-      return readOnly;
-    }
-
     private void lock() {
       lockCount++;
     }
@@ -264,6 +268,34 @@ public final class OpenChannelsCache
              ", channel=" + channel +
              ", readOnly=" + readOnly +
              '}';
+    }
+  }
+
+  private static final class ChannelCacheKey {
+    private final @NotNull Path path;
+    private final boolean readOnly;
+
+    private ChannelCacheKey(@NotNull Path path,
+                            boolean readOnly) {
+      this.path = path;
+      this.readOnly = readOnly;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      }
+      if (!(obj instanceof ChannelCacheKey)) {
+        return false;
+      }
+      ChannelCacheKey key = (ChannelCacheKey)obj;
+      return readOnly == key.readOnly && path.equals(key.path);
+    }
+
+    @Override
+    public int hashCode() {
+      return path.hashCode() * 31 + (readOnly ? 1 : 0);
     }
   }
 }
