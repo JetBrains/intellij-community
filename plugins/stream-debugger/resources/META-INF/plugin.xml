@@ -3,8 +3,10 @@
   <name>Java Stream Debugger</name>
   <vendor>JetBrains</vendor>
   <category>JVM Tools</category>
-  <!--suppress PluginXmlValidity -->
   <content namespace="jetbrains">
+    <module name="intellij.debugger.streams.core" loading="required"/>
+    <module name="intellij.debugger.streams.shared" loading="required"/>
+    <module name="intellij.debugger.streams.backend"/>
     <module name="intellij.debugger.streams.java" loading="optional"/>
   </content>
 

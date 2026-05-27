@@ -1,9 +1,9 @@
-### auto-generated section `build intellij.debugger.streams.core.testFramework` start
+### auto-generated section `build intellij.debugger.streams.testFramework` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "testFramework",
-  module_name = "intellij.debugger.streams.core.testFramework",
+  module_name = "intellij.debugger.streams.testFramework",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = glob(["resources/**/*"]),
@@ -12,7 +12,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//libraries/kotlin/test:libraries-kotlinTest",
     "//libraries/stream",
-    "//plugins/stream-debugger-core:debugger-streams-core",
+    "//plugins/stream-debugger/core",
     "//platform/core-api:core",
     "//platform/xdebugger-api:debugger",
     "//platform/util",
@@ -22,23 +22,23 @@ jvm_library(
 jvm_library(
   name = "testFramework_test_lib",
   testonly = True,
-  module_name = "intellij.debugger.streams.core.testFramework",
+  module_name = "intellij.debugger.streams.testFramework",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [
     ":testFramework",
     "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
     "//libraries/stream:stream_test_lib",
-    "//plugins/stream-debugger-core:debugger-streams-core_test_lib",
+    "//plugins/stream-debugger/core:core_test_lib",
     "//platform/core-api:core_test_lib",
     "//platform/xdebugger-api:debugger_test_lib",
     "//platform/util:util_test_lib",
   ]
 )
-### auto-generated section `build intellij.debugger.streams.core.testFramework` end
+### auto-generated section `build intellij.debugger.streams.testFramework` end
 
-### auto-generated section `iml intellij.debugger.streams.core.testFramework` start
+### auto-generated section `iml intellij.debugger.streams.testFramework` start
 exports_files([
-  "intellij.debugger.streams.core.testFramework.iml",
+  "intellij.debugger.streams.testFramework.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.debugger.streams.core.testFramework` end
+### auto-generated section `iml intellij.debugger.streams.testFramework` end

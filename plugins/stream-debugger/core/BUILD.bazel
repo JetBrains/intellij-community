@@ -2,7 +2,7 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "debugger-streams-core",
+  name = "core",
   module_name = "intellij.debugger.streams.core",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
@@ -24,18 +24,18 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/ide-core",
     "//platform/progress/shared:ide-progress",
-    "//plugins/stream-debugger-core/intellij.debugger.streams.shared:debugger-streams-shared",
+    "//plugins/stream-debugger/shared",
   ]
 )
 
 jvm_library(
-  name = "debugger-streams-core_test_lib",
+  name = "core_test_lib",
   testonly = True,
   module_name = "intellij.debugger.streams.core",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [
-    ":debugger-streams-core",
+    ":core",
     "//platform/analysis-api:analysis_test_lib",
     "//platform/util/concurrency:concurrency_test_lib",
     "//platform/core-api:core_test_lib",
@@ -50,7 +50,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/ide-core:ide-core_test_lib",
     "//platform/progress/shared:ide-progress_test_lib",
-    "//plugins/stream-debugger-core/intellij.debugger.streams.shared:debugger-streams-shared_test_lib",
+    "//plugins/stream-debugger/shared:shared_test_lib",
   ]
 )
 ### auto-generated section `build intellij.debugger.streams.core` end

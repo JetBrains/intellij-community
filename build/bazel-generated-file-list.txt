@@ -532,7 +532,6 @@ libraries/xml-rpc
 libraries/xstream
 libraries/xtext-xbase
 libraries/xz
-module-set-plugins/generated/intellij.moduleSet.plugin.debugger.streams
 module-set-plugins/generated/intellij.moduleSet.plugin.grid.core
 module-set-plugins/generated/intellij.moduleSet.plugin.main
 module-set-plugins/generated/intellij.moduleSet.plugin.recentFiles
@@ -1571,11 +1570,11 @@ plugins/sh/terminal
 plugins/space/jps-plugin
 plugins/stats-collector
 plugins/stream-debugger
-plugins/stream-debugger-core
-plugins/stream-debugger-core/intellij.debugger.streams.backend
-plugins/stream-debugger-core/intellij.debugger.streams.shared
-plugins/stream-debugger-core/testFramework
+plugins/stream-debugger/backend
+plugins/stream-debugger/core
 plugins/stream-debugger/java
+plugins/stream-debugger/shared
+plugins/stream-debugger/testFramework
 plugins/svn4idea
 plugins/tasks/tasks-api
 plugins/tasks/tasks-compatibility

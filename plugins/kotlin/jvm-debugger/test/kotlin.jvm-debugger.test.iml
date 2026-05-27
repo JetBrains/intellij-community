@@ -66,7 +66,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.debugger.impl.shared" scope="TEST" />
     <orderEntry type="module" module-name="intellij.debugger.streams.core" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.debugger.streams.core.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.debugger.streams.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.plugin.k1" scope="RUNTIME" />

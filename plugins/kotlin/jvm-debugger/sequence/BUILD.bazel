@@ -29,7 +29,7 @@ jvm_library(
     "//platform/core-impl",
     "//java/java-psi-api:psi",
     "//plugins/stream-debugger/java",
-    "//plugins/stream-debugger-core:debugger-streams-core",
+    "//plugins/stream-debugger/core",
   ]
 )
 
@@ -49,7 +49,7 @@ jvm_library(
     "//platform/core-impl:core-impl_test_lib",
     "//java/java-psi-api:psi_test_lib",
     "//plugins/stream-debugger/java:java_test_lib",
-    "//plugins/stream-debugger-core:debugger-streams-core_test_lib",
+    "//plugins/stream-debugger/core:core_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.jvm-debugger.sequence.k1` end
