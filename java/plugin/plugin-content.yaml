@@ -46,6 +46,9 @@
 - name: lib/modules/intellij.debugger.jvm.advanced.java.jar
   contentModules:
   - name: intellij.debugger.jvm.advanced.java
+- name: lib/modules/intellij.debugger.jvm.advanced.java.logpoints.jar
+  contentModules:
+  - name: intellij.debugger.jvm.advanced.java.logpoints
 - name: lib/modules/intellij.debugger.logpoints.backend.jar
   contentModules:
   - name: intellij.debugger.logpoints.backend

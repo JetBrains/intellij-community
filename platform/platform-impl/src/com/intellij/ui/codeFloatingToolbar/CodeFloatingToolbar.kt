@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.codeFloatingToolbar
 
 import com.intellij.codeInsight.hint.HintManager
@@ -20,6 +20,7 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.VisualPosition
+import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupListener
@@ -49,8 +50,11 @@ import java.awt.Dimension
 import java.awt.IllegalComponentStateException
 import java.awt.Point
 import java.awt.Rectangle
+import java.awt.datatransfer.StringSelection
+import java.awt.event.ActionEvent
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
+import javax.swing.JList
 
 /**
  * Represents floating toolbar which is shown for selected text inside editor.
@@ -241,11 +245,24 @@ class CodeFloatingToolbar(
         Toggleable.setSelected(button, true)
         alignButtonPopup(popup)
         HelpTooltip.setMasterPopupOpenCondition(button) { true }
+        overrideCopyAction(popup)
       }
 
       override fun onClosed(event: LightweightWindowEvent) {
         activeMenuPopup = null
         Toggleable.setSelected(button, null)
+      }
+    })
+  }
+
+  private fun overrideCopyAction(popup: JBPopup) {
+    val list = UIUtil.findComponentOfType(popup.content, JList::class.java) ?: return
+    list.actionMap.put("copy", object : javax.swing.AbstractAction() {
+      override fun actionPerformed(e: ActionEvent) {
+        val text = editor.selectionModel.selectedText ?: return
+        if (text.isNotEmpty()) {
+          CopyPasteManager.getInstance().setContents(StringSelection(text))
+        }
       }
     })
   }

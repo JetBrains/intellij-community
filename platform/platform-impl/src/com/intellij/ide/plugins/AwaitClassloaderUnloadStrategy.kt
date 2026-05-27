@@ -80,7 +80,12 @@ internal class AwaitClassloaderUnloadAsyncPostTransition : AwaitClassloaderUnloa
     if (classloaders.firstOrNull() == null) {
       return true
     }
-    service<DynamicPluginsSupportService>().coroutineScope.launch(Dispatchers.EDT) {
+    // try trigger full GC on JBR, perhaps we won't need to bother the user with background progress
+    GCWatcher.tracking(classloaders).tryCollect(0)
+    if (classloaders.firstOrNull() == null) {
+      return true
+    }
+    service<DynamicPluginsSupportService>().coroutineScope.launch(Dispatchers.Default) {
       delay(3.seconds) // give time for theme plugins to unload without showing a progress bar
       val project = ProjectUtil.getActiveProject() ?: ProjectUtil.getOpenProjects().firstOrNull() // TODO this is kinda clumsy
       if (project != null) {

@@ -7,10 +7,10 @@ import com.intellij.execution.ExecutionTarget;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.ModuleRunProfile;
 import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.testframework.ui.TestsConsoleBuilderImpl;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
+import com.intellij.execution.ui.ExecutionConsolePauseStateProvider;
 import com.intellij.execution.util.StoringPropertyContainer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -25,8 +25,6 @@ import com.intellij.util.config.DumbAwareToggleBooleanProperty;
 import com.intellij.util.config.Storage;
 import com.intellij.util.config.ToggleBooleanProperty;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.util.ui.JdkConstants;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -137,12 +135,20 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   }
 
   public boolean isDebug() {
-    return myExecutor.getId().equals(DefaultDebugExecutor.EXECUTOR_ID);
+    return ToolWindowId.DEBUG.equals(myExecutor.getId());
   }
 
   public boolean isPaused() {
-    XDebugSession debuggerSession = XDebuggerManager.getInstance(myProject).getDebugSession(getConsole());
-    return debuggerSession != null && debuggerSession.isPaused();
+    ExecutionConsole console = getConsole();
+    if (console == null) {
+      return false;
+    }
+    for (ExecutionConsolePauseStateProvider provider : ExecutionConsolePauseStateProvider.EP_NAME.getExtensionList()) {
+      if (provider.isPaused(myProject, console)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override
@@ -250,7 +256,8 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
 
   /**
    * Override to customize presentation of comparison difference visible before link to open diff window
-   * @param printer {@code Printer} to write on 
+   *
+   * @param printer  {@code Printer} to write on
    * @param expected text to be shown on the left of the diff window
    * @param actual   text to be shown on the right of the diff window
    */

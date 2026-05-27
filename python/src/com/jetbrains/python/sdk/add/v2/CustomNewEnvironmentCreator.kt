@@ -134,7 +134,7 @@ internal abstract class CustomNewEnvironmentCreator<P : PathHolder>(
     val baseInterpreter = model.state.baseInterpreter.get()
 
     val installedSdk = when (baseInterpreter) {
-      is InstallableSelectableInterpreter -> installBaseSdk(baseInterpreter.sdk, model.existingSdks)
+      is InstallableSelectableInterpreter -> installBaseSdk(baseInterpreter.installableSdk)
         ?.let {
           val sdkWrapper =
             runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.venv.progress.title.detect.executable")) {
@@ -181,10 +181,12 @@ internal suspend fun <P : PathHolder> PythonMutableTargetAddInterpreterModel<P>.
   val interpreter = requireNotNull(state.baseInterpreter.get()) { "wrong state: base interpreter is not selected" }
 
   // todo use target config
-  val path = if (interpreter is InstallableSelectableInterpreter<P>) {
-    installBaseSdk(interpreter.sdk, existingSdks)?.let { fileSystem.wrapSdk(it) }?.homePath
+  val path = when (interpreter) {
+    is InstallableSelectableInterpreter<P> -> {
+      installBaseSdk(interpreter.installableSdk)?.let { fileSystem.wrapSdk(it) }?.homePath
+    }
+    is DetectedSelectableInterpreter, is ExistingSelectableInterpreter, is ManuallyAddedSelectableInterpreter -> interpreter.homePath
   }
-  else interpreter.homePath
 
   return path
 }

@@ -212,7 +212,7 @@ internal fun <P : PathHolder> SimpleColoredComponent.customizeForPythonInterpret
     }
     is InstallableSelectableInterpreter -> {
       icon = AllIcons.Actions.Download
-      append(interpreter.sdk.name)
+      append(interpreter.installableSdk.name)
       append(" " + message("sdk.rendering.installable.grey.text"), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
     }
     is ExistingSelectableInterpreter -> {

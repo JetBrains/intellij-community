@@ -12,6 +12,7 @@ import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.ui.classFilter.ClassFilter
 import com.intellij.util.io.Compressor
 import com.intellij.util.io.delete
+import org.jetbrains.kotlin.idea.debugger.core.DexBytecodeInspector
 import java.lang.ProcessBuilder.Redirect.PIPE
 import java.nio.file.Files
 import java.nio.file.Path
@@ -70,6 +71,7 @@ internal class ArtAttacher : VmAttacher {
         testCase.setTimeout(getTestTimeoutMillis())
         val mainClass = javaParameters.mainClass
         val dexFile = buildDexFile(javaParameters.classPath.pathList)
+        testCase.project.putUserData(DexBytecodeInspector.DEX_FILES_KEY, listOf(dexFile))
         val command = buildCommandLine(dexFile.pathString, mainClass)
         testCase.testRootDisposable.whenDisposed {
             dexFile.delete()

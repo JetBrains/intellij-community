@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.rpc
 
+import com.intellij.execution.ExecutionEnvironmentIdImpl
 import com.intellij.execution.RunContentDescriptorIdImpl
 import com.intellij.execution.rpc.ExecutionEnvironmentProxyDto
 import com.intellij.execution.ui.RunContentDescriptor
@@ -78,7 +79,7 @@ data class XDebuggerSessionTabInfo(
   val forceNewDebuggerUi: Boolean,
   val withFramesCustomization: Boolean,
   val defaultFramesViewKey: String?,
-  val executionEnvironmentId: ExecutionEnvironmentId?,
+  val executionEnvironmentId: ExecutionEnvironmentIdImpl?,
   val executionEnvironmentProxyDto: ExecutionEnvironmentProxyDto?,
   val additionalTabsComponentManagerId: XDebugSessionAdditionalTabComponentManagerId,
   @Serializable(with = SendChannelSerializer::class) val tabClosedCallback: SendChannel<Unit>,
@@ -94,10 +95,6 @@ data class XDebugTabLayouterDto(
   val id: XDebugTabLayouterId,
   @Transient val localLayouter: XDebugTabLayouter? = null,
 )
-
-@ApiStatus.Internal
-@Serializable
-data class ExecutionEnvironmentId(override val uid: UID) : Id
 
 @ApiStatus.Internal
 @Serializable

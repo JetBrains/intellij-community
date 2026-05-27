@@ -23,8 +23,11 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * It is discouraged to use this class as it violates LSP.
+ *
+ * @deprecated to get all pythons on system, use {@link com.intellij.python.community.services.systemPython.SystemPythonService}.
+ * To get all python SDKs, use {@link PythonSdkUtil#getAllSdks()}
  */
-@ApiStatus.Obsolete
+@Deprecated(forRemoval = true)
 @ApiStatus.Internal
 public final class PyDetectedSdk extends ProjectJdkImpl {
   public PyDetectedSdk(@NotNull String name) {

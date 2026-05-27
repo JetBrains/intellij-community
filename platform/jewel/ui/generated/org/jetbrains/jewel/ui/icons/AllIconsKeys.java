@@ -283,30 +283,14 @@ public final class AllIconsKeys {
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey MenuCut = new IntelliJIconKey("actions/menu-cut.svg", "expui/general/cut.svg", AllIconsKeys.class);
     /** 16x16 */ 
-    @SuppressWarnings("DeprecationMismatch")
-    @GeneratedFromIntelliJSources
-    public static final @Deprecated @NotNull IntelliJIconKey Menu_cut = MenuCut;
-    /** 16x16 */ 
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey MenuOpen = new IntelliJIconKey("actions/menu-open.svg", "expui/general/open.svg", AllIconsKeys.class);
-    /** 16x16 */ 
-    @SuppressWarnings("DeprecationMismatch")
-    @GeneratedFromIntelliJSources
-    public static final @Deprecated @NotNull IntelliJIconKey Menu_open = MenuOpen;
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey MenuPaste = new IntelliJIconKey("actions/menu-paste.svg", "expui/general/paste.svg", AllIconsKeys.class);
     /** 16x16 */ 
-    @SuppressWarnings("DeprecationMismatch")
-    @GeneratedFromIntelliJSources
-    public static final @Deprecated @NotNull IntelliJIconKey Menu_paste = MenuPaste;
-    /** 16x16 */ 
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey MenuSaveall = new IntelliJIconKey("actions/menu-saveall.svg", "expui/general/save.svg", AllIconsKeys.class);
-    /** 16x16 */ 
-    @SuppressWarnings("DeprecationMismatch")
-    @GeneratedFromIntelliJSources
-    public static final @Deprecated @NotNull IntelliJIconKey Menu_saveall = MenuSaveall;
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey Minimap = new IntelliJIconKey("actions/minimap.svg", "expui/actions/minimap.svg", AllIconsKeys.class);
@@ -524,10 +508,6 @@ public final class AllIconsKeys {
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey RunAnything = new IntelliJIconKey("actions/runAnything.svg", "expui/general/runAnything.svg", AllIconsKeys.class);
     /** 16x16 */ 
-    @SuppressWarnings("DeprecationMismatch")
-    @GeneratedFromIntelliJSources
-    public static final @Deprecated @NotNull IntelliJIconKey Run_anything = RunAnything;
-    /** 16x16 */ 
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey RunToCursor = new IntelliJIconKey("actions/runToCursor.svg", "expui/run/runToCursor.svg", AllIconsKeys.class);
     /** 16x16 */ 
@@ -667,14 +647,6 @@ public final class AllIconsKeys {
 
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey EnableNewUi = new IntelliJIconKey("actions/enableNewUi.svg", "actions/enableNewUi.svg", AllIconsKeys.class);
-
-    /** @deprecated to be removed (use expandable text field instead, see https://plugins.jetbrains.com/docs/intellij/built-in-button.html) */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval
-
-    @GeneratedFromIntelliJSources
-    public static final @NotNull IntelliJIconKey ShowViewer = new IntelliJIconKey("actions/showViewer.png", "actions/showViewer.png", AllIconsKeys.class);
   }
 
   @GeneratedFromIntelliJSources
@@ -1732,10 +1704,6 @@ public final class AllIconsKeys {
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey Language = new IntelliJIconKey("general/language.svg", "expui/general/language.svg", AllIconsKeys.class);
     /** 16x16 */ 
-    @SuppressWarnings("DeprecationMismatch")
-    @GeneratedFromIntelliJSources
-    public static final @Deprecated @NotNull IntelliJIconKey LocalizationSettings = Language;
-    /** 16x16 */ 
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey Layout = new IntelliJIconKey("general/layout.svg", "expui/general/related.svg", AllIconsKeys.class);
     /** 16x16 */ 
@@ -2248,10 +2216,6 @@ public final class AllIconsKeys {
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey PipetteRollover = new IntelliJIconKey("ide/pipetteRollover.svg", "expui/image/colorPickerRollover.svg", AllIconsKeys.class);
-    /** 16x16 */ 
-    @SuppressWarnings("DeprecationMismatch")
-    @GeneratedFromIntelliJSources
-    public static final @Deprecated @NotNull IntelliJIconKey Pipette_rollover = PipetteRollover;
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey PowerSaveMode = new IntelliJIconKey("ide/powerSaveMode.svg", "expui/general/inspections/inspectionsPowerSaveMode.svg", AllIconsKeys.class);
@@ -2949,10 +2913,6 @@ public final class AllIconsKeys {
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey RwAccess = new IntelliJIconKey("nodes/rw-access.svg", "nodes/rw-access.svg", AllIconsKeys.class);
     /** 16x16 */ 
-    @SuppressWarnings("DeprecationMismatch")
-    @GeneratedFromIntelliJSources
-    public static final @Deprecated @NotNull IntelliJIconKey Rw_access = RwAccess;
-    /** 16x16 */ 
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey SecurityRole = new IntelliJIconKey("nodes/securityRole.svg", "expui/nodes/securityRole.svg", AllIconsKeys.class);
     /** 16x16 */ 
@@ -3057,22 +3017,6 @@ public final class AllIconsKeys {
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey WriteAccess = new IntelliJIconKey("nodes/write-access.svg", "expui/actions/showWriteAccess.svg", AllIconsKeys.class);
-
-    /** @deprecated to be removed without replacement */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval
-
-    @GeneratedFromIntelliJSources
-    public static final @NotNull IntelliJIconKey InspectionResults = new IntelliJIconKey("nodes/inspectionResults.svg", "nodes/inspectionResults.svg", AllIconsKeys.class);
-
-    /** @deprecated to be removed without replacement */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval
-
-    @GeneratedFromIntelliJSources
-    public static final @NotNull IntelliJIconKey Weblistener = new IntelliJIconKey("nodes/weblistener.svg", "nodes/weblistener.svg", AllIconsKeys.class);
   }
 
   @GeneratedFromIntelliJSources
@@ -3527,14 +3471,6 @@ public final class AllIconsKeys {
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey Yugabyte = new IntelliJIconKey("providers/yugabyte.svg", "providers/yugabyte.svg", AllIconsKeys.class);
-
-    /** @deprecated to be removed (Use AllIcons.Providers.AmazonWebServices instead) */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval
-
-    @GeneratedFromIntelliJSources
-    public static final @NotNull IntelliJIconKey Aws = new IntelliJIconKey("providers/aws.svg", "providers/aws.svg", AllIconsKeys.class);
   }
 
   @GeneratedFromIntelliJSources
@@ -4007,14 +3943,6 @@ public final class AllIconsKeys {
 
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey MeetNewUi = new IntelliJIconKey("expui/toolwindows/meetNewUi.svg", "expui/toolwindows/meetNewUi.svg", AllIconsKeys.class);
-
-    /** @deprecated to be removed without replacement */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval
-
-    @GeneratedFromIntelliJSources
-    public static final @NotNull IntelliJIconKey ToolWindowFavorites = new IntelliJIconKey("toolwindows/toolWindowFavorites.svg", "toolwindows/toolWindowFavorites.svg", AllIconsKeys.class);
   }
 
   @GeneratedFromIntelliJSources

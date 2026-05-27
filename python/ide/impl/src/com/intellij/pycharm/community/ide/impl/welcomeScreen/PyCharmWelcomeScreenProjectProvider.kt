@@ -35,6 +35,9 @@ internal class PyCharmWelcomeScreenProjectProvider : WelcomeScreenProjectProvide
 
   override fun doGetCreateNewFileProjectPrefix(): String = "awesomeProject"
 
+  // We explicitly want to open existing project if the file already belongs to it
+  override fun shouldOpenInWelcomeScreenIfFileBelongsToProject(filePath: Path): Boolean = false
+
   override fun canOpenFilesFromSystemFileManager(filePath: Path): Boolean {
     return Registry.`is`("welcome.screen.open.files", false) && filePath.extension == "ipynb"
   }

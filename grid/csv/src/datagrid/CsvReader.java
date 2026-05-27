@@ -20,7 +20,7 @@ public class CsvReader {
   private final CyclicBuffer myBuffer;
 
   public CsvReader(@NotNull Reader reader) {
-    myBuffer = new CyclicBuffer(reader, CsvLexer.MAX_CHARACTERS*2);
+    myBuffer = new CyclicBuffer(reader, CsvTokenizer.MAX_CHARACTERS * 2);
   }
 
   public long getLine() {
@@ -70,7 +70,7 @@ public class CsvReader {
     int state = automaton.getInitialState();
     myLocalCount = 0;
     int lastOk = -1;
-    while (myLocalCount < CsvLexer.MAX_CHARACTERS && (lastOk == -1 || myLocalCount - lastOk < enlargeGap)) {
+    while (myLocalCount < CsvTokenizer.MAX_CHARACTERS && (lastOk == -1 || myLocalCount - lastOk < enlargeGap)) {
       myBuffer.ensureAvailable(myLocalCount + 2);
       int c = getCharNormalized(myLocalCount, 1);
       state = automaton.step(state, c == -1 ? 0 : (char)c);

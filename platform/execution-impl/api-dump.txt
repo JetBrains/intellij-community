@@ -82,6 +82,7 @@ com.intellij.execution.target.TargetEnvironmentWizard$ValidationCallbackConsumer
 c:com.intellij.execution.ui.CommonProgramParametersPanel
 - <init>(com.intellij.openapi.project.Project):V
 - <init>(Z,com.intellij.openapi.project.Project):V
+a:com.intellij.execution.ui.RunConfigurationFragmentedEditor
 f:com.intellij.execution.ui.RunContentManagerImpl
 - getContentDescriptorToolWindowId(com.intellij.execution.runners.ExecutionEnvironment):java.lang.String
 com.intellij.execution.ui.TargetAwareRunConfigurationEditor

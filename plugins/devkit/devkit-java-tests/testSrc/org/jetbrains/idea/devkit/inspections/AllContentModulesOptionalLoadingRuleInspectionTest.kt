@@ -154,6 +154,194 @@ internal class AllContentModulesOptionalLoadingRuleInspectionTest : JavaCodeInsi
     myFixture.testHighlighting(true, true, true, pluginXml.virtualFile)
   }
   
+  fun `test no warning when extension points are registered directly`() {
+    addContentModules("module1")
+    val pluginXml = addPluginXmlToProject("""
+      <idea-plugin>
+        <id>com.example.plugin</id>
+        <content>
+          <module name="module1"/>
+        </content>
+        <extensionPoints>
+          <extensionPoint name="com.example.ep" interface="com.example.MyEp"/>
+        </extensionPoints>
+      </idea-plugin>
+    """.trimIndent())
+    myFixture.testHighlighting(true, true, true, pluginXml.virtualFile)
+  }
+
+  fun `test no warning when extensions are registered directly`() {
+    addContentModules("module1")
+    val pluginXml = addPluginXmlToProject("""
+      <idea-plugin>
+        <id>com.example.plugin</id>
+        <content>
+          <module name="module1"/>
+        </content>
+        <extensions defaultExtensionNs="com.intellij">
+          <registeredExtension/>
+        </extensions>
+      </idea-plugin>
+    """.trimIndent())
+    myFixture.testHighlighting(true, true, true, pluginXml.virtualFile)
+  }
+
+  fun `test no warning when application listeners are registered directly`() {
+    addContentModules("module1")
+    val pluginXml = addPluginXmlToProject("""
+      <idea-plugin>
+        <id>com.example.plugin</id>
+        <content>
+          <module name="module1"/>
+        </content>
+        <applicationListeners>
+          <listener class="com.example.MyListener" topic="com.example.MyTopic"/>
+        </applicationListeners>
+      </idea-plugin>
+    """.trimIndent())
+    myFixture.testHighlighting(true, true, true, pluginXml.virtualFile)
+  }
+
+  fun `test no warning when project listeners are registered directly`() {
+    addContentModules("module1")
+    val pluginXml = addPluginXmlToProject("""
+      <idea-plugin>
+        <id>com.example.plugin</id>
+        <content>
+          <module name="module1"/>
+        </content>
+        <projectListeners>
+          <listener class="com.example.MyListener" topic="com.example.MyTopic"/>
+        </projectListeners>
+      </idea-plugin>
+    """.trimIndent())
+    myFixture.testHighlighting(true, true, true, pluginXml.virtualFile)
+  }
+
+  fun `test no warning when actions are registered directly`() {
+    addContentModules("module1")
+    val pluginXml = addPluginXmlToProject("""
+      <idea-plugin>
+        <id>com.example.plugin</id>
+        <content>
+          <module name="module1"/>
+        </content>
+        <actions>
+          <action id="com.example.MyAction" class="com.example.MyAction"/>
+        </actions>
+      </idea-plugin>
+    """.trimIndent())
+    myFixture.testHighlighting(true, true, true, pluginXml.virtualFile)
+  }
+
+  fun `test warning when extensionPoints tag is empty`() {
+    addContentModules("module1")
+    val pluginXml = addPluginXmlToProject("""
+      <idea-plugin>
+        <id>com.example.plugin</id>
+        <<warning descr="All content modules use the 'optional' loading rule. At least one module should use 'required', 'embedded', or 'required-if-available'.">content</warning>>
+          <module name="module1"/>
+        </content>
+        <extensionPoints></extensionPoints>
+      </idea-plugin>
+    """.trimIndent())
+    myFixture.testHighlighting(true, true, true, pluginXml.virtualFile)
+  }
+
+  fun `test warning when extensions tag is empty`() {
+    addContentModules("module1")
+    val pluginXml = addPluginXmlToProject("""
+      <idea-plugin>
+        <id>com.example.plugin</id>
+        <<warning descr="All content modules use the 'optional' loading rule. At least one module should use 'required', 'embedded', or 'required-if-available'.">content</warning>>
+          <module name="module1"/>
+        </content>
+        <extensions defaultExtensionNs="com.intellij"></extensions>
+      </idea-plugin>
+    """.trimIndent())
+    myFixture.testHighlighting(true, true, true, pluginXml.virtualFile)
+  }
+
+  fun `test warning when applicationListeners tag is empty`() {
+    addContentModules("module1")
+    val pluginXml = addPluginXmlToProject("""
+      <idea-plugin>
+        <id>com.example.plugin</id>
+        <<warning descr="All content modules use the 'optional' loading rule. At least one module should use 'required', 'embedded', or 'required-if-available'.">content</warning>>
+          <module name="module1"/>
+        </content>
+        <applicationListeners></applicationListeners>
+      </idea-plugin>
+    """.trimIndent())
+    myFixture.testHighlighting(true, true, true, pluginXml.virtualFile)
+  }
+
+  fun `test warning when projectListeners tag is empty`() {
+    addContentModules("module1")
+    val pluginXml = addPluginXmlToProject(
+      """
+      <idea-plugin>
+        <id>com.example.plugin</id>
+        <<warning descr="All content modules use the 'optional' loading rule. At least one module should use 'required', 'embedded', or 'required-if-available'.">content</warning>>
+          <module name="module1"/>
+        </content>
+        <projectListeners></projectListeners>
+      </idea-plugin>
+    """.trimIndent())
+    myFixture.testHighlighting(true, true, true, pluginXml.virtualFile)
+  }
+
+  fun `test warning when actions tag is empty`() {
+    addContentModules("module1")
+    val pluginXml = addPluginXmlToProject(
+      """
+      <idea-plugin>
+        <id>com.example.plugin</id>
+        <<warning descr="All content modules use the 'optional' loading rule. At least one module should use 'required', 'embedded', or 'required-if-available'.">content</warning>>
+          <module name="module1"/>
+        </content>
+        <actions></actions>
+      </idea-plugin>
+    """.trimIndent())
+    myFixture.testHighlighting(true, true, true, pluginXml.virtualFile)
+  }
+
+  fun `test no warning when extensions are registered in xiIncluded file`() {
+    addContentModules("module1")
+    myFixture.addFileToProject("included.xml", """
+      <extensions defaultExtensionNs="com.intellij">
+        <registeredExtension/>
+      </extensions>
+    """.trimIndent())
+    val pluginXml = addPluginXmlToProject("""
+      <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+        <id>com.example.plugin</id>
+        <content>
+          <module name="module1"/>
+        </content>
+        <xi:include href="included.xml"/>
+      </idea-plugin>
+    """.trimIndent())
+    myFixture.testHighlighting(true, false, true, pluginXml.virtualFile)
+  }
+
+  fun `test warning when xiIncluded file has only empty registration tags`() {
+    addContentModules("module1")
+    myFixture.addFileToProject("included.xml", """
+      <extensionPoints/>
+    """.trimIndent())
+    val pluginXml = addPluginXmlToProject("""
+      <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+        <id>com.example.plugin</id>
+        <<warning descr="All content modules use the 'optional' loading rule. At least one module should use 'required', 'embedded', or 'required-if-available'.">content</warning>>
+          <module name="module1"/>
+        </content>
+        <xi:include href="included.xml"/>
+      </idea-plugin>
+    """.trimIndent())
+    myFixture.testHighlighting(true, false, true, pluginXml.virtualFile)
+  }
+
   private fun addPluginXmlToProject(@Language("XML") code: String): PsiFile {
     return myFixture.addFileToProject("plugin.xml", code)
   }

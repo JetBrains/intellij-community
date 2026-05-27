@@ -253,6 +253,8 @@ interface WorkspaceFileSetRegistrar {
   /**
    * Excludes all files and directories under [root] which names match to one of [patterns] (`*` and `?` wildcards are supported) from the
    * workspace.
+   * Note that you might want to register this pattern for each ContentRootEntity too, not only for the project root.
+   * Otherwise, a file set for a module content root will "hide" this exclusion pattern registered on a directory higher in the hierarchy.
    * @param entity the first parameter of [WorkspaceFileIndexContributor.registerFileSets] must be passed here
    */
   fun registerExclusionPatterns(root: VirtualFileUrl, patterns: List<String>, entity: WorkspaceEntity)

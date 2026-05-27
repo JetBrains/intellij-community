@@ -6,25 +6,6 @@ import org.junit.jupiter.api.Test
 import java.lang.reflect.Method
 
 class RuntimeModuleRepositoryForDistributionTest {
-  @Test
-  fun `drops assertj dependency from performance testing remote driver`() {
-    val actual = removeSkippedDistributionDependencyIds(
-      moduleName = "intellij.performanceTesting.remoteDriver",
-      dependencyIds = listOf("intellij.libraries.assertj.core", "intellij.platform.ide"),
-    )
-
-    assertThat(actual).containsExactly("intellij.platform.ide")
-  }
-
-  @Test
-  fun `drops assertj dependency from features trainer`() {
-    val actual = removeSkippedDistributionDependencyIds(
-      moduleName = "intellij.featuresTrainer",
-      dependencyIds = listOf("intellij.platform.lang", "intellij.libraries.assertj.core"),
-    )
-
-    assertThat(actual).containsExactly("intellij.platform.lang")
-  }
 
   @Test
   fun `keeps unrelated descriptors unchanged`() {

@@ -1,0 +1,14 @@
+<!--suppress SplitModeMixedDependencies -->
+<!--suppress PluginXmlPluginLogo -->
+<idea-plugin>
+  <id>intellij.navbar.plugin</id>
+  <name>Navbar</name>
+  <description>Provides Navigation Bar platform modules.</description>
+  <vendor>JetBrains</vendor>
+  <content namespace="jetbrains">
+    <module name="intellij.platform.navbar" loading="required"/>
+    <module name="intellij.platform.navbar.backend"/>
+    <module name="intellij.platform.navbar.frontend"/>
+    <module name="intellij.platform.navbar.monolith"/>
+  </content>
+</idea-plugin>

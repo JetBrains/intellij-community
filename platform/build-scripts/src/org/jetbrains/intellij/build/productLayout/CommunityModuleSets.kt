@@ -134,12 +134,6 @@ object CommunityModuleSets {
     embeddedModule("intellij.platform.scopes")
     module("intellij.platform.scopes.backend")
 
-    // todo navbar is not essential
-    module("intellij.platform.navbar")
-    module("intellij.platform.navbar.backend")
-    module("intellij.platform.navbar.frontend")
-    module("intellij.platform.navbar.monolith")
-
     // The loading="embedded" attribute is required here for module synchronization with CWM's ThinClientFindAndReplaceExecutor.
     // Since intellij.platform.frontend.split module loads in embedded mode, and it needs to override the default FindAndReplaceExecutor,
     // the find module must also be marked as embedded to maintain proper dependency loading order.

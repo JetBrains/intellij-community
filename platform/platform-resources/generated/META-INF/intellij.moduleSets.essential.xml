@@ -305,10 +305,6 @@
     <!-- region direct modules -->
     <module name="intellij.platform.scopes" loading="embedded"/>
     <module name="intellij.platform.scopes.backend"/>
-    <module name="intellij.platform.navbar"/>
-    <module name="intellij.platform.navbar.backend"/>
-    <module name="intellij.platform.navbar.frontend"/>
-    <module name="intellij.platform.navbar.monolith"/>
     <module name="intellij.platform.find" loading="embedded"/>
     <module name="intellij.platform.find.backend"/>
     <module name="intellij.platform.editor.frontend"/>

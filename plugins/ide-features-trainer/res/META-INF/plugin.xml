@@ -24,6 +24,9 @@
     <module name="intellij.featuresTrainer.onboarding"/>
     <module name="intellij.kotlin.onboarding.promoter"/>
   </content>
+  <content>
+    <module name="intellij.libraries.assertj.core" loading="embedded"/>
+  </content>
 
   <resource-bundle>messages.LearnBundle</resource-bundle>
 

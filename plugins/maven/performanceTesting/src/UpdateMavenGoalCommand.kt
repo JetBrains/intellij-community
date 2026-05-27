@@ -47,7 +47,7 @@ class UpdateMavenGoalCommand(text: String, line: Int) : PerformanceCommandCorout
 
     withContext(Dispatchers.EDT) {
       val configurable = writeIntentReadAction { SingleConfigurationConfigurable.editSettings<RunConfiguration>(configSettings, null) }
-      val editor = (configurable.editor as RunnerAndConfigurationSettingsEditor)
+      val editor = (configurable.editor as RunnerAndConfigurationSettingsEditor<*>)
       val configEditorRef = editor.javaClass.getDeclaredField("myConfigurationEditor")
       configEditorRef.isAccessible = true
       val configEditor = configEditorRef.get(editor) as MavenRunConfigurationSettingsEditor

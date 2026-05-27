@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.Disposable;
@@ -73,6 +73,8 @@ public interface NonBlockingReadAction<T> {
    * it won't be checked until the computation is complete.
    * Hence if you want to cancel the computation immediately, you should handle that separately
    * (e.g. by putting {@link CancellablePromise#cancel()} inside some listener).
+   *
+   * @param expireCondition a condition to check. `true` means the read action is obsolete
    */
   @Contract(pure = true)
   @NotNull

@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.nonModalWelcomeScreen
 
+import com.intellij.configurationStore.ProjectStorePathManager
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.openapi.application.EDT
@@ -38,17 +39,34 @@ private abstract class DummyProjectOpenProcessor(override val name: String) : Pr
    * The contract is established by canOpenProject() always returning false.
    * @see canOpenProject
    */
-  override suspend fun openProjectAsync(virtualFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? =
+  override suspend fun openProjectAsync(virtualFile: VirtualFile, projectOpenOptions: ProjectOpenOptions): Project? =
     throw UnsupportedOperationException()
 }
 
 private class WelcomeScreenCommandLineProjectOpenProcessor : DummyProjectOpenProcessor("WelcomeScreenCommandLineProjectOpenProcessor") {
   override suspend fun openProjectAndFile(file: Path, tempProject: Boolean, options: OpenProjectTask): Project? {
     val provider = getWelcomeScreenProjectProvider() ?: return null
-    if (provider.canOpenFilesFromSystemFileManager(file)) {
-      return openWelcomeScreenProject(file)
+    if (!provider.canOpenFilesFromSystemFileManager(file)) {
+      return null
     }
-    return null
+    val shouldPreferExistingProject = !provider.shouldOpenInWelcomeScreenIfFileBelongsToProject(file)
+    if (shouldPreferExistingProject && fileBelongsToExistingProject(file)) {
+      // If the file already belongs to an existing project,
+      // fallback to default behaviour,
+      // do not open welcome screen project
+      return null
+    }
+    return openWelcomeScreenProject(file)
+  }
+
+  private suspend fun fileBelongsToExistingProject(file: Path): Boolean {
+    val storePathManager = serviceAsync<ProjectStorePathManager>()
+    var candidate = file.parent
+    while (candidate != null) {
+      if (storePathManager.testStoreDirectoryExistsForProjectRoot(candidate)) return true
+      candidate = candidate.parent
+    }
+    return false
   }
 
   private suspend fun openWelcomeScreenProject(file: Path): Project {

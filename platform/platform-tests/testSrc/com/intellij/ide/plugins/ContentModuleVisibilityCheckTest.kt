@@ -4,14 +4,17 @@ package com.intellij.ide.plugins
 import com.intellij.diagnostic.PluginException
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
 import com.intellij.platform.pluginSystem.testFramework.PluginSetSpecBuilder
+import com.intellij.platform.testFramework.loadDescriptorInTest
 import com.intellij.platform.testFramework.plugins.content
 import com.intellij.platform.testFramework.plugins.dependencies
 import com.intellij.platform.testFramework.plugins.module
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.assertErrorLogged
 import com.intellij.testFramework.rules.InMemoryFsExtension
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
+import kotlin.io.path.Path
 
 internal class ContentModuleVisibilityCheckTest {
   @RegisterExtension
@@ -64,6 +67,57 @@ internal class ContentModuleVisibilityCheckTest {
       }
     }
     assertThat(exception.message).contains("depends on module 'foo.module' which is registered in 'foo' plugin with internal visibility in namespace 'foo.namespace'")
+  }
+
+  @Test
+  fun `plugin descriptor without namespace cannot depend on internal module`() {
+    val exception = assertErrorLogged<PluginException> {
+      buildPluginSet {
+        plugin("foo") {
+          content(namespace = "foo.namespace") {
+            module("foo.module") {
+              moduleVisibility = ModuleVisibilityValue.INTERNAL
+            }
+          }
+        }
+        plugin("bar") {
+          dependencies {
+            module("foo.module", namespace = "foo.namespace")
+          }
+        }
+      }
+    }
+    assertThat(exception.message).contains("depends on module 'foo.module' which is registered in 'foo' plugin with internal visibility in namespace 'foo.namespace'")
+  }
+
+  @Test
+  fun `plugin descriptor can depend on internal module if it has content module from the same namespace`() {
+    val pluginSet = buildPluginSet {
+      plugin("foo") {
+        content(namespace = "foo.namespace") {
+          module("foo.module") {
+            moduleVisibility = ModuleVisibilityValue.INTERNAL
+          }
+        }
+      }
+      plugin("bar") {
+        dependencies {
+          module("foo.module", namespace = "foo.namespace")
+        }
+        content(namespace = "foo.namespace") {
+          module("bar.module") {}
+        }
+      }
+    }
+    assertThat(pluginSet).hasEnabledPlugins("foo", "bar")
+  }
+
+  @Test
+  fun `dependency on internal module from plugin descriptor with a dummy content tag to specify namespace`() {
+    val testDataDir = Path("${PlatformTestUtil.getPlatformTestDataPath()}plugins/pluginDescriptor/dependencyOnInternalModuleFromPluginDescriptor")
+    loadDescriptorInTest(testDataDir.resolve("dependency"))
+    val main = loadDescriptorInTest(testDataDir.resolve("main"))
+    assertThat(main.moduleDependencies.modules.single()).isEqualTo(PluginModuleId("internal.module", "custom"))
   }
 
   private fun buildPluginSet(builder: PluginSetSpecBuilder.() -> Unit): PluginSet {

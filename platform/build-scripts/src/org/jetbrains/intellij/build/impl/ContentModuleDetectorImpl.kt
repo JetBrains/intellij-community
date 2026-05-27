@@ -33,10 +33,10 @@ internal class ContentModuleDetectorImpl(
   embeddedFrontendDescriptorModuleName: String?,
   project: JpsProject,
 ) : ContentModuleDetector {
-
+  private data class ContentModuleInPlugin(val pluginId: String, val moduleName: String)
   private val contentModules = mutableMapOf<String, ContentModuleRegistrationData>()
-  private val loadingRulesForContentModules = mutableMapOf<String, RuntimeModuleLoadingRule>()
-  private val requiredIfAvailableAttributeForContentModules = mutableMapOf<String, RuntimeModuleId>()
+  private val loadingRulesForContentModules = mutableMapOf<ContentModuleInPlugin, RuntimeModuleLoadingRule>()
+  private val requiredIfAvailableAttributeForContentModules = mutableMapOf<ContentModuleInPlugin, RuntimeModuleId>()
   val pluginHeaders: List<RawRuntimePluginHeader>
 
   init {
@@ -94,10 +94,11 @@ internal class ContentModuleDetectorImpl(
         val loadingRule = parseLoadingRule(moduleTag)
         contentModules[moduleName] = ContentModuleRegistrationData(moduleName, namespace, visibility)
         val requiredIfAvailableName = moduleTag.getAttributeValue("required-if-available")
+        val key = ContentModuleInPlugin(pluginId, moduleName)
         if (requiredIfAvailableName != null) {
-          requiredIfAvailableAttributeForContentModules[moduleName] = RuntimeModuleId.contentModule(requiredIfAvailableName, RuntimeModuleId.DEFAULT_NAMESPACE)
+          requiredIfAvailableAttributeForContentModules[key] = RuntimeModuleId.contentModule(requiredIfAvailableName, RuntimeModuleId.DEFAULT_NAMESPACE)
         }
-        loadingRulesForContentModules[moduleName] = loadingRule
+        loadingRulesForContentModules[key] = loadingRule
       }
     }
     return pluginId
@@ -119,13 +120,14 @@ internal class ContentModuleDetectorImpl(
 
   private fun createPluginHeader(plugin: PluginBuildDescriptor, pluginId: String, project: JpsProject): RawRuntimePluginHeader {
     val pluginDescriptorModuleId = createModuleId(plugin.layout.mainModule, project)
-    val includedModules = convertDistributionEntriesToIncludedModules(plugin.distribution, project)
+    val includedModules = convertDistributionEntriesToIncludedModules(plugin.distribution, project, pluginId)
     return RawRuntimePluginHeader.create(pluginId, pluginDescriptorModuleId, includedModules)
   }
 
   private fun convertDistributionEntriesToIncludedModules(
     entries: Collection<DistributionFileEntry>,
     project: JpsProject,
+    pluginId: String,
   ): List<RawIncludedRuntimeModule> {
     val includedModules = entries.mapNotNull { entry ->
       val relativeOutputPath = entry.relativeOutputFile ?: ""
@@ -136,8 +138,9 @@ internal class ContentModuleDetectorImpl(
             // verifier is injected into every commercial plugin JAR, it doesn't belong to any specific plugin
             return@mapNotNull null
           }
-          val loadingRule = loadingRulesForContentModules[moduleName] ?: RuntimeModuleLoadingRule.EMBEDDED
-          val requiredIfAvailableId = requiredIfAvailableAttributeForContentModules[moduleName]
+          val key = ContentModuleInPlugin(pluginId, moduleName)
+          val loadingRule = loadingRulesForContentModules[key] ?: RuntimeModuleLoadingRule.EMBEDDED
+          val requiredIfAvailableId = requiredIfAvailableAttributeForContentModules[key]
           RawIncludedRuntimeModule(createModuleId(moduleName, project), loadingRule, requiredIfAvailableId)
         }
         is ProjectLibraryEntry -> {
@@ -153,8 +156,9 @@ internal class ContentModuleDetectorImpl(
   }
 
   private fun createCorePluginHeader(platformEntries: List<DistributionFileEntry>, pluginDescriptorModuleId: RuntimeModuleId, project: JpsProject): RawRuntimePluginHeader {
-    val includedModules = convertDistributionEntriesToIncludedModules(platformEntries, project)
-    return RawRuntimePluginHeader.create("com.intellij", pluginDescriptorModuleId, includedModules)
+    val pluginId = "com.intellij"
+    val includedModules = convertDistributionEntriesToIncludedModules(platformEntries, project, pluginId)
+    return RawRuntimePluginHeader.create(pluginId, pluginDescriptorModuleId, includedModules)
   }
 
   /**

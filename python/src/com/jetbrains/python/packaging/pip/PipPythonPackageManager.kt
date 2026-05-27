@@ -38,7 +38,9 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
-@ApiStatus.Experimental
+/**
+ * This class will be internal soon, please do not use it outside of this module, even in monorepo
+ */
 @ApiStatus.Internal
 open class PipPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager.getInstance(project)

@@ -6,38 +6,32 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
 import com.intellij.python.pytools.PyTool
-import com.intellij.python.pytools.PyToolsState
 import com.intellij.python.pytools.configuration.ExecutableDiscoveryMode
-import com.intellij.python.pytools.lsp.PyLspToolSettings
 import com.intellij.util.ThreeState
 
 class PyToolUsagesCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   object Helper {
-    fun logConfigurationChanged(
-        project: Project,
-        tool: PyTool,
-        enabled: Boolean,
-        executableDiscoveryMode: ExecutableDiscoveryMode,
-        inspections: Boolean? = null,
-        completions: Boolean? = null,
-        inlayHints: Boolean? = null,
-        documentation: Boolean? = null,
-        formatting: Boolean? = null,
-        sortImports: Boolean? = null,
-    ) {
+    /**
+     * Single emit point for `configuration.changed`. The tool itself supplies the field values
+     * via [PyTool.configurationFusSnapshot], so every call site only needs the tool reference
+     * plus the originating UI [source].
+     */
+    fun logConfigurationChanged(project: Project, tool: PyTool, source: PyToolActionSource) {
+      val s = tool.configurationFusSnapshot(project)
       CONFIGURATION_CHANGED.log(
         project,
         toolNameField with tool.fusId,
-        enabledField with enabled,
-        inspectionsField with inspections.toThreeState,
-        completionsField with completions.toThreeState,
-        inlayHintsField with inlayHints.toThreeState,
-        documentationField with documentation.toThreeState,
-        formattingField with formatting.toThreeState,
-        sortImportsField with sortImports.toThreeState,
-        executableDiscoveryModeField with executableDiscoveryMode,
+        sourceField with source,
+        enabledField with s.enabled,
+        inspectionsField with s.inspections.toThreeState,
+        completionsField with s.completions.toThreeState,
+        inlayHintsField with s.inlayHints.toThreeState,
+        documentationField with s.documentation.toThreeState,
+        formattingField with s.formatting.toThreeState,
+        sortImportsField with s.sortImports.toThreeState,
+        executableDiscoveryModeField with s.executableDiscoveryMode,
       )
     }
 
@@ -45,47 +39,32 @@ class PyToolUsagesCollector : CounterUsagesCollector() {
       DISABLE_RULE.log(project, forFile)
     }
 
-    fun logToolInstalled(project: Project, tool: PyTool) {
-      TOOL_INSTALLED.log(project, tool.fusId)
+    fun logToolInstalled(project: Project, tool: PyTool, source: PyToolActionSource) {
+      TOOL_INSTALLED.log(project, tool.fusId, source)
     }
-    fun logToolUpdated(project: Project, tool: PyTool) {
-      TOOL_UPDATED.log(project, tool.fusId)
-    }
-
-    /**
-     * Convenience wrapper that derives enabled/discoveryMode/customPath from [PyToolsState] and
-     * feature-flag values from a per-tool [PyLspToolSettings] before calling
-     * [logConfigurationChanged]. Pass [formatting] / [sortImports] for tools that expose those
-     * (currently only Ruff).
-     */
-    fun logPyToolConfigurationChanged(
-      project: Project,
-      tool: PyTool,
-      settings: PyLspToolSettings,
-      formatting: Boolean? = null,
-      sortImports: Boolean? = null,
-    ) {
-      val entry = PyToolsState.getInstance(project).getEntry(tool)
-      logConfigurationChanged(
-        project = project,
-        tool = tool,
-        enabled = entry.enabled,
-        inspections = settings.inspections,
-        completions = settings.completions,
-        inlayHints = settings.inlayHints,
-        documentation = settings.documentation,
-        formatting = formatting,
-        sortImports = sortImports,
-        executableDiscoveryMode = entry.discoveryMode,
-      )
+    fun logToolUpdated(project: Project, tool: PyTool, source: PyToolActionSource) {
+      TOOL_UPDATED.log(project, tool.fusId, source)
     }
   }
 
 }
 
-private val GROUP = EventLogGroup("python.lsp", 5)
+private val GROUP = EventLogGroup("python.lsp", 6)
+
+/**
+ * UI place from which a Python-tool action (install / upgrade / configuration change) was
+ * triggered. Extend when new entry points (notifications, intentions, editor banners, ...)
+ * start logging these events.
+ */
+enum class PyToolActionSource {
+  /** The Python External Tools settings page — the table itself (path-column icons and the page-level apply). */
+  SETTINGS_TABLE,
+  /** A per-tool detail configurable nested inside the Python External Tools settings page. */
+  SETTINGS_DETAIL,
+}
 
 private val toolNameField = EventFields.StringValidatedByDictionary("tool_name", "python_packages.ndjson")
+private val sourceField = EventFields.Enum("source", PyToolActionSource::class.java)
 private val enabledField = EventFields.Boolean("enabled")
 private val inspectionsField = EventFields.Enum("inspections", ThreeState::class.java)
 private val completionsField = EventFields.Enum("completions", ThreeState::class.java)
@@ -98,6 +77,7 @@ private val executableDiscoveryModeField = EventFields.Enum("executable_discover
 private val CONFIGURATION_CHANGED = GROUP.registerVarargEvent(
   "configuration.changed",
   toolNameField,
+  sourceField,
   enabledField,
   inspectionsField,
   completionsField,
@@ -116,10 +96,12 @@ private val DISABLE_RULE = GROUP.registerEvent(
 private val TOOL_INSTALLED = GROUP.registerEvent(
   "installed",
   toolNameField,
+  sourceField,
 )
 private val TOOL_UPDATED = GROUP.registerEvent(
   "updated",
   toolNameField,
+  sourceField,
 )
 
 private val Boolean?.toThreeState: ThreeState

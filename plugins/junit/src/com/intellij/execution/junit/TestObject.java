@@ -638,6 +638,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     }
   }
 
+  @SuppressWarnings("DuplicateBranchesInSwitch")
   private static GlobalSearchScope getScopeForJUnit(@Nullable Module module, Project project) {
     if (module == null) return GlobalSearchScope.allScope(project);
 
@@ -646,7 +647,8 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       case "module" -> GlobalSearchScope.moduleScope(module);
       case "testsWithDependents" -> GlobalSearchScope.moduleTestsWithDependentsScope(module);
       case "withLibraries" -> GlobalSearchScope.moduleWithLibrariesScope(module);
-      case null, default -> GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, true);
+      case "withDependenciesAndLibraries" -> GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, true);
+      case null, default -> GlobalSearchScope.moduleRuntimeScope(module, true);
     };
   }
 

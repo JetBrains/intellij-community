@@ -5,6 +5,7 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.formatting.FormattingDocumentModel;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.DocumentImpl;
@@ -17,6 +18,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiDocumentManagerEx;
 import com.intellij.psi.impl.PsiToDocumentSynchronizer;
+import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +30,17 @@ public final class FormattingDocumentModelImpl implements FormattingDocumentMode
 
   private static final Logger LOG = Logger.getInstance(FormattingDocumentModelImpl.class);
   private final CodeStyleSettings mySettings;
+  private volatile CursorInfo cursor;
+
+  private record CursorInfo(PsiElement element, int parentStartOffset) {
+    CursorInfo(PsiElement element) {
+      this(element, element.getParent().getTextRange().getStartOffset());
+    }
+
+    TextRange parentTextRange() {
+      return TextRange.create(0, element().getParent().getTextLength()).shiftRight(parentStartOffset());
+    }
+  }
 
   public FormattingDocumentModelImpl(final @NotNull Document document, @NotNull PsiFile psiFile) {
     myDocument = document;
@@ -165,11 +178,72 @@ public final class FormattingDocumentModelImpl implements FormattingDocumentMode
 
   private Language getLanguageByOffset(int offset) {
     if (offset < myPsiFile.getTextLength()) {
-      PsiElement element = myPsiFile.findElementAt(offset);
+      CursorInfo elementFromCursor = findElementUsingCursor(offset);
+      PsiElement element = elementFromCursor != null ? elementFromCursor.element() : myPsiFile.findElementAt(offset);
       if (element != null) {
+        updateCursor(elementFromCursor, element);
         return element.getLanguage();
       }
     }
     return null;
   }
+
+  /**
+   * This function is an optimization.
+   * <p>
+   * During formatting, we repeatedly query elements by increasing offsets.
+   * In a wide syntax tree, each query runs in O(width) (because children of a syntax tree node are represented as a linked list),
+   * resulting in O(n^2) time for formatting wide trees.
+   * To optimize this process, we keep a mutable pointer to the last accessed element,
+   * so that the following queries for another element at offset are able to start from this pointer and not from the top-level FileElement node.
+   * We restrict this optimization to write actions only.
+   */
+  private @Nullable CursorInfo findElementUsingCursor(int offset) {
+    // I am not sure what are the threading contracts of this class, but I know that the degradation happens in write action.
+    // So I am limiting the cursor optimization to write actions only -- thus I am obtaining thread-safety.
+    if (!ApplicationManager.getApplication().isWriteAccessAllowed()) {
+      return null;
+    }
+    CursorInfo cursor = this.cursor;
+    if (cursor == null) {
+      return null;
+    }
+    TextRange parentRange = cursor.parentTextRange(); // O(1)
+    if (!parentRange.contains(offset)) {
+      this.cursor = null;
+      return null;
+    }
+    PsiElement currentElement = cursor.element();
+    boolean moveRight = offset >= currentElement.getTextRangeInParent().shiftRight(cursor.parentStartOffset()).getEndOffset(); // O(1)
+    // the whole loop may be O(width), but the amortized complexity is O(1) -- we visit each node at most once.
+    while (!currentElement.getTextRangeInParent().shiftRight(parentRange.getStartOffset()).contains(offset)) { // each check is O(1)
+      currentElement = moveRight ? currentElement.getNextSibling() : currentElement.getPrevSibling(); // O(1)
+      if (currentElement == null) {
+        this.cursor = null;
+        return null;
+      }
+    }
+    if (!(currentElement.getNode() instanceof LeafElement)) {
+      return null;
+    }
+    return new CursorInfo(currentElement, cursor.parentStartOffset());
+  }
+
+
+  private void updateCursor(@Nullable CursorInfo updatedCursor, @NotNull PsiElement newElement) {
+    if (!ApplicationManager.getApplication().isWriteAccessAllowed()) {
+      return;
+    }
+    if (updatedCursor != null) {
+      // we managed to shift cursor so that it points to the new element; let's record it
+      this.cursor = updatedCursor;
+      return;
+    }
+    // the cursor-based traversal failed, but we found element by traversing from the top.
+    PsiElement parent = newElement.getParent();
+    if (parent != null) {
+      this.cursor = new CursorInfo(newElement); // O(depth); amortized by repeated access to cursor
+    }
+  }
+
 }

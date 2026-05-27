@@ -6,7 +6,7 @@ import com.intellij.compose.ide.plugin.shared.associateNotNull
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
@@ -55,10 +55,12 @@ internal class ComposeResourcesManager(private val project: Project) {
 
   private fun loadComposeResources(): Map<String, ComposeResources>? =
     composeResourcesModels?.associateNotNull { node ->
-      val moduleName = (node.parent?.data as? ModuleData)?.moduleName ?: return@associateNotNull null
+      val moduleData = node.parent?.data as? ModuleData ?: return@associateNotNull null
+      val moduleName = moduleData.moduleName
+      val projectGroupName = moduleData.group.orEmpty()
       val dirs = node.data.customComposeResourcesDirs.mapValues { (sourceSetName, customDirectoryPath) ->
         val (directoryPath, isCustom) = customDirectoryPath
-        ComposeResourcesDir(moduleName, sourceSetName, Path.of(directoryPath), isCustom)
+        ComposeResourcesDir(moduleName, sourceSetName, Path.of(directoryPath), projectGroupName, isCustom)
       }
       moduleName to ComposeResources(
         moduleName = moduleName,
@@ -77,6 +79,6 @@ internal class ComposeResourcesManager(private val project: Project) {
   }
 
   companion object {
-    val log = Logger.getInstance(this::class.java)
+    private val log = logger<ComposeResourcesManager>()
   }
 }

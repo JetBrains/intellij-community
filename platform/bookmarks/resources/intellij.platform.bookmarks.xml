@@ -219,12 +219,6 @@
       <reference ref="EditBookmark"/>
       <reference ref="ToggleBookmark"/>
       <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="ReopenClosedTab"/>
-    </group>
-
-    <group>
-      <separator/>
-      <reference ref="popup@ExpandableBookmarkContextMenu"/>
-      <separator/>
       <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="ProjectViewPopupMenuRefactoringGroup"/>
     </group>
 

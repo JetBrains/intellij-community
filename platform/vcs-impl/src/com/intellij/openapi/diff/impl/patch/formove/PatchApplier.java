@@ -293,6 +293,7 @@ public final class PatchApplier {
                                   VcsBundle.message("patch.apply.aborted.message"));
       }
       catch (LocalHistoryException e) {
+        LOG.warn("Failed to revert patch application changes to local history label", e);
         VcsNotifier.getInstance(project)
           .notifyImportantWarning(PATCH_APPLY_ROLLBACK_FAILED,
                                   VcsBundle.message("patch.apply.rollback.failed.title"),

@@ -21,6 +21,14 @@ import org.jetbrains.annotations.NonNls
 interface EelDescriptorWithoutNativeFileChooserSupport : EelDescriptor
 
 /**
+ * Marker interface enforcing an isolated workspace for the project located in a container. The workspace file located under config/workspace
+ * is shared by default if the project is both opened locally and mounted, which may cause undesirable side effects.
+ */
+@ApiStatus.OverrideOnly
+@ApiStatus.Internal
+interface EelDescriptorWithIsolatedWorkspace : EelDescriptor
+
+/**
  * Identifies a specific machine — such as a Docker container, WSL distribution, or SSH host.
  *
  * Multiple [EelDescriptor]s may map to the same machine.

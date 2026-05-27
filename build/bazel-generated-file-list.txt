@@ -668,6 +668,7 @@ platform/ijent
 platform/ijent/buildConstants
 platform/ijent/impl
 platform/ijent/testFramework
+platform/ijent/ui
 platform/indexing-api
 platform/indexing-impl
 platform/indexing-tests
@@ -731,6 +732,7 @@ platform/multiplatformSupport
 platform/navbar/backend
 platform/navbar/frontend
 platform/navbar/monolith
+platform/navbar/plugin
 platform/navbar/shared
 platform/navbar/testFramework
 platform/new-ui-onboarding

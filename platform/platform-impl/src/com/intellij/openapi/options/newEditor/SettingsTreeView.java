@@ -731,7 +731,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       if (isBeta(configurable)) {
         myTextLabel.setIconOnTheRight(true);
         myTextLabel.setIconTextGap(JBUIScale.scale(8));
-        myTextLabel.setIcon(Badge.getBeta());
+        myTextLabel.setIcon(Badge.beta);
       }
 
       Configurable.Promo promo = asPromo(configurable);

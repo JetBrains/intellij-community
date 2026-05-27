@@ -36,7 +36,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import java.nio.file.Path
 
-class CondaPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
+internal class CondaPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
   override val repositoryManager: PythonRepositoryManager = CondaRepositoryManger(project, sdk).also {
     Disposer.register(this, it)
   }

@@ -50,8 +50,7 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Path
 
 @ApiStatus.Internal
-@VisibleForTesting
-class UvPackageManager internal constructor(project: Project, sdk: Sdk, uvExecutionContextDeferred: Deferred<UvExecutionContext<*>>) : PythonPackageManager(project, sdk) {
+internal class UvPackageManager internal constructor(project: Project, sdk: Sdk, uvExecutionContextDeferred: Deferred<UvExecutionContext<*>>) : PythonPackageManager(project, sdk) {
   override val installedPackagesIncludeTransitive: Boolean = true
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager.getInstance(project)
   override val treeProvider = CachedDependencyTreeProvider {

@@ -26,9 +26,9 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.output.TerminalAlarmManager
 import org.jetbrains.plugins.terminal.block.session.util.FutureTerminalOutputStream
-import org.jetbrains.plugins.terminal.util.STOP_EMULATOR_TIMEOUT
+import org.jetbrains.plugins.terminal.util.CONNECTOR_CLOSING_TIMEOUT
 import org.jetbrains.plugins.terminal.util.ShellIntegration
-import org.jetbrains.plugins.terminal.util.waitFor
+import org.jetbrains.plugins.terminal.util.waitForAsync
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -146,7 +146,7 @@ class BlockTerminalSession(
     terminalStarterFuture.complete(null)
     terminalStarterFuture.getNow(null)?.let {
       it.close() // close in background
-      it.ttyConnector.waitFor(STOP_EMULATOR_TIMEOUT) {
+      it.ttyConnector.waitForAsync(CONNECTOR_CLOSING_TIMEOUT) {
         it.requestEmulatorStop()
       }
     }

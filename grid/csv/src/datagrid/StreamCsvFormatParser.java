@@ -2,7 +2,7 @@ package com.intellij.database.datagrid;
 
 import com.intellij.database.csv.CsvFormat;
 import com.intellij.database.csv.CsvRecordFormat;
-import com.intellij.database.datagrid.CsvLexer.TokenType;
+import com.intellij.database.datagrid.CsvTokenizer.TokenType;
 import com.intellij.database.remote.dbimport.ErrorRecord;
 import com.intellij.database.remote.dbimport.OffsetRecord;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,36 +28,36 @@ public class StreamCsvFormatParser {
 
   private List<ErrorRecord> myErrors;
   private Token[] myHeader;
-  private final CsvLexer myLexer;
+  private final CsvTokenizer myTokenizer;
 
   public StreamCsvFormatParser(@NotNull CsvFormat format, int maxCharsReadPerBatch, @NotNull CsvReader reader) {
     myDataFormat = format;
     myMaxCharsReadPerBatch = maxCharsReadPerBatch;
-    myLexer = new CsvLexer(reader);
-    myLexer.setCsvFormat(ObjectUtils.chooseNotNull(myDataFormat.headerRecord, myDataFormat.dataRecord));
+    myTokenizer = new CsvTokenizer(reader);
+    myTokenizer.setCsvFormat(ObjectUtils.chooseNotNull(myDataFormat.headerRecord, myDataFormat.dataRecord));
   }
 
   public @Nullable CsvParserResult parse() throws IOException {
-    long startCharacters = myLexer.getCharacters();
+    long startCharacters = myTokenizer.getCharacters();
     if (startCharacters != 0 && myHeader == null) return null;
 
     myErrors = new ArrayList<>();
     List<Token[]> result = new ArrayList<>();
     if (!parseHeader(startCharacters)) {
       if (myErrors.isEmpty()) myErrors.add(new MyRecord());
-      return new CsvParserResult(null, ContainerUtil.emptyList(), myErrors, myLexer.getCharacters() - startCharacters);
+      return new CsvParserResult(null, ContainerUtil.emptyList(), myErrors, myTokenizer.getCharacters() - startCharacters);
     }
     if (startCharacters == 0 && myDataFormat.headerRecord == null) result.add(myHeader);
     parseRecords(result, startCharacters);
 
     return !result.isEmpty() || !myErrors.isEmpty() ?
-           new CsvParserResult(myDataFormat.headerRecord == null ? null : myHeader, result, myErrors, myLexer.getCharacters() - startCharacters) :
+           new CsvParserResult(myDataFormat.headerRecord == null ? null : myHeader, result, myErrors, myTokenizer.getCharacters() - startCharacters) :
            null;
   }
 
   private void parseRecords(@NotNull List<Token[]> result, long startCharacters) throws IOException {
     int valuesPerRecordCount = myDataFormat.rowNumbers ? myHeader.length + 1 : myHeader.length;
-    while (myLexer.isReady() && (myLexer.getCharacters() - startCharacters < myMaxCharsReadPerBatch || result.isEmpty())) {
+    while (myTokenizer.isReady() && (myTokenizer.getCharacters() - startCharacters < myMaxCharsReadPerBatch || result.isEmpty())) {
       Token[] e = getRecord(myDataFormat.dataRecord, true, valuesPerRecordCount);
       if (e == null) break;
       result.add(e);
@@ -68,16 +68,16 @@ public class StreamCsvFormatParser {
     if (myHeader != null) return true;
 
     CsvRecordFormat headerFormat = myDataFormat.headerRecord == null ? myDataFormat.dataRecord : myDataFormat.headerRecord;
-    while (myLexer.getCharacters() - startCharacters < myMaxCharsReadPerBatch && myLexer.isReady() && myHeader == null) {
+    while (myTokenizer.getCharacters() - startCharacters < myMaxCharsReadPerBatch && myTokenizer.isReady() && myHeader == null) {
       myHeader = getRecord(headerFormat, myDataFormat.headerRecord == null, NOT_IMPORTANT);
     }
-    myLexer.setCsvFormat(myDataFormat.dataRecord);
+    myTokenizer.setCsvFormat(myDataFormat.dataRecord);
     return myHeader != null;
   }
 
   private Token @Nullable [] getRecord(@NotNull CsvRecordFormat format, boolean allowNulls, int valuesPerRecordCount) throws IOException {
     List<Token> record = null;
-    while (myLexer.isReady() && record == null) {
+    while (myTokenizer.isReady() && record == null) {
       try {
         record = parseRecord(format, allowNulls, valuesPerRecordCount);
       }
@@ -100,9 +100,9 @@ public class StreamCsvFormatParser {
                          boolean allowNulls,
                          int valuesPerRecordCount,
                          List<Token> result) throws IOException, CsvParserException {
-    myLexer.advance();
+    myTokenizer.advance();
     maybe(TokenType.PREFIX);
-    if (myLexer.getType() == null) return;
+    if (myTokenizer.getType() == null) return;
     if (!valuesChain(format, result, allowNulls, valuesPerRecordCount)) {
       return;
     }
@@ -127,15 +127,15 @@ public class StreamCsvFormatParser {
                      int valuesPerRecordCount) throws CsvParserException, IOException {
     assertTokenType(format, TokenType.VALUE, TokenType.QUOTED_VALUE);
     result.add(createValueToken(allowNulls ? format : null));
-    myLexer.advance();
-    if (valuesPerRecordCount != NOT_IMPORTANT && valuesPerRecordCount == result.size() && myLexer.getType() != null) {
+    myTokenizer.advance();
+    if (valuesPerRecordCount != NOT_IMPORTANT && valuesPerRecordCount == result.size() && myTokenizer.getType() != null) {
       countChain(format);
     }
     if (checkIfTypesOrNull(TokenType.RECORD_SEPARATOR, TokenType.SUFFIX)) {
       return;
     }
     assertTokenType(format, TokenType.VALUE_SEPARATOR);
-    myLexer.advance();
+    myTokenizer.advance();
   }
 
   private void countChain(@NotNull CsvRecordFormat format) throws CsvParserException, IOException {
@@ -144,10 +144,10 @@ public class StreamCsvFormatParser {
   }
 
   private @Nullable Token createValueToken(@Nullable CsvRecordFormat format) {
-    String text = myLexer.getText();
+    String text = myTokenizer.getText();
     if (text == null) return null;
-    if (text.length() >= CsvLexer.MAX_CHARACTERS) myErrors.add(
-      new OffsetRecord(new MaxCharactersReachedException(cut(text)), myLexer.getTokenLine(), myLexer.getOffset())
+    if (text.length() >= CsvTokenizer.MAX_CHARACTERS) myErrors.add(
+      new OffsetRecord(new MaxCharactersReachedException(cut(text)), myTokenizer.getTokenLine(), myTokenizer.getOffset())
     );
     return createToken(format);
   }
@@ -159,17 +159,17 @@ public class StreamCsvFormatParser {
   }
 
   private boolean shouldReadValue() {
-    TokenType type = myLexer.getType();
+    TokenType type = myTokenizer.getType();
     return type != null && type != TokenType.SUFFIX && type != TokenType.RECORD_SEPARATOR;
   }
 
   private @NotNull StreamCsvFormatParser.CsvParserException newParserException(@NotNull CsvRecordFormat format,
                                                                                TokenType @NotNull ... types) throws IOException {
-    TokenType type = myLexer.getType();
+    TokenType type = myTokenizer.getType();
     boolean hasToken = type == null;
-    String text = hasToken ? cut(myLexer.readAhead(ERROR_TEXT_SIZE)) : myLexer.getText();
-    long character = hasToken ? myLexer.getLineCharacters() : myLexer.getOffset();
-    long line = hasToken ? myLexer.getLine() : myLexer.getTokenLine();
+    String text = hasToken ? cut(myTokenizer.readAhead(ERROR_TEXT_SIZE)) : myTokenizer.getText();
+    long character = hasToken ? myTokenizer.getLineCharacters() : myTokenizer.getOffset();
+    long line = hasToken ? myTokenizer.getLine() : myTokenizer.getTokenLine();
     return new CsvParserException(
       text == null ? null : StringUtil.wrapWithDoubleQuote(text),
       createToken(null),
@@ -186,12 +186,12 @@ public class StreamCsvFormatParser {
   }
 
   private @Nullable Token createToken(@Nullable CsvRecordFormat format) {
-    if (!myLexer.hasToken()) return null;
-    String text = Objects.requireNonNull(myLexer.getText());
-    TokenType type = Objects.requireNonNull(myLexer.getType());
+    if (!myTokenizer.hasToken()) return null;
+    String text = Objects.requireNonNull(myTokenizer.getText());
+    TokenType type = Objects.requireNonNull(myTokenizer.getType());
     boolean isNull = type != TokenType.QUOTED_VALUE && format != null && StringUtil.equals(text, format.nullText);
     if (type == TokenType.QUOTED_VALUE) {
-      CsvRecordFormat fmt = myLexer.getCsvFormat();
+      CsvRecordFormat fmt = myTokenizer.getCsvFormat();
       for (CsvRecordFormat.Quotes quote : fmt.quotes) {
         if (quote.isQuoted(text)) {
           text = unquote(text, quote, fmt.trimWhitespace);
@@ -199,10 +199,10 @@ public class StreamCsvFormatParser {
         }
       }
     }
-    if (type == TokenType.VALUE && myLexer.getCsvFormat().trimWhitespace) {
+    if (type == TokenType.VALUE && myTokenizer.getCsvFormat().trimWhitespace) {
       text = text.strip();
     }
-    return new Token(text, isNull, type, myLexer.getTokenLine(), myLexer.getOffset());
+    return new Token(text, isNull, type, myTokenizer.getTokenLine(), myTokenizer.getOffset());
   }
 
   private static String unquote(String text, CsvRecordFormat.Quotes quote, boolean trim) {
@@ -230,9 +230,9 @@ public class StreamCsvFormatParser {
     return res.toString();
   }
 
-  private static void restore(@NotNull CsvLexer lexer) throws IOException {
-    while (lexer.isReady() && lexer.getType() != TokenType.RECORD_SEPARATOR) {
-      lexer.advance();
+  private static void restore(@NotNull CsvTokenizer tokenizer) throws IOException {
+    while (tokenizer.isReady() && tokenizer.getType() != TokenType.RECORD_SEPARATOR) {
+      tokenizer.advance();
     }
   }
 
@@ -356,27 +356,27 @@ public class StreamCsvFormatParser {
 
   private void assertTokenType(@NotNull CsvRecordFormat format,
                                       TokenType @NotNull ... types) throws IOException, CsvParserException {
-    CsvLexer.TokenType type = myLexer.getType();
+    CsvTokenizer.TokenType type = myTokenizer.getType();
     if (type != null && ArrayUtil.contains(type, types)) return;
     CsvParserException e = newParserException(format, types);
     if (type == TokenType.RECORD_SEPARATOR) throw e;
-    restore(myLexer);
+    restore(myTokenizer);
     throw e;
   }
 
   private boolean checkIfTypesOrNull(TokenType @NotNull ... types) {
-    return myLexer.getType() == null || ArrayUtil.contains(myLexer.getType(), types);
+    return myTokenizer.getType() == null || ArrayUtil.contains(myTokenizer.getType(), types);
   }
 
 
   private void assertTypesOrNull(CsvRecordFormat format, TokenType @NotNull ... types) throws IOException, CsvParserException {
-    if (myLexer.getType() == null) return;
+    if (myTokenizer.getType() == null) return;
     assertTokenType(format, types);
   }
 
   private void maybe(@NotNull TokenType type) throws IOException {
-    TokenType tokenType = myLexer.getType();
-    if (tokenType == type) myLexer.advance();
+    TokenType tokenType = myTokenizer.getType();
+    if (tokenType == type) myTokenizer.advance();
   }
 
   public static class MaxCharactersReachedException extends Exception {

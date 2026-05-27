@@ -28,10 +28,10 @@ http_file(
 )
 
 http_file(
-  name = "ai_grazie-grazie-rule-engine-0_3_202_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rule-engine/0.3.202/grazie-rule-engine-0.3.202.jar",
-  sha256 = "126a25f90a3c63fb7cff495f905ca43792ee7e59fda0037031eecb550df98629",
-  downloaded_file_path = "grazie-rule-engine-0.3.202.jar"
+  name = "ai_grazie-grazie-rule-engine-0_3_212_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rule-engine/0.3.212/grazie-rule-engine-0.3.212.jar",
+  sha256 = "6029b1efa0b60aa72accb69dab7c6f23873f7ab584db9d1de932a9e9a7272560",
+  downloaded_file_path = "grazie-rule-engine-0.3.212.jar"
 )
 
 http_file(
@@ -42,10 +42,10 @@ http_file(
 )
 
 http_file(
-  name = "ai_grazie-grazie-rule-engine-0_3_202-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rule-engine/0.3.202/grazie-rule-engine-0.3.202-sources.jar",
-  sha256 = "cf794cfdc840ab9ccbfe4b41563e449e4210cbba672a6aa446b7e3fb5e0cbf15",
-  downloaded_file_path = "grazie-rule-engine-0.3.202-sources.jar"
+  name = "ai_grazie-grazie-rule-engine-0_3_212-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rule-engine/0.3.212/grazie-rule-engine-0.3.212-sources.jar",
+  sha256 = "73f3b1e53e7b8a91c05b2390c927561090479df7a7473db2b0e23099edcdeea4",
+  downloaded_file_path = "grazie-rule-engine-0.3.212-sources.jar"
 )
 
 http_file(
@@ -56,17 +56,17 @@ http_file(
 )
 
 http_file(
-  name = "ai_grazie-grazie-rules-llm-0_3_202_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rules-llm/0.3.202/grazie-rules-llm-0.3.202.jar",
-  sha256 = "2967f71337aade2a2322153828a3c28f4ce9652643627b706b180b6afdb23d3e",
-  downloaded_file_path = "grazie-rules-llm-0.3.202.jar"
+  name = "ai_grazie-grazie-rules-llm-0_3_212_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rules-llm/0.3.212/grazie-rules-llm-0.3.212.jar",
+  sha256 = "778ac686a02b2bbcde5fa4a994b742c9e16582ab7f030bad743de1038ba9a63c",
+  downloaded_file_path = "grazie-rules-llm-0.3.212.jar"
 )
 
 http_file(
-  name = "ai_grazie-grazie-rules-llm-0_3_202-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rules-llm/0.3.202/grazie-rules-llm-0.3.202-sources.jar",
-  sha256 = "87d0e11c2ad9e9ebc4d9647c7413646b386f13c71fdfac8c92e19b365c4cba25",
-  downloaded_file_path = "grazie-rules-llm-0.3.202-sources.jar"
+  name = "ai_grazie-grazie-rules-llm-0_3_212-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rules-llm/0.3.212/grazie-rules-llm-0.3.212-sources.jar",
+  sha256 = "a7959e2645062081558b56b8cc5d8129579f7ceb69f776d4d15412242d8de840",
+  downloaded_file_path = "grazie-rules-llm-0.3.212-sources.jar"
 )
 
 http_file(
@@ -5446,17 +5446,17 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps-debugger-agent-1_177_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/debugger-agent/1.177/debugger-agent-1.177.jar",
-  sha256 = "3d300df1856a9c588a12ff9b36435d00ec76a30271030fe07f0e8cae5c5d3e1d",
-  downloaded_file_path = "debugger-agent-1.177.jar"
+  name = "org_jetbrains_intellij_deps-debugger-agent-1_178_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/debugger-agent/1.178/debugger-agent-1.178.jar",
+  sha256 = "6adec1500711ba2e78d2a0398b2e5e948877d129fb3248a0e58bdb4cc07f1370",
+  downloaded_file_path = "debugger-agent-1.178.jar"
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps-debugger-agent-1_177-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/debugger-agent/1.177/debugger-agent-1.177-sources.jar",
-  sha256 = "2d3298df6e6cf34dd9eb99a5a0388d1f6a9cd3add15a17743c62b21205c4d395",
-  downloaded_file_path = "debugger-agent-1.177-sources.jar"
+  name = "org_jetbrains_intellij_deps-debugger-agent-1_178-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/debugger-agent/1.178/debugger-agent-1.178-sources.jar",
+  sha256 = "3fbb2afd7436066d67e2f9e11f7e5616cba3c292642f43f65facbc1f173ff2fc",
+  downloaded_file_path = "debugger-agent-1.178-sources.jar"
 )
 
 http_file(
@@ -5635,17 +5635,17 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_jediterm-jediterm-core-3_66_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/jediterm/jediterm-core/3.66/jediterm-core-3.66.jar",
-  sha256 = "b03e9f3c5bedf6c8d10c9ac35826c098a2031eb1c3cd8b5015f027e4060a23d5",
-  downloaded_file_path = "jediterm-core-3.66.jar"
+  name = "org_jetbrains_jediterm-jediterm-core-3_68_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/jediterm/jediterm-core/3.68/jediterm-core-3.68.jar",
+  sha256 = "775d91cc376b66342e4590bce5139b5741cc612a156fdfd8acbf2d99c3524ba0",
+  downloaded_file_path = "jediterm-core-3.68.jar"
 )
 
 http_file(
-  name = "org_jetbrains_jediterm-jediterm-core-3_66-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/jediterm/jediterm-core/3.66/jediterm-core-3.66-sources.jar",
-  sha256 = "3f04a978d99db69d180a32f1cd8328babdc9ab42922e9e7d29032afb31f30b06",
-  downloaded_file_path = "jediterm-core-3.66-sources.jar"
+  name = "org_jetbrains_jediterm-jediterm-core-3_68-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/jediterm/jediterm-core/3.68/jediterm-core-3.68-sources.jar",
+  sha256 = "f5a5223ace30404617803e02d8942d3789ea8b4c5785110ba5d487479f0b860d",
+  downloaded_file_path = "jediterm-core-3.68-sources.jar"
 )
 
 http_file(
@@ -9716,17 +9716,17 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_jediterm-jediterm-ui-3_66_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/jediterm/jediterm-ui/3.66/jediterm-ui-3.66.jar",
-  sha256 = "69113e2ec5a6cf5c5cb70ffb8010647cfce8d18549513b50118604ff2d9c866e",
-  downloaded_file_path = "jediterm-ui-3.66.jar"
+  name = "org_jetbrains_jediterm-jediterm-ui-3_68_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/jediterm/jediterm-ui/3.68/jediterm-ui-3.68.jar",
+  sha256 = "bc2f408fa9dd0542498b648e7805e93c214fabe56fad47b979f213f27462587a",
+  downloaded_file_path = "jediterm-ui-3.68.jar"
 )
 
 http_file(
-  name = "org_jetbrains_jediterm-jediterm-ui-3_66-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/jediterm/jediterm-ui/3.66/jediterm-ui-3.66-sources.jar",
-  sha256 = "37d09cc72b569700f540f035cbeac2341f2c1325cc275c2832de024a3321bb43",
-  downloaded_file_path = "jediterm-ui-3.66-sources.jar"
+  name = "org_jetbrains_jediterm-jediterm-ui-3_68-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/jediterm/jediterm-ui/3.68/jediterm-ui-3.68-sources.jar",
+  sha256 = "70a163ac70ef94e3e72b58dcddf2da521e90f823b1b92ae0f24c0cfe50caed62",
+  downloaded_file_path = "jediterm-ui-3.68-sources.jar"
 )
 
 http_file(

@@ -51,8 +51,3 @@ internal fun filterPluginsToPublish(plugins: MutableSet<PluginLayout>, context: 
 
   plugins.removeIf { !toInclude.contains(it.directoryName) }
 }
-
-/**
- * @return module names which are required to run the necessary tools from build scripts
- */
-internal fun getToolModules(): List<String> = listOf("intellij.java.rt", "intellij.platform.starter", "intellij.tools.updater")

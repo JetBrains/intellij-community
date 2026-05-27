@@ -198,7 +198,6 @@ f:com.intellij.openapi.application.CoroutinesKt
 - *sf:getUiImmediate(kotlinx.coroutines.Dispatchers):kotlin.coroutines.CoroutineContext
 - *sf:readAndBackgroundWriteActionUndispatched(kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
 - *sf:readAndEdtWriteActionUndispatched(kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
-- *sf:writeAction(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 - *sf:writeIntentReadAction(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 *a:com.intellij.openapi.application.WriteIntentReadAction
 - <init>():V

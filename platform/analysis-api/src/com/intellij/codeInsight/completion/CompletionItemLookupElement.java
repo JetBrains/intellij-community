@@ -14,6 +14,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.MarkupText;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.JBColor;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -181,6 +182,7 @@ public final class CompletionItemLookupElement extends LookupElement implements 
           case STRONG -> presentation.setItemTextBold(true);
           case EMPHASIZED -> presentation.setItemTextItalic(true);
           case STRIKEOUT -> presentation.setStrikeout(true);
+          case ERROR -> presentation.setItemTextForeground(JBColor.RED);
         }
       }
     }

@@ -11,8 +11,6 @@ import org.jetbrains.intellij.build.productLayout.discovery.GenerationResult
 import org.jetbrains.intellij.build.productLayout.discovery.ModuleSetGenerationConfig
 import org.jetbrains.intellij.build.productLayout.generator.ContentModuleDependencyPlanner
 import org.jetbrains.intellij.build.productLayout.generator.ContentModuleXmlWriter
-import org.jetbrains.intellij.build.productLayout.generator.ModuleSetPluginCleanupResult
-import org.jetbrains.intellij.build.productLayout.generator.ModuleSetPluginGenerator
 import org.jetbrains.intellij.build.productLayout.generator.ModuleSetXmlGenerator
 import org.jetbrains.intellij.build.productLayout.generator.PluginDependencyPlanner
 import org.jetbrains.intellij.build.productLayout.generator.PluginXmlWriter
@@ -21,8 +19,6 @@ import org.jetbrains.intellij.build.productLayout.generator.ProductXmlGenerator
 import org.jetbrains.intellij.build.productLayout.generator.SuppressionConfigGenerator
 import org.jetbrains.intellij.build.productLayout.generator.TestPluginDependencyPlanner
 import org.jetbrains.intellij.build.productLayout.generator.TestPluginXmlGenerator
-import org.jetbrains.intellij.build.productLayout.generator.cleanupGeneratedArtifactDirectories
-import org.jetbrains.intellij.build.productLayout.generator.cleanupOrphanedModuleSetPluginFiles
 import org.jetbrains.intellij.build.productLayout.model.ErrorSink
 import org.jetbrains.intellij.build.productLayout.model.error.FileDiff
 import org.jetbrains.intellij.build.productLayout.model.error.ValidationError
@@ -30,8 +26,6 @@ import org.jetbrains.intellij.build.productLayout.stats.DependencyGenerationResu
 import org.jetbrains.intellij.build.productLayout.stats.GenerationStats
 import org.jetbrains.intellij.build.productLayout.stats.ModuleSetFileResult
 import org.jetbrains.intellij.build.productLayout.stats.ModuleSetGenerationResult
-import org.jetbrains.intellij.build.productLayout.stats.ModuleSetPluginFileResult
-import org.jetbrains.intellij.build.productLayout.stats.ModuleSetPluginGenerationResult
 import org.jetbrains.intellij.build.productLayout.stats.PluginDependencyGenerationResult
 import org.jetbrains.intellij.build.productLayout.stats.ProductGenerationResult
 import org.jetbrains.intellij.build.productLayout.stats.SuppressionConfigStats
@@ -42,14 +36,12 @@ import org.jetbrains.intellij.build.productLayout.validator.ContentModulePluginD
 import org.jetbrains.intellij.build.productLayout.validator.EmbeddedContentModuleDependencyValidator
 import org.jetbrains.intellij.build.productLayout.validator.ImplicitEmbeddedContentModuleValidator
 import org.jetbrains.intellij.build.productLayout.validator.LibraryModuleValidator
-import org.jetbrains.intellij.build.productLayout.validator.ModuleSetPluginizationValidator
 import org.jetbrains.intellij.build.productLayout.validator.PluginContentDependencyValidator
 import org.jetbrains.intellij.build.productLayout.validator.PluginContentDuplicatesValidator
 import org.jetbrains.intellij.build.productLayout.validator.PluginContentStructureValidator
 import org.jetbrains.intellij.build.productLayout.validator.PluginDependencyDeclarationValidator
 import org.jetbrains.intellij.build.productLayout.validator.PluginDescriptorIdConflictValidator
 import org.jetbrains.intellij.build.productLayout.validator.PluginPluginDependencyValidator
-import org.jetbrains.intellij.build.productLayout.validator.PluginizedModuleSetReferenceValidator
 import org.jetbrains.intellij.build.productLayout.validator.ProductModuleSetValidator
 import org.jetbrains.intellij.build.productLayout.validator.SelfContainedModuleSetValidator
 import org.jetbrains.intellij.build.productLayout.validator.SuppressionConfigValidator
@@ -173,10 +165,10 @@ internal class GenerationPipeline(
       val aggregated = aggregate(ctx, model, modelBuildingErrorSink)
 
       // Stage 5: OUTPUT - Cleanup orphans and commit or return diffs
-      val outputResult = output(aggregated.errors, model, commitChanges, aggregated.trackingMaps, aggregated.moduleSetPluginsOutput)
+      val outputResult = output(aggregated.errors, model, commitChanges, aggregated.trackingMaps)
 
       // Build final stats including deleted files (after cleanup)
-      val stats = buildStats(ctx, System.currentTimeMillis() - startTime, outputResult.deletedModuleSetFiles, outputResult.deletedModuleSetPluginFiles, model.fileUpdater.getDiffs())
+      val stats = buildStats(ctx, System.currentTimeMillis() - startTime, outputResult.deletedModuleSetFiles, model.fileUpdater.getDiffs())
 
       GenerationResult(errors = aggregated.errors, diffs = aggregated.diffs, stats = stats)
     }
@@ -342,12 +334,10 @@ internal class GenerationPipeline(
     val diffs: List<FileDiff>,
     /** Tracking maps for orphan cleanup: directory → generated file names */
     val trackingMaps: Map<Path, Set<String>>,
-    val moduleSetPluginsOutput: ModuleSetPluginsOutput?,
   )
 
   private data class OutputStageResult(
     val deletedModuleSetFiles: List<ModuleSetFileResult>,
-    val deletedModuleSetPluginFiles: List<ModuleSetPluginFileResult>,
   )
 
   /**
@@ -377,7 +367,6 @@ internal class GenerationPipeline(
     ctx.tryGet(Slots.PLUGIN_XML)?.diffs?.let { allDiffs.addAll(it) }
     ctx.tryGet(Slots.PRODUCTS)?.diffs?.let { allDiffs.addAll(it) }
     ctx.tryGet(Slots.TEST_PLUGINS)?.diffs?.let { allDiffs.addAll(it) }
-    ctx.tryGet(Slots.MODULE_SET_PLUGINS)?.diffs?.let { allDiffs.addAll(it) }
     ctx.tryGet(Slots.SUPPRESSION_CONFIG)?.diffs?.let { allDiffs.addAll(it) }
 
     // Add diffs from file updater
@@ -403,7 +392,6 @@ internal class GenerationPipeline(
       errors = allErrors,
       diffs = allDiffs,
       trackingMaps = aggregatedTrackingMaps,
-      moduleSetPluginsOutput = ctx.tryGet(Slots.MODULE_SET_PLUGINS),
     )
   }
 
@@ -418,12 +406,10 @@ internal class GenerationPipeline(
     ctx: ComputeContextImpl,
     durationMs: Long,
     deletedModuleSetFiles: List<ModuleSetFileResult> = emptyList(),
-    deletedModuleSetPluginFiles: List<ModuleSetPluginFileResult> = emptyList(),
     fileUpdaterDiffs: List<FileDiff> = emptyList(),
   ): GenerationStats {
     // Read from slots
     val moduleSetsOutput = ctx.tryGet(Slots.MODULE_SETS)
-    val moduleSetPluginsOutput = ctx.tryGet(Slots.MODULE_SET_PLUGINS)
     val productModuleDepsOutput = ctx.tryGet(Slots.PRODUCT_MODULE_DEPS)
     val contentModuleOutput = ctx.tryGet(Slots.CONTENT_MODULE)
     val pluginXmlOutput = ctx.tryGet(Slots.PLUGIN_XML)
@@ -453,9 +439,6 @@ internal class GenerationPipeline(
 
     return GenerationStats(
       moduleSetResults = moduleSetResults,
-      moduleSetPluginResult = moduleSetPluginsOutput?.let {
-        ModuleSetPluginGenerationResult(files = it.files + deletedModuleSetPluginFiles)
-      },
       dependencyResult = productModuleDepsOutput?.let {
         DependencyGenerationResult(files = it.files, errors = productModuleDepErrors, diffs = it.diffs)
       },
@@ -498,33 +481,28 @@ internal class GenerationPipeline(
     model: GenerationModel,
     commitChanges: Boolean,
     trackingMaps: Map<Path, Set<String>>,
-    moduleSetPluginsOutput: ModuleSetPluginsOutput?,
   ): OutputStageResult {
     // In --update-suppressions mode we intentionally skip generated artifact writes,
     // but still must persist suppressions.json even when commitChanges=false.
     if (model.updateSuppressions) {
       model.fileUpdater.commit()
-      return OutputStageResult(emptyList(), emptyList())
+      return OutputStageResult(emptyList())
     }
 
     val deletedModuleSetFiles = cleanupOrphanedModuleSetFiles(trackingMaps, model.generatedArtifactWritePolicy)
-    val moduleSetPluginCleanup = moduleSetPluginsOutput?.let {
-      cleanupOrphanedModuleSetPluginFiles(model.projectRoot, it, model.generatedArtifactWritePolicy)
-    } ?: ModuleSetPluginCleanupResult(emptyList(), emptySet())
 
     if (errors.isEmpty() && commitChanges) {
-      val deletedFiles = deletedModuleSetFiles.size + moduleSetPluginCleanup.files.size
+      val deletedFiles = deletedModuleSetFiles.size
       if (deletedFiles > 0) {
         println("\nDeleted $deletedFiles orphaned files")
       }
 
       // Commit all deferred writes atomically
       model.fileUpdater.commit()
-      cleanupGeneratedArtifactDirectories(moduleSetPluginCleanup.emptyDirectoryCandidates)
 
-      return OutputStageResult(deletedModuleSetFiles, moduleSetPluginCleanup.files)
+      return OutputStageResult(deletedModuleSetFiles)
     }
-    return OutputStageResult(deletedModuleSetFiles, moduleSetPluginCleanup.files)
+    return OutputStageResult(deletedModuleSetFiles)
   }
 
   companion object {
@@ -539,7 +517,6 @@ internal class GenerationPipeline(
       return GenerationPipeline(
         nodes = listOf(
           ModuleSetXmlGenerator,
-          ModuleSetPluginGenerator,
           ProductModuleDependencyGenerator,
           ContentModuleDependencyPlanner,
           ContentModuleXmlWriter,
@@ -557,8 +534,6 @@ internal class GenerationPipeline(
           SuppressionConfigGenerator,
           SuppressionConfigValidator,
           TestLibraryScopeValidator,
-          PluginizedModuleSetReferenceValidator,
-          ModuleSetPluginizationValidator,
           SelfContainedModuleSetValidator,
           ContentModuleBackingValidator,
           EmbeddedContentModuleDependencyValidator,

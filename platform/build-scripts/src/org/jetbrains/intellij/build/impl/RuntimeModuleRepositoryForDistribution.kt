@@ -531,8 +531,4 @@ const val MODULE_DESCRIPTORS_COMPACT_PATH: String = "$RUNTIME_REPOSITORY_MODULES
 private val dependenciesToSkip = mapOf(
   // may be removed when IJPL-125 is fixed
   "intellij.platform.buildScripts.downloader" to setOf("zstd-jni"),
-  // Bundled via spec.withModuleLibrary(..., relativeOutputPath = "assertj.jar"), so the separate library content module
-  // must not remain as a hard runtime repository dependency in distributions.
-  "intellij.featuresTrainer" to setOf("intellij.libraries.assertj.core"),
-  "intellij.performanceTesting.remoteDriver" to setOf("intellij.libraries.assertj.core"),
 )

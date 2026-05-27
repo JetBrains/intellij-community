@@ -13,7 +13,7 @@ class GradleTestExternalProject {
 
   companion object {
 
-    fun testExternalProjects(configure: (GradleTestExternalProject) -> Unit): List<ExternalProject> {
+    fun externalProjects(configure: (GradleTestExternalProject) -> Unit = {}): List<ExternalProject> {
       val configuration = GradleTestExternalProject()
       configure(configuration)
       return buildList {

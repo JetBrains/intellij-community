@@ -23,6 +23,10 @@
     <localInspection bundle="messages.GrazieBundle" groupKey="specification.group.name" key="specification.inspection.semanticCoverage.name"
                      shortName="SpecificationSemanticCoverage" level="WARNING" enabledByDefault="true" language="Markdown"
                      implementationClass="com.intellij.grazie.ide.language.markdown.semantics.inspection.SpecificationSematicCoverageInspection"/>
+
+    <localInspection bundle="messages.GrazieBundle" groupKey="specification.group.name" key="specification.inspection.ambiguity.name"
+                     shortName="SpecificationAmbiguity" level="WARNING" enabledByDefault="true" language="Markdown"
+                     implementationClass="com.intellij.grazie.ide.language.markdown.semantics.inspection.SpecificationAmbiguityInspection"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.grazie">

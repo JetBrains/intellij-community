@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.actions.devkit
 
-import com.intellij.internal.statistic.devkit.actions.ShowChangedStateEventsAction
+import com.intellij.platform.statistics.devkit.actions.ShowChangedStateEventsAction
 import com.intellij.internal.statistic.eventLog.newLogEvent
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import org.junit.Assert.assertFalse

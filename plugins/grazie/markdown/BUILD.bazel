@@ -16,10 +16,12 @@ jvm_library(
     "//libraries/ai.grazie.spell.gec.engine.local",
     "//plugins/markdown/core:markdown",
     "//platform/core-api:core",
+    "//platform/ide-core-impl",
     "//platform/util",
     "//platform/util-ex",
     "//platform/analysis-api:analysis",
     "//platform/analysis-impl",
+    "//platform/projectModel-api:projectModel",
   ]
 )
 
@@ -35,10 +37,12 @@ jvm_library(
     "//libraries/ai.grazie.spell.gec.engine.local:ai.grazie.spell.gec.engine.local_test_lib",
     "//plugins/markdown/core:markdown_test_lib",
     "//platform/core-api:core_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
     "//platform/util:util_test_lib",
     "//platform/util-ex:util-ex_test_lib",
     "//platform/analysis-api:analysis_test_lib",
     "//platform/analysis-impl:analysis-impl_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
   ]
 )
 ### auto-generated section `build intellij.grazie.markdown` end

@@ -29,7 +29,6 @@ import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelPropertyFqnNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.psi.KotlinDeclarationNavigationPolicy
@@ -54,6 +53,7 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
+import org.jetbrains.kotlin.resolve.deprecation.DeprecationLevelValue
 import org.jetbrains.kotlin.types.Variance
 
 @ApiStatus.Internal
@@ -108,14 +108,17 @@ open class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDeclara
         return bool
     }
 
-    private fun KtDeclaration.isDeprecated(): Boolean {
+    @OptIn(KaExperimentalApi::class)
+    private fun KtDeclaration.isDeprecated(allowWarning: Boolean = true): Boolean {
         val declaration = this
-        // TODO: we need to check deprecation level
         @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
         return allowAnalysisOnEdt {
             allowAnalysisFromWriteAction {
                 analyze(declaration) {
-                    declaration.symbol.annotations.firstOrNull { it.classId == StandardClassIds.Annotations.Deprecated } != null
+                    val symbol = declaration.symbol
+                    val deprecationStatus = symbol.deprecationStatus ?: return false
+                    val deprecationLevel = deprecationStatus.deprecationLevel
+                    !allowWarning || deprecationLevel != DeprecationLevelValue.WARNING
                 }
             }
         }
@@ -160,9 +163,9 @@ open class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDeclara
 
         val targetDeclaration =
             getClassesByClassId(classId, project, scope).filter { it.matchesWithPlatform(targetPlatform) }.let { seq ->
-                seq.firstOrNull { !it.isDeprecated() } ?: seq.firstOrNull()
+                seq.firstOrNull { !it.isDeprecated(allowWarning = false) } ?: seq.firstOrNull { !it.isDeprecated(allowWarning = true) } ?: seq.firstOrNull()
             } ?: getTypeAliasesByClassId(classId, project, scope).filter { it.matchesWithPlatform(targetPlatform) }.let { seq ->
-                seq.firstOrNull { !it.isDeprecated() } ?: seq.firstOrNull()
+                seq.firstOrNull { !it.isDeprecated(allowWarning = false) } ?: seq.firstOrNull { !it.isDeprecated(allowWarning = true) } ?: seq.firstOrNull()
             }
         return targetDeclaration
     }
@@ -195,7 +198,9 @@ open class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDeclara
                         val declarations = getTopLevelCallablesByName(declaration, callableId, project, scope)
                         val targetPlatform = module.targetPlatform
                         declarations.filter { it.matchesWithPlatform(targetPlatform) }.let { seq ->
-                            seq.filter { !it.isDeprecated() }.ifEmpty { seq }
+                            seq.filter { !it.isDeprecated(allowWarning = false) }.ifEmpty {
+                                seq.filter { !it.isDeprecated(allowWarning = true) }.ifEmpty { seq }
+                            }
                         }
                     }
 
@@ -262,9 +267,12 @@ open class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDeclara
         return true
     }
 
-    private fun valueParameterMatches(firstValueParamOwner: KtCallableDeclaration, secondValueParameOwner: KtCallableDeclaration): Boolean {
+    private fun valueParameterMatches(
+        firstValueParamOwner: KtCallableDeclaration,
+        secondValueParameterOwner: KtCallableDeclaration
+    ): Boolean {
         val firstValueParameters = firstValueParamOwner.valueParameters
-        val secondValueParameters = secondValueParameOwner.valueParameters
+        val secondValueParameters = secondValueParameterOwner.valueParameters
 
         if (firstValueParameters.size != secondValueParameters.size) return false
         for (i in firstValueParameters.indices) {

@@ -10,9 +10,7 @@
   <resource-bundle>messages.DevkitUiDslBundle</resource-bundle>
 
   <actions>
-    <action id="UiDslShowcaseAction" internal="true" class="com.intellij.devkit.uiDsl.showcase.UiDslShowcaseAction">
-      <add-to-group group-id="Internal.UI.KotlinUiDsl" anchor="last"/>
-    </action>
+    <action id="UiDslShowcaseAction" class="com.intellij.devkit.uiDsl.showcase.UiDslShowcaseAction"/>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">

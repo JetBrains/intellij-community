@@ -10,15 +10,13 @@ import com.intellij.openapi.application.impl.LaterInvocator.leaveModal
 import com.intellij.openapi.util.Conditions
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.SkipInHeadlessEnvironment
+import com.intellij.tools.ide.metrics.benchmark.Benchmark
+import com.intellij.util.concurrency.ThreadingAssertions
 import java.awt.Dialog
 import java.util.concurrent.atomic.AtomicInteger
 
-private class NumberedRunnable private constructor(private val myNumber: Int, private val myConsumer: (Int) -> Unit = {}) : Runnable {
+private class NumberedRunnable (private val myNumber: Int, private val myConsumer: (Int) -> Unit = {}) : Runnable {
   override fun run() = myConsumer.invoke(myNumber)
-
-  companion object {
-    fun withNumber(number: Int) = NumberedRunnable(number)
-  }
 }
 
 @SkipInHeadlessEnvironment
@@ -53,30 +51,32 @@ class RunnableActionsTest : HeavyPlatformTestCase() {
   }
 
   private fun assertModalityStateNotifications() {
+    ThreadingAssertions.assertEventDispatchThread()
     val project = getProject()
+    assertTrue(
     Testable()
       .suspendEDT()
-      .execute { invokeLater(ModalityState.nonModal(), Conditions.alwaysFalse<Any>(), NumberedRunnable.withNumber(1)) }
+      .execute { invokeLater(ModalityState.nonModal(), Conditions.alwaysFalse<Any>(), NumberedRunnable(1)) }
       .flushEDT()
       .execute { enterModal(myApplicationModalDialog) }
       .flushEDT()
-      .execute { invokeLater(ModalityState.current(), Conditions.alwaysFalse<Any>(), NumberedRunnable.withNumber(2)) }
+      .execute { invokeLater(ModalityState.current(), Conditions.alwaysFalse<Any>(), NumberedRunnable(2)) }
       .flushEDT()
       .execute { enterModal(project, myPerProjectModalDialog) }
       .flushEDT()
-      .execute { invokeLater(ModalityState.nonModal(), Conditions.alwaysFalse<Any>(), NumberedRunnable.withNumber(3)) }
+      .execute { invokeLater(ModalityState.nonModal(), Conditions.alwaysFalse<Any>(), NumberedRunnable(3)) }
       .flushEDT()
-      .execute { invokeLater(ModalityState.current(), Conditions.alwaysFalse<Any>(), NumberedRunnable.withNumber(4)) }
+      .execute { invokeLater(ModalityState.current(), Conditions.alwaysFalse<Any>(), NumberedRunnable(4)) }
       .flushEDT()
       .execute { leaveModal(project, myPerProjectModalDialog) }
       .flushEDT()
-      .execute { invokeLater(ModalityState.nonModal(), Conditions.alwaysFalse<Any>(), NumberedRunnable.withNumber(5)) }
+      .execute { invokeLater(ModalityState.nonModal(), Conditions.alwaysFalse<Any>(), NumberedRunnable(5)) }
       .flushEDT()
       .execute { leaveModal(myApplicationModalDialog) }
       .flushEDT()
       .continueEDT()
       .ifExceptions { exception -> fail(exception.toString()) }
       .completed()
-      .waitCompletion(100_000)
+      .waitCompletion(100_000))
   }
 }

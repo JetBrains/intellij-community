@@ -56,9 +56,11 @@ open class IdeaFrameUI(data: ComponentData) : WindowUiComponent(data) {
   val isMaximized: Boolean
     get() = ideaFrameComponent.getExtendedState().and(JFrame.MAXIMIZED_BOTH) != 0
 
-  val leftToolWindowToolbar: ToolWindowLeftToolbarUi = x(ToolWindowLeftToolbarUi::class.java) { byClass("ToolWindowLeftToolbar") }
+  val leftToolWindowToolbar: ToolWindowLeftToolbarUi =
+    x(ToolWindowLeftToolbarUi::class.java) { byClass("ToolWindowLeftToolbar") }
 
-  val rightToolWindowToolbar: ToolWindowRightToolbarUi = x(ToolWindowRightToolbarUi::class.java) { byClass("ToolWindowRightToolbar") }
+  val rightToolWindowToolbar: ToolWindowRightToolbarUi =
+    x(ToolWindowRightToolbarUi::class.java) { byClass("ToolWindowRightToolbar") }
 
   fun waitForIndicators(timeout: Duration = 5.minutes) {
     driver.waitForIndicators(::project, timeout)

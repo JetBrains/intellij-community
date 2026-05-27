@@ -216,7 +216,7 @@ class ProductPluginInitContext(
         }
       }
       return sequence {
-        if (!PluginManagerCore.fallbackToOldPluginSetResolution() && descriptor.pluginId != CORE_ID) {
+        if (descriptor.pluginId != CORE_ID) {
           yieldIfResolves(DependencyRef.of(CORE_ID))
         }
         if (descriptor is PluginModuleDescriptor && descriptor.pluginId != CORE_ID && isExternalNonBundledPlugin(descriptor)) {
@@ -237,7 +237,7 @@ class ProductPluginInitContext(
           }
         }
 
-        if (!PluginManagerCore.fallbackToOldPluginSetResolution() && descriptor.pluginId == CORE_ID && descriptor is ContentModuleDescriptor) {
+        if (descriptor.pluginId == CORE_ID && descriptor is ContentModuleDescriptor) {
           yieldIfResolves(DependencyRef.of(CORE_ID)) // all content modules of CORE are expected to be registered after its main module
         }
 

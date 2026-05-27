@@ -814,6 +814,8 @@ com.intellij.lang.surroundWith.Surrounder
 - a:isApplicable(com.intellij.psi.PsiElement[]):Z
 - a:surroundElements(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiElement[]):com.intellij.openapi.util.TextRange
 com.intellij.microservices.endpoints.EndpointsFilter
+com.intellij.microservices.endpoints.EndpointsProjectModel
+- getModuleEntityForFile(com.intellij.psi.PsiFile):com.intellij.microservices.endpoints.EndpointsModuleEntity
 com.intellij.microservices.endpoints.EndpointsProvider
 - sf:Companion:com.intellij.microservices.endpoints.EndpointsProvider$Companion
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName

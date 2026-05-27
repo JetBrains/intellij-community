@@ -15,26 +15,19 @@ import java.nio.file.Path
  * Sdk with environment info. Use it as a regular sdk, but env fixtures (venv, conda) might use [env]
  */
 @ApiStatus.Internal
-class SdkFixture<ENV: Any>(private val sdk: Sdk, val env: ENV) : Sdk by sdk {
+class SdkFixture<ENV : Any>(val sdk: Sdk, val env: ENV) {
   override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-
-    return when (other) {
-      is SdkFixture<*> -> other.sdk == sdk
-      is Sdk -> other == sdk
-      else -> false
-    }
+    return this === other || other is SdkFixture<*> && other.sdk == sdk
   }
 
-  override fun hashCode(): Int {
-    return sdk.hashCode()
-  }
+  override fun hashCode(): Int = sdk.hashCode()
 }
 
 /**
  * Create mock (not a real python, but with [homePath]) SDK
  */
-fun TestFixture<Project>.pyMockSdkFixture(homePath: TestFixture<Path>) = sdkFixture("PyMockSDK" + System.currentTimeMillis().toString(), PyMockSdkTypeId, homePath)
+fun TestFixture<Project>.pyMockSdkFixture(homePath: TestFixture<Path>) =
+  sdkFixture("PyMockSDK" + System.currentTimeMillis().toString(), PyMockSdkTypeId, homePath)
 
 private object PyMockSdkTypeId : SdkTypeId {
   override fun getName(): String = PyNames.PYTHON_SDK_ID_NAME

@@ -1,7 +1,6 @@
 <idea-plugin visibility="public">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.platform.navbar.frontend"/>
     <module name="intellij.grid.core.impl"/>
     <module name="intellij.grid.csv.core.impl"/>
     <module name="intellij.grid.types"/>
@@ -259,7 +258,6 @@
     <group id="Console.TableResult.GoTo" popup="true" searchable="false">
       <!-- replacement of EditorPopupMenu.GoTo for tables to avoid rubbish actions -->
       <reference ref="Console.TableResult.Navigate.Group"/>
-      <reference ref="ShowNavBar"/>
       <reference ref="GotoRow"/>
       <reference ref="Console.TableResult.GotoReferencingResult"/>
     </group>

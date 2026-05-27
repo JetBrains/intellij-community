@@ -97,6 +97,7 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
   private final ActionButton myHistoryPopupButton;
   private boolean myMultilineEnabled = true;
   private boolean myShowNewLineButton = true;
+  private boolean myIslandsEnabled = false;
 
   /**
    * @deprecated infoMode is not used. Use the other constructor.
@@ -173,7 +174,7 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
       @Override
       public Insets getBorderInsets(Component c) {
         if (SystemInfo.isMac) {
-          return new JBInsets(3, 0, 2, 0);
+          return myIslandsEnabled ? JBUI.insetsTop(1) : new JBInsets(3, 0, 2, 0);
         }
         else {
           int bottom = (StringUtil.getLineBreakCount(myTextArea.getText()) > 0) ? 2 : StartupUiUtil.isUnderDarcula() ? 1 : 0;
@@ -221,12 +222,20 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
     }
   }
 
+  @ApiStatus.Internal
+  public void setIslandsEnabled(boolean islandsEnabled) {
+    if (myIslandsEnabled != islandsEnabled) {
+      myIslandsEnabled = islandsEnabled;
+      updateLayout();
+    }
+  }
+
   protected void updateLayout() {
     JPanel historyButtonWrapper = new NonOpaquePanel(new BorderLayout());
-    historyButtonWrapper.setBorder(ExperimentalUI.isNewUI() ? JBUI.Borders.empty(2, 3, 0, 8) : JBUI.Borders.empty(2, 3, 0, 0));
+    historyButtonWrapper.setBorder(createHistoryButtonBorder());
     historyButtonWrapper.add(myHistoryPopupButton, BorderLayout.NORTH);
     JPanel iconsPanelWrapper = new NonOpaquePanel(new BorderLayout());
-    iconsPanelWrapper.setBorder(JBUI.Borders.emptyTop(2));
+    iconsPanelWrapper.setBorder(createIconsPanelBorder());
     JPanel p = new NonOpaquePanel(new BorderLayout());
     p.add(myIconsPanel, BorderLayout.NORTH);
     myIconsPanel.setBorder(ExperimentalUI.isNewUI() ? JBUI.Borders.emptyRight(8) : JBUI.Borders.emptyRight(5));
@@ -242,6 +251,20 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
     add(myScrollPane, BorderLayout.CENTER);
     add(iconsPanelWrapper, BorderLayout.EAST);
     updateIconsLayout();
+  }
+
+  private Border createIconsPanelBorder() {
+    return myIslandsEnabled ? JBUI.Borders.empty(1, 0) : JBUI.Borders.emptyTop(2);
+  }
+
+  private Border createHistoryButtonBorder() {
+    if (!ExperimentalUI.isNewUI()) {
+      return JBUI.Borders.empty(2, 3, 0, 0);
+    }
+
+    return myIslandsEnabled
+           ? JBUI.Borders.empty(1, 3, 1, 8)
+           : JBUI.Borders.empty(2, 3, 0, 8);
   }
 
   private void updateIconsLayout() {

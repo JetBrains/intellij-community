@@ -30,9 +30,6 @@ class PluginDescriptorLoadingContext(
   @JvmField val isMissingSubDescriptorIgnored: Boolean = false,
   checkOptionalConfigFileUniqueness: Boolean = false
 ) : AutoCloseable {
-  // TODO this property should be dropped together with the feature-flag if the migration goes well...
-  val createEmptyDependsDescriptorForOptionalDependsWithoutConfigFile: Boolean = !PluginManagerCore.fallbackToOldPluginSetResolution()
-
   // synchronization will ruin parallel loading, so, string pool is local for thread
   private val threadLocalXmlFactory = ThreadLocal.withInitial(Supplier {
     val factory = MyXmlInterner()

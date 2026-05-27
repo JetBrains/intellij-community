@@ -157,6 +157,37 @@ internal class ContentModuleDependencyResolutionTest {
     assertThat(barModule.moduleDependencies.modules.single()).isEqualTo(PluginModuleId("common", "bar.ns"))
   }
 
+  @Test
+  fun `modules with same name and different namespaces in the same plugin`() {
+    val pluginSet = buildPluginSet {
+      plugin("foo") {
+        content(namespace = "ns1") {
+          module("foo1") {
+            dependencies {
+              module("foo2")
+            }
+          }
+        }
+        content(namespace = "ns2") {
+          module("foo2") {
+            dependencies {
+              module("foo3")
+            }
+          }
+        }
+        content {
+          module("foo3") {}
+        }
+      }
+    }
+    assertThat(pluginSet).hasExactlyEnabledModulesWithoutMainDescriptors("foo1", "foo2", "foo3")
+    val foo1Module = pluginSet.getEnabledModule("foo1")
+    val foo2Module = pluginSet.getEnabledModule("foo2")
+    val foo3Module = pluginSet.getEnabledModule("foo3")
+    assertThat(foo1Module.moduleDependencies.modules.single()).isEqualTo(foo2Module.moduleId)
+    assertThat(foo2Module.moduleDependencies.modules.single()).isEqualTo(foo3Module.moduleId)
+  }
+
   private fun buildPluginSet(builder: PluginSetSpecBuilder.() -> Unit): PluginSet {
     val pluginsDirPath = inMemoryFs.fs.getPath("/").resolve("plugins")
     val state = buildPluginSetState(pluginsDirPath, builder = builder)

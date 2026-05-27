@@ -13,6 +13,8 @@ import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.pythonSdk
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 internal class SyncProjectQuickFix : LocalQuickFix {
   override fun getFamilyName(): String = PyBundle.message("python.sdk.intention.family.name.sync.project")
@@ -28,7 +30,7 @@ internal class SyncProjectQuickFix : LocalQuickFix {
     val managerUI = PythonPackageManagerUI.Companion.forSdk(project, sdk)
     PyPackageCoroutine.Companion.launch(project) {
       managerUI.executeCommand(PyBundle.message("python.sdk.sync.project.text")) {
-        writeAction {
+        withContext(Dispatchers.Default) {
           FileDocumentManager.getInstance().saveAllDocuments()
         }
         packageManager.syncLocked()

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework.projectModel.mock
 
+import com.intellij.openapi.project.Project
 import com.intellij.testFramework.common.mock.notImplemented
 import org.gradle.tooling.model.DomainObjectSet
 import org.gradle.tooling.model.idea.IdeaJavaLanguageSettings
@@ -37,7 +38,7 @@ class GradleTestIdeaProject private constructor() {
 
   companion object {
 
-    fun testIdeaProject(configure: (GradleTestIdeaProject) -> Unit): IdeaProject {
+    fun ideaProject(configure: (GradleTestIdeaProject) -> Unit = {}): IdeaProject {
       val configuration = GradleTestIdeaProject()
       configure(configuration)
       val modules = buildList {
@@ -48,5 +49,13 @@ class GradleTestIdeaProject private constructor() {
       }
       return TestIdeaProject(configuration.projectName, configuration.projectSdkName, modules)
     }
+
+    fun ideaProject(project: Project, sdkName: String?, configure: (GradleTestIdeaProject) -> Unit = {}): IdeaProject =
+      ideaProject {
+        it.projectName = project.name
+        it.projectSdkName = sdkName
+        it.moduleSdkName = sdkName
+        configure(it)
+      }
   }
 }

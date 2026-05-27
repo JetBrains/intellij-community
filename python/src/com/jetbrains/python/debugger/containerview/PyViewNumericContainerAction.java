@@ -18,25 +18,24 @@ package com.jetbrains.python.debugger.containerview;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
-import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeBackendOnlyActionBase;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.debugger.NodeTypes;
 import com.jetbrains.python.debugger.PyDebugValue;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
 /**
  * @author amarch
  */
 
-public class PyViewNumericContainerAction extends XDebuggerTreeActionBase {
+public class PyViewNumericContainerAction extends XDebuggerTreeBackendOnlyActionBase {
 
   @Override
-  protected void perform(XValueNodeImpl node, @NotNull String nodeName, AnActionEvent e) {
+  protected void perform(@NotNull XValue value, @NlsSafe @NotNull String nodeName, @NotNull AnActionEvent e) {
     Project p = e.getProject();
-    if (p != null && node != null && node.getValueContainer() instanceof PyDebugValue debugValue && node.isComputed()) {
+    if (p != null && value instanceof PyDebugValue debugValue) {
       showNumericViewer(p, debugValue);
     }
   }
@@ -52,14 +51,8 @@ public class PyViewNumericContainerAction extends XDebuggerTreeActionBase {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    List<XValueNodeImpl> selectedNodes = getSelectedNodes(e.getDataContext());
-    if (selectedNodes.size() != 1) {
-      e.getPresentation().setVisible(false);
-      return;
-    }
-
-    XValueNodeImpl node = selectedNodes.get(0);
-    if (!(node.getValueContainer() instanceof PyDebugValue debugValue) || !node.isComputed()) {
+    XValue value = getSelectedValue(e.getDataContext());
+    if (!(value instanceof PyDebugValue debugValue)) {
       e.getPresentation().setVisible(false);
       return;
     }

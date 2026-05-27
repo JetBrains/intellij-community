@@ -111,7 +111,7 @@ internal class PluginContentCache(
 
   /**
    * Adds pre-computed plugin content to the cache.
-   * Used for generated wrapper plugins whose descriptors are not yet present on disk.
+   * Used for descriptors produced in memory, such as DSL test plugins.
    */
   suspend fun addPrecomputedPlugin(pluginModule: TargetName, content: PluginContentInfo) {
     cache.getOrPut(pluginModule) { content }

@@ -1,0 +1,3 @@
+- name: dist.all/lib/intellij.platform.ijent.community.ui.jar
+  modules:
+  - name: intellij.platform.ijent.community.ui

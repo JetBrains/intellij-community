@@ -1,0 +1,31 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.eel.nioFs.impl"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <actions resource-bundle="messages.IjentImplBundle">
+    <group id="com.intellij.platform.ijent.impl.VerificationActions"
+           internal="true">
+      <action
+        id="com.intellij.platform.ijent.impl.IjentLocalVerificationAction"
+        class="com.intellij.platform.ijent.community.ui.actions.IjentLocalVerificationAction"
+        internal="true"/>
+      <action
+        id="com.intellij.platform.ijent.impl.IjentDockerVerificationAction"
+        class="com.intellij.platform.ijent.community.ui.actions.IjentDockerVerificationAction"
+        internal="true"/>
+      <action
+        id="com.intellij.platform.ijent.impl.MultiRoutingFileSystemVerificationAction"
+        class="com.intellij.platform.ijent.community.ui.actions.MultiRoutingFileSystemVerificationAction"
+        internal="true"/>
+    </group>
+  </actions>
+</idea-plugin>

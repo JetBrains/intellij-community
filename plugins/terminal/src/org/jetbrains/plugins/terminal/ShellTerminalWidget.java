@@ -296,7 +296,7 @@ public class ShellTerminalWidget extends JBTerminalWidget implements TerminalPan
     else {
       starter.close(); // close in background
       TtyConnector connector = starter.getTtyConnector();
-      TerminalUtilKt.waitFor(connector, TerminalUtilKt.STOP_EMULATOR_TIMEOUT, () -> {
+      TerminalUtilKt.waitForAsync(connector, TerminalUtilKt.CONNECTOR_CLOSING_TIMEOUT, () -> {
         if (connector.isConnected()) {
           LOG.warn("Cannot destroy " + TerminalUtilKt.getDebugName(connector));
         }

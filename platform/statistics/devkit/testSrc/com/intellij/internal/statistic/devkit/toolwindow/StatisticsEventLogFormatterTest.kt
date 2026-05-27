@@ -3,7 +3,10 @@ package com.intellij.internal.statistic.devkit.toolwindow
 
 import com.intellij.diagnostic.logging.LogFilterModel.MyProcessingResult
 import com.intellij.execution.process.ProcessOutputType
-import com.intellij.internal.statistic.devkit.toolwindow.StatisticsEventLogFilter.Companion.LOG_PATTERN
+import com.intellij.platform.statistics.devkit.toolwindow.StatisticsEventLogFilter.Companion.LOG_PATTERN
+import com.intellij.platform.statistics.devkit.toolwindow.StatisticsEventLogFormatter
+import com.intellij.platform.statistics.devkit.toolwindow.StatisticsEventLogMessageBuilder
+import com.intellij.platform.statistics.devkit.toolwindow.StatisticsLogFilterModel
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.text.DateFormatUtil
 import com.jetbrains.fus.reporting.model.lion3.LogEvent

@@ -2,13 +2,12 @@ package com.intellij.python.featuresTrainer.ift
 
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.ui.dsl.builder.Panel
-import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.inspections.interpreter.InterpreterSettingsQuickFix
-import com.jetbrains.python.sdk.findBaseSdks
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.statistics.modules
@@ -59,14 +58,12 @@ object PythonLessonsUtil {
       return
     }
 
-    val allExistingSdks = listOf(*PyConfigurableInterpreterList.getInstance(null).model.sdks)
-    val existingSdks = DeprecatedUtils.getValidPythonSdks(allExistingSdks)
-
     val interpreterVersions = CompletableFuture<List<String>>()
     ApplicationManager.getApplication().executeOnPooledThread {
-      val context = UserDataHolderBase()
-      val baseSdks = findBaseSdks(existingSdks, null, context)
-      interpreterVersions.complete(baseSdks.mapNotNull { it.sdkType.getVersionString(it) }.sorted().distinct())
+      val versions = runBlockingCancellable {
+        SystemPythonService().findSystemPythons().map { it.pythonInfo.languageLevel }.distinct().map { it.toString() }
+      }
+      interpreterVersions.complete(versions)
     }
 
     val usedInterpreter = project.pythonSdk?.versionString ?: "none"

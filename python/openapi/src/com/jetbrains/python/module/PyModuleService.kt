@@ -8,6 +8,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.Consumer
 import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface PyModuleService {
   /**
    * Returns the Python SDK configured for this module, or `null` if none is set.

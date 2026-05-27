@@ -17,7 +17,7 @@ internal class AgentChatNextProposedPlanAction : DumbAwareAction() {
                                        canNavigateSelectedAgentChatProposedPlan(project, AgentChatSemanticNavigationDirection.NEXT)
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }
 
 internal class AgentChatPreviousProposedPlanAction : DumbAwareAction() {
@@ -32,5 +32,5 @@ internal class AgentChatPreviousProposedPlanAction : DumbAwareAction() {
                                        canNavigateSelectedAgentChatProposedPlan(project, AgentChatSemanticNavigationDirection.PREVIOUS)
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }

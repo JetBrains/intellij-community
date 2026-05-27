@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.actions.devkit
 
-import com.intellij.internal.statistic.devkit.actions.CleanupEventsTestSchemeAction
+import com.intellij.platform.statistics.devkit.actions.CleanupEventsTestSchemeAction
 import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator
 import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule
 import com.intellij.internal.statistic.eventLog.validator.storage.ValidationTestRulesPersistedStorage

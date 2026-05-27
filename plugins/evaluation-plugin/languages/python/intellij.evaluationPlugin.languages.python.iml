@@ -24,5 +24,6 @@
     <orderEntry type="module" module-name="intellij.python.community.impl" />
     <orderEntry type="module" module-name="intellij.evaluationPlugin.languages" />
     <orderEntry type="module" module-name="intellij.evaluationPlugin.core" />
+    <orderEntry type="module" module-name="intellij.python.sdk" />
   </component>
 </module>

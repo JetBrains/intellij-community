@@ -185,12 +185,11 @@ class ClassLoaderConfigurator(
           contributeDependencies(pluginSet.getSortedDependencies(module))
         }
       }
-      if (!PluginManagerCore.fallbackToOldPluginSetResolution()) {
-        // new resolver does not automatically treat "depends" sub-descriptor's dependencies as dependencies of the main module
-        for (descriptor in sequence { yieldAllDependsSubDescriptors(module) }) {
-          if (!descriptor.isEnabled) continue
-          contributeDependencies(pluginSet.getSortedDependencies(descriptor))
+      for (descriptor in sequence { yieldAllDependsSubDescriptors(module) }) {
+        if (!descriptor.isEnabled) {
+          continue
         }
+        contributeDependencies(pluginSet.getSortedDependencies(descriptor))
       }
     }
     val dependencies = (mutableDependenciesList ?: dependenciesList)

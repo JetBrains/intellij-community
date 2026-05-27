@@ -123,31 +123,12 @@ fun ideCommon() = moduleSet("ide.common") {
 }
 ```
 
-### `plugin(name)` - Create Pluginized Module Set
+### Module-Set Wrapper Plugins
 
-```kotlin
-fun plugin(
-  name: String,
-  pluginId: String? = null,
-  outputModule: String? = null,
-  addToMainModule: Boolean = true,
-  block: ModuleSetBuilder.() -> Unit
-): ModuleSet
-```
+The Product DSL no longer creates module-set wrapper plugins. Existing wrappers under
+`community/module-set-plugins/generated/` and `module-set-plugins/generated/` are checked-in plugin modules and stay in place until they are migrated to hand-written wrappers.
 
-Creates a module set and marks it to be materialized as a standalone bundled plugin wrapper.
-The Product DSL pipeline generates the wrapper module files, `plugin-content.yaml`, and `modules.xml` entries during generation.
-The resulting set must not be referenced through product-level or nested `moduleSet(...)` composition; bundle the generated wrapper plugin module instead.
-
-```kotlin
-fun recentFiles() = plugin("recentFiles") {
-  module("intellij.platform.recentFiles")
-  module("intellij.platform.recentFiles.frontend")
-  module("intellij.platform.recentFiles.backend")
-}
-```
-
-Set `addToMainModule = false` when the wrapper must not be added to `intellij.moduleSet.plugin.main` for flat-classpath launches.
+For new wrapper plugins, create a normal plugin module with `plugin.xml` and `plugin-content.yaml`, then add the plugin module to the product layout.
 
 ## Parameters Reference
 
@@ -210,7 +191,7 @@ See [programmatic-content.md](programmatic-content.md) for details on content vs
 /**
  * VCS frontend modules.
  */
-fun vcsFrontend(): ModuleSet = plugin("vcs.frontend") {
+fun vcsFrontend(): ModuleSet = moduleSet("vcs.frontend") {
   module("intellij.platform.vcs.impl.frontend")
 }
 ```

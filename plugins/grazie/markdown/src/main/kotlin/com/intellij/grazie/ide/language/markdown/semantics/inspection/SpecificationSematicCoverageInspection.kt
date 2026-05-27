@@ -1,6 +1,7 @@
 package com.intellij.grazie.ide.language.markdown.semantics.inspection
 
 import ai.grazie.rules.promptAnalysis.LlmAnalyzer
+import ai.grazie.rules.promptAnalysis.LlmAnalyzer.LlmIssue
 import ai.grazie.rules.promptAnalysis.SemanticCoverageAnalyzer
 import ai.grazie.rules.promptAnalysis.SemanticCoverageAnalyzer.CoverageIssue
 import ai.grazie.rules.promptAnalysis.SemanticCoverageAnalyzer.IssueType.COVERAGE_GAP
@@ -8,20 +9,14 @@ import ai.grazie.rules.promptAnalysis.SemanticCoverageAnalyzer.IssueType.MISSING
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.grazie.GrazieBundle
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 
 internal class SpecificationSematicCoverageInspection : SpecificationBaseInspection<CoverageIssue>() {
 
-  override fun reportProblem(holder: ProblemsHolder, file: PsiFile, problem: CoverageIssue) {
-    val text = file.text
-    val ranges = if (problem.startOffset != -1 && problem.endOffset != -1) {
-      listOf(TextRange(problem.startOffset, problem.endOffset))
-    } else {
-      findAllOccurrences(problem.text, text)
-    }
+  override fun reportProblem(holder: ProblemsHolder, file: PsiFile, issue: LlmIssue<CoverageIssue>) {
+    val ranges = findAllOccurrences(issue, file)
     ranges.forEach { range ->
-      holder.registerProblem(createProblemDescriptor(file, range, getProblemDescription(problem)))
+      holder.registerProblem(createProblemDescriptor(file, range, getProblemDescription(issue.issue)))
     }
   }
 

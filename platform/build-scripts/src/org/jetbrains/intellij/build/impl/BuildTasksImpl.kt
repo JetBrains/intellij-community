@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment")
+@file:Suppress("ReplacePutWithAssignment", "DestructuringForParameter")
 
 package org.jetbrains.intellij.build.impl
 
@@ -12,10 +12,8 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -48,8 +46,6 @@ import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
 import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.findFileInModuleSources
 import org.jetbrains.intellij.build.findProductModulesFile
-import org.jetbrains.intellij.build.impl.maven.MavenArtifactData
-import org.jetbrains.intellij.build.impl.maven.MavenArtifactsBuilder
 import org.jetbrains.intellij.build.impl.plugins.buildNonBundledPlugins
 import org.jetbrains.intellij.build.impl.plugins.buildPlugins
 import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
@@ -536,67 +532,6 @@ suspend fun buildDistributions(context: BuildContext): Unit = block("build distr
     }
 
     logFreeDiskSpace("after building distributions", context)
-  }
-}
-
-private fun CoroutineScope.createMavenArtifactJob(platformLayout: PlatformLayout, context: BuildContext): Job? {
-  val mavenArtifacts = context.productProperties.mavenArtifacts
-  if (!mavenArtifacts.forIdeModules &&
-      mavenArtifacts.additionalModules.isEmpty() &&
-      mavenArtifacts.squashedModules.isEmpty() &&
-      mavenArtifacts.proprietaryModules.isEmpty()) {
-    return null
-  }
-
-  return createSkippableJob(spanBuilder("generate maven artifacts"), BuildOptions.MAVEN_ARTIFACTS_STEP, context) {
-    val platformModules = HashSet<String>()
-    if (mavenArtifacts.forIdeModules) {
-      platformLayout.includedModules.mapTo(platformModules) { it.moduleName }
-      platformModules.addAll(getToolModules())
-      val enabledPluginModules = context.getBundledPluginModules()
-      platformModules.addAll(enabledPluginModules)
-      val pluginLayouts = getPluginLayoutsByJpsModuleNames(modules = enabledPluginModules, productLayout = context.productProperties.productLayout)
-      val contentModuleFilter = context.getContentModuleFilter()
-      for (plugin in pluginLayouts) {
-        plugin.includedModules.mapTo(platformModules) { it.moduleName }
-        val mainModule = context.outputProvider.findRequiredModule(plugin.mainModule)
-        platformModules.addAll((context as BuildContextImpl).jarPackagerDependencyHelper.readPluginIncompleteContentFromDescriptor(mainModule, contentModuleFilter))
-      }
-    }
-
-    val mavenArtifactsBuilder = MavenArtifactsBuilder(context)
-    val builtArtifacts = LinkedHashMap<MavenArtifactData, List<Path>>()
-    if (!platformModules.isEmpty()) {
-      mavenArtifactsBuilder.generateMavenArtifacts(
-        moduleNamesToPublish = platformModules,
-        outputDir = "maven-artifacts",
-        builtArtifacts = builtArtifacts,
-        ignoreNonMavenizable = true,
-      )
-    }
-    if (!mavenArtifacts.additionalModules.isEmpty()) {
-      mavenArtifactsBuilder.generateMavenArtifacts(
-        moduleNamesToPublish = mavenArtifacts.additionalModules,
-        moduleNamesToSquashAndPublish = mavenArtifacts.squashedModules,
-        builtArtifacts = builtArtifacts,
-        outputDir = "maven-artifacts"
-      )
-    }
-    if (!mavenArtifacts.proprietaryModules.isEmpty()) {
-      mavenArtifactsBuilder.generateMavenArtifacts(
-        moduleNamesToPublish = mavenArtifacts.proprietaryModules,
-        builtArtifacts = builtArtifacts,
-        outputDir = "proprietary-maven-artifacts"
-      )
-    }
-    for (spec in mavenArtifacts.aggregatorPomArtifacts) {
-      mavenArtifactsBuilder.generateAggregatorPom(
-        spec = spec,
-        outputDir = "maven-artifacts",
-        builtArtifacts = builtArtifacts,
-      )
-    }
-    mavenArtifactsBuilder.validate(builtArtifacts)
   }
 }
 

@@ -522,7 +522,8 @@ private fun computeJpsDeps(
   graph.query {
     val mod = contentModule(moduleName) ?: return JpsDeps(moduleDeps, pluginDeps, filteredEmbeddedModuleDeps)
     val isPluginOnlySource = hasPluginSource(mod.id) && !hasNonPluginSource(mod.id)
-    val sourceOwnerPluginIds = if (isPluginOnlySource) {
+    val applyEmbeddedPluginDependencyFiltering = isPluginOnlySource && !hasModuleSetWrapperSource(mod.id)
+    val sourceOwnerPluginIds = if (applyEmbeddedPluginDependencyFiltering) {
       HashSet<Int>().also { owners ->
         mod.owningPlugins(includeTestScope) { pluginNode -> owners.add(pluginNode.id) }
       }
@@ -530,14 +531,14 @@ private fun computeJpsDeps(
     else {
       emptySet()
     }
-    val embeddedCheckProductNames = if (isPluginOnlySource) {
+    val embeddedCheckProductNames = if (applyEmbeddedPluginDependencyFiltering) {
       embeddedCheckProductsForPluginOnlyContentModule(mod.id, allRealProductNames)
     }
     else {
       allRealProductNames
     }
 
-    if (isPluginOnlySource) {
+    if (applyEmbeddedPluginDependencyFiltering) {
       val productScopeSample = embeddedCheckProductNames.asSequence().sorted().take(5).joinToString(separator = ",")
       debug("missingDeps") {
         "computeJpsDeps source=${moduleName.value} includeTestScope=$includeTestScope pluginOnlySource=true " +
@@ -559,7 +560,8 @@ private fun computeJpsDeps(
             if (c.moduleName == moduleName) {
               return@dependsOn
             }
-            // skip globally embedded modules for plugin-only source modules
+            // Skip globally embedded modules for regular plugin-only source modules.
+            // Module-set wrapper content keeps legacy module-set dependency semantics.
             val depModuleId = contentModule(c.moduleName)
             var sharesOwnerPlugin = false
             if (depModuleId != null && sourceOwnerPluginIds.isNotEmpty()) {
@@ -569,7 +571,7 @@ private fun computeJpsDeps(
                 }
               }
             }
-            if (depModuleId != null && isPluginOnlySource && !sharesOwnerPlugin &&
+            if (depModuleId != null && applyEmbeddedPluginDependencyFiltering && !sharesOwnerPlugin &&
                 shouldSkipEmbeddedPluginDependency(depModuleId, embeddedCheckProductNames)) {
               filteredEmbeddedModuleDeps.add(c.moduleName)
               debug("missingDeps") {

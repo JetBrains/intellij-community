@@ -12,7 +12,6 @@ import org.jetbrains.intellij.build.productLayout.discovery.DiscoveredProduct
 import org.jetbrains.intellij.build.productLayout.discovery.ModuleSetGenerationConfig
 import org.jetbrains.intellij.build.productLayout.discovery.ProductConfiguration
 import org.jetbrains.intellij.build.productLayout.model.ErrorSink
-import org.jetbrains.intellij.build.productLayout.plugin
 import org.jetbrains.intellij.build.productLayout.productModules
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.util.JpsPathUtil
@@ -25,22 +24,40 @@ import java.nio.file.Path
 @ExtendWith(TestFailureLogger::class)
 class ModelBuildingStageTest {
   @Test
-  fun `execute preloads pluginized module set wrappers before generation`(@TempDir tempDir: Path) {
+  fun `execute reads static module set wrapper from disk`(@TempDir tempDir: Path) {
     runBlocking(Dispatchers.Default) {
       val jps = jpsProject(tempDir) {
-        module("intellij.grid")
+        module("intellij.moduleSet.plugin.grid.core") {
+          resourceRoot = "resources"
+        }
       }
       val outputProvider = createTestModuleOutputProvider(jps.project)
       val wrapperModule = TargetName("intellij.moduleSet.plugin.grid.core")
+      val pluginXmlPath = tempDir.resolve("intellij/moduleSet/plugin/grid/core/resources/META-INF/plugin.xml")
+      Files.createDirectories(pluginXmlPath.parent)
+      Files.writeString(
+        pluginXmlPath,
+        """
+        <idea-plugin>
+          <id>com.intellij.moduleSet.grid.core</id>
+          <content namespace="jetbrains">
+            <module name="intellij.grid"/>
+          </content>
+        </idea-plugin>
+        """.trimIndent(),
+      )
       val discovery = DiscoveryResult(
-        moduleSetsByLabel = mapOf(
-          "community" to listOf(
-            plugin("grid.core") {
-              module("intellij.grid")
-            }
+        moduleSetsByLabel = emptyMap(),
+        products = listOf(
+          DiscoveredProduct(
+            name = "Idea",
+            config = ProductConfiguration(modules = emptyList(), className = "IdeaProperties"),
+            properties = null,
+            spec = null,
+            pluginXmlPath = null,
+            bundledModuleSetPluginModules = listOf(wrapperModule),
           )
         ),
-        products = emptyList(),
         testProductSpecs = emptyList(),
         moduleSetSources = emptyMap(),
       )
@@ -63,7 +80,7 @@ class ModelBuildingStageTest {
 
       val wrapperPlugin = model.pluginContentCache.getOrExtract(wrapperModule)
       assertThat(wrapperPlugin).isNotNull
-      assertThat(Files.exists(wrapperPlugin!!.pluginXmlPath)).isFalse()
+      assertThat(wrapperPlugin!!.pluginXmlPath).isEqualTo(pluginXmlPath)
       assertThat(wrapperPlugin.pluginId).isNotNull
       assertThat(wrapperPlugin.pluginId!!.value).isEqualTo("com.intellij.moduleSet.grid.core")
 

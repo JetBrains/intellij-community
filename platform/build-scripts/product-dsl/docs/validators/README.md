@@ -31,7 +31,6 @@ This directory is the normative spec for product-dsl validation behavior. Each f
 | Test plugin descriptor ID conflicts | `PluginDescriptorIdConflictValidator` | `pluginDescriptorIdConflictValidation` | [plugin-descriptor-id-conflicts.md](plugin-descriptor-id-conflicts.md) |
 | Product module set validation | `ProductModuleSetValidator` | `productModuleSetValidation` | [product-module-set.md](product-module-set.md) |
 | Embedded content module dependencies | `EmbeddedContentModuleDependencyValidator` | `embeddedContentModuleDependencyValidation` | [embedded-content-module-dependency.md](embedded-content-module-dependency.md) |
-| Pluginized module-set reference validation | `PluginizedModuleSetReferenceValidator` | `pluginizedModuleSetReferenceValidation` | [pluginized-module-set-reference.md](pluginized-module-set-reference.md) |
 | Self-contained module set validation | `SelfContainedModuleSetValidator` | `selfContainedValidation` | [self-contained-module-set.md](self-contained-module-set.md) |
 | Library module replacement | `LibraryModuleValidator` | `libraryModuleValidation` | [library-module.md](library-module.md) |
 | Test library scope | `TestLibraryScopeValidator` | `testLibraryScopeValidation` | [test-library-scope.md](test-library-scope.md) |

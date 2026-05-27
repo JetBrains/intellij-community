@@ -2,31 +2,16 @@ package com.intellij.jupyter.ui.test.util.kernel
 
 import com.intellij.driver.sdk.step
 import com.intellij.driver.sdk.ui.components.elements.JLabelUiComponent
-import com.intellij.driver.sdk.ui.components.notebooks.FirstCell
 import com.intellij.driver.sdk.ui.components.notebooks.NotebookEditorUiComponent
 import com.intellij.driver.sdk.ui.components.notebooks.hasFailedExecutionIcon
 import com.intellij.driver.sdk.ui.components.notebooks.waitForHighlighting
 import com.intellij.driver.sdk.wait
 import com.intellij.driver.sdk.waitFor
 import com.intellij.jupyter.ui.test.util.utils.PostExecutionAwaitStrategy
-import io.kotest.matchers.shouldBe
-import org.junit.jupiter.api.Assertions.assertTrue
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
-
-fun NotebookEditorUiComponent.testRunCell() {
-  step("Run cell and wait for the output") {
-    pasteToCell(FirstCell, "2 + 2")
-    runAllCellsAndWaitExecuted()
-  }
-
-  step("Check output") {
-    notebookCellOutputs.size shouldBe 1
-    assertTrue(notebookCellOutputs.last().hasText("4"), "Expect 4 in the output")
-  }
-}
 
 fun NotebookEditorUiComponent.waitCellsAreExecuted(
   timeout: Duration = 1.minutes,

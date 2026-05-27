@@ -30,6 +30,9 @@
     <module name="intellij.station.comms.common.testFramework"/>
     <module name="intellij.station.core.tests"/>
   </content>
+  <content>
+    <module name="intellij.libraries.assertj.core"/>
+  </content>
   <dependencies>
     <module name="intellij.lambda.testFramework"/>
   </dependencies>

@@ -1,0 +1,7 @@
+<idea-plugin>
+  <id>dependencyOnInternalModuleFromPluginDescriptor</id>
+  <dependencies>
+    <module name="internal.module" namespace="custom"/>
+  </dependencies>
+  <content namespace="custom"/>
+</idea-plugin>

@@ -7,8 +7,6 @@ import com.intellij.driver.sdk.invokeAction
 import com.intellij.driver.sdk.ui.QueryBuilder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.logger
 
 open class ToolWindowToolbarUi(data: ComponentData) : UiComponent(data) {
   fun stripeButton(locator: QueryBuilder.() -> String): StripeButtonUi = x(StripeButtonUi::class.java, locator)
@@ -66,7 +64,7 @@ class StripeButtonUi(data: ComponentData) : UiComponent(data) {
       val toolWindowId = toolWindow.getId()
       val activateToolWindowAction = driver.utility(ActivateToolWindowActionManager::class)
         .getActionIdForToolWindow(toolWindowId)
-    driver.ideLogger.info("Calling action on window: id=$toolWindowId, action=$activateToolWindowAction, component=${component.javaClass.simpleName}")
+      driver.ideLogger.info("Calling action on window: id=$toolWindowId, action=$activateToolWindowAction, component=${component.javaClass.simpleName}")
       driver.invokeAction(activateToolWindowAction, component = component)
     }
   }

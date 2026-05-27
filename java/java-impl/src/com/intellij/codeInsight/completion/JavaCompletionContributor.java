@@ -8,18 +8,14 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.scope.CompletionElement;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
-import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
-import com.intellij.codeInsight.lookup.LookupElementPresentation;
-import com.intellij.codeInsight.lookup.LookupElementRenderer;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.icons.AllIcons;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.codeserver.core.JavaPsiEnumUtil;
 import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
@@ -78,7 +74,6 @@ import com.intellij.psi.PsiForStatement;
 import com.intellij.psi.PsiForeachStatement;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiImplicitClass;
-import com.intellij.psi.PsiImportModuleStatement;
 import com.intellij.psi.PsiImportStatement;
 import com.intellij.psi.PsiImportStatementBase;
 import com.intellij.psi.PsiInstanceOfExpression;
@@ -86,7 +81,6 @@ import com.intellij.psi.PsiJavaCodeReferenceCodeFragment;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiJavaModule;
-import com.intellij.psi.PsiJavaModuleReferenceElement;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiLocalVariable;
@@ -94,7 +88,6 @@ import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodReferenceExpression;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiNewExpression;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiPackageAccessibilityStatement;
@@ -105,7 +98,6 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.PsiReferenceParameterList;
-import com.intellij.psi.PsiRequiresStatement;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiSwitchBlock;
 import com.intellij.psi.PsiSwitchLabelStatementBase;
@@ -133,19 +125,14 @@ import com.intellij.psi.filters.getters.ClassLiteralGetter;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
 import com.intellij.psi.filters.getters.JavaMembersGetter;
 import com.intellij.psi.filters.types.AssignableFromFilter;
-import com.intellij.psi.impl.java.stubs.index.JavaAutoModuleNameIndex;
-import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
-import com.intellij.psi.impl.java.stubs.index.JavaSourceModuleNameIndex;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.ui.JBColor;
 import com.intellij.util.Consumer;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
@@ -168,7 +155,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Function;
 
 import static com.intellij.codeInsight.completion.JavaQualifierAsArgumentContributor.JavaQualifierAsArgumentStaticMembersProcessor;
 import static com.intellij.patterns.PsiJavaPatterns.or;
@@ -641,10 +627,6 @@ public final class JavaCompletionContributor extends CompletionContributor imple
         parameters.isExtendedCompletion() &&
         StringUtil.isNotEmpty(matcher.getPrefix())) {
       new JavaStaticMemberProcessor(parameters).processStaticMethodsGlobally(matcher, result);
-    }
-
-    if (!smart && parent instanceof PsiJavaModuleReferenceElement) {
-      addModuleReferences(parent, position, parameters.getOriginalFile(), result);
     }
 
     if (JavaPatternCompletionUtil.insideDeconstructionList(parameters.getPosition())) {
@@ -1322,150 +1304,6 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     }
     return added[0];
   }
-
-  private static void addModuleReferences(PsiElement moduleRef, PsiElement position, PsiFile originalFile, CompletionResultSet result) {
-    PsiElement statement = moduleRef.getParent();
-    boolean checkAccess = statement instanceof PsiImportModuleStatement;
-    boolean withAutoModules = checkAccess || statement instanceof PsiRequiresStatement;
-    if (withAutoModules || statement instanceof PsiPackageAccessibilityStatement) {
-      PsiElement parent = statement.getParent();
-      if (parent != null) {
-        Project project = moduleRef.getProject();
-        Set<String> filter = new HashSet<>();
-        Function<PsiJavaModule, String> getModuleName = psiJavaModule -> {
-          if (psiJavaModule == null) return null;
-          return psiJavaModule.getName();
-        };
-        String currentJavaModuleName = getModuleName.apply(PsiTreeUtil.getParentOfType(statement, PsiJavaModule.class));
-        if (currentJavaModuleName == null) currentJavaModuleName = getModuleName.apply(JavaPsiModuleUtil.findDescriptorByElement(originalFile));
-        if (currentJavaModuleName == null) currentJavaModuleName = findModuleName(originalFile, position);
-
-        if (currentJavaModuleName != null) {
-          // "importing a module declaration" can declare its own module.
-          if (statement instanceof PsiImportModuleStatement) {
-            LookupElement lookup = TailTypeDecorator.withTail(LookupElementBuilder.create(currentJavaModuleName)
-                                                                .withIcon(AllIcons.Nodes.JavaModule),
-                                                              TailTypes.semicolonType());
-            result.addElement(lookup);
-          }
-
-          filter.add(currentJavaModuleName);
-        }
-
-        JavaModuleNameIndex index = JavaModuleNameIndex.getInstance();
-        GlobalSearchScope scope = ProjectScope.getAllScope(project);
-        for (String name : index.getAllKeys(project)) {
-          Collection<PsiJavaModule> modules = index.getModules(name, project, scope);
-          if (!modules.isEmpty() && filter.add(name)) {
-            LookupElement lookup = LookupElementBuilder.create(name).withIcon(AllIcons.Nodes.JavaModule);
-            if (checkAccess && !ContainerUtil.and(modules, module -> JavaModuleGraphUtil.isModuleReadable(parent, module))) lookup = markAsInaccessible(lookup);
-            if (withAutoModules) lookup = TailTypeDecorator.withTail(lookup, TailTypes.semicolonType());
-            result.addElement(lookup);
-          }
-        }
-
-        if (withAutoModules) {
-          Module module = ModuleUtilCore.findModuleForFile(originalFile);
-          if (module != null) {
-            scope = ProjectScope.getAllScope(project);
-            for (String name : JavaSourceModuleNameIndex.getAllKeys(project)) {
-              Collection<VirtualFile> manifests = JavaSourceModuleNameIndex.getFilesByKey(name, scope);
-              if (!manifests.isEmpty()) {
-                LookupElement lookupElement = getAutoModuleReference(name, parent, filter);
-                if (lookupElement != null) {
-                  if (!checkAccess) {
-                    lookupElement = PrioritizedLookupElement.withPriority(lookupElement, -1);
-                  }
-                  else if (!ContainerUtil.and(manifests, manifest -> JavaModuleGraphUtil.isModuleReadable(parent, manifest))) {
-                    lookupElement = markAsInaccessible(lookupElement);
-                  }
-                  result.addElement(lookupElement);
-                }
-              }
-            }
-            for (String name : JavaAutoModuleNameIndex.getAllKeys(project)) {
-              Collection<VirtualFile> files = JavaAutoModuleNameIndex.getFilesByKey(name, scope);
-              if (!files.isEmpty()) {
-                LookupElement lookupElement = getAutoModuleReference(name, parent, filter);
-                if (lookupElement != null) {
-                  if (!checkAccess) {
-                    lookupElement = PrioritizedLookupElement.withPriority(lookupElement, -1);
-                  }
-                  else if (!ContainerUtil.and(files, file -> JavaModuleGraphUtil.isModuleReadable(parent, file))) {
-                    lookupElement = markAsInaccessible(lookupElement);
-                  }
-                  result.addElement(lookupElement);
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  /**
-   * Marks the given {@code LookupElement} as inaccessible.
-   *
-   * @param lookup the {@link LookupElement} to be marked as inaccessible
-   * @return the modified {@link LookupElement} marked as inaccessible
-   */
-  private static @NotNull LookupElement markAsInaccessible(@NotNull LookupElement lookup) {
-    return PrioritizedLookupElement.withExplicitProximity(LookupElementDecorator.withRenderer(lookup, new LookupElementRenderer<>() {
-      @Override
-      public void renderElement(@NotNull LookupElementDecorator<LookupElement> element, @NotNull LookupElementPresentation presentation) {
-        element.getDelegate().renderElement(presentation);
-        presentation.setItemTextForeground(JBColor.RED);
-      }
-    }), -1);
-  }
-
-
-  /**
-   * Searching for a module name in a broken PsiFile when import module declaration typing before the module description.
-   * <pre>{@code
-   *   import module current.<caret>
-   *   module current.module.name {
-   *   }
-   * }</pre>
-   *
-   * @param originalFile The module-info.java file
-   * @param position the position within the file
-   * @return The module name if found, otherwise null.
-   */
-  private static @Nullable String findModuleName(@NotNull PsiFile originalFile, @NotNull PsiElement position) {
-    if (!PsiJavaModule.MODULE_INFO_FILE.equals(originalFile.getName())) return null;
-    if(!(position.getNode() instanceof PsiIdentifier intellijIdeaRulezzz)) return null;
-    StringBuilder name = new StringBuilder();
-    PsiElement cursor = intellijIdeaRulezzz;
-    PsiElement prev = null;
-    while ((cursor = cursor.getNextSibling()) != null) {
-      if (cursor instanceof PsiErrorElement) {
-        name.setLength(0);
-      }
-      else if (cursor instanceof PsiIdentifier && prev instanceof PsiIdentifier) {
-        name.setLength(0);
-        name.append(cursor.getText());
-      }
-      else if (!(cursor instanceof PsiWhiteSpace)){
-        name.append(cursor.getText());
-      }
-      prev = cursor;
-    }
-    String result = name.toString();
-    if (result.trim().isEmpty()) return null;
-    return result;
-  }
-
-  private static @Nullable LookupElement getAutoModuleReference(@NotNull String name, @NotNull PsiElement parent,
-                                                                @NotNull Set<? super String> filter) {
-    if (PsiNameHelper.isValidModuleName(name, parent) && filter.add(name)) {
-      LookupElement lookup = LookupElementBuilder.create(name).withIcon(AllIcons.FileTypes.Archive);
-      return TailTypeDecorator.withTail(lookup, TailTypes.semicolonType());
-    }
-    return null;
-  }
-
 
   /**
    * Prepares a method call element with type inference based on the expected types provided.

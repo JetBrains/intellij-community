@@ -17,9 +17,6 @@ import org.jetbrains.intellij.build.impl.JpsCompilationRunner
 import org.jetbrains.intellij.build.impl.cleanOutput
 import org.jetbrains.intellij.build.impl.isBazelTestRun
 import org.jetbrains.intellij.build.impl.isRunningFromBazelOut
-import org.jetbrains.intellij.build.jpsCache.isForceDownloadJpsCache
-import org.jetbrains.intellij.build.jpsCache.isPortableCompilationCacheEnabled
-import org.jetbrains.intellij.build.jpsCache.jpsCacheRemoteGitUrl
 import org.jetbrains.intellij.build.productionClassesOutputDirectory
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
@@ -41,14 +38,7 @@ internal fun checkCompilationOptions(context: CompilationContext) {
       messages.logErrorAndThrow(message)
     }
   }
-  if (options.pathToCompiledClassesArchive != null && isPortableCompilationCacheEnabled) {
-    messages.logErrorAndThrow("JPS Cache is enabled so '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE}' cannot be used")
-  }
   val pathToCompiledClassArchiveMetadata = options.pathToCompiledClassesArchivesMetadata
-  if (pathToCompiledClassArchiveMetadata != null && isPortableCompilationCacheEnabled) {
-    messages.logErrorAndThrow("JPS Cache is enabled " +
-                              "so '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA}' cannot be used to fetch compile output")
-  }
   if (options.pathToCompiledClassesArchive != null && options.incrementalCompilation) {
     messages.logErrorAndThrow("'${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE}' is specified, so 'incremental compilation' option cannot be enabled")
   }
@@ -124,8 +114,7 @@ internal fun keepCompilationState(options: BuildOptions): Boolean {
   }
 
   return !options.forceRebuild &&
-         (isPortableCompilationCacheEnabled ||
-          options.useCompiledClassesFromProjectOutput ||
+         (options.useCompiledClassesFromProjectOutput ||
           options.pathToCompiledClassesArchive == null ||
           options.pathToCompiledClassesArchivesMetadata != null ||
           options.incrementalCompilation)
@@ -181,46 +170,14 @@ internal suspend fun reuseOrCompile(
       }
     }
     else -> {
-      var doCompileWithoutJpsCache = true
-      if (isPortableCompilationCacheEnabled) {
-
-        val forceDownload = isForceDownloadJpsCache
-        val forceRebuild = context.options.forceRebuild
-
-        val isLocalCacheUsed = !forceRebuild && !forceDownload && isIncrementalCompilationDataAvailable(context)
-        val shouldBeDownloaded = !forceRebuild && !isLocalCacheUsed
-        if (shouldBeDownloaded) {
-          span.addEvent("JPS remote cache will be used for compilation")
-          doCompileWithoutJpsCache = false
-          downloadCacheAndCompileProject(
-            forceDownload = isForceDownloadJpsCache,
-            gitUrl = jpsCacheRemoteGitUrl,
-            context = context,
-          )
-        }
-        else {
-          span.addEvent(
-            "JPS remote cache will NOT be used for compilation",
-            Attributes.of(
-              AttributeKey.booleanKey("forceRebuild"), forceRebuild,
-              AttributeKey.booleanKey("forceDownload"), forceDownload,
-              AttributeKey.booleanKey("isLocalCacheUsed"), isLocalCacheUsed,
-              AttributeKey.booleanKey("isIncrementalCompilationDataAvailable"), isIncrementalCompilationDataAvailable(context),
-            ),
-          )
-        }
-      }
-
-      if (doCompileWithoutJpsCache) {
-        spanBuilder("compile modules").use {
-          doCompile(
-            moduleNames = moduleNames,
-            includingTestsInModules = includingTestsInModules,
-            availableCommitDepth = -1,
-            context = context,
-            handleCompilationFailureBeforeRetry = null,
-          )
-        }
+      spanBuilder("compile modules").use {
+        doCompile(
+          moduleNames = moduleNames,
+          includingTestsInModules = includingTestsInModules,
+          availableCommitDepth = -1,
+          context = context,
+          handleCompilationFailureBeforeRetry = null,
+        )
       }
       return
     }
@@ -251,7 +208,6 @@ internal suspend fun doCompile(
   try {
     val (status, isIncrementalCompilation) = when {
       context.options.forceRebuild -> "forced rebuild" to false
-      availableCommitDepth >= 0 -> portableJpsCacheUsageStatus(availableCommitDepth) to true
       isIncrementalCompilationDataAvailable(context) -> "compile using local cache" to true
       else -> "clean build" to false
     }

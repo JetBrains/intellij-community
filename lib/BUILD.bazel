@@ -80,9 +80,9 @@ jvm_import(
 )
 
 copy_file(
-  name = "ai.grazie/grazie-rule-engine-0.3.202.jar_copy",
-  src = "@ai_grazie-grazie-rule-engine-0_3_202_http//file",
-  out = "ai.grazie/grazie-rule-engine-0.3.202.jar",
+  name = "ai.grazie/grazie-rule-engine-0.3.212.jar_copy",
+  src = "@ai_grazie-grazie-rule-engine-0_3_212_http//file",
+  out = "ai.grazie/grazie-rule-engine-0.3.212.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
@@ -98,16 +98,16 @@ copy_file(
 java_library(
   name = "ai-grazie-rule-engine",
   exports = [
-    ":ai_grazie-grazie-rule-engine-0_3_202_http_import",
+    ":ai_grazie-grazie-rule-engine-0_3_212_http_import",
     ":net_fellbaum-jemoji-1_3_1_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "ai_grazie-grazie-rule-engine-0_3_202_http_import",
-  jar = "@ai_grazie-grazie-rule-engine-0_3_202_http//file",
-  source_jar = "@ai_grazie-grazie-rule-engine-0_3_202-sources_http//file"
+  name = "ai_grazie-grazie-rule-engine-0_3_212_http_import",
+  jar = "@ai_grazie-grazie-rule-engine-0_3_212_http//file",
+  source_jar = "@ai_grazie-grazie-rule-engine-0_3_212-sources_http//file"
 )
 
 jvm_import(
@@ -117,17 +117,17 @@ jvm_import(
 )
 
 copy_file(
-  name = "ai.grazie/grazie-rules-llm-0.3.202.jar_copy",
-  src = "@ai_grazie-grazie-rules-llm-0_3_202_http//file",
-  out = "ai.grazie/grazie-rules-llm-0.3.202.jar",
+  name = "ai.grazie/grazie-rules-llm-0.3.212.jar_copy",
+  src = "@ai_grazie-grazie-rules-llm-0_3_212_http//file",
+  out = "ai.grazie/grazie-rules-llm-0.3.212.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "ai-grazie-semantic-engine",
-  jar = "@ai_grazie-grazie-rules-llm-0_3_202_http//file",
-  source_jar = "@ai_grazie-grazie-rules-llm-0_3_202-sources_http//file",
+  jar = "@ai_grazie-grazie-rules-llm-0_3_212_http//file",
+  source_jar = "@ai_grazie-grazie-rules-llm-0_3_212-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -6791,17 +6791,17 @@ java_library(
 )
 
 copy_file(
-  name = "org.jetbrains.intellij.deps/debugger-agent-1.177.jar_copy",
-  src = "@org_jetbrains_intellij_deps-debugger-agent-1_177_http//file",
-  out = "org.jetbrains.intellij.deps/debugger-agent-1.177.jar",
+  name = "org.jetbrains.intellij.deps/debugger-agent-1.178.jar_copy",
+  src = "@org_jetbrains_intellij_deps-debugger-agent-1_178_http//file",
+  out = "org.jetbrains.intellij.deps/debugger-agent-1.178.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "java-debugger-agent-holder-debugger-agent",
-  jar = "@org_jetbrains_intellij_deps-debugger-agent-1_177_http//file",
-  source_jar = "@org_jetbrains_intellij_deps-debugger-agent-1_177-sources_http//file",
+  jar = "@org_jetbrains_intellij_deps-debugger-agent-1_178_http//file",
+  source_jar = "@org_jetbrains_intellij_deps-debugger-agent-1_178-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -7063,17 +7063,17 @@ jvm_import(
 )
 
 copy_file(
-  name = "org.jetbrains.jediterm/jediterm-core-3.66.jar_copy",
-  src = "@org_jetbrains_jediterm-jediterm-core-3_66_http//file",
-  out = "org.jetbrains.jediterm/jediterm-core-3.66.jar",
+  name = "org.jetbrains.jediterm/jediterm-core-3.68.jar_copy",
+  src = "@org_jetbrains_jediterm-jediterm-core-3_68_http//file",
+  out = "org.jetbrains.jediterm/jediterm-core-3.68.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "jediterm-core",
-  jar = "@org_jetbrains_jediterm-jediterm-core-3_66_http//file",
-  source_jar = "@org_jetbrains_jediterm-jediterm-core-3_66-sources_http//file",
+  jar = "@org_jetbrains_jediterm-jediterm-core-3_68_http//file",
+  source_jar = "@org_jetbrains_jediterm-jediterm-core-3_68-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -12324,17 +12324,17 @@ jvm_import(
 )
 
 copy_file(
-  name = "org.jetbrains.jediterm/jediterm-ui-3.66.jar_copy",
-  src = "@org_jetbrains_jediterm-jediterm-ui-3_66_http//file",
-  out = "org.jetbrains.jediterm/jediterm-ui-3.66.jar",
+  name = "org.jetbrains.jediterm/jediterm-ui-3.68.jar_copy",
+  src = "@org_jetbrains_jediterm-jediterm-ui-3_68_http//file",
+  out = "org.jetbrains.jediterm/jediterm-ui-3.68.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "libraries-jediterm-ui-jediterm-ui",
-  jar = "@org_jetbrains_jediterm-jediterm-ui-3_66_http//file",
-  source_jar = "@org_jetbrains_jediterm-jediterm-ui-3_66-sources_http//file",
+  jar = "@org_jetbrains_jediterm-jediterm-ui-3_68_http//file",
+  source_jar = "@org_jetbrains_jediterm-jediterm-ui-3_68-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

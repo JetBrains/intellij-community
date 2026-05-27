@@ -41,10 +41,6 @@ internal class PersistentChangeListStorage(
   var lastId: Long = 0
     private set
 
-  @get:VisibleForTesting
-  var lastWrittenId: Long = 0
-    private set
-
   private var isCompletelyBroken = false
 
   init {
@@ -88,7 +84,6 @@ internal class PersistentChangeListStorage(
     }
 
     lastId = storage.getLastId()
-    lastWrittenId = storage.getLastId()
     return storage
   }
 
@@ -147,6 +142,7 @@ internal class PersistentChangeListStorage(
   override fun close(drop: Boolean) {
     if (!drop) {
       flushPending()
+      writeLastId()
     }
     Disposer.dispose(storage)
     if (drop) {
@@ -157,6 +153,7 @@ internal class PersistentChangeListStorage(
   override fun flush() {
     try {
       flushPending()
+      writeLastId()
       storage.force()
     }
     catch (e: IOException) {
@@ -237,6 +234,7 @@ internal class PersistentChangeListStorage(
     }
     else {
       doWriteNextSet(changeSet)
+      writeLastId()
     }
   }
 
@@ -257,12 +255,18 @@ internal class PersistentChangeListStorage(
       storage.writeStream(storage.createNextRecord(changeSet.timestamp), true).use { out ->
         changeSet.write(out)
       }
-      storage.setLastId(++lastWrittenId)
-      if (lastWrittenId > lastId) {
-        handleError(null,
-                    "ID desync detected - something is creating changesets with external IDs. LastID: $lastId, LastWrittenID: $lastWrittenId")
-        return
-      }
+    }
+    catch (e: IOException) {
+      handleError(e, null)
+    }
+  }
+
+  @Synchronized
+  private fun writeLastId() {
+    if (isCompletelyBroken) return
+
+    try {
+      storage.setLastId(lastId)
     }
     catch (e: IOException) {
       handleError(e, null)

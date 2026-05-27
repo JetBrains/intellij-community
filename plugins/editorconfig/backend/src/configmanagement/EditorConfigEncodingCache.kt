@@ -146,6 +146,9 @@ internal class EditorConfigEncodingCache : SettingsSavingComponent {
 
   class VfsListener : BulkVirtualFileListenerAdapter(object : VirtualFileListener {
     override fun fileCreated(event: VirtualFileEvent) {
+      if (event.isFromRefresh) {
+        return
+      }
       val file = event.file
       val project = ProjectLocator.getInstance().guessProjectForFile(file)
       if (project != null && Utils.isEnabledFor(project, file)) {

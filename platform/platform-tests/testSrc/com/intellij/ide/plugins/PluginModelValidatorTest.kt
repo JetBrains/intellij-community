@@ -264,7 +264,7 @@ class PluginModelValidatorTest {
     val result = validatePluginModel(project)
     assertThat(result.errorsAsString()).contains("""
       |Module 'intellij.private.module' has 'private' (default) visibility in 'intellij.plugin1' but it is used as a dependency in 
-      |a plugin 'intellij.plugin2'.
+      |a module 'intellij.module2' in a plugin 'intellij.plugin2'.
       |Use 'internal' or 'public' visibility instead by adding 'visibility' attribute to the root tag of intellij.private.module.xml
     """.trimMargin())
   }

@@ -64,6 +64,7 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
       LOCAL_CHANGES_NOT_RESTORED,
       MERGE_ABORT_FAILED,
       MERGE_ABORT_SUCCESS,
+      MERGE_COMMIT_ERROR,
       MERGE_ERROR,
       MERGE_FAILED,
       LOCAL_CHANGES_DETECTED,
@@ -203,6 +204,7 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
     const val LOCAL_CHANGES_NOT_RESTORED: String = "git.local.changes.not.restored"
     const val MERGE_ABORT_FAILED: String = "git.merge.abort.failed"
     const val MERGE_ABORT_SUCCESS: String = "git.merge.abort.success"
+    const val MERGE_COMMIT_ERROR: String = "git.merge.commit.error"
     const val MERGE_ERROR: String = "git.merge.error"
     const val MERGE_FAILED: String = "git.merge.failed"
     const val LOCAL_CHANGES_DETECTED: String = "git.merge.local.changes.detected"

@@ -11,10 +11,8 @@ import com.intellij.history.core.ByteContentRetriever
 import com.intellij.history.core.ChangeAndPathProcessor
 import com.intellij.history.core.ChangeListImpl
 import com.intellij.history.core.InMemoryChangeListStorage
-import com.intellij.history.core.LabelImpl
 import com.intellij.history.core.LocalHistoryFacade
 import com.intellij.history.core.PersistentChangeListStorage
-import com.intellij.history.core.changes.Change
 import com.intellij.history.core.changes.ChangeSet
 import com.intellij.history.core.changes.PutLabelChange
 import com.intellij.history.core.collectChanges
@@ -164,9 +162,9 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
     val facade = stateIfInitialized?.facade ?: return Label.NULL_INSTANCE
 
     val action = startAction(name, activityId)
-    val label = label(facade.putUserLabel(name, getProjectId(project)))
+    val label = facade.putUserLabel(name, getProjectId(project))
     action.finish()
-    return label
+    return createLabelWrapper(label.id)
   }
 
   override fun putUserLabel(project: Project, name: @NlsContexts.Label String): Label {
@@ -177,7 +175,8 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
     val facade = stateIfInitialized?.facade ?: return Label.NULL_INSTANCE
 
     gateway.registerUnsavedDocuments(facade)
-    return label(facade.putSystemLabel(name, getProjectId(project), color))
+    val label = facade.putSystemLabel(name, getProjectId(project), color)
+    return createLabelWrapper(label.id)
   }
 
   @ApiStatus.Internal
@@ -185,15 +184,18 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
     (state.get() as State.Initialized).eventDispatcher.addVirtualFileListener(virtualFileListener, disposable)
   }
 
-  private fun label(label: LabelImpl): Label {
+  private fun createLabelWrapper(labelId: Long): Label {
     return object : Label {
       override fun revert(project: Project, file: VirtualFile) {
-        revertToLabel(project = project, f = file, label = label)
+        val facade = facade ?: error("Local history storage unavailable")
+        revertToLabel(facade, project, file, labelId)
       }
 
       override fun getByteContent(path: String): ByteContent {
         return runReadActionBlocking {
-          label.getByteContent(gateway.createTransientRootEntryForPath(path, false), path)
+          val facade = facade ?: error("Local history storage unavailable")
+          val root = gateway.createTransientRootEntryForPath(path, false)
+          facade.getByteContentBefore(root, path, labelId)
         }
       }
     }
@@ -217,16 +219,17 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
   override fun isUnderControl(file: VirtualFile): Boolean = isInitialized() && gateway.isVersioned(file)
 
   @Throws(LocalHistoryException::class)
-  private fun revertToLabel(project: Project, f: VirtualFile, label: LabelImpl) {
-    val path = gateway.getPathOrUrl(f)
+  private fun revertToLabel(facade: LocalHistoryFacade, project: Project, file: VirtualFile, labelId: Long) {
+    val path = gateway.getPathOrUrl(file)
 
     var targetChangeSet: ChangeSet? = null
-    var targetChange: Change? = null
+    var targetChange: PutLabelChange? = null
     val targetPaths = mutableSetOf(path)
 
-    facade!!.collectChanges(path, ChangeAndPathProcessor(project.locationHash, null, targetPaths::add) { changeSet: ChangeSet ->
-      val change = changeSet.changes.firstOrNull { it.id == label.labelChangeId }
-      if (change != null) {
+    // TODO: stop collecting when the label change is found
+    facade.collectChanges(path, ChangeAndPathProcessor(project.locationHash, null, targetPaths::add) { changeSet: ChangeSet ->
+      val change = changeSet.changes.firstOrNull { it.id == labelId }
+      if (change != null && change is PutLabelChange) {
         targetChangeSet = changeSet
         targetChange = change
       }
@@ -237,20 +240,20 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
     }
 
     val rootEntry = runReadActionBlocking { gateway.createTransientRootEntryForPaths(targetPaths, true) }
-    val leftEntry = facade!!.findEntry(rootEntry, RevisionId.ChangeSet(targetChangeSet.id), path,
-                                       /*do not revert the change itself*/false)
+    val leftEntry = facade.findEntry(rootEntry, RevisionId.ChangeSet(targetChangeSet.id), path,
+                                     /*do not revert the change itself*/false)
     val rightEntry = rootEntry.findEntry(path)
     val diff = Entry.getDifferencesBetween(leftEntry, rightEntry, true)
     if (diff.isEmpty()) return // nothing to revert
 
     val reverter = DifferenceReverter(project, facade, gateway, diff) {
-      getRevertCommandName((targetChange as? PutLabelChange)?.name, targetChangeSet.timestamp, false)
+      getRevertCommandName(targetChange.name, targetChangeSet.timestamp, false)
     }
     try {
       reverter.revert()
     }
     catch (e: Exception) {
-      throw LocalHistoryException("Couldn't revert ${f.getName()} to local history label.", e)
+      throw LocalHistoryException("Couldn't revert ${file.getName()} to local history label.", e)
     }
   }
 }

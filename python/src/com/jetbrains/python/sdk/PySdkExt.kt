@@ -5,7 +5,6 @@ import com.intellij.execution.ExecutionException
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.TargetConfigurationWithLocalFsAccess
 import com.intellij.execution.target.TargetEnvironmentConfiguration
-import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.ide.projectView.actions.MarkRootsManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
@@ -22,8 +21,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.eel.EelApi
-import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
 import com.intellij.webcore.packaging.PackagesNotificationPanel
 import com.jetbrains.python.PyBundle
@@ -48,31 +45,6 @@ private data class TargetAndPath(
   val target: TargetEnvironmentConfiguration?,
   val path: FullPathOnTarget?,
 )
-
-@Internal
-fun findAllPythonSdks(baseDir: Path?): List<Sdk> {
-  val context: UserDataHolder = UserDataHolderBase()
-  if (baseDir != null) {
-    context.putUserData(BASE_DIR, baseDir)
-  }
-  val existing = PythonSdkUtil.getAllSdks()
-  return detectVirtualEnvs(null, existing, context) + findBaseSdks(existing, null, context)
-}
-
-@Internal
-fun findBaseSdks(existingSdks: List<Sdk>, module: Module?, context: UserDataHolder): List<Sdk> {
-  val existing = filterSystemWideSdks(existingSdks)
-  val detected = detectSystemWideSdks(module, existingSdks, context)
-  return (existing + detected)
-    .map { it.pyRichSdk() }
-    .sortedWith(PreferredSdkComparator.INSTANCE)
-    .filter { sdk ->
-      when (val env = sdk.pythonEnvironment) {
-        is PythonEnvironment.Conda -> env.isBase
-        is PythonEnvironment.Venv, is PythonEnvironment.SystemPython, null -> true
-      }
-    }
-}
 
 @Internal
 fun mostPreferred(sdks: List<Sdk>): Sdk? = sdks.minWithOrNull(PreferredSdkComparator.INSTANCE)
@@ -106,9 +78,11 @@ fun configurePythonSdk(project: Project, module: Module, sdk: Sdk) {
  * Use [SystemPythonService.findSystemPythons] instead for discovering Python interpreters in dedicated environments with proper EelApi
  * integration.
  *
+ * If you only want to get list of SDKs, use [PythonSdkUtil.getAllSdks]
+ *
  * @param context used to get [BASE_DIR] in [VirtualEnvSdkFlavor.suggestLocalHomePaths]
  */
-@Deprecated("PyDetectedSdk will be dropped soon, use SystemPythonService")
+@Deprecated("PyDetectedSdk will be dropped soon, use SystemPythonService", level = DeprecationLevel.ERROR)
 @JvmOverloads
 fun detectSystemWideSdks(
   module: Module?,
@@ -136,6 +110,7 @@ private fun PythonSdkFlavor<*>.detectSdks(
     .map { createDetectedSdk(it, targetModuleSitsOn?.asTargetConfig, this) }
 
 
+@Deprecated("Will be dropped soon along with PyDetectedSDK, do not use")
 private fun PythonSdkFlavor<*>.detectSdkPaths(
   module: Module?,
   context: UserDataHolder,

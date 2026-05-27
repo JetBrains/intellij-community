@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,15 +21,16 @@ import javax.swing.JPanel;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 
-public final class RunnerAndConfigurationSettingsEditor extends SettingsEditor<RunnerAndConfigurationSettings> implements
-                                                                                                         TargetAwareRunConfigurationEditor {
+@ApiStatus.Internal
+public final class RunnerAndConfigurationSettingsEditor<Editor extends SettingsEditor<RunConfigurationBase<?>> & RunnerAndConfigurationAwareSettingsEditor>
+  extends SettingsEditor<RunnerAndConfigurationSettings> implements TargetAwareRunConfigurationEditor {
 
-  private final RunConfigurationFragmentedEditor<RunConfigurationBase<?>> myConfigurationEditor;
+  private final Editor myConfigurationEditor;
   private final @Nullable RunConfigurationStorageUi myRCStorageUi;
   private final RunOnTargetPanel myRunOnTargetPanel;
 
   public RunnerAndConfigurationSettingsEditor(RunnerAndConfigurationSettings settings,
-                                              RunConfigurationFragmentedEditor<RunConfigurationBase<?>> configurationEditor) {
+                                              Editor configurationEditor) {
     super(settings.createFactory());
     myConfigurationEditor = configurationEditor;
     myConfigurationEditor.addSettingsEditorListener(editor -> fireEditorStateChanged());

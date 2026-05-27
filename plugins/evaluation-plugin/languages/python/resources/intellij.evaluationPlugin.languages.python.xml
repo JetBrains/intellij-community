@@ -1,6 +1,9 @@
 <idea-plugin>
   <dependencies>
     <plugin id="com.intellij.modules.python"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.python.sdk"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij.cce">

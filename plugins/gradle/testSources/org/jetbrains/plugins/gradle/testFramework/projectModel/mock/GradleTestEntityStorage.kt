@@ -1,7 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework.projectModel.mock
 
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.toCanonicalPath
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.exModuleOptions
@@ -59,10 +61,16 @@ class GradleTestEntityStorage private constructor() {
       return storage.toSnapshot()
     }
 
-    fun testEntityStorage(configure: (GradleTestEntityStorage) -> Unit): ImmutableEntityStorage {
+    fun entityStorage(configure: (GradleTestEntityStorage) -> Unit = {}): ImmutableEntityStorage {
       val configuration = GradleTestEntityStorage()
       configure(configuration)
       return createEntityStorage(configuration)
     }
+
+    fun entityStorage(project: Project, configure: (GradleTestEntityStorage) -> Unit = {}): ImmutableEntityStorage =
+      entityStorage {
+        it.projectPath = project.basePath!!.toNioPathOrNull()!!
+        configure(it)
+      }
   }
 }

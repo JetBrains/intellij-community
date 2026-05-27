@@ -31,6 +31,8 @@ jvm_library(
   module_name = "fleet.lsp.protocol.test",
   visibility = ["//visibility:public"],
   srcs = glob(["srcCommonTest/**/*.kt", "srcCommonTest/**/*.java", "srcCommonTest/**/*.form"], allow_empty = True),
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   kotlinc_opts = ":custom_test",
   deps = [
     "@lib//:kotlin-stdlib",

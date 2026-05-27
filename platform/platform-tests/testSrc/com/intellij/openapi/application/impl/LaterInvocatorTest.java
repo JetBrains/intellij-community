@@ -6,7 +6,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.DefaultLogger;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -56,8 +55,6 @@ import static org.junit.Assert.assertNotEquals;
 
 @SkipInHeadlessEnvironment
 public class LaterInvocatorTest extends HeavyPlatformTestCase {
-  private static final Logger LOG = Logger.getInstance(LaterInvocatorTest.class);
-  
   private final List<String> myOrder = new ArrayList<>();
 
   private Container myWindow1;
@@ -102,11 +99,9 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
     };
     EdtTestUtil.runInEdtAndWait(() -> {
       super.setUp();
-      final Object[] modalEntities = LaterInvocator.getCurrentModalEntities();
-      if (modalEntities.length > 0) {
-        LOG.error(
-          "Expect no modal entries. Probably some of the previous tests didn't left their entries. Top entry is: " + modalEntities[0]);
-      }
+      Object[] modalEntities = LaterInvocator.getCurrentModalEntities();
+      assertEmpty("Probably some of the previous tests didn't left their entries, Expect no modal entries but got: " +
+                  Arrays.toString(modalEntities), Arrays.asList(modalEntities));
     });
     EdtTestUtil.runInEdtAndWait(() -> TestCase.assertFalse("Can't run test " + ModalityState.current(), LaterInvocator.isInModalContext()));
 
@@ -301,7 +296,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
-        final ArrayList<String> consumed = new ArrayList<>();
+        ArrayList<String> consumed = new ArrayList<>();
         synchronized (LaterInvocatorTest.this) {
           blockSwingThread();
           ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -324,7 +319,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
         }
         flushSwingQueue();
 
-        TestCase.assertEquals(consumed.toString(), 2, consumed.size());
+        assertSize(2, consumed);
       }
     });
   }
@@ -353,9 +348,9 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
   }
 
   public void testDeadLock() throws InterruptedException, ExecutionException {
-    final Object lock = new Object();
-    final boolean[] started = { false };
-    final AtomicReference<Future<?>> thread = new AtomicReference<>();
+    Object lock = new Object();
+    boolean[] started = { false };
+    AtomicReference<Future<?>> thread = new AtomicReference<>();
 
     UIUtil.invokeAndWaitIfNeeded(() -> {
       synchronized (this) {
