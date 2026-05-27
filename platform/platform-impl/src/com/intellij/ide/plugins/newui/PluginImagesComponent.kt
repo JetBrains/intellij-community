@@ -10,7 +10,6 @@ import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.UI
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -51,9 +50,7 @@ import java.awt.Toolkit
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.geom.RoundRectangle2D
-import java.io.File
 import java.io.IOException
-import java.io.InputStream
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
@@ -155,16 +152,23 @@ class PluginImagesComponent : JPanel {
     var success = false
     try {
       withContext(Dispatchers.IO + CoroutineName("load")) {
-        val parentDir = File(PathManager.getPluginTempPath(), "imageCache/" + screenshots.externalPluginIdForScreenShots)
+        var parentDir = PathManager.getSystemDir().resolve("plugins").resolve("imageCache")
+        if (screenshots.externalPluginIdForScreenShots != null) {
+          parentDir = parentDir.resolve(screenshots.externalPluginIdForScreenShots)
+        }
         for (screenshotURL in screenshots.urls) {
           ensureActive()
           try {
-            val name = StringUtil.substringAfterLast(screenshotURL, "/")!!
-            val imageFile = File(parentDir, name)
-            readOrUpdateFile(imageFile.toPath(), screenshotURL, null, "") { stream ->
+            val name = StringUtil.substringAfterLast(screenshotURL, "/")
+            if (name == null) {
+              LOG.warn("Malformed screenshot URL: $screenshotURL")
+              continue
+            }
+            val imageFile = parentDir.resolve(name)
+            readOrUpdateFile(imageFile, screenshotURL, null, "") { stream ->
               IOUtil.closeSafe(LOG, stream)
             }
-            images.add(Toolkit.getDefaultToolkit().createImage(imageFile.absolutePath))
+            images.add(Toolkit.getDefaultToolkit().createImage(imageFile.toAbsolutePath().toString()))
             if (images.size >= 10) break
           }
           catch (e: IOException) {
