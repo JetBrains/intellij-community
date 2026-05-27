@@ -236,7 +236,8 @@ class TraverseUIStarter : ModernApplicationStarter() {
         fileDescriptors
           .groupBy(keySelector = { it.module.moduleName ?: it.module.pluginId.idString })
           .mapValues { entry ->
-            val item = entry.value.single().item
+            val searchableOptionFile = entry.value.singleOrNull() ?: error("Expected exactly one file for module ${entry.key}, but got ${entry.value}")
+            val item = searchableOptionFile.item
             listOf(SearchableOptionSetIndexItem(item.file, item.hash, item.size))
           }
       ))
