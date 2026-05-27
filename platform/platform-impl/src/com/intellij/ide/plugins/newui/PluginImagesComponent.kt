@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
@@ -21,7 +22,6 @@ import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.concurrency.ThreadingAssertions
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.IOUtil
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBUI
@@ -78,11 +78,11 @@ class PluginImagesComponent : JPanel {
   private var myFullScreenPopup: JBPopup? = null
 
   private data class Screenshots(
-    val paths: List<String>,
+    val urls: List<String>,
     val externalPluginIdForScreenShots: String?,
   ) {
     constructor() : this(
-      paths = emptyList(),
+      urls = emptyList(),
       externalPluginIdForScreenShots = null,
     )
   }
@@ -156,21 +156,20 @@ class PluginImagesComponent : JPanel {
     try {
       withContext(Dispatchers.IO + CoroutineName("load")) {
         val parentDir = File(PathManager.getPluginTempPath(), "imageCache/" + screenshots.externalPluginIdForScreenShots)
-        for (screenShot in screenshots.paths) {
+        for (screenshotURL in screenshots.urls) {
           ensureActive()
           try {
-            val name = StringUtil.substringAfterLast(screenShot, "/")!!
+            val name = StringUtil.substringAfterLast(screenshotURL, "/")!!
             val imageFile = File(parentDir, name)
-            readOrUpdateFile<Any?>(imageFile.toPath(), screenShot, null, "") { stream: InputStream? ->
-              IOUtil.closeSafe(Logger.getInstance(PluginImagesComponent::class.java), stream)
-              Any()
+            readOrUpdateFile(imageFile.toPath(), screenshotURL, null, "") { stream ->
+              IOUtil.closeSafe(LOG, stream)
             }
             images.add(Toolkit.getDefaultToolkit().createImage(imageFile.absolutePath))
             if (images.size >= 10) break
           }
           catch (e: IOException) {
             // IO errors such as image decoding problems are expected and must not be treated as IDE errors
-            Logger.getInstance(PluginImagesComponent::class.java).warn(e)
+            LOG.warn("An exception occurred during loading of the screenshot $screenshotURL", e)
           }
         }
       }
@@ -253,15 +252,16 @@ class PluginImagesComponent : JPanel {
   private val fullWidth: Int
     get() {
       val parent = getParent()
+      val myParent = myParent
       if (parent != null && myParent != null) {
-        return myParent!!.getWidth() - parent.insets.left
+        return myParent.getWidth() - parent.insets.left
       }
       return getWidth()
     }
 
   private fun handleMMove(e: MouseEvent) {
     val state = handleEvent(e, true)
-    val newCursor = if (state == None) null else myHandCursor
+    val newCursor = if (state == NONE) null else myHandCursor
 
     if (getCursor() !== newCursor) {
       setCursor(newCursor)
@@ -274,7 +274,7 @@ class PluginImagesComponent : JPanel {
     }
 
     val state = handleEvent(e, false)
-    if (state == None) {
+    if (state == NONE) {
       return
     }
 
@@ -284,11 +284,11 @@ class PluginImagesComponent : JPanel {
         repaint()
       }
     }
-    else if (state == FullScreen) {
+    else if (state == FULL_SCREEN) {
       handleFullScreen()
     }
     else {
-      showNextImage(state == PrevImage)
+      showNextImage(state == PREV_IMAGE)
     }
   }
 
@@ -309,25 +309,25 @@ class PluginImagesComponent : JPanel {
     val mouseY = e.getY()
 
     if (Rectangle(leftActionX, actionY, actionSize, actionSize).contains(mouseX, mouseY)) {
-      return PrevImage
+      return PREV_IMAGE
     }
     if (Rectangle(rightActionX, actionY, actionSize, actionSize).contains(mouseX, mouseY)) {
-      return NextImage
+      return NEXT_IMAGE
     }
     if (Rectangle(x + offset, y, width - offset2, height - offset).contains(mouseX, mouseY)) {
       if (cutFullScreen && !Rectangle(x + offset2, y, width - 2 * offset2, height - offset).contains(mouseX, mouseY)) {
-        return None
+        return NONE
       }
-      return FullScreen
+      return FULL_SCREEN
     }
 
-    if (ContainerUtil.isEmpty(myImages)) {
-      return None
+    if (myImages.isEmpty()) {
+      return NONE
     }
     val count = myImages.size
 
     if (count < 2) {
-      return None
+      return NONE
     }
 
     val ovalSize = JBUI.scale(if (myShowFullContent) 8 else 6)
@@ -344,7 +344,7 @@ class PluginImagesComponent : JPanel {
       bounds.x += ovalSize + ovalGap
     }
 
-    return None
+    return NONE
   }
 
   private fun handleFullScreen() {
@@ -352,7 +352,7 @@ class PluginImagesComponent : JPanel {
     if (myShowFullContent) {
       return
     }
-    if (ContainerUtil.isEmpty(myImages)) {
+    if (myImages.isEmpty()) {
       return
     }
     val images = myImages
@@ -377,9 +377,7 @@ class PluginImagesComponent : JPanel {
     newFullScreenPopup.addListener(object : JBPopupListener {
       override fun beforeShown(event: LightweightWindowEvent) {
         val window = SwingUtilities.getWindowAncestor(event.asPopup().getContent())
-        if (window.graphicsConfiguration.device
-            .isWindowTranslucencySupported(GraphicsDevice.WindowTranslucency.TRANSLUCENT)
-        ) {
+        if (window.graphicsConfiguration.device.isWindowTranslucencySupported(GraphicsDevice.WindowTranslucency.TRANSLUCENT)) {
           window.setBackground(Gray.TRANSPARENT)
           window.opacity = 0.95f
         }
@@ -574,10 +572,10 @@ class PluginImagesComponent : JPanel {
     private val CURRENT_IMAGE_FILL_COLOR: Color =
       JBColor.namedColor("Plugins.ScreenshotPagination.CurrentImage.fillColor", JBColor(0x6C707E, 0xCED0D6))
 
-    private const val None = -1
-    private const val NextImage = -2
-    private const val PrevImage = -3
-    private const val FullScreen = -4
+    private const val NONE = -1
+    private const val NEXT_IMAGE = -2
+    private const val PREV_IMAGE = -3
+    private const val FULL_SCREEN = -4
   }
 }
 
@@ -606,3 +604,5 @@ private class ReferencedImage(val image: Image) {
     }
   }
 }
+
+private val LOG = logger<PluginImagesComponent>()
