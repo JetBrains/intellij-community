@@ -5,6 +5,8 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.pom.Navigatable
+import com.intellij.util.application
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.xdebugger.XSourcePosition
 import org.jetbrains.annotations.ApiStatus
 
@@ -48,7 +50,12 @@ object XDebuggerUtilImplShared {
 
 private class XSourcePositionNavigatable(private val myProject: Project, private val myPosition: XSourcePosition) : Navigatable {
   override fun navigate(requestFocus: Boolean) {
-    XDebuggerUtilImplShared.createOpenFileDescriptor(myProject, myPosition).navigate(requestFocus)
+    AppExecutorUtil.getAppExecutorService().submit {
+      val descriptor = XDebuggerUtilImplShared.createOpenFileDescriptor(myProject, myPosition)
+      application.invokeLater {
+        descriptor.navigate(requestFocus)
+      }
+    }
   }
 
   override fun canNavigate(): Boolean {
