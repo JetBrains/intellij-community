@@ -91,7 +91,6 @@ class CommandCompletionSettingsService {
   }
 }
 
-@ApiStatus.Internal
 internal class AppCommandCompletionSettings(
   var showCounts: Int = 0,
   var myEnabled: CommandCompletionEnabled = CommandCompletionEnabled.FROM_REGISTRY,
