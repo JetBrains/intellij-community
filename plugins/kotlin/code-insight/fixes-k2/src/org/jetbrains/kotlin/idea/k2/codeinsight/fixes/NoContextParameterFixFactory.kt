@@ -11,6 +11,8 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFi
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtLambdaArgument
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -19,7 +21,7 @@ import org.jetbrains.kotlin.types.Variance
 @OptIn(KaExperimentalApi::class)
 internal object NoContextParameterFixFactory {
     val noContextArgument = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.NoContextArgument ->
-        val callElement = diagnostic.psi as? KtCallElement
+        val expression = diagnostic.psi as? KtExpression
             ?: return@ModCommandBased emptyList()
 
         val symbol = diagnostic.symbol as? KaContextParameterSymbol
@@ -27,22 +29,24 @@ internal object NoContextParameterFixFactory {
 
         val contextType = symbol.returnType.render(renderer = KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)
         buildList {
-            findSurroundingContextCall(callElement)?.let {
+            findSurroundingContextCall(expression)?.let {
                 add(AddContextParameterToExistingContextFix(it))
             }
-            val wrapper = if (callElement.languageVersionSettings.apiVersion >= ApiVersion.KOTLIN_2_2) {
-                SurroundCallWithContextFix.Wrapper.CONTEXT
-            } else {
-                SurroundCallWithContextFix.Wrapper.WITH
+            if (expression is KtCallElement) {
+                val wrapper = if (expression.languageVersionSettings.apiVersion >= ApiVersion.KOTLIN_2_2) {
+                    SurroundCallWithContextFix.Wrapper.CONTEXT
+                } else {
+                    SurroundCallWithContextFix.Wrapper.WITH
+                }
+                add(SurroundCallWithContextFix(expression, wrapper))
             }
-            add(SurroundCallWithContextFix(callElement, wrapper))
-            val containingFunction = callElement.getStrictParentOfType<KtNamedFunction>()
+            val containingFunction = expression.getStrictParentOfType<KtNamedFunction>()
             if (containingFunction != null && !containingFunction.hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
-                add(AddContextParameterFix(callElement, listOf(contextType)))
+                add(AddContextParameterFix(expression, listOf(contextType)))
             }
         }
     }
-    private fun findSurroundingContextCall(element: KtCallElement): KtCallExpression? {
+    private fun findSurroundingContextCall(element: KtElement): KtCallExpression? {
         val lambdaArg = element.getStrictParentOfType<KtLambdaArgument>() ?: return null
         val parentCall = lambdaArg.parent as? KtCallExpression ?: return null
         val callee = parentCall.calleeExpression?.text ?: return null

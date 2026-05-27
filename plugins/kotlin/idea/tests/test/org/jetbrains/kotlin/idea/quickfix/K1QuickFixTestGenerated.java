@@ -4130,6 +4130,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/contextParameter/addContext/addToExistingContext.kt");
             }
 
+            @TestMetadata("annotation.kt")
+            public void testAnnotation() throws Exception {
+                runTest("testData/quickfix/contextParameter/addContext/annotation.kt");
+            }
+
             @TestMetadata("callWithArguments.kt")
             public void testCallWithArguments() throws Exception {
                 runTest("testData/quickfix/contextParameter/addContext/callWithArguments.kt");
@@ -4140,9 +4145,29 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/contextParameter/addContext/expressionBody.kt");
             }
 
+            @TestMetadata("extensionFunction.kt")
+            public void testExtensionFunction() throws Exception {
+                runTest("testData/quickfix/contextParameter/addContext/extensionFunction.kt");
+            }
+
             @TestMetadata("genericFunction.kt")
             public void testGenericFunction() throws Exception {
                 runTest("testData/quickfix/contextParameter/addContext/genericFunction.kt");
+            }
+
+            @TestMetadata("infixCall.kt")
+            public void testInfixCall() throws Exception {
+                runTest("testData/quickfix/contextParameter/addContext/infixCall.kt");
+            }
+
+            @TestMetadata("init.kt")
+            public void testInit() throws Exception {
+                runTest("testData/quickfix/contextParameter/addContext/init.kt");
+            }
+
+            @TestMetadata("lambda.kt")
+            public void testLambda() throws Exception {
+                runTest("testData/quickfix/contextParameter/addContext/lambda.kt");
             }
 
             @TestMetadata("listStringType.kt")
@@ -4155,9 +4180,19 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/contextParameter/addContext/memberFunction.kt");
             }
 
+            @TestMetadata("nestedFunction.kt")
+            public void testNestedFunction() throws Exception {
+                runTest("testData/quickfix/contextParameter/addContext/nestedFunction.kt");
+            }
+
             @TestMetadata("noContextArgument.kt")
             public void testNoContextArgument() throws Exception {
                 runTest("testData/quickfix/contextParameter/addContext/noContextArgument.kt");
+            }
+
+            @TestMetadata("nullableParameterType.kt")
+            public void testNullableParameterType() throws Exception {
+                runTest("testData/quickfix/contextParameter/addContext/nullableParameterType.kt");
             }
 
             @TestMetadata("overrideModifier.kt")
@@ -4168,6 +4203,31 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             @TestMetadata("privateModifier.kt")
             public void testPrivateModifier() throws Exception {
                 runTest("testData/quickfix/contextParameter/addContext/privateModifier.kt");
+            }
+
+            @TestMetadata("qualifiedCall.kt")
+            public void testQualifiedCall() throws Exception {
+                runTest("testData/quickfix/contextParameter/addContext/qualifiedCall.kt");
+            }
+
+            @TestMetadata("qualifiedCall2.kt")
+            public void testQualifiedCall2() throws Exception {
+                runTest("testData/quickfix/contextParameter/addContext/qualifiedCall2.kt");
+            }
+
+            @TestMetadata("return.kt")
+            public void testReturn() throws Exception {
+                runTest("testData/quickfix/contextParameter/addContext/return.kt");
+            }
+
+            @TestMetadata("safeCall.kt")
+            public void testSafeCall() throws Exception {
+                runTest("testData/quickfix/contextParameter/addContext/safeCall.kt");
+            }
+
+            @TestMetadata("topLevelProperty.kt")
+            public void testTopLevelProperty() throws Exception {
+                runTest("testData/quickfix/contextParameter/addContext/topLevelProperty.kt");
             }
         }
 

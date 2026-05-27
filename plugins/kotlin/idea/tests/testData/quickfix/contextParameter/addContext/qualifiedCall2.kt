@@ -1,0 +1,11 @@
+// "Add context parameter to function" "true"
+// COMPILER_ARGUMENTS: -XXLanguage:+ContextParameters
+// IGNORE_K1
+// K2_ERROR: No context argument for 'i: Int' found.
+context(i: Int) fun String.middle(): String = ""
+
+fun foo() {
+    "hello".trim().<caret>middle().uppercase().length
+}
+
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddContextParameterFix
