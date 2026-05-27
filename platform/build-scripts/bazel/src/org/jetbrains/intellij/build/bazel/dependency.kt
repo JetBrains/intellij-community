@@ -14,7 +14,6 @@ import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.jps.model.module.JpsModuleReference
 import org.jetbrains.jps.model.module.JpsTestModuleProperties
 import org.jetbrains.jps.util.JpsPathUtil
-import org.jetbrains.kotlin.jps.model.JpsKotlinFacetModuleExtension
 import java.nio.file.Path
 import java.util.TreeSet
 import java.util.logging.Level
@@ -353,21 +352,9 @@ internal fun generateDeps(
   }
 
   val plugins = TreeSet<String>()
-  val kotlinFacetModuleExtension = module.module.container.getChild(JpsKotlinFacetModuleExtension.KIND)
-  kotlinFacetModuleExtension?.settings?.mergedCompilerArguments?.pluginClasspaths.orEmpty().map(Path::of).forEach {
-    if (it.name.startsWith("kotlin-compose-compiler-plugin-") && it.name.endsWith(".jar")) {
-      plugins.add("@lib//:compose-plugin")
-    }
-    else if (it.name.startsWith("rpc-compiler-plugin-") && it.name.endsWith(".jar")) {
-      if (module.module.name == "fleet.rpc") {  // other modules use exported_compiler_plugins
-        plugins.add("@community//fleet/compiler-plugins/rpc:rpc-plugin")
-      }
-    }
-    else if (it.name.startsWith("noria-compiler-plugin-") && it.name.endsWith(".jar")) {
-      if (module.module.name == "fleet.noria.cells") {
-        plugins.add("@community//fleet/compiler-plugins/noria:noria-plugin")
-      }
-    }
+  // other modules use exported_compiler_plugins
+  if (module.module.name == "fleet.noria.cells") {
+    plugins.add("@community//fleet/compiler-plugins/noria:noria-plugin")
   }
 
   checkForDuplicates("bazel deps", deps)
