@@ -12,7 +12,7 @@ enum class TruncateMode {
 internal const val truncatedMarker: String = "<<<...content truncated...>>>"
 internal const val maxTextLength: Int = 64 * 1024
 
-internal fun truncateText(
+fun truncateText(
   text: String,
   maxLinesCount: Int,
   maxTextLength: Int = com.intellij.mcpserver.util.maxTextLength,

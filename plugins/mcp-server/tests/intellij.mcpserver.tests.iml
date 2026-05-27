@@ -40,6 +40,8 @@
     <orderEntry type="module" module-name="intellij.mcpserver" scope="TEST" />
     <orderEntry type="module" module-name="intellij.mcpserver.stdio" scope="TEST" />
     <orderEntry type="module" module-name="intellij.mcpserver.tests.plugin" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.mcpserver.vcs" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.mcpserver.terminal" scope="TEST" />
     <orderEntry type="module" module-name="intellij.editorconfig.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle" scope="TEST" />
@@ -52,7 +54,6 @@
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.terminal" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.images.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.regexp.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.tests" scope="TEST" />

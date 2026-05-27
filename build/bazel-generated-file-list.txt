@@ -1508,6 +1508,11 @@ plugins/maven/src/test
 plugins/maven/testFramework
 plugins/mcp-server
 plugins/mcp-server/mcpserver.stdio
+plugins/mcp-server/mcpserver.terminal
+plugins/mcp-server/mcpserver.terminal.frontend
+plugins/mcp-server/mcpserver.terminal.frontend/tests
+plugins/mcp-server/mcpserver.terminal/tests
+plugins/mcp-server/mcpserver.vcs
 plugins/mcp-server/tests
 plugins/mcp-server/tests/plugin
 plugins/ml-local-models

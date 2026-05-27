@@ -1,7 +1,6 @@
 package com.intellij.mcpserver.impl
 
 import com.intellij.ide.DataManager
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.clients.McpClient
 import com.intellij.mcpserver.clients.McpClientInfo
@@ -45,7 +44,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandExecutionListener
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandFinishedEvent
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandStartedEvent
@@ -58,7 +56,6 @@ import javax.swing.JComponent
 import com.intellij.ui.EditorNotificationPanel.Status as NotificationStatus
 
 private val LOG = logger<McpServerTerminalPromotionNotifier>()
-private const val MCP_SERVER_TERMINAL_PROMOTION_DISMISSED_KEY = "mcp.server.terminal.promotion.dismissed"
 
 internal class McpServerTerminalPromotionNotifier(private val project: Project) : TerminalTabsManagerListener {
   override fun terminalViewCreated(view: TerminalView) {
@@ -234,25 +231,6 @@ internal fun determineMcpServerTerminalPromotionIssue(
     !isServerRunning -> McpServerTerminalPromotionIssue.ENABLE_SERVER
     isClientConfigured != true -> McpServerTerminalPromotionIssue.CONFIGURE_CLIENT
     else -> null
-  }
-}
-
-internal object McpServerTerminalPromotionDismissalState {
-  fun isDismissed(): Boolean {
-    return PropertiesComponent.getInstance().isTrueValue(MCP_SERVER_TERMINAL_PROMOTION_DISMISSED_KEY)
-  }
-
-  fun dismiss() {
-    PropertiesComponent.getInstance().setValue(MCP_SERVER_TERMINAL_PROMOTION_DISMISSED_KEY, true)
-  }
-
-  fun showAgain() {
-    PropertiesComponent.getInstance().unsetValue(MCP_SERVER_TERMINAL_PROMOTION_DISMISSED_KEY)
-  }
-
-  @TestOnly
-  fun reset() {
-    showAgain()
   }
 }
 

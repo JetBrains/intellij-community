@@ -1,0 +1,14 @@
+<idea-plugin visibility="public">
+  <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <plugin id="com.intellij.mcpServer"/>
+    <plugin id="org.jetbrains.plugins.terminal"/>
+    <module name="intellij.sh.core"/>
+    <module name="intellij.terminal.backend"/>
+    <!-- endregion -->
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.terminal.TerminalToolset"/>
+  </extensions>
+</idea-plugin>

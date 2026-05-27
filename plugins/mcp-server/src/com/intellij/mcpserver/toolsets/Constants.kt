@@ -19,5 +19,5 @@ object Constants {
   internal const val RUN_CONFIGURATION_PREVIEW_MAX_LENGTH: Int = 10 * 1000
   internal const val RUN_CONFIGURATION_PREVIEW_MAX_LINE_LENGTH: Int = 1000
   internal const val RUN_CONFIGURATION_PREVIEW_TRUNCATED_MARKER: String = "<truncated>"
-  internal val TRUCATE_MODE_VALUE: TruncateMode = TruncateMode.START
+  val TRUCATE_MODE_VALUE: TruncateMode = TruncateMode.START
 }

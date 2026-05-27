@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 
-internal fun getConsentDialog(project: Project?): Boolean = MessageDialogBuilder.yesNo(
+fun getConsentDialog(project: Project?): Boolean = MessageDialogBuilder.yesNo(
   McpServerBundle.message("dialog.title.mcp.server.consent"),
   McpServerBundle.message("dialog.message.mcp.server.consent", getHelpLink("mcp-server.html#supported-tools")),
   Messages.getWarningIcon()

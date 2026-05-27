@@ -257,8 +257,8 @@ internal class McpServerTerminalPromotionNotifierTest {
 
   @Test
   fun `terminal descriptor registers mcp server listener`() {
-    val descriptor = checkNotNull(javaClass.classLoader.getResource("META-INF/mcpServer-terminal.xml")) {
-      "MCP terminal descriptor is missing"
+    val descriptor = checkNotNull(javaClass.classLoader.getResource("intellij.mcpserver.terminal.frontend.xml")) {
+      "MCP terminal frontend descriptor is missing"
     }.readText()
 
     assertThat(descriptor)
