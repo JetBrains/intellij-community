@@ -379,23 +379,26 @@ class ExplanationVisitor extends RegExpRecursiveElementVisitor {
 
   private List<Fragment> buildPatternFragments(PsiElement element, boolean emphasize, List<Fragment> list) {
     PsiElement child = element.getFirstChild();
-    if (child == null) {
-      list.add(new Fragment(element.getText(), emphasize ? HIGHLIGHT_ATTRIBUTES : CODE_ATTRIBUTES));
+    if (child == null || child == element.getLastChild()) {
+      list.add(new Fragment(element instanceof RegExpElement e ? e.getUnescapedText() : element.getText(), 
+                            emphasize ? HIGHLIGHT_ATTRIBUTES : CODE_ATTRIBUTES));
     }
-    while (child != null) {
-      if (child.getFirstChild() == null) {
-        list.add(new Fragment(child instanceof RegExpElement e ? e.getUnescapedText() : child.getText(),
-                              emphasize ? HIGHLIGHT_ATTRIBUTES : CODE_ATTRIBUTES));
+    else {
+      while (child != null) {
+        if (child.getFirstChild() == null) {
+          list.add(new Fragment(child instanceof RegExpElement e ? e.getUnescapedText() : child.getText(),
+                                emphasize ? HIGHLIGHT_ATTRIBUTES : CODE_ATTRIBUTES));
+        }
+        else {
+          boolean keepEmphasis = element instanceof RegExpCharRange
+                                 || element instanceof RegExpBranch
+                                 || element instanceof RegExpClosure && child instanceof RegExpQuantifier
+                                 || element instanceof RegExpConditional && (child instanceof RegExpBackref
+                                                                             || child instanceof RegExpNamedGroupRef);
+          buildPatternFragments(child, keepEmphasis && emphasize, list);
+        }
+        child = child.getNextSibling();
       }
-      else {
-        boolean keepEmphasis = element instanceof RegExpCharRange
-                               || element instanceof RegExpBranch
-                               || element instanceof RegExpClosure && child instanceof RegExpQuantifier
-                               || element instanceof RegExpConditional && (child instanceof RegExpBackref
-                                                                           || child instanceof RegExpNamedGroupRef);
-        buildPatternFragments(child, keepEmphasis && emphasize, list);
-      }
-      child = child.getNextSibling();
     }
     return list;
   }
@@ -647,7 +650,16 @@ class ExplanationVisitor extends RegExpRecursiveElementVisitor {
         branch(new ValueNode(pattern, EMPTY_NAME_NODE, "matches characters in order", false));
       }
     }
-    leaf(c, EMPTY_NAME_NODE, "matches the " + charText(c) + " character");
+    NameNode node = switch (c.getType()) {
+      case CHAR -> EMPTY_NAME_NODE;
+      case HEX -> new NameNode("Hexadecimal Escape", "https://www.regular-expressions.info/nonprint.html");
+      case OCT -> new NameNode("Octal Escape", "https://www.regular-expressions.info/nonprint.html#octal");
+      case UNICODE -> new NameNode("Unicode Escape", "https://www.regular-expressions.info/nonprint.html");
+      case NAMED -> new NameNode("Named Character", "");
+      case CONTROL -> new NameNode("Control Character Escape", "https://www.regular-expressions.info/nonprint.html");
+      case ESCAPE -> new NameNode("Escape Character", "https://www.regular-expressions.info/nonprint.html");
+    };
+    leaf(c, node, "matches the " + charText(c) + " character");
     if (charGroup && !isSimpleChar(c.getNextSibling())) {
       charGroup = false;
       parent();
@@ -675,7 +687,7 @@ class ExplanationVisitor extends RegExpRecursiveElementVisitor {
     int value = c.getValue();
     return c.getType() == RegExpChar.Type.CHAR || !isVisibleCodePoint(value)
            ? Character.getName(value)
-           : Character.getName(value) + " " + Character.toString(value);
+           : Character.getName(value) + " (" + Character.toString(value) + ')';
   }
 
   private static boolean isVisibleCodePoint(int c) {

@@ -41,6 +41,24 @@ public final class ExplainRegExpIntentionTest extends BasePlatformTestCase {
                  d – matches the LATIN SMALL LETTER D character
              """);
   }
+  
+  public void testEscapes() {
+    doTest("\041 \u0032\\041 \\u0032\\n\\w\\c@\\x61\\e",
+           """
+             ! 2\\041 \\u0032\\n\\w\\c@\\x61\\e – matches elements in order
+               ! – matches the EXCLAMATION MARK character
+                 – matches the SPACE character
+               2 – matches the DIGIT TWO character
+               \\041 Octal Escape (https://www.regular-expressions.info/nonprint.html#octal) – matches the EXCLAMATION MARK (!) character
+                 – matches the SPACE character
+               \\u0032 Unicode Escape (https://www.regular-expressions.info/nonprint.html) – matches the DIGIT TWO (2) character
+               \\n Escape Character (https://www.regular-expressions.info/nonprint.html) – matches the LINE FEED (LF) character
+               \\w Shorthand Character Class (https://www.regular-expressions.info/shorthand.html) – matches a word character (letter, digit or underscore)
+               \\c@ Control Character Escape (https://www.regular-expressions.info/nonprint.html) – matches the NULL character
+               \\x61 Hexadecimal Escape (https://www.regular-expressions.info/nonprint.html) – matches the LATIN SMALL LETTER A (a) character
+               \\e Escape Character (https://www.regular-expressions.info/nonprint.html) – matches the ESCAPE character
+             """);
+  }
 
   public void testJustCharacters() {
     doTest("\\(vitreous humour\\)",

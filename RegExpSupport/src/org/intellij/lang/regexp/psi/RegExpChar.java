@@ -26,7 +26,7 @@ public interface RegExpChar extends RegExpAtom, RegExpClassElement {
         /** A plain character, e.g.: a */
         CHAR,
 
-        /** Aa hex encoded character value, e.g.: \x61 */
+        /** A hex encoded character value, e.g.: \x61 */
         HEX,
 
         /** An octal encoded character value, e.g.: \0141 */
@@ -40,6 +40,9 @@ public interface RegExpChar extends RegExpAtom, RegExpClassElement {
 
         /** A control character, e.g.: \c@ */
         CONTROL,
+
+        /** An escape character e.g. \n */
+        ESCAPE,
     }
 
     /**
