@@ -1,0 +1,443 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.util.io
+
+import org.junit.jupiter.api.Assertions.assertArrayEquals
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
+import org.junit.jupiter.api.assertThrows
+import java.lang.reflect.InvocationTargetException
+import java.lang.reflect.Method
+import java.nio.file.Path
+import java.util.Random
+
+/**
+ * Exercises the value-storage append/read contract directly, without `PersistentHashMap` hiding value-chain details.
+ */
+internal class PersistentHashMapValueStorageContractTest {
+  @TempDir
+  lateinit var tempDir: Path
+
+  @Test
+  fun `randomized append read and reopen contract for value chains`() {
+    testConfigurations(hasNoChunks = false).forEach { config ->
+      SEEDS.forEach { seed ->
+        ValueStorageScenario(tempDir.resolve("${config.name}-seed-$seed.values"), config, seed).run()
+      }
+    }
+  }
+
+  @Test
+  fun `randomized append read and reopen contract without value chains`() {
+    testConfigurations(hasNoChunks = true).forEach { config ->
+      SEEDS.forEach { seed ->
+        ValueStorageScenario(tempDir.resolve("${config.name}-seed-$seed.values"), config, seed).run()
+      }
+    }
+  }
+
+  @Test
+  fun `append after writable reopen does not overwrite existing records`() {
+    allTestConfigurations().forEach { config ->
+      val storageFile = tempDir.resolve("${config.name}-append-after-reopen.values")
+      val firstPayload = byteArrayOf(1, 2, 3, 4)
+      val secondPayload = ByteArray(4096) { index -> (index % 251).toByte() }
+
+      val firstAddress = withStorage(storageFile, config, readOnly = false) { storage ->
+        storage.appendPayload(firstPayload, previousTailAddress = 0).also {
+          storage.force()
+        }
+      }
+
+      val secondAddress = withStorage(storageFile, config, readOnly = false) { storage ->
+        storage.assertRecord(firstAddress, firstPayload, 1, "${config.name}: first record must survive writable reopen before next append")
+
+        storage.appendPayload(secondPayload, previousTailAddress = 0).also { secondAddress ->
+          assertTrue(
+            secondAddress > firstAddress,
+            "${config.name}: append after reopen must allocate after the already persisted first record"
+          )
+          storage.force()
+        }
+      }
+
+      withStorage(storageFile, config, readOnly = true) { storage ->
+        storage.assertRecord(firstAddress, firstPayload, 1, "${config.name}: first record must survive append after reopen")
+        storage.assertRecord(secondAddress, secondPayload, 1, "${config.name}: second record must be readable after read-only reopen")
+      }
+    }
+  }
+
+  @Test
+  fun `read-only storage rejects appends but keeps existing records readable`() {
+    allTestConfigurations().forEach { config ->
+      val storageFile = tempDir.resolve("${config.name}-readonly-append.values")
+      val payload = byteArrayOf(42, 43, 44)
+
+      val address = withStorage(storageFile, config, readOnly = false) { storage ->
+        storage.appendPayload(payload, previousTailAddress = 0).also {
+          storage.force()
+        }
+      }
+
+      withStorage(storageFile, config, readOnly = true) { storage ->
+        assertTrue(storage.isReadOnly, "${config.name}: precondition, storage must be read-only")
+        storage.assertRecord(address, payload, 1, "${config.name}: read-only storage must read records written before reopen")
+
+        assertThrows<AssertionError>("${config.name}: read-only storage must reject append attempts") {
+          storage.appendPayload(byteArrayOf(45), previousTailAddress = 0)
+        }
+      }
+    }
+  }
+
+  @Test
+  fun `compaction mode reader keeps value chains readable and rejects appends`() {
+    testConfigurations(hasNoChunks = false).forEach { config ->
+      val storageFile = tempDir.resolve("${config.name}-compaction-mode-reader.values")
+      val firstChunk = ByteArray(1024) { index -> index.toByte() }
+      val secondChunk = ByteArray(2048) { index -> (index * 3).toByte() }
+      val expectedBytes = firstChunk + secondChunk
+
+      withStorage(storageFile, config, readOnly = false) { storage ->
+        val firstAddress = storage.appendPayload(firstChunk, previousTailAddress = 0)
+        val secondAddress = storage.appendPayload(secondChunk, previousTailAddress = firstAddress)
+        storage.force()
+
+        storage.switchToCompactionModeForTest()
+
+        storage.assertRecord(secondAddress, expectedBytes, 2, "${config.name}: compaction-mode reader must read existing chunk chains")
+        assertThrows<AssertionError>("${config.name}: compaction mode must reject appends") {
+          storage.appendPayload(byteArrayOf(1), previousTailAddress = 0)
+        }
+      }
+    }
+  }
+
+  @Test
+  fun `compactChunks rewrites value chain into a single equivalent chunk`() {
+    testConfigurations(hasNoChunks = false).forEach { config ->
+      val storageFile = tempDir.resolve("${config.name}-compact-chunks.values")
+      val firstChunk = "first-chunk".toByteArray()
+      val secondChunk = "second-chunk".toByteArray()
+      val expectedBytes = firstChunk + secondChunk
+
+      withStorage(storageFile, config, readOnly = false) { storage ->
+        val firstAddress = storage.appendPayload(firstChunk, previousTailAddress = 0)
+        val secondAddress = storage.appendPayload(secondChunk, previousTailAddress = firstAddress)
+        val oldReadResult = storage.readBytesForTest(secondAddress)
+
+        assertEquals(2, oldReadResult.chunksCount, "${config.name}: precondition, value must be stored as two chunks")
+        assertArrayEquals(expectedBytes, oldReadResult.buffer, "${config.name}: precondition, old value chain must contain both chunks")
+
+        val compactedAddress = storage.compactChunksForTest(oldReadResult)
+
+        assertTrue(compactedAddress > secondAddress, "${config.name}: compacted chunk must be appended after the old chain")
+        assertNotEquals(secondAddress, compactedAddress, "${config.name}: compaction must return a new value address")
+        storage.assertRecord(compactedAddress, expectedBytes, 1, "${config.name}: compacted value must be a single equivalent chunk")
+        storage.assertRecord(secondAddress,
+                             expectedBytes,
+                             2,
+                             "${config.name}: old value chain remains readable until map metadata is updated")
+      }
+    }
+  }
+
+  /** Keeps the generated operation stream reproducible and reports enough context when a generated case fails. */
+  private class ValueStorageScenario(
+    private val storageFile: Path,
+    private val config: TestConfig,
+    private val seed: Long,
+  ) {
+    private val random = Random(seed)
+    private val records = ArrayList<Record>()
+    private var storage = openStorage(readOnly = false)
+    private var payloadNo = 0
+
+    fun run() {
+      try {
+        repeat(OPERATION_COUNT) { operationNo ->
+          try {
+            performOperation(operationNo)
+          }
+          catch (error: Throwable) {
+            throw AssertionError("${caseName(operationNo)}: generated operation failed", error)
+          }
+        }
+
+        forceAndReopen("final writable reopen")
+        reopenReadOnlyAndVerify("final read-only reopen")
+      }
+      finally {
+        storage.dispose()
+      }
+    }
+
+    private fun performOperation(operationNo: Int) {
+      val operation = if (records.isEmpty()) 0 else random.nextInt(100)
+      when {
+        operation < 40 -> appendNewRecord(operationNo)
+        operation < 65 && !config.hasNoChunks -> appendChunk(operationNo)
+        operation < 85 -> readBackRandomRecord(operationNo)
+        operation < 95 -> forceAndReopen("operation $operationNo")
+        else -> reopenReadOnlyAndVerify("operation $operationNo")
+      }
+    }
+
+    private fun appendNewRecord(operationNo: Int) {
+      val payload = nextPayload()
+      val tailAddress = storage.appendBytes(payload, 0, payload.size, 0)
+      val record = Record(tailAddress = tailAddress, expectedBytes = payload, expectedChunksCount = 1)
+      records.add(record)
+      assertRecord(records.lastIndex, record, "${caseName(operationNo)} after appendNew")
+    }
+
+    private fun appendChunk(operationNo: Int) {
+      val recordIndex = random.nextInt(records.size)
+      val previous = records[recordIndex]
+      val payload = nextPayload()
+      val tailAddress = storage.appendBytes(payload, 0, payload.size, previous.tailAddress)
+
+      val updated = Record(
+        tailAddress = tailAddress,
+        expectedBytes = previous.expectedBytes + payload,
+        expectedChunksCount = previous.expectedChunksCount + 1,
+      )
+      records[recordIndex] = updated
+      assertRecord(recordIndex, updated, "${caseName(operationNo)} after appendChunk")
+    }
+
+    private fun readBackRandomRecord(operationNo: Int) {
+      val recordIndex = random.nextInt(records.size)
+      assertRecord(recordIndex, records[recordIndex], "${caseName(operationNo)} readBack")
+    }
+
+    private fun forceAndReopen(checkpoint: String) {
+      storage.force()
+      storage.dispose()
+      storage = openStorage(readOnly = false)
+      assertAllRecords("${caseName()} after $checkpoint")
+    }
+
+    private fun reopenReadOnlyAndVerify(checkpoint: String) {
+      storage.force()
+      storage.dispose()
+
+      storage = openStorage(readOnly = true)
+      assertTrue(storage.isReadOnly, "${caseName()} $checkpoint: storage must be opened in read-only mode")
+      assertAllRecords("${caseName()} during $checkpoint")
+
+      storage.dispose()
+      storage = openStorage(readOnly = false)
+      assertAllRecords("${caseName()} after returning from $checkpoint")
+    }
+
+    private fun assertAllRecords(message: String) {
+      records.forEachIndexed { recordIndex, record ->
+        assertRecord(recordIndex, record, message)
+      }
+    }
+
+    private fun assertRecord(recordIndex: Int, record: Record, message: String) {
+      val result = storage.readBytesForTest(record.tailAddress)
+      assertArrayEquals(
+        record.expectedBytes,
+        result.buffer,
+        "$message: record[$recordIndex] bytes must match bytes appended to its chunk chain"
+      )
+      assertEquals(
+        record.expectedChunksCount,
+        result.chunksCount,
+        "$message: record[$recordIndex] chunk count must match number of appended chunks"
+      )
+    }
+
+    private fun openStorage(readOnly: Boolean): PersistentHashMapValueStorage {
+      return PersistentHashMapValueStorage.create(storageFile, config.options(readOnly))
+    }
+
+    private fun nextPayload(): ByteArray {
+      val size = if (payloadNo < INTERESTING_PAYLOAD_SIZES.size) {
+        INTERESTING_PAYLOAD_SIZES[payloadNo]
+      }
+      else {
+        when (random.nextInt(10)) {
+          0 -> 0
+          1 -> 1
+          2 -> 1024 + random.nextInt(128)
+          3 -> 4096 + random.nextInt(256)
+          4 -> 32768 + random.nextInt(128)
+          else -> random.nextInt(512)
+        }
+      }
+      payloadNo++
+
+      val bytes = ByteArray(size)
+      random.nextBytes(bytes)
+      return bytes
+    }
+
+    private fun caseName(operationNo: Int? = null): String {
+      return buildString {
+        append("[")
+        append(config.name)
+        append(", seed=")
+        append(seed)
+        if (operationNo != null) {
+          append(", operation=")
+          append(operationNo)
+        }
+        append("]")
+      }
+    }
+  }
+
+  /** Holds the current tail address and model value for one generated logical record. */
+  private class Record(
+    val tailAddress: Long,
+    val expectedBytes: ByteArray,
+    val expectedChunksCount: Int,
+  )
+
+  /** Captures storage creation flags that materially affect value-storage layout and append protocol. */
+  private class TestConfig(
+    val name: String,
+    val hasNoChunks: Boolean,
+    val useCompression: Boolean,
+  ) {
+    fun options(readOnly: Boolean): PersistentHashMapValueStorage.CreationTimeOptions {
+      return PersistentHashMapValueStorage.CreationTimeOptions(
+        readOnly,
+        /*compactChunksWithValueDeserialization = */false,
+        hasNoChunks,
+        useCompression,
+      )
+    }
+  }
+
+  /** Read result mirror for the package-private `PersistentHashMapValueStorage.ReadResult`. */
+  private class ReadResultForTest(
+    val rawResult: Any,
+    val buffer: ByteArray,
+    val chunksCount: Int,
+  )
+
+  private companion object {
+    private const val OPERATION_COUNT = 120
+
+    private val SEEDS = listOf(1L, 2L, 5L, 20260528L)
+
+    private val INTERESTING_PAYLOAD_SIZES = intArrayOf(
+      0,
+      1,
+      2,
+      15,
+      127,
+      1023,
+      1024,
+      1025,
+      4095,
+      4096,
+      4097,
+      32767,
+      32768,
+      32769,
+    )
+
+    private val readBytesMethod: Method = PersistentHashMapValueStorage::class.java
+      .getDeclaredMethod("readBytes", java.lang.Long.TYPE)
+      .apply { isAccessible = true }
+
+    private val readResultClass: Class<*> =
+      PersistentHashMapValueStorage::class.java.declaredClasses.single { it.simpleName == "ReadResult" }
+
+    private val compactChunksMethod: Method = PersistentHashMapValueStorage::class.java
+      .getDeclaredMethod("compactChunks", AppendablePersistentMap.ValueDataAppender::class.java, readResultClass)
+      .apply { isAccessible = true }
+
+    private val switchToCompactionModeMethod: Method = PersistentHashMapValueStorage::class.java
+      .getDeclaredMethod("switchToCompactionMode")
+      .apply { isAccessible = true }
+
+    private fun testConfigurations(hasNoChunks: Boolean): List<TestConfig> {
+      return listOf(
+        TestConfig(name = "plain-hasNoChunks-$hasNoChunks", hasNoChunks = hasNoChunks, useCompression = false),
+        TestConfig(name = "compressed-hasNoChunks-$hasNoChunks", hasNoChunks = hasNoChunks, useCompression = true),
+      )
+    }
+
+    private fun allTestConfigurations(): List<TestConfig> {
+      return testConfigurations(hasNoChunks = false) + testConfigurations(hasNoChunks = true)
+    }
+
+    private inline fun <T> withStorage(
+      storageFile: Path,
+      config: TestConfig,
+      readOnly: Boolean,
+      action: (PersistentHashMapValueStorage) -> T,
+    ): T {
+      val storage = PersistentHashMapValueStorage.create(storageFile, config.options(readOnly))
+      try {
+        return action(storage)
+      }
+      finally {
+        storage.dispose()
+      }
+    }
+
+    private fun PersistentHashMapValueStorage.appendPayload(payload: ByteArray, previousTailAddress: Long): Long {
+      return appendBytes(payload, 0, payload.size, previousTailAddress)
+    }
+
+    private fun PersistentHashMapValueStorage.assertRecord(
+      tailAddress: Long,
+      expectedBytes: ByteArray,
+      expectedChunksCount: Int,
+      message: String,
+    ) {
+      val result = readBytesForTest(tailAddress)
+      assertArrayEquals(expectedBytes, result.buffer, "$message: bytes must match bytes appended to the value chain")
+      assertEquals(expectedChunksCount, result.chunksCount, "$message: chunk count must match the expected value layout")
+    }
+
+    private fun PersistentHashMapValueStorage.readBytesForTest(tailAddress: Long): ReadResultForTest {
+      val result = try {
+        readBytesMethod.invoke(this, tailAddress)
+      }
+      catch (error: InvocationTargetException) {
+        throw error.targetException
+      }
+
+      // readBytes() and ReadResult are package-private in the production module; keep that API closed for now.
+      val resultClass = result.javaClass
+      val bufferField = resultClass.getDeclaredField("buffer").apply { isAccessible = true }
+      val chunksCountField = resultClass.getDeclaredField("chunksCount").apply { isAccessible = true }
+      return ReadResultForTest(
+        rawResult = result,
+        buffer = bufferField.get(result) as ByteArray,
+        chunksCount = chunksCountField.getInt(result),
+      )
+    }
+
+    private fun PersistentHashMapValueStorage.compactChunksForTest(readResult: ReadResultForTest): Long {
+      val appender = AppendablePersistentMap.ValueDataAppender { out -> out.write(readResult.buffer) }
+      return try {
+        compactChunksMethod.invoke(this, appender, readResult.rawResult) as Long
+      }
+      catch (error: InvocationTargetException) {
+        throw error.targetException
+      }
+    }
+
+    private fun PersistentHashMapValueStorage.switchToCompactionModeForTest() {
+      try {
+        switchToCompactionModeMethod.invoke(this)
+      }
+      catch (error: InvocationTargetException) {
+        throw error.targetException
+      }
+    }
+  }
+}
