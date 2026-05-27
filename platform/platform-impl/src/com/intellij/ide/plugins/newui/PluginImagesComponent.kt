@@ -1,26 +1,40 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(ExperimentalAtomicApi::class)
+
 package com.intellij.ide.plugins.newui
 
-import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests.Companion.readOrUpdateFile
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.IOUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil.drawImage
+import com.intellij.util.ui.launchOnShow
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.awt.AlphaComposite
 import java.awt.Color
@@ -45,23 +59,37 @@ import javax.imageio.ImageIO
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
+import kotlin.concurrent.atomics.AtomicInt
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.concurrent.atomics.decrementAndFetch
+import kotlin.concurrent.atomics.incrementAndFetch
 
 /**
  * @author Alexander Lobas
  */
 @ApiStatus.Internal
 class PluginImagesComponent : JPanel {
-  private val myHandCursor: Cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+  private val screenshots = MutableStateFlow(Screenshots())
 
-  private val myLock = Any()
+  private val myHandCursor: Cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
   private var myParent: JComponent? = null
   private val myShowFullContent: Boolean
-  private var myImages: List<Image>? = null
+  private var myImages: List<ReferencedImage> = emptyList()
   private var myCurrentImage = 0
   private var myHovered = false
-  private var myLoadingState: Any? = null
-  private var myShowState: Any? = null
   private var myFullScreenPopup: JBPopup? = null
+
+  private data class Screenshots(
+    val paths: List<String>,
+    val pluginId: PluginId?,
+    val externalPluginIdForScreenShots: String?,
+  ) {
+    constructor() : this(
+      paths = emptyList(),
+      pluginId = null,
+      externalPluginIdForScreenShots = null,
+    )
+  }
 
   constructor() {
     myShowFullContent = false
@@ -87,9 +115,26 @@ class PluginImagesComponent : JPanel {
     }
     addMouseListener(listener)
     addMouseMotionListener(listener)
+    launchOnShow("PluginImagesComponent images") {
+      screenshots.collectLatest { screenshots ->
+        loadImages(screenshots).use { images ->
+          withContext(Dispatchers.UI + CoroutineName("show")) {
+            try {
+              showImages(images)
+              awaitCancellation()
+            }
+            finally {
+              withContext(NonCancellable + CoroutineName("cleanup")) {
+                clearImages() // ensure the images are no longer used before they're disposed
+              }
+            }
+          }
+        }
+      }
+    }
   }
 
-  private constructor(images: List<Image>, currentImage: Int) {
+  private constructor(images: List<ReferencedImage>, currentImage: Int) {
     myShowFullContent = true
     myHovered = true
     myImages = images
@@ -109,77 +154,16 @@ class PluginImagesComponent : JPanel {
     addMouseMotionListener(listener)
   }
 
-  fun setParent(parent: JComponent) {
-    myParent = parent
-  }
-
-  fun show(model: PluginUiModel) {
-    val state: Any?
-
-    synchronized(myLock) {
-      myImages = null
-      myLoadingState = Any()
-      state = myLoadingState
-      myShowState = null
-    }
-
-    loadImages(model, state!!)
-    fullRepaint()
-  }
-
-  private fun handleImages(state: Any, images: MutableList<Image>?) {
-    synchronized(myLock) {
-      if (myLoadingState !== state) {
-        return
-      }
-      myShowState = state
-      myLoadingState = null
-      myImages = images
-      myCurrentImage = 0
-    }
-
-    if (myFullScreenPopup != null) {
-      myFullScreenPopup!!.cancel()
-      myFullScreenPopup = null
-    }
-
-    fullRepaint()
-  }
-
-  private fun fullRepaint() {
-    val parent = getParent()
-    if (parent != null) {
-      parent.doLayout()
-      parent.revalidate()
-      parent.repaint()
-    }
-  }
-
-  private fun loadImages(model: PluginUiModel, state: Any) {
-    if (!model.isFromMarketplace || model.externalPluginIdForScreenShots == null ||
-        ApplicationManager.getApplication().isHeadlessEnvironment()
-    ) {
-      handleImages(state, null)
-      return
-    }
-
-    val screenShots: List<String>? = model.screenShots
-    if (ContainerUtil.isEmpty(screenShots)) {
-      handleImages(state, null)
-      return
-    }
-
-    ProcessIOExecutorService.INSTANCE.execute(Runnable execute@{
+  private suspend fun loadImages(screenshots: Screenshots): ReferencedImages {
+    return withContext(Dispatchers.IO + CoroutineName("load")) {
       val images: MutableList<Image> = ArrayList()
-      val parentDir = File(PathManager.getPluginTempPath(), "imageCache/" + model.externalPluginIdForScreenShots)
+      val parentDir = File(PathManager.getPluginTempPath(), "imageCache/" + screenshots.externalPluginIdForScreenShots)
 
-      for (screenShot in screenShots!!) {
+      for (screenShot in screenshots.paths) {
+        ensureActive()
         try {
           val name = StringUtil.substringAfterLast(screenShot, "/")!!
           val imageFile = File(parentDir, name)
-          if (ApplicationManager.getApplication().isDisposed()) {
-            return@execute
-          }
           readOrUpdateFile<Any?>(imageFile.toPath(), screenShot, null, "") { stream: InputStream? ->
             IOUtil.closeSafe(Logger.getInstance(PluginImagesComponent::class.java), stream)
             Any()
@@ -192,7 +176,7 @@ class PluginImagesComponent : JPanel {
           }
           if (image == null || image.getWidth(null) <= 0 || image.getHeight(null) <= 0) {
             Logger.getInstance(PluginImagesComponent::class.java)
-              .info("=== Plugin: " + model.pluginId + " screenshot: " + name + " not loaded ===")
+              .info("=== Plugin: " + screenshots.pluginId + " screenshot: " + name + " not loaded ===")
           }
           else {
             images.add(image)
@@ -204,8 +188,55 @@ class PluginImagesComponent : JPanel {
           Logger.getInstance(PluginImagesComponent::class.java).warn(e)
         }
       }
-      ApplicationManager.getApplication().invokeLater(Runnable { handleImages(state, images) }, ModalityState.stateForComponent(this))
-    })
+      ReferencedImages(images.map { ReferencedImage(it) })
+    }
+  }
+
+  private fun showImages(images: List<ReferencedImage>) {
+    ThreadingAssertions.assertEventDispatchThread()
+    myImages = images
+    myCurrentImage = 0
+    myFullScreenPopup?.cancel()
+    myFullScreenPopup = null
+    fullRepaint()
+  }
+
+  private fun clearImages() {
+    showImages(emptyList())
+  }
+
+  fun setParent(parent: JComponent) {
+    myParent = parent
+  }
+
+  fun show(model: PluginUiModel) {
+    screenshots.value = getEffectiveScreenShots(model)
+  }
+
+  private fun getEffectiveScreenShots(model: PluginUiModel): Screenshots {
+    if (
+      !model.isFromMarketplace ||
+      model.externalPluginIdForScreenShots == null ||
+      ApplicationManager.getApplication().isHeadlessEnvironment()
+    ) {
+      return Screenshots()
+    }
+
+    val screenShots = model.screenShots
+    if (screenShots.isNullOrEmpty()) {
+      return Screenshots()
+    }
+
+    return Screenshots(screenShots, model.pluginId, model.externalPluginIdForScreenShots)
+  }
+
+  private fun fullRepaint() {
+    val parent = getParent()
+    if (parent != null) {
+      parent.doLayout()
+      parent.revalidate()
+      parent.repaint()
+    }
   }
 
   override fun getPreferredSize(): Dimension {
@@ -214,11 +245,7 @@ class PluginImagesComponent : JPanel {
 
     val parent = getParent()
     if (parent != null) {
-      val isImages: Boolean
-      synchronized(myLock) {
-        isImages = !ContainerUtil.isEmpty(myImages)
-      }
-      if (isImages) {
+      if (myImages.isNotEmpty()) {
         width = this.fullWidth
         height = (width / 1.58).toInt() + JBUI.scale(28)
       }
@@ -256,11 +283,9 @@ class PluginImagesComponent : JPanel {
     }
 
     if (state >= 0) {
-      synchronized(myLock) {
-        if (myCurrentImage != state) {
-          myCurrentImage = state
-          repaint()
-        }
+      if (myCurrentImage != state) {
+        myCurrentImage = state
+        repaint()
       }
     }
     else if (state == FullScreen) {
@@ -300,13 +325,10 @@ class PluginImagesComponent : JPanel {
       return FullScreen
     }
 
-    val count: Int
-    synchronized(myLock) {
-      if (ContainerUtil.isEmpty(myImages)) {
-        return None
-      }
-      count = myImages!!.size
+    if (ContainerUtil.isEmpty(myImages)) {
+      return None
     }
+    val count = myImages.size
 
     if (count < 2) {
       return None
@@ -330,34 +352,33 @@ class PluginImagesComponent : JPanel {
   }
 
   private fun handleFullScreen() {
-    if (myFullScreenPopup != null) {
-      myFullScreenPopup!!.cancel()
-    }
+    myFullScreenPopup?.cancel()
     if (myShowFullContent) {
       return
     }
-
-    val images: List<Image>?
-    val current: Int
-    val showState: Any?
-    synchronized(myLock) {
-      if (ContainerUtil.isEmpty(myImages)) {
-        return
-      }
-      images = myImages
-      current = myCurrentImage
-      showState = myShowState
+    if (ContainerUtil.isEmpty(myImages)) {
+      return
     }
+    val images = myImages
+    val current = myCurrentImage
 
-    val component = PluginImagesComponent(images!!, current)
+    val component = PluginImagesComponent(images, current)
     val panel: JPanel = Wrapper(component)
     panel.preferredSize = graphicsConfiguration.bounds.size
 
-    myFullScreenPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, component).createPopup()
-    component.myFullScreenPopup = myFullScreenPopup
-    component.myShowState = showState
+    // Now the images will be used by both this and the full screen component.
+    // It's possible that this component will dereference them soon (if another set is loading),
+    // but reference counting will ensure that the image is disposed when it's no longer referenced.
+    // This might even happen twice, but that's fine, as images can be reloaded and disposed again.
+    images.forEach { it.ref() }
+    val newFullScreenPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, component).createPopup()
+    Disposer.register(newFullScreenPopup) {
+      images.forEach { it.deref() }
+    }
+    this.myFullScreenPopup = newFullScreenPopup
+    component.myFullScreenPopup = newFullScreenPopup
 
-    myFullScreenPopup!!.addListener(object : JBPopupListener {
+    newFullScreenPopup.addListener(object : JBPopupListener {
       override fun beforeShown(event: LightweightWindowEvent) {
         val window = SwingUtilities.getWindowAncestor(event.asPopup().getContent())
         if (window.graphicsConfiguration.device
@@ -370,41 +391,34 @@ class PluginImagesComponent : JPanel {
 
       override fun onClosed(event: LightweightWindowEvent) {
         myFullScreenPopup = null
-        synchronized(myLock) {
-          if (myShowState === component.myShowState && component.myCurrentImage != myCurrentImage) {
-            myCurrentImage = component.myCurrentImage
-          }
+        if (component.myImages == myImages && component.myCurrentImage != myCurrentImage) {
+          myCurrentImage = component.myCurrentImage
         }
         repaint()
       }
     })
 
-    myFullScreenPopup!!.showInScreenCoordinates(this, Point())
+    newFullScreenPopup.showInScreenCoordinates(this, Point())
   }
 
   private fun showNextImage(left: Boolean) {
-    synchronized(myLock) {
-      if (myImages == null) {
-        return
-      }
-      val count = myImages!!.size
-      if (count < 2) {
-        return
-      }
-      if (left) {
-        if (myCurrentImage > 0) {
-          myCurrentImage--
-        }
-        else {
-          myCurrentImage = count - 1
-        }
-      }
-      else if (myCurrentImage < count - 1) {
-        myCurrentImage++
+    val count = myImages.size
+    if (count < 2) {
+      return
+    }
+    if (left) {
+      if (myCurrentImage > 0) {
+        myCurrentImage--
       }
       else {
-        myCurrentImage = 0
+        myCurrentImage = count - 1
       }
+    }
+    else if (myCurrentImage < count - 1) {
+      myCurrentImage++
+    }
+    else {
+      myCurrentImage = 0
     }
     repaint()
   }
@@ -429,21 +443,12 @@ class PluginImagesComponent : JPanel {
   }
 
   override fun paintComponent(g: Graphics) {
-    val count: Int
-    val current: Int
-    val image: Image
-
-    synchronized(myLock) {
-      if (myImages == null) {
-        return
-      }
-      count = myImages!!.size
-      if (count == 0) {
-        return
-      }
-      current = myCurrentImage
-      image = myImages!![current]
+    val count: Int = myImages.size
+    if (count == 0) {
+      return
     }
+    val current: Int = myCurrentImage
+    val image = myImages[current].image
 
     val insets = getInsets()
     val x = insets.left
@@ -558,5 +563,31 @@ class PluginImagesComponent : JPanel {
     private const val NextImage = -2
     private const val PrevImage = -3
     private const val FullScreen = -4
+  }
+}
+
+private class ReferencedImages(private val images: List<ReferencedImage>) {
+  suspend fun use(block: suspend (List<ReferencedImage>) -> Unit) {
+    images.forEach { it.ref() }
+    try {
+      block(images)
+    }
+    finally {
+      images.forEach { it.deref() }
+    }
+  }
+}
+
+private class ReferencedImage(val image: Image) {
+  private val refCount: AtomicInt = AtomicInt(0)
+
+  fun ref() {
+    refCount.incrementAndFetch()
+  }
+
+  fun deref() {
+    if (refCount.decrementAndFetch() == 0) {
+      image.flush()
+    }
   }
 }
