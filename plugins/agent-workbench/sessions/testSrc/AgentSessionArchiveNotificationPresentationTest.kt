@@ -4,7 +4,10 @@ package com.intellij.agent.workbench.sessions
 import com.intellij.agent.workbench.sessions.service.buildArchiveNotificationPresentation
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentSessionArchiveNotificationPresentationTest {
   @Test
   fun singleArchivedThreadUsesNamedBodyWhenLabelAvailable() {

@@ -29,10 +29,13 @@ import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.SystemNotifications
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import java.awt.Color
 import java.awt.event.MouseEvent
 
 @TestApplication
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentSessionsActivitySummaryTest {
   @Test
   fun separatesThreadsByBucket() {

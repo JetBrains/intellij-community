@@ -12,6 +12,8 @@ import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assumptions.assumeFalse
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import org.junit.jupiter.api.io.TempDir
 import java.io.IOException
 import java.net.ConnectException
@@ -28,6 +30,7 @@ import java.nio.file.attribute.PosixFilePermissions
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class CodexIdeContextUnixIpcTransportTest {
   @Test
   fun servesCodexIdeContextRequest(@TempDir tempDir: Path): Unit = runBlocking(Dispatchers.Default) {

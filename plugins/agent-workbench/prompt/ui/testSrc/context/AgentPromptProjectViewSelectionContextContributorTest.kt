@@ -22,12 +22,15 @@ import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import java.lang.reflect.Proxy
 import java.nio.file.Files
 import java.nio.file.Path
 import javax.swing.JTree
 
 @TestApplication
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentPromptProjectViewSelectionContextContributorTest {
     private val contributor = AgentPromptProjectViewSelectionContextContributor()
 

@@ -20,7 +20,10 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentSessionSleepPreventionServiceTest {
   @Test
   fun acquiresImmediatelyWhenProcessingThreadAppears() {

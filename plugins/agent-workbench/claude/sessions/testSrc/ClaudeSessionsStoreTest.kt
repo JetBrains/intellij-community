@@ -6,6 +6,8 @@ import com.intellij.agent.workbench.claude.common.ClaudeSessionTitleSource
 import com.intellij.agent.workbench.claude.common.ClaudeSessionsStore
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -16,6 +18,7 @@ import java.time.Instant
 import java.util.stream.Stream
 import kotlin.io.path.invariantSeparatorsPathString
 
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class ClaudeSessionsStoreTest {
   @TempDir
   lateinit var tempDir: Path

@@ -7,7 +7,10 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptContextRendererIds
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextTruncationReason
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentPromptContextSoftCapPolicyTest {
   @Test
   fun softCapTrimmingStartsFromLastContextItem() {

@@ -23,10 +23,13 @@ import kotlinx.coroutines.runBlocking
 import kotlin.time.Duration.Companion.milliseconds
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import java.util.Collections
 import java.util.concurrent.CompletableFuture
 
 @TestApplication
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentSessionsTreeStateControllerTest {
   @Test
   fun hiddenStateUpdatesAreDeferredUntilVisible() = runBlocking {

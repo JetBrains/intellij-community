@@ -27,9 +27,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import java.nio.file.Path
 
 @TestApplication
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class CodexAgentSessionProviderDescriptorTest {
   private val bridge = CodexAgentSessionProviderDescriptor(
     executableResolver = { CodexCliUtils.CODEX_COMMAND },

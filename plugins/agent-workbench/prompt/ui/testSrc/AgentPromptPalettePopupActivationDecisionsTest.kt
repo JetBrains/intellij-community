@@ -4,9 +4,12 @@ package com.intellij.agent.workbench.prompt.ui
 import com.intellij.openapi.project.Project
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Proxy
 
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentPromptPalettePopupActivationDecisionsTest {
   @Test
   fun sameProjectFrameActivationRefocusesVisiblePopup() {

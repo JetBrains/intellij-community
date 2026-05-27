@@ -46,12 +46,15 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import java.awt.Rectangle
 import javax.swing.Icon
 import javax.swing.JTree
 import javax.swing.tree.TreePath
 
 @TestApplication
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentSessionsSwingTreeCellRendererTest {
   @BeforeEach
   fun setUp() {

@@ -20,66 +20,68 @@ import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.fail
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.seconds
 
 @TestApplication
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class CodexPromptSuggestionAppServerServiceTest {
   @Test
+  @Timeout(value = 10, unit = TimeUnit.SECONDS)
   fun canceledQueuedRequestDoesNotStartAfterMutexIsReleased(): Unit = runBlocking(Dispatchers.Default) {
     @Suppress("RAW_SCOPE_CREATION")
     val serviceScope = CoroutineScope(coroutineContext + Job(coroutineContext.job))
     try {
-      withTimeout(10.seconds) {
-        val firstStarted = CompletableDeferred<Unit>()
-        val releaseFirst = CompletableDeferred<Unit>()
-        val observedTitles = mutableListOf<String>()
-        val expectedResult = CodexPromptSuggestionResult.GeneratedCandidates(emptyList())
-        val service = CodexPromptSuggestionAppServerService(
-          serviceScope = serviceScope,
-          suggestWithClient = { request ->
-            val title = request.contextItems.single().title ?: "missing"
-            synchronized(observedTitles) {
-              observedTitles += title
-            }
-            if (title == "first") {
-              firstStarted.complete(Unit)
-              releaseFirst.await()
-              null
-            }
-            else {
-              expectedResult
-            }
-          },
-        )
+      val firstStarted = CompletableDeferred<Unit>()
+      val releaseFirst = CompletableDeferred<Unit>()
+      val observedTitles = mutableListOf<String>()
+      val expectedResult = CodexPromptSuggestionResult.GeneratedCandidates(emptyList())
+      val service = CodexPromptSuggestionAppServerService(
+        serviceScope = serviceScope,
+        suggestWithClient = { request ->
+          val title = request.contextItems.single().title ?: "missing"
+          synchronized(observedTitles) {
+            observedTitles += title
+          }
+          if (title == "first") {
+            firstStarted.complete(Unit)
+            releaseFirst.await()
+            null
+          }
+          else {
+            expectedResult
+          }
+        },
+      )
 
-        val first = async(start = CoroutineStart.UNDISPATCHED) {
-          service.suggestPrompt(request(title = "first"))
-        }
-        withTimeout(5.seconds) {
-          firstStarted.await()
-        }
-
-        val second = async(start = CoroutineStart.UNDISPATCHED) {
-          service.suggestPrompt(request(title = "second"))
-        }
-        second.cancel()
-
-        val third = async(start = CoroutineStart.UNDISPATCHED) {
-          service.suggestPrompt(request(title = "third"))
-        }
-
-        releaseFirst.complete(Unit)
-
-        assertThat(first.await()).isNull()
-        try {
-          second.await()
-          fail("Expected CancellationException")
-        }
-        catch (_: CancellationException) {
-        }
-        assertThat(third.await()).isEqualTo(expectedResult)
-        assertThat(observedTitles).containsExactly("first", "third")
+      val first = async(start = CoroutineStart.UNDISPATCHED) {
+        service.suggestPrompt(request(title = "first"))
       }
+      withTimeout(5.seconds) {
+        firstStarted.await()
+      }
+
+      val second = async(start = CoroutineStart.UNDISPATCHED) {
+        service.suggestPrompt(request(title = "second"))
+      }
+      second.cancel()
+
+      val third = async(start = CoroutineStart.UNDISPATCHED) {
+        service.suggestPrompt(request(title = "third"))
+      }
+
+      releaseFirst.complete(Unit)
+
+      assertThat(first.await()).isNull()
+      try {
+        second.await()
+        fail("Expected CancellationException")
+      }
+      catch (_: CancellationException) {
+      }
+      assertThat(third.await()).isEqualTo(expectedResult)
+      assertThat(observedTitles).containsExactly("first", "third")
     }
     finally {
       serviceScope.cancel()

@@ -2,8 +2,13 @@
 package com.intellij.agent.workbench.ai.review.model
 
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import org.junit.Rule
+import org.junit.rules.Timeout
 
 class AIReviewViewModelTest : BasePlatformTestCase() {
+  @get:Rule
+  val timeout: Timeout = Timeout.seconds(120)
+
   fun `test full review state exposes all problems`() {
     val request = AIReviewRequest.LocalChanges(changes = emptyList())
     val problem1 = problem(id = "1", message = "first")

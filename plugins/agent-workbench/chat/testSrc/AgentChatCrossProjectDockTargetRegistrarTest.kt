@@ -14,6 +14,8 @@ import com.intellij.ui.docking.DockContainer.ContentResponse
 import com.intellij.ui.docking.DockableContent
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import java.awt.Dimension
 import java.awt.Image
 import java.awt.Point
@@ -25,6 +27,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 @TestApplication
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 internal class AgentChatCrossProjectDockTargetRegistrarTest {
   private val dedicatedProject = testProject("dedicated")
   private val sourceProject = testProject("source")

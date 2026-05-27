@@ -7,7 +7,10 @@ import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRebindCandidate
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class CodexSessionSourceRefreshHintsTest {
   @Test
   fun mergePrefersAppServerRebindCandidatesButAllowsRolloutUnreadOverride() {

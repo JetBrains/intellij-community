@@ -3,9 +3,12 @@ package com.intellij.agent.workbench.common
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import java.awt.Color
 import javax.swing.UIManager
 
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentThreadActivityPresentationTest {
   @Test
   fun usesThreadPresentationsAndMessageKeys() {

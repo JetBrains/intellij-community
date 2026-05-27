@@ -11,6 +11,8 @@ import com.intellij.util.ui.Advertiser
 import com.intellij.util.ui.JBUI
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import java.awt.Dimension
 import java.awt.event.KeyEvent
 import javax.swing.JPanel
@@ -19,6 +21,7 @@ import javax.swing.SwingUtilities
 import kotlin.math.abs
 
 @TestApplication
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentPromptPaletteViewStructureTest {
   @Test
   fun promptAreaIsRenderedExactlyOnceAndSharedAcrossTabs() {

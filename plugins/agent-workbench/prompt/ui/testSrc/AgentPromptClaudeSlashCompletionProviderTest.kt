@@ -17,6 +17,8 @@ import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.textCompletion.TextCompletionUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
@@ -24,6 +26,7 @@ import java.nio.file.Path
 private const val CODEX_SKILL_PREFIX = '$'
 
 @TestApplication
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentPromptClaudeSlashCompletionProviderTest {
   @Test
   fun slashCompletionIsDisabledForNonClaudeProviders() {

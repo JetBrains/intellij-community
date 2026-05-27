@@ -13,6 +13,8 @@ import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
@@ -22,6 +24,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class CodexRolloutSessionBackendFileWatchIntegrationTest {
   // Primary owner for end-to-end watcher wiring (filesystem event -> backend update -> refreshed title).
   @TempDir

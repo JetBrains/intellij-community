@@ -16,10 +16,13 @@ import com.intellij.agent.workbench.sessions.toolwindow.ui.buildArchivedDisplayS
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import java.time.Instant
 import java.time.ZoneId
 
 @TestApplication
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentSessionsSwingTreeRenderingTest {
   @Test
   fun errorRowsTakePrecedenceOverWarningsAndEmptyState() {

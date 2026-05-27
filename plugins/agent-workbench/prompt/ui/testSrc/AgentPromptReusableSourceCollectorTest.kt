@@ -4,10 +4,13 @@ package com.intellij.agent.workbench.prompt.ui
 import com.intellij.agent.workbench.prompt.core.AgentPromptReusableSourceKind
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
 
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentPromptReusableSourceCollectorTest {
   @TempDir
   lateinit var tempDir: Path

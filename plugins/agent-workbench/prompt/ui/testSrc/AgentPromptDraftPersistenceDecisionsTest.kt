@@ -4,7 +4,10 @@ package com.intellij.agent.workbench.prompt.ui
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.data.MapEntry
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentPromptDraftPersistenceDecisionsTest {
   @Test
   fun suggestionInsertedIntoEmptyDraftRemainsTransient() {

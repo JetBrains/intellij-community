@@ -12,8 +12,12 @@ import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.ThrowableRunnable
+import org.junit.Rule
+import org.junit.rules.Timeout
 
 class AIReviewPaletteExtensionTest : BasePlatformTestCase() {
+  @get:Rule
+  val timeout: Timeout = Timeout.seconds(120)
 
   private lateinit var extension: AIReviewPaletteExtension
   private var promptProviderExtensionPointRegistered: Boolean = false

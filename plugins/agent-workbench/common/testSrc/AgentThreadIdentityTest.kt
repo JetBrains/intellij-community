@@ -4,7 +4,10 @@ package com.intellij.agent.workbench.common
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentThreadIdentityTest {
   @Test
   fun buildsAndParsesValidIdentity() {

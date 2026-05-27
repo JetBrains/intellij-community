@@ -21,12 +21,15 @@ import com.intellij.ui.components.JBTextArea
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import java.awt.Container
 import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JLabel
 
 @TestApplication
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentProviderCliStatusBannerTest {
   private val project: Project
     get() = ProjectManager.getInstance().defaultProject

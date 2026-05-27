@@ -25,9 +25,12 @@ import com.intellij.testFramework.rules.TempDirectoryExtension
 import com.intellij.testFramework.runInEdtAndWait
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import org.junit.jupiter.api.extension.RegisterExtension
 
 @TestApplication
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentWorkbenchAddToAgentContextActionTest {
   private val action = AgentWorkbenchAddToAgentContextAction()
   private val intention = AgentWorkbenchAddToAgentContextIntention()

@@ -44,6 +44,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import java.awt.event.KeyEvent
 import java.lang.reflect.Constructor
 import java.lang.reflect.InvocationHandler
@@ -58,6 +60,7 @@ import kotlin.coroutines.CoroutineContext
 
 private val editorsToDispose = CopyOnWriteArrayList<AgentChatFileEditor>()
 
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentChatFileEditorLifecycleTest {
   @AfterEach
   fun tearDown() {

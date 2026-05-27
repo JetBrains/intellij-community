@@ -9,6 +9,8 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 
 /**
  * Pins the bundle keys that built-in providers expose for the New Thread UI.
@@ -17,6 +19,7 @@ import org.junit.jupiter.api.Test
  * sessions-actions tests that already build action presentations from the same keys.
  */
 @TestApplication
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentWorkbenchProviderDescriptorKeysTest {
   @Test
   fun codexExposesGenericQuickStartKeys() {

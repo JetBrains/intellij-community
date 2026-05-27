@@ -27,6 +27,8 @@ import kotlinx.coroutines.withTimeoutOrNull
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
@@ -34,6 +36,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.time.Duration.Companion.seconds
 
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class CodexSessionSourceRealAppServerIntegrationTest {
   @TempDir
   lateinit var tempDir: Path

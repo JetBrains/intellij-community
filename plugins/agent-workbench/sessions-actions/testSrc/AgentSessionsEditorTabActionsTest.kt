@@ -38,10 +38,13 @@ import com.intellij.ui.BadgeIcon
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import java.awt.event.MouseEvent
 import javax.swing.JPanel
 
 @TestApplication
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentSessionsEditorTabActionsTest {
   @BeforeEach
   fun clearProviderAvailabilityCache() {

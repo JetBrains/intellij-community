@@ -14,6 +14,8 @@ import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import java.io.IOException
 import java.io.RandomAccessFile
 import java.nio.ByteBuffer
@@ -22,6 +24,7 @@ import java.nio.charset.StandardCharsets
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class CodexIdeContextWindowsIpcTransportTest {
   @Test
   fun idleClientDoesNotBlockNextRequest(): Unit = runBlocking(Dispatchers.Default) {
