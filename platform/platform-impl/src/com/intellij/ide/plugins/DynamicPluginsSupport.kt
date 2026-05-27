@@ -8,6 +8,9 @@ import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
+/**
+ * Don't use this directly, use [DynamicPlugins] as an API
+ */
 @IntellijInternalApi
 @ApiStatus.Internal
 interface DynamicPluginsSupport {
