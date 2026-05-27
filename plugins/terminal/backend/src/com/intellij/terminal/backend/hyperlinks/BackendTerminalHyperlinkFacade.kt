@@ -33,7 +33,7 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.milliseconds
 
 @ApiStatus.Internal
-class BackendTerminalHyperlinkFacade private constructor(
+class BackendTerminalHyperlinkFacade(
   private val project: Project,
   coroutineScope: CoroutineScope,
   isInAlternateBuffer: Boolean,

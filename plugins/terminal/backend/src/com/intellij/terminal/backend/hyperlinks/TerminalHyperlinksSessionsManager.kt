@@ -3,10 +3,16 @@ package com.intellij.terminal.backend.hyperlinks
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.job
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinksSession
+import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksInputEvent
 import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksSessionId
+import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinksChangedEvent
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -19,12 +25,58 @@ internal class TerminalHyperlinksSessionsManager(private val coroutineScope: Cor
     return sessions[sessionId]
   }
 
-  fun createNewSession(project: Project): TerminalHyperlinksSession {
-    TODO()
-  }
-
   fun closeSession(sessionId: TerminalHyperlinksSessionId) {
     sessions[sessionId]?.coroutineScope?.cancel()
+  }
+
+  fun createNewSession(project: Project): TerminalHyperlinksSession {
+    val newId = TerminalHyperlinksSessionId(sessionIdCounter.getAndIncrement())
+
+    val sessionScope = coroutineScope.childScope("BackendTerminalHyperlinksSession#$newId")
+    @Suppress("IncorrectParentDisposable")  // Ensure that scope is canceled when project is closing
+    sessionScope.coroutineContext.job.cancelOnDispose(project)
+    sessionScope.coroutineContext.job.invokeOnCompletion {
+      sessions.remove(newId)
+    }
+
+    val session = startHyperlinksSession(project, newId, sessionScope)
+    sessions[newId] = session
+    return session
+  }
+
+  private fun startHyperlinksSession(
+    project: Project,
+    id: TerminalHyperlinksSessionId,
+    scope: CoroutineScope,
+  ): BackendTerminalHyperlinksSession {
+    val outputHyperlinksFacade = BackendTerminalHyperlinkFacade(
+      project = project,
+      coroutineScope = scope.childScope("Output hyperlinks facade"),
+      isInAlternateBuffer = false,
+      filterContext = null  // TODO: Specify filter context
+    )
+    val alternateBufferHyperlinksFacade = BackendTerminalHyperlinkFacade(
+      project = project,
+      coroutineScope = scope.childScope("AltBuf hyperlinks facade"),
+      isInAlternateBuffer = true,
+      filterContext = null  // TODO: Specify filter context
+    )
+
+    val inputEventsSink = Channel<TerminalHyperlinksInputEvent>()
+    val hyperlinkUpdatesChannel = Channel<TerminalHyperlinksChangedEvent>()
+
+    val session = BackendTerminalHyperlinksSession(
+      id = id,
+      inputEventsSink = inputEventsSink,
+      hyperlinkUpdatesChannel = hyperlinkUpdatesChannel,
+      outputHyperlinksFacade = outputHyperlinksFacade,
+      alternateBufferHyperlinksFacade = alternateBufferHyperlinksFacade,
+      coroutineScope = scope,
+    )
+
+    scheduleHyperlinksSessionProcessing(session)
+
+    return session
   }
 
   companion object {
