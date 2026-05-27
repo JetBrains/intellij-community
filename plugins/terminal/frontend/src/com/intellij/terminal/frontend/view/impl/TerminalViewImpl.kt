@@ -35,7 +35,6 @@ import com.intellij.terminal.frontend.view.TerminalViewSessionState
 import com.intellij.terminal.frontend.view.completion.ShellDataGeneratorsExecutorReworkedImpl
 import com.intellij.terminal.frontend.view.completion.ShellRuntimeContextProviderReworkedImpl
 import com.intellij.terminal.frontend.view.completion.TerminalCommandCompletionTypingListener
-import com.intellij.terminal.frontend.view.hyperlinks.FrontendTerminalHyperlinkFacade
 import com.intellij.terminal.frontend.view.typeahead.TerminalTypeAhead
 import com.intellij.terminal.frontend.view.typeahead.TerminalTypeAheadOutputModelController
 import com.intellij.terminal.frontend.view.typeahead.TerminalTypeAheadOutputModelControllerV1
@@ -144,10 +143,8 @@ class TerminalViewImpl(
 
   @VisibleForTesting
   val outputEditor: EditorEx
-  private val outputHyperlinkFacade: FrontendTerminalHyperlinkFacade
   private val alternateBufferEditor: EditorEx
 
-  private val alternateBufferHyperlinkFacade: FrontendTerminalHyperlinkFacade
   private val scrollingModel: TerminalOutputScrollingModel
   private var isAlternateScreenBuffer = false
 
@@ -250,14 +247,6 @@ class TerminalViewImpl(
       alternateBufferMouseEventsHandler,
     )
 
-    alternateBufferHyperlinkFacade = FrontendTerminalHyperlinkFacade(
-      isInAlternateBuffer = true,
-      editor = alternateBufferEditor,
-      outputModel = alternateBufferModel,
-      terminalInput = terminalInput,
-      coroutineScope = hyperlinkScope,
-    )
-
     outputEditor = TerminalEditorFactory.createOutputEditor(project, settings, coroutineScope.childScope("TerminalOutputEditor"))
     TerminalSourceNavigationInfo.setProjectPath(outputEditor, sourceNavigationProjectPath)
     outputEditor.putUserData(TerminalInput.KEY, terminalInput)
@@ -322,20 +311,10 @@ class TerminalViewImpl(
 
     terminalSearchController = TerminalSearchController(project)
 
-    outputHyperlinkFacade = FrontendTerminalHyperlinkFacade(
-      isInAlternateBuffer = false,
-      editor = outputEditor,
-      outputModel = outputModel,
-      terminalInput = terminalInput,
-      coroutineScope = hyperlinkScope,
-    )
-
     controller = TerminalSessionController(
       sessionModel,
       outputModelController,
-      outputHyperlinkFacade,
       alternateBufferModelController,
-      alternateBufferHyperlinkFacade,
       startupOptionsDeferred,
       settings,
       coroutineScope.childScope("TerminalSessionController")
@@ -783,8 +762,7 @@ class TerminalViewImpl(
       sink[TerminalSearchController.KEY] = terminalSearchController
       sink[TerminalSessionId.KEY] = null // TODO: session ID is required for hyperlinks - need to be reworked.
       sink[TerminalDataContextUtils.IS_ALTERNATE_BUFFER_DATA_KEY] = isAlternateScreenBuffer
-      val hyperlinkFacade = if (isAlternateScreenBuffer) alternateBufferHyperlinkFacade else outputHyperlinkFacade
-      sink[TerminalHyperlinkId.KEY] = hyperlinkFacade.getHoveredHyperlinkId()
+      sink[TerminalHyperlinkId.KEY] = null // TODO: required for hyperlinks
       sink.setNull(PlatformDataKeys.COPY_PROVIDER)
 
       // Add selection text to the data context, so features like Search Everywhere and Find in Files
