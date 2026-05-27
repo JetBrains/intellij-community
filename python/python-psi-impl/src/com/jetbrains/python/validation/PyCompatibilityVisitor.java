@@ -7,6 +7,8 @@ import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.ASTNode;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsSafe;
@@ -26,6 +28,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.inspections.quickfix.CompatibilityPrintCallQuickFix;
@@ -179,7 +182,8 @@ public abstract class PyCompatibilityVisitor extends PyElementVisitor {
     if (node.isLazy()) {
       registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON315),
                                      PyPsiBundle.message("INSP.compatibility.feature.support.lazy.imports"),
-                                     node.getFirstChild());
+                                     node.getFirstChild(),
+                                     LocalQuickFix.notNullElements(createInterpreterSettingsQuickFix(node)));
     }
 
     final PyIfStatement ifParent = PsiTreeUtil.getParentOfType(node, PyIfStatement.class);
@@ -646,6 +650,11 @@ public abstract class PyCompatibilityVisitor extends PyElementVisitor {
     registerForAllMatchingVersions(levelPredicate, suffix, node, node.getTextRange(), true, fixes);
   }
 
+  private static @Nullable LocalQuickFix createInterpreterSettingsQuickFix(@NotNull PsiElement element) {
+    final Module module = ModuleUtilCore.findModuleForPsiElement(element);
+    return PythonUiService.getInstance().createInterpreterSettingsQuickFix(module);
+  }
+
   @Override
   public void visitPyNonlocalStatement(final @NotNull PyNonlocalStatement node) {
     registerForAllMatchingVersions(level -> level.isPython2() && registerForLanguageLevel(level),
@@ -891,7 +900,8 @@ public abstract class PyCompatibilityVisitor extends PyElementVisitor {
     if (node.isLazy()) {
       registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON315),
                                      PyPsiBundle.message("INSP.compatibility.feature.support.lazy.imports"),
-                                     node.getFirstChild());
+                                     node.getFirstChild(),
+                                     LocalQuickFix.notNullElements(createInterpreterSettingsQuickFix(node)));
     }
   }
 
