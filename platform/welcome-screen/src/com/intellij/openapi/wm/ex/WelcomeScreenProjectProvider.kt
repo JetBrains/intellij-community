@@ -95,6 +95,10 @@ abstract class WelcomeScreenProjectProvider {
       return getWelcomeScreenProjectProvider()?.doGetProjectPaneToActivateId()
     }
 
+    fun getStartupToolWindowIdToActivate(): String? {
+      return getWelcomeScreenProjectProvider()?.doGetStartupToolWindowIdToActivate()
+    }
+
     suspend fun createOrOpenWelcomeScreenProject(extension: WelcomeScreenProjectProvider): Project {
       return serviceAsync<WelcomeScreenProjectSupport>().createOrOpenWelcomeScreenProject(extension)
     }
@@ -156,6 +160,8 @@ abstract class WelcomeScreenProjectProvider {
   protected open fun doIsHiddenInRecentProjects(): Boolean = true
 
   protected open fun doGetProjectPaneToActivateId(): String? = null
+
+  protected open fun doGetStartupToolWindowIdToActivate(): String? = null
 
   @Internal
   fun isHiddenInRecentProjectsForInternalUsage(): Boolean = doIsHiddenInRecentProjects()
