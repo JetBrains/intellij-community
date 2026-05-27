@@ -52,6 +52,7 @@ import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.ide.plugins.PluginNode;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -1037,10 +1038,11 @@ public class GridUtil extends GridUtilCore {
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
         if (virtualFile == null) {
-          DataGridNotifications.EXTRACTORS_GROUP.createNotification(
-            DataGridBundle.message("notification.content.can.t.access.file", myPath),
-            NotificationType.WARNING
-          ).setDisplayId("FileNotificationListener.cant.access").notify(myProject);
+          NotificationGroupManager.getInstance().getNotificationGroup(DataGridNotifications.EXTRACTORS_GROUP_ID)
+            .createNotification(
+              DataGridBundle.message("notification.content.can.t.access.file", myPath),
+              NotificationType.WARNING
+            ).setDisplayId("FileNotificationListener.cant.access").notify(myProject);
           return;
         }
         VfsUtil.markDirtyAndRefresh(false, false, false, virtualFile);

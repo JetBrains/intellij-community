@@ -9,6 +9,7 @@ import com.intellij.database.settings.CsvSettings;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentValidator;
@@ -197,7 +198,8 @@ public abstract class DumpDataDialog extends DialogWrapper {
 
   private void showError(@NotNull File file) {
     String message = DataGridBundle.message("settings.database.DumpDialog.CannotWriteFile", file.getPath());
-    DataGridNotifications.EXTRACTORS_GROUP.createNotification(message, MessageType.WARNING).setDisplayId("DumpDataDialog.write.failed")
+    NotificationGroupManager.getInstance().getNotificationGroup(DataGridNotifications.EXTRACTORS_GROUP_ID)
+      .createNotification(message, MessageType.WARNING).setDisplayId("DumpDataDialog.write.failed")
       .notify(myProject);
   }
 

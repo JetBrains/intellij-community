@@ -1031,6 +1031,7 @@
       <module fileurl="file://$PROJECT_DIR$/libraries/imgscalr/intellij.libraries.imgscalr.iml" filepath="$PROJECT_DIR$/libraries/imgscalr/intellij.libraries.imgscalr.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/ini4j/intellij.libraries.ini4j.iml" filepath="$PROJECT_DIR$/libraries/ini4j/intellij.libraries.ini4j.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/ion/intellij.libraries.ion.iml" filepath="$PROJECT_DIR$/libraries/ion/intellij.libraries.ion.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libraries/ivy/intellij.libraries.ivy.iml" filepath="$PROJECT_DIR$/libraries/ivy/intellij.libraries.ivy.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/jackson/jackson/intellij.libraries.jackson.iml" filepath="$PROJECT_DIR$/libraries/jackson/jackson/intellij.libraries.jackson.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/jackson/annotations/intellij.libraries.jackson.annotations.iml" filepath="$PROJECT_DIR$/libraries/jackson/annotations/intellij.libraries.jackson.annotations.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/jackson/databind/intellij.libraries.jackson.databind.iml" filepath="$PROJECT_DIR$/libraries/jackson/databind/intellij.libraries.jackson.databind.iml" />

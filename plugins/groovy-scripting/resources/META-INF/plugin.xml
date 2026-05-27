@@ -13,5 +13,6 @@
   <content namespace="jetbrains">
     <module name="intellij.libraries.groovy" loading="embedded"/>
     <module name="intellij.libraries.groovy.jsr223" loading="embedded"/>
+    <module name="intellij.libraries.ivy" loading="embedded"/>
   </content>
 </idea-plugin>

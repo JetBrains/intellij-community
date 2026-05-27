@@ -16,6 +16,7 @@ import com.intellij.database.extractors.ObjectFormatter;
 import com.intellij.database.run.actions.DumpSourceNameProvider;
 import com.intellij.database.util.ErrorHandler;
 import com.intellij.database.util.Out;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -183,7 +184,7 @@ public abstract class DumpHandler<T> {
         LOG.warn(e);
         return;
       }
-      DataGridNotifications.EXTRACTORS_GROUP
+      NotificationGroupManager.getInstance().getNotificationGroup(DataGridNotifications.EXTRACTORS_GROUP_ID)
         .createNotification(DataGridBundle.message("notification.title.data.dump"), message, NotificationType.ERROR)
         .setDisplayId("DumpHandler.error")
         .notify(myProject);

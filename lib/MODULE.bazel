@@ -9380,6 +9380,20 @@ http_file(
 )
 
 http_file(
+  name = "org_apache_ivy-ivy-2_5_2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/ivy/ivy/2.5.2/ivy-2.5.2.jar",
+  sha256 = "98428d545ea63cd9a0aaf255caf42cb8cb64fe430dbb5e709aed536d4daeed04",
+  downloaded_file_path = "ivy-2.5.2.jar"
+)
+
+http_file(
+  name = "org_apache_ivy-ivy-2_5_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/ivy/ivy/2.5.2/ivy-2.5.2-sources.jar",
+  sha256 = "607f5564babe9ef5e999de54c283118cf2232ea0c32aaec5895d5e0d5369a8a4",
+  downloaded_file_path = "ivy-2.5.2-sources.jar"
+)
+
+http_file(
   name = "com_fasterxml_jackson_core-jackson-annotations-2_21_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-annotations/2.21/jackson-annotations-2.21.jar",
   sha256 = "53ca085f4a150f703f49e1aabd935bd03b43e1ea3d55d135438292af22cef56b",

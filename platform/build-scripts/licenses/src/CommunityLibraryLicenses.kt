@@ -133,6 +133,7 @@ object CommunityLibraryLicenses {
       .copyrightText("Copyright 2014-2024 The Apache Software Foundation"),
 
     LibraryLicense("Apache Ivy", libraryName = "org.apache.ivy", url = "https://github.com/apache/ant-ivy")
+      .additionalLibraryNames("ivy")
       .apache("https://github.com/apache/ant-ivy/blob/master/LICENSE")
       .copyrightText("Copyright 2007-2019,2022-2023 The Apache Software Foundation")
       .suppliedByOrganizations(Suppliers.APACHE),

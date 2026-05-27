@@ -5,6 +5,7 @@ import com.intellij.database.datagrid.DataGridNotifications;
 import com.intellij.database.datagrid.GridUtil;
 import com.intellij.database.extractors.DataExtractor;
 import com.intellij.database.util.Out;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
@@ -127,7 +128,7 @@ public interface ExtractionHelper {
       );
       @NotNull NotificationType type = !info.getErrorSummary().isEmpty() ? NotificationType.ERROR : NotificationType.INFORMATION;
       @NotNull String path = myFile.getPath();
-      DataGridNotifications.EXTRACTORS_GROUP
+      NotificationGroupManager.getInstance().getNotificationGroup(DataGridNotifications.EXTRACTORS_GROUP_ID)
         .createNotification(title, GridUtil.getContent(content, path), type)
         .setDisplayId("FileExtractionHelper.finished")
         .setListener(new GridUtil.FileNotificationListener(project, path))
@@ -144,7 +145,8 @@ public interface ExtractionHelper {
   static void errorNotification(@NotNull Project project, @NotNull DumpInfo info) {
     String summary = info.getErrorSummary();
     if (summary.isEmpty()) return;
-    DataGridNotifications.EXTRACTORS_GROUP.createNotification(summary, NotificationType.ERROR)
+    NotificationGroupManager.getInstance().getNotificationGroup(DataGridNotifications.EXTRACTORS_GROUP_ID)
+      .createNotification(summary, NotificationType.ERROR)
       .setDisplayId("ExtractionHelper.error")
       .notify(project);
   }
