@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
@@ -49,6 +49,7 @@ public class BaseCompletionService extends CompletionService {
     }
   }
 
+  @SuppressWarnings("removal")
   @Override
   public void setAdvertisementText(@Nullable @NlsContexts.PopupAdvertisement String text) {
     if (text == null) return;
@@ -64,7 +65,7 @@ public class BaseCompletionService extends CompletionService {
     final int offset = parameters.getOffset();
     TextRange range = position.getTextRange();
     assert range.containsOffset(offset) : position + "; " + offset + " not in " + range;
-    //noinspection deprecation
+    //noinspection removal
     return CompletionData.findPrefixStatic(position, offset);
   }
 
@@ -129,7 +130,9 @@ public class BaseCompletionService extends CompletionService {
     @Override
     public void passResult(@NotNull CompletionResult result) {
       LookupElement element = result.getLookupElement();
-      element.putUserDataIfAbsent(LOOKUP_ELEMENT_CONTRIBUTOR, contributor);
+      if (contributor != null) {
+        element.putUserDataIfAbsent(LOOKUP_ELEMENT_CONTRIBUTOR, contributor);
+      }
       element.putUserData(LOOKUP_ELEMENT_RESULT_ADD_TIMESTAMP_MILLIS, System.currentTimeMillis());
       element.putUserData(LOOKUP_ELEMENT_RESULT_SET_ORDER, itemCounter);
       itemCounter += 1;
@@ -167,6 +170,7 @@ public class BaseCompletionService extends CompletionService {
 
     @Override
     public void addLookupAdvertisement(@NotNull @NlsContexts.PopupAdvertisement String text) {
+      //noinspection removal
       getCompletionService().setAdvertisementText(text);
     }
 
@@ -191,7 +195,7 @@ public class BaseCompletionService extends CompletionService {
   }
 
   protected @NotNull CompletionSorterImpl processStatsWeigher(@NotNull CompletionSorterImpl sorter,
-                                                              @NotNull Weigher weigher,
+                                                              @NotNull Weigher<?, ?> weigher,
                                                               @NotNull CompletionLocation location) {
     return sorter;
   }
@@ -205,6 +209,7 @@ public class BaseCompletionService extends CompletionService {
     //sorter = sorter.withClassifier(CompletionSorterImpl.weighingFactory(LiveTemplateWeigher()))
     sorter = sorter.withClassifier(CompletionSorterImpl.weighingFactory(new PreferStartMatching()));
 
+    //noinspection rawtypes
     for (final Weigher weigher : WeighingService.getWeighers(RELEVANCE_KEY)) {
       final String id = weigher.toString();
       if ("prefix".equals(id)) {
@@ -215,6 +220,7 @@ public class BaseCompletionService extends CompletionService {
       }
       else {
         sorter = sorter.weigh(new LookupElementWeigher(id, true, false) {
+          @SuppressWarnings("rawtypes")
           @Override
           public @Nullable Comparable weigh(@NotNull LookupElement element) {
             //noinspection unchecked
