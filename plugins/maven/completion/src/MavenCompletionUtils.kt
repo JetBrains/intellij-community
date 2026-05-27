@@ -3,7 +3,6 @@ package com.intellij.maven.completion
 
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.icons.AllIcons
-import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.repository.search.completion.api.DependencyCompletionContext
 import com.intellij.repository.search.completion.api.DependencyCompletionContextImpl
 import com.intellij.repository.search.completion.api.BaseDependencyCompletionResult
@@ -14,7 +13,7 @@ import javax.swing.Icon
 
 @ApiStatus.Internal
 fun CompletionParameters.getCompletionContext(): DependencyCompletionContext =
-  DependencyCompletionContextImpl(originalFile.virtualFile.toNioPath().getEelDescriptor(), MavenUtil.SYSTEM_ID)
+  DependencyCompletionContextImpl(originalFile.project, MavenUtil.SYSTEM_ID)
 
 @get:ApiStatus.Internal
 val BaseDependencyCompletionResult.icon: Icon

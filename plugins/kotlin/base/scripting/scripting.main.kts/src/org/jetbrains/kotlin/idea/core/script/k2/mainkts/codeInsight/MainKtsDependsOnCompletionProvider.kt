@@ -34,7 +34,7 @@ internal class MainKtsDependsOnCompletionProvider : CompletionProvider<Completio
 
         val completionService = service<DependencyCompletionService>()
         val completionContext = DependencyCompletionContextImpl(
-            parameters.originalFile.project.getEelDescriptor(),
+            parameters.originalFile.project,
             ProjectSystemId("GRADLE"),
         )
         val request = DependencyCompletionRequest(text, completionContext)

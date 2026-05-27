@@ -3,11 +3,8 @@ package com.intellij.maven.completion
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.platform.eel.EelDescriptor
-import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource
 import com.intellij.repository.search.completion.api.DependencyCompletionContributor
@@ -20,7 +17,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.indices.MavenIndicesManager
 import org.jetbrains.idea.maven.utils.MavenUtil
-import java.nio.file.Path
 import kotlin.math.min
 
 @ApiStatus.Internal
@@ -33,17 +29,11 @@ internal class MavenIndexBasedCompletionContributor : DependencyCompletionContri
     return Registry.`is`("maven.dependency.completion.contributor.local.index")
   }
 
-  // TODO: pass project as an optional parameter
-  private fun findProject(eelDescriptor: EelDescriptor): Project? =
-    ProjectManager.getInstance().openProjects.firstOrNull { project ->
-      project.basePath?.let { Path.of(it).getEelDescriptor() } == eelDescriptor
-    }
-
-  private fun gavIndex(eelDescriptor: EelDescriptor) =
-    findProject(eelDescriptor)?.let { MavenIndicesManager.getInstance(it).getCommonGavIndex() }
+  private fun gavIndex(project: Project) =
+    MavenIndicesManager.getInstance(project).getCommonGavIndex()
 
   override suspend fun search(request: DependencyCompletionRequest): List<DependencyCompletionResult> {
-    val index = gavIndex(request.context.eelDescriptor) ?: return emptyList()
+    val index = gavIndex(request.context.project)
     val searchString = request.searchString
     val (groupQuery, artifactQuery) = if (searchString.contains(":")) {
       val parts = searchString.split(":")
@@ -87,7 +77,7 @@ internal class MavenIndexBasedCompletionContributor : DependencyCompletionContri
   }
 
   override suspend fun getGroups(request: DependencyGroupCompletionRequest): List<DependencyPartCompletionResult> {
-    val index = gavIndex(request.context.eelDescriptor) ?: return emptyList()
+    val index = gavIndex(request.context.project)
     val prefix = request.groupPrefix
     return index.groupIds
       .filter { prefix.isEmpty() || it.contains(prefix, ignoreCase = true) }
@@ -96,7 +86,7 @@ internal class MavenIndexBasedCompletionContributor : DependencyCompletionContri
   }
 
   override suspend fun getArtifacts(request: DependencyArtifactCompletionRequest): List<DependencyPartCompletionResult> {
-    val index = gavIndex(request.context.eelDescriptor) ?: return emptyList()
+    val index = gavIndex(request.context.project)
     val prefix = request.artifactPrefix
     val artifactIds = if (request.group.isEmpty()) {
       index.groupIds.flatMapTo(mutableSetOf()) { index.getArtifactIds(it) }
@@ -110,7 +100,7 @@ internal class MavenIndexBasedCompletionContributor : DependencyCompletionContri
   }
 
   override suspend fun getVersions(request: DependencyVersionCompletionRequest): List<DependencyPartCompletionResult> {
-    val index = gavIndex(request.context.eelDescriptor) ?: return emptyList()
+    val index = gavIndex(request.context.project)
     val prefix = request.versionPrefix
     return index.getVersions(request.group, request.artifact)
       .filter { prefix.isEmpty() || it.contains(prefix, ignoreCase = true) }

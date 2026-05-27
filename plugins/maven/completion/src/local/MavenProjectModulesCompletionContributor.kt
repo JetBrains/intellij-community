@@ -2,11 +2,7 @@
 package com.intellij.maven.completion
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.eel.EelDescriptor
-import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource
 import com.intellij.repository.search.completion.api.DependencyCompletionContributor
 import com.intellij.repository.search.completion.api.DependencyCompletionRequest
@@ -20,7 +16,6 @@ import org.jetbrains.idea.maven.model.MavenDependencyCompletionItem
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
-import java.nio.file.Path
 
 @ApiStatus.Internal
 internal class MavenProjectModulesCompletionContributor : DependencyCompletionContributor {
@@ -32,14 +27,8 @@ internal class MavenProjectModulesCompletionContributor : DependencyCompletionCo
     return Registry.`is`("maven.dependency.completion.contributor.local.modules")
   }
 
-  // TODO: pass project as an optional parameter instead
-  private fun findProject(eelDescriptor: EelDescriptor): Project? =
-    ProjectManager.getInstance().openProjects.firstOrNull { project ->
-      project.basePath?.let { Path.of(it).getEelDescriptor() } == eelDescriptor
-    }
-
   override suspend fun search(request: DependencyCompletionRequest): List<DependencyCompletionResult> {
-    val project = findProject(request.context.eelDescriptor) ?: return emptyList()
+    val project = request.context.project
     val searchString = request.searchString
     MavenLog.LOG.debug("Project: get local maven artifacts started")
     val result = MavenProjectsManager.getInstance(project).projects
@@ -52,7 +41,7 @@ internal class MavenProjectModulesCompletionContributor : DependencyCompletionCo
   }
 
   override suspend fun getGroups(request: DependencyGroupCompletionRequest): List<DependencyPartCompletionResult> {
-    val project = findProject(request.context.eelDescriptor) ?: return emptyList()
+    val project = request.context.project
     val prefix = request.groupPrefix
     return MavenProjectsManager.getInstance(project).projects
       .asSequence()
@@ -65,7 +54,7 @@ internal class MavenProjectModulesCompletionContributor : DependencyCompletionCo
   }
 
   override suspend fun getArtifacts(request: DependencyArtifactCompletionRequest): List<DependencyPartCompletionResult> {
-    val project = findProject(request.context.eelDescriptor) ?: return emptyList()
+    val project = request.context.project
     val prefix = request.artifactPrefix
     return MavenProjectsManager.getInstance(project).projects.asSequence()
       .filter { it.mavenId.groupId == request.group }
@@ -77,7 +66,7 @@ internal class MavenProjectModulesCompletionContributor : DependencyCompletionCo
   }
 
   override suspend fun getVersions(request: DependencyVersionCompletionRequest): List<DependencyPartCompletionResult> {
-    val project = findProject(request.context.eelDescriptor) ?: return emptyList()
+    val project = request.context.project
     val prefix = request.versionPrefix
     return MavenProjectsManager.getInstance(project).projects.asSequence()
       .filter { it.mavenId.groupId == request.group && it.mavenId.artifactId == request.artifact }

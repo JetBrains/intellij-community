@@ -3,8 +3,8 @@ package com.intellij.repository.search.completion
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import com.intellij.platform.eel.EelDescriptor
-import com.intellij.platform.eel.EelOsFamily
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionContext
 import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource
@@ -186,13 +186,8 @@ class DependencyCompletionServiceImplTest {
 private val GRADLE_SYSTEM_ID = ProjectSystemId("Gradle")
 private val MAVEN_SYSTEM_ID = ProjectSystemId("Maven")
 
-private object TestEelDescriptor : EelDescriptor {
-  override val name: String get() = "test"
-  override val osFamily: EelOsFamily get() = EelOsFamily.Posix
-}
-
 private class TestContext(override val buildSystemId: ProjectSystemId = GRADLE_SYSTEM_ID) : DependencyCompletionContext {
-  override val eelDescriptor: EelDescriptor get() = TestEelDescriptor
+  override val project: Project get() = ProjectManager.getInstance().defaultProject
 }
 
 private fun testResult(groupId: String = "g", artifactId: String = "a", version: String = "1.0") =

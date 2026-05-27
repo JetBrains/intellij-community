@@ -4,6 +4,7 @@ package com.intellij.gradle.completion
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionUtil
 import com.intellij.icons.AllIcons
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.repository.search.completion.api.BaseDependencyCompletionResult
 import com.intellij.repository.search.completion.api.DependencyCompletionContext
@@ -28,9 +29,12 @@ fun removeDummySuffix(value: String?): String {
   return result.trim()
 }
 
+internal val DependencyCompletionContext.eelDescriptor: EelDescriptor
+  get() = project.getEelDescriptor()
+
 @ApiStatus.Internal
 fun CompletionParameters.getCompletionContext(): DependencyCompletionContext =
-  DependencyCompletionContextImpl(originalFile.virtualFile.toNioPath().getEelDescriptor(), GradleConstants.SYSTEM_ID)
+  DependencyCompletionContextImpl(originalFile.project, GradleConstants.SYSTEM_ID)
 
 @get:ApiStatus.Internal
 val BaseDependencyCompletionResult.icon: Icon

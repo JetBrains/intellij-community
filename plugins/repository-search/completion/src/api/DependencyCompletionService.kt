@@ -6,7 +6,7 @@ package com.intellij.repository.search.completion.api
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import com.intellij.platform.eel.EelDescriptor
+import com.intellij.openapi.project.Project
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import org.jetbrains.annotations.ApiStatus
@@ -34,12 +34,12 @@ interface DependencyCompletionContributor {
 }
 
 interface DependencyCompletionContext {
-  val eelDescriptor: EelDescriptor
+  val project: Project
   val buildSystemId: ProjectSystemId
 }
 
 class DependencyCompletionContextImpl(
-  override val eelDescriptor: EelDescriptor,
+  override val project: Project,
   override val buildSystemId: ProjectSystemId,
 ) : DependencyCompletionContext
 

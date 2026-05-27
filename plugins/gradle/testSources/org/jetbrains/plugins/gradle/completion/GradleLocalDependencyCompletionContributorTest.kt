@@ -6,8 +6,9 @@ import com.intellij.gradle.completion.indexer.GradleLocalRepositoryIndexer
 import com.intellij.gradle.completion.indexer.GradleLocalRepositoryIndexerTestImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionContext
 import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource
@@ -34,6 +35,7 @@ class GradleLocalDependencyCompletionContributorTest {
   @TestDisposable private lateinit var disposable: Disposable
 
   private val eelDescriptor = LocalEelDescriptor
+  private val testProject: Project get() = ProjectManager.getInstance().defaultProject
 
   @ParameterizedTest
   @ValueSource(strings = [
@@ -50,7 +52,7 @@ class GradleLocalDependencyCompletionContributorTest {
   fun `test search single result`(searchString: String): Unit = runBlocking {
     configureLocalIndex("group:artifact:version")
 
-    val context = GradleDependencyCompletionContext(eelDescriptor)
+    val context = GradleDependencyCompletionContext(testProject)
     val request = DependencyCompletionRequest(searchString, context)
     val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.search(request)
@@ -79,7 +81,7 @@ class GradleLocalDependencyCompletionContributorTest {
       "group:artifact:version.3",
     )
 
-    val context = GradleDependencyCompletionContext(eelDescriptor)
+    val context = GradleDependencyCompletionContext(testProject)
     val request = DependencyCompletionRequest(searchString, context)
     val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.search(request)
@@ -108,7 +110,7 @@ class GradleLocalDependencyCompletionContributorTest {
       "group:artifact-suffix:version",
     )
 
-    val context = GradleDependencyCompletionContext(eelDescriptor)
+    val context = GradleDependencyCompletionContext(testProject)
     val request = DependencyCompletionRequest(searchString, context)
     val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.search(request)
@@ -132,7 +134,7 @@ class GradleLocalDependencyCompletionContributorTest {
       "group:artifact:other",
     )
 
-    val context = GradleDependencyCompletionContext(eelDescriptor)
+    val context = GradleDependencyCompletionContext(testProject)
     val request = DependencyCompletionRequest(searchString, context)
     val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.search(request)
@@ -159,7 +161,7 @@ class GradleLocalDependencyCompletionContributorTest {
       "group:other:version",
     )
 
-    val context = GradleDependencyCompletionContext(eelDescriptor)
+    val context = GradleDependencyCompletionContext(testProject)
     val request = DependencyCompletionRequest(searchString, context)
     val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.search(request)
@@ -187,7 +189,7 @@ class GradleLocalDependencyCompletionContributorTest {
       "other:artifact:version",
     )
 
-    val context = GradleDependencyCompletionContext(eelDescriptor)
+    val context = GradleDependencyCompletionContext(testProject)
     val request = DependencyCompletionRequest(searchString, context)
     val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.search(request)
@@ -213,7 +215,7 @@ class GradleLocalDependencyCompletionContributorTest {
       "group:prefix-artifact:version",
     )
 
-    val context = GradleDependencyCompletionContext(eelDescriptor)
+    val context = GradleDependencyCompletionContext(testProject)
     val request = DependencyCompletionRequest(searchString, context)
     val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.search(request)
@@ -247,7 +249,7 @@ class GradleLocalDependencyCompletionContributorTest {
   fun `test search case insensitive`(searchString: String): Unit = runBlocking {
     configureLocalIndex("group:artifact:version")
 
-    val context = GradleDependencyCompletionContext(eelDescriptor)
+    val context = GradleDependencyCompletionContext(testProject)
     val request = DependencyCompletionRequest(searchString, context)
     val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.search(request)
@@ -270,7 +272,7 @@ class GradleLocalDependencyCompletionContributorTest {
       "b:c:2",
     )
 
-    val context = GradleDependencyCompletionContext(eelDescriptor)
+    val context = GradleDependencyCompletionContext(testProject)
     val request = DependencyCompletionRequest("", context)
     val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.search(request)
@@ -300,7 +302,7 @@ class GradleLocalDependencyCompletionContributorTest {
       "group:artifact:2.1.0",
     )
 
-    val context = GradleDependencyCompletionContext(eelDescriptor)
+    val context = GradleDependencyCompletionContext(testProject)
     val request = DependencyCompletionRequest("", context)
     val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.search(request)
@@ -324,7 +326,7 @@ class GradleLocalDependencyCompletionContributorTest {
       "group:artifact:version",
     )
 
-    val context = GradleDependencyCompletionContext(eelDescriptor)
+    val context = GradleDependencyCompletionContext(testProject)
     val request = DependencyCompletionRequest("", context)
     val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.search(request)
@@ -341,7 +343,7 @@ class GradleLocalDependencyCompletionContributorTest {
       "group:artifact:1",
     )
 
-    val context = GradleDependencyCompletionContext(eelDescriptor)
+    val context = GradleDependencyCompletionContext(testProject)
     val request = DependencyCompletionRequest("", context)
     val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.search(request)
@@ -363,7 +365,7 @@ class GradleLocalDependencyCompletionContributorTest {
       "group:artifact:pick-me",
     )
 
-    val context = GradleDependencyCompletionContext(eelDescriptor)
+    val context = GradleDependencyCompletionContext(testProject)
     val request = DependencyCompletionRequest(searchString, context)
     val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.search(request)
@@ -390,7 +392,7 @@ class GradleLocalDependencyCompletionContributorTest {
       "group:artifact:other",
     )
 
-    val context = GradleDependencyCompletionContext(eelDescriptor)
+    val context = GradleDependencyCompletionContext(testProject)
     val request = DependencyCompletionRequest(searchString, context)
     val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.search(request)
@@ -411,7 +413,7 @@ class GradleLocalDependencyCompletionContributorTest {
   fun `test group single`(searchString: String): Unit = runBlocking {
     configureLocalIndex("group:artifact:version")
 
-    val context = GradleDependencyCompletionContext(eelDescriptor)
+    val context = GradleDependencyCompletionContext(testProject)
     val request = DependencyGroupCompletionRequest(searchString, "", context)
     val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.getGroups(request)
@@ -434,7 +436,7 @@ class GradleLocalDependencyCompletionContributorTest {
       "other:artifact:version",
     )
 
-    val context = GradleDependencyCompletionContext(eelDescriptor)
+    val context = GradleDependencyCompletionContext(testProject)
     val request = DependencyGroupCompletionRequest(searchString, "", context)
     val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.getGroups(request)
@@ -460,7 +462,7 @@ class GradleLocalDependencyCompletionContributorTest {
       "group-also-wrong:correct-not:version",
     )
 
-    val context = GradleDependencyCompletionContext(eelDescriptor)
+    val context = GradleDependencyCompletionContext(testProject)
     val request = DependencyGroupCompletionRequest(searchString, "correct", context)
     val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.getGroups(request)
@@ -478,7 +480,7 @@ class GradleLocalDependencyCompletionContributorTest {
   fun `test artifact single`(searchString: String): Unit = runBlocking {
     configureLocalIndex("group:artifact:version")
 
-    val context = GradleDependencyCompletionContext(eelDescriptor)
+    val context = GradleDependencyCompletionContext(testProject)
     val request = DependencyArtifactCompletionRequest("group", searchString, context)
     val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.getArtifacts(request)
@@ -501,7 +503,7 @@ class GradleLocalDependencyCompletionContributorTest {
       "group:other:version",
     )
 
-    val context = GradleDependencyCompletionContext(eelDescriptor)
+    val context = GradleDependencyCompletionContext(testProject)
     val request = DependencyArtifactCompletionRequest("group", searchString, context)
     val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.getArtifacts(request)
@@ -527,7 +529,7 @@ class GradleLocalDependencyCompletionContributorTest {
       "correct-not:artifact-also-wrong:version",
     )
 
-    val context = GradleDependencyCompletionContext(eelDescriptor)
+    val context = GradleDependencyCompletionContext(testProject)
     val request = DependencyArtifactCompletionRequest("correct", searchString, context)
     val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.getArtifacts(request)
@@ -544,7 +546,7 @@ class GradleLocalDependencyCompletionContributorTest {
   fun `test version single`(searchString: String): Unit = runBlocking {
     configureLocalIndex("group:artifact:version")
 
-    val context = GradleDependencyCompletionContext(eelDescriptor)
+    val context = GradleDependencyCompletionContext(testProject)
     val request = DependencyVersionCompletionRequest("group", "artifact", searchString, context)
     val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.getVersions(request)
@@ -565,7 +567,7 @@ class GradleLocalDependencyCompletionContributorTest {
       "group:artifact:other",
     )
 
-    val context = GradleDependencyCompletionContext(eelDescriptor)
+    val context = GradleDependencyCompletionContext(testProject)
     val request = DependencyVersionCompletionRequest("group", "artifact", searchString, context)
     val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.getVersions(request)
@@ -591,7 +593,7 @@ class GradleLocalDependencyCompletionContributorTest {
       "wrong-group:correct-artifact:version.3",
     )
 
-    val context = GradleDependencyCompletionContext(eelDescriptor)
+    val context = GradleDependencyCompletionContext(testProject)
     val request = DependencyVersionCompletionRequest("correct-group", "correct-artifact", searchString, context)
     val contributor = GradleLocalDependencyCompletionContributor()
     val results = contributor.getVersions(request)
@@ -635,7 +637,7 @@ class GradleLocalDependencyCompletionContributorTest {
   }
 }
 
-private class GradleDependencyCompletionContext(override val eelDescriptor: EelDescriptor) : DependencyCompletionContext {
+private class GradleDependencyCompletionContext(override val project: Project) : DependencyCompletionContext {
   override val buildSystemId: ProjectSystemId
     get() = GradleConstants.SYSTEM_ID
 }

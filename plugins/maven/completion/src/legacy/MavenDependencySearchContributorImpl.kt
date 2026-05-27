@@ -3,7 +3,6 @@ package com.intellij.maven.completion
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionContextImpl
 import com.intellij.repository.search.completion.api.DependencyCompletionRequest
@@ -13,16 +12,12 @@ import com.intellij.repository.search.completion.api.DependencyVersionCompletion
 import org.jetbrains.idea.maven.completion.MavenDependencySearchContributor
 import org.jetbrains.idea.maven.model.MavenRepoArtifactInfo
 import org.jetbrains.idea.maven.utils.MavenUtil
-import java.nio.file.Path
 import java.util.function.Consumer
 import kotlinx.coroutines.flow.toList
 
 internal class MavenDependencySearchContributorImpl : MavenDependencySearchContributor {
 
-  private fun createContext(project: Project) = DependencyCompletionContextImpl(
-    Path.of(project.basePath ?: "").getEelDescriptor(),
-    MavenUtil.SYSTEM_ID,
-  )
+  private fun createContext(project: Project) = DependencyCompletionContextImpl(project, MavenUtil.SYSTEM_ID)
 
   override suspend fun fulltextSearch(
       project: Project,
