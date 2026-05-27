@@ -874,6 +874,7 @@ platform/testFramework/monorepo
 platform/testFramework/selfContainedProjects
 platform/testFramework/teamCity
 platform/testRunner
+platform/testRunner/plugin
 platform/threadDumpParser
 platform/tips-of-the-day
 platform/todo

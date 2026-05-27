@@ -365,7 +365,6 @@ object CoreModuleSets {
     embeddedModule("intellij.platform.macro")
     embeddedModule("intellij.platform.usageView.impl")
 
-    embeddedModule("intellij.platform.testRunner")
     embeddedModule("intellij.platform.execution")
     embeddedModule("intellij.platform.execution.impl")
 

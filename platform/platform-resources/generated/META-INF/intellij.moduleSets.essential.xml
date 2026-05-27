@@ -193,7 +193,6 @@
     <!-- region direct modules -->
     <module name="intellij.platform.macro" loading="embedded"/>
     <module name="intellij.platform.usageView.impl" loading="embedded"/>
-    <module name="intellij.platform.testRunner" loading="embedded"/>
     <module name="intellij.platform.execution" loading="embedded"/>
     <module name="intellij.platform.execution.impl" loading="embedded"/>
     <module name="intellij.platform.lvcs" loading="embedded"/>
@@ -307,7 +306,6 @@
     <module name="intellij.platform.completion.backend"/>
     <module name="intellij.platform.polySymbols" loading="embedded"/>
     <module name="intellij.platform.builtInServer.impl" loading="embedded"/>
-    <module name="intellij.platform.smRunner" loading="embedded"/>
     <module name="intellij.platform.externalSystem.dependencyUpdater" loading="embedded"/>
     <module name="intellij.platform.externalSystem.impl" loading="embedded"/>
     <module name="intellij.platform.externalProcessAuthHelper" loading="embedded"/>

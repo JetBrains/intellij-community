@@ -1,19 +1,8 @@
 <idea-plugin package="com.intellij.execution.vcs">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.libraries.kotlinx.coroutines.core"/>
-    <module name="intellij.platform.analysis"/>
-    <module name="intellij.platform.core"/>
-    <module name="intellij.platform.core.ui"/>
-    <module name="intellij.platform.editor.ui"/>
-    <module name="intellij.platform.execution"/>
-    <module name="intellij.platform.execution.impl"/>
-    <module name="intellij.platform.ide.core"/>
-    <module name="intellij.platform.ide.impl"/>
-    <module name="intellij.platform.lang"/>
-    <module name="intellij.platform.lang.impl"/>
-    <module name="intellij.platform.projectModel"/>
-    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.platform.smRunner"/>
+    <module name="intellij.platform.testRunner"/>
     <module name="intellij.platform.vcs.impl"/>
   </dependencies>
   <!-- endregion -->

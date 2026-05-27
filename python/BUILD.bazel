@@ -612,6 +612,7 @@ jvm_library(
     "//python/python-psi-impl:psi-impl",
   ],
   runtime_deps = [
+    "//platform/testRunner/plugin",
     "//python:python-helpers",
     "//commandInterface",
   ]
@@ -705,6 +706,7 @@ jvm_library(
     "//platform/core-impl:core-impl_test_lib",
     "//platform/smRunner",
     "//platform/smRunner:smRunner_test_lib",
+    "//platform/testRunner/plugin:plugin_test_lib",
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
     "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",
@@ -981,6 +983,7 @@ jvm_library(
     "//platform/testFramework",
     "//module-set-plugins/generated/intellij.moduleSet.plugin.structureView:moduleSet-plugin-structureView",
     "//module-set-plugins/generated/intellij.moduleSet.plugin.todoView:moduleSet-plugin-todoView",
+    "//platform/testRunner/plugin",
     "//libraries/misc/plugin",
     "//libraries/guava",
     "//platform/editor-ui-ex:editor-ex",
@@ -1229,6 +1232,7 @@ jvm_library(
     ":python-community-tests",
     "//module-set-plugins/generated/intellij.moduleSet.plugin.structureView:moduleSet-plugin-structureView_test_lib",
     "//module-set-plugins/generated/intellij.moduleSet.plugin.todoView:moduleSet-plugin-todoView_test_lib",
+    "//platform/testRunner/plugin:plugin_test_lib",
     "//libraries/misc/plugin:plugin_test_lib",
     "//platform/observable:observable_test_lib",
     "//platform/platform-impl/internal:internal_test_lib",

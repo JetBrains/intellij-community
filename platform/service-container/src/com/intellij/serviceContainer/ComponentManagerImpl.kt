@@ -1632,7 +1632,7 @@ val servicePreloadingAllowListForNonCorePlugin: Set<String> = java.util.Set.of(
   "com.jetbrains.rdserver.quickDoc.BackendEditorMouseHoverPopupHost",
   "com.jetbrains.rdserver.settings.BackendPerClientSettingsStorageService",
   "com.jetbrains.rdserver.status.BackendStatusBarHost",
-  "com.jetbrains.rdserver.tests.BackendTestsContentHost",
+  "com.intellij.platform.smRunner.backend.split.BackendTestsContentHost",
   "com.jetbrains.rdserver.toolWindow.BackendServerToolWindowManager",
   "com.jetbrains.rdserver.toolWindow.BackendToolWindowHost",
   "com.jetbrains.rdserver.ui.BackendUserFocusHost",

@@ -27,6 +27,7 @@ val DEFAULT_BUNDLED_PLUGINS: PersistentList<String> = persistentListOf(
   "intellij.platform.bookmarks.plugin",
   "intellij.moduleSet.plugin.grid.core",
   "intellij.platform.navbar.plugin",
+  "intellij.platform.testRunner.plugin",
   "intellij.moduleSet.plugin.recentFiles",
   "intellij.moduleSet.plugin.structuralSearch",
   "intellij.moduleSet.plugin.structureView",

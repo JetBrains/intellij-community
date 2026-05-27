@@ -3,6 +3,8 @@
   <dependencies>
     <plugin id="Coverage"/>
     <module name="intellij.gradle"/>
+    <module name="intellij.platform.smRunner"/>
+    <module name="intellij.platform.testRunner"/>
   </dependencies>
   <!-- endregion -->
 

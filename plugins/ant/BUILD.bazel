@@ -149,7 +149,13 @@ jvm_library(
   name = "ant-tests",
   module_name = "intellij.ant.tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.structuralSearch:moduleSet-plugin-structuralSearch",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.structureView:moduleSet-plugin-structureView",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.todoView:moduleSet-plugin-todoView",
+    "//platform/testRunner/plugin",
+  ]
 )
 
 jvm_library(
@@ -275,6 +281,10 @@ jvm_library(
     "//platform/platform-impl/concurrency:concurrency_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/platform-util-io:ide-util-io_test_lib",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.structuralSearch:moduleSet-plugin-structuralSearch_test_lib",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.structureView:moduleSet-plugin-structureView_test_lib",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.todoView:moduleSet-plugin-todoView_test_lib",
+    "//platform/testRunner/plugin:plugin_test_lib",
   ]
 )
 ### auto-generated section `build intellij.ant.tests` end

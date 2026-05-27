@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.devkit.core"/>
     <module name="intellij.gradle.java"/>
+    <module name="intellij.platform.smRunner"/>
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">

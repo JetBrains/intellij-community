@@ -1,0 +1,17 @@
+- name: lib/modules/intellij.platform.smRunner.backend.split.jar
+  contentModules:
+  - name: intellij.platform.smRunner.backend.split
+- name: lib/modules/intellij.platform.smRunner.frontend.split.jar
+  contentModules:
+  - name: intellij.platform.smRunner.frontend.split
+- name: lib/modules/intellij.platform.smRunner.jar
+  contentModules:
+  - name: intellij.platform.smRunner
+- name: lib/modules/intellij.platform.testRunner.jar
+  contentModules:
+  - name: intellij.platform.testRunner
+- name: lib/platform-testRunner-plugin.jar
+  modules:
+  - name: intellij.platform.testRunner.plugin
+  contentModules:
+  - name: intellij.platform.smRunner.vcs

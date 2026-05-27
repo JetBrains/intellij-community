@@ -160,7 +160,6 @@ object CommunityModuleSets {
     // Platform language modules (moved from platformLangBase for consolidation)
     // These provide core IDE functionality needed by all full IDE products
     embeddedModule("intellij.platform.builtInServer.impl")
-    embeddedModule("intellij.platform.smRunner")
     embeddedModule("intellij.platform.externalSystem.dependencyUpdater")
     embeddedModule("intellij.platform.externalSystem.impl")
     embeddedModule("intellij.platform.externalProcessAuthHelper")
@@ -370,7 +369,6 @@ object CommunityModuleSets {
 
     // Additional IDE-specific modules
     module("intellij.platform.lvcs.impl")
-    module("intellij.platform.smRunner.vcs")
     module("intellij.platform.collaborationTools")
     module("intellij.platform.collaborationTools.auth")
     module("intellij.platform.collaborationTools.auth.base")

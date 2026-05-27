@@ -71,7 +71,13 @@ jvm_library(
   name = "structuralSearch-tests",
   module_name = "intellij.groovy.structuralSearch.tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.structureView:moduleSet-plugin-structureView",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.todoView:moduleSet-plugin-todoView",
+    "//platform/testRunner/plugin",
+    "//plugins/groovy-scripting",
+  ]
 )
 
 jvm_library(
@@ -121,7 +127,13 @@ jvm_library(
     "//platform/code-style-api:codeStyle",
     "//platform/code-style-api:codeStyle_test_lib",
   ],
-  runtime_deps = [":structuralSearch-tests"]
+  runtime_deps = [
+    ":structuralSearch-tests",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.structureView:moduleSet-plugin-structureView_test_lib",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.todoView:moduleSet-plugin-todoView_test_lib",
+    "//platform/testRunner/plugin:plugin_test_lib",
+    "//plugins/groovy-scripting:groovy-scripting_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.groovy.structuralSearch.tests` end
 

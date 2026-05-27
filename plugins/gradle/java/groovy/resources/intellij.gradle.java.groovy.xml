@@ -13,6 +13,8 @@
     <module name="intellij.java.indexing"/>
     <module name="intellij.java.ui"/>
     <module name="intellij.platform.jps.build"/>
+    <module name="intellij.platform.smRunner"/>
+    <module name="intellij.platform.testRunner"/>
   </dependencies>
   <!-- endregion -->
   <extensionPoints>

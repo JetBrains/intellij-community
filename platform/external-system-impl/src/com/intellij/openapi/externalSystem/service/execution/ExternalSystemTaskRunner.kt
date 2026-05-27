@@ -6,11 +6,11 @@ import com.intellij.execution.ExecutionManager
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.configurations.RunnerSettings
+import com.intellij.execution.configurations.VisibleRunContentState
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.runners.RunContentBuilder
-import com.intellij.execution.testframework.HistoryTestRunnableState
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
 import org.jetbrains.concurrency.resolvedPromise
@@ -30,14 +30,14 @@ internal class ExternalSystemTaskRunner : ProgramRunner<RunnerSettings> {
   }
 
   private fun doExecute(state: RunProfileState, environment: ExecutionEnvironment): RunContentDescriptor? {
-    if (state !is ExternalSystemRunnableState && state !is HistoryTestRunnableState) {
+    if (state !is ExternalSystemRunnableState && state !is VisibleRunContentState) {
       return null
     }
 
     val executionResult = state.execute(environment.executor, this) ?: return null
     val runContentDescriptor = RunContentBuilder(executionResult, environment).showRunContent(environment.contentToReuse) ?: return null
 
-    if (state is HistoryTestRunnableState) {
+    if (state is VisibleRunContentState) {
       return runContentDescriptor
     }
 
