@@ -516,6 +516,22 @@ class PyTypeInferenceCspTest : PyInspectionTestCase() {
       """)
   }
 
+  @TestFor(issues = ["PY-89826"])
+  fun `test Performance and healthy termination on nested inference variable`() {
+    doTestByText("""
+      from typing import TypeVar
+      
+      K = TypeVar("K")
+      V = TypeVar("V")
+      
+      class MultiDict(dict[K, V]):
+          def deepcopy(self) -> dict[K, list[V]]:
+              return self.to_dict()
+      
+          def to_dict(self) -> dict[K, V]: ...
+      """)
+  }
+
   @TestFor(issues = ["PY-88071"])
   fun `test Default type from nested call`() {
     doTestByText("""
