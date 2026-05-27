@@ -117,6 +117,9 @@ internal class AppCommandCompletionSettings(
     myEnabled = if (enabled) CommandCompletionEnabled.ENABLED else CommandCompletionEnabled.DISABLED
   }
 
+  /**
+   * @see com.intellij.codeInsight.completion.group.GroupedCompletionImpl.isEnabled
+   */
   private fun calculateFromRegistry(): Boolean {
     // unit tests
     if (ApplicationManager.getApplication().isUnitTestMode() &&
