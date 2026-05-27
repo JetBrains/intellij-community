@@ -1,0 +1,12 @@
+[project]
+name = "monorepo-root"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = []
+
+[tool.uv.workspace]
+members = ["apps/*"]
+
+# Path source declared on the parent: relative to THIS pyproject.toml, not to a member's.
+[tool.uv.sources]
+external_lib = { path = "external_lib" }
