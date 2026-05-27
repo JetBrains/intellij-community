@@ -8,6 +8,7 @@ import com.intellij.driver.sdk.invokeAction
 import com.intellij.driver.sdk.step
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
+import com.intellij.driver.sdk.ui.components.UIComponentsList
 import com.intellij.driver.sdk.ui.components.common.editor.EditorTabsManager
 import com.intellij.driver.sdk.ui.components.common.toolwindows.ToolWindowLeftToolbarUi
 import com.intellij.driver.sdk.ui.components.common.toolwindows.ToolWindowRightToolbarUi
@@ -22,9 +23,9 @@ import javax.swing.JFrame
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
-fun Finder.ideFrame() = x(IdeaFrameUI::class.java) { byClass("IdeFrameImpl") }
+fun Finder.ideFrame(): IdeaFrameUI = x(IdeaFrameUI::class.java) { byClass("IdeFrameImpl") }
 
-fun Finder.currentIdeFrame() = ideFrames().list().let { frames ->
+fun Finder.currentIdeFrame(): IdeaFrameUI = ideFrames().list().let { frames ->
   when (frames.size) {
     0 -> throw IllegalStateException("No IDE frames found")
     1 -> frames[0]
@@ -32,7 +33,7 @@ fun Finder.currentIdeFrame() = ideFrames().list().let { frames ->
   }
 }
 
-fun Finder.ideFrames() = xx(IdeaFrameUI::class.java) { byClass("IdeFrameImpl") }
+fun Finder.ideFrames(): UIComponentsList<IdeaFrameUI> = xx(IdeaFrameUI::class.java) { byClass("IdeFrameImpl") }
 
 fun Finder.ideFrame(action: IdeaFrameUI.() -> Unit) {
   ideFrame().action()
@@ -97,22 +98,28 @@ open class IdeaFrameUI(data: ComponentData) : WindowUiComponent(data) {
     }
   }
 
-  fun maximize() = driver.withContext(OnDispatcher.EDT) {
-    ideaFrameComponent.setExtendedState(ideaFrameComponent.getExtendedState().or(JFrame.MAXIMIZED_BOTH))
+  fun maximize() {
+    driver.withContext(OnDispatcher.EDT) {
+      ideaFrameComponent.setExtendedState(ideaFrameComponent.getExtendedState().or(JFrame.MAXIMIZED_BOTH))
+    }
   }
 
-  fun resize(width: Int, height: Int) = driver.withContext(OnDispatcher.EDT) {
-    ideaFrameComponent.setSize(width, height)
+  fun resize(width: Int, height: Int) {
+    driver.withContext(OnDispatcher.EDT) {
+      ideaFrameComponent.setSize(width, height)
+    }
   }
 
-  fun openSettingsDialog() = driver.invokeAction("ShowSettings", now = false)
+  fun openSettingsDialog() {
+    driver.invokeAction("ShowSettings", now = false)
+  }
 
   override fun toFront() {
     super.toFront()
     click(Point(component.width / 2, 0))
   }
 
-  fun isMinimized() = ideaFrameComponent.getState() == Frame.ICONIFIED
+  fun isMinimized(): Boolean = ideaFrameComponent.getState() == Frame.ICONIFIED
 
   fun unminimize() {
     ideaFrameComponent.setState(Frame.NORMAL)
