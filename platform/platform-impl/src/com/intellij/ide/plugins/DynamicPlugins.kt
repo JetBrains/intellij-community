@@ -160,11 +160,6 @@ object DynamicPlugins {
     return DynamicPluginsLegacyImpl.allowLoadUnloadSynchronously(module)
   }
 
-  fun runAfter(callback: Runnable) {
-    // TODO adjust for new support
-    return DynamicPluginsLegacyImpl.runAfter(callback)
-  }
-
   internal fun notify(@NlsContexts.NotificationContent text: String, notificationType: NotificationType, vararg actions: AnAction) {
     return DynamicPluginsLegacyImpl.notify(text, notificationType, *actions)
   }
