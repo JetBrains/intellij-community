@@ -464,7 +464,7 @@ class PluginDescriptorTest {
   @Test
   fun `namespace and visibility of content modules`() {
     val pluginPath = plugin("foo") {
-      content(namespace = "my.namespace") {
+      content(namespace = "my_namespace") {
         module("foo.internal") {
           moduleVisibility = ModuleVisibilityValue.INTERNAL
         }
@@ -482,35 +482,35 @@ class PluginDescriptorTest {
     assertThat(contentModules[0].visibility).isEqualTo(ModuleVisibility.INTERNAL)
     assertThat(contentModules[1].visibility).isEqualTo(ModuleVisibility.PRIVATE)
     assertThat(contentModules[2].visibility).isEqualTo(ModuleVisibility.PUBLIC)
-    assertThat(contentModules[0].moduleId.namespace).isEqualTo("my.namespace")
+    assertThat(contentModules[0].moduleId.namespace).isEqualTo("my_namespace")
   }
 
   @Test
   fun `multiple namespaces in content tags`() {
     val pluginPath = plugin("foo") {
-      content(namespace = "my.namespace.1") {
+      content(namespace = "my_namespace_1") {
         module("module1") {}
       }
-      content(namespace = "my.namespace.2") {
+      content(namespace = "my_namespace_2") {
         module("module2") {}
       }
     }.installAt(pluginDirPath)
     val plugin = loadDescriptorInTest(pluginPath)
     assertThat(plugin).hasExactlyEnabledContentModules("module1", "module2")
-    assertThat(plugin.contentModules[0].moduleId).isEqualTo(PluginModuleId("module1", "my.namespace.1"))
-    assertThat(plugin.contentModules[1].moduleId).isEqualTo(PluginModuleId("module2", "my.namespace.2"))
+    assertThat(plugin.contentModules[0].moduleId).isEqualTo(PluginModuleId("module1", "my_namespace_1"))
+    assertThat(plugin.contentModules[1].moduleId).isEqualTo(PluginModuleId("module2", "my_namespace_2"))
   }
 
   @Test
   fun `multiple content modules with the same name in the same plugin are not allowed`() {
     val pluginPath = plugin("foo") {
-      content(namespace = "my.namespace1") {
+      content(namespace = "my_namespace1") {
         module("module") {
           //to ensure that the module will be packed into the main JAR to avoid assertion about two files with the same name in modules/ dir
           packagePrefix = "foo"
         }
       }
-      content(namespace = "my.namespace2") {
+      content(namespace = "my_namespace2") {
         module("module") {}
       }
     }.installAt(pluginDirPath)

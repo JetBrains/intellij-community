@@ -413,7 +413,7 @@ class PluginSetBuildersTest {
       plugin("foo") {
         version = "1.0"
         pluginAliases = listOf("alias1", "shared")
-        content(namespace = "test") {
+        content(namespace = "custom") {
           module("foo.module", loadingRule = ModuleLoadingRuleValue.REQUIRED) {
             pluginAlias("module-alias")
           }
@@ -423,7 +423,7 @@ class PluginSetBuildersTest {
       plugin("bar") {
         version = "1.0"
         pluginAliases = listOf("alias2", "shared")
-        content(namespace = "test") {
+        content(namespace = "custom") {
           module("bar.module", loadingRule = ModuleLoadingRuleValue.REQUIRED) {
             pluginAlias("module-alias")
           }
@@ -452,8 +452,8 @@ class PluginSetBuildersTest {
       assertThat(pluginMapping[PluginId.getId("module-alias")]).hasSize(2)
       
       val contentMapping = result.buildFullContentModuleIdMapping()
-      assertThat(contentMapping[PluginModuleId("foo.module", "test")]).hasSize(1)
-      assertThat(contentMapping[PluginModuleId("bar.module", "test")]).hasSize(1)
+      assertThat(contentMapping[PluginModuleId("foo.module", "custom")]).hasSize(1)
+      assertThat(contentMapping[PluginModuleId("bar.module", "custom")]).hasSize(1)
     }
 
     @Test
@@ -464,7 +464,7 @@ class PluginSetBuildersTest {
       val result = AmbiguousPluginSet.build(plugins)
 
       assertThat(result.resolvePluginId(PluginId.getId("unknown")).toList()).isEmpty()
-      assertThat(result.resolveContentModuleId(PluginModuleId("unknown", "test")).toList()).isEmpty()
+      assertThat(result.resolveContentModuleId(PluginModuleId("unknown", "custom")).toList()).isEmpty()
     }
 
     @Test

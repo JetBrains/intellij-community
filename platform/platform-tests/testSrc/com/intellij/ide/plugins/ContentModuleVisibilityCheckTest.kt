@@ -46,7 +46,7 @@ internal class ContentModuleVisibilityCheckTest {
     val exception = assertErrorLogged<PluginException> {
       buildPluginSet {
         plugin("foo") {
-          content(namespace = "foo.namespace") {
+          content(namespace = "foo_namespace") {
             module("foo.module") {
               moduleVisibility = ModuleVisibilityValue.INTERNAL
             }
@@ -56,14 +56,14 @@ internal class ContentModuleVisibilityCheckTest {
           content {
             module("bar.module") {
               dependencies {
-                module("foo.module", namespace = "foo.namespace")
+                module("foo.module", namespace = "foo_namespace")
               }
             }
           }
         }
       }
     }
-    assertThat(exception.message).contains("depends on module 'foo.module' which is registered in 'foo' plugin with internal visibility in namespace 'foo.namespace'")
+    assertThat(exception.message).contains("depends on module 'foo.module' which is registered in 'foo' plugin with internal visibility in namespace 'foo_namespace'")
   }
 
   @Test
@@ -71,7 +71,7 @@ internal class ContentModuleVisibilityCheckTest {
     val exception = assertErrorLogged<PluginException> {
       buildPluginSet {
         plugin("foo") {
-          content(namespace = "foo.namespace") {
+          content(namespace = "foo_namespace") {
             module("foo.module") {
               moduleVisibility = ModuleVisibilityValue.INTERNAL
             }
@@ -79,19 +79,19 @@ internal class ContentModuleVisibilityCheckTest {
         }
         plugin("bar") {
           dependencies {
-            module("foo.module", namespace = "foo.namespace")
+            module("foo.module", namespace = "foo_namespace")
           }
         }
       }
     }
-    assertThat(exception.message).contains("depends on module 'foo.module' which is registered in 'foo' plugin with internal visibility in namespace 'foo.namespace'")
+    assertThat(exception.message).contains("depends on module 'foo.module' which is registered in 'foo' plugin with internal visibility in namespace 'foo_namespace'")
   }
 
   @Test
   fun `plugin descriptor can depend on internal module if it has content module from the same namespace`() {
     val pluginSet = buildPluginSet {
       plugin("foo") {
-        content(namespace = "foo.namespace") {
+        content(namespace = "foo_namespace") {
           module("foo.module") {
             moduleVisibility = ModuleVisibilityValue.INTERNAL
           }
@@ -99,9 +99,9 @@ internal class ContentModuleVisibilityCheckTest {
       }
       plugin("bar") {
         dependencies {
-          module("foo.module", namespace = "foo.namespace")
+          module("foo.module", namespace = "foo_namespace")
         }
-        content(namespace = "foo.namespace") {
+        content(namespace = "foo_namespace") {
           module("bar.module") {}
         }
       }
@@ -113,7 +113,7 @@ internal class ContentModuleVisibilityCheckTest {
   fun `dependency on internal module from plugin descriptor with a dummy content tag to specify namespace`() {
     val pluginSet = buildPluginSet {
       plugin("foo") {
-        content(namespace = "foo.namespace") {
+        content(namespace = "foo_namespace") {
           module("foo.module") {
             moduleVisibility = ModuleVisibilityValue.INTERNAL
           }
@@ -121,9 +121,9 @@ internal class ContentModuleVisibilityCheckTest {
       }
       plugin("bar") {
         dependencies {
-          module("foo.module", namespace = "foo.namespace")
+          module("foo.module", namespace = "foo_namespace")
         }
-        body = "<content namespace=\"foo.namespace\"/>"
+        body = "<content namespace=\"foo_namespace\"/>"
       }
     }
     assertThat(pluginSet).hasEnabledPlugins("foo", "bar")
