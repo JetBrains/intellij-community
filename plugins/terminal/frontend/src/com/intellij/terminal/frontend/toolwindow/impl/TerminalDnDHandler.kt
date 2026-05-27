@@ -4,14 +4,13 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.dnd.DnDDropHandler
 import com.intellij.ide.dnd.DnDEvent
 import com.intellij.ide.dnd.DnDSupport
+import com.intellij.ide.dnd.FileCopyPasteUtil
 import com.intellij.ide.dnd.TransferableWrapper
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ex.ToolWindowEx
-import com.intellij.psi.PsiDirectory
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.util.ui.UIUtil
@@ -23,6 +22,8 @@ import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
  *
  * - Drop on the terminal view: inserts dropped file/directory paths into the active terminal
  * - Drop on the tab bar: creates a new terminal tab using the first item's directory as the working directory
+ *
+ * Supports drops from Project View (PSI elements) and native OS file managers
  */
 internal object TerminalDnDHandler {
   fun installHandler(window: ToolWindowEx, parentDisposable: Disposable) {
@@ -31,6 +32,7 @@ internal object TerminalDnDHandler {
     DnDSupport.createBuilder(window.decorator)
       .setDropHandler(handler)
       .setDisposableParent(parentDisposable)
+      .enableAsNativeTarget()
       .disableAsSource()
       .install()
   }
@@ -41,7 +43,7 @@ internal object TerminalDnDHandler {
     if (terminalView != null) {
       val files = getDroppedFiles(event).ifEmpty { return@DnDDropHandler }
 
-      val textToInsert = files.joinToString(" ") { it.virtualFile.path }
+      val textToInsert = files.joinToString(" ") { it.path }
       terminalView.sendText(textToInsert)
     }
     else {
@@ -52,7 +54,7 @@ internal object TerminalDnDHandler {
       val fusInfo = TerminalStartupFusInfo(TerminalOpeningWay.DND_FILE_TO_TOOLWINDOW)
       createTerminalTab(
         window.project,
-        workingDirectory = dir.virtualFile.path,
+        workingDirectory = dir.path,
         contentManager = contentManager,
         startupFusInfo = fusInfo
       )
@@ -68,15 +70,20 @@ internal object TerminalDnDHandler {
     return DataManager.getInstance().getDataContext(deepestComponent)
   }
 
-  private fun getDroppedFiles(event: DnDEvent): List<PsiFileSystemItem> {
-    val attached = event.getAttachedObject() as? TransferableWrapper ?: return emptyList()
-    return attached.getPsiElements()?.filterIsInstance<PsiFileSystemItem>() ?: emptyList()
+  private fun getDirectory(file: VirtualFile?): VirtualFile? {
+    if (file == null) return null
+    return if (file.isDirectory) file else file.parent
   }
+}
 
-  private fun getDirectory(item: PsiElement?): PsiDirectory? {
-    if (item is PsiFile) {
-      return item.getParent()
-    }
-    return item as? PsiDirectory
-  }
+internal fun getDroppedFiles(event: DnDEvent): List<VirtualFile> {
+  val attachedObject = event.getAttachedObject()
+
+  val psiFiles = (attachedObject as? TransferableWrapper)
+    ?.getPsiElements()
+    ?.filterIsInstance<PsiFileSystemItem>()
+    ?.map { it.virtualFile }
+    ?.takeIf { it.isNotEmpty() }
+
+  return psiFiles ?: FileCopyPasteUtil.getVirtualFileListFromAttachedObject(attachedObject)
 }
