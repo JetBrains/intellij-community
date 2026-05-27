@@ -25,6 +25,7 @@ import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.JBUI
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import java.awt.BorderLayout
 import java.awt.Component
@@ -319,9 +320,10 @@ private class ToolCallDetailPanel : JPanel(BorderLayout()), Disposable {
   }
 }
 
+private val jsonPrinter = Json { prettyPrint = true }
+
 private fun formatJson(json: JsonObject): String {
-  val prettyPrinter = kotlinx.serialization.json.Json { prettyPrint = true }
-  return prettyPrinter.encodeToString(JsonObject.serializer(), json)
+  return jsonPrinter.encodeToString(JsonObject.serializer(), json)
 }
 
 internal data class McpToolCallEntry(
