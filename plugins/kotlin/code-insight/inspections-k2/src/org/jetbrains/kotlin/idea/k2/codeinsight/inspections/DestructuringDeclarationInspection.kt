@@ -80,7 +80,7 @@ internal abstract class AbstractDestructureInspection<T: KtDeclaration>:  Kotlin
         collectUsagesToRemove(element)
 }
 
-internal class DestructureInspection : AbstractDestructureInspection<KtDeclaration>() {
+internal class DestructuringDeclarationInspection : AbstractDestructureInspection<KtDeclaration>() {
     override fun getProblemDescription(
         element: KtDeclaration, context: UsagesToRemove
     ): @InspectionMessage String =
