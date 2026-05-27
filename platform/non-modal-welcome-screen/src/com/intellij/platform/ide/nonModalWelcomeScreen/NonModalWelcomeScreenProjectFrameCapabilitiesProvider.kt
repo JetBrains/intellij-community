@@ -40,5 +40,5 @@ internal class NonModalWelcomeScreenProjectFrameCapabilitiesProvider : ProjectFr
 
 private val NON_MODAL_WELCOME_SCREEN_UI_POLICY = ProjectFrameUiPolicy(
   projectPaneToActivateId = WelcomeScreenProjectProvider.getProjectPaneToActivateId() ?: WelcomeScreenLeftPanel.ID,
-  startupToolWindowIdToActivate = ToolWindowId.PROJECT_VIEW,
+  startupToolWindowIdToActivate = WelcomeScreenProjectProvider.getStartupToolWindowIdToActivate() ?:ToolWindowId.PROJECT_VIEW,
 )
