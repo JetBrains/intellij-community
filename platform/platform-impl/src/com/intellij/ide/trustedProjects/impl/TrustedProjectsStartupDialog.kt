@@ -35,6 +35,7 @@ import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.plus
 import com.intellij.ui.util.width
+import com.intellij.util.SystemProperties
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -42,6 +43,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Point
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
@@ -79,7 +81,7 @@ class TrustedProjectStartupDialog private constructor(
   private val trustAll = propGraph.property(false)
   private var windowsDefenderCheckBox: Cell<JBCheckBox>? = null
   private var userChoice: OpenUntrustedProjectChoice = OpenUntrustedProjectChoice.CANCEL
-  private val myIsTitleComponent = SystemInfoRt.isMac || !Registry.`is`("ide.message.dialogs.as.swing.alert.show.title.bar", false)
+  private val myIsTitleComponent = SystemInfoRt.isMac || !Registry.`is`(DIALOGS_AS_SWING_ALERT_SHOW_TITLE_BAR_KEY, false)
   private var trustAction: Action? = null
 
   init {
@@ -249,8 +251,17 @@ class TrustedProjectStartupDialog private constructor(
 
   private fun getParentFolder(): Path? = projectPath.parent
 
-  // this is a workaround for ij-light which does not know what to do when user clicks the "cancel" button. (we don't know this either)
-  private fun hasCancelButton(): Boolean = Registry.`is`("trusted.project.dialog.has.cancel.button", true)
+  /* This is a workaround for ij-light which does not know what to do when user clicks the "cancel" button. (IJPL-245778)
+   * The problem is that ij-light can transform from Local IDE to RD client, but cannot do it backwards. Use case is the following:
+   * user opens remote project as a remote folder - they can see files, edit them, but there is no language support and the project is not
+   * imported. What they see is a plain folder and files accessed via eel. Then user decides to continue in the full-remdev mode. They
+   * click "enter smart mode" button. IDE installs backend to remote host, launches it, connects to it and then opens the project.
+   * Project open triggers import and external system shows this trusted project dialog. For now, we can only continue in "trusted" or
+   * "untrusted" mode. We cannot cancel this operation, because this would require to disconnect from the IDE and revert all the upgrades
+   * we've made so far (= uninstall RD-support plugin). This scenario is not supported, therefore we want to disable "cancel" option at all.
+   * User must choose how they want to proceed: in trusted or untrusted mode, but there is no way back to "light" mode.
+   */
+  private fun hasCancelButton(): Boolean = SystemProperties.getBooleanProperty(TRUSTED_PROJECT_DIALOG_HAS_CANCEL_BUTTON_KEY, true)
 
   override fun createCancelAction(): ActionListener? = if (hasCancelButton()) super.createCancelAction() else null
 
@@ -335,6 +346,10 @@ class TrustedProjectStartupDialog private constructor(
   )
 
   companion object {
+    @VisibleForTesting
+    const val TRUSTED_PROJECT_DIALOG_HAS_CANCEL_BUTTON_KEY: String = "trusted.project.dialog.has.cancel.button"
+
+    private const val DIALOGS_AS_SWING_ALERT_SHOW_TITLE_BAR_KEY: String = "ide.message.dialogs.as.swing.alert.show.title.bar"
 
     private var ourDialogChoice: DialogChoice? = null
 
