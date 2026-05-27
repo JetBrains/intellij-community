@@ -24,6 +24,14 @@ import kotlin.time.Duration.Companion.minutes
 
 fun Finder.ideFrame() = x(IdeaFrameUI::class.java) { byClass("IdeFrameImpl") }
 
+fun Finder.currentIdeFrame() = ideFrames().list().let { frames ->
+  when (frames.size) {
+    0 -> throw IllegalStateException("No IDE frames found")
+    1 -> frames[0]
+    else -> frames.firstOrNull { it.isFocused() } ?: throw IllegalStateException("No focused IDE frame found")
+  }
+}
+
 fun Finder.ideFrames() = xx(IdeaFrameUI::class.java) { byClass("IdeFrameImpl") }
 
 fun Finder.ideFrame(action: IdeaFrameUI.() -> Unit) {
