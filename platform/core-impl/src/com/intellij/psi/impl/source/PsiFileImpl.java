@@ -130,7 +130,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   protected PsiFile myOriginalFile;
   private final AbstractFileViewProvider myViewProvider;
-  private volatile FileTrees myTrees = FileTrees.noStub(null, this);
+  private volatile FileTrees myTrees;
   private volatile boolean myPossiblyInvalidated;
   protected final PsiManagerEx myManager;
   public static final Key<Boolean> BUILDING_STUB = new Key<>("Don't use stubs mark!");
@@ -145,6 +145,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   protected PsiFileImpl(@NotNull FileViewProvider provider ) {
     myManager = (PsiManagerEx)provider.getManager();
     myViewProvider = (AbstractFileViewProvider)provider;
+    myTrees = FileTrees.noStub(null, this, provider);
     myPsiLock = myViewProvider.getFilePsiLock();
   }
 
@@ -610,8 +611,24 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return PsiFileEx.super.getFileDocument();
   }
 
+  /**
+   * Drops stubs and installs {@code element} as the single source of truth for the tree structure of this file.
+   */
   public void setTreeElementPointer(@Nullable FileElement element) {
-    updateTrees(FileTrees.noStub(element, this));
+    FileTrees updatedTree;
+    if (element == null) {
+      updatedTree = myTrees.dropStubAndFileElement();
+    } else {
+      try {
+        updatedTree = myTrees.dropStubAndFileElement().withAst(createTreeElementPointer(element));
+      }
+      catch (StubTreeLoader.StubTreeAndIndexUnmatchCoarseException e) {
+        // this exception is not possible -- we are dropping stub prior to installing a new tree pointer,
+        // so no validation against stub and PSI actually happens
+        throw new RuntimeException(e);
+      }
+    }
+    updateTrees(updatedTree);
   }
 
   @Override
@@ -899,8 +916,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   protected PsiFileImpl cloneImpl(FileElement treeElementClone) {
     PsiFileImpl clone = (PsiFileImpl)super.clone();
     // we need to update trees without assertion about collapsed tree in a physical FileViewProvider, as clients usually clone PsiFile and only then set the cloned viewProvider there.
-    clone.updateTreesDirectly(FileTrees.noStub(treeElementClone, clone)); // should not use setTreeElement here because the cloned file still has VirtualFile (SCR17963)
+    clone.updateTreesDirectly(FileTrees.noStub(treeElementClone, clone, clone.getViewProvider())); // should not use setTreeElement here because the cloned file still has VirtualFile (SCR17963)
     treeElementClone.setPsi(clone);
+
     return clone;
   }
 
