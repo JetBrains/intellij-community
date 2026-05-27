@@ -7,8 +7,6 @@
 - name: lib/javaFX.jar
   modules:
   - name: intellij.javaFX.community
-  - name: intellij.platform.commercial.verifier
-    reason: <- intellij.javaFX.community
   contentModules:
   - name: intellij.javaFX.properties
 - name: lib/modules/intellij.javaFX.css.jar
@@ -17,6 +15,9 @@
 - name: lib/modules/intellij.javaFX.jar
   contentModules:
   - name: intellij.javaFX
+- name: lib/modules/intellij.platform.commercial.verifier.jar
+  contentModules:
+  - name: intellij.platform.commercial.verifier
 - name: lib/rt/sceneBuilderBridge.jar
   modules:
   - name: intellij.javaFX.sceneBuilder

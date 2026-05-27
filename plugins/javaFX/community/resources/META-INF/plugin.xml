@@ -21,6 +21,10 @@
     <module name="intellij.javaFX.css" loading="optional"/>
   </content>
 
+  <content>
+    <module name="intellij.platform.commercial.verifier" loading="optional"/>
+  </content>
+
   <extensions defaultExtensionNs="com.intellij">
     <dependencySupport coordinate="org.openjfx:javafx-base" kind="java" displayName="JavaFX"/>
   </extensions>
