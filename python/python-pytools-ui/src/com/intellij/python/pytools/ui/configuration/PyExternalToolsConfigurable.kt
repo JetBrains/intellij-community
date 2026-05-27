@@ -25,7 +25,7 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.supervisorScope
 import javax.swing.JComponent
 
-internal class PyExternalToolsConfigurable(private val project: Project) : BoundSearchableConfigurable(
+class PyExternalToolsConfigurable(private val project: Project) : BoundSearchableConfigurable(
   displayName = message("settings.external.tools.title"),
   helpTopic = "",
   _id = ID,
