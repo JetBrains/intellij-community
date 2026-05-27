@@ -1,7 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.options.OptPane.checkbox
+import com.intellij.codeInspection.options.OptPane.pane
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
@@ -42,6 +45,7 @@ import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtBlockStringTemplateEntry
 import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDeclarationWithReturnType
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
@@ -65,29 +69,32 @@ import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.addRemoveModifier.setModifierList
 import org.jetbrains.kotlin.psi.createDestructuringDeclarationByPattern
-import org.jetbrains.kotlin.psi.parameterVisitor
 import org.jetbrains.kotlin.psi.psiUtil.PsiChildRange
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
 
-internal abstract class AbstractDestructureInspection<T: KtDeclaration>:  KotlinApplicableInspectionBase.Simple<T, UsagesToRemove>() {
+internal class DestructuringDeclarationInspection(@JvmField var reportNonParameterCases: Boolean = false) : KotlinApplicableInspectionBase.Simple<KtDeclaration, UsagesToRemove>() {
     override fun createQuickFix(
-        element: T, context: UsagesToRemove
-    ): KotlinModCommandQuickFix<T> =
+        element: KtDeclaration, context: UsagesToRemove
+    ): KotlinModCommandQuickFix<KtDeclaration> =
         UseDestructureDeclarationFix(context)
 
-    override fun KaSession.prepareContext(element: T): UsagesToRemove? =
+    override fun KaSession.prepareContext(element: KtDeclaration): UsagesToRemove? =
         collectUsagesToRemove(element)
-}
 
-internal class DestructuringDeclarationInspection : AbstractDestructureInspection<KtDeclaration>() {
     override fun getProblemDescription(
         element: KtDeclaration, context: UsagesToRemove
-    ): @InspectionMessage String =
-        KotlinBundle.message("use.destructuring.declaration")
+    ): @InspectionMessage String = KotlinBundle.message("use.destructuring.declaration")
 
     override fun isApplicableByPsi(element: KtDeclaration): Boolean =
         element.getUsageScopeElement() != null
+
+    override fun getProblemHighlightType(element: KtDeclaration, context: UsagesToRemove): ProblemHighlightType =
+        if (reportNonParameterCases || element.parent is KtForExpression) {
+            ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+        } else {
+            ProblemHighlightType.INFORMATION
+        }
 
     override fun getApplicableRanges(element: KtDeclaration): List<TextRange> {
         val textRange = when (element) {
@@ -110,26 +117,18 @@ internal class DestructuringDeclarationInspection : AbstractDestructureInspectio
         override fun visitDeclaration(dcl: KtDeclaration) {
             visitTargetElement(dcl, holder, isOnTheFly)
         }
+
+        override fun visitParameter(parameter: KtParameter) {
+            visitTargetElement(parameter, holder, isOnTheFly)
+        }
     }
-}
 
-internal class DestructuringForParameterInspection : AbstractDestructureInspection<KtParameter>() {
-    override fun getProblemDescription(
-        element: KtParameter, context: UsagesToRemove
-    ): @InspectionMessage String =
-        KotlinBundle.message("use.destructuring.declaration.in.for.loop")
-
-    override fun isApplicableByPsi(element: KtParameter): Boolean =
-        element.parent is KtForExpression
-
-    override fun getApplicableRanges(element: KtParameter): List<TextRange> =
-        listOfNotNull(element.nameIdentifier?.textRange?.shiftLeft(element.textRange.startOffset))
-
-    override fun buildVisitor(
-        holder: ProblemsHolder, isOnTheFly: Boolean
-    ): KtVisitor<*, *> = parameterVisitor {
-        visitTargetElement(it, holder, isOnTheFly)
-    }
+    override fun getOptionsPane() = pane(
+        checkbox(
+            "reportNonParameterCases",
+            KotlinBundle.message("report.non.parameter.cases")
+        )
+    )
 }
 
 internal class UseDestructureDeclarationFix<T: KtDeclaration>(private val context: UsagesToRemove) : KotlinModCommandQuickFix<T>() {
@@ -221,7 +220,10 @@ internal class UseDestructureDeclarationFix<T: KtDeclaration>(private val contex
     }
 }
 
-internal data class UsagesToRemove(val data: List<UsageData>, val removeSelectorInLoopRange: Boolean)
+internal data class UsagesToRemove(
+    val data: List<UsageData>,
+    val removeSelectorInLoopRange: Boolean
+)
 
 internal data class SingleUsageData(val callableName: String?, val usageToReplace: KtExpression?, val declarationToDrop: KtDeclaration?)
 
@@ -278,8 +280,8 @@ private fun collectUsagesToRemove(declaration: KtDeclaration): UsagesToRemove? {
     }
 
     val type = when (declaration) {
-        is KtValVarKeywordOwner -> declaration.returnType
         is KtFunctionLiteral -> (declaration.expressionType as? KaFunctionType)?.parameterTypes?.singleOrNull()
+        is KtDeclarationWithReturnType -> declaration.returnType
         else -> return null
     }?.lowerBoundIfFlexible() as? KaClassType ?: return null
 
