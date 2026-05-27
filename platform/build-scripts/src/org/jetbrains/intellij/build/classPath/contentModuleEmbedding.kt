@@ -217,10 +217,15 @@ internal suspend fun embedContentModule(
     xIncludeResolver = xIncludeResolver,
     outputProvider = outputProvider,
     descriptorModifier = { descriptor ->
+      // `if (subRaw.`package` == null || subRaw.isSeparateJar) {` - separate-jar attribute matters only if the embedded descriptor has a package.
+      if (descriptor.getAttributeValue("package") == null) {
+        return@resolveAndEmbedContentModuleDescriptor
+      }
+
       val jpsModuleName = moduleName.substringBeforeLast('/')
       if (jpsModuleName == moduleName &&
           dependencyHelper.isPluginModulePackedIntoSeparateJar(
-            module = outputProvider.findRequiredModule(jpsModuleName.removeSuffix("._test")),
+            module = outputProvider.findRequiredModule(jpsModuleName),
             layout = pluginLayout,
             frontendModuleFilter = frontendModuleFilter,
           )) {
