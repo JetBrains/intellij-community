@@ -12,7 +12,6 @@ import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.block.ui.withLock
 import org.jetbrains.plugins.terminal.session.impl.TerminalClearBufferEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalCloseEvent
-import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkClickedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalInputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalResizeEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalWriteBytesEvent
@@ -98,7 +97,9 @@ private suspend fun handleInputEvent(event: TerminalInputEvent, services: JediTe
         }
       }
     }
-    is TerminalHyperlinkClickedEvent -> { } // handled by BackendTerminalHyperlinkFacade
+    else -> {
+      // Ignore unknown event
+    }
   }
 }
 

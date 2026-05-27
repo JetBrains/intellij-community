@@ -50,7 +50,7 @@ internal class TerminalHyperlinksSessionsManager(private val coroutineScope: Cor
     scope: CoroutineScope,
   ): BackendTerminalHyperlinksSession {
     val hyperlinksFacade = BackendTerminalHyperlinkFacade(
-      debugName = "HyperlinksFacade#${id.id}",
+      debugName = "Backend#${id.id}",
       project = project,
       coroutineScope = scope.childScope("BackendTerminalHyperlinkFacade"),
       filterContext = null  // TODO: Specify filter context

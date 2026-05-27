@@ -3,7 +3,6 @@ package com.intellij.terminal.frontend.view.impl
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
-import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.util.Key
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineName
@@ -25,8 +24,6 @@ import org.jetbrains.plugins.terminal.fus.secondLargest
 import org.jetbrains.plugins.terminal.fus.totalDuration
 import org.jetbrains.plugins.terminal.session.TerminalGridSize
 import org.jetbrains.plugins.terminal.session.impl.TerminalClearBufferEvent
-import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkClickedEvent
-import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkId
 import org.jetbrains.plugins.terminal.session.impl.TerminalInputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalResizeEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
@@ -187,10 +184,6 @@ internal class TerminalInput(
     terminalSessionDeferred.getNow() ?: return
     val event = TerminalResizeEvent(newSize)
     sendEvent(InputEventSubmission(event))
-  }
-
-  fun sendLinkClicked(isInAlternateBuffer: Boolean, hyperlinkId: TerminalHyperlinkId, event: EditorMouseEvent) {
-    sendEvent(InputEventSubmission(TerminalHyperlinkClickedEvent(isInAlternateBuffer, hyperlinkId, event)))
   }
 
   private fun sendEvent(event: InputEventSubmission) {
