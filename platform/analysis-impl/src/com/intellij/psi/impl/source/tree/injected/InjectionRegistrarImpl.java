@@ -310,7 +310,7 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
     String fileName = PathUtil.makeFileName(myHostVirtualFile.getName(), fileExtension);
 
     ASTNode[] parsedNodes =
-      PsiVersioningService.inVersionedEnvironment(myHostPsiFile, () ->
+      PsiVersioningService.createVersionedPsiElements(myHostPsiFile, () ->
         parseFile(myLanguage, forcedLanguage, documentWindow, myHostVirtualFile, myHostDocument, myHostPsiFile, myProject,
                   documentWindow.getText(),
                   placeInfos, decodedChars, fileName, myDocumentManagerBase));
@@ -690,9 +690,9 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
 
     assert documentManager.isUncommited(hostDocument);
     String fileName = ((VirtualFileWindowImpl)oldInjectedVirtualFile).getName();
-    ASTNode[] parsedNodes = PsiVersioningService.inVersionedEnvironment(oldNode, () -> parseFile(language, language, oldDocumentWindow,
-                                                                                                               hostVirtualFile, hostDocument, hostPsiFile, project, newDocumentText, placeInfos, chars,
-                                                                                                               fileName, documentManager));
+    ASTNode[] parsedNodes = PsiVersioningService.createVersionedPsiElements(oldNode, () -> parseFile(language, language, oldDocumentWindow,
+                                                                                                     hostVirtualFile, hostDocument, hostPsiFile, project, newDocumentText, placeInfos, chars,
+                                                                                                     fileName, documentManager));
     List<PsiFile> oldFiles = ((AbstractFileViewProvider)oldInjectedPsiViewProvider).getCachedPsiFiles();
     synchronized (InjectedLanguageManagerImpl.ourInjectionPsiLock) {
       DiffLog[] diffLogs = new DiffLog[parsedNodes.length];

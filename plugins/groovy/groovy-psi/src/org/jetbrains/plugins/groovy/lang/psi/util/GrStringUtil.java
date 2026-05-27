@@ -499,7 +499,7 @@ public final class GrStringUtil {
     final GrExpression expression = injection.getExpression();
     LOG.assertTrue(expression != null);
     final GroovyPsiElementFactory instance = GroovyPsiElementFactory.getInstance(injection.getProject());
-    final GrClosableBlock closure = PsiVersioningService.inVersionedEnvironment(expression.getNode(), () -> instance.createClosureFromText("{foo}"));
+    final GrClosableBlock closure = PsiVersioningService.createVersionedPsiElements(expression.getNode(), () -> instance.createClosureFromText("{foo}"));
     closure.getNode().replaceChild(closure.getStatements()[0].getNode(), expression.getNode());
     injection.getNode().addChild(closure.getNode());
     CodeEditUtil.setNodeGeneratedRecursively(expression.getNode(), true);

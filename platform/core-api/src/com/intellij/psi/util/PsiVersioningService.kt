@@ -12,36 +12,36 @@ interface PsiVersioningService {
   companion object {
 
     /**
-     * Allows marking PSI elements that are created inside [action] as versioned according to [node].
+     * Allows marking PSI elements that are created inside [action] as versioned according to the versioning state of [contextNode].
      *
      * A typical use-case for this function is the following:
      * ```kotlin
      * fun addWhitespace(element: PsiElement) {
-     *   val whitespaceElement: PsiElement = PsiVersioningService.inVersionedEnvironment(element.node) {
-     *     createWhitespace()
+     *   val functionElement: PsiElement = PsiVersioningService.inVersionedEnvironment(element.node) {
+     *     SomePsiFactory.createSyntheticFunction()
      *   }
-     *   element.add(whitespaceElement)
+     *   functionElement.add(element)
      * }
      * ```
-     * Without [inVersionedEnvironment], we could have a violation of versioned PSI invariants:
-     * the created `whitespace` could be versioned, and `element` could be non-versioned,
-     * where the Platform disallows adding non-versioned trees to versioned ones.
+     * Without [createVersionedPsiElements], we could have a violation of versioned PSI invariants:
+     * the created `functionElement` could be non-versioned, and `element` could be versioned,
+     * where the Platform disallows adding versioned elements to non-versioned trees.
      *
-     * With [inVersionedEnvironment], the created `whitespaceElement` will be compatible with [node], and it can be safely attached to `element`.
+     * With [createVersionedPsiElements], the created `whitespaceElement` will be compatible with [contextNode], and it can be safely attached to `element`.
      */
     @JvmStatic
-    fun <T> inVersionedEnvironment(node: ASTNode, action: () -> T): T = getInstance().runInVersionedEnvironment(node, action)
+    fun <T> createVersionedPsiElements(contextNode: ASTNode, action: () -> T): T = getInstance().runInVersionedEnvironment(contextNode, action)
 
     /**
-     * Overload of [inVersionedEnvironment] with [PsiElement] instead of [ASTNode]
+     * Overload of [createVersionedPsiElements] with [PsiElement] instead of [ASTNode]
      */
     @JvmStatic
-    fun <T> inVersionedEnvironment(element: PsiElement, action: () -> T): T {
-      val node = element.node
+    fun <T> createVersionedPsiElements(contextElement: PsiElement, action: () -> T): T {
+      val node = contextElement.node
       if (node == null) {
         return action()
       }
-      return getInstance().runInVersionedEnvironment(element.node, action)
+      return getInstance().runInVersionedEnvironment(contextElement.node, action)
     }
 
     /**

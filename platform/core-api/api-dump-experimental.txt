@@ -452,13 +452,13 @@ f:com.intellij.psi.util.PsiTreeUtilKt
 - *sf:walkUp(com.intellij.psi.PsiElement,I,com.intellij.psi.PsiElement):java.util.Iterator
 *:com.intellij.psi.util.PsiVersioningService
 - *sf:Companion:com.intellij.psi.util.PsiVersioningService$Companion
-- s:freezePsiVersion(kotlin.jvm.functions.Function0):java.lang.Object
-- s:inVersionedEnvironment(com.intellij.lang.ASTNode,kotlin.jvm.functions.Function0):java.lang.Object
-- s:inVersionedEnvironment(com.intellij.psi.PsiElement,kotlin.jvm.functions.Function0):java.lang.Object
+- *s:createVersionedPsiElements(com.intellij.lang.ASTNode,kotlin.jvm.functions.Function0):java.lang.Object
+- *s:createVersionedPsiElements(com.intellij.psi.PsiElement,kotlin.jvm.functions.Function0):java.lang.Object
+- *s:freezePsiVersion(kotlin.jvm.functions.Function0):java.lang.Object
 *f:com.intellij.psi.util.PsiVersioningService$Companion
+- f:createVersionedPsiElements(com.intellij.lang.ASTNode,kotlin.jvm.functions.Function0):java.lang.Object
+- f:createVersionedPsiElements(com.intellij.psi.PsiElement,kotlin.jvm.functions.Function0):java.lang.Object
 - f:freezePsiVersion(kotlin.jvm.functions.Function0):java.lang.Object
-- f:inVersionedEnvironment(com.intellij.lang.ASTNode,kotlin.jvm.functions.Function0):java.lang.Object
-- f:inVersionedEnvironment(com.intellij.psi.PsiElement,kotlin.jvm.functions.Function0):java.lang.Object
 f:com.intellij.util.CoroutinesKt
 - *sf:awaitCancellationAndInvoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2):V
 - *bs:awaitCancellationAndInvoke$default(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2,I,java.lang.Object):V

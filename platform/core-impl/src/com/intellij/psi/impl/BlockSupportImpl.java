@@ -277,7 +277,7 @@ public final class BlockSupportImpl extends BlockSupport {
                                                       viewProvider.getModificationStamp());
     lightFile.setOriginalFile(virtualFile);
 
-    FileViewProvider providerCopy = PsiVersioningService.inVersionedEnvironment(oldFileNode, () -> viewProvider.createCopy(lightFile));
+    FileViewProvider providerCopy = PsiVersioningService.createVersionedPsiElements(oldFileNode, () -> viewProvider.createCopy(lightFile));
     if (providerCopy.isEventSystemEnabled()) {
       throw new AssertionError("Copied view provider must be non-physical for reparse to deliver correct events: " + viewProvider);
     }
@@ -287,7 +287,7 @@ public final class BlockSupportImpl extends BlockSupport {
 
     newFile.setOriginalFile(fileImpl);
 
-    ASTNode newFileElement = PsiVersioningService.inVersionedEnvironment(oldFileNode, () -> newFile.getNode());
+    ASTNode newFileElement = PsiVersioningService.createVersionedPsiElements(oldFileNode, () -> newFile.getNode());
     if (lastCommittedText.length() != oldFileNode.getTextLength()) {
       throw new IncorrectOperationException(viewProvider.toString());
     }
