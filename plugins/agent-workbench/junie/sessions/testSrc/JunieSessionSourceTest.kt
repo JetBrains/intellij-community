@@ -2,12 +2,15 @@
 package com.intellij.agent.workbench.junie.sessions
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.session.AgentSessionCost
+import com.intellij.agent.workbench.common.session.AgentSessionCostKind
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
+import java.math.BigDecimal
 import java.util.concurrent.TimeUnit
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
@@ -249,6 +252,71 @@ class JunieSessionSourceTest {
     }
   }
 
+  @Test
+  fun `load thread costs reads requested session root events`() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-cost")
+      val index = writeIndex(
+        sessionIndexLine(
+          sessionId = "session-cost",
+          projectDir = projectDir,
+          taskName = "Cost thread",
+          updatedAt = 3000L,
+        ),
+      )
+      writeJunieEvents(
+        sessionsRoot = index.parent,
+        sessionId = "session-cost",
+        sessionA2uxLlmEvent(model = "gpt-4.1-mini-2025-04-14", cost = "0.10"),
+        sessionA2uxLlmEvent(model = "gemini-3-flash-preview", cost = "0.25"),
+      )
+      val source = JunieSessionSource(sessionIndexPathProvider = { index })
+
+      val threads = source.listThreadsFromClosedProject(projectDir.toString())
+      val thread = threads.single()
+      assertThat(thread.cost).isNull()
+
+      val loadedCosts = source.loadThreadCosts(projectDir.toString(), listOf(thread))
+
+      assertThat(loadedCosts).containsEntry(
+        "session-cost",
+        AgentSessionCost(
+          amountUsd = BigDecimal("0.35"),
+          kind = AgentSessionCostKind.EXACT,
+        ),
+      )
+    }
+  }
+
+  @Test
+  fun `load thread costs works for archived threads`() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-archived-cost")
+      val index = writeIndex(
+        sessionIndexLine(
+          sessionId = "session-archived-cost",
+          projectDir = projectDir,
+          taskName = "Archived cost",
+          updatedAt = 4000L,
+          archived = true,
+        ),
+      )
+      writeJunieEvents(
+        sessionsRoot = index.parent,
+        sessionId = "session-archived-cost",
+        sessionA2uxLlmEvent(model = "gemini-3-flash-preview", cost = "1.25"),
+      )
+      val source = JunieSessionSource(sessionIndexPathProvider = { index })
+
+      val archivedThreads = source.listArchivedThreadsFromClosedProject(projectDir.toString())
+      val loadedCosts = source.loadThreadCosts(projectDir.toString(), archivedThreads)
+
+      assertThat(archivedThreads.single().cost).isNull()
+      assertThat(loadedCosts["session-archived-cost"]?.amountUsd).isEqualByComparingTo("1.25")
+      assertThat(loadedCosts["session-archived-cost"]?.kind).isEqualTo(AgentSessionCostKind.EXACT)
+    }
+  }
+
   private fun writeIndex(vararg lines: String): Path {
     val index = tempDir.resolve(".junie").resolve("sessions").resolve("index.jsonl")
     Files.createDirectories(index.parent)
@@ -266,6 +334,19 @@ class JunieSessionSourceTest {
 
   private fun indexLineCount(index: Path): Int {
     return Files.readString(index).lineSequence().count { it.isNotBlank() }
+  }
+
+  private fun writeJunieEvents(sessionsRoot: Path, sessionId: String, vararg lines: String) {
+    val sessionDir = sessionsRoot.resolve(sessionId)
+    Files.createDirectories(sessionDir)
+    Files.writeString(sessionDir.resolve("events.jsonl"), lines.joinToString(separator = "\n", postfix = "\n"))
+  }
+
+  private fun sessionA2uxLlmEvent(model: String, cost: String?): String {
+    val costField = cost?.let { "\"cost\":$it," } ?: ""
+    return """
+      {"kind":"SessionA2uxEvent","event":{"agentEvent":{"kind":"LlmResponseMetadataEvent","modelUsage":[{"model":"$model",${costField}"inputTokens":1,"cacheInputTokens":0,"cacheCreateTokens":0,"outputTokens":1}]}}}
+    """.trimIndent()
   }
 }
 

@@ -162,6 +162,6 @@ private fun readJsonBigDecimalOrNull(parser: JsonParser): BigDecimal? {
   }
 }
 
-private fun defaultJunieSessionsRootPath(): Path {
+internal fun defaultJunieSessionsRootPath(): Path {
   return Path.of(System.getProperty("user.home") ?: ".", ".junie", "sessions")
 }
