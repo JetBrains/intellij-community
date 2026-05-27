@@ -2,9 +2,48 @@
 package com.jetbrains.python.inspections;
 
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 public class PyDisjointBaseInspectionTest extends PyInspectionTestCase {
+  
+  // PY-89915
+  public void testFunction() {
+    doTestByText("""
+                   from typing_extensions import disjoint_base
+                   
+                   <warning descr="'disjoint_base' cannot be used on a function">@disjoint_base</warning>
+                   def foo():
+                       pass
+                   """);
+  }
+  
+  // PY-89915
+  public void testTypedDict() {
+    doTestByText("""
+                   from typing_extensions import disjoint_base
+                   from typing import TypedDict
+                   
+                   <warning descr="'disjoint_base' cannot be used on a TypedDict">@disjoint_base</warning>
+                   class Wrong(TypedDict):
+                       pass
+                   
+                   
+                   """);
+  }
+
+  // PY-89915
+  public void testProtocol() {
+    doTestByText("""
+                   from typing_extensions import disjoint_base
+                   from typing import Protocol
+                   
+                   <warning descr="'disjoint_base' cannot be used on a protocol">@disjoint_base</warning>
+                   class Wrong(Protocol):
+                       pass
+                   
+                   """);
+  }
 
   // PY-84827
   public void testExplicitlySlottedBasesConflict() {
@@ -93,7 +132,7 @@ public class PyDisjointBaseInspectionTest extends PyInspectionTestCase {
 
   // PY-84827
   public void testDisjointBaseDecoratorHierarchyDoesNotConflict() {
-    doTestByText("""
+    runWithLanguageLevel(LanguageLevel.PYTHON315, () -> doTestByText("""
                    from typing import disjoint_base
 
                    @disjoint_base
@@ -104,7 +143,7 @@ public class PyDisjointBaseInspectionTest extends PyInspectionTestCase {
                        pass
 
                    class C(A, B):
-                       pass""");
+                       pass"""));
   }
 
   // PY-84827

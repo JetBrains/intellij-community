@@ -14,6 +14,7 @@ import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.typing.PyTypedDictTypeProvider
 import com.jetbrains.python.codeInsight.typing.PyTypedDictTypeProvider.Helper.TypedDictFieldQualifier
+import com.jetbrains.python.codeInsight.typing.PyTypedDictTypeProvider.Helper.isTypingTypedDictInheritor
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.psi.LanguageLevel
@@ -123,7 +124,7 @@ class PyTypedDictInspection : PyInspection() {
     }
 
     override fun visitPyArgumentList(node: PyArgumentList) {
-      if (node.parent is PyClass && PyTypedDictTypeProvider.Helper.isTypingTypedDictInheritor(node.parent as PyClass, myTypeEvalContext)) {
+      if (node.parent is PyClass && (node.parent as PyClass).isTypingTypedDictInheritor(myTypeEvalContext)) {
         for (argument in node.arguments) {
           val type = myTypeEvalContext.getType(argument)
           if (!isValidSuperclass(argument, type)) {
@@ -197,7 +198,7 @@ class PyTypedDictInspection : PyInspection() {
        PyTypingTypeProvider.GENERIC == (myTypeEvalContext.getType(argument.operand) as? PyClassLikeType)?.classQName)
 
     override fun visitPyClass(node: PyClass) {
-      if (!PyTypedDictTypeProvider.Helper.isTypingTypedDictInheritor(node, myTypeEvalContext)) return
+      if (!node.isTypingTypedDictInheritor(myTypeEvalContext)) return
 
       if (node.metaClassExpression != null) {
         registerProblem((node.metaClassExpression as PyExpression).parent,
@@ -578,7 +579,7 @@ class PyTypedDictInspection : PyInspection() {
             }
           }
           else {
-            if (!PyTypedDictTypeProvider.Helper.isTypingTypedDictInheritor(classParent, myTypeEvalContext)) {
+            if (!classParent.isTypingTypedDictInheritor(myTypeEvalContext)) {
               registerProblem(node, PyPsiBundle.message("INSP.typeddict.qualifiers.cannot.be.used.outside.typeddict.definition",
                                                         qualifierName))
             }

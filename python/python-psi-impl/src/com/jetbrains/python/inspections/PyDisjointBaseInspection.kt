@@ -4,9 +4,17 @@ package com.jetbrains.python.inspections
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.util.parentOfType
 import com.jetbrains.python.PyPsiBundle
+import com.jetbrains.python.codeInsight.typing.PyTypedDictTypeProvider.Helper.isTypingTypedDictInheritor
+import com.jetbrains.python.codeInsight.typing.isProtocol
 import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyDecoratable
+import com.jetbrains.python.psi.PyDecorator
 import com.jetbrains.python.psi.PyDisjointBaseUtil
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyKnownDecorator
+import com.jetbrains.python.psi.PyKnownDecoratorUtil
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.TypeEvalContext
 
@@ -45,6 +53,29 @@ class PyDisjointBaseInspection : PyInspection() {
           }
         }
       }
+    }
+
+    override fun visitPyDecorator(node: PyDecorator) {
+      val decorator = PyKnownDecoratorUtil.asKnownDecorators(node, myTypeEvalContext)
+      if (decorator.contains(PyKnownDecorator.DISJOINT_BASE) || decorator.contains(PyKnownDecorator.DISJOINT_BASE_EXT)) {
+        val parent = node.parentOfType<PyDecoratable>()
+        if (parent is PyFunction) {
+          registerProblem(node, PyPsiBundle.message("INSP.disjoint.base.on.function"))
+          return
+        }
+        if (parent is PyClass) {
+          if (parent.isProtocol(myTypeEvalContext)) {
+            registerProblem(node, PyPsiBundle.message("INSP.disjoint.base.on.protocol"))
+            return
+          }
+
+          if (parent.isTypingTypedDictInheritor(myTypeEvalContext)) {
+            registerProblem(node, PyPsiBundle.message("INSP.disjoint.base.on.typed.dict"))
+            return
+          }
+        }
+      }
+      super.visitPyDecorator(node)
     }
   }
 }

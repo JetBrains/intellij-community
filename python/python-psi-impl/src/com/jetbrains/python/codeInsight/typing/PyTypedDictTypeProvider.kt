@@ -85,12 +85,12 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
     }
 
     @JvmStatic
-    fun isTypingTypedDictInheritor(cls: PyClass, context: TypeEvalContext): Boolean {
+    fun PyClass.isTypingTypedDictInheritor(context: TypeEvalContext): Boolean {
       val isTypingTD = { type: PyClassLikeType? ->
         type is PyTypedDictType || nameIsTypedDict(type?.classQName)
       }
-      if (checkIfClassIsDirectTypedDictInheritor(cls, context)) return true
-      val ancestors = cls.getAncestorTypes(context)
+      if (checkIfClassIsDirectTypedDictInheritor(this, context)) return true
+      val ancestors = getAncestorTypes(context)
 
       return ancestors.any(isTypingTD)
     }
@@ -277,7 +277,7 @@ private fun getTypedDictTypeForClass(
   isDefinition: Boolean,
   context: TypeEvalContext,
 ): PyTypedDictType? {
-  if (!isTypingTypedDictInheritor(cls, context)) return null
+  if (!cls.isTypingTypedDictInheritor(context)) return null
 
   var inheritedExtraItemsType: PyType? = null
   var inheritedClosedStatus: Boolean? = null
