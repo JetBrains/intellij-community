@@ -7,7 +7,7 @@ import com.intellij.driver.sdk.singleProject
 import com.intellij.driver.sdk.waitFor
 import kotlin.time.Duration.Companion.minutes
 
-@Remote("org.jetbrains.qodana.inspectionKts.tests.ProfileCheckerKt", plugin = "org.intellij.qodana")
+@Remote("org.jetbrains.qodana.inspectionKts.tests.ProfileCheckerKt", plugin = "org.intellij.qodana/intellij.qodana.inspectionKts")
 interface InspectionProfileChecker {
   fun isInspectionPresentInProfile(project: Project, inspectionId: String): Boolean
 }
