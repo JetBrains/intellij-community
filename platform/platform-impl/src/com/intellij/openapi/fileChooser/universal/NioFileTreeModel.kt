@@ -184,6 +184,7 @@ class NioFileTreeModel(
       if (!descriptor.isShowHiddenFiles) {
         if (isHiddenFromAttrs(entry)) return false
       }
+      if (!descriptor.isChooseFiles && !entry.isDirectory) return false
       return true
     }
 
