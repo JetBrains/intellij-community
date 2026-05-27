@@ -9,6 +9,7 @@ import com.intellij.ide.todo.nodes.TodoItemNode;
 import com.intellij.ide.todo.nodes.TodoRemoteFileNode;
 import com.intellij.ide.todo.nodes.TodoRemoteItemNode;
 import com.intellij.ide.todo.nodes.TodoTreeHelper;
+import com.intellij.ide.todo.rpc.TodoFileResult;
 import com.intellij.ide.todo.rpc.TodoResult;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -61,6 +62,7 @@ import org.jetbrains.concurrency.Promises;
 import javax.swing.JTree;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -99,6 +101,7 @@ public abstract class TodoTreeBuilder implements Disposable {
   protected final Map<VirtualFile, EditorHighlighter> myFile2Highlighter = ContainerUtil.createConcurrentSoftValueMap();
 
   private final Map<VirtualFile, List<TodoResult>> remoteTodosCache = new ConcurrentHashMap<>();
+  private final Map<VirtualFile, TodoFileResult> remoteTodoFilesCache = new ConcurrentHashMap<>();
 
   private final @NotNull JTree myTree;
   /**
@@ -401,6 +404,7 @@ public abstract class TodoTreeBuilder implements Disposable {
     myDirtyFileSet.clear();
     myFile2Highlighter.clear();
     remoteTodosCache.clear();
+    remoteTodoFilesCache.clear();
   }
 
   protected final boolean hasDirtyFiles() {
@@ -479,6 +483,22 @@ public abstract class TodoTreeBuilder implements Disposable {
   @ApiStatus.Internal
   public void clearRemoteTodosCache(@NotNull VirtualFile file) {
     remoteTodosCache.remove(file);
+  }
+
+  @ApiStatus.Internal
+  public @Nullable TodoFileResult getCachedRemoteTodoFile(@NotNull VirtualFile file) {
+    return remoteTodoFilesCache.get(file);
+  }
+
+  @ApiStatus.Internal
+  public @NotNull Collection<TodoFileResult> getCachedRemoteTodoFiles() {
+    return remoteTodoFilesCache.values();
+  }
+
+  @ApiStatus.Internal
+  public void cacheRemoteTodoFile(@NotNull VirtualFile file, @NotNull TodoFileResult result) {
+    remoteTodoFilesCache.put(file, result);
+    remoteTodosCache.put(file, result.getTodos());
   }
 
   /**
