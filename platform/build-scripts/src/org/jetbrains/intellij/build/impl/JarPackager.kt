@@ -8,7 +8,6 @@ import com.dynatrace.hash4j.hashing.HashStream64
 import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.util.PathUtilRt
 import com.intellij.util.io.URLUtil
-import com.intellij.util.io.sanitizeFileName
 import com.jetbrains.util.filetype.FileType
 import com.jetbrains.util.filetype.FileTypeDetector.DetectFileType
 import io.opentelemetry.api.common.AttributeKey
@@ -28,7 +27,6 @@ import org.jetbrains.intellij.build.InMemoryContentSource
 import org.jetbrains.intellij.build.JarPackagerDependencyHelper
 import org.jetbrains.intellij.build.LazySource
 import org.jetbrains.intellij.build.MAVEN_REPO
-import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.NativeFileHandler
 import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
 import org.jetbrains.intellij.build.SignNativeFileMode
@@ -73,8 +71,6 @@ import java.nio.file.PathMatcher
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.TreeMap
 import kotlin.io.path.invariantSeparatorsPathString
-
-private val JAR_NAME_WITH_VERSION_PATTERN = "(.*)-\\d+(?:\\.\\d+)*\\.jar*".toPattern()
 
 private val libsUsedInJps = setOf(
   "netty-codec-protobuf",
@@ -125,7 +121,7 @@ class JarPackager private constructor(
   private val assets = LinkedHashMap<Path, AssetDescriptor>()
 
   private val libToMetadata = HashMap<JpsLibrary, ProjectLibraryData>()
-  private val copiedFiles = HashMap<CopiedForKey, CopiedFor>()
+  private val copiedFiles = LibraryFileCopyTracker()
 
   private val helper = (context as BuildContextImpl).jarPackagerDependencyHelper
 
@@ -416,7 +412,7 @@ class JarPackager private constructor(
     item: ModuleItem,
     layout: BaseLayout,
     module: JpsModule,
-    copiedFiles: MutableMap<CopiedForKey, CopiedFor>,
+    copiedFiles: LibraryFileCopyTracker,
     asset: Lazy<AssetDescriptor>,
     withTests: Boolean,
   ) {
@@ -482,8 +478,15 @@ class JarPackager private constructor(
           filesToSourceWithMapping(asset = asset, files = files, library = library, relativeOutputFile = relativeOutputFile, projectLibraryData = projectLibraryData)
         }
 
+        fun addSeparateLibrary(fileName: String, file: Path) {
+          val relativeOutputFile = removeVersionFromJar(fileName)
+          if (copiedFiles.markLibraryFileForCopy(file = file, targetFile = outDir.resolve(relativeOutputFile))) {
+            addLibrary(relativeOutputFile = relativeOutputFile, files = listOf(file))
+          }
+        }
+
         val targetFile = outDir.resolve(item.relativeOutputFile)
-        val files = getLibraryFiles(library = library, copiedFiles = copiedFiles, targetFile = targetFile, outputProvider = context.outputProvider)
+        val files = copiedFiles.getLibraryFiles(library = library, targetFile = targetFile, outputProvider = context.outputProvider)
         if (layout is PluginLayout && item.relativeOutputFile == layout.getMainJarName()) {
           if (files.size > 1) {
             for (i in (files.size - 1) downTo 0) {
@@ -491,7 +494,7 @@ class JarPackager private constructor(
               val fileName = file.fileName.toString()
               if (fileName.endsWith("-rt.jar") || fileName.startsWith("maven-")) {
                 files.removeAt(i)
-                addLibrary(relativeOutputFile = removeVersionFromJar(fileName), files = listOf(file))
+                addSeparateLibrary(fileName = fileName, file = file)
               }
             }
           }
@@ -502,9 +505,9 @@ class JarPackager private constructor(
           for (i in (files.size - 1) downTo 0) {
             val file = files[i]
             val fileName = file.fileName.toString()
-            if (isSeparateJar(fileName)) {
+            if (isSeparateLibraryJar(fileName)) {
               files.removeAt(i)
-              addLibrary(relativeOutputFile = removeVersionFromJar(fileName), files = listOf(file))
+              addSeparateLibrary(fileName = fileName, file = file)
             }
           }
 
@@ -588,7 +591,7 @@ class JarPackager private constructor(
       }
 
       val asset = getJarAsset(targetFile, relativePath)
-      val files = getLibraryFiles(library = library, copiedFiles = copiedFiles, targetFile = targetFile, outputProvider = context.outputProvider)
+      val files = copiedFiles.getLibraryFiles(library = library, targetFile = targetFile, outputProvider = context.outputProvider)
       filesToSourceWithMapping(asset = asset, files = files, library = library, relativeOutputFile = relativePath, projectLibraryData = null)
     }
   }
@@ -625,7 +628,7 @@ class JarPackager private constructor(
   private fun computeProjectLibrariesSources(
     outDir: Path,
     layout: BaseLayout,
-    copiedFiles: MutableMap<CopiedForKey, CopiedFor>,
+    copiedFiles: LibraryFileCopyTracker,
   ): MutableMap<JpsLibrary, List<Path>> {
     if (layout.includedProjectLibraries.isEmpty()) {
       return LinkedHashMap()
@@ -651,7 +654,7 @@ class JarPackager private constructor(
 
       val outPath = libraryData.outPath
       if (packMode == LibraryPackMode.MERGED && outPath == null) {
-        toMerge.put(library, getLibraryFiles(library = library, copiedFiles = copiedFiles, targetFile = null, outputProvider = outputProvider))
+        toMerge.put(library, copiedFiles.getLibraryFiles(library = library, targetFile = null, outputProvider = outputProvider))
         continue
       }
 
@@ -660,7 +663,7 @@ class JarPackager private constructor(
         if (outPath.endsWith(".jar")) {
           val targetFile = outDir.resolve(outPath)
           val asset = getJarAsset(targetFile, outPath)
-          val files = getLibraryFiles(library, copiedFiles, targetFile, outputProvider = outputProvider)
+          val files = copiedFiles.getLibraryFiles(library = library, targetFile = targetFile, outputProvider = outputProvider)
           filesToSourceWithMapping(asset, files, library, outPath, libraryData)
           continue
         }
@@ -679,7 +682,7 @@ class JarPackager private constructor(
         addLibrary(
           targetFile = targetFile,
           relativeOutputFile = relativeOutputFile,
-          files = getLibraryFiles(library = library, copiedFiles = copiedFiles, targetFile = targetFile, outputProvider = outputProvider)
+          files = copiedFiles.getLibraryFiles(library = library, targetFile = targetFile, outputProvider = outputProvider)
         )
       }
       else {
@@ -781,19 +784,6 @@ private fun toCanonicalReportPath(file: Path, buildPaths: BuildPaths): String {
 
 private val bazelMavenHome = USER_HOME.resolve(".m2/repository-do-not-use-maven-repository-with-bazel")
 
-@Suppress("SpellCheckingInspection")
-private val agentLibrariesNotForcedInSeparateJars = listOf(
-  "ideformer",
-  "code-agents",
-  "code-prompt-agents"
-)
-
-private fun isSeparateJar(fileName: String): Boolean {
-  return fileName.endsWith("-rt.jar") ||
-         (fileName.contains("-agent") && agentLibrariesNotForcedInSeparateJars.none { fileName.contains(it) }) ||
-         fileName.startsWith("maven-")
-}
-
 private data class AssetDescriptor(
   @JvmField val isDir: Boolean,
   @JvmField val file: Path,
@@ -809,27 +799,6 @@ private data class AssetDescriptor(
   @JvmField
   val includedModules = Reference2ObjectLinkedOpenHashMap<ModuleItem, MutableList<Source>>()
 }
-
-private fun removeVersionFromJar(fileName: String): String {
-  val matcher = JAR_NAME_WITH_VERSION_PATTERN.matcher(fileName)
-  return if (matcher.matches()) "${matcher.group(1)}.jar" else fileName
-}
-
-private fun getLibraryFiles(library: JpsLibrary, copiedFiles: MutableMap<CopiedForKey, CopiedFor>, targetFile: Path?, outputProvider: ModuleOutputProvider): MutableList<Path> {
-  val files = getLibraryRoots(library, outputProvider).toMutableList()
-  val iterator = files.iterator()
-  while (iterator.hasNext()) {
-    val file = iterator.next()
-    // allow duplication if packed into the same target file
-    val alreadyCopiedFor = copiedFiles.putIfAbsent(CopiedForKey(file, targetFile), CopiedFor(library, targetFile)) ?: continue
-    if (alreadyCopiedFor.targetFile == targetFile) {
-      iterator.remove()
-    }
-  }
-  return files
-}
-
-private fun nameToJarFileName(name: String): String = sanitizeFileName(name.lowercase(), replacement = "-") { it == ' ' } + ".jar"
 
 @Suppress("SpellCheckingInspection", "RedundantSuppression")
 private val excludedFromMergeLibs = setOf(
@@ -869,11 +838,6 @@ internal fun createModuleSourcesNamesFilter(excludes: List<PathMatcher>): (Strin
     excludes.none { it.matches(p) }
   }
 }
-
-// null targetFile means main jar
-private data class CopiedForKey(@JvmField val file: Path, @JvmField val targetFile: Path?)
-
-private data class CopiedFor(@JvmField val library: JpsLibrary, @JvmField val targetFile: Path?)
 
 private suspend fun buildJars(
   assets: Collection<AssetDescriptor>,
