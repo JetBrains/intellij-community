@@ -1,14 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("SpellCheckingInspection")
+@file:Suppress("SpellCheckingInspection", "FunctionName", "ClassName")
+@file:OptIn(LowLevelLocalMachineAccess::class)
 
 package com.intellij.openapi.vfs.impl.local.windows
 
-import com.intellij.openapi.vfs.impl.local.windows.WindowsStubs.BOOL
-import com.intellij.openapi.vfs.impl.local.windows.WindowsStubs.DWORD
-import com.intellij.openapi.vfs.impl.local.windows.WindowsStubs.HANDLE
-import com.intellij.openapi.vfs.impl.local.windows.WindowsStubs.LPDWORD
-import com.intellij.openapi.vfs.impl.local.windows.WindowsStubs.LPOVERLAPPED
-import com.intellij.openapi.vfs.impl.local.windows.WindowsStubs.LPVOID
+import com.intellij.util.system.LowLevelLocalMachineAccess
+import com.intellij.util.system.OS
+import com.jetbrains.rd.util.getOrCreate
+import org.jetbrains.annotations.ApiStatus
 import java.io.Closeable
 import java.lang.foreign.Arena
 import java.lang.foreign.FunctionDescriptor
@@ -17,8 +16,6 @@ import java.lang.foreign.MemoryLayout
 import java.lang.foreign.MemorySegment
 import java.lang.foreign.SymbolLookup
 import java.lang.invoke.MethodHandle
-import java.lang.invoke.VarHandle
-import java.nio.ByteBuffer
 import java.nio.CharBuffer
 import java.nio.charset.CoderResult
 import java.nio.charset.StandardCharsets
@@ -29,12 +26,12 @@ import kotlin.io.path.div
 // Will be empty if won't get it
 private val systemRoot: Path = Path(System.getenv("SystemRoot"))
 
-enum class WindowsLibrary(val path: Path) {
+private enum class WindowsLibrary(val path: Path) {
   Kernel32(systemRoot / "System32" / "kernel32.dll"),
   Ntdll(systemRoot / "System32" / "ntdll.dll")
 }
 
-enum class WindowsSymbol {
+private enum class WindowsSymbol {
   CreateFileW,
   NtCreateFile,
   NtQueryDirectoryFile,
@@ -43,10 +40,11 @@ enum class WindowsSymbol {
   DeviceIoControl
 }
 
-private class WindowsDllLookup(arena: Arena) {
+private val handleCache = mutableMapOf<Pair<WindowsLibrary, WindowsSymbol>, MethodHandle>()
 
-  private val kernel32DllLookup: SymbolLookup = SymbolLookup.libraryLookup(WindowsLibrary.Kernel32.path, arena)
-  private val ntdllDllLookup: SymbolLookup = SymbolLookup.libraryLookup(WindowsLibrary.Ntdll.path, arena)
+private object WindowsDllLookup {
+  private val kernel32DllLookup: SymbolLookup? = if (OS.CURRENT == OS.Windows) SymbolLookup.libraryLookup(WindowsLibrary.Kernel32.path, Arena.global()) else null
+  private val ntdllDllLookup: SymbolLookup? = if (OS.CURRENT == OS.Windows) SymbolLookup.libraryLookup(WindowsLibrary.Ntdll.path, Arena.global()) else null
 
   private val libsLookups = mapOf(
     WindowsLibrary.Kernel32 to kernel32DllLookup,
@@ -54,15 +52,16 @@ private class WindowsDllLookup(arena: Arena) {
   )
 
   fun handleFor(library: WindowsLibrary, label: WindowsSymbol): MethodHandle {
-    val libraryLookup = libsLookups[library] ?: throw IllegalArgumentException("Library '$library' not defined as a lookupable library")
-    val callStub = WindowsStubs[label] ?: throw IllegalArgumentException("Call stub '$label' not defined for library '$library'")
-    val getLastErrorOption = Linker.Option.captureCallState("GetLastError")
-    return Linker.nativeLinker().downcallHandle(libraryLookup.findOrThrow(label.name), callStub, getLastErrorOption)
+    return handleCache.getOrCreate(library to label) {
+      val libraryLookup = libsLookups[library] ?: throw IllegalArgumentException("Library '$library' not defined as a lookupable library")
+      val callStub = WindowsStubs[label] ?: throw IllegalArgumentException("Call stub '$label' not defined for library '$library'")
+      val getLastErrorOption = Linker.Option.captureCallState("GetLastError")
+      return@getOrCreate Linker.nativeLinker().downcallHandle(libraryLookup.findOrThrow(label.name), callStub, getLastErrorOption)
+    }
   }
 }
 
-@Suppress("PropertyName")
-internal object WindowsStubs {
+private object WindowsStubs {
 
   val canonicalLayouts: Map<String, MemoryLayout> = Linker.nativeLinker().canonicalLayouts()
 
@@ -209,6 +208,7 @@ internal object WindowsStubs {
 private val UTF16_ENCODER = StandardCharsets.UTF_16LE.newEncoder()
 private val UTF16_DECODER = StandardCharsets.UTF_16LE.newDecoder()
 
+@ApiStatus.Internal
 fun toWinReadonlyCWSTR(arena: Arena, str: String): MemorySegment {
   val stringMemorySegment = arena.allocate(((str.length + 1) * 2).toLong(), 2L)!!
   val buffer = stringMemorySegment.asByteBuffer()!!
@@ -223,6 +223,7 @@ fun toWinReadonlyCWSTR(arena: Arena, str: String): MemorySegment {
   return stringMemorySegment
 }
 
+@ApiStatus.Internal
 fun toJavaStringFromWinCWSTR(segment: MemorySegment, length: Int): String {
   val charArray = CharArray(length)
   val charBuffer = CharBuffer.wrap(charArray)
@@ -234,7 +235,8 @@ fun toJavaStringFromWinCWSTR(segment: MemorySegment, length: Int): String {
   return String(charArray)
 }
 
-class Windows(val arena: Arena) : Closeable {
+@Suppress("ConstPropertyName")
+internal class Windows(val arena: Arena) : Closeable {
 
   companion object {
     val NULL: MemorySegment = MemorySegment.NULL
@@ -263,11 +265,11 @@ class Windows(val arena: Arena) : Closeable {
   }
 
   object FILE_FULL_DIR_INFORMATION {
-    const val FILE_FULL_DIRECTORY_INFORMATION = 2
+    const val FILE_FULL_DIRECTORY_INFORMATION: Int = 2
   }
 
   object DeviceIoControlCodes {
-    const val FSCTL_GET_REPARSE_POINT = 0x000900A8U
+    const val FSCTL_GET_REPARSE_POINT: UInt = 0x000900A8U
   }
 
   object Read {
@@ -334,7 +336,7 @@ class Windows(val arena: Arena) : Closeable {
       }
 
       object Tag {
-        const val IO_REPARSE_TAG_SYMLINK = 0xA000000C
+        const val IO_REPARSE_TAG_SYMLINK: Long = 0xA000000C
       }
     }
   }
@@ -350,26 +352,24 @@ class Windows(val arena: Arena) : Closeable {
   }
 
   object FileAttributes {
-    const val None = 0x0000
-    const val ReadOnly = 0x0001
-    const val Hidden = 0x0002
-    const val System = 0x0004
-    const val Directory = 0x0010
-    const val Archive = 0x0020
-    const val Device = 0x0040
-    const val Normal = 0x0080
-    const val Temporary = 0x0100
-    const val SparseFile = 0x0200
-    const val ReparsePoint = 0x0400
-    const val Compressed = 0x0800
-    const val Offline = 0x1000
-    const val NotContentIndexed = 0x2000
-    const val Encrypted = 0x4000
-    const val IntegrityStream = 0x8000
-    const val NoScrubData = 0x20000
+    const val None: Int = 0x0000
+    const val ReadOnly: Int = 0x0001
+    const val Hidden: Int = 0x0002
+    const val System: Int = 0x0004
+    const val Directory: Int = 0x0010
+    const val Archive: Int = 0x0020
+    const val Device: Int = 0x0040
+    const val Normal: Int = 0x0080
+    const val Temporary: Int = 0x0100
+    const val SparseFile: Int = 0x0200
+    const val ReparsePoint: Int = 0x0400
+    const val Compressed: Int = 0x0800
+    const val Offline: Int = 0x1000
+    const val NotContentIndexed: Int = 0x2000
+    const val Encrypted: Int = 0x4000
+    const val IntegrityStream: Int = 0x8000
+    const val NoScrubData: Int = 0x20000
   }
-
-  private val dllLookup = WindowsDllLookup(arena)
 
   private val capturedStateLayout = Linker.Option.captureStateLayout()
   private val handleGetLastError = capturedStateLayout.varHandle(MemoryLayout.PathElement.groupElement("GetLastError"))
@@ -390,7 +390,7 @@ class Windows(val arena: Arena) : Closeable {
     hTemplateFile: MemorySegment,
   ): MemorySegment {
     Arena.ofConfined().use {
-      return dllLookup.handleFor(WindowsLibrary.Kernel32, WindowsSymbol.CreateFileW).invokeExact(
+      return WindowsDllLookup.handleFor(WindowsLibrary.Kernel32, WindowsSymbol.CreateFileW).invokeExact(
         errorMemorySegment.get(),
         toWinReadonlyCWSTR(it, fileName),
         dwDesiredAccess.toInt(),
@@ -416,7 +416,7 @@ class Windows(val arena: Arena) : Closeable {
     fileName: MemorySegment,
     restartScan: Byte,
   ): Int {
-    return dllLookup.handleFor(WindowsLibrary.Ntdll, WindowsSymbol.NtQueryDirectoryFile).invokeExact(
+    return WindowsDllLookup.handleFor(WindowsLibrary.Ntdll, WindowsSymbol.NtQueryDirectoryFile).invokeExact(
       errorMemorySegment.get(),
       fileHandle,
       event,
@@ -433,14 +433,14 @@ class Windows(val arena: Arena) : Closeable {
   }
 
   fun CloseHandle(handle: MemorySegment): Int {
-    return dllLookup.handleFor(WindowsLibrary.Kernel32, WindowsSymbol.CloseHandle).invokeExact(
+    return WindowsDllLookup.handleFor(WindowsLibrary.Kernel32, WindowsSymbol.CloseHandle).invokeExact(
       errorMemorySegment.get(),
       handle
     ) as Int
   }
 
   fun RtlNtStatusToDosError(ntStatus: Int): Int {
-    return dllLookup.handleFor(WindowsLibrary.Ntdll, WindowsSymbol.RtlNtStatusToDosError).invokeExact(
+    return WindowsDllLookup.handleFor(WindowsLibrary.Ntdll, WindowsSymbol.RtlNtStatusToDosError).invokeExact(
       errorMemorySegment.get(),
       ntStatus
     ) as Int
@@ -456,7 +456,7 @@ class Windows(val arena: Arena) : Closeable {
     lpBytesReturned: MemorySegment,
     lpOverlapped: MemorySegment
   ): Int {
-    return dllLookup.handleFor(WindowsLibrary.Kernel32, WindowsSymbol.DeviceIoControl).invokeExact(
+    return WindowsDllLookup.handleFor(WindowsLibrary.Kernel32, WindowsSymbol.DeviceIoControl).invokeExact(
       errorMemorySegment.get(),
       handle,
       dwIoControlCode,

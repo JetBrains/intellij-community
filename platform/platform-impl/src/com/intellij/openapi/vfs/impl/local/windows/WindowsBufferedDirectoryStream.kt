@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local.windows
 
+import org.jetbrains.annotations.ApiStatus
 import java.io.Closeable
 import java.lang.foreign.Arena
 import java.lang.foreign.MemorySegment
@@ -18,6 +19,7 @@ import kotlin.io.path.pathString
 private const val STANDARD_BUFFER_SIZE = 4096L
 private const val MAX_REPARSE_POINT_DATA_SIZE = 16384L
 
+@ApiStatus.Internal
 class WindowsBufferedDirectoryStream(val directory: Path) : DirectoryStream<com.intellij.openapi.util.Pair<Path, BasicFileAttributes>> {
 
   val iteraror = WindowsBufferedDirectoryIterator(directory)
@@ -32,7 +34,7 @@ class WindowsBufferedDirectoryStream(val directory: Path) : DirectoryStream<com.
 
 }
 
-class NTWindowsFileAttributes(
+internal class NTWindowsFileAttributes(
   private val creationTime: FileTime,
   private val lastAccessTime: FileTime,
   private val lastWriteTime: FileTime,
@@ -136,8 +138,9 @@ private fun adaptForLongPathHandling(path: String): String {
 }
 
 @OptIn(ExperimentalAtomicApi::class)
+@ApiStatus.Internal
 class WindowsBufferedDirectoryIterator(val directory: Path) : MutableIterator<com.intellij.openapi.util.Pair<Path, BasicFileAttributes>>, Closeable {
-  val api: Windows = Windows(Arena.ofShared())
+  internal val api: Windows = Windows(Arena.ofShared())
 
   val directoryHandle: AtomicReference<MemorySegment> = AtomicReference(Windows.NULL)
 
