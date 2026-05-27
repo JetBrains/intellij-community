@@ -60,18 +60,24 @@ class TodoRemoteFileNode(
 
   override fun update(presentation: PresentationData) {
     val file = value?.file ?: return
+    val fileResult = builder.getCachedRemoteTodoFile(file)
 
     val presentableText = if (builder.todoTreeStructure.isPackagesShown()) {
-      file.name
+      fileResult?.name ?: file.name
     }
     else {
-      if (singleFileMode) file.name else file.presentableUrl
+      if (singleFileMode) {
+        fileResult?.name ?: file.name
+      }
+      else {
+        fileResult?.presentableUrl ?: file.presentableUrl
+      }
     }
 
     presentation.presentableText = presentableText
     presentation.setIcon(file.fileType.icon)
 
-    val todoItemCount = builder.getCachedRemoteTodos(file).size
+    val todoItemCount = fileResult?.todos?.size ?: builder.getCachedRemoteTodos(file).size
     if (todoItemCount > 0) {
       presentation.locationString = IdeBundle.message("node.todo.items", todoItemCount)
     }
@@ -83,7 +89,7 @@ class TodoRemoteFileNode(
 
   override fun getTodoItemCount(value: Value?): Int {
     val file = value?.file ?: return 0
-    return builder.getCachedRemoteTodos(file).size
+    return builder.getCachedRemoteTodoFile(file)?.todos?.size ?: builder.getCachedRemoteTodos(file).size
   }
 
   public override fun getVirtualFile(): VirtualFile {
