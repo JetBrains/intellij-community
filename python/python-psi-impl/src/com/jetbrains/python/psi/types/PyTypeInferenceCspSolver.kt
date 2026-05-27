@@ -31,7 +31,6 @@ import com.jetbrains.python.psi.types.SubtypeJudgement.isSubtype
 import com.jetbrains.python.psi.types.SubtypeJudgement.sameTypes
 import org.jetbrains.annotations.ApiStatus
 import java.util.ArrayDeque
-import java.util.IdentityHashMap
 import java.util.Objects
 import java.util.TreeMap
 
@@ -339,8 +338,8 @@ private class ConstraintProblem(
   val pendingBounds: ArrayDeque<TypeBound> = ArrayDeque()
   val pendingInstantiations: LinkedHashSet<InferenceVariable> = LinkedHashSet()
 
-  /** Identity-based IDs for bounds so we can memoize processed pairs cheaply */
-  private val boundIds = IdentityHashMap<TypeBound, Int>()
+  /** IDs for structurally equal bounds so we can memoize processed pairs cheaply */
+  private val boundIds = HashMap<TypeBound, Int>()
 
   private var nextBoundId: Int = 1
 
