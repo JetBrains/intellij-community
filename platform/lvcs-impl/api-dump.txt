@@ -313,20 +313,24 @@ a:com.intellij.history.integration.LocalHistoryEx
 - a:getFacade():com.intellij.history.core.LocalHistoryFacade
 f:com.intellij.history.integration.revertion.DifferenceReverter
 - com.intellij.history.integration.revertion.Reverter
+- sf:Companion:com.intellij.history.integration.revertion.DifferenceReverter$Companion
 - <init>(com.intellij.openapi.project.Project,com.intellij.history.core.LocalHistoryFacade,com.intellij.history.integration.IdeaGateway,java.util.List,com.intellij.history.core.revisions.Revision):V
-- <init>(com.intellij.openapi.project.Project,com.intellij.history.core.LocalHistoryFacade,com.intellij.history.integration.IdeaGateway,java.util.List,java.util.function.Supplier):V
-- doRevert(Z):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,java.util.List,com.intellij.history.core.revisions.Revision):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,java.util.List,kotlin.jvm.functions.Function0):V
+- f:doRevert(Z):V
+f:com.intellij.history.integration.revertion.DifferenceReverter$Companion
 a:com.intellij.history.integration.revertion.Reverter
-- pf:myGateway:com.intellij.history.integration.IdeaGateway
-- p:myVcs:com.intellij.history.core.LocalHistoryFacade
-- p:<init>(com.intellij.openapi.project.Project,com.intellij.history.core.LocalHistoryFacade,com.intellij.history.integration.IdeaGateway,java.util.function.Supplier):V
-- p:askForReadOnlyStatusClearing():Z
-- checkCanRevert():java.util.List
+- sf:Companion:com.intellij.history.integration.revertion.Reverter$Companion
+- pf:askForReadOnlyStatusClearing():Z
+- f:checkCanRevert():java.util.List
 - pa:doRevert():V
-- getCommandName():java.lang.String
+- f:getCommandName():java.lang.String
 - pa:getFilesToClearROStatus():java.util.List
-- s:getRevertCommandName(com.intellij.history.core.revisions.Revision):java.lang.String
-- revert():V
+- pf:getGateway():com.intellij.history.integration.IdeaGateway
+- sf:getRevertCommandName(com.intellij.history.core.revisions.Revision):java.lang.String
+- f:revert():V
+f:com.intellij.history.integration.revertion.Reverter$Companion
+- f:getRevertCommandName(com.intellij.history.core.revisions.Revision):java.lang.String
 c:com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel
 - com.intellij.history.integration.ui.models.HistoryDialogModel
 - <init>(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,com.intellij.history.core.LocalHistoryFacade,com.intellij.openapi.vfs.VirtualFile):V

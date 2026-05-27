@@ -248,7 +248,7 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
     val diff = Entry.getDifferencesBetween(leftEntry, rightEntry, true)
     if (diff.isEmpty()) return // nothing to revert
 
-    val reverter = DifferenceReverter(project, facade, gateway, diff) {
+    val reverter = DifferenceReverter(project, gateway, diff) {
       getRevertCommandName(targetChange.name, targetChangeSet.timestamp, false)
     }
     try {

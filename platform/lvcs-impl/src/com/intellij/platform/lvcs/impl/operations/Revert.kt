@@ -21,43 +21,47 @@ import com.intellij.platform.lvcs.impl.getSelectionCalculator
 import com.intellij.platform.lvcs.impl.leftRevision
 import com.intellij.util.text.DateFormatUtil
 import org.jetbrains.annotations.Nls
-import java.util.function.Supplier
 
 internal fun LocalHistoryFacade.createReverter(project: Project, gateway: IdeaGateway, scope: ActivityScope, selection: ChangeSetSelection,
                                                diffMode: DirectoryDiffMode, isOldContentUsed: Boolean): Reverter? {
   val targetRevisionId = selection.leftRevision
   if (targetRevisionId == RevisionId.Current) return null
 
-  val commandNameSupplier = Supplier {
-    return@Supplier getRevertCommandName(selection.leftItem, isOldContentUsed)
+  val commandNameSupplier = {
+    getRevertCommandName(selection.leftItem, isOldContentUsed)
   }
 
   if (scope is ActivityScope.Selection) {
     val calculator = selection.data.getSelectionCalculator(this, gateway, scope, isOldContentUsed)
-    return SelectionReverter(project, this, gateway, calculator, targetRevisionId, getEntryPath(gateway, scope), scope.from, scope.to,
+    return SelectionReverter(project, gateway, calculator, targetRevisionId, getEntryPath(gateway, scope), scope.from, scope.to,
                              commandNameSupplier)
   }
 
   val diff = getDiff(gateway, scope, selection, diffMode, isOldContentUsed)
-  return DifferenceReverter(project, this, gateway, diff, commandNameSupplier)
+  return DifferenceReverter(project, gateway, diff, commandNameSupplier)
 }
 
-internal fun LocalHistoryFacade.createDifferenceReverter(project: Project, gateway: IdeaGateway, selection: ChangeSetSelection, differences: List<Difference>,
-                                                         isOldContentUsed: Boolean): Reverter? {
+internal fun createDifferenceReverter(
+  project: Project,
+  gateway: IdeaGateway,
+  selection: ChangeSetSelection,
+  differences: List<Difference>,
+  isOldContentUsed: Boolean,
+): Reverter? {
   val targetRevisionId = selection.leftRevision
   if (targetRevisionId == RevisionId.Current) return null
   if (differences.isEmpty()) return null
-  return DifferenceReverter(project, this, gateway, differences) {
+  return DifferenceReverter(project, gateway, differences) {
     getRevertCommandName(selection.leftItem, isOldContentUsed)
   }
 }
 
-private fun getRevertCommandName(item: ChangeSetActivityItem?, isOldContentUsed: Boolean): @Nls String? {
+private fun getRevertCommandName(item: ChangeSetActivityItem?, isOldContentUsed: Boolean): @Nls String {
   if (item == null) return LocalHistoryBundle.message("activity.name.revert")
   return getRevertCommandName(item.name, item.timestamp, isOldContentUsed)
 }
 
-internal fun getRevertCommandName(name: @NlsSafe String?, timestamp: Long, isOldContentUsed: Boolean): @Nls String? {
+internal fun getRevertCommandName(name: @NlsSafe String?, timestamp: Long, isOldContentUsed: Boolean): @Nls String {
   val date = DateFormatUtil.formatDateTime(timestamp)
   if (isOldContentUsed) {
     if (name != null) {

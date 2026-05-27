@@ -53,7 +53,7 @@ public class SelectionHistoryDialogModel extends FileHistoryDialogModel {
 
   @Override
   public Reverter createReverter() {
-    return new SelectionReverter(myProject, myVcs, myGateway, getCalculator(), getLeftRevision(), getRightEntry(), myFrom, myTo);
+    return new SelectionReverter(myProject, myGateway, getCalculator(), getLeftRevision(), getRightEntry(), myFrom, myTo);
   }
 
   @Override
