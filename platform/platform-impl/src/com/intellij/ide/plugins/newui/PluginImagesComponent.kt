@@ -458,28 +458,9 @@ class PluginImagesComponent : JPanel {
 
     val imageX = insets.left + offset
     val imageY = insets.top
-    val imageWidth = image.getWidth(this)
-    val imageHeight = image.getHeight(this)
     val paintWidth = width - 2 * offset
     val paintHeight = height - offset
-
-    if (imageWidth <= paintWidth && imageHeight <= paintHeight) {
-      drawImage(g, image, imageX + (paintWidth - imageWidth) / 2, imageY + (paintHeight - imageHeight) / 2, this)
-    }
-    else {
-      val zoomedHeight = imageHeight * paintWidth / imageWidth
-      val zoomedWidth = imageWidth * paintHeight / imageHeight
-
-      if (zoomedWidth <= paintWidth) {
-        drawImage(g, image, Rectangle(imageX + (paintWidth - zoomedWidth) / 2, imageY, zoomedWidth, paintHeight), this)
-      }
-      else if (zoomedHeight <= paintHeight) {
-        drawImage(g, image, Rectangle(imageX, imageY + (paintHeight - zoomedHeight) / 2, paintWidth, zoomedHeight), this)
-      }
-      else {
-        drawImage(g, image, Rectangle(imageX, imageY, paintWidth, paintHeight), this)
-      }
-    }
+    paintImage(g, image, imageX, imageY, paintWidth, paintHeight)
 
     val g2 = g.create() as Graphics2D
 
@@ -521,6 +502,35 @@ class PluginImagesComponent : JPanel {
     }
     finally {
       g2.dispose()
+    }
+  }
+
+  private fun paintImage(
+    g: Graphics,
+    image: Image,
+    imageX: Int,
+    imageY: Int,
+    paintWidth: Int,
+    paintHeight: Int,
+  ) {
+    val imageWidth = image.getWidth(this)
+    val imageHeight = image.getHeight(this)
+    if (imageWidth <= paintWidth && imageHeight <= paintHeight) {
+      drawImage(g, image, imageX + (paintWidth - imageWidth) / 2, imageY + (paintHeight - imageHeight) / 2, this)
+    }
+    else {
+      val zoomedHeight = imageHeight * paintWidth / imageWidth
+      val zoomedWidth = imageWidth * paintHeight / imageHeight
+
+      if (zoomedWidth <= paintWidth) {
+        drawImage(g, image, Rectangle(imageX + (paintWidth - zoomedWidth) / 2, imageY, zoomedWidth, paintHeight), this)
+      }
+      else if (zoomedHeight <= paintHeight) {
+        drawImage(g, image, Rectangle(imageX, imageY + (paintHeight - zoomedHeight) / 2, paintWidth, zoomedHeight), this)
+      }
+      else {
+        drawImage(g, image, Rectangle(imageX, imageY, paintWidth, paintHeight), this)
+      }
     }
   }
 
