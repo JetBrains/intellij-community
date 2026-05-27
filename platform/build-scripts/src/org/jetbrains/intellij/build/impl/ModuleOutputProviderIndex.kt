@@ -1,4 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.intellij.build.impl
 
 import org.jetbrains.jps.model.module.JpsModule
@@ -6,12 +8,12 @@ import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import java.nio.file.Path
 
 internal class ModuleOutputProviderIndex(
-  val modules: List<JpsModule>,
+  @JvmField val modules: List<JpsModule>,
 ) {
   private val nameToModule = modules.associateByTo(HashMap(modules.size)) { it.name }
   private val projectLibraryToModuleMapCache by lazy { buildProjectLibraryToModuleMap(modules) }
 
-  fun findModule(name: String): JpsModule? = nameToModule[name.removeSuffix("._test")]
+  fun findModule(name: String): JpsModule? = nameToModule.get(name.removeSuffix("._test"))
 
   fun findRequiredModule(name: String): JpsModule {
     return requireNotNull(findModule(name)) {
