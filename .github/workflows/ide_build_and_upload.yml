@@ -26,7 +26,7 @@ jobs:
     # IDEs cannot be built due to insufficient disk space on standard 'ubuntu-latest' runners
     runs-on: Large-linux-x64-for-intellij-community
     steps:
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v6.0.2
       - uses: ./.github/actions/build_ide
         with:
           os: linux
@@ -45,7 +45,7 @@ jobs:
     # IDEs cannot be built due to insufficient disk space on standard 'ubuntu-latest' runners
     runs-on: Large-linux-x64-for-intellij-community
     steps:
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v6.0.2
       - uses: ./.github/actions/build_ide
         with:
           os: windows
@@ -64,7 +64,7 @@ jobs:
     # IDEs cannot be built due to insufficient disk space on standard 'ubuntu-latest' runners
     runs-on: Large-linux-x64-for-intellij-community
     steps:
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v6.0.2
       - uses: ./.github/actions/build_ide
         with:
           os: mac
@@ -80,7 +80,7 @@ jobs:
           extension: sit
           artifacts_dir: ${{inputs.artifacts_dir}}
       - name: Upload .dmg build scripts
-        uses: actions/upload-artifact@v4.4.3
+        uses: actions/upload-artifact@v6.0.0
         if: ${{inputs.upload_artifacts}}
         with:
           name: dmg-build-scripts
@@ -92,13 +92,13 @@ jobs:
     needs: build-macos-aarch64
     if: ${{inputs.upload_artifacts}}
     steps:
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v6.0.2
       - name: Download .dmg build scripts
-        uses: actions/download-artifact@v4.1.8
+        uses: actions/download-artifact@v7.0.0
         with:
           name: dmg-build-scripts
       - name: Download aarch64.sit
-        uses: actions/download-artifact@v4.1.8
+        uses: actions/download-artifact@v7.0.0
         with:
           name: mac-aarch64-sit-unsigned
       - name: Build aarch64.dmg
