@@ -242,6 +242,10 @@
                     interface="com.intellij.internal.statistic.extensibility.StatisticsEventLogToolWindowEPLogProvider"
                     dynamic="true"/>
 
+    <extensionPoint name="statistic.eventLog.ideShutdownSessionTypeProvider"
+                    interface="com.intellij.featureStatistics.fusCollectors.IdeShutdownSessionTypeProvider"
+                    dynamic="true"/>
+
     <extensionPoint name="productivityFeaturesProvider" interface="com.intellij.featureStatistics.ProductivityFeaturesProvider"
                     dynamic="true"/>
 
