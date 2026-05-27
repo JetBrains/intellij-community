@@ -32,16 +32,18 @@ import com.intellij.openapi.util.Segment
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.PsiElement
+import com.intellij.psi.search.DelegatingGlobalSearchScope
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.GlobalSearchScopes
 import com.intellij.psi.util.PsiUtilCore
-import com.intellij.usageView.UsageViewUtil
 import com.intellij.util.Processor
 import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.indexing.FindSymbolParameters
+import org.jetbrains.annotations.ApiStatus
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.withTimeoutOrNull
 import java.nio.file.Path
@@ -50,7 +52,8 @@ import kotlin.time.Duration.Companion.milliseconds
 /**
  * Searches for symbols via Choose By Name models and maps them to [SearchItem]s.
  */
-internal suspend fun searchSymbols(
+@ApiStatus.Internal
+suspend fun searchSymbols(
   q: String,
   paths: List<String>?,
   includeExternal: Boolean,
@@ -62,15 +65,16 @@ internal suspend fun searchSymbols(
   val pathScope = buildPathScope(projectDir, paths)
   val directoryFilterPath = resolveDirectoryFilter(project, pathScope)
   val directoryFilterFile = directoryFilterPath?.let { LocalFileSystem.getInstance().refreshAndFindFileByNioFile(it) }
-  val searchScope = directoryFilterFile?.let { GlobalSearchScopes.directoryScope(project, it, true) }
-                    ?: if (includeExternal) GlobalSearchScope.allScope(project)
-                    else GlobalSearchScope.projectScope(project)
+  val baseSearchScope = directoryFilterFile?.let { GlobalSearchScopes.directoryScope(project, it, true) }
+                        ?: if (includeExternal) GlobalSearchScope.allScope(project)
+                        else GlobalSearchScope.projectScope(project)
+  val searchScope = pathScope?.let { PathFilteredGlobalSearchScope(baseSearchScope, projectDir, it) } ?: baseSearchScope
 
   val fileDocumentManager = serviceAsync<FileDocumentManager>()
   val provider = DefaultChooseByNameItemProvider(null)
   val items = LinkedHashSet<SearchItem>()
   val requestedCount = (effectiveLimit * SEARCH_SCOPE_MULTIPLIER).coerceAtMost(MAX_RESULTS_UPPER_BOUND)
-  var seenCount = 0
+  var providerStoppedEarly = false
   var reachedLimit = false
 
   val timedOut = withTimeoutOrNull(Constants.MEDIUM_TIMEOUT_MILLISECONDS_VALUE.milliseconds) {
@@ -84,10 +88,10 @@ internal suspend fun searchSymbols(
       val symbolModel = GotoSymbolModel2(project, parentDisposable).also { Disposer.register(parentDisposable, it) }
       val models = listOf(classModel, symbolModel)
       for (model in models) {
-        val viewModel = SimpleChooseByNameViewModel(project, model, requestedCount)
+        val viewModel = McpChooseByNameViewModel(project, model, requestedCount)
         val transformedPattern = viewModel.transformPattern(q)
         if (transformedPattern.isBlank()) continue
-        val localPattern = computeLocalPattern(model, transformedPattern)
+        val localPattern = computeChooseByNameLocalPattern(model, transformedPattern)
         val params = FindSymbolParameters.wrap(transformedPattern, searchScope)
           .withLocalPattern(localPattern)
 
@@ -96,8 +100,7 @@ internal suspend fun searchSymbols(
             val indicator = ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator()
             provider.filterElementsWithWeights(viewModel, params, indicator, Processor { descriptor: FoundItemDescriptor<*> ->
               indicator.checkCanceled()
-              seenCount++
-              val navigationItem = descriptor.item as? NavigationItem ?: return@Processor seenCount < requestedCount
+              val navigationItem = descriptor.item as? NavigationItem ?: return@Processor true
               val searchItem = mapNavigationItem(
                 project = project,
                 item = navigationItem,
@@ -112,23 +115,46 @@ internal suspend fun searchSymbols(
                   return@Processor false
                 }
               }
-              return@Processor seenCount < requestedCount
+              return@Processor true
             })
           }
         }
 
-        if (!completed || reachedLimit || seenCount >= requestedCount) break
+        if (!completed) {
+          providerStoppedEarly = true
+        }
+        if (!completed || reachedLimit) break
       }
     }
   } == null
 
   return SearchResult(
     items = items.toList(),
-    more = timedOut || reachedLimit || seenCount >= requestedCount,
+    more = timedOut || reachedLimit || providerStoppedEarly,
   )
 }
 
-private class SimpleChooseByNameViewModel(
+private class PathFilteredGlobalSearchScope(
+  baseScope: GlobalSearchScope,
+  private val projectDir: Path,
+  private val pathScope: PathScope,
+) : DelegatingGlobalSearchScope(baseScope) {
+  @Suppress("RedundantIf")
+  override fun contains(file: VirtualFile): Boolean {
+    if (!super.contains(file)) return false
+    val filePath = file.toNioPathOrNull() ?: return false
+    val relativePath = try {
+      projectDir.relativize(filePath)
+    }
+    catch (_: IllegalArgumentException) {
+      return false
+    }
+    if (relativePath.nameCount > 0 && relativePath.getName(0).toString() == "..") return false
+    return pathScope.matches(relativePath)
+  }
+}
+
+internal class McpChooseByNameViewModel(
   private val project: Project,
   private val model: ChooseByNameModel,
   private val maximumListSizeLimit: Int,
@@ -148,7 +174,7 @@ private class SimpleChooseByNameViewModel(
   override fun getMaximumListSizeLimit(): Int = maximumListSizeLimit
 }
 
-private fun computeLocalPattern(model: ChooseByNameModel, pattern: String): String {
+internal fun computeChooseByNameLocalPattern(model: ChooseByNameModel, pattern: String): String {
   var lastSeparatorOccurrence = 0
   for (separator in model.separators) {
     var idx = pattern.lastIndexOf(separator)
@@ -168,26 +194,23 @@ private fun mapNavigationItem(
   pathScope: PathScope?,
 ): SearchItem? {
   val psiElement = when (item) {
-    is PsiElement -> item
-    is PsiElementNavigationItem -> item.targetElement
-    else -> null
-  } ?: return null
+                     is PsiElement -> item
+                     is PsiElementNavigationItem -> item.targetElement
+                     else -> null
+                   } ?: return null
 
   val anchor = resolveNavigationAnchor(psiElement) ?: return null
   val filePath = projectDir.relativizeIfPossible(anchor.file)
   if (filePath.isBlank()) return null
   if (!matchesPathScope(pathScope, projectDir, filePath)) return null
 
-  val snippet = buildPsiSnippet(project, projectDir, fileDocumentManager, anchor)
+  val snippet = buildSnippet(project, fileDocumentManager, anchor)
   return SearchItem(
     filePath = filePath,
     startLine = snippet?.startLine,
     startColumn = snippet?.startColumn,
     endLine = snippet?.endLine,
     endColumn = snippet?.endColumn,
-    startOffset = snippet?.startOffset,
-    endOffset = snippet?.endOffset,
-    lineText = snippet?.lineText,
   )
 }
 
@@ -207,79 +230,18 @@ private fun toRelativePath(projectDir: Path, filePath: String): Path? {
 }
 
 @RequiresReadLock
-private fun buildPsiSnippet(
-  project: Project,
-  projectDir: Path,
-  fileDocumentManager: FileDocumentManager,
-  anchor: NavigationAnchor,
-): UsageSnippet? {
-  return buildSnippet(project, projectDir, fileDocumentManager, anchor)
-}
-
-@RequiresReadLock
 private fun buildSnippet(
   project: Project,
-  projectDir: Path,
   fileDocumentManager: FileDocumentManager,
   anchor: NavigationAnchor,
-): UsageSnippet? {
+): SearchSnippet? {
   if (anchor.file.fileType.isBinary) {
-    return buildCompiledSnippet(projectDir, anchor)
+    return null
   }
   val document = fileDocumentManager.getDocument(anchor.file, project) ?: return null
   val textRange = resolveSnippetRange(anchor, document)
-  val snippet = buildSearchSnippet(document = document, textRange = textRange, maxTextChars = Constants.MAX_USAGE_TEXT_CHARS)
-  return UsageSnippet(
-    file = anchor.file,
-    filePath = projectDir.relativizeIfPossible(anchor.file),
-    lineText = snippet.lineText,
-    startLine = snippet.startLine,
-    startColumn = snippet.startColumn,
-    endLine = snippet.endLine,
-    endColumn = snippet.endColumn,
-    startOffset = snippet.startOffset,
-    endOffset = snippet.endOffset,
-  )
+  return buildSearchSnippet(document = document, textRange = textRange)
 }
-
-@RequiresReadLock
-private fun buildCompiledSnippet(projectDir: Path, anchor: NavigationAnchor): UsageSnippet? {
-  val rendered = UsageViewUtil.createNodeText(anchor.element).trim()
-  if (rendered.isEmpty()) return null
-
-  val prefix = "compiled/binary code: "
-  val maxSnippetLength = (Constants.MAX_USAGE_TEXT_CHARS - prefix.length).coerceAtLeast(1)
-  val truncated = if (rendered.length > maxSnippetLength) {
-    rendered.take(maxSnippetLength - 1).trimEnd() + "…"
-  }
-  else {
-    rendered
-  }
-
-  return UsageSnippet(
-    file = anchor.file,
-    filePath = projectDir.relativizeIfPossible(anchor.file),
-    lineText = prefix + truncated,
-    startLine = null,
-    startColumn = null,
-    endLine = null,
-    endColumn = null,
-    startOffset = null,
-    endOffset = null,
-  )
-}
-
-private data class UsageSnippet(
-  @JvmField val file: VirtualFile,
-  @JvmField val filePath: String,
-  @JvmField val lineText: String,
-  @JvmField val startLine: Int?,
-  @JvmField val startColumn: Int?,
-  @JvmField val endLine: Int?,
-  @JvmField val endColumn: Int?,
-  @JvmField val startOffset: Int?,
-  @JvmField val endOffset: Int?,
-)
 
 private data class NavigationAnchor(
   @JvmField val element: PsiElement,

@@ -185,7 +185,7 @@ fun looksLikeVfsUrl(filePath: String): Boolean {
 }
 
 // TODO: this must be unified with resolveInProject and made more flexible to support multiple source roots, also MCP client roots and so on
-private fun isUnderProjectDirectory(project: Project, virtualFile: VirtualFile): Boolean {
+internal fun isUnderProjectDirectory(project: Project, virtualFile: VirtualFile): Boolean {
   val filePath = virtualFile.toNioPathOrNull()
                  ?: try {
                    Path.of(virtualFile.path)
