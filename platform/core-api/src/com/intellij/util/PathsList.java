@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -174,15 +175,35 @@ public final class PathsList  {
   }
 
   /**
-   * Adds the path to the passed files to the middle part of the path list.
+   * Adds the paths to the middle part of the path list.
    */
+  public void addAllPaths(Path[] paths) {
+    addAllPaths(Arrays.asList(paths));
+  }
+
+  /**
+   * Adds the path to the passed files to the middle part of the path list.
+   * @deprecated Use {@link #addAllPaths(Path[])}.
+   */
+  @Deprecated
   public void addAllFiles(File[] files) {
     addAllFiles(Arrays.asList(files));
   }
 
   /**
-   * Adds the path to the passed files to the middle part of the path list.
+   * Adds the paths to the middle part of the path list.
    */
+  public void addAllPaths(List<? extends Path> paths) {
+    for (Path path : paths) {
+      add(path);
+    }
+  }
+
+  /**
+   * Adds the path to the passed files to the middle part of the path list.
+   * @deprecated Use {@link #addAllPaths(List)}.
+   */
+  @Deprecated
   public void addAllFiles(List<? extends File> files) {
     for (File file : files) {
       add(file);
@@ -190,17 +211,39 @@ public final class PathsList  {
   }
 
   /**
-   * Adds the path to the passed file to the middle part of the path list.
+   * Adds the path to the middle part of the path list.
    */
+  public void add(Path path) {
+    add(asAbsolutePathString(path.toAbsolutePath().toString()));
+  }
+
+  /**
+   * Adds the path to the passed file to the middle part of the path list.
+   * @deprecated Use {@link #add(Path)}.
+   */
+  @Deprecated
   public void add(File file) {
-    add(FileUtil.toCanonicalPath(file.getAbsolutePath()).replace('/', File.separatorChar));
+    add(asAbsolutePathString(file.getAbsolutePath()));
+  }
+
+  /**
+   * Adds the path to the first part of the path list.
+   */
+  public void addFirst(Path path) {
+    addFirst(asAbsolutePathString(path.toAbsolutePath().toString()));
   }
 
   /**
    * Adds the path to the passed file to the first part of the path list.
+   * @deprecated Use {@link #addFirst(Path)}.
    */
+  @Deprecated
   public void addFirst(File file) {
-    addFirst(FileUtil.toCanonicalPath(file.getAbsolutePath()).replace('/', File.separatorChar));
+    addFirst(asAbsolutePathString(file.getAbsolutePath()));
+  }
+
+  private static String asAbsolutePathString(String path) {
+    return FileUtil.toCanonicalPath(path).replace('/', File.separatorChar);
   }
 
   /**

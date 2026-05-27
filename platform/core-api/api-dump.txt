@@ -1891,6 +1891,11 @@ com.intellij.util.CharTable
 - sf:CHAR_TABLE_KEY:com.intellij.openapi.util.Key
 - a:intern(java.lang.CharSequence):java.lang.CharSequence
 - a:intern(java.lang.CharSequence,I,I):java.lang.CharSequence
+f:com.intellij.util.PathsList
+- add(java.nio.file.Path):V
+- addAllPaths(java.util.List):V
+- addAllPaths(java.nio.file.Path[]):V
+- addFirst(java.nio.file.Path):V
 f:com.intellij.util.QueriesKt$sam$i$java_util_function_Predicate$0
 - java.util.function.Predicate
 - <init>(kotlin.jvm.functions.Function1):V
