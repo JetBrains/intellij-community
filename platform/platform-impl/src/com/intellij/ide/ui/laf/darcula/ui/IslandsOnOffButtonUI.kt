@@ -128,19 +128,18 @@ internal class IslandsOnOffButtonUI : BasicToggleButtonUI() {
   }
 
   private fun paintOnNotch(g2: Graphics2D, x: Float, y: Float, h: Float) {
-    val nh = JBUIScale.scale(7f)
-    val nw = JBUIScale.scale(2f)
-    val nx = x + JBUIScale.scale(18f)
-    val ny = y + (h - nh) / 2f
-    g2.fill(RoundRectangle2D.Float(nx, ny, nw, nh, nw, nw))
+    val nd = JBUIScale.scale(10f)
+    val ny = y + (h - nd) / 2f
+    val nx = x + JBUIScale.scale(13f)
+    g2.fill(Ellipse2D.Float(nx, ny, nd, nd))
   }
 
   private fun paintOffNotch(g2: Graphics2D, x: Float, y: Float, h: Float) {
-    val nd = JBUIScale.scale(8f)
+    val nd = JBUIScale.scale(9f)
     val ny = y + (h - nd) / 2f
-    val nx = x + JBUIScale.scale(4f)
+    val nx = x + JBUIScale.scale(3.5f)
     val outer = Area(Ellipse2D.Float(nx, ny, nd, nd))
-    val holeSize = JBUIScale.scale(4f)
+    val holeSize = JBUIScale.scale(5f)
     val hx = nx + (nd - holeSize) / 2f
     val hy = ny + (nd - holeSize) / 2f
     outer.subtract(Area(Ellipse2D.Float(hx, hy, holeSize, holeSize)))

@@ -20,11 +20,11 @@ The toggle is a **pill-shaped track** with a small **notch indicator** (no text 
 | Track width | 26px |
 | Track height | 16px |
 | Track corner radius | 100% of height (fully rounded pill) |
-| Notch (ON) | 2px wide × 7px tall rounded rect, centered vertically, positioned at `left: 18px` |
-| Notch (OFF) | 8×8px ring (2px stroke) — outer circle with 4×4px hole subtracted, centered vertically, positioned at `left: 4px` |
+| Notch (ON) | 10×10px solid filled circle, centered vertically, positioned at `left: 13px` (3px inset from the right of the track) |
+| Notch (OFF) | 9×9px ring (2px stroke) — outer circle with 5×5px hole subtracted, centered vertically, positioned at `left: 3.5px` |
 | Component preferred size | track + focus ring padding: width = 26 + 2×4 = 34px, height = max(32, 16 + 2×4) = 32px |
 
-The ON notch is a thin vertical bar. The OFF notch is a hollow circle (ring). Both are painted manually via `Graphics2D` shapes (`RoundRectangle2D` and `Ellipse2D` area subtraction).
+The ON notch is a **solid filled 10×10px circle** at `left: 13px`; the OFF notch is a **hollow 9×9px ring** at `left: 3.5px`. Both are centered vertically and painted manually via `Graphics2D` shapes — ON uses an `Ellipse2D` fill, OFF uses an `Ellipse2D` outer minus inner via `Area` subtraction.
 
 The component preferred size is larger than the track to accommodate the focus ring without clipping. The track is centered within the component bounds. Focus ring padding = gap (1px) + stroke (2px) + AA safe area (1px) = 4px per side.
 
@@ -147,8 +147,8 @@ Registered programmatically by `IslandsUICustomization.applyMissingKeys()` whene
 ## 8. Implementation Notes
 
 1. **Pill track** — `RoundRectangle2D` with arc = height (100% rounded).
-2. **Notch (ON)** — 2×7px `RoundRectangle2D` bar at `left: 18px`, centered vertically.
-3. **Notch (OFF)** — 8×8px `Ellipse2D` ring with 4×4px hole via `Area` subtraction at `left: 4px`.
+2. **Notch (ON)** — 10×10px `Ellipse2D` solid filled circle at `left: 13px`, centered vertically.
+3. **Notch (OFF)** — 9×9px `Ellipse2D` ring with 5×5px hole (2px stroke) via `Area` subtraction at `left: 3.5px`.
 4. **Disabled border** — rendered via `Area` subtraction (outer track minus inset track) then filled, not stroked. This avoids sub-pixel stroke artifacts.
 5. **Focus ring** — two concentric pill-shaped `RoundRectangle2D` shapes with `Path2D.WIND_EVEN_ODD` fill (gap 1px + stroke 2px). Only shown when enabled, focused, and no validation outline.
 6. **Enlarged preferred size** — 34×32px (26×16 track + 4px padding per side) to accommodate focus ring without clipping.
