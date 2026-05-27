@@ -2,6 +2,8 @@
 package org.jetbrains.kotlin.idea.search.refIndex.bta
 
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexStorage
 import org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexStorageProvider
 
@@ -40,3 +42,10 @@ internal class BtaKotlinCompilerReferenceIndexStorageProvider : KotlinCompilerRe
         return BtaKotlinCompilerReferenceIndexStorageImpl(project, projectPath, lookupStoragesByRoot, subtypeStoragesByRoot)
     }
 }
+
+/**
+ * Checks if the receiver is the BTA implementation of [KotlinCompilerReferenceIndexStorageProvider]
+ */
+@TestOnly
+@ApiStatus.Internal
+fun KotlinCompilerReferenceIndexStorageProvider?.isBtaCriProvider(): Boolean = this is BtaKotlinCompilerReferenceIndexStorageProvider

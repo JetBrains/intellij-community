@@ -41,6 +41,10 @@
             qualifiedName="org.jetbrains.kotlin.kotlinCompilerReferenceIndexStorageProvider"
             interface="org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexStorageProvider"
             dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.btaMavenCriApplicabilityProvider"
+            interface="org.jetbrains.kotlin.idea.search.refIndex.bta.BtaMavenCriApplicabilityProvider"
+            dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">

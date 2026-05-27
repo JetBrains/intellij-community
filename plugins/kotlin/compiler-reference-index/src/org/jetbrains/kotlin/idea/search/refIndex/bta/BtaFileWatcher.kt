@@ -7,26 +7,32 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
-import org.jetbrains.annotations.ApiStatus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.buildtools.api.ExperimentalBuildToolsApi
 import org.jetbrains.kotlin.buildtools.api.cri.CriToolchain
-import org.jetbrains.kotlin.idea.base.util.isMavenModule
 import org.jetbrains.kotlin.idea.gradle.configuration.readGradleProperty
 import org.jetbrains.kotlin.idea.search.refIndex.bta.BtaFileWatcher.Companion.ENABLE_BTA_CRI_KEY
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import java.io.IOException
 import java.nio.file.Path
 import java.nio.file.attribute.FileTime
-import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
 import kotlin.io.path.exists
 import kotlin.io.path.getLastModifiedTime
 import kotlin.time.Duration.Companion.seconds
+
+/**
+ * Maven/Gradle project property that enables Kotlin Compiler Reference Index artifact generation
+ * by Kotlin BTA-based builds
+ */
+@ApiStatus.Internal
+const val KOTLIN_CRI_GENERATION_PROPERTY: String = "kotlin.compiler.generateCompilerRefIndex"
 
 /**
  * Watches KCRI artifact directories produced by Kotlin Build Tools API-based builds (Gradle and Maven)
@@ -85,7 +91,6 @@ internal class BtaFileWatcher(private val project: Project) {
     companion object {
         private val LOG = logger<BtaFileWatcher>()
         private val POLLING_INTERVAL = 10.seconds
-        private const val CRI_PROPERTY = "kotlin.compiler.generateCompilerRefIndex"
         private const val ENABLE_BTA_CRI_KEY = "kotlin.cri.bta.support.enabled"
 
         /**
@@ -97,12 +102,11 @@ internal class BtaFileWatcher(private val project: Project) {
 
         private fun isGradleCriEnabled(project: Project): Boolean = runReadActionBlocking {
             GradleSettings.getInstance(project).linkedProjectsSettings.isNotEmpty()
-                    && (readGradleProperty(project, CRI_PROPERTY)?.toBoolean() ?: false)
+                    && (readGradleProperty(project, KOTLIN_CRI_GENERATION_PROPERTY)?.toBoolean() ?: false)
         }
 
-        // TODO KTIJ-37735: check if CRI_PROPERTY is enabled for Maven projects
         private fun isMavenCriEnabled(project: Project): Boolean = runReadActionBlocking {
-            ModuleManager.getInstance(project).modules.any { it.isMavenModule }
+            BtaMavenCriApplicabilityProvider.EP_NAME.findFirstSafe { it.isApplicable(project) } != null
         }
 
     }
