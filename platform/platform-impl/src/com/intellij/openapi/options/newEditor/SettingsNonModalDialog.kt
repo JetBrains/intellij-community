@@ -14,7 +14,6 @@ import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.options.Configurable
@@ -204,6 +203,7 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
   }
 
   override fun uiDataSnapshot(sink: DataSink) {
+    super.uiDataSnapshot(sink)
     sink.uiDataSnapshot(editor)
   }
 
