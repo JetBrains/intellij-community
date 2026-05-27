@@ -74,8 +74,7 @@ fun Application.mcpPatched(
       prePhase()
       if (context.request.httpMethod == HttpMethod.Get) {
         val sessionId = context.request.header(MCP_SESSION_ID_HEADER)
-        if (sessionId != null &&
-            (streamableTransports[sessionId] != null || pendingTransports[sessionId] != null)) {
+        if (sessionId != null && (streamableTransports[sessionId] != null || pendingTransports[sessionId] != null)) {
           context.response.header(MCP_SESSION_ID_HEADER, sessionId)
         }
       }
@@ -107,7 +106,7 @@ fun Application.mcpPatched(
           call.respond(HttpStatusCode.NotFound, "Streamable HTTP session not found")
           return@sse
         }
-        launchSseHeartbeat()
+        launchSseHeartbeat(transport)
         transport.handleRequest(this, call)
       }
 
@@ -257,11 +256,16 @@ private suspend fun obtainOrCreateStreamableTransport(
   return transport
 }
 
-private fun ServerSSESession.launchSseHeartbeat() {
+private fun ServerSSESession.launchSseHeartbeat(transport: StreamableHttpServerTransport) {
   launch(CoroutineName("sse-heartbeat")) {
-    while (isActive) {
-      send(SSE_HEARTBEAT_EVENT)
-      delay(SSE_HEARTBEAT_PERIOD)
+    try {
+      while (isActive) {
+        send(SSE_HEARTBEAT_EVENT)
+        delay(SSE_HEARTBEAT_PERIOD)
+      }
+    }
+    finally {
+      transport.close()
     }
   }
 }
