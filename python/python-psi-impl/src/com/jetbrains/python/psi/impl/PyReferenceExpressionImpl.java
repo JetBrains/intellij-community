@@ -317,10 +317,6 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   }
 
   private @Nullable Ref<PyType> getQualifiedReferenceType(@NotNull TypeEvalContext context) {
-    if (!context.maySwitchToAST(this)) {
-      return null;
-    }
-
     final PyExpression qualifier = getQualifier();
     if (qualifier == null) return null;
 
