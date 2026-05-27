@@ -1,181 +1,176 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.history.core;
+package com.intellij.history.core
 
-import com.intellij.history.core.changes.ChangeSet;
-import com.intellij.history.core.changes.PutSystemLabelChange;
-import com.intellij.history.core.tree.RootEntry;
-import com.intellij.platform.lvcs.impl.RevisionId;
-import org.junit.Test;
+import com.intellij.history.core.tree.RootEntry
+import com.intellij.platform.lvcs.impl.RevisionId
+import org.junit.Test
+import java.nio.charset.StandardCharsets
 
-import java.nio.charset.StandardCharsets;
-import java.util.List;
+class LocalVcsLabelsTest : LocalHistoryTestCase() {
+  private val facade = createInMemoryFacade()
+  private val root = RootEntry()
 
-public class LocalVcsLabelsTest extends LocalHistoryTestCase {
-  LocalHistoryFacade myVcs = createInMemoryFacade();
-  RootEntry myRoot = new RootEntry();
-
-  @Override
-  public long nextId() {
-    return myVcs.getChangeListInTests().nextId();
+  override fun nextId(): Long {
+    return facade.changeListInTests.nextId()
   }
 
   @Test
-  public void testUserLabels() {
-    add(myVcs, createFile(myRoot, "file"));
-    myVcs.putUserLabel("1", "project");
-    add(myVcs, changeContent(myRoot, "file", null));
-    myVcs.putUserLabel("2", "project");
+  fun testUserLabels() {
+    add(facade, createFile(root, "file"))
+    facade.putUserLabel("1", "project")
+    add(facade, changeContent(root, "file", null))
+    facade.putUserLabel("2", "project")
 
-    List<ChangeSet> changes = collectChanges(myVcs, "file", "project", null);
-    assertEquals(4, changes.size());
+    val changes = collectChanges(facade, "file", "project", null)
+    assertEquals(4, changes.size.toLong())
 
-    assertEquals("2", changes.get(0).getLabel());
-    assertNull(changes.get(1).getLabel());
-    assertEquals("1", changes.get(2).getLabel());
-    assertNull(changes.get(3).getLabel());
+    assertEquals("2", changes[0].label)
+    assertNull(changes[1].label)
+    assertEquals("1", changes[2].label)
+    assertNull(changes[3].label)
   }
 
   @Test
-  public void testLabelTimestamps() {
-    setCurrentTimestamp(10);
-    add(myVcs, createFile(myRoot, "file"));
+  fun testLabelTimestamps() {
+    setCurrentTimestamp(10)
+    add(facade, createFile(root, "file"))
 
-    setCurrentTimestamp(20);
-    myVcs.putUserLabel("", "project");
+    setCurrentTimestamp(20)
+    facade.putUserLabel("", "project")
 
-    setCurrentTimestamp(30);
-    myVcs.putUserLabel("", "project");
+    setCurrentTimestamp(30)
+    facade.putUserLabel("", "project")
 
-    List<ChangeSet> changes = collectChanges(myVcs, "file", "project", null);
-    assertEquals(30, changes.get(0).getTimestamp());
-    assertEquals(20, changes.get(1).getTimestamp());
-    assertEquals(10, changes.get(2).getTimestamp());
+    val changes = collectChanges(facade, "file", "project", null)
+    assertEquals(30, changes[0].timestamp)
+    assertEquals(20, changes[1].timestamp)
+    assertEquals(10, changes[2].timestamp)
   }
 
   @Test
-  public void testContent() {
-    add(myVcs, createFile(myRoot, "file", "one"));
-    myVcs.putUserLabel("", "project");
-    add(myVcs, changeContent(myRoot, "file", "two"));
-    myVcs.putUserLabel("", "project");
+  fun testContent() {
+    add(facade, createFile(root, "file", "one"))
+    facade.putUserLabel("", "project")
+    add(facade, changeContent(root, "file", "two"))
+    facade.putUserLabel("", "project")
 
-    List<ChangeSet> changes = collectChanges(myVcs, "file", "project", null);
+    val changes = collectChanges(facade, "file", "project", null)
 
-    assertContent("two", getEntryFor(myVcs, myRoot, RevisionId.Current.INSTANCE, "file"));
-    assertContent("one", getEntryFor(myVcs, myRoot, new RevisionId.ChangeSet(changes.get(1).getId()), "file"));
+    assertContent("two", getEntryFor(facade, root, RevisionId.Current, "file"))
+    assertContent("one", getEntryFor(facade, root, RevisionId.ChangeSet(changes[1].id), "file"))
   }
 
   @Test
-  public void testGlobalUserLabels() {
-    add(myVcs, createFile(myRoot, "one"));
-    myVcs.putUserLabel("1", "project");
-    add(myVcs, createFile(myRoot, "two"));
-    myVcs.putUserLabel("2", "project");
+  fun testGlobalUserLabels() {
+    add(facade, createFile(root, "one"))
+    facade.putUserLabel("1", "project")
+    add(facade, createFile(root, "two"))
+    facade.putUserLabel("2", "project")
 
-    List<ChangeSet> changes = collectChanges(myVcs, "one", "project", null);
-    assertEquals(3, changes.size());
-    assertEquals("2", changes.get(0).getLabel());
-    assertEquals("1", changes.get(1).getLabel());
+    var changes = collectChanges(facade, "one", "project", null)
+    assertEquals(3, changes.size.toLong())
+    assertEquals("2", changes[0].label)
+    assertEquals("1", changes[1].label)
 
-    changes = collectChanges(myVcs, "two", "project", null);
-    assertEquals(2, changes.size());
-    assertEquals("2", changes.get(0).getLabel());
+    changes = collectChanges(facade, "two", "project", null)
+    assertEquals(2, changes.size.toLong())
+    assertEquals("2", changes[0].label)
   }
 
   @Test
-  public void testGlobalLabelTimestamps() {
-    setCurrentTimestamp(10);
-    add(myVcs, createFile(myRoot, "file"));
-    setCurrentTimestamp(20);
-    myVcs.putUserLabel("", "project");
+  fun testGlobalLabelTimestamps() {
+    setCurrentTimestamp(10)
+    add(facade, createFile(root, "file"))
+    setCurrentTimestamp(20)
+    facade.putUserLabel("", "project")
 
-    List<ChangeSet> changes = collectChanges(myVcs, "file", "project", null);
-    assertEquals(20, changes.get(0).getTimestamp());
-    assertEquals(10, changes.get(1).getTimestamp());
+    val changes = collectChanges(facade, "file", "project", null)
+    assertEquals(20, changes[0].timestamp)
+    assertEquals(10, changes[1].timestamp)
   }
 
   @Test
-  public void testLabelsDuringChangeSet() {
-    add(myVcs, createFile(myRoot, "file"));
-    myVcs.beginChangeSet();
-    add(myVcs, changeContent(myRoot, "file", null));
-    myVcs.putUserLabel("label", "project");
-    myVcs.endChangeSet("changeSet");
+  fun testLabelsDuringChangeSet() {
+    add(facade, createFile(root, "file"))
+    facade.beginChangeSet()
+    add(facade, changeContent(root, "file", null))
+    facade.putUserLabel("label", "project")
+    facade.endChangeSet("changeSet")
 
-    List<ChangeSet> changes = collectChanges(myVcs, "file", "project", null);
-    assertEquals(2, changes.size());
-    assertEquals("changeSet", changes.get(0).getName());
-    assertNull(changes.get(1).getName());
+    val changes = collectChanges(facade, "file", "project", null)
+    assertEquals(2, changes.size.toLong())
+    assertEquals("changeSet", changes[0].name)
+    assertNull(changes[1].name)
   }
 
   @Test
-  public void testSystemLabels() {
-    myVcs.created("f1", false);
-    myVcs.created("f2", false);
+  fun testSystemLabels() {
+    facade.created("f1", false)
+    facade.created("f2", false)
 
-    setCurrentTimestamp(123);
-    myVcs.putSystemLabel("label", "project", 456);
+    setCurrentTimestamp(123)
+    facade.putSystemLabel("label", "project", 456)
 
-    List<ChangeSet> changes1 = collectChanges(myVcs, "f1", "project", null);
-    List<ChangeSet> changes2 = collectChanges(myVcs, "f2", "project", null);
-    assertEquals(2, changes1.size());
-    assertEquals(2, changes2.size());
+    val changes1 = collectChanges(facade, "f1", "project", null)
+    val changes2 = collectChanges(facade, "f2", "project", null)
+    assertEquals(2, changes1.size.toLong())
+    assertEquals(2, changes2.size.toLong())
 
-    assertEquals("label", changes1.get(0).getLabel());
-    assertEquals("label", changes2.get(0).getLabel());
+    assertEquals("label", changes1[0].label)
+    assertEquals("label", changes2[0].label)
 
-    ChangeSet r = changes1.get(0);
-    assertEquals(123, r.getTimestamp());
-    assertEquals(456, r.getLabelColor());
+    val r = changes1[0]
+    assertEquals(123, r.timestamp)
+    assertEquals(456, r.labelColor.toLong())
   }
 
   @Test
-  public void testGettingByteContent() {
-    PutSystemLabelChange l1 = myVcs.putSystemLabel("label", "project", -1);
-    add(myVcs, createFile(myRoot, "f", "one"));
+  fun testGettingByteContent() {
+    val l1 = facade.putSystemLabel("label", "project", -1)
+    add(facade, createFile(root, "f", "one"))
 
-    PutSystemLabelChange l2 = myVcs.putSystemLabel("label", "project", -1);
-    add(myVcs, changeContent(myRoot, "f", "two"));
+    val l2 = facade.putSystemLabel("label", "project", -1)
+    add(facade, changeContent(root, "f", "two"))
 
-    PutSystemLabelChange l3 = myVcs.putSystemLabel("label", "project", -1);
+    val l3 = facade.putSystemLabel("label", "project", -1)
 
-    assertNull(myVcs.getByteContentBefore(myRoot, "f", l1.getId()).getBytes());
-    assertEquals("one", new String(myVcs.getByteContentBefore(myRoot, "f", l2.getId()).getBytes(), StandardCharsets.UTF_8));
-    assertEquals("two", new String(myVcs.getByteContentBefore(myRoot, "f", l3.getId()).getBytes(), StandardCharsets.UTF_8));
+    assertNull(facade.getByteContentBefore(root, "f", l1.id).bytes)
+    assertEquals("one", String(facade.getByteContentBefore(root, "f", l2.id).bytes, StandardCharsets.UTF_8))
+    assertEquals("two", String(facade.getByteContentBefore(root, "f", l3.id).bytes, StandardCharsets.UTF_8))
 
-    add(myVcs, createDirectory(myRoot, "dir"));
-    PutSystemLabelChange l4 = myVcs.putSystemLabel("label", "project", -1);
+    add(facade, createDirectory(root, "dir"))
+    val l4 = facade.putSystemLabel("label", "project", -1)
 
-    assertTrue(myVcs.getByteContentBefore(myRoot, "dir", l4.getId()).isDirectory());
-    assertNull(myVcs.getByteContentBefore(myRoot, "dir", l4.getId()).getBytes());
+    assertTrue(facade.getByteContentBefore(root, "dir", l4.id).isDirectory)
+    assertNull(facade.getByteContentBefore(root, "dir", l4.id).bytes)
   }
 
   @Test
-  public void testGettingByteContentInsideChangeSet() {
-    myVcs.beginChangeSet();
-    add(myVcs, createFile(myRoot, "f", "one"));
-    PutSystemLabelChange l1 = myVcs.putSystemLabel("label", "project", -1);
-    add(myVcs, changeContent(myRoot, "f", "two"));
-    PutSystemLabelChange l2 = myVcs.putSystemLabel("label", "project", -1);
-    myVcs.endChangeSet(null);
+  fun testGettingByteContentInsideChangeSet() {
+    facade.beginChangeSet()
+    add(facade, createFile(root, "f", "one"))
+    val l1 = facade.putSystemLabel("label", "project", -1)
+    add(facade, changeContent(root, "f", "two"))
+    val l2 = facade.putSystemLabel("label", "project", -1)
+    facade.endChangeSet(null)
 
-    assertEquals("one", new String(myVcs.getByteContentBefore(myRoot, "f", l1.getId()).getBytes(), StandardCharsets.UTF_8));
-    assertEquals("two", new String(myVcs.getByteContentBefore(myRoot, "f", l2.getId()).getBytes(), StandardCharsets.UTF_8));
+    assertEquals("one", String(facade.getByteContentBefore(root, "f", l1.id).bytes, StandardCharsets.UTF_8))
+    assertEquals("two", String(facade.getByteContentBefore(root, "f", l2.id).bytes, StandardCharsets.UTF_8))
   }
 
   @Test
-  public void testGettingByteContentAfterRename() {
-    add(myVcs, createFile(myRoot, "f", "one"));
-    PutSystemLabelChange l1 = myVcs.putSystemLabel("label", "project", -1);
+  fun testGettingByteContentAfterRename() {
+    add(facade, createFile(root, "f", "one"))
+    val l1 = facade.putSystemLabel("label", "project", -1)
 
-    add(myVcs, changeContent(myRoot, "f", "two"));
-    PutSystemLabelChange l2 = myVcs.putSystemLabel("label", "project", -1);
-    add(myVcs, rename(myRoot, "f", "f_r"));
+    add(facade, changeContent(root, "f", "two"))
+    val l2 = facade.putSystemLabel("label", "project", -1)
+    add(facade, rename(root, "f", "f_r"))
 
-    PutSystemLabelChange l3 = myVcs.putSystemLabel("label", "project", -1);
+    val l3 = facade.putSystemLabel("label", "project", -1)
 
-    assertEquals("one", new String(myVcs.getByteContentBefore(myRoot, "f_r", l1.getId()).getBytes(), StandardCharsets.UTF_8));
-    assertEquals("two", new String(myVcs.getByteContentBefore(myRoot, "f_r", l2.getId()).getBytes(), StandardCharsets.UTF_8));
-    assertEquals("two", new String(myVcs.getByteContentBefore(myRoot, "f_r", l3.getId()).getBytes(), StandardCharsets.UTF_8));
+    assertEquals("one", String(facade.getByteContentBefore(root, "f_r", l1.id).bytes, StandardCharsets.UTF_8))
+    assertEquals("two", String(facade.getByteContentBefore(root, "f_r", l2.id).bytes, StandardCharsets.UTF_8))
+    assertEquals("two", String(facade.getByteContentBefore(root, "f_r", l3.id).bytes, StandardCharsets.UTF_8))
   }
 }

@@ -1,30 +1,30 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.history
 
-package com.intellij.history;
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import org.jetbrains.annotations.ApiStatus
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
-
-public interface Label {
-  Label NULL_INSTANCE = new Label() {
-
-    @Override
-    public void revert(@NotNull Project project, @NotNull VirtualFile file) {
-    }
-
-    @Override
-    public ByteContent getByteContent(String path) {
-      return null;
-    }
-  };
-
+@ApiStatus.NonExtendable
+interface Label {
   /**
    * Revert all changes up to this Label according to the local history
    *
    * @param file file or directory that should be reverted
    */
-  void revert(@NotNull Project project, @NotNull VirtualFile file) throws LocalHistoryException;
+  @RequiresBackgroundThread
+  @Throws(LocalHistoryException::class)
+  fun revert(project: Project, file: VirtualFile)
 
-  ByteContent getByteContent(String path);
+  @RequiresBackgroundThread
+  fun getByteContent(path: String): ByteContent?
+
+  companion object {
+    @JvmField
+    val NULL_INSTANCE: Label = object : Label {
+      override fun revert(project: Project, file: VirtualFile) = Unit
+      override fun getByteContent(path: String): ByteContent? = null
+    }
+  }
 }

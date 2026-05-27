@@ -5,9 +5,11 @@ c:com.intellij.history.ByteContent
 com.intellij.history.FileRevisionTimestampComparator
 - a:isSuitable(J):Z
 com.intellij.history.Label
+- sf:Companion:com.intellij.history.Label$Companion
 - sf:NULL_INSTANCE:com.intellij.history.Label
 - a:getByteContent(java.lang.String):com.intellij.history.ByteContent
 - a:revert(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):V
+f:com.intellij.history.Label$Companion
 a:com.intellij.history.LocalHistory
 - sf:Companion:com.intellij.history.LocalHistory$Companion
 - sf:VFS_EVENT_REQUESTOR:java.lang.Object
