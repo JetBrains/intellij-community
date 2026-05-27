@@ -72,6 +72,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.CardLayout
+import java.awt.Component
 import java.awt.Cursor
 import java.awt.Dimension
 import java.awt.Toolkit
@@ -113,9 +114,9 @@ object UniversalFileChooser {
   }
 
   @JvmStatic
-  fun create(project: Project?, descriptor: FileChooserDescriptor): Dialog {
+  fun create(project: Project?, parent: Component?, descriptor: FileChooserDescriptor): Dialog {
     val currProject = project ?: ProjectManager.getInstance().defaultProject
-    return Dialog(currProject, descriptor)
+    return Dialog(currProject, parent, descriptor)
   }
 
   /**
@@ -123,9 +124,10 @@ object UniversalFileChooser {
    */
   class Dialog(
     val project: Project,
+    parent: Component? = null,
     private val descriptor: FileChooserDescriptor,
     private val contributors: Collection<UniversalFileChooserContributor> = UniversalFileChooserContributor.EP_NAME.extensionList,
-  ) : DialogWrapper(project), FileChooserDialog, PathChooserDialog {
+  ) : DialogWrapper(project, parent, true, IdeModalityType.IDE), FileChooserDialog, PathChooserDialog {
     private lateinit var mainPanel: Panel
 
     init {

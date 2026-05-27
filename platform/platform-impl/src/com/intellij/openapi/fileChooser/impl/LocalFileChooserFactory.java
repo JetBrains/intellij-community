@@ -43,7 +43,7 @@ public class LocalFileChooserFactory implements ClientFileChooserFactory {
     var chooser = createNativePathChooserIfEnabled(descriptor, project, parent);
     return chooser != null ? (FileChooserDialog)chooser :
            useNewChooser(descriptor) ? new NewFileChooserDialogImpl(descriptor, parent, project) :
-           UniversalFileChooser.canUseIn(project) ? UniversalFileChooser.create(project, descriptor) :
+           UniversalFileChooser.canUseIn(project) ? UniversalFileChooser.create(project, parent, descriptor) :
            parent != null ? new FileChooserDialogImpl(descriptor, parent, project) :
            new FileChooserDialogImpl(descriptor, project);
   }
@@ -57,7 +57,7 @@ public class LocalFileChooserFactory implements ClientFileChooserFactory {
     var chooser = createNativePathChooserIfEnabled(descriptor, project, parent);
     return chooser != null ? chooser :
            useNewChooser(descriptor) ? new NewFileChooserDialogImpl(descriptor, parent, project) :
-           UniversalFileChooser.canUseIn(project) ? UniversalFileChooser.create(project, descriptor) :
+           UniversalFileChooser.canUseIn(project) ? UniversalFileChooser.create(project, parent, descriptor) :
            parent != null ? new FileChooserDialogImpl(descriptor, parent, project) :
            new FileChooserDialogImpl(descriptor, project);
   }
