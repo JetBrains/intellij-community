@@ -23,8 +23,8 @@ import com.intellij.util.ui.update.DebouncedUpdates
 import com.intellij.util.ui.update.UpdateQueue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import java.awt.KeyboardFocusManager
 import java.awt.event.KeyEvent
-import javax.swing.FocusManager
 import javax.swing.KeyStroke
 import javax.swing.SwingUtilities
 import kotlin.time.Duration.Companion.milliseconds
@@ -60,7 +60,7 @@ internal class JsonPathEvaluateSnippetView(project: Project, scope: CoroutineSco
       override fun documentChanged(event: DocumentEvent) {
         expressionHighlightingQueue.queue(Unit)
       }
-    })
+    }, this)
 
     val messageBusConnection = this.project.messageBus.connect(this)
     messageBusConnection.subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
@@ -87,7 +87,7 @@ internal class JsonPathEvaluateSnippetView(project: Project, scope: CoroutineSco
 
   override fun processKeyBinding(ks: KeyStroke?, e: KeyEvent?, condition: Int, pressed: Boolean): Boolean {
     if (pressed && e?.keyCode == KeyEvent.VK_ESCAPE) {
-      val focusOwner = FocusManager.getCurrentManager().focusOwner
+      val focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
 
       if (SwingUtilities.isDescendingFrom(focusOwner, sourceEditor.component)) {
         searchTextField.requestFocus()
