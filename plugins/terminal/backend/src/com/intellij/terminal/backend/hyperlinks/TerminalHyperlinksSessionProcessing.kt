@@ -2,6 +2,7 @@ package com.intellij.terminal.backend.hyperlinks
 
 import com.intellij.openapi.diagnostic.fileLogger
 import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -17,20 +18,20 @@ internal fun scheduleHyperlinksSessionProcessing(session: BackendTerminalHyperli
 
 private suspend fun processHyperlinksSession(session: BackendTerminalHyperlinksSession) = coroutineScope {
   launch(CoroutineName("Process input events")) {
-    processInputEvents(session)
+    processInputEvents(session.hyperlinksFacade, session.inputEventsSink)
   }
-  launch(CoroutineName("Process output hyperlink results")) {
-    collectHyperlinkResults(session.outputHyperlinksFacade, session.hyperlinkUpdatesChannel)
-  }
-  launch(CoroutineName("Process altBuf hyperlink results")) {
-    collectHyperlinkResults(session.alternateBufferHyperlinksFacade, session.hyperlinkUpdatesChannel)
+  launch(CoroutineName("Process results")) {
+    collectHyperlinkResults(session.hyperlinksFacade, session.hyperlinkUpdatesChannel)
   }
 }
 
-private suspend fun processInputEvents(session: BackendTerminalHyperlinksSession) {
-  for (event in session.inputEventsSink) {
+private suspend fun processInputEvents(
+  hyperlinkFacade: BackendTerminalHyperlinkFacade,
+  inputEventsChannel: ReceiveChannel<TerminalHyperlinksInputEvent>,
+) {
+  for (event in inputEventsChannel) {
     try {
-      processInputEvent(session, event)
+      processInputEvent(hyperlinkFacade, event)
     }
     catch (e: Exception) {
       LOG.error("Error when processing input event $event", e)
@@ -38,12 +39,14 @@ private suspend fun processInputEvents(session: BackendTerminalHyperlinksSession
   }
 }
 
-private fun processInputEvent(session: BackendTerminalHyperlinksSession, event: TerminalHyperlinksInputEvent) {
+private fun processInputEvent(
+  hyperlinkFacade: BackendTerminalHyperlinkFacade,
+  event: TerminalHyperlinksInputEvent,
+) {
   when (event) {
     is TerminalHyperlinksInputEvent.ContentUpdated -> {
       val update = event.update.toUpdate()
-      val facade = session.getFacade(event.isAlternateBuffer)
-      facade.applyContentUpdate(update)
+      hyperlinkFacade.applyContentUpdate(update)
     }
   }
 }
@@ -71,10 +74,6 @@ private suspend fun collectHyperlinkResults(facade: BackendTerminalHyperlinkFaca
       sink.send(changeEvent)
     }
   }
-}
-
-private fun BackendTerminalHyperlinksSession.getFacade(isAlternateBuffer: Boolean): BackendTerminalHyperlinkFacade {
-  return if (isAlternateBuffer) alternateBufferHyperlinksFacade else outputHyperlinksFacade
 }
 
 private val LOG = fileLogger()

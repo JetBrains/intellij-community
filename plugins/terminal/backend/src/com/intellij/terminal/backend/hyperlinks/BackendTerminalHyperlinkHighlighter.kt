@@ -54,7 +54,6 @@ import javax.swing.JLabel
 internal class BackendTerminalHyperlinkHighlighter(
   project: Project,
   coroutineScope: CoroutineScope,
-  private val isInAlternateBuffer: Boolean,
   filterContext: TerminalHyperlinkFilterContext?,
 ) {
 
@@ -260,13 +259,11 @@ internal class BackendTerminalHyperlinkHighlighter(
     //  affected range. Tracked for follow-up.
     val newTaskRunner = when (pending) {
       is TrimTask -> TrimTaskRunner(
-        isInAlternateBuffer = isInAlternateBuffer,
         task = pending,
         filter = currentFilter,
       )
       is HighlightTask -> HighlightTaskRunner(
         hyperlinkId = hyperlinkId,
-        isInAlternateBuffer = isInAlternateBuffer,
         task = pending,
         filter = currentFilter,
         continueCondition = { makesSenseToContinue(it) },
@@ -359,7 +356,6 @@ private sealed class TaskRunner {
 }
 
 private class TrimTaskRunner(
-  private val isInAlternateBuffer: Boolean,
   override val task: TrimTask,
   override val filter: CompositeFilter,
 ) : TaskRunner() {
@@ -374,7 +370,6 @@ private class TrimTaskRunner(
     // An event with non-null removeFromOffset means "remove trimmed at the start and from this offset at the end,"
     // so we specify the end-of-document offset to indicate that only the trimming should be done.
     return TerminalHyperlinksChangedEvent(
-      isInAlternateBuffer = isInAlternateBuffer,
       documentModificationStamp = task.modificationStamp,
       removeFromOffset = task.endOffset.toAbsolute(),
       emptyList(),
@@ -384,7 +379,6 @@ private class TrimTaskRunner(
 
 private class HighlightTaskRunner(
   hyperlinkId: AtomicLong,
-  private val isInAlternateBuffer: Boolean,
   override val task: HighlightTask,
   override val filter: CompositeFilter,
   private val continueCondition: (HighlightTaskRunner) -> Boolean,
@@ -520,7 +514,6 @@ private class HighlightTaskRunner(
     if (!send) return null
     isFirstEvent = false
     return TerminalHyperlinksChangedEvent(
-      isInAlternateBuffer = isInAlternateBuffer,
       documentModificationStamp = task.modificationStamp,
       removeFromOffset = if (remove) task.startAbsoluteOffset else null,
       hyperlinks = hyperlinks,

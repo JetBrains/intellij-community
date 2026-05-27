@@ -12,12 +12,10 @@ internal class BackendTerminalHyperlinksSession(
   override val id: TerminalHyperlinksSessionId,
   override val inputEventsSink: Channel<TerminalHyperlinksInputEvent>,
   override val hyperlinkUpdatesChannel: Channel<TerminalHyperlinksChangedEvent>,
-  val outputHyperlinksFacade: BackendTerminalHyperlinkFacade,
-  val alternateBufferHyperlinksFacade: BackendTerminalHyperlinkFacade,
+  val hyperlinksFacade: BackendTerminalHyperlinkFacade,
   val coroutineScope: CoroutineScope,
 ) : TerminalHyperlinksSession {
   override suspend fun handleHyperlinkClick(event: TerminalHyperlinkClickedEvent) {
-    val facade = if (event.isInAlternateBuffer) alternateBufferHyperlinksFacade else outputHyperlinksFacade
-    facade.hyperlinkClicked(event.hyperlinkId, event.mouseEvent)
+    hyperlinksFacade.hyperlinkClicked(event.hyperlinkId, event.mouseEvent)
   }
 }

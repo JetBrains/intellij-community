@@ -96,7 +96,7 @@ data class TerminalCompletionFinishedEvent(val result: String) : TerminalShellIn
  */
 @ApiStatus.Internal
 @Serializable
-data class TerminalHyperlinksHeartbeatEvent(val isInAlternateBuffer: Boolean) : TerminalOutputEvent
+data object TerminalHyperlinksHeartbeatEvent : TerminalOutputEvent
 
 /**
  * A change in terminal hyperlinks.
@@ -110,10 +110,6 @@ data class TerminalHyperlinksHeartbeatEvent(val isInAlternateBuffer: Boolean) : 
 @ApiStatus.Internal
 @Serializable
 data class TerminalHyperlinksChangedEvent(
-  /**
-   * Indicates which of the two terminal documents was changes.
-   */
-  val isInAlternateBuffer: Boolean,
   /**
    * The document modification stamp at the time a snapshot was taken to compute hyperlinks.
    */

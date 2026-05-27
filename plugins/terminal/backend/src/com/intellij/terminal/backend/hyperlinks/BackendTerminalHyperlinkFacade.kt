@@ -34,22 +34,22 @@ import kotlin.time.Duration.Companion.milliseconds
 
 @ApiStatus.Internal
 class BackendTerminalHyperlinkFacade(
+  private val debugName: String,
   private val project: Project,
   coroutineScope: CoroutineScope,
-  isInAlternateBuffer: Boolean,
   filterContext: TerminalHyperlinkFilterContext?,
 ) {
-  private val highlighter = BackendTerminalHyperlinkHighlighter(project, coroutineScope, isInAlternateBuffer, filterContext)
+  private val highlighter = BackendTerminalHyperlinkHighlighter(project, coroutineScope, filterContext)
   private val trimOffset = AtomicReference(TerminalOffset.of(0))
   private val model = TerminalHyperlinksModel(
-    debugName = if (isInAlternateBuffer) "Backend AltBuf" else "Backend Output",
+    debugName = debugName,
     trimOffset = { trimOffset.get() }
   )
 
   val heartbeatFlow: Flow<TerminalHyperlinksHeartbeatEvent> = flow {
     while (true) {
       if (highlighter.mayHaveWorkToDo()) {
-        emit(TerminalHyperlinksHeartbeatEvent(isInAlternateBuffer))
+        emit(TerminalHyperlinksHeartbeatEvent)
       }
       delay(20.milliseconds)
     }
@@ -108,13 +108,13 @@ class BackendTerminalHyperlinkFacade(
 
   companion object {
     fun install(
+      debugName: String,
       project: Project,
       coroutineScope: CoroutineScope,
       outputModel: TerminalOutputModel,
-      isInAlternateBuffer: Boolean,
       filterContext: TerminalHyperlinkFilterContext?,
     ): BackendTerminalHyperlinkFacade {
-      val facade = BackendTerminalHyperlinkFacade(project, coroutineScope, isInAlternateBuffer, filterContext)
+      val facade = BackendTerminalHyperlinkFacade(debugName, project, coroutineScope, filterContext)
 
       outputModel.addListener(coroutineScope.asDisposable(), object : TerminalOutputModelListener {
         override fun afterContentChanged(event: TerminalContentChangeEvent) {

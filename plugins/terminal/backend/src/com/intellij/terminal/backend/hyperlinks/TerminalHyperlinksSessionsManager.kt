@@ -49,16 +49,10 @@ internal class TerminalHyperlinksSessionsManager(private val coroutineScope: Cor
     id: TerminalHyperlinksSessionId,
     scope: CoroutineScope,
   ): BackendTerminalHyperlinksSession {
-    val outputHyperlinksFacade = BackendTerminalHyperlinkFacade(
+    val hyperlinksFacade = BackendTerminalHyperlinkFacade(
+      debugName = "HyperlinksFacade#${id.id}",
       project = project,
-      coroutineScope = scope.childScope("Output hyperlinks facade"),
-      isInAlternateBuffer = false,
-      filterContext = null  // TODO: Specify filter context
-    )
-    val alternateBufferHyperlinksFacade = BackendTerminalHyperlinkFacade(
-      project = project,
-      coroutineScope = scope.childScope("AltBuf hyperlinks facade"),
-      isInAlternateBuffer = true,
+      coroutineScope = scope.childScope("BackendTerminalHyperlinkFacade"),
       filterContext = null  // TODO: Specify filter context
     )
 
@@ -69,8 +63,7 @@ internal class TerminalHyperlinksSessionsManager(private val coroutineScope: Cor
       id = id,
       inputEventsSink = inputEventsSink,
       hyperlinkUpdatesChannel = hyperlinkUpdatesChannel,
-      outputHyperlinksFacade = outputHyperlinksFacade,
-      alternateBufferHyperlinksFacade = alternateBufferHyperlinksFacade,
+      hyperlinksFacade = hyperlinksFacade,
       coroutineScope = scope,
     )
 

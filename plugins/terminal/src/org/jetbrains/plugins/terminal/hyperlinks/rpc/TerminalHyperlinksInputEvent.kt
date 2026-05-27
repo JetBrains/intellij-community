@@ -8,8 +8,5 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 sealed interface TerminalHyperlinksInputEvent {
   @Serializable
-  data class ContentUpdated(
-    val isAlternateBuffer: Boolean,
-    val update: TerminalOutputUpdateDto,
-  ) : TerminalHyperlinksInputEvent
+  data class ContentUpdated(val update: TerminalOutputUpdateDto) : TerminalHyperlinksInputEvent
 }
