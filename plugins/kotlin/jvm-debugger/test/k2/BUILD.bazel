@@ -97,6 +97,8 @@ jvm_library(
     "//platform/xdebugger-impl:debugger-impl_test_lib",
     "//platform/xdebugger-testFramework:debugger-testFramework",
     "//platform/xdebugger-testFramework:debugger-testFramework_test_lib",
+    "//java/debugger/openapi:java-debugger",
+    "//java/debugger/openapi:java-debugger_test_lib",
     "//java/debugger/impl",
     "//java/debugger/impl:impl_test_lib",
     "//plugins/stream-debugger:java-debugger-streams",
