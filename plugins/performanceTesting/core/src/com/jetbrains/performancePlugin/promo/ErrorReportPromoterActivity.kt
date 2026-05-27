@@ -16,7 +16,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.ui.AppUIUtil
 import com.intellij.util.Time
@@ -42,7 +42,7 @@ internal class ErrorReportPromoterActivity : ProjectActivity {
     }
 
     lateinit var token: AccessToken
-    val idleTimeoutMs = Registry.intValue("platform.feedback.time.to.show.notification", 600) * Time.SECOND
+    val idleTimeoutMs = RegistryManager.getInstanceAsync().intValue("platform.feedback.time.to.show.notification", 600) * Time.SECOND
     token = IdleTracker.getInstance().addIdleListener(idleTimeoutMs) {
       project.service<ErrorReportPromoterService>().processIdleEvent(project, token)
     }
