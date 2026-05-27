@@ -3,8 +3,11 @@ package com.intellij.agent.workbench.common
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import java.nio.file.Path
 
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentWorkbenchPathUtilTest {
   @Test
   fun parsesAndNormalizesValidPaths() {

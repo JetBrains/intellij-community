@@ -10,10 +10,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
 
 @TestApplication
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentWorkbenchSourceProjectRoutingTest {
   @Test
   fun canonicalManagedPathIsUsedForDirectOpenProjectReuse() {

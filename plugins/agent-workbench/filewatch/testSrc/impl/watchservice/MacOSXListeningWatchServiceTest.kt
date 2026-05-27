@@ -7,6 +7,7 @@ import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
@@ -19,6 +20,7 @@ import java.nio.file.WatchKey
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.milliseconds
 
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class MacOSXListeningWatchServiceTest {
   @TempDir
   lateinit var tempDir: Path

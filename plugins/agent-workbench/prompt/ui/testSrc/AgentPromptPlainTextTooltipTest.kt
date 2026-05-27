@@ -6,9 +6,12 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.ui.components.JBTextArea
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import javax.swing.JButton
 
 @TestApplication
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentPromptPlainTextTooltipTest {
   @Test
   fun buildPlainTextTooltipComponentPreservesRawMultilineText() {

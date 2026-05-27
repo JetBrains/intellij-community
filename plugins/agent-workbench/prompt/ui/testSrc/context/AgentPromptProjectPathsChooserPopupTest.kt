@@ -23,6 +23,8 @@ import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import java.awt.event.ActionEvent
 import java.awt.event.KeyEvent
 import java.nio.file.Files
@@ -33,6 +35,7 @@ import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreePath
 
 @TestApplication
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentPromptProjectPathsChooserPopupTest {
   @Test
   fun collectConfirmedSelectionUsesTreeSelectionWhenProjectTabIsActive() {

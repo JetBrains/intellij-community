@@ -8,15 +8,18 @@ import com.intellij.agent.workbench.common.statusColor
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.model.AgentWorktree
+import com.intellij.agent.workbench.sessions.toolwindow.ui.AGENT_SESSIONS_CHROME_ACTIVITY_FRESHNESS_MILLIS
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsActivityBucket
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsActivityCounterComponent
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsActivityCounterTone
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsActivitySummary
+import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsMainToolbarActivityState
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsStripeBadge
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsSystemNotificationTarget
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsSystemNotificationTracker
 import com.intellij.agent.workbench.sessions.toolwindow.ui.agentSessionsActivityPopupRowText
 import com.intellij.agent.workbench.sessions.toolwindow.ui.buildAgentSessionsActivitySummary
+import com.intellij.agent.workbench.sessions.toolwindow.ui.freshAgentSessionsActivitySummary
 import com.intellij.agent.workbench.sessions.toolwindow.ui.resolveAgentSessionsSystemNotificationThread
 import com.intellij.agent.workbench.sessions.toolwindow.ui.showAgentSessionsSystemNotification
 import com.intellij.openapi.actionSystem.AnAction
@@ -26,10 +29,13 @@ import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.SystemNotifications
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import java.awt.Color
 import java.awt.event.MouseEvent
 
 @TestApplication
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentSessionsActivitySummaryTest {
   @Test
   fun separatesThreadsByBucket() {
@@ -91,6 +97,97 @@ class AgentSessionsActivitySummaryTest {
     assertThat(summary.rowsFor(AgentSessionsActivityBucket.ATTENTION)).isEmpty()
     assertThat(summary.rowsFor(AgentSessionsActivityBucket.RUNNING)).isEmpty()
     assertThat(summary.rowsFor(AgentSessionsActivityBucket.DONE).map { it.thread.id }).containsExactly("done")
+  }
+
+  @Test
+  fun freshActivitySummaryKeepsRowsUpdatedWithinChromeFreshnessWindow() {
+    val now = AGENT_SESSIONS_CHROME_ACTIVITY_FRESHNESS_MILLIS + 10_000L
+    val summary = buildAgentSessionsActivitySummary(
+      AgentSessionsState(
+        projects = listOf(
+          AgentProjectSessions(
+            path = "/work/project-a",
+            name = "Project A",
+            isOpen = true,
+            hasLoaded = true,
+            threads = listOf(
+              thread("fresh-attention", AgentThreadActivity.NEEDS_INPUT, 10_000),
+              thread("stale-running", AgentThreadActivity.PROCESSING, 9_999),
+              thread("future-done", AgentThreadActivity.UNREAD, now + 1),
+            ),
+          )
+        ),
+      )
+    )
+
+    val freshSummary = freshAgentSessionsActivitySummary(summary, now)
+
+    assertThat(summary.runningRows.map { it.thread.id }).containsExactly("stale-running")
+    assertThat(freshSummary.attentionRows.map { it.thread.id }).containsExactly("fresh-attention")
+    assertThat(freshSummary.runningRows).isEmpty()
+    assertThat(freshSummary.doneRows.map { it.thread.id }).containsExactly("future-done")
+  }
+
+  @Test
+  fun freshActivitySummaryRemovesStaleStripeBadgeRows() {
+    val now = AGENT_SESSIONS_CHROME_ACTIVITY_FRESHNESS_MILLIS + 10_000L
+    val summary = buildAgentSessionsActivitySummary(
+      AgentSessionsState(
+        projects = listOf(
+          AgentProjectSessions(
+            path = "/work/project-a",
+            name = "Project A",
+            isOpen = true,
+            hasLoaded = true,
+            threads = listOf(
+              thread("stale-attention", AgentThreadActivity.NEEDS_INPUT, 9_999),
+              thread("stale-done", AgentThreadActivity.UNREAD, 9_999),
+            ),
+          )
+        ),
+      )
+    )
+
+    val freshSummary = freshAgentSessionsActivitySummary(summary, now)
+
+    assertThat(summary.stripeBadge()).isEqualTo(AgentSessionsStripeBadge.ATTENTION)
+    assertThat(freshSummary.attentionRows).isEmpty()
+    assertThat(freshSummary.doneRows).isEmpty()
+    assertThat(freshSummary.stripeBadge()).isNull()
+  }
+
+  @Test
+  fun mainToolbarActivityStateIgnoresInitialLoadedAttentionBaseline() {
+    val state = AgentSessionsMainToolbarActivityState()
+
+    assertThat(state.update(summary(thread("needs-input", AgentThreadActivity.NEEDS_INPUT, 100)), isLoadedState = true))
+      .isEqualTo(AgentSessionsActivitySummary.EMPTY)
+    assertThat(state.update(summary(thread("needs-input", AgentThreadActivity.NEEDS_INPUT, 200)), isLoadedState = true))
+      .isEqualTo(AgentSessionsActivitySummary.EMPTY)
+  }
+
+  @Test
+  fun mainToolbarActivityStateLatchesAttentionEnteredAfterLoadedBaseline() {
+    val state = AgentSessionsMainToolbarActivityState()
+    assertThat(state.update(summary(thread("needs-input", AgentThreadActivity.PROCESSING, 100)), isLoadedState = true))
+      .isEqualTo(AgentSessionsActivitySummary.EMPTY)
+
+    val summary = summary(
+      thread("needs-input", AgentThreadActivity.NEEDS_INPUT, 200),
+      thread("running", AgentThreadActivity.PROCESSING, 150),
+    )
+
+    assertThat(state.update(summary, isLoadedState = true)).isEqualTo(summary)
+  }
+
+  @Test
+  fun mainToolbarActivityStateClearsWhenCurrentRunAttentionLeavesBucket() {
+    val state = AgentSessionsMainToolbarActivityState()
+    state.update(summary(thread("needs-input", AgentThreadActivity.PROCESSING, 100)), isLoadedState = true)
+    state.update(summary(thread("needs-input", AgentThreadActivity.NEEDS_INPUT, 200)), isLoadedState = true)
+
+    assertThat(state.update(summary(thread("needs-input", AgentThreadActivity.PROCESSING, 300)), isLoadedState = true))
+      .isEqualTo(AgentSessionsActivitySummary.EMPTY)
   }
 
   @Test

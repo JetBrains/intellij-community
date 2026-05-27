@@ -108,8 +108,7 @@ final class RetriesImpl {
       });
       testResultDelegate.removeListener(failureExposingListener);
     }
-    else if (!(test instanceof TestAll) &&
-             !(test instanceof TestSuite) &&
+    else if (!(test instanceof TestSuite) &&
              !(test instanceof TestDecorator) &&
              !(test instanceof JUnit4TestAdapter) &&
              !(test instanceof JUnit4TestCaseFacade)) {

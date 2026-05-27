@@ -35,7 +35,6 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.net.http.WebSocket
 import java.nio.charset.StandardCharsets
-import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
@@ -475,9 +474,9 @@ class CodexWebSocketAppServerClient(
       ?.takeIf { it.isNotEmpty() }
     val executable = configuredExecutable ?: CodexCliUtils.CODEX_COMMAND
     val requestedWorkingDirectory = workingDirectoryPath
-    val effectiveWorkingDirectory = requestedWorkingDirectory?.takeIf(Files::isDirectory)
+    val effectiveWorkingDirectory = resolveCodexAppServerWorkingDirectory(requestedWorkingDirectory)
     LOG.debug {
-      "Starting Codex websocket app-server(executable=$executable, executableSource=${if (configuredExecutable != null) "configured" else "default"}, requestedWorkingDirectory=${requestedWorkingDirectory ?: "<none>"}, effectiveWorkingDirectory=${effectiveWorkingDirectory ?: "<none>"}, environmentOverrideCount=${environmentOverrides.size})"
+      "Starting Codex websocket app-server(executable=$executable, executableSource=${if (configuredExecutable != null) "configured" else "default"}, requestedWorkingDirectory=${requestedWorkingDirectory ?: "<none>"}, effectiveWorkingDirectory=$effectiveWorkingDirectory, environmentOverrideCount=${environmentOverrides.size})"
     }
 
     val bindUrlDeferred = CompletableDeferred<String>()
@@ -485,11 +484,7 @@ class CodexWebSocketAppServerClient(
       GeneralCommandLine(executable, "-c", CODEX_AUTO_UPDATE_CONFIG, "app-server", "--listen", "ws://127.0.0.1:0")
         .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
         .withEnvironment(environmentOverrides)
-        .apply {
-          if (effectiveWorkingDirectory != null) {
-            withWorkingDirectory(effectiveWorkingDirectory)
-          }
-        }
+        .withWorkingDirectory(effectiveWorkingDirectory)
         .createProcess()
     }
     catch (t: Throwable) {
@@ -546,13 +541,6 @@ class CodexWebSocketAppServerClient(
           return@launch
         }
         LOG.error("Codex websocket app-server stderr reader failed", e)
-      }
-      finally {
-        try {
-          reader.close()
-        }
-        catch (_: Throwable) {
-        }
       }
     }
   }
@@ -680,30 +668,7 @@ class CodexWebSocketAppServerClient(
     }
 
     if (currentProcess != null) {
-      try {
-        currentProcess.outputStream.close()
-      }
-      catch (_: Throwable) {
-      }
-      try {
-        currentProcess.inputStream.close()
-      }
-      catch (_: Throwable) {
-      }
-      try {
-        currentProcess.errorStream.close()
-      }
-      catch (_: Throwable) {
-      }
-      currentProcess.destroy()
-      try {
-        if (!currentProcess.waitFor(PROCESS_TERMINATION_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
-          currentProcess.destroyForcibly()
-          currentProcess.waitFor(PROCESS_TERMINATION_TIMEOUT_MS, TimeUnit.MILLISECONDS)
-        }
-      }
-      catch (_: Throwable) {
-      }
+      stopCodexAppServerProcess(currentProcess, PROCESS_TERMINATION_TIMEOUT_MS, coroutineScope)
     }
   }
 

@@ -8,7 +8,10 @@ import com.intellij.agent.workbench.sessions.core.formatCompactAgentSessionTitle
 import com.intellij.openapi.util.text.StringUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentSessionThreadPresentationTest {
   @Test
   fun titleNormalizationCollapsesWhitespaceAndTrims() {

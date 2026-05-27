@@ -10,7 +10,10 @@ import com.intellij.agent.workbench.sessions.toolwindow.tree.pathForMoreThreadsN
 import com.intellij.agent.workbench.sessions.toolwindow.tree.shouldHandleSingleClick
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class SessionTreeInteractionTest {
   @Test
   fun singleClickActionIsReservedForMoreRows() {

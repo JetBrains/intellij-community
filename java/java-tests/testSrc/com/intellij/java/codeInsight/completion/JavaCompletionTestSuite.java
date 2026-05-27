@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.completion;
 
-import com.intellij.TestAll;
 import com.intellij.TestCaseLoader;
 import com.intellij.java.codeInsight.completion.ml.JavaCompletionFeaturesTest;
 import com.intellij.java.codeInsight.template.postfix.templates.PostfixTemplateTestCase;
@@ -37,7 +36,7 @@ public class JavaCompletionTestSuite extends TestSuite {
       .withTestGroupsResourcePath(TestCaseLoader.COMMON_TEST_GROUPS_RESOURCE_NAME)
       .withTestGroups(List.of("ULTIMATE_JAVA_TESTS", "COMMUNITY_JAVA_TESTS"))
       .build();
-    myTestCaseLoader.fillTestCases("", TestAll.getClassRoots());
+    myTestCaseLoader.fillTestCases("", TestCaseLoader.getClassRoots());
     List<Class<?>> classes = myTestCaseLoader.getClasses();
     for (Class<?> aClass : classes) {
       if (!aClass.getSimpleName().contains("Completion") && 

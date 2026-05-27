@@ -3,34 +3,75 @@ package com.intellij.agent.workbench.chat
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.DumbAwareAction
 
-internal class AgentChatNextProposedPlanAction : DumbAwareAction() {
+internal class AgentChatNextProposedPlanAction : DumbAwareAction {
+  private val resolveFileEditor: (AnActionEvent) -> AgentChatFileEditor?
+  private val canNavigate: (AgentChatFileEditor, AgentChatSemanticNavigationDirection) -> Boolean
+  private val navigate: (AgentChatFileEditor, AgentChatSemanticNavigationDirection) -> Boolean
+
+  @Suppress("unused")
+  constructor() : this(
+    canNavigate = AgentChatFileEditor::canNavigateProposedPlan,
+    navigate = AgentChatFileEditor::navigateProposedPlan,
+  )
+
+  internal constructor(
+    resolveFileEditor: (AnActionEvent) -> AgentChatFileEditor? = ::resolveAgentChatFileEditor,
+    canNavigate: (AgentChatFileEditor, AgentChatSemanticNavigationDirection) -> Boolean,
+    navigate: (AgentChatFileEditor, AgentChatSemanticNavigationDirection) -> Boolean,
+  ) {
+    this.resolveFileEditor = resolveFileEditor
+    this.canNavigate = canNavigate
+    this.navigate = navigate
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project ?: return
-    navigateSelectedAgentChatProposedPlan(project, AgentChatSemanticNavigationDirection.NEXT)
+    resolveFileEditor(e)?.let { editor -> navigate(editor, AgentChatSemanticNavigationDirection.NEXT) }
   }
 
   override fun update(e: AnActionEvent) {
-    val project = e.project
-    e.presentation.isEnabledAndVisible = project != null &&
-                                       canNavigateSelectedAgentChatProposedPlan(project, AgentChatSemanticNavigationDirection.NEXT)
+    e.presentation.isEnabledAndVisible =
+      resolveFileEditor(e)?.let { editor -> canNavigate(editor, AgentChatSemanticNavigationDirection.NEXT) } == true
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }
 
-internal class AgentChatPreviousProposedPlanAction : DumbAwareAction() {
+internal class AgentChatPreviousProposedPlanAction : DumbAwareAction {
+  private val resolveFileEditor: (AnActionEvent) -> AgentChatFileEditor?
+  private val canNavigate: (AgentChatFileEditor, AgentChatSemanticNavigationDirection) -> Boolean
+  private val navigate: (AgentChatFileEditor, AgentChatSemanticNavigationDirection) -> Boolean
+
+  @Suppress("unused")
+  constructor() : this(
+    canNavigate = AgentChatFileEditor::canNavigateProposedPlan,
+    navigate = AgentChatFileEditor::navigateProposedPlan,
+  )
+
+  internal constructor(
+    resolveFileEditor: (AnActionEvent) -> AgentChatFileEditor? = ::resolveAgentChatFileEditor,
+    canNavigate: (AgentChatFileEditor, AgentChatSemanticNavigationDirection) -> Boolean,
+    navigate: (AgentChatFileEditor, AgentChatSemanticNavigationDirection) -> Boolean,
+  ) {
+    this.resolveFileEditor = resolveFileEditor
+    this.canNavigate = canNavigate
+    this.navigate = navigate
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project ?: return
-    navigateSelectedAgentChatProposedPlan(project, AgentChatSemanticNavigationDirection.PREVIOUS)
+    resolveFileEditor(e)?.let { editor -> navigate(editor, AgentChatSemanticNavigationDirection.PREVIOUS) }
   }
 
   override fun update(e: AnActionEvent) {
-    val project = e.project
-    e.presentation.isEnabledAndVisible = project != null &&
-                                       canNavigateSelectedAgentChatProposedPlan(project, AgentChatSemanticNavigationDirection.PREVIOUS)
+    e.presentation.isEnabledAndVisible =
+      resolveFileEditor(e)?.let { editor -> canNavigate(editor, AgentChatSemanticNavigationDirection.PREVIOUS) } == true
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+}
+
+private fun resolveAgentChatFileEditor(e: AnActionEvent): AgentChatFileEditor? {
+  return PlatformDataKeys.FILE_EDITOR.getData(e.dataContext) as? AgentChatFileEditor
 }

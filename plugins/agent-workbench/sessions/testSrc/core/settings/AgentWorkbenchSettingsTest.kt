@@ -13,8 +13,11 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 
 @TestApplication
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentWorkbenchSettingsTest {
   private val settings: AgentWorkbenchSettings
     get() = AgentWorkbenchSettings.getInstance()
@@ -91,12 +94,20 @@ class AgentWorkbenchSettingsTest {
 
   @Test
   fun storedDefaultValuesNormalizeToNull() {
-    settings.loadState(AgentWorkbenchSettings.SettingsState(colorTabsBySourceProject = true, openInDedicatedFrame = true))
+    settings.loadState(
+      AgentWorkbenchSettings.SettingsState(
+        colorTabsBySourceProject = true,
+        openInDedicatedFrame = true,
+        showAgentActivityInMainToolbar = false,
+      )
+    )
 
     assertThat(settings.colorTabsBySourceProject).isTrue()
     assertThat(settings.colorTabsBySourceProjectOverride).isNull()
     assertThat(settings.openInDedicatedFrame).isTrue()
     assertThat(settings.openInDedicatedFrameOverride).isNull()
+    assertThat(settings.showAgentActivityInMainToolbar).isFalse()
+    assertThat(settings.showAgentActivityInMainToolbarOverride).isNull()
   }
 
   @Test
@@ -150,6 +161,30 @@ class AgentWorkbenchSettingsTest {
     settings.setColorTabsBySourceProject(true)
     assertThat(events).isEqualTo(2)
     assertThat(settings.colorTabsBySourceProjectOverride).isNull()
+  }
+
+  @Test
+  fun showAgentActivityInMainToolbarIsDisabledByDefault() {
+    assertThat(settings.showAgentActivityInMainToolbar).isFalse()
+    assertThat(settings.showAgentActivityInMainToolbarOverride).isNull()
+  }
+
+  @Test
+  fun showAgentActivityInMainToolbarStateRoundTrips() {
+    settings.loadState(AgentWorkbenchSettings.SettingsState(showAgentActivityInMainToolbar = true))
+
+    assertThat(settings.showAgentActivityInMainToolbar).isTrue()
+    assertThat(settings.showAgentActivityInMainToolbarOverride).isTrue()
+
+    settings.setShowAgentActivityInMainToolbar(false)
+
+    assertThat(settings.showAgentActivityInMainToolbar).isFalse()
+    assertThat(settings.showAgentActivityInMainToolbarOverride).isNull()
+
+    settings.setShowAgentActivityInMainToolbar(true)
+
+    assertThat(settings.showAgentActivityInMainToolbar).isTrue()
+    assertThat(settings.showAgentActivityInMainToolbarOverride).isTrue()
   }
 
   private fun resetLegacyDedicatedFrameSetting() {

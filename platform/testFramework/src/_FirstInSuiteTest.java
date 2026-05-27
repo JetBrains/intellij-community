@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 import com.intellij.ReviseWhenPortedToJDK;
-import com.intellij.TestAll;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -10,7 +9,6 @@ import com.intellij.testFramework.GlobalState;
 import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.Timings;
 import com.intellij.testFramework.UITestUtil;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SystemProperties;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +16,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.SwingUtilities;
 import java.io.File;
 import java.nio.charset.Charset;
-import java.util.List;
 import java.util.prefs.Preferences;
 
 /**
@@ -34,19 +31,6 @@ public class _FirstInSuiteTest extends TestCase {
 
   static long getSuiteStartTime() {
     return suiteStarted;
-  }
-
-  public void testReportClassLoadingProblems() {
-    List<Throwable> problems = TestAll.getLoadingClassProblems();
-    if (problems.isEmpty()) return;
-
-    StringBuilder builder = new StringBuilder("The following test classes were not loaded:\n");
-    for (Throwable each : problems) {
-      builder.append(ExceptionUtil.getThrowableText(each)).append("\n");
-      each.printStackTrace(System.out);
-    }
-
-    throw new AssertionError(builder.toString());
   }
 
   @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")

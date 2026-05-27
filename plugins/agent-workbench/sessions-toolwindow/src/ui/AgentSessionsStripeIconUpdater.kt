@@ -22,7 +22,7 @@ internal class AgentSessionsStripeIconUpdater(
     coroutineScope = scope,
   ) {
     val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(AGENT_SESSIONS_TOOL_WINDOW_ID) ?: return@singleEdtAlarm
-    val summary = project.service<AgentSessionsActivityService>().latestSummary()
+    val summary = project.service<AgentSessionsActivityService>().latestChromeSummary()
     toolWindow.setIcon(agentSessionsActivityIcon(summary))
   }
 

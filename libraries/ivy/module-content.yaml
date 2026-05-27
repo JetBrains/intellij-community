@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.ivy.jar
+  modules:
+  - name: intellij.libraries.ivy
+    libraries:
+      ivy:
+      - name: $MAVEN_REPOSITORY$/org/apache/ivy/ivy/2/ivy-2.jar

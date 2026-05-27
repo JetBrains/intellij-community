@@ -8,8 +8,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import java.nio.charset.StandardCharsets
 
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class CodexIdeContextIpcProtocolTest {
   @Test
   fun returnsIdeContextResponse(): Unit = runBlocking(Dispatchers.Default) {

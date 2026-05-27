@@ -22,6 +22,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import javax.swing.JPanel
@@ -46,6 +48,7 @@ private val RUN_ANYTHING_SHIFT_DOUBLE_CTRL_SHORTCUT = KeyboardModifierGestureSho
 
 @TestApplication
 @RunInEdt(writeIntent = true)
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 internal class AgentWorkbenchGlobalPromptDoubleCtrlShortcutTest {
   private val component = JPanel()
 

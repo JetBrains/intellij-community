@@ -10,8 +10,11 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import javax.swing.Icon
 
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentPromptFooterHintDecisionsTest {
   @Test
   fun codexExistingModeUsesCodexFooterHint() {

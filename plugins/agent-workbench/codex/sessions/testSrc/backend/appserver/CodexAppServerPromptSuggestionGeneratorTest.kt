@@ -19,11 +19,14 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.milliseconds
 import com.intellij.agent.workbench.codex.common.CodexPromptSuggestionCandidate as CodexCandidate
 import com.intellij.agent.workbench.codex.common.CodexPromptSuggestionRequest as CodexRequest
 
 @TestApplication
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class CodexAppServerPromptSuggestionBackendTest {
   @Test
   fun buildsPolishedSuggestionUpdateAndPreservesFallbackSlotIds(): Unit = runBlocking(Dispatchers.Default) {

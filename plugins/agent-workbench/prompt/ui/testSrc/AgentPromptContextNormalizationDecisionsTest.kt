@@ -15,8 +15,11 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SystemProperties
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import java.nio.file.Path
 
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentPromptContextNormalizationDecisionsTest {
   @Test
   fun removesFileItemWhenItMatchesCurrentProjectRoot() {

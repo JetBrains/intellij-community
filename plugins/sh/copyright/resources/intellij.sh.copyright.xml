@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.sh.copyright">
+<idea-plugin>
   <dependencies>
     <plugin id="com.intellij.copyright"/>
     <module name="intellij.sh.core"/>

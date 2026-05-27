@@ -4,6 +4,8 @@ package com.intellij.agent.workbench.prompt.ui
 import com.intellij.openapi.project.Project
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import java.awt.Component
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
@@ -11,6 +13,7 @@ import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Proxy
 import javax.swing.JPanel
 
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentPromptPalettePopupDismissalDecisionsTest {
   @Test
   fun sameFrameMouseClickAllowsPopupCancellation() {

@@ -20,6 +20,7 @@
     <module name="intellij.java.impl.refactorings"/>
     <module name="intellij.java.indexing"/>
     <module name="intellij.jsp"/>
+    <module name="intellij.platform.buildScripts.downloader"/>
     <module name="intellij.platform.jps.build"/>
   </dependencies>
   <!-- endregion -->

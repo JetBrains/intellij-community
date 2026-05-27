@@ -18,6 +18,8 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.ui.ColoredListCellRenderer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import java.awt.BorderLayout
 import java.lang.reflect.Proxy
 import javax.swing.JList
@@ -26,6 +28,7 @@ import javax.swing.JTable
 import javax.swing.table.DefaultTableModel
 
 @TestApplication
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentPromptListSelectionContextContributorTest {
     private val contributor = AgentPromptListSelectionContextContributor()
 

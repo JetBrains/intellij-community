@@ -3,9 +3,12 @@ package com.intellij.agent.workbench.json.filebacked
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class FileBackedSessionInvalidationStateTest {
   @TempDir
   lateinit var tempDir: Path

@@ -19,6 +19,8 @@ import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBTabbedPane
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import org.junit.jupiter.api.io.TempDir
 import java.awt.event.ActionEvent
 import java.awt.event.InputEvent
@@ -30,6 +32,7 @@ import javax.swing.JPanel
 import javax.swing.KeyStroke
 
 @TestApplication
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentPromptEnterHandlersTest {
   @Test
   fun enterSubmitsWhenNewTaskCanSubmit() {

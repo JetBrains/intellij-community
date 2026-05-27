@@ -5,7 +5,10 @@ import com.intellij.agent.workbench.common.session.claudeMenuCommands
 import com.intellij.agent.workbench.common.session.isClaudeMenuCommandPrompt
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class ClaudeMenuCommandsTest {
   @Test
   fun renameIsRecognizedAsMenuCommand() {

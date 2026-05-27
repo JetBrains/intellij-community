@@ -12,8 +12,11 @@ import com.intellij.openapi.util.use
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 
 @TestApplication
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentSessionProvidersTest {
   private val extensionPoint =
     ExtensionPointName<AgentSessionProviderDescriptor>("com.intellij.agent.workbench.sessionProvider")

@@ -25,9 +25,12 @@ import com.intellij.vcs.log.util.VcsUserUtil
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 
 @TestApplication
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentPromptVcsLogSelectionContextContributorIssueNavigationTest {
   private val contributor = AgentPromptVcsLogSelectionContextContributor()
 

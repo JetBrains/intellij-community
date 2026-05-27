@@ -7,6 +7,8 @@ import com.intellij.openapi.wm.StatusBar
 import com.intellij.ui.BalloonLayout
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import org.junit.jupiter.api.condition.DisabledIf
 import java.awt.Component
 import java.awt.Rectangle
@@ -20,6 +22,7 @@ import javax.swing.JFrame
 import javax.swing.JPanel
 
 @DisabledIf(value = "java.awt.GraphicsEnvironment#isHeadless", disabledReason = "Test is disabled in headless environment")
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentPromptPalettePopupWindowResolutionTest {
   @Test
   fun mouseClickInSameIdeFrameAllowsPopupCancellation() {

@@ -263,7 +263,7 @@
     <module name="intellij.libraries.download.pgp.verifier" loading="embedded"/>
     <module name="intellij.remoteDev.util" loading="embedded"/>
     <module name="intellij.libraries.teamcity.service.messages" loading="embedded"/>
-    <module name="intellij.platform.buildScripts.downloader" loading="embedded"/>
+    <module name="intellij.platform.buildScripts.downloader"/>
     <module name="intellij.platform.credentialStore.ui" loading="embedded"/>
     <module name="intellij.platform.credentialStore.impl" loading="embedded"/>
     <module name="intellij.platform.settings.local"/>

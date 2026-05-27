@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.toolwindow.actions
 
+import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettings
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
 import com.intellij.agent.workbench.sessions.service.normalizeOpenableSourceProjectPath
@@ -20,8 +21,9 @@ import com.intellij.openapi.wm.IdeFrame
 internal class AgentSessionsMainToolbarActivityGroup @JvmOverloads constructor(
   private val isDedicatedProject: (Project) -> Boolean = AgentWorkbenchDedicatedFrameProjectManager::isDedicatedProject,
   private val sourceProjectPath: (Project) -> String? = { project -> normalizeOpenableSourceProjectPath(project.basePath) },
+  private val isToolbarActivityEnabled: () -> Boolean = { AgentWorkbenchSettings.getInstance().showAgentActivityInMainToolbar },
   private val activitySummary: (Project) -> AgentSessionsActivitySummary = { project ->
-    if (project.isInitialized) project.service<AgentSessionsActivityService>().latestSummary() else AgentSessionsActivitySummary.EMPTY
+    if (project.isInitialized) project.service<AgentSessionsActivityService>().latestMainToolbarSummary() else AgentSessionsActivitySummary.EMPTY
   },
   private val projectProvider: (AnActionEvent) -> Project? = ::mainToolbarProject,
 ) : ActionGroup(), DumbAware {
@@ -44,7 +46,11 @@ internal class AgentSessionsMainToolbarActivityGroup @JvmOverloads constructor(
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   private fun isVisibleForProject(project: Project?): Boolean {
-    return project != null && !isDedicatedProject(project) && sourceProjectPath(project) != null
+    return project != null &&
+           isToolbarActivityEnabled() &&
+           !isDedicatedProject(project) &&
+           sourceProjectPath(project) != null &&
+           activitySummary(project).attentionRows.isNotEmpty()
   }
 
   private fun activityRowsFor(project: Project?, bucket: AgentSessionsActivityBucket) = when {

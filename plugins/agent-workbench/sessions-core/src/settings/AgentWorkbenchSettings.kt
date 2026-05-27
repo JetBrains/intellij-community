@@ -38,6 +38,12 @@ class AgentWorkbenchSettings : SerializablePersistentStateComponent<AgentWorkben
   val openInDedicatedFrameOverride: Boolean?
     get() = state.openInDedicatedFrame
 
+  val showAgentActivityInMainToolbar: Boolean
+    get() = state.showAgentActivityInMainToolbar ?: SHOW_AGENT_ACTIVITY_IN_MAIN_TOOLBAR_DEFAULT
+
+  val showAgentActivityInMainToolbarOverride: Boolean?
+    get() = state.showAgentActivityInMainToolbar
+
   fun setColorTabsBySourceProject(enabled: Boolean) {
     val previousValue = colorTabsBySourceProject
     val storedValue = nonDefaultBooleanValue(enabled, COLOR_TABS_BY_SOURCE_PROJECT_DEFAULT)
@@ -65,6 +71,12 @@ class AgentWorkbenchSettings : SerializablePersistentStateComponent<AgentWorkben
     updateState { current -> current.copy(openInDedicatedFrame = storedValue) }
   }
 
+  fun setShowAgentActivityInMainToolbar(enabled: Boolean) {
+    val storedValue = nonDefaultBooleanValue(enabled, SHOW_AGENT_ACTIVITY_IN_MAIN_TOOLBAR_DEFAULT)
+    if (state.showAgentActivityInMainToolbar == storedValue) return
+    updateState { current -> current.copy(showAgentActivityInMainToolbar = storedValue) }
+  }
+
   override fun loadState(state: SettingsState) {
     super.loadState(state.normalized())
   }
@@ -73,11 +85,16 @@ class AgentWorkbenchSettings : SerializablePersistentStateComponent<AgentWorkben
   data class SettingsState(
     @JvmField val colorTabsBySourceProject: Boolean? = null,
     @JvmField val openInDedicatedFrame: Boolean? = null,
+    @JvmField val showAgentActivityInMainToolbar: Boolean? = null,
   ) {
     fun normalized(): SettingsState {
       return copy(
         colorTabsBySourceProject = nonDefaultBooleanValue(colorTabsBySourceProject, COLOR_TABS_BY_SOURCE_PROJECT_DEFAULT),
         openInDedicatedFrame = nonDefaultBooleanValue(openInDedicatedFrame, OPEN_IN_DEDICATED_FRAME_DEFAULT),
+        showAgentActivityInMainToolbar = nonDefaultBooleanValue(
+          showAgentActivityInMainToolbar,
+          SHOW_AGENT_ACTIVITY_IN_MAIN_TOOLBAR_DEFAULT,
+        ),
       )
     }
   }
@@ -89,6 +106,7 @@ class AgentWorkbenchSettings : SerializablePersistentStateComponent<AgentWorkben
 
 private const val COLOR_TABS_BY_SOURCE_PROJECT_DEFAULT: Boolean = true
 private const val OPEN_IN_DEDICATED_FRAME_DEFAULT: Boolean = true
+private const val SHOW_AGENT_ACTIVITY_IN_MAIN_TOOLBAR_DEFAULT: Boolean = false
 
 private fun nonDefaultBooleanValue(value: Boolean?, defaultValue: Boolean): Boolean? {
   return value?.takeIf { it != defaultValue }

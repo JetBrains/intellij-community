@@ -8,12 +8,15 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.ui.BalloonLayout
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import java.awt.Point
 import java.awt.Rectangle
 import javax.swing.JComponent
 import javax.swing.JPanel
 
 @TestApplication
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class UIContextPickerSessionTest {
   @Test
   fun findFrameUnderScreenLocationReturnsFrameContainingCursor() {

@@ -4,8 +4,11 @@ package com.intellij.agent.workbench.prompt.core
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 
 @TestApplication
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentPromptSuggestionSeedsTest {
   @Test
   fun failingTestsProduceFixFirstSuggestions() {

@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.util;
 
-import com.intellij.TestAll;
 import com.intellij.TestCaseLoader;
 import com.intellij.util.ArrayUtil;
 import org.junit.runners.Suite;
@@ -28,7 +27,7 @@ public class AllTestsSuite extends Suite {
     SlowPolicy policy = annotation.policy();
 
     TestCaseLoader loader = TestCaseLoader.Builder.fromDefaults().withForceLoadPerformanceTests(true).build();
-    loader.fillTestCases(testPackage, TestAll.getClassRoots());
+    loader.fillTestCases(testPackage, TestCaseLoader.getClassRoots());
 
     List<Class<?>> result = new ArrayList<>();
     for (Class aClass : loader.getClasses()) {

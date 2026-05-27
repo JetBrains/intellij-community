@@ -30,6 +30,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import java.awt.Component
 import java.awt.Cursor
 import java.awt.Point
@@ -46,6 +48,7 @@ import javax.swing.JPanel
 import javax.swing.tree.TreeNode
 
 @TestApplication
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentChatFileDropSupportTest {
   @TestDisposable
   lateinit var disposable: Disposable

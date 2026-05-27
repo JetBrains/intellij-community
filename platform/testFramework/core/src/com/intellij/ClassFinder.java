@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.stream.Stream;
 
 public class ClassFinder {
-  private static final List<String> IGNORED_CLASS_NAMES = List.of("com.intellij.AllTests");
   private final List<String> classNameList;
   private final Path classPathRoot;
   private final boolean includeUnconventionallyNamedTests;
@@ -97,7 +96,7 @@ public class ClassFinder {
     String fqn = StringUtil
       .trimEnd(root.relativize(path).toString(), ".class")
       .replace(path.getFileSystem().getSeparator(), ".");
-    return IGNORED_CLASS_NAMES.contains(fqn) ? null : fqn;
+    return fqn;
   }
 
   private List<String> findAndStoreTestClasses(@NotNull String directoryOffset) {

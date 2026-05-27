@@ -9,6 +9,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.SoftAssertions
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -25,6 +27,7 @@ private const val RUN_CLAUDE_QUOTA_E2E_PROPERTY = "agent.workbench.sessions.runC
  * Disabled by default; set -Dagent.workbench.sessions.runClaudeQuotaE2e=true to enable.
  * Requires real Claude credentials (keychain or ~/.claude/.credentials.json).
  */
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class ClaudeQuotaServiceE2eTest {
   private val jsonFactory = JsonFactory()
 

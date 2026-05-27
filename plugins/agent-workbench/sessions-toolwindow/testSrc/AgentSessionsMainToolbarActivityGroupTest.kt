@@ -8,11 +8,13 @@ import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
+import com.intellij.agent.workbench.sessions.toolwindow.ui.AGENT_SESSIONS_CHROME_ACTIVITY_FRESHNESS_MILLIS
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsMainToolbarActivityGroup
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsActivityCounterAction
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsActivityCounterComponent
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsActivitySummary
 import com.intellij.agent.workbench.sessions.toolwindow.ui.buildAgentSessionsActivitySummary
+import com.intellij.agent.workbench.sessions.toolwindow.ui.freshAgentSessionsActivitySummary
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
@@ -31,11 +33,14 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import java.awt.Rectangle
 import javax.swing.JComponent
 import javax.swing.JPanel
 
 @TestApplication
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentSessionsMainToolbarActivityGroupTest {
   @BeforeEach
   fun setUp() {
@@ -81,6 +86,7 @@ class AgentSessionsMainToolbarActivityGroupTest {
     val group = AgentSessionsMainToolbarActivityGroup(
       isDedicatedProject = { false },
       sourceProjectPath = { "/work/project-a" },
+      isToolbarActivityEnabled = { true },
       activitySummary = { activitySummary() },
     )
     val event = testEventWithProject(group)
@@ -101,6 +107,7 @@ class AgentSessionsMainToolbarActivityGroupTest {
     val group = AgentSessionsMainToolbarActivityGroup(
       isDedicatedProject = { false },
       sourceProjectPath = { "/work/project-a" },
+      isToolbarActivityEnabled = { true },
       activitySummary = { activitySummary() },
     )
     val counters = group.getChildren(testEventWithProject(group)).filterIsInstance<AgentSessionsActivityCounterAction>()
@@ -120,6 +127,7 @@ class AgentSessionsMainToolbarActivityGroupTest {
     val group = AgentSessionsMainToolbarActivityGroup(
       isDedicatedProject = { false },
       sourceProjectPath = { "/work/project-a" },
+      isToolbarActivityEnabled = { true },
       activitySummary = { activitySummary() },
     )
     val dataContext = SimpleDataContext.builder()
@@ -140,11 +148,42 @@ class AgentSessionsMainToolbarActivityGroupTest {
   }
 
   @Test
-  fun emptyCountersStayVisibleAndDisabled() {
+  fun sourceFrameGroupHiddenWhenDisabledBySettings() {
     val group = AgentSessionsMainToolbarActivityGroup(
       isDedicatedProject = { false },
       sourceProjectPath = { "/work/project-a" },
+      isToolbarActivityEnabled = { false },
+      activitySummary = { activitySummary() },
+    )
+    val event = testEventWithProject(group)
+
+    group.update(event)
+
+    assertThat(event.presentation.isEnabledAndVisible).isFalse()
+  }
+
+  @Test
+  fun sourceFrameGroupHiddenWhenThereIsNoCurrentRunAttention() {
+    val group = AgentSessionsMainToolbarActivityGroup(
+      isDedicatedProject = { false },
+      sourceProjectPath = { "/work/project-a" },
+      isToolbarActivityEnabled = { true },
       activitySummary = { AgentSessionsActivitySummary.EMPTY },
+    )
+    val event = testEventWithProject(group)
+
+    group.update(event)
+
+    assertThat(event.presentation.isEnabledAndVisible).isFalse()
+  }
+
+  @Test
+  fun sourceFrameVisibleCountersKeepZeroBucketsStableWhenAttentionExists() {
+    val group = AgentSessionsMainToolbarActivityGroup(
+      isDedicatedProject = { false },
+      sourceProjectPath = { "/work/project-a" },
+      isToolbarActivityEnabled = { true },
+      activitySummary = { attentionOnlyActivitySummary() },
     )
     val counters = group.getChildren(testEventWithProject(group)).filterIsInstance<AgentSessionsActivityCounterAction>()
 
@@ -153,14 +192,25 @@ class AgentSessionsMainToolbarActivityGroupTest {
       counters.zip(events).forEach { (counter, event) -> counter.update(event) }
     }
 
-    assertThat(events.map { event -> event.presentation.text }).containsExactly("0", "0", "0")
+    assertThat(events.map { event -> event.presentation.text }).containsExactly("1", "0", "0")
     assertThat(events.map { event -> event.presentation.isVisible }).containsExactly(true, true, true)
-    assertThat(events.map { event -> event.presentation.isEnabled }).containsExactly(false, false, false)
-    assertThat(events.map { event -> event.presentation.description }).containsExactly(
-      AgentSessionsBundle.message("toolwindow.activity.action.attention.tooltip"),
-      AgentSessionsBundle.message("toolwindow.activity.action.running.tooltip"),
-      AgentSessionsBundle.message("toolwindow.activity.action.done.tooltip"),
+    assertThat(events.map { event -> event.presentation.isEnabled }).containsExactly(true, false, false)
+  }
+
+  @Test
+  fun sourceFrameCountersIgnoreStaleChromeActivityRows() {
+    val now = AGENT_SESSIONS_CHROME_ACTIVITY_FRESHNESS_MILLIS + 10_000L
+    val group = AgentSessionsMainToolbarActivityGroup(
+      isDedicatedProject = { false },
+      sourceProjectPath = { "/work/project-a" },
+      isToolbarActivityEnabled = { true },
+      activitySummary = { freshAgentSessionsActivitySummary(activitySummary(updatedAt = 9_999), now) },
     )
+    val event = testEventWithProject(group)
+
+    group.update(event)
+
+    assertThat(event.presentation.isEnabledAndVisible).isFalse()
   }
 
   @Test
@@ -168,6 +218,7 @@ class AgentSessionsMainToolbarActivityGroupTest {
     val group = AgentSessionsMainToolbarActivityGroup(
       isDedicatedProject = { true },
       sourceProjectPath = { "/work/project-a" },
+      isToolbarActivityEnabled = { true },
       activitySummary = { AgentSessionsActivitySummary.EMPTY },
     )
     val dedicatedEvent = testEventWithProject(group)
@@ -175,6 +226,7 @@ class AgentSessionsMainToolbarActivityGroupTest {
     val noSourcePathGroup = AgentSessionsMainToolbarActivityGroup(
       isDedicatedProject = { false },
       sourceProjectPath = { null },
+      isToolbarActivityEnabled = { true },
       activitySummary = { AgentSessionsActivitySummary.EMPTY },
     )
     val noSourcePathEvent = testEventWithProject(noSourcePathGroup)
@@ -188,7 +240,7 @@ class AgentSessionsMainToolbarActivityGroupTest {
     assertThat(noSourcePathEvent.presentation.isEnabledAndVisible).isFalse()
   }
 
-  private fun activitySummary(): AgentSessionsActivitySummary {
+  private fun activitySummary(updatedAt: Long = 1_000): AgentSessionsActivitySummary {
     return buildAgentSessionsActivitySummary(
       AgentSessionsState(
         projects = listOf(
@@ -198,8 +250,8 @@ class AgentSessionsMainToolbarActivityGroupTest {
             isOpen = true,
             hasLoaded = true,
             threads = listOf(
-              thread("attention", AgentThreadActivity.NEEDS_INPUT),
-              thread("done", AgentThreadActivity.UNREAD),
+              thread("attention", AgentThreadActivity.NEEDS_INPUT, updatedAt),
+              thread("done", AgentThreadActivity.UNREAD, updatedAt),
             ),
           ),
           AgentProjectSessions(
@@ -207,18 +259,34 @@ class AgentSessionsMainToolbarActivityGroupTest {
             name = "Project B",
             isOpen = true,
             hasLoaded = true,
-            threads = listOf(thread("running", AgentThreadActivity.PROCESSING)),
+            threads = listOf(thread("running", AgentThreadActivity.PROCESSING, updatedAt)),
           ),
         ),
       )
     )
   }
 
-  private fun thread(id: String, activity: AgentThreadActivity): AgentSessionThread {
+  private fun attentionOnlyActivitySummary(): AgentSessionsActivitySummary {
+    return buildAgentSessionsActivitySummary(
+      AgentSessionsState(
+        projects = listOf(
+          AgentProjectSessions(
+            path = "/work/project-a",
+            name = "Project A",
+            isOpen = true,
+            hasLoaded = true,
+            threads = listOf(thread("attention", AgentThreadActivity.NEEDS_INPUT, 1_000)),
+          )
+        ),
+      )
+    )
+  }
+
+  private fun thread(id: String, activity: AgentThreadActivity, updatedAt: Long): AgentSessionThread {
     return AgentSessionThread(
       id = id,
       title = id,
-      updatedAt = 1_000,
+      updatedAt = updatedAt,
       archived = false,
       activity = activity,
       provider = AgentSessionProvider.CODEX,

@@ -5,7 +5,10 @@ import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionBackendSe
 import com.intellij.agent.workbench.codex.sessions.backend.appserver.CodexAppServerSessionBackend
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class CodexSessionBackendSelectorTest {
   @Test
   fun defaultsToAppServerWhenOverrideMissing() {

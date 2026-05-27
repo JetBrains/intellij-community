@@ -26,7 +26,6 @@ internal class CausalProfilingOptions(
       searchScope = "com.intellij",
       scopesToIgnore = listOf(
         "com.intellij.causal",
-        "com.intellij.TestAll",
         "com.intellij.concurrency",
         "com.intellij.codeInsight.daemon.impl",
         "com.intellij.openapi.application",

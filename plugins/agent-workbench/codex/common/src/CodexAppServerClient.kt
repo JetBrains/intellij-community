@@ -37,10 +37,8 @@ import java.io.IOException
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
 import java.nio.charset.StandardCharsets
-import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -627,19 +625,15 @@ class CodexAppServerClient(
       ?.takeIf { it.isNotEmpty() }
     val executable = configuredExecutable ?: CodexCliUtils.CODEX_COMMAND
     val requestedWorkingDirectory = workingDirectoryPath
-    val effectiveWorkingDirectory = requestedWorkingDirectory?.takeIf(Files::isDirectory)
+    val effectiveWorkingDirectory = resolveCodexAppServerWorkingDirectory(requestedWorkingDirectory)
     LOG.debug {
-      "Starting Codex app-server(executable=$executable, executableSource=${if (configuredExecutable != null) "configured" else "default"}, requestedWorkingDirectory=${requestedWorkingDirectory ?: "<none>"}, effectiveWorkingDirectory=${effectiveWorkingDirectory ?: "<none>"}, environmentOverrideCount=${environmentOverrides.size})"
+      "Starting Codex app-server(executable=$executable, executableSource=${if (configuredExecutable != null) "configured" else "default"}, requestedWorkingDirectory=${requestedWorkingDirectory ?: "<none>"}, effectiveWorkingDirectory=$effectiveWorkingDirectory, environmentOverrideCount=${environmentOverrides.size})"
     }
     val process = try {
       GeneralCommandLine(executable, "-c", CODEX_AUTO_UPDATE_CONFIG, "app-server")
         .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
         .withEnvironment(environmentOverrides)
-        .apply {
-          if (effectiveWorkingDirectory != null) {
-            withWorkingDirectory(effectiveWorkingDirectory)
-          }
-        }
+        .withWorkingDirectory(effectiveWorkingDirectory)
         .createProcess()
     }
     catch (t: Throwable) {
@@ -675,13 +669,6 @@ class CodexAppServerClient(
         }
         LOG.warn("Codex app-server stdout reader failed", e)
       }
-      finally {
-        try {
-          reader.close()
-        }
-        catch (_: Throwable) {
-        }
-      }
     }
   }
 
@@ -700,13 +687,6 @@ class CodexAppServerClient(
       catch (e: Throwable) {
         if (!isActive || !process.isAlive) return@launch
         LOG.error("Codex app-server stderr reader failed", e)
-      }
-      finally {
-        try {
-          reader.close()
-        }
-        catch (_: Throwable) {
-        }
       }
     }
   }
@@ -809,7 +789,7 @@ class CodexAppServerClient(
         false
       }
       catch (t: Throwable) {
-        if (t is CancellationException && t !is TimeoutCancellationException) {
+        if (t is CancellationException) {
           throw t
         }
         LOG.warn("Failed to clean up Codex prompt suggestion turn $threadId/$turnId; resetting client", t)
@@ -885,39 +865,11 @@ class CodexAppServerClient(
     process = null
     initialized = false
     inFlightRequestCount = 0
-    try {
-      writer?.close()
-    }
-    catch (_: Throwable) {
-    }
     writer = null
-    try {
-      current.outputStream.close()
-    }
-    catch (_: Throwable) {
-    }
-    try {
-      current.inputStream.close()
-    }
-    catch (_: Throwable) {
-    }
-    try {
-      current.errorStream.close()
-    }
-    catch (_: Throwable) {
-    }
     readerJob?.cancel()
     stderrJob?.cancel()
     waitJob?.cancel()
-    current.destroy()
-    try {
-      if (!current.waitFor(PROCESS_TERMINATION_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
-        current.destroyForcibly()
-        current.waitFor(PROCESS_TERMINATION_TIMEOUT_MS, TimeUnit.MILLISECONDS)
-      }
-    }
-    catch (_: Throwable) {
-    }
+    stopCodexAppServerProcess(current, PROCESS_TERMINATION_TIMEOUT_MS, coroutineScope)
   }
 }
 

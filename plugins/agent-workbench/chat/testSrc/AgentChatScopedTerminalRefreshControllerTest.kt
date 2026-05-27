@@ -12,6 +12,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.milliseconds
@@ -21,6 +22,7 @@ import kotlin.time.Duration.Companion.seconds
 // rolloutPollJob effectively dormant so it does not race with the assertion paths.
 private const val DISABLED_POLL_INTERVAL_MS: Long = 60_000L
 
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentChatScopedTerminalRefreshControllerTest {
   @Test
   fun scopedRefreshThreadIdUsesParentSessionIdForSubAgentTabs() {

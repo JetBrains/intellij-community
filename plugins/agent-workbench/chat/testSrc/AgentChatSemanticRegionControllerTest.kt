@@ -16,8 +16,11 @@ import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.view.TerminalOutputModelSnapshot
 import org.jetbrains.plugins.terminal.view.impl.MutableTerminalOutputModelImpl
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 
 @TestApplication
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentChatSemanticRegionControllerTest {
   @Test
   fun codexDetectorExtractsSingleProposedPlanSummary(): Unit = timeoutRunBlocking {

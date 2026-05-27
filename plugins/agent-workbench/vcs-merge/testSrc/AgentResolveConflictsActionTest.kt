@@ -28,12 +28,15 @@ import com.intellij.ui.components.JBOptionButton
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.UIManager
 import javax.swing.plaf.metal.MetalIconFactory
 
 @TestApplication
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 internal class AgentResolveConflictsActionTest {
   @BeforeEach
   fun setUpOptionButtonUi() {

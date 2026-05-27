@@ -76,7 +76,8 @@ internal class GithubMarkdownCompletionContributor : CompletionContributor(), Du
             context.editor.caretModel.moveToOffset(offset + 1)
           }
         }
-    val element = user.name?.let { elementBuilder.withLookupString("@$it") } ?: elementBuilder
+
+    val element = user.name?.takeIf { it.isNotBlank() }?.let { elementBuilder.withLookupString("@$it") } ?: elementBuilder
     return PrioritizedLookupElement.withPriority(element, priority)
   }
 }
