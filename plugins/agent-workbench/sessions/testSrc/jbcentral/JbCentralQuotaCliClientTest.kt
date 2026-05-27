@@ -1,14 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.jbcentral
 
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.SystemInfoRt
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
-import java.nio.file.NoSuchFileException
 import java.nio.file.Path
-import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
 class JbCentralQuotaCliClientTest {
@@ -50,17 +47,10 @@ class JbCentralQuotaCliClientTest {
   }
 
   private fun loadFixture(name: String): String {
-    val path = fixturePath(name)
-    return try {
-      path.readText()
-    }
-    catch (_: NoSuchFileException) {
-      error("Missing fixture: $path")
-    }
-  }
-
-  private fun fixturePath(name: String): Path {
-    return Path.of(PathManager.getHomePath(), "community", "plugins", "agent-workbench", "sessions", "testData", "jbcentral", name)
+    val resourcePath = "jbcentral/$name"
+    return checkNotNull(javaClass.classLoader.getResource(resourcePath)) {
+      "Missing fixture resource: $resourcePath"
+    }.readText()
   }
 
   private fun withJbCentralPath(path: Path, action: () -> Unit) {

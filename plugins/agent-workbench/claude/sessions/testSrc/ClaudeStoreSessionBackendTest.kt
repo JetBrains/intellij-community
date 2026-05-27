@@ -9,7 +9,6 @@ import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionActivityHintPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
-import com.intellij.openapi.application.PathManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
@@ -980,18 +979,10 @@ class ClaudeStoreSessionBackendTest {
 }
 
 private fun loadUsageFixture(relativePath: String, projectPath: String): List<String> {
-  val fixturePath = Path.of(
-    PathManager.getHomePath(),
-    "community",
-    "plugins",
-    "agent-workbench",
-    "claude",
-    "sessions",
-    "testData",
-    relativePath,
-  )
-  check(Files.exists(fixturePath)) { "Missing fixture: $fixturePath" }
-  return fixturePath.toFile().readText()
+  val fixtureText = checkNotNull(ClaudeStoreSessionBackendTest::class.java.classLoader.getResource(relativePath)) {
+    "Missing fixture resource: $relativePath"
+  }.readText()
+  return fixtureText
     .replace("__PROJECT_DIR__", projectPath)
     .lineSequence()
     .filter(String::isNotBlank)

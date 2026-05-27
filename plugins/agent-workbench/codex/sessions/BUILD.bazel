@@ -88,6 +88,8 @@ jvm_library(
   testonly = True,
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  resources = glob(["testData/**/*"]),
+  resource_strip_prefix = "testData",
   associates = [
     "//plugins/agent-workbench/codex/sessions",
     "//plugins/agent-workbench/codex/sessions:sessions_test_lib",

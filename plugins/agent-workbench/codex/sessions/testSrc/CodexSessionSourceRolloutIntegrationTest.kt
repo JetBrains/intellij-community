@@ -8,7 +8,6 @@ import com.intellij.agent.workbench.common.session.AgentSessionCostKind
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceRefreshRequest
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
-import com.intellij.openapi.application.PathManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
@@ -18,10 +17,8 @@ import java.util.concurrent.TimeUnit
 import org.junit.jupiter.api.io.TempDir
 import java.math.BigDecimal
 import java.nio.file.Files
-import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.time.Instant
-import kotlin.io.path.readText
 
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
 class CodexSessionSourceRolloutIntegrationTest {
@@ -463,22 +460,9 @@ private fun CodexSessionSourceRolloutIntegrationTest.writeRolloutFixture(project
 }
 
 private fun loadRolloutFixture(projectDir: Path): List<String> {
-  val fixturePath = Path.of(
-    PathManager.getHomePath(),
-    "community",
-    "plugins",
-    "agent-workbench",
-    "codex",
-    "sessions",
-    "testData",
-    COST_ROLLOUT_FIXTURE_PATH,
-  )
-  val fixtureText = try {
-    fixturePath.readText()
-  }
-  catch (_: NoSuchFileException) {
-    error("Missing fixture: $fixturePath")
-  }
+  val fixtureText = checkNotNull(CodexSessionSourceRolloutIntegrationTest::class.java.classLoader.getResource(COST_ROLLOUT_FIXTURE_PATH)) {
+    "Missing fixture resource: $COST_ROLLOUT_FIXTURE_PATH"
+  }.readText()
   return fixtureText
     .replace("__PROJECT_DIR__", projectDir.toString().replace("\\", "\\\\"))
     .lineSequence()

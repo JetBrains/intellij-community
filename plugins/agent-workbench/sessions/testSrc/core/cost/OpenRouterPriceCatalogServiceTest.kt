@@ -2,14 +2,10 @@
 package com.intellij.agent.workbench.sessions.core.cost
 
 import com.intellij.agent.workbench.common.session.AgentSessionCostKind
-import com.intellij.openapi.application.PathManager
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
-import java.nio.file.Files
-import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.io.path.readText
 
 class OpenRouterPriceCatalogServiceTest {
   @Test
@@ -87,12 +83,9 @@ class OpenRouterPriceCatalogServiceTest {
   }
 
   private fun loadFixture(): String {
-    return fixturePath().readText()
-  }
-
-  private fun fixturePath(): Path {
-    val path = Path.of(PathManager.getHomePath(), "community", "plugins", "agent-workbench", "sessions", "testData", "openrouter", "models-snapshot.json")
-    check(Files.exists(path)) { "Missing fixture: $path" }
-    return path
+    val resourcePath = "openrouter/models-snapshot.json"
+    return checkNotNull(javaClass.classLoader.getResource(resourcePath)) {
+      "Missing fixture resource: $resourcePath"
+    }.readText()
   }
 }
