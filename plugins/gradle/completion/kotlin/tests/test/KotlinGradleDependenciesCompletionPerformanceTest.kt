@@ -30,7 +30,6 @@ import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.TestInfo
 import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.params.ParameterizedTest
 
@@ -58,31 +57,29 @@ internal class KotlinGradleDependenciesCompletionPerformanceTest : AbstractKotli
 
   @ParameterizedTest
   @BaseGradleVersionSource
-  fun `test completing gav coordinates inside a scope argument`(gradleVersion: GradleVersion, testInfo: TestInfo) =
+  fun `test completing gav coordinates inside a scope argument`(gradleVersion: GradleVersion) =
     testDependenciesCompletionPerformance(
       input = "implementation(\"<caret>\")",
       expectedElements = getGavEntries(),
       gradleVersion,
-      testInfo)
-
-  @ParameterizedTest
-  @BaseGradleVersionSource
-  fun `test completing a scope`(gradleVersion: GradleVersion, testInfo: TestInfo) =
-    testDependenciesCompletionPerformance(
-      input = "i<caret>",
-      expectedElements = listOf("implementation", "testImplementation"),
-      gradleVersion,
-      testInfo
     )
 
   @ParameterizedTest
   @BaseGradleVersionSource
-  fun `test completing a scope argument without quotes`(gradleVersion: GradleVersion, testInfo: TestInfo) =
+  fun `test completing a scope`(gradleVersion: GradleVersion) =
+    testDependenciesCompletionPerformance(
+      input = "i<caret>",
+      expectedElements = listOf("implementation", "testImplementation"),
+      gradleVersion,
+    )
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun `test completing a scope argument without quotes`(gradleVersion: GradleVersion) =
     testDependenciesCompletionPerformance(
       input = "implementation(<caret>)",
       expectedElements = listOf("libs", "libs.my.library.aaa", "libs.bundles.my.bundle.aaa", "platform", "project"),
       gradleVersion,
-      testInfo
     )
 
   @ParameterizedTest
@@ -92,14 +89,12 @@ internal class KotlinGradleDependenciesCompletionPerformanceTest : AbstractKotli
       input = "implementation(platform(<caret>))",
       expectedElements = listOf("libs.my.library.aaa", "libs.bundles.my.bundle.aaa"),
       gradleVersion,
-      testInfo
     )
 
   private fun testDependenciesCompletionPerformance(
     input: String,
     expectedElements: List<String>,
     gradleVersion: GradleVersion,
-    testInfo: TestInfo,
   ) {
     test(gradleVersion, COMPLETION_FIXTURE) {
       val file = writeTextAndCommit("build.gradle.kts", "dependencies { $input }")
@@ -120,12 +115,12 @@ internal class KotlinGradleDependenciesCompletionPerformanceTest : AbstractKotli
             removeRangeMarkers()
           }
           .runAsStressTest()
-          .start(getTestMethodFqn(testInfo))
+          .start(getTestMethodFqn())
       }
     }
   }
 
-  private fun getTestMethodFqn(testInfo: TestInfo): String =
+  private fun getTestMethodFqn(): String =
     testInfo.testClass.get().name + "." + testInfo.testMethod.get().name
 
   private fun removeRangeMarkers() {
