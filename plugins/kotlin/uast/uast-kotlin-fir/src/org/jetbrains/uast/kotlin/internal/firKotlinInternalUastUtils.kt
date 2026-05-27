@@ -12,9 +12,11 @@ import com.intellij.psi.PsiParameter
 import com.intellij.psi.PsiPrimitiveType
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypes
+import com.intellij.psi.impl.light.LightPsiClassBuilder
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.psi.util.parentOfType
+import com.intellij.util.runIf
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
@@ -83,6 +85,7 @@ import org.jetbrains.kotlin.asJava.classes.lazyPub
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
 import org.jetbrains.kotlin.asJava.toLightElements
+import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.light.classes.symbol.annotations.annotateByKtType
 import org.jetbrains.kotlin.load.java.JvmAbi
@@ -415,27 +418,50 @@ private fun toPsiMethodForDeserialized(
     val classId = psi?.containingClass()?.getClassId()
         ?: functionSymbol.callableId?.classId
     if (classId != null) {
-        toPsiClass(
+        val containingClass = toPsiClass(
             typeCreator.classType(classId),
             source = null,
             context,
             TypeOwnerKind.DECLARATION,
             isBoxed = false,
-        )?.lookup()?.let { return it }
+        ) ?: runIf(functionSymbol is KaConstructorSymbol) {
+            LightPsiClassBuilder(context, classId.asFqNameString())
+        }
+        containingClass?.lookup()?.let { return it }
     }
     // Deserialized top-level function
-    return if (psi != null) {
-        // Lint/UAST IDE: with deserialized PSI
-        psi.containingKtFile.symbol.asFacadePsiClass()?.lookup()
-    } else if (functionSymbol is KaNamedFunctionSymbol) {
-        // Lint/UAST CLI: attempt to find the binary class
-        //   with the facade fq name from the resolved symbol
-        functionSymbol.containingJvmClassName?.let { fqName ->
-            JavaPsiFacade.getInstance(context.project)
-                .findClass(fqName, context.resolveScope)
-                ?.lookup()
-        }
-    } else null
+    psi?.containingKtFile?.symbol?.asFacadePsiClass()?.lookup()?.let { return it }
+
+    if (functionSymbol !is KaNamedFunctionSymbol) return null
+    // JVM binary lookup when facade PSI is unavailable
+    functionSymbol.containingJvmClassName?.let { fqName ->
+        JavaPsiFacade.getInstance(context.project)
+            .findClass(fqName, context.resolveScope)
+            ?.lookup()
+    }?.let { return it }
+
+    if (functionSymbol.callableId?.classId != null) return null
+    val packageName = functionSymbol.callableId?.packageName ?: return null
+    // Skip stdlib built-in types (kotlin.Any, kotlin.String, etc.) - they resolve through normal JVM mapping
+    if (packageName == StandardClassIds.BASE_KOTLIN_PACKAGE) return null
+
+    // Non-JVM fallback: no JVM facade class on classpath
+    val psiFile = psi?.containingKtFile ?: (functionSymbol.psi as? KtElement)?.containingKtFile
+    val facadeFqName = psiFile?.javaFileFacadeFqName?.asString() ?: return null
+
+    val jvmFacadeClass = JavaPsiFacade.getInstance(context.project)
+        .findClass(facadeFqName, context.resolveScope)
+    jvmFacadeClass?.lookup()?.let { return it }
+    // Return null when the JVM facade class exists, but no matching method is found
+    if (jvmFacadeClass != null) return null
+
+    return UastFakeDeserializedSymbolLightMethod(
+        functionSymbol.createPointer(),
+        functionSymbol.name.identifier,
+        LightPsiClassBuilder(context, facadeFqName),
+        context,
+        kaCallInfo.typeArgumentsMappingOrEmptyMap()
+    )
 }
 
 private fun KaSimpleCall<*, *>?.typeArgumentsMappingOrEmptyMap(): Map<KaSymbolPointer<KaTypeParameterSymbol>, KaTypePointer<KaType>> =
