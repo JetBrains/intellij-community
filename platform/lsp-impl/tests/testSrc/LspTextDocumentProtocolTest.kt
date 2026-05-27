@@ -22,6 +22,7 @@ import com.intellij.platform.lsp.testFramework.checkHighlightingRetrying
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.common.waitUntilAssertSucceeds
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.moduleFixture
@@ -29,7 +30,6 @@ import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
@@ -64,7 +64,6 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 
@@ -301,23 +300,12 @@ internal class LspTextDocumentProtocolTest {
     }
 
     private suspend fun checkFoldRegionsRetrying(expectedCount: Int, check: ((Array<FoldRegion>) -> Unit)? = null) {
-      repeat(30) {
-        delay(100.milliseconds)
-        val success = readAction {
+      waitUntilAssertSucceeds(message = "Expected $expectedCount LSP fold regions") {
+        readAction {
           val regions = codeInsightFixture.editor.foldingModel.allFoldRegions
-          if (regions.size == expectedCount) {
-            check?.invoke(regions)
-            true
-          }
-          else {
-            false
-          }
+          assertEquals(expectedCount, regions.size)
+          check?.invoke(regions)
         }
-        if (success) return
-      }
-      readAction {
-        val regions = codeInsightFixture.editor.foldingModel.allFoldRegions
-        assertEquals(expectedCount, regions.size)
       }
     }
   }
@@ -345,14 +333,10 @@ internal class LspTextDocumentProtocolTest {
     }
 
     private suspend fun checkInlaysRetrying(sourceText: String, expected: String) {
-      repeat(3) {
+      waitUntilAssertSucceeds(message = "Inlays don't match expected") {
         codeInsightFixture.doHighlighting()
-        delay(100.milliseconds)
-        val actual = dumpInlays(sourceText)
-        if (actual.trim() == expected.trim()) return
+        assertEquals(expected.trim(), dumpInlays(sourceText).trim())
       }
-      val actual = dumpInlays(sourceText)
-      assertEquals(expected.trim(), actual.trim())
     }
 
     private fun dumpInlays(sourceText: String): String {

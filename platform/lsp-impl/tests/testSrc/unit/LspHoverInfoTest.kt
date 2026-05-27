@@ -7,6 +7,7 @@ import com.intellij.platform.backend.documentation.DocumentationTargetProvider
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.common.waitUntilAssertSucceeds
 import com.intellij.testFramework.fixtures.EditorMouseFixture
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.extensionPointFixture
@@ -14,7 +15,6 @@ import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -44,10 +44,9 @@ internal class LspHoverInfoTest {
     // `hint.isVisible()` is `false` in `EditorMouseHoverPopupManager.getCurrentHint` because
     // `ApplicationManager.isHeadlessEnvironment()` is `true` in `AbstractPopup.show(java.awt.Component, int, int, boolean)`.
     // So, the real popup doesn't appear in test, and we can't assert `EditorMouseHoverPopupManager.isHintShown` to be `true`.
-    while (docTargetProvider.invocationLog.isEmpty()) {
-      delay(10)
+    waitUntilAssertSucceeds {
+      assertEquals(listOf("foo.txt:6"), docTargetProvider.invocationLog)
     }
-    assertEquals(listOf("foo.txt:6"), docTargetProvider.invocationLog)
   }
 }
 

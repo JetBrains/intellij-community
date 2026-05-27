@@ -7,6 +7,7 @@ import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.lspServerSupportFixture
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeVisionFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.common.waitUntilAssertSucceeds
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.editorFixture
 import com.intellij.testFramework.junit5.fixture.moduleFixture
@@ -14,15 +15,12 @@ import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.psiFileFixture
 import com.intellij.testFramework.junit5.fixture.sourceRootFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
-import kotlinx.coroutines.delay
 import org.eclipse.lsp4j.CodeLens
 import org.eclipse.lsp4j.CodeLensOptions
 import org.eclipse.lsp4j.Command
 import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.fail
-import kotlin.time.Duration.Companion.milliseconds
 
 @TestApplication
 class LspCodeLensTest {
@@ -99,17 +97,8 @@ class LspCodeLensTest {
   // The code lens cache is not guaranteed to update between `doHighlighting` and `codeVisionHost.calculateCodeVisionSync`,
   // so a retry with delay is necessary
   private suspend fun checkCodeLensRetrying(expectedText: String, codeInsightContext: CodeInsightContext) {
-    var lastError: AssertionError? = null
-    repeat(3) {
-      try {
-        codeVision.testProviders(codeInsightContext, expectedText, "LspCodeVisionProvider")
-        return
-      }
-      catch (e: AssertionError) {
-        lastError = e
-        delay(100.milliseconds)
-      }
+    waitUntilAssertSucceeds(message = "Code lens aren't rendered") {
+      codeVision.testProviders(codeInsightContext, expectedText, "LspCodeVisionProvider")
     }
-    fail("Code lens aren't rendered after retries", lastError)
   }
 }
