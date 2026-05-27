@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.group
 
+import com.intellij.codeInsight.completion.NewRdCompletionSupport
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.registry.Registry
@@ -27,6 +28,10 @@ internal class GroupedCompletionImpl : GroupedCompletion {
     }
 
     if (!AppMode.isHeadless() && PlatformUtils.isIntelliJ()) {
+      return true
+    }
+
+    if (NewRdCompletionSupport.isFrontendRdCompletionOn() && NewRdCompletionSupport.getInstance().isFrontendForIntelliJBackend()) {
       return true
     }
 
