@@ -79,7 +79,7 @@ public final class JavadocCopyPastePreProcessor implements CopyPastePreProcessor
 
     /*
     This piece of code runs AFTER the LineCommentCopyPastePreProcessor.
-    Since there is not system in place to stop a preprocessor chain, we have to use whatever has been produced beforehand.
+    Since there is no system in place to stop a preprocessor chain, we have to use whatever has been produced beforehand.
     Meaning every line matches /^\s*?\/\/\s+?/
     There will probably be edge cases with specially crafted input.
     */
