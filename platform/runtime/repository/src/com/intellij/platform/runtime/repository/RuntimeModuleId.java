@@ -41,7 +41,7 @@ public final class RuntimeModuleId {
    * Returns a human-readable name of the module. It can be used for debugging and logging purposes only.
    */
   public @NotNull String getPresentableName() {
-    return myNamespace.equals(DEFAULT_NAMESPACE) ? myName : myNamespace + ":" + myName;
+    return myNamespace.equals(DEFAULT_NAMESPACE) ? myName : myName + " (namespace=" + myNamespace + ")";
   }
 
   /**
