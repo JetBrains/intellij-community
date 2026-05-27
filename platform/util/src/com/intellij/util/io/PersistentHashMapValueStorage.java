@@ -898,7 +898,7 @@ public final class PersistentHashMapValueStorage {
         FileAccessorCache.Handle<FileChannelWithSizeTracking> fileAccessor = ourFileChannelCache.get(myPath);
         FileChannelWithSizeTracking file = fileAccessor.get();
         try {
-          file.write(file.length(), b, off, len);
+          file.append(b, off, len);
         }
         finally {
           fileAccessor.release();
