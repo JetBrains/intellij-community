@@ -22,8 +22,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.intellij.codeInsight.completion.group.CompletionGroup.COMPLETION_GROUP_KEY;
-
 /**
  * For completion FAQ, see {@link CompletionContributor}.
  */
@@ -113,7 +111,7 @@ public abstract class CompletionService {
       CompletionResultSet result = createResultSet(
         parameters,
         (CompletionResult r) -> {
-          r.getLookupElement().putUserData(COMPLETION_GROUP_KEY, completionGroup);
+          completionGroup.installTo(r.getLookupElement());
           consumer.consume(r);
         },
         contributor,
