@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
@@ -30,7 +29,6 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.awaitCancellation
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -52,10 +50,8 @@ import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.geom.RoundRectangle2D
 import java.io.File
-import java.io.FileInputStream
 import java.io.IOException
 import java.io.InputStream
-import javax.imageio.ImageIO
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
@@ -81,12 +77,10 @@ class PluginImagesComponent : JPanel {
 
   private data class Screenshots(
     val paths: List<String>,
-    val pluginId: PluginId?,
     val externalPluginIdForScreenShots: String?,
   ) {
     constructor() : this(
       paths = emptyList(),
-      pluginId = null,
       externalPluginIdForScreenShots = null,
     )
   }
@@ -155,40 +149,40 @@ class PluginImagesComponent : JPanel {
   }
 
   private suspend fun loadImages(screenshots: Screenshots): ReferencedImages {
-    return withContext(Dispatchers.IO + CoroutineName("load")) {
-      val images: MutableList<Image> = ArrayList()
-      val parentDir = File(PathManager.getPluginTempPath(), "imageCache/" + screenshots.externalPluginIdForScreenShots)
-
-      for (screenShot in screenshots.paths) {
-        ensureActive()
-        try {
-          val name = StringUtil.substringAfterLast(screenShot, "/")!!
-          val imageFile = File(parentDir, name)
-          readOrUpdateFile<Any?>(imageFile.toPath(), screenShot, null, "") { stream: InputStream? ->
-            IOUtil.closeSafe(Logger.getInstance(PluginImagesComponent::class.java), stream)
-            Any()
-          }
-          var image = Toolkit.getDefaultToolkit().getImage(imageFile.absolutePath)
-          if (image == null || image.getWidth(null) <= 0 || image.getHeight(null) <= 0) {
-            FileInputStream(imageFile).use { stream ->
-              image = ImageIO.read(stream)
+    val images: MutableList<Image> = ArrayList()
+    var success = false
+    try {
+      withContext(Dispatchers.IO + CoroutineName("load")) {
+        val parentDir = File(PathManager.getPluginTempPath(), "imageCache/" + screenshots.externalPluginIdForScreenShots)
+        for (screenShot in screenshots.paths) {
+          ensureActive()
+          try {
+            val name = StringUtil.substringAfterLast(screenShot, "/")!!
+            val imageFile = File(parentDir, name)
+            readOrUpdateFile<Any?>(imageFile.toPath(), screenShot, null, "") { stream: InputStream? ->
+              IOUtil.closeSafe(Logger.getInstance(PluginImagesComponent::class.java), stream)
+              Any()
             }
-          }
-          if (image == null || image.getWidth(null) <= 0 || image.getHeight(null) <= 0) {
-            Logger.getInstance(PluginImagesComponent::class.java)
-              .info("=== Plugin: " + screenshots.pluginId + " screenshot: " + name + " not loaded ===")
-          }
-          else {
-            images.add(image)
+            images.add(Toolkit.getDefaultToolkit().createImage(imageFile.absolutePath))
             if (images.size >= 10) break
           }
-        }
-        catch (e: IOException) {
-          // IO errors such as image decoding problems are expected and must not be treated as IDE errors
-          Logger.getInstance(PluginImagesComponent::class.java).warn(e)
+          catch (e: IOException) {
+            // IO errors such as image decoding problems are expected and must not be treated as IDE errors
+            Logger.getInstance(PluginImagesComponent::class.java).warn(e)
+          }
         }
       }
-      ReferencedImages(images.map { ReferencedImage(it) })
+      success = true // passing ownership to the caller now
+      return ReferencedImages(images.map { ReferencedImage(it) })
+    }
+    finally {
+      // This is not strictly needed unless the images are actually accessed here, which they're not, for now.
+      // But it's so easy to add something like getWidth(null) inside the body.
+      // And then, if a cancellation or exception happens, well, that image will load in background
+      // and if it's an animated GIF, it'll keep animating in background forever, wasting CPU cycles.
+      if (!success) {
+        images.forEach { it.flush() }
+      }
     }
   }
 
@@ -227,7 +221,7 @@ class PluginImagesComponent : JPanel {
       return Screenshots()
     }
 
-    return Screenshots(screenShots, model.pluginId, model.externalPluginIdForScreenShots)
+    return Screenshots(screenShots, model.externalPluginIdForScreenShots)
   }
 
   private fun fullRepaint() {
