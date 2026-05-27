@@ -409,6 +409,7 @@ libraries/imgscalr
 libraries/ini4j
 libraries/io
 libraries/ion
+libraries/ivy
 libraries/jackson/annotations
 libraries/jackson/databind
 libraries/jackson/dataformat-toml

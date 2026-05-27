@@ -9,6 +9,7 @@ import com.intellij.ide.scratch.RootType;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -117,8 +118,26 @@ public final class ExtensionsRootType extends RootType {
   private void extractBundledExternalResources(@NotNull PluginId pluginId, @NotNull String path) throws IOException {
     for (ExternalResourcesUnpackExtensionBean pluginBean : ExternalResourcesUnpackExtensionBean.getPluginBeans(pluginId)) {
       PluginId dependentPluginId = PluginId.getId(pluginBean.unpackTo);
-      extractBundledResourcesImpl(dependentPluginId, path, getBundledExternalResources(pluginId, dependentPluginId, path));
+      List<URL> bundledResources = getExtensionsBundledModuleResources(pluginBean, dependentPluginId, path);
+      extractBundledResourcesImpl(dependentPluginId, path, bundledResources);
     }
+  }
+
+  private static @Unmodifiable @NotNull List<URL> getExtensionsBundledModuleResources(@NotNull ExternalResourcesUnpackExtensionBean bean,
+                                                                                      @NotNull PluginId dependentPluginId,
+                                                                                      @NotNull String path) throws IOException {
+    PluginDescriptor descriptor = bean.getPluginDescriptor();
+    ClassLoader loader = descriptor == null ? null : descriptor.getPluginClassLoader();
+    if (loader == null) return Collections.emptyList();
+
+    Enumeration<URL> resources = loader.getResources(EXTERNAL_EXTENSIONS_PATH + '/' + dependentPluginId.getIdString() + '/' + path);
+    if (resources == null) return Collections.emptyList();
+
+    Set<URL> urls = new LinkedHashSet<>();
+    while (resources.hasMoreElements()) {
+      urls.add(resources.nextElement());
+    }
+    return new ArrayList<>(urls);
   }
 
   private void extractBundledResourcesImpl(@NotNull PluginId pluginId, @NotNull String path, @NotNull List<URL> bundledResources) throws IOException {
@@ -242,10 +261,6 @@ public final class ExtensionsRootType extends RootType {
       }
     }
     return new ArrayList<>(urls);
-  }
-
-  private static @Unmodifiable @NotNull List<URL> getBundledExternalResources(@NotNull PluginId plugin, @NotNull PluginId destinationPlugin, @NotNull String path) throws IOException {
-    return getBundledResourceUrls(plugin, path, EXTERNAL_EXTENSIONS_PATH + '/' + destinationPlugin.getIdString());
   }
 
   private static @Unmodifiable @NotNull List<URL> getBundledExtensionsResources(@NotNull PluginId pluginId, @NotNull String path) throws IOException {

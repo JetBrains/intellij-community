@@ -18,6 +18,7 @@ import com.intellij.database.run.actions.ChoosePasteFormatAction;
 import com.intellij.database.run.actions.ChoosePasteFormatAction.PasteType;
 import com.intellij.ide.PasteProvider;
 import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -114,7 +115,7 @@ public class GridPasteProvider implements PasteProvider {
       String error = conversionExceptions.size() == 1
                      ? conversionExceptions.get(0).getMessage()
                      : DataGridBundle.message("group.Console.TableResult.PasteError.multiple.text", conversionExceptions.size());
-      Notification errorNotification = DataGridNotifications.PASTE_GROUP
+      Notification errorNotification = NotificationGroupManager.getInstance().getNotificationGroup(DataGridNotifications.PASTE_GROUP_ID)
         .createNotification(DataGridBundle.message("group.Console.TableResult.PasteError.title"),
                             error,
                             NotificationType.ERROR);
@@ -133,7 +134,7 @@ public class GridPasteProvider implements PasteProvider {
 
   private static @Nullable Notification createNotification(@NotNull PasteType pasteType, @Nullable CsvFormat csvFormat) {
     if (pasteType == PasteType.SINGLE_VALUE) {
-      return DataGridNotifications.PASTE_GROUP
+      return NotificationGroupManager.getInstance().getNotificationGroup(DataGridNotifications.PASTE_GROUP_ID)
         .createNotification(DataGridBundle.message("table.data.pasted"),
                             DataGridBundle.message("table.data.text.pasted.as.single.value"),
                             NotificationType.INFORMATION);
@@ -143,20 +144,20 @@ public class GridPasteProvider implements PasteProvider {
         LOG.error("Paste type is FORMAT but csv format is null.");
         return null;
       }
-      return DataGridNotifications.PASTE_GROUP
+      return NotificationGroupManager.getInstance().getNotificationGroup(DataGridNotifications.PASTE_GROUP_ID)
         .createNotification(DataGridBundle.message("table.data.pasted"),
                             DataGridBundle.message("table.text.pasted.using.format", csvFormat.name, getDelimiterName(csvFormat)),
                             NotificationType.INFORMATION);
     }
     else if (pasteType == PasteType.AUTO) {
       if (csvFormat == null) {
-        return DataGridNotifications.PASTE_GROUP
+        return NotificationGroupManager.getInstance().getNotificationGroup(DataGridNotifications.PASTE_GROUP_ID)
           .createNotification(DataGridBundle.message("table.data.pasted"),
                               DataGridBundle.message("table.data.no.format.detected"),
                               NotificationType.INFORMATION);
       }
       else {
-        return DataGridNotifications.PASTE_GROUP
+        return NotificationGroupManager.getInstance().getNotificationGroup(DataGridNotifications.PASTE_GROUP_ID)
           .createNotification(DataGridBundle.message("table.data.pasted"),
                               DataGridBundle.message("table.data.format.detected", csvFormat.name, getDelimiterName(csvFormat)),
                               NotificationType.INFORMATION);
