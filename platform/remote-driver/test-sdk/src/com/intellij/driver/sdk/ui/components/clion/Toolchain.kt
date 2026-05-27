@@ -114,6 +114,12 @@ sealed class Toolchain(
     buildTool: BuildTool = BuildTool.GMAKE,
     name: ToolchainNames = ToolchainNames.REMOTE_HOST,
   ) : Toolchain(name, compiler, debugger, buildTool)
+
+  companion object {
+    // Cygwin CMake is the only case where we need to specify CMake path manually. For this reason we did not add a cmake value to
+    // all the sealed Toolchain classes. This property should be removed anyway and should be made an environment variable
+    const val CYGWIN_CMAKE_PATH: String = "C:/Tools/cygwin/bin/cmake.exe"
+  }
 }
 
 enum class BuildTool {
