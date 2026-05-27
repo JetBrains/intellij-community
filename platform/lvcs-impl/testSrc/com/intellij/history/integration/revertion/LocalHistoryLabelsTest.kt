@@ -1,12 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.integration.revertion
 
+import com.intellij.history.Label
 import com.intellij.history.LocalHistory
+import com.intellij.history.LocalHistoryException
 import com.intellij.history.integration.IntegrationTestCase
+import com.intellij.history.integration.LocalHistoryImpl
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import junit.framework.TestCase
 
-class RevertToLabelTest : IntegrationTestCase() {
+class LocalHistoryLabelsTest : IntegrationTestCase() {
   @Throws(Exception::class)
   fun testFileCreation() {
     val fileBeforeLabel = "first.txt"
@@ -158,6 +162,81 @@ class RevertToLabelTest : IntegrationTestCase() {
     file2 = myRoot.findChild(fileName2)
     assertNotNull(file2)
     TestCase.assertEquals(lastContent, file2!!.contentsToByteArray()[0])
+  }
+
+  fun testValidLabel() {
+    createChildData(myRoot, "foo.txt")
+    val label = LocalHistory.getInstance().putSystemLabel(myProject, "testLabel")
+
+    val found = runWithModalProgressBlocking(project, "Find") { LocalHistory.getInstance().isLabelValid(myProject, label.id) }
+
+    assertTrue(found)
+  }
+
+  fun testInvalidLabels() {
+    runWithModalProgressBlocking(project, "Find") { LocalHistory.getInstance().isLabelValid(myProject, Label.NON_EXISTENT_ID) }.let {
+      assertFalse(it)
+    }
+
+    runWithModalProgressBlocking(project, "Find") { LocalHistory.getInstance().isLabelValid(myProject, "not-a-number") }.let {
+      assertFalse(it)
+    }
+
+    runWithModalProgressBlocking(project, "Find") { LocalHistory.getInstance().isLabelValid(myProject, "999999999") }.let {
+      assertFalse(it)
+    }
+  }
+
+  fun testPurgedLabelIsInvalid() {
+    val lh = LocalHistoryImpl.getInstanceImpl()
+    runWithModalProgressBlocking(project, "Test purge") {
+      val label = lh.putSystemLabel(myProject, "testLabel")
+      lh.cleanupForNextTest()
+      assertFalse(lh.isLabelValid(myProject, label.id))
+    }
+  }
+
+  fun testRevertToLabelByIdRevertsContentChange() {
+    val fileName = "foo.txt"
+    val initialContent: Byte = 1
+    val file = createFile(fileName, initialContent)
+
+    val label = LocalHistory.getInstance().putSystemLabel(myProject, "initialFileContent")
+    for (content in byteArrayOf(2, 3, 4)) {
+      setContent(file, content)
+    }
+
+    runWithModalProgressBlocking(project, "Revert") {
+      LocalHistory.getInstance().revertToLabel(myProject, label.id, myRoot)
+    }
+
+    val reverted = myRoot.findChild(fileName)
+    assertNotNull(reverted)
+    assertEquals(initialContent, reverted!!.contentsToByteArray()[0])
+  }
+
+  fun testRevertToLabelByIdThrowsForNullInstanceId() {
+    assertThrows(IllegalArgumentException::class.java) {
+      runWithModalProgressBlocking(project, "Revert") {
+        LocalHistory.getInstance().revertToLabel(myProject, Label.NON_EXISTENT_ID, myRoot)
+      }
+    }
+  }
+
+  fun testRevertToLabelByIdThrowsForNonNumericId() {
+    assertThrows(IllegalArgumentException::class.java) {
+      runWithModalProgressBlocking(project, "Revert") {
+        LocalHistory.getInstance().revertToLabel(myProject, "not-a-number", myRoot)
+      }
+    }
+  }
+
+  fun testRevertToLabelByIdThrowsForUnknownNumericId() {
+    assertThrows(LocalHistoryException::class.java) {
+      runWithModalProgressBlocking(this.project, "Revert") {
+        LocalHistory.getInstance().revertToLabel(myProject, "999999999", myRoot)
+      }
+    }
   }
 
   private fun createFile(fileName: String, content: Byte): VirtualFile {

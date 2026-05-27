@@ -328,6 +328,7 @@ a:com.intellij.history.integration.revertion.Reverter
 - pa:getFilesToClearROStatus():java.util.List
 - pf:getGateway():com.intellij.history.integration.IdeaGateway
 - sf:getRevertCommandName(com.intellij.history.core.revisions.Revision):java.lang.String
+- f:performRevert(kotlin.coroutines.Continuation):java.lang.Object
 - f:revert():V
 f:com.intellij.history.integration.revertion.Reverter$Companion
 - f:getRevertCommandName(com.intellij.history.core.revisions.Revision):java.lang.String

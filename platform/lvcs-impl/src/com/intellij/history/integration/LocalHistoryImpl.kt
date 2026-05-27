@@ -19,10 +19,12 @@ import com.intellij.history.core.collectChanges
 import com.intellij.history.core.tree.Entry
 import com.intellij.history.core.tree.RootEntry
 import com.intellij.history.integration.revertion.DifferenceReverter
+import com.intellij.history.integration.revertion.Reverter
 import com.intellij.history.utils.LocalHistoryLog
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -37,9 +39,11 @@ import com.intellij.platform.lvcs.impl.operations.getRevertCommandName
 import com.intellij.util.SystemProperties
 import com.intellij.util.asSafely
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -181,6 +185,29 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
     return createLabelWrapper(label.id)
   }
 
+  override suspend fun isLabelValid(project: Project, labelId: String): Boolean {
+    if (labelId == Label.NON_EXISTENT_ID) return false
+    val rawLabelId = labelId.toLongOrNull() ?: return false
+    val facade = facade ?: return false
+
+    val projectId = getProjectId(project)
+
+    return withContext(Dispatchers.Default) {
+      facade.changes.any { changesSet ->
+        changesSet.changes.any {
+          it is PutLabelChange && it.affectsProject(projectId) && it.id == rawLabelId
+        }
+      }
+    }
+  }
+
+  override suspend fun revertToLabel(project: Project, labelId: String, file: VirtualFile) {
+    require(labelId != Label.NON_EXISTENT_ID) { "Received an ID of a null label. Please validate that the label was created." }
+    val rawLabelId = labelId.toLongOrNull() ?: throw IllegalArgumentException("Invalid label ID: $labelId")
+    val facade = facade ?: throw LocalHistoryException(CANNOT_REVERT_NO_HISTORY_ERROR)
+    facade.revertToLabel(project, file, rawLabelId)
+  }
+
   @ApiStatus.Internal
   fun addVFSListenerAfterLocalHistoryOne(virtualFileListener: BulkFileListener, disposable: Disposable) {
     (state.get() as State.Initialized).eventDispatcher.addVirtualFileListener(virtualFileListener, disposable)
@@ -188,9 +215,11 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
 
   private fun createLabelWrapper(labelId: Long): Label {
     return object : Label {
+      override val id: String = labelId.toString()
+
       override fun revert(project: Project, file: VirtualFile) {
-        val facade = facade ?: error("Local history storage unavailable")
-        revertToLabel(facade, project, file, labelId)
+        val facade = facade ?: error(CANNOT_REVERT_NO_HISTORY_ERROR)
+        facade.revertToLabelBlocking(project, file, labelId)
       }
 
       override fun getByteContent(path: String): ByteContent {
@@ -221,7 +250,37 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
   override fun isUnderControl(file: VirtualFile): Boolean = isInitialized() && gateway.isVersioned(file)
 
   @Throws(LocalHistoryException::class)
-  private fun revertToLabel(facade: LocalHistoryFacade, project: Project, file: VirtualFile, labelId: Long) {
+  private suspend fun LocalHistoryFacade.revertToLabel(project: Project, file: VirtualFile, labelId: Long) {
+    withContext(Dispatchers.Default) {
+      revertToLabel(project, file, labelId, { paths ->
+        readAction {
+          gateway.createTransientRootEntryForPaths(paths, true)
+        }
+      }) {
+        performRevert()
+      }
+    }
+  }
+
+  @Throws(LocalHistoryException::class)
+  private fun LocalHistoryFacade.revertToLabelBlocking(project: Project, file: VirtualFile, labelId: Long) {
+    revertToLabel(project, file, labelId, { paths ->
+      runReadActionBlocking {
+        gateway.createTransientRootEntryForPaths(paths, true)
+      }
+    }) {
+      revert()
+    }
+  }
+
+  @Throws(LocalHistoryException::class)
+  private inline fun LocalHistoryFacade.revertToLabel(
+    project: Project,
+    file: VirtualFile,
+    labelId: Long,
+    createRootEntry: (Set<String>) -> RootEntry,
+    executeRevert: Reverter.() -> Unit,
+  ) {
     val path = gateway.getPathOrUrl(file)
 
     var targetChangeSet: ChangeSet? = null
@@ -229,7 +288,8 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
     val targetPaths = mutableSetOf(path)
 
     // TODO: stop collecting when the label change is found
-    facade.collectChanges(path, ChangeAndPathProcessor(project.locationHash, null, targetPaths::add) { changeSet: ChangeSet ->
+    val projectId = getProjectId(project)
+    collectChanges(path, ChangeAndPathProcessor(projectId, null, targetPaths::add) { changeSet: ChangeSet ->
       val change = changeSet.changes.firstOrNull { it.id == labelId }
       if (change != null && change is PutLabelChange) {
         targetChangeSet = changeSet
@@ -238,12 +298,12 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
     })
 
     if (targetChangeSet == null || targetChange == null) {
-      throw LocalHistoryException("Couldn't find label")
+      throw LocalHistoryException("Couldn't find label with ID $labelId")
     }
 
-    val rootEntry = runReadActionBlocking { gateway.createTransientRootEntryForPaths(targetPaths, true) }
-    val leftEntry = facade.findEntry(rootEntry, RevisionId.ChangeSet(targetChangeSet.id), path,
-                                     /*do not revert the change itself*/false)
+    val rootEntry = createRootEntry(targetPaths)
+    val leftEntry = findEntry(rootEntry, RevisionId.ChangeSet(targetChangeSet.id), path,
+                              /*do not revert the change itself*/false)
     val rightEntry = rootEntry.findEntry(path)
     val diff = Entry.getDifferencesBetween(leftEntry, rightEntry, true)
     if (diff.isEmpty()) return // nothing to revert
@@ -252,10 +312,10 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
       getRevertCommandName(targetChange.name, targetChangeSet.timestamp, false)
     }
     try {
-      reverter.revert()
+      reverter.executeRevert()
     }
     catch (e: Exception) {
-      throw LocalHistoryException("Couldn't revert ${file.getName()} to local history label.", e)
+      throw LocalHistoryException("Couldn't revert ${file.getName()} to local history label ${targetChange.name}.", e)
     }
   }
 }
@@ -270,6 +330,8 @@ private fun Entry.getByteContent(): ByteContent {
   if (isDirectory) return ByteContent(true, null)
   return ByteContent(false, content.bytesIfAvailable)
 }
+
+private const val CANNOT_REVERT_NO_HISTORY_ERROR = "Cannot revert to label: local history unavailable"
 
 private sealed interface State {
   object Initializing : State

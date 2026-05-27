@@ -68,7 +68,7 @@ abstract class LocalHistory {
    * @param project the project where the event occurred
    * @param name the name of the event
    * @param activityId the [ActivityId] associated with the event
-   * @return the Label object representing the event label
+   * @return the [Label] object representing the event label or a [Label.NULL_INSTANCE] if local history is unavailable
    */
   abstract fun putEventLabel(project: Project, name: @NlsContexts.Label String, activityId: ActivityId): Label
 
@@ -79,7 +79,7 @@ abstract class LocalHistory {
    * @param project the project where the event occurred
    * @param name the name of the label
    * @param color color of the label as returned by [java.awt.Color.getRGB]
-   * @return the [Label] object representing the event label
+   * @return the [Label] object representing the event label or a [Label.NULL_INSTANCE] if local history is unavailable
    */
   abstract fun putSystemLabel(project: Project, name: @NlsContexts.Label String, color: Int): Label
 
@@ -89,7 +89,7 @@ abstract class LocalHistory {
    *
    * @param project the project where the event occurred
    * @param name the name of the label
-   * @return the [Label] object representing the event label
+   * @return the [Label] object representing the event label or a [Label.NULL_INSTANCE] if local history is unavailable
    */
   fun putSystemLabel(project: Project, name: @NlsContexts.Label String): Label = putSystemLabel(project, name, -1)
 
@@ -99,10 +99,32 @@ abstract class LocalHistory {
    *
    * @param project the project for the label
    * @param name the name of the label
-   * @return the [Label] object representing the user label
+   * @return the [Label] object representing the user label or a [Label.NULL_INSTANCE] if local history is unavailable
    */
   @ApiStatus.Internal
   abstract fun putUserLabel(project: Project, name: @NlsContexts.Label String): Label
+
+  /**
+   * Test that the [project] label with [labelId] still exists in the history (was not purged)
+   *
+   * @param project the project where the label was created
+   * @param labelId the ID of the label to revert to
+   * @return `true` if the label still exists or `false` if the label id is invalid or the label was purged or the local history is disabled
+   */
+  abstract suspend fun isLabelValid(project: Project, labelId: String): Boolean
+
+  /**
+   * Revert the [file] and everything under it to the state at the label within the [project] with [labelId].
+   *
+   * @param project the project where the label was created
+   * @param labelId the ID of the label to revert to. Must be an ID of a non-[Label.NULL_INSTANCE] label returned by [putEventLabel] or [putSystemLabel]
+   * @param file the file to revert
+   *
+   * @throws IllegalArgumentException if the label ID is invalid
+   * @throws LocalHistoryException if the local history is unavailable, or an error has occurred during the revert operation
+   */
+  @Throws(LocalHistoryException::class)
+  abstract suspend fun revertToLabel(project: Project, labelId: String, file: VirtualFile)
 
   /**
    * Retrieves the byte content of a given file from the local history, based on a provided condition.
@@ -130,6 +152,8 @@ abstract class LocalHistory {
     override fun putEventLabel(project: Project, name: String, activityId: ActivityId): Label = Label.NULL_INSTANCE
     override fun putSystemLabel(project: Project, name: @NlsContexts.Label String, color: Int): Label = Label.NULL_INSTANCE
     override fun putUserLabel(project: Project, name: @NlsContexts.Label String): Label = Label.NULL_INSTANCE
+    override suspend fun isLabelValid(project: Project, labelId: String): Boolean = false
+    override suspend fun revertToLabel(project: Project, labelId: String, file: VirtualFile) = Unit
     override fun getByteContent(file: VirtualFile, condition: FileRevisionTimestampComparator): ByteArray? = null
     override fun isUnderControl(file: VirtualFile): Boolean = false
   }
