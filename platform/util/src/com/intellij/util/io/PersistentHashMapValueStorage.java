@@ -881,9 +881,10 @@ public final class PersistentHashMapValueStorage {
     }
 
     public void sync() throws IOException {
-      final FileAccessorCache.Handle<FileChannelWithSizeTracking> fileAccessor = ourFileChannelCache.get(myPath);
-      final FileChannelWithSizeTracking fileChannel = fileAccessor.get();
-      fileChannel.force();
+      try (FileAccessorCache.Handle<FileChannelWithSizeTracking> fileAccessor = ourFileChannelCache.get(myPath)) {
+        FileChannelWithSizeTracking fileChannel = fileAccessor.get();
+        fileChannel.force();
+      }
     }
 
     /** Implements output stream by writing data through {@link FileChannelWithSizeTracking} out of {@link #ourFileChannelCache} */
