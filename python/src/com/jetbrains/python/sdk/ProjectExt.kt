@@ -3,18 +3,18 @@
 
 package com.jetbrains.python.sdk
 
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
+import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.storage.entities
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.psi.PyUtil
 import org.jetbrains.annotations.ApiStatus
 
 private val thisLogger = fileLogger()
@@ -23,7 +23,7 @@ private val thisLogger = fileLogger()
  * Returns the union of every module's source and content roots for the receiver project.
  *
  * Awaits workspace-model synchronization with the on-disk JPS model first (PY-86494), then
- * reads modules under a read action.
+ * reads modules directly from the immutable workspace-model snapshot — no read action needed.
  *
  * Logs `LOG.warn` when the project has no modules at all (a legitimate codepath — e.g. the SDK
  * creation wizard running before any module is attached). Logs `LOG.error` for every Python
@@ -32,20 +32,23 @@ private val thisLogger = fileLogger()
  */
 @ApiStatus.Internal
 suspend fun Project.getModuleRoots(): Set<VirtualFile> {
-  (workspaceModel as WorkspaceModelInternal).awaitSynchronizationWithJpsModel()
-  return readAction {
-    val modules = ModuleManager.getInstance(this).modules
-    if (modules.isEmpty()) {
-      thisLogger.warn("SAFETY NET: no modules in project '$name'.")
-    }
+  val workspaceModel = workspaceModel.also {
+    (it as WorkspaceModelInternal).awaitSynchronizationWithJpsModel()
+  }
 
-    modules.flatMapTo(HashSet()) { module ->
-      PyUtil.getSourceRoots(module).also { roots ->
-        if (roots.isEmpty() && module.moduleTypeName == PyNames.PYTHON_MODULE_ID) {
-          thisLogger.error("SAFETY NET: no roots in python module '${module.name}' of project '$name'.")
-        }
-      }
+  val modules = workspaceModel.currentSnapshot.entities<ModuleEntity>().toList()
+  if (modules.isEmpty()) {
+    thisLogger.warn("SAFETY NET: no modules in project '$name'.")
+  }
+
+  return modules.flatMapTo(HashSet()) { module ->
+    val roots = module.contentRoots
+      .flatMap { listOf(it.url) + it.sourceRoots.map { sr -> sr.url } }
+      .mapNotNull { it.virtualFile }
+    if (roots.isEmpty() && module.type?.name == PyNames.PYTHON_MODULE_ID) {
+      thisLogger.warn("SAFETY NET: no roots in python module '${module.name}' of project '$name'.")
     }
+    roots
   }
 }
 
