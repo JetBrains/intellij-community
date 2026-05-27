@@ -31,10 +31,6 @@ import org.jetbrains.intellij.build.productLayout.traversal.OwningPlugin
 import org.jetbrains.intellij.build.productLayout.traversal.collectPluginContentModules
 import java.nio.file.Path
 
-private val TEST_PLUGIN_AUTO_ADD_EXCLUDED_MODULES = setOf(
-  ContentModuleName("intellij.platform.commercial.verifier"), // injected; forbidden as plugin content
-)
-
 /**
  * Computes plugin content from DSL spec instead of reading from disk.
  * Used for DSL-defined test plugins to avoid reading stale XML before generation.
@@ -259,11 +255,6 @@ internal suspend fun computePluginContentFromDslSpec(
       parentByModule.putIfAbsent(effectiveDepName, moduleName)
       rootDeclaredModuleByModule.putIfAbsent(effectiveDepName, rootDeclaredModuleByModule.get(moduleName) ?: moduleName)
       allowedMissingPluginIdsByModule.putIfAbsent(effectiveDepName, allowedMissingPluginIdsByModule.get(moduleName) ?: emptySet())
-
-      if (effectiveDepName in TEST_PLUGIN_AUTO_ADD_EXCLUDED_MODULES) {
-        debug("dslTestDeps") { "skip injected dep=$effectiveDepName from=$moduleName" }
-        return
-      }
 
       // Already resolvable via module sets or plugin content - skip auto-add and don't traverse
       if (effectiveDepName in resolvableModuleNames) {
