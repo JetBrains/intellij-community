@@ -22,7 +22,6 @@ import com.intellij.util.asSafely
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.test.AssertKotlinPluginMode
 import org.jetbrains.kotlin.idea.test.UseK2PluginMode
-import org.jetbrains.kotlin.idea.testFramework.gradle.KotlinGradleProjectTestCase
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
@@ -34,7 +33,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInfo
 import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.params.ParameterizedTest
-import kotlin.test.assertTrue
 
 @PerformanceUnitTest
 @UseK2PluginMode
@@ -44,10 +42,9 @@ internal class KotlinGradleDependenciesCompletionPerformanceTest : AbstractKotli
 
   @BeforeEach
   fun `set up local completion`() {
-    val gavEntries = (0 until 100).map { i -> "com.example.group$i:artifact$i:1.0.$i" }
     ApplicationManager.getApplication().replaceService(
       GradleLocalRepositoryIndexer::class.java,
-      GradleLocalRepositoryIndexerTestImpl(LocalEelDescriptor, gavEntries),
+      GradleLocalRepositoryIndexerTestImpl(LocalEelDescriptor, getGavEntries()),
       testRootDisposable
     )
     ExtensionTestUtil.maskExtensions(
@@ -57,57 +54,46 @@ internal class KotlinGradleDependenciesCompletionPerformanceTest : AbstractKotli
     )
   }
 
-  @ParameterizedTest
-  @BaseGradleVersionSource
-  fun `test dependency completion performance`(gradleVersion: GradleVersion) {
-    test(gradleVersion, KotlinGradleProjectTestCase.KOTLIN_PROJECT) {
-      val file = writeTextAndCommit("build.gradle.kts", "dependencies { implementation(\"<caret>\") }")
-      val repeatSize = 10
-      invokeAndWaitIfNeeded {
-        codeInsightFixture.configureFromExistingVirtualFile(file)
-        Benchmark.newBenchmark("KotlinGradleDependenciesCompletion") {
-          codeInsightFixture.psiManager.dropResolveCaches()
-          repeat(repeatSize) {
-            val elements = codeInsightFixture.completeBasic()
-            assertTrue(elements != null && elements.isNotEmpty())
-          }
-        }.start(KotlinGradleDependenciesCompletionPerformanceTest::`test dependency completion performance`)
-      }
-    }
-  }
+  private fun getGavEntries(): List<String> = (0 until 100).map { i -> "com.example.group$i:artifact$i:1.0.$i" }
 
   @ParameterizedTest
   @BaseGradleVersionSource
-  fun `test completing a scope`(gradleVersion: GradleVersion, testInfo: TestInfo) {
+  fun `test completing gav coordinates inside a scope argument`(gradleVersion: GradleVersion, testInfo: TestInfo) =
+    testDependenciesCompletionPerformance(
+      input = "implementation(\"<caret>\")",
+      expectedElements = getGavEntries(),
+      gradleVersion,
+      testInfo)
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun `test completing a scope`(gradleVersion: GradleVersion, testInfo: TestInfo) =
     testDependenciesCompletionPerformance(
       input = "i<caret>",
       expectedElements = listOf("implementation", "testImplementation"),
       gradleVersion,
       testInfo
     )
-  }
 
   @ParameterizedTest
   @BaseGradleVersionSource
-  fun `test completing a scope argument without quotes`(gradleVersion: GradleVersion) {
+  fun `test completing a scope argument without quotes`(gradleVersion: GradleVersion, testInfo: TestInfo) =
     testDependenciesCompletionPerformance(
       input = "implementation(<caret>)",
       expectedElements = listOf("libs", "libs.my.library.aaa", "libs.bundles.my.bundle.aaa", "platform", "project"),
       gradleVersion,
       testInfo
     )
-  }
 
   @ParameterizedTest
   @BaseGradleVersionSource
-  fun `test completing a Dependency-returning method argument without quotes`(gradleVersion: GradleVersion) {
+  fun `test completing a Dependency-returning method argument without quotes`(gradleVersion: GradleVersion) =
     testDependenciesCompletionPerformance(
       input = "implementation(platform(<caret>))",
       expectedElements = listOf("libs.my.library.aaa", "libs.bundles.my.bundle.aaa"),
       gradleVersion,
       testInfo
     )
-  }
 
   private fun testDependenciesCompletionPerformance(
     input: String,
