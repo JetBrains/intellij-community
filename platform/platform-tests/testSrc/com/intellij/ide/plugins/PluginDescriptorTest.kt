@@ -11,6 +11,7 @@ import com.intellij.platform.testFramework.loadDescriptorInTest
 import com.intellij.platform.testFramework.plugins.ContentModuleSpec
 import com.intellij.platform.testFramework.plugins.PluginPackagingConfig
 import com.intellij.platform.testFramework.plugins.content
+import com.intellij.platform.testFramework.plugins.dependencies
 import com.intellij.platform.testFramework.plugins.installAt
 import com.intellij.platform.testFramework.plugins.module
 import com.intellij.platform.testFramework.plugins.plugin
@@ -499,6 +500,39 @@ class PluginDescriptorTest {
     assertThat(plugin).hasExactlyEnabledContentModules("module1", "module2")
     assertThat(plugin.contentModules[0].moduleId).isEqualTo(PluginModuleId("module1", "my_namespace_1"))
     assertThat(plugin.contentModules[1].moduleId).isEqualTo(PluginModuleId("module2", "my_namespace_2"))
+  }
+
+  @Test
+  fun `unexpected symbols in namespace in content tag`() {
+    val pluginPath = plugin("foo") {
+      content(namespace = $$"$my_invalid_namespace") {
+        module("module") {}
+      }
+    }.installAt(pluginDirPath)
+    val error = assertThrows<Exception> { loadDescriptorInTest(pluginPath) }
+    assertThat(error.message).contains($$"Namespace '$my_invalid_namespace' doesn't match the pattern")
+  }
+
+  @Test
+  fun `too short namespace in content tag`() {
+    val pluginPath = plugin("foo") {
+      content(namespace = "0") {
+        module("module") {}
+      }
+    }.installAt(pluginDirPath)
+    val error = assertThrows<Exception> { loadDescriptorInTest(pluginPath) }
+    assertThat(error.message).contains("Length of namespace '0' is not in range 5..30")
+  }
+
+  @Test
+  fun `unexpected symbols in namespace in dependency element`() {
+    val pluginPath = plugin("foo") {
+      dependencies {
+        module("module", namespace = $$"$synthetic_namespace")
+      }
+    }.installAt(pluginDirPath)
+    val error = assertThrows<Exception> { loadDescriptorInTest(pluginPath) }
+    assertThat(error.message).contains($$"Namespace '$synthetic_namespace' doesn't match the pattern")
   }
 
   @Test

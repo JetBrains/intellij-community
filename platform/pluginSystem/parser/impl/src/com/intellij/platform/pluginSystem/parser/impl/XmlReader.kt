@@ -767,11 +767,28 @@ private fun readContent(reader: XMLStreamReader2, builder: PluginDescriptorBuild
   assert(reader.isEndElement)
 }
 
+private const val DEFAULT_NAMESPACE = "jetbrains"
+private val NAMESPACE_REGEX = Regex("^[a-zA-Z0-9]+([_-][a-zA-Z0-9]+)*\$")
+
+private fun internAndValidateNamespace(originalNamespace: String?, reader: XMLStreamReader2, interner: XmlInterner?): String? {
+  if (originalNamespace == null) return null
+  val namespace = interner?.name(originalNamespace) ?: originalNamespace
+  //optimization: there is no need to validate the default namespace
+  if (namespace != DEFAULT_NAMESPACE) {
+    if (!NAMESPACE_REGEX.matches(namespace)) {
+      throw RuntimeException("Namespace '$namespace' doesn't match the pattern '${NAMESPACE_REGEX.pattern}' (${reader.location})")
+    }
+    if (namespace.length !in 5..30) {
+      throw RuntimeException("Length of namespace '$namespace' is not in range 5..30 (${reader.location})")
+    }
+  }
+  return namespace
+}
+
 private fun readNamespaceAttribute(reader: XMLStreamReader2, readContext: PluginDescriptorReaderContext?): String? {
   for (i in 0 until reader.attributeCount) {
     if (reader.getAttributeLocalName(i) == PluginXmlConst.CONTENT_NAMESPACE_ATTR) {
-      val namespaceValue = reader.getAttributeValue(i)
-      return readContext?.interner?.name(namespaceValue) ?: namespaceValue
+      return internAndValidateNamespace(reader.getAttributeValue(i), reader, readContext?.interner)
     }
   }
   return null
@@ -786,7 +803,9 @@ private fun readDependencies(reader: XMLStreamReader2, builder: PluginDescriptor
         for (i in 0 until reader.attributeCount) {
           when (reader.getAttributeLocalName(i)) {
             PluginXmlConst.DEPENDENCIES_MODULE_NAME_ATTR -> name = interner.name(reader.getAttributeValue(i))
-            PluginXmlConst.DEPENDENCIES_MODULE_NAMESPACE_ATTR -> namespace = interner.name(reader.getAttributeValue(i))
+            PluginXmlConst.DEPENDENCIES_MODULE_NAMESPACE_ATTR -> {
+              namespace = internAndValidateNamespace(reader.getAttributeValue(i), reader, interner)
+            }
           }
         }
         builder.addDependency(DependenciesElement.ModuleDependency(name!!, namespace))
