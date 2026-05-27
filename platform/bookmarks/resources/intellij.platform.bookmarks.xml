@@ -53,7 +53,7 @@
     <projectSettings service="com.intellij.ide.bookmarks.BookmarkManager"/>
   </extensions>
 
-  <actions>
+  <actions resource-bundle="messages.ActionsBundle">
     <group id="Bookmarks" popup="true">
       <action id="AddAnotherBookmark" class="com.intellij.ide.bookmark.actions.AddAnotherBookmarkAction"/>
       <action id="EditBookmark" icon="AllIcons.Actions.Edit"

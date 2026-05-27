@@ -296,6 +296,7 @@ java/idea-ui
 java/java-analysis-api
 java/java-analysis-impl
 java/java-backend
+java/java-bookmarks
 java/java-copyright
 java/java-features-trainer
 java/java-frontback-impl
@@ -916,6 +917,7 @@ platform/vcs-log/api
 platform/vcs-log/graph
 platform/vcs-log/graph-api
 platform/vcs-log/impl
+platform/vcs-log/impl/bookmarks
 platform/vcs-tests
 platform/warmup
 platform/warmup/performanceTesting

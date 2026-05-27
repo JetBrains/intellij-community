@@ -8,7 +8,6 @@
     <module name="intellij.regexp"/>
     <module name="intellij.platform.externalSystem"/>
     <module name="intellij.platform.externalSystem.impl"/>
-    <module name="intellij.platform.bookmarks.backend"/>
     <module name="intellij.platform.todo.backend"/>
     <module name="intellij.platform.backend"/>
     <module name="intellij.java.frontback.impl"/>
@@ -26,7 +25,6 @@
     <module name="intellij.java.structureView"/>
     <module name="intellij.jsp"/>
     <module name="intellij.jsp.spi"/>
-    <module name="intellij.platform.bookmarks"/>
     <module name="intellij.platform.structureView.impl"/>
     <module name="intellij.platform.todo"/>
     <module name="intellij.spellchecker"/>

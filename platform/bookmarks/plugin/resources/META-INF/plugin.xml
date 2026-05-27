@@ -11,5 +11,6 @@
     <module name="intellij.platform.bookmarks.frontend"/>
     <module name="intellij.platform.debugger.impl.bookmarks"/>
     <module name="intellij.platform.frontend.split.bookmarks"/>
+    <module name="intellij.platform.vcs.log.impl.bookmarks" loading="optional"/>
   </content>
 </idea-plugin>

@@ -1,0 +1,31 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.bookmarks"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.platform.vcs.impl"/>
+    <module name="intellij.platform.vcs.impl.shared"/>
+    <module name="intellij.platform.vcs.log"/>
+    <module name="intellij.platform.vcs.log.impl"/>
+    <module name="intellij.platform.vcs.shared"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <vcs.log.bookmarkSupport implementation="com.intellij.platform.vcs.log.impl.bookmarks.VcsLogBookmarkSupportImpl"/>
+    <bookmarkProvider implementation="com.intellij.platform.vcs.log.impl.bookmarks.VcsLogBookmarkProvider"/>
+  </extensions>
+
+  <projectListeners>
+    <listener class="com.intellij.platform.vcs.log.impl.bookmarks.VcsLogBookmarksManagerListener"
+              topic="com.intellij.ide.bookmark.BookmarksListener"/>
+  </projectListeners>
+</idea-plugin>

@@ -11,7 +11,6 @@
     <module name="intellij.libraries.opentelemetry.semconv"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.analysis.impl"/>
-    <module name="intellij.platform.bookmarks"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
@@ -59,6 +58,9 @@
                     dynamic="true"/>
     <extensionPoint name="vcsLogRefreshActionListener"
                     interface="com.intellij.vcs.log.ui.actions.VcsLogRefreshActionListener"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.vcs.log.bookmarkSupport"
+                    interface="com.intellij.vcs.log.ui.VcsLogBookmarkSupport"
                     dynamic="true"/>
   </extensionPoints>
 
@@ -142,8 +144,6 @@
     <editorTabTitleProvider implementation="com.intellij.vcs.log.ui.editor.DefaultVcsLogFileTabTitleProvider"/>
     <openTelemetryExporterProvider implementation="com.intellij.vcs.log.statistics.VcsLogTelemetryExporter"/>
 
-    <bookmarkProvider implementation="com.intellij.vcs.log.ui.VcsLogBookmarkProvider"/>
-
     <registryKey key="vcs.log.table.show.centered"
                  defaultValue="true"
                  description="Handles scrolling to the selected commit in the VCS log table. If true, the selected commit will be centered. If false, it will be on the bottom of the table."/>."
@@ -161,8 +161,6 @@
   <projectListeners>
     <listener topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener"
               class="com.intellij.vcs.log.impl.VcsLogToolwindowManagerListener"/>
-    <listener class="com.intellij.vcs.log.ui.VcsLogBookmarksManagerListener"
-              topic="com.intellij.ide.bookmark.BookmarksListener"/>
   </projectListeners>
 
   <actions resource-bundle="messages.VcsLogBundle">
@@ -413,4 +411,3 @@
     </group>
   </actions>
 </idea-plugin>
-

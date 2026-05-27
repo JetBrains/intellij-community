@@ -1,12 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.bookmark.providers
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.java.bookmarks
 
 import com.intellij.ide.bookmark.Bookmark
 import com.intellij.ide.bookmark.BookmarkProvider
 import com.intellij.ide.projectView.impl.nodes.PackageElement
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.JavaPsiFacade
 
@@ -16,9 +15,6 @@ internal class PackageBookmarkProvider(private val project: Project) : BookmarkP
 
   internal val moduleManager: ModuleManager?
     get() = if (project.isDisposed) null else ModuleManager.getInstance(project)
-
-  internal val projectSettingsService: ProjectSettingsService?
-    get() = if (project.isDisposed) null else ProjectSettingsService.getInstance(project)
 
   override fun compare(bookmark1: Bookmark, bookmark2: Bookmark): Int {
     bookmark1 as PackageBookmark

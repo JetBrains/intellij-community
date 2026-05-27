@@ -28,6 +28,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.PropertyKey
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JComponent
@@ -199,6 +200,7 @@ internal class BreakpointListProvider(private val project: Project) : BookmarksL
   }
 }
 
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class BreakpointListUpdaterService(internal val cs: CoroutineScope) {
   @Volatile
