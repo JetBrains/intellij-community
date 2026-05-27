@@ -162,6 +162,7 @@ internal class AgentSessionThreadRebindSupport(
     allowedThreadIdsByPath: Map<String, Set<String>>? = null,
     refreshHintsByPath: Map<String, AgentSessionRefreshHints> = emptyMap(),
     pendingTabsByPath: Map<String, List<AgentChatPendingTabSnapshot>> = emptyMap(),
+    projectDirectoriesByPath: Map<String, String> = emptyMap(),
   ) {
     if (!canBindPendingOpenChatTabs || pendingTabsByPath.isEmpty()) {
       clearPendingThreadAmbiguityState()
@@ -191,6 +192,7 @@ internal class AgentSessionThreadRebindSupport(
         candidatesByPath.getOrPut(path) { ArrayList() }.add(
           buildAgentSessionChatRebindTarget(
             path = path,
+            projectDirectory = projectDirectoriesByPath[path],
             provider = provider,
             threadId = thread.id,
             title = thread.title,
@@ -418,6 +420,7 @@ private fun AgentChatPendingTabSnapshot.isEligibleForNoBaselineAutoBind(nowMs: L
 
 internal fun buildAgentSessionChatRebindTarget(
   path: String,
+  projectDirectory: String? = null,
   provider: AgentSessionProvider,
   threadId: String,
   title: String,
@@ -426,6 +429,7 @@ internal fun buildAgentSessionChatRebindTarget(
 ): AgentChatTabRebindTarget {
   return AgentChatTabRebindTarget(
     projectPath = normalizeAgentWorkbenchPath(path),
+    projectDirectory = projectDirectory?.takeIf { it.isNotBlank() }?.let(::normalizeAgentWorkbenchPath),
     provider = provider,
     threadIdentity = buildAgentSessionIdentity(provider, threadId),
     threadId = threadId,

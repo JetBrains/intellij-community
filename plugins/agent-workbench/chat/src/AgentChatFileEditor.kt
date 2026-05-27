@@ -323,6 +323,7 @@ internal class AgentChatFileEditor(
     return AgentSessionLaunchPlanner.plan(
       intent = AgentSessionLaunchIntent(
         projectPath = file.projectPath,
+        projectDirectory = file.projectDirectory,
         provider = provider,
         operation = AgentSessionLaunchOperation.NEW,
         launchMode = launchMode,
@@ -341,6 +342,7 @@ internal class AgentChatFileEditor(
     return AgentSessionLaunchPlanner.plan(
       intent = AgentSessionLaunchIntent(
         projectPath = file.projectPath,
+        projectDirectory = file.projectDirectory,
         provider = provider,
         operation = AgentSessionLaunchOperation.RESUME,
         sessionId = file.threadId.ifBlank { file.sessionId },

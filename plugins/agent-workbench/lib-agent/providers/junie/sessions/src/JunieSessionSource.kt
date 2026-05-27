@@ -14,6 +14,7 @@ import com.intellij.platform.ai.agent.json.WorkbenchJsonlScanner
 import com.intellij.platform.ai.agent.json.forEachJsonObjectField
 import com.intellij.platform.ai.agent.json.readJsonLongOrNull
 import com.intellij.platform.ai.agent.json.readJsonStringOrNull
+import com.intellij.platform.ai.agent.sessions.core.paths.resolveAgentWorkbenchProjectDirectory
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionActiveThreadUpdateSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionArchivedSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionCostSource
@@ -273,7 +274,7 @@ internal class JunieSessionSource(
     val failuresByPath = LinkedHashMap<String, Throwable>()
     for (path in request.paths) {
       try {
-        val entries = loadEntries(path = path)
+        val entries = loadEntries(path = request.sourcePathFor(path))
           .filter { entry -> entry.sessionId in request.threadIds }
         val visibleEntries = entries.filterNot { entry -> entry.archived == true }
         rememberActiveThreadRead(visibleEntries, JunieSessionIndexEntry::sessionId, JunieSessionIndexEntry::updatedAt)
@@ -512,7 +513,8 @@ private fun JunieSessionIndexEntry.effectiveActivity(
 }
 
 internal fun normalizeJunieProjectPath(path: String): String? {
-  return normalizeAgentSessionProjectPath(path)
+  val normalizedPath = normalizeAgentSessionProjectPath(path) ?: return null
+  return resolveAgentWorkbenchProjectDirectory(identityPath = normalizedPath) ?: normalizedPath
 }
 
 private fun String.normalizeJunieSessionTitle(): String? {

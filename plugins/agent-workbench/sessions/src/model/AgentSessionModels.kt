@@ -95,6 +95,7 @@ class ProjectBuildSystemBadge(
 
 data class AgentWorktree(
   @JvmField val path: String,
+  @JvmField val projectDirectory: String? = null,
   @JvmField val name: @NlsSafe String,
   @JvmField val branch: @NlsSafe String?,
   @JvmField val isOpen: Boolean,
@@ -113,6 +114,7 @@ data class AgentWorktree(
 
 data class AgentProjectSessions(
   @JvmField val path: String,
+  @JvmField val projectDirectory: String? = null,
   @JvmField val name: @NlsSafe String,
   @JvmField val branch: @NlsSafe String? = null,
   @JvmField val buildSystemBadge: ProjectBuildSystemBadge? = null,

@@ -18,6 +18,18 @@ import java.util.concurrent.atomic.AtomicInteger
 
 private val LOG = logger<AgentSessionThreadLoadSupport>()
 
+internal data class AgentSessionOpenProjectLoadTarget(
+  @JvmField val identityPath: String,
+  @JvmField val projectDirectory: String?,
+  @JvmField val project: Project,
+  @JvmField val originalPath: String,
+)
+
+internal data class AgentSessionPrefetchedThreads(
+  @JvmField val projectDirectory: String?,
+  @JvmField val threads: List<AgentSessionThread>,
+)
+
 internal class AgentSessionThreadLoadSupport(
   private val sessionSourcesProvider: () -> List<AgentSessionSource>,
   private val applyArchiveSuppressions: (
@@ -29,9 +41,9 @@ internal class AgentSessionThreadLoadSupport(
   private val resolveProviderWarningMessage: (AgentSessionProvider, Throwable) -> String,
   private val providerDescriptorProvider: (AgentSessionProvider) -> AgentSessionProviderDescriptor? = AgentSessionProviders::find,
 ) {
-  suspend fun loadThreadsFromClosedProject(path: String): AgentSessionLoadResult {
+  suspend fun loadThreadsFromClosedProject(path: String, projectDirectory: String? = null): AgentSessionLoadResult {
     return loadThreads(path) { source ->
-      source.listThreads(path = path, openProject = null)
+      source.listThreads(path = projectDirectory?.takeIf { it.isNotBlank() } ?: path, openProject = null)
     }
   }
 
@@ -77,19 +89,21 @@ internal class AgentSessionThreadLoadSupport(
 
   private suspend fun loadSourceResultForOpenProject(
     source: AgentSessionSource,
-    normalizedPath: String,
-    project: Project,
-    prefetchedByProvider: Map<AgentSessionProvider, Map<String, List<AgentSessionThread>>>,
-    originalPath: String,
+    loadTarget: AgentSessionOpenProjectLoadTarget,
+    prefetchedByProvider: Map<AgentSessionProvider, Map<String, AgentSessionPrefetchedThreads>>,
     cliAvailabilityByProvider: Map<AgentSessionProvider, Boolean>? = null,
   ): AgentSessionSourceLoadResult? {
     if (isProviderCliMissing(source.provider, cliAvailabilityByProvider)) return null
     return try {
-      val prefetched = prefetchedByProvider[source.provider]?.get(normalizedPath)
+      val prefetched = prefetchedByProvider[source.provider]?.get(loadTarget.identityPath)
+      val prefetchedThreads = prefetched
+        ?.takeIf { prefetchedResult -> prefetchedResult.projectDirectory == loadTarget.projectDirectory }
+        ?.threads
+      val sourcePath = loadTarget.projectDirectory?.takeIf { it.isNotBlank() } ?: loadTarget.identityPath
       val threads = applyArchiveSuppressions(
-        normalizedPath,
+        loadTarget.identityPath,
         source.provider,
-        prefetched ?: source.listThreads(path = normalizedPath, openProject = project),
+        prefetchedThreads ?: source.listThreads(path = sourcePath, openProject = loadTarget.project),
       )
       AgentSessionSourceLoadResult(
         provider = source.provider,
@@ -100,7 +114,7 @@ internal class AgentSessionThreadLoadSupport(
     catch (e: Throwable) {
       if (e is CancellationException) throw e
       if (isProviderCliMissingError(source.provider, e)) return null
-      LOG.warn("Failed to load ${source.provider.value} sessions for $originalPath", e)
+      LOG.warn("Failed to load ${source.provider.value} sessions for ${loadTarget.originalPath}", e)
       AgentSessionSourceLoadResult(
         provider = source.provider,
         result = Result.failure(e),
@@ -127,10 +141,8 @@ internal class AgentSessionThreadLoadSupport(
 
   suspend fun loadSourcesIncrementally(
     sessionSources: List<AgentSessionSource>,
-    normalizedPath: String,
-    project: Project,
-    prefetchedByProvider: Map<AgentSessionProvider, Map<String, List<AgentSessionThread>>>,
-    originalPath: String,
+    loadTarget: AgentSessionOpenProjectLoadTarget,
+    prefetchedByProvider: Map<AgentSessionProvider, Map<String, AgentSessionPrefetchedThreads>>,
     cliAvailabilityByProvider: Map<AgentSessionProvider, Boolean>? = null,
     onPartialResult: (AgentSessionLoadResult, isComplete: Boolean) -> Unit,
   ): AgentSessionLoadResult {
@@ -142,10 +154,8 @@ internal class AgentSessionThreadLoadSupport(
         launch {
           val sourceResult = loadSourceResultForOpenProject(
             source = source,
-            normalizedPath = normalizedPath,
-            project = project,
+            loadTarget = loadTarget,
             prefetchedByProvider = prefetchedByProvider,
-            originalPath = originalPath,
             cliAvailabilityByProvider = cliAvailabilityByProvider,
           )
           if (sourceResult != null) {

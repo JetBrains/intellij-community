@@ -25,6 +25,7 @@ internal class AgentChatOpenTopLevelThreadDispatchService : AgentOpenTopLevelThr
     openChat(
       project = openEntry.manager.project,
       projectPath = normalizedProjectPath,
+      projectDirectory = openEntry.file.projectDirectory,
       threadIdentity = openEntry.file.threadIdentity,
       shellCommand = launchSpec.command,
       shellEnvVariables = launchSpec.envVariables,

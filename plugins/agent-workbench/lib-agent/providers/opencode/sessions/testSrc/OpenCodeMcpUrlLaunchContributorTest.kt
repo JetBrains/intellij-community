@@ -17,12 +17,30 @@ class OpenCodeMcpUrlLaunchContributorTest {
 
     val launchSpec = contributor.contribute(
       projectPath = "/work/project",
+      projectDirectory = null,
       provider = AgentSessionProvider.from("opencode"),
       sessionId = null,
       launchSpec = AgentSessionTerminalLaunchSpec(command = listOf("opencode")),
     )
 
     assertThat(launchSpec.envVariables).containsEntry(OPENCODE_MCP_URL_ENVIRONMENT_VARIABLE, "http://127.0.0.1:63342/api/mcp")
+    assertThat(launchSpec.envVariables).containsEntry(AwbMcpConfigBuilder.PROJECT_PATH_ENV, "/work/project")
+  }
+
+  @Test
+  fun contributesProjectDirectoryForBazelProjectIdentity(): Unit = runBlocking {
+    val contributor = OpenCodeMcpUrlLaunchContributor(
+      mcpUrlResolver = { "http://127.0.0.1:63342/api/mcp" },
+    )
+
+    val launchSpec = contributor.contribute(
+      projectPath = "/work/project/toolbox/toolbox.bazelproject",
+      projectDirectory = "/work/project",
+      provider = AgentSessionProvider.from("opencode"),
+      sessionId = null,
+      launchSpec = AgentSessionTerminalLaunchSpec(command = listOf("opencode")),
+    )
+
     assertThat(launchSpec.envVariables).containsEntry(AwbMcpConfigBuilder.PROJECT_PATH_ENV, "/work/project")
   }
 
@@ -34,6 +52,7 @@ class OpenCodeMcpUrlLaunchContributorTest {
 
     val launchSpec = contributor.contribute(
       projectPath = "/work/project",
+      projectDirectory = null,
       provider = AgentSessionProvider.from("opencode"),
       sessionId = "thread-1",
       launchSpec = AgentSessionTerminalLaunchSpec(
@@ -55,6 +74,7 @@ class OpenCodeMcpUrlLaunchContributorTest {
 
     val launchSpec = contributor.contribute(
       projectPath = "/work/project",
+      projectDirectory = null,
       provider = AgentSessionProvider.from("codex"),
       sessionId = null,
       launchSpec = baseLaunchSpec,
@@ -70,6 +90,7 @@ class OpenCodeMcpUrlLaunchContributorTest {
 
     val launchSpec = contributor.contribute(
       projectPath = "/work/project",
+      projectDirectory = null,
       provider = AgentSessionProvider.from("opencode"),
       sessionId = null,
       launchSpec = baseLaunchSpec,

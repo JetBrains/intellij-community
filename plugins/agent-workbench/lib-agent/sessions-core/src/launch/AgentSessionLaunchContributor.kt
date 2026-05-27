@@ -39,6 +39,7 @@ fun interface AgentSessionLaunchContributor {
    */
   suspend fun contribute(
     projectPath: String,
+    projectDirectory: String?,
     provider: AgentSessionProvider,
     sessionId: String?,
     launchSpec: AgentSessionTerminalLaunchSpec,
@@ -55,6 +56,7 @@ private val AGENT_SESSION_LAUNCH_CONTRIBUTOR_EP: ExtensionPointName<AgentSession
 object AgentSessionLaunchContributors {
   suspend fun applyAll(
     projectPath: String,
+    projectDirectory: String? = null,
     provider: AgentSessionProvider,
     sessionId: String?,
     launchSpec: AgentSessionTerminalLaunchSpec,
@@ -64,7 +66,13 @@ object AgentSessionLaunchContributors {
     var result = launchSpec
     for (contributor in contributors) {
       result = try {
-        contributor.contribute(projectPath = projectPath, provider = provider, sessionId = sessionId, launchSpec = result)
+        contributor.contribute(
+          projectPath = projectPath,
+          projectDirectory = projectDirectory,
+          provider = provider,
+          sessionId = sessionId,
+          launchSpec = result,
+        )
       }
       catch (e: CancellationException) {
         // Coroutine cancellation must propagate — never log-and-swallow.

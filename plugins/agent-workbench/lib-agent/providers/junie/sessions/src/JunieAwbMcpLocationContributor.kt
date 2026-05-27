@@ -40,16 +40,18 @@ internal class JunieAwbMcpLocationContributor(
 ) : AgentSessionLaunchContributor {
   override suspend fun contribute(
     projectPath: String,
+    projectDirectory: String?,
     provider: AgentSessionProvider,
     sessionId: String?,
     launchSpec: AgentSessionTerminalLaunchSpec,
   ): AgentSessionTerminalLaunchSpec {
     if (provider != JUNIE_AGENT_SESSION_PROVIDER) return launchSpec
+    val targetPath = projectDirectory ?: projectPath
     val normalizedProjectPath = try {
-      Path.of(normalizeAgentWorkbenchPath(projectPath))
+      Path.of(normalizeAgentWorkbenchPath(targetPath))
     }
     catch (e: Exception) {
-      LOG.debug("Cannot normalize projectPath for Junie --mcp-location: $projectPath", e)
+      LOG.debug("Cannot normalize projectPath for Junie --mcp-location: $targetPath", e)
       return launchSpec
     }
     val awbDir = normalizedProjectPath.resolve(AwbMcpConfigBuilder.AWB_DIR)

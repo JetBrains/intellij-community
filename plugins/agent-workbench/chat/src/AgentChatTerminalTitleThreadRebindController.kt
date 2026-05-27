@@ -324,6 +324,7 @@ internal class AgentChatTerminalTitleThreadRebindController(
   ): AgentChatTerminalTitleRebindRequest? {
     val target = AgentChatTabRebindTarget(
       projectPath = projectPath,
+      projectDirectory = file.projectDirectory,
       provider = provider,
       threadIdentity = buildAgentThreadIdentity(provider.value, threadId),
       threadId = threadId,

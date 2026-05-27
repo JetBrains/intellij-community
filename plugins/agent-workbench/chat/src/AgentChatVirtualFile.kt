@@ -56,6 +56,9 @@ internal class AgentChatVirtualFile internal constructor(
   var projectPath: String = ""
     private set
 
+  var projectDirectory: String? = null
+    private set
+
   var threadIdentity: String = ""
     private set
 
@@ -663,6 +666,7 @@ internal class AgentChatVirtualFile internal constructor(
     if (snapshot.identity.threadIdentity.isNotBlank() || snapshot.identity.projectPath.isNotBlank()) {
       projectHash = snapshot.identity.projectHash
       projectPath = snapshot.identity.projectPath
+      projectDirectory = snapshot.identity.projectDirectory
       threadIdentity = snapshot.identity.threadIdentity
       subAgentId = snapshot.identity.subAgentId
       updateThreadCoordinates()
@@ -702,6 +706,7 @@ internal class AgentChatVirtualFile internal constructor(
       identity = AgentChatTabIdentity(
         projectHash = projectHash,
         projectPath = projectPath,
+        projectDirectory = projectDirectory,
         threadIdentity = threadIdentity,
         subAgentId = subAgentId,
       ),

@@ -152,6 +152,21 @@ class AgentSessionsStateStore {
     }
   }
 
+  fun findProjectDirectory(path: String): String? {
+    val normalizedPath = normalizeAgentWorkbenchPath(path)
+    for (project in mutableState.value.projects) {
+      if (normalizeAgentWorkbenchPath(project.path) == normalizedPath) {
+        return project.projectDirectory?.takeIf { it.isNotBlank() }?.let(::normalizeAgentWorkbenchPath)
+      }
+      for (worktree in project.worktrees) {
+        if (normalizeAgentWorkbenchPath(worktree.path) == normalizedPath) {
+          return worktree.projectDirectory?.takeIf { it.isNotBlank() }?.let(::normalizeAgentWorkbenchPath)
+        }
+      }
+    }
+    return null
+  }
+
   private fun buildInitialVisibleThreadCounts(
     knownPaths: List<String>,
     currentVisibleThreadCounts: Map<String, Int>,

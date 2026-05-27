@@ -22,6 +22,7 @@ data class AgentSessionChatOpenPlan(
 
 suspend fun resolveAgentSessionChatOpenPlan(
   projectPath: String,
+  projectDirectory: String? = null,
   thread: AgentSessionThread,
   subAgent: AgentSubAgent?,
   launchSpecOverride: AgentSessionTerminalLaunchSpec?,
@@ -34,9 +35,10 @@ suspend fun resolveAgentSessionChatOpenPlan(
   val runtimeThreadId = subAgent?.id ?: thread.id
   val launchSpec = launchSpecOverride
                    ?: AgentSessionLaunchPlanner.plan(
-                     intent = AgentSessionLaunchIntent(
-                       projectPath = projectPath,
-                       provider = thread.provider,
+                      intent = AgentSessionLaunchIntent(
+                        projectPath = projectPath,
+                        projectDirectory = projectDirectory,
+                        provider = thread.provider,
                        operation = AgentSessionLaunchOperation.RESUME,
                        sessionId = runtimeThreadId,
                        launchMode = launchMode,

@@ -135,6 +135,7 @@ private object AgentChatScopedRefreshSignalBus {
 
 data class AgentChatTabRebindTarget(
   @JvmField val projectPath: String,
+  @JvmField val projectDirectory: String? = null,
   val provider: AgentSessionProvider,
   @JvmField val threadIdentity: String,
   @JvmField val threadId: String,
@@ -234,6 +235,7 @@ data class AgentChatConcreteTabRebindReport(
 suspend fun openChat(
   project: Project,
   projectPath: String,
+  projectDirectory: String? = null,
   threadIdentity: String,
   shellCommand: List<String>,
   shellEnvVariables: Map<String, String> = emptyMap(),
@@ -261,6 +263,7 @@ suspend fun openChat(
     AgentChatTabIdentity(
       projectHash = project.locationHash,
       projectPath = projectPath,
+      projectDirectory = projectDirectory,
       threadIdentity = threadIdentity,
       subAgentId = subAgentId,
     )
@@ -308,6 +311,7 @@ suspend fun openChat(
   val snapshot = AgentChatTabSnapshot.create(
     projectHash = project.locationHash,
     projectPath = projectPath,
+    projectDirectory = projectDirectory,
     threadIdentity = threadIdentity,
     threadId = threadId,
     threadTitle = threadTitle,
@@ -613,6 +617,7 @@ private suspend fun collectOpenAgentChatProjectPaths(includePendingOnly: Boolean
 
 private data class AgentChatRebindLaunchSpecKey(
   val projectPath: String,
+  val projectDirectory: String?,
   val provider: AgentSessionProvider,
   val threadId: String,
 )
@@ -620,6 +625,7 @@ private data class AgentChatRebindLaunchSpecKey(
 private fun AgentChatTabRebindTarget.toRebindLaunchSpecKey(): AgentChatRebindLaunchSpecKey {
   return AgentChatRebindLaunchSpecKey(
     projectPath = normalizeAgentWorkbenchPath(projectPath),
+    projectDirectory = projectDirectory?.takeIf { it.isNotBlank() }?.let(::normalizeAgentWorkbenchPath),
     provider = provider,
     threadId = threadId,
   )
@@ -631,6 +637,7 @@ private suspend fun resolveRebindLaunchSpec(target: AgentChatTabRebindTarget): A
     AgentSessionLaunchPlanner.plan(
       intent = AgentSessionLaunchIntent(
         projectPath = normalizeAgentWorkbenchPath(target.projectPath),
+        projectDirectory = target.projectDirectory,
         provider = target.provider,
         operation = AgentSessionLaunchOperation.RESUME,
         sessionId = target.threadId,

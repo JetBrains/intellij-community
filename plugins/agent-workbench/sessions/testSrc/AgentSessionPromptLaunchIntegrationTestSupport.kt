@@ -400,6 +400,7 @@ internal class RecordingChatOpenExecutor(
 
   override suspend fun openChat(
       normalizedPath: String,
+      projectDirectory: String?,
       thread: AgentSessionThread,
       subAgent: AgentSubAgent?,
       launchSpecOverride: AgentSessionTerminalLaunchSpec?,
@@ -411,6 +412,7 @@ internal class RecordingChatOpenExecutor(
   ) {
     val request = OpenChatRequest(
       normalizedPath = normalizedPath,
+      projectDirectory = projectDirectory,
       thread = thread,
       subAgent = subAgent,
       launchSpecOverride = launchSpecOverride,
@@ -434,6 +436,7 @@ internal class RecordingChatOpenExecutor(
 
   override suspend fun openNewChat(
       normalizedPath: String,
+      projectDirectory: String?,
       identity: String,
       launchSpec: AgentSessionTerminalLaunchSpec,
       initialMessageDispatchPlan: AgentInitialPromptDeliveryPlan,
@@ -446,6 +449,7 @@ internal class RecordingChatOpenExecutor(
   ) {
     val request = OpenNewChatRequest(
       normalizedPath = normalizedPath,
+      projectDirectory = projectDirectory,
       identity = identity,
       launchSpec = launchSpec,
       startupLaunchSpecOverride = initialMessageDispatchPlan.startupLaunchSpecOverride,
@@ -468,6 +472,7 @@ internal class RecordingChatOpenExecutor(
 
   override suspend fun openPreparingNewChat(
       normalizedPath: String,
+      projectDirectory: String?,
       identity: String,
       launchSpec: AgentSessionTerminalLaunchSpec,
       launchMode: AgentSessionLaunchMode?,
@@ -481,6 +486,7 @@ internal class RecordingChatOpenExecutor(
   ): DeferredAgentSessionChatOpenResult {
     val request = OpenPreparingNewChatRequest(
       normalizedPath = normalizedPath,
+      projectDirectory = projectDirectory,
       identity = identity,
       launchSpec = launchSpec,
       launchMode = launchMode,
@@ -515,6 +521,7 @@ internal class RecordingChatOpenExecutor(
   ) {
     openNewChat(
       normalizedPath = projectPath,
+      projectDirectory = null,
       identity = identity,
       launchSpec = launchSpec,
       initialMessageDispatchPlan = initialMessageDispatchPlan,
@@ -539,6 +546,7 @@ internal class RecordingChatOpenExecutor(
 
 internal data class OpenChatRequest(
   @JvmField val normalizedPath: String,
+  @JvmField val projectDirectory: String?,
   @JvmField val thread: AgentSessionThread,
   @JvmField val subAgent: AgentSubAgent?,
   @JvmField val launchSpecOverride: AgentSessionTerminalLaunchSpec?,
@@ -558,6 +566,7 @@ internal data class OpenChatRequest(
 
 internal data class OpenNewChatRequest(
   @JvmField val normalizedPath: String,
+  @JvmField val projectDirectory: String?,
   @JvmField val identity: String,
   @JvmField val launchSpec: AgentSessionTerminalLaunchSpec,
   @JvmField val startupLaunchSpecOverride: AgentSessionTerminalLaunchSpec?,
@@ -577,6 +586,7 @@ internal data class OpenNewChatRequest(
 
 internal data class OpenPreparingNewChatRequest(
   @JvmField val normalizedPath: String,
+  @JvmField val projectDirectory: String?,
   @JvmField val identity: String,
   @JvmField val launchSpec: AgentSessionTerminalLaunchSpec,
   @JvmField val launchMode: AgentSessionLaunchMode?,

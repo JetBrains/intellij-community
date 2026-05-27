@@ -245,28 +245,31 @@ f:com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionChatOpenPlan
 - equals(java.lang.Object):Z
 - hashCode():I
 f:com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionChatOpenPlanKt
-- sf:resolveAgentSessionChatOpenPlan(java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionThread,com.intellij.platform.ai.agent.core.session.AgentSubAgent,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function4,kotlin.coroutines.Continuation):java.lang.Object
-- bs:resolveAgentSessionChatOpenPlan$default(java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionThread,com.intellij.platform.ai.agent.core.session.AgentSubAgent,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function4,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- sf:resolveAgentSessionChatOpenPlan(java.lang.String,java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionThread,com.intellij.platform.ai.agent.core.session.AgentSubAgent,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function4,kotlin.coroutines.Continuation):java.lang.Object
+- bs:resolveAgentSessionChatOpenPlan$default(java.lang.String,java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionThread,com.intellij.platform.ai.agent.core.session.AgentSubAgent,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function4,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchContributor
-- a:contribute-TrybPGk(java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,kotlin.coroutines.Continuation):java.lang.Object
+- a:contribute-rVRrr4o(java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchContributors
 - sf:INSTANCE:com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchContributors
-- f:applyAll-TrybPGk(java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,kotlin.coroutines.Continuation):java.lang.Object
+- f:applyAll-rVRrr4o(java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,kotlin.coroutines.Continuation):java.lang.Object
+- bs:applyAll-rVRrr4o$default(com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchContributors,java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 f:com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchIntent
 - f:generationSettings:com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 - f:launchMode:com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
 - f:operation:com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchOperation
+- f:projectDirectory:java.lang.String
 - f:projectPath:java.lang.String
 - f:sessionId:java.lang.String
-- b:<init>(java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchOperation,java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- b:<init>(java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchOperation,java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:component1():java.lang.String
-- f:component2-dBzBBrw():java.lang.String
-- f:component3():com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchOperation
-- f:component4():java.lang.String
-- f:component5():com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
-- f:component6():com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
-- f:copy-RmkVQ7I(java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchOperation,java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings):com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchIntent
-- bs:copy-RmkVQ7I$default(com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchIntent,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchOperation,java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings,I,java.lang.Object):com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchIntent
+- f:component2():java.lang.String
+- f:component3-dBzBBrw():java.lang.String
+- f:component4():com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchOperation
+- f:component5():java.lang.String
+- f:component6():com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
+- f:component7():com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
+- f:copy-ag9rIek(java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchOperation,java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings):com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchIntent
+- bs:copy-ag9rIek$default(com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchIntent,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchOperation,java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings,I,java.lang.Object):com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchIntent
 - equals(java.lang.Object):Z
 - f:getProvider-dBzBBrw():java.lang.String
 - hashCode():I
@@ -282,18 +285,20 @@ f:com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchPlanner
 - f:plan(com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchIntent,com.intellij.openapi.project.Project,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan,java.util.List,java.util.Map,java.util.List,kotlin.jvm.functions.Function4,kotlin.coroutines.Continuation):java.lang.Object
 - bs:plan$default(com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchPlanner,com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchIntent,com.intellij.openapi.project.Project,com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan,java.util.List,java.util.Map,java.util.List,kotlin.jvm.functions.Function4,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchSpecAugmenter
-- a:augment-TLLtW2k(java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,kotlin.coroutines.Continuation):java.lang.Object
+- a:augment-tFgkW8w(java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchSpecAugmenters
 - sf:INSTANCE:com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchSpecAugmenters
-- f:augment-TLLtW2k(java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,kotlin.coroutines.Continuation):java.lang.Object
+- f:augment-tFgkW8w(java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,kotlin.coroutines.Continuation):java.lang.Object
+- bs:augment-tFgkW8w$default(com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchSpecAugmenters,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 - f:withAugmenterForTest(com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchSpecAugmenter,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchSpecs
 - sf:INSTANCE:com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchSpecs
-- f:augment-TLLtW2k(java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,kotlin.coroutines.Continuation):java.lang.Object
-- f:resolveResume-RmkVQ7I(java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,kotlin.jvm.functions.Function4,kotlin.coroutines.Continuation):java.lang.Object
-- bs:resolveResume-RmkVQ7I$default(com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchSpecs,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,kotlin.jvm.functions.Function4,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
-- f:resolveResume-TrybPGk(java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,kotlin.coroutines.Continuation):java.lang.Object
-- bs:resolveResume-TrybPGk$default(com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchSpecs,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- f:augment-tFgkW8w(java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,kotlin.coroutines.Continuation):java.lang.Object
+- bs:augment-tFgkW8w$default(com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchSpecs,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- f:resolveResume-ag9rIek(java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,kotlin.jvm.functions.Function4,kotlin.coroutines.Continuation):java.lang.Object
+- bs:resolveResume-ag9rIek$default(com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchSpecs,java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,kotlin.jvm.functions.Function4,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- f:resolveResume-rVRrr4o(java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,kotlin.coroutines.Continuation):java.lang.Object
+- bs:resolveResume-rVRrr4o$default(com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchSpecs,java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 f:com.intellij.platform.ai.agent.sessions.core.launch.AgentSessionLaunchSpecsKt
 - sf:insertArgumentsBefore(java.util.List,java.util.List,java.util.Set):java.util.List
 - sf:removeOptions(java.util.List,java.util.Set,java.util.Set):java.util.List

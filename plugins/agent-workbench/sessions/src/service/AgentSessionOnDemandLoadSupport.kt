@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.sessions.service
 
 import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPath
+import com.intellij.platform.ai.agent.sessions.core.paths.resolveAgentWorkbenchProjectDirectory
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.model.hasAnyProviderSnapshot
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
@@ -35,7 +36,10 @@ internal class AgentSessionOnDemandLoadSupport(
             stateStore.updateProject(normalized) { project -> project.withLoadingProviderLoadStates(providerLoadStates) }
           },
         ) {
-          threadLoadSupport.loadThreadsFromClosedProject(path = normalized)
+          threadLoadSupport.loadThreadsFromClosedProject(
+            path = normalized,
+            projectDirectory = resolveClosedProjectDirectory(path = normalized),
+          )
         }
         stateStore.updateProject(normalized) { project ->
           project.copy(
@@ -68,7 +72,10 @@ internal class AgentSessionOnDemandLoadSupport(
             }
           },
         ) {
-          threadLoadSupport.loadThreadsFromClosedProject(path = normalizedWorktree)
+          threadLoadSupport.loadThreadsFromClosedProject(
+            path = normalizedWorktree,
+            projectDirectory = resolveClosedProjectDirectory(path = normalizedWorktree),
+          )
         }
         stateStore.updateWorktree(normalizedProject, normalizedWorktree) { worktree ->
           worktree.copy(
@@ -115,5 +122,10 @@ internal class AgentSessionOnDemandLoadSupport(
     onDemandMutex.withLock {
       onDemandWorktreeLoading.remove(worktreePath)
     }
+  }
+
+  private fun resolveClosedProjectDirectory(path: String): String? {
+    return stateStore.findProjectDirectory(path)
+           ?: resolveAgentWorkbenchProjectDirectory(identityPath = path)
   }
 }

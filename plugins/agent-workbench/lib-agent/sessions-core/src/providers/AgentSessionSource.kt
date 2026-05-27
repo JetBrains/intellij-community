@@ -5,6 +5,7 @@ package com.intellij.platform.ai.agent.sessions.core.providers
 
 import com.intellij.platform.ai.agent.core.AgentThreadActivity
 import com.intellij.platform.ai.agent.core.AgentThreadActivityReport
+import com.intellij.platform.ai.agent.core.normalizeAgentWorkbenchPath
 import com.intellij.platform.ai.agent.core.session.AgentSessionCost
 import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
 import com.intellij.platform.ai.agent.core.session.AgentSessionThread
@@ -344,10 +345,26 @@ data class AgentSessionSourceRefreshRequest(
   @JvmField val threadIds: Set<String> = emptySet(),
   /** Source update that triggered this refresh. */
   @JvmField val updateEvent: AgentSessionSourceUpdateEvent,
+  /** Optional provider source paths keyed by Agent Workbench identity path. */
+  @JvmField val projectDirectoriesByPath: Map<String, String> = emptyMap(),
 ) {
   /** True when [threadIds] requests a partial thread-level refresh. */
   val isThreadScoped: Boolean
     get() = threadIds.isNotEmpty()
+
+  fun projectDirectoryFor(path: String): String? {
+    return projectDirectoriesByPath[normalizeAgentWorkbenchPath(path)]
+      ?.takeIf { it.isNotBlank() }
+      ?.let(::normalizeAgentWorkbenchPath)
+  }
+
+  fun sourcePathFor(path: String): String {
+    return projectDirectoryFor(path) ?: path
+  }
+
+  fun sourcePaths(): List<String> {
+    return paths.map { path -> sourcePathFor(path) }
+  }
 }
 
 /**

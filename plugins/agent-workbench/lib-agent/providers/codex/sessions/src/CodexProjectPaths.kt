@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ai.agent.codex.sessions
 
+import com.intellij.platform.ai.agent.sessions.core.paths.resolveAgentWorkbenchProjectDirectory
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.AwaitCancellationAndInvoke
@@ -29,17 +30,7 @@ internal fun parseProjectPath(path: String?): Path? {
 }
 
 internal fun normalizeProjectPath(projectPath: Path?): Path? {
-  val path = projectPath ?: return null
-  val fileName = path.fileName?.toString() ?: return path
-  val parentName = path.parent?.fileName?.toString()
-  val normalized = when {
-    fileName == ".idea" -> path.parent
-    parentName == ".idea" -> path.parent?.parent
-    fileName.endsWith(".ipr", ignoreCase = true) -> path.parent
-    fileName.endsWith(".iws", ignoreCase = true) -> path.parent
-    else -> path
-  }
-  return normalized ?: path
+  return projectPath?.let(::resolveAgentWorkbenchProjectDirectory)
 }
 
 internal fun resolveProjectDirectoryFromPath(path: String): Path? {

@@ -11,6 +11,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 fun interface AgentSessionLaunchSpecAugmenter {
   suspend fun augment(
     projectPath: String,
+    projectDirectory: String?,
     provider: AgentSessionProvider,
     launchSpec: AgentSessionTerminalLaunchSpec,
   ): AgentSessionTerminalLaunchSpec
@@ -36,11 +37,17 @@ object AgentSessionLaunchSpecAugmenters {
 
   suspend fun augment(
     projectPath: String,
+    projectDirectory: String? = null,
     provider: AgentSessionProvider,
     launchSpec: AgentSessionTerminalLaunchSpec,
   ): AgentSessionTerminalLaunchSpec {
     val augmenter = augmenterOverride.value() ?: return launchSpec
-    return augmenter.augment(projectPath = projectPath, provider = provider, launchSpec = launchSpec)
+    return augmenter.augment(
+      projectPath = projectPath,
+      projectDirectory = projectDirectory,
+      provider = provider,
+      launchSpec = launchSpec,
+    )
   }
 
   suspend fun <T> withAugmenterForTest(augmenter: AgentSessionLaunchSpecAugmenter?, action: suspend () -> T): T {

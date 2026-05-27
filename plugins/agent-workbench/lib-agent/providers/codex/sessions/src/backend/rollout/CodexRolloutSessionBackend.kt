@@ -7,6 +7,7 @@ package com.intellij.platform.ai.agent.codex.sessions.backend.rollout
 // @spec community/plugins/agent-workbench/spec/sessions/agent-sessions-codex-rollout-source.spec.md
 
 import com.intellij.platform.ai.agent.codex.common.normalizeRootPath
+import com.intellij.platform.ai.agent.codex.sessions.normalizeProjectPath
 import com.intellij.platform.ai.agent.codex.sessions.backend.CodexBackendThread
 import com.intellij.platform.ai.agent.codex.sessions.backend.CodexBackendThreadRefreshResult
 import com.intellij.platform.ai.agent.codex.sessions.backend.CodexSessionBackend
@@ -31,6 +32,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.time.Duration.Companion.milliseconds
@@ -272,10 +274,10 @@ internal class CodexRolloutSessionBackend(
     }
   }
 
-  override suspend fun listThreads(path: String, @Suppress("UNUSED_PARAMETER") openProject: Project?): List<CodexBackendThread> {
+  override suspend fun listThreads(path: String, openProject: Project?): List<CodexBackendThread> {
     return withContext(Dispatchers.IO) {
-      val workingDirectory = resolveProjectDirectoryFromPath(path)
-                             ?: return@withContext emptyList()
+      val workingDirectory = resolveWorkingDirectory(path = path, openProject = openProject)
+                              ?: return@withContext emptyList()
       val cwdFilter = normalizeRootPath(workingDirectory.invariantSeparatorsPathString)
       val threadsByCwd = threadIndex.collectByCwd(setOf(cwdFilter))
       rememberCachedProjectFileChangeEvidence()
@@ -330,6 +332,14 @@ private fun resolvePathFilters(paths: List<String>): List<Pair<String, String>> 
       path to normalizeRootPath(directory.invariantSeparatorsPathString)
     }
   }
+}
+
+private fun resolveWorkingDirectory(path: String, openProject: Project?): Path? {
+  val openProjectDirectory = openProject?.basePath
+    ?.let(Path::of)
+    ?.let(::normalizeProjectPath)
+    ?.takeIf(Files::isDirectory)
+  return openProjectDirectory ?: resolveProjectDirectoryFromPath(path)
 }
 
 private fun rolloutSessionUpdate(

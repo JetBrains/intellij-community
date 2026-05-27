@@ -23,7 +23,7 @@ targets:
 # Global Prompt Entry
 
 Status: Draft
-Date: 2026-05-16
+Date: 2026-05-27
 
 ## Summary
 The global prompt opens a project-scoped prompt surface for starting a new task or sending a prompt to an existing loaded task. The surface is normally a popup, but the empty editor state may host a compact inline prompt composer instead of standard empty-state hints. This spec owns popup and inline lifecycle, target mode, validation, keyboard behavior, provider selection, and launcher handoff. Context collection and Add-to-Agent-Context routing are specified separately.
@@ -61,7 +61,7 @@ The global prompt opens a project-scoped prompt surface for starting a new task 
 - Submit validation must block empty prompts, missing provider, unavailable provider CLI, missing project path, missing launcher bridge, and existing-task submits without a selected task.
   [@test] ../../prompt/ui/testSrc/AgentPromptSubmitValidationDecisionsTest.kt
 
-- Working project path resolution must never use the dedicated-frame project path. In a dedicated Agent frame, it resolves from selected Sessions context, selected chat tab source path, then most recent non-dedicated project; unresolved submits prompt for a source project and keep the popup open on cancel.
+- Working project path resolution must never use the dedicated-frame project path. In non-dedicated frames it resolves from the current open project's identity path, so Bazel projects contribute their `.bazelproject` identity instead of raw `project.basePath`. In a dedicated Agent frame, it resolves from selected Sessions context, selected chat tab source path, then most recent non-dedicated project; unresolved submits prompt for a source project and keep the popup open on cancel.
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 
 - Keyboard behavior is: Enter submits, Shift+Enter inserts a line break, Tab/Shift+Tab switch prompt tabs unless completion or Codex tab-queue handling consumes the key.

@@ -14,6 +14,7 @@ internal class OpenCodeMcpUrlLaunchContributor(
 ) : AgentSessionLaunchContributor {
   override suspend fun contribute(
     projectPath: String,
+    projectDirectory: String?,
     provider: AgentSessionProvider,
     sessionId: String?,
     launchSpec: AgentSessionTerminalLaunchSpec,
@@ -25,7 +26,7 @@ internal class OpenCodeMcpUrlLaunchContributor(
     }
     val envVariables = LinkedHashMap(launchSpec.envVariables)
     envVariables[OPENCODE_MCP_URL_ENVIRONMENT_VARIABLE] = mcpUrl
-    normalizeAgentWorkbenchPathOrNull(projectPath)?.let { normalizedProjectPath ->
+    normalizeAgentWorkbenchPathOrNull(projectDirectory ?: projectPath)?.let { normalizedProjectPath ->
       envVariables[AwbMcpConfigBuilder.PROJECT_PATH_ENV] = normalizedProjectPath
     }
     return launchSpec.copy(envVariables = envVariables)
