@@ -1,8 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints
 
-import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.codeInsight.ExternalAnnotationsManager
+import com.intellij.codeInsight.ExternalAnnotationsManager.isNonCodeTypeAnnotation
 import com.intellij.codeInsight.InferredAnnotationsManager
 import com.intellij.codeInsight.MakeInferredAnnotationExplicit
 import com.intellij.codeInsight.NullableNotNullManager
@@ -27,7 +27,6 @@ import com.intellij.codeInsight.hints.declarative.SharedBypassCollector
 import com.intellij.codeInsight.hints.declarative.StringInlayActionPayload
 import com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPassFactory
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator
-import com.intellij.codeInspection.dataFlow.Mutability
 import com.intellij.java.JavaBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
@@ -37,7 +36,6 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.editor.BlockInlayPriority
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.pom.java.JavaFeature
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.JavaTokenType
 import com.intellij.psi.PsiAnnotation
@@ -107,7 +105,7 @@ public class AnnotationInlayProvider : InlayHintsProvider {
               processTypeParameterAnnotationRecursively(parameter, originalParameter,
                                                         { sinkReferenceElement, sinkOriginalType ->
                                                 sinkOriginalType.annotations
-                                                  .filter(manager::isExternalAnnotation)
+                                                  .filter(ExternalAnnotationsManager::isExternal)
                                                   .forEach {
                                                     showAnnotationInlay(sink, it, project, sinkReferenceElement)
                                                   }
@@ -151,7 +149,7 @@ public class AnnotationInlayProvider : InlayHintsProvider {
             if (nameReferenceElement != null &&
                 element.modifierList != null &&
                 (shownAnnotations.add(nameReferenceElement.qualifiedName) || JavaDocInfoGenerator.isRepeatableAnnotationType(annotation))) {
-              val hintPos = (if (isTypeAnno(annotation)) typeHintPos else modifierListHintPos) ?: return
+              val hintPos = (if (isNonCodeTypeAnnotation(annotation)) typeHintPos else modifierListHintPos) ?: return
               val suffixText = calculateTypeSuffixText(annotation)
               if (suffixText != null && AnnotationInlaySettings.getInstance().shortenNotNull) {
                 if (!shownAnnotations.add(suffixText)) return // to prevent duplicates when external and inferred annotations use different @NotNull classes
@@ -170,6 +168,7 @@ public class AnnotationInlayProvider : InlayHintsProvider {
           sink.whenOptionEnabled(SHOW_EXTERNAL) {
             ExternalAnnotationsManager.getInstance(project)
               .findExternalAnnotations(element)
+              .filter { !isNonCodeTypeAnnotation(it) }
               .forEach { sink.addAnnotationIfNotDuplicated(it) }
           }
           sink.whenOptionEnabled(SHOW_INFERRED) {
@@ -186,9 +185,8 @@ public class AnnotationInlayProvider : InlayHintsProvider {
         sink: InlayTreeSink,
       ) {
         val type = originalElement.type
-        val manager = ExternalAnnotationsManager.getInstance(project)
         type.annotations
-          .filter(manager::isExternalAnnotation)
+          .filter(ExternalAnnotationsManager::isExternal)
           .forEach {
             showAnnotationInlay(sink, it, project, element)
           }
@@ -215,10 +213,10 @@ public class AnnotationInlayProvider : InlayHintsProvider {
       }
 
       private fun calculateTypeSuffixText(annotation: PsiAnnotation) : String? {
-        val name = annotation.nameReferenceElement?.qualifiedName;
+        val name = annotation.nameReferenceElement?.qualifiedName
         if (notNulls.contains(name)) return "!"
         if (nullables.contains(name)) return "?"
-        return null;
+        return null
       }
     }
   }
@@ -370,16 +368,6 @@ private fun calcTypeHintPosition(element: PsiModifierListOwner): InlineInlayPosi
   return InlineInlayPosition(offset, relatedToPrevious = false, priority = 0)
 }
 
-private fun isTypeAnno(annotation: PsiAnnotation): Boolean {
-  val qualifiedName = annotation.qualifiedName ?: return false
-  val typeAnno = qualifiedName == AnnotationUtil.NOT_NULL ||
-                 qualifiedName == AnnotationUtil.NULLABLE ||
-                 qualifiedName == AnnotationUtil.UNKNOWN_NULLABILITY ||
-                 qualifiedName == Mutability.UNMODIFIABLE_ANNOTATION ||
-                 qualifiedName == Mutability.UNMODIFIABLE_VIEW_ANNOTATION
-  return typeAnno && PsiUtil.isAvailable(JavaFeature.TYPE_ANNOTATIONS, annotation)
-}
-
 private fun SmartPsiElementPointer<*>.toNavigateInlayAction(): InlayActionData {
   return InlayActionData(PsiPointerInlayActionPayload(this), PsiPointerInlayActionNavigationHandler.HANDLER_ID)
 }
@@ -395,12 +383,7 @@ private fun <T> Array<T>.joinPresentations(separator: () -> Unit, transform: (T)
 
 public class InsertAnnotationAction : AnAction() {
   override fun update(e: AnActionEvent) {
-    if (e.hasAnnotationProviderId()) {
-      e.presentation.isEnabledAndVisible = e.psiFile?.virtualFile?.isInLocalFileSystem == true
-    }
-    else {
-      e.presentation.isEnabledAndVisible = false
-    }
+    e.presentation.isEnabledAndVisible = e.hasAnnotationProviderId() && e.psiFile?.virtualFile?.isInLocalFileSystem == true
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {

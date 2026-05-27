@@ -2,6 +2,7 @@
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
@@ -10,6 +11,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiNameValuePair;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,6 +21,7 @@ import java.util.List;
 
 public abstract class ExternalAnnotationsManager {
   public static final String ANNOTATIONS_XML = "annotations.xml";
+  protected static final Key<Boolean> EXTERNAL_ANNO_MARKER = Key.create("EXTERNAL_ANNO_MARKER");
 
   /**
    * Describes where to place the new annotation
@@ -45,13 +48,28 @@ public abstract class ExternalAnnotationsManager {
     NOWHERE
   }
 
+  @Contract(pure = true)
   public static ExternalAnnotationsManager getInstance(@NotNull Project project) {
     return project.getService(ExternalAnnotationsManager.class);
   }
 
   public abstract boolean hasAnnotationRootsForFile(@NotNull VirtualFile file);
 
-  public abstract boolean isExternalAnnotation(@NotNull PsiAnnotation annotation);
+  /**
+   * @param annotation annotation to check
+   * @return true if the annotation is an external annotation
+   */
+  public static boolean isExternal(@NotNull PsiAnnotation annotation) {
+    return annotation.getUserData(EXTERNAL_ANNO_MARKER) != null;
+  }
+
+  /**
+   * @deprecated use static method {@link #isExternal(PsiAnnotation)}.
+   */
+  @Deprecated
+  public boolean isExternalAnnotation(@NotNull PsiAnnotation annotation) {
+    return isExternal(annotation);
+  }
 
   public abstract @Nullable PsiAnnotation findExternalAnnotation(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN);
 
@@ -176,4 +194,21 @@ public abstract class ExternalAnnotationsManager {
    *         {@code false} otherwise
    */
   public abstract boolean hasConfiguredAnnotationRoot(@NotNull PsiModifierListOwner owner);
+
+  /**
+   * @param annotation annotation to check
+   * @return true if a given non-code annotation should be considered as a type annotation
+   * (i.e., rendered in UI as such, etc.)
+   */
+  public static boolean isNonCodeTypeAnnotation(@NotNull PsiAnnotation annotation) {
+    String qualifiedName = annotation.getQualifiedName();
+    if (qualifiedName == null) return false;
+
+    boolean typeAnno = qualifiedName.equals(AnnotationUtil.NOT_NULL) ||
+                       qualifiedName.equals(AnnotationUtil.NULLABLE) ||
+                       qualifiedName.equals(AnnotationUtil.UNKNOWN_NULLABILITY) ||
+                       qualifiedName.equals("org.jetbrains.annotations.Unmodifiable") ||
+                       qualifiedName.equals("org.jetbrains.annotations.UnmodifiableView");
+    return typeAnno && (isExternal(annotation) || InferredAnnotationsManager.isInferredAnnotation(annotation));
+  }
 }

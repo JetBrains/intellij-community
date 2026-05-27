@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
-import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,7 +14,6 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.JavaResolveResult;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.LambdaUtil;
-import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiArrayInitializerExpression;
 import com.intellij.psi.PsiArrayType;
 import com.intellij.psi.PsiAssignmentExpression;
@@ -756,13 +754,10 @@ public final class PsiTypesUtil {
    * @return type with removed external annotations (if any); on any level of depth
    */
   public static @NotNull PsiType removeExternalAnnotations(@NotNull PsiType type) {
-    PsiAnnotation[] annotations = type.getAnnotations();
-    if (annotations.length > 0) {
-      List<PsiAnnotation> newAnnotations = ContainerUtil.filter(
-        annotations, annotation -> !ExternalAnnotationsManager.getInstance(annotation.getProject()).isExternalAnnotation(annotation));
-      if (newAnnotations.size() < annotations.length) {
-        type = type.annotate(TypeAnnotationProvider.Static.create(newAnnotations.toArray(PsiAnnotation.EMPTY_ARRAY)));
-      }
+    TypeAnnotationProvider provider = type.getAnnotationProvider();
+    TypeAnnotationProvider noExternal = provider.removeExternalAnnotations();
+    if (noExternal != provider) {
+      type = type.annotate(noExternal);
     }
     if (type instanceof PsiClassType) {
       PsiClassType classType = (PsiClassType)type;
@@ -777,7 +772,8 @@ public final class PsiTypesUtil {
           changed |= updatedParameter != parameter;
         }
         if (changed) {
-          return JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass, parameters);
+          return JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass, parameters)
+            .annotate(noExternal);
         }
       }
       return type;
@@ -786,7 +782,9 @@ public final class PsiTypesUtil {
       PsiArrayType arrayType = (PsiArrayType)type;
       PsiType origComponentType = arrayType.getComponentType();
       PsiType componentType = removeExternalAnnotations(origComponentType);
-      return componentType == origComponentType ? type : componentType.createArrayType();
+      return componentType == origComponentType ? type : 
+             arrayType instanceof PsiEllipsisType ? new PsiEllipsisType(componentType) : 
+             componentType.createArrayType().annotate(noExternal);
     }
     else if (type instanceof PsiWildcardType) {
       PsiWildcardType wildcardType = (PsiWildcardType)type;

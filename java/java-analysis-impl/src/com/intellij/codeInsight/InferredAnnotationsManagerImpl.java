@@ -2,7 +2,6 @@
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiModifierListOwner;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
-  private static final Key<Boolean> INFERRED_ANNOTATION = Key.create("INFERRED_ANNOTATION");
   private final Project myProject;
 
   public InferredAnnotationsManagerImpl(Project project) {
@@ -42,11 +40,6 @@ public final class InferredAnnotationsManagerImpl extends InferredAnnotationsMan
       }
     }
     return result.toArray(PsiAnnotation.EMPTY_ARRAY);
-  }
-
-  @Override
-  public boolean isInferredAnnotation(@NotNull PsiAnnotation annotation) {
-    return annotation.getUserData(INFERRED_ANNOTATION) != null;
   }
 
   private static void markInferred(@NotNull PsiAnnotation annotation) {

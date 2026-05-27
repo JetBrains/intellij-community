@@ -68,7 +68,7 @@ class RemoveSuppressWarningAction extends ModCommandQuickFix {
       if (commentOwner != null) {
         PsiElement psiElement = JavaSuppressionUtil.getElementMemberSuppressedIn(commentOwner, myID);
         if (psiElement instanceof PsiAnnotation annotation) {
-          if (!ExternalAnnotationsManager.getInstance(annotation.getProject()).isExternalAnnotation(annotation)) {
+          if (!ExternalAnnotationsManager.isExternal(annotation)) {
             removeFromAnnotation(annotation);
           }
         }
@@ -208,7 +208,7 @@ class RemoveSuppressWarningAction extends ModCommandQuickFix {
     PsiModifierListOwner owner = PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class, false);
     if (owner == null) return ModCommand.nop();
     if (JavaSuppressionUtil.getElementMemberSuppressedIn(owner, myID) instanceof PsiAnnotation annotation &&
-        ExternalAnnotationsManager.getInstance(annotation.getProject()).isExternalAnnotation(annotation)) {
+        ExternalAnnotationsManager.isExternal(annotation)) {
       return removeFromAnnotationExternal(annotation, owner);
     }
     return ModCommand.nop();

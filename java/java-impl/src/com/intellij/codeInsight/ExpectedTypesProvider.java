@@ -314,7 +314,8 @@ public final class ExpectedTypesProvider {
       }
     }
 
-    return set.toArray(PsiType.createArray(set.size()));
+    return StreamEx.of(set).map(t -> PsiTypesUtil.removeExternalAnnotations(t))
+      .toArray(PsiType.EMPTY_ARRAY);
   }
 
   private static void processType(@NotNull PsiType type, @NotNull PsiTypeVisitor<? extends PsiType> visitor,

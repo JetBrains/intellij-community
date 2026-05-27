@@ -3,7 +3,7 @@ UFile (package = ) [public final class LambdaExpressionFunctionalInterfaceTypeKt
         UMethod (name = streamMap) [public static final fun streamMap() : void {...}]
             UBlockExpression [{...}] : java.util.stream.Stream<java.lang.String>
                 UQualifiedReferenceExpression [java.util.stream.Stream.of(1, 2).map({ var it: java.lang.Integer ->...})] : java.util.stream.Stream<java.lang.String>
-                    UQualifiedReferenceExpression [java.util.stream.Stream.of(1, 2)] : java.util.stream.Stream<java.lang.Integer>
+                    UQualifiedReferenceExpression [java.util.stream.Stream.of(1, 2)] : @org.jetbrains.annotations.NotNull() java.util.stream.Stream<java.lang.Integer>
                         UQualifiedReferenceExpression [java.util.stream.Stream]
                             UQualifiedReferenceExpression [java.util.stream]
                                 UQualifiedReferenceExpression [java.util]
@@ -11,7 +11,7 @@ UFile (package = ) [public final class LambdaExpressionFunctionalInterfaceTypeKt
                                     USimpleNameReferenceExpression (identifier = util) [util]
                                 USimpleNameReferenceExpression (identifier = stream) [stream]
                             USimpleNameReferenceExpression (identifier = Stream) [Stream]
-                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [of(1, 2)] : java.util.stream.Stream<java.lang.Integer>
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [of(1, 2)] : @org.jetbrains.annotations.NotNull() java.util.stream.Stream<java.lang.Integer>
                             UIdentifier (Identifier (of)) [UIdentifier (Identifier (of))]
                             ULiteralExpression (value = 1) [1] : int
                             ULiteralExpression (value = 2) [2] : int

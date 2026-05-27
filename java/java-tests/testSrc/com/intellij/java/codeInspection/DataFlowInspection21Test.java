@@ -2,6 +2,7 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.idea.TestFor;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -292,6 +293,11 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
   public void testNullableArrayLocalVariable() {
     addJSpecifyNullMarked(myFixture);
     setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+  
+  @TestFor(issues = "IDEA-389723")
+  public void testOptionalInsideLambda() {
     doTest();
   }
 }

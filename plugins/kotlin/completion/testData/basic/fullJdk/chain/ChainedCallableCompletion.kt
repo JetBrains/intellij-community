@@ -5,5 +5,5 @@ fun main() {
 }
 
 // ABSENT: Collections
-// EXIST: { lookupString: "emptyList", itemText: "Collections.emptyList", tailText: "()", typeText: "kotlin.collections.(Mutable)List<T!>" }
+// EXIST: { lookupString: "emptyList", itemText: "Collections.emptyList", tailText: "()", typeText: "@Unmodifiable List<T!>" }
 // INVOCATION_COUNT: 0

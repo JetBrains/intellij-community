@@ -47,6 +47,7 @@ import com.intellij.psi.TypeAnnotationProvider;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
+import com.intellij.psi.impl.cache.ExternalTypeAnnotationContainer;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -222,14 +223,28 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     PsiModifierList modifierList = modifierListOwner.getModifierList();
     if (modifierList == null) return type;
     PsiAnnotation[] annotations = modifierList.getAnnotations();
-    if (annotations.length == 0) return type;
+    TypeAnnotationProvider modifierProvider = TypeAnnotationProvider.Static.create(annotations);
+    TypeAnnotationProvider externalProvider = ExternalTypeAnnotationContainer.create(modifierListOwner).getProvider(modifierListOwner);
+    TypeAnnotationProvider annotationProvider;
+    if (modifierProvider == TypeAnnotationProvider.EMPTY) {
+      if (externalProvider == TypeAnnotationProvider.EMPTY) {
+        return type;
+      }
+      annotationProvider = externalProvider;
+    }
+    else if (externalProvider == TypeAnnotationProvider.EMPTY) {
+      annotationProvider = modifierProvider;
+    }
+    else {
+      annotationProvider = new MergedProvider(modifierProvider, externalProvider);
+    }
     if (type instanceof PsiClassReferenceType) {
       PsiJavaCodeReferenceElement innermost = getInnermostComponentReferenceElement();
       if (innermost != null && innermost.isQualified()) {
-        return ((PsiClassReferenceType)type).withAddedQualifierAnnotations(annotations);
+        return ((PsiClassReferenceType)type).withAddedQualifierAnnotations(annotationProvider);
       }
     }
-    return JavaSharedImplUtil.annotate(type, modifierList, annotations);
+    return JavaSharedImplUtil.annotate(type, modifierList, annotationProvider);
   }
 
   private @Nullable PsiModifierListOwner getModifierListOwnerThatAffectsThisTypeElement(PsiType type) {
@@ -648,5 +663,35 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
       parent = parent.getContext();
     }
     return null;
+  }
+
+  private static class MergedProvider implements TypeAnnotationProvider {
+    private final @NotNull TypeAnnotationProvider myModifierProvider;
+    private final @NotNull TypeAnnotationProvider myExternalProvider;
+
+    private MergedProvider(@NotNull TypeAnnotationProvider modifierProvider, @NotNull TypeAnnotationProvider externalProvider) {
+      myModifierProvider = modifierProvider;
+      myExternalProvider = externalProvider;
+    }
+
+    @Override
+    public @NotNull PsiAnnotation @NotNull [] getAnnotations() {
+      return ArrayUtil.mergeArrays(myModifierProvider.getAnnotations(), myExternalProvider.getAnnotations());
+    }
+
+    @Override
+    public boolean isValid() {
+      return myModifierProvider.isValid();
+    }
+
+    @Override
+    public boolean hasAnnotations() {
+      return myModifierProvider.hasAnnotations() || myExternalProvider.hasAnnotations();
+    }
+
+    @Override
+    public @NotNull TypeAnnotationProvider removeExternalAnnotations() {
+      return myModifierProvider;
+    }
   }
 }

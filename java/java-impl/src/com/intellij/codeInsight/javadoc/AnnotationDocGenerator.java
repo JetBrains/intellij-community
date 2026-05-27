@@ -100,8 +100,8 @@ public final class AnnotationDocGenerator {
     return myAnnotation.getQualifiedName();
   }
   
-  boolean isNonCodeTypeUseAnnotation() {
-    return (isExternal() || isInferred()) && AnnotationTargetUtil.isTypeAnnotation(myAnnotation);
+  boolean isInferredTypeUseAnnotation() {
+    return isInferred() && AnnotationTargetUtil.isTypeAnnotation(myAnnotation);
   }
 
   public boolean isInferred() {
@@ -327,7 +327,7 @@ public final class AnnotationDocGenerator {
     if (owner instanceof PsiArrayType type) {
       PsiType contextType = getContextType(context);
       if (type.equals(contextType)) {
-        return StreamEx.of(getAnnotationsToShow((PsiModifierListOwner)context)).filter(anno -> anno.isNonCodeTypeUseAnnotation())
+        return StreamEx.of(getAnnotationsToShow((PsiModifierListOwner)context)).filter(anno -> anno.isInferredTypeUseAnnotation())
           .append(generators).toList();
       }
     }
@@ -344,8 +344,7 @@ public final class AnnotationDocGenerator {
     return StreamEx.of(AnnotationUtil.getAllAnnotations(owner, false, null))
       .filter(owner instanceof PsiClass || owner instanceof PsiJavaModule ? Predicates.alwaysTrue()
                                                                           : anno -> !AnnotationTargetUtil.isTypeAnnotation(anno) ||
-                                                                                    AnnotationUtil.isInferredAnnotation(anno) ||
-                                                                                    AnnotationUtil.isExternalAnnotation(anno))
+                                                                                    AnnotationUtil.isInferredAnnotation(anno))
       .map(annotation -> forAnnotation(owner, shownAnnotations, annotation))
       .nonNull()
       .toList();

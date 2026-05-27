@@ -19,6 +19,7 @@ import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeCastExpression;
 import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.TypeAnnotationProvider;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -127,6 +128,7 @@ public final class ExtractMethodUtil {
         for (int i = 0; i < args.length; i++) {
           PsiExpression arg = args[i];
           PsiType paramType = i < oldParameters.length ? oldParameters[i].getType() : oldParameters[oldParameters.length - 1].getType();
+          paramType = paramType.annotate(TypeAnnotationProvider.EMPTY);
           paramType = oldSubstitutor.substitute(paramType);
           final PsiTypeCastExpression cast = (PsiTypeCastExpression)factory.createExpressionFromText("(a)b", null);
           final PsiTypeElement typeElement = cast.getCastType();

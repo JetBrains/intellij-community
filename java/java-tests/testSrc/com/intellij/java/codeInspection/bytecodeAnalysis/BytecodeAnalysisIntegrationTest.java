@@ -57,6 +57,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -139,7 +140,7 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
     checkHasGutter("java.lang.String",
                    """
                      <html><p>External annotations available. Full signature:
-                     <pre><code><span style="color:#000000;">String</span><span style="">(</span><b><span style="color:#808000;">@</span><a href="psi_element://org.jetbrains.annotations.NotNull"><span style="color:#808000;">NotNull</span></a></b> <span style="color:#000080;font-weight:bold;">char</span><span style="">[]</span><span style="">,</span>
+                     <pre><code><span style="color:#000000;">String</span><span style="">(</span><span style="color:#000080;font-weight:bold;">char</span> <span style="color:#808000;">@</span><span style="color:#808000;">NotNull</span> <span style="">[]</span><span style="">,</span>
                      <span style="color:#000080;font-weight:bold;">int</span><span style="">,</span>
                      <span style="color:#000080;font-weight:bold;">int</span><span style="">)</span></code></pre></html>""");
   }
@@ -154,7 +155,7 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
       .map(GutterMark::getTooltipText)
       .filter(Objects::nonNull)
       .map(s -> s.replaceAll(" +", " ").replace("&nbsp;", " ").replace("&quot;", "'").replace("&gt;", ">"))
-      .collect(Collectors.toSet());
+      .collect(Collectors.toCollection(LinkedHashSet::new));
     assertThat(gutters).contains(expectedText);
   }
 

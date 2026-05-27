@@ -118,10 +118,7 @@ public final class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitive
    */
   @Override
   public boolean isValid() {
-    for (PsiAnnotation annotation : getAnnotations()) {
-      if (!annotation.isValid()) return false;
-    }
-    return true;
+    return getAnnotationProvider().isValid();
   }
 
   @Override

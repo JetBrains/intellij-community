@@ -92,16 +92,7 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
   @Override
   public boolean isValid() {
     PsiJavaCodeReferenceElement reference = myReference.retrieveReference();
-    if (reference != null && reference.isValid()) {
-      for (PsiAnnotation annotation : getAnnotations(false)) {
-        if (!annotation.isValid()) return false;
-      }
-      for (PsiAnnotation annotation : myQualifierAnnotationsProvider.getAnnotations()) {
-        if (!annotation.isValid()) return false;
-      }
-      return true;
-    }
-    return false;
+    return reference != null && reference.isValid() && getAnnotationProvider().isValid() && myQualifierAnnotationsProvider.isValid();
   }
 
   @Override
@@ -185,8 +176,8 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
    * Returns a copy of this PsiClassReferenceType with annotations from qualifierAnnotations parameter,
    * which target is {@link PsiAnnotation.TargetType#TYPE_USE}, added to qualifier annotations.
    */
-  public @NotNull PsiClassReferenceType withAddedQualifierAnnotations(@NotNull PsiAnnotation @NotNull [] qualifierAnnotations) {
-    TypeAnnotationProvider merged = filteringTypeAnnotationProvider(qualifierAnnotations, myQualifierAnnotationsProvider);
+  public @NotNull PsiClassReferenceType withAddedQualifierAnnotations(@NotNull TypeAnnotationProvider candidatesProvider) {
+    TypeAnnotationProvider merged = filteringTypeAnnotationProvider(candidatesProvider, myQualifierAnnotationsProvider);
     return new PsiClassReferenceType(myReference, myLanguageLevel, getAnnotationProvider(), merged, myNullability);
   }
 

@@ -376,22 +376,24 @@ public final class RedundantStreamOptionalCallInspection extends AbstractBaseJav
       return true;
     }
     if (expression instanceof PsiLambdaExpression lambda) {
-      PsiType functionalInterfaceType = lambda.getFunctionalInterfaceType();
       PsiParameterList parameterList = lambda.getParameterList();
-      if (functionalInterfaceType != null && parameterList.getParametersCount() == 1) {
-        PsiType functionalInterfaceReturnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
-        PsiParameter parameter = parameterList.getParameter(0);
-        assert parameter != null;
-        PsiType parameterType = parameter.getType();
-        if (functionalInterfaceReturnType != null) {
-          Nullability returnTypeNullability = functionalInterfaceReturnType.getNullability().nullability();
-          Nullability parameterNullability = parameterType.getNullability().nullability();
-          if (!returnTypeNullability.equals(Nullability.UNKNOWN) && !returnTypeNullability.equals(parameterNullability)) {
-            return false;
+      if (LambdaUtil.isIdentityLambda(lambda)) {
+        PsiType functionalInterfaceType = lambda.getFunctionalInterfaceType();
+        if (functionalInterfaceType != null && parameterList.getParametersCount() == 1) {
+          PsiType functionalInterfaceReturnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
+          PsiParameter parameter = parameterList.getParameter(0);
+          assert parameter != null;
+          PsiType parameterType = parameter.getType();
+          if (functionalInterfaceReturnType != null) {
+            Nullability returnTypeNullability = functionalInterfaceReturnType.getNullability().nullability();
+            Nullability parameterNullability = parameterType.getNullability().nullability();
+            if (!returnTypeNullability.equals(Nullability.UNKNOWN) && !returnTypeNullability.equals(parameterNullability)) {
+              return false;
+            }
           }
         }
+        return true;
       }
-      if (LambdaUtil.isIdentityLambda(lambda)) return true;
       if (!allowBoxUnbox) return false;
       PsiExpression body = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
       PsiParameter[] parameters = parameterList.getParameters();

@@ -784,27 +784,27 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
                         -
                         [<html><b>@NotNull String original</b></html>]
                         -
-                        <html><b>@NotNull char[] value</b></html>
+                        <html><b>char @NotNull [] value</b></html>
                         -
-                        <html><b>@NotNull char[] value</b>, int offset, int count</html>
+                        <html><b>char @NotNull [] value</b>, int offset, int count</html>
                         -
-                        <html><b>@NotNull int[] codePoints</b>, int offset, int count</html>
+                        <html><b>int @NotNull [] codePoints</b>, int offset, int count</html>
                         -
-                        <html><strike><b>@NotNull byte[] ascii</b>, int hibyte, int offset, int count</strike></html>
+                        <html><strike><b>byte @NotNull [] ascii</b>, int hibyte, int offset, int count</strike></html>
                         -
-                        <html><strike><b>@NotNull byte[] ascii</b>, int hibyte</strike></html>
+                        <html><strike><b>byte @NotNull [] ascii</b>, int hibyte</strike></html>
                         -
-                        <html><b>@NotNull byte[] bytes</b>, int offset, int length, @NotNull String charsetName</html>
+                        <html><b>byte @NotNull [] bytes</b>, int offset, int length, @NotNull String charsetName</html>
                         -
-                        <html><b>@NotNull byte[] bytes</b>, int offset, int length, @NotNull Charset charset</html>
+                        <html><b>byte @NotNull [] bytes</b>, int offset, int length, @NotNull Charset charset</html>
                         -
-                        <html><b>@NotNull byte[] bytes</b>, @NonNls @NotNull String charsetName</html>
+                        <html><b>byte @NotNull [] bytes</b>, @NonNls @NotNull String charsetName</html>
                         -
-                        <html><b>@NotNull byte[] bytes</b>, @NotNull Charset charset</html>
+                        <html><b>byte @NotNull [] bytes</b>, @NotNull Charset charset</html>
                         -
-                        <html><b>@NotNull byte[] bytes</b>, int offset, int length</html>
+                        <html><b>byte @NotNull [] bytes</b>, int offset, int length</html>
                         -
-                        <html><b>@NotNull byte[] bytes</b></html>
+                        <html><b>byte @NotNull [] bytes</b></html>
                         -
                         <html><b>@NotNull StringBuffer buffer</b></html>
                         -

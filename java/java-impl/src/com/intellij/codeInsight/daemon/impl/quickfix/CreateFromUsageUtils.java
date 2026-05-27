@@ -104,6 +104,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
@@ -358,7 +359,16 @@ public final class CreateFromUsageUtils {
       PsiParameter parameter = parameterList.getParameter(i);
       if (parameter == null) {
         // Remove top-level annotations. They will be added by setupTypeElement again
-        PsiParameter param = factory.createParameter(names[0], argType.annotate(TypeAnnotationProvider.EMPTY));
+        PsiType notAnnotated = argType.annotate(TypeAnnotationProvider.EMPTY);
+        if (notAnnotated instanceof PsiClassReferenceType classType) {
+          PsiClass target = classType.resolve();
+          if (target != null) {
+            // Sometimes, an annotation lurks inside the reference, so annotate(EMPTY) will not remove it.
+            // work this around by recreating the type
+            notAnnotated = JavaPsiFacade.getElementFactory(project).createType(target, classType.getParameters());
+          }
+        }
+        PsiParameter param = factory.createParameter(names[0], notAnnotated);
         if (isInterface) {
           PsiUtil.setModifierProperty(param, PsiModifier.FINAL, false);
         }

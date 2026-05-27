@@ -35,9 +35,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
-import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
-import static com.intellij.codeInsight.AnnotationUtil.isAnnotated;
 import static com.intellij.codeInspection.dataFlow.JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT;
 
 public final class DefaultInferredAnnotationProvider implements InferredAnnotationProvider {
@@ -134,8 +131,8 @@ public final class DefaultInferredAnnotationProvider implements InferredAnnotati
       return true;
     }
     if (annotationFQN.equals(myNullabilityManager.getDefaultNotNull()) && owner instanceof PsiParameter && owner.getParent() != null) {
-      List<String> annotations = NullableNotNullManager.getInstance(owner.getProject()).getNullables();
-      if (isAnnotated(owner, annotations, CHECK_EXTERNAL | CHECK_TYPE)) {
+      PsiType type = PsiUtil.getTypeByPsiElement(owner);
+      if (type != null && !TypeNullability.UNKNOWN.equals(type.getNullability())) {
         return true;
       }
       return HardcodedContracts.hasHardcodedContracts(owner);
