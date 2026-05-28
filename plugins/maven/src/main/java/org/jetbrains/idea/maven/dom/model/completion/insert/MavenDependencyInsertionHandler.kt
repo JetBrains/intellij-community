@@ -110,6 +110,10 @@ open class MavenDependencyInsertionHandler : InsertHandler<LookupElement?> {
     ) {
       if (completionItem.items.size == 1 && completionItem.version != null) {
         domCoordinates.getVersion().setStringValue(completionItem.version)
+        val versionTag = domCoordinates.version.xmlTag
+        if (versionTag != null) {
+          context.editor.caretModel.moveToOffset(versionTag.value.textRange.startOffset)
+        }
       }
       else {
         domCoordinates.version.stringValue = ""
