@@ -14,6 +14,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.ComponentInlayAlignment
 import com.intellij.openapi.editor.ComponentInlayRenderer
 import com.intellij.openapi.editor.Editor
@@ -46,21 +47,16 @@ import kotlinx.coroutines.launch
  */
 internal class CommandCompletionNonWriteAccessTypedHandler : NonWriteAccessTypedHandler {
   override fun isApplicable(editor: Editor, charTyped: Char, dataContext: DataContext): Boolean {
-    if (!CommandCompletionSettingsService.getInstance().commandCompletionEnabled()) return false
-    if (!CommandCompletionSettingsService.getInstance().readOnlyEnabled()) return false
-    if (AppMode.isRemoteDevHost()) return false
-    if (PlatformUtils.isJetBrainsClient()) return false
+    if (!isGenerallyApplicable()) return false
     val project = editor.project ?: return false
-    val commandCompletionService = project.getService(CommandCompletionService::class.java)
-    if (commandCompletionService == null) return false
+    val commandCompletionService = project.service<CommandCompletionService>()
     val targetFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()) ?: return false
     val offset = editor.caretModel.offset
     val injectedLanguageManager = InjectedLanguageManager.getInstance(project)
     val injectedElement = injectedLanguageManager.findInjectedElementAt(targetFile, offset)
     if (injectedElement != null) return false
     val dumbService = DumbService.getInstance(project)
-    val commandCompletionFactory = commandCompletionService.getFactory(targetFile.language)
-    if (commandCompletionFactory == null) return false
+    val commandCompletionFactory = commandCompletionService.getFactory(targetFile.language) ?: return false
     if (!dumbService.isUsableInCurrentContext(commandCompletionFactory)) return false
     if (StringUtil.isJavaIdentifierPart(editor.document.immutableCharSequence[offset])) return false
     return commandCompletionFactory.suffix() == charTyped &&
@@ -68,13 +64,19 @@ internal class CommandCompletionNonWriteAccessTypedHandler : NonWriteAccessTyped
   }
 
   override fun handle(editor: Editor, charTyped: Char, dataContext: DataContext) {
-    if (!CommandCompletionSettingsService.getInstance().commandCompletionEnabled()) return
-    if (!CommandCompletionSettingsService.getInstance().readOnlyEnabled()) return
-    if (AppMode.isRemoteDevHost()) return
-    if (PlatformUtils.isJetBrainsClient()) return
-    val accessCommandCompletionService = editor.project?.getService(NonWriteAccessCommandCompletionService::class.java)
-    if (accessCommandCompletionService == null) return
+    if (!isGenerallyApplicable()) return
+    val accessCommandCompletionService = editor.project?.service<NonWriteAccessCommandCompletionService>() ?: return
+
     accessCommandCompletionService.insertNewEditor(editor)
+  }
+
+  private fun isGenerallyApplicable(): Boolean {
+    val service = CommandCompletionSettingsService.getInstance()
+    if (!service.commandCompletionEnabled()) return false
+    if (!service.readOnlyEnabled()) return false
+    if (AppMode.isRemoteDevHost()) return false
+    if (PlatformUtils.isJetBrainsClient()) return false
+    return true
   }
 }
 
