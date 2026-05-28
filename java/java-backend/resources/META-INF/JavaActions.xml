@@ -389,7 +389,6 @@
     <group id="Internal.Java" popup="true" internal="true" compact="true">
       <action id="GenerateVisitorByHierarchy" internal="true" class="com.intellij.internal.GenerateVisitorByHierarchyAction"/>
 
-      <action id="UsedIconsListing" internal="true" class="com.intellij.internal.UsedIconsListingAction"/>
       <action id="ExpressionStatistics" internal="true" class="com.intellij.internal.ExpressionStatisticsAction"/>
 
       <action id="StaticIconFields" internal="true" class="com.intellij.internal.StaticIconFieldsAction"/>

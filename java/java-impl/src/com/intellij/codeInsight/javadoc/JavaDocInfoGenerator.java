@@ -8,7 +8,6 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
 import com.intellij.codeInsight.documentation.DocumentationManagerUtil;
 import com.intellij.codeInsight.javadoc.markdown.JavaDocMarkdownFlavourDescriptor;
-import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.javadoc.JavadocGeneratorRunProfile;
@@ -30,6 +29,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -517,7 +517,7 @@ public class JavaDocInfoGenerator {
 
       if (text.toUpperCase(Locale.ROOT).contains("HREF=\"")) {
         PsiFile fromText = PsiFileFactory.getInstance(myProject)
-          .createFileFromText("DUMMY__.html", HtmlFileType.INSTANCE, text, System.currentTimeMillis(), false);
+          .createFileFromText("DUMMY__.html", FileTypeManager.getInstance().getFileTypeByExtension("html"), text, System.currentTimeMillis(), false);
         Collection<XmlTag> tags = PsiTreeUtil.findChildrenOfType(fromText, XmlTag.class);
         for (XmlTag tag : tags) {
           if (!tag.getName().toLowerCase(Locale.ROOT).equals("a")) {

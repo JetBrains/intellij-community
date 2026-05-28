@@ -45,7 +45,7 @@
     <module name="intellij.java.structureView" required-if-available="intellij.platform.backend"/>
 
     <module name="intellij.java.impl" required-if-available="intellij.platform.backend"/>
-    <module name="intellij.java.xml.dom.impl" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.xml.dom.impl"/>
     <module name="intellij.java.bookmarks" loading="optional"/>
     <module name="intellij.java.impl.refactorings" required-if-available="intellij.platform.backend"/>
     <module name="intellij.java.compiler.impl" required-if-available="intellij.platform.backend"/>

@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang;
 
-import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
@@ -153,7 +153,7 @@ public class OuterModelsModificationTracker extends SimpleModificationTracker {
     }
 
     private static boolean isIgnoredFileType(@NotNull FileType type) {
-      return type.equals(HtmlFileType.INSTANCE) ||
+      return type.equals(FileTypeManager.getInstance().getFileTypeByExtension("html")) ||
              type instanceof LanguageFileType && "JavaScript".equals(((LanguageFileType)type).getLanguage().getID()) ||
              JspFileTypeUtil.isJspOrJspX(type);
     }

@@ -2,9 +2,9 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.concurrency.JobLauncher;
-import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
@@ -103,7 +103,7 @@ final class JavaTelescope {
     return count.get();
   }
 
-  private static final FileType[] ourFileTypesToIgnore =  new FileType[] { HtmlFileType.INSTANCE };
+  private static final FileType[] ourFileTypesToIgnore = new FileType[] { FileTypeManager.getInstance().getFileTypeByExtension("html") };
 
   private static @NotNull SearchScope getSearchScope(@NotNull Project project, @NotNull PsiMember member, @NotNull SearchScope scope) {
     SearchScope useScope = UnusedSymbolUtil.getUseScope(member);

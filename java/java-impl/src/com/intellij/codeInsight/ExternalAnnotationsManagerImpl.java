@@ -9,7 +9,6 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.options.OptionContainer;
 import com.intellij.diagnostic.CoreAttachmentFactory;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.java.JavaBundle;
@@ -40,6 +39,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.ModuleOrderEntry;
@@ -695,7 +695,7 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
     }
 
     final PsiFileFactory factory = PsiFileFactory.getInstance(root.getProject());
-    return (XmlFile)directory.add(factory.createFileFromText(ANNOTATIONS_XML, XmlFileType.INSTANCE, "<root></root>"));
+    return (XmlFile)directory.add(factory.createFileFromText(ANNOTATIONS_XML, FileTypeManager.getInstance().getFileTypeByExtension("xml"), "<root></root>"));
   }
 
   @Override

@@ -18,7 +18,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.TodoPattern;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.xml.util.HtmlUtil;
+import com.intellij.xml.util.BasicHtmlUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -469,7 +469,7 @@ public class JDParser {
   }
 
   private static boolean containsTagToKeepIndentsAfter(@NotNull String line) {
-    String tag = HtmlUtil.getStartTag(line);
+    String tag = BasicHtmlUtil.getStartTag(line);
     return tag != null && ArrayUtil.contains(tag, TAGS_TO_KEEP_INDENTS_AFTER);
   }
 
@@ -718,7 +718,7 @@ public class JDParser {
   }
 
   private boolean isKeepLineFeedsIn(@NotNull String line) {
-    return mySettings.JD_PRESERVE_LINE_FEEDS || HtmlUtil.startsWithTag(line);
+    return mySettings.JD_PRESERVE_LINE_FEEDS || BasicHtmlUtil.startsWithTag(line);
   }
 
   /**
@@ -1078,7 +1078,7 @@ public class JDParser {
     for (int i = currLine + 1; i < lines.size(); i ++) {
       String line = lines.get(i);
       if (!line.isEmpty()) {
-        return HtmlUtil.startsWithTag(line);
+        return BasicHtmlUtil.startsWithTag(line);
       }
     }
     return false;

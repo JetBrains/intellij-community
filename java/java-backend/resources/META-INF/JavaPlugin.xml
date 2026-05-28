@@ -699,16 +699,6 @@
     <treeCopyHandler implementation="com.intellij.psi.impl.source.tree.JavaTreeCopyHandler"/>
     <lang.treePatcher language="JAVA" implementationClass="com.intellij.psi.templateLanguages.MiddleTreePatcher"/>
     <generation.topLevelFactory language="JAVA" implementationClass="com.intellij.psi.impl.JavaFactoryProvider"/>
-    <dom.uiControlsProvider implementation="com.intellij.util.xml.impl.JavaDomUiControlProvider"/>
-    <dom.converter interfaceClass="com.intellij.util.xml.JvmPsiTypeConverter"
-                   implementationClass="com.intellij.util.xml.JvmPsiTypeConverterImpl"/>
-    <dom.converter interfaceClass="com.intellij.util.xml.CanonicalPsiTypeConverter"
-                   implementationClass="com.intellij.util.xml.CanonicalPsiTypeConverterImpl"/>
-    <dom.converter interfaceClass="com.intellij.util.xml.converters.values.ClassValueConverter"
-                   implementationClass="com.intellij.util.xml.converters.ClassValueConverterImpl"/>
-    <dom.converter interfaceClass="com.intellij.util.xml.converters.values.ClassArrayConverter"
-                   implementationClass="com.intellij.util.xml.converters.ClassArrayConverterImpl"/>
-
     <resolveScopeEnlarger implementation="com.intellij.psi.NonClasspathResolveScopeEnlarger"/>
     <inlineActionHandler implementation="com.intellij.refactoring.inline.InlineStaticImportHandler"/>
     <inlineActionHandler implementation="com.intellij.refactoring.inline.InlineConstantFieldHandler"/>
@@ -744,7 +734,6 @@
     <editorNavigation implementation="com.intellij.javadoc.JavadocNavigationDelegate"/>
     <methodImplementor implementation="com.intellij.codeInsight.javadoc.SnippetDocTagMethodImplementor"/>
     <methodNavigationOffsetProvider implementation="com.intellij.codeInsight.navigation.JavaMethodNavigationOffsetProvider"/>
-    <dom.customAnnotationChecker implementation="com.intellij.util.xml.impl.ExtendsClassChecker"/>
     <codeInsight.surroundWithRangeAdjuster implementation="com.intellij.codeInsight.generation.surroundWith.XmlSurroundWithRangeAdjuster"/>
     <liveTemplateSubstitutor implementation="com.intellij.codeInsight.template.impl.JavaTemplateSubstitutor"/>
     <defaultLiveTemplates file="liveTemplates/Java"/>
@@ -1160,8 +1149,6 @@
                             implementationClass="com.intellij.codeInsight.completion.JavaClassReferenceCompletionContributor"/>
     <completion.contributor language="JAVA" id="javaLegacy" order="last, before legacy, before default, before javaClassName"
                             implementationClass="com.intellij.codeInsight.completion.JavaCompletionContributor"/>
-    <completion.contributor language="XML" id="basic2ClassName" order="after xml, before javaClassReference"
-                            implementationClass="com.intellij.codeInsight.completion.XmlBasicToClassNameDelegator"/>
     <completion.contributor language="JAVA" id="magicCompletion" order="after javaBasic2ClassName"
                             implementationClass="com.intellij.codeInspection.magicConstant.MagicCompletionContributor"/>
     <completion.contributor language="JAVA" id="javaBasic2ClassName" order="before javaMemberName, before javaLegacy, after liveTemplates"
@@ -1264,7 +1251,6 @@
               implementationClass="com.intellij.ide.highlighter.JavaModuleFileType"/>
     <fileType extensions="snippet" name="JSHELL" language="JShellLanguage" fieldName="INSTANCE"
               implementationClass="com.intellij.ide.highlighter.JShellFileType"/>
-    <customPropertyScopeProvider implementation="com.intellij.psi.impl.search.SimpleAccessorScopeProvider"/>
     <codeInsight.createFieldFromUsageHelper language="JAVA"
                                             implementationClass="com.intellij.codeInsight.daemon.impl.quickfix.JavaCreateFieldFromUsageHelper"/>
     <expressionConverter implementationClass="com.intellij.refactoring.introduceParameter.JavaExpressionConverter" language="JAVA"/>
