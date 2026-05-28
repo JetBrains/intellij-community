@@ -68,6 +68,11 @@ public abstract class PythonCommonFormatterTest extends PythonCommonTestCase {
     doTest();
   }
 
+  // PEP 810: `lazy` keyword in `import`/`from ... import` must keep a single space around it after reformat.
+  public void testLazyImport() {
+    runWithLanguageLevel(LanguageLevel.PYTHON315, this::doTest);
+  }
+
   public void testBlankLineBeforeFunction() {
     doTest();
   }

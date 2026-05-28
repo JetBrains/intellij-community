@@ -88,6 +88,7 @@ import static com.jetbrains.python.PyTokenTypes.IMPORT_KEYWORD;
 import static com.jetbrains.python.PyTokenTypes.IN_KEYWORD;
 import static com.jetbrains.python.PyTokenTypes.IS_KEYWORD;
 import static com.jetbrains.python.PyTokenTypes.LAMBDA_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.LAZY_KEYWORD;
 import static com.jetbrains.python.PyTokenTypes.LBRACE;
 import static com.jetbrains.python.PyTokenTypes.LBRACKET;
 import static com.jetbrains.python.PyTokenTypes.LPAR;
@@ -274,7 +275,8 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilder, Cus
                                                                         ASSERT_KEYWORD, CLASS_KEYWORD, DEF_KEYWORD, DEL_KEYWORD,
                                                                         EXEC_KEYWORD, GLOBAL_KEYWORD, NONLOCAL_KEYWORD, IMPORT_KEYWORD,
                                                                         LAMBDA_KEYWORD, NOT_KEYWORD, WHILE_KEYWORD, YIELD_KEYWORD,
-                                                                        AS_KEYWORD, MATCH_KEYWORD, CASE_KEYWORD, TYPE_KEYWORD);
+                                                                        AS_KEYWORD, MATCH_KEYWORD, CASE_KEYWORD, TYPE_KEYWORD,
+                                                                        LAZY_KEYWORD);
 
   private static TokenSet allButLambda() {
     final PythonLanguage pythonLanguage = PythonLanguage.getInstance();
