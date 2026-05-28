@@ -941,7 +941,6 @@ f:com.intellij.openapi.application.impl.ModalityStateEx
 - com.intellij.openapi.application.ModalityState
 - <init>():V
 - accepts(com.intellij.openapi.application.ModalityState):Z
-- appendJob(kotlinx.coroutines.Job):com.intellij.openapi.application.ModalityState
 - appendProgress(com.intellij.openapi.progress.ProgressIndicator):com.intellij.openapi.application.ModalityState
 a:com.intellij.openapi.command.CommandProcessorEx
 - com.intellij.openapi.command.CommandProcessor

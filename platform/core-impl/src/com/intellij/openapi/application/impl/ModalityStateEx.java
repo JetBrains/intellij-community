@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakList;
@@ -25,7 +26,6 @@ import java.util.Set;
 import java.util.concurrent.CancellationException;
 
 public final class ModalityStateEx extends ModalityState {
-
   private final WeakList<Object> myModalEntities = new WeakList<>();
   private static final Set<Object> ourTransparentEntities = Collections.newSetFromMap(CollectionFactory.createConcurrentWeakMap());
 
@@ -49,10 +49,6 @@ public final class ModalityStateEx extends ModalityState {
     return appendEntity(progress);
   }
 
-  public @NotNull ModalityState appendJob(@NotNull Job job) {
-    return appendEntity(job);
-  }
-
   @NotNull ModalityStateEx appendEntity(@NotNull Object anEntity) {
     List<@NotNull Object> modalEntities = getModalEntities();
     List<Object> list = new ArrayList<>(modalEntities.size() + 1);
@@ -61,6 +57,7 @@ public final class ModalityStateEx extends ModalityState {
     return new ModalityStateEx(list);
   }
 
+  @RequiresEdt(generateAssertion = false/*already asserted*/)
   void forceModalEntities(@NotNull ModalityStateEx other) {
     List<@NotNull Object> otherEntities = other.getModalEntities();
     myModalEntities.clear();

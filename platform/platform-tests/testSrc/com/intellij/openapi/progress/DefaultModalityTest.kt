@@ -17,7 +17,7 @@ import kotlin.test.assertSame
 class DefaultModalityTest : CancellationTest() {
 
   private fun createFakeModality(): ModalityState {
-    return (ModalityState.nonModal() as ModalityStateEx).appendJob(Job())
+    return ModalityStateEx(listOf(ModalityState.nonModal(), Job()))
   }
 
   private fun assertModality(modality: ModalityState?) {
