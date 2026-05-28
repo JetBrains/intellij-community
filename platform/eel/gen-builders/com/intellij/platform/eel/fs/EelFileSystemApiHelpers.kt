@@ -4,6 +4,7 @@
  */
 package com.intellij.platform.eel.fs
 
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.GeneratedBuilder
 import com.intellij.platform.eel.channels.EelDelicateApi
@@ -222,7 +223,7 @@ object EelFileSystemApiHelpers {
   class ChangeAttributes(
     private val owner: EelFileSystemApi,
     private var path: EelPath,
-  ) : com.intellij.platform.eel.OwnedBuilder<EelResult<Unit, EelFileSystemApi.ChangeAttributesError>> {
+  ) : com.intellij.platform.eel.EelOwnedBuilder<EelResult<Unit, EelFileSystemApi.ChangeAttributesError>> {
     private var accessTime: EelFileSystemApi.TimeSinceEpoch? = null
 
     private var modificationTime: EelFileSystemApi.TimeSinceEpoch? = null
@@ -259,6 +260,8 @@ object EelFileSystemApiHelpers {
           permissions = permissions,
         )
       )
+
+    override val eelDescriptor: EelDescriptor get() = owner.descriptor
   }
 
   /**
@@ -270,7 +273,7 @@ object EelFileSystemApiHelpers {
     private val owner: EelFileSystemApi,
     private var source: EelPath,
     private var target: EelPath,
-  ) : com.intellij.platform.eel.OwnedBuilder<EelResult<Unit, EelFileSystemApi.CopyError>> {
+  ) : com.intellij.platform.eel.EelOwnedBuilder<EelResult<Unit, EelFileSystemApi.CopyError>> {
     private var copyRecursively: Boolean = false
 
     private var followLinks: Boolean = false
@@ -326,6 +329,8 @@ object EelFileSystemApiHelpers {
           target = target,
         )
       )
+
+    override val eelDescriptor: EelDescriptor get() = owner.descriptor
   }
 
   /**
@@ -335,7 +340,7 @@ object EelFileSystemApiHelpers {
   @ApiStatus.Internal
   class CreateTemporaryDirectory(
     private val owner: EelFileSystemApi,
-  ) : com.intellij.platform.eel.OwnedBuilder<EelResult<EelPath, EelFileSystemApi.CreateTemporaryEntryError>> {
+  ) : com.intellij.platform.eel.EelOwnedBuilder<EelResult<EelPath, EelFileSystemApi.CreateTemporaryEntryError>> {
     private var deleteOnExit: Boolean = false
 
     private var parentDirectory: EelPath? = null
@@ -374,6 +379,8 @@ object EelFileSystemApiHelpers {
           suffix = suffix,
         )
       )
+
+    override val eelDescriptor: EelDescriptor get() = owner.descriptor
   }
 
   /**
@@ -383,7 +390,7 @@ object EelFileSystemApiHelpers {
   @ApiStatus.Internal
   class CreateTemporaryFile(
     private val owner: EelFileSystemApi,
-  ) : com.intellij.platform.eel.OwnedBuilder<EelResult<EelPath, EelFileSystemApi.CreateTemporaryEntryError>> {
+  ) : com.intellij.platform.eel.EelOwnedBuilder<EelResult<EelPath, EelFileSystemApi.CreateTemporaryEntryError>> {
     private var deleteOnExit: Boolean = false
 
     private var parentDirectory: EelPath? = null
@@ -422,6 +429,8 @@ object EelFileSystemApiHelpers {
           suffix = suffix,
         )
       )
+
+    override val eelDescriptor: EelDescriptor get() = owner.descriptor
   }
 
   /**
@@ -432,7 +441,7 @@ object EelFileSystemApiHelpers {
   class ListDirectoryWithAttrs(
     private val owner: EelFileSystemApi,
     private var path: EelPath,
-  ) : com.intellij.platform.eel.OwnedBuilder<EelResult<Collection<Pair<String, EelFileInfo>>, EelFileSystemApi.ListDirectoryError>> {
+  ) : com.intellij.platform.eel.EelOwnedBuilder<EelResult<Collection<Pair<String, EelFileInfo>>, EelFileSystemApi.ListDirectoryError>> {
     private var symlinkPolicy: EelFileSystemApi.SymlinkPolicy = EelFileSystemApi.SymlinkPolicy.DO_NOT_RESOLVE
 
     fun path(arg: EelPath): ListDirectoryWithAttrs = apply {
@@ -475,6 +484,8 @@ object EelFileSystemApiHelpers {
           symlinkPolicy = symlinkPolicy,
         )
       )
+
+    override val eelDescriptor: EelDescriptor get() = owner.descriptor
   }
 
   /**
@@ -486,7 +497,7 @@ object EelFileSystemApiHelpers {
     private val owner: EelFileSystemApi,
     private var source: EelPath,
     private var target: EelPath,
-  ) : com.intellij.platform.eel.OwnedBuilder<EelResult<Unit, EelFileSystemApi.MoveError>> {
+  ) : com.intellij.platform.eel.EelOwnedBuilder<EelResult<Unit, EelFileSystemApi.MoveError>> {
     private var followLinks: Boolean = false
 
     private var replaceExisting: EelFileSystemApi.ReplaceExistingDuringMove = EelFileSystemApi.ReplaceExistingDuringMove.REPLACE_EVERYTHING
@@ -531,6 +542,8 @@ object EelFileSystemApiHelpers {
           target = target,
         )
       )
+
+    override val eelDescriptor: EelDescriptor get() = owner.descriptor
   }
 
   /**
@@ -541,7 +554,7 @@ object EelFileSystemApiHelpers {
   class OpenForReading(
     private val owner: EelFileSystemApi,
     private var path: EelPath,
-  ) : com.intellij.platform.eel.OwnedBuilder<EelResult<EelOpenedFile.Reader, EelFileSystemApi.FileReaderError>> {
+  ) : com.intellij.platform.eel.EelOwnedBuilder<EelResult<EelOpenedFile.Reader, EelFileSystemApi.FileReaderError>> {
     private var autoCloseAfterLastChunk: Boolean = false
 
     private var closeImmediatelyIfFileBiggerThan: Long? = null
@@ -605,6 +618,8 @@ object EelFileSystemApiHelpers {
           readFirstChunkInto = readFirstChunkInto,
         )
       )
+
+    override val eelDescriptor: EelDescriptor get() = owner.descriptor
   }
 
   /**
@@ -615,7 +630,7 @@ object EelFileSystemApiHelpers {
   class ReadFile(
     private val owner: EelFileSystemApi,
     private var path: EelPath,
-  ) : com.intellij.platform.eel.OwnedBuilder<EelResult<ReadFileResult, EelFileSystemApi.FileReaderError>> {
+  ) : com.intellij.platform.eel.EelOwnedBuilder<EelResult<ReadFileResult, EelFileSystemApi.FileReaderError>> {
     private var buffer: ByteBuffer? = null
 
     private var failFastIfBeyondLimit: Boolean = false
@@ -681,6 +696,8 @@ object EelFileSystemApiHelpers {
           path = path,
         )
       )
+
+    override val eelDescriptor: EelDescriptor get() = owner.descriptor
   }
 
   /**
@@ -691,7 +708,7 @@ object EelFileSystemApiHelpers {
   class Stat(
     private val owner: EelFileSystemApi,
     private var path: EelPath,
-  ) : com.intellij.platform.eel.OwnedBuilder<EelResult<EelFileInfo, StatError>> {
+  ) : com.intellij.platform.eel.EelOwnedBuilder<EelResult<EelFileInfo, StatError>> {
     private var symlinkPolicy: EelFileSystemApi.SymlinkPolicy = EelFileSystemApi.SymlinkPolicy.DO_NOT_RESOLVE
 
     fun path(arg: EelPath): Stat = apply {
@@ -734,6 +751,8 @@ object EelFileSystemApiHelpers {
           symlinkPolicy = symlinkPolicy,
         )
       )
+
+    override val eelDescriptor: EelDescriptor get() = owner.descriptor
   }
 
   /**
@@ -744,7 +763,7 @@ object EelFileSystemApiHelpers {
   class Unwatch(
     private val owner: EelFileSystemApi,
     private var path: EelPath,
-  ) : com.intellij.platform.eel.OwnedBuilder<Boolean> {
+  ) : com.intellij.platform.eel.EelOwnedBuilder<Boolean> {
 
 
     fun path(arg: EelPath): Unwatch = apply {
@@ -762,6 +781,8 @@ object EelFileSystemApiHelpers {
           path = path,
         )
       )
+
+    override val eelDescriptor: EelDescriptor get() = owner.descriptor
   }
 
   /**
@@ -772,7 +793,7 @@ object EelFileSystemApiHelpers {
   class WalkDirectory(
     private val owner: EelFileSystemApi,
     private var path: EelPath,
-  ) : com.intellij.platform.eel.OwnedBuilder<Flow<WalkDirectoryEntryResult>> {
+  ) : com.intellij.platform.eel.EelOwnedBuilder<Flow<WalkDirectoryEntryResult>> {
     private var entryOrder: WalkDirectoryOptions.WalkDirectoryEntryOrder = WalkDirectoryOptions.WalkDirectoryEntryOrder.RANDOM
 
     private var fileContentsHash: Boolean = false
@@ -953,6 +974,8 @@ object EelFileSystemApiHelpers {
           yieldSymlinks = yieldSymlinks,
         )
       )
+
+    override val eelDescriptor: EelDescriptor get() = owner.descriptor
   }
 
   /**
@@ -962,7 +985,7 @@ object EelFileSystemApiHelpers {
   @ApiStatus.Internal
   class AddWatchRoots(
     private val owner: EelFileSystemApi,
-  ) : com.intellij.platform.eel.OwnedBuilder<Boolean> {
+  ) : com.intellij.platform.eel.EelOwnedBuilder<Boolean> {
     private var changeTypes: Set<EelFileSystemApi.FileChangeType> = emptySet()
 
     private var paths: Set<EelFileSystemApi.WatchedPath> = emptySet()
@@ -987,6 +1010,8 @@ object EelFileSystemApiHelpers {
           paths = paths,
         )
       )
+
+    override val eelDescriptor: EelDescriptor get() = owner.descriptor
   }
 
   /**
@@ -997,7 +1022,7 @@ object EelFileSystemApiHelpers {
   class OpenForReadingAndWriting(
     private val owner: EelFileSystemApi,
     private var path: EelPath,
-  ) : com.intellij.platform.eel.OwnedBuilder<EelResult<EelOpenedFile.ReaderWriter, EelFileSystemApi.FileWriterError>> {
+  ) : com.intellij.platform.eel.EelOwnedBuilder<EelResult<EelOpenedFile.ReaderWriter, EelFileSystemApi.FileWriterError>> {
     private var append: Boolean = false
 
     private var creationMode: EelFileSystemApi.FileWriterCreationMode = EelFileSystemApi.FileWriterCreationMode.ALLOW_CREATE
@@ -1043,6 +1068,8 @@ object EelFileSystemApiHelpers {
           truncateExisting = truncateExisting,
         )
       )
+
+    override val eelDescriptor: EelDescriptor get() = owner.descriptor
   }
 
   /**
@@ -1053,7 +1080,7 @@ object EelFileSystemApiHelpers {
   class OpenForWriting(
     private val owner: EelFileSystemApi,
     private var path: EelPath,
-  ) : com.intellij.platform.eel.OwnedBuilder<EelResult<EelOpenedFile.Writer, EelFileSystemApi.FileWriterError>> {
+  ) : com.intellij.platform.eel.EelOwnedBuilder<EelResult<EelOpenedFile.Writer, EelFileSystemApi.FileWriterError>> {
     private var append: Boolean = false
 
     private var creationMode: EelFileSystemApi.FileWriterCreationMode = EelFileSystemApi.FileWriterCreationMode.ALLOW_CREATE
@@ -1099,5 +1126,7 @@ object EelFileSystemApiHelpers {
           truncateExisting = truncateExisting,
         )
       )
+
+    override val eelDescriptor: EelDescriptor get() = owner.descriptor
   }
 }

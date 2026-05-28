@@ -767,6 +767,11 @@ private suspend fun writeBuilderFiles(
           else -> null
         }
 
+        val ownedBuilderClass = when (val o = builderRequest.ownership) {
+          is Ownership.ExtensionFunction -> "com.intellij.platform.eel.EelOwnedBuilder"
+          is Ownership.Method -> "com.intellij.platform.eel.EelOwnedBuilder"
+          else -> "com.intellij.platform.eel.OwnedBuilder"
+        }
         text += """
         /**
          * Create it via [${ownerForKdoc?.plus(".").orEmpty()}${builderRequest.methodName}]. 
@@ -778,7 +783,7 @@ private suspend fun writeBuilderFiles(
             "\nprivate var ${prop.name}: ${prop.typeFqn},"
           }
         }
-        ) : com.intellij.platform.eel.OwnedBuilder<${builderRequest.returnTypeFqn}> {
+        ) : $ownedBuilderClass<${builderRequest.returnTypeFqn}> {
         ${
           argsInterfaceInfo.optionalArguments.joinToString("\n\n") { prop ->
             "private var ${prop.name}: ${prop.typeFqn} = ${prop.body}"
@@ -806,6 +811,9 @@ private suspend fun writeBuilderFiles(
           argsInterfaceInfo.properties.map { it.name }.joinToString("\n") { name -> "$name = $name," }
         })
             )
+          ${if (ownerForPropertyType != null) {
+            "override val eelDescriptor: EelDescriptor get() = owner.descriptor".trimIndent()
+          } else ""}
         }
         """
       }

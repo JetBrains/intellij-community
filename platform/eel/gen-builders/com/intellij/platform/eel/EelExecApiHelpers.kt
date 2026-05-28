@@ -89,7 +89,7 @@ object EelExecApiHelpers {
   @ApiStatus.Experimental
   class EnvironmentVariables(
     private val owner: EelExecApi,
-  ) : OwnedBuilder<EelExecApi.EnvironmentVariablesDeferred> {
+  ) : EelOwnedBuilder<EelExecApi.EnvironmentVariablesDeferred> {
     private var mode: EnvironmentVariablesOptions.Mode = EnvironmentVariablesOptions.Mode.DEFAULT
 
     private var onlyActual: Boolean = false
@@ -175,6 +175,8 @@ object EelExecApiHelpers {
           onlyActual = onlyActual,
         )
       )
+
+    override val eelDescriptor: EelDescriptor get() = owner.descriptor
   }
 
   /**
@@ -186,7 +188,7 @@ object EelExecApiHelpers {
   class Execute(
     private val owner: EelExecApi,
     private var exe: String,
-  ) : OwnedBuilder<EelResult<EelProcess, EelExecApi.ExecuteProcessError>> {
+  ) : EelOwnedBuilder<EelResult<EelProcess, EelExecApi.ExecuteProcessError>> {
     private var args: List<String> = listOf()
 
     private var env: Map<String, String> = mapOf()
@@ -279,6 +281,8 @@ object EelExecApiHelpers {
           workingDirectory = workingDirectory,
         )
       )
+
+    override val eelDescriptor: EelDescriptor get() = owner.descriptor
   }
 
   /**
@@ -289,7 +293,7 @@ object EelExecApiHelpers {
   class SpawnProcess(
     private val owner: EelExecApi,
     private var exe: String,
-  ) : OwnedBuilder<EelProcess> {
+  ) : EelOwnedBuilder<EelProcess> {
     private var args: List<String> = listOf()
 
     private var env: Map<String, String> = mapOf()
@@ -383,6 +387,8 @@ object EelExecApiHelpers {
           workingDirectory = workingDirectory,
         )
       )
+
+    override val eelDescriptor: EelDescriptor get() = owner.descriptor
   }
 
   /**
@@ -392,7 +398,7 @@ object EelExecApiHelpers {
   @ApiStatus.Internal
   class CreateExternalCli(
     private val owner: EelExecApi,
-  ) : OwnedBuilder<ExternalCliEntrypoint> {
+  ) : EelOwnedBuilder<ExternalCliEntrypoint> {
     private var envVariablesToCapture: List<String> = emptyList()
 
     private var exactName: String? = null
@@ -452,5 +458,7 @@ object EelExecApiHelpers {
           lifecycle = lifecycle,
         )
       )
+
+    override val eelDescriptor: EelDescriptor get() = owner.descriptor
   }
 }

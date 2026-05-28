@@ -95,6 +95,7 @@
 - <init>(com.intellij.platform.eel.EelExecApi):V
 - f:default():com.intellij.platform.eel.EelExecApiHelpers$EnvironmentVariables
 - eelIt(kotlin.coroutines.Continuation):java.lang.Object
+- getEelDescriptor():com.intellij.platform.eel.EelDescriptor
 - f:loginInteractive():com.intellij.platform.eel.EelExecApiHelpers$EnvironmentVariables
 - f:loginNonInteractive():com.intellij.platform.eel.EelExecApiHelpers$EnvironmentVariables
 - f:minimal():com.intellij.platform.eel.EelExecApiHelpers$EnvironmentVariables
@@ -107,6 +108,7 @@
 - eelIt(kotlin.coroutines.Continuation):java.lang.Object
 - *f:env(java.util.Map):com.intellij.platform.eel.EelExecApiHelpers$SpawnProcess
 - *f:exe(java.lang.String):com.intellij.platform.eel.EelExecApiHelpers$SpawnProcess
+- getEelDescriptor():com.intellij.platform.eel.EelDescriptor
 - *f:interactionOptions(com.intellij.platform.eel.EelExecApi$InteractionOptions):com.intellij.platform.eel.EelExecApiHelpers$SpawnProcess
 - f:scope(kotlinx.coroutines.CoroutineScope):com.intellij.platform.eel.EelExecApiHelpers$SpawnProcess
 - *f:workingDirectory(com.intellij.platform.eel.path.EelPath):com.intellij.platform.eel.EelExecApiHelpers$SpawnProcess
@@ -131,6 +133,7 @@ f:com.intellij.platform.eel.EelExecApiKt
 - <init>(com.intellij.platform.eel.EelExecPosixApi):V
 - f:default():com.intellij.platform.eel.EelExecPosixApiHelpers$EnvironmentVariables
 - eelIt(kotlin.coroutines.Continuation):java.lang.Object
+- getEelDescriptor():com.intellij.platform.eel.EelDescriptor
 - f:loginInteractive():com.intellij.platform.eel.EelExecPosixApiHelpers$EnvironmentVariables
 - f:loginNonInteractive():com.intellij.platform.eel.EelExecPosixApiHelpers$EnvironmentVariables
 - f:minimal():com.intellij.platform.eel.EelExecPosixApiHelpers$EnvironmentVariables
@@ -143,6 +146,7 @@ f:com.intellij.platform.eel.EelExecApiKt
 - eelIt(kotlin.coroutines.Continuation):java.lang.Object
 - *f:env(java.util.Map):com.intellij.platform.eel.EelExecPosixApiHelpers$SpawnProcess
 - *f:exe(java.lang.String):com.intellij.platform.eel.EelExecPosixApiHelpers$SpawnProcess
+- getEelDescriptor():com.intellij.platform.eel.EelDescriptor
 - *f:interactionOptions(com.intellij.platform.eel.EelExecApi$InteractionOptions):com.intellij.platform.eel.EelExecPosixApiHelpers$SpawnProcess
 - f:scope(kotlinx.coroutines.CoroutineScope):com.intellij.platform.eel.EelExecPosixApiHelpers$SpawnProcess
 - *f:workingDirectory(com.intellij.platform.eel.path.EelPath):com.intellij.platform.eel.EelExecPosixApiHelpers$SpawnProcess
@@ -161,6 +165,7 @@ f:com.intellij.platform.eel.EelExecPosixApiHelpersKt
 - <init>(com.intellij.platform.eel.EelExecWindowsApi):V
 - f:default():com.intellij.platform.eel.EelExecWindowsApiHelpers$EnvironmentVariables
 - eelIt(kotlin.coroutines.Continuation):java.lang.Object
+- getEelDescriptor():com.intellij.platform.eel.EelDescriptor
 - f:loginInteractive():com.intellij.platform.eel.EelExecWindowsApiHelpers$EnvironmentVariables
 - f:loginNonInteractive():com.intellij.platform.eel.EelExecWindowsApiHelpers$EnvironmentVariables
 - f:minimal():com.intellij.platform.eel.EelExecWindowsApiHelpers$EnvironmentVariables
@@ -173,6 +178,7 @@ f:com.intellij.platform.eel.EelExecPosixApiHelpersKt
 - eelIt(kotlin.coroutines.Continuation):java.lang.Object
 - *f:env(java.util.Map):com.intellij.platform.eel.EelExecWindowsApiHelpers$SpawnProcess
 - *f:exe(java.lang.String):com.intellij.platform.eel.EelExecWindowsApiHelpers$SpawnProcess
+- getEelDescriptor():com.intellij.platform.eel.EelDescriptor
 - *f:interactionOptions(com.intellij.platform.eel.EelExecApi$InteractionOptions):com.intellij.platform.eel.EelExecWindowsApiHelpers$SpawnProcess
 - f:scope(kotlinx.coroutines.CoroutineScope):com.intellij.platform.eel.EelExecWindowsApiHelpers$SpawnProcess
 - *f:workingDirectory(com.intellij.platform.eel.path.EelPath):com.intellij.platform.eel.EelExecWindowsApiHelpers$SpawnProcess
@@ -371,6 +377,7 @@ f:com.intellij.platform.eel.EelProxyKtHelpersKt
 *f:com.intellij.platform.eel.EelTunnelsApiHelpers$GetConnectionToRemotePort
 - <init>(com.intellij.platform.eel.EelTunnelsApi):V
 - eelIt(kotlin.coroutines.Continuation):java.lang.Object
+- getEelDescriptor():com.intellij.platform.eel.EelDescriptor
 - *f:hostname(java.lang.String):com.intellij.platform.eel.EelTunnelsApiHelpers$GetConnectionToRemotePort
 - *f:port-xj2QHRw(S):com.intellij.platform.eel.EelTunnelsApiHelpers$GetConnectionToRemotePort
 - f:preferV4():com.intellij.platform.eel.EelTunnelsApiHelpers$GetConnectionToRemotePort
@@ -381,6 +388,7 @@ f:com.intellij.platform.eel.EelProxyKtHelpersKt
 *f:com.intellij.platform.eel.EelTunnelsApiHelpers$ListenOnUnixSocket
 - <init>(com.intellij.platform.eel.EelTunnelsApi):V
 - eelIt(kotlin.coroutines.Continuation):java.lang.Object
+- getEelDescriptor():com.intellij.platform.eel.EelDescriptor
 - f:parentDirectory(com.intellij.platform.eel.path.EelPath):com.intellij.platform.eel.EelTunnelsApiHelpers$ListenOnUnixSocket
 - f:prefix(java.lang.String):com.intellij.platform.eel.EelTunnelsApiHelpers$ListenOnUnixSocket
 - f:suffix(java.lang.String):com.intellij.platform.eel.EelTunnelsApiHelpers$ListenOnUnixSocket

@@ -4,6 +4,7 @@
  */
 package com.intellij.platform.eel.fs
 
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.GeneratedBuilder
 import com.intellij.platform.eel.fs.EelFileSystemApi.StatError
@@ -42,7 +43,8 @@ object EelFileSystemPosixApiHelpers {
   class ListDirectoryWithAttrs(
     private val owner: EelFileSystemPosixApi,
     private var path: EelPath,
-  ) : com.intellij.platform.eel.OwnedBuilder<EelResult<Collection<Pair<String, EelPosixFileInfo>>, EelFileSystemApi.ListDirectoryError>> {
+  ) :
+    com.intellij.platform.eel.EelOwnedBuilder<EelResult<Collection<Pair<String, EelPosixFileInfo>>, EelFileSystemApi.ListDirectoryError>> {
     private var symlinkPolicy: EelFileSystemApi.SymlinkPolicy = EelFileSystemApi.SymlinkPolicy.DO_NOT_RESOLVE
 
     fun path(arg: EelPath): ListDirectoryWithAttrs = apply {
@@ -85,6 +87,8 @@ object EelFileSystemPosixApiHelpers {
           symlinkPolicy = symlinkPolicy,
         )
       )
+
+    override val eelDescriptor: EelDescriptor get() = owner.descriptor
   }
 
   /**
@@ -95,7 +99,7 @@ object EelFileSystemPosixApiHelpers {
   class Stat(
     private val owner: EelFileSystemPosixApi,
     private var path: EelPath,
-  ) : com.intellij.platform.eel.OwnedBuilder<EelResult<EelPosixFileInfo, StatError>> {
+  ) : com.intellij.platform.eel.EelOwnedBuilder<EelResult<EelPosixFileInfo, StatError>> {
     private var symlinkPolicy: EelFileSystemApi.SymlinkPolicy = EelFileSystemApi.SymlinkPolicy.DO_NOT_RESOLVE
 
     fun path(arg: EelPath): Stat = apply {
@@ -138,5 +142,7 @@ object EelFileSystemPosixApiHelpers {
           symlinkPolicy = symlinkPolicy,
         )
       )
+
+    override val eelDescriptor: EelDescriptor get() = owner.descriptor
   }
 }

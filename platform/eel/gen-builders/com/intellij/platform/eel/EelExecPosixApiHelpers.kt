@@ -44,7 +44,7 @@ object EelExecPosixApiHelpers {
   class SpawnProcess(
     private val owner: EelExecPosixApi,
     private var exe: String,
-  ) : OwnedBuilder<EelPosixProcess> {
+  ) : EelOwnedBuilder<EelPosixProcess> {
     private var args: List<String> = listOf()
 
     private var env: Map<String, String> = mapOf()
@@ -137,6 +137,8 @@ object EelExecPosixApiHelpers {
           workingDirectory = workingDirectory,
         )
       )
+
+    override val eelDescriptor: EelDescriptor get() = owner.descriptor
   }
 
   /**
@@ -146,7 +148,7 @@ object EelExecPosixApiHelpers {
   @ApiStatus.Experimental
   class EnvironmentVariables(
     private val owner: EelExecPosixApi,
-  ) : OwnedBuilder<EelExecApi.EnvironmentVariablesDeferred> {
+  ) : EelOwnedBuilder<EelExecApi.EnvironmentVariablesDeferred> {
     private var mode: EnvironmentVariablesOptions.Mode = EnvironmentVariablesOptions.Mode.DEFAULT
 
     private var onlyActual: Boolean = false
@@ -232,5 +234,7 @@ object EelExecPosixApiHelpers {
           onlyActual = onlyActual,
         )
       )
+
+    override val eelDescriptor: EelDescriptor get() = owner.descriptor
   }
 }

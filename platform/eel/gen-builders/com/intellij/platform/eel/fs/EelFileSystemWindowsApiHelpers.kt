@@ -4,6 +4,7 @@
  */
 package com.intellij.platform.eel.fs
 
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.GeneratedBuilder
 import com.intellij.platform.eel.fs.EelFileSystemApi.StatError
@@ -42,7 +43,8 @@ object EelFileSystemWindowsApiHelpers {
   class ListDirectoryWithAttrs(
     private val owner: EelFileSystemWindowsApi,
     private var path: EelPath,
-  ) : com.intellij.platform.eel.OwnedBuilder<EelResult<Collection<Pair<String, EelWindowsFileInfo>>, EelFileSystemApi.ListDirectoryError>> {
+  ) :
+    com.intellij.platform.eel.EelOwnedBuilder<EelResult<Collection<Pair<String, EelWindowsFileInfo>>, EelFileSystemApi.ListDirectoryError>> {
     private var symlinkPolicy: EelFileSystemApi.SymlinkPolicy = EelFileSystemApi.SymlinkPolicy.DO_NOT_RESOLVE
 
     fun path(arg: EelPath): ListDirectoryWithAttrs = apply {
@@ -85,6 +87,8 @@ object EelFileSystemWindowsApiHelpers {
           symlinkPolicy = symlinkPolicy,
         )
       )
+
+    override val eelDescriptor: EelDescriptor get() = owner.descriptor
   }
 
   /**
@@ -95,7 +99,7 @@ object EelFileSystemWindowsApiHelpers {
   class Stat(
     private val owner: EelFileSystemWindowsApi,
     private var path: EelPath,
-  ) : com.intellij.platform.eel.OwnedBuilder<EelResult<EelWindowsFileInfo, StatError>> {
+  ) : com.intellij.platform.eel.EelOwnedBuilder<EelResult<EelWindowsFileInfo, StatError>> {
     private var symlinkPolicy: EelFileSystemApi.SymlinkPolicy = EelFileSystemApi.SymlinkPolicy.DO_NOT_RESOLVE
 
     fun path(arg: EelPath): Stat = apply {
@@ -138,5 +142,7 @@ object EelFileSystemWindowsApiHelpers {
           symlinkPolicy = symlinkPolicy,
         )
       )
+
+    override val eelDescriptor: EelDescriptor get() = owner.descriptor
   }
 }

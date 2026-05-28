@@ -44,7 +44,7 @@ object EelExecWindowsApiHelpers {
   class SpawnProcess(
     private val owner: EelExecWindowsApi,
     private var exe: String,
-  ) : OwnedBuilder<EelWindowsProcess> {
+  ) : EelOwnedBuilder<EelWindowsProcess> {
     private var args: List<String> = listOf()
 
     private var env: Map<String, String> = mapOf()
@@ -137,6 +137,8 @@ object EelExecWindowsApiHelpers {
           workingDirectory = workingDirectory,
         )
       )
+
+    override val eelDescriptor: EelDescriptor get() = owner.descriptor
   }
 
   /**
@@ -146,7 +148,7 @@ object EelExecWindowsApiHelpers {
   @ApiStatus.Experimental
   class EnvironmentVariables(
     private val owner: EelExecWindowsApi,
-  ) : OwnedBuilder<EelExecApi.EnvironmentVariablesDeferred> {
+  ) : EelOwnedBuilder<EelExecApi.EnvironmentVariablesDeferred> {
     private var mode: EnvironmentVariablesOptions.Mode = EnvironmentVariablesOptions.Mode.DEFAULT
 
     private var onlyActual: Boolean = false
@@ -232,5 +234,7 @@ object EelExecWindowsApiHelpers {
           onlyActual = onlyActual,
         )
       )
+
+    override val eelDescriptor: EelDescriptor get() = owner.descriptor
   }
 }

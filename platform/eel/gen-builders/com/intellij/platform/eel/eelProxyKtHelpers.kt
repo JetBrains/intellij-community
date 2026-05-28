@@ -192,5 +192,6 @@ object eelProxyKtHelpers {
           onConnectionError = onConnectionError,
         )
       )
+
   }
 }

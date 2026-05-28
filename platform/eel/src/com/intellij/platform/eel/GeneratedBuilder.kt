@@ -51,3 +51,8 @@ annotation class GeneratedBuilder(val type: KClass<*> = GeneratedBuilder::class)
 interface OwnedBuilder<T> {
   suspend fun eelIt(): T
 }
+
+@ApiStatus.Internal
+interface EelOwnedBuilder<T> : OwnedBuilder<T> {
+  val eelDescriptor: EelDescriptor
+}

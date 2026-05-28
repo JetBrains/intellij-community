@@ -94,7 +94,7 @@ object EelTunnelsApiHelpers {
   @ApiStatus.Internal
   class GetAcceptorForRemotePort(
     private val owner: EelTunnelsApi,
-  ) : OwnedBuilder<ConnectionAcceptor> {
+  ) : EelOwnedBuilder<ConnectionAcceptor> {
     private var configureServerSocket: ConfigurableSocket.() -> Unit = {}
 
     private var hostname: String = "localhost"
@@ -160,6 +160,8 @@ object EelTunnelsApiHelpers {
           timeout = timeout,
         )
       )
+
+    override val eelDescriptor: EelDescriptor get() = owner.descriptor
   }
 
   /**
@@ -169,7 +171,7 @@ object EelTunnelsApiHelpers {
   @ApiStatus.Experimental
   class GetConnectionToRemotePort(
     private val owner: EelTunnelsApi,
-  ) : OwnedBuilder<Connection> {
+  ) : EelOwnedBuilder<Connection> {
     private var configureSocketBeforeConnection: ConfigurableClientSocket.() -> Unit = {}
 
     private var hostname: String = "localhost"
@@ -236,6 +238,8 @@ object EelTunnelsApiHelpers {
           timeout = timeout,
         )
       )
+
+    override val eelDescriptor: EelDescriptor get() = owner.descriptor
   }
 
   /**
@@ -245,7 +249,7 @@ object EelTunnelsApiHelpers {
   @ApiStatus.Experimental
   class ListenOnUnixSocket(
     private val owner: EelTunnelsApi,
-  ) : OwnedBuilder<EelTunnelsApi.ListenOnUnixSocketResult> {
+  ) : EelOwnedBuilder<EelTunnelsApi.ListenOnUnixSocketResult> {
     private var parentDirectory: EelPath? = null
 
     private var prefix: String = ""
@@ -276,5 +280,7 @@ object EelTunnelsApiHelpers {
           suffix = suffix,
         )
       )
+
+    override val eelDescriptor: EelDescriptor get() = owner.descriptor
   }
 }
