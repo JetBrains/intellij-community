@@ -47,7 +47,6 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.SlowOperations
-import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.min
 
@@ -61,10 +60,7 @@ private const val MAX_COUNT_TO_SHOW_HINT = 5
  * completion factories to customize behavior according to individual requirements.
  */
 @Service(Service.Level.PROJECT)
-internal class CommandCompletionService(
-  val coroutineScope: CoroutineScope,
-) : Disposable {
-
+internal class CommandCompletionService : Disposable {
   companion object {
     private val EP_NAME: LanguageExtension<CommandCompletionFactory> = LanguageExtension<CommandCompletionFactory>("com.intellij.codeInsight.completion.command.factory")
   }
