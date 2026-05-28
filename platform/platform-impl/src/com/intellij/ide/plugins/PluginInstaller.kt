@@ -203,7 +203,6 @@ object PluginInstaller {
     PluginStateManager.fireState(descriptor, true)
   }
 
-  @JvmStatic
   private fun installWithoutRestart(sourceFile: Path, descriptor: IdeaPluginDescriptorImpl, parent: JComponent?): Path? {
     var result: Path?
     try {
@@ -495,12 +494,10 @@ object PluginInstaller {
     return PluginEnabler.HEADLESS.isDisabled(targetPluginId) || DynamicPlugins.loadPlugin(targetDescriptor)
   }
 
-  @JvmStatic
   private fun keepArchive(): Boolean {
     return !LoadingState.COMPONENTS_LOADED.isOccurred || RegistryManager.getInstance().`is`("ide.plugins.keep.archive")
   }
 
-  @JvmStatic
   private fun findNotInstalledPluginDependencies(
     dependencies: List<IdeaPluginDependency>,
     model: InstalledPluginsTableModel,
@@ -525,7 +522,6 @@ object PluginInstaller {
     return notInstalled
   }
 
-  @JvmStatic
   private fun getPluginsPath(): Path {
     return Path.of(PathManager.getPluginsPath())
   }
@@ -549,7 +545,6 @@ object PluginInstaller {
     }
   }
 
-  @JvmStatic
   private fun shutdownOrRestartAppAfterInstall(descriptor: IdeaPluginDescriptorImpl) {
     PluginManagerConfigurable.shutdownOrRestartAppAfterInstall(
       PluginManagerConfigurable.getUpdatesDialogTitle()
