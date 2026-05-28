@@ -10,12 +10,27 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.openapi.wm.ex.ToolWindowEx
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.isPosix
+import com.intellij.platform.eel.isWindows
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.asEelPath
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.getResolvedEelMachine
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.terminal.frontend.view.TerminalView
+import com.intellij.terminal.frontend.view.completion.escapeShellArgument
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.terminal.fus.TerminalOpeningWay
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
+import org.jetbrains.plugins.terminal.session.ShellName
+import org.jetbrains.plugins.terminal.session.guessShellName
+import org.jetbrains.plugins.terminal.startup.TerminalLocalPathTranslator
+import org.jetbrains.plugins.terminal.util.getNow
+import java.nio.file.Path
 
 /**
  * Handles terminal drag-and-drop behavior
@@ -49,9 +64,8 @@ internal object TerminalDnDHandler {
   }
 
   private fun handleDropOnTerminalView(event: DnDEvent, terminalView: TerminalView) {
-    val files = getDroppedFiles(event).ifEmpty { return }
-
-    val textToInsert = files.joinToString(" ") { it.path }
+    val context = getTerminalDropContext(terminalView) ?: return
+    val textToInsert = getTextToInsertForFiles(getDroppedFiles(event), context).ifEmpty { return }
     terminalView.createSendTextBuilder()
       .useBracketedPasteMode()
       .send(textToInsert)
@@ -84,6 +98,52 @@ internal object TerminalDnDHandler {
     if (file == null) return null
     return if (file.isDirectory) file else file.parent
   }
+
+  private fun getTerminalDropContext(terminalView: TerminalView): TerminalDropContext? {
+    val eelDescriptor = terminalView.sessionDeferred.getNow()?.eelDescriptor ?: return null
+    val shellName = terminalView.startupOptionsDeferred.getNow()?.guessShellName() ?: ShellName.of("unknown")
+    return TerminalDropContext(eelDescriptor, shellName)
+  }
+
+  private fun getTextToInsertForFiles(files: List<VirtualFile>, context: TerminalDropContext): String {
+    return files.mapNotNull { file -> getPathToInsert(file, context.eelDescriptor) }
+      .joinToString(" ") { path -> escapeShellArgument(path, context.shellName) }
+  }
+
+  private fun getPathToInsert(file: VirtualFile, eelDescriptor: EelDescriptor): String? {
+    return if (IdeProductMode.isFrontend) getPathInFrontend(file) else getPathInMonolith(file, eelDescriptor)
+  }
+
+  private fun getPathInFrontend(file: VirtualFile): String? {
+    return file.path.takeIf { !file.isInLocalFileSystem }
+  }
+
+  private fun getPathInMonolith(file: VirtualFile, eelDescriptor: EelDescriptor): String? {
+    if (!file.isInLocalFileSystem) return null
+
+    val nioPath = file.toNioPathOrNull() ?: return null
+    val fileDescriptor = nioPath.getEelDescriptor()
+    val fileMachine = fileDescriptor.getResolvedEelMachine() ?: return null
+    val eelMachine = eelDescriptor.getResolvedEelMachine() ?: return null
+    if (fileMachine == eelMachine) {
+      return runCatching { nioPath.asEelPath(fileDescriptor).toString() }.getOrNull()
+    }
+
+    return translateLocalPathToWsl(nioPath, fileDescriptor, eelDescriptor)
+  }
+
+  private fun translateLocalPathToWsl(nioPath: Path, fileDescriptor: EelDescriptor, eelDescriptor: EelDescriptor): String? {
+    if (fileDescriptor != LocalEelDescriptor || !LocalEelDescriptor.osFamily.isWindows || !eelDescriptor.osFamily.isPosix) {
+      return null
+    }
+
+    return TerminalLocalPathTranslator(eelDescriptor).translateAbsoluteLocalPathToRemote(nioPath)?.toString()
+  }
+
+  private data class TerminalDropContext(
+    val eelDescriptor: EelDescriptor,
+    val shellName: ShellName,
+  )
 }
 
 internal fun getDroppedFiles(event: DnDEvent): List<VirtualFile> {

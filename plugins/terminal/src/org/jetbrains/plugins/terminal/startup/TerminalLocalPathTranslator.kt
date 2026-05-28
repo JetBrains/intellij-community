@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.startup
 
 import com.intellij.execution.wsl.WslPath
@@ -17,10 +17,12 @@ import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.util.PathUtil
 import com.intellij.util.asSafely
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 
-internal class TerminalLocalPathTranslator(private val descriptor: EelDescriptor) {
+@ApiStatus.Internal
+class TerminalLocalPathTranslator(private val descriptor: EelDescriptor) {
 
   /**
    * Translates new path entries to the format understood by the remote.
