@@ -86,6 +86,7 @@ public final class ThreadLeakTracker {
       "Cleaner-0", // Thread[Cleaner-0,8,InnocuousThreadGroup], java.lang.ref.Cleaner in android layoutlib, Java9+
       "CompilerThread0",
       "Coroutines Debugger Cleaner", // kotlinx.coroutines.debug.internal.DebugProbesImpl.startWeakRefCleanerThread
+      "docker-java-stream", // com.github.dockerjava.core.DefaultInvocationBuilder.executeAndStream spawns this for every streaming command (events, logs, attach, pull, etc.)
       "dockerjava-netty",
       "embeddings-server",
       "EventQueueMonitor-ComponentEvtDispatch", // com.sun.java.accessibility.util.ComponentEvtDispatchThread
