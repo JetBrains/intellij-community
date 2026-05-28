@@ -162,6 +162,11 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
         packageName = "com.pestphp.pest"
       )
 
+      "intellij.vcs.git.backend" -> IntellijIconClassGeneratorModuleConfig(
+        className = "GitIcons",
+        packageName = "com.intellij.vcs.git.icons"
+      )
+
       "intellij.vcs.github" -> IntellijIconClassGeneratorModuleConfig(
         className = "GithubIcons",
         packageName = "org.jetbrains.plugins.github"

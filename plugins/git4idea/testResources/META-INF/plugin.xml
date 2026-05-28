@@ -3,8 +3,10 @@
   <id>Git4Idea-Tests</id>
   <description>Overriding services for tests.</description>
 
-  <depends>com.intellij.modules.vcs</depends>
-  <depends>Git4Idea</depends>
+  <dependencies>
+    <module name="intellij.vcs.git.backend"/>
+    <module name="intellij.vcs.git.shared"/>
+  </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="git4idea.commands.GitHttpAuthService"

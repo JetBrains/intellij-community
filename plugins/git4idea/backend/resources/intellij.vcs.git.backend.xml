@@ -1,13 +1,25 @@
-<!-- todo: register this as a content module (IJPL-210868); currently it's included via 'xi:include' tag -->
-<idea-plugin>
+<idea-plugin package="git4idea" visibility="public">
   <resource-bundle>messages.GitBundle</resource-bundle>
 
   <dependencies>
     <plugin id="com.intellij.modules.vcs"/>
-    <module name="intellij.platform.vcs.dvcs"/>
-    <module name="intellij.platform.vcs.log.graph.impl"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.backend"/>
     <module name="intellij.platform.collaborationTools"/>
     <module name="intellij.platform.ide.impl.wsl"/>
+    <module name="intellij.platform.kernel.backend"/>
+    <module name="intellij.platform.lvcs.impl"/>
+    <module name="intellij.platform.rpc.backend"/>
+    <module name="intellij.platform.vcs.dvcs"/>
+    <module name="intellij.platform.vcs.dvcs.impl"/>
+    <module name="intellij.platform.vcs.dvcs.impl.shared"/>
+    <module name="intellij.platform.vcs.impl"/>
+    <module name="intellij.platform.vcs.impl.shared"/>
+    <module name="intellij.platform.vcs.log"/>
+    <module name="intellij.platform.vcs.log.graph.impl"/>
+    <module name="intellij.platform.vcs.log.impl"/>
+    <module name="intellij.vcs.git.shared"/>
+    <!-- endregion -->
   </dependencies>
 
   <actions resource-bundle="messages.GitBundle">
@@ -578,8 +590,6 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <dependencySupport kind="vcs" coordinate="vcs:git" displayName="Git"/>
-
     <advancedSetting id="git.clone.recurse.submodules" default="true" groupKey="advanced.settings.git"/>
     <advancedSetting id="git.read.content.with" enumClass="git4idea.util.GitTextConvMode" default="FILTERS"
                      groupKey="advanced.settings.git"/>

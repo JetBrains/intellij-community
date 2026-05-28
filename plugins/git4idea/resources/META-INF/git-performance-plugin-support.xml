@@ -1,5 +1,0 @@
-<idea-plugin>
-  <extensions defaultExtensionNs="com.jetbrains">
-    <performancePlugin.commandProvider implementation="git4idea.performanceTesting.GitCommandProvider"/>
-  </extensions>
-</idea-plugin>

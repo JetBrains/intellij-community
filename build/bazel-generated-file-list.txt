@@ -1079,9 +1079,11 @@ plugins/findUsagesMl
 plugins/git-features-trainer
 plugins/git-modal-commit
 plugins/git4idea
+plugins/git4idea/backend
 plugins/git4idea/frontend
 plugins/git4idea/intellij.vcs.git.coverage
 plugins/git4idea/localHistory
+plugins/git4idea/performanceTesting
 plugins/git4idea/rt
 plugins/git4idea/shared
 plugins/git4idea/terminal

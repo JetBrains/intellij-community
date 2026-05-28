@@ -19,12 +19,17 @@
 - name: lib/modules/intellij.vcs.git.model.generated.jar
   contentModules:
   - name: intellij.vcs.git.model.generated
+- name: lib/modules/intellij.vcs.git.performanceTesting.jar
+  contentModules:
+  - name: intellij.vcs.git.performanceTesting
+- name: lib/modules/intellij.vcs.git.shared.jar
+  contentModules:
+  - name: intellij.vcs.git.shared
 - name: lib/modules/intellij.vcs.git.terminal.jar
   contentModules:
   - name: intellij.vcs.git.terminal
-- name: lib/vcs-git-frontend.jar
-  contentModules:
-  - name: intellij.vcs.git.shared
 - name: lib/vcs-git.jar
   modules:
   - name: intellij.vcs.git
+  contentModules:
+  - name: intellij.vcs.git.backend
