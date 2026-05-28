@@ -39,7 +39,6 @@ import org.jetbrains.plugins.terminal.session.impl.TerminalContentUpdatedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalFilterResultInfo
 import org.jetbrains.plugins.terminal.session.impl.TerminalHighlightingInfo
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkInfo
-import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinksHeartbeatEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalInlayInfo
 import org.jetbrains.plugins.terminal.session.impl.TerminalOutputEvent
 import org.jetbrains.plugins.terminal.view.TerminalOffset
@@ -515,7 +514,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
                   outputModel.updateContent(event)
                   pendingUpdateEventCount.update { it - 1 }
                 }
-                TerminalHyperlinksHeartbeatEvent -> {
+                Unit -> {
                   val modelUpdateEvent = backendFacade.collectResultsAndMaybeStartNewTask()
                   if (modelUpdateEvent != null) {
                     backendFacade.updateModelState(modelUpdateEvent)

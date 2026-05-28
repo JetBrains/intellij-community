@@ -22,7 +22,6 @@ import org.jetbrains.plugins.terminal.hyperlinks.TerminalOutputContentUpdate
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalOutputTrimmingUpdate
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalOutputUpdate
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkId
-import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinksHeartbeatEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinksModelState
 import org.jetbrains.plugins.terminal.session.impl.dto.toFilterResultInfo
 import org.jetbrains.plugins.terminal.view.TerminalContentChangeEvent
@@ -46,10 +45,10 @@ class BackendTerminalHyperlinkFacade(
     trimOffset = { trimOffset.get() }
   )
 
-  val heartbeatFlow: Flow<TerminalHyperlinksHeartbeatEvent> = flow {
+  val heartbeatFlow: Flow<Unit> = flow {
     while (true) {
       if (highlighter.mayHaveWorkToDo()) {
-        emit(TerminalHyperlinksHeartbeatEvent)
+        emit(Unit)
       }
       delay(20.milliseconds)
     }
