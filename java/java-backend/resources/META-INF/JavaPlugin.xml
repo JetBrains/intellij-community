@@ -1301,10 +1301,6 @@
 
     <searchEverywhereResultsEqualityProvider implementation="com.intellij.ide.JavaClassAndFileEqualityProvider"/>
 
-    <applicationService serviceInterface="com.intellij.util.xml.ConverterManager"
-                        serviceImplementation="com.intellij.util.xml.impl.JavaDomConverterManagerImpl"
-                        overrides="true"/>
-
     <packageDirectoryProvider implementation="com.intellij.psi.impl.file.JavaPackageDirectoryProvider" id="default"/>
 
     <java.externalAnnotation.locationProvider

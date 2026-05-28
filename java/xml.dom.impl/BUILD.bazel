@@ -1,0 +1,37 @@
+### auto-generated section `build intellij.java.xml.dom.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "xml.dom.impl",
+  module_name = "intellij.java.xml.dom.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
+  deps = [
+    "//java/java-impl:impl",
+    "//java/java-psi-api:psi",
+    "//xml/dom-impl",
+  ]
+)
+
+jvm_library(
+  name = "xml.dom.impl_test_lib",
+  testonly = True,
+  module_name = "intellij.java.xml.dom.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":xml.dom.impl",
+    "//java/java-impl:impl_test_lib",
+    "//java/java-psi-api:psi_test_lib",
+    "//xml/dom-impl:dom-impl_test_lib",
+  ]
+)
+### auto-generated section `build intellij.java.xml.dom.impl` end
+
+### auto-generated section `iml intellij.java.xml.dom.impl` start
+exports_files([
+  "intellij.java.xml.dom.impl.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.xml.dom.impl` end

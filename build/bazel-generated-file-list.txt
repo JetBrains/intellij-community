@@ -339,6 +339,7 @@ java/testFramework/shared
 java/typeMigration
 java/unscramble
 java/vcs
+java/xml.dom.impl
 jps/antLayout
 jps/jps-builders
 jps/jps-launcher
