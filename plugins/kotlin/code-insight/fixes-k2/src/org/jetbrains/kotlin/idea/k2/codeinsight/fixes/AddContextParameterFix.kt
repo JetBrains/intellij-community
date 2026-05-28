@@ -23,14 +23,15 @@ class AddContextParameterFix(
         val allParams = existingParameters.map { it.text } + contextTypes.map { "_: $it" }
         val contextClause = allParams.joinToString(", ", "context(", ")")
 
-        val newFunction = if (existingParameters.isNotEmpty()) {
+        val newFunctionText = if (existingParameters.isNotEmpty()) {
             val oldContextEnd = existingParameters.last().parent.textRange.endOffset - containingFunction.textRange.startOffset
             val rest = containingFunction.text.substring(oldContextEnd).trimStart()
-            psiFactory.createFunction("$contextClause $rest")
+            "$contextClause $rest"
         } else {
-            psiFactory.createFunction("$contextClause\n${containingFunction.text}")
+            "$contextClause\n${containingFunction.text}"
         }
 
+        val newFunction = psiFactory.createFunction(newFunctionText)
         val replacedFunction = containingFunction.replace(newFunction) as KtNamedFunction
         updater.select(replacedFunction.contextParameters.getOrNull(existingParameters.size)?.nameIdentifier ?: return)
     }
