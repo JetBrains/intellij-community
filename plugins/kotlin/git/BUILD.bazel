@@ -1,11 +1,6 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.kotlin.git` start
-
-jvm_provided_library(
-    name = "plugins_vcs-git_provided",
-    lib = "//plugins/git4idea:vcs-git",
-)
 
 jvm_library(
     name = "git",
@@ -31,7 +26,8 @@ jvm_library(
         "//platform/core-api:core",
         "//platform/vcs-api/vcs-api-core:vcs-core",
         "//platform/platform-api:ide",
-        ":plugins_vcs-git_provided",
+        "//plugins/git4idea:vcs-git",
+        "//plugins/git4idea/backend",
     ],
 )
 
@@ -52,8 +48,8 @@ jvm_library(
         "//platform/core-api:core_test_lib",
         "//platform/vcs-api/vcs-api-core:vcs-core_test_lib",
         "//platform/platform-api:ide_test_lib",
-        "//plugins/git4idea:vcs-git",
         "//plugins/git4idea:vcs-git_test_lib",
+        "//plugins/git4idea/backend:backend_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.git` end

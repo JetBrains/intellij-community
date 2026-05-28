@@ -1,12 +1,13 @@
 <idea-plugin>
   <resource-bundle>messages.GitLabBundle</resource-bundle>
 
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="Git4Idea"/>
+    <module name="intellij.vcs.git.backend"/>
     <module name="intellij.vcs.git.shared"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 
   <actions>
     <action id="GitLab.Share" class="com.intellij.vcs.gitlab.git.GitLabShareProjectAction"

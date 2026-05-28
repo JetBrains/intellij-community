@@ -5,6 +5,7 @@
     <module name="intellij.platform.collaborationTools"/>
     <module name="intellij.platform.vcs.dvcs.impl"/>
     <module name="intellij.platform.vcs.impl"/>
+    <module name="intellij.vcs.git.backend"/>
     <module name="intellij.vcs.git.shared"/>
   </dependencies>
   <!-- endregion -->

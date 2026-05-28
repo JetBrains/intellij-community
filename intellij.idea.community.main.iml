@@ -70,7 +70,7 @@
     <orderEntry type="module" module-name="intellij.dev.plugin.main" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.devkit.plugin.main" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.eclipse" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.vcs.git" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.vcs.git.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.git.shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.git.frontend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.git.featuresTrainer" scope="RUNTIME" />

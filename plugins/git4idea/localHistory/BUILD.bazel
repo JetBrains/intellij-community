@@ -14,6 +14,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/lvcs-impl",
+        "//plugins/git4idea/backend",
+    ],
 )
 
 jvm_library(
@@ -25,7 +30,12 @@ jvm_library(
     ),
     module_name = "intellij.vcs.git.localHistory",
     visibility = ["//visibility:public"],
-    runtime_deps = [":localHistory"],
+    runtime_deps = [
+        # do not sort,
+        ":localHistory",
+        "//platform/lvcs-impl:lvcs-impl_test_lib",
+        "//plugins/git4idea/backend:backend_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.vcs.git.localHistory` end
 

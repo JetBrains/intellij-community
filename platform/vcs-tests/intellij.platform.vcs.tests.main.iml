@@ -15,7 +15,7 @@
     <orderEntry type="module" module-name="intellij.tasks.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.vcs.git.coverage.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.vcs.git.terminal.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.vcs.git.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.vcs.git.backend.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.vcs.hg.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.vcs.svn.tests" scope="TEST" />
   </component>

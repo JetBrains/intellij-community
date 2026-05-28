@@ -1,6 +1,9 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.git">
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="Git4Idea"/>
+    <module name="intellij.vcs.git.backend"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="Git4Idea">

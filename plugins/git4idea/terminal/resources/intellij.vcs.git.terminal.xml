@@ -1,6 +1,9 @@
 <idea-plugin>
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="org.jetbrains.plugins.terminal"/>
+    <module name="intellij.vcs.git.backend"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">

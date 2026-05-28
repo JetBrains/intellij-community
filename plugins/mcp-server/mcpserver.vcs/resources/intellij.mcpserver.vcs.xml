@@ -1,12 +1,13 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="Git4Idea"/>
     <plugin id="com.intellij.mcpServer"/>
     <module name="intellij.platform.vcs.dvcs.impl"/>
     <module name="intellij.platform.vcs.impl"/>
-    <!-- endregion -->
+    <module name="intellij.vcs.git.backend"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.vcs.VcsToolset"/>

@@ -6,6 +6,8 @@
       <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
     </content>
     <orderEntry type="inheritedJdk" />
+    <orderEntry type="module" module-name="intellij.platform.lvcs.impl" />
+    <orderEntry type="module" module-name="intellij.vcs.git.backend" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>
