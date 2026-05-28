@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Predicate;
 
-// array-backed queue with additional support for fast bulk inserts
+/// Array-backed queue with additional support for fast bulk inserts (see [bulkEnqueueFirst])
 @ApiStatus.Internal
 public final class BulkArrayQueue<T> {
   private static final Logger LOG = Logger.getInstance(BulkArrayQueue.class);

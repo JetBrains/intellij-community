@@ -6,10 +6,9 @@ import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 fun <T> inModalContext(modalEntity: Any, action: (ModalityState) -> T): T {
-  val newModalityState = LaterInvocator.getCurrentModalityState().appendEntity(modalEntity)
-  LaterInvocator.enterModal(modalEntity, newModalityState)
+  LaterInvocator.enterModal(modalEntity)
   try {
-    return action(newModalityState)
+    return action(LaterInvocator.getCurrentModalityState())
   }
   finally {
     LaterInvocator.leaveModal(modalEntity)
