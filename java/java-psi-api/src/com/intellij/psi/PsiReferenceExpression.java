@@ -27,7 +27,7 @@ public interface PsiReferenceExpression extends PsiExpression, PsiJavaCodeRefere
    * Returns the expression used as the qualifier of the reference (the content up to the
    * last period).
    *
-   * @return the qualifier, or null if thePsiReferenceExpression reference is not qualified.
+   * @return the qualifier, or null if the reference is not qualified.
    */
   @Nullable
   PsiExpression getQualifierExpression();
