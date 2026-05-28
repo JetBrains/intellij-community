@@ -51,6 +51,14 @@ val knownMissingModuleDependencies: List<String> = listOf(
  * Describes a distribution of an IntelliJ-based IDE hosted in the IntelliJ repository.
  */
 abstract class JetBrainsProductProperties : ProductProperties() {
+  private companion object {
+    val ALLOWED_PLUGIN_VENDORS: Set<String> = setOf(
+      "JetBrains", "JetBrains s.r.o.",
+      "JetBrains, Google",
+      "JetBrains Experimental",
+    )
+  }
+
   init {
     scrambleMainJar = true
     presignedNativeLibs = mapOf(
@@ -73,7 +81,7 @@ abstract class JetBrainsProductProperties : ProductProperties() {
         isIntentionallyIgnored(it, pluginId) || isApplicableToThirdPartyPluginsOnly(it)
       })
       if (result is PluginCreationSuccess) {
-        if (result.plugin.vendor?.contains("JetBrains") != true) {
+        if (!ALLOWED_PLUGIN_VENDORS.contains(result.plugin.vendor)) {
           add(InvalidPluginDescriptorError("${result.plugin.pluginId} is published not by JetBrains: ${result.plugin.vendor}"))
         }
       }
