@@ -51,6 +51,7 @@ data class RpcCompletionItem(
     fieldWithDefault("hasModCommand", hasModCommand, false)
     fieldWithDefault("isTopPriorityItem", isTopPriorityItem, false)
     fieldWithDefault("isNeverAutoselectTopPriorityItem", isNeverAutoselectTopPriorityItem, false)
+    fieldWithDefault("completionGroup", completionGroup, null)
   }
 }
 
@@ -77,7 +78,7 @@ fun CompletionResult.toRpc(): RpcCompletionItem {
     hasModCommand = element is CompletionItemLookupElement,
     isTopPriorityItem = TopPriorityLookupElement.isTopPriorityItem(element),
     isNeverAutoselectTopPriorityItem = TopPriorityLookupElement.isNeverAutoselectTopPriorityItem(element),
-    completionGroup = CompletionGroup.get(lookupElement)?.toRpc()
+    completionGroup = CompletionGroup.get(lookupElement)?.toRpc(),
   )
 }
 
