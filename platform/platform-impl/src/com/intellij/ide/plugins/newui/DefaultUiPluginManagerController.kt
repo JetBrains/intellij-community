@@ -789,7 +789,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
 
   private suspend fun checkCanUnloadWithoutRestart(pluginId: PluginId): Boolean {
     val plugin = PluginManagerCore.findPlugin(pluginId) as? PluginMainDescriptor ?: return false
-    return withContext(Dispatchers.Default) { DynamicPlugins.checkCanUnloadWithoutRestart(plugin) == null }
+    return withContext(Dispatchers.Default) { DynamicPlugins.checkCanUnloadWithoutRestart(plugin) }
   }
 
   private fun allowLoadUnloadSynchronously(pluginId: PluginId): Boolean {

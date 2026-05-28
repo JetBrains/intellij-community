@@ -893,12 +893,12 @@ class DynamicPluginsTest {
     loadPluginInTest(bar) {
       loadPluginInTest(quux) {
         if (isNewSupportEnabled()) {
-          assertThat(DynamicPlugins.checkCanLoadWithoutRestart(main)).isEqualTo(
+          assertThat(DynamicPlugins.validateCanLoadWithoutRestart(main)).isEqualTo(
             "<depends> config 'quux.xml' of plugin main cannot be loaded/unloaded dynamically because it uses non-dynamic extension point 'foo.barExtension' from plugin 'bar' (bar, 262.SNAPSHOT)."
           )
         } else {
           setPluginClassLoaderForMainAndSubPlugins(main, DynamicPluginsTest::class.java.classLoader)
-          assertThat(DynamicPlugins.checkCanLoadWithoutRestart(main)).isEqualTo(
+          assertThat(DynamicPlugins.validateCanLoadWithoutRestart(main)).isEqualTo(
             "Plugin '${main.pluginId}' is not unload-safe because of extension to non-dynamic EP 'foo.barExtension' in optional dependency on ${quux.pluginId} in optional dependency on ${bar.pluginId}"
           )
         }
@@ -917,10 +917,10 @@ class DynamicPluginsTest {
     }
     val plugin = pluginSet.getPlugin("nonDynamic")
     if (isNewSupportEnabled()) {
-      assertThat(DynamicPlugins.checkCanLoadWithoutRestart(plugin))
+      assertThat(DynamicPlugins.validateCanLoadWithoutRestart(plugin))
         .isEqualTo("plugin 'nonDynamic' (nonDynamic, 262.SNAPSHOT) cannot be loaded/unloaded dynamically because it uses non-dynamic extension point 'one.foo' from plugin 'nonDynamic' (nonDynamic, 262.SNAPSHOT).")
     } else {
-      assertThat(DynamicPlugins.checkCanLoadWithoutRestart(plugin))
+      assertThat(DynamicPlugins.validateCanLoadWithoutRestart(plugin))
         .isEqualTo("Plugin '${plugin.pluginId}' is not unload-safe because of extension to non-dynamic EP '$epName'")
     }
   }
@@ -935,7 +935,7 @@ class DynamicPluginsTest {
       }
     }
     val plugin = pluginSet.getPlugin("dynamic")
-    assertThat(DynamicPlugins.checkCanLoadWithoutRestart(plugin)).isNull()
+    assertThat(DynamicPlugins.validateCanLoadWithoutRestart(plugin)).isNull()
   }
 
   @Test
@@ -1157,7 +1157,7 @@ class DynamicPluginsTest {
       }
     }
     val foo = pluginSet.getPlugin("foo")
-    assertThat(DynamicPlugins.checkCanLoadWithoutRestart(foo)).isNotNull()
+    assertThat(DynamicPlugins.validateCanLoadWithoutRestart(foo)).isNotNull()
   }
 
   @Test
@@ -1177,7 +1177,7 @@ class DynamicPluginsTest {
         includePackageClassFiles<DefaultService>()
       }.installAt(pluginsDir)
       val foo = loadDescriptorInTest(fooPath)
-      assertThat(DynamicPlugins.checkCanLoadWithoutRestart(foo) == null).isEqualTo(dynamicServiceOverridesAllowed)
+      assertThat(DynamicPlugins.validateCanLoadWithoutRestart(foo) == null).isEqualTo(dynamicServiceOverridesAllowed)
     }
   }
 

@@ -316,7 +316,7 @@ object DynamicPlugins {
    * @return non-null message explaining why unloading is not possible, null otherwise
    */
   @RequiresBackgroundThread(generateAssertion = false)
-  fun checkCanUnloadWithoutRestart(module: IdeaPluginDescriptorImpl): String? {
+  fun validateCanUnloadWithoutRestart(module: IdeaPluginDescriptorImpl): String? {
     DynamicPluginsSupport.getInstance()?.let { instance ->
       require(module is PluginMainDescriptor) { "PluginMainDescriptor expected" }
       val newState = computeNewPluginsState(emptyList(), listOf(module))
@@ -336,7 +336,7 @@ object DynamicPlugins {
    * @return non-null message explaining why loading is not possible, null otherwise
    */
   @RequiresBackgroundThread(generateAssertion = false)
-  fun checkCanLoadWithoutRestart(plugin: PluginMainDescriptor): String? {
+  fun validateCanLoadWithoutRestart(plugin: PluginMainDescriptor): String? {
     DynamicPluginsSupport.getInstance()?.let { instance ->
       val newState = computeNewPluginsState(listOf(plugin), listOf())
       // old plugin set resolver is already dropped, so with new dynamic plugins support this thing is expected to be always present
@@ -349,6 +349,20 @@ object DynamicPlugins {
       }
     }
     return DynamicPluginsLegacyImpl.checkCanUnloadWithoutRestart(plugin) // old impl always assumes unload :igor-dead-inside:
+  }
+
+  @RequiresBackgroundThread(generateAssertion = false)
+  fun checkCanUnloadWithoutRestart(plugin: PluginMainDescriptor): Boolean {
+    val reason = validateCanUnloadWithoutRestart(plugin)
+    reason?.let { LOG.info("${plugin.shortLogDescription} cannot be unloaded dynamically: $it") }
+    return reason == null
+  }
+
+  @RequiresBackgroundThread(generateAssertion = false)
+  fun checkCanLoadWithoutRestart(plugin: PluginMainDescriptor): Boolean {
+    val reason = validateCanLoadWithoutRestart(plugin)
+    reason?.let { LOG.info("${plugin.shortLogDescription} cannot be loaded dynamically: $it") }
+    return reason == null
   }
 
   /**

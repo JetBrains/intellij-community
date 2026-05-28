@@ -8,7 +8,6 @@ import com.intellij.ide.plugins.PluginMainDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -96,10 +95,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
           GlobalScope.launch {
             val plugin = PluginManagerCore.getPlugin(id) as? PluginMainDescriptor
                          ?: return@launch
-            val notUnloadableMsg = DynamicPlugins.checkCanUnloadWithoutRestart(plugin)
-            if (notUnloadableMsg != null) {
-              Logger.getInstance(IdeaDecompiler::class.java).info("decompiler plugin cannot be unloaded: $notUnloadableMsg")
-            } else {
+            if (DynamicPlugins.checkCanUnloadWithoutRestart(plugin)) {
               ApplicationManager.getApplication().invokeLater {
                 DynamicPlugins.unloadPlugin(plugin, DynamicPlugins.UnloadPluginOptions(save = false))
               }

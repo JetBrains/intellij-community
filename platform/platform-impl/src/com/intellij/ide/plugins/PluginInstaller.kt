@@ -364,7 +364,7 @@ object PluginInstaller {
           "",
           cancellation = TaskCancellation.nonCancellable()
         ) {
-          DynamicPlugins.checkCanLoadWithoutRestart(pluginDescriptor)?.also { LOG.info(it) } != null
+          !DynamicPlugins.checkCanLoadWithoutRestart(pluginDescriptor)
         }
       for (dynamicPluginInstall in operation.pendingDynamicPluginInstalls) {
         val installed = installAndLoadDynamicPlugin(dynamicPluginInstall.file, parent, dynamicPluginInstall.pluginDescriptor)

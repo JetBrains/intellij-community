@@ -284,7 +284,7 @@ class PluginDownloader private constructor(
     val descriptor = myDescriptor as PluginMainDescriptor
 
     val canLoad = runWithModalProgressBlocking(ModalTaskOwner.guess(), "") { // FIXME this is an ad-hoc to run BGT method on EDT
-      DynamicPlugins.checkCanLoadWithoutRestart(descriptor) == null
+      DynamicPlugins.validateCanLoadWithoutRestart(descriptor) == null
     }
 
     val appliedWithoutRestart =
@@ -400,7 +400,7 @@ class PluginDownloader private constructor(
       val descriptor = PluginManagerCore.findPlugin(pluginId) ?: return false
       val pluginDescriptor = descriptor.getMainDescriptor()
       val canUnload = runWithModalProgressBlocking(ModalTaskOwner.guess(), "") { // FIXME this is an ad-hoc to run BGT method on EDT
-        DynamicPlugins.checkCanUnloadWithoutRestart(descriptor) == null
+        DynamicPlugins.validateCanUnloadWithoutRestart(descriptor) == null
       }
       if (!canUnload) {
         return false
