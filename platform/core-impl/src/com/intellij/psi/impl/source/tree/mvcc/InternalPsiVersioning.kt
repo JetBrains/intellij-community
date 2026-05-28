@@ -177,7 +177,8 @@ object InternalPsiVersioning {
       get() = version.get()
 
     fun incrementVersion(expected: Long) {
-      assert(version.compareAndSet(expected, expected + 1)) {
+      val versionAdvanced = version.compareAndSet(expected, expected + 1)
+      assert(versionAdvanced) {
         "Version modification failed: could not increment the version with $expected, because global version version is ${version.get()}"
       }
     }

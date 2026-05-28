@@ -17,12 +17,13 @@ interface PsiVersioningService {
      * A typical use-case for this function is the following:
      * ```kotlin
      * fun addWhitespace(element: PsiElement) {
-     *   val functionElement: PsiElement = PsiVersioningService.inVersionedEnvironment(element.node) {
+     *   val functionElement: PsiElement = PsiVersioningService.createVersionedPsiElements(element.node) {
      *     SomePsiFactory.createSyntheticFunction()
      *   }
      *   functionElement.add(element)
      * }
      * ```
+     *
      * Without [createVersionedPsiElements], we could have a violation of versioned PSI invariants:
      * the created `functionElement` could be non-versioned, and `element` could be versioned,
      * where the Platform disallows adding versioned elements to non-versioned trees.
@@ -41,7 +42,7 @@ interface PsiVersioningService {
       if (node == null) {
         return action()
       }
-      return getInstance().runInVersionedEnvironment(contextElement.node, action)
+      return getInstance().runInVersionedEnvironment(node, action)
     }
 
     /**

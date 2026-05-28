@@ -540,7 +540,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
         "Tree elements " + primary + " (versioned: " + primary.isVersioned() + ") and " + secondary + " (versioned: "+ secondary.isVersioned() + ") are not compatible from versioning point of view.\n" +
         "Most likely you created or copied some PSI element and then tried to attach it to a physical PSI tree.\n" +
         "The solution is to create or copy elements in the same environment (i.e., inside / outside of write actions),\n" +
-        "or to use `com.intellij.psi.util.PsiVersioningService.inVersionedEnvironment` before creating or copying an element.");
+        "or to use `com.intellij.psi.util.PsiVersioningService.createVersionedPsiElements` before creating or copying an element.");
   }
 
   @ApiStatus.Internal
