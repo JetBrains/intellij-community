@@ -19,7 +19,7 @@ runs:
   using: composite
   steps:
     - name: Checkout JetBrains/android
-      uses: actions/checkout@v4.2.2
+      uses: actions/checkout@v6.0.2
       with:
         repository: JetBrains/android
         path: android
