@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.options.AsyncInitPlaceholder
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
@@ -25,13 +26,9 @@ import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.util.PlatformIcons
-import com.intellij.util.ui.launchOnShow
+import com.intellij.util.ui.update.DebouncedUpdates
+import com.intellij.util.ui.update.UpdateQueue
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.withContext
 import javax.swing.JComponent
 import kotlin.time.Duration.Companion.milliseconds
@@ -46,15 +43,14 @@ internal class PostfixTemplatesConfigurableUi : Disposable {
   @JvmField
   val checkboxTree: PostfixTemplatesCheckboxTree = object : PostfixTemplatesCheckboxTree() {
     override fun selectionChanged() {
-      check(selectionChanges.tryEmit(Unit))
+      selectionChanges.queue(Unit)
     }
   }
 
   @JvmField
   val innerPostfixDescriptionPanel = PostfixDescriptionPanel()
 
-  private val selectionChangesJob: Job
-  private val selectionChanges = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_LATEST)
+  private val selectionChanges: UpdateQueue<Unit>
 
   @JvmField
   val panel: DialogPanel = panel {
@@ -97,12 +93,11 @@ internal class PostfixTemplatesConfigurableUi : Disposable {
   init {
     postfixTemplatesEnabled.addChangeListener { updateComponents() }
 
-    selectionChangesJob = panel.launchOnShow("PostfixTemplatesConfigurableUi") {
-      @OptIn(FlowPreview::class)
-      selectionChanges.debounce(100.milliseconds).collect {
-        resetDescriptionPanel()
-      }
-    }
+    selectionChanges = DebouncedUpdates.forComponent<Unit>(panel, "PostfixTemplatesConfigurableUi", 100.milliseconds)
+      .restartTimerOnAdd(true)
+      .withContext(Dispatchers.EDT)
+      .runLatest { resetDescriptionPanel() }
+      .cancelOnDispose(this)
   }
 
   fun getSelectedShortcut(): Int {
@@ -110,8 +105,6 @@ internal class PostfixTemplatesConfigurableUi : Disposable {
   }
 
   override fun dispose() {
-    selectionChangesJob.cancel()
-
     Disposer.dispose(checkboxTree)
     Disposer.dispose(innerPostfixDescriptionPanel)
   }
