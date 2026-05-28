@@ -145,7 +145,7 @@
                     serviceImplementation="com.intellij.openapi.wm.impl.ToolWindowManagerStateImpl"/>
 
     <nonLockedIdeEventQueueDispatcher implementation="com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler$MyEventDispatcher"/>
-    <actionConfigurationCustomizer implementation="com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler$ShortcutTracker"/>
+    <actionConfigurationCustomizer implementation="com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler$InitialShortcutSync"/>
 
     <applicationService serviceInterface="com.intellij.openapi.project.configuration.HeadlessLogging$HeadlessLoggingService"
                         serviceImplementation="com.intellij.openapi.project.configuration.EmptyLoggingService"
@@ -304,6 +304,8 @@
 
     <listener class="com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler$MyAnActionListener"
               topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
+    <listener class="com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler$KeymapShortcutChangeListener"
+              topic="com.intellij.openapi.keymap.KeymapManagerListener"/>
 
     <listener class="com.intellij.codeInsight.editorActions.ReaderModeFileEditorListener"
               topic="com.intellij.openapi.fileEditor.FileOpenedSyncListener" activeInHeadlessMode="false"/>

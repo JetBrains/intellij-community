@@ -63,7 +63,6 @@ class ModifierKeyDoubleClickHandler {
   private val keymapDispatcherKeys: MutableSet<DispatcherKey> = ConcurrentHashMap.newKeySet()
   private val suppressedActionIds: MutableSet<String> = ConcurrentHashMap.newKeySet()
   private val suppressedShortcuts: MutableSet<DispatcherKey> = ConcurrentHashMap.newKeySet()
-  private val keymapShortcutTrackerInstalled = AtomicBoolean()
   private val keymapShortcutSyncScheduled = AtomicBoolean()
   private var runningAction = false
 
@@ -128,27 +127,20 @@ class ModifierKeyDoubleClickHandler {
     }
   }
 
-  internal class ShortcutTracker : ActionConfigurationCustomizer, ActionConfigurationCustomizer.AsyncLightCustomizeStrategy {
+  internal class InitialShortcutSync : ActionConfigurationCustomizer, ActionConfigurationCustomizer.AsyncLightCustomizeStrategy {
     override suspend fun customize(actionRegistrar: ActionRuntimeRegistrar) {
-      serviceAsync<ModifierKeyDoubleClickHandler>().installKeymapShortcutTracker()
+      serviceAsync<ModifierKeyDoubleClickHandler>().scheduleKeymapShortcutSync()
     }
   }
 
-  private fun installKeymapShortcutTracker() {
-    if (!keymapShortcutTrackerInstalled.compareAndSet(false, true)) {
-      return
+  internal class KeymapShortcutChangeListener : KeymapManagerListener {
+    override fun activeKeymapChanged(keymap: Keymap?) {
+      scheduleKeymapShortcutSyncIfCreated()
     }
 
-    scheduleKeymapShortcutSync()
-    ApplicationManager.getApplication().messageBus.connect().subscribe(KeymapManagerListener.TOPIC, object : KeymapManagerListener {
-      override fun activeKeymapChanged(keymap: Keymap?) {
-        scheduleKeymapShortcutSync()
-      }
-
-      override fun shortcutsChanged(keymap: Keymap, @NonNls actionIds: Collection<String>, fromSettings: Boolean) {
-        scheduleKeymapShortcutSync()
-      }
-    })
+    override fun shortcutsChanged(keymap: Keymap, @NonNls actionIds: Collection<String>, fromSettings: Boolean) {
+      scheduleKeymapShortcutSyncIfCreated()
+    }
   }
 
   private fun scheduleKeymapShortcutSync() {

@@ -288,6 +288,25 @@ class ModifierKeyDoubleClickHandlerTest {
   }
 
   @Test
+  fun keymapGestureShortcutListenerResyncsRuntimeDoubleClick() {
+    val doubleClickHandler = ModifierKeyDoubleClickHandler.getInstance()
+
+    resetActionShortcuts(MY_KEYMAP_CTRL_CTRL_ACTION, listOf(CTRL_CTRL_SHORTCUT))
+    waitUntilAssertSucceedsBlocking(timeout = 2.seconds) {
+      assertTrue(doubleClickHandler.isShortcutRegistered(MY_KEYMAP_CTRL_CTRL_ACTION, CTRL_CTRL_SHORTCUT))
+    }
+    dispatchCtrlDoubleClick()
+    assertEquals(1, keymapCtrlCtrlActionInvocationCount)
+
+    resetActionShortcuts(MY_KEYMAP_CTRL_CTRL_ACTION, emptyList())
+    waitUntilAssertSucceedsBlocking(timeout = 2.seconds) {
+      assertFalse(doubleClickHandler.isShortcutRegistered(MY_KEYMAP_CTRL_CTRL_ACTION, CTRL_CTRL_SHORTCUT))
+    }
+    dispatchCtrlDoubleClick()
+    assertEquals(1, keymapCtrlCtrlActionInvocationCount)
+  }
+
+  @Test
   fun keymapGestureShortcutSurvivesRuntimeResyncDuringDoubleClick() {
     resetActionShortcuts(MY_KEYMAP_CTRL_CTRL_ACTION, listOf(CTRL_CTRL_SHORTCUT))
     syncKeymapShortcuts()
