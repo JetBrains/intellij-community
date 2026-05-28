@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io
 
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.util.io.stats.CachedChannelsStatistics
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -10,9 +11,15 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.api.assertThrows
+import java.io.DataOutputStream
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
+import java.nio.ByteBuffer
+import java.nio.MappedByteBuffer
 import java.nio.channels.FileChannel
+import java.nio.channels.FileLock
+import java.nio.channels.ReadableByteChannel
+import java.nio.channels.WritableByteChannel
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption.CREATE
@@ -216,7 +223,90 @@ internal class PersistentHashMapValueStorageContractTest {
     assertEquals(0, channelsAccessor.idempotentOperations, "Adapter append protocol must not use retryable idempotent operations")
     assertTrue(channelsAccessor.operations.any { !it.readOnly }, "Adapter must use the supplied accessor for write operations")
     assertTrue(channelsAccessor.operations.any { it.readOnly }, "Adapter must use the supplied accessor for read operations")
+    assertTrue(
+      channelsAccessor.channelOperations.any { it.path == storageFile && it.name == "read" && it.readOnly == false },
+      "Writable value storage must read value bytes through the writable accessor channel"
+    )
+    assertTrue(
+      channelsAccessor.channelOperations.any { it.path == storageFile && it.name == "read" && it.readOnly == true },
+      "Read-only value storage must read value bytes through the read-only accessor channel"
+    )
     assertTrue(channelsAccessor.closedPaths.contains(storageFile), "Adapter disposal must close channels through the supplied accessor")
+  }
+
+  @Test
+  fun `compressed value storage side files use StorageLockContext ChannelsAccessor`() {
+    val storageFile = tempDir.resolve("compressed-channel-accessor-side-files.values")
+    val chunkLengthFile = storageFile.resolveSibling("${storageFile.fileName}.s")
+    val incompleteChunkFile = storageFile.resolveSibling("${storageFile.fileName}.at")
+    val payload = ByteArray(COMPRESSED_ACCESSOR_PAYLOAD_SIZE) { index -> (index % 251).toByte() }
+    val channelsAccessor = RecordingChannelsAccessor()
+    val lockContext = StorageLockContext(false, channelsAccessor)
+    val config = TestConfig(name = "compressed", hasNoChunks = false, useCompression = true)
+
+    val address = withStorage(storageFile, config, readOnly = false, lockContext = lockContext) { storage ->
+      storage.appendPayload(payload, previousTailAddress = 0).also {
+        storage.force()
+      }
+    }
+
+    withStorage(storageFile, config, readOnly = true, lockContext = lockContext) { storage ->
+      storage.assertRecord(address, payload, 1, "Compressed value storage must read side files through the custom accessor")
+    }
+
+    assertTrue(
+      channelsAccessor.operations.any { it.path == chunkLengthFile && !it.readOnly },
+      "Compressed storage must append chunk lengths through the supplied accessor"
+    )
+    assertTrue(
+      channelsAccessor.operations.any { it.path == chunkLengthFile && it.readOnly },
+      "Compressed storage must read chunk length table through the supplied accessor"
+    )
+    assertTrue(
+      channelsAccessor.operations.any { it.path == incompleteChunkFile && !it.readOnly },
+      "Compressed storage must write incomplete chunk file through the supplied accessor"
+    )
+    assertTrue(
+      channelsAccessor.operations.any { it.path == incompleteChunkFile && it.readOnly },
+      "Compressed storage must read incomplete chunk file through the supplied accessor"
+    )
+    assertTrue(channelsAccessor.closedPaths.contains(chunkLengthFile),
+               "Compressed storage must close chunk length channels through the accessor")
+    assertTrue(channelsAccessor.closedPaths.contains(incompleteChunkFile),
+               "Compressed storage must close incomplete chunk channels through the accessor")
+    assertEquals(0, channelsAccessor.idempotentOperations, "Compressed side-file access must not use retryable idempotent operations")
+  }
+
+  @Test
+  fun `compressed incomplete chunk clear is forced even when side file becomes empty`() {
+    val storageFile = tempDir.resolve("compressed-forced-incomplete-tail-clear.values")
+    val incompleteChunkFile = storageFile.resolveSibling("${storageFile.fileName}.at")
+    val channelsAccessor = RecordingChannelsAccessor()
+    val lockContext = StorageLockContext(false, channelsAccessor)
+    val config = TestConfig(name = "compressed-hasNoChunks-true", hasNoChunks = true, useCompression = true)
+
+    withStorage(storageFile, config, readOnly = false, lockContext = lockContext) { storage ->
+      storage.appendPayload(byteArrayOf(1), previousTailAddress = 0)
+      storage.force()
+
+      val payloadLength = payloadLengthToFillCompressedPage(storage.size, config.hasNoChunks)
+      storage.appendPayload(ByteArray(payloadLength) { index -> (index % 251).toByte() }, previousTailAddress = 0)
+      storage.force()
+
+      assertEquals(
+        CompressedAppendableFile.PAGE_LENGTH.toLong(),
+        storage.size,
+        "precondition: second append must finish the compressed page and clear the incomplete tail"
+      )
+    }
+
+    val incompleteTailOperations = channelsAccessor.channelOperations.filter { it.path == incompleteChunkFile }
+    val truncateIndex = incompleteTailOperations.indexOfFirst { it.name == "truncate" && it.size == 0L }
+    assertTrue(truncateIndex >= 0, "Compressed storage must truncate the incomplete chunk side-file when a page is completed")
+    assertTrue(
+      incompleteTailOperations.drop(truncateIndex + 1).any { it.name == "force" },
+      "Incomplete chunk side-file clear must be forced even though the side-file size becomes 0"
+    )
   }
 
   /** Keeps the generated operation stream reproducible and reports enough context when a generated case fails. */
@@ -400,6 +490,7 @@ internal class PersistentHashMapValueStorageContractTest {
 
   private class RecordingChannelsAccessor : ChannelsAccessor {
     val operations = ArrayList<Operation>()
+    val channelOperations = ArrayList<ChannelOperation>()
     val closedPaths = ArrayList<Path>()
     var activeChannels = 0
       private set
@@ -420,7 +511,7 @@ internal class PersistentHashMapValueStorageContractTest {
       activeChannels++
       try {
         FileChannel.open(path, *options).use { channel ->
-          return operation.execute(channel)
+          return operation.execute(RecordingFileChannel(path, readOnly, channel, channelOperations))
         }
       }
       finally {
@@ -442,11 +533,83 @@ internal class PersistentHashMapValueStorageContractTest {
     }
 
     data class Operation(val path: Path, val readOnly: Boolean)
+
+    data class ChannelOperation(val path: Path, val name: String, val size: Long? = null, val readOnly: Boolean? = null)
+
+    private class RecordingFileChannel(
+      private val path: Path,
+      private val readOnly: Boolean,
+      private val delegate: FileChannel,
+      private val operations: MutableList<ChannelOperation>,
+    ) : FileChannel() {
+      override fun read(dst: ByteBuffer): Int {
+        operations.add(ChannelOperation(path, "read", readOnly = readOnly))
+        return delegate.read(dst)
+      }
+
+      override fun read(dsts: Array<out ByteBuffer>, offset: Int, length: Int): Long = delegate.read(dsts, offset, length)
+
+      override fun read(dst: ByteBuffer, position: Long): Int {
+        operations.add(ChannelOperation(path, "read", readOnly = readOnly))
+        return delegate.read(dst, position)
+      }
+
+      override fun write(src: ByteBuffer): Int = delegate.write(src)
+
+      override fun write(srcs: Array<out ByteBuffer>, offset: Int, length: Int): Long = delegate.write(srcs, offset, length)
+
+      override fun write(src: ByteBuffer, position: Long): Int = delegate.write(src, position)
+
+      override fun position(): Long = delegate.position()
+
+      override fun position(newPosition: Long): FileChannel {
+        delegate.position(newPosition)
+        return this
+      }
+
+      override fun size(): Long = delegate.size()
+
+      override fun truncate(size: Long): FileChannel {
+        operations.add(ChannelOperation(path, "truncate", size))
+        delegate.truncate(size)
+        return this
+      }
+
+      override fun force(metaData: Boolean) {
+        operations.add(ChannelOperation(path, "force"))
+        delegate.force(metaData)
+      }
+
+      override fun transferTo(position: Long, count: Long, target: WritableByteChannel): Long {
+        return delegate.transferTo(position, count, target)
+      }
+
+      override fun transferFrom(src: ReadableByteChannel, position: Long, count: Long): Long {
+        return delegate.transferFrom(src, position, count)
+      }
+
+      override fun map(mode: MapMode, position: Long, size: Long): MappedByteBuffer {
+        return delegate.map(mode, position, size)
+      }
+
+      override fun lock(position: Long, size: Long, shared: Boolean): FileLock {
+        return delegate.lock(position, size, shared)
+      }
+
+      override fun tryLock(position: Long, size: Long, shared: Boolean): FileLock? {
+        return delegate.tryLock(position, size, shared)
+      }
+
+      override fun implCloseChannel() {
+        delegate.close()
+      }
+    }
   }
 
   private companion object {
     private const val OPERATION_COUNT = 120
     private const val ACCESSOR_SECOND_PAYLOAD_SIZE = 4096
+    private const val COMPRESSED_ACCESSOR_PAYLOAD_SIZE = 32768 + 128
 
     private val SEEDS = listOf(1L, 2L, 5L, 20260528L)
 
@@ -499,6 +662,27 @@ internal class PersistentHashMapValueStorageContractTest {
 
     private fun accessorSecondPayload(): ByteArray {
       return ByteArray(ACCESSOR_SECOND_PAYLOAD_SIZE) { index -> (index % 251).toByte() }
+    }
+
+    private fun payloadLengthToFillCompressedPage(currentSize: Long, hasNoChunks: Boolean): Int {
+      val bytesUntilPageEnd = CompressedAppendableFile.PAGE_LENGTH - (currentSize % CompressedAppendableFile.PAGE_LENGTH).toInt()
+      for (payloadLength in 0..bytesUntilPageEnd) {
+        if (valueStorageRecordSize(payloadLength, hasNoChunks) == bytesUntilPageEnd) {
+          return payloadLength
+        }
+      }
+      error("Unable to choose payload size to fill compressed page from currentSize=$currentSize")
+    }
+
+    private fun valueStorageRecordSize(payloadLength: Int, hasNoChunks: Boolean): Int {
+      val stream = BufferExposingByteArrayOutputStream()
+      DataOutputStream(stream).use { output ->
+        DataInputOutputUtil.writeINT(output, payloadLength)
+        if (!hasNoChunks) {
+          DataInputOutputUtil.writeLONG(output, 0)
+        }
+      }
+      return stream.size() + payloadLength
     }
 
     private inline fun <T> withStorage(

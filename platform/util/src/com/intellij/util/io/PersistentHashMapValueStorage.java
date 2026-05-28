@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.annotations.VisibleForTesting;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
@@ -817,12 +818,48 @@ public final class PersistentHashMapValueStorage {
       }, myReadOnly);
     }
 
-    void read(long addr, byte @NotNull [] dst, int off, int len) throws IOException {
-      ByteBuffer wrappedBuffer = ByteBuffer.wrap(dst, off, len);
+    int read(long addr, byte @NotNull [] dst, int off, int len) throws IOException {
+      return myChannelsAccessor.executeOp(myPath, channel -> channel.read(ByteBuffer.wrap(dst, off, len), addr), myReadOnly);
+    }
+
+    /** Replaces side-file content while keeping FileChannel lifetime scoped to the accessor operation. */
+    synchronized void replace(byte @NotNull [] src, int len) throws IOException {
+      if (myReadOnly) {
+        throw new IOException("Value storage is read-only: " + myPath);
+      }
+
+      ByteBuffer buffer = ByteBuffer.wrap(src, 0, len);
       myChannelsAccessor.executeOp(myPath, channel -> {
-        channel.read(wrappedBuffer, addr);
+        long previousSize = channel.size();
+        long writeOffset = 0;
+        while (buffer.hasRemaining()) {
+          int written = channel.write(buffer, writeOffset);
+          if (written <= 0) {
+            throw new IOException("Failed to replace data in " + myPath + ": channel made no progress");
+          }
+          writeOffset += written;
+        }
+        if (len < previousSize) {
+          channel.truncate(len);
+        }
         return null;
       }, myReadOnly);
+      myAppendAtOffset = len;
+    }
+
+    /** Clears a non-empty side-file and returns true if truncation was performed. */
+    synchronized boolean clearIfNonEmpty() throws IOException {
+      if (myReadOnly || !Files.exists(myPath)) return false;
+
+      boolean cleared = myChannelsAccessor.executeOp(myPath, channel -> {
+        if (channel.size() == 0) return false;
+        channel.truncate(0);
+        return true;
+      }, myReadOnly);
+      if (cleared) {
+        myAppendAtOffset = 0;
+      }
+      return cleared;
     }
 
     void force() throws IOException {
@@ -891,6 +928,43 @@ public final class PersistentHashMapValueStorage {
     }
   }
 
+  /** Presents accessor-backed side-file reads as a stream without retaining a FileChannel between reads. */
+  private static final class InputStreamOverFileAccessor extends InputStream {
+    private final @NotNull ChannelAccessorBackedFileAccessor myFileAccessor;
+    private final long myLimit;
+    private long myPosition;
+
+    InputStreamOverFileAccessor(@NotNull ChannelAccessorBackedFileAccessor fileAccessor, long limit) {
+      myFileAccessor = fileAccessor;
+      myLimit = limit;
+    }
+
+    @Override
+    public int read(byte @NotNull [] b, int off, int len) throws IOException {
+      if (len == 0) return 0;
+      if (myPosition >= myLimit) return -1;
+
+      int bytesToRead = (int)Math.min(len, myLimit - myPosition);
+      int bytesRead = myFileAccessor.read(myPosition, b, off, bytesToRead);
+      if (bytesRead < 0) return -1;
+
+      myPosition += bytesRead;
+      return bytesRead;
+    }
+
+    @Override
+    public int read() throws IOException {
+      byte[] buffer = new byte[1];
+      int read = read(buffer);
+      return read == -1 ? -1 : buffer[0] & 0xFF;
+    }
+
+    @Override
+    public int available() {
+      return (int)Math.min(Integer.MAX_VALUE, Math.max(0, myLimit - myPosition));
+    }
+  }
+
   private static final class SyncAbleBufferedOutputStreamOverFileAccessor extends BufferedOutputStream {
     private final @NotNull ChannelAccessorBackedFileAccessor myFileAccessor;
 
@@ -936,11 +1010,14 @@ public final class PersistentHashMapValueStorage {
   private final class MyCompressedAppendableFile extends CompressedAppendableFile {
     private final @NotNull ChannelAccessorBackedFileAccessor myChunkLengthFileAccessor;
     private final @NotNull SyncAbleBufferedOutputStreamOverFileAccessor myChunkLengthAppender;
+    private final @NotNull ChannelAccessorBackedFileAccessor myIncompleteChunkFileAccessor;
 
     MyCompressedAppendableFile() throws IOException {
       super(myPath);
       myChunkLengthFileAccessor = new ChannelAccessorBackedFileAccessor(getChunkLengthFile(), myStorageLockContext, myOptions.myReadOnly);
       myChunkLengthAppender = new SyncAbleBufferedOutputStreamOverFileAccessor(myChunkLengthFileAccessor);
+      myIncompleteChunkFileAccessor =
+        new ChannelAccessorBackedFileAccessor(getIncompleteChunkFile(), myStorageLockContext, myOptions.myReadOnly);
     }
 
     @Override
@@ -962,6 +1039,39 @@ public final class PersistentHashMapValueStorage {
     }
 
     @Override
+    protected long getChunkLengthFileSize() throws IOException {
+      return myChunkLengthFileAccessor.sizeIfExists();
+    }
+
+    @Override
+    protected @NotNull InputStream getChunkLengthInputStream(long limit) {
+      return new BufferedInputStream(new InputStreamOverFileAccessor(myChunkLengthFileAccessor, limit), 32768);
+    }
+
+    @Override
+    protected long getIncompleteChunkFileSize() throws IOException {
+      return myIncompleteChunkFileAccessor.sizeIfExists();
+    }
+
+    @Override
+    protected @NotNull InputStream getIncompleteChunkInputStream(long limit) {
+      return new InputStreamOverFileAccessor(myIncompleteChunkFileAccessor, limit);
+    }
+
+    @Override
+    protected void writeIncompleteChunkFile(byte @NotNull [] buffer, int length) throws IOException {
+      myIncompleteChunkFileAccessor.replace(buffer, length);
+      myIncompleteChunkFileAccessor.force();
+    }
+
+    @Override
+    protected void deleteIncompleteChunkFileIfExists() throws IOException {
+      if (myIncompleteChunkFileAccessor.clearIfNonEmpty()) {
+        myIncompleteChunkFileAccessor.force();
+      }
+    }
+
+    @Override
     protected @NotNull Path getChunksFile() {
       return myPath;
     }
@@ -978,6 +1088,7 @@ public final class PersistentHashMapValueStorage {
 
       disposeAppender(myChunkLengthAppender);
       closeFileAccessor(myChunkLengthFileAccessor);
+      closeFileAccessor(myIncompleteChunkFileAccessor);
     }
   }
 
