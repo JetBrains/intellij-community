@@ -73,6 +73,8 @@ class MarkdownFormatterTest: LightPlatformCodeInsightTestCase() {
 
   fun `test blockquote with list item wrap`() = doTest(rightMargin = 80, insertQuoteArrows = true)
 
+  fun `test blockquote with numbered list`() = doTest(rightMargin = 80, insertQuoteArrows = true)
+
   override fun getTestDataPath(): String {
     return MarkdownTestingUtil.TEST_DATA_PATH + "/formatter/"
   }
