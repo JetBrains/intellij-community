@@ -25,6 +25,7 @@ fun runSuppressing(vararg blocks: () -> Unit) {
 }
 
 /** A Java-friendly overload of [runSuppressing]. */
+@SafeVarargs
 fun runSuppressing(vararg runnables: ThrowableRunnable<Throwable>) {
   var first: Throwable? = null
 
