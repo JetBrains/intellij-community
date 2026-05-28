@@ -181,7 +181,7 @@ class CodexAgentSessionProviderDescriptorTest {
   }
 
   @Test
-  fun planModeBuildsSplitPostStartDispatchSteps() {
+  fun planModeBuildsAtomicPostStartDispatchStep() {
     val steps = bridge.buildPostStartDispatchSteps(
       AgentInitialMessagePlan(
         message = "Refactor this",
@@ -192,13 +192,28 @@ class CodexAgentSessionProviderDescriptorTest {
 
     assertThat(steps).containsExactly(
       com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep(
-        text = AGENT_PROMPT_PLAN_MODE_COMMAND,
+        text = "$AGENT_PROMPT_PLAN_MODE_COMMAND Refactor this",
         timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
         completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
       ),
-      com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep(
-        text = "Refactor this",
+    )
+  }
+
+  @Test
+  fun emptyPlanModeBuildsPlanCommandOnlyPostStartDispatchStep() {
+    val steps = bridge.buildPostStartDispatchSteps(
+      AgentInitialMessagePlan(
+        message = "",
+        mode = AgentInitialMessageMode.PLAN,
         timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
+      )
+    )
+
+    assertThat(steps).containsExactly(
+      com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep(
+        text = AGENT_PROMPT_PLAN_MODE_COMMAND,
+        timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
+        completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
       ),
     )
   }
@@ -235,6 +250,8 @@ class CodexAgentSessionProviderDescriptorTest {
     assertThat(manualPlanCommand.message).isEqualTo("from manual input")
     assertThat(manualPlanCommand.startupPolicy).isEqualTo(AgentInitialMessageStartupPolicy.POST_START_ONLY)
     assertThat(manualPlanCommand.timeoutPolicy).isEqualTo(AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS)
+    assertThat(bridge.buildPostStartDispatchSteps(manualPlanCommand).single().text)
+      .isEqualTo("$AGENT_PROMPT_PLAN_MODE_COMMAND from manual input")
   }
 
   @Test

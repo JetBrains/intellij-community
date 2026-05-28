@@ -42,7 +42,7 @@ class CodexNewThreadPromptLaunchIntegrationTest {
     assertThat(observation.launchSpec.command)
       .containsExactlyElementsOf(CODEX_BASE_COMMAND)
     assertThat(observation.startupLaunchSpecOverride).isNull()
-    assertThat(observation.postStartDispatchSteps.map { it.text }).containsExactly("/plan", "Plan this refactor")
+    assertThat(observation.postStartDispatchSteps.map { it.text }).containsExactly("/plan Plan this refactor")
     assertThat(observation.initialMessageToken).isNotNull()
   }
 
@@ -68,7 +68,7 @@ class CodexNewThreadPromptLaunchIntegrationTest {
     assertThat(observation.launchSpec.command)
       .containsExactlyElementsOf(CODEX_BASE_COMMAND)
     assertThat(observation.startupLaunchSpecOverride).isNull()
-    assertThat(observation.postStartDispatchSteps.map { it.text }).containsExactly("/plan", "Refactor selected code")
+    assertThat(observation.postStartDispatchSteps.map { it.text }).containsExactly("/plan Refactor selected code")
     assertThat(observation.initialMessageToken).isNotNull()
   }
 

@@ -63,7 +63,9 @@ internal class CodexRolloutThreadIndex(
   }
 
   fun snapshotCachedFiles(): Map<String, FileBackedSessionCachedFile<ParsedRolloutThread?>> {
-    return invalidationState.snapshotCachedFiles()
+    return synchronized(cacheLock) {
+      LinkedHashMap(cachedFilesByPath)
+    }
   }
 
   fun collectByCwd(cwdFilters: Set<String>): Map<String, List<CodexBackendThread>> {

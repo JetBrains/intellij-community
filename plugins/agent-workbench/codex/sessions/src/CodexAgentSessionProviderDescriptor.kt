@@ -194,23 +194,14 @@ internal class CodexAgentSessionProviderDescriptor(
     }
 
     val message = initialMessagePlan.message ?: return emptyList()
-    return buildList {
-      add(
-        AgentInitialMessageDispatchStep(
-          text = AGENT_PROMPT_PLAN_MODE_COMMAND,
-          timeoutPolicy = initialMessagePlan.timeoutPolicy,
-          completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
-        )
+    val planCommand = if (message.isEmpty()) AGENT_PROMPT_PLAN_MODE_COMMAND else "$AGENT_PROMPT_PLAN_MODE_COMMAND $message"
+    return listOf(
+      AgentInitialMessageDispatchStep(
+        text = planCommand,
+        timeoutPolicy = initialMessagePlan.timeoutPolicy,
+        completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
       )
-      if (message.isNotEmpty()) {
-        add(
-          AgentInitialMessageDispatchStep(
-            text = message,
-            timeoutPolicy = initialMessagePlan.timeoutPolicy,
-          )
-        )
-      }
-    }
+    )
   }
 
   override suspend fun archiveThread(path: String, threadId: String): Boolean {
