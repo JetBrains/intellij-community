@@ -62,5 +62,8 @@
     <registryKey key="agent.workbench.chat.rollout.poll.enabled"
                  defaultValue="false"
                  description="Enable fallback polling of agent rollout/session state after terminal input or output"/>
+    <registryKey key="agent.workbench.chat.terminal.output.scoped.refresh.enabled"
+                 defaultValue="false"
+                 description="Kill-switch fallback: enable scoped session refresh from terminal output in Agent Workbench chat tabs. Off by default; primary refresh path is the provider session source update with project-file-change evidence. Toggle on only if the primary path is missing refreshes for a specific provider."/>
   </extensions>
 </idea-plugin>

@@ -92,6 +92,7 @@ internal class CodexRolloutParser(
       path = path,
       normalizedCwd = normalizedCwd,
       parentThreadId = state.parentThreadId,
+      projectFilesChangedAt = state.projectFilesChangedAt,
       thread = CodexBackendThread(
         thread = CodexThread(
           id = resolvedSessionId,
@@ -201,12 +202,18 @@ private fun reduceEvent(parseState: RolloutParseState, event: RolloutEvent) {
           parseState.markPendingApproval(eventTimestamp = eventTimestamp, callId = event.payloadCallId, turnId = event.payloadTurnId)
         }
 
-        "execcommandbegin", "patchapplybegin" -> {
+        in PROJECT_MUTATING_BEGIN_EVENT_TYPES -> {
           parseState.clearPendingApprovalForStartedTool(callId = event.payloadCallId, turnId = event.payloadTurnId)
-          parseState.markPendingFunctionCall(eventTimestamp = eventTimestamp, callId = event.payloadCallId, turnId = event.payloadTurnId)
+          parseState.markPendingFunctionCall(
+            eventTimestamp = eventTimestamp,
+            callId = event.payloadCallId,
+            turnId = event.payloadTurnId,
+            projectMutating = true,
+          )
         }
 
-        "execcommandend", "patchapplyend" -> {
+        in PROJECT_MUTATING_END_EVENT_TYPES -> {
+          parseState.markProjectFilesChanged(eventTimestamp)
           parseState.clearPendingFunctionCallForFinishedTool(callId = event.payloadCallId, turnId = event.payloadTurnId)
         }
 
@@ -250,17 +257,24 @@ private fun reduceEvent(parseState: RolloutParseState, event: RolloutEvent) {
                 eventTimestamp = eventTimestamp,
                 callId = event.payloadCallId,
                 turnId = event.payloadTurnId,
+                projectMutating = isProjectMutatingFunctionCall(event),
               )
             }
           }
           else {
-            parseState.markPendingFunctionCall(eventTimestamp = eventTimestamp, callId = event.payloadCallId, turnId = event.payloadTurnId)
+            parseState.markPendingFunctionCall(
+              eventTimestamp = eventTimestamp,
+              callId = event.payloadCallId,
+              turnId = event.payloadTurnId,
+              projectMutating = isProjectMutatingFunctionCall(event),
+            )
           }
         }
 
         "functioncalloutput" -> {
           event.payloadCallId?.let(parseState.pendingUserInputByCallId::remove)
           event.payloadCallId?.let(parseState.pendingApprovalByCallId::remove)
+          parseState.markProjectFilesChangedForCompletedFunctionCall(eventTimestamp = eventTimestamp, callId = event.payloadCallId)
           event.payloadCallId?.let(parseState.pendingFunctionCallByCallId::remove)
         }
       }
@@ -372,6 +386,7 @@ internal data class ParsedRolloutThread(
   @JvmField val path: Path,
   @JvmField val normalizedCwd: String,
   @JvmField val parentThreadId: String?,
+  @JvmField val projectFilesChangedAt: Long,
   @JvmField val thread: CodexBackendThread,
 )
 
@@ -413,6 +428,7 @@ private data class RolloutParseState(
   @JvmField var latestAgentMessageAt: Long = Long.MIN_VALUE,
   @JvmField var latestPlanAt: Long = Long.MIN_VALUE,
   @JvmField var usageSnapshot: AgentSessionUsageSnapshot? = null,
+  @JvmField var projectFilesChangedAt: Long = Long.MIN_VALUE,
   @JvmField val pendingUserInputByCallId: LinkedHashMap<String, Long> = LinkedHashMap(),
   @JvmField val pendingApprovalByCallId: LinkedHashMap<String, PendingApproval> = LinkedHashMap(),
   @JvmField val pendingFunctionCallByCallId: LinkedHashMap<String, PendingFunctionCall> = LinkedHashMap(),
@@ -429,6 +445,7 @@ private data class PendingApproval(
 private data class PendingFunctionCall(
   @JvmField val updatedAt: Long,
   @JvmField val turnId: String?,
+  @JvmField val projectMutating: Boolean,
 )
 
 private fun shouldClearProcessingTurn(parseState: RolloutParseState, completedTurnId: String?): Boolean {
@@ -455,12 +472,27 @@ private fun RolloutParseState.markPendingApproval(eventTimestamp: Long?, callId:
   }
 }
 
-private fun RolloutParseState.markPendingFunctionCall(eventTimestamp: Long?, callId: String?, turnId: String?) {
+private fun RolloutParseState.markPendingFunctionCall(eventTimestamp: Long?, callId: String?, turnId: String?, projectMutating: Boolean) {
   val resolvedTimestamp = eventTimestamp ?: updatedAt
   val resolvedCallId = callId ?: "pending-function-call-${nextSyntheticPendingFunctionCallId++}"
   val previous = pendingFunctionCallByCallId[resolvedCallId]
   if (previous == null || resolvedTimestamp >= previous.updatedAt) {
-    pendingFunctionCallByCallId[resolvedCallId] = PendingFunctionCall(updatedAt = resolvedTimestamp, turnId = turnId)
+    pendingFunctionCallByCallId[resolvedCallId] = PendingFunctionCall(
+      updatedAt = resolvedTimestamp,
+      turnId = turnId,
+      projectMutating = projectMutating || previous?.projectMutating == true,
+    )
+  }
+}
+
+private fun RolloutParseState.markProjectFilesChanged(eventTimestamp: Long?) {
+  projectFilesChangedAt = maxTimestamp(projectFilesChangedAt, eventTimestamp ?: updatedAt)
+}
+
+private fun RolloutParseState.markProjectFilesChangedForCompletedFunctionCall(eventTimestamp: Long?, callId: String?) {
+  val pendingFunctionCall = callId?.let(pendingFunctionCallByCallId::get) ?: return
+  if (pendingFunctionCall.projectMutating) {
+    markProjectFilesChanged(eventTimestamp)
   }
 }
 
@@ -523,6 +555,17 @@ private fun isApprovalFunctionCall(event: RolloutEvent): Boolean {
 private fun isToolFunctionCall(event: RolloutEvent): Boolean {
   return normalizeToken(event.payloadName) != "requestpermissions"
 }
+
+private fun isProjectMutatingFunctionCall(event: RolloutEvent): Boolean {
+  return normalizeToken(event.payloadName) in PROJECT_MUTATING_FUNCTION_CALL_NAMES
+}
+
+// Centralized so renames in the Codex CLI event taxonomy break in one place rather than silently
+// causing the project-file-change evidence path to no-op. Tokens are normalized: lowercased with
+// underscores/dashes removed by normalizeToken().
+private val PROJECT_MUTATING_BEGIN_EVENT_TYPES = setOf("execcommandbegin", "patchapplybegin")
+private val PROJECT_MUTATING_END_EVENT_TYPES = setOf("execcommandend", "patchapplyend")
+private val PROJECT_MUTATING_FUNCTION_CALL_NAMES = setOf("execcommand", "applypatch")
 
 private fun argumentsRequireEscalatedSandbox(arguments: String?): Boolean {
   val text = arguments?.trim()?.takeIf { it.isNotEmpty() } ?: return false

@@ -626,6 +626,216 @@ class ClaudeStoreSessionBackendTest {
         assertThat(update.threadIds).containsExactly("session-scoped-updates")
         assertThat(update.activityHintsByThreadId).containsEntry("session-scoped-updates", AgentThreadActivity.READY)
         assertThat(update.activityHintPolicy).isEqualTo(AgentSessionActivityHintPolicy.AUTHORITATIVE)
+        assertThat(update.mayHaveChangedProjectFiles).isFalse()
+      }
+      finally {
+        updatesJob.cancelAndJoin()
+      }
+    }
+  }
+
+  @Test
+  fun scopedSessionUpdateWithCompletedMutatingToolIncludesProjectFileChangeEvidence() {
+    runBlocking(Dispatchers.Default) {
+      val projectPath = "/work/project-mutating-tool-update"
+      val encodedPath = "-work-project-mutating-tool-update"
+      val projectDir = tempDir.resolve(".claude").resolve("projects").resolve(encodedPath)
+      Files.createDirectories(projectDir)
+
+      val jsonl = projectDir.resolve("session-mutating-tool-update.jsonl")
+      writeJsonl(
+        jsonl,
+        listOf(
+          claudeUserLine("2026-02-10T10:00:00.000Z", "session-mutating-tool-update", projectPath, "Change files"),
+          claudeAssistantToolUseLine("2026-02-10T10:00:01.000Z",
+                                     "session-mutating-tool-update",
+                                     projectPath,
+                                     "writing",
+                                     toolUseId = "tool-write-1",
+                                     toolName = "Write"),
+          claudeToolResultLine("2026-02-10T10:00:02.000Z", "session-mutating-tool-update", projectPath, "tool-write-1"),
+        ),
+      )
+
+      val sourceUpdates = MutableSharedFlow<FileBackedSessionChangeSet>(replay = 1, extraBufferCapacity = 1)
+      val backend = ClaudeStoreSessionBackend(
+        claudeHomeProvider = { tempDir.resolve(".claude") },
+        changeSource = { sourceUpdates },
+      )
+      val updates = Channel<AgentSessionSourceUpdateEvent>(capacity = Channel.CONFLATED)
+      val updatesJob = launch {
+        backend.sessionUpdates.collect { update ->
+          updates.trySend(update)
+        }
+      }
+
+      try {
+        sourceUpdates.emit(FileBackedSessionChangeSet(changedPaths = setOf(jsonl)))
+
+        val update = withTimeout(5.seconds) { updates.receive() }
+        assertThat(update.type).isEqualTo(AgentSessionSourceUpdate.THREADS_CHANGED)
+        assertThat(update.scopedPaths).containsExactly(projectPath)
+        assertThat(update.threadIds).containsExactly("session-mutating-tool-update")
+        assertThat(update.mayHaveChangedProjectFiles).isTrue()
+      }
+      finally {
+        updatesJob.cancelAndJoin()
+      }
+    }
+  }
+
+  @Test
+  fun loadedCompletedMutatingToolDoesNotMakeLaterStatusOnlyUpdateProjectMutating() {
+    runBlocking(Dispatchers.Default) {
+      val projectPath = "/work/project-status-only-after-tool"
+      val encodedPath = "-work-project-status-only-after-tool"
+      val projectDir = tempDir.resolve(".claude").resolve("projects").resolve(encodedPath)
+      Files.createDirectories(projectDir)
+
+      val jsonl = projectDir.resolve("session-status-only-after-tool.jsonl")
+      writeJsonl(
+        jsonl,
+        listOf(
+          claudeUserLine("2026-02-10T10:00:00.000Z", "session-status-only-after-tool", projectPath, "Change files"),
+          claudeAssistantToolUseLine("2026-02-10T10:00:01.000Z",
+                                     "session-status-only-after-tool",
+                                     projectPath,
+                                     "editing",
+                                     toolUseId = "tool-edit-1",
+                                     toolName = "Edit"),
+          claudeToolResultLine("2026-02-10T10:00:02.000Z", "session-status-only-after-tool", projectPath, "tool-edit-1"),
+        ),
+      )
+
+      val sourceUpdates = MutableSharedFlow<FileBackedSessionChangeSet>(replay = 1, extraBufferCapacity = 1)
+      val backend = ClaudeStoreSessionBackend(
+        claudeHomeProvider = { tempDir.resolve(".claude") },
+        changeSource = { sourceUpdates },
+      )
+      val loadedThreads = backend.listThreads(path = projectPath, openProject = null)
+      assertThat(loadedThreads).hasSize(1)
+
+      val updates = Channel<AgentSessionSourceUpdateEvent>(capacity = Channel.CONFLATED)
+      val updatesJob = launch {
+        backend.sessionUpdates.collect { update ->
+          updates.trySend(update)
+        }
+      }
+
+      try {
+        appendJsonl(
+          jsonl,
+          listOf(claudeAssistantLine("2026-02-10T10:00:03.000Z", "session-status-only-after-tool", projectPath, "Done")),
+        )
+        sourceUpdates.emit(FileBackedSessionChangeSet(changedPaths = setOf(jsonl)))
+
+        val update = withTimeout(5.seconds) { updates.receive() }
+        assertThat(update.type).isEqualTo(AgentSessionSourceUpdate.THREADS_CHANGED)
+        assertThat(update.scopedPaths).containsExactly(projectPath)
+        assertThat(update.threadIds).containsExactly("session-status-only-after-tool")
+        assertThat(update.mayHaveChangedProjectFiles).isFalse()
+      }
+      finally {
+        updatesJob.cancelAndJoin()
+      }
+    }
+  }
+
+  @Test
+  fun completedMutatingToolBeforeTailWindowIncludesProjectFileChangeEvidence() {
+    runBlocking(Dispatchers.Default) {
+      val projectPath = "/work/project-tail-mutating-tool"
+      val encodedPath = "-work-project-tail-mutating-tool"
+      val projectDir = tempDir.resolve(".claude").resolve("projects").resolve(encodedPath)
+      Files.createDirectories(projectDir)
+
+      val jsonl = projectDir.resolve("session-tail-mutating-tool.jsonl")
+      writeJsonl(
+        jsonl,
+        listOf(
+          claudeUserLine("2026-02-10T10:00:00.000Z", "session-tail-mutating-tool", projectPath, "Change files"),
+          claudeAssistantToolUseLine("2026-02-10T10:00:01.000Z",
+                                     "session-tail-mutating-tool",
+                                     projectPath,
+                                     "writing",
+                                     toolUseId = "tool-write-tail",
+                                     toolName = "Write"),
+          claudeAssistantLine("2026-02-10T10:00:02.000Z", "session-tail-mutating-tool", projectPath, "x".repeat(20_000)),
+          claudeToolResultLine("2026-02-10T10:00:03.000Z", "session-tail-mutating-tool", projectPath, "tool-write-tail"),
+        ),
+      )
+
+      val sourceUpdates = MutableSharedFlow<FileBackedSessionChangeSet>(replay = 1, extraBufferCapacity = 1)
+      val backend = ClaudeStoreSessionBackend(
+        claudeHomeProvider = { tempDir.resolve(".claude") },
+        changeSource = { sourceUpdates },
+      )
+      val updates = Channel<AgentSessionSourceUpdateEvent>(capacity = Channel.CONFLATED)
+      val updatesJob = launch {
+        backend.sessionUpdates.collect { update ->
+          updates.trySend(update)
+        }
+      }
+
+      try {
+        sourceUpdates.emit(FileBackedSessionChangeSet(changedPaths = setOf(jsonl)))
+
+        val update = withTimeout(5.seconds) { updates.receive() }
+        assertThat(update.type).isEqualTo(AgentSessionSourceUpdate.THREADS_CHANGED)
+        assertThat(update.scopedPaths).containsExactly(projectPath)
+        assertThat(update.threadIds).containsExactly("session-tail-mutating-tool")
+        assertThat(update.mayHaveChangedProjectFiles).isTrue()
+      }
+      finally {
+        updatesJob.cancelAndJoin()
+      }
+    }
+  }
+
+  @Test
+  fun completedNonMutatingToolBeforeTailWindowDoesNotIncludeProjectFileChangeEvidence() {
+    runBlocking(Dispatchers.Default) {
+      val projectPath = "/work/project-tail-non-mutating-tool"
+      val encodedPath = "-work-project-tail-non-mutating-tool"
+      val projectDir = tempDir.resolve(".claude").resolve("projects").resolve(encodedPath)
+      Files.createDirectories(projectDir)
+
+      val jsonl = projectDir.resolve("session-tail-non-mutating-tool.jsonl")
+      writeJsonl(
+        jsonl,
+        listOf(
+          claudeUserLine("2026-02-10T10:00:00.000Z", "session-tail-non-mutating-tool", projectPath, "Read files"),
+          claudeAssistantToolUseLine("2026-02-10T10:00:01.000Z",
+                                     "session-tail-non-mutating-tool",
+                                     projectPath,
+                                     "reading",
+                                     toolUseId = "tool-read-tail",
+                                     toolName = "Read"),
+          claudeAssistantLine("2026-02-10T10:00:02.000Z", "session-tail-non-mutating-tool", projectPath, "x".repeat(20_000)),
+          claudeToolResultLine("2026-02-10T10:00:03.000Z", "session-tail-non-mutating-tool", projectPath, "tool-read-tail"),
+        ),
+      )
+
+      val sourceUpdates = MutableSharedFlow<FileBackedSessionChangeSet>(replay = 1, extraBufferCapacity = 1)
+      val backend = ClaudeStoreSessionBackend(
+        claudeHomeProvider = { tempDir.resolve(".claude") },
+        changeSource = { sourceUpdates },
+      )
+      val updates = Channel<AgentSessionSourceUpdateEvent>(capacity = Channel.CONFLATED)
+      val updatesJob = launch {
+        backend.sessionUpdates.collect { update ->
+          updates.trySend(update)
+        }
+      }
+
+      try {
+        sourceUpdates.emit(FileBackedSessionChangeSet(changedPaths = setOf(jsonl)))
+
+        val update = withTimeout(5.seconds) { updates.receive() }
+        assertThat(update.type).isEqualTo(AgentSessionSourceUpdate.THREADS_CHANGED)
+        assertThat(update.scopedPaths).containsExactly(projectPath)
+        assertThat(update.threadIds).containsExactly("session-tail-non-mutating-tool")
+        assertThat(update.mayHaveChangedProjectFiles).isFalse()
       }
       finally {
         updatesJob.cancelAndJoin()
@@ -710,6 +920,66 @@ class ClaudeStoreSessionBackendTest {
         assertThat(update.type).isEqualTo(AgentSessionSourceUpdate.THREADS_CHANGED)
         assertThat(update.scopedPaths).isNull()
         assertThat(update.threadIds).isNull()
+      }
+      finally {
+        updatesJob.cancelAndJoin()
+      }
+    }
+  }
+
+  @Test
+  fun fullRescanUpdateIncludesProjectFileChangeEvidence() {
+    runBlocking(Dispatchers.Default) {
+      val sourceUpdates = MutableSharedFlow<FileBackedSessionChangeSet>(replay = 1, extraBufferCapacity = 1)
+      val backend = ClaudeStoreSessionBackend(
+        claudeHomeProvider = { tempDir.resolve(".claude") },
+        changeSource = { sourceUpdates },
+      )
+      val updates = Channel<AgentSessionSourceUpdateEvent>(capacity = Channel.CONFLATED)
+      val updatesJob = launch {
+        backend.sessionUpdates.collect { update ->
+          updates.trySend(update)
+        }
+      }
+
+      try {
+        sourceUpdates.emit(FileBackedSessionChangeSet(requiresFullRescan = true))
+
+        val update = withTimeout(5.seconds) { updates.receive() }
+        assertThat(update.type).isEqualTo(AgentSessionSourceUpdate.THREADS_CHANGED)
+        assertThat(update.scopedPaths).isNull()
+        assertThat(update.threadIds).isNull()
+        assertThat(update.mayHaveChangedProjectFiles).isTrue()
+      }
+      finally {
+        updatesJob.cancelAndJoin()
+      }
+    }
+  }
+
+  @Test
+  fun refreshPingUpdateDoesNotIncludeProjectFileChangeEvidence() {
+    runBlocking(Dispatchers.Default) {
+      val sourceUpdates = MutableSharedFlow<FileBackedSessionChangeSet>(replay = 1, extraBufferCapacity = 1)
+      val backend = ClaudeStoreSessionBackend(
+        claudeHomeProvider = { tempDir.resolve(".claude") },
+        changeSource = { sourceUpdates },
+      )
+      val updates = Channel<AgentSessionSourceUpdateEvent>(capacity = Channel.CONFLATED)
+      val updatesJob = launch {
+        backend.sessionUpdates.collect { update ->
+          updates.trySend(update)
+        }
+      }
+
+      try {
+        sourceUpdates.emit(FileBackedSessionChangeSet())
+
+        val update = withTimeout(5.seconds) { updates.receive() }
+        assertThat(update.type).isEqualTo(AgentSessionSourceUpdate.THREADS_CHANGED)
+        assertThat(update.scopedPaths).isNull()
+        assertThat(update.threadIds).isNull()
+        assertThat(update.mayHaveChangedProjectFiles).isFalse()
       }
       finally {
         updatesJob.cancelAndJoin()

@@ -62,6 +62,10 @@ internal class CodexRolloutThreadIndex(
     }
   }
 
+  fun snapshotCachedFiles(): Map<String, FileBackedSessionCachedFile<ParsedRolloutThread?>> {
+    return invalidationState.snapshotCachedFiles()
+  }
+
   fun collectByCwd(cwdFilters: Set<String>): Map<String, List<CodexBackendThread>> {
     if (cwdFilters.isEmpty()) return emptyMap()
 

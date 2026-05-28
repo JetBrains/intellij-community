@@ -110,6 +110,11 @@ class AgentChatScopedTerminalRefreshControllerTest {
   }
 
   @Test
+  fun terminalOutputScopedRefreshIsDisabledByDefault() {
+    assertThat(isAgentChatTerminalOutputScopedRefreshEnabled()).isFalse()
+  }
+
+  @Test
   fun rolloutPollIsDisabledByDefault() = runBlocking(Dispatchers.Default) {
     val inputChanges = MutableSharedFlow<Unit>(extraBufferCapacity = 16)
     val sessionState = MutableStateFlow<TerminalViewSessionState>(TerminalViewSessionState.Running)

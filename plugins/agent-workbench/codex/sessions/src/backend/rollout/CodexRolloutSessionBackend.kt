@@ -16,6 +16,7 @@ import com.intellij.agent.workbench.codex.sessions.resolveProjectDirectoryFromPa
 import com.intellij.agent.workbench.filewatch.agentWorkbenchImmediateFileChangeFlow
 import com.intellij.agent.workbench.json.filebacked.FileBackedSessionChangeSet
 import com.intellij.agent.workbench.json.filebacked.createFileBackedSessionChangeFlow
+import com.intellij.agent.workbench.json.filebacked.toFileBackedSessionPathKey
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionActivityHintPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
@@ -47,6 +48,8 @@ internal class CodexRolloutSessionBackend(
 ) : CodexSessionBackend {
   private val parser = CodexRolloutParser()
   private val threadIndex = CodexRolloutThreadIndex(codexHomeProvider = codexHomeProvider, parseRollout = parser::parse)
+  private val projectFilesChangedAtByPathKey = HashMap<String, Long>()
+  private val projectFilesChangedAtLock = Any()
   private val rolloutUpdates: Flow<AgentSessionSourceUpdateEvent> = createUpdatesFlow(
     rolloutChangeSource?.invoke() ?: createWatcherUpdates()
   ).conflate()
@@ -91,29 +94,38 @@ internal class CodexRolloutSessionBackend(
   }
 
   private fun buildSessionUpdate(changeSet: FileBackedSessionChangeSet): AgentSessionSourceUpdateEvent {
-    if (changeSet.requiresFullRescan || changeSet.changedPaths.isEmpty()) {
+    if (changeSet.requiresFullRescan) {
       LOG.debug {
-        "Codex rollout update is unscoped (fullRescan=${changeSet.requiresFullRescan}, changedPaths=${changeSet.changedPaths.size})"
+        "Codex rollout update is unscoped (fullRescan=true, changedPaths=${changeSet.changedPaths.size})"
       }
-      return UNSCOPED_ROLLOUT_SESSION_UPDATE
+      return rolloutSessionUpdate(mayHaveChangedProjectFiles = true)
+    }
+
+    if (changeSet.changedPaths.isEmpty()) {
+      LOG.debug { "Codex rollout update is unscoped (refresh ping)" }
+      return rolloutSessionUpdate()
     }
 
     val rolloutPaths = changeSet.changedPaths.filter(::isRolloutPath)
     if (rolloutPaths.isEmpty()) {
       LOG.debug { "Codex rollout update is unscoped (no rollout paths in changedPaths=${changeSet.changedPaths.size})" }
-      return UNSCOPED_ROLLOUT_SESSION_UPDATE
+      return rolloutSessionUpdate()
     }
 
     val scopedPaths = LinkedHashSet<String>()
     val threadIds = LinkedHashSet<String>()
     val activityHintsByThreadId = LinkedHashMap<String, AgentThreadActivity>()
     val summaryActivityHintsByThreadId = LinkedHashMap<String, AgentThreadActivity?>()
+    var mayHaveChangedProjectFiles = false
     var failedParses = 0
     for (path in rolloutPaths) {
       val parsedThread = parser.parse(path)
       if (parsedThread == null) {
         failedParses++
         continue
+      }
+      if (consumeProjectFileChangeEvidence(parsedThread)) {
+        mayHaveChangedProjectFiles = true
       }
       scopedPaths += parsedThread.normalizedCwd
       threadIds += parsedThread.thread.thread.id
@@ -130,7 +142,7 @@ internal class CodexRolloutSessionBackend(
         "Codex rollout update falls back to unscoped refresh " +
         "(changedRolloutPaths=${rolloutPaths.size}, failedParses=$failedParses, scopedPaths=${scopedPaths.size})"
       }
-      return UNSCOPED_ROLLOUT_SESSION_UPDATE
+      return rolloutSessionUpdate(mayHaveChangedProjectFiles = mayHaveChangedProjectFiles)
     }
 
     LOG.debug {
@@ -143,7 +155,47 @@ internal class CodexRolloutSessionBackend(
       activityHintsByThreadId = activityHintsByThreadId,
       summaryActivityHintsByThreadId = summaryActivityHintsByThreadId,
       activityHintPolicy = AgentSessionActivityHintPolicy.AUTHORITATIVE,
+      mayHaveChangedProjectFiles = mayHaveChangedProjectFiles,
     )
+  }
+
+  private fun consumeProjectFileChangeEvidence(parsedThread: ParsedRolloutThread): Boolean {
+    val projectFilesChangedAt = parsedThread.projectFilesChangedAt
+    if (projectFilesChangedAt == Long.MIN_VALUE) {
+      return false
+    }
+    val pathKey = toFileBackedSessionPathKey(parsedThread.path)
+    return synchronized(projectFilesChangedAtLock) {
+      val previousProjectFilesChangedAt = projectFilesChangedAtByPathKey[pathKey] ?: Long.MIN_VALUE
+      if (projectFilesChangedAt <= previousProjectFilesChangedAt) {
+        false
+      }
+      else {
+        projectFilesChangedAtByPathKey[pathKey] = projectFilesChangedAt
+        true
+      }
+    }
+  }
+
+  private fun rememberCachedProjectFileChangeEvidence() {
+    val cachedFiles = threadIndex.snapshotCachedFiles()
+    synchronized(projectFilesChangedAtLock) {
+      // Prune entries whose sessions are no longer tracked so the cache cannot grow unbounded
+      // across long IDE sessions that churn many ephemeral rollout files.
+      if (projectFilesChangedAtByPathKey.isNotEmpty()) {
+        projectFilesChangedAtByPathKey.keys.retainAll(cachedFiles.keys)
+      }
+      for ((pathKey, cachedFile) in cachedFiles) {
+        val projectFilesChangedAt = cachedFile.parsedValue?.projectFilesChangedAt ?: continue
+        if (projectFilesChangedAt == Long.MIN_VALUE) {
+          continue
+        }
+        val previousProjectFilesChangedAt = projectFilesChangedAtByPathKey[pathKey] ?: Long.MIN_VALUE
+        if (projectFilesChangedAt > previousProjectFilesChangedAt) {
+          projectFilesChangedAtByPathKey[pathKey] = projectFilesChangedAt
+        }
+      }
+    }
   }
 
   private fun createWatcherUpdates(): Flow<FileBackedSessionChangeSet> {
@@ -166,7 +218,9 @@ internal class CodexRolloutSessionBackend(
       val workingDirectory = resolveProjectDirectoryFromPath(path)
                              ?: return@withContext emptyList()
       val cwdFilter = normalizeRootPath(workingDirectory.invariantSeparatorsPathString)
-      threadIndex.collectByCwd(setOf(cwdFilter))[cwdFilter].orEmpty()
+      val threadsByCwd = threadIndex.collectByCwd(setOf(cwdFilter))
+      rememberCachedProjectFileChangeEvidence()
+      threadsByCwd[cwdFilter].orEmpty()
     }
   }
 
@@ -176,6 +230,7 @@ internal class CodexRolloutSessionBackend(
       if (pathFilters.isEmpty()) return@withContext emptyMap()
 
       val threadsByCwd = threadIndex.collectByCwd(pathFilters.mapTo(HashSet(pathFilters.size)) { (_, cwdFilter) -> cwdFilter })
+      rememberCachedProjectFileChangeEvidence()
       pathFilters.associate { (path, cwdFilter) ->
         path to threadsByCwd.get(cwdFilter).orEmpty()
       }
@@ -206,7 +261,12 @@ private fun resolvePathFilters(paths: List<String>): List<Pair<String, String>> 
   }
 }
 
-private val UNSCOPED_ROLLOUT_SESSION_UPDATE = AgentSessionSourceUpdateEvent(type = AgentSessionSourceUpdate.HINTS_CHANGED)
+private fun rolloutSessionUpdate(mayHaveChangedProjectFiles: Boolean = false): AgentSessionSourceUpdateEvent {
+  return AgentSessionSourceUpdateEvent(
+    type = AgentSessionSourceUpdate.HINTS_CHANGED,
+    mayHaveChangedProjectFiles = mayHaveChangedProjectFiles,
+  )
+}
 
 private fun isRolloutPath(path: Path): Boolean {
   val fileName = path.fileName?.toString() ?: return false

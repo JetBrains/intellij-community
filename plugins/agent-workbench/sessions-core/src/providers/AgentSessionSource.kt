@@ -54,6 +54,7 @@ data class AgentSessionSourceUpdateEvent(
   @JvmField val activityHintsByThreadId: Map<String, AgentThreadActivity> = emptyMap(),
   @JvmField val summaryActivityHintsByThreadId: Map<String, AgentThreadActivity?> = emptyMap(),
   @JvmField val activityHintPolicy: AgentSessionActivityHintPolicy = AgentSessionActivityHintPolicy.AUTHORITATIVE,
+  @JvmField val mayHaveChangedProjectFiles: Boolean = false,
 )
 
 data class AgentSessionSourceRefreshRequest(

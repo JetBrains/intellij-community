@@ -53,6 +53,10 @@ internal class ClaudeThreadIndex(
     }
   }
 
+  fun snapshotCachedFiles(): Map<String, FileBackedSessionCachedFile<ClaudeSessionThread?>> {
+    return threadInvalidationState.snapshotCachedFiles()
+  }
+
   fun collectByProject(projectPath: String): List<ClaudeBackendThread> {
     val directories = try {
       store.findMatchingDirectories(projectPath)

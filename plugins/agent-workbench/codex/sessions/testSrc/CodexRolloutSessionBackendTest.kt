@@ -1058,6 +1058,185 @@ class CodexRolloutSessionBackendTest {
         assertThat(update.activityHintsByThreadId)
           .containsEntry("session-update-activity-hint", AgentThreadActivity.PROCESSING)
         assertThat(update.activityHintPolicy).isEqualTo(AgentSessionActivityHintPolicy.AUTHORITATIVE)
+        assertThat(update.mayHaveChangedProjectFiles).isFalse()
+      }
+      finally {
+        updatesJob.cancelAndJoin()
+      }
+    }
+  }
+
+  @Test
+  fun scopedRolloutUpdateWithCompletedMutatingToolIncludesProjectFileChangeEvidence() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-update-mutating-tool")
+      Files.createDirectories(projectDir)
+
+      val rollout = tempDir.resolve("sessions").resolve("2026").resolve("02").resolve("16")
+        .resolve("rollout-update-mutating-tool.jsonl")
+      writeRollout(
+        file = rollout,
+        lines = listOf(
+          sessionMetaLine(timestamp = "2026-02-16T12:30:00.000Z", id = "session-update-mutating-tool", cwd = projectDir),
+          responseItemFunctionCall(
+            timestamp = "2026-02-16T12:30:01.000Z",
+            callId = "call-update-mutating-tool",
+            name = "exec_command",
+          ),
+          responseItemFunctionCallOutput(
+            timestamp = "2026-02-16T12:30:02.000Z",
+            callId = "call-update-mutating-tool",
+          ),
+        ),
+      )
+
+      val sourceUpdates = MutableSharedFlow<FileBackedSessionChangeSet>(replay = 1, extraBufferCapacity = 1)
+      val backend = CodexRolloutSessionBackend(
+        codexHomeProvider = { tempDir },
+        rolloutChangeSource = { sourceUpdates },
+        trailingRefreshDelayMs = 60_000L,
+      )
+      val updates = Channel<AgentSessionSourceUpdateEvent>(capacity = Channel.CONFLATED)
+      val updatesJob = launch {
+        backend.sessionUpdates.collect { update ->
+          updates.trySend(update)
+        }
+      }
+
+      try {
+        drainUpdateChannel(updates)
+        sourceUpdates.emit(FileBackedSessionChangeSet(changedPaths = setOf(rollout)))
+
+        val update = withTimeoutOrNull(WATCHER_UPDATE_WAIT_TIMEOUT) { updates.receive() }
+        assertThat(update).isNotNull
+        assertThat(update!!.scopedPaths).containsExactly(projectDir.toString())
+        assertThat(update.threadIds).containsExactly("session-update-mutating-tool")
+        assertThat(update.mayHaveChangedProjectFiles).isTrue()
+      }
+      finally {
+        updatesJob.cancelAndJoin()
+      }
+    }
+  }
+
+  @Test
+  fun loadedCompletedMutatingToolDoesNotMakeLaterStatusOnlyUpdateProjectMutating() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-update-status-only")
+      Files.createDirectories(projectDir)
+
+      val rollout = tempDir.resolve("sessions").resolve("2026").resolve("02").resolve("16")
+        .resolve("rollout-update-status-only.jsonl")
+      writeRollout(
+        file = rollout,
+        lines = listOf(
+          sessionMetaLine(timestamp = "2026-02-16T12:45:00.000Z", id = "session-update-status-only", cwd = projectDir),
+          responseItemFunctionCall(
+            timestamp = "2026-02-16T12:45:01.000Z",
+            callId = "call-update-status-only",
+            name = "exec_command",
+          ),
+          responseItemFunctionCallOutput(
+            timestamp = "2026-02-16T12:45:02.000Z",
+            callId = "call-update-status-only",
+          ),
+        ),
+      )
+
+      val sourceUpdates = MutableSharedFlow<FileBackedSessionChangeSet>(replay = 1, extraBufferCapacity = 1)
+      val backend = CodexRolloutSessionBackend(
+        codexHomeProvider = { tempDir },
+        rolloutChangeSource = { sourceUpdates },
+        trailingRefreshDelayMs = 60_000L,
+      )
+      val loadedThreads = backend.listThreads(path = projectDir.toString(), openProject = null)
+      assertThat(loadedThreads).hasSize(1)
+
+      val updates = Channel<AgentSessionSourceUpdateEvent>(capacity = Channel.CONFLATED)
+      val updatesJob = launch {
+        backend.sessionUpdates.collect { update ->
+          updates.trySend(update)
+        }
+      }
+
+      try {
+        drainUpdateChannel(updates)
+        Files.write(
+          rollout,
+          listOf("""{"timestamp":"2026-02-16T12:45:03.000Z","type":"event_msg","payload":{"type":"agent_message","message":"Done"}}"""),
+          StandardOpenOption.APPEND,
+        )
+        sourceUpdates.emit(FileBackedSessionChangeSet(changedPaths = setOf(rollout)))
+
+        val update = withTimeoutOrNull(WATCHER_UPDATE_WAIT_TIMEOUT) { updates.receive() }
+        assertThat(update).isNotNull
+        assertThat(update!!.scopedPaths).containsExactly(projectDir.toString())
+        assertThat(update.threadIds).containsExactly("session-update-status-only")
+        assertThat(update.mayHaveChangedProjectFiles).isFalse()
+      }
+      finally {
+        updatesJob.cancelAndJoin()
+      }
+    }
+  }
+
+  @Test
+  fun fullRescanUpdateIncludesProjectFileChangeEvidence() {
+    runBlocking(Dispatchers.Default) {
+      val sourceUpdates = MutableSharedFlow<FileBackedSessionChangeSet>(replay = 1, extraBufferCapacity = 1)
+      val backend = CodexRolloutSessionBackend(
+        codexHomeProvider = { tempDir },
+        rolloutChangeSource = { sourceUpdates },
+        trailingRefreshDelayMs = 60_000L,
+      )
+      val updates = Channel<AgentSessionSourceUpdateEvent>(capacity = Channel.CONFLATED)
+      val updatesJob = launch {
+        backend.sessionUpdates.collect { update ->
+          updates.trySend(update)
+        }
+      }
+
+      try {
+        drainUpdateChannel(updates)
+        sourceUpdates.emit(FileBackedSessionChangeSet(requiresFullRescan = true))
+
+        val update = withTimeoutOrNull(WATCHER_UPDATE_WAIT_TIMEOUT) { updates.receive() }
+        assertThat(update).isNotNull
+        assertThat(update!!.scopedPaths).isNull()
+        assertThat(update.threadIds).isNull()
+        assertThat(update.mayHaveChangedProjectFiles).isTrue()
+      }
+      finally {
+        updatesJob.cancelAndJoin()
+      }
+    }
+  }
+
+  @Test
+  fun refreshPingUpdateDoesNotIncludeProjectFileChangeEvidence() {
+    runBlocking(Dispatchers.Default) {
+      val sourceUpdates = MutableSharedFlow<FileBackedSessionChangeSet>(replay = 1, extraBufferCapacity = 1)
+      val backend = CodexRolloutSessionBackend(
+        codexHomeProvider = { tempDir },
+        rolloutChangeSource = { sourceUpdates },
+        trailingRefreshDelayMs = 60_000L,
+      )
+      val updates = Channel<AgentSessionSourceUpdateEvent>(capacity = Channel.CONFLATED)
+      val updatesJob = launch {
+        backend.sessionUpdates.collect { update ->
+          updates.trySend(update)
+        }
+      }
+
+      try {
+        drainUpdateChannel(updates)
+        sourceUpdates.emit(FileBackedSessionChangeSet())
+
+        val update = withTimeoutOrNull(WATCHER_UPDATE_WAIT_TIMEOUT) { updates.receive() }
+        assertThat(update).isNotNull
+        assertThat(update!!.scopedPaths).isNull()
+        assertThat(update.threadIds).isNull()
+        assertThat(update.mayHaveChangedProjectFiles).isFalse()
       }
       finally {
         updatesJob.cancelAndJoin()
@@ -1502,6 +1681,10 @@ private fun responseItemFunctionCall(
   val turnIdField = turnId?.let { ""","turn_id":"$it"""" }.orEmpty()
   val escapedArguments = jsonString(arguments)
   return """{"timestamp":"$timestamp","type":"response_item","payload":{"type":"function_call","name":"$name","arguments":"$escapedArguments","call_id":"$callId"$turnIdField}}"""
+}
+
+private fun responseItemFunctionCallOutput(timestamp: String, callId: String, output: String = "{}"): String {
+  return """{"timestamp":"$timestamp","type":"response_item","payload":{"type":"function_call_output","call_id":"$callId","output":"${jsonString(output)}"}}"""
 }
 
 private fun approvalEventLine(timestamp: String, type: String, callId: String? = null, turnId: String? = null): String {

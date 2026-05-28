@@ -42,6 +42,7 @@ data class ClaudeSessionThread(
   @JvmField val id: String,
   @JvmField val title: String,
   @JvmField val updatedAt: Long,
+  @JvmField val projectFilesChangedAt: Long = Long.MIN_VALUE,
   @JvmField val gitBranch: String? = null,
   @JvmField val activity: ClaudeSessionActivity = ClaudeSessionActivity.READY,
   @JvmField val awaitingAssistantTurn: Boolean = false,
@@ -89,6 +90,11 @@ class ClaudeSessionsStore(
     val activity = deriveActivity(activityState.needsInput, activityState.isProcessing)
     val updatedAt = listOfNotNull(headState.updatedAt, tailState.updatedAt, activityState.updatedAt).maxOrNull()
     val projectPath = headState.projectPath ?: tailState.projectPath
+    val recoveredProjectFilesChangedAt = scanProjectFileChangeEvidenceForCompletedTools(
+      path = path,
+      completedToolUseIdsById = tailState.unmatchedCompletedToolUseIdsById,
+    )
+    val projectFilesChangedAt = maxOf(headState.projectFilesChangedAt, tailState.projectFilesChangedAt, recoveredProjectFilesChangedAt)
 
     val resolvedTitle = resolveThreadTitle(
       agentName = tailState.agentName,
@@ -110,6 +116,7 @@ class ClaudeSessionsStore(
       id = normalizedSessionId,
       title = resolvedTitle.title,
       updatedAt = resolvedUpdatedAt,
+      projectFilesChangedAt = projectFilesChangedAt,
       gitBranch = headState.gitBranch,
       activity = activity,
       awaitingAssistantTurn = activityState.awaitingAssistantTurn,
@@ -208,6 +215,7 @@ class ClaudeSessionsStore(
         state.projectPath = lineData.projectPath
       }
       updateActivityFields(state, lineData)
+      updateProjectFileChangeFields(state, lineData)
       true
     }
   }
@@ -239,9 +247,40 @@ class ClaudeSessionsStore(
         scanState.hasConversationSignal = true
       }
       updateActivityFields(scanState, lineData)
+      updateProjectFileChangeFields(scanState, lineData)
       // Title metadata lives near the tail; early-exit once the head metadata is settled.
       !(scanState.sessionId != null && scanState.hasConversationSignal && scanState.firstPrompt != null)
     }
+  }
+
+  private fun scanProjectFileChangeEvidenceForCompletedTools(path: Path, completedToolUseIdsById: Map<String, Long>): Long {
+    if (completedToolUseIdsById.isEmpty()) {
+      return Long.MIN_VALUE
+    }
+    val unresolvedCompletedToolUseIds = LinkedHashMap(completedToolUseIdsById)
+    var projectFilesChangedAt = Long.MIN_VALUE
+    try {
+      WorkbenchJsonlScanner.scanJsonObjects(
+        path = path,
+        jsonFactory = jsonFactory,
+        newState = {},
+      ) { parser, _ ->
+        val lineData = parseJsonlLine(parser) ?: return@scanJsonObjects true
+        for (toolUseId in lineData.projectMutatingToolUseIds) {
+          val completedAt = unresolvedCompletedToolUseIds[toolUseId] ?: continue
+          val toolUseAt = lineData.timestampMillis
+          if (toolUseAt == null || completedAt == Long.MIN_VALUE || toolUseAt <= completedAt) {
+            projectFilesChangedAt = maxOf(projectFilesChangedAt, completedAt)
+            unresolvedCompletedToolUseIds.remove(toolUseId)
+          }
+        }
+        unresolvedCompletedToolUseIds.isNotEmpty()
+      }
+    }
+    catch (_: Throwable) {
+      return Long.MIN_VALUE
+    }
+    return projectFilesChangedAt
   }
 
 }
@@ -327,6 +366,8 @@ private fun parseJsonlLine(parser: JsonParser): ParsedJsonlLine? {
     var messageHasToolUse = false
     var messageNeedsInputToolUse = false
     var messageHasToolResult = false
+    var messageProjectMutatingToolUseIds: Set<String> = emptySet()
+    var messageCompletedToolUseIds: Set<String> = emptySet()
     var messageStopReason: String? = null
     var messageHasStopReason = false
     var messageModelId: String? = null
@@ -355,6 +396,8 @@ private fun parseJsonlLine(parser: JsonParser): ParsedJsonlLine? {
             messageHasToolUse = parsedMessage.hasToolUse
             messageNeedsInputToolUse = parsedMessage.needsInputToolUse
             messageHasToolResult = parsedMessage.hasToolResult
+            messageProjectMutatingToolUseIds = parsedMessage.projectMutatingToolUseIds
+            messageCompletedToolUseIds = parsedMessage.completedToolUseIds
             messageStopReason = parsedMessage.stopReason
             messageHasStopReason = parsedMessage.hasStopReason
             messageModelId = parsedMessage.modelId
@@ -421,6 +464,8 @@ private fun parseJsonlLine(parser: JsonParser): ParsedJsonlLine? {
       gitBranch = normalizeNonBlank(gitBranch),
       activityEvent = activityEvent,
       assistantUsage = assistantUsage,
+      projectMutatingToolUseIds = messageProjectMutatingToolUseIds,
+      completedToolUseIds = messageCompletedToolUseIds,
     )
   }
   catch (_: Throwable) {
@@ -434,6 +479,8 @@ private fun readMessageObject(parser: JsonParser): ParsedMessageObject {
   var hasToolUse = false
   var needsInputToolUse = false
   var hasToolResult = false
+  var projectMutatingToolUseIds: Set<String> = emptySet()
+  var completedToolUseIds: Set<String> = emptySet()
   var stopReason: String? = null
   var hasStopReason = false
   var modelId: String? = null
@@ -450,6 +497,8 @@ private fun readMessageObject(parser: JsonParser): ParsedMessageObject {
         hasToolUse = result.hasToolUse
         needsInputToolUse = result.needsInputToolUse
         hasToolResult = result.hasToolResult
+        projectMutatingToolUseIds = result.projectMutatingToolUseIds
+        completedToolUseIds = result.completedToolUseIds
       }
       "stop_reason" -> {
         hasStopReason = true
@@ -468,6 +517,8 @@ private fun readMessageObject(parser: JsonParser): ParsedMessageObject {
     hasToolUse = hasToolUse,
     needsInputToolUse = needsInputToolUse,
     hasToolResult = hasToolResult,
+    projectMutatingToolUseIds = projectMutatingToolUseIds,
+    completedToolUseIds = completedToolUseIds,
     stopReason = stopReason,
     hasStopReason = hasStopReason,
     usage = usage,
@@ -537,20 +588,40 @@ private fun readFirstTextAndToolUseFromArray(parser: JsonParser): ParsedMessageC
   var hasToolUse = false
   var needsInputToolUse = false
   var hasToolResult = false
+  val projectMutatingToolUseIds = LinkedHashSet<String>()
+  val completedToolUseIds = LinkedHashSet<String>()
   while (true) {
-    val token = parser.nextToken() ?: return ParsedMessageContent(firstText, hasToolUse, needsInputToolUse, hasToolResult)
-    if (token == JsonToken.END_ARRAY) return ParsedMessageContent(firstText, hasToolUse, needsInputToolUse, hasToolResult)
+    val token = parser.nextToken() ?: return ParsedMessageContent(
+      contentPreview = firstText,
+      hasToolUse = hasToolUse,
+      needsInputToolUse = needsInputToolUse,
+      hasToolResult = hasToolResult,
+      projectMutatingToolUseIds = projectMutatingToolUseIds,
+      completedToolUseIds = completedToolUseIds,
+    )
+    if (token == JsonToken.END_ARRAY) return ParsedMessageContent(
+      contentPreview = firstText,
+      hasToolUse = hasToolUse,
+      needsInputToolUse = needsInputToolUse,
+      hasToolResult = hasToolResult,
+      projectMutatingToolUseIds = projectMutatingToolUseIds,
+      completedToolUseIds = completedToolUseIds,
+    )
     if (token != JsonToken.START_OBJECT) {
       parser.skipChildren()
       continue
     }
     var itemType: String? = null
     var itemText: String? = null
+    var itemId: String? = null
     var itemName: String? = null
+    var itemToolUseId: String? = null
     forEachJsonObjectField(parser) { fieldName ->
       when (fieldName) {
         "type" -> itemType = readJsonStringOrNull(parser)
+        "id" -> itemId = readJsonStringOrNull(parser)
         "name" -> itemName = readJsonStringOrNull(parser)
+        "tool_use_id" -> itemToolUseId = readJsonStringOrNull(parser)
         "text" -> itemText = readJsonStringOrNull(parser)
         else -> parser.skipChildren()
       }
@@ -561,14 +632,22 @@ private fun readFirstTextAndToolUseFromArray(parser: JsonParser): ParsedMessageC
       if (isUserInteractionToolName(itemName)) {
         needsInputToolUse = true
       }
+      if (isProjectMutatingToolName(itemName)) {
+        normalizeToolUseId(itemId)?.let(projectMutatingToolUseIds::add)
+      }
     }
     if (itemType == "tool_result") {
       hasToolResult = true
+      normalizeToolUseId(itemToolUseId)?.let(completedToolUseIds::add)
     }
     if (firstText == null && itemType == "text" && !itemText.isNullOrBlank()) {
       firstText = itemText
     }
   }
+}
+
+private fun normalizeToolUseId(value: String?): String? {
+  return value?.trim()?.takeIf { it.isNotEmpty() }
 }
 
 private fun activityEventForAssistantStopReason(stopReason: String?): ClaudeActivityEvent {
@@ -581,6 +660,13 @@ private fun activityEventForAssistantStopReason(stopReason: String?): ClaudeActi
 private fun isUserInteractionToolName(toolName: String?): Boolean {
   return when (toolName?.trim()) {
     "AskUserQuestion", "ExitPlanMode" -> true
+    else -> false
+  }
+}
+
+private fun isProjectMutatingToolName(toolName: String?): Boolean {
+  return when (toolName?.trim()?.lowercase()) {
+    "bash", "edit", "multiedit", "write", "notebookedit" -> true
     else -> false
   }
 }
@@ -706,6 +792,8 @@ private data class ParsedJsonlLine(
   @JvmField val gitBranch: String?,
   @JvmField val activityEvent: ClaudeActivityEvent,
   @JvmField val assistantUsage: ClaudeAssistantUsage? = null,
+  @JvmField val projectMutatingToolUseIds: Set<String> = emptySet(),
+  @JvmField val completedToolUseIds: Set<String> = emptySet(),
 )
 
 private data class ParsedMessageObject(
@@ -716,6 +804,8 @@ private data class ParsedMessageObject(
   @JvmField val hasToolUse: Boolean = false,
   @JvmField val needsInputToolUse: Boolean = false,
   @JvmField val hasToolResult: Boolean = false,
+  @JvmField val projectMutatingToolUseIds: Set<String> = emptySet(),
+  @JvmField val completedToolUseIds: Set<String> = emptySet(),
   @JvmField val stopReason: String? = null,
   @JvmField val hasStopReason: Boolean = false,
   @JvmField val usage: ParsedClaudeUsage? = null,
@@ -742,6 +832,8 @@ private data class ParsedMessageContent(
   @JvmField val hasToolUse: Boolean = false,
   @JvmField val needsInputToolUse: Boolean = false,
   @JvmField val hasToolResult: Boolean = false,
+  @JvmField val projectMutatingToolUseIds: Set<String> = emptySet(),
+  @JvmField val completedToolUseIds: Set<String> = emptySet(),
 )
 
 private data class ResolvedClaudeThreadTitle(
@@ -766,6 +858,12 @@ private interface ActivityTrackingState {
   var needsInput: Boolean
   var isProcessing: Boolean
   var updatedAt: Long?
+}
+
+private interface ProjectFileChangeTrackingState {
+  var projectFilesChangedAt: Long
+  val pendingProjectMutatingToolUseIds: LinkedHashSet<String>
+  val unmatchedCompletedToolUseIdsById: LinkedHashMap<String, Long>
 }
 
 private fun updateActivityFields(state: ActivityTrackingState, lineData: ParsedJsonlLine) {
@@ -809,6 +907,18 @@ private fun updateActivityFields(state: ActivityTrackingState, lineData: ParsedJ
   }
 }
 
+private fun updateProjectFileChangeFields(state: ProjectFileChangeTrackingState, lineData: ParsedJsonlLine) {
+  state.pendingProjectMutatingToolUseIds.addAll(lineData.projectMutatingToolUseIds)
+  for (toolUseId in lineData.completedToolUseIds) {
+    if (state.pendingProjectMutatingToolUseIds.remove(toolUseId)) {
+      state.projectFilesChangedAt = maxOf(state.projectFilesChangedAt, lineData.timestampMillis ?: Long.MIN_VALUE)
+    }
+    else {
+      state.unmatchedCompletedToolUseIdsById.merge(toolUseId, lineData.timestampMillis ?: Long.MIN_VALUE, ::maxOf)
+    }
+  }
+}
+
 private data class JsonlTailScanState(
   @JvmField var agentName: String? = null,
   @JvmField var customTitle: String? = null,
@@ -820,7 +930,10 @@ private data class JsonlTailScanState(
   override var needsInput: Boolean = false,
   override var isProcessing: Boolean = false,
   override var updatedAt: Long? = null,
-) : ActivityTrackingState
+  override var projectFilesChangedAt: Long = Long.MIN_VALUE,
+  override val pendingProjectMutatingToolUseIds: LinkedHashSet<String> = LinkedHashSet(),
+  override val unmatchedCompletedToolUseIdsById: LinkedHashMap<String, Long> = LinkedHashMap(),
+) : ActivityTrackingState, ProjectFileChangeTrackingState
 
 private data class JsonlMetadataScanState(
   @JvmField var firstPrompt: String? = null,
@@ -834,7 +947,10 @@ private data class JsonlMetadataScanState(
   override var awaitingAssistantTurn: Boolean = false,
   override var needsInput: Boolean = false,
   override var isProcessing: Boolean = false,
-) : ActivityTrackingState
+  override var projectFilesChangedAt: Long = Long.MIN_VALUE,
+  override val pendingProjectMutatingToolUseIds: LinkedHashSet<String> = LinkedHashSet(),
+  override val unmatchedCompletedToolUseIdsById: LinkedHashMap<String, Long> = LinkedHashMap(),
+) : ActivityTrackingState, ProjectFileChangeTrackingState
 
 private data class JsonlUsageScanState(
   @JvmField var sessionId: String? = null,

@@ -35,6 +35,8 @@ private const val AGENT_CHAT_SCOPED_REFRESH_DEBOUNCE_MS: Long = 750L
 private const val AGENT_CHAT_ROLLOUT_POLL_INTERVAL_MS: Long = 1_500L
 private const val AGENT_CHAT_ROLLOUT_POLL_ACTIVE_WINDOW_MS: Long = 15_000L
 internal const val AGENT_CHAT_ROLLOUT_POLL_REGISTRY_KEY: String = "agent.workbench.chat.rollout.poll.enabled"
+internal const val AGENT_CHAT_TERMINAL_OUTPUT_SCOPED_REFRESH_REGISTRY_KEY: String =
+  "agent.workbench.chat.terminal.output.scoped.refresh.enabled"
 
 internal fun createAgentChatScopedTerminalRefreshController(
   file: AgentChatVirtualFile,
@@ -45,11 +47,17 @@ internal fun createAgentChatScopedTerminalRefreshController(
   if (descriptor?.emitsScopedRefreshSignals != true) {
     return null
   }
+  val terminalOutputChanges = if (isAgentChatTerminalOutputScopedRefreshEnabled()) {
+    tab.terminalView?.let(::terminalOutputModelChangeFlow)
+  }
+  else {
+    null
+  }
   return AgentChatScopedTerminalRefreshController(
     provider = provider,
     projectPath = file.projectPath,
     threadId = resolveAgentChatScopedRefreshThreadId(file),
-    outputChanges = tab.terminalView?.let(::terminalOutputModelChangeFlow),
+    outputChanges = terminalOutputChanges,
     inputChanges = tab.keyEventsFlow.map {},
     sessionState = tab.sessionState,
     parentScope = tab.coroutineScope,
@@ -260,4 +268,8 @@ private fun mergeTerminalActivityChanges(outputChanges: Flow<Unit>?, inputChange
 
 private fun isAgentChatRolloutPollEnabled(): Boolean {
   return Registry.`is`(AGENT_CHAT_ROLLOUT_POLL_REGISTRY_KEY, false)
+}
+
+internal fun isAgentChatTerminalOutputScopedRefreshEnabled(): Boolean {
+  return Registry.`is`(AGENT_CHAT_TERMINAL_OUTPUT_SCOPED_REFRESH_REGISTRY_KEY, false)
 }

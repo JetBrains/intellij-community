@@ -200,6 +200,12 @@ internal class AgentSessionRefreshCoordinator(
   }
 
   private fun scheduleVfsRefreshForSourceUpdate(provider: AgentSessionProvider, updateEvent: AgentSessionSourceUpdateEvent) {
+    if (!updateEvent.mayHaveChangedProjectFiles) {
+      LOG.debug {
+        "Skipped VFS refresh for ${provider.value} source update: no project file change evidence"
+      }
+      return
+    }
     val candidatePaths = collectVfsRefreshCandidatePaths(
       state = stateStore.snapshot(),
       provider = provider,
