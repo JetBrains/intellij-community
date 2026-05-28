@@ -24,6 +24,12 @@ class MergeConflictsTreeTable(private val tableModel: ListTreeTableModelOnColumn
 
   override fun doLayout() {
     setInitialColumnPreferredWidthIfNeeded()
+    var remainingSize = width
+    for (i in tableModel.columns.indices) {
+      if (i == FILE_COLUMN_INDEX) continue
+      remainingSize -= columnModel.getColumn(i).width
+    }
+    columnModel.getColumn(FILE_COLUMN_INDEX).preferredWidth = remainingSize
     super.doLayout()
   }
 
@@ -31,18 +37,17 @@ class MergeConflictsTreeTable(private val tableModel: ListTreeTableModelOnColumn
   private fun setInitialColumnPreferredWidthIfNeeded() {
     if (initialWidthSet) return
     for ((index, columnInfo) in tableModel.columns.withIndex()) {
-      columnModel.getColumn(index).preferredWidth = columnInfo.calcColumnWidth() ?: Int.MAX_VALUE
+      columnModel.getColumn(index).preferredWidth = columnInfo.calcColumnWidth()
     }
 
     initialWidthSet = true
   }
 
-  private fun ColumnInfo<Any, Any>.calcColumnWidth(): Int? {
-    return maxStringValue?.let {
-      val columnName = StringUtil.shortenTextWithEllipsis(name, 15, 7, true)
-      max(getFontMetrics(font).stringWidth(it),
-          getFontMetrics(tableHeader.font).stringWidth(columnName)) + additionalWidth
-    }
+  private fun ColumnInfo<Any, Any>.calcColumnWidth(): Int {
+    val maxCellWidth = maxStringValue?.let { getFontMetrics(font).stringWidth(it) } ?: 0
+    val columnName = StringUtil.shortenTextWithEllipsis(name, 15, 7, true)
+    val columnWidth = getFontMetrics(tableHeader.font).stringWidth(columnName) + additionalWidth
+    return max(maxCellWidth, columnWidth)
   }
 
   var toolTipTextProvider: ((file: VirtualFile) -> String?)? = null
