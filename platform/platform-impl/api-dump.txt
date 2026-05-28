@@ -968,6 +968,17 @@ com.intellij.openapi.fileTypes.ex.ExternalizableFileType
 com.intellij.openapi.fileTypes.impl.FileTypeOverrider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:getOverriddenFileType(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileTypes.FileType
+f:com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler
+- sf:Companion:com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler$Companion
+- sf:getInstance():com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler
+- sf:getMultiCaretActionModifier():I
+- f:isRunningAction():Z
+- f:registerAction(java.lang.String,I,I):V
+- f:registerAction(java.lang.String,I,I,Z):V
+- f:unregisterAction(java.lang.String):V
+f:com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler$Companion
+- f:getInstance():com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler
+- f:getMultiCaretActionModifier():I
 com.intellij.openapi.keymap.impl.SystemShortcutsListener
 - sf:CHANGE_TOPIC:com.intellij.util.messages.Topic
 - a:processSystemShortcutsChanged():V

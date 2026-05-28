@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("DEPRECATION")
+@file:Suppress("DEPRECATION", "ReplacePutWithAssignment")
 
 package com.intellij.openapi.keymap.impl
 
@@ -29,7 +29,6 @@ import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.keymap.impl.ui.ShortcutTextField
-import com.intellij.openapi.util.Couple
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
@@ -60,13 +59,13 @@ import java.util.concurrent.atomic.AtomicLong
  */
 @Service(Service.Level.APP)
 class ModifierKeyDoubleClickHandler {
-  private val myDispatchers: MutableMap<DispatcherKey, MyDispatcher> = ConcurrentHashMap()
-  private val myKeymapDispatcherKeys: MutableSet<DispatcherKey> = ConcurrentHashMap.newKeySet()
-  private val mySuppressedActionIds: MutableSet<String> = ConcurrentHashMap.newKeySet()
-  private val mySuppressedShortcuts: MutableSet<DispatcherKey> = ConcurrentHashMap.newKeySet()
-  private val myKeymapShortcutTrackerInstalled = AtomicBoolean()
-  private val myKeymapShortcutSyncScheduled = AtomicBoolean()
-  private var myIsRunningAction = false
+  private val dispatchers: MutableMap<DispatcherKey, Dispatcher> = ConcurrentHashMap()
+  private val keymapDispatcherKeys: MutableSet<DispatcherKey> = ConcurrentHashMap.newKeySet()
+  private val suppressedActionIds: MutableSet<String> = ConcurrentHashMap.newKeySet()
+  private val suppressedShortcuts: MutableSet<DispatcherKey> = ConcurrentHashMap.newKeySet()
+  private val keymapShortcutTrackerInstalled = AtomicBoolean()
+  private val keymapShortcutSyncScheduled = AtomicBoolean()
+  private var runningAction = false
 
   init {
     val modifierKeyCode = getMultiCaretActionModifier()
@@ -82,11 +81,11 @@ class ModifierKeyDoubleClickHandler {
   class MyAnActionListener : AnActionListener {
     override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
       val doubleClickHandler = getInstance()
-      if (doubleClickHandler.myIsRunningAction) {
+      if (doubleClickHandler.runningAction) {
         return
       }
 
-      for (dispatcher in doubleClickHandler.myDispatchers.values) {
+      for (dispatcher in doubleClickHandler.dispatchers.values) {
         dispatcher.resetState()
       }
     }
@@ -110,7 +109,7 @@ class ModifierKeyDoubleClickHandler {
 
       val doubleClickHandler = getInstance()
 
-      val dispatchers = doubleClickHandler.myDispatchers.values
+      val dispatchers = doubleClickHandler.dispatchers.values
       if (dispatchers.isEmpty()) {
         return false
       }
@@ -129,15 +128,14 @@ class ModifierKeyDoubleClickHandler {
     }
   }
 
-  @Internal
-  class ShortcutTracker : ActionConfigurationCustomizer, ActionConfigurationCustomizer.AsyncLightCustomizeStrategy {
+  internal class ShortcutTracker : ActionConfigurationCustomizer, ActionConfigurationCustomizer.AsyncLightCustomizeStrategy {
     override suspend fun customize(actionRegistrar: ActionRuntimeRegistrar) {
       serviceAsync<ModifierKeyDoubleClickHandler>().installKeymapShortcutTracker()
     }
   }
 
   private fun installKeymapShortcutTracker() {
-    if (!myKeymapShortcutTrackerInstalled.compareAndSet(false, true)) {
+    if (!keymapShortcutTrackerInstalled.compareAndSet(false, true)) {
       return
     }
 
@@ -154,11 +152,11 @@ class ModifierKeyDoubleClickHandler {
   }
 
   private fun scheduleKeymapShortcutSync() {
-    if (!myKeymapShortcutSyncScheduled.compareAndSet(false, true)) {
+    if (!keymapShortcutSyncScheduled.compareAndSet(false, true)) {
       return
     }
     service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
-      myKeymapShortcutSyncScheduled.set(false)
+      keymapShortcutSyncScheduled.set(false)
       syncKeymapShortcuts()
     }
   }
@@ -192,10 +190,10 @@ class ModifierKeyDoubleClickHandler {
 
   @Synchronized
   private fun clearKeymapShortcuts() {
-    for (key in myKeymapDispatcherKeys) {
-      myDispatchers.remove(key)
+    for (key in keymapDispatcherKeys) {
+      dispatchers.remove(key)
     }
-    myKeymapDispatcherKeys.clear()
+    keymapDispatcherKeys.clear()
   }
 
   /**
@@ -231,11 +229,17 @@ class ModifierKeyDoubleClickHandler {
   ) {
     val requiredModifierMask = getRequiredModifierMask(requiredModifierKeyCode)
     val key = DispatcherKey(actionId, modifierKeyCode, actionKeyCode, requiredModifierMask)
-    if (mySuppressedActionIds.contains(actionId) || mySuppressedShortcuts.contains(key)) {
+    if (suppressedActionIds.contains(actionId) || suppressedShortcuts.contains(key)) {
       return
     }
-    myKeymapDispatcherKeys.remove(key)
-    myDispatchers[key] = MyDispatcher(actionId, modifierKeyCode, actionKeyCode, requiredModifierMask, skipIfActionHasShortcut)
+    keymapDispatcherKeys.remove(key)
+    dispatchers.put(key, Dispatcher(
+      actionId = actionId,
+      modifierKeyCode = modifierKeyCode,
+      actionKeyCode = actionKeyCode,
+      requiredModifierMask = requiredModifierMask,
+      skipIfActionHasShortcut = skipIfActionHasShortcut,
+    ))
   }
 
   @Internal
@@ -245,12 +249,12 @@ class ModifierKeyDoubleClickHandler {
     shortcut: KeyboardModifierGestureShortcut,
     skipIfActionHasShortcut: Boolean,
   ): Boolean {
-    val doubleClickShortcut = DoubleClickShortcut.from(shortcut)
+    val doubleClickShortcut = shortcut.toDoubleClickShortcut()
     if (doubleClickShortcut == null) {
       LOG.warn("Cannot register modifier double-click shortcut for action '$actionId': unsupported shortcut $shortcut")
       return false
     }
-    return registerShortcut(actionId, doubleClickShortcut, skipIfActionHasShortcut)
+    return registerDoubleClickShortcut(actionId, doubleClickShortcut, skipIfActionHasShortcut)
   }
 
   private fun collectKeymapShortcut(
@@ -258,7 +262,7 @@ class ModifierKeyDoubleClickHandler {
     shortcut: KeyboardModifierGestureShortcut,
     newKeymapDispatcherKeys: MutableSet<DispatcherKey>,
   ) {
-    val doubleClickShortcut = DoubleClickShortcut.from(shortcut)
+    val doubleClickShortcut = shortcut.toDoubleClickShortcut()
     if (doubleClickShortcut != null) {
       val key = doubleClickShortcut.toDispatcherKey(actionId)
       if (isShortcutRegistrationSuppressed(actionId, key)) {
@@ -271,22 +275,23 @@ class ModifierKeyDoubleClickHandler {
 
   @Synchronized
   private fun retainKeymapShortcuts(newKeymapDispatcherKeys: Set<DispatcherKey>) {
-    for (key in myKeymapDispatcherKeys) {
+    // Preserve unchanged dispatchers so an async keymap resync does not reset an in-progress double-click gesture.
+    for (key in keymapDispatcherKeys) {
       if (!newKeymapDispatcherKeys.contains(key)) {
-        myDispatchers.remove(key)
+        dispatchers.remove(key)
       }
     }
     for (key in newKeymapDispatcherKeys) {
-      if (!myKeymapDispatcherKeys.contains(key)) {
-        myDispatchers[key] = MyDispatcher(key.actionId, key.modifierKeyCode, key.actionKeyCode, key.requiredModifierMask, false)
+      if (!keymapDispatcherKeys.contains(key)) {
+        dispatchers.put(key, Dispatcher(key.actionId, key.modifierKeyCode, key.actionKeyCode, key.requiredModifierMask, false))
       }
     }
-    myKeymapDispatcherKeys.clear()
-    myKeymapDispatcherKeys.addAll(newKeymapDispatcherKeys)
+    keymapDispatcherKeys.clear()
+    keymapDispatcherKeys.addAll(newKeymapDispatcherKeys)
   }
 
   @Synchronized
-  private fun registerShortcut(
+  private fun registerDoubleClickShortcut(
     @NonNls actionId: String,
     doubleClickShortcut: DoubleClickShortcut,
     skipIfActionHasShortcut: Boolean,
@@ -295,19 +300,19 @@ class ModifierKeyDoubleClickHandler {
     if (isShortcutRegistrationSuppressed(actionId, key)) {
       return false
     }
-    myKeymapDispatcherKeys.remove(key)
-    myDispatchers[key] = MyDispatcher(
+    keymapDispatcherKeys.remove(key)
+    dispatchers.put(key, Dispatcher(
       actionId,
       doubleClickShortcut.modifierKeyCode,
       -1,
       doubleClickShortcut.requiredModifierMask,
       skipIfActionHasShortcut,
-    )
+    ))
     return true
   }
 
   private fun isShortcutRegistrationSuppressed(@NonNls actionId: String, key: DispatcherKey): Boolean {
-    if (!mySuppressedActionIds.contains(actionId) && !mySuppressedShortcuts.contains(key)) {
+    if (!suppressedActionIds.contains(actionId) && !suppressedShortcuts.contains(key)) {
       return false
     }
     LOG.debug("Skipped modifier double-click registration for '", actionId, "': shortcut is suppressed")
@@ -325,38 +330,38 @@ class ModifierKeyDoubleClickHandler {
 
   @Synchronized
   fun unregisterAction(@NonNls actionId: String) {
-    myDispatchers.keys.removeIf { key -> key.actionId == actionId }
-    myKeymapDispatcherKeys.removeIf { key -> key.actionId == actionId }
+    dispatchers.keys.removeIf { key -> key.actionId == actionId }
+    keymapDispatcherKeys.removeIf { key -> key.actionId == actionId }
   }
 
   @Internal
   @Synchronized
   fun suppressShortcut(@NonNls actionId: String, shortcut: KeyboardModifierGestureShortcut) {
-    val doubleClickShortcut = DoubleClickShortcut.from(shortcut) ?: return
+    val doubleClickShortcut = shortcut.toDoubleClickShortcut() ?: return
     val key = doubleClickShortcut.toDispatcherKey(actionId)
-    mySuppressedShortcuts.add(key)
-    myDispatchers.remove(key)
-    myKeymapDispatcherKeys.remove(key)
+    suppressedShortcuts.add(key)
+    dispatchers.remove(key)
+    keymapDispatcherKeys.remove(key)
   }
 
   @Internal
   @Synchronized
   fun suppressAction(@NonNls actionId: String) {
-    mySuppressedActionIds.add(actionId)
+    suppressedActionIds.add(actionId)
     unregisterAction(actionId)
   }
 
   @Internal
   @Synchronized
   fun unsuppressAction(@NonNls actionId: String) {
-    mySuppressedActionIds.remove(actionId)
-    mySuppressedShortcuts.removeIf { key -> key.actionId == actionId }
+    suppressedActionIds.remove(actionId)
+    suppressedShortcuts.removeIf { key -> key.actionId == actionId }
   }
 
   @Internal
   @Synchronized
   fun isActionRegistered(@NonNls actionId: String): Boolean {
-    for ((registeredActionId) in myDispatchers.keys) {
+    for ((registeredActionId) in dispatchers.keys) {
       if (registeredActionId == actionId) {
         return true
       }
@@ -367,91 +372,43 @@ class ModifierKeyDoubleClickHandler {
   @Internal
   @Synchronized
   fun isShortcutRegistered(@NonNls actionId: String, shortcut: KeyboardModifierGestureShortcut): Boolean {
-    val doubleClickShortcut = DoubleClickShortcut.from(shortcut)
-    return doubleClickShortcut != null && myDispatchers.containsKey(doubleClickShortcut.toDispatcherKey(actionId))
+    val doubleClickShortcut = shortcut.toDoubleClickShortcut()
+    return doubleClickShortcut != null && dispatchers.containsKey(doubleClickShortcut.toDispatcherKey(actionId))
   }
 
-  fun isRunningAction(): Boolean = myIsRunningAction
+  fun isRunningAction(): Boolean = runningAction
 
-  private data class DispatcherKey(
-    val actionId: String,
-    val modifierKeyCode: Int,
-    val actionKeyCode: Int,
-    val requiredModifierMask: Int,
-  )
-
-  private data class DoubleClickShortcut(
-    val modifierKeyCode: Int,
-    val requiredModifierMask: Int,
+  private inner class Dispatcher(
+    private val actionId: String,
+    private val modifierKeyCode: Int,
+    private val actionKeyCode: Int,
+    private val requiredModifierMask: Int,
+    private val skipIfActionHasShortcut: Boolean,
   ) {
-    fun toDispatcherKey(actionId: String): DispatcherKey {
-      return DispatcherKey(actionId, modifierKeyCode, -1, requiredModifierMask)
-    }
-
-    fun matches(key: DispatcherKey): Boolean {
-      return key.modifierKeyCode == modifierKeyCode &&
-             key.actionKeyCode == -1 &&
-             key.requiredModifierMask == requiredModifierMask
-    }
-
-    companion object {
-      fun from(shortcut: KeyboardModifierGestureShortcut): DoubleClickShortcut? {
-        if (shortcut.type != KeyboardGestureAction.ModifierType.dblClick) {
-          return null
-        }
-
-        val modifierKeyCode = shortcut.stroke.keyCode
-        val modifierMask = KEY_CODE_TO_MODIFIER_MAP.get(modifierKeyCode)
-        if (modifierMask == 0) {
-          return null
-        }
-
-        val strokeModifiers = shortcut.stroke.modifiers
-        if (hasUnsupportedModifiers(strokeModifiers)) {
-          return null
-        }
-
-        val shortcutModifiers = normalizeModifiers(strokeModifiers) and SUPPORTED_MODIFIER_MASKS
-        if ((shortcutModifiers and modifierMask) == 0) {
-          return null
-        }
-
-        val requiredModifiers = shortcutModifiers and modifierMask.inv()
-        return DoubleClickShortcut(modifierKeyCode, requiredModifiers)
-      }
-    }
-  }
-
-  private inner class MyDispatcher(
-    private val myActionId: String,
-    private val myModifierKeyCode: Int,
-    private val myActionKeyCode: Int,
-    private val myRequiredModifierMask: Int,
-    private val mySkipIfActionHasShortcut: Boolean,
-  ) {
-    private val ourPressed = Couple.of(AtomicBoolean(false), AtomicBoolean(false))
-    private val ourReleased = Couple.of(AtomicBoolean(false), AtomicBoolean(false))
-    private val ourOtherKeyWasPressed = AtomicBoolean(false)
-    private val ourLastTimePressed = AtomicLong(0)
+    private val firstPressed = AtomicBoolean(false)
+    private val secondPressed = AtomicBoolean(false)
+    private val firstReleased = AtomicBoolean(false)
+    private val otherKeyWasPressed = AtomicBoolean(false)
+    private val lastTimePressed = AtomicLong(0)
 
     fun dispatch(event: KeyEvent): Boolean {
       val keyCode = event.keyCode
       if (LOG.isTraceEnabled) {
         LOG.trace("$this $event")
       }
-      if (keyCode == myModifierKeyCode) {
+      if (keyCode == modifierKeyCode) {
         if (hasOtherModifiers(event) || !hasRequiredModifier(event)) {
           resetState()
           return false
         }
 
-        if (myActionKeyCode == -1 && ourOtherKeyWasPressed.get() && event.`when` - ourLastTimePressed.get() < 100) {
+        if (actionKeyCode == -1 && otherKeyWasPressed.get() && event.`when` - lastTimePressed.get() < 100) {
           resetState()
           return false
         }
 
-        ourOtherKeyWasPressed.set(false)
-        if (ourPressed.first.get() && event.`when` - ourLastTimePressed.get() > 500) {
+        otherKeyWasPressed.set(false)
+        if (firstPressed.get() && event.`when` - lastTimePressed.get() > 500) {
           resetState()
         }
 
@@ -463,17 +420,17 @@ class ModifierKeyDoubleClickHandler {
         }
         return false
       }
-      else if (ourPressed.first.get() && ourReleased.first.get() && ourPressed.second.get() && myActionKeyCode != -1) {
-        return keyCode == myActionKeyCode &&
+      else if (firstPressed.get() && firstReleased.get() && secondPressed.get() && actionKeyCode != -1) {
+        return keyCode == actionKeyCode &&
                !hasOtherModifiers(event) &&
                hasRequiredModifier(event) &&
                (event.id != KeyEvent.KEY_PRESSED || run(event))
       }
       else {
-        ourLastTimePressed.set(event.`when`)
-        ourOtherKeyWasPressed.set(true)
+        lastTimePressed.set(event.`when`)
+        otherKeyWasPressed.set(true)
         if (keyCode == KeyEvent.VK_ESCAPE || keyCode == KeyEvent.VK_TAB) {
-          ourLastTimePressed.set(0)
+          lastTimePressed.set(0)
         }
       }
       resetState()
@@ -487,7 +444,7 @@ class ModifierKeyDoubleClickHandler {
       }
 
       val modifiers = normalizeModifiers(eventModifiers)
-      val allowedModifiers = getModifierMask(myModifierKeyCode) or myRequiredModifierMask
+      val allowedModifiers = getModifierMask(modifierKeyCode) or requiredModifierMask
       for (entry in KEY_CODE_TO_MODIFIER_MAP.int2IntEntrySet()) {
         if ((modifiers and entry.intValue) != 0 && (allowedModifiers and entry.intValue) == 0) {
           return true
@@ -498,43 +455,43 @@ class ModifierKeyDoubleClickHandler {
 
     private fun isRequiredModifierKey(keyCode: Int): Boolean {
       val modifierMask = getModifierMask(keyCode)
-      return modifierMask != 0 && (myRequiredModifierMask and modifierMask) != 0
+      return modifierMask != 0 && (requiredModifierMask and modifierMask) != 0
     }
 
     private fun hasRequiredModifier(event: KeyEvent): Boolean {
-      return myRequiredModifierMask == 0 || (normalizeModifiers(getEventModifiers(event)) and myRequiredModifierMask) == myRequiredModifierMask
+      return requiredModifierMask == 0 || (normalizeModifiers(getEventModifiers(event)) and requiredModifierMask) == requiredModifierMask
     }
 
     private fun handleModifier(event: KeyEvent): Boolean {
-      if (ourPressed.first.get() && event.`when` - ourLastTimePressed.get() > 300) {
+      if (firstPressed.get() && event.`when` - lastTimePressed.get() > 300) {
         resetState()
         return false
       }
 
       if (event.id == KeyEvent.KEY_PRESSED) {
-        if (!ourPressed.first.get()) {
+        if (!firstPressed.get()) {
           resetState()
-          ourPressed.first.set(true)
-          ourLastTimePressed.set(event.`when`)
+          firstPressed.set(true)
+          lastTimePressed.set(event.`when`)
           return false
         }
         else {
-          if (ourPressed.first.get() && ourReleased.first.get()) {
-            ourPressed.second.set(true)
-            ourLastTimePressed.set(event.`when`)
+          if (firstPressed.get() && firstReleased.get()) {
+            secondPressed.set(true)
+            lastTimePressed.set(event.`when`)
             return false
           }
         }
       }
       else if (event.id == KeyEvent.KEY_RELEASED) {
-        if (ourPressed.first.get() && !ourReleased.first.get()) {
-          ourReleased.first.set(true)
-          ourLastTimePressed.set(event.`when`)
+        if (firstPressed.get() && !firstReleased.get()) {
+          firstReleased.set(true)
+          lastTimePressed.set(event.`when`)
           return false
         }
-        else if (ourPressed.first.get() && ourReleased.first.get() && ourPressed.second.get()) {
+        else if (firstPressed.get() && firstReleased.get() && secondPressed.get()) {
           resetState()
-          if (myActionKeyCode == -1 && !shouldSkipIfActionHasShortcut()) {
+          if (actionKeyCode == -1 && !shouldSkipIfActionHasShortcut()) {
             if (!ClientId.isCurrentlyUnderLocalId) {
               return false
             }
@@ -550,17 +507,16 @@ class ModifierKeyDoubleClickHandler {
     }
 
     fun resetState() {
-      ourPressed.first.set(false)
-      ourPressed.second.set(false)
-      ourReleased.first.set(false)
-      ourReleased.second.set(false)
+      firstPressed.set(false)
+      secondPressed.set(false)
+      firstReleased.set(false)
     }
 
     private fun run(event: KeyEvent): Boolean {
-      myIsRunningAction = true
+      runningAction = true
       try {
         val ex = ActionManagerEx.getInstanceEx()
-        val action = ex.getAction(myActionId) ?: return false
+        val action = ex.getAction(actionId) ?: return false
 
         if (!action.isEnabledInModalContext) {
           // This check is copied IdeKeyEventDispatcher#dispatchKeyEvent method
@@ -576,93 +532,139 @@ class ModifierKeyDoubleClickHandler {
         return !result.isIgnored
       }
       finally {
-        myIsRunningAction = false
+        runningAction = false
       }
     }
 
     private fun shouldSkipIfActionHasShortcut(): Boolean {
-      return mySkipIfActionHasShortcut && KeymapUtil.getActiveKeymapShortcuts(myActionId).hasShortcuts()
+      return skipIfActionHasShortcut && KeymapUtil.getActiveKeymapShortcuts(actionId).hasShortcuts()
     }
 
     override fun toString(): String {
-      return "modifier double-click dispatcher [modifierKeyCode=$myModifierKeyCode" +
-             ",actionKeyCode=$myActionKeyCode" +
-             ",requiredModifierMask=$myRequiredModifierMask" +
-             ",actionId=$myActionId]"
+      return "modifier double-click dispatcher [modifierKeyCode=$modifierKeyCode" +
+             ",actionKeyCode=$actionKeyCode" +
+             ",requiredModifierMask=$requiredModifierMask" +
+             ",actionId=$actionId]"
     }
   }
 
   companion object {
-    private val LOG = logger<ModifierKeyDoubleClickHandler>()
-    private val KEY_CODE_TO_MODIFIER_MAP: Int2IntMap = Int2IntOpenHashMap().apply {
-      put(KeyEvent.VK_ALT, InputEvent.ALT_MASK)
-      put(KeyEvent.VK_CONTROL, InputEvent.CTRL_MASK)
-      put(KeyEvent.VK_META, InputEvent.META_MASK)
-      put(KeyEvent.VK_SHIFT, InputEvent.SHIFT_MASK)
-    }
-
-    private const val SUPPORTED_MODIFIER_MASKS =
-      InputEvent.SHIFT_MASK or InputEvent.ALT_MASK or InputEvent.CTRL_MASK or InputEvent.META_MASK
-    private const val SUPPORTED_MODIFIER_DOWN_MASKS =
-      InputEvent.SHIFT_DOWN_MASK or InputEvent.ALT_DOWN_MASK or InputEvent.CTRL_DOWN_MASK or InputEvent.META_DOWN_MASK
-    private const val SUPPORTED_MODIFIER_INPUT_MASKS = SUPPORTED_MODIFIER_MASKS or SUPPORTED_MODIFIER_DOWN_MASKS
-
     @JvmStatic
     fun getInstance(): ModifierKeyDoubleClickHandler = service()
 
     @Internal
-    @JvmStatic
     fun scheduleKeymapShortcutSyncIfCreated() {
       val application = ApplicationManager.getApplication() ?: return
-      val handler = application.getServiceIfCreated(ModifierKeyDoubleClickHandler::class.java)
-      handler?.scheduleKeymapShortcutSync()
+      application.getServiceIfCreated(ModifierKeyDoubleClickHandler::class.java)?.scheduleKeymapShortcutSync()
     }
 
     @JvmStatic
     fun getMultiCaretActionModifier(): Int = if (SystemInfoRt.isMac) KeyEvent.VK_ALT else KeyEvent.VK_CONTROL
+  }
+}
 
-    private fun normalizeModifiers(modifiers: Int): Int {
-      var normalized = modifiers
-      if ((normalized and InputEvent.SHIFT_DOWN_MASK) != 0) normalized = normalized or InputEvent.SHIFT_MASK
-      if ((normalized and InputEvent.ALT_DOWN_MASK) != 0) normalized = normalized or InputEvent.ALT_MASK
-      if ((normalized and InputEvent.CTRL_DOWN_MASK) != 0) normalized = normalized or InputEvent.CTRL_MASK
-      if ((normalized and InputEvent.META_DOWN_MASK) != 0) normalized = normalized or InputEvent.META_MASK
-      return normalized
-    }
+private val LOG = logger<ModifierKeyDoubleClickHandler>()
 
-    private fun hasUnsupportedModifiers(modifiers: Int): Boolean {
-      return (modifiers and SUPPORTED_MODIFIER_INPUT_MASKS.inv()) != 0
-    }
+private val KEY_CODE_TO_MODIFIER_MAP: Int2IntMap = Int2IntOpenHashMap().apply {
+  put(KeyEvent.VK_ALT, InputEvent.ALT_MASK)
+  put(KeyEvent.VK_CONTROL, InputEvent.CTRL_MASK)
+  put(KeyEvent.VK_META, InputEvent.META_MASK)
+  put(KeyEvent.VK_SHIFT, InputEvent.SHIFT_MASK)
+}
 
-    private fun getEventModifiers(event: KeyEvent): Int {
-      return event.modifiers or event.modifiersEx
-    }
+private const val SUPPORTED_MODIFIER_MASKS =
+  InputEvent.SHIFT_MASK or InputEvent.ALT_MASK or InputEvent.CTRL_MASK or InputEvent.META_MASK
+private const val SUPPORTED_MODIFIER_DOWN_MASKS =
+  InputEvent.SHIFT_DOWN_MASK or InputEvent.ALT_DOWN_MASK or InputEvent.CTRL_DOWN_MASK or InputEvent.META_DOWN_MASK
+private const val SUPPORTED_MODIFIER_INPUT_MASKS = SUPPORTED_MODIFIER_MASKS or SUPPORTED_MODIFIER_DOWN_MASKS
 
-    private fun getRequiredModifierMask(requiredModifierKeyCode: Int): Int {
-      if (requiredModifierKeyCode == -1) {
-        return 0
-      }
-      val modifierMask = getModifierMask(requiredModifierKeyCode)
-      if (modifierMask == 0) {
-        throw IllegalArgumentException("Unsupported required modifier keyCode: $requiredModifierKeyCode")
-      }
-      return modifierMask
-    }
+private data class DispatcherKey(
+  val actionId: String,
+  val modifierKeyCode: Int,
+  val actionKeyCode: Int,
+  val requiredModifierMask: Int,
+)
 
-    private fun getModifierMask(keyCode: Int): Int {
-      return KEY_CODE_TO_MODIFIER_MAP.get(keyCode)
-    }
+private data class DoubleClickShortcut(
+  val modifierKeyCode: Int,
+  val requiredModifierMask: Int,
+) {
+  fun toDispatcherKey(actionId: String): DispatcherKey {
+    return DispatcherKey(actionId, modifierKeyCode, -1, requiredModifierMask)
+  }
 
-    private fun calculateContext(): DataContext {
-      val focusManager = IdeFocusManager.findInstance()
-      val focusedComponent: Component? = focusManager.focusOwner
-      val ideWindow: Window? = focusManager.lastFocusedIdeWindow
-      return if (ideWindow === focusedComponent || focusedComponent === focusManager.getLastFocusedFor(ideWindow)) {
-        DataManager.getInstance().getDataContext(focusedComponent)
-      }
-      else {
-        DataManager.getInstance().dataContext
-      }
-    }
+  fun matches(key: DispatcherKey): Boolean {
+    return key.modifierKeyCode == modifierKeyCode &&
+           key.actionKeyCode == -1 &&
+           key.requiredModifierMask == requiredModifierMask
+  }
+}
+
+private fun KeyboardModifierGestureShortcut.toDoubleClickShortcut(): DoubleClickShortcut? {
+  if (type != KeyboardGestureAction.ModifierType.dblClick) {
+    return null
+  }
+
+  val modifierKeyCode = stroke.keyCode
+  val modifierMask = KEY_CODE_TO_MODIFIER_MAP.get(modifierKeyCode)
+  if (modifierMask == 0) {
+    return null
+  }
+
+  val strokeModifiers = stroke.modifiers
+  if (hasUnsupportedModifiers(strokeModifiers)) {
+    return null
+  }
+
+  val shortcutModifiers = normalizeModifiers(strokeModifiers) and SUPPORTED_MODIFIER_MASKS
+  if ((shortcutModifiers and modifierMask) == 0) {
+    return null
+  }
+
+  val requiredModifiers = shortcutModifiers and modifierMask.inv()
+  return DoubleClickShortcut(modifierKeyCode, requiredModifiers)
+}
+
+private fun normalizeModifiers(modifiers: Int): Int {
+  var normalized = modifiers
+  if ((normalized and InputEvent.SHIFT_DOWN_MASK) != 0) normalized = normalized or InputEvent.SHIFT_MASK
+  if ((normalized and InputEvent.ALT_DOWN_MASK) != 0) normalized = normalized or InputEvent.ALT_MASK
+  if ((normalized and InputEvent.CTRL_DOWN_MASK) != 0) normalized = normalized or InputEvent.CTRL_MASK
+  if ((normalized and InputEvent.META_DOWN_MASK) != 0) normalized = normalized or InputEvent.META_MASK
+  return normalized
+}
+
+private fun hasUnsupportedModifiers(modifiers: Int): Boolean {
+  return (modifiers and SUPPORTED_MODIFIER_INPUT_MASKS.inv()) != 0
+}
+
+private fun getEventModifiers(event: KeyEvent): Int {
+  return event.modifiers or event.modifiersEx
+}
+
+private fun getRequiredModifierMask(requiredModifierKeyCode: Int): Int {
+  if (requiredModifierKeyCode == -1) {
+    return 0
+  }
+  val modifierMask = getModifierMask(requiredModifierKeyCode)
+  if (modifierMask == 0) {
+    throw IllegalArgumentException("Unsupported required modifier keyCode: $requiredModifierKeyCode")
+  }
+  return modifierMask
+}
+
+private fun getModifierMask(keyCode: Int): Int {
+  return KEY_CODE_TO_MODIFIER_MAP.get(keyCode)
+}
+
+private fun calculateContext(): DataContext {
+  val focusManager = IdeFocusManager.findInstance()
+  val focusedComponent: Component? = focusManager.focusOwner
+  val ideWindow: Window? = focusManager.lastFocusedIdeWindow
+  return if (ideWindow === focusedComponent || focusedComponent === focusManager.getLastFocusedFor(ideWindow)) {
+    DataManager.getInstance().getDataContext(focusedComponent)
+  }
+  else {
+    DataManager.getInstance().dataContext
   }
 }

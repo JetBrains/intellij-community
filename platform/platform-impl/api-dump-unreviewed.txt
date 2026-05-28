@@ -7592,12 +7592,6 @@ f:com.intellij.openapi.keymap.impl.MacOSDefaultKeymap$Companion
 - f:convertShortcutFromParent(com.intellij.openapi.actionSystem.Shortcut):com.intellij.openapi.actionSystem.Shortcut
 f:com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler
 - <init>():V
-- s:getInstance():com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler
-- s:getMultiCaretActionModifier():I
-- isRunningAction():Z
-- registerAction(java.lang.String,I,I):V
-- registerAction(java.lang.String,I,I,Z):V
-- unregisterAction(java.lang.String):V
 f:com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler$MyAnActionListener
 - com.intellij.openapi.actionSystem.ex.AnActionListener
 - <init>():V
