@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.CantRunException;
@@ -113,7 +113,8 @@ public class TestPackage extends TestObject {
             addClassesListToJavaParameters(myClasses, CLASS_NAME_FUNCTION, packageName, createTempFiles(), getJavaParameters(), filters);
           }
         }
-        catch (Exception ignored) {
+        catch (Exception e) {
+          LOG.warn("Failed to prepare JUnit test suite file", e);
         }
 
         myShouldExecuteFinishMethod = !TargetEnvironmentUtil.reuploadRootFile(myTempFile, getTargetEnvironmentRequest(),

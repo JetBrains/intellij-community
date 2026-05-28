@@ -572,6 +572,28 @@ public class JUnitConfigurationTest extends JUnitConfigurationTestCase {
     }
   }
 
+  public void testRunningAllInDirectoryAboveTestSourceRoot() throws IOException, ExecutionException {
+    addModule("module4", false);
+    Module module4 = getModule4();
+    assignJdk(module4);
+    addSourcePath(module4, "testSrc", true);
+
+    VirtualFile contentRoot = ModuleRootManager.getInstance(module4).getContentRoots()[0];
+
+    JUnitConfiguration configuration = new JUnitConfiguration("", myProject);
+    configuration.getPersistentData().TEST_OBJECT = JUnitConfiguration.TEST_DIRECTORY;
+    configuration.getPersistentData().setDirName(contentRoot.getPath());
+    configuration.setModule(module4);
+
+    JavaParameters parameters = checkCanRun(configuration);
+    String filePath = ContainerUtil.find(parameters.getProgramParametersList().getArray(),
+                                         value -> StringUtil.startsWithChar(value, '@') && !StringUtil.startsWith(value, "@w@")).substring(1);
+    List<String> lines = FileUtilRt.loadLines(new File(filePath));
+    lines.remove(0);
+
+    assertThat(lines).contains("TestApplication");
+  }
+
   private void assignJdk(Module module) {
     myJdk = ModuleRootManager.getInstance(myModule).getSdk();
     ModuleRootModificationUtil.setModuleSdk(module, myJdk);
